@@ -81,8 +81,8 @@ const incomingRoutes = {
                             return '';
                         }
                         
-                        // Use ready-to-use HTML description from REST API
-                        const description = row.ruleDescription || '';
+                        // Use ready-to-use HTML representation from REST API
+                        const description = row.ruleRepresent || '';
                         const disabledClass = row.disabled ? 'disabled' : '';
                         return '<div class="' + disabledClass + '">' + description + '</div>';
                     }
@@ -135,14 +135,12 @@ const incomingRoutes = {
             
             // Build searchable text from all available data
             const searchableText = [
-                rowData.rulename || '',
                 rowData.number || '', 
                 rowData.note || '',
                 rowData.extension || '',
                 extractTextFromHtml(rowData.extensionRepresent || ''),
                 extractTextFromHtml(rowData.providerRepresent || ''),
-                extractTextFromHtml(rowData.callerid || ''),
-                extractTextFromHtml(rowData.ruleDescription || '')
+                extractTextFromHtml(rowData.ruleRepresent || '')
             ].filter(Boolean).join(' ').toLowerCase();
             
             return searchableText.includes(searchTerm);

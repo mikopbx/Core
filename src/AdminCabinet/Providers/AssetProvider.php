@@ -609,21 +609,29 @@ class AssetProvider implements ServiceProviderInterface
      */
     private function makeOutOffWorkTimeAssets(string $action): void
     {
+        // Add CSS for all actions
+        $this->headerCollectionCSS->addCss('css/OutOffWorkTime/out-off-work-time.css', true);
+        
         if ($action === 'index') {
             $this->headerCollectionCSS->addCss('css/vendor/datatable/dataTables.semanticui.min.css', true);
             $this->footerCollectionJS
+                ->addJs('js/pbx/main/PbxDataTableIndex.js', true)
                 ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
                 ->addJs('js/vendor/jquery.tablednd.js', true)
+                ->addJs('js/pbx/PbxAPI/outWorkTimesAPI.js', true)
                 ->addJs('js/pbx/OutOffWorkTime/out-of-work-times-index.js', true);
         } elseif ($action === 'modify') {
             $this->semanticCollectionCSS->addCss('css/vendor/semantic/calendar.min.css', true);
             $this->semanticCollectionJS->addJs('js/vendor/semantic/calendar.min.js', true);
             $this->footerCollectionJS
                 ->addJs('js/pbx/main/form.js', true)
-                ->addJs('js/pbx/OutOffWorkTime/out-of-work-time-modify.js', true)
+                ->addJs('js/pbx/PbxAPI/outWorkTimesAPI.js', true)
+                ->addJs('js/pbx/PbxAPI/incomingRoutesAPI.js', true)
+                ->addJs('js/pbx/PbxAPI/extensionsAPI.js', true)
                 ->addJs('js/pbx/PbxAPI/soundFilesAPI.js', true)
                 ->addJs('js/pbx/SoundFiles/sound-files-selector.js', true)
-                ->addJs('js/pbx/SoundFiles/one-button-sound-player.js', true);
+                ->addJs('js/pbx/SoundFiles/one-button-sound-player.js', true)
+                ->addJs('js/pbx/OutOffWorkTime/out-of-work-time-modify.js', true);
         }
     }
 

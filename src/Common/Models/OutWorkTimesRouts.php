@@ -72,8 +72,8 @@ class OutWorkTimesRouts extends ModelsBase
             ]
         );
 
-        // Establish a hasOne relationship with the IncomingRoutingTable model
-        $this->hasOne(
+        // Establish a belongsTo relationship with the IncomingRoutingTable model
+        $this->belongsTo(
             'routId',
             IncomingRoutingTable::class,
             'id',

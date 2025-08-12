@@ -1,6 +1,6 @@
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,12 +16,16 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl,globalTranslate, Extensions, Form, SemanticLocalization, SoundFilesSelector */
-
+/* global $ globalRootUrl Extensions moment Form globalTranslate 
+   SemanticLocalization SoundFilesSelector UserMessage SecurityUtils
+   IncomingRoutesAPI OutWorkTimesAPI */
 
 /**
- * Object for managing Out-of-Work Time settings
- *
+ * Module for managing out-of-work time settings
+ * 
+ * This module handles the form for creating and editing out-of-work time conditions.
+ * It uses a unified REST API approach matching the incoming routes pattern.
+ * 
  * @module outOfWorkTimeRecord
  */
 const outOfWorkTimeRecord = {
@@ -31,93 +35,441 @@ const outOfWorkTimeRecord = {
      */
     $formObj: $('#save-outoffwork-form'),
 
-    $defaultDropdown: $('#save-outoffwork-form .dropdown-default'),
+    /**
+     * Record ID from URL
+     * @type {string}
+     */
+    recordId: null, // Will be set in initialize()
+    
+    /**
+     * Store loaded record data
+     * @type {object|null}
+     */
+    recordData: null,
+
+    // Form field jQuery objects
+    $time_from: $('#time_from'),
+    $time_to: $('#time_to'),
+    $rulesTable: $('#routing-table'),
+    
+    // Hidden input fields
+    $idField: $('#id'),
+    $weekdayFromField: $('#weekday_from'),
+    $weekdayToField: $('#weekday_to'),
+    $actionField: $('#action'),
+    $calTypeField: $('#calType'),
+    $extensionField: $('#extension'),
+    $allowRestrictionField: $('#allowRestriction'),
+    $descriptionField: $('#description'),
+    
+    // Dropdown elements
+    $actionDropdown: $('.action-select'),
+    $calTypeDropdown: $('.calType-select'),
+    $weekdayFromDropdown: $('.weekday-from-select'),
+    $weekdayToDropdown: $('.weekday-to-select'),
+    $forwardingSelectDropdown: $('.forwarding-select'),
+    
+    // Tab elements
+    $tabMenu: $('#out-time-modify-menu .item'),
+    $rulesTab: null, // Will be initialized later
+    $generalTab: null, // Will be initialized later
+    $rulesTabSegment: null, // Will be initialized later
+    $generalTabSegment: null, // Will be initialized later
+    
+    // Row elements
+    $extensionRow: $('#extension-row'),
+    $audioMessageRow: $('#audio-message-row'),
+    
+    // Calendar tab elements
+    $calendarTab: $('#call-type-calendar-tab'),
+    $mainTab: $('#call-type-main-tab'),
+    
+    // Date/time calendar elements
     $rangeDaysStart: $('#range-days-start'),
     $rangeDaysEnd: $('#range-days-end'),
     $rangeTimeStart: $('#range-time-start'),
     $rangeTimeEnd: $('#range-time-end'),
-    $date_from: $('#date_from'),
-    $date_to: $('#date_to'),
-    $time_to: $('#time_to'),
-    $forwardingSelectDropdown: $('#save-outoffwork-form .forwarding-select'),
-
+    
+    // Erase buttons
+    $eraseDatesBtn: $('#erase-dates'),
+    $eraseWeekdaysBtn: $('#erase-weekdays'),
+    $eraseTimeperiodBtn: $('#erase-timeperiod'),
+    
+    // Error message element
+    $errorMessage: $('.form .error.message'),
+    
+    // Audio message ID for sound file selector
+    audioMessageId: 'audio_message_id',
 
     /**
-     * Additional condition for the time interval
+     * Additional time interval validation rules
      * @type {array}
      */
     additionalTimeIntervalRules: [{
         type: 'regExp',
-        value: /^(2[0-3]|1?[0-9]):([0-5]?[0-9])$/,
+        value: /^([01]?[0-9]|2[0-3]):([0-5]?[0-9])$/,
         prompt: globalTranslate.tf_ValidateCheckTimeInterval,
     }],
-
+    
     /**
-     * Validation rules for the form fields before submission.
-     *
+     * Validation rules for the form
      * @type {object}
      */
     validateRules: {
-        audio_message_id: {
-            identifier: 'audio_message_id',
-            rules: [
-                {
-                    type: 'customNotEmptyIfActionRule[playmessage]',
-                    prompt: globalTranslate.tf_ValidateAudioMessageEmpty,
-                },
-            ],
-        },
-        calUrl: {
-            identifier: 'calUrl',
-            rules: [
-                {
-                    type   : 'customNotEmptyIfCalType',
-                    prompt : globalTranslate.tf_ValidateCalUri
-                }
-            ]
-        },
         extension: {
             identifier: 'extension',
             rules: [
                 {
                     type: 'customNotEmptyIfActionRule[extension]',
-                    prompt: globalTranslate.tf_ValidateExtensionEmpty,
-                },
-            ],
+                    prompt: globalTranslate.tf_ValidateExtensionEmpty
+                }
+            ]
+        },
+        audio_message_id: {
+            identifier: 'audio_message_id',
+            rules: [
+                {
+                    type: 'customNotEmptyIfActionRule[playmessage]',
+                    prompt: globalTranslate.tf_ValidateAudioMessageEmpty
+                }
+            ]
+        },
+        calUrl: {
+            identifier: 'calUrl',
+            rules: [
+                {
+                    type: 'customNotEmptyIfCalType',
+                    prompt: globalTranslate.tf_ValidateCalUri
+                }
+            ]
         },
         timefrom: {
             optional: true,
             identifier: 'time_from',
             rules: [{
                 type: 'regExp',
-                value: /^(2[0-3]|1?[0-9]):([0-5]?[0-9])$/,
+                value: /^([01]?[0-9]|2[0-3]):([0-5]?[0-9])$/,
                 prompt: globalTranslate.tf_ValidateCheckTimeInterval,
-            }],
+            }]
         },
         timeto: {
             identifier: 'time_to',
             optional: true,
             rules: [{
                 type: 'regExp',
-                value: /^(2[0-3]|1?[0-9]):([0-5]?[0-9])$/,
+                value: /^([01]?[0-9]|2[0-3]):([0-5]?[0-9])$/,
                 prompt: globalTranslate.tf_ValidateCheckTimeInterval,
-            }],
-        },
+            }]
+        }
     },
 
     /**
-     * Initializes the out of work time record form.
+     * Initialize the module
      */
     initialize() {
-        // Initialize tab behavior for the out-time-modify-menu
-        $('#out-time-modify-menu .item').tab();
-
-        // Initialize the default dropdown
-        outOfWorkTimeRecord.$defaultDropdown.dropdown();
-
-        // Initialize the calendar for range days start
+        // Set record ID from DOM
+        outOfWorkTimeRecord.recordId = outOfWorkTimeRecord.$idField.val();
+        
+        // Initialize tab references that depend on DOM
+        outOfWorkTimeRecord.$rulesTab = $('#out-time-modify-menu .item[data-tab="rules"]');
+        outOfWorkTimeRecord.$generalTab = $('#out-time-modify-menu .item[data-tab="general"]');
+        outOfWorkTimeRecord.$rulesTabSegment = $('.ui.tab.segment[data-tab="rules"]');
+        outOfWorkTimeRecord.$generalTabSegment = $('.ui.tab.segment[data-tab="general"]');
+        
+        // Initialize tabs
+        outOfWorkTimeRecord.$tabMenu.tab();
+        
+        // Initialize form submission handling
+        outOfWorkTimeRecord.initializeForm();
+        
+        // Initialize components that don't depend on data
+        outOfWorkTimeRecord.initializeCalendars();
+        outOfWorkTimeRecord.initializeRoutingTable();
+        outOfWorkTimeRecord.initializeErasers();
+        outOfWorkTimeRecord.initializeDescriptionField();
+        outOfWorkTimeRecord.initializeTooltips();
+        
+        // Load data and initialize dropdowns
+        // This unified approach loads defaults for new records or existing data
+        outOfWorkTimeRecord.loadFormData();
+    },
+    
+    /**
+     * Load form data via REST API
+     * Unified approach for both new and existing records
+     */
+    loadFormData() {
+        // Show loading state
+        outOfWorkTimeRecord.$formObj.addClass('loading');
+        
+        // Use recordId for existing records, empty string for new
+        const recordIdToLoad = outOfWorkTimeRecord.recordId || '';
+        
+        // Load record data via REST API
+        OutWorkTimesAPI.getRecord(recordIdToLoad, (response) => {
+            if (response.result && response.data) {
+                outOfWorkTimeRecord.recordData = response.data;
+                outOfWorkTimeRecord.populateForm(response.data);
+                
+                // Load routing rules for both new and existing records
+                // For new records, this will show all available routes unchecked
+                outOfWorkTimeRecord.loadRoutingTable();
+                
+                // Save initial values to prevent save button activation
+                setTimeout(() => {
+                    Form.saveInitialValues();
+                    Form.checkValues();
+                }, 250);
+            } else {
+                // Error loading, but still initialize empty form
+                outOfWorkTimeRecord.initializeDropdowns();
+                // Load routing table even for new records
+                outOfWorkTimeRecord.loadRoutingTable();
+                
+                if (response.messages && response.messages.error) {
+                    const errorMessage = response.messages.error.join(', ');
+                    UserMessage.showError(SecurityUtils.escapeHtml(errorMessage));
+                }
+            }
+            
+            // Remove loading state
+            outOfWorkTimeRecord.$formObj.removeClass('loading');
+        });
+    },
+    
+    /**
+     * Initialize all dropdowns for the form
+     */
+    initializeDropdowns() {
+        // Initialize weekday dropdowns with values matching original implementation
+        const weekDays = [
+            { value: '-1', text: '-' } // Default empty option
+        ];
+        
+        // Add days 1-7 using the same logic as original controller
+        for (let i = 1; i <= 7; i++) {
+            // Create date for "Sunday +i days" to match original logic
+            const date = new Date(2020, 0, 5 + i); // Jan 5, 2020 was Sunday
+            const dayName = date.toLocaleDateString('en', { weekday: 'short' });
+            // Try to get translation for the day abbreviation
+            const translatedDay = globalTranslate[dayName] || dayName;
+            
+            weekDays.push({
+                name: translatedDay,
+                value: i.toString(),
+                text: translatedDay
+            });
+        }
+        
+        outOfWorkTimeRecord.$weekdayFromDropdown.dropdown({
+            values: weekDays,
+            onChange: (value) => {
+                outOfWorkTimeRecord.$weekdayFromField.val(value);
+                Form.dataChanged();
+            }
+        });
+        
+        outOfWorkTimeRecord.$weekdayToDropdown.dropdown({
+            values: weekDays,
+            onChange: (value) => {
+                outOfWorkTimeRecord.$weekdayToField.val(value);
+                Form.dataChanged();
+            }
+        });
+        
+        // Initialize action dropdown
+        outOfWorkTimeRecord.$actionDropdown.dropdown({
+            onChange: function(value) {
+                outOfWorkTimeRecord.$actionField.val(value);
+                outOfWorkTimeRecord.onActionChange();
+            }
+        });
+        
+        // Initialize calendar type dropdown
+        outOfWorkTimeRecord.$calTypeDropdown.dropdown({
+            onChange: function(value) {
+                outOfWorkTimeRecord.$calTypeField.val(value);
+                outOfWorkTimeRecord.onCalTypeChange();
+            }
+        });
+        
+        // Initialize extension dropdown using routing settings
+        const extensionSettings = Extensions.getDropdownSettingsForRouting();
+        extensionSettings.onChange = function(value) {
+            outOfWorkTimeRecord.$extensionField.val(value);
+            Form.dataChanged();
+        };
+        
+        outOfWorkTimeRecord.$forwardingSelectDropdown.dropdown('destroy');
+        outOfWorkTimeRecord.$forwardingSelectDropdown.dropdown(extensionSettings);
+        
+        // Initialize audio message dropdown with icons
+        SoundFilesSelector.initializeWithIcons(outOfWorkTimeRecord.audioMessageId, () => {
+            Form.dataChanged();
+        });
+    },
+    
+    /**
+     * Populate form with data
+     * @param {object} data - Record data from API
+     */
+    populateForm(data) {
+        // Set basic form values - all defaults come from REST API
+        outOfWorkTimeRecord.$formObj.form('set values', {
+            id: data.id,
+            uniqid: data.uniqid,
+            priority: data.priority,
+            description: data.description,
+            calType: data.calType,
+            weekday_from: data.weekday_from,
+            weekday_to: data.weekday_to,
+            time_from: data.time_from,
+            time_to: data.time_to,
+            calUrl: data.calUrl,
+            calUser: data.calUser,
+            calSecret: data.calSecret,
+            action: data.action,
+            extension: data.extension,
+            audio_message_id: data.audio_message_id,
+            allowRestriction: data.allowRestriction
+        });
+        
+        // Handle password field placeholder
+        const $calSecretField = $('#calSecret');
+        if (data.calSecret === 'XXXXXX') {
+            // Password exists but is masked, show placeholder
+            $calSecretField.attr('placeholder', globalTranslate.tf_PasswordMasked || 'Password saved (enter new to change)');
+            // Store original masked state to detect changes
+            $calSecretField.data('originalMasked', true);
+        } else {
+            $calSecretField.attr('placeholder', globalTranslate.tf_EnterPassword || 'Enter password');
+            $calSecretField.data('originalMasked', false);
+        }
+        
+        // Initialize dropdowns
+        outOfWorkTimeRecord.initializeDropdowns();
+        
+        // Set dropdown values after initialization
+        // Set action dropdown
+        if (data.action) {
+            outOfWorkTimeRecord.$actionDropdown.dropdown('set selected', data.action);
+        }
+        
+        // Set calType dropdown
+        if (data.calType) {
+            outOfWorkTimeRecord.$calTypeDropdown.dropdown('set selected', data.calType);
+        }
+        
+        // Set weekday dropdowns
+        if (data.weekday_from) {
+            outOfWorkTimeRecord.$weekdayFromDropdown.dropdown('set selected', data.weekday_from);
+        }
+        if (data.weekday_to) {
+            outOfWorkTimeRecord.$weekdayToDropdown.dropdown('set selected', data.weekday_to);
+        }
+        
+        // Set dates if present
+        if (data.date_from) {
+            outOfWorkTimeRecord.setDateFromTimestamp(data.date_from, '#range-days-start');
+        }
+        if (data.date_to) {
+            outOfWorkTimeRecord.setDateFromTimestamp(data.date_to, '#range-days-end');
+        }
+        
+        // Set extension value and display text if exists
+        if (data.extension) {
+            setTimeout(() => {
+                outOfWorkTimeRecord.$forwardingSelectDropdown.dropdown('set selected', data.extension);
+                
+                // Update display text if available
+                if (data.extensionRepresent) {
+                    const safeText = SecurityUtils.sanitizeExtensionsApiContent(data.extensionRepresent);
+                    outOfWorkTimeRecord.$forwardingSelectDropdown.find('.text')
+                        .removeClass('default')
+                        .html(safeText);
+                }
+            }, 100);
+        }
+        
+        // Setup audio message with representation
+        if (data.audio_message_id && data.audio_message_id_Represent) {
+            SoundFilesSelector.setInitialValueWithIcon(
+                outOfWorkTimeRecord.audioMessageId,
+                data.audio_message_id,
+                data.audio_message_id_Represent
+            );
+        } else if (data.audio_message_id) {
+            $(`.${outOfWorkTimeRecord.audioMessageId}-select`).dropdown('set selected', data.audio_message_id);
+        }
+        
+        // Update field visibility based on action
+        outOfWorkTimeRecord.onActionChange();
+        
+        // Update calendar type visibility
+        outOfWorkTimeRecord.onCalTypeChange();
+        
+        // Set rules tab visibility based on allowRestriction
+        outOfWorkTimeRecord.toggleRulesTab(data.allowRestriction);
+        
+        // Re-initialize dirty checking
+        if (Form.enableDirrity) {
+            Form.initializeDirrity();
+        }
+    },
+    
+    /**
+     * Handle action dropdown change
+     */
+    onActionChange() {
+        const action = outOfWorkTimeRecord.$formObj.form('get value', 'action');
+        
+        if (action === 'extension') {
+            // Show extension, hide audio
+            outOfWorkTimeRecord.$extensionRow.show();
+            outOfWorkTimeRecord.$audioMessageRow.hide();
+            // Clear audio message
+            $(`.${outOfWorkTimeRecord.audioMessageId}-select`).dropdown('clear');
+            $(`#${outOfWorkTimeRecord.audioMessageId}`).val('');
+        } else if (action === 'playmessage') {
+            // Show audio, hide extension
+            outOfWorkTimeRecord.$extensionRow.hide();
+            outOfWorkTimeRecord.$audioMessageRow.show();
+            // Clear extension
+            outOfWorkTimeRecord.$forwardingSelectDropdown.dropdown('clear');
+            outOfWorkTimeRecord.$extensionField.val('');
+        }
+        
+        Form.dataChanged();
+    },
+    
+    /**
+     * Handle calendar type change
+     */
+    onCalTypeChange() {
+        const calType = outOfWorkTimeRecord.$formObj.form('get value', 'calType');
+        
+        // 'timeframe' and empty string mean time-based conditions (show main tab)
+        if (!calType || calType === 'timeframe' || calType === '') {
+            // Show main time/date configuration
+            outOfWorkTimeRecord.$calendarTab.hide();
+            outOfWorkTimeRecord.$mainTab.show();
+        } else if (calType === 'CALDAV' || calType === 'ICAL') {
+            // Show calendar URL configuration
+            outOfWorkTimeRecord.$calendarTab.show();
+            outOfWorkTimeRecord.$mainTab.hide();
+        }
+        
+        Form.dataChanged();
+    },
+    
+    /**
+     * Initialize calendars for date and time selection
+     */
+    initializeCalendars() {
+        // Date range calendars
+        // Use class variables for calendars
+        
         outOfWorkTimeRecord.$rangeDaysStart.calendar({
-            // Calendar configuration options
             firstDayOfWeek: SemanticLocalization.calendarFirstDayOfWeek,
             text: SemanticLocalization.calendarText,
             endCalendar: outOfWorkTimeRecord.$rangeDaysEnd,
@@ -125,11 +477,10 @@ const outOfWorkTimeRecord = {
             inline: false,
             monthFirst: false,
             regExp: SemanticLocalization.regExp,
+            onChange: () => Form.dataChanged()
         });
-
-        // Initialize the calendar for range days end
+        
         outOfWorkTimeRecord.$rangeDaysEnd.calendar({
-            // Calendar configuration options
             firstDayOfWeek: SemanticLocalization.calendarFirstDayOfWeek,
             text: SemanticLocalization.calendarText,
             startCalendar: outOfWorkTimeRecord.$rangeDaysStart,
@@ -137,375 +488,712 @@ const outOfWorkTimeRecord = {
             inline: false,
             monthFirst: false,
             regExp: SemanticLocalization.regExp,
-            onChange: (newDateTo) => {
-                // Handle the change event for range time end
-                let oldDateTo = outOfWorkTimeRecord.$date_to.attr('value');
-                if (newDateTo !== null && oldDateTo !== '') {
-                    oldDateTo = new Date(oldDateTo * 1000);
-                    if ((newDateTo - oldDateTo) !== 0) {
-                        outOfWorkTimeRecord.$date_from.trigger('change');
-                        Form.dataChanged();
-                    }
-                }
-            },
+            onChange: () => Form.dataChanged()
         });
-
-        // Initialize the calendar for range time start
+        
+        // Time range calendars
+        // Use class variables for time calendars
+        
         outOfWorkTimeRecord.$rangeTimeStart.calendar({
-            // Calendar configuration options
             firstDayOfWeek: SemanticLocalization.calendarFirstDayOfWeek,
             text: SemanticLocalization.calendarText,
             endCalendar: outOfWorkTimeRecord.$rangeTimeEnd,
             type: 'time',
             inline: false,
-            disableMinute: true,
+            disableMinute: false,
+            monthFirst: false,
             ampm: false,
+            regExp: SemanticLocalization.regExp,
+            onChange: () => Form.dataChanged()
         });
-
-        // Initialize the calendar for range time end
+        
         outOfWorkTimeRecord.$rangeTimeEnd.calendar({
-            // Calendar configuration options
             firstDayOfWeek: SemanticLocalization.calendarFirstDayOfWeek,
             text: SemanticLocalization.calendarText,
+            startCalendar: outOfWorkTimeRecord.$rangeTimeStart,
             type: 'time',
             inline: false,
-            disableMinute: true,
+            monthFirst: false,
             ampm: false,
-            onChange: (newTimeTo) => {
-                // Handle the change event for range time end
-                let oldTimeTo = outOfWorkTimeRecord.$time_to.attr('value');
-                if (newTimeTo !== null && oldTimeTo !== '') {
-                    oldTimeTo = new Date(oldTimeTo * 1000);
-                    if ((newTimeTo - oldTimeTo) !== 0) {
-                        outOfWorkTimeRecord.$time_to.trigger('change');
-                        Form.dataChanged();
-                    }
-                }
-            },
+            regExp: SemanticLocalization.regExp,
+            onChange: () => Form.dataChanged()
         });
-
-        // Initialize the action dropdown
-        $('#action')
-            .dropdown({
-                onChange() {
-                    // Handle the change event for the action dropdown
-                    outOfWorkTimeRecord.toggleDisabledFieldClass();
-                },
-            });
-        // Initialize the calType dropdown
-        $('#calType')
-            .dropdown({
-                onChange() {
-                    // Handle the change event for the action dropdown
-                    outOfWorkTimeRecord.toggleDisabledFieldClass();
-                },
-            });
-
-        // Initialize the weekday_from dropdown
-        $('#weekday_from')
-            .dropdown({
-                onChange() {
-                    // Handle the change event for the weekday_from dropdown
-                    const from = outOfWorkTimeRecord.$formObj.form('get value', 'weekday_from');
-                    const to = outOfWorkTimeRecord.$formObj.form('get value', 'weekday_to');
-                    if (from < to || to === -1 || from === -1) {
-                        outOfWorkTimeRecord.$formObj.form('set value', 'weekday_to', from);
-                    }
-                },
-            });
-
-        // Initialize the weekday_to dropdown
-        $('#weekday_to')
-            .dropdown({
-                onChange() {
-                    // Handle the change event for the weekday_to dropdown
-                    const from = outOfWorkTimeRecord.$formObj.form('get value', 'weekday_from');
-                    const to = outOfWorkTimeRecord.$formObj.form('get value', 'weekday_to');
-                    if (to < from || from === -1) {
-                        outOfWorkTimeRecord.$formObj.form('set value', 'weekday_from', to);
-                    }
-                },
-            });
-
-        // Bind click event to erase-dates button
-        $('#erase-dates').on('click', (e) => {
-            // Handle the click event for erase-dates button
-            outOfWorkTimeRecord.$rangeDaysStart.calendar('clear');
-            outOfWorkTimeRecord.$rangeDaysEnd.calendar('clear');
-            outOfWorkTimeRecord.$formObj
-                .form('set values', {
-                    date_from: '',
-                    date_to: '',
-                });
-            e.preventDefault();
-        });
-
-        // Bind click event to erase-weekdays button
-        $('#erase-weekdays').on('click', (e) => {
-            // Handle the click event for erase-weekdays button
-            outOfWorkTimeRecord.$formObj
-                .form('set values', {
-                    weekday_from: -1,
-                    weekday_to: -1,
-                });
-            outOfWorkTimeRecord.$rangeDaysStart.trigger('change');
-            e.preventDefault();
-        });
-
-        // Bind click event to erase-timeperiod button
-        $('#erase-timeperiod').on('click', (e) => {
-            // Handle the click event for erase-timeperiod button
-            outOfWorkTimeRecord.$rangeTimeStart.calendar('clear');
-            outOfWorkTimeRecord.$rangeTimeEnd.calendar('clear');
-            outOfWorkTimeRecord.$time_to.trigger('change');
-            e.preventDefault();
-        });
-
-        // Initialize audio-message-select dropdown
-        $('#save-outoffwork-form .audio-message-select').dropdown(SoundFilesSelector.getDropdownSettingsWithEmpty());
-
-        // Change the date format from linuxtime to local representation
-        outOfWorkTimeRecord.changeDateFormat();
-
-        // Initialize the form
-        outOfWorkTimeRecord.initializeForm();
-
-        // Initialize the forwardingSelectDropdown
-        outOfWorkTimeRecord.$forwardingSelectDropdown.dropdown(Extensions.getDropdownSettingsWithoutEmpty());
-
-        // Toggle disabled field class based on action value
-        outOfWorkTimeRecord.toggleDisabledFieldClass();
-
-        // Bind checkbox change event for inbound rules table
-        $('#inbound-rules-table .ui.checkbox').checkbox({
-            onChange: function () {
-                let newState = 'unchecked';
-                // Handle the change event for inbound rules table checkbox
-                if ($(this).parent().checkbox('is checked')) {
-                    newState = 'checked';
-                }
-                let did = $(this).parent().attr('data-did');
-                let filter = '#inbound-rules-table .ui.checkbox[data-context-id=' + $(this).parent().attr('data-context-id') + ']';
-                if(did !== '' && newState === 'checked'){
-                    filter = filter + '.ui.checkbox[data-did='+did+']';
-                }else if(did !== '' && newState === 'unchecked'){
-                    $(filter + '.ui.checkbox[data-did="'+did+'"]').checkbox('set '+newState);
-                    filter = filter + '.ui.checkbox[data-did=""]';
-                }else if(did === '' && newState === 'unchecked'){
-                    filter = filter + '.ui.checkbox[data-did=""]';
-                }
-                $(filter).checkbox('set '+newState);
+    },
+    
+    /**
+     * Initialize routing table and allowRestriction checkbox
+     */
+    initializeRoutingTable() {
+        // Initialize allowRestriction checkbox
+        outOfWorkTimeRecord.$allowRestrictionField.parent().checkbox({
+            onChange: function() {
+                const isChecked = outOfWorkTimeRecord.$allowRestrictionField.parent().checkbox('is checked');
+                outOfWorkTimeRecord.toggleRulesTab(isChecked);
+                Form.dataChanged();
             }
         });
-
-        // Bind checkbox change event for allowRestriction checkbox
-        $('#allowRestriction').parent().checkbox({
-            onChange: outOfWorkTimeRecord.changeRestriction
+        
+        // Initialize existing checkboxes in table
+        outOfWorkTimeRecord.$rulesTable.find('.ui.checkbox').checkbox({
+            onChange: () => Form.dataChanged()
         });
-
-        // Call changeRestriction method
-        outOfWorkTimeRecord.changeRestriction();
     },
-
+    
     /**
-     * Changes the visibility of the 'rules' tab based on the checked status of the 'allowRestriction' checkbox.
+     * Toggle rules tab visibility
+     * @param {boolean} isChecked - Whether to show rules tab
      */
-    changeRestriction() {
-        if ($('#allowRestriction').parent().checkbox('is checked')) {
-            $("a[data-tab='rules']").show();
+    toggleRulesTab(isChecked) {
+        
+        if (isChecked) {
+            outOfWorkTimeRecord.$rulesTab.show();
         } else {
-            $("a[data-tab='rules']").hide();
+            outOfWorkTimeRecord.$rulesTab.hide();
+            // Switch to general tab if rules tab was active
+            if (outOfWorkTimeRecord.$rulesTab.hasClass('active')) {
+                outOfWorkTimeRecord.$rulesTab.removeClass('active');
+                outOfWorkTimeRecord.$rulesTabSegment.removeClass('active');
+                outOfWorkTimeRecord.$generalTab.addClass('active');
+                outOfWorkTimeRecord.$generalTabSegment.addClass('active');
+            }
         }
     },
-
+    
     /**
-     * Converts the date format from linuxtime to the local representation.
+     * Load routing table with incoming routes
      */
-    changeDateFormat() {
-        const dateFrom = outOfWorkTimeRecord.$date_from.attr('value');
-        const dateTo = outOfWorkTimeRecord.$date_to.attr('value');
-        const currentOffset = new Date().getTimezoneOffset();
-        const serverOffset = parseInt(outOfWorkTimeRecord.$formObj.form('get value', 'serverOffset'));
-        const offsetDiff = serverOffset + currentOffset;
-        if (dateFrom !== undefined && dateFrom.length > 0) {
-            const dateFromInBrowserTZ = dateFrom * 1000 + offsetDiff * 60 * 1000;
-            outOfWorkTimeRecord.$rangeDaysStart.calendar('set date', new Date(dateFromInBrowserTZ));
-        }
-        if (dateTo !== undefined && dateTo.length > 0) {
-            const dateToInBrowserTZ = dateTo * 1000 + offsetDiff * 60 * 1000;
-            outOfWorkTimeRecord.$rangeDaysEnd.calendar('set date', new Date(dateToInBrowserTZ));
-        }
+    loadRoutingTable() {
+        // Clear table
+        outOfWorkTimeRecord.$rulesTable.find('tbody').empty();
+        
+        // Get associated IDs from record data
+        const associatedIds = outOfWorkTimeRecord.recordData?.incomingRouteIds || [];
+        
+        // Load all available routes from IncomingRoutesAPI
+        IncomingRoutesAPI.getList((response) => {
+            if (response.result && response.data) {
+                // Group and sort routes
+                const groupedRoutes = outOfWorkTimeRecord.groupAndSortRoutes(response.data);
+                
+                // Render grouped routes
+                outOfWorkTimeRecord.renderGroupedRoutes(groupedRoutes, associatedIds);
+                
+                // Initialize UI components with grouped checkbox logic
+                outOfWorkTimeRecord.initializeRoutingCheckboxes();
+                outOfWorkTimeRecord.$rulesTable.find('[data-content]').popup();
+            } else {
+                outOfWorkTimeRecord.showEmptyRoutesMessage();
+            }
+        });
     },
-
+    
     /**
-     * Toggles the visibility of certain field groups based on the selected action value.
+     * Group and sort routes by provider and DID
+     * @param {Array} routes - Array of route objects
+     * @returns {Object} Grouped routes
      */
-    toggleDisabledFieldClass() {
-        if(outOfWorkTimeRecord.$formObj.form('get value', 'action') === 'extension') {
-            $('#extension-group').show();
-            $('#audio-file-group').hide();
-            $('#audio_message_id').dropdown('clear');
-        }else{
-            $('#extension-group').hide();
-            $('#audio-file-group').show();
-            outOfWorkTimeRecord.$formObj.form('set value', 'extension', -1);
+    groupAndSortRoutes(routes) {
+        const groups = {};
+        
+        // Skip default route and group by provider
+        routes.forEach((route) => {
+            if (route.id === 1 || route.id === '1') return;
+            
+            const providerId = route.provider || 'none';
+            if (!groups[providerId]) {
+                // Extract plain text provider name from HTML if needed
+                let providerName = route.providerRepresent || globalTranslate.ir_NoAssignedProvider || 'Direct calls';
+                // Remove HTML tags to get clean provider name for display
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = providerName;
+                const cleanProviderName = tempDiv.textContent || tempDiv.innerText || providerName;
+                
+                groups[providerId] = {
+                    providerId: providerId,  // Store actual provider ID
+                    providerName: cleanProviderName,  // Clean name for display
+                    providerNameHtml: route.providerRepresent || providerName,  // Original HTML if needed
+                    providerDisabled: route.providerDisabled || false,
+                    generalRules: [],
+                    specificRules: {}
+                };
+            }
+            
+            // Separate general rules (no DID) from specific rules (with DID)
+            if (!route.number || route.number === '') {
+                groups[providerId].generalRules.push(route);
+            } else {
+                if (!groups[providerId].specificRules[route.number]) {
+                    groups[providerId].specificRules[route.number] = [];
+                }
+                groups[providerId].specificRules[route.number].push(route);
+            }
+        });
+        
+        // Sort rules within each group by priority
+        Object.keys(groups).forEach(providerId => {
+            groups[providerId].generalRules.sort((a, b) => a.priority - b.priority);
+            Object.keys(groups[providerId].specificRules).forEach(did => {
+                groups[providerId].specificRules[did].sort((a, b) => a.priority - b.priority);
+            });
+        });
+        
+        return groups;
+    },
+    
+    /**
+     * Render grouped routes in the table
+     * @param {Object} groupedRoutes - Grouped routes object
+     * @param {Array} associatedIds - Array of associated route IDs
+     */
+    renderGroupedRoutes(groupedRoutes, associatedIds) {
+        const tbody = outOfWorkTimeRecord.$rulesTable.find('tbody');
+        let isFirstGroup = true;
+        
+        Object.keys(groupedRoutes).forEach(providerId => {
+            const group = groupedRoutes[providerId];
+            
+            // Add provider group header
+            if (!isFirstGroup) {
+                // Add separator between groups
+                tbody.append('<tr class="provider-separator"><td colspan="3"><div class="ui divider"></div></td></tr>');
+            }
+            isFirstGroup = false;
+            
+            // Add provider header row - use providerNameHtml for rich display
+            tbody.append(`
+                <tr class="provider-header">
+                    <td colspan="3">
+                        <div class="ui small header">
+                            <div class="content">
+                                ${group.providerNameHtml}
+                                ${group.providerDisabled ? '<span class="ui mini red label">Disabled</span>' : ''}
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            `);
+            
+            // Render general rules first
+            group.generalRules.forEach((route) => {
+                const row = outOfWorkTimeRecord.createRouteRow(route, associatedIds, 'rule-general');
+                tbody.append(row);
+            });
+            
+            // Render specific rules grouped by DID
+            Object.keys(group.specificRules).sort().forEach(did => {
+                group.specificRules[did].forEach((route, index) => {
+                    const isFirstInDID = index === 0;
+                    const row = outOfWorkTimeRecord.createRouteRow(route, associatedIds, 'rule-specific', isFirstInDID);
+                    tbody.append(row);
+                });
+            });
+        });
+    },
+    
+    /**
+     * Create a single route row
+     * @param {Object} route - Route object
+     * @param {Array} associatedIds - Associated route IDs
+     * @param {String} ruleClass - CSS class for the rule type
+     * @param {Boolean} showDIDIndicator - Whether to show DID indicator
+     * @returns {String} HTML row
+     */
+    createRouteRow(route, associatedIds, ruleClass = '', showDIDIndicator = false) {
+        const isChecked = associatedIds.includes(parseInt(route.id));
+        const providerDisabled = route.providerDisabled ? 'disabled' : '';
+        let ruleDescription = route.ruleRepresent || '';
+        
+        // Ensure provider ID is clean (no HTML)
+        const providerId = route.provider || '';
+        
+        // Add visual indicators for rule type
+        if (ruleClass === 'rule-specific') {
+            // Add indent and arrow for specific rules
+            ruleDescription = `<span class="rule-indent">↳</span> ${ruleDescription}`;
+        } else if (ruleClass === 'rule-general') {
+            // Add icon for general rules
+            ruleDescription = `<i class="random icon"></i> ${ruleDescription}`;
         }
-        if(outOfWorkTimeRecord.$formObj.form('get value', 'calType') === 'none'){
-            $('#call-type-main-tab').show();
-            $('#call-type-calendar-tab').hide();
-        }else{
-            $('#call-type-main-tab').hide();
-            $('#call-type-calendar-tab').show();
+        
+        const noteDisplay = route.note && route.note.length > 20 ? 
+            `<div class="ui basic icon button" data-content="${SecurityUtils.escapeHtml(route.note)}" data-variation="wide" data-position="top right">
+                <i class="file text icon"></i>
+            </div>` : 
+            SecurityUtils.escapeHtml(route.note || '');
+        
+        // Data attributes already safe from API
+        const safeProviderId = providerId;
+        const safeDid = route.number || '';
+        
+        return `
+            <tr class="rule-row ${ruleClass}" id="${route.id}" 
+                data-provider="${safeProviderId}" 
+                data-did="${safeDid}">
+                <td class="collapsing">
+                    <div class="ui fitted toggle checkbox" 
+                         data-did="${safeDid}" 
+                         data-provider="{${safeProviderId}}">
+                        <input type="checkbox" ${isChecked ? 'checked' : ''} 
+                               name="route-${route.id}" data-value="${route.id}">
+                        <label></label>
+                    </div>
+                </td>
+                <td class="${providerDisabled}">
+                    ${ruleDescription || '<span class="text-muted">No description</span>'}
+                </td>
+                <td class="hide-on-mobile">
+                    ${noteDisplay}
+                </td>
+            </tr>
+        `;
+    },
+    
+    /**
+     * Show empty routes message in table
+     */
+    showEmptyRoutesMessage() {
+        const emptyRow = `
+            <tr>
+                <td colspan="3" class="center aligned">
+                    ${globalTranslate.ir_NoIncomingRoutes || 'No incoming routes configured'}
+                </td>
+            </tr>
+        `;
+        outOfWorkTimeRecord.$rulesTable.find('tbody').append(emptyRow);
+    },
+    
+    /**
+     * Initialize routing checkboxes with grouped logic
+     * When checking/unchecking rules with same provider and DID
+     */
+    initializeRoutingCheckboxes() {
+        
+        // Add hover effect to highlight related rules
+        outOfWorkTimeRecord.$rulesTable.find('.rule-row').hover(
+            function() {
+                const $row = $(this);
+                const provider = $row.attr('data-provider');
+                const did = $row.attr('data-did');
+                
+                // Remove previous highlights
+                outOfWorkTimeRecord.$rulesTable.find('.rule-row').removeClass('related-highlight');
+                
+                if (provider && provider !== 'none') {
+                    // Highlight all rules with same provider
+                    let selector = `.rule-row[data-provider="${provider}"]`;
+                    
+                    if (did) {
+                        // If hovering on specific DID rule, highlight all with same DID
+                        selector += `[data-did="${did}"]`;
+                    } else {
+                        // If hovering on general rule, highlight all general rules for this provider
+                        selector += '[data-did=""]';
+                    }
+                    
+                    const $relatedRows = outOfWorkTimeRecord.$rulesTable.find(selector);
+                    $relatedRows.addClass('related-highlight');
+                }
+            },
+            function() {
+                // Remove highlights on mouse leave
+                outOfWorkTimeRecord.$rulesTable.find('.rule-row').removeClass('related-highlight');
+            }
+        );
+        
+        // Initialize checkbox behavior with tooltips
+        outOfWorkTimeRecord.$rulesTable.find('.ui.checkbox').each(function() {
+            const $checkbox = $(this);
+            const did = $checkbox.attr('data-did');
+            const provider = $checkbox.attr('data-provider');
+            
+            // Add tooltip to explain grouping
+            if (provider && provider !== 'none') {
+                let tooltipText = '';
+                if (did) {
+                    tooltipText = globalTranslate.tf_TooltipSpecificRule || 'This rule applies to calls to specific number. Related rules will be synchronized.';
+                } else {
+                    tooltipText = globalTranslate.tf_TooltipGeneralRule || 'This rule applies to all calls from provider. Related rules will be synchronized.';
+                }
+                
+                $checkbox.attr('data-content', tooltipText);
+                $checkbox.attr('data-variation', 'tiny');
+                $checkbox.popup();
+            }
+        });
+        
+        // Initialize checkbox change behavior
+        outOfWorkTimeRecord.$rulesTable.find('.ui.checkbox').checkbox({
+            onChange: function() {
+                const $checkbox = $(this).parent();
+                const isChecked = $checkbox.checkbox('is checked');
+                const did = $checkbox.attr('data-did');
+                const provider = $checkbox.attr('data-provider');
+                
+                // Skip synchronization for 'none' provider (direct calls)
+                if (!provider || provider === 'none') {
+                    Form.dataChanged();
+                    return;
+                }
+                
+                // If we have grouped logic requirements
+                if (provider) {
+                    let selector = `#routing-table .ui.checkbox[data-provider="${provider}"]`;
+                    
+                    if (did && did !== '') {
+                        // Rule with specific DID
+                        if (isChecked) {
+                            // When checking a rule with DID, check all rules with same provider and DID
+                            const selectorWithDID = `${selector}[data-did="${did}"]`;
+                            $(selectorWithDID).not($checkbox).checkbox('set checked');
+                        } else {
+                            // When unchecking a rule with DID:
+                            // 1. Uncheck all rules with same DID
+                            const selectorWithDID = `${selector}[data-did="${did}"]`;
+                            $(selectorWithDID).not($checkbox).checkbox('set unchecked');
+                            // 2. Also uncheck general rules (without DID) for same provider
+                            const selectorGeneral = `${selector}[data-did=""]`;
+                            $(selectorGeneral).checkbox('set unchecked');
+                        }
+                    } else {
+                        // General rule without DID
+                        if (!isChecked) {
+                            // When unchecking general rule, only uncheck other general rules for same provider
+                            const selectorGeneral = `${selector}[data-did=""]`;
+                            $(selectorGeneral).not($checkbox).checkbox('set unchecked');
+                        } else {
+                            // When checking general rule, check all general rules for same provider
+                            const selectorGeneral = `${selector}[data-did=""]`;
+                            $(selectorGeneral).not($checkbox).checkbox('set checked');
+                        }
+                    }
+                }
+                
+                // Trigger form change
+                Form.dataChanged();
+            }
+        });
+    },
+    
+    /**
+     * Initialize erase buttons for date/time fields
+     */
+    initializeErasers() {
+        outOfWorkTimeRecord.$eraseDatesBtn.on('click', () => {
+            outOfWorkTimeRecord.$rangeDaysStart.calendar('clear');
+            outOfWorkTimeRecord.$rangeDaysEnd.calendar('clear');
+            Form.dataChanged();
+        });
+        
+        outOfWorkTimeRecord.$eraseWeekdaysBtn.on('click', () => {
+            outOfWorkTimeRecord.$weekdayFromDropdown.dropdown('clear');
+            outOfWorkTimeRecord.$weekdayToDropdown.dropdown('clear');
+            Form.dataChanged();
+        });
+        
+        outOfWorkTimeRecord.$eraseTimeperiodBtn.on('click', () => {
+            outOfWorkTimeRecord.$rangeTimeStart.calendar('clear');
+            outOfWorkTimeRecord.$rangeTimeEnd.calendar('clear');
+            Form.dataChanged();
+        });
+    },
+    
+    /**
+     * Initialize description field with auto-resize
+     */
+    initializeDescriptionField() {
+        // Auto-resize on input
+        outOfWorkTimeRecord.$descriptionField.on('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+        
+        // Initial resize
+        if (outOfWorkTimeRecord.$descriptionField.val()) {
+            outOfWorkTimeRecord.$descriptionField.trigger('input');
         }
     },
-
+    
     /**
-     * Custom form validation for validating specific fields in a form.
-     *
-     * @param {Object} result - The result object containing form data.
-     * @returns {boolean|Object} Returns false if validation fails, or the result object if validation passes.
+     * Helper to set date from timestamp or date string
+     * @param {string|number} dateValue - Unix timestamp or date string (YYYY-MM-DD)
+     * @param {string} selector - jQuery selector
+     */
+    setDateFromTimestamp(dateValue, selector) {
+        if (!dateValue) return;
+        
+        // Check if it's a date string in YYYY-MM-DD format first
+        if (typeof dateValue === 'string') {
+            // Check for date format YYYY-MM-DD
+            if (/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+                const date = new Date(dateValue);
+                if (!isNaN(date.getTime())) {
+                    $(selector).calendar('set date', date);
+                    return;
+                }
+            }
+            
+            // Try to parse as Unix timestamp (all digits)
+            if (/^\d+$/.test(dateValue)) {
+                const timestamp = parseInt(dateValue);
+                if (timestamp > 0) {
+                    // Convert Unix timestamp to Date
+                    $(selector).calendar('set date', new Date(timestamp * 1000));
+                    return;
+                }
+            }
+        } else if (typeof dateValue === 'number' && dateValue > 0) {
+            // Numeric Unix timestamp
+            $(selector).calendar('set date', new Date(dateValue * 1000));
+        }
+    },
+    
+    /**
+     * Custom form validation for paired fields
+     * @param {object} result - Form data
+     * @returns {object|boolean} Result object or false if validation fails
      */
     customValidateForm(result) {
-        // Check date fields
-        if ((result.data.date_from !== '' && result.data.date_to === '')
-            || (result.data.date_to !== '' && result.data.date_from === '')) {
-            $('.form .error.message').html(globalTranslate.tf_ValidateCheckDateInterval).show();
+        // Check date fields - both should be filled or both empty
+        if ((result.data.date_from !== '' && result.data.date_to === '') ||
+            (result.data.date_to !== '' && result.data.date_from === '')) {
+            outOfWorkTimeRecord.$errorMessage.html(globalTranslate.tf_ValidateCheckDateInterval).show();
             Form.$submitButton.transition('shake').removeClass('loading disabled');
             return false;
         }
 
-        // Check weekday fields
-        if ((result.data.weekday_from > 0 && result.data.weekday_to === '-1')
-            || (result.data.weekday_to > 0 && result.data.weekday_from === '-1')) {
-            $('.form .error.message').html(globalTranslate.tf_ValidateCheckWeekDayInterval).show();
+        // Check weekday fields - both should be filled or both empty
+        if ((result.data.weekday_from > 0 && result.data.weekday_to === '-1') ||
+            (result.data.weekday_to > 0 && result.data.weekday_from === '-1')) {
+            outOfWorkTimeRecord.$errorMessage.html(globalTranslate.tf_ValidateCheckWeekDayInterval).show();
             Form.$submitButton.transition('shake').removeClass('loading disabled');
             return false;
         }
 
-        // Check time fields
-        if ((result.data.time_from.length > 0 && result.data.time_to.length === 0)
-            || (result.data.time_to.length > 0 && result.data.time_from.length === 0)) {
-            $('.form .error.message').html(globalTranslate.tf_ValidateCheckTimeInterval).show();
-            Form.$submitButton.transition('shake').removeClass('loading disabled');
-
-            return false;
-        }
-
-        // Check time field format
-        if ((result.data.time_from.length > 0 && result.data.time_to.length === 0)
-            || (result.data.time_to.length > 0 && result.data.time_from.length === 0)) {
-            $('.form .error.message').html(globalTranslate.tf_ValidateCheckTimeInterval).show();
-            Form.$submitButton.transition('shake').removeClass('loading disabled');
-
-            return false;
-        }
-
-        // Check all fields
-        if ($('#calType').parent().dropdown('get value') === 'none'
-            && result.data.time_from === ''
-            && result.data.time_to === ''
-            && result.data.weekday_from === '-1'
-            && result.data.weekday_to === '-1'
-            && result.data.date_from === ''
-            && result.data.date_to === '') {
-            $('.form .error.message').html(globalTranslate.tf_ValidateNoRulesSelected).show();
+        // Check time fields - both should be filled or both empty
+        if ((result.data.time_from.length > 0 && result.data.time_to.length === 0) ||
+            (result.data.time_to.length > 0 && result.data.time_from.length === 0)) {
+            outOfWorkTimeRecord.$errorMessage.html(globalTranslate.tf_ValidateCheckTimeInterval).show();
             Form.$submitButton.transition('shake').removeClass('loading disabled');
             return false;
         }
+        
+        // For timeframe type, check that at least one condition is specified
+        const calType = result.data.calType || 'timeframe';
+        if (calType === 'timeframe' || calType === '') {
+            const hasDateRange = result.data.date_from !== '' && result.data.date_to !== '';
+            const hasWeekdayRange = result.data.weekday_from > 0 && result.data.weekday_to > 0;
+            const hasTimeRange = result.data.time_from.length > 0 && result.data.time_to.length > 0;
+            
+            if (!hasDateRange && !hasWeekdayRange && !hasTimeRange) {
+                outOfWorkTimeRecord.$errorMessage.html(globalTranslate.tf_ValidateNoRulesSelected).show();
+                Form.$submitButton.transition('shake').removeClass('loading disabled');
+                return false;
+            }
+        }
+
         return result;
     },
-
+    
     /**
-     * Callback function to be called before the form is sent
-     * @param {Object} settings - The current settings of the form
-     * @returns {Object} - The updated settings of the form
+     * Callback before sending form
+     * @param {object} settings - Form settings
+     * @returns {object|boolean} Updated settings or false
      */
     cbBeforeSendForm(settings) {
         const result = settings;
-        $('.form .error.message').html('').hide();
         result.data = outOfWorkTimeRecord.$formObj.form('get values');
-        const dateFrom = outOfWorkTimeRecord.$rangeDaysStart.calendar('get date');
-        const dateTo = outOfWorkTimeRecord.$rangeDaysEnd.calendar('get date');
-        const currentOffset = new Date().getTimezoneOffset();
-        const serverOffset = parseInt(outOfWorkTimeRecord.$formObj.form('get value', 'serverOffset'));
-        const offsetDiff = serverOffset + currentOffset;
-
-        if($('#calType').parent().dropdown('get value') === 'none'){
+        
+        // Convert checkbox values from 'on'/undefined to true/false
+        // Process all route checkboxes
+        Object.keys(result.data).forEach(key => {
+            if (key.startsWith('route-')) {
+                result.data[key] = result.data[key] === 'on' || result.data[key] === true;
+            }
+        });
+        
+        // Convert allowRestriction checkbox
+        if ('allowRestriction' in result.data) {
+            result.data.allowRestriction = result.data.allowRestriction === 'on' || result.data.allowRestriction === true;
+        }
+        
+        // Handle calType conversion (matches old controller: ($data[$name] === 'timeframe') ? '' : $data[$name])
+        // For saving we convert 'timeframe' to empty string
+        if (result.data.calType === 'timeframe') {
+            result.data.calType = '';
+        }
+        
+        // Handle weekday values (matches old controller: ($data[$name] < 1) ? null : $data[$name])
+        if (result.data.weekday_from === '-1' || result.data.weekday_from < 1) {
+            result.data.weekday_from = '';
+        }
+        if (result.data.weekday_to === '-1' || result.data.weekday_to < 1) {
+            result.data.weekday_to = '';
+        }
+        
+        // Handle password field - if user didn't change the masked password, keep it as is
+        // The backend will recognize 'XXXXXX' and won't update the password
+        // If user cleared the field or entered new value, send that
+        if (result.data.calSecret === 'XXXXXX') {
+            // User didn't change the masked password, backend will keep existing value
+        } else if (result.data.calSecret === '') {
+            // User cleared the password field, backend will clear the password
+        }
+        // Otherwise send the new password value as entered
+        
+        // Update time validation rules based on calendar type
+        const calType = result.data.calType || 'timeframe';
+        if (calType === '' || calType === 'timeframe') {
             Form.validateRules.timefrom.rules = outOfWorkTimeRecord.additionalTimeIntervalRules;
             Form.validateRules.timeto.rules = outOfWorkTimeRecord.additionalTimeIntervalRules;
         } else {
             Form.validateRules.timefrom.rules = [];
             Form.validateRules.timeto.rules = [];
         }
-
+        
+        // Convert dates to timestamps
+        const dateFrom = outOfWorkTimeRecord.$rangeDaysStart.calendar('get date');
         if (dateFrom) {
             dateFrom.setHours(0, 0, 0, 0);
-            result.data.date_from = Math.floor(dateFrom.getTime()/1000) - offsetDiff * 60;
+            result.data.date_from = Math.floor(dateFrom.getTime() / 1000).toString();
         }
+        
+        const dateTo = outOfWorkTimeRecord.$rangeDaysEnd.calendar('get date');
         if (dateTo) {
             dateTo.setHours(23, 59, 59, 0);
-            result.data.date_to = Math.floor(dateTo.getTime()/1000) - offsetDiff * 60;
+            result.data.date_to = Math.floor(dateTo.getTime() / 1000).toString();
         }
+        
+        // Collect selected incoming routes
+        const selectedRoutes = [];
+        outOfWorkTimeRecord.$rulesTable.find('input[type="checkbox"]:checked').each(function() {
+            const routeId = $(this).attr('data-value');
+            if (routeId) {
+                selectedRoutes.push(routeId);
+            }
+        });
+        result.data.incomingRouteIds = selectedRoutes;
+        
+        // Clear action-dependent fields based on selection
+        if (result.data.action === 'extension') {
+            result.data.audio_message_id = '';
+        } else if (result.data.action === 'playmessage') {
+            result.data.extension = '';
+        }
+        
+        // Run custom validation for paired fields
         return outOfWorkTimeRecord.customValidateForm(result);
     },
-
+    
     /**
-     * Callback function to be called after the form has been sent.
-     * @param {Object} response - The response from the server after the form is sent
+     * Callback after form submission
+     * @param {object} response - Server response
      */
     cbAfterSendForm(response) {
-
+        if (response.result && response.data && response.data.id) {
+            // Update URL if this was a new record
+            if (!outOfWorkTimeRecord.recordId) {
+                const newUrl = `${globalRootUrl}out-off-work-time/modify/${response.data.id}`;
+                window.history.replaceState(null, '', newUrl);
+                outOfWorkTimeRecord.recordId = response.data.id;
+            }
+            
+            // Reload data to ensure consistency
+            outOfWorkTimeRecord.loadFormData();
+        }
     },
-
+    
     /**
-     * Initialize the form with custom settings
+     * Initialize form with REST API integration
      */
     initializeForm() {
         Form.$formObj = outOfWorkTimeRecord.$formObj;
-        Form.url = `${globalRootUrl}out-off-work-time/save`; // Form submission URL
-        Form.validateRules = outOfWorkTimeRecord.validateRules; // Form validation rules
-        Form.cbBeforeSendForm = outOfWorkTimeRecord.cbBeforeSendForm; // Callback before form is sent
-        Form.cbAfterSendForm = outOfWorkTimeRecord.cbAfterSendForm; // Callback after form is sent
+        Form.url = `${globalRootUrl}out-off-work-time/save`;
+        Form.validateRules = outOfWorkTimeRecord.validateRules;
+        Form.cbBeforeSendForm = outOfWorkTimeRecord.cbBeforeSendForm;
+        Form.cbAfterSendForm = outOfWorkTimeRecord.cbAfterSendForm;
+        
+        // REST API integration
+        Form.apiSettings.enabled = true;
+        Form.apiSettings.apiObject = OutWorkTimesAPI;
+        Form.apiSettings.saveMethod = 'saveRecord';
+        
         Form.initialize();
     },
+    
+    /**
+     * Initialize tooltips for form fields using TooltipBuilder
+     */
+    initializeTooltips() {
+        // Configuration for each field tooltip
+        const tooltipConfigs = {
+            calUrl: {
+                header: globalTranslate.tf_CalUrlTooltip_header,
+                description: globalTranslate.tf_CalUrlTooltip_desc,
+                list: [
+                    { term: globalTranslate.tf_CalUrlTooltip_caldav_header, definition: null },
+                    globalTranslate.tf_CalUrlTooltip_caldav_google,
+                    globalTranslate.tf_CalUrlTooltip_caldav_nextcloud,
+                    globalTranslate.tf_CalUrlTooltip_caldav_yandex
+                ],
+                list2: [
+                    { term: globalTranslate.tf_CalUrlTooltip_icalendar_header, definition: null },
+                    globalTranslate.tf_CalUrlTooltip_icalendar_desc
+                ],
+                examples: [
+                    globalTranslate.tf_CalUrlTooltip_example_google,
+                    globalTranslate.tf_CalUrlTooltip_example_nextcloud,
+                    globalTranslate.tf_CalUrlTooltip_example_ics
+                ],
+                examplesHeader: globalTranslate.tf_CalUrlTooltip_examples_header,
+                note: globalTranslate.tf_CalUrlTooltip_note
+            }
+        };
+        
+        // Use TooltipBuilder to initialize tooltips
+        TooltipBuilder.initialize(tooltipConfigs);
+    }
 };
 
 /**
- * Custom form validation rule that checks if a value is not empty based on a specific action.
- *
- * @param {string} value - The value to be validated.
- * @param {string} action - The action to compare against.
- * @returns {boolean} Returns true if the value is not empty or the action does not match, false otherwise.
+ * Custom validation rule that checks if a value is not empty based on a specific action
+ * @param {string} value - The value to be validated
+ * @param {string} action - The action to compare against
+ * @returns {boolean} Returns true if valid, false otherwise
  */
-$.fn.form.settings.rules.customNotEmptyIfActionRule = (value, action) => {
-    if (value.length === 0 && $('#action').val() === action) {
+$.fn.form.settings.rules.customNotEmptyIfActionRule = function(value, action) {
+    if (value.length === 0 && outOfWorkTimeRecord.$actionField.val() === action) {
         return false;
     }
     return true;
 };
 
 /**
- * Custom form validation rule that checks if a value is not empty based on a specific action.
- *
- * @param {string} value - The value to be validated.
- * @returns {boolean} Returns true if the value is not empty or the action does not match, false otherwise.
+ * Custom validation rule for calendar URL field
+ * Validates URL only when calendar type is not 'none' or 'time'
  */
-$.fn.form.settings.rules.customNotEmptyIfCalType = (value) => {
-    if ($('#calType').val() === 'none') {
+$.fn.form.settings.rules.customNotEmptyIfCalType = function(value) {
+    const calType = outOfWorkTimeRecord.$calTypeField.val();
+    
+    // If calendar type is timeframe or time, URL is not required
+    if (!calType || calType === 'timeframe' || calType === 'time') {
         return true;
     }
+    
+    // If calendar type is CALDAV or ICAL, validate URL
+    if (!value || value.length === 0) {
+        return false;
+    }
+    
+    // Check if it's a valid URL
     try {
-        let url = new URL(value);
+        new URL(value);
+        return true;
     } catch (_) {
         return false;
     }
-    return true;
 };
 
-
-/**
- *  Initialize out of work form on document ready
- */
+// Initialize when DOM is ready
 $(document).ready(() => {
     outOfWorkTimeRecord.initialize();
 });

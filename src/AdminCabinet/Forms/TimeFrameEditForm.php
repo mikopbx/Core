@@ -2,7 +2,7 @@
 
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,128 +20,98 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
-use MikoPBX\Common\Models\OutWorkTimes;
 use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Password;
-use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
 
 /**
  * Class TimeFrameEditForm
- *
+ * This class is responsible for creating the form used for editing out-of-work time conditions.
+ * It extends from BaseForm to inherit common form functionality.
+ * All dropdowns are dynamically populated via JavaScript and REST API.
+ * 
  * @package MikoPBX\AdminCabinet\Forms
  * @property TranslationProvider translation
  */
 class TimeFrameEditForm extends BaseForm
 {
+    /**
+     * Initialize the form elements
+     *
+     * @param mixed $entity The entity for which the form is being initialized.
+     * @param mixed $options Additional options that may be needed.
+     */
     public function initialize($entity = null, $options = null): void
     {
         parent::initialize($entity, $options);
-        foreach ($entity as $key => $value) {
-            switch ($key) {
-                case 'id':
-                    $this->add(new Hidden($key));
-                    break;
-                case 'allowRestriction':
-                    $this->addCheckBox('allowRestriction', intval($value) === 1);
-                    break;
-                case 'extension':
-                    $extension = new Select(
-                        $key,
-                        $options['extensions'],
-                        [
-                            'using' => [
-                                'id',
-                                'name',
-                            ],
-                            'useEmpty' => true,
-                            'class' => 'ui selection search forwarding-select',
-                        ]
-                    );
-                    $this->add($extension);
-                    break;
-                case 'audio_message_id':
-                    $audiomessageid = new Select(
-                        $key,
-                        $options['audio-message'],
-                        [
-                            'using' => [
-                                'id',
-                                'name',
-                            ],
-                            'useEmpty' => true,
-                            'class' => 'ui selection dropdown-default search',
-                        ]
-                    );
-                    $this->add($audiomessageid);
-                    break;
-                case 'action':
-                    $action = new Select(
-                        $key,
-                        $options['available-actions'],
-                        [
-                            'using' => [
-                                'id',
-                                'name',
-                            ],
-                            'useEmpty' => false,
-                            'class' => 'ui selection dropdown search',
-                        ]
-                    );
-                    $this->add($action);
-                    break;
-                case 'calType':
-                    $calTypeArray = [
-                        OutWorkTimes::CAL_TYPE_NONE     => $this->translation->_('tf_CAL_TYPE_NONE'),
-                        OutWorkTimes::CAL_TYPE_CALDAV   => $this->translation->_('tf_CAL_TYPE_CALDAV'),
-                        // TODO / It is broken, while we turn it off
-                        // OutWorkTimes::CAL_TYPE_ICAL     => $this->translation->_('tf_CAL_TYPE_ICAL'),
-                    ];
-                    if (empty($value)) {
-                        $value = OutWorkTimes::CAL_TYPE_NONE;
-                    }
-                    $calType = new Select(
-                        $key,
-                        $calTypeArray,
-                        [
-                           'using' => [
-                               'id',
-                               'name',
-                           ],
-                           'useEmpty' => false,
-                           'value' => $value,
-                           'class' => 'ui selection dropdown search',
-                        ]
-                    );
-                    $this->add($calType);
-                    break;
-                case 'weekday_from':
-                case 'weekday_to':
-                    $action = new Select(
-                        $key,
-                        $options['week-days'],
-                        [
-                            'using' => [
-                                'id',
-                                'name',
-                            ],
-                            'useEmpty' => false,
-                            'value' => empty($entity->$key) ? -1 : $value,
-                            'class' => 'ui selection',
-                        ]
-                    );
-                    $this->add($action);
-                    break;
-                case 'description':
-                    $this->addTextArea($key, $value ?? '', 65);
-                    break;
-                case 'calSecret':
-                    $this->add(new Password($key, ['value' => $value]));
-                    break;
-                default:
-                    $this->add(new Text($key, ['autocomplete' => 'off']));
-            }
-        }
+
+        $this->addHiddenFields($entity);
+        $this->addTextFields($entity);
+        $this->addSpecialFields($entity);
+    }
+    
+    /**
+     * Add hidden form fields
+     * These fields store values that will be populated by JavaScript
+     *
+     * @param mixed $entity The entity for which the form is being initialized.
+     */
+    private function addHiddenFields($entity): void
+    {
+        // Basic hidden fields
+        $this->add(new Hidden('id'));
+        $this->add(new Hidden('uniqid'));
+        $this->add(new Hidden('priority'));
+        
+        // Hidden fields for dropdown values (populated by JS)
+        $this->add(new Hidden('extension'));
+        $this->add(new Hidden('audio_message_id'));
+        $this->add(new Hidden('action', ['value' => $entity?->action ?? '']));
+        $this->add(new Hidden('calType', ['value' => $entity?->calType ?? 'timeframe']));
+        $this->add(new Hidden('weekday_from'));
+        $this->add(new Hidden('weekday_to'));
+        
+        // Date and time fields (text inputs for calendar widgets)
+        $this->add(new Text('date_from'));
+        $this->add(new Text('date_to'));
+        $this->add(new Text('time_from'));
+        $this->add(new Text('time_to'));
+    }
+    
+    /**
+     * Add text input fields
+     *
+     * @param mixed $entity The entity for which the form is being initialized.
+     */
+    private function addTextFields($entity): void
+    {
+        // Basic text fields
+        $this->add(new Text('calUrl', [
+            'autocomplete' => 'off',
+            'placeholder' => 'https://caldav.example.com/calendars/user@example.com/calendar/'
+        ]));
+        $this->add(new Text('calUser', ['autocomplete' => 'off']));
+        
+        // Password field for calendar secret
+        $this->add(new Password('calSecret', ['value' => $entity?->calSecret ?? '']));
+    }
+    
+    /**
+     * Add special form fields
+     *
+     * @param mixed $entity The entity for which the form is being initialized.
+     */
+    private function addSpecialFields($entity): void
+    {
+        // Add text area for description with 2000 character limit
+        $this->addTextArea('description', $entity?->description ?? '', 65, ['maxlength' => '2000']);
+        
+        // Add checkbox for allowRestriction
+        // Note: The checkbox value will be converted to boolean in JavaScript
+        // before sending to REST API
+        $this->addCheckBox('allowRestriction', 
+            ($entity?->allowRestriction ?? '0') === '1'
+        );
     }
 }

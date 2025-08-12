@@ -74,8 +74,10 @@ class DeleteRecordAction extends AbstractDeleteAction
             return $res;
         }
         
-        // Simply delete the route record without touching extensions
-        // Extensions can be shared between multiple routes
+        // Delete the route record
+        // The hasMany relationship with OutWorkTimesRouts has ACTION_CASCADE,
+        // so related records will be automatically deleted by ORM
+        // Extensions are not deleted (belongsTo with NO_ACTION)
         if ($route->delete()) {
             $res->success = true;
             $res->data = ['deleted_id' => $id];

@@ -30,10 +30,27 @@ use Phalcon\Mvc\Model\Relation;
 class IncomingRoutingTable extends ModelsBase
 {
     public const string ACTION_EXTENSION = 'extension';
+    
+    /**
+     * @deprecated Since 2024.12.12 - Use extension='hangup' with ACTION_EXTENSION instead
+     */
     public const string ACTION_HANGUP    = 'hangup';
+    
+    /**
+     * @deprecated Since 2024.12.12 - Use extension='busy' with ACTION_EXTENSION instead  
+     */
     public const string ACTION_BUSY      = 'busy';
+    
+    /**
+     * @deprecated Since 2024.12.12 - Use extension='did2user' with ACTION_EXTENSION instead
+     */
     public const string ACTION_DID       = 'did2user';
+    
+    /**
+     * @deprecated Since 2024.12.12 - Use extension='voicemail' with ACTION_EXTENSION instead
+     */
     public const string ACTION_VOICEMAIL = 'voicemail';
+    
     public const string ACTION_PLAYBACK  = 'playback';
 
     /**
@@ -161,7 +178,7 @@ class IncomingRoutingTable extends ModelsBase
             ]
         );
 
-        $this->hasOne(
+        $this->hasMany(
             'id',
             OutWorkTimesRouts::class,
             'routId',

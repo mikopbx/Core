@@ -70,6 +70,10 @@ use MikoPBX\PBXCoreREST\Controllers\
     OutboundRoutes\PostController as OutboundRoutesPostController,
     OutboundRoutes\PutController as OutboundRoutesPutController,
     OutboundRoutes\DeleteController as OutboundRoutesDeleteController,
+    OutWorkTimes\GetController as OutWorkTimesGetController,
+    OutWorkTimes\PostController as OutWorkTimesPostController,
+    OutWorkTimes\PutController as OutWorkTimesPutController,
+    OutWorkTimes\DeleteController as OutWorkTimesDeleteController,
     SoundFiles\GetController as SoundFilesGetController,
     SoundFiles\PostController as SoundFilesPostController,
     SoundFiles\PutController as SoundFilesPutController,
@@ -233,6 +237,12 @@ class RouterProvider implements ServiceProviderInterface
             [OutboundRoutesPostController::class, 'callAction', '/pbxcore/api/v2/outbound-routes/{actionName}', 'post', '/'],
             [OutboundRoutesPutController::class, 'callAction', '/pbxcore/api/v2/outbound-routes/{actionName}/{id:[a-zA-Z0-9\-]+}', 'put', '/'],
             [OutboundRoutesDeleteController::class, 'callAction', '/pbxcore/api/v2/outbound-routes/{actionName}/{id:[a-zA-Z0-9\-]+}', 'delete', '/'],
+
+            [OutWorkTimesGetController::class, 'callAction', '/pbxcore/api/v2/out-work-times/{actionName}', 'get', '/'],
+            [OutWorkTimesGetController::class, 'callAction', '/pbxcore/api/v2/out-work-times/{actionName}/{id:[a-zA-Z0-9\-]+}', 'get', '/'],
+            [OutWorkTimesPostController::class, 'callAction', '/pbxcore/api/v2/out-work-times/{actionName}', 'post', '/'],
+            [OutWorkTimesPutController::class, 'callAction', '/pbxcore/api/v2/out-work-times/{actionName}/{id:[a-zA-Z0-9\-]+}', 'put', '/'],
+            [OutWorkTimesDeleteController::class, 'callAction', '/pbxcore/api/v2/out-work-times/{actionName}/{id:[a-zA-Z0-9\-]+}', 'delete', '/'],
 
             [UsersGetController::class, 'callAction', '/pbxcore/api/users/{actionName}', 'get', '/'],
 
