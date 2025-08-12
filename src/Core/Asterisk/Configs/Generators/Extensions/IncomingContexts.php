@@ -20,6 +20,7 @@
 
 namespace MikoPBX\Core\Asterisk\Configs\Generators\Extensions;
 
+use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\IncomingRoutingTable;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\SoundFiles;
@@ -66,6 +67,9 @@ class IncomingContexts extends AsteriskConfigClass
     // @var bool $need_def_rout Flag for needing a default route.
     private bool $need_def_rout;
 
+    // @var array $systemExtensions System extensions that should use Goto instead of Dial.
+    private array $systemExtensions = [];
+
     /**
      * Generate incoming contexts.
      *
@@ -101,6 +105,7 @@ class IncomingContexts extends AsteriskConfigClass
         $this->routes         = $this->getRoutes();
         $this->lang           = str_replace('_', '-', PbxSettings::getValueByKey(PbxSettings::PBX_LANGUAGE));
         $this->need_def_rout  = $this->checkNeedDefRout();
+        $this->systemExtensions = Extensions::getSystemExtensions();
     }
 
     /**
@@ -296,13 +301,15 @@ class IncomingContexts extends AsteriskConfigClass
             $this->rout_data_dial[$rout_number] = '';
         }
 
-        // Check if the extension is a conference extension.
-        if (in_array($rout['extension'], $this->confExtensions, true)) {
-            // For conference extensions, there's no need to handle answer timeout.
-            // The call will be answered immediately by the conference.
+        // Check if the extension is a system extension or conference extension.
+        if (in_array($rout['extension'], $this->systemExtensions, true) || 
+            in_array($rout['extension'], $this->confExtensions, true)) {
+            // For system extensions and conference extensions, use Goto.
+            // System extensions handle special actions (hangup, busy, voicemail, did2user).
+            // Conference extensions answer immediately.
             $dialplanCommands = " \n\t" . 'same => n,ExecIf($["${M_DIALSTATUS}" != "ANSWER" && "${M_DIALSTATUS}" != "BUSY"]?' . "Goto(internal,{$rout['extension']},1));";
         } else {
-            // For other extensions, handle the answer timeout and generate the appropriate dial command.
+            // For regular extensions, handle the answer timeout and generate the appropriate dial command.
             $dialplanCommands = " \n\t" . "same => n,Set(M_TIMEOUT=$timeout)" .
                                 " \n\t" . 'same => n,ExecIf($["${M_DIALSTATUS}" != "ANSWER" && "${M_DIALSTATUS}" != "BUSY"]?' . "Dial(Local/{$rout['extension']}@internal-incoming,$timeout," . '${TRANSFER_OPTIONS}' . "Kg));";
         }
@@ -608,12 +615,14 @@ class IncomingContexts extends AsteriskConfigClass
         // DIALSTATUS must be checked, especially when dealing with parking lot calls through AMI.
         // The next priority might be executed upon answering.
         $conf .= "\t" . 'same => n,Set(M_TIMEOUT=0)' . "\n";
-        if (in_array($default_action->extension, $this->confExtensions, true)) {
-            // This is a conference. No need to handle answer timeout here.
-            // The call will be immediately answered by the conference.
+        if (in_array($default_action->extension, $this->systemExtensions, true) || 
+            in_array($default_action->extension, $this->confExtensions, true)) {
+            // System extensions and conferences use Goto.
+            // System extensions: hangup, busy, voicemail, did2user - handle special actions.
+            // Conferences: immediately answer the call.
             $conf .= "\t" . "same => n," . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER" && "${M_DIALSTATUS}" != "BUSY"]?' . "Goto(internal,$default_action->extension,1)); default action" . "\n";
         } else {
-            // Dial the local extension if the DIALSTATUS is not ANSWER or BUSY.
+            // Regular extensions use Dial.
             $conf .= "\t" . "same => n," . 'ExecIf($["${M_DIALSTATUS}" != "ANSWER" && "${M_DIALSTATUS}" != "BUSY"]?' . "Dial(Local/$default_action->extension@internal,," . '${TRANSFER_OPTIONS}' . "Kg)); default action" . "\n";
         }
 

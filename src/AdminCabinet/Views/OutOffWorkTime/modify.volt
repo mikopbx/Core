@@ -1,6 +1,9 @@
 {{ form(['action' : 'out-off-work-time/save', 'method': 'post', 'role': 'form', 'class': 'ui large form', 'id':'save-outoffwork-form']) }}
+
 {{ form.render('id') }}
-<input type="hidden" name="serverOffset" id="serverOffset" value="{{ serverOffset }}"/>
+{{ form.render('uniqid') }}
+{{ form.render('priority') }}
+
 <div class="field max-width-800">
     <label for="description">{{ t._('tf_Description') }}</label>
     {{ form.render('description') }}
@@ -22,6 +25,15 @@
     <div class="field max-width-300">
         <label>{{ t._('tf_calType') }}</label>
         {{ form.render('calType') }}
+        <div class="ui selection dropdown calType-select">
+            <i class="dropdown icon"></i>
+            <div class="default text">{{ t._('tf_SelectCalendarType') }}</div>
+            <div class="menu">
+                <div class="item" data-value="timeframe">{{ t._('tf_CAL_TYPE_TIMEFRAME') }}</div>
+                {# <div class="item" data-value="ICAL">{{ t._('tf_CAL_TYPE_ICAL') }}</div> #}
+                <div class="item" data-value="CALDAV">{{ t._('tf_CAL_TYPE_CALDAV') }}</div>
+            </div>
+        </div>
     </div>
 
     <div id="call-type-main-tab">
@@ -51,9 +63,19 @@
             <div class="two fields">
                 <div class="field max-width-250">
                     {{ form.render('weekday_from') }}
+                    <div class="ui selection dropdown weekday-from-select">
+                        <i class="dropdown icon"></i>
+                        <div class="default text">{{ t._('tf_SelectWeekdayFrom') }}</div>
+                        <div class="menu"></div>
+                    </div>
                 </div>
                 <div class="field max-width-250">
                     {{ form.render('weekday_to') }}
+                    <div class="ui selection dropdown weekday-to-select">
+                        <i class="dropdown icon"></i>
+                        <div class="default text">{{ t._('tf_SelectWeekdayTo') }}</div>
+                        <div class="menu"></div>
+                    </div>
                 </div>
                 <div class="item">
                     <div class="ui large icon button" id="erase-weekdays"><i class="eraser icon"></i></div>
@@ -83,7 +105,9 @@
     </div>
     <div id="call-type-calendar-tab">
         <div class="field">
-            <label>{{ t._('tf_calUrl') }}</label>
+            <label>{{ t._('tf_calUrl') }}
+                <i class="small info circle icon field-info-icon" data-field="calUrl"></i>
+            </label>
             {{ form.render('calUrl') }}
         </div>
         <div class="two fields">
@@ -103,90 +127,51 @@
 
     </div>
 
-    <div class="two fields">
-        <div class="field max-width-300">
-            <label>{{ t._('tf_PeriodAction') }}</label>
-            {{ form.render('action') }}
+    <h3 class="ui dividing header">{{ t._("tf_CallHandlingHeader") }}</h3>
+    
+    <div class="field max-width-300">
+        <label>{{ t._('tf_PeriodAction') }}</label>
+        {{ form.render('action') }}
+        <div class="ui selection dropdown action-select">
+            <i class="dropdown icon"></i>
+            <div class="default text">{{ t._('tf_SelectAction') }}</div>
+            <div class="menu">
+                <div class="item" data-value="playmessage">{{ t._('tf_SelectActionPlayMessage') }}</div>
+                <div class="item" data-value="extension">{{ t._('tf_SelectActionRedirectToExtension') }}</div>
+            </div>
         </div>
-        <div class="field max-width-500" id="extension-group">
-            <label>{{ t._('tf_SelectExtension') }}</label>
-            {{ form.render('extension') }}
+    </div>
+    
+    <div class="field max-width-800" id="extension-row" style="display:none;">
+        <label>{{ t._('tf_SelectExtension') }}</label>
+        {{ form.render('extension') }}
+        <div class="ui selection dropdown search forwarding-select">
+            <i class="dropdown icon"></i>
+            <div class="default text">{{ t._('ex_SelectExtension') }}</div>
+            <div class="menu"></div>
         </div>
-        {{ partial("partials/playAddNewSound", ['label': t._('tf_SelectAudioMessage'), 'id':'audio_message_id', 'fieldClass':'field', 'fieldID':'audio-file-group']) }}
+    </div>
+    
+    <div id="audio-message-row" style="display:none;">
+        {{ partial("partials/playAddNewSoundWithIcons", ['label': t._('tf_SelectAudioMessage'), 'id':'audio_message_id', 'fieldClass':'field max-width-800', 'fieldId':'']) }}
     </div>
     {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('GeneralTabFields')]) }}
 </div>
 
 <div class="ui bottom attached tab segment" data-tab="rules">
-
-    {% for rule in rules %}
-        {% if loop.first %}
-            <table class="ui selectable compact table" id="inbound-rules-table">
-            <thead>
-            <tr>
-                <th></th>
-                <th>{{ t._('ir_TableColumnDetails') }}</th>
-                <th class="hide-on-mobile">{{ t._('ir_TableColumnNote') }}</th>
-            </tr>
-            </thead>
-            <tbody>
-        {% endif %}
-
-        <tr class="rule-row" id="{{ rule['id'] }}">
-            <td class="collapsing">
-                <div class="ui fitted toggle checkbox" data-did="{{ rule['number'] }}" data-context-id="{{ rule['context-id'] }}">
-                    <input type="checkbox" {% if rule['status']!=='disabled' %} checked='on' value='on' {% endif %}
-                           name="rule-{{ rule['id'] }}" data-value="{{ rule['id'] }}">
-                    <label for="rule-{{ rule['id'] }}"></label>
-                </div>
-            </td>
-            <td class="{% if rule['disabled']==1 %}disabled{% endif %}">
-                {% if rule['number'] is empty AND rule['provider'] is empty %}
-                    {{ t._('ir_RuleDescriptionWithoutNumberAndWithoutProvider_v2',
-                        [
-                            'timeout':rule['timeout'],
-                            'callerid':rule['callerid']
-                        ]) }}
-                {% elseif rule['number'] is empty %}
-                    {{ t._('ir_RuleDescriptionWithoutNumber_v2',
-                        [
-                            'timeout':rule['timeout'],
-                            'provider':rule['provider'],
-                            'callerid':rule['callerid']
-                        ]) }}
-                {% elseif rule['provider'] is empty %}
-                    {{ t._('ir_RuleDescriptionWithoutProvider_v2',
-                        [
-                            'timeout':rule['timeout'],
-                            'callerid':rule['callerid'],
-                            'number':rule['number']
-                        ]) }}
-                {% else %}
-                    {{ t._('ir_RuleDescriptionWithNumberAndWithProvider_v2',
-                        [
-                            'timeout':rule['timeout'],
-                            'provider':rule['provider'],
-                            'callerid':rule['callerid'],
-                            'number':rule['number']
-                        ]) }}
-                {% endif %}
-            </td>
-            <td class="hide-on-mobile">
-                {% if not (rule['note'] is empty) and rule['note']|length>20 %}
-                    <div class="ui basic icon button" data-content="{{ rule['note'] }}" data-variation="wide"
-                         data-position="top right">
-                        <i class="file text icon"></i>
-                    </div>
-                {% else %}
-                    {{ rule['note'] }}
-                {% endif %}
-            </td>
+    <table class="ui selectable compact table" id="routing-table">
+        <thead>
+        <tr>
+            <th></th>
+            <th>{{ t._('ir_TableColumnDetails') }}</th>
+            <th class="hide-on-mobile">{{ t._('ir_TableColumnNote') }}</th>
         </tr>
-        {% if loop.last %}
-            </tbody>
-            </table>
-        {% endif %}
-    {% endfor %}
+        </thead>
+        <tbody>
+        {# Table body will be populated by JavaScript #}
+        </tbody>
+    </table>
+    
     {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('RulesTabFields')]) }}
 </div>
 

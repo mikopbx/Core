@@ -76,28 +76,27 @@ class DataStructure extends AbstractDataStructure
         $data = self::createBaseStructure($model);
         
         // Add essential fields for list display
-        $data['rulename'] = $model->rulename ?? '';
         $data['number'] = $model->number ?? '';
         $data['priority'] = (int)$model->priority;
         $data['timeout'] = (int)$model->timeout;
         $data['extension'] = $model->extension ?? '';
         $data['note'] = $model->note ?? '';
         
-        // Add provider and extension data for list display
+        // Add provider data - provider field contains ID
         $providerData = self::getProviderData($model->Providers);
-        $data['provider'] = $providerData['providerName'];
+        $data['provider'] = $model->provider ?? 'none';  // Provider ID
         $data['providerRepresent'] = $providerData['providerName'];
         $data['providerDisabled'] = $providerData['providerDisabled'];
         
+        // Add extension representation
         $extensionData = self::getExtensionData($model->Extensions);
-        $data['callerid'] = $extensionData['extensionName'];
         $data['extensionRepresent'] = $extensionData['extensionName'];
         
-        // Generate ready-to-use HTML description for the rule
-        $data['ruleDescription'] = self::generateRuleDescription($model, $data);
+        // Generate ready-to-use HTML representation for the rule
+        $data['ruleRepresent'] = self::generateRuleDescription($model, $data);
         
         // Handle null values for consistent JSON output
-        $data = self::handleNullValues($data, ['rulename', 'number', 'extension', 'note']);
+        $data = self::handleNullValues($data, ['number', 'extension', 'note']);
         
         return $data;
     }

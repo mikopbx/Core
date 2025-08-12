@@ -1,4 +1,5 @@
 <?php
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
@@ -19,46 +20,16 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Common;
 
+use MikoPBX\Common\Models\Extensions;
+
 /**
  * System sanitizer class for handling special extension and routing values
  * 
  * This class provides sanitization rules that handle both regular numeric extensions
- * and system enumeration values for IVR menu actions.
+ * and system extensions dynamically loaded from the database.
  */
 class SystemSanitizer
 {
-    /**
-     * Action constants for IVR menu routing
-     */
-    public const string ACTION_EXTENSION = 'extension';
-    public const string ACTION_HANGUP    = 'hangup';
-    public const string ACTION_BUSY      = 'busy';
-    public const string ACTION_DID       = 'did2user';
-    public const string ACTION_VOICEMAIL = 'voicemail';
-    public const string ACTION_PLAYBACK  = 'playback';
-
-    /**
-     * System enumeration values that are allowed for extension fields
-     */
-    public const array SYSTEM_EXTENSION_VALUES = [
-        self::ACTION_VOICEMAIL,
-        self::ACTION_HANGUP,
-        self::ACTION_BUSY,
-        self::ACTION_DID,
-        self::ACTION_PLAYBACK,
-    ];
-
-    /**
-     * System enumeration values that are allowed for routing fields
-     */
-    public const array SYSTEM_ROUTING_VALUES = [
-        self::ACTION_VOICEMAIL,
-        self::ACTION_HANGUP,
-        self::ACTION_BUSY,
-        self::ACTION_DID,
-        self::ACTION_PLAYBACK,
-    ];
-
     /**
      * Get sanitization rule for extension fields that allows numeric extensions and system values
      * 
@@ -70,17 +41,25 @@ class SystemSanitizer
     {
         $emptyRule = $allowEmpty ? '|empty_to_null' : '';
         
-        // Create regex pattern that allows:
-        // 1. Numeric extensions/phone numbers (1-20 digits)
-        // 2. System enumeration values
-        $systemValues = implode('|', self::SYSTEM_EXTENSION_VALUES);
-        $pattern = "/^([0-9]{1,{$maxLength}}|{$systemValues})$/";
+        // Get system extensions from database
+        $systemExtensions = Extensions::getSystemExtensions();
+        
+        if (!empty($systemExtensions)) {
+            // Create regex pattern that allows:
+            // 1. Numeric extensions/phone numbers (1-20 digits)
+            // 2. System extension values from database
+            $systemValues = implode('|', array_map('preg_quote', $systemExtensions));
+            $pattern = "/^([0-9]{1,{$maxLength}}|{$systemValues})$/";
+        } else {
+            // If no system extensions found, allow only numeric
+            $pattern = "/^[0-9]{1,{$maxLength}}$/";
+        }
         
         return "string|regex:{$pattern}|max:{$maxLength}{$emptyRule}";
     }
 
     /**
-     * Get sanitization rule for routing fields that allows numeric extensions and routing system values
+     * Get sanitization rule for routing fields that allows numeric extensions and system extensions
      * 
      * @param int $maxLength Maximum length for numeric extensions (default: 20 for phone numbers)
      * @param bool $allowEmpty Whether to allow empty values (default: true)
@@ -88,15 +67,8 @@ class SystemSanitizer
      */
     public static function getRoutingSanitizationRule(int $maxLength = 20, bool $allowEmpty = true): string
     {
-        $emptyRule = $allowEmpty ? '|empty_to_null' : '';
-        
-        // Create regex pattern that allows:
-        // 1. Numeric extensions/phone numbers (1-20 digits)  
-        // 2. System routing values
-        $systemValues = implode('|', self::SYSTEM_ROUTING_VALUES);
-        $pattern = "/^([0-9]{1,{$maxLength}}|{$systemValues})$/";
-        
-        return "string|regex:{$pattern}|max:{$maxLength}{$emptyRule}";
+        // For routing, we use the same rules as extensions since system extensions can be routing destinations
+        return self::getExtensionSanitizationRule($maxLength, $allowEmpty);
     }
 
     /**
@@ -108,8 +80,9 @@ class SystemSanitizer
      */
     public static function isValidExtension(string $value, int $maxLength = 20): bool
     {
-        // Check if it's a system value
-        if (in_array($value, self::SYSTEM_EXTENSION_VALUES, true)) {
+        // Check if it's a system extension from database
+        $systemExtensions = Extensions::getSystemExtensions();
+        if (in_array($value, $systemExtensions, true)) {
             return true;
         }
         
@@ -118,7 +91,7 @@ class SystemSanitizer
     }
 
     /**
-     * Check if a value is a valid routing destination (numeric or system routing value)
+     * Check if a value is a valid routing destination (numeric or system extension)
      * 
      * @param string $value Value to check
      * @param int $maxLength Maximum length for numeric extensions (default: 20 for phone numbers)
@@ -126,13 +99,8 @@ class SystemSanitizer
      */
     public static function isValidRoutingDestination(string $value, int $maxLength = 20): bool
     {
-        // Check if it's a system routing value
-        if (in_array($value, self::SYSTEM_ROUTING_VALUES, true)) {
-            return true;
-        }
-        
-        // Check if it's a numeric extension/phone number
-        return preg_match("/^[0-9]{1,{$maxLength}}$/", $value) === 1;
+        // For routing destinations, use the same validation as extensions
+        return self::isValidExtension($value, $maxLength);
     }
 
     /**
@@ -146,8 +114,9 @@ class SystemSanitizer
     {
         $value = trim($value);
         
-        // If it's a system value, return as-is
-        if (in_array($value, self::SYSTEM_EXTENSION_VALUES, true)) {
+        // If it's a system extension, return as-is
+        $systemExtensions = Extensions::getSystemExtensions();
+        if (in_array($value, $systemExtensions, true)) {
             return $value;
         }
         
@@ -165,15 +134,7 @@ class SystemSanitizer
      */
     public static function sanitizeRoutingDestination(string $value, int $maxLength = 20): string
     {
-        $value = trim($value);
-        
-        // If it's a system routing value, return as-is
-        if (in_array($value, self::SYSTEM_ROUTING_VALUES, true)) {
-            return $value;
-        }
-        
-        // For numeric values, remove non-numeric characters and limit length
-        $numericValue = preg_replace('/[^0-9]/', '', $value);
-        return substr($numericValue, 0, $maxLength);
+        // For routing destinations, use the same sanitization as extensions
+        return self::sanitizeExtension($value, $maxLength);
     }
 }

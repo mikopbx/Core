@@ -20,6 +20,8 @@
 
 namespace MikoPBX\Common\Models;
 
+use MikoPBX\Common\Providers\ManagedCacheProvider;
+use Phalcon\Di\Di;
 use Phalcon\Mvc\Model\Relation;
 use Phalcon\Filter\Validation;
 use Phalcon\Filter\Validation\Validator\Uniqueness as UniquenessValidator;
@@ -119,6 +121,50 @@ class Extensions extends ModelsBase
      */
     public ?string $search_index = "";
 
+
+    /**
+     * Get all system extension numbers from database with caching
+     * 
+     * @return array Array of system extension numbers
+     */
+    public static function getSystemExtensions(): array
+    {
+        $di = DI::getDefault();
+        if ($di === null) {
+            return [];
+        }
+        
+        $cacheKey = 'Models:Extensions:SystemExtensions';
+        
+        // Try to get from cache first
+        if ($di->has(ManagedCacheProvider::SERVICE_NAME)) {
+            $managedCache = $di->get(ManagedCacheProvider::SERVICE_NAME);
+            $cached = $managedCache->get($cacheKey);
+            if ($cached !== null) {
+                return $cached;
+            }
+        }
+        
+        // Load from database
+        $systemExtensions = self::find([
+            'conditions' => 'type = :type:',
+            'bind' => ['type' => self::TYPE_SYSTEM],
+            'columns' => 'number'
+        ]);
+        
+        $result = [];
+        foreach ($systemExtensions as $extension) {
+            $result[] = $extension->number;
+        }
+        
+        // Save to cache
+        if ($di->has(ManagedCacheProvider::SERVICE_NAME)) {
+            $managedCache = $di->get(ManagedCacheProvider::SERVICE_NAME);
+            $managedCache->set($cacheKey, $result, 3600); // Cache for 1 hour
+        }
+        
+        return $result;
+    }
 
     /**
      * Get the next available application number from the database.

@@ -260,7 +260,7 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
                 [$mDays, $months] = $this->initDaysMonthsInterval($srcOutData);
                 $appdata = $this->initRuleAppData($srcOutData, $conf_out_set_var);
 
-                $year = 1 * date('Y', $srcOutData['date_from']);
+                $year = 1 * date('Y', $this->convertToTimestamp($srcOutData['date_from']));
                 foreach ($timesArray as $times) {
                     $timeAppData = "GotoIfTime($times,$weekdays,$mDays,$months?$appdata)";
                     $conf .= 'same => n,ExecIf($["${currentYear}" == "' . $year . '"]?' . $timeAppData . ')' . "\n\t";
@@ -283,9 +283,9 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
         }
         $intervals = [];
         $start = new DateTime();
-        $start->setTimestamp($date_from);
+        $start->setTimestamp($this->convertToTimestamp($date_from));
         $end = new DateTime();
-        $end->setTimestamp($date_to);
+        $end->setTimestamp($this->convertToTimestamp($date_to));
         while ($start < $end) {
             $interval_start = clone $start;
             $interval_end = clone $start;
@@ -410,7 +410,7 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
      *
      * @return array An array containing the days and months interval.
      */
-    private function initDaysMonthsInterval(array $out_data): array
+    protected function initDaysMonthsInterval(array $out_data): array
     {
         // Extract date_from and date_to values
         $date_from = $out_data['date_from'];
@@ -420,15 +420,51 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
             $mDays = '*';
             $months = '*';
         } else {
-            // Convert date_from to lowercase day and month abbreviations
-            $mDays = strtolower(date("j", (int)$date_from));
-            $months = strtolower(date("M", (int)$date_from));
+            // Convert date_from to timestamp first, handling both unix timestamp and Y-m-d format
+            $timestamp_from = $this->convertToTimestamp($date_from);
+            $mDays = strtolower(date("j", $timestamp_from));
+            $months = strtolower(date("M", $timestamp_from));
+            
             if (!empty($date_to)) {
-                $mDays .= "-" . strtolower(date("j", (int)$date_to));
-                $months .= "-" . strtolower(date("M", (int)$date_to));
+                // Convert date_to to timestamp, handling both formats
+                $timestamp_to = $this->convertToTimestamp($date_to);
+                $mDays .= "-" . strtolower(date("j", $timestamp_to));
+                $months .= "-" . strtolower(date("M", $timestamp_to));
             }
         }
         return array($mDays, $months);
+    }
+
+    /**
+     * Convert date string to unix timestamp, handling both timestamp and Y-m-d formats
+     *
+     * @param string $date Date string (could be timestamp or Y-m-d format)
+     * @return int Unix timestamp
+     */
+    protected function convertToTimestamp(string $date): int
+    {
+        if (empty($date)) {
+            return 0;
+        }
+        
+        // Check if it's already a unix timestamp (numeric string)
+        if (is_numeric($date)) {
+            return (int)$date;
+        }
+        
+        // Try to parse as date string
+        $timestamp = strtotime($date);
+        if ($timestamp !== false) {
+            return $timestamp;
+        }
+        
+        // If all else fails, try to extract year from string for basic compatibility
+        if (preg_match('/^(\d{4})/', $date, $matches)) {
+            // This is a fallback - create timestamp for January 1st of the given year
+            return strtotime($matches[1] . '-01-01');
+        }
+        
+        return 0;
     }
 
     public function generateModulesConf(): string

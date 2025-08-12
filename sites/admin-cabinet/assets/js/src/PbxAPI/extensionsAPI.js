@@ -339,6 +339,31 @@ const Extensions = {
             },
         });
     },
+    
+    /**
+     * Gets extensions for select dropdown.
+     * This method is used by out-of-work-time forms and other modules.
+     * @param {Function} callBack - The function to call when the extensions have been retrieved.
+     * @param {string} type - The type of extensions to retrieve (all, internal, phones, routing). Default: 'routing'
+     */
+    getForSelect(callBack, type = 'routing') {
+        $.api({
+            url: PbxApi.extensionsGetForSelect,
+            urlData: {
+                type: type
+            },
+            on: 'now',
+            onResponse(response) {
+                return Extensions.formatDropdownResults(response, false);
+            },
+            onSuccess(response) {
+                callBack(response.results);
+            },
+            onError() {
+                callBack([]);
+            }
+        });
+    },
 
     /**
      * Creates an HTML string for a custom dropdown menu.

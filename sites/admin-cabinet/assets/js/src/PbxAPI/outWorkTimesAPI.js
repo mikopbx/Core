@@ -6,7 +6,7 @@
 /* global Config, SecurityUtils, PbxApi */
 
 /**
- * IncomingRoutesAPI - REST API for incoming routes management with enhanced security
+ * OutWorkTimesAPI - REST API for out-of-work-times management with enhanced security
  * 
  * Provides centralized API methods with built-in security features:
  * - Input sanitization for display
@@ -14,16 +14,16 @@
  * - Consistent error handling
  * - CSRF protection through session cookies
  */
-const IncomingRoutesAPI = {
+const OutWorkTimesAPI = {
     /**
      * API endpoints configuration
      */
     endpoints: {
-        getList: '/pbxcore/api/v2/incoming-routes/getList',
-        getRecord: '/pbxcore/api/v2/incoming-routes/getRecord',
-        saveRecord: '/pbxcore/api/v2/incoming-routes/saveRecord',
-        deleteRecord: '/pbxcore/api/v2/incoming-routes/deleteRecord',
-        changePriority: '/pbxcore/api/v2/incoming-routes/changePriority'
+        getList: '/pbxcore/api/v2/out-work-times/getList',
+        getRecord: '/pbxcore/api/v2/out-work-times/getRecord',
+        saveRecord: '/pbxcore/api/v2/out-work-times/saveRecord',
+        deleteRecord: '/pbxcore/api/v2/out-work-times/deleteRecord',
+        changePriority: '/pbxcore/api/v2/out-work-times/changePriority'
     },
     
     /**
@@ -42,7 +42,7 @@ const IncomingRoutesAPI = {
             onSuccess: (response) => {
                 if (response.result && response.data) {
                     // Sanitize data for display
-                    response.data = this.sanitizeRouteData(response.data);
+                    response.data = this.sanitizeTimeConditionData(response.data);
                 }
                 callback(response);
             },
@@ -67,9 +67,9 @@ const IncomingRoutesAPI = {
             on: 'now',
             onSuccess: (response) => {
                 if (response.result && response.data) {
-                    // Sanitize array of routes
+                    // Sanitize array of time conditions
                     response.data = response.data.map(function(item) {
-                        return this.sanitizeRouteData(item);
+                        return this.sanitizeTimeConditionData(item);
                     }.bind(this));
                 }
                 callback(response);
@@ -91,7 +91,7 @@ const IncomingRoutesAPI = {
      */
     saveRecord: function(data, callback) {
         // Client-side validation
-        if (!this.validateRouteData(data)) {
+        if (!this.validateTimeConditionData(data)) {
             callback({
                 result: false, 
                 messages: {error: ['Client-side validation failed']}
@@ -111,7 +111,7 @@ const IncomingRoutesAPI = {
             on: 'now',
             onSuccess: (response) => {
                 if (response.result && response.data) {
-                    response.data = this.sanitizeRouteData(response.data);
+                    response.data = this.sanitizeTimeConditionData(response.data);
                 }
                 callback(response);
             },
@@ -149,16 +149,16 @@ const IncomingRoutesAPI = {
     },
     
     /**
-     * Change priority of incoming routes
+     * Change priority for multiple records
      * 
-     * @param {object} priorities - Map of route ID to new priority value
+     * @param {object} priorityData - Object with record IDs as keys and priorities as values
      * @param {function} callback - Callback function
      */
-    changePriority: function(priorities, callback) {
+    changePriority: function(priorityData, callback) {
         $.api({
             url: this.endpoints.changePriority,
             method: 'POST',
-            data: {priorities: priorities},
+            data: {priorities: priorityData},
             on: 'now',
             onSuccess: (response) => {
                 callback(response);
@@ -167,78 +167,93 @@ const IncomingRoutesAPI = {
                 callback(response);
             },
             onError: () => {
-                callback({result: false, messages: {error: ['Network error']}});
+                callback({result: false});
             }
         });
     },
     
     /**
-     * Sanitize route data for secure display
-     * Data comes from API already properly escaped, so no additional escaping needed
+     * Sanitize time condition data for safe display
      * 
-     * @param {object} data - Route data from API (already sanitized)
-     * @return {object} Data ready for display
+     * @param {object} data - Raw time condition data
+     * @returns {object} Sanitized data
      */
-    sanitizeRouteData: function(data) {
+    sanitizeTimeConditionData: function(data) {
         if (!data) return data;
         
-        return {
-            id: data.id,
-            uniqid: data.uniqid,
-            number: data.number || '',
-            provider: data.provider || '',  // Provider ID
-            providerName: data.providerName || '',
-            providerType: data.providerType || '',
-            providerDisabled: !!data.providerDisabled,
-            priority: parseInt(data.priority) || 0,
-            timeout: parseInt(data.timeout) || 18,
-            extension: data.extension || '',
-            extensionName: data.extensionName || '',
-            extensionRepresent: data.extensionRepresent || '',
-            providerRepresent: data.providerRepresent || '',
-            audio_message_id: data.audio_message_id || '',
-            audio_message_id_Represent: data.audio_message_id_Represent || '',
-            note: data.note || '',
-            disabled: !!data.disabled,
-            // Use ruleRepresent for display in tables
-            ruleRepresent: data.ruleRepresent || ''
-        };
+        // Create a copy to avoid modifying original
+        const sanitized = {...data};
+        
+        // Sanitize text fields for XSS protection
+        const textFields = ['description', 'calTypeDisplay'];
+        textFields.forEach(function(field) {
+            if (sanitized[field] && typeof sanitized[field] === 'string') {
+                sanitized[field] = SecurityUtils.escapeHtml(sanitized[field]);
+            }
+        });
+        
+        // Sanitize nested objects
+        if (sanitized.routing && typeof sanitized.routing === 'object') {
+            ['failover', 'audioMessage'].forEach(function(field) {
+                if (sanitized.routing[field] && typeof sanitized.routing[field] === 'string') {
+                    sanitized.routing[field] = SecurityUtils.escapeHtml(sanitized.routing[field]);
+                }
+            });
+        }
+        
+        // Sanitize incoming routes array
+        if (Array.isArray(sanitized.incomingRoutes)) {
+            sanitized.incomingRoutes = sanitized.incomingRoutes.map(function(route) {
+                const sanitizedRoute = {...route};
+                ['rulename', 'number', 'provider'].forEach(function(field) {
+                    if (sanitizedRoute[field] && typeof sanitizedRoute[field] === 'string') {
+                        sanitizedRoute[field] = SecurityUtils.escapeHtml(sanitizedRoute[field]);
+                    }
+                });
+                return sanitizedRoute;
+            });
+        }
+        
+        return sanitized;
     },
     
     /**
-     * Client-side validation
+     * Validate time condition data before sending
      * 
      * @param {object} data - Data to validate
-     * @return {boolean} Validation result
+     * @returns {boolean} True if valid
      */
-    validateRouteData: function(data) {
-        // DID number validation (digits only)
-        if (data.number && !/^[0-9]*$/.test(data.number)) {
+    validateTimeConditionData: function(data) {
+        // No required fields - description is optional
+        
+        // calType can be empty string (which means 'timeframe') or have a value
+        // Empty string is valid for 'timeframe' type
+        if (data.calType === undefined || data.calType === null) {
+            console.warn('Calendar type is required');
             return false;
         }
         
-        // Extension validation (if provided)
-        // Allow special service values and numeric extensions
-        const specialExtensions = ['busy', 'hangup', 'voicemail', 'did2user'];
-        if (data.extension && 
-            !specialExtensions.includes(data.extension) && 
-            !/^[0-9]+$/.test(data.extension)) {
-            return false;
-        }
-        
-        // Priority validation
-        if (data.priority !== undefined && data.priority !== null) {
-            const priority = parseInt(data.priority);
-            if (isNaN(priority) || priority < 0) {
-                return false;
-            }
-        }
-        
-        // Timeout validation
-        if (data.timeout !== undefined && data.timeout !== null) {
-            const timeout = parseInt(data.timeout);
-            if (isNaN(timeout) || timeout < 0 || timeout > 300) {
-                return false;
+        // Validate calendar-specific fields only if calType is not empty (not 'timeframe')
+        if (data.calType && data.calType !== '') {
+            switch(data.calType) {
+                case 'date':
+                    if (!data.date_from || !data.date_to) {
+                        console.warn('Date range is required for date type');
+                        return false;
+                    }
+                    break;
+                case 'weekday':
+                    if (!data.weekday_from || !data.weekday_to) {
+                        console.warn('Weekday range is required for weekday type');
+                        return false;
+                    }
+                    break;
+                case 'time':
+                    if (!data.time_from || !data.time_to) {
+                        console.warn('Time range is required for time type');
+                        return false;
+                    }
+                    break;
             }
         }
         
