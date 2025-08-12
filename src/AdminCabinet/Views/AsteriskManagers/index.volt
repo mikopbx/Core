@@ -19,6 +19,6 @@
         'addButtonText': '<i class="add circle icon"></i> '~t._('am_AddNewUser'),
         'addButtonLink': 'asterisk-managers/modify',
         'showButton': isAllowed('save'),
-        'documentationLink': 'https://wiki.mikopbx.com/ami-users'
+        'documentationLink': 'https://wiki.mikopbx.com/asterisk-managers'
     ]) }}
 </div>
