@@ -21,57 +21,137 @@
 namespace MikoPBX\AdminCabinet\Forms;
 
 use MikoPBX\Common\Providers\TranslationProvider;
+use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
-use Phalcon\Forms\Element\Password;
 use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
 
 /**
  * Class AsteriskManagerEditForm
- * @property TranslationProvider translation
+ * This class is responsible for creating the form used for editing Asterisk managers.
+ * It extends from BaseForm to inherit common form functionality.
  * @package MikoPBX\AdminCabinet\Forms
+ * @property TranslationProvider translation
  */
 class AsteriskManagerEditForm extends BaseForm
 {
+    /**
+     * Initialize the form elements
+     *
+     * @param mixed $entity The entity for which the form is being initialized.
+     * @param mixed $options Additional options that may be needed.
+     */
     public function initialize($entity = null, $options = null): void
     {
         parent::initialize($entity, $options);
 
-        // Id
-        $this->add(new Hidden('id'));
-
-        // Username
+        $this->addHiddenFields();
+        $this->addTextFields();
+        $this->addPasswordField($entity);
+        $this->addPermissionCheckboxes();
+        $this->addNetworkFilterDropdown($options);
+        $this->addSpecialFields($entity);
+    }
+    
+    /**
+     * Add hidden form fields
+     */
+    private function addHiddenFields(): void
+    {
+        $hiddenFields = [
+            'id' => [],
+        ];
+        
+        foreach ($hiddenFields as $name => $attributes) {
+            $this->add(new Hidden($name, $attributes));
+        }
+    }
+    
+    /**
+     * Add text input fields
+     */
+    private function addTextFields(): void
+    {
         $this->add(new Text('username'));
-
-        // Secret
-        $this->add(new Password('secret', [
+    }
+    
+    /**
+     * Add password field with security attributes
+     */
+    private function addPasswordField($entity): void
+    {
+        $this->add(new Text('secret', [
+            'id' => 'secret',
+            'type' => 'password',
+            'value' => $entity->secret ?? '',
             'autocomplete' => 'new-password',
             'data-no-password-manager' => 'true'
         ]));
-
-        // Rights
-        foreach ($options['array_of_checkboxes'] as $checkBox) {
-            $this->addCheckBox($checkBox . '_read', str_contains($entity->$checkBox??'', 'read'));
-            $this->addCheckBox($checkBox . '_write', str_contains($entity->$checkBox??'', 'write'));
+    }
+    
+    /**
+     * Add permission checkboxes
+     * Checkboxes will be populated dynamically via JavaScript
+     */
+    private function addPermissionCheckboxes(): void
+    {
+        // Define available permissions
+        $permissions = [
+            'call', 'cdr', 'originate', 'reporting', 'agent', 'config', 
+            'dialplan', 'dtmf', 'log', 'system', 'user', 'verbose', 'command'
+        ];
+        
+        // Add checkbox elements for each permission (read and write)
+        foreach ($permissions as $permission) {
+            // Add read permission checkbox
+            $this->add(new Check($permission . '_read', [
+                'value' => '1',
+                'id' => $permission . '_read',
+                'class' => 'permission-checkbox'
+            ]));
+            
+            // Add write permission checkbox
+            $this->add(new Check($permission . '_write', [
+                'value' => '1',
+                'id' => $permission . '_write',
+                'class' => 'permission-checkbox'
+            ]));
         }
-
-        // Networkfilterid
+    }
+    
+    /**
+     * Add network filter dropdown (restored original logic)
+     *
+     * @param array|null $options Form options containing network filters
+     */
+    private function addNetworkFilterDropdown($options): void
+    {
+        // Use original structure: network_filters is already a key-value array
+        $networkFilters = $options['network_filters'] ?? [];
+        
+        // Create select element for network filter (original structure)
         $networkfilterid = new Select(
             'networkfilterid',
-            $options['network_filters'],
+            $networkFilters,
             [
-                'using' => [
-                    'id',
-                    'name',
-                ],
                 'useEmpty' => false,
-                'value' => $entity->networkfilterid,
+                'value' => $this->entity->networkfilterid ?? '',
                 'class' => 'ui selection dropdown network-filter-select',
             ]
         );
         $this->add($networkfilterid);
-
-        // Description
-        $this->addTextArea('description', $entity->description ?? '', 65);
+    }
+    
+    /**
+     * Add special form fields
+     *
+     * @param mixed $entity The entity for which the form is being initialized.
+     */
+    private function addSpecialFields($entity): void
+    {
+        // Add text area for Description with auto-resize and 2000 chars limit
+        $this->addTextArea('description', $entity?->description ?? '', 65, [
+            'maxlength' => 2000
+        ]);
     }
 }

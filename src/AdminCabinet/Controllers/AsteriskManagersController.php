@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,11 +22,15 @@ namespace MikoPBX\AdminCabinet\Controllers;
 use MikoPBX\AdminCabinet\Forms\AsteriskManagerEditForm;
 use MikoPBX\Common\Models\AsteriskManagerUsers;
 use MikoPBX\Common\Models\NetworkFilters;
-use Phalcon\Mvc\Model\Resultset;
 
+/**
+ * Asterisk Managers Controller
+ * 
+ * Handles the web interface for managing Asterisk Manager Interface (AMI) users.
+ * Uses REST API v2 for all data operations.
+ */
 class AsteriskManagersController extends BaseController
 {
-
     private array $arrCheckBoxes;
 
     /**
@@ -54,130 +58,90 @@ class AsteriskManagersController extends BaseController
 
     /**
      * Generates Asterisk Managers index page
+     * Data is loaded via REST API from JavaScript
      */
     public function indexAction(): void
     {
-        $amiUsers = AsteriskManagerUsers::find();
-        $amiUsers->setHydrateMode(
-            Resultset::HYDRATE_ARRAYS
-        );
-
-        $arrNetworkFilters = [];
-        $networkFilters    = NetworkFilters::find();
-        foreach ($networkFilters as $filter) {
-            $arrNetworkFilters[$filter->id] = $filter->getRepresent();
-        }
-        $this->view->setVar('networkFilters', $arrNetworkFilters);
-        $this->view->setVar('amiUsers', $amiUsers);
+        // Empty arrays - data will be loaded via REST API
+        $this->view->setVar('networkFilters', []);
+        $this->view->setVar('amiUsers', []);
     }
 
-
     /**
-     * Modifies Asterisk Managers by Webinterface
+     * Modifies Asterisk Managers
      *
      * @param string $id AsteriskManagerUsers record ID
      */
     public function modifyAction(string $id = ''): void
     {
-        $manager = AsteriskManagerUsers::findFirstById($id);
-        if ($manager === null) {
+        // Load manager record if editing, create new if creating
+        if (!empty($id)) {
+            $manager = AsteriskManagerUsers::findFirstById($id);
+            if (!$manager) {
+                $this->forward('asterisk-managers/index');
+                return;
+            }
+            $represent = $manager->getRepresent();
+        } else {
             $manager = new AsteriskManagerUsers();
-            $manager->secret = AsteriskManagerUsers::generateAMIPassword();
+            $represent = $this->translation->_('am_NewRecord');
         }
 
+        // Load allowed network filters for AMI/AJAM (original logic)
         $arrNetworkFilters = [];
-        $networkFilters    = NetworkFilters::getAllowedFiltersForType(
-            [
-                'AJAM',
-                'AMI',
-            ]
-        );
+        $networkFilters = NetworkFilters::getAllowedFiltersForType(['AJAM', 'AMI']);
         $arrNetworkFilters['none'] = $this->translation->_('ex_NoNetworkFilter');
         foreach ($networkFilters as $filter) {
             $arrNetworkFilters[$filter->id] = $filter->getRepresent();
         }
 
-
+        // Create form with manager data and original options structure
         $this->view->form = new AsteriskManagerEditForm(
             $manager,
             [
-                'network_filters'     => $arrNetworkFilters,
+                'network_filters' => $arrNetworkFilters,
                 'array_of_checkboxes' => $this->arrCheckBoxes,
             ]
         );
 
+        // Set view variables
         $this->view->setVar('arrCheckBoxes', $this->arrCheckBoxes);
-        $this->view->setVar('represent', $manager->getRepresent());
+        $this->view->setVar('represent', $represent);
     }
 
-
     /**
-     * Save Asterisk Manager User settings into database
+     * Save action - handled by REST API
+     * @deprecated Use REST API v2 instead
      */
     public function saveAction(): void
     {
-        if (!$this->request->isPost()) {
-            return;
-        }
-        $data    = $this->request->getPost();
-        $manager = null;
-        if (isset($data['id'])) {
-            $manager = AsteriskManagerUsers::findFirst($data['id']);
-        }
-        if ($manager === null) {
-            $manager = new AsteriskManagerUsers();
-        }
-
-        $manager->weakSecret = '0';
-
-        foreach ($manager as $name => $value) {
-            if (in_array($name, $this->arrCheckBoxes, true)) {
-                $manager->$name = ($data[$name . '_read'] === 'on') ? 'read' : '';
-                $manager->$name.= ($data[$name . '_write'] === 'on') ? 'write' : '';
-                continue;
-            }
-            if (! array_key_exists($name, $data)) {
-                continue;
-            }
-            $manager->$name = $data[$name];
-        }
-        $this->saveEntity($manager, "asterisk-managers/modify/$manager->id");
-    }
-
-    /**
-     * Deletes Asterisk Manager records from database
-     *
-     * @param string $amiId
-     *
-     * @return void
-     */
-    public function deleteAction(string $amiId = ''): void
-    {
-        if ($amiId === '') {
-            return;
-        }
-
-        $manager = AsteriskManagerUsers::findFirstByid($amiId);
-        $manager?->delete();
+        // Redirect to index - actual save is handled by REST API
         $this->forward('asterisk-managers/index');
     }
 
     /**
-     * Checks uniqueness for AMI username from JS by ajax requests.
+     * Delete action - handled by REST API
+     * @deprecated Use REST API v2 instead
+     * 
+     * @param string $amiId Manager ID to delete
+     */
+    public function deleteAction(string $amiId = ''): void
+    {
+        // Redirect to index - actual delete is handled by REST API
+        $this->forward('asterisk-managers/index');
+    }
+
+    /**
+     * Check username availability - handled by REST API
+     * @deprecated Use REST API v2 instead
      *
-     * @param string $username
-     *
-     * @return void  result send by ControllerBase::afterExecuteRoute()
+     * @param string $username Username to check
      */
     public function availableAction(string $username): void
     {
-        $result = true;
-        $amiUser = AsteriskManagerUsers::findFirst("username = '$username'");
-        if ($amiUser !== null) {
-            $result             = false;
-            $this->view->userId = $amiUser->id;
-        }
-        $this->view->setVar('nameAvailable', $result);
+        // This is now handled by REST API
+        // Keep for backward compatibility but return empty result
+        $this->view->setVar('nameAvailable', true);
         $this->view->setVar('success', true);
     }
 }
