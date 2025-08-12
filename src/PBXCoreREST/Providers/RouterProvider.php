@@ -80,7 +80,11 @@ use MikoPBX\PBXCoreREST\Controllers\
     License\PostController as LicensePostController,
     UserPageTracker\PostController as UserPageTrackerPostController,
     Passwords\GetController as PasswordsGetController,
-    Providers\GetController as ProvidersGetController
+    Providers\GetController as ProvidersGetController,
+    AsteriskManagers\GetController as AsteriskManagersGetController,
+    AsteriskManagers\PostController as AsteriskManagersPostController,
+    AsteriskManagers\PutController as AsteriskManagersPutController,
+    AsteriskManagers\DeleteController as AsteriskManagersDeleteController
 };
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\RestAPIConfigInterface;
@@ -274,6 +278,12 @@ class RouterProvider implements ServiceProviderInterface
             // Providers v2 routes
             [ProvidersGetController::class, 'callAction', '/pbxcore/api/v2/providers/{actionName}', 'get', '/'],
 
+            // AsteriskManagers v2 routes
+            [AsteriskManagersGetController::class, 'callAction', '/pbxcore/api/v2/asterisk-managers/{actionName}', 'get', '/'],
+            [AsteriskManagersGetController::class, 'callAction', '/pbxcore/api/v2/asterisk-managers/{actionName}/{id:[a-zA-Z0-9\-]+}', 'get', '/'],
+            [AsteriskManagersPostController::class, 'callAction', '/pbxcore/api/v2/asterisk-managers/{actionName}', 'post', '/'],
+            [AsteriskManagersPutController::class, 'callAction', '/pbxcore/api/v2/asterisk-managers/{actionName}/{id:[a-zA-Z0-9\-]+}', 'put', '/'],
+            [AsteriskManagersDeleteController::class, 'callAction', '/pbxcore/api/v2/asterisk-managers/{actionName}/{id:[a-zA-Z0-9\-]+}', 'delete', '/'],
 
         ];
     }

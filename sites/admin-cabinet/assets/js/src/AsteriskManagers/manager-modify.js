@@ -1,6 +1,6 @@
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,10 +16,10 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl,globalTranslate, Form, PbxApi, ClipboardJS */
+/* global globalRootUrl, globalTranslate, Form, PbxApi, ClipboardJS, AsteriskManagersAPI, UserMessage, FormElements */
 
 /**
- * Manager module.
+ * Manager module using REST API v2.
  * @module manager
  */
 const manager = {
@@ -27,25 +27,31 @@ const manager = {
      * jQuery object for the form.
      * @type {jQuery}
      */
-    $formObj: $('#save-ami-form'),
+    $formObj: $('form.ui.large.form'),
 
     /**
      * jQuery objects for dropdown elements.
      * @type {jQuery}
      */
-    $dropDowns: $('#save-ami-form .ui.dropdown'),
+    $dropDowns: $('form.ui.large.form .ui.dropdown'),
 
     /**
      * jQuery objects for all checkbox elements.
      * @type {jQuery}
      */
-    $allCheckBoxes: $('#save-ami-form .list .checkbox'),
+    $allCheckBoxes: $('form.ui.large.form .checkbox'),
 
     /**
      * jQuery object for the uncheck button.
      * @type {jQuery}
      */
     $unCheckButton: $('.uncheck.button'),
+
+    /**
+     * jQuery object for the check all button.
+     * @type {jQuery}
+     */
+    $checkAllButton: $('.check-all.button'),
 
     /**
      * jQuery object for the username input field.
@@ -57,13 +63,25 @@ const manager = {
      * jQuery object for the secret input field.
      * @type {jQuery}
      */
-    $secret: $('#secret'),
+    $secret: null,
 
     /**
      * Original username value.
      * @type {string}
      */
     originalName: '',
+
+    /**
+     * Manager ID.
+     * @type {string}
+     */
+    managerId: '',
+
+    /**
+     * Manager data from API.
+     * @type {Object}
+     */
+    managerData: null,
 
     /**
      * Validation rules for the form fields before submission.
@@ -99,47 +117,202 @@ const manager = {
      * Initializes the manager module.
      */
     initialize() {
+        // Initialize jQuery selectors that need DOM to be ready
+        manager.$secret = $('#secret');
+        
+        // Get manager ID from URL or form
+        const urlParts = window.location.pathname.split('/');
+        const lastSegment = urlParts[urlParts.length - 1] || '';
+        
+        // Check if the last segment is 'modify' (new record) or an actual ID
+        if (lastSegment === 'modify' || lastSegment === '') {
+            manager.managerId = '';
+        } else {
+            manager.managerId = lastSegment;
+        }
+        
+        // If no ID in URL, check form for existing ID
+        if (!manager.managerId) {
+            const formId = manager.$formObj.form('get value', 'id');
+            if (formId && formId !== '') {
+                manager.managerId = formId;
+            }
+        }
+
+        // Check if this is a copy operation
+        const urlParams = new URLSearchParams(window.location.search);
+        const copySourceId = urlParams.get('copy-source');
+
+        // Initialize API
+        AsteriskManagersAPI.initialize();
+
+        // Store original username for validation (get from form, not API)
+        manager.originalName = manager.$formObj.form('get value', 'username') || '';
+        
+        // Handle copy operation
+        if (copySourceId) {
+            // Load source manager data for copying
+            manager.loadManagerDataForCopy(copySourceId);
+        } else {
+            // Unified approach: always load from API (returns defaults for new records)
+            manager.loadManagerData();
+        }
+    },
+
+
+    /**
+     * Load manager data for copying.
+     * @param {string} sourceId - Source manager ID to copy from
+     */
+    loadManagerDataForCopy(sourceId) {
+        manager.$formObj.addClass('loading');
+
+        // Load full data from the source manager
+        AsteriskManagersAPI.getRecord(sourceId, (data) => {
+            manager.$formObj.removeClass('loading');
+
+            if (data === false) {
+                UserMessage.showMultiString(globalTranslate.am_ErrorLoadingManager || 'Error loading source manager');
+                // Initialize empty form
+                manager.initializeFormElements();
+                manager.setupEventHandlers();
+                manager.initializeForm();
+                return;
+            }
+
+            // Clear ID and username for new record
+            data.id = '';
+            data.username = '';
+            data.secret = '';
+            
+            manager.managerData = data;
+            manager.populateForm(data);
+            
+            // Initialize form elements and handlers
+            manager.initializeFormElements();
+            manager.setupEventHandlers();
+            manager.initializeForm();
+            
+            // Clear original name since this is a new record
+            manager.originalName = '';
+            manager.managerId = '';  // Clear manager ID to ensure it's treated as new
+            
+            // Update form title if possible
+            const $headerText = $('.ui.header .content');
+            if ($headerText.length) {
+                $headerText.text(globalTranslate.am_CopyRecord || 'Copy AMI User');
+            }
+            
+            // Focus on username field
+            manager.$username.focus();
+        });
+    },
+
+    /**
+     * Load manager data from API.
+     * Unified method for both new and existing records.
+     * API returns defaults for new records when ID is empty.
+     */
+    loadManagerData() {
+        manager.$formObj.addClass('loading');
+
+        // Always call API - it returns defaults for new records (when ID is empty)
+        AsteriskManagersAPI.getRecord(manager.managerId || '', (data) => {
+            manager.$formObj.removeClass('loading');
+
+            if (data === false) {
+                UserMessage.showMultiString(globalTranslate.am_ErrorLoadingManager || 'Error loading manager');
+                // Initialize even on error to ensure form works
+                manager.initializeFormElements();
+                manager.setupEventHandlers();
+                manager.initializeForm();
+                return;
+            }
+
+            manager.managerData = data;
+            manager.populateForm(data);
+            
+            // Initialize form elements and handlers after data is loaded
+            manager.initializeFormElements();
+            manager.setupEventHandlers();
+            manager.initializeForm();
+            
+            // Store original username for validation (empty for new records)
+            manager.originalName = data.username || '';
+            
+            // For new records, ensure managerId is empty
+            if (!manager.managerId) {
+                manager.managerId = '';
+                manager.originalName = '';
+            }
+
+            // Disable fields for system managers
+            if (data.isSystem) {
+                manager.$formObj.find('input, select, button').not('.cancel').attr('disabled', true);
+                manager.$formObj.find('.checkbox').addClass('disabled');
+                UserMessage.showMultiString(globalTranslate.am_SystemManagerReadOnly || 'System manager is read-only', UserMessage.INFO);
+            }
+        });
+    },
+
+    /**
+     * Populate form with manager data.
+     * @param {Object} data - Manager data.
+     */
+    populateForm(data) {
+        // Set form values
+        manager.$formObj.form('set values', {
+            id: data.id,
+            username: data.username,
+            secret: data.secret,
+            description: data.description
+        });
+
+        // Set network filter dropdown - now handled by PHP form
+        if (data.networkfilterid) {
+            $('#networkfilterid').dropdown('set selected', data.networkfilterid);
+        }
+
+        // Clear all checkboxes first
+        manager.$allCheckBoxes.checkbox('uncheck');
+        
+        // Set permission checkboxes using boolean fields
+        if (data.permissions && typeof data.permissions === 'object') {
+            Object.keys(data.permissions).forEach(permKey => {
+                if (data.permissions[permKey] === true) {
+                    const checkbox = manager.$formObj.find(`input[name="${permKey}"]`);
+                    if (checkbox.length) {
+                        checkbox.parent('.checkbox').checkbox('check');
+                    }
+                }
+            });
+        }
+
+        // Network filters dropdown is now handled by PHP form
+
+        // Update clipboard button with current password
+        if (data.secret) {
+            $('.clipboard').attr('data-clipboard-text', data.secret);
+        }
+
+        // Auto-resize textarea after data is loaded
+        // Use setTimeout to ensure DOM is fully updated
+        setTimeout(() => {
+            FormElements.optimizeTextareaSize('textarea[name="description"]');
+        }, 100);
+    },
+
+    /**
+     * Initialize form elements.
+     */
+    initializeFormElements() {
         // Initialize dropdowns
         manager.$dropDowns.dropdown();
 
-        // Handle uncheck button click
-        manager.$unCheckButton.on('click', (e) => {
-            e.preventDefault();
-            manager.$allCheckBoxes.checkbox('uncheck');
-        });
-
-        // Handle username change
-        manager.$username.on('change', (value) => {
-            const userId = manager.$formObj.form('get value', 'id');
-            const newValue = manager.$formObj.form('get value', 'username');
-            manager.checkAvailability(manager.originalName, newValue, 'username', userId);
-        });
-
-        // Generate new password if field is empty
-        if (manager.$secret.val() === '') {
+        // Generate new password if field is empty and creating new manager
+        if (!manager.managerId && manager.$secret.val() === '') {
             manager.generateNewPassword();
         }
-
-        // Handle generate new password button
-        $('#generate-new-password').on('click', (e) => {
-            e.preventDefault();
-            manager.generateNewPassword();
-        });
-
-        // Show/hide password toggle
-        $('#show-hide-password').on('click', (e) => {
-            e.preventDefault();
-            const $button = $(e.currentTarget);
-            const $icon = $button.find('i');
-            
-            if (manager.$secret.attr('type') === 'password') {
-                manager.$secret.attr('type', 'text');
-                $icon.removeClass('eye').addClass('eye slash');
-            } else {
-                manager.$secret.attr('type', 'password');
-                $icon.removeClass('eye slash').addClass('eye');
-            }
-        });
 
         // Initialize clipboard for password copy
         const clipboard = new ClipboardJS('.clipboard');
@@ -168,46 +341,87 @@ const manager = {
         // Initialize popups
         $('.popuped').popup();
 
-        manager.initializeForm();
-        manager.originalName = manager.$formObj.form('get value', 'username');
+        // Setup auto-resize for description textarea with event handlers
+        $('textarea[name="description"]').on('input paste keyup', function() {
+            FormElements.optimizeTextareaSize($(this));
+        });
     },
 
     /**
-     * Checks if the username doesn't exist in the database.
+     * Setup event handlers.
+     */
+    setupEventHandlers() {
+        // Handle uncheck button click
+        manager.$unCheckButton.on('click', (e) => {
+            e.preventDefault();
+            manager.$allCheckBoxes.checkbox('uncheck');
+        });
+
+        // Handle check all button click
+        manager.$checkAllButton.on('click', (e) => {
+            e.preventDefault();
+            manager.$allCheckBoxes.checkbox('check');
+        });
+
+        // Handle username change for validation
+        manager.$username.on('change', () => {
+            const newValue = manager.$username.val();
+            manager.checkAvailability(manager.originalName, newValue, 'username', manager.managerId);
+        });
+
+        // Handle generate new password button
+        $('#generate-new-password').on('click', (e) => {
+            e.preventDefault();
+            manager.generateNewPassword();
+        });
+
+        // Show/hide password toggle
+        $('#show-hide-password').on('click', (e) => {
+            e.preventDefault();
+            const $button = $(e.currentTarget);
+            const $icon = $button.find('i');
+            
+            if (manager.$secret.attr('type') === 'password') {
+                manager.$secret.attr('type', 'text');
+                $icon.removeClass('eye').addClass('eye slash');
+            } else {
+                manager.$secret.attr('type', 'password');
+                $icon.removeClass('eye slash').addClass('eye');
+            }
+        });
+    },
+
+    /**
+     * Checks if the username doesn't exist in the database using REST API.
      * @param {string} oldName - The old username.
      * @param {string} newName - The new username.
      * @param {string} cssClassName - The CSS class name.
-     * @param {string} userId - The user ID.
+     * @param {string} managerId - The manager ID.
      */
-    checkAvailability(oldName, newName, cssClassName = 'username', userId = '') {
+    checkAvailability(oldName, newName, cssClassName = 'username', managerId = '') {
         if (oldName === newName) {
             $(`.ui.input.${cssClassName}`).parent().removeClass('error');
             $(`#${cssClassName}-error`).addClass('hidden');
             return;
         }
-        $.api({
-            url: `${globalRootUrl}asterisk-managers/available/{value}`,
-            stateContext: `.ui.input.${cssClassName}`,
-            on: 'now',
-            beforeSend(settings) {
-                const result = settings;
-                result.urlData = {
-                    value: newName,
-                };
-                return result;
-            },
-            onSuccess(response) {
-                if (response.nameAvailable) {
-                    $(`.ui.input.${cssClassName}`).parent().removeClass('error');
-                    $(`#${cssClassName}-error`).addClass('hidden');
-                } else if (userId.length > 0 && response.userId === userId) {
-                    $(`.ui.input.${cssClassName}`).parent().removeClass('error');
-                    $(`#${cssClassName}-error`).addClass('hidden');
-                } else {
-                    $(`.ui.input.${cssClassName}`).parent().addClass('error');
-                    $(`#${cssClassName}-error`).removeClass('hidden');
-                }
-            },
+
+        // Use the new API to check all managers
+        AsteriskManagersAPI.getList((managers) => {
+            if (managers === false) {
+                return;
+            }
+
+            const exists = managers.some(m => 
+                m.username === newName && m.id !== managerId
+            );
+
+            if (exists) {
+                $(`.ui.input.${cssClassName}`).parent().addClass('error');
+                $(`#${cssClassName}-error`).removeClass('hidden');
+            } else {
+                $(`.ui.input.${cssClassName}`).parent().removeClass('error');
+                $(`#${cssClassName}-error`).addClass('hidden');
+            }
         });
     },
 
@@ -233,15 +447,58 @@ const manager = {
     cbBeforeSendForm(settings) {
         const result = settings;
         result.data = manager.$formObj.form('get values');
+        
+        // Collect permissions as boolean fields
+        const permissions = {};
+        const availablePermissions = [
+            'call', 'cdr', 'originate', 'reporting', 'agent', 'config', 
+            'dialplan', 'dtmf', 'log', 'system', 'user', 'verbose', 'command'
+        ];
+        
+        availablePermissions.forEach(perm => {
+            // Check read permission checkbox
+            const readCheckbox = manager.$formObj.find(`input[name="${perm}_read"]`);
+            if (readCheckbox.length) {
+                permissions[`${perm}_read`] = readCheckbox.is(':checked');
+            }
+            
+            // Check write permission checkbox
+            const writeCheckbox = manager.$formObj.find(`input[name="${perm}_write"]`);
+            if (writeCheckbox.length) {
+                permissions[`${perm}_write`] = writeCheckbox.is(':checked');
+            }
+        });
+        
+        // Remove individual permission fields from data to avoid duplication
+        availablePermissions.forEach(perm => {
+            delete result.data[`${perm}_read`];
+            delete result.data[`${perm}_write`];
+        });
+        
+        // Add permissions as a single object
+        result.data.permissions = permissions;
+        
         return result;
     },
+
 
     /**
      * Callback function to be called after the form has been sent.
      * @param {Object} response - The response from the server after the form is sent
      */
     cbAfterSendForm(response) {
-        // Callback function after sending the form
+        // This callback is called BEFORE Form.handleSubmitResponse processes redirect
+        // Only handle things that need to be done before potential page redirect
+        if (response && (response.success || response.result)) {
+            // Update managerId for new records (needed before redirect)
+            if (response.data && response.data.id && !manager.managerId) {
+                manager.managerId = response.data.id;
+                manager.$formObj.form('set value', 'id', manager.managerId);
+            }
+            
+            // Note: UserMessage and Form.initialize are handled automatically by Form.handleSubmitResponse
+            // if there's no redirect (response.reload). If there is redirect, they're not needed anyway.
+        }
     },
 
     /**
@@ -249,10 +506,20 @@ const manager = {
      */
     initializeForm() {
         Form.$formObj = manager.$formObj;
-        Form.url = `${globalRootUrl}asterisk-managers/save`; // Form submission URL
+        Form.url = '#'; // Not used with REST API
         Form.validateRules = manager.validateRules; // Form validation rules
         Form.cbBeforeSendForm = manager.cbBeforeSendForm; // Callback before form is sent
         Form.cbAfterSendForm = manager.cbAfterSendForm; // Callback after form is sent
+        
+        // REST API integration
+        Form.apiSettings.enabled = true;
+        Form.apiSettings.apiObject = AsteriskManagersAPI;
+        Form.apiSettings.saveMethod = 'saveRecord';
+        
+        // Navigation URLs
+        Form.afterSubmitIndexUrl = globalRootUrl + 'asterisk-managers/index/';
+        Form.afterSubmitModifyUrl = globalRootUrl + 'asterisk-managers/modify/';
+        
         Form.initialize();
     },
 

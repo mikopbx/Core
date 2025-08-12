@@ -984,11 +984,19 @@ class AssetProvider implements ServiceProviderInterface
     private function makeAsteriskManagersAssets(string $action): void
     {
         if ($action === 'index') {
-            $this->footerCollectionJS->addJs('js/pbx/AsteriskManagers/managers-index.js', true);
+            $this->headerCollectionCSS
+                ->addCss('css/vendor/datatable/dataTables.semanticui.css', true)
+                ->addCss('css/AsteriskManagers/managers-index.css', true);
+            $this->footerCollectionJS
+                ->addJs('js/pbx/main/PbxDataTableIndex.js', true)
+                ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
+                ->addJs('js/pbx/PbxAPI/asteriskManagersAPI.js', true)
+                ->addJs('js/pbx/AsteriskManagers/managers-index.js', true);
         } elseif ($action === 'modify') {
             $this->footerCollectionJS
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/vendor/clipboard/clipboard.js', true)
+                ->addJs('js/pbx/PbxAPI/asteriskManagersAPI.js', true)
                 ->addJs('js/pbx/AsteriskManagers/manager-modify.js', true);
 
             $this->semanticCollectionCSS->addCss('css/AsteriskManagers/manager-modify.css', true);
