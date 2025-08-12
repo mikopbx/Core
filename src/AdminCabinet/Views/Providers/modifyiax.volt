@@ -130,8 +130,11 @@
 {{ close('form') }}
 
 <script type="text/javascript">
+// Create global instance of ProviderIAX
+let providerIAX;
+
 $(document).ready(function() {
-    const providerIAX = new ProviderIAX();
+    providerIAX = new ProviderIAX();
     providerIAX.initialize();
 });
 </script>

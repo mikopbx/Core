@@ -155,6 +155,7 @@ return [
     'ms_SuccessfulDeleted' => 'Data deleted',
     'Codecs' => 'Codecs',
     'pr_ProviderName' => 'Provider name',
+    'pr_NewProvider' => 'New Provider',
     'pr_ProviderLogin' => 'Username',
     'pr_ProviderPassword' => 'Password',
     'pr_PasswordOptionalForNoneType' => 'Password is optional for "No registration" mode, but may be required by some providers for incoming calls or additional security',

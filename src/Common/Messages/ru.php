@@ -199,6 +199,7 @@ return [
         'note' => 'Уточните у вашего провайдера требования к аутентификации'
     ],
     'pr_ProviderName' => 'Название провайдера',
+    'pr_NewProvider' => 'Новый провайдер',
     'pr_ProviderLogin' => 'Логин',
     'pr_ProviderPassword' => 'Пароль',
     'pr_ProviderHostOrIPAddress' => 'Адрес сервера провайдера',

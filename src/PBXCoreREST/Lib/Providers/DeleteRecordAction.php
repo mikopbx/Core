@@ -74,15 +74,7 @@ class DeleteRecordAction extends AbstractDeleteAction
                 return $res;
             }
             
-            // Check if provider is used in routes
-            $usageCheck = self::checkProviderUsage($provider);
-            if (!$usageCheck['canDelete']) {
-                $res->messages['error'][] = 'api_ProviderInUse';
-                $res->messages['info'] = $usageCheck['usage'];
-                return $res;
-            }
-            
-            // Delete in transaction
+            // Delete provider - the model will check dependencies automatically
             $deleted = BaseActionHelper::executeInTransaction(function() use ($provider) {
                 return self::deleteProviderInTransaction($provider);
             });
@@ -97,7 +89,14 @@ class DeleteRecordAction extends AbstractDeleteAction
                 $description = $config ? $config->description : $provider->note;
                 SystemMessages::sysLogMsg(__METHOD__, "Provider '$description' ($provider->type) deleted successfully");
             } else {
-                $res->messages['error'][] = 'api_ProviderDeleteFailed';
+                // Get error messages from the model
+                foreach ($provider->getMessages() as $message) {
+                    $res->messages['error'][] = $message->getMessage();
+                }
+                // If no specific messages, add generic error
+                if (empty($res->messages['error'])) {
+                    $res->messages['error'][] = 'api_ProviderDeleteFailed';
+                }
             }
             
         } catch (\Exception $e) {
@@ -108,52 +107,6 @@ class DeleteRecordAction extends AbstractDeleteAction
         return $res;
     }
     
-    /**
-     * Check if provider is used in routing tables
-     * 
-     * @param Providers $provider Provider model
-     * @return array Usage information
-     */
-    private static function checkProviderUsage(Providers $provider): array
-    {
-        $usage = [];
-        $canDelete = true;
-        
-        // Check incoming routes
-        $incomingRoutes = IncomingRoutingTable::find([
-            'conditions' => 'provider = :provider:',
-            'bind' => ['provider' => $provider->uniqid]
-        ]);
-        
-        if ($incomingRoutes->count() > 0) {
-            $canDelete = false;
-            $routeNames = [];
-            foreach ($incomingRoutes as $route) {
-                $routeNames[] = $route->rulename;
-            }
-            $usage[] = sprintf('Used in incoming routes: %s', implode(', ', $routeNames));
-        }
-        
-        // Check outgoing routes
-        $outgoingRoutes = OutgoingRoutingTable::find([
-            'conditions' => 'providerid = :provider:',
-            'bind' => ['provider' => $provider->uniqid]
-        ]);
-        
-        if ($outgoingRoutes->count() > 0) {
-            $canDelete = false;
-            $routeNames = [];
-            foreach ($outgoingRoutes as $route) {
-                $routeNames[] = $route->rulename;
-            }
-            $usage[] = sprintf('Used in outgoing routes: %s', implode(', ', $routeNames));
-        }
-        
-        return [
-            'canDelete' => $canDelete,
-            'usage' => $usage
-        ];
-    }
     
     /**
      * Delete provider and all related data in transaction
@@ -164,34 +117,45 @@ class DeleteRecordAction extends AbstractDeleteAction
      */
     private static function deleteProviderInTransaction(Providers $provider): bool
     {
-        // Delete type-specific configuration
-        if ($provider->type === 'SIP') {
-            // Delete additional hosts
-            $sipHosts = SipHosts::find([
-                'conditions' => 'provider_id = :uid:',
-                'bind' => ['uid' => $provider->sipuid]
-            ]);
-            
-            foreach ($sipHosts as $host) {
-                if (!$host->delete()) {
-                    throw new \Exception('Failed to delete SIP host');
+        // Best Practice: Let the ORM handle cascade deletions through defined relationships
+        
+        // 1. Delete IAX configuration if exists
+        // IAX will automatically delete the Provider through its CASCADE relation
+        if ($provider->Iax) {
+            if (!$provider->Iax->delete()) {
+                $messages = [];
+                foreach ($provider->Iax->getMessages() as $message) {
+                    $messages[] = $message->getMessage();
                 }
-            }
-            
-            // Delete SIP configuration
-            if ($provider->Sip && !$provider->Sip->delete()) {
-                throw new \Exception('Failed to delete SIP configuration');
-            }
-        } else {
-            // Delete IAX configuration
-            if ($provider->Iax && !$provider->Iax->delete()) {
-                throw new \Exception('Failed to delete IAX configuration');
+                throw new \Exception('Failed to delete IAX configuration: ' . implode(', ', $messages));
             }
         }
         
-        // Delete provider record
-        if (!$provider->delete()) {
-            throw new \Exception('Failed to delete provider: ' . implode(', ', $provider->getMessages()));
+        // 2. Delete SIP configuration if exists
+        // SIP will automatically:
+        // - Delete all related SipHosts through CASCADE relation
+        // - Delete the Provider through its CASCADE relation
+        if ($provider->Sip) {
+            if (!$provider->Sip->delete()) {
+                $messages = [];
+                foreach ($provider->Sip->getMessages() as $message) {
+                    $messages[] = $message->getMessage();
+                }
+                throw new \Exception('Failed to delete SIP configuration: ' . implode(', ', $messages));
+            }
+        }
+        
+        // 3. Edge case: If neither Sip nor Iax exists, delete Provider directly
+        // This shouldn't happen in normal operation, but handles edge cases
+        if (!$provider->Iax && !$provider->Sip) {
+            $provider = Providers::findFirstByUniqid($provider->uniqid);
+            if ($provider !== null && !$provider->delete()) {
+                $messages = [];
+                foreach ($provider->getMessages() as $message) {
+                    $messages[] = $message->getMessage();
+                }
+                throw new \Exception('Failed to delete provider: ' . implode(', ', $messages));
+            }
         }
         
         return true;

@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, Form, ProviderBase, PasswordScore, TooltipBuilder, i18n */
+/* global globalRootUrl, globalTranslate, Form, ProviderBase, PasswordScore, TooltipBuilder, i18n, ProvidersAPI */
 
 /**
  * IAX provider management form
@@ -65,6 +65,71 @@ class ProviderIAX extends ProviderBase {
         
         // Initialize field help tooltips
         this.initializeFieldTooltips();
+    }
+    
+    /**
+     * Initialize form with REST API configuration
+     */
+    initializeForm() {
+        Form.$formObj = this.$formObj;
+        Form.url = '#'; // Not used with REST API
+        Form.validateRules = this.getValidateRules();
+        Form.cbBeforeSendForm = this.cbBeforeSendForm.bind(this);
+        Form.cbAfterSendForm = this.cbAfterSendForm.bind(this);
+        
+        // Configure REST API settings
+        Form.apiSettings = {
+            enabled: true,
+            apiObject: ProvidersAPI,
+            saveMethod: 'saveRecord'
+        };
+        
+        // Navigation URLs
+        Form.afterSubmitIndexUrl = globalRootUrl + 'providers/index/';
+        Form.afterSubmitModifyUrl = globalRootUrl + 'providers/modify/';
+        
+        Form.initialize();
+    }
+    
+    /**
+     * Callback before form submission
+     */
+    cbBeforeSendForm(settings) {
+        const result = super.cbBeforeSendForm(settings);
+        
+        // Add provider type
+        result.data.type = this.providerType;
+        
+        // Convert checkbox values to proper booleans
+        const booleanFields = ['disabled', 'qualify', 'disablefromuser', 'noregister', 'receive_calls_without_auth'];
+        booleanFields.forEach((field) => {
+            if (result.data.hasOwnProperty(field)) {
+                // Convert various checkbox representations to boolean
+                result.data[field] = result.data[field] === true || 
+                                     result.data[field] === 'true' || 
+                                     result.data[field] === '1' || 
+                                     result.data[field] === 'on';
+            }
+        });
+        
+        return result;
+    }
+    
+    /**
+     * Callback after form submission
+     */
+    cbAfterSendForm(response) {
+        super.cbAfterSendForm(response);
+        
+        if (response.result && response.data) {
+            // Update form with response data if needed
+            if (response.data.uniqid && !$('#uniqid').val()) {
+                $('#uniqid').val(response.data.uniqid);
+            }
+            
+            // The Form.js will handle the reload automatically if response.reload is present
+            // For new records, REST API returns reload path like "providers/modifyiax/IAX-TRUNK-xxx"
+        }
     }
 
     /**

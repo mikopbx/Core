@@ -115,7 +115,9 @@ class SaveRecordAction extends AbstractSaveRecordAction
             
             // Only set reload for new records
             if (empty($data['id'])) {
-                $res->reload = "providers/modify{$savedProvider->type}/{$savedProvider->uniqid}";
+                // Convert type to lowercase for URL (modifysip, modifyiax)
+                $urlType = strtolower($savedProvider->type);
+                $res->reload = "providers/modify{$urlType}/{$savedProvider->uniqid}";
             }
             
             // Log successful operation

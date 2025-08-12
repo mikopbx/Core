@@ -226,8 +226,11 @@
 {{ close('form') }}
 
 <script type="text/javascript">
+// Create global instance of ProviderSIP
+let providerSIP;
+
 $(document).ready(function() {
-    const providerSIP = new ProviderSIP();
+    providerSIP = new ProviderSIP();
     providerSIP.initialize();
 });
 </script>

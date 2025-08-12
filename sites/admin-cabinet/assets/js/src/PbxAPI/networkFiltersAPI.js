@@ -204,17 +204,21 @@ const NetworkFiltersAPI = {
         
         // Load and populate data
         this.getAllowedForProviders((data) => {
-            $dropdown.removeClass('loading');
-            
             if (!data) {
                 console.warn('Failed to load network filters');
                 // Set default "none" option if API fails
                 this.setDefaultOption($dropdown, settings.currentValue);
-                return;
+            } else {
+                // Populate dropdown
+                this.populateDropdown($dropdown, data, settings.currentValue);
             }
             
-            // Populate dropdown
-            this.populateDropdown($dropdown, data, settings.currentValue);
+            // Always remove loading class after processing
+            $dropdown.removeClass('loading');
+            // Also remove from parent dropdown wrapper if exists
+            if ($dropdown.parent().hasClass('ui') && $dropdown.parent().hasClass('dropdown')) {
+                $dropdown.parent().removeClass('loading');
+            }
             
         }, settings.categories);
         
