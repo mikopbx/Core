@@ -1172,7 +1172,6 @@ return [
     'tf_calUser' => '用户名',
     'tf_calSecret' => '密码',
     'tf_calType' => '类型',
-    'tf_CAL_TYPE_NONE' => '普通的',
     'tf_CAL_TYPE_CALDAV' => '加州DAV',
     'tf_CAL_TYPE_ICAL' => '钙',
     'tf_ValidateCalUri' => '“日历 URL”字段包含不正确的值。',

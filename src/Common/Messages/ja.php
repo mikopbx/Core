@@ -1173,7 +1173,6 @@ return [
     'tf_calUser' => 'ユーザー名',
     'tf_calSecret' => 'パスワード',
     'tf_calType' => 'タイプ',
-    'tf_CAL_TYPE_NONE' => '普通',
     'tf_CAL_TYPE_CALDAV' => 'カルダブ',
     'tf_CAL_TYPE_ICAL' => 'iCal',
     'tf_ValidateCalUri' => '「カレンダー URL」フィールドに不正な値が含まれています。',

@@ -1171,7 +1171,6 @@ return [
     'tf_calUser' => 'ชื่อผู้ใช้',
     'tf_calSecret' => 'รหัสผ่าน',
     'tf_calType' => 'รูปแบบ',
-    'tf_CAL_TYPE_NONE' => 'ปกติ',
     'tf_CAL_TYPE_CALDAV' => 'คาลดีเอวี',
     'tf_CAL_TYPE_ICAL' => 'ไอแคล',
     'ext_UpdateModuleTitle' => 'อัพเดตโมดูล',

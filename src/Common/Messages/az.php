@@ -1206,7 +1206,6 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'tf_calUser' => 'İstifadəçi adı',
     'tf_calSecret' => 'parol',
     'tf_calType' => 'Növ',
-    'tf_CAL_TYPE_NONE' => 'Adi siravi',
     'tf_CAL_TYPE_CALDAV' => 'CalDAV',
     'tf_CAL_TYPE_ICAL' => 'iCal',
     'tf_ValidateCalUri' => '"Təqvim URL" sahəsində yanlış dəyər var.',

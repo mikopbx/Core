@@ -1176,7 +1176,6 @@ return [
     'tf_CAL_TYPE_CALDAV' => 'CalDAV',
     'tf_CAL_TYPE_ICAL' => 'iCal',
     'tf_ValidateCalUri' => 'Το πεδίο "Διεύθυνση URL ημερολογίου" περιέχει μια εσφαλμένη τιμή.',
-    'tf_CAL_TYPE_NONE' => 'Συνήθης',
     'ext_FromDate' => 'απελευθερώθηκε',
     'ext_UpdateAllModulesTitle' => 'Ενημέρωση όλων των ενοτήτων',
     'ext_UpdateModuleTitle' => 'Ενημέρωση ενότητας',

@@ -352,7 +352,6 @@ return [
     'tf_calUser' => 'Käyttäjätunnus',
     'tf_calSecret' => 'Salasana',
     'tf_calType' => 'Tyyppi',
-    'tf_CAL_TYPE_NONE' => 'Tavallinen',
     'tf_CAL_TYPE_CALDAV' => 'CalDAV',
     'tf_CAL_TYPE_ICAL' => 'iCal',
     'tf_ValidateCalUri' => 'Kalenterin URL-osoite -kentässä on virheellinen arvo.',

@@ -1173,7 +1173,6 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'tf_calUser' => 'Nom d\'utilisateur',
     'tf_calSecret' => 'Mot de passe',
     'tf_calType' => 'Taper',
-    'tf_CAL_TYPE_NONE' => 'Ordinaire',
     'tf_CAL_TYPE_CALDAV' => 'CalDAV',
     'tf_CAL_TYPE_ICAL' => 'iCal',
     'tf_ValidateCalUri' => 'Le champ "URL du calendrier" contient une valeur incorrecte.',

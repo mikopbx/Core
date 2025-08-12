@@ -523,7 +523,6 @@ return [
     'tf_calUser' => 'Korisničko ime',
     'tf_calSecret' => 'Lozinka',
     'tf_calType' => 'Tip',
-    'tf_CAL_TYPE_NONE' => 'Obični',
     'tf_CAL_TYPE_CALDAV' => 'CalDAV',
     'tf_CAL_TYPE_ICAL' => 'iCal',
     'tf_ValidateCalUri' => 'Polje "URL kalendara" sadrži netočnu vrijednost.',

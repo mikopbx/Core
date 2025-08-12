@@ -1173,7 +1173,6 @@ return [
     'tf_calUser' => 'მომხმარებლის სახელი',
     'tf_calSecret' => 'პაროლი',
     'tf_calType' => 'ტიპი',
-    'tf_CAL_TYPE_NONE' => 'ჩვეულებრივი',
     'tf_CAL_TYPE_CALDAV' => 'CalDAV',
     'tf_CAL_TYPE_ICAL' => 'iCal',
     'tf_ValidateCalUri' => '"კალენდრის URL" ველი შეიცავს არასწორ მნიშვნელობას.',

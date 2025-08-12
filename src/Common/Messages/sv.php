@@ -1173,7 +1173,6 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'tf_calUser' => 'Användarnamn',
     'tf_calSecret' => 'Lösenord',
     'tf_calType' => 'Typ',
-    'tf_CAL_TYPE_NONE' => 'Vanlig',
     'tf_CAL_TYPE_CALDAV' => 'CalDAV',
     'tf_CAL_TYPE_ICAL' => 'iCal',
     'tf_ValidateCalUri' => 'Fältet "Kalender URL" innehåller ett felaktigt värde.',

@@ -735,7 +735,6 @@ return [
     'tf_calUser' => 'Felhasználónév',
     'tf_calSecret' => 'Jelszó',
     'tf_calType' => 'típus',
-    'tf_CAL_TYPE_NONE' => 'Rendes',
     'tf_CAL_TYPE_CALDAV' => 'CalDAV',
     'tf_CAL_TYPE_ICAL' => 'iCal',
     'tf_ValidateCalUri' => 'A „Naptár URL-címe” mező helytelen értéket tartalmaz.',
