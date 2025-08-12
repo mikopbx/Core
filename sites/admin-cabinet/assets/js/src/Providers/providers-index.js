@@ -91,14 +91,14 @@ const providers = {
                     data: null,
                     orderable: false,
                     searchable: false,
-                    className: 'center aligned provider-status',
+                    className: 'center aligned collapsing provider-status',
                     render: function(data, type, row) {
                         return `<i class="spinner loading icon"></i>`;
                     }
                 },
                 {
                     // Provider name column - display what comes from server
-                    data: 'name',
+                    data: 'represent',
                     className: 'collapsing',
                     render: function(data, type, row) {
                         if (type === 'display') {
@@ -181,6 +181,20 @@ const providers = {
      * Callback after table draw is complete
      */
     onDrawCallback() {
+        // Move add buttons group to DataTables wrapper (next to search)
+        const $addButtonsGroup = $('#add-buttons-group');
+        const $wrapper = $('#providers-table_wrapper');
+        const $leftColumn = $wrapper.find('.eight.wide.column').first();
+        
+        if ($addButtonsGroup.length && $leftColumn.length) {
+            $leftColumn.append($addButtonsGroup);
+            // Show buttons only if table has data
+            const hasData = $('#providers-table').DataTable().data().any();
+            if (hasData) {
+                $addButtonsGroup.show();
+            }
+        }
+        
         // Add row data attributes for each provider
         $('#providers-table tbody tr').each(function() {
             const data = $('#providers-table').DataTable().row(this).data();

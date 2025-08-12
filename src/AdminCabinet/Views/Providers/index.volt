@@ -17,7 +17,7 @@
 </div>
 
 {% if isAllowed('save') %}
-    <div id="add-buttons-group" style="display:none">
+    <div id="add-buttons-group" class="ui buttons" style="display:none; margin-bottom: 1em;">
         {{ link_to("providers/modifysip", '<i class="add circle icon"></i> '~t._('pr_AddSIPProvider'), "class": "ui blue button") }}
         {{ link_to("providers/modifyiax", '<i class="add circle icon"></i> '~t._('pr_AddIAXProvider'), "class": "ui blue button") }}
     </div>
@@ -44,13 +44,29 @@
 
 {# Empty table placeholder - hidden by default #}
 <div id="empty-table-placeholder" style="display:none">
-    {{ partial("partials/emptyTablePlaceholder", [
-        'icon': 'server',
-        'title': t._('pr_EmptyTableTitle'),
-        'description': t._('pr_EmptyTableDescription'),
-        'addButtonText': '<i class="add circle icon"></i> '~t._('pr_AddSIPProvider'),
-        'addButtonLink': 'providers/modifysip',
-        'showButton': isAllowed('save'),
-        'documentationLink': 'https://wiki.mikopbx.com/providers'
-    ]) }}
+    <div class="ui placeholder segment">
+        <div class="ui icon header">
+            <i class="server icon"></i>
+            {{ t._('pr_EmptyTableTitle') }}
+        </div>
+        <div class="inline">
+            <div class="ui text">
+                {{ t._('pr_EmptyTableDescription') }}
+            </div>
+        </div>
+        <div class="inline" style="margin-top: 1em; margin-bottom: 1em;">
+            <a href="https://wiki.mikopbx.com/providers" target="_blank" class="ui basic tiny button prevent-word-wrap">
+                <i class="question circle outline icon"></i>
+                {{ t._('et_ReadDocumentation') }}
+            </a>
+        </div>
+        {% if isAllowed('save') %}
+            <div class="inline">
+                <div class="ui buttons">
+                    {{ link_to("providers/modifysip", '<i class="add circle icon"></i> '~t._('pr_AddSIPProvider'), "class": "ui blue button prevent-word-wrap") }}
+                    {{ link_to("providers/modifyiax", '<i class="add circle icon"></i> '~t._('pr_AddIAXProvider'), "class": "ui blue button prevent-word-wrap") }}
+                </div>
+            </div>
+        {% endif %}
+    </div>
 </div>
