@@ -1,5 +1,18 @@
 <div class="ui grey top right attached label" id="status"><i
             class="spinner loading icon"></i>{{ t._("pr_UpdateStatus") }}</div>
+
+<!-- Tab menu -->
+<div class="ui top attached tabular menu" id="provider-tabs-menu">
+    <a class="item active" data-tab="settings">
+        <i class="settings icon"></i> {{ t._('pr_Settings') }}
+    </a>
+    <a class="item" data-tab="diagnostics">
+        <i class="heartbeat icon"></i> {{ t._('pr_Diagnostics') }}
+    </a>
+</div>
+
+<!-- Settings tab -->
+<div class="ui bottom attached tab segment active" data-tab="settings">
 {{ form(['action' : 'providers/save/sip', 'method': 'post', 'role': 'form', 'class': 'ui large form', 'id':'save-provider-form']) }}
 
 {{ form.render('id') }}
@@ -224,6 +237,12 @@
 </div>
 {{ partial("partials/submitbutton",['indexurl':'providers/index/']) }}
 {{ close('form') }}
+</div>
+
+<!-- Diagnostics tab -->
+<div class="ui bottom attached tab segment" data-tab="diagnostics">
+    {{ partial("Providers/partials/diagnostics-tab") }}
+</div>
 
 <script type="text/javascript">
 // Create global instance of ProviderSIP

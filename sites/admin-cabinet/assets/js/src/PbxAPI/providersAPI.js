@@ -198,6 +198,38 @@ const ProvidersAPI = {
     },
     
     /**
+     * Get status for a specific provider by ID
+     * 
+     * @param {string} providerId - Provider unique ID
+     * @param {string} providerType - Provider type (SIP or IAX)
+     * @param {function} callback - Callback function
+     */
+    getStatusById: function(providerId, providerType, callback) {
+        // Build URL with type if provided for better performance
+        let url = '/pbxcore/api/v2/providers/getStatus/';
+        if (providerType) {
+            url += providerType.toUpperCase() + '/' + providerId;
+        } else {
+            url += providerId;
+        }
+        
+        $.api({
+            url: url,
+            method: 'GET',
+            on: 'now',
+            onSuccess: (response) => {
+                callback(response);
+            },
+            onFailure: (response) => {
+                callback(response);
+            },
+            onError: () => {
+                callback({result: false, data: null});
+            }
+        });
+    },
+    
+    /**
      * Update provider status (enable/disable)
      * 
      * @param {object} data - Data with id, type, and disabled status

@@ -56,6 +56,23 @@ class ProviderSIP extends ProviderBase {
         
         // Initialize field help tooltips
         this.initializeFieldTooltips();
+        
+        // Initialize tabs
+        this.initializeTabs();
+    }
+    
+    /**
+     * Initialize tab functionality
+     */
+    initializeTabs() {
+        $('#provider-tabs-menu .item').tab({
+            onVisible: (tabPath) => {
+                if (tabPath === 'diagnostics' && typeof providerModifyStatusWorker !== 'undefined') {
+                    // Initialize diagnostics tab when it becomes visible
+                    providerModifyStatusWorker.initializeDiagnosticsTab();
+                }
+            }
+        });
     }
     /**
      * Initialize form with REST API configuration

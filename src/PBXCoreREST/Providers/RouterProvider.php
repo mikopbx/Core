@@ -273,10 +273,7 @@ class RouterProvider implements ServiceProviderInterface
             [SoundFilesPutController::class, 'callAction', '/pbxcore/api/v2/sound-files/{actionName}/{id:[0-9]+}', 'put', '/'],
             [SoundFilesDeleteController::class, 'callAction', '/pbxcore/api/v2/sound-files/{actionName}/{id:[0-9]+}', 'delete', '/'],
 
-            // Providers routes
-            [ProvidersGetController::class, 'callAction', '/pbxcore/api/providers/{actionName}', 'get', '/'],
-            
-            // Providers v2 routes
+            // Providers v2 routes (only v2 is supported)
             [ProvidersGetController::class, 'callAction', '/pbxcore/api/v2/providers/{actionName}', 'get', '/'],
             [ProvidersGetController::class, 'callAction', '/pbxcore/api/v2/providers/{actionName}/{type:[A-Z]+}/{id:[a-zA-Z0-9\-]+}', 'get', '/'],
             [ProvidersGetController::class, 'callAction', '/pbxcore/api/v2/providers/{actionName}/{id}', 'get', '/'],

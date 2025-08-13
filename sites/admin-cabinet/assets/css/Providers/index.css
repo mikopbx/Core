@@ -1,0 +1,202 @@
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
+/* Provider Status Styles for Index Page */
+
+/* Provider status tooltip container */
+.provider-status-tooltip {
+    text-align: left;
+    min-width: 200px;
+}
+
+.provider-status-tooltip__title {
+    font-size: 1.1em;
+    font-weight: bold;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.provider-status-tooltip__state-original {
+    font-size: 0.75em;
+    color: rgba(255, 255, 255, 0.7);
+    margin-top: 2px;
+}
+
+/* Provider info section */
+.provider-status-tooltip__section {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.provider-status-tooltip__info-item {
+    font-size: 0.9em;
+    margin: 2px 0;
+}
+
+/* Status details */
+.provider-status-tooltip__status-item {
+    font-size: 0.85em;
+    margin: 2px 0;
+}
+
+/* RTT color indicators */
+.provider-status-tooltip__rtt--good {
+    color: #4CAF50;
+}
+
+.provider-status-tooltip__rtt--warning {
+    color: #FF9800;
+}
+
+.provider-status-tooltip__rtt--bad {
+    color: #F44336;
+}
+
+/* Status type indicators */
+.provider-status-tooltip__last-success {
+    color: #FFA726;
+}
+
+.provider-status-tooltip__success-duration {
+    color: #66BB6A;
+}
+
+.provider-status-tooltip__failure-duration {
+    color: #EF5350;
+}
+
+/* Description section */
+.provider-status-tooltip__description {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.85em;
+    font-style: italic;
+    opacity: 0.9;
+}
+
+/* Duration info on provider rows */
+.provider-duration-info {
+    font-size: 0.8em;
+    color: #888;
+    margin-top: 2px;
+}
+
+/* Provider status indicator */
+.provider-status-indicator {
+    width: 1px;
+    height: 1px;
+}
+
+/* Provider status update indicator */
+#provider-status-indicator {
+    position: relative;
+    z-index: 10;
+}
+
+#provider-status-indicator .last-check-time {
+    font-size: 0.85em;
+    color: #888;
+}
+
+/* Refresh button */
+.provider-refresh-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 100;
+}
+
+/* Provider row states */
+.provider-row.status-updating {
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+}
+
+.provider-row.status-changed {
+    animation: providerStatusPulse 0.5s ease-in-out;
+}
+
+@keyframes providerStatusPulse {
+    0% {
+        background-color: transparent;
+    }
+    50% {
+        background-color: rgba(33, 186, 69, 0.1);
+    }
+    100% {
+        background-color: transparent;
+    }
+}
+
+/* Provider status cells */
+.provider-status-cell {
+    position: relative;
+    min-width: 20px;
+    text-align: center;
+}
+
+/* Enhanced status modal */
+#provider-status-details-modal .ui.statistic {
+    margin: 0 auto;
+}
+
+#provider-status-details-modal .ui.list .item {
+    padding: 4px 0;
+}
+
+/* Status colors for text */
+.provider-status--registered,
+.provider-status--ok,
+.provider-status--reachable {
+    color: #21ba45;
+}
+
+.provider-status--unreachable,
+.provider-status--lagged {
+    color: #fbbd08;
+}
+
+.provider-status--off,
+.provider-status--unmonitored,
+.provider-status--unknown {
+    color: #767676;
+}
+
+.provider-status--rejected,
+.provider-status--unregistered,
+.provider-status--failed {
+    color: #db2828;
+}
+
+/* Responsive adjustments */
+@media only screen and (max-width: 767px) {
+    .provider-duration-info {
+        font-size: 0.7em;
+    }
+    
+    .provider-refresh-btn {
+        top: 5px;
+        right: 5px;
+    }
+    
+    .provider-status-tooltip {
+        min-width: 150px;
+    }
+}

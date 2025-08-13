@@ -20,12 +20,16 @@
 namespace MikoPBX\PBXCoreREST\Lib;
 
 use MikoPBX\PBXCoreREST\Lib\Providers\{
-    GetProviderStatusAction,
+    GetAllStatusesAction,
     GetListAction,
     GetRecordAction,
     SaveRecordAction,
     DeleteRecordAction,
-    UpdateStatusAction
+    UpdateStatusAction,
+    GetStatusByIdAction,
+    GetHistoryAction,
+    GetStatsAction,
+    ForceCheckAction
 };
 use Phalcon\Di\Injectable;
 
@@ -40,6 +44,10 @@ enum ProviderAction: string
     case DELETE_RECORD = 'deleteRecord';
     case GET_STATUSES = 'getStatuses';
     case UPDATE_STATUS = 'updateStatus';
+    case GET_STATUS = 'getStatus';
+    case GET_HISTORY = 'getHistory';
+    case GET_STATS = 'getStats';
+    case FORCE_CHECK = 'forceCheck';
 }
 
 /**
@@ -51,6 +59,10 @@ enum ProviderAction: string
  * - saveRecord: Create or update provider
  * - deleteRecord: Delete provider
  * - getStatuses: Get current provider registration statuses
+ * - getStatus: Get individual provider status by ID
+ * - getHistory: Get provider history events
+ * - getStats: Get provider statistics and availability metrics
+ * - forceCheck: Force immediate provider status check
  *
  * @package MikoPBX\PBXCoreREST\Lib
  */
@@ -68,7 +80,11 @@ class ProvidersManagementProcessor extends Injectable
         $res->processor = __METHOD__;
 
         $actionString = $request['action'];
-        $data = $request['data'];
+        // Ensure data is always an array
+        $data = $request['data'] ?? [];
+        if (!is_array($data)) {
+            $data = [];
+        }
         
         // Try to match action with enum
         $action = ProviderAction::tryFrom($actionString);
@@ -89,8 +105,24 @@ class ProvidersManagementProcessor extends Injectable
             ),
             ProviderAction::SAVE_RECORD => SaveRecordAction::main($data),
             ProviderAction::DELETE_RECORD => DeleteRecordAction::main($data['id'] ?? ''),
-            ProviderAction::GET_STATUSES => GetProviderStatusAction::main(),
+            ProviderAction::GET_STATUSES => GetAllStatusesAction::main($data),
             ProviderAction::UPDATE_STATUS => UpdateStatusAction::main($data),
+            ProviderAction::GET_STATUS => GetStatusByIdAction::main(
+                $data['id'] ?? '',
+                $data
+            ),
+            ProviderAction::GET_HISTORY => GetHistoryAction::main(
+                $data['id'] ?? '',
+                $data
+            ),
+            ProviderAction::GET_STATS => GetStatsAction::main(
+                $data['id'] ?? '',
+                $data
+            ),
+            ProviderAction::FORCE_CHECK => GetStatusByIdAction::main(
+                $data['id'] ?? '',
+                array_merge($data, ['forceCheck' => true, 'refreshFromAmi' => true])
+            ),
         };
 
         $res->function = $actionString;

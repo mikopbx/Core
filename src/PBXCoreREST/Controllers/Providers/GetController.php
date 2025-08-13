@@ -40,14 +40,14 @@ class GetController extends BaseController
      */
     public function callAction(string $actionName, ?string $type = null, ?string $id = null): void
     {
-        // Merge GET parameters with path parameters
-        $requestData = $this->request->getQuery();
+        // Get all request parameters (GET, POST, etc.)
+        $requestData = $this->request->get();
         
         // Add path parameters if provided
-        if ($type !== null) {
+        if (!empty($type)) {
             $requestData['type'] = $type;
         }
-        if ($id !== null) {
+        if (!empty($id)) {
             $requestData['id'] = $id;
         }
         

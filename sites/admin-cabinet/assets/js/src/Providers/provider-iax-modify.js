@@ -38,6 +38,9 @@ class ProviderIAX extends ProviderBase {
         this.initializeRealtimeValidation();
         this.initializeRegistrationTypeHandlers();
         
+        // Initialize tabs
+        this.initializeTabs();
+        
         // Re-validate form when receive_calls_without_auth changes
         const self = this;
         $('#receive_calls_without_auth.checkbox').checkbox('setting', 'onChange', () => {
@@ -65,6 +68,20 @@ class ProviderIAX extends ProviderBase {
         
         // Initialize field help tooltips
         this.initializeFieldTooltips();
+    }
+    
+    /**
+     * Initialize tab functionality
+     */
+    initializeTabs() {
+        $('#provider-tabs-menu .item').tab({
+            onVisible: (tabPath) => {
+                if (tabPath === 'diagnostics' && typeof providerModifyStatusWorker !== 'undefined') {
+                    // Initialize diagnostics tab when it becomes visible
+                    providerModifyStatusWorker.initializeDiagnosticsTab();
+                }
+            }
+        });
     }
     
     /**
