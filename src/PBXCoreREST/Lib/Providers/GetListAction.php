@@ -22,8 +22,8 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Lib\Providers;
 
 use MikoPBX\Common\Models\Providers;
-use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractGetListAction;
 
 /**
  * Class GetListAction
@@ -32,85 +32,54 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
  * 
  * @package MikoPBX\PBXCoreREST\Lib\Providers
  */
-class GetListAction
+class GetListAction extends AbstractGetListAction
 {
     /**
      * Get list of all providers
      * 
      * @param bool $includeDisabled Include disabled providers in the list
+     * @param array $requestParams Request parameters for filtering/sorting
      * @return PBXApiResult
      */
-    public static function main(bool $includeDisabled = false): PBXApiResult
+    public static function main(bool $includeDisabled = false, array $requestParams = []): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
-        
-        try {
-            // Get all providers
-            $providers = Providers::find();
-            
-            // Process providers
-            foreach ($providers as $provider) {
-                $providerData = self::processProvider($provider, $includeDisabled);
-                if ($providerData !== null) {
-                    $res->data[] = $providerData;
+        // Create record filter for disabled providers
+        $recordFilter = null;
+        if (!$includeDisabled) {
+            $recordFilter = function($provider) {
+                // Check if provider is disabled based on type
+                if ($provider->type === 'SIP' && $provider->Sip) {
+                    return $provider->Sip->disabled !== '1';
+                } elseif ($provider->type === 'IAX' && $provider->Iax) {
+                    return $provider->Iax->disabled !== '1';
                 }
-            }
-            
-            // Sort providers by type and name
-            usort($res->data, function($a, $b) {
-                // First sort by type (SIP before IAX)
-                $typeCompare = strcmp($a['type'], $b['type']);
-                if ($typeCompare !== 0) {
-                    return $typeCompare;
-                }
-                // Then sort by name
-                return strcmp($a['name'], $b['name']);
-            });
-            
-            $res->success = true;
-        } catch (\Exception $e) {
-            $res->messages['error'][] = $e->getMessage();
+                return true; // Include if config not found
+            };
         }
         
-        return $res;
-    }
-    
-    /**
-     * Process single provider record
-     * 
-     * @param Providers $provider
-     * @param bool $includeDisabled
-     * @return array|null Provider data or null if should be skipped
-     */
-    private static function processProvider(Providers $provider, bool $includeDisabled): ?array
-    {
-        $providerData = [
-            'id' => $provider->id,
-            'uniqid' => $provider->uniqid,
-            'type' => $provider->type,
-            'typeLocalized' => Util::translate("prov_dropdownCategory_{$provider->type}"),
-            'name' => $provider->getRepresent(),
-            'disabled' => false,
-            'note' => $provider->note ?? ''
-        ];
+        // Define allowed fields for ordering and searching
+        $allowedOrderFields = ['type', '[note]', 'id'];
+        $searchableFields = ['[note]'];
         
-        // Check if provider is disabled based on type
-        if ($provider->type === 'SIP' && $provider->Sip) {
-            $providerData['disabled'] = $provider->Sip->disabled === '1';
-            $providerData['host'] = $provider->Sip->host;
-            $providerData['username'] = $provider->Sip->username;
-        } elseif ($provider->type === 'IAX' && $provider->Iax) {
-            $providerData['disabled'] = $provider->Iax->disabled === '1';
-            $providerData['host'] = $provider->Iax->host;
-            $providerData['username'] = $provider->Iax->username;
+        // Set custom default order: type first, then note (escaped)
+        $defaultOrder = 'type ASC, [note] ASC';
+        
+        // If no ordering requested, set empty requestParams to avoid applyOrdering interference
+        if (!isset($requestParams['order_by']) && !isset($requestParams['order'])) {
+            $requestParams = [];
         }
         
-        // Skip disabled providers if not including them
-        if (!$includeDisabled && $providerData['disabled']) {
-            return null;
-        }
-        
-        return $providerData;
+        // Use standard list execution with custom ordering
+        return self::executeStandardList(
+            Providers::class,
+            DataStructure::class,
+            $requestParams,
+            ['order' => $defaultOrder], // Set base query order
+            false, // Use createForList for performance
+            $allowedOrderFields,
+            $searchableFields,
+            $recordFilter,
+            $defaultOrder
+        );
     }
 }

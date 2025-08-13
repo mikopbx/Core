@@ -1,0 +1,45 @@
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
+/* Styles for disabled providers */
+#providers-table tbody tr.disabled-provider {
+    opacity: 0.7;
+}
+
+/* Apply disabled text style to data cells only (not checkbox column and actions column) */
+#providers-table tbody tr.disabled-provider td:not(:first-child):not(:last-child) {
+    color: rgba(0, 0, 0, 0.4);
+}
+
+/* Keep checkbox and action buttons fully opaque and functional */
+#providers-table tbody tr.disabled-provider td:first-child,
+#providers-table tbody tr.disabled-provider td:last-child {
+    opacity: 1;
+}
+
+/* Ensure buttons in action column remain clickable */
+#providers-table tbody tr.disabled-provider td:last-child a {
+    pointer-events: auto;
+    opacity: 1;
+}
+
+/* Ensure checkbox remains clickable */
+#providers-table tbody tr.disabled-provider td:first-child .checkbox {
+    pointer-events: auto;
+    opacity: 1;
+}

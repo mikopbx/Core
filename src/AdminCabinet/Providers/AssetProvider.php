@@ -530,32 +530,57 @@ class AssetProvider implements ServiceProviderInterface
      */
     private function makeProvidersAssets(string $action): void
     {
+        $this->footerCollectionJS
+            ->addJs('js/pbx/main/debugger-info.js', true);
+
         if ($action === 'index') {
             $this->semanticCollectionCSS
                 ->addCss('css/vendor/datatable/dataTables.semanticui.css', true)
                 ->addCss('css/vendor/semantic/modal.min.css', true);
+            
+            $this->headerCollectionCSS
+                ->addCss('css/Providers/index.css', true);
 
             $this->semanticCollectionJS
                 ->addJs('js/vendor/semantic/modal.min.js', true);
             $this->footerCollectionJS
-                ->addJs('js/pbx/main/debugger-info.js', true)
+                
                 ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
+                ->addJs('js/pbx/main/PbxDataTableIndex.js', true)
                 ->addJs('js/pbx/Providers/provider-status-monitor.js', true)
                 ->addJs('js/pbx/Providers/providers-index.js', true);
-        } elseif ($action === 'modifysip' || $action === 'modifyiax') {
+        } elseif ($action === 'modifysip') {
+                 $this->semanticCollectionCSS
+                    ->addCss('css/vendor/semantic/progress.min.css', true)
+                    ->addCss('css/vendor/semantic/statistic.min.css', true);
+                 $this->footerCollectionJS
+                 ->addJs('js/pbx/main/form.js', true)
+                 ->addJs('js/vendor/semantic/progress.min.js', true)
+                 ->addJs('js/pbx/main/password-score.js', true)
+                 ->addJs('js/pbx/main/TooltipBuilder.js', true)
+                 ->addJs('js/vendor/clipboard/clipboard.js', true)
+                 ->addJs('js/pbx/PbxAPI/networkFiltersAPI.js', true)
+                 ->addJs('js/pbx/Providers/provider-base-modify.js', true)
+                 ->addJs('js/pbx/Providers/provider-tooltip-manager.js', true)
+                 ->addJs('js/pbx/Providers/provider-sip-tooltip-manager.js', true)
+                 ->addJs('js/pbx/Providers/provider-sip-modify.js', true)
+                 ->addJs('js/pbx/Providers/provider-modify-status-worker.js', true);
+        } elseif ($action === 'modifyiax') {
+            $this->semanticCollectionCSS
+                ->addCss('css/vendor/semantic/progress.min.css', true)
+                ->addCss('css/vendor/semantic/statistic.min.css', true);
             $this->footerCollectionJS
                 ->addJs('js/pbx/main/form.js', true)
-                ->addJs('js/pbx/main/debugger-info.js', true)
+                ->addJs('js/vendor/semantic/progress.min.js', true)
+                ->addJs('js/pbx/main/password-score.js', true)
+                ->addJs('js/pbx/main/TooltipBuilder.js', true)
                 ->addJs('js/vendor/clipboard/clipboard.js', true)
-                ->addJs('js/pbx/Providers/provider-modify-status-worker.js', true)
-                ->addJs('js/pbx/Providers/provider-base-modify.js', true);
-                
-            // Load specific provider type JavaScript
-            if ($action === 'modifysip') {
-                $this->footerCollectionJS->addJs('js/pbx/Providers/provider-sip-modify.js', true);
-            } else {
-                $this->footerCollectionJS->addJs('js/pbx/Providers/provider-iax-modify.js', true);
-            }
+                ->addJs('js/pbx/PbxAPI/networkFiltersAPI.js', true)
+                ->addJs('js/pbx/Providers/provider-base-modify.js', true)
+                ->addJs('js/pbx/Providers/provider-tooltip-manager.js', true)
+                ->addJs('js/pbx/Providers/provider-iax-tooltip-manager.js', true)
+                ->addJs('js/pbx/Providers/provider-iax-modify.js', true)
+                ->addJs('js/pbx/Providers/provider-modify-status-worker.js', true);
         }
     }
 
@@ -759,11 +784,9 @@ class AssetProvider implements ServiceProviderInterface
     {
         if ($action === 'modify') {
             $this->semanticCollectionCSS
-                ->addCss('css/vendor/semantic/slider.min.css', true)
                 ->addCss('css/vendor/semantic/progress.min.css', true)
                 ->addCss('css/vendor/semantic/modal.min.css', true);
             $this->semanticCollectionJS
-                ->addJs('js/vendor/semantic/slider.min.js', true)
                 ->addJs('js/vendor/semantic/progress.min.js', true)
                 ->addJs('js/vendor/semantic/modal.min.js', true);
 

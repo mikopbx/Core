@@ -51,8 +51,10 @@ class PbxDataTableIndex {
      * @param {Function} [config.onDrawCallback] - Callback after table draw
      * @param {Function} [config.onPermissionsLoaded] - Callback after permissions loaded
      * @param {Function} [config.customDeleteHandler] - Custom delete handler
+     * @param {Function} [config.getModifyUrl] - Custom URL generator for modify/edit actions
      * @param {boolean} [config.orderable=true] - Enable/disable sorting for all columns
      * @param {Array} [config.order=[[0, 'asc']]] - Default sort order
+     * @param {Object} [config.ajaxData] - Additional data parameters for AJAX requests
      */
     constructor(config) {
         // Core configuration
@@ -98,6 +100,8 @@ class PbxDataTableIndex {
         this.onDrawCallback = config.onDrawCallback;
         this.onPermissionsLoaded = config.onPermissionsLoaded;
         this.customDeleteHandler = config.customDeleteHandler;
+        this.getModifyUrl = config.getModifyUrl;
+        this.ajaxData = config.ajaxData || {};
     }
     
     /**
@@ -161,6 +165,7 @@ class PbxDataTableIndex {
             ajax: {
                 url: this.apiModule.endpoints.getList,
                 type: 'GET',
+                data: this.ajaxData,
                 dataSrc: (json) => this.handleDataLoad(json),
                 error: (xhr, error, thrown) => {
                     this.hideLoader();
@@ -229,8 +234,14 @@ class PbxDataTableIndex {
                 // Edit button
                 if (this.actionButtons.includes('edit') && 
                     (this.permissions.modify || this.permissions.edit)) {
+                    
+                    // Use custom getModifyUrl if provided, otherwise use default
+                    const modifyUrl = this.getModifyUrl ? 
+                        this.getModifyUrl(recordId) : 
+                        `${globalRootUrl}${this.routePrefix}/modify/${recordId}`;
+                    
                     buttons.push(`
-                        <a href="${globalRootUrl}${this.routePrefix}/modify/${recordId}" 
+                        <a href="${modifyUrl}" 
                            class="ui button edit popuped" 
                            data-content="${globalTranslate.bt_ToolTipEdit}">
                             <i class="icon edit blue"></i>
@@ -517,7 +528,11 @@ class PbxDataTableIndex {
             // Get the record ID - check for both uniqid and id fields
             const recordId = data && (data.uniqid || data.id);
             if (recordId && (this.permissions.modify || this.permissions.edit)) {
-                window.location = `${globalRootUrl}${this.routePrefix}/modify/${recordId}`;
+                // Use custom getModifyUrl if provided, otherwise use default
+                const modifyUrl = this.getModifyUrl ? 
+                    this.getModifyUrl(recordId) : 
+                    `${globalRootUrl}${this.routePrefix}/modify/${recordId}`;
+                window.location = modifyUrl;
             }
         });
     }

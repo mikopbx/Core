@@ -98,7 +98,7 @@ class Providers extends ModelsBase
                 'foreignKey' => [
                     'allowNulls' => false,
                     'action' => Relation::NO_ACTION,
-                    // This account will be automatically deleted if the SIP record is deleted
+                    // Provider is deleted automatically when SIP record is deleted (reverse cascade)
                 ],
             ]
         );
@@ -113,7 +113,7 @@ class Providers extends ModelsBase
                 'foreignKey' => [
                     'allowNulls' => false,
                     'action' => Relation::NO_ACTION,
-                    // This account will be automatically deleted if the IAX record is deleted
+                    // Provider is deleted automatically when IAX record is deleted (reverse cascade)
                 ],
             ]
         );
@@ -128,7 +128,7 @@ class Providers extends ModelsBase
                 'foreignKey' => [
                     'allowNulls' => false,
                     'message' => 'OutgoingRouting',
-                    'action' => Relation::ACTION_CASCADE,
+                    'action' => Relation::ACTION_CASCADE, // Automatically delete routes when provider is deleted
                 ],
                 'params' => [
                     'order' => 'priority asc',
@@ -146,7 +146,7 @@ class Providers extends ModelsBase
                 'foreignKey' => [
                     'allowNulls' => true,
                     'message' => 'IncomingRouting',
-                    'action' => Relation::NO_ACTION,
+                    'action' => Relation::ACTION_CASCADE, // Automatically delete routes when provider is deleted
                 ],
                 'params' => [
                     'order' => 'priority asc',

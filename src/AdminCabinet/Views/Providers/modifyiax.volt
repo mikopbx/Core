@@ -1,11 +1,23 @@
 <div class="ui grey top right attached label" id="status"><i
             class="spinner loading icon"></i>{{ t._("pr_UpdateStatus") }}</div>
+
+<!-- Tab menu -->
+<div class="ui top attached tabular menu" id="provider-tabs-menu">
+    <a class="item active" data-tab="settings">
+        <i class="settings icon"></i> {{ t._('pr_Settings') }}
+    </a>
+    <a class="item" data-tab="diagnostics">
+        <i class="heartbeat icon"></i> {{ t._('pr_Diagnostics') }}
+    </a>
+</div>
+
+<!-- Settings tab -->
+<div class="ui bottom attached tab segment active" data-tab="settings">
 {{ form(['action' : 'providers/save/iax', 'method': 'post', 'role': 'form', 'class': 'ui large form ', 'id':'save-provider-form']) }}
 {{ form.render('id') }}
-{{ form.render('uniqid') }}
 {{ form.render('type') }}
 {{ form.render('disabled') }}
-{{ form.render('providerType') }}
+<input type="hidden" id="providerType" value="IAX" />
 
 
 <div class="required field max-width-500">
@@ -36,7 +48,11 @@
 </div>
 
 <div id='elSecret' class="field max-width-500">
-    <label for="secret"><span id="secretLabelText">{{ t._('pr_ProviderPassword') }}</span></label>
+    <label for="secret">
+        <span id="secretLabelText">{{ t._('pr_ProviderPassword') }}</span>
+        <i class="small info circle icon field-info-icon password-tooltip-icon" 
+           data-field="provider_password" style="display: none;"></i>
+    </label>
     <div class="ui action input">
         {{ form.render('secret') }}
         <div class="ui tiny basic icon left attached buttons ">
@@ -84,7 +100,7 @@
         <h4 class="ui dividing header ">{{ t._('pr_SecuritySettings') }}</h4>
         
         <div id='elReceiveCalls' class="field">
-            <div class="ui toggle checkbox" id="receive_calls_without_auth">
+            <div class="ui toggle checkbox">
                 {{ form.render('receive_calls_without_auth') }}
                 <label>
                     {{ t._('pr_ReceiveCallsWithoutAuth') }}
@@ -124,3 +140,19 @@
 </div>
 {{ partial("partials/submitbutton",['indexurl':'providers/index/']) }}
 {{ close('form') }}
+</div>
+
+<!-- Diagnostics tab -->
+<div class="ui bottom attached tab segment" data-tab="diagnostics">
+    {{ partial("Providers/partials/diagnostics-tab") }}
+</div>
+
+<script type="text/javascript">
+// Create global instance of ProviderIAX
+let providerIAX;
+
+$(document).ready(function() {
+    providerIAX = new ProviderIAX();
+    providerIAX.initialize();
+});
+</script>

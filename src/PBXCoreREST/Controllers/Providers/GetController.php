@@ -33,11 +33,24 @@ class GetController extends BaseController
      * Calls the action handler based on the provided REST API action name
      *
      * @param string $actionName The name of the REST API action.
+     * @param string|null $type Provider type (SIP/IAX) from URL path
+     * @param string|null $id Provider ID from URL path 
      *
      * @return void
      */
-    public function callAction(string $actionName): void
+    public function callAction(string $actionName, ?string $type = null, ?string $id = null): void
     {
-        $this->sendRequestToBackendWorker(ProvidersManagementProcessor::class, $actionName, $_REQUEST);
+        // Get all request parameters (GET, POST, etc.)
+        $requestData = $this->request->get();
+        
+        // Add path parameters if provided
+        if (!empty($type)) {
+            $requestData['type'] = $type;
+        }
+        if (!empty($id)) {
+            $requestData['id'] = $id;
+        }
+        
+        $this->sendRequestToBackendWorker(ProvidersManagementProcessor::class, $actionName, $requestData);
     }
 }

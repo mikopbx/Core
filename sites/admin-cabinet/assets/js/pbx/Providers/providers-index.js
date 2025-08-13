@@ -1,8 +1,6 @@
-"use strict";
-
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,141 +16,330 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, SemanticLocalization, ProviderStatusMonitor */
+/* global globalRootUrl, globalTranslate, ProvidersAPI, SecurityUtils, SemanticLocalization, PbxDataTableIndex, UserMessage, ProviderStatusMonitor */
 
 /**
- * Object for handling providers table
+ * Object for managing providers table
  *
  * @module providers
  */
-var providers = {
-  $deleteModalForm: $('#delete-modal-form'),
-  $providersTable: $('#providers-table'),
+const providers = {
+    /**
+     * DataTable instance from base class
+     */
+    dataTableInstance: null,
 
-  /**
-   * Initializes the providers page.
-   */
-  initialize: function initialize() {
-    providers.$deleteModalForm.modal(); // Enable/disable provider checkbox handlers
+    /**
+     * Delete modal form
+     */
+    $deleteModalForm: $('#delete-modal-form'),
 
-    $('.provider-row .checkbox').checkbox({
-      onChecked: function onChecked() {
-        var uniqid = $(this).closest('tr').attr('id');
-        $.api({
-          url: "".concat(globalRootUrl, "providers/enable/{type}/{uniqid}"),
-          on: 'now',
-          urlData: {
-            type: $(this).closest('tr').attr('data-value'),
-            uniqid: uniqid
-          },
-          onSuccess: function onSuccess(response) {
-            if (response.success) {
-              $("#".concat(uniqid, " .disability")).removeClass('disabled');
+    /**
+     * Initialize the object
+     */
+    initialize() {
+        // Initialize delete modal
+        providers.$deleteModalForm.modal();
+        
+        // Initialize the providers table with REST API
+        this.initializeDataTable();
+    },
+    
+    /**
+     * Initialize DataTable using base class
+     */
+    initializeDataTable() {
+        // Create instance of base class with Providers specific configuration
+        this.dataTableInstance = new PbxDataTableIndex({
+            tableId: 'providers-table',
+            apiModule: ProvidersAPI,
+            routePrefix: 'providers',
+            showSuccessMessages: false,
+            actionButtons: ['edit', 'delete'], // No copy button for providers
+            ajaxData: {
+                includeDisabled: 'true'  // Always include disabled providers in admin panel
+            },
+            translations: {
+                deleteError: globalTranslate.pr_ImpossibleToDeleteProvider
+            },
+            onDataLoaded: this.onDataLoaded.bind(this),
+            onDrawCallback: this.onDrawCallback.bind(this),
+            order: [[0, 'asc']], // Default sorting by status (enabled first)
+            columns: [
+                {
+                    // Enable/disable checkbox column
+                    data: 'disabled',
+                    orderable: true,
+                    searchable: false,
+                    className: 'collapsing',
+                    render(data, type, row) {
+                        if (type === 'sort' || type === 'type') {
+                            // Return 0 for enabled, 1 for disabled for sorting
+                            return row.disabled ? 1 : 0;
+                        }
+                        const checked = !row.disabled ? 'checked' : '';
+                        return `
+                            <div class="ui fitted toggle checkbox">
+                                <input type="checkbox" ${checked} />
+                                <label></label>
+                            </div>
+                        `;
+                    }
+                },
+                {
+                    // Status column
+                    data: null,
+                    orderable: false,
+                    searchable: false,
+                    className: 'center aligned collapsing provider-status',
+                    render() {
+                        return '<i class="spinner loading icon"></i>';
+                    }
+                },
+                {
+                    // Provider name column - display what comes from server
+                    data: 'represent',
+                    className: 'collapsing',
+                    render(data, type, row) {
+                        if (type === 'display') {
+                            // Use SecurityUtils.sanitizeExtensionsApiContent to allow safe HTML rendering
+                            const safeRepresentation = window.SecurityUtils.sanitizeExtensionsApiContent(data || '');
+                            
+                            return `<span>${safeRepresentation}</span><br><span class="features failure"></span>`;
+                        }
+                        
+                        // For search and other operations, return plain text
+                        return [data, row.note, row.type].filter(Boolean).join(' ');
+                    }
+                },
+                {
+                    // Host column
+                    data: 'host',
+                    render(data) {
+                        const host = window.SecurityUtils.escapeHtml(data || '');
+                        return `<span>${host}</span>`;
+                    }
+                },
+                {
+                    // Username column
+                    data: 'username',
+                    className: 'hide-on-mobile',
+                    render(data) {
+                        const username = window.SecurityUtils.escapeHtml(data || '');
+                        return `<span>${username}</span>`;
+                    }
+                }
+            ],
+            // Custom URL generator for modify/edit actions
+            getModifyUrl(recordId) {
+                const data = this.dataTable.rows().data().toArray();
+                const record = data.find(r => r.id === recordId);
+                if (record) {
+                    const type = record.type.toLowerCase();
+                    return `${globalRootUrl}providers/modify${type}/${recordId}`;
+                }
+                return null;
             }
-          }
         });
-      },
-      onUnchecked: function onUnchecked() {
-        var uniqid = $(this).closest('tr').attr('id');
-        $.api({
-          url: "".concat(globalRootUrl, "providers/disable/{type}/{uniqid}"),
-          on: 'now',
-          urlData: {
-            type: $(this).closest('tr').attr('data-value'),
-            uniqid: uniqid
-          },
-          onSuccess: function onSuccess(response) {
-            if (response.success) {
-              $("#".concat(uniqid, " .disability")).addClass('disabled');
+        
+        // Initialize the base class
+        this.dataTableInstance.initialize();
+        
+        // Initialize provider status monitor if available
+        if (typeof ProviderStatusMonitor !== 'undefined') {
+            ProviderStatusMonitor.initialize();
+            // Request initial status after table loads
+            setTimeout(() => {
+                this.requestInitialStatus();
+            }, 500);
+        }
+    },
+    
+    /**
+     * Callback when data is loaded
+     * @param {Object} response - The API response
+     */
+    onDataLoaded(response) {
+        // Extract data from response
+        const data = response.data || [];
+        const hasProviders = data.length > 0;
+        
+        if (hasProviders) {
+            // Show table and buttons
+            $('#providers-table-container').show();
+            $('#add-buttons-group').show();
+            $('#empty-table-placeholder').hide();
+        } else {
+            // Show empty placeholder
+            $('#providers-table-container').hide();
+            $('#add-buttons-group').hide();
+            $('#empty-table-placeholder').show();
+        }
+    },
+    
+    /**
+     * Callback after table draw is complete
+     */
+    onDrawCallback() {
+        // Move add buttons group to DataTables wrapper (next to search)
+        const $addButtonsGroup = $('#add-buttons-group');
+        const $wrapper = $('#providers-table_wrapper');
+        const $leftColumn = $wrapper.find('.eight.wide.column').first();
+        
+        if ($addButtonsGroup.length && $leftColumn.length) {
+            $leftColumn.append($addButtonsGroup);
+            // Show buttons only if table has data
+            const hasData = $('#providers-table').DataTable().data().any();
+            if (hasData) {
+                $addButtonsGroup.show();
             }
-          }
+        }
+        
+        // Add row data attributes for each provider
+        $('#providers-table tbody tr').each(function() {
+            const data = $('#providers-table').DataTable().row(this).data();
+            if (data) {
+                $(this).attr('id', data.id);
+                $(this).attr('data-value', 'modify' + data.type.toLowerCase());
+                $(this).attr('data-links', data.links || 'false');
+                $(this).addClass('provider-row');
+                
+                // Add disability class to specific cells if provider is disabled
+                if (data.disabled) {
+                    // Add disability and disabled classes to data cells (not checkbox and actions)
+                    $(this).find('td').each(function(index) {
+                        const $td = $(this);
+                        const totalColumns = $(this).parent().find('td').length;
+                        // Skip first column (checkbox) and last column (actions)
+                        if (index > 0 && index < totalColumns - 1) {
+                            $td.addClass('disability disabled');
+                        }
+                    });
+                }
+            }
         });
-      }
-    }); // Double-click provider row handler
-
-    $('.provider-row td').on('dblclick', function (e) {
-      var id = $(e.target).closest('tr').attr('id');
-      var type = $(e.target).closest('tr').attr('data-value');
-      window.location = "".concat(globalRootUrl, "providers/modify").concat(type, "/").concat(id);
-    }); // Delete provider link handler
-
-    $('body').on('click', '.provider-row a.delete', function (e) {
-      e.preventDefault();
-      var linksExist = $(e.target).closest('tr').attr('data-links');
-
-      if (linksExist === 'true') {
-        providers.$deleteModalForm.modal({
-          closable: false,
-          onDeny: function onDeny() {
-            return true;
-          },
-          onApprove: function onApprove() {
-            window.location = $(e.target).closest('a').attr('href');
-            return true;
-          }
-        }).modal('show');
-      } else {
-        window.location = $(e.target).closest('a').attr('href');
-      }
-    });
-    providers.initializeDataTable(); // Initialize provider status monitor
-
-    if (typeof ProviderStatusMonitor !== 'undefined') {
-      ProviderStatusMonitor.initialize(); // Request initial status update
-
-      providers.requestInitialStatus();
+        
+        // Initialize enable/disable checkboxes
+        this.initializeCheckboxes();
+        
+        // Override delete handler to check for links
+        $('.provider-row a.delete').off('click').on('click', (e) => {
+            e.preventDefault();
+            const providerId = $(e.target).closest('a').attr('data-value');
+            const linksExist = $(e.target).closest('tr').attr('data-links');
+            
+            if (linksExist === 'true') {
+                providers.$deleteModalForm
+                    .modal({
+                        closable: false,
+                        onDeny: () => true,
+                        onApprove: () => {
+                            providers.deleteProvider(providerId);
+                            return true;
+                        },
+                    })
+                    .modal('show');
+            } else {
+                providers.deleteProvider(providerId);
+            }
+        });
+    },
+    
+    /**
+     * Initialize enable/disable checkboxes
+     */
+    initializeCheckboxes() {
+        $('.provider-row .checkbox')
+            .checkbox({
+                onChecked() {
+                    const providerId = $(this).closest('tr').attr('id');
+                    const type = $(this).closest('tr').attr('data-value');
+                    
+                    // Build data object - extract actual type from data-value (remove 'modify' prefix)
+                    const actualType = type.replace(/^modify/i, '').toUpperCase();
+                    const data = {
+                        id: providerId,
+                        type: actualType,
+                        disabled: false
+                    };
+                    
+                    // Use REST API to update (will be detected as status-only update)
+                    ProvidersAPI.saveRecord(data, (response) => {
+                        if (response.result) {
+                            // Remove disability classes from cells
+                            $(`#${providerId} td`).removeClass('disability disabled');
+                        } else {
+                            // Revert checkbox
+                            $(this).checkbox('set unchecked');
+                            UserMessage.showMultiString(response.messages);
+                        }
+                    });
+                },
+                onUnchecked() {
+                    const providerId = $(this).closest('tr').attr('id');
+                    const type = $(this).closest('tr').attr('data-value');
+                    
+                    // Build data object - extract actual type from data-value (remove 'modify' prefix)
+                    const actualType = type.replace(/^modify/i, '').toUpperCase();
+                    const data = {
+                        id: providerId,
+                        type: actualType,
+                        disabled: true
+                    };
+                    
+                    // Use REST API to update (will be detected as status-only update)
+                    ProvidersAPI.saveRecord(data, (response) => {
+                        if (response.result) {
+                            // Add disability and disabled classes to data cells
+                            $(`#${providerId} td`).each(function(index) {
+                                const totalColumns = $(`#${providerId} td`).length;
+                                // Skip first column (checkbox) and last column (actions)
+                                if (index > 0 && index < totalColumns - 1) {
+                                    $(this).addClass('disability disabled');
+                                }
+                            });
+                        } else {
+                            // Revert checkbox
+                            $(this).checkbox('set checked');
+                            UserMessage.showMultiString(response.messages);
+                        }
+                    });
+                }
+            });
+    },
+    
+    /**
+     * Delete provider using REST API
+     * 
+     * @param {string} providerId - Provider ID to delete
+     */
+    deleteProvider(providerId) {
+        ProvidersAPI.deleteRecord(providerId, (response) => {
+            if (response.result) {
+                // Reload table data
+                this.dataTableInstance.dataTable.ajax.reload();
+            } else {
+                UserMessage.showMultiString(response.messages);
+            }
+        });
+    },
+    
+    /**
+     * Request initial provider status on page load
+     */
+    requestInitialStatus() {
+        ProvidersAPI.getStatuses((response) => {
+            // Manually trigger status update
+            if (response && response.data && typeof ProviderStatusMonitor !== 'undefined') {
+                ProviderStatusMonitor.updateAllProviderStatuses(response.data);
+            }
+        });
     }
-  },
-
-  /**
-   * Request initial provider status on page load
-   */
-  requestInitialStatus: function requestInitialStatus() {
-    $.api({
-      url: '/pbxcore/api/providers/getStatuses',
-      on: 'now',
-      onSuccess: function onSuccess(response) {
-        // Manually trigger status update
-        if (response && response.data && typeof ProviderStatusMonitor !== 'undefined') {
-          ProviderStatusMonitor.updateAllProviderStatuses(response.data);
-        }
-      },
-      onFailure: function onFailure() {
-        console.error('Failed to request initial provider status');
-      }
-    });
-  },
-
-  /**
-   * Initializes the DataTable for the providers table.
-   */
-  initializeDataTable: function initializeDataTable() {
-    providers.$providersTable.DataTable({
-      lengthChange: false,
-      paging: false,
-      columns: [null, null, {
-        render: function render(data) {
-          return data.length > 60 ? data.substr(0, 60) + " ..." : data;
-        }
-      }, {
-        "width": "0"
-      }, null, null, {
-        orderable: false,
-        searchable: false
-      }],
-      autoWidth: false,
-      order: [1, 'asc'],
-      language: SemanticLocalization.dataTableLocalisation
-    }); // Move the "Add New" button to the first eight-column div
-
-    $('.add-new-button').appendTo($('div.eight.column:eq(0)'));
-  }
 };
-/**
- *  Initialize providers table on document ready
- */
 
-$(document).ready(function () {
-  providers.initialize();
+/**
+ * Initialize providers on document ready
+ */
+$(document).ready(() => {
+    providers.initialize();
 });
-//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9Qcm92aWRlcnMvcHJvdmlkZXJzLWluZGV4LmpzIl0sIm5hbWVzIjpbInByb3ZpZGVycyIsIiRkZWxldGVNb2RhbEZvcm0iLCIkIiwiJHByb3ZpZGVyc1RhYmxlIiwiaW5pdGlhbGl6ZSIsIm1vZGFsIiwiY2hlY2tib3giLCJvbkNoZWNrZWQiLCJ1bmlxaWQiLCJjbG9zZXN0IiwiYXR0ciIsImFwaSIsInVybCIsImdsb2JhbFJvb3RVcmwiLCJvbiIsInVybERhdGEiLCJ0eXBlIiwib25TdWNjZXNzIiwicmVzcG9uc2UiLCJzdWNjZXNzIiwicmVtb3ZlQ2xhc3MiLCJvblVuY2hlY2tlZCIsImFkZENsYXNzIiwiZSIsImlkIiwidGFyZ2V0Iiwid2luZG93IiwibG9jYXRpb24iLCJwcmV2ZW50RGVmYXVsdCIsImxpbmtzRXhpc3QiLCJjbG9zYWJsZSIsIm9uRGVueSIsIm9uQXBwcm92ZSIsImluaXRpYWxpemVEYXRhVGFibGUiLCJQcm92aWRlclN0YXR1c01vbml0b3IiLCJyZXF1ZXN0SW5pdGlhbFN0YXR1cyIsImRhdGEiLCJ1cGRhdGVBbGxQcm92aWRlclN0YXR1c2VzIiwib25GYWlsdXJlIiwiY29uc29sZSIsImVycm9yIiwiRGF0YVRhYmxlIiwibGVuZ3RoQ2hhbmdlIiwicGFnaW5nIiwiY29sdW1ucyIsInJlbmRlciIsImxlbmd0aCIsInN1YnN0ciIsIm9yZGVyYWJsZSIsInNlYXJjaGFibGUiLCJhdXRvV2lkdGgiLCJvcmRlciIsImxhbmd1YWdlIiwiU2VtYW50aWNMb2NhbGl6YXRpb24iLCJkYXRhVGFibGVMb2NhbGlzYXRpb24iLCJhcHBlbmRUbyIsImRvY3VtZW50IiwicmVhZHkiXSwibWFwcGluZ3MiOiI7O0FBQUE7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTs7QUFFQTs7QUFHQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0EsSUFB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QjtBQWtCaENDLE1BQUFBLFFBQVEsRUFBRUMsb0JBQW9CLENBQUNDO0FBbEJDLEtBQXBDLEVBRGtCLENBc0JsQjs7QUFDQXBELElBQUFBLENBQUMsQ0FBQyxpQkFBRCxDQUFELENBQXFCcUQsUUFBckIsQ0FBOEJyRCxDQUFDLENBQUMsd0JBQUQsQ0FBL0I7QUFDSDtBQXJJYSxDQUFsQjtBQXdJQTtBQUNBO0FBQ0E7O0FBQ0FBLENBQUMsQ0FBQ3NELFFBQUQsQ0FBRCxDQUFZQyxLQUFaLENBQWtCLFlBQU07QUFDcEJ6RCxFQUFBQSxTQUFTLENBQUNJLFVBQVY7QUFDSCxDQUZEIiwic291cmNlc0NvbnRlbnQiOlsiLypcbiAqIE1pa29QQlggLSBmcmVlIHBob25lIHN5c3RlbSBmb3Igc21hbGwgYnVzaW5lc3NcbiAqIENvcHlyaWdodCDCqSAyMDE3LTIwMjMgQWxleGV5IFBvcnRub3YgYW5kIE5pa29sYXkgQmVrZXRvdlxuICpcbiAqIFRoaXMgcHJvZ3JhbSBpcyBmcmVlIHNvZnR3YXJlOiB5b3UgY2FuIHJlZGlzdHJpYnV0ZSBpdCBhbmQvb3IgbW9kaWZ5XG4gKiBpdCB1bmRlciB0aGUgdGVybXMgb2YgdGhlIEdOVSBHZW5lcmFsIFB1YmxpYyBMaWNlbnNlIGFzIHB1Ymxpc2hlZCBieVxuICogdGhlIEZyZWUgU29mdHdhcmUgRm91bmRhdGlvbjsgZWl0aGVyIHZlcnNpb24gMyBvZiB0aGUgTGljZW5zZSwgb3JcbiAqIChhdCB5b3VyIG9wdGlvbikgYW55IGxhdGVyIHZlcnNpb24uXG4gKlxuICogVGhpcyBwcm9ncmFtIGlzIGRpc3RyaWJ1dGVkIGluIHRoZSBob3BlIHRoYXQgaXQgd2lsbCBiZSB1c2VmdWwsXG4gKiBidXQgV0lUSE9VVCBBTlkgV0FSUkFOVFk7IHdpdGhvdXQgZXZlbiB0aGUgaW1wbGllZCB3YXJyYW50eSBvZlxuICogTUVSQ0hBTlRBQklMSVRZIG9yIEZJVE5FU1MgRk9SIEEgUEFSVElDVUxBUiBQVVJQT1NFLiAgU2VlIHRoZVxuICogR05VIEdlbmVyYWwgUHVibGljIExpY2Vuc2UgZm9yIG1vcmUgZGV0YWlscy5cbiAqXG4gKiBZb3Ugc2hvdWxkIGhhdmUgcmVjZWl2ZWQgYSBjb3B5IG9mIHRoZSBHTlUgR2VuZXJhbCBQdWJsaWMgTGljZW5zZSBhbG9uZyB3aXRoIHRoaXMgcHJvZ3JhbS5cbiAqIElmIG5vdCwgc2VlIDxodHRwczovL3d3dy5nbnUub3JnL2xpY2Vuc2VzLz4uXG4gKi9cblxuLyogZ2xvYmFsIGdsb2JhbFJvb3RVcmwsIFNlbWFudGljTG9jYWxpemF0aW9uLCBQcm92aWRlclN0YXR1c01vbml0b3IgKi9cblxuXG4vKipcbiAqIE9iamVjdCBmb3IgaGFuZGxpbmcgcHJvdmlkZXJzIHRhYmxlXG4gKlxuICogQG1vZHVsZSBwcm92aWRlcnNcbiAqL1xuY29uc3QgcHJvdmlkZXJzID0ge1xuXG4gICAgJGRlbGV0ZU1vZGFsRm9ybTogJCgnI2RlbGV0ZS1tb2RhbC1mb3JtJyksXG4gICAgJHByb3ZpZGVyc1RhYmxlOiAkKCcjcHJvdmlkZXJzLXRhYmxlJyksXG5cbiAgICAvKipcbiAgICAgKiBJbml0aWFsaXplcyB0aGUgcHJvdmlkZXJzIHBhZ2UuXG4gICAgICovXG4gICAgaW5pdGlhbGl6ZSgpIHtcbiAgICAgICAgcHJvdmlkZXJzLiRkZWxldGVNb2RhbEZvcm0ubW9kYWwoKTtcblxuICAgICAgICAvLyBFbmFibGUvZGlzYWJsZSBwcm92aWRlciBjaGVja2JveCBoYW5kbGVyc1xuICAgICAgICAkKCcucHJvdmlkZXItcm93IC5jaGVja2JveCcpXG4gICAgICAgICAgICAuY2hlY2tib3goe1xuICAgICAgICAgICAgICAgIG9uQ2hlY2tlZCgpIHtcbiAgICAgICAgICAgICAgICAgICAgY29uc3QgdW5pcWlkID0gJCh0aGlzKS5jbG9zZXN0KCd0cicpLmF0dHIoJ2lkJyk7XG4gICAgICAgICAgICAgICAgICAgICQuYXBpKHtcbiAgICAgICAgICAgICAgICAgICAgICAgIHVybDogYCR7Z2xvYmFsUm9vdFVybH1wcm92aWRlcnMvZW5hYmxlL3t0eXBlfS97dW5pcWlkfWAsXG4gICAgICAgICAgICAgICAgICAgICAgICBvbjogJ25vdycsXG4gICAgICAgICAgICAgICAgICAgICAgICB1cmxEYXRhOiB7XG4gICAgICAgICAgICAgICAgICAgICAgICAgICAgdHlwZTogJCh0aGlzKS5jbG9zZXN0KCd0cicpLmF0dHIoJ2RhdGEtdmFsdWUnKSxcbiAgICAgICAgICAgICAgICAgICAgICAgICAgICB1bmlxaWQsXG4gICAgICAgICAgICAgICAgICAgICAgICB9LFxuICAgICAgICAgICAgICAgICAgICAgICAgb25TdWNjZXNzKHJlc3BvbnNlKSB7XG4gICAgICAgICAgICAgICAgICAgICAgICAgICAgaWYgKHJlc3BvbnNlLnN1Y2Nlc3MpIHtcbiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgJChgIyR7dW5pcWlkfSAuZGlzYWJpbGl0eWApLnJlbW92ZUNsYXNzKCdkaXNhYmxlZCcpO1xuICAgICAgICAgICAgICAgICAgICAgICAgICAgIH1cbiAgICAgICAgICAgICAgICAgICAgICAgIH0sXG5cbiAgICAgICAgICAgICAgICAgICAgfSk7XG4gICAgICAgICAgICAgICAgfSxcbiAgICAgICAgICAgICAgICBvblVuY2hlY2tlZCgpIHtcbiAgICAgICAgICAgICAgICAgICAgY29uc3QgdW5pcWlkID0gJCh0aGlzKS5jbG9zZXN0KCd0cicpLmF0dHIoJ2lkJyk7XG4gICAgICAgICAgICAgICAgICAgICQuYXBpKHtcbiAgICAgICAgICAgICAgICAgICAgICAgIHVybDogYCR7Z2xvYmFsUm9vdFVybH1wcm92aWRlcnMvZGlzYWJsZS97dHlwZX0ve3VuaXFpZH1gLFxuICAgICAgICAgICAgICAgICAgICAgICAgb246ICdub3cnLFxuICAgICAgICAgICAgICAgICAgICAgICAgdXJsRGF0YToge1xuICAgICAgICAgICAgICAgICAgICAgICAgICAgIHR5cGU6ICQodGhpcykuY2xvc2VzdCgndHInKS5hdHRyKCdkYXRhLXZhbHVlJyksXG4gICAgICAgICAgICAgICAgICAgICAgICAgICAgdW5pcWlkLFxuICAgICAgICAgICAgICAgICAgICAgICAgfSxcbiAgICAgICAgICAgICAgICAgICAgICAgIG9uU3VjY2VzcyhyZXNwb25zZSkge1xuICAgICAgICAgICAgICAgICAgICAgICAgICAgIGlmIChyZXNwb25zZS5zdWNjZXNzKSB7XG4gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICQoYCMke3VuaXFpZH0gLmRpc2FiaWxpdHlgKS5hZGRDbGFzcygnZGlzYWJsZWQnKTtcbiAgICAgICAgICAgICAgICAgICAgICAgICAgICB9XG4gICAgICAgICAgICAgICAgICAgICAgICB9LFxuXG4gICAgICAgICAgICAgICAgICAgIH0pO1xuICAgICAgICAgICAgICAgIH0sXG4gICAgICAgICAgICB9KTtcblxuICAgICAgICAvLyBEb3VibGUtY2xpY2sgcHJvdmlkZXIgcm93IGhhbmRsZXJcbiAgICAgICAgJCgnLnByb3ZpZGVyLXJvdyB0ZCcpLm9uKCdkYmxjbGljaycsIChlKSA9PiB7XG4gICAgICAgICAgICBjb25zdCBpZCA9ICQoZS50YXJnZXQpLmNsb3Nlc3QoJ3RyJykuYXR0cignaWQnKTtcbiAgICAgICAgICAgIGNvbnN0IHR5cGUgPSAkKGUudGFyZ2V0KS5jbG9zZXN0KCd0cicpLmF0dHIoJ2RhdGEtdmFsdWUnKTtcbiAgICAgICAgICAgIHdpbmRvdy5sb2NhdGlvbiA9IGAke2dsb2JhbFJvb3RVcmx9cHJvdmlkZXJzL21vZGlmeSR7dHlwZX0vJHtpZH1gO1xuICAgICAgICB9KTtcblxuICAgICAgICAvLyBEZWxldGUgcHJvdmlkZXIgbGluayBoYW5kbGVyXG4gICAgICAgICQoJ2JvZHknKS5vbignY2xpY2snLCAnLnByb3ZpZGVyLXJvdyBhLmRlbGV0ZScsIChlKSA9PiB7XG4gICAgICAgICAgICBlLnByZXZlbnREZWZhdWx0KCk7XG4gICAgICAgICAgICBjb25zdCBsaW5rc0V4aXN0ID0gJChlLnRhcmdldCkuY2xvc2VzdCgndHInKS5hdHRyKCdkYXRhLWxpbmtzJyk7XG4gICAgICAgICAgICBpZiAobGlua3NFeGlzdCA9PT0gJ3RydWUnKSB7XG4gICAgICAgICAgICAgICAgcHJvdmlkZXJzLiRkZWxldGVNb2RhbEZvcm1cbiAgICAgICAgICAgICAgICAgICAgLm1vZGFsKHtcbiAgICAgICAgICAgICAgICAgICAgICAgIGNsb3NhYmxlOiBmYWxzZSxcbiAgICAgICAgICAgICAgICAgICAgICAgIG9uRGVueTogKCkgPT4gdHJ1ZSxcbiAgICAgICAgICAgICAgICAgICAgICAgIG9uQXBwcm92ZTogKCkgPT4ge1xuICAgICAgICAgICAgICAgICAgICAgICAgICAgIHdpbmRvdy5sb2NhdGlvbiA9ICQoZS50YXJnZXQpLmNsb3Nlc3QoJ2EnKS5hdHRyKCdocmVmJyk7XG4gICAgICAgICAgICAgICAgICAgICAgICAgICAgcmV0dXJuIHRydWU7XG4gICAgICAgICAgICAgICAgICAgICAgICB9LFxuICAgICAgICAgICAgICAgICAgICB9KVxuICAgICAgICAgICAgICAgICAgICAubW9kYWwoJ3Nob3cnKTtcbiAgICAgICAgICAgIH0gZWxzZSB7XG4gICAgICAgICAgICAgICAgd2luZG93LmxvY2F0aW9uID0gJChlLnRhcmdldCkuY2xvc2VzdCgnYScpLmF0dHIoJ2hyZWYnKTtcbiAgICAgICAgICAgIH1cbiAgICAgICAgfSk7XG4gICAgICAgIHByb3ZpZGVycy5pbml0aWFsaXplRGF0YVRhYmxlKCk7XG4gICAgICAgIFxuICAgICAgICAvLyBJbml0aWFsaXplIHByb3ZpZGVyIHN0YXR1cyBtb25pdG9yXG4gICAgICAgIGlmICh0eXBlb2YgUHJvdmlkZXJTdGF0dXNNb25pdG9yICE9PSAndW5kZWZpbmVkJykge1xuICAgICAgICAgICAgUHJvdmlkZXJTdGF0dXNNb25pdG9yLmluaXRpYWxpemUoKTtcbiAgICAgICAgICAgIFxuICAgICAgICAgICAgLy8gUmVxdWVzdCBpbml0aWFsIHN0YXR1cyB1cGRhdGVcbiAgICAgICAgICAgIHByb3ZpZGVycy5yZXF1ZXN0SW5pdGlhbFN0YXR1cygpO1xuICAgICAgICB9XG4gICAgfSxcbiAgICBcbiAgICAvKipcbiAgICAgKiBSZXF1ZXN0IGluaXRpYWwgcHJvdmlkZXIgc3RhdHVzIG9uIHBhZ2UgbG9hZFxuICAgICAqL1xuICAgIHJlcXVlc3RJbml0aWFsU3RhdHVzKCkge1xuICAgICAgICAkLmFwaSh7XG4gICAgICAgICAgICB1cmw6ICcvcGJ4Y29yZS9hcGkvcHJvdmlkZXJzL2dldFN0YXR1c2VzJyxcbiAgICAgICAgICAgIG9uOiAnbm93JyxcbiAgICAgICAgICAgIG9uU3VjY2VzcyhyZXNwb25zZSkge1xuICAgICAgICAgICAgICAgIC8vIE1hbnVhbGx5IHRyaWdnZXIgc3RhdHVzIHVwZGF0ZVxuICAgICAgICAgICAgICAgIGlmIChyZXNwb25zZSAmJiByZXNwb25zZS5kYXRhICYmIHR5cGVvZiBQcm92aWRlclN0YXR1c01vbml0b3IgIT09ICd1bmRlZmluZWQnKSB7XG4gICAgICAgICAgICAgICAgICAgIFByb3ZpZGVyU3RhdHVzTW9uaXRvci51cGRhdGVBbGxQcm92aWRlclN0YXR1c2VzKHJlc3BvbnNlLmRhdGEpO1xuICAgICAgICAgICAgICAgIH1cbiAgICAgICAgICAgIH0sXG4gICAgICAgICAgICBvbkZhaWx1cmUoKSB7XG4gICAgICAgICAgICAgICAgY29uc29sZS5lcnJvcignRmFpbGVkIHRvIHJlcXVlc3QgaW5pdGlhbCBwcm92aWRlciBzdGF0dXMnKTtcbiAgICAgICAgICAgIH1cbiAgICAgICAgfSk7XG4gICAgfSxcblxuICAgIC8qKlxuICAgICAqIEluaXRpYWxpemVzIHRoZSBEYXRhVGFibGUgZm9yIHRoZSBwcm92aWRlcnMgdGFibGUuXG4gICAgICovXG4gICAgaW5pdGlhbGl6ZURhdGFUYWJsZSgpIHtcbiAgICAgICAgcHJvdmlkZXJzLiRwcm92aWRlcnNUYWJsZS5EYXRhVGFibGUoe1xuICAgICAgICAgICAgbGVuZ3RoQ2hhbmdlOiBmYWxzZSxcbiAgICAgICAgICAgIHBhZ2luZzogZmFsc2UsXG4gICAgICAgICAgICBjb2x1bW5zOiBbXG4gICAgICAgICAgICAgICAgbnVsbCxcbiAgICAgICAgICAgICAgICBudWxsLFxuICAgICAgICAgICAgICAgIHtcbiAgICAgICAgICAgICAgICAgICAgcmVuZGVyOiBmdW5jdGlvbihkYXRhKSB7XG4gICAgICAgICAgICAgICAgICAgICAgICByZXR1cm4gZGF0YS5sZW5ndGggPiA2MCA/IGRhdGEuc3Vic3RyKDAsIDYwKSArIFwiIC4uLlwiIDogZGF0YTtcbiAgICAgICAgICAgICAgICAgICAgfVxuICAgICAgICAgICAgICAgIH0sXG4gICAgICAgICAgICAgICAge1wid2lkdGhcIjogXCIwXCJ9LFxuICAgICAgICAgICAgICAgIG51bGwsXG4gICAgICAgICAgICAgICAgbnVsbCxcbiAgICAgICAgICAgICAgICB7b3JkZXJhYmxlOiBmYWxzZSwgc2VhcmNoYWJsZTogZmFsc2V9LFxuICAgICAgICAgICAgXSxcbiAgICAgICAgICAgIGF1dG9XaWR0aDogZmFsc2UsXG4gICAgICAgICAgICBvcmRlcjogWzEsICdhc2MnXSxcbiAgICAgICAgICAgIGxhbmd1YWdlOiBTZW1hbnRpY0xvY2FsaXphdGlvbi5kYXRhVGFibGVMb2NhbGlzYXRpb24sXG4gICAgICAgIH0pO1xuXG4gICAgICAgIC8vIE1vdmUgdGhlIFwiQWRkIE5ld1wiIGJ1dHRvbiB0byB0aGUgZmlyc3QgZWlnaHQtY29sdW1uIGRpdlxuICAgICAgICAkKCcuYWRkLW5ldy1idXR0b24nKS5hcHBlbmRUbygkKCdkaXYuZWlnaHQuY29sdW1uOmVxKDApJykpO1xuICAgIH0sXG59O1xuXG4vKipcbiAqICBJbml0aWFsaXplIHByb3ZpZGVycyB0YWJsZSBvbiBkb2N1bWVudCByZWFkeVxuICovXG4kKGRvY3VtZW50KS5yZWFkeSgoKSA9PiB7XG4gICAgcHJvdmlkZXJzLmluaXRpYWxpemUoKTtcbn0pOyJdfQ==

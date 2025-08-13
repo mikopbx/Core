@@ -1,12 +1,24 @@
 <div class="ui grey top right attached label" id="status"><i
             class="spinner loading icon"></i>{{ t._("pr_UpdateStatus") }}</div>
+
+<!-- Tab menu -->
+<div class="ui top attached tabular menu" id="provider-tabs-menu">
+    <a class="item active" data-tab="settings">
+        <i class="settings icon"></i> {{ t._('pr_Settings') }}
+    </a>
+    <a class="item" data-tab="diagnostics">
+        <i class="heartbeat icon"></i> {{ t._('pr_Diagnostics') }}
+    </a>
+</div>
+
+<!-- Settings tab -->
+<div class="ui bottom attached tab segment active" data-tab="settings">
 {{ form(['action' : 'providers/save/sip', 'method': 'post', 'role': 'form', 'class': 'ui large form', 'id':'save-provider-form']) }}
 
 {{ form.render('id') }}
-{{ form.render('uniqid') }}
 {{ form.render('type') }}
 {{ form.render('disabled') }}
-{{ form.render('providerType') }}
+<input type="hidden" id="providerType" value="SIP" />
 <div class="required field max-width-500">
     <label for="description">{{ t._('pr_ProviderName') }}</label>
     {{ form.render('description') }}
@@ -34,7 +46,11 @@
 </div>
 
 <div id='elSecret' class="field max-width-500">
-    <label for="secret">{{ t._('pr_ProviderPassword') }}</label>
+    <label for="secret">
+        {{ t._('pr_ProviderPassword') }}
+        <i class="small info circle icon field-info-icon password-tooltip-icon" 
+           data-field="provider_password" style="display: none;"></i>
+    </label>
     <div class="ui action input">
         {{ form.render('secret') }}
         <div class="ui tiny basic icon left attached buttons">
@@ -147,7 +163,7 @@
         <h4 class="ui dividing header ">{{ t._('pr_SecuritySettings') }}</h4>
         
         <div id='elReceiveCalls' class="field">
-            <div class="ui toggle checkbox" id="receive_calls_without_auth">
+            <div class="ui toggle checkbox">
                 {{ form.render('receive_calls_without_auth') }}
                 <label for="receive_calls_without_auth">
                     {{ t._('pr_ReceiveCallsWithoutAuth') }}
@@ -175,7 +191,7 @@
                data-field="from_redefinition"></i>
         </h4>
         <div class="field">
-            <div class="ui toggle checkbox" id="disablefromuser">
+            <div class="ui toggle checkbox">
                 {{ form.render('disablefromuser') }}
                 <label for="disablefromuser">{{ t._('pr_DisableFromUser') }}</label>
             </div>
@@ -207,6 +223,110 @@
             </div>
         </div>
         
+        <!-- DID Source -->
+        <div class="field max-width-400">
+            <label for="did_source">
+                {{ t._('pr_DidSource') }}
+                <i class="small info circle icon field-info-icon" 
+                   data-field="did_source"></i>
+            </label>
+            {{ form.render('did_source') }}
+        </div>
+        
+        <!-- DID Custom Settings (показывается только при did_source=custom) -->
+        <div id="did-custom-settings" style="display: none; margin-left: 20px; padding: 15px; border-left: 3px solid #e0e1e2;">
+            <div class="field max-width-400">
+                <label for="did_custom_header">
+                    {{ t._('pr_CustomHeaderName') }}
+                    <i class="small info circle icon field-info-icon" 
+                       data-field="did_custom_header"></i>
+                </label>
+                {{ form.render('did_custom_header') }}
+            </div>
+            
+            <div class="two fields">
+                <div class="field max-width-200">
+                    <label for="did_parser_start">
+                        {{ t._('pr_ParserStartDelimiter') }}
+                    </label>
+                    {{ form.render('did_parser_start') }}
+                </div>
+                <div class="field max-width-200">
+                    <label for="did_parser_end">
+                        {{ t._('pr_ParserEndDelimiter') }}
+                    </label>
+                    {{ form.render('did_parser_end') }}
+                </div>
+            </div>
+            
+            <div class="field max-width-400">
+                <label for="did_parser_regex">
+                    {{ t._('pr_ParserRegex') }}
+                    <i class="small info circle icon field-info-icon" 
+                       data-field="did_parser_regex"></i>
+                </label>
+                {{ form.render('did_parser_regex') }}
+            </div>
+        </div>
+        
+        <!-- CallerID Source -->
+        <div class="field max-width-400">
+            <label for="cid_source">
+                {{ t._('pr_CallerIdSource') }}
+                <i class="small info circle icon field-info-icon" 
+                   data-field="callerid_source"></i>
+            </label>
+            {{ form.render('cid_source') }}
+        </div>
+        
+        <!-- CallerID Custom Settings (показывается только при cid_source=custom) -->
+        <div id="callerid-custom-settings" style="display: none; margin-left: 20px; padding: 15px; border-left: 3px solid #e0e1e2;">
+            <div class="field max-width-400">
+                <label for="cid_custom_header">
+                    {{ t._('pr_CustomHeaderName') }}
+                    <i class="small info circle icon field-info-icon" 
+                       data-field="cid_custom_header"></i>
+                </label>
+                {{ form.render('cid_custom_header') }}
+            </div>
+            
+            <div class="two fields">
+                <div class="field max-width-200">
+                    <label for="cid_parser_start">
+                        {{ t._('pr_ParserStartDelimiter') }}
+                    </label>
+                    {{ form.render('cid_parser_start') }}
+                </div>
+                <div class="field max-width-200">
+                    <label for="cid_parser_end">
+                        {{ t._('pr_ParserEndDelimiter') }}
+                    </label>
+                    {{ form.render('cid_parser_end') }}
+                </div>
+            </div>
+            
+            <div class="field max-width-400">
+                <label for="cid_parser_regex">
+                    {{ t._('pr_ParserRegex') }}
+                    <i class="small info circle icon field-info-icon" 
+                       data-field="cid_parser_regex"></i>
+                </label>
+                {{ form.render('cid_parser_regex') }}
+            </div>
+        </div>
+        
+        <!-- Debug Mode for CallerID/DID -->
+        <div class="field">
+            <div class="ui toggle checkbox">
+                {{ form.render('cid_did_debug') }}
+                <label for="cid_did_debug">
+                    {{ t._('pr_EnableCallerIdDidDebug') }}
+                    <i class="small info circle icon field-info-icon" 
+                       data-field="callerid_did_debug"></i>
+                </label>
+            </div>
+        </div>
+        
         <div class="field">
             <label>
                 {{ t._('pr_ManualAdditionalAtributes') }}
@@ -215,8 +335,25 @@
             </label>
             {{ form.render('manualattributes') }}
         </div>
+        
         {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('AdvancedFields')]) }}
     </div>
 </div>
 {{ partial("partials/submitbutton",['indexurl':'providers/index/']) }}
 {{ close('form') }}
+</div>
+
+<!-- Diagnostics tab -->
+<div class="ui bottom attached tab segment" data-tab="diagnostics">
+    {{ partial("Providers/partials/diagnostics-tab") }}
+</div>
+
+<script type="text/javascript">
+// Create global instance of ProviderSIP
+let providerSIP;
+
+$(document).ready(function() {
+    providerSIP = new ProviderSIP();
+    providerSIP.initialize();
+});
+</script>

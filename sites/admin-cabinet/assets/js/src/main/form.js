@@ -87,6 +87,13 @@ const Form = {
          */
         httpMethod: null
     },
+    
+    /**
+     * Convert checkbox values to boolean before form submission
+     * Set to true to enable automatic checkbox boolean conversion
+     * @type {boolean}
+     */
+    convertCheckboxesToBool: false,
     initialize() {
         // Set up custom form validation rules
         Form.$formObj.form.settings.rules.notRegExp = Form.notRegExpValidateRule;
@@ -203,6 +210,36 @@ const Form = {
     },
 
     /**
+     * Converts checkbox values to boolean in form data
+     * @param {object} formData - The form data object
+     * @returns {object} - Form data with boolean checkbox values
+     */
+    processCheckboxValues(formData) {
+        if (!Form.convertCheckboxesToBool) {
+            return formData;
+        }
+        
+        // Find all checkboxes using Semantic UI structure
+        // We look for the outer div.checkbox container, not the input
+        Form.$formObj.find('.ui.checkbox').each(function() {
+            const $checkbox = $(this);
+            const $input = $checkbox.find('input[type="checkbox"]');
+            
+            if ($input.length > 0) {
+                const fieldName = $input.attr('name');
+                if (fieldName && formData.hasOwnProperty(fieldName)) {
+                    // Use Semantic UI method to get actual checkbox state
+                    // Explicitly ensure we get a boolean value (not string)
+                    const isChecked = $checkbox.checkbox('is checked');
+                    formData[fieldName] = isChecked === true; // Force boolean type
+                }
+            }
+        });
+        
+        return formData;
+    },
+    
+    /**
      * Submits the form to the server.
      */
     submitForm() {
@@ -211,6 +248,9 @@ const Form = {
         
         // Get form data
         let formData = Form.$formObj.form('get values');
+        
+        // Process checkbox values if enabled
+        formData = Form.processCheckboxValues(formData);
         
         // Call cbBeforeSendForm
         const settings = { data: formData };
