@@ -35,6 +35,7 @@ use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\AstDB;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\IncomingContexts;
+use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\CallerIdDidProcessor;
 use MikoPBX\Core\System\{ Network, Processes, SystemMessages, Util};
 use MikoPBX\Core\Utilities\SubnetCalculator;
 use MikoPBX\Core\System\Directories;
@@ -222,15 +223,33 @@ class SIPConf extends AsteriskConfigClass
         $conf = '';
 
         $contexts = [];
+        $processedProviders = []; // Track processed providers for CallerID/DID contexts
+        
         // Process incoming contexts.
         foreach ($this->data_providers as $provider) {
             $contextsData = $this->contexts_data[$provider['context_id']];
             if (count($contextsData) === 1) {
                 $conf .= IncomingContexts::generate($provider['uniqid'], $provider['username']);
+                
+                // Generate CallerID/DID processing context if configured
+                if ($this->needsCallerIdDidProcessing($provider) && !in_array($provider['uniqid'], $processedProviders, true)) {
+                    $processor = new CallerIdDidProcessor($provider['uniqid'], $provider);
+                    $conf .= $processor->generateIncomingProcessingContext();
+                    $processedProviders[] = $provider['uniqid'];
+                }
             } elseif (! in_array($provider['context_id'], $contexts, true)) {
                 $context_id = str_replace('-incoming', '', $provider['context_id']);
                 $conf      .= IncomingContexts::generate($contextsData, '', $context_id);
                 $contexts[] = $provider['context_id'];
+                
+                // Generate CallerID/DID processing contexts for all providers in this context
+                foreach ($contextsData as $contextProvider) {
+                    if ($this->needsCallerIdDidProcessing($contextProvider) && !in_array($contextProvider['uniqid'], $processedProviders, true)) {
+                        $processor = new CallerIdDidProcessor($contextProvider['uniqid'], $contextProvider);
+                        $conf .= $processor->generateIncomingProcessingContext();
+                        $processedProviders[] = $contextProvider['uniqid'];
+                    }
+                }
             }
         }
 
@@ -262,7 +281,39 @@ class SIPConf extends AsteriskConfigClass
 
         $conf .= PHP_EOL . '[monitor-exceptions]' . PHP_EOL .
                 $confExceptions . PHP_EOL . PHP_EOL;
+        
+        // Add CallerID extraction subroutine (shared by all providers)
+        $conf .= CallerIdDidProcessor::generateCallerIdExtractionSubroutine();
+        
         return $conf;
+    }
+    
+    /**
+     * Check if provider needs CallerID/DID processing
+     * 
+     * @param array $provider Provider configuration
+     * @return bool True if CallerID or DID processing is configured
+     */
+    private function needsCallerIdDidProcessing(array $provider): bool
+    {
+        // Check if CallerID source is configured (not default)
+        $callerIdSource = $provider['cid_source'] ?? Sip::CALLERID_SOURCE_DEFAULT;
+        if ($callerIdSource !== Sip::CALLERID_SOURCE_DEFAULT) {
+            return true;
+        }
+        
+        // Check if DID source is configured (not default)
+        $didSource = $provider['did_source'] ?? Sip::DID_SOURCE_DEFAULT;
+        if ($didSource !== Sip::DID_SOURCE_DEFAULT) {
+            return true;
+        }
+        
+        // Check if debug mode is enabled
+        if (($provider['cid_did_debug'] ?? '0') === '1') {
+            return true;
+        }
+        
+        return false;
     }
 
     /**

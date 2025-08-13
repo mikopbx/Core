@@ -46,6 +46,19 @@ class Sip extends ModelsBase
     public const string REG_TYPE_INBOUND = 'inbound';
     public const string REG_TYPE_NONE = 'none';
 
+    // CallerID source options
+    public const string CALLERID_SOURCE_DEFAULT = 'default';
+    public const string CALLERID_SOURCE_FROM = 'from';
+    public const string CALLERID_SOURCE_RPID = 'rpid';
+    public const string CALLERID_SOURCE_PAI = 'pai';
+    public const string CALLERID_SOURCE_CUSTOM = 'custom';
+
+    // DID source options
+    public const string DID_SOURCE_DEFAULT = 'default';
+    public const string DID_SOURCE_TO = 'to';
+    public const string DID_SOURCE_DIVERSION = 'diversion';
+    public const string DID_SOURCE_CUSTOM = 'custom';
+
     /**
      * @Primary
      * @Identity
@@ -228,6 +241,83 @@ class Sip extends ModelsBase
      * @Column(type="integer", nullable=true, default="0")
      */
     public ?string $weakSecret= '0';
+
+    /**
+     * Source for CallerID extraction (default, from, rpid, pai, custom)
+     *
+     * @Column(type="string", nullable=true, default="default")
+     */
+    public ?string $cid_source = 'default';
+
+    /**
+     * Custom header name for CallerID extraction when cid_source is 'custom'
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $cid_custom_header = '';
+
+    /**
+     * Start delimiter for CallerID parsing from custom header
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $cid_parser_start = '';
+
+    /**
+     * End delimiter for CallerID parsing from custom header
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $cid_parser_end = '';
+
+    /**
+     * Regular expression for CallerID parsing from custom header (optional)
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $cid_parser_regex = '';
+
+    /**
+     * Source for DID extraction (default, to, diversion, custom)
+     *
+     * @Column(type="string", nullable=true, default="default")
+     */
+    public ?string $did_source = 'default';
+
+    /**
+     * Custom header name for DID extraction when did_source is 'custom'
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $did_custom_header = '';
+
+    /**
+     * Start delimiter for DID parsing from custom header
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $did_parser_start = '';
+
+    /**
+     * End delimiter for DID parsing from custom header
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $did_parser_end = '';
+
+    /**
+     * Regular expression for DID parsing from custom header (optional)
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $did_parser_regex = '';
+
+    /**
+     * Debug mode for CallerID/DID processing (0 = disabled, 1 = enabled)
+     *
+     * @Column(type="string", length=1, nullable=true, default="0")
+     */
+    public ?string $cid_did_debug = '0';
 
     /**
      * Initialize the model.

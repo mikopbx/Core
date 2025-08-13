@@ -245,6 +245,9 @@ class IncomingContexts extends AsteriskConfigClass
         $rout_data .= $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_INCOMING_ROUT_BEFORE_DIAL_SYSTEM, [$rout_number]);
         $rout_data .= $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_INCOMING_ROUT_BEFORE_DIAL, [$rout_number]);
 
+        // Process CallerID/DID if system context exists
+        $rout_data .= " \n\t" . 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-cid-did,${EXTEN},1)}" == "1"]?${CONTEXT}-cid-did,${EXTEN},1)';
+
         // Describe the ability to jump into the custom sub context.
         $rout_data .= " \n\t" . 'same => n,GosubIf($["${DIALPLAN_EXISTS(${CONTEXT}-custom,${EXTEN},1)}" == "1"]?${CONTEXT}-custom,${EXTEN},1)';
 
