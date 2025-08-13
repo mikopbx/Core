@@ -116,6 +116,19 @@ class GetRecordAction extends AbstractGetRecordAction
             $config->noregister = '0';
             $config->receive_calls_without_auth = '0';
             
+            // CallerID and DID source defaults
+            $config->cid_source = Sip::CALLERID_SOURCE_DEFAULT;
+            $config->cid_custom_header = '';
+            $config->cid_parser_start = '';
+            $config->cid_parser_end = '';
+            $config->cid_parser_regex = '';
+            $config->did_source = Sip::DID_SOURCE_DEFAULT;
+            $config->did_custom_header = '';
+            $config->did_parser_start = '';
+            $config->did_parser_end = '';
+            $config->did_parser_regex = '';
+            $config->cid_did_debug = '0';
+            
             // Attach SIP config to provider
             $model->Sip = $config;
             $model->sipuid = $model->uniqid;

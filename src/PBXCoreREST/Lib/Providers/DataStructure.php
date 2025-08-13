@@ -47,6 +47,13 @@ class DataStructure extends AbstractDataStructure
         // Start with base structure
         $data = self::createBaseStructure($provider);
         
+        // Override id with uniqid for API consistency
+        $data['id'] = $provider->uniqid;
+        
+        // Remove fields not needed for providers
+        unset($data['extension']);
+        unset($data['uniqid']);  // Remove uniqid from API response
+        
         // Add provider specific fields
         $data['type'] = $provider->type;
         $data['note'] = $provider->note ?? '';
@@ -79,6 +86,13 @@ class DataStructure extends AbstractDataStructure
     public static function createForList($provider): array
     {
         $data = self::createBaseStructure($provider);
+        
+        // Override id with uniqid for API consistency
+        $data['id'] = $provider->uniqid;
+        
+        // Remove fields not needed for providers
+        unset($data['extension']);
+        unset($data['uniqid']);  // Remove uniqid from API response
         
         // Add essential fields for list display
         $data['type'] = $provider->type;
@@ -123,8 +137,7 @@ class DataStructure extends AbstractDataStructure
         $config = $provider->$configType;
         
         return [
-            'id' => (string)$provider->id,
-            'uniqid' => $provider->uniqid,
+            'id' => $provider->uniqid,  // Use uniqid as id for API consistency
             'type' => $provider->type,
             'name' => $config ? $config->getRepresent() : $provider->note,
             'disabled' => $config ? ($config->disabled === '1') : false,
@@ -140,30 +153,43 @@ class DataStructure extends AbstractDataStructure
      */
     private static function getSipData($sip): array
     {
+        // Mask password only for outbound registration
+        $secret = $sip->secret ?? '';
+        if (!empty($secret) && $sip->registration_type === 'outbound') {
+            $secret = 'XXXXXXXX';
+        }
+        
         return [
-            'sipuid' => $sip->uniqid,
             'disabled' => $sip->disabled === '1',
             'username' => $sip->username ?? '',
-            'secret' => $sip->secret ?? '',
+            'secret' => $secret,
             'host' => $sip->host ?? '',
             'port' => (int)($sip->port ?? 5060),
             'transport' => $sip->transport ?? 'UDP',
-            'type' => $sip->type ?? 'friend',
             'qualify' => $sip->qualify === '1',
             'qualifyfreq' => (int)($sip->qualifyfreq ?? 60),
             'registration_type' => $sip->registration_type ?? 'none',
-            'extension' => $sip->extension ?? '',
             'description' => $sip->description ?? '',
             'networkfilterid' => (!empty($sip->networkfilterid) ? $sip->networkfilterid : 'none'),
             'manualattributes' => $sip->manualattributes ?? '',
             'dtmfmode' => $sip->dtmfmode ?? 'auto',
-            'nat' => $sip->nat ?? 'auto_force',
             'fromuser' => $sip->fromuser ?? '',
             'fromdomain' => $sip->fromdomain ?? '',
             'outbound_proxy' => $sip->outbound_proxy ?? '',
             'disablefromuser' => $sip->disablefromuser === '1',
-            'noregister' => $sip->noregister === '1',
             'receive_calls_without_auth' => $sip->receive_calls_without_auth === '1',
+            // CallerID and DID source fields
+            'cid_source' => $sip->cid_source ?? Sip::CALLERID_SOURCE_DEFAULT,
+            'cid_custom_header' => $sip->cid_custom_header ?? '',
+            'cid_parser_start' => $sip->cid_parser_start ?? '',
+            'cid_parser_end' => $sip->cid_parser_end ?? '',
+            'cid_parser_regex' => $sip->cid_parser_regex ?? '',
+            'did_source' => $sip->did_source ?? Sip::DID_SOURCE_DEFAULT,
+            'did_custom_header' => $sip->did_custom_header ?? '',
+            'did_parser_start' => $sip->did_parser_start ?? '',
+            'did_parser_end' => $sip->did_parser_end ?? '',
+            'did_parser_regex' => $sip->did_parser_regex ?? '',
+            'cid_did_debug' => $sip->cid_did_debug === '1',
         ];
     }
     
@@ -175,17 +201,21 @@ class DataStructure extends AbstractDataStructure
      */
     private static function getIaxData($iax): array
     {
+        // Mask password only for outbound registration
+        $secret = $iax->secret ?? '';
+        if (!empty($secret) && $iax->registration_type === 'outbound') {
+            $secret = 'XXXXXXXX';
+        }
+        
         return [
-            'iaxuid' => $iax->uniqid,
             'disabled' => $iax->disabled === '1',
             'username' => $iax->username ?? '',
-            'secret' => $iax->secret ?? '',
+            'secret' => $secret,
             'host' => $iax->host ?? '',
-            'qualify' => $iax->qualify === '1',
             'registration_type' => $iax->registration_type ?? 'none',
             'description' => $iax->description ?? '',
             'manualattributes' => $iax->manualattributes ?? '',
-            'noregister' => $iax->noregister === '1'
+            'networkfilterid' => (!empty($iax->networkfilterid) ? $iax->networkfilterid : 'none')
         ];
     }
     

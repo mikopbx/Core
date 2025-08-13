@@ -69,7 +69,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
         
         // Common sanitization rules
         $sanitizationRules = [
-            'id' => 'int',
+            'id' => 'string|max:64',  // Provider ID is a string like "SIP-TRUNK-XXXXX"
             'type' => 'string|upper|max:3',
             'note' => 'string|sanitize|max:255|empty_to_null',
         ];
@@ -92,7 +92,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
             $sanitizedData = self::sanitizeInputData($allowedData, $sanitizationRules, $textFields);
             
             // Provide defaults for missing bool fields
-            $boolFields = ['disabled', 'qualify', 'disablefromuser', 'noregister', 'receive_calls_without_auth'];
+            $boolFields = ['disabled', 'qualify', 'disablefromuser', 'receive_calls_without_auth'];
             foreach ($boolFields as $field) {
                 if (!array_key_exists($field, $sanitizedData) && isset($sanitizationRules[$field]) && $sanitizationRules[$field] === 'bool') {
                     $sanitizedData[$field] = false;
@@ -155,7 +155,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 return $res;
             }
             
-            // Find provider by uniqid
+            // Find provider by uniqid (id in API contains uniqid value)
             $provider = Providers::findFirst([
                 'conditions' => 'uniqid = :id: AND type = :type:',
                 'bind' => [
@@ -222,7 +222,6 @@ class SaveRecordAction extends AbstractSaveRecordAction
     private static function getSipSanitizationRules(): array
     {
         return [
-            'sipuid' => 'string|max:64',
             'disabled' => 'bool',
             'username' => 'string|max:64',
             'secret' => 'string|max:64',
@@ -232,19 +231,28 @@ class SaveRecordAction extends AbstractSaveRecordAction
             'qualify' => 'bool',
             'qualifyfreq' => 'int',
             'registration_type' => 'string|max:20',
-            'extension' => 'string|max:32',
             'description' => 'string|sanitize|max:255',
             'networkfilterid' => 'string|max:64|empty_to_null',
             'manualattributes' => 'string|sanitize|max:1024|empty_to_null',
             'dtmfmode' => 'string|max:20',
-            'nat' => 'string|max:20',
             'fromuser' => 'string|max:64|empty_to_null',
             'fromdomain' => 'string|max:255|empty_to_null',
             'outbound_proxy' => 'string|max:255|empty_to_null',
             'disablefromuser' => 'bool',
-            'noregister' => 'bool',
             'receive_calls_without_auth' => 'bool',
             'additionalHosts' => 'array',
+            // CallerID and DID source fields
+            'cid_source' => 'string|max:20',
+            'cid_custom_header' => 'string|max:100|empty_to_null',
+            'cid_parser_start' => 'string|max:10|empty_to_null',
+            'cid_parser_end' => 'string|max:10|empty_to_null',
+            'cid_parser_regex' => 'string|max:255|empty_to_null',
+            'did_source' => 'string|max:20',
+            'did_custom_header' => 'string|max:100|empty_to_null',
+            'did_parser_start' => 'string|max:10|empty_to_null',
+            'did_parser_end' => 'string|max:10|empty_to_null',
+            'did_parser_regex' => 'string|max:255|empty_to_null',
+            'cid_did_debug' => 'bool',
         ];
     }
     
@@ -256,16 +264,14 @@ class SaveRecordAction extends AbstractSaveRecordAction
     private static function getIaxSanitizationRules(): array
     {
         return [
-            'iaxuid' => 'string|max:64',
             'disabled' => 'bool',
             'username' => 'string|max:64',
             'secret' => 'string|max:64',
             'host' => 'string|max:255',
-            'qualify' => 'bool',
             'registration_type' => 'string|max:20',
             'description' => 'string|sanitize|max:255',
             'manualattributes' => 'string|sanitize|max:1024|empty_to_null',
-            'noregister' => 'bool',
+            'networkfilterid' => 'string|max:64|empty_to_null',
         ];
     }
     
@@ -280,7 +286,8 @@ class SaveRecordAction extends AbstractSaveRecordAction
     {
         // Find or create provider
         if (!empty($data['id'])) {
-            $provider = Providers::findFirstById($data['id']);
+            // Use uniqid to find provider (id in API contains uniqid value)
+            $provider = Providers::findFirstByUniqid($data['id']);
             if (!$provider) {
                 throw new \Exception('Provider not found');
             }
@@ -320,31 +327,65 @@ class SaveRecordAction extends AbstractSaveRecordAction
         $sip = $provider->Sip ?: new Sip();
         $sip->uniqid = $provider->uniqid;
         
+        // Define boolean fields for SIP
+        $booleanFields = ['disabled', 'qualify', 'disablefromuser', 'receive_calls_without_auth', 'cid_did_debug'];
+        
+        // Convert boolean fields using parent method
+        $data = self::convertBooleanFields($data, $booleanFields);
+        
         // Update fields
-        $sip->disabled = isset($data['disabled']) && $data['disabled'] ? '1' : '0';
+        $sip->disabled = $data['disabled'] ?? '0';
         $sip->username = $data['username'] ?? '';
-        $sip->secret = $data['secret'] ?? '';
+        
+        // Handle password update based on registration type
+        if (isset($data['secret'])) {
+            // For outbound registration, check if password is masked
+            if ($data['registration_type'] === 'outbound' && $data['secret'] === 'XXXXXXXX') {
+                // Don't update password if it's masked value for outbound
+                // Keep existing password - do nothing
+            } else {
+                // Update password for all other cases
+                $sip->secret = $data['secret'];
+            }
+        } elseif (!$provider->Sip) {
+            // New provider - set empty password if not provided
+            $sip->secret = '';
+        }
+        
         $sip->host = $data['host'] ?? '';
         $sip->port = (string)($data['port'] ?? 5060);
         $sip->transport = $data['transport'] ?? 'UDP';
         $sip->type = 'friend'; // Always use friend for providers
-        $sip->qualify = isset($data['qualify']) && $data['qualify'] ? '1' : '0';
+        $sip->qualify = $data['qualify'] ?? '0';
         $sip->qualifyfreq = (string)($data['qualifyfreq'] ?? 60);
         $sip->registration_type = $data['registration_type'] ?? 'none';
-        $sip->extension = $data['extension'] ?? '';
+        $sip->extension = ''; // Always empty for providers
         $sip->description = $data['description'] ?? '';
         // Handle network filter: 'none' means empty string in DB
         $networkfilterid = $data['networkfilterid'] ?? 'none';
         $sip->networkfilterid = ($networkfilterid === 'none' || $networkfilterid === '') ? '' : $networkfilterid;
         $sip->manualattributes = $data['manualattributes'] ?? '';
         $sip->dtmfmode = $data['dtmfmode'] ?? 'auto';
-        $sip->nat = $data['nat'] ?? 'auto_force';
+        $sip->nat = 'auto_force'; // Always use auto_force for providers
         $sip->fromuser = $data['fromuser'] ?? '';
         $sip->fromdomain = $data['fromdomain'] ?? '';
         $sip->outbound_proxy = $data['outbound_proxy'] ?? '';
-        $sip->disablefromuser = isset($data['disablefromuser']) && $data['disablefromuser'] ? '1' : '0';
-        $sip->noregister = isset($data['noregister']) && $data['noregister'] ? '1' : '0';
-        $sip->receive_calls_without_auth = isset($data['receive_calls_without_auth']) && $data['receive_calls_without_auth'] ? '1' : '0';
+        $sip->disablefromuser = $data['disablefromuser'] ?? '0';
+        $sip->noregister = '0'; // Always 0 for providers
+        $sip->receive_calls_without_auth = $data['receive_calls_without_auth'] ?? '0';
+        
+        // CallerID and DID source fields
+        $sip->cid_source = $data['cid_source'] ?? Sip::CALLERID_SOURCE_DEFAULT;
+        $sip->cid_custom_header = $data['cid_custom_header'] ?? '';
+        $sip->cid_parser_start = $data['cid_parser_start'] ?? '';
+        $sip->cid_parser_end = $data['cid_parser_end'] ?? '';
+        $sip->cid_parser_regex = $data['cid_parser_regex'] ?? '';
+        $sip->did_source = $data['did_source'] ?? Sip::DID_SOURCE_DEFAULT;
+        $sip->did_custom_header = $data['did_custom_header'] ?? '';
+        $sip->did_parser_start = $data['did_parser_start'] ?? '';
+        $sip->did_parser_end = $data['did_parser_end'] ?? '';
+        $sip->did_parser_regex = $data['did_parser_regex'] ?? '';
+        $sip->cid_did_debug = $data['cid_did_debug'] ?? '0';
         
         if (!$sip->save()) {
             throw new \Exception('Failed to save SIP configuration: ' . implode(', ', $sip->getMessages()));
@@ -373,16 +414,39 @@ class SaveRecordAction extends AbstractSaveRecordAction
         $iax = $provider->Iax ?: new Iax();
         $iax->uniqid = $provider->uniqid;
         
+        // Define boolean fields for IAX
+        $booleanFields = ['disabled'];
+        
+        // Convert boolean fields using parent method
+        $data = self::convertBooleanFields($data, $booleanFields);
+        
         // Update fields
-        $iax->disabled = isset($data['disabled']) && $data['disabled'] ? '1' : '0';
+        $iax->disabled = $data['disabled'] ?? '0';
         $iax->username = $data['username'] ?? '';
-        $iax->secret = $data['secret'] ?? '';
+        
+        // Handle password update based on registration type
+        if (isset($data['secret'])) {
+            // For outbound registration, check if password is masked
+            if ($data['registration_type'] === 'outbound' && $data['secret'] === 'XXXXXXXX') {
+                // Don't update password if it's masked value for outbound
+                // Keep existing password - do nothing
+            } else {
+                // Update password for all other cases
+                $iax->secret = $data['secret'];
+            }
+        } elseif (!$provider->Iax) {
+            // New provider - set empty password if not provided
+            $iax->secret = '';
+        }
+        
         $iax->host = $data['host'] ?? '';
-        $iax->qualify = isset($data['qualify']) && $data['qualify'] ? '1' : '0';
+        $iax->qualify = '1'; // Always enabled for providers
         $iax->registration_type = $data['registration_type'] ?? 'none';
         $iax->description = $data['description'] ?? '';
         $iax->manualattributes = $data['manualattributes'] ?? '';
-        $iax->noregister = isset($data['noregister']) && $data['noregister'] ? '1' : '0';
+        $iax->noregister = '0'; // Always 0 for providers
+        $networkfilterid = $data['networkfilterid'] ?? 'none';
+        $iax->networkfilterid = ($networkfilterid === 'none' || $networkfilterid === '') ? '' : $networkfilterid;
         
         if (!$iax->save()) {
             throw new \Exception('Failed to save IAX configuration: ' . implode(', ', $iax->getMessages()));

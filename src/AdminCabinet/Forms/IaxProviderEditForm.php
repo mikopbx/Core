@@ -47,9 +47,6 @@ class IaxProviderEditForm extends BaseForm
         // ID
         $this->add(new Hidden('id'));
 
-        // Uniqid
-        $this->add(new Hidden('uniqid'));
-
         // Type
         $this->add(new Hidden('type'));
 

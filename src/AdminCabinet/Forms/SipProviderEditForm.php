@@ -49,9 +49,6 @@ class SipProviderEditForm extends BaseForm
         // ID
         $this->add(new Hidden('id'));
 
-        // Uniqid
-        $this->add(new Hidden('uniqid'));
-
         // Type
         $this->add(new Hidden('type'));
 
@@ -84,7 +81,7 @@ class SipProviderEditForm extends BaseForm
         $this->add(new Text('outbound_proxy'));
 
         // Qualify
-        $this->addCheckBox('qualify', intval($entity->qualify) === 1);
+        $this->addCheckBox('qualify', intval($entity->qualify) === 1, '1');
 
         // Qualifyfreq
         $this->add(new Numeric('qualifyfreq', ["maxlength" => 3,
@@ -108,10 +105,10 @@ class SipProviderEditForm extends BaseForm
         $this->add(new Check('noregister', $cheskarr));
 
         // Disablefromuser
-        $this->addCheckBox('disablefromuser', intval($entity->disablefromuser) === 1);
+        $this->addCheckBox('disablefromuser', intval($entity->disablefromuser) === 1, '1');
 
         // Receive_calls_without_auth
-        $this->addCheckBox('receive_calls_without_auth', intval($entity->receive_calls_without_auth) === 1);
+        $this->addCheckBox('receive_calls_without_auth', intval($entity->receive_calls_without_auth) === 1, '1');
 
         // Network Filter - Changed from Select to Hidden
         // Network filter dropdown - empty select, will be populated via REST API
@@ -134,5 +131,49 @@ class SipProviderEditForm extends BaseForm
 
         // Note
         $this->addTextArea('note', $options['note'] ?? '', 80, ['class' => 'confidential-field']);
+        
+        // CallerID/DID Source Settings
+        // CallerID Source - will be replaced with dropdown in JavaScript
+        $this->add(new Hidden('cid_source', ['value' => $entity->cid_source ?? 'default']));
+        
+        // DID Source - will be replaced with dropdown in JavaScript
+        $this->add(new Hidden('did_source', ['value' => $entity->did_source ?? 'default']));
+        
+        // CallerID Custom Settings
+        $this->add(new Text('cid_custom_header', [
+            'placeholder' => 'X-Caller-ID'
+        ]));
+        
+        $this->add(new Text('cid_parser_start', [
+            'placeholder' => '<'
+        ]));
+        
+        $this->add(new Text('cid_parser_end', [
+            'placeholder' => '>'
+        ]));
+        
+        $this->add(new Text('cid_parser_regex', [
+            'placeholder' => '([0-9]+)'
+        ]));
+        
+        // DID Custom Settings
+        $this->add(new Text('did_custom_header', [
+            'placeholder' => 'X-DID'
+        ]));
+        
+        $this->add(new Text('did_parser_start', [
+            'placeholder' => '['
+        ]));
+        
+        $this->add(new Text('did_parser_end', [
+            'placeholder' => ']'
+        ]));
+        
+        $this->add(new Text('did_parser_regex', [
+            'placeholder' => '(?<=DID=)\\+?\\d+'
+        ]));
+        
+        // Debug checkbox
+        $this->addCheckBox('cid_did_debug', intval($entity->cid_did_debug) === 1, '1');
     }
 }

@@ -35,17 +35,18 @@ const ProvidersAPI = {
      * @param {function} callback - Callback function
      */
     getRecord: function(id, type, callback) {
-        const recordId = (!id || id === '') ? 'new' : id;
+        // Check if this is a new record or existing
+        const isNewRecord = !id || id === '' || id === 'new';
         
         // Use RESTful URL with path parameters: /getRecord/SIP/SIP-TRUNK-123
         // Fall back to query parameters for 'new' records
         let url;
-        if (recordId === 'new') {
+        if (isNewRecord) {
             // For new records, use query parameters
             url = this.endpoints.getRecord + (type ? '?type=' + type : '');
         } else {
             // For existing records, use RESTful path: /getRecord/SIP/SIP-TRUNK-123
-            url = this.endpoints.getRecord + '/' + type + '/' + recordId;
+            url = this.endpoints.getRecord + '/' + type + '/' + id;
         }
         
         $.api({
@@ -115,16 +116,9 @@ const ProvidersAPI = {
             return;
         }
         
-        // Convert boolean fields to 1/0 for form-encoded transmission
-        const booleanFields = ['disabled', 'qualify', 'disablefromuser', 'noregister', 'receive_calls_without_auth'];
+        // Form.js with convertCheckboxesToBool=true sends all checkboxes as boolean values
+        // Server accepts boolean values directly, no conversion needed
         const processedData = {...data};
-        
-        booleanFields.forEach(field => {
-            if (processedData.hasOwnProperty(field)) {
-                // Convert boolean to 1/0 for server
-                processedData[field] = processedData[field] ? '1' : '0';
-            }
-        });
         
         const method = processedData.id ? 'PUT' : 'POST';
         const url = processedData.id ? 
@@ -280,16 +274,14 @@ const ProvidersAPI = {
         
         const sanitized = {
             id: data.id,
-            uniqid: data.uniqid,
             type: data.type || 'SIP',
             note: data.note || '',
             disabled: !!data.disabled
         };
         
         // SIP-specific fields
-        if (data.type === 'SIP' || data.sipuid) {
+        if (data.type === 'SIP') {
             Object.assign(sanitized, {
-                sipuid: data.sipuid || '',
                 username: data.username || '',
                 secret: data.secret || '',
                 host: data.host || '',
@@ -310,14 +302,25 @@ const ProvidersAPI = {
                 disablefromuser: !!data.disablefromuser,
                 noregister: !!data.noregister,
                 receive_calls_without_auth: !!data.receive_calls_without_auth,
-                additionalHosts: data.additionalHosts || []
+                additionalHosts: data.additionalHosts || [],
+                // CallerID/DID fields
+                cid_source: data.cid_source || 'default',
+                cid_custom_header: data.cid_custom_header || '',
+                cid_parser_start: data.cid_parser_start || '',
+                cid_parser_end: data.cid_parser_end || '',
+                cid_parser_regex: data.cid_parser_regex || '',
+                did_source: data.did_source || 'default',
+                did_custom_header: data.did_custom_header || '',
+                did_parser_start: data.did_parser_start || '',
+                did_parser_end: data.did_parser_end || '',
+                did_parser_regex: data.did_parser_regex || '',
+                cid_did_debug: !!data.cid_did_debug
             });
         }
         
         // IAX-specific fields
-        if (data.type === 'IAX' || data.iaxuid) {
+        if (data.type === 'IAX') {
             Object.assign(sanitized, {
-                iaxuid: data.iaxuid || '',
                 username: data.username || '',
                 secret: data.secret || '',
                 host: data.host || '',
@@ -437,7 +440,7 @@ const ProvidersAPI = {
                         // Server sends: "<i class=\"server icon\"></i> IAX: Test IAX Provider"
                         
                         return {
-                            value: provider.uniqid,      // Use uniqid as the value
+                            value: provider.id,           // Use id as the value
                             name: provider.name,          // Use server's name field as-is
                             text: provider.name,          // Same for text display
                             // Store additional data for future use

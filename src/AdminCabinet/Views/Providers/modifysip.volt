@@ -16,7 +16,6 @@
 {{ form(['action' : 'providers/save/sip', 'method': 'post', 'role': 'form', 'class': 'ui large form', 'id':'save-provider-form']) }}
 
 {{ form.render('id') }}
-{{ form.render('uniqid') }}
 {{ form.render('type') }}
 {{ form.render('disabled') }}
 <input type="hidden" id="providerType" value="SIP" />
@@ -164,7 +163,7 @@
         <h4 class="ui dividing header ">{{ t._('pr_SecuritySettings') }}</h4>
         
         <div id='elReceiveCalls' class="field">
-            <div class="ui toggle checkbox" id="receive_calls_without_auth">
+            <div class="ui toggle checkbox">
                 {{ form.render('receive_calls_without_auth') }}
                 <label for="receive_calls_without_auth">
                     {{ t._('pr_ReceiveCallsWithoutAuth') }}
@@ -192,7 +191,7 @@
                data-field="from_redefinition"></i>
         </h4>
         <div class="field">
-            <div class="ui toggle checkbox" id="disablefromuser">
+            <div class="ui toggle checkbox">
                 {{ form.render('disablefromuser') }}
                 <label for="disablefromuser">{{ t._('pr_DisableFromUser') }}</label>
             </div>
@@ -224,6 +223,110 @@
             </div>
         </div>
         
+        <!-- DID Source -->
+        <div class="field max-width-400">
+            <label for="did_source">
+                {{ t._('pr_DidSource') }}
+                <i class="small info circle icon field-info-icon" 
+                   data-field="did_source"></i>
+            </label>
+            {{ form.render('did_source') }}
+        </div>
+        
+        <!-- DID Custom Settings (показывается только при did_source=custom) -->
+        <div id="did-custom-settings" style="display: none; margin-left: 20px; padding: 15px; border-left: 3px solid #e0e1e2;">
+            <div class="field max-width-400">
+                <label for="did_custom_header">
+                    {{ t._('pr_CustomHeaderName') }}
+                    <i class="small info circle icon field-info-icon" 
+                       data-field="did_custom_header"></i>
+                </label>
+                {{ form.render('did_custom_header') }}
+            </div>
+            
+            <div class="two fields">
+                <div class="field max-width-200">
+                    <label for="did_parser_start">
+                        {{ t._('pr_ParserStartDelimiter') }}
+                    </label>
+                    {{ form.render('did_parser_start') }}
+                </div>
+                <div class="field max-width-200">
+                    <label for="did_parser_end">
+                        {{ t._('pr_ParserEndDelimiter') }}
+                    </label>
+                    {{ form.render('did_parser_end') }}
+                </div>
+            </div>
+            
+            <div class="field max-width-400">
+                <label for="did_parser_regex">
+                    {{ t._('pr_ParserRegex') }}
+                    <i class="small info circle icon field-info-icon" 
+                       data-field="did_parser_regex"></i>
+                </label>
+                {{ form.render('did_parser_regex') }}
+            </div>
+        </div>
+        
+        <!-- CallerID Source -->
+        <div class="field max-width-400">
+            <label for="cid_source">
+                {{ t._('pr_CallerIdSource') }}
+                <i class="small info circle icon field-info-icon" 
+                   data-field="callerid_source"></i>
+            </label>
+            {{ form.render('cid_source') }}
+        </div>
+        
+        <!-- CallerID Custom Settings (показывается только при cid_source=custom) -->
+        <div id="callerid-custom-settings" style="display: none; margin-left: 20px; padding: 15px; border-left: 3px solid #e0e1e2;">
+            <div class="field max-width-400">
+                <label for="cid_custom_header">
+                    {{ t._('pr_CustomHeaderName') }}
+                    <i class="small info circle icon field-info-icon" 
+                       data-field="cid_custom_header"></i>
+                </label>
+                {{ form.render('cid_custom_header') }}
+            </div>
+            
+            <div class="two fields">
+                <div class="field max-width-200">
+                    <label for="cid_parser_start">
+                        {{ t._('pr_ParserStartDelimiter') }}
+                    </label>
+                    {{ form.render('cid_parser_start') }}
+                </div>
+                <div class="field max-width-200">
+                    <label for="cid_parser_end">
+                        {{ t._('pr_ParserEndDelimiter') }}
+                    </label>
+                    {{ form.render('cid_parser_end') }}
+                </div>
+            </div>
+            
+            <div class="field max-width-400">
+                <label for="cid_parser_regex">
+                    {{ t._('pr_ParserRegex') }}
+                    <i class="small info circle icon field-info-icon" 
+                       data-field="cid_parser_regex"></i>
+                </label>
+                {{ form.render('cid_parser_regex') }}
+            </div>
+        </div>
+        
+        <!-- Debug Mode for CallerID/DID -->
+        <div class="field">
+            <div class="ui toggle checkbox">
+                {{ form.render('cid_did_debug') }}
+                <label for="cid_did_debug">
+                    {{ t._('pr_EnableCallerIdDidDebug') }}
+                    <i class="small info circle icon field-info-icon" 
+                       data-field="callerid_did_debug"></i>
+                </label>
+            </div>
+        </div>
+        
         <div class="field">
             <label>
                 {{ t._('pr_ManualAdditionalAtributes') }}
@@ -232,6 +335,7 @@
             </label>
             {{ form.render('manualattributes') }}
         </div>
+        
         {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('AdvancedFields')]) }}
     </div>
 </div>

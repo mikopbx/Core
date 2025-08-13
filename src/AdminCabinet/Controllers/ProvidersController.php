@@ -72,8 +72,8 @@ class ProvidersController extends BaseController
         if ($type === 'SIP') {
             // Create empty SIP model for form generation
             $emptyProvider = new Sip();
-            $emptyProvider->uniqid = $uniqId ?: '';
             $emptyProvider->type = 'friend';
+            $emptyProvider->id = $uniqId ?: '';  // Set id field for JavaScript
             $form = new SipProviderEditForm($emptyProvider, $options);
             
             // Empty arrays that will be filled by JavaScript
@@ -82,7 +82,7 @@ class ProvidersController extends BaseController
         } else {
             // Create empty IAX model for form generation
             $emptyProvider = new Iax();
-            $emptyProvider->uniqid = $uniqId ?: '';
+            $emptyProvider->id = $uniqId ?: '';  // Set id field for JavaScript
             $form = new IaxProviderEditForm($emptyProvider, $options);
             
             // Get network filters for the dropdown

@@ -15,7 +15,6 @@
 <div class="ui bottom attached tab segment active" data-tab="settings">
 {{ form(['action' : 'providers/save/iax', 'method': 'post', 'role': 'form', 'class': 'ui large form ', 'id':'save-provider-form']) }}
 {{ form.render('id') }}
-{{ form.render('uniqid') }}
 {{ form.render('type') }}
 {{ form.render('disabled') }}
 <input type="hidden" id="providerType" value="IAX" />
@@ -101,7 +100,7 @@
         <h4 class="ui dividing header ">{{ t._('pr_SecuritySettings') }}</h4>
         
         <div id='elReceiveCalls' class="field">
-            <div class="ui toggle checkbox" id="receive_calls_without_auth">
+            <div class="ui toggle checkbox">
                 {{ form.render('receive_calls_without_auth') }}
                 <label>
                     {{ t._('pr_ReceiveCallsWithoutAuth') }}

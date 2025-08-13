@@ -2126,4 +2126,92 @@ return [
     'pr_StatusWarning' => 'Предупреждение',
     'pr_StatusOffline' => 'Офлайн',
     'pr_StatusUnknown' => 'Неизвестно',
+    
+    // CallerID and DID Source Settings
+    'pr_CallerIdDidSourceSettings' => 'Настройки источников CallerID и DID',
+    'pr_DidSourceSettings' => 'Настройки источника DID',
+    'pr_CallerIdSourceSettings' => 'Настройки источника CallerID',
+    'pr_CallerIdSource' => 'Источник CallerID',
+    'pr_DidSource' => 'Источник DID',
+    
+    // Source options
+    'pr_CallerIdSourceDefault' => 'По умолчанию',
+    'pr_CallerIdSourceFrom' => 'Заголовок FROM',
+    'pr_CallerIdSourceRpid' => 'Remote-Party-ID (RPID)',
+    'pr_CallerIdSourcePai' => 'P-Asserted-Identity (PAI)',
+    'pr_CallerIdSourceCustom' => 'Произвольный заголовок',
+    
+    'pr_DidSourceDefault' => 'По умолчанию',
+    'pr_DidSourceTo' => 'Заголовок TO',
+    'pr_DidSourceDiversion' => 'Заголовок Diversion',
+    'pr_DidSourceCustom' => 'Произвольный заголовок',
+    
+    // Custom settings
+    'pr_CallerIdCustomSettings' => 'Настройки произвольного источника CallerID',
+    'pr_DidCustomSettings' => 'Настройки произвольного источника DID',
+    'pr_CustomHeaderName' => 'Имя заголовка',
+    'pr_ParserStartDelimiter' => 'Символ начала',
+    'pr_ParserEndDelimiter' => 'Символ окончания',
+    'pr_ParserRegex' => 'Регулярное выражение (опционально)',
+    'pr_EnableCallerIdDidDebug' => 'Включить отладку CallerID/DID',
+    
+    // CallerID/DID Debug tooltip
+    'pr_CallerIdDidDebugTooltip_header' => 'Режим отладки CallerID/DID',
+    'pr_CallerIdDidDebugTooltip_desc' => 'Включает детальное логирование обработки CallerID и DID для входящих вызовов от этого провайдера',
+    'pr_CallerIdDidDebugTooltip_purpose' => 'Назначение',
+    'pr_CallerIdDidDebugTooltip_purpose_desc' => 'Помогает диагностировать проблемы с определением номера звонящего и вызываемого номера при входящих вызовах',
+    'pr_CallerIdDidDebugTooltip_what_logged' => 'Что логируется',
+    'pr_CallerIdDidDebugTooltip_original_values' => 'Исходные значения CallerID и DID до обработки',
+    'pr_CallerIdDidDebugTooltip_header_content' => 'Содержимое SIP заголовков (FROM, TO, Remote-Party-ID, P-Asserted-Identity, Diversion, кастомных)',
+    'pr_CallerIdDidDebugTooltip_extracted_values' => 'Извлеченные значения после применения парсинга',
+    'pr_CallerIdDidDebugTooltip_final_values' => 'Финальные значения CallerID и DID после всех преобразований',
+    'pr_CallerIdDidDebugTooltip_where_to_find' => 'Где искать логи',
+    'pr_CallerIdDidDebugTooltip_asterisk_console' => 'В консоли Asterisk (asterisk -rvvv)',
+    'pr_CallerIdDidDebugTooltip_system_logs' => 'В системных логах: /storage/usbdisk1/mikopbx/log/asterisk/verbose',
+    'pr_CallerIdDidDebugTooltip_web_interface' => 'В веб-интерфейсе: Обслуживание → Системные логи',
+    'pr_CallerIdDidDebugTooltip_when_to_use' => 'Когда использовать',
+    'pr_CallerIdDidDebugTooltip_wrong_callerid' => 'Неправильно определяется номер звонящего',
+    'pr_CallerIdDidDebugTooltip_wrong_did' => 'Вызовы приходят не на тот номер (DID)',
+    'pr_CallerIdDidDebugTooltip_custom_headers' => 'При настройке кастомных заголовков',
+    'pr_CallerIdDidDebugTooltip_provider_testing' => 'При первоначальной настройке провайдера',
+    'pr_CallerIdDidDebugTooltip_warning' => 'Отключайте после завершения отладки для экономии ресурсов',
+    
+    // Validation messages
+    'pr_ValidateCustomHeaderEmpty' => 'Укажите имя заголовка для произвольного источника',
+    'pr_ValidateCustomHeaderFormat' => 'Имя заголовка может содержать только латинские буквы, цифры, дефис и подчеркивание',
+    'pr_ValidateInvalidRegex' => 'Некорректное регулярное выражение',
+    
+    // Tooltips for CallerID Source
+    'pr_CallerIdSourceTooltip_header' => 'Источник CallerID',
+    'pr_CallerIdSourceTooltip_desc' => 'Выберите SIP-заголовок, из которого будет извлекаться номер звонящего (CallerID)',
+    'pr_CallerIdSourceTooltip_default' => 'По умолчанию',
+    'pr_CallerIdSourceTooltip_default_desc' => 'Использовать стандартную логику Asterisk для определения CallerID',
+    'pr_CallerIdSourceTooltip_from' => 'Заголовок FROM',
+    'pr_CallerIdSourceTooltip_from_desc' => 'Извлекать номер из заголовка FROM (наиболее распространенный вариант)',
+    'pr_CallerIdSourceTooltip_rpid' => 'Remote-Party-ID',
+    'pr_CallerIdSourceTooltip_rpid_desc' => 'Извлекать номер из заголовка Remote-Party-ID (используется некоторыми провайдерами)',
+    'pr_CallerIdSourceTooltip_pai' => 'P-Asserted-Identity',
+    'pr_CallerIdSourceTooltip_pai_desc' => 'Извлекать номер из заголовка P-Asserted-Identity (надежный источник идентификации)',
+    'pr_CallerIdSourceTooltip_custom' => 'Произвольный заголовок',
+    'pr_CallerIdSourceTooltip_custom_desc' => 'Извлекать номер из нестандартного заголовка (например, x-roistat-phone)',
+    
+    // Tooltips for DID Source
+    'pr_DidSourceTooltip_header' => 'Источник DID',
+    'pr_DidSourceTooltip_desc' => 'Выберите способ определения набранного номера (DID)',
+    'pr_DidSourceTooltip_default' => 'По умолчанию',
+    'pr_DidSourceTooltip_default_desc' => 'Использовать Request-URI для определения DID',
+    'pr_DidSourceTooltip_to' => 'Заголовок TO',
+    'pr_DidSourceTooltip_to_desc' => 'Извлекать номер из заголовка TO',
+    'pr_DidSourceTooltip_diversion' => 'Заголовок Diversion',
+    'pr_DidSourceTooltip_diversion_desc' => 'Использовать для переадресованных вызовов',
+    'pr_DidSourceTooltip_custom' => 'Произвольный заголовок',
+    'pr_DidSourceTooltip_custom_desc' => 'Извлекать номер из нестандартного заголовка',
+    
+    // Tooltips for Custom Header
+    'pr_CustomHeaderTooltip_header' => 'Имя заголовка',
+    'pr_CustomHeaderTooltip_desc' => 'Укажите точное имя SIP-заголовка, содержащего номер',
+    
+    // Tooltips for Parser Regex
+    'pr_ParserRegexTooltip_header' => 'Регулярное выражение',
+    'pr_ParserRegexTooltip_desc' => 'Опциональное регулярное выражение для извлечения номера из заголовка',
 ];

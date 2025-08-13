@@ -28,8 +28,7 @@ use MikoPBX\PBXCoreREST\Lib\Providers\{
     UpdateStatusAction,
     GetStatusByIdAction,
     GetHistoryAction,
-    GetStatsAction,
-    ForceCheckAction
+    GetStatsAction
 };
 use Phalcon\Di\Injectable;
 
