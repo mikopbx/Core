@@ -118,9 +118,8 @@ const ProviderStatusMonitor = {
             EventBus.subscribe('provider-status', (message) => {
                 this.handleEventBusMessage(message);
             });
-        } else {
-            console.warn('EventBus not available, provider status monitor disabled');
         }
+        // EventBus not available, provider status monitor will work without real-time updates
     },
     
     /**
@@ -190,7 +189,7 @@ const ProviderStatusMonitor = {
                 break;
                 
             default:
-                console.warn('Unknown provider status event:', event);
+                // Unknown event type
         }
     },
     
@@ -653,78 +652,43 @@ const ProviderStatusMonitor = {
         // Batch DOM updates for better performance
         const updates = [];
         
-        // Handle structured format with sip/iax separation
-        if (statuses.sip && typeof statuses.sip === 'object') {
-            Object.keys(statuses.sip).forEach(providerId => {
-                const provider = statuses.sip[providerId];
-                if (provider) {
-                    updates.push({
-                        provider_id: providerId,
-                        type: 'sip',
-                        state: provider.state,
-                        new_state: provider.state, // For backward compatibility
-                        old_state: provider.state, // No animation for bulk update
-                        stateColor: provider.stateColor,
-                        stateIcon: provider.stateIcon,
-                        stateText: provider.stateText,
-                        stateDescription: provider.stateDescription,
-                        stateDuration: provider.stateDuration,
-                        lastSuccessTime: provider.lastSuccessTime,
-                        timeSinceLastSuccess: provider.timeSinceLastSuccess,
-                        successDuration: provider.successDuration,
-                        failureDuration: provider.failureDuration,
-                        rtt: provider.rtt
-                    });
-                }
-            });
-        }
+        // Helper function to build update object from provider data
+        const buildUpdateObject = (providerId, provider, type) => ({
+            provider_id: providerId,
+            type,
+            state: provider.state,
+            new_state: provider.state, // For backward compatibility
+            old_state: provider.state, // No animation for bulk update
+            stateColor: provider.stateColor,
+            stateIcon: provider.stateIcon,
+            stateText: provider.stateText,
+            stateDescription: provider.stateDescription,
+            stateDuration: provider.stateDuration,
+            lastSuccessTime: provider.lastSuccessTime,
+            timeSinceLastSuccess: provider.timeSinceLastSuccess,
+            successDuration: provider.successDuration,
+            failureDuration: provider.failureDuration,
+            rtt: provider.rtt
+        });
         
-        // Update IAX providers
-        if (statuses.iax && typeof statuses.iax === 'object') {
-            Object.keys(statuses.iax).forEach(providerId => {
-                const provider = statuses.iax[providerId];
-                if (provider) {
-                    updates.push({
-                        provider_id: providerId,
-                        type: 'iax',
-                        state: provider.state,
-                        new_state: provider.state, // For backward compatibility
-                        old_state: provider.state, // No animation for bulk update
-                        stateColor: provider.stateColor,
-                        stateIcon: provider.stateIcon,
-                        stateText: provider.stateText,
-                        stateDescription: provider.stateDescription,
-                        stateDuration: provider.stateDuration,
-                        lastSuccessTime: provider.lastSuccessTime,
-                        timeSinceLastSuccess: provider.timeSinceLastSuccess,
-                        successDuration: provider.successDuration,
-                        failureDuration: provider.failureDuration,
-                        rtt: provider.rtt
-                    });
-                }
-            });
-        }
+        // Handle structured format with sip/iax separation
+        ['sip', 'iax'].forEach(providerType => {
+            if (statuses[providerType] && typeof statuses[providerType] === 'object') {
+                Object.keys(statuses[providerType]).forEach(providerId => {
+                    const provider = statuses[providerType][providerId];
+                    if (provider) {
+                        updates.push(buildUpdateObject(providerId, provider, providerType));
+                    }
+                });
+            }
+        });
         
         // If no structured format found, try simple object format (legacy)
         if (!statuses.sip && !statuses.iax && typeof statuses === 'object') {
             Object.keys(statuses).forEach(providerId => {
                 const provider = statuses[providerId];
                 if (provider) {
-                    updates.push({
-                        provider_id: providerId,
-                        type: 'unknown',
-                        state: provider.state,
-                        new_state: provider.state,
-                        old_state: provider.state,
-                        stateColor: provider.stateColor,
-                        stateIcon: provider.stateIcon,
-                        stateText: provider.stateText,
-                        stateDescription: provider.stateDescription,
-                        stateDuration: provider.stateDuration,
-                        lastSuccessTime: provider.lastSuccessTime,
-                        successDuration: provider.successDuration,
-                        failureDuration: provider.failureDuration
-                    });
+                    updates.push(buildUpdateObject(providerId, provider, 'unknown'));
                 }
             });
         }

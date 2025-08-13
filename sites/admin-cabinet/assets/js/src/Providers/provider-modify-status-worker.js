@@ -46,10 +46,10 @@ const providerModifyStatusWorker = {
     providerType: '',
     
     /**
-     * Current provider uniqid
+     * Current provider id
      * @type {string}
      */
-    uniqid: '',
+    providerId: '',
     
     /**
      * EventBus subscription status
@@ -91,14 +91,12 @@ const providerModifyStatusWorker = {
         } else if (window.location.pathname.includes('modifyiax')) {
             this.providerType = 'iax';
         } else {
-            console.warn('Unknown provider type from URL:', window.location.pathname);
             return;
         }
         
-        // Get provider uniqid from form
-        this.uniqid = this.$formObj.form('get value', 'uniqid');
-        if (!this.uniqid) {
-            console.warn('No provider uniqid found in form');
+        // Get provider id from form
+        this.providerId = this.$formObj.form('get value', 'id');
+        if (!this.providerId) {
             return;
         }
         
@@ -122,7 +120,6 @@ const providerModifyStatusWorker = {
      */
     subscribeToEventBus() {
         if (typeof EventBus === 'undefined') {
-            console.warn('EventBus not available, falling back to periodic polling');
             this.startPeriodicUpdate();
             return;
         }
@@ -132,7 +129,6 @@ const providerModifyStatusWorker = {
         });
         
         this.isSubscribed = true;
-        console.log(`Subscribed to EventBus for provider ${this.uniqid} (${this.providerType})`);
     },
     
     /**
@@ -183,7 +179,7 @@ const providerModifyStatusWorker = {
         
         // Find status change for our specific provider
         const relevantChange = data.changes.find(change => 
-            change.provider_id === this.uniqid || change.uniqid === this.uniqid
+            change.provider_id === this.providerId || change.id === this.providerId
         );
         
         if (relevantChange) {
@@ -200,8 +196,8 @@ const providerModifyStatusWorker = {
         }
         
         // Look for our provider in the status data
-        const providerStatus = data.statuses[this.providerType]?.[this.uniqid] ||
-                              data.statuses[this.uniqid];
+        const providerStatus = data.statuses[this.providerType]?.[this.providerId] ||
+                              data.statuses[this.providerId];
         
         if (providerStatus) {
             this.updateStatusDisplay(providerStatus);
@@ -212,8 +208,6 @@ const providerModifyStatusWorker = {
      * Handle status error
      */
     handleStatusError(data) {
-        console.warn('Provider status error:', data);
-        
         // Show error state
         this.$status
             .removeClass('green yellow grey loading')
@@ -240,7 +234,7 @@ const providerModifyStatusWorker = {
         // Update DebuggerInfo if available
         if (typeof DebuggerInfo !== 'undefined') {
             const debugInfo = {
-                uniqid: this.uniqid,
+                id: this.providerId,
                 type: this.providerType,
                 state: statusData.state || statusData.new_state,
                 stateColor: statusData.stateColor,
@@ -250,7 +244,7 @@ const providerModifyStatusWorker = {
             
             const htmlTable = `
                 <table class="ui very compact table">
-                    <tr><td>Provider</td><td>${debugInfo.uniqid}</td></tr>
+                    <tr><td>Provider</td><td>${debugInfo.id}</td></tr>
                     <tr><td>Type</td><td>${debugInfo.type}</td></tr>
                     <tr><td>State</td><td>${debugInfo.state}</td></tr>
                     <tr><td>Color</td><td>${debugInfo.stateColor}</td></tr>
@@ -364,7 +358,7 @@ const providerModifyStatusWorker = {
         
         // Request status for this specific provider via REST API V2
         // Pass provider type for optimized lookup
-        ProvidersAPI.getStatusById(this.uniqid, this.providerType, (response) => {
+        ProvidersAPI.getStatusById(this.providerId, this.providerType, (response) => {
             this.$status.removeClass('loading');
             
             if (response && response.result && response.data) {
@@ -386,8 +380,6 @@ const providerModifyStatusWorker = {
      * Handle request errors
      */
     handleRequestError(error) {
-        console.warn('Provider status request error:', error);
-        
         this.$status
             .removeClass('loading green yellow grey')
             .addClass('red')
@@ -408,7 +400,7 @@ const providerModifyStatusWorker = {
                     // Debounce status requests
                     clearTimeout(this.changeTimeout);
                     this.changeTimeout = setTimeout(() => {
-                        if (this.uniqid) { // Only request if we have a valid provider ID
+                        if (this.providerId) { // Only request if we have a valid provider ID
                             this.requestInitialStatus();
                         }
                     }, 1000);
@@ -438,10 +430,11 @@ const providerModifyStatusWorker = {
         this.initializeTimeline();
         
         // Force check button handler
-        $('#check-now-btn').off('click').on('click', () => {
-            $('#check-now-btn').addClass('loading');
+        const $checkBtn = $('#check-now-btn');
+        $checkBtn.off('click').on('click', () => {
+            $checkBtn.addClass('loading');
             $.api({
-                url: `/pbxcore/api/v2/providers/getStatus/${this.providerType.toUpperCase()}/${this.uniqid}`,
+                url: `/pbxcore/api/v2/providers/getStatus/${this.providerType.toUpperCase()}/${this.providerId}`,
                 method: 'GET',
                 data: { 
                     forceCheck: true 
@@ -449,15 +442,14 @@ const providerModifyStatusWorker = {
                 on: 'now',
                 successTest: PbxApi.successTest,
                 onSuccess: (response) => {
-                    $('#check-now-btn').removeClass('loading');
+                    $checkBtn.removeClass('loading');
                     if (response.result && response.data) {
                         this.updateStatusDisplay(response.data);
-                        // Reload timeline after force check
                         this.loadTimelineData();
                     }
                 },
                 onFailure: () => {
-                    $('#check-now-btn').removeClass('loading');
+                    $checkBtn.removeClass('loading');
                 }
             });
         });
@@ -488,7 +480,7 @@ const providerModifyStatusWorker = {
      */
     loadTimelineData() {
         $.api({
-            url: `/pbxcore/api/v2/providers/getHistory/${this.providerType.toUpperCase()}/${this.uniqid}`,
+            url: `/pbxcore/api/v2/providers/getHistory/${this.providerType.toUpperCase()}/${this.providerId}`,
             method: 'GET',
             data: { 
                 limit: 1000 
@@ -796,14 +788,16 @@ const providerModifyStatusWorker = {
         const $btn = $('#export-history-btn');
         $btn.addClass('loading');
         
-        // First get provider details
-        const providerHost = this.$formObj.form('get value', 'host');
-        const providerUsername = this.$formObj.form('get value', 'username');
-        const providerDescription = this.$formObj.form('get value', 'description');
+        // Get provider details
+        const providerInfo = {
+            host: this.$formObj.form('get value', 'host'),
+            username: this.$formObj.form('get value', 'username'),
+            description: this.$formObj.form('get value', 'description')
+        };
         
         // Fetch history data
         $.api({
-            url: `/pbxcore/api/v2/providers/getHistory/${this.providerType.toUpperCase()}/${this.uniqid}`,
+            url: `/pbxcore/api/v2/providers/getHistory/${this.providerType.toUpperCase()}/${this.providerId}`,
             method: 'GET',
             data: { 
                 limit: 10000 // Get more records for export
@@ -814,11 +808,9 @@ const providerModifyStatusWorker = {
                 $btn.removeClass('loading');
                 if (response.result && response.data && response.data.events) {
                     this.downloadCSV(response.data.events, {
-                        providerId: this.uniqid,
+                        providerId: this.providerId,
                         providerType: this.providerType.toUpperCase(),
-                        host: providerHost,
-                        username: providerUsername,
-                        description: providerDescription
+                        ...providerInfo
                     });
                 }
             },

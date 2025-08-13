@@ -149,7 +149,7 @@ class GetStatusByIdAction extends AbstractProviderStatusAction
                 
                 // Return basic info with unknown status
                 $statusData = [
-                    'uniqid' => $providerId,
+                    'id' => $providerId,  // Use id instead of uniqid
                     'type' => $provider['type'],
                     'state' => 'UNKNOWN',
                     'stateText' => 'pr_ProviderStateUnknown',

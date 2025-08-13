@@ -16,30 +16,62 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, Form, PbxApi, ClipboardJS, NetworkFiltersAPI, TooltipBuilder, i18n, ProvidersAPI */
+/* global globalRootUrl, globalTranslate, Form, PbxApi, ClipboardJS, NetworkFiltersAPI, TooltipBuilder, PasswordScore, i18n, ProvidersAPI */
 
 /**
  * Base class for provider management forms
  * @class ProviderBase
  */
-class ProviderBase { 
-    /**  
+class ProviderBase {
+    // Class constants for selectors
+    static SELECTORS = {
+        FORM: '#save-provider-form',
+        SECRET: '#secret',
+        CHECKBOXES: '#save-provider-form .checkbox',
+        ACCORDIONS: '#save-provider-form .ui.accordion',
+        DROPDOWNS: '#save-provider-form .ui.dropdown',
+        DESCRIPTION: '#description',
+        NETWORK_FILTER_ID: '#networkfilterid',
+        SHOW_HIDE_PASSWORD: '#show-hide-password',
+        GENERATE_PASSWORD: '#generate-new-password',
+        PASSWORD_TOOLTIP_ICON: '.password-tooltip-icon',
+        CLIPBOARD: '.clipboard',
+        POPUPED: '.popuped'
+    };
+
+    // Class constants for values
+    static DEFAULTS = {
+        SIP_PORT: '5060',
+        IAX_PORT: '4569',
+        PASSWORD_LENGTH: 16,
+        QUALIFY_FREQ: '60',
+        REGISTRATION_TYPE: 'outbound',
+        DTMF_MODE: 'auto',
+        TRANSPORT: 'UDP',
+        NETWORK_FILTER: 'none'
+    };
+
+    /**
      * Constructor
      * @param {string} providerType - Type of provider (SIP or IAX)
      */
     constructor(providerType) {
         this.providerType = providerType;
-        this.$formObj = $('#save-provider-form');
-        this.$secret = $('#secret');
-        this.$additionalHostsDummy = $('#additional-hosts-table .dummy');
-        this.$additionalHostsTemplate = $('#additional-hosts-table .host-row-tpl');
-        this.$checkBoxes = $('#save-provider-form .checkbox');
-        this.$accordions = $('#save-provider-form .ui.accordion');
-        this.$dropDowns = $('#save-provider-form .ui.dropdown');
-        this.$deleteRowButton = $('#additional-hosts-table .delete-row-button');
-        this.$additionalHostInput = $('#additional-host input');
-        this.hostRow = '#save-provider-form .host-row';
+        // Cache jQuery objects
+        this.$formObj = $(ProviderBase.SELECTORS.FORM);
+        this.$secret = $(ProviderBase.SELECTORS.SECRET);
+        this.$checkBoxes = $(ProviderBase.SELECTORS.CHECKBOXES);
+        this.$accordions = $(ProviderBase.SELECTORS.ACCORDIONS);
+        this.$dropDowns = $(ProviderBase.SELECTORS.DROPDOWNS);
+        this.$description = $(ProviderBase.SELECTORS.DESCRIPTION);
+        this.$networkFilterId = $(ProviderBase.SELECTORS.NETWORK_FILTER_ID);
+        this.$showHidePassword = $(ProviderBase.SELECTORS.SHOW_HIDE_PASSWORD);
+        this.$generatePassword = $(ProviderBase.SELECTORS.GENERATE_PASSWORD);
+        this.$passwordTooltipIcon = $(ProviderBase.SELECTORS.PASSWORD_TOOLTIP_ICON);
+        this.$clipboard = $(ProviderBase.SELECTORS.CLIPBOARD);
+        this.$popuped = $(ProviderBase.SELECTORS.POPUPED);
         
+        // Host input validation regex
         this.hostInputValidation = new RegExp(
             '^(((\\d|[1-9]\\d|1\\d{2}|2[0-4]\\d|25[0-5])\\.){3}'
             + '(\\d|[1-9]\\d|1\\d{2}|2[0-4]\\d|25[0-5])'
@@ -53,31 +85,23 @@ class ProviderBase {
      * Initialize the provider form
      */
     initialize() {
-        // Get provider ID and type from form
-        const providerId = $('#id').val() || $('#uniqid').val() || '';
-        const providerType = this.providerType;
+        const providerId = $('#id').val() || '';
+        const currentDescription = this.$description.val() || '';
         
         // Update header immediately for better UX
-        const currentDescription = $('#description').val() || '';
         this.updatePageHeader(currentDescription);
         
         // Show loading state
         this.showLoadingState();
         
         // Load provider data from REST API
-        ProvidersAPI.getRecord(providerId, providerType, (response) => {
+        ProvidersAPI.getRecord(providerId, this.providerType, (response) => {
             this.hideLoadingState();
             
             if (response.result && response.data) {
-                // Populate form with data
                 this.populateFormData(response.data);
-            } else {
-                // Provider data loading failed for existing provider
-                if (providerId && providerId !== 'new') {
-                    UserMessage.showMultiString(response.messages);
-                }
-                // Initialize network filter dropdown for new providers
-                this.initializeNetworkFilterDropdown();
+            } else if (providerId && providerId !== 'new') {
+                UserMessage.showMultiString(response.messages);
             }
             
             // Continue with initialization
@@ -86,14 +110,13 @@ class ProviderBase {
             this.initializeForm();
             this.updateVisibilityElements();
             
-            // Initialize all tooltip popups
-            $('.popuped').popup();
-            
+            // Initialize tooltip popups and clipboard
+            this.$popuped.popup();
             this.initializeClipboard();
             
             // Prevent browser password manager for generated passwords
-            this.$secret.on('focus', function() {
-                $(this).attr('autocomplete', 'new-password');
+            this.$secret.on('focus', () => {
+                this.$secret.attr('autocomplete', 'new-password');
             });
         });
     }
@@ -104,17 +127,13 @@ class ProviderBase {
     initializeUIComponents() {
         this.$checkBoxes.checkbox();
         this.$dropDowns.dropdown();
-        this.$accordions.accordion();
-        this.updateHostsTableView();
+        this.initializeAccordion();
         
         // Initialize dynamic dropdowns
         this.initializeRegistrationTypeDropdown();
-        if (this.providerType === 'SIP') {
-            this.initializeDtmfModeDropdown();
-            this.initializeTransportDropdown();
-        }
         
-        // Network filter dropdown will be initialized after data is loaded
+        // Initialize network filter dropdown
+        this.initializeNetworkFilterDropdown();
     }
     
     /**
@@ -146,7 +165,7 @@ class ProviderBase {
             return;
         }
         
-        const currentValue = $field.val() || 'outbound';
+        const currentValue = $field.val() || ProviderBase.DEFAULTS.REGISTRATION_TYPE;
         const isIAX = this.providerType === 'IAX';
         
         // Build options based on provider type
@@ -185,188 +204,39 @@ class ProviderBase {
             }
         });
     }
-    
+     
     /**
-     * Initialize DTMF mode dropdown for SIP providers
+     * Initialize accordion with callbacks
      */
-    initializeDtmfModeDropdown() {
-        const $field = $('#dtmfmode');
-        if ($field.length === 0) return;
-        
-        // Check if already inside a dropdown structure
-        const $existingDropdown = $field.closest('.ui.dropdown');
-        if ($existingDropdown.length > 0) {
-            // Already a dropdown, just ensure it's initialized
-            if (!$existingDropdown.hasClass('dtmf-mode-dropdown')) {
-                $existingDropdown.addClass('dtmf-mode-dropdown');
+    initializeAccordion() {
+        const self = this;
+        this.$accordions.accordion({
+            onOpen: function() {
+                // Update field visibility when accordion opens
+                setTimeout(() => {
+                    if (typeof self.updateVisibilityElements === 'function') {
+                        self.updateVisibilityElements();
+                    }
+                }, 50);
             }
-            $existingDropdown.dropdown({
-                onChange: () => Form.dataChanged()
-            });
-            return;
-        }
-        
-        const currentValue = $field.val() || 'auto';
-        
-        const options = [
-            { value: 'auto', text: globalTranslate.auto || 'auto' },
-            { value: 'rfc4733', text: globalTranslate.rfc4733 || 'rfc4733' },
-            { value: 'info', text: globalTranslate.info || 'info' },
-            { value: 'inband', text: globalTranslate.inband || 'inband' },
-            { value: 'auto_info', text: globalTranslate.auto_info || 'auto_info' }
-        ];
-        
-        const dropdownHtml = `
-            <div class="ui selection dropdown dtmf-mode-dropdown">
-                <input type="hidden" name="dtmfmode" id="dtmfmode" value="${currentValue}">
-                <i class="dropdown icon"></i>
-                <div class="default text">${options.find(o => o.value === currentValue)?.text || currentValue}</div>
-                <div class="menu">
-                    ${options.map(opt => `<div class="item" data-value="${opt.value}">${opt.text}</div>`).join('')}
-                </div>
-            </div>
-        `;
-        
-        $field.replaceWith(dropdownHtml);
-        
-        $('.dtmf-mode-dropdown').dropdown({
-            onChange: () => Form.dataChanged()
         });
     }
     
     /**
-     * Initialize transport protocol dropdown for SIP providers
+     * Initialize network filter dropdown with simplified logic
      */
-    initializeTransportDropdown() {
-        const $field = $('#transport');
-        if ($field.length === 0) return;
+    initializeNetworkFilterDropdown() {
+        if (this.$networkFilterId.length === 0) return;
         
-        // Check if already inside a dropdown structure
-        const $existingDropdown = $field.closest('.ui.dropdown');
-        if ($existingDropdown.length > 0) {
-            // Already a dropdown, just ensure it's initialized
-            if (!$existingDropdown.hasClass('transport-dropdown')) {
-                $existingDropdown.addClass('transport-dropdown');
-            }
-            $existingDropdown.dropdown({
-                onChange: () => Form.dataChanged()
-            });
-            return;
-        }
+        // Get current value from data attribute (set by populateFormData) or form value or default
+        const currentValue = this.$networkFilterId.data('value') || this.$networkFilterId.val() || ProviderBase.DEFAULTS.NETWORK_FILTER;
         
-        const currentValue = $field.val() || 'UDP';
-        
-        const options = [
-            { value: 'UDP', text: 'UDP' },
-            { value: 'TCP', text: 'TCP' },
-            { value: 'TLS', text: 'TLS' }
-        ];
-        
-        const dropdownHtml = `
-            <div class="ui selection dropdown transport-dropdown">
-                <input type="hidden" name="transport" id="transport" value="${currentValue}">
-                <i class="dropdown icon"></i>
-                <div class="default text">${currentValue}</div>
-                <div class="menu">
-                    ${options.map(opt => `<div class="item" data-value="${opt.value}">${opt.text}</div>`).join('')}
-                </div>
-            </div>
-        `;
-        
-        $field.replaceWith(dropdownHtml);
-        
-        $('.transport-dropdown').dropdown({
-            onChange: () => Form.dataChanged()
-        });
-    }
-    
-    /**
-     * Initialize network filter dropdown
-     * @param {string} preselectedValue - Optional preselected value from API
-     */
-    initializeNetworkFilterDropdown(preselectedValue = null) {
-        const $field = $('#networkfilterid');
-        if ($field.length === 0) return;
-        
-        // Get the dropdown element
-        let $dropdown = $field;
-        if ($field.is('select')) {
-            $dropdown = $field.hasClass('ui') ? $field : $field.closest('.ui.dropdown');
-            if ($dropdown.length === 0) {
-                $dropdown = $field;
-            }
-        }
-        
-        // Use provided value or get current value
-        const currentValue = preselectedValue || this.getCurrentNetworkFilterValue();
-        
-        // Use NetworkFiltersAPI to initialize the dropdown
-        NetworkFiltersAPI.initializeDropdown($dropdown, {
-            currentValue: currentValue,
+        // Initialize with NetworkFiltersAPI using simplified approach
+        NetworkFiltersAPI.initializeDropdown(this.$networkFilterId, {
+            currentValue,
             providerType: this.providerType,
-            onChange: (value) => {
-                this.onNetworkFilterChange(value);
-                Form.dataChanged();
-            }
+            onChange: () => Form.dataChanged()
         });
-    }
-    
-    /**
-     * Get current network filter value from various sources
-     * @returns {string} Current network filter value
-     */
-    getCurrentNetworkFilterValue() {
-        // Try to get value from hidden input
-        let value = $('#networkfilterid').val();
-        
-        // If not found, try to get from form data or REST API
-        if (!value) {
-            // Check if we're editing existing provider
-            const providerId = $('#id').val();
-            if (providerId) {
-                // Value should be loaded from server when editing
-                value = $('#networkfilterid').attr('value') || 'none';
-            } else {
-                // Default for new providers
-                value = 'none';
-            }
-        }
-        
-        return value;
-    }
-    
-    /**
-     * Handle network filter change
-     * @param {string} value - Selected network filter value
-     */
-    onNetworkFilterChange(value) {
-        // Update hidden input value
-        $('#networkfilterid').val(value);
-        
-        // Can be overridden in child classes for specific behavior
-    }
-    
-    /**
-     * Save current network filter value to restore later
-     */
-    saveNetworkFilterState() {
-        const value = $('#networkfilterid').val();
-        if (value) {
-            sessionStorage.setItem(`${this.providerType}_networkfilter_value`, value);
-        }
-    }
-    
-    /**
-     * Restore previously saved network filter value
-     */
-    restoreNetworkFilterState() {
-        const savedValue = sessionStorage.getItem(`${this.providerType}_networkfilter_value`);
-        if (savedValue) {
-            const $dropdown = $('#networkfilterid').closest('.ui.dropdown');
-            if ($dropdown.length > 0) {
-                $dropdown.dropdown('set selected', savedValue);
-            }
-        }
     }
 
     /**
@@ -376,28 +246,16 @@ class ProviderBase {
         const self = this;
         
         // Update header when provider name changes
-        $('#description').on('input', function() {
+        this.$description.on('input', function() {
             self.updatePageHeader($(this).val());
         });
         
-        // Add new string to additional-hosts-table table
-        this.$additionalHostInput.keypress((e) => {
-            if (e.which === 13) {
-                self.cbOnCompleteHostAddress();
-            }
-        });
-
-        // Delete host from additional-hosts-table - use event delegation for dynamic elements
-        $('#additional-hosts-table').on('click', '.delete-row-button', (e) => {
-            e.preventDefault();
-            $(e.target).closest('tr').remove();
-            self.updateHostsTableView();
-            Form.dataChanged();
-            return false;
-        });
+        // Initialize password strength indicator
+        this.initializePasswordStrengthIndicator();
+        
 
         // Show/hide password toggle
-        $('#show-hide-password').on('click', (e) => {
+        this.$showHidePassword.on('click', (e) => {
             e.preventDefault();
             const $button = $(e.currentTarget);
             const $icon = $button.find('i');
@@ -414,7 +272,7 @@ class ProviderBase {
         });
 
         // Generate new password
-        $('#generate-new-password').on('click', (e) => {
+        this.$generatePassword.on('click', (e) => {
             e.preventDefault();
             this.generatePassword();
         });
@@ -424,8 +282,8 @@ class ProviderBase {
      * Initialize clipboard functionality
      */
     initializeClipboard() {
-        const clipboard = new ClipboardJS('.clipboard');
-        $('.clipboard').popup({
+        const clipboard = new ClipboardJS(ProviderBase.SELECTORS.CLIPBOARD);
+        this.$clipboard.popup({
             on: 'manual',
         });
 
@@ -446,14 +304,55 @@ class ProviderBase {
      * Generate a new password
      */
     generatePassword() {
-        PbxApi.PasswordGenerate(16, (password) => {
+        PbxApi.PasswordGenerate(ProviderBase.DEFAULTS.PASSWORD_LENGTH, (password) => {
             if (password) {
                 this.$secret.val(password);
                 this.$secret.trigger('change');
                 Form.dataChanged();
-                $('.clipboard').attr('data-clipboard-text', password);
+                this.$clipboard.attr('data-clipboard-text', password);
+                
+                // Update password strength indicator
+                const $passwordProgress = $('#password-strength-progress');
+                if ($passwordProgress.length > 0 && typeof PasswordScore !== 'undefined') {
+                    PasswordScore.checkPassStrength({
+                        pass: password,
+                        bar: $passwordProgress,
+                        section: $passwordProgress
+                    });
+                }
             }
         });
+    }
+    
+    /**
+     * Initialize password strength indicator
+     */
+    initializePasswordStrengthIndicator() {
+        // Password strength indicator
+        if (this.$secret.length > 0 && typeof PasswordScore !== 'undefined') {
+            // Create progress bar for password strength if it doesn't exist
+            let $passwordProgress = $('#password-strength-progress');
+            if ($passwordProgress.length === 0) {
+                const $secretField = this.$secret.closest('.field');
+                $passwordProgress = $('<div class="ui tiny progress" id="password-strength-progress"><div class="bar"></div></div>');
+                $secretField.append($passwordProgress);
+            }
+            
+            // Initialize Semantic UI progress component
+            $passwordProgress.progress({
+                percent: 0,
+                showActivity: false
+            });
+            
+            // Update password strength on input
+            this.$secret.on('input', () => {
+                PasswordScore.checkPassStrength({
+                    pass: this.$secret.val(),
+                    bar: $passwordProgress,
+                    section: $passwordProgress
+                });
+            });
+        }
     }
 
     /**
@@ -468,14 +367,14 @@ class ProviderBase {
      * Show password tooltip icon when in 'none' registration mode
      */
     showPasswordTooltip() {
-        $('.password-tooltip-icon').show();
+        this.$passwordTooltipIcon.show();
     }
     
     /**
      * Hide password tooltip icon
      */
     hidePasswordTooltip() {
-        $('.password-tooltip-icon').hide();
+        this.$passwordTooltipIcon.hide();
     }
 
     /**
@@ -508,23 +407,15 @@ class ProviderBase {
      */
     cbBeforeSendForm(settings) {
         const result = settings;
-        result.data = this.$formObj.form('get values');
+        // IMPORTANT: Don't overwrite result.data - it already contains processed checkbox values from Form.js
+        // We should only add or modify specific fields
         
-        // Convert additional hosts table to array
-        const additionalHosts = [];
-        $('#additional-hosts-table tbody tr.host-row').each((index, obj) => {
-            const host = $(obj).find('td.address').text().trim();
-            if (host) {
-                additionalHosts.push(host);
-            }
-        });
-        
-        if (additionalHosts.length > 0) {
-            result.data.additionalHosts = JSON.stringify(additionalHosts);
+        // If result.data is not defined (shouldn't happen), initialize it
+        if (!result.data) {
+            result.data = this.$formObj.form('get values');
         }
         
-        // Save current network filter state
-        this.saveNetworkFilterState();
+        // Network filter value is automatically handled by form serialization
         
         return result;
     }
@@ -537,53 +428,7 @@ class ProviderBase {
         // Can be overridden in child classes
     }
 
-    /**
-     * Handle completion of host address input
-     */
-    cbOnCompleteHostAddress() {
-        const value = this.$formObj.form('get value', 'additional-host');
-        
-        if (value) {
-            const validation = value.match(this.hostInputValidation);
-            
-            // Validate the input value
-            if (validation === null || validation.length === 0) {
-                this.$additionalHostInput.transition('shake');
-                return;
-            }
-            
-            // Check if the host address already exists
-            if ($(`.host-row[data-value="${value}"]`).length === 0) {
-                const $tr = $('.host-row-tpl').last();
-                const $clone = $tr.clone(false); // Use false since events are delegated
-                $clone
-                    .removeClass('host-row-tpl')
-                    .addClass('host-row')
-                    .show();
-                $clone.attr('data-value', value);
-                $clone.find('.address').html(value);
-                if ($(this.hostRow).last().length === 0) {
-                    $tr.after($clone);
-                } else {
-                    $(this.hostRow).last().after($clone);
-                }
-                this.updateHostsTableView();
-                Form.dataChanged();
-            }
-            this.$additionalHostInput.val('');
-        }
-    }
 
-    /**
-     * Update the visibility of hosts table
-     */
-    updateHostsTableView() {
-        if ($(this.hostRow).length === 0) {
-            this.$additionalHostsDummy.show();
-        } else {
-            this.$additionalHostsDummy.hide();
-        }
-    }
     
     /**
      * Show loading state for the form
@@ -604,108 +449,50 @@ class ProviderBase {
      * @param {object} data - Provider data from API
      */
     populateFormData(data) {
+        
         // Common fields
-        if (data.id) $('#id').val(data.id);
-        if (data.uniqid) $('#uniqid').val(data.uniqid);
+        if (data.id) {
+            $('#id').val(data.id);
+        }
         if (data.description) {
-            $('#description').val(data.description);
+            this.$description.val(data.description);
             // Update page header with provider name and type
             this.updatePageHeader(data.description);
         }
-        if (data.note) $('#note').val(data.note);
+        if (data.note) {
+            $('#note').val(data.note);
+        }
         
         // Store network filter value for later initialization
-        let networkFilterValue = data.networkfilterid || 'none';
+        const networkFilterValue = data.networkfilterid || ProviderBase.DEFAULTS.NETWORK_FILTER;
         
-        // Provider type specific fields - REST API v2 returns flat structure
+        // Common provider fields
+        $('#username').val(data.username || '');
+        this.$secret.val(data.secret || '');
+        $('#host').val(data.host || '');
+        $('#registration_type').val(data.registration_type || ProviderBase.DEFAULTS.REGISTRATION_TYPE);
+        // Store value in data attribute since select is empty and can't hold value
+        this.$networkFilterId.data('value', networkFilterValue);
+        $('#manualattributes').val(data.manualattributes || '');
+        
+        // Set default ports based on provider type
         if (this.providerType === 'SIP') {
-            $('#username').val(data.username || '');
-            $('#secret').val(data.secret || '');
-            $('#host').val(data.host || '');
-            $('#port').val(data.port || '5060');
-            $('#registration_type').val(data.registration_type || 'outbound');
-            $('#networkfilterid').val(networkFilterValue);
-            $('#dtmfmode').val(data.dtmfmode || 'auto');
-            $('#transport').val(data.transport || 'UDP');
-            $('#fromuser').val(data.fromuser || '');
-            $('#fromdomain').val(data.fromdomain || '');
-            $('#outbound_proxy').val(data.outbound_proxy || '');
-            $('#manualattributes').val(data.manualattributes || '');
-            
-            // Checkboxes - handle both string '1' and boolean true
-            if (data.qualify === '1' || data.qualify === true) $('#qualify').prop('checked', true);
-            if (data.disablefromuser === '1' || data.disablefromuser === true) $('#disablefromuser').prop('checked', true);
-            if (data.receive_calls_without_auth === '1' || data.receive_calls_without_auth === true) $('#receive_calls_without_auth').prop('checked', true);
-            if (data.noregister === '1' || data.noregister === true) $('#noregister').prop('checked', true);
-            
-            // Qualify frequency
-            $('#qualifyfreq').val(data.qualifyfreq || '60');
-            
-            // Additional hosts - populate after form is ready
-            this.populateAdditionalHosts(data.additionalHosts);
+            $('#port').val(data.port || ProviderBase.DEFAULTS.SIP_PORT);
         } else if (this.providerType === 'IAX') {
-            $('#username').val(data.username || '');
-            $('#secret').val(data.secret || '');
-            $('#host').val(data.host || '');
-            $('#port').val(data.port || '4569');
-            $('#registration_type').val(data.registration_type || 'outbound');
-            $('#networkfilterid').val(networkFilterValue);
-            $('#manualattributes').val(data.manualattributes || '');
-            
-            // Checkboxes - handle both string '1' and boolean true
-            if (data.qualify === '1' || data.qualify === true) $('#qualify').prop('checked', true);
-            if (data.receive_calls_without_auth === '1' || data.receive_calls_without_auth === true) $('#receive_calls_without_auth').prop('checked', true);
-            if (data.noregister === '1' || data.noregister === true) $('#noregister').prop('checked', true);
+            $('#port').val(data.port || ProviderBase.DEFAULTS.IAX_PORT);
         }
+        
+        // Common checkboxes - handle both string '1' and boolean true
+        if (data.qualify === '1' || data.qualify === true) $('#qualify').prop('checked', true);
+        if (data.receive_calls_without_auth === '1' || data.receive_calls_without_auth === true) $('#receive_calls_without_auth').prop('checked', true);
+        if (data.noregister === '1' || data.noregister === true) $('#noregister').prop('checked', true);
         
         // Disabled state
         if (data.disabled === '1' || data.disabled === true) {
             $('#disabled').val('1');
         }
-        
-        // Initialize network filter dropdown with the value from API
-        this.initializeNetworkFilterDropdown(networkFilterValue);
     }
 
-    /**
-     * Populate additional hosts from API data
-     * @param {array} additionalHosts - Array of additional hosts from API
-     */
-    populateAdditionalHosts(additionalHosts) {
-        if (!additionalHosts || !Array.isArray(additionalHosts)) {
-            return;
-        }
-        
-        // Clear existing hosts first (except template and dummy)
-        $('#additional-hosts-table tbody tr.host-row').remove();
-        
-        // Add each host using the same logic as cbOnCompleteHostAddress
-        additionalHosts.forEach((hostObj) => {
-            // Handle both object format {id, address} and string format
-            const hostAddress = typeof hostObj === 'string' ? hostObj : hostObj.address;
-            if (hostAddress && hostAddress.trim()) {
-                // Use the same logic as cbOnCompleteHostAddress
-                const $tr = $('.host-row-tpl').last();
-                const $clone = $tr.clone(false); // Use false since events are delegated
-                $clone
-                    .removeClass('host-row-tpl')
-                    .addClass('host-row')
-                    .show();
-                $clone.attr('data-value', hostAddress);
-                $clone.find('.address').html(hostAddress);
-                
-                // Insert the cloned row
-                if ($(this.hostRow).last().length === 0) {
-                    $tr.after($clone);
-                } else {
-                    $(this.hostRow).last().after($clone);
-                }
-            }
-        });
-        
-        // Update table visibility
-        this.updateHostsTableView();
-    }
     
     /**
      * Build HTML content for tooltips from structured data

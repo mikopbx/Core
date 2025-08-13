@@ -72,7 +72,7 @@ const providers = {
                     orderable: true,
                     searchable: false,
                     className: 'collapsing',
-                    render: function(data, type, row) {
+                    render(data, type, row) {
                         if (type === 'sort' || type === 'type') {
                             // Return 0 for enabled, 1 for disabled for sorting
                             return row.disabled ? 1 : 0;
@@ -92,15 +92,15 @@ const providers = {
                     orderable: false,
                     searchable: false,
                     className: 'center aligned collapsing provider-status',
-                    render: function(data, type, row) {
-                        return `<i class="spinner loading icon"></i>`;
+                    render() {
+                        return '<i class="spinner loading icon"></i>';
                     }
                 },
                 {
                     // Provider name column - display what comes from server
                     data: 'represent',
                     className: 'collapsing',
-                    render: function(data, type, row) {
+                    render(data, type, row) {
                         if (type === 'display') {
                             // Use SecurityUtils.sanitizeExtensionsApiContent to allow safe HTML rendering
                             const safeRepresentation = window.SecurityUtils.sanitizeExtensionsApiContent(data || '');
@@ -115,7 +115,7 @@ const providers = {
                 {
                     // Host column
                     data: 'host',
-                    render: function(data, type, row) {
+                    render(data) {
                         const host = window.SecurityUtils.escapeHtml(data || '');
                         return `<span>${host}</span>`;
                     }
@@ -124,16 +124,16 @@ const providers = {
                     // Username column
                     data: 'username',
                     className: 'hide-on-mobile',
-                    render: function(data, type, row) {
+                    render(data) {
                         const username = window.SecurityUtils.escapeHtml(data || '');
                         return `<span>${username}</span>`;
                     }
                 }
             ],
             // Custom URL generator for modify/edit actions
-            getModifyUrl: function(recordId) {
+            getModifyUrl(recordId) {
                 const data = this.dataTable.rows().data().toArray();
-                const record = data.find(r => r.uniqid === recordId);
+                const record = data.find(r => r.id === recordId);
                 if (record) {
                     const type = record.type.toLowerCase();
                     return `${globalRootUrl}providers/modify${type}/${recordId}`;
@@ -199,7 +199,7 @@ const providers = {
         $('#providers-table tbody tr').each(function() {
             const data = $('#providers-table').DataTable().row(this).data();
             if (data) {
-                $(this).attr('id', data.uniqid);
+                $(this).attr('id', data.id);
                 $(this).attr('data-value', 'modify' + data.type.toLowerCase());
                 $(this).attr('data-links', data.links || 'false');
                 $(this).addClass('provider-row');
@@ -252,13 +252,13 @@ const providers = {
         $('.provider-row .checkbox')
             .checkbox({
                 onChecked() {
-                    const uniqid = $(this).closest('tr').attr('id');
+                    const providerId = $(this).closest('tr').attr('id');
                     const type = $(this).closest('tr').attr('data-value');
                     
                     // Build data object - extract actual type from data-value (remove 'modify' prefix)
                     const actualType = type.replace(/^modify/i, '').toUpperCase();
                     const data = {
-                        id: uniqid,
+                        id: providerId,
                         type: actualType,
                         disabled: false
                     };
@@ -267,7 +267,7 @@ const providers = {
                     ProvidersAPI.saveRecord(data, (response) => {
                         if (response.result) {
                             // Remove disability classes from cells
-                            $(`#${uniqid} td`).removeClass('disability disabled');
+                            $(`#${providerId} td`).removeClass('disability disabled');
                         } else {
                             // Revert checkbox
                             $(this).checkbox('set unchecked');
@@ -276,13 +276,13 @@ const providers = {
                     });
                 },
                 onUnchecked() {
-                    const uniqid = $(this).closest('tr').attr('id');
+                    const providerId = $(this).closest('tr').attr('id');
                     const type = $(this).closest('tr').attr('data-value');
                     
                     // Build data object - extract actual type from data-value (remove 'modify' prefix)
                     const actualType = type.replace(/^modify/i, '').toUpperCase();
                     const data = {
-                        id: uniqid,
+                        id: providerId,
                         type: actualType,
                         disabled: true
                     };
@@ -291,8 +291,8 @@ const providers = {
                     ProvidersAPI.saveRecord(data, (response) => {
                         if (response.result) {
                             // Add disability and disabled classes to data cells
-                            $(`#${uniqid} td`).each(function(index) {
-                                const totalColumns = $(`#${uniqid} td`).length;
+                            $(`#${providerId} td`).each(function(index) {
+                                const totalColumns = $(`#${providerId} td`).length;
                                 // Skip first column (checkbox) and last column (actions)
                                 if (index > 0 && index < totalColumns - 1) {
                                     $(this).addClass('disability disabled');

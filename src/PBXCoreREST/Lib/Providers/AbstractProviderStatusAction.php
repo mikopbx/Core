@@ -451,7 +451,7 @@ abstract class AbstractProviderStatusAction extends Injectable
         
         // Build base status data
         $statusData = [
-            'uniqid' => $provider['uniqid'],
+            'id' => $provider['uniqid'],  // Use uniqid as id for API consistency
             'type' => $provider['type'],
             'state' => $state,
             'stateText' => $displayProps['text'],
@@ -905,7 +905,7 @@ abstract class AbstractProviderStatusAction extends Injectable
      */
     protected static function enrichStatusWithHistory(array $statusData, $redis): array
     {
-        $providerId = $statusData['uniqid'];
+        $providerId = $statusData['id'];  // Changed from 'uniqid' to 'id'
         $currentState = $statusData['state'] ?? 'UNKNOWN';
         
         // Add last 10 events from history

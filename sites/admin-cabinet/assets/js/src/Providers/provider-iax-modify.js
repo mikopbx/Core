@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, Form, ProviderBase, PasswordScore, TooltipBuilder, i18n, ProvidersAPI */
+/* global globalRootUrl, globalTranslate, Form, ProviderBase, ProviderIaxTooltipManager, ProviderTooltipManager, i18n, ProvidersAPI */
 
 /**
  * IAX provider management form
@@ -25,6 +25,43 @@
 class ProviderIAX extends ProviderBase {
     constructor() { 
         super('IAX'); 
+    }
+    
+    /**
+     * Show password strength indicator and trigger initial check
+     */
+    showPasswordStrengthIndicator() {
+        const $passwordProgress = $('#password-strength-progress');
+        if ($passwordProgress.length > 0) {
+            // Initialize progress component if not already done
+            if (!$passwordProgress.hasClass('progress')) {
+                $passwordProgress.progress({
+                    percent: 0,
+                    showActivity: false
+                });
+            }
+            
+            $passwordProgress.show();
+            
+            // Trigger password strength check if password exists
+            if (this.$secret.val() && typeof PasswordScore !== 'undefined') {
+                PasswordScore.checkPassStrength({
+                    pass: this.$secret.val(),
+                    bar: $passwordProgress,
+                    section: $passwordProgress
+                });
+            }
+        }
+    }
+    
+    /**
+     * Hide password strength indicator
+     */
+    hidePasswordStrengthIndicator() {
+        const $passwordProgress = $('#password-strength-progress');
+        if ($passwordProgress.length > 0) {
+            $passwordProgress.hide();
+        }
     }
 
     /**
@@ -42,22 +79,20 @@ class ProviderIAX extends ProviderBase {
         this.initializeTabs();
         
         // Re-validate form when receive_calls_without_auth changes
-        const self = this;
         $('#receive_calls_without_auth.checkbox').checkbox('setting', 'onChange', () => {
-            // Get registration type to determine validation rules
             const regType = $('#registration_type').val();
             
             // Clear any existing error on secret field
-            self.$formObj.form('remove prompt', 'secret');
-            self.$secret.closest('.field').removeClass('error');
+            this.$formObj.form('remove prompt', 'secret');
+            this.$secret.closest('.field').removeClass('error');
             
             // For inbound registration, validate based on checkbox state
             if (regType === 'inbound') {
                 const isChecked = $('#receive_calls_without_auth').checkbox('is checked');
-                if (!isChecked && self.$secret.val() === '') {
+                if (!isChecked && this.$secret.val() === '') {
                     // If unchecked and password is empty, show error
                     setTimeout(() => {
-                        self.$formObj.form('validate field', 'secret');
+                        this.$formObj.form('validate field', 'secret');
                     }, 100);
                 }
             }
@@ -85,30 +120,6 @@ class ProviderIAX extends ProviderBase {
     }
     
     /**
-     * Initialize form with REST API configuration
-     */
-    initializeForm() {
-        Form.$formObj = this.$formObj;
-        Form.url = '#'; // Not used with REST API
-        Form.validateRules = this.getValidateRules();
-        Form.cbBeforeSendForm = this.cbBeforeSendForm.bind(this);
-        Form.cbAfterSendForm = this.cbAfterSendForm.bind(this);
-        
-        // Configure REST API settings
-        Form.apiSettings = {
-            enabled: true,
-            apiObject: ProvidersAPI,
-            saveMethod: 'saveRecord'
-        };
-        
-        // Navigation URLs
-        Form.afterSubmitIndexUrl = globalRootUrl + 'providers/index/';
-        Form.afterSubmitModifyUrl = globalRootUrl + 'providers/modify/';
-        
-        Form.initialize();
-    }
-    
-    /**
      * Callback before form submission
      */
     cbBeforeSendForm(settings) {
@@ -117,17 +128,7 @@ class ProviderIAX extends ProviderBase {
         // Add provider type
         result.data.type = this.providerType;
         
-        // Convert checkbox values to proper booleans
-        const booleanFields = ['disabled', 'qualify', 'disablefromuser', 'noregister', 'receive_calls_without_auth'];
-        booleanFields.forEach((field) => {
-            if (result.data.hasOwnProperty(field)) {
-                // Convert various checkbox representations to boolean
-                result.data[field] = result.data[field] === true || 
-                                     result.data[field] === 'true' || 
-                                     result.data[field] === '1' || 
-                                     result.data[field] === 'on';
-            }
-        });
+        // Checkbox values are now automatically processed by Form.js with convertCheckboxesToBool = true
         
         return result;
     }
@@ -140,8 +141,8 @@ class ProviderIAX extends ProviderBase {
         
         if (response.result && response.data) {
             // Update form with response data if needed
-            if (response.data.uniqid && !$('#uniqid').val()) {
-                $('#uniqid').val(response.data.uniqid);
+            if (response.data.id && !$('#id').val()) {
+                $('#id').val(response.data.id);
             }
             
             // The Form.js will handle the reload automatically if response.reload is present
@@ -157,25 +158,24 @@ class ProviderIAX extends ProviderBase {
         const $checkboxInput = $('#receive_calls_without_auth');
         
         // Function to update warning message state
-        function updateWarningState() {
+        const updateWarningState = () => {
             if ($checkboxInput.prop('checked')) {
                 $warningMessage.removeClass('hidden');
             } else {
                 $warningMessage.addClass('hidden');
             }
-        }
+        };
         
         // Initialize warning state
         updateWarningState();
         
         // Handle checkbox changes
-        const self = this;
         $('#receive_calls_without_auth.checkbox').checkbox({
-            onChecked: function() {
+            onChecked() {
                 $warningMessage.removeClass('hidden').transition('fade in');
             },
-            onUnchecked: function() {
-                $warningMessage.transition('fade out', function() {
+            onUnchecked() {
+                $warningMessage.transition('fade out', () => {
                     $warningMessage.addClass('hidden');
                 });
             }
@@ -188,26 +188,6 @@ class ProviderIAX extends ProviderBase {
     initializeRealtimeValidation() {
         // Enable inline validation for better UX
         this.$formObj.form('setting', 'inline', true);
-        
-        // Password strength indicator
-        if (this.$secret.length > 0 && typeof PasswordScore !== 'undefined') {
-            // Create progress bar for password strength if it doesn't exist
-            let $passwordProgress = $('#password-strength-progress');
-            if ($passwordProgress.length === 0) {
-                const $secretField = this.$secret.closest('.field');
-                $passwordProgress = $('<div class="ui tiny progress" id="password-strength-progress"><div class="bar"></div></div>');
-                $secretField.append($passwordProgress);
-            }
-            
-            // Update password strength on input
-            this.$secret.on('input', () => {
-                PasswordScore.checkPassStrength({
-                    pass: this.$secret.val(),
-                    bar: $passwordProgress,
-                    section: $passwordProgress
-                });
-            });
-        }
         
         // Add helper text for IAX-specific fields
         const $portField = $('#port').closest('.field');
@@ -226,12 +206,11 @@ class ProviderIAX extends ProviderBase {
         });
         
         // Validate on blur for immediate feedback
-        const self = this;
-        this.$formObj.find('input[type="text"], input[type="password"]').on('blur', function() {
-            const fieldName = $(this).attr('name');
-            const validateRules = self.getValidateRules();
+        this.$formObj.find('input[type="text"], input[type="password"]').on('blur', (event) => {
+            const fieldName = $(event.target).attr('name');
+            const validateRules = this.getValidateRules();
             if (fieldName && validateRules[fieldName]) {
-                self.$formObj.form('validate field', fieldName);
+                this.$formObj.form('validate field', fieldName);
             }
         });
     }
@@ -239,115 +218,9 @@ class ProviderIAX extends ProviderBase {
     /**
      * Initialize field help tooltips
      */
-    initializeFieldTooltips() { 
-        // Build tooltip data structures
-        const registrationTypeData = {
-            header: globalTranslate.iax_RegistrationTypeTooltip_header,
-            list: [
-                {
-                    term: globalTranslate.iax_RegistrationTypeTooltip_outbound,
-                    definition: globalTranslate.iax_RegistrationTypeTooltip_outbound_desc
-                },
-                {
-                    term: globalTranslate.iax_RegistrationTypeTooltip_inbound,
-                    definition: globalTranslate.iax_RegistrationTypeTooltip_inbound_desc
-                },
-                {
-                    term: globalTranslate.iax_RegistrationTypeTooltip_none,
-                    definition: globalTranslate.iax_RegistrationTypeTooltip_none_desc
-                }
-            ]
-        };
-
-        const receiveCallsData = {
-            header: globalTranslate.iax_ReceiveCallsWithoutAuthTooltip_header,
-            description: globalTranslate.iax_ReceiveCallsWithoutAuthTooltip_desc,
-            warning: {
-                header: globalTranslate.iax_ReceiveCallsWithoutAuthTooltip_warning_header,
-                text: globalTranslate.iax_ReceiveCallsWithoutAuthTooltip_warning
-            },
-            list: [
-                {
-                    term: globalTranslate.iax_ReceiveCallsWithoutAuthTooltip_application,
-                    definition: globalTranslate.iax_ReceiveCallsWithoutAuthTooltip_application_desc
-                }
-            ]
-        };
-
-        const networkFilterData = {
-            header: globalTranslate.iax_NetworkFilterTooltip_header,
-            description: globalTranslate.iax_NetworkFilterTooltip_desc,
-            list: [
-                {
-                    term: globalTranslate.iax_NetworkFilterTooltip_inbound,
-                    definition: globalTranslate.iax_NetworkFilterTooltip_inbound_desc
-                },
-                {
-                    term: globalTranslate.iax_NetworkFilterTooltip_outbound,
-                    definition: globalTranslate.iax_NetworkFilterTooltip_outbound_desc
-                },
-                {
-                    term: globalTranslate.iax_NetworkFilterTooltip_none,
-                    definition: globalTranslate.iax_NetworkFilterTooltip_none_desc
-                }
-            ]
-        };
-
-        const providerHostData = {
-            header: globalTranslate.iax_ProviderHostTooltip_header,
-            description: globalTranslate.iax_ProviderHostTooltip_desc,
-            list: [
-                globalTranslate.iax_ProviderHostTooltip_format_ip,
-                globalTranslate.iax_ProviderHostTooltip_format_domain,
-                globalTranslate.iax_ProviderHostTooltip_outbound_use,
-                globalTranslate.iax_ProviderHostTooltip_none_use
-            ],
-            note: globalTranslate.iax_ProviderHostTooltip_note
-        };
-
-        const portData = {
-            header: globalTranslate.iax_PortTooltip_header,
-            description: globalTranslate.iax_PortTooltip_desc,
-            list: [
-                globalTranslate.iax_PortTooltip_default,
-                globalTranslate.iax_PortTooltip_info
-            ],
-            note: globalTranslate.iax_PortTooltip_note
-        };
-
-        const manualAttributesData = {
-            header: i18n('iax_ManualAttributesTooltip_header'),
-            description: i18n('iax_ManualAttributesTooltip_desc'),
-            list: [
-                {
-                    term: i18n('iax_ManualAttributesTooltip_format'),
-                    definition: null
-                }
-            ],
-            examplesHeader: i18n('iax_ManualAttributesTooltip_examples_header'),
-            examples: [
-                'language = ru',
-                'codecpriority = host',
-                'trunktimestamps = yes',
-                'trunk = yes'
-            ],
-            warning: {
-                header: i18n('iax_ManualAttributesTooltip_warning_header'),
-                text: i18n('iax_ManualAttributesTooltip_warning')
-            }
-        };
-
-        const tooltipConfigs = {
-            'registration_type': registrationTypeData,
-            'receive_calls_without_auth': receiveCallsData,
-            'network_filter': networkFilterData,
-            'provider_host': providerHostData,
-            'iax_port': portData,
-            'manual_attributes': manualAttributesData
-        };
-        
-        // Initialize tooltips using TooltipBuilder
-        TooltipBuilder.initialize(tooltipConfigs);
+    initializeFieldTooltips() {
+        // Use the specialized ProviderIaxTooltipManager for IAX provider
+        ProviderIaxTooltipManager.initialize();
     }
 
     /**
@@ -540,60 +413,16 @@ class ProviderIAX extends ProviderBase {
         // This method is kept for compatibility
     }
     
-    /**
-     * Initialize network filter dropdown with IAX category
-     */
-    initializeNetworkFilterDropdown() {
-        const $field = $('#networkfilterid');
-        if ($field.length === 0) return;
-        
-        // Get the dropdown element
-        let $dropdown = $field;
-        if ($field.is('select')) {
-            $dropdown = $field.hasClass('ui') ? $field : $field.closest('.ui.dropdown');
-            if ($dropdown.length === 0) {
-                $dropdown = $field;
-            }
-        }
-        
-        // Get current value
-        const currentValue = this.getCurrentNetworkFilterValue();
-        
-        // Use NetworkFiltersAPI to initialize the dropdown with IAX category
-        NetworkFiltersAPI.initializeDropdown($dropdown, {
-            currentValue: currentValue,
-            categories: ['IAX'], // Use IAX category instead of SIP
-            onChange: (value) => {
-                this.onNetworkFilterChange(value);
-                Form.dataChanged();
-            }
-        });
-    }
 
     /**
-     * Override parent's initializeForm to handle dynamic validation rules
+     * Initialize form with REST API configuration
      */
     initializeForm() {
-        const self = this;
         Form.$formObj = this.$formObj;
-        
-        // Get initial validation rules
-        const validationConfig = {
-            on: 'blur',
-            inline: true,
-            keyboardShortcuts: false,
-            fields: this.getValidateRules(),
-            onSuccess: function(event) {
-                // Prevent auto-submit, only submit via button click
-                if (event) {
-                    event.preventDefault();
-                }
-                return false;
-            }
-        };
-        
-        // Initialize form with validation
-        Form.$formObj.form(validationConfig);
+        Form.url = '#'; // Not used with REST API
+        Form.validateRules = this.getValidateRules();
+        Form.cbBeforeSendForm = this.cbBeforeSendForm.bind(this);
+        Form.cbAfterSendForm = this.cbAfterSendForm.bind(this);
         
         // Configure REST API settings
         Form.apiSettings = {
@@ -601,36 +430,15 @@ class ProviderIAX extends ProviderBase {
             apiObject: ProvidersAPI,
             saveMethod: 'saveRecord'
         };
-        Form.validateRules = this.getValidateRules();
-        Form.cbBeforeSendForm = this.cbBeforeSendForm.bind(this);
-        Form.cbAfterSendForm = this.cbAfterSendForm.bind(this);
-        Form.initialize();
         
-        // Override Form's submit button handler to use dynamic validation rules
-        Form.$submitButton.off('click').on('click', (e) => {
-            e.preventDefault();
-            if (Form.$submitButton.hasClass('loading')) return;
-            if (Form.$submitButton.hasClass('disabled')) return;
-
-            // Get current validation rules based on form state
-            const currentRules = self.getValidateRules();
-            
-            // Set up form validation with current rules and submit
-            Form.$formObj
-                .form({
-                    on: 'blur',
-                    fields: currentRules,
-                    onSuccess() {
-                        // Call submitForm() on successful validation
-                        Form.submitForm();
-                    },
-                    onFailure() {
-                        // Add error class to form on validation failure
-                        Form.$formObj.removeClass('error').addClass('error');
-                    },
-                });
-            Form.$formObj.form('validate form');
-        });
+        // Navigation URLs
+        Form.afterSubmitIndexUrl = `${globalRootUrl}providers/index/`;
+        Form.afterSubmitModifyUrl = `${globalRootUrl}providers/modifyiax/`;
+        
+        // Enable automatic checkbox to boolean conversion
+        Form.convertCheckboxesToBool = true;
+        
+        Form.initialize();
     }
 
     /**
@@ -645,12 +453,12 @@ class ProviderIAX extends ProviderBase {
         const elReceiveCalls = $('#elReceiveCalls');
         const elNetworkFilter = $('#elNetworkFilter');
         const regType = $('#registration_type').val();
-        const elUniqId = $('#uniqid');
         const genPassword = $('#generate-new-password');
 
         const valUserName = $('#username');
         const valSecret = this.$secret;
         const valPort = $('#port');
+        const providerId = $('#id').val();
         const valQualify = $('#qualify');
         const copyButton = $('#elSecret .button.clipboard');
         const showHideButton = $('#show-hide-password');
@@ -688,10 +496,13 @@ class ProviderIAX extends ProviderBase {
             elUsername.addClass('required');
             elSecret.addClass('required');
 
-            // Hide generate and copy buttons for outbound
+            // Hide all password management buttons for outbound
             genPassword.hide();
             copyButton.hide();
-            showHideButton.show();
+            showHideButton.hide();
+            
+            // Hide password strength indicator for outbound
+            this.hidePasswordStrengthIndicator();
 
             // Update labels for outbound
             labelHostText.text(globalTranslate.pr_ProviderHostOrIPAddress || 'Provider Host/IP');
@@ -705,7 +516,7 @@ class ProviderIAX extends ProviderBase {
             }
         } else if (regType === 'inbound') {
             // INBOUND: Provider connects to us
-            valUserName.val(elUniqId.val());
+            valUserName.val(providerId);
             valUserName.attr('readonly', '');
             
             // Auto-generate password for inbound registration if empty
@@ -737,10 +548,10 @@ class ProviderIAX extends ProviderBase {
             genPassword.show();
             copyButton.show();
             showHideButton.show();
-            copyButton.attr('data-clipboard-text', valSecret.val());
             
-            // Restore network filter state if needed
-            this.restoreNetworkFilterState();
+            // Show password strength indicator for inbound
+            this.showPasswordStrengthIndicator();
+            copyButton.attr('data-clipboard-text', valSecret.val());
 
             // Update labels for inbound
             labelHostText.text(globalTranslate.pr_RemoteHostOrIPAddress || 'Remote Host/IP');
@@ -764,13 +575,13 @@ class ProviderIAX extends ProviderBase {
             elUsername.addClass('required');
             elSecret.removeClass('required'); // Password is optional in none mode
 
-            // Hide generate and copy buttons
+            // Show password management buttons for none registration (except generate)
             genPassword.hide();
-            copyButton.hide();
+            copyButton.show();
             showHideButton.show();
             
-            // Restore network filter state if needed
-            this.restoreNetworkFilterState();
+            // Show password strength indicator for none type
+            this.showPasswordStrengthIndicator();
 
             // Update labels for none (peer-to-peer)
             labelHostText.text(globalTranslate.pr_PeerHostOrIPAddress || 'Peer Host/IP');
