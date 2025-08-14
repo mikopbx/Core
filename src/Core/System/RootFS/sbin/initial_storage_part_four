@@ -61,7 +61,7 @@ fi
 
 # Create MBR backup
 mbrBackupFile=/tmp/mbr_backup.bin;
-dd if="${dev}" of="$mbrBackupFile" bs=512 count=1
+dd if="${dev}" of="$mbrBackupFile" bs=512 count=1 > /dev/null 2>&1;
 
 # Get partition info for the device
 count=$(/sbin/sfdisk -l "${dev}" 2>/dev/null | /bin/busybox grep -c "^/dev");
@@ -101,7 +101,7 @@ fi
 echo " - parted return ${resultParted}...";
 
 # Restore MBR backup
-dd if="$mbrBackupFile" of="${dev}" bs=512 count=1
+dd if="$mbrBackupFile" of="${dev}" bs=512 count=1 > /dev/null 2>&1;
 rm -rf "$mbrBackupFile";
 
 # Get the name of the new fourth partition
