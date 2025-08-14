@@ -59,6 +59,10 @@ else
   partitionFour=''
 fi
 
+# Create MBR backup
+mbrBackupFile=/tmp/mbr_backup.bin;
+dd if="${dev}" of="$mbrBackupFile" bs=512 count=1
+
 # Get partition info for the device
 count=$(/sbin/sfdisk -l "${dev}" 2>/dev/null | /bin/busybox grep -c "^/dev");
 if [ -n "$partitionFour" ]; then
@@ -87,6 +91,7 @@ elif [ "$count" -eq 3 ] || [ "$count" -eq 4 ]; then
       echo "fix" | parted "$dev" print free ---pretend-input-tty > /dev/null 2>&1;
     fi;
 else
+    rm -rf "$mbrBackupFile";
     # Not the expected number of partitions; exit
     echo " - Unexpected number of partitions. Exiting."
     exit 0
@@ -94,6 +99,10 @@ fi
 
 # Save the exit status of parted command
 echo " - parted return ${resultParted}...";
+
+# Restore MBR backup
+dd if="$mbrBackupFile" of="${dev}" bs=512 count=1
+rm -rf "$mbrBackupFile";
 
 # Get the name of the new fourth partition
 partitionName=$(/bin/lsblk -r | /bin/busybox grep "$(/bin/busybox basename "$dev")" |  /bin/busybox cut -d ' ' -f 1 | /bin/busybox grep "4$" | /bin/busybox sort -u);
