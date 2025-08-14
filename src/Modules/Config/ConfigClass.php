@@ -474,4 +474,17 @@ abstract class ConfigClass extends AsteriskConfigClass implements
     public function onAfterExecuteRestAPIRoute(Micro $app): void
     {
     }
+
+     /**
+     * Called from AclController to get custom permissions for a controller.
+     * @see https://docs.mikopbx.com/mikopbx-development/module-developement/module-class#ongetcontrollerpermissions
+     *
+     * @param string $controller The called controller name.
+     * @param array $permissions The permissions array for modifications.
+     *
+     * @return void
+     */
+    public function onGetControllerPermissions(string $controller, array &$permissions): void
+    {
+    }
 }
