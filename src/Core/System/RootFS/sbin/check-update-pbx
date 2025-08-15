@@ -21,6 +21,17 @@ echo " - Start ${0}";
 systemDir='/system';
 mkdir -p "$systemDir";
 
+checkBootPartitionTable() {
+  diskForCheck="/dev/$(/bin/lsblk -no PKNAME "$1")";
+  /sbin/parted -s "$diskForCheck" print  2>&1 | grep "Not all of the space available" > /dev/null;
+  failPartition="$?";
+  /bin/lsblk "$diskForCheck" -r -p -o NAME,UUID | /bin/busybox grep '4 ' > /dev/null;
+  part4NotExists="$?";
+  if [ "$failPartition" -eq 0 ] && [ "$part4NotExists" -eq 1 ]; then
+    /sbin/initial_storage_part_four update "$diskForCheck";
+  fi
+}
+
 # Function to mount disks smaller than 60MB
 searchNewFirmware() {
   # Get a list of block devices with their UUIDs.
@@ -32,7 +43,7 @@ searchNewFirmware() {
        echo " - Skip disk $disk, larger than 200MB. ";
        continue;
     fi
-    # Mount the disk to the system directory if it less than 60 mb
+    # Mount the disk to the system directory if it less than 200 mb
     mount "$disk" "$systemDir";
     MOUNT_RESULT=$?;
     if [ ! "${MOUNT_RESULT}" = "0" ] ; then
@@ -42,6 +53,8 @@ searchNewFirmware() {
     checkAndUpgrade "$disk";
     # Umount boot disk
     umount -f "$disk";
+    # Check disk.
+    checkBootPartitionTable "$disk";
   done
 }
 

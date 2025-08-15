@@ -125,7 +125,8 @@ done
 
 # If the partition was successfully created
 if [ "$resultParted" = "0" ];then
-    if [ "$action" = "create" ]; then
+    fsType="$(/bin/lsblk -o FSTYPE -n "$partitionFour")";
+    if [ "$action" = "create" ] || { [ "$fsType" != "ext2" ] && [ "$fsType" != "ext4" ]; }; then
         echo " - start mkfs.ext4 $partitionFour...";
         /sbin/mkfs.ext4 -qF "$partitionFour"
         echo " - result $?...";
@@ -149,7 +150,7 @@ if [ "$resultParted" = "0" ];then
 
     if [ "$mountResult" != "0" ]; then
         echo " - start check ${partitionFour}...";
-        /sbin/fsck.ext4 -p "$partitionFour";
+        /sbin/fsck.ext4 -p "$partitionFour" 2> /dev/null > /dev/null;
         echo " - result $?...";
         mount -t "$type" "${partitionFour}" "$tmp_dir" 2> /dev/null > /dev/null;
         mountResult=$?;
