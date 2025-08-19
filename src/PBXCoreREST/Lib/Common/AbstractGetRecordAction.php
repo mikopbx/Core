@@ -126,12 +126,12 @@ abstract class AbstractGetRecordAction
     }
 
     /**
-     * Create standardized API result for get record operations
+     * Create standardized API result with processor info
      *
      * @param string $processorMethod Method name (__METHOD__)
      * @return PBXApiResult Initialized result object
      */
-    protected static function createGetRecordResult(string $processorMethod): PBXApiResult
+    protected static function createApiResult(string $processorMethod): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = $processorMethod;
@@ -141,11 +141,24 @@ abstract class AbstractGetRecordAction
     /**
      * Handle get record operation errors consistently
      *
+     * @deprecated Use handleError() instead
      * @param \Exception $exception Exception that occurred during record retrieval
      * @param PBXApiResult $result Result object to populate with error
      * @return PBXApiResult Result with error information
      */
     protected static function handleGetRecordError(\Exception $exception, PBXApiResult $result): PBXApiResult
+    {
+        return self::handleError($exception, $result);
+    }
+    
+    /**
+     * Handle operation errors consistently
+     *
+     * @param \Exception $exception Exception that occurred
+     * @param PBXApiResult $result Result object to populate with error
+     * @return PBXApiResult Result with error information
+     */
+    protected static function handleError(\Exception $exception, PBXApiResult $result): PBXApiResult
     {
         $result->messages['error'][] = $exception->getMessage();
         CriticalErrorsHandler::handleExceptionWithSyslog($exception);
@@ -185,7 +198,9 @@ abstract class AbstractGetRecordAction
         ?callable $newRecordCallback = null,
         ?callable $existingRecordCallback = null
     ): PBXApiResult {
-        $res = self::createGetRecordResult(debug_backtrace()[1]['class'] . '::' . debug_backtrace()[1]['function']);
+        $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
+        $caller = ($trace[1]['class'] ?? 'Unknown') . '::' . ($trace[1]['function'] ?? 'unknown');
+        $res = self::createApiResult($caller);
 
         try {
             if (empty($id) || $id === 'new') {
@@ -230,7 +245,7 @@ abstract class AbstractGetRecordAction
             }
             
         } catch (\Exception $e) {
-            return self::handleGetRecordError($e, $res);
+            return self::handleError($e, $res);
         }
 
         return $res;

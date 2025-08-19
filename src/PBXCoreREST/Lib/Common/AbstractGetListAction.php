@@ -287,7 +287,9 @@ abstract class AbstractGetListAction
         ?callable $recordFilter = null,
         ?string $defaultOrder = null
     ): PBXApiResult {
-        $res = self::createListResult(debug_backtrace()[1]['class'] . '::' . debug_backtrace()[1]['function']);
+        $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
+        $caller = ($trace[1]['class'] ?? 'Unknown') . '::' . ($trace[1]['function'] ?? 'unknown');
+        $res = self::createListResult($caller);
 
         try {
             $queryOptions = $baseQueryOptions;

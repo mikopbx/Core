@@ -58,7 +58,7 @@ class CallDetailRecordsTmp extends CallDetailRecordsBase
     public function beforeSave(): void
     {
         if (empty($this->linkedid)) {
-            $trace = debug_backtrace();
+            $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
             $error =  "Call trace:\n";
             foreach ($trace as $index => $item) {
                 if ($index > 0) {
