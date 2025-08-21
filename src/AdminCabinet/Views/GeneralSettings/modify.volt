@@ -1,4 +1,4 @@
-{{ form(['action' : 'general-settings/save', 'method': 'post', 'role': 'form', 'class': 'ui form', 'id':'general-settings-form']) }}
+{{ form(['role': 'form', 'class': 'ui form', 'id':'general-settings-form']) }}
 <div class="ui grid">
     <div class="four wide column">
         <div class="ui vertical fluid tabular menu" id="general-settings-menu">
