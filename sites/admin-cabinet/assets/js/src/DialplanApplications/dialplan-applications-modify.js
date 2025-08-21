@@ -19,7 +19,7 @@ var dialplanApplicationModify = {
     isLoadingData: false, // Flag to prevent button reactivation during data loading
     
     /**
-     * Form validation rules
+     * Form validation rules 
      */
     validateRules: {
         name: {
