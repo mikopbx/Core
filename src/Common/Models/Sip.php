@@ -436,7 +436,7 @@ class Sip extends ModelsBase
     {
         $di = Di::getDefault();
         $response = $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
-            '/pbxcore/api/passwords/generate',
+            '/pbxcore/api/v2/passwords/generate',
             PBXCoreRESTClientProvider::HTTP_METHOD_GET,
             ['length' => $length]
         ]);

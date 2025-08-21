@@ -28,7 +28,7 @@ const PbxApi = {
     adviceGetList: `${Config.pbxUrl}/pbxcore/api/advice/getList`, // Generates a list of notifications about the system, firewall, passwords, and wrong settings.
 
     // PasswordsManagementProcessor
-    passwordGenerate: `${Config.pbxUrl}/pbxcore/api/passwords/generate`, // Generate secure password
+    passwordGenerate: `${Config.pbxUrl}/pbxcore/api/v2/passwords/generate`, // Generate secure password
 
     // CdrDBProcessor
     pbxGetActiveChannels: `${Config.pbxUrl}/pbxcore/api/cdr/getActiveChannels`,  //  Get active channels. These are the unfinished calls (endtime IS NULL).
