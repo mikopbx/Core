@@ -56,7 +56,19 @@ abstract class CreateExtensionsTest extends MikoPBXTestsBase
 
             // Fill search field and delete if exists
             $this->fillDataTableSearchInput('extensions-table', 'global-search', $params['username']);
-            $this->clickDeleteButtonOnRowWithText($params['username']);
+
+
+            // Delete any existing application with the same extension
+            try {
+                $this->clickDeleteButtonOnRowWithText($params['username']);
+            } catch (\Exception $e) {
+                // Log the error as information instead of failing the test
+                self::annotate(
+                    sprintf('Extension "%s" not found for deletion (this is expected if Extension does not exist): %s', $params['username'], $e->getMessage()),
+                    'info'
+                );
+            }
+         
 
             // Create new extension
             $this->clickButtonByHref('/admin-cabinet/extensions/modify');

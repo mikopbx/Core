@@ -58,7 +58,15 @@ trait AudioFilesTrait
      */
     protected function clearExistingFile(string $name): void
     {
-        $this->clickDeleteButtonOnRowWithText($name);
+        try {
+            $this->clickDeleteButtonOnRowWithText($name);
+        } catch (\Exception $e) {
+            // Log the error as information instead of failing the test
+            self::annotate(
+                sprintf('Audio file "%s" not found for deletion (this is expected if file does not exist): %s', $name, $e->getMessage()),
+                'info'
+            );
+        }
     }
 
     /**

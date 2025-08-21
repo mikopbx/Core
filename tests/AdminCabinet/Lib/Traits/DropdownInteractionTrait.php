@@ -40,6 +40,7 @@ trait DropdownInteractionTrait
         '//select[@name="%1$s"]/ancestor::div[contains(@class, "dropdown")] | ' .
         '//input[@name="%1$s"]/ancestor::div[contains(@class, "dropdown")] | ' .
         '//div[contains(@class, "dropdown")][@id="%1$s"] | ' .
+        '//div[contains(@class, "dropdown")][@id="%1$s-dropdown"] | ' .
         '//div[contains(@class, "dropdown")][.//select[@name="%1$s"]] | ' .
         '//input[@name="%1$s"]/following-sibling::div[contains(@class, "dropdown") and contains(@class, "%1$s-select")] | ' .
         '//div[contains(@class, "dropdown") and contains(@class, "%1$s-select")]';
@@ -484,6 +485,7 @@ trait DropdownInteractionTrait
                 '//select[@name="%1$s"]/ancestor::div[contains(@class, "dropdown") and contains(@class, "search")] | ' .
                 '//input[@name="%1$s"]/ancestor::div[contains(@class, "dropdown") and contains(@class, "search")] | ' .
                 '//div[contains(@class, "dropdown") and contains(@class, "search")][@id="%1$s"] | ' .
+                '//div[contains(@class, "dropdown") and contains(@class, "search")][@id="%1$s-dropdown"] | ' .
                 '//div[contains(@class, "dropdown") and contains(@class, "search")][.//select[@name="%1$s"]] | ' .
                 '//input[@name="%1$s"]/following-sibling::div[contains(@class, "dropdown") and contains(@class, "search")] | ' .
                 '//div[contains(@class, "dropdown") and contains(@class, "search") and contains(@class, "%1$s-select")]',
@@ -558,6 +560,7 @@ trait DropdownInteractionTrait
                 '//select[@name="%1$s"]/ancestor::div[contains(@class, "dropdown")] | ' .
                 '//input[@name="%1$s"]/ancestor::div[contains(@class, "dropdown")] | ' .
                 '//div[contains(@class, "dropdown")][@id="%1$s"] | ' .
+                '//div[contains(@class, "dropdown")][@id="%1$s-dropdown"] | ' .
                 '//div[contains(@class, "dropdown")][.//select[@name="%1$s"]] | ' .
                 '//input[@name="%1$s"]/following-sibling::div[contains(@class, "dropdown") and contains(@class, "%1$s-select")] | ' .
                 '//div[contains(@class, "dropdown") and contains(@class, "%1$s-select")]',
