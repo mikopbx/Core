@@ -55,12 +55,6 @@ class GeneralSettingsController extends BaseController
             }
         }
 
-        // Initialize empty array for simple passwords - will be checked asynchronously
-        $this->view->simplePasswords = [];
-        
-        // Check if WEBHTTPSPrivateKey exists (without exposing the actual value)
-        $privateKey = PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PRIVATE_KEY);
-        $this->view->WEBHTTPSPrivateKeyExists = !empty($privateKey);
 
         // Create an instance of the GeneralSettingsEditForm and assign it to the view
         // Pass default structure with empty values
