@@ -162,6 +162,14 @@ require_once 'Globals.php'; // !!!IMPORTANT!!! NO NEED ANY PATH
 - **[Admin UI Development](src/AdminCabinet/CLAUDE.md)** - Extend web interface
 - **[Asterisk Integration](src/Core/Asterisk/CLAUDE.md)** - Work with Asterisk
 - **[Models Documentation](src/Common/Models/CLAUDE.md)** - Database models guide
+- **[Providers Documentation](src/Common/Providers/CLAUDE.md)** - DI providers guide
+- **[Test Suite](tests/AdminCabinet/CLAUDE.md)** - Browser automation tests
+
+### Security & Guidelines
+- **[XSS Protection](docs/xss-protection-guidelines.md)** - Cross-site scripting prevention
+- **[CSRF Protection](docs/csrf-protection-guidelines.md)** - CSRF attack prevention
+- **[DataTable Guidelines](docs/datatable-semantic-ui-guidelines.md)** - DataTable implementation
+- **[Tooltip Guidelines](docs/TOOLTIP_GUIDELINES.md)** - UI tooltip standards
 
 ## External Documentation
 
@@ -170,6 +178,7 @@ require_once 'Globals.php'; // !!!IMPORTANT!!! NO NEED ANY PATH
 - 📖 **[Fomantic-UI](https://github.com/fomantic/fomantic-ui)** - Community fork of Semantic-UI
 - 📖 **[PHP Documentation](https://github.com/php/doc-en)** - Official PHP documentation
 - 📖 **[Asterisk Documentation](https://github.com/asterisk/documentation)** - Official Asterisk docs
+
 - 
 ### Container
 MikoPBX runs in a single container which includes all services:
