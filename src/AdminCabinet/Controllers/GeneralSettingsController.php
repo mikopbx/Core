@@ -21,10 +21,7 @@
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\GeneralSettingsEditForm;
-use MikoPBX\Common\Models\Codecs;
-use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Core\System\Util;
 
 /**
  * Class GeneralSettingsController
@@ -44,290 +41,30 @@ class GeneralSettingsController extends BaseController
      */
     public function modifyAction(): void
     {
-        // Retrieve and sort audio codecs from database
-        $audioCodecs = Codecs::find(['conditions' => 'type="audio"'])->toArray();
-        usort($audioCodecs, [__CLASS__, 'sortArrayByPriority']);
-        $this->view->audioCodecs = $audioCodecs;
-
-        // Retrieve and sort video codecs from database
-        $videoCodecs = Codecs::find(['conditions' => 'type="video"'])->toArray();
-        usort($videoCodecs, [__CLASS__, 'sortArrayByPriority']);
-        $this->view->videoCodecs = $videoCodecs;
 
         // Fetch all PBX settings
-        $pbxSettings = PbxSettings::getAllPbxSettings(false);
+        // $pbxSettings = PbxSettings::getAllPbxSettings(false);
+        // Use default values only to prevent form errors, but empty values for actual data
+        $pbxSettings = PbxSettings::getDefaultArrayValues();
+        // Clear actual values to test REST API loading
+        foreach ($pbxSettings as $key => &$value) {
+            // Keep the key structure but clear values except for hidden fields
+            if (!in_array($key, ['***ALL HIDDEN ABOVE***', '***ALL NUMBERIC ABOVE***', 
+                                  '***ALL TEXTAREA ABOVE***', '***ALL CHECK BOXES ABOVE***'])) {
+                $value = '';
+            }
+        }
 
-        // Fetch and assign simple passwords for the view
-        $this->view->simplePasswords = $this->getSimplePasswords($pbxSettings);
+        // Initialize empty array for simple passwords - will be checked asynchronously
+        $this->view->simplePasswords = [];
+        
+        // Check if WEBHTTPSPrivateKey exists (without exposing the actual value)
+        $privateKey = PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PRIVATE_KEY);
+        $this->view->WEBHTTPSPrivateKeyExists = !empty($privateKey);
 
         // Create an instance of the GeneralSettingsEditForm and assign it to the view
+        // Pass default structure with empty values
         $this->view->form = new GeneralSettingsEditForm(null, $pbxSettings);
         $this->view->submitMode = null;
-    }
-
-    /**
-     * Retrieves a list of simple passwords from the given data.
-     *
-     * This function checks if the SSHPassword and WebAdminPassword in the data array are simple passwords.
-     * It also checks if the CloudInstanceId matches any of these passwords.
-     * If a simple password or a matching CloudInstanceId is found, the corresponding password key is added to the list.
-     *
-     * @param array $data The data array containing the passwords and CloudInstanceId.
-     * @return array The list of password keys that failed the simple password check.
-     */
-    private function getSimplePasswords(array $data): array
-    {
-        // Initialize an array to keep track of passwords that fail the check
-        $passwordCheckFail = [];
-
-        $cloudInstanceId = $data[PbxSettings::CLOUD_INSTANCE_ID] ?? '';
-        $checkPasswordFields = [PbxSettings::SSH_PASSWORD, PbxSettings::WEB_ADMIN_PASSWORD];
-
-        // If SSH is disabled, remove the SSH_PASSWORD key
-        if ($data[PbxSettings::SSH_DISABLE_SSH_PASSWORD] === 'on') {
-            $checkPasswordFields = array_diff($checkPasswordFields, [PbxSettings::SSH_PASSWORD]);
-        }
-
-        // Loop through and check passwords
-        foreach ($checkPasswordFields as $value) {
-            if (!isset($data[$value]) || $data[$value] === GeneralSettingsEditForm::HIDDEN_PASSWORD) {
-                continue;
-            }
-            if ($cloudInstanceId === $data[$value] || Util::isSimplePassword($data[$value])) {
-                $passwordCheckFail[] = $value;
-            }
-        }
-        return $passwordCheckFail;
-    }
-
-    /**
-     * Saves the general settings form data.
-     *
-     */
-    public function saveAction(): void
-    {
-        if (!$this->request->isPost()) {
-            return;
-        }
-        $postData = self::sanitizeData($this->request->getPost(), $this->filter);
-        
-        // No need to sanitize these fields
-        $postData[PbxSettings::WEB_ADMIN_PASSWORD] = $this->request->getPost(PbxSettings::WEB_ADMIN_PASSWORD);
-        $postData[PbxSettings::SSH_PASSWORD] = $this->request->getPost(PbxSettings::SSH_PASSWORD);
-
-        $passwordCheckFail = $this->getSimplePasswords($postData);
-        if (!empty($passwordCheckFail)) {
-            foreach ($passwordCheckFail as $settingsKey) {
-                $this->flash->error($this->translation->_('gs_SetPasswordError', ['password' => $postData[$settingsKey]]));
-            }
-            $this->view->success = false;
-            $this->view->passwordCheckFail = $passwordCheckFail;
-            return;
-        }
-
-        $this->db->begin();
-
-        list($result, $messages) = $this->updatePBXSettings($postData);
-        if (!$result) {
-            $this->view->success = false;
-            $this->view->messages = $messages;
-            $this->db->rollback();
-            return;
-        }
-
-        list($result, $messages) = $this->updateCodecs($postData['codecs']);
-        if (!$result) {
-            $this->view->success = false;
-            $this->view->messages = $messages;
-            $this->db->rollback();
-            return;
-        }
-
-        list($result, $messages) = $this->createParkingExtensions(
-            $postData[PbxSettings::PBX_CALL_PARKING_START_SLOT],
-            $postData[PbxSettings::PBX_CALL_PARKING_END_SLOT],
-            $postData[PbxSettings::PBX_CALL_PARKING_EXT],
-        );
-
-        if (!$result) {
-            $this->view->success = false;
-            $this->view->messages = $messages;
-            $this->db->rollback();
-            return;
-        }
-
-        $this->flash->success($this->translation->_('ms_SuccessfulSaved'));
-        $this->view->success = true;
-        $this->db->commit();
-    }
-
-
-    /**
-     * Create or update parking extensions by ensuring only necessary slots are modified.
-     * This method first fetches the existing parking slots and determines which slots
-     * need to be created or deleted based on the desired range and reserved slot.
-     * It aims to minimize database operations by only deleting slots that are no longer needed
-     * and creating new slots that do not exist yet, preserving all others.
-     *
-     * @param int $startSlot The starting number of the parking slot range.
-     * @param int $endSlot The ending number of the parking slot range.
-     * @param int $reservedSlot The number of the reserved slot to be included outside the range.
-     *
-     * @return array Returns an array with two elements:
-     *               - bool: true if the operation was successful without any errors, false otherwise.
-     *               - array: an array of messages, primarily errors encountered during operations.
-     */
-    private function createParkingExtensions(int $startSlot, int $endSlot, int $reservedSlot): array
-    {
-        $messages = [];
-
-        // Retrieve all current parking slots.
-        $currentSlots = Extensions::findByType(Extensions::TYPE_PARKING);
-
-        // Create an array of desired numbers.
-        $desiredNumbers = range($startSlot, $endSlot);
-        $desiredNumbers[] = $reservedSlot;
-
-        // Determine slots to delete.
-        $currentNumbers = [];
-        foreach ($currentSlots as $slot) {
-            if (!in_array($slot->number, $desiredNumbers)) {
-                if (!$slot->delete()) {
-                    $messages['error'][] = $slot->getMessages();
-                }
-            } else {
-                $currentNumbers[] = $slot->number;
-            }
-        }
-
-        // Determine slots to create.
-        $numbersToCreate = array_diff($desiredNumbers, $currentNumbers);
-        foreach ($numbersToCreate as $number) {
-            $record = new Extensions();
-            $record->type = Extensions::TYPE_PARKING;
-            $record->number = $number;
-            $record->show_in_phonebook = '0';
-            if (!$record->create()) {
-                $messages['error'][] = $record->getMessages();
-            }
-        }
-
-        // Determine the overall result.
-        $result = count($messages['error'] ?? []) === 0;
-        return [$result, $messages];
-    }
-
-    /**
-     * Update codecs based on the provided data.
-     *
-     * @param string $codecsData The JSON-encoded data for codecs.
-     *
-     * @return array
-     */
-    private function updateCodecs(string $codecsData): array
-    {
-        $messages = [];
-        $codecs = json_decode($codecsData, true);
-        foreach ($codecs as $codec) {
-            $record = Codecs::findFirstById($codec['codecId']);
-            $newPriority = $codec['priority'];
-            $newStatus = $codec['disabled'] === true ? '1' : '0';
-            if (intval($record->priority) !== intval($newPriority) || $record->disabled !== $newStatus) {
-                $record->priority = $newPriority;
-                $record->disabled = $newStatus;
-                if (!$record->update()) {
-                    $messages['error'][] = $record->getMessages();
-                }
-            }
-        }
-        $result = count($messages) === 0;
-        return [$result, $messages];
-    }
-
-    /**
-     * Update PBX settings based on the provided data.
-     *
-     * @param array $data The data containing PBX settings.
-     *
-     * @return array
-     */
-    private function updatePBXSettings(array $data): array
-    {
-        $messages = ['error' => []];
-        $defaultPbxSettings = PbxSettings::getDefaultArrayValues();
-
-        // Update PBX settings
-        foreach ($defaultPbxSettings as $key => $defaultValue) {
-            switch ($key) {
-                case PbxSettings::SSH_ID_RSA_PUB:
-                    continue 2;
-                case PbxSettings::PBX_RECORD_CALLS:
-                case PbxSettings::PBX_RECORD_CALLS_INNER:
-                case PbxSettings::AJAM_ENABLED:
-                case PbxSettings::AMI_ENABLED:
-                case PbxSettings::RESTART_EVERY_NIGHT:
-                case PbxSettings::REDIRECT_TO_HTTPS:
-                case PbxSettings::PBX_SPLIT_AUDIO_THREAD:
-                case PbxSettings::USE_WEB_RTC:
-                case PbxSettings::SSH_DISABLE_SSH_PASSWORD:
-                case PbxSettings::PBX_ALLOW_GUEST_CALLS:
-                case PbxSettings::DISABLE_ALL_MODULES:
-                case '***ALL CHECK BOXES ABOVE***':
-                    $newValue = ($data[$key] === 'on') ? '1' : '0';
-                    break;
-                case PbxSettings::SSH_PASSWORD:
-                    if ($data[$key] !== GeneralSettingsEditForm::HIDDEN_PASSWORD) {
-                        // User changed SSH password
-                        $newValue = $data[$key];
-                        PbxSettings::setValueByKey(PbxSettings::SSH_PASSWORD_HASH_STRING, md5($newValue), $messages['error']);
-                    } elseif(
-                        $data[PbxSettings::WEB_ADMIN_PASSWORD] !== GeneralSettingsEditForm::HIDDEN_PASSWORD
-                        && PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD) === $defaultPbxSettings[PbxSettings::SSH_PASSWORD]
-                    ) {
-                        // Пользователь изменил Web пароль И текущий SSH пароль равен дефолтному
-                        $newValue = $data[PbxSettings::WEB_ADMIN_PASSWORD];
-                        PbxSettings::setValueByKey(PbxSettings::SSH_PASSWORD_HASH_STRING, md5($newValue), $messages['error']);
-                    } else {
-                        // User did not change SSH password, continue processing other settings
-                        continue 2; // Use continue 2 to skip to the next iteration of the outer loop
-                    }
-                    break;
-                case PbxSettings::SEND_METRICS:
-                    $newValue = ($data[$key] === 'on') ? '1' : '0';
-                    $this->session->set(PbxSettings::SEND_METRICS, $newValue);
-                    break;
-                case PbxSettings::PBX_FEATURE_TRANSFER_DIGIT_TIMEOUT:
-                    $newValue = ceil((int)$data[PbxSettings::PBX_FEATURE_DIGIT_TIMEOUT] / 1000);
-                    break;
-                case PbxSettings::SIP_AUTH_PREFIX:
-                    $newValue = trim($data[$key]);
-                    break;
-                case PbxSettings::WEB_ADMIN_PASSWORD:
-                    if ($data[$key] !== GeneralSettingsEditForm::HIDDEN_PASSWORD) {
-                        // User changed Web password
-                        $newValue = $this->security->hash($data[$key]);
-                    } elseif ($data[PbxSettings::SSH_PASSWORD] !== GeneralSettingsEditForm::HIDDEN_PASSWORD 
-                        && PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_PASSWORD) === $defaultPbxSettings[PbxSettings::WEB_ADMIN_PASSWORD]) {
-                        // User changed SSH password AND current Web password equals default
-                        $newValue = $this->security->hash($data[PbxSettings::SSH_PASSWORD]);
-                    } else {
-                        // User did not change Web password, continue processing other settings
-                        continue 2; // Use continue 2 to skip to the next iteration of the outer loop
-                    }
-                    break;
-                default:
-                    $newValue = $data[$key];
-            }
-
-            if (array_key_exists($key, $data)) {
-                PbxSettings::setValueByKey($key, $newValue, $messages['error']);
-            }
-        }
-
-        // Reset a cloud provision flag
-        PbxSettings::setValueByKey(PbxSettings::CLOUD_PROVISIONING, '1', $messages['error']);
-
-        $result = count($messages['error']) === 0;
-        return [$result, $messages];
     }
 }

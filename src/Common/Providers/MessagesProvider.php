@@ -48,7 +48,6 @@ class MessagesProvider implements ServiceProviderInterface
             function () use ($di, $coreConfig) {
                 $cacheKey = false;
                 $language = $di->get(LanguageProvider::SERVICE_NAME);
-                file_put_contents('/tmp/language',$language,FILE_APPEND);
                 if (php_sapi_name() !== 'cli') {
                     $version = PBXConfModulesProvider::getVersionsHash();
                     $cacheKey = 'LocalisationArray:' . $version . ':' . $language;
@@ -58,26 +57,22 @@ class MessagesProvider implements ServiceProviderInterface
                 if ($cacheKey) {
                     $translates = $di->get(ManagedCacheProvider::SERVICE_NAME)->get($cacheKey, 3600);
                     if (is_array($translates)) {
-                        file_put_contents('/tmp/language.fromCache',$language,FILE_APPEND);
                         return $translates;
                     }
-                }
-                file_put_contents('/tmp/language.NotfromCache',$language,FILE_APPEND);
-                // Load English translations
-                $translates = self::includeLanguageFile(appPath('/src/Common/Messages/en.php'));
-
+                }             
+                // Load English translations from directory (new structure for main distribution)
+                $translates = self::loadLanguageDirectory(appPath('/src/Common/Messages/en'));
+                
                 if ($language !== 'en') {
-                    // Check if the translation file exists for the selected language
-                    $langFile = appPath("/src/Common/Messages/$language.php");
-                    if (file_exists($langFile)) {
-                        $langArr = self::includeLanguageFile($langFile);
-                        if (!empty($langArr)) {
-                            $translates = array_merge($translates, $langArr);
-                        }
+                    // Load translations for the selected language from directory
+                    $langDirectory = appPath("/src/Common/Messages/$language");
+                    $langArr = self::loadLanguageDirectory($langDirectory);
+                    if (!empty($langArr)) {
+                        $translates = array_merge($translates, $langArr);
                     }
                 }
 
-                // Load English translations for extensions
+                // Load English translations for extensions (modules keep old structure)
                 $extensionsTranslates = [[]];
                 $results              = glob($coreConfig->modulesDir . '/*/{Messages}/en.php', GLOB_BRACE);
                 foreach ($results as $path) {
@@ -140,6 +135,35 @@ class MessagesProvider implements ServiceProviderInterface
 
         // Return an empty array if there was an error or $langArr is not an array.
         return [];
+    }
+
+    /**
+     * Loads all language files from a directory and merges them into a single array.
+     *
+     * @param string $directory The directory path containing language files.
+     * @return array The merged language array from all files in the directory.
+     */
+    private static function loadLanguageDirectory(string $directory): array
+    {
+        $translations = [];
+        
+        if (!is_dir($directory)) {
+            return $translations;
+        }
+
+        // Get all PHP files in the directory
+        $files = glob($directory . '/*.php');
+        
+        foreach ($files as $file) {
+            if (is_file($file)) {
+                $fileTranslations = self::includeLanguageFile($file);
+                if (!empty($fileTranslations)) {
+                    $translations = array_merge($translations, $fileTranslations);
+                }
+            }
+        }
+        
+        return $translations;
     }
 
     /**

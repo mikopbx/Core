@@ -203,7 +203,9 @@ abstract class AbstractDeleteAction
         string $notFoundMessage,
         ?callable $additionalCleanup = null
     ): PBXApiResult {
-        $res = self::createDeleteResult(debug_backtrace()[1]['class'] . '::' . debug_backtrace()[1]['function']);
+        $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
+        $caller = ($trace[1]['class'] ?? 'Unknown') . '::' . ($trace[1]['function'] ?? 'unknown');
+        $res = self::createDeleteResult($caller);
 
         // Validate parameters
         $validationErrors = self::validateDeleteParameters($id);

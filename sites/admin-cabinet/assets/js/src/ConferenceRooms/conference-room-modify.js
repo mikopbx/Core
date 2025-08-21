@@ -27,7 +27,7 @@ const conferenceRoomModify = {
     defaultExtension: '',
     
     /**
-     * Правила валидации формы
+     * Validation rules
      */
     validateRules: {
         name: {

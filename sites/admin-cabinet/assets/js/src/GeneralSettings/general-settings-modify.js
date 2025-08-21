@@ -17,7 +17,7 @@
  */
 
 
-/* global globalRootUrl,globalTranslate, Form, PasswordScore, PbxApi, UserMessage, SoundFilesSelector, $ */
+/* global globalRootUrl,globalTranslate, Form, PasswordScore, PbxApi, UserMessage, SoundFilesSelector, GeneralSettingsAPI, ClipboardJS, passwordValidator, PasswordValidationAPI, GeneralSettingsTooltipManager, $ */
 
 /**
  * A module to handle modification of general settings.
@@ -57,6 +57,27 @@ const generalSettingsModify = {
      * If password set, it will be hided from web ui.
      */
     hiddenPassword: 'xxxxxxx',
+
+    /**
+     * Sound file field IDs
+     * @type {object}
+     */
+    soundFileFields: {
+        announcementIn: 'PBXRecordAnnouncementIn',
+        announcementOut: 'PBXRecordAnnouncementOut'
+    },
+    
+    /**
+     * Original codec state from last load
+     * @type {object}
+     */
+    originalCodecState: {},
+    
+    /**
+     * Flag to track if data has been loaded from API
+     * @type {boolean}
+     */
+    dataLoaded: false,
 
     /**
      * Validation rules for the form fields before submission.
@@ -231,31 +252,35 @@ const generalSettingsModify = {
     ],
 
     /**
+     * Clipboard instance for copy functionality
+     * @type {ClipboardJS}
+     */
+    clipboard: null,
+    
+    /**
      *  Initialize module with event bindings and component initializations.
      */
     initialize() {
 
-        // When WebAdminPassword input is changed, recalculate the password strength
-        generalSettingsModify.$webAdminPassword.on('keyup', () => {
+        // Initialize async password validator
+        if (typeof passwordValidator !== 'undefined') {
+            passwordValidator.initialize({
+                debounceDelay: 500,
+                showStrengthBar: true,
+                showWarnings: true
+            });
+        }
+        
+        // Update validation rules when passwords change
+        generalSettingsModify.$webAdminPassword.on('change', () => {
             if (generalSettingsModify.$webAdminPassword.val() !== generalSettingsModify.hiddenPassword) {
                 generalSettingsModify.initRules();
-                PasswordScore.checkPassStrength({
-                    pass: generalSettingsModify.$webAdminPassword.val(),
-                    bar: $('.password-score'),
-                    section: $('.password-score-section'),
-                });
             }
         });
 
-        // When SSHPassword input is changed, recalculate the password strength
-        generalSettingsModify.$sshPassword.on('keyup', () => {
+        generalSettingsModify.$sshPassword.on('change', () => {
             if (generalSettingsModify.$sshPassword.val() !== generalSettingsModify.hiddenPassword) {
                 generalSettingsModify.initRules();
-                PasswordScore.checkPassStrength({
-                    pass: generalSettingsModify.$sshPassword.val(),
-                    bar: $('.ssh-password-score'),
-                    section: $('.ssh-password-score-section'),
-                });
             }
         });
 
@@ -265,27 +290,28 @@ const generalSettingsModify = {
             historyType: 'hash',
         });
 
-        // Enable dropdowns on the form
-        $('#general-settings-form .dropdown').dropdown();
+        // Enable dropdowns on the form (except sound file selectors)
+        $('#general-settings-form .dropdown').not('.audio-message-select').dropdown();
 
         // Enable checkboxes on the form
         $('#general-settings-form .checkbox').checkbox();
 
-        // Enable table drag-n-drop functionality
-        $('#audio-codecs-table, #video-codecs-table').tableDnD({
-            onDrop() {
-                // Trigger change event to acknowledge the modification
-                Form.dataChanged();
-            },
-            onDragClass: 'hoveringRow',
-            dragHandle: '.dragHandle',
-        });
+        // Codec table drag-n-drop will be initialized after data is loaded
+        // See initializeCodecDragDrop() which is called from updateCodecTables()
 
-        // Enable dropdown with sound file selection
-        $('#general-settings-form .audio-message-select').dropdown(SoundFilesSelector.getDropdownSettingsWithEmpty());
+        // Initialize sound file selectors with HTML icons support
+        generalSettingsModify.initializeSoundFileSelectors();
 
         // Initialize the form
         generalSettingsModify.initializeForm();
+        
+        // Note: SSH keys table will be initialized after data loads
+        
+        // Initialize truncated fields display
+        generalSettingsModify.initializeTruncatedFields();
+        
+        // Initialize clipboard for copy buttons
+        generalSettingsModify.initializeClipboard();
 
         // Initialize additional validation rules
         generalSettingsModify.initRules();
@@ -300,8 +326,733 @@ const generalSettingsModify = {
         $(window).on('GS-ActivateTab', (event, nameTab) => {
             $('#general-settings-menu').find('.item').tab('change tab', nameTab);
         });
+        
+        // Initialize tooltips for form fields
+        if (typeof GeneralSettingsTooltipManager !== 'undefined') {
+            GeneralSettingsTooltipManager.initialize();
+        }
+        
+        // Initialize PBXLanguage change detection for restart warning
+        generalSettingsModify.initializePBXLanguageWarning();
+
+        // Load data from API instead of using server-rendered values
+        generalSettingsModify.loadData();
     },
 
+    /**
+     * Initialize sound file selectors with HTML icons and change tracking
+     * Note: The HTML structure is now provided by the playAddNewSoundWithIcons partial:
+     * - Hidden input: <input type="hidden" id="PBXRecordAnnouncementIn" name="PBXRecordAnnouncementIn">
+     * - Dropdown div: <div class="ui selection dropdown search PBXRecordAnnouncementIn-select">
+     */
+    initializeSoundFileSelectors() {
+        // Initialize incoming announcement selector
+        SoundFilesSelector.initializeWithIcons(
+            generalSettingsModify.soundFileFields.announcementIn, 
+            () => {
+                Form.dataChanged();
+            }
+        );
+        
+        // Initialize outgoing announcement selector
+        SoundFilesSelector.initializeWithIcons(
+            generalSettingsModify.soundFileFields.announcementOut, 
+            () => {
+                Form.dataChanged();
+            }
+        );
+    },
+
+    /**
+     * Load general settings data from API
+     * Used both on initial page load and for manual refresh
+     * Can be called anytime to reload the form data: generalSettingsModify.loadData()
+     */
+    loadData() {
+        // Show loading state on the form
+        generalSettingsModify.$formObj.addClass('loading');
+        console.log('Loading general settings from API...');
+        
+        GeneralSettingsAPI.getSettings((response) => {
+            generalSettingsModify.$formObj.removeClass('loading');
+            console.log('API Response:', response);
+            
+            if (response && response.result && response.data) {
+                console.log('Populating form with:', response.data.settings);
+                // Populate form with the received data
+                generalSettingsModify.populateForm(response.data);
+                generalSettingsModify.dataLoaded = true;
+            } else if (response && response.messages) {
+                console.error('API Error:', response.messages);
+                // Show error message if available
+                generalSettingsModify.showApiError(response.messages);
+            }
+        });
+    },
+    
+    /**
+     * Populate form with data from API
+     * @param {object} data - Settings data from API response
+     */
+    populateForm(data) {
+        // Extract settings and additional data
+        const settings = data.settings || data;
+        const codecs = data.codecs || [];
+        
+        // Set form values using Fomantic UI form API
+        generalSettingsModify.$formObj.form('set values', settings);
+        
+        // Handle special field types
+        generalSettingsModify.populateSpecialFields(settings);
+        
+        // Load sound file values with representations
+        generalSettingsModify.loadSoundFileValues(settings);
+        
+        // Update codec tables
+        if (codecs.length > 0) {
+            generalSettingsModify.updateCodecTables(codecs);
+        }
+        
+        // Initialize password fields (hide actual passwords)
+        generalSettingsModify.initializePasswordFields(settings);
+        
+        // Update SSH password visibility
+        generalSettingsModify.showHideSSHPassword();
+        
+        // Remove loading state
+        generalSettingsModify.$formObj.removeClass('loading');
+        
+        // Re-initialize form validation rules
+        generalSettingsModify.initRules();
+        
+        // Re-initialize dirty checking if enabled
+        if (Form.enableDirrity) {
+            Form.initializeDirrity();
+        }
+        
+        // Initialize SSH keys table after data is loaded
+        if (typeof sshKeysTable !== 'undefined') {
+            sshKeysTable.initialize('ssh-keys-container', 'SSHAuthorizedKeys');
+        }
+        
+        // Re-initialize truncated fields with new data
+        generalSettingsModify.initializeTruncatedFields();
+        
+        // Trigger event to notify that data has been loaded
+        $(document).trigger('GeneralSettings.dataLoaded');
+    },
+    
+    /**
+     * Handle special field types that need custom population
+     * @param {object} settings - Settings data
+     */
+    populateSpecialFields(settings) {
+        // Private key existence is now determined by checking if value equals HIDDEN_PASSWORD
+        
+        // Handle certificate info
+        if (settings.WEBHTTPSPublicKey_info) {
+            $('#WEBHTTPSPublicKey').data('cert-info', settings.WEBHTTPSPublicKey_info);
+        }
+        
+        // Handle checkboxes (API returns boolean values)
+        Object.keys(settings).forEach(key => {
+            const $checkbox = $(`#${key}`).parent('.checkbox');
+            if ($checkbox.length > 0) {
+                const isChecked = settings[key] === true || settings[key] === '1' || settings[key] === 1;
+                $checkbox.checkbox(isChecked ? 'check' : 'uncheck');
+            }
+            
+            // Handle regular dropdowns (excluding sound file selectors which are handled separately)
+            const $dropdown = $(`#${key}`).parent('.dropdown');
+            if ($dropdown.length > 0 && !$dropdown.hasClass('audio-message-select')) {
+                $dropdown.dropdown('set selected', settings[key]);
+            }
+        });
+    },
+    
+    /**
+     * Initialize password fields with hidden password indicator
+     * @param {object} settings - Settings data
+     */
+    initializePasswordFields(settings) {
+        // Hide actual passwords and show hidden indicator
+        if (settings.WebAdminPassword && settings.WebAdminPassword !== '') {
+            generalSettingsModify.$formObj.form('set value', 'WebAdminPassword', generalSettingsModify.hiddenPassword);
+            generalSettingsModify.$formObj.form('set value', 'WebAdminPasswordRepeat', generalSettingsModify.hiddenPassword);
+        }
+        
+        if (settings.SSHPassword && settings.SSHPassword !== '') {
+            generalSettingsModify.$formObj.form('set value', 'SSHPassword', generalSettingsModify.hiddenPassword);
+            generalSettingsModify.$formObj.form('set value', 'SSHPasswordRepeat', generalSettingsModify.hiddenPassword);
+        }
+    },
+    
+    /**
+     * Show API error messages
+     * @param {object} messages - Error messages from API
+     */
+    showApiError(messages) {
+        if (messages.error) {
+            const errorMessage = Array.isArray(messages.error) 
+                ? messages.error.join(', ') 
+                : messages.error;
+            UserMessage.showError(errorMessage);
+        }
+    },
+    
+    /**
+     * Load sound file values with HTML representation
+     * @param {object} settings - Settings data from API
+     */
+    loadSoundFileValues(settings) {
+        // Load incoming announcement sound file
+        if (settings.PBXRecordAnnouncementIn) {
+            const announcementInRepresent = settings.PBXRecordAnnouncementIn_Represent || 
+                                           settings.PBXRecordAnnouncementInRepresent;
+            if (announcementInRepresent) {
+                SoundFilesSelector.setInitialValueWithIcon(
+                    generalSettingsModify.soundFileFields.announcementIn,
+                    settings.PBXRecordAnnouncementIn,
+                    announcementInRepresent
+                );
+            } else {
+                $(`.${generalSettingsModify.soundFileFields.announcementIn}-select`)
+                    .dropdown('set selected', settings.PBXRecordAnnouncementIn);
+            }
+        }
+        
+        // Load outgoing announcement sound file
+        if (settings.PBXRecordAnnouncementOut) {
+            const announcementOutRepresent = settings.PBXRecordAnnouncementOut_Represent || 
+                                            settings.PBXRecordAnnouncementOutRepresent;
+            if (announcementOutRepresent) {
+                SoundFilesSelector.setInitialValueWithIcon(
+                    generalSettingsModify.soundFileFields.announcementOut,
+                    settings.PBXRecordAnnouncementOut,
+                    announcementOutRepresent
+                );
+            } else {
+                $(`.${generalSettingsModify.soundFileFields.announcementOut}-select`)
+                    .dropdown('set selected', settings.PBXRecordAnnouncementOut);
+            }
+        }
+    },
+
+    /**
+     * Build and update codec tables with data from API
+     * @param {Array} codecs - Array of codec configurations
+     */
+    updateCodecTables(codecs) {
+        // Store original codec state for comparison
+        generalSettingsModify.originalCodecState = {};
+        
+        // Separate audio and video codecs
+        const audioCodecs = codecs.filter(c => c.type === 'audio').sort((a, b) => a.priority - b.priority);
+        const videoCodecs = codecs.filter(c => c.type === 'video').sort((a, b) => a.priority - b.priority);
+        
+        // Build audio codecs table
+        generalSettingsModify.buildCodecTable(audioCodecs, 'audio');
+        
+        // Build video codecs table
+        generalSettingsModify.buildCodecTable(videoCodecs, 'video');
+        
+        // Hide loaders and show tables
+        $('#audio-codecs-loader, #video-codecs-loader').removeClass('active');
+        $('#audio-codecs-table, #video-codecs-table').show();
+        
+        // Re-initialize drag and drop for reordering
+        generalSettingsModify.initializeCodecDragDrop();
+    },
+    
+    /**
+     * Build codec table rows from data
+     * @param {Array} codecs - Array of codec objects
+     * @param {string} type - 'audio' or 'video'
+     */
+    buildCodecTable(codecs, type) {
+        const $tableBody = $(`#${type}-codecs-table tbody`);
+        $tableBody.empty();
+        
+        codecs.forEach((codec, index) => {
+            // Store original state for change detection
+            generalSettingsModify.originalCodecState[codec.name] = {
+                priority: index,
+                disabled: codec.disabled
+            };
+            
+            // Create table row
+            const isDisabled = codec.disabled === true || codec.disabled === '1' || codec.disabled === 1;
+            const checked = !isDisabled ? 'checked' : '';
+            
+            const rowHtml = `
+                <tr class="codec-row" id="codec-${codec.name}" 
+                    data-value="${index}" 
+                    data-codec-name="${codec.name}"
+                    data-original-priority="${index}">
+                    <td class="collapsing dragHandle">
+                        <i class="sort grey icon"></i>
+                    </td>
+                    <td>
+                        <div class="ui toggle checkbox codecs">
+                            <input type="checkbox" 
+                                   name="codec_${codec.name}" 
+                                   ${checked}
+                                   tabindex="0" 
+                                   class="hidden">
+                            <label for="codec_${codec.name}">${generalSettingsModify.escapeHtml(codec.description || codec.name)}</label>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            
+            $tableBody.append(rowHtml);
+        });
+        
+        // Initialize checkboxes for the new rows
+        $tableBody.find('.checkbox').checkbox({
+            onChange: function() {
+                // Mark form as changed when codec is enabled/disabled
+                Form.dataChanged();
+            }
+        });
+    },
+    
+    /**
+     * Initialize drag and drop for codec tables
+     */
+    initializeCodecDragDrop() {
+        $('#audio-codecs-table, #video-codecs-table').tableDnD({
+            onDragClass: 'hoveringRow',
+            dragHandle: '.dragHandle',
+            onDrop: function() {
+                // Mark form as changed when codecs are reordered
+                Form.dataChanged();
+            }
+        });
+    },
+
+    /**
+     * Initialize certificate field display only
+     */
+    initializeCertificateField() {
+        // Handle WEBHTTPSPublicKey field only
+        const $certPubKeyField = $('#WEBHTTPSPublicKey');
+        if ($certPubKeyField.length) {
+            const fullValue = $certPubKeyField.val();
+            const $container = $certPubKeyField.parent();
+            
+            // Get certificate info if available from data attribute
+            const certInfo = $certPubKeyField.data('cert-info') || {};
+            
+            // Remove any existing display elements for this field only
+            $container.find('.cert-display, .cert-edit-form').remove();
+            
+            if (fullValue) {
+                // Create meaningful display text from certificate info
+                let displayText = '';
+                if (certInfo && !certInfo.error) {
+                    const parts = [];
+                    
+                    // Add subject/domain
+                    if (certInfo.subject) {
+                        parts.push(`📜 ${certInfo.subject}`);
+                    }
+                    
+                    // Add issuer if not self-signed
+                    if (certInfo.issuer && !certInfo.is_self_signed) {
+                        parts.push(`by ${certInfo.issuer}`);
+                    } else if (certInfo.is_self_signed) {
+                        parts.push('(Self-signed)');
+                    }
+                    
+                    // Add validity dates
+                    if (certInfo.valid_to) {
+                        if (certInfo.is_expired) {
+                            parts.push(`❌ Expired ${certInfo.valid_to}`);
+                        } else if (certInfo.days_until_expiry <= 30) {
+                            parts.push(`⚠️ Expires in ${certInfo.days_until_expiry} days`);
+                        } else {
+                            parts.push(`✅ Valid until ${certInfo.valid_to}`);
+                        }
+                    }
+                    
+                    displayText = parts.join(' | ');
+                } else {
+                    // Fallback to truncated certificate
+                    displayText = generalSettingsModify.truncateCertificate(fullValue);
+                }
+                
+                // Hide the original field
+                $certPubKeyField.hide();
+                
+                // Add status color class based on certificate status
+                let statusClass = '';
+                if (certInfo.is_expired) {
+                    statusClass = 'error';
+                } else if (certInfo.days_until_expiry <= 30) {
+                    statusClass = 'warning';
+                }
+                
+                const displayHtml = `
+                    <div class="ui action input fluid cert-display ${statusClass}">
+                        <input type="text" value="${generalSettingsModify.escapeHtml(displayText)}" readonly class="truncated-display" />
+                        <button class="ui button icon basic copy-btn" data-clipboard-text="${generalSettingsModify.escapeHtml(fullValue)}"
+                                data-variation="basic" data-content="${globalTranslate.bt_ToolTipCopyCert || 'Copy certificate'}">
+                            <i class="copy icon blue"></i>
+                        </button>
+                        <button class="ui button icon basic info-cert-btn"
+                                data-content="${globalTranslate.bt_ToolTipCertInfo || 'Certificate details'}">
+                            <i class="info circle icon blue"></i>
+                        </button>
+                        <button class="ui button icon basic edit-btn"
+                                data-content="${globalTranslate.bt_ToolTipEdit || 'Edit certificate'}">
+                            <i class="edit icon blue"></i>
+                        </button>
+                        <button class="ui button icon basic delete-cert-btn"
+                                data-content="${globalTranslate.bt_ToolTipDelete || 'Delete certificate'}">
+                            <i class="trash icon red"></i>
+                        </button>
+                    </div>
+                    ${certInfo && !certInfo.error ? generalSettingsModify.renderCertificateDetails(certInfo) : ''}
+                    <div class="ui form cert-edit-form" style="display:none;">
+                        <div class="field">
+                            <textarea id="WEBHTTPSPublicKey_edit" 
+                                      rows="10" 
+                                      placeholder="${globalTranslate.gs_PastePublicCert || 'Paste public certificate here...'}">${fullValue}</textarea>
+                        </div>
+                        <div class="ui mini buttons">
+                            <button class="ui positive button save-cert-btn">
+                                <i class="check icon"></i> ${globalTranslate.bt_Save || 'Save'}
+                            </button>
+                            <button class="ui button cancel-cert-btn">
+                                <i class="close icon"></i> ${globalTranslate.bt_Cancel || 'Cancel'}
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                $container.append(displayHtml);
+                
+                // Handle info button - toggle details display
+                $container.find('.info-cert-btn').on('click', function(e) {
+                    e.preventDefault();
+                    const $details = $container.find('.cert-details');
+                    if ($details.length) {
+                        $details.slideToggle();
+                    }
+                });
+                
+                // Handle edit button
+                $container.find('.edit-btn').on('click', function(e) {
+                    e.preventDefault();
+                    $container.find('.cert-display').hide();
+                    $container.find('.cert-edit-form').show();
+                    $container.find('#WEBHTTPSPublicKey_edit').focus();
+                });
+                
+                // Handle save button
+                $container.find('.save-cert-btn').on('click', function(e) {
+                    e.preventDefault();
+                    const newValue = $container.find('#WEBHTTPSPublicKey_edit').val();
+                    
+                    // Update the original hidden field
+                    $certPubKeyField.val(newValue);
+                    
+                    // Trigger form validation
+                    if (typeof Form !== 'undefined' && Form.checkValues) {
+                        Form.checkValues();
+                    }
+                    
+                    // Re-initialize only the certificate field display with new value
+                    generalSettingsModify.initializeCertificateField();
+                });
+                
+                // Handle cancel button
+                $container.find('.cancel-cert-btn').on('click', function(e) {
+                    e.preventDefault();
+                    $container.find('.cert-edit-form').hide();
+                    $container.find('.cert-display').show();
+                });
+                
+                // Handle delete button
+                $container.find('.delete-cert-btn').on('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Clear the certificate
+                    $certPubKeyField.val('');
+                    
+                    // Trigger form validation
+                    if (typeof Form !== 'undefined' && Form.checkValues) {
+                        Form.checkValues();
+                    }
+                    
+                    // Re-initialize only the certificate field to show empty field
+                    generalSettingsModify.initializeCertificateField();
+                });
+                
+                // Initialize tooltips
+                $container.find('[data-content]').popup();
+                
+                // Re-initialize clipboard for new buttons
+                if (generalSettingsModify.clipboard) {
+                    generalSettingsModify.clipboard.destroy();
+                    generalSettingsModify.initializeClipboard();
+                }
+            } else {
+                // Show the original field for input with proper placeholder
+                $certPubKeyField.show();
+                $certPubKeyField.attr('placeholder', globalTranslate.gs_PastePublicCert || 'Paste public certificate here...');
+                $certPubKeyField.attr('rows', '10');
+                
+                // Ensure change events trigger form validation
+                $certPubKeyField.off('input.cert change.cert keyup.cert').on('input.cert change.cert keyup.cert', function() {
+                    if (typeof Form !== 'undefined' && Form.checkValues) {
+                        Form.checkValues();
+                    }
+                });
+            }
+        }
+    },
+
+    /**
+     * Initialize truncated fields display for SSH keys and certificates
+     */
+    initializeTruncatedFields() {
+        // Handle SSH_ID_RSA_PUB field
+        const $sshPubKeyField = $('#SSH_ID_RSA_PUB');
+        if ($sshPubKeyField.length) {
+            const fullValue = $sshPubKeyField.val();
+            const $container = $sshPubKeyField.parent();
+            
+            // Remove any existing display elements
+            $container.find('.ssh-key-display, .full-display').remove();
+            
+            // Only create display if there's a value
+            if (fullValue) {
+                // Create truncated display
+                const truncated = generalSettingsModify.truncateSSHKey(fullValue);
+                
+                // Hide the original field
+                $sshPubKeyField.hide();
+                
+                const displayHtml = `
+                    <div class="ui action input fluid ssh-key-display">
+                        <input type="text" value="${truncated}" readonly class="truncated-display" />
+                        <button class="ui button icon basic copy-btn" data-clipboard-text="${generalSettingsModify.escapeHtml(fullValue)}" 
+                                data-variation="basic" data-content="${globalTranslate.bt_ToolTipCopyKey || 'Copy'}">
+                            <i class="copy icon blue"></i>
+                        </button>
+                        <button class="ui button icon basic expand-btn" 
+                                data-content="${globalTranslate.bt_ToolTipExpand || 'Show full key'}">
+                            <i class="expand icon blue"></i>
+                        </button>
+                    </div>
+                    <textarea class="full-display" style="display:none;" readonly>${fullValue}</textarea>
+                `;
+                
+                $container.append(displayHtml);
+            
+            // Handle expand/collapse
+            $container.find('.expand-btn').on('click', function(e) {
+                e.preventDefault();
+                const $fullDisplay = $container.find('.full-display');
+                const $truncatedDisplay = $container.find('.ssh-key-display');
+                const $icon = $(this).find('i');
+                
+                if ($fullDisplay.is(':visible')) {
+                    $fullDisplay.hide();
+                    $truncatedDisplay.show();
+                    $icon.removeClass('compress').addClass('expand');
+                } else {
+                    $fullDisplay.show();
+                    $truncatedDisplay.hide();
+                    $icon.removeClass('expand').addClass('compress');
+                }
+            });
+            
+            // Initialize tooltips for new elements
+            $container.find('[data-content]').popup();
+            } else {
+                // Show the original field as read-only (this is a system-generated key)
+                $sshPubKeyField.show();
+                $sshPubKeyField.attr('readonly', true);
+                $sshPubKeyField.attr('placeholder', globalTranslate.gs_NoSSHPublicKey || 'No SSH public key generated');
+            }
+        }
+        
+        // Handle WEBHTTPSPublicKey field - use dedicated method
+        generalSettingsModify.initializeCertificateField();
+        
+        // Handle WEBHTTPSPrivateKey field (write-only with password masking)
+        const $certPrivKeyField = $('#WEBHTTPSPrivateKey');
+        if ($certPrivKeyField.length) {
+            const $container = $certPrivKeyField.parent();
+            
+            // Remove any existing display elements
+            $container.find('.private-key-set, #WEBHTTPSPrivateKey_new').remove();
+            
+            // Check if private key exists (password masking logic)
+            // The field will contain 'xxxxxxx' if a private key is set
+            const currentValue = $certPrivKeyField.val();
+            const hasValue = currentValue === generalSettingsModify.hiddenPassword;
+            
+            if (hasValue) {
+                // Hide original field and show status message
+                $certPrivKeyField.hide();
+                
+                const displayHtml = `
+                    <div class="ui info message private-key-set">
+                        <p>
+                            <i class="lock icon"></i>
+                            ${globalTranslate.gs_PrivateKeyIsSet || 'Private key is configured'} 
+                            <a href="#" class="replace-key-link">${globalTranslate.gs_Replace || 'Replace'}</a>
+                        </p>
+                    </div>
+                    <textarea id="WEBHTTPSPrivateKey_new" name="WEBHTTPSPrivateKey" 
+                              rows="10"
+                              style="display:none;" 
+                              placeholder="${globalTranslate.gs_PastePrivateKey || 'Paste private key here...'}"></textarea>
+                `;
+                
+                $container.append(displayHtml);
+                
+                // Handle replace link
+                $container.find('.replace-key-link').on('click', function(e) {
+                    e.preventDefault();
+                    $container.find('.private-key-set').hide();
+                    const $newField = $container.find('#WEBHTTPSPrivateKey_new');
+                    $newField.show().focus();
+                    
+                    // Clear the hidden password value so we can set a new one
+                    $certPrivKeyField.val('');
+                    
+                    // Bind change event to update hidden field and enable save button
+                    $newField.on('input change keyup', function() {
+                        // Update the original hidden field with new value
+                        $certPrivKeyField.val($newField.val());
+                        
+                        // Trigger form validation check
+                        if (typeof Form !== 'undefined' && Form.checkValues) {
+                            Form.checkValues();
+                        }
+                    });
+                });
+            } else {
+                // Show the original field for input with proper placeholder
+                $certPrivKeyField.show();
+                $certPrivKeyField.attr('placeholder', globalTranslate.gs_PastePrivateKey || 'Paste private key here...');
+                $certPrivKeyField.attr('rows', '10');
+                
+                // Ensure change events trigger form validation
+                $certPrivKeyField.off('input.priv change.priv keyup.priv').on('input.priv change.priv keyup.priv', function() {
+                    if (typeof Form !== 'undefined' && Form.checkValues) {
+                        Form.checkValues();
+                    }
+                });
+            }
+        }
+    },
+    
+    /**
+     * Initialize clipboard functionality for copy buttons
+     */
+    initializeClipboard() {
+        if (generalSettingsModify.clipboard) {
+            generalSettingsModify.clipboard.destroy();
+        }
+        
+        generalSettingsModify.clipboard = new ClipboardJS('.copy-btn');
+        
+        generalSettingsModify.clipboard.on('success', (e) => {
+            // Show success message
+            const $btn = $(e.trigger);
+            const originalIcon = $btn.find('i').attr('class');
+            
+            $btn.find('i').removeClass().addClass('check icon');
+            setTimeout(() => {
+                $btn.find('i').removeClass().addClass(originalIcon);
+            }, 2000);
+            
+            // Clear selection
+            e.clearSelection();
+        });
+        
+        generalSettingsModify.clipboard.on('error', () => {
+            UserMessage.showError(globalTranslate.gs_CopyFailed || 'Failed to copy to clipboard');
+        });
+    },
+    
+    /**
+     * Truncate SSH key for display
+     * @param {string} key - Full SSH key
+     * @return {string} Truncated key
+     */
+    truncateSSHKey(key) {
+        if (!key || key.length < 50) {
+            return key;
+        }
+        
+        const parts = key.split(' ');
+        if (parts.length >= 2) {
+            const keyType = parts[0];
+            const keyData = parts[1];
+            const comment = parts.slice(2).join(' ');
+            
+            if (keyData.length > 40) {
+                const truncated = keyData.substring(0, 20) + '...' + keyData.substring(keyData.length - 15);
+                return `${keyType} ${truncated} ${comment}`.trim();
+            }
+        }
+        
+        return key;
+    },
+    
+    /**
+     * Truncate certificate for display
+     * @param {string} cert - Full certificate
+     * @return {string} Truncated certificate in single line format
+     */
+    truncateCertificate(cert) {
+        if (!cert || cert.length < 100) {
+            return cert;
+        }
+        
+        const lines = cert.split('\n').filter(line => line.trim());
+        
+        // Extract first and last meaningful lines
+        const firstLine = lines[0] || '';
+        const lastLine = lines[lines.length - 1] || '';
+        
+        // For certificates, show begin and end markers
+        if (firstLine.includes('BEGIN CERTIFICATE')) {
+            return `${firstLine}...${lastLine}`;
+        }
+        
+        // For other formats, truncate the content
+        const cleanCert = cert.replace(/\n/g, ' ').trim();
+        if (cleanCert.length > 80) {
+            return cleanCert.substring(0, 40) + '...' + cleanCert.substring(cleanCert.length - 30);
+        }
+        
+        return cleanCert;
+    },
+    
+    /**
+     * Escape HTML for safe display
+     * @param {string} text - Text to escape
+     * @return {string} Escaped text
+     */
+    escapeHtml(text) {
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, m => map[m]);
+    },
+    
     /**
      * Show, hide ssh password segment according to the value of use SSH password checkbox.
      */
@@ -316,75 +1067,120 @@ const generalSettingsModify = {
 
     /**
      * Callback function to be called before the form is sent
+     * Prepares data for REST API submission
      * @param {Object} settings - The current settings of the form
      * @returns {Object} - The updated settings of the form
      */
     cbBeforeSendForm(settings) {
         const result = settings;
-        result.data = generalSettingsModify.$formObj.form('get values');
+        
+        // Clean up unnecessary fields before sending
+        const fieldsToRemove = [
+            'dirrty',
+            'deleteAllInput',
+        ];
+        
+        // Remove codec_* fields (they're replaced with the codecs array)
+        Object.keys(result.data).forEach(key => {
+            if (key.startsWith('codec_') || fieldsToRemove.includes(key)) {
+                delete result.data[key];
+            }
+        });
+        
+        // Collect codec data - only include if changed
         const arrCodecs = [];
-        $('#audio-codecs-table .codec-row, #video-codecs-table .codec-row').each((index, obj) => {
-            if ($(obj).attr('id')) {
+        let hasCodecChanges = false;
+        
+        // Process all codec rows
+        $('#audio-codecs-table .codec-row, #video-codecs-table .codec-row').each((currentIndex, obj) => {
+            const codecName = $(obj).attr('data-codec-name');
+            if (codecName && generalSettingsModify.originalCodecState[codecName]) {
+                const original = generalSettingsModify.originalCodecState[codecName];
+                const currentDisabled = $(obj).find('.checkbox').checkbox('is unchecked');
+                
+                // Check if position or disabled state changed
+                if (currentIndex !== original.priority || currentDisabled !== original.disabled) {
+                    hasCodecChanges = true;
+                }
+                
                 arrCodecs.push({
-                    codecId: $(obj).attr('id'),
-                    disabled: $(obj).find('.checkbox').checkbox('is unchecked'),
-                    priority: index,
+                    name: codecName,
+                    disabled: currentDisabled,
+                    priority: currentIndex,
                 });
             }
         });
-        result.data.codecs = JSON.stringify(arrCodecs);
-
+        
+        // Only include codecs if there were changes
+        if (hasCodecChanges) {
+            result.data.codecs = arrCodecs;
+        }
+        
         return result;
     },
 
     /**
      * Callback function to be called after the form has been sent.
+     * Handles REST API response structure
      * @param {Object} response - The response from the server after the form is sent
      */
     cbAfterSendForm(response) {
         $("#error-messages").remove();
-        if (!response.success) {
+        
+        // REST API response structure: { result: bool, data: {}, messages: {} }
+        if (!response.result) {
             Form.$submitButton.removeClass('disabled');
             generalSettingsModify.generateErrorMessageHtml(response);
         } else {
+            // Update password fields to hidden value on success
             generalSettingsModify.$formObj.form('set value', 'WebAdminPassword', generalSettingsModify.hiddenPassword);
             generalSettingsModify.$formObj.form('set value', 'WebAdminPasswordRepeat', generalSettingsModify.hiddenPassword);
             generalSettingsModify.$formObj.form('set value', 'SSHPassword', generalSettingsModify.hiddenPassword);
             generalSettingsModify.$formObj.form('set value', 'SSHPasswordRepeat', generalSettingsModify.hiddenPassword);
             $('.password-validate').remove();
         }
-        // Check if delete all phrase was entered
+        
+        // Check delete all conditions if needed
         if (typeof generalSettingsDeleteAll !== 'undefined') {
             generalSettingsDeleteAll.checkDeleteConditions();
         }
     },
 
     /**
-     * The function collects an information message about a data saving error
-     * @param response
+     * Generate error message HTML from REST API response
+     * @param {Object} response - API response with error messages
      */
     generateErrorMessageHtml(response) {
-        if (response.messages && response.messages.error) {
+        if (response.messages) {
             const $div = $('<div>', { class: 'ui negative message', id: 'error-messages' });
             const $header = $('<div>', { class: 'header' }).text(globalTranslate.gs_ErrorSaveSettings);
             $div.append($header);
             const $ul = $('<ul>', { class: 'list' });
             const messagesSet = new Set();
-            response.messages.error.forEach(errorArray => {
-                errorArray.forEach(error => {
-                    let textContent ='';
-                    if(globalTranslate[error.message] === undefined){
-                        textContent = error.message;
-                    }else{
-                        textContent = globalTranslate[error.message];
-                    }
-                    if (messagesSet.has(textContent)) {
-                        return;
-                    }
-                    messagesSet.add(error.message);
-                    $ul.append($('<li>').text(textContent));
-                });
+            
+            // Handle both error and validation message types
+            ['error', 'validation'].forEach(msgType => {
+                if (response.messages[msgType]) {
+                    const messages = Array.isArray(response.messages[msgType]) 
+                        ? response.messages[msgType] 
+                        : [response.messages[msgType]];
+                    
+                    messages.forEach(error => {
+                        let textContent = '';
+                        if (typeof error === 'object' && error.message) {
+                            textContent = globalTranslate[error.message] || error.message;
+                        } else {
+                            textContent = globalTranslate[error] || error;
+                        }
+                        
+                        if (!messagesSet.has(textContent)) {
+                            messagesSet.add(textContent);
+                            $ul.append($('<li>').text(textContent));
+                        }
+                    });
+                }
             });
+            
             $div.append($ul);
             $('#submitbutton').before($div);
         }
@@ -412,14 +1208,114 @@ const generalSettingsModify = {
     },
 
     /**
-     * Initialize the form with custom settings
+     * Render certificate details HTML
+     * @param {object} certInfo - Certificate information object
+     * @returns {string} HTML for certificate details
+     */
+    renderCertificateDetails(certInfo) {
+        let html = '<div class="cert-details" style="display:none; margin-top:10px;">';
+        html += '<div class="ui segment">';
+        html += '<div class="ui tiny list">';
+        
+        // Subject
+        if (certInfo.subject) {
+            html += `<div class="item"><strong>Subject:</strong> ${generalSettingsModify.escapeHtml(certInfo.subject)}</div>`;
+        }
+        
+        // Issuer
+        if (certInfo.issuer) {
+            html += `<div class="item"><strong>Issuer:</strong> ${generalSettingsModify.escapeHtml(certInfo.issuer)}`;
+            if (certInfo.is_self_signed) {
+                html += ' <span class="ui tiny label">Self-signed</span>';
+            }
+            html += '</div>';
+        }
+        
+        // Validity period
+        if (certInfo.valid_from && certInfo.valid_to) {
+            html += `<div class="item"><strong>Valid:</strong> ${certInfo.valid_from} to ${certInfo.valid_to}</div>`;
+        }
+        
+        // Expiry status
+        if (certInfo.is_expired) {
+            html += '<div class="item"><span class="ui tiny red label">Certificate Expired</span></div>';
+        } else if (certInfo.days_until_expiry <= 30) {
+            html += `<div class="item"><span class="ui tiny yellow label">Expires in ${certInfo.days_until_expiry} days</span></div>`;
+        } else if (certInfo.days_until_expiry > 0) {
+            html += `<div class="item"><span class="ui tiny green label">Valid for ${certInfo.days_until_expiry} days</span></div>`;
+        }
+        
+        // Subject Alternative Names
+        if (certInfo.san && certInfo.san.length > 0) {
+            html += '<div class="item"><strong>Alternative Names:</strong>';
+            html += '<div class="ui tiny list" style="margin-left:10px;">';
+            certInfo.san.forEach(san => {
+                html += `<div class="item">${generalSettingsModify.escapeHtml(san)}</div>`;
+            });
+            html += '</div></div>';
+        }
+        
+        html += '</div>'; // Close list
+        html += '</div>'; // Close segment
+        html += '</div>'; // Close cert-details
+        
+        return html;
+    },
+    
+    /**
+     * Initialize PBXLanguage change detection for restart warning
+     * Shows restart warning only when the language value changes
+     */
+    initializePBXLanguageWarning() {
+        const $languageDropdown = $('#PBXLanguage');
+        const $restartWarning = $('#restart-warning-PBXLanguage');
+        
+        // Store original value
+        let originalValue = null;
+        
+        // Set original value after data loads
+        $(document).on('GeneralSettings.dataLoaded', () => {
+            originalValue = $languageDropdown.val();
+        });
+        
+        // Handle dropdown change event
+        $languageDropdown.closest('.dropdown').dropdown({
+            onChange: (value) => {
+                // Show warning if value changed from original
+                if (originalValue !== null && value !== originalValue) {
+                    $restartWarning.transition('fade in');
+                } else {
+                    $restartWarning.transition('fade out');
+                }
+                
+                // Trigger form change detection
+                Form.dataChanged();
+            }
+        });
+    },
+    
+    /**
+     * Initialize the form with REST API configuration
      */
     initializeForm() {
         Form.$formObj = generalSettingsModify.$formObj;
-        Form.url = `${globalRootUrl}general-settings/save`; // Form submission URL
-        Form.validateRules = generalSettingsModify.validateRules; // Form validation rules
-        Form.cbBeforeSendForm = generalSettingsModify.cbBeforeSendForm; // Callback before form is sent
-        Form.cbAfterSendForm = generalSettingsModify.cbAfterSendForm; // Callback after form is sent
+        
+        // Enable REST API mode
+        Form.apiSettings.enabled = true;
+        Form.apiSettings.apiObject = GeneralSettingsAPI;
+        Form.apiSettings.saveMethod = 'saveSettings';
+        
+        // Enable checkbox to boolean conversion for cleaner API requests
+        Form.convertCheckboxesToBool = true;
+
+        // No redirect after save - stay on the same page
+        Form.afterSubmitIndexUrl = null;
+        Form.afterSubmitModifyUrl = null;
+        Form.url = `#`;
+        
+        Form.validateRules = generalSettingsModify.validateRules;
+        Form.cbBeforeSendForm = generalSettingsModify.cbBeforeSendForm;
+        Form.cbAfterSendForm = generalSettingsModify.cbAfterSendForm;
         Form.initialize();
     }
 };

@@ -21,7 +21,6 @@
 namespace MikoPBX\AdminCabinet\Forms;
 
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
@@ -91,13 +90,17 @@ class GeneralSettingsEditForm extends BaseForm
                 case PbxSettings::SSH_ID_RSA_PUB:
                     $this->addTextArea($key, base64_decode($value) ?? '', 65, ['readonly' => '']);
                     break;
+                case PbxSettings::WEB_HTTPS_PRIVATE_KEY:
+                    // Use password masking for private key
+                    $maskedValue = !empty($value) ? self::HIDDEN_PASSWORD : '';
+                    $this->addTextArea($key, $maskedValue, 65);
+                    break;
                 case PbxSettings::PBX_DESCRIPTION:
                 case PbxSettings::SSH_AUTHORIZED_KEYS:
                 case PbxSettings::SSH_ECDSA_KEY:
                 case PbxSettings::SSH_RSA_KEY:
                 case PbxSettings::SSH_DSS_KEY:
                 case PbxSettings::WEB_HTTPS_PUBLIC_KEY:
-                case PbxSettings::WEB_HTTPS_PRIVATE_KEY:
                 case '***ALL TEXTAREA ABOVE***':
                     $this->addTextArea($key, $value ?? '', 65);
                     break;
@@ -160,27 +163,8 @@ class GeneralSettingsEditForm extends BaseForm
                     break;
                 case PbxSettings::PBX_RECORD_ANNOUNCEMENT_IN:
                 case PbxSettings::PBX_RECORD_ANNOUNCEMENT_OUT:
-                    $currentSoundFile = SoundFiles::findFirstById($value);
-                    $selectArray = [];
-                    if ($currentSoundFile !== null) {
-                        $selectArray = [$value => $currentSoundFile->getRepresent()];
-                    }
-
-                    // Audio_message_id
-                    $audioMessage = new Select(
-                        $key,
-                        $selectArray,
-                        [
-                            'using' => [
-                                'id',
-                                'name',
-                            ],
-                            'useEmpty' => true,
-                            'value' => $value,
-                            'class' => 'ui selection dropdown search fluid audio-message-select',
-                        ]
-                    );
-                    $this->add($audioMessage);
+                    // Just add a hidden field - the dropdown will be initialized in JavaScript
+                    $this->add(new Hidden($key, ['id' => $key, 'value' => $value]));
                     break;
                 case PbxSettings::PBX_RECORD_CALLS:
                 case PbxSettings::PBX_RECORD_CALLS_INNER:

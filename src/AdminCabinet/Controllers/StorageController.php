@@ -62,14 +62,24 @@ class StorageController extends BaseController
         
         // Save record retention period
         if (isset($data[PbxSettings::PBX_RECORD_SAVE_PERIOD])) {
-            $recordSavePeriod = PbxSettings::findFirstByKey(PbxSettings::PBX_RECORD_SAVE_PERIOD);
-            if ($recordSavePeriod !== null) {
-                $recordSavePeriod->value = $data[PbxSettings::PBX_RECORD_SAVE_PERIOD];
-                $result = $recordSavePeriod->save();
-                
-                if (!$result) {
-                    $errors = $recordSavePeriod->getMessages();
-                    $this->flash->error(implode('<br>', $errors));
+            $messages = [];
+            $result = PbxSettings::setValueByKey(
+                PbxSettings::PBX_RECORD_SAVE_PERIOD,
+                $data[PbxSettings::PBX_RECORD_SAVE_PERIOD],
+                $messages
+            );
+            
+            if (!$result && !empty($messages)) {
+                $errorTexts = [];
+                foreach ($messages as $message) {
+                    if (is_array($message)) {
+                        foreach ($message as $msg) {
+                            $errorTexts[] = $msg->getMessage();
+                        }
+                    }
+                }
+                if (!empty($errorTexts)) {
+                    $this->flash->error(implode('<br>', $errorTexts));
                 }
             }
         }

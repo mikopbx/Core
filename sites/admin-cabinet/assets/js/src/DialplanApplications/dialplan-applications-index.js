@@ -15,7 +15,7 @@ const dialplanApplicationsTable = {
     dataTableInstance: null,
 
     /**
-     * Initialize the module
+     * Initialize the module 
      */
     initialize() {
         // Create instance of base class with Dialplan Applications specific configuration

@@ -273,11 +273,24 @@ abstract class AbstractSaveRecordAction
     /**
      * Handle save operation errors consistently
      *
+     * @deprecated Use handleError() instead
      * @param \Exception $exception Exception that occurred during save
      * @param PBXApiResult $result Result object to populate with error
      * @return PBXApiResult Result with error information
      */
     protected static function handleSaveError(\Exception $exception, PBXApiResult $result): PBXApiResult
+    {
+        return self::handleError($exception, $result);
+    }
+    
+    /**
+     * Handle operation errors consistently
+     *
+     * @param \Exception $exception Exception that occurred
+     * @param PBXApiResult $result Result object to populate with error
+     * @return PBXApiResult Result with error information
+     */
+    protected static function handleError(\Exception $exception, PBXApiResult $result): PBXApiResult
     {
         $result->messages['error'][] = $exception->getMessage();
         CriticalErrorsHandler::handleExceptionWithSyslog($exception);
