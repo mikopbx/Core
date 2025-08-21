@@ -1082,7 +1082,6 @@ return [
     'bt_ToolTipEditCert' => 'Редактировать сертификат',
     'bt_ToolTipDeleteCert' => 'Удалить сертификат',
     'bt_ToolTipExpand' => 'Показать полный ключ',
-    'bt_ToolTipEdit' => 'Редактировать',
     'bt_Save' => 'Сохранить',
     'bt_Add' => 'Добавить',
     'bt_Cancel' => 'Отмена',
