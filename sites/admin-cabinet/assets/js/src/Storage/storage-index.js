@@ -83,7 +83,8 @@ const storageIndex = {
             });
         
         // Set the initial value for the records save period slider
-        const recordSavePeriod = storageIndex.$formObj.form('get value', 'PBXRecordSavePeriod');
+        const $hiddenField = storageIndex.$formObj.find('input[name="PBXRecordSavePeriod"]');
+        const recordSavePeriod = $hiddenField.val() || '';
         storageIndex.$recordsSavePeriodSlider
             .slider('set value', storageIndex.saveRecordsPeriod.indexOf(recordSavePeriod), false);
         
