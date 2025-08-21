@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace MikoPBX\Core\Workers;
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\Workers\Pool\WorkerPoolManager;
-use Redis;
 use RuntimeException;
 use Throwable;
 
@@ -196,7 +196,7 @@ abstract class WorkerRedisBase extends WorkerBase
     protected function updateWorkerStatus(): void
     {
         try {
-            $this->redis = $this->di->get('redis');
+            $this->redis = $this->di->get(RedisClientProvider::SERVICE_NAME);;
             $currentTime = microtime(true);
             $memoryUsage = memory_get_usage(true);
 

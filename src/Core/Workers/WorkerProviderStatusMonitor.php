@@ -60,7 +60,7 @@ class WorkerProviderStatusMonitor extends WorkerRedisBase
     ];
     
     private ?UserPageTrackerLib $pageTracker = null;
-    private $redis;
+    protected $redis;
     private int $lastCheckTime = 0;
     
     /**
