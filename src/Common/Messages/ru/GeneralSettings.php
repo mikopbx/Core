@@ -136,7 +136,6 @@ return [
     'gs_WebAdminPasswordRepeat' => 'Повторите ввод пароля',
     'gs_SSHPasswordRepeat' => 'Повторите ввод пароля',
     'gs_Passwords' => 'Пароль WEB интерфейса',
-    'gs_DefaultPasswordWarning' => 'Не используйте стандартный логин и пароль администратора системы',
     'gs_ValidateEmptyWebPassword' => 'Пароль админки не может быть пустым',
     'gs_ValidateWeakWebPassword' => 'Пароль WEB должен быть длиннее 4х символов',
     'gs_ValidateWebPasswordsFieldDifferent' => 'Пароль web интерфейса введен некорректно',

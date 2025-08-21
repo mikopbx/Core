@@ -382,6 +382,14 @@ const generalSettingsModify = {
                 // Populate form with the received data
                 generalSettingsModify.populateForm(response.data);
                 generalSettingsModify.dataLoaded = true;
+                
+                // Show warnings for default passwords after DOM update
+                if (response.data.passwordValidation) {
+                    // Use setTimeout to ensure DOM is updated after populateForm
+                    setTimeout(() => {
+                        generalSettingsModify.showDefaultPasswordWarnings(response.data.passwordValidation);
+                    }, 100);
+                }
             } else if (response && response.messages) {
                 console.error('API Error:', response.messages);
                 // Show error message if available
@@ -497,6 +505,74 @@ const generalSettingsModify = {
                 ? messages.error.join(', ') 
                 : messages.error;
             UserMessage.showError(errorMessage);
+        }
+    },
+    
+    /**
+     * Show warnings for default passwords
+     * @param {object} validation - Password validation results from API
+     */
+    showDefaultPasswordWarnings(validation) {
+        // Remove any existing password-validate messages first
+        $('.password-validate').remove();
+        
+        // Show warning for default Web Admin password
+        if (validation.isDefaultWebPassword) {
+            // Find the password fields group - try multiple selectors
+            let $webPasswordFields = $('#WebAdminPassword').closest('.two.fields');
+            
+            if ($webPasswordFields.length === 0) {
+                // Try alternative selector if the first one doesn't work
+                $webPasswordFields = $('#WebAdminPassword').parent().parent();
+            }
+            
+            if ($webPasswordFields.length > 0) {
+                // Create warning message
+                const warningHtml = `
+                    <div class="ui negative icon message password-validate">
+                        <i class="exclamation triangle icon"></i>
+                        <div class="content">
+                            <div class="header">${globalTranslate.gs_SetPassword || 'Security Warning'}</div>
+                            <p>${globalTranslate.gs_SetPasswordInfo || 'You are using the default password. Please change it for security.'}</p>
+                        </div>
+                    </div>
+                `;
+                
+                // Insert warning before the password fields
+                $webPasswordFields.before(warningHtml);
+            }
+        }
+        
+        // Show warning for default SSH password
+        if (validation.isDefaultSSHPassword) {
+            // Check if SSH password login is enabled
+            const sshPasswordDisabled = $('#SSHDisablePasswordLogins').checkbox('is checked');
+            
+            if (!sshPasswordDisabled) {
+                // Find the SSH password fields group
+                let $sshPasswordFields = $('#SSHPassword').closest('.two.fields');
+                
+                if ($sshPasswordFields.length === 0) {
+                    // Try alternative selector
+                    $sshPasswordFields = $('#SSHPassword').parent().parent();
+                }
+                
+                if ($sshPasswordFields.length > 0) {
+                    // Create warning message
+                    const warningHtml = `
+                        <div class="ui negative icon message password-validate">
+                            <i class="exclamation triangle icon"></i>
+                            <div class="content">
+                                <div class="header">${globalTranslate.gs_SetPassword || 'Security Warning'}</div>
+                                <p>${globalTranslate.gs_SetPasswordInfo || 'You are using the default password. Please change it for security.'}</p>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Insert warning before the SSH password fields
+                    $sshPasswordFields.before(warningHtml);
+                }
+            }
         }
     },
     
@@ -1137,7 +1213,11 @@ const generalSettingsModify = {
             generalSettingsModify.$formObj.form('set value', 'WebAdminPasswordRepeat', generalSettingsModify.hiddenPassword);
             generalSettingsModify.$formObj.form('set value', 'SSHPassword', generalSettingsModify.hiddenPassword);
             generalSettingsModify.$formObj.form('set value', 'SSHPasswordRepeat', generalSettingsModify.hiddenPassword);
-            $('.password-validate').remove();
+            
+            // Remove password validation warnings after successful save
+            $('.password-validate').fadeOut(300, function() {
+                $(this).remove();
+            });
         }
         
         // Check delete all conditions if needed

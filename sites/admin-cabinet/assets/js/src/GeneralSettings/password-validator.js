@@ -80,7 +80,7 @@ const passwordValidator = {
         if ($sshPassword.length > 0) {
             $sshPassword.on('input', (e) => {
                 const password = e.target.value;
-                const sshDisabled = $('#SSHDisableSSHPassword').checkbox('is checked');
+                const sshDisabled = $('#SSHDisablePasswordLogins').checkbox('is checked');
                 
                 if (!sshDisabled && password && password !== 'xxxxxxx') {
                     PasswordScore.checkPassStrength({

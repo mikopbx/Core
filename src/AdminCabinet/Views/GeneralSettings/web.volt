@@ -28,9 +28,5 @@
         <i class="small info circle icon field-info-icon" 
            data-field="WEBHTTPSPrivateKey"></i>
     </label>
-    {% if WEBHTTPSPrivateKeyExists %}
-        {{ form.render('WEBHTTPSPrivateKey', ['data-has-value': 'true', 'data-field-type': 'certificate-private']) }}
-    {% else %}
-        {{ form.render('WEBHTTPSPrivateKey', ['data-field-type': 'certificate-private']) }}
-    {% endif %}
+    {{ form.render('WEBHTTPSPrivateKey', ['data-field-type': 'certificate-private']) }}
 </div>

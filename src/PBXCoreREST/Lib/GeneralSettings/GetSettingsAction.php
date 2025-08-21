@@ -164,10 +164,14 @@ class GetSettingsAction extends AbstractGetRecordAction
             // Get codecs information
             $codecs = self::getCodecs();
             
+            // Check if passwords are default (for warning display)
+            $passwordValidation = self::checkDefaultPasswords();
+            
             // Return both settings and codecs
             $res->data = [
                 'settings' => $formattedSettings,
-                'codecs' => $codecs
+                'codecs' => $codecs,
+                'passwordValidation' => $passwordValidation
             ];
             $res->success = true;
             
@@ -435,6 +439,44 @@ class GetSettingsAction extends AbstractGetRecordAction
         } catch (\Exception $e) {
             return ['error' => 'Failed to parse certificate: ' . $e->getMessage()];
         }
+    }
+    
+    /**
+     * Check if current passwords are default values
+     * 
+     * @return array<string, bool> Password validation flags
+     */
+    private static function checkDefaultPasswords(): array
+    {
+        $result = [
+            'isDefaultWebPassword' => false,
+            'isDefaultSSHPassword' => false
+        ];
+        
+        try {
+            // Get default values
+            $defaults = PbxSettings::getDefaultArrayValues();
+            
+            // Get current password hashes from database
+            $currentWebPasswordHash = PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_PASSWORD);
+            $currentSSHPasswordHash = PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD);
+            
+            // Check Web Admin password against default
+            if (isset($defaults[PbxSettings::WEB_ADMIN_PASSWORD])) {
+                $result['isDefaultWebPassword'] = ($currentWebPasswordHash === $defaults[PbxSettings::WEB_ADMIN_PASSWORD]);
+            }
+            
+            // Check SSH password against default
+            if (isset($defaults[PbxSettings::SSH_PASSWORD])) {
+                $result['isDefaultSSHPassword'] = ($currentSSHPasswordHash === $defaults[PbxSettings::SSH_PASSWORD]);
+            }
+            
+        } catch (\Exception $e) {
+            // Log error but don't fail the whole request
+            \MikoPBX\Core\System\Util::sysLogMsg(__METHOD__, "Failed to check default passwords: " . $e->getMessage());
+        }
+        
+        return $result;
     }
     
     /**

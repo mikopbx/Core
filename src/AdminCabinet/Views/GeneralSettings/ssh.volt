@@ -18,16 +18,6 @@
     </div>
 </div>
 <div class="ui basic segment" id="only-if-password-enabled">
-    {% for field in simplePasswords %}
-        {% if field === 'SSHPassword' %}
-            <div class="ui negative message password-validate">
-                <div class="header">
-                    {{ t._('gs_SetPassword') }}
-                </div>
-                <p>{{ t._('gs_SetPasswordInfo') }}</p>
-            </div>
-        {% endif  %}
-    {% endfor  %}
 <div class="two fields">
     <div class="field">
         <label>{{ t._('gs_SSHPassword') }}</label>
