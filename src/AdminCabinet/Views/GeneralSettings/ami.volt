@@ -1,7 +1,10 @@
 <div class="field">
     <div class="ui segment">
         <div class="ui toggle checkbox">
-            <label>{{ t._('gs_AMIEnabled') }}</label>
+            <label>{{ t._('gs_AMIEnabled') }}
+                <i class="small info circle icon field-info-icon" 
+                   data-field="AMIEnabled"></i>
+            </label>
             {{ form.render('AMIEnabled') }}
         </div>
     </div>
@@ -9,7 +12,10 @@
 <div class="field">
     <div class="ui segment">
         <div class="ui toggle checkbox">
-            <label>{{ t._('gs_AJAMEnabled') }}</label>
+            <label>{{ t._('gs_AJAMEnabled') }}
+                <i class="small info circle icon field-info-icon" 
+                   data-field="AJAMEnabled"></i>
+            </label>
             {{ form.render('AJAMEnabled') }}
         </div>
     </div>

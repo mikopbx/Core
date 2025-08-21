@@ -17,10 +17,13 @@
 <div class="field">
     <div class="ui segment">
         <div class="ui toggle checkbox">
-            <label>{{ t._('gs_PBXSplitAudioThread') }}</label>
+            <label>{{ t._('gs_PBXSplitAudioThread') }}
+                <i class="small info circle icon field-info-icon" 
+                   data-field="PBXSplitAudioThread"></i>
+            </label>
             {{ form.render('PBXSplitAudioThread') }}
         </div>
     </div>
 </div>
-{{ partial("partials/playAddNewSound", ['label': t._('gs_PBXRecordAnnouncementIn'), 'id':'PBXRecordAnnouncementIn', 'fieldClass':'field', 'fieldId':'']) }}
-{{ partial("partials/playAddNewSound", ['label': t._('gs_PBXRecordAnnouncementOut'), 'id':'PBXRecordAnnouncementOut', 'fieldClass':'field', 'fieldId':'']) }}
+{{ partial("partials/playAddNewSoundWithIcons", ['label': t._('gs_PBXRecordAnnouncementIn'), 'id':'PBXRecordAnnouncementIn', 'fieldClass':'field', 'fieldId':'']) }}
+{{ partial("partials/playAddNewSoundWithIcons", ['label': t._('gs_PBXRecordAnnouncementOut'), 'id':'PBXRecordAnnouncementOut', 'fieldClass':'field', 'fieldId':'']) }}
