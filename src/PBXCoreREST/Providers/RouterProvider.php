@@ -93,7 +93,10 @@ use MikoPBX\PBXCoreREST\Controllers\
     AsteriskManagers\PutController as AsteriskManagersPutController,
     AsteriskManagers\DeleteController as AsteriskManagersDeleteController,
     NetworkFilters\GetController as NetworkFiltersGetController,
-    NetworkFilters\PostController as NetworkFiltersPostController
+    NetworkFilters\PostController as NetworkFiltersPostController,
+    GeneralSettings\GetController as GeneralSettingsGetController,
+    GeneralSettings\PostController as GeneralSettingsPostController,
+    Passwords\PostController as PasswordsPostController
 };
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\RestAPIConfigInterface;
@@ -278,7 +281,13 @@ class RouterProvider implements ServiceProviderInterface
 
             [UserPageTrackerPostController::class, 'callAction', '/pbxcore/api/user-page-tracker/{actionName}', 'post', '/'],
             
-            [PasswordsGetController::class, 'callAction', '/pbxcore/api/passwords/{actionName}', 'get', '/'],
+            // General Settings routes (v2)
+            [GeneralSettingsGetController::class, 'callAction', '/pbxcore/api/v2/general-settings/{actionName}', 'get', '/'],
+            [GeneralSettingsGetController::class, 'callAction', '/pbxcore/api/v2/general-settings/{actionName}/{key}', 'get', '/'],
+            [GeneralSettingsPostController::class, 'callAction', '/pbxcore/api/v2/general-settings/{actionName}', 'post', '/'],
+            
+            // Password validation and generation endpoints (v2)
+            [PasswordsPostController::class, 'callAction', '/pbxcore/api/v2/passwords/{actionName}', 'post', '/'],
             
             // Sound Files routes
             [SoundFilesGetController::class, 'callAction', '/pbxcore/api/v2/sound-files/{actionName}', 'get', '/'],

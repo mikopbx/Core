@@ -71,18 +71,28 @@ class PbxSettings extends ModelsBase
         $currentSettings = [];
 
         if ($useCache) {
-           $currentSettings =$redis->hgetall(self::CACHE_KEY)??[];
+           $currentSettings = $redis->hgetall(self::CACHE_KEY) ?? [];
         }
 
-        if ($currentSettings === []) {
-            $currentSettings = PbxSettings::find()->toArray();
-            foreach ($currentSettings as $record) {
-                $redis->hset(self::CACHE_KEY, $record['key'], $record['value']);
+        // If cache is empty or cache is disabled, load from database
+        if ($currentSettings === [] || !$useCache) {
+            $dbSettings = PbxSettings::find()->toArray();
+            
+            // Convert database records to key-value format
+            $currentSettings = [];
+            foreach ($dbSettings as $record) {
+                $currentSettings[$record['key']] = $record['value'];
+                // Update cache if using cache
+                if ($useCache) {
+                    $redis->hset(self::CACHE_KEY, $record['key'], $record['value']);
+                }
             }
         }
-        foreach ($currentSettings as $record) {
-            if (isset($record['value'])) {
-                $getDefaultArrayValues[$record['key']] = $record['value'];
+        
+        // Merge with default values (database/cache values override defaults)
+        foreach ($currentSettings as $key => $value) {
+            if (array_key_exists($key, $getDefaultArrayValues)) {
+                $getDefaultArrayValues[$key] = $value;
             }
         }
 
