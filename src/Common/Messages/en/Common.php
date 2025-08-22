@@ -174,6 +174,7 @@ return [
     'pr_RegistrationSettings' => 'Registration settings',
     'pr_ValidationProviderNameIsEmpty' => 'Describe name for this provider',
     'pr_ValidationProviderHostIsEmpty' => 'Enter the server name or IP address of the provider',
+    'pr_ValidationProviderHostInvalidCharacters' => 'Host can only contain letters, numbers, dots, hyphens and underscores',
     'pr_ValidationProviderLoginIsEmpty' => 'Enter the username for authorization at the provider',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'The login must be longer than one character',
     'pr_SIPPort' => 'SIP connection port',

@@ -40,8 +40,8 @@ class GetController extends BaseController
      */
     public function callAction(string $actionName, ?string $type = null, ?string $id = null): void
     {
-        // Get all request parameters (GET, POST, etc.)
-        $requestData = $this->request->get();
+        // Use unified method to get request data
+        $requestData = $this->request->getData();
         
         // Add path parameters if provided
         if (!empty($type)) {

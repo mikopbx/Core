@@ -400,7 +400,8 @@ class ProviderSIP extends ProviderBase {
         Form.apiSettings = {
             enabled: true,
             apiObject: ProvidersAPI,
-            saveMethod: 'saveRecord'
+            saveMethod: 'saveRecord',
+            httpMethod: this.isNewProvider ? 'POST' : 'PUT'
         };
         
         // Navigation URLs

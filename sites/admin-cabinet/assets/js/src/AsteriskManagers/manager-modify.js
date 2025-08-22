@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, Form, PbxApi, ClipboardJS, AsteriskManagersAPI, UserMessage, FormElements */
+/* global globalRootUrl, globalTranslate, Form, PbxApi, ClipboardJS, AsteriskManagersAPI, UserMessage, FormElements, PasswordWidget */
 
 /**
  * Manager module using REST API v2.
@@ -27,31 +27,31 @@ const manager = {
      * jQuery object for the form.
      * @type {jQuery}
      */
-    $formObj: $('form.ui.large.form'),
+    $formObj: $('#save-ami-form'),
 
     /**
      * jQuery objects for dropdown elements.
      * @type {jQuery}
      */
-    $dropDowns: $('form.ui.large.form .ui.dropdown'),
+    $dropDowns: $('#save-ami-form .ui.dropdown'),
 
     /**
      * jQuery objects for all checkbox elements.
      * @type {jQuery}
      */
-    $allCheckBoxes: $('form.ui.large.form .checkbox'),
+    $allCheckBoxes: null,
 
     /**
      * jQuery object for the uncheck button.
      * @type {jQuery}
      */
-    $unCheckButton: $('.uncheck.button'),
+    $unCheckButton: null,
 
     /**
      * jQuery object for the check all button.
      * @type {jQuery}
      */
-    $checkAllButton: $('.check-all.button'),
+    $checkAllButton: null,
 
     /**
      * jQuery object for the username input field.
@@ -82,6 +82,12 @@ const manager = {
      * @type {Object}
      */
     managerData: null,
+
+    /**
+     * Password widget instance.
+     * @type {Object}
+     */
+    passwordWidget: null,
 
     /**
      * Validation rules for the form fields before submission.
@@ -119,6 +125,9 @@ const manager = {
     initialize() {
         // Initialize jQuery selectors that need DOM to be ready
         manager.$secret = $('#secret');
+        manager.$unCheckButton = $('.uncheck.button');
+        manager.$checkAllButton = $('.check-all.button');
+        manager.$allCheckBoxes = $('#save-ami-form .checkbox');
         
         // Get manager ID from URL or form
         const urlParts = window.location.pathname.split('/');
@@ -273,19 +282,23 @@ const manager = {
             $('#networkfilterid').dropdown('set selected', data.networkfilterid);
         }
 
-        // Clear all checkboxes first
-        manager.$allCheckBoxes.checkbox('uncheck');
-        
-        // Set permission checkboxes using boolean fields
+        // Set permission checkboxes using Semantic UI API
         if (data.permissions && typeof data.permissions === 'object') {
+            // First uncheck all checkboxes
+            manager.$allCheckBoxes.checkbox('uncheck');
+            
+            // Then set checked state for permissions that are true
             Object.keys(data.permissions).forEach(permKey => {
                 if (data.permissions[permKey] === true) {
-                    const checkbox = manager.$formObj.find(`input[name="${permKey}"]`);
-                    if (checkbox.length) {
-                        checkbox.parent('.checkbox').checkbox('check');
+                    const $checkboxDiv = manager.$formObj.find(`input[name="${permKey}"]`).parent('.checkbox');
+                    if ($checkboxDiv.length) {
+                        $checkboxDiv.checkbox('set checked');
                     }
                 }
             });
+        } else {
+            // If no permissions data, uncheck all
+            manager.$allCheckBoxes.checkbox('uncheck');
         }
 
         // Network filters dropdown is now handled by PHP form
@@ -308,35 +321,62 @@ const manager = {
     initializeFormElements() {
         // Initialize dropdowns
         manager.$dropDowns.dropdown();
+        
+        // Initialize checkboxes first
+        manager.$allCheckBoxes.checkbox();
 
-        // Generate new password if field is empty and creating new manager
-        if (!manager.managerId && manager.$secret.val() === '') {
-            manager.generateNewPassword();
+        // Initialize password widget with all features
+        if (manager.$secret.length > 0) {
+            const widget = PasswordWidget.init(manager.$secret, {
+                validation: PasswordWidget.VALIDATION.SOFT,
+                generateButton: true,  // Widget will add generate button
+                showStrengthBar: true,
+                showWarnings: true,
+                validateOnInput: true,
+                checkOnLoad: true,  // Validate password when card is opened
+                minScore: 60,
+                generateLength: 32, // AMI passwords should be 32 chars for better security
+                onGenerate: (password) => {
+                    // Trigger form change to enable save button
+                    Form.dataChanged();
+                }
+            });
+            
+            // Store widget instance for later use
+            manager.passwordWidget = widget;
+            
+            // Generate new password if field is empty and creating new manager
+            if (!manager.managerId && manager.$secret.val() === '') {
+                // Trigger password generation through the widget
+                setTimeout(() => {
+                    const $generateBtn = manager.$secret.closest('.ui.input').find('button.generate-password');
+                    if ($generateBtn.length > 0) {
+                        $generateBtn.trigger('click');
+                    }
+                }, 100); // Small delay to ensure widget is fully initialized
+            }
         }
+        
+        // Initialize clipboard for copy button that will be created by widget
+        setTimeout(() => {
+            const clipboard = new ClipboardJS('.clipboard');
+            $('.clipboard').popup({
+                on: 'manual',
+            });
 
-        // Initialize clipboard for password copy
-        const clipboard = new ClipboardJS('.clipboard');
-        $('.clipboard').popup({
-            on: 'manual',
-        });
+            clipboard.on('success', (e) => {
+                $(e.trigger).popup('show');
+                setTimeout(() => {
+                    $(e.trigger).popup('hide');
+                }, 1500);
+                e.clearSelection();
+            });
 
-        clipboard.on('success', (e) => {
-            $(e.trigger).popup('show');
-            setTimeout(() => {
-                $(e.trigger).popup('hide');
-            }, 1500);
-            e.clearSelection();
-        });
-
-        clipboard.on('error', (e) => {
-            console.error('Action:', e.action);
-            console.error('Trigger:', e.trigger);
-        });
-
-        // Prevent browser password manager for generated passwords
-        manager.$secret.on('focus', function() {
-            $(this).attr('autocomplete', 'new-password');
-        });
+            clipboard.on('error', (e) => {
+                console.error('Action:', e.action);
+                console.error('Trigger:', e.trigger);
+            });
+        }, 200); // Delay to ensure widget buttons are created
 
         // Initialize popups
         $('.popuped').popup();
@@ -369,26 +409,6 @@ const manager = {
             manager.checkAvailability(manager.originalName, newValue, 'username', manager.managerId);
         });
 
-        // Handle generate new password button
-        $('#generate-new-password').on('click', (e) => {
-            e.preventDefault();
-            manager.generateNewPassword();
-        });
-
-        // Show/hide password toggle
-        $('#show-hide-password').on('click', (e) => {
-            e.preventDefault();
-            const $button = $(e.currentTarget);
-            const $icon = $button.find('i');
-            
-            if (manager.$secret.attr('type') === 'password') {
-                manager.$secret.attr('type', 'text');
-                $icon.removeClass('eye').addClass('eye slash');
-            } else {
-                manager.$secret.attr('type', 'password');
-                $icon.removeClass('eye slash').addClass('eye');
-            }
-        });
     },
 
     /**
@@ -425,19 +445,6 @@ const manager = {
         });
     },
 
-    /**
-     * Generate a new AMI password.
-     */
-    generateNewPassword() {
-        // Request 16 chars for AMI password
-        PbxApi.PasswordGenerate(16, (password) => {
-            manager.$formObj.form('set value', 'secret', password);
-            // Update clipboard button attribute
-            $('.clipboard').attr('data-clipboard-text', password);
-            // Trigger form change to enable save button
-            Form.dataChanged();
-        });
-    },
 
     /**
      * Callback function before sending the form.

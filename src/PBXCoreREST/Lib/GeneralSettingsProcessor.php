@@ -23,8 +23,7 @@ namespace MikoPBX\PBXCoreREST\Lib;
 
 use MikoPBX\PBXCoreREST\Lib\GeneralSettings\{
     GetSettingsAction,
-    SaveSettingsAction,
-    UpdateCodecsAction
+    SaveSettingsAction
 };
 use Phalcon\Di\Injectable;
 
@@ -73,8 +72,7 @@ class GeneralSettingsProcessor extends Injectable
         
         $res = match ($action) {
             GeneralSettingsAction::GET_SETTINGS => GetSettingsAction::main($data),
-            GeneralSettingsAction::SAVE_SETTINGS => SaveSettingsAction::main($data),
-            GeneralSettingsAction::UPDATE_CODECS => UpdateCodecsAction::main($data),
+            GeneralSettingsAction::SAVE_SETTINGS => SaveSettingsAction::main($data)
         };
 
         $res->function = $actionString;

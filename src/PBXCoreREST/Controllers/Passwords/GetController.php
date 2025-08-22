@@ -23,26 +23,76 @@ use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use MikoPBX\PBXCoreREST\Lib\PasswordsManagementProcessor;
 
 /**
- * Password generation controller
+ * Password GET controller
  * 
- * @RoutePrefix("/pbxcore/api/passwords")
+ * @RoutePrefix("/pbxcore/api/v2/passwords")
+ * 
+ * Handles GET requests for password operations:
+ * - /pbxcore/api/v2/passwords/generate - Generate secure password
  * 
  * @examples
- * curl http://127.0.0.1/pbxcore/api/passwords/generate
- * curl http://127.0.0.1/pbxcore/api/passwords/generate?length=32
+ * 
+ * # Generate default password (16 characters)
+ * curl http://127.0.0.1/pbxcore/api/v2/passwords/generate
+ * 
+ * # Generate password with specific length
+ * curl http://127.0.0.1/pbxcore/api/v2/passwords/generate?length=32
+ * 
+ * # Generate password without special characters
+ * curl http://127.0.0.1/pbxcore/api/v2/passwords/generate?includeSpecial=false
+ * 
+ * # Generate password with custom parameters
+ * curl "http://127.0.0.1/pbxcore/api/v2/passwords/generate?length=20&includeNumbers=true&includeSpecial=true"
+ * 
+ * @response examples
+ * 
+ * # Generate response
+ * {
+ *   "result": true,
+ *   "data": {
+ *     "password": "Kj8#mN2$pL9@vR4x",
+ *     "length": 16,
+ *     "score": 92,
+ *     "strength": "strong"
+ *   }
+ * }
+ * 
+ * # Generate with custom length response
+ * {
+ *   "result": true,
+ *   "data": {
+ *     "password": "Wx3#nK9@mP2$vL8&tR5^qY7*zB4!jH6",
+ *     "length": 32,
+ *     "score": 100,
+ *     "strength": "very_strong"
+ *   }
+ * }
+ * 
+ * @query parameters
+ * - length (int): Password length (8-128, default: 16)
+ * - includeNumbers (bool): Include numbers (default: true)
+ * - includeSpecial (bool): Include special characters (default: true)
+ * - includeLowercase (bool): Include lowercase letters (default: true)
+ * - includeUppercase (bool): Include uppercase letters (default: true)
  */
 class GetController extends BaseController
 {
     /**
-     * Generate password
+     * Process GET requests to passwords API
+     * 
+     * Currently supports password generation endpoint.
      * 
      * @Get("/generate")
      * 
+     * @param string $actionName Action to execute (currently only 'generate')
      * @return void
      */
     public function callAction(string $actionName): void
     {
-        $getData = self::sanitizeData($this->request->getQuery(), $this->filter);
+        // Use unified method to get request data
+        $requestData = $this->request->getData();
+
+        $getData = self::sanitizeData($requestData, $this->filter);
         
         $this->sendRequestToBackendWorker(
             PasswordsManagementProcessor::class,

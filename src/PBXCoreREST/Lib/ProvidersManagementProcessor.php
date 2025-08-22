@@ -94,6 +94,11 @@ class ProvidersManagementProcessor extends Injectable
             return $res;
         }
         
+        // For SAVE_RECORD action, pass httpMethod from request level to data
+        if ($action === ProviderAction::SAVE_RECORD && isset($request['httpMethod'])) {
+            $data['httpMethod'] = $request['httpMethod'];
+        }
+        
         $res = match ($action) {
             ProviderAction::GET_LIST => GetListAction::main(
                 !empty($data['includeDisabled']) && $data['includeDisabled'] === 'true'

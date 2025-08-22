@@ -17,68 +17,91 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
+declare(strict_types=1);
+
 namespace MikoPBX\PBXCoreREST\Lib;
 
+use MikoPBX\PBXCoreREST\Lib\Passwords\{
+    ValidatePasswordAction,
+    GeneratePasswordAction,
+    CheckDictionaryAction,
+    BatchValidateAction,
+    BatchCheckDictionaryAction
+};
+use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Di\Injectable;
-use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Encryption\Security\Random;
-use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use Phalcon\Di\Di;
 
 /**
- * Password generation processor using Phalcon Random
+ * Available actions for password management
+ */
+enum PasswordAction: string
+{
+    case VALIDATE = 'validate';
+    case GENERATE = 'generate';
+    case CHECK_DICTIONARY = 'checkDictionary';
+    case BATCH_VALIDATE = 'batchValidate';
+    case BATCH_CHECK_DICTIONARY = 'batchCheckDictionary';
+}
+
+/**
+ * Passwords REST API processor
+ *
+ * Provides REST API endpoints for password validation and generation.
+ * Uses the unified PasswordValidator service through dedicated action classes.
+ * 
+ * Available actions:
+ * - validate: Validate password strength with detailed feedback
+ * - generate: Generate cryptographically secure passwords
+ * - checkDictionary: Quick check against common passwords dictionary
+ * - batchValidate: Validate multiple passwords with different contexts
+ * - batchCheckDictionary: Batch check multiple passwords against dictionary
  * 
  * @package MikoPBX\PBXCoreREST\Lib
  */
 class PasswordsManagementProcessor extends Injectable
 {
-    // Default length for base64Safe
-    private const DEFAULT_LENGTH = 16;
-    
-    // Constraints
-    private const MIN_LENGTH = 8;
-    private const MAX_LENGTH = 64;
-
     /**
-     * Generate password using Phalcon Random
-     * 
-     * @param array $request Request data
-     * @return PBXApiResult
+     * Process password-related requests
+     *
+     * Routes requests to appropriate action handlers based on the action parameter.
+     * All actions are implemented as separate classes for better maintainability.
+     *
+     * @param array $request Request data with 'action' and 'data' fields
+     * @return PBXApiResult API response object with success status and data
      */
     public static function callBack(array $request): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        $res->function = $request['action'];
+
+        $actionString = $request['action'];
+        $data = $request['data'];
+
+        // Try to match action with enum
+        $action = PasswordAction::tryFrom($actionString);
         
-        if ($request['action'] !== 'generate') {
-            $res->messages['error'][] = "Unknown action - {$request['action']}";
+        if ($action === null) {
+            $di = Di::getDefault();
+            $translation = $di->get(TranslationProvider::SERVICE_NAME);
+            $res->messages['error'][] = $translation->_('api_UnknownAction') . ": {$actionString}";
+            $res->function = $actionString;
             return $res;
         }
-        
-        // Get and validate length
-        $length = self::DEFAULT_LENGTH;
-        if (isset($request['data']['length'])) {
-            $requestedLength = filter_var($request['data']['length'], FILTER_VALIDATE_INT);
-            if ($requestedLength !== false) {
-                $length = max(self::MIN_LENGTH, min(self::MAX_LENGTH, $requestedLength));
-            }
-        }
-        
-        // Generate password using Phalcon Random
+
         try {
-            $random = new Random();
-            $password = $random->base64Safe($length);
-            
-            $res->data = [
-                'password' => $password,
-                'length' => strlen($password) // Actual length will be ~1.37x requested
-            ];
-            $res->success = true;
+            $res = match ($action) {
+                PasswordAction::VALIDATE => ValidatePasswordAction::main($data),
+                PasswordAction::GENERATE => GeneratePasswordAction::main($data),
+                PasswordAction::CHECK_DICTIONARY => CheckDictionaryAction::main($data),
+                PasswordAction::BATCH_VALIDATE => BatchValidateAction::main($data),
+                PasswordAction::BATCH_CHECK_DICTIONARY => BatchCheckDictionaryAction::main($data),
+            };
         } catch (\Throwable $e) {
-            CriticalErrorsHandler::handleExceptionWithSyslog($e);
-            $res->messages['error'][] = "Password generation failed";
+            $res->messages['error'][] = $e->getMessage();
         }
-        
+
+        $res->function = $actionString;
         return $res;
     }
 }

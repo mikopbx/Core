@@ -154,7 +154,7 @@ class PasswordValidator
         if (in_array($context, [self::CONTEXT_SIP, self::CONTEXT_AMI, self::CONTEXT_PROVIDER])) {
             if ($result['score'] < self::SCORE_FAIR) {
                 $result['isValid'] = false;
-                $result['messages'][] = 'Security passwords require at least fair strength';
+                $result['messages'][] = self::translate('psw_PasswordSecurityRequiresFair');
             }
         }
         
@@ -175,7 +175,7 @@ class PasswordValidator
     }
     
     /**
-     * Check if password is in dictionary (wrapper for Util::isSimplePassword)
+     * Check if password is in dictionary
      * 
      * @param string $password Password to check
      * @return bool True if password is in dictionary
@@ -192,13 +192,29 @@ class PasswordValidator
             self::$dictionaryCache = [];
         }
         
-        // Check using existing Util method
-        $result = Util::isSimplePassword($password);
+        // Check using the dictionary file
+        $result = self::isSimplePassword($password);
         
         // Cache the result
         self::$dictionaryCache[$password] = $result;
         
         return $result;
+    }
+    
+    /**
+     * Check if password exists in the common passwords dictionary
+     * 
+     * This method checks against the rockyou wordlist for common/compromised passwords.
+     * For performance, results are cached in memory.
+     * 
+     * @param string $value Password to check
+     * @return bool True if password is found in dictionary
+     */
+    public static function isSimplePassword(string $value): bool
+    {
+        $passwords = [];
+        \MikoPBX\Core\System\Processes::mwExec('/bin/zcat /usr/share/wordlists/rockyou.txt.gz', $passwords);
+        return in_array($value, $passwords, true);
     }
     
     /**
@@ -350,11 +366,11 @@ class PasswordValidator
     public static function getStrengthLabel(int $score): string
     {
         return match(true) {
-            $score < self::SCORE_VERY_WEAK => self::translate('gs_PasswordStrengthWeak'),
-            $score < self::SCORE_WEAK => self::translate('gs_PasswordStrengthWeak'),
-            $score < self::SCORE_FAIR => self::translate('gs_PasswordStrengthFair'),
-            $score < self::SCORE_GOOD => self::translate('gs_PasswordStrengthGood'),
-            default => self::translate('gs_PasswordStrengthStrong')
+            $score < self::SCORE_VERY_WEAK => self::translate('psw_PasswordStrengthWeak'),
+            $score < self::SCORE_WEAK => self::translate('psw_PasswordStrengthWeak'),
+            $score < self::SCORE_FAIR => self::translate('psw_PasswordStrengthFair'),
+            $score < self::SCORE_GOOD => self::translate('psw_PasswordStrengthGood'),
+            default => self::translate('psw_PasswordStrengthStrong')
         };
     }
     
@@ -370,36 +386,36 @@ class PasswordValidator
         $length = strlen($password);
         
         if ($length < 12) {
-            $suggestions[] = self::translate('gs_PasswordTooShort', ['min' => 12]);
+            $suggestions[] = self::translate('psw_PasswordTooShort', ['min' => 12]);
         }
         
         if (!preg_match('/[a-z]/', $password)) {
-            $suggestions[] = self::translate('gs_PasswordNoLowSimvol');
+            $suggestions[] = self::translate('psw_PasswordNoLowSimvol');
         }
         
         if (!preg_match('/[A-Z]/', $password)) {
-            $suggestions[] = self::translate('gs_PasswordNoUpperSimvol');
+            $suggestions[] = self::translate('psw_PasswordNoUpperSimvol');
         }
         
         if (!preg_match('/\d/', $password)) {
-            $suggestions[] = self::translate('gs_PasswordNoNumbers');
+            $suggestions[] = self::translate('psw_PasswordNoNumbers');
         }
         
         if (!preg_match('/[^a-zA-Z0-9]/', $password)) {
-            $suggestions[] = self::translate('gs_PasswordNoSpecialChars');
+            $suggestions[] = self::translate('psw_PasswordNoSpecialChars');
         }
         
         if (preg_match('/(.)\1{2,}/', $password)) {
-            $suggestions[] = self::translate('gs_PasswordAvoidCommon');
+            $suggestions[] = self::translate('psw_PasswordAvoidCommon');
         }
         
         if (preg_match('/(123|abc|qwe|asd|zxc)/i', $password)) {
-            $suggestions[] = self::translate('gs_PasswordAvoidCommon');
+            $suggestions[] = self::translate('psw_PasswordAvoidCommon');
         }
         
         // Check if it looks like a date
         if (preg_match('/\d{4}|\d{2}[\/\-\.]\d{2}/', $password)) {
-            $suggestions[] = self::translate('gs_PasswordAvoidCommon');
+            $suggestions[] = self::translate('psw_PasswordAvoidCommon');
         }
         
         return array_unique($suggestions);
@@ -496,6 +512,41 @@ class PasswordValidator
     }
     
     /**
+     * Batch check multiple passwords against dictionary
+     * 
+     * Optimized batch operation for checking multiple passwords against
+     * the common passwords dictionary. More efficient than individual checks.
+     * 
+     * @param array<int|string, string> $passwords Array of passwords to check
+     * @return array<int|string, bool> Array of password index/key => isInDictionary result
+     */
+    public static function checkDictionaryBatch(array $passwords): array
+    {
+        $results = [];
+        
+        // Load dictionary once for all checks
+        $dictionaryPath = Util::which('pwqcheck');
+        $haveDictionary = !empty($dictionaryPath);
+        
+        foreach ($passwords as $key => $password) {
+            if (empty($password)) {
+                $results[$key] = false;
+                continue;
+            }
+            
+            // Check against dictionary if available
+            if ($haveDictionary) {
+                $results[$key] = self::isInDictionary($password);
+            } else {
+                // If no dictionary, consider as not in dictionary
+                $results[$key] = false;
+            }
+        }
+        
+        return $results;
+    }
+    
+    /**
      * Translate message key with optional parameters
      * 
      * @param string $key Translation key
@@ -514,8 +565,30 @@ class PasswordValidator
             // If DI or translation service not available, continue with fallback
         }
         
-        // Fallback to English messages
+        // Fallback to English messages (with both old and new keys for compatibility)
         $fallbackMessages = [
+            // New psw_ keys
+            'psw_ValidateEmptyPassword' => 'Password cannot be empty',
+            'psw_PasswordTooShort' => 'Password must be at least %min% characters',
+            'psw_PasswordIsDefault' => 'Using default password is not allowed',
+            'psw_DefaultPasswordWarning' => 'Do not use default login and password',
+            'psw_PasswordInDictionary' => 'Password found in common passwords dictionary',
+            'psw_PasswordTooCommon' => 'This password is too common',
+            'psw_PasswordNoNumbers' => 'Password must contain numbers',
+            'psw_PasswordNoLowSimvol' => 'Password must contain lowercase letters',
+            'psw_PasswordNoUpperSimvol' => 'Password must contain uppercase letters',
+            'psw_PasswordNoSpecialChars' => 'Add special characters (!@#$%)',
+            'psw_PasswordMixCharTypes' => 'Mix different character types',
+            'psw_PasswordAvoidCommon' => 'Avoid common patterns and words',
+            'psw_PasswordUsePassphrase' => 'Consider using a passphrase',
+            'psw_PasswordSecurityRequiresFair' => 'Security passwords require at least fair strength',
+            'psw_PasswordStrengthWeak' => 'Weak',
+            'psw_PasswordStrengthFair' => 'Fair',
+            'psw_PasswordStrengthGood' => 'Good',
+            'psw_PasswordStrengthStrong' => 'Strong',
+            'psw_PasswordStrengthVeryStrong' => 'Very Strong',
+            
+            // Old gs_ keys for backward compatibility
             'gs_ValidateEmptyWebPassword' => 'Password cannot be empty',
             'gs_PasswordTooShort' => 'Password must be at least %min% characters',
             'gs_PasswordIsDefault' => 'Using default password is not allowed',

@@ -550,13 +550,13 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/Providers/provider-status-monitor.js', true)
                 ->addJs('js/pbx/Providers/providers-index.js', true);
         } elseif ($action === 'modifysip') {
-                 $this->semanticCollectionCSS
-                    ->addCss('css/vendor/semantic/progress.min.css', true)
-                    ->addCss('css/vendor/semantic/statistic.min.css', true);
-                 $this->footerCollectionJS
+            // Add password widget assets
+            $this->addPasswordWidgetAssets();
+            
+            $this->semanticCollectionCSS
+                ->addCss('css/vendor/semantic/statistic.min.css', true);
+            $this->footerCollectionJS
                  ->addJs('js/pbx/main/form.js', true)
-                 ->addJs('js/vendor/semantic/progress.min.js', true)
-                 ->addJs('js/pbx/main/password-score.js', true)
                  ->addJs('js/pbx/main/TooltipBuilder.js', true)
                  ->addJs('js/vendor/clipboard/clipboard.js', true)
                  ->addJs('js/pbx/PbxAPI/networkFiltersAPI.js', true)
@@ -566,13 +566,13 @@ class AssetProvider implements ServiceProviderInterface
                  ->addJs('js/pbx/Providers/provider-sip-modify.js', true)
                  ->addJs('js/pbx/Providers/provider-modify-status-worker.js', true);
         } elseif ($action === 'modifyiax') {
+            // Add password widget assets
+            $this->addPasswordWidgetAssets();
+            
             $this->semanticCollectionCSS
-                ->addCss('css/vendor/semantic/progress.min.css', true)
                 ->addCss('css/vendor/semantic/statistic.min.css', true);
             $this->footerCollectionJS
                 ->addJs('js/pbx/main/form.js', true)
-                ->addJs('js/vendor/semantic/progress.min.js', true)
-                ->addJs('js/pbx/main/password-score.js', true)
                 ->addJs('js/pbx/main/TooltipBuilder.js', true)
                 ->addJs('js/vendor/clipboard/clipboard.js', true)
                 ->addJs('js/pbx/PbxAPI/networkFiltersAPI.js', true)
@@ -790,6 +790,9 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/vendor/semantic/progress.min.js', true)
                 ->addJs('js/vendor/semantic/modal.min.js', true);
 
+            // Add password widget assets
+            $this->addPasswordWidgetAssets();
+
             $this->footerCollectionJS
                 ->addJs('js/vendor/jquery.address.min.js', true)
                 ->addJs('js/vendor/jquery.tablednd.js', true)
@@ -799,10 +802,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/SoundFiles/one-button-sound-player.js', true)
                 ->addJs('js/pbx/GeneralSettings/ssh-keys-table.js', true)
                 ->addJs('js/pbx/main/form.js', true)
-                ->addJs('js/pbx/main/password-score.js', true)
                 ->addJs('js/pbx/PbxAPI/GeneralSettingsAPI.js', true)
-                ->addJs('js/pbx/PbxAPI/PasswordValidationAPI.js', true)
-                ->addJs('js/pbx/GeneralSettings/password-validator.js', true)
                 ->addJs('js/pbx/GeneralSettings/general-settings-tooltip-manager.js', true)
                 ->addJs(
                     'js/pbx/GeneralSettings/general-settings-modify.js',
@@ -907,6 +907,9 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/Extensions/extensions-index-status-worker.js', true)
                 ->addJs('js/pbx/main/debugger-info.js', true);
         } elseif ($action === 'modify') {
+            // Add password widget assets
+            $this->addPasswordWidgetAssets();
+            
             $this->semanticCollectionCSS->addCss('css/vendor/semantic/card.min.css', true);
             $this->footerCollectionJS
                 ->addJs('js/vendor/inputmask/jquery.inputmask.min.js', true)
@@ -917,7 +920,6 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/Extensions/input-mask-patterns.js', true)
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/pbx/main/debugger-info.js', true)
-                ->addJs('js/vendor/clipboard/clipboard.js', true)
                 ->addJs('js/pbx/Extensions/extension-modify-avatar.js', true)
                 ->addJs('js/pbx/Extensions/extension-modify-status-worker.js', true)
                 ->addJs('js/pbx/Extensions/extension-modify.js', true);
@@ -1030,13 +1032,40 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/PbxAPI/asteriskManagersAPI.js', true)
                 ->addJs('js/pbx/AsteriskManagers/managers-index.js', true);
         } elseif ($action === 'modify') {
+            // Add password widget assets
+            $this->addPasswordWidgetAssets();
+            
             $this->footerCollectionJS
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/vendor/clipboard/clipboard.js', true)
                 ->addJs('js/pbx/PbxAPI/asteriskManagersAPI.js', true)
                 ->addJs('js/pbx/AsteriskManagers/manager-modify.js', true);
 
-            $this->semanticCollectionCSS->addCss('css/AsteriskManagers/manager-modify.css', true);
+            $this->semanticCollectionCSS
+                ->addCss('css/AsteriskManagers/manager-modify.css', true);
         }
+    }
+    
+    /**
+     * Add all password widget related assets (CSS and JS)
+     * This includes all dependencies required for the password widget to function properly
+     * 
+     * @return void
+     */
+    private function addPasswordWidgetAssets(): void
+    {
+        // Add CSS for progress bar (used for password strength indicator)
+        $this->semanticCollectionCSS
+            ->addCss('css/vendor/semantic/list.min.css', true)
+            ->addCss('css/vendor/semantic/progress.min.css', true);
+        
+        // Add JavaScript dependencies in the correct order
+        $this->semanticCollectionJS
+            ->addJs('js/vendor/semantic/progress.min.js', true);
+        
+        $this->footerCollectionJS
+            ->addJs('js/vendor/clipboard/clipboard.js', true)
+            ->addJs('js/pbx/PbxAPI/PasswordValidationAPI.js', true)
+            ->addJs('js/pbx/FormElements/password-widget.js', true);
     }
 }

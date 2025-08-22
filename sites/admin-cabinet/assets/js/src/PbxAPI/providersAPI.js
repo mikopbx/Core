@@ -120,8 +120,18 @@ const ProvidersAPI = {
         // Server accepts boolean values directly, no conversion needed
         const processedData = {...data};
         
-        const method = processedData.id ? 'PUT' : 'POST';
-        const url = processedData.id ? 
+        // Use _method flag from Form.js if provided, otherwise fallback to ID-based detection
+        let method = 'POST';
+        if (processedData._method) {
+            method = processedData._method;
+            delete processedData._method; // Remove from data before sending
+        } else if (processedData.id) {
+            method = 'PUT';
+        }
+        
+        // For POST (create), don't include ID in URL even if ID exists (pre-generated)
+        // For PUT (update), include ID in URL
+        const url = method === 'PUT' && processedData.id ? 
             this.endpoints.saveRecord + '/' + processedData.id : 
             this.endpoints.saveRecord;
         

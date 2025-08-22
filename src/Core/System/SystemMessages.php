@@ -391,7 +391,10 @@ class SystemMessages extends Injectable
         $info .= PHP_EOL . $borderLine;
 
         $addresses = self::getNetworkAddresses();
-        $port = PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PORT);
+        $httpsPort = PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PORT);
+        $httpPort = PbxSettings::getValueByKey(PbxSettings::WEB_PORT);
+        $redirectToHttps = PbxSettings::getValueByKey(PbxSettings::REDIRECT_TO_HTTPS);
+        
         $info .= PHP_EOL . self::formatLine("Web Interface Access", $lineWidth, 'center');
         $info .= PHP_EOL . $emptyLine;
 
@@ -399,8 +402,20 @@ class SystemMessages extends Injectable
             if (!empty($addresses[$type])) {
                 $info .= PHP_EOL . self::formatLine($label, $lineWidth);
                 foreach ($addresses[$type] as $address) {
-                    $formattedAddress = $port === '443' ? "https://$address" : "https://$address:$port";
-                    $info .= PHP_EOL . self::formatLine($formattedAddress, $lineWidth);
+                    if ($redirectToHttps === '1') {
+                        // If REDIRECT_TO_HTTPS is enabled, show only HTTPS URL
+                        $formattedAddress = $httpsPort === '443' ? "https://$address" : "https://$address:$httpsPort";
+                        $info .= PHP_EOL . self::formatLine($formattedAddress, $lineWidth);
+                    } else {
+                        // If REDIRECT_TO_HTTPS is disabled, show both HTTPS and HTTP URLs
+                        $httpsAddress = $httpsPort === '443' ? "https://$address" : "https://$address:$httpsPort";
+                        $info .= PHP_EOL . self::formatLine($httpsAddress, $lineWidth);
+                        
+                        if (!empty($httpPort)) {
+                            $httpAddress = $httpPort === '80' ? "http://$address" : "http://$address:$httpPort";
+                            $info .= PHP_EOL . self::formatLine($httpAddress, $lineWidth);
+                        }
+                    }
                 }
                 $info .= PHP_EOL . $emptyLine;
             }

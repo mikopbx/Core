@@ -222,9 +222,11 @@ const providers = {
         // Initialize enable/disable checkboxes
         this.initializeCheckboxes();
         
-        // Override delete handler to check for links
-        $('.provider-row a.delete').off('click').on('click', (e) => {
+        // Override delete handler to check for links ONLY on second click (after two-steps confirmation)
+        // Don't handle clicks on elements with two-steps-delete class - let delete-something.js handle them first
+        $('.provider-row a.delete:not(.two-steps-delete)').off('click').on('click', (e) => {
             e.preventDefault();
+            e.stopPropagation();
             const providerId = $(e.target).closest('a').attr('data-value');
             const linksExist = $(e.target).closest('tr').attr('data-links');
             

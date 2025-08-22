@@ -1,4 +1,4 @@
-{{ form(['action' : 'asterisk-managers/save', 'method': 'post', 'role': 'form', 'class': 'ui large form', 'id':'save-ami-form']) }}
+{{ form(['action' : 'asterisk-managers/save', 'method': 'post', 'role': 'form', 'class': 'ui form', 'id':'save-ami-form']) }}
 {{ form.render('id') }}
 
 <div class="max-width-500 field">
@@ -13,19 +13,8 @@
 </div>
 <div class="max-width-500 field">
     <label>{{ t._('am_Secret') }}</label>
-    <div class="ui action input">
+    <div class="ui input">
         {{ form.render('secret') }}
-        <div class="ui tiny basic icon left attached buttons">
-            <button class="ui button popuped" id="show-hide-password" type="button" tabindex="-1" data-content="{{ t._('bt_ToolTipShowPassword') }}">
-                <i class="eye icon"></i>
-            </button>
-            <button class="ui button popuped" id="generate-new-password" type="button" tabindex="-1" data-content="{{ t._('bt_ToolTipGeneratePassword') }}">
-                <i class="refresh icon"></i>
-            </button>
-            <button class="ui button popuped clipboard" data-clipboard-text="{{ form.getValue('secret') }}" type="button" tabindex="-1" data-content="{{ t._('bt_ToolTipCopyPassword') }}">
-                <i class="copy icon"></i>
-            </button>
-        </div>
     </div>
 </div>
 <div class="field">

@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, Form, PbxApi, ClipboardJS, NetworkFiltersAPI, TooltipBuilder, PasswordScore, i18n, ProvidersAPI */
+/* global globalRootUrl, globalTranslate, Form, PbxApi, ClipboardJS, NetworkFiltersAPI, TooltipBuilder, PasswordScore, i18n, ProvidersAPI, providerPasswordValidator */
 
 /**
  * Base class for provider management forms
@@ -71,6 +71,9 @@ class ProviderBase {
         this.$clipboard = $(ProviderBase.SELECTORS.CLIPBOARD);
         this.$popuped = $(ProviderBase.SELECTORS.POPUPED);
         
+        // Track if this is a new provider (not existing in database)
+        this.isNewProvider = false;
+        
         // Host input validation regex
         this.hostInputValidation = new RegExp(
             '^(((\\d|[1-9]\\d|1\\d{2}|2[0-4]\\d|25[0-5])\\.){3}'
@@ -87,6 +90,10 @@ class ProviderBase {
     initialize() {
         const providerId = $('#id').val() || '';
         const currentDescription = this.$description.val() || '';
+        
+        // Determine if this is a new provider
+        // New providers have empty ID or 'new' as ID in the URL
+        this.isNewProvider = !providerId || providerId === '' || providerId === 'new';
         
         // Update header immediately for better UX
         this.updatePageHeader(currentDescription);
@@ -325,11 +332,18 @@ class ProviderBase {
     }
     
     /**
-     * Initialize password strength indicator
+     * Initialize password strength indicator and validation
      */
     initializePasswordStrengthIndicator() {
-        // Password strength indicator
-        if (this.$secret.length > 0 && typeof PasswordScore !== 'undefined') {
+        // Initialize the enhanced password validator if available
+        if (typeof providerPasswordValidator !== 'undefined') {
+            providerPasswordValidator.initialize(this, {
+                showWarnings: true,
+                checkOnLoad: true,
+                validateOnlyGenerated: false // Validate all passwords for providers
+            });
+        } else if (this.$secret.length > 0 && typeof PasswordScore !== 'undefined') {
+            // Fallback to basic password strength indicator
             // Create progress bar for password strength if it doesn't exist
             let $passwordProgress = $('#password-strength-progress');
             if ($passwordProgress.length === 0) {
@@ -344,12 +358,13 @@ class ProviderBase {
                 showActivity: false
             });
             
-            // Update password strength on input
+            // Update password strength on input with provider context
             this.$secret.on('input', () => {
                 PasswordScore.checkPassStrength({
                     pass: this.$secret.val(),
                     bar: $passwordProgress,
-                    section: $passwordProgress
+                    section: $passwordProgress,
+                    field: 'provider_secret'  // Use provider context for validation
                 });
             });
         }

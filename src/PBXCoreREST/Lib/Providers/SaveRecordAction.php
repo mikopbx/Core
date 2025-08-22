@@ -55,7 +55,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
     public static function main(array $data): PBXApiResult
     {
         $res = self::createApiResult(__METHOD__);
-        
+
         // Check if this is a status-only update (contains only id, type, disabled)
         $isStatusUpdate = isset($data['id']) && isset($data['type']) && isset($data['disabled']) && 
                           count(array_diff_key($data, array_flip(['id', 'type', 'disabled']))) === 0;
@@ -63,6 +63,13 @@ class SaveRecordAction extends AbstractSaveRecordAction
         if ($isStatusUpdate) {
             return self::updateStatusOnly($data, $res);
         }
+        
+        // Determine if this is a CREATE or UPDATE operation based on HTTP method
+        // For saveRecord action:
+        // - POST method = CREATE operation (even with pre-generated ID)
+        // - PUT method = UPDATE operation (must find existing record)
+        $httpMethod = $data['httpMethod'] ?? null;
+        unset($data['httpMethod']); // Remove from data to avoid saving it
         
         // Define sanitization rules based on provider type
         $providerType = strtoupper($data['type'] ?? 'SIP');
@@ -105,16 +112,16 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 return $res;
             }
             
-            // Save in transaction
-            $savedProvider = self::executeInTransaction(function() use ($sanitizedData) {
-                return self::saveProviderInTransaction($sanitizedData);
+            // Save in transaction, passing the HTTP method info
+            $savedProvider = self::executeInTransaction(function() use ($sanitizedData, $httpMethod) {
+                return self::saveProviderInTransaction($sanitizedData, $httpMethod);
             });
             
             $res->data = DataStructure::createFromModel($savedProvider);
             $res->success = true;
             
-            // Only set reload for new records
-            if (empty($data['id'])) {
+            // Set reload URL for new records (POST requests)
+            if ($httpMethod === 'POST') {
                 // Convert type to lowercase for URL (modifysip, modifyiax)
                 $urlType = strtolower($savedProvider->type);
                 $res->reload = "providers/modify{$urlType}/{$savedProvider->uniqid}";
@@ -279,21 +286,28 @@ class SaveRecordAction extends AbstractSaveRecordAction
      * Save provider and configuration in transaction
      * 
      * @param array $data Sanitized data
+     * @param string|null $httpMethod HTTP method used for the request
      * @return Providers Saved provider model
      * @throws \Exception
      */
-    private static function saveProviderInTransaction(array $data): Providers
+    private static function saveProviderInTransaction(array $data, ?string $httpMethod = null): Providers
     {
-        // Find or create provider
-        if (!empty($data['id'])) {
-            // Use uniqid to find provider (id in API contains uniqid value)
+        // Determine if this is a CREATE or UPDATE operation
+        $isCreateOperation = ($httpMethod === 'POST');
+
+        // Find or create provider based on operation type
+        if (!$isCreateOperation && !empty($data['id'])) {
+            // UPDATE operation - provider must exist
             $provider = Providers::findFirstByUniqid($data['id']);
             if (!$provider) {
                 throw new \Exception('Provider not found');
             }
         } else {
+            // CREATE operation - create new provider
             $provider = new Providers();
-            $provider->uniqid = Providers::generateUniqueID($data['type'] . '-TRUNK-');
+            // Use provided ID if available (pre-generated), otherwise generate new one
+            $provider->uniqid = !empty($data['id']) ? $data['id'] : 
+                                Providers::generateUniqueID($data['type'] . '-TRUNK-');
             $provider->type = $data['type'];
         }
         

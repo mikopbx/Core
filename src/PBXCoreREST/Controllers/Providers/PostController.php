@@ -46,7 +46,8 @@ class PostController extends BaseController
      */
     public function callAction(string $actionName): void
     {
-        $postData = $this->request->getPost();
+        // Use unified method to get request data (handles both JSON and form data)
+        $postData = $this->request->getData();
         
         // Sanitize input data
         $sanitizedData = self::sanitizeData($postData, $this->filter);

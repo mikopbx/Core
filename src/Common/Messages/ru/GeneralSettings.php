@@ -113,7 +113,7 @@ return [
     'gs_PasswordStrengthGood' => 'Хороший',
     'gs_PasswordStrengthStrong' => 'Сильный',
     'gs_PasswordStrengthVeryStrong' => 'Очень сильный',
-    'gs_PasswordSecurityRequiresFair' => 'Пароли безопасности требуют минимум удовлетворительной надежности',
+    'gs_PasswordSecurityRequiresFair' => 'Для обеспечения безопасности пароль должен иметь хотя бы среднюю надежность',
     'gs_PasswordAcceptable' => 'Пароль приемлемый',
     'gs_PasswordGenerateFailed' => 'Не удалось сгенерировать пароль',
     'gs_PasswordsArrayRequired' => 'Требуется массив паролей',

@@ -609,7 +609,10 @@ abstract class AbstractProviderStatusAction extends Injectable
     {
         $state = strtoupper($state);
         
-        if (strpos($state, 'REGISTERED') !== false) {
+        // Check for UNREGISTERED first (before REGISTERED)
+        if ($state === 'UNREGISTERED' || strpos($state, 'UNREGISTERED') !== false) {
+            return 'unregistered';
+        } elseif (strpos($state, 'REGISTERED') !== false) {
             return 'registered';
         } elseif (strpos($state, 'UNREACHABLE') !== false) {
             return 'unreachable';
@@ -619,6 +622,9 @@ abstract class AbstractProviderStatusAction extends Injectable
             return 'rejected';
         } elseif ($state === 'OK') {
             return 'OK';
+        } elseif ($state === 'UNKNOWN') {
+            // Explicitly handle UNKNOWN state - provider status is not determined yet
+            return 'UNKNOWN';
         } else {
             return 'unregistered';
         }
@@ -720,6 +726,7 @@ abstract class AbstractProviderStatusAction extends Injectable
             return 'yellow';
         }
         
+        // UNKNOWN and any other undefined states should be grey (neutral)
         return 'grey';
     }
     

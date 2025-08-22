@@ -48,7 +48,8 @@ class PutController extends BaseController
      */
     public function callAction(string $actionName, ?string $typeOrId = null, ?string $id = null): void
     {
-        $putData = $this->request->getPut();
+        // Use unified method to get request data (handles both JSON and form data)
+        $putData = $this->request->getData();
         
         // Handle both formats: /saveRecord/{type}/{id} and /saveRecord/{id}
         if ($id !== null) {

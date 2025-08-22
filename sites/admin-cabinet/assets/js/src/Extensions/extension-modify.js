@@ -17,7 +17,7 @@
  */
 
 /* global globalRootUrl, globalTranslate, Extensions, Form,
- InputMaskPatterns, avatar, extensionStatusLoopWorker, ClipboardJS */
+ InputMaskPatterns, avatar, extensionStatusLoopWorker, ClipboardJS, PasswordWidget */
 
 
 /**
@@ -39,6 +39,12 @@ const extension = {
     $qualify: $('#qualify'),
     $qualify_freq: $('#qualify-freq'),
     $email: $('#user_email'),
+    
+    /**
+     * Password widget instance.
+     * @type {Object}
+     */
+    passwordWidget: null,
 
     /**
      * jQuery object for the form.
@@ -122,15 +128,9 @@ const extension = {
                     prompt: globalTranslate.ex_ValidateSecretWeak,
                 },
                 {
-                    type: 'notRegExp',
-                    value: /[A-z]/,
-                    prompt: globalTranslate.ex_PasswordNoLowSimvol
-                },
-                {
-                    type: 'notRegExp',
-                    value: /\d/,
-                    prompt: globalTranslate.ex_PasswordNoNumbers
-                },
+                    type: 'passwordStrength',
+                    prompt: globalTranslate.ex_ValidatePasswordTooWeak || 'Password is too weak for security requirements'
+                }
             ],
         },
         fwd_ringlength: {
@@ -205,48 +205,44 @@ const extension = {
         // Initialize the dropdown menu for forwarding select
         $(extension.forwardingSelect).dropdown(Extensions.getDropdownSettingsWithEmpty());
 
-        // Generate a new SIP password if the field is empty
-        if (extension.$sip_secret.val() === '') extension.generateNewSipPassword();
-
-        // Attach a click event listener to the "generate new password" button
-        $('#generate-new-password').on('click', (e) => {
-            e.preventDefault();
-            extension.generateNewSipPassword();
-        });
-
-        // Show/hide password toggle
-        $('#show-hide-password').on('click', (e) => {
-            e.preventDefault();
-            const $button = $(e.currentTarget);
-            const $icon = $button.find('i');
+        // Initialize password widget with full functionality for extensions
+        if (extension.$sip_secret.length > 0) {
+            // Hide any legacy buttons if they exist
+            $('.clipboard').hide();
+            $('#show-hide-password').hide();
             
-            if (extension.$sip_secret.attr('type') === 'password') {
-                extension.$sip_secret.attr('type', 'text');
-                $icon.removeClass('eye').addClass('eye slash');
-            } else {
-                extension.$sip_secret.attr('type', 'password');
-                $icon.removeClass('eye slash').addClass('eye');
+            const widget = PasswordWidget.init(extension.$sip_secret, {
+                validation: PasswordWidget.VALIDATION.SOFT,  // Soft validation - show warnings but allow submission
+                generateButton: true,         // Show generate button
+                showPasswordButton: true,     // Show show/hide password toggle
+                clipboardButton: true,        // Show copy to clipboard button
+                showStrengthBar: true,        // Show password strength bar
+                showWarnings: true,           // Show validation warnings
+                validateOnInput: true,        // Validate as user types
+                checkOnLoad: true,            // Validate password when card is opened
+                minScore: 30,                 // SIP passwords have lower minimum score requirement
+                generateLength: 32,           // Generate 32 character passwords for better security
+                onGenerate: (password) => {
+                    // Trigger form change to enable save button
+                    Form.dataChanged();
+                },
+                onValidate: (isValid, score, messages) => {
+                    // Optional: Handle validation results if needed
+                    // The widget will handle visual feedback automatically
+                }
+            });
+            
+            // Store widget instance for later use
+            extension.passwordWidget = widget;
+            
+            // Auto-generate password if field is empty (for new extensions)
+            if (extension.$sip_secret.val() === '') {
+                // Use widget API to generate password
+                setTimeout(() => {
+                    widget.generatePassword(widget);
+                }, 100);
             }
-        });
-
-        // Initialize clipboard for password copy
-        const clipboard = new ClipboardJS('.clipboard');
-        $('.clipboard').popup({
-            on: 'manual',
-        });
-
-        clipboard.on('success', (e) => {
-            $(e.trigger).popup('show');
-            setTimeout(() => {
-                $(e.trigger).popup('hide');
-            }, 1500);
-            e.clearSelection();
-        });
-
-        clipboard.on('error', (e) => {
-            console.error('Action:', e.action);
-            console.error('Trigger:', e.trigger);
-        });
+        }
 
         // Set the "oncomplete" event handler for the extension number input
         let timeoutNumberId;
@@ -355,6 +351,18 @@ const extension = {
         extension.$sip_secret.on('focus', function() {
             $(this).attr('autocomplete', 'new-password');
         });
+        
+        // Add custom validation rule for password strength if not already defined
+        if (typeof $.fn.form.settings.rules.passwordStrength === 'undefined') {
+            $.fn.form.settings.rules.passwordStrength = () => {
+                // Check if password widget exists and password meets minimum score
+                if (extension.passwordWidget) {
+                    const state = PasswordWidget.getState(extension.passwordWidget);
+                    return state && state.score >= 30; // Minimum score for extensions
+                }
+                return true; // Pass validation if widget not initialized
+            };
+        }
 
         // Initialize the extension form
         extension.initializeForm();
@@ -499,17 +507,13 @@ const extension = {
 
     /**
      * Generate a new SIP password.
-     * The generated password will consist of 16 characters using base64-safe alphabet.
+     * Uses the PasswordWidget API to generate a secure password.
      */
     generateNewSipPassword() {
-        // Request 16 chars for unified password length
-        PbxApi.PasswordGenerate(16, (password) => {
-            extension.$formObj.form('set value', 'sip_secret', password);
-            // Update clipboard button attribute
-            $('.clipboard').attr('data-clipboard-text', password);
-            // Trigger form change to enable save button
-            Form.dataChanged();
-        });
+        // Use PasswordWidget API directly
+        if (extension.passwordWidget) {
+            extension.passwordWidget.generatePassword(extension.passwordWidget);
+        }
     },
 
     /**

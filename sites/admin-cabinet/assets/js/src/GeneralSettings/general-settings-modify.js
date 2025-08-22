@@ -17,7 +17,7 @@
  */
 
 
-/* global globalRootUrl,globalTranslate, Form, PasswordScore, PbxApi, UserMessage, SoundFilesSelector, GeneralSettingsAPI, ClipboardJS, passwordValidator, PasswordValidationAPI, GeneralSettingsTooltipManager, $ */
+/* global globalRootUrl,globalTranslate, Form, PasswordScore, PbxApi, UserMessage, SoundFilesSelector, GeneralSettingsAPI, ClipboardJS, PasswordWidget, PasswordValidationAPI, GeneralSettingsTooltipManager, $ */
 
 /**
  * A module to handle modification of general settings.
@@ -262,12 +262,45 @@ const generalSettingsModify = {
      */
     initialize() {
 
-        // Initialize async password validator
-        if (typeof passwordValidator !== 'undefined') {
-            passwordValidator.initialize({
-                debounceDelay: 500,
+        // Initialize password widgets
+        // Web Admin Password widget - only validation and warnings, no buttons
+        if (generalSettingsModify.$webAdminPassword.length > 0) {
+            PasswordWidget.init(generalSettingsModify.$webAdminPassword, {
+                context: 'general_web',
+                generateButton: false,         // No generate button
+                showPasswordButton: false,     // No show/hide button
+                clipboardButton: false,         // No copy button
+                validateOnInput: true,
                 showStrengthBar: true,
-                showWarnings: true
+                showWarnings: true,
+                checkOnLoad: true
+            });
+        }
+        
+        // SSH Password widget - only validation and warnings, no buttons
+        if (generalSettingsModify.$sshPassword.length > 0) {
+            const sshWidget = PasswordWidget.init(generalSettingsModify.$sshPassword, {
+                context: 'general_ssh',
+                generateButton: false,         // No generate button
+                showPasswordButton: false,     // No show/hide button
+                clipboardButton: false,         // No copy button
+                validateOnInput: true,
+                showStrengthBar: true,
+                showWarnings: true,
+                checkOnLoad: true
+            });
+            
+            // Handle SSH disable checkbox
+            $('#SSHDisablePasswordLogins').on('change', () => {
+                const isDisabled = $('#SSHDisablePasswordLogins').checkbox('is checked');
+                if (isDisabled && sshWidget) {
+                    PasswordWidget.hideWarnings(sshWidget);
+                    if (sshWidget.elements.$scoreSection) {
+                        sshWidget.elements.$scoreSection.hide();
+                    }
+                } else if (!isDisabled && sshWidget) {
+                    PasswordWidget.checkPassword(sshWidget);
+                }
             });
         }
         

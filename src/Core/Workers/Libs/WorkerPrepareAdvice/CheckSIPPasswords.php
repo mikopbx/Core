@@ -22,7 +22,7 @@ namespace MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\Users;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Common\Providers\PBXCoreRESTClientProvider;
 use Phalcon\Di\Injectable;
 
 /**
@@ -47,11 +47,34 @@ class CheckSIPPasswords extends Injectable
         ];
 
         $sipRecordsToCheck = SIP::find($parameters);
-        foreach ($sipRecordsToCheck as $sipRecord) {
-            if (Util::isSimplePassword($sipRecord->secret)) {
-                $sipRecord->assign(['weakSecret' => '2']); // Weak password
-            } else {
-                $sipRecord->assign(['weakSecret' => '1']); // OK, it is a strong password
+        
+        if ($sipRecordsToCheck->count() > 0) {
+            // Collect all passwords for batch checking
+            $passwords = [];
+            $recordMap = [];
+            
+            foreach ($sipRecordsToCheck as $index => $sipRecord) {
+                $passwords[$index] = $sipRecord->secret;
+                $recordMap[$index] = $sipRecord;
+            }
+            
+            // Check passwords individually using REST API
+            foreach ($passwords as $index => $password) {
+                $result = $this->di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
+                    '/pbxcore/api/v2/passwords/checkDictionary',
+                    PBXCoreRESTClientProvider::HTTP_METHOD_POST,
+                    ['password' => $password]
+                ]);
+                
+                if ($result && $result->success && isset($result->data['isInDictionary'])) {
+                    $sipRecord = $recordMap[$index];
+                    if ($result->data['isInDictionary']) {
+                        $sipRecord->assign(['weakSecret' => '2']); // Weak password
+                    } else {
+                        $sipRecord->assign(['weakSecret' => '1']); // OK, it is a strong password
+                    }
+                    $sipRecord->save();
+                }
             }
         }
 

@@ -461,6 +461,9 @@ class BaseController extends Controller
         }
 
         $requestMessage['debug'] = $this->request->isDebugRequest();
+        
+        // Add HTTP method to help backend distinguish between CREATE and UPDATE operations
+        $requestMessage['httpMethod'] = $this->request->getMethod();
 
         return array($requestMessage['debug'], $requestMessage);
     }

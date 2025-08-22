@@ -435,20 +435,6 @@ class Util
     }
 
     /**
-     * Checks if a password is simple based on a dictionary.
-     *
-     * @param string $value The password to check.
-     *
-     * @return bool True if the password is found in the dictionary, false otherwise.
-     */
-    public static function isSimplePassword(string $value): bool
-    {
-        $passwords = [];
-        Processes::mwExec('/bin/zcat /usr/share/wordlists/rockyou.txt.gz', $passwords);
-        return in_array($value, $passwords, true);
-    }
-
-    /**
      * Sets the Cyrillic font for the console.
      *
      * @return void

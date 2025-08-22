@@ -1,6 +1,6 @@
 <div class="ui grey top right attached label" id="status"><i
             class="spinner loading icon"></i>{{ t._("pr_UpdateStatus") }}</div>
-{{ form(['action' : 'extensions/save', 'method': 'post', 'role': 'form', 'class': 'ui form large', 'id':'extensions-form']) }}
+{{ form(['action' : 'extensions/save', 'method': 'post', 'role': 'form', 'class': 'ui form', 'id':'extensions-form']) }}
 
 {{ form.render('id') }}
 {{ form.render('type') }}
@@ -64,20 +64,7 @@
 
             <div class="field">
                 <label>{{ t._('ex_Secret') }}</label>
-                <div class="ui action input">
-                    {{ form.render('sip_secret') }}
-                    <div class="ui tiny basic icon left attached buttons">
-                        <button class="ui button popuped" id="show-hide-password" type="button" tabindex="-1" data-content="{{ t._('bt_ToolTipShowPassword') }}">
-                            <i class="eye icon"></i>
-                        </button>
-                        <button class="ui button popuped" id="generate-new-password" type="button" tabindex="-1" data-content="{{ t._('bt_ToolTipGeneratePassword') }}">
-                            <i class="refresh icon"></i>
-                        </button>
-                        <button class="ui button popuped clipboard" data-clipboard-text="{{ form.getValue('sip_secret') }}" type="button" tabindex="-1" data-content="{{ t._('bt_ToolTipCopyPassword') }}">
-                            <i class="copy icon"></i>
-                        </button>
-                    </div>
-                </div>
+                {{ form.render('sip_secret') }}
             </div>
         </div>
         <div class="field">

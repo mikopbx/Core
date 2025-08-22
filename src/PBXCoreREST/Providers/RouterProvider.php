@@ -83,7 +83,6 @@ use MikoPBX\PBXCoreREST\Controllers\
     License\GetController as LicenseGetController,
     License\PostController as LicensePostController,
     UserPageTracker\PostController as UserPageTrackerPostController,
-    Passwords\GetController as PasswordsGetController,
     Providers\GetController as ProvidersGetController,
     Providers\PostController as ProvidersPostController,
     Providers\PutController as ProvidersPutController,
@@ -96,6 +95,7 @@ use MikoPBX\PBXCoreREST\Controllers\
     NetworkFilters\PostController as NetworkFiltersPostController,
     GeneralSettings\GetController as GeneralSettingsGetController,
     GeneralSettings\PostController as GeneralSettingsPostController,
+    Passwords\GetController as PasswordsGetController,
     Passwords\PostController as PasswordsPostController
 };
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
@@ -287,6 +287,7 @@ class RouterProvider implements ServiceProviderInterface
             [GeneralSettingsPostController::class, 'callAction', '/pbxcore/api/v2/general-settings/{actionName}', 'post', '/'],
             
             // Password validation and generation endpoints (v2)
+            [PasswordsGetController::class, 'callAction', '/pbxcore/api/v2/passwords/{actionName}', 'get', '/'],
             [PasswordsPostController::class, 'callAction', '/pbxcore/api/v2/passwords/{actionName}', 'post', '/'],
             
             // Sound Files routes
