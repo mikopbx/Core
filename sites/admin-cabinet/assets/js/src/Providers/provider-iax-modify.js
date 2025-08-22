@@ -28,43 +28,6 @@ class ProviderIAX extends ProviderBase {
     }
     
     /**
-     * Show password strength indicator and trigger initial check
-     */
-    showPasswordStrengthIndicator() {
-        const $passwordProgress = $('#password-strength-progress');
-        if ($passwordProgress.length > 0) {
-            // Initialize progress component if not already done
-            if (!$passwordProgress.hasClass('progress')) {
-                $passwordProgress.progress({
-                    percent: 0,
-                    showActivity: false
-                });
-            }
-            
-            $passwordProgress.show();
-            
-            // Trigger password strength check if password exists
-            if (this.$secret.val() && typeof PasswordScore !== 'undefined') {
-                PasswordScore.checkPassStrength({
-                    pass: this.$secret.val(),
-                    bar: $passwordProgress,
-                    section: $passwordProgress
-                });
-            }
-        }
-    }
-    
-    /**
-     * Hide password strength indicator
-     */
-    hidePasswordStrengthIndicator() {
-        const $passwordProgress = $('#password-strength-progress');
-        if ($passwordProgress.length > 0) {
-            $passwordProgress.hide();
-        }
-    }
-
-    /**
      * Initialize the provider form
      */
     initialize() {
@@ -109,310 +72,274 @@ class ProviderIAX extends ProviderBase {
      * Initialize tab functionality
      */
     initializeTabs() {
+        const self = this;
+        
+        // Disable diagnostics tab for new providers
+        if (this.isNewProvider) {
+            $('#provider-tabs-menu .item[data-tab="diagnostics"]')
+                .addClass('disabled');
+        } else {
+            $('#provider-tabs-menu .item[data-tab="diagnostics"]')
+                .removeClass('disabled');
+        }
+        
         $('#provider-tabs-menu .item').tab({
             onVisible: (tabPath) => {
-                if (tabPath === 'diagnostics' && typeof providerModifyStatusWorker !== 'undefined') {
+                if (tabPath === 'diagnostics' && typeof providerModifyStatusWorker !== 'undefined' && !self.isNewProvider) {
                     // Initialize diagnostics tab when it becomes visible
                     providerModifyStatusWorker.initializeDiagnosticsTab();
                 }
-            }
-        });
-    }
-    
-    /**
-     * Callback before form submission
-     */
-    cbBeforeSendForm(settings) {
-        const result = super.cbBeforeSendForm(settings);
-        
-        // Add provider type
-        result.data.type = this.providerType;
-        
-        // Checkbox values are now automatically processed by Form.js with convertCheckboxesToBool = true
-        
-        return result;
-    }
-    
-    /**
-     * Callback after form submission
-     */
-    cbAfterSendForm(response) {
-        super.cbAfterSendForm(response);
-        
-        if (response.result && response.data) {
-            // Update form with response data if needed
-            if (response.data.id && !$('#id').val()) {
-                $('#id').val(response.data.id);
-            }
-            
-            // The Form.js will handle the reload automatically if response.reload is present
-            // For new records, REST API returns reload path like "providers/modifyiax/IAX-TRUNK-xxx"
-        }
-    }
-
-    /**
-     * Initialize IAX warning message handling
-     */
-    initializeIaxWarningMessage() {
-        const $warningMessage = $('#elReceiveCalls').next('.warning.message');
-        const $checkboxInput = $('#receive_calls_without_auth');
-        
-        // Function to update warning message state
-        const updateWarningState = () => {
-            if ($checkboxInput.prop('checked')) {
-                $warningMessage.removeClass('hidden');
-            } else {
-                $warningMessage.addClass('hidden');
-            }
-        };
-        
-        // Initialize warning state
-        updateWarningState();
-        
-        // Handle checkbox changes
-        $('#receive_calls_without_auth.checkbox').checkbox({
-            onChecked() {
-                $warningMessage.removeClass('hidden').transition('fade in');
             },
-            onUnchecked() {
-                $warningMessage.transition('fade out', () => {
-                    $warningMessage.addClass('hidden');
-                });
+            onLoad: (tabPath, parameterArray, historyEvent) => {
+                // Block loading of diagnostics tab for new providers
+                if (tabPath === 'diagnostics' && self.isNewProvider) {
+                    // Switch back to settings tab
+                    $('#provider-tabs-menu .item[data-tab="settings"]').tab('change tab', 'settings');
+                    return false;
+                }
+            }
+        });
+        
+        // Additional click prevention for disabled tab
+        $('#provider-tabs-menu .item[data-tab="diagnostics"]').off('click.disabled').on('click.disabled', function(e) {
+            if (self.isNewProvider) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                // Ensure we stay on settings tab
+                $('#provider-tabs-menu .item[data-tab="settings"]').tab('change tab', 'settings');
+                return false;
             }
         });
     }
-
-    /**
-     * Initialize real-time validation feedback
-     */
-    initializeRealtimeValidation() {
-        // Enable inline validation for better UX
-        this.$formObj.form('setting', 'inline', true);
-        
-        // Add helper text for IAX-specific fields
-        const $portField = $('#port').closest('.field');
-        if ($portField.find('.ui.pointing.label').length === 0) {
-            $portField.append('<div class="ui pointing label" style="display: none;">Default IAX port is 4569</div>');
-        }
-        
-        // Show port helper on focus
-        $('#port').on('focus', function() {
-            const $label = $(this).closest('.field').find('.ui.pointing.label');
-            if ($(this).val() === '' || $(this).val() === '4569') {
-                $label.show();
-            }
-        }).on('blur', function() {
-            $(this).closest('.field').find('.ui.pointing.label').hide();
-        });
-        
-        // Validate on blur for immediate feedback
-        this.$formObj.find('input[type="text"], input[type="password"]').on('blur', (event) => {
-            const fieldName = $(event.target).attr('name');
-            const validateRules = this.getValidateRules();
-            if (fieldName && validateRules[fieldName]) {
-                this.$formObj.form('validate field', fieldName);
-            }
-        });
-    }
-
+    
     /**
      * Initialize field help tooltips
      */
     initializeFieldTooltips() {
-        // Use the specialized ProviderIaxTooltipManager for IAX provider
         ProviderIaxTooltipManager.initialize();
     }
-
+    
     /**
-     * Get validation rules based on registration type
-     * @returns {object} Validation rules
+     * Initialize IAX warning message
      */
-    getValidateRules() {
-        const regType = $('#registration_type').val();
-        
-        switch (regType) {
-            case 'outbound':
-                return this.getOutboundRules();
-            case 'inbound':
-                return this.getInboundRules();
-            case 'none':
-                return this.getNoneRules();
-            default:
-                return this.getOutboundRules();
+    initializeIaxWarningMessage() {
+        // Show IAX deprecated warning if enabled
+        const showIaxWarning = $('#show-iax-warning').val() === '1';
+        if (showIaxWarning) {
+            const warningHtml = `
+                <div class="ui warning message" id="iax-deprecation-notice">
+                    <i class="close icon"></i>
+                    <div class="header">
+                        ${globalTranslate.iax_DeprecationWarningTitle || 'IAX Protocol Notice'}
+                    </div>
+                    <p>${globalTranslate.iax_DeprecationWarningText || 'IAX protocol is deprecated. Consider using SIP instead.'}</p>
+                </div>
+            `;
+            $('#iax-warning-placeholder').html(warningHtml);
+            
+            // Allow user to close the warning
+            $('#iax-deprecation-notice .close.icon').on('click', function() {
+                $(this).closest('.message').transition('fade');
+            });
         }
     }
-
+    
     /**
-     * Get validation rules for outbound registration
+     * Initialize real-time validation for specific fields
      */
-    getOutboundRules() {
-        return {
-            description: {
-                identifier: 'description',
-                rules: [
-                    {
-                        type: 'empty',
-                        prompt: globalTranslate.pr_ValidationProviderNameIsEmpty,
-                    },
-                ],
-            },
-            host: {
-                identifier: 'host',
-                rules: [
-                    {
-                        type: 'empty',
-                        prompt: globalTranslate.pr_ValidationProviderHostIsEmpty,
-                    },
-                ],
-            },
-            username: {
-                identifier: 'username',
-                rules: [
-                    {
-                        type: 'empty',
-                        prompt: globalTranslate.pr_ValidationProviderLoginIsEmpty,
-                    },
-                ],
-            },
-            secret: {
-                identifier: 'secret',
-                optional: true,
-                rules: [],
-            },
-            port: {
-                identifier: 'port',
-                rules: [
-                    {
-                        type: 'empty',
-                        prompt: globalTranslate.pr_ValidationProviderPortIsEmpty,
-                    },
-                    {
-                        type: 'integer[1..65535]',
-                        prompt: globalTranslate.pr_ValidationProviderPortInvalid,
-                    },
-                ],
-            },
-        };
+    initializeRealtimeValidation() {
+        // Real-time validation for username - restrict special characters
+        $('#username').on('input', function() {
+            const $this = $(this);
+            const value = $this.val();
+            // Allow only alphanumeric, dash and underscore
+            const cleanValue = value.replace(/[^a-zA-Z0-9_-]/g, '');
+            if (value !== cleanValue) {
+                $this.val(cleanValue);
+                // Show warning about invalid characters
+                $this.closest('.field').addClass('error');
+                $this.parent().append('<div class="ui pointing red basic label temporary-warning">' +
+                    (globalTranslate.pr_ValidationProviderLoginInvalidCharacters || 'Only letters, numbers, dash and underscore allowed') +
+                    '</div>');
+                // Remove warning after 3 seconds
+                setTimeout(() => {
+                    $('.temporary-warning').remove();
+                    $this.closest('.field').removeClass('error');
+                }, 3000);
+            }
+        });
     }
-
-    /**
-     * Get validation rules for inbound registration
-     */
-    getInboundRules() {
-        const receiveWithoutAuth = $('#receive_calls_without_auth').checkbox('is checked');
-        
-        const rules = {
-            description: {
-                identifier: 'description',
-                rules: [
-                    {
-                        type: 'empty',
-                        prompt: globalTranslate.pr_ValidationProviderNameIsEmpty,
-                    },
-                ],
-            },
-            username: {
-                identifier: 'username',
-                rules: [
-                    {
-                        type: 'empty',
-                        prompt: globalTranslate.pr_ValidationProviderLoginIsEmpty,
-                    },
-                ],
-            },
-        };
-
-        // Secret is optional if receive_calls_without_auth is checked
-        if (!receiveWithoutAuth) {
-            rules.secret = {
-                identifier: 'secret',
-                rules: [
-                    {
-                        type: 'empty',
-                        prompt: globalTranslate.pr_ValidationProviderPasswordEmpty,
-                    },
-                    {
-                        type: 'minLength[8]',
-                        prompt: globalTranslate.pr_ValidationProviderPasswordTooShort,
-                    },
-                ],
-            };
-        } else {
-            rules.secret = {
-                identifier: 'secret',
-                optional: true,
-                rules: [],
-            };
-        }
-
-        return rules;
-    }
-
-    /**
-     * Get validation rules for none registration
-     */
-    getNoneRules() {
-        return {
-            description: {
-                identifier: 'description',
-                rules: [
-                    {
-                        type: 'empty',
-                        prompt: globalTranslate.pr_ValidationProviderNameIsEmpty,
-                    },
-                ],
-            },
-            host: {
-                identifier: 'host',
-                rules: [
-                    {
-                        type: 'empty',
-                        prompt: globalTranslate.pr_ValidationProviderHostIsEmpty,
-                    },
-                ],
-            },
-            username: {
-                identifier: 'username',
-                rules: [
-                    {
-                        type: 'empty',
-                        prompt: globalTranslate.pr_ValidationProviderLoginIsEmpty,
-                    },
-                ],
-            },
-            secret: {
-                identifier: 'secret',
-                rules: [
-                    {
-                        type: 'empty',
-                        prompt: globalTranslate.pr_ValidationProviderPasswordEmpty,
-                    },
-                ],
-            },
-            port: {
-                identifier: 'port',
-                rules: [
-                    {
-                        type: 'empty',
-                        prompt: globalTranslate.pr_ValidationProviderPortIsEmpty,
-                    },
-                    {
-                        type: 'integer[1..65535]',
-                        prompt: globalTranslate.pr_ValidationProviderPortInvalid,
-                    },
-                ],
-            },
-        };
-    }
-
+    
     /**
      * Initialize registration type change handlers
      */
     initializeRegistrationTypeHandlers() {
-        // Registration type handler is now in base class
-        // This method is kept for compatibility
+        // Already handled by parent class dropdown initialization
+        // This is for IAX-specific behavior if needed
     }
     
+    /**
+     * Get validation rules based on provider settings
+     * @returns {object} Validation rules for the form
+     */
+    getValidateRules() {
+        const regType = $('#registration_type').val();
+        const rules = {};
+        
+        // Common rules for all registration types
+        rules.description = {
+            identifier: 'description',
+            rules: [
+                {
+                    type: 'empty',
+                    prompt: globalTranslate.pr_ValidationProviderNameIsEmpty,
+                },
+            ],
+        };
+        
+        // Rules based on registration type
+        if (regType === 'outbound') {
+            // OUTBOUND: We register to provider
+            rules.host = {
+                identifier: 'host',
+                rules: [
+                    {
+                        type: 'empty',
+                        prompt: globalTranslate.pr_ValidationProviderHostIsEmpty,
+                    },
+                    {
+                        type: 'regExp',
+                        value: '/^[a-zA-Z0-9._-]+$/',
+                        prompt: globalTranslate.pr_ValidationProviderHostInvalidCharacters || 'Host can only contain letters, numbers, dots, hyphens and underscores',
+                    },
+                ],
+            };
+            rules.username = {
+                identifier: 'username',
+                rules: [
+                    {
+                        type: 'empty',
+                        prompt: globalTranslate.pr_ValidationProviderLoginIsEmpty,
+                    },
+                    {
+                        type: 'regExp',
+                        value: '/^[a-zA-Z0-9_-]+$/',
+                        prompt: globalTranslate.pr_ValidationProviderLoginInvalidCharacters,
+                    },
+                ],
+            };
+            rules.secret = {
+                identifier: 'secret',
+                rules: [] // No validation for outbound passwords
+            };
+            rules.port = {
+                identifier: 'port',
+                rules: [
+                    {
+                        type: 'empty',
+                        prompt: globalTranslate.pr_ValidationProviderPortIsEmpty,
+                    },
+                    {
+                        type: 'integer[1..65535]',
+                        prompt: globalTranslate.pr_ValidationProviderPortInvalid,
+                    },
+                ],
+            };
+        } else if (regType === 'inbound') {
+            // INBOUND: Provider connects to us
+            const receiveCallsChecked = $('#receive_calls_without_auth').checkbox('is checked');
+            
+            rules.username = {
+                identifier: 'username',
+                rules: [
+                    {
+                        type: 'empty',
+                        prompt: globalTranslate.pr_ValidationProviderLoginIsEmpty,
+                    },
+                    {
+                        type: 'regExp',
+                        value: '/^[a-zA-Z0-9_-]+$/',
+                        prompt: globalTranslate.pr_ValidationProviderLoginInvalidCharacters,
+                    },
+                ],
+            };
+            
+            // Password validation only if receive_calls_without_auth is NOT checked
+            if (!receiveCallsChecked) {
+                rules.secret = {
+                    identifier: 'secret',
+                    rules: [
+                        {
+                            type: 'empty',
+                            prompt: globalTranslate.pr_ValidationProviderPasswordEmpty,
+                        },
+                        {
+                            type: 'minLength[5]',
+                            prompt: globalTranslate.pr_ValidationProviderPasswordTooShort,
+                        }
+                    ],
+                };
+            }
+            
+            // Host is optional for inbound
+            // Port is not shown for inbound
+        } else if (regType === 'none') {
+            // NONE: Static peer-to-peer connection
+            rules.host = {
+                identifier: 'host',
+                rules: [
+                    {
+                        type: 'empty',
+                        prompt: globalTranslate.pr_ValidationProviderHostIsEmpty,
+                    },
+                    {
+                        type: 'regExp',
+                        value: '/^[a-zA-Z0-9._-]+$/',
+                        prompt: globalTranslate.pr_ValidationProviderHostInvalidCharacters || 'Host can only contain letters, numbers, dots, hyphens and underscores',
+                    },
+                ],
+            };
+            rules.username = {
+                identifier: 'username',
+                rules: [
+                    {
+                        type: 'empty',
+                        prompt: globalTranslate.pr_ValidationProviderLoginIsEmpty,
+                    },
+                    {
+                        type: 'regExp',
+                        value: '/^[a-zA-Z0-9_-]+$/',
+                        prompt: globalTranslate.pr_ValidationProviderLoginInvalidCharacters,
+                    },
+                ],
+            };
+            // Password is optional for none mode
+            rules.secret = {
+                identifier: 'secret',
+                rules: [
+                    {
+                        type: 'empty',
+                        prompt: globalTranslate.pr_ValidationProviderPasswordEmpty,
+                    },
+                ],
+            };
+            rules.port = {
+                identifier: 'port',
+                rules: [
+                    {
+                        type: 'empty',
+                        prompt: globalTranslate.pr_ValidationProviderPortIsEmpty,
+                    },
+                    {
+                        type: 'integer[1..65535]',
+                        prompt: globalTranslate.pr_ValidationProviderPortInvalid,
+                    },
+                ],
+            };
+        }
+        
+        return rules;
+    }
 
     /**
      * Initialize form with REST API configuration
@@ -432,7 +359,7 @@ class ProviderIAX extends ProviderBase {
             httpMethod: this.isNewProvider ? 'POST' : 'PUT'
         };
         
-        // Navigation URLs
+        // Set redirect URLs for save modes
         Form.afterSubmitIndexUrl = `${globalRootUrl}providers/index/`;
         Form.afterSubmitModifyUrl = `${globalRootUrl}providers/modifyiax/`;
         
@@ -441,159 +368,221 @@ class ProviderIAX extends ProviderBase {
         
         Form.initialize();
     }
-
+    
     /**
      * Update the visibility of elements based on the registration type
      */
     updateVisibilityElements() {
-        // Get element references
-        const elHost = $('#elHost');
-        const elUsername = $('#elUsername');
-        const elSecret = $('#elSecret');
-        const elPort = $('#elPort');
-        const elReceiveCalls = $('#elReceiveCalls');
-        const elNetworkFilter = $('#elNetworkFilter');
         const regType = $('#registration_type').val();
-        const genPassword = $('#generate-new-password');
-
-        const valUserName = $('#username');
-        const valSecret = this.$secret;
-        const valPort = $('#port');
         const providerId = $('#id').val();
-        const valQualify = $('#qualify');
-        const copyButton = $('#elSecret .button.clipboard');
-        const showHideButton = $('#show-hide-password');
-
-        // Get label text elements
-        const labelHostText = $('#hostLabelText');
-        const labelPortText = $('#portLabelText');
-        const labelUsernameText = $('#usernameLabelText');
-        const labelSecretText = $('#secretLabelText');
-
-        // Always enable qualify for IAX (NAT keepalive)
-        if (valQualify.length > 0) {
-            valQualify.prop('checked', true);
-            valQualify.val('1');
+        
+        // Cache DOM elements
+        const elements = {
+            host: $('#elHost'),
+            port: $('#elPort'),
+            username: $('#elUsername'),
+            secret: $('#elSecret'),
+            receiveCalls: $('#elReceiveCalls'),
+            networkFilter: $('#elNetworkFilter')
+        };
+        
+        const fields = {
+            username: $('#username'),
+            secret: this.$secret,
+            port: $('#port'),
+            qualify: $('#qualify')
+        };
+        
+        const labels = {
+            host: $('#hostLabelText'),
+            port: $('#portLabelText'),
+            username: $('#usernameLabelText'),
+            secret: $('#secretLabelText')
+        };
+        
+        // Configuration for each registration type
+        const configs = {
+            outbound: {
+                visible: ['host', 'port', 'username', 'secret'],
+                hidden: ['receiveCalls', 'networkFilter'],
+                required: ['host', 'port', 'username', 'secret'],
+                labels: {
+                    host: globalTranslate.pr_ProviderHostOrIPAddress || 'Provider Host/IP',
+                    port: globalTranslate.pr_ProviderPort || 'Provider Port',
+                    username: globalTranslate.pr_ProviderLogin || 'Login',
+                    secret: globalTranslate.pr_ProviderPassword || 'Password'
+                },
+                passwordWidget: {
+                    generateButton: false,
+                    showPasswordButton: false,
+                    clipboardButton: false,
+                    showStrengthBar: false,
+                    validation: PasswordWidget.VALIDATION.NONE
+                },
+                defaultPort: '4569'
+            },
+            inbound: {
+                visible: ['host', 'username', 'secret', 'receiveCalls', 'networkFilter'],
+                hidden: ['port'],
+                required: ['username', 'secret'],
+                optional: ['host', 'port'],
+                labels: {
+                    host: globalTranslate.pr_RemoteHostOrIPAddress || 'Remote Host/IP',
+                    username: globalTranslate.pr_AuthenticationUsername || 'Authentication Username',
+                    secret: globalTranslate.pr_AuthenticationPassword || 'Authentication Password'
+                },
+                passwordWidget: {
+                    generateButton: true,
+                    showPasswordButton: true,
+                    clipboardButton: true,
+                    showStrengthBar: true,
+                    validation: PasswordWidget.VALIDATION.SOFT
+                },
+                readonlyUsername: true,
+                autoGeneratePassword: true
+            },
+            none: {
+                visible: ['host', 'port', 'username', 'secret', 'receiveCalls', 'networkFilter'],
+                hidden: [],
+                required: ['host', 'port', 'username'],
+                optional: ['secret'],
+                labels: {
+                    host: globalTranslate.pr_PeerHostOrIPAddress || 'Peer Host/IP',
+                    port: globalTranslate.pr_PeerPort || 'Peer Port',
+                    username: globalTranslate.pr_PeerUsername || 'Peer Username',
+                    secret: globalTranslate.pr_PeerPassword || 'Peer Password'
+                },
+                passwordWidget: {
+                    generateButton: true,
+                    showPasswordButton: true,
+                    clipboardButton: true,
+                    showStrengthBar: true,
+                    validation: PasswordWidget.VALIDATION.SOFT
+                },
+                defaultPort: '4569',
+                showPasswordTooltip: true
+            }
+        };
+        
+        // Get current configuration
+        const config = configs[regType] || configs.outbound;
+        
+        // Apply visibility
+        config.visible.forEach(key => elements[key]?.show());
+        config.hidden.forEach(key => elements[key]?.hide());
+        
+        // Apply required/optional classes
+        config.required?.forEach(key => elements[key]?.addClass('required'));
+        config.optional?.forEach(key => elements[key]?.removeClass('required'));
+        
+        // Update labels
+        Object.entries(config.labels).forEach(([key, text]) => {
+            labels[key]?.text(text);
+        });
+        
+        // Handle username field for inbound
+        if (config.readonlyUsername) {
+            fields.username.val(providerId).attr('readonly', '');
+        } else {
+            fields.username.removeAttr('readonly');
         }
-
-        valUserName.removeAttr('readonly');
-
-        // Hide password tooltip by default
-        this.hidePasswordTooltip();
-
-        // Update element visibility based on registration type
-        if (regType === 'outbound') {
-            // OUTBOUND: We register to provider
-            elHost.show();
-            elPort.show();
-            elUsername.show();
-            elSecret.show();
-            elReceiveCalls.hide();
-            elNetworkFilter.hide(); // Network filter not relevant for outbound
-
-            // Update required fields
-            elHost.addClass('required');
-            elPort.addClass('required');
-            elUsername.addClass('required');
-            elSecret.addClass('required');
-
-            // Hide all password management buttons for outbound
-            genPassword.hide();
-            copyButton.hide();
-            showHideButton.hide();
-            
-            // Hide password strength indicator for outbound
-            this.hidePasswordStrengthIndicator();
-
-            // Update labels for outbound
-            labelHostText.text(globalTranslate.pr_ProviderHostOrIPAddress || 'Provider Host/IP');
-            labelPortText.text(globalTranslate.pr_ProviderPort || 'Provider Port');
-            labelUsernameText.text(globalTranslate.pr_ProviderLogin || 'Login');
-            labelSecretText.text(globalTranslate.pr_ProviderPassword || 'Password');
-
-            // Set default port if empty
-            if (valPort.val() === '' || valPort.val() === '0') {
-                valPort.val('4569');
-            }
-        } else if (regType === 'inbound') {
-            // INBOUND: Provider connects to us
-            valUserName.val(providerId);
-            valUserName.attr('readonly', '');
-            
-            // Auto-generate password for inbound registration if empty
-            if (valSecret.val().trim() === '') {
-                this.generatePassword();
-            }
-            
-            elHost.show();
-            elPort.hide();
-            elUsername.show();
-            elSecret.show();
-            elReceiveCalls.show();
-            elNetworkFilter.show(); // Network filter available for security
-
-            // Remove validation prompt for hidden port field
-            this.$formObj.form('remove prompt', 'port');
-
-            // Update required fields
-            elHost.removeClass('required');
-            elPort.removeClass('required');
-            elUsername.addClass('required');
-            elSecret.addClass('required');
-
-            // Remove host validation error since it's optional for inbound
-            this.$formObj.form('remove prompt', 'host');
-            $('#host').closest('.field').removeClass('error');
-
-            // Show all buttons for inbound
-            genPassword.show();
-            copyButton.show();
-            showHideButton.show();
-            
-            // Show password strength indicator for inbound
-            this.showPasswordStrengthIndicator();
-            copyButton.attr('data-clipboard-text', valSecret.val());
-
-            // Update labels for inbound
-            labelHostText.text(globalTranslate.pr_RemoteHostOrIPAddress || 'Remote Host/IP');
-            labelUsernameText.text(globalTranslate.pr_AuthenticationUsername || 'Authentication Username');
-            labelSecretText.text(globalTranslate.pr_AuthenticationPassword || 'Authentication Password');
-        } else if (regType === 'none') {
-            // NONE: Static peer-to-peer connection
-            elHost.show(); 
-            elPort.show();
-            elUsername.show();
-            elSecret.show();
-            elReceiveCalls.show();
-            elNetworkFilter.show(); // Network filter available for security
-
-            // Show tooltip icon for password field
+        
+        // Auto-generate password for inbound if empty
+        if (config.autoGeneratePassword && fields.secret.val().trim() === '' && this.passwordWidget) {
+            this.passwordWidget.elements.$generateBtn?.trigger('click');
+        }
+        
+        // Set default port if needed
+        if (config.defaultPort && (fields.port.val() === '' || fields.port.val() === '0')) {
+            fields.port.val(config.defaultPort);
+        }
+        
+        // Update password widget configuration
+        if (this.passwordWidget && config.passwordWidget) {
+            PasswordWidget.updateConfig(this.passwordWidget, config.passwordWidget);
+        }
+        
+        // Handle password tooltip
+        if (config.showPasswordTooltip) {
             this.showPasswordTooltip();
+        } else {
+            this.hidePasswordTooltip();
+        }
+        
+        // Always enable qualify for IAX (NAT keepalive)
+        fields.qualify.prop('checked', true).val('1');
+        
+        // Clear validation errors for hidden fields
+        config.hidden.forEach(key => {
+            const fieldName = key.replace('el', '').toLowerCase();
+            this.$formObj.form('remove prompt', fieldName);
+            $(`#${fieldName}`).closest('.field').removeClass('error');
+        });
+    }
 
-            // Update required fields
-            elHost.addClass('required');
-            elPort.addClass('required');
-            elUsername.addClass('required');
-            elSecret.removeClass('required'); // Password is optional in none mode
+    /**
+     * Callback before form submission
+     * @param {object} settings - Form settings
+     * @returns {object} Modified form settings
+     */
+    cbBeforeSendForm(settings) {
+        const result = settings;
+        
+        // Form.js with apiSettings.enabled will automatically:
+        // 1. Collect form data
+        // 2. Convert checkboxes using convertCheckboxesToBool
+        // 3. Call the API using apiSettings configuration
+        
+        // Just add provider-specific data
+        result.data.type = 'IAX';
+        
+        // Ensure ID field exists
+        result.data.id = result.data.id || '';
+        
+        return result;
+    }
 
-            // Show password management buttons for none registration (except generate)
-            genPassword.hide();
-            copyButton.show();
-            showHideButton.show();
+    /**
+     * Callback after form submission
+     * @param {object} response - Response from server
+     */
+    cbAfterSendForm(response) {
+        if (response.result === true && response.data && response.data.id) {
+            const newId = response.data.id;
             
-            // Show password strength indicator for none type
-            this.showPasswordStrengthIndicator();
-
-            // Update labels for none (peer-to-peer)
-            labelHostText.text(globalTranslate.pr_PeerHostOrIPAddress || 'Peer Host/IP');
-            labelPortText.text(globalTranslate.pr_PeerPort || 'Peer Port');
-            labelUsernameText.text(globalTranslate.pr_PeerUsername || 'Peer Username');
-            labelSecretText.text(globalTranslate.pr_PeerPassword || 'Peer Password');
-
-            // Set default port if empty
-            if (valPort.val() === '' || valPort.val() === '0') {
-                valPort.val('4569');
-            }
+            // Update the form ID field
+            $('#id').val(newId);
+            
+            // Update isNewProvider flag
+            this.isNewProvider = false;
+            
+            // Enable diagnostics tab for existing providers
+            $('#provider-tabs-menu .item[data-tab="diagnostics"]')
+                .removeClass('disabled')
+                .css('opacity', '')
+                .css('cursor', '');
+            
+            // Update the browser URL without reloading
+            const newUrl = `${globalRootUrl}providers/modifyiax/${newId}`;
+            window.history.pushState({ id: newId }, '', newUrl);
         }
     }
+    
+    /**
+     * Populate form with data from API
+     * @param {object} data - Provider data
+     */
+    populateFormData(data) {
+        super.populateFormData(data);
+        
+        // IAX-specific data population can be added here if needed
+    }
 }
+
+/**
+ * Initialize provider form on document ready
+ */
+$(document).ready(() => {
+    const provider = new ProviderIAX();
+    provider.initialize();
+});

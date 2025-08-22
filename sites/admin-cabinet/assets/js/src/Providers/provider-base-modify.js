@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, Form, PbxApi, ClipboardJS, NetworkFiltersAPI, TooltipBuilder, PasswordScore, i18n, ProvidersAPI, providerPasswordValidator */
+/* global globalRootUrl, globalTranslate, Form, PbxApi, ClipboardJS, NetworkFiltersAPI, TooltipBuilder, PasswordScore, i18n, ProvidersAPI, PasswordWidget */
 
 /**
  * Base class for provider management forms
@@ -32,10 +32,7 @@ class ProviderBase {
         DROPDOWNS: '#save-provider-form .ui.dropdown',
         DESCRIPTION: '#description',
         NETWORK_FILTER_ID: '#networkfilterid',
-        SHOW_HIDE_PASSWORD: '#show-hide-password',
-        GENERATE_PASSWORD: '#generate-new-password',
         PASSWORD_TOOLTIP_ICON: '.password-tooltip-icon',
-        CLIPBOARD: '.clipboard',
         POPUPED: '.popuped'
     };
 
@@ -65,10 +62,7 @@ class ProviderBase {
         this.$dropDowns = $(ProviderBase.SELECTORS.DROPDOWNS);
         this.$description = $(ProviderBase.SELECTORS.DESCRIPTION);
         this.$networkFilterId = $(ProviderBase.SELECTORS.NETWORK_FILTER_ID);
-        this.$showHidePassword = $(ProviderBase.SELECTORS.SHOW_HIDE_PASSWORD);
-        this.$generatePassword = $(ProviderBase.SELECTORS.GENERATE_PASSWORD);
         this.$passwordTooltipIcon = $(ProviderBase.SELECTORS.PASSWORD_TOOLTIP_ICON);
-        this.$clipboard = $(ProviderBase.SELECTORS.CLIPBOARD);
         this.$popuped = $(ProviderBase.SELECTORS.POPUPED);
         
         // Track if this is a new provider (not existing in database)
@@ -117,9 +111,8 @@ class ProviderBase {
             this.initializeForm();
             this.updateVisibilityElements();
             
-            // Initialize tooltip popups and clipboard
+            // Initialize tooltip popups
             this.$popuped.popup();
-            this.initializeClipboard();
             
             // Prevent browser password manager for generated passwords
             this.$secret.on('focus', () => {
@@ -257,116 +250,44 @@ class ProviderBase {
             self.updatePageHeader($(this).val());
         });
         
-        // Initialize password strength indicator
-        this.initializePasswordStrengthIndicator();
-        
-
-        // Show/hide password toggle
-        this.$showHidePassword.on('click', (e) => {
-            e.preventDefault();
-            const $button = $(e.currentTarget);
-            const $icon = $button.find('i');
-            
-            if (this.$secret.attr('type') === 'password') {
-                // Show password
-                $icon.removeClass('eye').addClass('eye slash');
-                this.$secret.attr('type', 'text');
-            } else {
-                // Hide password
-                $icon.removeClass('eye slash').addClass('eye');
-                this.$secret.attr('type', 'password');
-            }
-        });
-
-        // Generate new password
-        this.$generatePassword.on('click', (e) => {
-            e.preventDefault();
-            this.generatePassword();
-        });
+        // Initialize password widget
+        this.initializePasswordWidget();
     }
 
-    /**
-     * Initialize clipboard functionality
-     */
-    initializeClipboard() {
-        const clipboard = new ClipboardJS(ProviderBase.SELECTORS.CLIPBOARD);
-        this.$clipboard.popup({
-            on: 'manual',
-        });
 
-        clipboard.on('success', (e) => {
-            $(e.trigger).popup('show');
-            setTimeout(() => {
-                $(e.trigger).popup('hide');
-            }, 1500);
-            e.clearSelection();
-        });
-
-        clipboard.on('error', (e) => {
-            UserMessage.showError(globalTranslate.pr_ErrorOnProviderSave);
-        });
-    }
-
-    /**
-     * Generate a new password
-     */
-    generatePassword() {
-        PbxApi.PasswordGenerate(ProviderBase.DEFAULTS.PASSWORD_LENGTH, (password) => {
-            if (password) {
-                this.$secret.val(password);
-                this.$secret.trigger('change');
-                Form.dataChanged();
-                this.$clipboard.attr('data-clipboard-text', password);
-                
-                // Update password strength indicator
-                const $passwordProgress = $('#password-strength-progress');
-                if ($passwordProgress.length > 0 && typeof PasswordScore !== 'undefined') {
-                    PasswordScore.checkPassStrength({
-                        pass: password,
-                        bar: $passwordProgress,
-                        section: $passwordProgress
-                    });
-                }
-            }
-        });
-    }
     
     /**
-     * Initialize password strength indicator and validation
+     * Initialize password widget with default configuration
      */
-    initializePasswordStrengthIndicator() {
-        // Initialize the enhanced password validator if available
-        if (typeof providerPasswordValidator !== 'undefined') {
-            providerPasswordValidator.initialize(this, {
+    initializePasswordWidget() {
+        // Initialize the password widget with default configuration
+        if (this.$secret.length > 0) {
+            // Hide legacy HTML buttons - PasswordWidget will manage its own buttons
+            $('.clipboard').hide();
+            $('#show-hide-password').hide();
+            
+            // Default configuration for providers - will be updated based on registration type
+            const widget = PasswordWidget.init(this.$secret, {
+                validation: PasswordWidget.VALIDATION.SOFT,
+                generateButton: true,
+                showPasswordButton: true,  // Will be updated based on registration type
+                clipboardButton: true,      // Keep copy button for all modes
+                showStrengthBar: true,
                 showWarnings: true,
-                checkOnLoad: true,
-                validateOnlyGenerated: false // Validate all passwords for providers
+                validateOnInput: true,
+                checkOnLoad: false, // Don't validate on load, let updateVisibilityElements handle it
+                minScore: 60,
+                generateLength: 32 // Provider passwords should be 32 chars for better security
             });
-        } else if (this.$secret.length > 0 && typeof PasswordScore !== 'undefined') {
-            // Fallback to basic password strength indicator
-            // Create progress bar for password strength if it doesn't exist
-            let $passwordProgress = $('#password-strength-progress');
-            if ($passwordProgress.length === 0) {
-                const $secretField = this.$secret.closest('.field');
-                $passwordProgress = $('<div class="ui tiny progress" id="password-strength-progress"><div class="bar"></div></div>');
-                $secretField.append($passwordProgress);
+            
+            // Store widget instance for later use
+            this.passwordWidget = widget;
+            
+            // Update visibility elements now that widget is initialized
+            // This will apply the correct configuration based on registration type
+            if (typeof this.updateVisibilityElements === 'function') {
+                this.updateVisibilityElements();
             }
-            
-            // Initialize Semantic UI progress component
-            $passwordProgress.progress({
-                percent: 0,
-                showActivity: false
-            });
-            
-            // Update password strength on input with provider context
-            this.$secret.on('input', () => {
-                PasswordScore.checkPassStrength({
-                    pass: this.$secret.val(),
-                    bar: $passwordProgress,
-                    section: $passwordProgress,
-                    field: 'provider_secret'  // Use provider context for validation
-                });
-            });
         }
     }
 
@@ -375,7 +296,7 @@ class ProviderBase {
      * This method should be overridden in child classes
      */
     updateVisibilityElements() {
-        // Override in child classes
+        // Override in child classes to configure PasswordWidget based on registration type
     }
     
     /**
@@ -498,14 +419,13 @@ class ProviderBase {
         }
         
         // Common checkboxes - handle both string '1' and boolean true
-        if (data.qualify === '1' || data.qualify === true) $('#qualify').prop('checked', true);
-        if (data.receive_calls_without_auth === '1' || data.receive_calls_without_auth === true) $('#receive_calls_without_auth').prop('checked', true);
-        if (data.noregister === '1' || data.noregister === true) $('#noregister').prop('checked', true);
+        // These checkboxes use standard HTML checkbox behavior
+        $('#qualify').prop('checked', data.qualify === '1' || data.qualify === true);
+        $('#receive_calls_without_auth').prop('checked', data.receive_calls_without_auth === '1' || data.receive_calls_without_auth === true);
+        $('#noregister').prop('checked', data.noregister === '1' || data.noregister === true);
         
-        // Disabled state
-        if (data.disabled === '1' || data.disabled === true) {
-            $('#disabled').val('1');
-        }
+        // Disabled state - this is a hidden field, not a checkbox
+        $('#disabled').val(data.disabled ? '1' : '0');
     }
 
     

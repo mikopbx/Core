@@ -91,12 +91,46 @@ class ProviderSIP extends ProviderBase {
      * Initialize tab functionality
      */
     initializeTabs() {
+        const self = this;
+        
+        // Disable diagnostics tab for new providers
+        if (this.isNewProvider) {
+            $('#provider-tabs-menu .item[data-tab="diagnostics"]')
+                .addClass('disabled')
+                .css('opacity', '0.45')
+                .css('cursor', 'not-allowed');
+        } else {
+            $('#provider-tabs-menu .item[data-tab="diagnostics"]')
+                .removeClass('disabled')
+                .css('opacity', '')
+                .css('cursor', '');
+        }
+        
         $('#provider-tabs-menu .item').tab({
             onVisible: (tabPath) => {
-                if (tabPath === 'diagnostics' && typeof providerModifyStatusWorker !== 'undefined') {
+                if (tabPath === 'diagnostics' && typeof providerModifyStatusWorker !== 'undefined' && !self.isNewProvider) {
                     // Initialize diagnostics tab when it becomes visible
                     providerModifyStatusWorker.initializeDiagnosticsTab();
                 }
+            },
+            onLoad: (tabPath, parameterArray, historyEvent) => {
+                // Block loading of diagnostics tab for new providers
+                if (tabPath === 'diagnostics' && self.isNewProvider) {
+                    // Switch back to settings tab
+                    $('#provider-tabs-menu .item[data-tab="settings"]').tab('change tab', 'settings');
+                    return false;
+                }
+            }
+        });
+        
+        // Additional click prevention for disabled tab
+        $('#provider-tabs-menu .item[data-tab="diagnostics"]').off('click.disabled').on('click.disabled', function(e) {
+            if (self.isNewProvider) {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                // Ensure we stay on settings tab
+                $('#provider-tabs-menu .item[data-tab="settings"]').tab('change tab', 'settings');
+                return false;
             }
         });
     }
@@ -630,6 +664,11 @@ class ProviderSIP extends ProviderBase {
                         type: 'empty',
                         prompt: globalTranslate.pr_ValidationProviderHostIsEmpty,
                     },
+                    {
+                        type: 'regExp',
+                        value: '/^[a-zA-Z0-9._-]+$/',
+                        prompt: globalTranslate.pr_ValidationProviderHostInvalidCharacters || 'Host can only contain letters, numbers, dots, hyphens and underscores',
+                    },
                 ],
             },
             username: {
@@ -638,6 +677,11 @@ class ProviderSIP extends ProviderBase {
                     {
                         type: 'empty',
                         prompt: globalTranslate.pr_ValidationProviderLoginIsEmpty,
+                    },
+                    {
+                        type: 'regExp',
+                        value: '^[a-zA-Z0-9_.-]+$',
+                        prompt: globalTranslate.pr_ValidationProviderLoginInvalidCharacters || 'Username can only contain letters, numbers and symbols: _ - .',
                     },
                 ],
             },
@@ -694,6 +738,11 @@ class ProviderSIP extends ProviderBase {
                         type: 'empty',
                         prompt: globalTranslate.pr_ValidationProviderLoginIsEmpty,
                     },
+                    {
+                        type: 'regExp',
+                        value: '^[a-zA-Z0-9_.-]+$',
+                        prompt: globalTranslate.pr_ValidationProviderLoginInvalidCharacters || 'Username can only contain letters, numbers and symbols: _ - .',
+                    },
                 ],
             },
             secret: {
@@ -744,6 +793,11 @@ class ProviderSIP extends ProviderBase {
                         type: 'empty',
                         prompt: globalTranslate.pr_ValidationProviderHostIsEmpty,
                     },
+                    {
+                        type: 'regExp',
+                        value: '/^[a-zA-Z0-9._-]+$/',
+                        prompt: globalTranslate.pr_ValidationProviderHostInvalidCharacters || 'Host can only contain letters, numbers, dots, hyphens and underscores',
+                    },
                 ],
             },
             port: {
@@ -790,104 +844,123 @@ class ProviderSIP extends ProviderBase {
     /**
      * Update the visibility of elements based on the registration type
      */
-    updateVisibilityElements() { 
-        // Get element references
-        const elHost = $('#elHost');
-        const elUsername = $('#elUsername');
-        const elSecret = $('#elSecret');
-        const elPort = $('#elPort');
-        const elAdditionalHost = $('#elAdditionalHosts');
-        const elNetworkFilter = $('#elNetworkFilter');
+    updateVisibilityElements() {
         const regType = $('#registration_type').val();
-        const genPassword = $('#generate-new-password');
-
-        const valUserName = $('#username');
-        const valSecret = this.$secret;
         const providerId = $('#id').val();
-
-        // Reset username only when switching from inbound to other types
-        if (valUserName.val() === providerId && regType !== 'inbound') {
-            valUserName.val('');
-        }
-        valUserName.removeAttr('readonly');
-
-        // Hide password tooltip by default
-        this.hidePasswordTooltip();
         
-        // Update host label based on registration type
-        this.updateHostLabel(regType);
-
-        // Update element visibility based on registration type
-        if (regType === 'outbound') {
-            elHost.show();
-            elUsername.show();
-            elSecret.show();
-            elPort.show();
-            elAdditionalHost.show(); // Show for all registration types
-            elNetworkFilter.hide(); // Network filter not relevant for outbound
-            $('#networkfilterid').val('none'); // Reset to default
-            genPassword.hide();
-            
-            // Hide password management buttons for outbound registration
-            $('#elSecret .button.clipboard').hide(); // Hide copy button
-            $('#show-hide-password').hide(); // Hide show/hide button
-            
-            // Hide password strength indicator for outbound
-            this.hidePasswordStrengthIndicator();
-        } else if (regType === 'inbound') {
-            valUserName.val(providerId);
-            valUserName.attr('readonly', '');
-            
-            // Auto-generate password for inbound registration if empty
-            if (valSecret.val().trim() === '') {
-                this.generatePassword();
+        // Cache DOM elements
+        const elements = {
+            host: $('#elHost'),
+            port: $('#elPort'),
+            username: $('#elUsername'),
+            secret: $('#elSecret'),
+            additionalHost: $('#elAdditionalHosts'),
+            networkFilter: $('#elNetworkFilter')
+        };
+        
+        const fields = {
+            username: $('#username'),
+            secret: this.$secret,
+            networkFilterId: $('#networkfilterid')
+        };
+        
+        // Configuration for each registration type
+        const configs = {
+            outbound: {
+                visible: ['host', 'port', 'username', 'secret', 'additionalHost'],
+                hidden: ['networkFilter'],
+                passwordWidget: {
+                    generateButton: false,
+                    showPasswordButton: false,
+                    clipboardButton: false,
+                    showStrengthBar: false,
+                    validation: PasswordWidget.VALIDATION.NONE
+                },
+                resetNetworkFilter: true
+            },
+            inbound: {
+                visible: ['username', 'secret', 'networkFilter', 'additionalHost'],
+                hidden: ['host', 'port'],
+                passwordWidget: {
+                    generateButton: true,
+                    showPasswordButton: true,
+                    clipboardButton: true,
+                    showStrengthBar: true,
+                    validation: PasswordWidget.VALIDATION.SOFT
+                },
+                readonlyUsername: true,
+                autoGeneratePassword: true,
+                clearValidationFor: ['host', 'port']
+            },
+            none: {
+                visible: ['host', 'port', 'username', 'secret', 'additionalHost', 'networkFilter'],
+                hidden: [],
+                passwordWidget: {
+                    generateButton: true,
+                    showPasswordButton: true,
+                    clipboardButton: true,
+                    showStrengthBar: true,
+                    validation: PasswordWidget.VALIDATION.SOFT
+                },
+                showPasswordTooltip: true,
+                makeOptional: ['secret'],
+                clearValidationFor: ['username', 'secret']
             }
-            
-            elHost.hide();
-            elUsername.show();
-            elSecret.show();
-            elPort.hide(); // Port not needed for inbound registration
-            elNetworkFilter.show(); // Network filter critical for inbound security
-            genPassword.show();
-            elAdditionalHost.show(); // Show for all registration types
-            
-            // Show password management buttons for inbound registration
-            $('#elSecret .button.clipboard').show(); // Show copy button
-            $('#show-hide-password').show(); // Show show/hide button
-            
-            // Show password strength indicator for inbound
-            this.showPasswordStrengthIndicator(); 
-            // Remove validation errors for hidden fields
-            this.$formObj.form('remove prompt', 'host');
-            $('#host').closest('.field').removeClass('error');
-            this.$formObj.form('remove prompt', 'port');
-            $('#port').closest('.field').removeClass('error');
-        } else if (regType === 'none') {
-            elHost.show();
-            elUsername.show();
-            elSecret.show();
-            elPort.show();
-            elAdditionalHost.show(); // Show for all registration types
-            elNetworkFilter.show(); // Network filter critical for none type (no auth)
-            genPassword.hide();
-            
-            // Show password management buttons for none registration
-            $('#elSecret .button.clipboard').show(); // Show copy button
-            $('#show-hide-password').show(); // Show show/hide button
-            
-            // Show tooltip icon for password field
-            this.showPasswordTooltip();
-            
-            // Show password strength indicator for none type
-            this.showPasswordStrengthIndicator();
-            
-            // Update field requirements - make password optional in none mode
-            $('#elSecret').removeClass('required');
-            
-            // Remove validation prompts for optional fields in none mode
-            this.$formObj.form('remove prompt', 'username');
-            this.$formObj.form('remove prompt', 'secret');
+        };
+        
+        // Get current configuration
+        const config = configs[regType] || configs.outbound;
+        
+        // Apply visibility
+        config.visible.forEach(key => elements[key]?.show());
+        config.hidden.forEach(key => elements[key]?.hide());
+        
+        // Handle username field
+        if (config.readonlyUsername) {
+            fields.username.val(providerId).attr('readonly', '');
+        } else {
+            // Reset username if it matches provider ID when not inbound
+            if (fields.username.val() === providerId && regType !== 'inbound') {
+                fields.username.val('');
+            }
+            fields.username.removeAttr('readonly');
         }
+        
+        // Auto-generate password for inbound if empty
+        if (config.autoGeneratePassword && fields.secret.val().trim() === '' && this.passwordWidget) {
+            this.passwordWidget.elements.$generateBtn?.trigger('click');
+        }
+        
+        // Reset network filter for outbound
+        if (config.resetNetworkFilter) {
+            fields.networkFilterId.val('none');
+        }
+        
+        // Update password widget configuration
+        if (this.passwordWidget && config.passwordWidget) {
+            PasswordWidget.updateConfig(this.passwordWidget, config.passwordWidget);
+        }
+        
+        // Handle password tooltip
+        if (config.showPasswordTooltip) {
+            this.showPasswordTooltip();
+        } else {
+            this.hidePasswordTooltip();
+        }
+        
+        // Make fields optional
+        config.makeOptional?.forEach(field => {
+            $(`#el${field.charAt(0).toUpperCase() + field.slice(1)}`).removeClass('required');
+        });
+        
+        // Clear validation errors for specified fields
+        config.clearValidationFor?.forEach(field => {
+            this.$formObj.form('remove prompt', field);
+            $(`#${field}`).closest('.field').removeClass('error');
+        });
+        
+        // Update host label
+        this.updateHostLabel(regType); 
 
         // Update element visibility based on 'disablefromuser' checkbox
         // Use the outer div.checkbox container instead of input element
@@ -900,6 +973,7 @@ class ProviderSIP extends ProviderBase {
             fromUser.show();
             fromUser.addClass('visible');
         }
+        
         
         // Update CallerID custom settings visibility based on current dropdown value
         const cidDropdown = $('.callerid-source-dropdown');
@@ -980,42 +1054,6 @@ class ProviderSIP extends ProviderBase {
         }
     }
     
-    /**
-     * Show password strength indicator and trigger initial check
-     */
-    showPasswordStrengthIndicator() {
-        const $passwordProgress = $('#password-strength-progress');
-        if ($passwordProgress.length > 0) {
-            // Initialize progress component if not already done
-            if (!$passwordProgress.hasClass('progress')) {
-                $passwordProgress.progress({
-                    percent: 0,
-                    showActivity: false
-                });
-            }
-            
-            $passwordProgress.show();
-            
-            // Trigger password strength check if password exists
-            if (this.$secret.val() && typeof PasswordScore !== 'undefined') {
-                PasswordScore.checkPassStrength({
-                    pass: this.$secret.val(),
-                    bar: $passwordProgress,
-                    section: $passwordProgress
-                });
-            }
-        }
-    }
-    
-    /**
-     * Hide password strength indicator
-     */
-    hidePasswordStrengthIndicator() {
-        const $passwordProgress = $('#password-strength-progress');
-        if ($passwordProgress.length > 0) {
-            $passwordProgress.hide();
-        }
-    }
     
     /**
      * Populate additional hosts from API data

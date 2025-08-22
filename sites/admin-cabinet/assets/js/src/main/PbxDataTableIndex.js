@@ -51,6 +51,7 @@ class PbxDataTableIndex {
      * @param {Function} [config.onDrawCallback] - Callback after table draw
      * @param {Function} [config.onPermissionsLoaded] - Callback after permissions loaded
      * @param {Function} [config.customDeleteHandler] - Custom delete handler
+     * @param {Function} [config.onAfterDelete] - Callback after successful deletion
      * @param {Function} [config.getModifyUrl] - Custom URL generator for modify/edit actions
      * @param {boolean} [config.orderable=true] - Enable/disable sorting for all columns
      * @param {Array} [config.order=[[0, 'asc']]] - Default sort order
@@ -100,6 +101,7 @@ class PbxDataTableIndex {
         this.onDrawCallback = config.onDrawCallback;
         this.onPermissionsLoaded = config.onPermissionsLoaded;
         this.customDeleteHandler = config.customDeleteHandler;
+        this.onAfterDelete = config.onAfterDelete;
         this.getModifyUrl = config.getModifyUrl;
         this.ajaxData = config.ajaxData || {};
     }
@@ -401,8 +403,16 @@ class PbxDataTableIndex {
      */
     cbAfterDeleteRecord(response) {
         if (response.result === true) {
-            // Reload table data
-            this.dataTable.ajax.reload();
+            // Reload table data with callback support
+            const reloadCallback = () => {
+                // Call custom after-delete callback if provided
+                if (typeof this.onAfterDelete === 'function') {
+                    this.onAfterDelete(response);
+                }
+            };
+            
+            // Reload table and execute callback
+            this.dataTable.ajax.reload(reloadCallback, false);
             
             // Update related components
             if (typeof Extensions !== 'undefined' && Extensions.cbOnDataChanged) {

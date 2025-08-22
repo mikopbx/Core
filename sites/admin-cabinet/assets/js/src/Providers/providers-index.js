@@ -64,6 +64,7 @@ const providers = {
             },
             onDataLoaded: this.onDataLoaded.bind(this),
             onDrawCallback: this.onDrawCallback.bind(this),
+            onAfterDelete: this.onAfterDeleteSuccess.bind(this), // Callback after successful deletion
             order: [[0, 'asc']], // Default sorting by status (enabled first)
             columns: [
                 {
@@ -222,29 +223,10 @@ const providers = {
         // Initialize enable/disable checkboxes
         this.initializeCheckboxes();
         
-        // Override delete handler to check for links ONLY on second click (after two-steps confirmation)
-        // Don't handle clicks on elements with two-steps-delete class - let delete-something.js handle them first
-        $('.provider-row a.delete:not(.two-steps-delete)').off('click').on('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            const providerId = $(e.target).closest('a').attr('data-value');
-            const linksExist = $(e.target).closest('tr').attr('data-links');
-            
-            if (linksExist === 'true') {
-                providers.$deleteModalForm
-                    .modal({
-                        closable: false,
-                        onDeny: () => true,
-                        onApprove: () => {
-                            providers.deleteProvider(providerId);
-                            return true;
-                        },
-                    })
-                    .modal('show');
-            } else {
-                providers.deleteProvider(providerId);
-            }
-        });
+        // Refresh ProviderStatusMonitor cache after DOM changes
+        if (typeof ProviderStatusMonitor !== 'undefined' && ProviderStatusMonitor.refreshCache) {
+            ProviderStatusMonitor.refreshCache();
+        }
     },
     
     /**
@@ -311,19 +293,14 @@ const providers = {
     },
     
     /**
-     * Delete provider using REST API
-     * 
-     * @param {string} providerId - Provider ID to delete
+     * Callback after successful provider deletion
+     * Restores provider statuses after table reload
      */
-    deleteProvider(providerId) {
-        ProvidersAPI.deleteRecord(providerId, (response) => {
-            if (response.result) {
-                // Reload table data
-                this.dataTableInstance.dataTable.ajax.reload();
-            } else {
-                UserMessage.showMultiString(response.messages);
-            }
-        });
+    onAfterDeleteSuccess() {
+        // Request fresh provider statuses after deletion
+        setTimeout(() => {
+            this.requestInitialStatus();
+        }, 300);
     },
     
     /**

@@ -16,21 +16,25 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalTranslate, PasswordScore, PasswordValidationAPI, Form */
+/* global globalTranslate, PasswordValidationAPI, Form, ClipboardJS */
 
 /**
- * Unified Password Widget Module
- * Provides password validation, generation, and UI feedback for any password field
+ * Password Widget Module
+ * 
+ * A comprehensive password field component that provides:
+ * - Password generation
+ * - Strength validation with real-time feedback
+ * - Visual progress indicator
+ * - API-based validation with local fallback
+ * - Form validation integration
  * 
  * Usage:
- * PasswordWidget.init('#myPasswordField', {
- *     context: 'provider',       // Context: 'provider', 'general', 'extension', 'ami'
- *     generateButton: true,      // Add generate button
- *     validateOnInput: true,     // Real-time validation
- *     validateOnlyGenerated: false, // Validate only generated passwords
- *     showStrengthBar: true,     // Show strength indicator
- *     showWarnings: true,        // Show warning messages
- *     checkOnLoad: true          // Check initial password
+ * const widget = PasswordWidget.init('#myPasswordField', {
+ *     mode: 'full',              // 'full' | 'generate-only' | 'display-only' | 'disabled'
+ *     validation: 'soft',        // 'hard' | 'soft' | 'none'
+ *     minScore: 60,
+ *     generateLength: 16,
+ *     onValidate: (isValid, score, messages) => { ... }
  * });
  */
 const PasswordWidget = {
@@ -40,26 +44,50 @@ const PasswordWidget = {
      */
     instances: new Map(),
     
+    
+    /**
+     * Validation types
+     */
+    VALIDATION: {
+        HARD: 'hard',   // Block form submission if invalid
+        SOFT: 'soft',   // Show warnings but allow submission
+        NONE: 'none'    // No validation
+    },
+    
+    /**
+     * Cache for validation results
+     */
+    validationCache: {},
+    
+    /**
+     * Timers for debouncing validation
+     */
+    validationTimers: {},
+    
     /**
      * Default configuration
      */
     defaults: {
-        context: 'general',
+        validation: 'soft',
         generateButton: true,
-        validateOnInput: true,
-        validateOnlyGenerated: false,
+        showPasswordButton: true,  // Show/hide password toggle
+        clipboardButton: true,      // Copy to clipboard button
         showStrengthBar: true,
         showWarnings: true,
-        checkOnLoad: true,
         minScore: 60,
-        generateLength: 16
+        generateLength: 16,
+        validateOnInput: true,
+        checkOnLoad: false,
+        onValidate: null,        // Callback: (isValid, score, messages) => void
+        onGenerate: null,        // Callback: (password) => void
+        validationRules: null    // Custom validation rules for Form.js
     },
     
     /**
-     * Initialize password widget for a field
+     * Initialize password widget
      * @param {string|jQuery} selector - Field selector or jQuery object
      * @param {object} options - Widget options
-     * @returns {object} Widget instance
+     * @returns {object|null} Widget instance
      */
     init(selector, options = {}) {
         const $field = $(selector);
@@ -75,27 +103,39 @@ const PasswordWidget = {
             this.destroy(fieldId);
         }
         
-        // Create new instance
+        // Create instance
         const instance = {
-            id: fieldId,
-            $field: $field,
+            fieldId,
+            $field,
             $container: $field.closest('.field'),
             options: { ...this.defaults, ...options },
-            isGenerated: false,
-            elements: {}
+            elements: {},
+            state: {
+                isValid: true,
+                score: 0,
+                strength: '',
+                messages: [],
+                isGenerated: false,
+                isFocused: false
+            }
         };
-        
-        // Initialize widget
-        this.setupUI(instance);
-        this.bindEvents(instance);
-        
-        // Check initial password if needed
-        if (instance.options.checkOnLoad) {
-            this.checkPassword(instance);
-        }
         
         // Store instance
         this.instances.set(fieldId, instance);
+        
+        // Initialize
+        this.setupUI(instance);
+        this.bindEvents(instance);
+        
+        // Setup form validation if needed
+        if (instance.options.validation !== this.VALIDATION.NONE) {
+            this.setupFormValidation(instance);
+        }
+        
+        // Check initial value if requested
+        if (instance.options.checkOnLoad && $field.val()) {
+            this.checkPassword(instance);
+        }
         
         return instance;
     },
@@ -107,9 +147,26 @@ const PasswordWidget = {
     setupUI(instance) {
         const { $field, $container, options } = instance;
         
+        // Find or create input wrapper
+        let $inputWrapper = $field.closest('.ui.input');
+        if ($inputWrapper.length === 0) {
+            $field.wrap('<div class="ui input"></div>');
+            $inputWrapper = $field.parent();
+        }
+        
+        // Add show/hide password button if needed
+        if (options.showPasswordButton) {
+            this.addShowHideButton(instance);
+        }
+        
         // Add generate button if needed
         if (options.generateButton) {
             this.addGenerateButton(instance);
+        }
+        
+        // Add clipboard button if needed
+        if (options.clipboardButton) {
+            this.addClipboardButton(instance);
         }
         
         // Add strength bar if needed
@@ -117,78 +174,167 @@ const PasswordWidget = {
             this.addStrengthBar(instance);
         }
         
-        // Prepare warning container
+        // Add warnings container if needed
         if (options.showWarnings) {
-            instance.elements.$warnings = $(`<div id="${instance.id}-warnings" class="ui small message password-warnings" style="display:none;"></div>`);
-            $container.after(instance.elements.$warnings);
+            this.addWarningsContainer(instance);
         }
+        
+        // Update input wrapper class based on button visibility
+        this.updateInputWrapperClass(instance);
     },
     
     /**
-     * Add generate button to field
+     * Add show/hide password button
+     * @param {object} instance - Widget instance
+     */
+    addShowHideButton(instance) {
+        const { $field } = instance;
+        const $inputWrapper = $field.closest('.ui.input');
+        
+        // Check if button already exists
+        if ($inputWrapper.find('button.show-hide-password').length > 0) {
+            instance.elements.$showHideBtn = $inputWrapper.find('button.show-hide-password');
+            return;
+        }
+        
+        // Create button
+        const $showHideBtn = $(`
+            <button type="button" class="ui basic icon button show-hide-password" 
+                    data-content="${globalTranslate.bt_ToolTipShowPassword || 'Show password'}">
+                <i class="eye icon"></i>
+            </button>
+        `);
+        
+        // Append to wrapper
+        $inputWrapper.append($showHideBtn);
+        instance.elements.$showHideBtn = $showHideBtn;
+    },
+    
+    /**
+     * Add generate button
      * @param {object} instance - Widget instance
      */
     addGenerateButton(instance) {
-        const { $field, $container } = instance;
-        const $inputWrapper = $container.find('.ui.input');
+        const { $field } = instance;
+        const $inputWrapper = $field.closest('.ui.input');
         
-        // Check if there's already a generate button (clipboard button on providers)
-        let $generateBtn = $inputWrapper.find('button.clipboard, button.generate-password');
-        
-        if ($generateBtn.length === 0) {
-            // Add action class to input wrapper
-            if (!$inputWrapper.hasClass('action')) {
-                $inputWrapper.addClass('action');
-            }
-            
-            // Create generate button
-            $generateBtn = $(`
-                <button class="ui icon button generate-password" type="button" 
-                        title="${globalTranslate.psw_GeneratePassword || 'Generate password'}">
-                    <i class="sync alternate icon"></i>
-                </button>
-            `);
-            $inputWrapper.append($generateBtn);
+        // Check if button already exists
+        if ($inputWrapper.find('button.generate-password').length > 0) {
+            instance.elements.$generateBtn = $inputWrapper.find('button.generate-password');
+            return;
         }
         
+        // Create button
+        const $generateBtn = $(`
+            <button type="button" class="ui basic icon button generate-password" 
+                    data-content="${globalTranslate.bt_ToolTipGeneratePassword || 'Generate password'}">
+                <i class="sync icon"></i>
+            </button>
+        `);
+        
+        // Append to wrapper
+        $inputWrapper.append($generateBtn);
         instance.elements.$generateBtn = $generateBtn;
     },
     
     /**
-     * Add strength bar to field
+     * Add clipboard button
+     * @param {object} instance - Widget instance
+     */
+    addClipboardButton(instance) {
+        const { $field } = instance;
+        const $inputWrapper = $field.closest('.ui.input');
+        
+        // Check if button already exists
+        if ($inputWrapper.find('button.clipboard').length > 0) {
+            instance.elements.$clipboardBtn = $inputWrapper.find('button.clipboard');
+            return;
+        }
+        
+        // Create button
+        const currentValue = $field.val() || '';
+        const $clipboardBtn = $(`
+            <button type="button" class="ui basic icon button clipboard" 
+                    data-clipboard-text="${currentValue}"
+                    data-content="${globalTranslate.bt_ToolTipCopyPassword || 'Copy password'}">
+                <i class="icons">
+                    <i class="icon copy"></i>
+                    <i class="corner key icon"></i>
+                </i>
+            </button>
+        `);
+        
+        // Append to wrapper
+        $inputWrapper.append($clipboardBtn);
+        instance.elements.$clipboardBtn = $clipboardBtn;
+    },
+    
+    /**
+     * Add strength bar
      * @param {object} instance - Widget instance
      */
     addStrengthBar(instance) {
         const { $container } = instance;
         
-        let $scoreSection = $container.find('.password-score-section');
-        if ($scoreSection.length === 0) {
-            $scoreSection = $(`
-                <div class="password-score-section" style="display: none;">
-                    <div class="ui small progress password-score">
-                        <div class="bar"></div>
-                    </div>
-                </div>
-            `);
-            $container.append($scoreSection);
+        // Check if progress bar already exists
+        if ($container.find('.password-strength-progress').length > 0) {
+            instance.elements.$progressBar = $container.find('.password-strength-progress');
+            instance.elements.$progressSection = $container.find('.password-strength-section');
+            return;
         }
         
-        const $progressBar = $scoreSection.find('.password-score');
-        $progressBar.progress({
-            percent: 0,
-            showActivity: false
-        });
+        // Create progress bar
+        const $progressSection = $(`
+            <div class="password-strength-section" style="display:none;">
+                <div class="ui small password-strength-progress progress bottom attached ">
+                    <div class="bar"></div>
+                </div>
+            </div>
+        `);
         
-        instance.elements.$scoreSection = $scoreSection;
-        instance.elements.$progressBar = $progressBar;
+        // Insert after field
+        $container.append($progressSection);
+        
+        instance.elements.$progressBar = $progressSection.find('.password-strength-progress');
+        instance.elements.$progressSection = $progressSection;
     },
     
     /**
-     * Bind event handlers
+     * Add warnings container
+     * @param {object} instance - Widget instance
+     */
+    addWarningsContainer(instance) {
+        const { $container } = instance;
+        
+        // Check if warnings container already exists
+        if ($container.find('.password-warnings').length > 0) {
+            instance.elements.$warnings = $container.find('.password-warnings');
+            return;
+        }
+        
+        // Create warnings container (will be populated when needed)
+        const $warnings = $('<div class="password-warnings"></div>');
+        
+        // Append to the field container (after progress bar if exists)
+        $container.append($warnings);
+        
+        instance.elements.$warnings = $warnings;
+    },
+    
+    /**
+     * Bind events
      * @param {object} instance - Widget instance
      */
     bindEvents(instance) {
         const { $field, options } = instance;
+        
+        // Show/hide button click
+        if (instance.elements.$showHideBtn) {
+            instance.elements.$showHideBtn.off('click.passwordWidget').on('click.passwordWidget', (e) => {
+                e.preventDefault();
+                this.togglePasswordVisibility(instance);
+            });
+        }
         
         // Generate button click
         if (instance.elements.$generateBtn) {
@@ -198,79 +344,206 @@ const PasswordWidget = {
             });
         }
         
-        // Real-time validation on input
+        // Initialize clipboard functionality for copy button
+        if (instance.elements.$clipboardBtn && typeof ClipboardJS !== 'undefined') {
+            // Initialize ClipboardJS for the button
+            if (!instance.clipboard) {
+                instance.clipboard = new ClipboardJS(instance.elements.$clipboardBtn[0]);
+                
+                // Initialize popup for clipboard button
+                instance.elements.$clipboardBtn.popup({
+                    on: 'manual',
+                });
+                
+                // Handle successful copy
+                instance.clipboard.on('success', (e) => {
+                    instance.elements.$clipboardBtn.popup('show');
+                    setTimeout(() => {
+                        instance.elements.$clipboardBtn.popup('hide');
+                    }, 1500);
+                    e.clearSelection();
+                });
+                
+                // Handle copy error
+                instance.clipboard.on('error', (e) => {
+                    console.error('Clipboard error:', e.action, e.trigger);
+                });
+            }
+        }
+        
+        // Field input event
         if (options.validateOnInput) {
-            $field.off('input.passwordWidget').on('input.passwordWidget', () => {
+            $field.off('input.passwordWidget change.passwordWidget').on('input.passwordWidget change.passwordWidget', () => {
                 this.handleInput(instance);
             });
         }
         
-        // Clear warnings on empty
-        $field.off('change.passwordWidget').on('change.passwordWidget', () => {
+        // Update clipboard button when password changes
+        $field.on('input.passwordWidget change.passwordWidget', () => {
             const value = $field.val();
-            if (!value || value === 'xxxxxxx') {
-                this.hideWarnings(instance);
-                if (instance.elements.$scoreSection) {
-                    instance.elements.$scoreSection.hide();
+            // Clear validation state on empty
+            if (!value || value === '') {
+                this.clearValidation(instance);
+            }
+            // Update all clipboard buttons (widget's and any external ones)
+            $('.clipboard').attr('data-clipboard-text', value);
+        });
+        
+        // Focus event - show progress bar when field is focused
+        $field.off('focus.passwordWidget').on('focus.passwordWidget', () => {
+            instance.state.isFocused = true;
+            // Show progress bar if there's a password value
+            const password = $field.val();
+            if (password && password !== '' && !this.isMaskedPassword(password)) {
+                if (instance.elements.$progressSection) {
+                    instance.elements.$progressSection.show();
+                }
+                // Trigger validation to update progress bar
+                if (options.validateOnInput) {
+                    this.validatePassword(instance, password);
                 }
             }
         });
+        
+        // Blur event - hide progress bar when field loses focus
+        $field.off('blur.passwordWidget').on('blur.passwordWidget', () => {
+            instance.state.isFocused = false;
+            // Hide only progress bar, keep warnings visible
+            if (instance.elements.$progressSection) {
+                instance.elements.$progressSection.hide();
+            }
+            // Never hide warnings on blur - they should remain visible
+        });
+    },
+    
+    
+    /**
+     * Disable widget
+     * @param {object} instance - Widget instance
+     */
+    disable(instance) {
+        instance.$field.prop('disabled', true);
+        if (instance.elements.$generateBtn) {
+            instance.elements.$generateBtn.prop('disabled', true);
+        }
+        instance.$container.addClass('disabled');
     },
     
     /**
-     * Handle password input
+     * Enable widget
+     * @param {object} instance - Widget instance
+     */
+    enable(instance) {
+        instance.$field.prop('disabled', false);
+        if (instance.elements.$generateBtn) {
+            instance.elements.$generateBtn.prop('disabled', false);
+        }
+        instance.$container.removeClass('disabled');
+    },
+    
+    /**
+     * Set read-only mode
+     * @param {object} instance - Widget instance
+     */
+    setReadOnly(instance) {
+        instance.$field.prop('readonly', true);
+        if (instance.elements.$generateBtn) {
+            instance.elements.$generateBtn.hide();
+        }
+    },
+    
+    /**
+     * Setup form validation
+     * @param {object} instance - Widget instance
+     */
+    setupFormValidation(instance) {
+        const { $field, options } = instance;
+        
+        // Skip if Form object is not available
+        if (typeof Form === 'undefined' || !Form.validateRules) {
+            return;
+        }
+        
+        const fieldName = $field.attr('name') || $field.attr('id');
+        if (!fieldName) {
+            return;
+        }
+        
+        // Use custom rules if provided
+        if (options.validationRules) {
+            Form.validateRules[fieldName] = options.validationRules;
+            return;
+        }
+        
+        // Create validation rules based on mode
+        const rules = [];
+        
+        // Add non-empty rule for hard validation
+        if (options.validation === this.VALIDATION.HARD) {
+            rules.push({
+                type: 'empty',
+                prompt: globalTranslate.pw_ValidatePasswordEmpty || 'Password cannot be empty'
+            });
+        }
+        
+        // Add strength validation
+        if (options.minScore > 0 && options.validation === this.VALIDATION.HARD) {
+            rules.push({
+                type: 'passwordStrength',
+                prompt: globalTranslate.pw_ValidatePasswordWeak || 'Password is too weak'
+            });
+        }
+        
+        if (rules.length > 0) {
+            Form.validateRules[fieldName] = {
+                identifier: fieldName,
+                rules: rules
+            };
+        }
+        
+        // Add custom validation rule for password strength
+        if (typeof $.fn.form.settings.rules.passwordStrength === 'undefined') {
+            $.fn.form.settings.rules.passwordStrength = () => {
+                return instance.state.score >= options.minScore;
+            };
+        }
+    },
+    
+    /**
+     * Check if password is masked (server returns these when password is hidden)
+     * @param {string} password - Password to check
+     * @returns {boolean} True if password appears to be masked
+     */
+    isMaskedPassword(password) {
+        return /^[xX]{6,}$|^\*{6,}$|^HIDDEN$|^MASKED$/i.test(password);
+    },
+    
+    /**
+     * Handle input event
      * @param {object} instance - Widget instance
      */
     handleInput(instance) {
         const { $field, options } = instance;
         const password = $field.val();
         
-        // Check if should validate
-        if (!this.shouldValidate(instance, password)) {
-            this.hideWarnings(instance);
-            if (instance.elements.$scoreSection) {
-                instance.elements.$scoreSection.hide();
-            }
+        // Skip validation if disabled
+        if (options.validation === this.VALIDATION.NONE) {
             return;
         }
         
-        // Show strength bar
-        if (instance.elements.$scoreSection) {
-            instance.elements.$scoreSection.show();
+        // Skip validation for masked passwords
+        if (this.isMaskedPassword(password)) {
+            this.clearValidation(instance);
+            return;
         }
         
-        // Validate password
-        this.validatePassword(instance, password);
-    },
-    
-    /**
-     * Check if password should be validated
-     * @param {object} instance - Widget instance
-     * @param {string} password - Password value
-     * @returns {boolean}
-     */
-    shouldValidate(instance, password) {
-        if (!password || password === 'xxxxxxx') {
-            return false;
+        // Clear generated flag when user types
+        instance.state.isGenerated = false;
+        
+        // Validate password only if field is focused
+        if (instance.state.isFocused) {
+            this.validatePassword(instance, password);
         }
-        
-        const { options } = instance;
-        
-        // Always validate generated passwords
-        if (instance.isGenerated) {
-            return true;
-        }
-        
-        // Check context-specific rules
-        if (options.context === 'provider') {
-            const registrationType = $('#registration_type').val();
-            if (registrationType === 'none') {
-                return true;
-            }
-            return !options.validateOnlyGenerated;
-        }
-        
-        return !options.validateOnlyGenerated;
     },
     
     /**
@@ -281,16 +554,167 @@ const PasswordWidget = {
     validatePassword(instance, password) {
         const { options } = instance;
         
-        // Use PasswordScore for validation
-        PasswordScore.checkPassStrength({
-            pass: password,
-            bar: instance.elements.$progressBar,
-            section: instance.elements.$scoreSection,
-            field: `${options.context}_${instance.id}`,
-            callback: (result) => {
+        // Handle empty password
+        if (!password || password === '') {
+            this.clearValidation(instance);
+            return;
+        }
+        
+        // Skip validation for masked passwords (server returns these when password is hidden)
+        // Common patterns: xxxxxxx, XXXXXXXX, *******, HIDDEN, etc.
+        if (this.isMaskedPassword(password)) {
+            this.clearValidation(instance);
+            return;
+        }
+        
+        // Show progress section only if field is focused
+        if (instance.elements.$progressSection && instance.state.isFocused) {
+            instance.elements.$progressSection.show();
+        }
+        
+        // Check cache first
+        const cacheKey = `${instance.fieldId}:${password}`;
+        if (this.validationCache[cacheKey]) {
+            this.handleValidationResult(instance, this.validationCache[cacheKey]);
+            return;
+        }
+        
+        // Clear existing timer
+        if (this.validationTimers[instance.fieldId]) {
+            clearTimeout(this.validationTimers[instance.fieldId]);
+        }
+        
+        // Show immediate local feedback
+        const localScore = this.scorePasswordLocal(password);
+        this.updateProgressBar(instance, localScore);
+        
+        // Debounce API call
+        this.validationTimers[instance.fieldId] = setTimeout(() => {
+            // Use API if available
+            if (typeof PasswordValidationAPI !== 'undefined') {
+                PasswordValidationAPI.validatePassword(password, instance.fieldId, (result) => {
+                    if (result) {
+                        // Cache result
+                        this.validationCache[cacheKey] = result;
+                        this.handleValidationResult(instance, result);
+                    }
+                });
+            } else {
+                // Use local validation
+                const result = {
+                    score: localScore,
+                    isValid: localScore >= options.minScore,
+                    strength: this.getStrengthLabel(localScore),
+                    messages: []
+                };
                 this.handleValidationResult(instance, result);
             }
+        }, 300);
+    },
+    
+    /**
+     * Calculate password score locally
+     * @param {string} password - Password to score
+     * @returns {number} Score from 0-100
+     */
+    scorePasswordLocal(password) {
+        let score = 0;
+        if (!password || password.length === 0) {
+            return score;
+        }
+        
+        const length = password.length;
+        
+        // Length scoring (up to 30 points)
+        if (length >= 16) {
+            score += 30;
+        } else if (length >= 12) {
+            score += 20;
+        } else if (length >= 8) {
+            score += 10;
+        } else if (length >= 6) {
+            score += 5;
+        }
+        
+        // Character diversity (up to 40 points)
+        if (/[a-z]/.test(password)) score += 10; // Lowercase
+        if (/[A-Z]/.test(password)) score += 10; // Uppercase
+        if (/\d/.test(password)) score += 10;     // Digits
+        if (/\W/.test(password)) score += 10;     // Special characters
+        
+        // Pattern complexity (up to 30 points)
+        const uniqueChars = new Set(password).size;
+        const uniqueRatio = uniqueChars / length;
+        
+        if (uniqueRatio > 0.7) {
+            score += 20;
+        } else if (uniqueRatio > 0.5) {
+            score += 15;
+        } else if (uniqueRatio > 0.3) {
+            score += 10;
+        } else {
+            score += 5;
+        }
+        
+        // Penalties for common patterns
+        if (/(.)\1{2,}/.test(password)) {
+            score -= 10; // Repeating characters
+        }
+        if (/(012|123|234|345|456|567|678|789|890|abc|bcd|cde|def)/i.test(password)) {
+            score -= 10; // Sequential patterns
+        }
+        
+        return Math.max(0, Math.min(100, score));
+    },
+    
+    /**
+     * Get strength label for score
+     * @param {number} score - Password score
+     * @returns {string} Strength label
+     */
+    getStrengthLabel(score) {
+        if (score < 20) return 'very_weak';
+        if (score < 40) return 'weak';
+        if (score < 60) return 'fair';
+        if (score < 80) return 'good';
+        return 'strong';
+    },
+    
+    /**
+     * Update progress bar
+     * @param {object} instance - Widget instance
+     * @param {number} score - Password score
+     */
+    updateProgressBar(instance, score) {
+        const { elements } = instance;
+        
+        if (!elements.$progressBar || elements.$progressBar.length === 0) {
+            return;
+        }
+        
+        // Update progress
+        elements.$progressBar.progress({
+            percent: Math.min(score, 100),
+            showActivity: false,
         });
+        
+        // Update color
+        elements.$progressBar
+            .removeClass('red orange yellow olive green')
+            .addClass(this.getColorForScore(score));
+    },
+    
+    /**
+     * Get color class for score
+     * @param {number} score - Password score
+     * @returns {string} Color class name
+     */
+    getColorForScore(score) {
+        if (score < 20) return 'red';
+        if (score < 40) return 'orange';
+        if (score < 60) return 'yellow';
+        if (score < 80) return 'olive';
+        return 'green';
     },
     
     /**
@@ -301,27 +725,41 @@ const PasswordWidget = {
     handleValidationResult(instance, result) {
         if (!result) return;
         
-        const { $container, options } = instance;
-        const $field = $container;
+        const { options } = instance;
         
-        // Update field state
-        $field.removeClass('error warning success');
+        // Update state
+        instance.state = {
+            isValid: result.isValid || result.score >= options.minScore,
+            score: result.score,
+            strength: result.strength || this.getStrengthLabel(result.score),
+            messages: result.messages || [],
+            isGenerated: instance.state.isGenerated
+        };
         
-        if (result.isDefault || result.isSimple || result.isInDictionary) {
-            $field.addClass('error');
-            if (options.showWarnings) {
-                this.showWarnings(instance, result, 'error');
-            }
-        } else if (!result.isValid || result.score < options.minScore) {
-            $field.addClass('warning');
-            if (options.showWarnings) {
-                this.showWarnings(instance, result, 'warning');
-            }
-        } else if (result.score >= 80) {
-            $field.addClass('success');
-            this.hideWarnings(instance);
+        // Update UI
+        this.updateProgressBar(instance, result.score);
+        
+        // Show warnings/errors
+        if (options.showWarnings && result.messages && result.messages.length > 0) {
+            const messageType = instance.state.isValid ? 'warning' : 'error';
+            this.showWarnings(instance, result, messageType);
         } else {
             this.hideWarnings(instance);
+        }
+        
+        // Call validation callback
+        if (options.onValidate) {
+            options.onValidate(instance.state.isValid, result.score, result.messages);
+        }
+        
+        // Update form validation state
+        if (Form && Form.$formObj) {
+            const fieldName = instance.$field.attr('name') || instance.$field.attr('id');
+            if (!instance.state.isValid && options.validation === this.VALIDATION.HARD) {
+                Form.$formObj.form('add prompt', fieldName, result.messages[0] || 'Invalid password');
+            } else {
+                Form.$formObj.form('remove prompt', fieldName);
+            }
         }
     },
     
@@ -330,32 +768,42 @@ const PasswordWidget = {
      * @param {object} instance - Widget instance
      */
     generatePassword(instance) {
-        const { $field, options } = instance;
-        const $btn = instance.elements.$generateBtn;
+        const { options } = instance;
         
-        if ($btn) {
-            $btn.addClass('loading');
+        // Show loading state
+        if (instance.elements.$generateBtn) {
+            instance.elements.$generateBtn.addClass('loading');
         }
+        
+        // Generate password
+        const generateCallback = (result) => {
+            const password = typeof result === 'string' ? result : result.password;
+            
+            // Set password
+            this.setGeneratedPassword(instance, password);
+            
+            // Remove loading state
+            if (instance.elements.$generateBtn) {
+                instance.elements.$generateBtn.removeClass('loading');
+            }
+            
+            // Call callback
+            if (options.onGenerate) {
+                options.onGenerate(password);
+            }
+        };
         
         // Use API if available
         if (typeof PasswordValidationAPI !== 'undefined') {
-            PasswordValidationAPI.generatePassword(options.generateLength, (result) => {
-                if ($btn) $btn.removeClass('loading');
-                
-                if (result && result.password) {
-                    this.setGeneratedPassword(instance, result.password);
-                }
-            });
+            PasswordValidationAPI.generatePassword(options.generateLength, generateCallback);
         } else {
-            // Fallback generation
+            // Simple local generator
             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
             let password = '';
             for (let i = 0; i < options.generateLength; i++) {
                 password += chars.charAt(Math.floor(Math.random() * chars.length));
             }
-            
-            if ($btn) $btn.removeClass('loading');
-            this.setGeneratedPassword(instance, password);
+            generateCallback(password);
         }
     },
     
@@ -365,32 +813,23 @@ const PasswordWidget = {
      * @param {string} password - Generated password
      */
     setGeneratedPassword(instance, password) {
-        const { $field, $container } = instance;
+        const { $field, $container, options } = instance;
         
-        // Set password
-        $field.val(password);
-        instance.isGenerated = true;
+        // Set value
+        $field.val(password).trigger('change');
+        instance.state.isGenerated = true;
         
-        // Hide warnings
-        this.hideWarnings(instance);
+        // Update all clipboard buttons (widget's and any external ones)
+        $('.clipboard').attr('data-clipboard-text', password);
         
-        // Show success state
-        if (instance.elements.$scoreSection) {
-            instance.elements.$scoreSection.show();
+        // Validate if needed
+        if (options.validation !== this.VALIDATION.NONE) {
+            this.validatePassword(instance, password);
         }
         
-        if (instance.elements.$progressBar) {
-            instance.elements.$progressBar
-                .removeClass('red orange yellow olive')
-                .addClass('green')
-                .progress('set percent', 100);
-        }
-        
-        $container.removeClass('error warning').addClass('success');
-        
-        // Mark form as changed
-        if (typeof Form !== 'undefined' && Form.checkValues) {
-            Form.checkValues();
+        // Trigger form change
+        if (typeof Form !== 'undefined' && Form.dataChanged) {
+            Form.dataChanged();
         }
     },
     
@@ -398,61 +837,40 @@ const PasswordWidget = {
      * Show warnings
      * @param {object} instance - Widget instance
      * @param {object} result - Validation result
-     * @param {string} type - Warning type
+     * @param {string} type - Message type (warning/error)
      */
     showWarnings(instance, result, type = 'warning') {
         if (!instance.elements.$warnings) return;
         
-        const $warnings = instance.elements.$warnings;
-        $warnings.empty()
-            .removeClass('negative warning info positive error success')
-            .addClass(type === 'error' ? 'negative' : type);
+        const { elements } = instance;
+        const colorClass = type === 'error' ? 'red' : 'orange';
         
-        let content = '';
+        // Clear existing warnings
+        elements.$warnings.empty();
         
-        if (result.isDefault) {
-            content = `
-                <div class="header">
-                    <i class="exclamation triangle icon"></i>
-                    ${globalTranslate.psw_DefaultPasswordWarning || 'Default Password Detected'}
+        // Add warnings as pointing label
+        if (result.messages && result.messages.length > 0) {
+            // Choose icon based on message type
+            const iconClass = type === 'error' ? 'exclamation circle' : 'exclamation triangle';
+            
+            // Create list items from messages with icons
+            const listItems = result.messages.map(msg => `
+                <div class="item">
+                    <i class="${iconClass} icon"></i>
+                    <div class="content">${msg}</div>
                 </div>
-                <p>${globalTranslate.psw_ChangeDefaultPassword || 'Please change the default password for security.'}</p>
-            `;
-        } else if (result.isSimple || result.isInDictionary) {
-            content = `
-                <div class="header">
-                    <i class="exclamation triangle icon"></i>
-                    ${globalTranslate.psw_WeakPassword || 'Weak Password'}
+            `).join('');
+            
+            // Create pointing above label with list (points to password field)
+            const $label = $(`
+                <div class="ui pointing ${colorClass} basic label">
+                    <div class="ui list">
+                        ${listItems}
+                    </div>
                 </div>
-                <p>${globalTranslate.psw_PasswordTooCommon || 'This password is too common and easily guessable.'}</p>
-            `;
-        } else if (result.messages && result.messages.length > 0) {
-            content = `
-                <div class="header">
-                    <i class="info circle icon"></i>
-                    ${globalTranslate.psw_PasswordRequirements || 'Password Requirements'}
-                </div>
-                <ul class="list">
-                    ${result.messages.map(msg => `<li>${msg}</li>`).join('')}
-                </ul>
-            `;
-        }
-        
-        // Add generate button suggestion for weak passwords
-        if ((result.score < 60 || !result.isValid) && type === 'error') {
-            content += `
-                <div class="ui divider"></div>
-                <p>
-                    <i class="idea icon"></i>
-                    ${globalTranslate.psw_UseGenerateButton || 'Use the generate button to create a strong password.'}
-                </p>
-            `;
-        }
-        
-        if (content) {
-            $warnings.html(content).show();
-        } else {
-            $warnings.hide();
+            `);
+            
+            elements.$warnings.append($label).show();
         }
     },
     
@@ -462,19 +880,265 @@ const PasswordWidget = {
      */
     hideWarnings(instance) {
         if (instance.elements.$warnings) {
-            instance.elements.$warnings.hide();
+            instance.elements.$warnings.empty().hide();
         }
-        instance.$container.removeClass('error warning success');
     },
     
     /**
-     * Check initial password
+     * Toggle password visibility
+     * @param {object} instance - Widget instance
+     */
+    togglePasswordVisibility(instance) {
+        const { $field } = instance;
+        const $showHideBtn = instance.elements.$showHideBtn;
+        
+        if (!$showHideBtn) return;
+        
+        const $icon = $showHideBtn.find('i');
+        
+        if ($field.attr('type') === 'password') {
+            // Show password
+            $field.attr('type', 'text');
+            $icon.removeClass('eye').addClass('eye slash');
+            $showHideBtn.attr('data-content', globalTranslate.bt_ToolTipHidePassword || 'Hide password');
+        } else {
+            // Hide password
+            $field.attr('type', 'password');
+            $icon.removeClass('eye slash').addClass('eye');
+            $showHideBtn.attr('data-content', globalTranslate.bt_ToolTipShowPassword || 'Show password');
+        }
+    },
+    
+    /**
+     * Clear validation
+     * @param {object} instance - Widget instance
+     */
+    clearValidation(instance) {
+        // Clear warnings when explicitly clearing validation (empty password)
+        this.hideWarnings(instance);
+        if (instance.elements.$progressSection) {
+            instance.elements.$progressSection.hide();
+        }
+        if (instance.elements.$progressBar) {
+            instance.elements.$progressBar.progress({ percent: 0 });
+        }
+        instance.state = {
+            isValid: true,
+            score: 0,
+            strength: '',
+            messages: [],
+            isGenerated: false,
+            isFocused: instance.state.isFocused || false
+        };
+    },
+    
+    /**
+     * Check password (manual validation)
      * @param {object} instance - Widget instance
      */
     checkPassword(instance) {
         const password = instance.$field.val();
-        if (this.shouldValidate(instance, password)) {
+        if (password && password !== '') {
+            // Skip validation for masked passwords
+            if (this.isMaskedPassword(password)) {
+                this.clearValidation(instance);
+                return;
+            }
+            // For initial check, don't show progress bar but do validate and show warnings
             this.validatePassword(instance, password);
+        }
+    },
+    
+    /**
+     * Update configuration
+     * @param {string|object} instanceOrFieldId - Instance or field ID
+     * @param {object} newOptions - New options
+     */
+    updateConfig(instanceOrFieldId, newOptions) {
+        const instance = typeof instanceOrFieldId === 'string' 
+            ? this.instances.get(instanceOrFieldId)
+            : instanceOrFieldId;
+            
+        if (!instance) {
+            console.warn('PasswordWidget: Instance not found');
+            return;
+        }
+        
+        // Update options
+        instance.options = { ...instance.options, ...newOptions };
+        
+        // Handle dynamic button visibility
+        if ('showPasswordButton' in newOptions) {
+            if (newOptions.showPasswordButton && !instance.elements.$showHideBtn) {
+                // Add button if it doesn't exist
+                this.addShowHideButton(instance);
+                // Re-bind events for the new button
+                if (instance.elements.$showHideBtn) {
+                    instance.elements.$showHideBtn.off('click.passwordWidget').on('click.passwordWidget', (e) => {
+                        e.preventDefault();
+                        this.togglePasswordVisibility(instance);
+                    });
+                }
+            } else if (!newOptions.showPasswordButton && instance.elements.$showHideBtn) {
+                // Remove button if it exists
+                instance.elements.$showHideBtn.remove();
+                delete instance.elements.$showHideBtn;
+            }
+        }
+        
+        // Handle generate button visibility
+        if ('generateButton' in newOptions) {
+            if (newOptions.generateButton && !instance.elements.$generateBtn) {
+                // Add button if it doesn't exist
+                this.addGenerateButton(instance);
+                // Re-bind events for the new button
+                if (instance.elements.$generateBtn) {
+                    instance.elements.$generateBtn.off('click.passwordWidget').on('click.passwordWidget', (e) => {
+                        e.preventDefault();
+                        this.generatePassword(instance);
+                    });
+                    // Initialize popup
+                    instance.elements.$generateBtn.popup();
+                }
+            } else if (!newOptions.generateButton && instance.elements.$generateBtn) {
+                // Remove button if it exists
+                instance.elements.$generateBtn.remove();
+                delete instance.elements.$generateBtn;
+            }
+        }
+        
+        // Handle clipboard button visibility
+        if ('clipboardButton' in newOptions) {
+            if (newOptions.clipboardButton && !instance.elements.$clipboardBtn) {
+                // Add button if it doesn't exist
+                this.addClipboardButton(instance);
+                // Re-initialize clipboard for the new button
+                if (instance.elements.$clipboardBtn && typeof ClipboardJS !== 'undefined') {
+                    // Initialize ClipboardJS for the button
+                    if (instance.clipboard) {
+                        instance.clipboard.destroy();
+                    }
+                    instance.clipboard = new ClipboardJS(instance.elements.$clipboardBtn[0]);
+                    
+                    // Initialize popup for clipboard button
+                    instance.elements.$clipboardBtn.popup({
+                        on: 'manual',
+                    });
+                    
+                    // Handle successful copy
+                    instance.clipboard.on('success', (e) => {
+                        instance.elements.$clipboardBtn.popup('show');
+                        setTimeout(() => {
+                            instance.elements.$clipboardBtn.popup('hide');
+                        }, 1500);
+                        e.clearSelection();
+                    });
+                    
+                    // Handle copy error
+                    instance.clipboard.on('error', (e) => {
+                        console.error('Clipboard error:', e.action, e.trigger);
+                    });
+                }
+            } else if (!newOptions.clipboardButton && instance.elements.$clipboardBtn) {
+                // Remove button if it exists
+                if (instance.clipboard) {
+                    instance.clipboard.destroy();
+                    delete instance.clipboard;
+                }
+                instance.elements.$clipboardBtn.remove();
+                delete instance.elements.$clipboardBtn;
+            }
+        }
+        
+        // Handle strength bar visibility
+        if ('showStrengthBar' in newOptions) {
+            if (newOptions.showStrengthBar) {
+                this.showStrengthBar(instance);
+            } else {
+                this.hideStrengthBar(instance);
+            }
+        }
+        
+        // Handle warnings visibility
+        if ('showWarnings' in newOptions) {
+            if (newOptions.showWarnings) {
+                this.showWarnings(instance);
+            } else {
+                this.hideWarnings(instance);
+            }
+        }
+        
+        // Update input wrapper action class based on button visibility
+        this.updateInputWrapperClass(instance);
+        
+        // Re-setup form validation if needed
+        if (instance.options.validation !== this.VALIDATION.NONE) {
+            this.setupFormValidation(instance);
+        }
+        
+        // Check current value if validation changed
+        if ('validation' in newOptions && instance.$field.val()) {
+            this.checkPassword(instance);
+        }
+    },
+    
+    /**
+     * Update input wrapper action class based on button visibility
+     * @param {object} instance - Widget instance
+     */
+    updateInputWrapperClass(instance) {
+        const $inputWrapper = instance.$field.closest('.ui.input');
+        const hasButtons = !!(
+            instance.elements.$showHideBtn || 
+            instance.elements.$generateBtn || 
+            instance.elements.$clipboardBtn
+        );
+        
+        if (hasButtons) {
+            $inputWrapper.addClass('action');
+        } else {
+            $inputWrapper.removeClass('action');
+        }
+    },
+    
+    /**
+     * Get widget state
+     * @param {string|object} instanceOrFieldId - Instance or field ID
+     * @returns {object|null} Widget state
+     */
+    getState(instanceOrFieldId) {
+        const instance = typeof instanceOrFieldId === 'string' 
+            ? this.instances.get(instanceOrFieldId)
+            : instanceOrFieldId;
+            
+        return instance ? instance.state : null;
+    },
+    
+    /**
+     * Show strength bar
+     * @param {string|object} instanceOrFieldId - Instance or field ID
+     */
+    showStrengthBar(instanceOrFieldId) {
+        const instance = typeof instanceOrFieldId === 'string' 
+            ? this.instances.get(instanceOrFieldId)
+            : instanceOrFieldId;
+            
+        if (instance && instance.elements.$progressSection) {
+            instance.elements.$progressSection.show();
+        }
+    },
+    
+    /**
+     * Hide strength bar
+     * @param {string|object} instanceOrFieldId - Instance or field ID
+     */
+    hideStrengthBar(instanceOrFieldId) {
+        const instance = typeof instanceOrFieldId === 'string' 
+            ? this.instances.get(instanceOrFieldId)
+            : instanceOrFieldId;
+            
+        if (instance && instance.elements.$progressSection) {
+            instance.elements.$progressSection.hide();
         }
     },
     
@@ -491,13 +1155,20 @@ const PasswordWidget = {
         if (instance.elements.$generateBtn) {
             instance.elements.$generateBtn.off('.passwordWidget');
         }
-        
-        // Remove elements
-        if (instance.elements.$warnings) {
-            instance.elements.$warnings.remove();
+        if (instance.elements.$showHideBtn) {
+            instance.elements.$showHideBtn.off('.passwordWidget');
         }
-        if (instance.elements.$scoreSection) {
-            instance.elements.$scoreSection.remove();
+        
+        // Destroy clipboard instance
+        if (instance.clipboard) {
+            instance.clipboard.destroy();
+            delete instance.clipboard;
+        }
+        
+        // Clear timer
+        if (this.validationTimers[fieldId]) {
+            clearTimeout(this.validationTimers[fieldId]);
+            delete this.validationTimers[fieldId];
         }
         
         // Remove instance
@@ -505,14 +1176,19 @@ const PasswordWidget = {
     },
     
     /**
-     * Destroy all widget instances
+     * Destroy all instances
      */
     destroyAll() {
         this.instances.forEach((instance, fieldId) => {
             this.destroy(fieldId);
         });
+        this.validationCache = {};
+    },
+    
+    /**
+     * Clear validation cache
+     */
+    clearCache() {
+        this.validationCache = {};
     }
 };
-
-// Export for use in other modules
-// export default PasswordWidget;
