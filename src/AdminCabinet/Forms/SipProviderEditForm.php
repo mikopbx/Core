@@ -126,7 +126,8 @@ class SipProviderEditForm extends BaseForm
         // Manualattributes
         $placeholderText = "[registration-auth]\nusername=962xxxxx030@ip.beeline.ru\n\n[endpoint-auth]\nusername=962xxxxx030@ip.beeline.ru";
         $this->addTextArea('manualattributes', $entity->getManualAttributes() ?? '', 65, [
-            'placeholder' => $placeholderText
+            'placeholder' => $placeholderText,
+            'skipEscaping' => true  // Technical configuration field - preserve special characters
         ]);
 
         // Note

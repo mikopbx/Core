@@ -182,7 +182,8 @@ class ExtensionEditForm extends BaseForm
         // SIP Manualattributes
         $placeholderText = "[endpoint]\ndevice_state_busy_at = 10\n\n[aor]\nmax_contacts = 5";
         $this->addTextArea('sip_manualattributes', base64_decode($entity->sip_manualattributes) ?? '', 80, [
-            'placeholder' => $placeholderText
+            'placeholder' => $placeholderText,
+            'skipEscaping' => true  // Technical configuration field - preserve special characters
         ]);
 
         // EXTERNAL Extension

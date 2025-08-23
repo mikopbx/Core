@@ -99,7 +99,8 @@ class IaxProviderEditForm extends BaseForm
         // Manualattributes
         $placeholderText = "language = ru\ncodecpriority = host\ntrunktimestamps = yes\ntrunk = yes";
         $this->addTextArea('manualattributes', $entity->getManualAttributes() ?? '', 80, [
-            'placeholder' => $placeholderText
+            'placeholder' => $placeholderText,
+            'skipEscaping' => true  // Technical configuration field - preserve special characters
         ]);
 
         // Note

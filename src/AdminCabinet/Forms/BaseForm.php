@@ -47,6 +47,7 @@ abstract class BaseForm extends Form
      * @param string $areaValue The initial value for the textarea field.
      * @param int $areaWidth The width of the textarea field in columns (optional, default: 85).
      * @param array $options Additional options for TextArea element
+     *                       Special option 'skipEscaping' can be used for technical configuration fields
      * @return void
      */
     public function addTextArea(string $areaName, string $areaValue, int $areaWidth = 90, array $options = []): void
@@ -66,7 +67,15 @@ abstract class BaseForm extends Form
         
         // SECURITY: Escape HTML content to prevent XSS attacks in textarea values
         // Use SecurityHelper to properly escape HTML while preserving user content integrity
-        $options["value"] = SecurityHelper::escapeHtml($areaValue);
+        // Skip escaping for technical configuration fields that may contain special characters
+        $skipEscaping = $options['skipEscaping'] ?? false;
+        unset($options['skipEscaping']); // Remove from options to avoid passing to TextArea
+        
+        if ($skipEscaping) {
+            $options["value"] = $areaValue;
+        } else {
+            $options["value"] = SecurityHelper::escapeHtml($areaValue);
+        }
         
         $this->add(new TextArea($areaName, $options));
     }
