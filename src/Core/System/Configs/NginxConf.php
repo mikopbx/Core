@@ -29,6 +29,7 @@ use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\DockerNetworkFilterService;
 use MikoPBX\Core\System\Network;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\SslCertificateService;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
@@ -173,14 +174,13 @@ class NginxConf extends SystemConfigClass
 
     /**
      * Writes additional settings to the nginx.conf.
-     *
-     * @param bool $not_ssl Whether to generate the configuration for non-SSL.
-     * @param int $level The recursion level.
+     * Always configures both HTTP and HTTPS with valid certificates.
      *
      * @return void
      */
-    public function generateConf(bool $not_ssl = false, int $level = 0): void
+    public function generateConf(): void
     {
+        
         $dns_server      = '127.0.0.1';
 
         $net = new Network();
@@ -219,7 +219,7 @@ class NginxConf extends SystemConfigClass
         $config = str_replace($placeholders, $replacementValues, $config);
 
         $RedirectToHttps = PbxSettings::getValueByKey(PbxSettings::REDIRECT_TO_HTTPS);
-        if ($RedirectToHttps === '1' && $not_ssl === false) {
+        if ($RedirectToHttps === '1') {
             $includeRow = 'include mikopbx/locations/*.conf;';
 
             $conf_data = 'if ( $remote_addr != "127.0.0.1" ) {' . PHP_EOL
@@ -230,18 +230,12 @@ class NginxConf extends SystemConfigClass
         }
         file_put_contents(self::CONF_PATH, $config);
 
-        // SSL
-        $WEBHTTPSPublicKey  = PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PUBLIC_KEY);
-        $WEBHTTPSPrivateKey = PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PRIVATE_KEY);
-        if (
-            $not_ssl === false
-            && ! empty($WEBHTTPSPublicKey)
-            && ! empty($WEBHTTPSPrivateKey)
-        ) {
-            $public_filename  = '/etc/ssl/certs/nginx.crt';
-            $private_filename = '/etc/ssl/private/nginx.key';
-            file_put_contents($public_filename, $WEBHTTPSPublicKey);
-            file_put_contents($private_filename, $WEBHTTPSPrivateKey);
+        // SSL Configuration - Always enable HTTPS with valid certificates
+        // Prepare SSL certificates (will use user-provided or fallback)
+        $certInfo = SslCertificateService::prepareNginxCertificates();
+        
+        if (!empty($certInfo['certPath']) && !empty($certInfo['keyPath'])) {
+            // We have valid certificates, configure SSL
             $config = file_get_contents(self::CONF_PATH_SSL . ".original");
 
             // Add dynamic security filtering via Lua when firewall is enabled (SSL)
@@ -264,18 +258,20 @@ class NginxConf extends SystemConfigClass
             $config = str_replace($placeholders, $replacementValues, $config);
 
             file_put_contents(self::CONF_PATH_SSL, $config);
-        } elseif (file_exists(self::CONF_PATH_SSL)) {
-            unlink(self::CONF_PATH_SSL);
+            
+            if ($certInfo['usedFallback']) {
+                SystemMessages::sysLogMsg(self::PROC_NAME, 'HTTPS configured with self-signed fallback certificates', LOG_INFO);
+            } else {
+                SystemMessages::sysLogMsg(self::PROC_NAME, 'HTTPS configured with user-provided certificates', LOG_INFO);
+            }
+        } else {
+            // Failed to prepare any certificates - this should rarely happen
+            SystemMessages::sysLogMsg(self::PROC_NAME, 'Failed to prepare SSL certificates, HTTPS will be disabled', LOG_ERR);
+            if (file_exists(self::CONF_PATH_SSL)) {
+                unlink(self::CONF_PATH_SSL);
+            }
         }
-
-        // Test work
-        $currentConfigIsGood = $this->testCurrentNginxConfig();
-        if ($level < 1 && ! $currentConfigIsGood) {
-            ++$level;
-            SystemMessages::sysLogMsg(self::PROC_NAME, 'Failed test config file. SSL will be disable...', LOG_ERR);
-            $this->generateConf(true, $level);
-        }
-        // Add additional rules from modules
+        // Test configuration for module locations
         $this->generateModulesConfigs();
     }
 
@@ -362,6 +358,7 @@ class NginxConf extends SystemConfigClass
         return true;
     }
 
+
     /**
      * Tests the current nginx config for errors.
      *
@@ -370,11 +367,17 @@ class NginxConf extends SystemConfigClass
     private function testCurrentNginxConfig(): bool
     {
         $nginx = Util::which(self::PROC_NAME);
-        $out       = [];
-        Processes::mwExec("$nginx -t", $out);
-        $res = implode($out);
-
-        return false === stripos($res, 'test failed');
+        $out = [];
+        
+        Processes::mwExec("$nginx -t 2>&1", $out);
+        $res = implode(' ', $out);
+        
+        if (stripos($res, 'test is successful') !== false || stripos($res, 'syntax is ok') !== false) {
+            return true;
+        }
+        
+        SystemMessages::sysLogMsg(self::PROC_NAME, "Nginx config test failed: $res", LOG_ERR);
+        return false;
     }
 
     /**

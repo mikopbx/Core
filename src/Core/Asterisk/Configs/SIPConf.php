@@ -36,7 +36,7 @@ use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\AstDB;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\IncomingContexts;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\CallerIdDidProcessor;
-use MikoPBX\Core\System\{ Network, Processes, SystemMessages, Util};
+use MikoPBX\Core\System\{ Network, Processes, SslCertificateService, SystemMessages, Util};
 use MikoPBX\Core\Utilities\SubnetCalculator;
 use MikoPBX\Core\System\Directories;
 use Throwable;
@@ -728,24 +728,33 @@ class SIPConf extends AsteriskConfigClass
             "$typeTransport\n" .
             "protocol = tcp\n" .
             "bind=0.0.0.0:$sipPort\n" .
-            "$natConf\n\n" .
-
-            "[transport-tls]\n" .
-            "$typeTransport\n" .
-            "protocol = tls\n" .
-            "bind=0.0.0.0:$tlsPort\n" .
-            "cert_file=/etc/asterisk/keys/ajam.pem\n" .
-            "priv_key_file=/etc/asterisk/keys/ajam.pem\n" .
-            // "ca_list_file=/etc/ssl/certs/ca-certificates.crt\n".
-            // "verify_server=yes\n".
-            "method=sslv23\n" .
-            "$tlsNatConf\n\n" .
-
-            "[transport-wss]\n" .
-            "$typeTransport\n" .
-            "protocol = wss\n" .
-            "bind=0.0.0.0:$sipPort\n" .
             "$natConf\n\n";
+
+        // Get unified certificates for TLS/WSS transports
+        $certs = SslCertificateService::prepareAsteriskCertificates('asterisk-pjsip');
+        
+        // Only add TLS transport if certificates are available
+        if (!empty($certs['certPath']) && !empty($certs['keyPath'])) {
+            $conf .= "[transport-tls]\n" .
+                "$typeTransport\n" .
+                "protocol = tls\n" .
+                "bind=0.0.0.0:$tlsPort\n" .
+                "cert_file={$certs['certPath']}\n" .
+                "priv_key_file={$certs['keyPath']}\n" .
+                // "ca_list_file=/etc/ssl/certs/ca-certificates.crt\n".
+                // "verify_server=yes\n".
+                "method=sslv23\n" .
+                "$tlsNatConf\n\n";
+                
+            // Only add WSS transport if certificates are available (for WebRTC)
+            $conf .= "[transport-wss]\n" .
+                "$typeTransport\n" .
+                "protocol = wss\n" .
+                "bind=0.0.0.0:$sipPort\n" .
+                "cert_file={$certs['certPath']}\n" .
+                "priv_key_file={$certs['keyPath']}\n" .
+                "$natConf\n\n";
+        }
 
         $allowGuestCalls = PbxSettings::getValueByKey(PbxSettings::PBX_ALLOW_GUEST_CALLS);
         if ($allowGuestCalls === '1') {

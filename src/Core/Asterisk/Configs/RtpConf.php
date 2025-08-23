@@ -21,6 +21,7 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\System\SslCertificateService;
 
 /**
  * Class RtpConf
@@ -43,19 +44,37 @@ class RtpConf extends AsteriskConfigClass
     protected function generateConfigProtected(): void
     {
         $stunConfig = '';
-        $stun = trim(PbxSettings::getValueByKey(PbxSettings::RTP_STUN_SERVER)??'');
+        $stun = trim(PbxSettings::getValueByKey(PbxSettings::RTP_STUN_SERVER));
         if(!empty($stun)){
             $stunConfig = "stunaddr=$stun".PHP_EOL;
         }
 
-        $rtpStart = PbxSettings::getValueByKey(PbxSettings::RTP_PORT_FROM)??'10000';
-        $rtpEnd = PbxSettings::getValueByKey(PbxSettings::RTP_PORT_TO)??'10200';
+        $rtpStart = PbxSettings::getValueByKey(PbxSettings::RTP_PORT_FROM);
+        $rtpEnd = PbxSettings::getValueByKey(PbxSettings::RTP_PORT_TO);
 
         $conf = "[general]\n" .
             $stunConfig.
             "rtpstart={$rtpStart}".PHP_EOL.
-            "rtpend={$rtpEnd}".PHP_EOL.
-            PHP_EOL;
+            "rtpend={$rtpEnd}".PHP_EOL;
+            
+        // Add DTLS configuration for WebRTC if enabled
+        $useWebRTC = PbxSettings::getValueByKey(PbxSettings::USE_WEB_RTC);
+        if ($useWebRTC === '1') {
+            // Prepare certificates for DTLS
+            $certs = SslCertificateService::prepareAsteriskCertificates('asterisk-rtp-dtls');
+            
+            if (!empty($certs['certPath']) && !empty($certs['keyPath'])) {
+                $conf .= PHP_EOL .
+                    "; DTLS configuration for WebRTC\n" .
+                    "dtlsenable=yes".PHP_EOL.
+                    "dtlscertfile={$certs['certPath']}".PHP_EOL.
+                    "dtlsprivatekey={$certs['keyPath']}".PHP_EOL.
+                    "dtlssetup=actpass".PHP_EOL.
+                    "dtlsverify=no".PHP_EOL;
+            }
+        }
+        
+        $conf .= PHP_EOL;
 
         // Write the configuration content to the file
         $this->saveConfig($conf, $this->description);

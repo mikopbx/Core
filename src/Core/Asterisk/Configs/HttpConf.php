@@ -20,7 +20,7 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\SslCertificateService;
 
 /**
  * Class HttpConf
@@ -54,24 +54,15 @@ class HttpConf extends AsteriskConfigClass
             "prefix=asterisk".PHP_EOL .
             "enablestatic=yes".PHP_EOL.PHP_EOL;
         if ( ! empty($tlsPort)) {
-            $keys_dir = '/etc/asterisk/keys';
-            Util::mwMkdir($keys_dir);
-            $publicKey  = PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PUBLIC_KEY);
-            $privateKey = PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PRIVATE_KEY);
-
-            if ( ! empty($publicKey) && ! empty($privateKey)) {
-                $s_data = "".$publicKey.PHP_EOL.
-                             $privateKey;
-            } else {
-                // Generate SSL certificate
-                $data   = Util::generateSslCert();
-                $s_data = implode("\n", $data);
+            // Use unified Asterisk certificate preparation
+            $certs = SslCertificateService::prepareAsteriskCertificates('asterisk-http');
+            
+            if (!empty($certs['certPath']) && !empty($certs['keyPath'])) {
+                $conf .= "tlsenable=$enabled" . PHP_EOL.
+                    "tlsbindaddr=0.0.0.0:{$tlsPort}".PHP_EOL.
+                    "tlscertfile={$certs['certPath']}".PHP_EOL.
+                    "tlsprivatekey={$certs['keyPath']}".PHP_EOL;
             }
-            $conf .= "tlsenable=$enabled" . PHP_EOL.
-                "tlsbindaddr=0.0.0.0:{$tlsPort}".PHP_EOL.
-                "tlscertfile=$keys_dir/ajam.pem".PHP_EOL.
-                "tlsprivatekey=$keys_dir/ajam.pem".PHP_EOL;
-            Util::fileWriteContent("$keys_dir/ajam.pem", $s_data);
         }
         $this->saveConfig($conf, $this->description);
     }

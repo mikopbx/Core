@@ -24,6 +24,7 @@ namespace MikoPBX\PBXCoreREST\Lib\GeneralSettings;
 use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\SoundFiles;
+use MikoPBX\Core\System\SslCertificateService;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractGetRecordAction;
 use MikoPBX\PBXCoreREST\Lib\Common\FieldTypeResolver;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
@@ -318,7 +319,7 @@ class GetSettingsAction extends AbstractGetRecordAction
                 // Return certificate with parsed info
                 $result[$key] = $value;
                 if (!empty($value)) {
-                    $result[$key . '_info'] = self::parseCertificateInfo($value);
+                    $result[$key . '_info'] = SslCertificateService::parseCertificateInfo($value);
                 }
             } elseif ($key === PbxSettings::WEB_HTTPS_PRIVATE_KEY) {
                 // Use password masking for private key
@@ -363,83 +364,6 @@ class GetSettingsAction extends AbstractGetRecordAction
         return $settings;
     }
     
-    /**
-     * Parse certificate information for display
-     * 
-     * @param string $certPem PEM formatted certificate
-     * @return array Certificate information or empty array on failure
-     */
-    private static function parseCertificateInfo(string $certPem): array
-    {
-        try {
-            // Parse the certificate using OpenSSL functions
-            $cert = openssl_x509_parse($certPem);
-            
-            if ($cert === false) {
-                return ['error' => 'Invalid certificate format'];
-            }
-            
-            // Extract useful information
-            $info = [
-                'subject' => '',
-                'issuer' => '',
-                'valid_from' => '',
-                'valid_to' => '',
-                'is_expired' => false,
-                'days_until_expiry' => 0,
-                'san' => [] // Subject Alternative Names
-            ];
-            
-            // Extract subject (CN - Common Name)
-            if (isset($cert['subject']['CN'])) {
-                $info['subject'] = $cert['subject']['CN'];
-            } elseif (isset($cert['subject']['O'])) {
-                $info['subject'] = $cert['subject']['O']; // Organization as fallback
-            }
-            
-            // Extract issuer
-            if (isset($cert['issuer']['CN'])) {
-                $info['issuer'] = $cert['issuer']['CN'];
-            } elseif (isset($cert['issuer']['O'])) {
-                $info['issuer'] = $cert['issuer']['O'];
-            }
-            
-            // Format validity dates
-            if (isset($cert['validFrom_time_t'])) {
-                $info['valid_from'] = date('Y-m-d', $cert['validFrom_time_t']);
-            }
-            
-            if (isset($cert['validTo_time_t'])) {
-                $info['valid_to'] = date('Y-m-d', $cert['validTo_time_t']);
-                
-                // Check if expired and calculate days until expiry
-                $now = time();
-                $info['is_expired'] = $cert['validTo_time_t'] < $now;
-                $info['days_until_expiry'] = (int)ceil(($cert['validTo_time_t'] - $now) / 86400);
-            }
-            
-            // Extract Subject Alternative Names (SANs) if present
-            if (isset($cert['extensions']['subjectAltName'])) {
-                // Parse SAN string like "DNS:*.example.com, DNS:example.com"
-                $sanString = $cert['extensions']['subjectAltName'];
-                preg_match_all('/DNS:([^,\s]+)/', $sanString, $matches);
-                if (!empty($matches[1])) {
-                    $info['san'] = $matches[1];
-                }
-            }
-            
-            // Determine if self-signed
-            $info['is_self_signed'] = false;
-            if (isset($cert['subject']) && isset($cert['issuer'])) {
-                $info['is_self_signed'] = $cert['subject'] === $cert['issuer'];
-            }
-            
-            return $info;
-            
-        } catch (\Exception $e) {
-            return ['error' => 'Failed to parse certificate: ' . $e->getMessage()];
-        }
-    }
     
     /**
      * Check if current passwords are default values
@@ -497,6 +421,7 @@ class GetSettingsAction extends AbstractGetRecordAction
         $audioPriority = 0;
         $videoPriority = 0;
         
+        /** @var Codecs[] $codecs */
         foreach ($codecs as $codec) {
             // Assign sequential priority based on order in result set
             if ($codec->type === 'audio') {

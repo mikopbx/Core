@@ -505,6 +505,8 @@ class Util
     /**
      * Generates an SSL certificate.
      *
+     * @deprecated Since 2025.1.0, use SslCertificateService::generateSelfSignedCertificate() instead
+     * 
      * @param array|null $options The options for the certificate (default: null).
      * @param array|null $config_args_pkey The configuration arguments for the private key (default: null).
      * @param array|null $config_args_csr The configuration arguments for the CSR (default: null).
@@ -513,43 +515,8 @@ class Util
      */
     public static function generateSslCert(?array $options = null, ?array $config_args_pkey = null, ?array $config_args_csr = null): array
     {
-        // Initialize options if not provided
-        if (!$options) {
-            $options = [
-                "countryName" => 'RU',
-                "stateOrProvinceName" => 'Moscow',
-                "localityName" => 'Zelenograd',
-                "organizationName" => 'MIKO LLC',
-                "organizationalUnitName" => 'Software development',
-                "commonName" => 'MIKO PBX',
-                "emailAddress" => 'info@miko.ru',
-            ];
-        }
-
-        // Initialize CSR configuration arguments if not provided
-        if (!$config_args_csr) {
-            $config_args_csr = ['digest_alg' => 'sha256'];
-        }
-
-        // Initialize private key configuration arguments if not provided
-        if (!$config_args_pkey) {
-            $config_args_pkey = [
-                "private_key_bits" => 2048,
-                "private_key_type" => OPENSSL_KEYTYPE_RSA,
-            ];
-        }
-
-        // Generate keys
-        $private_key = openssl_pkey_new($config_args_pkey);
-        $csr = openssl_csr_new($options, /** @scrutinizer ignore-type */$private_key, $config_args_csr);
-        $x509 = openssl_csr_sign($csr, null, $private_key, $days = 3650, $config_args_csr);
-
-        // Export keys
-        openssl_x509_export($x509, $certout);
-        openssl_pkey_export($private_key, $pkeyout);
-        // echo $pkeyout; // -> WEBHTTPSPrivateKey
-        // echo $certout; // -> WEBHTTPSPublicKey
-        return ['PublicKey' => $certout, 'PrivateKey' => $pkeyout];
+        // Delegate to the new SslCertificateService
+        return SslCertificateService::generateSelfSignedCertificate($options, $config_args_pkey, $config_args_csr);
     }
 
     /**
