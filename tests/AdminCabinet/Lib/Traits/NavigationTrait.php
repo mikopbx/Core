@@ -77,10 +77,19 @@ trait NavigationTrait
         $this->logTestAction("Click modify button", ['text' => $text]);
 
         try {
-            // Combined XPath pattern for both class="row" and role="row"
+            // Combined XPath patterns for different table structures:
+            // 1. Legacy tables with class="row" and direct text
+            // 2. Legacy tables with role="row" and direct text  
+            // 3. DataTable with text in any child element (including <strong>)
+            // 4. DataTable with edit button having class "edit"
+            // 5. DataTable with text anywhere in the cell (including after <strong> in angle brackets)
             $xpath = sprintf(
                 '//td[contains(text(),"%1$s")]/parent::tr[contains(@class, "row")]//a[contains(@href,"modify")] | ' .
-                '//td[contains(text(),"%1$s")]/parent::tr[contains(@role, "row")]//a[contains(@href,"modify")]',
+                '//td[contains(text(),"%1$s")]/parent::tr[contains(@role, "row")]//a[contains(@href,"modify")] | ' .
+                '//td[descendant-or-self::*[contains(text(),"%1$s")]]/parent::tr//a[contains(@class,"edit")] | ' .
+                '//td[descendant-or-self::*[contains(text(),"%1$s")]]/parent::tr//a[contains(@href,"modify")] | ' .
+                '//td[contains(.,"%1$s")]/parent::tr//a[contains(@class,"edit")] | ' .
+                '//td[contains(.,"%1$s")]/parent::tr//a[contains(@href,"modify")]',
                 $text
             );
             
@@ -111,10 +120,19 @@ trait NavigationTrait
         $this->logTestAction("Click delete button", ['text' => $text, 'confirm' => $confirmDelete]);
 
         try {
-            // Combined XPath pattern for both class="row" and role="row"
+            // Combined XPath patterns for different table structures:
+            // 1. Legacy tables with class="row" and direct text
+            // 2. Legacy tables with role="row" and direct text
+            // 3. DataTable with text in any child element (including <strong>)
+            // 4. DataTable with delete button having class "delete"
+            // 5. DataTable with text anywhere in the cell (including after <strong> in angle brackets)
             $xpath = sprintf(
                 '//td[contains(text(),"%1$s")]/ancestor::tr[contains(@class, "row")]//a[contains(@href,"delete")] | ' .
-                '//td[contains(text(),"%1$s")]/ancestor::tr[contains(@role, "row")]//a[contains(@href,"delete")]',
+                '//td[contains(text(),"%1$s")]/ancestor::tr[contains(@role, "row")]//a[contains(@href,"delete")] | ' .
+                '//td[descendant-or-self::*[contains(text(),"%1$s")]]/parent::tr//a[contains(@class,"delete")] | ' .
+                '//td[descendant-or-self::*[contains(text(),"%1$s")]]/parent::tr//a[contains(@href,"delete")] | ' .
+                '//td[contains(.,"%1$s")]/parent::tr//a[contains(@class,"delete")] | ' .
+                '//td[contains(.,"%1$s")]/parent::tr//a[contains(@href,"delete")]',
                 $text
             );
 
