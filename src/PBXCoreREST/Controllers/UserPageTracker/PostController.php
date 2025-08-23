@@ -46,10 +46,8 @@ class PostController extends BaseController
      */
     public function callAction(string $actionName): void
     {
-        $data = $this->request->getRawBody();
-        $data = json_decode($data, true)??[];
-        $data = self::sanitizeData($data, $this->filter);
-        if (empty($data)) {
+        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
+        if (empty( $requestData)) {
             $this->response->setStatusCode(400, 'Bad Request');
             $this->response->setJsonContent(['error' => 'Invalid request data']);
             $this->response->send();
@@ -57,8 +55,8 @@ class PostController extends BaseController
         }
 
         $userId = session_id();  
-        $pageName = $data['pageName'];
-        $expire = $data['expire']??300;
+        $pageName =  $requestData['pageName'];
+        $expire =  $requestData['expire']??300;
 
         // Use unified page tracker mechanism
         $pageTracker = new UserPageTrackerLib();

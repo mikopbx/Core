@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global PbxApi */
+/* global UserPageTrackerAPI */
 
 /**
  * User Page Tracker module.
@@ -63,7 +63,7 @@ const userPageTracker = {
      */
     sendHeartbeat() {
         if (!this.currentPage) return;
-        PbxApi.UserPageTrackerPageView(this.currentPage);
+        UserPageTrackerAPI.UserPageTrackerPageView(this.currentPage);
     },
 
     /**
@@ -75,7 +75,7 @@ const userPageTracker = {
         }
         
         if (this.currentPage) {
-            PbxApi.UserPageTrackerPageLeave(this.currentPage);
+            UserPageTrackerAPI.UserPageTrackerPageLeave(this.currentPage);
             this.currentPage = null;
         }
     },

@@ -120,10 +120,6 @@ const PbxApi = {
     // Users
     usersAvailable: `${Config.pbxUrl}/pbxcore/api/users/available?email={email}`, // Checks the email uniqueness.
 
-    // User Page Tracker
-    userPageTrackerPageView: `${Config.pbxUrl}/pbxcore/api/user-page-tracker/pageView`, // Tracks the page view.
-    userPageTrackerPageLeave: `${Config.pbxUrl}/pbxcore/api/user-page-tracker/pageLeave`, // Tracks the page leave.
-
     // Call queues
     callQueuesDeleteRecord: `${Config.pbxUrl}/pbxcore/api/call-queues/deleteRecord`, // Deletes the call queue record with its dependent tables.
 
@@ -1543,30 +1539,6 @@ const PbxApi = {
                 callback('');
             }
         });
-    },
-
-    /**
-     * Tracks the page view.
-     *
-     * @param {string} pageName - The name of the page to track.
-     * @returns {void}
-     */
-    UserPageTrackerPageView(pageName) {
-        navigator.sendBeacon(PbxApi.userPageTrackerPageView, JSON.stringify({ 
-            pageName: pageName,
-        }));
-    },
-
-    /**
-     * Tracks the page leave.
-     *
-     * @param {string} pageName - The name of the page to track.
-     * @returns {void}
-     */
-    UserPageTrackerPageLeave(pageName) {
-        navigator.sendBeacon(PbxApi.userPageTrackerPageLeave, JSON.stringify({ 
-            pageName: pageName,
-        }));
     },
 
     /**
