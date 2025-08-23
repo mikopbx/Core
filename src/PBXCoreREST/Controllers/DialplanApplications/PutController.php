@@ -55,13 +55,14 @@ class PutController extends BaseController
             return;
         }
 
-        $putData = self::sanitizeData($this->request->getPut(), $this->filter);
-        $putData['id'] = $id;
+        // Handle both form data and JSON data
+        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
+        $requestData['id'] = $id;
         
         $this->sendRequestToBackendWorker(
             DialplanApplicationsManagementProcessor::class,
             $actionName,
-            $putData
+            $requestData
         );
     }
 }

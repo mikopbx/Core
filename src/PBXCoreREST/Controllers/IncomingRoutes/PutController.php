@@ -56,13 +56,13 @@ class PutController extends BaseController
             return;
         }
 
-        $putData = self::sanitizeData($this->request->getPut(), $this->filter);
-        $putData['id'] = $id;
+        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
+        $requestData['id'] = $id;
         
         $this->sendRequestToBackendWorker(
             IncomingRoutesManagementProcessor::class,
             $actionName,
-            $putData
+            $requestData
         );
     }
 }

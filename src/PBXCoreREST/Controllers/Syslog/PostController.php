@@ -64,10 +64,9 @@ class PostController extends BaseController
      */
     public function callAction(string $actionName): void
     {
-        switch ($actionName) {
-            default:
-                $data = $this->request->getPost();
-                $this->sendRequestToBackendWorker(SysLogsManagementProcessor::class, $actionName, $data);
-        }
+
+        $requestData = self::sanitizeData($this->request->getData(), $this->filter);    
+        $this->sendRequestToBackendWorker(SysLogsManagementProcessor::class, $actionName, $requestData);
+        
     }
 }

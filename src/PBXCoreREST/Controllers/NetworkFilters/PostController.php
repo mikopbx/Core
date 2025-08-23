@@ -41,13 +41,13 @@ class PostController extends BaseController
     public function callAction(string $actionName): void
     {
         // Get POST data and sanitize it
-        $postData = self::sanitizeData($this->request->getPost(), $this->filter);
+        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
         
         // Send request to backend worker for processing
         $this->sendRequestToBackendWorker(
             NetworkFiltersManagementProcessor::class,
             $actionName,
-            $postData
+            $requestData
         );
     }
 }

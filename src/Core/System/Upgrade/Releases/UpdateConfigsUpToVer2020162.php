@@ -27,6 +27,7 @@ use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\PBX;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\SslCertificateService;
 use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
 use MikoPBX\Core\System\Util;
 use Phalcon\Config\Config as ConfigAlias;
@@ -73,7 +74,7 @@ class UpdateConfigsUpToVer2020162 extends Injectable implements UpgradeSystemCon
         $PrivateKey =  PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PRIVATE_KEY);
         $PublicKey  = PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PUBLIC_KEY);
         if (empty($PrivateKey) || empty($PublicKey)) {
-            $certs = Util::generateSslCert();
+            $certs = SslCertificateService::generateSelfSignedCertificate();
             PbxSettings::setValueByKey(PbxSettings::WEB_HTTPS_PRIVATE_KEY, $certs['PrivateKey']);
             PbxSettings::setValueByKey(PbxSettings::WEB_HTTPS_PUBLIC_KEY, $certs['PublicKey']);
         }

@@ -50,7 +50,7 @@ class GetController extends BaseController
      */
     public function callAction(string $actionName, ?string $id = null): void
     {
-        $requestData = $this->request->get();
+        $requestData = $this->request->getData();
         
         if (!empty($id)) {
             $requestData['id'] = $id;

@@ -56,28 +56,7 @@ class PostController extends BaseController
     public function callAction(string $actionName): void
     {
         // Handle both form data and JSON data
-        $postData = [];
-        
-        if ($this->request->getContentType() === 'application/json') {
-            // Handle JSON requests
-            $rawBody = $this->request->getRawBody();
-            if (!empty($rawBody)) {
-                $jsonData = json_decode($rawBody, true);
-                if (json_last_error() === JSON_ERROR_NONE && is_array($jsonData)) {
-                    $postData = $jsonData;
-                }
-            }
-        } else {
-            // Handle form data
-            // Phalcon's getPost() properly handles nested arrays in modern versions
-            // It returns the full $_POST array including nested structures
-            $postData = $this->request->getPost();
-            
-            // Ensure we have an array
-            if (!is_array($postData)) {
-                $postData = [];
-            }
-        }
+        $requestData = $this->request->getData();    
         
         // For general settings, we need to handle password fields specially
         // Don't sanitize password fields through the filter
@@ -85,24 +64,24 @@ class PostController extends BaseController
         $protectedData = [];
         
         foreach ($protectedFields as $field) {
-            if (isset($postData[$field])) {
-                $protectedData[$field] = $postData[$field];
-                unset($postData[$field]);
+            if (isset($requestData[$field])) {
+                $protectedData[$field] = $requestData[$field];
+                unset($requestData[$field]);
             }
         }
         
         // Sanitize other data
-        $postData = self::sanitizeData($postData, $this->filter);
+        $requestData = self::sanitizeData($requestData, $this->filter);
         
         // Restore protected password fields
         foreach ($protectedData as $field => $value) {
-            $postData[$field] = $value;
+            $requestData[$field] = $value;
         }
         
         $this->sendRequestToBackendWorker(
             GeneralSettingsProcessor::class,
             $actionName,
-            $postData
+            $requestData
         );
     }
 }

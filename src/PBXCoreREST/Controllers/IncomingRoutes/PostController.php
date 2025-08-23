@@ -52,30 +52,13 @@ class PostController extends BaseController
      */
     public function callAction(string $actionName): void
     {
-        // Handle both form data and JSON data
-        $postData = [];
-        
-        if ($this->request->getContentType() === 'application/json') {
-            // Handle JSON requests
-            $rawBody = $this->request->getRawBody();
-            if (!empty($rawBody)) {
-                $jsonData = json_decode($rawBody, true);
-                if (json_last_error() === JSON_ERROR_NONE && is_array($jsonData)) {
-                    $postData = $jsonData;
-                }
-            }
-        } else {
-            // Handle form data
-            $postData = $this->request->getPost();
-        }
-        
         // Sanitize the data
-        $postData = self::sanitizeData($postData, $this->filter);
+        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
         
         $this->sendRequestToBackendWorker(
             IncomingRoutesManagementProcessor::class,
             $actionName,
-            $postData
+            $requestData
         );
     }
 }

@@ -90,14 +90,12 @@ class GetController extends BaseController
     public function callAction(string $actionName): void
     {
         // Use unified method to get request data
-        $requestData = $this->request->getData();
-
-        $getData = self::sanitizeData($requestData, $this->filter);
+        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
         
         $this->sendRequestToBackendWorker(
             PasswordsManagementProcessor::class,
             $actionName,
-            $getData
+            $requestData
         );
     }
 }

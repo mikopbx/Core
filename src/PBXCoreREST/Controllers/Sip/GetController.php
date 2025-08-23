@@ -65,7 +65,7 @@ class GetController extends BaseController
      */
     public function callAction(string $actionName): void
     {
-        $requestData = $this->request->get();
+        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
         $this->sendRequestToBackendWorker(SIPStackProcessor::class, $actionName, $requestData);
     }
 }

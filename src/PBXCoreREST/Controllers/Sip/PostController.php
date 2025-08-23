@@ -45,8 +45,7 @@ class PostController extends BaseController
      */
     public function callAction(string $actionName): void
     {
-        $raw_data = $this->request->getRawBody();
-        $data     = json_decode($raw_data, true);
-        $this->sendRequestToBackendWorker(SIPStackProcessor::class, $actionName, $data);
+        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
+        $this->sendRequestToBackendWorker(SIPStackProcessor::class, $actionName,  $requestData);
     }
 }

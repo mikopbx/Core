@@ -58,13 +58,14 @@ class PutController extends BaseController
             return;
         }
 
-        $putData = self::sanitizeData($this->request->getPut(), $this->filter);
-        $putData['id'] = $id;
+        // Use unified method to get request data (handles both JSON and form data)
+        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
+        $requestData['id'] = $id;
         
         $this->sendRequestToBackendWorker(
             AsteriskManagersProcessor::class,
             $actionName,
-            $putData
+            $requestData
         );
     }
 }

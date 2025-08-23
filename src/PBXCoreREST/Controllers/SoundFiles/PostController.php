@@ -53,17 +53,12 @@ class PostController extends BaseController
      */
     public function callAction(string $actionName): void
     {
-        $postData = self::sanitizeData($this->request->getPost(), $this->filter);
-        
-        // Handle file uploads
-        if ($actionName === 'uploadFile') {
-            $postData = array_merge($postData, $_REQUEST);
-        }
+        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
         
         $this->sendRequestToBackendWorker(
             SoundFilesManagementProcessor::class,
             $actionName,
-            $postData
+            $requestData
         );
     }
 }

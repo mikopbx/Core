@@ -78,13 +78,13 @@ class PostController extends BaseController
      */
     public function callAction(string $actionName=''): void
     {
+        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
         switch ($actionName) {
             case 'uploadFile':
-                $this->uploadFile();
+                $this->uploadFile($requestData);
                 break;
             default:
-                $data = $this->request->getPost();
-                $this->sendRequestToBackendWorker(FilesManagementProcessor::class, $actionName, $data);
+                $this->sendRequestToBackendWorker(FilesManagementProcessor::class, $actionName, $requestData );
         }
     }
 
@@ -93,21 +93,10 @@ class PostController extends BaseController
      *
      * @return void
      */
-    private function uploadFile(): void
+    private function uploadFile(array $requestData): void
     {
-        $data   = $this->request->getPost();
-        $data['result'] = 'ERROR';
-
         if ($this->request->hasFiles() > 0) {
-            $data = [
-                'resumableFilename'    => $this->request->getPost('resumableFilename'),
-                'resumableIdentifier'  => $this->request->getPost('resumableIdentifier'),
-                'resumableChunkNumber' => $this->request->getPost('resumableChunkNumber'),
-                'resumableTotalChunks' => $this->request->getPost('resumableTotalChunks'),
-                'resumableTotalSize'   => $this->request->getPost('resumableTotalSize'),
-            ];
-
-            $identifier = preg_replace(['#[/\\\\]#','/\.\./'], ['',''], $data['resumableIdentifier'])??'';
+            $identifier = preg_replace(['#[/\\\\]#','/\.\./'], ['',''], $requestData['resumableIdentifier'])??'';
             $identifier = trim($identifier);
             if (!preg_match('/^[a-zA-Z0-9_-]+$/', $identifier)) {
                 $this->sendError(Response::BAD_REQUEST, 'FILE Invalid identifier');
@@ -117,10 +106,10 @@ class PostController extends BaseController
                 $this->sendError(Response::BAD_REQUEST, 'FILE Identifier too long');
                 return;
             }
-            $data['resumableIdentifier'] = $identifier;
+            $requestData['resumableIdentifier'] = $identifier;
 
             foreach ($this->request->getUploadedFiles() as $file) {
-                $data['files'][]= [
+                $requestData['files'][]= [
                     'file_path' => $file->getTempName(),
                     'file_size' => $file->getSize(),
                     'file_error'=> $file->getError(),
@@ -128,16 +117,16 @@ class PostController extends BaseController
                     'file_type' => $file->getType()
                 ];
                 if ($file->getError()) {
-                    $data['data'] = 'error ' . $file->getError() . ' in file ' . $file->getTempName();
-                    $this->sendError(Response::BAD_REQUEST, $data['data']);
-                    SystemMessages::sysLogMsg('UploadFile', 'error ' . $file->getError() . ' in file ' . $file->getTempName(), LOG_ERR);
+                    $message = 'Error ' . $file->getError() . ' in file ' . $file->getTempName();
+                    $this->sendError(Response::BAD_REQUEST, $message);
+                    SystemMessages::sysLogMsg('UploadFile', $message, LOG_ERR);
                     return;
                 }
             }
             usleep(100000);
         }
 
-        $this->sendRequestToBackendWorker(FilesManagementProcessor::class, 'uploadFile', $data);
+        $this->sendRequestToBackendWorker(FilesManagementProcessor::class, 'uploadFile', $requestData);
     }
 
 }

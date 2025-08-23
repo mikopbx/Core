@@ -38,7 +38,7 @@ class PostController extends BaseController
      */
     public function callAction(string $actionName): void
     {
-        $data = $this->request->getPost();
-        $this->sendRequestToBackendWorker(SysinfoManagementProcessor::class, $actionName, $data);
+        $requestData = self::sanitizeData($this->request->getData(), $this->filter);  
+        $this->sendRequestToBackendWorker(SysinfoManagementProcessor::class, $actionName, $requestData);
     }
 }

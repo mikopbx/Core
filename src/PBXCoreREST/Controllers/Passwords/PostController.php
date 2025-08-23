@@ -133,7 +133,7 @@ class PostController extends BaseController
         $this->sendRequestToBackendWorker(
             PasswordsManagementProcessor::class,
             $actionName,
-            self::sanitizeData($requestData, $this->filter)
+            $requestData
         );
     }
 }

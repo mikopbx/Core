@@ -56,15 +56,7 @@ class DeleteController extends BaseController
             ]);
             $this->response->send();
             return;
-        }
-        
-        // Get the manager data first to check if it's a system manager
-        $checkData = ['id' => $id];
-        
-        // For system managers, we should prevent deletion at controller level
-        // This is an additional safety check, the main check is in DeleteRecordAction
-        $systemManagers = ['mikopbxuser', 'phpagi', 'admin'];
-        
+        }        
         $deleteData = ['id' => $id];
         
         $this->sendRequestToBackendWorker(

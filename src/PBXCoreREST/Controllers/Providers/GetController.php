@@ -41,7 +41,7 @@ class GetController extends BaseController
     public function callAction(string $actionName, ?string $type = null, ?string $id = null): void
     {
         // Use unified method to get request data
-        $requestData = $this->request->getData();
+        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
         
         // Add path parameters if provided
         if (!empty($type)) {

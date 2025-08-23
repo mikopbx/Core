@@ -46,16 +46,33 @@ class PostController extends BaseController
      */
     public function callAction(string $actionName): void
     {
-        // Use unified method to get request data (handles both JSON and form data)
-        $postData = $this->request->getData();
+         // Handle both form data and JSON data
+         $requestData = $this->request->getData();    
         
-        // Sanitize input data
-        $sanitizedData = self::sanitizeData($postData, $this->filter);
+         // For extensions, we need to handle password and manual attributes fields specially
+         // Don't sanitize fields through the filter
+         $protectedFields = ['manualattributes', 'secret'];
+         $protectedData = [];
+         
+         foreach ($protectedFields as $field) {
+             if (isset($requestData[$field])) {
+                 $protectedData[$field] = $requestData[$field];
+                 unset($requestData[$field]);
+             }
+         }
+         
+         // Sanitize other data
+         $requestData = self::sanitizeData($requestData, $this->filter);
+         
+         // Restore protected fields
+         foreach ($protectedData as $field => $value) {
+             $requestData[$field] = $value;
+         }
         
         $this->sendRequestToBackendWorker(
             ProvidersManagementProcessor::class, 
             $actionName, 
-            $sanitizedData
+            $requestData
         );
     }
 }

@@ -48,26 +48,43 @@ class PutController extends BaseController
      */
     public function callAction(string $actionName, ?string $typeOrId = null, ?string $id = null): void
     {
-        // Use unified method to get request data (handles both JSON and form data)
-        $putData = $this->request->getData();
+        // Handle both form data and JSON data
+        $requestData = $this->request->getData();    
+            
+        // For extensions, we need to handle password and manual attributes fields specially
+        // Don't sanitize fields through the filter
+        $protectedFields = ['manualattributes', 'secret'];
+        $protectedData = [];
+
+        foreach ($protectedFields as $field) {
+            if (isset($requestData[$field])) {
+                $protectedData[$field] = $requestData[$field];
+                unset($requestData[$field]);
+            }
+        }
+
+        // Sanitize other data
+        $requestData = self::sanitizeData($requestData, $this->filter);
+
+        // Restore protected fields
+        foreach ($protectedData as $field => $value) {
+            $requestData[$field] = $value;
+        }
         
         // Handle both formats: /saveRecord/{type}/{id} and /saveRecord/{id}
         if ($id !== null) {
             // Format: /saveRecord/{type}/{id}
-            $putData['type'] = $typeOrId;
-            $putData['id'] = $id;
+            $requestData['type'] = $typeOrId;
+            $requestData['id'] = $id;
         } elseif ($typeOrId !== null) {
             // Format: /saveRecord/{id} (backward compatibility)
-            $putData['id'] = $typeOrId;
+            $requestData['id'] = $typeOrId;
         }
-        
-        // Sanitize input data
-        $sanitizedData = self::sanitizeData($putData, $this->filter);
         
         $this->sendRequestToBackendWorker(
             ProvidersManagementProcessor::class, 
             $actionName, 
-            $sanitizedData
+            $requestData
         );
     }
 }

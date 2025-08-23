@@ -61,33 +61,13 @@ class PutController extends BaseController
             return;
         }
 
-        // Handle both JSON and form data
-        $contentType = $this->request->getContentType();
-        
-        if (strpos($contentType, 'application/json') !== false) {
-            // Handle JSON data
-            $rawBody = $this->request->getRawBody();
-            $putData = json_decode($rawBody, true);
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                $this->response->setStatusCode(400, 'Bad Request');
-                $this->response->setJsonContent([
-                    'result' => false,
-                    'messages' => ['error' => ['Invalid JSON format']]
-                ]);
-                return;
-            }
-        } else {
-            // Handle form data
-            $putData = $this->request->getPut();
-        }
-        
-        $putData = self::sanitizeData($putData, $this->filter);
-        $putData['id'] = $id;
+        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
+        $requestData['id'] = $id;
         
         $this->sendRequestToBackendWorker(
             IvrMenuManagementProcessor::class,
             $actionName,
-            $putData
+            $requestData
         );
     }
 }

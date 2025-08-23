@@ -52,7 +52,8 @@ class GetController extends BaseController
      */
     public function callAction(string $actionName, ?string $id = null): void
     {
-        $requestData = $this->request->get();
+        // Use unified method to get request data (handles both JSON and form data)
+        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
         
         if (!empty($id)) {
             $requestData['id'] = $id;

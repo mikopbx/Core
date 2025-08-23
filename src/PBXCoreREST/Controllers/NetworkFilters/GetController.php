@@ -36,12 +36,12 @@ class GetController extends BaseController
      */
     public function callAction(string $actionName): void
     {
-        $getData = $this->request->getQuery();
+        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
         
         $this->sendRequestToBackendWorker(
             NetworkFiltersManagementProcessor::class,
             $actionName,
-            $getData
+            $requestData
         );
     }
 }

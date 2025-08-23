@@ -77,6 +77,7 @@ class GetController extends BaseController
      */
     public function callAction(string $actionName): void
     {
-        $this->sendRequestToBackendWorker(SystemManagementProcessor::class, $actionName, $_REQUEST);
+        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
+        $this->sendRequestToBackendWorker(SystemManagementProcessor::class, $actionName, $requestData);
     }
 }

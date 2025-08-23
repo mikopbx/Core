@@ -42,6 +42,7 @@ class CoreGetController extends BaseController
      */
     public function callAction(string $actionName): void
     {
-        $this->sendRequestToBackendWorker(ModulesManagementProcessor::class, $actionName);
+        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
+        $this->sendRequestToBackendWorker(ModulesManagementProcessor::class, $actionName, $requestData);
     }
 }

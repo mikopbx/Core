@@ -55,19 +55,30 @@ class PostController extends BaseController
      */
     public function callAction(string $actionName): void
     {
-        // Fetching parameters from POST request
-        $postData = self::sanitizeData($this->request->getPost(), $this->filter);
-
-        // Do not sanitize the sip_manualattributes field
-        if ($this->request->getPost('sip_manualattributes') !== '') {
-            $postData['sip_manualattributes'] = $this->request->getPost('sip_manualattributes', FILTER::FILTER_TRIM);
+        
+        // Handle both form data and JSON data
+        $requestData = $this->request->getData();    
+        
+        // For extensions, we need to handle password and manual attributes fields specially
+        // Don't sanitize fields through the filter
+        $protectedFields = ['sip_manualattributes', 'sip_secret'];
+        $protectedData = [];
+        
+        foreach ($protectedFields as $field) {
+            if (isset($requestData[$field])) {
+                $protectedData[$field] = $requestData[$field];
+                unset($requestData[$field]);
+            }
+        }
+        
+        // Sanitize other data
+        $requestData = self::sanitizeData($requestData, $this->filter);
+        
+        // Restore protected fields
+        foreach ($protectedData as $field => $value) {
+            $requestData[$field] = $value;
         }
 
-        // Do not sanitize passwords
-        if ($this->request->getPost('sip_secret') !== '') {
-            $postData['sip_secret'] = $this->request->getPost('sip_secret');
-        }
-
-        $this->sendRequestToBackendWorker(ExtensionsManagementProcessor::class, $actionName, $postData);
+        $this->sendRequestToBackendWorker(ExtensionsManagementProcessor::class, $actionName, $requestData);
     }
 }

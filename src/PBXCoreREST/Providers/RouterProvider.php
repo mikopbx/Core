@@ -279,7 +279,7 @@ class RouterProvider implements ServiceProviderInterface
             [ModulesCoreGetController::class, 'callAction', '/pbxcore/api/modules/core/{actionName}', 'get', '/'],
             [ModulesCorePostController::class, 'callAction', '/pbxcore/api/modules/core/{actionName}', 'post', '/'],
 
-            [UserPageTrackerPostController::class, 'callAction', '/pbxcore/api/user-page-tracker/{actionName}', 'post', '/'],
+            [UserPageTrackerPostController::class, 'callAction', '/pbxcore/api/v2/user-page-tracker/{actionName}', 'post', '/'],
             
             // General Settings routes (v2)
             [GeneralSettingsGetController::class, 'callAction', '/pbxcore/api/v2/general-settings/{actionName}', 'get', '/'],

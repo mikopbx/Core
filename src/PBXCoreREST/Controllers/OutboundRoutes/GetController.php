@@ -34,7 +34,7 @@ class GetController extends BaseController
      */
     public function callAction(string $actionName, ?string $id = null): void
     {
-        $requestData = $this->request->get();
+        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
         
         if (!empty($id)) {
             $requestData['id'] = $id;

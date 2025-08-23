@@ -81,8 +81,8 @@ class PostController extends BaseController
     {
         switch ($actionName) {
             default:
-                $data = $this->request->getPost();
-                $this->sendRequestToBackendWorker(SystemManagementProcessor::class, $actionName, $data);
+                $requestData = self::sanitizeData($this->request->getData(), $this->filter);
+                $this->sendRequestToBackendWorker(SystemManagementProcessor::class, $actionName, $requestData);
         }
     }
 }

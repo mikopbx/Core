@@ -45,7 +45,8 @@ class GetController extends BaseController
      */
     public function callAction(string $actionName): void
     {
-        $requestData = $this->request->get();
+        // Use unified method to get request data (handles both JSON and form data)
+        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
         $this->sendRequestToBackendWorker(UsersManagementProcessor::class, $actionName, $requestData);
     }
 

@@ -52,12 +52,12 @@ class PostController extends BaseController
      */
     public function callAction(string $actionName): void
     {
-        $postData = self::sanitizeData($this->request->getPost(), $this->filter);
+        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
 
         $this->sendRequestToBackendWorker(
             CallQueuesManagementProcessor::class,
             $actionName,
-            $postData
+            $requestData
         );
     }
 }

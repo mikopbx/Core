@@ -52,32 +52,12 @@ class PostController extends BaseController
      */
     public function callAction(string $actionName): void
     {
-        // Handle both JSON and form data
-        $contentType = $this->request->getContentType();
-        
-        if (strpos($contentType, 'application/json') !== false) {
-            // Handle JSON data
-            $rawBody = $this->request->getRawBody();
-            $postData = json_decode($rawBody, true);
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                $this->response->setStatusCode(400, 'Bad Request');
-                $this->response->setJsonContent([
-                    'result' => false,
-                    'messages' => ['error' => ['Invalid JSON format']]
-                ]);
-                return;
-            }
-        } else {
-            // Handle form data
-            $postData = $this->request->getPost();
-        }
-        
-        $postData = self::sanitizeData($postData, $this->filter);
+        $requestData = self::sanitizeData( $this->request->getData(), $this->filter);
         
         $this->sendRequestToBackendWorker(
             IvrMenuManagementProcessor::class,
             $actionName,
-            $postData
+            $requestData
         );
     }
 }

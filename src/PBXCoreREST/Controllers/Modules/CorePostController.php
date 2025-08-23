@@ -76,16 +76,15 @@ class CorePostController extends BaseController
      */
     public function callAction(string $actionName): void
     {
-        $data = $this->request->getPost();
-        $this->sanitizeData($data, $this->filter);
+        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
         switch ($actionName) {
             case 'installFromRepo':
                 // Extended timeout for a long async operation
-                $this->sendRequestToBackendWorker(ModulesManagementProcessor::class, $actionName, $data, '', 600);
+                $this->sendRequestToBackendWorker(ModulesManagementProcessor::class, $actionName, $requestData, '', 600);
                 break;
             case 'updateAll':
-                $asyncChannelId = $data['asyncChannelId'];
-                $modulesForUpdate = $data['modulesForUpdate'];
+                $asyncChannelId = $requestData['asyncChannelId'];
+                $modulesForUpdate = $requestData['modulesForUpdate'];
                 if (is_array($modulesForUpdate)) {
                     $this->updateAll($asyncChannelId, $modulesForUpdate);
                 } else {
@@ -93,7 +92,7 @@ class CorePostController extends BaseController
                 }
                 break;
             default:
-                $this->sendRequestToBackendWorker(ModulesManagementProcessor::class, $actionName, $data);
+                $this->sendRequestToBackendWorker(ModulesManagementProcessor::class, $actionName, $requestData);
         }
     }
 
