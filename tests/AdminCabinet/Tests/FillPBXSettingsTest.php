@@ -82,11 +82,63 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
     }
 
     /**
+     * Delete all existing SSH keys from the table
+     */
+    protected function deleteAllSSHKeys(): void
+    {
+        try {
+            // Find all delete buttons in the SSH keys table
+            $deleteButtonsXpath = "//table[@id='ssh-keys-list']//a[contains(@class, 'delete-key-btn')]";
+            $deleteButtons = self::$driver->findElements(WebDriverBy::xpath($deleteButtonsXpath));
+            
+            if (empty($deleteButtons)) {
+                // No keys to delete
+                self::annotate("No existing SSH keys found to delete", 'info');
+                return;
+            }
+            
+            self::annotate("Found " . count($deleteButtons) . " SSH keys to delete", 'info');
+            
+            // Delete each key (iterate backwards to avoid stale element issues)
+            $keysCount = count($deleteButtons);
+            for ($i = $keysCount - 1; $i >= 0; $i--) {
+                // Re-find buttons each time as DOM changes after deletion
+                $deleteButtons = self::$driver->findElements(WebDriverBy::xpath($deleteButtonsXpath));
+                
+                if (isset($deleteButtons[$i])) {
+                    $this->scrollIntoView($deleteButtons[$i]);
+                    $deleteButtons[$i]->click();
+                    
+                    // Wait a moment for the DOM to update after deletion
+                    usleep(500000); // 0.5 seconds
+                    
+                    self::annotate("Deleted SSH key " . ($keysCount - $i) . " of " . $keysCount, 'info');
+                }
+            }
+            
+            // Verify all keys were deleted
+            $remainingButtons = self::$driver->findElements(WebDriverBy::xpath($deleteButtonsXpath));
+            if (!empty($remainingButtons)) {
+                self::annotate("Warning: " . count($remainingButtons) . " SSH keys remain after deletion", 'warning');
+            } else {
+                self::annotate("Successfully deleted all SSH keys", 'success');
+            }
+            
+        } catch (\Exception $e) {
+            // It's OK if no keys exist - just log and continue
+            self::annotate("Note: Could not delete SSH keys (may not exist): " . $e->getMessage(), 'info');
+        }
+    }
+    
+    /**
      * Fill SSH keys using the table interface
      */
     protected function fillSSHKeysTable(string $keysValue): void
     {
         try {
+            // First, delete all existing SSH keys to ensure clean state
+            $this->deleteAllSSHKeys();
+            
             // Click the "Add SSH Key" button
             $addButtonXpath = "//button[@id='show-add-key-btn']";
             $addButton = self::$driver->findElement(WebDriverBy::xpath($addButtonXpath));
@@ -166,7 +218,13 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
         try {
             // Check if the keys are displayed in the table
             $tableXpath = "//table[@id='ssh-keys-list']";
-            $table = self::$driver->findElement(WebDriverBy::xpath($tableXpath));
+            
+            // Wait for table to exist
+            self::$driver->wait(10, 500)->until(
+                \Facebook\WebDriver\WebDriverExpectedCondition::presenceOfElementLocated(
+                    WebDriverBy::xpath($tableXpath)
+                )
+            );
             
             // Get all key cells
             $keyCellsXpath = $tableXpath . "//td[@class='ssh-key-cell']/code";
@@ -174,6 +232,15 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
             
             if (empty($keyCells)) {
                 throw new \RuntimeException("No SSH keys found in the table");
+            }
+            
+            // Count the expected keys
+            $expectedKeyLines = array_filter(explode("\n", trim($expectedKeys)));
+            $expectedCount = count($expectedKeyLines);
+            $actualCount = count($keyCells);
+            
+            if ($actualCount !== $expectedCount) {
+                self::annotate("SSH key count mismatch - Expected: $expectedCount, Actual: $actualCount", 'warning');
             }
             
             // For verification, we'll check that at least one key row exists
@@ -192,7 +259,7 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
                 throw new \RuntimeException("SSH keys do not match expected value");
             }
             
-            self::annotate("SSH keys verified successfully", 'success');
+            self::annotate("SSH keys verified successfully (" . $actualCount . " key(s) present)", 'success');
         } catch (\Exception $e) {
             self::annotate("Failed to verify SSH keys: " . $e->getMessage(), 'error');
             throw new \RuntimeException("Failed to verify SSH keys: " . $e->getMessage());
