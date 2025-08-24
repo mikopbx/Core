@@ -1209,6 +1209,7 @@ return [
     'da_AddNewDialplanApp' => 'Добавить новое',
     'da_TypePhp' => 'PHP-AGI скрипт',
     'da_TypePlaintext' => 'Диалплан Asterisk',
+    'da_SelectType' => 'Выберите тип приложения',
     'da_ValidateExtensionNumber' => 'Внутренний номер должен состоять только из чисел',
     'da_ImpossibleToDeleteDialplanApplication' => 'Невозможно удалить приложение диалпланов, на него есть ссылки',
     'da_NoDialplanApplicationsFound' => 'Приложения диалплана не найдены',

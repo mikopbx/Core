@@ -50,13 +50,8 @@ class DialplanApplicationEditForm extends BaseForm
             'class' => 'form-control'
         ]));
         
-        // Application type selector
-        $this->add(new Select('type', [
-            'php' => $this->translation->_('da_TypePhp'),
-            'plaintext' => $this->translation->_('da_TypePlaintext')
-        ], [
-            'class' => 'ui dropdown type-select'
-        ]));
+        // Application type - hidden field, UI dropdown will be created by JavaScript
+        $this->add(new Hidden('type'));
         
         // Application logic - hidden field, ACE editor will populate this
         $this->add(new Hidden('applicationlogic'));

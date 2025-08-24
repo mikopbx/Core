@@ -11,7 +11,7 @@
 var dialplanApplicationModify = {
     $formObj: $('#dialplan-application-form'),
     $number: $('#extension'),
-    $typeSelectDropDown: $('#dialplan-application-form .type-select'),
+    $typeSelectDropDown: $('#type-dropdown'),
     $tabMenuItems: $('#application-code-menu .item'),
     defaultExtension: '',
     editor: null,
@@ -85,8 +85,12 @@ var dialplanApplicationModify = {
                 }
             }
         });
+        
+        // Initialize type dropdown with proper settings
         dialplanApplicationModify.$typeSelectDropDown.dropdown({
-            onChange: dialplanApplicationModify.changeAceMode
+            onChange: dialplanApplicationModify.changeAceMode,
+            fullTextSearch: false,
+            direction: 'downward'
         });
         
         // Extension availability check
@@ -146,6 +150,7 @@ var dialplanApplicationModify = {
     initializeForm: function() {
         var recordId = dialplanApplicationModify.getRecordId();
         
+        // Always call REST API to get data (including defaults for new records)
         DialplanApplicationsAPI.getRecord(recordId, function(response) {
             if (response.result) {
                 // Data is already sanitized in API module
@@ -297,7 +302,7 @@ var dialplanApplicationModify = {
      * Change ACE editor mode based on type
      */
     changeAceMode: function() {
-        var mode = dialplanApplicationModify.$formObj.form('get value', 'type');
+        var mode = dialplanApplicationModify.$typeSelectDropDown.dropdown('get value');
         var NewMode;
 
         if (mode === 'php') {
@@ -387,7 +392,15 @@ var dialplanApplicationModify = {
      * @param {object} data - Form data
      */
     populateForm: function(data) {
-        Form.$formObj.form('set values', data);
+        // Set form values, but exclude the type field which we'll handle separately
+        var formData = $.extend({}, data);
+        delete formData.type;
+        Form.$formObj.form('set values', formData);
+        
+        // Set dropdown value explicitly
+        // REST API always provides a type value (default 'php' for new records)
+        dialplanApplicationModify.$typeSelectDropDown.dropdown('set selected', data.type);
+        
         if (Form.enableDirrity) {
             Form.initializeDirrity();
         }
