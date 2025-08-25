@@ -21,8 +21,6 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Lib\Passwords;
 
-use MikoPBX\Core\System\PasswordValidator;
-
 /**
  * Helper class for mapping field names to validation contexts
  * 

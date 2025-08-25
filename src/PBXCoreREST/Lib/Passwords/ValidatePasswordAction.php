@@ -21,7 +21,6 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Lib\Passwords;
 
-use MikoPBX\Core\System\PasswordValidator;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Di;

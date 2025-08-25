@@ -19,12 +19,13 @@
 
 declare(strict_types=1);
 
-namespace MikoPBX\Core\System;
+namespace MikoPBX\PBXCoreREST\Lib\Passwords;
 
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\TranslationProvider;
-use Phalcon\Encryption\Security\Random;
+use MikoPBX\Core\System\Util;
 use Phalcon\Di\Di;
+use Phalcon\Encryption\Security\Random;
 
 /**
  * Unified Password Validator Service
@@ -555,68 +556,11 @@ class PasswordValidator
      */
     private static function translate(string $key, array $params = []): string
     {
-        try {
-            $di = Di::getDefault();
-            if ($di && $di->has(TranslationProvider::SERVICE_NAME)) {
-                $translation = $di->get(TranslationProvider::SERVICE_NAME);
-                return $translation->_($key, $params);
-            }
-        } catch (\Exception $e) {
-            // If DI or translation service not available, continue with fallback
+        $di = Di::getDefault();
+        if ($di && $di->has(TranslationProvider::SERVICE_NAME)) {
+            $translation = $di->get(TranslationProvider::SERVICE_NAME);
+            return $translation->_($key, $params);
         }
-        
-        // Fallback to English messages (with both old and new keys for compatibility)
-        $fallbackMessages = [
-            // New psw_ keys
-            'psw_ValidateEmptyPassword' => 'Password cannot be empty',
-            'psw_PasswordTooShort' => 'Password must be at least %min% characters',
-            'psw_PasswordIsDefault' => 'Using default password is not allowed',
-            'psw_DefaultPasswordWarning' => 'Do not use default login and password',
-            'psw_PasswordInDictionary' => 'Password found in common passwords dictionary',
-            'psw_PasswordTooCommon' => 'This password is too common',
-            'psw_PasswordNoNumbers' => 'Password must contain numbers',
-            'psw_PasswordNoLowSimvol' => 'Password must contain lowercase letters',
-            'psw_PasswordNoUpperSimvol' => 'Password must contain uppercase letters',
-            'psw_PasswordNoSpecialChars' => 'Add special characters (!@#$%)',
-            'psw_PasswordMixCharTypes' => 'Mix different character types',
-            'psw_PasswordAvoidCommon' => 'Avoid common patterns and words',
-            'psw_PasswordUsePassphrase' => 'Consider using a passphrase',
-            'psw_PasswordSecurityRequiresFair' => 'Security passwords require at least fair strength',
-            'psw_PasswordStrengthWeak' => 'Weak',
-            'psw_PasswordStrengthFair' => 'Fair',
-            'psw_PasswordStrengthGood' => 'Good',
-            'psw_PasswordStrengthStrong' => 'Strong',
-            'psw_PasswordStrengthVeryStrong' => 'Very Strong',
-            
-            // Old gs_ keys for backward compatibility
-            'gs_ValidateEmptyWebPassword' => 'Password cannot be empty',
-            'gs_PasswordTooShort' => 'Password must be at least %min% characters',
-            'gs_PasswordIsDefault' => 'Using default password is not allowed',
-            'gs_DefaultPasswordWarning' => 'Do not use default login and password',
-            'gs_PasswordInDictionary' => 'Password found in common passwords dictionary',
-            'gs_PasswordTooCommon' => 'This password is too common',
-            'gs_PasswordNoNumbers' => 'Password must contain numbers',
-            'gs_PasswordNoLowSimvol' => 'Password must contain lowercase letters',
-            'gs_PasswordNoUpperSimvol' => 'Password must contain uppercase letters',
-            'gs_PasswordNoSpecialChars' => 'Add special characters (!@#$%)',
-            'gs_PasswordMixCharTypes' => 'Mix different character types',
-            'gs_PasswordAvoidCommon' => 'Avoid common patterns and words',
-            'gs_PasswordUsePassphrase' => 'Consider using a passphrase',
-            'gs_PasswordSecurityRequiresFair' => 'Security passwords require at least fair strength',
-            'gs_PasswordStrengthWeak' => 'Weak',
-            'gs_PasswordStrengthFair' => 'Fair',
-            'gs_PasswordStrengthGood' => 'Good',
-            'gs_PasswordStrengthStrong' => 'Strong',
-            'gs_PasswordStrengthVeryStrong' => 'Very Strong'
-        ];
-        
-        $message = $fallbackMessages[$key] ?? $key;
-        
-        // Replace parameters if any
-        foreach ($params as $param => $value) {
-            $message = str_replace('%' . $param . '%', $value, $message);
-        }
-        
-        return $message;
+        return $key;
     }
 }
