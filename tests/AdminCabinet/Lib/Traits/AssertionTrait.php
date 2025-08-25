@@ -45,6 +45,37 @@ trait AssertionTrait
     }
 
     /**
+     * Assert that password field is masked (shows XXXXXXXX or similar pattern)
+     *
+     * @param string $name Field name
+     * @param bool $skipIfNotExist Skip assertion if field not found
+     */
+    protected function assertPasswordFieldIsMasked(
+        string $name,
+        bool $skipIfNotExist = false
+    ): void {
+        $xpath = sprintf(
+            '//input[@name="%s" and (@type="text" or @type="password")]',
+            $name
+        );
+        $inputItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
+
+        if (empty($inputItems) && !$skipIfNotExist) {
+            $this->fail("Password field '{$name}' not found");
+        }
+
+        foreach ($inputItems as $inputItem) {
+            $currentValue = $inputItem->getAttribute('value');
+            // Check if the value matches the masked pattern (all X's or asterisks)
+            $isMasked = preg_match('/^[X*]+$/', $currentValue) === 1;
+            $this->assertTrue(
+                $isMasked,
+                "Password field '{$name}' should be masked but got: {$currentValue}"
+            );
+        }
+    }
+
+    /**
      * Assert that textarea has specific value
      *
      * @param string $name Textarea name

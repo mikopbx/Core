@@ -153,6 +153,7 @@ abstract class CreateExtensionsTest extends MikoPBXTestsBase
         $this->assertMenuItemSelected('fwd_forwardingonunavailable', $params['mobile']);
 
         $this->changeTabOnCurrentPage('general');
+        // Extension passwords are not masked
         $this->assertInputFieldValueEqual('sip_secret', $params['secret']);
 
         $this->openAccordionOnThePage();

@@ -86,13 +86,15 @@ class CreateDefaultIncomingCallRule extends MikoPBXTestsBase
         $params = [];
         $params[] = [
             [
-                'action' => 'busy',
+                'action' => 'extension',
+                'extension' => 'busy',
             ]
         ];
 
         $params[] = [
             [
-                'action' => 'hangup',
+                'action' => 'extension',
+                'extension' => 'hangup',
             ]
         ];
 

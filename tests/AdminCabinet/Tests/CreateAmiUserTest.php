@@ -119,6 +119,7 @@ abstract class CreateAmiUserTest extends MikoPBXTestsBase
 
         $this->assertTextAreaValueIsEqual('description', $params['description']);
         $this->assertInputFieldValueEqual('username', $params['username']);
+        // AMI user passwords are not masked
         $this->assertInputFieldValueEqual('secret', $params['secret']);
         $this->verifyPermissions($params['permissions']);
     }

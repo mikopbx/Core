@@ -144,7 +144,7 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
         $this->clickModifyButtonOnRowWithText($this->employeeData['username']);
 
         $this->changeTabOnCurrentPage('routing');
-        $this->assertInputFieldValueEqual('fwd_ringlength', 0);
+        $this->assertInputFieldValueEqual('fwd_ringlength', '0');
         $this->assertMenuItemSelected('fwd_forwardingonbusy', '');
         $this->assertMenuItemSelected('fwd_forwarding', '');
         $this->assertMenuItemSelected('fwd_forwardingonunavailable', '');
@@ -308,6 +308,7 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
         $this->assertMenuItemSelected('fwd_forwarding', $this->employeeData['fwd_forwarding']);
         $this->assertMenuItemSelected('fwd_forwardingonunavailable', $this->employeeData['fwd_forwardingonunavailable']);
         $this->changeTabOnCurrentPage('general');
+        // Extension passwords are not masked
         $this->assertInputFieldValueEqual('sip_secret', $this->employeeData['secret']);
 
 

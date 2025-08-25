@@ -212,6 +212,7 @@ class CheckDropdownsOnAddExtensionsTest extends MikoPBXTestsBase
 
         // Verify general tab and advanced options
         $this->changeTabOnCurrentPage('general');
+        // Extension passwords are not masked
         $this->assertInputFieldValueEqual('sip_secret', $params['secret']);
 
         $this->openAccordionOnThePage();
