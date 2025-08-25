@@ -189,8 +189,9 @@ const soundFilesTable = {
      * Render single file row using template structure
      */
     renderFileRow(file) {
-        const playPath = file.path ? `/pbxcore/api/cdr/v2/playback?view=${file.path}` : '';
-        const downloadPath = file.path ? `/pbxcore/api/cdr/v2/playback?view=${file.path}&download=1&filename=${file.name}.mp3` : '';
+        // Use new sound-files endpoint for MOH/IVR/system sounds (not CDR recordings)
+        const playPath = file.path ? `/pbxcore/api/v2/sound-files/playback?view=${file.path}` : '';
+        const downloadPath = file.path ? `/pbxcore/api/v2/sound-files/playback?view=${file.path}&download=1&filename=${file.name}.mp3` : '';
         
         return `<tr class="file-row" id="${file.id}" data-value="${file.path || ''}">
             <td><i class="file audio outline icon"></i>${file.name}</td>

@@ -199,7 +199,8 @@ const soundFileModifyRest = {
         
         // Update audio player if path exists
         if (data.path) {
-            const audioUrl = `/pbxcore/api/cdr/v2/playback?view=${data.path}`;
+            // Use new sound-files endpoint for MOH/IVR/system sounds
+            const audioUrl = `/pbxcore/api/v2/sound-files/playback?view=${data.path}`;
             sndPlayer.UpdateSource(audioUrl);
         }
         
@@ -281,8 +282,8 @@ const soundFileModifyRest = {
             soundFileModifyRest.$formObj.form('set value', 'path', filename);
             soundFileModifyRest.$soundFileName.trigger('change');
             
-            // Update player with new file
-            sndPlayer.UpdateSource(`/pbxcore/api/cdr/v2/playback?view=${filename}`);
+            // Update player with new file using sound-files endpoint
+            sndPlayer.UpdateSource(`/pbxcore/api/v2/sound-files/playback?view=${filename}`);
             
             // Remove loading states
             soundFileModifyRest.$submitButton.removeClass('loading');

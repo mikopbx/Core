@@ -99,8 +99,9 @@ class sndPlayerOneBtn {
             // Use REST API to get sound file details
             SoundFilesAPI.getRecord(audioFileId, (response) => {
                 if (response.result && response.data && response.data.path) {
+                    // Use new sound-files endpoint for MOH/IVR/system sounds
                     _this.html5Audio.getElementsByTagName('source')[0].src
-                        = `/pbxcore/api/cdr/v2/playback?view=${response.data.path}`;
+                        = `/pbxcore/api/v2/sound-files/playback?view=${response.data.path}`;
                     _this.html5Audio.pause();
                     _this.html5Audio.load();
                     _this.html5Audio.oncanplaythrough = _this.cbCanPlayThrough;
