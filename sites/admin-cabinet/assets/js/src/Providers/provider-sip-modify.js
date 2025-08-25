@@ -666,8 +666,8 @@ class ProviderSIP extends ProviderBase {
                     },
                     {
                         type: 'regExp',
-                        value: '/^[a-zA-Z0-9._-]+$/',
-                        prompt: globalTranslate.pr_ValidationProviderHostInvalidCharacters || 'Host can only contain letters, numbers, dots, hyphens and underscores',
+                        value: '/^[a-zA-Z0-9.-]+$/',
+                        prompt: globalTranslate.pr_ValidationProviderHostInvalidCharacters || 'Host can only contain letters, numbers, dots and hyphens',
                     },
                 ],
             },
@@ -795,8 +795,8 @@ class ProviderSIP extends ProviderBase {
                     },
                     {
                         type: 'regExp',
-                        value: '/^[a-zA-Z0-9._-]+$/',
-                        prompt: globalTranslate.pr_ValidationProviderHostInvalidCharacters || 'Host can only contain letters, numbers, dots, hyphens and underscores',
+                        value: '/^[a-zA-Z0-9.-]+$/',
+                        prompt: globalTranslate.pr_ValidationProviderHostInvalidCharacters || 'Host can only contain letters, numbers, dots and hyphens',
                     },
                 ],
             },

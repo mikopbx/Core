@@ -55,7 +55,7 @@ class DeleteProviderTest extends MikoPBXTestsBase
         $this->clickModifyButtonOnRowWithText($params['description']);
 
         // TESTS
-        $xpath = "//input[@name = 'uniqid']";
+        $xpath = "//input[@name = 'id']";
         $input_UniqueID = self::$driver->findElement(WebDriverBy::xpath($xpath));
         $elementID = $input_UniqueID->getAttribute('value');
         $this->clickSidebarMenuItemByHref('/admin-cabinet/providers/index/');

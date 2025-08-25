@@ -66,8 +66,14 @@ abstract class CreateSIPProviderTest extends MikoPBXTestsBase
 
         $this->fillBasicFields($params);
         $this->fillAdvancedOptions($params);
+        $this->fillDidAndCallerIdFields($params);
 
         $this->submitForm('save-provider-form');
+        
+        // Verify provider was created by checking the ID field
+        $xpath = "//input[@name = 'id']";
+        $input_ProviderID = self::$driver->findElement(\Facebook\WebDriver\WebDriverBy::xpath($xpath));
+        $this->assertNotEmpty($input_ProviderID->getAttribute('value'), 'Provider ID should be set after creation');
     }
 
     /**
@@ -75,9 +81,9 @@ abstract class CreateSIPProviderTest extends MikoPBXTestsBase
      */
     protected function fillBasicFields(array $params): void
     {
-        // Fix uniqid
+        // Fix id (previously uniqid)
         self::$driver->executeScript(
-            "$('#save-provider-form').form('set value','uniqid','{$params['uniqid']}');"
+            "$('#save-provider-form').form('set value','id','{$params['uniqid']}');"
         );
 
         $this->selectDropdownItem('registration_type', $params['registration_type']);
@@ -126,6 +132,42 @@ abstract class CreateSIPProviderTest extends MikoPBXTestsBase
     }
 
     /**
+     * Fill DID and CallerID fields
+     */
+    protected function fillDidAndCallerIdFields(array $params): void
+    {
+        // Skip if fields are not present in test data
+        if (!isset($params['did_source'])) {
+            return;
+        }
+
+        // Set DID source
+        $this->selectDropdownItem('.did-source-dropdown', $params['did_source']);
+        
+        // If DID source is custom, fill custom fields
+        if ($params['did_source'] === 'custom') {
+            $this->changeInputField('did_custom_header', $params['did_custom_header']);
+            $this->changeInputField('did_parser_start', $params['did_parser_start']);
+            $this->changeInputField('did_parser_end', $params['did_parser_end']);
+            $this->changeInputField('did_parser_regex', $params['did_parser_regex']);
+        }
+        
+        // Set CallerID source
+        $this->selectDropdownItem('.callerid-source-dropdown', $params['callerid_source']);
+        
+        // If CallerID source is custom, fill custom fields
+        if ($params['callerid_source'] === 'custom') {
+            $this->changeInputField('cid_custom_header', $params['cid_custom_header']);
+            $this->changeInputField('cid_parser_start', $params['cid_parser_start']);
+            $this->changeInputField('cid_parser_end', $params['cid_parser_end']);
+            $this->changeInputField('cid_parser_regex', $params['cid_parser_regex']);
+        }
+        
+        // Set debug checkbox
+        $this->changeCheckBoxState('cid_did_debug', $params['cid_did_debug']);
+    }
+
+    /**
      * Verify SIP provider creation
      */
     protected function verifySIPProvider(array $params): void
@@ -135,6 +177,7 @@ abstract class CreateSIPProviderTest extends MikoPBXTestsBase
 
         $this->verifyBasicFields($params);
         $this->verifyAdvancedOptions($params);
+        $this->verifyDidAndCallerIdFields($params);
     }
 
     /**
@@ -158,7 +201,13 @@ abstract class CreateSIPProviderTest extends MikoPBXTestsBase
         }
         
         if ($params['registration_type'] !== 'none') {
-            $this->assertInputFieldValueEqual('secret', $params['password']);
+            // Password is masked only for outbound providers
+            if ($params['registration_type'] === 'outbound') {
+                $this->assertPasswordFieldIsMasked('secret');
+            } else {
+                // For inbound providers, password is not masked
+                $this->assertInputFieldValueEqual('secret', $params['password']);
+            }
         }
     }
 
@@ -184,5 +233,41 @@ abstract class CreateSIPProviderTest extends MikoPBXTestsBase
         $this->assertCheckBoxStageIsEqual('disablefromuser', $params['disablefromuser']);
         $this->assertMenuItemSelected('dtmfmode', $params['dtmfmode']);
         $this->assertTextAreaValueIsEqual('manualattributes', $params['manualattributes']);
+    }
+
+    /**
+     * Verify DID and CallerID fields
+     */
+    protected function verifyDidAndCallerIdFields(array $params): void
+    {
+        // Skip verification if fields are not present in test data
+        if (!isset($params['did_source'])) {
+            return;
+        }
+
+        // Verify DID source dropdown
+        $this->assertMenuItemSelected('.did-source-dropdown', $params['did_source']);
+        
+        // If DID source is custom, verify custom fields
+        if ($params['did_source'] === 'custom') {
+            $this->assertInputFieldValueEqual('did_custom_header', $params['did_custom_header']);
+            $this->assertInputFieldValueEqual('did_parser_start', $params['did_parser_start']);
+            $this->assertInputFieldValueEqual('did_parser_end', $params['did_parser_end']);
+            $this->assertInputFieldValueEqual('did_parser_regex', $params['did_parser_regex']);
+        }
+        
+        // Verify CallerID source dropdown  
+        $this->assertMenuItemSelected('.callerid-source-dropdown', $params['callerid_source']);
+        
+        // If CallerID source is custom, verify custom fields
+        if ($params['callerid_source'] === 'custom') {
+            $this->assertInputFieldValueEqual('cid_custom_header', $params['cid_custom_header']);
+            $this->assertInputFieldValueEqual('cid_parser_start', $params['cid_parser_start']);
+            $this->assertInputFieldValueEqual('cid_parser_end', $params['cid_parser_end']);
+            $this->assertInputFieldValueEqual('cid_parser_regex', $params['cid_parser_regex']);
+        }
+        
+        // Verify debug checkbox
+        $this->assertCheckBoxStageIsEqual('cid_did_debug', $params['cid_did_debug']);
     }
 }

@@ -51,6 +51,11 @@ abstract class CreateIAXProviderTest extends MikoPBXTestsBase
         $this->fillAdvancedOptions($params);
 
         $this->submitForm('save-provider-form');
+        
+        // Verify provider was created by checking the ID field
+        $xpath = "//input[@name = 'id']";
+        $input_ProviderID = self::$driver->findElement(\Facebook\WebDriver\WebDriverBy::xpath($xpath));
+        $this->assertNotEmpty($input_ProviderID->getAttribute('value'), 'Provider ID should be set after creation');
     }
 
     /**
@@ -58,9 +63,9 @@ abstract class CreateIAXProviderTest extends MikoPBXTestsBase
      */
     protected function fillBasicFields(array $params): void
     {
-        // Fix uniqid
+        // Fix id (previously uniqid)
         self::$driver->executeScript(
-            "$('#save-provider-form').form('set value','uniqid','{$params['uniqid']}');"
+            "$('#save-provider-form').form('set value','id','{$params['uniqid']}');"
         );
 
         $this->changeInputField('description', $params['description']);
@@ -128,7 +133,13 @@ abstract class CreateIAXProviderTest extends MikoPBXTestsBase
             $this->assertInputFieldValueEqual('username', $params['username']);
         }
         
-        $this->assertInputFieldValueEqual('secret', $params['password']);
+        // Password is masked only for outbound providers
+        if (isset($params['registration_type']) && $params['registration_type'] === 'outbound') {
+            $this->assertPasswordFieldIsMasked('secret');
+        } else {
+            // For inbound providers, password is not masked
+            $this->assertInputFieldValueEqual('secret', $params['password']);
+        }
     }
 
     /**

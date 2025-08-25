@@ -50,7 +50,6 @@ class IAXProviderDataFactory
             'username' => 'providerName',
             'password' => 'providerPassword',
             'registration_type' => 'outbound',
-            'noregister' => false,
             'receive_calls_without_auth' => false,
             'manualattributes' => '',
             'possibleToDelete' => true
@@ -59,11 +58,10 @@ class IAXProviderDataFactory
             'type' => 'iax',
             'uniqid' => 'IAX-1683372850',
             'description' => 'Inbound IAX Provider',
-            'host' => 'test_INBOUND.miko.ru',
+            'host' => 'test-INBOUND.miko.ru',
             'username' => 'IAX-TRUNK-93BE1B99',
             'password' => 'inboundSecret123',
             'registration_type' => 'inbound', // Входящая регистрация
-            'noregister' => true,
             'receive_calls_without_auth' => true,
             'manualattributes' => 'language=ru',
         ],
@@ -71,11 +69,10 @@ class IAXProviderDataFactory
             'type' => 'iax',
             'uniqid' => 'IAX-1683372875',
             'description' => 'No Registration IAX Provider',
-            'host' => 'NO_REGISTRATION.miko.ru',
+            'host' => 'no-registration.miko.ru',
             'username' => 'IAX-TRUNK-93BE1B99',
             'password' => 'noRegSecret456',
             'registration_type' => 'none', // Без регистрации (IP аутентификация)
-            'noregister' => true,
             'receive_calls_without_auth' => true,
             'manualattributes' => 'language=en',
         ]
