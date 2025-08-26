@@ -446,13 +446,13 @@ const ProvidersAPI = {
                     
                     // Transform API response to dropdown format
                     const results = response.data.map(function(provider) {
-                        // Use the 'name' field from server as-is, it already contains the icon
+                        // Use the 'represent' field from server as-is, it already contains the icon
                         // Server sends: "<i class=\"server icon\"></i> IAX: Test IAX Provider"
                         
                         return {
-                            value: provider.id,           // Use id as the value
-                            name: provider.name,          // Use server's name field as-is
-                            text: provider.name,          // Same for text display
+                            value: provider.id,           // Use id as the value (this is the provider ID)
+                            name: provider.represent,     // Use server's represent field
+                            text: provider.represent,     // Same for text display
                             // Store additional data for future use
                             providerType: provider.type,
                             providerId: provider.id,

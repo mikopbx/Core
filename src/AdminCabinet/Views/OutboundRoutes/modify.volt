@@ -46,10 +46,10 @@
 <div class="field max-width-500">
     <label for="providerid">{{ t._('or_Provider') }}
         <i class="small info circle icon field-info-icon" 
-           data-field="provider"></i>
+           data-field="providerid"></i>
     </label>
     {{ form.render('providerid') }}
-    <div class="ui selection dropdown search" id="provider-dropdown">
+    <div class="ui selection dropdown search" id="providerid-dropdown">
         <i class="dropdown icon"></i>
         <div class="default text">{{ t._('or_SelectProvider') }}</div>
         <div class="menu"></div>

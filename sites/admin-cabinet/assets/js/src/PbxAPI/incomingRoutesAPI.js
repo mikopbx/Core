@@ -184,9 +184,8 @@ const IncomingRoutesAPI = {
         
         return {
             id: data.id,
-            uniqid: data.uniqid,
             number: data.number || '',
-            provider: data.provider || '',  // Provider ID
+            providerid: data.providerid || '',  // Provider ID (unified field name)
             providerName: data.providerName || '',
             providerType: data.providerType || '',
             providerDisabled: !!data.providerDisabled,
@@ -200,6 +199,7 @@ const IncomingRoutesAPI = {
             audio_message_id_Represent: data.audio_message_id_Represent || '',
             note: data.note || '',
             disabled: !!data.disabled,
+            rulename: data.rulename || '',
             // Use ruleRepresent for display in tables
             ruleRepresent: data.ruleRepresent || ''
         };

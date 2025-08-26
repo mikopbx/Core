@@ -682,6 +682,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/pbx/PbxAPI/outboundRoutesAPI.js', true)
                 ->addJs('js/pbx/PbxAPI/providersAPI.js', true)
+                ->addJs('js/pbx/FormElements/provider-selector.js', true)
                 ->addJs('js/pbx/OutboundRoutes/outbound-route-modify.js', true);
         }
     }
@@ -770,6 +771,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/PbxAPI/soundFilesAPI.js', true)
                 ->addJs('js/pbx/PbxAPI/incomingRoutesAPI.js', true)
                 ->addJs('js/pbx/PbxAPI/providersAPI.js', true)
+                ->addJs('js/pbx/FormElements/provider-selector.js', true)
                 ->addJs('js/pbx/SoundFiles/sound-files-selector.js', true)
                 ->addJs('js/pbx/SoundFiles/one-button-sound-player.js', true)
                 ->addJs('js/pbx/IncomingRoutes/incoming-route-modify.js', true);
@@ -1044,6 +1046,41 @@ class AssetProvider implements ServiceProviderInterface
 
             $this->semanticCollectionCSS
                 ->addCss('css/AsteriskManagers/manager-modify.css', true);
+        }
+    }
+
+    /**
+     * Makes assets for the ApiKeys controller
+     *
+     * @param string $action
+     */
+    private function makeApiKeysAssets(string $action): void
+    {
+        if ($action === 'index') {
+            $this->headerCollectionCSS
+                ->addCss('css/vendor/datatable/dataTables.semanticui.css', true)
+                ->addCss('css/ApiKeys/api-keys-index.css', true);
+            $this->footerCollectionJS
+                ->addJs('js/pbx/main/PbxDataTableIndex.js', true)
+                ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
+                ->addJs('js/pbx/PbxAPI/apiKeysAPI.js', true)
+                ->addJs('js/pbx/ApiKeys/api-keys-index.js', true);
+        } elseif ($action === 'modify') {
+            // Add modal CSS
+            $this->semanticCollectionCSS
+                ->addCss('css/vendor/semantic/modal.min.css', true)
+                ->addCss('css/vendor/semantic/dimmer.min.css', true);
+            
+            // Add modal JS and other dependencies
+            $this->semanticCollectionJS
+                ->addJs('js/vendor/semantic/modal.min.js', true)
+                ->addJs('js/vendor/semantic/dimmer.min.js', true);
+            
+            $this->footerCollectionJS
+                ->addJs('js/pbx/main/form.js', true)
+                ->addJs('js/vendor/clipboard/clipboard.js', true)
+                ->addJs('js/pbx/PbxAPI/apiKeysAPI.js', true)
+                ->addJs('js/pbx/ApiKeys/api-keys-modify.js', true);
         }
     }
     

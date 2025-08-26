@@ -47,6 +47,11 @@ class IncomingRouteEditForm extends BaseForm
         $this->addHiddenFields();
         $this->addTextFields();
         $this->addSpecialFields($entity);
+        
+        // Map database field 'provider' to form field 'providerid' for consistency
+        if ($entity !== null && isset($entity->provider)) {
+            $this->get('providerid')->setDefault($entity->provider);
+        }
     }
     
     /**
@@ -58,7 +63,7 @@ class IncomingRouteEditForm extends BaseForm
             'id' => [],
             'priority' => [],
             'action' => ['value' => 'extension'],
-            'provider' => ['id' => 'provider'],
+            'providerid' => ['id' => 'providerid'],
             'extension' => ['id' => 'extension'],
             'audio_message_id' => ['id' => 'audio_message_id'],
         ];

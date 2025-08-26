@@ -45,7 +45,7 @@ class DataStructure extends AbstractDataStructure
         
         // Add outbound route specific fields
         $data['rulename'] = $model->rulename ?? '';
-        $data['provider'] = $model->providerid ?? '';  // API uses 'provider', DB uses 'providerid'
+        $data['providerid'] = $model->providerid ?? '';  // Unified field name
         $data['priority'] = (int)($model->priority ?? 0);
         $data['numberbeginswith'] = $model->numberbeginswith ?? '';
         $data['restnumbers'] = $model->restnumbers ?? '9';
@@ -60,7 +60,7 @@ class DataStructure extends AbstractDataStructure
         $data['represent'] = $model->getRepresent();
         
         // Handle null values for consistent JSON output
-        $data = self::handleNullValues($data, ['rulename', 'provider', 'numberbeginswith', 'prepend', 'note']);
+        $data = self::handleNullValues($data, ['rulename', 'providerid', 'numberbeginswith', 'prepend', 'note']);
         
         return $data;
     }
@@ -86,7 +86,7 @@ class DataStructure extends AbstractDataStructure
         
         // Add provider data for list display
         $providerData = self::getProviderData($model->Providers);
-        $data['provider'] = $providerData['providerName'];
+        $data['providerid'] = $model->providerid ?? '';  // Provider ID
         $data['providerName'] = $providerData['providerName'];
         $data['disabled'] = $providerData['providerDisabled'];
         

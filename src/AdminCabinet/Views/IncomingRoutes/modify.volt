@@ -12,12 +12,12 @@
 <h3 class="ui dividing header ">{{ t._("ir_RuleAssignIf") }}</h3>
 
 <div class="field max-width-500">
-    <label for="provider">{{ t._('ir_Provider') }}
+    <label for="providerid">{{ t._('ir_Provider') }}
         <i class="small info circle icon field-info-icon" 
-           data-field="provider"></i>
+           data-field="providerid"></i>
     </label>
-    {{ form.render('provider') }}
-    <div class="ui selection dropdown search" id="provider-dropdown">
+    {{ form.render('providerid') }}
+    <div class="ui selection dropdown search" id="providerid-dropdown">
         <i class="dropdown icon"></i>
         <div class="default text">{{ t._('ir_AnyProvider_v2') }}</div>
         <div class="menu"></div>

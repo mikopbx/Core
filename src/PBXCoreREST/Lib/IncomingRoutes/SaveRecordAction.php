@@ -36,7 +36,7 @@ use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
  * @apiParam {String} [id] Record ID (for update)
  * @apiParam {String} rulename Route name
  * @apiParam {String} number DID number
- * @apiParam {String} [provider] Provider uniqid (null for any provider)
+ * @apiParam {String} [providerid] Provider uniqid (null for any provider)
  * @apiParam {Number} [priority] Route priority (auto-assigned if empty)
  * @apiParam {Number} [timeout] Ring timeout in seconds (default: 18)
  * @apiParam {String} [extension] Forward to extension number
@@ -64,7 +64,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
             'id' => 'int',
             'rulename' => 'string|sanitize|max:64',
             'number' => 'string|max:32',
-            'provider' => 'string|max:64|empty_to_null',
+            'providerid' => 'string|max:64|empty_to_null',  // Map from frontend field name
             'priority' => 'int',
             'timeout' => 'int',
             'extension' => 'string|max:32',
@@ -82,9 +82,14 @@ class SaveRecordAction extends AbstractSaveRecordAction
             // Unified data sanitization using new approach
             $sanitizedData = self::sanitizeInputData($allowedData, $sanitizationRules, $textFields);
             
-            // Handle "none" values
-            if (isset($sanitizedData['provider']) && $sanitizedData['provider'] === 'none') {
-                $sanitizedData['provider'] = null;
+            // Map providerid to provider for database
+            if (isset($sanitizedData['providerid'])) {
+                if (empty($sanitizedData['providerid']) || $sanitizedData['providerid'] === 'none') {
+                    $sanitizedData['provider'] = null;
+                } else {
+                    $sanitizedData['provider'] = $sanitizedData['providerid'];
+                }
+                unset($sanitizedData['providerid']);  // Remove frontend field name
             }
             if (isset($sanitizedData['audio_message_id']) && $sanitizedData['audio_message_id'] === 'none') {
                 $sanitizedData['audio_message_id'] = null;

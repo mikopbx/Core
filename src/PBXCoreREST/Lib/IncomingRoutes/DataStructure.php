@@ -45,7 +45,8 @@ class DataStructure extends AbstractDataStructure
         // Add incoming route specific fields
         $data['rulename'] = $model->rulename ?? '';
         $data['number'] = $model->number ?? '';
-        $data['provider'] = $model->provider ?? 'none';
+        // Map database field 'provider' to API field 'providerid' for consistency
+        $data['providerid'] = $model->provider ?? 'none';
         $data['priority'] = (int)$model->priority;
         $data['timeout'] = (int)$model->timeout;
         $data['extension'] = $model->extension ?? '';
@@ -59,8 +60,8 @@ class DataStructure extends AbstractDataStructure
         // Add sound file field using unified approach with underscore separator for consistency with IVR menu
         $data = self::addSoundFileField($data, 'audio_message_id', $model->audio_message_id, '_Represent');
         
-        // Handle null values for consistent JSON output
-        $data = self::handleNullValues($data, ['rulename', 'number', 'provider', 'extension', 'audio_message_id', 'note']);
+        // Handle null values for consistent JSON output (excluding providerid which uses 'none')
+        $data = self::handleNullValues($data, ['rulename', 'number', 'extension', 'audio_message_id', 'note']);
         
         return $data;
     }
@@ -82,9 +83,10 @@ class DataStructure extends AbstractDataStructure
         $data['extension'] = $model->extension ?? '';
         $data['note'] = $model->note ?? '';
         
-        // Add provider data - provider field contains ID
+        // Add provider data - map provider to providerid for consistency
         $providerData = self::getProviderData($model->Providers);
-        $data['provider'] = $model->provider ?? 'none';  // Provider ID
+        // Map database field 'provider' to API field 'providerid' for consistency
+        $data['providerid'] = $model->provider ?? 'none';  // Provider ID
         $data['providerRepresent'] = $providerData['providerName'];
         $data['providerDisabled'] = $providerData['providerDisabled'];
         

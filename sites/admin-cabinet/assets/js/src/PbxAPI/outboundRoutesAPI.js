@@ -215,14 +215,13 @@ const OutboundRoutesAPI = {
         
         return {
             id: data.id,
-            uniqid: data.uniqid,
             rulename: data.rulename || '',
             priority: parseInt(data.priority) || 0,
             numberbeginswith: data.numberbeginswith || '',
             restnumbers: data.restnumbers || '-1',
             trimfrombegin: data.trimfrombegin || '0',
             prepend: data.prepend || '',
-            provider: data.provider || '',
+            providerid: data.providerid || '',  // Unified field name
             providerName: data.providerName || '',
             providerType: data.providerType || '',
             providerDisabled: !!data.providerDisabled,
@@ -244,7 +243,7 @@ const OutboundRoutesAPI = {
         }
         
         // Provider validation (required for outbound routes)
-        if (!data.provider || data.provider === 'none') {
+        if (!data.providerid || data.providerid === 'none') {
             return false;
         }
         

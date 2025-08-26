@@ -30,9 +30,9 @@ trait IncomingCallRulesTrait
         $this->changeTextAreaValue('note', $params['note']);
 
         if (!empty($params['providerName'])) {
-            $this->selectDropdownItem('provider', $params['providerName']);
+            $this->selectDropdownItem('providerid', $params['providerName']);
         } else {
-            $this->selectDropdownItem('provider', $params['provider']);
+            $this->selectDropdownItem('providerid', $params['provider']);
         }
 
         $this->changeInputField('number', $params['number']);
@@ -46,7 +46,7 @@ trait IncomingCallRulesTrait
     protected function verifyRuleConfig(array $params): void
     {
         $this->assertTextAreaValueIsEqual('note', $params['note']);
-        $this->assertMenuItemSelected('provider', $params['provider']);
+        $this->assertMenuItemSelected('providerid', $params['provider']);
         $this->assertInputFieldValueEqual('number', $params['number']);
         $this->assertMenuItemSelected('extension', $params['extension']);
         $this->assertInputFieldValueEqual('timeout', $params['timeout']);

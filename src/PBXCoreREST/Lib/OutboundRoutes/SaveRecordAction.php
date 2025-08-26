@@ -63,7 +63,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
         $sanitizationRules = [
             'id' => 'int',
             'rulename' => 'string|sanitize|max:64',
-            'provider' => 'string|max:64',  // API uses 'provider', required field
+            'providerid' => 'string|max:64',  // Unified field name, required field
             'priority' => 'int',
             'numberbeginswith' => 'string|max:32',
             'restnumbers' => 'int|min:-1|max:20',
@@ -83,8 +83,8 @@ class SaveRecordAction extends AbstractSaveRecordAction
             $sanitizedData = self::sanitizeInputData($allowedData, $sanitizationRules, $textFields);
             
             // Validate provider exists
-            if (!empty($sanitizedData['provider'])) {
-                $provider = Providers::findFirstByUniqid($sanitizedData['provider']);
+            if (!empty($sanitizedData['providerid'])) {
+                $provider = Providers::findFirstByUniqid($sanitizedData['providerid']);
                 if (!$provider) {
                     $res->messages['error'][] = 'api_OutboundRouteProviderNotFound';
                     return $res;
@@ -124,7 +124,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
             $savedRoute = self::executeInTransaction(function() use ($route, $sanitizedData) {
                 // Update route fields
                 $route->rulename = $sanitizedData['rulename'] ?? '';
-                $route->providerid = $sanitizedData['provider'];  // Map 'provider' to 'providerid' for DB
+                $route->providerid = $sanitizedData['providerid'];  // Use unified field name
                 $route->priority = (string)$sanitizedData['priority'];
                 $route->numberbeginswith = $sanitizedData['numberbeginswith'] ?? '';
                 $route->restnumbers = (string)$sanitizedData['restnumbers'];

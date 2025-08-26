@@ -59,7 +59,7 @@ class GetRecordAction extends AbstractGetRecordAction
             [                                // Entity-specific defaults
                 'rulename' => '',
                 'number' => '',
-                'provider' => null,
+                'provider' => null,              // Database field name (will be mapped to providerid)
                 'priority' => '0',  // Will be set to max+1 when saving
                 'timeout' => '18',
                 'extension' => '',

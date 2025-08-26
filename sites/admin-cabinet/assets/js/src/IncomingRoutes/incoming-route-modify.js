@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global $, globalRootUrl, globalTranslate, Extensions, Form, IncomingRoutesAPI, UserMessage, SoundFilesSelector, ProvidersAPI, SecurityUtils, FormElements, TooltipBuilder */
+/* global $, globalRootUrl, globalTranslate, Extensions, Form, IncomingRoutesAPI, UserMessage, SoundFilesSelector, ProviderSelector, SecurityUtils, FormElements, TooltipBuilder */
 
 /**
  * Object for managing incoming route record
@@ -30,7 +30,7 @@ const incomingRouteModify = {
      */
     $formObj: $('#incoming-route-form'),
 
-    $providerDropDown: $('.ui.dropdown#provider-dropdown'),
+    $providerDropDown: $('.ui.dropdown#providerid-dropdown'),
     $forwardingSelectDropdown: $('.forwarding-select'),
 
     /**
@@ -89,17 +89,21 @@ const incomingRouteModify = {
     
     /**
      * Initialize provider dropdown with settings
+     * @param {string} currentValue - Current provider ID value
+     * @param {string} currentText - Current provider representation text
      */
-    initializeProviderDropdown() {
-        const providerSettings = ProvidersAPI.getDropdownSettings(() => {
-            Form.dataChanged();
+    initializeProviderDropdown(currentValue = null, currentText = null) {
+        // Use the new ProviderSelector component
+        ProviderSelector.init('#providerid-dropdown', {
+            includeNone: true,      // Include "Any provider" option
+            forceSelection: false,  // Don't force selection
+            hiddenFieldId: 'providerid', // Updated field name
+            currentValue: currentValue,  // Pass current value for initialization
+            currentText: currentText,    // Pass current text for initialization
+            onChange: () => {
+                Form.dataChanged();
+            }
         });
-        
-        // Clear any existing initialization
-        incomingRouteModify.$providerDropDown.dropdown('destroy');
-        
-        // Initialize fresh dropdown
-        incomingRouteModify.$providerDropDown.dropdown(providerSettings);
     },
     
     /**
@@ -115,15 +119,6 @@ const incomingRouteModify = {
         };
         incomingRouteModify.$forwardingSelectDropdown.dropdown(dropdownSettings);
     },
-    
-    /**
-     * Initialize dropdowns for new record
-     */
-    initializeDropdowns() {
-        incomingRouteModify.initializeProviderDropdown();
-        incomingRouteModify.initializeExtensionDropdown();
-    },
-    
     
     /**
      * Load form data via REST API
@@ -145,8 +140,9 @@ const incomingRouteModify = {
                     // Populate form with copied data
                     incomingRouteModify.populateForm(copyData);
                 } else {
-                    // Error loading source data for copy
-                    incomingRouteModify.initializeDropdowns();
+                    // Error loading source data for copy - initialize with empty dropdowns
+                    incomingRouteModify.initializeProviderDropdown();
+                    incomingRouteModify.initializeExtensionDropdown();
                     
                     const errorMessage = response.messages && response.messages.error ? 
                         response.messages.error.join(', ') : 
@@ -160,9 +156,10 @@ const incomingRouteModify = {
         // Regular load or new record
         const recordId = incomingRouteModify.getRecordId();
         
-        if (!recordId) {
-            // New record - just initialize dropdowns
-            incomingRouteModify.initializeDropdowns();
+        if (!recordId || recordId === 'new') {
+            // New record - initialize dropdowns without values
+            incomingRouteModify.initializeProviderDropdown();
+            incomingRouteModify.initializeExtensionDropdown();
             return;
         }
         
@@ -171,8 +168,9 @@ const incomingRouteModify = {
                 // Populate form with data
                 incomingRouteModify.populateForm(response.data);
             } else {
-                // Error loading data, but still initialize dropdowns
-                incomingRouteModify.initializeDropdowns();
+                // Error loading data - initialize with empty dropdowns
+                incomingRouteModify.initializeProviderDropdown();
+                incomingRouteModify.initializeExtensionDropdown();
                 
                 const errorMessage = response.messages && response.messages.error ? 
                     response.messages.error.join(', ') : 
@@ -206,37 +204,18 @@ const incomingRouteModify = {
         const urlParams = new URLSearchParams(window.location.search);
         const isCopy = urlParams.has('copy');
         
-        // Set form values
+        // Set form values first (except dropdowns)
         Form.$formObj.form('set values', data);
         
-        // Initialize dropdowns using shared methods
-        incomingRouteModify.initializeProviderDropdown();
-        incomingRouteModify.initializeExtensionDropdown();
+        // Initialize provider dropdown with current value and representation
+        const providerValue = (data.providerid && data.providerid !== 'none') ? data.providerid : null;
+        const providerText = data.providerRepresent || data.providerName || null;
         
-        // Set provider value after dropdown is initialized
-        // Note: provider can be 'none' or actual provider ID
-        if (data.provider && data.provider !== 'none') {
-            // For actual provider, set both value and text if available
-            setTimeout(() => {
-                incomingRouteModify.$providerDropDown.dropdown('set selected', data.provider);
-                
-                // If we have provider name, update the text to show it
-                if (data.providerName) {
-                    const safeProviderText = window.SecurityUtils ? 
-                        window.SecurityUtils.sanitizeExtensionsApiContent(data.providerName) : 
-                        data.providerName;
-                    
-                    incomingRouteModify.$providerDropDown.find('.text')
-                        .removeClass('default')
-                        .html(safeProviderText);
-                }
-            }, 150);
-        } else {
-            // For 'none', just set the selected value
-            setTimeout(() => {
-                incomingRouteModify.$providerDropDown.dropdown('set selected', 'none');
-            }, 150);
-        }
+        // Initialize provider dropdown once with all data
+        incomingRouteModify.initializeProviderDropdown(providerValue, providerText);
+        
+        // Initialize extension dropdown
+        incomingRouteModify.initializeExtensionDropdown();
         
         if (data.extension) {
             // Small delay to ensure dropdown is fully initialized

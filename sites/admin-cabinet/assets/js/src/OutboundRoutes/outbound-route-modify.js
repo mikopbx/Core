@@ -8,7 +8,7 @@
  * (at your option) any later version.
  */
 
-/* global globalRootUrl, globalTranslate, Form, OutboundRoutesAPI, ProvidersAPI, UserMessage, TooltipBuilder */
+/* global globalRootUrl, globalTranslate, Form, OutboundRoutesAPI, ProviderSelector, UserMessage, TooltipBuilder */
 
 /**
  * Object for managing outbound route settings
@@ -25,7 +25,7 @@ const outboundRoute = {
      * jQuery object for provider dropdown
      * @type {jQuery}
      */
-    $providerDropDown: $('.ui.dropdown#provider-dropdown'),
+    $providerDropDown: $('.ui.dropdown#providerid-dropdown'),
     
     /**
      * Route data from API
@@ -106,10 +106,7 @@ const outboundRoute = {
         // Get route ID from form or URL
         const routeId = this.getRouteId();
         
-        // Initialize provider dropdown
-        this.initializeProviderDropdown();
-        
-        // Load route data
+        // Load route data (will initialize dropdown with data)
         this.loadRouteData(routeId);
         
         this.initializeForm();
@@ -137,22 +134,21 @@ const outboundRoute = {
     
     /**
      * Initialize provider dropdown with settings
+     * @param {string} currentValue - Current provider ID value
+     * @param {string} currentText - Current provider representation text
      */
-    initializeProviderDropdown() {
-        // Get dropdown settings for outbound routes (provider is required)
-        const providerSettings = ProvidersAPI.getDropdownSettings({
-            includeNone: false,  // No 'none' option for outbound routes
-            forceSelection: true, // Provider is mandatory
-            onChange: function(value) {
+    initializeProviderDropdown(currentValue = null, currentText = null) {
+        // Use the new ProviderSelector component
+        ProviderSelector.init('#providerid-dropdown', {
+            includeNone: false,     // No 'none' option for outbound routes
+            forceSelection: true,   // Provider is mandatory
+            hiddenFieldId: 'providerid',  // Consistent field name
+            currentValue: currentValue,  // Pass current value for initialization
+            currentText: currentText,    // Pass current text for initialization
+            onChange: () => {
                 Form.dataChanged();
             }
         });
-        
-        // Clear any existing initialization
-        outboundRoute.$providerDropDown.dropdown('destroy');
-        
-        // Initialize fresh dropdown
-        outboundRoute.$providerDropDown.dropdown(providerSettings);
     },
     
     /**
@@ -192,8 +188,13 @@ const outboundRoute = {
             if (response.result) {
                 this.routeData = response.data;
                 this.populateForm(response.data);
-            } else if (routeId !== 'new') {
-                UserMessage.showMultiString(response.messages);
+            } else {
+                // If no data or error, initialize with empty dropdown
+                this.initializeProviderDropdown();
+                
+                if (routeId !== 'new') {
+                    UserMessage.showMultiString(response.messages);
+                }
             }
         });
     },
@@ -203,11 +204,11 @@ const outboundRoute = {
      * @param {Object} data - Route data
      */
     populateForm(data) {
-        // Set form values (API uses 'provider', form field is 'providerid')
+        // Set form values (API now uses 'providerid')
         this.$formObj.form('set values', {
             id: data.id || '',
             rulename: data.rulename || '',
-            providerid: data.provider || '',
+            providerid: data.providerid || '',
             priority: data.priority || '',
             numberbeginswith: data.numberbeginswith || '',
             restnumbers: data.restnumbers === '-1' ? '' : (data.restnumbers || ''),
@@ -216,24 +217,12 @@ const outboundRoute = {
             note: data.note || ''
         });
         
-        // Set provider value after dropdown is initialized
-        if (data.provider) {
-            // Small delay to ensure dropdown is fully initialized
-            setTimeout(() => {
-                outboundRoute.$providerDropDown.dropdown('set selected', data.provider);
-                
-                // If we have provider name, update the text to show it
-                if (data.providerName) {
-                    const safeProviderText = window.SecurityUtils ? 
-                        window.SecurityUtils.sanitizeExtensionsApiContent(data.providerName) : 
-                        data.providerName;
-                    
-                    outboundRoute.$providerDropDown.find('.text')
-                        .removeClass('default')
-                        .html(safeProviderText);
-                }
-            }, 150);
-        }
+        // Initialize provider dropdown with current value and representation
+        const providerValue = data.providerid || null;
+        const providerText = data.providerRepresent || data.providerName || null;
+        
+        // Initialize provider dropdown once with all data
+        this.initializeProviderDropdown(providerValue, providerText);
         
         // Update page header if we have a representation
         if (data.represent) {
@@ -249,12 +238,6 @@ const outboundRoute = {
     cbBeforeSendForm(settings) {
         const result = settings;
         result.data = outboundRoute.$formObj.form('get values');
-        
-        // Convert providerid to provider for API consistency
-        if (result.data.providerid !== undefined) {
-            result.data.provider = result.data.providerid;
-            delete result.data.providerid;
-        }
         
         // Handle empty restnumbers
         if (result.data.restnumbers === '') {
