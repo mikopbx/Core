@@ -87,7 +87,7 @@ class BatchCheckDictionaryAction extends Injectable
         }
 
         // Batch check using optimized method
-        $checkResults = PasswordValidator::checkDictionaryBatch($passwordsToCheck);
+        $checkResults = \MikoPBX\PBXCoreREST\Services\PasswordService::checkDictionaryBatch($passwordsToCheck);
         
         // Prepare response data
         $weakIndexes = [];

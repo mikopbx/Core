@@ -19,7 +19,7 @@
 
 declare(strict_types=1);
 
-namespace MikoPBX\PBXCoreREST\Lib\Passwords;
+namespace MikoPBX\PBXCoreREST\Services;
 
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\TranslationProvider;
@@ -28,14 +28,14 @@ use Phalcon\Di\Di;
 use Phalcon\Encryption\Security\Random;
 
 /**
- * Unified Password Validator Service
+ * Unified Password Service
  * 
  * Provides centralized password validation and generation functionality
  * for use across the entire application (REST API, Controllers, Workers)
  * 
- * @package MikoPBX\Core\System
+ * @package MikoPBX\PBXCoreREST\Services
  */
-class PasswordValidator
+class PasswordService
 {
     /**
      * Password length constraints
@@ -371,7 +371,7 @@ class PasswordValidator
             $score < self::SCORE_WEAK => self::translate('psw_PasswordStrengthWeak'),
             $score < self::SCORE_FAIR => self::translate('psw_PasswordStrengthFair'),
             $score < self::SCORE_GOOD => self::translate('psw_PasswordStrengthGood'),
-            default => self::translate('psw_PasswordStrengthStrong')
+            default => self::translate('psw_PasswordStrengthStrong'),
         };
     }
     

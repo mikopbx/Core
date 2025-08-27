@@ -25,7 +25,7 @@ namespace MikoPBX\PBXCoreREST\Lib\Passwords;
  * Helper class for mapping field names to validation contexts
  * 
  * Provides centralized mapping logic for converting various field name formats
- * to standardized validation contexts used by PasswordValidator.
+ * to standardized validation contexts used by PasswordService.
  * 
  * @package MikoPBX\PBXCoreREST\Lib\Passwords
  */
@@ -35,10 +35,10 @@ class FieldContextMapper
      * Map field name to validation context
      *
      * Converts various field name formats (camelCase, UPPER_CASE, snake_case)
-     * to standardized validation contexts for PasswordValidator.
+     * to standardized validation contexts for PasswordService.
      *
      * @param string $field Field name from request
-     * @return string|null Validation context for PasswordValidator, null if empty field
+     * @return string|null Validation context for PasswordService, null if empty field
      */
     public static function mapFieldToContext(string $field): ?string
     {
@@ -49,19 +49,19 @@ class FieldContextMapper
         // Handle various field name formats
         return match($field) {
             // Web admin password variations
-            'WebAdminPassword', 'WEB_ADMIN_PASSWORD', 'web_admin_password' => PasswordValidator::CONTEXT_WEB_ADMIN,
+            'WebAdminPassword', 'WEB_ADMIN_PASSWORD', 'web_admin_password' => \MikoPBX\PBXCoreREST\Services\PasswordService::CONTEXT_WEB_ADMIN,
             
             // SSH password variations
-            'SSHPassword', 'SSH_PASSWORD', 'ssh_password' => PasswordValidator::CONTEXT_SSH,
+            'SSHPassword', 'SSH_PASSWORD', 'ssh_password' => \MikoPBX\PBXCoreREST\Services\PasswordService::CONTEXT_SSH,
             
             // SIP secret variations
-            'secret', 'sip_secret', 'SIP_SECRET' => PasswordValidator::CONTEXT_SIP,
+            'secret', 'sip_secret', 'SIP_SECRET' => \MikoPBX\PBXCoreREST\Services\PasswordService::CONTEXT_SIP,
             
             // AMI secret variations
-            'ami_secret', 'AMI_SECRET' => PasswordValidator::CONTEXT_AMI,
+            'ami_secret', 'AMI_SECRET' => \MikoPBX\PBXCoreREST\Services\PasswordService::CONTEXT_AMI,
             
             // Provider secret variations
-            'provider_secret', 'PROVIDER_SECRET' => PasswordValidator::CONTEXT_PROVIDER,
+            'provider_secret', 'PROVIDER_SECRET' => \MikoPBX\PBXCoreREST\Services\PasswordService::CONTEXT_PROVIDER,
             
             // Default: return field as-is for custom contexts
             default => $field

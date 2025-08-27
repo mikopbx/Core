@@ -87,7 +87,7 @@ class BatchValidateAction  extends Injectable
         }
 
         // Batch validate
-        $results = PasswordValidator::validateBatch(
+        $results = \MikoPBX\PBXCoreREST\Services\PasswordService::validateBatch(
             $passwordsWithContext,
             ['skipDictionary' => $skipDictionary]
         );

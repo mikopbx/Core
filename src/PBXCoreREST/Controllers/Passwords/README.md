@@ -302,5 +302,5 @@ time curl -X POST http://127.0.0.1/pbxcore/api/v2/passwords/batchValidate \
 - **Controllers**: `GetController.php`, `PostController.php`
 - **Processor**: `src/PBXCoreREST/Lib/PasswordsManagementProcessor.php`
 - **Actions**: `src/PBXCoreREST/Lib/Passwords/*.php`
-- **Validator**: `src/Core/System/PasswordValidator.php`
+- **Service**: `src/PBXCoreREST/Services/PasswordService.php`
 - **Frontend Widget**: `sites/admin-cabinet/assets/js/src/FormElements/password-widget.js`

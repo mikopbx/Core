@@ -63,20 +63,20 @@ class GeneratePasswordAction  extends Injectable
         $res = new PBXApiResult();
         $res->processor = __CLASS__;
 
-        $length = isset($data['length']) ? (int)$data['length'] : PasswordValidator::DEFAULT_LENGTH;
+        $length = isset($data['length']) ? (int)$data['length'] : \MikoPBX\PBXCoreREST\Services\PasswordService::DEFAULT_LENGTH;
         $includeSpecial = $data['includeSpecial'] ?? true;
 
         try {
-            $password = PasswordValidator::generate($length, $includeSpecial);
+            $password = \MikoPBX\PBXCoreREST\Services\PasswordService::generate($length, $includeSpecial);
 
             // Calculate strength of generated password
-            $score = PasswordValidator::calculateScore($password);
+            $score = \MikoPBX\PBXCoreREST\Services\PasswordService::calculateScore($password);
 
             $res->data = [
                 'password' => $password,
                 'length' => strlen($password),
                 'score' => $score,
-                'strength' => PasswordValidator::getStrengthLabel($score),
+                'strength' => \MikoPBX\PBXCoreREST\Services\PasswordService::getStrengthLabel($score),
                 'hasSpecialChars' => preg_match('/[^a-zA-Z0-9]/', $password) === 1
             ];
             $res->success = true;

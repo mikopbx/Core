@@ -66,7 +66,7 @@ class CheckDictionaryAction  extends Injectable
             return $res;
         }
 
-        $isInDictionary = PasswordValidator::isInDictionary($password);
+        $isInDictionary = \MikoPBX\PBXCoreREST\Services\PasswordService::isInDictionary($password);
 
         $di = Di::getDefault();
         $translation = $di->get(TranslationProvider::SERVICE_NAME);

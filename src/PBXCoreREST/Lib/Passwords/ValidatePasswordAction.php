@@ -81,7 +81,7 @@ class ValidatePasswordAction extends Injectable
         $context = FieldContextMapper::mapFieldToContext($field);
 
         // Validate using unified validator
-        $validationResult = PasswordValidator::validate(
+        $validationResult = \MikoPBX\PBXCoreREST\Services\PasswordService::validate(
             $password,
             $context,
             ['skipDictionary' => $skipDictionary]
