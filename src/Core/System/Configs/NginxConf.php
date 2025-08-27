@@ -222,11 +222,20 @@ class NginxConf extends SystemConfigClass
         if ($RedirectToHttps === '1') {
             $includeRow = 'include mikopbx/locations/*.conf;';
 
-            $conf_data = 'if ( $remote_addr != "127.0.0.1" ) {' . PHP_EOL
-                . '        ' . 'return 301 https://$host:' . $WEBHTTPSPort . '$request_uri;' . PHP_EOL
-                . '    }' . PHP_EOL
-                . '    ' . $includeRow . PHP_EOL;
-            $config    = str_replace($includeRow, $conf_data, $config);
+            $mapDirective = 'map $remote_addr$host $is_local {' . PHP_EOL
+                . '    default 0;' . PHP_EOL
+                . '    "~127\.0\.0\.1.*" 1;' . PHP_EOL
+                . '    "~.*localhost" 1;' . PHP_EOL
+                . '}' . PHP_EOL;
+
+
+              $conf_data = 'if ( $is_local != 1 ) {' . PHP_EOL
+                . '    ' . 'return 301 https://$host:' . $WEBHTTPSPort . '$request_uri;' . PHP_EOL
+                . '}' . PHP_EOL
+                . $includeRow . PHP_EOL;
+
+             $config = $mapDirective . PHP_EOL . $config;
+             $config = str_replace($includeRow, $conf_data, $config);
         }
         file_put_contents(self::CONF_PATH, $config);
 
