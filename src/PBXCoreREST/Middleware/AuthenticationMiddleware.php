@@ -25,6 +25,7 @@ namespace MikoPBX\PBXCoreREST\Middleware;
 use MikoPBX\Common\Providers\LoggerAuthProvider;
 use MikoPBX\PBXCoreREST\Http\Request;
 use MikoPBX\PBXCoreREST\Http\Response;
+use MikoPBX\PBXCoreREST\Services\ApiKeyValidationService;
 use MikoPBX\PBXCoreREST\Providers\RequestProvider;
 use MikoPBX\PBXCoreREST\Providers\ResponseProvider;
 use MikoPBX\PBXCoreREST\Traits\ResponseTrait;
@@ -53,6 +54,30 @@ class AuthenticationMiddleware implements MiddlewareInterface
         /** @var Response $response */
         $response = $application->getService(ResponseProvider::SERVICE_NAME);
 
+        // Check API key authentication first
+        if ($request->hasApiKey()) {
+            $apiKeyValidator = new ApiKeyValidationService($application->getDI());
+            $validationResult = $apiKeyValidator->validate($request);
+            
+            if ($validationResult->isValid()) {
+                // Store API key info in request for logging and context
+                $request->setApiKeyInfo($validationResult->getKeyInfo());
+                // API key authenticated successfully, skip other checks
+                return true;
+            }
+            
+            // Log failed API key attempt
+            $loggerAuth = $application->getService(LoggerAuthProvider::SERVICE_NAME);
+            $loggerAuth->warning("API Key auth failed - From: {$request->getClientAddress(true)} Key: ***{$validationResult->getKeySuffix()} Error: {$validationResult->getError()}");
+            
+            $this->halt(
+                $application,
+                $response::UNAUTHORIZED,
+                'Invalid API key'
+            );
+            return false;
+        }
+        
         $isNoAuthApi = $request->thisIsModuleNoAuthRequest($application);
         if (
             true !== $request->isLocalHostRequest()
@@ -115,6 +140,11 @@ class AuthenticationMiddleware implements MiddlewareInterface
 
         // Skip CSRF for localhost and debug mode
         if ($request->isLocalHostRequest() || $request->isDebugModeEnabled()) {
+            return false;
+        }
+        
+        // Skip CSRF for API key authenticated requests
+        if ($request->hasApiKey()) {
             return false;
         }
 

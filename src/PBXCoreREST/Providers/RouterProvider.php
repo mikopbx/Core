@@ -24,6 +24,10 @@ namespace MikoPBX\PBXCoreREST\Providers;
 
 use MikoPBX\PBXCoreREST\Controllers\
 {
+    ApiKeys\GetController as ApiKeysGetController,
+    ApiKeys\PostController as ApiKeysPostController,
+    ApiKeys\PutController as ApiKeysPutController,
+    ApiKeys\DeleteController as ApiKeysDeleteController,
     Cdr\GetController as CdrGetController,
     Iax\GetController as IaxGetController,
     Modules\ModulesControllerBase,
@@ -317,6 +321,13 @@ class RouterProvider implements ServiceProviderInterface
             [AsteriskManagersPostController::class, 'callAction', '/pbxcore/api/v2/asterisk-managers/{actionName}', 'post', '/'],
             [AsteriskManagersPutController::class, 'callAction', '/pbxcore/api/v2/asterisk-managers/{actionName}/{id:[a-zA-Z0-9\-]+}', 'put', '/'],
             [AsteriskManagersDeleteController::class, 'callAction', '/pbxcore/api/v2/asterisk-managers/{actionName}/{id:[a-zA-Z0-9\-]+}', 'delete', '/'],
+
+            // API Keys v2 routes
+            [ApiKeysGetController::class, 'callAction', '/pbxcore/api/v2/api-keys/{actionName}', 'get', '/'],
+            [ApiKeysGetController::class, 'callAction', '/pbxcore/api/v2/api-keys/{actionName}/{id:[a-zA-Z0-9\-]+}', 'get', '/'],
+            [ApiKeysPostController::class, 'callAction', '/pbxcore/api/v2/api-keys/{actionName}', 'post', '/'],
+            [ApiKeysPutController::class, 'callAction', '/pbxcore/api/v2/api-keys/{actionName}/{id:[a-zA-Z0-9\-]+}', 'put', '/'],
+            [ApiKeysDeleteController::class, 'callAction', '/pbxcore/api/v2/api-keys/{actionName}/{id:[a-zA-Z0-9\-]+}', 'delete', '/'],
 
         ];
     }

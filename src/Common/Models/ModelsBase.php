@@ -20,6 +20,7 @@
 
 namespace MikoPBX\Common\Models;
 
+use MikoPBX\AdminCabinet\Controllers\ApiKeysController;
 use MikoPBX\AdminCabinet\Controllers\AsteriskManagersController;
 use MikoPBX\AdminCabinet\Controllers\CallQueuesController;
 use MikoPBX\AdminCabinet\Controllers\ConferenceRoomsController;
@@ -366,6 +367,12 @@ class ModelsBase extends Model
     public function getRepresent(bool $needLink = false): string
     {
         switch (static::class) {
+            case ApiKeys::class:
+                $name = '<i class="key icon"></i> ';
+                $name .= empty($this->id)
+                    ? $this->t('mo_NewElementApiKeys')
+                    : $this->t('repApiKeys', ['represent' =>$this->key_display]);
+                break;
             case AsteriskManagerUsers::class:
                 $name = '<i class="asterisk icon"></i> ';
                 $name .= empty($this->id)
@@ -649,6 +656,9 @@ class ModelsBase extends Model
         $link = '#';
 
         switch (static::class) {
+            case ApiKeys::class:
+                $link = $this->buildRecordUrl(ApiKeysController::class, 'modify', $this->id);
+                break;
             case AsteriskManagerUsers::class:
                 $link = $this->buildRecordUrl(AsteriskManagersController::class, 'modify', $this->id);
                 break;

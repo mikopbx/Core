@@ -578,3 +578,17 @@ curl -X POST -H "X-Async-Response-Channel-Id: test-channel" \
 8. **Document API changes** in comments
 9. **Use type hints** for better code clarity
 10. **Follow existing patterns** in the codebase
+11. RESTART THE CONTAINER if you change any backend code 
+    
+## ABSOLUTE RULES:
+
+- NO PARTIAL IMPLEMENTATION
+- NO SIMPLIFICATION : no "//This is simplified stuff for now, complete implementation would blablabla"
+- NO CODE DUPLICATION : check existing codebase to reuse functions and constants Read files before writing new functions. Use common sense function name to find them easily.
+- NO DEAD CODE : either use or delete from codebase completely
+- IMPLEMENT TEST FOR EVERY FUNCTIONS
+- NO CHEATER TESTS : test must be accurate, reflect real usage and be designed to reveal flaws. No useless tests! Design tests to be verbose so we can use them for debuging.
+- NO INCONSISTENT NAMING - read existing codebase naming patterns.
+- NO OVER-ENGINEERING - Don't add unnecessary abstractions, factory patterns, or middleware when simple functions would work. Don't think "enterprise" when you need "working"
+- NO MIXED CONCERNS - Don't put validation logic inside API handlers, database queries inside UI components, etc. instead of proper separation
+- NO RESOURCE LEAKS - Don't forget to close database connections, clear timeouts, remove event listeners, or clean up file handles

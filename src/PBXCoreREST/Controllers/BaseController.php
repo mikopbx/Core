@@ -22,8 +22,10 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Controllers;
 
+use MikoPBX\AdminCabinet\Controllers\SessionController;
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\RedisClientProvider;
+use MikoPBX\Common\Providers\SessionProvider;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Lib\PbxExtensionsProcessor;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
@@ -464,6 +466,28 @@ class BaseController extends Controller
         
         // Add HTTP method to help backend distinguish between CREATE and UPDATE operations
         $requestMessage['httpMethod'] = $this->request->getMethod();
+        
+        // Pass session context for ACL modules (like ModuleUsersUI)
+        // Only for session-based requests, not for API keys
+        if ($this->request->isAuthorizedSessionRequest()) {
+            $session = $this->di->get(SessionProvider::SERVICE_NAME);
+            $sessionData = $session->get(SessionController::SESSION_ID);
+            
+            if ($sessionData) {
+                // Pass only necessary session data for ACL
+                $requestMessage['sessionContext'] = [
+                    'role' => $sessionData[SessionController::ROLE] ?? null,
+                    'user_id' => $sessionData['user_id'] ?? null,
+                    'auth_type' => 'session'
+                ];
+            }
+        } elseif ($this->request->isApiKeyRequest()) {
+            // For API keys - just mark auth type, no user context
+            $requestMessage['sessionContext'] = [
+                'auth_type' => 'api_key',
+                'api_key_id' => $this->request->getApiKeyInfo()['id'] ?? null
+            ];
+        }
 
         return array($requestMessage['debug'], $requestMessage);
     }

@@ -39,6 +39,12 @@ use Phalcon\Mvc\Micro;
 class Request extends PhRequest
 {
     /**
+     * API key information stored after successful validation
+     * @var array|null
+     */
+    private ?array $apiKeyInfo = null;
+    
+    /**
      * Check the header of a request to understand if it needs async response or not
      * @return bool
      */
@@ -177,6 +183,57 @@ class Request extends PhRequest
     public function isAuthorizedSessionRequest(): bool
     {
         return $this->getDI()->getShared(SessionProvider::SERVICE_NAME)->has(SessionController::SESSION_ID);
+    }
+    
+    /**
+     * Check if request has API key header
+     * 
+     * @return bool
+     */
+    public function hasApiKey(): bool
+    {
+        return $this->hasHeader('X-API-Key');
+    }
+    
+    /**
+     * Get API key from header
+     * 
+     * @return string|null
+     */
+    public function getApiKey(): ?string
+    {
+        return $this->getHeader('X-API-Key');
+    }
+    
+    /**
+     * Check if this is an API key authenticated request
+     * 
+     * @return bool
+     */
+    public function isApiKeyRequest(): bool
+    {
+        return $this->hasApiKey();
+    }
+    
+    /**
+     * Store API key info for logging/context
+     * 
+     * @param array $info
+     * @return void
+     */
+    public function setApiKeyInfo(array $info): void
+    {
+        $this->apiKeyInfo = $info;
+    }
+    
+    /**
+     * Get API key info
+     * 
+     * @return array|null
+     */
+    public function getApiKeyInfo(): ?array
+    {
+        return $this->apiKeyInfo;
     }
 
     /**

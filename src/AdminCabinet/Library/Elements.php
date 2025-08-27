@@ -26,6 +26,7 @@ use MikoPBX\AdminCabinet\Controllers\CallQueuesController;
 use MikoPBX\AdminCabinet\Controllers\ConferenceRoomsController;
 use MikoPBX\AdminCabinet\Controllers\ConsoleController;
 use MikoPBX\AdminCabinet\Controllers\CustomFilesController;
+use MikoPBX\AdminCabinet\Controllers\ApiKeysController;
 use MikoPBX\AdminCabinet\Controllers\DialplanApplicationsController;
 use MikoPBX\AdminCabinet\Controllers\ExtensionsController;
 use MikoPBX\AdminCabinet\Controllers\Fail2BanController;
@@ -272,6 +273,13 @@ class Elements extends Injectable
                     CustomFilesController::class => [
                         'caption' => 'mm_CustomFiles',
                         'iconclass' => 'linux',
+                        'action' => 'index',
+                        'param' => '',
+                        'style' => '',
+                    ],
+                    ApiKeysController::class => [
+                        'caption' => 'mm_ApiKeys',
+                        'iconclass' => 'key',
                         'action' => 'index',
                         'param' => '',
                         'style' => '',
