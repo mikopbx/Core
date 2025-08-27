@@ -25,7 +25,7 @@ use MikoPBX\AdminCabinet\Forms\GeneralSettingsEditForm;
 use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\PBXCoreREST\Lib\Passwords\PasswordValidator;
+use MikoPBX\PBXCoreREST\Services\PasswordService;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
 use MikoPBX\PBXCoreREST\Lib\Common\FieldTypeResolver;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
@@ -159,7 +159,7 @@ class SaveSettingsAction extends AbstractSaveRecordAction
     }
     
     /**
-     * Validate passwords using unified PasswordValidator
+     * Validate passwords using unified PasswordService
      * 
      * @param array $data Settings data containing passwords
      * @return array Array of password keys that failed validation with details
@@ -169,8 +169,8 @@ class SaveSettingsAction extends AbstractSaveRecordAction
         $passwordCheckFail = [];
         
         $checkPasswordFields = [
-            PbxSettings::SSH_PASSWORD => PasswordValidator::CONTEXT_SSH,
-            PbxSettings::WEB_ADMIN_PASSWORD => PasswordValidator::CONTEXT_WEB_ADMIN
+            PbxSettings::SSH_PASSWORD => PasswordService::CONTEXT_SSH,
+            PbxSettings::WEB_ADMIN_PASSWORD => PasswordService::CONTEXT_WEB_ADMIN
         ];
         
         // If SSH is disabled, skip SSH password validation
@@ -186,7 +186,7 @@ class SaveSettingsAction extends AbstractSaveRecordAction
             $password = $data[$field];
             
             // Use unified password validator
-            $validationResult = PasswordValidator::validate($password, $context);
+            $validationResult = PasswordService::validate($password, $context);
             
             if (!$validationResult['isValid']) {
                 $passwordCheckFail[$field] = $validationResult;

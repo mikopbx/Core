@@ -41,7 +41,8 @@ class DataStructure
             'uniqid' => $model->uniqid,
             'extension' => $model->extension,
             'name' => $model->name,
-            'pinCode' => $model->pinCode ?? ''
+            'pinCode' => $model->pinCode ?? '',
+            'represent' => $model->getRepresent()
         ];
     }
 }

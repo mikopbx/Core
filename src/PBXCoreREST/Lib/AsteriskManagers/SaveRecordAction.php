@@ -134,7 +134,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
             }
             
         } catch (\Exception $e) {
-            return self::handleSaveError($e, $res);
+            return self::handleError($e, $res);
         }
 
         return $res;

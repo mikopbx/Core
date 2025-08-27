@@ -90,6 +90,9 @@ class DataStructure extends AbstractDataStructure
     {
         $data = self::createFromModel($model, false);
         
+        // Add represent field identical to IvrMenu->getRepresent()
+        $data['represent'] = $model->getRepresent();
+        
         // Add timeout extension representation
         $data['timeoutExtensionRepresent'] = $model->TimeoutExtensions ? 
             $model->TimeoutExtensions->getRepresent() : '';

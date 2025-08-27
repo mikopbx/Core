@@ -48,7 +48,7 @@ enum PasswordAction: string
  * Passwords REST API processor
  *
  * Provides REST API endpoints for password validation and generation.
- * Uses the unified PasswordValidator service through dedicated action classes.
+ * Uses the unified PasswordService service through dedicated action classes.
  * 
  * Available actions:
  * - validate: Validate password strength with detailed feedback

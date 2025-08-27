@@ -37,6 +37,7 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
  * @apiSuccess {String} data.extension Extension number
  * @apiSuccess {String} data.name Conference name
  * @apiSuccess {String} data.pinCode PIN code
+ * @apiSuccess {String} data.represent Display representation of conference room (name + extension)
  */
 class GetListAction
 {

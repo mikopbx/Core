@@ -23,6 +23,7 @@ use MikoPBX\Common\Models\IncomingRoutingTable;
 use MikoPBX\Common\Models\OutWorkTimesRouts;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
+use MikoPBX\PBXCoreREST\Lib\IncomingRoutes\DataStructure;
 
 /**
  * Action for saving incoming route record
@@ -90,6 +91,9 @@ class SaveRecordAction extends AbstractSaveRecordAction
                     $sanitizedData['provider'] = $sanitizedData['providerid'];
                 }
                 unset($sanitizedData['providerid']);  // Remove frontend field name
+            } else {
+                // For default routes or when provider is not specified, set to null
+                $sanitizedData['provider'] = null;
             }
             if (isset($sanitizedData['audio_message_id']) && $sanitizedData['audio_message_id'] === 'none') {
                 $sanitizedData['audio_message_id'] = null;
@@ -128,11 +132,11 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 // Update route fields
                 $route->rulename = $sanitizedData['rulename'] ?? '';
                 $route->number = $sanitizedData['number'] ?? '';
-                $route->provider = $sanitizedData['provider'];
+                $route->provider = $sanitizedData['provider'] ?? null;
                 $route->priority = $sanitizedData['priority'];
                 $route->timeout = $sanitizedData['timeout'];
                 $route->extension = $sanitizedData['extension'] ?? '';
-                $route->audio_message_id = $sanitizedData['audio_message_id'];
+                $route->audio_message_id = $sanitizedData['audio_message_id'] ?? null;
                 $route->note = $sanitizedData['note'] ?? '';
                 
                 if (!$route->save()) {
@@ -158,7 +162,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
             
         } catch (\Exception $e) {
             // Handle save error using unified approach
-            return self::handleSaveError($e, $res);
+            return self::handleError($e, $res);
         }
         
         return $res;

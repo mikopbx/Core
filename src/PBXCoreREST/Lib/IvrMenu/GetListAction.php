@@ -37,6 +37,7 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
  * @apiSuccess {String} data.extension Extension number
  * @apiSuccess {String} data.name IVR menu name
  * @apiSuccess {String} data.description IVR menu description
+ * @apiSuccess {String} data.represent Display representation of IVR menu (name + extension)
  * @apiSuccess {String} data.timeoutExtensionRepresent Timeout extension representation
  * @apiSuccess {Array} data.actions Array of menu actions with digits and extensions
  */

@@ -22,14 +22,10 @@ namespace MikoPBX\PBXCoreREST\Lib\CallQueues;
 use MikoPBX\Common\Models\CallQueues;
 use MikoPBX\Common\Models\CallQueueMembers;
 use MikoPBX\Common\Models\Extensions;
-use MikoPBX\AdminCabinet\Library\SecurityHelper;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
-use MikoPBX\PBXCoreREST\Lib\Common\BaseActionHelper;
 use MikoPBX\PBXCoreREST\Lib\Common\SystemSanitizer;
-use MikoPBX\PBXCoreREST\Lib\Common\TextFieldProcessor;
 use MikoPBX\Core\System\SystemMessages;
-use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 
 /**
  * Action for saving call queue record with comprehensive validation
@@ -255,7 +251,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
 
         } catch (\Exception $e) {
             // Handle save error using unified approach
-            return self::handleSaveError($e, $res);
+            return self::handleError($e, $res);
         }
 
         return $res;

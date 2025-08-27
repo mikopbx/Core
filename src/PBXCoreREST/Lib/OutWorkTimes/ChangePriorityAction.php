@@ -72,7 +72,7 @@ class ChangePriorityAction extends AbstractSaveRecordAction
         try {
             return self::updatePrioritiesInTransaction($priorities, $res);
         } catch (\Exception $e) {
-            return self::handleSaveError($e, $res);
+            return self::handleError($e, $res);
         }
     }
     
