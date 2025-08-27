@@ -34,8 +34,10 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
  * 
  * @apiSuccess {Boolean} result Operation result
  * @apiSuccess {Array} data List of sound files
- * @apiSuccess {String} data.name Display name
- * @apiSuccess {String} data.value File ID
+ * @apiSuccess {String} data.id File ID
+ * @apiSuccess {String} data.category File category (custom/moh)
+ * @apiSuccess {String} data.path File path
+ * @apiSuccess {String} data.represent Display name with HTML formatting
  */
 class GetForSelectAction
 {
@@ -67,8 +69,10 @@ class GetForSelectAction
             $soundFilesList = [];
             foreach ($soundFiles as $soundFile) {
                 $soundFilesList[] = [
-                    'name' => $soundFile->getRepresent(),
-                    'value' => $soundFile->id
+                    'id' => $soundFile->id,
+                    'category' => $soundFile->category,
+                    'path' => $soundFile->path,
+                    'represent' => $soundFile->getRepresent()
                 ];
             }
             
