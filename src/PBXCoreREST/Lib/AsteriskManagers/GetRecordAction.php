@@ -68,7 +68,7 @@ class GetRecordAction extends AbstractGetRecordAction
             'username' => '',
             'secret' => '',
             'description' => '',
-            'networkfilterid' => null,
+            'networkfilterid' => 'none',
             'permit' => '127.0.0.1/255.255.255.255',
             'deny' => '0.0.0.0/0.0.0.0',
             'call_limit' => 0,

@@ -110,18 +110,10 @@ class SipProviderEditForm extends BaseForm
         // Receive_calls_without_auth
         $this->addCheckBox('receive_calls_without_auth', intval($entity->receive_calls_without_auth) === 1, '1');
 
-        // Network Filter - Changed from Select to Hidden
-        // Network filter dropdown - empty select, will be populated via REST API
-        $networkfilterid = new Select(
-            'networkfilterid',
-            [],
-            [
-                'useEmpty' => false,
-                'value' => $entity->networkfilterid ?? 'none',
-                'class' => 'ui selection dropdown search network-filter-select',
-            ]
-        );
-        $this->add($networkfilterid);
+        // Network Filter - Hidden field (UI will be created by NetworkFilterSelector)
+        $this->add(new Hidden('networkfilterid', [
+            'value' => $entity->networkfilterid ?? 'none'
+        ]));
 
         // Manualattributes
         $placeholderText = "[registration-auth]\nusername=962xxxxx030@ip.beeline.ru\n\n[endpoint-auth]\nusername=962xxxxx030@ip.beeline.ru";

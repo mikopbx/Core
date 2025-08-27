@@ -49,20 +49,8 @@ class DataStructure extends AbstractDataStructure
             'read' => $permissions['read'],
             'write' => $permissions['write'],
             'description' => $model->description ?? '',
-            'networkfilterid' => $model->networkfilterid ?? '',
+            'networkfilterid' => !empty($model->networkfilterid) ? (string)$model->networkfilterid : 'none',
         ];
-
-        // Add network filter representation if exists
-        if (!empty($model->networkfilterid)) {
-            $filter = NetworkFilters::findFirstById($model->networkfilterid);
-            if ($filter) {
-                $data['networkFilterRepresent'] = $filter->getRepresent();
-            } else {
-                $data['networkFilterRepresent'] = '';
-            }
-        } else {
-            $data['networkFilterRepresent'] = '';
-        }
 
         // Parse permissions into boolean fields for easier frontend handling
         $data['permissions'] = self::parsePermissionsToBoolean($permissions['read'], $permissions['write']);
@@ -91,20 +79,8 @@ class DataStructure extends AbstractDataStructure
             'id' => (string)$model->id,
             'username' => $model->username ?? '',
             'description' => $model->description ?? '',
-            'networkfilterid' => $model->networkfilterid ?? '',
+            'networkfilterid' => !empty($model->networkfilterid) ? (string)$model->networkfilterid : 'none',
         ];
-
-        // Add network filter representation
-        if (!empty($model->networkfilterid)) {
-            $filter = NetworkFilters::findFirstById($model->networkfilterid);
-            if ($filter) {
-                $data['networkFilterRepresent'] = $filter->getRepresent();
-            } else {
-                $data['networkFilterRepresent'] = '';
-            }
-        } else {
-            $data['networkFilterRepresent'] = '';
-        }
 
         // Add permission summary
         $data['readPermissionsSummary'] = self::getPermissionsSummary($permissions['read']);

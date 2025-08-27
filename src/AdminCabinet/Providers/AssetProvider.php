@@ -561,6 +561,7 @@ class AssetProvider implements ServiceProviderInterface
                  ->addJs('js/pbx/main/TooltipBuilder.js', true)
                  ->addJs('js/vendor/clipboard/clipboard.js', true)
                  ->addJs('js/pbx/PbxAPI/networkFiltersAPI.js', true)
+                 ->addJs('js/pbx/FormElements/network-filter-selector.js', true)
                  ->addJs('js/pbx/Providers/provider-base-modify.js', true)
                  ->addJs('js/pbx/Providers/provider-tooltip-manager.js', true)
                  ->addJs('js/pbx/Providers/provider-sip-tooltip-manager.js', true)
@@ -577,6 +578,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/main/TooltipBuilder.js', true)
                 ->addJs('js/vendor/clipboard/clipboard.js', true)
                 ->addJs('js/pbx/PbxAPI/networkFiltersAPI.js', true)
+                ->addJs('js/pbx/FormElements/network-filter-selector.js', true)
                 ->addJs('js/pbx/Providers/provider-base-modify.js', true)
                 ->addJs('js/pbx/Providers/provider-tooltip-manager.js', true)
                 ->addJs('js/pbx/Providers/provider-iax-tooltip-manager.js', true)
@@ -923,6 +925,8 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/Extensions/input-mask-patterns.js', true)
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/pbx/main/debugger-info.js', true)
+                ->addJs('js/pbx/PbxAPI/networkFiltersAPI.js', true)
+                ->addJs('js/pbx/FormElements/network-filter-selector.js', true)
                 ->addJs('js/pbx/Extensions/extension-modify-avatar.js', true)
                 ->addJs('js/pbx/Extensions/extension-modify-status-worker.js', true)
                 ->addJs('js/pbx/Extensions/extension-modify.js', true);
@@ -1042,6 +1046,8 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/vendor/clipboard/clipboard.js', true)
                 ->addJs('js/pbx/PbxAPI/asteriskManagersAPI.js', true)
+                ->addJs('js/pbx/PbxAPI/networkFiltersAPI.js', true)
+                ->addJs('js/pbx/FormElements/network-filter-selector.js', true)
                 ->addJs('js/pbx/AsteriskManagers/manager-modify.js', true);
 
             $this->semanticCollectionCSS
@@ -1066,10 +1072,11 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/PbxAPI/apiKeysAPI.js', true)
                 ->addJs('js/pbx/ApiKeys/api-keys-index.js', true);
         } elseif ($action === 'modify') {
-            // Add modal CSS
+            // Add modal and DataTable CSS
             $this->semanticCollectionCSS
                 ->addCss('css/vendor/semantic/modal.min.css', true)
-                ->addCss('css/vendor/semantic/dimmer.min.css', true);
+                ->addCss('css/vendor/semantic/dimmer.min.css', true)
+                ->addCss('css/vendor/datatable/dataTables.semanticui.min.css', true);
             
             // Add modal JS and other dependencies
             $this->semanticCollectionJS
@@ -1079,7 +1086,10 @@ class AssetProvider implements ServiceProviderInterface
             $this->footerCollectionJS
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/vendor/clipboard/clipboard.js', true)
+                ->addJs('js/vendor/datatable/dataTables.semanticui.min.js', true)
                 ->addJs('js/pbx/PbxAPI/apiKeysAPI.js', true)
+                ->addJs('js/pbx/PbxAPI/networkFiltersAPI.js', true)
+                ->addJs('js/pbx/FormElements/network-filter-selector.js', true)
                 ->addJs('js/pbx/ApiKeys/api-keys-modify.js', true);
         }
     }

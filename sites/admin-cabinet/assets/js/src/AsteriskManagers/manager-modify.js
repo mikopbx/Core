@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, Form, PbxApi, ClipboardJS, AsteriskManagersAPI, UserMessage, FormElements, PasswordWidget */
+/* global globalRootUrl, globalTranslate, Form, PbxApi, ClipboardJS, AsteriskManagersAPI, UserMessage, FormElements, PasswordWidget, NetworkFilterSelector */
 
 /**
  * Manager module using REST API v2.
@@ -277,10 +277,9 @@ const manager = {
             description: data.description
         });
 
-        // Set network filter dropdown - now handled by PHP form
-        if (data.networkfilterid) {
-            $('#networkfilterid').dropdown('set selected', data.networkfilterid);
-        }
+        // Network filter is handled by NetworkFilterSelector during initialization
+        // Always set the hidden field value (use 'none' as default if not provided)
+        $('#networkfilterid').val(data.networkfilterid || 'none');
 
         // Set permission checkboxes using Semantic UI API
         if (data.permissions && typeof data.permissions === 'object') {
@@ -319,8 +318,19 @@ const manager = {
      * Initialize form elements.
      */
     initializeFormElements() {
-        // Initialize dropdowns
-        manager.$dropDowns.dropdown();
+        // Initialize dropdowns except network filter (handled by NetworkFilterSelector)
+        manager.$dropDowns.not('#networkfilterid-dropdown').dropdown();
+        
+        // Get network filter value from hidden field
+        const currentValue = $('#networkfilterid').val() || 'none';
+        
+        // Initialize network filter selector
+        NetworkFilterSelector.init('#networkfilterid-dropdown', {
+            filterType: 'AMI',
+            includeNone: false,  // AMI managers should have specific network filters
+            currentValue: currentValue,
+            onChange: () => Form.dataChanged()
+        });
         
         // Initialize checkboxes first
         manager.$allCheckBoxes.checkbox();

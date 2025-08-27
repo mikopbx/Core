@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, Form, PbxApi, ClipboardJS, NetworkFiltersAPI, TooltipBuilder, PasswordScore, i18n, ProvidersAPI, PasswordWidget */
+/* global globalRootUrl, globalTranslate, Form, PbxApi, ClipboardJS, NetworkFiltersAPI, NetworkFilterSelector, TooltipBuilder, PasswordScore, i18n, ProvidersAPI, PasswordWidget */
 
 /**
  * Base class for provider management forms
@@ -31,7 +31,7 @@ class ProviderBase {
         ACCORDIONS: '#save-provider-form .ui.accordion',
         DROPDOWNS: '#save-provider-form .ui.dropdown',
         DESCRIPTION: '#description',
-        NETWORK_FILTER_ID: '#networkfilterid',
+        NETWORK_FILTER_ID: '#networkfilterid-dropdown',
         PASSWORD_TOOLTIP_ICON: '.password-tooltip-icon',
         POPUPED: '.popuped'
     };
@@ -107,6 +107,12 @@ class ProviderBase {
             
             // Continue with initialization
             this.initializeUIComponents();
+            
+            // Initialize network filter dropdown after data is loaded
+            const networkFilterValue = response.result && response.data ? 
+                response.data.networkfilterid : null;
+            this.initializeNetworkFilterDropdown(networkFilterValue);
+            
             this.initializeEventHandlers();
             this.initializeForm();
             this.updateVisibilityElements();
@@ -126,14 +132,13 @@ class ProviderBase {
      */
     initializeUIComponents() {
         this.$checkBoxes.checkbox();
-        this.$dropDowns.dropdown();
+        // Initialize dropdowns except network filter (handled by NetworkFilterSelector)
+        this.$dropDowns.not('#networkfilterid-dropdown').dropdown();
         this.initializeAccordion();
         
         // Initialize dynamic dropdowns
         this.initializeRegistrationTypeDropdown();
-        
-        // Initialize network filter dropdown
-        this.initializeNetworkFilterDropdown();
+        // Network filter dropdown is initialized after data is loaded
     }
     
     /**
@@ -224,17 +229,22 @@ class ProviderBase {
     
     /**
      * Initialize network filter dropdown with simplified logic
+     * @param {string} networkFilterValue - Current network filter value from API
      */
-    initializeNetworkFilterDropdown() {
+    initializeNetworkFilterDropdown(networkFilterValue = null) {
         if (this.$networkFilterId.length === 0) return;
         
-        // Get current value from data attribute (set by populateFormData) or form value or default
-        const currentValue = this.$networkFilterId.data('value') || this.$networkFilterId.val() || ProviderBase.DEFAULTS.NETWORK_FILTER;
+        // Use provided value or get from hidden field or default
+        const currentValue = networkFilterValue || $('#networkfilterid').val() || ProviderBase.DEFAULTS.NETWORK_FILTER;
         
-        // Initialize with NetworkFiltersAPI using simplified approach
-        NetworkFiltersAPI.initializeDropdown(this.$networkFilterId, {
-            currentValue,
-            providerType: this.providerType,
+        // Set hidden field value before initialization
+        $('#networkfilterid').val(currentValue);
+        
+        // Initialize with NetworkFilterSelector
+        NetworkFilterSelector.init(this.$networkFilterId, {
+            filterType: this.providerType, // 'SIP' or 'IAX'
+            currentValue: currentValue,
+            includeNone: false,  // Providers don't have "None" option, they use specific filters
             onChange: () => Form.dataChanged()
         });
     }

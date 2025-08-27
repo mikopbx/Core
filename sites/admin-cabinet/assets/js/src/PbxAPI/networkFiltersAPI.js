@@ -20,18 +20,29 @@
 
 /**
  * NetworkFiltersAPI module for working with network filters.
+ * Provides methods to fetch network filter data for dropdowns.
+ * 
+ * API response format:
+ * {
+ *   result: true,
+ *   data: [
+ *     { value: 'none', represent: '<i class="globe icon"></i> Allow from any address' },
+ *     { value: '123', represent: '<i class="filter icon"></i> Office Network (192.168.1.0/24)' }
+ *   ]
+ * }
  * 
  * @module NetworkFiltersAPI
  */
 const NetworkFiltersAPI = {
     
     /**
-     * Get all network filters for dropdown select (simplified)
+     * Get all network filters for dropdown select
+     * Returns filters with 'value' and 'represent' fields
      * 
-     * @param {Function} callback - Callback function
+     * @param {Function} callback - Callback function that receives data array or false on error
      */
     getNetworksForSelect(callback) {
-        const url = `${globalRootUrl}pbxcore/api/v2/network-filters/getNetworksForSelect`;
+        const url = `/pbxcore/api/v2/network-filters/getNetworksForSelect`;
         
         $.api({
             url: url,
@@ -51,13 +62,14 @@ const NetworkFiltersAPI = {
     },
     
     /**
-     * Get network filters for dropdown select
+     * Get network filters for dropdown select filtered by categories
+     * Returns filters with 'value' and 'represent' fields
      * 
-     * @param {Function} callback - Callback function
-     * @param {Array|string} categories - Filter categories (default: ['SIP'])
+     * @param {Function} callback - Callback function that receives data array or false on error
+     * @param {Array|string} categories - Filter categories: 'SIP', 'IAX', 'AMI', 'API' (default: ['SIP'])
      */
     getForSelect(callback, categories = ['SIP']) {
-        const url = `${globalRootUrl}pbxcore/api/v2/network-filters/getForSelect`;
+        const url = `/pbxcore/api/v2/network-filters/getForSelect`;
         
         $.api({
             url: url,
@@ -80,36 +92,8 @@ const NetworkFiltersAPI = {
     },
     
     /**
-     * Get network filters allowed for providers
-     * 
-     * @param {Function} callback - Callback function
-     * @param {Array|string} categories - Filter categories (default: ['SIP'])
-     */
-    getAllowedForProviders(callback, categories = ['SIP']) {
-        const url = `/pbxcore/api/v2/network-filters/getAllowedForProviders`;
-        
-        $.api({
-            url: url,
-            on: 'now',
-            method: 'POST',
-            data: {
-                categories: Array.isArray(categories) ? categories : [categories]
-            },
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response.data);
-            },
-            onFailure(response) {
-                callback(false);
-            },
-            onError() {
-                callback(false);
-            }
-        });
-    },
-    
-    /**
-     * Initialize network filter dropdown with simplified logic
+     * Initialize network filter dropdown
+     * @deprecated Use NetworkFilterSelector module instead for better functionality
      * 
      * @param {jQuery|string} selector - Dropdown selector or jQuery element
      * @param {Object} options - Configuration options
@@ -140,7 +124,7 @@ const NetworkFiltersAPI = {
         $dropdown.addClass('loading');
         
         // Load data and populate dropdown
-        this.getAllowedForProviders((data) => {
+        this.getForSelect((data) => {
             // Remove loading state from wrapper
             $dropdown.removeClass('loading');
             
@@ -148,7 +132,8 @@ const NetworkFiltersAPI = {
                 // Clear and populate options
                 $select.empty();
                 data.forEach(filter => {
-                    $select.append(`<option value="${filter.value}">${filter.text || filter.name}</option>`);
+                    // Use 'represent' field from new API structure
+                    $select.append(`<option value="${filter.value}">${filter.represent}</option>`);
                 });
                 
                 // Set current value and refresh dropdown
@@ -161,8 +146,8 @@ const NetworkFiltersAPI = {
                 }
             } else {
                 // Fallback to default "none" option
-                const noneText = globalTranslate.ex_NoNetworkFilter || 'None';
-                $select.empty().append(`<option value="none">${noneText}</option>`);
+                const noneText = globalTranslate.ex_NoNetworkFilter || 'Connections from any addresses are allowed';
+                $select.empty().append(`<option value="none"><i class="globe icon"></i> ${noneText}</option>`);
                 $select.val('none');
                 $dropdown.dropdown('refresh');
                 $dropdown.dropdown('set selected', 'none');

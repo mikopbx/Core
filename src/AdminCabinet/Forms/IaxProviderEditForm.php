@@ -83,18 +83,10 @@ class IaxProviderEditForm extends BaseForm
         // Noregister (hidden for backward compatibility)
         $this->add(new Hidden('noregister'));
 
-        // Network filter dropdown - empty select, will be populated via REST API
-        $networkfilterid = new Select(
-            'networkfilterid',
-            [],
-            [
-                'using'    => ['id', 'name'],
-                'useEmpty' => false,
-                'value' => $entity->networkfilterid ?? 'none',
-                'class'    => 'ui selection dropdown search network-filter-select',
-            ]
-        );
-        $this->add($networkfilterid);
+        // Network Filter - Hidden field (UI will be created by NetworkFilterSelector)
+        $this->add(new Hidden('networkfilterid', [
+            'value' => $entity->networkfilterid ?? 'none'
+        ]));
 
         // Manualattributes
         $placeholderText = "language = ru\ncodecpriority = host\ntrunktimestamps = yes\ntrunk = yes";
