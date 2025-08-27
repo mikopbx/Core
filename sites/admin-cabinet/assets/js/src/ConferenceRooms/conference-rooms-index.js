@@ -44,19 +44,16 @@ const conferenceRoomsIndex = {
             },
             columns: [
                 {
-                    data: 'name',
-                    render: function(data) {
-                        // SECURITY: Properly escape room name to prevent XSS
-                        const safeName = window.SecurityUtils.escapeHtml(data);
-                        return `<strong>${safeName}</strong>`;
-                    }
-                },
-                {
-                    data: 'extension',
-                    className: 'center aligned',
-                    render: function(data) {
-                        // SECURITY: Properly escape extension to prevent XSS
-                        return window.SecurityUtils.escapeHtml(data) || '—';
+                    data: null,
+                    className: 'collapsing',
+                    render: function(data, type, row) {
+                        // Create single-line represent format with icon, name, and extension in <>
+                        // This allows DataTable to search by extension number in brackets
+                        const icon = '<i class="phone volume icon"></i>';
+                        const name = row.name ? '<strong>' + window.SecurityUtils.escapeHtml(row.name) + '</strong>' : '';
+                        const extension = row.extension ? ' &lt;' + window.SecurityUtils.escapeHtml(row.extension) + '&gt;' : '';
+                        
+                        return icon + ' ' + name + extension;
                     }
                 },
                 {

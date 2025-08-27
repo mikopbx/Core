@@ -17,7 +17,7 @@
  */
 
 /* global $ globalRootUrl Extensions moment Form globalTranslate 
-   SemanticLocalization SoundFilesSelector UserMessage SecurityUtils
+   SemanticLocalization SoundFileSelector UserMessage SecurityUtils
    IncomingRoutesAPI OutWorkTimesAPI */
 
 /**
@@ -303,9 +303,13 @@ const outOfWorkTimeRecord = {
         outOfWorkTimeRecord.$forwardingSelectDropdown.dropdown('destroy');
         outOfWorkTimeRecord.$forwardingSelectDropdown.dropdown(extensionSettings);
         
-        // Initialize audio message dropdown with icons
-        SoundFilesSelector.initializeWithIcons(outOfWorkTimeRecord.audioMessageId, () => {
-            Form.dataChanged();
+        // Initialize sound file selector
+        SoundFileSelector.init(outOfWorkTimeRecord.audioMessageId, {
+            category: 'custom',
+            includeEmpty: true,
+            onChange: () => {
+                Form.dataChanged();
+            }
         });
     },
     
@@ -391,15 +395,9 @@ const outOfWorkTimeRecord = {
             }, 100);
         }
         
-        // Setup audio message with representation
-        if (data.audio_message_id && data.audio_message_id_Represent) {
-            SoundFilesSelector.setInitialValueWithIcon(
-                outOfWorkTimeRecord.audioMessageId,
-                data.audio_message_id,
-                data.audio_message_id_Represent
-            );
-        } else if (data.audio_message_id) {
-            $(`.${outOfWorkTimeRecord.audioMessageId}-select`).dropdown('set selected', data.audio_message_id);
+        // Setup audio message value
+        if (data.audio_message_id) {
+            SoundFileSelector.setValue(outOfWorkTimeRecord.audioMessageId, data.audio_message_id, data.audio_message_id_Represent);
         }
         
         // Update field visibility based on action
@@ -428,8 +426,7 @@ const outOfWorkTimeRecord = {
             outOfWorkTimeRecord.$extensionRow.show();
             outOfWorkTimeRecord.$audioMessageRow.hide();
             // Clear audio message
-            $(`.${outOfWorkTimeRecord.audioMessageId}-select`).dropdown('clear');
-            $(`#${outOfWorkTimeRecord.audioMessageId}`).val('');
+            SoundFileSelector.clear(outOfWorkTimeRecord.audioMessageId);
         } else if (action === 'playmessage') {
             // Show audio, hide extension
             outOfWorkTimeRecord.$extensionRow.hide();

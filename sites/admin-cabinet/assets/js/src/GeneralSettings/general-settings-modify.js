@@ -17,7 +17,7 @@
  */
 
 
-/* global globalRootUrl,globalTranslate, Form, PasswordScore, PbxApi, UserMessage, SoundFilesSelector, GeneralSettingsAPI, ClipboardJS, PasswordWidget, PasswordValidationAPI, GeneralSettingsTooltipManager, $ */
+/* global globalRootUrl,globalTranslate, Form, PasswordScore, PbxApi, UserMessage, SoundFileSelector, GeneralSettingsAPI, ClipboardJS, PasswordWidget, PasswordValidationAPI, GeneralSettingsTooltipManager, $ */
 
 /**
  * A module to handle modification of general settings.
@@ -380,20 +380,22 @@ const generalSettingsModify = {
      */
     initializeSoundFileSelectors() {
         // Initialize incoming announcement selector
-        SoundFilesSelector.initializeWithIcons(
-            generalSettingsModify.soundFileFields.announcementIn, 
-            () => {
+        SoundFileSelector.init('PBXRecordAnnouncementIn', {
+            category: 'custom',
+            includeEmpty: true,
+            onChange: () => {
                 Form.dataChanged();
             }
-        );
+        });
         
         // Initialize outgoing announcement selector
-        SoundFilesSelector.initializeWithIcons(
-            generalSettingsModify.soundFileFields.announcementOut, 
-            () => {
+        SoundFileSelector.init('PBXRecordAnnouncementOut', {
+            category: 'custom',
+            includeEmpty: true,
+            onChange: () => {
                 Form.dataChanged();
             }
-        );
+        });
     },
 
     /**
@@ -619,14 +621,13 @@ const generalSettingsModify = {
             const announcementInRepresent = settings.PBXRecordAnnouncementIn_Represent || 
                                            settings.PBXRecordAnnouncementInRepresent;
             if (announcementInRepresent) {
-                SoundFilesSelector.setInitialValueWithIcon(
-                    generalSettingsModify.soundFileFields.announcementIn,
+                SoundFileSelector.setValue(
+                    'PBXRecordAnnouncementIn',
                     settings.PBXRecordAnnouncementIn,
                     announcementInRepresent
                 );
             } else {
-                $(`.${generalSettingsModify.soundFileFields.announcementIn}-select`)
-                    .dropdown('set selected', settings.PBXRecordAnnouncementIn);
+                SoundFileSelector.setSelected('PBXRecordAnnouncementIn', settings.PBXRecordAnnouncementIn);
             }
         }
         
@@ -635,14 +636,13 @@ const generalSettingsModify = {
             const announcementOutRepresent = settings.PBXRecordAnnouncementOut_Represent || 
                                             settings.PBXRecordAnnouncementOutRepresent;
             if (announcementOutRepresent) {
-                SoundFilesSelector.setInitialValueWithIcon(
-                    generalSettingsModify.soundFileFields.announcementOut,
+                SoundFileSelector.setValue(
+                    'PBXRecordAnnouncementOut',
                     settings.PBXRecordAnnouncementOut,
                     announcementOutRepresent
                 );
             } else {
-                $(`.${generalSettingsModify.soundFileFields.announcementOut}-select`)
-                    .dropdown('set selected', settings.PBXRecordAnnouncementOut);
+                SoundFileSelector.setSelected('PBXRecordAnnouncementOut', settings.PBXRecordAnnouncementOut);
             }
         }
     },

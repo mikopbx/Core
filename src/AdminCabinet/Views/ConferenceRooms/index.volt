@@ -8,8 +8,7 @@
     <table class="ui selectable compact unstackable table" id="conference-rooms-table">
         <thead>
             <tr>
-                <th>{{ t._('cr_ColumnName') }}</th>
-                <th>{{ t._('cr_ColumnExtension') }}</th>
+                <th>{{ t._('mm_ConferenceRooms') }}</th>
                 <th class="hide-on-mobile">{{ t._('cr_ColumnPinCode') }}</th>
                 <th></th>
             </tr>

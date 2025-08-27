@@ -113,33 +113,13 @@ class CallQueueEditForm extends BaseForm
         // Announceholdtime
         $this->addCheckBox('announce_hold_time', intval($entity->announce_hold_time) === 1, true);
 
-        $periodicannouncesoundid = new Select(
-            'periodic_announce_sound_id',
-            $options['soundfiles'],
-            [
-                'using' => [
-                    'id',
-                    'name',
-                ],
-                'useEmpty' => true,
-                'class' => 'ui selection dropdown search periodic_announce_sound_id-select',
-            ]
-        );
-        $this->add($periodicannouncesoundid);
+        $this->add(new Hidden('periodic_announce_sound_id', [
+            'id' => 'periodic_announce_sound_id'
+        ]));
 
-        $mohSoundId = new Select(
-            'moh_sound_id',
-            $options['mohSoundFiles'],
-            [
-                'using' => [
-                    'id',
-                    'name',
-                ],
-                'useEmpty' => true,
-                'class' => 'ui selection dropdown search moh_sound_id-select',
-            ]
-        );
-        $this->add($mohSoundId);
+        $this->add(new Hidden('moh_sound_id', [
+            'id' => 'moh_sound_id'
+        ]));
 
         // Periodicannouncefrequency - Seconds between announcements
         $this->add(new Numeric('periodic_announce_frequency', ["maxlength" => 2, "style" => "width: 80px;"]));

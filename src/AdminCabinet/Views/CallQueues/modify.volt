@@ -103,7 +103,7 @@
             <label for="caller_hear">{{ t._('cq_CallerHearOnQueued') }}</label>
             {{ form.render('caller_hear') }}
         </div>
-        {{ partial("partials/playAddNewSound", ['label': t._('cq_PereodicAnonceMohSoundFile'), 'id':'moh_sound_id', 'fieldClass':'eleven wide field', 'fieldId':'']) }}
+        {{ partial("partials/playAddNewSoundWithIcons", ['label': t._('cq_PereodicAnonceMohSoundFile'), 'id':'moh_sound_id', 'fieldClass':'eleven wide field', 'fieldId':'']) }}
 
         <div class="field">
             <div class="ui toggle checkbox">
@@ -120,7 +120,7 @@
             </div>
         </div>
 
-        {{ partial("partials/playAddNewSound", ['label': t._('cq_PereodicAnonceSoundFile'), 'id':'periodic_announce_sound_id', 'fieldClass':'eleven wide field', 'fieldId':'']) }}
+        {{ partial("partials/playAddNewSoundWithIcons", ['label': t._('cq_PereodicAnonceSoundFile'), 'id':'periodic_announce_sound_id', 'fieldClass':'eleven wide field', 'fieldId':'']) }}
 
         <div class="inline field">
             {{ form.render('periodic_announce_frequency') }}

@@ -1,4 +1,4 @@
-<div class="{{ fieldClass }}" id='{{ fieldID }}'>
+<div class="{{ fieldClass }}" id="{{ fieldID }}" data-field-id="{{ id }}">
     {% if label != '' %}
         <label for="{{ id }}">{{ label }}
             {% if id == 'audio_message_id' %}
@@ -10,7 +10,7 @@
     <div class="unstackable fields">
         <div class="twelve wide field">
             {{ form.render(id) }}
-            <div class="ui selection dropdown search {{ id }}-select">
+            <div class="ui selection dropdown search {{ id }}-dropdown">
                 <i class="dropdown icon"></i>
                 <div class="default text">{{ t._('sf_SelectAudioFile') }}</div>
                 <div class="menu"></div>
@@ -18,9 +18,13 @@
         </div>
         <div class="field">
             <div class="ui buttons">
-                <div class="ui icon basic button action-playback-button" data-value="{{ id }}"><i class="play icon"></i></div>
+                <div class="ui icon basic button action-playback-button disabled" data-field="{{ id }}">
+                    <i class="play icon"></i>
+                </div>
                 {% if isAllowed('modify','MikoPBX\AdminCabinet\Controllers\SoundFilesController') %}
-                    <a href="{{ url('sound-files/modify/custom') }}" class="ui icon basic button" target="_blank"><i class="add circle icon"></i></a>
+                    <a href="{{ url('sound-files/modify/custom') }}" class="ui icon basic button" target="_blank">
+                        <i class="add circle icon"></i>
+                    </a>
                 {% endif %}
             </div>
         </div>

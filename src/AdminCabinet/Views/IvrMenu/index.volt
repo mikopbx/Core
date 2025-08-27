@@ -6,8 +6,7 @@
     <table class="ui selectable compact unstackable table datatable-width-constrained" id="ivr-menu-table">
         <thead>
         <tr>
-            <th class="centered collapsing">{{ t._('iv_Extension') }}</th>
-            <th class="collapsing">{{ t._('iv_Name') }}</th>
+            <th class="collapsing">{{ t._('mm_IvrMenu') }}</th>
             <th class="collapsing">{{ t._('iv_Actions') }}</th>
             <th class="hide-on-mobile collapsing">{{ t._('iv_TimeoutExtension') }}</th>
             <th class="hide-on-mobile">{{ t._('iv_Note') }}</th>
@@ -17,7 +16,6 @@
         <tbody>
         {# Hidden template row for DataTable #}
         <tr class="menu-row hidden" id="template-row" style="display:none">
-            <td class="centered"></td>
             <td class="collapsing"></td>
             <td class="collapsing">
                 <small></small>
