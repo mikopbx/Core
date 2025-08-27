@@ -42,19 +42,16 @@ const ivrMenuIndex = {
         // Create configuration with all columns including description
         const columns = [
             {
-                data: 'extension',
-                className: 'centered collapsing',
-                render: function(data) {
-                    // SECURITY: Properly escape extension data to prevent XSS
-                    return window.SecurityUtils.escapeHtml(data) || '—';
-                }
-            },
-            {
-                data: 'name',
+                data: null,
                 className: 'collapsing',
-                render: function(data) {
-                    // SECURITY: Properly escape name data to prevent XSS
-                    return window.SecurityUtils.escapeHtml(data) || '—';
+                render: function(data, type, row) {
+                    // Create single-line represent format with icon, name, and extension in <>
+                    // This allows DataTable to search by extension number in brackets
+                    const icon = '<i class="sitemap icon"></i>';
+                    const name = row.name ? '<strong>' + window.SecurityUtils.escapeHtml(row.name) + '</strong>' : '';
+                    const extension = row.extension ? ' &lt;' + window.SecurityUtils.escapeHtml(row.extension) + '&gt;' : '';
+                    
+                    return icon + ' ' + name + extension;
                 }
             },
             {

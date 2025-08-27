@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global $, globalRootUrl, globalTranslate, Extensions, Form, IncomingRoutesAPI, UserMessage, SoundFilesSelector, ProviderSelector, SecurityUtils, FormElements, TooltipBuilder */
+/* global $, globalRootUrl, globalTranslate, Extensions, Form, IncomingRoutesAPI, UserMessage, SoundFileSelector, ProviderSelector, SecurityUtils, FormElements, TooltipBuilder */
 
 /**
  * Object for managing incoming route record
@@ -63,10 +63,13 @@ const incomingRouteModify = {
      * Initialize the object
      */
     initialize() {
-        // Initialize audio message dropdowns with HTML icons support
-        SoundFilesSelector.initializeWithIcons('audio_message_id', () => {
-            // Mark form as changed when dropdown value changes
-            Form.dataChanged();
+        // Initialize sound file selector
+        SoundFileSelector.init('audio_message_id', {
+            category: 'custom',
+            includeEmpty: true,
+            onChange: () => {
+                Form.dataChanged();
+            }
         });
 
         // Initialize the form
@@ -237,16 +240,9 @@ const incomingRouteModify = {
             }, 100);
         }
         
-        // Setup audio message dropdown with HTML content
-        if (data.audio_message_id && data.audio_message_id_Represent) {
-            SoundFilesSelector.setInitialValueWithIcon(
-                'audio_message_id',
-                data.audio_message_id,
-                data.audio_message_id_Represent
-            );
-        } else if (data.audio_message_id) {
-            // If we don't have representation, just set the value
-            $('.audio_message_id-select').dropdown('set selected', data.audio_message_id);
+        // Setup audio message value
+        if (data.audio_message_id) {
+            SoundFileSelector.setValue('audio_message_id', data.audio_message_id, data.audio_message_id_Represent);
         }
         
         // If this is a copy operation, mark form as changed to enable save button

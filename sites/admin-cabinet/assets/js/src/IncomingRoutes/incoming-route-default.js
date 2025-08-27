@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global $, globalTranslate, Extensions, Form, IncomingRoutesAPI, SecurityUtils, SoundFilesSelector, UserMessage */
+/* global $, globalTranslate, Extensions, Form, IncomingRoutesAPI, SecurityUtils, SoundFileSelector, UserMessage */
 
 /**
  * Module for managing default incoming route
@@ -85,9 +85,13 @@ const incomingRouteDefault = {
      * Initialize the default route module
      */
     initialize() {
-        // Initialize audio message dropdown with HTML icons support (like in modify form)
-        SoundFilesSelector.initializeWithIcons(incomingRouteDefault.audioMessageId, () => {
-            Form.dataChanged();
+        // Initialize sound file selector
+        SoundFileSelector.init(incomingRouteDefault.audioMessageId, {
+            category: 'custom',
+            includeEmpty: true,
+            onChange: () => {
+                Form.dataChanged();
+            }
         });
         
         // Setup action dropdown with change handler
@@ -185,16 +189,9 @@ const incomingRouteDefault = {
             }, 100);
         }
         
-        // Setup audio message dropdown with HTML content (like in modify form)
-        if (data.audio_message_id && data.audio_message_id_Represent) {
-            SoundFilesSelector.setInitialValueWithIcon(
-                incomingRouteDefault.audioMessageId,
-                data.audio_message_id,
-                data.audio_message_id_Represent
-            );
-        } else if (data.audio_message_id) {
-            // If we don't have representation, just set the value
-            $(`.${incomingRouteDefault.audioMessageId}-select`).dropdown('set selected', data.audio_message_id);
+        // Setup audio message value
+        if (data.audio_message_id) {
+            SoundFileSelector.setValue(incomingRouteDefault.audioMessageId, data.audio_message_id, data.audio_message_id_Represent);
         }
         
         // Update field visibility
@@ -217,8 +214,7 @@ const incomingRouteDefault = {
             $('#extension-group').show();
             $('#audio-group').hide();
             // Clear audio message
-            $(`.${incomingRouteDefault.audioMessageId}-select`).dropdown('clear');
-            $(`#${incomingRouteDefault.audioMessageId}`).val('');
+            SoundFileSelector.clear(incomingRouteDefault.audioMessageId);
         } else if (action === 'playback') {
             // Show audio, hide extension
             $('#extension-group').hide();

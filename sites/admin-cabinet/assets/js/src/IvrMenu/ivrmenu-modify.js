@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, IvrMenuAPI, Form, globalTranslate, UserMessage, Extensions, SoundFilesSelector */
+/* global globalRootUrl, IvrMenuAPI, Form, globalTranslate, UserMessage, Extensions, SoundFileSelector */
 
 /**
  * IVR menu edit form management module
@@ -101,8 +101,16 @@ const ivrMenuModify = {
           }, 500);
       });
       
-      // Initialize sound file selector with HTML icons support
-      SoundFilesSelector.initializeWithIcons('audio_message_id');
+      // Initialize sound file selector
+      SoundFileSelector.init('audio_message_id', {
+          category: 'custom',
+          includeEmpty: true,
+          onChange: () => {
+              if (!ivrMenuModify.isFormInitializing) {
+                  Form.dataChanged();
+              }
+          }
+      });
       
       // Initialize timeout extension selector with exclusion to prevent infinite loops
       ivrMenuModify.initializeTimeoutExtensionDropdown();
@@ -428,25 +436,9 @@ const ivrMenuModify = {
       // Set initialization flag to prevent triggering Form.dataChanged()
       ivrMenuModify.isFormInitializing = true;
 
-      // Setup audio message dropdown with HTML content
-      if (data.audio_message_id && data.audio_message_id_Represent) {
-          SoundFilesSelector.setInitialValueWithIcon(
-              'audio_message_id',
-              data.audio_message_id,
-              data.audio_message_id_Represent
-          );
-          
-          // Reinitialize audio player for this field if needed
-          setTimeout(() => {
-              if (typeof oneButtonPlayer !== 'undefined') {
-                  $('.action-playback-button[data-value="audio_message_id"]').each((index, button) => {
-                      if (!$(button).data('player-initialized')) {
-                          new sndPlayerOneBtn('audio_message_id');
-                          $(button).data('player-initialized', true);
-                      }
-                  });
-              }
-          }, 100);
+      // Setup audio message value
+      if (data.audio_message_id) {
+          SoundFileSelector.setValue('audio_message_id', data.audio_message_id, data.audio_message_id_Represent);
       }
 
       Form.$formObj.form('set values', data);
