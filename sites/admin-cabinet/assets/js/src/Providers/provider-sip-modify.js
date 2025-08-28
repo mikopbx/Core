@@ -286,7 +286,7 @@ class ProviderSIP extends ProviderBase {
         ];
         
         const dropdownHtml = `
-            <div class="ui selection dropdown callerid-source-dropdown">
+            <div class="ui selection dropdown callerid-source-dropdown" id="cid_source-dropdown">
                 <input type="hidden" name="cid_source" id="cid_source" value="${currentValue}">
                 <i class="dropdown icon"></i>
                 <div class="default text">${options.find(o => o.value === currentValue)?.text || currentValue}</div>
@@ -303,7 +303,7 @@ class ProviderSIP extends ProviderBase {
         
         $field.replaceWith(dropdownHtml);
         
-        $('.callerid-source-dropdown').dropdown({
+        $('#cid_source-dropdown').dropdown({
             onChange: (value) => {
                 this.onCallerIdSourceChange(value);
                 Form.dataChanged();
@@ -344,7 +344,7 @@ class ProviderSIP extends ProviderBase {
         ];
         
         const dropdownHtml = `
-            <div class="ui selection dropdown did-source-dropdown">
+            <div class="ui selection dropdown did-source-dropdown" id='did_source-dropdown'>
                 <input type="hidden" name="did_source" id="did_source" value="${currentValue}">
                 <i class="dropdown icon"></i>
                 <div class="default text">${options.find(o => o.value === currentValue)?.text || currentValue}</div>
@@ -361,7 +361,7 @@ class ProviderSIP extends ProviderBase {
         
         $field.replaceWith(dropdownHtml);
         
-        $('.did-source-dropdown').dropdown({
+        $('#did_source-dropdown').dropdown({
             onChange: (value) => {
                 this.onDidSourceChange(value);
                 Form.dataChanged();
