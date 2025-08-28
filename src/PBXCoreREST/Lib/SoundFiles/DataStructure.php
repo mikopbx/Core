@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,38 +20,54 @@
 namespace MikoPBX\PBXCoreREST\Lib\SoundFiles;
 
 use MikoPBX\Common\Models\SoundFiles;
-use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
 
 /**
  * Data structure for sound files
  * 
  * @package MikoPBX\PBXCoreREST\Lib\SoundFiles
  */
-class DataStructure
+class DataStructure extends AbstractDataStructure
 {
     /**
-     * Create data array from SoundFiles model
-     * @param SoundFiles $model
+     * Create complete data array from SoundFiles model
+     * @param mixed $model SoundFiles model instance
      * @return array
      */
-    public static function createFromModel(SoundFiles $model): array
+    public static function createFromModel($model): array
     {
-        return [
+        // SoundFiles doesn't have uniqid/extension fields, so we create structure manually
+        $data = [
             'id' => (string)$model->id,
-            'name' => $model->name,
-            'path' => $model->path,
-            'category' => $model->category,
-            'description' => $model->description ?? '',
-            'fileSize' => file_exists($model->path) ? filesize($model->path) : 0,
-            'duration' => self::getAudioDuration($model->path)
+            'name' => $model->name ?? '',
+            'description' => $model->description ?? ''
         ];
+        
+        // Add SoundFiles specific fields
+        $data['path'] = $model->path ?? '';
+        $data['category'] = $model->category ?? SoundFiles::CATEGORY_CUSTOM;
+        $data['fileSize'] = file_exists($model->path) ? filesize($model->path) : 0;
+        $data['duration'] = self::getAudioDuration($model->path);
+        
+        return $data;
     }
     
     /**
-     * Get audio file duration
-     * @param string $path
-     * @return string
+     * Create simplified data array for list view
+     * @param mixed $model
+     * @return array
+     */
+    public static function createForList($model): array
+    {
+        // For list view, include all data (sound files don't have heavy relations)
+        return self::createFromModel($model);
+    }
+    
+    /**
+     * Get audio file duration using sox
+     * @param string $path Path to audio file
+     * @return string Duration in MM:SS format
      */
     private static function getAudioDuration(string $path): string
     {

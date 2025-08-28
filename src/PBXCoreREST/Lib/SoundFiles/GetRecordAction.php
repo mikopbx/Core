@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@ namespace MikoPBX\PBXCoreREST\Lib\SoundFiles;
 
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractGetRecordAction;
 
 /**
  * Action for getting sound file record
@@ -40,7 +41,7 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
  * @apiSuccess {String} data.category File category
  * @apiSuccess {String} data.description File description
  */
-class GetRecordAction
+class GetRecordAction extends AbstractGetRecordAction
 {
     /**
      * Get sound file record
@@ -49,32 +50,17 @@ class GetRecordAction
      */
     public static function main(?string $id = null): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
-        
-        if (empty($id) || $id === 'new') {
-            // Create structure for new record
-            $newFile = new SoundFiles();
-            $newFile->id = '';
-            $newFile->name = '';
-            $newFile->path = '';
-            $newFile->category = SoundFiles::CATEGORY_CUSTOM;
-            $newFile->description = '';
-            
-            $res->data = DataStructure::createFromModel($newFile);
-            $res->success = true;
-        } else {
-            // Find existing record
-            $file = SoundFiles::findFirstById($id);
-            
-            if ($file) {
-                $res->data = DataStructure::createFromModel($file);
-                $res->success = true;
-            } else {
-                $res->messages['error'][] = 'Sound file not found';
-            }
-        }
-        
-        return $res;
+        return self::executeStandardGetRecord(
+            $id,
+            SoundFiles::class,
+            DataStructure::class,
+            'SOUND-', // Note: SoundFiles doesn't use uniqid, but this is for consistency
+            [
+                'category' => SoundFiles::CATEGORY_CUSTOM,
+                'path' => ''
+            ],
+            'Sound file not found',
+            false // SoundFiles don't need extensions
+        );
     }
 }

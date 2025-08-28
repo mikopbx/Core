@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@ namespace MikoPBX\PBXCoreREST\Lib\SoundFiles;
 
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractGetListAction;
 
 /**
  * Action for getting list of all sound files
@@ -40,7 +41,7 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
  * @apiSuccess {String} data.category File category
  * @apiSuccess {String} data.description File description
  */
-class GetListAction
+class GetListAction extends AbstractGetListAction
 {
     /**
      * Get list of all sound files
@@ -50,35 +51,25 @@ class GetListAction
      */
     public static function main(array $data = []): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
+        // Build base query options
+        $baseQueryOptions = [];
         
-        try {
-            // Build query conditions
-            $parameters = [
-                'order' => 'name ASC'
-            ];
-            
-            // Add category filter if provided
-            if (!empty($data['category'])) {
-                $parameters['conditions'] = 'category = :category:';
-                $parameters['bind'] = ['category' => $data['category']];
-            }
-            
-            // Get sound files
-            $files = SoundFiles::find($parameters);
-            
-            $result = [];
-            foreach ($files as $file) {
-                $result[] = DataStructure::createFromModel($file);
-            }
-            
-            $res->data = $result;
-            $res->success = true;
-        } catch (\Exception $e) {
-            $res->messages['error'][] = $e->getMessage();
+        // Add category filter if provided
+        if (!empty($data['category'])) {
+            $baseQueryOptions['conditions'] = 'category = :category:';
+            $baseQueryOptions['bind'] = ['category' => $data['category']];
         }
         
-        return $res;
+        return self::executeStandardList(
+            SoundFiles::class,
+            DataStructure::class,
+            $data,
+            $baseQueryOptions,
+            false, // use createForList for better performance
+            ['name', 'category', 'id'], // allowed order fields
+            ['name', 'description', 'category'], // searchable fields
+            null, // no record filter
+            'name ASC' // default order
+        );
     }
 }

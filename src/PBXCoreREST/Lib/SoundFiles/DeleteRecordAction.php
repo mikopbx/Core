@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,9 +20,8 @@
 namespace MikoPBX\PBXCoreREST\Lib\SoundFiles;
 
 use MikoPBX\Common\Models\SoundFiles;
-use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use MikoPBX\PBXCoreREST\Lib\Common\BaseActionHelper;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractDeleteAction;
 
 /**
  * Action for deleting sound file record
@@ -38,7 +37,7 @@ use MikoPBX\PBXCoreREST\Lib\Common\BaseActionHelper;
  * @apiSuccess {Object} data Deletion result
  * @apiSuccess {String} data.deleted_id ID of deleted record
  */
-class DeleteRecordAction
+class DeleteRecordAction extends AbstractDeleteAction
 {
     /**
      * Delete sound file record
@@ -48,40 +47,12 @@ class DeleteRecordAction
      */
     public static function main(string $id): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
-        
-        if (empty($id)) {
-            $res->messages['error'][] = 'Record ID is required';
-            return $res;
-        }
-        
-        try {
-            // Find record
-            $file = SoundFiles::findFirstById($id);
-            
-            if (!$file) {
-                $res->messages['error'][] = 'api_SoundFileNotFound';
-                return $res;
-            }
-            
-            // Try to delete - the model will check integrity constraints
-            if ($file->delete()) {
-                // Success - file and record deleted
-                $res->success = true;
-                $res->data = ['deleted_id' => $id];
-            } else {
-                // Failed - get detailed error messages from model
-                $messages = $file->getMessages();
-                foreach ($messages as $message) {
-                    $res->messages['error'][] = $message->getMessage();
-                }
-            }
-            
-        } catch (\Exception $e) {
-            $res->messages['error'][] = $e->getMessage();
-        }
-        
-        return $res;
+        return self::executeStandardDelete(
+            SoundFiles::class,
+            $id,
+            'Sound file',
+            'api_SoundFileNotFound',
+            null // No additional cleanup needed - SoundFiles model handles file deletion
+        );
     }
 }
