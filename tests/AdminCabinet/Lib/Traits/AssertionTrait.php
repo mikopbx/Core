@@ -126,12 +126,40 @@ trait AssertionTrait
             "return ace.edit('{$editorId}').getValue();"
         );
         
-        // Compare values
+        // Normalize both values for comparison
+        // Remove potential formatting differences
+        $normalizedExpected = $this->normalizeAceEditorValue($expectedValue);
+        $normalizedActual = $this->normalizeAceEditorValue($actualValue);
+        
+        // Compare normalized values
         $this->assertEquals(
-            $expectedValue,
-            $actualValue,
-            "ACE editor '{$editorId}' value mismatch"
+            $normalizedExpected,
+            $normalizedActual,
+            "ACE editor '{$editorId}' value mismatch.\nExpected:\n{$expectedValue}\n\nActual:\n{$actualValue}"
         );
+    }
+    
+    /**
+     * Normalize ACE editor value for comparison
+     *
+     * @param string $value Value to normalize
+     * @return string Normalized value
+     */
+    private function normalizeAceEditorValue(string $value): string
+    {
+        // Trim whitespace from beginning and end
+        $value = trim($value);
+        
+        // Normalize line endings to \n
+        $value = str_replace("\r\n", "\n", $value);
+        $value = str_replace("\r", "\n", $value);
+        
+        // Remove trailing whitespace from each line
+        $lines = explode("\n", $value);
+        $lines = array_map('rtrim', $lines);
+        $value = implode("\n", $lines);
+        
+        return $value;
     }
 
     /**

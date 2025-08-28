@@ -78,9 +78,20 @@ abstract class CreateDialPlanApplicationTest extends MikoPBXTestsBase
 
         // Switch to the 'code' tab and set the application's logic
         $this->changeTabOnCurrentPage('code');
-        $textAreaACEContent = self::$driver->findElement(WebDriverBy::xpath('id("application-code")//textarea'));
-        $textAreaACEContent->clear();
-        $textAreaACEContent->sendKeys($params['applicationlogic']);
+        
+        // Wait for ACE editor to be initialized
+        self::$driver->wait(5, 100)->until(
+            WebDriverExpectedCondition::presenceOfElementLocated(
+                WebDriverBy::xpath('//div[@id="application-code"]//textarea')
+            )
+        );
+        
+        // Set value using ACE editor's JavaScript API
+        // This ensures proper synchronization and formatting
+        $escapedCode = json_encode($params['applicationlogic']);
+        self::$driver->executeScript(
+            "ace.edit('application-code').getSession().setValue({$escapedCode});"
+        );
 
         // Save the application
         $this->submitForm('dialplan-application-form');
