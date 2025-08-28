@@ -51,6 +51,11 @@
 <div class="field">
     <label>{{ t._('cq_QueueStrategy') }}</label>
     {{ form.render('strategy') }}
+    <div class="ui selection dropdown" id="strategy-dropdown">
+        <div class="text"></div>
+        <i class="dropdown icon"></i>
+        <div class="menu"></div>
+    </div>
 </div>
 
 {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('MainFields')]) }}
@@ -103,7 +108,7 @@
             <label for="caller_hear">{{ t._('cq_CallerHearOnQueued') }}</label>
             {{ form.render('caller_hear') }}
         </div>
-        {{ partial("partials/playAddNewSoundWithIcons", ['label': t._('cq_PereodicAnonceMohSoundFile'), 'id':'moh_sound_id', 'fieldClass':'eleven wide field', 'fieldId':'']) }}
+        {{ partial("partials/playAddNewSoundWithIcons", ['label': t._('cq_PereodicAnonceMohSoundFile'), 'id':'moh_sound_id', 'fieldClass':'max-width-800 field', 'fieldId':'']) }}
 
         <div class="field">
             <div class="ui toggle checkbox">
@@ -120,7 +125,7 @@
             </div>
         </div>
 
-        {{ partial("partials/playAddNewSoundWithIcons", ['label': t._('cq_PereodicAnonceSoundFile'), 'id':'periodic_announce_sound_id', 'fieldClass':'eleven wide field', 'fieldId':'']) }}
+        {{ partial("partials/playAddNewSoundWithIcons", ['label': t._('cq_PereodicAnonceSoundFile'), 'id':'periodic_announce_sound_id', 'fieldClass':'max-width-800 field', 'fieldId':'']) }}
 
         <div class="inline field">
             {{ form.render('periodic_announce_frequency') }}

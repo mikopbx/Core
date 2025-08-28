@@ -52,30 +52,10 @@ class CallQueueEditForm extends BaseForm
         $this->add(new Text('extension'));
 
 
-        // Strategy
-        $arrActions = [
-            'ringall' => $this->translation->_('cq_ringall'),
-            'leastrecent' => $this->translation->_('cq_leastrecent'),
-            'fewestcalls' => $this->translation->_('cq_fewestcalls'),
-            'random' => $this->translation->_('cq_random'),
-            'rrmemory' => $this->translation->_('cq_rrmemory'),
-            'linear' => $this->translation->_('cq_linear'),
-        ];
-
-        $strategy = new Select(
-            'strategy',
-            $arrActions,
-            [
-                'using' => [
-                    'id',
-                    'name',
-                ],
-                'useEmpty' => false,
-                'defaultValue' => "ringall",
-                'class' => 'ui selection dropdown strategyselect',
-            ]
-        );
-        $this->add($strategy);
+        // Strategy - hidden field, dropdown is managed by JavaScript
+        $this->add(new Hidden('strategy', [
+            'value' => $entity->strategy ?? 'ringall'
+        ]));
 
 
         // Seconds_to_ring_each_member - Seconds between announcements

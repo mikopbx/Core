@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, CallQueuesAPI, Extensions, Form, SoundFilesSelector, UserMessage, SecurityUtils */
+/* global globalRootUrl, globalTranslate, CallQueuesAPI, Extensions, Form, SoundFileSelector, UserMessage, SecurityUtils */
 
 /**
  * Modern Call Queue Form Management Module
@@ -150,8 +150,11 @@ const callQueueModifyRest = {
      * Initialize the call queue form management module
      */
     initialize() {
-        // Initialize UI components
+        // Initialize UI components first
         callQueueModifyRest.initializeUIComponents();
+        
+        // Initialize sound file selectors early to ensure they're ready before data loads
+        callQueueModifyRest.initializeSoundSelectors();
         
         // Initialize dropdowns with hidden input pattern
         callQueueModifyRest.initializeDropdowns();
@@ -162,17 +165,14 @@ const callQueueModifyRest = {
         // Set up extension availability checking
         callQueueModifyRest.initializeExtensionChecking();
         
-        // Initialize sound file selectors
-        callQueueModifyRest.initializeSoundSelectors();
-        
         // Setup auto-resize for description textarea
         callQueueModifyRest.initializeDescriptionTextarea();
         
-        // Load form data via REST API
-        callQueueModifyRest.loadFormData();
-        
-        // Initialize form with REST API settings
+        // Initialize form with REST API settings (before loading data)
         callQueueModifyRest.initializeForm();
+        
+        // Load form data via REST API (last, after all UI is initialized)
+        callQueueModifyRest.loadFormData();
     },
 
     /**
@@ -191,6 +191,9 @@ const callQueueModifyRest = {
      * Initialize dropdowns with hidden input pattern following IVR Menu approach
      */
     initializeDropdowns() {
+        // Initialize strategy dropdown with options
+        callQueueModifyRest.initializeStrategyDropdown();
+        
         // Initialize timeout extension dropdown with exclusion
         callQueueModifyRest.initializeTimeoutExtensionDropdown();
         
@@ -210,6 +213,38 @@ const callQueueModifyRest = {
                 }
             }
         }));
+    },
+
+    /**
+     * Initialize strategy dropdown with queue strategy options
+     */
+    initializeStrategyDropdown() {
+        // Define strategy options with translations
+        const strategyOptions = [
+            { value: 'ringall', name: globalTranslate.cq_ringall || 'Ring All' },
+            { value: 'leastrecent', name: globalTranslate.cq_leastrecent || 'Least Recent' },
+            { value: 'fewestcalls', name: globalTranslate.cq_fewestcalls || 'Fewest Calls' },
+            { value: 'random', name: globalTranslate.cq_random || 'Random' },
+            { value: 'rrmemory', name: globalTranslate.cq_rrmemory || 'Round Robin with Memory' },
+            { value: 'linear', name: globalTranslate.cq_linear || 'Linear' }
+        ];
+        
+        // Initialize dropdown with options
+        $('#strategy-dropdown').dropdown({
+            values: strategyOptions,
+            onChange: (value) => {
+                // Update hidden input when dropdown changes
+                $('input[name="strategy"]').val(value);
+                if (!callQueueModifyRest.isFormInitializing) {
+                    $('input[name="strategy"]').trigger('change');
+                    Form.dataChanged();
+                }
+            }
+        });
+        
+        // Set initial value from hidden field
+        const currentStrategy = $('input[name="strategy"]').val() || 'ringall';
+        $('#strategy-dropdown').dropdown('set selected', currentStrategy);
     },
 
     /**
@@ -475,11 +510,27 @@ const callQueueModifyRest = {
      * Initialize sound file selectors
      */
     initializeSoundSelectors() {
-        // Initialize periodic announce selector (matches IVR pattern)
-        SoundFilesSelector.initializeWithIcons('periodic_announce_sound_id');
+        // Initialize periodic announce sound file selector
+        SoundFileSelector.init('periodic_announce_sound_id', {
+            category: 'custom',
+            includeEmpty: true,
+            onChange: () => {
+                if (!callQueueModifyRest.isFormInitializing) {
+                    Form.dataChanged();
+                }
+            }
+        });
         
-        // Initialize MOH sound selector (matches IVR pattern)
-        SoundFilesSelector.initializeWithIcons('moh_sound_id');
+        // Initialize MOH sound file selector
+        SoundFileSelector.init('moh_sound_id', {
+            category: 'moh',
+            includeEmpty: true,
+            onChange: () => {
+                if (!callQueueModifyRest.isFormInitializing) {
+                    Form.dataChanged();
+                }
+            }
+        });
     },
 
     /**
@@ -497,6 +548,22 @@ const callQueueModifyRest = {
      */
     loadFormData() {
         const recordId = callQueueModifyRest.getRecordId();
+        
+        // If no record ID (new queue), initialize with defaults
+        if (!recordId) {
+            callQueueModifyRest.defaultExtension = '';
+            callQueueModifyRest.isFormInitializing = false;
+            
+            // Set default strategy for new queues
+            const defaultStrategy = $('input[name="strategy"]').val() || 'ringall';
+            $('#strategy-dropdown').dropdown('set selected', defaultStrategy);
+            
+            // Initialize empty members table
+            callQueueModifyRest.updateMembersTableView();
+            callQueueModifyRest.reinitializeExtensionSelect();
+            
+            return;
+        }
         
         CallQueuesAPI.getRecord(recordId, (response) => {
             if (response.result) {
@@ -537,8 +604,8 @@ const callQueueModifyRest = {
         // Populate form fields using Semantic UI form, but handle text fields manually to prevent double-escaping
         const dataForSemanticUI = {...data};
         
-        // Remove text fields from Semantic UI processing to handle them manually
-        const textFields = ['name', 'description', 'callerid_prefix'];
+        // Remove text fields and strategy from Semantic UI processing to handle them manually
+        const textFields = ['name', 'description', 'callerid_prefix', 'strategy'];
         textFields.forEach(field => {
             delete dataForSemanticUI[field];
         });
@@ -556,12 +623,20 @@ const callQueueModifyRest = {
                 }
             }
         });
+        
+        // Handle strategy dropdown separately
+        if (data.strategy) {
+            $('input[name="strategy"]').val(data.strategy);
+            $('#strategy-dropdown').dropdown('set selected', data.strategy);
+        }
 
         // Handle extension-based dropdowns with representations (except timeout_extension)
         callQueueModifyRest.populateExtensionDropdowns(data);
         
-        // Handle sound file dropdowns with representations
-        callQueueModifyRest.populateSoundDropdowns(data);
+        // Handle sound file dropdowns with representations after a delay to ensure dropdowns are initialized
+        setTimeout(() => {
+            callQueueModifyRest.populateSoundDropdowns(data);
+        }, 100);
 
         // Re-initialize timeout extension dropdown with current extension exclusion (after form values are set)
         callQueueModifyRest.initializeTimeoutExtensionDropdown();
@@ -640,21 +715,21 @@ const callQueueModifyRest = {
      * @param {Object} data - Form data containing sound file representations
      */
     populateSoundDropdowns(data) {
-        // Handle periodic announce sound (matches IVR pattern)
-        if (data.periodic_announce_sound_id && data.periodic_announce_sound_idRepresent) {
-            SoundFilesSelector.setInitialValueWithIcon(
+        // Handle periodic announce sound (using underscore naming like IVR Menu)
+        if (data.periodic_announce_sound_id) {
+            SoundFileSelector.setValue(
                 'periodic_announce_sound_id',
                 data.periodic_announce_sound_id,
-                data.periodic_announce_sound_idRepresent
+                data.periodic_announce_sound_id_Represent || ''
             );
         }
         
-        // Handle MOH sound (matches IVR pattern)
-        if (data.moh_sound_id && data.moh_sound_idRepresent) {
-            SoundFilesSelector.setInitialValueWithIcon(
+        // Handle MOH sound (using underscore naming like IVR Menu)
+        if (data.moh_sound_id) {
+            SoundFileSelector.setValue(
                 'moh_sound_id',
                 data.moh_sound_id,
-                data.moh_sound_idRepresent
+                data.moh_sound_id_Represent || ''
             );
         }
     },
