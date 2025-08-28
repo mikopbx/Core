@@ -50,15 +50,7 @@ abstract class CreateDialPlanApplicationTest extends MikoPBXTestsBase
         $this->clickSidebarMenuItemByHref("/admin-cabinet/dialplan-applications/index/");
 
         // Delete any existing application with the same extension
-        try {
-            $this->clickDeleteButtonOnRowWithText($params['extension']);
-        } catch (\Exception $e) {
-            // Log the error as information instead of failing the test
-            self::annotate(
-                sprintf('DialplanApplication "%s" not found for deletion (this is expected if DialplanApplication does not exist): %s', $params['extension'], $e->getMessage()),
-                'info'
-            );
-        }
+        $this->clickDeleteButtonOnRowWithText($params['extension']);
 
         // Click the button to modify the dialplan application
         $this->clickButtonByHref('/admin-cabinet/dialplan-applications/modify');

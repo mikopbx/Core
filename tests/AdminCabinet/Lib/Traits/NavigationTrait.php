@@ -139,7 +139,8 @@ trait NavigationTrait
             $deleteButtons = self::$driver->findElements(WebDriverBy::xpath($xpath));
             
             if (empty($deleteButtons)) {
-                throw new RuntimeException("No delete buttons found with XPath: $xpath");
+                $this->annotate("Delete buttons not found for element with text: ".$text, 'debug');
+                return;
             }
             
             foreach ($deleteButtons as $deleteButton) {

@@ -64,15 +64,8 @@ class DeleteAudioFileTest extends MikoPBXTestsBase
         $this->clickSidebarMenuItemByHref('/admin-cabinet/sound-files/index/');
 
         // Click the delete button on the row with the audio file's name
-        try {
-            $this->clickDeleteButtonOnRowWithText($params['name']);
-        } catch (\Exception $e) {
-            // Log the error as information instead of failing the test
-            self::annotate(
-                sprintf('AudioFile "%s" not found for deletion (this is expected if AudioFile does not exist): %s', $params['name'], $e->getMessage()),
-                'info'
-            );
-        }
+        $this->clickDeleteButtonOnRowWithText($params['name']);
+      
         $this->waitForAjax();
 
         // Try to find the element with the ID on the page

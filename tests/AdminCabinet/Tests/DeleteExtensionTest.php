@@ -64,15 +64,7 @@ class DeleteExtensionTest extends MikoPBXTestsBase
 
         // Fill search field
         $this->fillDataTableSearchInput('extensions-table', 'global-search', $params['username']);
-        try {
-            $this->clickDeleteButtonOnRowWithText($params['username']);
-        } catch (\Exception $e) {
-            // Log the error as information instead of failing the test
-            self::annotate(
-                sprintf('Extension "%s" not found for deletion (this is expected if Extension does not exist): %s', $params['username'], $e->getMessage()),
-                'info'
-            );
-        }
+        $this->clickDeleteButtonOnRowWithText($params['username']);
 
         $this->waitForAjax();
 

@@ -63,16 +63,8 @@ abstract class CreateCallQueueTest extends MikoPBXTestsBase
     public function createCallQueue(array $params): void
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/call-queues/index/');
-
-        try {
-            $this->clickDeleteButtonOnRowWithText($params['name']);
-        } catch (\Exception $e) {
-            // Log the error as information instead of failing the test
-            self::annotate(
-                sprintf('CallQueue "%s" not found for deletion (this is expected if CallQueue does not exist): %s', $params['name'], $e->getMessage()),
-                'info'
-            );
-        }
+      
+        $this->clickDeleteButtonOnRowWithText($params['name']);
        
         $this->clickButtonByHref('/admin-cabinet/call-queues/modify');
 

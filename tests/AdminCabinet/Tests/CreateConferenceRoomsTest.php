@@ -66,19 +66,8 @@ abstract class CreateConferenceRoomsTest extends MikoPBXTestsBase
     {
         // Navigate to the conference rooms page and delete any existing rooms with the same name
         $this->clickSidebarMenuItemByHref('/admin-cabinet/conference-rooms/index/');
-        
-        
-        try {
-            $this->clickDeleteButtonOnRowWithText($params['name']);
-        } catch (\Exception $e) {
-            // Log the error as information instead of failing the test
-            self::annotate(
-                sprintf('ConferenceRoom "%s" not found for deletion (this is expected if ConferenceRoom does not exist): %s', $params['name'], $e->getMessage()),
-                'info'
-            );
-        }
-        
-       
+    
+        $this->clickDeleteButtonOnRowWithText($params['name']);
 
         // Click the "Modify" button to add a new conference room
         $this->clickButtonByHref('/admin-cabinet/conference-rooms/modify');

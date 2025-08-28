@@ -52,16 +52,8 @@ abstract class CreateIVRMenuTest extends MikoPBXTestsBase
     {
         $this->clickSidebarMenuItemByHref('/admin-cabinet/ivr-menu/index/');
 
-        try {
-            $this->clickDeleteButtonOnRowWithText($params['name']);
-        } catch (\Exception $e) {
-            // Log the error as information instead of failing the test
-            self::annotate(
-                sprintf('IVRMenu "%s" not found for deletion (this is expected if IVRMenu does not exist): %s', $params['name'], $e->getMessage()),
-                'info'
-            );
-        }
-
+        $this->clickDeleteButtonOnRowWithText($params['name']);
+       
         $this->clickButtonByHref('/admin-cabinet/ivr-menu/modify');
         $this->fillIVRMenuForm($params);
         $this->submitForm('ivr-menu-form');

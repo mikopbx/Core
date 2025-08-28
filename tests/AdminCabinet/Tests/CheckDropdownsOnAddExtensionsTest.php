@@ -96,16 +96,8 @@ class CheckDropdownsOnAddExtensionsTest extends MikoPBXTestsBase
 
         // Fill search field and delete if exists
         $this->fillDataTableSearchInput('extensions-table', 'global-search', $this->employeeData['username']);
-
-        try {
-            $this->clickDeleteButtonOnRowWithText($this->employeeData['username']);
-        } catch (\Exception $e) {
-            // Log the error as information instead of failing the test
-            self::annotate(
-                sprintf('Extension "%s" not found for deletion (this is expected if Extension does not exist): %s', $this->employeeData['username'], $e->getMessage()),
-                'info'
-            );
-        }
+       
+        $this->clickDeleteButtonOnRowWithText($this->employeeData['username']);
        
 
         // Create new extension

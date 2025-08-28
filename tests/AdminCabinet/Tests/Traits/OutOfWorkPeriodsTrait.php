@@ -111,7 +111,7 @@ trait OutOfWorkPeriodsTrait
         if ($params['allowRestriction'] && !empty($params['inbound-rules-table'])) {
             $this->navigateToRulesTab();
             foreach ($params['inbound-rules-table'] as $ruleId => $value) {
-                $this->changeCheckBoxState("rule-{$ruleId}", $value);
+                $this->changeCheckBoxState("route-{$ruleId}", $value);
             }
         }
     }
@@ -181,7 +181,7 @@ trait OutOfWorkPeriodsTrait
         if ($params['allowRestriction'] && !empty($params['inbound-rules-table'])) {
             $this->navigateToRulesTab();
             foreach ($params['inbound-rules-table'] as $ruleId => $value) {
-                $this->assertCheckBoxStageIsEqual("rule-{$ruleId}", $value);
+                $this->assertCheckBoxStageIsEqual("route-{$ruleId}", $value);
             }
         }
     }

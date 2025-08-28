@@ -246,7 +246,7 @@ abstract class CreateSIPProviderTest extends MikoPBXTestsBase
         }
 
         // Verify DID source dropdown
-        $this->assertMenuItemSelected('.did-source-dropdown', $params['did_source']);
+        $this->assertMenuItemSelected('did-source', $params['did_source']);
         
         // If DID source is custom, verify custom fields
         if ($params['did_source'] === 'custom') {

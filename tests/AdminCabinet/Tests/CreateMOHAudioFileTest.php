@@ -93,15 +93,7 @@ abstract class CreateMOHAudioFileTest extends MikoPBXTestsBase
     protected function deleteExistingFile(string $name): void
     {
         $fullName = self::MOH_PREFIX . $name;
-        try {
-            $this->clickDeleteButtonOnRowWithText($fullName);
-        } catch (\RuntimeException $e) {
-            // It's OK if the file doesn't exist, just continue
-            self::annotate(
-                "No existing MOH file to delete: {$fullName} (this is expected if file does not exist)",
-                'info'
-            );
-        }
+        $this->clickDeleteButtonOnRowWithText($fullName);
     }
 
     /**

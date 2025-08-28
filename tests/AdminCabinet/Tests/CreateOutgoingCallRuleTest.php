@@ -80,12 +80,8 @@ abstract class CreateOutgoingCallRuleTest extends MikoPBXTestsBase
         $this->clickSidebarMenuItemByHref('/admin-cabinet/outbound-routes/index/');
         
         // Try to delete existing rule with the same name if it exists
-        try {
-            $this->clickDeleteButtonOnRowWithText($params['rulename']);
-        } catch (\RuntimeException $e) {
-            // It's OK if the rule doesn't exist, just continue
-            self::annotate("No existing rule to delete: " . $params['rulename']);
-        }
+        $this->clickDeleteButtonOnRowWithText($params['rulename']);
+       
 
         $this->clickButtonByHref('/admin-cabinet/outbound-routes/modify');
         $this->fillRuleInfo($params);
