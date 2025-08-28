@@ -215,7 +215,8 @@ class DataStructure extends AbstractDataStructure
             'registration_type' => $iax->registration_type ?? 'none',
             'description' => $iax->description ?? '',
             'manualattributes' => $iax->manualattributes ?? '',
-            'networkfilterid' => (!empty($iax->networkfilterid) ? $iax->networkfilterid : 'none')
+            'networkfilterid' => (!empty($iax->networkfilterid) ? $iax->networkfilterid : 'none'),
+            'receive_calls_without_auth' => $iax->receive_calls_without_auth === '1'
         ];
     }
     

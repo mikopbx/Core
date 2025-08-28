@@ -279,6 +279,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
             'description' => 'string|sanitize|max:255',
             'manualattributes' => 'string|sanitize|max:1024|empty_to_null',
             'networkfilterid' => 'string|max:64|empty_to_null',
+            'receive_calls_without_auth' => 'bool',
         ];
     }
     
@@ -429,7 +430,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
         $iax->uniqid = $provider->uniqid;
         
         // Define boolean fields for IAX
-        $booleanFields = ['disabled'];
+        $booleanFields = ['disabled', 'receive_calls_without_auth'];
         
         // Convert boolean fields using parent method
         $data = self::convertBooleanFields($data, $booleanFields);
@@ -459,6 +460,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
         $iax->description = $data['description'] ?? '';
         $iax->manualattributes = $data['manualattributes'] ?? '';
         $iax->noregister = '0'; // Always 0 for providers
+        $iax->receive_calls_without_auth = $data['receive_calls_without_auth'] ?? '0';
         $networkfilterid = $data['networkfilterid'] ?? 'none';
         $iax->networkfilterid = ($networkfilterid === 'none' || $networkfilterid === '') ? '' : $networkfilterid;
         

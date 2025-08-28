@@ -145,6 +145,7 @@ class GetRecordAction extends AbstractGetRecordAction
             $config->description = '';
             $config->manualattributes = '';
             $config->noregister = '0';
+            $config->receive_calls_without_auth = '0';
             
             // Attach IAX config to provider
             $model->Iax = $config;
