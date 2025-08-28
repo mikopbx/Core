@@ -1314,6 +1314,7 @@ return [
     'repIax' => 'Учетная запись IAX - %represent%',
     'repIncomingRoutingTable' => '%represent%',
     'repIncomingRoutingTableNumber' => 'Правило обработки входящих - N%represent%',
+    'repIncomingRoutingTableDefaultRuleName' => 'Правило обработки входящих по умолчанию',
     'repLanInterfaces' => 'Системный файл - %represent%',
     'repNetworkFilters' => 'Сетевой фильтр - %represent%',
     'repOutgoingRoutingTable' => '%represent%',

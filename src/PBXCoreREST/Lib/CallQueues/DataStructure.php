@@ -19,9 +19,6 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\CallQueues;
 
-use MikoPBX\Common\Models\Extensions;
-use MikoPBX\Common\Models\SoundFiles;
-use MikoPBX\AdminCabinet\Library\SecurityHelper;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
 
 /**

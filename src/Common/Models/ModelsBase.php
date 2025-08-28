@@ -299,8 +299,16 @@ class ModelsBase extends Model
     public function onValidationFails(): void
     {
         $errorMessages = $this->getMessages();
-        foreach ($errorMessages as $errorMessage) {
+        $dependencyGroups = [];
+        $otherErrors = [];
+        $constraintViolationMessages = [];
+        
+        // First pass: collect all constraint violations and group dependencies
+        foreach ($errorMessages as $index => $errorMessage) {
             if ($errorMessage->getType() === 'ConstraintViolation') {
+                // Store the original message for later processing
+                $constraintViolationMessages[] = $errorMessage;
+                
                 // Extract the related model name from the error message
                 $arrMessageParts = explode('Common\\Models\\', $errorMessage->getMessage());
                 if (count($arrMessageParts) === 2) {
@@ -308,37 +316,61 @@ class ModelsBase extends Model
                 } else {
                     $relatedModel = $errorMessage->getMessage();
                 }
-
+                
                 // Get the related records
                 $relatedRecords = $this->getRelated($relatedModel);
-
-                // Create a new error message template
-                $newErrorMessage = '<div class="ui header">' . $this->t('ConstraintViolation') . '</div>';
-                $newErrorMessage .= "<ul class='list'>";
+                
                 if ($relatedRecords === false) {
                     // Throw an exception if there is an error in the model relationship
                     throw new Model\Exception('Error on models relationship ' . $errorMessage);
                 }
+                
+                // Store dependencies grouped by relation
+                if (!isset($dependencyGroups[$relatedModel])) {
+                    $dependencyGroups[$relatedModel] = [];
+                }
+                
                 if ($relatedRecords instanceof Resultset) {
                     // If there are multiple related records, iterate through them
                     foreach ($relatedRecords as $item) {
                         if ($item instanceof ModelsBase) {
-                            // Append each related record's representation to the error message
-                            $newErrorMessage .= '<li>' . $item->getRepresent(true) . '</li>';
+                            $dependencyGroups[$relatedModel][] = $item;
                         }
                     }
                 } elseif ($relatedRecords instanceof ModelsBase) {
-                    // If there is a single related record, append its representation to the error message
-                    $newErrorMessage .= '<li>' . $relatedRecords->getRepresent(true) . '</li>';
-                } else {
-                    // If the related records are of an unknown type, indicate it in the error message
-                    $newErrorMessage .= '<li>Unknown object</li>';
+                    // If there is a single related record, add it
+                    $dependencyGroups[$relatedModel][] = $relatedRecords;
                 }
-                $newErrorMessage .= '</ul>';
-
-                // Set the new error message
-                $errorMessage->setMessage($newErrorMessage);
-                break;
+            }
+        }
+        
+        // If we have constraint violations, create a single comprehensive message
+        if (!empty($dependencyGroups)) {
+            // Build comprehensive HTML message with all dependencies
+            $htmlMessage = '<div class="ui header">' . $this->t('ConstraintViolation') . '</div>';
+            $htmlMessage .= "<ul class='list'>";
+            
+            // Add all dependencies from all groups
+            foreach ($dependencyGroups as $relatedModel => $records) {
+                foreach ($records as $record) {
+                    $htmlMessage .= '<li>' . $record->getRepresent(true) . '</li>';
+                }
+            }
+            
+            $htmlMessage .= '</ul>';
+            
+            // Update only the first constraint violation message with all dependencies
+            // and remove the rest to avoid duplicates
+            $firstConstraintMessage = null;
+            foreach ($constraintViolationMessages as $msg) {
+                if ($firstConstraintMessage === null) {
+                    $firstConstraintMessage = $msg;
+                    $msg->setMessage($htmlMessage);
+                } else {
+                    // Remove duplicate constraint violation messages
+                    // by setting empty message that will be filtered out by the framework
+                    $msg->setMessage('');
+                }
             }
         }
     }
@@ -488,7 +520,7 @@ class ModelsBase extends Model
                     . " <$this->extension>";
                 break;
             case IvrMenuActions::class:
-                $name = $this->Extensions->getRepresent();
+                $name = $this->IvrMenu->getRepresent();
                 break;
             case Codecs::class:
                 $name = $this->name;
@@ -497,6 +529,8 @@ class ModelsBase extends Model
                 $name = '<i class="map signs icon"></i> ';
                 if (empty($this->id)) {
                     $name .= $this->t('mo_NewElementIncomingRoutingTable');
+                } elseif (!empty($this->rulename && $this->rulename ==='default action')) {   
+                    $name .= $this->t('repIncomingRoutingTableDefaultRuleName'); 
                 } elseif (!empty($this->rulename)) {
                     $name .= $this->t('repIncomingRoutingTable', ['represent' => $this->rulename]);
                 } else {

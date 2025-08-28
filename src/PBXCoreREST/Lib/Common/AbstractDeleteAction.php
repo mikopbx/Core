@@ -105,7 +105,18 @@ abstract class AbstractDeleteAction
 
         $extension = Extensions::findFirstByNumber($extensionNumber);
         if ($extension && !$extension->delete()) {
-            throw new \Exception('Failed to delete extension: ' . implode(', ', $extension->getMessages()));
+            // Get the error messages
+            $messages = $extension->getMessages();
+            $errorMessage = implode(', ', $messages);
+            
+            // If the error message contains HTML (constraint violation with links),
+            // don't add a prefix as it already has proper formatting
+            if (strpos($errorMessage, '<div class="ui header">') !== false) {
+                throw new \Exception($errorMessage);
+            } else {
+                // For simple error messages, add the prefix
+                throw new \Exception('Failed to delete extension: ' . $errorMessage);
+            }
         }
     }
 
@@ -247,7 +258,7 @@ abstract class AbstractDeleteAction
             });
 
             $res->success = true;
-            $res->data = ['deleted_id' => $id];
+            $res->data = [];
 
             // Log successful operation
             self::logSuccessfulDelete($entityType, $entityName, $entityExtension, $res->processor);

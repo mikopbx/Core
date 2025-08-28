@@ -25,6 +25,7 @@ use Phalcon\Di\Di;
 use Phalcon\Mvc\Model\Relation;
 use Phalcon\Filter\Validation;
 use Phalcon\Filter\Validation\Validator\Uniqueness as UniquenessValidator;
+use Phalcon\Messages\Message;
 
 /**
  * Class Extensions
@@ -528,6 +529,83 @@ class Extensions extends ModelsBase
                 ],
             ]
         );
+    }
+
+    /**
+     * Override delete to check ALL dependencies first before Phalcon does partial check
+     * This ensures all constraint violations are shown at once, not just the first one
+     * 
+     * @return bool True if deletion succeeded, false otherwise
+     */
+    public function delete(): bool
+    {
+        // First, manually check ALL dependencies before Phalcon does its partial check
+        $allBlockingDependencies = [];
+        $relations = $this->getModelsManager()->getRelations(get_class($this));
+        
+        foreach ($relations as $relation) {
+            $foreignKey = $relation->getOption('foreignKey') ?? [];
+            
+            // Only check relations with ACTION_RESTRICT
+            if (!isset($foreignKey['action']) || $foreignKey['action'] !== Relation::ACTION_RESTRICT) {
+                continue;
+            }
+            
+            // Get related model and fields
+            $relatedModel = $relation->getReferencedModel();
+            $mappedFields = $relation->getFields();
+            $mappedFields = is_array($mappedFields) ? $mappedFields : [$mappedFields];
+            $referencedFields = $relation->getReferencedFields();
+            $referencedFields = is_array($referencedFields) ? $referencedFields : [$referencedFields];
+            
+            // Build query parameters
+            $conditions = [];
+            $bind = [];
+            foreach ($referencedFields as $index => $referencedField) {
+                $conditions[] = "$referencedField = :field$index:";
+                $bindField = $mappedFields[$index];
+                $bind["field$index"] = $this->$bindField;
+            }
+            
+            // Find related records that would block deletion
+            $relatedRecords = $relatedModel::find([
+                'conditions' => implode(' OR ', $conditions),
+                'bind' => $bind
+            ]);
+            
+            // Add to blocking dependencies
+            foreach ($relatedRecords as $relatedRecord) {
+                // Skip if it's the same record we're trying to delete
+                if (serialize($relatedRecord) === serialize($this)) {
+                    continue;
+                }
+                $allBlockingDependencies[] = $relatedRecord;
+            }
+        }
+        
+        // If we have blocking dependencies, create comprehensive error message
+        if (!empty($allBlockingDependencies)) {
+            // Build comprehensive HTML message with ALL dependencies
+            $htmlMessage = '<div class="ui header">' . $this->t('ConstraintViolation') . '</div>';
+            $htmlMessage .= '<ul class="list">';
+            
+            foreach ($allBlockingDependencies as $dependency) {
+                if ($dependency instanceof ModelsBase) {
+                    $htmlMessage .= '<li>' . $dependency->getRepresent(true) . '</li>';
+                }
+            }
+            
+            $htmlMessage .= '</ul>';
+            
+            // Add the comprehensive error message
+            $message = new Message($htmlMessage, 'ConstraintViolation', 'number');
+            $this->appendMessage($message);
+            
+            return false; // Prevent deletion and don't call parent
+        }
+        
+        // If no blocking dependencies, proceed with normal deletion
+        return parent::delete();
     }
 
     /**
