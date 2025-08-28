@@ -20,16 +20,25 @@
 namespace MikoPBX\PBXCoreREST\Lib\ConferenceRooms;
 
 use MikoPBX\Common\Models\ConferenceRooms;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
 
 /**
  * Data structure for conference rooms
  * 
+ * Extends AbstractDataStructure to leverage common functionality:
+ * - Boolean field formatting
+ * - Extension representation helpers
+ * - Text field processing
+ * 
  * @package MikoPBX\PBXCoreREST\Lib\ConferenceRooms
  */
-class DataStructure
+class DataStructure extends AbstractDataStructure
 {
     /**
-     * Create data array from ConferenceRooms model
+     * Create full data array from ConferenceRooms model
+     * 
+     * Used for detailed views and single record retrieval.
+     * Uses uniqid as the primary identifier for clean API design.
      * 
      * @param ConferenceRooms $model
      * @return array
@@ -37,8 +46,27 @@ class DataStructure
     public static function createFromModel($model): array
     {
         return [
-            'id' => (string)$model->id,
-            'uniqid' => $model->uniqid,
+            'id' => $model->uniqid,
+            'extension' => $model->extension,
+            'name' => $model->name,
+            'pinCode' => $model->pinCode ?? '',
+            'represent' => $model->getRepresent()
+        ];
+    }
+    
+    /**
+     * Create optimized data array for list view
+     * 
+     * Returns data needed for list display.
+     * Uses uniqid as the primary identifier for clean API design.
+     * 
+     * @param ConferenceRooms $model
+     * @return array
+     */
+    public static function createForList($model): array
+    {
+        return [
+            'id' => $model->uniqid,
             'extension' => $model->extension,
             'name' => $model->name,
             'pinCode' => $model->pinCode ?? '',

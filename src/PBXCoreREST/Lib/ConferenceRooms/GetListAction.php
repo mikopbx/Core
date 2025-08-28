@@ -21,54 +21,58 @@ namespace MikoPBX\PBXCoreREST\Lib\ConferenceRooms;
 
 use MikoPBX\Common\Models\ConferenceRooms;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractGetListAction;
 
 /**
  * Action for getting list of all conference rooms
+ * 
+ * Extends AbstractGetListAction to leverage:
+ * - Standard list retrieval patterns
+ * - Search functionality
+ * - Ordering support
+ * - Pagination support
+ * - Consistent error handling
  * 
  * @api {get} /pbxcore/api/v2/conference-rooms/getList Get all conference rooms
  * @apiVersion 2.0.0
  * @apiName GetList
  * @apiGroup ConferenceRooms
  * 
+ * @apiParam {String} [search] Search term for filtering by name
+ * @apiParam {String} [order] Field to order by (name, extension, id)
+ * @apiParam {String} [orderWay] Order direction (ASC/DESC)
+ * @apiParam {Number} [limit] Maximum number of records to return
+ * @apiParam {Number} [offset] Number of records to skip
+ * 
  * @apiSuccess {Boolean} result Operation result
  * @apiSuccess {Array} data Array of conference rooms
- * @apiSuccess {String} data.id Record ID
- * @apiSuccess {String} data.uniqid Unique identifier
+ * @apiSuccess {String} data.id Unique identifier
  * @apiSuccess {String} data.extension Extension number
  * @apiSuccess {String} data.name Conference name
  * @apiSuccess {String} data.pinCode PIN code
  * @apiSuccess {String} data.represent Display representation of conference room (name + extension)
  */
-class GetListAction
+class GetListAction extends AbstractGetListAction
 {
     /**
-     * Get list of all conference rooms
+     * Get list of all conference rooms with filtering and pagination support
      * 
-     * @param array $data - Filter parameters (not used yet)
+     * @param array $data Filter parameters (search, ordering, pagination)
      * @return PBXApiResult
      */
     public static function main(array $data = []): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
-        
-        try {
-            // Get all conference rooms sorted by name
-            $rooms = ConferenceRooms::find([
-                'order' => 'name ASC'
-            ]);
-            
-            $data = [];
-            foreach ($rooms as $room) {
-                $data[] = DataStructure::createFromModel($room);
-            }
-            
-            $res->data = $data;
-            $res->success = true;
-        } catch (\Exception $e) {
-            $res->messages['error'][] = $e->getMessage();
-        }
-        
-        return $res;
+        // Use standard list execution from parent class
+        return self::executeStandardList(
+            ConferenceRooms::class,
+            DataStructure::class,
+            $data,                              // Request parameters
+            [],                                 // Base query options
+            false,                              // Use createForList() for better performance
+            ['name', 'extension', 'id'],       // Allowed order fields
+            ['name'],                           // Searchable fields
+            null,                               // No record filter
+            'name ASC'                          // Default order
+        );
     }
 }

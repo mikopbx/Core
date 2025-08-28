@@ -1,7 +1,7 @@
 {{ form(['action' : 'conference-rooms/save', 'method': 'post', 'role': 'form', 'class': 'ui large form','id':'conference-room-form']) }}
 
-{{ form.render('uniqid') }}
 {{ form.render('id') }}
+{{ form.render('isNew') }}
 <div class="ui ribbon label" id="conference-extension-number">
     <i class="phone icon"></i> {{ extension }}
 </div>

@@ -39,8 +39,9 @@ class ConferenceRoomEditForm extends BaseForm
         // ID
         $this->add(new Hidden('id'));
 
-        // Uniqid
-        $this->add(new Hidden('uniqid'));
+        // IsNew flag for determining POST vs PUT
+        $isNewValue = isset($entity->isNew) && $entity->isNew === true ? '1' : '0';
+        $this->add(new Hidden('isNew', ['value' => $isNewValue]));
 
         // Name
         $this->add(new Text('name'));

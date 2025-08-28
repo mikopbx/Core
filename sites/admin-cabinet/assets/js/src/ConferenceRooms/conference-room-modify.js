@@ -148,9 +148,13 @@ const conferenceRoomModify = {
      * Callback before form submission
      */
     cbBeforeSendForm(settings) {
-        // Можно динамически изменить HTTP метод если нужно
-        // const recordId = $('#id').val();
-        // Form.apiSettings.httpMethod = recordId ? 'PUT' : 'POST';
+        // Get form values including the hidden isNew field
+        const formData = conferenceRoomModify.$formObj.form('get values');
+        
+        // Add _isNew flag based on the form's hidden field value
+        if (formData.isNew === '1') {
+            settings.data._isNew = true;
+        }
         
         // Возвращаем settings для продолжения обработки
         return settings;
@@ -167,11 +171,13 @@ const conferenceRoomModify = {
                 conferenceRoomModify.populateForm(response.data);
             }
             
-             // Update URL for new records
-            const currentId = $('#id').val();
-            if (!currentId && response.data && response.data.uniqid) {
-                const newUrl = window.location.href.replace(/modify\/?$/, `modify/${response.data.uniqid}`);
+             // Update URL for new records (after first save)
+            const formData = conferenceRoomModify.$formObj.form('get values');
+            if (formData.isNew === '1' && response.data && response.data.id) {
+                const newUrl = window.location.href.replace(/modify\/?$/, `modify/${response.data.id}`);
                 window.history.pushState(null, '', newUrl);
+                // Update the hidden isNew field to '0' since it's no longer new
+                conferenceRoomModify.$formObj.form('set value', 'isNew', '0');
             }
             
         }
@@ -181,6 +187,8 @@ const conferenceRoomModify = {
      * Populate form with data
      */
     populateForm(data) {
+        // Simply populate the form with all data from API
+        // The isNew field will be populated automatically from the API response
         Form.$formObj.form('set values', data);
         if (Form.enableDirrity) {
             Form.saveInitialValues();

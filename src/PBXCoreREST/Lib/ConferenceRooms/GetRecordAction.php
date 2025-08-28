@@ -22,64 +22,63 @@ namespace MikoPBX\PBXCoreREST\Lib\ConferenceRooms;
 use MikoPBX\Common\Models\ConferenceRooms;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractGetRecordAction;
 
 /**
  * Action for getting conference room record
+ * 
+ * Extends AbstractGetRecordAction to leverage:
+ * - Standard record retrieval patterns
+ * - Automatic new record structure creation
+ * - Extension number allocation
+ * - Consistent error handling
  * 
  * @api {get} /pbxcore/api/v2/conference-rooms/getRecord/:id Get conference room record
  * @apiVersion 2.0.0
  * @apiName GetRecord
  * @apiGroup ConferenceRooms
  * 
- * @apiParam {String} [id] Record ID or "new" for new record structure
+ * @apiParam {String} [id] Record ID (uniqid) or "new" for new record structure
  * 
  * @apiSuccess {Boolean} result Operation result
  * @apiSuccess {Object} data Conference room data
- * @apiSuccess {String} data.id Record ID
- * @apiSuccess {String} data.uniqid Unique identifier
+ * @apiSuccess {String} data.id Unique identifier
  * @apiSuccess {String} data.extension Extension number
  * @apiSuccess {String} data.name Conference name
  * @apiSuccess {String} data.pinCode PIN code
+ * @apiSuccess {String} data.represent Display representation
  */
-class GetRecordAction
+class GetRecordAction extends AbstractGetRecordAction
 {
     /**
-     * Get conference room record
+     * Get conference room record or create new structure
      * 
-     * @param string|null $id - Record ID or null for new record
+     * @param string|null $id Record ID or null for new record
      * @return PBXApiResult
      */
     public static function main(?string $id = null): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
+        $isNew = empty($id) || $id === 'new';
         
-        if (empty($id) || $id === 'new') {
-            // Create structure for new record
-            $newRoom = new ConferenceRooms();
-            $newRoom->id = '';
-            $newRoom->uniqid = ConferenceRooms::generateUniqueID(Extensions::TYPE_CONFERENCE.'-');
-            $newRoom->extension = Extensions::getNextFreeApplicationNumber();
-            $newRoom->name = '';
-            $newRoom->pinCode = '';
-            
-            $res->data = DataStructure::createFromModel($newRoom);
-            $res->success = true;
-        } else {
-            // Find existing record
-            $room = ConferenceRooms::findFirst([
-                'conditions' => 'uniqid = :uniqid: OR id = :id:',
-                'bind' => ['uniqid' => $id, 'id' => $id]
-            ]);
-            
-            if ($room) {
-                $res->data = DataStructure::createFromModel($room);
-                $res->success = true;
-            } else {
-                $res->messages['error'][] = 'Conference room not found';
-            }
+        // Use standard get record execution from parent class
+        $result = self::executeStandardGetRecord(
+            $id,
+            ConferenceRooms::class,
+            DataStructure::class,
+            Extensions::TYPE_CONFERENCE . '-',  // Unique ID prefix
+            [                                    // Default values for new records
+                'name' => '',
+                'pinCode' => ''
+            ],
+            'Conference room not found',        // Not found error message
+            true                                 // Needs extension number
+        );
+        
+        // Always add isNew field for form population
+        if ($result->success) {
+            $result->data['isNew'] = $isNew ? '1' : '0';
         }
         
-        return $res;
+        return $result;
     }
 }

@@ -93,10 +93,20 @@ const ConferenceRoomsAPI = {
      * @param {function} callback - Callback function
      */
     saveRecord(data, callback) {
-        const method = data.id ? 'PUT' : 'POST';
-        const url = data.id ? 
-            `${this.endpoints.saveRecord}/${data.id}` : 
-            this.endpoints.saveRecord;
+        // Check if this is a new record using the _isNew flag passed from form
+        const isNew = data._isNew === true;
+        
+        // Remove the flag before sending to server
+        if (data._isNew !== undefined) {
+            delete data._isNew;
+        }
+        
+        // For new records use POST, for existing use PUT
+        // Don't rely on data.id since it's always present now (contains uniqid)
+        const method = isNew ? 'POST' : 'PUT';
+        const url = isNew ? 
+            this.endpoints.saveRecord : 
+            `${this.endpoints.saveRecord}/${data.id}`;
         
         $.api({
             url: url,

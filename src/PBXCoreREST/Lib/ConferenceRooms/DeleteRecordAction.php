@@ -20,80 +20,43 @@
 namespace MikoPBX\PBXCoreREST\Lib\ConferenceRooms;
 
 use MikoPBX\Common\Models\ConferenceRooms;
-use MikoPBX\Common\Models\Extensions;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use MikoPBX\PBXCoreREST\Lib\Common\BaseActionHelper;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractDeleteAction;
 
 /**
  * Action for deleting conference room record
+ * 
+ * Extends AbstractDeleteAction to leverage:
+ * - Standard record deletion patterns
+ * - Automatic extension cleanup
+ * - Transaction-based deletion
+ * - Consistent error handling and logging
  * 
  * @api {delete} /pbxcore/api/v2/conference-rooms/deleteRecord/:id Delete conference room
  * @apiVersion 2.0.0
  * @apiName DeleteRecord
  * @apiGroup ConferenceRooms
  * 
- * @apiParam {String} id Record ID to delete
+ * @apiParam {String} id Record ID to delete (uniqid)
  * 
  * @apiSuccess {Boolean} result Operation result
- * @apiSuccess {Object} data Deletion result
- * @apiSuccess {String} data.deleted_id ID of deleted record
  */
-class DeleteRecordAction
+class DeleteRecordAction extends AbstractDeleteAction
 {
     /**
      * Delete conference room record
      * 
-     * @param string $id - Record ID to delete
+     * @param string $id Record ID to delete (expects uniqid)
      * @return PBXApiResult
      */
     public static function main(string $id): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
-        
-        if (empty($id)) {
-            $res->messages['error'][] = 'Record ID is required';
-            return $res;
-        }
-        
-        try {
-            // Find record by uniqid or id
-            $room = ConferenceRooms::findFirst([
-                'conditions' => 'uniqid = :uniqid: OR id = :id:',
-                'bind' => ['uniqid' => $id, 'id' => $id]
-            ]);
-            
-            if (!$room) {
-                $res->messages['error'][] = 'api_ConferenceRoomNotFound';
-                return $res;
-            }
-            
-            // Delete in transaction using BaseActionHelper
-            BaseActionHelper::executeInTransaction(function() use ($room) {
-                // Delete related extension
-                $extension = Extensions::findFirstByNumber($room->extension);
-                if ($extension) {
-                    if (!$extension->delete()) {
-                        throw new \Exception('Failed to delete extension: ' . implode(', ', $extension->getMessages()));
-                    }
-                }
-                
-                // Delete conference room itself
-                if (!$room->delete()) {
-                    throw new \Exception('Failed to delete conference room: ' . implode(', ', $room->getMessages()));
-                }
-                
-                return true;
-            });
-            
-            
-            $res->success = true;
-            $res->data = ['deleted_id' => $id];
-            
-        } catch (\Exception $e) {
-            $res->messages['error'][] = $e->getMessage();
-        }
-        
-        return $res;
+        // Use standard delete execution from parent class
+        return self::executeStandardDelete(
+            ConferenceRooms::class,
+            $id,
+            'Conference room',                  // Entity type for logging
+            'Conference room not found'         // Not found error message
+        );
     }
 }
