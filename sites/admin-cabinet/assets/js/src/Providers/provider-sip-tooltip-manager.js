@@ -64,7 +64,7 @@ class ProviderSipTooltipManager extends ProviderTooltipManager {
             'provider_host': this.getProviderHostTooltip(),
             'additional_hosts': this.getAdditionalHostsTooltip(),
             'dtmf_mode': this.getDtmfModeTooltip(),
-            'callerid_source': this.getCallerIdSourceTooltip(),
+            'cid_source': this.getCallerIdSourceTooltip(),
             'did_source': this.getDidSourceTooltip(),
             'cid_custom_header': this.getCustomHeaderTooltip(),
             'did_custom_header': this.getCustomHeaderTooltip(),

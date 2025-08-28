@@ -142,7 +142,7 @@ abstract class CreateSIPProviderTest extends MikoPBXTestsBase
         }
 
         // Set DID source
-        $this->selectDropdownItem('.did-source-dropdown', $params['did_source']);
+        $this->selectDropdownItem('did-source', $params['did_source']);
         
         // If DID source is custom, fill custom fields
         if ($params['did_source'] === 'custom') {
@@ -153,10 +153,10 @@ abstract class CreateSIPProviderTest extends MikoPBXTestsBase
         }
         
         // Set CallerID source
-        $this->selectDropdownItem('.callerid-source-dropdown', $params['callerid_source']);
+        $this->selectDropdownItem('cid_source', $params['cid_source']);
         
         // If CallerID source is custom, fill custom fields
-        if ($params['callerid_source'] === 'custom') {
+        if ($params['cid_source'] === 'custom') {
             $this->changeInputField('cid_custom_header', $params['cid_custom_header']);
             $this->changeInputField('cid_parser_start', $params['cid_parser_start']);
             $this->changeInputField('cid_parser_end', $params['cid_parser_end']);
@@ -257,10 +257,10 @@ abstract class CreateSIPProviderTest extends MikoPBXTestsBase
         }
         
         // Verify CallerID source dropdown  
-        $this->assertMenuItemSelected('.callerid-source-dropdown', $params['callerid_source']);
+        $this->assertMenuItemSelected('cid_source', $params['cid_source']);
         
         // If CallerID source is custom, verify custom fields
-        if ($params['callerid_source'] === 'custom') {
+        if ($params['cid_source'] === 'custom') {
             $this->assertInputFieldValueEqual('cid_custom_header', $params['cid_custom_header']);
             $this->assertInputFieldValueEqual('cid_parser_start', $params['cid_parser_start']);
             $this->assertInputFieldValueEqual('cid_parser_end', $params['cid_parser_end']);

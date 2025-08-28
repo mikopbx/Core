@@ -227,7 +227,7 @@
             {{ form.render('did_source') }}
         </div>
         
-        <!-- DID Custom Settings (показывается только при did_source=custom) -->
+        <!-- DID Custom Settings (shows only if did_source=custom) -->
         <div id="did-custom-settings" style="display: none; margin-left: 20px; padding: 15px; border-left: 3px solid #e0e1e2;">
             <div class="field max-width-400">
                 <label for="did_custom_header">
@@ -268,12 +268,12 @@
             <label for="cid_source">
                 {{ t._('pr_CallerIdSource') }}
                 <i class="small info circle icon field-info-icon" 
-                   data-field="callerid_source"></i>
+                   data-field="cid_source"></i>
             </label>
             {{ form.render('cid_source') }}
         </div>
         
-        <!-- CallerID Custom Settings (показывается только при cid_source=custom) -->
+        <!-- CallerID Custom Settings (shows only if cid_source=custom) -->
         <div id="callerid-custom-settings" style="display: none; margin-left: 20px; padding: 15px; border-left: 3px solid #e0e1e2;">
             <div class="field max-width-400">
                 <label for="cid_custom_header">

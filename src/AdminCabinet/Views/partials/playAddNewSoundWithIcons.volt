@@ -10,7 +10,7 @@
     <div class="unstackable fields">
         <div class="twelve wide field">
             {{ form.render(id) }}
-            <div class="ui selection dropdown search {{ id }}-dropdown">
+            <div class="ui selection dropdown search {{ id }}-dropdown" id="{{ id }}-dropdown"> 
                 <i class="dropdown icon"></i>
                 <div class="default text">{{ t._('sf_SelectAudioFile') }}</div>
                 <div class="menu"></div>

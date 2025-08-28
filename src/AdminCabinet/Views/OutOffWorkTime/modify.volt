@@ -63,7 +63,7 @@
             <div class="two fields">
                 <div class="field max-width-250">
                     {{ form.render('weekday_from') }}
-                    <div class="ui selection dropdown weekday-from-select">
+                    <div class="ui selection dropdown weekday-from-select" id="weekday_from-dropdown">
                         <i class="dropdown icon"></i>
                         <div class="default text">{{ t._('tf_SelectWeekdayFrom') }}</div>
                         <div class="menu"></div>
@@ -71,7 +71,7 @@
                 </div>
                 <div class="field max-width-250">
                     {{ form.render('weekday_to') }}
-                    <div class="ui selection dropdown weekday-to-select">
+                    <div class="ui selection dropdown weekday-to-select" id="weekday_to-dropdown">
                         <i class="dropdown icon"></i>
                         <div class="default text">{{ t._('tf_SelectWeekdayTo') }}</div>
                         <div class="menu"></div>
