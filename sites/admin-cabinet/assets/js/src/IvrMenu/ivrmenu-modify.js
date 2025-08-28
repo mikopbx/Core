@@ -406,6 +406,11 @@ const ivrMenuModify = {
       const formData = ivrMenuModify.$formObj.form('get values');
       formData.actions = actions; // Pass as array, not JSON string
       
+      // Add _isNew flag based on the form's hidden field value
+      if (formData.isNew === '1') {
+          formData._isNew = true;
+      }
+      
       settings.data = formData;
       
       return settings;
@@ -420,11 +425,13 @@ const ivrMenuModify = {
               ivrMenuModify.populateForm(response.data);
           }
           
-          // Update URL for new records
-          const currentId = $('#id').val();
-          if (!currentId && response.data && response.data.uniqid) {
-              const newUrl = window.location.href.replace(/modify\/?$/, `modify/${response.data.uniqid}`);
+          // Update URL for new records (after first save)
+          const formData = ivrMenuModify.$formObj.form('get values');
+          if (formData.isNew === '1' && response.data && response.data.id) {
+              const newUrl = window.location.href.replace(/modify\/?$/, `modify/${response.data.id}`);
               window.history.pushState(null, '', newUrl);
+              // Update the hidden isNew field to '0' since it's no longer new
+              ivrMenuModify.$formObj.form('set value', 'isNew', '0');
           }
       }
   },
