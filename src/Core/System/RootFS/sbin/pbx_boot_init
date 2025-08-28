@@ -107,7 +107,7 @@ mdadmPath=$(/sbin/which mdadm)
 if [ -n "$mdadmPath" ]; then
   # Initial array setup
   "$mdadmPath" --detail --scan | /bin/busybox cut -d ' ' -f 2 | /bin/xargs "$mdadmPath" --stop >/dev/null 2>/dev/null
-  "$mdadmPath" --assemble --scan
+  "$mdadmPath" --assemble --scan > /dev/null 2> /dev/null
   mkdir -p /etc/mdadm
   # Config generation
   echo "DEVICE partitions" >/etc/mdadm/mdadm.conf
@@ -123,7 +123,7 @@ if [ -n "$mdadmPath" ]; then
   "$mdadmPath" --detail --scan | /bin/busybox cut -d ' ' -f 2 | /bin/xargs "$mdadmPath" --stop >/dev/null 2>/dev/null
 
   # Assembling arrays with correct config
-  "$mdadmPath" --assemble --scan
+  "$mdadmPath" --assemble --scan > /dev/null 2> /dev/null
 fi
 # RAID END
 
