@@ -21,7 +21,7 @@ namespace MikoPBX\PBXCoreREST\Lib\ApiKeys;
 
 use MikoPBX\Common\Models\ApiKeys;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractGetRecordAction;
 
 /**
  * Action for getting single API key record
@@ -36,7 +36,7 @@ use MikoPBX\Common\Handlers\CriticalErrorsHandler;
  * @apiSuccess {Boolean} result Operation result
  * @apiSuccess {Object} data API key record
  */
-class GetRecordAction
+class GetRecordAction extends AbstractGetRecordAction
 {
     /**
      * Get single API key record by ID or create new structure
@@ -46,32 +46,23 @@ class GetRecordAction
      */
     public static function main(?string $id): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
-        
-        try {
-            if (empty($id) || $id === 'new') {
-                // Return empty structure for new record
-                $dataStructure = new DataStructure([]);
-            } else {
-                $apiKey = ApiKeys::findFirst($id);
-                
-                if (!$apiKey) {
-                    $res->messages['error'][] = 'API key not found';
-                    return $res;
-                }
-                
-                $dataStructure = DataStructure::createFromModel($apiKey);
-            }
-            
-            $res->data = $dataStructure->toArray();
-            $res->success = true;
-            
-        } catch (\Exception $e) {
-            $res->messages['error'][] = $e->getMessage();
-            CriticalErrorsHandler::handleExceptionWithSyslog($e);
-        }
-        
-        return $res;
+        // Use simplified get record from parent class
+        // API keys don't need extension numbers, so needsExtension is false
+        return self::executeStandardGetRecord(
+            $id,
+            ApiKeys::class,
+            DataStructure::class,
+            'APIKEY-',                          // Unique ID prefix
+            [                                   // Default values for new records
+                'description' => '',
+                'full_permissions' => '1',
+                'allowed_paths' => '[]',
+                'networkfilterid' => null,
+            ],
+            'API key not found',                // Not found message
+            false,                              // Doesn't need extension
+            null,                               // No additional new record setup
+            null                                // No additional data loading
+        );
     }
 }

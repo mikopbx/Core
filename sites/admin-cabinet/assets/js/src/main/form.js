@@ -552,6 +552,78 @@ const Form = {
         } else {
             console.warn('FormElements module not loaded. Please include form-elements.js');
         }
+    },
+
+    /**
+     * Populate form with data without triggering dirty state changes
+     * This method is designed for initial form population from API data
+     * @param {object} data - Form data object
+     */
+    populateFormSilently(data) {
+        if (!data || typeof data !== 'object') {
+            console.warn('Form.populateFormSilently: invalid data provided');
+            return;
+        }
+
+        // Temporarily disable dirty checking
+        const wasEnabledDirrity = Form.enableDirrity;
+        const originalCheckValues = Form.checkValues;
+        
+        // Disable dirty checking during population
+        Form.enableDirrity = false;
+        Form.checkValues = function() {
+            // Silent during population
+        };
+
+        try {
+            // Use standard Semantic UI form population
+            Form.$formObj.form('set values', data);
+            
+            // Reset dirty state after population
+            if (wasEnabledDirrity) {
+                // Save the populated values as initial state
+                Form.oldFormValues = Form.$formObj.form('get values');
+                
+                // Ensure buttons are disabled initially
+                Form.$submitButton.addClass('disabled');
+                Form.$dropdownSubmit.addClass('disabled');
+            }
+        } finally {
+            // Restore original settings
+            Form.enableDirrity = wasEnabledDirrity;
+            Form.checkValues = originalCheckValues;
+        }
+    },
+
+    /**
+     * Execute function without triggering dirty state changes
+     * Useful for setting values in custom components during initialization
+     * @param {Function} callback - Function to execute silently
+     */
+    executeSilently(callback) {
+        if (typeof callback !== 'function') {
+            console.warn('Form.executeSilently: callback must be a function');
+            return;
+        }
+
+        // Temporarily disable dirty checking
+        const wasEnabledDirrity = Form.enableDirrity;
+        const originalCheckValues = Form.checkValues;
+        
+        // Disable dirty checking during execution
+        Form.enableDirrity = false;
+        Form.checkValues = function() {
+            // Silent during execution
+        };
+
+        try {
+            // Execute the callback
+            callback();
+        } finally {
+            // Restore original settings
+            Form.enableDirrity = wasEnabledDirrity;
+            Form.checkValues = originalCheckValues;
+        }
     }
 };
 

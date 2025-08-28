@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, Form, UserMessage, ApiKeysAPI, NetworkFilterSelector, FormElements, SemanticLocalization */
+// global globalRootUrl, globalTranslate, Form, UserMessage, ApiKeysAPI, NetworkFilterSelector, FormElements, SemanticLocalization
 
 /**
  * API key edit form management module
@@ -25,6 +25,8 @@ const apiKeysModify = {
     $formObj: $('#save-api-key-form'),
     permissionsTable: null,
     generatedApiKey: '',
+    handlers: {},  // Store event handlers for cleanup
+    formInitialized: false,  // Flag to prevent dataChanged during initialization
 
     /**
      * Validation rules
@@ -35,10 +37,10 @@ const apiKeysModify = {
             rules: [
                 {
                     type: 'empty',
-                    prompt: globalTranslate.ak_ValidateNameEmpty
-                }
-            ]
-        }
+                    prompt: globalTranslate.ak_ValidateNameEmpty,
+                },
+            ],
+        },
     },
 
     /**
@@ -47,7 +49,7 @@ const apiKeysModify = {
     initialize() {
         // Configure Form.js
         Form.$formObj = apiKeysModify.$formObj;
-        Form.url = '#'; // Не используется при REST API
+        Form.url = '#'; // Not used with REST API
         Form.validateRules = apiKeysModify.validateRules;
         Form.cbBeforeSendForm = apiKeysModify.cbBeforeSendForm;
         Form.cbAfterSendForm = apiKeysModify.cbAfterSendForm;
@@ -61,6 +63,7 @@ const apiKeysModify = {
         // Important settings for correct save modes operation
         Form.afterSubmitIndexUrl = `${globalRootUrl}api-keys/index/`;
         Form.afterSubmitModifyUrl = `${globalRootUrl}api-keys/modify/`;
+        
         
         // Initialize Form with all standard features:
         // - Dirty checking (change tracking)
@@ -87,8 +90,10 @@ const apiKeysModify = {
         const recordId = apiKeysModify.getRecordId();
         
         ApiKeysAPI.getRecord(recordId, (response) => {
-            if (response.result) {
-                apiKeysModify.populateForm(response.data);
+            const { result, data, messages } = response || {};
+            
+            if (result && data) {
+                apiKeysModify.populateForm(data);
                 
                 // Load permissions only after form is populated
                 apiKeysModify.loadAvailableControllers();
@@ -97,8 +102,13 @@ const apiKeysModify = {
                 if (!recordId) {
                     apiKeysModify.generateApiKey();
                 }
+                
+                // Mark form as fully initialized after all async operations complete
+                setTimeout(() => {
+                    apiKeysModify.formInitialized = true;
+                }, 750); // Wait for all async operations to complete
             } else {
-                UserMessage.showError(response.messages?.error || 'Failed to load API key data');
+                UserMessage.showError(messages?.error || 'Failed to load API key data');
             }
         });
     },
@@ -127,16 +137,18 @@ const apiKeysModify = {
         
         // Initialize network filter selector
         const $networkFilterDropdown = $('#networkfilterid-dropdown');
-        const $networkFilterHidden = $('#networkfilterid');
         
         if ($networkFilterDropdown.length > 0) {
             // Don't pass currentValue here, it will be set later when form data loads
-            const instance = NetworkFilterSelector.init($networkFilterDropdown, {
+            NetworkFilterSelector.init($networkFilterDropdown, {
                 filterType: 'WEB',  // API keys use WEB category for firewall rules
                 includeNone: true,  // API keys can have "No restrictions" option
-                onChange: (value, text) => {
-                    Form.dataChanged();
-                }
+                onChange: () => {
+                    // Only call dataChanged if form is fully initialized
+                    if (apiKeysModify.formInitialized) {
+                        Form.dataChanged();
+                    }
+                },
             });
         }
         
@@ -145,65 +157,28 @@ const apiKeysModify = {
             onChecked: () => {
                 $('#selective-permissions-section').slideUp();
                 $('#full-permissions-warning').slideDown();
-                Form.dataChanged();
+                // Only call dataChanged if form is fully initialized
+                if (apiKeysModify.formInitialized) {
+                    Form.dataChanged();
+                }
             },
             onUnchecked: () => {
                 $('#selective-permissions-section').slideDown();
                 $('#full-permissions-warning').slideUp();
-                Form.dataChanged();
-            }
-        });
-        
-        // Copy API Key button handler
-        $('.copy-api-key').on('click', function(e) {
-            e.preventDefault();
-            const apiKey = $('#api-key-display').val();
-            const actualApiKey = $('#api_key').val();
-            
-            const keyToCopy = actualApiKey || apiKey;
-            if (keyToCopy && keyToCopy.trim() !== '') {
-                navigator.clipboard.writeText(keyToCopy).then(function() {
-                    // Silent copy
-                });
-            }
-        });
-        
-        // Regenerate API Key button handler
-        $('.regenerate-api-key').on('click', function(e) {
-            e.preventDefault();
-            const $button = $(this);
-            
-            $button.addClass('loading disabled');
-            
-            ApiKeysAPI.generateKey((response) => {
-                $button.removeClass('loading disabled');
-                
-                if (response && response.result && response.data && response.data.key) {
-                    const newKey = response.data.key;
-                    
-                    // Update fields
-                    $('#api_key').val(newKey);
-                    $('#api-key-display').val(newKey);
-                    apiKeysModify.generatedApiKey = newKey;
-                    
-                    // Update key display representation
-                    const keyDisplay = apiKeysModify.generateKeyDisplay(newKey);
-                    $('#key_display').val(keyDisplay);
-                    $('.api-key-suffix').text(`(${keyDisplay})`).show();
-                    
-                    // For existing keys, show copy button
-                    if (apiKeysModify.getRecordId()) {
-                        $('.copy-api-key').show();
-                        $('.ui.info.message').removeClass('info').addClass('warning')
-                            .find('i').removeClass('info').addClass('warning');
-                    }
-                    
+                // Only call dataChanged if form is fully initialized
+                if (apiKeysModify.formInitialized) {
                     Form.dataChanged();
-                } else {
-                    UserMessage.showError('Failed to generate API key');
                 }
-            });
+            }
         });
+        
+        // Store event handlers for cleanup
+        apiKeysModify.handlers.copyKey = apiKeysModify.handleCopyKey.bind(apiKeysModify);
+        apiKeysModify.handlers.regenerateKey = apiKeysModify.handleRegenerateKey.bind(apiKeysModify);
+        
+        // Attach event handlers
+        $('.copy-api-key').off('click').on('click', apiKeysModify.handlers.copyKey);
+        $('.regenerate-api-key').off('click').on('click', apiKeysModify.handlers.regenerateKey);
     },
 
     /**
@@ -218,39 +193,46 @@ const apiKeysModify = {
      */
     loadAvailableControllers() {
         ApiKeysAPI.getAvailableControllers((response) => {
-            if (response && response.result && response.data) {
-                const uniqueControllers = [];
-                const seen = new Set();
-                
-                response.data.forEach(controller => {
-                    const key = controller.path;
-                    if (!seen.has(key)) {
-                        seen.add(key);
-                        uniqueControllers.push(controller);
-                    }
-                });
+            const { result, data, messages } = response || {};
+            
+            if (result && data) {
+                const uniqueControllers = apiKeysModify.getUniqueControllers(data);
                 
                 if (!apiKeysModify.permissionsTable) {
                     apiKeysModify.createPermissionsTable(uniqueControllers);
                 }
             } else {
-                UserMessage.showError('Failed to load available controllers');
+                UserMessage.showError(messages?.error || 'Failed to load available controllers');
             }
         });
+    },
+
+    /**
+     * Get unique controllers by path
+     */
+    getUniqueControllers(controllers) {
+        const uniqueControllers = [];
+        const seen = new Set();
+        
+        controllers.forEach(controller => {
+            const { path } = controller;
+            if (!seen.has(path)) {
+                seen.add(path);
+                uniqueControllers.push(controller);
+            }
+        });
+        
+        return uniqueControllers;
     },
 
     /**
      * Create permissions DataTable
      */
     createPermissionsTable(controllers) {
-        const data = controllers.map(controller => [
-            controller.name,
-            controller.description,
-            controller.path
-        ]);
+        const tableData = apiKeysModify.prepareTableData(controllers);
         
         apiKeysModify.permissionsTable = $('#api-permissions-table').DataTable({
-            data: data,
+            data: tableData,
             paging: false,
             searching: true,
             info: false,
@@ -258,113 +240,262 @@ const apiKeysModify = {
             autoWidth: true,
             scrollX: false,
             language: SemanticLocalization.dataTableLocalisation,
-            columns: [
-                {
-                    width: '50px',
-                    orderable: false,
-                    searchable: false,
-                    title: '<div class="ui fitted checkbox" id="select-all-permissions"><input type="checkbox"><label></label></div>',
-                    render: function(data) {
-                        return `<div class="ui fitted checkbox permission-checkbox">
-                                    <input type="checkbox" 
-                                           name="permission_${data}" 
-                                           data-path="">
-                                    <label></label>
-                                </div>`;
-                    }
-                },
-                {
-                    orderable: false,
-                    title: 'Description',
-                    render: function(data) {
-                        return `<strong>${data}</strong>`;
-                    }
-                },
-                {
-                    orderable: false,
-                    title: 'API Path',
-                    render: function(data) {
-                        return `<span class="text-muted">${data}</span>`;
-                    }
-                }
-            ],
-            drawCallback: function() {
+            columns: apiKeysModify.getTableColumns(),
+            drawCallback() {
                 $('#api-permissions-table .checkbox').checkbox();
             },
-            initComplete: function() {
-                const api = this.api();
-                $('#api-permissions-table tbody tr').each(function() {
-                    const rowData = api.row(this).data();
-                    if (rowData) {
-                        $(this).find('input[type="checkbox"]').attr('data-path', rowData[2]);
-                    }
-                });
-                
-                $('#api-permissions-table_wrapper').css('width', '100%');
-                $('#api-permissions-table').css('width', '100%');
-                
-                // Initialize master checkbox
-                $('#select-all-permissions').checkbox({
-                    onChecked: function() {
-                        $('#api-permissions-table tbody .permission-checkbox').checkbox('check');
-                        Form.dataChanged();
-                    },
-                    onUnchecked: function() {
-                        $('#api-permissions-table tbody .permission-checkbox').checkbox('uncheck');
-                        Form.dataChanged();
-                    }
-                });
-                
-                // Initialize child checkboxes
-                $('#api-permissions-table tbody .permission-checkbox').checkbox({
-                    fireOnInit: true,
-                    onChange: function() {
-                        const $allCheckboxes = $('#api-permissions-table tbody .permission-checkbox');
-                        const $masterCheckbox = $('#select-all-permissions');
-                        let allChecked = true;
-                        let allUnchecked = true;
-                        
-                        $allCheckboxes.each(function() {
-                            if ($(this).checkbox('is checked')) {
-                                allUnchecked = false;
-                            } else {
-                                allChecked = false;
-                            }
-                        });
-                        
-                        if (allChecked) {
-                            $masterCheckbox.checkbox('set checked');
-                        } else if (allUnchecked) {
-                            $masterCheckbox.checkbox('set unchecked');
-                        } else {
-                            $masterCheckbox.checkbox('set indeterminate');
-                        }
-                        
-                        Form.dataChanged();
-                    }
-                });
+            initComplete() {
+                apiKeysModify.initializeTableCheckboxes(this.api());
+            },
+        });
+    },
+
+    /**
+     * Prepare data for DataTable
+     */
+    prepareTableData(controllers) {
+        return controllers.map(controller => [
+            controller.name,
+            controller.description,
+            controller.path,
+        ]);
+    },
+
+    /**
+     * Get DataTable column definitions
+     */
+    getTableColumns() {
+        return [
+            apiKeysModify.getCheckboxColumn(),
+            apiKeysModify.getDescriptionColumn(),
+            apiKeysModify.getPathColumn(),
+        ];
+    },
+
+    /**
+     * Get checkbox column definition
+     */
+    getCheckboxColumn() {
+        return {
+            width: '50px',
+            orderable: false,
+            searchable: false,
+            title: apiKeysModify.getMasterCheckboxHtml(),
+            render(data) {
+                return apiKeysModify.getPermissionCheckboxHtml(data);
+            },
+        };
+    },
+
+    /**
+     * Get description column definition
+     */
+    getDescriptionColumn() {
+        return {
+            orderable: false,
+            title: 'Description',
+            render(data) {
+                return `<strong>${data}</strong>`;
+            },
+        };
+    },
+
+    /**
+     * Get path column definition
+     */
+    getPathColumn() {
+        return {
+            orderable: false,
+            title: 'API Path',
+            render(data) {
+                return `<span class="text-muted">${data}</span>`;
+            },
+        };
+    },
+
+    /**
+     * Get master checkbox HTML
+     */
+    getMasterCheckboxHtml() {
+        return '<div class="ui fitted checkbox" id="select-all-permissions"><input type="checkbox"><label></label></div>';
+    },
+
+    /**
+     * Get permission checkbox HTML
+     */
+    getPermissionCheckboxHtml(data) {
+        return `<div class="ui fitted checkbox permission-checkbox">
+                    <input type="checkbox" 
+                           name="permission_${data}" 
+                           data-path="">
+                    <label></label>
+                </div>`;
+    },
+
+    /**
+     * Initialize table checkboxes after DataTable creation
+     */
+    initializeTableCheckboxes(api) {
+        // Set data-path attributes
+        $('#api-permissions-table tbody tr').each(function() {
+            const rowData = api.row(this).data();
+            if (rowData) {
+                $(this).find('input[type="checkbox"]').attr('data-path', rowData[2]);
+            }
+        });
+        
+        // Style table wrapper
+        $('#api-permissions-table_wrapper').css('width', '100%');
+        $('#api-permissions-table').css('width', '100%');
+        
+        // Initialize master and child checkboxes
+        apiKeysModify.initializeMasterCheckbox();
+        apiKeysModify.initializeChildCheckboxes();
+    },
+
+    /**
+     * Initialize master checkbox behavior
+     */
+    initializeMasterCheckbox() {
+        $('#select-all-permissions').checkbox({
+            onChecked() {
+                $('#api-permissions-table tbody .permission-checkbox').checkbox('check');
+                // Only call dataChanged if form is fully initialized
+                if (apiKeysModify.formInitialized) {
+                    Form.dataChanged();
+                }
+            },
+            onUnchecked() {
+                $('#api-permissions-table tbody .permission-checkbox').checkbox('uncheck');
+                // Only call dataChanged if form is fully initialized
+                if (apiKeysModify.formInitialized) {
+                    Form.dataChanged();
+                }
+            },
+        });
+    },
+
+    /**
+     * Initialize child checkbox behavior
+     */
+    initializeChildCheckboxes() {
+        $('#api-permissions-table tbody .permission-checkbox').checkbox({
+            fireOnInit: true,
+            onChange() {
+                apiKeysModify.updateMasterCheckboxState();
+                // Only call dataChanged if form is fully initialized
+                if (apiKeysModify.formInitialized) {
+                    Form.dataChanged();
+                }
+            },
+        });
+    },
+
+    /**
+     * Update master checkbox state based on child checkboxes
+     */
+    updateMasterCheckboxState() {
+        const $allCheckboxes = $('#api-permissions-table tbody .permission-checkbox');
+        const $masterCheckbox = $('#select-all-permissions');
+        let allChecked = true;
+        let allUnchecked = true;
+        
+        $allCheckboxes.each(function() {
+            if ($(this).checkbox('is checked')) {
+                allUnchecked = false;
+            } else {
+                allChecked = false;
+            }
+        });
+        
+        if (allChecked) {
+            $masterCheckbox.checkbox('set checked');
+        } else if (allUnchecked) {
+            $masterCheckbox.checkbox('set unchecked');
+        } else {
+            $masterCheckbox.checkbox('set indeterminate');
+        }
+    },
+
+    /**
+     * Handle copy API key button click
+     */
+    handleCopyKey(e) {
+        e.preventDefault();
+        const apiKey = $('#api-key-display').val();
+        const actualApiKey = $('#api_key').val();
+        
+        const keyToCopy = actualApiKey || apiKey;
+        if (keyToCopy && keyToCopy.trim() !== '') {
+            navigator.clipboard.writeText(keyToCopy).then(() => {
+                // Silent copy
+            });
+        }
+    },
+
+    /**
+     * Handle regenerate API key button click
+     */
+    handleRegenerateKey(e) {
+        e.preventDefault();
+        const $button = $(e.currentTarget);
+        
+        $button.addClass('loading disabled');
+        
+        apiKeysModify.generateNewApiKey((newKey) => {
+            $button.removeClass('loading disabled');
+            
+            if (newKey) {
+                // For existing keys, show copy button
+                if (apiKeysModify.getRecordId()) {
+                    $('.copy-api-key').show();
+                    $('.ui.info.message').removeClass('info').addClass('warning')
+                        .find('i').removeClass('info').addClass('warning');
+                }
             }
         });
     },
 
     /**
-     * Generate new API key
+     * Generate new API key and update fields
      */
-    generateApiKey() {
+    generateNewApiKey(callback) {
         ApiKeysAPI.generateKey((response) => {
-            if (response && response.result && response.data && response.data.key) {
-                const generatedKey = response.data.key;
-                $('#api_key').val(generatedKey);
-                $('#api-key-display').val(generatedKey);
-                apiKeysModify.generatedApiKey = generatedKey;
+            const { result, data, messages } = response || {};
+            
+            if (result && data?.key) {
+                const newKey = data.key;
+                apiKeysModify.updateApiKeyFields(newKey);
                 
-                // Update key display representation
-                const keyDisplay = apiKeysModify.generateKeyDisplay(generatedKey);
-                $('#key_display').val(keyDisplay);
+                if (callback) callback(newKey);
             } else {
-                UserMessage.showError('Failed to generate API key');
+                UserMessage.showError(messages?.error || 'Failed to generate API key');
+                if (callback) callback(null);
             }
         });
+    },
+
+    /**
+     * Update API key fields with new key
+     */
+    updateApiKeyFields(key) {
+        $('#api_key').val(key);
+        $('#api-key-display').val(key);
+        apiKeysModify.generatedApiKey = key;
+        
+        // Update key display representation
+        const keyDisplay = apiKeysModify.generateKeyDisplay(key);
+        $('#key_display').val(keyDisplay);
+        $('.api-key-suffix').text(`(${keyDisplay})`).show();
+        
+        Form.dataChanged();
+    },
+
+    /**
+     * Generate new API key (wrapper for backward compatibility)
+     */
+    generateApiKey() {
+        apiKeysModify.generateNewApiKey();
     },
 
     /**
@@ -374,44 +505,74 @@ const apiKeysModify = {
         const result = settings;
         // Form.js already handles form data collection when apiSettings.enabled = true
         
+        // Handle API key for new/existing records
+        apiKeysModify.handleApiKeyInFormData(result.data);
+        
+        // Collect and set permissions
+        result.data.allowed_paths = apiKeysModify.collectSelectedPermissions(result.data);
+        
+        // Clean up temporary form fields
+        apiKeysModify.cleanupFormData(result.data);
+        
+        return result;
+    },
+
+    /**
+     * Handle API key inclusion in form data
+     */
+    handleApiKeyInFormData(data) {
         // Ensure API key is included for new records
-        if (!result.data.id && result.data.api_key) {
-            // For new records, ensure the generated key is included
-            result.data.key = result.data.api_key;
+        if (!data.id && data.api_key) {
+            data.key = data.api_key;
         }
         
         // For existing records with regenerated key
-        if (result.data.id && result.data.api_key && apiKeysModify.generatedApiKey) {
-            result.data.key = result.data.api_key;
+        if (data.id && data.api_key && apiKeysModify.generatedApiKey) {
+            data.key = data.api_key;
         }
-        
-        // Collect permissions
+    },
+
+    /**
+     * Collect selected permissions based on form state
+     */
+    collectSelectedPermissions(data) {
         // Note: with convertCheckboxesToBool=true, full_permissions will be boolean
-        const isFullPermissions = result.data.full_permissions === true;
-        let allowedPaths = [];
+        const isFullPermissions = data.full_permissions === true;
         
-        if (!isFullPermissions) {
-            // Collect selected permissions from checkboxes
-            $('#api-permissions-table tbody .permission-checkbox').each(function() {
-                if ($(this).checkbox('is checked')) {
-                    const path = $(this).find('input').data('path');
-                    if (path) {
-                        allowedPaths.push(path);
-                    }
-                }
-            });
+        if (isFullPermissions) {
+            return [];
         }
         
-        result.data.allowed_paths = allowedPaths;
+        return apiKeysModify.getSelectedPermissionPaths();
+    },
+
+    /**
+     * Get selected permission paths from checkboxes
+     */
+    getSelectedPermissionPaths() {
+        const selectedPaths = [];
         
-        // Clean up permission_* fields as they're not needed in API
-        Object.keys(result.data).forEach(key => {
-            if (key.startsWith('permission_')) {
-                delete result.data[key];
+        $('#api-permissions-table tbody .permission-checkbox').each(function() {
+            if ($(this).checkbox('is checked')) {
+                const path = $(this).find('input').data('path');
+                if (path) {
+                    selectedPaths.push(path);
+                }
             }
         });
         
-        return result;
+        return selectedPaths;
+    },
+
+    /**
+     * Clean up temporary form fields not needed in API
+     */
+    cleanupFormData(data) {
+        Object.keys(data).forEach(key => {
+            if (key.startsWith('permission_')) {
+                delete data[key];
+            }
+        });
     },
 
     /**
@@ -439,45 +600,33 @@ const apiKeysModify = {
      * Populate form with data
      */
     populateForm(data) {
-        Form.$formObj.form('set values', data);
+        // Use universal method for silent form population
+        Form.populateFormSilently(data);
         
-        // Set network filter using NetworkFilterSelector
+        // Set network filter using NetworkFilterSelector silently
         const networkFilterValue = data.networkfilterid || 'none';
-        
-        if (typeof NetworkFilterSelector !== 'undefined') {
-            const instance = NetworkFilterSelector.instances.get('networkfilterid-dropdown');
-            if (instance) {
-                NetworkFilterSelector.setValue('networkfilterid-dropdown', networkFilterValue);
-                
-                // Force sync visual state with hidden field value
-                setTimeout(() => {
-                    const hiddenValue = $('#networkfilterid').val();
-                    const $dropdown = $('#networkfilterid-dropdown');
-                    
-                    // Update Semantic UI dropdown visual state to match hidden field
-                    $dropdown.dropdown('set selected', hiddenValue);
-                }, 150);
-            }
-        }
+        NetworkFilterSelector.setValueSilently('networkfilterid-dropdown', networkFilterValue);
         
         // Set permissions
         const isFullPermissions = data.full_permissions === '1' || data.full_permissions === true || 
                                 (data.allowed_paths && Array.isArray(data.allowed_paths) && data.allowed_paths.length === 0);
         
         if (isFullPermissions) {
-            $('#full-permissions-toggle').checkbox('check');
+            $('#full-permissions-toggle').checkbox('set checked');
             $('#selective-permissions-section').hide();
             $('#full-permissions-warning').show();
         } else {
-            $('#full-permissions-toggle').checkbox('uncheck');
+            $('#full-permissions-toggle').checkbox('set unchecked');
             $('#selective-permissions-section').show();
             $('#full-permissions-warning').hide();
             
             // Set specific permissions if available
             if (data.allowed_paths && Array.isArray(data.allowed_paths) && data.allowed_paths.length > 0) {
                 setTimeout(() => {
-                    data.allowed_paths.forEach(path => {
-                        $(`#api-permissions-table input[data-path="${path}"]`).parent('.permission-checkbox').checkbox('check');
+                    Form.executeSilently(() => {
+                        data.allowed_paths.forEach(path => {
+                            $(`#api-permissions-table input[data-path="${path}"]`).parent('.permission-checkbox').checkbox('set checked');
+                        });
                     });
                 }, 500);
             }
@@ -486,10 +635,6 @@ const apiKeysModify = {
         // Show key display in header if available
         if (data.key_display) {
             $('.api-key-suffix').text(`(${data.key_display})`).show();
-        }
-        
-        if (Form.enableDirty) {
-            Form.saveInitialValues();
         }
     },
 
@@ -505,7 +650,7 @@ const apiKeysModify = {
             return key;
         }
         
-        return key.substring(0, 5) + '...' + key.substring(key.length - 5);
+        return `${key.substring(0, 5)}...${key.substring(key.length - 5)}`;
     },
 
     /**
@@ -517,7 +662,29 @@ const apiKeysModify = {
         $('#api-key-display').val(keyDisplay || '');
         $('.copy-api-key').hide();
         $('.ui.warning.message').hide();
-    }
+    },
+
+    /**
+     * Cleanup method to remove event handlers and prevent memory leaks
+     */
+    destroy() {
+        // Remove custom event handlers
+        if (apiKeysModify.handlers.copyKey) {
+            $('.copy-api-key').off('click', apiKeysModify.handlers.copyKey);
+        }
+        if (apiKeysModify.handlers.regenerateKey) {
+            $('.regenerate-api-key').off('click', apiKeysModify.handlers.regenerateKey);
+        }
+        
+        // Destroy DataTable if it exists
+        if (apiKeysModify.permissionsTable) {
+            apiKeysModify.permissionsTable.destroy();
+            apiKeysModify.permissionsTable = null;
+        }
+        
+        // Clear handlers object
+        apiKeysModify.handlers = {};
+    },
 };
 
 /**
@@ -525,4 +692,11 @@ const apiKeysModify = {
  */
 $(document).ready(() => {
     apiKeysModify.initialize();
+});
+
+/**
+ * Cleanup on page unload
+ */
+$(window).on('beforeunload', () => {
+    apiKeysModify.destroy();
 });

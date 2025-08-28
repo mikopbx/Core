@@ -20,65 +20,80 @@
 namespace MikoPBX\PBXCoreREST\Lib\ApiKeys;
 
 use MikoPBX\Common\Models\ApiKeys;
+use MikoPBX\Common\Models\NetworkFilters;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
 
 /**
  * Data structure for API keys
  * 
  * Provides consistent data format for API key records in REST API responses
  */
-class DataStructure
+class DataStructure extends AbstractDataStructure
 {
-    private array $data;
-    
     /**
-     * Constructor
-     * 
-     * @param array $data Raw data
-     */
-    public function __construct(array $data)
-    {
-        $this->data = $this->normalizeData($data);
-    }
-    
-    /**
-     * Create from model instance
+     * Create data structure from model instance
      * 
      * @param ApiKeys $apiKey
-     * @return self
+     * @return array Full data structure
      */
-    public static function createFromModel(ApiKeys $apiKey): self
+    public static function createFromModel($apiKey): array
     {
-        $data = $apiKey->toArray();
+        $data = [
+            'id' => (string)$apiKey->id,
+            'description' => $apiKey->description ?? '',
+            'created_at' => $apiKey->created_at ?? '',
+            'last_used_at' => $apiKey->last_used_at ?? '',
+            'networkfilterid' => $apiKey->networkfilterid ?? '',
+            'key_display' => $apiKey->key_display ?? '',
+            'key_suffix' => $apiKey->key_suffix ?? '',
+        ];
         
-        // Decode JSON fields
-        if (!empty($data['allowed_paths'])) {
-            $decoded = json_decode($data['allowed_paths'], true);
+        // Decode allowed_paths JSON field
+        if (!empty($apiKey->allowed_paths)) {
+            $decoded = json_decode($apiKey->allowed_paths, true);
             $data['allowed_paths'] = is_array($decoded) ? $decoded : [];
         } else {
             $data['allowed_paths'] = [];
         }
         
-        // Remove sensitive data
-        unset($data['key_hash']);
-        
         // Add computed fields
         $data['has_key'] = !empty($apiKey->key_hash);
+        $data['allowed_paths_count'] = count($data['allowed_paths']);
         
-        // Convert full_permissions to boolean
-        $data['full_permissions'] = ($data['full_permissions'] ?? '1') === '1';
+        // Add network filter representation
+        if (!empty($apiKey->networkfilterid) && $apiKey->networkfilterid !== 'none') {
+            $networkFilter = NetworkFilters::findFirstById($apiKey->networkfilterid);
+            $data['networkfilterRepresent'] = $networkFilter ? $networkFilter->getRepresent() : '';
+            $data['has_network_filter'] = true;
+        } else {
+            $data['networkfilterRepresent'] = '';
+            $data['has_network_filter'] = false;
+        }
         
-        return new self($data);
+        // Format boolean fields using parent method
+        $data = self::formatBooleanFields($data, ['full_permissions']);
+        $data['full_permissions'] = ($apiKey->full_permissions ?? '1') === '1';
+        
+        // Handle null values
+        $data = self::handleNullValues($data);
+        
+        // Add representation
+        if (method_exists($apiKey, 'getRepresent')) {
+            $data['represent'] = $apiKey->getRepresent();
+        }
+        
+        return $data;
     }
     
     /**
-     * Create for list view (minimal data)
+     * Create minimal data structure for list view
      * 
      * @param ApiKeys $apiKey
-     * @return array
+     * @return array Minimal data for list display
      */
-    public static function createForList(ApiKeys $apiKey): array
+    public static function createForList($apiKey): array
     {
-        // Handle allowed_paths which could be empty string, null, or JSON
+        // Decode allowed_paths to count them
         $allowedPaths = [];
         if (!empty($apiKey->allowed_paths)) {
             $decoded = json_decode($apiKey->allowed_paths, true);
@@ -87,60 +102,40 @@ class DataStructure
             }
         }
         
-        return [
-            'id' => $apiKey->id,
-            'description' => $apiKey->description,
-            'created_at' => $apiKey->created_at,
-            'last_used_at' => $apiKey->last_used_at,
-            'full_permissions' => ($apiKey->full_permissions ?? '1') === '1',
+        $data = [
+            'id' => (string)$apiKey->id,
+            'description' => $apiKey->description ?? '',
+            'created_at' => $apiKey->created_at ?? '',
+            'last_used_at' => $apiKey->last_used_at ?? '',
             'allowed_paths_count' => count($allowedPaths),
             'has_network_filter' => !empty($apiKey->networkfilterid) && $apiKey->networkfilterid !== 'none',
             'has_key' => !empty($apiKey->key_hash),
             'key_display' => $apiKey->key_display ?? '',
-            'represent' => $apiKey->getRepresent(),
         ];
+        
+        // Format boolean field
+        $data['full_permissions'] = ($apiKey->full_permissions ?? '1') === '1';
+        
+        // Add representation
+        if (method_exists($apiKey, 'getRepresent')) {
+            $data['represent'] = $apiKey->getRepresent();
+        }
+        
+        return $data;
     }
     
     /**
-     * Normalize data structure
+     * Generate key display representation
      * 
-     * @param array $data
-     * @return array
+     * @param string $key The full API key
+     * @return string Display representation (first 5...last 5)
      */
-    private function normalizeData(array $data): array
+    public static function generateKeyDisplay(string $key): string
     {
-        $normalized = [
-            'id' => $data['id'] ?? null,
-            'description' => $data['description'] ?? '',
-            'allowed_paths' => $data['allowed_paths'] ?? [],
-            'networkfilterid' => $data['networkfilterid'] ?? null,
-            'full_permissions' => $data['full_permissions'] ?? true,
-            'created_at' => $data['created_at'] ?? null,
-            'last_used_at' => $data['last_used_at'] ?? null,
-            'has_key' => $data['has_key'] ?? false,
-            'key_display' => $data['key_display'] ?? '',
-        ];
-        
-        // Ensure allowed_paths is array
-        if (!is_array($normalized['allowed_paths'])) {
-            $normalized['allowed_paths'] = [];
+        if (strlen($key) <= 15) {
+            return $key;
         }
         
-        // Convert full_permissions string to boolean
-        if (is_string($normalized['full_permissions'])) {
-            $normalized['full_permissions'] = $normalized['full_permissions'] === '1';
-        }
-        
-        return $normalized;
-    }
-    
-    /**
-     * Convert to array
-     * 
-     * @return array
-     */
-    public function toArray(): array
-    {
-        return $this->data;
+        return substr($key, 0, 5) . '...' . substr($key, -5);
     }
 }

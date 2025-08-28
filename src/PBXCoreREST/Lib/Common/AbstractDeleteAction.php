@@ -223,7 +223,7 @@ abstract class AbstractDeleteAction
             }
 
             // Get entity name - check common fields
-            $entityName = $record->name ?? $record->rulename ?? $record->id ?? 'Unknown';
+            $entityName = $record->name ?? $record->description ?? $record->rulename ?? (string)($record->id ?? 'Unknown');
             $entityExtension = $record->extension ?? '';
 
             // Delete in transaction

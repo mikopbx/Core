@@ -21,7 +21,7 @@ namespace MikoPBX\PBXCoreREST\Lib\ApiKeys;
 
 use MikoPBX\Common\Models\ApiKeys;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractGetListAction;
 
 /**
  * Action for getting list of all API key records
@@ -34,42 +34,27 @@ use MikoPBX\Common\Handlers\CriticalErrorsHandler;
  * @apiSuccess {Boolean} result Operation result
  * @apiSuccess {Array} data Array of API key records
  */
-class GetListAction
+class GetListAction extends AbstractGetListAction
 {
     /**
      * Get list of all API keys with formatted data
      * 
-     * @param array $data Filter parameters (not used yet)
+     * @param array $data Filter parameters (supports search, ordering, pagination)
      * @return PBXApiResult
      */
     public static function main(array $data = []): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
-        
-        try {
-            $keys = ApiKeys::find(['order' => 'description ASC, id DESC']);
-            
-            $keysList = [];
-            if ($keys !== false) {
-                // Convert to array to satisfy phpstan
-                $keysArray = $keys->toArray();
-                foreach ($keysArray as $keyData) {
-                    // Re-hydrate the model from array data
-                    $key = new ApiKeys();
-                    $key->assign($keyData);
-                    $keysList[] = DataStructure::createForList($key);
-                }
-            }
-            
-            $res->data = $keysList;
-            $res->success = true;
-            
-        } catch (\Exception $e) {
-            $res->messages['error'][] = $e->getMessage();
-            CriticalErrorsHandler::handleExceptionWithSyslog($e);
-        }
-        
-        return $res;
+        // Use standard list execution from parent class
+        return self::executeStandardList(
+            ApiKeys::class,
+            DataStructure::class,
+            $data,                              // Request parameters
+            [],                                 // Base query options
+            false,                              // Use createForList() for better performance
+            ['description', 'id'],              // Allowed order fields
+            ['description', 'key_display'],     // Searchable fields
+            null,                               // No record filter
+            'description ASC, id DESC'          // Default order
+        );
     }
 }

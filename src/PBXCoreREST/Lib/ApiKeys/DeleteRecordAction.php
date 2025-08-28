@@ -21,8 +21,8 @@ namespace MikoPBX\PBXCoreREST\Lib\ApiKeys;
 
 use MikoPBX\Common\Models\ApiKeys;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractDeleteAction;
 use MikoPBX\PBXCoreREST\Services\ApiKeyValidationService;
-use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 
 /**
  * Action for deleting API key record
@@ -36,7 +36,7 @@ use MikoPBX\Common\Handlers\CriticalErrorsHandler;
  * 
  * @apiSuccess {Boolean} result Operation result
  */
-class DeleteRecordAction
+class DeleteRecordAction extends AbstractDeleteAction
 {
     /**
      * Delete API key record
@@ -46,39 +46,16 @@ class DeleteRecordAction
      */
     public static function main(string $id): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
-        
-        try {
-            if (empty($id)) {
-                $res->messages['error'][] = 'API key ID is required';
-                return $res;
+        // Use standard delete execution from parent class
+        return self::executeStandardDelete(
+            ApiKeys::class,
+            $id,
+            'API key',                          // Entity type for logging
+            'API key not found',                // Not found message
+            function($apiKey) {                 // Additional cleanup callback
+                // Clear validation cache for this key before deletion
+                ApiKeyValidationService::clearCache((int)$apiKey->id);
             }
-            
-            $apiKey = ApiKeys::findFirst($id);
-            
-            if (!$apiKey) {
-                $res->messages['error'][] = 'API key not found';
-                return $res;
-            }
-            
-            if ($apiKey->delete()) {
-                // Clear cache for this key
-                ApiKeyValidationService::clearCache((int)$id);
-                
-                $res->success = true;
-            } else {
-                $res->messages['error'] = [];
-                foreach ($apiKey->getMessages() as $message) {
-                    $res->messages['error'][] = $message->getMessage();
-                }
-            }
-            
-        } catch (\Exception $e) {
-            $res->messages['error'][] = $e->getMessage();
-            CriticalErrorsHandler::handleExceptionWithSyslog($e);
-        }
-        
-        return $res;
+        );
     }
 }

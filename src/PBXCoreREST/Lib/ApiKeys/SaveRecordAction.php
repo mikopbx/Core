@@ -21,6 +21,8 @@ namespace MikoPBX\PBXCoreREST\Lib\ApiKeys;
 
 use MikoPBX\Common\Models\ApiKeys;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
+use MikoPBX\PBXCoreREST\Lib\Common\BaseActionHelper;
 use MikoPBX\PBXCoreREST\Services\ApiKeyValidationService;
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 
@@ -37,11 +39,12 @@ use MikoPBX\Common\Handlers\CriticalErrorsHandler;
  * @apiParam {String} [key] API key value (for new records)
  * @apiParam {Array} [allowed_paths] Array of allowed API paths
  * @apiParam {String} [networkfilterid] Network filter ID
+ * @apiParam {Boolean} [full_permissions] Full permissions flag
  * 
  * @apiSuccess {Boolean} result Operation result
  * @apiSuccess {Object} data Saved record data
  */
-class SaveRecordAction
+class SaveRecordAction extends AbstractSaveRecordAction
 {
     /**
      * Save API key record (create new or update existing)
@@ -51,108 +54,113 @@ class SaveRecordAction
      */
     public static function main(array $data): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
+        $res = self::createApiResult(__METHOD__);
         
         try {
-            // Find existing or create new
-            if (!empty($data['id'])) {
-                $apiKey = ApiKeys::findFirst($data['id']);
-                if (!$apiKey) {
-                    $res->messages['error'][] = 'API key not found';
-                    return $res;
-                }
-            } else {
-                $apiKey = new ApiKeys();
-                
-                // For new keys, hash the provided key
-                if (!empty($data['key'])) {
-                    $apiKey->key_hash = password_hash($data['key'], PASSWORD_BCRYPT);
-                    $apiKey->key_suffix = substr($data['key'], -4);
-                    $apiKey->key_display = self::generateKeyDisplay($data['key']);
-                } else {
-                    $res->messages['error'][] = 'API key is required for new records';
-                    return $res;
-                }
-            }
+            // Define sanitization rules
+            $sanitizationRules = [
+                'id' => FILTER_SANITIZE_NUMBER_INT,
+                'description' => FILTER_SANITIZE_SPECIAL_CHARS,
+                'key' => FILTER_DEFAULT,
+                'networkfilterid' => FILTER_DEFAULT,
+                'full_permissions' => FILTER_DEFAULT,
+            ];
             
-            // Update fields
-            if (isset($data['description'])) {
-                $apiKey->description = $data['description'];
-            }
+            // Sanitize input data including text fields
+            $sanitizedData = self::sanitizeInputData(
+                $data,
+                $sanitizationRules,
+                ['description']  // Text fields to process
+            );
             
-            // Handle key regeneration for existing records
-            if (!empty($data['key']) && !empty($apiKey->id)) {
-                $apiKey->key_hash = password_hash($data['key'], PASSWORD_BCRYPT);
-                // Update key suffix and display for identification
-                $apiKey->key_suffix = substr($data['key'], -4);
-                $apiKey->key_display = self::generateKeyDisplay($data['key']);
-            }
-            
+            // Handle allowed_paths separately (it's already an array)
             if (isset($data['allowed_paths'])) {
-                // Ensure proper JSON encoding
-                if (is_array($data['allowed_paths'])) {
-                    $apiKey->allowed_paths = json_encode($data['allowed_paths']);
+                $sanitizedData['allowed_paths'] = $data['allowed_paths'];
+            }
+            
+            // Execute save in transaction
+            $result = self::executeInTransaction(function() use ($sanitizedData) {
+                // Find existing or create new
+                if (!empty($sanitizedData['id'])) {
+                    $apiKey = ApiKeys::findFirst($sanitizedData['id']);
+                    if (!$apiKey) {
+                        throw new \Exception('API key not found');
+                    }
+                    $isNew = false;
                 } else {
-                    $apiKey->allowed_paths = $data['allowed_paths'];
+                    $apiKey = new ApiKeys();
+                    $isNew = true;
                 }
-            }
-            
-            if (isset($data['networkfilterid'])) {
-                $apiKey->networkfilterid = (!empty($data['networkfilterid']) && $data['networkfilterid'] !== 'none') ? $data['networkfilterid'] : null;
-            }
-            
-            if (isset($data['full_permissions'])) {
-                // Handle both boolean and string values
-                $value = $data['full_permissions'];
-                if (is_string($value)) {
-                    $value = strtolower($value);
-                    $apiKey->full_permissions = ($value === 'true' || $value === '1') ? '1' : '0';
-                } else {
-                    $apiKey->full_permissions = $value ? '1' : '0';
+                
+                // Process API key for new records or regeneration
+                if (!empty($sanitizedData['key'])) {
+                    $apiKey->key_hash = password_hash($sanitizedData['key'], PASSWORD_BCRYPT);
+                    $apiKey->key_suffix = substr($sanitizedData['key'], -4);
+                    $apiKey->key_display = DataStructure::generateKeyDisplay($sanitizedData['key']);
+                } elseif ($isNew) {
+                    throw new \Exception('API key is required for new records');
                 }
-            }
-            
-            // Save
-            if ($apiKey->save()) {
-                // Clear cache for this key
+                
+                // Update fields
+                if (isset($sanitizedData['description'])) {
+                    $apiKey->description = $sanitizedData['description'];
+                }
+                
+                // Handle allowed_paths
+                if (isset($sanitizedData['allowed_paths'])) {
+                    if (is_array($sanitizedData['allowed_paths'])) {
+                        $apiKey->allowed_paths = json_encode($sanitizedData['allowed_paths']);
+                    } else {
+                        $apiKey->allowed_paths = $sanitizedData['allowed_paths'];
+                    }
+                }
+                
+                // Handle network filter
+                if (isset($sanitizedData['networkfilterid'])) {
+                    $value = $sanitizedData['networkfilterid'];
+                    $apiKey->networkfilterid = (!empty($value) && $value !== 'none') ? $value : null;
+                }
+                
+                // Handle full_permissions boolean field
+                if (isset($sanitizedData['full_permissions'])) {
+                    $value = $sanitizedData['full_permissions'];
+                    if (is_string($value)) {
+                        $value = strtolower($value);
+                        $apiKey->full_permissions = ($value === 'true' || $value === '1') ? '1' : '0';
+                    } else {
+                        $apiKey->full_permissions = $value ? '1' : '0';
+                    }
+                }
+                
+                // Save the record
+                if (!$apiKey->save()) {
+                    $errors = [];
+                    foreach ($apiKey->getMessages() as $message) {
+                        $errors[] = $message->getMessage();
+                    }
+                    throw new \Exception('Failed to save API key: ' . implode(', ', $errors));
+                }
+                
+                // Clear validation cache for this key
                 ApiKeyValidationService::clearCache((int)$apiKey->id);
                 
-                // Return updated data structure
-                $dataStructure = DataStructure::createFromModel($apiKey);
-                $res->data = $dataStructure->toArray();
-                $res->success = true;
-                
-                // Add reload path for page refresh after save
-                $res->reload = "api-keys/modify/{$apiKey->id}";
-            } else {
-                $res->messages['error'] = [];
-                foreach ($apiKey->getMessages() as $message) {
-                    $res->messages['error'][] = $message->getMessage();
-                }
-            }
+                return $apiKey;
+            });
+            
+            // Return success with updated data structure
+            $res->data = DataStructure::createFromModel($result);
+            $res->success = true;
+            
+            // Add reload path for page refresh after save
+            $res->reload = "api-keys/modify/{$result->id}";
+            
+            // Handle tab preservation if requested
+            self::handleTabPreservation($data, $res);
             
         } catch (\Exception $e) {
-            $res->messages['error'][] = $e->getMessage();
-            CriticalErrorsHandler::handleExceptionWithSyslog($e);
+            return self::handleError($e, $res);
         }
         
         return $res;
-    }
-    
-    /**
-     * Generate key display representation (first 5 + ... + last 5 chars)
-     * 
-     * @param string $key The full API key
-     * @return string Display representation
-     */
-    private static function generateKeyDisplay(string $key): string
-    {
-        if (strlen($key) <= 15) {
-            // For short keys, show full key
-            return $key;
-        }
-        
-        return substr($key, 0, 5) . '...' . substr($key, -5);
     }
 }

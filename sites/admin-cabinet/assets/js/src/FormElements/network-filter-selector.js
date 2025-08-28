@@ -459,6 +459,53 @@ const NetworkFilterSelector = {
             instance.$hiddenField.val(value).trigger('change');
         }
     },
+
+    /**
+     * Set value for a selector silently without triggering onChange callbacks
+     * 
+     * @param {string} instanceId - Instance ID
+     * @param {string} value - Network filter ID to select
+     * @param {string} text - Optional display text
+     */
+    setValueSilently(instanceId, value, text = null) {
+        const instance = this.instances.get(instanceId);
+        if (!instance) {
+            return;
+        }
+        
+        // Update instance values
+        instance.currentValue = value;
+        if (text) {
+            instance.currentText = text;
+        }
+        
+        // Check if dropdown has this value in menu
+        const $item = instance.$dropdown.find(`.menu .item[data-value="${value}"]`);
+        
+        if ($item.length === 0 && text) {
+            // If item doesn't exist and we have text, add it
+            const $menu = instance.$dropdown.find('.menu');
+            $menu.append(`<div class="item" data-value="${value}">${text}</div>`);
+            instance.$dropdown.dropdown('refresh');
+        }
+        
+        // Use built-in Semantic UI preventChangeTrigger parameter
+        instance.$dropdown.dropdown('set selected', value, true); // value, preventChangeTrigger=true
+        
+        if (instance.$hiddenField.length > 0) {
+            // Update hidden field without triggering change event
+            instance.$hiddenField.val(value);
+        }
+        
+        // Force sync visual state after a short delay
+        setTimeout(() => {
+            const currentValue = instance.$hiddenField.val();
+            if (currentValue !== value) {
+                // Sync dropdown visual state with hidden field value
+                instance.$dropdown.dropdown('set selected', currentValue, true);
+            }
+        }, 150);
+    },
     
     /**
      * Get value from a selector
