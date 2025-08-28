@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,10 +20,8 @@
 namespace MikoPBX\PBXCoreREST\Lib\IvrMenu;
 
 use MikoPBX\Common\Models\IvrMenu;
-use MikoPBX\Common\Models\Extensions;
-use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use MikoPBX\PBXCoreREST\Lib\Common\BaseActionHelper;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractDeleteAction;
 
 /**
  * Action for deleting IVR menu record
@@ -39,7 +37,7 @@ use MikoPBX\PBXCoreREST\Lib\Common\BaseActionHelper;
  * @apiSuccess {Object} data Deletion result
  * @apiSuccess {String} data.deleted_id ID of deleted record
  */
-class DeleteRecordAction
+class DeleteRecordAction extends AbstractDeleteAction
 {
     /**
      * Delete IVR menu record
@@ -49,53 +47,26 @@ class DeleteRecordAction
      */
     public static function main(string $id): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
-        
-        if (empty($id)) {
-            $res->messages['error'][] = 'Record ID is required';
-            return $res;
-        }
-        
-        try {
-            // Find record by uniqid or id
-            $ivrMenu = IvrMenu::findFirst([
-                'conditions' => 'uniqid = :uniqid: OR id = :id:',
-                'bind' => ['uniqid' => $id, 'id' => $id]
-            ]);
-            
-            if (!$ivrMenu) {
-                $res->messages['error'][] = 'api_IvrMenuNotFound';
-                return $res;
-            }
-            
-            // Delete in transaction using BaseActionHelper
-            BaseActionHelper::executeInTransaction(function() use ($ivrMenu) {
-                // Delete related extension
-                $extension = Extensions::findFirstByNumber($ivrMenu->extension);
-                if ($extension) {
-                    if (!$extension->delete()) {
-                        throw new \Exception('Failed to delete extension: ' . implode(', ', $extension->getMessages()));
+        return self::executeStandardDelete(
+            IvrMenu::class,
+            $id,
+            'IVR menu',
+            'api_IvrMenuNotFound',
+            function($ivrMenu) {
+                // Manually delete IvrMenuActions since NO_ACTION is set in the relation
+                $actions = \MikoPBX\Common\Models\IvrMenuActions::find([
+                    'conditions' => 'ivr_menu_id = :uniqid:',
+                    'bind' => ['uniqid' => $ivrMenu->uniqid]
+                ]);
+                
+                if ($actions) {
+                    foreach ($actions as $action) {
+                        if (!$action->delete()) {
+                            throw new \Exception('Failed to delete IVR menu actions: ' . implode(', ', $action->getMessages()));
+                        }
                     }
                 }
-                
-                // IVR menu actions will be deleted automatically due to CASCADE relation
-                
-                // Delete IVR menu itself
-                if (!$ivrMenu->delete()) {
-                    throw new \Exception('Failed to delete IVR menu: ' . implode(', ', $ivrMenu->getMessages()));
-                }
-                
-                return true;
-            });
-            
-            $res->success = true;
-            $res->data = ['deleted_id' => $id];
-            
-        } catch (\Exception $e) {
-            $res->messages['error'][] = $e->getMessage();
-        }
-        
-        return $res;
+            }
+        );
     }
 }

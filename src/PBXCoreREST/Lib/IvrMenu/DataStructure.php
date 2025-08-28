@@ -41,6 +41,9 @@ class DataStructure extends AbstractDataStructure
         // No additional HTML escaping needed for API response (follows "Store Raw, Escape at Edge")
         $data = self::createBaseStructure($model);
         
+        // Mask the id with uniqid value for all REST clients
+        $data['id'] = $model->uniqid;
+        
         // Add IVR menu specific fields
         $data['timeout'] = $model->timeout ?? '7';
         $data['number_of_repeat'] = $model->number_of_repeat ?? '3';

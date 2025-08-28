@@ -22,6 +22,7 @@ namespace MikoPBX\PBXCoreREST\Lib\IvrMenu;
 use MikoPBX\Common\Models\IvrMenu;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractGetRecordAction;
 
 /**
  * Action for getting IVR menu record
@@ -47,7 +48,7 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
  * @apiSuccess {String} data.description IVR menu description
  * @apiSuccess {Array} data.actions Array of IVR menu actions
  */
-class GetRecordAction
+class GetRecordAction extends AbstractGetRecordAction
 {
     /**
      * Get IVR menu record
@@ -56,40 +57,28 @@ class GetRecordAction
      */
     public static function main(?string $id = null): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
+        $isNew = empty($id) || $id === 'new';
         
-        if (empty($id) || $id === 'new') {
-            // Create structure for new record
-            $newIvrMenu = new IvrMenu();
-            $newIvrMenu->id = '';
-            $newIvrMenu->uniqid = IvrMenu::generateUniqueID('IVR-');
-            $newIvrMenu->extension = Extensions::getNextFreeApplicationNumber();
-            $newIvrMenu->name = '';
-            $newIvrMenu->audio_message_id = '';
-            $newIvrMenu->timeout = '7';
-            $newIvrMenu->timeout_extension = '';
-            $newIvrMenu->allow_enter_any_internal_extension = '0';
-            $newIvrMenu->number_of_repeat = '3';
-            $newIvrMenu->description = '';
-            
-            $res->data = DataStructure::createFromModel($newIvrMenu);
-            $res->success = true;
-        } else {
-            // Find existing record
-            $ivrMenu = IvrMenu::findFirst([
-                'conditions' => 'uniqid = :uniqid: OR id = :id:',
-                'bind' => ['uniqid' => $id, 'id' => $id]
-            ]);
-            
-            if ($ivrMenu) {
-                $res->data = DataStructure::createFromModel($ivrMenu);
-                $res->success = true;
-            } else {
-                $res->messages['error'][] = 'IVR menu not found';
-            }
+        $result = self::executeStandardGetRecord(
+            $id,
+            IvrMenu::class,
+            DataStructure::class,
+            'IVR-',
+            [
+                'audio_message_id' => '',
+                'timeout' => '7',
+                'timeout_extension' => '',
+                'allow_enter_any_internal_extension' => '0',
+                'number_of_repeat' => '3'
+            ],
+            'IVR menu not found'
+        );
+        
+        // Always add isNew field for form population
+        if ($result->success) {
+            $result->data['isNew'] = $isNew ? '1' : '0';
         }
         
-        return $res;
+        return $result;
     }
 }

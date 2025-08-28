@@ -1,6 +1,6 @@
 {{ form(['action' : 'ivr-menu/save', 'method': 'post', 'role': 'form', 'class': 'ui large form','id':'ivr-menu-form']) }}
 {{ form.render('id') }}
-{{ form.render('uniqid') }}
+{{ form.render('isNew') }}
 <input type="hidden" name="{{ security.getTokenKey() }}" value="{{ security.getToken() }}"/>
 <div class="ui ribbon label" id="ivr-menu-extension-number">
     <i class="phone icon"></i> {{ extension|e }}
@@ -27,7 +27,7 @@
                 <div class="ui search selection dropdown forwarding-select">
                     <input type="hidden" name="extension-id" value="">
                     <i class="dropdown icon"></i>
-                    <div class="default text">Select Number</div>
+                    <div class="default text">{{ t._('ex_SelectExtension') }}</div>
                 </div>
             </div>
             <div class="one wide field">

@@ -21,6 +21,7 @@ namespace MikoPBX\PBXCoreREST\Lib\IvrMenu;
 
 use MikoPBX\Common\Models\IvrMenu;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractGetListAction;
 
 /**
  * Action for getting list of all IVR menus
@@ -41,7 +42,7 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
  * @apiSuccess {String} data.timeoutExtensionRepresent Timeout extension representation
  * @apiSuccess {Array} data.actions Array of menu actions with digits and extensions
  */
-class GetListAction
+class GetListAction extends AbstractGetListAction
 {
     /**
      * Get list of all IVR menus
@@ -51,28 +52,16 @@ class GetListAction
      */
     public static function main(array $data = []): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
-        
-        try {
-            // Get all IVR menus sorted by name
-            $ivrMenus = IvrMenu::find([
-                'order' => 'name ASC'
-            ]);
-            
-            $data = [];
-            foreach ($ivrMenus->toArray() as $menuData) {
-                $ivrMenu = new IvrMenu();
-                $ivrMenu->assign($menuData);
-                $data[] = DataStructure::createForList($ivrMenu);
-            }
-            
-            $res->data = $data;
-            $res->success = true;
-        } catch (\Exception $e) {
-            $res->messages['error'][] = $e->getMessage();
-        }
-        
-        return $res;
+        return self::executeStandardList(
+            IvrMenu::class,
+            DataStructure::class,
+            $data,
+            [], // base query options
+            false, // use createForList
+            ['name', 'extension', 'id'], // allowed order fields
+            ['name', 'description'], // searchable fields
+            null, // no record filter
+            'name ASC' // default order
+        );
     }
 }

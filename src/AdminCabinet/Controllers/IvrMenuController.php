@@ -44,8 +44,9 @@ class IvrMenuController extends BaseController
     {
         // Create empty form - JavaScript will populate everything via REST API
         $emptyIvrMenu = new \stdClass();
-        $emptyIvrMenu->id = '';
-        $emptyIvrMenu->uniqid = $ivrmenuid ?: '';
+        // Now id is the uniqid value for REST API compatibility
+        $emptyIvrMenu->id = $ivrmenuid ?: '';
+        $emptyIvrMenu->isNew = ''; // Will be filled by REST API response
         $emptyIvrMenu->extension = '';
         $emptyIvrMenu->name = '';
         $emptyIvrMenu->audio_message_id = '';
@@ -64,9 +65,8 @@ class IvrMenuController extends BaseController
             ]
         );
         
-        // Pass only the form and uniqid - JavaScript handles everything else
+        // Pass only the form - JavaScript handles everything else
         $this->view->form = $form;
-        $this->view->uniqid = $ivrmenuid ?: '';
     }
 
 

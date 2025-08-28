@@ -39,12 +39,12 @@ class IvrMenuEditForm extends BaseForm
         parent::initialize($entity, $options);
         // ID
         $this->add(new Hidden('id'));
+        
+        // isNew flag for determining POST vs PUT
+        $this->add(new Hidden('isNew'));
 
         // Name
         $this->add(new Text('name'));
-
-        // Uniqid
-        $this->add(new Hidden('uniqid'));
 
         // Extension
         $this->add(new Text('extension'));

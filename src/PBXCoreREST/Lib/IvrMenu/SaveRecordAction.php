@@ -63,7 +63,8 @@ class SaveRecordAction extends AbstractSaveRecordAction
         
         // Define sanitization rules - use 'sanitize' for text fields to follow "Store Raw, Escape at Edge"
         $sanitizationRules = [
-            'id' => 'int',
+            'id' => 'string|max:50', // Now id is actually uniqid (string)
+            'isNew' => 'string|max:1', // Flag for new records
             'name' => 'string|sanitize|max:100',
             'extension' => 'string|regex:/^[0-9]{2,8}$/|max:8',
             'audio_message_id' => 'string|max:50|empty_to_null',
@@ -110,13 +111,24 @@ class SaveRecordAction extends AbstractSaveRecordAction
         }
         
         // Get or create model
+        // For POST (new records), id contains pre-generated uniqid but record doesn't exist yet
+        // For PUT (updates), id contains existing uniqid and record must exist
+        $ivrMenu = null;
+        
         if (!empty($sanitizedData['id'])) {
-            $ivrMenu = IvrMenu::findFirstById($sanitizedData['id']);
+            // Try to find existing record by uniqid
+            $ivrMenu = IvrMenu::findFirst([
+                'conditions' => 'uniqid = :uniqid:',
+                'bind' => ['uniqid' => $sanitizedData['id']]
+            ]);
+            
             if (!$ivrMenu) {
-                $res->messages['error'][] = 'api_IvrMenuNotFound';
-                return $res;
+                // If no existing record found, this must be a new record with pre-generated uniqid
+                $ivrMenu = new IvrMenu();
+                $ivrMenu->uniqid = $sanitizedData['id'];
             }
         } else {
+            // No id provided, create completely new record
             $ivrMenu = new IvrMenu();
             $ivrMenu->uniqid = IvrMenu::generateUniqueID('IVR-');
         }
