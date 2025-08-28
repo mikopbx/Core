@@ -144,9 +144,9 @@ const queueTable = {
                     Extensions.cbOnDataChanged();
                 }
             } else {
-                // Only show error messages
-                const errorMessage = response.messages?.error || [globalTranslate.cq_ImpossibleToDeleteQueue];
-                UserMessage.showMultiString(errorMessage, globalTranslate.cq_DeletionError);
+                // Show error message (matches conference room behavior)
+                const errorMessage = response.messages?.error || globalTranslate.cq_ImpossibleToDeleteQueue;
+                UserMessage.showError(errorMessage);
             }
             
             // Remove loading state
