@@ -699,11 +699,29 @@ class Network extends Injectable
     public function hostnameConfigure(): void
     {
         $data = self::getHostName();
-        $hosts_conf = "127.0.0.1 localhost\n" .
-            "127.0.0.1 {$data['hostname']}\n";
+        $hosts_conf = "127.0.0.1 localhost\n";
+        
+        // Get external hostname to check for conflicts
+        /** @var LanInterfaces|null $res */
+        $res = LanInterfaces::findFirst("internet = '1'");
+        $externalHostname = ($res !== null) ? $res->exthostname : '';
+        
+        // Build full hostname for comparison
+        $fullHostname = $data['hostname'];
         if (!empty($data['domain'])) {
-            $hosts_conf .= "127.0.0.1 {$data['hostname']}.{$data['domain']}\n";
+            $fullHostname .= '.' . $data['domain'];
         }
+        
+        // Only add hostname to /etc/hosts if it doesn't match the external hostname
+        // This prevents DNS resolution conflicts when the same name is used for both local and external access
+        if (strcasecmp($data['hostname'], $externalHostname) !== 0 && 
+            strcasecmp($fullHostname, $externalHostname) !== 0) {
+            $hosts_conf .= "127.0.0.1 {$data['hostname']}\n";
+            if (!empty($data['domain'])) {
+                $hosts_conf .= "127.0.0.1 {$data['hostname']}.{$data['domain']}\n";
+            }
+        }
+        
         $hostnamePath = Util::which('hostname');
         if (Util::isDocker()) {
             $realHostName = shell_exec($hostnamePath);
