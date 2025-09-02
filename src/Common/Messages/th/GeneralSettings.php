@@ -2098,4 +2098,71 @@ return [
     // Tooltips for Parser Regex
     'pr_ParserRegexTooltip_header' => '',
     'pr_ParserRegexTooltip_desc' => '',
+    'gs_CallRecordTab' => 'การบันทึกการสนทนา',
+    'gs_RTPStunServer' => 'ที่อยู่เซิร์ฟเวอร์ STUN (ตัวอย่าง: stun.test.net:10000)',
+    'gs_SIPAuthPrefix' => 'คำนำหน้าชื่อผู้ใช้ Auth สำหรับการอนุมัติ คำนำหน้าจะถูกเพิ่มต่อท้ายชื่อผู้ใช้',
+    'gs_UseWebRTC' => 'ใช้ WebRTC',
+    'gs_DisableAllModules' => 'ปิดการใช้งาน Marketplace',
+    'gs_ErrorSaveSettings' => 'ข้อผิดพลาดในการบันทึกการตั้งค่า',
+    'gs_SSHDisablePasswordLogins' => 'ปิดใช้งานการตรวจสอบรหัสผ่าน',
+    'gs_MainTab' => 'หลัก',
+    'gs_SIPTab' => 'SIP',
+    'gs_AMITab' => 'AMI&AJAM',
+    'gs_SSHTab' => 'SSH',
+    'gs_WebTab' => 'HTTP/HTTPS',
+    'gs_PBXName' => 'ชื่อระบบ PBX',
+    'gs_PBXDescription' => 'คำอธิบายเพิ่มเติม',
+    'gs_PBXLanguage' => 'ภาษาของข้อความเสียงระบบ',
+    'gs_PBXInternalExtensionLength' => 'ความยาวสูงสุดของตัวเลขภายใน',
+    'gs_PBXRecordCalls' => 'บันทึกการโทร',
+    'gs_PBXRecordCallsInner' => 'การบันทึกการสนทนาภายใน',
+    'gs_PBXCallParkingExt' => 'โทรเบอร์ที่จอดรถ',
+    'gs_PBXCallParkingSlotRange' => 'ลานจอดรถ',
+    'gs_PBXFeatureAttendedTransfer' => 'การผสมผสานเพื่อการแปลเชิงปรึกษา',
+    'gs_PBXFeaturePickupExten' => 'Code ดึงสายโทรเข้า จากเครื่องอื่น',
+    'gs_PBXFeatureAtxferNoAnswerTimeout' => 'เวลาโทรกลับหากไม่มีการตอบรับหลังจากการโอนคำแนะนำ',
+    'gs_PBXSplitAudioThread' => 'บันทึกการบันทึกในโหมดสเตอริโอ',
+    'gs_PBXAllowGuestCalls' => 'อนุญาตให้มีสายเรียกเข้าจากเซิร์ฟเวอร์ใดก็ได้',
+    'gs_TLS_PORT' => 'พอร์ต SIP TLS (การโทรแบบเข้ารหัส)',
+    'gs_KeepAliveHeader' => 'การตั้งค่าระยะเวลาการลงทะเบียน',
+    'gs_SIPDefaultExpiry' => 'เวลาเริ่มต้นเป็นวินาทีในการส่ง Keep-alive',
+    'gs_SIPPortSettings' => 'การตั้งค่าพอร์ตสำหรับการส่งสัญญาณ SIP และช่วง RTP',
+    'gs_RTPPortRange' => 'ช่วงพอร์ต RTP',
+    'gs_AMIEnabled' => 'ใช้อินเทอร์เฟซ AMI',
+    'gs_AMIPort' => 'พอร์ต AMI',
+    'gs_AJAMEnabled' => 'ใช้อินเทอร์เฟซ AJAM',
+    'gs_AJAMPort' => 'พอร์ต AJAM',
+    'gs_SSHPort' => 'พอร์ต SSH',
+    'gs_SSHLogin' => 'เข้าสู่ระบบคอนโซล SSH',
+    'gs_SSHPassword' => 'รหัสผ่าน SSH',
+    'gs_SSH_ID_RSA_PUB' => 'คีย์ SSH สาธารณะของระบบ',
+    'gs_SSHKeyColumn' => 'คีย์ SSH',
+    /*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+    'gs_SystemWillRestart' => 'ระบบจะเริ่มการทำงานใหม่อีกครั้ง',
+    'gs_SIPAuthPrefixInvalid' => 'คำนำหน้าชื่อผู้ใช้ Auth สามารถมีเฉพาะตัวอักษรละตินเท่านั้น',
+    'gs_FeaturesTab' => 'การโอนสาย',
+    'gs_NeedRestartPBX' => 'เมื่อมีการเปลี่ยนแปลงจะรีสตาร์ทบริการ Asterisk',
+    'gs_RestartEveryNight' => 'รีสตาร์ท PBX ทุกคืน',
+    'gs_PBXFeatureBlindTransfer' => 'การรวมสำหรับการโอนแบบไม่มีเงื่อนไข',
+    'gs_PBXFeatureDigitTimeout' => 'ระยะเวลาหมดเวลาสูงสุดระหว่างตัวเลขเมื่อป้อนหมายเลขต่อ (เป็นมิลลิวินาที)',
+    'gs_SIPPort' => 'พอร์ต SIP สำหรับลงทะเบียนโทรศัพท์บนสถานีนี้',
+    'gs_SIPExpiryRange' => 'เวลาต่ำสุดและสูงสุดเป็นวินาที',
+    'gs_AJAMPortTLS' => 'พอร์ตเข้ารหัส AJAM',
+    'gs_SSHAuthorizedKeys' => 'คีย์ SSH ที่ได้รับอนุญาต',
 ];
