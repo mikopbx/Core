@@ -37,6 +37,51 @@ use Phalcon\Di\Injectable;
  */
 class UploadFileAction extends Injectable
 {
+    // MIME types allowed for different categories
+    private const ALLOWED_MIME_TYPES = [
+        'sound' => [
+            'audio/mpeg',
+            'audio/wav', 
+            'audio/ogg',
+            'audio/mp4',
+            'audio/webm',
+            'audio/x-wav',
+            'audio/wave'
+        ],
+        'image' => [
+            'image/jpeg',
+            'image/png',
+            'image/gif',
+            'image/webp',
+            'image/svg+xml',
+            'image/bmp'
+        ],
+        'csv' => [
+            'text/csv',
+            'text/plain',
+            'application/csv',
+            'application/vnd.ms-excel'
+        ],
+        'archive' => [
+            'application/zip',
+            'application/x-zip-compressed',
+            'application/gzip',
+            'application/x-tar',
+            'application/x-gzip'
+        ],
+        'firmware' => [
+            'application/octet-stream'
+        ]
+    ];
+    
+    // Forbidden file extensions (executable files and scripts)
+    private const FORBIDDEN_EXTENSIONS = [
+        'php', 'php3', 'php4', 'php5', 'phtml', 'jsp', 'asp', 'aspx',
+        'js', 'exe', 'bat', 'cmd', 'com', 'scr', 'vbs', 'ps1',
+        'sh', 'bash', 'pl', 'py', 'rb', 'jar', 'class', 'war',
+        'dll', 'so', 'dylib', 'msi', 'deb', 'rpm'
+    ];
+
     /**
      * Process upload files by chunks.
      *
@@ -53,6 +98,22 @@ class UploadFileAction extends Injectable
             $res->success = false;
             $res->messages[] = 'Dependency injector does not initialized';
 
+            return $res;
+        }
+
+        // Validate file type and security
+        $category = $parameters['category'] ?? 'unknown';
+        $mimeType = $parameters['file_mime_type'] ?? '';
+        
+        $validationResult = self::validateFileType(
+            $parameters['resumableFilename'], 
+            $mimeType,
+            $category
+        );
+        
+        if (!$validationResult['valid']) {
+            $res->success = false;
+            $res->messages['error'] = $validationResult['error'];
             return $res;
         }
         $parameters['uploadDir'] = $di->getShared('config')->path('www.uploadDir');
@@ -171,5 +232,67 @@ class UploadFileAction extends Injectable
         }
 
         return false;
+    }
+
+    /**
+     * Validate file type, extension and security
+     * 
+     * @param string $filename Original filename
+     * @param string $mimeType MIME type from browser
+     * @param string $category File category (sound, image, csv, archive, firmware)
+     * 
+     * @return array Validation result with 'valid' boolean and 'error' message
+     */
+    private static function validateFileType(string $filename, string $mimeType, string $category): array
+    {
+        $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+        
+        // 1. Check forbidden extensions (security)
+        if (in_array($extension, self::FORBIDDEN_EXTENSIONS, true)) {
+            return [
+                'valid' => false,
+                'error' => Util::translate(
+                    'sf_UploadForbiddenExtension',false,
+                    ['extension' => $extension]
+                )
+            ];
+        }
+        
+        // 2. Check MIME type for category
+        if (isset(self::ALLOWED_MIME_TYPES[$category])) {
+            if (!in_array($mimeType, self::ALLOWED_MIME_TYPES[$category], true)) {
+                return [
+                    'valid' => false,
+                    'error' => Util::translate(
+                        'sf_UploadInvalidMimeType', false,
+                        [
+                            'mimetype' => $mimeType, 
+                            'category' => $category
+                        ]
+                    )
+                ];
+            }
+        }
+        
+        // 3. Special check for .img files (only for firmware)
+        if ($extension === 'img' && $category !== 'firmware') {
+            return [
+                'valid' => false,
+                'error' => Util::translate('sf_UploadImgOnlyForFirmware', false)
+            ];
+        }
+        
+        // 4. Additional security check for CSV files
+        if ($category === 'csv' && !in_array($extension, ['csv', 'txt'], true)) {
+            return [
+                'valid' => false,
+                'error' => Util::translate(
+                    'sf_UploadInvalidExtensionForCategory', false,
+                    ['extension' => $extension, 'category' => $category]
+                )
+            ];
+        }
+        
+        return ['valid' => true];
     }
 }
