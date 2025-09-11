@@ -92,7 +92,6 @@ const PasswordWidget = {
     init(selector, options = {}) {
         const $field = $(selector);
         if ($field.length === 0) {
-            console.warn('PasswordWidget: Field not found', selector);
             return null;
         }
         
@@ -364,10 +363,6 @@ const PasswordWidget = {
                     e.clearSelection();
                 });
                 
-                // Handle copy error
-                instance.clipboard.on('error', (e) => {
-                    console.error('Clipboard error:', e.action, e.trigger);
-                });
             }
         }
         
@@ -537,8 +532,11 @@ const PasswordWidget = {
             return;
         }
         
-        // Clear generated flag when user types
-        instance.state.isGenerated = false;
+        // Skip validation if this is a generated password (already validated in setGeneratedPassword)
+        if (instance.state.isGenerated) {
+            instance.state.isGenerated = false; // Reset flag for next input
+            return;
+        }
         
         // Validate password only if field is focused
         if (instance.state.isFocused) {
@@ -609,7 +607,7 @@ const PasswordWidget = {
                 };
                 this.handleValidationResult(instance, result);
             }
-        }, 300);
+        }, 700); // Increased debounce for more comfortable typing
     },
     
     /**
@@ -815,17 +813,22 @@ const PasswordWidget = {
     setGeneratedPassword(instance, password) {
         const { $field, $container, options } = instance;
         
-        // Set value
-        $field.val(password).trigger('change');
+        // Set generated flag first to prevent duplicate validation
         instance.state.isGenerated = true;
+        
+        // Set value without triggering change event yet
+        $field.val(password);
         
         // Update all clipboard buttons (widget's and any external ones)
         $('.clipboard').attr('data-clipboard-text', password);
         
-        // Validate if needed
+        // Validate once if needed
         if (options.validation !== this.VALIDATION.NONE) {
             this.validatePassword(instance, password);
         }
+        
+        // Now trigger change for form tracking (validation already done above)
+        $field.trigger('change')
         
         // Trigger form change
         if (typeof Form !== 'undefined' && Form.dataChanged) {
@@ -960,7 +963,6 @@ const PasswordWidget = {
             : instanceOrFieldId;
             
         if (!instance) {
-            console.warn('PasswordWidget: Instance not found');
             return;
         }
         
@@ -1034,10 +1036,6 @@ const PasswordWidget = {
                         e.clearSelection();
                     });
                     
-                    // Handle copy error
-                    instance.clipboard.on('error', (e) => {
-                        console.error('Clipboard error:', e.action, e.trigger);
-                    });
                 }
             } else if (!newOptions.clipboardButton && instance.elements.$clipboardBtn) {
                 // Remove button if it exists

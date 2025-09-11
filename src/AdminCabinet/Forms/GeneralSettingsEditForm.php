@@ -22,6 +22,7 @@ namespace MikoPBX\AdminCabinet\Forms;
 
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\TranslationProvider;
+use MikoPBX\AdminCabinet\Forms\Elements\SemanticUIDropdown;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
 use Phalcon\Forms\Element\Password;
@@ -163,7 +164,7 @@ class GeneralSettingsEditForm extends BaseForm
                     break;
                 case PbxSettings::PBX_RECORD_ANNOUNCEMENT_IN:
                 case PbxSettings::PBX_RECORD_ANNOUNCEMENT_OUT:
-                    // Just add a hidden field - the dropdown will be initialized in JavaScript
+                    // Hidden field for sound file selector with playAddNewSoundWithIcons partial
                     $this->add(new Hidden($key, ['id' => $key, 'value' => $value]));
                     break;
                 case PbxSettings::PBX_RECORD_CALLS:

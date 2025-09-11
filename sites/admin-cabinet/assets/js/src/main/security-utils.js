@@ -210,6 +210,79 @@ window.SecurityUtils = {
     _escapeHtmlContent(text) {
         return $('<div>').text(text).html();
     },
+
+    /**
+     * Sanitize with comprehensive whitelist for all MikoPBX object representations
+     * 
+     * @private
+     * @param {string} text - Text to sanitize
+     * @returns {string} Sanitized text with preserved safe icons
+     */
+    _sanitizeWithWhitelist(text) {
+        if (!text) return '';
+        
+        // Comprehensive whitelist for all MikoPBX object types
+        const allowedIconClasses = [
+            // Extension icons
+            'phone volume icon',
+            'php icon', 
+            'sitemap icon',
+            'users icon',
+            'cogs icon',
+            'user outline icon',
+            'icons', // Container for multiple icons
+            'top right corner alternate mobile icon',
+            
+            // Network filter icons
+            'globe icon',
+            'shield alternate icon', 
+            'ban icon',
+            
+            // Sound file icons
+            'music icon',
+            'file audio icon',
+            'file audio outline icon',
+            'sound icon',
+            
+            // Call queue icons
+            'call icon',
+            'phone icon',
+            'headphones icon',
+            
+            // Provider icons
+            'server icon',
+            'cloud icon',
+            'plug icon',
+            
+            // System icons
+            'settings icon',
+            'wrench icon',
+            'tool icon'
+        ];
+        
+        // Parse HTML safely
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = text;
+        
+        // Check all <i> tags
+        const iTags = tempDiv.querySelectorAll('i');
+        let isSafe = true;
+        
+        iTags.forEach(tag => {
+            const className = tag.className;
+            if (!allowedIconClasses.includes(className)) {
+                isSafe = false;
+            }
+        });
+        
+        // If all icons are safe, return the original text
+        if (isSafe) {
+            return text;
+        }
+        
+        // If any unsafe icon found, escape all HTML
+        return this._escapeHtmlContent(text);
+    },
     
     /**
      * Sanitize text for use in HTML attributes
@@ -271,25 +344,31 @@ window.SecurityUtils = {
     },
 
     /**
-     * Sanitize Extensions API content with enhanced XSS protection while preserving safe icons
+     * Sanitize object representations with enhanced XSS protection while preserving safe icons
      * 
-     * This method combines advanced XSS pattern detection with Extensions.sanitizeExtensionRepresent
-     * to provide the best balance between security and functionality for extension representations.
+     * Universal method for sanitizing all object representation data from REST API.
+     * Handles Extensions, NetworkFilters, SoundFiles, CallQueues, and other MikoPBX objects.
+     * Uses comprehensive whitelist approach for maximum security with proper functionality.
      * 
      * @param {string} text - Text to sanitize
      * @returns {string} Sanitized text with preserved safe icons
      * 
      * @example
-     * // Safe icons are preserved
-     * SecurityUtils.sanitizeExtensionsApiContent('<i class="phone icon"></i> John Doe')
+     * // Safe icons are preserved (Extensions)
+     * SecurityUtils.sanitizeObjectRepresentations('<i class="phone icon"></i> John Doe')
      * // Returns: '<i class="phone icon"></i> John Doe'
      * 
      * @example
+     * // Safe icons are preserved (NetworkFilters)
+     * SecurityUtils.sanitizeObjectRepresentations('<i class="globe icon"></i> Any Network')
+     * // Returns: '<i class="globe icon"></i> Any Network'
+     * 
+     * @example
      * // XSS attacks are blocked
-     * SecurityUtils.sanitizeExtensionsApiContent('<script>alert("XSS")</script>')
+     * SecurityUtils.sanitizeObjectRepresentations('<script>alert("XSS")</script>')
      * // Returns: '&lt;script&gt;alert(&quot;XSS&quot;)&lt;/script&gt;'
      */
-    sanitizeExtensionsApiContent(text) {
+    sanitizeObjectRepresentations(text) {
         if (!text) return '';
         
         // Enhanced dangerous patterns specifically for extension representations
@@ -323,14 +402,16 @@ window.SecurityUtils = {
             }
         }
         
-        // If no dangerous patterns found, use Extensions.sanitizeExtensionRepresent
-        // which properly handles HTML entities and preserves safe icons
-        if (typeof Extensions !== 'undefined' && Extensions.sanitizeExtensionRepresent) {
-            return Extensions.sanitizeExtensionRepresent(text, true);
-        }
-        
-        // Fallback: if Extensions is not available, use strict escaping with icons
-        return this.escapeHtml(text, true);
+        // If no dangerous patterns found, use whitelist validation for safe icons
+        return this._sanitizeWithWhitelist(text);
+    },
+
+    /**
+     * Legacy alias for backward compatibility
+     * @deprecated Use sanitizeObjectRepresentations instead
+     */
+    sanitizeExtensionsApiContent(text) {
+        return this.sanitizeObjectRepresentations(text);
     },
 
     /**

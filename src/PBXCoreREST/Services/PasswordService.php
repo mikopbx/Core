@@ -22,8 +22,9 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Services;
 
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\Processes;
 use Phalcon\Di\Di;
 use Phalcon\Encryption\Security\Random;
 
@@ -74,6 +75,11 @@ class PasswordService
     private const MAX_CACHE_SIZE = 1000;
     
     /**
+     * Redis cache key for dictionary
+     */
+    private const REDIS_DICTIONARY_KEY = 'password_service:dictionary';
+    
+    /**
      * Validate password with comprehensive checks
      * 
      * @param string $password Password to validate
@@ -101,7 +107,7 @@ class PasswordService
         // Check if password is empty
         if (empty($password)) {
             $result['isValid'] = false;
-            $result['messages'][] = self::translate('gs_ValidateEmptyWebPassword');
+            $result['messages'][] = self::translate('psw_ValidateEmptyWebPassword');
             return $result;
         }
         
@@ -112,11 +118,11 @@ class PasswordService
         if ($length < $minLength) {
             $result['isValid'] = false;
             $result['isTooShort'] = true;
-            $result['messages'][] = self::translate('gs_PasswordTooShort', ['min' => $minLength]);
+            $result['messages'][] = self::translate('psw_PasswordTooShort', ['min' => $minLength]);
         } elseif ($length > self::MAX_LENGTH) {
             $result['isValid'] = false;
             $result['isTooLong'] = true;
-            $result['messages'][] = sprintf('Password must not exceed %d characters', self::MAX_LENGTH); // Keep as is - rarely triggered
+            $result['messages'][] = self::translate('psw_PasswordTooLong', ['max' => self::MAX_LENGTH]);
         }
         
         // Check for default passwords if context is provided
@@ -124,8 +130,8 @@ class PasswordService
             if (self::isDefaultPassword($password, $context)) {
                 $result['isValid'] = false;
                 $result['isDefault'] = true;
-                $result['messages'][] = self::translate('gs_PasswordIsDefault');
-                $result['suggestions'][] = self::translate('gs_DefaultPasswordWarning');
+                $result['messages'][] = self::translate('psw_PasswordIsDefault');
+                $result['suggestions'][] = self::translate('psw_DefaultPasswordWarning');
             }
         }
         
@@ -134,8 +140,8 @@ class PasswordService
             if (self::isInDictionary($password)) {
                 $result['isValid'] = false;
                 $result['isSimple'] = true;
-                $result['messages'][] = self::translate('gs_PasswordTooCommon');
-                $result['suggestions'][] = self::translate('gs_PasswordAvoidCommon');
+                $result['messages'][] = self::translate('psw_PasswordTooCommon');
+                $result['suggestions'][] = self::translate('psw_PasswordAvoidCommon');
             }
         }
         
@@ -206,16 +212,36 @@ class PasswordService
      * Check if password exists in the common passwords dictionary
      * 
      * This method checks against the rockyou wordlist for common/compromised passwords.
-     * For performance, results are cached in memory.
+     * Uses Redis for caching with fallback to file loading.
      * 
      * @param string $value Password to check
      * @return bool True if password is found in dictionary
      */
     public static function isSimplePassword(string $value): bool
     {
-        $passwords = [];
-        \MikoPBX\Core\System\Processes::mwExec('/bin/zcat /usr/share/wordlists/rockyou.txt.gz', $passwords);
-        return in_array($value, $passwords, true);
+        if (empty($value)) {
+            return false;
+        }
+        
+        $redis = self::getRedisClient();
+        
+        if (!$redis) {
+            // Fallback to direct file check if Redis not available
+            $dictionary = self::loadDictionaryFromFile();
+            return in_array($value, $dictionary, true);
+        }
+        
+        // First check if dictionary is cached
+        $exists = $redis->hexists(self::REDIS_DICTIONARY_KEY, $value);
+        
+        if ($exists !== false) {
+            // Dictionary is cached, return direct result
+            return (bool)$exists;
+        }
+        
+        // Dictionary not cached, load and cache it, then check
+        $dictionary = self::getDictionary();
+        return in_array($value, $dictionary, true);
     }
     
     /**
@@ -487,11 +513,16 @@ class PasswordService
     }
     
     /**
-     * Clear the dictionary cache
+     * Clear the dictionary cache (both memory and Redis)
      */
     public static function clearCache(): void
     {
         self::$dictionaryCache = [];
+        
+        $redis = self::getRedisClient();
+        if ($redis) {
+            $redis->del(self::REDIS_DICTIONARY_KEY);
+        }
     }
     
     /**
@@ -516,7 +547,7 @@ class PasswordService
      * Batch check multiple passwords against dictionary
      * 
      * Optimized batch operation for checking multiple passwords against
-     * the common passwords dictionary. More efficient than individual checks.
+     * the common passwords dictionary. Uses Redis for caching dictionary data.
      * 
      * @param array<int|string, string> $passwords Array of passwords to check
      * @return array<int|string, bool> Array of password index/key => isInDictionary result
@@ -525,9 +556,8 @@ class PasswordService
     {
         $results = [];
         
-        // Load dictionary once for all checks
-        $dictionaryPath = Util::which('pwqcheck');
-        $haveDictionary = !empty($dictionaryPath);
+        // Get dictionary from Redis cache or load it
+        $dictionary = self::getDictionary();
         
         foreach ($passwords as $key => $password) {
             if (empty($password)) {
@@ -535,16 +565,87 @@ class PasswordService
                 continue;
             }
             
-            // Check against dictionary if available
-            if ($haveDictionary) {
-                $results[$key] = self::isInDictionary($password);
-            } else {
-                // If no dictionary, consider as not in dictionary
-                $results[$key] = false;
-            }
+            // Check against dictionary
+            $results[$key] = in_array($password, $dictionary, true);
         }
         
         return $results;
+    }
+    
+    /**
+     * Get dictionary from Redis cache or load from file
+     * 
+     * @return array Dictionary array
+     */
+    private static function getDictionary(): array
+    {
+        $redis = self::getRedisClient();
+        
+        if (!$redis) {
+            return self::loadDictionaryFromFile();
+        }
+        
+        // Try to get dictionary from Redis
+        $cachedDictionary = $redis->hgetall(self::REDIS_DICTIONARY_KEY);
+        
+        if (!empty($cachedDictionary)) {
+            // Return array keys (passwords are stored as Redis hash keys)
+            return array_keys($cachedDictionary);
+        }
+        
+        // Dictionary not cached, load from file and cache it
+        $dictionary = self::loadDictionaryFromFile();
+        self::cacheDictionaryInRedis($redis, $dictionary);
+        
+        return $dictionary;
+    }
+    
+    /**
+     * Get Redis client or null if not available
+     * 
+     * @return mixed Redis client or null
+     */
+    private static function getRedisClient()
+    {
+        $di = Di::getDefault();
+        if (!$di || !$di->has(RedisClientProvider::SERVICE_NAME)) {
+            return null;
+        }
+        
+        return $di->getShared(RedisClientProvider::SERVICE_NAME);
+    }
+    
+    /**
+     * Load dictionary from file
+     * 
+     * @return array Dictionary array
+     */
+    private static function loadDictionaryFromFile(): array
+    {
+        $dictionary = [];
+        Processes::mwExec('/bin/zcat /usr/share/wordlists/rockyou.txt.gz', $dictionary);
+        return $dictionary;
+    }
+    
+    /**
+     * Cache dictionary in Redis
+     * 
+     * @param mixed $redis Redis client
+     * @param array $dictionary Dictionary array
+     */
+    private static function cacheDictionaryInRedis($redis, array $dictionary): void
+    {
+        if (empty($dictionary)) {
+            return;
+        }
+        
+        $pipe = $redis->multi();
+        foreach ($dictionary as $password) {
+            $pipe->hset(self::REDIS_DICTIONARY_KEY, $password, '1');
+        }
+        // Set expiration for 24 hours
+        $pipe->expire(self::REDIS_DICTIONARY_KEY, 86400);
+        $pipe->exec();
     }
     
     /**
