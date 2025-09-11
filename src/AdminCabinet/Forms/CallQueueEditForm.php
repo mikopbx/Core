@@ -20,6 +20,7 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
+use MikoPBX\AdminCabinet\Forms\Elements\SemanticUIDropdown;
 use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
@@ -69,19 +70,15 @@ class CallQueueEditForm extends BaseForm
 
         // Callerhear
         $arrActions = [
-            'ringing' => $this->translation->_('cq_ringing'),
-            'moh' => $this->translation->_('cq_moh'),
+            ['value' => 'ringing', 'text' => $this->translation->_('cq_ringing')],
+            ['value' => 'moh', 'text' => $this->translation->_('cq_moh')],
         ];
 
-        $callerhear = new Select(
+        $callerhear = new SemanticUIDropdown(
             'caller_hear',
             $arrActions,
             [
-                'using' => [
-                    'id',
-                    'name',
-                ],
-                'useEmpty' => false,
+                'placeholder' => '',
                 'class' => 'ui selection dropdown callerhearselect',
             ]
         );
@@ -117,91 +114,17 @@ class CallQueueEditForm extends BaseForm
             )
         );
 
-        // Timeoutextension
-        $extension = new Select(
-            'timeout_extension',
-            $options['extensions'],
-            [
-                'using' => [
-                    'id',
-                    'name',
-                ],
-                'useEmpty' => true,
-                'class' => 'ui selection dropdown search timeout_extension-select',
-            ]
-        );
-        $this->add($extension);
+        // Timeoutextension - hidden field, dropdown managed by JavaScript
+        $this->add(new Hidden('timeout_extension'));
 
-        // Redirecttoextensionifempty
-        $extension = new Select(
-            'redirect_to_extension_if_empty',
-            $options['extensions'],
-            [
-                'using' => [
-                    'id',
-                    'name',
-                ],
-                'useEmpty' => true,
-                'class' => 'ui selection dropdown search redirect_to_extension_if_empty-select',
-            ]
-        );
-        $this->add($extension);
+        // Redirecttoextensionifempty - hidden field, dropdown managed by JavaScript
+        $this->add(new Hidden('redirect_to_extension_if_empty'));
 
-        // Numberunansweredcallstoredirect
-        $ringlength = $entity->number_unanswered_calls_to_redirect;
-        $this->add(
-            new Numeric(
-                'number_unanswered_calls_to_redirect',
-                [
-                    "maxlength" => 2,
-                    "style" => "width: 80px;",
-                    "value" => ($ringlength > 0) ? $ringlength : '',
-                ]
-            )
-        );
-
-        // Redirecttoextensionifunanswered
-        $extension = new Select(
-            'redirect_to_extension_if_unanswered',
-            $options['extensions'],
-            [
-                'using' => [
-                    'id',
-                    'name',
-                ],
-                'useEmpty' => true,
-                'class' => 'ui selection dropdown search forwarding-select',
-            ]
-        );
-        $this->add($extension);
-
-        // Numberrepeatunansweredtoredirect
-        $ringlength = $entity->number_repeat_unanswered_to_redirect;
-        $this->add(
-            new Numeric(
-                'number_repeat_unanswered_to_redirect',
-                [
-                    "maxlength" => 2,
-                    "style" => "width: 80px;",
-                    "value" => ($ringlength > 0) ? $ringlength : '',
-                ]
-            )
-        );
-
-        // Redirecttoextensionifrepeatexceeded
-        $extension = new Select(
-            'redirect_to_extension_if_repeat_exceeded',
-            $options['extensions'],
-            [
-                'using' => [
-                    'id',
-                    'name',
-                ],
-                'useEmpty' => true,
-                'class' => 'ui selection dropdown search forwarding-select',
-            ]
-        );
-        $this->add($extension);
+        // Hidden fields for database compatibility (not displayed in UI)
+        $this->add(new Hidden('number_unanswered_calls_to_redirect'));
+        $this->add(new Hidden('redirect_to_extension_if_unanswered'));
+        $this->add(new Hidden('number_repeat_unanswered_to_redirect'));
+        $this->add(new Hidden('redirect_to_extension_if_repeat_exceeded'));
 
         // Caller ID prefix
         $this->add(new Text('callerid_prefix'));

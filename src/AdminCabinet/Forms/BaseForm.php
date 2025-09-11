@@ -23,6 +23,7 @@ namespace MikoPBX\AdminCabinet\Forms;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\WebUIConfigInterface;
 use MikoPBX\AdminCabinet\Library\SecurityHelper;
+use MikoPBX\AdminCabinet\Forms\Elements\SemanticUIDropdown;
 use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\TextArea;
 use Phalcon\Forms\Form;
@@ -95,5 +96,29 @@ abstract class BaseForm extends Form
             $checkAr = ['checked' => $checkedValue,'value' => $checkedValue];
         }
         $this->add(new Check($fieldName, $checkAr));
+    }
+    
+    /**
+     * Add a SemanticUI dropdown element to the form.
+     *
+     * @param string $name The name of the dropdown field
+     * @param array $options Static options array (if not using API)
+     * @param mixed $value Initial value for the dropdown
+     * @param array $attributes Additional attributes and configuration
+     * @return void
+     */
+    protected function addSemanticUIDropdown(
+        string $name, 
+        array $options = [], 
+        $value = null,
+        array $attributes = []
+    ): void {
+        $element = new SemanticUIDropdown($name, $options, $attributes);
+        
+        if ($value !== null) {
+            $element->setDefault($value);
+        }
+        
+        $this->add($element);
     }
 }

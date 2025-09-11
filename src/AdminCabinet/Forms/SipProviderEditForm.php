@@ -20,12 +20,12 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
+use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
 use Phalcon\Forms\Element\Password;
-use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
 
 /**
@@ -67,14 +67,52 @@ class SipProviderEditForm extends BaseForm
         // Host
         $this->add(new Text('host'));
 
-        // DTMF Mode - will be replaced with dropdown in JavaScript
-        $this->add(new Hidden('dtmfmode', ['value' => $entity->dtmfmode ?? 'auto']));
+        // DTMF Mode - Universal Dropdown
+        $this->addSemanticUIDropdown(
+            'dtmfmode',
+            [
+                'auto' => $this->translation->_('auto'),
+                'rfc4733' => $this->translation->_('rfc4733'),
+                'info' => $this->translation->_('info'),
+                'inband' => $this->translation->_('inband'),
+                'auto_info' => $this->translation->_('auto_info')
+            ],
+            $entity->dtmfmode ?? 'auto',
+            [
+                'clearable' => false,
+                'forceSelection' => true
+            ]
+        );
 
-        // Registration type - will be replaced with dropdown in JavaScript
-        $this->add(new Hidden('registration_type', ['value' => $entity->registration_type ?? 'outbound']));
+        // Registration type - Universal Dropdown
+        $this->addSemanticUIDropdown(
+            'registration_type',
+            [
+                'outbound' => $this->translation->_('pr_RegistrationTypeTooltip_outbound'),
+                'inbound' => $this->translation->_('pr_RegistrationTypeTooltip_inbound'),
+                'none' => $this->translation->_('pr_RegistrationTypeTooltip_none')
+            ],
+            $entity->registration_type ?? 'outbound',
+            [
+                'clearable' => false,
+                'forceSelection' => true
+            ]
+        );
 
-        // Transport protocol - will be replaced with dropdown in JavaScript
-        $this->add(new Hidden('transport', ['value' => $entity->transport ?? 'UDP']));
+        // Transport protocol - Universal Dropdown
+        $this->addSemanticUIDropdown(
+            'transport',
+            [
+                Sip::TRANSPORT_UDP => Sip::TRANSPORT_UDP,
+                Sip::TRANSPORT_TCP => Sip::TRANSPORT_TCP,
+                Sip::TRANSPORT_TLS => Sip::TRANSPORT_TLS,
+            ],
+            $entity->transport ?? Sip::TRANSPORT_UDP,
+            [
+                'clearable' => false,
+                'forceSelection' => true
+            ]
+        );
 
         // Port
         $this->add(new Numeric('port'));
@@ -110,10 +148,8 @@ class SipProviderEditForm extends BaseForm
         // Receive_calls_without_auth
         $this->addCheckBox('receive_calls_without_auth', intval($entity->receive_calls_without_auth) === 1, '1');
 
-        // Network Filter - Hidden field (UI will be created by NetworkFilterSelector)
-        $this->add(new Hidden('networkfilterid', [
-            'value' => $entity->networkfilterid ?? 'none'
-        ]));
+        // Network Filter - using DynamicDropdownBuilder (built by JavaScript)
+        $this->add(new Hidden('networkfilterid'));
 
         // Manualattributes
         $placeholderText = "[registration-auth]\nusername=962xxxxx030@ip.beeline.ru\n\n[endpoint-auth]\nusername=962xxxxx030@ip.beeline.ru";
@@ -126,11 +162,38 @@ class SipProviderEditForm extends BaseForm
         $this->addTextArea('note', $options['note'] ?? '', 80, ['class' => 'confidential-field']);
         
         // CallerID/DID Source Settings
-        // CallerID Source - will be replaced with dropdown in JavaScript
-        $this->add(new Hidden('cid_source', ['value' => $entity->cid_source ?? 'default']));
+        // CallerID Source - Universal Dropdown
+        $this->addSemanticUIDropdown(
+            'cid_source',
+            [
+                'default' => $this->translation->_('pr_CallerIdSourceDefault'),
+                'from' => $this->translation->_('pr_CallerIdSourceFrom'),
+                'rpid' => $this->translation->_('pr_CallerIdSourceRpid'),
+                'pai' => $this->translation->_('pr_CallerIdSourcePai'),
+                'custom' => $this->translation->_('pr_CallerIdSourceCustom')
+            ],
+            $entity->cid_source ?? 'default',
+            [
+                'clearable' => false,
+                'forceSelection' => true
+            ]
+        );
         
-        // DID Source - will be replaced with dropdown in JavaScript
-        $this->add(new Hidden('did_source', ['value' => $entity->did_source ?? 'default']));
+        // DID Source - Universal Dropdown
+        $this->addSemanticUIDropdown(
+            'did_source',
+            [
+                'default' => $this->translation->_('pr_DidSourceDefault'),
+                'to' => $this->translation->_('pr_DidSourceTo'),
+                'diversion' => $this->translation->_('pr_DidSourceDiversion'),
+                'custom' => $this->translation->_('pr_DidSourceCustom')
+            ],
+            $entity->did_source ?? 'default',
+            [
+                'clearable' => false,
+                'forceSelection' => true
+            ]
+        );
         
         // CallerID Custom Settings
         $this->add(new Text('cid_custom_header', [

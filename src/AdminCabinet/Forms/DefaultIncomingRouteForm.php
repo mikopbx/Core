@@ -41,27 +41,11 @@ class DefaultIncomingRouteForm extends BaseForm
             switch ($key) {
                 case 'action' :
                 {
-                    // Simplified actions - only extension and playback
-                    // Special actions (busy, hangup, voicemail, did2user) are now in the extension dropdown
-                    $arrDefaultActions = [
-                        IncomingRoutingTable::ACTION_EXTENSION  => $this->translation->_('ir_extension'),
-                        IncomingRoutingTable::ACTION_PLAYBACK   => $this->translation->_('ir_playback'),
-                    ];
-
-                    $defaultActions = new Select(
-                        'action',
-                        $arrDefaultActions,
-                        [
-                            'using' => [
-                                'id',
-                                'name',
-                            ],
-                            'useEmpty' => false,
-                            'value' => $value,
-                            'class' => 'ui selection dropdown defaultrouteselect',
-                        ]
-                    );
-                    $this->add($defaultActions);
+                    // Action - Hidden field, dropdown will be populated via JS
+                    $this->add(new Hidden('action', [
+                        'id' => 'action',
+                        'value' => $value ?: IncomingRoutingTable::ACTION_EXTENSION
+                    ]));
                     break;
                 }
                 case 'audio_message_id' :{

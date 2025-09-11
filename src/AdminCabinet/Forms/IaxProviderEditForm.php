@@ -68,8 +68,20 @@ class IaxProviderEditForm extends BaseForm
         // Port
         $this->add(new Numeric('port'));
 
-        // Registration type - will be replaced with dropdown in JavaScript
-        $this->add(new Hidden('registration_type', ['value' => $entity->registration_type ?? 'outbound']));
+        // Registration type - Universal Dropdown
+        $this->addSemanticUIDropdown(
+            'registration_type',
+            [
+                'outbound' => $this->translation->_('pr_RegistrationTypeTooltip_outbound'),
+                'inbound' => $this->translation->_('pr_RegistrationTypeTooltip_inbound'),
+                'none' => $this->translation->_('pr_RegistrationTypeTooltip_none')
+            ],
+            $entity->registration_type ?? 'outbound',
+            [
+                'clearable' => false,
+                'forceSelection' => true
+            ]
+        );
 
         // Receive calls without auth
         $this->addCheckBox('receive_calls_without_auth', intval($entity->receive_calls_without_auth) === 1);
@@ -83,10 +95,8 @@ class IaxProviderEditForm extends BaseForm
         // Noregister (hidden for backward compatibility)
         $this->add(new Hidden('noregister'));
 
-        // Network Filter - Hidden field (UI will be created by NetworkFilterSelector)
-        $this->add(new Hidden('networkfilterid', [
-            'value' => $entity->networkfilterid ?? 'none'
-        ]));
+        // Network Filter - using DynamicDropdownBuilder (built by JavaScript)
+        $this->add(new Hidden('networkfilterid'));
 
         // Manualattributes
         $placeholderText = "language = ru\ncodecpriority = host\ntrunktimestamps = yes\ntrunk = yes";

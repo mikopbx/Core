@@ -2,6 +2,7 @@
 {{ form.render('id') }}
 {{ form.render('uniqid') }}
 {{ form.render('applicationlogic') }}
+<input type="hidden" id="copy-from-id" value="{{ copyFromId }}"/>
 <div class="ui ribbon label" id="dialplan-application-extension-number">
     <i class="phone icon"></i> <span id="extension-display"></span>
 </div>
@@ -43,15 +44,8 @@
     <div class="field">
         <label>{{ t._('da_Type') }}</label>
         <div class="field max-width-300">
-            <div class="ui selection dropdown type-select" id="type-dropdown">
-                <input type="hidden" name="type" id="type" value="">
-                <i class="dropdown icon"></i>
-                <div class="default text">{{ t._('da_SelectType') }}</div>
-                <div class="menu">
-                    <div class="item" data-value="php">{{ t._('da_TypePhp') }}</div>
-                    <div class="item" data-value="plaintext">{{ t._('da_TypePlaintext') }}</div>
-                </div>
-            </div>
+            {{ form.render('type') }}
+            <!-- Dropdown created automatically by JavaScript -->
         </div>
     </div>
 

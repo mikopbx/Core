@@ -120,17 +120,14 @@ class AsteriskManagerEditForm extends BaseForm
     }
     
     /**
-     * Add network filter field (hidden - UI will be created by NetworkFilterSelector)
+     * Add network filter dropdown using DynamicDropdownBuilder (built by JavaScript)
      *
      * @param array|null $options Form options containing network filters
      */
     private function addNetworkFilterDropdown($options): void
     {
-        // Add hidden field for network filter ID
-        // The dropdown UI will be created dynamically by NetworkFilterSelector JavaScript
-        $this->add(new Hidden('networkfilterid', [
-            'value' => $this->entity->networkfilterid ?? 'none'
-        ]));
+        // Network filter - using DynamicDropdownBuilder (built by JavaScript)
+        $this->add(new Hidden('networkfilterid'));
     }
     
     /**

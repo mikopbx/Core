@@ -50,18 +50,21 @@
 
     <div class="inline field">
         <label>{{ t._('ir_ActionSelect') }}</label>
-        {{ form.render('action') }}
+        <div class="ui selection dropdown" id="action-dropdown">
+            {{ form.render('action') }}
+            <i class="dropdown icon"></i>
+            <div class="text"></div>
+            <div class="menu">
+                <div class="item" data-value="extension">{{ t._('ir_extension') }}</div>
+                <div class="item" data-value="playback">{{ t._('ir_playback') }}</div>
+            </div>
+        </div>
     </div>
 
 
         <div class="inline field max-width-800" id="extension-group">
             <label>{{ t._('ir_ExtensionSelect') }}</label>
-            <div class="ui selection dropdown search forwarding-select">
-                {{ form.render('extension') }}
-                <i class="dropdown icon"></i>
-                <div class="text"></div>
-                <div class="menu"></div>
-            </div>
+            {{ form.render('extension') }}
         </div>
         <div class="inline field max-width-800" id='audio-group' style="display:none;">
             {{ partial("partials/playAddNewSoundWithIcons", ['label': '', 'id':'audio_message_id', 'fieldClass':'', 'fieldId':'']) }}

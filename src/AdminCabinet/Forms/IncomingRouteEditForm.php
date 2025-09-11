@@ -63,7 +63,6 @@ class IncomingRouteEditForm extends BaseForm
             'id' => [],
             'priority' => [],
             'action' => ['value' => 'extension'],
-            'providerid' => ['id' => 'providerid'],
             'extension' => ['id' => 'extension'],
             'audio_message_id' => ['id' => 'audio_message_id'],
         ];
@@ -71,6 +70,9 @@ class IncomingRouteEditForm extends BaseForm
         foreach ($hiddenFields as $name => $attributes) {
             $this->add(new Hidden($name, $attributes));
         }
+        
+        // Provider dropdown - using DynamicDropdownBuilder (built by JavaScript)
+        $this->add(new Hidden('providerid'));
     }
     
     /**

@@ -20,12 +20,9 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
-use MikoPBX\Common\Models\Extensions;
-use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Providers\TranslationProvider;
-use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
 use Phalcon\Forms\Element\Password;
@@ -40,6 +37,16 @@ use Phalcon\Forms\Element\Text;
  */
 class ExtensionEditForm extends BaseForm
 {
+    /**
+     * List of checkbox fields that should be automatically converted to boolean.
+     * This is used by JavaScript to properly handle form submission.
+     * 
+     * @var array
+     */
+    public array $checkboxFields = [
+        'sip_enableRecording'
+    ];
+    
     public function initialize($entity = null, $options = null): void
     {
         parent::initialize($entity, $options);
@@ -61,21 +68,7 @@ class ExtensionEditForm extends BaseForm
             )
         );
 
-        // Type
-        $this->add(new Hidden('type'));
-
-        // Is_general_user_number
-        $this->add(new Hidden('is_general_user_number'));
-
-        // Show_in_phonebook
-        $this->addCheckBox('show_in_phonebook', intval($entity->show_in_phonebook) === 1);
-
-        // Public_access
-        $this->addCheckBox('public_access', intval($entity->public_access) === 1);
-
-        // USER ID
-        $this->add(new Hidden('user_id', ["value" => $entity->user_id]));
-
+        
         // USER Username
         $this->add(new Text('user_username', ["value" => $entity->user_username, 'autocomplete' => 'off']));
 
@@ -90,14 +83,9 @@ class ExtensionEditForm extends BaseForm
         // USER Picture
         $this->add(new Hidden('user_avatar', ["value" => $entity->user_avatar]));
 
-        // SIP Uniqid
-        $this->add(new Hidden('sip_uniqid', ["value" => $entity->sip_uniqid]));
 
         // SIP extension
         $this->add(new Hidden('sip_extension', ["value" => $entity->number]));
-
-        // SIP Type
-        $this->add(new Hidden('sip_type', ["value" => $entity->sip_type]));
 
         // SIP Secret
         $this->add(
@@ -111,73 +99,46 @@ class ExtensionEditForm extends BaseForm
             )
         );
 
-        // SIP Dtmfmode
-        $arrDTMFType = [
-            'auto' => $this->translation->_('auto'),
-            'inband' => $this->translation->_('inband'),
-            'info' => $this->translation->_('info'),
-            'rfc4733' => $this->translation->_('rfc4733'),
-            'auto_info' => $this->translation->_('auto_info'),
-        ];
-
-        $dtmfmode = new Select(
+         // DTMF Mode - Universal Dropdown
+         $this->addSemanticUIDropdown(
             'sip_dtmfmode',
-            $arrDTMFType,
             [
-                'using' => [
-                    'id',
-                    'name',
-                ],
-                'useEmpty' => false,
-                'value' => $entity->sip_dtmfmode,
-                'class' => 'ui selection dropdown',
+                'auto' => $this->translation->_('auto'),
+                'rfc4733' => $this->translation->_('rfc4733'),
+                'info' => $this->translation->_('info'),
+                'inband' => $this->translation->_('inband'),
+                'auto_info' => $this->translation->_('auto_info')
+            ],
+            $entity->sip_dtmfmode ?? 'auto',
+            [
+                'clearable' => false,
+                'forceSelection' => true
             ]
         );
-        $this->add($dtmfmode);
 
         // SIP EnableRecording
-        $this->addCheckBox('sip_enableRecording', intval($entity->sip_enableRecording) !== 0);
+        $this->addCheckBox('sip_enableRecording', $this->isTrueValue($entity->sip_enableRecording));
 
 
         // SIP Transport
-        $arrTransport = [
-            Sip::TRANSPORT_UDP => Sip::TRANSPORT_UDP,
-            Sip::TRANSPORT_TCP => Sip::TRANSPORT_TCP,
-            Sip::TRANSPORT_TLS => Sip::TRANSPORT_TLS,
-        ];
-
-        $transport = new Select(
+        $this->addSemanticUIDropdown(
             'sip_transport',
-            $arrTransport,
             [
-                'using' => [
-                    'id',
-                    'name',
-                ],
-                'emptyText' => 'udp, tcp',
-                'emptyValue' => ' ',
-                'useEmpty' => true,
-                'value' => $entity->sip_transport,
-                'class' => 'ui selection dropdown',
+                Sip::TRANSPORT_AUTO => Sip::TRANSPORT_AUTO,
+                Sip::TRANSPORT_UDP => Sip::TRANSPORT_UDP,
+                Sip::TRANSPORT_TCP => Sip::TRANSPORT_TCP,
+                Sip::TRANSPORT_TLS => Sip::TRANSPORT_TLS,
+            ],
+            $entity->sip_transport ?? Sip::TRANSPORT_AUTO,
+            [
+                'clearable' => false,
+                'forceSelection' => true
             ]
         );
-        $this->add($transport);
 
-        // SIP Networkfilterid
-        $networkfilterid = new Select(
-            'sip_networkfilterid',
-            $this->prepareNetworkFilters(),
-            [
-                'using' => [
-                    'id',
-                    'name',
-                ],
-                'useEmpty' => false,
-                'value' => $entity->sip_networkfilterid,
-                'class' => 'ui selection dropdown network-filter-select',
-            ]
-        );
-        $this->add($networkfilterid);
+        // SIP Networkfilterid - V5.0 Universal Dropdown Architecture
+        // JavaScript will initialize DynamicDropdownBuilder with API data
+        $this->add(new Hidden('sip_networkfilterid'));
 
         // SIP Manualattributes
         $placeholderText = "[endpoint]\ndevice_state_busy_at = 10\n\n[aor]\nmax_contacts = 5";
@@ -189,9 +150,6 @@ class ExtensionEditForm extends BaseForm
         // EXTERNAL Extension
         $this->add(new Text('mobile_number', ["value" => $entity->mobile_number, 'autocomplete' => 'off']));
 
-        // EXTERNAL Uniqid
-        $this->add(new Hidden('mobile_uniqid', ["value" => $entity->mobile_uniqid]));
-
         // EXTERNAL Dialstring
         $this->add(
             new Text(
@@ -200,59 +158,13 @@ class ExtensionEditForm extends BaseForm
             )
         );
 
-        // Routing tab
-        $forwardingExtensions = $this->prepareForwardingExtensions($entity);
+        // Routing tab - V5.0 Universal Dropdown Architecture
+        // JavaScript will initialize ExtensionSelector with clean data from REST API
+        $this->add(new Hidden('fwd_forwarding'));
 
-        // Forwarding
-        $this->add(
-            new Select(
-                'fwd_forwarding',
-                $forwardingExtensions,
-                [
-                    'using' => [
-                        'id',
-                        'name',
-                    ],
-                    'useEmpty' => true,
-                    'value' => $entity->fwd_forwarding,
-                    'class' => 'ui selection dropdown search forwarding-select',
-                ]
-            )
-        );
+        $this->add(new Hidden('fwd_forwardingonbusy'));
 
-        // Forwardingonbusy
-        $this->add(
-            new Select(
-                'fwd_forwardingonbusy',
-                $forwardingExtensions,
-                [
-                    'using' => [
-                        'id',
-                        'name',
-                    ],
-                    'useEmpty' => true,
-                    'value' => $entity->fwd_forwardingonbusy,
-                    'class' => 'ui selection dropdown search forwarding-select',
-                ]
-            )
-        );
-
-        // Forwardingonunavailable
-        $this->add(
-            new Select(
-                'fwd_forwardingonunavailable',
-                $forwardingExtensions,
-                [
-                    'using' => [
-                        'id',
-                        'name',
-                    ],
-                    'useEmpty' => true,
-                    'value' => $entity->fwd_forwardingonunavailable,
-                    'class' => 'ui selection dropdown search forwarding-select',
-                ]
-            )
-        );
+        $this->add(new Hidden('fwd_forwardingonunavailable'));
 
         // RingLength
         $ringDuration = (int)$entity->fwd_ringlength;
@@ -270,47 +182,42 @@ class ExtensionEditForm extends BaseForm
         );
     }
 
-    /**
-     * Prepare an array of forwarding extensions based on the provided extension.
-     *
-     * @param object $entity extensions request structure.
-     * @return array An array of forwarding extensions with their numbers and representations.
-     */
-    private function prepareForwardingExtensions(object $entity): array
-    {
-        $forwardingExtensions = [];
-        $forwardingExtensions[''] = $this->translation->_('ex_SelectNumber');
-
-        $parameters = [
-            'conditions' => 'number IN ({ids:array})',
-            'bind' => [
-                'ids' => [
-                    $entity->fwd_forwarding,
-                    $entity->fwd_forwardingonbusy,
-                    $entity->fwd_forwardingonunavailable
-                ],
-            ],
-        ];
-        $extensions = Extensions::find($parameters);
-        foreach ($extensions as $record) {
-            $forwardingExtensions[$record->number] = $record->getRepresent();
-        }
-        return $forwardingExtensions;
-    }
+    // V5.0 Architecture: Dropdown preparation methods removed
+    // Data loading and dropdown creation moved to JavaScript using:
+    // - ExtensionSelector for forwarding extensions
+    // - DynamicDropdownBuilder for network filters
+    // - Clean data from REST API with represent fields
 
     /**
-     * Get an array of prepared network filters for SIP type.
+     * Helper method to determine if a value should be considered "true"
+     * Works with both boolean values (from REST API v2) and string values (from legacy)
      *
-     * @return array An array of network filters with their IDs and representations.
+     * @param mixed $value The value to check (bool, string, int, or null)
+     * @return bool True if the value should be considered "true", false otherwise
      */
-    private function prepareNetworkFilters(): array
+    private function isTrueValue($value): bool
     {
-        $arrNetworkFilters = [];
-        $networkFilters = NetworkFilters::getAllowedFiltersForType(['SIP']);
-        $arrNetworkFilters['none'] = $this->translation->_('ex_NoNetworkFilter');
-        foreach ($networkFilters as $filter) {
-            $arrNetworkFilters[$filter->id] = $filter->getRepresent();
+        // Handle null or empty values
+        if ($value === null || $value === '') {
+            return false;
         }
-        return $arrNetworkFilters;
+        
+        // Handle boolean values (from REST API v2)
+        if (is_bool($value)) {
+            return $value;
+        }
+        
+        // Handle string values (from legacy API)
+        if (is_string($value)) {
+            return $value === '1' || strtolower($value) === 'true';
+        }
+        
+        // Handle integer values
+        if (is_int($value)) {
+            return $value !== 0;
+        }
+        
+        // For any other type, convert to int and check
+        return intval($value) === 1;
     }
 }

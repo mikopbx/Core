@@ -16,20 +16,19 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global $, globalTranslate, SoundFilesAPI, Form, globalRootUrl */
+/* global $, globalTranslate, SoundFilesAPI, Form, DynamicDropdownBuilder, SecurityUtils */
 
 /**
- * SoundFileSelector - Unified component for sound file dropdown selection with playback
+ * SoundFileSelector - Audio-specific extension of DynamicDropdownBuilder
  * 
- * Provides consistent sound file selection functionality across the application:
- * - Unified initialization and configuration
- * - REST API integration for loading sound files
+ * This component builds upon DynamicDropdownBuilder to add audio-specific features:
  * - Built-in audio playback functionality
- * - Support for custom/moh categories
- * - Integration with play and add buttons
+ * - Play/pause button integration
+ * - Support for custom/moh sound file categories
+ * - Audio preview capabilities
  * 
  * Usage:
- * SoundFileSelector.init('#audio_message_id', {
+ * SoundFileSelector.init('audio_message_id', {
  *     category: 'custom',           // File category (custom/moh)
  *     includeEmpty: true,           // Show empty option
  *     onChange: (value) => { ... }  // Change callback
@@ -40,13 +39,13 @@
 const SoundFileSelector = {
     
     /**
-     * Active selector instances
+     * Active selector instances with audio capabilities
      * @type {Map}
      */
     instances: new Map(),
     
     /**
-     * Audio player element
+     * Global audio player element
      * @type {HTMLAudioElement|null}
      */
     audioPlayer: null,
@@ -63,15 +62,12 @@ const SoundFileSelector = {
      */
     defaults: {
         category: 'custom',       // Sound file category (custom/moh)
-        includeEmpty: true,       // Include empty option
-        forceSelection: false,    // Force user to select a file
-        clearable: false,         // Allow clearing selection
-        fullTextSearch: true,     // Enable full text search
-        onChange: null,           // Change callback function
-        onPlay: null,            // Play callback function
+        includeEmpty: true,       // Include empty/none option
         placeholder: null,        // Placeholder text (auto-detected)
         showPlayButton: true,     // Show play button
         showAddButton: true,      // Show add new file button
+        onChange: null,           // Change callback function
+        onPlay: null,            // Play callback function
     },
     
     /**
@@ -82,149 +78,154 @@ const SoundFileSelector = {
      * @returns {object|null} Selector instance
      */
     init(fieldId, options = {}) {
-        // Find elements - try multiple ways to find container
-        let $container = $(`#${fieldId}-container, .${fieldId}-container`).first();
-        if ($container.length === 0) {
-            $container = $(`[data-field-id="${fieldId}"]`).first();
-        }
-        if ($container.length === 0) {
-            $container = $(`.${fieldId}-dropdown`).closest('.field').parent();
-        }
-        
-        const $dropdown = $(`.${fieldId}-dropdown`);
-        const $hiddenInput = $(`input[name="${fieldId}"]`);
-        
-        
-        if ($dropdown.length === 0) {
-            console.warn(`SoundFileSelector: Dropdown not found for field: ${fieldId}`);
-            return null;
-        }
-        
         // Check if already initialized
         if (this.instances.has(fieldId)) {
             return this.instances.get(fieldId);
         }
         
+        // Find hidden input element
+        const $hiddenInput = $(`#${fieldId}`);
+        if (!$hiddenInput.length) {
+            return null;
+        }
+        
         // Merge options with defaults
         const config = { ...this.defaults, ...options };
         
-        // Auto-detect placeholder
-        if (!config.placeholder) {
-            config.placeholder = this.detectPlaceholder($dropdown);
+        // Get current value and represent text from data object if provided
+        const currentValue = (options.data && options.data[fieldId]) || $hiddenInput.val() || config.defaultValue || '';
+        const currentText = this.detectInitialText(fieldId, options.data) || config.placeholder;
+        
+        // Create dropdown configuration for DynamicDropdownBuilder
+        const dropdownConfig = {
+            apiUrl: `/pbxcore/api/v2/sound-files/getForSelect`,
+            apiParams: {
+                category: config.category
+            },
+            placeholder: config.placeholder || globalTranslate.sf_SelectAudioFile || 'Select audio file',
+            onChange: (value, text, $choice) => {
+                this.handleSelectionChange(fieldId, value, text, $choice, config);
+            }
+        };
+        
+        // Add empty option if needed
+        if (config.includeEmpty) {
+            dropdownConfig.emptyOption = {
+                key: '',
+                value: '-'
+            };
         }
         
-        // Create instance
+        // Build dropdown using DynamicDropdownBuilder
+        const dropdownData = {
+            [fieldId]: currentValue
+        };
+        
+        // Add represent text if available and we have a value
+        if (currentValue && currentText) {
+            dropdownData[`${fieldId}_represent`] = currentText;
+        }
+        
+        
+        DynamicDropdownBuilder.buildDropdown(fieldId, dropdownData, dropdownConfig);
+        
+        // Create instance for audio functionality
         const instance = {
             fieldId,
-            $container,
-            $dropdown,
-            $hiddenInput,
             config,
-            initialized: false,
-            currentValue: null,
-            currentText: null,
+            currentValue,
+            currentText,
+            $hiddenInput,
             playButton: null,
             addButton: null
         };
         
-        // Initialize components
-        this.initializeDropdown(instance);
-        this.initializeButtons(instance);
-        this.initializeAudioPlayer();
+        // Initialize audio-specific features
+        this.initializeAudioFeatures(instance);
         
         // Store instance
         this.instances.set(fieldId, instance);
-        instance.initialized = true;
         
         return instance;
     },
     
     /**
-     * Detect placeholder text
+     * Detect initial text from data object or dropdown
      * 
-     * @param {jQuery} $dropdown - Dropdown element
-     * @returns {string} Detected text
+     * @param {string} fieldId - Field ID
+     * @param {object} data - Data object with represent fields
+     * @returns {string|null} Initial text
      */
-    detectPlaceholder($dropdown) {
-        const $defaultText = $dropdown.find('.default.text');
-        if ($defaultText.length > 0) {
-            return $defaultText.text();
+    detectInitialText(fieldId, data) {
+        if (data && data[`${fieldId}_represent`]) {
+            return data[`${fieldId}_represent`];
         }
-        return globalTranslate.sf_SelectAudioFile || 'Select audio file';
+        
+        // Try to get from existing dropdown text
+        const $dropdown = $(`#${fieldId}-dropdown`);
+        if ($dropdown.length) {
+            const $text = $dropdown.find('.text:not(.default)');
+            if ($text.length && $text.text().trim()) {
+                return $text.html();
+            }
+        }
+        
+        return null;
     },
     
     /**
-     * Initialize dropdown with sound file data
+     * Handle dropdown selection change
+     * 
+     * @param {string} fieldId - Field ID
+     * @param {string} value - Selected value
+     * @param {string} text - Selected text
+     * @param {jQuery} $choice - Selected choice element
+     * @param {object} config - Configuration
+     */
+    handleSelectionChange(fieldId, value, text, $choice, config) {
+        const instance = this.instances.get(fieldId);
+        if (!instance) return;
+        
+        // Update instance state
+        instance.currentValue = value;
+        instance.currentText = text;
+        
+        // CRITICAL: Update hidden input field to maintain synchronization
+        const $hiddenInput = $(`#${fieldId}`);
+        if ($hiddenInput.length) {
+            $hiddenInput.val(value);
+        }
+        
+        // Update play button state
+        this.updatePlayButtonState(instance);
+        
+        // Call custom onChange if provided
+        if (typeof config.onChange === 'function') {
+            config.onChange(value, text, $choice);
+        }
+        
+        // Notify form of changes
+        if (typeof Form !== 'undefined' && Form.dataChanged) {
+            Form.dataChanged();
+        }
+    },
+    
+    /**
+     * Initialize audio-specific features
      * 
      * @param {object} instance - Selector instance
      */
-    initializeDropdown(instance) {
-        const { $dropdown, $hiddenInput, config, fieldId } = instance;
+    initializeAudioFeatures(instance) {
+        // Initialize global audio player
+        this.initializeAudioPlayer();
         
-        // Dropdown configuration with no caching
-        const dropdownSettings = {
-            apiSettings: {
-                url: SoundFilesAPI.endpoints.getForSelect,
-                method: 'GET',
-                cache: false,
-                beforeSend(settings) {
-                    // Add timestamp to prevent caching
-                    settings.data = { 
-                        category: config.category,
-                        _t: Date.now()
-                    };
-                    return settings;
-                },
-                onResponse(response) {
-                    return SoundFileSelector.formatDropdownResults(response, config.includeEmpty);
-                }
-            },
-            onChange(value, text, $selectedItem) {
-                // Update instance
-                instance.currentValue = value;
-                instance.currentText = text;
-                
-                // Update hidden input
-                if ($hiddenInput.length > 0) {
-                    $hiddenInput.val(value).trigger('change');
-                }
-                
-                // Update play button state
-                SoundFileSelector.updatePlayButtonState(instance, value);
-                
-                // Call custom onChange
-                if (typeof config.onChange === 'function') {
-                    config.onChange(value, text, $selectedItem);
-                }
-                
-                // Mark form as changed
-                if (typeof Form !== 'undefined' && Form.dataChanged) {
-                    Form.dataChanged();
-                }
-            },
-            clearable: config.clearable,
-            fullTextSearch: config.fullTextSearch,
-            forceSelection: config.forceSelection,
-            placeholder: config.placeholder,
-            ignoreCase: true,
-            filterRemoteData: true,
-            saveRemoteData: false,
-            cache: false,
-            hideDividers: 'empty'
-        };
+        // Find and initialize buttons
+        this.initializeButtons(instance);
         
-        // Clear any existing initialization and data
-        $dropdown.dropdown('destroy');
-        
-        // Clear dropdown menu content
-        $dropdown.find('.menu').empty();
-        
-        // Clear any cached data
-        $dropdown.removeData();
-        
-        // Initialize dropdown
-        $dropdown.dropdown(dropdownSettings);
+        // Update initial button state
+        this.updatePlayButtonState(instance);
     },
+    
     
     /**
      * Initialize control buttons (play/add)
@@ -232,23 +233,26 @@ const SoundFileSelector = {
      * @param {object} instance - Selector instance
      */
     initializeButtons(instance) {
-        const { $container, config, fieldId } = instance;
+        const { fieldId, config } = instance;
         
-        // Find button container
-        let $buttonContainer = $container.find('.ui.buttons').first();
-        if ($buttonContainer.length === 0) {
-            $buttonContainer = $container.find('.field').last().find('.ui.buttons');
+        // Find button container by looking near the dropdown
+        const $dropdown = $(`#${fieldId}-dropdown`);
+        if (!$dropdown.length) return;
+        
+        // Look for buttons in the same parent container (unstackable fields)
+        let $buttonContainer = $dropdown.closest('.unstackable.fields').find('.ui.buttons');
+        
+        // Fallback: look in the same field
+        if (!$buttonContainer.length) {
+            $buttonContainer = $dropdown.closest('.field').find('.ui.buttons');
         }
         
         if ($buttonContainer.length > 0) {
-            // Play button
+            // Initialize play button
             if (config.showPlayButton) {
                 instance.playButton = $buttonContainer.find('.action-playback-button').first();
                 
                 if (instance.playButton.length > 0) {
-                    // Initially disable the button
-                    instance.playButton.addClass('disabled');
-                    
                     instance.playButton.off('click').on('click', (e) => {
                         e.preventDefault();
                         this.handlePlayClick(instance);
@@ -256,10 +260,9 @@ const SoundFileSelector = {
                 }
             }
             
-            // Add button
+            // Find add button (no additional handling needed - has href)
             if (config.showAddButton) {
                 instance.addButton = $buttonContainer.find('a[href*="sound-files/modify"]').first();
-                // Add button already has href, no additional handling needed
             }
         }
     },
@@ -280,49 +283,9 @@ const SoundFileSelector = {
             });
             
             this.audioPlayer.addEventListener('error', (e) => {
-                console.error('Audio playback error:', e);
                 this.stopPlayback();
             });
         }
-    },
-    
-    /**
-     * Format dropdown results
-     * 
-     * @param {object} response - API response
-     * @param {boolean} includeEmpty - Include empty option
-     * @returns {object} Formatted results
-     */
-    formatDropdownResults(response, includeEmpty) {
-        const formattedResponse = {
-            success: false,
-            results: []
-        };
-        
-        if (includeEmpty) {
-            formattedResponse.results.push({
-                name: '-',
-                value: -1,
-                text: '-'
-            });
-        }
-        
-        if (response && response.result && response.data) {
-            formattedResponse.success = true;
-            response.data.forEach((item) => {
-                // Use represent field which already contains the icon
-                const displayName = item.represent;
-                
-                formattedResponse.results.push({
-                    name: displayName,
-                    value: item.id,
-                    text: displayName,
-                    raw: displayName // Store raw text for search
-                });
-            });
-        }
-        
-        return formattedResponse;
     },
     
     /**
@@ -373,7 +336,6 @@ const SoundFileSelector = {
                 this.currentlyPlayingId = fileId;
                 this.audioPlayer.src = `/pbxcore/api/v2/sound-files/playback?view=${encodeURIComponent(response.data.path)}`;
                 this.audioPlayer.play().catch(error => {
-                    console.error('Failed to play audio:', error);
                     this.stopPlayback();
                 });
             } else {
@@ -405,19 +367,28 @@ const SoundFileSelector = {
     },
     
     /**
-     * Update play button state based on selection
+     * Update play button state based on current selection
      * 
      * @param {object} instance - Selector instance
-     * @param {string} value - Selected value
      */
-    updatePlayButtonState(instance, value) {
-        if (instance.playButton) {
-            if (!value || value === '-1' || value === -1) {
-                instance.playButton.addClass('disabled');
-                // Make sure icon is in play state when disabled
-                instance.playButton.find('i').removeClass('pause').addClass('play');
+    updatePlayButtonState(instance) {
+        if (!instance.playButton || !instance.playButton.length) return;
+        
+        const { currentValue } = instance;
+        
+        if (!currentValue || currentValue === '' || currentValue === '-') {
+            // Disable button and ensure play icon
+            instance.playButton.addClass('disabled');
+            instance.playButton.find('i').removeClass('pause').addClass('play');
+        } else {
+            // Enable button
+            instance.playButton.removeClass('disabled');
+            
+            // Set appropriate icon based on playback state
+            if (this.currentlyPlayingId === currentValue && !this.audioPlayer.paused) {
+                instance.playButton.find('i').removeClass('play').addClass('pause');
             } else {
-                instance.playButton.removeClass('disabled');
+                instance.playButton.find('i').removeClass('pause').addClass('play');
             }
         }
     },
@@ -432,28 +403,18 @@ const SoundFileSelector = {
     setValue(fieldId, value, text = null) {
         const instance = this.instances.get(fieldId);
         if (!instance) {
-            console.warn(`SoundFileSelector: Instance not found for field: ${fieldId}`);
             return;
         }
         
-        const { $dropdown, $hiddenInput } = instance;
+        // Use DynamicDropdownBuilder to set the value
+        DynamicDropdownBuilder.setValue(fieldId, value);
         
-        // Set dropdown value
-        $dropdown.dropdown('set value', value);
-        
-        // Set text if provided
-        if (text) {
-            $dropdown.dropdown('set text', text);
-            instance.currentText = text;
-        }
-        
-        // Update hidden input
-        if ($hiddenInput.length > 0) {
-            $hiddenInput.val(value);
-        }
-        
+        // Update instance state
         instance.currentValue = value;
-        this.updatePlayButtonState(instance, value);
+        instance.currentText = text || '';
+        
+        // Update play button state
+        this.updatePlayButtonState(instance);
     },
     
     /**
@@ -473,10 +434,11 @@ const SoundFileSelector = {
      * @param {string} fieldId - Field ID
      */
     refresh(fieldId) {
-        const instance = this.instances.get(fieldId);
-        if (instance && instance.$dropdown) {
-            instance.$dropdown.dropdown('clear cache');
-            instance.$dropdown.dropdown('restore defaults');
+        // Delegate to DynamicDropdownBuilder
+        // (DynamicDropdownBuilder would need a refresh method)
+        const $dropdown = $(`#${fieldId}-dropdown`);
+        if ($dropdown.length) {
+            $dropdown.dropdown('refresh');
         }
     },
     
@@ -491,11 +453,6 @@ const SoundFileSelector = {
             // Stop playback if playing
             if (this.currentlyPlayingId === instance.currentValue) {
                 this.stopPlayback();
-            }
-            
-            // Destroy dropdown
-            if (instance.$dropdown) {
-                instance.$dropdown.dropdown('destroy');
             }
             
             // Remove event handlers
@@ -515,90 +472,55 @@ const SoundFileSelector = {
      */
     clear(fieldId) {
         const instance = this.instances.get(fieldId);
-        if (instance && instance.$dropdown) {
-            instance.$dropdown.dropdown('clear');
+        if (instance) {
+            // Use DynamicDropdownBuilder to clear
+            DynamicDropdownBuilder.clear(fieldId);
+            
+            // Update instance state
             instance.currentValue = null;
             instance.currentText = null;
-            this.updatePlayButtonState(instance, null);
             
-            // Update hidden input
-            if (instance.$hiddenInput.length > 0) {
-                instance.$hiddenInput.val('');
-            }
+            // Update play button state
+            this.updatePlayButtonState(instance);
         }
     },
     
     /**
-     * Set dropdown selection by value (without representation text)
-     * 
-     * @param {string} fieldId - Field ID
-     * @param {string} value - Value to select
+     * Clear cache for sound files API
+     * Call this after sound file operations (add/edit/delete)
+     * @param {string} category - Optional: specific category to clear ('custom', 'moh')
      */
-    setSelected(fieldId, value) {
-        const instance = this.instances.get(fieldId);
-        if (instance && instance.$dropdown) {
-            instance.$dropdown.dropdown('set selected', value);
-            instance.currentValue = value;
-            this.updatePlayButtonState(instance, value);
-            
-            // Update hidden input
-            if (instance.$hiddenInput.length > 0) {
-                instance.$hiddenInput.val(value);
-            }
+    clearCache(category = null) {
+        if (category) {
+            // Clear cache for specific category
+            DynamicDropdownBuilder.clearCacheFor('/pbxcore/api/v2/sound-files/getForSelect', { category });
+        } else {
+            // Clear all sound files cache
+            DynamicDropdownBuilder.clearCacheFor('/pbxcore/api/v2/sound-files/getForSelect');
         }
     },
     
     /**
-     * Refresh dropdown data and clear cache
-     * 
-     * @param {string} fieldId - Field ID
+     * Refresh all sound file dropdowns on the page
+     * This will force them to reload data from server
+     * @param {string} category - Optional: specific category to refresh ('custom', 'moh')
      */
-    clearCache(fieldId) {
-        const instance = this.instances.get(fieldId);
-        if (instance && instance.$dropdown) {
-            // Clear Semantic UI cache
-            instance.$dropdown.dropdown('clear cache');
-            
-            // Clear dropdown menu content
-            instance.$dropdown.find('.menu').empty();
-            
-            // Clear jQuery data cache
-            instance.$dropdown.removeData();
-            
-            // Force refresh on next interaction
-            instance.$dropdown.dropdown('refresh');
-        }
-    },
-    
-    /**
-     * Check if field has a value selected
-     * 
-     * @param {string} fieldId - Field ID
-     * @returns {boolean} True if has value
-     */
-    hasValue(fieldId) {
-        const instance = this.instances.get(fieldId);
-        return instance && instance.currentValue && instance.currentValue !== '-1' && instance.currentValue !== -1;
-    },
-    
-    /**
-     * Get dropdown jQuery object (for advanced operations)
-     * 
-     * @param {string} fieldId - Field ID
-     * @returns {jQuery|null} Dropdown jQuery object
-     */
-    getDropdown(fieldId) {
-        const instance = this.instances.get(fieldId);
-        return instance ? instance.$dropdown : null;
-    },
-    
-    /**
-     * Destroy all instances
-     */
-    destroyAll() {
-        this.stopPlayback();
+    refreshAll(category = null) {
+        // Clear cache first
+        this.clearCache(category);
+        
+        // Refresh each active instance
         this.instances.forEach((instance, fieldId) => {
-            this.destroy(fieldId);
+            if (!category || instance.config.category === category) {
+                // Clear dropdown and reload
+                DynamicDropdownBuilder.clear(fieldId);
+                
+                // Reinitialize dropdown to trigger new API request
+                const $dropdown = $(`#${fieldId}-dropdown`);
+                if ($dropdown.length) {
+                    $dropdown.dropdown('refresh');
+                }
+            }
         });
     }
 };

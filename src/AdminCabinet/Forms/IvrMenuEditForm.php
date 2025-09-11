@@ -73,15 +73,12 @@ class IvrMenuEditForm extends BaseForm
             )
         );
 
-        // Timeout extension - Hidden field, dropdown will be populated via JS
-        $this->add(new Hidden('timeout_extension', [
-            'id' => 'timeout_extension'
-        ]));
+        // Timeout extension - V5.0 Architecture: Hidden input only, dropdown created by JavaScript
+        $this->add(new Hidden('timeout_extension'));
 
-        // Audio_message_id - Hidden field, dropdown will be populated via JS
-        $this->add(new Hidden('audio_message_id', [
-            'id' => 'audio_message_id'
-        ]));
+        // Audio message - using Hidden field instead of SemanticUIDropdown
+        // The dropdown will be created by Volt partial playAddNewSoundWithIcons
+        $this->add(new Hidden('audio_message_id'));
 
         //Allow_enter_any_internal_extension
         $this->addCheckBox(

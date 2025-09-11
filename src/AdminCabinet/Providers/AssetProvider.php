@@ -331,9 +331,11 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/vendor/jquery.tablednd.js', true)
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/pbx/PbxAPI/callQueuesAPI.js', true)
-                ->addJs('js/pbx/CallQueues/callqueue-modify.js', true)
                 ->addJs('js/pbx/PbxAPI/soundFilesAPI.js', true)
-                ->addJs('js/pbx/FormElements/sound-file-selector.js', true);
+                ->addJs('js/pbx/FormElements/dynamic-dropdown-builder.js', true)
+                ->addJs('js/pbx/FormElements/extension-selector.js', true)
+                ->addJs('js/pbx/FormElements/sound-file-selector.js', true)
+                ->addJs('js/pbx/CallQueues/callqueue-modify.js', true);
         }
     }
 
@@ -560,7 +562,7 @@ class AssetProvider implements ServiceProviderInterface
                  ->addJs('js/pbx/main/TooltipBuilder.js', true)
                  ->addJs('js/vendor/clipboard/clipboard.js', true)
                  ->addJs('js/pbx/PbxAPI/networkFiltersAPI.js', true)
-                 ->addJs('js/pbx/FormElements/network-filter-selector.js', true)
+                  ->addJs('js/pbx/FormElements/dynamic-dropdown-builder.js', true)
                  ->addJs('js/pbx/Providers/provider-base-modify.js', true)
                  ->addJs('js/pbx/Providers/provider-tooltip-manager.js', true)
                  ->addJs('js/pbx/Providers/provider-sip-tooltip-manager.js', true)
@@ -577,7 +579,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/main/TooltipBuilder.js', true)
                 ->addJs('js/vendor/clipboard/clipboard.js', true)
                 ->addJs('js/pbx/PbxAPI/networkFiltersAPI.js', true)
-                ->addJs('js/pbx/FormElements/network-filter-selector.js', true)
+                ->addJs('js/pbx/FormElements/dynamic-dropdown-builder.js', true)
                 ->addJs('js/pbx/Providers/provider-base-modify.js', true)
                 ->addJs('js/pbx/Providers/provider-tooltip-manager.js', true)
                 ->addJs('js/pbx/Providers/provider-iax-tooltip-manager.js', true)
@@ -656,6 +658,8 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/PbxAPI/incomingRoutesAPI.js', true)
                 ->addJs('js/pbx/PbxAPI/extensionsAPI.js', true)
                 ->addJs('js/pbx/PbxAPI/soundFilesAPI.js', true)
+                ->addJs('js/pbx/FormElements/dynamic-dropdown-builder.js', true)
+                ->addJs('js/pbx/FormElements/extension-selector.js', true)
                 ->addJs('js/pbx/FormElements/sound-file-selector.js', true)
                 ->addJs('js/pbx/OutOffWorkTime/out-of-work-time-modify.js', true);
         }
@@ -681,8 +685,7 @@ class AssetProvider implements ServiceProviderInterface
             $this->footerCollectionJS
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/pbx/PbxAPI/outboundRoutesAPI.js', true)
-                ->addJs('js/pbx/PbxAPI/providersAPI.js', true)
-                ->addJs('js/pbx/FormElements/provider-selector.js', true)
+                ->addJs('js/pbx/FormElements/dynamic-dropdown-builder.js', true)
                 ->addJs('js/pbx/OutboundRoutes/outbound-route-modify.js', true);
         }
     }
@@ -739,7 +742,9 @@ class AssetProvider implements ServiceProviderInterface
             $this->footerCollectionJS->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/pbx/PbxAPI/ivrMenuAPI.js', true)
                 ->addJs('js/pbx/PbxAPI/soundFilesAPI.js', true)
-                ->addJs('js/pbx/FormElements/sound-file-selector.js', true)
+                ->addJs('js/pbx/FormElements/dynamic-dropdown-builder.js', true)    // Base class
+                ->addJs('js/pbx/FormElements/extension-selector.js', true)          // Extensions
+                ->addJs('js/pbx/FormElements/sound-file-selector.js', true)         // Sound files
                 ->addJs('js/pbx/IvrMenu/ivrmenu-modify.js', true);
         }
     }
@@ -761,16 +766,18 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
                 ->addJs('js/pbx/PbxAPI/soundFilesAPI.js', true)
                 ->addJs('js/pbx/PbxAPI/incomingRoutesAPI.js', true)
+                ->addJs('js/pbx/FormElements/dynamic-dropdown-builder.js', true)
                 ->addJs('js/pbx/FormElements/sound-file-selector.js', true)
+                ->addJs('js/pbx/FormElements/extension-selector.js', true)
                 ->addJs('js/pbx/IncomingRoutes/incoming-route-default.js', true)
                 ->addJs('js/pbx/IncomingRoutes/incoming-route-index.js', true);
         } elseif ($action === 'modify') {
             $this->footerCollectionJS->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/pbx/PbxAPI/soundFilesAPI.js', true)
                 ->addJs('js/pbx/PbxAPI/incomingRoutesAPI.js', true)
-                ->addJs('js/pbx/PbxAPI/providersAPI.js', true)
-                ->addJs('js/pbx/FormElements/provider-selector.js', true)
+                ->addJs('js/pbx/FormElements/dynamic-dropdown-builder.js', true)
                 ->addJs('js/pbx/FormElements/sound-file-selector.js', true)
+                ->addJs('js/pbx/FormElements/extension-selector.js', true)
                 ->addJs('js/pbx/IncomingRoutes/incoming-route-modify.js', true);
         }
     }
@@ -798,6 +805,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/vendor/jquery.tablednd.js', true)
                 ->addJs('js/vendor/clipboard/clipboard.js', true)
                 ->addJs('js/pbx/PbxAPI/soundFilesAPI.js', true)
+                ->addJs('js/pbx/FormElements/dynamic-dropdown-builder.js', true)
                 ->addJs('js/pbx/FormElements/sound-file-selector.js', true)
                 ->addJs('js/pbx/GeneralSettings/ssh-keys-table.js', true)
                 ->addJs('js/pbx/main/form.js', true)
@@ -902,13 +910,15 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/Extensions/input-mask-patterns.js', true)
                 ->addJs('js/pbx/PbxAPI/sipAPI.js', true)
                 ->addJs('js/pbx/Extensions/extensions-index.js', true)
-                ->addJs('js/pbx/Extensions/extensions-index-status-worker.js', true)
+                ->addJs('js/pbx/Extensions/extension-index-status-monitor.js', true)
                 ->addJs('js/pbx/main/debugger-info.js', true);
         } elseif ($action === 'modify') {
             // Add password widget assets
             $this->addPasswordWidgetAssets();
             
-            $this->semanticCollectionCSS->addCss('css/vendor/semantic/card.min.css', true);
+            $this->semanticCollectionCSS
+                ->addCss('css/vendor/semantic/card.min.css', true)
+                ->addCss('css/vendor/semantic/list.min.css', true);
             $this->footerCollectionJS
                 ->addJs('js/vendor/inputmask/jquery.inputmask.min.js', true)
                 ->addJs('js/vendor/inputmask/jquery.inputmask-multi.js', true)
@@ -918,11 +928,29 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/Extensions/input-mask-patterns.js', true)
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/pbx/main/debugger-info.js', true)
-                ->addJs('js/pbx/PbxAPI/networkFiltersAPI.js', true)
-                ->addJs('js/pbx/FormElements/network-filter-selector.js', true)
+                // V5.0 Universal Dropdown System assets
+                ->addJs('js/pbx/PbxAPI/extensionsAPI.js', true)                     // Extension API methods
+                ->addJs('js/pbx/PbxAPI/employeesAPI.js', true)                      // Employees API methods
+                ->addJs('js/pbx/PbxAPI/networkFiltersAPI.js', true)                 // Network filters API
+                ->addJs('js/pbx/FormElements/dynamic-dropdown-builder.js', true)   // Base dropdown class
+                ->addJs('js/pbx/FormElements/extension-selector.js', true)         // Extension dropdowns
                 ->addJs('js/pbx/Extensions/extension-modify-avatar.js', true)
-                ->addJs('js/pbx/Extensions/extension-modify-status-worker.js', true)
-                ->addJs('js/pbx/Extensions/extension-modify.js', true);
+                ->addJs('js/pbx/Extensions/extension-modify-status-monitor.js', true)
+                ->addJs('js/pbx/main/TooltipBuilder.js', true)                     // Unified tooltip system
+                ->addJs('js/pbx/Extensions/extension-tooltip-manager.js', true)    // Extension tooltips
+                ->addJs('js/pbx/Extensions/extension-modify.js', true);            // Main form logic
+        } elseif ($action === 'bulkupload') {
+            $this->semanticCollectionCSS
+                ->addCss('css/vendor/semantic/progress.min.css', true)
+                ->addCss('css/vendor/semantic/statistic.min.css', true)
+                ->addCss('css/vendor/semantic/list.min.css', true);
+            
+            $this->semanticCollectionJS
+                ->addJs('js/vendor/semantic/progress.min.js', true);
+            
+            $this->footerCollectionJS
+                ->addJs('js/vendor/resumable.js', true)
+                ->addJs('js/pbx/Extensions/extensions-bulk-upload.js', true);
         }
     }
 
@@ -950,6 +978,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/vendor/jquery.address.min.js', true)
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/pbx/PbxAPI/dialplanApplicationsAPI.js', true)
+                ->addJs('js/pbx/FormElements/dynamic-dropdown-builder.js', true)
                 ->addJs('js/pbx/DialplanApplications/dialplan-applications-modify.js', true);
         }
     }
@@ -1040,7 +1069,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/vendor/clipboard/clipboard.js', true)
                 ->addJs('js/pbx/PbxAPI/asteriskManagersAPI.js', true)
                 ->addJs('js/pbx/PbxAPI/networkFiltersAPI.js', true)
-                ->addJs('js/pbx/FormElements/network-filter-selector.js', true)
+                ->addJs('js/pbx/FormElements/dynamic-dropdown-builder.js', true)
                 ->addJs('js/pbx/AsteriskManagers/manager-modify.js', true);
 
             $this->semanticCollectionCSS
@@ -1073,7 +1102,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/vendor/datatable/dataTables.semanticui.min.js', true)
                 ->addJs('js/pbx/PbxAPI/apiKeysAPI.js', true)
                 ->addJs('js/pbx/PbxAPI/networkFiltersAPI.js', true)
-                ->addJs('js/pbx/FormElements/network-filter-selector.js', true)
+                ->addJs('js/pbx/FormElements/dynamic-dropdown-builder.js', true)
                 ->addJs('js/pbx/ApiKeys/api-keys-modify.js', true);
         }
     }

@@ -3,21 +3,13 @@
 {{ form(['action' : 'extensions/save', 'method': 'post', 'role': 'form', 'class': 'ui form', 'id':'extensions-form']) }}
 
 {{ form.render('id') }}
-{{ form.render('type') }}
-{{ form.render('is_general_user_number') }}
-
-{{ form.render('sip_type') }}
-{{ form.render('sip_uniqid') }}
-
-{{ form.render('mobile_uniqid') }}
-
 {{ form.render('user_avatar') }}
-{{ form.render('user_id') }}
 <input type="file" name="file-select" id="file-select" style="display: none"/>
 
 <div class="ui top attached tabular menu" id="extensions-menu">
         <a class="item active" data-tab="general">{{ t._('ex_GeneralSettings') }}</a>
         <a class="item" data-tab="routing">{{ t._('ex_RoutingSettings') }}</a>
+        <a class="item" data-tab="status"><i class="heartbeat icon"></i>{{ t._('ex_MonitoringTab') }}</a>
     {{ partial("PbxExtensionModules/hookVoltBlock",
         ['arrayOfPartials':hookVoltBlock('TabularMenu')])
     }}
@@ -57,11 +49,6 @@
                 <div class="ui top pointing red label hidden" id="email-error"></div>
             </div>
 
-            {# <div class="field"> #}
-            {# <label >{{ t._('ex_Language') }}</label> #}
-            {# {{ form.render('user_language') }} #}
-            {# </div> #}
-
             <div class="field">
                 <label>{{ t._('ex_Secret') }}</label>
                 {{ form.render('sip_secret') }}
@@ -71,7 +58,7 @@
             <div class="field">
                 <div class="ui centered card">
                     <div class="image">
-                        <img src='{{ avatar }}' id="avatar" alt="{{ t._('ex_UserPhotography') }}">
+                        <img src='/admin-cabinet/assets/img/unknownPerson.jpg' id="avatar" alt="{{ t._('ex_UserPhotography') }}">
                     </div>
                     <div class="ui bottom attached basic buttons">
                         <div class="ui button" id="upload-new-avatar">
@@ -85,10 +72,6 @@
                 </div>
             </div>
         </div>
-    </div>
-    <div id='endpoint-list-field' class="field">
-        <label>{{ t._('ex_Endpoints') }}</label>
-        <div id='endpoint-list' class="ui horizontal list"></div>
     </div>
 
     {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('GeneralTabFields')]) }}
@@ -106,10 +89,11 @@
                     <i class="small info circle icon field-info-icon" 
                        data-field="sip_transport"></i>
                 </label>
-                <div class="five wide field">
+                <div class="field max-width-200">
                     {{ form.render('sip_transport') }}
                 </div>
             </div>
+
               <!-- Group: Security settings -->
             <h4 class="ui dividing header ">{{ t._('ex_SecuritySettings') }}</h4>
             <div class="field">
@@ -137,10 +121,7 @@
             <div class="ten wide field">
                 <div class="ui toggle checkbox">
                     {{ form.render('sip_enableRecording') }}
-                    <label for="sip_enableRecording">{{ t._('ex_enableRecording') }}
-                        <i class="small info circle icon field-info-icon" 
-                           data-field="sip_enableRecording"></i>
-                    </label>
+                    <label for="sip_enableRecording">{{ t._('ex_enableRecording') }}</label>
                 </div>
             </div>
 
@@ -149,7 +130,7 @@
                     <i class="small info circle icon field-info-icon" 
                        data-field="sip_dtmfmode"></i>
                 </label>
-                <div class="five wide field">
+                <div class="field max-width-200">
                     {{ form.render('sip_dtmfmode') }}
                 </div>
             </div>
@@ -184,6 +165,44 @@
     <div class="wide inline field">
         {{ t._('ex_IfMainExtensionIsUnavailableRedirectCallTo') }}
         {{ form.render('fwd_forwardingonunavailable') }}
+    </div>
+</div>
+
+<div class="ui bottom attached tab segment" data-tab="status">
+    <!-- Active devices section -->
+    <h3 class="ui header">
+        <i class="mobile alternate icon"></i>
+        <div class="content">
+            {{ t._('ex_ActiveDevices') }}
+        </div>
+    </h3>
+    <div id="active-devices-list">
+        <div class="ui relaxed divided list">
+            <div class="item">
+                <div class="content">
+                    <div class="description">{{ t._('ex_NoActiveDevices') }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="ui divider"></div>
+    
+    <!-- Device history section -->
+    <h3 class="ui header">
+        <i class="history icon"></i>
+        <div class="content">
+            {{ t._('ex_DeviceHistory') }}
+        </div>
+    </h3>
+    <div id="device-history-list">
+        <div class="ui relaxed divided list">
+            <div class="item">
+                <div class="content">
+                    <div class="description">{{ t._('ex_NoHistoryAvailable') }}</div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 

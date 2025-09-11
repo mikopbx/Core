@@ -2,6 +2,7 @@
 {{ form.render('id') }}
 {{ form.render('uniqid') }}
 <input type="hidden" name="{{ security.getTokenKey() }}" value="{{ security.getToken() }}"/>
+<input type="hidden" id="copy-from-id" value="{{ copyFromId }}"/>
 <div class="ui ribbon label" id="queue-extension-number">
     <i class="phone icon"></i> <span id="extension-display"></span>
 </div>
@@ -28,10 +29,8 @@
 <h3 class="ui dividing header ">{{ t._("cq_QueueMembers") }}</h3>
 <div class="field max-width-500">
     <label for="extensionselect">{{ t._('cq_SelectAgentForAddToQueue') }}</label>
-    <div class="ui selection dropdown search" id="extensionselect">
-        <div class="default text">{{ t._('ex_SelectNumber') }}</div>
-        <i class="dropdown icon"></i>
-    </div>
+    <input type="hidden" name="extensionselect" id="extensionselect" value="">
+    <!-- Dropdown will be created by DynamicDropdownBuilder JavaScript -->
 </div>
 <div class="ui basic compact segment">
     <table class="ui selectable small very compact unstackable table" id="extensionsTable">
@@ -51,11 +50,7 @@
 <div class="field">
     <label>{{ t._('cq_QueueStrategy') }}</label>
     {{ form.render('strategy') }}
-    <div class="ui selection dropdown" id="strategy-dropdown">
-        <div class="text"></div>
-        <i class="dropdown icon"></i>
-        <div class="menu"></div>
-    </div>
+    <!-- Dropdown created automatically by JavaScript -->
 </div>
 
 {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('MainFields')]) }}
@@ -143,6 +138,7 @@
                 {{ form.render('timeout_to_redirect_to_extension') }}
                 {{ t._("cq_SecondsCallWillBeRoutedTo") }}
                 {{ form.render('timeout_extension') }}
+                <!-- Dropdown created automatically by JavaScript -->
             </div>
 
         </div>
@@ -153,7 +149,7 @@
             <div class="inline field">
                 {{ t._("cq_RedirectToExtensionIfEmtyQueue") }}
                 {{ form.render('redirect_to_extension_if_empty') }}
-            </div>
+                 <!-- Dropdown created automatically by JavaScript -->
 
         </div>
 

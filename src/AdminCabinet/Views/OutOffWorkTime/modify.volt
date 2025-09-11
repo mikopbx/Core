@@ -145,11 +145,6 @@
     <div class="field max-width-800" id="extension-row" style="display:none;">
         <label>{{ t._('tf_SelectExtension') }}</label>
         {{ form.render('extension') }}
-        <div class="ui selection dropdown search forwarding-select">
-            <i class="dropdown icon"></i>
-            <div class="default text">{{ t._('ex_SelectExtension') }}</div>
-            <div class="menu"></div>
-        </div>
     </div>
     
     <div id="audio-message-row" style="display:none;">

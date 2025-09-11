@@ -49,11 +49,6 @@
            data-field="providerid"></i>
     </label>
     {{ form.render('providerid') }}
-    <div class="ui selection dropdown search" id="providerid-dropdown">
-        <i class="dropdown icon"></i>
-        <div class="default text">{{ t._('or_SelectProvider') }}</div>
-        <div class="menu"></div>
-    </div>
 </div>
 
 {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('Fields')]) }}

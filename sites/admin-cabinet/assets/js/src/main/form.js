@@ -558,8 +558,13 @@ const Form = {
      * Populate form with data without triggering dirty state changes
      * This method is designed for initial form population from API data
      * @param {object} data - Form data object
+     * @param {object} options - Configuration options
+     * @param {function} options.beforePopulate - Callback executed before population
+     * @param {function} options.afterPopulate - Callback executed after population
+     * @param {boolean} options.skipSemanticUI - Skip Semantic UI form('set values') call
+     * @param {function} options.customPopulate - Custom population function
      */
-    populateFormSilently(data) {
+    populateFormSilently(data, options = {}) {
         if (!data || typeof data !== 'object') {
             console.warn('Form.populateFormSilently: invalid data provided');
             return;
@@ -576,8 +581,22 @@ const Form = {
         };
 
         try {
-            // Use standard Semantic UI form population
-            Form.$formObj.form('set values', data);
+            // Execute beforePopulate callback if provided
+            if (typeof options.beforePopulate === 'function') {
+                options.beforePopulate(data);
+            }
+
+            // Custom population or standard Semantic UI
+            if (typeof options.customPopulate === 'function') {
+                options.customPopulate(data);
+            } else if (!options.skipSemanticUI) {
+                Form.$formObj.form('set values', data);
+            }
+            
+            // Execute afterPopulate callback if provided
+            if (typeof options.afterPopulate === 'function') {
+                options.afterPopulate(data);
+            }
             
             // Reset dirty state after population
             if (wasEnabledDirrity) {

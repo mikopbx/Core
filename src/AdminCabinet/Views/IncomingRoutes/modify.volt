@@ -17,11 +17,6 @@
            data-field="providerid"></i>
     </label>
     {{ form.render('providerid') }}
-    <div class="ui selection dropdown search" id="providerid-dropdown">
-        <i class="dropdown icon"></i>
-        <div class="default text">{{ t._('ir_AnyProvider_v2') }}</div>
-        <div class="menu"></div>
-    </div>
 </div>
 
 <div class="field">
@@ -39,12 +34,7 @@
 <div class="field max-width-800">
     <label for="extension"></label>
     {{ form.render('extension') }}
-    <div class="ui selection dropdown search forwarding-select">
-        <i class="dropdown icon"></i>
-        <div class="default text">{{ t._('ex_SelectExtension') }}</div>
-        <div class="menu"></div>
-    </div>
-</div>
+  </div>
 
 <div class="inline field">
     {{ form.render('timeout') }}

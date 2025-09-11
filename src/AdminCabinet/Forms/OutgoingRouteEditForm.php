@@ -58,12 +58,14 @@ class OutgoingRouteEditForm extends BaseForm
         $hiddenFields = [
             'id' => [],
             'priority' => [],
-            'providerid' => ['id' => 'providerid'],
         ];
         
         foreach ($hiddenFields as $name => $attributes) {
             $this->add(new Hidden($name, $attributes));
         }
+        
+        // Provider dropdown - using DynamicDropdownBuilder (built by JavaScript)
+        $this->add(new Hidden('providerid'));
     }
     
     /**

@@ -34,6 +34,7 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
  * 
  * @apiSuccess {Boolean} result Operation result
  * @apiSuccess {Array} data List of sound files
+ * @apiSuccess {String} data.value File ID (for dropdown value)
  * @apiSuccess {String} data.id File ID
  * @apiSuccess {String} data.category File category (custom/moh)
  * @apiSuccess {String} data.path File path
@@ -69,6 +70,7 @@ class GetForSelectAction
             $soundFilesList = [];
             foreach ($soundFiles as $soundFile) {
                 $soundFilesList[] = [
+                    'value' => $soundFile->id,
                     'id' => $soundFile->id,
                     'category' => $soundFile->category,
                     'path' => $soundFile->path,
