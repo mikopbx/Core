@@ -53,11 +53,6 @@
 <div class="max-width-800 field">
     <label>{{ t._('ak_NetworkFilter') }}</label>
     {{ form.render('networkfilterid') }}
-    <div id="networkfilterid-dropdown" class="ui selection dropdown network-filter-select">
-        <i class="dropdown icon"></i>
-        <div class="text"></div>
-        <div class="menu"></div>
-    </div>
 </div>
 
 <!-- Permissions Section -->

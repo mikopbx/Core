@@ -22,7 +22,7 @@ namespace MikoPBX\PBXCoreREST\Lib\ApiKeys;
 use MikoPBX\Common\Models\ApiKeys;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractDeleteAction;
-use MikoPBX\PBXCoreREST\Services\ApiKeyValidationService;
+use MikoPBX\PBXCoreREST\Services\TokenValidationService;
 
 /**
  * Action for deleting API key record
@@ -54,7 +54,7 @@ class DeleteRecordAction extends AbstractDeleteAction
             'API key not found',                // Not found message
             function($apiKey) {                 // Additional cleanup callback
                 // Clear validation cache for this key before deletion
-                ApiKeyValidationService::clearCache((int)$apiKey->id);
+                TokenValidationService::clearCache((int)$apiKey->id);
             }
         );
     }

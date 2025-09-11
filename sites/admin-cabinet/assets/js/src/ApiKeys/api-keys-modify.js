@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-// global globalRootUrl, globalTranslate, Form, UserMessage, ApiKeysAPI, NetworkFilterSelector, FormElements, SemanticLocalization
+/* global globalRootUrl, globalTranslate, Form, UserMessage, ApiKeysAPI, DynamicDropdownBuilder, FormElements, SemanticLocalization */
 
 /**
  * API key edit form management module
@@ -89,11 +89,11 @@ const apiKeysModify = {
     initializeForm() {
         const recordId = apiKeysModify.getRecordId();
         
-        ApiKeysAPI.getRecord(recordId, (response) => {
+        ApiKeysAPI.getRecord(recordId, async (response) => {
             const { result, data, messages } = response || {};
             
             if (result && data) {
-                apiKeysModify.populateForm(data);
+                await apiKeysModify.populateForm(data);
                 
                 // Load permissions only after form is populated
                 apiKeysModify.loadAvailableControllers();
@@ -132,25 +132,8 @@ const apiKeysModify = {
         // Initialize checkboxes
         $('.ui.checkbox').checkbox();
         
-        // Initialize dropdowns (excluding network filter selector)
-        $('.ui.dropdown').not('#networkfilterid-dropdown').dropdown();
-        
-        // Initialize network filter selector
-        const $networkFilterDropdown = $('#networkfilterid-dropdown');
-        
-        if ($networkFilterDropdown.length > 0) {
-            // Don't pass currentValue here, it will be set later when form data loads
-            NetworkFilterSelector.init($networkFilterDropdown, {
-                filterType: 'WEB',  // API keys use WEB category for firewall rules
-                includeNone: true,  // API keys can have "No restrictions" option
-                onChange: () => {
-                    // Only call dataChanged if form is fully initialized
-                    if (apiKeysModify.formInitialized) {
-                        Form.dataChanged();
-                    }
-                },
-            });
-        }
+        // Initialize dropdowns (network filter will be built by DynamicDropdownBuilder)
+        $('.ui.dropdown').dropdown();
         
         // Initialize full permissions toggle
         $('#full-permissions-toggle').checkbox({
@@ -578,10 +561,10 @@ const apiKeysModify = {
     /**
      * Callback after form submission
      */
-    cbAfterSendForm(response) {
+    async cbAfterSendForm(response) {
         if (response.result) {
             if (response.data) {
-                apiKeysModify.populateForm(response.data);
+                await apiKeysModify.populateForm(response.data);
             }
             
             // Update URL for new records
@@ -599,13 +582,19 @@ const apiKeysModify = {
     /**
      * Populate form with data
      */
-    populateForm(data) {
+    async populateForm(data) {
+        // Set hidden field value BEFORE initializing dropdown
+        $('#networkfilterid').val(data.networkfilterid || 'none');
+        
         // Use universal method for silent form population
         Form.populateFormSilently(data);
         
-        // Set network filter using NetworkFilterSelector silently
-        const networkFilterValue = data.networkfilterid || 'none';
-        NetworkFilterSelector.setValueSilently('networkfilterid-dropdown', networkFilterValue);
+        // Build network filter dropdown with DynamicDropdownBuilder
+        DynamicDropdownBuilder.buildDropdown('networkfilterid', data, {
+            apiUrl: '/pbxcore/api/v2/network-filters/getForSelect?categories[]=WEB',
+            placeholder: globalTranslate.ak_SelectNetworkFilter,
+            cache: false
+        });
         
         // Set permissions
         const isFullPermissions = data.full_permissions === '1' || data.full_permissions === true || 

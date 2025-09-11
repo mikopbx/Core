@@ -20,7 +20,6 @@
 namespace MikoPBX\PBXCoreREST\Lib\ApiKeys;
 
 use MikoPBX\Common\Models\ApiKeys;
-use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
 
 /**
@@ -43,7 +42,7 @@ class DataStructure extends AbstractDataStructure
             'description' => $apiKey->description ?? '',
             'created_at' => $apiKey->created_at ?? '',
             'last_used_at' => $apiKey->last_used_at ?? '',
-            'networkfilterid' => $apiKey->networkfilterid ?? '',
+            'networkfilterid' => !empty($apiKey->networkfilterid) ? $apiKey->networkfilterid : 'none',
             'key_display' => $apiKey->key_display ?? '',
             'key_suffix' => $apiKey->key_suffix ?? '',
         ];
@@ -60,15 +59,9 @@ class DataStructure extends AbstractDataStructure
         $data['has_key'] = !empty($apiKey->key_hash);
         $data['allowed_paths_count'] = count($data['allowed_paths']);
         
-        // Add network filter representation
-        if (!empty($apiKey->networkfilterid) && $apiKey->networkfilterid !== 'none') {
-            $networkFilter = NetworkFilters::findFirstById($apiKey->networkfilterid);
-            $data['networkfilterRepresent'] = $networkFilter ? $networkFilter->getRepresent() : '';
-            $data['has_network_filter'] = true;
-        } else {
-            $data['networkfilterRepresent'] = '';
-            $data['has_network_filter'] = false;
-        }
+        // Add network filter representation using unified helper
+        $data['networkfilter_represent'] = self::getNetworkFilterRepresentation($apiKey->networkfilterid);
+        $data['has_network_filter'] = !empty($apiKey->networkfilterid) && $apiKey->networkfilterid !== 'none';
         
         // Format boolean fields using parent method
         $data = self::formatBooleanFields($data, ['full_permissions']);

@@ -25,7 +25,7 @@ namespace MikoPBX\PBXCoreREST\Middleware;
 use MikoPBX\Common\Providers\LoggerAuthProvider;
 use MikoPBX\PBXCoreREST\Http\Request;
 use MikoPBX\PBXCoreREST\Http\Response;
-use MikoPBX\PBXCoreREST\Services\ApiKeyValidationService;
+use MikoPBX\PBXCoreREST\Services\TokenValidationService;
 use MikoPBX\PBXCoreREST\Providers\RequestProvider;
 use MikoPBX\PBXCoreREST\Providers\ResponseProvider;
 use MikoPBX\PBXCoreREST\Traits\ResponseTrait;
@@ -54,26 +54,26 @@ class AuthenticationMiddleware implements MiddlewareInterface
         /** @var Response $response */
         $response = $application->getService(ResponseProvider::SERVICE_NAME);
 
-        // Check API key authentication first
-        if ($request->hasApiKey()) {
-            $apiKeyValidator = new ApiKeyValidationService($application->getDI());
-            $validationResult = $apiKeyValidator->validate($request);
+        // Check Bearer token authentication first
+        if ($request->hasBearerToken()) {
+            $tokenValidator = new TokenValidationService($application->getDI());
+            $validationResult = $tokenValidator->validate($request);
             
             if ($validationResult->isValid()) {
-                // Store API key info in request for logging and context
-                $request->setApiKeyInfo($validationResult->getKeyInfo());
-                // API key authenticated successfully, skip other checks
+                // Store token info in request for logging and context
+                $request->setTokenInfo($validationResult->getTokenInfo());
+                // Bearer token authenticated successfully, skip other checks
                 return true;
             }
             
-            // Log failed API key attempt
+            // Log failed Bearer token attempt
             $loggerAuth = $application->getService(LoggerAuthProvider::SERVICE_NAME);
-            $loggerAuth->warning("API Key auth failed - From: {$request->getClientAddress(true)} Key: ***{$validationResult->getKeySuffix()} Error: {$validationResult->getError()}");
+            $loggerAuth->warning("Bearer token auth failed - From: {$request->getClientAddress(true)} Token: ***{$validationResult->getTokenSuffix()} Error: {$validationResult->getError()}");
             
             $this->halt(
                 $application,
                 $response::UNAUTHORIZED,
-                'Invalid API key'
+                'Invalid Bearer token'
             );
             return false;
         }
@@ -143,8 +143,8 @@ class AuthenticationMiddleware implements MiddlewareInterface
             return false;
         }
         
-        // Skip CSRF for API key authenticated requests
-        if ($request->hasApiKey()) {
+        // Skip CSRF for Bearer token authenticated requests
+        if ($request->hasBearerToken()) {
             return false;
         }
 

@@ -59,10 +59,8 @@ class ApiKeyEditForm extends BaseForm
             $this->add(new Hidden('api_key'));
         }
 
-        // Network filter - Hidden field (UI will be created by NetworkFilterSelector)
-        $this->add(new Hidden('networkfilterid', [
-            'value' => $entity->networkfilterid ?? 'none'
-        ]));
+        // Network filter - using DynamicDropdownBuilder (built by JavaScript)
+        $this->add(new Hidden('networkfilterid'));
 
         // Permission checkboxes are now added dynamically via JavaScript
     }

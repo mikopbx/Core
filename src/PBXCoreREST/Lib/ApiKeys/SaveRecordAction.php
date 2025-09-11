@@ -22,9 +22,7 @@ namespace MikoPBX\PBXCoreREST\Lib\ApiKeys;
 use MikoPBX\Common\Models\ApiKeys;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
-use MikoPBX\PBXCoreREST\Lib\Common\BaseActionHelper;
-use MikoPBX\PBXCoreREST\Services\ApiKeyValidationService;
-use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use MikoPBX\PBXCoreREST\Services\TokenValidationService;
 
 /**
  * Action for saving (creating or updating) API key record
@@ -142,7 +140,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 }
                 
                 // Clear validation cache for this key
-                ApiKeyValidationService::clearCache((int)$apiKey->id);
+                TokenValidationService::clearCache((int)$apiKey->id);
                 
                 return $apiKey;
             });

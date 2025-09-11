@@ -36,7 +36,7 @@ class EndpointScanner
      * through authenticated browser sessions.
      * 
      * Security note: These controllers are also blocked at validation level
-     * in ApiKeyValidationService::checkPathPermissions()
+     * in TokenValidationService::checkPathPermissions()
      */
     private const EXCLUDED_CONTROLLERS = [
         'UserPageTracker',  // Internal user activity tracking (browser sessions only)

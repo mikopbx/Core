@@ -24,7 +24,7 @@ use Phalcon\Mvc\Model\Relation;
 /**
  * Class ApiKeys
  * 
- * Represents API keys for REST API authentication
+ * Represents Bearer tokens for REST API authentication
  * 
  * @package MikoPBX\Common\Models
  */
@@ -38,28 +38,28 @@ class ApiKeys extends ModelsBase
     public $id;
     
     /**
-     * Description of the key purpose (formerly name field)
+     * Description of the token purpose (formerly name field)
      * 
      * @Column(type="string", nullable=true)
      */
     public ?string $description = '';
     
     /**
-     * Hashed API key value (using bcrypt)
+     * Hashed Bearer token value (using bcrypt)
      * 
      * @Column(type="string", nullable=false)
      */
     public string $key_hash = '';
     
     /**
-     * Last 4 characters of the key for identification
+     * Last 4 characters of the token for identification
      * 
      * @Column(type="string", nullable=true)
      */
     public ?string $key_suffix = '';
     
     /**
-     * Display representation of the key (first 5 + ... + last 5 chars)
+     * Display representation of the token (first 5 + ... + last 5 chars)
      * 
      * @Column(type="string", nullable=true)
      */
@@ -88,7 +88,7 @@ class ApiKeys extends ModelsBase
     public ?string $full_permissions = '1';
     
     /**
-     * Timestamp when the key was created
+     * Timestamp when the token was created
      * 
      * @Column(type="string", nullable=true)
      */

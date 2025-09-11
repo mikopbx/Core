@@ -36,10 +36,9 @@ const apiKeysIndex = {
             tableId: 'api-keys-table',
             apiModule: ApiKeysAPI,
             routePrefix: 'api-keys',
-            showSuccessMessages: true,
+            showSuccessMessages: false,
             actionButtons: ['edit', 'delete'], // No copy for API Keys
             translations: {
-                deleteSuccess: globalTranslate.ak_ApiKeyDeleted,
                 deleteError: globalTranslate.ak_ImpossibleToDeleteApiKey
             },
             descriptionSettings: {
@@ -51,8 +50,9 @@ const apiKeysIndex = {
                     data: null,
                     className: 'collapsing',
                     render: function(data, type, row) {
-                        // Use represent from model which includes icon and key display
-                        return row.represent || '—';
+                        // Use represent from model with proper sanitization for API keys
+                        const representation = row.represent || '—';
+                        return representation === '—' ? representation : SecurityUtils.sanitizeForDisplay(representation, false);
                     }
                 },
                 {
