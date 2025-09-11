@@ -663,7 +663,6 @@ class Extensions extends ModelsBase
      */
     public function validation(): bool
     {
-
         $existingRecord = self::findFirst(
             [
                 'conditions' => 'number = :number:',
@@ -676,11 +675,54 @@ class Extensions extends ModelsBase
         }
 
         $validation = new Validation();
+        
+        // Build exception conditions for uniqueness check
+        $exceptConditions = [];
+        
+        // Always exclude current record by ID if it exists
+        if (!empty($this->id)) {
+            $exceptConditions['id'] = $this->id;
+        }
+        
+        // Check for user general extension uniqueness
+        // Each user should have only one general extension per type
+        if (!empty($this->userid) && $this->is_general_user_number === "1") {
+            $conflictingGeneral = self::findFirst([
+                'conditions' => 'userid = :userid: AND type = :type: AND is_general_user_number = "1" AND id != :id:',
+                'bind' => [
+                    'userid' => $this->userid,
+                    'type' => $this->type,
+                    'id' => $this->id ?: 0
+                ]
+            ]);
+            
+            if ($conflictingGeneral) {
+                $this->appendMessage(
+                    new Message(
+                        $this->t('mo_UserCanHaveOnlyOneGeneralExtensionPerType', [
+                            'type' => $this->type,
+                            'existing' => $conflictingGeneral->getRepresent()
+                        ])
+                    )
+                );
+                return false;
+            }
+        }
+        
+        // For updates: if we have a userid, allow same user to have multiple extensions
+        // (one SIP, one EXTERNAL) but prevent true duplicates
+        if (!empty($this->userid) && $existingRecord && $existingRecord->userid === $this->userid) {
+            // If this is the same user's extension, allow it
+            // This handles cases where user has both SIP extension and mobile EXTERNAL extension
+            return true;
+        }
+
         $validation->add(
             'number',
             new UniquenessValidator(
                 [
                     'message' => $this->t('mo_ThisNumberNotUniqueForExtensionsModels', ['record' => $currentRepresent]),
+                    'except' => $exceptConditions,
                 ]
             )
         );

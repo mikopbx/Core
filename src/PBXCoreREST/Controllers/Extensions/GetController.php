@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,43 +23,81 @@ use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use MikoPBX\PBXCoreREST\Lib\ExtensionsManagementProcessor;
 
 /**
- * Handles the GET request for extensions data.
- *
- * @RoutePrefix("/pbxcore/api/extensions")
- *
+ * GET controller for extensions management
+ * 
+ * @RoutePrefix("/pbxcore/api/v2/extensions")
+ * 
  * @examples
- * curl http://127.0.0.1/pbxcore/api/extensions/getForSelect?type=all;
- * curl http://127.0.0.1/pbxcore/api/extensions/available?number=225;
- * curl http://127.0.0.1/pbxcore/api/extensions/getPhoneRepresent?number=225;
- * curl http://127.0.0.1/pbxcore/api/extensions/getRecord?id=195
+ * curl http://127.0.0.1/pbxcore/api/v2/extensions/getList
+ * curl http://127.0.0.1/pbxcore/api/v2/extensions/getForSelect?type=all
+ * curl http://127.0.0.1/pbxcore/api/v2/extensions/available?number=101
+ * curl http://127.0.0.1/pbxcore/api/v2/extensions/getStatuses
+ * curl http://127.0.0.1/pbxcore/api/v2/extensions/getStatus/101
+ * curl http://127.0.0.1/pbxcore/api/v2/extensions/getHistory/101?limit=50
+ * curl http://127.0.0.1/pbxcore/api/v2/extensions/getStats/101?days=7
+ * curl http://127.0.0.1/pbxcore/api/v2/extensions/forceCheck/101
+ * 
+ * @package MikoPBX\PBXCoreREST\Controllers\Extensions
  */
 class GetController extends BaseController
 {
-
     /**
      * Handles the call to different actions based on the action name
      *
-     * @param string $actionName The name of the action.
-     *
-     * Get data structure for saveRecord request, if id parameter is empty it returns structure with default data
-     * @Get("/getRecord")
-     *
-     * Retrieves the extensions list limited by type parameter.
+     * @param string $actionName The name of the action
+     * @param string|null $id Optional ID parameter for record operations
+     * 
+     * 
+     * Get extensions for dropdown/select components
      * @Get("/getForSelect")
-     *
-     * Checks the number uniqueness.
+     * 
+     * Check if extension number is available
      * @Get("/available")
-     *
-     * Returns CallerID names for the number.
+     * 
+     * Get phone representation
      * @Get("/getPhoneRepresent")
-     *
+     * 
+     * Get phones representations (multiple)
+     * @Get("/getPhonesRepresent")
+     * 
+     * Get all extension statuses
+     * @Get("/getStatuses")
+     * 
+     * Get status for specific extension
+     * @Get("/getStatus/{extension}")
+     * 
+     * Get history for specific extension
+     * @Get("/getHistory/{extension}")
+     * 
+     * Get statistics for specific extension
+     * @Get("/getStats/{extension}")
+     * 
+     * Force status check for specific extension or all
+     * @Get("/forceCheck")
+     * @Get("/forceCheck/{extension}")
+     * 
+     * @param string $actionName
+     * @param string|null $id Optional ID parameter for record operations or extension number
      * @return void
      */
-    public function callAction(string $actionName): void
+    public function callAction(string $actionName, ?string $id = null): void
     {
-        // Use unified method to get request data (handles both JSON and form data)
         $requestData = self::sanitizeData($this->request->getData(), $this->filter);
-        $this->sendRequestToBackendWorker(ExtensionsManagementProcessor::class, $actionName, $requestData);
+        
+        if (!empty($id)){
+            // For status/history/stats actions, use 'extension' parameter
+            if (in_array($actionName, ['getStatus', 'getHistory', 'getStats', 'forceCheck'])) {
+                $requestData['extension'] = $id;
+            } else {
+                $requestData['id'] = $id;
+            }
+        }
+        
+        // Send request to Worker
+        $this->sendRequestToBackendWorker(
+            ExtensionsManagementProcessor::class, 
+            $actionName, 
+            $requestData
+        );
     }
-
 }
