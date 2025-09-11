@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global $, globalTranslate, Extensions, Form, IncomingRoutesAPI, SecurityUtils, SoundFileSelector, UserMessage */
+/* global $, globalTranslate, Extensions, Form, IncomingRoutesAPI, SecurityUtils, SoundFileSelector, UserMessage, DynamicDropdownBuilder, ExtensionSelector */
 
 /**
  * Module for managing default incoming route
@@ -36,13 +36,15 @@ const incomingRouteDefault = {
      * Action dropdown element
      * @type {jQuery}
      */
-    $actionDropdown: $('#action'),
+    $actionDropdown: $('#action-dropdown'),
     
     /**
-     * Extension dropdown element
+     * Extension dropdown element (will be created by DynamicDropdownBuilder)
      * @type {jQuery}
      */
-    $extensionDropdown: $('.forwarding-select'),
+    get $extensionDropdown() {
+        return $('#extension-dropdown');
+    },
     
     /**
      * Audio message dropdown element selector
@@ -55,6 +57,8 @@ const incomingRouteDefault = {
      * @type {string}
      */
     defaultRouteId: '1',
+    
+    // Note: Using DynamicDropdownBuilder now, no need for instance variables
     
     /**
      * Validation rules for the form
@@ -85,18 +89,13 @@ const incomingRouteDefault = {
      * Initialize the default route module
      */
     initialize() {
-        // Initialize sound file selector
-        SoundFileSelector.init(incomingRouteDefault.audioMessageId, {
-            category: 'custom',
-            includeEmpty: true,
-            onChange: () => {
+        // Initialize action dropdown - this is a static dropdown handled by HTML/CSS only
+        // The DynamicDropdownBuilder is not needed here as it's a simple static dropdown
+        incomingRouteDefault.$actionDropdown.dropdown({
+            onChange: (value) => {
+                incomingRouteDefault.onActionChange();
                 Form.dataChanged();
             }
-        });
-        
-        // Setup action dropdown with change handler
-        incomingRouteDefault.$actionDropdown.dropdown({
-            onChange: incomingRouteDefault.onActionChange.bind(incomingRouteDefault)
         });
         
         // Initialize form submission handling
@@ -117,8 +116,8 @@ const incomingRouteDefault = {
             if (response.result && response.data) {
                 incomingRouteDefault.populateForm(response.data);
             } else {
-                // Initialize empty form with dropdowns
-                incomingRouteDefault.initializeDropdowns();
+                // Initialize empty form with dropdowns (use empty data)
+                incomingRouteDefault.populateForm({});
                 
                 // Show error if needed
                 if (response.messages && response.messages.error) {
@@ -131,24 +130,42 @@ const incomingRouteDefault = {
     
     /**
      * Initialize dropdowns for the form
+     * @param {object} data - Route data for initialization
      */
-    initializeDropdowns() {
-        // Initialize extension dropdown
-        const extensionSettings = Extensions.getDropdownSettingsForRouting();
-        extensionSettings.onChange = function(value, text, $selectedItem) {
-            // Simply update the hidden input
-            // All special values (hangup, busy, voicemail, did2user) are handled as extensions
-            $('#extension').val(value);
-            // Mark form as changed
-            Form.dataChanged();
+    initializeDropdowns(data = {}) {
+        // Initialize extension dropdown using ExtensionSelector (same as modify page)
+        ExtensionSelector.init('extension', {
+            type: 'routing',
+            includeEmpty: false,
+            data: data,
+            onChange: (value, text, $selectedItem) => {
+                // Update hidden input
+                $('#extension').val(value);
+                // Mark form as changed
+                Form.dataChanged();
+            }
+        });
+        
+        // Initialize sound file selector with data
+        // Note: HTML already contains static dropdown structure, so we need to reinitialize properly
+        const audioData = {
+            audio_message_id: data.audio_message_id || '',
+            audio_message_id_represent: data.audio_message_id_represent || ''
         };
         
-        // Clear and reinitialize extension dropdown
-        incomingRouteDefault.$extensionDropdown.dropdown('destroy');
-        incomingRouteDefault.$extensionDropdown.dropdown(extensionSettings);
+        // Destroy any existing SoundFileSelector instance first
+        if (SoundFileSelector.instances.has(incomingRouteDefault.audioMessageId)) {
+            SoundFileSelector.destroy(incomingRouteDefault.audioMessageId);
+        }
         
-        // Audio dropdown is initialized once in initialize() method
-        // No need to initialize it here again
+        SoundFileSelector.init(incomingRouteDefault.audioMessageId, {
+            category: 'custom',
+            includeEmpty: true,
+            data: audioData,
+            onChange: () => {
+                Form.dataChanged();
+            }
+        });
     },
     
     /**
@@ -164,50 +181,42 @@ const incomingRouteDefault = {
             action = 'playback';
         }
         
-        // Set basic form values
-        incomingRouteDefault.$formObj.form('set values', {
+        // Use unified silent population approach
+        Form.populateFormSilently({
             id: data.id,
-            action: action,
             audio_message_id: data.audio_message_id || ''
-        });
-        
-        // Initialize dropdowns
-        incomingRouteDefault.initializeDropdowns();
-        
-        // Set extension value if exists (including special values like hangup, busy, voicemail, did2user)
-        if (data.extension) {
-            setTimeout(() => {
-                incomingRouteDefault.$extensionDropdown.dropdown('set selected', data.extension);
+        }, {
+            afterPopulate: (formData) => {
+                // Set action value in static dropdown (managed by HTML/CSS)
+                $('#action').val(action);
+                $('#action-dropdown').dropdown('set selected', action);
                 
-                // Update display text if available
-                if (data.extensionName) {
-                    const safeText = SecurityUtils.sanitizeExtensionsApiContent(data.extensionName);
-                    incomingRouteDefault.$extensionDropdown.find('.text')
-                        .removeClass('default')
-                        .html(safeText);
+                // Initialize dropdowns with data
+                incomingRouteDefault.initializeDropdowns(data);
+                
+                // Set extension value if exists (including special values like hangup, busy, voicemail, did2user)
+                if (data.extension) {
+                    // Set the value using ExtensionSelector - it will handle display text automatically
+                    ExtensionSelector.setValue('extension', data.extension, data.extension_represent);
                 }
-            }, 100);
-        }
-        
-        // Setup audio message value
-        if (data.audio_message_id) {
-            SoundFileSelector.setValue(incomingRouteDefault.audioMessageId, data.audio_message_id, data.audio_message_id_Represent);
-        }
-        
-        // Update field visibility
-        incomingRouteDefault.onActionChange();
-        
-        // Re-initialize dirty checking if enabled
-        if (Form.enableDirrity) {
-            Form.initializeDirrity();
-        }
+                
+                // Update field visibility
+                incomingRouteDefault.onActionChange();
+                
+                // Re-initialize dirty checking if enabled
+                if (Form.enableDirrity) {
+                    Form.initializeDirrity();
+                }
+            }
+        });
     },
     
     /**
      * Handle action dropdown change
      */
     onActionChange() {
-        const action = incomingRouteDefault.$formObj.form('get value', 'action');
+        // Get action value from the dropdown or hidden input
+        const action = $('#action').val() || $('#action-dropdown').dropdown('get value');
         
         if (action === 'extension') {
             // Show extension, hide audio
@@ -219,8 +228,8 @@ const incomingRouteDefault = {
             // Show audio, hide extension
             $('#extension-group').hide();
             $('#audio-group').show();
-            // Clear extension
-            incomingRouteDefault.$extensionDropdown.dropdown('clear');
+            // Clear extension using ExtensionSelector
+            ExtensionSelector.setValue('extension', '');
             $('#extension').val('');
         }
     },

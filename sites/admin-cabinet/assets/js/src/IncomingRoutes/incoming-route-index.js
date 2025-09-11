@@ -81,8 +81,8 @@ const incomingRoutes = {
                             return '';
                         }
                         
-                        // Use ready-to-use HTML representation from REST API
-                        const description = row.ruleRepresent || '';
+                        // Use ready-to-use HTML representation from REST API (already safe from server)
+                        const description = row.rule_represent || '';
                         const disabledClass = row.disabled ? 'disabled' : '';
                         return '<div class="' + disabledClass + '">' + description + '</div>';
                     }
@@ -138,9 +138,9 @@ const incomingRoutes = {
                 rowData.number || '', 
                 rowData.note || '',
                 rowData.extension || '',
-                extractTextFromHtml(rowData.extensionRepresent || ''),
-                extractTextFromHtml(rowData.providerRepresent || ''),
-                extractTextFromHtml(rowData.ruleRepresent || '')
+                extractTextFromHtml(rowData.extension_represent || ''),
+                extractTextFromHtml(rowData.providerid_represent || ''),
+                extractTextFromHtml(rowData.rule_represent || '')
             ].filter(Boolean).join(' ').toLowerCase();
             
             return searchableText.includes(searchTerm);

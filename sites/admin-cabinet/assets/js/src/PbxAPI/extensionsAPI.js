@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, sessionStorage, PbxApi */
+/* global globalRootUrl, sessionStorage, PbxApi, globalTranslate, SecurityUtils */
 
 
 /**
@@ -25,6 +25,9 @@
  * @module Extensions
  */
 const Extensions = {
+    // Debounce timeout storage for different CSS classes
+    debounceTimeouts: {},
+
     /**
      * Formats the dropdown results by adding necessary data.
      *
@@ -50,9 +53,8 @@ const Extensions = {
             formattedResponse.success = true;
             $.each(response.data, (index, item) => {
                 formattedResponse.results.push({
-                    // SECURITY: Sanitize name field to prevent XSS attacks in dropdown menus
-                    // Use SecurityUtils to safely handle extension representations with icons
-                    name: window.SecurityUtils ? window.SecurityUtils.sanitizeExtensionsApiContent(item.name) : item.name,
+                    // Safely process name field - allow only specific icon patterns
+                    name: SecurityUtils.sanitizeObjectRepresentations(item.name),
                     value: item.value,
                     type: item.type,
                     typeLocalized: item.typeLocalized,
@@ -64,38 +66,85 @@ const Extensions = {
     },
 
     /**
-     * Constructs dropdown settings for extensions with an empty field.
-     * @param {Function} cbOnChange - The function to call when the dropdown selection changes.
-     * @returns {Object} The dropdown settings.
+     * Get dropdown settings for extensions (universal method)
+     * This method is designed to work with SemanticUIDropdownComponent
+     * 
+     * @param {function|object} onChangeCallback - Callback when selection changes OR options object
+     * @param {object} options - Additional options (when first param is callback)
+     * @return {object} Settings object for SemanticUIDropdownComponent
      */
-    getDropdownSettingsWithEmpty(cbOnChange = null) {
+    getDropdownSettings: function(onChangeCallback, options) {
+        // Handle different parameter combinations
+        let callback = onChangeCallback;
+        let settings = options || {};
+        
+        // If first parameter is an object, treat it as options
+        if (typeof onChangeCallback === 'object' && onChangeCallback !== null) {
+            settings = onChangeCallback;
+            callback = settings.onChange;
+        }
+        
+        // Extract settings with defaults
+        const type = settings.type || 'routing';
+        const addEmpty = settings.addEmpty !== undefined ? settings.addEmpty : false;
+        const excludeExtensions = settings.excludeExtensions || [];
+        const clearOnEmpty = settings.clearOnEmpty !== undefined ? settings.clearOnEmpty : true;
+        
         return {
             apiSettings: {
                 url: PbxApi.extensionsGetForSelect,
                 urlData: {
-                    type: 'all'
+                    type: type
                 },
                 cache: false,
-                // throttle: 400,
-                onResponse(response) {
-                    return Extensions.formatDropdownResults(response, true);
-                },
-            },
-            onChange(value) {
-                if (parseInt(value, 10) === -1) $(this).dropdown('clear');
-                if (cbOnChange !== null) cbOnChange(value);
+                onResponse: function(response) {
+                    const formattedResponse = Extensions.formatDropdownResults(response, addEmpty);
+                    
+                    // Filter out excluded extensions if specified
+                    if (excludeExtensions.length > 0 && formattedResponse.results) {
+                        formattedResponse.results = formattedResponse.results.filter(item => {
+                            return !excludeExtensions.includes(item.value);
+                        });
+                    }
+                    
+                    return formattedResponse;
+                }
             },
             ignoreCase: true,
             fullTextSearch: true,
             filterRemoteData: true,
             saveRemoteData: false,
             forceSelection: false,
-            // direction: 'downward',
             hideDividers: 'empty',
+            onChange: function(value, text, $choice) {
+                // Handle empty value (-1) if clearOnEmpty is enabled
+                if (clearOnEmpty && parseInt(value, 10) === -1) {
+                    $(this).dropdown('clear');
+                }
+                
+                // Call the provided callback if it exists
+                if (typeof callback === 'function') {
+                    callback(value, text, $choice);
+                }
+            },
             templates: {
                 menu: Extensions.customDropdownMenu,
-            },
+            }
         };
+    },
+
+    /**
+     * Constructs dropdown settings for extensions with an empty field.
+     * @param {Function} cbOnChange - The function to call when the dropdown selection changes.
+     * @returns {Object} The dropdown settings.
+     */
+    getDropdownSettingsWithEmpty(cbOnChange = null) {
+        return Extensions.getDropdownSettings({
+            onChange: cbOnChange,
+            type: 'all',
+            addEmpty: true,
+            clearOnEmpty: true
+        });
     },
 
     /**
@@ -104,30 +153,12 @@ const Extensions = {
      * @returns {Object} The dropdown settings.
      */
     getDropdownSettingsWithoutEmpty(cbOnChange = null) {
-        return {
-            apiSettings: {
-                url: PbxApi.extensionsGetForSelect,
-                urlData: {
-                    type: 'all'
-                },
-                cache: false,
-                onResponse(response) {
-                    return Extensions.formatDropdownResults(response, false);
-                },
-            },
-            ignoreCase: true,
-            fullTextSearch: true,
-            filterRemoteData: true,
-            saveRemoteData: false,
-            forceSelection: false,
-            hideDividers: 'empty',
-            onChange(value) {
-                if (cbOnChange !== null) cbOnChange(value);
-            },
-            templates: {
-                menu: Extensions.customDropdownMenu,
-            },
-        };
+        return Extensions.getDropdownSettings({
+            onChange: cbOnChange,
+            type: 'all',
+            addEmpty: false,
+            clearOnEmpty: false
+        });
     },
 
     /**
@@ -136,32 +167,12 @@ const Extensions = {
      * @returns {Object} The dropdown settings.
      */
     getDropdownSettingsForRouting(cbOnChange = null) {
-        return {
-            apiSettings: {
-                url: PbxApi.extensionsGetForSelect,
-                urlData: {
-                    type: 'routing'
-                },
-                cache: false,
-                // throttle: 400,
-                onResponse(response) {
-                    return Extensions.formatDropdownResults(response, false);
-                },
-            },
-            ignoreCase: true,
-            fullTextSearch: true,
-            filterRemoteData: true,
-            saveRemoteData: false,
-            forceSelection: false,
-            // direction: 'downward',
-            hideDividers: 'empty',
-            onChange(value) {
-                if (cbOnChange !== null) cbOnChange(value);
-            },
-            templates: {
-                menu: Extensions.customDropdownMenu,
-            },
-        };
+        return Extensions.getDropdownSettings({
+            onChange: cbOnChange,
+            type: 'routing',
+            addEmpty: false,
+            clearOnEmpty: false
+        });
     },
 
     /**
@@ -171,41 +182,13 @@ const Extensions = {
      * @returns {Object} The dropdown settings.
      */
     getDropdownSettingsForRoutingWithExclusion(cbOnChange = null, excludeExtensions = []) {
-        return {
-            apiSettings: {
-                url: PbxApi.extensionsGetForSelect,
-                urlData: {
-                    type: 'routing'
-                },
-                cache: false,
-                // throttle: 400,
-                onResponse(response) {
-                    const formattedResponse = Extensions.formatDropdownResults(response, false);
-                    
-                    // Filter out excluded extensions
-                    if (excludeExtensions.length > 0 && formattedResponse.results) {
-                        formattedResponse.results = formattedResponse.results.filter(item => {
-                            return !excludeExtensions.includes(item.value);
-                        });
-                    }
-                    
-                    return formattedResponse;
-                },
-            },
-            ignoreCase: true,
-            fullTextSearch: true,
-            filterRemoteData: true,
-            saveRemoteData: false,
-            forceSelection: false,
-            // direction: 'downward',
-            hideDividers: 'empty',
-            onChange(value) {
-                if (cbOnChange !== null) cbOnChange(value);
-            },
-            templates: {
-                menu: Extensions.customDropdownMenu,
-            },
-        };
+        return Extensions.getDropdownSettings({
+            onChange: cbOnChange,
+            type: 'routing',
+            addEmpty: false,
+            clearOnEmpty: false,
+            excludeExtensions: excludeExtensions
+        });
     },
 
     /**
@@ -214,32 +197,12 @@ const Extensions = {
      * @returns {Object} The dropdown settings.
      */
     getDropdownSettingsOnlyInternalWithoutEmpty(cbOnChange = null) {
-        return {
-            apiSettings: {
-                url: PbxApi.extensionsGetForSelect,
-                urlData: {
-                    type: 'internal'
-                },
-                cache: false,
-                // throttle: 400,
-                onResponse(response) {
-                    return Extensions.formatDropdownResults(response, false);
-                },
-            },
-            ignoreCase: true,
-            fullTextSearch: true,
-            filterRemoteData: true,
-            saveRemoteData: false,
-            forceSelection: false,
-            // direction: 'downward',
-            hideDividers: 'empty',
-            onChange(value) {
-                if (cbOnChange !== null) cbOnChange(value);
-            },
-            templates: {
-                menu: Extensions.customDropdownMenu,
-            },
-        };
+        return Extensions.getDropdownSettings({
+            onChange: cbOnChange,
+            type: 'internal',
+            addEmpty: false,
+            clearOnEmpty: false
+        });
     },
 
     /**
@@ -248,34 +211,12 @@ const Extensions = {
      * @returns {Object} The dropdown settings.
      */
     getDropdownSettingsOnlyInternalWithEmpty(cbOnChange = null) {
-        return {
-            apiSettings: {
-                url: PbxApi.extensionsGetForSelect,
-                urlData: {
-                    type: 'internal'
-                },
-                cache: false,
-                // throttle: 400,
-                onResponse(response) {
-                    return Extensions.formatDropdownResults(response, true);
-                },
-            },
-            onChange(value) {
-                if (parseInt(value, 10) === -1) $(this).dropdown('clear');
-                if (cbOnChange !== null) cbOnChange(value);
-            },
-            ignoreCase: true,
-            fullTextSearch: true,
-            filterRemoteData: true,
-            saveRemoteData: false,
-            forceSelection: false,
-            // direction: 'downward',
-            hideDividers: 'empty',
-            templates: {
-                menu: Extensions.customDropdownMenu,
-            },
-
-        };
+        return Extensions.getDropdownSettings({
+            onChange: cbOnChange,
+            type: 'internal',
+            addEmpty: true,
+            clearOnEmpty: true
+        });
     },
 
     /**
@@ -291,7 +232,15 @@ const Extensions = {
             $(`#${cssClassName}-error`).addClass('hidden');
             return;
         }
-        $.api({
+        
+        // Clear existing timeout for this CSS class
+        if (this.debounceTimeouts[cssClassName]) {
+            clearTimeout(this.debounceTimeouts[cssClassName]);
+        }
+        
+        // Set new timeout with 500ms debounce
+        this.debounceTimeouts[cssClassName] = setTimeout(() => {
+            $.api({
             url: PbxApi.extensionsAvailable,
             stateContext: `.ui.input.${cssClassName}`,
             on: 'now',
@@ -317,7 +266,8 @@ const Extensions = {
                     $(`#${cssClassName}-error`).removeClass('hidden').html(message);
                 }
             },
-        });
+            });
+        }, 500); // 500ms debounce delay
     },
 
     /**
@@ -473,74 +423,177 @@ const Extensions = {
                 }
             }
         })
-    },
+    }
+};
 
-    /**
-     * Fix HTML entities in dropdown text elements to properly display icons
-     * Handles both single and double-escaped HTML entities
-     * @param {string} selector - jQuery selector for dropdown text elements to fix
-     * @param {number} delay - Delay in milliseconds before applying fix (default: 50)
-     */
-    fixDropdownHtmlEntities(selector = '.ui.dropdown .text', delay = 50) {
-        setTimeout(() => {
-            $(selector).each(function() {
-                const $text = $(this);
-                const currentText = $text.html();
-                
-                if (currentText && (currentText.includes('&lt;') || currentText.includes('&amp;lt;'))) {
-                    let fixedText = currentText;
-                    
-                    // First, handle double-escaped entities (e.g., &amp;lt; -> &lt;)
-                    if (currentText.includes('&amp;lt;')) {
-                        fixedText = fixedText
-                            .replace(/&amp;lt;/g, '&lt;')
-                            .replace(/&amp;gt;/g, '&gt;')
-                            .replace(/&amp;quot;/g, '&quot;');
-                    }
-                    
-                    // Then restore HTML tags for icons only (safe tags) - handle nested icons
-                    if (fixedText.includes('&lt;i') && fixedText.includes('&gt;')) {
-                        fixedText = fixedText
-                            // Fix opening i tags with any class
-                            .replace(/&lt;i(\s+class="[^"]*")?&gt;/g, '<i$1>')
-                            // Fix closing i tags
-                            .replace(/&lt;\/i&gt;/g, '</i>');
-                    }
-                    
-                    $text.html(fixedText);
-                }
-            });
-        }, delay);
-    },
 
+/**
+ * Extensions API methods for V5.0 architecture (similar to ConferenceRooms pattern)
+ * These methods provide clean REST API interface for extension data management
+ * with proper POST/PUT support for create/update operations
+ */
+const ExtensionsAPI = {
     /**
-     * Safely process extension representation text to handle HTML entities
-     * @param {string} text - Text to process
-     * @param {boolean} allowIcons - Whether to allow <i> tags for icons
-     * @returns {string} Processed safe HTML
+     * API endpoints
      */
-    sanitizeExtensionRepresent(text, allowIcons = true) {
-        if (!text) return '';
+    apiUrl: `${Config.pbxUrl}/pbxcore/api/v2/extensions/`,
+    
+    /**
+     * Get all extension statuses
+     * @param {function|object} callbackOrOptions - Either callback function or options object
+     * @param {function} [callback] - Callback function when first param is options
+     */
+    getStatuses(callbackOrOptions, callback) {
+        let options = {};
+        let cb = callback;
         
-        // Handle double-escaped HTML entities first
-        let fixedText = text;
-        if (text.includes('&amp;lt;')) {
-            fixedText = text
-                .replace(/&amp;lt;/g, '&lt;')
-                .replace(/&amp;gt;/g, '&gt;')
-                .replace(/&amp;quot;/g, '&quot;');
+        // Handle overloaded parameters
+        if (typeof callbackOrOptions === 'function') {
+            cb = callbackOrOptions;
+        } else if (typeof callbackOrOptions === 'object') {
+            options = callbackOrOptions;
+            // callback must be provided as second parameter when first is options
+            if (typeof callback !== 'function') {
+                console.error('ExtensionsAPI.getStatuses: callback function required when options provided');
+                return;
+            }
         }
         
-        // If we want to allow icons, convert safe icon tags back to HTML
-        if (allowIcons && fixedText.includes('&lt;i') && fixedText.includes('&gt;')) {
-            fixedText = fixedText
-                // Fix opening i tags with any class
-                .replace(/&lt;i(\s+class="[^"]*")?&gt;/g, '<i$1>')
-                // Fix closing i tags
-                .replace(/&lt;\/i&gt;/g, '</i>');
+        // Build query parameters
+        const params = new URLSearchParams();
+        if (options.simplified === true) {
+            params.append('simplified', 'true');
         }
         
-        return fixedText;
+        const url = params.toString() 
+            ? `${this.apiUrl}getStatuses?${params.toString()}`
+            : `${this.apiUrl}getStatuses`;
+        
+        $.api({
+            url: url,
+            method: 'GET',
+            on: 'now',
+            cache: false, // Always get fresh status data
+            onSuccess(response) {
+                if (cb) cb(response);
+            },
+            onFailure(response) {
+                if (cb) cb(response);
+            },
+            onError() {
+                if (cb) cb({result: false, data: {}});
+            }
+        });
     },
-
+    
+    /**
+     * Get status for specific extension
+     * @param {string} extension - Extension number
+     * @param {function} callback - Callback function to handle response
+     */
+    getStatus(extension, callback) {
+        $.api({
+            url: `${this.apiUrl}getStatus/${extension}`,
+            method: 'GET',
+            on: 'now',
+            cache: false,
+            onSuccess(response) {
+                callback(response);
+            },
+            onFailure(response) {
+                callback(response);
+            },
+            onError() {
+                callback({result: false, data: null});
+            }
+        });
+    },
+    
+    /**
+     * Force status check for extension(s)
+     * @param {string} extension - Extension number (optional, if not provided checks all)
+     * @param {function} callback - Callback function to handle response
+     */
+    forceCheck(extension, callback) {
+        const url = extension ? 
+            `${this.apiUrl}forceCheck/${extension}` : 
+            `${this.apiUrl}forceCheck`;
+            
+        $.api({
+            url: url,
+            method: 'GET',
+            on: 'now',
+            cache: false,
+            onSuccess(response) {
+                callback(response);
+            },
+            onFailure(response) {
+                callback(response);
+            },
+            onError() {
+                callback({result: false, messages: {error: ['Network error']}});
+            }
+        });
+    },
+    
+    /**
+     * Get extension history
+     * @param {string} extension - Extension number
+     * @param {object} options - Options (limit, offset)
+     * @param {function} callback - Callback function to handle response
+     */
+    getHistory(extension, options = {}, callback) {
+        const params = new URLSearchParams();
+        if (options.limit) params.append('limit', options.limit);
+        if (options.offset) params.append('offset', options.offset);
+        
+        const url = `${this.apiUrl}getHistory/${extension}` + 
+                   (params.toString() ? `?${params.toString()}` : '');
+        
+        $.api({
+            url: url,
+            method: 'GET',
+            on: 'now',
+            cache: false,
+            onSuccess(response) {
+                callback(response);
+            },
+            onFailure(response) {
+                callback(response);
+            },
+            onError() {
+                callback({result: false, data: []});
+            }
+        });
+    },
+    
+    /**
+     * Get extension statistics
+     * @param {string} extension - Extension number
+     * @param {object} options - Options (days)
+     * @param {function} callback - Callback function to handle response
+     */
+    getStats(extension, options = {}, callback) {
+        const params = new URLSearchParams();
+        if (options.days) params.append('days', options.days);
+        
+        const url = `${this.apiUrl}getStats/${extension}` + 
+                   (params.toString() ? `?${params.toString()}` : '');
+        
+        $.api({
+            url: url,
+            method: 'GET',
+            on: 'now',
+            cache: false,
+            onSuccess(response) {
+                callback(response);
+            },
+            onFailure(response) {
+                callback(response);
+            },
+            onError() {
+                callback({result: false, data: {}});
+            }
+        });
+    },
 };

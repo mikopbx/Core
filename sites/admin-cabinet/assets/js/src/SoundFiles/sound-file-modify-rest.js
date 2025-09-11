@@ -194,20 +194,22 @@ const soundFileModifyRest = {
      * @param {object} data - Sound file data from API
      */
     populateForm(data) {
-        // Set form values
-        soundFileModifyRest.$formObj.form('set values', data);
-        
-        // Update audio player if path exists
-        if (data.path) {
-            // Use new sound-files endpoint for MOH/IVR/system sounds
-            const audioUrl = `/pbxcore/api/v2/sound-files/playback?view=${data.path}`;
-            sndPlayer.UpdateSource(audioUrl);
-        }
-        
-        // Save initial values for dirrity checking
-        if (Form.enableDirrity) {
-            Form.saveInitialValues();
-        }
+        // Use unified silent population approach
+        Form.populateFormSilently(data, {
+            afterPopulate: (formData) => {
+                // Update audio player if path exists
+                if (formData.path) {
+                    // Use new sound-files endpoint for MOH/IVR/system sounds
+                    const audioUrl = `/pbxcore/api/v2/sound-files/playback?view=${formData.path}`;
+                    sndPlayer.UpdateSource(audioUrl);
+                }
+                
+                // Save initial values for dirrity checking
+                if (Form.enableDirrity) {
+                    Form.saveInitialValues();
+                }
+            }
+        });
     },
 
     /**

@@ -378,8 +378,25 @@ class PbxDataTableIndex {
             e.preventDefault();
             const recordId = $(e.currentTarget).attr('data-value');
             
-            // Redirect to modify page with copy parameter
-            window.location = `${globalRootUrl}${this.routePrefix}/modify/?copy=${recordId}`;
+            // Use same logic as modify URL but add copy parameter
+            let copyUrl;
+            if (this.getModifyUrl) {
+                // Use custom getModifyUrl and add copy parameter
+                const modifyUrl = this.getModifyUrl(recordId);
+                if (modifyUrl) {
+                    // Remove recordId from URL and add copy parameter
+                    const baseUrl = modifyUrl.replace(`/${recordId}`, '');
+                    copyUrl = `${baseUrl}/?copy=${recordId}`;
+                }
+            } else {
+                // Default URL pattern
+                copyUrl = `${globalRootUrl}${this.routePrefix}/modify/?copy=${recordId}`;
+            }
+            
+            // Redirect to copy URL
+            if (copyUrl) {
+                window.location = copyUrl;
+            }
         });
     }
     
@@ -419,10 +436,7 @@ class PbxDataTableIndex {
                 Extensions.cbOnDataChanged();
             }
             
-            // Show success message if configured
-            if (this.showSuccessMessages && this.translations.deleteSuccess) {
-                UserMessage.showSuccess(this.translations.deleteSuccess);
-            }
+            // Success message removed - no need to show success for deletion operations
         } else {
             // Show error message
             const errorMessage = response.messages?.error || 

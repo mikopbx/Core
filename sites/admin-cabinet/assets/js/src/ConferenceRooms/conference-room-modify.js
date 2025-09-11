@@ -187,12 +187,14 @@ const conferenceRoomModify = {
      * Populate form with data
      */
     populateForm(data) {
-        // Simply populate the form with all data from API
-        // The isNew field will be populated automatically from the API response
-        Form.$formObj.form('set values', data);
-        if (Form.enableDirrity) {
-            Form.saveInitialValues();
-        }
+        // Use unified silent population approach
+        Form.populateFormSilently(data, {
+            afterPopulate: (formData) => {
+                if (Form.enableDirrity) {
+                    Form.saveInitialValues();
+                }
+            }
+        });
     },
     
 };

@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global $, globalRootUrl, globalTranslate, Extensions, Form, IncomingRoutesAPI, UserMessage, SoundFileSelector, ProviderSelector, SecurityUtils, FormElements, TooltipBuilder */
+/* global $, globalRootUrl, globalTranslate, Extensions, Form, IncomingRoutesAPI, UserMessage, SoundFileSelector, SecurityUtils, FormElements, TooltipBuilder, DynamicDropdownBuilder, ExtensionSelector */
 
 /**
  * Object for managing incoming route record
@@ -30,7 +30,6 @@ const incomingRouteModify = {
      */
     $formObj: $('#incoming-route-form'),
 
-    $providerDropDown: $('.ui.dropdown#providerid-dropdown'),
     $forwardingSelectDropdown: $('.forwarding-select'),
 
     /**
@@ -63,14 +62,7 @@ const incomingRouteModify = {
      * Initialize the object
      */
     initialize() {
-        // Initialize sound file selector
-        SoundFileSelector.init('audio_message_id', {
-            category: 'custom',
-            includeEmpty: true,
-            onChange: () => {
-                Form.dataChanged();
-            }
-        });
+        // Note: Sound file selector will be initialized in populateForm() with proper data
 
         // Initialize the form
         incomingRouteModify.initializeForm();
@@ -83,44 +75,34 @@ const incomingRouteModify = {
         // Initialize tooltips for form fields
         incomingRouteModify.initializeTooltips();
 
-        // Note: Provider and Extension dropdowns will be initialized after data is loaded
+        // Note: Provider dropdown will be initialized after data is loaded
+        
+        // Note: Extension dropdowns will be initialized after data is loaded
         // to ensure proper display of selected values
         
         // Load form data via API
         incomingRouteModify.loadFormData();
     },
     
-    /**
-     * Initialize provider dropdown with settings
-     * @param {string} currentValue - Current provider ID value
-     * @param {string} currentText - Current provider representation text
-     */
-    initializeProviderDropdown(currentValue = null, currentText = null) {
-        // Use the new ProviderSelector component
-        ProviderSelector.init('#providerid-dropdown', {
-            includeNone: true,      // Include "Any provider" option
-            forceSelection: false,  // Don't force selection
-            hiddenFieldId: 'providerid', // Updated field name
-            currentValue: currentValue,  // Pass current value for initialization
-            currentText: currentText,    // Pass current text for initialization
-            onChange: () => {
-                Form.dataChanged();
-            }
-        });
-    },
     
     /**
      * Initialize extension dropdown with settings
+     * @param {object} data - Form data including current values and representations
      */
-    initializeExtensionDropdown() {
-        const dropdownSettings = Extensions.getDropdownSettingsForRouting();
-        dropdownSettings.onChange = function(value, text, $selectedItem) {
-            // Update hidden input
-            $('#extension').val(value).trigger('change');
-            // Mark form as changed
-            Form.dataChanged();
-        };
-        incomingRouteModify.$forwardingSelectDropdown.dropdown(dropdownSettings);
+    initializeExtensionDropdown(data = {}) {
+        // Initialize extension dropdown using specialized ExtensionSelector
+        ExtensionSelector.init('extension', {
+            type: 'routing',
+            includeEmpty: false,
+            additionalClasses: ['forwarding-select'],
+            data: data,
+            onChange: (value, text, $selectedItem) => {
+                // Update hidden field
+                $('#extension').val(value).trigger('change');
+                // Mark form as changed
+                Form.dataChanged();
+            }
+        });
     },
     
     /**
@@ -143,10 +125,7 @@ const incomingRouteModify = {
                     // Populate form with copied data
                     incomingRouteModify.populateForm(copyData);
                 } else {
-                    // Error loading source data for copy - initialize with empty dropdowns
-                    incomingRouteModify.initializeProviderDropdown();
-                    incomingRouteModify.initializeExtensionDropdown();
-                    
+                    // V5.0: No fallback - show error and stop
                     const errorMessage = response.messages && response.messages.error ? 
                         response.messages.error.join(', ') : 
                         'Failed to load source data for copying';
@@ -160,9 +139,36 @@ const incomingRouteModify = {
         const recordId = incomingRouteModify.getRecordId();
         
         if (!recordId || recordId === 'new') {
-            // New record - initialize dropdowns without values
-            incomingRouteModify.initializeProviderDropdown();
-            incomingRouteModify.initializeExtensionDropdown();
+            // New record - get default structure from API following V5.0 architecture
+            IncomingRoutesAPI.getRecord('new', (response) => {
+                if (response.result && response.data) {
+                    // Populate form with default data structure from backend
+                    incomingRouteModify.populateForm(response.data);
+                } else {
+                    // Fallback: initialize dropdowns with empty data if API fails
+                    const emptyData = {};
+                    DynamicDropdownBuilder.buildDropdown('providerid', emptyData, {
+                        apiUrl: '/pbxcore/api/v2/providers/getForSelect',
+                        apiParams: {
+                            includeNone: true
+                        },
+                        emptyOption: {
+                            key: 'none',
+                            value: globalTranslate.ir_AnyProvider_v2
+                        },
+                        onChange: function(value, text) {
+                            Form.dataChanged();
+                        }
+                    });
+                    incomingRouteModify.initializeExtensionDropdown();
+                    
+                    // Show error if API failed
+                    if (response.messages && response.messages.error) {
+                        const errorMessage = response.messages.error.join(', ');
+                        UserMessage.showError(SecurityUtils.escapeHtml(errorMessage));
+                    }
+                }
+            });
             return;
         }
         
@@ -171,10 +177,7 @@ const incomingRouteModify = {
                 // Populate form with data
                 incomingRouteModify.populateForm(response.data);
             } else {
-                // Error loading data - initialize with empty dropdowns
-                incomingRouteModify.initializeProviderDropdown();
-                incomingRouteModify.initializeExtensionDropdown();
-                
+                // V5.0: No fallback - show error and stop
                 const errorMessage = response.messages && response.messages.error ? 
                     response.messages.error.join(', ') : 
                     'Failed to load incoming route data';
@@ -207,54 +210,61 @@ const incomingRouteModify = {
         const urlParams = new URLSearchParams(window.location.search);
         const isCopy = urlParams.has('copy');
         
-        // Set form values first (except dropdowns)
-        Form.$formObj.form('set values', data);
-        
-        // Initialize provider dropdown with current value and representation
-        const providerValue = (data.providerid && data.providerid !== 'none') ? data.providerid : null;
-        const providerText = data.providerRepresent || data.providerName || null;
-        
-        // Initialize provider dropdown once with all data
-        incomingRouteModify.initializeProviderDropdown(providerValue, providerText);
-        
-        // Initialize extension dropdown
-        incomingRouteModify.initializeExtensionDropdown();
-        
-        if (data.extension) {
-            // Small delay to ensure dropdown is fully initialized
-            setTimeout(() => {
-                // Set the value using dropdown method
-                incomingRouteModify.$forwardingSelectDropdown.dropdown('set selected', data.extension);
+        // Use unified silent population approach
+        Form.populateFormSilently(data, {
+            afterPopulate: (formData) => {
+                // Initialize provider dropdown with data
+                DynamicDropdownBuilder.buildDropdown('providerid', formData, {
+                    apiUrl: '/pbxcore/api/v2/providers/getForSelect',
+                    apiParams: {
+                        includeNone: true
+                    },
+                    emptyOption: {
+                        key: 'none',
+                        value: globalTranslate.ir_AnyProvider_v2
+                    },
+                    onChange: function(value, text) {
+                        Form.dataChanged();
+                    }
+                });
                 
-                // If we have extensionName, update the display text
-                if (data.extensionName) {
-                    const safeText = window.SecurityUtils ? 
-                        window.SecurityUtils.sanitizeExtensionsApiContent(data.extensionName) : 
-                        data.extensionName;
-                    
-                    // Update the text display
-                    incomingRouteModify.$forwardingSelectDropdown.find('.text')
-                        .removeClass('default')
-                        .html(safeText);
+                // Initialize extension dropdown with current value and representation
+                const extensionValue = formData.extension || null;
+                const extensionText = formData.extension_represent || null;
+                
+                // Initialize extension dropdown once with all data
+                incomingRouteModify.initializeExtensionDropdown({
+                    extension: extensionValue,
+                    extension_represent: extensionText
+                });
+                
+                // Initialize sound file selector with loaded data FIRST
+                const audioData = {
+                    audio_message_id: formData.audio_message_id || '',
+                    audio_message_id_represent: formData.audio_message_id_represent || ''
+                };
+                
+                SoundFileSelector.init('audio_message_id', {
+                    category: 'custom',
+                    includeEmpty: true,
+                    data: audioData,
+                    onChange: () => {
+                        Form.dataChanged();
+                    }
+                });
+                
+                // If this is a copy operation, mark form as changed to enable save button
+                if (isCopy) {
+                    // Enable save button for copy operation
+                    Form.dataChanged();
+                } else {
+                    // Re-initialize dirrity if enabled for regular edit
+                    if (Form.enableDirrity) {
+                        Form.initializeDirrity();
+                    }
                 }
-            }, 100);
-        }
-        
-        // Setup audio message value
-        if (data.audio_message_id) {
-            SoundFileSelector.setValue('audio_message_id', data.audio_message_id, data.audio_message_id_Represent);
-        }
-        
-        // If this is a copy operation, mark form as changed to enable save button
-        if (isCopy) {
-            // Enable save button for copy operation
-            Form.dataChanged();
-        } else {
-            // Re-initialize dirrity if enabled for regular edit
-            if (Form.enableDirrity) {
-                Form.initializeDirrity();
             }
-        }
+        });
         
         // Auto-resize textarea after data is loaded
         // Use setTimeout to ensure DOM is fully updated

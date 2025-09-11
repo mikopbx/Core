@@ -8,7 +8,7 @@
  * (at your option) any later version.
  */
 
-/* global globalRootUrl, globalTranslate, Form, OutboundRoutesAPI, ProviderSelector, UserMessage, TooltipBuilder */
+/* global globalRootUrl, globalTranslate, Form, OutboundRoutesAPI, UserMessage, TooltipBuilder, DynamicDropdownBuilder */
 
 /**
  * Object for managing outbound route settings
@@ -20,12 +20,6 @@ const outboundRoute = {
      * @type {jQuery}
      */
     $formObj: $('#outbound-route-form'),
-    
-    /**
-     * jQuery object for provider dropdown
-     * @type {jQuery}
-     */
-    $providerDropDown: $('.ui.dropdown#providerid-dropdown'),
     
     /**
      * Route data from API
@@ -106,7 +100,9 @@ const outboundRoute = {
         // Get route ID from form or URL
         const routeId = this.getRouteId();
         
-        // Load route data (will initialize dropdown with data)
+        // Note: Provider dropdown will be initialized after data is loaded
+        
+        // Load route data
         this.loadRouteData(routeId);
         
         this.initializeForm();
@@ -132,24 +128,6 @@ const outboundRoute = {
         return routeId || 'new';
     },
     
-    /**
-     * Initialize provider dropdown with settings
-     * @param {string} currentValue - Current provider ID value
-     * @param {string} currentText - Current provider representation text
-     */
-    initializeProviderDropdown(currentValue = null, currentText = null) {
-        // Use the new ProviderSelector component
-        ProviderSelector.init('#providerid-dropdown', {
-            includeNone: false,     // No 'none' option for outbound routes
-            forceSelection: true,   // Provider is mandatory
-            hiddenFieldId: 'providerid',  // Consistent field name
-            currentValue: currentValue,  // Pass current value for initialization
-            currentText: currentText,    // Pass current text for initialization
-            onChange: () => {
-                Form.dataChanged();
-            }
-        });
-    },
     
     /**
      * Load route data from API
@@ -174,6 +152,7 @@ const outboundRoute = {
                     // Mark form as changed for copy operation
                     Form.dataChanged();
                 } else {
+                    // V5.0: No fallback - show error and stop
                     const errorMessage = response.messages && response.messages.error ? 
                         response.messages.error.join(', ') : 
                         'Failed to load source data for copying';
@@ -183,18 +162,19 @@ const outboundRoute = {
             return;
         }
         
-        // Regular load
-        OutboundRoutesAPI.getRecord(routeId, (response) => {
+        // Regular load or new record - always use REST API (V5.0 architecture)
+        const apiRouteId = (routeId === 'new') ? 'new' : routeId;
+        
+        OutboundRoutesAPI.getRecord(apiRouteId, (response) => {
             if (response.result) {
                 this.routeData = response.data;
                 this.populateForm(response.data);
             } else {
-                // If no data or error, initialize with empty dropdown
-                this.initializeProviderDropdown();
-                
-                if (routeId !== 'new') {
-                    UserMessage.showMultiString(response.messages);
-                }
+                // V5.0: No fallback - show error and stop
+                const errorMessage = response.messages && response.messages.error ? 
+                    response.messages.error.join(', ') : 
+                    'Failed to load outbound route data';
+                UserMessage.showError(errorMessage);
             }
         });
     },
@@ -204,8 +184,8 @@ const outboundRoute = {
      * @param {Object} data - Route data
      */
     populateForm(data) {
-        // Set form values (API now uses 'providerid')
-        this.$formObj.form('set values', {
+        // Use unified silent population approach
+        Form.populateFormSilently({
             id: data.id || '',
             rulename: data.rulename || '',
             providerid: data.providerid || '',
@@ -215,19 +195,23 @@ const outboundRoute = {
             trimfrombegin: data.trimfrombegin || '0',
             prepend: data.prepend || '',
             note: data.note || ''
+        }, {
+            afterPopulate: (formData) => {
+                // Initialize provider dropdown with data
+                DynamicDropdownBuilder.buildDropdown('providerid', data, {
+                    apiUrl: '/pbxcore/api/v2/providers/getForSelect',
+                    placeholder: globalTranslate.or_SelectProvider,
+                    onChange: function(value, text) {
+                        Form.dataChanged();
+                    }
+                });
+                
+                // Update page header if we have a representation
+                if (data.represent) {
+                    $('.page-header .header').text(data.represent);
+                }
+            }
         });
-        
-        // Initialize provider dropdown with current value and representation
-        const providerValue = data.providerid || null;
-        const providerText = data.providerRepresent || data.providerName || null;
-        
-        // Initialize provider dropdown once with all data
-        this.initializeProviderDropdown(providerValue, providerText);
-        
-        // Update page header if we have a representation
-        if (data.represent) {
-            $('.page-header .header').text(data.represent);
-        }
     },
     
     /**

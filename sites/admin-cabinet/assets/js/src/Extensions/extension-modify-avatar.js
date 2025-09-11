@@ -21,29 +21,35 @@
 const avatar = {
     // Store reference to the avatar picture element
     $picture: $('#avatar'),
+    
+    // Flag to prevent multiple initializations
+    initialized: false,
 
     // Initialize the avatar component
     initialize() {
-
-        // Check if the avatar picture source is empty and set a default image
-        if (avatar.$picture.attr('src') === '') {
-            avatar.$picture.attr('src', `${globalRootUrl}assets/img/unknownPerson.jpg`);
+        // Prevent multiple initializations
+        if (avatar.initialized) {
+            return;
         }
+        avatar.initialized = true;
+
+        // Dynamic avatar loading will be handled by setAvatarUrl method
+        // No need to check src here as it's set in template
 
         // Bind click event to upload new avatar button
-        $('#upload-new-avatar').on('click', () => {
+        $('#upload-new-avatar').off('click.avatar').on('click.avatar', () => {
             $('#file-select').click();
         });
 
         // Bind click event to clear avatar button
-        $('#clear-avatar').on('click', () => {
+        $('#clear-avatar').off('click.avatar').on('click.avatar', () => {
             avatar.$picture.attr('src', `${globalRootUrl}assets/img/unknownPerson.jpg`);
             extension.$formObj.form('set value', 'user_avatar', null);
             extension.$sip_secret.trigger('change');
         });
 
         // Bind change event to file select input
-        $('#file-select').on('change', (e) => {
+        $('#file-select').off('change.avatar').on('change.avatar', (e) => {
             let image;
             e.preventDefault();
             const dataTransfer = 'dataTransfer' in e ? e.dataTransfer.files : [];
@@ -118,6 +124,19 @@ const avatar = {
     createObjectURL(i) {
         const URL = window.URL || window.webkitURL || window.mozURL || window.msURL;
         return URL.createObjectURL(i);
+    },
+
+    /**
+     * Set avatar URL from API data
+     * @param {string} avatarUrl - Avatar URL from API response
+     */
+    setAvatarUrl(avatarUrl) {
+        if (avatarUrl && avatarUrl !== '') {
+            avatar.$picture.attr('src', avatarUrl);
+        } else {
+            // Set default avatar if no URL provided
+            avatar.$picture.attr('src', `${globalRootUrl}assets/img/unknownPerson.jpg`);
+        }
     },
 
 };

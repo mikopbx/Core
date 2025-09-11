@@ -49,10 +49,12 @@ const ProvidersAPI = {
             url = this.endpoints.getRecord + '/' + type + '/' + id;
         }
         
+        
         $.api({
             url: url,
             method: 'GET',
             on: 'now',
+            cache: false, // Explicitly disable caching to prevent double callbacks
             onSuccess: (response) => {
                 if (response.result && response.data) {
                     // Sanitize data for display
@@ -286,15 +288,21 @@ const ProvidersAPI = {
             id: data.id,
             type: data.type || 'SIP',
             note: data.note || '',
-            disabled: !!data.disabled
+            disabled: !!data.disabled,
+            // Include represent field as-is (it will be sanitized during display)
+            represent: data.represent || ''
         };
+        
+        // Common fields for display
+        Object.assign(sanitized, {
+            host: data.host || '',
+            username: data.username || ''
+        });
         
         // SIP-specific fields
         if (data.type === 'SIP') {
             Object.assign(sanitized, {
-                username: data.username || '',
                 secret: data.secret || '',
-                host: data.host || '',
                 port: parseInt(data.port) || 5060,
                 transport: data.transport || 'UDP',
                 qualify: !!data.qualify,
@@ -303,6 +311,7 @@ const ProvidersAPI = {
                 extension: data.extension || '',
                 description: data.description || '',
                 networkfilterid: data.networkfilterid || '',
+                networkfilter_represent: data.networkfilter_represent || '',
                 manualattributes: data.manualattributes || '',
                 dtmfmode: data.dtmfmode || 'auto',
                 nat: data.nat || 'auto_force',
@@ -331,15 +340,14 @@ const ProvidersAPI = {
         // IAX-specific fields
         if (data.type === 'IAX') {
             Object.assign(sanitized, {
-                username: data.username || '',
                 secret: data.secret || '',
-                host: data.host || '',
                 qualify: !!data.qualify,
                 registration_type: data.registration_type || 'none',
                 description: data.description || '',
                 manualattributes: data.manualattributes || '',
                 noregister: !!data.noregister,
                 networkfilterid: data.networkfilterid || '',
+                networkfilter_represent: data.networkfilter_represent || '',
                 port: data.port || '',
                 receive_calls_without_auth: !!data.receive_calls_without_auth
             });

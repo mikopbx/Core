@@ -193,15 +193,15 @@ const IncomingRoutesAPI = {
             timeout: parseInt(data.timeout) || 18,
             extension: data.extension || '',
             extensionName: data.extensionName || '',
-            extensionRepresent: data.extensionRepresent || '',
-            providerRepresent: data.providerRepresent || '',
+            extension_represent: data.extension_represent || '',
+            providerid_represent: data.providerid_represent || '',
             audio_message_id: data.audio_message_id || '',
-            audio_message_id_Represent: data.audio_message_id_Represent || '',
+            audio_message_id_represent: data.audio_message_id_represent || '',
             note: data.note || '',
             disabled: !!data.disabled,
             rulename: data.rulename || '',
-            // Use ruleRepresent for display in tables
-            ruleRepresent: data.ruleRepresent || ''
+            // Use rule_represent for display in tables
+            rule_represent: data.rule_represent || ''
         };
     },
     

@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, SipAPI, SemanticLocalization, InputMaskPatterns, UserMessage, globalTranslate, Inputmask */
+/* global globalRootUrl, SipAPI, SemanticLocalization, InputMaskPatterns, UserMessage, globalTranslate, Inputmask, ExtensionIndexStatusMonitor, ExtensionsAPI, EmployeesAPI */
 
 
 /**
@@ -58,6 +58,12 @@ const extensionsIndex = {
     dataTable: {},
 
     /**
+     * Draw counter for DataTables draw parameter
+     * @type {number}
+     */
+    drawCounter: 1,
+
+    /**
      * Timeout reference for retry attempts
      * @type {number}
      */
@@ -89,24 +95,25 @@ const extensionsIndex = {
         // Move the "Add New" button to the first eight-column div.
         $('#add-new-button').appendTo($('div.eight.column:eq(0)'));
 
-        // Set up double-click behavior on the extension rows.
-        $('.extension-row td').on('dblclick', (e) => {
-            const id = $(e.target).closest('tr').attr('id');
-            window.location = `${globalRootUrl}extensions/modify/${id}`;
+        // Set up double-click behavior on the extension rows using delegation for dynamic content.
+        // Exclude buttons column to prevent accidental navigation when trying to delete
+        extensionsIndex.$body.on('dblclick', '.extension-row td:not(:last-child)', (e) => {
+            const extensionId = $(e.target).closest('tr').attr('data-extension-id');
+            window.location = `${globalRootUrl}extensions/modify/${extensionId}`;
         });
 
         // Set up delete functionality on delete button click.
         extensionsIndex.$body.on('click', 'a.delete', (e) => {
             e.preventDefault();
             $(e.target).addClass('disabled');
-            // Get the extension ID from the closest table row.
-            const extensionId = $(e.target).closest('tr').attr('id');
+            // Get the database extension ID from the closest table row.
+            const extensionId = $(e.target).closest('tr').attr('data-extension-id');
 
             // Remove any previous AJAX messages.
             $('.message.ajax').remove();
 
-            // Call the PbxApi method to delete the extension record.
-            PbxApi.ExtensionsDeleteRecord(extensionId, extensionsIndex.cbAfterDeleteRecord);
+            // Call the EmployeesAPI method to delete the employee record.
+            EmployeesAPI.deleteRecord(extensionId, extensionsIndex.cbAfterDeleteRecord);
         });
 
         // Set up copy secret button click.
@@ -174,7 +181,6 @@ const extensionsIndex = {
             extensionsIndex.$globalSearch.focus();
             extensionsIndex.$searchExtensionsInput.search('query');
         });
-
     },
 
     // Set up the DataTable on the extensions list.
@@ -206,27 +212,29 @@ const extensionsIndex = {
             columns: [
                 {
                     name: 'status',
+                    data: null,
                     orderable: false,  // This column is not orderable
                     searchable: false  // This column is not searchable,
                 },
                 {
                     name: 'username',
-                    data: 'Users.username',
+                    data: 'user_username',
                 },
                 {
                     name: 'number',
-                    data: 'CAST(Extensions.number AS INTEGER)',
+                    data: 'number',
                 },
                 {
                     name: 'mobile',
-                    data: 'CAST(ExternalExtensions.number AS INTEGER)',
+                    data: 'mobile',
                 },
                 {
                     name: 'email',
-                    data: 'Users.email',
+                    data: 'user_email',
                 },
                 {
                     name: 'buttons',
+                    data: null,
                     orderable: false,  // This column is not orderable
                     searchable: false,  // This column is not searchable
                 },
@@ -235,8 +243,55 @@ const extensionsIndex = {
             serverSide: true,
             processing: false,
             ajax: {
-                url: `${globalRootUrl}extensions/getNewRecords`,
-                type: 'POST',
+                url: `/pbxcore/api/v3/employees`,
+                type: 'GET',
+                data: function(d) {
+                    // Increment draw counter for this request
+                    extensionsIndex.drawCounter = d.draw || ++extensionsIndex.drawCounter;
+                    
+                    // Transform DataTables request to our REST API format (query params for GET)
+                    const requestData = {
+                        search: d.search.value,
+                        limit: d.length,
+                        offset: d.start
+                    };
+                    
+                    // Add sorting information
+                    if (d.order && d.order.length > 0) {
+                        const orderColumn = d.columns[d.order[0].column];
+                        if (orderColumn && orderColumn.name) {
+                            requestData.order_by = orderColumn.name;
+                            requestData.order_direction = d.order[0].dir.toUpperCase();
+                        }
+                    }
+                    
+                    return requestData;
+                },
+                dataSrc: function(json) {
+                    // Handle new pagination format from Employees API
+                    // API returns: {data: {data: [...], recordsTotal: n, recordsFiltered: n}}
+                    let data, recordsTotal, recordsFiltered;
+                    
+                    if (json.data && json.data.data && Array.isArray(json.data.data)) {
+                        // New pagination format
+                        data = json.data.data;
+                        recordsTotal = json.data.recordsTotal || data.length;
+                        recordsFiltered = json.data.recordsFiltered || recordsTotal;
+                    } else {
+                        // Fallback to old format for compatibility
+                        data = json.data || [];
+                        recordsTotal = data.length;
+                        recordsFiltered = data.length;
+                    }
+                    
+                    // Set DataTables pagination info on the response object
+                    json.draw = extensionsIndex.drawCounter;
+                    json.recordsTotal = recordsTotal;
+                    json.recordsFiltered = recordsFiltered;
+                    
+                    // Return just the data array for DataTables to process
+                    return data;
+                },
                 error: function(xhr, textStatus, error) {
                     // Suppress the default error alert
                     console.log('DataTable request failed, will retry in 3 seconds');
@@ -274,24 +329,33 @@ const extensionsIndex = {
             createdRow(row, data) {
                 const $templateRow  =  $('.extension-row-tpl').clone(true);
                 const $avatar = $templateRow.find('.avatar');
-                $avatar.attr('src',data.avatar);
-                $avatar.after(data.username);
+                $avatar.attr('src', data.avatar);
+                $avatar.after(data.user_username);
                 $templateRow.find('.number').text(data.number);
                 $templateRow.find('.mobile input').attr('value', data.mobile);
-                $templateRow.find('.email').text(data.email);
+                $templateRow.find('.email').text(data.user_email);
 
                 $templateRow.find('.action-buttons').removeClass('small').addClass('tiny');
 
                 const $editButton = $templateRow.find('.action-buttons .button.edit');
-                if ($editButton!==undefined){
+                if ($editButton !== undefined){
                     $editButton.attr('href',`${globalRootUrl}extensions/modify/${data.id}`)
                 }
 
                 const $clipboardButton = $templateRow.find('.action-buttons .button.clipboard');
-                if ($clipboardButton!==undefined){
-                    $clipboardButton.attr('data-value',data.number)
+                if ($clipboardButton !== undefined){
+                    $clipboardButton.attr('data-value', data.number)
                 }
                 $(row).attr('data-value', data.number);
+                $(row).attr('id', data.number); // Use extension number as ID for status monitor
+                $(row).attr('data-extension-id', data.id); // Preserve database ID as data attribute
+                $(row).addClass('extension-row'); // Add class for status monitor
+                
+                // Apply disabled class if extension is disabled
+                if (data.disabled) {
+                    $(row).addClass('disabled');
+                }
+                
                 $.each($('td', $templateRow), (index, value) => {
                     $('td', row).eq(index)
                         .html($(value).html())
@@ -306,26 +370,38 @@ const extensionsIndex = {
                 // Initialize the input mask for mobile numbers.
                 extensionsIndex.initializeInputmask($('input.mobile-number-input'));
                 
-                // Check if table is empty and show placeholder
+                // Check if table is empty and show appropriate message
                 const api = new $.fn.dataTable.Api(settings);
                 const pageInfo = api.page.info();
-                const hasRecords = pageInfo.recordsTotal > 0 || pageInfo.recordsDisplay > 0;
+                const hasRecords = pageInfo.recordsDisplay > 0;
+                const searchValue = api.search();
                 
                 if (!hasRecords) {
-                    $('#extensions-table-container').hide();
-                    $('#extensions-placeholder').show();
+                    $('#extensions-table').hide();
+                    
+                    // Check if this is due to search filter or truly empty database
+                    if (searchValue && searchValue.trim() !== '') {
+                        // Show "Nothing found" message for search results
+                        extensionsIndex.showNoSearchResultsMessage();
+                    } else {
+                        // Show "Add first employee" placeholder for empty database
+                        $('#extensions-table-container').hide();
+                        $('#extensions-placeholder').show();
+                    }
                 } else {
+                    $('#extensions-table').show();
                     $('#extensions-table-container').show();
                     $('#extensions-placeholder').hide();
+                    extensionsIndex.hideNoSearchResultsMessage();
                 }
+                
+                // Hide pagination when there are few records (less than page length)
+                extensionsIndex.togglePaginationVisibility(pageInfo);
                 
                 // Set up popups.
                 $('.clipboard').popup({
                     on: 'manual',
                 });
-
-                // Initialize the extension status worker.
-                extensionsStatusLoopWorker.initialize();
             },
             // Disable DataTables error alerts completely
             fnInitComplete: function() {
@@ -377,6 +453,15 @@ const extensionsIndex = {
             extensionsIndex.$globalSearch.val(searchValue);
             extensionsIndex.applyFilter(searchValue);
         }
+        
+        // Initialize extension index status monitor if available
+        if (typeof ExtensionIndexStatusMonitor !== 'undefined') {
+            ExtensionIndexStatusMonitor.initialize();
+            // Request initial status after table loads
+            setTimeout(() => {
+                extensionsIndex.requestInitialStatus();
+            }, 500);
+        }
     },
 
     /**
@@ -412,10 +497,12 @@ const extensionsIndex = {
      */
     cbAfterDeleteRecord(response){
         if (response.result === true) {
-            // Remove the deleted extension's table row.
-            extensionsIndex.$extensionsList.find(`tr[id=${response.data.id}]`).remove();
-            // Call the callback function for data change.
-            Extensions.cbOnDataChanged();
+            // Reload the datatable to reflect changes
+            extensionsIndex.dataTable.ajax.reload(null, false);
+            // Call the callback function for data change if it exists.
+            if (typeof Extensions !== 'undefined' && typeof Extensions.cbOnDataChanged === 'function') {
+                Extensions.cbOnDataChanged();
+            }
         } else {
             // Show an error message if deletion was not successful.
             UserMessage.showError(response.messages.error, globalTranslate.ex_ImpossibleToDeleteExtension);
@@ -476,6 +563,54 @@ const extensionsIndex = {
     },
 
     /**
+     * Shows "No search results found" message
+     */
+    showNoSearchResultsMessage() {
+        // Remove any existing no-results message
+        extensionsIndex.hideNoSearchResultsMessage();
+        
+        // Create and show no results message
+        const noResultsHtml = `
+            <div id="no-search-results" style="margin-top: 2em;">
+                <div class="ui icon message">
+                    <i class="search icon"></i>
+                    <div class="content">
+                        <div class="header">${globalTranslate.ex_NoSearchResults}</div>
+                        <p>${globalTranslate.ex_TryDifferentKeywords}</p>
+                    </div>
+                </div>
+            </div>
+        `;
+        $('#extensions-table-container').after(noResultsHtml);
+    },
+
+    /**
+     * Hides "No search results found" message
+     */
+    hideNoSearchResultsMessage() {
+        $('#no-search-results').remove();
+    },
+
+    /**
+     * Toggles pagination visibility based on number of records
+     * Hides pagination when there are fewer records than the page length
+     * @param {Object} pageInfo - DataTables page info object
+     */
+    togglePaginationVisibility(pageInfo) {
+        const paginationWrapper = $('#extensions-table_paginate');
+        const paginationInfo = $('#extensions-table_info');
+        
+        // Hide pagination if total records fit on one page
+        if (pageInfo.recordsDisplay <= pageInfo.length) {
+            paginationWrapper.hide();
+            paginationInfo.hide();
+        } else {
+            paginationWrapper.show();
+            paginationInfo.show();
+        }
+    },
+
+    /**
      * Copies the text passed as param to the system clipboard
      * Check if using HTTPS and navigator.clipboard is available
      * Then uses standard clipboard API, otherwise uses fallback
@@ -503,6 +638,21 @@ const extensionsIndex = {
         }
         document.body.removeChild(textArea)
     },
+    
+    /**
+     * Request initial extension status on page load
+     */
+    requestInitialStatus() {
+        if (typeof ExtensionsAPI !== 'undefined') {
+            // Use simplified mode for index page - pass options as first param, callback as second
+            ExtensionsAPI.getStatuses({ simplified: true }, (response) => {
+                // Manually trigger status update
+                if (response && response.data && typeof ExtensionIndexStatusMonitor !== 'undefined') {
+                    ExtensionIndexStatusMonitor.updateAllExtensionStatuses(response.data);
+                }
+            });
+        }
+    }
 };
 
 /**

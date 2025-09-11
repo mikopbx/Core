@@ -332,8 +332,8 @@ const generalSettingsModify = {
         // Codec table drag-n-drop will be initialized after data is loaded
         // See initializeCodecDragDrop() which is called from updateCodecTables()
 
-        // Initialize sound file selectors with HTML icons support
-        generalSettingsModify.initializeSoundFileSelectors();
+        // Sound file selectors will be initialized after REST API data is loaded
+        // See loadSoundFileValues() method called from populateForm()
 
         // Initialize the form
         generalSettingsModify.initializeForm();
@@ -373,29 +373,18 @@ const generalSettingsModify = {
     },
 
     /**
-     * Initialize sound file selectors with HTML icons and change tracking
-     * Note: The HTML structure is now provided by the playAddNewSoundWithIcons partial:
+     * Initialize sound file selectors with playback functionality using SoundFileSelector
+     * HTML structure is provided by the playAddNewSoundWithIcons partial in recording.volt:
      * - Hidden input: <input type="hidden" id="PBXRecordAnnouncementIn" name="PBXRecordAnnouncementIn">
-     * - Dropdown div: <div class="ui selection dropdown search PBXRecordAnnouncementIn-select">
+     * - Dropdown div: <div class="ui selection dropdown search PBXRecordAnnouncementIn-dropdown">
+     * - Playback button and add new button
      */
     initializeSoundFileSelectors() {
-        // Initialize incoming announcement selector
-        SoundFileSelector.init('PBXRecordAnnouncementIn', {
-            category: 'custom',
-            includeEmpty: true,
-            onChange: () => {
-                Form.dataChanged();
-            }
-        });
+        // Sound file selectors will be initialized after data is loaded
+        // See initializeSoundFileSelectorWithData() called from populateForm()
         
-        // Initialize outgoing announcement selector
-        SoundFileSelector.init('PBXRecordAnnouncementOut', {
-            category: 'custom',
-            includeEmpty: true,
-            onChange: () => {
-                Form.dataChanged();
-            }
-        });
+        // This method is kept for consistency but actual initialization happens
+        // when we have data from the server in loadSoundFileValues()
     },
 
     /**
@@ -442,31 +431,33 @@ const generalSettingsModify = {
         const settings = data.settings || data;
         const codecs = data.codecs || [];
         
-        // Set form values using Fomantic UI form API
-        generalSettingsModify.$formObj.form('set values', settings);
-        
-        // Handle special field types
-        generalSettingsModify.populateSpecialFields(settings);
-        
-        // Load sound file values with representations
-        generalSettingsModify.loadSoundFileValues(settings);
-        
-        // Update codec tables
-        if (codecs.length > 0) {
-            generalSettingsModify.updateCodecTables(codecs);
-        }
-        
-        // Initialize password fields (hide actual passwords)
-        generalSettingsModify.initializePasswordFields(settings);
-        
-        // Update SSH password visibility
-        generalSettingsModify.showHideSSHPassword();
-        
-        // Remove loading state
-        generalSettingsModify.$formObj.removeClass('loading');
-        
-        // Re-initialize form validation rules
-        generalSettingsModify.initRules();
+        // Use unified silent population approach
+        Form.populateFormSilently(settings, {
+            afterPopulate: (formData) => {
+                // Handle special field types
+                generalSettingsModify.populateSpecialFields(formData);
+                
+                // Load sound file values with representations
+                generalSettingsModify.loadSoundFileValues(formData);
+                
+                // Update codec tables
+                if (codecs.length > 0) {
+                    generalSettingsModify.updateCodecTables(codecs);
+                }
+                
+                // Initialize password fields (hide actual passwords)
+                generalSettingsModify.initializePasswordFields(formData);
+                
+                // Update SSH password visibility
+                generalSettingsModify.showHideSSHPassword();
+                
+                // Remove loading state
+                generalSettingsModify.$formObj.removeClass('loading');
+                
+                // Re-initialize form validation rules
+                generalSettingsModify.initRules();
+            }
+        });
         
         // Re-initialize dirty checking if enabled
         if (Form.enableDirrity) {
@@ -612,39 +603,25 @@ const generalSettingsModify = {
     },
     
     /**
-     * Load sound file values with HTML representation
+     * Initialize and load sound file selectors with data, similar to IVR implementation
      * @param {object} settings - Settings data from API
      */
     loadSoundFileValues(settings) {
-        // Load incoming announcement sound file
-        if (settings.PBXRecordAnnouncementIn) {
-            const announcementInRepresent = settings.PBXRecordAnnouncementIn_Represent || 
-                                           settings.PBXRecordAnnouncementInRepresent;
-            if (announcementInRepresent) {
-                SoundFileSelector.setValue(
-                    'PBXRecordAnnouncementIn',
-                    settings.PBXRecordAnnouncementIn,
-                    announcementInRepresent
-                );
-            } else {
-                SoundFileSelector.setSelected('PBXRecordAnnouncementIn', settings.PBXRecordAnnouncementIn);
-            }
-        }
+        // Initialize incoming announcement selector with data (following IVR pattern)
+        SoundFileSelector.init('PBXRecordAnnouncementIn', {
+            category: 'custom',
+            includeEmpty: true,
+            data: settings
+            // ❌ NO onChange needed - complete automation by base class
+        });
         
-        // Load outgoing announcement sound file
-        if (settings.PBXRecordAnnouncementOut) {
-            const announcementOutRepresent = settings.PBXRecordAnnouncementOut_Represent || 
-                                            settings.PBXRecordAnnouncementOutRepresent;
-            if (announcementOutRepresent) {
-                SoundFileSelector.setValue(
-                    'PBXRecordAnnouncementOut',
-                    settings.PBXRecordAnnouncementOut,
-                    announcementOutRepresent
-                );
-            } else {
-                SoundFileSelector.setSelected('PBXRecordAnnouncementOut', settings.PBXRecordAnnouncementOut);
-            }
-        }
+        // Initialize outgoing announcement selector with data (following IVR pattern)  
+        SoundFileSelector.init('PBXRecordAnnouncementOut', {
+            category: 'custom',
+            includeEmpty: true,
+            data: settings
+            // ❌ NO onChange needed - complete automation by base class
+        });
     },
 
     /**

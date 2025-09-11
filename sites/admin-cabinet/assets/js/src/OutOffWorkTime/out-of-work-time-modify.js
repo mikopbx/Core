@@ -18,7 +18,7 @@
 
 /* global $ globalRootUrl Extensions moment Form globalTranslate 
    SemanticLocalization SoundFileSelector UserMessage SecurityUtils
-   IncomingRoutesAPI OutWorkTimesAPI */
+   IncomingRoutesAPI OutWorkTimesAPI DynamicDropdownBuilder ExtensionSelector */
 
 /**
  * Module for managing out-of-work time settings
@@ -67,7 +67,6 @@ const outOfWorkTimeRecord = {
     $calTypeDropdown: $('.calType-select'),
     $weekdayFromDropdown: $('.weekday-from-select'),
     $weekdayToDropdown: $('.weekday-to-select'),
-    $forwardingSelectDropdown: $('.forwarding-select'),
     
     // Tab elements
     $tabMenu: $('#out-time-modify-menu .item'),
@@ -205,14 +204,17 @@ const outOfWorkTimeRecord = {
         // Use recordId for existing records, empty string for new
         const recordIdToLoad = outOfWorkTimeRecord.recordId || '';
         
-        // Load record data via REST API
+        // Load record data via REST API - always returns data (with defaults for new records)
         OutWorkTimesAPI.getRecord(recordIdToLoad, (response) => {
+            // Remove loading state
+            outOfWorkTimeRecord.$formObj.removeClass('loading');
+            
             if (response.result && response.data) {
+                // Success: populate form with data (defaults for new, real data for existing)
                 outOfWorkTimeRecord.recordData = response.data;
                 outOfWorkTimeRecord.populateForm(response.data);
                 
-                // Load routing rules for both new and existing records
-                // For new records, this will show all available routes unchecked
+                // Load routing rules
                 outOfWorkTimeRecord.loadRoutingTable();
                 
                 // Save initial values to prevent save button activation
@@ -221,19 +223,12 @@ const outOfWorkTimeRecord = {
                     Form.checkValues();
                 }, 250);
             } else {
-                // Error loading, but still initialize empty form
-                outOfWorkTimeRecord.initializeDropdowns();
-                // Load routing table even for new records
-                outOfWorkTimeRecord.loadRoutingTable();
-                
+                // API error - show error message
                 if (response.messages && response.messages.error) {
                     const errorMessage = response.messages.error.join(', ');
                     UserMessage.showError(SecurityUtils.escapeHtml(errorMessage));
                 }
             }
-            
-            // Remove loading state
-            outOfWorkTimeRecord.$formObj.removeClass('loading');
         });
     },
     
@@ -293,23 +288,43 @@ const outOfWorkTimeRecord = {
             }
         });
         
-        // Initialize extension dropdown using routing settings
-        const extensionSettings = Extensions.getDropdownSettingsForRouting();
-        extensionSettings.onChange = function(value) {
-            outOfWorkTimeRecord.$extensionField.val(value);
-            Form.dataChanged();
-        };
-        
-        outOfWorkTimeRecord.$forwardingSelectDropdown.dropdown('destroy');
-        outOfWorkTimeRecord.$forwardingSelectDropdown.dropdown(extensionSettings);
-        
-        // Initialize sound file selector
+        // Extension selector will be initialized in populateForm with API data
+    },
+    
+    /**
+     * Initialize sound file selector with API data
+     * Single point of initialization after receiving data from API
+     * @param {object} data - API response data (with defaults or existing values)
+     */
+    initializeSoundFileSelector(data) {
+        // Initialize SoundFileSelector with complete API data context
         SoundFileSelector.init(outOfWorkTimeRecord.audioMessageId, {
             category: 'custom',
             includeEmpty: true,
-            onChange: () => {
-                Form.dataChanged();
-            }
+            data: data // Pass complete API data for proper initialization
+        });
+        
+        // If audio_message_id exists, set the value with representation
+        if (data.audio_message_id && data.audio_message_id_represent) {
+            SoundFileSelector.setValue(
+                outOfWorkTimeRecord.audioMessageId, 
+                data.audio_message_id, 
+                data.audio_message_id_represent
+            );
+        }
+    },
+    
+    /**
+     * Initialize extension selector with API data
+     * Single point of initialization after receiving data from API
+     * @param {object} data - API response data (with defaults or existing values)
+     */
+    initializeExtensionSelector(data) {
+        // Initialize ExtensionSelector following V5.0 pattern
+        ExtensionSelector.init('extension', {
+            type: 'routing',
+            includeEmpty: true,
+            data: data
         });
     },
     
@@ -318,8 +333,8 @@ const outOfWorkTimeRecord = {
      * @param {object} data - Record data from API
      */
     populateForm(data) {
-        // Set basic form values - all defaults come from REST API
-        outOfWorkTimeRecord.$formObj.form('set values', {
+        // Use unified silent population approach
+        Form.populateFormSilently({
             id: data.id,
             uniqid: data.uniqid,
             priority: data.priority,
@@ -336,83 +351,71 @@ const outOfWorkTimeRecord = {
             extension: data.extension,
             audio_message_id: data.audio_message_id,
             allowRestriction: data.allowRestriction
-        });
-        
-        // Handle password field placeholder
-        const $calSecretField = $('#calSecret');
-        if (data.calSecret === 'XXXXXX') {
-            // Password exists but is masked, show placeholder
-            $calSecretField.attr('placeholder', globalTranslate.tf_PasswordMasked || 'Password saved (enter new to change)');
-            // Store original masked state to detect changes
-            $calSecretField.data('originalMasked', true);
-        } else {
-            $calSecretField.attr('placeholder', globalTranslate.tf_EnterPassword || 'Enter password');
-            $calSecretField.data('originalMasked', false);
-        }
-        
-        // Initialize dropdowns
-        outOfWorkTimeRecord.initializeDropdowns();
-        
-        // Set dropdown values after initialization
-        // Set action dropdown
-        if (data.action) {
-            outOfWorkTimeRecord.$actionDropdown.dropdown('set selected', data.action);
-        }
-        
-        // Set calType dropdown
-        if (data.calType) {
-            outOfWorkTimeRecord.$calTypeDropdown.dropdown('set selected', data.calType);
-        }
-        
-        // Set weekday dropdowns
-        if (data.weekday_from) {
-            outOfWorkTimeRecord.$weekdayFromDropdown.dropdown('set selected', data.weekday_from);
-        }
-        if (data.weekday_to) {
-            outOfWorkTimeRecord.$weekdayToDropdown.dropdown('set selected', data.weekday_to);
-        }
-        
-        // Set dates if present
-        if (data.date_from) {
-            outOfWorkTimeRecord.setDateFromTimestamp(data.date_from, '#range-days-start');
-        }
-        if (data.date_to) {
-            outOfWorkTimeRecord.setDateFromTimestamp(data.date_to, '#range-days-end');
-        }
-        
-        // Set extension value and display text if exists
-        if (data.extension) {
-            setTimeout(() => {
-                outOfWorkTimeRecord.$forwardingSelectDropdown.dropdown('set selected', data.extension);
-                
-                // Update display text if available
-                if (data.extensionRepresent) {
-                    const safeText = SecurityUtils.sanitizeExtensionsApiContent(data.extensionRepresent);
-                    outOfWorkTimeRecord.$forwardingSelectDropdown.find('.text')
-                        .removeClass('default')
-                        .html(safeText);
+        }, {
+            afterPopulate: (formData) => {
+                // Handle password field placeholder
+                const $calSecretField = $('#calSecret');
+                if (data.calSecret === 'XXXXXX') {
+                    // Password exists but is masked, show placeholder
+                    $calSecretField.attr('placeholder', globalTranslate.tf_PasswordMasked || 'Password saved (enter new to change)');
+                    // Store original masked state to detect changes
+                    $calSecretField.data('originalMasked', true);
+                } else {
+                    $calSecretField.attr('placeholder', globalTranslate.tf_EnterPassword || 'Enter password');
+                    $calSecretField.data('originalMasked', false);
                 }
-            }, 100);
-        }
-        
-        // Setup audio message value
-        if (data.audio_message_id) {
-            SoundFileSelector.setValue(outOfWorkTimeRecord.audioMessageId, data.audio_message_id, data.audio_message_id_Represent);
-        }
-        
-        // Update field visibility based on action
-        outOfWorkTimeRecord.onActionChange();
-        
-        // Update calendar type visibility
-        outOfWorkTimeRecord.onCalTypeChange();
-        
-        // Set rules tab visibility based on allowRestriction
-        outOfWorkTimeRecord.toggleRulesTab(data.allowRestriction);
-        
-        // Re-initialize dirty checking
-        if (Form.enableDirrity) {
-            Form.initializeDirrity();
-        }
+                
+                // Initialize dropdowns
+                outOfWorkTimeRecord.initializeDropdowns();
+                
+                // Initialize sound file selector with API data (single point of initialization)
+                outOfWorkTimeRecord.initializeSoundFileSelector(data);
+                
+                // Initialize extension selector with API data
+                outOfWorkTimeRecord.initializeExtensionSelector(data);
+                
+                // Set dropdown values after initialization
+                // Set action dropdown
+                if (data.action) {
+                    outOfWorkTimeRecord.$actionDropdown.dropdown('set selected', data.action);
+                }
+                
+                // Set calType dropdown
+                if (data.calType) {
+                    outOfWorkTimeRecord.$calTypeDropdown.dropdown('set selected', data.calType);
+                }
+                
+                // Set weekday dropdowns
+                if (data.weekday_from) {
+                    outOfWorkTimeRecord.$weekdayFromDropdown.dropdown('set selected', data.weekday_from);
+                }
+                if (data.weekday_to) {
+                    outOfWorkTimeRecord.$weekdayToDropdown.dropdown('set selected', data.weekday_to);
+                }
+                
+                // Set dates if present
+                if (data.date_from) {
+                    outOfWorkTimeRecord.setDateFromTimestamp(data.date_from, '#range-days-start');
+                }
+                if (data.date_to) {
+                    outOfWorkTimeRecord.setDateFromTimestamp(data.date_to, '#range-days-end');
+                }
+                
+                // Update field visibility based on action
+                outOfWorkTimeRecord.onActionChange();
+                
+                // Update calendar type visibility
+                outOfWorkTimeRecord.onCalTypeChange();
+                
+                // Set rules tab visibility based on allowRestriction
+                outOfWorkTimeRecord.toggleRulesTab(data.allowRestriction);
+                
+                // Re-initialize dirty checking
+                if (Form.enableDirrity) {
+                    Form.initializeDirrity();
+                }
+            }
+        });
     },
     
     /**
@@ -431,8 +434,8 @@ const outOfWorkTimeRecord = {
             // Show audio, hide extension
             outOfWorkTimeRecord.$extensionRow.hide();
             outOfWorkTimeRecord.$audioMessageRow.show();
-            // Clear extension
-            outOfWorkTimeRecord.$forwardingSelectDropdown.dropdown('clear');
+            // Clear extension using ExtensionSelector
+            ExtensionSelector.clear('extension');
             outOfWorkTimeRecord.$extensionField.val('');
         }
         
@@ -599,7 +602,7 @@ const outOfWorkTimeRecord = {
             const providerId = route.provider || 'none';
             if (!groups[providerId]) {
                 // Extract plain text provider name from HTML if needed
-                let providerName = route.providerRepresent || globalTranslate.ir_NoAssignedProvider || 'Direct calls';
+                let providerName = route.providerid_represent || globalTranslate.ir_NoAssignedProvider || 'Direct calls';
                 // Remove HTML tags to get clean provider name for display
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = providerName;
@@ -608,7 +611,7 @@ const outOfWorkTimeRecord = {
                 groups[providerId] = {
                     providerId: providerId,  // Store actual provider ID
                     providerName: cleanProviderName,  // Clean name for display
-                    providerNameHtml: route.providerRepresent || providerName,  // Original HTML if needed
+                    providerNameHtml: route.providerid_represent || providerName,  // Original HTML if needed
                     providerDisabled: route.providerDisabled || false,
                     generalRules: [],
                     specificRules: {}
@@ -698,7 +701,7 @@ const outOfWorkTimeRecord = {
     createRouteRow(route, associatedIds, ruleClass = '', showDIDIndicator = false) {
         const isChecked = associatedIds.includes(parseInt(route.id));
         const providerDisabled = route.providerDisabled ? 'disabled' : '';
-        let ruleDescription = route.ruleRepresent || '';
+        let ruleDescription = route.rule_represent || '';
         
         // Ensure provider ID is clean (no HTML)
         const providerId = route.provider || '';

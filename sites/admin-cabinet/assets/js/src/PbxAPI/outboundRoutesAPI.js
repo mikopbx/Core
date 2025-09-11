@@ -205,29 +205,48 @@ const OutboundRoutesAPI = {
     
     /**
      * Sanitize route data for secure display
-     * Data comes from API already properly escaped, so no additional escaping needed
      * 
-     * @param {object} data - Route data from API (already sanitized)
-     * @return {object} Data ready for display
+     * @param {object} data - Route data from API
+     * @return {object} Data ready for display with proper sanitization
      */
     sanitizeRouteData: function(data) {
         if (!data) return data;
         
-        return {
+        const sanitized = {
             id: data.id,
-            rulename: data.rulename || '',
             priority: parseInt(data.priority) || 0,
-            numberbeginswith: data.numberbeginswith || '',
             restnumbers: data.restnumbers || '-1',
             trimfrombegin: data.trimfrombegin || '0',
-            prepend: data.prepend || '',
             providerid: data.providerid || '',  // Unified field name
-            providerName: data.providerName || '',
-            providerType: data.providerType || '',
             providerDisabled: !!data.providerDisabled,
-            note: data.note || '',
             disabled: !!data.disabled
         };
+        
+        // Sanitize text fields for XSS protection
+        const textFields = ['rulename', 'numberbeginswith', 'prepend', 'note'];
+        textFields.forEach(function(field) {
+            if (data[field] && typeof data[field] === 'string') {
+                sanitized[field] = SecurityUtils.escapeHtml(data[field]);
+            } else {
+                sanitized[field] = data[field] || '';
+            }
+        });
+        
+        // Sanitize represent fields that may contain HTML
+        const htmlFields = ['providerid_represent', 'represent', 'providerName'];
+        htmlFields.forEach(function(field) {
+            if (data[field] && typeof data[field] === 'string') {
+                // Use sanitizeForDropdown for represent fields as they may contain safe icons
+                sanitized[field] = SecurityUtils.sanitizeForDropdown(data[field]);
+            } else {
+                sanitized[field] = data[field] || '';
+            }
+        });
+        
+        // Provider type as plain text
+        sanitized.providerType = data.providerType || '';
+        
+        return sanitized;
     },
     
     /**
