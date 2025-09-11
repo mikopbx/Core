@@ -245,6 +245,25 @@ class SaveEmployeeAction extends AbstractSaveRecordAction
                 case 'language':
                     $userEntity->$name = PbxSettings::getValueByKey(PbxSettings::PBX_LANGUAGE);
                     break;
+                case 'avatar':
+                    // Special handling for avatar field:
+                    // - If empty string: clear avatar (user clicked clear button)
+                    // - If starts with 'data:image': new base64 image to save
+                    // - If starts with '/' (URL path): unchanged, skip update
+                    $propertyKey = 'user_avatar';
+                    if (array_key_exists($propertyKey, $sanitizedData)) {
+                        $avatarValue = $sanitizedData[$propertyKey];
+                        
+                        if ($avatarValue === '' || $avatarValue === null) {
+                            // Empty value means clear the avatar
+                            $userEntity->avatar = '';
+                        } elseif (str_starts_with($avatarValue, 'data:image')) {
+                            // New base64 image - save it
+                            $userEntity->avatar = $avatarValue;
+                        }
+                        // If it's a URL (starts with '/'), don't update - keep existing avatar
+                    }
+                    break;
                 default:
                     $propertyKey = 'user_' . $name;
                     if (array_key_exists($propertyKey, $sanitizedData)) {

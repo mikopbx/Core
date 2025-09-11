@@ -25,9 +25,8 @@ use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\Users;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractGetListAction;
+use MikoPBX\PBXCoreREST\Lib\Common\AvatarHelper;
 use Phalcon\Di\Di;
-
-use function MikoPBX\Common\Config\appPath;
 
 /**
  * Get list of all employees with DataTable support
@@ -104,15 +103,22 @@ class GetListAction extends AbstractGetListAction
                 $resultData[] = self::createDataTableRecord($employee);
             }
             
-            $res->data = $resultData;
-            $res->success = true;
+            // Check if DataTable format is requested
+            $isDataTableRequest = isset($parameters['draw']);
             
-            // Add total count for pagination
-            $res->data = [
-                'data' => $resultData,
-                'recordsTotal' => $totalCount,
-                'recordsFiltered' => $totalCount  // Same as total since we filter on server side
-            ];
+            if ($isDataTableRequest) {
+                // DataTable format for web UI
+                $res->data = [
+                    'data' => $resultData,
+                    'recordsTotal' => $totalCount,
+                    'recordsFiltered' => $totalCount  // Same as total since we filter on server side
+                ];
+            } else {
+                // Simple array format for API
+                $res->data = $resultData;
+            }
+            
+            $res->success = true;
             
         } catch (\Exception $e) {
             return self::handleListError($e, $res);
@@ -331,7 +337,7 @@ class GetListAction extends AbstractGetListAction
         $disabled = ($employee['sip_disabled'] ?? '0') === '1';
         
         // Process avatar with caching
-        $avatarUrl = self::getAvatarUrl($avatar);
+        $avatarUrl = AvatarHelper::getAvatarUrl($avatar);
         
         return [
             'id' => (int)$userId,  // User ID as primary identifier
@@ -342,69 +348,5 @@ class GetListAction extends AbstractGetListAction
             'avatar' => $avatarUrl,
             'disabled' => $disabled,
         ];
-    }
-    
-    /**
-     * Get avatar URL with caching support
-     * Saves base64 avatars to cache directory for performance
-     * 
-     * @param string $avatarData Base64 avatar data or empty string
-     * @param string $userId User ID for generating unique filename
-     * @return string Avatar URL path
-     */
-    private static function getAvatarUrl(string $avatarData): string
-    {
-        // Default avatar for empty data
-        if (empty($avatarData)) {
-            return '/admin-cabinet/assets/img/unknownPerson.jpg';
-        }
-        
-        // Check if it's base64 data
-        if (!str_starts_with($avatarData, 'data:image')) {
-            // Already a URL path, return as is
-            return $avatarData;
-        }
-        
-        
-        $filename = md5($avatarData);
-        $imgCacheDir = appPath('sites/admin-cabinet/assets/img/cache');
-        $imgFile = "{$imgCacheDir}/{$filename}.jpg";
-        
-        // Process avatar file if it doesn't exist yet
-        if (!file_exists($imgFile)) {
-            self::base64ToJpegFile($avatarData, $imgFile);
-        }
-        $avatarUrl = "/admin-cabinet/assets/img/cache/{$filename}.jpg";
-       
-        // Return the cache URL
-        return $avatarUrl;
-    }
-    
-    /**
-     * Convert base64 string to JPEG file
-     * 
-     * @param string $base64String Base64 encoded image data
-     * @param string $outputFile Output file path
-     * @return void
-     */
-    private static function base64ToJpegFile(string $base64String, string $outputFile): void
-    {
-        // Open the output file for writing
-        $ifp = fopen($outputFile, 'wb');
-        if ($ifp === false) {
-            return;
-        }
-        
-        // Split the string on commas
-        // $data[0] == "data:image/png;base64"
-        // $data[1] == <actual base64 string>
-        $data = explode(',', $base64String);
-        if (count($data) > 1) {
-            // Write the base64 decoded data to the file
-            fwrite($ifp, base64_decode($data[1]));
-        }
-        
-        // Close the file resource
-        fclose($ifp);
     }
 }

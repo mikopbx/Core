@@ -23,6 +23,7 @@ use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\Users;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
+use MikoPBX\PBXCoreREST\Lib\Common\AvatarHelper;
 
 /**
  * Data structure for employees following Extensions DataStructure pattern from 1 month ago
@@ -43,7 +44,7 @@ class DataStructure extends AbstractDataStructure
         $data['id'] = $user->id;
         $data['user_username'] = $user->username ?? '';
         $data['user_email'] = $user->email ?? '';
-        $data['user_avatar'] = $user->avatar ?? '/admin-cabinet/assets/img/unknownPerson.jpg';
+        $data['user_avatar'] = AvatarHelper::getAvatarUrl($user->avatar ?? '');
 
         $sipExtension = Extensions::findFirst([
             'conditions' => 'type = :type: AND is_general_user_number = "1" AND userid = :userid:',

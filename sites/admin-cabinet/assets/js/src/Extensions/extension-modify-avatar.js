@@ -44,7 +44,8 @@ const avatar = {
         // Bind click event to clear avatar button
         $('#clear-avatar').off('click.avatar').on('click.avatar', () => {
             avatar.$picture.attr('src', `${globalRootUrl}assets/img/unknownPerson.jpg`);
-            extension.$formObj.form('set value', 'user_avatar', null);
+            // Set empty value to clear avatar in database
+            extension.$formObj.form('set value', 'user_avatar', '');
             extension.$sip_secret.trigger('change');
         });
 
@@ -128,14 +129,28 @@ const avatar = {
 
     /**
      * Set avatar URL from API data
-     * @param {string} avatarUrl - Avatar URL from API response
+     * Handles both base64 data and URL paths
+     * @param {string} avatarUrl - Avatar URL or base64 data from API response
      */
     setAvatarUrl(avatarUrl) {
         if (avatarUrl && avatarUrl !== '') {
-            avatar.$picture.attr('src', avatarUrl);
+            // Check if it's a base64 string or a URL
+            if (avatarUrl.startsWith('data:image')) {
+                // Base64 data - set directly
+                avatar.$picture.attr('src', avatarUrl);
+                // Also update the form field with base64 data
+                extension.$formObj.form('set value', 'user_avatar', avatarUrl);
+            } else {
+                // URL path - display the image and keep URL in form field
+                avatar.$picture.attr('src', avatarUrl);
+                // Store the URL in form field - server will ignore URLs and keep existing avatar
+                extension.$formObj.form('set value', 'user_avatar', avatarUrl);
+            }
         } else {
             // Set default avatar if no URL provided
             avatar.$picture.attr('src', `${globalRootUrl}assets/img/unknownPerson.jpg`);
+            // Empty value means no avatar
+            extension.$formObj.form('set value', 'user_avatar', '');
         }
     },
 
