@@ -171,7 +171,6 @@
 <div class="ui bottom attached tab segment" data-tab="status">
     <!-- Active devices section -->
     <h3 class="ui header">
-        <i class="mobile alternate icon"></i>
         <div class="content">
             {{ t._('ex_ActiveDevices') }}
         </div>
@@ -190,7 +189,6 @@
     
     <!-- Device history section -->
     <h3 class="ui header">
-        <i class="history icon"></i>
         <div class="content">
             {{ t._('ex_DeviceHistory') }}
         </div>

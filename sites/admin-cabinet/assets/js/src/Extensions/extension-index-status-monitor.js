@@ -232,10 +232,7 @@ const ExtensionIndexStatusMonitor = {
             return;
         }
         
-        // Update cache
-        this.statusCache = data.statuses;
-        
-        // Update all extension statuses on the page
+        // Update all extension statuses on the page (this will also update cache)
         this.updateAllExtensionStatuses(data.statuses);
     },
     
@@ -325,6 +322,9 @@ const ExtensionIndexStatusMonitor = {
             return;
         }
         
+        // Update cache first
+        this.statusCache = statuses;
+        
         // Process each extension status
         Object.keys(statuses).forEach(extensionId => {
             const extensionData = statuses[extensionId];
@@ -338,6 +338,71 @@ const ExtensionIndexStatusMonitor = {
                 });
             }
         });
+    },
+    
+    /**
+     * Apply cached statuses to all visible rows
+     */
+    applyStatusesToVisibleRows() {
+        if (!this.statusCache || Object.keys(this.statusCache).length === 0) {
+            return;
+        }
+        
+        // Find all visible extension rows
+        $('tr.extension-row').each((index, element) => {
+            const $row = $(element);
+            const extensionId = $row.attr('id') || $row.attr('data-value');
+            
+            if (extensionId && this.statusCache[extensionId]) {
+                const cachedStatus = this.statusCache[extensionId];
+                const stateColor = this.getColorForStatus(cachedStatus.status);
+                const $statusCell = $row.find('.extension-status');
+                
+                if ($statusCell.length && $statusCell.find('.circular.label').length === 0) {
+                    // Only apply if status not already set
+                    const statusHtml = `
+                        <div class="ui ${stateColor} empty circular label" 
+                             style="width: 1px;height: 1px;"
+                             title="Extension ${extensionId}: ${cachedStatus.status}">
+                        </div>
+                    `;
+                    $statusCell.html(statusHtml);
+                }
+            }
+        });
+    },
+    
+    /**
+     * Request statuses only for extensions not in cache
+     */
+    requestStatusesForNewExtensions() {
+        const newExtensions = [];
+        
+        // Find all visible extension rows
+        $('tr.extension-row').each((index, element) => {
+            const $row = $(element);
+            const extensionId = $row.attr('id') || $row.attr('data-value');
+            
+            if (extensionId && !this.statusCache[extensionId]) {
+                // Extension not in cache, add to list
+                newExtensions.push(extensionId);
+            }
+        });
+        
+        // If we have new extensions, request their statuses
+        if (newExtensions.length > 0) {
+            // Request status for new extensions
+            if (typeof ExtensionsAPI !== 'undefined') {
+                ExtensionsAPI.getStatuses({ simplified: true }, (response) => {
+                    if (response && response.result && response.data) {
+                        // Merge new statuses into cache
+                        Object.assign(this.statusCache, response.data);
+                        // Apply statuses to visible rows
+                        this.applyStatusesToVisibleRows();
+                    }
+                });
+            }
+        }
     },
     
     /**

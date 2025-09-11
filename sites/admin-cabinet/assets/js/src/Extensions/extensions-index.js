@@ -356,6 +356,25 @@ const extensionsIndex = {
                     $(row).addClass('disabled');
                 }
                 
+                // Apply cached status immediately if available
+                if (typeof ExtensionIndexStatusMonitor !== 'undefined' && ExtensionIndexStatusMonitor.statusCache) {
+                    const cachedStatus = ExtensionIndexStatusMonitor.statusCache[data.number];
+                    if (cachedStatus) {
+                        // Status is available in cache, apply it immediately
+                        const statusColor = ExtensionIndexStatusMonitor.getColorForStatus(cachedStatus.status);
+                        const $statusCell = $(row).find('.extension-status');
+                        if ($statusCell.length) {
+                            const statusHtml = `
+                                <div class="ui ${statusColor} empty circular label" 
+                                     style="width: 1px;height: 1px;"
+                                     title="Extension ${data.number}: ${cachedStatus.status}">
+                                </div>
+                            `;
+                            $statusCell.html(statusHtml);
+                        }
+                    }
+                }
+                
                 $.each($('td', $templateRow), (index, value) => {
                     $('td', row).eq(index)
                         .html($(value).html())
@@ -393,6 +412,16 @@ const extensionsIndex = {
                     $('#extensions-table-container').show();
                     $('#extensions-placeholder').hide();
                     extensionsIndex.hideNoSearchResultsMessage();
+                    
+                    // Apply cached statuses to newly rendered rows
+                    if (typeof ExtensionIndexStatusMonitor !== 'undefined') {
+                        // Refresh DOM cache for new rows
+                        ExtensionIndexStatusMonitor.refreshCache();
+                        // Apply cached statuses immediately
+                        ExtensionIndexStatusMonitor.applyStatusesToVisibleRows();
+                        // Request statuses for any new extensions not in cache
+                        ExtensionIndexStatusMonitor.requestStatusesForNewExtensions();
+                    }
                 }
                 
                 // Hide pagination when there are few records (less than page length)

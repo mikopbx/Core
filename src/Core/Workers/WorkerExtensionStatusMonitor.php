@@ -42,13 +42,12 @@ use Throwable;
 class WorkerExtensionStatusMonitor extends WorkerRedisBase
 {
     // Simplified 2-state monitoring intervals (seconds)
-    private const ACTIVE_USER_INTERVAL = 10;     // When users are viewing extension pages
+    private const ACTIVE_USER_INTERVAL = 3;     // When users are viewing extension pages
     private const IDLE_INTERVAL = 300;           // When no users active (5 minutes)
     private const ERROR_BACKOFF_INTERVAL = 30;   // After errors
     
     // Cache keys
     private const HEALTH_KEY = 'Extensions:StatusMonitor:health';
-    private const CACHE_KEY = 'Extensions:StatusMonitor:statusCache';
     private const DEVICE_HISTORY_PREFIX = 'Extensions:DeviceHistory:';
     
     // TTL settings
@@ -449,88 +448,7 @@ class WorkerExtensionStatusMonitor extends WorkerRedisBase
         
         // Clear state
         $this->lastCheckTime = 0;
-    }
-    
-    /**
-     * Get device history for an extension (public method for REST API access)
-     */
-    public static function getExtensionDeviceHistory(string $extension): array
-    {
-        try {
-            $redis = \MikoPBX\Core\System\Di::getDefault()->get(RedisClientProvider::SERVICE_NAME);
-            $historyKey = self::DEVICE_HISTORY_PREFIX . $extension;
-            
-            $historyData = $redis->get($historyKey);
-            if ($historyData === null) {
-                return [];
-            }
-            
-            $history = json_decode($historyData, true);
-            if (!is_array($history)) {
-                return [];
-            }
-            
-            // Format the history for API consumption
-            $formattedHistory = [];
-            foreach ($history as $deviceId => $session) {
-                $formattedHistory[] = [
-                    'device_id' => $deviceId,
-                    'session_start' => $session['session_start'] ?? null,
-                    'session_end' => $session['session_end'] ?? null,
-                    'last_seen' => $session['last_seen'] ?? null,
-                    'device_info' => $session['device_info'] ?? [],
-                    'is_active' => !isset($session['session_end']),
-                    'duration' => isset($session['session_end']) 
-                        ? ($session['session_end'] - $session['session_start'])
-                        : (time() - $session['session_start']),
-                ];
-            }
-            
-            // Sort by session_start (most recent first)
-            usort($formattedHistory, function($a, $b) {
-                return ($b['session_start'] ?? 0) <=> ($a['session_start'] ?? 0);
-            });
-            
-            return $formattedHistory;
-            
-        } catch (Throwable $e) {
-            SystemMessages::sysLogMsg(
-                static::class,
-                "Error retrieving device history for extension {$extension}: " . $e->getMessage(),
-                LOG_WARNING
-            );
-            return [];
-        }
-    }
-    
-    /**
-     * Get device history for all extensions (public method for REST API access)
-     */
-    public static function getAllExtensionsDeviceHistory(): array
-    {
-        try {
-            $redis = \MikoPBX\Core\System\Di::getDefault()->get(RedisClientProvider::SERVICE_NAME);
-            $pattern = self::DEVICE_HISTORY_PREFIX . '*';
-            
-            $keys = $redis->keys($pattern);
-            $allHistory = [];
-            
-            foreach ($keys as $key) {
-                $extension = str_replace(self::DEVICE_HISTORY_PREFIX, '', $key);
-                $allHistory[$extension] = self::getExtensionDeviceHistory($extension);
-            }
-            
-            return $allHistory;
-            
-        } catch (Throwable $e) {
-            SystemMessages::sysLogMsg(
-                static::class,
-                "Error retrieving all device history: " . $e->getMessage(),
-                LOG_WARNING
-            );
-            return [];
-        }
-    }
+    } 
 }
 
 // Start worker process

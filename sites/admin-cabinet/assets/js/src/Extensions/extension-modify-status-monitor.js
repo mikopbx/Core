@@ -30,8 +30,6 @@ const ExtensionModifyStatusMonitor = {
     channelId: 'extension-status',
     isInitialized: false,
     currentExtensionId: null,
-    statusHistory: [],
-    maxHistoryItems: 20,
     
     /**
      * jQuery objects
@@ -111,10 +109,29 @@ const ExtensionModifyStatusMonitor = {
         }
         
         
-        // Make single API call
+        // Make single API call for current status
         ExtensionsAPI.getStatus(this.currentExtensionId, (response) => {
             if (response && response.result && response.data) {
                 this.updateStatus(response.data);
+            }
+        });
+        
+        // Also load historical data
+        this.loadHistoricalData();
+    },
+    
+    /**
+     * Load historical data from API
+     */
+    loadHistoricalData() {
+        if (!this.currentExtensionId) {
+            return;
+        }
+        
+        // Fetch history from API
+        ExtensionsAPI.getHistory(this.currentExtensionId, {limit: 50}, (response) => {
+            if (response && response.result && response.data && response.data.history) {
+                this.displayHistoricalData(response.data.history);
             }
         });
     },
@@ -159,8 +176,8 @@ const ExtensionModifyStatusMonitor = {
         // Update active devices
         this.updateActiveDevices(statusData.devices || []);
         
-        // Add to history if status changed
-        this.addToHistory(statusData);
+        // Don't add to history - history is loaded from API only
+        // this.addToHistory(statusData);
     },
     
     /**
@@ -243,84 +260,83 @@ const ExtensionModifyStatusMonitor = {
         this.$activeDevicesList.html(devicesHtml);
     },
     
-    /**
-     * Add status change to history
-     */
-    addToHistory(statusData) {
-        const now = new Date();
-        const timestamp = now.toLocaleString();
-        
-        // Determine activity type
-        let activityType = 'unknown';
-        let activityIcon = 'question circle';
-        let activityColor = 'grey';
-        
-        if (statusData.status === 'Available' && statusData.devices && statusData.devices.length > 0) {
-            activityType = 'online';
-            activityIcon = 'arrow circle up';
-            activityColor = 'green';
-        } else if (statusData.status === 'Unavailable') {
-            activityType = 'offline';
-            activityIcon = 'arrow circle down';
-            activityColor = 'red';
-        }
-        
-        // Add to history array
-        this.statusHistory.unshift({
-            timestamp: timestamp,
-            status: statusData.status,
-            devices: statusData.devices || [],
-            activityType: activityType,
-            activityIcon: activityIcon,
-            activityColor: activityColor
-        });
-        
-        // Keep only last N items
-        if (this.statusHistory.length > this.maxHistoryItems) {
-            this.statusHistory = this.statusHistory.slice(0, this.maxHistoryItems);
-        }
-        
-        // Update history display
-        this.updateHistoryDisplay();
-    },
     
     /**
-     * Update history display
+     * Display historical data from API with device grouping
      */
-    updateHistoryDisplay() {
-        if (!this.$deviceHistoryList) {
+    displayHistoricalData(historyData) {
+        if (!this.$deviceHistoryList || !Array.isArray(historyData)) {
             return;
         }
         
-        if (this.statusHistory.length === 0) {
+        if (historyData.length === 0) {
             this.$deviceHistoryList.html(`
-                <div class="ui relaxed divided list">
-                    <div class="item">
-                        <div class="content">
-                            <div class="description">${globalTranslate.ex_NoHistoryAvailable}</div>
-                        </div>
+                <div class="ui message">
+                    <div class="content">
+                        ${globalTranslate.ex_NoHistoryAvailable || 'No history available'}
                     </div>
                 </div>
             `);
             return;
         }
         
-        let historyHtml = '<div class="ui relaxed divided list">';
+        // Group history by device
+        const deviceGroups = this.groupHistoryByDevice(historyData);
         
-        this.statusHistory.forEach((entry) => {
-            const devices = entry.devices || [];
-            const deviceInfo = devices.length > 0 
-                ? devices.map(d => `${d.user_agent || 'Unknown'} - ${d.ip || 'Unknown IP'}`).join(', ')
-                : 'No devices';
-                
+        // Build HTML for grouped display - simplified structure
+        let historyHtml = '<div class="ui divided list">';
+        
+        Object.entries(deviceGroups).forEach(([deviceKey, sessions]) => {
+            const [userAgent, ip] = deviceKey.split('|');
+            const deviceName = userAgent || 'Unknown Device';
+            const deviceIP = (ip && ip !== 'Unknown') ? ip : '';
+            
+            // Device header - exactly as requested
             historyHtml += `
                 <div class="item">
-                    <i class="${entry.activityColor} ${entry.activityIcon} icon"></i>
                     <div class="content">
+                        <div class="ui small header">
+                            <i class="mobile icon"></i>
+                            <div class="content">
+                                ${deviceName}
+                                ${deviceIP ? `<span class="ui tiny grey text">(${deviceIP})</span>` : ''}
+                            </div>
+                        </div>
                         <div class="description">
-                            <span class="ui small text">${entry.timestamp}</span>
-                            <span class="ui small text"> - ${deviceInfo}</span>
-                            <span class="ui ${entry.activityColor} small text"> - ${entry.activityType}</span>
+            `;
+            
+            // Sessions timeline - simplified
+            sessions.forEach((session, index) => {
+                const isOnline = session.status === 'Available';
+                const duration = this.calculateDuration(session.timestamp, sessions[index - 1]?.timestamp);
+                const rttLabel = this.getRttLabel(session.rtt);
+                const time = this.formatTime(session.date || session.timestamp);
+                
+                // Use circular labels like in extensions list
+                const statusClass = isOnline ? 'green' : 'grey';
+                const statusTitle = isOnline ? 'Online' : 'Offline';
+                
+                // Format duration with translation
+                const durationText = duration && isOnline 
+                    ? `${globalTranslate.ex_Online || 'Online'} ${duration}` 
+                    : duration 
+                        ? `${globalTranslate.ex_Offline || 'Offline'} ${duration}`
+                        : '';
+                
+                historyHtml += `
+                    <div class="ui small text" style="margin: 6px 20px; display: flex; align-items: center;">
+                        <div class="ui ${statusClass} empty circular label" 
+                             style="width: 8px; height: 8px; min-height: 8px; margin-right: 8px;" 
+                             title="${statusTitle}">
+                        </div>
+                        ${time}
+                        ${rttLabel}
+                        ${durationText ? `<span class="ui grey text" style="margin-left: 8px;">${durationText}</span>` : ''}
+                    </div>
+                `;
+            });
+            
+            historyHtml += `
                         </div>
                     </div>
                 </div>
@@ -332,6 +348,103 @@ const ExtensionModifyStatusMonitor = {
     },
     
     /**
+     * Group history events by device
+     */
+    groupHistoryByDevice(historyData) {
+        const groups = {};
+        
+        historyData.forEach(entry => {
+            // Create device key from user_agent and IP
+            let deviceKey = 'Unknown|Unknown';
+            
+            if (entry.user_agent || entry.ip_address) {
+                deviceKey = `${entry.user_agent || 'Unknown'}|${entry.ip_address || 'Unknown'}`;
+            } else if (entry.details) {
+                // Try to extract device info from details
+                const match = entry.details.match(/([\w\s.]+)\s*-\s*([\d.]+)/);
+                if (match) {
+                    deviceKey = `${match[1].trim()}|${match[2].trim()}`;
+                }
+            }
+            
+            if (!groups[deviceKey]) {
+                groups[deviceKey] = [];
+            }
+            
+            groups[deviceKey].push(entry);
+        });
+        
+        // Sort sessions within each group by timestamp (newest first)
+        Object.keys(groups).forEach(key => {
+            groups[key].sort((a, b) => b.timestamp - a.timestamp);
+        });
+        
+        return groups;
+    },
+    
+    /**
+     * Calculate duration between two timestamps
+     */
+    calculateDuration(currentTimestamp, previousTimestamp) {
+        if (!previousTimestamp) return null;
+        
+        const diff = Math.abs(previousTimestamp - currentTimestamp);
+        const minutes = Math.floor(diff / 60);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+        
+        if (days > 0) {
+            return `${days}d ${hours % 24}h`;
+        } else if (hours > 0) {
+            return `${hours}h ${minutes % 60}m`;
+        } else if (minutes > 0) {
+            return `${minutes}m`;
+        } else {
+            return `${diff}s`;
+        }
+    },
+    
+    /**
+     * Format time for display
+     */
+    formatTime(dateStr) {
+        if (!dateStr) return '';
+        
+        // If it's already a formatted date string like "2025-09-11 11:30:36"
+        if (typeof dateStr === 'string' && dateStr.includes(' ')) {
+            const timePart = dateStr.split(' ')[1];
+            return timePart || dateStr;
+        }
+        
+        // If it's a timestamp
+        if (typeof dateStr === 'number') {
+            const date = new Date(dateStr * 1000);
+            return date.toLocaleTimeString();
+        }
+        
+        return dateStr;
+    },
+    
+    /**
+     * Get RTT label with color coding
+     */
+    getRttLabel(rtt) {
+        if (rtt === null || rtt === undefined || rtt <= 0) {
+            return '';
+        }
+        
+        let color = 'green';
+        if (rtt > 150) {
+            color = 'red';
+        } else if (rtt > 50) {
+            color = 'olive';  // yellow can be hard to see, olive is better
+        }
+        
+        return `<span class="ui ${color} text" style="margin-left: 8px;">[RTT: ${rtt.toFixed(0)}ms]</span>`;
+    },
+    
+    
+    /**
      * Cleanup on page unload
      */
     destroy() {
@@ -340,7 +453,6 @@ const ExtensionModifyStatusMonitor = {
         }
         this.isInitialized = false;
         this.currentExtensionId = null;
-        this.statusHistory = [];
     }
 };
 

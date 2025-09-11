@@ -195,17 +195,23 @@ class GetAllStatusesAction extends AbstractExtensionStatusAction
             
             // Check if status changed
             if (!$lastStatus || $lastStatus['status'] !== $status['status']) {
+                // Extract device info from first available device
+                $firstDevice = (!empty($status['devices']) && is_array($status['devices'])) 
+                    ? $status['devices'][0] 
+                    : null;
+                
                 $changes[] = [
                     'extension' => $extension,
                     'callerid' => $status['callerid'] ?? '',
                     'userid' => $status['userid'] ?? '',
                     'old_status' => $lastStatus ? $lastStatus['status'] : 'Unknown',
                     'new_status' => $status['status'],
-                    'ip_address' => $status['ip_address'] ?? '',
-                    'user_agent' => $status['user_agent'] ?? '',
-                    'rtt' => $status['rtt'] ?? null,
+                    'ip_address' => $firstDevice['ip'] ?? '',
+                    'user_agent' => $firstDevice['user_agent'] ?? '',
+                    'rtt' => $status['rtt'] ?? $firstDevice['rtt'] ?? null,
                     'timestamp' => time(),
-                    'details' => self::generateEventDetails($status, $lastStatus)
+                    'details' => self::generateEventDetails($status, $lastStatus),
+                    'devices' => $status['devices'] ?? []
                 ];
             }
         }
@@ -352,18 +358,33 @@ class GetAllStatusesAction extends AbstractExtensionStatusAction
         try {
             $historyKey = self::HISTORY_KEY_PREFIX . $extension;
             
+            // Prepare simplified event structure
             $event = [
                 'timestamp' => time(),
-                'date' => date('Y-m-d H:i:s'),
-                'type' => self::getEventType($change),
-                'event' => self::getEventDescription($change),
-                'details' => $change['details'] ?? '',
                 'status' => $change['new_status'],
-                'previousStatus' => $change['old_status'],
-                'ip_address' => $change['ip_address'] ?? '',
-                'user_agent' => $change['user_agent'] ?? '',
-                'rtt' => $change['rtt'] ?? null
+                'previousStatus' => $change['old_status']
             ];
+            
+            // Add device data only when relevant
+            if ($change['new_status'] === self::STATUS_AVAILABLE) {
+                // When coming online, add current device info
+                $event['ip_address'] = $change['ip_address'] ?? '';
+                $event['user_agent'] = $change['user_agent'] ?? '';
+                $event['rtt'] = $change['rtt'] ?? null;
+            } elseif ($change['new_status'] === self::STATUS_UNAVAILABLE && $change['old_status'] === self::STATUS_AVAILABLE) {
+                // When going offline from online state, try to get last known device info
+                $cacheKey = self::CACHE_KEY_PREFIX . $extension;
+                $cachedData = $redis->get($cacheKey);
+                if ($cachedData) {
+                    $lastStatus = json_decode($cachedData, true);
+                    if ($lastStatus && !empty($lastStatus['devices'])) {
+                        // Get the first device's info as representative
+                        $firstDevice = $lastStatus['devices'][0];
+                        $event['ip_address'] = $firstDevice['ip'] ?? '';
+                        $event['user_agent'] = $firstDevice['user_agent'] ?? '';
+                    }
+                }
+            }
             
             $eventJson = json_encode($event);
             
@@ -412,39 +433,34 @@ class GetAllStatusesAction extends AbstractExtensionStatusAction
     {
         $details = '';
         $status = $currentStatus['status'] ?? '';
-        $previousStatus = $previousStatus ? ($previousStatus['status'] ?? '') : 'Unknown';
-        $deviceCount = $currentStatus['device_count'] ?? 0;
-        $availableDevices = $currentStatus['available_devices'] ?? 0;
+        $previousStatusStr = $previousStatus ? ($previousStatus['status'] ?? '') : 'Unknown';
+        $devices = $currentStatus['devices'] ?? [];
+        $deviceCount = count($devices);
         
         switch ($status) {
             case self::STATUS_AVAILABLE:
                 if ($deviceCount > 1) {
-                    $details = "Extension online with {$availableDevices} of {$deviceCount} devices available";
+                    $details = "Extension online with {$deviceCount} devices";
                     // Add best RTT info
-                    if ($currentStatus['best_rtt'] !== null) {
-                        $details .= " (Best RTT: {$currentStatus['best_rtt']}ms)";
+                    if ($currentStatus['rtt'] !== null) {
+                        $details .= " (RTT: {$currentStatus['rtt']}ms)";
                     }
-                } else {
-                    $ipInfo = !empty($currentStatus['ip_address']) ? " from {$currentStatus['ip_address']}" : '';
-                    $rttInfo = $currentStatus['rtt'] !== null ? " (RTT: {$currentStatus['rtt']}ms)" : '';
+                } else if ($deviceCount === 1) {
+                    $device = $devices[0];
+                    $ipInfo = !empty($device['ip']) ? " from {$device['ip']}" : '';
+                    $rttInfo = ($device['rtt'] ?? $currentStatus['rtt']) !== null ? " (RTT: " . ($device['rtt'] ?? $currentStatus['rtt']) . "ms)" : '';
                     $details = "Extension came online{$ipInfo}{$rttInfo}";
+                } else {
+                    $rttInfo = $currentStatus['rtt'] !== null ? " (RTT: {$currentStatus['rtt']}ms)" : '';
+                    $details = "Extension came online{$rttInfo}";
                 }
                 break;
                 
             case self::STATUS_UNAVAILABLE:
-                if ($deviceCount > 0) {
-                    $unavailableCount = $currentStatus['unavailable_devices'] ?? 0;
-                    if ($unavailableCount === $deviceCount) {
-                        $details = "All {$deviceCount} devices went offline";
-                    } else {
-                        $details = "Extension unavailable ({$unavailableCount} of {$deviceCount} devices offline)";
-                    }
+                if ($previousStatusStr === self::STATUS_AVAILABLE) {
+                    $details = "Extension went offline";
                 } else {
-                    if ($previousStatus === self::STATUS_AVAILABLE) {
-                        $details = "Extension went offline";
-                    } else {
-                        $details = "Extension is not registered or unreachable";
-                    }
+                    $details = "Extension is not registered or unreachable";
                 }
                 break;
                 

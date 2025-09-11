@@ -90,6 +90,11 @@ class GetHistoryAction extends AbstractExtensionStatusAction
             foreach ($records as $recordJson) {
                 $record = json_decode($recordJson, true);
                 if ($record) {
+                    // Add computed fields for UI display
+                    $record['date'] = date('Y-m-d H:i:s', $record['timestamp']);
+                    $record['type'] = self::getEventTypeForHistory($record['status'], $record['previousStatus']);
+                    $record['details'] = self::generateHistoryDetails($record);
+                    
                     $history[] = $record;
                 }
             }
@@ -111,5 +116,48 @@ class GetHistoryAction extends AbstractExtensionStatusAction
         }
         
         return $res;
+    }
+    
+    /**
+     * Get event type for UI display
+     */
+    private static function getEventTypeForHistory(string $status, string $previousStatus): string
+    {
+        if ($status === 'Available') {
+            return 'success';
+        } elseif ($status === 'Unavailable') {
+            return 'warning';
+        } else {
+            return 'info';
+        }
+    }
+    
+    /**
+     * Generate human-readable details for history event
+     */
+    private static function generateHistoryDetails(array $record): string
+    {
+        $status = $record['status'] ?? '';
+        $previousStatus = $record['previousStatus'] ?? '';
+        
+        if ($status === 'Available') {
+            $details = 'Extension came online';
+            if (!empty($record['ip_address'])) {
+                $details .= ' from ' . $record['ip_address'];
+            }
+            if (isset($record['rtt']) && $record['rtt'] !== null) {
+                $details .= ' (RTT: ' . $record['rtt'] . 'ms)';
+            }
+        } elseif ($status === 'Unavailable') {
+            if ($previousStatus === 'Available') {
+                $details = 'Extension went offline';
+            } else {
+                $details = 'Extension is not registered or unreachable';
+            }
+        } else {
+            $details = 'Status changed from ' . $previousStatus . ' to ' . $status;
+        }
+        
+        return $details;
     }
 }

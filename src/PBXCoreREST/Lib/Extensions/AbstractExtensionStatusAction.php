@@ -187,7 +187,7 @@ abstract class AbstractExtensionStatusAction extends Injectable
     }
     
     /**
-     * Get PJSIP contacts information via AMI using PJSIPShowEndpoint
+     * Get PJSIP contacts information via AMI
      */
     private static function getPjsipContacts(): array
     {
@@ -202,15 +202,8 @@ abstract class AbstractExtensionStatusAction extends Injectable
                 $extensionNum = $ext['extension'];
                 
                 try {
-                    // Use getPjSipPeer which sends PJSIPShowEndpoint AMI command
+                    // Use getPjSipPeer which returns ContactStatusDetail event
                     $peerInfo = $am->getPjSipPeer($extensionNum);
-                    
-                    // Debug logging
-                    SystemMessages::sysLogMsg(
-                        static::class,
-                        "getPjSipPeer for $extensionNum returned: " . json_encode($peerInfo),
-                        LOG_DEBUG
-                    );
                     
                     if ($peerInfo && isset($peerInfo['Event']) && $peerInfo['Event'] === 'ContactStatusDetail') {
                         // Initialize array for multiple contacts if not exists
@@ -228,10 +221,9 @@ abstract class AbstractExtensionStatusAction extends Injectable
                                 $status = 'Unavail';
                             } elseif ($peerInfo['Status'] === 'NonQualified') {
                                 $status = 'NonQual';
+                            } elseif ($peerInfo['Status'] === 'Unknown') {
+                                $status = 'Unknown';
                             }
-                        } elseif ($peerInfo && isset($peerInfo['state']) && $peerInfo['state'] === 'UNKNOWN') {
-                            // If AMI returns state=UNKNOWN, treat as NonQualified (device registered but not qualified)
-                            $status = 'NonQual';
                         }
                         
                         // Parse RTT from microseconds to milliseconds
