@@ -39,9 +39,11 @@ class DropdownsAction extends Injectable
      * Generate a select list of extensions based on the given type.
      *
      * @param string $type {all, routing, phones, internal} - The type of extensions to fetch.
+     * @param string $query Optional search query for filtering extensions.
+     * @param string $exclude Optional comma-separated list of extensions to exclude.
      * @return PBXApiResult The result containing the select list of extensions.
      */
-    public static function getForSelect(string $type = 'all'): PBXApiResult
+    public static function getForSelect(string $type = 'all', string $query = '', string $exclude = ''): PBXApiResult
     {
         // Initialize the result object
         $res = new PBXApiResult();
@@ -49,15 +51,15 @@ class DropdownsAction extends Injectable
         $res->success = true;
 
         // Determine the query conditions based on the type
-        $parameters = self::getQueryParametersByType($type);
+        $parameters = self::getQueryParametersByType($type, $exclude);
 
         // Fetch extensions based on the query parameters
         $extensions = Extensions::find($parameters);
 
-        // Process fetched extensions
+        // Process fetched extensions and apply search filter
         foreach ($extensions as $record) {
-             $extensionData = self::processExtension($record);
-            if ($extensionData !== []) {
+            $extensionData = self::processExtension($record);
+            if ($extensionData !== [] && self::matchesSearchQuery($extensionData, $query)) {
                 $res->data[] = $extensionData;
             }
         }
@@ -82,9 +84,10 @@ class DropdownsAction extends Injectable
      * Generate query parameters based on the extension type.
      *
      * @param string $type - The type of extensions.
+     * @param string $exclude - Comma-separated list of extensions to exclude.
      * @return array - Query parameters.
      */
-    private static function getQueryParametersByType(string $type): array
+    private static function getQueryParametersByType(string $type, string $exclude = ''): array
     {
         // Initialize default query conditions
         $parameters = [
@@ -100,6 +103,7 @@ class DropdownsAction extends Injectable
                 ];
                 break;
             case 'phones':
+            case 'phone':
                 $parameters['conditions'] .= ' AND type IN ({ids:array})';
                 $parameters['bind']['ids'] = [
                     Extensions::TYPE_SIP,
@@ -126,6 +130,27 @@ class DropdownsAction extends Injectable
                     // Extensions::TYPE_PARKING,
                 ];
                 break;
+        }
+
+        // Add custom exclusion list if provided
+        if (!empty($exclude)) {
+            $excludeArray = array_map('trim', explode(',', $exclude));
+            $excludeArray = array_filter($excludeArray); // Remove empty strings
+            
+            if (!empty($excludeArray)) {
+                $parameters['conditions'] .= ' AND number NOT IN ({customExclude:array})';
+                
+                if (!isset($parameters['bind'])) {
+                    $parameters['bind'] = [];
+                }
+                
+                // Merge with existing exclude array if present
+                if (isset($parameters['bind']['exclude'])) {
+                    $excludeArray = array_merge($parameters['bind']['exclude'], $excludeArray);
+                }
+                
+                $parameters['bind']['customExclude'] = $excludeArray;
+            }
         }
 
         return $parameters;
@@ -156,6 +181,7 @@ class DropdownsAction extends Injectable
         // Create a result entry for the extension
         return [
             'name' => $represent,
+            'text' => $represent, // Add text field for Fomantic UI compatibility
             'value' => $record->number,
             'type' => $type,
             'typeLocalized' => Util::translate("ex_dropdownCategory_$type"),
@@ -199,6 +225,42 @@ class DropdownsAction extends Injectable
         }
 
         return $result;
+    }
+
+    /**
+     * Check if extension data matches the search query.
+     * Searches in name (represent text), number, and cleaned represent text.
+     *
+     * @param array $extensionData - Extension data to check.
+     * @param string $query - Search query.
+     * @return bool - True if matches, false otherwise.
+     */
+    private static function matchesSearchQuery(array $extensionData, string $query): bool
+    {
+        // If no search query, return true (match all)
+        if (empty($query)) {
+            return true;
+        }
+
+        $query = strtolower(trim($query));
+        
+        // Search in extension number
+        if (stripos($extensionData['value'], $query) !== false) {
+            return true;
+        }
+        
+        // Search in name/represent text (with HTML tags)
+        if (stripos($extensionData['name'], $query) !== false) {
+            return true;
+        }
+        
+        // Search in cleaned name (without HTML tags) - this helps find content inside <> brackets
+        $cleanedName = strip_tags($extensionData['name']);
+        if (stripos($cleanedName, $query) !== false) {
+            return true;
+        }
+        
+        return false;
     }
 
     /**
