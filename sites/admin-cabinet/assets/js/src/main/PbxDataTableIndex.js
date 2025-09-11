@@ -300,19 +300,56 @@ class PbxDataTableIndex {
     
     /**
      * Handle data load and empty state management
+     * Supports multiple API formats:
+     * - v2 API: {result: true, data: [...]}
+     * - v3 API: {data: {items: [...]}}
+     * - Hybrid: {result: true, data: {items: [...]}}
      */
     handleDataLoad(json) {
         // Hide loader first
         this.hideLoader();
         
-        const isEmpty = !json.result || !json.data || json.data.length === 0;
+        let data = [];
+        let isSuccess = false;
+        
+        // First check if we have a result field to determine success
+        if (json.hasOwnProperty('result')) {
+            isSuccess = json.result === true;
+        }
+        
+        // Now extract data based on structure
+        if (json.data) {
+            // Check if data has items property (v3 or hybrid format)
+            if (json.data.items !== undefined) {
+                data = json.data.items || [];
+                // If no result field was present, assume success if we have data.items
+                if (!json.hasOwnProperty('result')) {
+                    isSuccess = true;
+                }
+            }
+            // Check if data is directly an array (v2 format)
+            else if (Array.isArray(json.data)) {
+                data = json.data;
+                // If no result field was present, assume success
+                if (!json.hasOwnProperty('result')) {
+                    isSuccess = true;
+                }
+            }
+        }
+        
+        const isEmpty = !isSuccess || data.length === 0;
         this.toggleEmptyPlaceholder(isEmpty);
         
         if (this.onDataLoaded) {
-            this.onDataLoaded(json);
+            // Pass normalized response to callback
+            const normalizedResponse = {
+                result: isSuccess,
+                data: data
+            };
+            this.onDataLoaded(normalizedResponse);
         }
         
-        return json.result ? json.data : [];
+        return data;
     }
     
     /**
