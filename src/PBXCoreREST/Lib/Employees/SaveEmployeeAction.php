@@ -339,6 +339,7 @@ class SaveEmployeeAction extends AbstractSaveRecordAction
         if ($sipEntity === null) {
             $sipEntity = new Sip();
             $sipEntity->uniqid = Sip::generateUniqueID();
+            $sipEntity->type = 'peer';
             $sipEntity->weakSecret = '0';
         }
 
