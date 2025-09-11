@@ -3,7 +3,26 @@
         <div class="ui row">
             <div class="ui seven wide column">
                 {% if isAllowed('save') %}
-                    {{ link_to("extensions/modify", '<i class="add user icon"></i>  '~t._('ex_AddNewExtension'), "class": "ui blue button", "id":"add-new-button") }}
+                    <div class="ui buttons">
+                        {{ link_to("extensions/modify", '<i class="add user icon"></i> '~t._('ex_AddNewExtension'), "class": "ui blue button", "id":"add-new-button") }}
+                        <div class="ui floating dropdown icon button" id="bulk-actions-dropdown">
+                            <i class="dropdown icon"></i>
+                            <div class="menu">
+                                <a class="item" href="{{ url('extensions/bulkupload#import') }}">
+                                    <i class="upload icon"></i>
+                                    {{ t._('ex_ImportFromCSV') }}
+                                </a>
+                                <a class="item" href="{{ url('extensions/bulkupload#export') }}">
+                                    <i class="download icon"></i>
+                                    {{ t._('ex_ExportToCSV') }}
+                                </a>
+                                <a class="item" href="{{ url('extensions/bulkupload#template') }}">
+                                    <i class="file outline icon"></i>
+                                    {{ t._('ex_DownloadTemplate') }}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 {% endif %}
             </div>
             <div class="ui nine wide column">

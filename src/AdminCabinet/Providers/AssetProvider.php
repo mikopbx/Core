@@ -940,16 +940,26 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/Extensions/extension-tooltip-manager.js', true)    // Extension tooltips
                 ->addJs('js/pbx/Extensions/extension-modify.js', true);            // Main form logic
         } elseif ($action === 'bulkupload') {
+            // CSS for bulk upload interface
             $this->semanticCollectionCSS
                 ->addCss('css/vendor/semantic/progress.min.css', true)
                 ->addCss('css/vendor/semantic/statistic.min.css', true)
-                ->addCss('css/vendor/semantic/list.min.css', true);
+                ->addCss('css/vendor/semantic/list.min.css', true)
+                ->addCss('css/vendor/semantic/message.min.css', true)
+                ->addCss('css/vendor/datatable/dataTables.semanticui.min.css', true);
             
+            // Semantic UI JS components
             $this->semanticCollectionJS
-                ->addJs('js/vendor/semantic/progress.min.js', true);
+                ->addJs('js/vendor/semantic/progress.min.js', true)
+                ->addJs('js/vendor/semantic/tab.min.js', true);
             
+            // Footer JS for bulk upload functionality
             $this->footerCollectionJS
                 ->addJs('js/vendor/resumable.js', true)
+                ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
+                ->addJs('js/pbx/main/form.js', true)
+                ->addJs('js/pbx/main/event-bus.js', true)
+                ->addJs('js/pbx/PbxAPI/employeesAPI.js', true)
                 ->addJs('js/pbx/Extensions/extensions-bulk-upload.js', true);
         }
     }
@@ -1104,6 +1114,33 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/PbxAPI/networkFiltersAPI.js', true)
                 ->addJs('js/pbx/FormElements/dynamic-dropdown-builder.js', true)
                 ->addJs('js/pbx/ApiKeys/api-keys-modify.js', true);
+        }
+    }
+    
+    /**
+     * Makes assets for the AsteriskRestUsers controller
+     *
+     * @param string $action
+     */
+    private function makeAsteriskRestUsersAssets(string $action): void
+    {
+        if ($action === 'index') {
+            $this->headerCollectionCSS->addCss('css/vendor/datatable/dataTables.semanticui.css', true);
+            $this->footerCollectionJS
+                ->addJs('js/pbx/main/PbxDataTableIndex.js', true)
+                ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
+                ->addJs('js/pbx/PbxAPI/asteriskRestUsersAPI.js', true)
+                ->addJs('js/pbx/AsteriskRestUsers/asterisk-rest-users-index.js', true);
+        } elseif ($action === 'modify') {
+            // Add password widget assets
+            $this->addPasswordWidgetAssets();
+            
+            $this->footerCollectionJS
+                ->addJs('js/pbx/main/form.js', true)
+                ->addJs('js/pbx/PbxAPI/asteriskRestUsersAPI.js', true)
+                ->addJs('js/pbx/PbxAPI/networkFiltersAPI.js', true)
+                ->addJs('js/pbx/FormElements/dynamic-dropdown-builder.js', true)
+                ->addJs('js/pbx/AsteriskRestUsers/asterisk-rest-user-modify.js', true);
         }
     }
     

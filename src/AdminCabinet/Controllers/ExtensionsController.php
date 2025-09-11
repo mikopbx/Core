@@ -85,8 +85,13 @@ class ExtensionsController extends BaseController
      * 
      * @return void
      */
-    public function bulkUploadAction(): void
+    public function bulkuploadAction(): void
     {
-       
+        // Set page title and metadata for bulk upload interface
+        $this->view->represent = $this->translation->_("ex_BulkUploadTitle");
+        $this->view->urlToWiki = 'https://docs.mikopbx.com/mikopbx/manual/telefoniya/extensions#bulk-upload';
+        $this->view->controllerName = 'Extensions';
+        $this->view->controllerClass = 'ExtensionsController';
+        $this->view->actionName = 'bulkupload';
     }
 }
