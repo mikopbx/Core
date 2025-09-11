@@ -45,6 +45,7 @@ use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadIAXAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadLicenseAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadMOHAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadManagerAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadAriAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadModuleStateAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadModulesConfAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadNTPAction;
@@ -298,6 +299,7 @@ class WorkerModelsEvents extends WorkerBase
             ReloadQueuesAction::class,
             ReloadConferenceAction::class,
             ReloadManagerAction::class,
+            ReloadAriAction::class,
             ReloadVoicemailAction::class,
             ReloadMOHAction::class,
             ReloadWorkerCallEventsAction::class,

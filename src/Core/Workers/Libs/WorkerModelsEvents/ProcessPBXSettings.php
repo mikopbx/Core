@@ -21,6 +21,7 @@ namespace MikoPBX\Core\Workers\Libs\WorkerModelsEvents;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadAdviceAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadAllSystemWorkersAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadAriAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCloudDescriptionAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCrondAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadDialplanAction;
@@ -29,6 +30,7 @@ use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadFirewallAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadIAXAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadLicenseAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadManagerAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadModulesConfAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadNTPAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadNatsAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadNginxAction;
@@ -121,6 +123,18 @@ class ProcessPBXSettings extends Injectable
             ],
             'actions' => [
                 ReloadManagerAction::class,
+            ],
+        ];
+
+        // ARIParameters
+        $tables[] = [
+            'keys' => [
+                PbxSettings::ARI_ENABLED,
+                PbxSettings::ARI_ALLOWED_ORIGINS,
+            ],
+            'actions' => [
+                ReloadModulesConfAction::class,  // Reload modules.conf when ARI_ENABLED changes
+                ReloadAriAction::class,
             ],
         ];
 

@@ -20,6 +20,7 @@
 namespace MikoPBX\Core\Workers\Libs\WorkerModelsEvents;
 
 use MikoPBX\Common\Models\AsteriskManagerUsers;
+use MikoPBX\Common\Models\AsteriskRestUsers;
 use MikoPBX\Common\Models\CallQueueMembers;
 use MikoPBX\Common\Models\CallQueues;
 use MikoPBX\Common\Models\Codecs;
@@ -51,6 +52,7 @@ use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadFirewallAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadIAXAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadMOHAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadManagerAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadAriAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadModuleStateAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadNetworkAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPJSIPAction;
@@ -69,6 +71,16 @@ class ProcessOtherModels extends Injectable
             ],
             'actions' => [
                 ReloadManagerAction::class,
+                ReloadAdviceAction::class,
+            ],
+        ];
+
+        $tables[] = [
+            'modelClasses' => [
+                AsteriskRestUsers::class,
+            ],
+            'actions' => [
+                ReloadAriAction::class,
                 ReloadAdviceAction::class,
             ],
         ];
