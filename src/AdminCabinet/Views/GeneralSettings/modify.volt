@@ -7,7 +7,7 @@
             <a class="item" data-tab="features">{{ t._('gs_FeaturesTab') }}</a>
             <a class="item" data-tab="sip">{{ t._('gs_SIPTab') }}</a>
             <a class="item" data-tab="codecs">{{ t._('gs_CodecsTab') }}</a>
-            <a class="item" data-tab="ami">{{ t._('gs_AMITab') }}</a>
+            <a class="item" data-tab="api">{{ t._('gs_APITab') }}</a>
             <a class="item" data-tab="ssh">{{ t._('gs_SSHTab') }}</a>
             <a class="item" data-tab="web">{{ t._('gs_WebTab') }}</a>
             <a class="item" data-tab="passwords">{{ t._('gs_Passwords') }}</a>
@@ -48,10 +48,10 @@
             {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('CodecsTabFields')]) }}
         </div>
 
-        <!-- ami -->
-        <div class="ui tab segment" data-tab="ami">
-            {{ partial("GeneralSettings/ami") }}
-            {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('AmiTabFields')]) }}
+        <!-- api -->
+        <div class="ui tab segment" data-tab="api">
+            {{ partial("GeneralSettings/api") }}
+            {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('ApiTabFields')]) }}
         </div>
 
         <!-- ssh -->

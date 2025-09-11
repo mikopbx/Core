@@ -31,7 +31,7 @@ return [
     'gs_MainTab' => '基本',
     'gs_FeaturesTab' => '通話転送',
     'gs_SIPTab' => 'SIP',
-    'gs_AMITab' => 'AMI&AJAM',
+    'gs_APITab' => 'AMI&ARI',
     'gs_SSHTab' => 'SSH',
     'gs_WebTab' => 'HTTP/HTTPS',
     'gs_PBXName' => 'PBXシステム名',

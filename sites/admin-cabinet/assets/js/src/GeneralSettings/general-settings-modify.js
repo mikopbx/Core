@@ -328,6 +328,9 @@ const generalSettingsModify = {
 
         // Enable checkboxes on the form
         $('#general-settings-form .checkbox').checkbox();
+        
+        // Initialize AMI/AJAM dependency after checkboxes are initialized
+        generalSettingsModify.initializeAMIAJAMDependency();
 
         // Codec table drag-n-drop will be initialized after data is loaded
         // See initializeCodecDragDrop() which is called from updateCodecTables()
@@ -1352,6 +1355,48 @@ const generalSettingsModify = {
         return html;
     },
     
+    /**
+     * Initialize AMI/AJAM dependency
+     * AJAM requires AMI to be enabled since it's an HTTP wrapper over AMI
+     */
+    initializeAMIAJAMDependency() {
+        const $amiCheckbox = $('#AMIEnabled').parent('.checkbox');
+        const $ajamCheckbox = $('#AJAMEnabled').parent('.checkbox');
+        
+        if ($amiCheckbox.length === 0 || $ajamCheckbox.length === 0) {
+            return;
+        }
+        
+        // Function to update AJAM state based on AMI state
+        const updateAJAMState = () => {
+            const isAMIEnabled = $amiCheckbox.checkbox('is checked');
+            
+            if (!isAMIEnabled) {
+                // If AMI is disabled, disable AJAM and make it read-only
+                $ajamCheckbox.checkbox('uncheck');
+                $ajamCheckbox.addClass('disabled');
+                
+                // Add tooltip to explain why it's disabled
+                $ajamCheckbox.attr('data-tooltip', globalTranslate.gs_AJAMRequiresAMI || 'AJAM requires AMI to be enabled');
+                $ajamCheckbox.attr('data-position', 'top left');
+            } else {
+                // If AMI is enabled, allow AJAM to be toggled
+                $ajamCheckbox.removeClass('disabled');
+                $ajamCheckbox.removeAttr('data-tooltip');
+                $ajamCheckbox.removeAttr('data-position');
+            }
+        };
+        
+        // Initial state
+        updateAJAMState();
+        
+        // Listen for AMI checkbox changes using event delegation
+        // This won't override existing handlers
+        $('#AMIEnabled').on('change', function() {
+            updateAJAMState();
+        });
+    },
+
     /**
      * Initialize PBXLanguage change detection for restart warning
      * Shows restart warning only when the language value changes

@@ -23,7 +23,6 @@ namespace MikoPBX\AdminCabinet\Forms;
 use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
-use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
 
 /**
@@ -49,7 +48,7 @@ class AsteriskManagerEditForm extends BaseForm
         $this->addTextFields();
         $this->addPasswordField($entity);
         $this->addPermissionCheckboxes();
-        $this->addNetworkFilterDropdown($options);
+        $this->addNetworkFilterDropdown();
         $this->addSpecialFields($entity);
     }
     
@@ -122,9 +121,8 @@ class AsteriskManagerEditForm extends BaseForm
     /**
      * Add network filter dropdown using DynamicDropdownBuilder (built by JavaScript)
      *
-     * @param array|null $options Form options containing network filters
      */
-    private function addNetworkFilterDropdown($options): void
+    private function addNetworkFilterDropdown(): void
     {
         // Network filter - using DynamicDropdownBuilder (built by JavaScript)
         $this->add(new Hidden('networkfilterid'));

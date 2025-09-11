@@ -105,6 +105,9 @@ class GeneralSettingsEditForm extends BaseForm
                 case '***ALL TEXTAREA ABOVE***':
                     $this->addTextArea($key, $value ?? '', 65);
                     break;
+                case PbxSettings::ARI_ALLOWED_ORIGINS:
+                    $this->add(new Text($key, ['value' => $value]));
+                    break;
                 case PbxSettings::PBX_LANGUAGE:
                     $language = new Select(
                         $key,
@@ -172,6 +175,7 @@ class GeneralSettingsEditForm extends BaseForm
                 case PbxSettings::USE_WEB_RTC:
                 case PbxSettings::AJAM_ENABLED:
                 case PbxSettings::AMI_ENABLED:
+                case PbxSettings::ARI_ENABLED:
                 case PbxSettings::RESTART_EVERY_NIGHT:
                 case PbxSettings::SEND_METRICS:
                 case PbxSettings::REDIRECT_TO_HTTPS:

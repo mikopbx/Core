@@ -62,6 +62,8 @@ class GeneralSettingsTooltipManager {
             'SSHDisablePasswordLogins': this.getSSHDisablePasswordLoginsTooltip(),
             'AJAMEnabled': this.getAJAMEnabledTooltip(),
             'AMIEnabled': this.getAMIEnabledTooltip(),
+            'ARIEnabled': this.getARIEnabledTooltip(),
+            'ARIAllowedOrigins': this.getARIAllowedOriginsTooltip(),
             'PBXCallParkingExt': this.getPBXCallParkingExtTooltip(),
             'PBXFeatureAttendedTransfer': this.getPBXFeatureAttendedTransferTooltip(),
             'PBXFeatureBlindTransfer': this.getPBXFeatureBlindTransferTooltip(),
@@ -616,6 +618,128 @@ class GeneralSettingsTooltipManager {
                 text: globalTranslate.gs_AMIEnabledTooltip_warning
             },
             footer: globalTranslate.gs_AMIEnabledTooltip_footer
+        };
+    }
+
+    /**
+     * Get ARIEnabled tooltip configuration
+     * 
+     * @private
+     * @static
+     * @returns {Object} Tooltip configuration for ARIEnabled field
+     */
+    static getARIEnabledTooltip() {
+        return {
+            header: globalTranslate.gs_ARIEnabledTooltip_header,
+            description: globalTranslate.gs_ARIEnabledTooltip_desc,
+            list: [
+                {
+                    term: globalTranslate.gs_ARIEnabledTooltip_what_is,
+                    definition: globalTranslate.gs_ARIEnabledTooltip_what_is_desc
+                }
+            ],
+            list2: [
+                {
+                    term: globalTranslate.gs_ARIEnabledTooltip_usage,
+                    definition: null
+                }
+            ],
+            list3: [
+                globalTranslate.gs_ARIEnabledTooltip_usage_webrtc,
+                globalTranslate.gs_ARIEnabledTooltip_usage_ivr,
+                globalTranslate.gs_ARIEnabledTooltip_usage_conference,
+                globalTranslate.gs_ARIEnabledTooltip_usage_recording,
+                globalTranslate.gs_ARIEnabledTooltip_usage_custom
+            ],
+            list4: [
+                {
+                    term: globalTranslate.gs_ARIEnabledTooltip_examples,
+                    definition: null
+                }
+            ],
+            list5: [
+                globalTranslate.gs_ARIEnabledTooltip_example_webphone,
+                globalTranslate.gs_ARIEnabledTooltip_example_bot,
+                globalTranslate.gs_ARIEnabledTooltip_example_queue,
+                globalTranslate.gs_ARIEnabledTooltip_example_analytics
+            ],
+            list6: [
+                {
+                    term: globalTranslate.gs_ARIEnabledTooltip_default,
+                    definition: globalTranslate.gs_ARIEnabledTooltip_default_desc
+                }
+            ],
+            list7: [
+                {
+                    term: globalTranslate.gs_ARIEnabledTooltip_when_enable,
+                    definition: null
+                }
+            ],
+            list8: [
+                globalTranslate.gs_ARIEnabledTooltip_enable_1,
+                globalTranslate.gs_ARIEnabledTooltip_enable_2,
+                globalTranslate.gs_ARIEnabledTooltip_enable_3
+            ],
+            warning: {
+                header: globalTranslate.gs_ARIEnabledTooltip_warning_header,
+                text: globalTranslate.gs_ARIEnabledTooltip_warning
+            },
+            footer: globalTranslate.gs_ARIEnabledTooltip_footer
+        };
+    }
+
+    /**
+     * Get ARIAllowedOrigins tooltip configuration
+     * 
+     * @private
+     * @static
+     * @returns {Object} Tooltip configuration for ARIAllowedOrigins field
+     */
+    static getARIAllowedOriginsTooltip() {
+        return {
+            header: globalTranslate.gs_ARIAllowedOriginsTooltip_header,
+            description: globalTranslate.gs_ARIAllowedOriginsTooltip_desc,
+            list: [
+                {
+                    term: globalTranslate.gs_ARIAllowedOriginsTooltip_what_is,
+                    definition: globalTranslate.gs_ARIAllowedOriginsTooltip_what_is_desc
+                }
+            ],
+            list2: [
+                {
+                    term: globalTranslate.gs_ARIAllowedOriginsTooltip_format,
+                    definition: globalTranslate.gs_ARIAllowedOriginsTooltip_format_desc
+                }
+            ],
+            list3: [
+                {
+                    term: globalTranslate.gs_ARIAllowedOriginsTooltip_examples,
+                    definition: null
+                }
+            ],
+            list4: [
+                globalTranslate.gs_ARIAllowedOriginsTooltip_example_1,
+                globalTranslate.gs_ARIAllowedOriginsTooltip_example_2,
+                globalTranslate.gs_ARIAllowedOriginsTooltip_example_3
+            ],
+            list5: [
+                {
+                    term: globalTranslate.gs_ARIAllowedOriginsTooltip_security,
+                    definition: null
+                }
+            ],
+            list6: [
+                globalTranslate.gs_ARIAllowedOriginsTooltip_security_1,
+                globalTranslate.gs_ARIAllowedOriginsTooltip_security_2,
+                globalTranslate.gs_ARIAllowedOriginsTooltip_security_3
+            ],
+            list7: [
+                {
+                    term: globalTranslate.gs_ARIAllowedOriginsTooltip_default,
+                    definition: globalTranslate.gs_ARIAllowedOriginsTooltip_default_desc
+                }
+            ],
+            footer: globalTranslate.gs_ARIAllowedOriginsTooltip_footer
         };
     }
 

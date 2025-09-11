@@ -28,6 +28,7 @@ use MikoPBX\PBXCoreREST\Controllers\
     ApiKeys\PostController as ApiKeysPostController,
     ApiKeys\PutController as ApiKeysPutController,
     ApiKeys\DeleteController as ApiKeysDeleteController,
+    AsteriskRestUsers\RestController as AsteriskRestUsersRestController,
     Cdr\GetController as CdrGetController,
     Iax\GetController as IaxGetController,
     Modules\ModulesControllerBase,
@@ -223,6 +224,7 @@ class RouterProvider implements ServiceProviderInterface
             // v3 Employees RESTful API endpoints
             // Custom methods with colon notation (Google API Design Guide) - must be before standard routes
             // Using relative paths from prefix for proper Phalcon routing
+            [EmployeesRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/employees', 'get', ':{customMethod:[a-zA-Z]+}'],
             [EmployeesRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/employees', 'post', ':{customMethod:[a-zA-Z]+}'],
             [EmployeesRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/employees', 'post', '/{id:[0-9]+}:{customMethod:[a-zA-Z]+}'],
             
@@ -348,6 +350,20 @@ class RouterProvider implements ServiceProviderInterface
             [ApiKeysPostController::class, 'callAction', '/pbxcore/api/v2/api-keys/{actionName}', 'post', '/'],
             [ApiKeysPutController::class, 'callAction', '/pbxcore/api/v2/api-keys/{actionName}/{id:[a-zA-Z0-9\-]+}', 'put', '/'],
             [ApiKeysDeleteController::class, 'callAction', '/pbxcore/api/v2/api-keys/{actionName}/{id:[a-zA-Z0-9\-]+}', 'delete', '/'],
+
+            // v3 AsteriskRestUsers (ARI) RESTful API endpoints
+            // Custom methods with colon notation (Google API Design Guide) - must be before standard routes
+            [AsteriskRestUsersRestController::class, 'handleCustomMethod', '/pbxcore/api/v3/asterisk-rest-users', 'get', ':{customMethod:[a-zA-Z]+}'],
+            [AsteriskRestUsersRestController::class, 'handleCustomMethod', '/pbxcore/api/v3/asterisk-rest-users', 'post', ':{customMethod:[a-zA-Z]+}'],
+            [AsteriskRestUsersRestController::class, 'handleCustomMethod', '/pbxcore/api/v3/asterisk-rest-users', 'post', '/{id:[0-9]+}:{customMethod:[a-zA-Z]+}'],
+            
+            // Standard CRUD operations
+            [AsteriskRestUsersRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/asterisk-rest-users', 'get', '/'],
+            [AsteriskRestUsersRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/asterisk-rest-users', 'get', '/{id:[0-9]+}'],
+            [AsteriskRestUsersRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/asterisk-rest-users', 'post', '/'],
+            [AsteriskRestUsersRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/asterisk-rest-users', 'put', '/{id:[0-9]+}'],
+            [AsteriskRestUsersRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/asterisk-rest-users', 'patch', '/{id:[0-9]+}'],
+            [AsteriskRestUsersRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/asterisk-rest-users', 'delete', '/{id:[0-9]+}'],
 
         ];
     }

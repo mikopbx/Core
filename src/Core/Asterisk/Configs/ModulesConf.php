@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
+use MikoPBX\Common\Models\PbxSettings;
 
 /**
  * Class ModulesConf
@@ -216,6 +217,16 @@ class ModulesConf extends AsteriskConfigClass
 
         foreach ($modules as $value) {
             $conf .= "load => $value\n";
+        }
+        
+        // Load ARI modules if ARI is enabled
+        $ariEnabled = PbxSettings::getValueByKey(PbxSettings::ARI_ENABLED) === '1';
+        if ($ariEnabled) {
+            $conf .= "\n; ARI (Asterisk REST Interface) modules\n";
+            $ariModules = AriConf::getAriModules();
+            foreach ($ariModules as $module) {
+                $conf .= "load => $module\n";
+            }
         }
 
         // Call the hook modules method for generating additional configuration

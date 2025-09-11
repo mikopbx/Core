@@ -31,7 +31,7 @@ return [
     'gs_MainTab' => 'כללי',
     'gs_FeaturesTab' => 'העברת שיחות',
     'gs_SIPTab' => 'SIP',
-    'gs_AMITab' => 'AMI&AJAM',
+    'gs_APITab' => 'AMI&ARI',
     'gs_SSHTab' => 'SSH',
     'gs_WebTab' => 'HTTP/HTTPS',
     'gs_PBXName' => 'שם מערכת PBX',

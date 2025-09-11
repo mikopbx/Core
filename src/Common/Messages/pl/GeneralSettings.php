@@ -31,7 +31,7 @@ return [
     'gs_MainTab' => 'Główne',
     'gs_FeaturesTab' => 'Przekierowanie połączeń',
     'gs_SIPTab' => 'SIP',
-    'gs_AMITab' => 'AMI&AJAM',
+    'gs_APITab' => 'AMI&ARI',
     'gs_SSHTab' => 'SSH',
     'gs_WebTab' => 'HTTP/HTTPS',
     'gs_PBXName' => 'Nazwa systemu PBX',

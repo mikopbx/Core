@@ -25,7 +25,8 @@ use MikoPBX\Core\System\SslCertificateService;
 /**
  * Class HttpConf
  *
- * Represents a configuration class for HTTP.
+ * Represents a configuration class for HTTP server used by AJAM and ARI.
+ * HTTP server is enabled if either AJAM or ARI is enabled.
  *
  * @package MikoPBX\Core\Asterisk\Configs
  */
@@ -43,7 +44,11 @@ class HttpConf extends AsteriskConfigClass
      */
     protected function generateConfigProtected(): void
     {
-        $isEnable = intval(PbxSettings::getValueByKey(PbxSettings::AJAM_ENABLED)) === 1;
+        // HTTP should be enabled if either AJAM or ARI is enabled
+        $ajamEnabled = intval(PbxSettings::getValueByKey(PbxSettings::AJAM_ENABLED)) === 1;
+        $ariEnabled = intval(PbxSettings::getValueByKey(PbxSettings::ARI_ENABLED)) === 1;
+        $isEnable = $ajamEnabled || $ariEnabled;
+        
         $port = PbxSettings::getValueByKey(PbxSettings::AJAM_PORT);
         $tlsPort = PbxSettings::getValueByKey(PbxSettings::AJAM_PORT_TLS);
         $enabled = ($isEnable) ? 'yes' : 'no';

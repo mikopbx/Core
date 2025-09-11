@@ -31,7 +31,7 @@ return [
     'gs_MainTab' => 'Allgemein',
     'gs_FeaturesTab' => 'Anrufweiterleitungen',
     'gs_SIPTab' => 'SIP',
-    'gs_AMITab' => 'AMI&AJAM',
+    'gs_APITab' => 'AMI&ARI',
     'gs_SSHTab' => 'SSH',
     'gs_WebTab' => 'HTTP/HTTPS',
     'gs_PBXName' => 'Name des PBX-Systems',

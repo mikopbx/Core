@@ -141,6 +141,12 @@ trait PbxSettingsConstantsTrait
     public const string AJAM_PORT = 'AJAMPort';
     /** @FieldType('integer') */
     public const string AJAM_PORT_TLS = 'AJAMPortTLS';
+    
+    // ARI (Asterisk REST Interface) settings
+    /** @FieldType('boolean') */
+    public const string ARI_ENABLED = 'ARIEnabled';
+    /** @FieldType('string') */
+    public const string ARI_ALLOWED_ORIGINS = 'ARIAllowedOrigins';
 
     // Email and notifications settings
     /** @FieldType('boolean') */

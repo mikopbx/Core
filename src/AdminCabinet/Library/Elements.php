@@ -21,6 +21,7 @@
 namespace MikoPBX\AdminCabinet\Library;
 
 use MikoPBX\AdminCabinet\Controllers\AsteriskManagersController;
+use MikoPBX\AdminCabinet\Controllers\AsteriskRestUsersController;
 use MikoPBX\AdminCabinet\Controllers\CallDetailRecordsController;
 use MikoPBX\AdminCabinet\Controllers\CallQueuesController;
 use MikoPBX\AdminCabinet\Controllers\ConferenceRoomsController;
@@ -270,6 +271,13 @@ class Elements extends Injectable
                         'param' => '',
                         'style' => '',
                     ],
+                    AsteriskRestUsersController::class => [
+                        'caption' => 'mm_AsteriskRestUsers',
+                        'iconclass' => 'code branch',
+                        'action' => 'index',
+                        'param' => '',
+                        'style' => '',
+                    ],
                     CustomFilesController::class => [
                         'caption' => 'mm_CustomFiles',
                         'iconclass' => 'linux',
@@ -505,6 +513,18 @@ class Elements extends Injectable
         // Check if the application is running in a Docker environment and if the controller is in the hidden list.
         // If so, return false as the element should not be shown.
         if (Util::isDocker() and in_array($controller, $this->_hiddenInDocker)) {
+            return false;
+        }
+
+        // Check if AMI is disabled and hide AMI menu item
+        if ($controller === AsteriskManagersController::class 
+            && PbxSettings::getValueByKey(PbxSettings::AMI_ENABLED) !== '1') {
+            return false;
+        }
+
+        // Check if ARI is disabled and hide ARI menu item
+        if ($controller === AsteriskRestUsersController::class 
+            && PbxSettings::getValueByKey(PbxSettings::ARI_ENABLED) !== '1') {
             return false;
         }
 

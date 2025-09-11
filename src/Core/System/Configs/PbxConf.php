@@ -25,6 +25,7 @@ use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\Asterisk\Configs\{AclConf,
+    AriConf,
     AsteriskConf,
     AsteriskConfigClass,
     AsteriskConfigInterface,
@@ -255,6 +256,15 @@ class PbxConf extends SystemConfigClass
         $asterisk = Util::which(self::PROC_NAME);
         Processes::mwExec("$asterisk -rx 'module reload manager'", $arr_out);
         Processes::mwExec("$asterisk -rx 'module reload http'", $arr_out);
+    }
+
+    /**
+     * Reloads the Asterisk REST Interface (ARI) module.
+     */
+    public static function ariReload(): void
+    {
+        $ariConf = new AriConf();
+        $ariConf->reload();
     }
 
     /**

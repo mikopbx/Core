@@ -58,6 +58,8 @@ interface AsteriskConfigInterface
     public const string GENERATE_MODULES_CONF = 'generateModulesConf';
 
     public const string GENERATE_MANAGER_CONF = 'generateManagerConf';
+    
+    public const string GENERATE_ARI_CONF = 'generateAriConf';
 
     public const string GENERATE_PEERS_PJ = 'generatePeersPj';
 

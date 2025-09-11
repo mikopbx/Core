@@ -338,7 +338,7 @@ return [
     'gs_SIPTab' => 'SIP',
     'gs_IAXTab' => 'IAX',
     'gs_NetworkTab' => 'Nätverk',
-    'gs_AMITab' => 'AMI',
+    'gs_APITab' => 'AMI&ARI',
     'gs_AJAMTab' => 'AJAM',
     'gs_MailTab' => 'E-post',
     'gs_CloudTab' => 'Moln',

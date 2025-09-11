@@ -53,6 +53,8 @@ trait PbxSettingsDefaultValuesTrait
             PbxSettings::AJAM_ENABLED => '1',
             PbxSettings::AJAM_PORT => '8088',
             PbxSettings::AJAM_PORT_TLS => '8089',
+            PbxSettings::ARI_ENABLED => '0',
+            PbxSettings::ARI_ALLOWED_ORIGINS => '*',
             PbxSettings::SSH_PORT => '22',
             PbxSettings::SSH_LOGIN => 'root',
             PbxSettings::SSH_PASSWORD => 'admin',

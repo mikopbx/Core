@@ -99,12 +99,14 @@ class GetSettingsAction extends AbstractGetRecordAction
         PbxSettings::PBX_RECORD_ANNOUNCEMENT_IN,
         PbxSettings::PBX_RECORD_ANNOUNCEMENT_OUT,
         
-        // AMI/AJAM settings
+        // AMI/AJAM/ARI settings
         PbxSettings::AMI_ENABLED,
         PbxSettings::AMI_PORT,
         PbxSettings::AJAM_ENABLED,
         PbxSettings::AJAM_PORT,
         PbxSettings::AJAM_PORT_TLS,
+        PbxSettings::ARI_ENABLED,
+        PbxSettings::ARI_ALLOWED_ORIGINS,
         
         // Features settings
         PbxSettings::PBX_CALL_PARKING_EXT,
