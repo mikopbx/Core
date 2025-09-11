@@ -71,7 +71,29 @@ const ExtensionModifyStatusMonitor = {
         // First, try to get the phone number from form field (primary)
         const $numberField = $('input[name="number"]');
         if ($numberField.length && $numberField.val()) {
-            return $numberField.val();
+            // Try to get unmasked value if inputmask is applied
+            let extensionNumber;
+            
+            // Check if inputmask is available and applied to the field
+            if (typeof $numberField.inputmask === 'function') {
+                try {
+                    // Get unmasked value (only the actual input without mask characters)
+                    extensionNumber = $numberField.inputmask('unmaskedvalue');
+                } catch (e) {
+                    // Fallback if inputmask method fails
+                    extensionNumber = $numberField.val();
+                }
+            } else {
+                extensionNumber = $numberField.val();
+            }
+            
+            // Clean up the value - remove any remaining mask characters like underscore
+            extensionNumber = extensionNumber.replace(/[^0-9]/g, '');
+            
+            // Only return if we have actual digits
+            if (extensionNumber && extensionNumber.length > 0) {
+                return extensionNumber;
+            }
         }
         
         // Fallback to URL parameter
@@ -206,7 +228,7 @@ const ExtensionModifyStatusMonitor = {
             case 'Available':
                 return 'green';
             case 'Unavailable':
-                return 'red';
+                return 'grey';
             case 'Disabled':
                 return 'grey';
             default:

@@ -92,8 +92,8 @@ const extensionsIndex = {
         // Set up the DataTable on the extensions list.
         extensionsIndex.initializeDataTable();
 
-        // Move the "Add New" button to the first eight-column div.
-        $('#add-new-button').appendTo($('div.eight.column:eq(0)'));
+        // Initialize the bulk actions dropdown
+        $('#bulk-actions-dropdown').dropdown();
 
         // Set up double-click behavior on the extension rows using delegation for dynamic content.
         // Exclude buttons column to prevent accidental navigation when trying to delete
