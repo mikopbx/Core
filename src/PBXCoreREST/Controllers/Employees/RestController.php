@@ -133,28 +133,37 @@ class RestController extends BaseController
     
     /**
      * Handle custom method requests following Google API Design Guide
-     * Custom methods always use POST per Google API Design Guide conventions
      * 
      * Routes handled by this method:
+     * @Get(":{customMethod:[a-zA-Z]+}")               Collection-level custom methods (getDefault)
      * @Post(":{customMethod:[a-zA-Z]+}")              Collection-level custom methods
      * @Post("/{id:[0-9]+}:{customMethod:[a-zA-Z]+}")  Resource-level custom methods
      * 
      * Supported custom methods:
-     * - export: Export employees to various formats (CSV, JSON, XML)
-     * - import: Import employees from file
-     * - batchDelete: Delete multiple employees at once
+     * - getDefault: Get default values for new employee (GET)
+     * - export: Export employees to various formats (CSV, JSON, XML) (POST)
+     * - import: Import employees from file (POST)
+     * - batchDelete: Delete multiple employees at once (POST)
      * 
-     * @param string $customMethod The custom method name (e.g., 'export', 'import')
+     * @param string $customMethod The custom method name (e.g., 'getDefault', 'export', 'import')
      * @param string|null $id Optional resource ID for resource-specific custom methods
      * @return void
      */
     public function handleCustomRequest(string $customMethod, ?string $id = null): void
     {
-        // Custom methods must use POST
-        if ($this->request->getMethod() !== 'POST') {
+        // Check HTTP method based on the custom method
+        $httpMethod = $this->request->getMethod();
+        
+        // Define which custom methods are allowed for each HTTP method
+        $allowedMethods = [
+            'GET' => ['getDefault'],
+            'POST' => ['export', 'exportTemplate', 'import', 'confirmImport', 'batchCreate', 'batchDelete', 'activate', 'deactivate']
+        ];
+        
+        if (!isset($allowedMethods[$httpMethod]) || !in_array($customMethod, $allowedMethods[$httpMethod])) {
             $this->response->setJsonContent([
                 'result' => false,
-                'messages' => ['error' => ['Custom methods must use POST']]
+                'messages' => ['error' => ["Method '$customMethod' is not allowed with HTTP $httpMethod"]]
             ]);
             $this->response->setStatusCode(405, 'Method Not Allowed');
             $this->response->send();

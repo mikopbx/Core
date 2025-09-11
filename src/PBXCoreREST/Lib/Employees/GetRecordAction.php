@@ -51,7 +51,7 @@ use MikoPBX\PBXCoreREST\Lib\Common\AbstractGetRecordAction;
 class GetRecordAction extends AbstractGetRecordAction
 {
     /**
-     * Gets employee data for existing or for the new record
+     * Gets employee data for existing record
      * 
      * @param string|null $userId User ID of the employee to be retrieved
      * @return PBXApiResult Result of the operation
@@ -61,24 +61,24 @@ class GetRecordAction extends AbstractGetRecordAction
         $res = self::createApiResult(__METHOD__);
         
         try {
-            if (empty($userId) || $userId === 'new') {
-                // Create structure for new employee
-                $res->data = DataStructure::createForNewEmployee();
-                $res->success = true;
-            } else {
-                // Get existing employee with all related data
-                $user = Users::findFirstById($userId);
-                
-                if (!$user) {
-                    $res->success = false;
-                    $res->messages['error'][] = 'Employee with user_id ' . $userId . ' not found';
-                    return $res;
-                }
-                
-                // Create data structure using DataStructure class
-                $res->data = DataStructure::createFromModel($user);
-                $res->success = true;
+            if (empty($userId)) {
+                $res->success = false;
+                $res->messages['error'][] = 'User ID is required';
+                return $res;
             }
+            
+            // Get existing employee with all related data
+            $user = Users::findFirstById($userId);
+            
+            if (!$user) {
+                $res->success = false;
+                $res->messages['error'][] = 'Employee with user_id ' . $userId . ' not found';
+                return $res;
+            }
+            
+            // Create data structure using DataStructure class
+            $res->data = DataStructure::createFromModel($user);
+            $res->success = true;
             
         } catch (\Exception $e) {
             return self::handleError($e, $res);

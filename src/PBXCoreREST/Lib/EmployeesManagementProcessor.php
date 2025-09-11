@@ -22,10 +22,13 @@ namespace MikoPBX\PBXCoreREST\Lib;
 use MikoPBX\PBXCoreREST\Lib\Employees\GetRecordAction;
 use MikoPBX\PBXCoreREST\Lib\Employees\DeleteRecordAction;
 use MikoPBX\PBXCoreREST\Lib\Employees\GetListAction;
+use MikoPBX\PBXCoreREST\Lib\Employees\GetDefaultAction;
 use MikoPBX\PBXCoreREST\Lib\Employees\CreateRecordAction;
 use MikoPBX\PBXCoreREST\Lib\Employees\UpdateRecordAction;
 use MikoPBX\PBXCoreREST\Lib\Employees\PatchRecordAction;
 use MikoPBX\PBXCoreREST\Lib\Employees\BatchCreateAction;
+use MikoPBX\PBXCoreREST\Lib\Employees\ImportCSVAction;
+use MikoPBX\PBXCoreREST\Lib\Employees\ExportCSVAction;
 use Phalcon\Di\Injectable;
 
 /**
@@ -36,6 +39,7 @@ enum EmployeeAction: string
     // Standard CRUD operations
     case GET_LIST = 'getList';
     case GET_RECORD = 'getRecord';
+    case GET_DEFAULT = 'getDefault';
     case CREATE = 'create';
     case UPDATE = 'update';
     case PATCH = 'patch';
@@ -44,7 +48,9 @@ enum EmployeeAction: string
     // Custom methods
     case BATCH_CREATE = 'batchCreate';
     case EXPORT = 'export';
+    case EXPORT_TEMPLATE = 'exportTemplate';
     case IMPORT = 'import';
+    case CONFIRM_IMPORT = 'confirmImport';
     case BATCH_DELETE = 'batchDelete';
     case ACTIVATE = 'activate';
     case DEACTIVATE = 'deactivate';
@@ -102,7 +108,8 @@ class EmployeesManagementProcessor extends Injectable
         $res = match ($action) {
             // Standard CRUD operations
             EmployeeAction::GET_LIST => GetListAction::main($data),
-            EmployeeAction::GET_RECORD => GetRecordAction::main($data['id'] ?? 'new'),
+            EmployeeAction::GET_RECORD => GetRecordAction::main($data['id'] ?? null),
+            EmployeeAction::GET_DEFAULT => GetDefaultAction::main(),
             EmployeeAction::CREATE => CreateRecordAction::main($data),
             EmployeeAction::UPDATE => UpdateRecordAction::main($data),
             EmployeeAction::PATCH => PatchRecordAction::main($data),
@@ -110,13 +117,48 @@ class EmployeesManagementProcessor extends Injectable
             
             // Custom methods
             EmployeeAction::BATCH_CREATE => BatchCreateAction::main($data),
-            EmployeeAction::EXPORT => self::notImplemented('export'),
-            EmployeeAction::IMPORT => self::notImplemented('import'),
+            EmployeeAction::EXPORT => ExportCSVAction::main($data),
+            EmployeeAction::EXPORT_TEMPLATE => ExportCSVAction::template($data),
+            EmployeeAction::IMPORT => ImportCSVAction::main($data),
+            EmployeeAction::CONFIRM_IMPORT => self::confirmImport($data),
             EmployeeAction::BATCH_DELETE => self::notImplemented('batchDelete'),
         };
 
         $res->function = $actionString;
         return $res;
+    }
+    
+    /**
+     * Confirm import after preview
+     * 
+     * @param array $data Request data with uploadId and options
+     * @return PBXApiResult
+     */
+    private static function confirmImport(array $data): PBXApiResult
+    {
+        $res = new PBXApiResult();
+        $res->processor = __METHOD__;
+        
+        $uploadId = $data['uploadId'] ?? '';
+        $strategy = $data['strategy'] ?? 'skip_duplicates';
+        
+        if (empty($uploadId)) {
+            $res->messages['error'][] = 'Upload ID is required';
+            return $res;
+        }
+        
+        // The uploadId points to saved JSON data from preview
+        // ImportCSVAction will handle this internally when mode is 'import'
+        $importData = [
+            'uploadId' => $uploadId,
+            'mode' => 'import',
+            'strategy' => $strategy
+        ];
+        
+        // Use special internal path to signal we're confirming a preview
+        $importData['filepath'] = "/tmp/employee_import/{$uploadId}.json";
+        
+        return ImportCSVAction::main($importData);
     }
     
     /**
