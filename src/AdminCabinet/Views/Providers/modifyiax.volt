@@ -17,6 +17,7 @@
 {{ form.render('id') }}
 {{ form.render('type') }}
 {{ form.render('disabled') }}
+<input type="hidden" id="copy-from-id" value="{{ copyFromId }}"/>
 <input type="hidden" id="providerType" value="IAX" />
 
 
@@ -107,11 +108,6 @@
             </label>
             <div class="ten wide field">
                 {{ form.render('networkfilterid') }}
-                <div id="networkfilterid-dropdown" class="ui selection dropdown network-filter-select">
-                    <i class="dropdown icon"></i>
-                    <div class="text"></div>
-                    <div class="menu"></div>
-                </div>
             </div>
         </div>
 
@@ -141,12 +137,3 @@
     {{ partial("Providers/partials/diagnostics-tab") }}
 </div>
 
-<script type="text/javascript">
-// Create global instance of ProviderIAX
-let providerIAX;
-
-$(document).ready(function() {
-    providerIAX = new ProviderIAX();
-    providerIAX.initialize();
-});
-</script>

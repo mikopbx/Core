@@ -22,25 +22,26 @@ namespace MikoPBX\PBXCoreREST\Services;
 use MikoPBX\Common\Models\ApiKeys;
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
+use MikoPBX\Core\System\SystemMessages;
 use Phalcon\Di\DiInterface;
 use Phalcon\Encryption\Security\Random;
 
 /**
- * Class ApiKeyValidationService
+ * Class TokenValidationService
  * 
- * Validates API keys for REST API authentication
+ * Validates Bearer tokens for REST API authentication
  * 
  * @package MikoPBX\PBXCoreREST\Services
  */
-class ApiKeyValidationService
+class TokenValidationService
 {
-    private const string CACHE_KEY_PREFIX = 'api_keys:';
+    private const string CACHE_KEY_PREFIX = 'bearer_tokens:';
     private const int CACHE_TTL = 300; // 5 minutes
-    private const string LAST_USED_BUFFER_KEY = 'api_keys:last_used:';
+    private const string LAST_USED_BUFFER_KEY = 'bearer_tokens:last_used:';
     private const int LAST_USED_SYNC_INTERVAL = 60; // Sync to DB every minute
     
     /**
-     * List of endpoints that should never be accessible via API keys
+     * List of endpoints that should never be accessible via Bearer tokens
      * These are internal system endpoints
      */
     private const array EXCLUDED_ENDPOINTS = [
@@ -59,94 +60,94 @@ class ApiKeyValidationService
     }
     
     /**
-     * Validate API key from request
+     * Validate Bearer token from request
      * 
      * @param \MikoPBX\PBXCoreREST\Http\Request $request
-     * @return ApiKeyValidationResult
+     * @return TokenValidationResult
      */
-    public function validate($request): ApiKeyValidationResult
+    public function validate($request): TokenValidationResult
     {
-        $providedKey = $request->getApiKey();
-        if (empty($providedKey)) {
-            return new ApiKeyValidationResult(false, null, 'No API key provided');
+        $providedToken = $request->getBearerToken();
+        if (empty($providedToken)) {
+            return new TokenValidationResult(false, null, 'No Bearer token provided');
         }
         
-        // Get key suffix for logging
-        $keySuffix = substr($providedKey, -4);
+        // Get token suffix for logging
+        $tokenSuffix = substr($providedToken, -4);
         
-        // Temporary debug log
-        error_log("ApiKeyValidation: Testing key ending with {$keySuffix}");
+        // Debug log
+        SystemMessages::sysLogMsg(__CLASS__, "Testing Bearer token ending with {$tokenSuffix}", LOG_DEBUG);
         
         // Try to get from cache first
-        $cacheKey = self::CACHE_KEY_PREFIX . md5($providedKey);
+        $cacheKey = self::CACHE_KEY_PREFIX . md5($providedToken);
         $cachedData = $this->cache->get($cacheKey);
         
         if ($cachedData !== null) {
-            error_log("ApiKeyValidation: Found key in cache");
-            return $this->validatePermissions($cachedData, $request, $keySuffix);
+            SystemMessages::sysLogMsg(__CLASS__, "Found Bearer token in cache", LOG_DEBUG);
+            return $this->validatePermissions($cachedData, $request, $tokenSuffix);
         }
         
         // Not in cache, check database
-        $apiKey = $this->findApiKeyByHash($providedKey);
+        $apiKey = $this->findTokenByHash($providedToken);
         
         if ($apiKey === null) {
-            error_log("ApiKeyValidation: Key not found in database");
-            return new ApiKeyValidationResult(false, $keySuffix, 'Invalid API key');
+            SystemMessages::sysLogMsg(__CLASS__, "Bearer token not found in database", LOG_DEBUG);
+            return new TokenValidationResult(false, $tokenSuffix, 'Invalid Bearer token');
         }
         
-        error_log("ApiKeyValidation: Key found in database, caching...");
+        SystemMessages::sysLogMsg(__CLASS__, "Bearer token found in database, caching...", LOG_DEBUG);
         
-        // Cache the valid key
+        // Cache the valid token
         $keyData = $apiKey->toArray();
         $this->cache->set($cacheKey, $keyData, self::CACHE_TTL);
         
-        return $this->validatePermissions($keyData, $request, $keySuffix);
+        return $this->validatePermissions($keyData, $request, $tokenSuffix);
     }
     
     /**
-     * Validate permissions for authenticated API key
+     * Validate permissions for authenticated Bearer token
      * 
      * @param array $keyData
      * @param \MikoPBX\PBXCoreREST\Http\Request $request
-     * @param string $keySuffix
-     * @return ApiKeyValidationResult
+     * @param string $tokenSuffix
+     * @return TokenValidationResult
      */
-    private function validatePermissions(array $keyData, $request, string $keySuffix): ApiKeyValidationResult
+    private function validatePermissions(array $keyData, $request, string $tokenSuffix): TokenValidationResult
     {
         $requestPath = $request->getURI();
-        error_log("ApiKeyValidation: Validating permissions for path: {$requestPath}");
+        SystemMessages::sysLogMsg(__CLASS__, "Validating Bearer token permissions for path: {$requestPath}", LOG_DEBUG);
         
         // Update last used time in buffer
         $this->updateLastUsedBuffer($keyData['id']);
         
         // Check network filter first (more critical)
         if (!$this->checkNetworkFilter($keyData, $request)) {
-            error_log("ApiKeyValidation: Network filter check failed");
-            return new ApiKeyValidationResult(false, $keySuffix, 'Access denied: IP address not allowed');
+            SystemMessages::sysLogMsg(__CLASS__, "Bearer token network filter check failed", LOG_WARNING);
+            return new TokenValidationResult(false, $tokenSuffix, 'Access denied: IP address not allowed');
         }
         
         // Check path permissions
         if (!$this->checkPathPermissions($keyData, $request)) {
-            error_log("ApiKeyValidation: Path permissions check failed. Allowed paths: " . ($keyData['allowed_paths'] ?? 'null'));
-            return new ApiKeyValidationResult(false, $keySuffix, 'Access denied: insufficient permissions for this endpoint');
+            SystemMessages::sysLogMsg(__CLASS__, "Bearer token path permissions check failed. Allowed paths: " . ($keyData['allowed_paths'] ?? 'null'), LOG_WARNING);
+            return new TokenValidationResult(false, $tokenSuffix, 'Access denied: insufficient permissions for this endpoint');
         }
         
-        error_log("ApiKeyValidation: All checks passed successfully");
-        return new ApiKeyValidationResult(true, $keySuffix, null, $keyData);
+        SystemMessages::sysLogMsg(__CLASS__, "Bearer token validation - all checks passed successfully", LOG_DEBUG);
+        return new TokenValidationResult(true, $tokenSuffix, null, $keyData);
     }
     
     /**
-     * Find API key by comparing hashes
+     * Find Bearer token by comparing hashes
      * 
-     * @param string $providedKey
+     * @param string $providedToken
      * @return ApiKeys|null
      */
-    private function findApiKeyByHash(string $providedKey): ?ApiKeys
+    private function findTokenByHash(string $providedToken): ?ApiKeys
     {
         $activeKeys = ApiKeys::find();
         
         foreach ($activeKeys as $key) {
-            if (password_verify($providedKey, $key->key_hash)) {
+            if (password_verify($providedToken, $key->key_hash)) {
                 return $key;
             }
         }
@@ -195,7 +196,7 @@ class ApiKeyValidationService
     }
     
     /**
-     * Check if request path is allowed for this API key
+     * Check if request path is allowed for this Bearer token
      * 
      * @param array $keyData
      * @param \MikoPBX\PBXCoreREST\Http\Request $request
@@ -321,7 +322,7 @@ class ApiKeyValidationService
     }
     
     /**
-     * Clear cache for a specific API key or all keys
+     * Clear cache for a specific Bearer token or all tokens
      * 
      * @param int|null $keyId
      * @return void
@@ -331,8 +332,8 @@ class ApiKeyValidationService
         $di = \Phalcon\Di\Di::getDefault();
         $cache = $di->getShared(ManagedCacheProvider::SERVICE_NAME);
         
-        // Clear all cached keys (since we don't know the hash)
-        // In production, might want to track key->hash mapping
+        // Clear all cached tokens (since we don't know the hash)
+        // In production, might want to track token->hash mapping
         $keys = $cache->getKeys(self::CACHE_KEY_PREFIX . '*');
         foreach ($keys as $key) {
             $cache->delete($key);
@@ -341,21 +342,21 @@ class ApiKeyValidationService
 }
 
 /**
- * API Key validation result
+ * Bearer Token validation result
  */
-class ApiKeyValidationResult
+class TokenValidationResult
 {
     private bool $valid;
-    private ?string $keySuffix;
+    private ?string $tokenSuffix;
     private ?string $error;
-    private ?array $keyInfo;
+    private ?array $tokenInfo;
     
-    public function __construct(bool $valid, ?string $keySuffix = null, ?string $error = null, ?array $keyInfo = null)
+    public function __construct(bool $valid, ?string $tokenSuffix = null, ?string $error = null, ?array $tokenInfo = null)
     {
         $this->valid = $valid;
-        $this->keySuffix = $keySuffix;
+        $this->tokenSuffix = $tokenSuffix;
         $this->error = $error;
-        $this->keyInfo = $keyInfo;
+        $this->tokenInfo = $tokenInfo;
     }
     
     public function isValid(): bool 
@@ -363,9 +364,9 @@ class ApiKeyValidationResult
         return $this->valid; 
     }
     
-    public function getKeySuffix(): ?string 
+    public function getTokenSuffix(): ?string 
     { 
-        return $this->keySuffix; 
+        return $this->tokenSuffix; 
     }
     
     public function getError(): ?string 
@@ -373,8 +374,8 @@ class ApiKeyValidationResult
         return $this->error; 
     }
     
-    public function getKeyInfo(): ?array 
+    public function getTokenInfo(): ?array 
     { 
-        return $this->keyInfo; 
+        return $this->tokenInfo; 
     }
 }

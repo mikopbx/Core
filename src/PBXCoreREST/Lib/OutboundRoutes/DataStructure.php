@@ -87,8 +87,8 @@ class DataStructure extends AbstractDataStructure
         // Add provider data for list display
         $providerData = self::getProviderData($model->Providers);
         $data['providerid'] = $model->providerid ?? '';  // Provider ID
-        $data['providerName'] = $providerData['providerName'];
-        $data['disabled'] = $providerData['providerDisabled'];
+        $data['providerid_represent'] = $providerData['providerid_represent'];
+        $data['provider_disabled'] = $providerData['provider_disabled'];
         
         // Generate ready-to-use description for the rule
         $data['ruleDescription'] = self::generateRuleDescription($model);
@@ -205,9 +205,9 @@ class DataStructure extends AbstractDataStructure
     {
         if ($provider === null) {
             return [
-                'providerName' => '',
-                'providerType' => '',
-                'providerDisabled' => false,
+                'providerid_represent' => '',
+                'provider_type' => '',
+                'provider_disabled' => false,
             ];
         }
         
@@ -219,9 +219,9 @@ class DataStructure extends AbstractDataStructure
         }
         
         return [
-            'providerName' => $provider->getRepresent(),
-            'providerType' => $provider->type,
-            'providerDisabled' => $isDisabled,
+            'providerid_represent' => $provider->getRepresent(),
+            'provider_type' => $provider->type,
+            'provider_disabled' => $isDisabled,
         ];
     }
 }

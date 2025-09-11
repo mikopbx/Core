@@ -481,11 +481,11 @@ class BaseController extends Controller
                     'auth_type' => 'session'
                 ];
             }
-        } elseif ($this->request->isApiKeyRequest()) {
-            // For API keys - just mark auth type, no user context
+        } elseif ($this->request->isBearerTokenRequest()) {
+            // For Bearer tokens - just mark auth type, no user context
             $requestMessage['sessionContext'] = [
-                'auth_type' => 'api_key',
-                'api_key_id' => $this->request->getApiKeyInfo()['id'] ?? null
+                'auth_type' => 'bearer_token',
+                'token_id' => $this->request->getTokenInfo()['id'] ?? null
             ];
         }
 

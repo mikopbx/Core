@@ -79,8 +79,8 @@ class DataStructure extends AbstractDataStructure
         // Add extension field with representation using unified approach
         $data = self::addExtensionField($data, 'extension', $model->extension);
         
-        // Add sound file field using unified approach with underscore separator for consistency
-        $data = self::addSoundFileField($data, 'audio_message_id', $model->audio_message_id, '_Represent');
+        // Add sound file field using standard naming convention: field_name_represent
+        $data = self::addSoundFileField($data, 'audio_message_id', $model->audio_message_id);
         
         return $data;
     }
@@ -154,7 +154,7 @@ class DataStructure extends AbstractDataStructure
         $data = self::addExtensionField($data, 'extension', null);
         
         // Add sound file field with empty representation
-        $data = self::addSoundFileField($data, 'audio_message_id', null, '_Represent');
+        $data = self::addSoundFileField($data, 'audio_message_id', null);
         
         return $data;
     }

@@ -20,6 +20,7 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\System;
 
+use MikoPBX\Common\Models\ApiKeys;
 use MikoPBX\Common\Models\AsteriskManagerUsers;
 use MikoPBX\Common\Models\CallQueueMembers;
 use MikoPBX\Common\Models\CallQueues;
@@ -49,6 +50,7 @@ use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Configs\MonitConf;
 use MikoPBX\Core\System\Configs\CronConf;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\PBXCoreREST\Services\TokenValidationService;
 use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
 
@@ -384,6 +386,7 @@ class RestoreDefaultSettingsAction extends Injectable
             [Sip::class => ''], // All SIP providers
             [Iax::class => ''], // All IAX providers
             [AsteriskManagerUsers::class => ''],
+            [ApiKeys::class => ''], // All Bearer tokens
             [Extensions::class => 'type="' . Extensions::TYPE_IVR_MENU . '"'],  // IVR Menu
             [Extensions::class => 'type="' . Extensions::TYPE_CONFERENCE . '"'],  // CONFERENCE
             [Extensions::class => 'type="' . Extensions::TYPE_QUEUE . '"'],  // QUEUE
@@ -404,6 +407,9 @@ class RestoreDefaultSettingsAction extends Injectable
             }
         }
         // FirewallRules will be automatically deleted due to CASCADE relation with NetworkFilters
+        
+        // Clear Bearer tokens cache after deleting all tokens
+        TokenValidationService::clearCache();
     }
 
     /**
@@ -423,10 +429,10 @@ class RestoreDefaultSettingsAction extends Injectable
                     '000063',   // Reads back the extension
                     '000064',   // 0000MILLI
                     '10003246', // Echo test
-                    IncomingRoutingTable::ACTION_HANGUP,   // System Extension
-                    IncomingRoutingTable::ACTION_BUSY,     // System Extension
-                    IncomingRoutingTable::ACTION_DID, // System Extension
-                    IncomingRoutingTable::ACTION_VOICEMAIL,// System Extension
+                    'hangup',   // System Extension
+                    'busy',     // System Extension
+                    'did2user', // System Extension
+                    'voicemail',// System Extension
                 ],
             ],
         ];

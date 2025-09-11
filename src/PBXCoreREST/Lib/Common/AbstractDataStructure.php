@@ -23,6 +23,8 @@ namespace MikoPBX\PBXCoreREST\Lib\Common;
 
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\SoundFiles;
+use MikoPBX\Common\Models\NetworkFilters;
+use MikoPBX\Common\Providers\TranslationProvider;
 
 /**
  * Abstract base class for REST API data structure creation
@@ -136,7 +138,7 @@ abstract class AbstractDataStructure
     protected static function addExtensionField(array $data, string $fieldName, ?string $extensionNumber): array
     {
         $data[$fieldName] = $extensionNumber ?? '';
-        $data[$fieldName . 'Represent'] = self::getExtensionRepresentation($extensionNumber);
+        $data[$fieldName . '_represent'] = self::getExtensionRepresentation($extensionNumber);
         return $data;
     }
 
@@ -145,17 +147,18 @@ abstract class AbstractDataStructure
      * 
      * Common pattern for creating sound file field + representation field pairs
      * used in CallQueues, IVR Menu, etc.
+     * 
+     * Standard naming convention: field_name_represent (lowercase with underscores)
      *
      * @param array $data Data array to modify
      * @param string $fieldName Base field name (e.g., 'audio_message_id')
      * @param string|null $soundFileId Sound file ID value
-     * @param string|null $customRepresentSuffix Custom suffix for represent field (default: 'Represent')
      * @return array Data array with sound file field and representation field
      */
-    protected static function addSoundFileField(array $data, string $fieldName, ?string $soundFileId, ?string $customRepresentSuffix = 'Represent'): array
+    protected static function addSoundFileField(array $data, string $fieldName, ?string $soundFileId): array
     {
         $data[$fieldName] = $soundFileId ?? '';
-        $data[$fieldName . $customRepresentSuffix] = self::getSoundFileRepresentation($soundFileId);
+        $data[$fieldName . '_represent'] = self::getSoundFileRepresentation($soundFileId);
         return $data;
     }
 
@@ -341,6 +344,58 @@ abstract class AbstractDataStructure
             }
         }
         
+        return $data;
+    }
+
+    /**
+     * Get network filter representation with HTML and icon
+     * 
+     * Unified method for getting network filter representation across all modules.
+     * Returns HTML formatted representation with appropriate icon:
+     * - 'none' returns globe icon with translated text
+     * - Valid filter ID returns filter's getRepresent() output
+     * - Invalid filter ID returns empty string
+     *
+     * @param string|int|null $networkFilterId Network filter ID ('none', numeric ID, or null)
+     * @return string HTML formatted representation with icon
+     */
+    public static function getNetworkFilterRepresentation($networkFilterId): string
+    {
+        // Handle empty or 'none' values
+        if (empty($networkFilterId) || $networkFilterId === 'none') {
+            // Get translation for "none" option with globe icon
+            $translation = \Phalcon\Di\Di::getDefault()->get(TranslationProvider::SERVICE_NAME);
+            $noneText = $translation->_('ex_NoNetworkFilter');
+            return '<i class="globe icon"></i> ' . $noneText;
+        }
+        
+        // Look up the network filter
+        $filter = NetworkFilters::findFirstById($networkFilterId);
+        if ($filter) {
+            // Use getRepresent() which includes HTML and icon
+            return $filter->getRepresent();
+        }
+        
+        // Invalid filter ID - return empty string
+        return '';
+    }
+
+    /**
+     * Add network filter field pair with representation
+     * 
+     * Common pattern for creating network filter field + representation field pairs.
+     * Always returns 'none' instead of empty string for API consistency.
+     *
+     * @param array $data Data array to modify
+     * @param string $fieldName Base field name (e.g., 'networkfilterid')
+     * @param string|int|null $networkFilterId Network filter ID value
+     * @return array Data array with network filter field and representation field
+     */
+    public static function addNetworkFilterField(array $data, string $fieldName, $networkFilterId): array
+    {
+        // Always return 'none' instead of empty string for API consistency
+        $data[$fieldName] = !empty($networkFilterId) ? (string)$networkFilterId : 'none';
+        $data[$fieldName . '_represent'] = self::getNetworkFilterRepresentation($networkFilterId);
         return $data;
     }
 }

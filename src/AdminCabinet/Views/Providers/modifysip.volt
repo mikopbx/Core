@@ -18,6 +18,7 @@
 {{ form.render('id') }}
 {{ form.render('type') }}
 {{ form.render('disabled') }}
+<input type="hidden" id="copy-from-id" value="{{ copyFromId }}"/>
 <input type="hidden" id="providerType" value="SIP" />
 <div class="required field max-width-500">
     <label for="description">{{ t._('pr_ProviderName') }}</label>
@@ -170,11 +171,6 @@
             </label>
             <div class="ten wide field">
                 {{ form.render('networkfilterid') }}
-                <div id="networkfilterid-dropdown" class="ui selection dropdown network-filter-select">
-                    <i class="dropdown icon"></i>
-                    <div class="text"></div>
-                    <div class="menu"></div>
-                </div>
             </div>
         </div>
 
@@ -342,12 +338,3 @@
     {{ partial("Providers/partials/diagnostics-tab") }}
 </div>
 
-<script type="text/javascript">
-// Create global instance of ProviderSIP
-let providerSIP;
-
-$(document).ready(function() {
-    providerSIP = new ProviderSIP();
-    providerSIP.initialize();
-});
-</script>

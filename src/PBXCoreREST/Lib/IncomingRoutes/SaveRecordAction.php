@@ -152,10 +152,8 @@ class SaveRecordAction extends AbstractSaveRecordAction
             $res->data = DataStructure::createFromModel($savedRoute);
             $res->success = true;
             
-            // Only set reload for new records
-            if (empty($data['id'])) {
-                $res->reload = "incoming-routes/modify/{$savedRoute->id}";
-            }
+            // Set reload for all operations since incoming routes affect Asterisk configuration
+            $res->reload = "incoming-routes/modify/{$savedRoute->id}";
             
             // Log successful operation
             self::logSuccessfulSave('Incoming route', $savedRoute->rulename, $savedRoute->number, __METHOD__);

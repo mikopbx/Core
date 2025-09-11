@@ -370,8 +370,9 @@ class SIPConf extends AsteriskConfigClass
             // Assign permit and deny values based on network filter.
             $arr_data['permit'] = ($network_filter === null)?'': $network_filter->permit;
             $arr_data['deny']   = ($network_filter === null)?'': $network_filter->deny;
+            
+            $arr_data['transport'] = trim($arr_data['transport'] ?? Sip::TRANSPORT_AUTO);
 
-            $arr_data['transport'] = trim($arr_data['transport'] ?? '');
             // Retrieve used codecs.
             $arr_data['codecs'] = $this->getCodecs();
             $arr_data['enableRecording'] = $arr_data['enableRecording'] !== '0';
@@ -1332,7 +1333,10 @@ class SIPConf extends AsteriskConfigClass
         }
 
         $dtmfmode = ($peer['dtmfmode'] === 'rfc2833') ? 'rfc4733' : $peer['dtmfmode'];
-        $peer['transport'] = trim($peer['transport']??'');
+        $peer['transport'] = trim($peer['transport']??Sip::TRANSPORT_AUTO);
+        if ($peer['transport'] === Sip::TRANSPORT_AUTO){
+            $peer['transport'] = '';
+        }
         // Prepare the options for the endpoint section
         $options  = [
             'type'                 => 'endpoint',

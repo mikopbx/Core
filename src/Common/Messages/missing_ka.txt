@@ -1,0 +1,3 @@
+
+Parse error: syntax error, unexpected token "=>", expecting "," or ";" in Command line code on line 5
+

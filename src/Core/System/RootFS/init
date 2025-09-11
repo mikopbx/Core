@@ -36,18 +36,10 @@ mount -t proc      -o nosuid,noexec,nodev proc  /proc;
 mount -t sysfs     -o nosuid,noexec,nodev sysfs /sys;
 mount -t tmpfs     -o size=90% tmpfs            /mnt;
 
-echo " - Check build time...";
-buildTimeFile='/etc/version.buildtime';
-if [ -f "$buildTimeFile" ]; then
-  echo " - Set time to $buildTimeFile...";
-  date -u -s "@$(cat "$buildTimeFile")" 2>/dev/null
-else
-  echo " - $buildTimeFile not found...";
-fi;
 # Switch root.
 # Create an archive of the current root directory and extract it to /mnt.
 # If successful, continue with the switch root process.
-if tar -C / --exclude=mnt --exclude="./proc/*" --exclude="./sys/*" -cf - . | tar -C /mnt/ -xmf - ; then
+if tar -C / --exclude=mnt --exclude="./proc/*" --exclude="./sys/*" -cf - . | tar -C /mnt/ -xf - ; then
 	resFileInitTab='/mnt/etc/inittab';
 	mv /mnt/etc/inittab_base "$resFileInitTab";
 

@@ -54,11 +54,15 @@ class DataStructure extends AbstractDataStructure
         $data['note'] = $model->note ?? '';
         
         // Add provider and extension details
-        $data = array_merge($data, self::getProviderData($model->Providers));
+        $providerData = self::getProviderData($model->Providers, $model->provider);
+        $data = array_merge($data, $providerData);
         $data = array_merge($data, self::getExtensionData($model->Extensions));
         
-        // Add sound file field using unified approach with underscore separator for consistency with IVR menu
-        $data = self::addSoundFileField($data, 'audio_message_id', $model->audio_message_id, '_Represent');
+        // Add providerid_represent field using standard naming convention: field_name_represent
+        $data['providerid_represent'] = $providerData['providerid_represent'];
+        
+        // Add sound file field using standard naming convention: field_name_represent
+        $data = self::addSoundFileField($data, 'audio_message_id', $model->audio_message_id);
         
         // Handle null values for consistent JSON output (excluding providerid which uses 'none')
         $data = self::handleNullValues($data, ['rulename', 'number', 'extension', 'audio_message_id', 'note']);
@@ -84,18 +88,18 @@ class DataStructure extends AbstractDataStructure
         $data['note'] = $model->note ?? '';
         
         // Add provider data - map provider to providerid for consistency
-        $providerData = self::getProviderData($model->Providers);
+        $providerData = self::getProviderData($model->Providers, $model->provider);
         // Map database field 'provider' to API field 'providerid' for consistency
         $data['providerid'] = $model->provider ?? 'none';  // Provider ID
-        $data['providerRepresent'] = $providerData['providerName'];
-        $data['providerDisabled'] = $providerData['providerDisabled'];
+        $data['providerid_represent'] = $providerData['providerid_represent'];
+        $data['provider_disabled'] = $providerData['provider_disabled'];
         
         // Add extension representation
         $extensionData = self::getExtensionData($model->Extensions);
-        $data['extensionRepresent'] = $extensionData['extensionName'];
+        $data['extension_represent'] = $extensionData['extension_represent'];
         
         // Generate ready-to-use HTML representation for the rule
-        $data['ruleRepresent'] = self::generateRuleDescription($model, $data);
+        $data['rule_represent'] = self::generateRuleDescription($model, $data);
         
         // Handle null values for consistent JSON output
         $data = self::handleNullValues($data, ['number', 'extension', 'note']);
@@ -142,8 +146,8 @@ class DataStructure extends AbstractDataStructure
         
         // Get provider representation with icon
         $providerDisplay = '';
-        if (!empty($data['providerRepresent'])) {
-            $providerDisplay = '<span class="provider">' . $data['providerRepresent'] . '</span>';
+        if (!empty($data['providerid_represent'])) {
+            $providerDisplay = '<span class="provider">' . $data['providerid_represent'] . '</span>';
         }
         
         // Get number display - use "any number" text that already exists in translations
@@ -185,15 +189,21 @@ class DataStructure extends AbstractDataStructure
      * Extract provider data from model
      * 
      * @param \MikoPBX\Common\Models\Providers|null $provider
+     * @param string|null $providerValue Database value for provider field
      * @return array Provider data array
      */
-    private static function getProviderData($provider): array
+    private static function getProviderData($provider, $providerValue = null): array
     {
-        if ($provider === null) {
+        // Check if this should be treated as "Any Provider"
+        if ($provider === null || $providerValue === null || $providerValue === 'none') {
+            $di = \Phalcon\Di\Di::getDefault();
+            $translation = $di->get(TranslationProvider::SERVICE_NAME);
+            $anyProviderText = $translation->_('ir_AnyProvider_v2') ?: 'Any Provider';
+            
             return [
-                'providerName' => '',
-                'providerType' => '',
-                'providerDisabled' => false,
+                'providerid_represent' => '<i class="globe icon"></i> ' . $anyProviderText,
+                'provider_type' => '',
+                'provider_disabled' => false,
             ];
         }
         
@@ -205,9 +215,9 @@ class DataStructure extends AbstractDataStructure
         }
         
         return [
-            'providerName' => $provider->getRepresent(),
-            'providerType' => $provider->type,
-            'providerDisabled' => $isDisabled,
+            'providerid_represent' => $provider->getRepresent(),
+            'provider_type' => $provider->type,
+            'provider_disabled' => $isDisabled,
         ];
     }
     
@@ -220,7 +230,7 @@ class DataStructure extends AbstractDataStructure
     private static function getExtensionData($extension): array
     {
         return [
-            'extensionName' => $extension?->getRepresent() ?? '',
+            'extension_represent' => $extension?->getRepresent() ?? '',
         ];
     }
 }

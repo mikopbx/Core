@@ -38,6 +38,7 @@ use MikoPBX\Core\Workers\WorkerNotifyAdministrator;
 use MikoPBX\Core\Workers\WorkerNotifyByEmail;
 use MikoPBX\Core\Workers\WorkerPrepareAdvice;
 use MikoPBX\Core\Workers\WorkerProviderStatusMonitor;
+use MikoPBX\Core\Workers\WorkerExtensionStatusMonitor;
 use MikoPBX\Core\Workers\WorkerRedisBase;
 use MikoPBX\Core\Workers\WorkerRemoveOldRecords;
 use MikoPBX\Modules\Config\SystemConfigInterface;
@@ -245,6 +246,7 @@ class WorkerSafeScriptsCore extends WorkerBase
                     WorkerApiCommands::class,
                     WorkerPrepareAdvice::class,
                     WorkerProviderStatusMonitor::class,
+                    WorkerExtensionStatusMonitor::class,
                 ],
             self::CHECK_BY_AMI =>
                 [

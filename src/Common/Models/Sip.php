@@ -38,6 +38,7 @@ use Phalcon\Mvc\Model\Relation;
  */
 class Sip extends ModelsBase
 {
+    public const string TRANSPORT_AUTO = 'udp,tcp';
     public const string TRANSPORT_UDP = 'udp';
     public const string TRANSPORT_TCP = 'tcp';
     public const string TRANSPORT_TLS = 'tls';

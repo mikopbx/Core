@@ -20,8 +20,6 @@
 
 namespace MikoPBX\Core\Asterisk\Configs;
 
-use MikoPBX\Core\System\Util;
-
 /**
  * Class SipNotifyConf
  *

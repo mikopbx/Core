@@ -39,10 +39,10 @@ use Phalcon\Mvc\Micro;
 class Request extends PhRequest
 {
     /**
-     * API key information stored after successful validation
+     * Bearer token information stored after successful validation
      * @var array|null
      */
-    private ?array $apiKeyInfo = null;
+    private ?array $tokenInfo = null;
     
     /**
      * Check the header of a request to understand if it needs async response or not
@@ -186,54 +186,59 @@ class Request extends PhRequest
     }
     
     /**
-     * Check if request has API key header
+     * Check if request has Bearer token in Authorization header
      * 
      * @return bool
      */
-    public function hasApiKey(): bool
+    public function hasBearerToken(): bool
     {
-        return $this->hasHeader('X-API-Key');
+        $authHeader = $this->getHeader('Authorization');
+        return $authHeader && str_starts_with($authHeader, 'Bearer ');
     }
     
     /**
-     * Get API key from header
+     * Get Bearer token from Authorization header
      * 
      * @return string|null
      */
-    public function getApiKey(): ?string
+    public function getBearerToken(): ?string
     {
-        return $this->getHeader('X-API-Key');
+        $authHeader = $this->getHeader('Authorization');
+        if ($authHeader && str_starts_with($authHeader, 'Bearer ')) {
+            return substr($authHeader, 7); // Remove "Bearer " prefix
+        }
+        return null;
     }
     
     /**
-     * Check if this is an API key authenticated request
+     * Check if this is a Bearer token authenticated request
      * 
      * @return bool
      */
-    public function isApiKeyRequest(): bool
+    public function isBearerTokenRequest(): bool
     {
-        return $this->hasApiKey();
+        return $this->hasBearerToken();
     }
     
     /**
-     * Store API key info for logging/context
+     * Store Bearer token info for logging/context
      * 
      * @param array $info
      * @return void
      */
-    public function setApiKeyInfo(array $info): void
+    public function setTokenInfo(array $info): void
     {
-        $this->apiKeyInfo = $info;
+        $this->tokenInfo = $info;
     }
     
     /**
-     * Get API key info
+     * Get Bearer token info
      * 
      * @return array|null
      */
-    public function getApiKeyInfo(): ?array
+    public function getTokenInfo(): ?array
     {
-        return $this->apiKeyInfo;
+        return $this->tokenInfo;
     }
 
     /**

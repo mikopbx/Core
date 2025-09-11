@@ -442,7 +442,7 @@ class ModelsBase extends Model
                     . " <$this->extension>";
                 break;
             case ExtensionForwardingRights::class:
-                $name = $this->Extensions->getRepresent();
+                $name = $this->Extensions ? $this->Extensions->getRepresent() : ($this->extension ?: 'Unknown');
                 break;
             case Extensions::class:
                 if ($this->type === Extensions::TYPE_EXTERNAL) {
@@ -714,18 +714,18 @@ class ModelsBase extends Model
             case ExtensionForwardingRights::class:
                 break;
             case Extensions::class:
-                $link = $this->buildRecordUrl(ExtensionsController::class, 'modify', $this->id);
+                // Check if this is a user extension (has userid and is general user number)
+                // If so, redirect to employees controller instead of extensions
+                if ($this->userid > 0 && $this->is_general_user_number === "1") {
+                    $link = $this->buildRecordUrl(ExtensionsController::class, 'modify', $this->userid);
+                } else {
+                    $link = $this->buildRecordUrl(ExtensionsController::class, 'modify', $this->id);
+                }
                 break;
             case ExternalPhones::class:
                 if ($this->Extensions->is_general_user_number === "1") {
-                    $parameters = [
-                        'conditions' => 'is_general_user_number="1" AND type="' . Extensions::TYPE_EXTERNAL . '" AND userid=:userid:',
-                        'bind' => [
-                            'userid' => $this->Extensions->userid,
-                        ],
-                    ];
-                    $needExtension = Extensions::findFirst($parameters);
-                    $link = $this->buildRecordUrl(ExtensionsController::class, 'modify', $needExtension->id);
+                    // For user extensions, redirect to employees controller using userid
+                    $link = $this->buildRecordUrl(ExtensionsController::class, 'modify', $this->Extensions->userid);
                 }
                 break;
             case Fail2BanRules::class:
@@ -777,6 +777,9 @@ class ModelsBase extends Model
             case Sip::class:
                 if ($this->Extensions) {
                     if ($this->Extensions->is_general_user_number === "1") {
+                        // For user extensions, redirect to employees controller using userid
+                        $link = $this->buildRecordUrl(ExtensionsController::class, 'modify', $this->Extensions->userid);
+                    } else {
                         $link = $this->buildRecordUrl(ExtensionsController::class, 'modify', $this->Extensions->id);
                     }
                 } elseif ($this->Providers) {
@@ -784,18 +787,8 @@ class ModelsBase extends Model
                 }
                 break;
             case Users::class:
-                $parameters = [
-                    'conditions' => 'userid=:userid:',
-                    'bind' => [
-                        'userid' => $this->id,
-                    ],
-                ];
-                $needExtension = Extensions::findFirst($parameters);
-                if ($needExtension === null) {
-                    $link = $this->buildRecordUrl(ExtensionsController::class, 'index');
-                } else {
-                    $link = $this->buildRecordUrl(ExtensionsController::class, 'modify', $needExtension->id);
-                }
+                // For users, always redirect to employees controller using userid
+                $link = $this->buildRecordUrl(ExtensionsController::class, 'modify', $this->id);
                 break;
             case SoundFiles::class:
                 $link = $this->buildRecordUrl(SoundFilesController::class, 'modify', $this->id);

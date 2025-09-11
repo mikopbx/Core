@@ -355,8 +355,8 @@ class GetSettingsAction extends AbstractGetRecordAction
             if (!empty($settings[$field])) {
                 $soundFile = SoundFiles::findFirstById($settings[$field]);
                 if ($soundFile !== null) {
-                    // Add representation with _Represent suffix
-                    $settings[$field . '_Represent'] = $soundFile->getRepresent();
+                    // Add representation with _represent suffix (lowercase following standard naming convention)
+                    $settings[$field . '_represent'] = $soundFile->getRepresent();
                 }
             }
         }
