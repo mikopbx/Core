@@ -20,6 +20,7 @@
 namespace MikoPBX\PBXCoreREST\Lib\IvrMenu;
 
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
+use MikoPBX\Common\Models\Extensions;
 
 
 /**
@@ -32,10 +33,10 @@ class DataStructure extends AbstractDataStructure
     /**
      * Create complete data array from IvrMenu model including actions
      * @param \MikoPBX\Common\Models\IvrMenu $model
-     * @param bool $includeActions Whether to include IVR menu actions
+     * @param array|bool $actionsOrInclude Actions array for copy mode, or boolean to include actions
      * @return array
      */
-    public static function createFromModel($model, bool $includeActions = true): array
+    public static function createFromModel($model, $actionsOrInclude = true): array
     {
         // Start with base structure - data is already sanitized during storage
         // No additional HTML escaping needed for API response (follows "Store Raw, Escape at Edge")
@@ -57,18 +58,30 @@ class DataStructure extends AbstractDataStructure
         // Add extension fields with representations using unified approach
         $data = self::addExtensionField($data, 'timeout_extension', $model->timeout_extension);
 
-        // Add sound file field using unified approach with IVR-specific naming (audio_message_id_Represent)
-        $data = self::addSoundFileField($data, 'audio_message_id', $model->audio_message_id, '_Represent');
+        // Add sound file field using standard naming convention: field_name_represent
+        $data = self::addSoundFileField($data, 'audio_message_id', $model->audio_message_id);
         
-        if ($includeActions && !empty($model->id)) {
-            // Add IVR actions
+        // Handle actions - either from provided array (copy mode) or from model relations
+        if (is_array($actionsOrInclude)) {
+            // Copy mode - use provided actions array and load extension representations
             $actions = [];
-            foreach ($model->IvrMenuActions as $action) {
+            foreach ($actionsOrInclude as $actionData) {
+                $extensionNumber = $actionData['extension'] ?? '';
+                $extensionRepresent = '';
+                
+                // Load extension representation if extension number exists
+                if (!empty($extensionNumber)) {
+                    $extension = Extensions::findFirstByNumber($extensionNumber);
+                    if ($extension) {
+                        $extensionRepresent = $extension->getRepresent();
+                    }
+                }
+                
                 $actions[] = [
-                    'id' => (string)$action->id,
-                    'digits' => $action->digits,
-                    'extension' => $action->extension,
-                    'extensionRepresent' => $action->Extensions ? $action->Extensions->getRepresent() : 'ERROR'
+                    'id' => $actionData['id'] ?? '',
+                    'digits' => $actionData['digits'] ?? '',
+                    'extension' => $extensionNumber,
+                    'extension_represent' => $extensionRepresent
                 ];
             }
             // Sort actions by digits
@@ -76,7 +89,23 @@ class DataStructure extends AbstractDataStructure
                 return (int)$a['digits'] <=> (int)$b['digits'];
             });
             $data['actions'] = $actions;
-        } elseif ($includeActions) {
+        } elseif ($actionsOrInclude && !empty($model->id)) {
+            // Normal mode - get actions from model relations
+            $actions = [];
+            foreach ($model->IvrMenuActions as $action) {
+                $actions[] = [
+                    'id' => (string)$action->id,
+                    'digits' => $action->digits,
+                    'extension' => $action->extension,
+                    'extension_represent' => $action->Extensions ? $action->Extensions->getRepresent() : 'ERROR'
+                ];
+            }
+            // Sort actions by digits
+            usort($actions, function($a, $b) {
+                return (int)$a['digits'] <=> (int)$b['digits'];
+            });
+            $data['actions'] = $actions;
+        } elseif ($actionsOrInclude) {
             // For new records, set empty actions array
             $data['actions'] = [];
         }

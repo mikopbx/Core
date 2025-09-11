@@ -56,6 +56,9 @@ const ProviderStatusMonitor = {
         // Cache DOM elements for performance
         this.cacheElements();
         
+        // Initialize loading placeholders for all provider rows
+        this.initializeLoadingPlaceholders();
+        
         // Create enhanced status indicator
         this.createStatusIndicator();
         
@@ -147,6 +150,9 @@ const ProviderStatusMonitor = {
         
         // Rebuild cache
         this.cacheElements();
+        
+        // Reinitialize loading placeholders for new rows
+        this.initializeLoadingPlaceholders();
     },
     
     /**
@@ -522,6 +528,25 @@ const ProviderStatusMonitor = {
             
             $durationInfo.text(durationText);
         }
+    },
+    
+    /**
+     * Initialize loading placeholders for all provider rows
+     * This prevents table jumping when statuses are loading
+     */
+    initializeLoadingPlaceholders() {
+        $('tr.provider-row, tr[id]').each((index, element) => {
+            const $row = $(element);
+            const $nameColumn = $row.find('td').eq(2); // Provider name column
+            
+            // Check if duration info already exists
+            let $durationInfo = $row.find('.provider-duration-info');
+            if ($durationInfo.length === 0 && $nameColumn.length) {
+                // Add loading placeholder
+                const loadingText = globalTranslate.pr_CheckingProviderStatuses || 'Getting status...';
+                $nameColumn.append(`<div class="provider-duration-info" style="color: #999; font-size: 0.9em;">${loadingText}</div>`);
+            }
+        });
     },
     
     /**

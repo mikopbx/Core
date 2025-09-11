@@ -366,7 +366,11 @@ class ProviderIAX extends ProviderBase {
         // Enable automatic checkbox to boolean conversion
         Form.convertCheckboxesToBool = true;
         
+        // Initialize the form - this was missing!
         Form.initialize();
+        
+        // Mark form as fully initialized
+        this.formInitialized = true;
     }
     
     /**

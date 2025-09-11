@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, Form, PbxApi, ClipboardJS, NetworkFiltersAPI, NetworkFilterSelector, TooltipBuilder, PasswordScore, i18n, ProvidersAPI, PasswordWidget */
+/* global globalRootUrl, globalTranslate, Form, PbxApi, ClipboardJS, NetworkFiltersAPI, DynamicDropdownBuilder, TooltipBuilder, PasswordScore, i18n, ProvidersAPI, PasswordWidget */
 
 /**
  * Base class for provider management forms
@@ -29,24 +29,11 @@ class ProviderBase {
         SECRET: '#secret',
         CHECKBOXES: '#save-provider-form .checkbox',
         ACCORDIONS: '#save-provider-form .ui.accordion',
-        DROPDOWNS: '#save-provider-form .ui.dropdown',
         DESCRIPTION: '#description',
-        NETWORK_FILTER_ID: '#networkfilterid-dropdown',
         PASSWORD_TOOLTIP_ICON: '.password-tooltip-icon',
         POPUPED: '.popuped'
     };
 
-    // Class constants for values
-    static DEFAULTS = {
-        SIP_PORT: '5060',
-        IAX_PORT: '4569',
-        PASSWORD_LENGTH: 16,
-        QUALIFY_FREQ: '60',
-        REGISTRATION_TYPE: 'outbound',
-        DTMF_MODE: 'auto',
-        TRANSPORT: 'UDP',
-        NETWORK_FILTER: 'none'
-    };
 
     /**
      * Constructor
@@ -59,14 +46,15 @@ class ProviderBase {
         this.$secret = $(ProviderBase.SELECTORS.SECRET);
         this.$checkBoxes = $(ProviderBase.SELECTORS.CHECKBOXES);
         this.$accordions = $(ProviderBase.SELECTORS.ACCORDIONS);
-        this.$dropDowns = $(ProviderBase.SELECTORS.DROPDOWNS);
         this.$description = $(ProviderBase.SELECTORS.DESCRIPTION);
-        this.$networkFilterId = $(ProviderBase.SELECTORS.NETWORK_FILTER_ID);
         this.$passwordTooltipIcon = $(ProviderBase.SELECTORS.PASSWORD_TOOLTIP_ICON);
         this.$popuped = $(ProviderBase.SELECTORS.POPUPED);
         
         // Track if this is a new provider (not existing in database)
         this.isNewProvider = false;
+        
+        // Track if form is fully initialized
+        this.formInitialized = false;
         
         // Host input validation regex
         this.hostInputValidation = new RegExp(
@@ -85,9 +73,22 @@ class ProviderBase {
         const providerId = $('#id').val() || '';
         const currentDescription = this.$description.val() || '';
         
+        // Check for copy mode from URL parameter or hidden field
+        const copyFromId = $('#copy-from-id').val();
+        const urlParams = new URLSearchParams(window.location.search);
+        const copyParam = urlParams.get('copy');
+        
+        let requestId = providerId;
+        this.isCopyMode = false; // Save as class property
+        
+        if (copyParam || copyFromId) {
+            requestId = 'copy-' + (copyParam || copyFromId);
+            this.isCopyMode = true;
+        }
+        
         // Determine if this is a new provider
-        // New providers have empty ID or 'new' as ID in the URL
-        this.isNewProvider = !providerId || providerId === '' || providerId === 'new';
+        // New providers have empty ID or 'new' as ID in the URL, or are in copy mode
+        this.isNewProvider = !providerId || providerId === '' || providerId === 'new' || this.isCopyMode;
         
         // Update header immediately for better UX
         this.updatePageHeader(currentDescription);
@@ -96,26 +97,33 @@ class ProviderBase {
         this.showLoadingState();
         
         // Load provider data from REST API
-        ProvidersAPI.getRecord(providerId, this.providerType, (response) => {
+        ProvidersAPI.getRecord(requestId, this.providerType, (response) => {
             this.hideLoadingState();
             
             if (response.result && response.data) {
+                // Store provider data for later use
+                this.providerData = response.data;
                 this.populateFormData(response.data);
             } else if (providerId && providerId !== 'new') {
                 UserMessage.showMultiString(response.messages);
             }
             
+            // Initialize dynamic dropdowns with API data (V5.0 pattern)
+            // For both new and existing records - API provides complete data with defaults
+            const dropdownData = (response.result && response.data) ? response.data : {};
+            this.initializeDropdownsWithData(dropdownData);
+            
             // Continue with initialization
             this.initializeUIComponents();
-            
-            // Initialize network filter dropdown after data is loaded
-            const networkFilterValue = response.result && response.data ? 
-                response.data.networkfilterid : null;
-            this.initializeNetworkFilterDropdown(networkFilterValue);
             
             this.initializeEventHandlers();
             this.initializeForm();
             this.updateVisibilityElements();
+            
+            // Mark form as changed if in copy mode to enable save button
+            if (this.isCopyMode) {
+                Form.dataChanged();
+            }
             
             // Initialize tooltip popups
             this.$popuped.popup();
@@ -132,78 +140,41 @@ class ProviderBase {
      */
     initializeUIComponents() {
         this.$checkBoxes.checkbox();
-        // Initialize dropdowns except network filter (handled by NetworkFilterSelector)
-        this.$dropDowns.not('#networkfilterid-dropdown').dropdown();
         this.initializeAccordion();
         
-        // Initialize dynamic dropdowns
-        this.initializeRegistrationTypeDropdown();
-        // Network filter dropdown is initialized after data is loaded
+        // Dynamic dropdowns are initialized after data is loaded with provider data
     }
     
     /**
-     * Initialize registration type dropdown dynamically
+     * Initialize all dropdowns following V5.0 clean data pattern
+     * Called AFTER populateFormData to ensure clean data flow
+     * @param {object} data - Provider data from API containing complete field values and represent text
+     */
+    initializeDropdownsWithData(data = {}) {
+        // Initialize dynamic dropdowns (API-based - uses DynamicDropdownBuilder with complete data)
+        this.initializeNetworkFilterDropdown(data);
+        
+        // Initialize static dropdowns (rendered by PHP - use standard Fomantic UI)
+        this.initializeRegistrationTypeDropdown();
+    }
+
+    /**
+     * Initialize registration type dropdown with standard Fomantic UI (PHP-rendered)
+     * This dropdown needs custom onChange for provider-specific visibility logic
      */
     initializeRegistrationTypeDropdown() {
-        const $field = $('#registration_type');
-        if ($field.length === 0) return;
+        const $dropdown = $('#registration_type-dropdown');
         
-        // Check if already inside a dropdown structure
-        const $existingDropdown = $field.closest('.ui.dropdown');
-        if ($existingDropdown.length > 0) {
-            // Already a dropdown, just ensure it's initialized
-            if (!$existingDropdown.hasClass('registration-type-dropdown')) {
-                $existingDropdown.addClass('registration-type-dropdown');
-            }
-            $existingDropdown.dropdown({
-                onChange: (value) => {
-                    this.updateVisibilityElements();
-                    // Clear validation errors
-                    this.$formObj.find('.field').removeClass('error');
-                    this.$formObj.find('.ui.error.message').remove();
-                    this.$formObj.find('.prompt').remove();
-                    // Update validation rules
-                    Form.validateRules = this.getValidateRules();
-                    Form.dataChanged();
-                }
-            });
+        if ($dropdown.length === 0) {
             return;
         }
         
-        const currentValue = $field.val() || ProviderBase.DEFAULTS.REGISTRATION_TYPE;
-        const isIAX = this.providerType === 'IAX';
-        
-        // Build options based on provider type
-        const options = [
-            { value: 'outbound', text: globalTranslate[isIAX ? 'iax_REG_TYPE_OUTBOUND' : 'sip_REG_TYPE_OUTBOUND'] || 'Outbound' },
-            { value: 'inbound', text: globalTranslate[isIAX ? 'iax_REG_TYPE_INBOUND' : 'sip_REG_TYPE_INBOUND'] || 'Inbound' },
-            { value: 'none', text: globalTranslate[isIAX ? 'iax_REG_TYPE_NONE' : 'sip_REG_TYPE_NONE'] || 'None' }
-        ];
-        
-        // Create dropdown HTML
-        const dropdownHtml = `
-            <div class="ui selection dropdown registration-type-dropdown">
-                <input type="hidden" name="registration_type" id="registration_type" value="${currentValue}">
-                <i class="dropdown icon"></i>
-                <div class="default text">${options.find(o => o.value === currentValue)?.text || currentValue}</div>
-                <div class="menu">
-                    ${options.map(opt => `<div class="item" data-value="${opt.value}">${opt.text}</div>`).join('')}
-                </div>
-            </div>
-        `;
-        
-        // Replace the field
-        $field.replaceWith(dropdownHtml);
-        
-        // Initialize dropdown
-        $('.registration-type-dropdown').dropdown({
+        // For static dropdowns rendered by PHP, use simple Fomantic UI initialization
+        // This dropdown needs custom onChange for complex field visibility logic
+        $dropdown.dropdown({
             onChange: (value) => {
                 this.updateVisibilityElements();
-                // Clear validation errors
-                this.$formObj.find('.field').removeClass('error');
-                this.$formObj.find('.ui.error.message').remove();
-                this.$formObj.find('.prompt').remove();
-                // Update validation rules
+                // Update validation rules based on registration type
                 Form.validateRules = this.getValidateRules();
                 Form.dataChanged();
             }
@@ -228,24 +199,22 @@ class ProviderBase {
     }
     
     /**
-     * Initialize network filter dropdown with simplified logic
-     * @param {string} networkFilterValue - Current network filter value from API
+     * Initialize network filter dropdown following V5.0 clean data pattern
+     * @param {object} data - Provider data from API containing networkfilterid and networkfilterid_represent
      */
-    initializeNetworkFilterDropdown(networkFilterValue = null) {
-        if (this.$networkFilterId.length === 0) return;
+    initializeNetworkFilterDropdown(data = {}) {
+        const category = this.providerType || 'SIP';
         
-        // Use provided value or get from hidden field or default
-        const currentValue = networkFilterValue || $('#networkfilterid').val() || ProviderBase.DEFAULTS.NETWORK_FILTER;
-        
-        // Set hidden field value before initialization
-        $('#networkfilterid').val(currentValue);
-        
-        // Initialize with NetworkFilterSelector
-        NetworkFilterSelector.init(this.$networkFilterId, {
-            filterType: this.providerType, // 'SIP' or 'IAX'
-            currentValue: currentValue,
-            includeNone: false,  // Providers don't have "None" option, they use specific filters
-            onChange: () => Form.dataChanged()
+        // V5.0 pattern: Complete automation - no custom onChange needed
+        DynamicDropdownBuilder.buildDropdown('networkfilterid', data, {
+            apiUrl: `/pbxcore/api/v2/network-filters/getForSelect?categories[]=${category}`,
+            placeholder: globalTranslate.pr_NetworkFilter,
+            cache: false
+            // No onChange callback - DynamicDropdownBuilder handles everything automatically:
+            // - Hidden input synchronization
+            // - Change event triggering  
+            // - Form.dataChanged() notification
+            // - Validation error clearing
         });
     }
 
@@ -344,6 +313,9 @@ class ProviderBase {
         Form.cbBeforeSendForm = this.cbBeforeSendForm.bind(this);
         Form.cbAfterSendForm = this.cbAfterSendForm.bind(this);
         Form.initialize();
+        
+        // Mark form as fully initialized
+        this.formInitialized = true;
     }
 
     /**
@@ -409,24 +381,14 @@ class ProviderBase {
             $('#note').val(data.note);
         }
         
-        // Store network filter value for later initialization
-        const networkFilterValue = data.networkfilterid || ProviderBase.DEFAULTS.NETWORK_FILTER;
-        
-        // Common provider fields
+        // Common provider fields - backend provides defaults
         $('#username').val(data.username || '');
         this.$secret.val(data.secret || '');
         $('#host').val(data.host || '');
-        $('#registration_type').val(data.registration_type || ProviderBase.DEFAULTS.REGISTRATION_TYPE);
-        // Store value in data attribute since select is empty and can't hold value
-        this.$networkFilterId.data('value', networkFilterValue);
+        $('#registration_type').val(data.registration_type || '');
+        $('#networkfilterid').val(data.networkfilterid || '');
         $('#manualattributes').val(data.manualattributes || '');
-        
-        // Set default ports based on provider type
-        if (this.providerType === 'SIP') {
-            $('#port').val(data.port || ProviderBase.DEFAULTS.SIP_PORT);
-        } else if (this.providerType === 'IAX') {
-            $('#port').val(data.port || ProviderBase.DEFAULTS.IAX_PORT);
-        }
+        $('#port').val(data.port || '');
         
         // Common checkboxes - handle both string '1' and boolean true
         // These checkboxes use standard HTML checkbox behavior

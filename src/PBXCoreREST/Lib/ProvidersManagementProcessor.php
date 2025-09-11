@@ -21,6 +21,7 @@ namespace MikoPBX\PBXCoreREST\Lib;
 
 use MikoPBX\PBXCoreREST\Lib\Providers\{
     GetAllStatusesAction,
+    GetForSelectAction,
     GetListAction,
     GetRecordAction,
     SaveRecordAction,
@@ -37,6 +38,7 @@ use Phalcon\Di\Injectable;
  */
 enum ProviderAction: string
 {
+    case GET_FOR_SELECT = 'getForSelect';
     case GET_LIST = 'getList';
     case GET_RECORD = 'getRecord';
     case SAVE_RECORD = 'saveRecord';
@@ -53,6 +55,7 @@ enum ProviderAction: string
  * Providers management processor
  * 
  * Handles all provider management operations including:
+ * - getForSelect: Get providers list for dropdown selects
  * - getList: Get list of all providers
  * - getRecord: Get single provider by ID or create new structure
  * - saveRecord: Create or update provider
@@ -100,6 +103,7 @@ class ProvidersManagementProcessor extends Injectable
         }
         
         $res = match ($action) {
+            ProviderAction::GET_FOR_SELECT => GetForSelectAction::main($data),
             ProviderAction::GET_LIST => GetListAction::main(
                 !empty($data['includeDisabled']) && $data['includeDisabled'] === 'true'
             ),

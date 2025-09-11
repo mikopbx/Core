@@ -24,7 +24,7 @@ const dialplanApplicationsTable = {
             apiModule: DialplanApplicationsAPI,
             routePrefix: 'dialplan-applications',
             showSuccessMessages: false, // Silent operation - no success messages
-            actionButtons: ['edit', 'delete'], // No copy for Dialplan Applications
+            actionButtons: ['edit', 'copy', 'delete'], // Include copy button
             translations: {
                 deleteError: globalTranslate.da_ImpossibleToDeleteDialplanApplication
             },

@@ -68,45 +68,21 @@ class AsteriskManagersController extends BaseController
     }
 
     /**
-     * Modifies Asterisk Managers
+     * Shows the edit form for an Asterisk manager.
+     * Creates empty form structure, data is loaded via REST API.
      *
      * @param string $id AsteriskManagerUsers record ID
      */
     public function modifyAction(string $id = ''): void
     {
-        // Load manager record if editing, create new if creating
-        if (!empty($id)) {
-            $manager = AsteriskManagerUsers::findFirstById($id);
-            if (!$manager) {
-                $this->forward('asterisk-managers/index');
-                return;
-            }
-            $represent = $manager->getRepresent();
-        } else {
-            $manager = new AsteriskManagerUsers();
-            $represent = $this->translation->_('am_NewRecord');
-        }
-
-        // Load allowed network filters for AMI/AJAM (original logic)
-        $arrNetworkFilters = [];
-        $networkFilters = NetworkFilters::getAllowedFiltersForType(['AJAM', 'AMI']);
-        $arrNetworkFilters['none'] = $this->translation->_('ex_NoNetworkFilter');
-        foreach ($networkFilters as $filter) {
-            $arrNetworkFilters[$filter->id] = $filter->getRepresent();
-        }
-
-        // Create form with manager data and original options structure
-        $this->view->form = new AsteriskManagerEditForm(
-            $manager,
-            [
-                'network_filters' => $arrNetworkFilters,
-                'array_of_checkboxes' => $this->arrCheckBoxes,
-            ]
-        );
-
-        // Set view variables
-        $this->view->setVar('arrCheckBoxes', $this->arrCheckBoxes);
-        $this->view->setVar('represent', $represent);
+        // V5.0 Architecture: Create empty form, data loaded via REST API
+        $emptyManager = new AsteriskManagerUsers();
+        $form = new AsteriskManagerEditForm($emptyManager);
+        
+        $this->view->form = $form;
+        $this->view->managerId = $id;
+        $this->view->represent = '';
+        $this->view->arrCheckBoxes = $this->arrCheckBoxes;
     }
 
     /**

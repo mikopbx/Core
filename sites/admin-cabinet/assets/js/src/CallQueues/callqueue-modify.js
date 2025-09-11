@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, CallQueuesAPI, Extensions, Form, SoundFileSelector, UserMessage, SecurityUtils */
+/* global globalRootUrl, globalTranslate, CallQueuesAPI, Extensions, Form, SoundFileSelector, UserMessage, SecurityUtils, DynamicDropdownBuilder, ExtensionSelector, TooltipBuilder, FormElements */
 
 /**
  * Modern Call Queue Form Management Module
@@ -83,17 +83,7 @@ const callQueueModifyRest = {
      */
     $deleteRowButton: $('.delete-row-button'),
 
-    /**
-     * Extension select dropdown for adding members
-     * @type {jQuery}
-     */
-    $extensionSelectDropdown: $('#extensionselect'),
 
-    /**
-     * Available members list for queue management
-     * @type {Array}
-     */
-    availableMembersList: [],
 
     /**
      * Default extension number for availability checking
@@ -101,11 +91,6 @@ const callQueueModifyRest = {
      */
     defaultExtension: '',
 
-    /**
-     * Flag to prevent change tracking during form initialization
-     * @type {boolean}
-     */
-    isFormInitializing: false,
 
     /**
      * Member row selector
@@ -152,13 +137,7 @@ const callQueueModifyRest = {
     initialize() {
         // Initialize UI components first
         callQueueModifyRest.initializeUIComponents();
-        
-        // Initialize sound file selectors early to ensure they're ready before data loads
-        callQueueModifyRest.initializeSoundSelectors();
-        
-        // Initialize dropdowns with hidden input pattern
-        callQueueModifyRest.initializeDropdowns();
-        
+          
         // Initialize members table with drag-and-drop
         callQueueModifyRest.initializeMembersTable();
         
@@ -170,6 +149,9 @@ const callQueueModifyRest = {
         
         // Initialize form with REST API settings (before loading data)
         callQueueModifyRest.initializeForm();
+        
+        // Initialize tooltips for form fields
+        callQueueModifyRest.initializeTooltips();
         
         // Load form data via REST API (last, after all UI is initialized)
         callQueueModifyRest.loadFormData();
@@ -187,32 +169,38 @@ const callQueueModifyRest = {
         callQueueModifyRest.$dropDowns.not('.forwarding-select').not('.extension-select').dropdown();
     },
 
+    
     /**
-     * Initialize dropdowns with hidden input pattern following IVR Menu approach
+     * Initialize dropdowns with actual form data (called from populateForm)
+     * @param {Object} data - Form data from API
      */
-    initializeDropdowns() {
-        // Initialize strategy dropdown with options
-        callQueueModifyRest.initializeStrategyDropdown();
+    initializeDropdownsWithData(data) {
+        // Initialize strategy dropdown with current value
+        if (!$('#strategy-dropdown').length) {
+            callQueueModifyRest.initializeStrategyDropdown();
+        }
         
-        // Initialize timeout extension dropdown with exclusion
-        callQueueModifyRest.initializeTimeoutExtensionDropdown();
+        // Initialize timeout_extension dropdown with exclusion logic
+        if (!$('#timeout_extension-dropdown').length) {
+            const currentExtension = callQueueModifyRest.$formObj.form('get value', 'extension');
+            const excludeExtensions = currentExtension ? [currentExtension] : [];
+            
+            ExtensionSelector.init('timeout_extension', {
+                type: 'routing',
+                excludeExtensions: excludeExtensions,
+                includeEmpty: false,
+                data: data
+            });
+        }
         
         // Initialize redirect_to_extension_if_empty dropdown
-        callQueueModifyRest.initializeExtensionDropdown('redirect_to_extension_if_empty');
-        
-        // Initialize other general forwarding dropdowns
-        $('.queue-form .forwarding-select').not('.timeout_extension-select').not('.redirect_to_extension_if_empty-select').dropdown(Extensions.getDropdownSettingsWithEmpty((value) => {
-            // Update corresponding hidden input when dropdown changes
-            const $dropdown = $(this);
-            const fieldName = $dropdown.data('field');
-            if (fieldName) {
-                $(`input[name="${fieldName}"]`).val(value);
-                if (!callQueueModifyRest.isFormInitializing) {
-                    $(`input[name="${fieldName}"]`).trigger('change');
-                    Form.dataChanged();
-                }
-            }
-        }));
+        if (!$('#redirect_to_extension_if_empty-dropdown').length) {
+            ExtensionSelector.init('redirect_to_extension_if_empty', {
+                type: 'routing',
+                includeEmpty: false,
+                data: data 
+            });
+        }
     },
 
     /**
@@ -221,84 +209,30 @@ const callQueueModifyRest = {
     initializeStrategyDropdown() {
         // Define strategy options with translations
         const strategyOptions = [
-            { value: 'ringall', name: globalTranslate.cq_ringall || 'Ring All' },
-            { value: 'leastrecent', name: globalTranslate.cq_leastrecent || 'Least Recent' },
-            { value: 'fewestcalls', name: globalTranslate.cq_fewestcalls || 'Fewest Calls' },
-            { value: 'random', name: globalTranslate.cq_random || 'Random' },
-            { value: 'rrmemory', name: globalTranslate.cq_rrmemory || 'Round Robin with Memory' },
-            { value: 'linear', name: globalTranslate.cq_linear || 'Linear' }
+            { value: 'ringall', text: globalTranslate.cq_ringall },
+            { value: 'leastrecent', text: globalTranslate.cq_leastrecent },
+            { value: 'fewestcalls', text: globalTranslate.cq_fewestcalls },
+            { value: 'random', text: globalTranslate.cq_random },
+            { value: 'rrmemory', text: globalTranslate.cq_rrmemory },
+            { value: 'linear', text: globalTranslate.cq_linear }
         ];
         
-        // Initialize dropdown with options
-        $('#strategy-dropdown').dropdown({
-            values: strategyOptions,
+        // Get current strategy value
+        const currentStrategy = $('input[name="strategy"]').val();
+        
+        // Use new DynamicDropdownBuilder API
+        DynamicDropdownBuilder.buildDropdown('strategy', { strategy: currentStrategy }, {
+            staticOptions: strategyOptions,
+            placeholder: globalTranslate.cq_SelectStrategy,
             onChange: (value) => {
                 // Update hidden input when dropdown changes
                 $('input[name="strategy"]').val(value);
-                if (!callQueueModifyRest.isFormInitializing) {
-                    $('input[name="strategy"]').trigger('change');
-                    Form.dataChanged();
-                }
-            }
-        });
-        
-        // Set initial value from hidden field
-        const currentStrategy = $('input[name="strategy"]').val() || 'ringall';
-        $('#strategy-dropdown').dropdown('set selected', currentStrategy);
-    },
-
-    /**
-     * Initialize timeout extension dropdown with current extension exclusion
-     */
-    initializeTimeoutExtensionDropdown() {
-        // Get current extension to exclude from timeout dropdown
-        const getCurrentExtension = () => {
-            return callQueueModifyRest.$formObj.form('get value', 'extension') || callQueueModifyRest.defaultExtension;
-        };
-        
-        // Initialize dropdown with exclusion
-        const initDropdown = () => {
-            const currentExtension = getCurrentExtension();
-            const excludeExtensions = currentExtension ? [currentExtension] : [];
-            
-            $('.timeout_extension-select').dropdown(Extensions.getDropdownSettingsForRoutingWithExclusion((value) => {
-                // Update hidden input when dropdown changes
-                $('input[name="timeout_extension"]').val(value);
-                
-                // Trigger change event only if not initializing
-                if (!callQueueModifyRest.isFormInitializing) {
-                    $('input[name="timeout_extension"]').trigger('change');
-                    Form.dataChanged();
-                }
-            }, excludeExtensions));
-        };
-        
-        // Initialize dropdown
-        initDropdown();
-        
-        // Re-initialize dropdown when extension number changes
-        callQueueModifyRest.$extension.on('change', () => {
-            // Small delay to ensure the value is updated
-            setTimeout(() => {
-                initDropdown();
-            }, 100);
-        });
-    },
-
-    /**
-     * Initialize extension dropdown (universal method for different extension fields)
-     * @param {string} fieldName - Name of the field (e.g., 'redirect_to_extension_if_empty')
-     */
-    initializeExtensionDropdown(fieldName) {
-        $(`.${fieldName}-select`).dropdown(Extensions.getDropdownSettingsWithEmpty((value) => {
-            // Update hidden input when dropdown changes
-            $(`input[name="${fieldName}"]`).val(value);
-            if (!callQueueModifyRest.isFormInitializing) {
-                $(`input[name="${fieldName}"]`).trigger('change');
+                $('input[name="strategy"]').trigger('change');
                 Form.dataChanged();
             }
-        }));
+        });
     },
+
 
     /**
      * Initialize members table with drag-and-drop functionality
@@ -308,9 +242,7 @@ const callQueueModifyRest = {
         callQueueModifyRest.$extensionsTable.tableDnD({
             onDrop: function() {
                 // Trigger form change notification
-                if (!callQueueModifyRest.isFormInitializing) {
-                    Form.dataChanged();
-                }
+                Form.dataChanged();
                 
                 // Update member priorities based on new order (for backend processing)
                 callQueueModifyRest.updateMemberPriorities();
@@ -329,85 +261,80 @@ const callQueueModifyRest = {
      * Initialize extension selector dropdown for adding members
      */
     initializeExtensionSelector() {
-        // Get phone extensions for member selection
-        Extensions.getPhoneExtensions(callQueueModifyRest.setAvailableQueueMembers);
-    },
-
-    /**
-     * Set available members for the call queue
-     * @param {Object} arrResult - The list of available members from Extensions API
-     */
-    setAvailableQueueMembers(arrResult) {
-        // Clear existing list
-        callQueueModifyRest.availableMembersList = [];
-        
-        // Populate available members list
-        $.each(arrResult.results, (index, extension) => {
-            callQueueModifyRest.availableMembersList.push({
-                number: extension.value,
-                callerid: extension.name,
-            });
-        });
-
-        // Initialize member selection dropdown
-        callQueueModifyRest.reinitializeExtensionSelect();
-        callQueueModifyRest.updateMembersTableView();
-    },
-
-    /**
-     * Get available queue members not already selected
-     * @returns {Array} Available members for selection
-     */
-    getAvailableQueueMembers() {
-        const result = [];
-
-        // Filter out already selected members
-        callQueueModifyRest.availableMembersList.forEach((member) => {
-            if ($(`.member-row#${member.number}`).length === 0) {
-                result.push({
-                    name: member.callerid,
-                    value: member.number,
-                });
-            }
-        });
-        
-        return result;
-    },
-
-    /**
-     * Reinitialize extension select dropdown with available members
-     */
-    reinitializeExtensionSelect() {
-        callQueueModifyRest.$extensionSelectDropdown.dropdown({
-            action: 'hide',
-            forceSelection: false,
-            onChange(value, text) {
+        // Initialize member selection using ExtensionSelector
+        ExtensionSelector.init('extensionselect', {
+            type: 'phones',
+            includeEmpty: false,
+            onChange: (value, text) => {
                 if (value) {
-                    // Add selected member to table
-                    callQueueModifyRest.addMemberToTable(value, text);
+                    // Add selected member to table (with duplicate check)
+                    const added = callQueueModifyRest.addMemberToTable(value, text);
                     
-                    // Clear dropdown selection
-                    callQueueModifyRest.$extensionSelectDropdown.dropdown('clear');
+                    // Clear dropdown selection and refresh
+                    $('#extensionselect-dropdown').dropdown('clear');
+                    callQueueModifyRest.refreshMemberSelection();
                     
-                    // Refresh available options
-                    callQueueModifyRest.reinitializeExtensionSelect();
-                    callQueueModifyRest.updateMembersTableView();
-                    
-                    if (!callQueueModifyRest.isFormInitializing) {
+                    // Only trigger change if member was actually added
+                    if (added !== false) {
                         Form.dataChanged();
                     }
                 }
-            },
-            values: callQueueModifyRest.getAvailableQueueMembers(),
+            }
         });
+    },
+
+    /**
+     * Refresh member selection dropdown to exclude already selected members
+     */
+    refreshMemberSelection() {
+        // Get currently selected members
+        const selectedMembers = [];
+        $(callQueueModifyRest.memberRow).each((index, row) => {
+            selectedMembers.push($(row).attr('id'));
+        });
+        
+        // Remove existing dropdown and recreate with new exclusions
+        $('#extensionselect-dropdown').remove();
+        ExtensionSelector.instances.delete('extensionselect'); // Clear cached instance
+        
+        // Rebuild dropdown with exclusion using ExtensionSelector
+        ExtensionSelector.init('extensionselect', {
+            type: 'phones',
+            includeEmpty: false,
+            excludeExtensions: selectedMembers,
+            onChange: (value, text) => {
+                if (value) {
+                    // Add selected member to table (with duplicate check)
+                    const added = callQueueModifyRest.addMemberToTable(value, text);
+                    
+                    // Clear dropdown selection and refresh
+                    $('#extensionselect-dropdown').dropdown('clear');
+                    callQueueModifyRest.refreshMemberSelection();
+                    
+                    // Only trigger change if member was actually added
+                    if (added !== false) {
+                        Form.dataChanged();
+                    }
+                }
+            }
+        });
+        
+        // Update table view
+        callQueueModifyRest.updateMembersTableView();
     },
 
     /**
      * Add a member to the members table
      * @param {string} extension - Extension number
-     * @param {string} callerid - Caller ID/Name
+     * @param {string} callerid - Caller ID/Name or HTML representation with icons
      */
     addMemberToTable(extension, callerid) {
+        // Check if member already exists
+        if ($(callQueueModifyRest.memberRow + '#' + extension).length > 0) {
+            console.warn(`Member ${extension} already exists in queue`);
+            return false;
+        }
+        
         // Get the template row and clone it
         const $template = $('.member-row-template').last();
         const $newRow = $template.clone(true);
@@ -419,11 +346,10 @@ const callQueueModifyRest = {
             .attr('id', extension)
             .show();
         
-        // SECURITY: Sanitize content to prevent XSS attacks while preserving safe icons
-        const safeCallerid = SecurityUtils.sanitizeExtensionsApiContent(callerid);
-        
-        // Populate row data (only callerid, no separate number column)
-        $newRow.find('.callerid').html(safeCallerid);
+        // The callerid from API already contains safe HTML with icons
+        // Use it directly since the API provides pre-sanitized content
+        // This preserves icon markup like: <i class="icons"><i class="user outline icon"></i></i>
+        $newRow.find('.callerid').html(callerid);
         
         // Add to table
         if ($(callQueueModifyRest.memberRow).length === 0) {
@@ -434,6 +360,8 @@ const callQueueModifyRest = {
         
         // Update priorities (for backend processing, not displayed)
         callQueueModifyRest.updateMemberPriorities();
+        
+        return true;
     },
 
     /**
@@ -461,12 +389,9 @@ const callQueueModifyRest = {
             
             // Update priorities and view
             callQueueModifyRest.updateMemberPriorities();
-            callQueueModifyRest.reinitializeExtensionSelect();
-            callQueueModifyRest.updateMembersTableView();
+            callQueueModifyRest.refreshMemberSelection();
             
-            if (!callQueueModifyRest.isFormInitializing) {
-                Form.dataChanged();
-            }
+            Form.dataChanged();
             
             return false;
         });
@@ -490,7 +415,7 @@ const callQueueModifyRest = {
      * Initialize extension availability checking
      */
     initializeExtensionChecking() {
-        // Set up dynamic availability check for extension number
+        // Set up dynamic availability check for extension number using modern validation
         let timeoutId;
         callQueueModifyRest.$extension.on('input', () => {
             // Clear previous timeout
@@ -501,37 +426,58 @@ const callQueueModifyRest = {
             // Set new timeout with delay
             timeoutId = setTimeout(() => {
                 const newNumber = callQueueModifyRest.$formObj.form('get value', 'extension');
-                Extensions.checkAvailability(callQueueModifyRest.defaultExtension, newNumber);
+                callQueueModifyRest.checkExtensionAvailability(callQueueModifyRest.defaultExtension, newNumber);
+                
+                // Re-initialize timeout_extension dropdown with new exclusion
+                const $dropdown = $('#timeout_extension-dropdown');
+                if ($dropdown.length) {
+                    const excludeExtensions = newNumber ? [newNumber] : [];
+                    const currentData = {
+                        timeout_extension: $('#timeout_extension').val(),
+                        timeout_extension_represent: $dropdown.find('.text').html()
+                    };
+                    
+                    // Remove old dropdown and re-initialize
+                    $dropdown.remove();
+                    ExtensionSelector.init('timeout_extension', {
+                        type: 'routing',
+                        excludeExtensions: excludeExtensions,
+                        includeEmpty: false,
+                        data: currentData
+                    });
+                }
             }, 500);
         });
     },
 
     /**
-     * Initialize sound file selectors
+     * Check extension availability using REST API
+     * @param {string} oldNumber - Original extension number
+     * @param {string} newNumber - New extension number to check
      */
-    initializeSoundSelectors() {
-        // Initialize periodic announce sound file selector
-        SoundFileSelector.init('periodic_announce_sound_id', {
-            category: 'custom',
-            includeEmpty: true,
-            onChange: () => {
-                if (!callQueueModifyRest.isFormInitializing) {
-                    Form.dataChanged();
-                }
-            }
-        });
-        
-        // Initialize MOH sound file selector
-        SoundFileSelector.init('moh_sound_id', {
-            category: 'moh',
-            includeEmpty: true,
-            onChange: () => {
-                if (!callQueueModifyRest.isFormInitializing) {
-                    Form.dataChanged();
+    checkExtensionAvailability(oldNumber, newNumber) {
+        if (oldNumber === newNumber) {
+            $('.ui.input.extension').parent().removeClass('error');
+            $('#extension-error').addClass('hidden');
+            return;
+        }
+
+        // Use CallQueuesAPI to check extension availability
+        CallQueuesAPI.checkExtensionAvailability(newNumber, (response) => {
+            if (response.result !== undefined) {
+                if (response.result === false) {
+                    // Extension is not available
+                    $('.ui.input.extension').parent().addClass('error');
+                    $('#extension-error').removeClass('hidden');
+                } else {
+                    // Extension is available
+                    $('.ui.input.extension').parent().removeClass('error');
+                    $('#extension-error').addClass('hidden');
                 }
             }
         });
     },
+
 
     /**
      * Initialize description textarea with auto-resize functionality
@@ -548,34 +494,58 @@ const callQueueModifyRest = {
      */
     loadFormData() {
         const recordId = callQueueModifyRest.getRecordId();
+        const copyFromId = $('#copy-from-id').val();
+        const urlParams = new URLSearchParams(window.location.search);
+        const copyParam = urlParams.get('copy');
         
-        // If no record ID (new queue), initialize with defaults
-        if (!recordId) {
-            callQueueModifyRest.defaultExtension = '';
-            callQueueModifyRest.isFormInitializing = false;
-            
-            // Set default strategy for new queues
-            const defaultStrategy = $('input[name="strategy"]').val() || 'ringall';
-            $('#strategy-dropdown').dropdown('set selected', defaultStrategy);
-            
-            // Initialize empty members table
-            callQueueModifyRest.updateMembersTableView();
-            callQueueModifyRest.reinitializeExtensionSelect();
-            
-            return;
+        let requestId = recordId;
+        let isCopyMode = false;
+        
+        // Check for copy mode from URL parameter or hidden field
+        if (copyParam || copyFromId) {
+            requestId = `copy-${copyParam || copyFromId}`;
+            isCopyMode = true;
+        } else if (!recordId) {
+            requestId = 'new';
         }
         
-        CallQueuesAPI.getRecord(recordId, (response) => {
-            if (response.result) {
+        // Load record data from REST API
+        CallQueuesAPI.getRecord(requestId, (response) => {
+            if (response.result && response.data) {
                 callQueueModifyRest.populateForm(response.data);
                 
                 // Set default extension for availability checking
-                callQueueModifyRest.defaultExtension = callQueueModifyRest.$formObj.form('get value', 'extension');
+                if (isCopyMode || !recordId) {
+                    // For new records or copies, use the new extension for validation
+                    callQueueModifyRest.defaultExtension = '';
+                } else {
+                    // For existing records, use their original extension
+                    callQueueModifyRest.defaultExtension = callQueueModifyRest.$formObj.form('get value', 'extension');
+                }
                 
                 // Populate members table
-                callQueueModifyRest.populateMembersTable(response.data.members || []);
+                if (response.data.members) {
+                    callQueueModifyRest.populateMembersTable(response.data.members);
+                } else {
+                    // Initialize empty member selection
+                    callQueueModifyRest.refreshMemberSelection();
+                }
+                
+                // Mark form as changed if in copy mode to enable save button
+                if (isCopyMode) {
+                    Form.dataChanged();
+                }
+                
+                // Clear copy mode after successful load
+                if (copyFromId) {
+                    $('#copy-from-id').val('');
+                }
             } else {
-                UserMessage.showError(response.messages?.error || 'Failed to load call queue data');
+                // Show error - API must work
+                const errorMessage = response.messages && response.messages.error ? 
+                    response.messages.error.join(', ') : 
+                    'Failed to load queue data';
+                UserMessage.showError(SecurityUtils.escapeHtml(errorMessage));
             }
         });
     },
@@ -598,140 +568,92 @@ const callQueueModifyRest = {
      * @param {Object} data - Form data from API
      */
     populateForm(data) {
-        // Set initialization flag to prevent change tracking
-        callQueueModifyRest.isFormInitializing = true;
-
-        // Populate form fields using Semantic UI form, but handle text fields manually to prevent double-escaping
+        // Prepare data for Semantic UI (exclude manually handled fields)
         const dataForSemanticUI = {...data};
-        
-        // Remove text fields and strategy from Semantic UI processing to handle them manually
-        const textFields = ['name', 'description', 'callerid_prefix', 'strategy'];
-        textFields.forEach(field => {
+        const fieldsToHandleManually = [
+            'name', 'description', 'callerid_prefix', 'strategy',
+            'timeout_extension', 'redirect_to_extension_if_empty',
+            'redirect_to_extension_if_unanswered', 'redirect_to_extension_if_repeat_exceeded'
+        ];
+        fieldsToHandleManually.forEach(field => {
             delete dataForSemanticUI[field];
         });
-        
-        // Populate non-text fields through Semantic UI
-        Form.$formObj.form('set values', dataForSemanticUI);
-        
-        // Manually populate text fields directly - REST API now returns raw data
-        textFields.forEach(fieldName => {
-            if (data[fieldName] !== undefined) {
-                const $field = $(`input[name="${fieldName}"], textarea[name="${fieldName}"]`);
-                if ($field.length) {
-                    // Use raw data from API - no decoding needed
-                    $field.val(data[fieldName]);
+
+        // Use unified silent population approach
+        Form.populateFormSilently(dataForSemanticUI, {
+            beforePopulate: (formData) => {
+                // Initialize dropdowns first with form data (only once)
+                callQueueModifyRest.initializeDropdownsWithData(data);
+            },
+            afterPopulate: (formData) => {
+                // Manually populate text fields directly - REST API now returns raw data
+                const textFields = ['name', 'description', 'callerid_prefix'];
+                textFields.forEach(fieldName => {
+                    if (data[fieldName] !== undefined) {
+                        const $field = $(`input[name="${fieldName}"], textarea[name="${fieldName}"]`);
+                        if ($field.length) {
+                            // Use raw data from API - no decoding needed
+                            $field.val(data[fieldName]);
+                        }
+                    }
+                });
+                
+                // Handle strategy dropdown - value will be set automatically by DynamicDropdownBuilder
+                if (data.strategy) {
+                    $('input[name="strategy"]').val(data.strategy);
                 }
+
+                // Handle extension-based dropdowns with representations (except timeout_extension)
+                // Only populate if dropdowns exist (they were created in initializeDropdownsWithData)
+                if ($('#timeout_extension-dropdown').length) {
+                    callQueueModifyRest.populateExtensionDropdowns(data);
+                }
+                
+                // Handle sound file dropdowns with representations
+                callQueueModifyRest.populateSoundDropdowns(data);
+                
+                // Update extension number in ribbon label
+                if (data.extension) {
+                    $('#extension-display').text(data.extension);
+                }
+
+                // Auto-resize textarea after data is loaded
+                FormElements.optimizeTextareaSize('textarea[name="description"]');
             }
         });
-        
-        // Handle strategy dropdown separately
-        if (data.strategy) {
-            $('input[name="strategy"]').val(data.strategy);
-            $('#strategy-dropdown').dropdown('set selected', data.strategy);
-        }
-
-        // Handle extension-based dropdowns with representations (except timeout_extension)
-        callQueueModifyRest.populateExtensionDropdowns(data);
-        
-        // Handle sound file dropdowns with representations after a delay to ensure dropdowns are initialized
-        setTimeout(() => {
-            callQueueModifyRest.populateSoundDropdowns(data);
-        }, 100);
-
-        // Re-initialize timeout extension dropdown with current extension exclusion (after form values are set)
-        callQueueModifyRest.initializeTimeoutExtensionDropdown();
-        
-        // Restore timeout extension dropdown AFTER re-initialization
-        if (data.timeout_extension && data.timeout_extensionRepresent) {
-            const currentExtension = data.extension || callQueueModifyRest.defaultExtension;
-            
-            // Only set if different from current extension (prevent circular reference)
-            if (data.timeout_extension !== currentExtension) {
-                callQueueModifyRest.populateExtensionDropdown('timeout_extension', data.timeout_extension, data.timeout_extensionRepresent);
-            }
-        }
-
-        // Fix HTML entities in dropdown text after initialization for safe content
-        // Note: This should be safe since we've already sanitized the content through SecurityUtils
-        Extensions.fixDropdownHtmlEntities('#queue-form .forwarding-select .text, #queue-form .timeout_extension-select .text');
-
-        // Update extension number in ribbon label
-        if (data.extension) {
-            $('#extension-display').text(data.extension);
-        }
-
-        // Auto-resize textarea after data is loaded
-        FormElements.optimizeTextareaSize('textarea[name="description"]');
     },
 
     /**
-     * Populate extension-based dropdowns with safe representations following IVR Menu approach
+     * Populate extension-based dropdowns using ExtensionSelector
      * @param {Object} data - Form data containing extension representations
      */
     populateExtensionDropdowns(data) {
-        // Handle extension dropdowns (excluding timeout_extension which is handled separately)
-        const extensionFields = [
-            'redirect_to_extension_if_empty',
-            'redirect_to_extension_if_unanswered', 
-            'redirect_to_extension_if_repeat_exceeded'
-        ];
-        
-        extensionFields.forEach((fieldName) => {
-            const value = data[fieldName];
-            const represent = data[`${fieldName}Represent`];
-            
-            if (value && represent) {
-                callQueueModifyRest.populateExtensionDropdown(fieldName, value, represent);
-            }
-        });
-    },
-
-    /**
-     * Populate specific extension dropdown with value and representation following IVR Menu approach
-     * @param {string} fieldName - Field name (e.g., 'timeout_extension')
-     * @param {string} value - Extension value (e.g., '1111')  
-     * @param {string} represent - Extension representation with HTML (e.g., '<i class="icon"></i> Name <1111>')
-     */
-    populateExtensionDropdown(fieldName, value, represent) {
-        const $dropdown = $(`.${fieldName}-select`);
-        
-        if ($dropdown.length) {
-            // SECURITY: Sanitize extension representation with XSS protection while preserving safe icons
-            const safeText = SecurityUtils.sanitizeExtensionsApiContent(represent);
-            
-            // Set the value and update display text (following IVR Menu pattern)
-            $dropdown.dropdown('set value', value);
-            $dropdown.find('.text').removeClass('default').html(safeText);
-            
-            // Update hidden input without triggering change event during initialization
-            $(`input[name="${fieldName}"]`).val(value);
-        }
+        // ExtensionSelector handles value setting automatically when initialized with data
+        // No manual manipulation needed - ExtensionSelector takes care of everything
     },
 
 
 
     /**
-     * Populate sound file dropdowns with safe representations
+     * Initialize sound file dropdowns with data
      * @param {Object} data - Form data containing sound file representations
      */
     populateSoundDropdowns(data) {
-        // Handle periodic announce sound (using underscore naming like IVR Menu)
-        if (data.periodic_announce_sound_id) {
-            SoundFileSelector.setValue(
-                'periodic_announce_sound_id',
-                data.periodic_announce_sound_id,
-                data.periodic_announce_sound_id_Represent || ''
-            );
-        }
+        // Initialize periodic announce sound file selector with data
+        SoundFileSelector.init('periodic_announce_sound_id', {
+            category: 'custom',
+            includeEmpty: true,
+            data: data
+            // onChange not needed - fully automated in base class
+        });
         
-        // Handle MOH sound (using underscore naming like IVR Menu)
-        if (data.moh_sound_id) {
-            SoundFileSelector.setValue(
-                'moh_sound_id',
-                data.moh_sound_id,
-                data.moh_sound_id_Represent || ''
-            );
-        }
+        // Initialize MOH sound file selector with data
+        SoundFileSelector.init('moh_sound_id', {
+            category: 'moh',
+            includeEmpty: true,
+            data: data
+            // onChange not needed - fully automated in base class
+        });
     },
 
     /**
@@ -749,15 +671,13 @@ const callQueueModifyRest = {
         
         // Update table view and member selection
         callQueueModifyRest.updateMembersTableView();
-        callQueueModifyRest.reinitializeExtensionSelect();
+        callQueueModifyRest.refreshMemberSelection();
         
         // Re-initialize dirty checking AFTER all form data is populated
         if (Form.enableDirrity) {
             Form.initializeDirrity();
         }
         
-        // Clear initialization flag
-        callQueueModifyRest.isFormInitializing = false;
     },
 
 
@@ -783,6 +703,95 @@ const callQueueModifyRest = {
         
         // Initialize form with all features
         Form.initialize();
+    },
+
+    /**
+     * Initialize tooltips for form fields
+     */
+    initializeTooltips() {
+        // Configuration for each field tooltip - using proper translation keys from Route.php
+        const tooltipConfigs = {
+            callerid_prefix: {
+                header: globalTranslate.cq_CallerIDPrefixTooltip_header,
+                description: globalTranslate.cq_CallerIDPrefixTooltip_desc,
+                list: [
+                    {
+                        term: globalTranslate.cq_CallerIDPrefixTooltip_purposes,
+                        definition: null
+                    },
+                    globalTranslate.cq_CallerIDPrefixTooltip_purpose_identify,
+                    globalTranslate.cq_CallerIDPrefixTooltip_purpose_priority,
+                    globalTranslate.cq_CallerIDPrefixTooltip_purpose_stats
+                ],
+                list2: [
+                    {
+                        term: globalTranslate.cq_CallerIDPrefixTooltip_how_it_works,
+                        definition: null
+                    },
+                    globalTranslate.cq_CallerIDPrefixTooltip_example
+                ],
+                list3: [
+                    {
+                        term: globalTranslate.cq_CallerIDPrefixTooltip_examples_header,
+                        definition: null
+                    },
+                    globalTranslate.cq_CallerIDPrefixTooltip_examples
+                ],
+                note: globalTranslate.cq_CallerIDPrefixTooltip_note
+            },
+            
+            seconds_to_ring_each_member: {
+                header: globalTranslate.cq_SecondsToRingEachMemberTooltip_header,
+                description: globalTranslate.cq_SecondsToRingEachMemberTooltip_desc,
+                list: [
+                    {
+                        term: globalTranslate.cq_SecondsToRingEachMemberTooltip_strategies_header,
+                        definition: null
+                    },
+                    `${globalTranslate.cq_SecondsToRingEachMemberTooltip_linear} - ${globalTranslate.cq_SecondsToRingEachMemberTooltip_linear_desc}`,
+                    `${globalTranslate.cq_SecondsToRingEachMemberTooltip_ringall} - ${globalTranslate.cq_SecondsToRingEachMemberTooltip_ringall_desc}`
+                ],
+                list2: [
+                    {
+                        term: globalTranslate.cq_SecondsToRingEachMemberTooltip_recommendations_header,
+                        definition: null
+                    },
+                    globalTranslate.cq_SecondsToRingEachMemberTooltip_rec_short,
+                    globalTranslate.cq_SecondsToRingEachMemberTooltip_rec_medium,
+                    globalTranslate.cq_SecondsToRingEachMemberTooltip_rec_long
+                ],
+                note: globalTranslate.cq_SecondsToRingEachMemberTooltip_note
+            },
+            
+            seconds_for_wrapup: {
+                header: globalTranslate.cq_SecondsForWrapupTooltip_header,
+                description: globalTranslate.cq_SecondsForWrapupTooltip_desc,
+                list: [
+                    {
+                        term: globalTranslate.cq_SecondsForWrapupTooltip_purposes_header,
+                        definition: null
+                    },
+                    globalTranslate.cq_SecondsForWrapupTooltip_purpose_notes,
+                    globalTranslate.cq_SecondsForWrapupTooltip_purpose_crm,
+                    globalTranslate.cq_SecondsForWrapupTooltip_purpose_prepare,
+                    globalTranslate.cq_SecondsForWrapupTooltip_purpose_break
+                ],
+                list2: [
+                    {
+                        term: globalTranslate.cq_SecondsForWrapupTooltip_recommendations_header,
+                        definition: null
+                    },
+                    globalTranslate.cq_SecondsForWrapupTooltip_rec_none,
+                    globalTranslate.cq_SecondsForWrapupTooltip_rec_short,
+                    globalTranslate.cq_SecondsForWrapupTooltip_rec_medium,
+                    globalTranslate.cq_SecondsForWrapupTooltip_rec_long
+                ],
+                note: globalTranslate.cq_SecondsForWrapupTooltip_note
+            }
+        };
+        
+        // Use TooltipBuilder to initialize tooltips
+        TooltipBuilder.initialize(tooltipConfigs);
     },
 
     /**

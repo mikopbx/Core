@@ -21,7 +21,6 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Lib\AsteriskManagers;
 
-use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
 
 /**
@@ -51,6 +50,9 @@ class DataStructure extends AbstractDataStructure
             'description' => $model->description ?? '',
             'networkfilterid' => !empty($model->networkfilterid) ? (string)$model->networkfilterid : 'none',
         ];
+        
+        // Get network filter representation using unified helper
+        $data['networkfilter_represent'] = self::getNetworkFilterRepresentation($model->networkfilterid);
 
         // Parse permissions into boolean fields for easier frontend handling
         $data['permissions'] = self::parsePermissionsToBoolean($permissions['read'], $permissions['write']);

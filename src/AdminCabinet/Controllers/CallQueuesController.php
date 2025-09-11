@@ -49,15 +49,18 @@ class CallQueuesController extends BaseController
     }
 
     /**
-     * Modify call queue action.
+     * Modify call queue action with copy support.
      * 
      * Simplified controller following IVR Menu pattern - all data loading is handled by JavaScript via REST API.
-     * This only provides the basic form structure.
+     * This only provides the basic form structure and copy mode information.
      *
      * @param string $uniqid - The unique identifier of the call queue to modify.
      */
     public function modifyAction(string $uniqid = ''): void
     {
+        // Check for copy mode
+        $copyFromId = $this->request->getQuery('copy');
+        
         // Create empty form - JavaScript will populate everything via REST API
         $emptyQueue = new \stdClass();
         $emptyQueue->id = '';
@@ -94,9 +97,10 @@ class CallQueuesController extends BaseController
             ]
         );
         
-        // Pass only the form and uniqid - JavaScript handles everything else
+        // Pass form, uniqid and copy mode information to JavaScript
         $this->view->form = $form;
         $this->view->uniqid = $uniqid ?: '';
+        $this->view->copyFromId = $copyFromId ?: '';
     }
 
     /**

@@ -275,6 +275,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
             'username' => 'string|max:64',
             'secret' => 'string|max:64',
             'host' => 'string|max:255',
+            'port' => 'int',
             'registration_type' => 'string|max:20',
             'description' => 'string|sanitize|max:255',
             'manualattributes' => 'string|sanitize|max:1024|empty_to_null',
@@ -455,6 +456,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
         }
         
         $iax->host = $data['host'] ?? '';
+        $iax->port = (string)($data['port'] ?? 4569);
         $iax->qualify = '1'; // Always enabled for providers
         $iax->registration_type = $data['registration_type'] ?? 'none';
         $iax->description = $data['description'] ?? '';

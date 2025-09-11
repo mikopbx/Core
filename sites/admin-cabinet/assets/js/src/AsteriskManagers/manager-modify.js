@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, Form, PbxApi, ClipboardJS, AsteriskManagersAPI, UserMessage, FormElements, PasswordWidget, NetworkFilterSelector */
+/* global globalRootUrl, globalTranslate, Form, PbxApi, ClipboardJS, AsteriskManagersAPI, UserMessage, FormElements, PasswordWidget, DynamicDropdownBuilder */
 
 /**
  * Manager module using REST API v2.
@@ -129,6 +129,9 @@ const manager = {
         manager.$checkAllButton = $('.check-all.button');
         manager.$allCheckBoxes = $('#save-ami-form .checkbox');
         
+        // Initialize Form first to enable form methods
+        manager.initializeForm();
+        
         // Get manager ID from URL or form
         const urlParts = window.location.pathname.split('/');
         const lastSegment = urlParts[urlParts.length - 1] || '';
@@ -139,14 +142,6 @@ const manager = {
         } else {
             manager.managerId = lastSegment;
         }
-        
-        // If no ID in URL, check form for existing ID
-        if (!manager.managerId) {
-            const formId = manager.$formObj.form('get value', 'id');
-            if (formId && formId !== '') {
-                manager.managerId = formId;
-            }
-        }
 
         // Check if this is a copy operation
         const urlParams = new URLSearchParams(window.location.search);
@@ -155,9 +150,6 @@ const manager = {
         // Initialize API
         AsteriskManagersAPI.initialize();
 
-        // Store original username for validation (get from form, not API)
-        manager.originalName = manager.$formObj.form('get value', 'username') || '';
-        
         // Handle copy operation
         if (copySourceId) {
             // Load source manager data for copying
@@ -181,11 +173,8 @@ const manager = {
             manager.$formObj.removeClass('loading');
 
             if (data === false) {
-                UserMessage.showMultiString(globalTranslate.am_ErrorLoadingManager || 'Error loading source manager');
-                // Initialize empty form
-                manager.initializeFormElements();
-                manager.setupEventHandlers();
-                manager.initializeForm();
+                // V5.0: No fallback - show error and stop
+                UserMessage.showError(globalTranslate.am_ErrorLoadingManager || 'Error loading source manager');
                 return;
             }
 
@@ -195,12 +184,16 @@ const manager = {
             data.secret = '';
             
             manager.managerData = data;
+            
+            // Set hidden field value BEFORE initializing dropdowns
+            $('#networkfilterid').val(data.networkfilterid || 'none');
+            
+            // Now populate form and initialize elements
             manager.populateForm(data);
             
-            // Initialize form elements and handlers
+            // Initialize form elements and handlers after data is loaded
             manager.initializeFormElements();
             manager.setupEventHandlers();
-            manager.initializeForm();
             
             // Clear original name since this is a new record
             manager.originalName = '';
@@ -230,21 +223,23 @@ const manager = {
             manager.$formObj.removeClass('loading');
 
             if (data === false) {
-                UserMessage.showMultiString(globalTranslate.am_ErrorLoadingManager || 'Error loading manager');
-                // Initialize even on error to ensure form works
-                manager.initializeFormElements();
-                manager.setupEventHandlers();
-                manager.initializeForm();
+                // V5.0: No fallback - show error and stop
+                UserMessage.showError(globalTranslate.am_ErrorLoadingManager || 'Error loading manager');
                 return;
             }
 
             manager.managerData = data;
+            
+            // Set hidden field value BEFORE initializing dropdowns
+            // This ensures the value is available when dropdown initializes
+            $('#networkfilterid').val(data.networkfilterid || 'none');
+            
+            // Now populate form and initialize elements
             manager.populateForm(data);
             
             // Initialize form elements and handlers after data is loaded
             manager.initializeFormElements();
             manager.setupEventHandlers();
-            manager.initializeForm();
             
             // Store original username for validation (empty for new records)
             manager.originalName = data.username || '';
@@ -269,69 +264,58 @@ const manager = {
      * @param {Object} data - Manager data.
      */
     populateForm(data) {
-        // Set form values
-        manager.$formObj.form('set values', {
+        // Use unified silent population approach
+        Form.populateFormSilently({
             id: data.id,
             username: data.username,
             secret: data.secret,
             description: data.description
-        });
+        }, {
+            afterPopulate: (formData) => {
+                // Build network filter dropdown using DynamicDropdownBuilder
+                DynamicDropdownBuilder.buildDropdown('networkfilterid', data, {
+                    apiUrl: '/pbxcore/api/v2/network-filters/getForSelect?categories[]=AMI',
+                    placeholder: globalTranslate.am_NetworkFilter,
+                    cache: false
+                });
 
-        // Network filter is handled by NetworkFilterSelector during initialization
-        // Always set the hidden field value (use 'none' as default if not provided)
-        $('#networkfilterid').val(data.networkfilterid || 'none');
-
-        // Set permission checkboxes using Semantic UI API
-        if (data.permissions && typeof data.permissions === 'object') {
-            // First uncheck all checkboxes
-            manager.$allCheckBoxes.checkbox('uncheck');
-            
-            // Then set checked state for permissions that are true
-            Object.keys(data.permissions).forEach(permKey => {
-                if (data.permissions[permKey] === true) {
-                    const $checkboxDiv = manager.$formObj.find(`input[name="${permKey}"]`).parent('.checkbox');
-                    if ($checkboxDiv.length) {
-                        $checkboxDiv.checkbox('set checked');
-                    }
+                // Set permission checkboxes using Semantic UI API
+                if (data.permissions && typeof data.permissions === 'object') {
+                    // First uncheck all checkboxes
+                    manager.$allCheckBoxes.checkbox('uncheck');
+                    
+                    // Then set checked state for permissions that are true
+                    Object.keys(data.permissions).forEach(permKey => {
+                        if (data.permissions[permKey] === true) {
+                            const $checkboxDiv = manager.$formObj.find(`input[name="${permKey}"]`).parent('.checkbox');
+                            if ($checkboxDiv.length) {
+                                $checkboxDiv.checkbox('set checked');
+                            }
+                        }
+                    });
+                } else {
+                    // If no permissions data, uncheck all
+                    manager.$allCheckBoxes.checkbox('uncheck');
                 }
-            });
-        } else {
-            // If no permissions data, uncheck all
-            manager.$allCheckBoxes.checkbox('uncheck');
-        }
 
-        // Network filters dropdown is now handled by PHP form
+                // Update clipboard button with current password
+                if (data.secret) {
+                    $('.clipboard').attr('data-clipboard-text', data.secret);
+                }
 
-        // Update clipboard button with current password
-        if (data.secret) {
-            $('.clipboard').attr('data-clipboard-text', data.secret);
-        }
-
-        // Auto-resize textarea after data is loaded
-        // Use setTimeout to ensure DOM is fully updated
-        setTimeout(() => {
-            FormElements.optimizeTextareaSize('textarea[name="description"]');
-        }, 100);
+                // Auto-resize textarea after data is loaded
+                // Use setTimeout to ensure DOM is fully updated
+                setTimeout(() => {
+                    FormElements.optimizeTextareaSize('textarea[name="description"]');
+                }, 100);
+            }
+        });
     },
 
     /**
      * Initialize form elements.
      */
     initializeFormElements() {
-        // Initialize dropdowns except network filter (handled by NetworkFilterSelector)
-        manager.$dropDowns.not('#networkfilterid-dropdown').dropdown();
-        
-        // Get network filter value from hidden field
-        const currentValue = $('#networkfilterid').val() || 'none';
-        
-        // Initialize network filter selector
-        NetworkFilterSelector.init('#networkfilterid-dropdown', {
-            filterType: 'AMI',
-            includeNone: false,  // AMI managers should have specific network filters
-            currentValue: currentValue,
-            onChange: () => Form.dataChanged()
-        });
-        
         // Initialize checkboxes first
         manager.$allCheckBoxes.checkbox();
 
@@ -463,7 +447,7 @@ const manager = {
      */
     cbBeforeSendForm(settings) {
         const result = settings;
-        result.data = manager.$formObj.form('get values');
+        result.data = Form.$formObj.form('get values');
         
         // Collect permissions as boolean fields
         const permissions = {};
@@ -510,7 +494,7 @@ const manager = {
             // Update managerId for new records (needed before redirect)
             if (response.data && response.data.id && !manager.managerId) {
                 manager.managerId = response.data.id;
-                manager.$formObj.form('set value', 'id', manager.managerId);
+                Form.$formObj.form('set value', 'id', manager.managerId);
             }
             
             // Note: UserMessage and Form.initialize are handled automatically by Form.handleSubmitResponse

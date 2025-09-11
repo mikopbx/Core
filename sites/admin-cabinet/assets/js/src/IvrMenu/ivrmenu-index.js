@@ -61,9 +61,10 @@ const ivrMenuIndex = {
                     if (!data || data.length === 0) {
                         return '<small>—</small>';
                     }
-                    // SECURITY: Escape digits and sanitize represent field allowing only safe icons
+                    // SECURITY: Properly sanitize all content
                     const actionsHtml = data.map(action => {
                         const safeDigits = window.SecurityUtils.escapeHtml(action.digits || '');
+                        // Properly sanitize represent field to preserve safe HTML icons
                         const safeRepresent = window.SecurityUtils.sanitizeExtensionsApiContent(action.represent || '');
                         return `${safeDigits} - ${safeRepresent}`;
                     }).join('<br>');
@@ -74,10 +75,11 @@ const ivrMenuIndex = {
                 data: 'timeoutExtensionRepresent',
                 className: 'hide-on-mobile collapsing',
                 render: function(data) {
-                    // SECURITY: Sanitize timeout extension representation allowing only safe icons
+                    // Timeout extension representation needs proper sanitization
                     if (!data) {
                         return '<small>—</small>';
                     }
+                    // Properly sanitize data to preserve safe HTML icons
                     const safeData = window.SecurityUtils.sanitizeExtensionsApiContent(data);
                     return `<small>${safeData}</small>`;
                 }
@@ -97,7 +99,7 @@ const ivrMenuIndex = {
             apiModule: IvrMenuAPI,
             routePrefix: 'ivr-menu',
             showSuccessMessages: true,
-            actionButtons: ['edit', 'delete'], // No copy for IVR Menu
+            actionButtons: ['edit', 'copy', 'delete'], // Include copy button
             translations: {
                 deleteSuccess: globalTranslate.iv_IvrMenuDeleted,
                 deleteError: globalTranslate.iv_ImpossibleToDeleteIvrMenu

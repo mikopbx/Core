@@ -93,10 +93,10 @@ class DataStructure extends AbstractDataStructure
             'redirect_to_extension_if_repeat_exceeded' => $model->redirect_to_extension_if_repeat_exceeded,
         ]);
 
-        // Add sound file fields with representations using unified approach with underscore naming convention
-        // Following IVR Menu pattern for consistency
-        $data = self::addSoundFileField($data, 'periodic_announce_sound_id', $model->periodic_announce_sound_id, '_Represent');
-        $data = self::addSoundFileField($data, 'moh_sound_id', $model->moh_sound_id, '_Represent');
+        // Add sound file fields with representations using unified approach
+        // Using standard naming convention: field_name_represent (lowercase with underscores)
+        $data = self::addSoundFileField($data, 'periodic_announce_sound_id', $model->periodic_announce_sound_id);
+        $data = self::addSoundFileField($data, 'moh_sound_id', $model->moh_sound_id);
 
         // Add members
         $data['members'] = $members;

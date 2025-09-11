@@ -67,7 +67,7 @@ class ProviderSIP extends ProviderBase {
             Form.dataChanged();
         });
         
-        // Initialize SIP-specific dropdowns
+        // Initialize SIP-specific static dropdowns
         this.initializeDtmfModeDropdown();
         this.initializeTransportDropdown();
         this.initializeCallerIdSourceDropdown();
@@ -159,151 +159,40 @@ class ProviderSIP extends ProviderBase {
     }
     
     /**
-     * Initialize DTMF mode dropdown for SIP providers
+     * Initialize DTMF mode dropdown with standard Fomantic UI (PHP-rendered)
      */
     initializeDtmfModeDropdown() {
-        const $field = $('#dtmfmode');
-        if ($field.length === 0) return;
+        const $dropdown = $('#dtmfmode-dropdown');
+        if ($dropdown.length === 0) return;
         
-        // Check if already inside a dropdown structure
-        const $existingDropdown = $field.closest('.ui.dropdown');
-        if ($existingDropdown.length > 0) {
-            // Already a dropdown, just ensure it's initialized
-            if (!$existingDropdown.hasClass('dtmf-mode-dropdown')) {
-                $existingDropdown.addClass('dtmf-mode-dropdown');
-            }
-            $existingDropdown.dropdown({
-                onChange: () => Form.dataChanged()
-            });
-            return;
-        }
-        
-        const currentValue = $field.val() || ProviderBase.DEFAULTS.DTMF_MODE;
-        
-        const options = [
-            { value: 'auto', text: globalTranslate.auto || 'auto' },
-            { value: 'rfc4733', text: globalTranslate.rfc4733 || 'rfc4733' },
-            { value: 'info', text: globalTranslate.info || 'info' },
-            { value: 'inband', text: globalTranslate.inband || 'inband' },
-            { value: 'auto_info', text: globalTranslate.auto_info || 'auto_info' }
-        ];
-        
-        const dropdownHtml = `
-            <div class="ui selection dropdown dtmf-mode-dropdown">
-                <input type="hidden" name="dtmfmode" id="dtmfmode" value="${currentValue}">
-                <i class="dropdown icon"></i>
-                <div class="default text">${options.find(o => o.value === currentValue)?.text || currentValue}</div>
-                <div class="menu">
-                    ${options.map(opt => `<div class="item" data-value="${opt.value}">${opt.text}</div>`).join('')}
-                </div>
-            </div>
-        `;
-        
-        $field.replaceWith(dropdownHtml);
-        
-        $('.dtmf-mode-dropdown').dropdown({
+        // Initialize with standard Fomantic UI - it's already rendered by PHP
+        $dropdown.dropdown({
             onChange: () => Form.dataChanged()
         });
     }
     
     /**
-     * Initialize transport protocol dropdown for SIP providers
+     * Initialize transport protocol dropdown with standard Fomantic UI (PHP-rendered)
      */
     initializeTransportDropdown() {
-        const $field = $('#transport');
-        if ($field.length === 0) return;
+        const $dropdown = $('#transport-dropdown');
+        if ($dropdown.length === 0) return;
         
-        // Check if already inside a dropdown structure
-        const $existingDropdown = $field.closest('.ui.dropdown');
-        if ($existingDropdown.length > 0) {
-            // Already a dropdown, just ensure it's initialized
-            if (!$existingDropdown.hasClass('transport-dropdown')) {
-                $existingDropdown.addClass('transport-dropdown');
-            }
-            $existingDropdown.dropdown({
-                onChange: () => Form.dataChanged()
-            });
-            return;
-        }
-        
-        const currentValue = $field.val() || ProviderBase.DEFAULTS.TRANSPORT;
-        
-        const options = [
-            { value: 'UDP', text: 'UDP' },
-            { value: 'TCP', text: 'TCP' },
-            { value: 'TLS', text: 'TLS' }
-        ];
-        
-        const dropdownHtml = `
-            <div class="ui selection dropdown transport-dropdown">
-                <input type="hidden" name="transport" id="transport" value="${currentValue}">
-                <i class="dropdown icon"></i>
-                <div class="default text">${currentValue}</div>
-                <div class="menu">
-                    ${options.map(opt => `<div class="item" data-value="${opt.value}">${opt.text}</div>`).join('')}
-                </div>
-            </div>
-        `;
-        
-        $field.replaceWith(dropdownHtml);
-        
-        $('.transport-dropdown').dropdown({
+        // Initialize with standard Fomantic UI - it's already rendered by PHP
+        $dropdown.dropdown({
             onChange: () => Form.dataChanged()
         });
     }
     
     /**
-     * Initialize CallerID source dropdown
+     * Initialize CallerID source dropdown with standard Fomantic UI (PHP-rendered)
      */
     initializeCallerIdSourceDropdown() {
-        const $field = $('#cid_source');
-        if ($field.length === 0) return;
+        const $dropdown = $('#cid_source-dropdown');
+        if ($dropdown.length === 0) return;
         
-        // Check if already inside a dropdown structure
-        const $existingDropdown = $field.closest('.ui.dropdown');
-        if ($existingDropdown.length > 0) {
-            // Already a dropdown, just ensure it's initialized
-            if (!$existingDropdown.hasClass('callerid-source-dropdown')) {
-                $existingDropdown.addClass('callerid-source-dropdown');
-            }
-            $existingDropdown.dropdown({
-                onChange: (value) => {
-                    this.onCallerIdSourceChange(value);
-                    Form.dataChanged();
-                }
-            });
-            return;
-        }
-        
-        const currentValue = $field.val() || 'default';
-        
-        const options = [
-            { value: 'default', text: globalTranslate.pr_CallerIdSourceDefault || 'Default' },
-            { value: 'from', text: globalTranslate.pr_CallerIdSourceFrom || 'FROM header' },
-            { value: 'rpid', text: globalTranslate.pr_CallerIdSourceRpid || 'Remote-Party-ID' },
-            { value: 'pai', text: globalTranslate.pr_CallerIdSourcePai || 'P-Asserted-Identity' },
-            { value: 'custom', text: globalTranslate.pr_CallerIdSourceCustom || 'Custom header' }
-        ];
-        
-        const dropdownHtml = `
-            <div class="ui selection dropdown callerid-source-dropdown" id="cid_source-dropdown">
-                <input type="hidden" name="cid_source" id="cid_source" value="${currentValue}">
-                <i class="dropdown icon"></i>
-                <div class="default text">${options.find(o => o.value === currentValue)?.text || currentValue}</div>
-                <div class="menu">
-                    ${options.map(opt => `
-                        <div class="item" data-value="${opt.value}">
-                            <span>${opt.text}</span>
-                            ${opt.value === 'custom' ? '<i class="settings icon right floated"></i>' : ''}
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        `;
-        
-        $field.replaceWith(dropdownHtml);
-        
-        $('#cid_source-dropdown').dropdown({
+        // Initialize with standard Fomantic UI - it's already rendered by PHP
+        $dropdown.dropdown({
             onChange: (value) => {
                 this.onCallerIdSourceChange(value);
                 Form.dataChanged();
@@ -312,56 +201,14 @@ class ProviderSIP extends ProviderBase {
     }
     
     /**
-     * Initialize DID source dropdown
+     * Initialize DID source dropdown with standard Fomantic UI (PHP-rendered)
      */
     initializeDidSourceDropdown() {
-        const $field = $('#did_source');
-        if ($field.length === 0) return;
+        const $dropdown = $('#did_source-dropdown');
+        if ($dropdown.length === 0) return;
         
-        // Check if already inside a dropdown structure
-        const $existingDropdown = $field.closest('.ui.dropdown');
-        if ($existingDropdown.length > 0) {
-            // Already a dropdown, just ensure it's initialized
-            if (!$existingDropdown.hasClass('did-source-dropdown')) {
-                $existingDropdown.addClass('did-source-dropdown');
-            }
-            $existingDropdown.dropdown({
-                onChange: (value) => {
-                    this.onDidSourceChange(value);
-                    Form.dataChanged();
-                }
-            });
-            return;
-        }
-        
-        const currentValue = $field.val() || 'default';
-        
-        const options = [
-            { value: 'default', text: globalTranslate.pr_DidSourceDefault || 'Default' },
-            { value: 'to', text: globalTranslate.pr_DidSourceTo || 'TO header' },
-            { value: 'diversion', text: globalTranslate.pr_DidSourceDiversion || 'Diversion header' },
-            { value: 'custom', text: globalTranslate.pr_DidSourceCustom || 'Custom header' }
-        ];
-        
-        const dropdownHtml = `
-            <div class="ui selection dropdown did-source-dropdown" id='did_source-dropdown'>
-                <input type="hidden" name="did_source" id="did_source" value="${currentValue}">
-                <i class="dropdown icon"></i>
-                <div class="default text">${options.find(o => o.value === currentValue)?.text || currentValue}</div>
-                <div class="menu">
-                    ${options.map(opt => `
-                        <div class="item" data-value="${opt.value}">
-                            <span>${opt.text}</span>
-                            ${opt.value === 'custom' ? '<i class="settings icon right floated"></i>' : ''}
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        `;
-        
-        $field.replaceWith(dropdownHtml);
-        
-        $('#did_source-dropdown').dropdown({
+        // Initialize with standard Fomantic UI - it's already rendered by PHP
+        $dropdown.dropdown({
             onChange: (value) => {
                 this.onDidSourceChange(value);
                 Form.dataChanged();
@@ -445,7 +292,11 @@ class ProviderSIP extends ProviderBase {
         // Enable automatic checkbox to boolean conversion
         Form.convertCheckboxesToBool = true;
         
+        // Initialize the form - this was missing!
         Form.initialize();
+        
+        // Mark form as fully initialized
+        this.formInitialized = true;
     }
     
     /**
@@ -485,9 +336,9 @@ class ProviderSIP extends ProviderBase {
         super.populateFormData(data);
         
         if (this.providerType === 'SIP') {
-            // SIP-specific fields
-            $('#dtmfmode').val(data.dtmfmode || ProviderBase.DEFAULTS.DTMF_MODE);
-            $('#transport').val(data.transport || ProviderBase.DEFAULTS.TRANSPORT);
+            // SIP-specific fields - backend provides defaults
+            $('#dtmfmode').val(data.dtmfmode || '');
+            $('#transport').val(data.transport || '');
             $('#fromuser').val(data.fromuser || '');
             $('#fromdomain').val(data.fromdomain || '');
             $('#outbound_proxy').val(data.outbound_proxy || '');
@@ -495,8 +346,8 @@ class ProviderSIP extends ProviderBase {
             // SIP-specific checkboxes
             if (data.disablefromuser === '1' || data.disablefromuser === true) $('#disablefromuser').prop('checked', true);
             
-            // Qualify frequency
-            $('#qualifyfreq').val(data.qualifyfreq || ProviderBase.DEFAULTS.QUALIFY_FREQ);
+            // Qualify frequency - backend provides default
+            $('#qualifyfreq').val(data.qualifyfreq || '');
             
             // CallerID/DID fields
             $('#cid_source').val(data.cid_source || 'default');
@@ -517,13 +368,13 @@ class ProviderSIP extends ProviderBase {
                 $('#cid_did_debug').prop('checked', false);
             }
             
-            // Update dropdown values after setting hidden inputs
+            // Update dropdown values - backend provides defaults, just set selected values
             const dropdownUpdates = [
-                { selector: '.dtmf-mode-dropdown', value: data.dtmfmode || ProviderBase.DEFAULTS.DTMF_MODE },
-                { selector: '.transport-dropdown', value: data.transport || ProviderBase.DEFAULTS.TRANSPORT },
-                { selector: '.registration-type-dropdown', value: data.registration_type || ProviderBase.DEFAULTS.REGISTRATION_TYPE },
-                { selector: '.callerid-source-dropdown', value: data.cid_source || 'default' },
-                { selector: '.did-source-dropdown', value: data.did_source || 'default' }
+                { selector: '#dtmfmode-dropdown', value: data.dtmfmode || '' },
+                { selector: '#transport-dropdown', value: data.transport || '' },
+                { selector: '#registration_type-dropdown', value: data.registration_type || '' },
+                { selector: '#cid_source-dropdown', value: data.cid_source || '' },
+                { selector: '#did_source-dropdown', value: data.did_source || '' }
             ];
             
             dropdownUpdates.forEach(({ selector, value }) => {
@@ -976,7 +827,7 @@ class ProviderSIP extends ProviderBase {
         
         
         // Update CallerID custom settings visibility based on current dropdown value
-        const cidDropdown = $('.callerid-source-dropdown');
+        const cidDropdown = $('#cid_source-dropdown');
         if (cidDropdown.length > 0) {
             const cidValue = cidDropdown.dropdown('get value');
             const cidCustomSettings = $('#callerid-custom-settings');
@@ -990,7 +841,7 @@ class ProviderSIP extends ProviderBase {
         }
         
         // Update DID custom settings visibility based on current dropdown value
-        const didDropdown = $('.did-source-dropdown');
+        const didDropdown = $('#did_source-dropdown');
         if (didDropdown.length > 0) {
             const didValue = didDropdown.dropdown('get value');
             const didCustomSettings = $('#did-custom-settings');
@@ -1096,3 +947,11 @@ class ProviderSIP extends ProviderBase {
         this.updateHostsTableView();
     }
 }
+
+/**
+ * Initialize provider form on document ready
+ */
+$(document).ready(() => {
+    const provider = new ProviderSIP();
+    provider.initialize();
+});

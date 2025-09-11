@@ -116,6 +116,7 @@ class DataStructure extends AbstractDataStructure
                 $data['port'] = (int)($config->port ?? 5060);
             } else {
                 $data['registration_type'] = $config->registration_type ?? 'none';
+                $data['port'] = (int)($config->port ?? 4569);
             }
         }
         
@@ -159,6 +160,9 @@ class DataStructure extends AbstractDataStructure
             $secret = 'XXXXXXXX';
         }
         
+        // Get network filter representation using unified helper
+        $networkfilterRepresent = self::getNetworkFilterRepresentation($sip->networkfilterid);
+        
         return [
             'disabled' => $sip->disabled === '1',
             'username' => $sip->username ?? '',
@@ -171,6 +175,7 @@ class DataStructure extends AbstractDataStructure
             'registration_type' => $sip->registration_type ?? 'none',
             'description' => $sip->description ?? '',
             'networkfilterid' => (!empty($sip->networkfilterid) ? $sip->networkfilterid : 'none'),
+            'networkfilter_represent' => $networkfilterRepresent,
             'manualattributes' => $sip->manualattributes ?? '',
             'dtmfmode' => $sip->dtmfmode ?? 'auto',
             'fromuser' => $sip->fromuser ?? '',
@@ -207,15 +212,20 @@ class DataStructure extends AbstractDataStructure
             $secret = 'XXXXXXXX';
         }
         
+        // Get network filter representation using unified helper
+        $networkfilterRepresent = self::getNetworkFilterRepresentation($iax->networkfilterid);
+        
         return [
             'disabled' => $iax->disabled === '1',
             'username' => $iax->username ?? '',
             'secret' => $secret,
             'host' => $iax->host ?? '',
+            'port' => (int)($iax->port ?? 4569),
             'registration_type' => $iax->registration_type ?? 'none',
             'description' => $iax->description ?? '',
             'manualattributes' => $iax->manualattributes ?? '',
             'networkfilterid' => (!empty($iax->networkfilterid) ? $iax->networkfilterid : 'none'),
+            'networkfilter_represent' => $networkfilterRepresent,
             'receive_calls_without_auth' => $iax->receive_calls_without_auth === '1'
         ];
     }

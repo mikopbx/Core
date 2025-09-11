@@ -50,6 +50,7 @@ use MikoPBX\PBXCoreREST\Controllers\
     Advice\GetController as AdviceGetController,
     Extensions\GetController as ExtensionsGetController,
     Extensions\PostController as ExtensionsPostController,
+    Employees\RestController as EmployeesRestController,
     CallQueues\GetController as CallQueuesGetController,
     CallQueues\PostController as CallQueuesPostController,
     CallQueues\PutController as CallQueuesPutController,
@@ -213,6 +214,25 @@ class RouterProvider implements ServiceProviderInterface
 
             [ExtensionsGetController::class, 'callAction', '/pbxcore/api/extensions/{actionName}', 'get', '/'],
             [ExtensionsPostController::class, 'callAction', '/pbxcore/api/extensions/{actionName}', 'post', '/'],
+            
+            // v2 Extensions REST API endpoints
+            [ExtensionsGetController::class, 'callAction', '/pbxcore/api/v2/extensions/{actionName}', 'get', '/'],
+            [ExtensionsGetController::class, 'callAction', '/pbxcore/api/v2/extensions/{actionName}/{id:[a-zA-Z0-9\-]+}', 'get', '/'],
+            [ExtensionsPostController::class, 'callAction', '/pbxcore/api/v2/extensions/{actionName}', 'post', '/'],
+                
+            // v3 Employees RESTful API endpoints
+            // Custom methods with colon notation (Google API Design Guide) - must be before standard routes
+            // Using relative paths from prefix for proper Phalcon routing
+            [EmployeesRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/employees', 'post', ':{customMethod:[a-zA-Z]+}'],
+            [EmployeesRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/employees', 'post', '/{id:[0-9]+}:{customMethod:[a-zA-Z]+}'],
+            
+            // Standard CRUD operations
+            [EmployeesRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/employees', 'get', '/'],
+            [EmployeesRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/employees', 'get', '/{id:[0-9]+}'],
+            [EmployeesRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/employees', 'post', '/'],
+            [EmployeesRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/employees', 'put', '/{id:[0-9]+}'],
+            [EmployeesRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/employees', 'patch', '/{id:[0-9]+}'],
+            [EmployeesRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/employees', 'delete', '/{id:[0-9]+}'],
 
             [CallQueuesGetController::class, 'callAction', '/pbxcore/api/v2/call-queues/{actionName}', 'get', '/'],
             [CallQueuesGetController::class, 'callAction', '/pbxcore/api/v2/call-queues/{actionName}/{id:[a-zA-Z0-9\-]+}', 'get', '/'],

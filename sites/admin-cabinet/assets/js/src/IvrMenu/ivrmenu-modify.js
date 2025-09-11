@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, IvrMenuAPI, Form, globalTranslate, UserMessage, Extensions, SoundFileSelector */
+/* global globalRootUrl, IvrMenuAPI, Form, globalTranslate, UserMessage, Extensions, SoundFileSelector, ExtensionSelector, TooltipBuilder, FormElements */
 
 /**
  * IVR menu edit form management module
@@ -28,7 +28,6 @@ const ivrMenuModify = {
   $rowTemplate: $('#row-template'),
   actionsRowsCount: 0,
   defaultExtension: '',
-  isFormInitializing: false,
 
 
   /**
@@ -101,19 +100,7 @@ const ivrMenuModify = {
           }, 500);
       });
       
-      // Initialize sound file selector
-      SoundFileSelector.init('audio_message_id', {
-          category: 'custom',
-          includeEmpty: true,
-          onChange: () => {
-              if (!ivrMenuModify.isFormInitializing) {
-                  Form.dataChanged();
-              }
-          }
-      });
-      
-      // Initialize timeout extension selector with exclusion to prevent infinite loops
-      ivrMenuModify.initializeTimeoutExtensionDropdown();
+      // Audio message dropdown will be initialized in populateForm() with clean data
       
       // Initialize actions table
       ivrMenuModify.initializeActionsTable();
@@ -146,6 +133,9 @@ const ivrMenuModify = {
       // - AJAX response handling
       Form.initialize();
       
+      // Initialize tooltips for form fields
+      ivrMenuModify.initializeTooltips();
+      
       // Load form data
       ivrMenuModify.initializeForm();
   },
@@ -154,15 +144,46 @@ const ivrMenuModify = {
    */
   initializeForm() {
       const recordId = ivrMenuModify.getRecordId();
+      const copyFromId = $('#copy-from-id').val();
+      const urlParams = new URLSearchParams(window.location.search);
+      const copyParam = urlParams.get('copy');
       
-      IvrMenuAPI.getRecord(recordId, (response) => {
+      let requestId = recordId;
+      let isCopyMode = false;
+      
+      // Check for copy mode from URL parameter or hidden field
+      if (copyParam || copyFromId) {
+          requestId = `copy-${copyParam || copyFromId}`;
+          isCopyMode = true;
+      } else if (!recordId) {
+          requestId = 'new';
+      }
+      
+      IvrMenuAPI.getRecord(requestId, (response) => {
           if (response.result) {
               ivrMenuModify.populateForm(response.data);
-              // Get the default extension from the form
-              ivrMenuModify.defaultExtension = ivrMenuModify.$formObj.form('get value', 'extension');
+              
+              // Set default extension for validation
+              if (isCopyMode || !recordId) {
+                  // For new records or copies, use the new extension for validation
+                  ivrMenuModify.defaultExtension = '';
+              } else {
+                  // For existing records, use their original extension
+                  ivrMenuModify.defaultExtension = ivrMenuModify.$formObj.form('get value', 'extension');
+              }
               
               // Populate actions table
               ivrMenuModify.populateActionsTable(response.data.actions || []);
+              
+              // Mark form as changed if in copy mode to enable save button
+              if (isCopyMode) {
+                  Form.dataChanged();
+              }
+              
+              // Clear copy mode after successful load
+              if (copyFromId) {
+                  $('#copy-from-id').val('');
+              }
           } else {
               UserMessage.showError(response.messages?.error || 'Failed to load IVR menu data');
           }
@@ -181,42 +202,7 @@ const ivrMenuModify = {
       return '';
   },
 
-  /**
-   * Initialize timeout extension dropdown with current extension exclusion
-   */
-  initializeTimeoutExtensionDropdown() {
-      // Get current extension value to exclude it from timeout dropdown
-      const getCurrentExtension = () => {
-          return ivrMenuModify.$formObj.form('get value', 'extension') || ivrMenuModify.defaultExtension;
-      };
-      
-      // Initialize dropdown with exclusion
-      const initDropdown = () => {
-          const currentExtension = getCurrentExtension();
-          const excludeExtensions = currentExtension ? [currentExtension] : [];
-          
-          $('.timeout_extension-select').dropdown(Extensions.getDropdownSettingsForRoutingWithExclusion((value) => {
-              // Update hidden input when dropdown changes
-              $('input[name="timeout_extension"]').val(value);
-              // Trigger change event only if not initializing
-              if (!ivrMenuModify.isFormInitializing) {
-                  $('input[name="timeout_extension"]').trigger('change');
-                  Form.dataChanged();
-              }
-          }, excludeExtensions));
-      };
-      
-      // Initialize dropdown
-      initDropdown();
-      
-      // Re-initialize dropdown when extension number changes
-      ivrMenuModify.$number.on('change', () => {
-          // Small delay to ensure the value is updated
-          setTimeout(() => {
-              initDropdown();
-          }, 100);
-      });
-  },
+
 
   /**
    * Initialize actions table
@@ -226,7 +212,9 @@ const ivrMenuModify = {
       $('#add-new-ivr-action').on('click', (e) => {
           e.preventDefault();
           ivrMenuModify.addNewActionRow();
-          ivrMenuModify.rebuildActionExtensionsDropdown();
+          // Initialize dropdown for the new row only
+          const lastRowId = ivrMenuModify.actionsRowsCount;
+          ivrMenuModify.initializeNewActionExtensionDropdown(lastRowId);
       });
   },
 
@@ -238,23 +226,25 @@ const ivrMenuModify = {
       $('.action-row:not(#row-template)').remove();
       ivrMenuModify.actionsRowsCount = 0;
       
-      actions.forEach(action => {
+      actions.forEach((action, index) => {
+          // Create row with proper index-based data structure for V5.0
+          const rowIndex = index + 1;
           ivrMenuModify.addNewActionRow({
               digits: action.digits,
               extension: action.extension,
-              extensionRepresent: action.extensionRepresent || ''
+              extensionRepresent: action.extension_represent || '',
+              rowIndex: rowIndex // Pass row index for proper field naming
           });
       });
       
-      ivrMenuModify.rebuildActionExtensionsDropdown();
+      // Initialize action extension dropdowns once after all actions are populated
+      ivrMenuModify.initializeActionExtensionsDropdowns();
       
       // Re-initialize dirty checking AFTER all form data (including actions) is populated
       if (Form.enableDirrity) {
           Form.initializeDirrity();
       }
       
-      // Clear initialization flag AFTER everything is complete
-      ivrMenuModify.isFormInitializing = false;
   },
   
   /**
@@ -284,24 +274,21 @@ const ivrMenuModify = {
           .attr('name', `digits-${ivrMenuModify.actionsRowsCount}`)
           .attr('value', rowParam.digits);
           
-      // Set extension input
-      $actionTemplate.find('input[name="extension-id"]')
+      // Set extension input and store represent data
+      const $extensionInput = $actionTemplate.find('input[name="extension-id"]');
+      $extensionInput
           .attr('id', `extension-${ivrMenuModify.actionsRowsCount}`)
           .attr('name', `extension-${ivrMenuModify.actionsRowsCount}`)
           .attr('value', rowParam.extension);
           
+      // Store extension represent data directly on the input for later use
+      if (rowParam.extensionRepresent && rowParam.extensionRepresent.length > 0) {
+          $extensionInput.attr('data-represent', rowParam.extensionRepresent);
+      }
+          
       // Set delete button data-value
       $actionTemplate.find('div.delete-action-row')
           .attr('data-value', ivrMenuModify.actionsRowsCount);
-          
-      // Update extension represent text if available
-      if (rowParam.extensionRepresent.length > 0) {
-          // SECURITY: Sanitize extension representation with XSS protection while preserving safe icons
-          const safeExtensionRepresent = window.SecurityUtils.sanitizeExtensionsApiContent(rowParam.extensionRepresent);
-          $actionTemplate.find('div.default.text')
-              .removeClass('default')
-              .html(safeExtensionRepresent);
-      }
       
       // Add validation rules for the new fields
       ivrMenuModify.validateRules[`digits-${ivrMenuModify.actionsRowsCount}`] = {
@@ -310,6 +297,9 @@ const ivrMenuModify = {
           rules: [{
               type: 'empty',
               prompt: globalTranslate.iv_ValidateDigitsIsEmpty
+          }, {
+              type: 'checkDoublesDigits',
+              prompt: globalTranslate.iv_ValidateDigitsIsNotCorrect
           }]
       };
       
@@ -325,28 +315,87 @@ const ivrMenuModify = {
       // Append to actions place
       ivrMenuModify.$actionsPlace.append($actionTemplate);
       
-      // Acknowledge form modification (but not during initialization)
-      if (!ivrMenuModify.isFormInitializing) {
+      // Set up change handlers for the new fields to trigger Form.dataChanged()
+      const digitsFieldId = `digits-${ivrMenuModify.actionsRowsCount}`;
+      const extensionFieldId = `extension-${ivrMenuModify.actionsRowsCount}`;
+      
+      // Add change handler for digits field
+      $(`#${digitsFieldId}`).on('input change', () => {
           Form.dataChanged();
-      }
+      });
+      
+      // Add change handler for extension field (hidden input)
+      $(`#${extensionFieldId}`).on('change', () => {
+          Form.dataChanged();
+      });
+      
+      // Acknowledge form modification when action row is configured
+      Form.dataChanged();
   },
 
   
   /**
-   * Rebuild dropdown for action extensions
+   * Initialize action extension dropdowns - V5.0 Architecture with Clean Backend Data
+   * Uses ExtensionSelector with complete automation and proper REST API data
    */
-  rebuildActionExtensionsDropdown() {
-      // Initialize dropdowns with routing settings
-      $('#ivr-menu-form .forwarding-select').dropdown(
-          Extensions.getDropdownSettingsForRouting(ivrMenuModify.cbOnExtensionSelect)
-      );
+  initializeActionExtensionsDropdowns() {
+      // Initialize each action row's extension dropdown with V5.0 specialized class
+      $('.action-row:not(#row-template)').each(function() {
+          const $row = $(this);
+          const rowId = $row.attr('data-value');
+          
+          if (rowId) {
+              const fieldName = `extension-${rowId}`;
+              const $hiddenInput = $row.find(`input[name="${fieldName}"]`);
+              
+              if ($hiddenInput.length) {
+                  // Get clean data from REST API structure stored in data-represent attribute
+                  const currentValue = $hiddenInput.val() || '';
+                  const currentRepresent = $hiddenInput.attr('data-represent') || '';
+                  
+                  // Create V5.0 compliant data structure
+                  const cleanData = {};
+                  cleanData[fieldName] = currentValue;
+                  cleanData[`${fieldName}_represent`] = currentRepresent;
+                  
+                  
+                  // V5.0 ExtensionSelector - complete automation with clean backend data
+                  ExtensionSelector.init(fieldName, {
+                      type: 'routing',
+                      includeEmpty: false,
+                      data: cleanData
+                      // ❌ NO onChange needed - complete automation by ExtensionSelector + base class
+                  });
+              }
+          }
+      });
       
-      // Fix HTML entities in dropdown text after initialization for safe content
-      // Note: This should be safe since we've already sanitized the content through SecurityUtils
-      Extensions.fixDropdownHtmlEntities('#ivr-menu-form .forwarding-select .text, #ivr-menu-form .timeout_extension-select .text');
+      // Set up change handlers for existing action fields to trigger Form.dataChanged()
+      $('.action-row:not(#row-template)').each(function() {
+          const $row = $(this);
+          const rowId = $row.attr('data-value');
+          
+          if (rowId) {
+              // Add change handlers for digits fields
+              const $digitsField = $row.find(`input[name="digits-${rowId}"]`);
+              if ($digitsField.length) {
+                  $digitsField.off('input.formChange change.formChange').on('input.formChange change.formChange', () => {
+                      Form.dataChanged();
+                  });
+              }
+              
+              // Add change handlers for extension fields (hidden inputs)
+              const $extensionField = $row.find(`input[name="extension-${rowId}"]`);
+              if ($extensionField.length) {
+                  $extensionField.off('change.formChange').on('change.formChange', () => {
+                      Form.dataChanged();
+                  });
+              }
+          }
+      });
       
-      // Attach delete handlers
-      $('.delete-action-row').off('click').on('click', function(e) {
+      // Use event delegation for delete handlers to support dynamically added rows
+      $(document).off('click.deleteActionRow', '.delete-action-row').on('click.deleteActionRow', '.delete-action-row', function(e) {
           e.preventDefault();
           const id = $(this).attr('data-value');
           
@@ -363,14 +412,29 @@ const ivrMenuModify = {
   },
   
   /**
-   * Callback when extension is selected in dropdown
+   * Initialize extension dropdown for a new action row - V5.0 Architecture
+   * @param {number} rowId - Row ID for the new row
    */
-  cbOnExtensionSelect(text, value, $element) {
-      // Mark that data has changed (but not during initialization)
-      if (!ivrMenuModify.isFormInitializing) {
-          Form.dataChanged();
+  initializeNewActionExtensionDropdown(rowId) {
+      const fieldName = `extension-${rowId}`;
+      const $hiddenInput = $(`#${fieldName}`);
+      
+      if ($hiddenInput.length) {
+          // Clean empty data object for new row
+          const data = {};
+          data[fieldName] = '';
+          data[`${fieldName}_represent`] = '';
+          
+          // V5.0 ExtensionSelector - complete automation, NO onChange needed
+          ExtensionSelector.init(fieldName, {
+              type: 'routing',
+              includeEmpty: false,
+              data: data
+              // ❌ NO onChange needed - complete automation by ExtensionSelector + base class
+          });
       }
   },
+  
 
 
 
@@ -440,63 +504,159 @@ const ivrMenuModify = {
    * Populate form with data
    */
   populateForm(data) {
-      // Set initialization flag to prevent triggering Form.dataChanged()
-      ivrMenuModify.isFormInitializing = true;
-
-      // Setup audio message value
-      if (data.audio_message_id) {
-          SoundFileSelector.setValue('audio_message_id', data.audio_message_id, data.audio_message_id_Represent);
-      }
-
-      Form.$formObj.form('set values', data);
-      
-      // Update extension number in ribbon label
-      if (data.extension) {
-          $('#ivr-menu-extension-number').html(`<i class="phone icon"></i> ${data.extension}`);
-      }
-      
-      // Re-initialize timeout extension dropdown with current extension exclusion
-      // (after form values are set so we have the current extension)
-      ivrMenuModify.initializeTimeoutExtensionDropdown();
-      
-      // Restore timeout extension value and display if it exists and is not the current extension
-      if (data.timeout_extension && data.timeout_extensionRepresent) {
-          const currentExtension = ivrMenuModify.$formObj.form('get value', 'extension') || ivrMenuModify.defaultExtension;
-          
-          // Only set the timeout extension if it's different from current extension
-          if (data.timeout_extension !== currentExtension) {
-              const $timeoutDropdown = $('.timeout_extension-select');
+      // Use unified silent population approach
+      Form.populateFormSilently(data, {
+          afterPopulate: (formData) => {
+              // Update extension number in ribbon label
+              if (formData.extension) {
+                  $('#ivr-menu-extension-number').html(`<i class="phone icon"></i> ${formData.extension}`);
+              }
               
-              // SECURITY: Sanitize timeout extension representation with XSS protection while preserving safe icons
-              const safeText = window.SecurityUtils.sanitizeExtensionsApiContent(data.timeout_extensionRepresent);
+              // Initialize dropdowns with V5.0 specialized classes - complete automation
+              ivrMenuModify.initializeDropdownsWithCleanData(formData);
               
-              // Set the value and update display text (this triggers the dropdown callback)
-              $timeoutDropdown.dropdown('set value', data.timeout_extension);
-              $timeoutDropdown.find('.text').removeClass('default').html(safeText);
-              
-              // Update hidden input without triggering change event during initialization
-              $('input[name="timeout_extension"]').val(data.timeout_extension);
-          } else {
-              // Clear timeout extension if it's the same as current extension
-              $('.timeout_extension-select').dropdown('clear');
-              $('input[name="timeout_extension"]').val('');
+              // Auto-resize textarea after data is loaded
+              FormElements.optimizeTextareaSize('textarea[name="description"]');
           }
-      }
-      
-      // Initialize all forwarding dropdowns
-      ivrMenuModify.rebuildActionExtensionsDropdown();
-
-      // Auto-resize textarea after data is loaded
-      FormElements.optimizeTextareaSize('textarea[name="description"]');
+      });
       
       // NOTE: Form.initializeDirrity() will be called AFTER actions are populated
-      // NOTE: isFormInitializing flag will be cleared in populateActionsTable()
+  },
+  
+  /**
+   * Initialize dropdowns with clean data - V5.0 Architecture
+   * Uses specialized classes with complete automation
+   */
+  initializeDropdownsWithCleanData(data) {
+      // Audio message dropdown with playback controls - V5.0 complete automation
+      SoundFileSelector.init('audio_message_id', {
+          category: 'custom',
+          includeEmpty: true,
+          data: data
+          // ❌ NO onChange needed - complete automation by base class
+      });
       
-      // Trigger change event to update audio player after form is fully initialized
-      if (data.audio_message_id && data.audio_message_id_Represent) {
-          const $audioSelect = $('select[name="audio_message_id"]');
-          $audioSelect.trigger('change');
-      }
+      // Timeout extension dropdown with current extension exclusion - V5.0 specialized class
+      
+      ExtensionSelector.init('timeout_extension', {
+          type: 'routing',
+          excludeExtensions: [data.extension],
+          includeEmpty: false,
+          data: data
+          // ❌ NO onChange needed - complete automation by base class
+      });
+      
+      // Handle extension number changes - rebuild timeout extension dropdown with new exclusion
+      ivrMenuModify.$number.off('change.timeout').on('change.timeout', () => {
+          const newExtension = ivrMenuModify.$formObj.form('get value', 'extension');
+          const currentValue = $('#timeout_extension').val();
+          const currentText = $('#timeout_extension-dropdown').find('.text').text();
+          
+          if (newExtension) {
+              // Remove old dropdown
+              $('#timeout_extension-dropdown').remove();
+              
+              // Create new data object with current value
+              const refreshData = {
+                  timeout_extension: currentValue,
+                  timeout_extension_represent: currentText
+              };
+              
+              // Rebuild with new exclusion
+              ExtensionSelector.init('timeout_extension', {
+                  type: 'routing',
+                  excludeExtensions: [newExtension],
+                  includeEmpty: false,
+                  data: refreshData
+                  // ❌ NO onChange needed - complete automation
+              });
+          }
+      });
+  },
+
+  /**
+   * Initialize tooltips for form fields
+   */
+  initializeTooltips() {
+      // Configuration for each field tooltip - using proper translation keys from Route.php
+      const tooltipConfigs = {
+          number_of_repeat: {
+              header: globalTranslate.iv_NumberOfRepeatTooltip_header,
+              description: globalTranslate.iv_NumberOfRepeatTooltip_desc,
+              note: globalTranslate.iv_NumberOfRepeatTooltip_note
+          },
+          
+          timeout: {
+              header: globalTranslate.iv_TimeoutTooltip_header,
+              description: globalTranslate.iv_TimeoutTooltip_desc,
+              list: [
+                  globalTranslate.iv_TimeoutTooltip_list1,
+                  globalTranslate.iv_TimeoutTooltip_list2,
+                  globalTranslate.iv_TimeoutTooltip_list3
+              ],
+              note: globalTranslate.iv_TimeoutTooltip_note
+          },
+          
+          timeout_extension: {
+              header: globalTranslate.iv_TimeoutExtensionTooltip_header,
+              description: globalTranslate.iv_TimeoutExtensionTooltip_desc,
+              list: [
+                  globalTranslate.iv_TimeoutExtensionTooltip_list1,
+                  globalTranslate.iv_TimeoutExtensionTooltip_list2,
+                  globalTranslate.iv_TimeoutExtensionTooltip_list3
+              ],
+              note: globalTranslate.iv_TimeoutExtensionTooltip_note
+          },
+          
+          allow_enter_any_internal_extension: {
+              header: globalTranslate.iv_AllowEnterAnyInternalExtensionTooltip_header,
+              description: globalTranslate.iv_AllowEnterAnyInternalExtensionTooltip_desc,
+              list: [
+                  {
+                      term: globalTranslate.iv_AllowEnterAnyInternalExtensionTooltip_list_header,
+                      definition: null
+                  },
+                  globalTranslate.iv_AllowEnterAnyInternalExtensionTooltip_list1,
+                  globalTranslate.iv_AllowEnterAnyInternalExtensionTooltip_list2,
+                  globalTranslate.iv_AllowEnterAnyInternalExtensionTooltip_list3,
+                  globalTranslate.iv_AllowEnterAnyInternalExtensionTooltip_list4
+              ],
+              note: globalTranslate.iv_AllowEnterAnyInternalExtensionTooltip_note
+          },
+          
+          extension: {
+              header: globalTranslate.iv_ExtensionTooltip_header,
+              description: globalTranslate.iv_ExtensionTooltip_desc,
+              note: globalTranslate.iv_ExtensionTooltip_note
+          },
+          
+          audio_message_id: {
+              header: globalTranslate.iv_AudioMessageIdTooltip_header,
+              description: globalTranslate.iv_AudioMessageIdTooltip_desc,
+              list: [
+                  {
+                      term: globalTranslate.iv_AudioMessageIdTooltip_content_header,
+                      definition: null
+                  },
+                  globalTranslate.iv_AudioMessageIdTooltip_content1,
+                  globalTranslate.iv_AudioMessageIdTooltip_content2,
+                  globalTranslate.iv_AudioMessageIdTooltip_content3
+              ],
+              list2: [
+                  {
+                      term: globalTranslate.iv_AudioMessageIdTooltip_recommendations_header,
+                      definition: null
+                  },
+                  globalTranslate.iv_AudioMessageIdTooltip_rec1,
+                  globalTranslate.iv_AudioMessageIdTooltip_rec2,
+                  globalTranslate.iv_AudioMessageIdTooltip_rec3
+              ],
+              note: globalTranslate.iv_AudioMessageIdTooltip_note
+          }
+      };
+
+      // Use TooltipBuilder to initialize tooltips
+      TooltipBuilder.initialize(tooltipConfigs);
   }
 };
 
@@ -505,6 +665,20 @@ const ivrMenuModify = {
 * @returns {boolean} True if the parameter has the 'hidden' class, false otherwise
 */
 $.fn.form.settings.rules.existRule = (value, parameter) => $(`#${parameter}`).hasClass('hidden');
+
+/**
+ * Custom form rule to check for duplicate digits values.
+ * @param {string} value - The value to check for duplicates.
+ * @returns {boolean} - True if there are no duplicates, false otherwise.
+ */
+$.fn.form.settings.rules.checkDoublesDigits = (value) => {
+    let count = 0;
+    $("input[id^='digits']").each((index, obj) => {
+        if (ivrMenuModify.$formObj.form('get value', `${obj.id}`) === value) count += 1;
+    });
+
+    return (count === 1);
+};
 
 
 /**

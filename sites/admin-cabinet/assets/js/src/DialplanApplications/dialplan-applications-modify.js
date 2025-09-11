@@ -11,7 +11,6 @@
 var dialplanApplicationModify = {
     $formObj: $('#dialplan-application-form'),
     $number: $('#extension'),
-    $typeSelectDropDown: $('#type-dropdown'),
     $tabMenuItems: $('#application-code-menu .item'),
     defaultExtension: '',
     editor: null,
@@ -84,15 +83,7 @@ var dialplanApplicationModify = {
                     }, 100);
                 }
             }
-        });
-        
-        // Initialize type dropdown with proper settings
-        dialplanApplicationModify.$typeSelectDropDown.dropdown({
-            onChange: dialplanApplicationModify.changeAceMode,
-            fullTextSearch: false,
-            direction: 'downward'
-        });
-        
+        });        
         // Extension availability check
         var timeoutId;
         dialplanApplicationModify.$number.on('input', function() {
@@ -149,6 +140,16 @@ var dialplanApplicationModify = {
      */
     initializeForm: function() {
         var recordId = dialplanApplicationModify.getRecordId();
+        var copyFromId = $('#copy-from-id').val();
+        var urlParams = new URLSearchParams(window.location.search);
+        var copyParam = urlParams.get('copy');
+        var isCopyMode = false;
+        
+        // Check for copy mode from URL parameter or hidden field
+        if (copyParam || copyFromId) {
+            recordId = 'copy-' + (copyParam || copyFromId);
+            isCopyMode = true;
+        }
         
         // Always call REST API to get data (including defaults for new records)
         DialplanApplicationsAPI.getRecord(recordId, function(response) {
@@ -176,6 +177,11 @@ var dialplanApplicationModify = {
                 // Hash history will preserve the tab for existing records
                 if (!response.data.name && !response.data.extension && !window.location.hash) {
                     dialplanApplicationModify.$tabMenuItems.tab('change tab', 'main');
+                }
+                
+                // Mark form as changed if in copy mode to enable save button
+                if (isCopyMode) {
+                    Form.dataChanged();
                 }
                 
                 // Auto-resize textarea after data is loaded (with small delay for DOM update)
@@ -301,8 +307,9 @@ var dialplanApplicationModify = {
     /**
      * Change ACE editor mode based on type
      */
-    changeAceMode: function() {
-        var mode = dialplanApplicationModify.$typeSelectDropDown.dropdown('get value');
+    changeAceMode: function(value, text, $choice) {
+        // Get mode value - can be passed as parameter or from hidden input
+        var mode = value || $('#type').val();
         var NewMode;
 
         if (mode === 'php') {
@@ -392,21 +399,30 @@ var dialplanApplicationModify = {
      * @param {object} data - Form data
      */
     populateForm: function(data) {
-        // Set form values, but exclude the type field which we'll handle separately
-        var formData = $.extend({}, data);
-        delete formData.type;
-        Form.$formObj.form('set values', formData);
-        
-        // Set dropdown value explicitly
-        // REST API always provides a type value (default 'php' for new records)
-        dialplanApplicationModify.$typeSelectDropDown.dropdown('set selected', data.type);
-        
-        if (Form.enableDirrity) {
-            Form.initializeDirrity();
-        }
-        
-        // Auto-resize textarea after data is populated
-        FormElements.optimizeTextareaSize('textarea[name="description"]');
+        // Use unified silent population approach
+        Form.populateFormSilently(data, {
+            beforePopulate: (formData) => {
+                // Initialize dropdown if not already done
+                if (!$('#type-dropdown').length) {
+                    DynamicDropdownBuilder.buildDropdown('type', formData, {
+                        staticOptions: [
+                            { value: 'php', text: globalTranslate.da_TypePhp },
+                            { value: 'plaintext', text: globalTranslate.da_TypePlaintext }
+                        ],
+                        placeholder: globalTranslate.da_SelectType,
+                        onChange: dialplanApplicationModify.changeAceMode
+                    });
+                }
+            },
+            afterPopulate: (formData) => {
+                if (Form.enableDirrity) {
+                    Form.initializeDirrity();
+                }
+                
+                // Auto-resize textarea after data is populated
+                FormElements.optimizeTextareaSize('textarea[name="description"]');
+            }
+        });
     }
 };
 

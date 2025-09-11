@@ -28,15 +28,18 @@ class DialplanApplicationsController extends BaseController
     }
 
     /**
-     * Edit dialplan application details
+     * Edit dialplan application details with copy support
      * 
      * Simplified controller - all data loading is handled by JavaScript via REST API.
-     * This only provides the basic form structure without REST API calls.
+     * This only provides the basic form structure and copy mode information.
      *
      * @param string $uniqid The unique identifier of the dialplan application
      */
     public function modifyAction(string $uniqid = ''): void
     {
+        // Check for copy mode
+        $copyFromId = $this->request->getQuery('copy');
+        
         // Create empty form structure - JavaScript will populate everything via REST API
         $emptyApplication = new \stdClass();
         $emptyApplication->id = '';
@@ -51,9 +54,10 @@ class DialplanApplicationsController extends BaseController
         // Create form with minimal structure
         $form = new DialplanApplicationEditForm($emptyApplication);
         
-        // Pass only essential data - JavaScript handles everything else
+        // Pass form and copy mode information to JavaScript
         $this->view->form = $form;
         $this->view->uniqid = $uniqid ?: '';
+        $this->view->copyFromId = $copyFromId ?: '';
     }
 
     /**

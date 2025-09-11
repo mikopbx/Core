@@ -87,9 +87,11 @@ const queueTable = {
                             // Get strategy description
                             const strategyDesc = queueTable.getStrategyDescription(row.strategy);
                             
-                            // SECURITY: Sanitize member representations allowing safe icons
+                            // Member representations need proper sanitization
                             const membersList = data.map(member => {
-                                return SecurityUtils.sanitizeExtensionsApiContent(member.represent || member.extension);
+                                // Safely sanitize member representation with icon support
+                                const representation = member.represent || member.extension;
+                                return SecurityUtils.sanitizeExtensionsApiContent(representation);
                             }).join('<br>');
 
                             // Create searchable content with member extensions and names

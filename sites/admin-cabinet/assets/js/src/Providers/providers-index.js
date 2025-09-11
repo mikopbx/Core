@@ -55,7 +55,7 @@ const providers = {
             apiModule: ProvidersAPI,
             routePrefix: 'providers',
             showSuccessMessages: false,
-            actionButtons: ['edit', 'delete'], // No copy button for providers
+            actionButtons: ['edit', 'copy', 'delete'], // Include copy button for providers
             ajaxData: {
                 includeDisabled: 'true'  // Always include disabled providers in admin panel
             },
@@ -103,8 +103,8 @@ const providers = {
                     className: 'collapsing',
                     render(data, type, row) {
                         if (type === 'display') {
-                            // Use SecurityUtils.sanitizeExtensionsApiContent to allow safe HTML rendering
-                            const safeRepresentation = window.SecurityUtils.sanitizeExtensionsApiContent(data || '');
+                            // Use SecurityUtils.sanitizeForDisplay with less strict mode for provider icons
+                            const safeRepresentation = window.SecurityUtils.sanitizeForDisplay(data || '', false);
                             
                             return `<span>${safeRepresentation}</span><br><span class="features failure"></span>`;
                         }

@@ -36,7 +36,7 @@ class ProvidersController extends BaseController
     }
 
     /**
-     * Opens the SIP provider card for editing or creating.
+     * Opens the SIP provider card for editing or creating with copy support.
      * Creates form structure with empty data, actual values loaded via REST API
      *
      * @param string $uniqId Provider unique identifier (empty for new provider)
@@ -48,7 +48,7 @@ class ProvidersController extends BaseController
     }
 
     /**
-     * Opens the IAX provider card for editing or creating.
+     * Opens the IAX provider card for editing or creating with copy support.
      * Creates form structure with empty data, actual values loaded via REST API
      *
      * @param string $uniqId Provider unique identifier (empty for new provider)
@@ -60,13 +60,16 @@ class ProvidersController extends BaseController
     }
     
     /**
-     * Common setup logic for SIP and IAX provider modification views
+     * Common setup logic for SIP and IAX provider modification views with copy support
      * 
      * @param string $type Provider type (SIP or IAX)
      * @param string $uniqId Provider unique identifier
      */
     private function setupModifyView(string $type, string $uniqId): void
     {
+        // Check for copy mode
+        $copyFromId = $this->request->getQuery('copy');
+        
         $options = ['note' => ''];
         
         if ($type === 'SIP') {
@@ -93,6 +96,7 @@ class ProvidersController extends BaseController
         $this->view->uniqid = $uniqId;
         $this->view->represent = '';
         $this->view->providerType = $type;
+        $this->view->copyFromId = $copyFromId ?: '';
     }
 
     /**
