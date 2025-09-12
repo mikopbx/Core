@@ -314,7 +314,9 @@ const AsteriskRestUsersAPI = {
      */
     deleteRecord(id, callback) {
         if (!id) {
-            callback({ success: false, messages: { error: ['ID is required'] } });
+            if (callback) {
+                callback({ success: false, messages: { error: ['ID is required'] } });
+            }
             return;
         }
 
@@ -326,13 +328,19 @@ const AsteriskRestUsersAPI = {
             method: 'DELETE',
             successTest: PbxApi.successTest,
             onSuccess: (response) => {
-                callback(response);
+                if (callback) {
+                    callback(response);
+                }
             },
             onFailure: (response) => {
-                callback(response);
+                if (callback) {
+                    callback(response);
+                }
             },
             onError: (response) => {
-                callback({ success: false, messages: { error: ['Network error'] } });
+                if (callback) {
+                    callback({ success: false, messages: { error: ['Network error'] } });
+                }
             }
         });
     },

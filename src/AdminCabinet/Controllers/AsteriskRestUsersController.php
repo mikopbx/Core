@@ -46,45 +46,12 @@ class AsteriskRestUsersController extends BaseController
      * @param string|null $id User ID
      */
     public function modifyAction($id = null): void
-    {
-        // Create empty object for new record
-        $record = new AsteriskRestUsers();
-        
-        // For existing records, data will be loaded via JavaScript
-        if ($id && $id !== 'new') {
-            $record->id = $id;
-        }
-        
+    { 
         // Create form
-        $form = new AsteriskRestUserEditForm($record);
+        $form = new AsteriskRestUserEditForm();
         
         // Pass data to view
         $this->view->form = $form;
-        $this->view->id = $id ?? '';
-        $this->view->represent = !$id 
-            ? $this->translation->_('ari_NewUser') 
-            : $this->translation->_('ari_EditUser');
-        
-        // Get network filters for dropdown
-        $networkFilters = NetworkFilters::find();
-        $networkFiltersList = [
-            'none' => $this->translation->_('ari_NetworkFilterNone')
-        ];
-        
-        foreach ($networkFilters as $filter) {
-            $networkFiltersList[$filter->id] = $filter->getRepresent();
-        }
-        
-        $this->view->networkFilters = $networkFiltersList;
     }
     
-    /**
-     * This action is not used anymore as saving is done via REST API v3
-     * Kept for backwards compatibility
-     */
-    public function saveAction(): void
-    {
-        // Redirect to index
-        $this->forward('asterisk-rest-users/index');
-    }
 }

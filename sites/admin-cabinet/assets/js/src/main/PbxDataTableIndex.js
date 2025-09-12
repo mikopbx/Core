@@ -400,7 +400,7 @@ class PbxDataTableIndex {
             $button.addClass('loading disabled');
             
             if (this.customDeleteHandler) {
-                this.customDeleteHandler(recordId);
+                this.customDeleteHandler(recordId, (response) => this.cbAfterDeleteRecord(response));
             } else {
                 this.apiModule.deleteRecord(recordId, (response) => this.cbAfterDeleteRecord(response));
             }

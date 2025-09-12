@@ -50,6 +50,11 @@ class AsteriskRestUserEditForm extends BaseForm
         
         // Password field
         $this->add(new Text('password', [
+            'id' => 'password',
+            'type' => 'password',
+            'value' => '',
+            'autocomplete' => 'new-password',
+            'data-no-password-manager' => 'true',
             'placeholder' => $this->translation->_('ari_PasswordPlaceholder'),
         ]));
         

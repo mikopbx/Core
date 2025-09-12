@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, Form, AsteriskRestUsersAPI, UserMessage, PasswordWidget, ClipboardJS */
+/* global globalRootUrl, globalTranslate, Form, AsteriskRestUsersAPI, UserMessage, PasswordWidget, ClipboardJS, AsteriskRestUserTooltipManager */
 
 /**
  * AsteriskRestUserModify module.
@@ -126,15 +126,15 @@ const AsteriskRestUserModify = {
      * @param {Object} data - ARI user data for initialization
      */
     initializeFormElements(data = {}) {
-        // Initialize applications dropdown (multi-select)
-        this.$applications.dropdown({
-            allowAdditions: true,
-            forceSelection: false,
-            placeholder: globalTranslate.ari_ApplicationsPlaceholder
-        });
+        // Setup username availability check
+        this.setupUsernameCheck();
         
-        // Load available Stasis applications
-        this.loadStasisApplications();
+        // Initialize tooltips for form fields
+        // Get server IP from page if available
+        const serverIP = window.location.hostname || 'your-server-ip';
+        if (typeof AsteriskRestUserTooltipManager !== 'undefined') {
+            AsteriskRestUserTooltipManager.initialize(serverIP);
+        }
         
         // Initialize clipboard for copy button that will be created by widget
         setTimeout(() => {
@@ -156,9 +156,6 @@ const AsteriskRestUserModify = {
                 console.error('Trigger:', e.trigger);
             });
         }, 200); // Delay to ensure widget buttons are created
-        
-        // Initialize username availability check
-        this.setupUsernameCheck();
     },
     
     /**
@@ -256,10 +253,19 @@ const AsteriskRestUserModify = {
                 }
             },
             afterPopulate: (formData) => {
-                // Set applications after form is populated
-                if (data.applications && data.applications.length > 0) {
-                    AsteriskRestUserModify.$applications.dropdown('set selected', data.applications);
-                }
+                // Initialize applications dropdown after form is populated
+                AsteriskRestUserModify.$applications.dropdown({
+                    allowAdditions: true,
+                    forceSelection: false,
+                    placeholder: globalTranslate.ari_ApplicationsPlaceholder,
+                    onChange: (value) => {
+                        // Trigger form change when applications are modified
+                        Form.dataChanged();
+                    }
+                });
+                
+                // Load available Stasis applications  
+                AsteriskRestUserModify.loadStasisApplications(data.applications);
                 
                 // Update clipboard button with current password if PasswordWidget created it
                 if (data.password) {
@@ -273,8 +279,9 @@ const AsteriskRestUserModify = {
     
     /**
      * Load available Stasis applications.
+     * @param {Array} selectedApps - Currently selected applications from API
      */
-    loadStasisApplications() {
+    loadStasisApplications(selectedApps = []) {
         // Set some common applications as suggestions
         const commonApps = [
             'stasis',
@@ -284,13 +291,22 @@ const AsteriskRestUserModify = {
             'channel-spy'
         ];
         
-        const values = commonApps.map(app => ({
+        // Merge selected apps with common apps to ensure all are available
+        const allApps = [...new Set([...commonApps, ...selectedApps])];
+        
+        const values = allApps.map(app => ({
             name: app,
-            value: app
+            value: app,
+            selected: selectedApps.includes(app)
         }));
         
         // Add to dropdown as suggestions
-        this.$applications.dropdown('change values', values);
+        this.$applications.dropdown('setup menu', { values });
+        
+        // If there are selected apps, set them
+        if (selectedApps && selectedApps.length > 0) {
+            this.$applications.dropdown('set selected', selectedApps);
+        }
     },
     
     /**

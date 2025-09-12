@@ -77,4 +77,42 @@ return [
     'ari_SettingsEnabled' => 'ARI включен',
     'ari_SettingsAllowedOrigins' => 'Разрешенные источники CORS',
     'ari_SettingsAllowedOriginsHelp' => 'Список доменов для CORS (через запятую). Используйте * для разрешения всех источников.',
+    
+    // Connection info summary
+    'ari_ConnectionInfoSummary' => 'Используйте учетные данные пользователя для подключения к ARI через WebSocket или REST API',
+    
+    // Tooltips for Applications field
+    'ari_ApplicationsTooltip_header' => 'Stasis приложения',
+    'ari_ApplicationsTooltip_desc' => 'Укажите имена Stasis приложений, к которым имеет доступ пользователь',
+    'ari_ApplicationsTooltip_usage_header' => 'Использование',
+    'ari_ApplicationsTooltip_usage_desc' => 'Оставьте поле пустым для доступа ко всем приложениям. Укажите конкретные приложения для ограничения доступа.',
+    'ari_ApplicationsTooltip_common_header' => 'Распространенные приложения',
+    'ari_ApplicationsTooltip_common_ari_app' => 'Основное приложение для ARI',
+    'ari_ApplicationsTooltip_common_stasis' => 'Базовое Stasis приложение',
+    'ari_ApplicationsTooltip_common_external_media' => 'Работа с внешними медиа-потоками',
+    'ari_ApplicationsTooltip_common_bridge_app' => 'Управление мостами вызовов',
+    'ari_ApplicationsTooltip_common_channel_spy' => 'Прослушивание каналов',
+    'ari_ApplicationsTooltip_warning_header' => 'Внимание',
+    'ari_ApplicationsTooltip_warning' => 'Ограничение доступа к приложениям влияет на функциональность ARI клиента',
+    'ari_ApplicationsTooltip_note' => 'Вы можете добавить собственные имена приложений, введя их в поле',
+    
+    // Tooltips for Connection Info
+    'ari_ConnectionInfoTooltip_header' => 'Параметры подключения',
+    'ari_ConnectionInfoTooltip_desc' => 'Используйте эти параметры для настройки подключения к Asterisk REST Interface',
+    'ari_ConnectionInfoTooltip_websocket_header' => 'WebSocket подключение',
+    'ari_ConnectionInfoTooltip_websocket_url' => 'Обычный WebSocket',
+    'ari_ConnectionInfoTooltip_websocket_secure' => 'Защищенный WebSocket (TLS)',
+    'ari_ConnectionInfoTooltip_rest_header' => 'REST API',
+    'ari_ConnectionInfoTooltip_rest_url' => 'HTTP endpoint',
+    'ari_ConnectionInfoTooltip_rest_secure' => 'HTTPS endpoint',
+    'ari_ConnectionInfoTooltip_auth_header' => 'Аутентификация',
+    'ari_ConnectionInfoTooltip_auth_desc' => 'Используйте имя пользователя и пароль из этой формы для Basic Authentication',
+    'ari_ConnectionInfoTooltip_examples_header' => 'Пример подключения',
+    'ari_ConnectionInfoTooltip_examples' => '# WebSocket с аутентификацией|ws://username:password@server:8088/ari/events?app=my-app&subscribe=all||# REST API запрос|curl -u username:password http://server:8088/ari/channels',
+    'ari_ConnectionInfoTooltip_note' => 'Замените [application] на имя вашего Stasis приложения',
+    'ari_ConnectionInfoTooltip_server_placeholder' => 'ваш-сервер',
+    
+    // Other tooltips
+    'ari_SystemUserReadOnly' => 'Системный пользователь доступен только для чтения',
+    'ari_ErrorLoadingUser' => 'Ошибка при загрузке данных пользователя',
 ];

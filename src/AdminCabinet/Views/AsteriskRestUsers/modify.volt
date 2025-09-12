@@ -25,7 +25,9 @@
 </div>
 
 <div class="field">
-    <label>{{ t._('ari_Applications') }}</label>
+    <label>{{ t._('ari_Applications') }}
+        <i class="small info circle icon field-info-icon" data-field="applications"></i>
+    </label>
     <div class="ui fluid multiple search selection dropdown" id="applications">
         {{ form.render('applications') }}
         <i class="dropdown icon"></i>
@@ -33,47 +35,14 @@
         <div class="menu">
         </div>
     </div>
-    <div class="ui info message">
-        <p>{{ t._('ari_ApplicationsHelp') }}</p>
-    </div>
 </div>
 
-<div class="ui segment">
-    <h4 class="ui header">
-        <i class="info circle icon"></i>
-        <div class="content">
-            {{ t._('ari_ConnectionInfo') }}
-        </div>
-    </h4>
-    
-    <div class="ui list">
-        <div class="item">
-            <i class="server icon"></i>
-            <div class="content">
-                <div class="header">{{ t._('ari_WebSocketURL') }}</div>
-                <div class="description">
-                    <code>ws://{{ serverIP }}:8088/ari/events?app=[application]&subscribe=all</code>
-                </div>
-            </div>
-        </div>
-        <div class="item">
-            <i class="plug icon"></i>
-            <div class="content">
-                <div class="header">{{ t._('ari_RESTURL') }}</div>
-                <div class="description">
-                    <code>http://{{ serverIP }}:8088/ari/</code>
-                </div>
-            </div>
-        </div>
-        <div class="item">
-            <i class="lock icon"></i>
-            <div class="content">
-                <div class="header">{{ t._('ari_SecureWebSocketURL') }}</div>
-                <div class="description">
-                    <code>wss://{{ serverIP }}:8089/ari/events?app=[application]&subscribe=all</code>
-                </div>
-            </div>
-        </div>
+<div class="field">
+    <label>{{ t._('ari_ConnectionInfo') }}
+        <i class="small info circle icon field-info-icon" data-field="connection_info"></i>
+    </label>
+    <div class="ui segment">
+        <p>{{ t._('ari_ConnectionInfoSummary') }}</p>
     </div>
 </div>
 
