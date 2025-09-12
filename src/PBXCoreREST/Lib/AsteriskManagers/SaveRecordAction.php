@@ -122,9 +122,6 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 return $manager;
             });
 
-            // Reload manager configuration
-            self::reloadAsteriskManager();
-
             $res->success = true;
             $res->data = DataStructure::createFromModel($savedManager);
             
@@ -233,18 +230,105 @@ class SaveRecordAction extends AbstractSaveRecordAction
     }
 
     /**
-     * Reload Asterisk manager configuration.
+     * Process data for saving (used by Create/Update/Patch actions).
+     *
+     * @param AsteriskManagerUsers $manager Manager model
+     * @param array $data Data to process
+     * @param bool $partial Whether this is a partial update (patch)
+     * @return array Result with 'success', 'id', and 'messages' keys
      */
-    private static function reloadAsteriskManager(): void
+    public static function processData(AsteriskManagerUsers $manager, array $data, bool $partial = false): array
     {
-        // Send signal to reload manager configuration
-        $di = \Phalcon\Di\Di::getDefault();
-        if ($di && $di->has('beanstalkConnectionWorkers')) {
-            $queue = $di->get('beanstalkConnectionWorkers');
-            $queue->publish(
-                json_encode(['action' => 'reload', 'module' => 'manager']),
-                'worker_reload_manager'
-            );
+        $result = [
+            'success' => false,
+            'id' => null,
+            'messages' => []
+        ];
+
+        // Define sanitization rules
+        $sanitizationRules = [
+            'username' => 'string|sanitize|max:32',
+            'secret' => 'string|max:64',
+            'description' => 'string|sanitize|max:255|empty_to_null',
+            'networkfilterid' => 'string|max:64|empty_to_null',
+            'permissions' => 'array',
+        ];
+        
+        // Text fields for unified processing
+        $textFields = ['username', 'description'];
+
+        try {
+            // Sanitize input data
+            $sanitizedData = self::sanitizeInputData($data, $sanitizationRules, $textFields);
+            
+            // For full update, validate required fields
+            if (!$partial) {
+                $validationErrors = self::validateRequiredFields(
+                    $sanitizedData,
+                    ['username' => [['type' => 'required', 'message' => 'Username is required']]]
+                );
+                
+                if (!empty($validationErrors)) {
+                    $result['messages']['error'] = $validationErrors;
+                    return $result;
+                }
+            }
+
+            // Check for duplicate username if it's being changed
+            if (isset($sanitizedData['username']) && 
+                !self::checkUsernameUniqueness($sanitizedData['username'], $manager->id)) {
+                $result['messages']['error'][] = "Manager with username '{$sanitizedData['username']}' already exists";
+                return $result;
+            }
+
+            // Save in transaction
+            $savedManager = self::executeInTransaction(function() use ($manager, $sanitizedData, $partial) {
+                // Update fields based on whether it's partial or full update
+                if (!$partial || isset($sanitizedData['username'])) {
+                    $manager->username = $sanitizedData['username'];
+                }
+                
+                // Only update password if provided
+                if (isset($sanitizedData['secret']) && !empty($sanitizedData['secret'])) {
+                    $manager->secret = $sanitizedData['secret'];
+                } elseif (!$partial && empty($manager->secret)) {
+                    // Generate password for new manager if not provided
+                    $manager->secret = AsteriskManagerUsers::generateAMIPassword();
+                }
+
+                // Process permissions if provided
+                if (isset($sanitizedData['permissions'])) {
+                    self::processPermissions($manager, $sanitizedData['permissions']);
+                } elseif (!$partial) {
+                    // Clear all permissions for full update if not provided
+                    self::processPermissions($manager, []);
+                }
+                
+                // Process network filter if provided
+                if (isset($sanitizedData['networkfilterid']) || !$partial) {
+                    self::processNetworkFilter($manager, $sanitizedData);
+                }
+
+                // Set other fields if provided or not partial
+                if (!$partial || isset($sanitizedData['description'])) {
+                    $manager->description = $sanitizedData['description'] ?? '';
+                }
+
+                // Save manager
+                if (!$manager->save()) {
+                    throw new \Exception('Failed to save manager: ' . implode(', ', $manager->getMessages()));
+                }
+                
+                return $manager;
+            });
+
+            $result['success'] = true;
+            $result['id'] = $savedManager->id;
+            
+        } catch (\Exception $e) {
+            $result['messages']['error'][] = $e->getMessage();
         }
+
+        return $result;
     }
 }

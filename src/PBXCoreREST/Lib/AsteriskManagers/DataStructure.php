@@ -225,4 +225,33 @@ class DataStructure extends AbstractDataStructure
         // Show all permissions without truncation
         return implode(', ', $perms);
     }
+
+    /**
+     * Create default data structure for a new AMI manager.
+     * 
+     * @return array
+     */
+    public static function createForNewManager(): array
+    {
+        // Generate secure random password
+        $secret = \MikoPBX\Common\Models\AsteriskManagerUsers::generateAMIPassword();
+        
+        $data = [
+            'id' => '',
+            'username' => '',
+            'secret' => $secret,
+            'read' => '',
+            'write' => '',
+            'description' => '',
+            'networkfilterid' => 'none',
+            'networkfilter_represent' => self::getNetworkFilterRepresentation('none'),
+            'permissions' => self::parsePermissionsToBoolean('', ''),
+            'isSystem' => false
+        ];
+
+        // Handle null values for consistent JSON output
+        $data = self::handleNullValues($data);
+
+        return $data;
+    }
 }

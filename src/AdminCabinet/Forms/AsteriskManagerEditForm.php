@@ -82,7 +82,7 @@ class AsteriskManagerEditForm extends BaseForm
         $this->add(new Text('secret', [
             'id' => 'secret',
             'type' => 'password',
-            'value' => $entity->secret ?? '',
+            'value' => '',
             'autocomplete' => 'new-password',
             'data-no-password-manager' => 'true'
         ]));
@@ -136,7 +136,7 @@ class AsteriskManagerEditForm extends BaseForm
     private function addSpecialFields($entity): void
     {
         // Add text area for Description with auto-resize and 2000 chars limit
-        $this->addTextArea('description', $entity?->description ?? '', 65, [
+        $this->addTextArea('description', '', 65, [
             'maxlength' => 2000
         ]);
     }

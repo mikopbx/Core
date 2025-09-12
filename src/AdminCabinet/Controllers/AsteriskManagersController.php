@@ -20,7 +20,6 @@
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\AsteriskManagerEditForm;
-use MikoPBX\Common\Models\AsteriskManagerUsers;
 
 /**
  * Asterisk Managers Controller
@@ -61,9 +60,7 @@ class AsteriskManagersController extends BaseController
      */
     public function indexAction(): void
     {
-        // Empty arrays - data will be loaded via REST API
-        $this->view->setVar('networkFilters', []);
-        $this->view->setVar('amiUsers', []);
+
     }
 
     /**
@@ -74,49 +71,9 @@ class AsteriskManagersController extends BaseController
      */
     public function modifyAction(string $id = ''): void
     {
-        // V5.0 Architecture: Create empty form, data loaded via REST API
-        $emptyManager = new AsteriskManagerUsers();
-        $form = new AsteriskManagerEditForm($emptyManager);
+        $form = new AsteriskManagerEditForm();
         
         $this->view->form = $form;
-        $this->view->managerId = $id;
-        $this->view->represent = '';
         $this->view->arrCheckBoxes = $this->arrCheckBoxes;
-    }
-
-    /**
-     * Save action - handled by REST API
-     * @deprecated Use REST API v2 instead
-     */
-    public function saveAction(): void
-    {
-        // Redirect to index - actual save is handled by REST API
-        $this->forward('asterisk-managers/index');
-    }
-
-    /**
-     * Delete action - handled by REST API
-     * @deprecated Use REST API v2 instead
-     * 
-     * @param string $amiId Manager ID to delete
-     */
-    public function deleteAction(string $amiId = ''): void
-    {
-        // Redirect to index - actual delete is handled by REST API
-        $this->forward('asterisk-managers/index');
-    }
-
-    /**
-     * Check username availability - handled by REST API
-     * @deprecated Use REST API v2 instead
-     *
-     * @param string $username Username to check
-     */
-    public function availableAction(string $username): void
-    {
-        // This is now handled by REST API
-        // Keep for backward compatibility but return empty result
-        $this->view->setVar('nameAvailable', true);
-        $this->view->setVar('success', true);
-    }
+    }    
 }

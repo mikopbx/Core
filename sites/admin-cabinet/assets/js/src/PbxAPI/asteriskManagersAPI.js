@@ -30,14 +30,12 @@ const AsteriskManagersAPI = {
     endpoint: `${globalRootUrl}api/asterisk-managers`,
     
     /**
-     * API endpoints for REST API v2 integration with PbxDataTableIndex
+     * API endpoints for REST API v3 integration
      * @type {object}
      */
     endpoints: {
-        getList: '/pbxcore/api/v2/asterisk-managers/getList',
-        getRecord: '/pbxcore/api/v2/asterisk-managers/getRecord',
-        saveRecord: '/pbxcore/api/v2/asterisk-managers/saveRecord',
-        deleteRecord: '/pbxcore/api/v2/asterisk-managers/deleteRecord'
+        base: '/pbxcore/api/v3/asterisk-managers',
+        getDefault: '/pbxcore/api/v3/asterisk-managers:getDefault'
     },
 
     /**
@@ -69,7 +67,7 @@ const AsteriskManagersAPI = {
         }
 
         $.api({
-            url: this.endpoints.getList,
+            url: this.endpoints.base,
             on: 'now',
             method: 'GET',
             successTest: PbxApi.successTest,
@@ -91,13 +89,14 @@ const AsteriskManagersAPI = {
     },
 
     /**
-     * Get single Asterisk manager by ID.
+     * Get single Asterisk manager by ID or default values for new manager.
      * 
-     * @param {string} id - Manager ID.
+     * @param {string} id - Manager ID (empty for new manager).
      * @param {function} callback - Callback function to handle the response.
      */
     getRecord(id, callback) {
-        const url = id ? `${this.endpoints.getRecord}/${id}` : this.endpoints.getRecord;
+        // Use getDefault for new managers, or get specific record
+        const url = id ? `${this.endpoints.base}/${id}` : this.endpoints.getDefault;
         
         $.api({
             url: url,
@@ -128,7 +127,7 @@ const AsteriskManagersAPI = {
 
         const isUpdate = data.id && data.id !== '';
         const method = isUpdate ? 'PUT' : 'POST';
-        const url = isUpdate ? `${this.endpoints.saveRecord}/${data.id}` : this.endpoints.saveRecord;
+        const url = isUpdate ? `${this.endpoints.base}/${data.id}` : this.endpoints.base;
 
         $.api({
             url: url,
@@ -159,7 +158,7 @@ const AsteriskManagersAPI = {
         this.clearCache();
 
         $.api({
-            url: `${this.endpoints.deleteRecord}/${id}`,
+            url: `${this.endpoints.base}/${id}`,
             on: 'now',
             method: 'DELETE',
             successTest: PbxApi.successTest,
@@ -175,29 +174,6 @@ const AsteriskManagersAPI = {
         });
     },
 
-    /**
-     * Get copy of manager record for duplication.
-     * 
-     * @param {string} id - Manager ID to copy.
-     * @param {function} callback - Callback function to handle the response.
-     */
-    getCopyRecord(id, callback) {
-        $.api({
-            url: `${this.endpoints.getRecord}?copy-source=${id}`,
-            on: 'now',
-            method: 'GET',
-            successTest: PbxApi.successTest,
-            onSuccess: (response) => {
-                callback(response.data);
-            },
-            onFailure: (response) => {
-                callback(false);
-            },
-            onError: () => {
-                callback(false);
-            }
-        });
-    },
 
     /**
      * Get managers for dropdown/select.

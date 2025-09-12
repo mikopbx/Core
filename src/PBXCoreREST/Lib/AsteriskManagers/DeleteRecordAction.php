@@ -98,20 +98,4 @@ class DeleteRecordAction extends AbstractDeleteAction
 
         return $res;
     }
-
-    /**
-     * Reload Asterisk manager configuration.
-     */
-    private static function reloadAsteriskManager(): void
-    {
-        // Send signal to reload manager configuration
-        $di = \Phalcon\Di\Di::getDefault();
-        if ($di && $di->has('beanstalkConnectionWorkers')) {
-            $queue = $di->get('beanstalkConnectionWorkers');
-            $queue->publish(
-                json_encode(['action' => 'reload', 'module' => 'manager']),
-                'worker_reload_manager'
-            );
-        }
-    }
 }
