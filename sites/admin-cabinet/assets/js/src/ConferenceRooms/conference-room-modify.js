@@ -121,15 +121,29 @@ const conferenceRoomModify = {
     initializeForm() {
         const recordId = conferenceRoomModify.getRecordId();
         
-        ConferenceRoomsAPI.getRecord(recordId, (response) => {
-            if (response.result) {
-                conferenceRoomModify.populateForm(response.data);
-                // Get the default extension from the form
-                conferenceRoomModify.defaultExtension = conferenceRoomModify.$formObj.form('get value', 'extension');
-            } else {
-                UserMessage.showError(response.messages?.error || 'Failed to load conference room data');
-            }
-        });
+        if (!recordId || recordId === '') {
+            // New record - get default values
+            ConferenceRoomsAPI.getDefault((response) => {
+                if (response.result) {
+                    conferenceRoomModify.populateForm(response.data);
+                    // Get the default extension from the form
+                    conferenceRoomModify.defaultExtension = conferenceRoomModify.$formObj.form('get value', 'extension');
+                } else {
+                    UserMessage.showError(response.messages?.error || 'Failed to load default conference room data');
+                }
+            });
+        } else {
+            // Existing record - get by ID
+            ConferenceRoomsAPI.getRecord(recordId, (response) => {
+                if (response.result) {
+                    conferenceRoomModify.populateForm(response.data);
+                    // Get the default extension from the form
+                    conferenceRoomModify.defaultExtension = conferenceRoomModify.$formObj.form('get value', 'extension');
+                } else {
+                    UserMessage.showError(response.messages?.error || 'Failed to load conference room data');
+                }
+            });
+        }
     },
     
     /**

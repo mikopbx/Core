@@ -19,39 +19,56 @@
 /* global globalRootUrl, PbxApi, globalTranslate */
 
 /**
- * ConferenceRoomsAPI - REST API for conference room management
+ * ConferenceRoomsAPI - REST API for conference room management (v3)
  * 
- * Uses unified approach with centralized endpoint definitions.
- * This provides:
- * - Single point of API URL management
- * - Easy API version switching (v2 -> v3)
- * - Consistent endpoint usage throughout code
- * - Simplified debugging and support
+ * RESTful implementation following standard HTTP verbs and resource-oriented URLs.
+ * Supports both standard CRUD operations and custom methods.
  */
 const ConferenceRoomsAPI = {
     /**
-     * API endpoints
+     * API endpoints (v3)
      */
-    apiUrl: `${Config.pbxUrl}/pbxcore/api/v2/conference-rooms/`,
+    baseUrl: `${Config.pbxUrl}/pbxcore/api/v3/conference-rooms`,
     
-    // Endpoint definitions for unification
+    /**
+     * Endpoint definitions for PbxDataTableIndex compatibility
+     */
     endpoints: {
-        getList: `${Config.pbxUrl}/pbxcore/api/v2/conference-rooms/getList`,
-        getRecord: `${Config.pbxUrl}/pbxcore/api/v2/conference-rooms/getRecord`,
-        saveRecord: `${Config.pbxUrl}/pbxcore/api/v2/conference-rooms/saveRecord`,
-        deleteRecord: `${Config.pbxUrl}/pbxcore/api/v2/conference-rooms/deleteRecord`
+        getList: `${Config.pbxUrl}/pbxcore/api/v3/conference-rooms`,
+        getRecord: `${Config.pbxUrl}/pbxcore/api/v3/conference-rooms`,
+        saveRecord: `${Config.pbxUrl}/pbxcore/api/v3/conference-rooms`,
+        deleteRecord: `${Config.pbxUrl}/pbxcore/api/v3/conference-rooms`
+    },
+    
+    /**
+     * Get default values for new conference room
+     * @param {function} callback - Callback function
+     */
+    getDefault(callback) {
+        $.api({
+            url: `${this.baseUrl}:getDefault`,
+            method: 'GET',
+            on: 'now',
+            onSuccess(response) {
+                callback(response);
+            },
+            onFailure(response) {
+                callback(response);
+            },
+            onError() {
+                callback({result: false, messages: {error: 'Network error'}});
+            }
+        });
     },
     
     /**
      * Get record by ID
-     * @param {string} id - Record ID or empty string for new
+     * @param {string} id - Record ID
      * @param {function} callback - Callback function
      */
     getRecord(id, callback) {
-        const recordId = (!id || id === '') ? 'new' : id;
-        
         $.api({
-            url: `${this.endpoints.getRecord}/${recordId}`,
+            url: `${this.baseUrl}/${id}`,
             method: 'GET',
             on: 'now',
             onSuccess(response) {
@@ -68,12 +85,20 @@ const ConferenceRoomsAPI = {
     
     /**
      * Get list of all records
+     * @param {object} params - Query parameters (limit, offset, search)
      * @param {function} callback - Callback function
      */
-    getList(callback) {
+    getList(params, callback) {
+        // If params is a function, it's the callback (backward compatibility)
+        if (typeof params === 'function') {
+            callback = params;
+            params = {};
+        }
+        
         $.api({
-            url: this.endpoints.getList,
+            url: this.baseUrl,
             method: 'GET',
+            data: params,
             on: 'now',
             onSuccess(response) {
                 callback(response);
@@ -88,29 +113,14 @@ const ConferenceRoomsAPI = {
     },
     
     /**
-     * Save record
+     * Create new record
      * @param {object} data - Data to save
      * @param {function} callback - Callback function
      */
-    saveRecord(data, callback) {
-        // Check if this is a new record using the _isNew flag passed from form
-        const isNew = data._isNew === true;
-        
-        // Remove the flag before sending to server
-        if (data._isNew !== undefined) {
-            delete data._isNew;
-        }
-        
-        // For new records use POST, for existing use PUT
-        // Don't rely on data.id since it's always present now (contains uniqid)
-        const method = isNew ? 'POST' : 'PUT';
-        const url = isNew ? 
-            this.endpoints.saveRecord : 
-            `${this.endpoints.saveRecord}/${data.id}`;
-        
+    createRecord(data, callback) {
         $.api({
-            url: url,
-            method: method,
+            url: this.baseUrl,
+            method: 'POST',
             data: data,
             on: 'now',
             onSuccess(response) {
@@ -126,16 +136,17 @@ const ConferenceRoomsAPI = {
     },
     
     /**
-     * Delete record
+     * Update existing record (full update)
      * @param {string} id - Record ID
+     * @param {object} data - Data to update
      * @param {function} callback - Callback function
      */
-    deleteRecord(id, callback) {
+    updateRecord(id, data, callback) {
         $.api({
-            url: `${this.endpoints.deleteRecord}/${id}`,
+            url: `${this.baseUrl}/${id}`,
+            method: 'PUT',
+            data: data,
             on: 'now',
-            method: 'DELETE',
-            successTest: PbxApi.successTest,
             onSuccess(response) {
                 callback(response);
             },
@@ -143,7 +154,73 @@ const ConferenceRoomsAPI = {
                 callback(response);
             },
             onError() {
-                callback(false);
+                callback({result: false, messages: {error: 'Network error'}});
+            }
+        });
+    },
+    
+    /**
+     * Partially update record
+     * @param {string} id - Record ID
+     * @param {object} data - Partial data to update
+     * @param {function} callback - Callback function
+     */
+    patchRecord(id, data, callback) {
+        $.api({
+            url: `${this.baseUrl}/${id}`,
+            method: 'PATCH',
+            data: data,
+            on: 'now',
+            onSuccess(response) {
+                callback(response);
+            },
+            onFailure(response) {
+                callback(response);
+            },
+            onError() {
+                callback({result: false, messages: {error: 'Network error'}});
+            }
+        });
+    },
+    
+    /**
+     * Save record (create or update based on isNew flag)
+     * This method provides backward compatibility with existing forms
+     * @param {object} data - Data to save
+     * @param {function} callback - Callback function
+     */
+    saveRecord(data, callback) {
+        // Check if this is a new record
+        const isNew = data.isNew === '1' || data.isNew === true || !data.id || data.id === '';
+        
+        if (isNew) {
+            // Create new record
+            this.createRecord(data, callback);
+        } else {
+            // Update existing record
+            this.updateRecord(data.id, data, callback);
+        }
+    },
+    
+    /**
+     * Delete record
+     * @param {string} id - Record ID
+     * @param {function} callback - Callback function
+     */
+    deleteRecord(id, callback) {
+        $.api({
+            url: `${this.baseUrl}/${id}`,
+            on: 'now',
+            method: 'DELETE',
+            successTest: PbxApi.successTest,
+            onSuccess(response) {
+                if (callback) callback(response);
+            },
+            onFailure(response) {
+                if (callback) callback(response);
+            },
+            onError() {
+                if (callback) callback(false);
             }
         });
     }

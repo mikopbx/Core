@@ -19,31 +19,52 @@
 
 namespace MikoPBX\PBXCoreREST\Lib;
 
-use MikoPBX\PBXCoreREST\Lib\ConferenceRooms\{
-    GetRecordAction,
-    GetListAction,
-    SaveRecordAction,
-    DeleteRecordAction
-};
+use MikoPBX\PBXCoreREST\Lib\ConferenceRooms\GetRecordAction;
+use MikoPBX\PBXCoreREST\Lib\ConferenceRooms\GetListAction;
+use MikoPBX\PBXCoreREST\Lib\ConferenceRooms\GetDefaultAction;
+use MikoPBX\PBXCoreREST\Lib\ConferenceRooms\CreateRecordAction;
+use MikoPBX\PBXCoreREST\Lib\ConferenceRooms\UpdateRecordAction;
+use MikoPBX\PBXCoreREST\Lib\ConferenceRooms\PatchRecordAction;
+use MikoPBX\PBXCoreREST\Lib\ConferenceRooms\DeleteRecordAction;
 use Phalcon\Di\Injectable;
+
+/**
+ * Available actions for conference rooms management
+ */
+enum ConferenceRoomAction: string
+{
+    // Standard CRUD operations
+    case GET_LIST = 'getList';
+    case GET_RECORD = 'getRecord';
+    case GET_DEFAULT = 'getDefault';
+    case CREATE = 'create';
+    case UPDATE = 'update';
+    case PATCH = 'patch';
+    case DELETE = 'delete';
+}
 
 /**
  * Conference rooms management processor
  *
- * Handles all conference room management operations including:
- * - getRecord: Get single conference room by ID or create new structure
- * - getList: Get list of all conference rooms
- * - saveRecord: Create or update conference room
- * - deleteRecord: Delete conference room
+ * Handles all conference room management operations using RESTful CRUD operations (v3 API)
+ * 
+ * RESTful API mapping:
+ * - GET /conference-rooms         -> getList
+ * - GET /conference-rooms/{id}    -> getRecord
+ * - GET /conference-rooms:getDefault -> getDefault
+ * - POST /conference-rooms        -> create
+ * - PUT /conference-rooms/{id}    -> update
+ * - PATCH /conference-rooms/{id}  -> patch
+ * - DELETE /conference-rooms/{id} -> delete
  * 
  * @package MikoPBX\PBXCoreREST\Lib
  */
 class ConferenceRoomsManagementProcessor extends Injectable
 {
     /**
-     * Processes conference room management requests
+     * Processes conference room management requests with type-safe enum matching
      *
-     * @param array $request Request data with 'action' and 'data' fields
+     * @param array<string, mixed> $request Request data with 'action' and 'data' fields
      * @return PBXApiResult API response object with success status and data
      */
     public static function callBack(array $request): PBXApiResult
@@ -51,36 +72,31 @@ class ConferenceRoomsManagementProcessor extends Injectable
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
 
-        $action = $request['action'];
+        $actionString = $request['action'];
         $data = $request['data'];
         
-        switch ($action) {
-            case 'getRecord':
-                $recordId = $data['id'] ?? null;
-                $res = GetRecordAction::main($recordId);
-                break;
-                
-            case 'getList':
-                $res = GetListAction::main($data);
-                break;
-                
-            case 'saveRecord':
-                $res = SaveRecordAction::main($data);
-                break;
-                
-            case 'deleteRecord':
-                if (!empty($data['id'])) {
-                    $res = DeleteRecordAction::main($data['id']);
-                } else {
-                    $res->messages['error'][] = 'Empty ID in request data';
-                }
-                break;
-                
-            default:
-                $res->messages['error'][] = "Unknown action - $action in " . __CLASS__;
+        // Type-safe action matching with enum
+        $action = ConferenceRoomAction::tryFrom($actionString);
+        
+        if ($action === null) {
+            $res->messages['error'][] = "Unknown action - $actionString in " . __CLASS__;
+            $res->function = $actionString;
+            return $res;
         }
+        
+        // Execute action using match expression (PHP 8)
+        $res = match ($action) {
+            // Standard CRUD operations
+            ConferenceRoomAction::GET_LIST => GetListAction::main($data),
+            ConferenceRoomAction::GET_RECORD => GetRecordAction::main($data['id'] ?? null),
+            ConferenceRoomAction::GET_DEFAULT => GetDefaultAction::main(),
+            ConferenceRoomAction::CREATE => CreateRecordAction::main($data),
+            ConferenceRoomAction::UPDATE => UpdateRecordAction::main($data),
+            ConferenceRoomAction::PATCH => PatchRecordAction::main($data),
+            ConferenceRoomAction::DELETE => DeleteRecordAction::main($data['id'] ?? ''),
+        };
 
-        $res->function = $action;
+        $res->function = $actionString;
         return $res;
     }
 }

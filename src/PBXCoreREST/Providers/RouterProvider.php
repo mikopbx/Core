@@ -61,10 +61,7 @@ use MikoPBX\PBXCoreREST\Controllers\
     DialplanApplications\PostController as DialplanApplicationsPostController,
     DialplanApplications\PutController as DialplanApplicationsPutController,
     DialplanApplications\DeleteController as DialplanApplicationsDeleteController,
-    ConferenceRooms\GetController as ConferenceRoomsGetController,
-    ConferenceRooms\PostController as ConferenceRoomsPostController,
-    ConferenceRooms\PutController as ConferenceRoomsPutController,
-    ConferenceRooms\DeleteController as ConferenceRoomsDeleteController,
+    ConferenceRooms\RestController as ConferenceRoomsRestController,
     IncomingRoutes\GetController as IncomingRoutesGetController,
     IncomingRoutes\PostController as IncomingRoutesPostController,
     IncomingRoutes\PutController as IncomingRoutesPutController,
@@ -90,10 +87,7 @@ use MikoPBX\PBXCoreREST\Controllers\
     Providers\PostController as ProvidersPostController,
     Providers\PutController as ProvidersPutController,
     Providers\DeleteController as ProvidersDeleteController,
-    AsteriskManagers\GetController as AsteriskManagersGetController,
-    AsteriskManagers\PostController as AsteriskManagersPostController,
-    AsteriskManagers\PutController as AsteriskManagersPutController,
-    AsteriskManagers\DeleteController as AsteriskManagersDeleteController,
+    AsteriskManagers\RestController as AsteriskManagersRestController,
     NetworkFilters\GetController as NetworkFiltersGetController,
     NetworkFilters\PostController as NetworkFiltersPostController,
     GeneralSettings\GetController as GeneralSettingsGetController,
@@ -246,6 +240,18 @@ class RouterProvider implements ServiceProviderInterface
             [ApiKeysRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/api-keys', 'put', '/{id:[0-9]+}'],
             [ApiKeysRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/api-keys', 'patch', '/{id:[0-9]+}'],
             [ApiKeysRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/api-keys', 'delete', '/{id:[0-9]+}'],
+            
+            // v3 Conference Rooms RESTful API endpoints
+            // Custom methods with colon notation
+            [ConferenceRoomsRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/conference-rooms', 'get', ':{customMethod:[a-zA-Z]+}'],
+            
+            // Standard CRUD operations
+            [ConferenceRoomsRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/conference-rooms', 'get', '/'],
+            [ConferenceRoomsRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/conference-rooms', 'get', '/{id:[a-zA-Z0-9\-]+}'],
+            [ConferenceRoomsRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/conference-rooms', 'post', '/'],
+            [ConferenceRoomsRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/conference-rooms', 'put', '/{id:[a-zA-Z0-9\-]+}'],
+            [ConferenceRoomsRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/conference-rooms', 'patch', '/{id:[a-zA-Z0-9\-]+}'],
+            [ConferenceRoomsRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/conference-rooms', 'delete', '/{id:[a-zA-Z0-9\-]+}'],
 
             [CallQueuesGetController::class, 'callAction', '/pbxcore/api/v2/call-queues/{actionName}', 'get', '/'],
             [CallQueuesGetController::class, 'callAction', '/pbxcore/api/v2/call-queues/{actionName}/{id:[a-zA-Z0-9\-]+}', 'get', '/'],
@@ -259,12 +265,6 @@ class RouterProvider implements ServiceProviderInterface
             [IvrMenuPutController::class, 'callAction', '/pbxcore/api/v2/ivr-menu/{actionName}/{id:[a-zA-Z0-9\-]+}', 'put', '/'],
             [IvrMenuDeleteController::class, 'callAction', '/pbxcore/api/v2/ivr-menu/{actionName}/{id:[a-zA-Z0-9\-]+}', 'delete', '/'],
             
-            [ConferenceRoomsGetController::class, 'callAction', '/pbxcore/api/v2/conference-rooms/{actionName}', 'get', '/'],
-            [ConferenceRoomsGetController::class, 'callAction', '/pbxcore/api/v2/conference-rooms/{actionName}/{id:[a-zA-Z0-9\-]+}', 'get', '/'],
-            [ConferenceRoomsPostController::class, 'callAction', '/pbxcore/api/v2/conference-rooms/{actionName}', 'post', '/'],
-            [ConferenceRoomsPutController::class, 'callAction', '/pbxcore/api/v2/conference-rooms/{actionName}/{id:[a-zA-Z0-9\-]+}', 'put', '/'],
-            [ConferenceRoomsDeleteController::class, 'callAction', '/pbxcore/api/v2/conference-rooms/{actionName}/{id:[a-zA-Z0-9\-]+}', 'delete', '/'],
-
             [DialplanApplicationsGetController::class, 'callAction', '/pbxcore/api/v2/dialplan-applications/{actionName}', 'get', '/'],
             [DialplanApplicationsGetController::class, 'callAction', '/pbxcore/api/v2/dialplan-applications/{actionName}/{id:[a-zA-Z0-9\-]+}', 'get', '/'],
             [DialplanApplicationsPostController::class, 'callAction', '/pbxcore/api/v2/dialplan-applications/{actionName}', 'post', '/'],
@@ -348,12 +348,19 @@ class RouterProvider implements ServiceProviderInterface
             [NetworkFiltersGetController::class, 'callAction', '/pbxcore/api/v2/network-filters/{actionName}', 'get', '/'],
             [NetworkFiltersPostController::class, 'callAction', '/pbxcore/api/v2/network-filters/{actionName}', 'post', '/'],
 
-            // AsteriskManagers v2 routes
-            [AsteriskManagersGetController::class, 'callAction', '/pbxcore/api/v2/asterisk-managers/{actionName}', 'get', '/'],
-            [AsteriskManagersGetController::class, 'callAction', '/pbxcore/api/v2/asterisk-managers/{actionName}/{id:[a-zA-Z0-9\-]+}', 'get', '/'],
-            [AsteriskManagersPostController::class, 'callAction', '/pbxcore/api/v2/asterisk-managers/{actionName}', 'post', '/'],
-            [AsteriskManagersPutController::class, 'callAction', '/pbxcore/api/v2/asterisk-managers/{actionName}/{id:[a-zA-Z0-9\-]+}', 'put', '/'],
-            [AsteriskManagersDeleteController::class, 'callAction', '/pbxcore/api/v2/asterisk-managers/{actionName}/{id:[a-zA-Z0-9\-]+}', 'delete', '/'],
+            // v3 Asterisk Managers RESTful API endpoints
+            // Custom methods with colon notation (Google API Design Guide) - must be before standard routes
+            [AsteriskManagersRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/asterisk-managers', 'get', ':{customMethod:[a-zA-Z]+}'],
+            [AsteriskManagersRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/asterisk-managers', 'post', ':{customMethod:[a-zA-Z]+}'],
+            [AsteriskManagersRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/asterisk-managers', 'post', '/{id:[0-9]+}:{customMethod:[a-zA-Z]+}'],
+            
+            // Standard CRUD operations
+            [AsteriskManagersRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/asterisk-managers', 'get', '/'],
+            [AsteriskManagersRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/asterisk-managers', 'get', '/{id:[0-9]+}'],
+            [AsteriskManagersRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/asterisk-managers', 'post', '/'],
+            [AsteriskManagersRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/asterisk-managers', 'put', '/{id:[0-9]+}'],
+            [AsteriskManagersRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/asterisk-managers', 'patch', '/{id:[0-9]+}'],
+            [AsteriskManagersRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/asterisk-managers', 'delete', '/{id:[0-9]+}'],
 
             // v3 AsteriskRestUsers (ARI) RESTful API endpoints
             // Custom methods with colon notation (Google API Design Guide) - must be before standard routes

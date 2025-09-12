@@ -38,29 +38,9 @@ class ConferenceRoomsController extends BaseController
      * @param string|null $uniqid The unique identifier of the conference room.
      */
     public function modifyAction(string $uniqid = null): void
-    {
-         // Get data via REST API
-        $restAnswer = $this->di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
-            '/pbxcore/api/v2/conference-rooms/getRecord',
-            PBXCoreRESTClientProvider::HTTP_METHOD_GET,
-            ['id' => $uniqid]
-        ]);
-        
-        if (!$restAnswer->success) {
-            $this->flash->error(json_encode($restAnswer->messages));
-            $this->dispatcher->forward([
-                'controller' => 'conference-rooms',
-                'action' => 'index'
-            ]);
-            return;
-        }
-        
-        $getRecordStructure = (object)$restAnswer->data;
-        
+    {   
         // Create form based on API data structure
-        $this->view->form = new ConferenceRoomEditForm($getRecordStructure);
-        $this->view->represent = $getRecordStructure->name ?: '';
-        $this->view->extension = $getRecordStructure->extension ?: '';
+        $this->view->form = new ConferenceRoomEditForm();
     }
 
 }

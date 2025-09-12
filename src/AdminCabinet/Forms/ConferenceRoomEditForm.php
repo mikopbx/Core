@@ -40,8 +40,7 @@ class ConferenceRoomEditForm extends BaseForm
         $this->add(new Hidden('id'));
 
         // IsNew flag for determining POST vs PUT
-        $isNewValue = isset($entity->isNew) && $entity->isNew === true ? '1' : '0';
-        $this->add(new Hidden('isNew', ['value' => $isNewValue]));
+        $this->add(new Hidden('isNew'));
 
         // Name
         $this->add(new Text('name'));
