@@ -1,4 +1,4 @@
-<h1 class="ui {% if (actionName=='index') %}dividing{% endif %} header">
+<h1 id="page-header" class="ui {% if (actionName=='index') %}dividing{% endif %} header">
     {% if represent is empty %}
         {{ elements.getIconByController(controllerClass) }}
         <div class="content">

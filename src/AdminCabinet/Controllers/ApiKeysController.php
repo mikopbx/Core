@@ -20,7 +20,6 @@
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\ApiKeyEditForm;
-use MikoPBX\Common\Models\ApiKeys;
 
 /**
  * ApiKeysController
@@ -41,29 +40,9 @@ class ApiKeysController extends BaseController
      *
      * @param string|null $id The unique identifier of the API key.
      */
-    public function modifyAction(string $id = null): void
+    public function modifyAction(): void
     {
-        // Create empty structure for new records or pass ID for existing
-        $getRecordStructure = (object)[
-            'id' => $id ?: '',
-            'description' => '',
-            'networkfilterid' => '',
-            'allowed_paths' => []
-        ];
-        
-        // For existing keys, get the key suffix for display
-        $apiKeySuffix = '';
-        if (!empty($id)) {
-            $apiKey = ApiKeys::findFirstById($id);
-            if ($apiKey) {
-                $apiKeySuffix = $apiKey->key_suffix ?? '';
-            }
-        }
-        
         // Create form with empty/default structure - JavaScript will load everything
-        $this->view->form = new ApiKeyEditForm($getRecordStructure);
-        $this->view->represent = $id ? $this->translation->_('ak_EditApiKey') : $this->translation->_('ak_NewApiKey');
-        $this->view->apiKeyId = $id ?: '';
-        $this->view->apiKeySuffix = $apiKeySuffix;
+        $this->view->form = new ApiKeyEditForm();
     }
 }

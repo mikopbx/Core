@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, Form, UserMessage, ApiKeysAPI, DynamicDropdownBuilder, FormElements, SemanticLocalization */
+/* global globalRootUrl, globalTranslate, Form, UserMessage, ApiKeysAPI, DynamicDropdownBuilder, FormElements, SemanticLocalization, TooltipBuilder */
 
 /**
  * API key edit form management module
@@ -75,6 +75,7 @@ const apiKeysModify = {
         // Initialize other components
         apiKeysModify.initializeUIComponents();
         apiKeysModify.initializePermissionsTable();
+        apiKeysModify.initializeTooltips();
         
         // Initialize form elements (textareas auto-resize)
         FormElements.initialize('#save-api-key-form');
@@ -89,11 +90,11 @@ const apiKeysModify = {
     initializeForm() {
         const recordId = apiKeysModify.getRecordId();
         
-        ApiKeysAPI.getRecord(recordId, async (response) => {
+        ApiKeysAPI.getRecord(recordId, (response) => {
             const { result, data, messages } = response || {};
             
             if (result && data) {
-                await apiKeysModify.populateForm(data);
+                apiKeysModify.populateForm(data);
                 
                 // Load permissions only after form is populated
                 apiKeysModify.loadAvailableControllers();
@@ -102,11 +103,6 @@ const apiKeysModify = {
                 if (!recordId) {
                     apiKeysModify.generateApiKey();
                 }
-                
-                // Mark form as fully initialized after all async operations complete
-                setTimeout(() => {
-                    apiKeysModify.formInitialized = true;
-                }, 750); // Wait for all async operations to complete
             } else {
                 UserMessage.showError(messages?.error || 'Failed to load API key data');
             }
@@ -169,6 +165,63 @@ const apiKeysModify = {
      */
     initializePermissionsTable() {
         // Will be initialized after loading controllers
+    },
+
+    /**
+     * Initialize tooltips for form fields
+     */
+    initializeTooltips() {
+        const tooltipConfigs = {
+            api_key_usage: {
+                header: globalTranslate.ak_ApiKeyUsageTooltip_header || 'Using API Keys',
+                description: globalTranslate.ak_ApiKeyUsageTooltip_desc || 'API keys are used for authenticating REST API requests',
+                list: [
+                    {
+                        term: globalTranslate.ak_ApiKeyUsageTooltip_auth_header || 'Authentication',
+                        definition: null
+                    },
+                    globalTranslate.ak_ApiKeyUsageTooltip_auth_format || 'Add the Authorization header to your requests:',
+                ],
+                examples: [
+                    'Authorization: Bearer YOUR_API_KEY'
+                ],
+                list2: [
+                    {
+                        term: globalTranslate.ak_ApiKeyUsageTooltip_example_header || 'Usage Example',
+                        definition: null
+                    }
+                ],
+                list3: [
+                    {
+                        term: 'curl',
+                        definition: globalTranslate.ak_ApiKeyUsageTooltip_curl_example || 'curl -H "Authorization: Bearer YOUR_API_KEY" "http://pbx.example.com/pbxcore/api/v3/employees?limit=20&offset=0"'
+                    },
+                    {
+                        term: 'JavaScript',
+                        definition: globalTranslate.ak_ApiKeyUsageTooltip_js_example || 'fetch("http://pbx.example.com/pbxcore/api/v3/employees?limit=20&offset=0", { headers: { "Authorization": "Bearer YOUR_API_KEY" } })'
+                    },
+                    {
+                        term: 'PHP',
+                        definition: globalTranslate.ak_ApiKeyUsageTooltip_php_example || '$ch = curl_init("http://pbx.example.com/pbxcore/api/v3/employees?limit=20&offset=0"); curl_setopt($ch, CURLOPT_HTTPHEADER, ["Authorization: Bearer YOUR_API_KEY"]);'
+                    }
+                ],
+                warning: {
+                    header: globalTranslate.ak_ApiKeyUsageTooltip_warning_header || 'Security Warning',
+                    text: globalTranslate.ak_ApiKeyUsageTooltip_warning || 'Never share your API key or commit it to version control. Treat it like a password.'
+                },
+                note: globalTranslate.ak_ApiKeyUsageTooltip_note || 'The key display shows only the first and last 5 characters for security reasons.'
+            }
+        };
+        
+        // Initialize tooltips using TooltipBuilder if available
+        if (typeof TooltipBuilder !== 'undefined') {
+            TooltipBuilder.initialize(tooltipConfigs, {
+                selector: '.field-info-icon',
+                position: 'top left',
+                hoverable: true,
+                variation: 'flowing wide'
+            });
+        }
     },
 
     /**
@@ -488,6 +541,10 @@ const apiKeysModify = {
         const result = settings;
         // Form.js already handles form data collection when apiSettings.enabled = true
         
+        // Add _isNew flag for RESTful API to distinguish POST vs PUT
+        const recordId = apiKeysModify.getRecordId();
+        result.data._isNew = !recordId;
+        
         // Handle API key for new/existing records
         apiKeysModify.handleApiKeyInFormData(result.data);
         
@@ -561,10 +618,10 @@ const apiKeysModify = {
     /**
      * Callback after form submission
      */
-    async cbAfterSendForm(response) {
+    cbAfterSendForm(response) {
         if (response.result) {
             if (response.data) {
-                await apiKeysModify.populateForm(response.data);
+                apiKeysModify.populateForm(response.data);
             }
             
             // Update URL for new records
@@ -575,6 +632,9 @@ const apiKeysModify = {
                 
                 // Update page state for existing record
                 apiKeysModify.updatePageForExistingRecord();
+                
+                // Clear the generated key after successful save
+                apiKeysModify.generatedApiKey = '';
             }
         }
     },
@@ -582,12 +642,16 @@ const apiKeysModify = {
     /**
      * Populate form with data
      */
-    async populateForm(data) {
+    populateForm(data) {
         // Set hidden field value BEFORE initializing dropdown
         $('#networkfilterid').val(data.networkfilterid || 'none');
         
         // Use universal method for silent form population
         Form.populateFormSilently(data);
+        
+        // Update page header with represent value if available
+        // Since the template already handles represent display, we don't need to update it here
+        // The represent value will be shown correctly when the page reloads or when set on server side
         
         // Build network filter dropdown with DynamicDropdownBuilder
         DynamicDropdownBuilder.buildDropdown('networkfilterid', data, {
@@ -621,9 +685,13 @@ const apiKeysModify = {
             }
         }
         
-        // Show key display in header if available
+        // Show key display in header and input field if available
         if (data.key_display) {
             $('.api-key-suffix').text(`(${data.key_display})`).show();
+            // For existing keys, show key display instead of "Key hidden"
+            if (data.id) {
+                $('#api-key-display').val(data.key_display);
+            }
         }
     },
 
@@ -646,9 +714,7 @@ const apiKeysModify = {
      * Update page interface for existing record
      */
     updatePageForExistingRecord() {
-        // Show key display representation instead of "Key hidden" message
-        const keyDisplay = $('#key_display').val();
-        $('#api-key-display').val(keyDisplay || '');
+        // Hide copy button and warning message for existing keys
         $('.copy-api-key').hide();
         $('.ui.warning.message').hide();
     },

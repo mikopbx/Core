@@ -34,10 +34,16 @@ use Phalcon\Di\Injectable;
  */
 enum ApiKeyAction: string
 {
-    case GET_RECORD = 'getRecord';
+    // Standard CRUD operations
     case GET_LIST = 'getList';
-    case SAVE_RECORD = 'saveRecord';
-    case DELETE_RECORD = 'deleteRecord';
+    case GET_RECORD = 'getRecord';
+    case GET_DEFAULT = 'getDefault';
+    case CREATE = 'create';
+    case UPDATE = 'update';
+    case PATCH = 'patch';
+    case DELETE = 'delete';
+    
+    // Custom methods
     case GENERATE_KEY = 'generateKey';
     case GET_AVAILABLE_CONTROLLERS = 'getAvailableControllers';
 }
@@ -45,13 +51,20 @@ enum ApiKeyAction: string
 /**
  * API keys management processor
  *
- * Handles all API key management operations including:
- * - getRecord: Get single API key by ID or create new structure
- * - getList: Get list of all API keys
- * - saveRecord: Create or update API key
- * - deleteRecord: Delete API key
- * - generateKey: Generate new API key
- * - getAvailableControllers: Get list of available API endpoints
+ * Handles all API key management operations
+ * 
+ * RESTful API mapping:
+ * - GET /api-keys         -> getList
+ * - GET /api-keys/{id}    -> getRecord
+ * - GET /api-keys:getDefault -> getDefault (returns new empty structure)
+ * - POST /api-keys        -> create
+ * - PUT /api-keys/{id}    -> update
+ * - PATCH /api-keys/{id}  -> patch
+ * - DELETE /api-keys/{id} -> delete
+ * 
+ * Custom methods:
+ * - POST /api-keys:generateKey -> generateKey
+ * - GET /api-keys:getAvailableControllers -> getAvailableControllers
  */
 class ApiKeysManagementProcessor extends Injectable
 {
@@ -79,10 +92,16 @@ class ApiKeysManagementProcessor extends Injectable
         }
         
         $res = match ($action) {
-            ApiKeyAction::GET_RECORD => GetRecordAction::main($data['id'] ?? null),
+            // Standard CRUD operations
             ApiKeyAction::GET_LIST => GetListAction::main($data),
-            ApiKeyAction::SAVE_RECORD => SaveRecordAction::main($data),
-            ApiKeyAction::DELETE_RECORD => DeleteRecordAction::main($data['id'] ?? ''),
+            ApiKeyAction::GET_RECORD => GetRecordAction::main($data['id'] ?? null),
+            ApiKeyAction::GET_DEFAULT => GetRecordAction::main(null), // New empty record
+            ApiKeyAction::CREATE => SaveRecordAction::main($data), // Create new
+            ApiKeyAction::UPDATE => SaveRecordAction::main($data), // Full update
+            ApiKeyAction::PATCH => SaveRecordAction::main($data), // Partial update (same as update for now)
+            ApiKeyAction::DELETE => DeleteRecordAction::main($data['id'] ?? ''),
+            
+            // Custom methods
             ApiKeyAction::GENERATE_KEY => GenerateKeyAction::main($data),
             ApiKeyAction::GET_AVAILABLE_CONTROLLERS => GetAvailableControllersAction::main($data),
         };

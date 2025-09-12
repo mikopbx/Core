@@ -21,21 +21,31 @@
 /**
  * ApiKeysAPI - REST API for API Keys management
  * 
- * Uses unified approach with centralized endpoint definitions.
+ * Uses v3 RESTful API with proper HTTP methods.
  * This provides:
- * - Single point of API URL management
- * - Easy API version switching (v2 -> v3)
- * - Consistent endpoint usage throughout code
- * - Simplified debugging and support
+ * - RESTful resource-oriented endpoints
+ * - Proper HTTP method usage (GET, POST, PUT, PATCH, DELETE)
+ * - Custom methods using colon notation (:method)
+ * - Backward compatibility through method mapping
  */
 const ApiKeysAPI = {
     /**
-     * API endpoints
+     * API base URL for v3 RESTful endpoints
      */
-    apiUrl: `${Config.pbxUrl}/pbxcore/api/v2/api-keys/`,
+    apiUrl: `${Config.pbxUrl}/pbxcore/api/v3/api-keys`,
     
-    // Endpoint definitions for unification
+    // Centralized endpoint definitions for PbxDataTableIndex compatibility
     endpoints: {
+        getList: `${Config.pbxUrl}/pbxcore/api/v3/api-keys`,
+        getRecord: `${Config.pbxUrl}/pbxcore/api/v3/api-keys`,
+        saveRecord: `${Config.pbxUrl}/pbxcore/api/v3/api-keys`,
+        deleteRecord: `${Config.pbxUrl}/pbxcore/api/v3/api-keys`,
+        generateKey: `${Config.pbxUrl}/pbxcore/api/v3/api-keys:generateKey`,
+        getAvailableControllers: `${Config.pbxUrl}/pbxcore/api/v3/api-keys:getAvailableControllers`
+    },
+    
+    // Legacy v2 endpoints for backward compatibility (will be removed in future)
+    v2Endpoints: {
         getList: `${Config.pbxUrl}/pbxcore/api/v2/api-keys/getList`,
         getRecord: `${Config.pbxUrl}/pbxcore/api/v2/api-keys/getRecord`,
         saveRecord: `${Config.pbxUrl}/pbxcore/api/v2/api-keys/saveRecord`,
@@ -54,12 +64,22 @@ const ApiKeysAPI = {
 
     /**
      * Get list of all API keys
+     * Uses v3 RESTful API: GET /api-keys
+     * @param {object} params - Query parameters (limit, offset, search, etc.)
      * @param {function} callback - Callback function
      */
-    getList(callback) {
+    getList(params, callback) {
+        // Support old signature where callback is the first parameter
+        if (typeof params === 'function') {
+            callback = params;
+            params = {};
+        }
+        
+        // v3 API: GET /api-keys with query parameters
         $.api({
             url: this.endpoints.getList,
             method: 'GET',
+            data: params,
             on: 'now',
             onSuccess(response) {
                 callback(response);
@@ -75,14 +95,17 @@ const ApiKeysAPI = {
 
     /**
      * Get record by ID
+     * Uses v3 RESTful API: GET /api-keys/{id} or GET /api-keys:getDefault for new
      * @param {string} id - Record ID or empty string for new
      * @param {function} callback - Callback function
      */
     getRecord(id, callback) {
-        const recordId = (!id || id === '') ? 'new' : id;
+        // Use :getDefault for new records, otherwise GET by ID
+        const isNew = !id || id === '' || id === 'new';
+        const url = isNew ? `${this.apiUrl}:getDefault` : `${this.apiUrl}/${id}`;
         
         $.api({
-            url: `${this.endpoints.getRecord}/${recordId}`,
+            url: url,
             method: 'GET',
             on: 'now',
             onSuccess(response) {
@@ -99,11 +122,13 @@ const ApiKeysAPI = {
 
     /**
      * Generate a new API key
+     * Uses v3 RESTful API: POST /api-keys:generateKey
      * @param {function} callback - Callback function
      */
     generateKey(callback) {
+        // v3 API: POST /api-keys:generateKey (custom method)
         $.api({
-            url: this.endpoints.generateKey,
+            url: `${this.apiUrl}:generateKey`,
             method: 'POST',
             on: 'now',
             onSuccess(response) {
@@ -120,14 +145,22 @@ const ApiKeysAPI = {
 
     /**
      * Save record
+     * Uses v3 RESTful API: POST /api-keys (create) or PUT /api-keys/{id} (update)
      * @param {object} data - Data to save
      * @param {function} callback - Callback function
      */
     saveRecord(data, callback) {
-        const method = data.id ? 'PUT' : 'POST';
-        const url = data.id ? 
-            `${this.endpoints.saveRecord}/${data.id}` : 
-            this.endpoints.saveRecord;
+        // Check if this is a new record using the _isNew flag passed from form
+        const isNew = data._isNew === true || !data.id || data.id === '';
+        
+        // Remove the flag before sending to server
+        if (data._isNew !== undefined) {
+            delete data._isNew;
+        }
+        
+        // v3 API: POST for new records, PUT for updates
+        const method = isNew ? 'POST' : 'PUT';
+        const url = isNew ? this.apiUrl : `${this.apiUrl}/${data.id}`;
         
         $.api({
             url: url,
@@ -148,12 +181,14 @@ const ApiKeysAPI = {
 
     /**
      * Delete record
+     * Uses v3 RESTful API: DELETE /api-keys/{id}
      * @param {string} id - Record ID
      * @param {function} callback - Callback function
      */
     deleteRecord(id, callback) {
+        // v3 API: DELETE /api-keys/{id}
         $.api({
-            url: `${this.endpoints.deleteRecord}/${id}`,
+            url: `${this.apiUrl}/${id}`,
             on: 'now',
             method: 'DELETE',
             successTest: PbxApi.successTest,
@@ -171,11 +206,13 @@ const ApiKeysAPI = {
 
     /**
      * Get list of available controllers/endpoints for permissions
+     * Uses v3 RESTful API: GET /api-keys:getAvailableControllers
      * @param {function} callback - Callback function
      */
     getAvailableControllers(callback) {
+        // v3 API: GET /api-keys:getAvailableControllers (custom method)
         $.api({
-            url: this.endpoints.getAvailableControllers,
+            url: `${this.apiUrl}:getAvailableControllers`,
             method: 'GET',
             on: 'now',
             onSuccess(response) {

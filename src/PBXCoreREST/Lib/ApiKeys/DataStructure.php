@@ -44,7 +44,6 @@ class DataStructure extends AbstractDataStructure
             'last_used_at' => $apiKey->last_used_at ?? '',
             'networkfilterid' => !empty($apiKey->networkfilterid) ? $apiKey->networkfilterid : 'none',
             'key_display' => $apiKey->key_display ?? '',
-            'key_suffix' => $apiKey->key_suffix ?? '',
         ];
         
         // Decode allowed_paths JSON field

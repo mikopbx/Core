@@ -11,7 +11,9 @@
 <!-- Hidden field for storing generated API key -->
 {{ form.render('api_key') }}
 <div class="field max-width-800">
-    <label>{{ t._('ak_ApiKey') }}</label>
+    <label>{{ t._('ak_ApiKey') }}
+        <i class="small info circle icon field-info-icon" data-field="api_key_usage"></i>
+    </label>
     <div class="ui input action">
         <input type="text" id="api-key-display" readonly autocomplete="new-password" data-no-password-manager="true">
         <button type="button" class="ui basic icon button regenerate-api-key" data-content="{{ t._('ak_RegenerateApiKey') }}">
@@ -34,7 +36,9 @@
 <!-- Hidden field for storing regenerated API key -->
 <input type="hidden" id="api_key" name="api_key">
 <div class="field max-width-800">
-    <label>{{ t._('ak_ApiKey') }} <span class="api-key-suffix" style="display: none;"></span></label>
+    <label>{{ t._('ak_ApiKey') }} <span class="api-key-suffix" style="display: none;"></span>
+        <i class="small info circle icon field-info-icon" data-field="api_key_usage"></i>
+    </label>
     <div class="ui input action">
         <input type="text" id="api-key-display" readonly value="{{ t._('ak_KeyHidden') }}" placeholder="{{ t._('ak_ExistingApiKeyInfo') }}">
         <button type="button" class="ui basic icon button regenerate-api-key" data-content="{{ t._('ak_RegenerateApiKey') }}">

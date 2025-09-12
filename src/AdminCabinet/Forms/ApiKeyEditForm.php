@@ -19,10 +19,7 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
-use MikoPBX\Common\Models\NetworkFilters;
 use Phalcon\Forms\Element\Hidden;
-use Phalcon\Forms\Element\Select;
-use Phalcon\Forms\Element\Text;
 use Phalcon\Forms\Element\TextArea;
 
 /**
@@ -42,26 +39,20 @@ class ApiKeyEditForm extends BaseForm
         parent::initialize($entity, $options);
 
         // Hidden ID field
-        $this->add(new Hidden('id', [
-            'value' => $entity->id ?? ''
-        ]));
+        $this->add(new Hidden('id'));
 
         // Description field (required) - using textarea for multi-line descriptions
         $this->add(new TextArea('description', [
             'placeholder' => $this->translation->_('ak_DescriptionPlaceholder'),
-            'value' => $entity->description ?? '',
+            'value' => '',
             'rows' => 3,
             'class' => 'form-textarea-autoresize'
         ]));
 
-        // API Key field (hidden, only for new keys)
-        if (empty($entity->id)) {
-            $this->add(new Hidden('api_key'));
-        }
+        // API Key field
+                $this->add(new Hidden('api_key'));
 
         // Network filter - using DynamicDropdownBuilder (built by JavaScript)
         $this->add(new Hidden('networkfilterid'));
-
-        // Permission checkboxes are now added dynamically via JavaScript
     }
 }

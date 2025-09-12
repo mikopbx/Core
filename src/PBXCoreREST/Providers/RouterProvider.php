@@ -24,10 +24,7 @@ namespace MikoPBX\PBXCoreREST\Providers;
 
 use MikoPBX\PBXCoreREST\Controllers\
 {
-    ApiKeys\GetController as ApiKeysGetController,
-    ApiKeys\PostController as ApiKeysPostController,
-    ApiKeys\PutController as ApiKeysPutController,
-    ApiKeys\DeleteController as ApiKeysDeleteController,
+    ApiKeys\RestController as ApiKeysRestController,
     AsteriskRestUsers\RestController as AsteriskRestUsersRestController,
     Cdr\GetController as CdrGetController,
     Iax\GetController as IaxGetController,
@@ -235,6 +232,20 @@ class RouterProvider implements ServiceProviderInterface
             [EmployeesRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/employees', 'put', '/{id:[0-9]+}'],
             [EmployeesRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/employees', 'patch', '/{id:[0-9]+}'],
             [EmployeesRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/employees', 'delete', '/{id:[0-9]+}'],
+            
+            // v3 API Keys RESTful API endpoints
+            // Custom methods with colon notation
+            [ApiKeysRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/api-keys', 'get', ':{customMethod:[a-zA-Z]+}'],
+            [ApiKeysRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/api-keys', 'post', ':{customMethod:[a-zA-Z]+}'],
+            [ApiKeysRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/api-keys', 'post', '/{id:[0-9]+}:{customMethod:[a-zA-Z]+}'],
+            
+            // Standard CRUD operations
+            [ApiKeysRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/api-keys', 'get', '/'],
+            [ApiKeysRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/api-keys', 'get', '/{id:[0-9]+}'],
+            [ApiKeysRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/api-keys', 'post', '/'],
+            [ApiKeysRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/api-keys', 'put', '/{id:[0-9]+}'],
+            [ApiKeysRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/api-keys', 'patch', '/{id:[0-9]+}'],
+            [ApiKeysRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/api-keys', 'delete', '/{id:[0-9]+}'],
 
             [CallQueuesGetController::class, 'callAction', '/pbxcore/api/v2/call-queues/{actionName}', 'get', '/'],
             [CallQueuesGetController::class, 'callAction', '/pbxcore/api/v2/call-queues/{actionName}/{id:[a-zA-Z0-9\-]+}', 'get', '/'],
@@ -343,13 +354,6 @@ class RouterProvider implements ServiceProviderInterface
             [AsteriskManagersPostController::class, 'callAction', '/pbxcore/api/v2/asterisk-managers/{actionName}', 'post', '/'],
             [AsteriskManagersPutController::class, 'callAction', '/pbxcore/api/v2/asterisk-managers/{actionName}/{id:[a-zA-Z0-9\-]+}', 'put', '/'],
             [AsteriskManagersDeleteController::class, 'callAction', '/pbxcore/api/v2/asterisk-managers/{actionName}/{id:[a-zA-Z0-9\-]+}', 'delete', '/'],
-
-            // API Keys v2 routes
-            [ApiKeysGetController::class, 'callAction', '/pbxcore/api/v2/api-keys/{actionName}', 'get', '/'],
-            [ApiKeysGetController::class, 'callAction', '/pbxcore/api/v2/api-keys/{actionName}/{id:[a-zA-Z0-9\-]+}', 'get', '/'],
-            [ApiKeysPostController::class, 'callAction', '/pbxcore/api/v2/api-keys/{actionName}', 'post', '/'],
-            [ApiKeysPutController::class, 'callAction', '/pbxcore/api/v2/api-keys/{actionName}/{id:[a-zA-Z0-9\-]+}', 'put', '/'],
-            [ApiKeysDeleteController::class, 'callAction', '/pbxcore/api/v2/api-keys/{actionName}/{id:[a-zA-Z0-9\-]+}', 'delete', '/'],
 
             // v3 AsteriskRestUsers (ARI) RESTful API endpoints
             // Custom methods with colon notation (Google API Design Guide) - must be before standard routes
