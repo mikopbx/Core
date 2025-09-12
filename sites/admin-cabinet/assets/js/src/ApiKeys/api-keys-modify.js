@@ -194,15 +194,15 @@ const apiKeysModify = {
                 list3: [
                     {
                         term: 'curl',
-                        definition: globalTranslate.ak_ApiKeyUsageTooltip_curl_example || 'curl -H "Authorization: Bearer YOUR_API_KEY" "http://pbx.example.com/pbxcore/api/v3/employees?limit=20&offset=0"'
+                        definition: '<br>&nbsp&nbsp'+globalTranslate.ak_ApiKeyUsageTooltip_curl_example || 'curl -H "Authorization: Bearer YOUR_API_KEY" "http://pbx.example.com/pbxcore/api/v3/employees?limit=20&offset=0"'
                     },
                     {
                         term: 'JavaScript',
-                        definition: globalTranslate.ak_ApiKeyUsageTooltip_js_example || 'fetch("http://pbx.example.com/pbxcore/api/v3/employees?limit=20&offset=0", { headers: { "Authorization": "Bearer YOUR_API_KEY" } })'
+                        definition: '<br>&nbsp&nbsp'+globalTranslate.ak_ApiKeyUsageTooltip_js_example || 'fetch("http://pbx.example.com/pbxcore/api/v3/employees?limit=20&offset=0", { headers: { "Authorization": "Bearer YOUR_API_KEY" } })'
                     },
                     {
                         term: 'PHP',
-                        definition: globalTranslate.ak_ApiKeyUsageTooltip_php_example || '$ch = curl_init("http://pbx.example.com/pbxcore/api/v3/employees?limit=20&offset=0"); curl_setopt($ch, CURLOPT_HTTPHEADER, ["Authorization: Bearer YOUR_API_KEY"]);'
+                        definition: '<br>&nbsp&nbsp'+globalTranslate.ak_ApiKeyUsageTooltip_php_example || '$ch = curl_init("http://pbx.example.com/pbxcore/api/v3/employees?limit=20&offset=0"); curl_setopt($ch, CURLOPT_HTTPHEADER, ["Authorization: Bearer YOUR_API_KEY"]);'
                     }
                 ],
                 warning: {
@@ -458,12 +458,13 @@ const apiKeysModify = {
      */
     handleCopyKey(e) {
         e.preventDefault();
-        const apiKey = $('#api-key-display').val();
         const actualApiKey = $('#api_key').val();
         
-        const keyToCopy = actualApiKey || apiKey;
-        if (keyToCopy && keyToCopy.trim() !== '') {
-            navigator.clipboard.writeText(keyToCopy).then(() => {
+        // Only copy if we have the actual full API key (for new or regenerated keys)
+        if (actualApiKey && actualApiKey.trim() !== '') {
+            // Add Authorization: Bearer prefix
+            const fullAuthHeader = `Authorization: Bearer ${actualApiKey}`;
+            navigator.clipboard.writeText(fullAuthHeader).then(() => {
                 // Silent copy
             });
         }
@@ -691,8 +692,13 @@ const apiKeysModify = {
             // For existing keys, show key display instead of "Key hidden"
             if (data.id) {
                 $('#api-key-display').val(data.key_display);
+                // Don't show copy button for existing keys - they can only be regenerated
+                $('.copy-api-key').hide();
             }
         }
+        
+        // Note: For existing API keys, the actual key is never sent from server for security
+        // Copy button remains hidden for existing keys - only available for new/regenerated keys
     },
 
     /**
@@ -714,8 +720,9 @@ const apiKeysModify = {
      * Update page interface for existing record
      */
     updatePageForExistingRecord() {
-        // Hide copy button and warning message for existing keys
+        // Hide copy button for existing keys (can only regenerate, not copy)
         $('.copy-api-key').hide();
+        // Hide warning message for existing keys
         $('.ui.warning.message').hide();
     },
 
