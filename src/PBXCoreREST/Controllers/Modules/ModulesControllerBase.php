@@ -39,6 +39,13 @@ use Pheanstalk\Contract\PheanstalkInterface;
  */
 class ModulesControllerBase extends BaseController
 {
+
+    /**
+     * Indicates whether this controller requires CSRF protection
+     * Controllers can override this constant to opt-in to CSRF protection
+     */
+    public const bool REQUIRES_CSRF_PROTECTION = false;
+
     /**
      * Handles the call action for a specific module.
      *

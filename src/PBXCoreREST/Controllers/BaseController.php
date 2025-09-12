@@ -45,7 +45,7 @@ class BaseController extends Controller
      * Indicates whether this controller requires CSRF protection
      * Controllers can override this constant to opt-in to CSRF protection
      */
-    public const bool REQUIRES_CSRF_PROTECTION = false;
+    public const bool REQUIRES_CSRF_PROTECTION = true;
     /**
      * Send a request to the backend worker.
      *

@@ -31,6 +31,7 @@ use MikoPBX\PBXCoreREST\Lib\ModulesManagementProcessor;
  */
 class CorePostController extends BaseController
 {
+
     /**
      * Handles the call to different actions based on the action name for core
      *

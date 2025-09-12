@@ -36,10 +36,6 @@ use MikoPBX\PBXCoreREST\Lib\IvrMenuManagementProcessor;
 class PutController extends BaseController
 {
     /**
-     * Enable CSRF protection for this controller
-     */
-    public const bool REQUIRES_CSRF_PROTECTION = true;
-    /**
      * Handles the call to different actions based on the action name
      * 
      * @param string $actionName The name of the action

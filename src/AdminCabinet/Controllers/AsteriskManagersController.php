@@ -21,7 +21,6 @@ namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\AsteriskManagerEditForm;
 use MikoPBX\Common\Models\AsteriskManagerUsers;
-use MikoPBX\Common\Models\NetworkFilters;
 
 /**
  * Asterisk Managers Controller

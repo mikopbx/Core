@@ -35,10 +35,7 @@ use MikoPBX\PBXCoreREST\Lib\CallQueuesManagementProcessor;
  */
 class DeleteController extends BaseController
 {
-    /**
-     * Enable CSRF protection for this controller
-     */
-    public const bool REQUIRES_CSRF_PROTECTION = true;
+
     /**
      * Handle DELETE requests for call queue operations
      *

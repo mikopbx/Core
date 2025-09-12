@@ -37,10 +37,6 @@ use MikoPBX\PBXCoreREST\Lib\CallQueuesManagementProcessor;
 class PostController extends BaseController
 {
     /**
-     * Enable CSRF protection for this controller
-     */
-    public const bool REQUIRES_CSRF_PROTECTION = true;
-    /**
      * Handle POST requests for call queue operations
      *
      * @param string $actionName The name of the action

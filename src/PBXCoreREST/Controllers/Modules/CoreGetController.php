@@ -30,6 +30,7 @@ use MikoPBX\PBXCoreREST\Lib\ModulesManagementProcessor;
  */
 class CoreGetController extends BaseController
 {
+
     /**
      * Handles the call to different actions based on the action name for core
      *

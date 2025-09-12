@@ -33,7 +33,7 @@ use MikoPBX\PBXCoreREST\Lib\ApiKeysManagementProcessor;
  * @package MikoPBX\PBXCoreREST\Controllers\ApiKeys
  */
 class DeleteController extends BaseController
-{
+{   
     /**
      * Handles the call to different actions based on the action name
      * 

@@ -32,10 +32,6 @@ use MikoPBX\AdminCabinet\Forms\CallQueueEditForm;
 class CallQueuesController extends BaseController
 {
     /**
-     * Enable CSRF protection for this controller
-     */
-    public const bool REQUIRES_CSRF_PROTECTION = true;
-    /**
      * Display the list of call queues
      *
      * DataTable handles all data loading via AJAX to REST API.

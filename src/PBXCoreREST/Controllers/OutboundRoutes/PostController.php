@@ -13,10 +13,6 @@ use MikoPBX\PBXCoreREST\Lib\OutboundRoutesManagementProcessor;
  */
 class PostController extends BaseController
 {
-    /**
-     * Enable CSRF protection for this controller
-     */
-    public const bool REQUIRES_CSRF_PROTECTION = true;
     
     /**
      * Handle the call to different actions based on the action name

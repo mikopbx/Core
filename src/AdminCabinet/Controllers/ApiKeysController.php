@@ -21,7 +21,6 @@ namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\ApiKeyEditForm;
 use MikoPBX\Common\Models\ApiKeys;
-use MikoPBX\Common\Providers\PBXCoreRESTClientProvider;
 
 /**
  * ApiKeysController
