@@ -20,6 +20,7 @@
 namespace MikoPBX\PBXCoreREST\Lib\CallQueues;
 
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
+use MikoPBX\PBXCoreREST\Lib\Common\SearchIndexTrait;
 
 /**
  * Data structure for call queues with extension representations
@@ -31,6 +32,7 @@ use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
  */
 class DataStructure extends AbstractDataStructure
 {
+    use SearchIndexTrait;
     /**
      * Create data array from CallQueues model with representation fields
      *
@@ -50,6 +52,10 @@ class DataStructure extends AbstractDataStructure
 
         // Start with base structure (raw data, no HTML escaping)
         $data = self::createBaseStructure($model);
+        
+        // Replace numeric id with uniqid for v3 API
+        $data['id'] = $model->uniqid;
+        unset($data['uniqid']); // Remove uniqid field to avoid duplication
         
         // Add call queue specific fields
         $data['strategy'] = $model->strategy;
@@ -115,6 +121,10 @@ class DataStructure extends AbstractDataStructure
         // Use unified base method for list creation
         $data = parent::createForList($model);
 
+        // Replace numeric id with uniqid for v3 API
+        $data['id'] = $model->uniqid;
+        unset($data['uniqid']); // Remove uniqid field to avoid duplication
+
         // Add call queue specific fields for list display
         $data['strategy'] = $model->strategy;
         $data['extension'] = $model->extension;
@@ -133,6 +143,59 @@ class DataStructure extends AbstractDataStructure
         }
 
         $data['members'] = $members;
+        
+        // Generate search index automatically from all fields
+        // This will use all _represent fields and extract extension numbers
+        $data['search_index'] = self::generateAutoSearchIndex($data);
+        
+        return $data;
+    }
+    
+    /**
+     * Create default data structure for a new call queue
+     *
+     * Provides default values and empty structures for creating a new queue
+     * following the same pattern as existing DataStructure methods.
+     *
+     * @return array Default data structure for new call queue
+     */
+    public static function createForNewQueue(): array
+    {
+        // Create base structure with default values
+        // Using 'id' field for uniqid value (v3 API simplified structure)
+        $data = [
+            'id' => '', // Will be filled with uniqid value
+            'name' => '',
+            'extension' => '',
+            'description' => '',
+            'strategy' => 'ringall', // Default strategy
+            'seconds_to_ring_each_member' => '15',
+            'seconds_for_wrapup' => '15',
+            'recive_calls_while_on_a_call' => '0',
+            'announce_position' => '0',
+            'announce_hold_time' => '0',
+            'periodic_announce_sound_id' => '',
+            'periodic_announce_sound_id_represent' => '',
+            'periodic_announce_frequency' => 0,
+            'timeout_to_redirect_to_extension' => 0,
+            'timeout_extension' => '',
+            'timeout_extension_represent' => '',
+            'redirect_to_extension_if_empty' => '',
+            'redirect_to_extension_if_empty_represent' => '',
+            'redirect_to_extension_if_unanswered' => '',
+            'redirect_to_extension_if_unanswered_represent' => '',
+            'redirect_to_extension_if_repeat_exceeded' => '',
+            'redirect_to_extension_if_repeat_exceeded_represent' => '',
+            'number_unanswered_calls_to_redirect' => 0,
+            'number_repeat_unanswered_to_redirect' => 0,
+            'callerid_prefix' => '',
+            'moh_sound_id' => '',
+            'moh_sound_id_represent' => '',
+            'caller_hear' => 'mohClass',
+            'members' => [],
+            'represent' => ''
+        ];
+        
         return $data;
     }
 }

@@ -1,130 +1,43 @@
 /*
- * CallQueuesAPI - REST API client for call queue management
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
- * Implements unified API approach with centralized endpoint definitions
- * and comprehensive error handling following IVR Menu patterns.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, PbxApi, globalTranslate */
+/* global PbxApiClient */
 
-const CallQueuesAPI = {
-    /**
-     * API endpoints configuration
-     */
-    apiUrl: `/pbxcore/api/v2/call-queues/`,
-
-    // Centralized endpoint definitions for easy maintenance
-    endpoints: {
-        getList: `/pbxcore/api/v2/call-queues/getList`,
-        getRecord: `/pbxcore/api/v2/call-queues/getRecord`,
-        saveRecord: `/pbxcore/api/v2/call-queues/saveRecord`,
-        deleteRecord: `/pbxcore/api/v2/call-queues/deleteRecord`
-    },
-
-    /**
-     * Get call queue record with all representation fields
-     *
-     * @param {string} id Record ID or empty string for new record
-     * @param {function} callback Callback function to handle response
-     */
-    getRecord(id, callback) {
-        const recordId = (!id || id === '') ? 'new' : id;
-
-        $.api({
-            url: `${this.endpoints.getRecord}/${recordId}`,
-            method: 'GET',
-            on: 'now',
-            onSuccess(response) {
-                callback(response);
-            },
-            onFailure(response) {
-                callback(response);
-            },
-            onError() {
-                callback({
-                    result: false,
-                    messages: {error: ['Network error occurred']}
-                });
-            }
-        });
-    },
-
-    /**
-     * Get list of all call queues with member representations
-     *
-     * @param {function} callback Callback function to handle response
-     */
-    getList(callback) {
-        $.api({
-            url: this.endpoints.getList,
-            method: 'GET',
-            on: 'now',
-            onSuccess(response) {
-                callback(response);
-            },
-            onFailure(response) {
-                callback(response);
-            },
-            onError() {
-                callback({result: false, data: []});
-            }
-        });
-    },
-
-    /**
-     * Save call queue record (create or update)
-     *
-     * @param {object} data Data to save
-     * @param {function} callback Callback function to handle response
-     */
-    saveRecord(data, callback) {
-        const method = data.id ? 'PUT' : 'POST';
-        const url = data.id ?
-            `${this.endpoints.saveRecord}/${data.id}` :
-            this.endpoints.saveRecord;
-
-        $.api({
-            url: url,
-            method: method,
-            data: data,
-            on: 'now',
-            // Session cookies automatically included for CSRF protection
-            onSuccess(response) {
-                callback(response);
-            },
-            onFailure(response) {
-                callback(response);
-            },
-            onError() {
-                callback({
-                    result: false,
-                    messages: {error: ['Network error occurred']}
-                });
-            }
-        });
-    },
-
-    /**
-     * Delete call queue record
-     *
-     * @param {string} id Record ID to delete
-     * @param {function} callback Callback function to handle response
-     */
-    deleteRecord(id, callback) {
-        $.api({
-            url: `${this.endpoints.deleteRecord}/${id}`,
-            on: 'now',
-            method: 'DELETE',
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response);
-            },
-            onFailure(response) {
-                callback(response);
-            },
-            onError() {
-                callback(false);
-            }
-        });
+/**
+ * Call Queues API using unified PbxApiClient
+ * All standard CRUD operations are provided by the base class
+ */
+const CallQueuesAPI = new PbxApiClient({
+    endpoint: '/pbxcore/api/v3/call-queues',
+    customMethods: {
+        getDefault: ':getDefault'
     }
+});
+
+// Override getRecordId to handle uniqid field specifically
+CallQueuesAPI.getRecordId = function(data) {
+    // Call queues use uniqid as primary identifier
+    return data.uniqid || data.id;
 };
+
+// The PbxApiClient automatically provides:
+// - getList(callback) or getList(params, callback)
+// - getRecord(id, callback) - uses :getDefault for new records
+// - saveRecord(data, callback) - automatically selects POST/PUT
+// - deleteRecord(id, callback)
+// - callCustomMethod(methodName, data, callback)

@@ -503,15 +503,19 @@ const callQueueModifyRest = {
         
         // Check for copy mode from URL parameter or hidden field
         if (copyParam || copyFromId) {
-            requestId = `copy-${copyParam || copyFromId}`;
+            requestId = copyParam || copyFromId;
             isCopyMode = true;
-        } else if (!recordId) {
-            requestId = 'new';
         }
         
         // Load record data from REST API
+        // v3 API will automatically use :getDefault for new records
         CallQueuesAPI.getRecord(requestId, (response) => {
             if (response.result && response.data) {
+                // Mark as new record if we don't have an ID
+                if (!recordId || recordId === '') {
+                    response.data._isNew = true;
+                }
+                
                 callQueueModifyRest.populateForm(response.data);
                 
                 // Set default extension for availability checking
@@ -804,6 +808,12 @@ const callQueueModifyRest = {
 
         // Get form values (following IVR Menu pattern)
         result.data = callQueueModifyRest.$formObj.form('get values');
+
+        // Check if this is a new record and pass the flag to API
+        const recordId = callQueueModifyRest.getRecordId();
+        if (!recordId || recordId === '') {
+            result.data._isNew = true;
+        }
 
         // Explicitly collect checkbox values to ensure boolean true/false values are sent to API
         // This ensures unchecked checkboxes send false, not undefined

@@ -62,7 +62,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
 
         // Define sanitization rules - no HTML escaping as it's handled at output level
         $sanitizationRules = [
-            'id' => 'int',
+            'id' => 'string|max:50',
             'name' => 'string|max:100',
             'extension' => 'string|regex:/^[0-9]{2,8}$/|max:8',
             'strategy' => 'string|in:ringall,leastrecent,fewestcalls,random,rrmemory,linear',
@@ -131,8 +131,9 @@ class SaveRecordAction extends AbstractSaveRecordAction
         }
 
         // Get or create model
+        // v3 API: 'id' field contains uniqid value
         if (!empty($sanitizedData['id'])) {
-            $queue = CallQueues::findFirstById($sanitizedData['id']);
+            $queue = CallQueues::findFirst("uniqid='{$sanitizedData['id']}'");
             if (!$queue) {
                 $res->messages['error'][] = 'Call queue not found';
                 SystemMessages::sysLogMsg(__METHOD__,

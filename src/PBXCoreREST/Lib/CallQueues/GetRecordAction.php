@@ -50,7 +50,7 @@ class GetRecordAction extends AbstractGetRecordAction
      * Get call queue record with all representation fields for dropdowns
      * Supports copy mode with "copy-{sourceId}" format
      *
-     * @param string|null $id Record ID, null/"new" for new record, or "copy-{sourceId}" for copy mode
+     * @param string|null $id Record ID (uniqid value), null/"new" for new record, or "copy-{sourceId}" for copy mode
      * @return PBXApiResult
      */
     public static function main(?string $id = null): PBXApiResult
@@ -69,7 +69,8 @@ class GetRecordAction extends AbstractGetRecordAction
         if (empty($id) || $id === 'new' || $copyMode) {
             if ($copyMode && !empty($sourceId)) {
                 // Copy mode - load source record and modify it
-                $sourceQueue = self::findRecordById(CallQueues::class, $sourceId);
+                // v3 API: ID is the uniqid value
+                $sourceQueue = CallQueues::findFirst("uniqid='{$sourceId}'");
                 
                 if ($sourceQueue) {
                     // Create copy of the source queue
@@ -124,7 +125,8 @@ class GetRecordAction extends AbstractGetRecordAction
             }
         } else {
             // Find existing record
-            $queue = self::findRecordById(CallQueues::class, $id);
+            // v3 API: ID is the uniqid value
+            $queue = CallQueues::findFirst("uniqid='{$id}'");
 
             if ($queue) {
                 // Get queue members with their representations

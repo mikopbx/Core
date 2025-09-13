@@ -46,7 +46,7 @@ class DeleteRecordAction
     /**
      * Delete call queue record with proper logging
      *
-     * @param string $id Record ID to delete
+     * @param string $id Record ID to delete (uniqid value for v3 API)
      * @return PBXApiResult
      */
     public static function main(string $id): PBXApiResult
@@ -64,11 +64,8 @@ class DeleteRecordAction
         }
 
         try {
-            // Find record by uniqid or id
-            $queue = CallQueues::findFirst([
-                'conditions' => 'uniqid = :uniqid: OR id = :id:',
-                'bind' => ['uniqid' => $id, 'id' => $id]
-            ]);
+            // v3 API: ID is the uniqid value
+            $queue = CallQueues::findFirst("uniqid='{$id}'");
 
             if (!$queue) {
                 $res->messages['error'][] = 'Call queue not found';
