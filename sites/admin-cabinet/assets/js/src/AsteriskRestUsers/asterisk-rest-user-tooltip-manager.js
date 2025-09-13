@@ -113,7 +113,7 @@ class AsteriskRestUserTooltipManager {
                     header: globalTranslate.ari_ApplicationsTooltip_warning_header,
                     text: globalTranslate.ari_ApplicationsTooltip_warning
                 },
-                note: globalTranslate.ari_ApplicationsTooltip_note
+                note: ''
             },
             
             // Connection info tooltip

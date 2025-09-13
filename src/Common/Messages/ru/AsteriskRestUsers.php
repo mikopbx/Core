@@ -94,7 +94,6 @@ return [
     'ari_ApplicationsTooltip_common_channel_spy' => 'Прослушивание каналов',
     'ari_ApplicationsTooltip_warning_header' => 'Внимание',
     'ari_ApplicationsTooltip_warning' => 'Ограничение доступа к приложениям влияет на функциональность ARI клиента',
-    'ari_ApplicationsTooltip_note' => 'Вы можете добавить собственные имена приложений, введя их в поле',
     
     // Tooltips for Connection Info
     'ari_ConnectionInfoTooltip_header' => 'Параметры подключения',
