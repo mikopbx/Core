@@ -12,3 +12,4 @@ CLAUDE.local.md
 build
 .config.json
 docs
+.playwright-mcp

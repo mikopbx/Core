@@ -232,6 +232,7 @@ class AssetProvider implements ServiceProviderInterface
             $this->footerCollectionJS
                 ->addJs('js/pbx/main/config.js', true)
                 ->addJs('js/pbx/PbxAPI/pbxapi.js', true)
+                ->addJs('js/pbx/PbxAPI/PbxApiClient.js', true)
                 ->addJs('js/pbx/PbxAPI/extensionsAPI.js', true)
                 ->addJs('js/pbx/PbxAPI/providersAPI.js', true)
                 ->addJs('js/src/PbxAPI/userPageTrackerAPI.js', true)
@@ -909,6 +910,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/vendor/inputmask/init.js', true)
                 ->addJs('js/pbx/Extensions/input-mask-patterns.js', true)
                 ->addJs('js/pbx/PbxAPI/sipAPI.js', true)
+                ->addJs('js/pbx/PbxAPI/employeesAPI.js', true)    
                 ->addJs('js/pbx/Extensions/extensions-index.js', true)
                 ->addJs('js/pbx/Extensions/extension-index-status-monitor.js', true)
                 ->addJs('js/pbx/main/debugger-info.js', true);
@@ -1139,6 +1141,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/main/form.js', true)
                 ->addJs('js/pbx/PbxAPI/asteriskRestUsersAPI.js', true)
                 ->addJs('js/pbx/PbxAPI/networkFiltersAPI.js', true)
+                ->addJs('js/src/AsteriskRestUsers/asterisk-rest-user-tooltip-manager.js', true)
                 ->addJs('js/pbx/FormElements/dynamic-dropdown-builder.js', true)
                 ->addJs('js/pbx/AsteriskRestUsers/asterisk-rest-user-modify.js', true);
         }
