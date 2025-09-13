@@ -29,10 +29,10 @@ const CallQueuesAPI = new PbxApiClient({
     }
 });
 
-// Override getRecordId to handle uniqid field specifically
+// Override getRecordId to handle ID field
 CallQueuesAPI.getRecordId = function(data) {
-    // Call queues use uniqid as primary identifier
-    return data.uniqid || data.id;
+    // v3 API uses 'id' field as primary identifier
+    return data.id;
 };
 
 // The PbxApiClient automatically provides:

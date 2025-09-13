@@ -872,8 +872,8 @@ const callQueueModifyRest = {
             
             // Update URL for new records
             const currentId = $('#id').val();
-            if (!currentId && response.data && response.data.uniqid) {
-                const newUrl = window.location.href.replace(/modify\/?$/, `modify/${response.data.uniqid}`);
+            if (!currentId && response.data && response.data.id) {
+                const newUrl = window.location.href.replace(/modify\/?$/, `modify/${response.data.id}`);
                 window.history.pushState(null, '', newUrl);
             }
         }

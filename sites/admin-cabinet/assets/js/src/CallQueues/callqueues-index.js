@@ -62,17 +62,11 @@ const queueTable = {
                     className: 'collapsing', // Without 'ui' prefix as per guidelines
                     render: function(data, type, row) {
                         if (type === 'display') {
-                            // For display, show the represent with hidden searchable content
-                            const searchableContent = [
-                                row.name || '',
-                                row.extension || '',
-                                row.uniqid || ''
-                            ].join(' ').toLowerCase();
-                            
-                            return `${data || '—'}<span style="display:none;">${searchableContent}</span>`;
+                            // Display the representation
+                            return data || '—';
                         }
-                        // For search and other operations, return plain text
-                        return [data, row.name, row.extension, row.uniqid].filter(Boolean).join(' ');
+                        // For search, use the pre-generated search_index from backend
+                        return row.search_index || data || '';
                     }
                 },
                 {
@@ -94,20 +88,12 @@ const queueTable = {
                                 return SecurityUtils.sanitizeExtensionsApiContent(representation);
                             }).join('<br>');
 
-                            // Create searchable content with member extensions and names
-                            const searchableContent = data.map(member => {
-                                return [member.extension, member.represent || ''].join(' ');
-                            }).join(' ').toLowerCase();
-
                             return `<div style="color: #999; font-size: 0.8em; margin-bottom: 3px;">${strategyDesc}</div>
-                                    <small>${membersList}</small>
-                                    <span style="display:none;">${searchableContent}</span>`;
+                                    <small>${membersList}</small>`;
                         }
                         
-                        // For search, return plain text with all member info
-                        return data.map(member => {
-                            return [member.extension, member.represent || ''].filter(Boolean).join(' ');
-                        }).join(' ');
+                        // For search, backend provides search_index with all searchable content
+                        return '';
                     }
                 }
             ],
