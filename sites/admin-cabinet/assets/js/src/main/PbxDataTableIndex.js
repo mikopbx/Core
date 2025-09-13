@@ -56,6 +56,7 @@ class PbxDataTableIndex {
      * @param {boolean} [config.orderable=true] - Enable/disable sorting for all columns
      * @param {Array} [config.order=[[0, 'asc']]] - Default sort order
      * @param {Object} [config.ajaxData] - Additional data parameters for AJAX requests
+     * @param {boolean} [config.serverSide=false] - Enable server-side processing
      */
     constructor(config) {
         // Core configuration
@@ -69,7 +70,9 @@ class PbxDataTableIndex {
         
         // Sorting configuration (backward compatible)
         this.orderable = config.orderable !== undefined ? config.orderable : true;
-        this.order = config.order || [[0, 'asc']];
+        this.enableSearchIndex = config.enableSearchIndex !== false; // Default true
+        // Adjust default sort order if search_index is added (it will be column 0)
+        this.order = config.order || (this.enableSearchIndex ? [[1, 'asc']] : [[0, 'asc']]);
         
         // Permission state (loaded from server)
         this.permissions = {
@@ -104,6 +107,7 @@ class PbxDataTableIndex {
         this.onAfterDelete = config.onAfterDelete;
         this.getModifyUrl = config.getModifyUrl;
         this.ajaxData = config.ajaxData || {};
+        this.serverSide = config.serverSide || false;
     }
     
     /**
@@ -161,20 +165,31 @@ class PbxDataTableIndex {
         // Add the datatable-width-constrained class to the table
         this.$table.addClass('datatable-width-constrained');
         
+        // Add missing header cells if needed for search_index column
+        this.ensureHeaderCells();
+        
         const processedColumns = this.processColumns();
         
+        // v3 API format with getList method
+        let ajaxConfig;
+        
+        if (typeof this.apiModule.getList === 'function') {
+            // v3 format with getList method - use custom ajax function
+            ajaxConfig = (data, callback, settings) => {
+                this.apiModule.getList(this.ajaxData, (response) => {
+                    const processedData = this.handleDataLoad(response);
+                    callback({
+                        data: processedData
+                    });
+                });
+            };
+        } else {
+            console.error('API module does not have getList method');
+            ajaxConfig = {data: []};
+        }
+        
         const config = {
-            ajax: {
-                url: this.apiModule.endpoints.getList,
-                type: 'GET',
-                data: this.ajaxData,
-                dataSrc: (json) => this.handleDataLoad(json),
-                error: (xhr, error, thrown) => {
-                    this.hideLoader();
-                    this.toggleEmptyPlaceholder(true);
-                    UserMessage.showError(globalTranslate.ex_ErrorLoadingData || 'Failed to load data');
-                }
-            },
+            ajax: ajaxConfig,
             columns: processedColumns,
             order: this.order,
             ordering: this.orderable,
@@ -199,6 +214,53 @@ class PbxDataTableIndex {
      */
     processColumns() {
         const columns = [...this.columns];
+        
+        // Add hidden search_index column at the beginning if enabled and not present
+        // This column contains all searchable text without HTML formatting
+        if (this.enableSearchIndex && !columns.find(col => col.data === 'search_index')) {
+            columns.unshift({
+                data: 'search_index',
+                visible: false,
+                searchable: true,
+                orderable: false,
+                defaultContent: '',
+                render: function(data, type, row) {
+                    // If search_index is not provided by backend, generate it from row data
+                    if (data) {
+                        return data;
+                    }
+                    
+                    // Fallback: generate search index from visible fields
+                    const searchableFields = [];
+                    Object.keys(row).forEach(key => {
+                        // Skip internal fields and represent fields (they're often duplicates)
+                        if (key !== 'search_index' && key !== 'id' && key !== 'uniqid' && 
+                            key !== 'DT_RowId' && !key.endsWith('_represent')) {
+                            const value = row[key];
+                            if (value && typeof value === 'string') {
+                                // Strip HTML tags and add to searchable fields
+                                const cleanValue = value.replace(/<[^>]*>/g, '').trim();
+                                if (cleanValue) {
+                                    searchableFields.push(cleanValue);
+                                }
+                            } else if (value && typeof value === 'number') {
+                                searchableFields.push(value.toString());
+                            }
+                        }
+                    });
+                    // Also process _represent fields as they contain user-friendly text
+                    Object.keys(row).forEach(key => {
+                        if (key.endsWith('_represent') && row[key]) {
+                            const cleanValue = String(row[key]).replace(/<[^>]*>/g, '').trim();
+                            if (cleanValue) {
+                                searchableFields.push(cleanValue);
+                            }
+                        }
+                    });
+                    return searchableFields.join(' ').toLowerCase();
+                }
+            });
+        }
         
         // If sorting is globally disabled, ensure all columns respect it
         if (!this.orderable) {
@@ -300,45 +362,42 @@ class PbxDataTableIndex {
     
     /**
      * Handle data load and empty state management
-     * Supports multiple API formats:
-     * - v2 API: {result: true, data: [...]}
-     * - v3 API: {data: {items: [...]}}
-     * - Hybrid: {result: true, data: {items: [...]}}
+     * v3 API format: {result: boolean, data: array} or {data: {items: array}}
      */
-    handleDataLoad(json) {
+    handleDataLoad(response) {
         // Hide loader first
         this.hideLoader();
         
         let data = [];
         let isSuccess = false;
         
-        // First check if we have a result field to determine success
-        if (json.hasOwnProperty('result')) {
-            isSuccess = json.result === true;
+        // Check for error response
+        if (!response || response.result === false) {
+            isSuccess = false;
+            data = [];
         }
-        
-        // Now extract data based on structure
-        if (json.data) {
-            // Check if data has items property (v3 or hybrid format)
-            if (json.data.items !== undefined) {
-                data = json.data.items || [];
-                // If no result field was present, assume success if we have data.items
-                if (!json.hasOwnProperty('result')) {
-                    isSuccess = true;
-                }
-            }
-            // Check if data is directly an array (v2 format)
-            else if (Array.isArray(json.data)) {
-                data = json.data;
-                // If no result field was present, assume success
-                if (!json.hasOwnProperty('result')) {
-                    isSuccess = true;
-                }
-            }
+        // Standard v3 format with data array
+        else if (Array.isArray(response.data)) {
+            isSuccess = true;
+            data = response.data;
+        }
+        // v3 format with items property
+        else if (response.data && Array.isArray(response.data.items)) {
+            isSuccess = true;
+            data = response.data.items;
+        }
+        // Fallback for responses with result:true but no data
+        else if (response.result === true) {
+            isSuccess = true;
+            data = [];
         }
         
         const isEmpty = !isSuccess || data.length === 0;
         this.toggleEmptyPlaceholder(isEmpty);
+        
+        if (isEmpty && !isSuccess) {
+            UserMessage.showError(globalTranslate.ex_ErrorLoadingData || 'Failed to load data');
+        }
         
         if (this.onDataLoaded) {
             // Pass normalized response to callback
@@ -369,6 +428,28 @@ class PbxDataTableIndex {
         if (this.onDrawCallback) {
             this.onDrawCallback();
         }
+    }
+    
+    /**
+     * Ensure table has enough header cells for all columns
+     * This is needed when we add the hidden search_index column programmatically
+     */
+    ensureHeaderCells() {
+        if (!this.enableSearchIndex) {
+            return;
+        }
+        
+        const $thead = this.$table.find('thead');
+        if (!$thead.length) {
+            // Create thead if it doesn't exist
+            this.$table.prepend('<thead><tr></tr></thead>');
+        }
+        
+        const $headerRow = this.$table.find('thead tr').first();
+        
+        // Add a hidden header cell at the beginning for search_index
+        // DataTables requires matching number of th elements and columns
+        $headerRow.prepend('<th style="display:none;">Search Index</th>');
     }
     
     /**

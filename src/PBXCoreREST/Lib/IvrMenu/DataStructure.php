@@ -20,6 +20,7 @@
 namespace MikoPBX\PBXCoreREST\Lib\IvrMenu;
 
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
+use MikoPBX\PBXCoreREST\Lib\Common\SearchIndexTrait;
 use MikoPBX\Common\Models\Extensions;
 
 
@@ -30,6 +31,7 @@ use MikoPBX\Common\Models\Extensions;
  */
 class DataStructure extends AbstractDataStructure
 {
+    use SearchIndexTrait;
     /**
      * Create complete data array from IvrMenu model including actions
      * @param \MikoPBX\Common\Models\IvrMenu $model
@@ -38,12 +40,14 @@ class DataStructure extends AbstractDataStructure
      */
     public static function createFromModel($model, $actionsOrInclude = true): array
     {
-        // Start with base structure - data is already sanitized during storage
-        // No additional HTML escaping needed for API response (follows "Store Raw, Escape at Edge")
-        $data = self::createBaseStructure($model);
-        
-        // Mask the id with uniqid value for all REST clients
-        $data['id'] = $model->uniqid;
+        // Create custom structure without calling createBaseStructure to avoid duplicate fields
+        // Use only 'id' field that contains the uniqid value
+        $data = [
+            'id' => $model->uniqid ?? '',
+            'extension' => $model->extension ?? '',
+            'name' => $model->name ?? '',
+            'description' => $model->description ?? ''
+        ];
         
         // Add IVR menu specific fields
         $data['timeout'] = $model->timeout ?? '7';
@@ -97,7 +101,7 @@ class DataStructure extends AbstractDataStructure
                     'id' => (string)$action->id,
                     'digits' => $action->digits,
                     'extension' => $action->extension,
-                    'extension_represent' => $action->Extensions ? $action->Extensions->getRepresent() : 'ERROR'
+                    'extension_represent' => $action->Extensions?->getRepresent() ?? 'ERROR'
                 ];
             }
             // Sort actions by digits
@@ -109,6 +113,9 @@ class DataStructure extends AbstractDataStructure
             // For new records, set empty actions array
             $data['actions'] = [];
         }
+        
+        // Generate search index automatically
+        $data['search_index'] = self::generateAutoSearchIndex($data);
         
         return $data;
     }
@@ -126,21 +133,24 @@ class DataStructure extends AbstractDataStructure
         $data['represent'] = $model->getRepresent();
         
         // Add timeout extension representation
-        $data['timeoutExtensionRepresent'] = $model->TimeoutExtensions ? 
-            $model->TimeoutExtensions->getRepresent() : '';
+        $data['timeoutExtensionRepresent'] = $model->TimeoutExtensions?->getRepresent() ?? '';
         
         // Add simplified actions summary
         $actions = [];
         foreach ($model->IvrMenuActions as $action) {
             $actions[] = [
                 'digits' => $action->digits,
-                'represent' => $action->Extensions ? $action->Extensions->getRepresent() : 'ERROR'
+                'represent' => $action->Extensions?->getRepresent() ?? 'ERROR'
             ];
         }
         usort($actions, function($a, $b) {
             return (int)$a['digits'] <=> (int)$b['digits'];
         });
         $data['actions'] = $actions;
+        
+        // Generate search index automatically from all fields
+        // This will use all _represent fields and extract extension numbers
+        $data['search_index'] = self::generateAutoSearchIndex($data);
         
         return $data;
     }

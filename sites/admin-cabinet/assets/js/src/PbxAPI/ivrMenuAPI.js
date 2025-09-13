@@ -21,37 +21,38 @@
 /**
  * IvrMenuAPI - REST API for IVR menu management
  * 
- * Uses unified approach with centralized endpoint definitions.
+ * Uses RESTful v3 API with standard HTTP methods.
  * This provides:
- * - Single point of API URL management
- * - Easy API version switching (v2 -> v3)
+ * - Standard RESTful operations (GET, POST, PUT, DELETE)
+ * - Custom methods support (:getDefault)
  * - Consistent endpoint usage throughout code
  * - Simplified debugging and support
  */
 const IvrMenuAPI = {
     /**
-     * API endpoints
+     * API base URL
      */
-    apiUrl: `${Config.pbxUrl}/pbxcore/api/v2/ivr-menu/`,
+    apiUrl: `${Config.pbxUrl}/pbxcore/api/v3/ivr-menu`,
     
     // Endpoint definitions for unification
     endpoints: {
-        getList: `${Config.pbxUrl}/pbxcore/api/v2/ivr-menu/getList`,
-        getRecord: `${Config.pbxUrl}/pbxcore/api/v2/ivr-menu/getRecord`,
-        saveRecord: `${Config.pbxUrl}/pbxcore/api/v2/ivr-menu/saveRecord`,
-        deleteRecord: `${Config.pbxUrl}/pbxcore/api/v2/ivr-menu/deleteRecord`
+        base: `${Config.pbxUrl}/pbxcore/api/v3/ivr-menu`,
+        getDefault: `${Config.pbxUrl}/pbxcore/api/v3/ivr-menu:getDefault`
     },
     
     /**
-     * Get record by ID
+     * Get record by ID or get default for new record
      * @param {string} id - Record ID or empty string for new
      * @param {function} callback - Callback function
      */
     getRecord(id, callback) {
-        const recordId = (!id || id === '') ? 'new' : id;
+        // For new records, use getDefault custom method
+        const url = (!id || id === '' || id === 'new') 
+            ? this.endpoints.getDefault
+            : `${this.endpoints.base}/${id}`;
         
         $.api({
-            url: `${this.endpoints.getRecord}/${recordId}`,
+            url: url,
             method: 'GET',
             on: 'now',
             onSuccess(response) {
@@ -68,21 +69,35 @@ const IvrMenuAPI = {
     
     /**
      * Get list of all records
-     * @param {function} callback - Callback function
+     * @param {object|function} dataOrCallback - Optional data object or callback function
+     * @param {function} [callback] - Callback function (if first param is data)
      */
-    getList(callback) {
+    getList(dataOrCallback, callback) {
+        // Handle overloaded parameters - support both (callback) and (data, callback) signatures
+        let actualCallback;
+        if (typeof dataOrCallback === 'function') {
+            actualCallback = dataOrCallback;
+        } else {
+            actualCallback = callback;
+        }
+        
         $.api({
-            url: this.endpoints.getList,
+            url: this.endpoints.base,
             method: 'GET',
             on: 'now',
             onSuccess(response) {
-                callback(response);
+                // Pass the full response object as-is (PbxDataTableIndex handles the structure)
+                actualCallback(response);
             },
             onFailure(response) {
-                callback(response);
+                // Ensure we return a structure with result and data fields
+                if (response && !response.hasOwnProperty('data')) {
+                    response.data = [];
+                }
+                actualCallback(response);
             },
             onError() {
-                callback({result: false, data: []});
+                actualCallback({result: false, data: []});
             }
         });
     },
@@ -102,11 +117,10 @@ const IvrMenuAPI = {
         }
         
         // For new records use POST, for existing use PUT
-        // Don't rely on data.id since it's always present now (contains uniqid)
         const method = isNew ? 'POST' : 'PUT';
         const url = isNew ? 
-            this.endpoints.saveRecord : 
-            `${this.endpoints.saveRecord}/${data.id}`;
+            this.endpoints.base : 
+            `${this.endpoints.base}/${data.id}`;
         
         $.api({
             url: url,
@@ -152,7 +166,7 @@ const IvrMenuAPI = {
         }
         
         $.api({
-            url: `${this.endpoints.deleteRecord}/${id}`,
+            url: `${this.endpoints.base}/${id}`,
             on: 'now',
             method: 'DELETE',
             data: data,

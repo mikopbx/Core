@@ -130,7 +130,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
         } else {
             // No id provided, create completely new record
             $ivrMenu = new IvrMenu();
-            $ivrMenu->uniqid = IvrMenu::generateUniqueID('IVR-');
+            $ivrMenu->uniqid = IvrMenu::generateUniqueID('IVR');
         }
         
         // Check extension uniqueness using unified approach

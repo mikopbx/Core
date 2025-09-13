@@ -24,7 +24,9 @@ use MikoPBX\PBXCoreREST\Lib\IvrMenu\{
     GetRecordAction,
     GetListAction,
     SaveRecordAction,
-    DeleteRecordAction
+    DeleteRecordAction,
+    GetDefaultAction,
+    PatchAction
 };
 use Phalcon\Di\Injectable;
 
@@ -76,6 +78,18 @@ class IvrMenuManagementProcessor extends Injectable
                     $res = DeleteRecordAction::main($data['id']);
                 } else {
                     $res->messages['error'][] = 'Empty ID in request data';
+                }
+                break;
+                
+            case 'getDefault':
+                $res = GetDefaultAction::main();
+                break;
+                
+            case 'patch':
+                if (!empty($data['id'])) {
+                    $res = PatchAction::main($data);
+                } else {
+                    $res->messages['error'][] = 'Empty ID in request data for patch operation';
                 }
                 break;
                 

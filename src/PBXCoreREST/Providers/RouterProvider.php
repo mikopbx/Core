@@ -49,14 +49,12 @@ use MikoPBX\PBXCoreREST\Controllers\
     Extensions\GetController as ExtensionsGetController,
     Extensions\PostController as ExtensionsPostController,
     Employees\RestController as EmployeesRestController,
+    CallQueues\RestController as CallQueuesRestController,
     CallQueues\GetController as CallQueuesGetController,
     CallQueues\PostController as CallQueuesPostController,
     CallQueues\PutController as CallQueuesPutController,
     CallQueues\DeleteController as CallQueuesDeleteController,
-    IvrMenu\GetController as IvrMenuGetController,
-    IvrMenu\PostController as IvrMenuPostController,
-    IvrMenu\PutController as IvrMenuPutController,
-    IvrMenu\DeleteController as IvrMenuDeleteController,
+    IvrMenu\RestController as IvrMenuRestController,
     DialplanApplications\GetController as DialplanApplicationsGetController,
     DialplanApplications\PostController as DialplanApplicationsPostController,
     DialplanApplications\PutController as DialplanApplicationsPutController,
@@ -259,11 +257,33 @@ class RouterProvider implements ServiceProviderInterface
             [CallQueuesPutController::class, 'callAction', '/pbxcore/api/v2/call-queues/{actionName}/{id:[a-zA-Z0-9\-]+}', 'put', '/'],
             [CallQueuesDeleteController::class, 'callAction', '/pbxcore/api/v2/call-queues/{actionName}/{id:[a-zA-Z0-9\-]+}', 'delete', '/'],
 
-            [IvrMenuGetController::class, 'callAction', '/pbxcore/api/v2/ivr-menu/{actionName}', 'get', '/'],
-            [IvrMenuGetController::class, 'callAction', '/pbxcore/api/v2/ivr-menu/{actionName}/{id:[a-zA-Z0-9\-]+}', 'get', '/'],
-            [IvrMenuPostController::class, 'callAction', '/pbxcore/api/v2/ivr-menu/{actionName}', 'post', '/'],
-            [IvrMenuPutController::class, 'callAction', '/pbxcore/api/v2/ivr-menu/{actionName}/{id:[a-zA-Z0-9\-]+}', 'put', '/'],
-            [IvrMenuDeleteController::class, 'callAction', '/pbxcore/api/v2/ivr-menu/{actionName}/{id:[a-zA-Z0-9\-]+}', 'delete', '/'],
+            // v3 Call Queues RESTful API endpoints
+            // Custom methods with colon notation (Google API Design Guide) - must be before standard routes
+            [CallQueuesRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/call-queues', 'get', ':{customMethod:[a-zA-Z]+}'],
+            [CallQueuesRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/call-queues', 'post', ':{customMethod:[a-zA-Z]+}'],
+            [CallQueuesRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/call-queues', 'post', '/{id:[a-zA-Z0-9\-]+}:{customMethod:[a-zA-Z]+}'],
+            
+            // Standard CRUD operations
+            [CallQueuesRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/call-queues', 'get', '/'],
+            [CallQueuesRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/call-queues', 'get', '/{id:[a-zA-Z0-9\-]+}'],
+            [CallQueuesRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/call-queues', 'post', '/'],
+            [CallQueuesRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/call-queues', 'put', '/{id:[a-zA-Z0-9\-]+}'],
+            [CallQueuesRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/call-queues', 'patch', '/{id:[a-zA-Z0-9\-]+}'],
+            [CallQueuesRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/call-queues', 'delete', '/{id:[a-zA-Z0-9\-]+}'],
+
+            // v3 IVR Menu RESTful API endpoints
+            // Custom methods with colon notation (Google API Design Guide) - must be before standard routes
+            [IvrMenuRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/ivr-menu', 'get', ':{customMethod:[a-zA-Z]+}'],
+            [IvrMenuRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/ivr-menu', 'post', ':{customMethod:[a-zA-Z]+}'],
+            [IvrMenuRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/ivr-menu', 'post', '/{id:[a-zA-Z0-9\-]+}:{customMethod:[a-zA-Z]+}'],
+            
+            // Standard CRUD operations
+            [IvrMenuRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/ivr-menu', 'get', '/'],
+            [IvrMenuRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/ivr-menu', 'get', '/{id:[a-zA-Z0-9\-]+}'],
+            [IvrMenuRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/ivr-menu', 'post', '/'],
+            [IvrMenuRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/ivr-menu', 'put', '/{id:[a-zA-Z0-9\-]+}'],
+            [IvrMenuRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/ivr-menu', 'patch', '/{id:[a-zA-Z0-9\-]+}'],
+            [IvrMenuRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/ivr-menu', 'delete', '/{id:[a-zA-Z0-9\-]+}'],
             
             [DialplanApplicationsGetController::class, 'callAction', '/pbxcore/api/v2/dialplan-applications/{actionName}', 'get', '/'],
             [DialplanApplicationsGetController::class, 'callAction', '/pbxcore/api/v2/dialplan-applications/{actionName}/{id:[a-zA-Z0-9\-]+}', 'get', '/'],
