@@ -19,8 +19,8 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\ConferenceRooms;
 
+use MikoPBX\Common\Models\ConferenceRooms;
 use MikoPBX\Common\Models\Extensions;
-use MikoPBX\Core\System\MikoPBXConfig;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 
 /**
@@ -56,7 +56,8 @@ class GetDefaultAction
         
         try {
             // Generate unique ID for the new conference room
-            $uniqid = Extensions::TYPE_CONFERENCE . '-' . strtoupper(md5(uniqid('', true)));
+            
+            $uniqid = ConferenceRooms::generateUniqueID(Extensions::TYPE_CONFERENCE);
             
             // Get next available extension number using centralized method
             $extensionNumber = Extensions::getNextFreeApplicationNumber();

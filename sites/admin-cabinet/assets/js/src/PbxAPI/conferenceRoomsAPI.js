@@ -16,212 +16,27 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, PbxApi, globalTranslate */
+/* global PbxApiClient */
 
 /**
- * ConferenceRoomsAPI - REST API for conference room management (v3)
- * 
- * RESTful implementation following standard HTTP verbs and resource-oriented URLs.
- * Supports both standard CRUD operations and custom methods.
+ * Conference Rooms API using unified PbxApiClient
+ * All standard CRUD operations are provided by the base class
  */
-const ConferenceRoomsAPI = {
-    /**
-     * API endpoints (v3)
-     */
-    baseUrl: `${Config.pbxUrl}/pbxcore/api/v3/conference-rooms`,
-    
-    /**
-     * Endpoint definitions for PbxDataTableIndex compatibility
-     */
-    endpoints: {
-        getList: `${Config.pbxUrl}/pbxcore/api/v3/conference-rooms`,
-        getRecord: `${Config.pbxUrl}/pbxcore/api/v3/conference-rooms`,
-        saveRecord: `${Config.pbxUrl}/pbxcore/api/v3/conference-rooms`,
-        deleteRecord: `${Config.pbxUrl}/pbxcore/api/v3/conference-rooms`
-    },
-    
-    /**
-     * Get default values for new conference room
-     * @param {function} callback - Callback function
-     */
-    getDefault(callback) {
-        $.api({
-            url: `${this.baseUrl}:getDefault`,
-            method: 'GET',
-            on: 'now',
-            onSuccess(response) {
-                callback(response);
-            },
-            onFailure(response) {
-                callback(response);
-            },
-            onError() {
-                callback({result: false, messages: {error: 'Network error'}});
-            }
-        });
-    },
-    
-    /**
-     * Get record by ID
-     * @param {string} id - Record ID
-     * @param {function} callback - Callback function
-     */
-    getRecord(id, callback) {
-        $.api({
-            url: `${this.baseUrl}/${id}`,
-            method: 'GET',
-            on: 'now',
-            onSuccess(response) {
-                callback(response);
-            },
-            onFailure(response) {
-                callback(response);
-            },
-            onError() {
-                callback({result: false, messages: {error: 'Network error'}});
-            }
-        });
-    },
-    
-    /**
-     * Get list of all records
-     * @param {object} params - Query parameters (limit, offset, search)
-     * @param {function} callback - Callback function
-     */
-    getList(params, callback) {
-        // If params is a function, it's the callback (backward compatibility)
-        if (typeof params === 'function') {
-            callback = params;
-            params = {};
-        }
-        
-        $.api({
-            url: this.baseUrl,
-            method: 'GET',
-            data: params,
-            on: 'now',
-            onSuccess(response) {
-                callback(response);
-            },
-            onFailure(response) {
-                callback(response);
-            },
-            onError() {
-                callback({result: false, data: []});
-            }
-        });
-    },
-    
-    /**
-     * Create new record
-     * @param {object} data - Data to save
-     * @param {function} callback - Callback function
-     */
-    createRecord(data, callback) {
-        $.api({
-            url: this.baseUrl,
-            method: 'POST',
-            data: data,
-            on: 'now',
-            onSuccess(response) {
-                callback(response);
-            },
-            onFailure(response) {
-                callback(response);
-            },
-            onError() {
-                callback({result: false, messages: {error: 'Network error'}});
-            }
-        });
-    },
-    
-    /**
-     * Update existing record (full update)
-     * @param {string} id - Record ID
-     * @param {object} data - Data to update
-     * @param {function} callback - Callback function
-     */
-    updateRecord(id, data, callback) {
-        $.api({
-            url: `${this.baseUrl}/${id}`,
-            method: 'PUT',
-            data: data,
-            on: 'now',
-            onSuccess(response) {
-                callback(response);
-            },
-            onFailure(response) {
-                callback(response);
-            },
-            onError() {
-                callback({result: false, messages: {error: 'Network error'}});
-            }
-        });
-    },
-    
-    /**
-     * Partially update record
-     * @param {string} id - Record ID
-     * @param {object} data - Partial data to update
-     * @param {function} callback - Callback function
-     */
-    patchRecord(id, data, callback) {
-        $.api({
-            url: `${this.baseUrl}/${id}`,
-            method: 'PATCH',
-            data: data,
-            on: 'now',
-            onSuccess(response) {
-                callback(response);
-            },
-            onFailure(response) {
-                callback(response);
-            },
-            onError() {
-                callback({result: false, messages: {error: 'Network error'}});
-            }
-        });
-    },
-    
-    /**
-     * Save record (create or update based on isNew flag)
-     * This method provides backward compatibility with existing forms
-     * @param {object} data - Data to save
-     * @param {function} callback - Callback function
-     */
-    saveRecord(data, callback) {
-        // Check if this is a new record
-        const isNew = data.isNew === '1' || data.isNew === true || !data.id || data.id === '';
-        
-        if (isNew) {
-            // Create new record
-            this.createRecord(data, callback);
-        } else {
-            // Update existing record
-            this.updateRecord(data.id, data, callback);
-        }
-    },
-    
-    /**
-     * Delete record
-     * @param {string} id - Record ID
-     * @param {function} callback - Callback function
-     */
-    deleteRecord(id, callback) {
-        $.api({
-            url: `${this.baseUrl}/${id}`,
-            on: 'now',
-            method: 'DELETE',
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                if (callback) callback(response);
-            },
-            onFailure(response) {
-                if (callback) callback(response);
-            },
-            onError() {
-                if (callback) callback(false);
-            }
-        });
+const ConferenceRoomsAPI = new PbxApiClient({
+    endpoint: '/pbxcore/api/v3/conference-rooms',
+    customMethods: {
+        getDefault: ':getDefault'
     }
+});
+
+// Add getDefault alias for compatibility
+ConferenceRoomsAPI.getDefault = function(callback) {
+    return this.callCustomMethod('getDefault', callback);
 };
+
+// The PbxApiClient automatically provides:
+// - getList(callback) or getList(params, callback)
+// - getRecord(id, callback) - uses :getDefault for new records
+// - saveRecord(data, callback) - automatically selects POST/PUT
+// - deleteRecord(id, callback)
+// - callCustomMethod(methodName, data, callback)
