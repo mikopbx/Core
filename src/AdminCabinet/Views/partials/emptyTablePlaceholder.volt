@@ -27,6 +27,8 @@ Parameters:
 - showButton: boolean - Whether to show the button (permission check)
 - documentationLink: string - URL to documentation (optional)
 - showDocumentationLink: boolean - Whether to show documentation link (optional, defaults to true if link provided)
+- dropdownItems: array - Array of dropdown menu items (optional, creates dropdown button instead of simple button)
+  Each item should have: 'link', 'icon', 'text'
 #}
 
 <div class="ui placeholder segment">
@@ -49,9 +51,30 @@ Parameters:
             </a>
         </div>
     {% endif %}
-    {% if showButton and addButtonLink and addButtonText %}
-        <div style="margin-top: 1em;">
-            {{ link_to(addButtonLink, addButtonText, "class": "ui blue button prevent-word-wrap") }}
+    {% if showButton %}
+        <div style="margin-top: 1em; text-align: center;">
+            {% if dropdownItems is defined and dropdownItems|length > 0 %}
+                {# Dropdown button with multiple actions #}
+                <div class="ui buttons" style="display: inline-flex;">
+                    {% if addButtonLink and addButtonText %}
+                        {{ link_to(addButtonLink, addButtonText, "class": "ui blue button prevent-word-wrap") }}
+                    {% endif %}
+                    <div class="ui floating dropdown blue icon button">
+                        <i class="dropdown icon"></i>
+                        <div class="menu">
+                            {% for item in dropdownItems %}
+                                <a class="item" href="{{ item['link'] }}">
+                                    <i class="{{ item['icon'] }} icon"></i>
+                                    {{ item['text'] }}
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% elseif addButtonLink and addButtonText %}
+                {# Simple button (backward compatibility) #}
+                {{ link_to(addButtonLink, addButtonText, "class": "ui blue button prevent-word-wrap") }}
+            {% endif %}
         </div>
     {% endif %}
 </div>

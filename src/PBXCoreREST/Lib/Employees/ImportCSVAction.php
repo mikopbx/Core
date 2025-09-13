@@ -78,13 +78,15 @@ class ImportCSVAction
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
         
-        $mode = $data['mode'] ?? 'preview';
+        // Support both 'mode' and 'action' parameters for compatibility
+        $mode = $data['mode'] ?? $data['action'] ?? 'preview';
         $strategy = $data['strategy'] ?? 'skip_duplicates';
         
-        // Check if we're in import mode with saved data
-        if ($mode === 'import' && !empty($data['uploadId'])) {
+        // Check if we're in import mode with saved data (support both uploadId and upload_id)
+        $uploadId = $data['uploadId'] ?? $data['upload_id'] ?? null;
+        if ($mode === 'import' && !empty($uploadId)) {
             // Load saved preview data
-            $dataFile = "/tmp/employee_import/{$data['uploadId']}.json";
+            $dataFile = "/tmp/employee_import/{$uploadId}.json";
             if (!file_exists($dataFile)) {
                 $res->messages['error'][] = TranslationProvider::translate('ex_ImportFileNotFound');
                 return $res;
@@ -100,7 +102,7 @@ class ImportCSVAction
             $validationResult = $savedData['validation'] ?? [];
             
             // Start import worker directly
-            $jobId = self::startImportWorker($data['uploadId'], $strategy);
+            $jobId = self::startImportWorker($uploadId, $strategy);
             
             if ($jobId) {
                 $res->data = [
@@ -117,13 +119,38 @@ class ImportCSVAction
             return $res;
         }
         
-        // Validate input for preview mode
-        if (empty($data['filepath']) || !file_exists($data['filepath'])) {
+        // Handle upload_id parameter from web interface
+        if (!empty($data['upload_id'])) {
+            // Construct filepath from upload_id
+            $uploadCacheDir = '/storage/usbdisk1/mikopbx/tmp/www_cache/upload_cache/';
+            $uploadId = $data['upload_id'];
+            
+            // Find the CSV file in the upload directory
+            $uploadDir = $uploadCacheDir . $uploadId;
+            if (is_dir($uploadDir)) {
+                $files = glob($uploadDir . '/*.csv');
+                if (!empty($files)) {
+                    $filepath = $files[0]; // Take the first CSV file
+                } else {
+                    $res->messages['error'][] = TranslationProvider::translate('ex_ImportFileNotFound');
+                    return $res;
+                }
+            } else {
+                $res->messages['error'][] = TranslationProvider::translate('ex_ImportFileNotFound');
+                return $res;
+            }
+        } elseif (!empty($data['filepath'])) {
+            $filepath = $data['filepath'];
+        } else {
             $res->messages['error'][] = TranslationProvider::translate('ex_ImportFileNotFound');
             return $res;
         }
         
-        $filepath = $data['filepath'];
+        // Validate that file exists
+        if (!file_exists($filepath)) {
+            $res->messages['error'][] = TranslationProvider::translate('ex_ImportFileNotFound');
+            return $res;
+        }
         
         // Check file size
         $filesize = filesize($filepath);
@@ -236,12 +263,10 @@ class ImportCSVAction
             return $result;
         }
         
-        // Clean and validate headers
-        $headers = array_map('trim', $headers);
-        $headers = array_map('strtolower', $headers);
+        // Clean headers (remove BOM if present) and lowercase them
         $headers = array_map(function($header) {
-            // Remove BOM if present
-            return str_replace("\xEF\xBB\xBF", '', $header);
+            $cleaned = trim(str_replace("\xEF\xBB\xBF", '', $header));
+            return strtolower($cleaned);
         }, $headers);
         
         // Check required columns
@@ -518,5 +543,4 @@ class ImportCSVAction
         // If it's gone, worker started successfully
         return $jobId;
     }
-    
 }

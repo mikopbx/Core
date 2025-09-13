@@ -5,7 +5,7 @@
                 {% if isAllowed('save') %}
                     <div class="ui buttons">
                         {{ link_to("extensions/modify", '<i class="add user icon"></i> '~t._('ex_AddNewExtension'), "class": "ui blue button", "id":"add-new-button") }}
-                        <div class="ui floating dropdown icon button" id="bulk-actions-dropdown">
+                        <div class="ui floating dropdown blue icon button" id="bulk-actions-dropdown">
                             <i class="dropdown icon"></i>
                             <div class="menu">
                                 <a class="item" href="{{ url('extensions/bulkupload#import') }}">
@@ -64,6 +64,11 @@
 </div>
 
 <div id="extensions-placeholder" style="display: none; margin-top: 2em;">
+    {% set dropdownItems = [
+        {'link': url('extensions/bulkupload#import'), 'icon': 'upload', 'text': t._('ex_ImportFromCSV')},
+        {'link': url('extensions/bulkupload#export'), 'icon': 'download', 'text': t._('ex_ExportToCSV')},
+        {'link': url('extensions/bulkupload#template'), 'icon': 'file outline', 'text': t._('ex_DownloadTemplate')}
+    ] %}
     {{ partial("partials/emptyTablePlaceholder", [
         'icon': 'users',
         'title': t._('ex_EmptyTableTitle'),
@@ -71,7 +76,8 @@
         'addButtonText': '<i class="add user icon"></i> '~t._('ex_AddNewExtension'),
         'addButtonLink': 'extensions/modify',
         'showButton': isAllowed('save'),
-        'documentationLink': 'https://wiki.mikopbx.com/extensions'
+        'documentationLink': 'https://wiki.mikopbx.com/extensions',
+        'dropdownItems': dropdownItems
     ]) }}
 </div>
 

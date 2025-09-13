@@ -29,14 +29,6 @@ const EmployeesAPI = {
      */
     apiUrl: `${Config.pbxUrl}/pbxcore/api/v3/employees`,
     
-    // Legacy v2 endpoints for backward compatibility (will be removed in future)
-    v2Endpoints: {
-        getRecord: `${Config.pbxUrl}/pbxcore/api/v2/employees/getRecord`,
-        getNew: `${Config.pbxUrl}/pbxcore/api/v2/employees/new`,
-        saveRecord: `${Config.pbxUrl}/pbxcore/api/v2/employees/saveRecord`,
-        deleteRecord: `${Config.pbxUrl}/pbxcore/api/v2/employees/deleteRecord`
-    },
-    
     /**
      * Get employee record for editing
      * Uses v3 RESTful API: GET /employees/{id} or GET /employees:getDefault for new
@@ -250,10 +242,10 @@ const EmployeesAPI = {
      * @param {function} callback - Callback function to handle response
      */
     getTemplate(format, callback) {
-        // v3 API: GET /employees:template (custom action)
+        // v3 API: POST /employees:exportTemplate (custom action)
         $.api({
-            url: `${this.apiUrl}:template`,
-            method: 'GET',
+            url: `${this.apiUrl}:exportTemplate`,
+            method: 'POST',
             data: {
                 format: format
             },

@@ -34,6 +34,7 @@ return [
     'BreadcrumbErrors' => 'Error message',
     'BreadcrumbExtensions' => 'Extensions',
     'BreadcrumbExtensionsmodify' => 'Settings modification',
+    'BreadcrumbExtensionsbulkupload' => 'Bulk Upload',
     'BreadcrumbFail2Ban' => 'Intrusion protection',
     'BreadcrumbFirewall' => 'Firewall settings',
     'BreadcrumbFirewallmodify' => 'Rule setup',

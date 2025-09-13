@@ -442,7 +442,7 @@ class ModelsBase extends Model
                     . " <$this->extension>";
                 break;
             case ExtensionForwardingRights::class:
-                $name = $this->Extensions ? $this->Extensions->getRepresent() : ($this->extension ?: 'Unknown');
+                $name = $this->Extensions?->getRepresent() ?? ($this->extension ?? 'Unknown');
                 break;
             case Extensions::class:
                 if ($this->type === Extensions::TYPE_EXTERNAL) {
@@ -453,24 +453,21 @@ class ModelsBase extends Model
                 if (empty($this->id)) {
                     $name = "$icon {$this->t('mo_NewElementExtensions')}";
                 } elseif ($this->userid > 0) {
-                    $name = '';
-                    if (isset($this->Users->username)) {
-                        $name = $this->trimName($this->Users->username);
-                    }
+                    $name = $this->Users?->username ? $this->trimName($this->Users->username) : '';
                     $name = "$icon $name <$this->number>";
                 } else {
                     switch (strtoupper($this->type)) {
                         case Extensions::TYPE_CONFERENCE:
-                            $name = $this->ConferenceRooms->getRepresent();
+                            $name = $this->ConferenceRooms?->getRepresent() ?? "$this->callerid <$this->number>";
                             break;
                         case Extensions::TYPE_QUEUE:
-                            $name = $this->CallQueues->getRepresent();
+                            $name = $this->CallQueues?->getRepresent() ?? "$this->callerid <$this->number>";
                             break;
                         case Extensions::TYPE_DIALPLAN_APPLICATION:
-                            $name = $this->DialplanApplications->getRepresent();
+                            $name = $this->DialplanApplications?->getRepresent() ?? "$this->callerid <$this->number>";
                             break;
                         case Extensions::TYPE_IVR_MENU:
-                            $name = $this->IvrMenu->getRepresent();
+                            $name = $this->IvrMenu?->getRepresent() ?? "$this->callerid <$this->number>";
                             break;
                         case Extensions::TYPE_MODULES:
                             $name = '<i class="puzzle piece icon"></i> '
@@ -493,7 +490,7 @@ class ModelsBase extends Model
                 }
                 break;
             case ExternalPhones::class:
-                $name = $this->Extensions->getRepresent();
+                $name = $this->Extensions?->getRepresent() ?? 'Unknown';
                 break;
             case Fail2BanRules::class:
                 $name = '';
@@ -570,7 +567,7 @@ class ModelsBase extends Model
                         $represent .= "<i class='icon outline calendar alternate' ></i>";
                         $date_from = date("d.m.Y", $this->date_from);
                         $represent .= "$date_from";
-                        $date_to = date("d.m.Y", $this->date_to) ?? $date_from;
+                        $date_to = $this->date_to ? date("d.m.Y", $this->date_to) : $date_from;
                         if ($date_from !== $date_to) {
                             $represent .= " - $date_to";
                         }
@@ -712,6 +709,10 @@ class ModelsBase extends Model
                 $link = $this->buildRecordUrl(DialplanApplicationsController::class, 'modify', $this->uniqid);
                 break;
             case ExtensionForwardingRights::class:
+                // Link to the associated extension's edit page
+                if ($this->Extensions) {
+                    $link = $this->Extensions->getWebInterfaceLink();
+                }
                 break;
             case Extensions::class:
                 // Check if this is a user extension (has userid and is general user number)

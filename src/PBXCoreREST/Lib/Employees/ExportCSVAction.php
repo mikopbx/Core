@@ -19,8 +19,16 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Employees;
 
+use MikoPBX\Common\Models\Users;
+use MikoPBX\Common\Models\Extensions;
+use MikoPBX\Common\Models\ExternalPhones;
+use MikoPBX\Common\Models\Sip;
+use MikoPBX\Common\Models\ExtensionForwardingRights;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\PBXCoreREST\Lib\Files\RestAPIFilesUtils;
+use MikoPBX\PBXCoreREST\Lib\Common\AvatarHelper;
+use Phalcon\Di\Di;
 
 /**
  * Class ExportCSVAction
@@ -35,16 +43,27 @@ class ExportCSVAction
     private const array FORMATS = [
         'minimal' => [
             'number',
-            'user_username'
+            'user_username',
+            'user_email',
+            'mobile_number',
+            'sip_secret',
+            'fwd_ringlength',
+            'fwd_forwarding'
         ],
         'standard' => [
             'number',
             'user_username',
             'user_email',
             'mobile_number',
+            'mobile_dialstring',
             'sip_secret',
+            'sip_dtmfmode',
+            'sip_transport',
+            'sip_enableRecording',
+            'fwd_ringlength',
             'fwd_forwarding',
-            'fwd_ringlength'
+            'fwd_forwardingonbusy',
+            'fwd_forwardingonunavailable'
         ],
         'full' => [
             'number',
@@ -57,12 +76,11 @@ class ExportCSVAction
             'sip_dtmfmode',
             'sip_transport',
             'sip_enableRecording',
-            'sip_networkfilterid',
             'sip_manualattributes',
+            'fwd_ringlength',
             'fwd_forwarding',
             'fwd_forwardingonbusy',
-            'fwd_forwardingonunavailable',
-            'fwd_ringlength'
+            'fwd_forwardingonunavailable'
         ]
     ];
     
@@ -101,18 +119,17 @@ class ExportCSVAction
         // Generate CSV
         $csvContent = self::generateCSV($employees, $format);
         
-        // Create temporary file
-        $tempFile = tempnam(sys_get_temp_dir(), 'employee_export_');
+        // Create temporary file with proper extension
+        $tempFileName = 'employees_' . date('Y-m-d_H-i-s') . '.csv';
+        $tempFile = sys_get_temp_dir() . '/' . $tempFileName;
         file_put_contents($tempFile, $csvContent);
+        
+        // Create download link using RestAPIFilesUtils
+        $downloadLink = RestAPIFilesUtils::makeFileLinkForDownload($tempFile, '');
         
         // Prepare response
         $res->data = [
-            'fpassthru' => [
-                'filename' => $tempFile,
-                'need_delete' => true,
-                'content_type' => 'text/csv',
-                'download_name' => 'employees_' . date('Y-m-d_H-i-s') . '.csv'
-            ],
+            'filename' => $downloadLink,
             'count' => count($employees),
             'format' => $format
         ];
@@ -129,37 +146,91 @@ class ExportCSVAction
      */
     private static function getEmployees(array $filter): array
     {
-        // Use GetListAction to get all employees
-        $listResult = GetListAction::main($filter);
+        // Get full employee data directly from database
+        $employees = [];
         
-        if (!$listResult->success) {
+        // Build query with all necessary JOINs
+        $di = Di::getDefault();
+        if ($di === null) {
             return [];
         }
         
-        $employees = $listResult->data ?? [];
+        $parameters = [
+            'models' => [
+                'Users' => Users::class,
+            ],
+            'joins' => [
+                'InternalExtensions' => [
+                    0 => Extensions::class,
+                    1 => 'InternalExtensions.userid=Users.id AND InternalExtensions.is_general_user_number = "1" AND InternalExtensions.type="' . Extensions::TYPE_SIP . '"',
+                    2 => 'InternalExtensions',
+                    3 => 'INNER',
+                ],
+                'Sip' => [
+                    0 => Sip::class,
+                    1 => 'Sip.extension=InternalExtensions.number',
+                    2 => 'Sip',
+                    3 => 'INNER',
+                ],
+                'MobileExtensions' => [
+                    0 => Extensions::class,
+                    1 => 'MobileExtensions.userid=Users.id AND MobileExtensions.is_general_user_number = "1" AND MobileExtensions.type="' . Extensions::TYPE_EXTERNAL . '"',
+                    2 => 'MobileExtensions',
+                    3 => 'LEFT',
+                ],
+                'ExternalPhones' => [
+                    0 => ExternalPhones::class,
+                    1 => 'ExternalPhones.extension=MobileExtensions.number',
+                    2 => 'ExternalPhones',
+                    3 => 'LEFT',
+                ],
+                'ForwardingRights' => [
+                    0 => ExtensionForwardingRights::class,
+                    1 => 'ForwardingRights.extension=InternalExtensions.number',
+                    2 => 'ForwardingRights',
+                    3 => 'LEFT',
+                ],
+            ],
+            'columns' => [
+                'user_id' => 'Users.id',
+                'user_username' => 'Users.username',
+                'user_email' => 'Users.email',
+                'user_avatar' => 'Users.avatar',
+                'number' => 'InternalExtensions.number',
+                'sip_secret' => 'Sip.secret',
+                'sip_dtmfmode' => 'Sip.dtmfmode',
+                'sip_transport' => 'Sip.transport',
+                'sip_manualattributes' => 'Sip.manualattributes',
+                'sip_enableRecording' => 'Sip.enableRecording',
+                'mobile_number' => 'MobileExtensions.number',
+                'mobile_dialstring' => 'ExternalPhones.dialstring',
+                'fwd_ringlength' => 'ForwardingRights.ringlength',
+                'fwd_forwarding' => 'ForwardingRights.forwarding',
+                'fwd_forwardingonbusy' => 'ForwardingRights.forwardingonbusy',
+                'fwd_forwardingonunavailable' => 'ForwardingRights.forwardingonunavailable',
+            ],
+        ];
         
-        // Apply additional filters if needed
+        // Apply number range filter if provided
         if (!empty($filter['number_from']) && !empty($filter['number_to'])) {
-            $employees = array_filter($employees, function($emp) use ($filter) {
-                // Check if number key exists
-                if (!isset($emp['number'])) {
-                    return false;
-                }
-                $number = intval($emp['number']);
-                $from = intval($filter['number_from']);
-                $to = intval($filter['number_to']);
-                return $number >= $from && $number <= $to;
-            });
+            $from = intval($filter['number_from']);
+            $to = intval($filter['number_to']);
+            $parameters['conditions'] = "CAST(InternalExtensions.number AS INTEGER) BETWEEN $from AND $to";
         }
         
-        // Sort by number
-        usort($employees, function($a, $b) {
-            $aNumber = isset($a['number']) ? intval($a['number']) : 0;
-            $bNumber = isset($b['number']) ? intval($b['number']) : 0;
-            return $aNumber - $bNumber;
-        });
+        // Order by number
+        $parameters['order'] = 'CAST(InternalExtensions.number AS INTEGER) ASC';
         
-        return $employees;
+        // Execute query
+        $query = $di->get('modelsManager')->createBuilder($parameters)->getQuery();
+        $result = $query->execute();
+        
+        if (!$result) {
+            return [];
+        }
+        
+        // Convert to array and return
+        return $result->toArray();
     }
     
     /**
@@ -179,7 +250,7 @@ class ExportCSVAction
         // Add BOM for Excel UTF-8 compatibility
         fprintf($output, "\xEF\xBB\xBF");
         
-        // Write headers
+        // Write field names as headers (English identifiers)
         fputcsv($output, $fields);
         
         // Write data
@@ -191,6 +262,16 @@ class ExportCSVAction
                 // Special handling for boolean fields
                 if ($field === 'sip_enableRecording') {
                     $value = $value ? 'true' : 'false';
+                }
+                
+                // Decode base64 for manualattributes
+                if ($field === 'sip_manualattributes' && !empty($value)) {
+                    $value = base64_decode($value);
+                }
+                
+                // Convert avatar to URL
+                if ($field === 'user_avatar') {
+                    $value = AvatarHelper::getAvatarUrl($value);
                 }
                 
                 // Clean passwords for security (optional - can be removed for full backup)
@@ -278,7 +359,7 @@ class ExportCSVAction
         // Add BOM for Excel UTF-8 compatibility
         fprintf($output, "\xEF\xBB\xBF");
         
-        // Write headers
+        // Write field names as headers (English identifiers)
         fputcsv($output, $fields);
         
         // Write sample data
@@ -295,18 +376,17 @@ class ExportCSVAction
         $csvContent = stream_get_contents($output);
         fclose($output);
         
-        // Create temporary file
-        $tempFile = tempnam(sys_get_temp_dir(), 'employee_template_');
+        // Create temporary file with proper extension
+        $tempFileName = 'employee_import_template.csv';
+        $tempFile = sys_get_temp_dir() . '/' . $tempFileName;
         file_put_contents($tempFile, $csvContent);
+        
+        // Create download link using RestAPIFilesUtils
+        $downloadLink = RestAPIFilesUtils::makeFileLinkForDownload($tempFile, '');
         
         // Prepare response
         $res->data = [
-            'fpassthru' => [
-                'filename' => $tempFile,
-                'need_delete' => true,
-                'content_type' => 'text/csv',
-                'download_name' => 'employee_import_template.csv'
-            ],
+            'filename' => $downloadLink,
             'format' => $format
         ];
         $res->success = true;

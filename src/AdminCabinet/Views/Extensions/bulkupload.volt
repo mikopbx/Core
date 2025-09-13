@@ -1,14 +1,8 @@
 <div class="ui container">
-    <h2 class="ui header">
-        <i class="file excel outline icon"></i>
-        <div class="content">
-            {{ t._('ex_BulkUploadTitle') }}
-            <div class="sub header">{{ t._('ex_BulkUploadDescription') }}</div>
-        </div>
-    </h2>
+ 
 
     <!-- Tabs -->
-    <div class="ui top attached tabular menu" id="bulk-tabs">
+    <div class="ui secondary menu" id="bulk-tabs">
         <a class="item active" data-tab="import">
             <i class="upload icon"></i>
             {{ t._('ex_ImportTab') }}
@@ -24,7 +18,7 @@
     </div>
 
     <!-- Import Tab -->
-    <div class="ui bottom attached tab segment active" data-tab="import">
+    <div class="ui tab active" data-tab="import">
         <!-- Upload Area -->
         <div class="ui placeholder segment" id="upload-segment">
             <div class="ui icon header">
@@ -140,7 +134,7 @@
     </div>
 
     <!-- Export Tab -->
-    <div class="ui bottom attached tab segment" data-tab="export">
+    <div class="ui tab" data-tab="export">
         <div class="ui form">
             <h3 class="ui header">{{ t._('ex_ExportSettings') }}</h3>
             
@@ -151,6 +145,12 @@
                     <option value="standard" selected>{{ t._('ex_FormatStandard') }}</option>
                     <option value="full">{{ t._('ex_FormatFull') }}</option>
                 </select>
+            </div>
+            
+            <!-- Field description for selected format -->
+            <div class="ui info message" id="export-format-fields-info">
+                <div class="header">{{ t._('ex_FieldsInFormat') }}</div>
+                <div id="export-format-fields-description"></div>
             </div>
 
             <div class="field">
@@ -173,7 +173,7 @@
     </div>
 
     <!-- Template Tab -->
-    <div class="ui bottom attached tab segment" data-tab="template">
+    <div class="ui tab" data-tab="template">
         <h3 class="ui header">{{ t._('ex_DownloadTemplate') }}</h3>
         <p>{{ t._('ex_TemplateDescription') }}</p>
         
@@ -186,26 +186,21 @@
                     <option value="full">{{ t._('ex_FormatFull') }}</option>
                 </select>
             </div>
+            
+            <!-- Field description for selected format -->
+            <div class="ui info message" id="format-fields-info">
+                <div class="header">{{ t._('ex_FieldsInFormat') }}</div>
+                <div id="format-fields-description"></div>
+            </div>
 
             <button class="ui primary button" id="download-template">
                 <i class="download icon"></i>
                 {{ t._('ex_DownloadCSVTemplate') }}
             </button>
         </div>
-
-        <div class="ui info message">
-            <div class="header">{{ t._('ex_CSVFieldsInfo') }}</div>
-            <ul class="list">
-                <li><strong>number</strong> - {{ t._('ex_FieldNumber') }}</li>
-                <li><strong>user_username</strong> - {{ t._('ex_FieldUsername') }}</li>
-                <li><strong>user_email</strong> - {{ t._('ex_FieldEmail') }}</li>
-                <li><strong>mobile_number</strong> - {{ t._('ex_FieldMobile') }}</li>
-                <li><strong>sip_secret</strong> - {{ t._('ex_FieldPassword') }}</li>
-                <li><strong>fwd_forwarding</strong> - {{ t._('ex_FieldForwarding') }}</li>
-                <li><strong>fwd_ringlength</strong> - {{ t._('ex_FieldRingLength') }}</li>
-            </ul>
-        </div>
     </div>
 </div>
-
-{{ partial("partials/submitbutton", ['indexurl':'extensions/index']) }}
+<div class="ui hidden divider"></div>
+<div class="ui section">
+    {{ link_to('extensions/index', "<i class='list icon'></i>"~t._('bt_BackToList'), "class": "ui labeled large icon button", "id":"back-to-list-button") }}
+</div>

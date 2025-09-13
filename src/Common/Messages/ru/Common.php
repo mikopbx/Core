@@ -35,6 +35,7 @@ return [
     'BreadcrumbErrors' => 'Сообщение об ошибке',
     'BreadcrumbExtensions' => 'Сотрудники',
     'BreadcrumbExtensionsmodify' => 'Изменение настроек',
+    'BreadcrumbExtensionsbulkupload' => 'Массовая загрузка',
     'BreadcrumbFail2Ban' => 'Защита от взлома',
     'BreadcrumbFirewall' => 'Настройка сетевого экрана',
     'BreadcrumbFirewallmodify' => 'Настройка правила',

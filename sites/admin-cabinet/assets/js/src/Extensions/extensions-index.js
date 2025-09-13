@@ -406,6 +406,8 @@ const extensionsIndex = {
                         // Show "Add first employee" placeholder for empty database
                         $('#extensions-table-container').hide();
                         $('#extensions-placeholder').show();
+                        // Initialize dropdown in the placeholder
+                        $('#extensions-placeholder .dropdown').dropdown();
                     }
                 } else {
                     $('#extensions-table').show();

@@ -66,10 +66,22 @@ const extensionsBulkUpload = {
         // Initialize tabs
         $('#bulk-tabs .item').tab();
 
-        // Initialize dropdowns
+        // Initialize dropdowns with change handlers
         extensionsBulkUpload.$importStrategy.dropdown();
-        extensionsBulkUpload.$exportFormat.dropdown();
-        extensionsBulkUpload.$templateFormat.dropdown();
+        extensionsBulkUpload.$exportFormat.dropdown({
+            onChange: function(value) {
+                extensionsBulkUpload.updateFormatDescription('export', value);
+            }
+        });
+        extensionsBulkUpload.$templateFormat.dropdown({
+            onChange: function(value) {
+                extensionsBulkUpload.updateFormatDescription('template', value);
+            }
+        });
+        
+        // Show initial format descriptions
+        extensionsBulkUpload.updateFormatDescription('export', 'standard');
+        extensionsBulkUpload.updateFormatDescription('template', 'standard');
 
         // Set up file upload
         extensionsBulkUpload.initializeFileUpload();
@@ -390,14 +402,11 @@ const extensionsBulkUpload = {
                 extensionsBulkUpload.$exportButton.removeClass('loading');
                 
                 if (response.result === true && response.data) {
-                    // Trigger download
-                    if (response.data.fpassthru) {
-                        window.location = `${globalRootUrl}employees/downloadCSV?file=${response.data.fpassthru.filename}`;
+                    // Trigger download using the link from the server
+                    if (response.data.filename) {
+                        // response.data.filename already contains the full path from root
+                        window.location.href = response.data.filename;
                     }
-                    
-                    const message = globalTranslate.ex_ExportSuccess
-                        .replace('{count}', response.data.count || 0);
-                    UserMessage.showInformation(message);
                 } else {
                     UserMessage.showMultiString(response.messages);
                 }
@@ -419,17 +428,84 @@ const extensionsBulkUpload = {
                 extensionsBulkUpload.$downloadTemplate.removeClass('loading');
                 
                 if (response.result === true && response.data) {
-                    // Trigger download
-                    if (response.data.fpassthru) {
-                        window.location = `${globalRootUrl}employees/downloadCSV?file=${response.data.fpassthru.filename}`;
+                    // Trigger download using the link from the server
+                    if (response.data.filename) {
+                        // response.data.filename already contains the full path from root
+                        window.location.href = response.data.filename;
                     }
-                    
-                    UserMessage.showInformation(globalTranslate.ex_TemplateDownloaded);
                 } else {
                     UserMessage.showMultiString(response.messages);
                 }
             }
         );
+    },
+
+    /**
+     * Get field descriptions for format
+     */
+    getFormatFields(format) {
+        const formats = {
+            minimal: [
+                'number - ' + globalTranslate.ex_FieldNumber_Help,
+                'user_username - ' + globalTranslate.ex_FieldUsername_Help,
+                'user_email - ' + globalTranslate.ex_FieldEmail_Help,
+                'mobile_number - ' + globalTranslate.ex_FieldMobile_Help,
+                'sip_secret - ' + globalTranslate.ex_FieldPassword_Help,
+                'fwd_ringlength - ' + globalTranslate.ex_FieldRingLength_Help,
+                'fwd_forwarding - ' + globalTranslate.ex_FieldForwarding_Help
+            ],
+            standard: [
+                'number - ' + globalTranslate.ex_FieldNumber_Help,
+                'user_username - ' + globalTranslate.ex_FieldUsername_Help,
+                'user_email - ' + globalTranslate.ex_FieldEmail_Help,
+                'mobile_number - ' + globalTranslate.ex_FieldMobile_Help,
+                'mobile_dialstring - ' + globalTranslate.ex_FieldMobileDialstring_Help,
+                'sip_secret - ' + globalTranslate.ex_FieldPassword_Help,
+                'sip_dtmfmode - ' + globalTranslate.ex_FieldDTMFMode_Help,
+                'sip_transport - ' + globalTranslate.ex_FieldTransport_Help,
+                'sip_enableRecording - ' + globalTranslate.ex_FieldRecording_Help,
+                'fwd_ringlength - ' + globalTranslate.ex_FieldRingLength_Help,
+                'fwd_forwarding - ' + globalTranslate.ex_FieldForwarding_Help,
+                'fwd_forwardingonbusy - ' + globalTranslate.ex_FieldForwardingBusy_Help,
+                'fwd_forwardingonunavailable - ' + globalTranslate.ex_FieldForwardingUnavailable_Help
+            ],
+            full: [
+                'number - ' + globalTranslate.ex_FieldNumber_Help,
+                'user_username - ' + globalTranslate.ex_FieldUsername_Help,
+                'user_email - ' + globalTranslate.ex_FieldEmail_Help,
+                'user_avatar - ' + globalTranslate.ex_FieldAvatar_Help,
+                'mobile_number - ' + globalTranslate.ex_FieldMobile_Help,
+                'mobile_dialstring - ' + globalTranslate.ex_FieldMobileDialstring_Help,
+                'sip_secret - ' + globalTranslate.ex_FieldPassword_Help,
+                'sip_dtmfmode - ' + globalTranslate.ex_FieldDTMFMode_Help,
+                'sip_transport - ' + globalTranslate.ex_FieldTransport_Help,
+                'sip_enableRecording - ' + globalTranslate.ex_FieldRecording_Help,
+                'sip_manualattributes - ' + globalTranslate.ex_FieldManualAttributes_Help,
+                'fwd_ringlength - ' + globalTranslate.ex_FieldRingLength_Help,
+                'fwd_forwarding - ' + globalTranslate.ex_FieldForwarding_Help,
+                'fwd_forwardingonbusy - ' + globalTranslate.ex_FieldForwardingBusy_Help,
+                'fwd_forwardingonunavailable - ' + globalTranslate.ex_FieldForwardingUnavailable_Help
+            ]
+        };
+        
+        return formats[format] || formats.standard;
+    },
+    
+    /**
+     * Update format description
+     */
+    updateFormatDescription(type, format) {
+        const fields = extensionsBulkUpload.getFormatFields(format);
+        const $container = type === 'export' ? 
+            $('#export-format-fields-description') : 
+            $('#format-fields-description');
+        
+        if ($container.length) {
+            const html = '<ul class="list">' + 
+                fields.map(field => `<li><code>${field}</code></li>`).join('') + 
+                '</ul>';
+            $container.html(html);
+        }
     }
 };
 

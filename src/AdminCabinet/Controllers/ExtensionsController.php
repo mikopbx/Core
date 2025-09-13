@@ -21,7 +21,7 @@
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\ExtensionEditForm;
-use MikoPBX\Common\Models\{Extensions, Sip, Users};
+use MikoPBX\Common\Models\{Extensions, Sip};
 
 class ExtensionsController extends BaseController
 {
@@ -30,9 +30,7 @@ class ExtensionsController extends BaseController
      */
     public function indexAction(): void
     {
-        // Add EmployeesAPI for delete operations on the index page
-        $this->assets->collection('footerJS')
-            ->addJs('js/pbx/PbxAPI/employeesAPI.js', true);
+
     }
 
 
@@ -88,7 +86,9 @@ class ExtensionsController extends BaseController
     public function bulkuploadAction(): void
     {
         // Set page title and metadata for bulk upload interface
-        $this->view->represent = $this->translation->_("ex_BulkUploadTitle");
+        $this->view->represent = '<i class="file excel outline icon"></i>'.$this->translation->_("ex_BulkUploadTitle");
+        $this->view->representSubHeader = $this->translation->_("ex_BulkUploadDescription");
+
         $this->view->urlToWiki = 'https://docs.mikopbx.com/mikopbx/manual/telefoniya/extensions#bulk-upload';
         $this->view->controllerName = 'Extensions';
         $this->view->controllerClass = 'ExtensionsController';

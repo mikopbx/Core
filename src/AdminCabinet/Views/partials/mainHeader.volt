@@ -13,10 +13,22 @@
         </div>
     {% else %}
         <div class="content">
-            {{ represent }} {% if not urlToWiki is empty %}
+            {{ represent }} 
+            
+            {% if not representSubHeader is empty %}
+                <div class="sub header" id="page-sub-header">{{ representSubHeader }}
+ {% if not urlToWiki is empty %}
                 <a href="{{ urlToWiki }}" target="_blank"
                    data-content="{{ t._("GoToWikiDocumentation") }}"
                    data-variation="wide"> <i class="small blue question icon"></i></a>
+            {% endif %}
+                </div>
+            {% else %}
+                {% if not urlToWiki is empty %}
+                <a href="{{ urlToWiki }}" target="_blank"
+                   data-content="{{ t._("GoToWikiDocumentation") }}"
+                   data-variation="wide"> <i class="small blue question icon"></i></a>
+                {% endif %}
             {% endif %}
         </div>
     {% endif %}
