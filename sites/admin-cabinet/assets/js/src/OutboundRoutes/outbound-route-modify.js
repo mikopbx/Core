@@ -8,7 +8,7 @@
  * (at your option) any later version.
  */
 
-/* global globalRootUrl, globalTranslate, Form, OutboundRoutesAPI, UserMessage, TooltipBuilder, DynamicDropdownBuilder */
+/* global globalRootUrl, globalTranslate, Form, OutboundRoutesAPI, ProvidersAPI, UserMessage, TooltipBuilder, DynamicDropdownBuilder */
 
 /**
  * Object for managing outbound route settings
@@ -139,15 +139,12 @@ const outboundRoute = {
         const copySource = urlParams.get('copy');
         
         if (copySource) {
-            // Load source route data for copying
-            OutboundRoutesAPI.getRecordWithCopy('new', copySource, (response) => {
+            // Use the new RESTful copy method: /outbound-routes/{id}:copy
+            OutboundRoutesAPI.callCustomMethod('copy', {id: copySource}, (response) => {
                 if (response.result) {
-                    // Clear the id to ensure it's treated as a new record
-                    const copyData = response.data;
-                    copyData.id = '';
-                    
-                    this.routeData = copyData;
-                    this.populateForm(copyData);
+                    // Data is already prepared by backend with new ID and priority
+                    this.routeData = response.data;
+                    this.populateForm(response.data);
                     
                     // Mark form as changed for copy operation
                     Form.dataChanged();
@@ -155,7 +152,7 @@ const outboundRoute = {
                     // V5.0: No fallback - show error and stop
                     const errorMessage = response.messages && response.messages.error ? 
                         response.messages.error.join(', ') : 
-                        'Failed to load source data for copying';
+                        'Failed to copy outbound route data';
                     UserMessage.showError(errorMessage);
                 }
             });
@@ -163,17 +160,23 @@ const outboundRoute = {
         }
         
         // Regular load or new record - always use REST API (V5.0 architecture)
-        const apiRouteId = (routeId === 'new') ? 'new' : routeId;
+        // Use getRecord which automatically handles :getDefault for new records
+        const requestId = routeId === 'new' ? '' : routeId;
         
-        OutboundRoutesAPI.getRecord(apiRouteId, (response) => {
+        OutboundRoutesAPI.getRecord(requestId, (response) => {
             if (response.result) {
+                // Mark as new record if we don't have an ID
+                if (routeId === 'new') {
+                    response.data._isNew = true;
+                }
+                
                 this.routeData = response.data;
                 this.populateForm(response.data);
             } else {
                 // V5.0: No fallback - show error and stop
                 const errorMessage = response.messages && response.messages.error ? 
                     response.messages.error.join(', ') : 
-                    'Failed to load outbound route data';
+                    `Failed to load outbound route data${routeId === 'new' ? ' (default values)' : ''}`;
                 UserMessage.showError(errorMessage);
             }
         });
@@ -197,9 +200,9 @@ const outboundRoute = {
             note: data.note || ''
         }, {
             afterPopulate: (formData) => {
-                // Initialize provider dropdown with data
+                // Initialize provider dropdown with data using v3 API
                 DynamicDropdownBuilder.buildDropdown('providerid', data, {
-                    apiUrl: '/pbxcore/api/v2/providers/getForSelect',
+                    apiUrl: '/pbxcore/api/v3/providers:getForSelect',
                     placeholder: globalTranslate.or_SelectProvider,
                     onChange: function(value, text) {
                         Form.dataChanged();
@@ -262,7 +265,8 @@ const outboundRoute = {
         // REST API integration - use built-in Form support
         Form.apiSettings.enabled = true;
         Form.apiSettings.apiObject = OutboundRoutesAPI;
-        Form.apiSettings.saveMethod = 'saveRecord';
+        Form.apiSettings.saveMethod = 'auto'; // Will automatically use create/update based on ID
+        Form.apiSettings.autoDetectMethod = true;
         
         // Navigation URLs
         Form.afterSubmitIndexUrl = `${globalRootUrl}outbound-routes/index/`;

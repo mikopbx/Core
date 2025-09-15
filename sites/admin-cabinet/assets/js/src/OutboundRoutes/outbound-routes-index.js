@@ -35,7 +35,7 @@ const outboundRoutes = {
      * Initialize DataTable using base class
      */
     initializeDataTable() {
-        // Use OutboundRoutesAPI directly - it now follows the same pattern as IncomingRoutesAPI
+        // Use OutboundRoutesAPI directly
         const apiWrapper = OutboundRoutesAPI;
         
         // Create instance of base class with Outbound Routes specific configuration

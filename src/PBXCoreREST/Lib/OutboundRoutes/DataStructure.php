@@ -132,15 +132,13 @@ class DataStructure extends AbstractDataStructure
         $prepend = $model->prepend ?? '';
         
         // Get provider representation (already includes icon from getRepresent())
-        $providerDisplay = '';
-        if ($model->Providers) {
-            $providerName = $model->Providers->getRepresent();
-            // The getRepresent() method already returns HTML with icon, so we don't need to add it
-            $providerDisplay = '<span class="provider">' . $providerName . '</span>';
-        } else {
+        $providerName = $model->Providers?->getRepresent();
+        if ($providerName === null) {
             // No provider selected
             return $translation->_('or_RuleNotConfigured');
         }
+        // The getRepresent() method already returns HTML with icon, so we don't need to add it
+        $providerDisplay = '<span class="provider">' . $providerName . '</span>';
         
         // Determine the base translation key based on pattern
         $baseKey = '';

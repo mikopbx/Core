@@ -24,7 +24,13 @@ use MikoPBX\PBXCoreREST\Lib\OutboundRoutes\{
     GetListAction,
     SaveRecordAction,
     DeleteRecordAction,
-    ChangePriorityAction
+    ChangePriorityAction,
+    GetDefaultAction,
+    CreateAction,
+    UpdateAction,
+    PatchAction,
+    DeleteAction,
+    CopyRecordAction
 };
 use Phalcon\Di\Injectable;
 
@@ -35,9 +41,13 @@ enum OutboundRouteAction: string
 {
     case GET_RECORD = 'getRecord';
     case GET_LIST = 'getList';
-    case SAVE_RECORD = 'saveRecord';
-    case DELETE_RECORD = 'deleteRecord';
-    case CHANGE_PRIORITY = 'changePriority';
+    case CREATE = 'create';
+    case UPDATE = 'update';
+    case PATCH = 'patch';
+    case DELETE = 'delete';
+    case CHANGE_PRIORITIES = 'changePriorities';
+    case GET_DEFAULT = 'getDefault';
+    case COPY = 'copy';
 }
 
 /**
@@ -46,9 +56,11 @@ enum OutboundRouteAction: string
  * Handles all outbound route management operations including:
  * - getRecord: Get single outbound route by ID or create new structure
  * - getList: Get list of all outbound routes with provider data
- * - saveRecord: Create or update outbound route
- * - deleteRecord: Delete outbound route
- * - changePriority: Update priorities for multiple routes
+ * - create: Create new outbound route
+ * - update: Update outbound route
+ * - patch: Partially update outbound route
+ * - delete: Delete outbound route
+ * - changePriorities: Update priorities for multiple routes
  */
 class OutboundRoutesManagementProcessor extends Injectable
 {
@@ -78,9 +90,13 @@ class OutboundRoutesManagementProcessor extends Injectable
         $res = match ($action) {
             OutboundRouteAction::GET_RECORD => GetRecordAction::main($data['id'] ?? null, $data['copy-source'] ?? null),
             OutboundRouteAction::GET_LIST => GetListAction::main($data),
-            OutboundRouteAction::SAVE_RECORD => SaveRecordAction::main($data),
-            OutboundRouteAction::DELETE_RECORD => DeleteRecordAction::main($data['id'] ?? ''),
-            OutboundRouteAction::CHANGE_PRIORITY => ChangePriorityAction::main($data),
+            OutboundRouteAction::CREATE => CreateAction::main($data),
+            OutboundRouteAction::UPDATE => UpdateAction::main($data),
+            OutboundRouteAction::PATCH => PatchAction::main($data),
+            OutboundRouteAction::DELETE => DeleteAction::main($data['id'] ?? ''),
+            OutboundRouteAction::CHANGE_PRIORITIES => ChangePriorityAction::main($data),
+            OutboundRouteAction::GET_DEFAULT => GetDefaultAction::main(),
+            OutboundRouteAction::COPY => CopyRecordAction::main($data['id'] ?? ''),
         };
 
         $res->function = $actionString;
