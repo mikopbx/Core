@@ -33,18 +33,15 @@ class IvrMenuController extends BaseController
     }
 
     /**
-     * Modify IVR menu action with copy support.
+     * Modify IVR menu action.
      * 
      * Simplified controller - all data loading is handled by JavaScript via REST API.
-     * This only provides the basic form structure and copy mode information.
+     * This only provides the basic form structure.
      *
      * @param string $ivrmenuid - The ID of the IVR menu to modify.
      */
     public function modifyAction(string $ivrmenuid = ''): void
     {
-        // Check for copy mode
-        $copyFromId = $this->request->getQuery('copy');
-        
         // Create empty form - JavaScript will populate everything via REST API
         $emptyIvrMenu = new \stdClass();
         // Now id is the uniqid value for REST API compatibility
@@ -68,9 +65,8 @@ class IvrMenuController extends BaseController
             ]
         );
         
-        // Pass form and copy mode information to JavaScript
+        // Pass form to JavaScript
         $this->view->form = $form;
-        $this->view->copyFromId = $copyFromId ?: '';
     }
 
 
