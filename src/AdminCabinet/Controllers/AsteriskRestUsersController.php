@@ -20,8 +20,6 @@
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\AsteriskRestUserEditForm;
-use MikoPBX\Common\Models\AsteriskRestUsers;
-use MikoPBX\Common\Models\NetworkFilters;
 
 /**
  * Asterisk REST Interface (ARI) Users Controller

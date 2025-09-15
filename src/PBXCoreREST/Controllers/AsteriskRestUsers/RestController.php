@@ -19,7 +19,7 @@
 
 namespace MikoPBX\PBXCoreREST\Controllers\AsteriskRestUsers;
 
-use MikoPBX\PBXCoreREST\Controllers\BaseController;
+use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\AsteriskRestUsersManagementProcessor;
 
 /**
@@ -58,129 +58,32 @@ use MikoPBX\PBXCoreREST\Lib\AsteriskRestUsersManagementProcessor;
  * 
  * @examples Custom method operations:
  * 
- * # Generate new password for ARI user
- * curl -X POST http://127.0.0.1/pbxcore/api/v3/asterisk-rest-users/123:generatePassword
+ * # Get default values for new ARI user
+ * curl -X GET http://127.0.0.1/pbxcore/api/v3/asterisk-rest-users:getDefaults
  * 
- * # Test ARI connection with user credentials
- * curl -X POST http://127.0.0.1/pbxcore/api/v3/asterisk-rest-users:testConnection \
- *      -H "Content-Type: application/json" \
- *      -d '{"username":"api_user","password":"SecurePass123"}'
+ * @note For password generation, use the dedicated password API:
+ * curl -X GET http://127.0.0.1/pbxcore/api/v2/passwords/generate?length=32
  * 
  * @package MikoPBX\PBXCoreREST\Controllers\AsteriskRestUsers
  */
-class RestController extends BaseController
+class RestController extends BaseRestController
 {
     /**
-     * Handle standard CRUD requests (GET, POST, PUT, PATCH, DELETE)
-     * 
-     * Routes handled by this method:
-     * @Get("/")                     List all ARI users with optional filtering
-     * @Get("/{id:[0-9]+}")          Get single ARI user by ID
-     * @Post("/")                    Create new ARI user
-     * @Put("/{id:[0-9]+}")          Full update of ARI user (replace all fields)
-     * @Patch("/{id:[0-9]+}")        Partial update of ARI user (modify specific fields)
-     * @Delete("/{id:[0-9]+}")       Delete ARI user by ID
-     * 
-     * @param string|null $id Resource ID for single resource operations
-     * @return void
+     * The processor class to handle requests
+     * @var string
      */
-    public function handleCRUDRequest(?string $id = null): void
-    {
-        // Sanitize all input data
-        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
-        
-        // Add ID to request data if provided in URL
-        if ($id !== null) {
-            $requestData['id'] = $id;
-        }
-        
-        // Determine action based on HTTP method
-        $method = $this->request->getMethod();
-        $action = $this->mapHttpMethodToAction($method, $id);
-        
-        // Log the request for debugging
-        $this->logger->info("ARI Users REST request - Method: {$method}, Action: {$action}, ID: " . ($id ?? 'none'));
-        
-        // Send to backend worker for processing
-        $this->sendRequestToBackendWorker(
-            AsteriskRestUsersManagementProcessor::class,
-            $action,
-            $requestData
-        );
-    }
+    protected string $processorClass = AsteriskRestUsersManagementProcessor::class;
     
     /**
-     * Handle custom method requests (GET or POST with :customMethod suffix)
+     * Define allowed custom methods for each HTTP method
      * 
-     * Custom methods follow Google API Design Guide patterns for non-CRUD operations.
-     * These are called using GET or POST with a colon-prefixed custom method name.
-     * 
-     * Routes handled by this method:
-     * @Get(":getDefaults")                      Get default values for new user
-     * @Post("/{id:[0-9]+}:generatePassword")    Generate new password for specific user
-     * @Post(":testConnection")                  Test ARI connection with provided credentials
-     * @Post(":batchDelete")                     Delete multiple ARI users
-     * 
-     * @param string $customMethod Custom method name (without colon prefix)
-     * @param string|null $id Optional resource ID for resource-specific custom methods
-     * @return void
+     * @return array<string, array<string>>
      */
-    public function handleCustomMethod(string $customMethod, ?string $id = null): void
+    protected function getAllowedCustomMethods(): array
     {
-        // Check HTTP method based on the custom method
-        $httpMethod = $this->request->getMethod();
-        
-        // Define which custom methods are allowed for each HTTP method
-        $allowedMethods = [
+        return [
             'GET' => ['getDefaults'],
-            'POST' => ['generatePassword', 'testConnection', 'batchDelete']
+            'POST' => [] // No custom POST methods - use standard CRUD operations
         ];
-        
-        if (!isset($allowedMethods[$httpMethod]) || !in_array($customMethod, $allowedMethods[$httpMethod])) {
-            $this->response->setJsonContent([
-                'result' => false,
-                'messages' => ['error' => ["Method '$customMethod' is not allowed with HTTP $httpMethod"]]
-            ]);
-            $this->response->setStatusCode(405, 'Method Not Allowed');
-            $this->response->send();
-            return;
-        }
-        
-        // Sanitize all input data
-        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
-        
-        // Add ID if provided for resource-specific custom methods
-        if (!empty($id)) {
-            $requestData['id'] = $id;
-        }
-        
-        // Log the custom method request
-        $this->logger->info("ARI Users custom method - Method: {$httpMethod}, Action: {$customMethod}, ID: " . ($id ?? 'none'));
-        
-        // Send request to backend worker with custom method as action
-        $this->sendRequestToBackendWorker(
-            AsteriskRestUsersManagementProcessor::class,
-            $customMethod,
-            $requestData
-        );
-    }
-    
-    /**
-     * Map HTTP method to processor action
-     * 
-     * @param string $method HTTP method (GET, POST, PUT, PATCH, DELETE)
-     * @param string|null $id Resource ID if present
-     * @return string Action name for processor
-     */
-    private function mapHttpMethodToAction(string $method, ?string $id): string
-    {
-        return match ($method) {
-            'GET' => $id ? 'getRecord' : 'getList',
-            'POST' => 'createRecord',
-            'PUT' => 'updateRecord',
-            'PATCH' => 'patchRecord',
-            'DELETE' => 'deleteRecord',
-            default => throw new \InvalidArgumentException("Unsupported HTTP method: {$method}")
-        };
     }
 }

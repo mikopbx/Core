@@ -179,35 +179,38 @@ const AsteriskRestUserModify = {
     loadUserData() {
         // Show loading state
         this.$formObj.addClass('loading');
-        
+
         // Get user ID from form data attribute
         const userId = this.$formObj.data('id') || '';
-        
+
         // Always call API - it returns defaults for new records (when ID is empty)
-        AsteriskRestUsersAPI.getRecord(userId, (data) => {
+        AsteriskRestUsersAPI.getRecord(userId, (response) => {
             this.$formObj.removeClass('loading');
-            
-            if (data === false) {
+
+            if (response === false) {
                 // Show error and stop
                 UserMessage.showError(globalTranslate.ari_ErrorLoadingUser || 'Error loading user');
                 return;
             }
-            
+
+            // Extract actual data from API response
+            const data = response.data || response;
+
             // Populate form with data using silent population
-            this.populateForm(data);
-            
+            this.populateForm(response);
+
             // Initialize form elements after population
             this.initializeFormElements(data);
-            
+
             // Store original username for validation (empty for new records)
             this.originalUsername = data.username || '';
-            
+
             // For new records, ensure form data-id is empty
             if (!userId) {
                 this.$formObj.data('id', '');
                 this.originalUsername = '';
             }
-            
+
             // Disable fields for system user
             if (data.username === 'pbxcore') {
                 this.$username.prop('readonly', true);
@@ -220,39 +223,49 @@ const AsteriskRestUserModify = {
     
     /**
      * Populate form with user data.
-     * @param {Object} data - User data from API
+     * @param {Object} response - Response from API
      */
-    populateForm(data) {
-        // Use unified silent population approach (same as AMI users)
-        Form.populateFormSilently({
-            id: data.id,
-            username: data.username,
-            password: data.password,
-            description: data.description
-        }, {
-            beforePopulate: () => {
-                // Initialize password widget BEFORE populating data
-                if (AsteriskRestUserModify.$password.length > 0 && !AsteriskRestUserModify.passwordWidget) {
-                    const widget = PasswordWidget.init(AsteriskRestUserModify.$password, {
-                        validation: PasswordWidget.VALIDATION.SOFT,
-                        generateButton: true,  // Widget will add generate button
-                        showStrengthBar: true,
-                        showWarnings: true,
-                        validateOnInput: true,
-                        checkOnLoad: true,  // Validate password when card is opened
-                        minScore: 60,
-                        generateLength: 32, // ARI passwords should be 32 chars for better security
-                        onGenerate: (password) => {
-                            // Trigger form change to enable save button
-                            Form.dataChanged();
-                        }
-                    });
-                    
-                    // Store widget instance for later use
-                    AsteriskRestUserModify.passwordWidget = widget;
+    populateForm(response) {
+        // Extract actual data from API response
+        const data = response.data || response;
+
+        // Initialize password widget BEFORE populating data
+        if (this.$password.length > 0 && !this.passwordWidget) {
+            const widget = PasswordWidget.init(this.$password, {
+                validation: PasswordWidget.VALIDATION.SOFT,
+                generateButton: true,  // Widget will add generate button
+                showStrengthBar: true,
+                showWarnings: true,
+                validateOnInput: true,
+                checkOnLoad: true,  // Validate password when card is opened
+                minScore: 60,
+                generateLength: 32, // ARI passwords should be 32 chars for better security
+                onGenerate: (password) => {
+                    // Trigger form change to enable save button
+                    Form.dataChanged();
                 }
-            },
-            afterPopulate: (formData) => {
+            });
+
+            // Store widget instance for later use
+            this.passwordWidget = widget;
+        }
+
+        // Prepare form data
+        const formData = {
+            id: data.id || '',
+            username: data.username || '',
+            password: data.password || '',
+            description: data.description || ''
+        };
+
+        // Use unified silent population approach (same as AMI users)
+        Form.populateFormSilently(formData, {
+            afterPopulate: (populatedData) => {
+                // Ensure ID is also stored in form data attribute for consistency
+                if (data.id) {
+                    AsteriskRestUserModify.$formObj.data('id', data.id);
+                }
+
                 // Initialize applications dropdown after form is populated
                 AsteriskRestUserModify.$applications.dropdown({
                     allowAdditions: true,
@@ -263,10 +276,10 @@ const AsteriskRestUserModify = {
                         Form.dataChanged();
                     }
                 });
-                
-                // Load available Stasis applications  
-                AsteriskRestUserModify.loadStasisApplications(data.applications);
-                
+
+                // Load available Stasis applications
+                AsteriskRestUserModify.loadStasisApplications(data.applications || []);
+
                 // Update clipboard button with current password if PasswordWidget created it
                 if (data.password) {
                     setTimeout(() => {
@@ -351,17 +364,23 @@ const AsteriskRestUserModify = {
     cbBeforeSendForm(settings) {
         const result = settings;
         result.data = Form.$formObj.form('get values');
-        
-        // Get ID from form data attribute
-        const id = AsteriskRestUserModify.$formObj.data('id');
-        if (id) {
-            result.data.id = id;
+
+        // Ensure ID is properly set for existing records
+        // Priority: form data-id > hidden field value
+        const dataId = AsteriskRestUserModify.$formObj.data('id');
+        const fieldId = result.data.id;
+
+        if (dataId && dataId !== '') {
+            result.data.id = dataId;
+        } else if (!fieldId || fieldId === '') {
+            // For new records, ensure ID is empty
+            result.data.id = '';
         }
-        
+
         // Get applications
         const applications = AsteriskRestUserModify.$applications.dropdown('get value');
         result.data.applications = applications ? applications.split(',').map(app => app.trim()).filter(app => app) : [];
-        
+
         return result;
     },
     
@@ -395,7 +414,8 @@ const AsteriskRestUserModify = {
         Form.apiSettings.enabled = true;
         Form.apiSettings.apiObject = AsteriskRestUsersAPI;
         Form.apiSettings.saveMethod = 'saveRecord';
-        
+        Form.apiSettings.autoDetectMethod = false; // PbxApiClient handles method detection internally
+
         // Navigation URLs
         Form.afterSubmitIndexUrl = `${globalRootUrl}asterisk-rest-users/index/`;
         Form.afterSubmitModifyUrl = `${globalRootUrl}asterisk-rest-users/modify/`;

@@ -40,10 +40,10 @@ enum AsteriskRestUserAction: string
     case GET_LIST = 'getList';
     case GET_RECORD = 'getRecord';
     case GET_DEFAULTS = 'getDefaults';
-    case CREATE_RECORD = 'createRecord';
-    case UPDATE_RECORD = 'updateRecord';
-    case PATCH_RECORD = 'patchRecord';
-    case DELETE_RECORD = 'deleteRecord';
+    case CREATE = 'create';
+    case UPDATE = 'update';
+    case PATCH = 'patch';
+    case DELETE = 'delete';
 }
 
 /**
@@ -52,10 +52,10 @@ enum AsteriskRestUserAction: string
  * Handles all ARI user operations following RESTful principles:
  * - getList: Get paginated list of ARI users
  * - getRecord: Get single ARI user by ID
- * - createRecord: Create new ARI user
- * - updateRecord: Full update (replace) of ARI user
- * - patchRecord: Partial update (modify) of ARI user
- * - deleteRecord: Delete ARI user
+ * - create: Create new ARI user
+ * - update: Full update (replace) of ARI user
+ * - patch: Partial update (modify) of ARI user
+ * - delete: Delete ARI user
  * 
  * @package MikoPBX\PBXCoreREST\Lib
  */
@@ -88,10 +88,10 @@ class AsteriskRestUsersManagementProcessor extends Injectable
             AsteriskRestUserAction::GET_LIST => GetListAction::main($data),
             AsteriskRestUserAction::GET_RECORD => GetRecordAction::main($data['id'] ?? ''),
             AsteriskRestUserAction::GET_DEFAULTS => GetDefaultsAction::main(),
-            AsteriskRestUserAction::CREATE_RECORD => CreateRecordAction::main($data),
-            AsteriskRestUserAction::UPDATE_RECORD => UpdateRecordAction::main($data),
-            AsteriskRestUserAction::PATCH_RECORD => PatchRecordAction::main($data),
-            AsteriskRestUserAction::DELETE_RECORD => DeleteRecordAction::main($data['id'] ?? ''),
+            AsteriskRestUserAction::CREATE => CreateRecordAction::main($data),
+            AsteriskRestUserAction::UPDATE => UpdateRecordAction::main($data),
+            AsteriskRestUserAction::PATCH => PatchRecordAction::main($data),
+            AsteriskRestUserAction::DELETE => DeleteRecordAction::main($data['id'] ?? ''),
         };
 
         $res->function = $actionString;
