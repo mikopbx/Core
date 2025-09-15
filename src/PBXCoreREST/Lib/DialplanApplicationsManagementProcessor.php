@@ -19,66 +19,102 @@
 
 namespace MikoPBX\PBXCoreREST\Lib;
 
-use MikoPBX\PBXCoreREST\Lib\DialplanApplications\{
-    GetRecordAction,
-    GetListAction,
-    SaveRecordAction,
-    DeleteRecordAction
-};
+use MikoPBX\PBXCoreREST\Lib\DialplanApplications\DeleteRecordAction;
+use MikoPBX\PBXCoreREST\Lib\DialplanApplications\GetRecordAction;
+use MikoPBX\PBXCoreREST\Lib\DialplanApplications\SaveRecordAction;
+use MikoPBX\PBXCoreREST\Lib\DialplanApplications\GetListAction;
+use MikoPBX\PBXCoreREST\Lib\DialplanApplications\GetDefaultAction;
+use MikoPBX\PBXCoreREST\Lib\DialplanApplications\CreateRecordAction;
+use MikoPBX\PBXCoreREST\Lib\DialplanApplications\UpdateRecordAction;
+use MikoPBX\PBXCoreREST\Lib\DialplanApplications\PatchRecordAction;
+use MikoPBX\PBXCoreREST\Lib\DialplanApplications\CopyRecordAction;
 use Phalcon\Di\Injectable;
 
 /**
- * Dialplan applications management processor
+ * Available actions for dialplan applications management
+ */
+enum DialplanApplicationAction: string
+{
+    // Standard CRUD operations
+    case GET_LIST = 'getList';
+    case GET_RECORD = 'getRecord';
+    case GET_DEFAULT = 'getDefault';
+    case CREATE = 'create';
+    case UPDATE = 'update';
+    case PATCH = 'patch';
+    case DELETE = 'delete';
+    case SAVE_RECORD = 'saveRecord'; // Legacy support
+    case DELETE_RECORD = 'deleteRecord'; // Legacy support
+
+    // Custom methods
+    case COPY = 'copy';
+}
+
+/**
+ * Class DialplanApplicationsManagementProcessor
+ * 
+ * Processes dialplan application management requests using uniqid as primary identifier
+ * 
+ * RESTful API mapping:
+ * - GET /dialplan-applications         -> getList
+ * - GET /dialplan-applications/{id}    -> getRecord
+ * - POST /dialplan-applications        -> create
+ * - PUT /dialplan-applications/{id}    -> update
+ * - PATCH /dialplan-applications/{id}  -> patch
+ * - DELETE /dialplan-applications/{id} -> delete
+ * 
+ * Custom methods:
+ * - GET /dialplan-applications:getDefault -> getDefault
+ * - GET /dialplan-applications/{id}:copy  -> copy
  *
- * Handles all dialplan application management operations including:
- * - getRecord: Get single dialplan application by ID or create new structure
- * - getList: Get list of all dialplan applications
- * - saveRecord: Create or update dialplan application
- * - deleteRecord: Delete dialplan application
+ * @package MikoPBX\PBXCoreREST\Lib
  */
 class DialplanApplicationsManagementProcessor extends Injectable
 {
     /**
-     * Process dialplan application management requests
+     * Processes DialplanApplications management requests with type-safe enum matching
      *
-     * @param array $request Request data with 'action' and 'data' fields
-     * @return PBXApiResult API response object with success status and data
+     * @param array<string, mixed> $request
+     *
+     * @return PBXApiResult An object containing the result of the API call.
      */
     public static function callBack(array $request): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
 
-        $action = $request['action'];
+        $actionString = $request['action'];
         $data = $request['data'];
         
-        switch ($action) {
-            case 'getRecord':
-                $recordId = $data['id'] ?? null;
-                $res = GetRecordAction::main($recordId);
-                break;
-                
-            case 'getList':
-                $res = GetListAction::main($data);
-                break;
-                
-            case 'saveRecord':
-                $res = SaveRecordAction::main($data);
-                break;
-                
-            case 'deleteRecord':
-                if (!empty($data['id'])) {
-                    $res = DeleteRecordAction::main($data['id']);
-                } else {
-                    $res->messages['error'][] = 'Empty ID in request data';
-                }
-                break;
-                
-            default:
-                $res->messages['error'][] = "Unknown action - $action in " . __CLASS__;
+        // Type-safe action matching with enum
+        $action = DialplanApplicationAction::tryFrom($actionString);
+        
+        if ($action === null) {
+            $res->messages['error'][] = "Unknown action - $actionString in " . __CLASS__;
+            $res->function = $actionString;
+            return $res;
         }
+        
+        // Execute action using match expression (PHP 8)
+        $res = match ($action) {
+            // Standard CRUD operations
+            DialplanApplicationAction::GET_LIST => GetListAction::main($data),
+            DialplanApplicationAction::GET_RECORD => GetRecordAction::main($data['id'] ?? ''),
+            DialplanApplicationAction::GET_DEFAULT => GetDefaultAction::main(),
+            DialplanApplicationAction::CREATE => CreateRecordAction::main($data),
+            DialplanApplicationAction::UPDATE => UpdateRecordAction::main($data),
+            DialplanApplicationAction::PATCH => PatchRecordAction::main($data),
+            DialplanApplicationAction::DELETE => DeleteRecordAction::main($data['id'] ?? ''),
+            
+            // Legacy support
+            DialplanApplicationAction::SAVE_RECORD => SaveRecordAction::main($data),
+            DialplanApplicationAction::DELETE_RECORD => DeleteRecordAction::main($data['id'] ?? ''),
+            
+            // Custom methods
+            DialplanApplicationAction::COPY => CopyRecordAction::main($data['id'] ?? '')
+        };
 
-        $res->function = $action;
+        $res->function = $actionString;
         return $res;
     }
 }

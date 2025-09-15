@@ -61,7 +61,8 @@
          
         // Define sanitization rules - use 'sanitize' for text fields to follow "Store Raw, Escape at Edge"
         $sanitizationRules = [
-            'id' => 'int',
+            'id' => 'string',  // uniqid passed as id in REST API v3
+            'uniqid' => 'string',  // Support both for backward compatibility
             'name' => 'string|sanitize|max:50',
             'extension' => 'string|max:64',
             'hint' => 'string|sanitize|max:255|empty_to_null',
@@ -120,15 +121,23 @@
              }
              
              // Find or create record
-             if (!empty($sanitizedData['id'])) {
-                 $app = DialplanApplications::findFirstById($sanitizedData['id']);
+             // Support both 'id' (REST v3) and 'uniqid' (legacy) fields
+             $recordId = $sanitizedData['id'] ?? $sanitizedData['uniqid'] ?? null;
+             
+             if (!empty($recordId)) {
+                 // Try to find by uniqid first (REST v3 uses uniqid as id)
+                 $app = DialplanApplications::findFirstByUniqid($recordId);
+                 if (!$app) {
+                     // Fallback to numeric id for backward compatibility
+                     $app = DialplanApplications::findFirstById($recordId);
+                 }
                  if (!$app) {
                      $res->messages['error'][] = 'api_DialplanApplicationNotFound';
                      return $res;
                  }
              } else {
                  $app = new DialplanApplications();
-                 $app->uniqid = DialplanApplications::generateUniqueID('DIALPLAN-APP-');
+                 $app->uniqid = DialplanApplications::generateUniqueID('DIALPLAN-');
              }
              
             // Check extension uniqueness using unified approach

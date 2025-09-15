@@ -3,7 +3,7 @@
  * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  */
 
-/* global DialplanApplicationsAPI, Form, SecurityUtils, globalTranslate, Extensions, ace, UserMessage */
+/* global DialplanApplicationsAPI, Form, SecurityUtils, globalTranslate, Extensions, ace, UserMessage, FormElements */
 
 /**
  * Dialplan application edit form management module with enhanced security
@@ -102,10 +102,10 @@ var dialplanApplicationModify = {
         Form.cbBeforeSendForm = dialplanApplicationModify.cbBeforeSendForm;
         Form.cbAfterSendForm = dialplanApplicationModify.cbAfterSendForm;
         
-        // REST API integration
+        // REST API v3 integration
         Form.apiSettings.enabled = true;
         Form.apiSettings.apiObject = DialplanApplicationsAPI;
-        Form.apiSettings.saveMethod = 'saveRecord';
+        Form.apiSettings.saveMethod = 'saveRecord'; // Use saveRecord method from PbxApiClient
         
         // Navigation URLs
         Form.afterSubmitIndexUrl = globalRootUrl + 'dialplan-applications/index/';
@@ -143,58 +143,117 @@ var dialplanApplicationModify = {
         var copyFromId = $('#copy-from-id').val();
         var urlParams = new URLSearchParams(window.location.search);
         var copyParam = urlParams.get('copy');
-        var isCopyMode = false;
+        var isCopyMode = copyParam || copyFromId;
         
-        // Check for copy mode from URL parameter or hidden field
-        if (copyParam || copyFromId) {
-            recordId = 'copy-' + (copyParam || copyFromId);
-            isCopyMode = true;
-        }
-        
-        // Always call REST API to get data (including defaults for new records)
-        DialplanApplicationsAPI.getRecord(recordId, function(response) {
-            if (response.result) {
-                // Data is already sanitized in API module
-                dialplanApplicationModify.populateForm(response.data);
-                dialplanApplicationModify.defaultExtension = response.data.extension;
-                
-                // Update extension number display in the ribbon label
-                dialplanApplicationModify.updateExtensionDisplay(response.data.extension);
-                
-                // Set ACE editor content (applicationlogic is not sanitized)
-                var codeContent = response.data.applicationlogic || '';
-                
-                // Set flag to prevent reactivating buttons during data load
-                dialplanApplicationModify.isLoadingData = true;
-                
-                dialplanApplicationModify.editor.getSession().setValue(codeContent);
-                dialplanApplicationModify.changeAceMode();
-                
-                // Clear loading flag after setting content
-                dialplanApplicationModify.isLoadingData = false;
-                
-                // Switch to main tab only for completely new records (no name and no extension)
-                // Hash history will preserve the tab for existing records
-                if (!response.data.name && !response.data.extension && !window.location.hash) {
-                    dialplanApplicationModify.$tabMenuItems.tab('change tab', 'main');
-                }
-                
-                // Mark form as changed if in copy mode to enable save button
-                if (isCopyMode) {
+        // Check copy mode first (before checking for new record)
+        if (isCopyMode) {
+            // Use the RESTful copy method
+            var sourceId = copyParam || copyFromId;
+            DialplanApplicationsAPI.copy(sourceId, function(response) {
+                if (response.result) {
+                    // Data is already sanitized in API module
+                    dialplanApplicationModify.populateForm(response.data);
+                    dialplanApplicationModify.defaultExtension = response.data.extension;
+                    
+                    // Update extension number display in the ribbon label
+                    dialplanApplicationModify.updateExtensionDisplay(response.data.extension);
+                    
+                    // Set ACE editor content (applicationlogic is not sanitized)
+                    var codeContent = response.data.applicationlogic || '';
+                    
+                    // Set flag to prevent reactivating buttons during data load
+                    dialplanApplicationModify.isLoadingData = true;
+                    
+                    dialplanApplicationModify.editor.getSession().setValue(codeContent);
+                    dialplanApplicationModify.changeAceMode();
+                    
+                    // Clear loading flag after setting content
+                    dialplanApplicationModify.isLoadingData = false;
+                    
+                    // Switch to main tab for copy mode
+                    if (!window.location.hash) {
+                        dialplanApplicationModify.$tabMenuItems.tab('change tab', 'main');
+                    }
+                    
+                    // Mark form as changed for copy mode to enable save button
                     Form.dataChanged();
+                    
+                    // Auto-resize textarea after data is loaded (with small delay for DOM update)
+                    setTimeout(function() {
+                        FormElements.optimizeTextareaSize('textarea[name="description"]');
+                    }, 100);
+                } else {
+                    var errorMessage = response.messages && response.messages.error ? 
+                        response.messages.error.join(', ') : 
+                        'Failed to copy dialplan application';
+                    UserMessage.showError(SecurityUtils.escapeHtml(errorMessage));
                 }
-                
-                // Auto-resize textarea after data is loaded (with small delay for DOM update)
-                setTimeout(function() {
-                    FormElements.optimizeTextareaSize('textarea[name="description"]');
-                }, 100);
-            } else {
-                var errorMessage = response.messages && response.messages.error ? 
-                    response.messages.error.join(', ') : 
-                    'Failed to load dialplan application data';
-                UserMessage.showError(SecurityUtils.escapeHtml(errorMessage));
-            }
-        });
+            });
+        } else if (!recordId || recordId === '') {
+            // For new records, get default values
+            DialplanApplicationsAPI.getDefault(function(response) {
+                if (response.result) {
+                    dialplanApplicationModify.populateForm(response.data);
+                    dialplanApplicationModify.defaultExtension = response.data.extension;
+                    dialplanApplicationModify.updateExtensionDisplay(response.data.extension);
+                    
+                    // Switch to main tab for new records
+                    if (!window.location.hash) {
+                        dialplanApplicationModify.$tabMenuItems.tab('change tab', 'main');
+                    }
+                    
+                    // Auto-resize textarea after data is loaded
+                    setTimeout(function() {
+                        FormElements.optimizeTextareaSize('textarea[name="description"]');
+                    }, 100);
+                } else {
+                    var errorMessage = response.messages && response.messages.error ? 
+                        response.messages.error.join(', ') : 
+                        'Failed to load default values';
+                    UserMessage.showError(SecurityUtils.escapeHtml(errorMessage));
+                }
+            });
+        } else {
+            // For existing records, get record data
+            DialplanApplicationsAPI.getRecord(recordId, function(response) {
+                if (response.result) {
+                    // Data is already sanitized in API module
+                    dialplanApplicationModify.populateForm(response.data);
+                    dialplanApplicationModify.defaultExtension = response.data.extension;
+                    
+                    // Update extension number display in the ribbon label
+                    dialplanApplicationModify.updateExtensionDisplay(response.data.extension);
+                    
+                    // Set ACE editor content (applicationlogic is not sanitized)
+                    var codeContent = response.data.applicationlogic || '';
+                    
+                    // Set flag to prevent reactivating buttons during data load
+                    dialplanApplicationModify.isLoadingData = true;
+                    
+                    dialplanApplicationModify.editor.getSession().setValue(codeContent);
+                    dialplanApplicationModify.changeAceMode();
+                    
+                    // Clear loading flag after setting content
+                    dialplanApplicationModify.isLoadingData = false;
+                    
+                    // Switch to main tab only for completely new records (no name and no extension)
+                    // Hash history will preserve the tab for existing records
+                    if (!response.data.name && !response.data.extension && !window.location.hash) {
+                        dialplanApplicationModify.$tabMenuItems.tab('change tab', 'main');
+                    }
+                    
+                    // Auto-resize textarea after data is loaded (with small delay for DOM update)
+                    setTimeout(function() {
+                        FormElements.optimizeTextareaSize('textarea[name="description"]');
+                    }, 100);
+                } else {
+                    var errorMessage = response.messages && response.messages.error ? 
+                        response.messages.error.join(', ') : 
+                        'Failed to load dialplan application data';
+                    UserMessage.showError(SecurityUtils.escapeHtml(errorMessage));
+                }
+            });
+        }
     },
     
     /**
@@ -344,10 +403,11 @@ var dialplanApplicationModify = {
         // Pass current active tab for redirect
         result.data.currentTab = dialplanApplicationModify.currentActiveTab;
         
-        // Additional client-side validation
-        if (!DialplanApplicationsAPI.validateApplicationData(result.data)) {
-            UserMessage.showError('Validation failed');
-            return false;
+        // Add record ID for updates
+        var recordId = dialplanApplicationModify.getRecordId();
+        if (recordId && recordId !== '') {
+            result.data.id = recordId;
+            result.data.uniqid = recordId;
         }
         
         return result;

@@ -127,10 +127,7 @@ class GetRecordAction extends AbstractGetRecordAction
             }
         }
 
-        // Always add isNew field for form population
-        if ($res->success) {
-            $res->data['isNew'] = $isNew ? '1' : '0';
-        }
+        // Remove isNew field - not needed in REST API v3
         
         return $res;
     }
@@ -143,8 +140,8 @@ class GetRecordAction extends AbstractGetRecordAction
     private static function createNewRecord(): DialplanApplications
     {
         $newApp = new DialplanApplications();
-        $newApp->id = '';
-        $newApp->uniqid = DialplanApplications::generateUniqueID('DIALPLAN-APP-');
+        // For REST API v3, uniqid will be used as id in DataStructure
+        $newApp->uniqid = DialplanApplications::generateUniqueID('DIALPLAN-');
         $newApp->extension = Extensions::getNextFreeApplicationNumber();
         $newApp->name = '';
         $newApp->hint = '';
@@ -165,9 +162,8 @@ class GetRecordAction extends AbstractGetRecordAction
     {
         $newApp = new DialplanApplications();
         
-        // Clear identifiers
-        $newApp->id = '';
-        $newApp->uniqid = DialplanApplications::generateUniqueID('DIALPLAN-APP-');
+        // Generate new uniqid for copy
+        $newApp->uniqid = DialplanApplications::generateUniqueID('DIALPLAN-');
         
         // Get new extension number
         $newApp->extension = Extensions::getNextFreeApplicationNumber();

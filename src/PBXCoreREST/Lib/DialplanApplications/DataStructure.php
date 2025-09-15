@@ -38,14 +38,16 @@ class DataStructure extends AbstractDataStructure
      */
     public static function createFromModel($model): array
     {
-        // Start with base structure - data is already sanitized during storage
-        // No additional HTML escaping needed for API response (follows "Store Raw, Escape at Edge")
-        $data = self::createBaseStructure($model);
-        
-        // Add dialplan application specific fields
-        $data['hint'] = $model->hint ?? '';
-        $data['applicationlogic'] = $model->getApplicationlogic(); // Decoded logic for editing
-        $data['type'] = $model->type ?? 'php';
+        // Use uniqid as id for REST API v3
+        $data = [
+            'id' => $model->uniqid,
+            'extension' => $model->extension ?? '',
+            'name' => $model->name ?? '',
+            'description' => $model->description ?? '',
+            'hint' => $model->hint ?? '',
+            'applicationlogic' => $model->getApplicationlogic(), // Decoded logic for editing
+            'type' => $model->type ?? 'php'
+        ];
         
         // Handle null values for consistent JSON output
         $data = self::handleNullValues($data, ['hint', 'description']);
@@ -61,11 +63,15 @@ class DataStructure extends AbstractDataStructure
      */
     public static function createForList($model): array
     {
-        $data = self::createBaseStructure($model);
-        
-        // Add essential fields for list display
-        $data['type'] = $model->type ?? 'php';
-        $data['hint'] = $model->hint ?? '';
+        // Use uniqid as id for REST API v3
+        $data = [
+            'id' => $model->uniqid,
+            'extension' => $model->extension ?? '',
+            'name' => $model->name ?? '',
+            'description' => $model->description ?? '',
+            'type' => $model->type ?? 'php',
+            'hint' => $model->hint ?? ''
+        ];
         
         // Add represent field for dropdown display
         if (method_exists($model, 'getRepresent')) {
@@ -87,8 +93,7 @@ class DataStructure extends AbstractDataStructure
     public static function createForSelect($model): array
     {
         return [
-            'id' => (string)$model->id,
-            'uniqid' => $model->uniqid,
+            'id' => $model->uniqid, // Use uniqid as id for REST API v3
             'extension' => $model->extension ?? '',
             'name' => $model->name ?? '',
             'represent' => method_exists($model, 'getRepresent') ? $model->getRepresent() : ($model->name ?? '')

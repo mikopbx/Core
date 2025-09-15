@@ -3,7 +3,7 @@
 {% endif %}
 
 <div id="dialplan-applications-table-container">
-    <table class="ui selectable compact unstackable table datatable-width-constrained" id="dialplan-applications-table">
+    <table class="ui selectable compact unstackable table" id="dialplan-applications-table">
         <thead>
             <tr>
                 <th class="collapsing">{{ t._('da_ColumnName') }}</th>
