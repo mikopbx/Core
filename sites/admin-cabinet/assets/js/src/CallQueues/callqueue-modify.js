@@ -494,64 +494,76 @@ const callQueueModifyRest = {
      */
     loadFormData() {
         const recordId = callQueueModifyRest.getRecordId();
-        const copyFromId = $('#copy-from-id').val();
         const urlParams = new URLSearchParams(window.location.search);
         const copyParam = urlParams.get('copy');
-        
-        let requestId = recordId;
-        let isCopyMode = false;
-        
-        // Check for copy mode from URL parameter or hidden field
-        if (copyParam || copyFromId) {
-            requestId = copyParam || copyFromId;
-            isCopyMode = true;
-        }
-        
-        // Load record data from REST API
-        // v3 API will automatically use :getDefault for new records
-        CallQueuesAPI.getRecord(requestId, (response) => {
-            if (response.result && response.data) {
-                // Mark as new record if we don't have an ID
-                if (!recordId || recordId === '') {
+
+        // Check for copy mode from URL parameter
+        if (copyParam) {
+            // Use the new RESTful copy method: /call-queues/{id}:copy
+            CallQueuesAPI.callCustomMethod('copy', {id: copyParam}, (response) => {
+                if (response.result && response.data) {
+                    // Mark as new record for copy
                     response.data._isNew = true;
-                }
-                
-                callQueueModifyRest.populateForm(response.data);
-                
-                // Set default extension for availability checking
-                if (isCopyMode || !recordId) {
-                    // For new records or copies, use the new extension for validation
+
+                    callQueueModifyRest.populateForm(response.data);
+
+                    // For copies, clear the default extension for validation
                     callQueueModifyRest.defaultExtension = '';
-                } else {
-                    // For existing records, use their original extension
-                    callQueueModifyRest.defaultExtension = callQueueModifyRest.$formObj.form('get value', 'extension');
-                }
-                
-                // Populate members table
-                if (response.data.members) {
-                    callQueueModifyRest.populateMembersTable(response.data.members);
-                } else {
-                    // Initialize empty member selection
-                    callQueueModifyRest.refreshMemberSelection();
-                }
-                
-                // Mark form as changed if in copy mode to enable save button
-                if (isCopyMode) {
+
+                    // Populate members table
+                    if (response.data.members) {
+                        callQueueModifyRest.populateMembersTable(response.data.members);
+                    } else {
+                        // Initialize empty member selection
+                        callQueueModifyRest.refreshMemberSelection();
+                    }
+
+                    // Mark form as changed to enable save button
                     Form.dataChanged();
+                } else {
+                    // Show error - API must work
+                    const errorMessage = response.messages && response.messages.error ?
+                        response.messages.error.join(', ') :
+                        'Failed to copy queue data';
+                    UserMessage.showError(SecurityUtils.escapeHtml(errorMessage));
                 }
-                
-                // Clear copy mode after successful load
-                if (copyFromId) {
-                    $('#copy-from-id').val('');
+            });
+        } else {
+            // Normal mode - load existing record or get default for new
+            CallQueuesAPI.getRecord(recordId, (response) => {
+                if (response.result && response.data) {
+                    // Mark as new record if we don't have an ID
+                    if (!recordId || recordId === '') {
+                        response.data._isNew = true;
+                    }
+
+                    callQueueModifyRest.populateForm(response.data);
+
+                    // Set default extension for availability checking
+                    if (!recordId) {
+                        // For new records, use the new extension for validation
+                        callQueueModifyRest.defaultExtension = '';
+                    } else {
+                        // For existing records, use their original extension
+                        callQueueModifyRest.defaultExtension = callQueueModifyRest.$formObj.form('get value', 'extension');
+                    }
+
+                    // Populate members table
+                    if (response.data.members) {
+                        callQueueModifyRest.populateMembersTable(response.data.members);
+                    } else {
+                        // Initialize empty member selection
+                        callQueueModifyRest.refreshMemberSelection();
+                    }
+                } else {
+                    // Show error - API must work
+                    const errorMessage = response.messages && response.messages.error ?
+                        response.messages.error.join(', ') :
+                        'Failed to load queue data';
+                    UserMessage.showError(SecurityUtils.escapeHtml(errorMessage));
                 }
-            } else {
-                // Show error - API must work
-                const errorMessage = response.messages && response.messages.error ? 
-                    response.messages.error.join(', ') : 
-                    'Failed to load queue data';
-                UserMessage.showError(SecurityUtils.escapeHtml(errorMessage));
-            }
-        });
+            });
+        }
     },
 
     /**

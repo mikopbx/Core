@@ -25,7 +25,8 @@
 const CallQueuesAPI = new PbxApiClient({
     endpoint: '/pbxcore/api/v3/call-queues',
     customMethods: {
-        getDefault: ':getDefault'
+        getDefault: ':getDefault',
+        copy: ':copy'
     }
 });
 

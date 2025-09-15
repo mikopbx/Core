@@ -5,7 +5,7 @@
 
 {# Main table container - initially hidden, will be shown by JavaScript when data loads #}
 <div id="queue-table-container" style="display: none;">
-    <table class="ui selectable unstackable compact table datatable-width-constrained" id="call-queues-table">
+    <table class="ui selectable unstackable compact table" id="call-queues-table">
         <thead>
         <tr>
             <th class="collapsing">{{ t._('cq_ColumnQueue') }}</th>

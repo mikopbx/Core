@@ -27,6 +27,7 @@ use MikoPBX\PBXCoreREST\Lib\CallQueues\GetDefaultAction;
 use MikoPBX\PBXCoreREST\Lib\CallQueues\CreateRecordAction;
 use MikoPBX\PBXCoreREST\Lib\CallQueues\UpdateRecordAction;
 use MikoPBX\PBXCoreREST\Lib\CallQueues\PatchRecordAction;
+use MikoPBX\PBXCoreREST\Lib\CallQueues\CopyRecordAction;
 use Phalcon\Di\Injectable;
 
 /**
@@ -42,6 +43,9 @@ enum CallQueueAction: string
     case UPDATE = 'update';
     case PATCH = 'patch';
     case DELETE = 'delete';
+
+    // Custom methods
+    case COPY = 'copy';
 }
 
 /**
@@ -97,7 +101,9 @@ class CallQueuesManagementProcessor extends Injectable
             CallQueueAction::CREATE => CreateRecordAction::main($data),
             CallQueueAction::UPDATE => UpdateRecordAction::main($data),
             CallQueueAction::PATCH => PatchRecordAction::main($data),
-            CallQueueAction::DELETE => DeleteRecordAction::main($data['id'] ?? '')
+            CallQueueAction::DELETE => DeleteRecordAction::main($data['id'] ?? ''),
+            // Custom methods
+            CallQueueAction::COPY => CopyRecordAction::main($data['id'] ?? '')
         };
 
         $res->function = $actionString;
