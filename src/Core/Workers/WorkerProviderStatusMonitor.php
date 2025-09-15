@@ -138,11 +138,11 @@ class WorkerProviderStatusMonitor extends WorkerRedisBase
         
         // Call the REST API using PBXCoreRESTClientProvider
         try {
-            // Make internal REST API call to get provider statuses
+            // Make internal REST API call to get provider statuses using v3 API
             $result = $this->di->get(
                 PBXCoreRESTClientProvider::SERVICE_NAME,
                 [
-                    '/pbxcore/api/v2/providers/getStatuses',
+                    '/pbxcore/api/v3/providers:getStatuses',
                     PBXCoreRESTClientProvider::HTTP_METHOD_GET,
                     [
                         'fromWorker' => true,       // Indicate this is from worker context
