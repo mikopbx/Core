@@ -20,7 +20,6 @@
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\ConferenceRoomEditForm;
-use MikoPBX\Common\Providers\PBXCoreRESTClientProvider;
 
 class ConferenceRoomsController extends BaseController
 {
