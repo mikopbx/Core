@@ -24,7 +24,8 @@ use MikoPBX\PBXCoreREST\Lib\OutWorkTimes\{
     GetListAction,
     SaveRecordAction,
     DeleteRecordAction,
-    ChangePriorityAction
+    ChangePriorityAction,
+    CopyRecordAction
 };
 use Phalcon\Di\Injectable;
 
@@ -35,9 +36,13 @@ enum OutWorkTimeAction: string
 {
     case GET_RECORD = 'getRecord';
     case GET_LIST = 'getList';
-    case SAVE_RECORD = 'saveRecord';
-    case DELETE_RECORD = 'deleteRecord';
-    case CHANGE_PRIORITY = 'changePriority';
+    case CREATE = 'create';
+    case UPDATE = 'update';
+    case PATCH = 'patch';
+    case DELETE = 'delete';
+    case CHANGE_PRIORITIES = 'changePriorities';
+    case GET_DEFAULT = 'getDefault';
+    case COPY = 'copy';
 }
 
 /**
@@ -46,9 +51,11 @@ enum OutWorkTimeAction: string
  * Handles all out-of-work-time management operations including:
  * - getRecord: Get single time condition by ID or create new structure
  * - getList: Get list of all time conditions with routing and calendar data
- * - saveRecord: Create or update time condition
- * - deleteRecord: Delete time condition
- * - changePriority: Update priorities for multiple time conditions
+ * - create: Create new time condition
+ * - update: Update time condition
+ * - patch: Partially update time condition
+ * - delete: Delete time condition
+ * - changePriorities: Update priorities for multiple time conditions
  */
 class OutWorkTimesManagementProcessor extends Injectable
 {
@@ -78,9 +85,13 @@ class OutWorkTimesManagementProcessor extends Injectable
         $res = match ($action) {
             OutWorkTimeAction::GET_RECORD => GetRecordAction::main($data['id'] ?? null),
             OutWorkTimeAction::GET_LIST => GetListAction::main($data),
-            OutWorkTimeAction::SAVE_RECORD => SaveRecordAction::main($data),
-            OutWorkTimeAction::DELETE_RECORD => DeleteRecordAction::main($data['id'] ?? ''),
-            OutWorkTimeAction::CHANGE_PRIORITY => ChangePriorityAction::main($data),
+            OutWorkTimeAction::CREATE => SaveRecordAction::main($data),
+            OutWorkTimeAction::UPDATE => SaveRecordAction::main($data),
+            OutWorkTimeAction::PATCH => SaveRecordAction::main($data),
+            OutWorkTimeAction::DELETE => DeleteRecordAction::main($data['id'] ?? ''),
+            OutWorkTimeAction::CHANGE_PRIORITIES => ChangePriorityAction::main($data),
+            OutWorkTimeAction::GET_DEFAULT => GetRecordAction::main(null),
+            OutWorkTimeAction::COPY => CopyRecordAction::main($data['id'] ?? ''),
         };
 
         $res->function = $actionString;

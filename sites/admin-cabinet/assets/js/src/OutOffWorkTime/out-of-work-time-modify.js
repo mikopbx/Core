@@ -18,7 +18,7 @@
 
 /* global $ globalRootUrl Extensions moment Form globalTranslate 
    SemanticLocalization SoundFileSelector UserMessage SecurityUtils
-   IncomingRoutesAPI OutWorkTimesAPI DynamicDropdownBuilder ExtensionSelector */
+   IncomingRoutesAPI OutOffWorkTimeAPI DynamicDropdownBuilder ExtensionSelector */
 
 /**
  * Module for managing out-of-work time settings
@@ -200,36 +200,68 @@ const outOfWorkTimeRecord = {
     loadFormData() {
         // Show loading state
         outOfWorkTimeRecord.$formObj.addClass('loading');
-        
-        // Use recordId for existing records, empty string for new
-        const recordIdToLoad = outOfWorkTimeRecord.recordId || '';
-        
-        // Load record data via REST API - always returns data (with defaults for new records)
-        OutWorkTimesAPI.getRecord(recordIdToLoad, (response) => {
-            // Remove loading state
-            outOfWorkTimeRecord.$formObj.removeClass('loading');
-            
-            if (response.result && response.data) {
-                // Success: populate form with data (defaults for new, real data for existing)
-                outOfWorkTimeRecord.recordData = response.data;
-                outOfWorkTimeRecord.populateForm(response.data);
-                
-                // Load routing rules
-                outOfWorkTimeRecord.loadRoutingTable();
-                
-                // Save initial values to prevent save button activation
-                setTimeout(() => {
-                    Form.saveInitialValues();
-                    Form.checkValues();
-                }, 250);
-            } else {
-                // API error - show error message
-                if (response.messages && response.messages.error) {
-                    const errorMessage = response.messages.error.join(', ');
-                    UserMessage.showError(SecurityUtils.escapeHtml(errorMessage));
+
+        // Check if this is a copy operation
+        const urlParams = new URLSearchParams(window.location.search);
+        const copyId = urlParams.get('copy');
+
+        if (copyId) {
+            // Copy operation - use the new RESTful copy endpoint
+            OutOffWorkTimeAPI.callCustomMethod('copy', {id: copyId}, (response) => {
+                // Remove loading state
+                outOfWorkTimeRecord.$formObj.removeClass('loading');
+
+                if (response.result && response.data) {
+                    // Success: populate form with copied data
+                    outOfWorkTimeRecord.recordData = response.data;
+                    outOfWorkTimeRecord.populateForm(response.data);
+
+                    // Load routing rules
+                    outOfWorkTimeRecord.loadRoutingTable();
+
+                    // Mark as modified to enable save button
+                    setTimeout(() => {
+                        Form.dataChanged();
+                    }, 250);
+                } else {
+                    // API error - show error message
+                    if (response.messages && response.messages.error) {
+                        const errorMessage = response.messages.error.join(', ');
+                        UserMessage.showError(SecurityUtils.escapeHtml(errorMessage));
+                    }
                 }
-            }
-        });
+            });
+        } else {
+            // Normal load - either existing record or new
+            const recordIdToLoad = outOfWorkTimeRecord.recordId || '';
+
+            // Load record data via REST API - always returns data (with defaults for new records)
+            OutOffWorkTimeAPI.getRecord(recordIdToLoad, (response) => {
+                // Remove loading state
+                outOfWorkTimeRecord.$formObj.removeClass('loading');
+
+                if (response.result && response.data) {
+                    // Success: populate form with data (defaults for new, real data for existing)
+                    outOfWorkTimeRecord.recordData = response.data;
+                    outOfWorkTimeRecord.populateForm(response.data);
+
+                    // Load routing rules
+                    outOfWorkTimeRecord.loadRoutingTable();
+
+                    // Save initial values to prevent save button activation
+                    setTimeout(() => {
+                        Form.saveInitialValues();
+                        Form.checkValues();
+                    }, 250);
+                } else {
+                    // API error - show error message
+                    if (response.messages && response.messages.error) {
+                        const errorMessage = response.messages.error.join(', ');
+                        UserMessage.showError(SecurityUtils.escapeHtml(errorMessage));
+                    }
+                }
+            });
+        }
     },
     
     /**
@@ -333,6 +365,16 @@ const outOfWorkTimeRecord = {
      * @param {object} data - Record data from API
      */
     populateForm(data) {
+        // Check if this is a copy operation
+        const urlParams = new URLSearchParams(window.location.search);
+        const isCopy = urlParams.has('copy');
+        
+        // For copy operation, clear ID and priority
+        if (isCopy) {
+            data.id = '';
+            data.priority = '';
+        }
+        
         // Use unified silent population approach
         Form.populateFormSilently({
             id: data.id,
@@ -1114,7 +1156,7 @@ const outOfWorkTimeRecord = {
         
         // REST API integration
         Form.apiSettings.enabled = true;
-        Form.apiSettings.apiObject = OutWorkTimesAPI;
+        Form.apiSettings.apiObject = OutOffWorkTimeAPI;
         Form.apiSettings.saveMethod = 'saveRecord';
         
         Form.initialize();

@@ -27,6 +27,7 @@ use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
+use MikoPBX\PBXCoreREST\Lib\Common\SearchIndexTrait;
 
 /**
  * Data structure for out-of-work-time conditions
@@ -38,6 +39,7 @@ use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
  */
 class DataStructure extends AbstractDataStructure
 {
+    use SearchIndexTrait;
     /**
      * Create full data structure from model
      * 
@@ -82,6 +84,9 @@ class DataStructure extends AbstractDataStructure
         // Add sound file field using standard naming convention: field_name_represent
         $data = self::addSoundFileField($data, 'audio_message_id', $model->audio_message_id);
         
+        // Add search_index for frontend search functionality using trait
+        $data['search_index'] = self::generateAutoSearchIndex($data);
+        
         return $data;
     }
     
@@ -102,7 +107,7 @@ class DataStructure extends AbstractDataStructure
         // Get action information
         $actionInfo = self::getActionInfo($model);
         
-        return [
+        $data = [
             'id' => $model->id,
             'name' => $model->description ?? '',
             'description' => $model->description ?? '',
@@ -124,6 +129,11 @@ class DataStructure extends AbstractDataStructure
             'time_from' => $model->time_from ?? '',
             'time_to' => $model->time_to ?? '',
         ];
+        
+        // Add search_index for frontend search functionality using trait
+        $data['search_index'] = self::generateAutoSearchIndex($data);
+        
+        return $data;
     }
     
     /**

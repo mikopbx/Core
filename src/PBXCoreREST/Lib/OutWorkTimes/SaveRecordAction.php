@@ -24,6 +24,7 @@ namespace MikoPBX\PBXCoreREST\Lib\OutWorkTimes;
 use MikoPBX\Common\Models\OutWorkTimes;
 use MikoPBX\Common\Models\OutWorkTimesRouts;
 use MikoPBX\Common\Models\IncomingRoutingTable;
+use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
 use MikoPBX\Core\System\SystemMessages;
@@ -128,18 +129,11 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 'allowRestriction' => '0'
             ]);
             
-            // No required field validation - description is optional
-            $validationErrors = [];
+            // Validate data based on action and calendar type
+            $validationErrors = self::validateTimeConditionData($sanitizedData);
             
             if (!empty($validationErrors)) {
                 $res->messages['error'] = $validationErrors;
-                return $res;
-            }
-            
-            // Validate calendar-specific fields
-            $calValidationErrors = self::validateCalendarFields($sanitizedData);
-            if (!empty($calValidationErrors)) {
-                $res->messages['error'] = $calValidationErrors;
                 return $res;
             }
             
@@ -165,14 +159,14 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 // Update condition fields
                 $condition->description = $sanitizedData['description'] ?? '';
                 $condition->calType = $sanitizedData['calType'] ?? '';
-                $condition->date_from = $sanitizedData['date_from'];
-                $condition->date_to = $sanitizedData['date_to'];
-                $condition->weekday_from = $sanitizedData['weekday_from'] !== null ? (string)$sanitizedData['weekday_from'] : null;
-                $condition->weekday_to = $sanitizedData['weekday_to'] !== null ? (string)$sanitizedData['weekday_to'] : null;
-                $condition->time_from = $sanitizedData['time_from'];
-                $condition->time_to = $sanitizedData['time_to'];
-                $condition->calUrl = $sanitizedData['calUrl'];
-                $condition->calUser = $sanitizedData['calUser'];
+                $condition->date_from = $sanitizedData['date_from'] ?? '';
+                $condition->date_to = $sanitizedData['date_to'] ?? '';
+                $condition->weekday_from = isset($sanitizedData['weekday_from']) && $sanitizedData['weekday_from'] !== null ? (string)$sanitizedData['weekday_from'] : '';
+                $condition->weekday_to = isset($sanitizedData['weekday_to']) && $sanitizedData['weekday_to'] !== null ? (string)$sanitizedData['weekday_to'] : '';
+                $condition->time_from = $sanitizedData['time_from'] ?? '';
+                $condition->time_to = $sanitizedData['time_to'] ?? '';
+                $condition->calUrl = $sanitizedData['calUrl'] ?? '';
+                $condition->calUser = $sanitizedData['calUser'] ?? '';
                 
                 // Only update password if it's not the masked value and not empty
                 // If it's 'XXXXXX' (masked) or empty, keep the existing password
@@ -185,8 +179,8 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 // If 'XXXXXX' is sent, we don't update the field at all (keep existing value)
                 
                 $condition->action = $sanitizedData['action'] ?? '';
-                $condition->extension = $sanitizedData['extension'] ?? null;
-                $condition->audio_message_id = $sanitizedData['audio_message_id'];
+                $condition->extension = $sanitizedData['extension'] ?? '';
+                $condition->audio_message_id = $sanitizedData['audio_message_id'] ?? '';
                 $condition->priority = (string)$sanitizedData['priority'];
                 $condition->allowRestriction = $sanitizedData['allowRestriction'] ?? '0';
                 
@@ -234,53 +228,100 @@ class SaveRecordAction extends AbstractSaveRecordAction
     }
     
     /**
-     * Validate calendar-specific fields based on calendar type
+     * Validate time condition data with all business rules
      * 
      * @param array $data Sanitized data
      * @return array Validation errors
      */
-    private static function validateCalendarFields(array $data): array
+    private static function validateTimeConditionData(array $data): array
     {
         $errors = [];
+        $di = \Phalcon\Di\Di::getDefault();
+        $t = $di->get(TranslationProvider::SERVICE_NAME);
         
-        // Skip validation if calType is empty (which means 'timeframe')
-        if (empty($data['calType'])) {
-            return $errors;
+        // Get action and calType
+        $action = $data['action'] ?? '';
+        $calType = $data['calType'] ?? '';
+        
+        // Validate action-specific fields
+        if ($action === 'extension') {
+            // Extension is required when action is 'extension'
+            if (empty($data['extension']) || trim($data['extension']) === '') {
+                $errors[] = $t->_('tf_ValidateExtensionEmpty');
+            }
+        } elseif ($action === 'playmessage') {
+            // Audio message is required when action is 'playmessage'
+            if (empty($data['audio_message_id']) || trim($data['audio_message_id']) === '') {
+                $errors[] = $t->_('tf_ValidateAudioMessageEmpty');
+            }
         }
         
-        switch ($data['calType']) {
-            case 'date':
-                if (empty($data['date_from']) || empty($data['date_to'])) {
-                    $errors[] = 'api_DateRangeRequired';
+        // Validate time format if provided
+        $timePattern = '/^([01]?[0-9]|2[0-3]):([0-5]?[0-9])$/';
+        if (!empty($data['time_from']) && !preg_match($timePattern, $data['time_from'])) {
+            $errors[] = $t->_('tf_ValidateCheckTimeInterval');
+        }
+        if (!empty($data['time_to']) && !preg_match($timePattern, $data['time_to'])) {
+            $errors[] = $t->_('tf_ValidateCheckTimeInterval');
+        }
+        
+        // If one time is set, both must be set
+        if ((!empty($data['time_from']) && empty($data['time_to'])) ||
+            (empty($data['time_from']) && !empty($data['time_to']))) {
+            $errors[] = $t->_('tf_ValidateCheckTimeInterval');
+        }
+        
+        // Validate calendar-specific fields
+        if ($calType === 'CALDAV' || $calType === 'ICAL') {
+            // CalDAV/iCal requires URL
+            if (empty($data['calUrl']) || trim($data['calUrl']) === '') {
+                $errors[] = $t->_('tf_ValidateCalUri');
+            }
+            // Validate URL format if provided
+            if (!empty($data['calUrl']) && !filter_var($data['calUrl'], FILTER_VALIDATE_URL)) {
+                $errors[] = $t->_('tf_ValidateCalUri');
+            }
+        } elseif ($calType === '' || $calType === 'timeframe') {
+            // For timeframe type, at least one condition must be specified
+            $hasDateRange = !empty($data['date_from']) || !empty($data['date_to']);
+            $hasWeekdayRange = !empty($data['weekday_from']) || !empty($data['weekday_to']);
+            $hasTimeRange = !empty($data['time_from']) || !empty($data['time_to']);
+            
+            if (!$hasDateRange && !$hasWeekdayRange && !$hasTimeRange) {
+                // At least one time condition must be specified
+                $errors[] = $t->_('tf_ValidateAtLeastOneCondition');
+            }
+            
+            // Validate date range if provided
+            if ($hasDateRange) {
+                if ((!empty($data['date_from']) && empty($data['date_to'])) ||
+                    (empty($data['date_from']) && !empty($data['date_to']))) {
+                    $errors[] = $t->_('tf_ValidateDateRangeComplete');
                 }
+                // Check if start date is before end date
                 if (!empty($data['date_from']) && !empty($data['date_to'])) {
-                    if (strtotime($data['date_from']) > strtotime($data['date_to'])) {
-                        $errors[] = 'api_InvalidDateRange';
+                    $startTimestamp = is_numeric($data['date_from']) ? (int)$data['date_from'] : strtotime($data['date_from']);
+                    $endTimestamp = is_numeric($data['date_to']) ? (int)$data['date_to'] : strtotime($data['date_to']);
+                    if ($startTimestamp > $endTimestamp) {
+                        $errors[] = $t->_('tf_ValidateDateRangeOrder');
                     }
                 }
-                break;
-                
-            case 'weekday':
-                if (empty($data['weekday_from']) || empty($data['weekday_to'])) {
-                    $errors[] = 'api_WeekdayRangeRequired';
+            }
+            
+            // Validate weekday range if provided
+            if ($hasWeekdayRange) {
+                if ((!empty($data['weekday_from']) && empty($data['weekday_to'])) ||
+                    (empty($data['weekday_from']) && !empty($data['weekday_to']))) {
+                    $errors[] = $t->_('tf_ValidateWeekdayRangeComplete');
                 }
-                break;
-                
-            case 'time':
-                if (empty($data['time_from']) || empty($data['time_to'])) {
-                    $errors[] = 'api_TimeRangeRequired';
+                // Validate weekday values (1-7)
+                if (!empty($data['weekday_from']) && ((int)$data['weekday_from'] < 1 || (int)$data['weekday_from'] > 7)) {
+                    $errors[] = $t->_('tf_ValidateWeekdayInvalid');
                 }
-                break;
-                
-            case 'CALDAV':
-                if (empty($data['calUrl'])) {
-                    $errors[] = 'api_CalDavUrlRequired';
+                if (!empty($data['weekday_to']) && ((int)$data['weekday_to'] < 1 || (int)$data['weekday_to'] > 7)) {
+                    $errors[] = $t->_('tf_ValidateWeekdayInvalid');
                 }
-                // Validate URL format if provided
-                if (!empty($data['calUrl']) && !filter_var($data['calUrl'], FILTER_VALIDATE_URL)) {
-                    $errors[] = 'api_InvalidCalDavUrl';
-                }
-                break;
+            }
         }
         
         return $errors;
