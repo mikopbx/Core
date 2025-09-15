@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalTranslate, PbxApi, DebuggerInfo, EventBus, globalRootUrl, ProvidersAPI */
+/* global globalTranslate, PbxApi, DebuggerInfo, EventBus, globalRootUrl, ProvidersAPI, SipProvidersAPI, IaxProvidersAPI */
 
 /**
  * Provider Status Worker for Modify Page
@@ -332,8 +332,8 @@ const providerModifyStatusWorker = {
             case 'UNREGISTERED':
             case 'FAILED':
                 this.$status
-                    .removeClass('green yellow grey')
-                    .addClass('red')
+                    .removeClass('green yellow red')
+                    .addClass('grey')
                     .html(`<i class="times icon"></i> ${globalTranslate.pr_Offline || 'Offline'}`);
                 break;
                 
@@ -356,9 +356,8 @@ const providerModifyStatusWorker = {
             .addClass('loading')
             .html(`<i class="spinner loading icon"></i> ${globalTranslate.pr_CheckingStatus || 'Checking...'}`);
         
-        // Request status for this specific provider via REST API V2
-        // Pass provider type for optimized lookup
-        ProvidersAPI.getStatusById(this.providerId, this.providerType, (response) => {
+        // Request status for this specific provider via REST API v3
+        ProvidersAPI.getStatus(this.providerId, (response) => {
             this.$status.removeClass('loading');
             
             if (response && response.result && response.data) {
@@ -433,23 +432,16 @@ const providerModifyStatusWorker = {
         const $checkBtn = $('#check-now-btn');
         $checkBtn.off('click').on('click', () => {
             $checkBtn.addClass('loading');
-            $.api({
-                url: `/pbxcore/api/v2/providers/getStatus/${this.providerType.toUpperCase()}/${this.providerId}`,
-                method: 'GET',
-                data: { 
-                    forceCheck: true 
-                },
-                on: 'now',
-                successTest: PbxApi.successTest,
-                onSuccess: (response) => {
-                    $checkBtn.removeClass('loading');
-                    if (response.result && response.data) {
-                        this.updateStatusDisplay(response.data);
-                        this.loadTimelineData();
-                    }
-                },
-                onFailure: () => {
-                    $checkBtn.removeClass('loading');
+            
+            // Use the appropriate API client based on provider type
+            const apiClient = this.providerType === 'SIP' ? SipProvidersAPI : IaxProvidersAPI;
+            
+            // Call forceCheck using v3 API
+            apiClient.forceCheck(this.providerId, (response) => {
+                $checkBtn.removeClass('loading');
+                if (response.result && response.data) {
+                    this.updateStatusDisplay(response.data);
+                    this.loadTimelineData();
                 }
             });
         });
@@ -479,23 +471,15 @@ const providerModifyStatusWorker = {
      * Load timeline data from history
      */
     loadTimelineData() {
-        $.api({
-            url: `/pbxcore/api/v2/providers/getHistory/${this.providerType.toUpperCase()}/${this.providerId}`,
-            method: 'GET',
-            data: { 
-                limit: 1000 
-            },
-            on: 'now',
-            successTest: PbxApi.successTest,
-            onSuccess: (response) => {
-                if (response.result && response.data && response.data.events) {
-                    this.renderTimeline(response.data.events);
-                }
-                $('#timeline-loader').removeClass('active');
-            },
-            onFailure: () => {
-                $('#timeline-loader').removeClass('active');
+        // Use the appropriate API client based on provider type
+        const apiClient = this.providerType === 'SIP' ? SipProvidersAPI : IaxProvidersAPI;
+        
+        // Call getHistory using v3 API
+        apiClient.getHistory(this.providerId, (response) => {
+            if (response.result && response.data && response.data.events) {
+                this.renderTimeline(response.data.events);
             }
+            $('#timeline-loader').removeClass('active');
         });
     },
     
@@ -795,27 +779,19 @@ const providerModifyStatusWorker = {
             description: this.$formObj.form('get value', 'description')
         };
         
-        // Fetch history data
-        $.api({
-            url: `/pbxcore/api/v2/providers/getHistory/${this.providerType.toUpperCase()}/${this.providerId}`,
-            method: 'GET',
-            data: { 
-                limit: 10000 // Get more records for export
-            },
-            on: 'now',
-            successTest: PbxApi.successTest,
-            onSuccess: (response) => {
-                $btn.removeClass('loading');
-                if (response.result && response.data && response.data.events) {
-                    this.downloadCSV(response.data.events, {
-                        providerId: this.providerId,
-                        providerType: this.providerType.toUpperCase(),
-                        ...providerInfo
-                    });
-                }
-            },
-            onFailure: () => {
-                $btn.removeClass('loading');
+        // Use the appropriate API client based on provider type
+        const apiClient = this.providerType === 'SIP' ? SipProvidersAPI : IaxProvidersAPI;
+        
+        // Fetch history data using v3 API
+        apiClient.getHistory(this.providerId, (response) => {
+            $btn.removeClass('loading');
+            if (response.result && response.data && response.data.events) {
+                this.downloadCSV(response.data.events, {
+                    providerId: this.providerId,
+                    providerType: this.providerType.toUpperCase(),
+                    ...providerInfo
+                });
+            } else if (!response.result) {
                 UserMessage.showError(globalTranslate.pr_ExportFailed || 'Export failed');
             }
         });

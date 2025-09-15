@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, ProvidersAPI, SecurityUtils, SemanticLocalization, PbxDataTableIndex, UserMessage, ProviderStatusMonitor */
+/* global globalRootUrl, globalTranslate, ProvidersAPI, SipProvidersAPI, IaxProvidersAPI, SecurityUtils, SemanticLocalization, PbxDataTableIndex, UserMessage, ProviderStatusMonitor */
 
 /**
  * Object for managing providers table
@@ -140,6 +140,23 @@ const providers = {
                     return `${globalRootUrl}providers/modify${type}/${recordId}`;
                 }
                 return null;
+            },
+            // Custom delete handler to use correct API based on provider type
+            customDeleteHandler(recordId, callback) {
+                const data = this.dataTable.rows().data().toArray();
+                const record = data.find(r => r.id === recordId);
+                
+                if (record) {
+                    // Use type-specific API for deletion
+                    const apiModule = record.type === 'SIP' ? SipProvidersAPI : IaxProvidersAPI;
+                    apiModule.deleteRecord(recordId, callback);
+                } else {
+                    // Record not found in table data
+                    callback({
+                        result: false,
+                        messages: {error: ['Provider not found in table']}
+                    });
+                }
             }
         });
         
@@ -247,8 +264,8 @@ const providers = {
                         disabled: false
                     };
                     
-                    // Use REST API to update (will be detected as status-only update)
-                    ProvidersAPI.saveRecord(data, (response) => {
+                    // Use REST API v3 to update provider
+                    ProvidersAPI.patch(providerId, data, (response) => {
                         if (response.result) {
                             // Remove disability classes from cells
                             $(`#${providerId} td`).removeClass('disability disabled');
@@ -271,8 +288,8 @@ const providers = {
                         disabled: true
                     };
                     
-                    // Use REST API to update (will be detected as status-only update)
-                    ProvidersAPI.saveRecord(data, (response) => {
+                    // Use REST API v3 to update provider
+                    ProvidersAPI.patch(providerId, data, (response) => {
                         if (response.result) {
                             // Add disability and disabled classes to data cells
                             $(`#${providerId} td`).each(function(index) {

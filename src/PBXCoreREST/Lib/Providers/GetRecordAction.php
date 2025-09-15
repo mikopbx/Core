@@ -51,9 +51,9 @@ use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
 class GetRecordAction extends AbstractGetRecordAction
 {
     /**
-     * Get provider record with copy support
-     * 
-     * @param string|null $id Provider ID, "new", or "copy-{sourceId}"
+     * Get provider record
+     *
+     * @param string|null $id Provider ID or "new"
      * @param string $type Provider type for new records (SIP or IAX)
      * @return PBXApiResult
      */
@@ -61,49 +61,26 @@ class GetRecordAction extends AbstractGetRecordAction
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        
+
         $type = strtoupper($type);
-        
+
         // Validate provider type
         if (!in_array($type, ['SIP', 'IAX'])) {
             $type = 'SIP';
         }
 
-        // Check for copy mode
-        $copyMode = false;
-        $sourceId = '';
-        if (!empty($id) && strpos($id, 'copy-') === 0) {
-            $copyMode = true;
-            $sourceId = substr($id, 5); // Remove 'copy-' prefix
-        }
-
-        $isNew = empty($id) || $id === 'new' || $copyMode;
+        $isNew = empty($id) || $id === 'new';
 
         if ($isNew) {
-            if ($copyMode && !empty($sourceId)) {
-                // Copy mode - load source record and modify it
-                $sourceProvider = self::findRecordById(Providers::class, $sourceId);
-                
-                if ($sourceProvider) {
-                    // Create copy of the source provider
-                    $newProvider = self::createCopyFromSource($sourceProvider);
-                    
-                    $res->data = DataStructure::createFromModel($newProvider);
-                    $res->success = true;
-
-                    // Log the copy operation (省略日志代码)
-                } else {
-                    // Fallback to new record if source not found
-                    $newProvider = self::createNewRecord($type);
-                    $res->data = DataStructure::createFromModel($newProvider);
-                    $res->success = true;
-                }
-            } else {
-                // Create structure for new record with default values
-                $newProvider = self::createNewRecord($type);
-                $res->data = DataStructure::createFromModel($newProvider);
-                $res->success = true;
-            }
+            // Create structure for new record with default values
+            $newProvider = self::createNewRecord($type);
+            $res->data = DataStructure::createFromModel($newProvider);
+            
+            // Clear the ID field for new providers
+            // The frontend should treat this as a new provider (POST request)
+            $res->data['id'] = '';
+            
+            $res->success = true;
         } else {
             // Find existing record
             $provider = self::findRecordById(Providers::class, $id);
@@ -116,11 +93,6 @@ class GetRecordAction extends AbstractGetRecordAction
             }
         }
 
-        // Always add isNew field for form population
-        if ($res->success) {
-            $res->data['isNew'] = $isNew ? '1' : '0';
-        }
-        
         return $res;
     }
     
@@ -134,14 +106,14 @@ class GetRecordAction extends AbstractGetRecordAction
     {
         $newProvider = new Providers();
         $newProvider->id = '';
-        $newProvider->uniqid = Providers::generateUniqueID($type . '-TRUNK-');
+        $newProvider->uniqid = ''; // Will be generated on actual creation
         $newProvider->type = $type;
         $newProvider->note = '';
         
         // Create model instances with defaults to use DataStructure
         if ($type === 'SIP') {
             $config = new Sip();
-            $config->uniqid = $newProvider->uniqid;
+            $config->uniqid = ''; // No ID for new providers
             $config->disabled = '0';
             $config->username = '';
             $config->secret = '';
@@ -182,11 +154,11 @@ class GetRecordAction extends AbstractGetRecordAction
             
             // Attach SIP config to provider
             $newProvider->Sip = $config;
-            $newProvider->sipuid = $newProvider->uniqid;
+            $newProvider->sipuid = ''; // No ID for new providers
         } else {
             // IAX-specific defaults
             $config = new Iax();
-            $config->uniqid = $newProvider->uniqid;
+            $config->uniqid = ''; // No ID for new providers
             $config->disabled = '0';
             $config->username = '';
             $config->secret = '';
@@ -204,102 +176,10 @@ class GetRecordAction extends AbstractGetRecordAction
             
             // Attach IAX config to provider
             $newProvider->Iax = $config;
-            $newProvider->iaxuid = $newProvider->uniqid;
+            $newProvider->iaxuid = ''; // No ID for new providers
         }
         
         return $newProvider;
     }
     
-    /**
-     * Create copy of provider from source record
-     * 
-     * @param Providers $sourceProvider
-     * @return Providers
-     */
-    private static function createCopyFromSource(Providers $sourceProvider): Providers
-    {
-        $newProvider = new Providers();
-        
-        // Clear identifiers
-        $newProvider->id = '';
-        $newProvider->uniqid = Providers::generateUniqueID($sourceProvider->type . '-TRUNK-');
-        
-        // Copy provider fields
-        $newProvider->type = $sourceProvider->type;
-        $newProvider->note = $sourceProvider->note;
-        
-        if ($sourceProvider->type === 'SIP' && $sourceProvider->Sip) {
-            // Copy SIP configuration
-            $config = new Sip();
-            $sourceConfig = $sourceProvider->Sip;
-            
-            $config->uniqid = $newProvider->uniqid;
-            $config->disabled = $sourceConfig->disabled;
-            $config->username = $sourceConfig->username;
-            $config->secret = $sourceConfig->secret; // Note: password will be copied
-            $config->host = $sourceConfig->host;
-            $config->port = $sourceConfig->port;
-            $config->transport = $sourceConfig->transport;
-            $config->type = $sourceConfig->type;
-            $config->qualify = $sourceConfig->qualify;
-            $config->qualifyfreq = $sourceConfig->qualifyfreq;
-            $config->registration_type = $sourceConfig->registration_type;
-            $config->extension = $sourceConfig->extension;
-            $config->description = 'copy of ' . $sourceConfig->description;
-            $config->networkfilterid = $sourceConfig->networkfilterid;
-            $config->networkfilter_represent = $sourceConfig->networkfilter_represent ?? AbstractDataStructure::getNetworkFilterRepresentation($sourceConfig->networkfilterid);
-            $config->manualattributes = $sourceConfig->manualattributes;
-            $config->dtmfmode = $sourceConfig->dtmfmode;
-            $config->nat = $sourceConfig->nat;
-            $config->fromuser = $sourceConfig->fromuser;
-            $config->fromdomain = $sourceConfig->fromdomain;
-            $config->outbound_proxy = $sourceConfig->outbound_proxy;
-            $config->disablefromuser = $sourceConfig->disablefromuser;
-            $config->noregister = $sourceConfig->noregister;
-            $config->receive_calls_without_auth = $sourceConfig->receive_calls_without_auth;
-            
-            // Copy CallerID and DID source settings
-            $config->cid_source = $sourceConfig->cid_source;
-            $config->cid_custom_header = $sourceConfig->cid_custom_header;
-            $config->cid_parser_start = $sourceConfig->cid_parser_start;
-            $config->cid_parser_end = $sourceConfig->cid_parser_end;
-            $config->cid_parser_regex = $sourceConfig->cid_parser_regex;
-            $config->did_source = $sourceConfig->did_source;
-            $config->did_custom_header = $sourceConfig->did_custom_header;
-            $config->did_parser_start = $sourceConfig->did_parser_start;
-            $config->did_parser_end = $sourceConfig->did_parser_end;
-            $config->did_parser_regex = $sourceConfig->did_parser_regex;
-            $config->cid_did_debug = $sourceConfig->cid_did_debug;
-            
-            // Attach SIP config to provider
-            $newProvider->Sip = $config;
-            $newProvider->sipuid = $newProvider->uniqid;
-            
-        } else if ($sourceProvider->type === 'IAX' && $sourceProvider->Iax) {
-            // Copy IAX configuration
-            $config = new Iax();
-            $sourceConfig = $sourceProvider->Iax;
-            
-            $config->uniqid = $newProvider->uniqid;
-            $config->disabled = $sourceConfig->disabled;
-            $config->username = $sourceConfig->username;
-            $config->secret = $sourceConfig->secret; // Note: password will be copied
-            $config->host = $sourceConfig->host;
-            $config->port = $sourceConfig->port;
-            $config->qualify = $sourceConfig->qualify;
-            $config->registration_type = $sourceConfig->registration_type;
-            $config->description = 'copy of ' . $sourceConfig->description;
-            $config->networkfilterid = $sourceConfig->networkfilterid;
-            $config->networkfilter_represent = $sourceConfig->networkfilter_represent ?? AbstractDataStructure::getNetworkFilterRepresentation($sourceConfig->networkfilterid);
-            $config->manualattributes = $sourceConfig->manualattributes;
-            $config->noregister = $sourceConfig->noregister;
-            $config->receive_calls_without_auth = $sourceConfig->receive_calls_without_auth;
-            
-            // Attach IAX config to provider
-            $newProvider->Iax = $config;
-            $newProvider->iaxuid = $newProvider->uniqid;
-        }
-        
-        return $newProvider;
-    }
 }

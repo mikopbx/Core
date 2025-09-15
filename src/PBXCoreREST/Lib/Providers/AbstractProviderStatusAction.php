@@ -712,7 +712,7 @@ abstract class AbstractProviderStatusAction extends Injectable
     protected static function getStateColor(string $state, ?int $rtt): string
     {
         if (in_array($state, ['unregistered', 'rejected', 'OFF'])) {
-            return 'red';
+            return 'grey';
         }
         
         if ($state === 'registered' || $state === 'OK') {

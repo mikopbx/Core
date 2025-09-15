@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, Form, ProviderBase, ProviderIaxTooltipManager, ProviderTooltipManager, i18n, ProvidersAPI */
+/* global globalRootUrl, globalTranslate, Form, ProviderBase, ProviderIaxTooltipManager, ProviderTooltipManager, i18n, IaxProvidersAPI */
 
 /**
  * IAX provider management form
@@ -351,12 +351,11 @@ class ProviderIAX extends ProviderBase {
         Form.cbBeforeSendForm = this.cbBeforeSendForm.bind(this);
         Form.cbAfterSendForm = this.cbAfterSendForm.bind(this);
         
-        // Configure REST API settings
+        // Configure REST API settings for v3 with auto-detection
         Form.apiSettings = {
             enabled: true,
-            apiObject: ProvidersAPI,
-            saveMethod: 'saveRecord',
-            httpMethod: this.isNewProvider ? 'POST' : 'PUT'
+            apiObject: IaxProvidersAPI, // Use IAX-specific API client v3
+            autoDetectMethod: true // Automatically detect create/update based on id field
         };
         
         // Set redirect URLs for save modes
@@ -532,10 +531,11 @@ class ProviderIAX extends ProviderBase {
     cbBeforeSendForm(settings) {
         const result = settings;
         
-        // Form.js with apiSettings.enabled will automatically:
+        // Form.js with apiSettings.enabled and autoDetectMethod will automatically:
         // 1. Collect form data
         // 2. Convert checkboxes using convertCheckboxesToBool
-        // 3. Call the API using apiSettings configuration
+        // 3. Detect if record is new based on id field
+        // 4. Call the appropriate API method (create/update)
         
         // Just add provider-specific data
         result.data.type = 'IAX';

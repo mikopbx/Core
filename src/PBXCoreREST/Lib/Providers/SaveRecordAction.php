@@ -112,6 +112,13 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 return $res;
             }
             
+            // Validate required fields
+            $validationErrors = self::validateProviderData($sanitizedData);
+            if (!empty($validationErrors)) {
+                $res->messages['error'] = $validationErrors;
+                return $res;
+            }
+            
             // Save in transaction, passing the HTTP method info
             $savedProvider = self::executeInTransaction(function() use ($sanitizedData, $httpMethod) {
                 return self::saveProviderInTransaction($sanitizedData, $httpMethod);
@@ -502,5 +509,101 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 $sipHost->save();
             }
         }
+    }
+    
+    /**
+     * Validate provider data
+     * 
+     * @param array $data Provider data to validate
+     * @return array Array of validation error messages
+     */
+    private static function validateProviderData(array $data): array
+    {
+        $errors = [];
+        
+        // Provider type specific validation
+        if ($data['type'] === 'SIP') {
+            // Registration type validation
+            if (empty($data['registration_type'])) {
+                $errors[] = \MikoPBX\Common\Providers\TranslationProvider::translate('pr_ValidationRegistrationTypeRequired');
+            }
+            
+            $regType = $data['registration_type'] ?? '';
+            
+            // Host validation - required for outbound and none, optional for inbound
+            if (in_array($regType, ['outbound', 'none']) && (empty($data['host']) || trim($data['host']) === '')) {
+                $errors[] = \MikoPBX\Common\Providers\TranslationProvider::translate('pr_ValidationProviderHostIsEmpty');
+            }
+            
+            // Username and password validation for outbound registration
+            if ($regType === 'outbound') {
+                if (empty($data['username']) || trim($data['username']) === '') {
+                    $errors[] = \MikoPBX\Common\Providers\TranslationProvider::translate('pr_ValidationProviderLogin');
+                }
+                if (empty($data['secret']) || trim($data['secret']) === '') {
+                    $errors[] = \MikoPBX\Common\Providers\TranslationProvider::translate('pr_ValidationProviderPasswordEmpty');
+                }
+            }
+            
+            // For inbound registration, username is required
+            if ($regType === 'inbound') {
+                if (empty($data['username']) || trim($data['username']) === '') {
+                    $errors[] = \MikoPBX\Common\Providers\TranslationProvider::translate('pr_ValidationProviderLogin');
+                }
+                // Password is optional if receive_calls_without_auth is enabled
+                if (empty($data['receive_calls_without_auth']) && (empty($data['secret']) || trim($data['secret']) === '')) {
+                    $errors[] = \MikoPBX\Common\Providers\TranslationProvider::translate('pr_ValidationProviderPasswordEmpty');
+                }
+            }
+        } elseif ($data['type'] === 'IAX') {
+            // Registration type validation
+            if (empty($data['registration_type'])) {
+                $errors[] = \MikoPBX\Common\Providers\TranslationProvider::translate('pr_ValidationRegistrationTypeRequired');
+            }
+            
+            $regType = $data['registration_type'] ?? '';
+            
+            // Host validation - required for outbound and none, optional for inbound
+            if (in_array($regType, ['outbound', 'none']) && (empty($data['host']) || trim($data['host']) === '')) {
+                $errors[] = \MikoPBX\Common\Providers\TranslationProvider::translate('pr_ValidationProviderHostIsEmpty');
+            }
+            
+            // Username and password validation based on registration type
+            if ($regType === 'outbound' || $regType === 'none') {
+                if (empty($data['username']) || trim($data['username']) === '') {
+                    $errors[] = \MikoPBX\Common\Providers\TranslationProvider::translate('pr_ValidationProviderLogin');
+                }
+                if (empty($data['secret']) || trim($data['secret']) === '') {
+                    $errors[] = \MikoPBX\Common\Providers\TranslationProvider::translate('pr_ValidationProviderPasswordEmpty');
+                }
+            }
+            
+            // For inbound registration, username is required
+            if ($regType === 'inbound') {
+                if (empty($data['username']) || trim($data['username']) === '') {
+                    $errors[] = \MikoPBX\Common\Providers\TranslationProvider::translate('pr_ValidationProviderLogin');
+                }
+                // Password is optional if receive_calls_without_auth is enabled
+                if (empty($data['receive_calls_without_auth']) && (empty($data['secret']) || trim($data['secret']) === '')) {
+                    $errors[] = \MikoPBX\Common\Providers\TranslationProvider::translate('pr_ValidationProviderPasswordEmpty');
+                }
+            }
+        }
+        
+        // Common validations
+        // Provider name/description validation
+        if (empty($data['description']) || trim($data['description']) === '') {
+            $errors[] = \MikoPBX\Common\Providers\TranslationProvider::translate('pr_ValidationProviderNameIsEmpty');
+        }
+        
+        // Port validation if provided
+        if (!empty($data['port'])) {
+            $port = intval($data['port']);
+            if ($port < 1 || $port > 65535) {
+                $errors[] = \MikoPBX\Common\Providers\TranslationProvider::translate('pr_ValidationProviderPortInvalid');
+            }
+        }
+        
+        return $errors;
     }
 }

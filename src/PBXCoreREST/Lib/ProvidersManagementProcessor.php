@@ -29,7 +29,8 @@ use MikoPBX\PBXCoreREST\Lib\Providers\{
     UpdateStatusAction,
     GetStatusByIdAction,
     GetHistoryAction,
-    GetStatsAction
+    GetStatsAction,
+    CopyRecordAction
 };
 use Phalcon\Di\Injectable;
 
@@ -41,14 +42,18 @@ enum ProviderAction: string
     case GET_FOR_SELECT = 'getForSelect';
     case GET_LIST = 'getList';
     case GET_RECORD = 'getRecord';
-    case SAVE_RECORD = 'saveRecord';
-    case DELETE_RECORD = 'deleteRecord';
+    case CREATE = 'create';
+    case UPDATE = 'update';
+    case PATCH = 'patch';
+    case DELETE = 'delete';
     case GET_STATUSES = 'getStatuses';
     case UPDATE_STATUS = 'updateStatus';
     case GET_STATUS = 'getStatus';
     case GET_HISTORY = 'getHistory';
     case GET_STATS = 'getStats';
     case FORCE_CHECK = 'forceCheck';
+    case GET_DEFAULT = 'getDefault';
+    case COPY = 'copy';
 }
 
 /**
@@ -58,8 +63,10 @@ enum ProviderAction: string
  * - getForSelect: Get providers list for dropdown selects
  * - getList: Get list of all providers
  * - getRecord: Get single provider by ID or create new structure
- * - saveRecord: Create or update provider
- * - deleteRecord: Delete provider
+ * - create: Create new provider
+ * - update: Update provider  
+ * - patch: Partially update provider
+ * - delete: Delete provider
  * - getStatuses: Get current provider registration statuses
  * - getStatus: Get individual provider status by ID
  * - getHistory: Get provider history events
@@ -97,13 +104,13 @@ class ProvidersManagementProcessor extends Injectable
             return $res;
         }
         
-        // For SAVE_RECORD action, pass httpMethod from request level to data
-        if ($action === ProviderAction::SAVE_RECORD && isset($request['httpMethod'])) {
+        // For create/update actions, pass httpMethod from request level to data
+        if (in_array($action, [ProviderAction::CREATE, ProviderAction::UPDATE, ProviderAction::PATCH], true) && isset($request['httpMethod'])) {
             $data['httpMethod'] = $request['httpMethod'];
         }
         
         $res = match ($action) {
-            ProviderAction::GET_FOR_SELECT => GetForSelectAction::main($data),
+            ProviderAction::GET_FOR_SELECT, 'getForSelect' => GetForSelectAction::main($data),
             ProviderAction::GET_LIST => GetListAction::main(
                 !empty($data['includeDisabled']) && $data['includeDisabled'] === 'true'
             ),
@@ -111,8 +118,14 @@ class ProvidersManagementProcessor extends Injectable
                 $data['id'] ?? null,
                 $data['type'] ?? 'SIP'
             ),
-            ProviderAction::SAVE_RECORD => SaveRecordAction::main($data),
-            ProviderAction::DELETE_RECORD => DeleteRecordAction::main($data['id'] ?? ''),
+            ProviderAction::GET_DEFAULT => GetRecordAction::main(
+                'new',
+                $data['type'] ?? 'SIP'
+            ),
+            ProviderAction::CREATE,
+            ProviderAction::UPDATE,
+            ProviderAction::PATCH => SaveRecordAction::main($data),
+            ProviderAction::DELETE => DeleteRecordAction::main($data['id'] ?? ''),
             ProviderAction::GET_STATUSES => GetAllStatusesAction::main($data),
             ProviderAction::UPDATE_STATUS => UpdateStatusAction::main($data),
             ProviderAction::GET_STATUS => GetStatusByIdAction::main(
@@ -130,6 +143,10 @@ class ProvidersManagementProcessor extends Injectable
             ProviderAction::FORCE_CHECK => GetStatusByIdAction::main(
                 $data['id'] ?? '',
                 array_merge($data, ['forceCheck' => true, 'refreshFromAmi' => true])
+            ),
+            ProviderAction::COPY => CopyRecordAction::main(
+                $data['id'] ?? '',
+                $data['type'] ?? null
             ),
         };
 

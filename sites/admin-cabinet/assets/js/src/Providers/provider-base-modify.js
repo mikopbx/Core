@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, Form, PbxApi, ClipboardJS, NetworkFiltersAPI, DynamicDropdownBuilder, TooltipBuilder, PasswordScore, i18n, ProvidersAPI, PasswordWidget */
+/* global globalRootUrl, globalTranslate, Form, PbxApi, ClipboardJS, NetworkFiltersAPI, DynamicDropdownBuilder, TooltipBuilder, PasswordScore, i18n, ProvidersAPI, SipProvidersAPI, IaxProvidersAPI, PasswordWidget */
 
 /**
  * Base class for provider management forms
@@ -72,37 +72,76 @@ class ProviderBase {
     initialize() {
         const providerId = $('#id').val() || '';
         const currentDescription = this.$description.val() || '';
-        
+
         // Check for copy mode from URL parameter or hidden field
         const copyFromId = $('#copy-from-id').val();
         const urlParams = new URLSearchParams(window.location.search);
         const copyParam = urlParams.get('copy');
-        
-        let requestId = providerId;
+
         this.isCopyMode = false; // Save as class property
-        
-        if (copyParam || copyFromId) {
-            requestId = 'copy-' + (copyParam || copyFromId);
-            this.isCopyMode = true;
+
+        // Select appropriate API client based on provider type
+        let apiClient;
+        if (this.providerType === 'SIP') {
+            apiClient = SipProvidersAPI;
+        } else if (this.providerType === 'IAX') {
+            apiClient = IaxProvidersAPI;
+        } else {
+            apiClient = ProvidersAPI;
         }
-        
-        // Determine if this is a new provider
-        // New providers have empty ID or 'new' as ID in the URL, or are in copy mode
-        this.isNewProvider = !providerId || providerId === '' || providerId === 'new' || this.isCopyMode;
-        
-        // Update header immediately for better UX
-        this.updatePageHeader(currentDescription);
-        
+
         // Show loading state
         this.showLoadingState();
-        
-        // Load provider data from REST API
-        ProvidersAPI.getRecord(requestId, this.providerType, (response) => {
-            this.hideLoadingState();
+
+        if (copyParam || copyFromId) {
+            // Copy mode - use the new RESTful copy endpoint
+            const sourceId = copyParam || copyFromId;
+            this.isCopyMode = true;
+            this.isNewProvider = true; // Copy creates a new provider
+
+            // Update header immediately for better UX
+            this.updatePageHeader(currentDescription);
+
+            // Call the copy custom method
+            apiClient.callCustomMethod('copy', {id: sourceId}, (response) => {
+                this.hideLoadingState();
+                this.handleProviderDataResponse(response, ''); // Empty ID for new provider
+            });
+        } else {
+            // Determine if this is a new provider
+            this.isNewProvider = !providerId || providerId === '' || providerId === 'new';
+
+            // Update header immediately for better UX
+            this.updatePageHeader(currentDescription);
+
+            // Use getRecord method from PbxApiClient
+            // It automatically handles new records (calls getDefault) and existing records
+            apiClient.getRecord(providerId || 'new', (response) => {
+                this.hideLoadingState();
+                this.handleProviderDataResponse(response, providerId);
+            });
+        }
+    }
+    
+    /**
+     * Handle provider data response from API
+     * @param {Object} response - API response
+     * @param {string} providerId - Provider ID
+     */
+    handleProviderDataResponse(response, providerId) {
             
             if (response.result && response.data) {
                 // Store provider data for later use
                 this.providerData = response.data;
+                
+                // Update isNewProvider based on actual data from server
+                // New providers won't have an id in the response data
+                if (!response.data.id || response.data.id === '') {
+                    this.isNewProvider = true;
+                } else {
+                    this.isNewProvider = false;
+                }
+                
                 this.populateFormData(response.data);
             } else if (providerId && providerId !== 'new') {
                 UserMessage.showMultiString(response.messages);
@@ -125,13 +164,12 @@ class ProviderBase {
                 Form.dataChanged();
             }
             
-            // Initialize tooltip popups
-            this.$popuped.popup();
-            
-            // Prevent browser password manager for generated passwords
-            this.$secret.on('focus', () => {
-                this.$secret.attr('autocomplete', 'new-password');
-            });
+        // Initialize tooltip popups
+        this.$popuped.popup();
+        
+        // Prevent browser password manager for generated passwords
+        this.$secret.on('focus', () => {
+            this.$secret.attr('autocomplete', 'new-password');
         });
     }
 

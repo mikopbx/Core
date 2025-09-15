@@ -650,7 +650,7 @@ const ProviderStatusMonitor = {
             case 'REJECTED':
             case 'UNREGISTERED':
             case 'FAILED':
-                $statusCell.html(red);
+                $statusCell.html(grey);
                 $row.find('.failure').text(new_state);
                 break;
             default:

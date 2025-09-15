@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, Form, ProviderBase, ProviderSipTooltipManager, ProviderTooltipManager, i18n */
+/* global globalRootUrl, globalTranslate, Form, ProviderBase, ProviderSipTooltipManager, ProviderTooltipManager, i18n, SipProvidersAPI */
 
 /**
  * SIP provider management form
@@ -277,12 +277,11 @@ class ProviderSIP extends ProviderBase {
         Form.cbBeforeSendForm = this.cbBeforeSendForm.bind(this);
         Form.cbAfterSendForm = this.cbAfterSendForm.bind(this);
         
-        // Configure REST API settings
+        // Configure REST API settings for v3 with auto-detection
         Form.apiSettings = {
             enabled: true,
-            apiObject: ProvidersAPI,
-            saveMethod: 'saveRecord',
-            httpMethod: this.isNewProvider ? 'POST' : 'PUT'
+            apiObject: SipProvidersAPI, // Use SIP-specific API client v3
+            autoDetectMethod: true // Automatically detect create/update based on id field
         };
         
         // Navigation URLs
