@@ -19,7 +19,7 @@
 
 namespace MikoPBX\PBXCoreREST\Controllers\IvrMenu;
 
-use MikoPBX\PBXCoreREST\Controllers\BaseController;
+use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\IvrMenuManagementProcessor;
 
 /**
@@ -63,110 +63,33 @@ use MikoPBX\PBXCoreREST\Lib\IvrMenuManagementProcessor;
  * 
  * @package MikoPBX\PBXCoreREST\Controllers\IvrMenu
  */
-class RestController extends BaseController
+class RestController extends BaseRestController
 {
-    /**
-     * Handle standard CRUD requests (GET, POST, PUT, PATCH, DELETE)
-     * 
-     * Routes handled by this method:
-     * @Get("/")                     List all IVR menus with optional filtering
-     * @Get("/{id:[a-zA-Z0-9\-]+}")  Get single IVR menu by ID
-     * @Post("/")                    Create new IVR menu
-     * @Put("/{id:[a-zA-Z0-9\-]+}")  Full update of IVR menu (replace all fields)
-     * @Patch("/{id:[a-zA-Z0-9\-]+}") Partial update of IVR menu (modify specific fields)
-     * @Delete("/{id:[a-zA-Z0-9\-]+}") Delete IVR menu by ID
-     * 
-     * @param string|null $id Resource ID for single resource operations
-     * @return void
-     */
-    public function handleCRUDRequest(?string $id = null): void
-    {
-        // Sanitize all input data
-        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
-        
-        // Add ID to request data if provided in URL
-        if (!empty($id)) {
-            $requestData['id'] = $id;
-        }
-        
-        // Map HTTP method to CRUD action
-        $httpMethod = $this->request->getMethod();
-        $action = match ($httpMethod) {
-            'GET' => $id !== null ? 'getRecord' : 'getList',
-            'POST' => 'saveRecord',
-            'PUT' => 'saveRecord',
-            'PATCH' => 'patch',
-            'DELETE' => 'deleteRecord',
-            default => null
-        };
-        
-        if ($action === null) {
-            $this->response->setJsonContent([
-                'result' => false,
-                'messages' => ['error' => ["Invalid HTTP method: $httpMethod"]]
-            ]);
-            $this->response->setStatusCode(405, 'Method Not Allowed');
-            $this->response->send();
-            return;
-        }
-        
-        // Send request to backend worker
-        $this->sendRequestToBackendWorker(
-            IvrMenuManagementProcessor::class,
-            $action,
-            $requestData
-        );
-    }
+    protected string $processorClass = IvrMenuManagementProcessor::class;
     
     /**
-     * Handle custom method requests following Google API Design Guide
-     * 
-     * Routes handled by this method:
-     * @Get(":{customMethod:[a-zA-Z]+}")               Collection-level custom methods (getDefault)
-     * @Post(":{customMethod:[a-zA-Z]+}")              Collection-level custom methods
-     * @Post("/{id:[a-zA-Z0-9\-]+}:{customMethod:[a-zA-Z]+}")  Resource-level custom methods
-     * 
-     * Supported custom methods:
-     * - getDefault: Get default values for new IVR menu (GET)
-     * 
-     * @param string $customMethod The custom method name (e.g., 'getDefault')
-     * @param string|null $id Optional resource ID for resource-specific custom methods
-     * @return void
+     * Define allowed custom methods for each HTTP method
+     *
+     * @return array<string, array<string>>
      */
-    public function handleCustomRequest(string $customMethod, ?string $id = null): void
+    protected function getAllowedCustomMethods(): array
     {
-        // Check HTTP method based on the custom method
-        $httpMethod = $this->request->getMethod();
-        
-        // Define which custom methods are allowed for each HTTP method
-        $allowedMethods = [
-            'GET' => ['getDefault'],
+        return [
+            'GET' => ['getDefault', 'copy'],
             'POST' => []
         ];
-        
-        if (!isset($allowedMethods[$httpMethod]) || !in_array($customMethod, $allowedMethods[$httpMethod])) {
-            $this->response->setJsonContent([
-                'result' => false,
-                'messages' => ['error' => ["Method '$customMethod' is not allowed with HTTP $httpMethod"]]
-            ]);
-            $this->response->setStatusCode(405, 'Method Not Allowed');
-            $this->response->send();
-            return;
-        }
-        
-        // Sanitize all input data
-        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
-        
-        // Add ID if provided for resource-specific custom methods
-        if (!empty($id)) {
-            $requestData['id'] = $id;
-        }
-        
-        // Send request to backend worker with custom method as action
-        $this->sendRequestToBackendWorker(
-            IvrMenuManagementProcessor::class,
-            $customMethod,
-            $requestData
-        );
     }
+
+    /**
+     * Check if a custom method requires a resource ID
+     *
+     * @param string $method The custom method name
+     * @return bool
+     */
+    protected function isResourceLevelMethod(string $method): bool
+    {
+        // 'copy' is a resource-level method that requires an ID
+        return $method === 'copy' || parent::isResourceLevelMethod($method);
+    }
+    
 }

@@ -25,7 +25,8 @@
 const IvrMenuAPI = new PbxApiClient({
     endpoint: '/pbxcore/api/v3/ivr-menu',
     customMethods: {
-        getDefault: ':getDefault'
+        getDefault: ':getDefault',
+        copy: ':copy'
     }
 });
 

@@ -34,7 +34,7 @@ use MikoPBX\Core\System\SystemMessages;
  * @apiName GetRecord
  * @apiGroup IvrMenu
  * 
- * @apiParam {String} [id] Record ID, "new" for new record structure, or "copy-{id}" for copy mode
+ * @apiParam {String} [id] Record ID or "new" for new record structure
  * 
  * @apiSuccess {Boolean} result Operation result
  * @apiSuccess {Object} data IVR menu data
@@ -53,8 +53,8 @@ use MikoPBX\Core\System\SystemMessages;
 class GetRecordAction extends AbstractGetRecordAction
 {
     /**
-     * Get IVR menu record with copy support
-     * @param string|null $id - Record ID, "new", or "copy-{sourceId}"
+     * Get IVR menu record
+     * @param string|null $id - Record ID or "new"
      * @return PBXApiResult
      */
     public static function main(?string $id = null): PBXApiResult
@@ -62,70 +62,13 @@ class GetRecordAction extends AbstractGetRecordAction
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
 
-        // Check for copy mode
-        $copyMode = false;
-        $sourceId = '';
-        if (!empty($id) && strpos($id, 'copy-') === 0) {
-            $copyMode = true;
-            $sourceId = substr($id, 5); // Remove 'copy-' prefix
-        }
-
-        $isNew = empty($id) || $id === 'new' || $copyMode;
+        $isNew = empty($id) || $id === 'new';
 
         if ($isNew) {
-            if ($copyMode && !empty($sourceId)) {
-                // Copy mode - load source record and modify it
-                $sourceMenu = self::findRecordById(IvrMenu::class, $sourceId);
-                
-                if ($sourceMenu) {
-                    // Create copy of the source IVR menu
-                    $newMenu = self::createCopyFromSource($sourceMenu);
-                    
-                    // Get source IVR menu actions for copying
-                    $sourceActions = IvrMenuActions::find([
-                        'conditions' => 'ivr_menu_id = :ivrMenuId:',
-                        'bind' => ['ivrMenuId' => $sourceMenu->uniqid],
-                        'order' => 'digits ASC'
-                    ]);
-
-                    $actionsArray = [];
-                    foreach ($sourceActions as $action) {
-                        $actionsArray[] = [
-                            'id' => '', // Clear ID for new record
-                            'digits' => $action->digits,
-                            'extension' => $action->extension
-                        ];
-                    }
-
-                    $res->data = DataStructure::createFromModel($newMenu, $actionsArray);
-                    $res->success = true;
-
-                    SystemMessages::sysLogMsg(__METHOD__,
-                        "IVR menu copied from '{$sourceMenu->name}' to '{$newMenu->name}'",
-                        LOG_DEBUG
-                    );
-                } else {
-                    // Fallback to new record if source not found
-                    $newMenu = self::createNewRecord();
-                    $res->data = DataStructure::createFromModel($newMenu, []);
-                    $res->success = true;
-                    
-                    SystemMessages::sysLogMsg(__METHOD__,
-                        "Source IVR menu not found for copy, created new record instead",
-                        LOG_WARNING
-                    );
-                }
-            } else {
-                // Create structure for new record with default values
-                $newMenu = self::createNewRecord();
-                $res->data = DataStructure::createFromModel($newMenu, []);
-                $res->success = true;
-
-                SystemMessages::sysLogMsg(__METHOD__,
-                    "New IVR menu structure generated",
-                    LOG_DEBUG
-                );
-            }
+            // Create structure for new record with default values
+            $newMenu = self::createNewRecord();
+            $res->data = DataStructure::createFromModel($newMenu, []);
+            $res->success = true;
         } else {
             // Find existing record
             $menu = self::findRecordById(IvrMenu::class, $id);
@@ -149,11 +92,6 @@ class GetRecordAction extends AbstractGetRecordAction
 
                 $res->data = DataStructure::createFromModel($menu, $actionsArray);
                 $res->success = true;
-
-                SystemMessages::sysLogMsg(__METHOD__,
-                    "IVR menu '{$menu->name}' ({$menu->extension}) loaded successfully",
-                    LOG_DEBUG
-                );
             } else {
                 $res->messages['error'][] = 'IVR menu not found';
                 SystemMessages::sysLogMsg(__METHOD__,
@@ -193,32 +131,4 @@ class GetRecordAction extends AbstractGetRecordAction
         return $newMenu;
     }
 
-    /**
-     * Create copy of IVR menu from source record
-     * 
-     * @param IvrMenu $sourceMenu
-     * @return IvrMenu
-     */
-    private static function createCopyFromSource(IvrMenu $sourceMenu): IvrMenu
-    {
-        $newMenu = new IvrMenu();
-        
-        // Clear identifiers
-        $newMenu->id = '';
-        $newMenu->uniqid = IvrMenu::generateUniqueID('IVR-');
-        
-        // Get new extension number
-        $newMenu->extension = Extensions::getNextFreeApplicationNumber();
-        
-        // Copy all other fields
-        $newMenu->name = 'copy of ' . $sourceMenu->name;
-        $newMenu->audio_message_id = $sourceMenu->audio_message_id;
-        $newMenu->timeout = $sourceMenu->timeout;
-        $newMenu->timeout_extension = $sourceMenu->timeout_extension;
-        $newMenu->allow_enter_any_internal_extension = $sourceMenu->allow_enter_any_internal_extension;
-        $newMenu->number_of_repeat = $sourceMenu->number_of_repeat;
-        $newMenu->description = $sourceMenu->description;
-        
-        return $newMenu;
-    }
 }

@@ -3,7 +3,7 @@
 {% endif %}
 
 <div id="ivr-table-container" style="display:none">
-    <table class="ui selectable compact unstackable table datatable-width-constrained" id="ivr-menu-table">
+    <table class="ui selectable compact unstackable table" id="ivr-menu-table">
         <thead>
         <tr>
             <th class="collapsing">{{ t._('mm_IvrMenu') }}</th>

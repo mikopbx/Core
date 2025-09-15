@@ -144,50 +144,60 @@ const ivrMenuModify = {
    */
   initializeForm() {
       const recordId = ivrMenuModify.getRecordId();
-      const copyFromId = $('#copy-from-id').val();
       const urlParams = new URLSearchParams(window.location.search);
       const copyParam = urlParams.get('copy');
-      
-      let requestId = recordId;
-      let isCopyMode = false;
-      
-      // Check for copy mode from URL parameter or hidden field
-      if (copyParam || copyFromId) {
-          requestId = `copy-${copyParam || copyFromId}`;
-          isCopyMode = true;
-      } else if (!recordId) {
-          requestId = 'new';
-      }
-      
-      IvrMenuAPI.getRecord(requestId, (response) => {
-          if (response.result) {
-              ivrMenuModify.populateForm(response.data);
-              
-              // Set default extension for validation
-              if (isCopyMode || !recordId) {
-                  // For new records or copies, use the new extension for validation
+
+      // Check for copy mode from URL parameter
+      if (copyParam) {
+          // Use the new RESTful copy method: /ivr-menu/{id}:copy
+          IvrMenuAPI.callCustomMethod('copy', {id: copyParam}, (response) => {
+              if (response.result) {
+                  // Mark as new record for copy
+                  response.data._isNew = true;
+
+                  ivrMenuModify.populateForm(response.data);
+
+                  // For copies, clear the default extension for validation
                   ivrMenuModify.defaultExtension = '';
-              } else {
-                  // For existing records, use their original extension
-                  ivrMenuModify.defaultExtension = ivrMenuModify.$formObj.form('get value', 'extension');
-              }
-              
-              // Populate actions table
-              ivrMenuModify.populateActionsTable(response.data.actions || []);
-              
-              // Mark form as changed if in copy mode to enable save button
-              if (isCopyMode) {
+
+                  // Populate actions table
+                  ivrMenuModify.populateActionsTable(response.data.actions || []);
+
+                  // Mark form as changed to enable save button
                   Form.dataChanged();
+              } else {
+                  UserMessage.showError(response.messages?.error || 'Failed to copy IVR menu data');
               }
-              
-              // Clear copy mode after successful load
-              if (copyFromId) {
-                  $('#copy-from-id').val('');
+          });
+      } else {
+          // Normal mode - load existing record or get default for new
+          const requestId = recordId || 'new';
+
+          IvrMenuAPI.getRecord(requestId, (response) => {
+              if (response.result) {
+                  // Mark as new record if we don't have an ID
+                  if (!recordId) {
+                      response.data._isNew = true;
+                  }
+
+                  ivrMenuModify.populateForm(response.data);
+
+                  // Set default extension for validation
+                  if (!recordId) {
+                      // For new records, use the new extension for validation
+                      ivrMenuModify.defaultExtension = '';
+                  } else {
+                      // For existing records, use their original extension
+                      ivrMenuModify.defaultExtension = ivrMenuModify.$formObj.form('get value', 'extension');
+                  }
+
+                  // Populate actions table
+                  ivrMenuModify.populateActionsTable(response.data.actions || []);
+              } else {
+                  UserMessage.showError(response.messages?.error || 'Failed to load IVR menu data');
               }
-          } else {
-              UserMessage.showError(response.messages?.error || 'Failed to load IVR menu data');
-          }
-      });
+          });
+      }
   },
   
   /**

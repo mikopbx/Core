@@ -26,7 +26,8 @@ use MikoPBX\PBXCoreREST\Lib\IvrMenu\{
     SaveRecordAction,
     DeleteRecordAction,
     GetDefaultAction,
-    PatchAction
+    PatchAction,
+    CopyRecordAction
 };
 use Phalcon\Di\Injectable;
 
@@ -36,8 +37,9 @@ use Phalcon\Di\Injectable;
  * Handles all IVR menu management operations including:
  * - getRecord: Get single IVR menu by ID or create new structure
  * - getList: Get list of all IVR menus
- * - saveRecord: Create or update IVR menu
- * - deleteRecord: Delete IVR menu
+ * - create: Create new IVR menu
+ * - update: Update IVR menu
+ * - delete: Delete IVR menu
  * 
  * @package MikoPBX\PBXCoreREST\Lib
  */
@@ -69,11 +71,15 @@ class IvrMenuManagementProcessor extends Injectable
                 $res = GetListAction::main($data);
                 break;
                 
-            case 'saveRecord':
+            case 'create':
                 $res = SaveRecordAction::main($data);
                 break;
                 
-            case 'deleteRecord':
+            case 'update':
+                $res = SaveRecordAction::main($data);
+                break;
+                
+            case 'delete':
                 if (!empty($data['id'])) {
                     $res = DeleteRecordAction::main($data['id']);
                 } else {
@@ -92,7 +98,15 @@ class IvrMenuManagementProcessor extends Injectable
                     $res->messages['error'][] = 'Empty ID in request data for patch operation';
                 }
                 break;
-                
+
+            case 'copy':
+                if (!empty($data['id'])) {
+                    $res = CopyRecordAction::main($data['id']);
+                } else {
+                    $res->messages['error'][] = 'Empty ID in request data for copy operation';
+                }
+                break;
+
             default:
                 $res->messages['error'][] = "Unknown action - $action in " . __CLASS__;
         }
