@@ -24,31 +24,23 @@ use MikoPBX\PBXCoreREST\Lib\IncomingRoutes\{
     GetListAction,
     SaveRecordAction,
     DeleteRecordAction,
-    ChangePriorityAction
+    ChangePriorityAction,
+    CopyRecordAction
 };
 use Phalcon\Di\Injectable;
 
 /**
- * Available actions for incoming routes management
- */
-enum IncomingRouteAction: string
-{
-    case GET_RECORD = 'getRecord';
-    case GET_LIST = 'getList';
-    case SAVE_RECORD = 'saveRecord';
-    case DELETE_RECORD = 'deleteRecord';
-    case CHANGE_PRIORITY = 'changePriority';
-}
-
-/**
- * Incoming routes management processor
+ * Incoming routes management processor (v3 API)
  *
  * Handles all incoming route management operations including:
- * - getRecord: Get single incoming route by ID or create new structure
+ * - getRecord: Get single incoming route by ID
  * - getList: Get list of all incoming routes with provider and extension data
- * - saveRecord: Create or update incoming route
- * - deleteRecord: Delete incoming route
- * - changePriority: Update priorities for multiple routes
+ * - getDefault: Get default values for new incoming route
+ * - create: Create new incoming route  
+ * - update: Full update of incoming route (replace all fields)
+ * - patch: Partial update of incoming route (modify specific fields)
+ * - delete: Delete incoming route
+ * - changePriorities: Update priorities for multiple routes
  */
 class IncomingRoutesManagementProcessor extends Injectable
 {
@@ -63,27 +55,42 @@ class IncomingRoutesManagementProcessor extends Injectable
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
 
-        $actionString = $request['action'];
+        $action = $request['action'];
         $data = $request['data'];
         
-        // Try to match action with enum
-        $action = IncomingRouteAction::tryFrom($actionString);
-        
-        if ($action === null) {
-            $res->messages['error'][] = "Unknown action - $actionString in " . __CLASS__;
-            $res->function = $actionString;
-            return $res;
-        }
-        
+        // Map actions to handlers
         $res = match ($action) {
-            IncomingRouteAction::GET_RECORD => GetRecordAction::main($data['id'] ?? null),
-            IncomingRouteAction::GET_LIST => GetListAction::main($data),
-            IncomingRouteAction::SAVE_RECORD => SaveRecordAction::main($data),
-            IncomingRouteAction::DELETE_RECORD => DeleteRecordAction::main($data['id'] ?? ''),
-            IncomingRouteAction::CHANGE_PRIORITY => ChangePriorityAction::main($data),
+            // Standard CRUD operations
+            'getRecord' => GetRecordAction::main($data['id'] ?? null),
+            'getList' => GetListAction::main($data),
+            'create' => SaveRecordAction::main($data),
+            'update' => SaveRecordAction::main($data),
+            'patch' => SaveRecordAction::main($data),
+            'delete' => DeleteRecordAction::main($data['id'] ?? ''),
+            
+            // Custom methods
+            'getDefault' => GetRecordAction::main(null),
+            'changePriorities' => ChangePriorityAction::main($data),
+            'copy' => CopyRecordAction::main($data['id'] ?? ''),
+            
+            // Unknown action
+            default => self::unknownAction($action)
         };
 
-        $res->function = $actionString;
+        $res->function = $action;
+        return $res;
+    }
+    
+    /**
+     * Handle unknown action
+     * 
+     * @param string $action Unknown action name
+     * @return PBXApiResult
+     */
+    private static function unknownAction(string $action): PBXApiResult
+    {
+        $res = new PBXApiResult();
+        $res->messages['error'][] = "Unknown action - $action in " . __CLASS__;
         return $res;
     }
 }

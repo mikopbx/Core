@@ -23,6 +23,7 @@ namespace MikoPBX\PBXCoreREST\Lib\IncomingRoutes;
 
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
+use MikoPBX\PBXCoreREST\Lib\Common\SearchIndexTrait;
 
 /**
  * Data structure for Incoming Routes
@@ -31,6 +32,7 @@ use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
  */
 class DataStructure extends AbstractDataStructure
 {
+    use SearchIndexTrait;
     /**
      * Create complete data array from IncomingRoutingTable model
      * 
@@ -39,8 +41,10 @@ class DataStructure extends AbstractDataStructure
      */
     public static function createFromModel($model): array
     {
-        // Start with base structure
-        $data = self::createBaseStructure($model);
+        // Only use ID, no uniqid for IncomingRoutes
+        $data = [
+            'id' => (string)$model->id,
+        ];
         
         // Add incoming route specific fields
         $data['rulename'] = $model->rulename ?? '';
@@ -67,6 +71,9 @@ class DataStructure extends AbstractDataStructure
         // Handle null values for consistent JSON output (excluding providerid which uses 'none')
         $data = self::handleNullValues($data, ['rulename', 'number', 'extension', 'audio_message_id', 'note']);
         
+        // Add search_index for frontend search functionality using trait
+        $data['search_index'] = self::generateAutoSearchIndex($data);
+        
         return $data;
     }
     
@@ -78,7 +85,10 @@ class DataStructure extends AbstractDataStructure
      */
     public static function createForList($model): array
     {
-        $data = self::createBaseStructure($model);
+        // Only use ID, no uniqid for IncomingRoutes
+        $data = [
+            'id' => (string)$model->id,
+        ];
         
         // Add essential fields for list display
         $data['number'] = $model->number ?? '';
@@ -86,6 +96,7 @@ class DataStructure extends AbstractDataStructure
         $data['timeout'] = (int)$model->timeout;
         $data['extension'] = $model->extension ?? '';
         $data['note'] = $model->note ?? '';
+        $data['rulename'] = $model->rulename ?? '';
         
         // Add provider data - map provider to providerid for consistency
         $providerData = self::getProviderData($model->Providers, $model->provider);
@@ -102,7 +113,10 @@ class DataStructure extends AbstractDataStructure
         $data['rule_represent'] = self::generateRuleDescription($model, $data);
         
         // Handle null values for consistent JSON output
-        $data = self::handleNullValues($data, ['number', 'extension', 'note']);
+        $data = self::handleNullValues($data, ['number', 'extension', 'note', 'rulename']);
+        
+        // Add search_index for frontend search functionality using trait
+        $data['search_index'] = self::generateAutoSearchIndex($data);
         
         return $data;
     }
@@ -117,7 +131,7 @@ class DataStructure extends AbstractDataStructure
     {
         return [
             'id' => (string)$model->id,
-            'uniqid' => $model->uniqid,
+            // No uniqid in IncomingRoutingTable
             'rulename' => $model->rulename ?? '',
             'number' => $model->number ?? '',
             'represent' => method_exists($model, 'getRepresent') ? $model->getRepresent() : ($model->rulename ?? '')

@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global $, globalRootUrl, globalTranslate, Extensions, Form, IncomingRoutesAPI, UserMessage, SoundFileSelector, SecurityUtils, FormElements, TooltipBuilder, DynamicDropdownBuilder, ExtensionSelector */
+/* global $, globalRootUrl, globalTranslate, Extensions, Form, IncomingRoutesAPI, ProvidersAPI, UserMessage, SoundFileSelector, SecurityUtils, FormElements, TooltipBuilder, DynamicDropdownBuilder, ExtensionSelector */
 
 /**
  * Object for managing incoming route record
@@ -114,24 +114,19 @@ const incomingRouteModify = {
         const copyId = urlParams.get('copy');
         
         if (copyId) {
-            // Load data from the source record for copying
-            IncomingRoutesAPI.getRecord(copyId, (response) => {
+            // Use the new RESTful copy method: /incoming-routes/{id}:copy with POST
+            IncomingRoutesAPI.callCustomMethod('copy', {id: copyId}, (response) => {
                 if (response.result && response.data) {
-                    // Clear the ID for creating a new record
-                    const copyData = { ...response.data };
-                    delete copyData.id;
-                    delete copyData.priority; // Let the server assign a new priority
-                    
-                    // Populate form with copied data
-                    incomingRouteModify.populateForm(copyData);
+                    // Populate form with copied data (ID and priority are already handled by backend)
+                    incomingRouteModify.populateForm(response.data);
                 } else {
                     // V5.0: No fallback - show error and stop
                     const errorMessage = response.messages && response.messages.error ? 
                         response.messages.error.join(', ') : 
-                        'Failed to load source data for copying';
+                        'Failed to copy incoming route data';
                     UserMessage.showError(SecurityUtils.escapeHtml(errorMessage));
                 }
-            });
+            }, 'POST'); // Specify POST method for copy operation
             return;
         }
         
@@ -140,7 +135,7 @@ const incomingRouteModify = {
         
         if (!recordId || recordId === 'new') {
             // New record - get default structure from API following V5.0 architecture
-            IncomingRoutesAPI.getRecord('new', (response) => {
+            IncomingRoutesAPI.getRecord('', (response) => {
                 if (response.result && response.data) {
                     // Populate form with default data structure from backend
                     incomingRouteModify.populateForm(response.data);
@@ -148,7 +143,7 @@ const incomingRouteModify = {
                     // Fallback: initialize dropdowns with empty data if API fails
                     const emptyData = {};
                     DynamicDropdownBuilder.buildDropdown('providerid', emptyData, {
-                        apiUrl: '/pbxcore/api/v2/providers/getForSelect',
+                        apiUrl: '/pbxcore/api/v3/providers:getForSelect',
                         apiParams: {
                             includeNone: true
                         },
@@ -213,9 +208,9 @@ const incomingRouteModify = {
         // Use unified silent population approach
         Form.populateFormSilently(data, {
             afterPopulate: (formData) => {
-                // Initialize provider dropdown with data
+                // Initialize provider dropdown with data using v3 API
                 DynamicDropdownBuilder.buildDropdown('providerid', formData, {
-                    apiUrl: '/pbxcore/api/v2/providers/getForSelect',
+                    apiUrl: '/pbxcore/api/v3/providers:getForSelect',
                     apiParams: {
                         includeNone: true
                     },
@@ -281,13 +276,6 @@ const incomingRouteModify = {
     cbBeforeSendForm(settings) {
         const result = settings;
         result.data = incomingRouteModify.$formObj.form('get values');
-        
-        // Additional client-side validation
-        if (!IncomingRoutesAPI.validateRouteData(result.data)) {
-            UserMessage.showError('Validation failed');
-            return false;
-        }
-        
         return result;
     },
 

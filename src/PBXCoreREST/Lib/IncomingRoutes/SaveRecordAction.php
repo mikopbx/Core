@@ -108,7 +108,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 }
             } else {
                 $route = new IncomingRoutingTable();
-                $route->uniqid = IncomingRoutingTable::generateUniqueID('INC-ROUTE-');
+                // No uniqid in IncomingRoutingTable - using auto-increment ID
             }
             
             // Handle priority

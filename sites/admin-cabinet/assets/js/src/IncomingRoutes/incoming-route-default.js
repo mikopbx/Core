@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global $, globalTranslate, Extensions, Form, IncomingRoutesAPI, SecurityUtils, SoundFileSelector, UserMessage, DynamicDropdownBuilder, ExtensionSelector */
+/* global $, globalTranslate, Extensions, Form, SecurityUtils, SoundFileSelector, UserMessage, DynamicDropdownBuilder, ExtensionSelector, IncomingRoutesAPI */
 
 /**
  * Module for managing default incoming route
@@ -248,11 +248,7 @@ const incomingRouteDefault = {
         
         // No special handling needed - hangup/busy/voicemail/did2user are now regular extensions
         
-        // Validation
-        if (!IncomingRoutesAPI.validateRouteData(result.data)) {
-            UserMessage.showError('Validation failed');
-            return false;
-        }
+        // Client-side validation is no longer needed - server will validate
         
         return result;
     },
