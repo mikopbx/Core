@@ -168,8 +168,8 @@ const manager = {
     loadManagerDataForCopy(sourceId) {
         manager.$formObj.addClass('loading');
 
-        // Load full data from the source manager
-        AsteriskManagersAPI.getRecord(sourceId, (data) => {
+        // Load copy data from the source manager using the copy endpoint
+        AsteriskManagersAPI.getCopyData(sourceId, (data) => {
             manager.$formObj.removeClass('loading');
 
             if (data === false) {
@@ -178,33 +178,29 @@ const manager = {
                 return;
             }
 
-            // Clear ID and username for new record
-            data.id = '';
-            data.username = '';
-            data.secret = '';
-            
+            // The copy endpoint already returns data with cleared ID, username, generated secret, and updated description
             manager.managerData = data;
-            
+
             // Set hidden field value BEFORE initializing dropdowns
             $('#networkfilterid').val(data.networkfilterid || 'none');
-            
+
             // Now populate form and initialize elements
             manager.populateForm(data);
-            
+
             // Initialize form elements and handlers after data is loaded
             manager.initializeFormElements();
             manager.setupEventHandlers();
-            
+
             // Clear original name since this is a new record
             manager.originalName = '';
             manager.managerId = '';  // Clear manager ID to ensure it's treated as new
-            
+
             // Update form title if possible
             const $headerText = $('.ui.header .content');
             if ($headerText.length) {
                 $headerText.text(globalTranslate.am_CopyRecord || 'Copy AMI User');
             }
-            
+
             // Focus on username field
             manager.$username.focus();
         });

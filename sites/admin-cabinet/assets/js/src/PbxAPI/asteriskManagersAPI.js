@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, sessionStorage, PbxApi */
+/* global globalRootUrl, sessionStorage, PbxApi, PbxApiClient */
 
 /**
  * Asterisk Managers API module.
@@ -24,11 +24,17 @@
  */
 const AsteriskManagersAPI = {
     /**
+     * API client instance.
+     * @type {PbxApiClient}
+     */
+    client: null,
+
+    /**
      * API endpoint for Asterisk managers.
      * @type {string}
      */
     endpoint: `${globalRootUrl}api/asterisk-managers`,
-    
+
     /**
      * API endpoints for REST API v3 integration
      * @type {object}
@@ -90,14 +96,14 @@ const AsteriskManagersAPI = {
 
     /**
      * Get single Asterisk manager by ID or default values for new manager.
-     * 
+     *
      * @param {string} id - Manager ID (empty for new manager).
      * @param {function} callback - Callback function to handle the response.
      */
     getRecord(id, callback) {
         // Use getDefault for new managers, or get specific record
         const url = id ? `${this.endpoints.base}/${id}` : this.endpoints.getDefault;
-        
+
         $.api({
             url: url,
             on: 'now',
@@ -110,6 +116,23 @@ const AsteriskManagersAPI = {
                 callback(false);
             },
             onError: () => {
+                callback(false);
+            }
+        });
+    },
+
+    /**
+     * Get copy data for an Asterisk manager by ID.
+     *
+     * @param {string} id - Manager ID to copy from.
+     * @param {function} callback - Callback function to handle the response.
+     */
+    getCopyData(id, callback) {
+        // Use PbxApiClient's callCustomMethod for copy operation
+        this.client.callCustomMethod('copy', { id: id }, (response) => {
+            if (response && response.data) {
+                callback(response.data);
+            } else {
                 callback(false);
             }
         });
@@ -258,6 +281,15 @@ const AsteriskManagersAPI = {
      * Sets up any required event listeners or initial data loading.
      */
     initialize() {
+        // Initialize PbxApiClient with custom methods
+        this.client = new PbxApiClient({
+            endpoint: '/pbxcore/api/v3/asterisk-managers',
+            customMethods: {
+                getDefault: ':getDefault',
+                copy: ':copy'
+            }
+        });
+
         // Clear cache on page load to ensure fresh data
         this.clearCache();
     }

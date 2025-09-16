@@ -44,17 +44,19 @@ class CreateRecordAction
         try {
             // Create new model
             $model = new AsteriskManagerUsers();
-            
+
             // Process and save the data
             $result = SaveRecordAction::processData($model, $data);
-            
+
             if ($result['success']) {
                 $res->data = ['id' => $result['id']];
                 $res->success = true;
+                // Add reload URL for frontend navigation
+                $res->reload = "asterisk-managers/modify/{$result['id']}";
             } else {
                 $res->messages = $result['messages'];
             }
-            
+
         } catch (\Exception $e) {
             $res->messages['error'][] = $e->getMessage();
         }

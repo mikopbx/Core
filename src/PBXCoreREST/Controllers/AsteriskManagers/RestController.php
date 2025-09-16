@@ -19,7 +19,7 @@
 
 namespace MikoPBX\PBXCoreREST\Controllers\AsteriskManagers;
 
-use MikoPBX\PBXCoreREST\Controllers\BaseController;
+use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\AsteriskManagersManagementProcessor;
 
 /**
@@ -63,110 +63,20 @@ use MikoPBX\PBXCoreREST\Lib\AsteriskManagersManagementProcessor;
  * 
  * @package MikoPBX\PBXCoreREST\Controllers\AsteriskManagers
  */
-class RestController extends BaseController
+class RestController extends BaseRestController
 {
-    /**
-     * Handle standard CRUD requests (GET, POST, PUT, PATCH, DELETE)
-     * 
-     * Routes handled by this method:
-     * @Get("/")                     List all AMI users with optional filtering
-     * @Get("/{id:[0-9]+}")          Get single AMI user by ID
-     * @Post("/")                    Create new AMI user
-     * @Put("/{id:[0-9]+}")          Full update of AMI user (replace all fields)
-     * @Patch("/{id:[0-9]+}")        Partial update of AMI user (modify specific fields)
-     * @Delete("/{id:[0-9]+}")       Delete AMI user by ID
-     * 
-     * @param string|null $id Resource ID for single resource operations
-     * @return void
-     */
-    public function handleCRUDRequest(?string $id = null): void
-    {
-        // Sanitize all input data
-        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
-        
-        // Add ID to request data if provided in URL
-        if (!empty($id)) {
-            $requestData['id'] = $id;
-        }
-        
-        // Map HTTP method to CRUD action
-        $httpMethod = $this->request->getMethod();
-        $action = match ($httpMethod) {
-            'GET' => $id !== null ? 'getRecord' : 'getList',
-            'POST' => 'create',
-            'PUT' => 'update',
-            'PATCH' => 'patch',
-            'DELETE' => 'delete',
-            default => null
-        };
-        
-        if ($action === null) {
-            $this->response->setJsonContent([
-                'result' => false,
-                'messages' => ['error' => ["Invalid HTTP method: $httpMethod"]]
-            ]);
-            $this->response->setStatusCode(405, 'Method Not Allowed');
-            $this->response->send();
-            return;
-        }
-        
-        // Send request to backend worker
-        $this->sendRequestToBackendWorker(
-            AsteriskManagersManagementProcessor::class,
-            $action,
-            $requestData
-        );
-    }
+    protected string $processorClass = AsteriskManagersManagementProcessor::class;
     
     /**
-     * Handle custom method requests following Google API Design Guide
-     * 
-     * Routes handled by this method:
-     * @Get(":{customMethod:[a-zA-Z]+}")               Collection-level custom methods (getDefault)
-     * @Post(":{customMethod:[a-zA-Z]+}")              Collection-level custom methods
-     * @Post("/{id:[0-9]+}:{customMethod:[a-zA-Z]+}")  Resource-level custom methods
-     * 
-     * Supported custom methods:
-     * - getDefault: Get default values for new AMI user (GET)
-     * 
-     * @param string $customMethod The custom method name (e.g., 'getDefault')
-     * @param string|null $id Optional resource ID for resource-specific custom methods
-     * @return void
+     * Define allowed custom methods for each HTTP method
+     *
+     * @return array<string, array<string>>
      */
-    public function handleCustomRequest(string $customMethod, ?string $id = null): void
+    protected function getAllowedCustomMethods(): array
     {
-        // Check HTTP method based on the custom method
-        $httpMethod = $this->request->getMethod();
-        
-        // Define which custom methods are allowed for each HTTP method
-        $allowedMethods = [
-            'GET' => ['getDefault'],
+        return [
+            'GET' => ['getDefault', 'copy'],
             'POST' => []
         ];
-        
-        if (!isset($allowedMethods[$httpMethod]) || !in_array($customMethod, $allowedMethods[$httpMethod])) {
-            $this->response->setJsonContent([
-                'result' => false,
-                'messages' => ['error' => ["Method '$customMethod' is not allowed with HTTP $httpMethod"]]
-            ]);
-            $this->response->setStatusCode(405, 'Method Not Allowed');
-            $this->response->send();
-            return;
-        }
-        
-        // Sanitize all input data
-        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
-        
-        // Add ID if provided for resource-specific custom methods
-        if (!empty($id)) {
-            $requestData['id'] = $id;
-        }
-        
-        // Send request to backend worker with custom method as action
-        $this->sendRequestToBackendWorker(
-            AsteriskManagersManagementProcessor::class,
-            $customMethod,
-            $requestData
-        );
     }
 }

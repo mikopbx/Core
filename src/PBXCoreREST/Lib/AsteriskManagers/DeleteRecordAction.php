@@ -75,8 +75,7 @@ class DeleteRecordAction extends AbstractDeleteAction
                     throw new \Exception('Failed to delete manager: ' . implode(', ', $manager->getMessages()));
                 }
 
-                // Reload manager configuration after deletion
-                self::reloadAsteriskManager();
+                // Configuration reload will be triggered automatically by model events
 
                 return true;
             });

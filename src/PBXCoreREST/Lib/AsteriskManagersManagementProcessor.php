@@ -26,6 +26,7 @@ use MikoPBX\PBXCoreREST\Lib\AsteriskManagers\GetDefaultAction;
 use MikoPBX\PBXCoreREST\Lib\AsteriskManagers\CreateRecordAction;
 use MikoPBX\PBXCoreREST\Lib\AsteriskManagers\UpdateRecordAction;
 use MikoPBX\PBXCoreREST\Lib\AsteriskManagers\PatchRecordAction;
+use MikoPBX\PBXCoreREST\Lib\AsteriskManagers\CopyRecordAction;
 use Phalcon\Di\Injectable;
 
 /**
@@ -41,6 +42,7 @@ enum AsteriskManagerAction: string
     case UPDATE = 'update';
     case PATCH = 'patch';
     case DELETE = 'delete';
+    case COPY = 'copy';
 }
 
 /**
@@ -52,6 +54,7 @@ enum AsteriskManagerAction: string
  * - GET /asterisk-managers         -> getList
  * - GET /asterisk-managers/{id}    -> getRecord
  * - GET /asterisk-managers:getDefault -> getDefault
+ * - GET /asterisk-managers/{id}:copy -> copy
  * - POST /asterisk-managers        -> create
  * - PUT /asterisk-managers/{id}    -> update
  * - PATCH /asterisk-managers/{id}  -> patch
@@ -95,6 +98,7 @@ class AsteriskManagersManagementProcessor extends Injectable
             AsteriskManagerAction::UPDATE => UpdateRecordAction::main($data),
             AsteriskManagerAction::PATCH => PatchRecordAction::main($data),
             AsteriskManagerAction::DELETE => DeleteRecordAction::main($data['id'] ?? ''),
+            AsteriskManagerAction::COPY => CopyRecordAction::main($data['id'] ?? null),
         };
 
         $res->function = $actionString;
