@@ -19,7 +19,7 @@
 
 namespace MikoPBX\PBXCoreREST\Controllers\ApiKeys;
 
-use MikoPBX\PBXCoreREST\Controllers\BaseController;
+use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\ApiKeysManagementProcessor;
 
 /**
@@ -69,112 +69,24 @@ use MikoPBX\PBXCoreREST\Lib\ApiKeysManagementProcessor;
  * 
  * @package MikoPBX\PBXCoreREST\Controllers\ApiKeys
  */
-class RestController extends BaseController
+class RestController extends BaseRestController
 {
     /**
-     * Handle standard CRUD requests (GET, POST, PUT, PATCH, DELETE)
-     * 
-     * Routes handled by this method:
-     * @Get("/")                     List all API keys
-     * @Get("/{id:[0-9]+}")          Get single API key by ID
-     * @Post("/")                    Create new API key
-     * @Put("/{id:[0-9]+}")          Full update of API key (replace all fields)
-     * @Patch("/{id:[0-9]+}")        Partial update of API key (modify specific fields)
-     * @Delete("/{id:[0-9]+}")       Delete API key by ID
-     * 
-     * @param string|null $id Resource ID for single resource operations
-     * @return void
+     * The processor class to handle requests
+     * @var string
      */
-    public function handleCRUDRequest(?string $id = null): void
-    {
-        // Sanitize all input data
-        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
-        
-        // Add ID to request data if provided in URL
-        if (!empty($id)) {
-            $requestData['id'] = $id;
-        }
-        
-        // Map HTTP method to CRUD action
-        $httpMethod = $this->request->getMethod();
-        $action = match ($httpMethod) {
-            'GET' => $id !== null ? 'getRecord' : 'getList',
-            'POST' => 'create',
-            'PUT' => 'update',
-            'PATCH' => 'patch',
-            'DELETE' => 'delete',
-            default => null
-        };
-        
-        if ($action === null) {
-            $this->response->setJsonContent([
-                'result' => false,
-                'messages' => ['error' => ["Invalid HTTP method: $httpMethod"]]
-            ]);
-            $this->response->setStatusCode(405, 'Method Not Allowed');
-            $this->response->send();
-            return;
-        }
-        
-        // Send request to backend worker
-        $this->sendRequestToBackendWorker(
-            ApiKeysManagementProcessor::class,
-            $action,
-            $requestData
-        );
-    }
+    protected string $processorClass = ApiKeysManagementProcessor::class;
     
     /**
-     * Handle custom method requests following Google API Design Guide
+     * Define allowed custom methods for each HTTP method
      * 
-     * Routes handled by this method:
-     * @Get(":{customMethod:[a-zA-Z]+}")               Collection-level custom methods
-     * @Post(":{customMethod:[a-zA-Z]+}")              Collection-level custom methods
-     * @Post("/{id:[0-9]+}:{customMethod:[a-zA-Z]+}")  Resource-level custom methods
-     * 
-     * Supported custom methods:
-     * - getDefault: Get default values for new API key (GET)
-     * - generateKey: Generate new API key string (POST)
-     * - getAvailableControllers: Get list of available API endpoints (GET)
-     * 
-     * @param string $customMethod The custom method name
-     * @param string|null $id Optional resource ID for resource-specific custom methods
-     * @return void
+     * @return array<string, array<string>>
      */
-    public function handleCustomRequest(string $customMethod, ?string $id = null): void
+    protected function getAllowedCustomMethods(): array
     {
-        // Check HTTP method based on the custom method
-        $httpMethod = $this->request->getMethod();
-        
-        // Define which custom methods are allowed for each HTTP method
-        $allowedMethods = [
+        return [
             'GET' => ['getDefault', 'getAvailableControllers'],
             'POST' => ['generateKey']
         ];
-        
-        if (!isset($allowedMethods[$httpMethod]) || !in_array($customMethod, $allowedMethods[$httpMethod])) {
-            $this->response->setJsonContent([
-                'result' => false,
-                'messages' => ['error' => ["Method '$customMethod' is not allowed with HTTP $httpMethod"]]
-            ]);
-            $this->response->setStatusCode(405, 'Method Not Allowed');
-            $this->response->send();
-            return;
-        }
-        
-        // Sanitize all input data
-        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
-        
-        // Add ID if provided for resource-specific custom methods
-        if (!empty($id)) {
-            $requestData['id'] = $id;
-        }
-        
-        // Send request to backend worker with custom method as action
-        $this->sendRequestToBackendWorker(
-            ApiKeysManagementProcessor::class,
-            $customMethod,
-            $requestData
-        );
     }
 }
