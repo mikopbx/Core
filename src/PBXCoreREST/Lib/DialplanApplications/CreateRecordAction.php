@@ -106,7 +106,9 @@ class CreateRecordAction
             // Return created record data
             $res->data = DataStructure::createFromModel($record);
             $res->success = true;
-            
+            // Add reload URL for frontend navigation
+            $res->reload = "dialplan-applications/modify/{$record->uniqid}";
+
             // Reload dialplan
             $di->get('pbxConfigurator')->reloadDialplan();
             

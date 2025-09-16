@@ -97,6 +97,8 @@ class CreateRecordAction extends AbstractSaveRecordAction
             // Build response data
             $res->data = DataStructure::createFromModel($record);
             $res->success = true;
+            // Add reload URL for frontend navigation
+            $res->reload = "asterisk-rest-users/modify/{$record->id}";
             
         } catch (\Exception $e) {
             return self::handleError($e, $res);
