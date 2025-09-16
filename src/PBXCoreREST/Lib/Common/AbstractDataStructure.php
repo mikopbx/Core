@@ -353,20 +353,29 @@ abstract class AbstractDataStructure
      * Unified method for getting network filter representation across all modules.
      * Returns HTML formatted representation with appropriate icon:
      * - 'none' returns globe icon with translated text
+     * - 'localhost' returns home icon with translated text
      * - Valid filter ID returns filter's getRepresent() output
      * - Invalid filter ID returns empty string
      *
-     * @param string|int|null $networkFilterId Network filter ID ('none', numeric ID, or null)
+     * @param string|int|null $networkFilterId Network filter ID ('none', 'localhost', numeric ID, or null)
      * @return string HTML formatted representation with icon
      */
     public static function getNetworkFilterRepresentation($networkFilterId): string
     {
+        $translation = \Phalcon\Di\Di::getDefault()->get(TranslationProvider::SERVICE_NAME);
+        
         // Handle empty or 'none' values
         if (empty($networkFilterId) || $networkFilterId === 'none') {
             // Get translation for "none" option with globe icon
-            $translation = \Phalcon\Di\Di::getDefault()->get(TranslationProvider::SERVICE_NAME);
             $noneText = $translation->_('ex_NoNetworkFilter');
             return '<i class="globe icon"></i> ' . $noneText;
+        }
+        
+        // Handle localhost special value (for AMI/API connections)
+        if ($networkFilterId === 'localhost') {
+            // Get translation for "localhost only" option with home icon
+            $localhostText = $translation->_('fw_LocalhostOnly');
+            return '<i class="home icon"></i> ' . $localhostText;
         }
         
         // Look up the network filter

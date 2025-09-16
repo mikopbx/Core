@@ -19,117 +19,56 @@
 
 namespace MikoPBX\PBXCoreREST\Lib;
 
-use MikoPBX\Common\Models\NetworkFilters;
-use MikoPBX\Common\Providers\TranslationProvider;
-use MikoPBX\Core\System\SystemMessages;
+use MikoPBX\PBXCoreREST\Lib\NetworkFilters\GetForSelectAction;
+use MikoPBX\PBXCoreREST\Lib\NetworkFilters\GetListAction;
+use MikoPBX\PBXCoreREST\Lib\NetworkFilters\GetRecordAction;
 use Phalcon\Di\Injectable;
-use Phalcon\Di\Di;
 
 /**
- * Class NetworkFiltersManagementProcessor
+ * NetworkFiltersManagementProcessor
  * 
- * Handles network filters management operations through REST API
+ * Processes REST API v3 requests for network filters management
  * 
  * @package MikoPBX\PBXCoreREST\Lib
  */
 class NetworkFiltersManagementProcessor extends Injectable
 {
     /**
-     * Processes REST API network filters requests
+     * Process REST API request
      * 
-     * @param array $request Request data
-     * @return PBXApiResult API response
+     * @param array $request Request data with action and parameters
+     * @return PBXApiResult
      */
     public static function callBack(array $request): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
-        
         $action = $request['action'];
         $data = $request['data'];
         
-        switch ($action) {
-            case 'getForSelect':
-                $res = self::getForSelect($data);
-                break;
-            case 'getNetworksForSelect':
-                // For backward compatibility, returns all filters without category filtering
-                $res = self::getForSelect(['categories' => ['SIP', 'IAX', 'AMI', 'API']]);
-                break;
-            default:
-                $res->messages['error'][] = "Unknown action - $action";
-        }
+        // NetworkFilters is read-only - only supports listing for dropdowns
+        // Actual filter management is done through Firewall API
+        $res = match ($action) {
+            'getList' => GetListAction::main($data),
+            'getRecord' => GetRecordAction::main($data),
+            'getForSelect' => GetForSelectAction::main($data),
+            default => self::getErrorResult($action)
+        };
         
         $res->function = $action;
         return $res;
     }
     
     /**
-     * Get network filters for dropdown select
+     * Get error result for unknown action
      * 
-     * @param array $data Request parameters
+     * @param string $action The unknown action
      * @return PBXApiResult
      */
-    private static function getForSelect(array $data): PBXApiResult
+    private static function getErrorResult(string $action): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        
-        try {
-            $filters = [];
-            
-            // Get translation service
-            $di = Di::getDefault();
-            $translation = $di->get(TranslationProvider::SERVICE_NAME);
-            
-            // Get categories
-            $categories = $data['categories'] ?? ['SIP'];
-            if (!is_array($categories)) {
-                $categories = [$categories];
-            }
-            
-            // Convert to uppercase to match FirewallRules constants (for SIP/IAX compatibility)
-            $categories = array_map('strtoupper', $categories);
-            
-            // Use proper translation for "none" option
-            $noneText = $translation->_('ex_NoNetworkFilter');
-            
-            // Add "none" option with proper translation and globe icon
-            $filters[] = [
-                'value' => 'none',
-                'represent' => '<i class="globe icon"></i> ' . $noneText
-            ];
-            
-            // Get filters that are allowed for specified categories
-            $networkFilters = NetworkFilters::getAllowedFiltersForType($categories);
-            
-            // Keep track of added filters to avoid duplicates
-            $addedFilterIds = [];
-            
-            foreach ($networkFilters as $filter) {
-                // Skip if we already added this filter
-                if (in_array($filter->id, $addedFilterIds)) {
-                    continue;
-                }
-                
-                // getRepresent() already includes the icon
-                $filters[] = [
-                    'value' => (string)$filter->id,
-                    'represent' => $filter->getRepresent()
-                ];
-                
-                // Mark this filter as added
-                $addedFilterIds[] = $filter->id;
-            }
-            
-            $res->success = true;
-            $res->data = $filters;
-            
-        } catch (\Exception $e) {
-            $res->messages['error'][] = $e->getMessage();
-            SystemMessages::sysLogMsg(__CLASS__, "Failed to get network filters: " . $e->getMessage(), LOG_ERR);
-        }
-        
+        $res->messages['error'][] = "Unknown action - $action";
+        $res->success = false;
         return $res;
     }
 }

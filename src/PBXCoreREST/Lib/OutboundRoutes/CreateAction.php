@@ -89,6 +89,8 @@ class CreateAction
             if ($model->save()) {
                 $res->data = DataStructure::createFromModel($model);
                 $res->success = true;
+                // Add reload URL for frontend navigation
+                $res->reload = "outbound-routes/modify/{$model->id}";
             } else {
                 $res->messages['error'] = $model->getMessages();
             }

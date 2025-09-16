@@ -69,13 +69,19 @@ class AclConf extends AsteriskConfigClass
         $data    = [];
         $db_data = Sip::find(["type = 'peer' AND ( disabled <> '1')", 'columns' => 'networkfilterid,manualattributes,extension']);
         foreach ($db_data as $sip_peer) {
-            $arr_data       = $sip_peer->toArray();
-            $network_filter = null;
-            if (null != $sip_peer->networkfilterid) {
+            $arr_data = $sip_peer->toArray();
+            
+            // Handle special case: none or empty (no restrictions)
+            if (empty($sip_peer->networkfilterid) || $sip_peer->networkfilterid === 'none') {
+                // No restrictions - allow all
+                $arr_data['permit'] = '';
+                $arr_data['deny']   = '';
+            } else {
+                // Regular network filter
                 $network_filter = NetworkFilters::findFirst($sip_peer->networkfilterid);
+                $arr_data['permit'] = ($network_filter === null) ? '' : $network_filter->permit;
+                $arr_data['deny']   = ($network_filter === null) ? '' : $network_filter->deny;
             }
-            $arr_data['permit'] = ($network_filter === null) ? '' : $network_filter->permit;
-            $arr_data['deny']   = ($network_filter === null) ? '' : $network_filter->deny;
 
             $data[] = $arr_data;
         }

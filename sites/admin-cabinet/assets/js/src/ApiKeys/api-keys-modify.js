@@ -656,7 +656,7 @@ const apiKeysModify = {
         
         // Build network filter dropdown with DynamicDropdownBuilder
         DynamicDropdownBuilder.buildDropdown('networkfilterid', data, {
-            apiUrl: '/pbxcore/api/v2/network-filters/getForSelect?categories[]=WEB',
+            apiUrl: '/pbxcore/api/v3/network-filters:getForSelect?categories[]=API&includeLocalhost=true',
             placeholder: globalTranslate.ak_SelectNetworkFilter,
             cache: false
         });

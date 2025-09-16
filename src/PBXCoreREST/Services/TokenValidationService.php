@@ -258,9 +258,17 @@ class TokenValidationService
      */
     private function checkNetworkFilter(array $keyData, $request): bool
     {
-        if (empty($keyData['networkfilterid'])) {
+        if (empty($keyData['networkfilterid']) || $keyData['networkfilterid'] === 'none') {
             // No network filter, allow all IPs
             return true;
+        }
+        
+        $clientIp = $request->getClientAddress();
+        
+        // Special case: localhost-only restriction
+        if ($keyData['networkfilterid'] === 'localhost') {
+            // Allow only localhost connections
+            return in_array($clientIp, ['127.0.0.1', '::1']);
         }
         
         // Use existing NetworkFilter validation logic
@@ -268,8 +276,6 @@ class TokenValidationService
         if (!$filter) {
             return true; // Filter not found, allow
         }
-        
-        $clientIp = $request->getClientAddress();
         
         // Check if IP is allowed by the filter
         // NetworkFilters has permit/deny fields with comma-separated networks

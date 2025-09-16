@@ -270,7 +270,7 @@ const manager = {
             afterPopulate: (formData) => {
                 // Build network filter dropdown using DynamicDropdownBuilder
                 DynamicDropdownBuilder.buildDropdown('networkfilterid', data, {
-                    apiUrl: '/pbxcore/api/v2/network-filters/getForSelect?categories[]=AMI',
+                    apiUrl: '/pbxcore/api/v3/network-filters:getForSelect?categories[]=AMI&includeLocalhost=true',
                     placeholder: globalTranslate.am_NetworkFilter,
                     cache: false
                 });
