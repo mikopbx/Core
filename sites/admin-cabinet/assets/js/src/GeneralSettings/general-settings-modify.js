@@ -72,7 +72,13 @@ const generalSettingsModify = {
      * @type {object}
      */
     originalCodecState: {},
-    
+
+    /**
+     * Flag to track if codecs have been changed
+     * @type {boolean}
+     */
+    codecsChanged: false,
+
     /**
      * Flag to track if data has been loaded from API
      * @type {boolean}
@@ -367,7 +373,9 @@ const generalSettingsModify = {
         if (typeof GeneralSettingsTooltipManager !== 'undefined') {
             GeneralSettingsTooltipManager.initialize();
         }
-        
+
+        // Tooltip click behavior is now handled globally in TooltipBuilder.js
+
         // Initialize PBXLanguage change detection for restart warning
         generalSettingsModify.initializePBXLanguageWarning();
 
@@ -396,16 +404,13 @@ const generalSettingsModify = {
      * Can be called anytime to reload the form data: generalSettingsModify.loadData()
      */
     loadData() {
-        // Show loading state on the form
-        generalSettingsModify.$formObj.addClass('loading');
-        console.log('Loading general settings from API...');
-        
+        // Show loading state on the form with dimmer
+        Form.showLoadingState(true, 'Loading settings...');
+
         GeneralSettingsAPI.getSettings((response) => {
-            generalSettingsModify.$formObj.removeClass('loading');
-            console.log('API Response:', response);
+            Form.hideLoadingState();
             
             if (response && response.result && response.data) {
-                console.log('Populating form with:', response.data.settings);
                 // Populate form with the received data
                 generalSettingsModify.populateForm(response.data);
                 generalSettingsModify.dataLoaded = true;
@@ -477,6 +482,7 @@ const generalSettingsModify = {
         
         // Trigger event to notify that data has been loaded
         $(document).trigger('GeneralSettings.dataLoaded');
+
     },
     
     /**
@@ -610,19 +616,31 @@ const generalSettingsModify = {
      * @param {object} settings - Settings data from API
      */
     loadSoundFileValues(settings) {
+        // Convert empty values to -1 for the dropdown
+        const dataIn = {...settings};
+        if (!settings.PBXRecordAnnouncementIn || settings.PBXRecordAnnouncementIn === '') {
+            dataIn.PBXRecordAnnouncementIn = '-1';
+        }
+
         // Initialize incoming announcement selector with data (following IVR pattern)
         SoundFileSelector.init('PBXRecordAnnouncementIn', {
             category: 'custom',
             includeEmpty: true,
-            data: settings
+            data: dataIn
             // ❌ NO onChange needed - complete automation by base class
         });
-        
-        // Initialize outgoing announcement selector with data (following IVR pattern)  
+
+        // Convert empty values to -1 for the dropdown
+        const dataOut = {...settings};
+        if (!settings.PBXRecordAnnouncementOut || settings.PBXRecordAnnouncementOut === '') {
+            dataOut.PBXRecordAnnouncementOut = '-1';
+        }
+
+        // Initialize outgoing announcement selector with data (following IVR pattern)
         SoundFileSelector.init('PBXRecordAnnouncementOut', {
             category: 'custom',
             includeEmpty: true,
-            data: settings
+            data: dataOut
             // ❌ NO onChange needed - complete automation by base class
         });
     },
@@ -632,6 +650,9 @@ const generalSettingsModify = {
      * @param {Array} codecs - Array of codec configurations
      */
     updateCodecTables(codecs) {
+        // Reset codec change flag when loading data
+        generalSettingsModify.codecsChanged = false;
+
         // Store original codec state for comparison
         generalSettingsModify.originalCodecState = {};
         
@@ -700,12 +721,13 @@ const generalSettingsModify = {
         // Initialize checkboxes for the new rows
         $tableBody.find('.checkbox').checkbox({
             onChange: function() {
-                // Mark form as changed when codec is enabled/disabled
+                // Mark codecs as changed and form as changed
+                generalSettingsModify.codecsChanged = true;
                 Form.dataChanged();
             }
         });
     },
-    
+
     /**
      * Initialize drag and drop for codec tables
      */
@@ -714,7 +736,8 @@ const generalSettingsModify = {
             onDragClass: 'hoveringRow',
             dragHandle: '.dragHandle',
             onDrop: function() {
-                // Mark form as changed when codecs are reordered
+                // Mark codecs as changed and form as changed
+                generalSettingsModify.codecsChanged = true;
                 Form.dataChanged();
             }
         });
@@ -1162,13 +1185,27 @@ const generalSettingsModify = {
      */
     cbBeforeSendForm(settings) {
         const result = settings;
-        
+
+        // Handle certificate fields - only send if user actually entered new values
+        if (result.data.WEBHTTPSPrivateKey !== undefined) {
+            const privateKeyValue = result.data.WEBHTTPSPrivateKey;
+            // If the field is empty or contains the hidden password, don't send it
+            if (privateKeyValue === '' || privateKeyValue === generalSettingsModify.hiddenPassword) {
+                delete result.data.WEBHTTPSPrivateKey;
+            }
+        }
+
+        // Same for public key - don't send empty values
+        if (result.data.WEBHTTPSPublicKey !== undefined && result.data.WEBHTTPSPublicKey === '') {
+            delete result.data.WEBHTTPSPublicKey;
+        }
+
         // Clean up unnecessary fields before sending
         const fieldsToRemove = [
             'dirrty',
             'deleteAllInput',
         ];
-        
+
         // Remove codec_* fields (they're replaced with the codecs array)
         Object.keys(result.data).forEach(key => {
             if (key.startsWith('codec_') || fieldsToRemove.includes(key)) {
@@ -1176,33 +1213,32 @@ const generalSettingsModify = {
             }
         });
         
-        // Collect codec data - only include if changed
-        const arrCodecs = [];
-        let hasCodecChanges = false;
-        
-        // Process all codec rows
-        $('#audio-codecs-table .codec-row, #video-codecs-table .codec-row').each((currentIndex, obj) => {
-            const codecName = $(obj).attr('data-codec-name');
-            if (codecName && generalSettingsModify.originalCodecState[codecName]) {
-                const original = generalSettingsModify.originalCodecState[codecName];
-                const currentDisabled = $(obj).find('.checkbox').checkbox('is unchecked');
-                
-                // Check if position or disabled state changed
-                if (currentIndex !== original.priority || currentDisabled !== original.disabled) {
-                    hasCodecChanges = true;
+        // Check if we should process codecs
+        // When sendOnlyChanged is enabled, only process codecs if they were actually changed
+        const shouldProcessCodecs = !Form.sendOnlyChanged || generalSettingsModify.codecsChanged;
+
+        if (shouldProcessCodecs) {
+            // Collect all codec data when they've been changed
+            const arrCodecs = [];
+
+            // Process all codec rows
+            $('#audio-codecs-table .codec-row, #video-codecs-table .codec-row').each((currentIndex, obj) => {
+                const codecName = $(obj).attr('data-codec-name');
+                if (codecName) {
+                    const currentDisabled = $(obj).find('.checkbox').checkbox('is unchecked');
+
+                    arrCodecs.push({
+                        name: codecName,
+                        disabled: currentDisabled,
+                        priority: currentIndex,
+                    });
                 }
-                
-                arrCodecs.push({
-                    name: codecName,
-                    disabled: currentDisabled,
-                    priority: currentIndex,
-                });
+            });
+
+            // Include codecs if they were changed or sendOnlyChanged is false
+            if (arrCodecs.length > 0) {
+                result.data.codecs = arrCodecs;
             }
-        });
-        
-        // Only include codecs if there were changes
-        if (hasCodecChanges) {
-            result.data.codecs = arrCodecs;
         }
         
         return result;
@@ -1397,6 +1433,7 @@ const generalSettingsModify = {
         });
     },
 
+
     /**
      * Initialize PBXLanguage change detection for restart warning
      * Shows restart warning only when the language value changes
@@ -1404,27 +1441,34 @@ const generalSettingsModify = {
     initializePBXLanguageWarning() {
         const $languageDropdown = $('#PBXLanguage');
         const $restartWarning = $('#restart-warning-PBXLanguage');
-        
-        // Store original value
+
+        // Store original value and data loaded flag
         let originalValue = null;
-        
+        let isDataLoaded = false;
+
+        // Hide warning initially
+        $restartWarning.hide();
+
         // Set original value after data loads
         $(document).on('GeneralSettings.dataLoaded', () => {
             originalValue = $languageDropdown.val();
+            isDataLoaded = true;
         });
-        
+
         // Handle dropdown change event
         $languageDropdown.closest('.dropdown').dropdown({
             onChange: (value) => {
-                // Show warning if value changed from original
-                if (originalValue !== null && value !== originalValue) {
+                // Only show warning after data is loaded and value changed from original
+                if (isDataLoaded && originalValue !== null && value !== originalValue) {
                     $restartWarning.transition('fade in');
-                } else {
+                } else if (isDataLoaded) {
                     $restartWarning.transition('fade out');
                 }
-                
-                // Trigger form change detection
-                Form.dataChanged();
+
+                // Trigger form change detection only after data is loaded
+                if (isDataLoaded) {
+                    Form.dataChanged();
+                }
             }
         });
     },
@@ -1439,9 +1483,12 @@ const generalSettingsModify = {
         Form.apiSettings.enabled = true;
         Form.apiSettings.apiObject = GeneralSettingsAPI;
         Form.apiSettings.saveMethod = 'saveSettings';
-        
+
         // Enable checkbox to boolean conversion for cleaner API requests
         Form.convertCheckboxesToBool = true;
+
+        // Enable sending only changed fields for optimal PATCH semantics
+        Form.sendOnlyChanged = true;
 
         // No redirect after save - stay on the same page
         Form.afterSubmitIndexUrl = null;

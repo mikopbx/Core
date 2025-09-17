@@ -11,7 +11,7 @@
 <div class="inline field">
     <div class="ui segment">
     <div class="ui toggle checkbox">
-        <label>{{ t._('gs_RedirectToHttps') }}</label>
+        <label for="RedirectToHttps">{{ t._('gs_RedirectToHttps') }}</label>
         {{ form.render('RedirectToHttps') }}
     </div>
     </div>

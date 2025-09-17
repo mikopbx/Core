@@ -1,7 +1,7 @@
 <div class="field">
     <div class="ui segment">
         <div class="ui toggle checkbox">
-            <label>{{ t._('gs_PBXRecordCalls') }}</label>
+            <label for="PBXRecordCalls">{{ t._('gs_PBXRecordCalls') }}</label>
             {{ form.render('PBXRecordCalls') }}
         </div>
     </div>
@@ -9,7 +9,7 @@
 <div class="field">
     <div class="ui segment">
         <div class="ui toggle checkbox">
-            <label>{{ t._('gs_PBXRecordCallsInner') }}</label>
+            <label for="PBXRecordCallsInner">{{ t._('gs_PBXRecordCallsInner') }}</label>
             {{ form.render('PBXRecordCallsInner') }}
         </div>
     </div>
@@ -17,8 +17,8 @@
 <div class="field">
     <div class="ui segment">
         <div class="ui toggle checkbox">
-            <label>{{ t._('gs_PBXSplitAudioThread') }}
-                <i class="small info circle icon field-info-icon" 
+            <label for="PBXSplitAudioThread">{{ t._('gs_PBXSplitAudioThread') }}
+                <i class="small info circle icon field-info-icon"
                    data-field="PBXSplitAudioThread"></i>
             </label>
             {{ form.render('PBXSplitAudioThread') }}

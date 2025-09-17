@@ -20,6 +20,8 @@ return [
  */
 
     'gs_SystemWillRestart' => 'Система будет перезапущена',
+    'gs_AMISettings' => 'Настройки AMI',
+    'gs_AJAMSettings' => 'Настройки AJAM',
     'gs_CallRecordTab' => 'Запись разговоров',
     'gs_RTPStunServer' => 'Адрес STUN сервера (пример: stun.test.net:10000)',
     'gs_SIPAuthPrefix' => 'Префикс Auth Username для авторизации. Префикс будет добавлен в конец Username.',

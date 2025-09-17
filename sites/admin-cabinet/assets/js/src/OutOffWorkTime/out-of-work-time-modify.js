@@ -332,7 +332,7 @@ const outOfWorkTimeRecord = {
         // Initialize SoundFileSelector with complete API data context
         SoundFileSelector.init(outOfWorkTimeRecord.audioMessageId, {
             category: 'custom',
-            includeEmpty: true,
+            includeEmpty: false,  // Out of work time must always have a sound file
             data: data // Pass complete API data for proper initialization
         });
         

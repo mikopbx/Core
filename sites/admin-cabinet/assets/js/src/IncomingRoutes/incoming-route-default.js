@@ -160,7 +160,7 @@ const incomingRouteDefault = {
         
         SoundFileSelector.init(incomingRouteDefault.audioMessageId, {
             category: 'custom',
-            includeEmpty: true,
+            includeEmpty: false,  // Default route must always have a sound file
             data: audioData,
             onChange: () => {
                 Form.dataChanged();

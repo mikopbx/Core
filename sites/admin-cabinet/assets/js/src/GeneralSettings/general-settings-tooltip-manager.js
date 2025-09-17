@@ -1629,41 +1629,66 @@ class GeneralSettingsTooltipManager {
 
     /**
      * Initialize all general settings tooltips
-     * 
+     *
      * This method builds the complete tooltip configurations and attaches
-     * them to the corresponding field icons using Fomantic UI popup.
-     * 
+     * them to the corresponding field icons using TooltipBuilder for proper event handling.
+     *
      * @static
      */
     static initialize() {
         try {
-            const tooltipConfigs = this.getTooltipConfigurations();
-            
-            // Build HTML content for each tooltip configuration
-            const htmlConfigs = {};
-            Object.entries(tooltipConfigs).forEach(([fieldName, config]) => {
-                htmlConfigs[fieldName] = this.buildTooltipContent(config);
-            });
-            
-            // Initialize tooltip for each field info icon
-            $('.field-info-icon').each((index, element) => {
-                const $icon = $(element);
-                const fieldName = $icon.data('field');
-                const content = htmlConfigs[fieldName];
-                
-                if (content) {
-                    $icon.popup({
-                        html: content,
-                        position: 'top right',
-                        hoverable: true,
-                        delay: {
-                            show: 300,
-                            hide: 100
-                        },
-                        variation: 'flowing'
-                    });
-                }
-            });
+            // Check if TooltipBuilder is available
+            if (typeof TooltipBuilder === 'undefined') {
+                console.error('TooltipBuilder is not available, falling back to direct popup initialization');
+
+                const tooltipConfigs = this.getTooltipConfigurations();
+
+                // Build HTML content for each tooltip configuration
+                const htmlConfigs = {};
+                Object.entries(tooltipConfigs).forEach(([fieldName, config]) => {
+                    htmlConfigs[fieldName] = this.buildTooltipContent(config);
+                });
+
+                // Initialize tooltip for each field info icon (fallback)
+                $('.field-info-icon').each((index, element) => {
+                    const $icon = $(element);
+                    const fieldName = $icon.data('field');
+                    const content = htmlConfigs[fieldName];
+
+                    if (content) {
+                        $icon.popup({
+                            html: content,
+                            position: 'top right',
+                            hoverable: true,
+                            delay: {
+                                show: 300,
+                                hide: 100
+                            },
+                            variation: 'flowing',
+                            on: 'click'  // Show on click for better control
+                        });
+                    }
+                });
+            } else {
+                // Use TooltipBuilder for proper event handling
+                const tooltipConfigs = this.getTooltipConfigurations();
+
+                // Build HTML content for each tooltip configuration
+                const htmlConfigs = {};
+                Object.entries(tooltipConfigs).forEach(([fieldName, config]) => {
+                    htmlConfigs[fieldName] = this.buildTooltipContent(config);
+                });
+
+                // Initialize using TooltipBuilder which includes click prevention
+                TooltipBuilder.initialize(htmlConfigs, {
+                    selector: '.field-info-icon',
+                    position: 'top right',
+                    hoverable: true,
+                    showDelay: 300,
+                    hideDelay: 100,
+                    variation: 'flowing'
+                });
+            }
         } catch (error) {
             console.error('Failed to initialize general settings tooltips:', error);
         }

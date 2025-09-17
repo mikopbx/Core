@@ -24,14 +24,15 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 
 /**
  * Action for getting sound files list formatted for dropdown selects
- * 
+ *
  * @api {get} /pbxcore/api/v2/sound-files/getForSelect Get sound files for select dropdown
  * @apiVersion 2.0.0
  * @apiName GetForSelect
  * @apiGroup SoundFiles
- * 
+ *
  * @apiParam {String} [category=custom] Category filter (custom/moh)
- * 
+ * @apiParam {Boolean} [includeEmpty=false] Include empty option at the beginning
+ *
  * @apiSuccess {Boolean} result Operation result
  * @apiSuccess {Array} data List of sound files
  * @apiSuccess {String} data.value File ID (for dropdown value)
@@ -44,7 +45,7 @@ class GetForSelectAction
 {
     /**
      * Get sound files list for dropdown select
-     * 
+     *
      * @param array $data Request parameters
      * @return PBXApiResult
      */
@@ -52,22 +53,35 @@ class GetForSelectAction
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        
+
         try {
             $category = $data['category'] ?? SoundFiles::CATEGORY_CUSTOM;
-            
+            $includeEmpty = filter_var($data['includeEmpty'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
             // Validate category
             if (!in_array($category, [SoundFiles::CATEGORY_CUSTOM, SoundFiles::CATEGORY_MOH], true)) {
                 $category = SoundFiles::CATEGORY_CUSTOM;
             }
-            
+
             // Get files by category
             $soundFiles = SoundFiles::find([
                 'conditions' => 'category = :category:',
                 'bind' => ['category' => $category]
             ]);
-            
+
             $soundFilesList = [];
+
+            // Add empty option if requested
+            if ($includeEmpty) {
+                $soundFilesList[] = [
+                    'value' => -1,
+                    'id' => -1,
+                    'category' => '',
+                    'path' => '',
+                    'represent' => '-'
+                ];
+            }
+
             foreach ($soundFiles as $soundFile) {
                 $soundFilesList[] = [
                     'value' => $soundFile->id,
@@ -77,7 +91,7 @@ class GetForSelectAction
                     'represent' => $soundFile->getRepresent()
                 ];
             }
-            
+
             $res->data = $soundFilesList;
             $res->success = true;
             

@@ -41,8 +41,8 @@
 <div class="field">
     <div class="ui segment">
         <div class="ui toggle checkbox">
-            <label>{{ t._('gs_UseWebRTC') }}
-                <i class="small info circle icon field-info-icon" 
+            <label for="UseWebRTC">{{ t._('gs_UseWebRTC') }}
+                <i class="small info circle icon field-info-icon"
                    data-field="UseWebRTC"></i>
             </label>
             {{ form.render('UseWebRTC') }}

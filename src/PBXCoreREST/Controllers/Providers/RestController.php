@@ -57,7 +57,6 @@ use MikoPBX\PBXCoreREST\Lib\ProvidersManagementProcessor;
  * # Get provider statistics
  * curl -X GET http://127.0.0.1/pbxcore/api/v3/providers/PROV-123:getStats
  * 
- * @deprecated Write operations (POST, PUT, PATCH, DELETE) - use type-specific endpoints instead
  * 
  * @package MikoPBX\PBXCoreREST\Controllers\Providers
  */

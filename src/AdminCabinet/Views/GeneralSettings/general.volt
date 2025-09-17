@@ -30,8 +30,8 @@
 <div class="field">
     <div class="ui segment">
         <div class="ui toggle checkbox">
-            <label>{{ t._('gs_PBXAllowGuestCalls') }}
-                <i class="small info circle icon field-info-icon" 
+            <label for="PBXAllowGuestCalls">{{ t._('gs_PBXAllowGuestCalls') }}
+                <i class="small info circle icon field-info-icon"
                    data-field="PBXAllowGuestCalls"></i>
             </label>
             {{ form.render('PBXAllowGuestCalls') }}
@@ -52,8 +52,8 @@
 <div class="field">
     <div class="ui segment">
         <div class="ui toggle checkbox">
-            <label>{{ t._('gs_SendAnonymousMetrics') }}
-                <i class="small info circle icon field-info-icon" 
+            <label for="SendMetrics">{{ t._('gs_SendAnonymousMetrics') }}
+                <i class="small info circle icon field-info-icon"
                    data-field="SendMetrics"></i>
             </label>
             {{ form.render('SendMetrics') }}

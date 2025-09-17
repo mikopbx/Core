@@ -300,7 +300,13 @@ class SaveSettingsAction extends AbstractSaveRecordAction
                     // User provided new private key or cleared it
                     $newValue = $data[$key];
                     break;
-                    
+
+                case PbxSettings::PBX_RECORD_ANNOUNCEMENT_IN:
+                case PbxSettings::PBX_RECORD_ANNOUNCEMENT_OUT:
+                    // Handle sound file selection - convert -1 to empty string
+                    $newValue = ($data[$key] === '-1' || $data[$key] === -1) ? '' : $data[$key];
+                    break;
+
                 default:
                     // Check if this is a boolean field and convert accordingly
                     if (FieldTypeResolver::isFieldType(PbxSettings::class, $key, 'boolean')) {
@@ -506,13 +512,16 @@ class SaveSettingsAction extends AbstractSaveRecordAction
         foreach ($currentSlots as $slot) {
             if (!in_array($slot->number, $desiredNumbers)) {
                 if (!$slot->delete()) {
-                    $messages['error'][] = 'Failed to delete parking slot ' . $slot->number . ': ' . implode(', ', $slot->getMessages());
+                    // Just pass the model's validation messages directly
+                    foreach ($slot->getMessages() as $message) {
+                        $messages['error'][] = $message->getMessage();
+                    }
                 }
             } else {
                 $currentNumbers[] = $slot->number;
             }
         }
-        
+
         // Determine slots to create
         $numbersToCreate = array_diff($desiredNumbers, $currentNumbers);
         foreach ($numbersToCreate as $number) {
@@ -521,7 +530,10 @@ class SaveSettingsAction extends AbstractSaveRecordAction
             $record->number = (string)$number;
             $record->show_in_phonebook = '0';
             if (!$record->create()) {
-                $messages['error'][] = 'Failed to create parking slot ' . $number . ': ' . implode(', ', $record->getMessages());
+                // Just pass the model's validation messages directly
+                foreach ($record->getMessages() as $message) {
+                    $messages['error'][] = $message->getMessage();
+                }
             }
         }
         

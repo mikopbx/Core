@@ -100,21 +100,14 @@ const SoundFileSelector = {
         const dropdownConfig = {
             apiUrl: `/pbxcore/api/v3/sound-files:getForSelect`,
             apiParams: {
-                category: config.category
+                category: config.category,
+                includeEmpty: config.includeEmpty ? 'true' : 'false'
             },
             placeholder: config.placeholder || globalTranslate.sf_SelectAudioFile || 'Select audio file',
             onChange: (value, text, $choice) => {
                 this.handleSelectionChange(fieldId, value, text, $choice, config);
             }
         };
-        
-        // Add empty option if needed
-        if (config.includeEmpty) {
-            dropdownConfig.emptyOption = {
-                key: '',
-                value: '-'
-            };
-        }
         
         // Build dropdown using DynamicDropdownBuilder
         const dropdownData = {

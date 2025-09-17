@@ -262,9 +262,14 @@ const DynamicDropdownBuilder = {
                             apiUrl += '&' + existingParams;
                         }
                     } else {
-                        apiUrl += '?' + existingParams + '&query={query}';
+                        // Only add query parameter if the dropdown is searchable
+                        if (hasSearchInput) {
+                            apiUrl += '?' + existingParams + '&query={query}';
+                        } else {
+                            apiUrl += '?' + existingParams;
+                        }
                     }
-                    
+
                     settings.apiSettings.url = apiUrl;
                 }
             }

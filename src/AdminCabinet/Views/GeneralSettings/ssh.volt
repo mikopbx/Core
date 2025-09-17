@@ -9,8 +9,8 @@
 <div class="field">
     <div class="ui segment">
         <div class="ui toggle checkbox">
-            <label>{{ t._('gs_SSHDisablePasswordLogins') }}
-                <i class="small info circle icon field-info-icon" 
+            <label for="SSHDisablePasswordLogins">{{ t._('gs_SSHDisablePasswordLogins') }}
+                <i class="small info circle icon field-info-icon"
                    data-field="SSHDisablePasswordLogins"></i>
             </label>
             {{ form.render('SSHDisablePasswordLogins') }}

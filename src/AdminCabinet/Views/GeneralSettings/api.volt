@@ -2,8 +2,8 @@
 <div class="field">
     <div class="ui segment">
         <div class="ui toggle checkbox">
-            <label>{{ t._('gs_AMIEnabled') }}
-                <i class="small info circle icon field-info-icon" 
+            <label for="AMIEnabled">{{ t._('gs_AMIEnabled') }}
+                <i class="small info circle icon field-info-icon"
                    data-field="AMIEnabled"></i>
             </label>
             {{ form.render('AMIEnabled') }}
@@ -29,8 +29,8 @@
 <div class="field">
     <div class="ui segment">
         <div class="ui toggle checkbox">
-            <label>{{ t._('gs_AJAMEnabled') }}
-                <i class="small info circle icon field-info-icon" 
+            <label for="AJAMEnabled">{{ t._('gs_AJAMEnabled') }}
+                <i class="small info circle icon field-info-icon"
                    data-field="AJAMEnabled"></i>
             </label>
             {{ form.render('AJAMEnabled') }}
@@ -42,8 +42,8 @@
 <div class="field">
     <div class="ui segment">
         <div class="ui toggle checkbox">
-            <label>{{ t._('gs_ARIEnabled') }}
-                <i class="small info circle icon field-info-icon" 
+            <label for="ARIEnabled">{{ t._('gs_ARIEnabled') }}
+                <i class="small info circle icon field-info-icon"
                    data-field="ARIEnabled"></i>
             </label>
             {{ form.render('ARIEnabled') }}

@@ -20,6 +20,8 @@ return [
  */
 
     'gs_SystemWillRestart' => 'The system will be restarted',
+    'gs_AMISettings' => 'AMI Settings',
+    'gs_AJAMSettings' => 'AJAM Settings',
     'gs_CallRecordTab' => 'Call Recording',
     'gs_RTPStunServer' => 'STUN server address (example: stun.test.net:10000)',
     'gs_SIPAuthPrefix' => 'Auth Username prefix for authorization. The prefix will be added to the end of Username.',
