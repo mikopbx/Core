@@ -32,7 +32,7 @@ return [
     'ex_Mobile' => 'Mobile',
     'ex_MobileDialstring' => 'Mobilfunknummer (Wählstring) anpassen',
     'ex_MobileDialstringTooltip_desc' => 'Gibt die tatsächliche Nummer oder Wählregel beim Anrufen der mobilen internen Nummer des Mitarbeiters an. Wenn das Feld nicht ausgefüllt ist, wird der Wert aus dem Feld "Mobilnummer" verwendet.',
-    'ex_MobileDialstringTooltip_examples' => '+49 30 12345678|+49 30 87654321|SIP/SIP-1698919803/+49 30 12345678|SIP/SIP-1698919847/+49 30 87654321|201',
+    'ex_MobileDialstringTooltip_examples' => '493012345678|493087654321|SIP/SIP-1698919803/493012345678|SIP/SIP-1698919847/493087654321|201',
     'ex_MobileDialstringTooltip_examples_header' => 'Beispiele',
     'ex_MobileDialstringTooltip_header' => 'Wählstring-Überschreibung',
     'ex_MobileDialstringTooltip_note' => 'Beim Anruf auf die mobile interne Nummer des Mitarbeiters wird der Wert aus diesem Feld verwendet',

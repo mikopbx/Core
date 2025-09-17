@@ -38,7 +38,7 @@ return [
     'ex_MobileDialstringTooltip_header' => 'Nadpisanie ciągu wybierania',
     'ex_MobileDialstringTooltip_note' => 'Przy dzwonieniu na mobilny numer wewnętrzny pracownika zostanie użyta wartość z tego pola',
     'ex_MobileDialstringTooltip_usage_format' => 'Zmiana formatu numeru',
-    'ex_MobileDialstringTooltip_usage_format_desc' => 'jeśli numer komórkowy to 501234567, ale dostawca wymaga formatu z +48, określ +48501234567',
+    'ex_MobileDialstringTooltip_usage_format_desc' => 'jeśli numer komórkowy to 501234567, ale dostawca wymaga formatu z 48, określ 48501234567',
     'ex_MobileDialstringTooltip_usage_forward' => 'Przekierowanie na inny numer',
     'ex_MobileDialstringTooltip_usage_forward_desc' => 'można podać dowolny numer wewnętrzny lub zewnętrzny do przekierowania',
     'ex_MobileDialstringTooltip_usage_header' => 'Główne scenariusze użycia',

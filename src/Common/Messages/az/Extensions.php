@@ -32,7 +32,7 @@ return [
     'ex_Mobile' => 'Mobil',
     'ex_MobileDialstring' => 'Yığma sətirinin ləğvi',
     'ex_MobileDialstringTooltip_desc' => 'İşçinin mobil daxili nömrəsinə zəng edərkən faktiki nömrə və ya yığma qaydalarını göstərir. Əgər sahə doldurulmayıbsa, "Mobil nömrə" sahəsindəki dəyər istifadə olunur.',
-    'ex_MobileDialstringTooltip_examples' => '+994501234567|+994121234567|SIP/SIP-1698919803/+994501234567|SIP/SIP-1698919847/+994121234567|201',
+    'ex_MobileDialstringTooltip_examples' => '994501234567|994121234567|SIP/SIP-1698919803/994501234567|SIP/SIP-1698919847/994121234567|201',
     'ex_MobileDialstringTooltip_examples_header' => 'Nümunələr',
     'ex_MobileDialstringTooltip_header' => 'Yığma sətirinin ləğvi',
     'ex_MobileDialstringTooltip_note' => 'İşçinin mobil daxili nömrəsinə zəng edərkən bu sahədəki dəyər istifadə olunacaq',

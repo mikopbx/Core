@@ -32,7 +32,7 @@ return [
     'ex_Mobile' => 'Móvil',
     'ex_MobileDialstring' => 'Marcar anulación de línea',
     'ex_MobileDialstringTooltip_desc' => 'Especifica el número real o regla de marcado al llamar al número interno móvil del empleado. Si el campo no está completado, se usa el valor del campo "Número móvil".',
-    'ex_MobileDialstringTooltip_examples' => '+34 91 1234567|+34 93 7654321|SIP/SIP-1698919803/+34 91 1234567|SIP/SIP-1698919847/+34 93 7654321|201',
+    'ex_MobileDialstringTooltip_examples' => '34911234567|34937654321|SIP/SIP-1698919803/34911234567|SIP/SIP-1698919847/34937654321|201',
     'ex_MobileDialstringTooltip_examples_header' => 'Ejemplos',
     'ex_MobileDialstringTooltip_header' => 'Anulación de cadena de marcado',
     'ex_MobileDialstringTooltip_note' => 'Al llamar al número interno móvil del empleado se usará el valor de este campo',

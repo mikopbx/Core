@@ -38,7 +38,7 @@ return [
     'ex_MobileDialstringTooltip_header' => 'ダイヤル文字列の上書き',
     'ex_MobileDialstringTooltip_note' => '従業員のモバイル内線番号に電話をかける際、このフィールドの値が使用されます',
     'ex_MobileDialstringTooltip_usage_format' => '番号フォーマットの変更',
-    'ex_MobileDialstringTooltip_usage_format_desc' => 'モバイル番号が09012345678で、プロバイダーが+81形式を要求する場合、+819012345678を指定',
+    'ex_MobileDialstringTooltip_usage_format_desc' => 'モバイル番号が09012345678で、プロバイダーが+81形式を要求する場合、819012345678を指定',
     'ex_MobileDialstringTooltip_usage_forward' => '他の番号への転送',
     'ex_MobileDialstringTooltip_usage_forward_desc' => '転送用に任意の内線番号または外線番号を指定可能',
     'ex_MobileDialstringTooltip_usage_header' => '主な使用シナリオ',

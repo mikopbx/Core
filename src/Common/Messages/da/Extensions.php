@@ -32,7 +32,7 @@ return [
     'ex_Mobile' => 'mobil',
     'ex_MobileDialstring' => 'Oprettelse af opkaldslinje',
     'ex_MobileDialstringTooltip_desc' => 'Angiver det faktiske nummer eller opkaldsregel, når du ringer til medarbejderens mobile interne nummer. Hvis feltet ikke er udfyldt, bruges værdien fra feltet "Mobilnummer".',
-    'ex_MobileDialstringTooltip_examples' => '+45 32 123456|+45 33 654321|SIP/SIP-1698919803/+45 32 123456|SIP/SIP-1698919847/+45 33 654321|201',
+    'ex_MobileDialstringTooltip_examples' => '4532123456|4533654321|SIP/SIP-1698919803/4532123456|SIP/SIP-1698919847/4533654321|201',
     'ex_MobileDialstringTooltip_examples_header' => 'Eksempler',
     'ex_MobileDialstringTooltip_header' => 'Opkaldsstrengs-override',
     'ex_MobileDialstringTooltip_note' => 'Når du ringer til medarbejderens mobile interne nummer, bruges værdien fra dette felt',

@@ -38,7 +38,7 @@ return [
     'ex_MobileDialstringTooltip_header' => 'Kiesreeks overschrijving',
     'ex_MobileDialstringTooltip_note' => 'Bij het bellen naar het mobiele interne nummer van de werknemer, wordt de waarde van dit veld gebruikt',
     'ex_MobileDialstringTooltip_usage_format' => 'Wijziging nummerformaat',
-    'ex_MobileDialstringTooltip_usage_format_desc' => 'als mobiel nummer 06123456789 is, maar provider +31 formaat vereist, specificeer +31612345678',
+    'ex_MobileDialstringTooltip_usage_format_desc' => 'als mobiel nummer 06123456789 is, maar provider 31 formaat vereist, specificeer 31612345678',
     'ex_MobileDialstringTooltip_usage_forward' => 'Doorschakeling naar ander nummer',
     'ex_MobileDialstringTooltip_usage_forward_desc' => 'u kunt elk intern of extern nummer opgeven voor doorschakeling',
     'ex_MobileDialstringTooltip_usage_header' => 'Hoofdgebruiksscenario\'s',

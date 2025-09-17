@@ -50,7 +50,7 @@ return [
     'ex_Mobile' => 'Mobile',
     'ex_MobileDialstring' => 'Dial string override',
     'ex_MobileDialstringTooltip_desc' => 'Specifies the actual number or dialing rule when calling the employee\'s mobile internal number. If the field is not filled in, the value from the "Mobile number" field is used.',
-    'ex_MobileDialstringTooltip_examples' => '+1234567890|+1987654321|SIP/SIP-1698919803/+1234567890|SIP/SIP-1698919847/+1987654321|201',
+    'ex_MobileDialstringTooltip_examples' => '1234567890|1987654321|SIP/SIP-1698919803/1234567890|SIP/SIP-1698919847/1987654321|201',
     'ex_MobileDialstringTooltip_examples_header' => 'Examples',
     'ex_MobileDialstringTooltip_header' => 'Dial string override',
     'ex_MobileDialstringTooltip_note' => 'When calling the employee\'s mobile internal number, the value from this field will be used',
