@@ -194,7 +194,7 @@ const soundFileModify = {
             soundFileModify.$formObj.form('set value', 'path', filename);
             soundFileModify.$soundFileName.trigger('change');
             // Use new sound-files endpoint for MOH/IVR/system sounds
-            sndPlayer.UpdateSource(`/pbxcore/api/v2/sound-files/playback?view=${filename}`);
+            sndPlayer.UpdateSource(`/pbxcore/api/v3/sound-files:playback?view=${filename}`);
             soundFileModify.$submitButton.removeClass('loading');
             soundFileModify.$formObj.removeClass('loading');
 

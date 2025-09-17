@@ -1,6 +1,6 @@
-{{ form(['action' : 'sound-files/save', 'method': 'post', 'role': 'form', 'class': 'ui form large', 'id':'sound-file-form']) }}
-{{ form.render('id') }}
-{{ form.render('category') }}
+<form class="ui form large" id="sound-file-form">
+<input type="hidden" name="id" id="id" value="{{ recordId }}"/>
+<input type="hidden" name="category" id="category" value="{{ category }}"/>
 <input type="file" name="sound-file" accept=".wav,.mp3,.ogg,.m4a,.aac" style="display: none!important;" id="file"/>
 <input type="hidden" name="sound-file-url" id="sound-file-url"/>
 
@@ -56,17 +56,17 @@
 
 <div class="field">
     <label>{{ t._('sf_Filename') }}</label>
-    {{ form.render('name') }}
+    <input type="text" name="name" id="name" />
 </div>
 
 <div class="field disabled">
     <label>{{ t._('cf_Path') }}</label>
-    {{ form.render('path') }}
+    <input type="text" name="path" id="path" readonly />
 </div>
 
 <div class="field">
     <label>{{ t._('sf_Description') }}</label>
-    {{ form.render('description') }}
+    <textarea name="description" id="description" rows="3"></textarea>
 </div>
 
 {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('Fields')]) }}
@@ -74,5 +74,5 @@
 {{ partial("partials/submitbutton",[
     'indexurl':'sound-files/index'
 ]) }}
-{{ close('form') }}
+</form>
 

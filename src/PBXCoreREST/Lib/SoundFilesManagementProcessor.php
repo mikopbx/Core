@@ -19,79 +19,103 @@
 
 namespace MikoPBX\PBXCoreREST\Lib;
 
-use MikoPBX\PBXCoreREST\Lib\SoundFiles\{
-    GetRecordAction,
-    GetListAction,
-    SaveRecordAction,
-    DeleteRecordAction,
-    UploadFileAction,
-    GetForSelectAction
-};
+use MikoPBX\PBXCoreREST\Lib\SoundFiles\DeleteRecordAction;
+use MikoPBX\PBXCoreREST\Lib\SoundFiles\GetRecordAction;
+use MikoPBX\PBXCoreREST\Lib\SoundFiles\GetListAction;
+use MikoPBX\PBXCoreREST\Lib\SoundFiles\GetDefaultAction;
+use MikoPBX\PBXCoreREST\Lib\SoundFiles\CreateRecordAction;
+use MikoPBX\PBXCoreREST\Lib\SoundFiles\UpdateRecordAction;
+use MikoPBX\PBXCoreREST\Lib\SoundFiles\PatchRecordAction;
+use MikoPBX\PBXCoreREST\Lib\SoundFiles\GetForSelectAction;
+use MikoPBX\PBXCoreREST\Lib\SoundFiles\UploadFileAction;
+use MikoPBX\PBXCoreREST\Lib\SoundFiles\PlaybackAction;
 use Phalcon\Di\Injectable;
 
 /**
- * Sound files management processor
+ * Available actions for sound files management
+ */
+enum SoundFileAction: string
+{
+    // Standard CRUD operations
+    case GET_LIST = 'getList';
+    case GET_RECORD = 'getRecord';
+    case GET_DEFAULT = 'getDefault';
+    case CREATE = 'create';
+    case UPDATE = 'update';
+    case PATCH = 'patch';
+    case DELETE = 'delete';
+
+    // Custom methods
+    case GET_FOR_SELECT = 'getForSelect';
+    case UPLOAD_FILE = 'uploadFile';
+    case PLAYBACK = 'playback';
+}
+
+/**
+ * Class SoundFilesManagementProcessor
  *
- * Handles all sound file management operations including:
- * - getRecord: Get single sound file by ID or create new structure
- * - getList: Get list of all sound files
- * - saveRecord: Create or update sound file
- * - deleteRecord: Delete sound file
- * - uploadFile: Upload new sound file
- * 
+ * Processes sound file management requests
+ *
+ * RESTful API mapping:
+ * - GET /sound-files              -> getList
+ * - GET /sound-files/{id}         -> getRecord
+ * - POST /sound-files             -> create
+ * - PUT /sound-files/{id}         -> update
+ * - PATCH /sound-files/{id}       -> patch
+ * - DELETE /sound-files/{id}      -> delete
+ *
+ * Custom methods:
+ * - GET /sound-files:getDefault     -> getDefault
+ * - GET /sound-files:getForSelect   -> getForSelect
+ * - POST /sound-files:uploadFile    -> uploadFile
+ * - GET /sound-files:playback       -> playback
+ *
  * @package MikoPBX\PBXCoreREST\Lib
  */
 class SoundFilesManagementProcessor extends Injectable
 {
     /**
-     * Processes sound file management requests
+     * Processes sound file management requests with type-safe enum matching
      *
-     * @param array $request Request data with 'action' and 'data' fields
-     * @return PBXApiResult API response object with success status and data
+     * @param array<string, mixed> $request
+     *
+     * @return PBXApiResult An object containing the result of the API call.
      */
     public static function callBack(array $request): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
 
-        $action = $request['action'];
+        $actionString = $request['action'];
         $data = $request['data'];
-        
-        switch ($action) {
-            case 'getRecord':
-                $recordId = $data['id'] ?? null;
-                $res = GetRecordAction::main($recordId);
-                break;
-                
-            case 'getList':
-                $res = GetListAction::main($data);
-                break;
-                
-            case 'saveRecord':
-                $res = SaveRecordAction::main($data);
-                break;
-                
-            case 'deleteRecord':
-                if (!empty($data['id'])) {
-                    $res = DeleteRecordAction::main($data['id']);
-                } else {
-                    $res->messages['error'][] = 'Empty ID in request data';
-                }
-                break;
-                
-            case 'uploadFile':
-                $res = UploadFileAction::main($data);
-                break;
-                
-            case 'getForSelect':
-                $res = GetForSelectAction::main($data);
-                break;
-                
-            default:
-                $res->messages['error'][] = "Unknown action - $action in " . __CLASS__;
+
+        // Type-safe action matching with enum
+        $action = SoundFileAction::tryFrom($actionString);
+
+        if ($action === null) {
+            $res->messages['error'][] = "Unknown action - $actionString in " . __CLASS__;
+            $res->function = $actionString;
+            return $res;
         }
 
-        $res->function = $action;
+        // Execute action using match expression (PHP 8)
+        $res = match ($action) {
+            // Standard CRUD operations
+            SoundFileAction::GET_LIST => GetListAction::main($data),
+            SoundFileAction::GET_RECORD => GetRecordAction::main($data['id'] ?? ''),
+            SoundFileAction::GET_DEFAULT => GetDefaultAction::main(),
+            SoundFileAction::CREATE => CreateRecordAction::main($data),
+            SoundFileAction::UPDATE => UpdateRecordAction::main($data),
+            SoundFileAction::PATCH => PatchRecordAction::main($data),
+            SoundFileAction::DELETE => DeleteRecordAction::main($data['id'] ?? ''),
+
+            // Custom methods
+            SoundFileAction::GET_FOR_SELECT => GetForSelectAction::main($data),
+            SoundFileAction::UPLOAD_FILE => UploadFileAction::main($data),
+            SoundFileAction::PLAYBACK => PlaybackAction::main($data)
+        };
+
+        $res->function = $actionString;
         return $res;
     }
 }

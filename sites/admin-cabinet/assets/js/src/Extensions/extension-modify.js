@@ -672,7 +672,7 @@ const extension = {
         // Network filter dropdown with API data - V5.0 base class
         
         DynamicDropdownBuilder.buildDropdown('sip_networkfilterid', data, {
-            apiUrl: `/pbxcore/api/v2/network-filters/getForSelect?categories[]=SIP`,
+            apiUrl: `/pbxcore/api/v3/network-filters:getForSelect?categories[]=SIP`,
             placeholder: globalTranslate.ex_SelectNetworkFilter || 'Select Network Filter',
             cache: false
         });

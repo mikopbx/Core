@@ -172,21 +172,20 @@ const soundFileModifyRest = {
     },
 
     /**
-     * Get record ID from URL
+     * Get record ID from hidden input field
      * @returns {string} Record ID or empty string for new records
      */
     getRecordId() {
-        const urlParts = window.location.pathname.split('/');
-        const modifyIndex = urlParts.indexOf('modify');
-        
-        if (modifyIndex !== -1 && urlParts[modifyIndex + 1]) {
-            const potentialId = urlParts[modifyIndex + 1];
-            // Check if it's a numeric ID or category (custom/moh)
-            if (!isNaN(potentialId)) {
-                return potentialId;
-            }
+        // Get record ID from hidden input set by controller
+        const recordIdValue = $('#id').val();
+
+        // Check if it's a category name (custom/moh) or actual ID
+        if (recordIdValue === 'custom' || recordIdValue === 'moh') {
+            // This is a new record with category preset
+            return '';
         }
-        return '';
+
+        return recordIdValue || '';
     },
 
     /**
@@ -200,7 +199,7 @@ const soundFileModifyRest = {
                 // Update audio player if path exists
                 if (formData.path) {
                     // Use new sound-files endpoint for MOH/IVR/system sounds
-                    const audioUrl = `/pbxcore/api/v2/sound-files/playback?view=${formData.path}`;
+                    const audioUrl = `/pbxcore/api/v3/sound-files:playback?view=${formData.path}`;
                     sndPlayer.UpdateSource(audioUrl);
                 }
                 
@@ -285,7 +284,7 @@ const soundFileModifyRest = {
             soundFileModifyRest.$soundFileName.trigger('change');
             
             // Update player with new file using sound-files endpoint
-            sndPlayer.UpdateSource(`/pbxcore/api/v2/sound-files/playback?view=${filename}`);
+            sndPlayer.UpdateSource(`/pbxcore/api/v3/sound-files:playback?view=${filename}`);
             
             // Remove loading states
             soundFileModifyRest.$submitButton.removeClass('loading');
@@ -301,6 +300,17 @@ const soundFileModifyRest = {
     cbBeforeSendForm(settings) {
         const result = settings;
         result.data = soundFileModifyRest.$formObj.form('get values');
+
+        // Add flag to indicate if this is a new record for proper HTTP method selection
+        const currentId = result.data.id;
+        if (!currentId || currentId === '' || currentId === 'custom' || currentId === 'moh') {
+            result.data._isNew = true;
+            // Clear the ID for new records
+            if (currentId === 'custom' || currentId === 'moh') {
+                result.data.id = '';
+            }
+        }
+
         return result;
     },
 
