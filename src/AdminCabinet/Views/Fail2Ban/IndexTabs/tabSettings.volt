@@ -1,22 +1,29 @@
-{{ form(['action' : 'fail2-ban/save', 'method': 'post', 'role': 'form', 'class': 'ui form large', 'id':'fail2ban-settings-form']) }}
-        {{ form.render('id') }}
+{{ form(['action' : '#', 'method': 'post', 'role': 'form', 'class': 'ui form', 'id':'fail2ban-settings-form']) }}
 <div class="three fields disability">
     <div class="field ">
-        <label>{{ t._('f2b_MaxRetry') }}</label>
+        <label>{{ t._('f2b_MaxRetry') }}
+            <i class="circle info icon field-info-icon" data-field="maxretry"></i>
+        </label>
         {{ form.render('maxretry') }}
     </div>
     <div class="field">
-        <label>{{ t._('f2b_FindTime') }}</label>
+        <label>{{ t._('f2b_FindTime') }}
+            <i class="circle info icon field-info-icon" data-field="findtime"></i>
+        </label>
         {{ form.render('findtime') }}
     </div>
     <div class="field">
-        <label>{{ t._('f2b_BanTime') }}</label>
+        <label>{{ t._('f2b_BanTime') }}
+            <i class="circle info icon field-info-icon" data-field="bantime"></i>
+        </label>
         {{ form.render('bantime') }}
     </div>
 </div>
 <div class="field disability">
-    <label>{{ t._('f2b_WhiteList') }}</label>
-    {{ form.render('whitelist') }}
+    <label>{{ t._('f2b_WhiteList') }}
+        <i class="circle info icon field-info-icon" data-field="whitelist"></i>
+    </label>
+    <textarea name="whitelist" rows="4" cols="95"></textarea>
 </div>
 
 {% if not isDocker %}

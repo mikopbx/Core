@@ -21,93 +21,23 @@
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\Fail2BanEditForm;
-use MikoPBX\Common\Models\{Fail2BanRules, PbxSettings};
 use MikoPBX\Core\System\Util;
 
 class Fail2BanController extends BaseController
 {
     /**
-     * Builds the index page for the internal numbers and employees.
+     * Builds the index page for Fail2Ban management.
+     *
+     * Data loading is handled via REST API from JavaScript.
+     * This method only sets up the form structure for the view.
      */
     public function indexAction(): void
     {
-        // Check if Fail2Ban rules exist, otherwise create a new instance
-        $rules = Fail2BanRules::findFirst();
-        if ($rules === null) {
-            $rules = new Fail2BanRules();
-        }
 
-        // Get the Fail2Ban enabled status from PbxSettings
-        $fail2BanEnabled      = PbxSettings::getValueByKey(PbxSettings::PBX_FAIL2BAN_ENABLED);
-        $PBXFirewallMaxReqSec = PbxSettings::getValueByKey(PbxSettings::PBX_FIREWALL_MAX_REQ);
-
-        // Set the Fail2BanEditForm and its data to the view
-        $this->view->form = new Fail2BanEditForm(
-            $rules,
-            [
-                PbxSettings::PBX_FAIL2BAN_ENABLED => $fail2BanEnabled,
-                PbxSettings::PBX_FIREWALL_MAX_REQ => $PBXFirewallMaxReqSec,
-            ]
-        );
+        $this->view->form = new Fail2BanEditForm();
         $this->view->submitMode = null;
-        
+
         // Pass Docker environment flag to view
         $this->view->isDocker = Util::isDocker();
-    }
-
-    /**
-     * Saves the Fail2Ban rules.
-     *
-     * This action is responsible for handling the form submission and saving the Fail2Ban rules to the database.
-     *
-     * @return void
-     */
-    public function saveAction(): void
-    {
-        if (!$this->request->isPost()) {
-            return;
-        }
-        $data = $this->request->getPost();
-        $record = Fail2BanRules::findFirst();
-
-        // Find the existing Fail2Ban rules record or create a new one
-        if ($record === null) {
-            $record = new Fail2BanRules();
-        }
-        $this->db->begin();
-
-        // Iterate over each property of the Fail2BanRules record
-        foreach ($record as $key => $value) {
-            switch ($key) {
-                case PbxSettings::PBX_FIREWALL_MAX_REQ:
-                case "id":
-                    break;
-                default:
-                    // Check if the key exists in the POST data
-                    if (!array_key_exists($key, $data)) {
-                        $record->$key = '';
-                        continue 2; // Skip to the next iteration
-                    }
-                    // Assign the value from the POST data to the record's property
-                    $record->$key = $data[$key];
-            }
-            // Save the record
-            if ($record->save() === false) {
-                $errors = $record->getMessages();
-                $this->flash->warning(implode('<br>', $errors));
-                $this->view->success = false;
-                $this->db->rollback();
-
-                return;
-            }
-        }
-
-        if(isset($data[PbxSettings::PBX_FIREWALL_MAX_REQ])){
-            PbxSettings::setValueByKey(PbxSettings::PBX_FIREWALL_MAX_REQ, $data[PbxSettings::PBX_FIREWALL_MAX_REQ]);
-        }
-        // Set success flash message
-        $this->flash->success($this->translation->_('ms_SuccessfulSaved'));
-        $this->view->success = false;
-        $this->db->commit();
     }
 }

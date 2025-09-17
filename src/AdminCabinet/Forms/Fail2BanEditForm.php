@@ -2,7 +2,7 @@
 
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,46 +24,38 @@ use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
-use Phalcon\Forms\Element\Text;
 
 /**
  * Class Fail2BanEditForm
+ *
+ * Creates empty form structure for Fail2Ban settings.
+ * Actual data is loaded via REST API from JavaScript.
  *
  * @package MikoPBX\AdminCabinet\Forms
  * @property TranslationProvider translation
  */
 class Fail2BanEditForm extends BaseForm
 {
+    /**
+     * Initialize the form with empty fields
+     * Data will be populated via REST API from JavaScript
+     */
     public function initialize($entity = null, $options = null): void
     {
         parent::initialize($entity, $options);
 
+        // Numeric fields for Fail2Ban settings
+        $this->add(new Numeric('maxretry'));
+        $this->add(new Numeric('bantime'));
+        $this->add(new Numeric('findtime'));
 
-        foreach ($entity as $key => $value) {
-            switch ($key) {
-                case "id":
-                    $this->add(new Hidden($key));
-                    break;
-                case "maxretry":
-                case "bantime":
-                case "findtime":
-                case "***ALL NUMBERIC ABOVE***":
-                    $this->add(new Numeric($key));
-                    break;
-                case "whitelist":
-                    $this->addTextArea($key, $value ?? '', 95);
-                    break;
-                default:
-                    $this->add(new Text($key));
-            }
-        }
+        // Textarea for whitelist
+        $this->addTextArea('whitelist', '', 95);
 
-        $this->addCheckBox(
-            PbxSettings::PBX_FAIL2BAN_ENABLED,
-            intval($options[PbxSettings::PBX_FAIL2BAN_ENABLED]) === 1
-        );
+        // Checkbox for enabling/disabling Fail2Ban
+        $this->addCheckBox(PbxSettings::PBX_FAIL2BAN_ENABLED, false);
 
-        $this->add(new Hidden(PbxSettings::PBX_FIREWALL_MAX_REQ, ['value' => intval($options[PbxSettings::PBX_FIREWALL_MAX_REQ])]));
-
+        // Hidden field for max requests per second
+        $this->add(new Hidden(PbxSettings::PBX_FIREWALL_MAX_REQ));
     }
 }

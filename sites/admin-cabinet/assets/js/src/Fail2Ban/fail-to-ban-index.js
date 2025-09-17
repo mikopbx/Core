@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalTranslate, PbxApi, Form, globalRootUrl, Datatable, SemanticLocalization */
+/* global globalTranslate, PbxApi, Form, globalRootUrl, Datatable, SemanticLocalization, FirewallAPI, Fail2BanAPI, Fail2BanTooltipManager */
 /**
  * The `fail2BanIndex` object contains methods and variables for managing the Fail2Ban system.
  *
@@ -105,13 +105,19 @@ const fail2BanIndex = {
         $('#fail2ban-tab-menu .item').tab();
         fail2BanIndex.initializeDataTable();
         fail2BanIndex.initializeForm();
+        fail2BanIndex.loadSettings();
 
-        PbxApi.FirewallGetBannedIp(fail2BanIndex.cbGetBannedIpList);
+        // Initialize tooltips for form fields
+        if (typeof Fail2BanTooltipManager !== 'undefined') {
+            Fail2BanTooltipManager.initialize();
+        }
+
+        FirewallAPI.getBannedIps(fail2BanIndex.cbGetBannedIpList);
 
         fail2BanIndex.$bannedIpListTable.on('click', fail2BanIndex.$unbanButtons, (e) => {
             const unbannedIp = $(e.target).attr('data-value');
             fail2BanIndex.$bannedIpListTable.addClass('loading');
-            PbxApi.FirewallUnBanIp(unbannedIp, fail2BanIndex.cbAfterUnBanIp);
+            FirewallAPI.unbanIp(unbannedIp, fail2BanIndex.cbAfterUnBanIp);
         });
 
         // Initialize records save period slider only if it exists (not in Docker)
@@ -210,16 +216,20 @@ const fail2BanIndex = {
     // This callback method is used to display the list of banned IPs.
     cbGetBannedIpList(response) {
         fail2BanIndex.$bannedIpListTable.removeClass('loading');
-        if (response === false) {
+        if (response === false || !response.result) {
             return;
         }
+
+        // Extract data from response
+        const bannedIps = response.data || {};
+
         // Clear the DataTable
         fail2BanIndex.dataTable.clear();
 
         // Prepare the new data to be added
         let newData = [];
-        Object.keys(response).forEach(ip => {
-            const bans = response[ip];
+        Object.keys(bannedIps).forEach(ip => {
+            const bans = bannedIps[ip];
             // Combine all reasons and dates for this IP into one string
             let reasonsDatesCombined = bans.map(ban => {
                 const blockDate = new Date(ban.timeofban * 1000).toLocaleString();
@@ -245,7 +255,7 @@ const fail2BanIndex = {
 
     // This callback method is used after an IP has been unbanned.
     cbAfterUnBanIp() {
-        PbxApi.FirewallGetBannedIp(fail2BanIndex.cbGetBannedIpList);
+        FirewallAPI.getBannedIps(fail2BanIndex.cbGetBannedIpList);
     },
 
     /**
@@ -264,7 +274,33 @@ const fail2BanIndex = {
      * @param {Object} response - The response from the server after the form is sent
      */
     cbAfterSendForm(response) {
+        // Response handling is done by Form.js
+        // This callback is for additional processing if needed
+    },
 
+    /**
+     * Load Fail2Ban settings from API
+     */
+    loadSettings() {
+        Fail2BanAPI.getSettings((response) => {
+            if (response.result && response.data) {
+                const data = response.data;
+                // Set form values
+                fail2BanIndex.$formObj.form('set values', {
+                    maxretry: data.maxretry,
+                    bantime: data.bantime,
+                    findtime: data.findtime,
+                    whitelist: data.whitelist,
+                    PBXFirewallMaxReqSec: data.PBXFirewallMaxReqSec
+                });
+
+                // Update slider if it exists
+                if (fail2BanIndex.$maxReqSlider.length > 0) {
+                    const maxReq = data.PBXFirewallMaxReqSec || '10';
+                    fail2BanIndex.$maxReqSlider.slider('set value', fail2BanIndex.maxReqValue.indexOf(maxReq), false);
+                }
+            }
+        });
     },
 
     /**
@@ -288,10 +324,17 @@ const fail2BanIndex = {
      */
     initializeForm() {
         Form.$formObj = fail2BanIndex.$formObj;
-        Form.url = `${globalRootUrl}fail2-ban/save`; // Form submission URL
-        Form.validateRules = fail2BanIndex.validateRules; // Form validation rules
-        Form.cbBeforeSendForm = fail2BanIndex.cbBeforeSendForm; // Callback before form is sent
-        Form.cbAfterSendForm = fail2BanIndex.cbAfterSendForm; // Callback after form is sent
+        Form.validateRules = fail2BanIndex.validateRules;
+        Form.cbBeforeSendForm = fail2BanIndex.cbBeforeSendForm;
+        Form.cbAfterSendForm = fail2BanIndex.cbAfterSendForm;
+
+        // Configure REST API settings for Form.js (singleton resource)
+        Form.apiSettings = {
+            enabled: true,
+            apiObject: Fail2BanAPI,
+            saveMethod: 'update' // Using standard PUT for singleton update
+        };
+
         Form.initialize();
     },
 };
