@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,61 +29,80 @@ use MikoPBX\PBXCoreREST\Lib\SysLogs\StartLogAction;
 use Phalcon\Di\Injectable;
 
 /**
+ * Available actions for syslog management
+ */
+enum SyslogAction: string
+{
+    // Custom methods for log operations
+    case GET_LOGS_LIST = 'getLogsList';
+    case GET_LOG_FROM_FILE = 'getLogFromFile';
+    case START_CAPTURE = 'startCapture';
+    case STOP_CAPTURE = 'stopCapture';
+    case PREPARE_ARCHIVE = 'prepareArchive';
+    case DOWNLOAD_LOG_FILE = 'downloadLogFile';
+    case DOWNLOAD_ARCHIVE = 'downloadArchive';
+    case ERASE_FILE = 'eraseFile';
+}
+
+/**
  * Class SysLogsManagementProcessor
  *
- * @package MikoPBX\PBXCoreREST\Lib
+ * Processes system logs management requests including capture, archive, and download
  *
+ * Custom methods:
+ * - GET  /syslog:getLogsList      -> Get list of available log files
+ * - POST /syslog:getLogFromFile   -> Get content from specific log file
+ * - POST /syslog:startCapture     -> Start log capture with tcpdump
+ * - POST /syslog:stopCapture      -> Stop capture and prepare archive
+ * - POST /syslog:prepareArchive   -> Prepare logs archive without stopping capture
+ * - POST /syslog:downloadLogFile  -> Download specific log file
+ * - POST /syslog:downloadArchive  -> Download prepared logs archive
+ * - POST /syslog:eraseFile        -> Erase log file content
+ *
+ * @package MikoPBX\PBXCoreREST\Lib
  */
 class SysLogsManagementProcessor extends Injectable
 {
     /**
-     * Processes syslog requests
+     * Processes syslog management requests with type-safe enum matching
      *
-     * @param array $request
+     * @param array<string, mixed> $request
      *
      * @return PBXApiResult An object containing the result of the API call.
-     *
      */
     public static function callBack(array $request): PBXApiResult
     {
-        $action         = $request['action'];
-        $data           = $request['data'];
-        $res            = new PBXApiResult();
+        $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        switch ($action) {
-            case 'getLogFromFile':
-                $res = GetLogFromFileAction::main($data);
-                break;
-            case 'prepareLog':
-                $res = PrepareLogAction::main(false);
-                $res->processor = $action;
-                break;
-            case 'startLog':
-                $res = StartLogAction::main();
-                break;
-            case 'stopLog':
-                $res = PrepareLogAction::main(true);
-                $res->processor = $action;
-                break;
-            case 'downloadLogsArchive':
-                $res = DownloadLogsArchiveAction::main($data['filename']);
-                break;
-            case 'downloadLogFile':
-                $res = DownloadLogFileAction::main($data['filename'], $data['archive'] ?? false);
-                break;
-            case 'getLogsList':
-                $res = GetLogsListAction::main();
-                break;
-            case 'eraseFile':
-                $res = EraseFileAction::main($data['filename']);
-                break;
-            default:
-                $res->messages['error'][] = "Unknown action - $action in ".__CLASS__;
+
+        $actionString = $request['action'];
+        $data = $request['data'];
+
+        // Type-safe action matching with enum
+        $action = SyslogAction::tryFrom($actionString);
+
+        if ($action === null) {
+            $res->messages['error'][] = "Unknown action - $actionString in " . __CLASS__;
+            $res->function = $actionString;
+            return $res;
         }
 
-        $res->function = $action;
+        // Execute action using match expression (PHP 8)
+        $res = match ($action) {
+            SyslogAction::GET_LOGS_LIST => GetLogsListAction::main(),
+            SyslogAction::GET_LOG_FROM_FILE => GetLogFromFileAction::main($data),
+            SyslogAction::START_CAPTURE => StartLogAction::main(),
+            SyslogAction::STOP_CAPTURE => PrepareLogAction::main(true),
+            SyslogAction::PREPARE_ARCHIVE => PrepareLogAction::main(false),
+            SyslogAction::DOWNLOAD_LOG_FILE => DownloadLogFileAction::main(
+                $data['filename'] ?? '',
+                $data['archive'] ?? false
+            ),
+            SyslogAction::DOWNLOAD_ARCHIVE => DownloadLogsArchiveAction::main($data['filename'] ?? ''),
+            SyslogAction::ERASE_FILE => EraseFileAction::main($data['filename'] ?? ''),
+        };
 
+        $res->function = $actionString;
         return $res;
     }
-
 }

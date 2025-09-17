@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-/* global ace, PbxApi, updateLogViewWorker, Ace, UserMessage */
+/* global ace, PbxApi, SyslogAPI, updateLogViewWorker, Ace, UserMessage */
  
 /**
  * Represents the system diagnostic logs object.
@@ -125,7 +125,7 @@ const systemDiagnosticLogs = {
         systemDiagnosticLogs.initializeAce();
 
         // Fetch the list of log files
-        PbxApi.SyslogGetLogsList(systemDiagnosticLogs.cbFormatDropdownResults);
+        SyslogAPI.getLogsList(systemDiagnosticLogs.cbFormatDropdownResults);
 
         // Event listener for "Show Log" button click
         systemDiagnosticLogs.$showBtn.on('click', (e) => {
@@ -137,7 +137,7 @@ const systemDiagnosticLogs = {
         systemDiagnosticLogs.$downloadBtn.on('click', (e) => {
             e.preventDefault();
             const data = systemDiagnosticLogs.$formObj.form('get values');
-            PbxApi.SyslogDownloadLogFile(data.filename, systemDiagnosticLogs.cbDownloadFile);
+            SyslogAPI.downloadLogFile(data.filename, true, systemDiagnosticLogs.cbDownloadFile);
         });
 
         // Event listener for "Auto Refresh" button click
@@ -359,16 +359,13 @@ const systemDiagnosticLogs = {
      * @param {Object} response - The response data.
      */
     cbFormatDropdownResults(response) {
-        if (response === false) {
+        // Check if response is valid
+        if (!response || !response.result || !response.data || !response.data.files) {
             systemDiagnosticLogs.$dimmer.removeClass('active');
             return;
         }
-        
-        // Check if response has the expected structure
-        if (!response.files) {
-            systemDiagnosticLogs.$dimmer.removeClass('active');
-            return;
-        }
+
+        const files = response.data.files;
         
         // Check if there is a default value set for the filename input field
         let defVal = '';
@@ -378,13 +375,7 @@ const systemDiagnosticLogs = {
         }
 
         // Build tree structure from files
-        systemDiagnosticLogs.logsItems = systemDiagnosticLogs.buildTreeStructure(response.files, defVal);
-        
-        // Debug: log the filename and items to see what's happening
-        if (defVal) {
-            console.log('Looking for file:', defVal);
-            console.log('Available files:', Object.keys(response.files));
-        }
+        systemDiagnosticLogs.logsItems = systemDiagnosticLogs.buildTreeStructure(files, defVal);
 
         // Create values array for dropdown with all items (including folders)
         const dropdownValues = systemDiagnosticLogs.logsItems.map((item, index) => {
@@ -467,19 +458,29 @@ const systemDiagnosticLogs = {
      */
     updateLogFromServer() {
         const params = systemDiagnosticLogs.$formObj.form('get values');
-        PbxApi.SyslogGetLogFromFile(params, systemDiagnosticLogs.cbUpdateLogText);
+        SyslogAPI.getLogFromFile(params, systemDiagnosticLogs.cbUpdateLogText);
     },
 
     /**
      * Updates the log view.
-     * @param {Object} data - The log data.
+     * @param {Object} response - The response from API.
      */
-    cbUpdateLogText(data) {
-        systemDiagnosticLogs.viewer.getSession().setValue(data.content);
+    cbUpdateLogText(response) {
+        systemDiagnosticLogs.$dimmer.removeClass('active');
+
+        // Handle v3 API response structure
+        if (!response || !response.result) {
+            if (response && response.messages) {
+                UserMessage.showMultiString(response.messages);
+            }
+            return;
+        }
+
+        const content = response.data?.content || '';
+        systemDiagnosticLogs.viewer.getSession().setValue(content);
         const row = systemDiagnosticLogs.viewer.session.getLength() - 1;
         const column = systemDiagnosticLogs.viewer.session.getLine(row).length; // or simply Infinity
         systemDiagnosticLogs.viewer.gotoLine(row + 1, column);
-        systemDiagnosticLogs.$dimmer.removeClass('active');
     },
 
     /**
@@ -487,8 +488,11 @@ const systemDiagnosticLogs = {
      * @param {Object} response - The response data.
      */
     cbDownloadFile(response) {
-        if (response !== false) {
-            window.location = response.filename;
+        // Handle v3 API response structure
+        if (response && response.result && response.data) {
+            window.location = response.data.filename || response.data;
+        } else if (response && response.messages) {
+            UserMessage.showMultiString(response.messages);
         }
     },
 
@@ -498,7 +502,7 @@ const systemDiagnosticLogs = {
     eraseCurrentFileContent(){
         const fileName = systemDiagnosticLogs.$formObj.form('get value', 'filename');
         if (fileName.length>0){
-            PbxApi.SyslogEraseFile(fileName, systemDiagnosticLogs.cbAfterFileErased)
+            SyslogAPI.eraseFile(fileName, systemDiagnosticLogs.cbAfterFileErased)
         }
     },
 

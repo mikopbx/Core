@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global PbxApi, systemDiagnosticCapture */
+/* global PbxApi, SyslogAPI, systemDiagnosticCapture */
 
 /**
  * Represents the archive packing check worker object.
@@ -76,7 +76,7 @@ const archivePackingCheckWorker = {
      * Worker function for fetching the request.
      */
     worker() {
-        PbxApi.SyslogDownloadLogsArchive(archivePackingCheckWorker.filename, archivePackingCheckWorker.cbAfterResponse);
+        SyslogAPI.downloadArchive(archivePackingCheckWorker.filename, archivePackingCheckWorker.cbAfterResponse);
         archivePackingCheckWorker.timeoutHandle = window.setTimeout(
             archivePackingCheckWorker.worker,
             archivePackingCheckWorker.timeOut,
@@ -96,22 +96,26 @@ const archivePackingCheckWorker = {
             systemDiagnosticCapture.$startBtn.removeClass('disabled loading');
             window.clearTimeout(archivePackingCheckWorker.timeoutHandle);
         }
-        if (response === undefined || Object.keys(response).length === 0) {
+
+        // Handle v3 API response structure
+        if (!response || !response.result || !response.data) {
             archivePackingCheckWorker.errorCounts += 1;
             return;
         }
-        if (response.status === 'READY') {
+
+        const responseData = response.data;
+        if (responseData.status === 'READY') {
             systemDiagnosticCapture.$stopBtn
                 .removeClass('disabled loading')
                 .addClass('disabled');
             systemDiagnosticCapture.$startBtn.removeClass('disabled loading');
             systemDiagnosticCapture.$downloadBtn.removeClass('disabled loading');
-            window.location = response.filename;
+            window.location = responseData.filename;
             window.clearTimeout(archivePackingCheckWorker.timeoutHandle);
             systemDiagnosticCapture.$dimmer.removeClass('active');
-        } else if (response.status === 'PREPARING') {
+        } else if (responseData.status === 'PREPARING') {
             archivePackingCheckWorker.errorCounts = 0;
-            archivePackingCheckWorker.$progress.text(`${response.progress}%`);
+            archivePackingCheckWorker.$progress.text(`${responseData.progress}%`);
         } else {
             archivePackingCheckWorker.errorCounts += 1;
         }

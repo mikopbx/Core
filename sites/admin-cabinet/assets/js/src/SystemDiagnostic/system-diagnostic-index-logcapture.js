@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global sessionStorage, PbxApi, archivePackingCheckWorker */
+/* global sessionStorage, PbxApi, SyslogAPI, UserMessage, archivePackingCheckWorker */
 
 /**
  * Represents the system diagnostic capture object.
@@ -71,21 +71,21 @@ const systemDiagnosticCapture = {
             e.preventDefault();
             systemDiagnosticCapture.$startBtn.addClass('disabled loading');
             systemDiagnosticCapture.$stopBtn.removeClass('disabled');
-            PbxApi.SyslogStartLogsCapture(systemDiagnosticCapture.cbAfterStartCapture);
+            SyslogAPI.startCapture(systemDiagnosticCapture.cbAfterStartCapture);
         });
         systemDiagnosticCapture.$stopBtn.on('click', (e) => {
             e.preventDefault();
             systemDiagnosticCapture.$startBtn.removeClass('loading');
             systemDiagnosticCapture.$stopBtn.addClass('loading');
             systemDiagnosticCapture.$dimmer.addClass('active');
-            PbxApi.SyslogStopLogsCapture(systemDiagnosticCapture.cbAfterStopCapture);
+            SyslogAPI.stopCapture(systemDiagnosticCapture.cbAfterStopCapture);
 
         });
         systemDiagnosticCapture.$downloadBtn.on('click', (e) => {
             e.preventDefault();
             systemDiagnosticCapture.$downloadBtn.addClass('disabled loading');
             systemDiagnosticCapture.$dimmer.addClass('active');
-            PbxApi.SyslogPrepareLog(systemDiagnosticCapture.cbAfterDownloadCapture);
+            SyslogAPI.prepareArchive(systemDiagnosticCapture.cbAfterDownloadCapture);
         });
     },
 
@@ -94,11 +94,14 @@ const systemDiagnosticCapture = {
      * @param {object} response - The response object.
      */
     cbAfterStartCapture(response) {
-        if (response !== false) {
+        // Handle v3 API response structure
+        if (response && response.result) {
             sessionStorage.setItem('PCAPCaptureStatus', 'started');
             setTimeout(() => {
                 sessionStorage.setItem('PCAPCaptureStatus', 'stopped');
             }, 300000);
+        } else if (response && response.messages) {
+            UserMessage.showMultiString(response.messages);
         }
     },
 
@@ -108,8 +111,12 @@ const systemDiagnosticCapture = {
      * @param {object} response - The response object.
      */
     cbAfterDownloadCapture(response) {
-        if (response !== false) {
-            archivePackingCheckWorker.initialize(response.filename);
+        // Handle v3 API response structure
+        if (response && response.result && response.data) {
+            const filename = response.data.filename || response.data;
+            archivePackingCheckWorker.initialize(filename);
+        } else if (response && response.messages) {
+            UserMessage.showMultiString(response.messages);
         }
     },
 
@@ -118,8 +125,12 @@ const systemDiagnosticCapture = {
      * @param {object} response - The response object.
      */
     cbAfterStopCapture(response) {
-        if (response !== false) {
-            archivePackingCheckWorker.initialize(response.filename);
+        // Handle v3 API response structure
+        if (response && response.result && response.data) {
+            const filename = response.data.filename || response.data;
+            archivePackingCheckWorker.initialize(filename);
+        } else if (response && response.messages) {
+            UserMessage.showMultiString(response.messages);
         }
     }
 };
