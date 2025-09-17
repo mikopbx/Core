@@ -75,11 +75,11 @@
         <div class="field">
             <div class="inline field">
                 {{ form.render('externalSIPPort') }}
-                <label>{{ t._('nw_PublicSIPPort', ['SIP_PORT':SIP_PORT]) }}</label>
+                <label id="external-sip-port-label">{{ t._('nw_PublicSIPPort', ['SIP_PORT':'...']) }}</label>
             </div>
             <div class="inline field">
                 {{ form.render('externalTLSPort') }}
-                <label>{{ t._('nw_PublicTLSPort', ['TLS_PORT':TLS_PORT]) }}</label>
+                <label id="external-tls-port-label">{{ t._('nw_PublicTLSPort', ['TLS_PORT':'...']) }}</label>
             </div>
         </div>
 
@@ -91,10 +91,11 @@
                     <br>
                     <div class="item">{{ t._('nw_NATInfo2') }} </div>
                     <br>
-                    <div class="item">
-                        <b>SIP:</b> {{ t._('nw_NATInfo3', ['SIP_PORT':SIP_PORT,'TLS_PORT':TLS_PORT]) }} </div>
-                    <div class="item">
-                        <b>RTP:</b> {{ t._('nw_NATInfo4',['RTP_PORT_FROM':RTP_PORT_FROM,'RTP_PORT_TO':RTP_PORT_TO]) }}
+                    <div class="item" id="nat-help-sip-ports">
+                        <b>SIP:</b> <span class="port-values">{{ t._('nw_NATInfo3', ['SIP_PORT':'...','TLS_PORT':'...']) }}</span>
+                    </div>
+                    <div class="item" id="nat-help-rtp-ports">
+                        <b>RTP:</b> <span class="port-values">{{ t._('nw_NATInfo4',['RTP_PORT_FROM':'...','RTP_PORT_TO':'...']) }}</span>
                     </div>
                     <br>
                     <br>

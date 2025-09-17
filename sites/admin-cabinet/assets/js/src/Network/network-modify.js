@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl,globalTranslate, Form, PbxApi */
+/* global globalRootUrl,globalTranslate, Form, PbxApi, NetworkAPI, UserMessage, DynamicDropdownBuilder */
 
 /**
  * Object for managing network settings
@@ -104,8 +104,8 @@ const networks = {
      * Initializes the network settings form.
      */
     initialize() {
-        networks.toggleDisabledFieldClass();
-        $('#eth-interfaces-menu .item').tab();
+        // Load configuration via REST API
+        networks.loadConfiguration();
 
         // Handles the change event of the 'usenat-checkbox'.
         $('#usenat-checkbox').checkbox({
@@ -129,36 +129,23 @@ const networks = {
             PbxApi.GetExternalIp(networks.cbAfterGetExternalIp);
         });
 
-        // Delete additional network interface
-        $('.delete-interface').api({
-            url: `${globalRootUrl}network/delete/{value}`,
-            method: 'POST',
-            beforeSend(settings) {
-                $(this).addClass('loading disabled');
-                return settings;
-            },
+        // Delete additional network interface using REST API
+        $('.delete-interface').on('click', function(e) {
+            e.preventDefault();
+            const $button = $(this);
+            const interfaceId = $button.attr('data-value');
 
-            /**
-             * Handles the successful response of the 'delete-interface' API request.
-             * @param {object} response - The response object.
-             */
-            onSuccess(response) {
-                $(this).removeClass('loading disabled');
-                $('.ui.message.ajax').remove();
-                $.each(response.message, (index, value) => {
-                    networks.$formObj.after(`<div class="ui ${index} message ajax">${value}</div>`);
-                });
-                if (response.success) window.location.reload();
-            },
+            $button.addClass('loading disabled');
 
-            /**
-             * Handles the failure response of the 'delete-interface' API request.
-             * @param {object} response - The response object.
-             */
-            onFailure(response) {
-                $(this).removeClass('loading disabled');
-                $('form').after(response);
-            },
+            NetworkAPI.deleteRecord(interfaceId, (response) => {
+                $button.removeClass('loading disabled');
+
+                if (response.result) {
+                    window.location.reload();
+                } else {
+                    UserMessage.showMultiString(response.messages);
+                }
+            });
         });
 
         // Clear additional network settings
@@ -198,8 +185,70 @@ const networks = {
             const port = portMatch ? ':' + portMatch[1] : '';
             const newExtIpAddr = response.ip + port;
             networks.$formObj.form('set value', 'extipaddr', newExtIpAddr);
+            // Clear external hostname when getting external IP
+            networks.$formObj.form('set value', 'exthostname', '');
             networks.$extipaddr.trigger('change');
             networks.$getMyIpButton.removeClass('loading disabled');
+        }
+    },
+
+    /**
+     * Update NAT help text with actual port values from REST API
+     * @param {object} ports - Port configuration object from API
+     */
+    updateNATHelpText(ports) {
+        // Only update if we have port values from server
+        if (!ports.SIP_PORT || !ports.TLS_PORT || !ports.RTP_PORT_FROM || !ports.RTP_PORT_TO) {
+            return;
+        }
+
+        // Update SIP ports text using ID
+        const $sipPortValues = $('#nat-help-sip-ports .port-values');
+        if ($sipPortValues.length > 0) {
+            const sipText = i18n('nw_NATInfo3', {
+                'SIP_PORT': ports.SIP_PORT,
+                'TLS_PORT': ports.TLS_PORT
+            });
+            $sipPortValues.html(sipText);
+        }
+
+        // Update RTP ports text using ID
+        const $rtpPortValues = $('#nat-help-rtp-ports .port-values');
+        if ($rtpPortValues.length > 0) {
+            const rtpText = i18n('nw_NATInfo4', {
+                'RTP_PORT_FROM': ports.RTP_PORT_FROM,
+                'RTP_PORT_TO': ports.RTP_PORT_TO
+            });
+            $rtpPortValues.html(rtpText);
+        }
+    },
+
+    /**
+     * Update port field labels with actual internal port values from REST API
+     * @param {object} ports - Port configuration object from API
+     */
+    updatePortLabels(ports) {
+        // Only update if we have port values from server
+        if (!ports.SIP_PORT || !ports.TLS_PORT) {
+            return;
+        }
+
+        // Update external SIP port label using ID
+        const $sipLabel = $('#external-sip-port-label');
+        if ($sipLabel.length > 0) {
+            const sipLabelText = i18n('nw_PublicSIPPort', {
+                'SIP_PORT': ports.SIP_PORT
+            });
+            $sipLabel.text(sipLabelText);
+        }
+
+        // Update external TLS port label using ID
+        const $tlsLabel = $('#external-tls-port-label');
+        if ($tlsLabel.length > 0) {
+            const tlsLabelText = i18n('nw_PublicTLSPort', {
+                'TLS_PORT': ports.TLS_PORT
+            });
+            $tlsLabel.text(tlsLabelText);
         }
     },
 
@@ -311,8 +360,78 @@ const networks = {
      * @returns {Object} - The updated settings of the form
      */
     cbBeforeSendForm(settings) {
-        const result = settings;
-        result.data = networks.$formObj.form('get values');
+        console.log('cbBeforeSendForm called with settings:', settings);
+
+        // Create a new object with all settings properties
+        const result = Object.assign({}, settings);
+        result.data = {};
+
+        // Manually collect form values to avoid any DOM-related issues
+        // Collect all regular input fields
+        networks.$formObj.find('input[type="text"], input[type="hidden"], input[type="number"], textarea').each(function() {
+            const $input = $(this);
+            const name = $input.attr('name');
+            if (name) {
+                const value = $input.val();
+                // Ensure we only get string values
+                result.data[name] = (value !== null && value !== undefined) ? String(value) : '';
+            }
+        });
+
+        // Collect select dropdowns
+        networks.$formObj.find('select').each(function() {
+            const $select = $(this);
+            const name = $select.attr('name');
+            if (name) {
+                const value = $select.val();
+                // Ensure we only get string values
+                result.data[name] = (value !== null && value !== undefined) ? String(value) : '';
+            }
+        });
+
+        // Convert checkbox values to boolean
+        // PbxApiClient will handle conversion to strings for jQuery
+        result.data.usenat = $('#usenat-checkbox').checkbox('is checked');
+
+        // Use correct field name from the form (autoUpdateExternalIp, not AUTO_UPDATE_EXTERNAL_IP)
+        const $autoUpdateDiv = networks.$formObj.find('input[name="autoUpdateExternalIp"]').parent('.checkbox');
+        if ($autoUpdateDiv.length > 0) {
+            result.data.autoUpdateExternalIp = $autoUpdateDiv.checkbox('is checked');
+        } else {
+            result.data.autoUpdateExternalIp = false;
+        }
+
+        // Convert DHCP checkboxes to boolean for each interface
+        networks.$formObj.find('.dhcp-checkbox').each((index, obj) => {
+            const inputId = $(obj).attr('id');
+            const rowId = inputId.replace('dhcp-', '').replace('-checkbox', '');
+            result.data[`dhcp_${rowId}`] = $(obj).checkbox('is checked');
+        });
+
+        // Ensure internet_interface is included (from dynamic dropdown)
+        const internetInterfaceValue = $('#internet_interface').val();
+        if (internetInterfaceValue) {
+            result.data.internet_interface = String(internetInterfaceValue);
+        }
+
+        // Map form field names to API field names for ports
+        const portFieldMapping = {
+            'externalSIPPort': 'EXTERNAL_SIP_PORT',
+            'externalTLSPort': 'EXTERNAL_TLS_PORT'
+        };
+
+        // Apply port field mapping
+        Object.keys(portFieldMapping).forEach(formField => {
+            const apiField = portFieldMapping[formField];
+            if (result.data[formField] !== undefined) {
+                result.data[apiField] = result.data[formField];
+                delete result.data[formField];
+            }
+        });
+
+        console.log('cbBeforeSendForm returning result:', result);
+        console.log('cbBeforeSendForm result.data:', result.data);
+
         return result;
     },
 
@@ -321,7 +440,7 @@ const networks = {
      * @param {Object} response - The response from the server after the form is sent
      */
     cbAfterSendForm(response) {
-
+        console.log('cbAfterSendForm called with response:', response);
     },
 
     /**
@@ -329,11 +448,194 @@ const networks = {
      */
     initializeForm() {
         Form.$formObj = networks.$formObj;
-        Form.url = `${globalRootUrl}network/save`; // Form submission URL
+        Form.url = '#'; // Not used with REST API
         Form.validateRules = networks.validateRules; // Form validation rules
         Form.cbBeforeSendForm = networks.cbBeforeSendForm; // Callback before form is sent
         Form.cbAfterSendForm = networks.cbAfterSendForm; // Callback after form is sent
+
+        // Configure REST API
+        Form.apiSettings.enabled = true;
+        Form.apiSettings.apiObject = NetworkAPI;
+        Form.apiSettings.saveMethod = 'saveConfig';
+
+        // Important settings for correct save modes operation
+        Form.afterSubmitIndexUrl = `${globalRootUrl}network/index/`;
+        Form.afterSubmitModifyUrl = `${globalRootUrl}network/modify/`;
+
         Form.initialize();
+    },
+
+    /**
+     * Load network configuration via REST API
+     */
+    loadConfiguration() {
+        console.log('Loading configuration from REST API...');
+        NetworkAPI.getConfig((response) => {
+            console.log('NetworkAPI.getConfig response:', response);
+            if (response.result && response.data) {
+                console.log('Configuration data received:', response.data);
+                networks.populateForm(response.data);
+
+                // Initialize UI after loading data
+                networks.toggleDisabledFieldClass();
+                $('#eth-interfaces-menu .item').tab();
+
+                // Hide form elements connected with non docker installations
+                if (response.data.isDocker) {
+                    networks.$formObj.form('set value', 'is-docker', '1');
+                    networks.$notShowOnDockerDivs.hide();
+                }
+            } else {
+                console.error('Failed to load configuration:', response.messages);
+                UserMessage.showMultiString(response.messages);
+            }
+        });
+    },
+
+    /**
+     * Populate form with configuration data
+     */
+    populateForm(data) {
+        console.log('populateForm called with data:', data);
+        // Set interfaces data
+        if (data.interfaces) {
+            data.interfaces.forEach(iface => {
+                const id = iface.id;
+                Object.keys(iface).forEach(key => {
+                    if (key !== 'id') {
+                        const fieldName = `${key}_${id}`;
+                        if (networks.$formObj.find(`[name="${fieldName}"]`).length > 0) {
+                            networks.$formObj.form('set value', fieldName, iface[key]);
+                        }
+                    }
+                });
+
+                // Set checkbox states (boolean values from API)
+                if (iface.dhcp) {
+                    $(`#dhcp-${id}-checkbox`).checkbox('check');
+                } else {
+                    $(`#dhcp-${id}-checkbox`).checkbox('uncheck');
+                }
+            });
+        }
+
+        // Set template for new interface
+        if (data.template) {
+            Object.keys(data.template).forEach(key => {
+                if (key !== 'id') {
+                    const fieldName = `${key}_0`;
+                    if (networks.$formObj.find(`[name="${fieldName}"]`).length > 0) {
+                        networks.$formObj.form('set value', fieldName, data.template[key]);
+                    }
+                }
+            });
+        }
+
+        // Build internet interface dropdown dynamically
+        // Prepare options from interfaces
+        const internetInterfaceOptions = data.interfaces.map(iface => ({
+            value: iface.id.toString(),
+            text: iface.name || `${iface.interface}${iface.vlanid !== '0' ? `.${iface.vlanid}` : ''}`,
+            name: iface.name || `${iface.interface}${iface.vlanid !== '0' ? `.${iface.vlanid}` : ''}`
+        }));
+
+        // Build dropdown with DynamicDropdownBuilder
+        const formData = {
+            internet_interface: data.internetInterfaceId?.toString() || ''
+        };
+
+        DynamicDropdownBuilder.buildDropdown('internet_interface', formData, {
+            staticOptions: internetInterfaceOptions,
+            placeholder: globalTranslate.nw_SelectInternetInterface || 'Select internet interface'
+        });
+
+        // Build interface selector for new VLAN only if the field exists
+        if ($('#interface_0').length > 0) {
+            // Get unique physical interfaces (without VLANs)
+            const physicalInterfaces = {};
+            data.interfaces.forEach(iface => {
+                if (!physicalInterfaces[iface.interface]) {
+                    physicalInterfaces[iface.interface] = {
+                        value: iface.id.toString(),
+                        text: iface.interface,
+                        name: iface.interface
+                    };
+                }
+            });
+
+            const physicalInterfaceOptions = Object.values(physicalInterfaces);
+
+            DynamicDropdownBuilder.buildDropdown('interface_0', { interface_0: '' }, {
+                staticOptions: physicalInterfaceOptions,
+                placeholder: globalTranslate.nw_SelectInterface || 'Select interface',
+                allowEmpty: true
+            });
+        }
+
+        // Set NAT settings
+        if (data.nat) {
+            console.log('Setting NAT settings:', data.nat);
+            // Boolean values from API
+            if (data.nat.usenat) {
+                console.log('Checking usenat checkbox');
+                $('#usenat-checkbox').checkbox('check');
+            } else {
+                console.log('Unchecking usenat checkbox');
+                $('#usenat-checkbox').checkbox('uncheck');
+            }
+            networks.$formObj.form('set value', 'extipaddr', data.nat.extipaddr || '');
+            networks.$formObj.form('set value', 'exthostname', data.nat.exthostname || '');
+
+            // autoUpdateExternalIp boolean (field name from the form)
+            const $autoUpdateCheckbox = networks.$formObj.find('input[name="autoUpdateExternalIp"]').parent('.checkbox');
+            if ($autoUpdateCheckbox.length > 0) {
+                if (data.nat.AUTO_UPDATE_EXTERNAL_IP || data.nat.autoUpdateExternalIp) {
+                    console.log('Checking autoUpdateExternalIp checkbox');
+                    $autoUpdateCheckbox.checkbox('check');
+                } else {
+                    console.log('Unchecking autoUpdateExternalIp checkbox');
+                    $autoUpdateCheckbox.checkbox('uncheck');
+                }
+            }
+        }
+
+        // Set port settings
+        if (data.ports) {
+            console.log('Setting port values:', data.ports);
+
+            // Map API field names to form field names
+            const portFieldMapping = {
+                'EXTERNAL_SIP_PORT': 'externalSIPPort',
+                'EXTERNAL_TLS_PORT': 'externalTLSPort',
+                'SIP_PORT': 'SIP_PORT',
+                'TLS_PORT': 'TLS_PORT',
+                'RTP_PORT_FROM': 'RTP_PORT_FROM',
+                'RTP_PORT_TO': 'RTP_PORT_TO'
+            };
+
+            Object.keys(data.ports).forEach(key => {
+                const formFieldName = portFieldMapping[key] || key;
+                const value = data.ports[key];
+                console.log(`Setting port field ${formFieldName} to value ${value}`);
+                networks.$formObj.form('set value', formFieldName, value);
+            });
+
+            // Update the NAT help text and labels with actual port values
+            networks.updateNATHelpText(data.ports);
+            networks.updatePortLabels(data.ports);
+        }
+
+        // Set additional settings
+        if (data.settings) {
+            Object.keys(data.settings).forEach(key => {
+                networks.$formObj.form('set value', key, data.settings[key]);
+            });
+        }
+
+        // Save initial values for dirty checking
+        if (Form.enableDirrity) {
+            Form.saveInitialValues();
+        }
     },
 };
 

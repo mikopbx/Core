@@ -22,11 +22,14 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Providers;
 
+use MikoPBX\PBXCoreREST\Lib\RestfulRouteBuilder;
+
 use MikoPBX\PBXCoreREST\Controllers\
 {
     ApiKeys\RestController as ApiKeysRestController,
     AsteriskRestUsers\RestController as AsteriskRestUsersRestController,
     Cdr\GetController as CdrGetController,
+    DialplanApplications\RestController as DialplanApplicationsRestController,
     Iax\GetController as IaxGetController,
     Modules\ModulesControllerBase,
     Modules\CorePostController as ModulesCorePostController,
@@ -41,57 +44,37 @@ use MikoPBX\PBXCoreREST\Controllers\
     Sysinfo\PostController as SysinfoPostController,
     System\GetController as SystemGetController,
     System\PostController as SystemPostController,
-    Firewall\GetController as FirewallGetController,
-    Firewall\PostController as FirewallPostController,
+    Firewall\RestController as FirewallRestController,
+    NetworkFilters\RestController as NetworkFiltersRestController,
     Files\GetController as FilesGetController,
     Files\PostController as FilesPostController,
     Advice\GetController as AdviceGetController,
     Extensions\GetController as ExtensionsGetController,
     Extensions\PostController as ExtensionsPostController,
     Employees\RestController as EmployeesRestController,
+    Fail2Ban\RestController as Fail2BanRestController,
     CallQueues\RestController as CallQueuesRestController,
-    CallQueues\GetController as CallQueuesGetController,
-    CallQueues\PostController as CallQueuesPostController,
-    CallQueues\PutController as CallQueuesPutController,
-    CallQueues\DeleteController as CallQueuesDeleteController,
     IvrMenu\RestController as IvrMenuRestController,
-    DialplanApplications\GetController as DialplanApplicationsGetController,
-    DialplanApplications\PostController as DialplanApplicationsPostController,
-    DialplanApplications\PutController as DialplanApplicationsPutController,
-    DialplanApplications\DeleteController as DialplanApplicationsDeleteController,
     ConferenceRooms\RestController as ConferenceRoomsRestController,
-    IncomingRoutes\GetController as IncomingRoutesGetController,
-    IncomingRoutes\PostController as IncomingRoutesPostController,
-    IncomingRoutes\PutController as IncomingRoutesPutController,
-    IncomingRoutes\DeleteController as IncomingRoutesDeleteController,
-    OutboundRoutes\GetController as OutboundRoutesGetController,
-    OutboundRoutes\PostController as OutboundRoutesPostController,
-    OutboundRoutes\PutController as OutboundRoutesPutController,
-    OutboundRoutes\DeleteController as OutboundRoutesDeleteController,
-    OutWorkTimes\GetController as OutWorkTimesGetController,
-    OutWorkTimes\PostController as OutWorkTimesPostController,
-    OutWorkTimes\PutController as OutWorkTimesPutController,
-    OutWorkTimes\DeleteController as OutWorkTimesDeleteController,
-    SoundFiles\GetController as SoundFilesGetController,
-    SoundFiles\PostController as SoundFilesPostController,
-    SoundFiles\PutController as SoundFilesPutController,
-    SoundFiles\DeleteController as SoundFilesDeleteController,
+    GeneralSettings\RestController as GeneralSettingsRestController,
+    IncomingRoutes\RestController as IncomingRoutesRestController,
+    Network\RestController as NetworkRestController,
+    OutboundRoutes\RestController as OutboundRoutesRestController,
+    OutOffWorkTime\RestController as OutOffWorkTimeRestController,
+    CustomFiles\RestController as CustomFilesRestController,
+    SoundFiles\RestController as SoundFilesRestController,
     Users\GetController as UsersGetController,
     Nchan\GetController as NchanGetController,
     License\GetController as LicenseGetController,
     License\PostController as LicensePostController,
     UserPageTracker\PostController as UserPageTrackerPostController,
-    Providers\GetController as ProvidersGetController,
-    Providers\PostController as ProvidersPostController,
-    Providers\PutController as ProvidersPutController,
-    Providers\DeleteController as ProvidersDeleteController,
+    Providers\RestController as ProvidersRestController,
+    SipProviders\RestController as SipProvidersRestController,
+    IaxProviders\RestController as IaxProvidersRestController,
     AsteriskManagers\RestController as AsteriskManagersRestController,
-    NetworkFilters\GetController as NetworkFiltersGetController,
-    NetworkFilters\PostController as NetworkFiltersPostController,
-    GeneralSettings\GetController as GeneralSettingsGetController,
-    GeneralSettings\PostController as GeneralSettingsPostController,
     Passwords\GetController as PasswordsGetController,
-    Passwords\PostController as PasswordsPostController
+    Passwords\PostController as PasswordsPostController,
+    Syslog\RestController as SyslogRestController
 };
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\RestAPIConfigInterface;
@@ -171,232 +154,102 @@ class RouterProvider implements ServiceProviderInterface
      */
     private function getRoutes(): array
     {
-        return [
+        $routes = [];
+        
+        // ========== Legacy v1/v2 API routes ==========
+        $routes = array_merge($routes, [
             // Class, Method, Route, Handler, ParamsRegex
-
             [SipGetController::class, 'callAction', '/pbxcore/api/sip/{actionName}', 'get', '/'],
             [SipPostController::class, 'callAction', '/pbxcore/api/sip/{actionName}', 'post', '/'],
-
             [IaxGetController::class, 'callAction', '/pbxcore/api/iax/{actionName}', 'get', '/'],
-
             [CdrGetController::class, 'callAction', '/pbxcore/api/cdr/{actionName}', 'get', '/'],
             [CdrGetController::class, 'callAction', '/pbxcore/api/cdr/v2/{actionName}', 'get', '/'],
+        ]);
+        
+        // ========== v3 RESTful API routes with numeric IDs ==========
+        $routes = array_merge($routes, RestfulRouteBuilder::buildBatchRoutes([
+            FirewallRestController::class => '/pbxcore/api/v3/firewall',
+            NetworkFiltersRestController::class => '/pbxcore/api/v3/network-filters',
+            EmployeesRestController::class => '/pbxcore/api/v3/employees',
+            ApiKeysRestController::class => '/pbxcore/api/v3/api-keys',
+            OutboundRoutesRestController::class => '/pbxcore/api/v3/outbound-routes',
+            OutOffWorkTimeRestController::class => '/pbxcore/api/v3/out-off-work-time',
+            CustomFilesRestController::class => '/pbxcore/api/v3/custom-files',
+            AsteriskManagersRestController::class => '/pbxcore/api/v3/asterisk-managers',
+            AsteriskRestUsersRestController::class => '/pbxcore/api/v3/asterisk-rest-users',
+        ], ['idPattern' => 'numeric']));
+        
+        // ========== v3 RESTful API routes with alphanumeric IDs ==========
+        $routes = array_merge($routes, RestfulRouteBuilder::buildBatchRoutes([
+            ConferenceRoomsRestController::class => '/pbxcore/api/v3/conference-rooms',
+            CallQueuesRestController::class => '/pbxcore/api/v3/call-queues',
+            IvrMenuRestController::class => '/pbxcore/api/v3/ivr-menu',
+            IncomingRoutesRestController::class => '/pbxcore/api/v3/incoming-routes',
+            SoundFilesRestController::class => '/pbxcore/api/v3/sound-files',
+            DialplanApplicationsRestController::class => '/pbxcore/api/v3/dialplan-applications',
+            ProvidersRestController::class => '/pbxcore/api/v3/providers',
+            SipProvidersRestController::class => '/pbxcore/api/v3/sip-providers',
+            IaxProvidersRestController::class => '/pbxcore/api/v3/iax-providers',
+            NetworkRestController::class => '/pbxcore/api/v3/network',
+        ], ['idPattern' => 'alphanumeric']));
 
-            [FirewallGetController::class, 'callAction', '/pbxcore/api/firewall/{actionName}', 'get', '/'],
-            [FirewallPostController::class, 'callAction', '/pbxcore/api/firewall/{actionName}', 'post', '/'],
+        // ========== v3 RESTful API singleton resources (no ID in path) ==========
+        // GeneralSettings is a singleton resource - there's only one set of general settings
+        $routes = array_merge($routes, RestfulRouteBuilder::buildSingletonRoutes(
+            GeneralSettingsRestController::class,
+            '/pbxcore/api/v3/general-settings'
+        ));
 
+        // Add Syslog RESTful routes (custom methods only, no CRUD)
+        $routes = array_merge($routes, RestfulRouteBuilder::buildCustomOnlyRoutes(
+            SyslogRestController::class,
+            '/pbxcore/api/v3/syslog'
+        ));
+
+        // Fail2Ban is a singleton resource - there's only one fail2ban configuration
+        $routes = array_merge($routes, RestfulRouteBuilder::buildSingletonRoutes(
+            Fail2BanRestController::class,
+            '/pbxcore/api/v3/fail2ban'
+        ));
+        
+        // ========== More legacy v1/v2 routes ==========
+        $routes = array_merge($routes, [
             [StorageGetController::class, 'callAction', '/pbxcore/api/storage/{actionName}', 'get', '/'],
             [StoragePostController::class, 'callAction', '/pbxcore/api/storage/{actionName}', 'post', '/'],
-
             [SystemGetController::class, 'callAction', '/pbxcore/api/system/{actionName}', 'get', '/'],
             [SystemPostController::class, 'callAction', '/pbxcore/api/system/{actionName}', 'post', '/'],
-
             [SyslogGetController::class, 'callAction', '/pbxcore/api/syslog/{actionName}', 'get', '/'],
             [SyslogPostController::class, 'callAction', '/pbxcore/api/syslog/{actionName}', 'post', '/'],
-
             [SysinfoGetController::class, 'callAction', '/pbxcore/api/sysinfo/{actionName}', 'get', '/'],
             [SysinfoPostController::class, 'callAction', '/pbxcore/api/sysinfo/{actionName}', 'post', '/'],
-
             [FilesGetController::class, 'callAction', '/pbxcore/api/files/{actionName}', 'get', '/'],
             [FilesPostController::class, 'callAction', '/pbxcore/api/files/{actionName}', 'post', '/'],
-
             [AdviceGetController::class, 'callAction', '/pbxcore/api/advice/{actionName}', 'get', '/'],
-
             [ExtensionsGetController::class, 'callAction', '/pbxcore/api/extensions/{actionName}', 'get', '/'],
             [ExtensionsPostController::class, 'callAction', '/pbxcore/api/extensions/{actionName}', 'post', '/'],
-            
-            // v2 Extensions REST API endpoints
+
+            // v2 API routes
             [ExtensionsGetController::class, 'callAction', '/pbxcore/api/v2/extensions/{actionName}', 'get', '/'],
             [ExtensionsGetController::class, 'callAction', '/pbxcore/api/v2/extensions/{actionName}/{id:[a-zA-Z0-9\-]+}', 'get', '/'],
             [ExtensionsPostController::class, 'callAction', '/pbxcore/api/v2/extensions/{actionName}', 'post', '/'],
-                
-            // v3 Employees RESTful API endpoints
-            // Custom methods with colon notation (Google API Design Guide) - must be before standard routes
-            // Using relative paths from prefix for proper Phalcon routing
-            [EmployeesRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/employees', 'get', ':{customMethod:[a-zA-Z]+}'],
-            [EmployeesRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/employees', 'post', ':{customMethod:[a-zA-Z]+}'],
-            [EmployeesRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/employees', 'post', '/{id:[0-9]+}:{customMethod:[a-zA-Z]+}'],
-            
-            // Standard CRUD operations
-            [EmployeesRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/employees', 'get', '/'],
-            [EmployeesRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/employees', 'get', '/{id:[0-9]+}'],
-            [EmployeesRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/employees', 'post', '/'],
-            [EmployeesRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/employees', 'put', '/{id:[0-9]+}'],
-            [EmployeesRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/employees', 'patch', '/{id:[0-9]+}'],
-            [EmployeesRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/employees', 'delete', '/{id:[0-9]+}'],
-            
-            // v3 API Keys RESTful API endpoints
-            // Custom methods with colon notation
-            [ApiKeysRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/api-keys', 'get', ':{customMethod:[a-zA-Z]+}'],
-            [ApiKeysRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/api-keys', 'post', ':{customMethod:[a-zA-Z]+}'],
-            [ApiKeysRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/api-keys', 'post', '/{id:[0-9]+}:{customMethod:[a-zA-Z]+}'],
-            
-            // Standard CRUD operations
-            [ApiKeysRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/api-keys', 'get', '/'],
-            [ApiKeysRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/api-keys', 'get', '/{id:[0-9]+}'],
-            [ApiKeysRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/api-keys', 'post', '/'],
-            [ApiKeysRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/api-keys', 'put', '/{id:[0-9]+}'],
-            [ApiKeysRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/api-keys', 'patch', '/{id:[0-9]+}'],
-            [ApiKeysRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/api-keys', 'delete', '/{id:[0-9]+}'],
-            
-            // v3 Conference Rooms RESTful API endpoints
-            // Custom methods with colon notation
-            [ConferenceRoomsRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/conference-rooms', 'get', ':{customMethod:[a-zA-Z]+}'],
-            
-            // Standard CRUD operations
-            [ConferenceRoomsRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/conference-rooms', 'get', '/'],
-            [ConferenceRoomsRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/conference-rooms', 'get', '/{id:[a-zA-Z0-9\-]+}'],
-            [ConferenceRoomsRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/conference-rooms', 'post', '/'],
-            [ConferenceRoomsRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/conference-rooms', 'put', '/{id:[a-zA-Z0-9\-]+}'],
-            [ConferenceRoomsRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/conference-rooms', 'patch', '/{id:[a-zA-Z0-9\-]+}'],
-            [ConferenceRoomsRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/conference-rooms', 'delete', '/{id:[a-zA-Z0-9\-]+}'],
 
-            [CallQueuesGetController::class, 'callAction', '/pbxcore/api/v2/call-queues/{actionName}', 'get', '/'],
-            [CallQueuesGetController::class, 'callAction', '/pbxcore/api/v2/call-queues/{actionName}/{id:[a-zA-Z0-9\-]+}', 'get', '/'],
-            [CallQueuesPostController::class, 'callAction', '/pbxcore/api/v2/call-queues/{actionName}', 'post', '/'],
-            [CallQueuesPutController::class, 'callAction', '/pbxcore/api/v2/call-queues/{actionName}/{id:[a-zA-Z0-9\-]+}', 'put', '/'],
-            [CallQueuesDeleteController::class, 'callAction', '/pbxcore/api/v2/call-queues/{actionName}/{id:[a-zA-Z0-9\-]+}', 'delete', '/'],
-
-            // v3 Call Queues RESTful API endpoints
-            // Custom methods with colon notation (Google API Design Guide) - must be before standard routes
-            [CallQueuesRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/call-queues', 'get', ':{customMethod:[a-zA-Z]+}'],
-            [CallQueuesRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/call-queues', 'post', ':{customMethod:[a-zA-Z]+}'],
-            [CallQueuesRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/call-queues', 'post', '/{id:[a-zA-Z0-9\-]+}:{customMethod:[a-zA-Z]+}'],
-            
-            // Standard CRUD operations
-            [CallQueuesRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/call-queues', 'get', '/'],
-            [CallQueuesRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/call-queues', 'get', '/{id:[a-zA-Z0-9\-]+}'],
-            [CallQueuesRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/call-queues', 'post', '/'],
-            [CallQueuesRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/call-queues', 'put', '/{id:[a-zA-Z0-9\-]+}'],
-            [CallQueuesRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/call-queues', 'patch', '/{id:[a-zA-Z0-9\-]+}'],
-            [CallQueuesRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/call-queues', 'delete', '/{id:[a-zA-Z0-9\-]+}'],
-
-            // v3 IVR Menu RESTful API endpoints
-            // Custom methods with colon notation (Google API Design Guide) - must be before standard routes
-            [IvrMenuRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/ivr-menu', 'get', ':{customMethod:[a-zA-Z]+}'],
-            [IvrMenuRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/ivr-menu', 'post', ':{customMethod:[a-zA-Z]+}'],
-            [IvrMenuRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/ivr-menu', 'post', '/{id:[a-zA-Z0-9\-]+}:{customMethod:[a-zA-Z]+}'],
-            
-            // Standard CRUD operations
-            [IvrMenuRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/ivr-menu', 'get', '/'],
-            [IvrMenuRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/ivr-menu', 'get', '/{id:[a-zA-Z0-9\-]+}'],
-            [IvrMenuRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/ivr-menu', 'post', '/'],
-            [IvrMenuRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/ivr-menu', 'put', '/{id:[a-zA-Z0-9\-]+}'],
-            [IvrMenuRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/ivr-menu', 'patch', '/{id:[a-zA-Z0-9\-]+}'],
-            [IvrMenuRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/ivr-menu', 'delete', '/{id:[a-zA-Z0-9\-]+}'],
-            
-            [DialplanApplicationsGetController::class, 'callAction', '/pbxcore/api/v2/dialplan-applications/{actionName}', 'get', '/'],
-            [DialplanApplicationsGetController::class, 'callAction', '/pbxcore/api/v2/dialplan-applications/{actionName}/{id:[a-zA-Z0-9\-]+}', 'get', '/'],
-            [DialplanApplicationsPostController::class, 'callAction', '/pbxcore/api/v2/dialplan-applications/{actionName}', 'post', '/'],
-            [DialplanApplicationsPutController::class, 'callAction', '/pbxcore/api/v2/dialplan-applications/{actionName}/{id:[a-zA-Z0-9\-]+}', 'put', '/'],
-            [DialplanApplicationsDeleteController::class, 'callAction', '/pbxcore/api/v2/dialplan-applications/{actionName}/{id:[a-zA-Z0-9\-]+}', 'delete', '/'],
-
-            [IncomingRoutesGetController::class, 'callAction', '/pbxcore/api/v2/incoming-routes/{actionName}', 'get', '/'],
-            [IncomingRoutesGetController::class, 'callAction', '/pbxcore/api/v2/incoming-routes/{actionName}/{id:[a-zA-Z0-9\-]+}', 'get', '/'],
-            [IncomingRoutesPostController::class, 'callAction', '/pbxcore/api/v2/incoming-routes/{actionName}', 'post', '/'],
-            [IncomingRoutesPutController::class, 'callAction', '/pbxcore/api/v2/incoming-routes/{actionName}/{id:[a-zA-Z0-9\-]+}', 'put', '/'],
-            [IncomingRoutesDeleteController::class, 'callAction', '/pbxcore/api/v2/incoming-routes/{actionName}/{id:[a-zA-Z0-9\-]+}', 'delete', '/'],
-
-            [OutboundRoutesGetController::class, 'callAction', '/pbxcore/api/v2/outbound-routes/{actionName}', 'get', '/'],
-            [OutboundRoutesGetController::class, 'callAction', '/pbxcore/api/v2/outbound-routes/{actionName}/{id:[a-zA-Z0-9\-]+}', 'get', '/'],
-            [OutboundRoutesPostController::class, 'callAction', '/pbxcore/api/v2/outbound-routes/{actionName}', 'post', '/'],
-            [OutboundRoutesPutController::class, 'callAction', '/pbxcore/api/v2/outbound-routes/{actionName}/{id:[a-zA-Z0-9\-]+}', 'put', '/'],
-            [OutboundRoutesDeleteController::class, 'callAction', '/pbxcore/api/v2/outbound-routes/{actionName}/{id:[a-zA-Z0-9\-]+}', 'delete', '/'],
-
-            [OutWorkTimesGetController::class, 'callAction', '/pbxcore/api/v2/out-work-times/{actionName}', 'get', '/'],
-            [OutWorkTimesGetController::class, 'callAction', '/pbxcore/api/v2/out-work-times/{actionName}/{id:[a-zA-Z0-9\-]+}', 'get', '/'],
-            [OutWorkTimesPostController::class, 'callAction', '/pbxcore/api/v2/out-work-times/{actionName}', 'post', '/'],
-            [OutWorkTimesPutController::class, 'callAction', '/pbxcore/api/v2/out-work-times/{actionName}/{id:[a-zA-Z0-9\-]+}', 'put', '/'],
-            [OutWorkTimesDeleteController::class, 'callAction', '/pbxcore/api/v2/out-work-times/{actionName}/{id:[a-zA-Z0-9\-]+}', 'delete', '/'],
-
+            // More v1/v2 routes
             [UsersGetController::class, 'callAction', '/pbxcore/api/users/{actionName}', 'get', '/'],
-
             [NchanGetController::class, 'callAction', '/pbxcore/api/nchan/{queueName}', 'get', '/'],
-
             [LicenseGetController::class, 'callAction', '/pbxcore/api/license/{actionName}', 'get', '/'],
             [LicensePostController::class, 'callAction', '/pbxcore/api/license/{actionName}', 'post', '/'],
-
-            // External modules actions
-            [
-                ModulesControllerBase::class,
-                'callActionForModule',
-                '/pbxcore/api/modules/{moduleName}/{actionName}',
-                'get',
-                '/',
-            ],
-            [
-                ModulesControllerBase::class,
-                'callActionForModule',
-                '/pbxcore/api/modules/{moduleName}/{actionName}',
-                'post',
-                '/',
-            ],
-
-            // Module installation, upgrading, downloading, removing
-            [ModulesCoreGetController::class, 'callAction', '/pbxcore/api/modules/core/{actionName}', 'get', '/'],
-            [ModulesCorePostController::class, 'callAction', '/pbxcore/api/modules/core/{actionName}', 'post', '/'],
-
-            [UserPageTrackerPostController::class, 'callAction', '/pbxcore/api/v2/user-page-tracker/{actionName}', 'post', '/'],
-            
-            // General Settings routes (v2)
-            [GeneralSettingsGetController::class, 'callAction', '/pbxcore/api/v2/general-settings/{actionName}', 'get', '/'],
-            [GeneralSettingsGetController::class, 'callAction', '/pbxcore/api/v2/general-settings/{actionName}/{key}', 'get', '/'],
-            [GeneralSettingsPostController::class, 'callAction', '/pbxcore/api/v2/general-settings/{actionName}', 'post', '/'],
-            
-            // Password validation and generation endpoints (v2)
             [PasswordsGetController::class, 'callAction', '/pbxcore/api/v2/passwords/{actionName}', 'get', '/'],
             [PasswordsPostController::class, 'callAction', '/pbxcore/api/v2/passwords/{actionName}', 'post', '/'],
-            
-            // Sound Files routes
-            [SoundFilesGetController::class, 'callAction', '/pbxcore/api/v2/sound-files/{actionName}', 'get', '/'],
-            [SoundFilesGetController::class, 'callAction', '/pbxcore/api/v2/sound-files/{actionName}/{id}', 'get', '/'],
-            [SoundFilesPostController::class, 'callAction', '/pbxcore/api/v2/sound-files/{actionName}', 'post', '/'],
-            [SoundFilesPutController::class, 'callAction', '/pbxcore/api/v2/sound-files/{actionName}/{id:[0-9]+}', 'put', '/'],
-            [SoundFilesDeleteController::class, 'callAction', '/pbxcore/api/v2/sound-files/{actionName}/{id:[0-9]+}', 'delete', '/'],
+            [UserPageTrackerPostController::class, 'callAction', '/pbxcore/api/v2/user-page-tracker/{actionName}', 'post', '/'],
 
-            // Providers v2 routes (only v2 is supported)
-            [ProvidersGetController::class, 'callAction', '/pbxcore/api/v2/providers/{actionName}', 'get', '/'],
-            [ProvidersGetController::class, 'callAction', '/pbxcore/api/v2/providers/{actionName}/{type:[A-Z]+}/{id:[a-zA-Z0-9\-]+}', 'get', '/'],
-            [ProvidersGetController::class, 'callAction', '/pbxcore/api/v2/providers/{actionName}/{id}', 'get', '/'],
-            [ProvidersPostController::class, 'callAction', '/pbxcore/api/v2/providers/{actionName}', 'post', '/'],
-            [ProvidersPutController::class, 'callAction', '/pbxcore/api/v2/providers/{actionName}/{type:[A-Z]+}/{id:[a-zA-Z0-9\-]+}', 'put', '/'],
-            [ProvidersPutController::class, 'callAction', '/pbxcore/api/v2/providers/{actionName}/{id}', 'put', '/'],
-            [ProvidersDeleteController::class, 'callAction', '/pbxcore/api/v2/providers/{actionName}/{type:[A-Z]+}/{id:[a-zA-Z0-9\-]+}', 'delete', '/'],
-            [ProvidersDeleteController::class, 'callAction', '/pbxcore/api/v2/providers/{actionName}/{id}', 'delete', '/'],
-            
-            // Network Filters v2 routes
-            [NetworkFiltersGetController::class, 'callAction', '/pbxcore/api/v2/network-filters/{actionName}', 'get', '/'],
-            [NetworkFiltersPostController::class, 'callAction', '/pbxcore/api/v2/network-filters/{actionName}', 'post', '/'],
-
-            // v3 Asterisk Managers RESTful API endpoints
-            // Custom methods with colon notation (Google API Design Guide) - must be before standard routes
-            [AsteriskManagersRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/asterisk-managers', 'get', ':{customMethod:[a-zA-Z]+}'],
-            [AsteriskManagersRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/asterisk-managers', 'post', ':{customMethod:[a-zA-Z]+}'],
-            [AsteriskManagersRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/asterisk-managers', 'post', '/{id:[0-9]+}:{customMethod:[a-zA-Z]+}'],
-            
-            // Standard CRUD operations
-            [AsteriskManagersRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/asterisk-managers', 'get', '/'],
-            [AsteriskManagersRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/asterisk-managers', 'get', '/{id:[0-9]+}'],
-            [AsteriskManagersRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/asterisk-managers', 'post', '/'],
-            [AsteriskManagersRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/asterisk-managers', 'put', '/{id:[0-9]+}'],
-            [AsteriskManagersRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/asterisk-managers', 'patch', '/{id:[0-9]+}'],
-            [AsteriskManagersRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/asterisk-managers', 'delete', '/{id:[0-9]+}'],
-
-            // v3 AsteriskRestUsers (ARI) RESTful API endpoints
-            // Custom methods with colon notation (Google API Design Guide) - must be before standard routes
-            [AsteriskRestUsersRestController::class, 'handleCustomMethod', '/pbxcore/api/v3/asterisk-rest-users', 'get', ':{customMethod:[a-zA-Z]+}'],
-            [AsteriskRestUsersRestController::class, 'handleCustomMethod', '/pbxcore/api/v3/asterisk-rest-users', 'post', ':{customMethod:[a-zA-Z]+}'],
-            [AsteriskRestUsersRestController::class, 'handleCustomMethod', '/pbxcore/api/v3/asterisk-rest-users', 'post', '/{id:[0-9]+}:{customMethod:[a-zA-Z]+}'],
-            
-            // Standard CRUD operations
-            [AsteriskRestUsersRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/asterisk-rest-users', 'get', '/'],
-            [AsteriskRestUsersRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/asterisk-rest-users', 'get', '/{id:[0-9]+}'],
-            [AsteriskRestUsersRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/asterisk-rest-users', 'post', '/'],
-            [AsteriskRestUsersRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/asterisk-rest-users', 'put', '/{id:[0-9]+}'],
-            [AsteriskRestUsersRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/asterisk-rest-users', 'patch', '/{id:[0-9]+}'],
-            [AsteriskRestUsersRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/asterisk-rest-users', 'delete', '/{id:[0-9]+}'],
-
-        ];
+            // Module routes
+            [ModulesControllerBase::class, 'callActionForModule', '/pbxcore/api/modules/{moduleName}/{actionName}', 'get', '/'],
+            [ModulesControllerBase::class, 'callActionForModule', '/pbxcore/api/modules/{moduleName}/{actionName}', 'post', '/'],
+            [ModulesCoreGetController::class, 'callAction', '/pbxcore/api/modules/core/{actionName}', 'get', '/'],
+            [ModulesCorePostController::class, 'callAction', '/pbxcore/api/modules/core/{actionName}', 'post', '/'],
+        ]);
+        
+        return $routes;
     }
 
     /**

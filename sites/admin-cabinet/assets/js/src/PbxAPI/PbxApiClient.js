@@ -39,19 +39,21 @@ class PbxApiClient {
      * @param {object} config - Configuration object
      * @param {string} config.endpoint - Base API endpoint (e.g., '/pbxcore/api/v3/ivr-menu')
      * @param {object} [config.customMethods] - Map of custom methods (e.g., {getDefault: ':getDefault'})
+     * @param {boolean} [config.singleton] - Whether this is a singleton resource (no IDs in URLs)
      */
     constructor(config) {
         this.endpoint = config.endpoint;
         this.customMethods = config.customMethods || {};
-        
+        this.isSingleton = config.singleton || false;
+
         // Extract base URL for Config.pbxUrl
         this.apiUrl = `${Config.pbxUrl}${this.endpoint}`;
-        
+
         // Create endpoints property for backward compatibility with PbxDataTableIndex
         this.endpoints = {
             getList: this.apiUrl
         };
-        
+
         // Add custom method endpoints
         for (const [methodName, methodPath] of Object.entries(this.customMethods)) {
             this.endpoints[methodName] = `${this.apiUrl}${methodPath}`;
@@ -99,22 +101,29 @@ class PbxApiClient {
     }
     
     /**
-     * Get list of records
+     * Get list of records (or single record for singleton)
      * @param {object|function} dataOrCallback - Optional params or callback
      * @param {function} [callback] - Callback if first param is data
      */
     getList(dataOrCallback, callback) {
+        // For singleton resources, redirect to get() method
+        if (this.isSingleton) {
+            if (typeof this.get === 'function') {
+                return this.get(dataOrCallback, callback);
+            }
+        }
+
         // Handle overloaded parameters
         let actualCallback;
         let params = {};
-        
+
         if (typeof dataOrCallback === 'function') {
             actualCallback = dataOrCallback;
         } else {
             params = dataOrCallback || {};
             actualCallback = callback;
         }
-        
+
         $.api({
             url: this.apiUrl,
             on: 'now',
@@ -145,20 +154,24 @@ class PbxApiClient {
     saveRecord(data, callback) {
         // Determine if this is a new record
         const isNew = this.isNewRecord(data);
-        
+
         // Clean up internal flags
         const cleanData = {...data};
         if (cleanData._isNew !== undefined) {
             delete cleanData._isNew;
         }
-        
+        // Remove _method as it's handled by the actual HTTP method
+        if (cleanData._method !== undefined) {
+            delete cleanData._method;
+        }
+
         // Get the record ID for updates
         const recordId = this.getRecordId(cleanData);
-        
+
         // v3 API: POST for new records, PUT for updates
         const method = isNew ? 'POST' : 'PUT';
         const url = isNew ? this.apiUrl : `${this.apiUrl}/${recordId}`;
-        
+
         $.api({
             url: url,
             method: method,
@@ -228,8 +241,9 @@ class PbxApiClient {
      * @param {string} methodName - Method name
      * @param {object|function} dataOrCallback - Data or callback
      * @param {function} [callback] - Callback if first param is data
+     * @param {string} [httpMethod] - HTTP method to use (GET or POST), defaults to GET
      */
-    callCustomMethod(methodName, dataOrCallback, callback) {
+    callCustomMethod(methodName, dataOrCallback, callback, httpMethod = 'GET') {
         // Handle overloaded parameters
         let actualCallback;
         let data = {};
@@ -250,11 +264,43 @@ class PbxApiClient {
             return;
         }
         
-        $.api({
-            url: `${this.apiUrl}${methodPath}`,
-            method: 'GET',
-            data: data,
+        // Build URL with ID if provided (for resource-level custom methods)
+        let url = this.apiUrl;
+        if (data.id) {
+            // Resource-level method: /api/v3/resource/{id}:method
+            url = `${this.apiUrl}/${data.id}${methodPath}`;
+            // Remove id from data since it's in the URL
+            const requestData = {...data};
+            delete requestData.id;
+            data = requestData;
+        } else {
+            // Collection-level method: /api/v3/resource:method
+            url = `${this.apiUrl}${methodPath}`;
+        }
+        
+        // Add CSRF token for POST requests
+        if (httpMethod === 'POST' && typeof globalCsrfTokenKey !== 'undefined' && typeof globalCsrfToken !== 'undefined') {
+            data[globalCsrfTokenKey] = globalCsrfToken;
+        }
+
+        // Check if data contains boolean or complex values
+        let hasComplexData = false;
+        for (const key in data) {
+            if (data.hasOwnProperty(key)) {
+                const value = data[key];
+                if (typeof value === 'boolean' || typeof value === 'object' || Array.isArray(value)) {
+                    hasComplexData = true;
+                    break;
+                }
+            }
+        }
+
+        // Use JSON for complex data, form encoding for simple data
+        const ajaxSettings = {
+            url: url,
+            method: httpMethod,
             on: 'now',
+            successTest: PbxApi.successTest,
             onSuccess(response) {
                 actualCallback(response);
             },
@@ -267,7 +313,20 @@ class PbxApiClient {
                     messages: {error: ['Network error occurred']}
                 });
             }
-        });
+        };
+
+        if (hasComplexData) {
+            // Send as JSON to preserve boolean values and complex structures
+            ajaxSettings.data = JSON.stringify(data);
+            ajaxSettings.contentType = 'application/json';
+            console.log('Sending as JSON:', data);
+        } else {
+            // Send as regular form data
+            ajaxSettings.data = data;
+            console.log('Sending as form data:', data);
+        }
+
+        $.api(ajaxSettings);
     }
     
     /**
@@ -277,11 +336,18 @@ class PbxApiClient {
      * @returns {boolean} True if new record
      */
     isNewRecord(data) {
-        // Check various flags that indicate a new record
-        if (data._isNew === true) return true;
+        // Check explicit flag first - if set, use it
+        if (data._isNew !== undefined) {
+            return data._isNew === true;
+        }
+
+        // Check if it's marked as new
         if (data.isNew === '1' || data.isNew === true || data.isNew === 'true') return true;
+
+        // Simple check: if no id or empty id, it's a new record
+        // REST API v3 doesn't use uniqid anymore
         if (!data.id || data.id === '' || data.id === 'new') return true;
-        if (!data.uniqid || data.uniqid === '') return true;
+
         return false;
     }
     
@@ -292,8 +358,8 @@ class PbxApiClient {
      * @returns {string} Record ID
      */
     getRecordId(data) {
-        // Priority: uniqid > id
-        return data.uniqid || data.id;
+        // REST API v3 uses only 'id' field
+        return data.id;
     }
     
     /**
