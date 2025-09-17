@@ -123,14 +123,6 @@ class AclConf extends AsteriskConfigClass
                 'permit' => $permit,
             ];
             $conf_acl .= "[acl_$peer[extension]]".PHP_EOL;
-            
-            // In Docker, include fail2ban and network_filters_deny ACL files directly
-            if (Util::isDocker()) {
-                $asteriskEtcDir = \MikoPBX\Core\System\Directories::getDir(\MikoPBX\Core\System\Directories::AST_ETC_DIR);
-                $conf_acl .= "#tryinclude $asteriskEtcDir/fail2ban_sip_acl.conf\n";
-                $conf_acl .= "#tryinclude $asteriskEtcDir/network_filters_deny_acl.conf\n";
-            }
-            
             $conf_acl .= Util::overrideConfigurationArray($options, $manual_attributes, 'acl');
         }
 

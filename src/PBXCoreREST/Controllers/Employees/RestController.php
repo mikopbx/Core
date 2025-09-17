@@ -19,7 +19,7 @@
 
 namespace MikoPBX\PBXCoreREST\Controllers\Employees;
 
-use MikoPBX\PBXCoreREST\Controllers\BaseController;
+use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\EmployeesManagementProcessor;
 
 /**
@@ -58,6 +58,9 @@ use MikoPBX\PBXCoreREST\Lib\EmployeesManagementProcessor;
  * 
  * @examples Custom method operations:
  * 
+ * # Get default values for new employee
+ * curl -X GET http://127.0.0.1/pbxcore/api/v3/employees:getDefault
+ * 
  * # Export all employees to CSV
  * curl -X POST http://127.0.0.1/pbxcore/api/v3/employees:export \
  *      -H "Content-Type: application/json" \
@@ -73,116 +76,26 @@ use MikoPBX\PBXCoreREST\Lib\EmployeesManagementProcessor;
  *      -H "Content-Type: application/json" \
  *      -d '{"ids":["123","456","789"]}'
  * 
- * 
  * @package MikoPBX\PBXCoreREST\Controllers\Employees
  */
-class RestController extends BaseController
+class RestController extends BaseRestController
 {
     /**
-     * Handle standard CRUD requests (GET, POST, PUT, PATCH, DELETE)
-     * 
-     * Routes handled by this method:
-     * @Get("/")                     List all employees with optional filtering
-     * @Get("/{id:[0-9]+}")          Get single employee by ID
-     * @Post("/")                    Create new employee
-     * @Put("/{id:[0-9]+}")          Full update of employee (replace all fields)
-     * @Patch("/{id:[0-9]+}")        Partial update of employee (modify specific fields)
-     * @Delete("/{id:[0-9]+}")       Delete employee by ID
-     * 
-     * @param string|null $id Resource ID for single resource operations
-     * @return void
+     * The processor class to handle requests
+     * @var string
      */
-    public function handleCRUDRequest(?string $id = null): void
-    {
-        // Sanitize all input data
-        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
-        
-        // Add ID to request data if provided in URL
-        if (!empty($id)) {
-            $requestData['id'] = $id;
-        }
-        
-        // Map HTTP method to CRUD action
-        $httpMethod = $this->request->getMethod();
-        $action = match ($httpMethod) {
-            'GET' => $id !== null ? 'getRecord' : 'getList',
-            'POST' => 'create',
-            'PUT' => 'update',
-            'PATCH' => 'patch',
-            'DELETE' => 'delete',
-            default => null
-        };
-        
-        if ($action === null) {
-            $this->response->setJsonContent([
-                'result' => false,
-                'messages' => ['error' => ["Invalid HTTP method: $httpMethod"]]
-            ]);
-            $this->response->setStatusCode(405, 'Method Not Allowed');
-            $this->response->send();
-            return;
-        }
-        
-        // Send request to backend worker
-        $this->sendRequestToBackendWorker(
-            EmployeesManagementProcessor::class,
-            $action,
-            $requestData
-        );
-    }
+    protected string $processorClass = EmployeesManagementProcessor::class;
     
     /**
-     * Handle custom method requests following Google API Design Guide
+     * Define allowed custom methods for each HTTP method
      * 
-     * Routes handled by this method:
-     * @Get(":{customMethod:[a-zA-Z]+}")               Collection-level custom methods (getDefault)
-     * @Post(":{customMethod:[a-zA-Z]+}")              Collection-level custom methods
-     * @Post("/{id:[0-9]+}:{customMethod:[a-zA-Z]+}")  Resource-level custom methods
-     * 
-     * Supported custom methods:
-     * - getDefault: Get default values for new employee (GET)
-     * - export: Export employees to various formats (CSV, JSON, XML) (POST)
-     * - import: Import employees from file (POST)
-     * - batchDelete: Delete multiple employees at once (POST)
-     * 
-     * @param string $customMethod The custom method name (e.g., 'getDefault', 'export', 'import')
-     * @param string|null $id Optional resource ID for resource-specific custom methods
-     * @return void
+     * @return array<string, array<string>>
      */
-    public function handleCustomRequest(string $customMethod, ?string $id = null): void
+    protected function getAllowedCustomMethods(): array
     {
-        // Check HTTP method based on the custom method
-        $httpMethod = $this->request->getMethod();
-        
-        // Define which custom methods are allowed for each HTTP method
-        $allowedMethods = [
+        return [
             'GET' => ['getDefault'],
-            'POST' => ['export', 'exportTemplate', 'import', 'confirmImport', 'batchCreate', 'batchDelete', 'activate', 'deactivate']
+            'POST' => ['export', 'exportTemplate', 'import', 'confirmImport', 'batchCreate', 'batchDelete']
         ];
-        
-        if (!isset($allowedMethods[$httpMethod]) || !in_array($customMethod, $allowedMethods[$httpMethod])) {
-            $this->response->setJsonContent([
-                'result' => false,
-                'messages' => ['error' => ["Method '$customMethod' is not allowed with HTTP $httpMethod"]]
-            ]);
-            $this->response->setStatusCode(405, 'Method Not Allowed');
-            $this->response->send();
-            return;
-        }
-        
-        // Sanitize all input data
-        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
-        
-        // Add ID if provided for resource-specific custom methods
-        if (!empty($id)) {
-            $requestData['id'] = $id;
-        }
-        
-        // Send request to backend worker with custom method as action
-        $this->sendRequestToBackendWorker(
-            EmployeesManagementProcessor::class,
-            $customMethod,
-            $requestData
-        );
     }
 }

@@ -38,7 +38,7 @@ class GetListAction
 {
     /**
      * Get list of all call queues with member representations
-     * 
+     *
      * @param array $data Filter parameters (not used yet)
      * @return PBXApiResult
      */
@@ -46,23 +46,48 @@ class GetListAction
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        
+
         try {
             $queues = CallQueues::find(['order' => 'name ASC']);
-            
+
+            // Pre-load all queue members to avoid N+1 queries
+            $queueIds = [];
+            foreach ($queues as $queue) {
+                $queueIds[] = $queue->uniqid;
+            }
+
+            // Load all members in one query
+            $membersByQueue = [];
+            if (!empty($queueIds)) {
+                $allMembers = \MikoPBX\Common\Models\CallQueueMembers::find([
+                    'conditions' => 'queue IN ({queue:array})',
+                    'bind' => ['queue' => $queueIds],
+                    'order' => 'priority ASC'
+                ]);
+
+                // Group members by queue
+                foreach ($allMembers as $member) {
+                    if (!isset($membersByQueue[$member->queue])) {
+                        $membersByQueue[$member->queue] = [];
+                    }
+                    $membersByQueue[$member->queue][] = $member;
+                }
+            }
+
             $queuesList = [];
             foreach ($queues as $queue) {
-                $queuesList[] = DataStructure::createForList($queue);
+                $members = $membersByQueue[$queue->uniqid] ?? [];
+                $queuesList[] = DataStructure::createForList($queue, $members);
             }
-            
+
             $res->data = $queuesList;
             $res->success = true;
-            
+
         } catch (\Exception $e) {
             $res->messages['error'][] = $e->getMessage();
             CriticalErrorsHandler::handleExceptionWithSyslog($e);
         }
-        
+
         return $res;
     }
 }

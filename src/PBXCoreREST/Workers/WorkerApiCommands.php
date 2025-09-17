@@ -482,6 +482,9 @@ class WorkerApiCommands extends WorkerRedisBase
             ];
             
             $responseKey = WorkerApiCommands::REDIS_API_RESPONSE_PREFIX . ($request['request_id'] ?? $jobId);
+
+            // Clean UTF-8 data before encoding to prevent JSON encoding errors
+            $result = $this->cleanUtf8Data($result);
             $encodedResult = json_encode($result, JSON_THROW_ON_ERROR);
 
             $perfMetrics['encoding_time'] = microtime(true) - $perfMetrics['start'];
@@ -788,8 +791,40 @@ class WorkerApiCommands extends WorkerRedisBase
     }
     
     /**
+     * Recursively clean UTF-8 data to prevent JSON encoding errors
+     *
+     * @param mixed $data Data to clean
+     * @return mixed Cleaned data
+     */
+    private function cleanUtf8Data($data)
+    {
+        if (is_string($data)) {
+            // Check if string is valid UTF-8
+            if (!mb_check_encoding($data, 'UTF-8')) {
+                // Try to convert to UTF-8
+                $data = mb_convert_encoding($data, 'UTF-8', 'UTF-8');
+            }
+            // Remove any invalid UTF-8 sequences
+            $data = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $data);
+            return $data;
+        } elseif (is_array($data)) {
+            foreach ($data as $key => $value) {
+                $data[$key] = $this->cleanUtf8Data($value);
+            }
+            return $data;
+        } elseif (is_object($data)) {
+            foreach ($data as $key => $value) {
+                $data->$key = $this->cleanUtf8Data($value);
+            }
+            return $data;
+        }
+
+        return $data;
+    }
+
+    /**
      * Finalize job processing
-     * 
+     *
      * @param string $jobId Job identifier
      * @param array $request Request data
      * @param PBXApiResult $res Result object

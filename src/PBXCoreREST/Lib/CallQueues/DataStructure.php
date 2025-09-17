@@ -114,9 +114,10 @@ class DataStructure extends AbstractDataStructure
      * Create simplified data structure for list display
      *
      * @param \MikoPBX\Common\Models\CallQueues $model Queue model instance
+     * @param array $preloadedMembers Pre-loaded members to avoid N+1 queries
      * @return array Simplified data structure for table display
      */
-    public static function createForList($model): array
+    public static function createForList($model, array $preloadedMembers = []): array
     {
         // Use unified base method for list creation
         $data = parent::createForList($model);
@@ -135,7 +136,11 @@ class DataStructure extends AbstractDataStructure
 
         // Add members summary for list display
         $members = [];
-        foreach ($model->CallQueueMembers as $member) {
+
+        // Use pre-loaded members if provided, otherwise fall back to lazy loading
+        $membersToProcess = !empty($preloadedMembers) ? $preloadedMembers : $model->CallQueueMembers;
+
+        foreach ($membersToProcess as $member) {
             $members[] = [
                 'extension' => $member->extension,
                 'represent' => self::getExtensionRepresentation($member->extension)

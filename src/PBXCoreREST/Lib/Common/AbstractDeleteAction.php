@@ -251,7 +251,17 @@ abstract class AbstractDeleteAction
 
                 // Delete main record
                 if (!$record->delete()) {
-                    throw new \Exception('Failed to delete record: ' . implode(', ', $record->getMessages()));
+                    // Get error messages and format them properly
+                    $messages = $record->getMessages();
+                    $errorMessage = implode(', ', $messages);
+
+                    // Don't add prefix if message already contains formatted HTML
+                    // (e.g., constraint violation errors with HTML structure)
+                    if (strpos($errorMessage, '<') === false) {
+                        $errorMessage = 'Failed to delete record: ' . $errorMessage;
+                    }
+
+                    throw new \Exception($errorMessage);
                 }
 
                 return true;

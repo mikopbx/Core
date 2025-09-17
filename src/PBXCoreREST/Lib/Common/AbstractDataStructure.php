@@ -88,7 +88,7 @@ abstract class AbstractDataStructure
 
     /**
      * Get extension representation for display in dropdowns
-     * 
+     *
      * Finds extension by number and returns its formatted representation
      * with appropriate icons and labels.
      *
