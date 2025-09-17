@@ -595,7 +595,17 @@ class ModelsBase extends Model
                             $represent .= " - $this->time_to";
                         }
                     }
-                    $name = $this->t('repOutWorkTimes', ['represent' => $represent]);
+
+                    // Use custom description if available, otherwise use translation
+                    if (!empty($this->description)) {
+                        $name .= $this->description;
+                        if (!empty($represent)) {
+                            $name .= ' - ' . $represent;
+                        }
+                    } else {
+                        // Use the standard translation pattern
+                        $name .= $this->t('repOutWorkTimes', ['represent' => $represent]);
+                    }
                 }
                 break;
             case Providers::class:
