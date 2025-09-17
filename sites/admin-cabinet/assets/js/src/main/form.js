@@ -77,15 +77,32 @@ const Form = {
         
         /**
          * Method name for saving records
+         * Can be 'auto' for automatic detection based on id field
          * @type {string}
          */
         saveMethod: 'saveRecord',
         
         /**
          * HTTP method for API calls (can be overridden in cbBeforeSendForm)
+         * Can be 'auto' for automatic detection based on id field
          * @type {string|null}
          */
-        httpMethod: null
+        httpMethod: null,
+        
+        /**
+         * Enable automatic RESTful method detection
+         * When true, automatically uses:
+         * - POST/create for new records (no id)
+         * - PUT/update for existing records (with id)
+         * @type {boolean}
+         */
+        autoDetectMethod: false,
+        
+        /**
+         * Field name to check for record id
+         * @type {string}
+         */
+        idField: 'id'
     },
     
     /**
@@ -94,6 +111,13 @@ const Form = {
      * @type {boolean}
      */
     convertCheckboxesToBool: false,
+
+    /**
+     * Send only changed fields instead of all form data
+     * When true, compares current values with oldFormValues and sends only differences
+     * @type {boolean}
+     */
+    sendOnlyChanged: false,
     initialize() {
         // Set up custom form validation rules
         Form.$formObj.form.settings.rules.notRegExp = Form.notRegExpValidateRule;
@@ -210,6 +234,78 @@ const Form = {
     },
 
     /**
+     * Get only the fields that have changed from their initial values
+     *
+     * @returns {object} Object containing only changed fields
+     */
+    getChangedFields() {
+        const currentValues = Form.$formObj.form('get values');
+        const changedFields = {};
+
+        // Track if any codec fields changed for special handling
+        let codecFieldsChanged = false;
+        const codecFields = {};
+
+        // Compare each field with its original value
+        Object.keys(currentValues).forEach(key => {
+            const currentValue = currentValues[key];
+            const oldValue = Form.oldFormValues[key];
+
+            // Convert to strings for comparison to handle type differences
+            // Skip if both are empty (null, undefined, empty string)
+            const currentStr = String(currentValue || '').trim();
+            const oldStr = String(oldValue || '').trim();
+
+            // Check if this is a codec field
+            if (key.startsWith('codec_')) {
+                // Store codec field for later processing
+                codecFields[key] = currentValue;
+                if (currentStr !== oldStr) {
+                    codecFieldsChanged = true;
+                }
+            } else if (currentStr !== oldStr) {
+                // Regular field has changed, include it
+                changedFields[key] = currentValue;
+            }
+        });
+
+        // Check for fields that existed in old values but not in current
+        // (unchecked checkboxes might not appear in current values)
+        Object.keys(Form.oldFormValues).forEach(key => {
+            if (!(key in currentValues) && Form.oldFormValues[key]) {
+                // Field was removed or unchecked
+                const $element = Form.$formObj.find(`[name="${key}"]`);
+                if ($element.length > 0 && $element.attr('type') === 'checkbox') {
+                    // Check if this is a codec checkbox
+                    if (key.startsWith('codec_')) {
+                        codecFields[key] = '';
+                        // Check if it actually changed
+                        if (Form.oldFormValues[key]) {
+                            codecFieldsChanged = true;
+                        }
+                    } else {
+                        // Regular checkbox was unchecked
+                        changedFields[key] = '';
+                    }
+                }
+            }
+        });
+
+        // Special handling for codec fields:
+        // Include ALL codec fields only if ANY codec changed
+        // This is because codecs need to be processed as a complete set
+        if (codecFieldsChanged) {
+            // Add all codec fields to changed fields
+            Object.keys(codecFields).forEach(key => {
+                changedFields[key] = codecFields[key];
+            });
+
+        }
+
+        return changedFields;
+    },
+
+    /**
      * Converts checkbox values to boolean in form data
      * @param {object} formData - The form data object
      * @returns {object} - Form data with boolean checkbox values
@@ -245,13 +341,22 @@ const Form = {
     submitForm() {
         // Add 'loading' class to the submit button
         Form.$submitButton.addClass('loading');
-        
-        // Get form data
-        let formData = Form.$formObj.form('get values');
-        
+
+        // Get form data - either all fields or only changed ones
+        let formData;
+        if (Form.sendOnlyChanged && Form.enableDirrity) {
+            // Get only changed fields
+            formData = Form.getChangedFields();
+
+            // Log what fields are being sent
+        } else {
+            // Get all form data
+            formData = Form.$formObj.form('get values');
+        }
+
         // Process checkbox values if enabled
         formData = Form.processCheckboxValues(formData);
-        
+
         // Call cbBeforeSendForm
         const settings = { data: formData };
         const cbBeforeSendResult = Form.cbBeforeSendForm(settings);
@@ -279,19 +384,40 @@ const Form = {
         if (Form.apiSettings.enabled && Form.apiSettings.apiObject) {
             // REST API submission
             const apiObject = Form.apiSettings.apiObject;
-            const saveMethod = Form.apiSettings.saveMethod;
+            let saveMethod = Form.apiSettings.saveMethod;
+            let httpMethod = Form.apiSettings.httpMethod;
             
-            if (apiObject && typeof apiObject[saveMethod] === 'function') {
-                // If httpMethod is specified, pass it in the data
-                if (Form.apiSettings.httpMethod) {
-                    formData._method = Form.apiSettings.httpMethod;
+            // Auto-detect RESTful methods if enabled
+            if (Form.apiSettings.autoDetectMethod) {
+                const idField = Form.apiSettings.idField || 'id';
+                const recordId = formData[idField];
+                const isNew = !recordId || recordId === '';
+                
+                // Auto-detect saveMethod if set to 'auto' or autoDetectMethod is true
+                if (saveMethod === 'auto' || Form.apiSettings.autoDetectMethod) {
+                    saveMethod = isNew ? 'create' : 'update';
                 }
                 
+                // Auto-detect httpMethod if set to 'auto' or autoDetectMethod is true
+                if (httpMethod === 'auto' || Form.apiSettings.autoDetectMethod) {
+                    httpMethod = isNew ? 'POST' : 'PUT';
+                }
+            }
+            
+            if (apiObject && typeof apiObject[saveMethod] === 'function') {
+                console.log('Form: Calling API method', saveMethod, 'with data:', formData);
+                // If httpMethod is specified, pass it in the data
+                if (httpMethod) {
+                    formData._method = httpMethod;
+                }
+
                 apiObject[saveMethod](formData, (response) => {
+                    console.log('Form: API response received:', response);
                     Form.handleSubmitResponse(response);
                 });
             } else {
-                console.error('API object or method not found');
+                console.error('API object or method not found:', saveMethod, apiObject);
+                console.error('Available methods:', apiObject ? Object.getOwnPropertyNames(apiObject) : 'No API object');
                 Form.$submitButton
                     .transition('shake')
                     .removeClass('loading');
@@ -449,6 +575,58 @@ const Form = {
      */
     specialCharactersExistValidateRule(value) {
         return value.match(/[()$^;#"><,.%№@!+=_]/) === null;
+    },
+
+    /**
+     * Show loading state on the form
+     * Adds loading class and optionally shows a dimmer with loader
+     *
+     * @param {boolean} withDimmer - Whether to show dimmer overlay (default: false)
+     * @param {string} message - Optional loading message to display
+     */
+    showLoadingState(withDimmer = false, message = '') {
+        if (Form.$formObj && Form.$formObj.length) {
+            Form.$formObj.addClass('loading');
+
+            if (withDimmer) {
+                // Add dimmer with loader if it doesn't exist
+                let $dimmer = Form.$formObj.find('> .ui.dimmer');
+                if (!$dimmer.length) {
+                    const loaderHtml = `
+                        <div class="ui inverted dimmer">
+                            <div class="ui text loader">
+                                ${message || globalTranslate.ex_Loading || 'Loading...'}
+                            </div>
+                        </div>`;
+                    Form.$formObj.append(loaderHtml);
+                    $dimmer = Form.$formObj.find('> .ui.dimmer');
+                }
+
+                // Update message if provided
+                if (message) {
+                    $dimmer.find('.loader').text(message);
+                }
+
+                // Activate dimmer
+                $dimmer.addClass('active');
+            }
+        }
+    },
+
+    /**
+     * Hide loading state from the form
+     * Removes loading class and hides dimmer if present
+     */
+    hideLoadingState() {
+        if (Form.$formObj && Form.$formObj.length) {
+            Form.$formObj.removeClass('loading');
+
+            // Hide dimmer if present
+            const $dimmer = Form.$formObj.find('> .ui.dimmer');
+            if ($dimmer.length) {
+                $dimmer.removeClass('active');
+            }
+        }
     },
     
     /**

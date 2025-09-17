@@ -61,9 +61,7 @@ const PbxApi = {
     modulesGetMetadataFromModulePackage: `${Config.pbxUrl}/pbxcore/api/modules/core/getMetadataFromModulePackage`, // Retrieves the module.json information from uploaded zip archive.
     modulesGetModuleInfo: `${Config.pbxUrl}/pbxcore/api/modules/core/getModuleInfo`, // Retrieves the module description from the repository.
 
-    // FirewallManagementProcessor
-    firewallGetBannedIp: `${Config.pbxUrl}/pbxcore/api/firewall/getBannedIp`, // Retrieve a list of banned IP addresses or get data for a specific IP address.
-    firewallUnBanIp: `${Config.pbxUrl}/pbxcore/api/firewall/unBanIp`, //  Remove an IP address from the fail2ban ban list.
+    // FirewallManagementProcessor - deprecated, use FirewallAPI v3 instead
 
     // SIPStackProcessor
     sipGetRegistry: `${Config.pbxUrl}/pbxcore/api/sip/getRegistry`, //  Retrieves the statuses of SIP providers registration.
@@ -74,15 +72,9 @@ const PbxApi = {
     // IAXStackProcessor
     iaxGetRegistry: `${Config.pbxUrl}/pbxcore/api/iax/getRegistry`, // Retrieves the statuses of IAX providers registration.
 
-    // SysLogsManagementProcessor
-    syslogStartLogsCapture: `${Config.pbxUrl}/pbxcore/api/syslog/startLog`, // Starts the collection of logs and captures TCP packets.
-    syslogStopLogsCapture: `${Config.pbxUrl}/pbxcore/api/syslog/stopLog`, // Stops tcpdump and starts creating a log files archive for download.
-    syslogPrepareLog: `${Config.pbxUrl}/pbxcore/api/syslog/prepareLog`, // Starts creating a log files archive for download.
-    syslogDownloadLogsArchive: `${Config.pbxUrl}/pbxcore/api/syslog/downloadLogsArchive`, //  Checks if archive ready then create download link containing logs and PCAP file.
-    syslogGetLogsList: `${Config.pbxUrl}/pbxcore/api/syslog/getLogsList`, // Returns list of log files to show them on web interface
-    syslogGetLogFromFile: `${Config.pbxUrl}/pbxcore/api/syslog/getLogFromFile`, // Gets partially filtered log file strings.
-    syslogDownloadLogFile: `${Config.pbxUrl}/pbxcore/api/syslog/downloadLogFile`, //  Prepares a downloadable link for a log file with the provided name.
-    syslogEraseFile: `${Config.pbxUrl}/pbxcore/api/syslog/eraseFile`, // Erase file content.
+    // SysLogsManagementProcessor - DEPRECATED: Use SyslogAPI v3 instead
+    // All syslog endpoints have been migrated to RESTful v3 API
+    // See SyslogAPI class for new methods
 
     // FilesManagementProcessor
     filesUploadFile: `${Config.pbxUrl}/pbxcore/api/files/uploadFile`, // Upload files into the system by chunks
@@ -198,56 +190,7 @@ const PbxApi = {
         });
     },
 
-    /**
-     * Retrieves the list of banned by fail2ban IP addresses.
-     *
-     * @param {function} callback - The callback function to be called after retrieving the list of banned IP addresses.
-     *                              It will receive the response data or `false` in case of failure.
-     * @returns {void}
-     */
-    FirewallGetBannedIp(callback) {
-        $.api({
-            url: PbxApi.firewallGetBannedIp,
-            on: 'now',
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response.data);
-            },
-            onFailure() {
-                callback(false);
-            },
-            onError() {
-                callback(false);
-            },
-        });
-    },
-
-    /**
-     * Removes an IP from the fail2ban list.
-     *
-     * @param {string} ipAddress - The IP address to be removed from the fail2ban list.
-     * @param {function} callback - The callback function to be called after removing the IP.
-     *                              It will receive the response data or `false` in case of failure.
-     * @returns {boolean} - Always returns `true`.
-     */
-    FirewallUnBanIp(ipAddress, callback) {
-        $.api({
-            url: PbxApi.firewallUnBanIp,
-            on: 'now',
-            method: 'POST',
-            data: {ip: ipAddress},
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response.data);
-            },
-            onFailure() {
-                callback(false);
-            },
-            onError() {
-                callback(false);
-            },
-        });
-    },
+    // Deprecated - use FirewallAPI.getBannedIps() and FirewallAPI.unbanIp() instead
 
     /**
      * Retrieves the statuses of SIP peers.
@@ -557,21 +500,21 @@ const PbxApi = {
      * @param {function} callback - The callback function to be called after starting the logs capture.
      *                              It will receive the response data or `false` in case of failure.
      * @returns {void}
+     * @deprecated Use SyslogAPI.startCapture() instead
      */
     SyslogStartLogsCapture(callback) {
-        $.api({
-            url: PbxApi.syslogStartLogsCapture,
-            on: 'now',
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
+        console.error('PbxApi.SyslogStartLogsCapture is deprecated. Use SyslogAPI.startCapture() instead.');
+        if (typeof SyslogAPI === 'undefined') {
+            console.error('SyslogAPI is not loaded. Make sure syslogAPI.js is included.');
+            callback(false);
+            return;
+        }
+        return SyslogAPI.startCapture((response) => {
+            if (response && response.result) {
                 callback(response.data);
-            },
-            onFailure() {
+            } else {
                 callback(false);
-            },
-            onError() {
-                callback(false);
-            },
+            }
         });
     },
 
@@ -581,21 +524,21 @@ const PbxApi = {
      * @param {function} callback - The callback function to be called after starting the logs collection.
      *                              It will receive the response data or `false` in case of failure.
      * @returns {void}
+     * @deprecated Use SyslogAPI.prepareArchive() instead
      */
     SyslogPrepareLog(callback) {
-        $.api({
-            url: PbxApi.syslogPrepareLog,
-            on: 'now',
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
+        console.error('PbxApi.SyslogPrepareLog is deprecated. Use SyslogAPI.prepareArchive() instead.');
+        if (typeof SyslogAPI === 'undefined') {
+            console.error('SyslogAPI is not loaded. Make sure syslogAPI.js is included.');
+            callback(false);
+            return;
+        }
+        return SyslogAPI.prepareArchive((response) => {
+            if (response && response.result) {
                 callback(response.data);
-            },
-            onFailure() {
+            } else {
                 callback(false);
-            },
-            onError() {
-                callback(false);
-            },
+            }
         });
     },
 
@@ -605,22 +548,22 @@ const PbxApi = {
      * @param {function} callback - The callback function to be called after stopping the logs capture.
      *                              It will receive the response data or `false` in case of failure.
      * @returns {void}
+     * @deprecated Use SyslogAPI.stopCapture() instead
      */
     SyslogStopLogsCapture(callback) {
         sessionStorage.setItem('LogsCaptureStatus', 'stopped');
-        $.api({
-            url: PbxApi.syslogStopLogsCapture,
-            on: 'now',
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
+        console.error('PbxApi.SyslogStopLogsCapture is deprecated. Use SyslogAPI.stopCapture() instead.');
+        if (typeof SyslogAPI === 'undefined') {
+            console.error('SyslogAPI is not loaded. Make sure syslogAPI.js is included.');
+            callback(false);
+            return;
+        }
+        return SyslogAPI.stopCapture((response) => {
+            if (response && response.result) {
                 callback(response.data);
-            },
-            onFailure() {
+            } else {
                 callback(false);
-            },
-            onError() {
-                callback(false);
-            },
+            }
         });
     },
 
@@ -630,21 +573,21 @@ const PbxApi = {
      * @param {function} callback - The callback function to be called after retrieving the list of log files.
      *                              It will receive the response data or `false` in case of failure.
      * @returns {void}
+     * @deprecated Use SyslogAPI.getLogsList() instead
      */
     SyslogGetLogsList(callback) {
-        $.api({
-            url: PbxApi.syslogGetLogsList,
-            on: 'now',
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
+        console.error('PbxApi.SyslogGetLogsList is deprecated. Use SyslogAPI.getLogsList() instead.');
+        if (typeof SyslogAPI === 'undefined') {
+            console.error('SyslogAPI is not loaded. Make sure syslogAPI.js is included.');
+            callback(false);
+            return;
+        }
+        return SyslogAPI.getLogsList((response) => {
+            if (response && response.result) {
                 callback(response.data);
-            },
-            onFailure() {
+            } else {
                 callback(false);
-            },
-            onError() {
-                callback(false);
-            },
+            }
         });
     },
 
@@ -659,28 +602,21 @@ const PbxApi = {
      * @param {function} callback - The callback function to be called after retrieving the log file strings.
      *                              It will receive the response data or the error response.
      * @returns {void}
+     * @deprecated Use SyslogAPI.getLogFromFile() instead
      */
     SyslogGetLogFromFile(params, callback) {
-        $.api({
-            url: PbxApi.syslogGetLogFromFile,
-            on: 'now',
-            method: 'POST',
-            data: {
-                filename: params.filename,
-                filter: params.filter,
-                lines: params.lines,
-                offset: params.offset
-            },
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
+        console.error('PbxApi.SyslogGetLogFromFile is deprecated. Use SyslogAPI.getLogFromFile() instead.');
+        if (typeof SyslogAPI === 'undefined') {
+            console.error('SyslogAPI is not loaded. Make sure syslogAPI.js is included.');
+            callback(false);
+            return;
+        }
+        return SyslogAPI.getLogFromFile(params, (response) => {
+            if (response && response.result) {
                 callback(response.data);
-            },
-            onFailure(response) {
+            } else {
                 callback(response);
-            },
-            onError(response) {
-                callback(response);
-            },
+            }
         });
     },
 
@@ -691,23 +627,21 @@ const PbxApi = {
      * @param {function} callback - The callback function to be called after downloading the log file.
      *                              It will receive the response data or `false` in case of failure.
      * @returns {void}
+     * @deprecated Use SyslogAPI.downloadLogFile() instead
      */
     SyslogDownloadLogFile(filename, callback) {
-        $.api({
-            url: PbxApi.syslogDownloadLogFile,
-            on: 'now',
-            method: 'POST',
-            data: {filename, archive: true},
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
+        console.error('PbxApi.SyslogDownloadLogFile is deprecated. Use SyslogAPI.downloadLogFile() instead.');
+        if (typeof SyslogAPI === 'undefined') {
+            console.error('SyslogAPI is not loaded. Make sure syslogAPI.js is included.');
+            callback(false);
+            return;
+        }
+        return SyslogAPI.downloadLogFile(filename, true, (response) => {
+            if (response && response.result) {
                 callback(response.data);
-            },
-            onFailure(response) {
+            } else {
                 callback(false);
-            },
-            onError(response) {
-                callback(false);
-            },
+            }
         });
     },
 
@@ -718,24 +652,16 @@ const PbxApi = {
      * @param {function} callback - The callback function to be called after erase the log file.
      *
      * @returns {void}
+     * @deprecated Use SyslogAPI.eraseFile() instead
      */
     SyslogEraseFile(filename, callback) {
-        $.api({
-            url: PbxApi.syslogEraseFile,
-            on: 'now',
-            method: 'POST',
-            data: {filename},
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response);
-            },
-            onFailure(response) {
-                callback(response);
-            },
-            onError(response) {
-                callback(false);
-            },
-        });
+        console.error('PbxApi.SyslogEraseFile is deprecated. Use SyslogAPI.eraseFile() instead.');
+        if (typeof SyslogAPI === 'undefined') {
+            console.error('SyslogAPI is not loaded. Make sure syslogAPI.js is included.');
+            callback(false);
+            return;
+        }
+        return SyslogAPI.eraseFile(filename, callback);
     },
 
     /**
@@ -746,23 +672,21 @@ const PbxApi = {
      * @param {function} callback - The callback function to be called after requesting the logs archive.
      *                              It will receive the response data or the error response.
      * @returns {void}
+     * @deprecated Use SyslogAPI.downloadArchive() instead
      */
     SyslogDownloadLogsArchive(filename, callback) {
-        $.api({
-            url: PbxApi.syslogDownloadLogsArchive,
-            on: 'now',
-            method: 'POST',
-            data: {filename},
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
+        console.error('PbxApi.SyslogDownloadLogsArchive is deprecated. Use SyslogAPI.downloadArchive() instead.');
+        if (typeof SyslogAPI === 'undefined') {
+            console.error('SyslogAPI is not loaded. Make sure syslogAPI.js is included.');
+            callback(false);
+            return;
+        }
+        return SyslogAPI.downloadArchive(filename, (response) => {
+            if (response && response.result) {
                 callback(response.data);
-            },
-            onFailure(response) {
+            } else {
                 callback(response);
-            },
-            onError(response) {
-                callback(response);
-            },
+            }
         });
     },
 
