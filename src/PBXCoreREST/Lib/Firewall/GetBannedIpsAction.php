@@ -31,7 +31,7 @@ use Phalcon\Di\Injectable;
  *
  * @package MikoPBX\PBXCoreREST\Lib\Firewall
  */
-class GetBannedIpAction extends Injectable
+class GetBannedIpsAction extends Injectable
 {
     /**
      * Retrieve a list of banned IP addresses or get data for a specific IP address.

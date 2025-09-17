@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl,globalTranslate, Form, firewallTooltips */
+/* global globalRootUrl,globalTranslate, Form, firewallTooltips, FirewallAPI, FormElements, UserMessage */
 
 /**
  * The firewall object contains methods and variables for managing the Firewall form
@@ -29,6 +29,18 @@ const firewall = {
      * @type {jQuery}
      */
     $formObj: $('#firewall-form'),
+    
+    /**
+     * Firewall record ID.
+     * @type {string}
+     */
+    recordId: '',
+    
+    /**
+     * Firewall data from API.
+     * @type {Object}
+     */
+    firewallData: null,
 
     /**
      * Validation rules for the form fields before submission.
@@ -58,14 +70,126 @@ const firewall = {
 
     // Initialization function to set up form behavior
     initialize() {
-        $('#firewall-form .rules,#firewall-form .checkbox').checkbox();
-        $('#firewall-form .dropdown').dropdown();
-
+        // Initialize global variables for tooltips and Docker detection
+        // These will be updated when data is loaded from API
+        window.servicePortInfo = {};
+        window.serviceNameMapping = {};
+        window.isDocker = false;
+        window.dockerSupportedServices = [];
+        window.currentNetwork = '';
+        window.currentSubnet = '';
+        
+        // Get record ID from URL or form
+        const urlParts = window.location.pathname.split('/');
+        const lastSegment = urlParts[urlParts.length - 1] || '';
+        
+        // Check if the last segment is 'modify' (new record) or an actual ID
+        if (lastSegment === 'modify' || lastSegment === '') {
+            firewall.recordId = '';
+        } else {
+            firewall.recordId = lastSegment;
+        }
+        
+        // Initialize Form first to enable form methods
         firewall.initializeForm();
-        firewall.initializeTooltips();
-        firewall.initializeDockerLimitedCheckboxes();
+        
+        // Load firewall data from API
+        firewall.loadFirewallData();
     },
 
+    /**
+     * Load firewall data from API.
+     * Unified method for both new and existing records.
+     * API returns defaults for new records when ID is empty.
+     */
+    loadFirewallData() {
+        firewall.$formObj.addClass('loading');
+        
+        // Always call API - it returns defaults for new records (when ID is empty)
+        FirewallAPI.getRecord(firewall.recordId || '', (response) => {
+            firewall.$formObj.removeClass('loading');
+            
+            if (!response || !response.result) {
+                // Show error and stop
+                UserMessage.showError(globalTranslate.fw_ErrorLoadingRecord || 'Error loading firewall rule');
+                return;
+            }
+            
+            firewall.firewallData = response.data;
+            
+            // Populate form and initialize elements
+            firewall.populateForm(response.data);
+            
+            // Initialize UI elements after data is loaded
+            firewall.initializeUIElements();
+            firewall.initializeTooltips();
+            firewall.initializeDockerLimitedCheckboxes();
+        });
+    },
+    
+    /**
+     * Populate form with firewall data.
+     * @param {Object} data - Firewall data.
+     */
+    populateForm(data) {
+        // Prepare form data object with all fields
+        const formData = {
+            id: data.id,
+            network: data.network,
+            subnet: data.subnet,
+            description: data.description,
+            newer_block_ip: data.newer_block_ip,
+            local_network: data.local_network
+        };
+        
+        // Add rule checkboxes to form data
+        if (data.rules && typeof data.rules === 'object') {
+            Object.keys(data.rules).forEach(category => {
+                const fieldName = `rule_${category}`;
+                // Convert action boolean to checkbox value
+                formData[fieldName] = data.rules[category].action === true;
+            });
+        }
+        
+        // Use unified silent population approach
+        Form.populateFormSilently(formData, {
+            afterPopulate: (populatedData) => {
+                // Update window variables for tooltips
+                window.currentNetwork = data.network;
+                window.currentSubnet = data.subnet;
+                window.isDocker = data.isDocker || false;
+                window.dockerSupportedServices = data.dockerSupportedServices || [];
+                
+                // Build service port info and name mapping from rules
+                window.servicePortInfo = {};
+                window.serviceNameMapping = {};
+                if (data.rules && typeof data.rules === 'object') {
+                    Object.keys(data.rules).forEach(category => {
+                        const rule = data.rules[category];
+                        window.servicePortInfo[category] = rule.ports || [];
+                        // Map display name to category key
+                        window.serviceNameMapping[rule.name] = category;
+                    });
+                }
+            }
+        });
+    },
+    
+    /**
+     * Initialize UI elements.
+     */
+    initializeUIElements() {
+        // Initialize checkboxes including rules
+        $('#firewall-form .checkbox').checkbox();
+        $('#firewall-form .rules').checkbox();
+        
+        // Initialize dropdowns
+        $('#firewall-form .dropdown').dropdown();
+        
+        // Initialize input mask for network field (IP address)
+        $('input[name="network"]').inputmask({alias: 'ip', 'placeholder': '_'});
+    },
+    
     /**
      * Callback function to be called before the form is sent
      * @param {Object} settings - The current settings of the form
@@ -73,7 +197,26 @@ const firewall = {
      */
     cbBeforeSendForm(settings) {
         const result = settings;
-        result.data = firewall.$formObj.form('get values');
+        const formData = result.data || firewall.$formObj.form('get values');
+        
+        // Prepare rules data for API
+        // Checkbox values will already be boolean thanks to convertCheckboxesToBool
+        const rules = {};
+        Object.keys(formData).forEach(key => {
+            if (key.startsWith('rule_')) {
+                const category = key.replace('rule_', '');
+                // Send as boolean - backend will convert to allow/block
+                rules[category] = formData[key] === true;
+                delete formData[key];
+            }
+        });
+        
+        // Add rules to formData
+        formData.rules = rules;
+        
+        // newer_block_ip and local_network are already boolean thanks to convertCheckboxesToBool
+        
+        result.data = formData;
         return result;
     },
 
@@ -88,11 +231,30 @@ const firewall = {
      * Initialize the form with custom settings
      */
     initializeForm() {
+        // Configure Form.js
         Form.$formObj = firewall.$formObj;
-        Form.url = `${globalRootUrl}firewall/save`; // Form submission URL
-        Form.validateRules = firewall.validateRules; // Form validation rules
-        Form.cbBeforeSendForm = firewall.cbBeforeSendForm; // Callback before form is sent
-        Form.cbAfterSendForm = firewall.cbAfterSendForm; // Callback after form is sent
+        Form.url = '#'; // Not used with REST API
+        Form.validateRules = firewall.validateRules;
+        Form.cbBeforeSendForm = firewall.cbBeforeSendForm;
+        Form.cbAfterSendForm = firewall.cbAfterSendForm;
+        
+        // Enable checkbox to boolean conversion
+        Form.convertCheckboxesToBool = true;
+        
+        // Setup REST API
+        Form.apiSettings.enabled = true;
+        Form.apiSettings.apiObject = FirewallAPI;
+        Form.apiSettings.saveMethod = 'saveRecord';
+        
+        // Important settings for correct save modes operation
+        Form.afterSubmitIndexUrl = `${globalRootUrl}firewall/index/`;
+        Form.afterSubmitModifyUrl = `${globalRootUrl}firewall/modify/`;
+        
+        // Initialize Form with all standard features:
+        // - Dirty checking (change tracking)
+        // - Dropdown submit (SaveSettings, SaveSettingsAndAddNew, SaveSettingsAndExit)
+        // - Form validation
+        // - AJAX response handling
         Form.initialize();
     },
     

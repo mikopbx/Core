@@ -29,13 +29,14 @@
             <div class="field">
                 <div class="ui toggle checkbox rules {% if isLimited %}docker-limited-checkbox{% endif %}">
                     <input type="checkbox"
-                           name="rule_{{ name|upper }}" 
+                           id="rule_{{ name|upper }}"
+                           name="rule_{{ name|upper }}"
                            {% if isLimited or value['action']=='allow' %} checked {% endif %}
                            {% if isLimited %} disabled {% endif %}
                            tabindex="0" class="hidden">
-                    <label>
+                    <label for="rule_{{ name|upper }}">
                         {{ t._('fw_'~name|lower~'Description') }}
-                        <i class="{% if isLimited %}yellow exclamation triangle{% else %}small info circle{% endif %} icon service-info-icon" 
+                        <i class="{% if isLimited %}yellow exclamation triangle{% else %}small info circle{% endif %} icon service-info-icon"
                            data-service="{{ name }}"
                            data-action="{{ value['action'] }}"
                            {% if isLimited %}data-limited="true"{% endif %}></i>
@@ -49,9 +50,9 @@
 <div class="field">
     <div class="ui segment">
         <div class="ui toggle checkbox rules">
-            <label>
+            <label for="local_network">
                 {{ t._('fw_ItIsLocalNetwork') }}
-                <i class="small info circle icon special-checkbox-info" 
+                <i class="small info circle icon special-checkbox-info"
                    data-type="local_network"></i>
             </label>
             {{ form.render('local_network') }}
@@ -61,9 +62,9 @@
 <div class="field">
     <div class="ui segment">
         <div class="ui toggle checkbox rules">
-            <label>
+            <label for="newer_block_ip">
                 {{ t._('fw_NewerBlockIp') }}
-                <i class="small info circle icon special-checkbox-info" 
+                <i class="small info circle icon special-checkbox-info"
                    data-type="newer_block_ip"></i>
             </label>
             {{ form.render('newer_block_ip') }}
@@ -75,12 +76,3 @@
 
 {{ partial("partials/submitbutton",['indexurl':'firewall/index/']) }}
 {{ close('form') }}
-
-<script>
-    // Pass service port information and settings to JavaScript
-    window.servicePortInfo = {{ servicePortInfo }};
-    window.isDocker = {{ isDocker ? 'true' : 'false' }};
-    window.dockerSupportedServices = {{ dockerSupportedServices | json_encode }};
-    window.currentNetwork = '{{ network }}';
-    window.currentSubnet = '{{ subnet }}';
-</script>

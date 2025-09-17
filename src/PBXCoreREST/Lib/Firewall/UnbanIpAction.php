@@ -33,7 +33,7 @@ use Phalcon\Di\Injectable;
  *
  * @package MikoPBX\PBXCoreREST\Lib\Firewall
  */
-class Fail2BanUnbanAction extends Injectable
+class UnbanIpAction extends Injectable
 {
     /**
      * Remove an IP address from the fail2ban ban list.

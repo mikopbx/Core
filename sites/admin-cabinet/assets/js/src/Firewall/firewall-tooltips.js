@@ -176,7 +176,22 @@ const firewallTooltips = {
             };
         }
         
-        $element.popup(settings);
+        // Check if element is an icon inside a label (for checkbox toggle prevention)
+        if ($element.is('.special-checkbox-info, .service-info-icon') && $element.closest('label').length > 0) {
+            // Use manual control for icons inside labels
+            settings.on = 'manual';
+            $element.popup(settings);
+
+            // Add click handler to show popup and prevent checkbox toggle
+            $element.off('click.popup-trigger').on('click.popup-trigger', function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+                $(this).popup('toggle');
+            });
+        } else {
+            // Regular popup initialization
+            $element.popup(settings);
+        }
     },
     
     /**

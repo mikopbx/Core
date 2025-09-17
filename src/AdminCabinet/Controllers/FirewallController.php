@@ -21,9 +21,7 @@
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\FirewallEditForm;
-use MikoPBX\AdminCabinet\Library\Cidr;
-use MikoPBX\Common\Models\{FirewallRules, LanInterfaces, NetworkFilters, PbxSettings};
-use MikoPBX\Core\System\Util;
+use MikoPBX\Common\Models\NetworkFilters;
 
 class FirewallController extends BaseController
 {
@@ -32,157 +30,8 @@ class FirewallController extends BaseController
      */
     public function indexAction(): void
     {
-        $calculator        = new Cidr();
-        $localAddresses    = [];
-        $localAddresses[]  = '0.0.0.0/0';
-        $conditions        = 'disabled=0 AND internet=0'; // We need only local networks here
-        $networkInterfaces = LanInterfaces::find($conditions);
-        foreach ($networkInterfaces as $interface) {
-            if (empty($interface->ipaddr)) {
-                continue;
-            }
-
-            if (!str_contains($interface->subnet, '.')) {
-                $localAddresses[] = $calculator->cidr2network(
-                    $interface->ipaddr,
-                    intval($interface->subnet)
-                ) . '/' . $interface->subnet;
-            } else {
-                $cidr             = $calculator->netmask2cidr($interface->subnet);
-                $localAddresses[] = $calculator->cidr2network($interface->ipaddr, $cidr) . '/' . $cidr;
-            }
-        }
-
-        $defaultRules             = FirewallRules::getDefaultRules();
-        $networksTable            = [];
-        $networkFilters           = NetworkFilters::find();
-        $networkFiltersStoredInDB = ($networkFilters->count() > 0);
-        foreach ($networkFilters as $filter) {
-            $networksTable[$filter->id]['id']          = $filter->id;
-            $networksTable[$filter->id]['description'] = $filter->description;
-
-            $permitParts = explode('/', $filter->permit);
-
-            if (!str_contains($permitParts[1], '.')) {
-                $networksTable[$filter->id]['network'] = $calculator->cidr2network(
-                    $permitParts[0],
-                    intval($permitParts[1])
-                ) . '/' . $permitParts[1];
-            } else {
-                $cidr                                  = $calculator->netmask2cidr($permitParts[1]);
-                $networksTable[$filter->id]['network'] = $calculator->cidr2network(
-                    $permitParts[0],
-                    $cidr
-                ) . '/' . $cidr;
-            }
-            $networksTable[$filter->id]['permanent'] = false;
-
-
-            // Fill the default walues
-            foreach ($defaultRules as $key => $value) {
-                $networksTable[$filter->id]['category'][$key] = [
-                    'name'   => empty($value['shortName']) ? $key : $value['shortName'],
-                    'action' => $value['action'],
-                ];
-            }
-
-            // Fill previous saved values
-            $firewallRules = $filter->FirewallRules;
-            foreach ($firewallRules as $rule) {
-                $networksTable[$filter->id]['category'][$rule->category]['action'] = $rule->action;
-                if (! array_key_exists('name', $networksTable[$filter->id]['category'][$rule->category])) {
-                    $networksTable[$filter->id]['category'][$rule->category]['name'] = $rule->category;
-                }
-            }
-        }
-
-        // Add default filters
-        foreach ($localAddresses as $localAddress) {
-            $existsPersistentRecord = false;
-            foreach ($networksTable as $key => $value) {
-                if ($value['network'] === $localAddress) {
-                    $networksTable[$key]['permanent'] = true;
-                    $existsPersistentRecord           = true;
-                    break;
-                }
-            }
-            if (! $existsPersistentRecord) {
-                foreach ($defaultRules as $key => $value) {
-                    $networksTableNewRecord['category'][$key] = [
-                        'name'   => $key,
-                        'action' => $networkFiltersStoredInDB ? 'block' : $value['action'],
-                    ];
-                }
-                $networksTableNewRecord['id']        = '';
-                $networksTableNewRecord['permanent'] = true;
-                $networksTableNewRecord['network']   = $localAddress;
-                if ($localAddress === '0.0.0.0/0') {
-                    $networksTableNewRecord['description'] = $this->translation->_('fw_AllNetworksRule');
-                } else {
-                    $networksTableNewRecord['description'] = $this->translation->_('fw_LocalNetworksRule');
-                }
-                $networksTable[] = $networksTableNewRecord;
-            }
-        }
-
-        usort($networksTable, [__CLASS__, 'sortArrayByNetwork']);
-
-        $this->view->rulesTable         = $networksTable;
-        $this->view->PBXFirewallEnabled = PbxSettings::getValueByKey(PbxSettings::PBX_FIREWALL_ENABLED);
-        $this->view->isDocker           = Util::isDocker();
-        
-        // Define which services are fully supported in Docker
-        // Only these services use Redis-based blocking in Docker environments
-        // WEB - HTTP/HTTPS traffic (Nginx with Lua script)
-        // AMI - Asterisk Manager Interface
-        // SIP & RTP - SIP protocol and RTP media for VoIP
-        // IAX - IAX2 protocol for VoIP
-        $this->view->dockerSupportedServices = ['WEB', 'AMI', 'SIP & RTP', 'IAX'];
-        
-        // All other services (including those added by modules) will be marked as limited
-        // This includes: AJAM, ICMP, CTI, Zabbix, and any custom services from modules
-        
-        // Get port information for all services to display in tooltips
-        $servicePortInfo = [];
-        $serviceNameMapping = []; // Map display names to categories
-        $defaultRules = FirewallRules::getDefaultRules();
-        $protectedPorts = FirewallRules::getProtectedPortSet();
-        
-        foreach ($defaultRules as $category => $categoryData) {
-            $ports = [];
-            foreach ($categoryData['rules'] as $rule) {
-                $portFrom = is_string($rule['portfrom']) && isset($protectedPorts[$rule['portfrom']]) 
-                    ? $protectedPorts[$rule['portfrom']] 
-                    : $rule['portfrom'];
-                $portTo = is_string($rule['portto']) && isset($protectedPorts[$rule['portto']]) 
-                    ? $protectedPorts[$rule['portto']] 
-                    : $rule['portto'];
-                    
-                if ($rule['protocol'] === 'icmp') {
-                    $ports[] = [
-                        'protocol' => 'ICMP'
-                    ];
-                } elseif ($portFrom == $portTo) {
-                    $ports[] = [
-                        'port' => $portFrom,
-                        'protocol' => strtoupper($rule['protocol'])
-                    ];
-                } else {
-                    $ports[] = [
-                        'range' => "$portFrom-$portTo",
-                        'protocol' => strtoupper($rule['protocol'])
-                    ];
-                }
-            }
-            $servicePortInfo[$category] = $ports;
-            
-            // Create mapping from display name to category
-            $displayName = empty($categoryData['shortName']) ? $category : $categoryData['shortName'];
-            $serviceNameMapping[$displayName] = $category;
-        }
-        
-        $this->view->servicePortInfo = json_encode($servicePortInfo);
-        $this->view->serviceNameMapping = json_encode($serviceNameMapping);
+        // All data is now loaded via REST API in JavaScript
+        // This action only renders the view
     }
 
 
@@ -193,406 +42,68 @@ class FirewallController extends BaseController
      */
     public function modifyAction(string $networkId = ''): void
     {
-        $networkFilter = NetworkFilters::findFirstById($networkId);
-        $firewallRules = FirewallRules::getDefaultRules();
-        $data          = $this->request->getPost();
-        if ($networkFilter === null) {
-            $networkFilter         = new NetworkFilters();
-            $networkFilter->permit = empty($data['permit']) ? '0.0.0.0/0' : $data['permit'];
-        } else {
-            // Fill previous saved values
-            foreach ($networkFilter->FirewallRules as $rule) {
-                $firewallRules[$rule->category]['action'] = $rule->action;
-            }
-        }
-        $permitParts = explode('/', $networkFilter->permit ?? '0.0.0.0/0');
-
-        $this->view->form          = new FirewallEditForm(
-            $networkFilter,
-            ['network' => $permitParts[0], 'subnet' => $permitParts[1]]
+        // Create empty form - data will be loaded via REST API
+        $emptyFilter = new NetworkFilters();
+        $form = new FirewallEditForm(
+            $emptyFilter,
+            ['network' => '0.0.0.0', 'subnet' => '0']
         );
-        $this->view->firewallRules = $firewallRules;
-        $this->view->represent     = $networkFilter->getRepresent();
         
-        // Pass Docker status and supported services
-        $this->view->isDocker = Util::isDocker();
+        $this->view->form = $form;
+        
+        // Get default rules structure for form generation
+        $this->view->firewallRules = \MikoPBX\Common\Models\FirewallRules::getDefaultRules();
+        $this->view->isDocker = \MikoPBX\Core\System\Util::isDocker();
         $this->view->dockerSupportedServices = ['WEB', 'AMI', 'SIP & RTP', 'IAX'];
         
-        // Get port information for tooltips
-        $servicePortInfo = [];
-        $protectedPorts = FirewallRules::getProtectedPortSet();
-        
-        foreach ($firewallRules as $category => $categoryData) {
-            $ports = [];
-            foreach ($categoryData['rules'] as $rule) {
-                $portFrom = is_string($rule['portfrom']) && isset($protectedPorts[$rule['portfrom']]) 
-                    ? $protectedPorts[$rule['portfrom']] 
-                    : $rule['portfrom'];
-                $portTo = is_string($rule['portto']) && isset($protectedPorts[$rule['portto']]) 
-                    ? $protectedPorts[$rule['portto']] 
-                    : $rule['portto'];
-                    
-                if ($rule['protocol'] === 'icmp') {
-                    $ports[] = [
-                        'protocol' => 'ICMP',
-                        'description' => $this->translation->_('fw_ICMPDescription')
-                    ];
-                } elseif ($portFrom == $portTo) {
-                    $ports[] = [
-                        'port' => $portFrom,
-                        'protocol' => strtoupper($rule['protocol']),
-                        'description' => $this->getPortDescription($category, $portFrom, $rule['protocol'])
-                    ];
-                } else {
-                    $ports[] = [
-                        'range' => "$portFrom-$portTo",
-                        'protocol' => strtoupper($rule['protocol']),
-                        'description' => $this->getPortDescription($category, "$portFrom-$portTo", $rule['protocol'])
-                    ];
-                }
-            }
-            $servicePortInfo[$category] = $ports;
-        }
-        
-        $this->view->servicePortInfo = json_encode($servicePortInfo);
-        $this->view->network = $permitParts[0];
-        $this->view->subnet = $permitParts[1];
+        // All actual data is loaded via REST API in JavaScript
     }
 
 
     /**
      * Save request from the form
+     * @deprecated Use REST API v3 instead
      */
     public function saveAction(): void
     {
-        if (! $this->request->isPost()) {
-            return;
-        }
-
-        $this->db->begin();
-        $data      = $this->request->getPost();
-        $networkId = $this->request->getPost('id');
-        // Update network filters Network Filter
-        $filterRecordId = $this->updateNetworkFilters($networkId, $data);
-        if (empty($filterRecordId)) {
-            $this->view->success = false;
-            $this->db->rollback();
-
-            return;
-        }
-
-        // If it was new entity we will reload page with new ID
-        if (empty($data['id'])) {
-            $this->view->reload = "firewall/modify/$filterRecordId";
-        }
-
-        // Update firewall rules Firewall
-        $data['id'] = $filterRecordId;
-        if (! $this->updateFirewallRules($data)) {
-            $this->view->success = false;
-            $this->db->rollback();
-
-            return;
-        }
-
-        $this->flash->success($this->translation->_('ms_SuccessfulSaved'));
-        $this->view->success = true;
-        $this->db->commit();
+        // This method is deprecated
+        // All save operations are handled via REST API v3
+        $this->forward('firewall/index');
     }
 
-    /**
-     * Fills Network Filter record
-     *
-     * @param string $networkId
-     * @param array  $data POST parameters array
-     *
-     * @return string update result
-     */
-    private function updateNetworkFilters(string $networkId, array $data): string
-    {
-        $filterRecord = NetworkFilters::findFirstById($networkId);
-        if ($filterRecord === null) {
-            $filterRecord = new NetworkFilters();
-        }
 
-        $calculator = new Cidr();
-        // Fills Network Filter record
-        foreach ($filterRecord as $name => $value) {
-            switch ($name) {
-                case 'permit':
-                    $filterRecord->$name = $calculator->cidr2network(
-                        $data['network'],
-                        intval($data['subnet'])
-                    ) . '/' . $data['subnet'];
-                    break;
-                case 'deny':
-                    $filterRecord->$name = '0.0.0.0/0';
-                    break;
-                case 'local_network':
-                case 'newer_block_ip':
-                    if (array_key_exists($name, $data) && $data[$name] === 'on') {
-                        $filterRecord->$name = 1;
-                    } else {
-                        $filterRecord->$name = 0;
-                    }
-                    break;
-                default:
-                    if (array_key_exists($name, $data)) {
-                        $filterRecord->$name = $data[$name];
-                    }
-            }
-        }
-
-        if ($filterRecord->save() === false) {
-            $errors = $filterRecord->getMessages();
-            $this->flash->error(implode('<br>', $errors));
-
-            return '';
-        }
-
-        return $filterRecord->toArray()['id'];
-    }
-
-    /**
-     * Updates firewall rules
-     *
-     * @param array $data POST parameters array
-     *
-     * @return bool update result
-     */
-    private function updateFirewallRules(array $data): bool
-    {
-        // Get default rules
-        $defaultRules      = FirewallRules::getDefaultRules();
-        $countDefaultRules = 0;
-        foreach ($defaultRules as $key => $value) {
-            foreach ($value['rules'] as $rule) {
-                $countDefaultRules++;
-            }
-        }
-
-        // Delete outdated records
-        $parameters        = [
-            'conditions' => 'networkfilterid=:networkfilterid:',
-            'bind'       => [
-                'networkfilterid' => $data['id'],
-            ],
-        ];
-        $firewallRules     = FirewallRules::find($parameters);
-        $currentRulesCount = $firewallRules->count();
-
-        $needUpdateFirewallRules = false;
-        while ($countDefaultRules < $currentRulesCount) {
-            $firewallRules->next();
-            if ($firewallRules->current()->delete() === false) {
-                $errors = $firewallRules->getMessages();
-                $this->flash->error(implode('<br>', $errors));
-                $this->view->success = false;
-
-                return false;
-            }
-            $currentRulesCount--;
-            $needUpdateFirewallRules = true;
-        }
-
-        if ($needUpdateFirewallRules) {
-            $firewallRules = FirewallRules::find($parameters);
-        }
-        $rowId = 0;
-        foreach ($defaultRules as $key => $value) {
-            foreach ($value['rules'] as $rule) {
-                if ($firewallRules->offsetExists($rowId)) {
-                    $newRule = $firewallRules->offsetGet($rowId);
-                } else {
-                    $newRule = new FirewallRules();
-                }
-                $newRule->networkfilterid = $data['id'];
-                $newRule->protocol        = $rule['protocol'];
-                $newRule->portfrom        = $rule['portfrom'];
-                $newRule->portto          = $rule['portto'];
-                $newRule->category        = $key;
-                $newRule->portFromKey     = $rule['portFromKey'];
-                $newRule->portToKey       = $rule['portToKey'];
-
-                if (array_key_exists('rule_' . $key, $data) && $data['rule_' . $key]) {
-                    $newRule->action = $data['rule_' . $key] === 'on' ? 'allow' : 'block';
-                } else {
-                    $newRule->action = 'block';
-                }
-                $newRule->description = "$newRule->action connection from network: {$data['network']} / {$data['subnet']}";
-
-                if ($newRule->save() === false) {
-                    $errors = $newRule->getMessages();
-                    $this->flash->error(implode('<br>', $errors));
-                    $this->view->success = false;
-
-                    return false;
-                }
-                $rowId++;
-            }
-        }
-
-        return true;
-    }
 
     /**
      * Deletes NetworkFilters record
-     *
-     * @param string $networkId
+     * @deprecated Use REST API v3 instead
      */
     public function deleteAction(string $networkId = ''): void
     {
-        $this->db->begin();
-        $filterRecord = NetworkFilters::findFirstById($networkId);
-
-        $errors = null;
-        if ($filterRecord !== null && ! $filterRecord->delete()) {
-            $errors = $filterRecord->getMessages();
-        }
-
-        if ($errors) {
-            $this->flash->warning(implode('<br>', $errors));
-            $this->db->rollback();
-        } else {
-            $this->db->commit();
-        }
-
+        // This method is deprecated
+        // All delete operations are handled via REST API v3
         $this->forward('firewall/index');
     }
 
     /**
      * Enables Fail2Ban and Firewall
+     * @deprecated Use REST API v3 instead
      */
     public function enableAction(): void
     {
-        $fail2BanEnabled = PbxSettings::findFirstByKey(PbxSettings::PBX_FAIL2BAN_ENABLED);
-        if ($fail2BanEnabled === null) {
-            $fail2BanEnabled      = new PbxSettings();
-            $fail2BanEnabled->key = PbxSettings::PBX_FAIL2BAN_ENABLED;
-        }
-        $fail2BanEnabled->value = '1';
-        if ($fail2BanEnabled->save() === false) {
-            $errors = $fail2BanEnabled->getMessages();
-            $this->flash->warning(implode('<br>', $errors));
-            $this->view->success = false;
-
-            return;
-        }
-
-        $firewallEnabled = PbxSettings::findFirstByKey(PbxSettings::PBX_FIREWALL_ENABLED);
-        if ($firewallEnabled === null) {
-            $firewallEnabled      = new PbxSettings();
-            $firewallEnabled->key = PbxSettings::PBX_FAIL2BAN_ENABLED;
-        }
-        $firewallEnabled->value = '1';
-        if ($firewallEnabled->save() === false) {
-            $errors = $firewallEnabled->getMessages();
-            $this->flash->warning(implode('<br>', $errors));
-            $this->view->success = false;
-
-            return;
-        }
-        $this->view->success = true;
+        // This method is deprecated
+        // All enable operations are handled via REST API v3
+        $this->view->success = false;
     }
 
     /**
      * Disables Fail2Ban and Firewall
+     * @deprecated Use REST API v3 instead
      */
     public function disableAction(): void
     {
-        $fail2BanEnabled = PbxSettings::findFirstByKey(PbxSettings::PBX_FAIL2BAN_ENABLED);
-        if ($fail2BanEnabled === null) {
-            $fail2BanEnabled      = new PbxSettings();
-            $fail2BanEnabled->key = PbxSettings::PBX_FAIL2BAN_ENABLED;
-        }
-        $fail2BanEnabled->value = '0';
-        if ($fail2BanEnabled->save() === false) {
-            $errors = $fail2BanEnabled->getMessages();
-            $this->flash->warning(implode('<br>', $errors));
-            $this->view->success = false;
-
-            return;
-        }
-
-        $firewallEnabled = PbxSettings::findFirstByKey(PbxSettings::PBX_FIREWALL_ENABLED);
-        if ($firewallEnabled === null) {
-            $firewallEnabled      = new PbxSettings();
-            $firewallEnabled->key = PbxSettings::PBX_FAIL2BAN_ENABLED;
-        }
-        $firewallEnabled->value = '0';
-        if ($firewallEnabled->save() === false) {
-            $errors = $firewallEnabled->getMessages();
-            $this->flash->warning(implode('<br>', $errors));
-            $this->view->success = false;
-
-            return;
-        }
-        $this->view->success = true;
+        // This method is deprecated
+        // All disable operations are handled via REST API v3
+        $this->view->success = false;
     }
 
-    /**
-     * Compare two network entries for sorting
-     *
-     * @param array $a First network entry
-     * @param array $b Second network entry
-     * @return int Returns -1 if $a should be placed before $b,
-     *             1 if $a should be placed after $b,
-     *             0 if they are considered equal
-     */
-    private function sortArrayByNetwork(array $a, array $b): int
-    {
-        // If second entry is permanent and first is not 0.0.0.0/0
-        if ($b['permanent'] && $a['network'] !== '0.0.0.0/0') {
-            return 1; // Move $a after $b
-        }
-
-        // If second entry is 0.0.0.0/0
-        if ($b['network'] === '0.0.0.0/0') {
-            return 1; // Move $a after $b
-        }
-
-        return -1; // In all other cases, move $a before $b
-    }
-    
-    /**
-     * Get port description based on service category and port
-     *
-     * @param string $category Service category
-     * @param string $port Port number or range
-     * @param string $protocol Protocol type
-     * @return string Port description
-     */
-    private function getPortDescription(string $category, string $port, string $protocol): string
-    {
-        $descriptions = [
-            'SIP' => [
-                '5060' => 'fw_PortDescSIPSignaling',
-                '5061' => 'fw_PortDescSIPTLS',
-                '10000-20000' => 'fw_PortDescRTPMedia'
-            ],
-            'IAX' => [
-                '4569' => 'fw_PortDescIAXProtocol'
-            ],
-            'WEB' => [
-                '80' => 'fw_PortDescHTTP',
-                '443' => 'fw_PortDescHTTPS'
-            ],
-            'SSH' => [
-                '22' => 'fw_PortDescSSH'
-            ],
-            'AMI' => [
-                '5038' => 'fw_PortDescAMI'
-            ],
-            'AJAM' => [
-                '8088' => 'fw_PortDescAJAMHTTP',
-                '8089' => 'fw_PortDescAJAMHTTPS'
-            ]
-        ];
-        
-        if (isset($descriptions[$category][$port])) {
-            return $this->translation->_($descriptions[$category][$port]);
-        }
-        
-        return '';
-    }
 }

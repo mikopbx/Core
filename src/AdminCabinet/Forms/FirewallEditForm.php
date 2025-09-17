@@ -23,7 +23,6 @@ namespace MikoPBX\AdminCabinet\Forms;
 use MikoPBX\AdminCabinet\Library\Cidr;
 use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Hidden;
-use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
 
 /**
@@ -40,25 +39,28 @@ class FirewallEditForm extends BaseForm
 
         $this->add(new Hidden('id'));
         $this->add(new Text('description'));
-        $this->add(new Text('network', ['value' => $options['network']]));
+        $this->add(new Text('network', [
+            'value' => $options['network'],
+            'data-inputmask' => "'alias': 'ip'",
+            'placeholder' => '192.168.1.0'
+        ]));
 
-        // Makes subnet select
+        // Makes subnet dropdown
         $arrMasks = Cidr::getNetMasks();
-
-        $mask = new Select(
+        
+        // Use SemanticUIDropdown for proper REST API compatibility
+        // getNetMasks() already returns array in correct format: ['0' => '0 - 0.0.0.0', ...]
+        $this->addSemanticUIDropdown(
             'subnet',
             $arrMasks,
+            $options['subnet'],
             [
-                'using' => [
-                    'id',
-                    'name',
-                ],
-                'useEmpty' => false,
-                'value' => $options['subnet'],
                 'class' => 'ui selection dropdown ipaddress',
+                'placeholder' => '',
+                'clearable' => false,
+                'forceSelection' => true
             ]
         );
-        $this->add($mask);
 
         // Newer_block_ip
         $this->addCheckBox(

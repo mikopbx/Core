@@ -150,20 +150,20 @@ const TooltipBuilder = {
             hideDelay: 100,
             variation: 'flowing'
         };
-        
+
         const settings = Object.assign({}, defaults, options);
-        
+
         // Initialize popup for each icon
         $(settings.selector).each((index, element) => {
             const $icon = $(element);
             const fieldName = $icon.data('field');
             const tooltipData = tooltipConfigs[fieldName];
-            
+
             if (tooltipData) {
-                const content = typeof tooltipData === 'string' ? 
-                    tooltipData : 
+                const content = typeof tooltipData === 'string' ?
+                    tooltipData :
                     this.buildContent(tooltipData);
-                
+
                 $icon.popup({
                     html: content,
                     position: settings.position,
@@ -172,10 +172,23 @@ const TooltipBuilder = {
                         show: settings.showDelay,
                         hide: settings.hideDelay
                     },
-                    variation: settings.variation
+                    variation: settings.variation,
+                    on: 'manual'  // Manual control for better handling inside labels
+                });
+
+                // Add click handler for manual popup control
+                $icon.off('click.popup-trigger').on('click.popup-trigger', function(e) {
+                    // Stop propagation to prevent label from triggering checkbox
+                    e.stopPropagation();
+                    e.preventDefault();
+
+                    // Show the popup
+                    $(this).popup('toggle');
                 });
             }
         });
+
+        // Note: Click prevention is handled individually for each icon in the loop above
     },
     
     /**
@@ -198,22 +211,22 @@ const TooltipBuilder = {
     
     /**
      * Update tooltip content for a specific field
-     * 
+     *
      * @param {string} fieldName - Field name to update
      * @param {Object|string} tooltipData - New tooltip data or HTML content
      * @param {string} selector - jQuery selector for finding the field icon
      */
     update(fieldName, tooltipData, selector = '.field-info-icon') {
         const $icon = $(`${selector}[data-field="${fieldName}"]`);
-        
+
         if ($icon.length) {
-            const content = typeof tooltipData === 'string' ? 
-                tooltipData : 
+            const content = typeof tooltipData === 'string' ?
+                tooltipData :
                 this.buildContent(tooltipData);
-            
+
             // Destroy existing popup
             $icon.popup('destroy');
-            
+
             // Create new popup with updated content
             $icon.popup({
                 html: content,
@@ -223,13 +236,40 @@ const TooltipBuilder = {
                     show: 300,
                     hide: 100
                 },
-                variation: 'flowing'
+                variation: 'flowing',
+                on: 'manual'
+            });
+
+            // Add click handler for manual popup control
+            $icon.off('click.popup-trigger').on('click.popup-trigger', function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+                $(this).popup('toggle');
             });
         }
-    }
+    },
+
+
 };
 
 // Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = TooltipBuilder;
 }
+
+// Initialize global click prevention for all tooltip icons
+// This will work for dynamically added elements too
+$(document).ready(() => {
+    // Use event delegation for all current and future tooltip icon elements
+    // Supports multiple icon classes: field-info-icon, special-checkbox-info, service-info-icon
+    const tooltipIconSelector = '.field-info-icon, .special-checkbox-info, .service-info-icon';
+
+    $(document).off('click.global-tooltip').on('click.global-tooltip', tooltipIconSelector, function(e) {
+        const $label = $(this).closest('label');
+        if ($label.length > 0) {
+            // Stop propagation to prevent label from toggling checkbox
+            e.stopPropagation();
+            e.preventDefault();
+        }
+    });
+});
