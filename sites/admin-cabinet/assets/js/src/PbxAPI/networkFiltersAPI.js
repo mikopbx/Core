@@ -42,12 +42,15 @@ const NetworkFiltersAPI = {
      * @param {Function} callback - Callback function that receives data array or false on error
      */
     getNetworksForSelect(callback) {
-        const url = `/pbxcore/api/v2/network-filters/getNetworksForSelect`;
+        const url = `/pbxcore/api/v3/network-filters:getForSelect`;
         
         $.api({
             url: url,
             on: 'now',
             method: 'GET',
+            data: {
+                categories: ['SIP', 'IAX', 'AMI', 'API']
+            },
             successTest: PbxApi.successTest,
             onSuccess(response) {
                 callback(response.data);
@@ -68,16 +71,23 @@ const NetworkFiltersAPI = {
      * @param {Function} callback - Callback function that receives data array or false on error
      * @param {Array|string} categories - Filter categories: 'SIP', 'IAX', 'AMI', 'API' (default: ['SIP'])
      */
-    getForSelect(callback, categories = ['SIP']) {
-        const url = `/pbxcore/api/v2/network-filters/getForSelect`;
+    getForSelect(callback, categories = ['SIP'], includeLocalhost = false) {
+        const url = `/pbxcore/api/v3/network-filters:getForSelect`;
+        
+        const params = {
+            categories: categories
+        };
+        
+        // Add includeLocalhost flag for AMI/API categories
+        if (includeLocalhost && (categories.includes('AMI') || categories.includes('API'))) {
+            params.includeLocalhost = true;
+        }
         
         $.api({
             url: url,
             on: 'now',
             method: 'GET',
-            data: {
-                categories: categories
-            },
+            data: params,
             successTest: PbxApi.successTest,
             onSuccess(response) {
                 callback(response.data);

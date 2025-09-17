@@ -20,10 +20,10 @@
 
 /**
  * OutOffWorkTimeAPI - REST API v3 client for out-of-work-time management
- * 
+ *
  * Provides a clean interface for time condition operations using the new RESTful API.
- * This replaces the legacy v2 API client (OutWorkTimesAPI).
- * 
+ * This is the v3 API client that replaces the legacy v2 implementation.
+ *
  * @class OutOffWorkTimeAPI
  */
 const OutOffWorkTimeAPI = new PbxApiClient({
@@ -37,7 +37,7 @@ const OutOffWorkTimeAPI = new PbxApiClient({
 
 /**
  * Change priority of multiple time conditions
- * 
+ *
  * @param {object} priorities - Map of time condition ID to new priority value
  * @param {function} callback - Callback function
  */
@@ -65,7 +65,7 @@ OutOffWorkTimeAPI.changePriorities = function(priorities, callback) {
 /**
  * Get default values for new time condition
  * This is a convenience method that wraps getRecord with null ID
- * 
+ *
  * @param {function} callback - Callback function
  */
 OutOffWorkTimeAPI.getDefault = function(callback) {

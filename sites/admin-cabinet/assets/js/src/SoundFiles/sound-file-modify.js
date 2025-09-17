@@ -16,14 +16,20 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, Form, PbxApi, sndPlayer, mergingCheckWorker */
+/* global globalRootUrl, globalTranslate, Form, PbxApi, sndPlayer, mergingCheckWorker, SoundFilesAPI, UserMessage, Config */
 
 /**
- * Object representing sound file modification functionality.
+ * Sound file modification module with REST API integration
+ * This module replaces sound-file-modify.js with REST API calls while preserving
+ * all existing functionality including file upload, audio recording, and player
  *
- * @module soundFileModify
+ * @module soundFileModifyRest
  */
-const soundFileModify = {
+const soundFileModifyRest = {
+    /**
+     * Array to store paths of files to be deleted after save
+     * @type {Array}
+     */
     trashBin: [],
 
     /**
@@ -68,7 +74,6 @@ const soundFileModify = {
      */
     $formObj: $('#sound-file-form'),
 
-
     /**
      * jQuery object for the form dropdowns.
      * @type {jQuery}
@@ -81,7 +86,7 @@ const soundFileModify = {
      * @type {object}
      */
     validateRules: {
-        description: {
+        name: {
             identifier: 'name',
             rules: [
                 {
@@ -105,33 +110,112 @@ const soundFileModify = {
      * Initializes the sound file modification functionality.
      */
     initialize() {
-        soundFileModify.$dropDowns.dropdown();
-        soundFileModify.initializeForm();
+        // Initialize dropdowns
+        soundFileModifyRest.$dropDowns.dropdown();
+        
+        // Load form data from REST API
+        soundFileModifyRest.loadFormData();
+        
+        // Initialize form validation and submission
+        soundFileModifyRest.initializeForm();
 
-        soundFileModify.$soundUploadButton.on('click', (e) => {
+        // Initialize file upload button
+        soundFileModifyRest.$soundUploadButton.on('click', (e) => {
             e.preventDefault();
             $('input:file', $(e.target).parents()).click();
         });
 
-        soundFileModify.$soundFileInput.on('change', (e) => {
+        // Handle file selection
+        soundFileModifyRest.$soundFileInput.on('change', (e) => {
             const file = e.target.files[0];
             if (file === undefined) return;
-            soundFileModify.$soundFileName.val(file.name.replace(/\.[^/.]+$/, ''));
-            soundFileModify.blob = window.URL || window.webkitURL;
-            const fileURL = soundFileModify.blob.createObjectURL(file);
+            
+            // Update name field with filename without extension
+            soundFileModifyRest.$soundFileName.val(file.name.replace(/\.[^/.]+$/, ''));
+            
+            // Create blob URL for preview
+            soundFileModifyRest.blob = window.URL || window.webkitURL;
+            const fileURL = soundFileModifyRest.blob.createObjectURL(file);
             sndPlayer.UpdateSource(fileURL);
-            PbxApi.FilesUploadFile(file, soundFileModify.cbUploadResumable);
-
+            
+            // Upload file using PbxApi (this remains the same as it uses resumable.js)
+            PbxApi.FilesUploadFile(file, soundFileModifyRest.cbUploadResumable);
         });
-        window.addEventListener('ConfigDataChanged', soundFileModify.cbOnDataChanged);
+        
+        // Listen for data changes to clear cache
+        window.addEventListener('ConfigDataChanged', soundFileModifyRest.cbOnDataChanged);
+    },
+
+    /**
+     * Load form data from REST API
+     */
+    loadFormData() {
+        const recordId = soundFileModifyRest.getRecordId();
+        
+        // Show loading state
+        soundFileModifyRest.$formObj.addClass('loading');
+        
+        SoundFilesAPI.getRecord(recordId, (response) => {
+            soundFileModifyRest.$formObj.removeClass('loading');
+            
+            if (response.result) {
+                soundFileModifyRest.populateForm(response.data);
+            } else if (recordId && recordId !== 'new') {
+                // Show error if trying to load non-existent record
+                UserMessage.showError(response.messages?.error || 'Failed to load sound file data');
+                // Redirect to index after delay
+                setTimeout(() => {
+                    window.location.href = `${globalRootUrl}sound-files/index`;
+                }, 3000);
+            }
+        });
+    },
+
+    /**
+     * Get record ID from hidden input field
+     * @returns {string} Record ID or empty string for new records
+     */
+    getRecordId() {
+        // Get record ID from hidden input set by controller
+        const recordIdValue = $('#id').val();
+
+        // Check if it's a category name (custom/moh) or actual ID
+        if (recordIdValue === 'custom' || recordIdValue === 'moh') {
+            // This is a new record with category preset
+            return '';
+        }
+
+        return recordIdValue || '';
+    },
+
+    /**
+     * Populate form with data
+     * @param {object} data - Sound file data from API
+     */
+    populateForm(data) {
+        // Use unified silent population approach
+        Form.populateFormSilently(data, {
+            afterPopulate: (formData) => {
+                // Update audio player if path exists
+                if (formData.path) {
+                    // Use new sound-files endpoint for MOH/IVR/system sounds
+                    const audioUrl = `/pbxcore/api/v3/sound-files:playback?view=${formData.path}`;
+                    sndPlayer.UpdateSource(audioUrl);
+                }
+                
+                // Save initial values for dirrity checking
+                if (Form.enableDirrity) {
+                    Form.saveInitialValues();
+                }
+            }
+        });
     },
 
     /**
      * Clears caches if data changes.
      */
     cbOnDataChanged() {
-        sessionStorage.removeItem(`${globalRootUrl}sound-files/getSoundFiles/custom`);
-        sessionStorage.removeItem(`${globalRootUrl}sound-files/getSoundFiles/moh`);
+        // Clear REST API cache if needed - handled by API layer
     },
 
     /**
@@ -144,19 +228,18 @@ const soundFileModify = {
             case 'fileSuccess':
                 const response = PbxApi.tryParseJSON(params.response);
                 if (response !== false && response.data.filename !== undefined) {
-                    soundFileModify.$soundFileName.val(params.file.fileName);
-                    soundFileModify.checkStatusFileMerging(params.response);
+                    soundFileModifyRest.$soundFileName.val(params.file.fileName);
+                    soundFileModifyRest.checkStatusFileMerging(params.response);
                 } else {
                     UserMessage.showMultiString(params, globalTranslate.sf_UploadError);
                 }
-
                 break;
             case 'uploadStart':
-                soundFileModify.$formObj.addClass('loading');
+                soundFileModifyRest.$formObj.addClass('loading');
                 break;
             case 'error':
-                soundFileModify.$submitButton.removeClass('loading');
-                soundFileModify.$formObj.removeClass('loading');
+                soundFileModifyRest.$submitButton.removeClass('loading');
+                soundFileModifyRest.$formObj.removeClass('loading');
                 UserMessage.showMultiString(params, globalTranslate.sf_UploadError);
                 break;
             default:
@@ -190,14 +273,22 @@ const soundFileModify = {
         if (filename === false) {
             UserMessage.showMultiString(`${globalTranslate.sf_UploadError}`);
         } else {
-            soundFileModify.trashBin.push(soundFileModify.$formObj.form('get value', 'path'));
-            soundFileModify.$formObj.form('set value', 'path', filename);
-            soundFileModify.$soundFileName.trigger('change');
-            // Use new sound-files endpoint for MOH/IVR/system sounds
+            // Add old file to trash bin for deletion after save
+            const oldPath = soundFileModifyRest.$formObj.form('get value', 'path');
+            if (oldPath) {
+                soundFileModifyRest.trashBin.push(oldPath);
+            }
+            
+            // Update form with new file path
+            soundFileModifyRest.$formObj.form('set value', 'path', filename);
+            soundFileModifyRest.$soundFileName.trigger('change');
+            
+            // Update player with new file using sound-files endpoint
             sndPlayer.UpdateSource(`/pbxcore/api/v3/sound-files:playback?view=${filename}`);
-            soundFileModify.$submitButton.removeClass('loading');
-            soundFileModify.$formObj.removeClass('loading');
-
+            
+            // Remove loading states
+            soundFileModifyRest.$submitButton.removeClass('loading');
+            soundFileModifyRest.$formObj.removeClass('loading');
         }
     },
 
@@ -208,7 +299,18 @@ const soundFileModify = {
      */
     cbBeforeSendForm(settings) {
         const result = settings;
-        result.data = soundFileModify.$formObj.form('get values');
+        result.data = soundFileModifyRest.$formObj.form('get values');
+
+        // Add flag to indicate if this is a new record for proper HTTP method selection
+        const currentId = result.data.id;
+        if (!currentId || currentId === '' || currentId === 'custom' || currentId === 'moh') {
+            result.data._isNew = true;
+            // Clear the ID for new records
+            if (currentId === 'custom' || currentId === 'moh') {
+                result.data.id = '';
+            }
+        }
+
         return result;
     },
 
@@ -217,31 +319,66 @@ const soundFileModify = {
      * @param {Object} response - The response from the server after the form is sent
      */
     cbAfterSendForm(response) {
-        soundFileModify.trashBin.forEach((filepath) => {
-            if (filepath) PbxApi.FilesRemoveAudioFile(filepath);
-        });
-        const event = document.createEvent('Event');
-        event.initEvent('ConfigDataChanged', false, true);
-        window.dispatchEvent(event);
+        if (response.result) {
+            // Delete old files from trash bin
+            soundFileModifyRest.trashBin.forEach((filepath) => {
+                if (filepath) PbxApi.FilesRemoveAudioFile(filepath);
+            });
+            soundFileModifyRest.trashBin = [];
+            
+            // Update form with new data if provided
+            if (response.data) {
+                soundFileModifyRest.populateForm(response.data);
+                
+                // Update URL for new records
+                const currentId = soundFileModifyRest.$formObj.form('get value', 'id');
+                if (!currentId && response.data.id) {
+                    const newUrl = window.location.href.replace(/modify\/(custom|moh)?$/, `modify/${response.data.id}`);
+                    window.history.pushState(null, '', newUrl);
+                }
+            }
+            
+            // Trigger config changed event to refresh lists
+            const event = document.createEvent('Event');
+            event.initEvent('ConfigDataChanged', false, true);
+            window.dispatchEvent(event);
+        }
     },
 
     /**
      * Initialize the form with custom settings
      */
     initializeForm() {
-        const category = soundFileModify.$formObj.form('get value', 'category');
-        Form.$formObj = soundFileModify.$formObj;
-        Form.url = `${globalRootUrl}sound-files/save`; // Form submission URL
-        Form.validateRules = soundFileModify.validateRules; // Form validation rules
-        Form.cbBeforeSendForm = soundFileModify.cbBeforeSendForm; // Callback before form is sent
-        Form.cbAfterSendForm = soundFileModify.cbAfterSendForm; // Callback after form is sent
-        Form.afterSubmitModifyUrl = `${globalRootUrl}sound-files/modify/${category}`;
+        const category = soundFileModifyRest.$formObj.form('get value', 'category');
+        
+        // Configure Form.js
+        Form.$formObj = soundFileModifyRest.$formObj;
+        Form.url = '#'; // Not used with REST API
+        Form.validateRules = soundFileModifyRest.validateRules;
+        Form.cbBeforeSendForm = soundFileModifyRest.cbBeforeSendForm;
+        Form.cbAfterSendForm = soundFileModifyRest.cbAfterSendForm;
+        
+        // Configure REST API integration
+        Form.apiSettings = {
+            enabled: true,
+            apiObject: SoundFilesAPI,
+            saveMethod: 'saveRecord'
+        };
+        
+        // Configure redirect URLs
+        Form.afterSubmitModifyUrl = `${globalRootUrl}sound-files/modify/`;
         Form.afterSubmitIndexUrl = `${globalRootUrl}sound-files/index/#/${category}`;
+        
         Form.initialize();
     },
 };
 
+// Initialize mergingCheckWorker callback
+if (typeof mergingCheckWorker !== 'undefined') {
+    mergingCheckWorker.cbAfterMerging = soundFileModifyRest.cbAfterConvertFile;
+}
+
 // When the document is ready, initialize the sound file modify form
 $(document).ready(() => {
-    soundFileModify.initialize();
+    soundFileModifyRest.initialize();
 });

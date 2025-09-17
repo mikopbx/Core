@@ -116,6 +116,7 @@ const providers = {
                 {
                     // Host column
                     data: 'host',
+                    className: 'hide-on-mobile',
                     render(data) {
                         const host = window.SecurityUtils.escapeHtml(data || '');
                         return `<span>${host}</span>`;
@@ -264,8 +265,8 @@ const providers = {
                         disabled: false
                     };
                     
-                    // Use REST API v3 to update provider
-                    ProvidersAPI.patch(providerId, data, (response) => {
+                    // Use REST API v3 to update provider status
+                    ProvidersAPI.updateStatus(providerId, data, (response) => {
                         if (response.result) {
                             // Remove disability classes from cells
                             $(`#${providerId} td`).removeClass('disability disabled');
@@ -288,8 +289,8 @@ const providers = {
                         disabled: true
                     };
                     
-                    // Use REST API v3 to update provider
-                    ProvidersAPI.patch(providerId, data, (response) => {
+                    // Use REST API v3 to update provider status
+                    ProvidersAPI.updateStatus(providerId, data, (response) => {
                         if (response.result) {
                             // Add disability and disabled classes to data cells
                             $(`#${providerId} td`).each(function(index) {

@@ -197,6 +197,7 @@ class PbxDataTableIndex {
             paging: false,
             searching: true,
             info: this.showInfo,
+            autoWidth: false,
             language: SemanticLocalization.dataTableLocalisation,
             drawCallback: () => this.handleDrawCallback()
         };

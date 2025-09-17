@@ -235,6 +235,7 @@ window.SecurityUtils = {
             
             // Network filter icons
             'globe icon',
+            'home icon',
             'shield alternate icon', 
             'ban icon',
             

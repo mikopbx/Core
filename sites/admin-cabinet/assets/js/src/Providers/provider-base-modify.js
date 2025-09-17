@@ -245,7 +245,7 @@ class ProviderBase {
         
         // V5.0 pattern: Complete automation - no custom onChange needed
         DynamicDropdownBuilder.buildDropdown('networkfilterid', data, {
-            apiUrl: `/pbxcore/api/v2/network-filters/getForSelect?categories[]=${category}`,
+            apiUrl: `/pbxcore/api/v3/network-filters:getForSelect?categories[]=${category}`,
             placeholder: globalTranslate.pr_NetworkFilter,
             cache: false
             // No onChange callback - DynamicDropdownBuilder handles everything automatically:

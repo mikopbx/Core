@@ -56,7 +56,7 @@ const ivrMenuIndex = {
             },
             {
                 data: 'actions',
-                className: 'collapsing',
+                className: 'hide-on-mobile collapsing',
                 render: function(data) {
                     if (!data || data.length === 0) {
                         return '<small>—</small>';

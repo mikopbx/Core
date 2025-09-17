@@ -98,7 +98,7 @@ const SoundFileSelector = {
         
         // Create dropdown configuration for DynamicDropdownBuilder
         const dropdownConfig = {
-            apiUrl: `/pbxcore/api/v2/sound-files/getForSelect`,
+            apiUrl: `/pbxcore/api/v3/sound-files:getForSelect`,
             apiParams: {
                 category: config.category
             },
@@ -334,7 +334,7 @@ const SoundFileSelector = {
         SoundFilesAPI.getRecord(fileId, (response) => {
             if (response.result && response.data && response.data.path) {
                 this.currentlyPlayingId = fileId;
-                this.audioPlayer.src = `/pbxcore/api/v2/sound-files/playback?view=${encodeURIComponent(response.data.path)}`;
+                this.audioPlayer.src = `/pbxcore/api/v3/sound-files:playback?view=${encodeURIComponent(response.data.path)}`;
                 this.audioPlayer.play().catch(error => {
                     this.stopPlayback();
                 });
@@ -493,10 +493,10 @@ const SoundFileSelector = {
     clearCache(category = null) {
         if (category) {
             // Clear cache for specific category
-            DynamicDropdownBuilder.clearCacheFor('/pbxcore/api/v2/sound-files/getForSelect', { category });
+            DynamicDropdownBuilder.clearCacheFor('/pbxcore/api/v3/sound-files:getForSelect', { category });
         } else {
             // Clear all sound files cache
-            DynamicDropdownBuilder.clearCacheFor('/pbxcore/api/v2/sound-files/getForSelect');
+            DynamicDropdownBuilder.clearCacheFor('/pbxcore/api/v3/sound-files:getForSelect');
         }
     },
     
