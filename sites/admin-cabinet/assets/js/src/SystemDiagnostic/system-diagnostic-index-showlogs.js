@@ -133,6 +133,11 @@ const systemDiagnosticLogs = {
             systemDiagnosticLogs.updateLogFromServer();
         });
 
+        // Listen for hash changes to update selected file
+        $(window).on('hashchange', () => {
+            systemDiagnosticLogs.handleHashChange();
+        });
+
         // Event listener for "Download Log" button click
         systemDiagnosticLogs.$downloadBtn.on('click', (e) => {
             e.preventDefault();
@@ -355,6 +360,39 @@ const systemDiagnosticLogs = {
     },
 
     /**
+     * Handles hash changes to update the selected file
+     */
+    handleHashChange() {
+        const hash = window.location.hash;
+        if (hash && hash.startsWith('#file=')) {
+            const filePath = decodeURIComponent(hash.substring(6));
+            if (filePath && systemDiagnosticLogs.$fileSelectDropDown.dropdown('get value') !== filePath) {
+                // Check if the file exists in dropdown items
+                const fileExists = systemDiagnosticLogs.logsItems.some(item =>
+                    item.type === 'file' && item.value === filePath
+                );
+                if (fileExists) {
+                    systemDiagnosticLogs.$fileSelectDropDown.dropdown('set selected', filePath);
+                    systemDiagnosticLogs.$fileSelectDropDown.dropdown('set text', filePath);
+                    systemDiagnosticLogs.$formObj.form('set value', 'filename', filePath);
+                    systemDiagnosticLogs.updateLogFromServer();
+                }
+            }
+        }
+    },
+
+    /**
+     * Gets the file path from URL hash if present
+     */
+    getFileFromHash() {
+        const hash = window.location.hash;
+        if (hash && hash.startsWith('#file=')) {
+            return decodeURIComponent(hash.substring(6));
+        }
+        return '';
+    },
+
+    /**
      * Callback function to format the dropdown menu structure based on the response.
      * @param {Object} response - The response data.
      */
@@ -366,12 +404,16 @@ const systemDiagnosticLogs = {
         }
 
         const files = response.data.files;
-        
-        // Check if there is a default value set for the filename input field
-        let defVal = '';
-        const fileName = systemDiagnosticLogs.$formObj.form('get value', 'filename');
-        if (fileName !== '') {
-            defVal = fileName.trim();
+
+        // Check for file from hash first
+        let defVal = systemDiagnosticLogs.getFileFromHash();
+
+        // If no hash value, check if there is a default value set for the filename input field
+        if (!defVal) {
+            const fileName = systemDiagnosticLogs.$formObj.form('get value', 'filename');
+            if (fileName !== '') {
+                defVal = fileName.trim();
+            }
         }
 
         // Build tree structure from files
@@ -445,11 +487,15 @@ const systemDiagnosticLogs = {
         if (value.length === 0) {
             return;
         }
-        
+
         // Set dropdown text to show the full file path
         systemDiagnosticLogs.$fileSelectDropDown.dropdown('set text', value);
-        
+
         systemDiagnosticLogs.$formObj.form('set value', 'filename', value);
+
+        // Update URL hash with the selected file
+        window.location.hash = 'file=' + encodeURIComponent(value);
+
         systemDiagnosticLogs.updateLogFromServer();
     },
 

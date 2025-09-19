@@ -933,6 +933,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addCss('css/vendor/semantic/card.min.css', true)
                 ->addCss('css/vendor/semantic/list.min.css', true);
             $this->footerCollectionJS
+                ->addJs('js/vendor/jquery.address.min.js', true)
                 ->addJs('js/vendor/inputmask/jquery.inputmask.min.js', true)
                 ->addJs('js/vendor/inputmask/jquery.inputmask-multi.js', true)
                 ->addJs('js/vendor/inputmask/bindings/inputmask.binding.js', true)
@@ -1017,12 +1018,15 @@ class AssetProvider implements ServiceProviderInterface
             $this->headerCollectionCSS
                 ->addCss('css/vendor/datatable/dataTables.semanticui.css', true);
             $this->footerCollectionJS
+                ->addJs('js/pbx/main/PbxDataTableIndex.js', true)
                 ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
+                ->addJs('js/pbx/PbxAPI/customFilesAPI.js', true)
                 ->addJs('js/pbx/CustomFiles/custom-files-index.js', true);
         } elseif ($action === 'modify') {
             $this->footerCollectionJS
                 ->addJs('js/vendor/jquery.address.min.js', true)
                 ->addJs('js/pbx/main/form.js', true)
+                ->addJs('js/pbx/PbxAPI/customFilesAPI.js', true)
                 ->addJs('js/pbx/CustomFiles/custom-files-modify.js', true);
             $this->footerCollectionACE
                 ->addJs('js/vendor/ace/ace.js', true)
