@@ -50,6 +50,7 @@ const Form = {
     $submitButton: $('#submitbutton'),
     $dropdownSubmit: $('#dropdownSubmit'),
     $submitModeInput: $('input[name="submitMode"]'),
+    isRestoringMode: false, // Flag to prevent saving during restore
     processData: true,
     contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
     keyboardShortcuts: true,
@@ -160,9 +161,11 @@ const Form = {
                     Form.$submitButton
                         .html(`<i class="save icon"></i> ${globalTranslate[translateKey]}`);
                     // Removed .click() to prevent automatic form submission
-                    
-                    // Save selected mode
-                    Form.saveSubmitMode(value);
+
+                    // Save selected mode only if not restoring
+                    if (!Form.isRestoringMode) {
+                        Form.saveSubmitMode(value);
+                    }
                 },
             });
             
@@ -679,26 +682,58 @@ const Form = {
      */
     restoreSubmitMode() {
         try {
+            // Exit if no dropdown exists
+            if (!Form.$dropdownSubmit || Form.$dropdownSubmit.length === 0) {
+                return;
+            }
+
+            // Set flag to prevent saving during restore
+            Form.isRestoringMode = true;
+
+            // First, reset dropdown to default state (SaveSettings)
+            const defaultMode = 'SaveSettings';
+            Form.$submitModeInput.val(defaultMode);
+            Form.$dropdownSubmit.dropdown('set selected', defaultMode);
+            const defaultTranslateKey = `bt_${defaultMode}`;
+            Form.$submitButton.html(`<i class="save icon"></i> ${globalTranslate[defaultTranslateKey]}`);
+
+            // Check if this is a new object (no id field or empty id)
+            const idValue = Form.$formObj.find('input[name="id"]').val() ||
+                           Form.$formObj.find('input[name="uniqid"]').val() || '';
+            const isNewObject = !idValue || idValue === '' || idValue === '-1';
+
+            // For existing objects, keep the default SaveSettings
+            if (!isNewObject) {
+                Form.isRestoringMode = false;
+                return;
+            }
+
+            // For new objects use saved mode from localStorage
             const savedMode = localStorage.getItem(Form.getSubmitModeKey());
-            if (savedMode && Form.$dropdownSubmit.length > 0) {
+
+            if (savedMode && savedMode !== defaultMode) {
                 // Check if the saved mode exists in dropdown options
                 const dropdownValues = [];
                 Form.$dropdownSubmit.find('.item').each(function() {
                     dropdownValues.push($(this).attr('data-value'));
                 });
-                
+
                 if (dropdownValues.includes(savedMode)) {
                     // Set saved value
                     Form.$submitModeInput.val(savedMode);
                     Form.$dropdownSubmit.dropdown('set selected', savedMode);
-                    
+
                     // Update button text
                     const translateKey = `bt_${savedMode}`;
                     Form.$submitButton.html(`<i class="save icon"></i> ${globalTranslate[translateKey]}`);
                 }
             }
+
+            // Reset flag
+            Form.isRestoringMode = false;
         } catch (e) {
             console.warn('Unable to restore submit mode:', e);
+            Form.isRestoringMode = false;
         }
     },
 
@@ -780,10 +815,16 @@ const Form = {
             if (wasEnabledDirrity) {
                 // Save the populated values as initial state
                 Form.oldFormValues = Form.$formObj.form('get values');
-                
+
                 // Ensure buttons are disabled initially
                 Form.$submitButton.addClass('disabled');
                 Form.$dropdownSubmit.addClass('disabled');
+            }
+
+            // Re-check submit mode after form is populated
+            // This is important for forms that load data via REST API
+            if (Form.$dropdownSubmit.length > 0) {
+                Form.restoreSubmitMode();
             }
         } finally {
             // Restore original settings
