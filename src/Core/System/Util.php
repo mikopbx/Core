@@ -281,6 +281,7 @@ class Util
                 file_put_contents($filename, $data);
                 break;
             case CustomFiles::MODE_OVERRIDE:
+            case CustomFiles::MODE_CUSTOM:
                 file_put_contents($filename_orgn, $data);
                 // Override the file
                 $data = base64_decode((string)$res->content);
