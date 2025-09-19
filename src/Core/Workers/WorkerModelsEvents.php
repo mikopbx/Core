@@ -29,6 +29,7 @@ use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\Configs\AsteriskConfigInterface;
 use MikoPBX\Core\Providers\AsteriskConfModulesProvider;
 use MikoPBX\Core\System\{BeanstalkClient, SystemMessages};
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ApplyCustomFilesAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadAdviceAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadAllSystemWorkersAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCloudDescriptionAction;
@@ -39,6 +40,7 @@ use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadDialplanAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadFail2BanConfAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadFeaturesAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadFirewallAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\RemoveCustomFilesAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadH323Action;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadHepAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadIAXAction;
@@ -110,8 +112,15 @@ class WorkerModelsEvents extends WorkerBase
     private array $customFilesDependencyTable = [];
 
     private BeanstalkClient $beanstalkClient;
-    
-    
+
+    /**
+     * Get check interval for worker monitoring
+     */
+    public static function getCheckInterval(): int
+    {
+        return 5; // Check every 5 seconds
+    }
+
     /**
      * Save worker state to Redis
      */
@@ -273,6 +282,8 @@ class WorkerModelsEvents extends WorkerBase
             ReloadTimezoneAction::class,
             ReloadSyslogDAction::class,
             ReloadRestAPIWorkerAction::class,
+            ApplyCustomFilesAction::class,
+            RemoveCustomFilesAction::class,
             ReloadNetworkAction::class,
             ReloadFirewallAction::class,
             ReloadFail2BanConfAction::class,
@@ -503,7 +514,6 @@ class WorkerModelsEvents extends WorkerBase
             } elseif ($receivedMessage['source'] === BeanstalkConnectionModelsProvider::SOURCE_MODELS_CHANGED) {
                 // Fill the modified tables array with the changes from the received message
                 $this->fillModifiedTables($receivedMessage);
-
             }
 
             // Start the reload process if there are modified tables
@@ -573,9 +583,6 @@ class WorkerModelsEvents extends WorkerBase
 
         SystemMessages::sysLogMsg(__METHOD__, "New changes received:" . PHP_EOL . json_encode($data, JSON_PRETTY_PRINT), LOG_DEBUG);
 
-        // Clear cache for the called class
-        ModelsBase::clearCache($modifiedModel);
-
         // Get new settings for dependent modules
         $this->getNewSettingsForDependentModules($modifiedModel);
 
@@ -630,14 +637,20 @@ class WorkerModelsEvents extends WorkerBase
             return;
         }
 
+        if ($modelData['action'] === 'afterDelete' && isset($modelData['changedFields']['filepath'])){
+            SystemMessages::sysLogMsg(__METHOD__, "New changes $modifiedModel received:" . PHP_EOL . json_encode($modelData, JSON_PRETTY_PRINT), LOG_DEBUG);
+            $this->planReloadAction(RemoveCustomFilesAction::class, $modelData['changedFields']);
+            return;
+        }
+
         $changedCustomFile = CustomFiles::findFirstById($modelData['recordId']);
         if ($changedCustomFile === null || $changedCustomFile->changed !== '1') {
             return;
         }
 
         foreach ($this->customFilesDependencyTable as $dependencyData) {
-            // The rule for all files or the rule only for specific file
-            if ($dependencyData['filePath'] === '*' || strcasecmp($changedCustomFile->filepath, $dependencyData['filePath']) === 0) {
+            if (isset($dependencyData['filePath']) &&
+                    ($dependencyData['filePath'] === '*' || strcasecmp($changedCustomFile->filepath, $dependencyData['filePath']) === 0)) {
                 foreach ($dependencyData['actions'] as $action) {
                     $this->planReloadAction($action, $modelData);
                 }

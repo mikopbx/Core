@@ -20,6 +20,7 @@
 
 namespace MikoPBX\Core\Workers\Libs\WorkerModelsEvents;
 
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ApplyCustomFilesAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadConferenceAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadCrondAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadFeaturesAction;
@@ -48,6 +49,7 @@ class ProcessCustomFiles extends Injectable
         $tables[] = [
             'filePath' => '*',
             'actions' => [
+                ApplyCustomFilesAction::class,
                 ReloadPBXCoreAction::class,
             ],
         ];

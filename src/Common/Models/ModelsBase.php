@@ -202,7 +202,15 @@ class ModelsBase extends Model
             return;
         }
         if ($action === 'afterDelete') {
-            $changedFields = array_keys($this->getSnapshotData());
+            $deletedData = $this->getSnapshotData();
+
+            $changedFields = [];
+            if (get_class($this)===CustomFiles::class) {
+                $changedFields['filepath'] = $deletedData['filepath'];
+                $changedFields['mode'] = $deletedData['mode'];
+            } else {
+                $changedFields = array_keys($deletedData);
+            }
         }
 
         $this->sendChangesToBackend($action, $changedFields);

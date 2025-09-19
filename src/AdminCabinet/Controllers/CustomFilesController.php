@@ -1,8 +1,7 @@
 <?php
-
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,76 +20,36 @@
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\CustomFilesEditForm;
-use MikoPBX\Common\Models\CustomFiles;
 
+/**
+ * Custom Files Controller
+ *
+ * Handles the web interface for managing custom configuration files.
+ * Uses REST API v3 for all data operations.
+ */
 class CustomFilesController extends BaseController
 {
     /**
-     * Build the list of files.
+     * Generates Custom Files index page
+     * Data is loaded via REST API from JavaScript
      */
     public function indexAction(): void
     {
-        $files = CustomFiles::find();
-
-        $this->view->files = $files;
+        // View will be loaded automatically
+        // Data fetching is handled by custom-files-index.js via REST API
     }
 
-
     /**
-     * Open the file edit card.
+     * Shows the edit form for a custom file.
+     * Creates empty form structure, data is loaded via REST API.
      *
-     * @param string $id The ID of the file to be edited.
+     * @param string $id CustomFiles record ID (optional for new files)
      */
-    public function modifyAction(string $id): void
+    public function modifyAction(string $id = ''): void
     {
-        $file = CustomFiles::findFirstById($id);
-        if ($file === null) {
-            $this->forward('custom-files/index');
-        }
+        $form = new CustomFilesEditForm();
 
-        $form                   = new CustomFilesEditForm($file);
-        $this->view->content    = $file->getContent();
-        $this->view->form       = $form;
-        $this->view->represent  = $file->getRepresent();
-        $this->view->submitMode = null;
-    }
-
-
-    /**
-     * Save the parameters of the custom file override.
-     */
-    public function saveAction(): void
-    {
-        if (! $this->request->isPost()) {
-            return;
-        }
-
-        $data       = $this->request->getPost();
-        $customFile = CustomFiles::findFirstById($data['id']);
-        if ($customFile === null) {
-            return;
-        }
-
-        // Update file parameters
-        foreach ($customFile as $name => $value) {
-            switch ($name) {
-                case "changed":
-                    $customFile->changed = 1;
-                    break;
-                case "content":
-                    $customFile->setContent($data[$name]);
-                    break;
-                default:
-                    if (! array_key_exists($name, $data)) {
-                        continue 2;
-                    }
-                    $customFile->$name = $data[$name];
-            }
-        }
-        if (empty($customFile->getContent())) {
-            $customFile->mode = CustomFiles::MODE_NONE;
-        }
-
-        $this->saveEntity($customFile, "custom-files/modify/{id}");
+        $this->view->form = $form;
+        $this->view->id = $id;
     }
 }

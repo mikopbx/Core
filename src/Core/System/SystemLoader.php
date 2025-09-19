@@ -341,6 +341,15 @@ class SystemLoader extends Injectable
             $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
         }
 
+
+        // Apply user-created custom files (after Redis is started)
+        $this->echoStartMsg(' - Applying user-created custom files...');
+        if (!$this->isRecoveryMode) {
+            CustomFilesApplier::initializeOnBoot();
+            $this->echoResultMsg();
+        } else {
+            $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
+        }
         return true;
     }
 
