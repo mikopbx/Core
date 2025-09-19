@@ -205,17 +205,17 @@ const generalSettingsModify = {
         {
             type: 'notRegExp',
             value: /[a-z]/,
-            prompt: '<b>' + globalTranslate.gs_Passwords + '</b>: ' + globalTranslate.gs_PasswordNoLowSimvol
+            prompt: '<b>' + globalTranslate.gs_Passwords + '</b>: ' + globalTranslate.psw_PasswordNoLowSimvol
         },
         {
             type: 'notRegExp',
             value: /\d/,
-            prompt: '<b>' + globalTranslate.gs_Passwords + '</b>: ' + globalTranslate.gs_PasswordNoNumbers
+            prompt: '<b>' + globalTranslate.gs_Passwords + '</b>: ' + globalTranslate.psw_PasswordNoNumbers
         },
         {
             type: 'notRegExp',
             value: /[A-Z]/,
-            prompt: '<b>' + globalTranslate.gs_Passwords + '</b>: ' + globalTranslate.gs_PasswordNoUpperSimvol
+            prompt: '<b>' + globalTranslate.gs_Passwords + '</b>: ' + globalTranslate.psw_PasswordNoUpperSimvol
         }
     ],
     // Rules for the SSH password field when SSH login through the password enabled, and it not equal to hiddenPassword
@@ -231,17 +231,17 @@ const generalSettingsModify = {
         {
             type: 'notRegExp',
             value: /[a-z]/,
-            prompt: '<b>' + globalTranslate.gs_SSHPassword + '</b>: ' + globalTranslate.gs_PasswordNoLowSimvol
+            prompt: '<b>' + globalTranslate.gs_SSHPassword + '</b>: ' + globalTranslate.psw_PasswordNoLowSimvol
         },
         {
             type: 'notRegExp',
             value: /\d/,
-            prompt: '<b>' + globalTranslate.gs_SSHPassword + '</b>: ' + globalTranslate.gs_PasswordNoNumbers
+            prompt: '<b>' + globalTranslate.gs_SSHPassword + '</b>: ' + globalTranslate.psw_PasswordNoNumbers
         },
         {
             type: 'notRegExp',
             value: /[A-Z]/,
-            prompt: '<b>' + globalTranslate.gs_SSHPassword + '</b>: ' + globalTranslate.gs_PasswordNoUpperSimvol
+            prompt: '<b>' + globalTranslate.gs_SSHPassword + '</b>: ' + globalTranslate.psw_PasswordNoUpperSimvol
         }
     ],
 
@@ -567,8 +567,8 @@ const generalSettingsModify = {
                     <div class="ui negative icon message password-validate">
                         <i class="exclamation triangle icon"></i>
                         <div class="content">
-                            <div class="header">${globalTranslate.gs_SetPassword || 'Security Warning'}</div>
-                            <p>${globalTranslate.gs_SetPasswordInfo || 'You are using the default password. Please change it for security.'}</p>
+                            <div class="header">${globalTranslate.psw_SetPassword || 'Security Warning'}</div>
+                            <p>${globalTranslate.psw_ChangeDefaultPassword || 'You are using the default password. Please change it for security.'}</p>
                         </div>
                     </div>
                 `;
@@ -598,8 +598,8 @@ const generalSettingsModify = {
                         <div class="ui negative icon message password-validate">
                             <i class="exclamation triangle icon"></i>
                             <div class="content">
-                                <div class="header">${globalTranslate.gs_SetPassword || 'Security Warning'}</div>
-                                <p>${globalTranslate.gs_SetPasswordInfo || 'You are using the default password. Please change it for security.'}</p>
+                                <div class="header">${globalTranslate.psw_SetPassword || 'Security Warning'}</div>
+                                <p>${globalTranslate.psw_ChangeDefaultPassword || 'You are using the default password. Please change it for security.'}</p>
                             </div>
                         </div>
                     `;

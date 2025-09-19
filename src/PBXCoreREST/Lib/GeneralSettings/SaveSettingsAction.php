@@ -25,7 +25,7 @@ use MikoPBX\AdminCabinet\Forms\GeneralSettingsEditForm;
 use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\PBXCoreREST\Services\PasswordService;
+use MikoPBX\Core\System\PasswordService;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
 use MikoPBX\PBXCoreREST\Lib\Common\FieldTypeResolver;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
