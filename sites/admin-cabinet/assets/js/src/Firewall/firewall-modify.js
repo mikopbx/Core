@@ -78,21 +78,21 @@ const firewall = {
         window.dockerSupportedServices = [];
         window.currentNetwork = '';
         window.currentSubnet = '';
-        
+
         // Get record ID from URL or form
         const urlParts = window.location.pathname.split('/');
         const lastSegment = urlParts[urlParts.length - 1] || '';
-        
+
         // Check if the last segment is 'modify' (new record) or an actual ID
         if (lastSegment === 'modify' || lastSegment === '') {
             firewall.recordId = '';
         } else {
             firewall.recordId = lastSegment;
         }
-        
-        // Initialize Form first to enable form methods
-        firewall.initializeForm();
-        
+
+        // DON'T initialize Form here - wait until after dynamic content is loaded
+        // firewall.initializeForm();
+
         // Load firewall data from API
         firewall.loadFirewallData();
     },
@@ -119,11 +119,14 @@ const firewall = {
             
             // Populate form and initialize elements
             firewall.populateForm(response.data);
-            
+
             // Initialize UI elements after data is loaded
             firewall.initializeUIElements();
             firewall.initializeTooltips();
             firewall.initializeDockerLimitedCheckboxes();
+
+            // Initialize Form AFTER all dynamic content is loaded
+            firewall.initializeForm();
         });
     },
     
@@ -132,60 +135,163 @@ const firewall = {
      * @param {Object} data - Firewall data.
      */
     populateForm(data) {
-        // Prepare form data object with all fields
-        const formData = {
-            id: data.id,
-            network: data.network,
-            subnet: data.subnet,
-            description: data.description,
-            newer_block_ip: data.newer_block_ip,
-            local_network: data.local_network
-        };
-        
-        // Add rule checkboxes to form data
-        if (data.rules && typeof data.rules === 'object') {
-            Object.keys(data.rules).forEach(category => {
-                const fieldName = `rule_${category}`;
-                // Convert action boolean to checkbox value
-                formData[fieldName] = data.rules[category].action === true;
+        // Generate rules HTML first
+        firewall.generateRulesHTML(data);
+
+        // Populate form fields manually since Form.js is not initialized yet
+        // Set basic fields
+        if (data.id) {
+            $('#firewall-form input[name="id"]').val(data.id);
+        }
+        $('#firewall-form input[name="network"]').val(data.network || '0.0.0.0');
+        $('#firewall-form input[name="subnet"]').val(data.subnet || '0');
+        $('#firewall-form input[name="description"]').val(data.description || '');
+
+        // Set checkboxes
+        const $newerBlockIp = $('#firewall-form input[name="newer_block_ip"]');
+        if ($newerBlockIp.length) {
+            $newerBlockIp.prop('checked', data.newer_block_ip === true);
+        }
+
+        const $localNetwork = $('#firewall-form input[name="local_network"]');
+        if ($localNetwork.length) {
+            $localNetwork.prop('checked', data.local_network === true);
+        }
+
+        // Set rule checkboxes from currentRules
+        if (data.currentRules && typeof data.currentRules === 'object') {
+            Object.keys(data.currentRules).forEach(category => {
+                const $checkbox = $(`#rule_${category}`);
+                if ($checkbox.length) {
+                    $checkbox.prop('checked', data.currentRules[category] === true);
+                }
             });
         }
-        
-        // Use unified silent population approach
-        Form.populateFormSilently(formData, {
-            afterPopulate: (populatedData) => {
-                // Update window variables for tooltips
-                window.currentNetwork = data.network;
-                window.currentSubnet = data.subnet;
-                window.isDocker = data.isDocker || false;
-                window.dockerSupportedServices = data.dockerSupportedServices || [];
-                
-                // Build service port info and name mapping from rules
-                window.servicePortInfo = {};
-                window.serviceNameMapping = {};
-                if (data.rules && typeof data.rules === 'object') {
-                    Object.keys(data.rules).forEach(category => {
-                        const rule = data.rules[category];
-                        window.servicePortInfo[category] = rule.ports || [];
-                        // Map display name to category key
-                        window.serviceNameMapping[rule.name] = category;
+
+        // Update window variables for tooltips
+        window.currentNetwork = data.network;
+        window.currentSubnet = data.subnet;
+        window.isDocker = data.isDocker || false;
+        window.dockerSupportedServices = data.dockerSupportedServices || [];
+
+        // Build service port info and name mapping from availableRules
+        window.servicePortInfo = {};
+        window.serviceNameMapping = {};
+        if (data.availableRules && typeof data.availableRules === 'object') {
+            Object.keys(data.availableRules).forEach(category => {
+                const ruleTemplate = data.availableRules[category];
+                // Extract port info from rule template
+                window.servicePortInfo[category] = firewall.extractPortsFromTemplate(ruleTemplate);
+                // Map display name to category key
+                const shortName = ruleTemplate.shortName || category;
+                window.serviceNameMapping[shortName] = category;
+            });
+        }
+    },
+
+    /**
+     * Extract port information from rule template.
+     * @param {Object} ruleTemplate - Rule template from availableRules.
+     * @returns {Array} Array of port information objects.
+     */
+    extractPortsFromTemplate(ruleTemplate) {
+        const ports = [];
+
+        if (ruleTemplate.rules && Array.isArray(ruleTemplate.rules)) {
+            ruleTemplate.rules.forEach(rule => {
+                if (rule.protocol === 'icmp') {
+                    ports.push({
+                        protocol: 'ICMP'
+                    });
+                } else if (rule.portfrom === rule.portto) {
+                    ports.push({
+                        port: rule.portfrom,
+                        protocol: rule.protocol.toUpperCase()
+                    });
+                } else {
+                    ports.push({
+                        range: `${rule.portfrom}-${rule.portto}`,
+                        protocol: rule.protocol.toUpperCase()
                     });
                 }
-            }
+            });
+        }
+
+        return ports;
+    },
+
+    /**
+     * Generate HTML for firewall rules based on API data.
+     * @param {Object} data - Firewall data from API.
+     */
+    generateRulesHTML(data) {
+        const $container = $('#firewall-rules-container');
+        $container.empty().removeClass('loading');
+
+        // Use new naming: availableRules for templates, currentRules for actual values
+        const availableRules = data.availableRules;
+        const currentRules = data.currentRules || {};
+
+        if (!availableRules) {
+            console.error('No available rules data received from API');
+            $container.html('<div class="ui warning message">Unable to load firewall rules. Please refresh the page.</div>');
+            return;
+        }
+
+        const isDocker = data.isDocker || false;
+        const dockerSupportedServices = data.dockerSupportedServices || [];
+
+        // Generate HTML for each rule
+        Object.keys(availableRules).forEach(name => {
+            const ruleTemplate = availableRules[name];
+            const shortName = ruleTemplate.shortName || name;
+            const isLimited = isDocker && !dockerSupportedServices.includes(shortName);
+            // Get actual value from currentRules, default to template default
+            const isChecked = currentRules[name] !== undefined ? currentRules[name] : (ruleTemplate.action === 'allow');
+
+            const segmentClass = isLimited ? 'docker-limited-segment' : '';
+            const checkboxClass = isLimited ? 'docker-limited-checkbox' : '';
+            const iconClass = isLimited ? 'yellow exclamation triangle' : 'small info circle';
+
+            const html = `
+                <div class="ui segment ${segmentClass}">
+                    <div class="field">
+                        <div class="ui toggle checkbox rules ${checkboxClass}">
+                            <input type="checkbox"
+                                   id="rule_${name}"
+                                   name="rule_${name}"
+                                   ${isLimited || isChecked ? 'checked' : ''}
+                                   ${isLimited ? 'disabled' : ''}
+                                   tabindex="0" class="hidden">
+                            <label for="rule_${name}">
+                                ${globalTranslate[`fw_${name.toLowerCase()}Description`] || shortName}
+                                <i class="${iconClass} icon service-info-icon"
+                                   data-service="${name}"
+                                   data-action="${ruleTemplate.action}"
+                                   ${isLimited ? 'data-limited="true"' : ''}></i>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            $container.append(html);
         });
+
+        // Re-initialize checkboxes for dynamically added elements
+        $('#firewall-rules-container .checkbox').checkbox();
     },
     
     /**
      * Initialize UI elements.
      */
     initializeUIElements() {
-        // Initialize checkboxes including rules
-        $('#firewall-form .checkbox').checkbox();
-        $('#firewall-form .rules').checkbox();
-        
+        // Initialize checkboxes (excluding dynamically added rules which are handled in generateRulesHTML)
+        $('#firewall-form .checkbox').not('#firewall-rules-container .checkbox').checkbox();
+
         // Initialize dropdowns
         $('#firewall-form .dropdown').dropdown();
-        
+
         // Initialize input mask for network field (IP address)
         $('input[name="network"]').inputmask({alias: 'ip', 'placeholder': '_'});
     },
@@ -198,21 +304,20 @@ const firewall = {
     cbBeforeSendForm(settings) {
         const result = settings;
         const formData = result.data || firewall.$formObj.form('get values');
-        
-        // Prepare rules data for API
-        // Checkbox values will already be boolean thanks to convertCheckboxesToBool
-        const rules = {};
+
+        // Prepare currentRules data for API (simple boolean map)
+        const currentRules = {};
         Object.keys(formData).forEach(key => {
             if (key.startsWith('rule_')) {
                 const category = key.replace('rule_', '');
-                // Send as boolean - backend will convert to allow/block
-                rules[category] = formData[key] === true;
+                // Send as boolean - true = allow, false = block
+                currentRules[category] = formData[key] === true;
                 delete formData[key];
             }
         });
-        
-        // Add rules to formData
-        formData.rules = rules;
+
+        // Add currentRules to formData
+        formData.currentRules = currentRules;
         
         // newer_block_ip and local_network are already boolean thanks to convertCheckboxesToBool
         
@@ -237,25 +342,32 @@ const firewall = {
         Form.validateRules = firewall.validateRules;
         Form.cbBeforeSendForm = firewall.cbBeforeSendForm;
         Form.cbAfterSendForm = firewall.cbAfterSendForm;
-        
+
         // Enable checkbox to boolean conversion
         Form.convertCheckboxesToBool = true;
-        
+
         // Setup REST API
         Form.apiSettings.enabled = true;
         Form.apiSettings.apiObject = FirewallAPI;
         Form.apiSettings.saveMethod = 'saveRecord';
-        
+
         // Important settings for correct save modes operation
         Form.afterSubmitIndexUrl = `${globalRootUrl}firewall/index/`;
         Form.afterSubmitModifyUrl = `${globalRootUrl}firewall/modify/`;
-        
+
         // Initialize Form with all standard features:
         // - Dirty checking (change tracking)
         // - Dropdown submit (SaveSettings, SaveSettingsAndAddNew, SaveSettingsAndExit)
         // - Form validation
         // - AJAX response handling
         Form.initialize();
+
+        // Add change handlers for dynamically added checkboxes
+        // This must be done AFTER Form.initialize() to ensure proper tracking
+        $('#firewall-rules-container input[type="checkbox"]').on('change', function() {
+            // Trigger form change event for dirty checking
+            Form.dataChanged();
+        });
     },
     
     /**
@@ -329,8 +441,8 @@ const firewall = {
             $checkbox.data('specialTooltipIcon', $icon);
         });
         
-        // Listen for checkbox changes to update tooltips
-        $('#firewall-form .rules input[type="checkbox"]').on('change', function() {
+        // Listen for checkbox changes to update tooltips (use delegation for dynamic elements)
+        $('#firewall-form').on('change', '.rules input[type="checkbox"]', function() {
             const $checkbox = $(this);
             const $icon = $checkbox.data('tooltipIcon');
             const $specialIcon = $checkbox.data('specialTooltipIcon');

@@ -46,19 +46,12 @@ class GetDefaultAction
         try {
             // Get default firewall rules configuration
             $defaultRules = FirewallRules::getDefaultRules();
-            
-            // Build default rules with allowed actions
-            $rules = [];
+
+            // Build simple current rules map (just boolean values)
+            $currentRules = [];
             foreach ($defaultRules as $category => $categoryData) {
-                // Convert action to boolean (true = allow, false = block)
-                $defaultAction = $categoryData['action'] ?? 'allow';
-                $actionBool = ($defaultAction === 'allow');
-                
-                $rules[$category] = [
-                    'name' => empty($categoryData['shortName']) ? $category : $categoryData['shortName'],
-                    'action' => $actionBool,
-                    'ports' => self::getPortsInfo($categoryData)
-                ];
+                // Simple boolean: true = allow, false = block
+                $currentRules[$category] = ($categoryData['action'] ?? 'allow') === 'allow';
             }
             
             // Get local network suggestion
@@ -81,7 +74,8 @@ class GetDefaultAction
                 'description' => '',
                 'newer_block_ip' => false,
                 'local_network' => false,
-                'rules' => $rules,
+                'currentRules' => $currentRules,  // Simple boolean map
+                'availableRules' => $defaultRules,  // Full template with metadata
                 'isDocker' => Util::isDocker(),
                 'dockerSupportedServices' => ['WEB', 'AMI', 'SIP & RTP', 'IAX']
             ];
@@ -158,46 +152,5 @@ class GetDefaultAction
         $network = $ip & $mask;
         
         return long2ip($network);
-    }
-    
-    /**
-     * Get ports information for a category
-     *
-     * @param array $categoryData Category configuration
-     * @return array Ports information
-     */
-    private static function getPortsInfo(array $categoryData): array
-    {
-        $ports = [];
-        $protectedPorts = FirewallRules::getProtectedPortSet();
-        
-        if (isset($categoryData['rules'])) {
-            foreach ($categoryData['rules'] as $rule) {
-                $portFrom = is_string($rule['portfrom']) && isset($protectedPorts[$rule['portfrom']]) 
-                    ? $protectedPorts[$rule['portfrom']] 
-                    : $rule['portfrom'];
-                $portTo = is_string($rule['portto']) && isset($protectedPorts[$rule['portto']]) 
-                    ? $protectedPorts[$rule['portto']] 
-                    : $rule['portto'];
-                    
-                if ($rule['protocol'] === 'icmp') {
-                    $ports[] = [
-                        'protocol' => 'ICMP'
-                    ];
-                } elseif ($portFrom == $portTo) {
-                    $ports[] = [
-                        'port' => $portFrom,
-                        'protocol' => strtoupper($rule['protocol'])
-                    ];
-                } else {
-                    $ports[] = [
-                        'range' => "$portFrom-$portTo",
-                        'protocol' => strtoupper($rule['protocol'])
-                    ];
-                }
-            }
-        }
-        
-        return $ports;
     }
 }

@@ -122,9 +122,9 @@ class UpdateRecordAction extends AbstractSaveRecordAction
                 return $res;
             }
             
-            // Update FirewallRules if rules data is provided
-            if (isset($data['rules'])) {
-                if (!self::updateFirewallRules($networkFilter->id, $data['rules'], $isPatch)) {
+            // Update FirewallRules if currentRules data is provided
+            if (isset($data['currentRules'])) {
+                if (!self::updateFirewallRules($networkFilter->id, $data['currentRules'], $isPatch)) {
                     $res->messages['error'][] = 'Failed to update firewall rules';
                     $db->rollback();
                     $res->success = false;
@@ -151,7 +151,7 @@ class UpdateRecordAction extends AbstractSaveRecordAction
      * Update FirewallRules for a NetworkFilter
      *
      * @param string $networkFilterId NetworkFilter ID
-     * @param array $rulesData Rules configuration
+     * @param array $rulesData Simple boolean map of rules (e.g., ["SIP" => true, "WEB" => false])
      * @param bool $isPatch Whether this is a partial update
      * @return bool Success status
      */
@@ -162,7 +162,7 @@ class UpdateRecordAction extends AbstractSaveRecordAction
             'conditions' => 'networkfilterid = :id:',
             'bind' => ['id' => $networkFilterId]
         ]);
-        
+
         // Create a map of existing rules by category
         $rulesMap = [];
         foreach ($existingRules as $rule) {
@@ -171,27 +171,14 @@ class UpdateRecordAction extends AbstractSaveRecordAction
             }
             $rulesMap[$rule->category][] = $rule;
         }
-        
+
         // Update rules
-        foreach ($rulesData as $category => $categoryData) {
+        foreach ($rulesData as $category => $action) {
             if (isset($rulesMap[$category])) {
                 // Update existing rules for this category
                 foreach ($rulesMap[$category] as $rule) {
-                    if (is_array($categoryData)) {
-                        // Handle array format with 'action' key
-                        $action = $categoryData['action'] ?? $rule->action;
-                    } else {
-                        // Handle simple format: "SIP" => true/false or "SIP" => "allow"/"block"
-                        $action = $categoryData;
-                    }
-                    
-                    // Convert boolean to allow/block string
-                    if (is_bool($action)) {
-                        $rule->action = $action ? 'allow' : 'block';
-                    } else {
-                        // Support legacy string format
-                        $rule->action = $action === 'allow' ? 'allow' : 'block';
-                    }
+                    // Simple boolean format: true = allow, false = block
+                    $rule->action = $action ? 'allow' : 'block';
                     $rule->description = "$rule->action connection for $category";
                     
                     if (!$rule->save()) {

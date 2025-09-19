@@ -70,36 +70,30 @@ class GetRecordAction
                 // Convert '0'/'1' strings to boolean for REST API
                 'newer_block_ip' => $networkFilter->newer_block_ip === '1',
                 'local_network' => $networkFilter->local_network === '1',
-                'rules' => []
+                'currentRules' => []  // Simple boolean map: category => allow/block
             ];
-            
+
             // Get default rules structure
             $defaultRules = FirewallRules::getDefaultRules();
-            
-            // Fill default values for all categories
+
+            // Initialize currentRules with default values
             foreach ($defaultRules as $category => $categoryData) {
-                $data['rules'][$category] = [
-                    'name' => empty($categoryData['shortName']) ? $category : $categoryData['shortName'],
-                    // Convert action to boolean for REST API (allow = true, block = false)
-                    'action' => ($categoryData['action'] ?? 'block') === 'allow',
-                    'ports' => self::getPortsInfo($categoryData)
-                ];
+                // Simple boolean: true = allow, false = block
+                $data['currentRules'][$category] = ($categoryData['action'] ?? 'block') === 'allow';
             }
-            
-            // Override with saved values
+
+            // Override with saved values from database
             $firewallRules = $networkFilter->FirewallRules;
             foreach ($firewallRules as $rule) {
-                // Convert action to boolean for REST API
-                $data['rules'][$rule->category]['action'] = $rule->action === 'allow';
-                if (!isset($data['rules'][$rule->category]['name'])) {
-                    $data['rules'][$rule->category]['name'] = $rule->category;
-                }
+                // Update with actual saved value
+                $data['currentRules'][$rule->category] = $rule->action === 'allow';
             }
             
             // Add system information
+            $data['availableRules'] = $defaultRules;  // All possible firewall rule templates
             $data['isDocker'] = Util::isDocker();
             $data['dockerSupportedServices'] = ['WEB', 'AMI', 'SIP & RTP', 'IAX'];
-            
+
             $res->data = $data;
             $res->success = true;
         } catch (\Exception $e) {
@@ -108,46 +102,5 @@ class GetRecordAction
         }
         
         return $res;
-    }
-    
-    /**
-     * Get ports information for a category
-     *
-     * @param array $categoryData Category configuration
-     * @return array Ports information
-     */
-    private static function getPortsInfo(array $categoryData): array
-    {
-        $ports = [];
-        $protectedPorts = FirewallRules::getProtectedPortSet();
-        
-        if (isset($categoryData['rules'])) {
-            foreach ($categoryData['rules'] as $rule) {
-                $portFrom = is_string($rule['portfrom']) && isset($protectedPorts[$rule['portfrom']]) 
-                    ? $protectedPorts[$rule['portfrom']] 
-                    : $rule['portfrom'];
-                $portTo = is_string($rule['portto']) && isset($protectedPorts[$rule['portto']]) 
-                    ? $protectedPorts[$rule['portto']] 
-                    : $rule['portto'];
-                    
-                if ($rule['protocol'] === 'icmp') {
-                    $ports[] = [
-                        'protocol' => 'ICMP'
-                    ];
-                } elseif ($portFrom == $portTo) {
-                    $ports[] = [
-                        'port' => $portFrom,
-                        'protocol' => strtoupper($rule['protocol'])
-                    ];
-                } else {
-                    $ports[] = [
-                        'range' => "$portFrom-$portTo",
-                        'protocol' => strtoupper($rule['protocol'])
-                    ];
-                }
-            }
-        }
-        
-        return $ports;
     }
 }

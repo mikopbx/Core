@@ -22,29 +22,9 @@
 </div>
 <div class="field">
     <h4 class="ui  header">{{ t._('fw_Rules') }}</h4>
-    {% for name, value in firewallRules %}
-        {% set shortName = value['shortName'] is defined ? value['shortName'] : name %}
-        {% set isLimited = isDocker and (shortName not in dockerSupportedServices) %}
-        <div class="ui segment {% if isLimited %}docker-limited-segment{% endif %}">
-            <div class="field">
-                <div class="ui toggle checkbox rules {% if isLimited %}docker-limited-checkbox{% endif %}">
-                    <input type="checkbox"
-                           id="rule_{{ name|upper }}"
-                           name="rule_{{ name|upper }}"
-                           {% if isLimited or value['action']=='allow' %} checked {% endif %}
-                           {% if isLimited %} disabled {% endif %}
-                           tabindex="0" class="hidden">
-                    <label for="rule_{{ name|upper }}">
-                        {{ t._('fw_'~name|lower~'Description') }}
-                        <i class="{% if isLimited %}yellow exclamation triangle{% else %}small info circle{% endif %} icon service-info-icon"
-                           data-service="{{ name }}"
-                           data-action="{{ value['action'] }}"
-                           {% if isLimited %}data-limited="true"{% endif %}></i>
-                    </label>
-                </div>
-            </div>
-        </div>
-    {% endfor %}
+    <div id="firewall-rules-container" class="ui loading segment" style="min-height: 200px;">
+        <!-- Rules will be dynamically loaded via JavaScript -->
+    </div>
 </div>
 <h4 class="ui  header">{{ t._('fw_AdditionalRules') }}</h4>
 <div class="field">

@@ -42,68 +42,17 @@ class FirewallController extends BaseController
      */
     public function modifyAction(string $networkId = ''): void
     {
-        // Create empty form - data will be loaded via REST API
+        // Create empty form - all data will be loaded via REST API
         $emptyFilter = new NetworkFilters();
         $form = new FirewallEditForm(
             $emptyFilter,
             ['network' => '0.0.0.0', 'subnet' => '0']
         );
-        
+
         $this->view->form = $form;
-        
-        // Get default rules structure for form generation
-        $this->view->firewallRules = \MikoPBX\Common\Models\FirewallRules::getDefaultRules();
-        $this->view->isDocker = \MikoPBX\Core\System\Util::isDocker();
-        $this->view->dockerSupportedServices = ['WEB', 'AMI', 'SIP & RTP', 'IAX'];
-        
-        // All actual data is loaded via REST API in JavaScript
-    }
 
-
-    /**
-     * Save request from the form
-     * @deprecated Use REST API v3 instead
-     */
-    public function saveAction(): void
-    {
-        // This method is deprecated
-        // All save operations are handled via REST API v3
-        $this->forward('firewall/index');
-    }
-
-
-
-    /**
-     * Deletes NetworkFilters record
-     * @deprecated Use REST API v3 instead
-     */
-    public function deleteAction(string $networkId = ''): void
-    {
-        // This method is deprecated
-        // All delete operations are handled via REST API v3
-        $this->forward('firewall/index');
-    }
-
-    /**
-     * Enables Fail2Ban and Firewall
-     * @deprecated Use REST API v3 instead
-     */
-    public function enableAction(): void
-    {
-        // This method is deprecated
-        // All enable operations are handled via REST API v3
-        $this->view->success = false;
-    }
-
-    /**
-     * Disables Fail2Ban and Firewall
-     * @deprecated Use REST API v3 instead
-     */
-    public function disableAction(): void
-    {
-        // This method is deprecated
-        // All disable operations are handled via REST API v3
-        $this->view->success = false;
+        // All data including firewallRules, isDocker, and dockerSupportedServices
+        // is loaded via REST API in JavaScript
     }
 
 }

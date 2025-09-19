@@ -86,8 +86,8 @@ class CreateRecordAction extends AbstractSaveRecordAction
                 return $res;
             }
             
-            // Create FirewallRules
-            if (!self::createFirewallRules($networkFilter->id, $data['rules'] ?? [])) {
+            // Create FirewallRules from currentRules data
+            if (!self::createFirewallRules($networkFilter->id, $data['currentRules'] ?? [])) {
                 $res->messages['error'][] = 'Failed to create firewall rules';
                 $db->rollback();
                 $res->success = false;
@@ -115,13 +115,13 @@ class CreateRecordAction extends AbstractSaveRecordAction
      * Create FirewallRules for a NetworkFilter
      *
      * @param string $networkFilterId NetworkFilter ID
-     * @param array $rulesData Rules configuration
+     * @param array $rulesData Simple boolean map of rules (e.g., ["SIP" => true, "WEB" => false])
      * @return bool Success status
      */
     private static function createFirewallRules(string $networkFilterId, array $rulesData): bool
     {
         $defaultRules = FirewallRules::getDefaultRules();
-        
+
         foreach ($defaultRules as $category => $categoryData) {
             foreach ($categoryData['rules'] as $rule) {
                 $firewallRule = new FirewallRules();
@@ -132,25 +132,13 @@ class CreateRecordAction extends AbstractSaveRecordAction
                 $firewallRule->category = $category;
                 $firewallRule->portFromKey = $rule['portFromKey'] ?? '';
                 $firewallRule->portToKey = $rule['portToKey'] ?? '';
-                
-                // Get action from input data or use default
+
+                // Get action from currentRules data or use default
                 if (isset($rulesData[$category])) {
-                    if (is_array($rulesData[$category])) {
-                        // Handle array format with 'action' key
-                        $action = $rulesData[$category]['action'] ?? false;
-                    } else {
-                        // Handle simple format: "SIP" => true/false or "SIP" => "allow"/"block"
-                        $action = $rulesData[$category];
-                    }
-                    
-                    // Convert boolean to allow/block string
-                    if (is_bool($action)) {
-                        $firewallRule->action = $action ? 'allow' : 'block';
-                    } else {
-                        // Support legacy string format
-                        $firewallRule->action = $action === 'allow' ? 'allow' : 'block';
-                    }
+                    // Simple boolean format: true = allow, false = block
+                    $firewallRule->action = $rulesData[$category] ? 'allow' : 'block';
                 } else {
+                    // Use default from template
                     $firewallRule->action = $categoryData['action'] ?? 'block';
                 }
                 
