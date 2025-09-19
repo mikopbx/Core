@@ -108,7 +108,8 @@ class PbxConf extends SystemConfigClass
         $configClassObj = new AsteriskConfigClass();
         $configClassObj->hookModulesMethod(AsteriskConfigInterface::GENERATE_CONFIG);
 
-        self::dialplanReload();
+        ExtensionsConf::reload();
+        
         if (System::isBooting()) {
             $message = '   |- reload dialplan...';
             SystemMessages::echoWithSyslog($message);
@@ -197,126 +198,100 @@ class PbxConf extends SystemConfigClass
 
     /**
      * Refreshes the features configs and reloads the features module.
+     *
+     * @deprecated Use FeaturesConf::reload() instead
+     * @see \MikoPBX\Core\Asterisk\Configs\FeaturesConf::reload()
      */
     public static function featuresReload(): void
     {
-        $featuresConf = new FeaturesConf();
-        $featuresConf->generateConfig();
-        $arr_out      = [];
-        $asterisk = Util::which(self::PROC_NAME);
-        Processes::mwExec("$asterisk -rx 'module reload features'", $arr_out);
+        FeaturesConf::reload();
     }
 
     /**
      * Reloads the Asterisk core.
+     *
      */
     public static function coreReload(): void
     {
-        $featuresConf = new FeaturesConf();
-        $featuresConf->generateConfig();
-
-        $asteriskConf = new AsteriskConf();
-        $asteriskConf->generateConfig();
-
-        $indicationConf = new IndicationConf();
-        $indicationConf->generateConfig();
-
-        $arr_out      = [];
-        $asterisk = Util::which(self::PROC_NAME);
-        Processes::mwExec("$asterisk -rx 'core reload'", $arr_out);
+        FeaturesConf::reload();
+        AsteriskConf::reload();
+        IndicationConf::reload();
     }
 
     /**
      * Restarts the Asterisk core.
+     *
      */
     public static function coreRestart(): void
     {
-        $asteriskConf = new AsteriskConf();
-        $asteriskConf->generateConfig();
-
-        $indicationConf = new IndicationConf();
-        $indicationConf->generateConfig();
-
-        $asterisk = Util::which(self::PROC_NAME);
-        Processes::mwExec("$asterisk -rx 'core restart now'");
+        AsteriskConf::restart();
     }
 
     /**
      * Reloads the Asterisk manager interface module.
+     *
+     * @deprecated Use ManagerConf::reload() instead
+     * @see \MikoPBX\Core\Asterisk\Configs\ManagerConf::reload()
      */
     public static function managerReload(): void
     {
-        $managerCong = new ManagerConf();
-        $managerCong->generateConfig();
-
-        $httpConf = new HttpConf();
-        $httpConf->generateConfig();
-
-        $arr_out      = [];
-        $asterisk = Util::which(self::PROC_NAME);
-        Processes::mwExec("$asterisk -rx 'module reload manager'", $arr_out);
-        Processes::mwExec("$asterisk -rx 'module reload http'", $arr_out);
+        ManagerConf::reload();
     }
 
     /**
      * Reloads the Asterisk REST Interface (ARI) module.
+     *
+     * @deprecated Use AriConf::reload() instead
+     * @see \MikoPBX\Core\Asterisk\Configs\AriConf::reload()
      */
     public static function ariReload(): void
     {
-        $ariConf = new AriConf();
-        $ariConf->reload();
+        AriConf::reload();
     }
 
     /**
      * Reloads the Asterisk music on hold module.
+     *
+     * @deprecated Use MusicOnHoldConf::reload() instead
+     * @see \MikoPBX\Core\Asterisk\Configs\MusicOnHoldConf::reload()
      */
     public static function musicOnHoldReload(): void
     {
-        $o = new MusicOnHoldConf();
-        $o->generateConfig();
-        $asterisk = Util::which(self::PROC_NAME);
-        Processes::mwExec("$asterisk -rx 'moh reload'");
+        MusicOnHoldConf::reload();
     }
 
     /**
-     * Reloads the Asterisk music on hold module.
+     * Reloads the Asterisk conference bridge module.
+     *
+     * @deprecated Use ConferenceConf::reload() instead
+     * @see \MikoPBX\Core\Asterisk\Configs\ConferenceConf::reload()
      */
     public static function confBridgeReload(): void
     {
-        $o = new ConferenceConf();
-        $o->generateConfig();
-        $asterisk = Util::which(self::PROC_NAME);
-        Processes::mwExec("$asterisk -rx 'module reload app_confbridge'");
+        ConferenceConf::reload();
     }
 
     /**
      * Reloads the Asterisk voicemail module.
+     *
+     * @deprecated Use VoiceMailConf::reload() instead
+     * @see \MikoPBX\Core\Asterisk\Configs\VoiceMailConf::reload()
      */
     public static function voicemailReload(): void
     {
-        $o = new VoiceMailConf();
-        $o->generateConfig();
-        $arr_out      = [];
-        $asterisk = Util::which(self::PROC_NAME);
-        Processes::mwExec("$asterisk -rx 'voicemail reload'", $arr_out);
+        VoiceMailConf::reload();
     }
 
     /**
      * Reloads the Asterisk modules.
+     *
+     * @deprecated Use ModulesConf::reload() instead
+     * @see \MikoPBX\Core\Asterisk\Configs\ModulesConf::reload()
      * @return array
      */
     public static function modulesReload(): array
     {
-        $pbx = new ModulesConf();
-        $pbx->generateConfig();
-        $arr_out      = [];
-        $asterisk = Util::which(self::PROC_NAME);
-        Processes::mwExec("$asterisk -rx 'core restart now'", $arr_out);
-
-        return [
-            'result' => 'Success',
-            'data'   => '',
-        ];
+        return ModulesConf::reload();
     }
 
     /**
@@ -339,53 +314,35 @@ class PbxConf extends SystemConfigClass
 
     /**
      * Refreshes the SIP configurations and reloads the PJSIP module.
+     *
+     * @deprecated Use SIPConf::reload() instead
+     * @see \MikoPBX\Core\Asterisk\Configs\SIPConf::reload()
      */
     public static function sipReload():void
     {
-        $di     = Di::getDefault();
-        if ($di === null) {
-            return;
-        }
-        $sip = new SIPConf();
-        $needRestart = $sip->needAsteriskRestart();
-        $sip->generateConfig();
-
-        $acl = new AclConf();
-        $acl->generateConfig();
-
-        $asterisk = Util::which(self::PROC_NAME);
-        if ($needRestart === false) {
-            Processes::mwExec("$asterisk -rx 'module reload acl'");
-            Processes::mwExec("$asterisk -rx 'core reload'");
-        } else {
-            SystemMessages::sysLogMsg('SIP RELOAD', 'Need reload asterisk',LOG_INFO);
-            // Terminate channels.
-            Processes::mwExec("$asterisk -rx 'channel request hangup all'");
-            usleep(500000);
-            Processes::mwExec("$asterisk -rx 'core restart now'");
-        }
+        SIPConf::reload();
     }
 
     /**
      * Updates the RTP config file.
+     *
+     * @deprecated Use RtpConf::reload() instead
+     * @see \MikoPBX\Core\Asterisk\Configs\RtpConf::reload()
      */
     public static function rtpReload(): void
     {
-        $rtp = new RtpConf();
-        $rtp->generateConfig();
-        $asterisk = Util::which(self::PROC_NAME);
-        Processes::mwExec("$asterisk -rx 'module reload res_rtp_asterisk'");
+        RtpConf::reload();
     }
 
     /**
      * Refreshes the IAX configurations and reloads the iax2 module.
+     *
+     * @deprecated Use IAXConf::reload() instead
+     * @see \MikoPBX\Core\Asterisk\Configs\IAXConf::reload()
      */
     public static function iaxReload(): void
     {
-        $iax    = new IAXConf();
-        $iax->generateConfig();
-        $asterisk = Util::which(self::PROC_NAME);
-        Processes::mwExec("$asterisk -rx 'iax2 reload'");
+        IAXConf::reload();
     }
 
     /**
@@ -423,20 +380,13 @@ class PbxConf extends SystemConfigClass
 
     /**
      * Refreshes the extensions.conf file and reloads the Asterisk dialplan.
+     *
+     * @deprecated Use ExtensionsConf::reload() instead
+     * @see \MikoPBX\Core\Asterisk\Configs\ExtensionsConf::reload()
      */
     public static function dialplanReload(): void
     {
-        $di = Di::getDefault();
-        if ($di === null) {
-            return;
-        }
-        if (!System::isBooting()) {
-            $extensions = new ExtensionsConf();
-            $extensions->generateConfig();
-            $asterisk = Util::which(self::PROC_NAME);
-            Processes::mwExec("$asterisk -rx 'dialplan reload'");
-            Processes::mwExec("$asterisk -rx 'module reload pbx_lua.so'");
-        }
+        ExtensionsConf::reload();
     }
 
     /**

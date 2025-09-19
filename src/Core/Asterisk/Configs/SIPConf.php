@@ -1284,6 +1284,7 @@ class SIPConf extends AsteriskConfigClass
             'qualify_timeout'   => '5',
             'max_contacts'      => '5',
             'remove_existing'   => 'yes',
+            'remove_unavailable' => 'yes'
         ];
 
         // Override PJSIP options from modules
@@ -1417,5 +1418,34 @@ class SIPConf extends AsteriskConfigClass
             $conf .= $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_PEER_PJ_ADDITIONAL_OPTIONS, [$peer]);
         }
         return $conf;
+    }
+
+    /**
+     * Refreshes the SIP configurations and reloads the PJSIP module.
+     */
+    public static function reload(): void
+    {
+        $di = \Phalcon\Di\Di::getDefault();
+        if ($di === null) {
+            return;
+        }
+        $sip = new self();
+        $needRestart = $sip->needAsteriskRestart();
+        $sip->generateConfig();
+
+        $acl = new AclConf();
+        $acl->generateConfig();
+
+        $asterisk = Util::which('asterisk');
+        if ($needRestart === false) {
+            Processes::mwExec("$asterisk -rx 'module reload acl'");
+            Processes::mwExec("$asterisk -rx 'core reload'");
+        } else {
+            SystemMessages::sysLogMsg('SIP RELOAD', 'Need reload asterisk', LOG_INFO);
+            // Terminate channels.
+            Processes::mwExec("$asterisk -rx 'channel request hangup all'");
+            usleep(500000);
+            Processes::mwExec("$asterisk -rx 'core restart now'");
+        }
     }
 }

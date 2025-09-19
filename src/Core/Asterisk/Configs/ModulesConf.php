@@ -20,6 +20,8 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\Util;
 
 /**
  * Class ModulesConf
@@ -234,5 +236,23 @@ class ModulesConf extends AsteriskConfigClass
 
         // Write the configuration content to the file
         $this->saveConfig($conf, $this->description);
+    }
+
+    /**
+     * Reloads the Asterisk modules.
+     * @return array
+     */
+    public static function reload(): array
+    {
+        $pbx = new self();
+        $pbx->generateConfig();
+        $arr_out = [];
+        $asterisk = Util::which('asterisk');
+        Processes::mwExec("$asterisk -rx 'core restart now'", $arr_out);
+
+        return [
+            'result' => 'Success',
+            'data'   => '',
+        ];
     }
 }

@@ -20,6 +20,8 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\Util;
 
 /**
  * Class FeaturesConf
@@ -102,5 +104,16 @@ class FeaturesConf extends AsteriskConfigClass
         $conf .= $this->hookModulesMethod(AsteriskConfigInterface::GET_FEATURE_MAP);
 
         $this->saveConfig($conf, $this->description);
+    }
+
+    /**
+     * Refreshes the features configs and reloads the features module.
+     */
+    public static function reload(): void
+    {
+        $featuresConf = new self();
+        $featuresConf->generateConfig();
+        $asterisk = Util::which('asterisk');
+        Processes::mwExec("$asterisk -rx 'module reload features'");
     }
 }

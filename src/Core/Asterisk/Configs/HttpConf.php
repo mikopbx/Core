@@ -20,7 +20,9 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SslCertificateService;
+use MikoPBX\Core\System\Util;
 
 /**
  * Class HttpConf
@@ -70,5 +72,16 @@ class HttpConf extends AsteriskConfigClass
             }
         }
         $this->saveConfig($conf, $this->description);
+    }
+
+    /**
+     * Reloads the Asterisk HTTP module.
+     */
+    public static function reload(): void
+    {
+        $conf = new self();
+        $conf->generateConfig();
+        $asterisk = Util::which('asterisk');
+        Processes::mwExec("$asterisk -rx 'module reload http'");
     }
 }

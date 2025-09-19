@@ -22,7 +22,8 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\CallQueues;
 use MikoPBX\Common\Models\Extensions;
-use MikoPBX\Core\System\{PBX, Processes, Util};
+use MikoPBX\Core\System\{Processes, Util};
+use MikoPBX\Core\System\Configs\PbxConf;
 
 /**
  * Class QueueConf
@@ -40,14 +41,24 @@ class QueueConf extends AsteriskConfigClass
 
     /**
      * Generates queue.conf and restarts the Asterisk queue module.
+     *
+     * @deprecated Use reload() instead for consistency with other config classes
+     * @see reload()
      */
     public static function queueReload(): void
     {
+        self::reload();
+    }
+
+    /**
+     * Reloads the Asterisk queue module.
+     */
+    public static function reload(): void
+    {
         $queue = new self();
         $queue->generateConfig();
-        $out          = [];
-        $asterisk = Util::which(PBX::PROC_NAME);
-        Processes::mwExec("$asterisk -rx 'queue reload all '", $out);
+        $asterisk = Util::which(PbxConf::PROC_NAME);
+        Processes::mwExec("$asterisk -rx 'queue reload all'");
     }
 
     /**

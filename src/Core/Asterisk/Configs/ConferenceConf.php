@@ -21,6 +21,8 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\ConferenceRooms;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\Util;
 
 /**
  * Generates the configuration content for confbridge.conf.
@@ -199,4 +201,14 @@ class ConferenceConf extends AsteriskConfigClass
         return $confExtensions;
     }
 
+    /**
+     * Reloads the Asterisk confbridge module.
+     */
+    public static function reload(): void
+    {
+        $conf = new self();
+        $conf->generateConfig();
+        $asterisk = Util::which('asterisk');
+        Processes::mwExec("$asterisk -rx 'module reload app_confbridge'");
+    }
 }

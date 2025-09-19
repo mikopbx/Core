@@ -21,12 +21,14 @@
 namespace MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions;
 
 use MikoPBX\Common\Models\AsteriskManagerUsers;
+use MikoPBX\Common\Models\AsteriskRestUsers;
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckAmiPasswords;
+use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckAriPasswords;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckFirewalls;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckSIPPasswords;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckSSHConfig;
@@ -77,6 +79,10 @@ class ReloadAdviceAction implements ReloadActionInterface
                 case NetworkFilters::class:
                     $cacheKeys[WorkerPrepareAdvice::getCacheKey(CheckFirewalls::class)] = true;
                     break;
+                case AsteriskRestUsers::class:
+                    $cacheKeys[WorkerPrepareAdvice::getCacheKey(CheckAriPasswords::class)] = true;
+                    break;
+
                 default:
             }
             foreach ($cacheKeys as $cacheKey => $value) {

@@ -19,7 +19,8 @@
 
 namespace MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions;
 
-use MikoPBX\Core\System\PBX;
+
+use MikoPBX\Core\Asterisk\Configs\AriConf;
 
 /**
  * Class ReloadAriAction
@@ -38,6 +39,6 @@ class ReloadAriAction implements ReloadActionInterface
      */
     public function execute(array $parameters = []): void
     {
-        PBX::ariReload();
+        AriConf::reload();
     }
 }

@@ -130,4 +130,15 @@ class MusicOnHoldConf extends AsteriskConfigClass
             }
         }
     }
+
+    /**
+     * Reloads the Asterisk music on hold module.
+     */
+    public static function reload(): void
+    {
+        $conf = new self();
+        $conf->generateConfig();
+        $asterisk = Util::which('asterisk');
+        Processes::mwExec("$asterisk -rx 'moh reload'");
+    }
 }

@@ -22,7 +22,7 @@ namespace MikoPBX\Core\Asterisk\Configs;
 use MikoPBX\Common\Models\IncomingRoutingTable;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\{IncomingContexts, InternalContexts, OutgoingContext};
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Core\System\{Directories, Util};
+use MikoPBX\Core\System\{Directories, Processes, System, Util};
 
 /**
  * Represents the Asterisk configuration class for handling extensions.conf and 99-extensions-override.lua
@@ -302,5 +302,22 @@ class ExtensionsConf extends AsteriskConfigClass
             $ext_prefix = '';
         }
         return $ext_prefix.$did;
+    }
+
+    /**
+     * Reloads the Asterisk dialplan and Lua module.
+     * Only applies reload if not during system boot.
+     */
+    public static function reload(): void
+    {
+        $conf = new self();
+        $conf->generateConfig();
+
+        // Only reload if not during system boot
+        if (!System::isBooting()) {
+            $asterisk = Util::which('asterisk');
+            Processes::mwExec("$asterisk -rx 'dialplan reload'");
+            Processes::mwExec("$asterisk -rx 'module reload pbx_lua.so'");
+        }
     }
 }

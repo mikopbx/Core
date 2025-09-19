@@ -26,6 +26,7 @@ use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\IncomingContexts;
 use MikoPBX\Core\System\Directories;
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 
 /**
@@ -250,5 +251,16 @@ class IAXConf extends AsteriskConfigClass
             $data_providers[] = $arr_data;
         }
         return $data_providers;
+    }
+
+    /**
+     * Refreshes the IAX configurations and reloads the iax2 module.
+     */
+    public static function reload(): void
+    {
+        $iax = new self();
+        $iax->generateConfig();
+        $asterisk = Util::which('asterisk');
+        Processes::mwExec("$asterisk -rx 'iax2 reload'");
     }
 }

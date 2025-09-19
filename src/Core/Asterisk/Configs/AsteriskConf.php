@@ -143,4 +143,30 @@ class AsteriskConf extends AsteriskConfigClass
         }
         Processes::mwExecBg("$logRotatePath $options '$path_conf' > /dev/null 2> /dev/null");
     }
+
+    /**
+     * Reloads the Asterisk core configuration.
+     */
+    public static function reload(): void
+    {
+        $asteriskConf = new self();
+        $asteriskConf->generateConfig();
+        $asterisk = Util::which('asterisk');
+        Processes::mwExec("$asterisk -rx 'core reload'");
+    }
+
+    /**
+     * Restarts the Asterisk core.
+     */
+    public static function restart(): void
+    {
+        $asteriskConf = new self();
+        $asteriskConf->generateConfig();
+
+        $indicationConf = new IndicationConf();
+        $indicationConf->generateConfig();
+
+        $asterisk = Util::which('asterisk');
+        Processes::mwExec("$asterisk -rx 'core restart now'");
+    }
 }

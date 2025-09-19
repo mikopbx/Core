@@ -21,7 +21,9 @@ namespace MikoPBX\Core\Asterisk\Configs;
 
 
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SslCertificateService;
+use MikoPBX\Core\System\Util;
 
 /**
  * Class RtpConf
@@ -78,5 +80,16 @@ class RtpConf extends AsteriskConfigClass
 
         // Write the configuration content to the file
         $this->saveConfig($conf, $this->description);
+    }
+
+    /**
+     * Updates the RTP config file and reloads the module.
+     */
+    public static function reload(): void
+    {
+        $rtp = new self();
+        $rtp->generateConfig();
+        $asterisk = Util::which('asterisk');
+        Processes::mwExec("$asterisk -rx 'module reload res_rtp_asterisk'");
     }
 }

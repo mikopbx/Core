@@ -273,4 +273,14 @@ class VoiceMailConf extends AsteriskConfigClass
         return $toMails;
     }
 
+    /**
+     * Reloads the Asterisk voicemail module.
+     */
+    public static function reload(): void
+    {
+        $conf = new self();
+        $conf->generateConfig();
+        $asterisk = Util::which('asterisk');
+        Processes::mwExec("$asterisk -rx 'voicemail reload'");
+    }
 }

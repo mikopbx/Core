@@ -21,6 +21,7 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 
 /**
@@ -251,5 +252,16 @@ class ResParkingConf extends AsteriskConfigClass
     public function getFeatureMap(): string
     {
         return "parkcall => $this->ParkingFeature" . PHP_EOL;
+    }
+
+    /**
+     * Reloads the Asterisk parking module.
+     */
+    public static function reload(): void
+    {
+        $parkingConf = new self();
+        $parkingConf->generateConfig();
+        $asterisk = Util::which('asterisk');
+        Processes::mwExec("$asterisk -rx 'module reload res_parking'");
     }
 }

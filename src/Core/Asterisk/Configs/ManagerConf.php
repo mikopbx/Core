@@ -24,6 +24,7 @@ use MikoPBX\Common\Models\AsteriskManagerUsers;
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Directories;
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 
 /**
@@ -191,5 +192,22 @@ class ManagerConf extends AsteriskConfigClass
 
         // Write the configuration content to the file
         $this->saveConfig($conf, $this->description);
+    }
+
+    /**
+     * Reloads the Asterisk manager module and HTTP module.
+     */
+    public static function reload(): void
+    {
+        $conf = new self();
+        $conf->generateConfig();
+
+        // Also generate and reload HTTP configuration
+        $httpConf = new HttpConf();
+        $httpConf->generateConfig();
+
+        $asterisk = Util::which('asterisk');
+        Processes::mwExec("$asterisk -rx 'module reload manager'");
+        Processes::mwExec("$asterisk -rx 'module reload http'");
     }
 }

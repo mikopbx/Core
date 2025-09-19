@@ -21,6 +21,8 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\Util;
 use function MikoPBX\Common\Config\appPath;
 
 /**
@@ -64,5 +66,16 @@ class IndicationConf extends AsteriskConfigClass
         $conf     = str_replace('{country}', $country, $data);
         // Write the configuration content to the file
         $this->saveConfig($conf, $this->description);
+    }
+
+    /**
+     * Reloads the Asterisk indications configuration.
+     */
+    public static function reload(): void
+    {
+        $indicationConf = new self();
+        $indicationConf->generateConfig();
+        $asterisk = Util::which('asterisk');
+        Processes::mwExec("$asterisk -rx 'core reload'");
     }
 }

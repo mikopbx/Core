@@ -152,18 +152,19 @@ class AriConf extends AsteriskConfigClass
      *
      * @return void
      */
-    public function reload(): void
+    public static function reload(): void
     {
         // First generate the configuration
-        $this->generateConfig();
-        
+        $ariConf = new self();
+        $ariConf->generateConfig();
+
         $ariEnabled = PbxSettings::getValueByKey(PbxSettings::ARI_ENABLED) === '1';
         $arr_out = [];
         $asterisk = Util::which('asterisk');
-        
+
         if ($ariEnabled) {
             // ARI is enabled - load/reload modules
-            
+
             // Try to reload modules first, if they fail - load them
             Processes::mwExec("$asterisk -rx 'module reload res_ari'", $arr_out);
             if (!empty($arr_out) && strpos(implode('', $arr_out), 'No such module') !== false) {
@@ -172,19 +173,19 @@ class AriConf extends AsteriskConfigClass
                 $modulesConf->generateConfig();
                 Processes::mwExec("$asterisk -rx 'module reload'", $arr_out);
             }
-            
+
             // Also reload HTTP websocket module as ARI depends on it
             Processes::mwExec("$asterisk -rx 'module reload res_http_websocket'", $arr_out);
         } else {
             // ARI is disabled - unload ARI modules
             // Get modules in reverse order for proper dependency handling
             $ariModules = array_reverse(self::getAriModules());
-            
+
             // Unload each module
             foreach ($ariModules as $module) {
                 Processes::mwExec("$asterisk -rx 'module unload $module'", $arr_out);
             }
-            
+
             // Regenerate modules.conf to remove ARI modules from autoload
             $modulesConf = new ModulesConf();
             $modulesConf->generateConfig();
