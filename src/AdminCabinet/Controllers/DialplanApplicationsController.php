@@ -35,29 +35,10 @@ class DialplanApplicationsController extends BaseController
      *
      * @param string $uniqid The unique identifier of the dialplan application
      */
-    public function modifyAction(string $uniqid = ''): void
-    {
-        // Check for copy mode
-        $copyFromId = $this->request->getQuery('copy');
-        
-        // Create empty form structure - JavaScript will populate everything via REST API
-        $emptyApplication = new \stdClass();
-        $emptyApplication->id = '';
-        $emptyApplication->uniqid = $uniqid ?: '';
-        $emptyApplication->extension = '';
-        $emptyApplication->name = '';
-        $emptyApplication->hint = '';
-        $emptyApplication->applicationlogic = '';
-        $emptyApplication->type = 'php';
-        $emptyApplication->description = '';
-        
-        // Create form with minimal structure
-        $form = new DialplanApplicationEditForm($emptyApplication);
-        
+    public function modifyAction(): void
+    {    
         // Pass form and copy mode information to JavaScript
-        $this->view->form = $form;
-        $this->view->uniqid = $uniqid ?: '';
-        $this->view->copyFromId = $copyFromId ?: '';
+        $this->view->form = new DialplanApplicationEditForm();
     }
 
     /**

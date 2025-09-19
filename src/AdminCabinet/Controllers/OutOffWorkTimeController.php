@@ -49,19 +49,6 @@ class OutOffWorkTimeController extends BaseController
      */
     public function modifyAction(string $id = ''): void
     {
-        // Create empty form - JS will populate via REST API
-        $this->setupModifyView($id);
-    }
-    
-    /**
-     * Setup view for modify action
-     * Creates empty form that will be populated by JavaScript
-     * 
-     * @param string $id Time condition ID
-     * @return void
-     */
-    private function setupModifyView(string $id): void
-    {
         // Create empty model for form structure
         $timeFrame = new OutWorkTimes();
         
@@ -89,33 +76,5 @@ class OutOffWorkTimeController extends BaseController
         // Server timezone offset for calendar
         $dateTime = new \DateTime();
         $this->view->setVar('serverOffset', $dateTime->getOffset() / 60);
-    }
-
-    /**
-     * @deprecated Use REST API instead
-     * Change priority action - handled by REST API
-     */
-    public function changePriorityAction(): void
-    {
-        $this->view->disable();
-        echo json_encode(['result' => false, 'message' => 'Use REST API']);
-    }
-
-    /**
-     * @deprecated Use REST API instead
-     * Save action - handled by REST API
-     */
-    public function saveAction(): void
-    {
-        $this->forward('out-off-work-time/index');
-    }
-
-    /**
-     * @deprecated Use REST API instead
-     * Delete action - handled by REST API
-     */
-    public function deleteAction(string $id): void
-    {
-        $this->forward('out-off-work-time/index');
     }
 }

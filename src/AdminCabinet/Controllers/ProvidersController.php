@@ -67,83 +67,19 @@ class ProvidersController extends BaseController
      */
     private function setupModifyView(string $type, string $uniqId): void
     {
-        // Check for copy mode
-        $copyFromId = $this->request->getQuery('copy');
         
-        $options = ['note' => ''];
+
         
         if ($type === 'SIP') {
-            // Create empty SIP model for form generation
-            $emptyProvider = new Sip();
-            $emptyProvider->type = 'friend';
-            $emptyProvider->id = $uniqId ?: '';  // Set id field for JavaScript
-            $form = new SipProviderEditForm($emptyProvider, $options);
-            
-            // Empty arrays that will be filled by JavaScript
-            $this->view->hostsTable = [];
-            $this->view->secret = '';
+            $form = new SipProviderEditForm(null);
         } else {
-            // Create empty IAX model for form generation
-            $emptyProvider = new Iax();
-            $emptyProvider->id = $uniqId ?: '';  // Set id field for JavaScript
-            $form = new IaxProviderEditForm($emptyProvider, $options);
-            
-            // Get network filters for the dropdown
-            $this->view->networkFilters = NetworkFilters::find();
+            $form = new IaxProviderEditForm(null);
         }
         
         $this->view->form = $form;
-        $this->view->uniqid = $uniqId;
         $this->view->represent = '';
         $this->view->providerType = $type;
-        $this->view->copyFromId = $copyFromId ?: '';
     }
 
-    /**
-     * Save action - deprecated, returns 404
-     * All saves are now handled through REST API v2
-     * @deprecated Use REST API v2 /pbxcore/api/v2/providers/saveRecord instead
-     */
-    public function saveAction(): void
-    {
-        // Return 404 - this endpoint is deprecated
-        $this->response->setStatusCode(404, 'Not Found');
-        $this->response->setJsonContent([
-            'result' => false,
-            'messages' => ['error' => ['This endpoint is deprecated. Use REST API v2 instead']]
-        ]);
-        $this->response->send();
-        $this->view->disable();
-    }
 
-    /**
-     * Enable action - handled by REST API
-     * @deprecated Use REST API instead
-     */
-    public function enableAction(string $type, string $uniqid = ''): void
-    {
-        $this->view->success = false;
-        $this->view->disable();
-        echo json_encode(['result' => false, 'message' => 'Use REST API']);
-    }
-
-    /**
-     * Disable action - handled by REST API
-     * @deprecated Use REST API instead
-     */
-    public function disableAction(string $type, string $uniqid = ''): void
-    {
-        $this->view->success = false;
-        $this->view->disable();
-        echo json_encode(['result' => false, 'message' => 'Use REST API']);
-    }
-
-    /**
-     * Delete action - handled by REST API
-     * @deprecated Use REST API instead
-     */
-    public function deleteAction(string $uniqid = ''): void
-    {
-        $this->forward('providers/index');
-    }
 }

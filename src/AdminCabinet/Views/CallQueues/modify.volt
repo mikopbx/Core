@@ -50,7 +50,6 @@
 <div class="field">
     <label>{{ t._('cq_QueueStrategy') }}</label>
     {{ form.render('strategy') }}
-    <!-- Dropdown created automatically by JavaScript -->
 </div>
 
 {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('MainFields')]) }}

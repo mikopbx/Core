@@ -9,7 +9,6 @@ namespace MikoPBX\AdminCabinet\Forms;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Text;
 use Phalcon\Forms\Element\TextArea;
-use Phalcon\Forms\Element\Select;
 
 /**
  * DialplanApplicationEditForm - Form for editing dialplan applications

@@ -42,23 +42,10 @@ class IvrMenuController extends BaseController
      */
     public function modifyAction(string $ivrmenuid = ''): void
     {
-        // Create empty form - JavaScript will populate everything via REST API
-        $emptyIvrMenu = new \stdClass();
-        // Now id is the uniqid value for REST API compatibility
-        $emptyIvrMenu->id = $ivrmenuid ?: '';
-        $emptyIvrMenu->isNew = ''; // Will be filled by REST API response
-        $emptyIvrMenu->extension = '';
-        $emptyIvrMenu->name = '';
-        $emptyIvrMenu->audio_message_id = '';
-        $emptyIvrMenu->timeout = '7';
-        $emptyIvrMenu->timeout_extension = '';
-        $emptyIvrMenu->allow_enter_any_internal_extension = '1';
-        $emptyIvrMenu->number_of_repeat = '3';
-        $emptyIvrMenu->description = '';
-        
+     
         // Create form with minimal options - all dropdowns populated dynamically
         $form = new IvrMenuEditForm(
-            $emptyIvrMenu,
+            null,
             [
                 'extensions' => ['' => 'Select number'], // Minimal - loaded via Extensions API
                 'soundfiles' => ['' => 'Select sound file'], // Minimal - loaded via SoundFiles API

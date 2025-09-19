@@ -22,10 +22,8 @@ namespace MikoPBX\AdminCabinet\Forms;
 
 use MikoPBX\AdminCabinet\Forms\Elements\SemanticUIDropdown;
 use MikoPBX\Common\Providers\TranslationProvider;
-use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
-use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
 
 /**
@@ -38,7 +36,8 @@ class CallQueueEditForm extends BaseForm
 {
     public function initialize($entity = null, $options = null): void
     {
-        parent::initialize($entity, $options);
+        // Entity is not used anymore - all data comes from REST API
+        parent::initialize(null, $options);
 
         // ID
         $this->add(new Hidden('id'));
@@ -53,10 +52,23 @@ class CallQueueEditForm extends BaseForm
         $this->add(new Text('extension'));
 
 
-        // Strategy - hidden field, dropdown is managed by JavaScript
-        $this->add(new Hidden('strategy', [
-            'value' => $entity->strategy ?? 'ringall'
-        ]));
+        // Strategy - static dropdown with PHP rendering
+        $this->addSemanticUIDropdown(
+            'strategy',
+            [
+                'ringall' => $this->translation->_('cq_ringall'),
+                'leastrecent' => $this->translation->_('cq_leastrecent'),
+                'fewestcalls' => $this->translation->_('cq_fewestcalls'),
+                'random' => $this->translation->_('cq_random'),
+                'rrmemory' => $this->translation->_('cq_rrmemory'),
+                'linear' => $this->translation->_('cq_linear')
+            ],
+            'ringall', // Default value, actual value will come from REST API
+            [
+                'clearable' => false,
+                'forceSelection' => true
+            ]
+        );
 
 
         // Seconds_to_ring_each_member - Seconds between announcements
@@ -66,7 +78,7 @@ class CallQueueEditForm extends BaseForm
         $this->add(new Numeric('seconds_for_wrapup', ["maxlength" => 2, "style" => "width: 80px;"]));
 
         // Recivecallswhileonacall
-        $this->addCheckBox('recive_calls_while_on_a_call', intval($entity->recive_calls_while_on_a_call) === 1, true);
+        $this->addCheckBox('recive_calls_while_on_a_call', false, true);
 
         // Callerhear
         $arrActions = [
@@ -85,10 +97,10 @@ class CallQueueEditForm extends BaseForm
         $this->add($callerhear);
 
         // Announceposition
-        $this->addCheckBox('announce_position', intval($entity->announce_position) === 1, true);
+        $this->addCheckBox('announce_position', false, true);
 
         // Announceholdtime
-        $this->addCheckBox('announce_hold_time', intval($entity->announce_hold_time) === 1, true);
+        $this->addCheckBox('announce_hold_time', false, true);
 
         $this->add(new Hidden('periodic_announce_sound_id', [
             'id' => 'periodic_announce_sound_id'
@@ -102,14 +114,13 @@ class CallQueueEditForm extends BaseForm
         $this->add(new Numeric('periodic_announce_frequency', ["maxlength" => 2, "style" => "width: 80px;"]));
 
         // Timeouttoredirecttoextension
-        $ringlength = $entity->timeout_to_redirect_to_extension;
         $this->add(
             new Numeric(
                 'timeout_to_redirect_to_extension',
                 [
                     "maxlength" => 2,
                     "style" => "width: 80px;",
-                    "value" => ($ringlength > 0) ? $ringlength : '',
+                    "value" => 30,
                 ]
             )
         );
@@ -130,6 +141,6 @@ class CallQueueEditForm extends BaseForm
         $this->add(new Text('callerid_prefix'));
 
         // Description
-        $this->addTextArea('description', $entity->description ?? '', 65);
+        $this->addTextArea('description', '', 65); // Default empty, actual value will come from REST API
     }
 }
