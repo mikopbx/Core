@@ -57,6 +57,7 @@ class PbxDataTableIndex {
      * @param {Array} [config.order=[[0, 'asc']]] - Default sort order
      * @param {Object} [config.ajaxData] - Additional data parameters for AJAX requests
      * @param {boolean} [config.serverSide=false] - Enable server-side processing
+     * @param {Function} [config.customDeletePermissionCheck] - Function to check if delete is allowed for a row
      */
     constructor(config) {
         // Core configuration
@@ -67,6 +68,7 @@ class PbxDataTableIndex {
         this.columns = config.columns || [];
         this.showSuccessMessages = config.showSuccessMessages || false;
         this.showInfo = config.showInfo || false;
+        this.dataTableOptions = config.dataTableOptions || {};
         
         // Sorting configuration (backward compatible)
         this.orderable = config.orderable !== undefined ? config.orderable : true;
@@ -106,6 +108,7 @@ class PbxDataTableIndex {
         this.customDeleteHandler = config.customDeleteHandler;
         this.onAfterDelete = config.onAfterDelete;
         this.getModifyUrl = config.getModifyUrl;
+        this.customDeletePermissionCheck = config.customDeletePermissionCheck;
         this.ajaxData = config.ajaxData || {};
         this.serverSide = config.serverSide || false;
     }
@@ -199,9 +202,11 @@ class PbxDataTableIndex {
             info: this.showInfo,
             autoWidth: false,
             language: SemanticLocalization.dataTableLocalisation,
-            drawCallback: () => this.handleDrawCallback()
+            drawCallback: () => this.handleDrawCallback(),
+            // Apply custom DataTable options, overriding defaults if provided
+            ...this.dataTableOptions
         };
-        
+
         this.dataTable = this.$table.DataTable(config);
         
         // Initialize handlers
@@ -344,14 +349,31 @@ class PbxDataTableIndex {
                 
                 // Delete button (always last)
                 if (this.actionButtons.includes('delete') && this.permissions.delete) {
-                    buttons.push(`
-                        <a href="#" 
-                           data-value="${recordId}" 
-                           class="ui button delete two-steps-delete popuped" 
-                           data-content="${globalTranslate.bt_ToolTipDelete}">
-                            <i class="icon trash red"></i>
-                        </a>
-                    `);
+                    // Check if custom delete permission check is needed
+                    let canDelete = true;
+                    if (this.customDeletePermissionCheck && typeof this.customDeletePermissionCheck === 'function') {
+                        canDelete = this.customDeletePermissionCheck(row);
+                    }
+
+                    if (canDelete) {
+                        buttons.push(`
+                            <a href="#"
+                               data-value="${recordId}"
+                               class="ui button delete two-steps-delete popuped"
+                               data-content="${globalTranslate.bt_ToolTipDelete}">
+                                <i class="icon trash red"></i>
+                            </a>
+                        `);
+                    } else {
+                        // Show disabled delete button with explanation
+                        buttons.push(`
+                            <a href="#"
+                               class="ui button delete disabled popuped"
+                               data-content="${this.translations.deleteDisabledTooltip || globalTranslate.bt_CannotDelete}">
+                                <i class="icon trash grey"></i>
+                            </a>
+                        `);
+                    }
                 }
                 
                 return buttons.length > 0 ? 
@@ -418,17 +440,47 @@ class PbxDataTableIndex {
     handleDrawCallback() {
         // Initialize Semantic UI popups
         this.$table.find('.popuped').popup();
-        
+
         // Move Add New button to DataTables wrapper
         this.repositionAddButton();
-        
+
         // Initialize double-click editing
         this.initializeDoubleClickEdit();
-        
+
+        // Hide pagination controls when all records fit on one page
+        this.togglePaginationVisibility();
+
         // Custom draw callback
         if (this.onDrawCallback) {
             this.onDrawCallback();
         }
+    }
+
+    /**
+     * Toggle pagination visibility based on page count
+     * Hides pagination when all records fit on a single page
+     */
+    togglePaginationVisibility() {
+        // Use setTimeout to ensure DataTable is fully initialized
+        setTimeout(() => {
+            // Get the DataTable instance
+            const table = this.$table.DataTable();
+            if (table && table.page) {
+                const info = table.page.info();
+                const tableId = this.$table.attr('id');
+                const $paginateContainer = $(`#${tableId}_paginate`);
+
+                if ($paginateContainer.length) {
+                    if (info.pages <= 1) {
+                        // Hide pagination when there's only one page
+                        $paginateContainer.hide();
+                    } else {
+                        // Show pagination when there are multiple pages
+                        $paginateContainer.show();
+                    }
+                }
+            }
+        }, 0);
     }
     
     /**
