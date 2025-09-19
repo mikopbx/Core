@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Lib\Passwords;
 
 use MikoPBX\Common\Providers\TranslationProvider;
+use MikoPBX\Core\System\PasswordService;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
@@ -87,7 +88,7 @@ class BatchValidateAction  extends Injectable
         }
 
         // Batch validate
-        $results = \MikoPBX\PBXCoreREST\Services\PasswordService::validateBatch(
+        $results = PasswordService::validateBatch(
             $passwordsWithContext,
             ['skipDictionary' => $skipDictionary]
         );

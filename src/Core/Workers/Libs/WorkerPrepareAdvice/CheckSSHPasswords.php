@@ -21,6 +21,7 @@ namespace MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice;
 
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\PBXCoreRESTClientProvider;
+use MikoPBX\Core\System\PasswordService;
 use Phalcon\Di\Injectable;
 
 /**
@@ -75,14 +76,10 @@ class CheckSSHPasswords extends Injectable
             return $messages; // Shadow file corrupted, need to reset password
         }
 
-        // Check password against dictionary using REST API
-        $result = $this->di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
-            '/pbxcore/api/v2/passwords/checkDictionary',
-            PBXCoreRESTClientProvider::HTTP_METHOD_POST,
-            ['password' => $passwords->ssh]
-        ]);
+        // Check password against dictionary
+        $isInDictionary = PasswordService::checkDictionary($passwords->ssh);
 
-        if ($result && isset($result->data) && !empty($result->data->isInDictionary)) {
+        if ($isInDictionary) {
             $messages['warning'][] = [
                 'messageTpl' => 'adv_SshPasswordWeak',
                 'messageParams' => $messageParams

@@ -19,8 +19,7 @@
 
 namespace MikoPBX\Common\Models;
 
-use MikoPBX\Common\Providers\PBXCoreRESTClientProvider;
-use Phalcon\Di\Di;
+use MikoPBX\Core\System\PasswordService;
 use Phalcon\Filter\Validation;
 use Phalcon\Filter\Validation\Validator\Uniqueness as UniquenessValidator;
 use Phalcon\Mvc\Model\Relation;
@@ -428,21 +427,14 @@ class Sip extends ModelsBase
     }
 
     /**
-     * Generates a random SIP password using REST API.
+     * Generates a random SIP password.
      *
      * @param int $length Password length (default: 16)
      * @return string The generated SIP password.
      */
     public static function generateSipPassword(int $length = 16): string
     {
-        $di = Di::getDefault();
-        $response = $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
-            '/pbxcore/api/v2/passwords/generate',
-            PBXCoreRESTClientProvider::HTTP_METHOD_GET,
-            ['length' => $length]
-        ]);
-        
-        return $response->data['password'] ?? '';
+        return PasswordService::generate(['length' => $length]);
     }
 
     /**

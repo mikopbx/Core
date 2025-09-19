@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Lib\Passwords;
 
 use MikoPBX\Common\Providers\TranslationProvider;
+use MikoPBX\Core\System\PasswordService;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
@@ -87,7 +88,7 @@ class BatchCheckDictionaryAction extends Injectable
         }
 
         // Batch check using optimized method
-        $checkResults = \MikoPBX\PBXCoreREST\Services\PasswordService::checkDictionaryBatch($passwordsToCheck);
+        $checkResults = PasswordService::batchCheckDictionary($passwordsToCheck);
         
         // Prepare response data
         $weakIndexes = [];

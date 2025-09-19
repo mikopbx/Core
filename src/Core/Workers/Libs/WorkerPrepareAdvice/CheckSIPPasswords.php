@@ -23,6 +23,7 @@ use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\Users;
 use MikoPBX\Common\Providers\PBXCoreRESTClientProvider;
+use MikoPBX\Core\System\PasswordService;
 use Phalcon\Di\Injectable;
 
 /**
@@ -58,23 +59,17 @@ class CheckSIPPasswords extends Injectable
                 $recordMap[$index] = $sipRecord;
             }
             
-            // Check passwords individually using REST API
+            // Check passwords individually
             foreach ($passwords as $index => $password) {
-                $result = $this->di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
-                    '/pbxcore/api/v2/passwords/checkDictionary',
-                    PBXCoreRESTClientProvider::HTTP_METHOD_POST,
-                    ['password' => $password]
-                ]);
-                
-                if ($result && $result->success && isset($result->data['isInDictionary'])) {
-                    $sipRecord = $recordMap[$index];
-                    if ($result->data['isInDictionary']) {
-                        $sipRecord->assign(['weakSecret' => '2']); // Weak password
-                    } else {
-                        $sipRecord->assign(['weakSecret' => '1']); // OK, it is a strong password
-                    }
-                    $sipRecord->save();
+                $isInDictionary = PasswordService::checkDictionary($password);
+
+                $sipRecord = $recordMap[$index];
+                if ($isInDictionary) {
+                    $sipRecord->assign(['weakSecret' => '2']); // Weak password
+                } else {
+                    $sipRecord->assign(['weakSecret' => '1']); // OK, it is a strong password
                 }
+                $sipRecord->save();
             }
         }
 

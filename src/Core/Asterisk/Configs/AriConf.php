@@ -23,7 +23,7 @@ use MikoPBX\Common\Models\AsteriskRestUsers;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
-use MikoPBX\PBXCoreREST\Services\PasswordService;
+use MikoPBX\Core\System\PasswordService;
 
 /**
  * Class AriConf
@@ -131,7 +131,7 @@ class AriConf extends AsteriskConfigClass
         // Add default user for internal use (used by MikoPBX core)
         $conf .= "[pbxcore]\n";
         $conf .= "type = user\n";
-        $conf .= "password = " . PasswordService::generate(32, true) . "\n";
+        $conf .= "password = " . PasswordService::generate(['length' => 32, 'includeSpecial' => true]) . "\n";
         $conf .= "password_format = plain\n";
         // pbxcore user has access to all applications
         $conf .= "\n";

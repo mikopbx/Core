@@ -49,20 +49,32 @@ class FieldContextMapper
         // Handle various field name formats
         return match($field) {
             // Web admin password variations
-            'WebAdminPassword', 'WEB_ADMIN_PASSWORD', 'web_admin_password' => \MikoPBX\PBXCoreREST\Services\PasswordService::CONTEXT_WEB_ADMIN,
-            
+            'WebAdminPassword', 'WEB_ADMIN_PASSWORD', 'web_admin_password' => \MikoPBX\Core\System\PasswordService::CONTEXT_WEB_ADMIN,
+
             // SSH password variations
-            'SSHPassword', 'SSH_PASSWORD', 'ssh_password' => \MikoPBX\PBXCoreREST\Services\PasswordService::CONTEXT_SSH,
-            
-            // SIP secret variations
-            'secret', 'sip_secret', 'SIP_SECRET' => \MikoPBX\PBXCoreREST\Services\PasswordService::CONTEXT_SIP,
-            
+            'SSHPassword', 'SSH_PASSWORD', 'ssh_password' => \MikoPBX\Core\System\PasswordService::CONTEXT_SSH,
+
+            // SIP employee secret variations (specific field name for employees)
+            'sip_secret', 'SIP_SECRET', 'sip_password' => \MikoPBX\Core\System\PasswordService::CONTEXT_SIP,
+
+            // IAX provider secret variations (only for providers)
+            'iax_secret', 'IAX_SECRET', 'iax_password' => \MikoPBX\Core\System\PasswordService::CONTEXT_IAX,
+
             // AMI secret variations
-            'ami_secret', 'AMI_SECRET' => \MikoPBX\PBXCoreREST\Services\PasswordService::CONTEXT_AMI,
-            
-            // Provider secret variations
-            'provider_secret', 'PROVIDER_SECRET' => \MikoPBX\PBXCoreREST\Services\PasswordService::CONTEXT_PROVIDER,
-            
+            'ami_secret', 'AMI_SECRET', 'ami_password' => \MikoPBX\Core\System\PasswordService::CONTEXT_AMI,
+
+            // ARI (Asterisk REST Interface) password variations
+            'password', 'ari_secret', 'ARI_SECRET', 'ari_password', 'rest_password' => \MikoPBX\Core\System\PasswordService::CONTEXT_ARI,
+
+            // API key/secret variations
+            'api_key', 'API_KEY', 'api_secret', 'API_SECRET', 'api_password' => \MikoPBX\Core\System\PasswordService::CONTEXT_API,
+
+            // SMTP password variations
+            'MailSMTPPassword', 'MAIL_SMTP_PASSWORD', 'mail_smtp_password', 'smtp_password' => \MikoPBX\Core\System\PasswordService::CONTEXT_SMTP,
+
+            // Provider secret variations (generic 'secret' when used for providers)
+            'secret', 'provider_secret', 'PROVIDER_SECRET', 'trunk_secret', 'trunk_password' => \MikoPBX\Core\System\PasswordService::CONTEXT_PROVIDER,
+
             // Default: return field as-is for custom contexts
             default => $field
         };

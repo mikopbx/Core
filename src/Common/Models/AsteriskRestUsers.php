@@ -19,8 +19,7 @@
 
 namespace MikoPBX\Common\Models;
 
-use MikoPBX\PBXCoreREST\Services\PasswordService;
-use Phalcon\Mvc\Model\Relation;
+use MikoPBX\Core\System\PasswordService;
 use Phalcon\Filter\Validation;
 use Phalcon\Filter\Validation\Validator\Uniqueness as UniquenessValidator;
 
@@ -114,7 +113,7 @@ class AsteriskRestUsers extends ModelsBase
     {
         // Generate a secure password with 32 characters for ARI
         // ARI passwords need to be strong as they provide API access
-        return PasswordService::generate(32, true);
+        return PasswordService::generate(['length' => 32, 'includeSpecial' => true]);
     }
 
     /**

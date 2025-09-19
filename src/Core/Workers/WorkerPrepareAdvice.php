@@ -26,6 +26,7 @@ use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\MutexProvider;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckAmiPasswords;
+use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckAriPasswords;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckConnection;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckCorruptedFiles;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckFirewalls;
@@ -66,6 +67,7 @@ class WorkerPrepareAdvice extends WorkerRedisBase
         ['type' => CheckFirewalls::class, 'cacheTime' => 864000, 'priority' => 1],
         ['type' => CheckSIPPasswords::class, 'cacheTime' => 864000, 'priority' => 9],
         ['type' => CheckAmiPasswords::class, 'cacheTime' => 864000, 'priority' => 9],
+        ['type' => CheckAriPasswords::class, 'cacheTime' => 864000, 'priority' => 9],
         ['type' => CheckStorage::class, 'cacheTime' => 3600, 'priority' => 2],
         ['type' => CheckUpdates::class, 'cacheTime' => 86400, 'priority' => 5],
         ['type' => CheckSSHConfig::class, 'cacheTime' => 3600, 'priority' => 1],

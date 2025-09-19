@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Lib\Passwords;
 
 use MikoPBX\Common\Providers\TranslationProvider;
+use MikoPBX\Core\System\PasswordService;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
@@ -63,20 +64,22 @@ class GeneratePasswordAction  extends Injectable
         $res = new PBXApiResult();
         $res->processor = __CLASS__;
 
-        $length = isset($data['length']) ? (int)$data['length'] : \MikoPBX\PBXCoreREST\Services\PasswordService::DEFAULT_LENGTH;
-        $includeSpecial = $data['includeSpecial'] ?? true;
+        $options = [
+            'length' => isset($data['length']) ? (int)$data['length'] : PasswordService::DEFAULT_LENGTH,
+            'includeSpecial' => $data['includeSpecial'] ?? true
+        ];
 
         try {
-            $password = \MikoPBX\PBXCoreREST\Services\PasswordService::generate($length, $includeSpecial);
+            $password = PasswordService::generate($options);
 
             // Calculate strength of generated password
-            $score = \MikoPBX\PBXCoreREST\Services\PasswordService::calculateScore($password);
+            $validationResult = PasswordService::validate($password);
 
             $res->data = [
                 'password' => $password,
                 'length' => strlen($password),
-                'score' => $score,
-                'strength' => \MikoPBX\PBXCoreREST\Services\PasswordService::getStrengthLabel($score),
+                'score' => $validationResult['score'],
+                'strength' => $validationResult['strength'],
                 'hasSpecialChars' => preg_match('/[^a-zA-Z0-9]/', $password) === 1
             ];
             $res->success = true;

@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Lib\Passwords;
 
 use MikoPBX\Common\Providers\TranslationProvider;
+use MikoPBX\Core\System\PasswordService;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
@@ -66,7 +67,7 @@ class CheckDictionaryAction  extends Injectable
             return $res;
         }
 
-        $isInDictionary = \MikoPBX\PBXCoreREST\Services\PasswordService::isInDictionary($password);
+        $isInDictionary = PasswordService::checkDictionary($password);
 
         $di = Di::getDefault();
         $translation = $di->get(TranslationProvider::SERVICE_NAME);

@@ -19,22 +19,21 @@
 
 declare(strict_types=1);
 
-namespace MikoPBX\PBXCoreREST\Services;
+namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
-use MikoPBX\Core\System\Processes;
 use Phalcon\Di\Di;
 use Phalcon\Encryption\Security\Random;
 
 /**
  * Unified Password Service
- * 
+ *
  * Provides centralized password validation and generation functionality
  * for use across the entire application (REST API, Controllers, Workers)
- * 
- * @package MikoPBX\PBXCoreREST\Services
+ *
+ * @package MikoPBX\Core\System
  */
 class PasswordService
 {
@@ -60,8 +59,12 @@ class PasswordService
     public const CONTEXT_WEB_ADMIN = 'WebAdminPassword';
     public const CONTEXT_SSH = 'SSHPassword';
     public const CONTEXT_SIP = 'SipSecret';
+    public const CONTEXT_IAX = 'IaxSecret';
     public const CONTEXT_AMI = 'AmiSecret';
+    public const CONTEXT_ARI = 'AriSecret';
+    public const CONTEXT_API = 'ApiSecret';
     public const CONTEXT_PROVIDER = 'ProviderSecret';
+    public const CONTEXT_SMTP = 'SmtpPassword';
     
     /**
      * Cache for dictionary check results
@@ -137,7 +140,7 @@ class PasswordService
         
         // Check against dictionary if not skipped and password is long enough
         if (empty($options['skipDictionary']) && $result['isValid'] && $length >= $minLength) {
-            if (self::isInDictionary($password)) {
+            if (self::checkDictionary($password)) {
                 $result['isValid'] = false;
                 $result['isSimple'] = true;
                 $result['messages'][] = self::translate('psw_PasswordTooCommon');
@@ -187,7 +190,7 @@ class PasswordService
      * @param string $password Password to check
      * @return bool True if password is in dictionary
      */
-    public static function isInDictionary(string $password): bool
+    public static function checkDictionary(string $password): bool
     {
         // Check cache first
         if (isset(self::$dictionaryCache[$password])) {
@@ -271,8 +274,15 @@ class PasswordService
         }
         
         // Check common defaults for other contexts
-        if (in_array($context, [self::CONTEXT_SIP, self::CONTEXT_AMI, self::CONTEXT_PROVIDER])) {
-            // Common default passwords for SIP/AMI
+        if (in_array($context, [
+            self::CONTEXT_SIP,
+            self::CONTEXT_IAX,
+            self::CONTEXT_AMI,
+            self::CONTEXT_ARI,
+            self::CONTEXT_API,
+            self::CONTEXT_PROVIDER
+        ])) {
+            // Common default passwords for telephony/API services
             $commonDefaults = ['admin', 'password', '1234', '12345', 'secret'];
             if (in_array(strtolower($password), $commonDefaults)) {
                 return true;
@@ -450,19 +460,24 @@ class PasswordService
     
     /**
      * Generate a secure password
-     * 
-     * @param int $length Desired password length
-     * @param bool $includeSpecial Include special characters
+     *
+     * @param array $options Options array with:
+     *                       - length: Desired password length (default: 16)
+     *                       - includeSpecial: Include special characters (default: true)
      * @return string Generated password
      */
-    public static function generate(int $length = self::DEFAULT_LENGTH, bool $includeSpecial = true): string
+    public static function generate(array $options = []): string
     {
+        // Extract options with defaults
+        $length = isset($options['length']) ? (int)$options['length'] : self::DEFAULT_LENGTH;
+        $includeSpecial = $options['includeSpecial'] ?? true;
+
         // Validate length
         $length = max(self::MIN_LENGTH, min(self::MAX_LENGTH, $length));
-        
+
         try {
             $random = new Random();
-            
+
             if ($includeSpecial) {
                 // Generate base64-safe password (includes -, _)
                 $password = $random->base64Safe($length);
@@ -470,18 +485,18 @@ class PasswordService
                 // Generate alphanumeric only
                 $password = $random->base58($length);
             }
-            
+
             // Ensure exact length
             if (strlen($password) > $length) {
                 $password = substr($password, 0, $length);
             }
-            
+
             while (strlen($password) < $length) {
                 $password .= $includeSpecial ? $random->base64Safe(1) : $random->base58(1);
             }
-            
+
             return substr($password, 0, $length);
-            
+
         } catch (\Throwable $e) {
             // Fallback to simple generation
             return self::generateFallback($length, $includeSpecial);
@@ -552,7 +567,7 @@ class PasswordService
      * @param array<int|string, string> $passwords Array of passwords to check
      * @return array<int|string, bool> Array of password index/key => isInDictionary result
      */
-    public static function checkDictionaryBatch(array $passwords): array
+    public static function batchCheckDictionary(array $passwords): array
     {
         $results = [];
         

@@ -22,6 +22,7 @@ namespace MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice;
 
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\PBXCoreRESTClientProvider;
+use MikoPBX\Core\System\PasswordService;
 use Phalcon\Di\Injectable;
 
 /**
@@ -61,14 +62,10 @@ class CheckWebPasswords extends Injectable
             return $messages; // No need to check further if using default
         }
 
-        // Check password against dictionary using REST API
-        $result = $this->di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
-            '/pbxcore/api/v2/passwords/checkDictionary',
-            PBXCoreRESTClientProvider::HTTP_METHOD_POST,
-            ['password' => $passwords->web]
-        ]);
+        // Check password against dictionary
+        $isInDictionary = PasswordService::checkDictionary($passwords->web);
 
-        if ($result && isset($result->data) && !empty($result->data->isInDictionary)) {
+        if ($isInDictionary) {
             $messages['error'][] = [
                 'messageTpl' => 'adv_WebPasswordWeak',
                 'messageParams' => $messageParams

@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,20 +19,20 @@
 
 namespace MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice;
 
-use MikoPBX\Common\Models\AsteriskManagerUsers;
+use MikoPBX\Common\Models\AsteriskRestUsers;
 use MikoPBX\Core\System\PasswordService;
 use Phalcon\Di\Injectable;
 
 /**
- * Class CheckAMIPasswords
+ * Class CheckAriPasswords
  * This class is responsible for checking password quality on backend.
  *
  * @package MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice
  */
-class CheckAmiPasswords extends Injectable
+class CheckAriPasswords extends Injectable
 {
     /**
-     * Check the quality of AMI passwords.
+     * Check the quality of ARI passwords.
      *
      * @return array An array containing warning and needUpdate messages.
      *
@@ -43,50 +43,50 @@ class CheckAmiPasswords extends Injectable
 
         // Check passwords and save status
         $parameters = [
-            'conditions' => 'weakSecret="0"'
+            'conditions' => 'weakPassword="0"'
         ];
 
-        $amiUsersToCheck = AsteriskManagerUsers::find($parameters);
-        
-        if ($amiUsersToCheck->count() > 0) {
+        $ariUsersToCheck = AsteriskRestUsers::find($parameters);
+
+        if ($ariUsersToCheck->count() > 0) {
             // Collect all passwords for batch checking
             $passwords = [];
             $userMap = [];
-            
-            foreach ($amiUsersToCheck as $index => $amiUser) {
-                $passwords[$index] = $amiUser->secret;
-                $userMap[$index] = $amiUser;
+
+            foreach ($ariUsersToCheck as $index => $ariUser) {
+                $passwords[$index] = $ariUser->password;
+                $userMap[$index] = $ariUser;
             }
-            
+
             // Check passwords individually
             foreach ($passwords as $index => $password) {
                 $isInDictionary = PasswordService::checkDictionary($password);
 
-                $amiUser = $userMap[$index];
+                $ariUser = $userMap[$index];
                 if ($isInDictionary) {
-                    $amiUser->assign(['weakSecret' => '2']); // Weak password
+                    $ariUser->assign(['weakPassword' => '2']); // Weak password
                 } else {
-                    $amiUser->assign(['weakSecret' => '1']); // OK, it is a strong password
+                    $ariUser->assign(['weakPassword' => '1']); // OK, it is a strong password
                 }
-                $amiUser->save();
+                $ariUser->save();
             }
         }
 
-        // Collect weak AMI records
+        // Collect weak ARI records
         $parameters = [
-            'columns' => 'id, username, secret',
-            'conditions' => 'weakSecret="2"'
+            'columns' => 'id, username, password',
+            'conditions' => 'weakPassword="2"'
         ];
 
-        $amiUsersData = AsteriskManagerUsers::find($parameters);
+        $ariUsersData = AsteriskRestUsers::find($parameters);
 
-        foreach ($amiUsersData as $amiUser) {
+        foreach ($ariUsersData as $ariUser) {
             $messages['warning'][] =
                 [
-                    'messageTpl' => 'adv_AmiPasswordWeak',
+                    'messageTpl' => 'adv_AriPasswordWeak',
                     'messageParams' => [
-                        'record' => $amiUser->username,
-                        'url' => $this->url->get('asterisk-managers/modify/' . $amiUser->id),
+                        'record' => $ariUser->username,
+                        'url' => $this->url->get('asterisk-rest-users/modify/' . $ariUser->id),
                     ]
                 ];
         }

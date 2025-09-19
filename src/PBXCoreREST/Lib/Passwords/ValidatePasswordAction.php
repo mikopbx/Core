@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Lib\Passwords;
 
 use MikoPBX\Common\Providers\TranslationProvider;
+use MikoPBX\Core\System\PasswordService;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
@@ -80,8 +81,8 @@ class ValidatePasswordAction extends Injectable
         // Map field to context using shared mapper
         $context = FieldContextMapper::mapFieldToContext($field);
 
-        // Validate using unified validator
-        $validationResult = \MikoPBX\PBXCoreREST\Services\PasswordService::validate(
+        // Validate using unified service
+        $validationResult = PasswordService::validate(
             $password,
             $context,
             ['skipDictionary' => $skipDictionary]
