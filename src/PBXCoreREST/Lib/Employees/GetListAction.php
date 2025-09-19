@@ -103,20 +103,13 @@ class GetListAction extends AbstractGetListAction
                 $resultData[] = self::createDataTableRecord($employee);
             }
             
-            // Check if DataTable format is requested
-            $isDataTableRequest = isset($parameters['draw']);
-            
-            if ($isDataTableRequest) {
-                // DataTable format for web UI
-                $res->data = [
-                    'data' => $resultData,
-                    'recordsTotal' => $totalCount,
-                    'recordsFiltered' => $totalCount  // Same as total since we filter on server side
-                ];
-            } else {
-                // Simple array format for API
-                $res->data = $resultData;
-            }
+            // Always return DataTable format with pagination info
+            // This ensures proper pagination support in the frontend
+            $res->data = [
+                'data' => $resultData,
+                'recordsTotal' => $totalCount,
+                'recordsFiltered' => $totalCount  // Same as total since we filter on server side
+            ];
             
             $res->success = true;
             

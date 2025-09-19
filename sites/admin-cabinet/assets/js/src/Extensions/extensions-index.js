@@ -268,27 +268,19 @@ const extensionsIndex = {
                     return requestData;
                 },
                 dataSrc: function(json) {
-                    // Handle new pagination format from Employees API
+                    // Handle pagination format from Employees API
                     // API returns: {data: {data: [...], recordsTotal: n, recordsFiltered: n}}
-                    let data, recordsTotal, recordsFiltered;
-                    
-                    if (json.data && json.data.data && Array.isArray(json.data.data)) {
-                        // New pagination format
-                        data = json.data.data;
-                        recordsTotal = json.data.recordsTotal || data.length;
-                        recordsFiltered = json.data.recordsFiltered || recordsTotal;
-                    } else {
-                        // Fallback to old format for compatibility
-                        data = json.data || [];
-                        recordsTotal = data.length;
-                        recordsFiltered = data.length;
-                    }
-                    
+
+                    // Extract data and pagination info from the response
+                    const data = json.data?.data || [];
+                    const recordsTotal = json.data?.recordsTotal || 0;
+                    const recordsFiltered = json.data?.recordsFiltered || recordsTotal;
+
                     // Set DataTables pagination info on the response object
                     json.draw = extensionsIndex.drawCounter;
                     json.recordsTotal = recordsTotal;
                     json.recordsFiltered = recordsFiltered;
-                    
+
                     // Return just the data array for DataTables to process
                     return data;
                 },
