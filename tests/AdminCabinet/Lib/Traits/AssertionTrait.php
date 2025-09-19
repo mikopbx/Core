@@ -2,436 +2,468 @@
 
 namespace MikoPBX\Tests\AdminCabinet\Lib\Traits;
 
+use Facebook\WebDriver\Exception\NoSuchElementException;
 use Facebook\WebDriver\WebDriverBy;
-use Facebook\WebDriver\WebDriverExpectedCondition;
-use RuntimeException;
+use Facebook\WebDriver\WebDriverElement;
 
 /**
  * Trait AssertionTrait
- * Contains all assertion methods for testing UI elements
+ * Simplified assertions for MikoPBX V5.0 architecture
+ *
+ * Focuses on clean, simple assertions that match the actual UI patterns
  */
 trait AssertionTrait
 {
     /**
-     * Assert that input field has specific value
+     * Assert input field value
      *
-     * @param string $name Field name
+     * @param string $fieldName Field name or ID
      * @param string $expectedValue Expected value
-     * @param bool $skipIfNotExist Skip assertion if field not found
+     * @param string $message Optional failure message
      */
     protected function assertInputFieldValueEqual(
-        string $name,
+        string $fieldName,
         string $expectedValue,
-        bool $skipIfNotExist = false
+        string $message = ''
     ): void {
-        $xpath = sprintf(
-            '//input[@name="%s" and (@type="text" or @type="number" or @type="password" or @type="hidden")]',
-            $name
+        $actualValue = $this->getInputFieldValue($fieldName);
+
+        if ($actualValue === null) {
+            $this->fail($message ?: "Input field '{$fieldName}' not found");
+        }
+
+        $this->assertEquals(
+            $expectedValue,
+            $actualValue,
+            $message ?: "Input field '{$fieldName}' value mismatch"
         );
-        $inputItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
-
-        if (empty($inputItems) && !$skipIfNotExist) {
-            $this->fail("Input field '{$name}' not found");
-        }
-
-        foreach ($inputItems as $inputItem) {
-            $currentValue = $inputItem->getAttribute('value');
-            $this->assertEquals(
-                $expectedValue,
-                $currentValue,
-                "Input field '{$name}' value mismatch. Expected: {$expectedValue}, Got: {$currentValue}"
-            );
-        }
     }
 
     /**
-     * Assert that password field is masked (shows XXXXXXXX or similar pattern)
+     * Assert textarea value
      *
-     * @param string $name Field name
-     * @param bool $skipIfNotExist Skip assertion if field not found
-     */
-    protected function assertPasswordFieldIsMasked(
-        string $name,
-        bool $skipIfNotExist = false
-    ): void {
-        $xpath = sprintf(
-            '//input[@name="%s" and (@type="text" or @type="password")]',
-            $name
-        );
-        $inputItems = self::$driver->findElements(WebDriverBy::xpath($xpath));
-
-        if (empty($inputItems) && !$skipIfNotExist) {
-            $this->fail("Password field '{$name}' not found");
-        }
-
-        foreach ($inputItems as $inputItem) {
-            $currentValue = $inputItem->getAttribute('value');
-            // Check if the value matches the masked pattern (all X's or asterisks)
-            $isMasked = preg_match('/^[X*]+$/', $currentValue) === 1;
-            $this->assertTrue(
-                $isMasked,
-                "Password field '{$name}' should be masked but got: {$currentValue}"
-            );
-        }
-    }
-
-    /**
-     * Assert that textarea has specific value
-     *
-     * @param string $name Textarea name
+     * @param string $fieldName Textarea name or ID
      * @param string $expectedValue Expected value
-     * @param bool $skipIfNotExist Skip assertion if not found
+     * @param string $message Optional failure message
      */
-    protected function assertTextAreaValueIsEqual(
-        string $name,
+    protected function assertTextAreaValueEqual(
+        string $fieldName,
         string $expectedValue,
-        bool $skipIfNotExist = false
+        string $message = ''
     ): void {
-        $xpath = sprintf('//textarea[@name="%s"]', $name);
-        $textArea = $this->findElementSafely($xpath);
+        $actualValue = $this->getTextAreaValue($fieldName);
 
-        if (!$textArea && !$skipIfNotExist) {
-            $this->fail("Textarea '{$name}' not found");
+        if ($actualValue === null) {
+            $this->fail($message ?: "Textarea '{$fieldName}' not found");
         }
 
-        if ($textArea) {
-            $currentValue = $textArea->getAttribute('value');
-            $this->assertEquals(
-                $expectedValue,
-                $currentValue,
-                "Textarea '{$name}' value mismatch. Expected: {$expectedValue}, Got: {$currentValue}"
-            );
-        }
+        $this->assertEquals(
+            $expectedValue,
+            $actualValue,
+            $message ?: "Textarea '{$fieldName}' value mismatch"
+        );
     }
 
     /**
-     * Assert that ACE editor has specific value
+     * Assert checkbox state
+     *
+     * @param string $fieldName Checkbox name or ID
+     * @param bool $expectedState Expected checked state
+     * @param string $message Optional failure message
+     */
+    protected function assertCheckboxState(
+        string $fieldName,
+        bool $expectedState,
+        string $message = ''
+    ): void {
+        $isChecked = $this->isCheckboxChecked($fieldName);
+
+        if ($isChecked === null) {
+            $this->fail($message ?: "Checkbox '{$fieldName}' not found");
+        }
+
+        $this->assertEquals(
+            $expectedState,
+            $isChecked,
+            $message ?: "Checkbox '{$fieldName}' state mismatch"
+        );
+    }
+
+    /**
+     * Assert dropdown value (V5.0 architecture)
+     * Uses the simplified dropdown methods from DropdownInteractionTrait
+     *
+     * @param string $fieldName Field name
+     * @param string $expectedValue Expected value
+     * @param string $message Optional failure message
+     */
+    protected function assertDropdownValue(
+        string $fieldName,
+        string $expectedValue,
+        string $message = ''
+    ): void {
+        // This method is already in DropdownInteractionTrait
+        // Just call it directly for consistency
+        parent::assertDropdownValue($fieldName, $expectedValue, $message);
+    }
+
+    /**
+     * Assert dropdown text (V5.0 architecture)
+     *
+     * @param string $fieldName Field name
+     * @param string $expectedText Expected display text
+     * @param string $message Optional failure message
+     */
+    protected function assertDropdownText(
+        string $fieldName,
+        string $expectedText,
+        string $message = ''
+    ): void {
+        // This method is already in DropdownInteractionTrait
+        parent::assertDropdownText($fieldName, $expectedText, $message);
+    }
+
+    /**
+     * Assert ACE editor value
      *
      * @param string $editorId ACE editor element ID
      * @param string $expectedValue Expected value
+     * @param string $message Optional failure message
      */
-    protected function assertAceEditorValueEqual(
+    protected function assertAceEditorValue(
         string $editorId,
-        string $expectedValue
+        string $expectedValue,
+        string $message = ''
     ): void {
-        // Wait for the editor to be initialized
-        self::$driver->wait(5, 100)->until(
-            WebDriverExpectedCondition::presenceOfElementLocated(
-                WebDriverBy::xpath("//div[@id='{$editorId}']//textarea")
-            )
-        );
-        
-        // Get the actual value from ACE editor using JavaScript
-        $actualValue = self::$driver->executeScript(
-            "return ace.edit('{$editorId}').getValue();"
-        );
-        
-        // Normalize both values for comparison
-        // Remove potential formatting differences
-        $normalizedExpected = $this->normalizeAceEditorValue($expectedValue);
-        $normalizedActual = $this->normalizeAceEditorValue($actualValue);
-        
-        // Compare normalized values
-        $this->assertEquals(
-            $normalizedExpected,
-            $normalizedActual,
-            "ACE editor '{$editorId}' value mismatch.\nExpected:\n{$expectedValue}\n\nActual:\n{$actualValue}"
+        try {
+            // Get value from ACE editor using JavaScript
+            $actualValue = self::$driver->executeScript(
+                "return ace.edit('{$editorId}').getValue();"
+            );
+
+            // Normalize for comparison
+            $normalizedExpected = $this->normalizeEditorValue($expectedValue);
+            $normalizedActual = $this->normalizeEditorValue($actualValue);
+
+            $this->assertEquals(
+                $normalizedExpected,
+                $normalizedActual,
+                $message ?: "ACE editor '{$editorId}' value mismatch"
+            );
+        } catch (\Exception $e) {
+            $this->fail($message ?: "Failed to get ACE editor value: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Assert element exists
+     *
+     * @param string $selector CSS selector or element ID
+     * @param string $message Optional failure message
+     */
+    protected function assertElementExists(string $selector, string $message = ''): void
+    {
+        $element = $this->findElementBySelector($selector);
+
+        if (!$element) {
+            $this->fail($message ?: "Element '{$selector}' not found");
+        }
+
+        $this->assertNotNull($element);
+    }
+
+    /**
+     * Assert element not exists
+     *
+     * @param string $selector CSS selector or element ID
+     * @param string $message Optional failure message
+     */
+    protected function assertElementNotExists(string $selector, string $message = ''): void
+    {
+        $element = $this->findElementBySelector($selector);
+
+        if ($element) {
+            $this->fail($message ?: "Element '{$selector}' should not exist but was found");
+        }
+
+        $this->assertNull($element);
+    }
+
+    /**
+     * Assert element is visible
+     *
+     * @param string $selector CSS selector or element ID
+     * @param string $message Optional failure message
+     */
+    protected function assertElementVisible(string $selector, string $message = ''): void
+    {
+        $element = $this->findElementBySelector($selector);
+
+        if (!$element) {
+            $this->fail($message ?: "Element '{$selector}' not found");
+        }
+
+        $this->assertTrue(
+            $element->isDisplayed(),
+            $message ?: "Element '{$selector}' is not visible"
         );
     }
-    
+
     /**
-     * Normalize ACE editor value for comparison
+     * Assert element is not visible
+     *
+     * @param string $selector CSS selector or element ID
+     * @param string $message Optional failure message
+     */
+    protected function assertElementNotVisible(string $selector, string $message = ''): void
+    {
+        $element = $this->findElementBySelector($selector);
+
+        if (!$element) {
+            // Element doesn't exist, so it's not visible - test passes
+            $this->assertTrue(true);
+            return;
+        }
+
+        $this->assertFalse(
+            $element->isDisplayed(),
+            $message ?: "Element '{$selector}' should not be visible"
+        );
+    }
+
+    /**
+     * Assert element has text
+     *
+     * @param string $selector CSS selector or element ID
+     * @param string $expectedText Expected text
+     * @param string $message Optional failure message
+     */
+    protected function assertElementText(
+        string $selector,
+        string $expectedText,
+        string $message = ''
+    ): void {
+        $element = $this->findElementBySelector($selector);
+
+        if (!$element) {
+            $this->fail($message ?: "Element '{$selector}' not found");
+        }
+
+        $actualText = $element->getText();
+
+        $this->assertEquals(
+            $expectedText,
+            $actualText,
+            $message ?: "Element '{$selector}' text mismatch"
+        );
+    }
+
+    /**
+     * Assert element contains text
+     *
+     * @param string $selector CSS selector or element ID
+     * @param string $expectedText Text that should be contained
+     * @param string $message Optional failure message
+     */
+    protected function assertElementContainsText(
+        string $selector,
+        string $expectedText,
+        string $message = ''
+    ): void {
+        $element = $this->findElementBySelector($selector);
+
+        if (!$element) {
+            $this->fail($message ?: "Element '{$selector}' not found");
+        }
+
+        $actualText = $element->getText();
+
+        $this->assertStringContainsString(
+            $expectedText,
+            $actualText,
+            $message ?: "Element '{$selector}' does not contain expected text"
+        );
+    }
+
+    /**
+     * Assert page title
+     *
+     * @param string $expectedTitle Expected page title
+     * @param string $message Optional failure message
+     */
+    protected function assertPageTitle(string $expectedTitle, string $message = ''): void
+    {
+        $actualTitle = self::$driver->getTitle();
+
+        $this->assertEquals(
+            $expectedTitle,
+            $actualTitle,
+            $message ?: "Page title mismatch"
+        );
+    }
+
+    /**
+     * Assert current URL
+     *
+     * @param string $expectedUrl Expected URL or URL pattern
+     * @param string $message Optional failure message
+     */
+    protected function assertCurrentUrl(string $expectedUrl, string $message = ''): void
+    {
+        $actualUrl = self::$driver->getCurrentURL();
+
+        $this->assertEquals(
+            $expectedUrl,
+            $actualUrl,
+            $message ?: "Current URL mismatch"
+        );
+    }
+
+    /**
+     * Assert current URL contains
+     *
+     * @param string $expectedPart Expected URL part
+     * @param string $message Optional failure message
+     */
+    protected function assertUrlContains(string $expectedPart, string $message = ''): void
+    {
+        $actualUrl = self::$driver->getCurrentURL();
+
+        $this->assertStringContainsString(
+            $expectedPart,
+            $actualUrl,
+            $message ?: "Current URL does not contain expected part"
+        );
+    }
+
+    // ========== Helper Methods ==========
+
+    /**
+     * Get input field value
+     *
+     * @param string $fieldName Field name or ID
+     * @return string|null Value or null if not found
+     */
+    private function getInputFieldValue(string $fieldName): ?string
+    {
+        try {
+            // Try by ID first
+            $element = self::$driver->findElement(WebDriverBy::id($fieldName));
+            return $element->getAttribute('value');
+        } catch (NoSuchElementException $e) {
+            // Try by name
+            try {
+                $element = self::$driver->findElement(WebDriverBy::name($fieldName));
+                return $element->getAttribute('value');
+            } catch (NoSuchElementException $e) {
+                return null;
+            }
+        }
+    }
+
+    /**
+     * Get textarea value
+     *
+     * @param string $fieldName Textarea name or ID
+     * @return string|null Value or null if not found
+     */
+    private function getTextAreaValue(string $fieldName): ?string
+    {
+        try {
+            // Try by ID first
+            $element = self::$driver->findElement(WebDriverBy::id($fieldName));
+            if ($element->getTagName() === 'textarea') {
+                return $element->getAttribute('value');
+            }
+        } catch (NoSuchElementException $e) {
+            // Continue to try by name
+        }
+
+        try {
+            // Try by name
+            $element = self::$driver->findElement(WebDriverBy::name($fieldName));
+            if ($element->getTagName() === 'textarea') {
+                return $element->getAttribute('value');
+            }
+        } catch (NoSuchElementException $e) {
+            return null;
+        }
+
+        return null;
+    }
+
+    /**
+     * Check if checkbox is checked
+     *
+     * @param string $fieldName Checkbox name or ID
+     * @return bool|null True if checked, false if unchecked, null if not found
+     */
+    private function isCheckboxChecked(string $fieldName): ?bool
+    {
+        try {
+            // Try by ID first
+            $element = self::$driver->findElement(WebDriverBy::id($fieldName));
+            if ($element->getAttribute('type') === 'checkbox') {
+                return $element->isSelected();
+            }
+        } catch (NoSuchElementException $e) {
+            // Continue to try by name
+        }
+
+        try {
+            // Try by name
+            $element = self::$driver->findElement(WebDriverBy::name($fieldName));
+            if ($element->getAttribute('type') === 'checkbox') {
+                return $element->isSelected();
+            }
+        } catch (NoSuchElementException $e) {
+            return null;
+        }
+
+        return null;
+    }
+
+    /**
+     * Find element by flexible selector
+     *
+     * @param string $selector CSS selector, ID (with #), or class (with .)
+     * @return WebDriverElement|null Element or null if not found
+     */
+    private function findElementBySelector(string $selector): ?WebDriverElement
+    {
+        try {
+            // If selector starts with #, treat as ID
+            if (strpos($selector, '#') === 0) {
+                $id = substr($selector, 1);
+                return self::$driver->findElement(WebDriverBy::id($id));
+            }
+
+            // Otherwise use as CSS selector
+            return self::$driver->findElement(WebDriverBy::cssSelector($selector));
+        } catch (NoSuchElementException $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Normalize editor value for comparison
      *
      * @param string $value Value to normalize
      * @return string Normalized value
      */
-    private function normalizeAceEditorValue(string $value): string
+    private function normalizeEditorValue(string $value): string
     {
-        // Trim whitespace from beginning and end
+        // Trim whitespace
         $value = trim($value);
-        
-        // Normalize line endings to \n
+
+        // Normalize line endings
         $value = str_replace("\r\n", "\n", $value);
         $value = str_replace("\r", "\n", $value);
-        
-        // Remove trailing whitespace from each line
+
+        // Remove trailing whitespace from lines
         $lines = explode("\n", $value);
         $lines = array_map('rtrim', $lines);
-        $value = implode("\n", $lines);
-        
-        return $value;
+
+        return implode("\n", $lines);
     }
-
-    /**
-     * Assert that checkbox has specific state
-     *
-     * @param string $name Checkbox name
-     * @param bool $expectedState Expected state
-     * @param bool $skipIfNotExist Skip assertion if not found
-     */
-    protected function assertCheckBoxStageIsEqual(
-        string $name,
-        bool $expectedState,
-        bool $skipIfNotExist = false
-    ): void {
-        $xpath = sprintf('//input[@name="%s" and @type="checkbox"]', $name);
-        $checkbox = $this->findElementSafely($xpath);
-
-        if (!$checkbox && !$skipIfNotExist) {
-            $this->fail("Checkbox '{$name}' not found");
-        }
-
-        if ($checkbox) {
-            $isChecked = $checkbox->isSelected();
-            $stateText = $expectedState ? 'checked' : 'unchecked';
-            $this->assertEquals(
-                $expectedState,
-                $isChecked,
-                "Checkbox '{$name}' should be {$stateText}"
-            );
-        }
-    }
-
-    /**
-     * Assert that menu item is selected
-     *
-     * @param string $name Menu name
-     * @param string $expectedValue Expected selected value
-     * @param bool $skipIfNotExist Skip assertion if not found
-     */
-    protected function assertMenuItemSelected(
-        string $name,
-        string $expectedValue,
-        bool $skipIfNotExist = false
-    ): void {
-        $this->assertDropdownSelection($name, $expectedValue, true, $skipIfNotExist);
-    }
-
-    /**
-     * Assert that menu item is not selected
-     *
-     * @param string $name Menu name
-     * @param string $expectedValue Value that should not be selected
-     * @param bool $skipIfNotExist Skip assertion if not found
-     */
-    protected function assertMenuItemNotSelected(
-        string $name,
-        string $expectedValue = '',
-        bool $skipIfNotExist = false
-    ): void {
-        $this->assertDropdownSelection($name, $expectedValue, false, $skipIfNotExist);
-    }
-
-    /**
-     * Assert dropdown selection state with improved Semantic UI support
-     *
-     * @param string $name Dropdown name
-     * @param string $expectedValue Value to check
-     * @param bool $shouldBeSelected Whether the value should be selected
-     * @param bool $skipIfNotExist Skip assertion if dropdown doesn't exist
-     */
-    protected function assertDropdownSelection(
-        string $name,
-        string $expectedValue,
-        bool $shouldBeSelected = true,
-        bool $skipIfNotExist = false
-    ): void {
-        try {
-            // XPath for both standard select and Semantic UI dropdown
-            $xpath = sprintf(
-                '//select[@name="%1$s"]/ancestor::div[contains(@class, "dropdown")] | ' .
-                '//input[@name="%1$s"]/ancestor::div[contains(@class, "dropdown")] | ' .
-                '//div[contains(@class, "dropdown")][@id="%1$s"] | ' .
-                '//div[contains(@class, "dropdown")][.//select[@name="%1$s"]]',
-                $name
-            );
-
-            // Check for hidden input field value first
-            $hiddenInputXpath = sprintf('//input[@name="%s" and @type="hidden"]', $name);
-            $hiddenInput = $this->findElementSafely($hiddenInputXpath);
-            
-            if ($hiddenInput) {
-                $hiddenValue = $hiddenInput->getAttribute('value');
-                
-                if ($shouldBeSelected) {
-                    $isMatch = $hiddenValue === $expectedValue;
-                    $this->assertTrue(
-                        $isMatch,
-                        "Expected '{$expectedValue}' to be selected in dropdown '{$name}', but hidden input has value '{$hiddenValue}'"
-                    );
-                    if ($isMatch) {
-                        return; // Success, no need to check further
-                    }
-                } else {
-                    $isMatch = $hiddenValue === $expectedValue;
-                    $this->assertFalse(
-                        $isMatch,
-                        "Expected '{$expectedValue}' NOT to be selected in dropdown '{$name}', but hidden input has this value"
-                    );
-                    if (!$isMatch) {
-                        return; // Success, no need to check further
-                    }
-                }
-            }
-
-            // Also check for traditional select element selection
-            $optionXpath = sprintf('//select[@name="%s"]/option[@selected="selected"]', $name);
-            $selectedOption = $this->findElementSafely($optionXpath);
-            
-            if ($selectedOption) {
-                $currentSelection = $selectedOption->getAttribute('value');
-                $currentText = $selectedOption->getText();
-                
-                if ($shouldBeSelected) {
-                    $isMatch = $currentSelection === $expectedValue || $currentText === $expectedValue;
-                    $this->assertTrue(
-                        $isMatch,
-                        "Expected '{$expectedValue}' to be selected in dropdown '{$name}', but found value '{$currentSelection}' with text '{$currentText}'"
-                    );
-                    return;
-                } else {
-                    $isMatch = $currentSelection === $expectedValue || $currentText === $expectedValue;
-                    $this->assertFalse(
-                        $isMatch,
-                        "Expected '{$expectedValue}' NOT to be selected in dropdown '{$name}', but it was found"
-                    );
-                    return;
-                }
-            }
-
-            // Continue with Semantic UI dropdown check
-            $dropdown = $this->findElementSafely($xpath);
-
-            if (!$dropdown && !$skipIfNotExist) {
-                $this->fail("Dropdown '{$name}' not found");
-                return;
-            }
-
-            if (!$dropdown) {
-                return;
-            }
-
-            // Check current selection
-            $selectionXpath = './/div[contains(@class, "item") and contains(@class, "active selected")]';
-            $currentSelection = null;
-            $currentText = null;
-            
-            try {
-                $selectedItem = $dropdown->findElement(WebDriverBy::xpath($selectionXpath));
-                $currentSelection = $selectedItem->getAttribute('data-value');
-                $currentText = $selectedItem->getText();
-            } catch (\Exception $e) {
-                // No selection found
-                $currentSelection = null;
-                $currentText = null;
-            }
-
-            // Also check for div with class "text" which often contains the selected text
-            if ($currentSelection === null && $currentText === null) {
-                try {
-                    $textDiv = $dropdown->findElement(WebDriverBy::xpath('.//div[contains(@class, "text")]'));
-                    $currentText = $textDiv->getText();
-                    // If text div has content, treat it as a selection
-                    if (trim($currentText) !== '') {
-                        $currentSelection = $currentText; // Use text as fallback value
-                    }
-                } catch (\Exception $e) {
-                    // No text div found or it's empty
-                }
-            }
-
-            if ($shouldBeSelected) {
-                if ($currentSelection === null && $currentText === null) {
-                    // If no selection, try clicking to check if the value is in the dropdown
-                    $dropdown->click();
-                    $this->waitForElement('//div[contains(@class, "menu") and contains(@class, "visible")]');
-                    
-                    // Try using search field if available
-                    $searchXpath = sprintf(
-                        '//select[@name="%1$s"]/ancestor::div[contains(@class, "dropdown")]/input[contains(@class,"search")] | ' .
-                        '//div[@id="%1$s" and contains(@class, "dropdown")]/input[contains(@class,"search")]',
-                        $name
-                    );
-                    
-                    $searchInput = $this->findElementSafely($searchXpath);
-                    if ($searchInput) {
-                        $searchInput->click();
-                        $searchInput->clear();
-                        $searchInput->sendKeys($expectedValue);
-                    }
-                    
-                    // Now check if the item exists
-                    $menuItemXpath = sprintf(
-                        '//div[contains(@class, "menu") and contains(@class, "visible")]' .
-                        '//div[contains(@class, "item") and (contains(text(), "%1$s") or @data-value="%1$s")]',
-                        $expectedValue
-                    );
-                    
-                    $menuItem = $this->findElementSafely($menuItemXpath);
-                    
-                    // Close dropdown regardless of result
-                    try {
-                        $dropdown->click();
-                    } catch (\Exception $e) {
-                        // Ignore errors on closing
-                    }
-                    
-                    if (!$menuItem) {
-                        $this->fail("Value '{$expectedValue}' not found in dropdown '{$name}'");
-                    }
-                    
-                    // Since we didn't actually select the item but just verified it exists,
-                    // we should fail because it should be selected but isn't
-                    $this->fail("Expected '{$expectedValue}' to be selected in dropdown '{$name}', but no selection was found");
-                } else {
-                    $isMatch = $currentSelection === $expectedValue || 
-                               $currentText === $expectedValue ||
-                               stripos($currentText, $expectedValue) !== false;
-                               
-                    $this->assertTrue(
-                        $isMatch,
-                        "Expected '{$expectedValue}' to be selected in dropdown '{$name}', but found value '{$currentSelection}' with text '{$currentText}'"
-                    );
-                }
-            } else {
-                if ($expectedValue === '') {
-                    $this->assertNull(
-                        $currentSelection,
-                        "Expected no selection in dropdown '{$name}', but found '{$currentText}'"
-                    );
-                } else {
-                    $isMatch = $currentSelection === $expectedValue || 
-                               ($currentText !== null && (
-                                   $currentText === $expectedValue ||
-                                   stripos($currentText, $expectedValue) !== false
-                               ));
-                               
-                    $this->assertFalse(
-                        $isMatch,
-                        "Expected '{$expectedValue}' NOT to be selected in dropdown '{$name}', but it was found"
-                    );
-                }
-            }
-        } catch (\Exception $e) {
-            if (!$skipIfNotExist) {
-                $this->fail("Assertion failed for dropdown '{$name}': " . $e->getMessage());
-            }
-        }
-    }
-
-    /**
-     * Assert that element not exists
-     *
-     * @param WebDriverBy $by Element locator
-     * @param string $message Custom failure message
-     */
-    protected function assertElementNotFound(WebDriverBy $by, string $message = ''): void
-    {
-        $elements = self::$driver->findElements($by);
-        if (!empty($elements)) {
-            $this->fail($message ?: "Unexpectedly found element: " . $by->getValue());
-        }
-        $this->assertTrue(true);
-    }
-
 }
