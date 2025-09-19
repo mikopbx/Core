@@ -242,13 +242,8 @@ const outboundRoute = {
         if (response.result && response.data) {
             // Update form with response data
             outboundRoute.populateForm(response.data);
-            
-            // Update URL for new records
-            const currentId = $('#id').val();
-            if (!currentId && response.data.id) {
-                const newUrl = window.location.href.replace(/modify\/?$/, 'modify/' + response.data.id);
-                window.history.pushState(null, '', newUrl);
-            }
+
+            // Form.js will handle all redirect logic based on submitMode
         }
     },
     

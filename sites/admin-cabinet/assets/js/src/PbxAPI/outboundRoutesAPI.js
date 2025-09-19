@@ -58,5 +58,22 @@ OutboundRoutesAPI.update = function(data, callback) {
  * @param {function} callback - Callback function
  */
 OutboundRoutesAPI.changePriority = function(priorityData, callback) {
-    this.callCustomMethod('changePriority', priorityData, callback, 'POST');
+    $.api({
+        url: `${this.apiUrl}:changePriority`,
+        method: 'POST',
+        data: { priorities: priorityData },
+        on: 'now',
+        onSuccess(response) {
+            callback(response);
+        },
+        onFailure(response) {
+            callback(response);
+        },
+        onError() {
+            callback({
+                result: false,
+                messages: { error: ['Network error occurred'] }
+            });
+        }
+    });
 };

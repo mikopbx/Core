@@ -45,7 +45,7 @@ enum OutboundRouteAction: string
     case UPDATE = 'update';
     case PATCH = 'patch';
     case DELETE = 'delete';
-    case CHANGE_PRIORITIES = 'changePriorities';
+    case CHANGE_PRIORITY = 'changePriority';
     case GET_DEFAULT = 'getDefault';
     case COPY = 'copy';
 }
@@ -60,7 +60,7 @@ enum OutboundRouteAction: string
  * - update: Update outbound route
  * - patch: Partially update outbound route
  * - delete: Delete outbound route
- * - changePriorities: Update priorities for multiple routes
+ * - changePriority: Update priorities for multiple routes
  */
 class OutboundRoutesManagementProcessor extends Injectable
 {
@@ -94,7 +94,7 @@ class OutboundRoutesManagementProcessor extends Injectable
             OutboundRouteAction::UPDATE => UpdateAction::main($data),
             OutboundRouteAction::PATCH => PatchAction::main($data),
             OutboundRouteAction::DELETE => DeleteAction::main($data['id'] ?? ''),
-            OutboundRouteAction::CHANGE_PRIORITIES => ChangePriorityAction::main($data),
+            OutboundRouteAction::CHANGE_PRIORITY => ChangePriorityAction::main($data),
             OutboundRouteAction::GET_DEFAULT => GetDefaultAction::main(),
             OutboundRouteAction::COPY => CopyRecordAction::main($data['id'] ?? ''),
         };
