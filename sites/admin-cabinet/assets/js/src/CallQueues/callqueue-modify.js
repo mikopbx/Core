@@ -164,9 +164,10 @@ const callQueueModifyRest = {
         // Initialize Semantic UI components
         callQueueModifyRest.$accordions.accordion();
         callQueueModifyRest.$checkBoxes.checkbox();
-        
+
         // Initialize basic dropdowns (non-extension ones)
-        callQueueModifyRest.$dropDowns.not('.forwarding-select').not('.extension-select').dropdown();
+        // Strategy dropdown is now initialized separately
+        callQueueModifyRest.$dropDowns.not('.forwarding-select').not('.extension-select').not('#strategy-dropdown').dropdown();
     },
 
     
@@ -175,16 +176,14 @@ const callQueueModifyRest = {
      * @param {Object} data - Form data from API
      */
     initializeDropdownsWithData(data) {
-        // Initialize strategy dropdown with current value
-        if (!$('#strategy-dropdown').length) {
-            callQueueModifyRest.initializeStrategyDropdown();
-        }
-        
+        // Strategy dropdown is server-rendered, initialize and set value from API data
+        callQueueModifyRest.initializeStrategyDropdown(data);
+
         // Initialize timeout_extension dropdown with exclusion logic
         if (!$('#timeout_extension-dropdown').length) {
             const currentExtension = callQueueModifyRest.$formObj.form('get value', 'extension');
             const excludeExtensions = currentExtension ? [currentExtension] : [];
-            
+
             ExtensionSelector.init('timeout_extension', {
                 type: 'routing',
                 excludeExtensions: excludeExtensions,
@@ -192,45 +191,34 @@ const callQueueModifyRest = {
                 data: data
             });
         }
-        
+
         // Initialize redirect_to_extension_if_empty dropdown
         if (!$('#redirect_to_extension_if_empty-dropdown').length) {
             ExtensionSelector.init('redirect_to_extension_if_empty', {
                 type: 'routing',
                 includeEmpty: false,
-                data: data 
+                data: data
             });
         }
     },
 
     /**
-     * Initialize strategy dropdown with queue strategy options
+     * Initialize strategy dropdown behavior (dropdown is server-rendered)
+     * @param {Object} data - Form data containing strategy value
      */
-    initializeStrategyDropdown() {
-        // Define strategy options with translations
-        const strategyOptions = [
-            { value: 'ringall', text: globalTranslate.cq_ringall },
-            { value: 'leastrecent', text: globalTranslate.cq_leastrecent },
-            { value: 'fewestcalls', text: globalTranslate.cq_fewestcalls },
-            { value: 'random', text: globalTranslate.cq_random },
-            { value: 'rrmemory', text: globalTranslate.cq_rrmemory },
-            { value: 'linear', text: globalTranslate.cq_linear }
-        ];
-        
-        // Get current strategy value
-        const currentStrategy = $('input[name="strategy"]').val();
-        
-        // Use new DynamicDropdownBuilder API
-        DynamicDropdownBuilder.buildDropdown('strategy', { strategy: currentStrategy }, {
-            staticOptions: strategyOptions,
-            placeholder: globalTranslate.cq_SelectStrategy,
-            onChange: (value) => {
-                // Update hidden input when dropdown changes
-                $('input[name="strategy"]').val(value);
-                $('input[name="strategy"]').trigger('change');
-                Form.dataChanged();
-            }
+    initializeStrategyDropdown(data = null) {
+        const $dropdown = $('#strategy-dropdown');
+        if ($dropdown.length === 0) return;
+
+        // Initialize with standard Fomantic UI - it's already rendered by PHP
+        $dropdown.dropdown({
+            onChange: () => Form.dataChanged()
         });
+
+        // Set the value if data is provided
+        if (data && data.strategy) {
+            $dropdown.dropdown('set selected', data.strategy);
+        }
     },
 
 
@@ -614,10 +602,7 @@ const callQueueModifyRest = {
                     }
                 });
                 
-                // Handle strategy dropdown - value will be set automatically by DynamicDropdownBuilder
-                if (data.strategy) {
-                    $('input[name="strategy"]').val(data.strategy);
-                }
+                // Strategy dropdown value is set in initializeStrategyDropdown
 
                 // Handle extension-based dropdowns with representations (except timeout_extension)
                 // Only populate if dropdowns exist (they were created in initializeDropdownsWithData)
@@ -876,18 +861,8 @@ const callQueueModifyRest = {
         if (response.result) {
             // Update default extension for availability checking
             callQueueModifyRest.defaultExtension = callQueueModifyRest.$formObj.form('get value', 'extension');
-            
-            // Update form with response data if available
-            if (response.data) {
-                callQueueModifyRest.populateForm(response.data);
-            }
-            
-            // Update URL for new records
-            const currentId = $('#id').val();
-            if (!currentId && response.data && response.data.id) {
-                const newUrl = window.location.href.replace(/modify\/?$/, `modify/${response.data.id}`);
-                window.history.pushState(null, '', newUrl);
-            }
+
+            // Form.js will handle all redirect logic based on submitMode
         }
     },
 };

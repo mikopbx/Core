@@ -415,7 +415,7 @@ var dialplanApplicationModify = {
     
     /**
      * Callback after form submission (no success messages - UI updates only)
-     * 
+     *
      * @param {object} response - Server response
      */
     cbAfterSendForm: function(response) {
@@ -423,14 +423,14 @@ var dialplanApplicationModify = {
             if (response.data) {
                 // Data is already sanitized in API module
                 dialplanApplicationModify.populateForm(response.data);
-                
+
                 // Update extension number display in the ribbon label
                 dialplanApplicationModify.updateExtensionDisplay(response.data.extension);
-                
+
                 // Update ACE editor content
                 var codeContent = response.data.applicationlogic || '';
                 dialplanApplicationModify.editor.getSession().setValue(codeContent);
-                
+
                 // Handle redirect with tab preservation
                 if (response.data.redirectTab && response.data.redirectTab !== 'main') {
                     // Update Form.js redirect URL to include hash
@@ -440,15 +440,9 @@ var dialplanApplicationModify = {
                     }
                 }
             }
-            
-            // Update URL for new records 
-            var currentId = $('#id').val();
-            if (!currentId && response.data && response.data.uniqid) {
-                var hash = response.data.redirectTab && response.data.redirectTab !== 'main' ? '#/' + response.data.redirectTab : '';
-                var newUrl = window.location.href.replace(/modify\/?$/, 'modify/' + response.data.uniqid) + hash;
-                window.history.pushState(null, '', newUrl);
-            }
-            
+
+            // Form.js will handle all redirect logic based on submitMode
+
             // No success message - just silent update
         }
     },

@@ -623,20 +623,17 @@ const apiKeysModify = {
         if (response.result) {
             if (response.data) {
                 apiKeysModify.populateForm(response.data);
-            }
-            
-            // Update URL for new records
-            const currentId = $('#id').val();
-            if (!currentId && response.data && response.data.id) {
-                const newUrl = window.location.href.replace(/modify\/?$/, `modify/${response.data.id}`);
-                window.history.pushState(null, '', newUrl);
-                
+
                 // Update page state for existing record
-                apiKeysModify.updatePageForExistingRecord();
-                
-                // Clear the generated key after successful save
-                apiKeysModify.generatedApiKey = '';
+                const currentId = $('#id').val();
+                if (!currentId && response.data && response.data.id) {
+                    apiKeysModify.updatePageForExistingRecord();
+
+                    // Clear the generated key after successful save
+                    apiKeysModify.generatedApiKey = '';
+                }
             }
+            // Form.js will handle all redirect logic based on submitMode
         }
     },
 

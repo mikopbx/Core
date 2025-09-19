@@ -325,19 +325,14 @@ const soundFileModifyRest = {
                 if (filepath) PbxApi.FilesRemoveAudioFile(filepath);
             });
             soundFileModifyRest.trashBin = [];
-            
+
             // Update form with new data if provided
             if (response.data) {
                 soundFileModifyRest.populateForm(response.data);
-                
-                // Update URL for new records
-                const currentId = soundFileModifyRest.$formObj.form('get value', 'id');
-                if (!currentId && response.data.id) {
-                    const newUrl = window.location.href.replace(/modify\/(custom|moh)?$/, `modify/${response.data.id}`);
-                    window.history.pushState(null, '', newUrl);
-                }
             }
-            
+
+            // Form.js will handle all redirect logic based on submitMode
+
             // Trigger config changed event to refresh lists
             const event = document.createEvent('Event');
             event.initEvent('ConfigDataChanged', false, true);

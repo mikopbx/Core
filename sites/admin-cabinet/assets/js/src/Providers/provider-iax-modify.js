@@ -553,22 +553,20 @@ class ProviderIAX extends ProviderBase {
     cbAfterSendForm(response) {
         if (response.result === true && response.data && response.data.id) {
             const newId = response.data.id;
-            
+
             // Update the form ID field
             $('#id').val(newId);
-            
+
             // Update isNewProvider flag
             this.isNewProvider = false;
-            
+
             // Enable diagnostics tab for existing providers
             $('#provider-tabs-menu .item[data-tab="diagnostics"]')
                 .removeClass('disabled')
                 .css('opacity', '')
                 .css('cursor', '');
-            
-            // Update the browser URL without reloading
-            const newUrl = `${globalRootUrl}providers/modifyiax/${newId}`;
-            window.history.pushState({ id: newId }, '', newUrl);
+
+            // Form.js will handle all redirect logic based on submitMode
         }
     }
     

@@ -180,20 +180,18 @@ const conferenceRoomModify = {
      */
     cbAfterSendForm(response) {
         if (response.result) {
-           
+
             if (response.data) {
                 conferenceRoomModify.populateForm(response.data);
             }
-            
-             // Update URL for new records (after first save)
+
+            // Form.js will handle all redirect logic based on submitMode
             const formData = conferenceRoomModify.$formObj.form('get values');
             if (formData.isNew === '1' && response.data && response.data.id) {
-                const newUrl = window.location.href.replace(/modify\/?$/, `modify/${response.data.id}`);
-                window.history.pushState(null, '', newUrl);
                 // Update the hidden isNew field to '0' since it's no longer new
                 conferenceRoomModify.$formObj.form('set value', 'isNew', '0');
             }
-            
+
         }
     },
     
