@@ -286,7 +286,7 @@ const DynamicDropdownBuilder = {
             // For static options, populate menu immediately
             this.populateStaticOptions($dropdown, config.staticOptions);
         }
-        
+
         // Initialize native Fomantic UI dropdown
         $dropdown.dropdown(settings);
     },
