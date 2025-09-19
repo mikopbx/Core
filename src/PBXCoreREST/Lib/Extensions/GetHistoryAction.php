@@ -131,15 +131,47 @@ class GetHistoryAction extends AbstractExtensionStatusAction
             return 'info';
         }
     }
-    
+
     /**
      * Generate human-readable details for history event
      */
     private static function generateHistoryDetails(array $record): string
     {
+        // Check if we have a custom details field (for device events)
+        if (!empty($record['details'])) {
+            return $record['details'];
+        }
+
+        // Check event type for device-specific events
+        $eventType = $record['event_type'] ?? 'status_change';
+        if ($eventType === 'device_added') {
+            $details = 'New device registered';
+            if (!empty($record['ip_address'])) {
+                $details .= ' from ' . $record['ip_address'];
+            }
+            if (!empty($record['user_agent'])) {
+                $details .= ' (' . $record['user_agent'];
+                if (isset($record['rtt']) && $record['rtt'] !== null) {
+                    $details .= ', RTT: ' . $record['rtt'] . 'ms';
+                }
+                $details .= ')';
+            }
+            return $details;
+        } elseif ($eventType === 'device_removed') {
+            $details = 'Device unregistered';
+            if (!empty($record['ip_address'])) {
+                $details .= ' from ' . $record['ip_address'];
+            }
+            if (!empty($record['user_agent'])) {
+                $details .= ' (' . $record['user_agent'] . ')';
+            }
+            return $details;
+        }
+
+        // Default logic for status changes
         $status = $record['status'] ?? '';
         $previousStatus = $record['previousStatus'] ?? '';
-        
+
         if ($status === 'Available') {
             $details = 'Extension came online';
             if (!empty($record['ip_address'])) {
@@ -157,7 +189,7 @@ class GetHistoryAction extends AbstractExtensionStatusAction
         } else {
             $details = 'Status changed from ' . $previousStatus . ' to ' . $status;
         }
-        
+
         return $details;
     }
 }

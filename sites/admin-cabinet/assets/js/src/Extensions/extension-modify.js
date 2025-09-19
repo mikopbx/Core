@@ -37,6 +37,7 @@ const extension = {
     $fwd_forwardingonbusy: $('#fwd_forwardingonbusy'),
     $fwd_forwardingonunavailable: $('#fwd_forwardingonunavailable'),
     $email: $('#user_email'),
+    $user_username: $('#user_username'),
     
     /**
      * Password widget instance.
@@ -184,13 +185,17 @@ const extension = {
      * Initializes the extension form and its interactions.
      */
     initialize() {
-        // Set default values for email, mobile number, and extension number
-        extension.defaultEmail = extension.$email.inputmask('unmaskedvalue');
-        extension.defaultMobileNumber = extension.$mobile_number.inputmask('unmaskedvalue');
-        extension.defaultNumber = extension.$number.inputmask('unmaskedvalue');
+        // Default values will be set after REST API data is loaded
+        // Initialize with empty values since forms are empty until API responds
+        extension.defaultEmail = '';
+        extension.defaultMobileNumber = '';
+        extension.defaultNumber = '';
 
         // Initialize tab menu items, accordions, and dropdown menus
-        extension.$tabMenuItems.tab();
+        extension.$tabMenuItems.tab({
+            history: true,
+            historyType: 'hash',
+        });
         $('#extensions-form .ui.accordion').accordion();
 
         // Initialize popups for question icons and buttons
@@ -204,7 +209,20 @@ const extension = {
 
         // Initialize the extension form
         extension.initializeForm();
-        
+
+        // Add event handler for username change to update page title
+        extension.$user_username.on('input', function() {
+            const currentNumber = extension.$number.inputmask ? extension.$number.inputmask('unmaskedvalue') : extension.$number.val();
+            extension.updatePageHeader($(this).val(), currentNumber);
+        });
+
+        // Also update header when extension number changes
+        extension.$number.on('input', function() {
+            const currentUsername = extension.$user_username.val();
+            const currentNumber = $(this).inputmask ? $(this).inputmask('unmaskedvalue') : $(this).val();
+            extension.updatePageHeader(currentUsername, currentNumber);
+        });
+
         // Initialize tooltips for advanced settings using unified system
         if (typeof ExtensionTooltipManager !== 'undefined') {
             ExtensionTooltipManager.initialize();
@@ -212,7 +230,7 @@ const extension = {
             // Fallback to old name if new class not available
             extensionTooltipManager.initialize();
         }
-        
+
         // Load extension data via REST API
         extension.loadExtensionData();
     },
@@ -373,20 +391,32 @@ const extension = {
     },
 
     initializeInputMasks(){
-        // Set the "oncomplete" event handler for the extension number input
+        // Set up number input mask with correct length from API
         let timeoutNumberId;
-        extension.$number.inputmask('option', {
-            oncomplete: ()=>{
-                    // Clear the previous timer, if it exists
-                    if (timeoutNumberId) {
-                        clearTimeout(timeoutNumberId);
+
+        // Always initialize mask based on extensions_length from API
+        // No defaults in JavaScript - value must come from API
+        if (extension.extensionsLength) {
+            const extensionsLength = parseInt(extension.extensionsLength, 10);
+            if (extensionsLength >= 2 && extensionsLength <= 10) {
+                // Initialize mask with correct length and oncomplete handler
+                extension.$number.inputmask({
+                    mask: `9{2,${extensionsLength}}`,
+                    placeholder: '_',
+                    oncomplete: () => {
+                        // Clear the previous timer, if it exists
+                        if (timeoutNumberId) {
+                            clearTimeout(timeoutNumberId);
+                        }
+                        // Set a new timer with a delay of 0.5 seconds
+                        timeoutNumberId = setTimeout(() => {
+                            extension.cbOnCompleteNumber();
+                        }, 500);
                     }
-                    // Set a new timer with a delay of 0.5 seconds
-                    timeoutNumberId = setTimeout(() => {
-                        extension.cbOnCompleteNumber();
-                    }, 500);
+                });
             }
-        });
+        }
+
         extension.$number.on('paste', function() {
             extension.cbOnCompleteNumber();
         });
@@ -514,23 +544,13 @@ const extension = {
      */
     cbAfterSendForm(response) {
         if (response.result) {
-            // Update form with new data if provided
-            if (response.data) {
-                extension.populateFormWithData(response.data);
+            // Store the current extension number as the default number from response
+            if (response.data && response.data.number) {
+                extension.defaultNumber = response.data.number;
+                // Update the phone representation with the new default number
+                Extensions.updatePhoneRepresent(extension.defaultNumber);
             }
-            
-            // Update URL for new records (after first save)
-            const currentId = extension.getRecordId();
-            if ((!currentId || currentId === '') && response.data && response.data.id) {
-                const newUrl = window.location.href.replace(/modify\/?$/, `modify/${response.data.id}`);
-                window.history.pushState(null, '', newUrl);
-            }
-
-            // Store the current extension number as the default number
-            extension.defaultNumber = extension.$number.val();
-
-            // Update the phone representation with the new default number
-            Extensions.updatePhoneRepresent(extension.defaultNumber);
+            // Form.js will handle all redirect logic based on submitMode and response.reload from server
         } else {
             UserMessage.showMultiString(response.messages);
         }
@@ -609,13 +629,17 @@ const extension = {
      * Populate form with data from REST API (V5.0 clean data architecture)
      */
     populateFormWithData(data) {
+        // Store extensions_length from API for use in initializeInputMasks
+        // This value MUST come from API - no defaults in JS
+        extension.extensionsLength = data.extensions_length;
+
         // Use unified silent population approach (same as IVR menu)
         Form.populateFormSilently(data, {
             afterPopulate: (formData) => {
                 // Initialize dropdowns with V5.0 specialized classes - complete automation
                 extension.initializeDropdownsWithCleanData(formData);
-                
-                // Update extension number in any UI elements if needed  
+
+                // Update extension number in any UI elements if needed
                 if (formData.number) {
                     $('#extension-number-display').text(formData.number);
                 }
@@ -630,7 +654,10 @@ const extension = {
                 if (typeof ExtensionModifyStatusMonitor !== 'undefined') {
                     ExtensionModifyStatusMonitor.initialize();
                 }
-                
+
+                // Update page header with employee name and extension number
+                extension.updatePageHeader(formData.user_username, formData.number);
+
                 // Initialize password widget after data is loaded
                 extension.initializePasswordWidget(formData);
 
@@ -791,12 +818,37 @@ const extension = {
     initializeTransportDropdown() {
         const $dropdown = $('#sip_transport-dropdown');
         if ($dropdown.length === 0) return;
-        
+
         // Initialize with standard Fomantic UI - it's already rendered by PHP
         $dropdown.dropdown({
             onChange: () => Form.dataChanged()
         });
     },
+
+    /**
+     * Update page header with employee name and extension number
+     * @param {string} employeeName - Name of the employee
+     * @param {string} extensionNumber - Extension number (optional)
+     */
+    updatePageHeader(employeeName, extensionNumber) {
+        let headerText;
+
+        if (employeeName && employeeName.trim() !== '') {
+            // Existing employee with name
+            headerText = '<i class="user outline icon"></i> ' + employeeName;
+
+            // Add extension number if available
+            if (extensionNumber && extensionNumber.trim() !== '') {
+                headerText += ' &lt;' + extensionNumber + '&gt;';
+            }
+        } else {
+            // New employee or no name yet
+            headerText = globalTranslate.ex_CreateNewExtension || 'New Employee';
+        }
+
+        // Update main header content
+        $('h1 .content').html(headerText);
+    }
 };
 
 

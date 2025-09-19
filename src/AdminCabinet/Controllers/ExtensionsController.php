@@ -46,28 +46,7 @@ class ExtensionsController extends BaseController
      */
     public function modifyAction(string $id = ''): void
     {
-        // Create empty form structure like IVR Menu - JavaScript will populate everything via REST API
-        $emptyExtension = new \stdClass();
-        $emptyExtension->id = $id ?: '';
-        $emptyExtension->type = Extensions::TYPE_SIP;
-        $emptyExtension->number = '';
-        $emptyExtension->user_username = '';
-        $emptyExtension->user_email = '';
-        $emptyExtension->mobile_number = '';
-        $emptyExtension->mobile_dialstring = '';
-        $emptyExtension->sip_secret = '';
-        $emptyExtension->sip_dtmfmode = 'auto';
-        $emptyExtension->sip_networkfilterid = '';
-        $emptyExtension->sip_enableRecording = true;
-        $emptyExtension->sip_transport = Sip::TRANSPORT_AUTO;
-        $emptyExtension->sip_manualattributes = '';
-        $emptyExtension->fwd_ringlength = 45;
-        $emptyExtension->fwd_forwarding = '';
-        $emptyExtension->fwd_forwardingonbusy = '';
-        $emptyExtension->fwd_forwardingonunavailable = '';
-        
-        $form = new ExtensionEditForm($emptyExtension);
-        $this->view->form = $form;
+        $this->view->form = new ExtensionEditForm();
         
         // All data loading moved to JavaScript via REST API - no server-side DB queries needed
         if (empty($id) || $id === 'new') {

@@ -30,7 +30,7 @@ use MikoPBX\Common\Providers\ModelsMetadataProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use MikoPBX\PBXCoreREST\Services\PasswordService;
+use MikoPBX\Core\System\PasswordService;
 use Phalcon\Di\Di;
 
 /**

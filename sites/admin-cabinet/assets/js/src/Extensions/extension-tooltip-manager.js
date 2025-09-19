@@ -192,16 +192,48 @@ class ExtensionTooltipManager {
                 description: globalTranslate.ex_SipManualattributesTooltip_desc,
                 list: [
                     {
+                        term: globalTranslate.ex_SipManualattributesTooltip_format,
+                        definition: globalTranslate.ex_SipManualattributesTooltip_format_desc
+                    }
+                ],
+                list2: [
+                    {
+                        term: globalTranslate.ex_SipManualattributesTooltip_examples_header,
+                        definition: null
+                    }
+                ],
+                examples: [
+                    '[endpoint]',
+                    'device_state_busy_at=2',
+                    'max_audio_streams=1',
+                    'direct_media=no',
+                    'trust_id_inbound=yes',
+                    'force_rport=yes',
+                    'rewrite_contact=yes',
+                    'rtp_timeout=180',
+                    'rtp_timeout_hold=900',
+                    'rtp_keepalive=60',
+                    '',
+                    '',
+                    '[aor]',
+                    'max_contacts=3',
+                    'remove_existing=yes',
+                    'remove_unavailable=yes',
+                    'qualify_frequency=30',
+                    'qualify_timeout=3',
+                    '',
+                    '',
+                    '[auth]',
+                    'auth_type=userpass'
+                ],
+                list3: [
+                    {
+                        term: globalTranslate.ex_SipManualattributesTooltip_common_params,
+                        definition: null
+                    },
+                    {
                         term: globalTranslate.ex_SipManualattributesTooltip_list_device_state_busy_at,
                         definition: globalTranslate.ex_SipManualattributesTooltip_list_device_state_busy_at_desc
-                    },
-                    {
-                        term: globalTranslate.ex_SipManualattributesTooltip_list_rtp_timeout,
-                        definition: globalTranslate.ex_SipManualattributesTooltip_list_rtp_timeout_desc
-                    },
-                    {
-                        term: globalTranslate.ex_SipManualattributesTooltip_list_rtp_timeout_hold,
-                        definition: globalTranslate.ex_SipManualattributesTooltip_list_rtp_timeout_hold_desc
                     },
                     {
                         term: globalTranslate.ex_SipManualattributesTooltip_list_max_audio_streams,
@@ -214,8 +246,49 @@ class ExtensionTooltipManager {
                     {
                         term: globalTranslate.ex_SipManualattributesTooltip_list_remove_existing,
                         definition: globalTranslate.ex_SipManualattributesTooltip_list_remove_existing_desc
+                    },
+                    {
+                        term: globalTranslate.ex_SipManualattributesTooltip_list_rtp_timeout,
+                        definition: globalTranslate.ex_SipManualattributesTooltip_list_rtp_timeout_desc
+                    },
+                    {
+                        term: globalTranslate.ex_SipManualattributesTooltip_list_rtp_timeout_hold,
+                        definition: globalTranslate.ex_SipManualattributesTooltip_list_rtp_timeout_hold_desc
+                    },
+                    {
+                        term: globalTranslate.ex_SipManualattributesTooltip_list_direct_media,
+                        definition: globalTranslate.ex_SipManualattributesTooltip_list_direct_media_desc
+                    },
+                    {
+                        term: globalTranslate.ex_SipManualattributesTooltip_list_trust_id_inbound,
+                        definition: globalTranslate.ex_SipManualattributesTooltip_list_trust_id_inbound_desc
+                    },
+                    {
+                        term: globalTranslate.ex_SipManualattributesTooltip_list_force_rport,
+                        definition: globalTranslate.ex_SipManualattributesTooltip_list_force_rport_desc
+                    },
+                    {
+                        term: globalTranslate.ex_SipManualattributesTooltip_list_rewrite_contact,
+                        definition: globalTranslate.ex_SipManualattributesTooltip_list_rewrite_contact_desc
+                    },
+                    {
+                        term: globalTranslate.ex_SipManualattributesTooltip_list_qualify_frequency,
+                        definition: globalTranslate.ex_SipManualattributesTooltip_list_qualify_frequency_desc
+                    },
+                    {
+                        term: globalTranslate.ex_SipManualattributesTooltip_list_rtp_keepalive,
+                        definition: globalTranslate.ex_SipManualattributesTooltip_list_rtp_keepalive_desc
+                    },
+                    {
+                        term: globalTranslate.ex_SipManualattributesTooltip_list_qualify_timeout,
+                        definition: globalTranslate.ex_SipManualattributesTooltip_list_qualify_timeout_desc
+                    },
+                    {
+                        term: globalTranslate.ex_SipManualattributesTooltip_list_remove_unavailable,
+                        definition: globalTranslate.ex_SipManualattributesTooltip_list_remove_unavailable_desc
                     }
                 ],
+                note: globalTranslate.ex_SipManualattributesTooltip_note,
                 warning: {
                     header: globalTranslate.ex_SipManualattributesTooltip_warning_header,
                     text: globalTranslate.ex_SipManualattributesTooltip_warning

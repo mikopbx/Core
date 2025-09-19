@@ -23,7 +23,7 @@ use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use MikoPBX\PBXCoreREST\Services\PasswordService;
+use MikoPBX\Core\System\PasswordService;
 
 /**
  * Class ImportCSVAction

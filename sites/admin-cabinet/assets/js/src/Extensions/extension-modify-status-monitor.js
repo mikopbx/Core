@@ -39,28 +39,36 @@ const ExtensionModifyStatusMonitor = {
     $deviceHistoryList: null,
     
     /**
+     * Update interval timer
+     */
+    updateTimer: null,
+
+    /**
      * Initialize the extension status monitor
      */
     initialize() {
         if (this.isInitialized) {
             return;
         }
-        
+
         // Get extension number from form
         this.currentExtensionId = this.extractExtensionId();
         if (!this.currentExtensionId) {
             return;
         }
-        
+
         // Cache DOM elements
         this.cacheElements();
-        
+
         // Subscribe to EventBus for real-time updates
         this.subscribeToEvents();
-        
+
         // Make single initial API call
         this.loadInitialStatus();
-        
+
+        // Start timer for updating online durations
+        this.startDurationUpdateTimer();
+
         this.isInitialized = true;
     },
     
@@ -255,8 +263,8 @@ const ExtensionModifyStatusMonitor = {
             return;
         }
         
-        // Use horizontal list with teal labels like the old endpoint-list
-        let devicesHtml = '<div class="ui horizontal list">';
+        // Use list with teal labels like the old endpoint-list
+        let devicesHtml = '<div class="ui list">';
         
         devices.forEach((device) => {
             const userAgent = device.user_agent || 'Unknown';
@@ -280,9 +288,77 @@ const ExtensionModifyStatusMonitor = {
         
         devicesHtml += '</div>';
         this.$activeDevicesList.html(devicesHtml);
+
+        // Add click handler to copy IP address
+        this.attachDeviceClickHandlers();
     },
-    
-    
+
+    /**
+     * Attach click handlers to device labels for IP copying
+     */
+    attachDeviceClickHandlers() {
+        this.$activeDevicesList.find('.item .ui.label').on('click', function(e) {
+            e.preventDefault();
+
+            const $label = $(this);
+            const $item = $label.closest('.item');
+            const dataId = $item.data('id');
+
+            if (!dataId) return;
+
+            // Extract IP from data-id (format: "UserAgent|IP")
+            const parts = dataId.split('|');
+            const ip = parts[1];
+
+            if (!ip || ip === '-') return;
+
+            // Copy to clipboard using the same method as password widget
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(ip).then(() => {
+                    // Show success feedback
+                    $label.transition('pulse');
+
+                    // Temporarily change the label color to indicate success
+                    $label.removeClass('teal').addClass('green');
+                    setTimeout(() => {
+                        $label.removeClass('green').addClass('teal');
+                    }, 1000);
+
+                    // Show popup message
+                    $label.popup({
+                        content: `${globalTranslate.ex_IpCopied || 'IP copied'}: ${ip}`,
+                        on: 'manual',
+                        position: 'top center'
+                    }).popup('show');
+
+                    setTimeout(() => {
+                        $label.popup('hide').popup('destroy');
+                    }, 2000);
+                }).catch(err => {
+                    console.error('Failed to copy IP:', err);
+                });
+            } else {
+                // Fallback for older browsers
+                const $temp = $('<input>');
+                $('body').append($temp);
+                $temp.val(ip).select();
+                document.execCommand('copy');
+                $temp.remove();
+
+                // Show feedback
+                $label.transition('pulse');
+                $label.removeClass('teal').addClass('green');
+                setTimeout(() => {
+                    $label.removeClass('green').addClass('teal');
+                }, 1000);
+            }
+        });
+
+        // Add cursor pointer style
+        this.$activeDevicesList.find('.item .ui.label').css('cursor', 'pointer');
+    },
+
+
     /**
      * Display historical data from API with device grouping
      */
@@ -318,10 +394,10 @@ const ExtensionModifyStatusMonitor = {
                 <div class="item">
                     <div class="content">
                         <div class="ui small header">
-                            <i class="mobile icon"></i>
+                            <i class="mobile alternate icon"></i>
                             <div class="content">
                                 ${deviceName}
-                                ${deviceIP ? `<span class="ui tiny grey text">(${deviceIP})</span>` : ''}
+                                ${deviceIP ? `<span style="color: grey; font-size:0.7em;">${deviceIP}</>` : ''}
                             </div>
                         </div>
                         <div class="description">
@@ -329,31 +405,58 @@ const ExtensionModifyStatusMonitor = {
             
             // Sessions timeline - simplified
             sessions.forEach((session, index) => {
-                const isOnline = session.status === 'Available';
-                const duration = this.calculateDuration(session.timestamp, sessions[index - 1]?.timestamp);
+                // Check event type to determine actual device status
+                let isOnline = session.status === 'Available';
+                let eventLabel = '';
+
+                // Handle device-specific events
+                if (session.event_type === 'device_removed') {
+                    isOnline = false;
+                    eventLabel = ` ${globalTranslate.ex_DeviceDisconnected || 'Disconnected'}`;
+                } else if (session.event_type === 'device_added') {
+                    isOnline = true;
+                    eventLabel = ` ${globalTranslate.ex_DeviceConnected || 'Connected'}`;
+                }
+
                 const rttLabel = this.getRttLabel(session.rtt);
                 const time = this.formatTime(session.date || session.timestamp);
-                
+
                 // Use circular labels like in extensions list
                 const statusClass = isOnline ? 'green' : 'grey';
                 const statusTitle = isOnline ? 'Online' : 'Offline';
-                
-                // Format duration with translation
-                const durationText = duration && isOnline 
-                    ? `${globalTranslate.ex_Online || 'Online'} ${duration}` 
-                    : duration 
-                        ? `${globalTranslate.ex_Offline || 'Offline'} ${duration}`
-                        : '';
-                
+
+                let durationHtml = '';
+                // For the first (most recent) entry that is online, add live duration
+                if (index === 0 && isOnline && session.event_type !== 'device_removed') {
+                    // Add data attribute with timestamp for live updating
+                    durationHtml = `<span class="ui grey text online-duration" style="margin-left: 8px;"
+                                          data-online-since="${session.timestamp}">
+                                          ${globalTranslate.ex_Online || 'Online'} ${this.calculateDurationFromNow(session.timestamp)}
+                                     </span>`;
+                } else {
+                    // Calculate static duration for historical entries
+                    const duration = this.calculateDuration(session.timestamp, sessions[index - 1]?.timestamp);
+                    // Format duration with translation
+                    const durationText = duration && isOnline
+                        ? `${globalTranslate.ex_Online || 'Online'} ${duration}`
+                        : duration
+                            ? `${globalTranslate.ex_Offline || 'Offline'} ${duration}`
+                            : '';
+
+                    if (durationText) {
+                        durationHtml = `<span class="ui grey text" style="margin-left: 8px;">${durationText}</span>`;
+                    }
+                }
+
                 historyHtml += `
                     <div class="ui small text" style="margin: 6px 20px; display: flex; align-items: center;">
-                        <div class="ui ${statusClass} empty circular label" 
-                             style="width: 8px; height: 8px; min-height: 8px; margin-right: 8px;" 
+                        <div class="ui ${statusClass} empty circular label"
+                             style="width: 8px; height: 8px; min-height: 8px; margin-right: 8px;"
                              title="${statusTitle}">
                         </div>
                         ${time}
                         ${rttLabel}
-                        ${durationText ? `<span class="ui grey text" style="margin-left: 8px;">${durationText}</span>` : ''}
+                        ${durationHtml || eventLabel}
                     </div>
                 `;
             });
@@ -370,15 +473,15 @@ const ExtensionModifyStatusMonitor = {
     },
     
     /**
-     * Group history events by device
+     * Group history events by device and sort by last event
      */
     groupHistoryByDevice(historyData) {
         const groups = {};
-        
+
         historyData.forEach(entry => {
             // Create device key from user_agent and IP
             let deviceKey = 'Unknown|Unknown';
-            
+
             if (entry.user_agent || entry.ip_address) {
                 deviceKey = `${entry.user_agent || 'Unknown'}|${entry.ip_address || 'Unknown'}`;
             } else if (entry.details) {
@@ -388,20 +491,35 @@ const ExtensionModifyStatusMonitor = {
                     deviceKey = `${match[1].trim()}|${match[2].trim()}`;
                 }
             }
-            
+
             if (!groups[deviceKey]) {
                 groups[deviceKey] = [];
             }
-            
+
             groups[deviceKey].push(entry);
         });
-        
+
         // Sort sessions within each group by timestamp (newest first)
         Object.keys(groups).forEach(key => {
             groups[key].sort((a, b) => b.timestamp - a.timestamp);
         });
-        
-        return groups;
+
+        // Convert to array and sort by most recent event
+        const sortedGroups = Object.entries(groups)
+            .sort((a, b) => {
+                // Get the most recent timestamp from each group (first element since already sorted)
+                const aLatest = a[1][0]?.timestamp || 0;
+                const bLatest = b[1][0]?.timestamp || 0;
+                return bLatest - aLatest;
+            });
+
+        // Convert back to object with sorted keys
+        const sortedObject = {};
+        sortedGroups.forEach(([key, value]) => {
+            sortedObject[key] = value;
+        });
+
+        return sortedObject;
     },
     
     /**
@@ -454,15 +572,73 @@ const ExtensionModifyStatusMonitor = {
         if (rtt === null || rtt === undefined || rtt <= 0) {
             return '';
         }
-        
+
         let color = 'green';
         if (rtt > 150) {
             color = 'red';
         } else if (rtt > 50) {
             color = 'olive';  // yellow can be hard to see, olive is better
         }
-        
+
         return `<span class="ui ${color} text" style="margin-left: 8px;">[RTT: ${rtt.toFixed(0)}ms]</span>`;
+    },
+
+    /**
+     * Calculate duration from timestamp to now
+     */
+    calculateDurationFromNow(timestamp) {
+        const now = Math.floor(Date.now() / 1000);
+        const diff = now - timestamp;
+
+        if (diff < 0) return '0s';
+
+        const minutes = Math.floor(diff / 60);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+
+        if (days > 0) {
+            return `${days}d ${hours % 24}h`;
+        } else if (hours > 0) {
+            return `${hours}h ${minutes % 60}m`;
+        } else if (minutes > 0) {
+            return `${minutes}m`;
+        } else {
+            return `${diff}s`;
+        }
+    },
+
+    /**
+     * Start timer to update online durations
+     */
+    startDurationUpdateTimer() {
+        // Clear any existing timer
+        if (this.updateTimer) {
+            clearInterval(this.updateTimer);
+        }
+
+        // Update every 10 seconds
+        this.updateTimer = setInterval(() => {
+            this.updateOnlineDurations();
+        }, 10000);
+    },
+
+    /**
+     * Update all online duration displays
+     */
+    updateOnlineDurations() {
+        const $durations = this.$deviceHistoryList?.find('.online-duration[data-online-since]');
+        if (!$durations || $durations.length === 0) {
+            return;
+        }
+
+        $durations.each((index, element) => {
+            const $element = $(element);
+            const onlineSince = parseInt($element.data('online-since'), 10);
+            if (onlineSince) {
+                const duration = this.calculateDurationFromNow(onlineSince);
+                $element.text(`${globalTranslate.ex_Online || 'Online'} ${duration}`);
+            }
+        });
     },
     
     
@@ -470,6 +646,12 @@ const ExtensionModifyStatusMonitor = {
      * Cleanup on page unload
      */
     destroy() {
+        // Clear update timer
+        if (this.updateTimer) {
+            clearInterval(this.updateTimer);
+            this.updateTimer = null;
+        }
+
         if (typeof EventBus !== 'undefined') {
             EventBus.unsubscribe('extension-status');
         }

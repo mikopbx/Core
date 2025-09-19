@@ -20,7 +20,6 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
-use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Hidden;
@@ -49,7 +48,8 @@ class ExtensionEditForm extends BaseForm
     
     public function initialize($entity = null, $options = null): void
     {
-        parent::initialize($entity, $options);
+        // Entity is not used anymore - all data comes from REST API
+        parent::initialize(null, $options);
 
         // EXTENSION
 
@@ -57,42 +57,33 @@ class ExtensionEditForm extends BaseForm
         $this->add(new Hidden('id'));
 
         // Number
-        // Limit the length of internal extension based on settings
-        $extensionsLength = PbxSettings::getValueByKey(PbxSettings::PBX_INTERNAL_EXTENSION_LENGTH);
-        $this->add(
-            new Text(
-                'number',
-                [
-                    "data-inputmask" => "'mask': '9{2,$extensionsLength}'",
-                ]
-            )
-        );
+        // Input mask will be initialized dynamically from REST API data in JavaScript
+        $this->add(new Text('number'));
 
         
         // USER Username
-        $this->add(new Text('user_username', ["value" => $entity->user_username, 'autocomplete' => 'off']));
+        $this->add(new Text('user_username', ['autocomplete' => 'off']));
 
         // USER Email
         $this->add(
             new Text(
                 'user_email',
-                ["value" => $entity->user_email, 'autocomplete' => 'off']
+                ['autocomplete' => 'off']
             )
         );
 
         // USER Picture
-        $this->add(new Hidden('user_avatar', ["value" => $entity->user_avatar]));
+        $this->add(new Hidden('user_avatar'));
 
 
         // SIP extension
-        $this->add(new Hidden('sip_extension', ["value" => $entity->number]));
+        $this->add(new Hidden('sip_extension'));
 
         // SIP Secret
         $this->add(
             new Password(
                 'sip_secret',
                 [
-                    "value" => $entity->sip_secret,
                     'autocomplete' => 'new-password',
                     'data-no-password-manager' => 'true'
                 ]
@@ -109,7 +100,7 @@ class ExtensionEditForm extends BaseForm
                 'inband' => $this->translation->_('inband'),
                 'auto_info' => $this->translation->_('auto_info')
             ],
-            $entity->sip_dtmfmode ?? 'auto',
+            'auto', // Default value, actual value will come from REST API
             [
                 'clearable' => false,
                 'forceSelection' => true
@@ -117,7 +108,7 @@ class ExtensionEditForm extends BaseForm
         );
 
         // SIP EnableRecording
-        $this->addCheckBox('sip_enableRecording', $this->isTrueValue($entity->sip_enableRecording));
+        $this->addCheckBox('sip_enableRecording', false); // Default value, actual value will come from REST API
 
 
         // SIP Transport
@@ -129,7 +120,7 @@ class ExtensionEditForm extends BaseForm
                 Sip::TRANSPORT_TCP => Sip::TRANSPORT_TCP,
                 Sip::TRANSPORT_TLS => Sip::TRANSPORT_TLS,
             ],
-            $entity->sip_transport ?? Sip::TRANSPORT_AUTO,
+            Sip::TRANSPORT_AUTO, // Default value, actual value will come from REST API
             [
                 'clearable' => false,
                 'forceSelection' => true
@@ -142,19 +133,19 @@ class ExtensionEditForm extends BaseForm
 
         // SIP Manualattributes
         $placeholderText = "[endpoint]\ndevice_state_busy_at = 10\n\n[aor]\nmax_contacts = 5";
-        $this->addTextArea('sip_manualattributes', base64_decode($entity->sip_manualattributes) ?? '', 80, [
+        $this->addTextArea('sip_manualattributes', $placeholderText, 80, [
             'placeholder' => $placeholderText,
             'skipEscaping' => true  // Technical configuration field - preserve special characters
         ]);
 
         // EXTERNAL Extension
-        $this->add(new Text('mobile_number', ["value" => $entity->mobile_number, 'autocomplete' => 'off']));
+        $this->add(new Text('mobile_number', ['autocomplete' => 'off']));
 
         // EXTERNAL Dialstring
         $this->add(
             new Text(
                 'mobile_dialstring',
-                ["value" => $entity->mobile_dialstring, 'autocomplete' => 'off']
+                ['autocomplete' => 'off']
             )
         );
 
@@ -167,7 +158,6 @@ class ExtensionEditForm extends BaseForm
         $this->add(new Hidden('fwd_forwardingonunavailable'));
 
         // RingLength
-        $ringDuration = (int)$entity->fwd_ringlength;
         $this->add(
             new Numeric(
                 'fwd_ringlength',
@@ -175,7 +165,7 @@ class ExtensionEditForm extends BaseForm
                     "maxlength" => 2,
                     "style" => "width: 80px;",
                     "defaultValue" => 120,
-                    "value" => ($ringDuration > 0) ? $ringDuration : 0,
+                    "value" => 0, // Default value, actual value will come from REST API
                     'autocomplete' => 'off'
                 ]
             )

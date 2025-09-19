@@ -189,38 +189,58 @@ class GetAllStatusesAction extends AbstractExtensionStatusAction
     private static function detectStatusChanges(array $lastStatuses, array $currentStatuses): array
     {
         $changes = [];
-        
+
         foreach ($currentStatuses as $extension => $status) {
             $lastStatus = $lastStatuses[$extension] ?? null;
-            
-            // Check if status changed
+
+            // Check if overall status changed
             if (!$lastStatus || $lastStatus['status'] !== $status['status']) {
+                // Skip recording initial Unknown -> Unavailable transition
+                $oldStatus = $lastStatus ? $lastStatus['status'] : 'Unknown';
+                if ($oldStatus === 'Unknown' && $status['status'] === 'Unavailable') {
+                    // Don't record this transition in history, it's just initialization
+                    continue;
+                }
+
                 // Extract device info from first available device
-                $firstDevice = (!empty($status['devices']) && is_array($status['devices'])) 
-                    ? $status['devices'][0] 
+                $firstDevice = (!empty($status['devices']) && is_array($status['devices']))
+                    ? $status['devices'][0]
                     : null;
-                
+
                 $changes[] = [
-                    'extension' => $extension,
+                    'extension' => (string)$extension,
                     'callerid' => $status['callerid'] ?? '',
                     'userid' => $status['userid'] ?? '',
-                    'old_status' => $lastStatus ? $lastStatus['status'] : 'Unknown',
+                    'old_status' => $oldStatus,
                     'new_status' => $status['status'],
                     'ip_address' => $firstDevice['ip'] ?? '',
                     'user_agent' => $firstDevice['user_agent'] ?? '',
                     'rtt' => $status['rtt'] ?? $firstDevice['rtt'] ?? null,
                     'timestamp' => time(),
                     'details' => self::generateEventDetails($status, $lastStatus),
-                    'devices' => $status['devices'] ?? []
+                    'devices' => $status['devices'] ?? [],
+                    'event_type' => 'status_change'
                 ];
+            } else {
+                // Status is the same, but check for device changes
+                $deviceChanges = self::detectDeviceChanges(
+                    $lastStatus['devices'] ?? [],
+                    $status['devices'] ?? [],
+                    (string)$extension,
+                    $status
+                );
+
+                foreach ($deviceChanges as $deviceChange) {
+                    $changes[] = $deviceChange;
+                }
             }
         }
-        
+
         // Check for removed extensions
         foreach ($lastStatuses as $extension => $status) {
             if (!isset($currentStatuses[$extension])) {
                 $changes[] = [
-                    'extension' => $extension,
+                    'extension' => (string)$extension,
                     'callerid' => $status['callerid'] ?? '',
                     'userid' => $status['userid'] ?? '',
                     'old_status' => $status['status'],
@@ -229,11 +249,87 @@ class GetAllStatusesAction extends AbstractExtensionStatusAction
                     'user_agent' => '',
                     'rtt' => null,
                     'timestamp' => time(),
-                    'details' => 'Extension removed from configuration'
+                    'details' => 'Extension removed from configuration',
+                    'event_type' => 'extension_removed'
                 ];
             }
         }
-        
+
+        return $changes;
+    }
+
+    /**
+     * Detect changes in devices for an extension
+     */
+    private static function detectDeviceChanges(array $oldDevices, array $newDevices, string $extension, array $extensionStatus): array
+    {
+        $changes = [];
+
+        // Create device signatures for comparison (ignore port as it can change)
+        // We only care about IP + User Agent combination
+        $oldSignatures = [];
+        foreach ($oldDevices as $device) {
+            // Use IP and User-Agent as unique identifier (port can change on re-registration)
+            $signature = $device['ip'] . '|' . ($device['user_agent'] ?? 'unknown');
+            $oldSignatures[$signature] = $device;
+        }
+
+        $newSignatures = [];
+        foreach ($newDevices as $device) {
+            // Use IP and User-Agent as unique identifier (port can change on re-registration)
+            $signature = $device['ip'] . '|' . ($device['user_agent'] ?? 'unknown');
+            $newSignatures[$signature] = $device;
+        }
+
+        // Check for new devices
+        foreach ($newSignatures as $signature => $device) {
+            if (!isset($oldSignatures[$signature])) {
+                $changes[] = [
+                    'extension' => $extension,
+                    'callerid' => $extensionStatus['callerid'] ?? '',
+                    'userid' => $extensionStatus['userid'] ?? '',
+                    'old_status' => $extensionStatus['status'],
+                    'new_status' => $extensionStatus['status'],
+                    'ip_address' => $device['ip'] ?? '',
+                    'user_agent' => $device['user_agent'] ?? '',
+                    'rtt' => $device['rtt'] ?? null,
+                    'timestamp' => time(),
+                    'details' => sprintf('New device registered from %s:%s (%s, RTT: %sms)',
+                        $device['ip'] ?? 'unknown',
+                        $device['port'] ?? 'unknown',
+                        $device['user_agent'] ?? 'unknown agent',
+                        $device['rtt'] ?? 'N/A'
+                    ),
+                    'devices' => $newDevices,
+                    'event_type' => 'device_added'
+                ];
+            }
+        }
+
+        // Check for removed devices
+        foreach ($oldSignatures as $signature => $device) {
+            if (!isset($newSignatures[$signature])) {
+                $changes[] = [
+                    'extension' => $extension,
+                    'callerid' => $extensionStatus['callerid'] ?? '',
+                    'userid' => $extensionStatus['userid'] ?? '',
+                    'old_status' => $extensionStatus['status'],
+                    'new_status' => $extensionStatus['status'],
+                    'ip_address' => $device['ip'] ?? '',
+                    'user_agent' => $device['user_agent'] ?? '',
+                    'rtt' => null,
+                    'timestamp' => time(),
+                    'details' => sprintf('Device unregistered from %s:%s (%s)',
+                        $device['ip'] ?? 'unknown',
+                        $device['port'] ?? 'unknown',
+                        $device['user_agent'] ?? 'unknown agent'
+                    ),
+                    'devices' => $newDevices,
+                    'event_type' => 'device_removed'
+                ];
+            }
+        }
+
         return $changes;
     }
     
@@ -357,16 +453,25 @@ class GetAllStatusesAction extends AbstractExtensionStatusAction
     {
         try {
             $historyKey = self::HISTORY_KEY_PREFIX . $extension;
-            
+
             // Prepare simplified event structure
             $event = [
                 'timestamp' => time(),
                 'status' => $change['new_status'],
-                'previousStatus' => $change['old_status']
+                'previousStatus' => $change['old_status'],
+                'event_type' => $change['event_type'] ?? 'status_change'
             ];
-            
-            // Add device data only when relevant
-            if ($change['new_status'] === self::STATUS_AVAILABLE) {
+
+            // Handle different event types
+            $eventType = $change['event_type'] ?? 'status_change';
+
+            if ($eventType === 'device_added' || $eventType === 'device_removed') {
+                // For device events, always include device info
+                $event['ip_address'] = $change['ip_address'] ?? '';
+                $event['user_agent'] = $change['user_agent'] ?? '';
+                $event['rtt'] = $change['rtt'] ?? null;
+                $event['details'] = $change['details'] ?? '';
+            } elseif ($change['new_status'] === self::STATUS_AVAILABLE) {
                 // When coming online, add current device info
                 $event['ip_address'] = $change['ip_address'] ?? '';
                 $event['user_agent'] = $change['user_agent'] ?? '';

@@ -20,6 +20,7 @@
 namespace MikoPBX\PBXCoreREST\Lib\Employees;
 
 use MikoPBX\Common\Models\Extensions;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\Users;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
@@ -46,6 +47,9 @@ class DataStructure extends AbstractDataStructure
         $data['user_email'] = $user->email ?? '';
         $data['user_avatar'] = AvatarHelper::getAvatarUrl($user->avatar ?? '');
 
+        // Add extension length setting for form field validation
+        $data['extensions_length'] = (int)PbxSettings::getValueByKey(PbxSettings::PBX_INTERNAL_EXTENSION_LENGTH);
+
         $sipExtension = Extensions::findFirst([
             'conditions' => 'type = :type: AND is_general_user_number = "1" AND userid = :userid:',
             'bind' => 
@@ -63,7 +67,7 @@ class DataStructure extends AbstractDataStructure
                 $data['sip_secret'] = $sipRecord->secret;
                 $data['sip_dtmfmode'] = $sipRecord->dtmfmode;
                 $data['sip_transport'] = $sipRecord->transport;
-                $data['sip_manualattributes'] = $sipRecord->manualattributes;
+                $data['sip_manualattributes'] = $sipRecord->getManualAttributes();
                 $data['sip_enableRecording'] = $sipRecord->enableRecording === '1';
                 
                 // Add network filter field with representation
@@ -109,13 +113,14 @@ class DataStructure extends AbstractDataStructure
     public static function createForNewEmployee(): array
     {
         $defaultAvatar = '/admin-cabinet/assets/img/unknownPerson.jpg';
-        
+
         $data = [
             'id' => '',  // Empty for new employee
             'user_username' => '',
             'user_email' => '',
             'user_avatar' => $defaultAvatar,
             'number' => Extensions::getNextInternalNumber(),
+            'extensions_length' => (int)PbxSettings::getValueByKey(PbxSettings::PBX_INTERNAL_EXTENSION_LENGTH),
             'sip_secret' => Sip::generateSipPassword(),
             'sip_enableRecording' => true,
             'sip_dtmfmode' => 'auto',

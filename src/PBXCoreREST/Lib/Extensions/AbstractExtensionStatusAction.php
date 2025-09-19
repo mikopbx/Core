@@ -200,60 +200,64 @@ abstract class AbstractExtensionStatusAction extends Injectable
             
             foreach ($extensions as $ext) {
                 $extensionNum = $ext['extension'];
-                
+
                 try {
-                    // Use getPjSipPeer which returns ContactStatusDetail event
-                    $peerInfo = $am->getPjSipPeer($extensionNum);
-                    
-                    if ($peerInfo && isset($peerInfo['Event']) && $peerInfo['Event'] === 'ContactStatusDetail') {
+                    // Use getPjSipPeerContacts to get all contacts for this extension
+                    $peerContacts = $am->getPjSipPeerContacts($extensionNum);
+
+                    if (!empty($peerContacts)) {
                         // Initialize array for multiple contacts if not exists
                         if (!isset($contacts[$extensionNum])) {
                             $contacts[$extensionNum] = [];
                         }
-                        
-                        // Parse status from AMI response
-                        $status = 'Unknown';
-                        if (isset($peerInfo['Status'])) {
-                            // Convert AMI status to our format
-                            if ($peerInfo['Status'] === 'Reachable' || $peerInfo['Status'] === 'Available') {
-                                $status = 'Avail';
-                            } elseif ($peerInfo['Status'] === 'Unreachable' || $peerInfo['Status'] === 'Unavailable') {
-                                $status = 'Unavail';
-                            } elseif ($peerInfo['Status'] === 'NonQualified') {
-                                $status = 'NonQual';
-                            } elseif ($peerInfo['Status'] === 'Unknown') {
-                                $status = 'Unknown';
+
+                        // Process each contact for this extension
+                        foreach ($peerContacts as $peerInfo) {
+                            // Parse status from AMI response
+                            $status = 'Unknown';
+                            if (isset($peerInfo['Status'])) {
+                                // Convert AMI status to our format
+                                if ($peerInfo['Status'] === 'Reachable' || $peerInfo['Status'] === 'Available') {
+                                    $status = 'Avail';
+                                } elseif ($peerInfo['Status'] === 'Unreachable' || $peerInfo['Status'] === 'Unavailable') {
+                                    $status = 'Unavail';
+                                } elseif ($peerInfo['Status'] === 'NonQualified') {
+                                    $status = 'NonQual';
+                                } elseif ($peerInfo['Status'] === 'Unknown') {
+                                    $status = 'Unknown';
+                                }
                             }
+
+                            // Parse RTT from microseconds to milliseconds
+                            $rtt = null;
+                            if (isset($peerInfo['RoundtripUsec']) && is_numeric($peerInfo['RoundtripUsec'])) {
+                                $rtt = round((float)$peerInfo['RoundtripUsec'] / 1000, 2);
+                            }
+
+                            // Parse IP and port from ViaAddress
+                            $ipAddress = '';
+                            $port = 5060;
+                            if (isset($peerInfo['ViaAddress'])) {
+                                $parts = explode(':', $peerInfo['ViaAddress']);
+                                $ipAddress = $parts[0] ?? '';
+                                $port = isset($parts[1]) ? (int)$parts[1] : 5060;
+                            }
+
+                            // Add contact to the array
+                            $contacts[$extensionNum][] = [
+                                'extension' => $extensionNum,
+                                'username' => $extensionNum,
+                                'ip_address' => $ipAddress,
+                                'port' => $port,
+                                'aor' => $peerInfo['AOR'] ?? $extensionNum,
+                                'status' => $status,
+                                'rtt' => $rtt,
+                                'user_agent' => $peerInfo['UserAgent'] ?? '',
+                                'reg_expire' => $peerInfo['RegExpire'] ?? null,
+                                'call_id' => $peerInfo['CallID'] ?? '',
+                                'is_webrtc' => $peerInfo['IsWebRTC'] ?? false
+                            ];
                         }
-                        
-                        // Parse RTT from microseconds to milliseconds
-                        $rtt = null;
-                        if (isset($peerInfo['RoundtripUsec']) && is_numeric($peerInfo['RoundtripUsec'])) {
-                            $rtt = round((float)$peerInfo['RoundtripUsec'] / 1000, 2);
-                        }
-                        
-                        // Parse IP and port from ViaAddress
-                        $ipAddress = '';
-                        $port = 5060;
-                        if (isset($peerInfo['ViaAddress'])) {
-                            $parts = explode(':', $peerInfo['ViaAddress']);
-                            $ipAddress = $parts[0] ?? '';
-                            $port = isset($parts[1]) ? (int)$parts[1] : 5060;
-                        }
-                        
-                        // Add contact to the array
-                        $contacts[$extensionNum][] = [
-                            'extension' => $extensionNum,
-                            'username' => $extensionNum,
-                            'ip_address' => $ipAddress,
-                            'port' => $port,
-                            'aor' => $peerInfo['AOR'] ?? $extensionNum,
-                            'status' => $status,
-                            'rtt' => $rtt,
-                            'user_agent' => $peerInfo['UserAgent'] ?? '',
-                            'reg_expire' => $peerInfo['RegExpire'] ?? null,
-                            'call_id' => $peerInfo['CallID'] ?? ''
-                        ];
                     }
                 } catch (Throwable $e) {
                     // Skip extensions that fail to get status
