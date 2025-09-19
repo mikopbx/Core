@@ -252,6 +252,7 @@ return [
 
     // ADV
     'adv_AmiPasswordWeak' => 'Простой пароль у AMI пользователя <a href=\'%url%\'>%record%</a>',
+    'adv_AriPasswordWeak' => 'Простой пароль у ARI пользователя <a href=\'%url%\'>%record%</a>',
     'adv_AvailableNewVersionModule' => 'Доступна новая версия модуля %module% - %ver%. Текущая версия: %currentVer%',
     'adv_AvailableNewVersionPBX' => 'Доступна новая версия PBX - <a href=\'%url%\'>%ver%</a>',
     'adv_FirewallDisabled' => 'В системе отключен сетевой экран или не настроены параметры разрешенных подсетей - <a href=\'%url%\'>изменить</a>',
@@ -414,10 +415,12 @@ return [
     // CF
     'cf_ColumnMode' => 'Режим',
     'cf_ColumnNote' => 'Заметка',
+    'cf_AddNewFile' => 'Добавить новый файл',
     'cf_ColumnPath' => 'Путь к файлу',
     'cf_Content' => 'Программный код или конфигурация',
     'cf_Description' => 'Комментарий для чего сделаны изменения',
     'cf_FileActionsAppend' => 'Добавлять в конец файла',
+    'cf_FileActionsCustom' => 'Пользовательский файл',
     'cf_FileActionsNone' => 'Не менять',
     'cf_FileActionsOverride' => 'Заменять полностью',
     'cf_FileActionsScript' => 'Обработать скриптом',
@@ -427,6 +430,11 @@ return [
     'cf_Path' => 'Путь к файлу',
     'cf_ResultFileHeader' => 'Содержимое файла с изменениями',
     'cf_UserEditHeader' => 'Редактор для внесения изменений',
+    'cf_EnterSearchPhrase' => 'Введите данные для поиска',
+    'cf_CalculateAutomatically' => 'Авто',
+    'cf_ShowOnlyRows' => 'по %rows% записей',
+    'cf_ShowAll' => 'Все записи',
+    'cf_CannotDeleteSystemFile' => 'Системные файлы не могут быть удалены',
 
     // DBG
     'dbg_Header' => 'Отладочная информация',

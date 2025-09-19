@@ -250,6 +250,7 @@ return [
 
     // ADV
     'adv_AmiPasswordWeak' => 'Weak password for AMI user <a href=\'%url%\'>%record%</a>',
+    'adv_AriPasswordWeak' => 'Weak password for ARI user <a href=\'%url%\'>%record%</a>',
     'adv_AvailableNewVersionModule' => 'New module version %module% - %ver% available. Current version: %currentVer%',
     'adv_AvailableNewVersionPBX' => 'New PBX version available - <a href=\'%url%\'>%ver%</a>',
     'adv_FirewallDisabled' => 'Network firewall is disabled in the system or allowed subnet parameters are not configured - <a href=\'%url%\'>change</a>',
@@ -412,10 +413,12 @@ return [
     // CF
     'cf_ColumnMode' => 'Mode',
     'cf_ColumnNote' => 'Note',
+    'cf_AddNewFile' => 'Add new file',
     'cf_ColumnPath' => 'File path',
     'cf_Content' => 'Program code or configuration',
     'cf_Description' => 'Comment for what changes were made',
     'cf_FileActionsAppend' => 'Append to end of file',
+    'cf_FileActionsCustom' => 'Custom file',
     'cf_FileActionsNone' => 'Do not change',
     'cf_FileActionsOverride' => 'Replace completely',
     'cf_FileActionsScript' => 'Process with script',
@@ -425,6 +428,11 @@ return [
     'cf_Path' => 'File path',
     'cf_ResultFileHeader' => 'File content with changes',
     'cf_UserEditHeader' => 'Editor for making changes',
+    'cf_EnterSearchPhrase' => 'Enter search query',
+    'cf_CalculateAutomatically' => 'Auto',
+    'cf_ShowOnlyRows' => '%rows% entries',
+    'cf_ShowAll' => 'All entries',
+    'cf_CannotDeleteSystemFile' => 'System files cannot be deleted',
 
     // DBG
     'dbg_Header' => 'Debug information',
