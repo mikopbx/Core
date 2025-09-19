@@ -1499,6 +1499,41 @@ class AsteriskManager
         return $result;
     }
 
+    /**
+     * Get all PJSIP contacts for an endpoint (supports multiple registrations)
+     *
+     * @param string $peer Extension number
+     * @return array Array of all contacts for the extension
+     */
+    public function getPjSipPeerContacts(string $peer): array
+    {
+        $contacts = [];
+        $parameters = ['Endpoint' => trim($peer)];
+
+        // Get endpoint information with all contacts
+        $res = $this->sendRequestTimeout('PJSIPShowEndpoint', $parameters);
+
+        // Process all ContactStatusDetail entries
+        foreach ($res['data']['ContactStatusDetail'] ?? [] as $contactData) {
+            if (!empty($contactData['URI'])) {
+                $contacts[] = $contactData;
+            }
+        }
+
+        // Also check for WebRTC endpoint
+        $wsParameters = ['Endpoint' => trim($peer) . "-WS"];
+        $wsRes = $this->sendRequestTimeout('PJSIPShowEndpoint', $wsParameters);
+
+        foreach ($wsRes['data']['ContactStatusDetail'] ?? [] as $contactData) {
+            if (!empty($contactData['URI'])) {
+                $contactData['IsWebRTC'] = true;
+                $contacts[] = $contactData;
+            }
+        }
+
+        return $contacts;
+    }
+
     /*
     * MIKO End.
     */
