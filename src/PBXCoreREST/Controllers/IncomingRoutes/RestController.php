@@ -69,14 +69,14 @@ class RestController extends BaseRestController
     
     /**
      * Define allowed custom methods for each HTTP method
-     * 
+     *
      * @return array<string, array<string>>
      */
     protected function getAllowedCustomMethods(): array
     {
         return [
-            'GET' => ['getDefault'],
-            'POST' => ['changePriorities', 'copy']
+            'GET' => ['getDefault', 'getDefaultRoute'],
+            'POST' => ['changePriority', 'copy']
         ];
     }
 }

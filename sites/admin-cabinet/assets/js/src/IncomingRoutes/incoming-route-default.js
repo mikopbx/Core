@@ -112,13 +112,14 @@ const incomingRouteDefault = {
      * Load default route data from API
      */
     loadData() {
-        IncomingRoutesAPI.getRecord(incomingRouteDefault.defaultRouteId, (response) => {
+        // Use getDefaultRoute to ensure default route exists
+        IncomingRoutesAPI.getDefaultRoute((response) => {
             if (response.result && response.data) {
                 incomingRouteDefault.populateForm(response.data);
             } else {
                 // Initialize empty form with dropdowns (use empty data)
                 incomingRouteDefault.populateForm({});
-                
+
                 // Show error if needed
                 if (response.messages && response.messages.error) {
                     const errorMessage = response.messages.error.join(', ');

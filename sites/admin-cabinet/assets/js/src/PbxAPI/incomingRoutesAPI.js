@@ -30,14 +30,40 @@ const IncomingRoutesAPI = new PbxApiClient({
     endpoint: '/pbxcore/api/v3/incoming-routes',
     customMethods: {
         getDefault: ':getDefault',
+        getDefaultRoute: ':getDefaultRoute',
         changePriority: ':changePriority',
         copy: ':copy'
     }
 });
 
 /**
+ * Get or create default incoming route (ID=1)
+ *
+ * @param {function} callback - Callback function
+ */
+IncomingRoutesAPI.getDefaultRoute = function(callback) {
+    $.api({
+        url: `${this.apiUrl}:getDefaultRoute`,
+        method: 'GET',
+        on: 'now',
+        onSuccess(response) {
+            callback(response);
+        },
+        onFailure(response) {
+            callback(response);
+        },
+        onError() {
+            callback({
+                result: false,
+                messages: { error: ['Network error occurred'] }
+            });
+        }
+    });
+};
+
+/**
  * Change priority of multiple incoming routes
- * 
+ *
  * @param {object} priorities - Map of route ID to new priority value
  * @param {function} callback - Callback function
  */

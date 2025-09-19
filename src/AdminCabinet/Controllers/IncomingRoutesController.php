@@ -28,27 +28,24 @@ class IncomingRoutesController extends BaseController
 {
     /**
      * Builds the index page for incoming routes.
-     * Only handles default route form, data loaded via REST API
+     * Only creates empty form, data loaded via REST API
      *
      * @return void
      */
     public function indexAction(): void
     {
-        // Create default rule if it doesn't exist
-        $defaultRule = IncomingRoutingTable::findFirstById(1);
-        if ($defaultRule === null) {
-            $defaultRule = IncomingRoutingTable::resetDefaultRoute();
-        }
-        
-        // Create form for default rule with empty dropdowns (will be loaded by JS)
+        // Create empty form for default rule (will be populated by JS via REST API)
+        $emptyDefaultRule = new IncomingRoutingTable();
+        $emptyDefaultRule->id = 1;  // Default route ID
+
         $form = new DefaultIncomingRouteForm(
-            $defaultRule,
+            $emptyDefaultRule,
             [
                 'extensions' => [],  // Will be loaded by JS
                 'soundfiles' => [],  // Will be loaded by JS
             ]
         );
-        
+
         $this->view->form = $form;
         $this->view->submitMode = null;
         $this->view->routingTable = [];  // Empty array - data will be loaded via REST API
@@ -68,18 +65,6 @@ class IncomingRoutesController extends BaseController
             return;
         }
 
-        // Create empty form - JS will populate via REST API
-        $this->setupModifyView($ruleId);
-    }
-    
-    /**
-     * Setup view for modify action
-     * 
-     * @param string $ruleId Rule ID
-     * @return void
-     */
-    private function setupModifyView(string $ruleId): void
-    {
         $emptyRoute = new IncomingRoutingTable();
         $form = new IncomingRouteEditForm($emptyRoute, ['soundfiles' => []]);
         
@@ -88,31 +73,4 @@ class IncomingRoutesController extends BaseController
         $this->view->represent = '';
     }
 
-    /**
-     * Save action - handled by REST API
-     * @deprecated Use REST API instead
-     */
-    public function saveAction(): void
-    {
-        $this->forward('incoming-routes/index');
-    }
-
-    /**
-     * Delete action - handled by REST API
-     * @deprecated Use REST API instead
-     */
-    public function deleteAction(string $ruleId): void
-    {
-        $this->forward('incoming-routes/index');
-    }
-
-    /**
-     * Change priority action - handled by REST API
-     * @deprecated Use REST API instead
-     */
-    public function changePriorityAction(): void
-    {
-        $this->view->disable();
-        echo json_encode(['result' => false, 'message' => 'Use REST API']);
-    }
 }
