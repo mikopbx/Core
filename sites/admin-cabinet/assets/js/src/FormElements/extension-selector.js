@@ -315,11 +315,12 @@ const ExtensionSelector = {
     },
     
     /**
-     * Set value programmatically
-     * 
+     * Set value programmatically with optional text
+     * V5.0: Enhanced to support setting both value and display text
+     *
      * @param {string} fieldId - Field ID
      * @param {string} value - Value to set
-     * @param {string} text - Display text (optional)
+     * @param {string} text - Display text (optional, if provided will update display)
      */
     setValue(fieldId, value, text = null) {
         const instance = this.instances.get(fieldId);
@@ -327,13 +328,103 @@ const ExtensionSelector = {
             console.warn(`ExtensionSelector: Instance not found for field: ${fieldId}`);
             return;
         }
-        
-        // Use DynamicDropdownBuilder to set the value
-        DynamicDropdownBuilder.setValue(fieldId, value);
-        
+
+        // Update hidden input value
+        const $hiddenInput = $(`#${fieldId}`);
+        if ($hiddenInput.length) {
+            $hiddenInput.val(value);
+        }
+
+        // Update dropdown display
+        const $dropdown = $(`#${fieldId}-dropdown`);
+        if ($dropdown.length) {
+            // Handle empty value specially
+            if (value === '' || value === null) {
+                // Clear the dropdown
+                $dropdown.dropdown('clear');
+                const $textElement = $dropdown.find('.text');
+                if ($textElement.length) {
+                    // Add default class for placeholder style
+                    $textElement.addClass('default');
+                }
+            }
+            // If text is provided, update both value and text
+            else if (text !== null && text !== '') {
+                // Create temporary menu item with the new text if it doesn't exist
+                const $menu = $dropdown.find('.menu');
+                const existingItem = $menu.find(`.item[data-value="${value}"]`);
+
+                if (!existingItem.length && value !== '') {
+                    // Add temporary item for mobile number or other dynamic values
+                    const safeValue = this.escapeHtml(value);
+                    const safeText = typeof SecurityUtils !== 'undefined'
+                        ? SecurityUtils.sanitizeExtensionsApiContent(text)
+                        : text;
+                    $menu.append(`<div class="item" data-value="${safeValue}" data-text="${safeText.replace(/"/g, '&quot;')}">${safeText}</div>`);
+                }
+
+                // Set selected value in dropdown
+                $dropdown.dropdown('set selected', value);
+
+                // Force text update if Semantic UI didn't pick it up
+                const $textElement = $dropdown.find('.text');
+                if ($textElement.length) {
+                    $textElement.html(text);
+                    // Remove default class to show text as selected, not placeholder
+                    $textElement.removeClass('default');
+                }
+            } else {
+                // Just set the value, let dropdown handle text
+                $dropdown.dropdown('set selected', value);
+                // Remove default class if value is set
+                const $textElement = $dropdown.find('.text');
+                if ($textElement.length) {
+                    $textElement.removeClass('default');
+                }
+            }
+        }
+
         // Update instance state
         instance.currentValue = value;
         instance.currentText = text || '';
+
+        // Trigger change event for form processing
+        $hiddenInput.trigger('change');
+
+        // Notify form of changes
+        if (typeof Form !== 'undefined' && Form.dataChanged) {
+            Form.dataChanged();
+        }
+    },
+
+    /**
+     * Set display text without changing value
+     * V5.0: New method for updating display text only
+     *
+     * @param {string} fieldId - Field ID
+     * @param {string} text - Display text to set
+     */
+    setText(fieldId, text) {
+        const instance = this.instances.get(fieldId);
+        if (!instance) {
+            console.warn(`ExtensionSelector: Instance not found for field: ${fieldId}`);
+            return;
+        }
+
+        const $dropdown = $(`#${fieldId}-dropdown`);
+        if ($dropdown.length) {
+            const $textElement = $dropdown.find('.text');
+            if ($textElement.length) {
+                // Sanitize text before setting
+                const safeText = typeof SecurityUtils !== 'undefined'
+                    ? SecurityUtils.sanitizeExtensionsApiContent(text)
+                    : text;
+                $textElement.html(safeText);
+                // Remove default class to show text as selected, not placeholder
+                $textElement.removeClass('default');
+                instance.currentText = text;
+            }
+        }
     },
     
     /**
@@ -349,7 +440,7 @@ const ExtensionSelector = {
     
     /**
      * Clear dropdown selection
-     * 
+     *
      * @param {string} fieldId - Field ID
      */
     clear(fieldId) {
@@ -357,7 +448,16 @@ const ExtensionSelector = {
         if (instance) {
             // Use DynamicDropdownBuilder to clear
             DynamicDropdownBuilder.clear(fieldId);
-            
+
+            // Add default class to show placeholder style
+            const $dropdown = $(`#${fieldId}-dropdown`);
+            if ($dropdown.length) {
+                const $textElement = $dropdown.find('.text');
+                if ($textElement.length) {
+                    $textElement.addClass('default');
+                }
+            }
+
             // Update instance state
             instance.currentValue = null;
             instance.currentText = null;

@@ -145,39 +145,42 @@ const PasswordWidget = {
      */
     setupUI(instance) {
         const { $field, $container, options } = instance;
-        
+
         // Find or create input wrapper
         let $inputWrapper = $field.closest('.ui.input');
         if ($inputWrapper.length === 0) {
             $field.wrap('<div class="ui input"></div>');
             $inputWrapper = $field.parent();
         }
-        
+
+        // Disable password managers
+        this.disablePasswordManagers(instance);
+
         // Add show/hide password button if needed
         if (options.showPasswordButton) {
             this.addShowHideButton(instance);
         }
-        
+
         // Add generate button if needed
         if (options.generateButton) {
             this.addGenerateButton(instance);
         }
-        
+
         // Add clipboard button if needed
         if (options.clipboardButton) {
             this.addClipboardButton(instance);
         }
-        
+
         // Add strength bar if needed
         if (options.showStrengthBar) {
             this.addStrengthBar(instance);
         }
-        
+
         // Add warnings container if needed
         if (options.showWarnings) {
             this.addWarningsContainer(instance);
         }
-        
+
         // Update input wrapper class based on button visibility
         this.updateInputWrapperClass(instance);
     },
@@ -320,6 +323,41 @@ const PasswordWidget = {
         instance.elements.$warnings = $warnings;
     },
     
+    /**
+     * Disable password managers from interfering with password fields
+     * @param {object} instance - Widget instance
+     */
+    disablePasswordManagers(instance) {
+        const { $field } = instance;
+        const $form = $field.closest('form');
+
+        // Set attributes to prevent autofill
+        $field.attr({
+            'autocomplete': 'off',
+            'data-lpignore': 'true',           // LastPass
+            'data-1p-ignore': 'true',          // 1Password
+            'data-form-type': 'other',         // Chrome
+            'data-bwignore': 'true',           // Bitwarden
+            'readonly': 'readonly'              // Make readonly initially
+        });
+
+        // Remove readonly on focus
+        $field.on('focus.passwordManager', function() {
+            $(this).removeAttr('readonly');
+        });
+
+        // Add honeypot field to trick password managers
+        if ($field.prev('.password-honeypot').length === 0) {
+            const $honeypot = $('<input type="password" class="password-honeypot" name="fake_password_field" style="position: absolute; left: -9999px; width: 1px; height: 1px;" tabindex="-1" aria-hidden="true" autocomplete="off">');
+            $field.before($honeypot);
+        }
+
+        // Prevent form from triggering password save prompt
+        if ($form.length > 0) {
+            $form.attr('data-lpignore', 'true');
+        }
+    },
+
     /**
      * Bind events
      * @param {object} instance - Widget instance

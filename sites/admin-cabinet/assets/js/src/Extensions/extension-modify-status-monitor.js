@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, EventBus, ExtensionsAPI */
+/* global globalRootUrl, globalTranslate, globalWebAdminLanguage, EventBus, ExtensionsAPI, SemanticLocalization */
 
 /**
  * Extension Modify Status Monitor
@@ -157,9 +157,9 @@ const ExtensionModifyStatusMonitor = {
         if (!this.currentExtensionId) {
             return;
         }
-        
+
         // Fetch history from API
-        ExtensionsAPI.getHistory(this.currentExtensionId, {limit: 50}, (response) => {
+        ExtensionsAPI.getHistory(this.currentExtensionId, (response) => {
             if (response && response.result && response.data && response.data.history) {
                 this.displayHistoricalData(response.data.history);
             }
@@ -366,7 +366,7 @@ const ExtensionModifyStatusMonitor = {
         if (!this.$deviceHistoryList || !Array.isArray(historyData)) {
             return;
         }
-        
+
         if (historyData.length === 0) {
             this.$deviceHistoryList.html(`
                 <div class="ui message">
@@ -377,18 +377,22 @@ const ExtensionModifyStatusMonitor = {
             `);
             return;
         }
-        
+
         // Group history by device
         const deviceGroups = this.groupHistoryByDevice(historyData);
-        
+
         // Build HTML for grouped display - simplified structure
         let historyHtml = '<div class="ui divided list">';
-        
-        Object.entries(deviceGroups).forEach(([deviceKey, sessions]) => {
+
+        Object.entries(deviceGroups).forEach(([deviceKey, sessions], deviceIndex) => {
             const [userAgent, ip] = deviceKey.split('|');
             const deviceName = userAgent || 'Unknown Device';
             const deviceIP = (ip && ip !== 'Unknown') ? ip : '';
-            
+            const deviceId = `device-${deviceIndex}`;
+
+            // Create timeline HTML for this device
+            const timelineHtml = this.createDeviceTimeline(sessions, deviceId);
+
             // Device header - exactly as requested
             historyHtml += `
                 <div class="item">
@@ -400,6 +404,7 @@ const ExtensionModifyStatusMonitor = {
                                 ${deviceIP ? `<span style="color: grey; font-size:0.7em;">${deviceIP}</>` : ''}
                             </div>
                         </div>
+                        ${timelineHtml}
                         <div class="description">
             `;
             
@@ -419,7 +424,8 @@ const ExtensionModifyStatusMonitor = {
                 }
 
                 const rttLabel = this.getRttLabel(session.rtt);
-                const time = this.formatTime(session.date || session.timestamp);
+                // Format datetime with date and time
+                const datetime = this.formatDateTime(session.date || session.timestamp);
 
                 // Use circular labels like in extensions list
                 const statusClass = isOnline ? 'green' : 'grey';
@@ -454,7 +460,7 @@ const ExtensionModifyStatusMonitor = {
                              style="width: 8px; height: 8px; min-height: 8px; margin-right: 8px;"
                              title="${statusTitle}">
                         </div>
-                        ${time}
+                        ${datetime}
                         ${rttLabel}
                         ${durationHtml || eventLabel}
                     </div>
@@ -467,9 +473,12 @@ const ExtensionModifyStatusMonitor = {
                 </div>
             `;
         });
-        
+
         historyHtml += '</div>';
         this.$deviceHistoryList.html(historyHtml);
+
+        // Initialize timeline tooltips
+        this.initializeTimelineTooltips();
     },
     
     /**
@@ -584,6 +593,39 @@ const ExtensionModifyStatusMonitor = {
     },
 
     /**
+     * Format datetime with date and time using interface language
+     */
+    formatDateTime(time) {
+        if (!time) return '--:--';
+
+        const date = new Date(typeof time === 'string' ? time : time * 1000);
+        const now = new Date();
+
+        // Check if it's today
+        const isToday = date.toDateString() === now.toDateString();
+
+        // Check if it's yesterday
+        const yesterday = new Date(now);
+        yesterday.setDate(yesterday.getDate() - 1);
+        const isYesterday = date.toDateString() === yesterday.toDateString();
+
+        const locale = SemanticLocalization.getUserLocale();
+        const timeStr = date.toLocaleTimeString(locale, {hour: '2-digit', minute: '2-digit', second: '2-digit'});
+
+        if (isToday) {
+            return timeStr;
+        } else if (isYesterday) {
+            // Use translation for "Yesterday" if available
+            const yesterdayText = globalTranslate.ex_Yesterday || 'Yesterday';
+            return `${yesterdayText} ${timeStr}`;
+        } else {
+            // Format date according to locale
+            const dateStr = date.toLocaleDateString(locale, {day: '2-digit', month: '2-digit'});
+            return `${dateStr} ${timeStr}`;
+        }
+    },
+
+    /**
      * Calculate duration from timestamp to now
      */
     calculateDurationFromNow(timestamp) {
@@ -640,8 +682,130 @@ const ExtensionModifyStatusMonitor = {
             }
         });
     },
-    
-    
+
+    /**
+     * Create timeline visualization for a device's history
+     * @param {Array} sessions - Array of session events for the device
+     * @param {String} deviceId - Unique identifier for the device
+     * @returns {String} HTML for the timeline
+     */
+    createDeviceTimeline(sessions, deviceId) {
+        if (!sessions || sessions.length === 0) {
+            return '';
+        }
+
+        // Get time range (last 24 hours)
+        const now = Math.floor(Date.now() / 1000);
+        const dayAgo = now - (24 * 60 * 60);
+
+        // Filter sessions within last 24 hours (sessions are sorted newest first)
+        const recentSessions = sessions.filter(s => s.timestamp >= dayAgo);
+        if (recentSessions.length === 0) {
+            return ''; // No recent activity
+        }
+
+        // Create timeline segments (96 segments for 24 hours, 15 minutes each)
+        const segmentDuration = 15 * 60; // 15 minutes in seconds
+        const segments = 96;
+        const segmentData = new Array(segments).fill('grey');
+
+        // Reverse sessions to process from oldest to newest
+        const chronologicalSessions = [...recentSessions].reverse();
+
+        // Process sessions to fill segments
+        chronologicalSessions.forEach((session, index) => {
+            const nextSession = chronologicalSessions[index + 1]; // Next event in time
+            const startTime = session.timestamp;
+            const endTime = nextSession ? nextSession.timestamp : now;
+
+            // Determine status color based on event type and status
+            let color = 'grey';
+
+            // Check event type first
+            if (session.event_type === 'device_added' || session.event_type === 'status_change') {
+                // Device came online
+                if (session.status === 'Available') {
+                    color = 'green';
+                } else {
+                    color = 'grey';
+                }
+            } else if (session.event_type === 'device_removed') {
+                // Device went offline - segments AFTER this event should be grey
+                color = 'grey';
+            } else if (session.status === 'Available') {
+                // Default to available status
+                color = 'green';
+            }
+
+            // Fill segments for this session period
+            for (let time = startTime; time < endTime && time <= now; time += segmentDuration) {
+                const segmentIndex = Math.floor((time - dayAgo) / segmentDuration);
+                if (segmentIndex >= 0 && segmentIndex < segments) {
+                    segmentData[segmentIndex] = color;
+                }
+            }
+        });
+
+        // Build timeline HTML
+        let timelineHtml = `
+            <div class="device-timeline" style="margin: 10px 0;">
+                <div style="display: flex; width: 100%; height: 12px; background: #f3f4f5; border-radius: 3px; overflow: hidden;">
+        `;
+
+        segmentData.forEach((color, index) => {
+            const segmentWidth = 100 / segments;
+            const bgColor = color === 'green' ? '#21ba45' : '#e8e8e8';
+            const borderLeft = index > 0 ? '1px solid rgba(255,255,255,0.2)' : 'none';
+
+            // Calculate time for this segment
+            const segmentTime = dayAgo + (index * segmentDuration);
+            const segmentDate = new Date(segmentTime * 1000);
+
+            // Get user's locale
+            const locale = SemanticLocalization.getUserLocale();
+            const timeStr = segmentDate.toLocaleTimeString(locale, {hour: '2-digit', minute: '2-digit'});
+
+            timelineHtml += `
+                <div style="width: ${segmentWidth}%; height: 100%; background-color: ${bgColor};
+                           box-sizing: border-box; border-left: ${borderLeft};"
+                     title="${timeStr} - ${color === 'green' ? 'Online' : 'Offline'}">
+                </div>
+            `;
+        });
+
+        // Time labels with localization
+        const hoursLabel = globalTranslate.ex_Hours_Short || 'h';
+
+        timelineHtml += `
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 2px; font-size: 10px; color: #999;">
+                    <span>24${hoursLabel}</span>
+                    <span>18${hoursLabel}</span>
+                    <span>12${hoursLabel}</span>
+                    <span>6${hoursLabel}</span>
+                    <span>${globalTranslate.ex_Now || 'Now'}</span>
+                </div>
+            </div>
+        `;
+
+        return timelineHtml;
+    },
+
+    /**
+     * Initialize timeline tooltips after rendering
+     */
+    initializeTimelineTooltips() {
+        // Initialize Fomantic UI tooltips for timeline segments
+        this.$deviceHistoryList?.find('.device-timeline [title]').popup({
+            variation: 'mini',
+            position: 'top center',
+            delay: {
+                show: 300,
+                hide: 100
+            }
+        });
+    },
+
     /**
      * Cleanup on page unload
      */

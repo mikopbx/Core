@@ -184,9 +184,9 @@
             </div>
         </div>
     </div>
-    
+
     <div class="ui divider"></div>
-    
+
     <!-- Device history section -->
     <h3 class="ui header">
         <div class="content">

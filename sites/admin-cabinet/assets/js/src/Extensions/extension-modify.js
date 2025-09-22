@@ -306,38 +306,27 @@ const extension = {
             
             // Update fwd_forwarding if it matches old mobile number (including empty)
             if (currentFwdForwarding === extension.defaultMobileNumber) {
-                
+
                 // Set ring length if empty
                 if (extension.$formObj.form('get value', 'fwd_ringlength').length === 0
                     || extension.$formObj.form('get value', 'fwd_ringlength')==="0") {
                     extension.$formObj.form('set value', 'fwd_ringlength', 45);
                 }
 
-                // Use Semantic UI API directly on dropdown element
-                const $fwdDropdown = $(`#fwd_forwarding-dropdown`);
-                $fwdDropdown.dropdown('set text', `${userName} <${newMobileNumber}>`);
-                $fwdDropdown.dropdown('set value', newMobileNumber);
-                extension.$formObj.form('set value', 'fwd_forwarding', newMobileNumber);
+                // Use ExtensionSelector API for V5.0 unified pattern
+                ExtensionSelector.setValue('fwd_forwarding', newMobileNumber, `${userName} <${newMobileNumber}>`);
             }
 
             // Update fwd_forwardingonbusy if it matches old mobile number (including empty)
             if (currentFwdOnBusy === extension.defaultMobileNumber) {
-                
-                // Use Semantic UI API directly on dropdown element
-                const $fwdOnBusyDropdown = $(`#fwd_forwardingonbusy-dropdown`);
-                $fwdOnBusyDropdown.dropdown('set text', `${userName} <${newMobileNumber}>`);
-                $fwdOnBusyDropdown.dropdown('set value', newMobileNumber);
-                extension.$formObj.form('set value', 'fwd_forwardingonbusy', newMobileNumber);
+                // Use ExtensionSelector API for V5.0 unified pattern
+                ExtensionSelector.setValue('fwd_forwardingonbusy', newMobileNumber, `${userName} <${newMobileNumber}>`);
             }
 
             // Update fwd_forwardingonunavailable if it matches old mobile number (including empty)
             if (currentFwdOnUnavailable === extension.defaultMobileNumber) {
-                
-                // Use Semantic UI API directly on dropdown element
-                const $fwdOnUnavailableDropdown = $(`#fwd_forwardingonunavailable-dropdown`);
-                $fwdOnUnavailableDropdown.dropdown('set text', `${userName} <${newMobileNumber}>`);
-                $fwdOnUnavailableDropdown.dropdown('set value', newMobileNumber);
-                extension.$formObj.form('set value', 'fwd_forwardingonunavailable', newMobileNumber);
+                // Use ExtensionSelector API for V5.0 unified pattern
+                ExtensionSelector.setValue('fwd_forwardingonunavailable', newMobileNumber, `${userName} <${newMobileNumber}>`);
             }
         }
         // Set the new mobile number as the default
@@ -359,31 +348,22 @@ const extension = {
 
         // Check if forwarding was set to the mobile number
         if (currentFwdForwarding === extension.defaultMobileNumber) {
-            // If so, clear the 'fwd_ringlength' field and set 'fwd_forwarding' to -1
+            // If so, clear the 'fwd_ringlength' field and clear forwarding dropdown
             extension.$formObj.form('set value', 'fwd_ringlength', 0);
-            // Use Semantic UI API directly on dropdown element with proper clearing
-            const $fwdDropdown = $('#fwd_forwarding-dropdown');
-            $fwdDropdown.dropdown('clear');
-            $fwdDropdown.dropdown('set text', '-');
-            extension.$formObj.form('set value', 'fwd_forwarding', '');
+            // Use ExtensionSelector API for V5.0 unified pattern
+            ExtensionSelector.clear('fwd_forwarding');
         }
 
         // Check if forwarding when busy was set to the mobile number
         if (currentFwdOnBusy === extension.defaultMobileNumber) {
-            // Use Semantic UI API directly on dropdown element with proper clearing
-            const $fwdOnBusyDropdown = $('#fwd_forwardingonbusy-dropdown');
-            $fwdOnBusyDropdown.dropdown('clear');
-            $fwdOnBusyDropdown.dropdown('set text', '-');
-            extension.$formObj.form('set value', 'fwd_forwardingonbusy', '');
+            // Use ExtensionSelector API for V5.0 unified pattern
+            ExtensionSelector.clear('fwd_forwardingonbusy');
         }
 
         // Check if forwarding when unavailable was set to the mobile number
         if (currentFwdOnUnavailable === extension.defaultMobileNumber) {
-            // Use Semantic UI API directly on dropdown element with proper clearing
-            const $fwdOnUnavailableDropdown = $('#fwd_forwardingonunavailable-dropdown');
-            $fwdOnUnavailableDropdown.dropdown('clear');
-            $fwdOnUnavailableDropdown.dropdown('set text', '-');
-            extension.$formObj.form('set value', 'fwd_forwardingonunavailable', '');
+            // Use ExtensionSelector API for V5.0 unified pattern
+            ExtensionSelector.clear('fwd_forwardingonunavailable');
         }
 
         // Clear the default mobile number
@@ -757,14 +737,14 @@ const extension = {
         if (!extension.$sip_secret.length) {
             return;
         }
-        
+
         // Hide any legacy buttons if they exist
         $('.clipboard').hide();
         $('#show-hide-password').hide();
-        
+
         // Determine if this is a new extension (no ID) or existing one
         const isNewExtension = !formData.id || formData.id === '';
-        
+
         const widget = PasswordWidget.init(extension.$sip_secret, {
             validation: PasswordWidget.VALIDATION.SOFT,  // Soft validation - show warnings but allow submission
             generateButton: true,         // Show generate button

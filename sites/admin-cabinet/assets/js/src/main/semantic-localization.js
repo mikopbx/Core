@@ -100,6 +100,46 @@ const SemanticLocalization = {
             last: globalTranslate.dt_Last,
         },
     },
+    /**
+     * Get browser locale based on current interface language
+     * @returns {string} Browser locale string (e.g., 'en-US', 'ru-RU')
+     */
+    getUserLocale() {
+        const userLang = globalWebAdminLanguage || 'en';
+        const localeMap = {
+            'en': 'en-US',
+            'ru': 'ru-RU',
+            'de': 'de-DE',
+            'es': 'es-ES',
+            'fr': 'fr-FR',
+            'it': 'it-IT',
+            'ja': 'ja-JP',
+            'pt': 'pt-BR',
+            'zh_Hans': 'zh-CN',
+            'uk': 'uk-UA',
+            'nl': 'nl-NL',
+            'pl': 'pl-PL',
+            'tr': 'tr-TR',
+            'vi': 'vi-VN',
+            'th': 'th-TH',
+            'ko': 'ko-KR',
+            'ar': 'ar-SA',
+            'he': 'he-IL',
+            'cs': 'cs-CZ',
+            'da': 'da-DK',
+            'fi': 'fi-FI',
+            'el': 'el-GR',
+            'hu': 'hu-HU',
+            'no': 'no-NO',
+            'ro': 'ro-RO',
+            'sv': 'sv-SE',
+            'ka': 'ka-GE',
+            'az': 'az-AZ',
+            'pt_BR': 'pt-BR',
+            'hr': 'hr-HR'
+        };
+        return localeMap[userLang] || 'en-US';
+    },
 };
 
 // When the document is ready, initialize the system localisation process

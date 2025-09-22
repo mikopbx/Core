@@ -596,4 +596,37 @@ const ExtensionsAPI = {
             }
         });
     },
+
+    /**
+     * Get extension history for timeline visualization
+     * @param {string} extensionId - The extension number
+     * @param {function} callback - Callback function
+     */
+    getHistory(extensionId, callback) {
+        if (!extensionId) {
+            callback({result: false, messages: {error: 'Extension ID is required'}});
+            return;
+        }
+
+        $.api({
+            url: `${this.apiUrl}getHistory`,
+            method: 'GET',
+            data: {
+                extension: extensionId,
+                limit: 200,  // Get up to 200 events for 24 hour timeline
+                period: '24h' // Get last 24 hours of data
+            },
+            on: 'now',
+            cache: false,
+            onSuccess(response) {
+                callback(response);
+            },
+            onFailure(response) {
+                callback(response);
+            },
+            onError() {
+                callback({result: false, data: {}});
+            }
+        });
+    },
 };

@@ -355,4 +355,8 @@ return [
     
     // Error messages
     'ex_FileUploadError' => 'Ошибка загрузки файла',
+
+    'ex_Now' => 'Сейчас',
+    'ex_Hours_Short' => 'ч',
+    'ex_Yesterday' => 'Вчера'
 ];
