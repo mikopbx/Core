@@ -209,24 +209,24 @@ class SipProviderEditForm extends BaseForm
         ]));
         
         $this->add(new Text('cid_parser_regex', [
-            'placeholder' => '([0-9]+)'
+            'placeholder' => '[+]?[0-9]+'
         ]));
-        
+
         // DID Custom Settings
         $this->add(new Text('did_custom_header', [
             'placeholder' => 'X-DID'
         ]));
-        
+
         $this->add(new Text('did_parser_start', [
             'placeholder' => '['
         ]));
-        
+
         $this->add(new Text('did_parser_end', [
             'placeholder' => ']'
         ]));
-        
+
         $this->add(new Text('did_parser_regex', [
-            'placeholder' => '(?<=DID=)\\+?\\d+'
+            'placeholder' => '[0-9]+'
         ]));
         
         // Debug checkbox

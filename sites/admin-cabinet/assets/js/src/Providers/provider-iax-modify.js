@@ -351,11 +351,11 @@ class ProviderIAX extends ProviderBase {
         Form.cbBeforeSendForm = this.cbBeforeSendForm.bind(this);
         Form.cbAfterSendForm = this.cbAfterSendForm.bind(this);
         
-        // Configure REST API settings for v3 with auto-detection
+        // Configure REST API settings for v3
         Form.apiSettings = {
             enabled: true,
             apiObject: IaxProvidersAPI, // Use IAX-specific API client v3
-            autoDetectMethod: true // Automatically detect create/update based on id field
+            saveMethod: 'saveRecord'
         };
         
         // Set redirect URLs for save modes

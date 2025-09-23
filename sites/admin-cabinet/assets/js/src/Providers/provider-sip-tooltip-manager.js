@@ -534,9 +534,9 @@ class ProviderSipTooltipManager extends ProviderTooltipManager {
             header: globalTranslate.pr_ParserRegexTooltip_header || 'Regular Expression',
             description: globalTranslate.pr_ParserRegexTooltip_desc || 'Optional regex for extracting the number',
             examples: [
-                '([0-9]+) - digits only',
-                '(\\+?[0-9]+) - digits with optional +',
-                '(?<=tel:)[0-9]+ - after tel:'
+                '[0-9]+ - digits only',
+                '[+]?[0-9]+ - digits with optional +',
+                '[0-9]{7,15} - 7 to 15 digits'
             ]
         };
     }

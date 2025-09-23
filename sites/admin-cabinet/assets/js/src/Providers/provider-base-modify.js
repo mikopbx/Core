@@ -129,11 +129,11 @@ class ProviderBase {
      * @param {string} providerId - Provider ID
      */
     handleProviderDataResponse(response, providerId) {
-            
+
             if (response.result && response.data) {
                 // Store provider data for later use
                 this.providerData = response.data;
-                
+
                 // Update isNewProvider based on actual data from server
                 // New providers won't have an id in the response data
                 if (!response.data.id || response.data.id === '') {
@@ -141,7 +141,12 @@ class ProviderBase {
                 } else {
                     this.isNewProvider = false;
                 }
-                
+
+                // Set the _isNew flag for new providers
+                if (this.isNewProvider) {
+                    response.data._isNew = true;
+                }
+
                 this.populateFormData(response.data);
             } else if (providerId && providerId !== 'new') {
                 UserMessage.showMultiString(response.messages);
@@ -405,7 +410,22 @@ class ProviderBase {
      * @param {object} data - Provider data from API
      */
     populateFormData(data) {
-        
+
+        // Save the _isNew flag in a hidden field if present
+        if (data._isNew !== undefined) {
+            if ($('#_isNew').length === 0) {
+                // Create hidden field if it doesn't exist
+                $('<input>').attr({
+                    type: 'hidden',
+                    id: '_isNew',
+                    name: '_isNew',
+                    value: data._isNew ? 'true' : 'false'
+                }).appendTo(this.$formObj);
+            } else {
+                $('#_isNew').val(data._isNew ? 'true' : 'false');
+            }
+        }
+
         // Common fields
         if (data.id) {
             $('#id').val(data.id);
@@ -418,7 +438,7 @@ class ProviderBase {
         if (data.note) {
             $('#note').val(data.note);
         }
-        
+
         // Common provider fields - backend provides defaults
         $('#username').val(data.username || '');
         this.$secret.val(data.secret || '');
@@ -427,13 +447,13 @@ class ProviderBase {
         $('#networkfilterid').val(data.networkfilterid || '');
         $('#manualattributes').val(data.manualattributes || '');
         $('#port').val(data.port || '');
-        
+
         // Common checkboxes - handle both string '1' and boolean true
         // These checkboxes use standard HTML checkbox behavior
         $('#qualify').prop('checked', data.qualify === '1' || data.qualify === true);
         $('#receive_calls_without_auth').prop('checked', data.receive_calls_without_auth === '1' || data.receive_calls_without_auth === true);
         $('#noregister').prop('checked', data.noregister === '1' || data.noregister === true);
-        
+
         // Disabled state - this is a hidden field, not a checkbox
         $('#disabled').val(data.disabled ? '1' : '0');
     }

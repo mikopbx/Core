@@ -19,6 +19,58 @@
 /* global globalRootUrl, globalTranslate, Form, ProviderBase, ProviderSipTooltipManager, ProviderTooltipManager, i18n, SipProvidersAPI */
 
 /**
+ * Custom validation rule: Check if regex pattern is valid
+ * Only validates when the corresponding source dropdown is set to 'custom'
+ */
+$.fn.form.settings.rules.regexPattern = (value, parameter) => {
+    // Parse parameter to get field type (cid or did)
+    const fieldType = parameter || 'cid';
+    const sourceField = fieldType === 'did' ? '#did_source' : '#cid_source';
+
+    // Skip validation if source is not 'custom'
+    if ($(sourceField).val() !== 'custom') {
+        return true;
+    }
+
+    // Allow empty values (field is optional)
+    if (!value || value.trim() === '') {
+        return true;
+    }
+
+    // Validate regex pattern
+    try {
+        new RegExp(value);
+        return true;
+    } catch (e) {
+        console.log(`Invalid ${fieldType.toUpperCase()} regex pattern:`, value, e.message);
+        return false;
+    }
+};
+
+/**
+ * Custom validation rule: Check if custom header is valid
+ * Only validates when the corresponding source dropdown is set to 'custom'
+ */
+$.fn.form.settings.rules.customHeader = (value, parameter) => {
+    // Parse parameter to get field type (cid or did)
+    const fieldType = parameter || 'cid';
+    const sourceField = fieldType === 'did' ? '#did_source' : '#cid_source';
+
+    // Skip validation if source is not 'custom'
+    if ($(sourceField).val() !== 'custom') {
+        return true;
+    }
+
+    // Field is required when source is custom
+    if (!value || value.trim() === '') {
+        return false;
+    }
+
+    // Validate format: only letters, numbers, dash and underscore
+    return /^[A-Za-z0-9-_]+$/.test(value);
+};
+
+/**
  * SIP provider management form
  * @class ProviderSIP
  */
@@ -237,9 +289,10 @@ class ProviderSIP extends ProviderBase {
             $('#cid_parser_start').val('');
             $('#cid_parser_end').val('');
             $('#cid_parser_regex').val('');
+            // Clear any validation errors on hidden fields
+            $('#cid_parser_regex').closest('.field').removeClass('error');
         }
-        // Update form validation
-        Form.validateRules = this.getValidateRules();
+        // No need to reinitialize form - validation rules check source automatically
     }
     
     /**
@@ -263,9 +316,10 @@ class ProviderSIP extends ProviderBase {
             $('#did_parser_start').val('');
             $('#did_parser_end').val('');
             $('#did_parser_regex').val('');
+            // Clear any validation errors on hidden fields
+            $('#did_parser_regex').closest('.field').removeClass('error');
         }
-        // Update form validation
-        Form.validateRules = this.getValidateRules();
+        // No need to reinitialize form - validation rules check source automatically
     }
     /**
      * Initialize form with REST API configuration
@@ -277,11 +331,11 @@ class ProviderSIP extends ProviderBase {
         Form.cbBeforeSendForm = this.cbBeforeSendForm.bind(this);
         Form.cbAfterSendForm = this.cbAfterSendForm.bind(this);
         
-        // Configure REST API settings for v3 with auto-detection
+        // Configure REST API settings for v3
         Form.apiSettings = {
             enabled: true,
             apiObject: SipProvidersAPI, // Use SIP-specific API client v3
-            autoDetectMethod: true // Automatically detect create/update based on id field
+            saveMethod: 'saveRecord'
         };
         
         // Navigation URLs
@@ -430,66 +484,47 @@ class ProviderSIP extends ProviderBase {
      * @returns {object} Rules with CallerID/DID validation
      */
     addCallerIdDidRules(rules) {
-        const callerIdSource = $('#cid_source').val();
-        const didSource = $('#did_source').val();
-        
-        // Add custom header validation when custom source is selected
-        const customHeaderRules = {
-            rules: [{
-                type: 'empty',
-                prompt: globalTranslate.pr_ValidateCustomHeaderEmpty || 'Please specify custom header name',
-            }, {
-                type: 'regExp[/^[A-Za-z0-9-_]+$/]',
-                prompt: globalTranslate.pr_ValidateCustomHeaderFormat || 'Header name can only contain letters, numbers, dash and underscore',
-            }]
-        };
-        
-        if (callerIdSource === 'custom') {
-            rules.cid_custom_header = {
-                identifier: 'cid_custom_header',
-                ...customHeaderRules
-            };
-        }
-        
-        if (didSource === 'custom') {
-            rules.did_custom_header = {
-                identifier: 'did_custom_header',
-                ...customHeaderRules
-            };
-        }
-        
-        // Regex validation if provided (optional fields)
-        const regexValidationRule = {
+        // Custom header validation using global custom rules
+        rules.cid_custom_header = {
+            identifier: 'cid_custom_header',
             optional: true,
             rules: [{
-                type: 'callback',
-                callback: (value) => {
-                    if (!value) return true;
-                    try {
-                        new RegExp(value);
-                        return true;
-                    } catch (e) {
-                        return false;
-                    }
-                },
-                prompt: globalTranslate.pr_ValidateInvalidRegex || 'Invalid regular expression',
+                type: 'customHeader[cid]',
+                prompt: globalTranslate.pr_ValidateCustomHeaderEmpty || 'Please specify valid custom header name',
             }]
         };
-        
-        if ($('#cid_parser_regex').val()) {
-            rules.cid_parser_regex = {
-                identifier: 'cid_parser_regex',
-                ...regexValidationRule
-            };
-        }
-        
-        if ($('#did_parser_regex').val()) {
-            rules.did_parser_regex = {
-                identifier: 'did_parser_regex',
-                ...regexValidationRule
-            };
-        }
-        
+
+        rules.did_custom_header = {
+            identifier: 'did_custom_header',
+            optional: true,
+            rules: [{
+                type: 'customHeader[did]',
+                prompt: globalTranslate.pr_ValidateCustomHeaderEmpty || 'Please specify valid custom header name',
+            }]
+        };
+
+        // Regex pattern validation using global custom rules
+        rules.cid_parser_regex = {
+            identifier: 'cid_parser_regex',
+            optional: true,
+            rules: [{
+                type: 'regexPattern[cid]',
+                prompt: globalTranslate.pr_ValidateInvalidRegex || 'Invalid regular expression'
+            }]
+        };
+
+        rules.did_parser_regex = {
+            identifier: 'did_parser_regex',
+            optional: true,
+            rules: [{
+                type: 'regexPattern[did]',
+                prompt: globalTranslate.pr_ValidateInvalidRegex || 'Invalid regular expression'
+            }]
+        };
+
+        // Parser start/end fields don't need validation - they are truly optional
+        // No rules needed for cid_parser_start, cid_parser_end, did_parser_start, did_parser_end
+
         return rules;
     }
 

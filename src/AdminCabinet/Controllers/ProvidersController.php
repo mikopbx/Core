@@ -67,15 +67,20 @@ class ProvidersController extends BaseController
      */
     private function setupModifyView(string $type, string $uniqId): void
     {
-        
 
-        
+
+
         if ($type === 'SIP') {
             $form = new SipProviderEditForm(null);
         } else {
             $form = new IaxProviderEditForm(null);
         }
-        
+
+        // Set the ID in the form so JavaScript can retrieve it
+        if (!empty($uniqId)) {
+            $form->get('id')->setDefault($uniqId);
+        }
+
         $this->view->form = $form;
         $this->view->represent = '';
         $this->view->providerType = $type;

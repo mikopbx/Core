@@ -46,24 +46,6 @@ const ProvidersAPI = new PbxApiClient({
 });
 
 /**
- * Create new provider (POST)
- * @param {object} data - Provider data
- * @param {function} callback - Callback function
- */
-ProvidersAPI.create = function(data, callback) {
-    this.saveRecord(data, callback);
-};
-
-/**
- * Update existing provider (PUT)
- * @param {object} data - Provider data
- * @param {function} callback - Callback function
- */
-ProvidersAPI.update = function(data, callback) {
-    this.saveRecord(data, callback);
-};
-
-/**
  * Get providers formatted for dropdown selection
  * @param {object|function} dataOrCallback - Optional parameters or callback
  * @param {function} [callback] - Callback if first param is data
@@ -152,21 +134,6 @@ const SipProvidersAPI = new PbxApiClient({
     }
 });
 
-// Standard methods for SIP providers
-SipProvidersAPI.create = function(data, callback) {
-    // Force new record creation
-    const cleanData = {...data};
-    cleanData._isNew = true;
-    this.saveRecord(cleanData, callback);
-};
-
-SipProvidersAPI.update = function(data, callback) {
-    // Force update existing record
-    const cleanData = {...data};
-    cleanData._isNew = false;
-    this.saveRecord(cleanData, callback);
-};
-
 // Add custom methods for SIP providers
 SipProvidersAPI.getStatuses = function(callback) {
     this.callCustomMethod('getStatuses', callback);
@@ -212,21 +179,6 @@ const IaxProvidersAPI = new PbxApiClient({
         copy: ':copy'
     }
 });
-
-// Standard methods for IAX providers
-IaxProvidersAPI.create = function(data, callback) {
-    // Force new record creation
-    const cleanData = {...data};
-    cleanData._isNew = true;
-    this.saveRecord(cleanData, callback);
-};
-
-IaxProvidersAPI.update = function(data, callback) {
-    // Force update existing record
-    const cleanData = {...data};
-    cleanData._isNew = false;
-    this.saveRecord(cleanData, callback);
-};
 
 // Add custom methods for IAX providers
 IaxProvidersAPI.getStatuses = function(callback) {
