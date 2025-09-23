@@ -63,6 +63,12 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
      */
     protected function fillSetting(string $key, $value): void
     {
+        // Handle codec settings specially
+        if (strpos($key, 'codec_') === 0) {
+            $this->handleCodecSetting($key, $value);
+            return;
+        }
+
         if ($tab = $this->findElementTab($key)) {
             $this->navigateToTab($tab);
 
@@ -82,6 +88,84 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
     }
 
     /**
+     * Handle codec checkbox settings
+     * Codec checkboxes have different ID structure in the HTML
+     */
+    protected function handleCodecSetting(string $key, bool $enabled): void
+    {
+        try {
+            // Navigate to the codec tab first
+            $codecTab = $this->findCodecTab();
+            if ($codecTab) {
+                $this->navigateToTab($codecTab);
+            }
+
+            // Convert codec_name to codec-name for the row ID
+            $codecRowId = str_replace('_', '-', $key);
+
+            // Find the checkbox within the codec row
+            // The checkbox is inside a div.ui.toggle.checkbox within the codec row
+            $xpath = sprintf(
+                "//tr[@id='%s']//input[@type='checkbox' and @name='%s']",
+                $codecRowId,
+                $key
+            );
+
+            // Try to find the checkbox
+            try {
+                $checkbox = self::$driver->findElement(WebDriverBy::xpath($xpath));
+            } catch (\Facebook\WebDriver\Exception\NoSuchElementException $e) {
+                // Log warning but continue - codec might not be available
+                self::annotate("Codec checkbox not found: {$key}", 'warning');
+                return;
+            }
+
+            // Check current state
+            $isChecked = $checkbox->isSelected();
+
+            if ($isChecked !== $enabled) {
+                // Click on the parent div to toggle the checkbox (Semantic UI pattern)
+                $parentXpath = $xpath . '/parent::div[contains(@class, "checkbox")]';
+                $parentElement = self::$driver->findElement(WebDriverBy::xpath($parentXpath));
+                $this->scrollIntoView($parentElement);
+                $parentElement->click();
+
+                // Wait for the change to process
+                usleep(200000); // 200ms
+
+                self::annotate("Toggled codec {$key} to " . ($enabled ? 'enabled' : 'disabled'), 'info');
+            }
+        } catch (\Exception $e) {
+            self::annotate("Failed to set codec {$key}: " . $e->getMessage(), 'warning');
+            // Don't throw - codec settings are not critical
+        }
+    }
+
+    /**
+     * Find the tab that contains codec settings
+     */
+    protected function findCodecTab(): ?string
+    {
+        // Look for the audio-codecs-table to find its parent tab
+        $xpath = "//table[@id='audio-codecs-table']/ancestor::div[contains(@class, 'ui') and contains(@class, 'tab')]";
+        $elements = self::$driver->findElements(WebDriverBy::xpath($xpath));
+
+        if (!empty($elements)) {
+            return $elements[0]->getAttribute('data-tab');
+        }
+
+        // Fallback: try to find any codec checkbox to locate the tab
+        $xpath = "//input[starts-with(@name, 'codec_')]/ancestor::div[contains(@class, 'ui') and contains(@class, 'tab')]";
+        $elements = self::$driver->findElements(WebDriverBy::xpath($xpath));
+
+        if (!empty($elements)) {
+            return $elements[0]->getAttribute('data-tab');
+        }
+
+        return null;
+    }
+
+    /**
      * Delete all existing SSH keys from the table
      */
     protected function deleteAllSSHKeys(): void
@@ -90,32 +174,32 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
             // Find all delete buttons in the SSH keys table
             $deleteButtonsXpath = "//table[@id='ssh-keys-list']//a[contains(@class, 'delete-key-btn')]";
             $deleteButtons = self::$driver->findElements(WebDriverBy::xpath($deleteButtonsXpath));
-            
+
             if (empty($deleteButtons)) {
                 // No keys to delete
                 self::annotate("No existing SSH keys found to delete", 'info');
                 return;
             }
-            
+
             self::annotate("Found " . count($deleteButtons) . " SSH keys to delete", 'info');
-            
+
             // Delete each key (iterate backwards to avoid stale element issues)
             $keysCount = count($deleteButtons);
             for ($i = $keysCount - 1; $i >= 0; $i--) {
                 // Re-find buttons each time as DOM changes after deletion
                 $deleteButtons = self::$driver->findElements(WebDriverBy::xpath($deleteButtonsXpath));
-                
+
                 if (isset($deleteButtons[$i])) {
                     $this->scrollIntoView($deleteButtons[$i]);
                     $deleteButtons[$i]->click();
-                    
+
                     // Wait a moment for the DOM to update after deletion
                     usleep(500000); // 0.5 seconds
-                    
+
                     self::annotate("Deleted SSH key " . ($keysCount - $i) . " of " . $keysCount, 'info');
                 }
             }
-            
+
             // Verify all keys were deleted
             $remainingButtons = self::$driver->findElements(WebDriverBy::xpath($deleteButtonsXpath));
             if (!empty($remainingButtons)) {
@@ -123,13 +207,13 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
             } else {
                 self::annotate("Successfully deleted all SSH keys", 'success');
             }
-            
+
         } catch (\Exception $e) {
             // It's OK if no keys exist - just log and continue
             self::annotate("Note: Could not delete SSH keys (may not exist): " . $e->getMessage(), 'info');
         }
     }
-    
+
     /**
      * Fill SSH keys using the table interface
      */
@@ -138,13 +222,13 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
         try {
             // First, delete all existing SSH keys to ensure clean state
             $this->deleteAllSSHKeys();
-            
+
             // Click the "Add SSH Key" button
             $addButtonXpath = "//button[@id='show-add-key-btn']";
             $addButton = self::$driver->findElement(WebDriverBy::xpath($addButtonXpath));
             $this->scrollIntoView($addButton);
             $addButton->click();
-            
+
             // Wait for the textarea to appear
             $textareaXpath = "//textarea[@id='new-ssh-key']";
             self::$driver->wait(10, 500)->until(
@@ -152,17 +236,17 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
                     WebDriverBy::xpath($textareaXpath)
                 )
             );
-            
+
             // Enter the SSH keys
             $textarea = self::$driver->findElement(WebDriverBy::xpath($textareaXpath));
             $textarea->clear();
             $textarea->sendKeys($keysValue);
-            
+
             // Click the save button
             $saveButtonXpath = "//button[@id='save-key-btn']";
             $saveButton = self::$driver->findElement(WebDriverBy::xpath($saveButtonXpath));
             $saveButton->click();
-            
+
             // Wait for the key to be added (add button row should be visible again)
             self::$driver->wait(10, 500)->until(
                 \Facebook\WebDriver\WebDriverExpectedCondition::visibilityOfElementLocated(
@@ -192,6 +276,12 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
      */
     protected function verifySetting(string $key, $value): void
     {
+        // Handle codec settings specially
+        if (strpos($key, 'codec_') === 0) {
+            $this->verifyCodecSetting($key, $value);
+            return;
+        }
+
         if ($tab = $this->findElementTab($key)) {
             $this->navigateToTab($tab);
 
@@ -211,6 +301,55 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
     }
 
     /**
+     * Verify codec checkbox setting
+     */
+    protected function verifyCodecSetting(string $key, bool $expectedState): void
+    {
+        try {
+            // Navigate to the codec tab first
+            $codecTab = $this->findCodecTab();
+            if ($codecTab) {
+                $this->navigateToTab($codecTab);
+            }
+
+            // Convert codec_name to codec-name for the row ID
+            $codecRowId = str_replace('_', '-', $key);
+
+            // Find the checkbox within the codec row
+            $xpath = sprintf(
+                "//tr[@id='%s']//input[@type='checkbox' and @name='%s']",
+                $codecRowId,
+                $key
+            );
+
+            // Try to find the checkbox
+            try {
+                $checkbox = self::$driver->findElement(WebDriverBy::xpath($xpath));
+            } catch (\Facebook\WebDriver\Exception\NoSuchElementException $e) {
+                self::annotate("Codec checkbox not found for verification: {$key}", 'warning');
+                return;
+            }
+
+            $isChecked = $checkbox->isSelected();
+
+            if ($isChecked !== $expectedState) {
+                $message = sprintf(
+                    "Codec %s state mismatch. Expected: %s, Actual: %s",
+                    $key,
+                    $expectedState ? 'enabled' : 'disabled',
+                    $isChecked ? 'enabled' : 'disabled'
+                );
+                throw new \RuntimeException($message);
+            }
+
+            self::annotate("Verified codec {$key} is " . ($expectedState ? 'enabled' : 'disabled'), 'success');
+        } catch (\Exception $e) {
+            self::annotate("Failed to verify codec {$key}: " . $e->getMessage(), 'error');
+            throw $e;
+        }
+    }
+
+    /**
      * Verify SSH keys in the table
      */
     protected function verifySSHKeysTable(string $expectedKeys): void
@@ -218,47 +357,47 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
         try {
             // Check if the keys are displayed in the table
             $tableXpath = "//table[@id='ssh-keys-list']";
-            
+
             // Wait for table to exist
             self::$driver->wait(10, 500)->until(
                 \Facebook\WebDriver\WebDriverExpectedCondition::presenceOfElementLocated(
                     WebDriverBy::xpath($tableXpath)
                 )
             );
-            
+
             // Get all key cells
             $keyCellsXpath = $tableXpath . "//td[@class='ssh-key-cell']/code";
             $keyCells = self::$driver->findElements(WebDriverBy::xpath($keyCellsXpath));
-            
+
             if (empty($keyCells)) {
                 throw new \RuntimeException("No SSH keys found in the table");
             }
-            
+
             // Count the expected keys
             $expectedKeyLines = array_filter(explode("\n", trim($expectedKeys)));
             $expectedCount = count($expectedKeyLines);
             $actualCount = count($keyCells);
-            
+
             if ($actualCount !== $expectedCount) {
                 self::annotate("SSH key count mismatch - Expected: $expectedCount, Actual: $actualCount", 'warning');
             }
-            
+
             // For verification, we'll check that at least one key row exists
             // The actual key value is truncated in the display, so we can't compare directly
             // Instead, we verify that the hidden field contains the expected value
             $hiddenFieldXpath = "//textarea[@id='SSHAuthorizedKeys']";
             $hiddenField = self::$driver->findElement(WebDriverBy::xpath($hiddenFieldXpath));
             $actualValue = $hiddenField->getAttribute('value');
-            
+
             // Normalize the values for comparison
             $expectedNormalized = trim($expectedKeys);
             $actualNormalized = trim($actualValue);
-            
+
             if ($actualNormalized !== $expectedNormalized) {
                 self::annotate("SSH keys mismatch - Expected: $expectedNormalized, Actual: $actualNormalized", 'error');
                 throw new \RuntimeException("SSH keys do not match expected value");
             }
-            
+
             self::annotate("SSH keys verified successfully (" . $actualCount . " key(s) present)", 'success');
         } catch (\Exception $e) {
             self::annotate("Failed to verify SSH keys: " . $e->getMessage(), 'error');

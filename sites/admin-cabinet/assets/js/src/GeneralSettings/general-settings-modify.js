@@ -329,8 +329,16 @@ const generalSettingsModify = {
             historyType: 'hash',
         });
 
-        // Enable dropdowns on the form (except sound file selectors)
-        $('#general-settings-form .dropdown').not('.audio-message-select').dropdown();
+        // Initialize PBXLanguage dropdown first with special handler
+        // Must be done before general dropdown initialization
+        generalSettingsModify.initializePBXLanguageWarning();
+
+        // Enable dropdowns on the form (except sound file selectors and language dropdown)
+        // Language dropdown already initialized above with special onChange handler
+        $('#general-settings-form .dropdown')
+            .not('.audio-message-select')
+            .not('#PBXLanguage-dropdown')
+            .dropdown();
 
         // Enable checkboxes on the form
         $('#general-settings-form .checkbox').checkbox();
@@ -376,8 +384,7 @@ const generalSettingsModify = {
 
         // Tooltip click behavior is now handled globally in TooltipBuilder.js
 
-        // Initialize PBXLanguage change detection for restart warning
-        generalSettingsModify.initializePBXLanguageWarning();
+        // PBXLanguage dropdown with restart warning already initialized above
 
         // Load data from API instead of using server-rendered values
         generalSettingsModify.loadData();
@@ -1439,7 +1446,8 @@ const generalSettingsModify = {
      * Shows restart warning only when the language value changes
      */
     initializePBXLanguageWarning() {
-        const $languageDropdown = $('#PBXLanguage');
+        const $languageInput = $('#PBXLanguage');  // Hidden input
+        const $languageDropdown = $('#PBXLanguage-dropdown');  // V5.0 pattern dropdown
         const $restartWarning = $('#restart-warning-PBXLanguage');
 
         // Store original value and data loaded flag
@@ -1451,13 +1459,16 @@ const generalSettingsModify = {
 
         // Set original value after data loads
         $(document).on('GeneralSettings.dataLoaded', () => {
-            originalValue = $languageDropdown.val();
+            originalValue = $languageInput.val();
             isDataLoaded = true;
         });
 
-        // Handle dropdown change event
-        $languageDropdown.closest('.dropdown').dropdown({
+        // Handle dropdown change event - use V5.0 dropdown selector
+        $languageDropdown.dropdown({
             onChange: (value) => {
+                // SemanticUIDropdown automatically syncs hidden input value
+                // No need to manually update $languageInput
+
                 // Only show warning after data is loaded and value changed from original
                 if (isDataLoaded && originalValue !== null && value !== originalValue) {
                     $restartWarning.transition('fade in');

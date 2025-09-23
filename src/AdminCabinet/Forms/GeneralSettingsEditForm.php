@@ -26,7 +26,6 @@ use MikoPBX\AdminCabinet\Forms\Elements\SemanticUIDropdown;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
 use Phalcon\Forms\Element\Password;
-use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
 
 /**
@@ -109,7 +108,8 @@ class GeneralSettingsEditForm extends BaseForm
                     $this->add(new Text($key, ['value' => $value]));
                     break;
                 case PbxSettings::PBX_LANGUAGE:
-                    $language = new Select(
+                    // Use SemanticUIDropdown for V5.0 pattern compliance
+                    $this->addSemanticUIDropdown(
                         $key,
                         [
                             'en-en' => $this->translation->_('ex_English'),
@@ -129,20 +129,16 @@ class GeneralSettingsEditForm extends BaseForm
                             'cs-cs' => $this->translation->_('ex_Czech'),
                             'tr-tr' => $this->translation->_('ex_Turkish'),
                         ],
+                        $value,
                         [
-                            'using' => [
-                                'id',
-                                'name',
-                            ],
-                            'value' => $value,
-                            'useEmpty' => false,
-                            'class' => 'ui selection dropdown language-select',
+                            'clearable' => false,
+                            'forceSelection' => true
                         ]
                     );
-                    $this->add($language);
                     break;
                 case PbxSettings::PBX_INTERNAL_EXTENSION_LENGTH:
-                    $extLength = new Select(
+                    // Use SemanticUIDropdown for V5.0 pattern compliance
+                    $this->addSemanticUIDropdown(
                         $key,
                         [
                             2 => $this->translation->_('gs_TwoDigthts'),
@@ -153,17 +149,12 @@ class GeneralSettingsEditForm extends BaseForm
                             7 => $this->translation->_('gs_SevenDigthts'),
                             11 => $this->translation->_('gs_ElevenDigthts'),
                         ],
+                        $value,
                         [
-                            'using' => [
-                                'id',
-                                'name',
-                            ],
-                            'value' => $value,
-                            'useEmpty' => false,
-                            'class' => 'ui selection dropdown extension-length-select',
+                            'clearable' => false,
+                            'forceSelection' => true
                         ]
                     );
-                    $this->add($extLength);
                     break;
                 case PbxSettings::PBX_RECORD_ANNOUNCEMENT_IN:
                 case PbxSettings::PBX_RECORD_ANNOUNCEMENT_OUT:
