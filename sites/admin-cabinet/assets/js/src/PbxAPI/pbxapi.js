@@ -20,110 +20,9 @@
 /**
  * The PbxApi object is responsible for conversation with backend core API
  *
- * @module PbxApi
+ * @module PbxApi 
  */
 const PbxApi = {
-
-    // AdviceProcessor
-    adviceGetList: `${Config.pbxUrl}/pbxcore/api/advice/getList`, // Generates a list of notifications about the system, firewall, passwords, and wrong settings.
-
-    // PasswordsManagementProcessor
-    passwordGenerate: `${Config.pbxUrl}/pbxcore/api/v2/passwords/generate`, // Generate secure password
-
-    // CdrDBProcessor
-    pbxGetActiveChannels: `${Config.pbxUrl}/pbxcore/api/cdr/getActiveChannels`,  //  Get active channels. These are the unfinished calls (endtime IS NULL).
-
-    // SystemManagementProcessor
-    systemPing: `${Config.pbxUrl}/pbxcore/api/system/ping`, // Ping backend (described in nginx.conf)
-    systemReboot: `${Config.pbxUrl}/pbxcore/api/system/reboot`, // Reboot the operating system.
-    systemShutDown: `${Config.pbxUrl}/pbxcore/api/system/shutdown`, // Shutdown the system.
-    systemGetDateTime: `${Config.pbxUrl}/pbxcore/api/system/getDate`, // Retrieves the system date and time.
-    systemSetDateTime: `${Config.pbxUrl}/pbxcore/api/system/setDate`, // Updates the system date and time.
-    systemSendTestEmail: `${Config.pbxUrl}/pbxcore/api/system/sendMail`, //  Sends an email notification.
-    systemRestoreDefaultSettings: `${Config.pbxUrl}/pbxcore/api/system/restoreDefault`, // Restore default system settings
-    systemGetDeleteStatistics: `${Config.pbxUrl}/pbxcore/api/system/getDeleteStatistics`, // Get statistics about what will be deleted
-    systemConvertAudioFile: `${Config.pbxUrl}/pbxcore/api/system/convertAudioFile`, // Convert the audio file to various codecs using Asterisk.
-    systemUpdateMailSettings: `${Config.pbxUrl}/pbxcore/api/system/updateMailSettings`, // Tries to send a test email.
-    systemUpgrade: `${Config.pbxUrl}/pbxcore/api/system/upgrade`, // Upgrade the PBX using uploaded IMG file.
-
-    // ModulesManagementProcessor
-    modulesModuleStartDownload: `${Config.pbxUrl}/pbxcore/api/modules/core/moduleStartDownload`, // Starts the module download in a separate background process
-    modulesModuleDownloadStatus: `${Config.pbxUrl}/pbxcore/api/modules/core/moduleDownloadStatus`, // Returns the download status of a module.
-    modulesInstallFromPackage: `${Config.pbxUrl}/pbxcore/api/modules/core/installFromPackage`, // Installs a new additional extension module from an early uploaded zip archive.
-    modulesInstallFromRepo: `${Config.pbxUrl}/pbxcore/api/modules/core/installFromRepo`, // Installs a new additional extension module from a repository.
-    modulesGetModuleInstallationStatus: `${Config.pbxUrl}/pbxcore/api/modules/core/statusOfModuleInstallation`, // Checks the status of a module installation by the provided zip file path.
-    modulesEnableModule: `${Config.pbxUrl}/pbxcore/api/modules/core/enableModule`, // Enables extension module.
-    modulesDisableModule: `${Config.pbxUrl}/pbxcore/api/modules/core/disableModule`, // Disables extension module.
-    modulesUnInstallModule: `${Config.pbxUrl}/pbxcore/api/modules/core/uninstallModule`, // Uninstall extension module.
-    modulesGetAvailable: `${Config.pbxUrl}/pbxcore/api/modules/core/getAvailableModules`, // Retrieves available modules on MIKO repository.
-    modulesGetLink: `${Config.pbxUrl}/pbxcore/api/modules/core/getModuleLink`, // Retrieves the installation link for a module.
-    modulesUpdateAll: `${Config.pbxUrl}/pbxcore/api/modules/core/updateAll`, // Update all installed modules.
-    modulesGetMetadataFromModulePackage: `${Config.pbxUrl}/pbxcore/api/modules/core/getMetadataFromModulePackage`, // Retrieves the module.json information from uploaded zip archive.
-    modulesGetModuleInfo: `${Config.pbxUrl}/pbxcore/api/modules/core/getModuleInfo`, // Retrieves the module description from the repository.
-
-    // FirewallManagementProcessor - deprecated, use FirewallAPI v3 instead
-
-    // SIPStackProcessor
-    sipGetRegistry: `${Config.pbxUrl}/pbxcore/api/sip/getRegistry`, //  Retrieves the statuses of SIP providers registration.
-    sipGetPeersStatus: `${Config.pbxUrl}/pbxcore/api/sip/getPeersStatuses`, // Retrieves the statuses of SIP peers.
-    sipGetPeerStatus: `${Config.pbxUrl}/pbxcore/api/sip/getSipPeer`, //  Retrieves the status of provided SIP peer.
-    sipGetSecret: `${Config.pbxUrl}/pbxcore/api/sip/getSecret?number={number}`, // Get extension sip secret.
-
-    // IAXStackProcessor
-    iaxGetRegistry: `${Config.pbxUrl}/pbxcore/api/iax/getRegistry`, // Retrieves the statuses of IAX providers registration.
-
-    // SysLogsManagementProcessor - DEPRECATED: Use SyslogAPI v3 instead
-    // All syslog endpoints have been migrated to RESTful v3 API
-    // See SyslogAPI class for new methods
-
-    // FilesManagementProcessor
-    filesUploadFile: `${Config.pbxUrl}/pbxcore/api/files/uploadFile`, // Upload files into the system by chunks
-    filesStatusUploadFile: `${Config.pbxUrl}/pbxcore/api/files/statusUploadFile`, // Returns Status of uploading and merging process
-    filesGetFileContent: `${Config.pbxUrl}/pbxcore/api/files/getFileContent`,  // Get the content of config file by it name.
-    filesRemoveAudioFile: `${Config.pbxUrl}/pbxcore/api/files/removeAudioFile`, // Delete audio files (mp3, wav, alaw ..) by name its name.
-    filesDownloadNewFirmware: `${Config.pbxUrl}/pbxcore/api/files/downloadNewFirmware`, // Downloads the firmware file from the provided URL.
-    filesFirmwareDownloadStatus: `${Config.pbxUrl}/pbxcore/api/files/firmwareDownloadStatus`, // Get the progress status of the firmware file download..
-
-    // SysinfoManagementProcessor
-    sysinfoGetInfo: `${Config.pbxUrl}/pbxcore/api/sysinfo/getInfo`, // Gets collection of the system information.
-    sysinfoGetExternalIP: `${Config.pbxUrl}/pbxcore/api/sysinfo/getExternalIpInfo`, //  Gets an external IP address of the system.
-
-    // LicenseManagementProcessor
-    licensePing: `${Config.pbxUrl}/pbxcore/api/license/ping`, // Check connection with license server.
-    licenseResetKey: `${Config.pbxUrl}/pbxcore/api/license/resetKey`, // Reset license key settings.
-    licenseProcessUserRequest: `${Config.pbxUrl}/pbxcore/api/license/processUserRequest`, // Update license key, get new one, activate coupon
-    licenseGetLicenseInfo: `${Config.pbxUrl}/pbxcore/api/license/getLicenseInfo`, // Retrieves license information from the license server.
-    licenseCaptureFeatureForProductId: `${Config.pbxUrl}/pbxcore/api/license/captureFeatureForProductId`, // Tries to capture a feature for a product.
-    licenseSendPBXMetrics: `${Config.pbxUrl}/pbxcore/api/license/sendPBXMetrics`, // Make an API call to send PBX metrics
-
-    // StorageManagementProcessor
-    storageList: `${Config.pbxUrl}/pbxcore/api/storage/list`, // Get list of all storage devices with usage information.
-    storageGetUsage: `${Config.pbxUrl}/pbxcore/api/storage/usage`, // Get detailed storage usage breakdown by categories.
-
-    // Extensions
-    extensionsGetPhonesRepresent: `${Config.pbxUrl}/pbxcore/api/extensions/getPhonesRepresent`, // Returns CallerID names for the numbers list.
-    extensionsGetPhoneRepresent: `${Config.pbxUrl}/pbxcore/api/extensions/getPhoneRepresent`, // Returns CallerID names for the number.
-    extensionsGetForSelect: `${Config.pbxUrl}/pbxcore/api/extensions/getForSelect?type={type}`, // Retrieves the extensions list limited by type parameter.
-    extensionsAvailable: `${Config.pbxUrl}/pbxcore/api/extensions/available?number={number}`, // Checks the number uniqueness.
-    extensionsGetRecord: `${Config.pbxUrl}/pbxcore/api/extensions/getRecord?id={id}`, // Get data structure for saveRecord request, if id parameter is empty it returns structure with default data.
-    extensionsSaveRecord: `${Config.pbxUrl}/pbxcore/api/extensions/saveRecord`, // Saves extensions, sip, users, external phones, forwarding rights with POST data.
-    extensionsDeleteRecord: `${Config.pbxUrl}/pbxcore/api/extensions/deleteRecord`, // Deletes the extension record with its dependent tables.
-
-    // Users
-    usersAvailable: `${Config.pbxUrl}/pbxcore/api/users/available?email={email}`, // Checks the email uniqueness.
-
-    // Call queues
-    callQueuesDeleteRecord: `${Config.pbxUrl}/pbxcore/api/call-queues/deleteRecord`, // Deletes the call queue record with its dependent tables.
-
-    // Conference rooms
-    conferenceRoomsDeleteRecord: `${Config.pbxUrl}/pbxcore/api/conference-rooms/deleteRecord`, // Deletes the conference room record with its dependent tables.
-
-    // IVR menu
-    ivrMenuDeleteRecord: `${Config.pbxUrl}/pbxcore/api/ivr-menu/deleteRecord`, // Deletes the ivr menu record with its dependent tables.
-
-    // Dialplan applications
-    dialplanApplicationsDeleteRecord: `${Config.pbxUrl}/pbxcore/api/dialplan-applications/deleteRecord`, // Deletes the call-queues record with its dependent tables.
-
 
     /**
      * Tries to parse a JSON string.
@@ -161,1063 +60,7 @@ const PbxApi = {
             && response.result !== undefined
             && response.result === true;
     },
-
-    /**
-     * Checks the connection with the PBX.
-     * Ping backend (described in nginx.conf)
-     *
-     * @param {function} callback - The callback function to be called after checking the PBX connection.
-     *                              It will receive `true` in case of successful connection or `false` otherwise.
-     * @returns {void}
-     */
-    SystemPingPBX(callback) {
-        $.api({
-            url: PbxApi.systemPing,
-            on: 'now',
-            dataType: 'text',
-            timeout: 2000,
-            onComplete(response) {
-                if (response !== undefined
-                    && response.toUpperCase() === 'PONG') {
-                    callback(true);
-                } else {
-                    callback(false);
-                }
-            },
-            onFailure() {
-                callback(false);
-            },
-        });
-    },
-
-    // Deprecated - use FirewallAPI.getBannedIps() and FirewallAPI.unbanIp() instead
-
-    /**
-     * Retrieves the statuses of SIP peers.
-     *
-     * @param {function} callback - The callback function to be called after retrieving the peers' status.
-     *                              It will receive the response data.
-     * @returns {boolean} - Always returns `true`.
-     */
-    GetPeersStatus(callback) {
-        $.api({
-            url: PbxApi.sipGetPeersStatus,
-            on: 'now',
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response.data);
-            },
-            onFailure() {
-                callback(false);
-            },
-            onError(errorMessage, element, xhr) {
-                if (xhr.status === 401) {
-                    window.location = `${globalRootUrl}session/index`;
-                }
-            },
-        });
-    },
-
-    /**
-     *  Retrieves the status of provided SIP peer.
-     *
-     * @param {Object} data - The data object containing the necessary information to retrieve the peer status.
-     * @param {function} callback - The callback function to be called after retrieving the peer status.
-     *                              It will receive the response data.
-     * @returns {boolean} - Always returns `true`.
-     */
-    GetPeerStatus(data, callback) {
-        $.api({
-            url: PbxApi.sipGetPeerStatus,
-            on: 'now',
-            method: 'POST',
-            data: JSON.stringify(data),
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response.data);
-            },
-            onFailure() {
-                callback(false);
-            },
-            onError(errorMessage, element, xhr) {
-                if (xhr.status === 401) {
-                    window.location = `${globalRootUrl}session/index`;
-                }
-            },
-        });
-    },
-
-    /**
-     * Retrieves the statuses of SIP providers registration.
-     *
-     * @param {function} callback - The callback function to be called after retrieving the statuses.
-     *                              It will receive the response data.
-     * @returns {void}
-     */
-    GetSipProvidersStatuses(callback) {
-        $.api({
-            url: PbxApi.sipGetRegistry,
-            on: 'now',
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response.data);
-            },
-            onError(errorMessage, element, xhr) {
-                if (xhr.status === 401) {
-                    window.location = `${globalRootUrl}session/index`;
-                }
-            },
-        });
-    },
-
-    /**
-     * Retrieves the statuses of IAX providers registration.
-     *
-     * @param {function} callback - The callback function to be called after retrieving the statuses.
-     *                              It will receive the response data.
-     * @returns {void}
-     */
-    GetIaxProvidersStatuses(callback) {
-        $.api({
-            url: PbxApi.iaxGetRegistry,
-            on: 'now',
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response.data);
-            },
-            onError(errorMessage, element, xhr) {
-                if (xhr.status === 401) {
-                    window.location = `${globalRootUrl}session/index`;
-                }
-            },
-        });
-    },
-
-    /**
-     * Sends a test email.
-     *
-     * @param {Object} data - The data object containing the necessary information to send the test email.
-     * @param {function} callback - The callback function to be called after sending the test email.
-     *                              It will receive `true` in case of success or the error message in case of failure.
-     * @returns {void}
-     */
-    SendTestEmail(data, callback) {
-        $.api({
-            url: PbxApi.systemSendTestEmail,
-            on: 'now',
-            method: 'POST',
-            data: data,
-            successTest: PbxApi.successTest,
-            onSuccess() {
-                callback(true);
-            },
-            onFailure(response) {
-                callback(response.data.message);
-            },
-        });
-    },
-
-    /**
-     * Tries to send a test email.
-     *
-     * @param {function} callback - The callback function to be called after updating the mail settings.
-     *                              It will receive the response data or `false` in case of failure.
-     * @returns {void}
-     */
-    UpdateMailSettings(callback) {
-        $.api({
-            url: PbxApi.systemUpdateMailSettings,
-            on: 'now',
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response.data);
-            },
-            onError(errorMessage, element, xhr) {
-                if (xhr.status === 401) {
-                    window.location = `${globalRootUrl}session/index`;
-                }
-            },
-        });
-    },
-
-    /**
-     * Retrieves the file content from the server.
-     *
-     * @param {Object} data - The data object containing the necessary information to retrieve the file content.
-     * @param {function} callback - The callback function to be called after retrieving the file content.
-     *                              It will receive the response data.
-     * @returns {void}
-     */
-    GetFileContent(data, callback) {
-        $.api({
-            url: PbxApi.filesGetFileContent,
-            on: 'now',
-            method: 'POST',
-            data: data,
-            onSuccess(response) {
-                if (response !== undefined) {
-                    callback(response);
-                }
-            },
-        });
-    },
-
-    /**
-     * Retrieves the system date and time.
-     *
-     * @param {function} callback - The callback function to be called after retrieving the date and time information.
-     *                              It will receive the response data or `false` in case of failure.
-     * @returns {void}
-     */
-    GetDateTime(callback) {
-        $.api({
-            url: PbxApi.systemGetDateTime,
-            on: 'now',
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response.data);
-            },
-            onError() {
-                callback(false);
-            },
-        });
-    },
-
-    /**
-     * Updates the system date and time.
-     *
-     * @param {Object} data - The data object containing the updated date and time information.
-     * @returns {void}
-     */
-    UpdateDateTime(data) {
-        $.api({
-            url: PbxApi.systemSetDateTime,
-            on: 'now',
-            method: 'POST',
-            data: data,
-        });
-    },
-
-    /**
-     * Gets an external IP address of the system.
-     *
-     * @param {function} callback - The callback function to be called after retrieving the information.
-     *                              It will receive the response data or `false` in case of failure.
-     * @returns {void}
-     */
-    GetExternalIp(callback) {
-        $.api({
-            url: PbxApi.sysinfoGetExternalIP,
-            on: 'now',
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response.data);
-            },
-            onError() {
-                callback(false);
-            },
-        });
-    },
-
-    /**
-     * Retrieves active calls based on CDR data.
-     *
-     * @param {function} callback - The callback function to be called after retrieving the list of active calls.
-     *                              It will receive the response data or `false` in case of no active calls.
-     * @returns {void}
-     */
-    GetActiveChannels(callback) {
-        $.api({
-            url: PbxApi.pbxGetActiveChannels,
-            on: 'now',
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                if (Object.keys(response).length > 0) {
-                    callback(response.data);
-                } else {
-                    callback(false);
-                }
-            },
-            onError(errorMessage, element, xhr) {
-                if (xhr.status === 401) {
-                    window.location = `${globalRootUrl}session/index`;
-                }
-            },
-        });
-    },
-
-    /**
-     * Reboot the operating system.
-     *
-     * @returns {void}
-     */
-    SystemReboot() {
-        $.api({
-            url: PbxApi.systemReboot,
-            on: 'now',
-        });
-    },
-
-    /**
-     * Shutdown the system.
-     *
-     * @returns {void}
-     */
-    SystemShutDown() {
-        $.api({
-            url: PbxApi.systemShutDown,
-            on: 'now',
-        });
-    },
-
-    /**
-     * Gets collection of the system information.
-     *
-     * @param {function} callback - The callback function to be called after retrieving the system information.
-     *                              It will receive the response data or `false` in case of failure.
-     * @returns {void}
-     */
-    SysInfoGetInfo(callback) {
-        $.api({
-            url: PbxApi.sysinfoGetInfo,
-            on: 'now',
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response.data);
-            },
-            onFailure() {
-                callback(false);
-            },
-            onError() {
-                callback(false);
-            },
-        });
-    },
-
-    /**
-     * Starts the collection of logs and captures TCP packets.
-     *
-     * @param {function} callback - The callback function to be called after starting the logs capture.
-     *                              It will receive the response data or `false` in case of failure.
-     * @returns {void}
-     * @deprecated Use SyslogAPI.startCapture() instead
-     */
-    SyslogStartLogsCapture(callback) {
-        console.error('PbxApi.SyslogStartLogsCapture is deprecated. Use SyslogAPI.startCapture() instead.');
-        if (typeof SyslogAPI === 'undefined') {
-            console.error('SyslogAPI is not loaded. Make sure syslogAPI.js is included.');
-            callback(false);
-            return;
-        }
-        return SyslogAPI.startCapture((response) => {
-            if (response && response.result) {
-                callback(response.data);
-            } else {
-                callback(false);
-            }
-        });
-    },
-
-    /**
-     * Starts creating a log files archive for download.
-     *
-     * @param {function} callback - The callback function to be called after starting the logs collection.
-     *                              It will receive the response data or `false` in case of failure.
-     * @returns {void}
-     * @deprecated Use SyslogAPI.prepareArchive() instead
-     */
-    SyslogPrepareLog(callback) {
-        console.error('PbxApi.SyslogPrepareLog is deprecated. Use SyslogAPI.prepareArchive() instead.');
-        if (typeof SyslogAPI === 'undefined') {
-            console.error('SyslogAPI is not loaded. Make sure syslogAPI.js is included.');
-            callback(false);
-            return;
-        }
-        return SyslogAPI.prepareArchive((response) => {
-            if (response && response.result) {
-                callback(response.data);
-            } else {
-                callback(false);
-            }
-        });
-    },
-
-    /**
-     * Stops tcpdump and starts creating a log files archive for download.
-     *
-     * @param {function} callback - The callback function to be called after stopping the logs capture.
-     *                              It will receive the response data or `false` in case of failure.
-     * @returns {void}
-     * @deprecated Use SyslogAPI.stopCapture() instead
-     */
-    SyslogStopLogsCapture(callback) {
-        sessionStorage.setItem('LogsCaptureStatus', 'stopped');
-        console.error('PbxApi.SyslogStopLogsCapture is deprecated. Use SyslogAPI.stopCapture() instead.');
-        if (typeof SyslogAPI === 'undefined') {
-            console.error('SyslogAPI is not loaded. Make sure syslogAPI.js is included.');
-            callback(false);
-            return;
-        }
-        return SyslogAPI.stopCapture((response) => {
-            if (response && response.result) {
-                callback(response.data);
-            } else {
-                callback(false);
-            }
-        });
-    },
-
-    /**
-     * Gets the list of log files.
-     *
-     * @param {function} callback - The callback function to be called after retrieving the list of log files.
-     *                              It will receive the response data or `false` in case of failure.
-     * @returns {void}
-     * @deprecated Use SyslogAPI.getLogsList() instead
-     */
-    SyslogGetLogsList(callback) {
-        console.error('PbxApi.SyslogGetLogsList is deprecated. Use SyslogAPI.getLogsList() instead.');
-        if (typeof SyslogAPI === 'undefined') {
-            console.error('SyslogAPI is not loaded. Make sure syslogAPI.js is included.');
-            callback(false);
-            return;
-        }
-        return SyslogAPI.getLogsList((response) => {
-            if (response && response.result) {
-                callback(response.data);
-            } else {
-                callback(false);
-            }
-        });
-    },
-
-    /**
-     * Gets partially filtered log file strings.
-     *
-     * @param {Object} params - The parameters for retrieving log file strings.
-     * @param {string} params.filename - The name of the log file.
-     * @param {string|null} [params.filter=null] - The filter to apply on the log file (optional).
-     * @param {number} params.lines - The number of lines to retrieve.
-     * @param {number} params.offset - The offset from which to start retrieving lines.
-     * @param {function} callback - The callback function to be called after retrieving the log file strings.
-     *                              It will receive the response data or the error response.
-     * @returns {void}
-     * @deprecated Use SyslogAPI.getLogFromFile() instead
-     */
-    SyslogGetLogFromFile(params, callback) {
-        console.error('PbxApi.SyslogGetLogFromFile is deprecated. Use SyslogAPI.getLogFromFile() instead.');
-        if (typeof SyslogAPI === 'undefined') {
-            console.error('SyslogAPI is not loaded. Make sure syslogAPI.js is included.');
-            callback(false);
-            return;
-        }
-        return SyslogAPI.getLogFromFile(params, (response) => {
-            if (response && response.result) {
-                callback(response.data);
-            } else {
-                callback(response);
-            }
-        });
-    },
-
-    /**
-     *  Prepares a downloadable link for a log file with the provided name.
-     *
-     * @param {string} filename - The name of the log file to be downloaded.
-     * @param {function} callback - The callback function to be called after downloading the log file.
-     *                              It will receive the response data or `false` in case of failure.
-     * @returns {void}
-     * @deprecated Use SyslogAPI.downloadLogFile() instead
-     */
-    SyslogDownloadLogFile(filename, callback) {
-        console.error('PbxApi.SyslogDownloadLogFile is deprecated. Use SyslogAPI.downloadLogFile() instead.');
-        if (typeof SyslogAPI === 'undefined') {
-            console.error('SyslogAPI is not loaded. Make sure syslogAPI.js is included.');
-            callback(false);
-            return;
-        }
-        return SyslogAPI.downloadLogFile(filename, true, (response) => {
-            if (response && response.result) {
-                callback(response.data);
-            } else {
-                callback(false);
-            }
-        });
-    },
-
-    /**
-     *  Erase log file content.
-     *
-     * @param {string} filename - The name of the log file to be erased.
-     * @param {function} callback - The callback function to be called after erase the log file.
-     *
-     * @returns {void}
-     * @deprecated Use SyslogAPI.eraseFile() instead
-     */
-    SyslogEraseFile(filename, callback) {
-        console.error('PbxApi.SyslogEraseFile is deprecated. Use SyslogAPI.eraseFile() instead.');
-        if (typeof SyslogAPI === 'undefined') {
-            console.error('SyslogAPI is not loaded. Make sure syslogAPI.js is included.');
-            callback(false);
-            return;
-        }
-        return SyslogAPI.eraseFile(filename, callback);
-    },
-
-    /**
-     * Requests a zipped archive containing logs and PCAP file.
-     * Checks if archive ready it returns download link
-     *
-     * @param {string} filename - The name of the file to be downloaded.
-     * @param {function} callback - The callback function to be called after requesting the logs archive.
-     *                              It will receive the response data or the error response.
-     * @returns {void}
-     * @deprecated Use SyslogAPI.downloadArchive() instead
-     */
-    SyslogDownloadLogsArchive(filename, callback) {
-        console.error('PbxApi.SyslogDownloadLogsArchive is deprecated. Use SyslogAPI.downloadArchive() instead.');
-        if (typeof SyslogAPI === 'undefined') {
-            console.error('SyslogAPI is not loaded. Make sure syslogAPI.js is included.');
-            callback(false);
-            return;
-        }
-        return SyslogAPI.downloadArchive(filename, (response) => {
-            if (response && response.result) {
-                callback(response.data);
-            } else {
-                callback(response);
-            }
-        });
-    },
-
-    /**
-     * Upgrade the PBX using uploaded IMG file.
-     *
-     * @param {string} filePath - The temporary file path for the upgrade.
-     * @param {function} callback - The callback function to be called after starting the system upgrade.
-     *                              It will receive a boolean indicating the success of the operation.
-     * @returns {void}
-     */
-    SystemUpgrade(filePath, callback) {
-        $.api({
-            url: PbxApi.systemUpgrade,
-            on: 'now',
-            method: 'POST',
-            data: {temp_filename: filePath},
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response);
-            },
-            onFailure(response) {
-                callback(response);
-            },
-            onError(response) {
-                callback(response);
-            },
-        });
-    },
-
-    /**
-     * Convert the audio file to various codecs using Asterisk.
-     *
-     * @param {string} filePath - The uploaded file path.
-     * @param {string} category - The category of the audio file (e.g., 'moh', 'custom', etc.).
-     * @param {function} callback - The callback function to be called after converting the audio file.
-     *                              It will receive the response data or `false` in case of failure.
-     * @returns {void}
-     */
-    SystemConvertAudioFile(filePath, category, callback) {
-        $.api({
-            on: 'now',
-            url: PbxApi.systemConvertAudioFile,
-            method: 'POST',
-            data: {temp_filename: filePath, category: category},
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response.data);
-            },
-            onFailure() {
-                callback(false);
-            },
-            onError() {
-                callback(false);
-            },
-        });
-    },
-
-    /**
-     * Deletes an audio file from disk.
-     *
-     * @param {string} filePath - The full path to the file.
-     * @param {string|null} [fileId=null] - The ID of the file (optional).
-     * @param {function|null} [callback=null] - The callback function (optional).
-     *                                          It will be called with the fileId parameter if provided.
-     * @returns {void}
-     */
-    FilesRemoveAudioFile(filePath, fileId = null, callback = null) {
-        $.api({
-            url: PbxApi.filesRemoveAudioFile,
-            on: 'now',
-            method: 'POST',
-            data: {filename: filePath},
-            successTest: PbxApi.successTest,
-            onSuccess() {
-                if (callback !== null) {
-                    callback(fileId);
-                }
-
-            },
-        });
-    },
-
-    /**
-     * Installs a new additional extension module from an early uploaded zip archive.
-     *
-     * @param {Object} params - The parameters required for uploading the module.
-     * @param {string} params.filePath - The uploaded file path.
-     * @param {string} params.fileId - The unique ID of uploaded module file.
-     * @param {string} params.channelId - The unique ID of the pub/sub channel to send response.
-     * @param {function} callback - The callback function to be called after attempting to install the module.
-     *                              It will receive the response object.
-     * @returns {void}
-     */
-    ModulesInstallFromPackage(params, callback) {
-        $.api({
-            url: PbxApi.modulesInstallFromPackage,
-            on: 'now',
-            method: 'POST',
-            data: {
-                filePath: params.filePath,
-                fileId: params.fileId,
-            },
-            beforeXHR(xhr) {
-                xhr.setRequestHeader ('X-Async-Response-Channel-Id', params.channelId);
-                return xhr;
-            },
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response);
-            },
-            onFailure(response) {
-                callback(response);
-            },
-            onError(response) {
-                callback(response);
-            },
-        });
-    },
-
-
-    /**
-     * Installs a new additional extension module from mikopbx repository.
-     *
-     * @param {Object} params - The parameters required for uploading the module.
-     * @param {string} params.uniqid - The unique ID of the module.
-     * @param {string} params.releaseId - The unique ID of the release or 0 if we want the last one.
-     * @param {string} params.channelId - The unique ID of the pub/sub channel to send response.
-     * @param {function} callback - The callback function to be called after attempting to install the module.
-     *                              It will receive the response object.
-     * @returns {void}
-     */
-    ModulesInstallFromRepo(params, callback) {
-        $.api({
-            url: PbxApi.modulesInstallFromRepo,
-            on: 'now',
-            method: 'POST',
-            data: {
-                uniqid: params.uniqid,
-                releaseId: params.releaseId,
-            },
-            beforeXHR(xhr) {
-                xhr.setRequestHeader ('X-Async-Response-Channel-Id', params.channelId);
-                return xhr;
-            },
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response);
-            },
-            onFailure(response) {
-                callback(response);
-            },
-            onError(response) {
-                callback(response);
-            },
-        });
-    },
-
-    /**
-     * Checks the status of a module installation by the provided zip file path.
-     *
-     * @param {string} filePath - The file path of the module.
-     * @param {function} callback - The callback function to be called with the installation status and response data.
-     *                              It will receive a boolean indicating the success of the operation and the response data.
-     * @returns {void}
-     */
-    ModulesGetModuleInstallationStatus(filePath, callback) {
-        $.api({
-            url: PbxApi.modulesGetModuleInstallationStatus,
-            on: 'now',
-            method: 'POST',
-            data: {filePath: filePath},
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(true, response);
-            },
-            onFailure(response) {
-                callback(false, response);
-            },
-            onError(response) {
-                callback(false, response);
-            },
-        });
-    },
-
-    /**
-     * Starts the module download in a separate background process.
-     *
-     * @param {Object} params - The parameters required for uploading the module.
-     * @param {string} params.uniqid - The unique ID of the module.
-     * @param {string} params.md5 - The MD5 hash of the module.
-     * @param {number} params.size - The size of the module in bytes.
-     * @param {string} params.updateLink - The URL from which to download the module.
-     * @param {function} callback - The callback function to be called after attempting to upload the module.
-     *                              It will receive a boolean indicating the success of the operation.
-     * @returns {void}
-     */
-    ModulesModuleStartDownload(params, callback) {
-        $.api({
-            url: PbxApi.modulesModuleStartDownload,
-            on: 'now',
-            method: 'POST',
-            data: {
-                uniqid: params.uniqid,
-                md5: params.md5,
-                size: params.size,
-                url: params.updateLink
-            },
-            successTest: PbxApi.successTest,
-            onSuccess() {
-                callback(response);
-            },
-            onFailure(response) {
-                callback(response);
-            },
-            onError(response) {
-                callback(response);
-            },
-        });
-    },
-
-    /**
-     * Uninstall extension module.
-     *
-     * @param {Object} params - The parameters required for deleting the module.
-     * @param {string} params.uniqid - The ID of the module to be deleted.
-     * @param {boolean} params.keepSettings - Whether to keep the module settings or not.
-     * @param {string} params.channelId - The unique ID of the pub/sub channel to send response.
-     * @param {function} callback - The callback function to be called after attempting to delete the module.
-     *                              It will receive the response object.
-     * @returns {void}
-     */
-    ModulesUnInstallModule(params, callback) {
-        $.api({
-            url: PbxApi.modulesUnInstallModule,
-            on: 'now',
-            method: 'POST',
-            data: {
-                uniqid: params.uniqid,
-                keepSettings: params.keepSettings
-            },
-            beforeXHR(xhr) {
-                xhr.setRequestHeader ('X-Async-Response-Channel-Id', params.channelId);
-                return xhr;
-            },
-            successTest: PbxApi.successTest,
-            onSuccess() {
-                callback(response);
-            },
-            onFailure(response) {
-                callback(response);
-            },
-            onError(response) {
-                callback(response);
-            },
-        });
-    },
-
-    /**
-     * Gets the download status of a module.
-     *
-     * @param {string} moduleUniqueID - The unique ID of the module for which the download status is requested.
-     * @param {function} callback - The callback function to be called with the response data on successful download status.
-     * @param {function} failureCallback - The callback function to be called in case of failure or timeout.
-     * @returns {void}
-     */
-    ModulesModuleDownloadStatus(moduleUniqueID, callback, failureCallback) {
-        $.api({
-            url: PbxApi.modulesModuleDownloadStatus,
-            on: 'now',
-            timeout: 3000,
-            method: 'POST',
-            data: {uniqid: moduleUniqueID},
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response.data);
-            },
-            onFailure() {
-                failureCallback();
-            },
-            onError() {
-                failureCallback();
-            },
-            onAbort() {
-                failureCallback();
-            },
-        });
-    },
-
-    /**
-     * Disables extension module.
-     *
-     * @param {Object} params - The parameters required for disabling the module.
-     * @param {string} params.moduleUniqueID - The unique ID of the module to be disabled.
-     * @param {string} params.channelId - The unique ID of the pub/sub channel to send response.
-     * @returns {void}
-     */
-    ModulesDisableModule(params) {
-        $.api({
-            url: PbxApi.modulesDisableModule,
-            on: 'now',
-            method: 'POST',
-            beforeXHR(xhr) {
-                xhr.setRequestHeader ('X-Async-Response-Channel-Id', params.channelId);
-                return xhr;
-            },
-            data: {uniqid: params.moduleUniqueID, reason: 'DisabledByUser'},
-        });
-    },
-
-    /**
-     * Enables extension module.
-     *
-     * @param {Object} params - The parameters required for enabling the module.
-     * @param {string} params.moduleUniqueID - The unique ID of the module to be enabled.
-     * @param {string} params.channelId - The unique ID of the pub/sub channel to send response.
-     * @returns {void}
-     */
-    ModulesEnableModule(params) {
-        $.api({
-            url: PbxApi.modulesEnableModule,
-            on: 'now',
-            method: 'POST',
-            data: {uniqid: params.moduleUniqueID},
-            beforeXHR(xhr) {
-                xhr.setRequestHeader ('X-Async-Response-Channel-Id', params.channelId);
-                return xhr;
-            },
-        });
-    },
-
-    /**
-     * Retrieves available modules on MIKO repository.
-     *
-     * @param {function} callback - The callback function to execute on success.
-     * @returns {void} Returns true.
-     */
-    ModulesGetAvailable(callback) {
-        $.api({
-            url: PbxApi.modulesGetAvailable,
-            on: 'now',
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response.data, true);
-            },
-            onFailure(response) {
-                callback(response, false);
-            },
-            onError(response) {
-                callback(response, false);
-            },
-        });
-    },
-
-    /**
-     * Retrieves the installation link for a module.
-     *
-     * @param {object} params - The parameters for retrieving the installation link.
-     * @param {function} cbSuccess - The callback function to execute on success.
-     * @param {function} cbFailure - The callback function to execute on failure.
-     *
-     * @returns {void} Returns true.
-     */
-    ModulesGetModuleLink(params, cbSuccess, cbFailure) {
-        $.api({
-            url: PbxApi.modulesGetLink,
-            on: 'now',
-            method: 'POST',
-            data: {releaseId: params.releaseId},
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                cbSuccess(params, response.data);
-            },
-            onFailure(response) {
-                cbFailure(params);
-            },
-            onError(response) {
-                cbFailure(params);
-            },
-        });
-    },
-
-    /**
-     * Retrieves the module.json information from uploaded zip archive.
-     *
-     * @param {string} filePath - The file path of the module.
-     * @param {function} callback - The callback function to process response.
-     * @returns {void}
-     */
-    ModulesGetMetadataFromModulePackage(filePath, callback) {
-        $.api({
-            url: PbxApi.modulesGetMetadataFromModulePackage,
-            on: 'now',
-            method: 'POST',
-            data: {filePath: filePath},
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(true, response);
-            },
-            onFailure(response) {
-                callback(false, response);
-            },
-            onError(response) {
-                callback(false, response);
-            },
-        });
-    },
-
-    /**
-     * Retrieves the module detail information from the repository.
-     *
-     * @param params
-     * @param {string} params.uniqid - The unique ID of the module.
-     * @param {function} callback - The callback function to process response.
-     * @returns {void}
-     */
-    ModulesGetModuleInfo(params, callback) {
-        $.api({
-            url: PbxApi.modulesGetModuleInfo,
-            on: 'now',
-            method: 'POST',
-            data: {uniqid: params.uniqid},
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(true, response);
-            },
-            onFailure(response) {
-                callback(false, response);
-            },
-            onError(response) {
-                callback(false, response);
-            },
-        });
-    },
-
-    /**
-     * Updates all installed modules.
-     *
-     * @param params
-     * @param {string} params.channelId - The unique ID of the pub/sub channel to send response.
-     * @param {array} params.modulesForUpdate - The list of module unique ID for update.
-     * @param {function} callback - The callback function to process response.
-     * @returns {void} Returns true.
-     */
-    ModulesUpdateAll(params, callback) {
-        $.api({
-            url: PbxApi.modulesUpdateAll,
-            on: 'now',
-            method: 'POST',
-            beforeXHR(xhr) {
-                xhr.setRequestHeader ('X-Async-Response-Channel-Id', params.channelId);
-                return xhr;
-            },
-            data: {
-                modulesForUpdate:params.modulesForUpdate
-            },
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response);
-            },
-            onFailure(response) {
-                callback(response);
-            },
-            onError(response) {
-                callback(response);
-            },
-        });
-    },
-
-    /**
-     * Downloads new firmware from the provided URL.
-     *
-     * @param {Object} params - The parameters required for downloading the firmware.
-     * @param {string} params.md5 - The MD5 hash of the firmware.
-     * @param {number} params.size - The size of the firmware in bytes.
-     * @param {string} params.version - The version of the firmware.
-     * @param {string} params.updateLink - The URL from which to download the firmware.
-     * @param {function} callback - The callback function to be called with the response data or error information.
-     * @returns {void}
-     */
-    FilesDownloadNewFirmware(params, callback) {
-        $.api({
-            url: PbxApi.filesDownloadNewFirmware,
-            on: 'now',
-            method: 'POST',
-            data: {
-                md5: params.md5,
-                size: params.size,
-                version: params.version,
-                url: params.updateLink
-            },
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response.data);
-            },
-            onFailure(response) {
-                callback(response);
-            },
-            onError(response) {
-                callback(response);
-            },
-        });
-    },
-
-    /**
-     * Get the progress status of the firmware file download.
-     *
-     * @param {string} filename - The name of the firmware file.
-     * @param {function} callback - The callback function to be called with the response data or `false` in case of failure.
-     * @returns {undefined}
-     */
-    FilesFirmwareDownloadStatus(filename, callback) {
-        $.api({
-            url: PbxApi.filesFirmwareDownloadStatus,
-            on: 'now',
-            method: 'POST',
-            data: {filename},
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response.data);
-            },
-            onFailure() {
-                callback(false);
-            },
-            onError() {
-                callback(false);
-            },
-        });
-    },
-
-    /**
+        /**
      * Connects the file upload handler for uploading files in parts.
      *
      * @param {string} buttonId - The ID of the button to assign the file upload functionality.
@@ -1225,53 +68,11 @@ const PbxApi = {
      * @param {function} callback - The callback function to be called during different upload events.
      *                             It will receive event information such as progress, success, error, etc.
      * @returns {void}
+     * 
+     * @depricated Use FilesAPI.attachToBtn() instead
      */
     SystemUploadFileAttachToBtn(buttonId, fileTypes, callback) {
-        const r = new Resumable({
-            target: PbxApi.filesUploadFile,
-            testChunks: false,
-            chunkSize: 3 * 1024 * 1024,
-            maxFiles: 1,
-            simultaneousUploads: 1,
-            fileType: fileTypes,
-        });
-
-        r.assignBrowse(document.getElementById(buttonId));
-        r.on('fileSuccess', (file, response) => {
-            callback('fileSuccess', {file, response});
-        });
-        r.on('fileProgress', (file) => {
-            callback('fileProgress', {file});
-        });
-        r.on('fileAdded', (file, event) => {
-            r.upload();
-            callback('fileAdded', {file, event});
-        });
-        r.on('fileRetry', (file) => {
-            callback('fileRetry', {file});
-        });
-        r.on('fileError', (file, message) => {
-            callback('fileError', {file, message});
-        });
-        r.on('uploadStart', () => {
-            callback('uploadStart');
-        });
-        r.on('complete', () => {
-            callback('complete');
-        });
-        r.on('progress', () => {
-            const percent = 100 * r.progress();
-            callback('progress', {percent});
-        });
-        r.on('error', (message, file) => {
-            callback('error', {message, file});
-        });
-        r.on('pause', () => {
-            callback('pause');
-        });
-        r.on('cancel', () => {
-            callback('cancel');
-        });
+        FilesAPI.attachToBtn(buttonId, fileTypes, callback);
     },
 
     /**
@@ -1281,384 +82,304 @@ const PbxApi = {
      * @param {function} callback - The callback function to be called during different upload events.
      *                             It will receive event information such as progress, success, error, etc.
      * @returns {void}
+     * 
+     * @depricated Use FilesAPI.uploadFile() instead
      */
     FilesUploadFile(file, callback) {
-        const r = new Resumable({
-            target: PbxApi.filesUploadFile,
-            testChunks: false,
-            chunkSize: 3 * 1024 * 1024,
-            simultaneousUploads: 1,
-            maxFiles: 1,
-        });
-
-        r.addFile(file);
-        r.upload();
-        r.on('fileSuccess', (file, response) => {
-            callback('fileSuccess', {file, response});
-        });
-        r.on('fileProgress', (file) => {
-            callback('fileProgress', {file});
-        });
-        r.on('fileAdded', (file, event) => {
-            r.upload();
-            callback('fileAdded', {file, event});
-        });
-        r.on('fileRetry', (file) => {
-            callback('fileRetry', {file});
-        });
-        r.on('fileError', (file, message) => {
-            callback('fileError', {file, message});
-        });
-        r.on('uploadStart', () => {
-            callback('uploadStart');
-        });
-        r.on('complete', () => {
-            callback('complete');
-        });
-        r.on('progress', () => {
-            const percent = 100 * r.progress();
-            callback('progress', {percent});
-        });
-        r.on('error', (message, file) => {
-            callback('error', {message, file});
-        });
-        r.on('pause', () => {
-            callback('pause');
-        });
-        r.on('cancel', () => {
-            callback('cancel');
-        });
+        FilesAPI.uploadFile(file, callback);
     },
 
-    /**
+        /**
      * Gets the uploading status of a file.
      *
      * @param {string} fileId - The ID of the file for which the status is requested.
      * @param {function} callback - The callback function to be called with the response data or `false` in case of failure.
      * @returns {void}
+     * 
+     * @depricated Use FilesAPI.getStatusUploadFile() instead
      */
     FilesGetStatusUploadFile(fileId, callback) {
-        $.api({
-            url: PbxApi.filesStatusUploadFile,
-            on: 'now',
-            method: 'POST',
-            data: {id: fileId},
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response.data);
-            },
-            onFailure() {
-                callback(false);
-            },
-            onError() {
-                callback(false);
-            },
-        });
+        FilesAPI.getStatusUploadFile(fileId, callback);
     },
 
     /**
-     * Update WorkerApiCommands language.
+     * Handles API errors with consistent format and context information
      *
-     * @returns {void}
+     * @param {string} context - The context where the error occurred (e.g., 'ExtensionsAPI.getRecord')
+     * @param {Error|string|Object} error - The error object, string, or response
+     * @param {function} [callback] - Optional callback to call with formatted error
+     * @returns {Object} Standardized error response object
      */
-    SystemChangeCoreLanguage() {
-        $.api({
-            url: PbxApi.systemChangeCoreLanguage,
-            on: 'now',
-        });
-    },
+    handleApiError(context, error, callback) {
+        let errorMessage = 'Unknown error occurred';
+        let errorDetails = {};
 
-    /**
-     * Restore default system settings.
-     *
-     * @param {string} asyncChannelId - The async channel ID for WebSocket events
-     * @param {function} callback - The callback function to be called after the operation completes.
-     *                              It will receive a boolean value indicating the success of the operation.
-     * @returns {void}
-     */
-    SystemRestoreDefaultSettings(asyncChannelId, callback) {
-        $.api({
-            url: PbxApi.systemRestoreDefaultSettings,
-            on: 'now',
-            method: 'POST',
-            data: { asyncChannelId: asyncChannelId },
-            successTest: PbxApi.successTest,
-            onSuccess() {
-                callback(true);
-            },
-            onFailure(response) {
-                callback(response.messages);
-            },
-        });
-    },
-
-    /**
-     * Get statistics about what will be deleted during system restore.
-     *
-     * @param {function} callback - The callback function to be called after the operation completes.
-     * @returns {void}
-     */
-    SystemGetDeleteStatistics(callback) {
-        $.api({
-            url: PbxApi.systemGetDeleteStatistics,
-            on: 'now',
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response.data);
-            },
-            onFailure(response) {
-                callback(false);
-            },
-        });
-    },
-
-
-    /**
-     * Generates a list of notifications about the system, firewall, passwords, and wrong settings.
-     *
-     * @returns {void}
-     */
-    AdviceGetList(callback) {
-        $.api({
-            url: PbxApi.adviceGetList,
-            on: 'now',
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response);
-            },
-            onFailure(response) {
-                callback(response);
-            },
-            onError(response) {
-                callback(response);
-            },
-        });
-    },
-
-    /**
-     * Generate secure password
-     * 
-     * @param {number} length - Password length (optional)
-     * @param {function} callback - The callback function that will receive the generated password
-     * @returns {void}
-     */
-    PasswordGenerate(length, callback) {
-        const params = {};
-        if (length) {
-            params.length = length;
+        // Extract error message from different error types
+        if (typeof error === 'string') {
+            errorMessage = error;
+        } else if (error && error.message) {
+            errorMessage = error.message;
+        } else if (error && error.messages && error.messages.error) {
+            errorMessage = Array.isArray(error.messages.error)
+                ? error.messages.error.join(', ')
+                : error.messages.error;
+            errorDetails = error.messages;
+        } else if (error && error.result === false) {
+            errorMessage = 'API request failed';
+            errorDetails = error;
         }
-        
-        $.api({
-            url: PbxApi.passwordGenerate,
-            on: 'now',
-            method: 'GET',
-            data: params,
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                if (response.data && response.data.password) {
-                    callback(response.data.password);
-                }
+
+        const response = {
+            result: false,
+            messages: {
+                error: [`${context}: ${errorMessage}`]
             },
-            onError() {
-                callback('');
+            context: context,
+            originalError: errorDetails,
+            timestamp: new Date().toISOString()
+        };
+
+        // Call callback if provided
+        if (typeof callback === 'function') {
+            callback(response);
+        }
+
+        // Log error for debugging in development
+        if (typeof console !== 'undefined' && console.error) {
+            console.error(`[PbxAPI] ${context}:`, error);
+        }
+
+        return response;
+    },
+
+    /**
+     * Normalizes callback parameters for overloaded functions
+     * Handles common patterns like (callback) and (data, callback)
+     *
+     * @param {function|Object} arg1 - First argument (callback or data)
+     * @param {function} [arg2] - Second argument (callback when first is data)
+     * @returns {Object} Object with normalized data and callback
+     */
+    normalizeCallbackParams(arg1, arg2) {
+        let data = {};
+        let callback;
+
+        if (typeof arg1 === 'function') {
+            // Pattern: (callback)
+            callback = arg1;
+        } else if (typeof arg1 === 'object' && arg1 !== null) {
+            // Pattern: (data, callback)
+            data = arg1;
+            callback = arg2;
+        } else {
+            // Pattern: (data, callback) where data is not object
+            data = arg1 || {};
+            callback = arg2;
+        }
+
+        return { data, callback };
+    },
+
+    /**
+     * Standard implementation for getRecord methods across API modules
+     * Handles the common pattern of GET by ID or getDefault for new records
+     *
+     * @param {Object} apiInstance - The API client instance
+     * @param {string} recordId - Record ID or empty/null for new record
+     * @param {function} callback - Callback function
+     * @param {boolean} [useDefault=true] - Whether to use :getDefault for new records
+     * @param {string} [defaultMethod='getDefault'] - Name of the default method to use
+     * @returns {void}
+     */
+    standardGetRecord(apiInstance, recordId, callback, useDefault = true, defaultMethod = 'getDefault') {
+        const isNew = !recordId || recordId === '' || recordId === 'new';
+
+        try {
+            if (isNew && useDefault && apiInstance.customMethods && apiInstance.customMethods[defaultMethod]) {
+                // Use custom method for new records
+                apiInstance.callCustomMethod(defaultMethod, {}, (response) => {
+                    // Set _isNew flag for new records
+                    if (response && response.result && response.data) {
+                        response.data._isNew = true;
+                    }
+                    callback(response);
+                });
+            } else if (!isNew) {
+                // Get existing record by ID
+                apiInstance.callGet({}, callback, recordId);
+            } else {
+                // Fallback: return empty structure for new record
+                callback({
+                    result: true,
+                    data: { _isNew: true }
+                });
             }
-        });
+        } catch (error) {
+            this.handleApiError(`${apiInstance.constructor.name || 'API'}.getRecord`, error, callback);
+        }
     },
 
     /**
-     * Check connection with license server.
-     * @param {Function} callback - The callback function to be executed after the check operation.
-     * @returns {void}
-     */
-    LicensePing(callback) {
-        $.api({
-            url: PbxApi.licensePing,
-            on: 'now',
-            successTest: PbxApi.successTest,
-            onSuccess() {
-                callback(true);
-            },
-            onFailure() {
-                callback(false);
-            },
-            onError() {
-                callback(false);
-            },
-        });
-    },
-
-    /**
-     * Reset license key settings.
-     * @param {Function} callback - The callback function to be executed after the reset operation.
-     * @returns {void}
-     */
-    LicenseResetLicenseKey(callback) {
-        $.api({
-            url: PbxApi.licenseResetKey,
-            on: 'now',
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response.data);
-            },
-            onFailure() {
-                callback(false);
-            },
-            onError() {
-                callback(false);
-            },
-        });
-    },
-
-    /**
-     * Update license key, get new one, activate coupon
+     * Validates API parameters against a simple schema
      *
-     * @param {Object} formData - The data for the license update request.
-     * @param {function} callback - The callback function to handle the response.
-     * @returns {void}
+     * @param {Object} params - Parameters to validate
+     * @param {Object} schema - Validation schema
+     * @param {string} schema.required - Array of required parameter names
+     * @param {string} schema.optional - Array of optional parameter names
+     * @param {Object} schema.types - Object mapping parameter names to expected types
+     * @returns {Object} Validation result with isValid boolean and errors array
      */
-    LicenseProcessUserRequest(formData, callback) {
-        $.api({
-            url: PbxApi.licenseProcessUserRequest,
-            on: 'now',
-            method: 'POST',
-            data: formData,
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response, true);
-            },
-            onFailure(response) {
-                callback(response, false);
-            },
-            onError() {
-                callback(false);
-            },
-        });
+    validateApiParams(params, schema) {
+        const result = {
+            isValid: true,
+            errors: []
+        };
+
+        // Check required parameters
+        if (schema.required) {
+            for (const param of schema.required) {
+                if (params[param] === undefined || params[param] === null) {
+                    result.isValid = false;
+                    result.errors.push(`Required parameter '${param}' is missing`);
+                }
+            }
+        }
+
+        // Check parameter types
+        if (schema.types) {
+            for (const [param, expectedType] of Object.entries(schema.types)) {
+                if (params[param] !== undefined) {
+                    const actualType = typeof params[param];
+                    if (actualType !== expectedType) {
+                        result.isValid = false;
+                        result.errors.push(`Parameter '${param}' should be ${expectedType}, got ${actualType}`);
+                    }
+                }
+            }
+        }
+
+        return result;
     },
 
     /**
-     * Retrieves license information from the license server.
+     * Extends an API client instance with additional methods using a consistent pattern
      *
-     * @param {function} callback - The callback function to handle the result.
+     * @param {Object} apiInstance - The PbxApiClient instance to extend
+     * @param {Object} methods - Object containing methods to add to the API
+     * @param {Object} [options={}] - Extension options
+     * @param {boolean} [options.preserveContext=true] - Whether to preserve 'this' context
+     * @returns {Object} The extended API instance
      */
-    LicenseGetLicenseInfo(callback) {
-        $.api({
-            url: PbxApi.licenseGetLicenseInfo,
-            on: 'now',
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response.data);
-            },
-            onFailure(response) {
-                callback(response);
-            },
-            onError() {
-                callback(false);
-            },
-        });
+    extendApiClient(apiInstance, methods, options = {}) {
+        const opts = {
+            preserveContext: true,
+            ...options
+        };
+
+        // Validate input
+        if (!apiInstance || typeof apiInstance !== 'object') {
+            throw new Error('API instance must be an object');
+        }
+
+        if (!methods || typeof methods !== 'object') {
+            throw new Error('Methods must be an object');
+        }
+
+        // Add methods to the API instance
+        for (const [methodName, methodFunc] of Object.entries(methods)) {
+            if (typeof methodFunc === 'function') {
+                if (opts.preserveContext) {
+                    // Bind the function to the API instance to preserve 'this' context
+                    apiInstance[methodName] = methodFunc.bind(apiInstance);
+                } else {
+                    apiInstance[methodName] = methodFunc;
+                }
+            } else {
+                console.warn(`[PbxAPI] Skipping non-function property '${methodName}' during API extension`);
+            }
+        }
+
+        return apiInstance;
     },
 
     /**
-     * Tries to capture a feature for a product.
-     * If it fails, it tries to get a trial and then tries to capture again.
+     * Creates a debounced version of a function
+     * Useful for API calls that should be delayed until after a period of inactivity
      *
-     * @param {object} params - The parameters for capturing the feature.
-     * @param {string} params.licFeatureId - The feature ID to capture.
-     * @param {string} params.licProductId - The product ID for capturing the feature.
-     * @param {function} callback - The callback function to handle the result.
+     * @param {function} func - Function to debounce
+     * @param {number} wait - Time to wait in milliseconds
+     * @param {boolean} [immediate=false] - Whether to call function immediately on first call
+     * @returns {function} Debounced function
      */
-    LicenseCaptureFeatureForProductId(params, callback) {
-        const licFeatureId = params.licFeatureId;
-        const licProductId = params.licProductId;
-        $.api({
-            url: PbxApi.licenseCaptureFeatureForProductId,
-            on: 'now',
-            method: 'POST',
-            data: {licFeatureId, licProductId},
-            successTest: PbxApi.successTest,
-            onSuccess() {
-                callback(params, true);
-            },
-            onFailure(response) {
-                callback(response.messages, false);
-            },
-            onError() {
-                callback('', false);
-            },
-        });
-    },
-    /**
-     * Make an API call to send PBX metrics
-     *
-     * @param callback
-     */
-    LicenseSendPBXMetrics(callback) {
-        $.api({
-            url: PbxApi.licenseSendPBXMetrics,
-            on: 'now',
-            successTest: PbxApi.successTest,
-            onSuccess() {
-                callback(true);
-            },
-            onFailure() {
-                callback(false);
-            },
-            onError() {
-                callback(false);
-            },
-        });
+    debounce(func, wait, immediate = false) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                timeout = null;
+                if (!immediate) func.apply(this, args);
+            };
+            const callNow = immediate && !timeout;
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+            if (callNow) func.apply(this, args);
+        };
     },
 
     /**
-     * Fetches phone representations for a list of phone numbers using an API call.
+     * Formats dropdown results with consistent structure
+     * Used by multiple API modules for dropdown data formatting
      *
-     * @param {string[]} numbers - An array of phone numbers to fetch representations for.
-     * @param {function} callback - The callback function to handle the API response.
+     * @param {Object} response - API response containing data array
+     * @param {Object} [options={}] - Formatting options
+     * @param {boolean} [options.addEmpty=false] - Whether to add empty option
+     * @param {string} [options.emptyText='-'] - Text for empty option
+     * @param {number} [options.emptyValue=-1] - Value for empty option
+     * @param {Array} [options.excludeValues=[]] - Values to exclude from results
+     * @returns {Object} Formatted dropdown response
      */
-    ExtensionsGetPhonesRepresent(numbers, callback) {
-        $.api({
-            url: PbxApi.extensionsGetPhonesRepresent,
-            on: 'now',
-            method: 'POST',
-            data: {numbers},
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response);
-            },
-            onFailure(response) {
-                callback(response);
-            },
-            onError() {
-                callback(false);
-            },
-        });
-    },
+    formatDropdownResults(response, options = {}) {
+        const opts = {
+            addEmpty: false,
+            emptyText: '-',
+            emptyValue: -1,
+            excludeValues: [],
+            ...options
+        };
 
-    /**
-     * Deletes the extension record with its dependent tables.
-     *
-     * @param {string} id - id of deleting extensions record.
-     * @param {function} callback - The callback function to handle the API response.
-     */
-    ExtensionsDeleteRecord(id, callback) {
-        $.api({
-            url: PbxApi.extensionsDeleteRecord,
-            on: 'now',
-            method: 'POST',
-            data: {id},
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response);
-            },
-            onFailure(response) {
-                callback(response);
-            },
-            onError() {
-                callback(false);
-            },
-        });
-    },
-    
-};
+        const formattedResponse = {
+            success: false,
+            results: []
+        };
 
-// requirejs(["pbx/PbxAPI/extensionsAPI"]);
-// requirejs(["pbx/PbxAPI/usersAPI"]);
+        // Add empty option if requested
+        if (opts.addEmpty) {
+            formattedResponse.results.push({
+                name: opts.emptyText,
+                value: opts.emptyValue,
+                type: '',
+                typeLocalized: ''
+            });
+        }
+
+        if (response && response.result === true && response.data) {
+            formattedResponse.success = true;
+
+            // Process each item in the response data
+            response.data.forEach((item) => {
+                // Skip excluded values
+                if (opts.excludeValues.includes(item.value)) {
+                    return;
+                }
+
+                formattedResponse.results.push({
+                    name: item.name || item.text || item.label || '',
+                    value: item.value || item.id || '',
+                    type: item.type || '',
+                    typeLocalized: item.typeLocalized || item.type || ''
+                });
+            });
+        }
+
+        return formattedResponse;
+    }
+}
