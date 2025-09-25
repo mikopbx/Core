@@ -33,23 +33,68 @@ use Phalcon\Di\ServiceProviderInterface;
 
 /**
  * Represents a client for making REST API requests to PBX Core.
- * 
- * Example of usage:
- * 
- * $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
- *           '/pbxcore/api/nchan/pub/' . self::CHANNEL_ID,
- *           PBXCoreRESTClientProvider::HTTP_METHOD_POST,
- *           ['type' => $type, 'data' => $data],
- *           ['Content-Type' => 'application/json']  
- *       ]);
  *
+ * Supports full RESTful API v3 with GET, POST, PUT, PATCH, DELETE methods.
+ *
+ * Examples of usage:
+ *
+ * // GET request - retrieve a resource
  * $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
- *           '/pbxcore/api/extensions/getRecord',
- *           PBXCoreRESTClientProvider::HTTP_METHOD_GET,
- *           ['id' => $id]
- *       ]);
- * 
- * 
+ *     '/pbxcore/api/v3/extensions/101',
+ *     PBXCoreRESTClientProvider::HTTP_METHOD_GET
+ * ]);
+ *
+ * // POST request - create a new resource
+ * $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
+ *     '/pbxcore/api/v3/extensions',
+ *     PBXCoreRESTClientProvider::HTTP_METHOD_POST,
+ *     ['number' => '102', 'username' => 'John'],
+ *     ['Content-Type' => 'application/json']
+ * ]);
+ *
+ * // PUT request - fully update a resource
+ * $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
+ *     '/pbxcore/api/v3/extensions/102',
+ *     PBXCoreRESTClientProvider::HTTP_METHOD_PUT,
+ *     ['number' => '102', 'username' => 'John Doe', 'email' => 'john@example.com'],
+ *     ['Content-Type' => 'application/json']
+ * ]);
+ *
+ * // PATCH request - partially update a resource
+ * $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
+ *     '/pbxcore/api/v3/extensions/102',
+ *     PBXCoreRESTClientProvider::HTTP_METHOD_PATCH,
+ *     ['email' => 'newemail@example.com'],
+ *     ['Content-Type' => 'application/json']
+ * ]);
+ *
+ * // DELETE request - remove a resource
+ * $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
+ *     '/pbxcore/api/v3/extensions/102',
+ *     PBXCoreRESTClientProvider::HTTP_METHOD_DELETE
+ * ]);
+ *
+ * // Custom method on singleton resource
+ * $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
+ *     '/pbxcore/api/v3/system:datetime',
+ *     PBXCoreRESTClientProvider::HTTP_METHOD_GET
+ * ]);
+ *
+ * // Legacy API (deprecated)
+ * $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
+ *     '/pbxcore/api/extensions/getRecord',
+ *     PBXCoreRESTClientProvider::HTTP_METHOD_GET,
+ *     ['id' => $id]
+ * ]);
+ *
+ * // Event publishing (nchan)
+ * $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
+ *     '/pbxcore/api/nchan/pub/' . self::CHANNEL_ID,
+ *     PBXCoreRESTClientProvider::HTTP_METHOD_POST,
+ *     ['type' => $type, 'data' => $data],
+ *     ['Content-Type' => 'application/json']
+ * ]);
+ *
  * @package MikoPBX\Common\Providers
  */
 class PBXCoreRESTClientProvider implements ServiceProviderInterface
@@ -57,14 +102,17 @@ class PBXCoreRESTClientProvider implements ServiceProviderInterface
     public const string SERVICE_NAME = 'restAPIClient';
     public const string HTTP_METHOD_GET = 'GET';
     public const string HTTP_METHOD_POST = 'POST';
+    public const string HTTP_METHOD_PUT = 'PUT';
+    public const string HTTP_METHOD_PATCH = 'PATCH';
+    public const string HTTP_METHOD_DELETE = 'DELETE';
 
     /**
      * Makes a REST API request.
      *
      * @param string $url - The API endpoint URL.
      * @param string $method - The HTTP method (default: 'GET').
-     * @param array $data - Optional data to include in the request.
-     * @param array $headers - Optional headers to include in the request.
+     * @param array<string, mixed> $data - Optional data to include in the request.
+     * @param array<string, string> $headers - Optional headers to include in the request.
      * @return PBXApiResult - The response from the API as PBXApiResult class.
      */
     private static function restApiRequest(string $url, string $method = self::HTTP_METHOD_GET, array $data = [], array $headers = []): PBXApiResult
@@ -74,9 +122,12 @@ class PBXCoreRESTClientProvider implements ServiceProviderInterface
         // Modify request data according to http method
         switch ($method){
             case self::HTTP_METHOD_GET:
+            case self::HTTP_METHOD_DELETE:
                 $requestData = ['query'=>$data];
                 break;
             case self::HTTP_METHOD_POST:
+            case self::HTTP_METHOD_PUT:
+            case self::HTTP_METHOD_PATCH:
                 if (isset($headers['Content-Type']) && $headers['Content-Type'] === 'application/json') {
                     $requestData = ['json' => $data];
                 } else {
@@ -145,6 +196,10 @@ class PBXCoreRESTClientProvider implements ServiceProviderInterface
     {
         $di->set(
             self::SERVICE_NAME,
+            /**
+             * @param array<string, mixed> $data
+             * @param array<string, string> $headers
+             */
             function (string $url, string $method = self::HTTP_METHOD_GET, array $data = [], array $headers=[]): PBXApiResult {
                 return self::restApiRequest($url, $method, $data, $headers);
             }
