@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global PbxApiClient, $ */
+/* global PbxApiClient, $ */ 
 
 /**
  * DialplanApplicationsAPI - REST API v3 client for dialplan applications management
@@ -45,28 +45,12 @@ const DialplanApplicationsAPI = new PbxApiClient({
  * });
  */
 DialplanApplicationsAPI.getDefault = function(callback) {
-    $.api({
-        url: `${this.apiUrl}:getDefault`,
-        method: 'GET',
-        on: 'now',
-        onSuccess(response) {
-            callback(response);
-        },
-        onFailure(response) {
-            callback(response);
-        },
-        onError() {
-            callback({
-                result: false,
-                messages: { error: ['Network error occurred'] }
-            });
-        }
-    });
+    return this.callCustomMethod('getDefault', {}, callback);
 };
 
 /**
  * Copy an existing dialplan application
- * 
+ *
  * @param {string} id - ID of the dialplan application to copy
  * @param {function} callback - Callback function to handle the response
  * @example
@@ -77,21 +61,5 @@ DialplanApplicationsAPI.getDefault = function(callback) {
  * });
  */
 DialplanApplicationsAPI.copy = function(id, callback) {
-    $.api({
-        url: `${this.apiUrl}/${id}:copy`,
-        method: 'GET',
-        on: 'now',
-        onSuccess(response) {
-            callback(response);
-        },
-        onFailure(response) {
-            callback(response);
-        },
-        onError() {
-            callback({
-                result: false,
-                messages: { error: ['Network error occurred'] }
-            });
-        }
-    });
+    return this.callCustomMethod('copy', {id: id}, callback, 'GET', id);
 };

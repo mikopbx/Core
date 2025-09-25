@@ -30,7 +30,7 @@ var dialplanApplicationModify = {
                 },
                 {
                     type: 'maxLength[50]',
-                    prompt: globalTranslate.da_ValidateNameTooLong || 'Name is too long (max 50 characters)'
+                    prompt: globalTranslate.da_ValidateNameTooLong
                 }
             ]
         },
