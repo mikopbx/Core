@@ -31,7 +31,7 @@ const outboundRoute = {
      * Validation rules for the form fields before submission
      * @type {object}
      */
-    validateRules: {
+    validateRules: { 
         rulename: {
             identifier: 'rulename',
             rules: [
@@ -260,8 +260,7 @@ const outboundRoute = {
         // REST API integration - use built-in Form support
         Form.apiSettings.enabled = true;
         Form.apiSettings.apiObject = OutboundRoutesAPI;
-        Form.apiSettings.saveMethod = 'auto'; // Will automatically use create/update based on ID
-        Form.apiSettings.autoDetectMethod = true;
+        Form.apiSettings.saveMethod = 'saveRecord';
         
         // Navigation URLs
         Form.afterSubmitIndexUrl = `${globalRootUrl}outbound-routes/index/`;
