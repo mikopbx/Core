@@ -173,43 +173,43 @@ const apiKeysModify = {
     initializeTooltips() {
         const tooltipConfigs = {
             api_key_usage: {
-                header: globalTranslate.ak_ApiKeyUsageTooltip_header || 'Using API Keys',
-                description: globalTranslate.ak_ApiKeyUsageTooltip_desc || 'API keys are used for authenticating REST API requests',
+                header: globalTranslate.ak_ApiKeyUsageTooltip_header,
+                description: globalTranslate.ak_ApiKeyUsageTooltip_desc,
                 list: [
                     {
-                        term: globalTranslate.ak_ApiKeyUsageTooltip_auth_header || 'Authentication',
+                        term: globalTranslate.ak_ApiKeyUsageTooltip_auth_header,
                         definition: null
                     },
-                    globalTranslate.ak_ApiKeyUsageTooltip_auth_format || 'Add the Authorization header to your requests:',
+                    globalTranslate.ak_ApiKeyUsageTooltip_auth_format,
                 ],
                 examples: [
                     'Authorization: Bearer YOUR_API_KEY'
                 ],
                 list2: [
                     {
-                        term: globalTranslate.ak_ApiKeyUsageTooltip_example_header || 'Usage Example',
+                        term: globalTranslate.ak_ApiKeyUsageTooltip_example_header,
                         definition: null
                     }
                 ],
                 list3: [
                     {
                         term: 'curl',
-                        definition: '<br>&nbsp&nbsp'+globalTranslate.ak_ApiKeyUsageTooltip_curl_example || 'curl -H "Authorization: Bearer YOUR_API_KEY" "http://pbx.example.com/pbxcore/api/v3/employees?limit=20&offset=0"'
+                        definition: '<br>&nbsp&nbsp'+globalTranslate.ak_ApiKeyUsageTooltip_curl_example
                     },
                     {
                         term: 'JavaScript',
-                        definition: '<br>&nbsp&nbsp'+globalTranslate.ak_ApiKeyUsageTooltip_js_example || 'fetch("http://pbx.example.com/pbxcore/api/v3/employees?limit=20&offset=0", { headers: { "Authorization": "Bearer YOUR_API_KEY" } })'
+                        definition: '<br>&nbsp&nbsp'+globalTranslate.ak_ApiKeyUsageTooltip_js_example
                     },
                     {
                         term: 'PHP',
-                        definition: '<br>&nbsp&nbsp'+globalTranslate.ak_ApiKeyUsageTooltip_php_example || '$ch = curl_init("http://pbx.example.com/pbxcore/api/v3/employees?limit=20&offset=0"); curl_setopt($ch, CURLOPT_HTTPHEADER, ["Authorization: Bearer YOUR_API_KEY"]);'
+                        definition: '<br>&nbsp&nbsp'+globalTranslate.ak_ApiKeyUsageTooltip_php_example
                     }
                 ],
                 warning: {
-                    header: globalTranslate.ak_ApiKeyUsageTooltip_warning_header || 'Security Warning',
-                    text: globalTranslate.ak_ApiKeyUsageTooltip_warning || 'Never share your API key or commit it to version control. Treat it like a password.'
+                    header: globalTranslate.ak_ApiKeyUsageTooltip_warning_header,
+                    text: globalTranslate.ak_ApiKeyUsageTooltip_warning
                 },
-                note: globalTranslate.ak_ApiKeyUsageTooltip_note || 'The key display shows only the first and last 5 characters for security reasons.'
+                note: globalTranslate.ak_ApiKeyUsageTooltip_note
             }
         };
         
@@ -541,11 +541,7 @@ const apiKeysModify = {
     cbBeforeSendForm(settings) {
         const result = settings;
         // Form.js already handles form data collection when apiSettings.enabled = true
-        
-        // Add _isNew flag for RESTful API to distinguish POST vs PUT
-        const recordId = apiKeysModify.getRecordId();
-        result.data._isNew = !recordId;
-        
+
         // Handle API key for new/existing records
         apiKeysModify.handleApiKeyInFormData(result.data);
         

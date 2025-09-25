@@ -20,6 +20,7 @@
 namespace MikoPBX\PBXCoreREST\Lib\ApiKeys;
 
 use MikoPBX\Common\Providers\TranslationProvider;
+use MikoPBX\Core\System\SystemMessages;
 use Phalcon\Di\Di;
 
 /**
@@ -57,7 +58,7 @@ class EndpointScanner
         $basePath = dirname(__FILE__, 3) . '/Controllers';
         
         if (!is_dir($basePath)) {
-            error_log("EndpointScanner: Controllers path not found: $basePath");
+            SystemMessages::sysLogMsg(__CLASS__, "EndpointScanner: Controllers path not found: $basePath", LOG_WARNING);
             return [];
         }
         
