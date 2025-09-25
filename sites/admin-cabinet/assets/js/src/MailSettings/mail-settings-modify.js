@@ -801,9 +801,6 @@ const mailSettings = {
 
         // Check for success
         if (urlParams.has('oauth_success')) {
-            UserMessage.showInformation(
-                globalTranslate.ms_OAuth2AuthorizationSuccess || 'OAuth2 авторизация успешно завершена'
-            );
             // Reload settings to show updated OAuth2 status
             mailSettings.loadSettingsFromAPI();
             // Clean URL
@@ -1339,13 +1336,7 @@ const mailSettings = {
                 console.log('OAuth2 event received via EventBus:', data);
 
                 if (data.status === 'success') {
-                    // Success: show success message and refresh OAuth2 status
-                    UserMessage.showInformation(
-                        globalTranslate.ms_OAuth2AuthorizationSuccess,
-                        3000
-                    );
-
-                    // Refresh OAuth2 status after a short delay
+                    // Success: refresh OAuth2 status after a short delay
                     setTimeout(() => {
                         mailSettings.checkOAuth2Status();
                     }, 1000);
