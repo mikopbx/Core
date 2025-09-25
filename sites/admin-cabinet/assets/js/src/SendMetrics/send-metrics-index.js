@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global sessionStorage, PbxApi */
+/* global sessionStorage, LicenseAPI */
 
 /**
  * Object responsible for sending PBX metrics.
@@ -32,7 +32,7 @@ const sendMetrics = {
     initialize() {
         const isMetricsSend = sessionStorage.getItem('MetricsAlreadySent');
         if (isMetricsSend === null) {
-            PbxApi.LicenseSendPBXMetrics(sendMetrics.cbAfterMetricsSent);
+            LicenseAPI.sendPBXMetrics(sendMetrics.cbAfterMetricsSent);
 
         }
     },
