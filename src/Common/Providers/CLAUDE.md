@@ -196,12 +196,65 @@ $logger = $di->getShared(LoggerProvider::SERVICE_NAME);
 
 ### PBXCoreRESTClientProvider
 - **Service Name**: `restAPIClient`
-- **Description**: Internal REST API client
-- **Key Dependencies**: 
-  - `config` service
-  - `logger` service
-- **Configuration**: Uses `pbx.RestAPIPort` from config
-- **Features**: Internal API communication
+- **Description**: Internal REST API client with full RESTful support
+- **Key Dependencies**: None (uses PbxSettings directly)
+- **Configuration**: Uses `WEB_PORT` from PbxSettings
+- **Supported HTTP Methods**:
+  - `GET` - Retrieve resources
+  - `POST` - Create new resources
+  - `PUT` - Fully update resources
+  - `PATCH` - Partially update resources
+  - `DELETE` - Remove resources
+- **Features**:
+  - Full RESTful API v3 support
+  - Legacy API compatibility
+  - Event publishing via nchan
+  - JSON and form-data support
+  - Automatic error handling
+- **Usage Examples**:
+  ```php
+  // GET request
+  $result = $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
+      '/pbxcore/api/v3/extensions/101',
+      PBXCoreRESTClientProvider::HTTP_METHOD_GET
+  ]);
+
+  // POST request with JSON
+  $result = $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
+      '/pbxcore/api/v3/extensions',
+      PBXCoreRESTClientProvider::HTTP_METHOD_POST,
+      ['number' => '102', 'username' => 'John'],
+      ['Content-Type' => 'application/json']
+  ]);
+
+  // PUT request
+  $result = $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
+      '/pbxcore/api/v3/extensions/102',
+      PBXCoreRESTClientProvider::HTTP_METHOD_PUT,
+      ['number' => '102', 'username' => 'John Doe'],
+      ['Content-Type' => 'application/json']
+  ]);
+
+  // PATCH request
+  $result = $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
+      '/pbxcore/api/v3/extensions/102',
+      PBXCoreRESTClientProvider::HTTP_METHOD_PATCH,
+      ['email' => 'new@example.com'],
+      ['Content-Type' => 'application/json']
+  ]);
+
+  // DELETE request
+  $result = $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
+      '/pbxcore/api/v3/extensions/102',
+      PBXCoreRESTClientProvider::HTTP_METHOD_DELETE
+  ]);
+
+  // Custom method on singleton resource
+  $result = $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
+      '/pbxcore/api/v3/system:datetime',
+      PBXCoreRESTClientProvider::HTTP_METHOD_GET
+  ]);
+  ```
 
 ### RedisClientProvider
 - **Service Name**: `redis`
