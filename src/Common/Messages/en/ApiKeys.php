@@ -70,7 +70,7 @@ return [
     'ak_EndpointLicense' => 'License operations',
     'ak_EndpointModules' => 'Module management',
     'ak_EndpointNetworkFilters' => 'Network filters',
-    'ak_EndpointOutWorkTimes' => 'Out-of-office hours',
+    'ak_EndpointOffWorkTimes' => 'Out-of-office hours',
     'ak_EndpointOutboundRoutes' => 'Outbound call routing',
     'ak_EndpointOutgoingRoutes' => 'Outgoing call routing',
     'ak_EndpointPasswords' => 'Password management',

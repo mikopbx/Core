@@ -1,6 +1,6 @@
 {# Add button (initially hidden) #}
 {% if isAllowed('save') %}
-    {{ link_to("out-off-work-time/modify", '<i class="add circle icon"></i> '~t._('tf_AddNewTimeFrame'), "class": "ui blue button", "id": "add-new-button", "style": "display:none") }}
+    {{ link_to("off-work-times/modify", '<i class="add circle icon"></i> '~t._('tf_AddNewTimeFrame'), "class": "ui blue button", "id": "add-new-button", "style": "display:none") }}
 {% endif %}
 
 {# Table container - hidden by default #}
@@ -29,8 +29,8 @@
         'title': t._('tf_EmptyTableTitle'),
         'description': t._('tf_EmptyTableDescription'),
         'addButtonText': '<i class="add circle icon"></i> '~t._('tf_AddNewTimeFrame'),
-        'addButtonLink': 'out-off-work-time/modify',
+        'addButtonLink': 'off-work-times/modify',
         'showButton': isAllowed('save'),
-        'documentationLink': 'https://wiki.mikopbx.com/out-off-work-time'
+        'documentationLink': 'https://wiki.mikopbx.com/off-work-times'
     ]) }}
 </div>

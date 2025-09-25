@@ -70,7 +70,7 @@ return [
     'ak_EndpointLicense' => 'Lisenziya əməliyyatları',
     'ak_EndpointModules' => 'Modulların idarəsi',
     'ak_EndpointNetworkFilters' => 'Şəbəkə filtrləri',
-    'ak_EndpointOutWorkTimes' => 'İş vaxtı xaricində',
+    'ak_EndpointOffWorkTimes' => 'İş vaxtı xaricində',
     'ak_EndpointOutboundRoutes' => 'Çıxan zənglərin marşrutlaşdırılması',
     'ak_EndpointOutgoingRoutes' => 'Çıxan zənglərin marşrutlaşdırılması',
     'ak_EndpointPasswords' => 'Parolların idarəsi',

@@ -206,7 +206,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
             
             // Only set reload for new records
             if (empty($data['id'])) {
-                $res->reload = "out-off-work-time/modify/{$savedCondition->id}";
+                $res->reload = "off-work-times/modify/{$savedCondition->id}";
             }
             
             // Handle tab preservation

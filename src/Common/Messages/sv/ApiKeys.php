@@ -70,7 +70,7 @@ return [
     'ak_EndpointLicense' => 'Licensoperationer',
     'ak_EndpointModules' => 'Modulhantering',
     'ak_EndpointNetworkFilters' => 'Nätverksfilter',
-    'ak_EndpointOutWorkTimes' => 'Icke-arbetstid',
+    'ak_EndpointOffWorkTimes' => 'Icke-arbetstid',
     'ak_EndpointOutboundRoutes' => 'Utgående samtalsruttning',
     'ak_EndpointOutgoingRoutes' => 'Utgående samtalsruttning',
     'ak_EndpointPasswords' => 'Lösenordshantering',

@@ -70,7 +70,7 @@ return [
     'ak_EndpointLicense' => 'Operace s licencí',
     'ak_EndpointModules' => 'Správa modulů',
     'ak_EndpointNetworkFilters' => 'Síťové filtry',
-    'ak_EndpointOutWorkTimes' => 'Mimopracovní doba',
+    'ak_EndpointOffWorkTimes' => 'Mimopracovní doba',
     'ak_EndpointOutboundRoutes' => 'Směrování odchozích hovorů',
     'ak_EndpointOutgoingRoutes' => 'Směrování odchozích hovorů',
     'ak_EndpointPasswords' => 'Správa hesel',

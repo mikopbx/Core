@@ -70,7 +70,7 @@ return [
     'ak_EndpointLicense' => 'Licentieoperaties',
     'ak_EndpointModules' => 'Modulebeheer',
     'ak_EndpointNetworkFilters' => 'Netwerkfilters',
-    'ak_EndpointOutWorkTimes' => 'Buiten kantooruren',
+    'ak_EndpointOffWorkTimes' => 'Buiten kantooruren',
     'ak_EndpointOutboundRoutes' => 'Uitgaande oproep-routing',
     'ak_EndpointOutgoingRoutes' => 'Uitgaande oproep-routing',
     'ak_EndpointPasswords' => 'Wachtwoordbeheer',

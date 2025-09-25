@@ -70,7 +70,7 @@ return [
     'ak_EndpointLicense' => 'Licensoperationer',
     'ak_EndpointModules' => 'Modulhåndtering',
     'ak_EndpointNetworkFilters' => 'Netværksfiltre',
-    'ak_EndpointOutWorkTimes' => 'Uden for arbejdstid',
+    'ak_EndpointOffWorkTimes' => 'Uden for arbejdstid',
     'ak_EndpointOutboundRoutes' => 'Udgående opkalds-routing',
     'ak_EndpointOutgoingRoutes' => 'Udgående opkalds-routing',
     'ak_EndpointPasswords' => 'Adgangskodestyring',

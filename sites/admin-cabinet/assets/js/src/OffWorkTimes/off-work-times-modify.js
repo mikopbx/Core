@@ -18,7 +18,7 @@
 
 /* global $ globalRootUrl Extensions moment Form globalTranslate 
    SemanticLocalization SoundFileSelector UserMessage SecurityUtils
-   IncomingRoutesAPI OutOffWorkTimeAPI DynamicDropdownBuilder ExtensionSelector */
+   IncomingRoutesAPI OffWorkTimesAPI DynamicDropdownBuilder ExtensionSelector */
 
 /**
  * Module for managing out-of-work time settings
@@ -207,7 +207,7 @@ const outOfWorkTimeRecord = {
 
         if (copyId) {
             // Copy operation - use the new RESTful copy endpoint
-            OutOffWorkTimeAPI.callCustomMethod('copy', {id: copyId}, (response) => {
+            OffWorkTimesAPI.callCustomMethod('copy', {id: copyId}, (response) => {
                 // Remove loading state
                 outOfWorkTimeRecord.$formObj.removeClass('loading');
 
@@ -236,7 +236,7 @@ const outOfWorkTimeRecord = {
             const recordIdToLoad = outOfWorkTimeRecord.recordId || '';
 
             // Load record data via REST API - always returns data (with defaults for new records)
-            OutOffWorkTimeAPI.getRecord(recordIdToLoad, (response) => {
+            OffWorkTimesAPI.getRecord(recordIdToLoad, (response) => {
                 // Remove loading state
                 outOfWorkTimeRecord.$formObj.removeClass('loading');
 
@@ -399,11 +399,11 @@ const outOfWorkTimeRecord = {
                 const $calSecretField = $('#calSecret');
                 if (data.calSecret === 'XXXXXX') {
                     // Password exists but is masked, show placeholder
-                    $calSecretField.attr('placeholder', globalTranslate.tf_PasswordMasked || 'Password saved (enter new to change)');
+                    $calSecretField.attr('placeholder', globalTranslate.tf_PasswordMasked);
                     // Store original masked state to detect changes
                     $calSecretField.data('originalMasked', true);
                 } else {
-                    $calSecretField.attr('placeholder', globalTranslate.tf_EnterPassword || 'Enter password');
+                    $calSecretField.attr('placeholder', globalTranslate.tf_EnterPassword);
                     $calSecretField.data('originalMasked', false);
                 }
                 
@@ -644,7 +644,7 @@ const outOfWorkTimeRecord = {
             const providerId = route.provider || 'none';
             if (!groups[providerId]) {
                 // Extract plain text provider name from HTML if needed
-                let providerName = route.providerid_represent || globalTranslate.ir_NoAssignedProvider || 'Direct calls';
+                let providerName = route.providerid_represent || globalTranslate.ir_NoAssignedProvider;
                 // Remove HTML tags to get clean provider name for display
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = providerName;
@@ -797,7 +797,7 @@ const outOfWorkTimeRecord = {
         const emptyRow = `
             <tr>
                 <td colspan="3" class="center aligned">
-                    ${globalTranslate.ir_NoIncomingRoutes || 'No incoming routes configured'}
+                    ${globalTranslate.ir_NoIncomingRoutes}
                 </td>
             </tr>
         `;
@@ -852,9 +852,9 @@ const outOfWorkTimeRecord = {
             if (provider && provider !== 'none') {
                 let tooltipText = '';
                 if (did) {
-                    tooltipText = globalTranslate.tf_TooltipSpecificRule || 'This rule applies to calls to specific number. Related rules will be synchronized.';
+                    tooltipText = globalTranslate.tf_TooltipSpecificRule;
                 } else {
-                    tooltipText = globalTranslate.tf_TooltipGeneralRule || 'This rule applies to all calls from provider. Related rules will be synchronized.';
+                    tooltipText = globalTranslate.tf_TooltipGeneralRule;
                 }
                 
                 $checkbox.attr('data-content', tooltipText);
@@ -1134,7 +1134,7 @@ const outOfWorkTimeRecord = {
         if (response.result && response.data && response.data.id) {
             // Update URL if this was a new record
             if (!outOfWorkTimeRecord.recordId) {
-                const newUrl = `${globalRootUrl}out-off-work-time/modify/${response.data.id}`;
+                const newUrl = `${globalRootUrl}off-work-times/modify/${response.data.id}`;
                 window.history.replaceState(null, '', newUrl);
                 outOfWorkTimeRecord.recordId = response.data.id;
             }
@@ -1149,14 +1149,14 @@ const outOfWorkTimeRecord = {
      */
     initializeForm() {
         Form.$formObj = outOfWorkTimeRecord.$formObj;
-        Form.url = `${globalRootUrl}out-off-work-time/save`;
+        Form.url = `${globalRootUrl}off-work-times/save`;
         Form.validateRules = outOfWorkTimeRecord.validateRules;
         Form.cbBeforeSendForm = outOfWorkTimeRecord.cbBeforeSendForm;
         Form.cbAfterSendForm = outOfWorkTimeRecord.cbAfterSendForm;
         
         // REST API integration
         Form.apiSettings.enabled = true;
-        Form.apiSettings.apiObject = OutOffWorkTimeAPI;
+        Form.apiSettings.apiObject = OffWorkTimesAPI;
         Form.apiSettings.saveMethod = 'saveRecord';
         
         Form.initialize();

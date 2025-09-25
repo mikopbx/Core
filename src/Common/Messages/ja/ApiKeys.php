@@ -70,7 +70,7 @@ return [
     'ak_EndpointLicense' => 'ライセンス操作',
     'ak_EndpointModules' => 'モジュール管理',
     'ak_EndpointNetworkFilters' => 'ネットワークフィルター',
-    'ak_EndpointOutWorkTimes' => '営業時間外',
+    'ak_EndpointOffWorkTimes' => '営業時間外',
     'ak_EndpointOutboundRoutes' => '発信コールルーティング',
     'ak_EndpointOutgoingRoutes' => '発信コールルーティング',
     'ak_EndpointPasswords' => 'パスワード管理',

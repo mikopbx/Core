@@ -70,7 +70,7 @@ return [
     'ak_EndpointLicense' => 'Operacje licencyjne',
     'ak_EndpointModules' => 'Zarządzanie modułami',
     'ak_EndpointNetworkFilters' => 'Filtry sieciowe',
-    'ak_EndpointOutWorkTimes' => 'Czas poza godzinami pracy',
+    'ak_EndpointOffWorkTimes' => 'Czas poza godzinami pracy',
     'ak_EndpointOutboundRoutes' => 'Routing połączeń wychodzących',
     'ak_EndpointOutgoingRoutes' => 'Routing połączeń wychodzących',
     'ak_EndpointPasswords' => 'Zarządzanie hasłami',

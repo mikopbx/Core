@@ -30,7 +30,7 @@ abstract class CreateOutOfWorkPeriodTest extends MikoPBXTestsBase
      */
     protected function clearOutOfWorkTable(): void
     {
-        $this->clickSidebarMenuItemByHref('/admin-cabinet/out-off-work-time/index/');
+        $this->clickSidebarMenuItemByHref('/admin-cabinet/off-work-times/index/');
         $this->deleteAllRecordsOnTable('time-frames-table');
     }
 
@@ -62,8 +62,8 @@ abstract class CreateOutOfWorkPeriodTest extends MikoPBXTestsBase
      */
     protected function createPeriod(array $params): void
     {
-        $this->clickSidebarMenuItemByHref('/admin-cabinet/out-off-work-time/index/');
-        $this->clickButtonByHref('/admin-cabinet/out-off-work-time/modify');
+        $this->clickSidebarMenuItemByHref('/admin-cabinet/off-work-times/index/');
+        $this->clickButtonByHref('/admin-cabinet/off-work-times/modify');
 
         $this->changeTextAreaValue('description', $params['description']);
 
@@ -94,7 +94,7 @@ abstract class CreateOutOfWorkPeriodTest extends MikoPBXTestsBase
     {
         $id = $this->getCurrentRecordID();
 
-        $this->clickSidebarMenuItemByHref('/admin-cabinet/out-off-work-time/index/');
+        $this->clickSidebarMenuItemByHref('/admin-cabinet/off-work-times/index/');
         $this->clickModifyButtonOnRowWithID($id);
 
         $this->verifyPeriodSettings($params);

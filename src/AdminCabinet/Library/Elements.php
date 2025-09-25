@@ -38,7 +38,7 @@ use MikoPBX\AdminCabinet\Controllers\IvrMenuController;
 use MikoPBX\AdminCabinet\Controllers\MailSettingsController;
 use MikoPBX\AdminCabinet\Controllers\NetworkController;
 use MikoPBX\AdminCabinet\Controllers\OutboundRoutesController;
-use MikoPBX\AdminCabinet\Controllers\OutOffWorkTimeController;
+use MikoPBX\AdminCabinet\Controllers\OffWorkTimesController;
 use MikoPBX\AdminCabinet\Controllers\PbxExtensionModulesController;
 use MikoPBX\AdminCabinet\Controllers\ProvidersController;
 use MikoPBX\AdminCabinet\Controllers\RestartController;
@@ -140,7 +140,7 @@ class Elements extends Injectable
                         'param' => '',
                         'style' => '',
                     ],
-                    OutOffWorkTimeController::class => [
+                    OffWorkTimesController::class => [
                         'caption' => 'mm_OutOffWorkTime',
                         'iconclass' => 'calendar times outline',
                         'action' => 'index',

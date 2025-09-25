@@ -37,4 +37,9 @@ class EveningTest extends CreateOutOfWorkPeriodTest
     {
         return OutOfWorkPeriodsDataFactory::getPeriodData('evening');
     }
+
+    public function testCreateOutOfWorkPeriod(): void
+    {
+        parent::testCreateOutOfWorkPeriod();
+    }
 }

@@ -70,7 +70,7 @@ return [
     'ak_EndpointLicense' => 'Hoạt động giấy phép',
     'ak_EndpointModules' => 'Quản lý mô-đun',
     'ak_EndpointNetworkFilters' => 'Bộ lọc mạng',
-    'ak_EndpointOutWorkTimes' => 'Giờ ngoài giờ làm việc',
+    'ak_EndpointOffWorkTimes' => 'Giờ ngoài giờ làm việc',
     'ak_EndpointOutboundRoutes' => 'Định tuyến cuộc gọi đi',
     'ak_EndpointOutgoingRoutes' => 'Định tuyến cuộc gọi đi',
     'ak_EndpointPasswords' => 'Quản lý mật khẩu',

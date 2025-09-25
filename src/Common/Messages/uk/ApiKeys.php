@@ -70,7 +70,7 @@ return [
     'ak_EndpointLicense' => 'Операції з ліцензією',
     'ak_EndpointModules' => 'Керування модулями',
     'ak_EndpointNetworkFilters' => 'Мережеві фільтри',
-    'ak_EndpointOutWorkTimes' => 'Неробочий час',
+    'ak_EndpointOffWorkTimes' => 'Неробочий час',
     'ak_EndpointOutboundRoutes' => 'Маршрутизація вихідних викликів',
     'ak_EndpointOutgoingRoutes' => 'Маршрутизація вихідних викликів',
     'ak_EndpointPasswords' => 'Керування паролями',

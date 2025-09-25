@@ -70,7 +70,7 @@ return [
     'ak_EndpointLicense' => 'การดำเนินการใบอนุญาต',
     'ak_EndpointModules' => 'จัดการโมดูล',
     'ak_EndpointNetworkFilters' => 'ตัวกรองเครือข่าย',
-    'ak_EndpointOutWorkTimes' => 'เวลานอกงาน',
+    'ak_EndpointOffWorkTimes' => 'เวลานอกงาน',
     'ak_EndpointOutboundRoutes' => 'การกำหนดเส้นทางสายออก',
     'ak_EndpointOutgoingRoutes' => 'การกำหนดเส้นทางสายออก',
     'ak_EndpointPasswords' => 'จัดการรหัสผ่าน',

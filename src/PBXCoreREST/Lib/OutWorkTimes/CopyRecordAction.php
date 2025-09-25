@@ -34,7 +34,7 @@ use MikoPBX\Core\System\SystemMessages;
  * - Description prefixed with "copy of"
  * - All settings and routing rules copied
  *
- * @api {get} /pbxcore/api/v3/out-off-work-time/{id}:copy Copy time condition
+ * @api {get} /pbxcore/api/v3/off-work-times/{id}:copy Copy time condition
  * @apiVersion 3.0.0
  * @apiName CopyRecord
  * @apiGroup OutOffWorkTime

@@ -70,7 +70,7 @@ return [
     'ak_EndpointLicense' => 'Licencne operacije',
     'ak_EndpointModules' => 'Upravljanje modulima',
     'ak_EndpointNetworkFilters' => 'Mrežni filtri',
-    'ak_EndpointOutWorkTimes' => 'Izvan radnog vremena',
+    'ak_EndpointOffWorkTimes' => 'Izvan radnog vremena',
     'ak_EndpointOutboundRoutes' => 'Usmjeravanje odlaznih poziva',
     'ak_EndpointOutgoingRoutes' => 'Usmjeravanje odlaznih poziva',
     'ak_EndpointPasswords' => 'Upravljanje lozinkama',

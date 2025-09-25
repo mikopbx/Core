@@ -70,7 +70,7 @@ return [
     'ak_EndpointLicense' => 'Lisans işlemleri',
     'ak_EndpointModules' => 'Modül yönetimi',
     'ak_EndpointNetworkFilters' => 'Ağ filtreleri',
-    'ak_EndpointOutWorkTimes' => 'Mesai dışı saatler',
+    'ak_EndpointOffWorkTimes' => 'Mesai dışı saatler',
     'ak_EndpointOutboundRoutes' => 'Giden çağrı yönlendirme',
     'ak_EndpointOutgoingRoutes' => 'Giden çağrı yönlendirme',
     'ak_EndpointPasswords' => 'Şifre yönetimi',

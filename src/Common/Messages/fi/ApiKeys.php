@@ -70,7 +70,7 @@ return [
     'ak_EndpointLicense' => 'Lisenssioperaatiot',
     'ak_EndpointModules' => 'Moduulien hallinta',
     'ak_EndpointNetworkFilters' => 'Verkkosuodattimet',
-    'ak_EndpointOutWorkTimes' => 'Työajan ulkopuolella',
+    'ak_EndpointOffWorkTimes' => 'Työajan ulkopuolella',
     'ak_EndpointOutboundRoutes' => 'Lähtevien puhelujen reititys',
     'ak_EndpointOutgoingRoutes' => 'Lähtevien puhelujen reititys',
     'ak_EndpointPasswords' => 'Salasanojen hallinta',

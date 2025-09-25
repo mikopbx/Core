@@ -70,7 +70,7 @@ return [
     'ak_EndpointLicense' => 'ლიცენზიის ოპერაციები',
     'ak_EndpointModules' => 'მოდულების მართვა',
     'ak_EndpointNetworkFilters' => 'ქსელური ფილტრები',
-    'ak_EndpointOutWorkTimes' => 'სამუშაო საათების გარეთ',
+    'ak_EndpointOffWorkTimes' => 'სამუშაო საათების გარეთ',
     'ak_EndpointOutboundRoutes' => 'გამავალი ზარების მარშრუტიზაცია',
     'ak_EndpointOutgoingRoutes' => 'გამავალი ზარების მარშრუტიზაცია',
     'ak_EndpointPasswords' => 'პაროლების მართვა',

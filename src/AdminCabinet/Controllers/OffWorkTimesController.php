@@ -23,13 +23,13 @@ use MikoPBX\AdminCabinet\Forms\TimeFrameEditForm;
 use MikoPBX\Common\Models\OutWorkTimes;
 
 /**
- * OutOffWorkTimeController - manages out-of-work time conditions interface
+ * OffWorkTimesController - manages out-of-work time conditions interface
  * 
  * This controller has been refactored to use REST API v2.
  * All data operations are now handled through JavaScript and REST API calls.
  * The controller only provides the basic page structure and forms.
  */
-class OutOffWorkTimeController extends BaseController
+class OffWorkTimesController extends BaseController
 {
     /**
      * Index page for out-of-work time conditions

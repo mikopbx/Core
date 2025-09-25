@@ -1,4 +1,4 @@
-{{ form(['action' : 'out-off-work-time/save', 'method': 'post', 'role': 'form', 'class': 'ui large form', 'id':'save-outoffwork-form']) }}
+{{ form(['action' : 'off-work-times/save', 'method': 'post', 'role': 'form', 'class': 'ui large form', 'id':'save-outoffwork-form']) }}
 
 {{ form.render('id') }}
 {{ form.render('uniqid') }}
@@ -173,5 +173,5 @@
 {{ partial("PbxExtensionModules/hookVoltBlock",
     ['arrayOfPartials':hookVoltBlock('AdditionalTab')]) }}
 
-{{ partial("partials/submitbutton",['indexurl':'out-off-work-time/index/']) }}
+{{ partial("partials/submitbutton",['indexurl':'off-work-times/index/']) }}
 {{ close('form') }}

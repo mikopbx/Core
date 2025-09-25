@@ -70,7 +70,7 @@ return [
     'ak_EndpointLicense' => 'Operațiuni de licență',
     'ak_EndpointModules' => 'Gestionarea modulelor',
     'ak_EndpointNetworkFilters' => 'Filtre de rețea',
-    'ak_EndpointOutWorkTimes' => 'Ore non-lucrătoare',
+    'ak_EndpointOffWorkTimes' => 'Ore non-lucrătoare',
     'ak_EndpointOutboundRoutes' => 'Rutarea apelurilor de ieșire',
     'ak_EndpointOutgoingRoutes' => 'Rutarea apelurilor de ieșire',
     'ak_EndpointPasswords' => 'Gestionarea parolelor',

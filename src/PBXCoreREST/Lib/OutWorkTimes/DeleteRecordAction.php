@@ -103,7 +103,7 @@ class DeleteRecordAction extends AbstractDeleteAction
             if ($transactionResult) {
                 $res->success = true;
                 $res->data = ['deleted_id' => $id];
-                $res->reload = 'out-off-work-time/index';
+                $res->reload = 'off-work-times/index';
                 
                 // Log successful deletion with description
                 \MikoPBX\Core\System\SystemMessages::sysLogMsg(

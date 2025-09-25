@@ -70,7 +70,7 @@ return [
     'ak_EndpointLicense' => 'Licenc műveletek',
     'ak_EndpointModules' => 'Modulok kezelése',
     'ak_EndpointNetworkFilters' => 'Hálózati szűrők',
-    'ak_EndpointOutWorkTimes' => 'Munkaidőn kívül',
+    'ak_EndpointOffWorkTimes' => 'Munkaidőn kívül',
     'ak_EndpointOutboundRoutes' => 'Kimenő hívások továbbítása',
     'ak_EndpointOutgoingRoutes' => 'Kimenő hívások továbbítása',
     'ak_EndpointPasswords' => 'Jelszavak kezelése',

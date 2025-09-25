@@ -70,7 +70,7 @@ return [
     'ak_EndpointLicense' => 'Λειτουργίες άδειας',
     'ak_EndpointModules' => 'Διαχείριση μονάδων',
     'ak_EndpointNetworkFilters' => 'Φίλτρα δικτύου',
-    'ak_EndpointOutWorkTimes' => 'Εκτός ωραρίου εργασίας',
+    'ak_EndpointOffWorkTimes' => 'Εκτός ωραρίου εργασίας',
     'ak_EndpointOutboundRoutes' => 'Δρομολόγηση εξερχόμενων κλήσεων',
     'ak_EndpointOutgoingRoutes' => 'Δρομολόγηση εξερχόμενων κλήσεων',
     'ak_EndpointPasswords' => 'Διαχείριση κωδικών πρόσβασης',

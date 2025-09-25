@@ -372,4 +372,64 @@ return [
     'ms_MailSMTPCertCheckTooltip_legacy_servers' => 'Устаревшие почтовые серверы',
     'ms_MailSMTPCertCheckTooltip_warning' => 'Отключение проверки сертификата снижает безопасность соединения. Используйте только если уверены в надежности почтового сервера.',
     'ms_MailSMTPCertCheckTooltip_note' => 'Эта опция доступна только при использовании шифрования (STARTTLS или SSL/TLS) и автоматически скрывается при выборе незащищенного соединения.',
+
+    // SMTP Connection Diagnostics
+    // Error types
+    'ms_DiagnosticErrorType_oauth2_auth_failed' => 'Ошибка OAuth2 аутентификации',
+    'ms_DiagnosticErrorType_connection_failed' => 'Ошибка подключения',
+    'ms_DiagnosticErrorType_encryption_failed' => 'Ошибка шифрования',
+    'ms_DiagnosticErrorType_password_auth_failed' => 'Ошибка аутентификации',
+    'ms_DiagnosticErrorType_protocol_mismatch' => 'Несоответствие протокола',
+    'ms_DiagnosticErrorType_unknown' => 'Неизвестная ошибка',
+
+    // Probable causes
+    'ms_DiagnosticCause_oauth2_auth_failed' => 'Неудачная OAuth2 авторизация',
+    'ms_DiagnosticCause_connection_refused' => 'Сервер отклонил соединение',
+    'ms_DiagnosticCause_connection_timeout' => 'Превышено время ожидания соединения',
+    'ms_DiagnosticCause_connection_failed' => 'Не удалось установить соединение с SMTP сервером',
+    'ms_DiagnosticCause_ssl_tls_failed' => 'Ошибка SSL/TLS шифрования',
+    'ms_DiagnosticCause_password_incorrect' => 'Неверные имя пользователя или пароль',
+    'ms_DiagnosticCause_wrong_port_encryption' => 'Неправильный порт или тип шифрования для сервера',
+    'ms_DiagnosticCause_unknown_error' => 'Неизвестная ошибка',
+
+    // Detailed errors
+    'ms_DiagnosticDetail_oauth2_535_error' => 'OAuth2 авторизация не удалась (ошибка 535) - недействительные учетные данные или истекший токен',
+    'ms_DiagnosticDetail_oauth2_refresh_token_invalid' => 'Refresh token OAuth2 недействителен или истек',
+    'ms_DiagnosticDetail_oauth2_insufficient_permissions' => 'У учетной записи OAuth2 нет разрешения на отправку писем',
+    'ms_DiagnosticDetail_smtp_connection_refused' => 'SMTP сервер отклонил соединение - проверьте хост и порт',
+    'ms_DiagnosticDetail_smtp_connection_timeout' => 'Превышено время ожидания подключения к SMTP серверу',
+    'ms_DiagnosticDetail_smtp_connection_failed' => 'Не удалось установить соединение с SMTP сервером - проверьте настройки сети и сервера',
+    'ms_DiagnosticDetail_ssl_certificate_failed' => 'Ошибка проверки SSL сертификата',
+    'ms_DiagnosticDetail_ssl_handshake_failed' => 'Ошибка SSL/TLS рукопожатия',
+    'ms_DiagnosticDetail_smtp_auth_535_error' => 'Аутентификация SMTP не удалась (535) - неверные имя пользователя/пароль',
+
+    // Hints and suggestions
+    'ms_DiagnosticHint_check_sender_matches_oauth2' => 'Проверьте, что адрес отправителя соответствует авторизованной учетной записи OAuth2',
+    'ms_DiagnosticHint_verify_client_credentials' => 'Проверьте правильность Client ID и Client Secret',
+    'ms_DiagnosticHint_reauthorize_oauth2' => 'Попробуйте переавторизовать OAuth2 соединение',
+    'ms_DiagnosticHint_reauthorize_oauth2_new_tokens' => 'Переавторизуйте OAuth2 соединение для получения новых токенов',
+    'ms_DiagnosticHint_check_gmail_send_as_permission' => 'Проверьте разрешения "Отправить как" в аккаунте Gmail',
+    'ms_DiagnosticHint_verify_sender_authorized_gmail' => 'Убедитесь, что адрес отправителя авторизован в настройках Gmail',
+    'ms_DiagnosticHint_verify_smtp_hostname' => 'Проверьте правильность имени SMTP сервера',
+    'ms_DiagnosticHint_check_firewall_blocking' => 'Проверьте, что брандмауэр не блокирует соединение',
+    'ms_DiagnosticHint_ensure_smtp_service_running' => 'Убедитесь, что служба SMTP запущена на сервере',
+    'ms_DiagnosticHint_check_network_connectivity' => 'Проверьте сетевую связь с SMTP сервером',
+    'ms_DiagnosticHint_server_overloaded_unreachable' => 'Сервер может быть перегружен или недоступен',
+    'ms_DiagnosticHint_disable_ssl_verification' => 'Попробуйте отключить проверку SSL сертификата',
+    'ms_DiagnosticHint_check_valid_ssl_certificate' => 'Проверьте, что у сервера есть действительный SSL сертификат',
+    'ms_DiagnosticHint_check_encryption_type_matches' => 'Проверьте, что тип шифрования соответствует требованиям сервера',
+    'ms_DiagnosticHint_try_different_encryption' => 'Попробуйте другой метод шифрования (TLS/SSL/Нет)',
+    'ms_DiagnosticHint_verify_username_password' => 'Проверьте правильность имени пользователя и пароля',
+    'ms_DiagnosticHint_check_app_specific_password' => 'Проверьте, требует ли учетная запись пароль приложения',
+    'ms_DiagnosticHint_ensure_smtp_auth_allowed' => 'Убедитесь, что учетная запись разрешает SMTP аутентификацию',
+    'ms_DiagnosticHint_check_port_matches_encryption' => 'Проверьте, что порт соответствует типу шифрования',
+    'ms_DiagnosticHint_common_port_combinations' => 'Обычные комбинации: 587+TLS, 465+SSL, 25+Нет',
+    'ms_DiagnosticHint_gmail_sender_must_match' => 'Для Gmail: адрес отправителя должен совпадать с учетной записью OAuth2 или быть её псевдонимом',
+    'ms_DiagnosticHint_check_send_mail_as_settings' => 'Проверьте настройки "Отправка почты от имени" в Gmail',
+
+    // Diagnostic UI labels
+    'ms_DiagnosticConnectionFailed' => 'Подключение не удалось',
+    'ms_DiagnosticAuthorized' => 'Авторизовано',
+    'ms_DiagnosticProbableCause' => 'Вероятная причина:',
+    'ms_DiagnosticTechnicalDetails' => 'Технические подробности',
 ];

@@ -10,7 +10,7 @@
   "https://wiki.mikopbx.com/incoming-routes":"https://docs.mikopbx.com/mikopbx/manual/routing/incoming-routes",
   "https://wiki.mikopbx.com/outbound-routes":"https://docs.mikopbx.com/mikopbx/manual/routing/outbound-routes",
   "https://wiki.mikopbx.com/pbx-extension-modules":"https://docs.mikopbx.com/mikopbx/manual/modules",
-  "https://wiki.mikopbx.com/out-off-work-time":"https://docs.mikopbx.com/mikopbx/manual/routing/out-off-work-time",
+  "https://wiki.mikopbx.com/off-work-times":"https://docs.mikopbx.com/mikopbx/manual/routing/off-work-times",
   "https://wiki.mikopbx.com/dialplan-applications":"https://docs.mikopbx.com/mikopbx/manual/modules/dialplan-applications",
   "https://wiki.mikopbx.com/system-diagnostic":"https://docs.mikopbx.com/mikopbx/manual/maintenance/system-diagnostic",
   "https://wiki.mikopbx.com/network": "https://docs.mikopbx.com/mikopbx/manual/connectivity/network",

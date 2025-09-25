@@ -16,18 +16,18 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global PbxApiClient, $ */
+/* global PbxApiClient, $ */ 
 
 /**
- * OutOffWorkTimeAPI - REST API v3 client for out-of-work-time management
+ * OffWorkTimesAPI - REST API v3 client for out-of-work-time management
  *
  * Provides a clean interface for time condition operations using the new RESTful API.
  * This is the v3 API client that replaces the legacy v2 implementation.
  *
- * @class OutOffWorkTimeAPI
+ * @class OffWorkTimesAPI
  */
-const OutOffWorkTimeAPI = new PbxApiClient({
-    endpoint: '/pbxcore/api/v3/out-off-work-time',
+const OffWorkTimesAPI = new PbxApiClient({
+    endpoint: '/pbxcore/api/v3/off-work-times',
     customMethods: {
         getDefault: ':getDefault',
         changePriorities: ':changePriorities',
@@ -41,7 +41,7 @@ const OutOffWorkTimeAPI = new PbxApiClient({
  * @param {object} priorities - Map of time condition ID to new priority value
  * @param {function} callback - Callback function
  */
-OutOffWorkTimeAPI.changePriorities = function(priorities, callback) {
+OffWorkTimesAPI.changePriorities = function(priorities, callback) {
     $.api({
         url: `${this.apiUrl}:changePriorities`,
         method: 'POST',
@@ -68,6 +68,6 @@ OutOffWorkTimeAPI.changePriorities = function(priorities, callback) {
  *
  * @param {function} callback - Callback function
  */
-OutOffWorkTimeAPI.getDefault = function(callback) {
+OffWorkTimesAPI.getDefault = function(callback) {
     this.getRecord(null, callback);
 };

@@ -17,7 +17,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-namespace MikoPBX\PBXCoreREST\Controllers\OutOffWorkTime;
+namespace MikoPBX\PBXCoreREST\Controllers\OffWorkTimes;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\OutWorkTimesManagementProcessor;
@@ -28,41 +28,41 @@ use MikoPBX\PBXCoreREST\Lib\OutWorkTimesManagementProcessor;
  * Handles both standard CRUD operations and custom methods following Google API Design Guide patterns.
  * This controller implements a clean RESTful interface with proper HTTP methods and resource-oriented URLs.
  * 
- * @RoutePrefix("/pbxcore/api/v3/out-off-work-time")
+ * @RoutePrefix("/pbxcore/api/v3/off-work-times")
  * 
  * @examples Standard CRUD operations:
  * 
  * # List all time conditions with pagination and filtering
- * curl -X GET "http://127.0.0.1/pbxcore/api/v3/out-off-work-time?limit=20&offset=0&search=holiday"
+ * curl -X GET "http://127.0.0.1/pbxcore/api/v3/off-work-times?limit=20&offset=0&search=holiday"
  * 
  * # Get specific time condition
- * curl -X GET http://127.0.0.1/pbxcore/api/v3/out-off-work-time/TIME-123
+ * curl -X GET http://127.0.0.1/pbxcore/api/v3/off-work-times/TIME-123
  * 
  * # Create new time condition
- * curl -X POST http://127.0.0.1/pbxcore/api/v3/out-off-work-time \
+ * curl -X POST http://127.0.0.1/pbxcore/api/v3/off-work-times \
  *      -H "Content-Type: application/json" \
  *      -d '{"description":"Holiday schedule","time_from":"09:00","time_to":"18:00"}'
  * 
  * # Full update (replace) time condition
- * curl -X PUT http://127.0.0.1/pbxcore/api/v3/out-off-work-time/TIME-123 \
+ * curl -X PUT http://127.0.0.1/pbxcore/api/v3/off-work-times/TIME-123 \
  *      -H "Content-Type: application/json" \
  *      -d '{"description":"Weekend schedule","weekday_from":"6","weekday_to":"7"}'
  * 
  * # Partial update (modify) time condition
- * curl -X PATCH http://127.0.0.1/pbxcore/api/v3/out-off-work-time/TIME-123 \
+ * curl -X PATCH http://127.0.0.1/pbxcore/api/v3/off-work-times/TIME-123 \
  *      -H "Content-Type: application/json" \
  *      -d '{"priority":"10"}'
  * 
  * # Delete time condition
- * curl -X DELETE http://127.0.0.1/pbxcore/api/v3/out-off-work-time/TIME-123
+ * curl -X DELETE http://127.0.0.1/pbxcore/api/v3/off-work-times/TIME-123
  * 
  * @examples Custom method operations:
  * 
  * # Get default values for new time condition
- * curl -X GET http://127.0.0.1/pbxcore/api/v3/out-off-work-time:getDefault
+ * curl -X GET http://127.0.0.1/pbxcore/api/v3/off-work-times:getDefault
  * 
  * # Change priorities for multiple time conditions
- * curl -X POST http://127.0.0.1/pbxcore/api/v3/out-off-work-time:changePriorities \
+ * curl -X POST http://127.0.0.1/pbxcore/api/v3/off-work-times:changePriorities \
  *      -H "Content-Type: application/json" \
  *      -d '{"priorities":{"TIME-123":1,"TIME-456":2,"TIME-789":3}}'
  * 

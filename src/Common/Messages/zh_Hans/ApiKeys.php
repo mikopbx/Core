@@ -70,7 +70,7 @@ return [
     'ak_EndpointLicense' => '许可证操作',
     'ak_EndpointModules' => '模块管理',
     'ak_EndpointNetworkFilters' => '网络过滤器',
-    'ak_EndpointOutWorkTimes' => '下班时间',
+    'ak_EndpointOffWorkTimes' => '下班时间',
     'ak_EndpointOutboundRoutes' => '外拨路由',
     'ak_EndpointOutgoingRoutes' => '外拨路由',
     'ak_EndpointPasswords' => '密码管理',
