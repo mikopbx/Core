@@ -28,7 +28,9 @@
 
 {% if not isDocker %}
 <div class="field">
-    <label>{{ t._('f2b_PBXFirewallMaxReqSec') }}</label>
+    <label>{{ t._('f2b_PBXFirewallMaxReqSec') }}
+        <i class="circle info icon field-info-icon" data-field="PBXFirewallMaxReqSec"></i>
+    </label>
     <div class="ui">
         <div class="ui segment slider" id="pbx-firewall-max-req-slider" style="padding-left: 35px;padding-right: 35px;margin-top: 5px;">
             <div class="ui bottom aligned ticked labeled slider" id="PBXFirewallMaxReqSec"></div>

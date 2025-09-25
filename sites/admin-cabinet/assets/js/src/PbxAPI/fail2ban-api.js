@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global PbxApiClient, $ */
+/* global PbxApiClient, $ */ 
 
 /**
  * Fail2BanAPI - REST API v3 client for Fail2Ban management (Singleton resource)
@@ -43,23 +43,7 @@ const Fail2BanAPI = new PbxApiClient({
  * });
  */
 Fail2BanAPI.get = function(callback) {
-    $.api({
-        url: this.apiUrl,
-        method: 'GET',
-        on: 'now',
-        onSuccess(response) {
-            callback(response);
-        },
-        onFailure(response) {
-            callback(response);
-        },
-        onError() {
-            callback({
-                result: false,
-                messages: { error: ['Network error occurred'] }
-            });
-        }
-    });
+    return this.callGet({}, callback);
 };
 
 // Alias for backward compatibility
@@ -83,24 +67,7 @@ Fail2BanAPI.getSettings = Fail2BanAPI.get;
  * });
  */
 Fail2BanAPI.update = function(data, callback) {
-    $.api({
-        url: this.apiUrl,
-        method: 'PUT',
-        data: data,
-        on: 'now',
-        onSuccess(response) {
-            callback(response);
-        },
-        onFailure(response) {
-            callback(response);
-        },
-        onError() {
-            callback({
-                result: false,
-                messages: { error: ['Network error occurred'] }
-            });
-        }
-    });
+    return this.callPut(data, callback);
 };
 
 // Alias for backward compatibility
@@ -121,22 +88,5 @@ Fail2BanAPI.updateSettings = Fail2BanAPI.update;
  * });
  */
 Fail2BanAPI.patch = function(data, callback) {
-    $.api({
-        url: this.apiUrl,
-        method: 'PATCH',
-        data: data,
-        on: 'now',
-        onSuccess(response) {
-            callback(response);
-        },
-        onFailure(response) {
-            callback(response);
-        },
-        onError() {
-            callback({
-                result: false,
-                messages: { error: ['Network error occurred'] }
-            });
-        }
-    });
+    return this.callPatch(data, callback);
 };

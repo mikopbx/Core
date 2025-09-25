@@ -212,6 +212,57 @@ class Fail2BanTooltipManager {
                     }
                 ],
                 note: globalTranslate.f2b_FindTimeTooltip_note
+            },
+
+            // PBXFirewallMaxReqSec field tooltip
+            PBXFirewallMaxReqSec: {
+                header: globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_header,
+                description: globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_desc,
+                list: [
+                    {
+                        term: globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_how_it_works,
+                        definition: null
+                    },
+                    globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_how_it_works_desc,
+                    {
+                        term: globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_values_header,
+                        definition: null
+                    },
+                    {
+                        term: '10 req/s',
+                        definition: globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_value_10
+                    },
+                    {
+                        term: '30 req/s',
+                        definition: globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_value_30
+                    },
+                    {
+                        term: '100 req/s',
+                        definition: globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_value_100
+                    },
+                    {
+                        term: '300 req/s',
+                        definition: globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_value_300
+                    },
+                    {
+                        term: '∞',
+                        definition: globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_value_unlimited
+                    }
+                ],
+                list2: [
+                    {
+                        term: globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_scenarios_header,
+                        definition: null
+                    },
+                    globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_scenario_1,
+                    globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_scenario_2,
+                    globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_scenario_3
+                ],
+                warning: {
+                    header: globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_warning_header,
+                    text: globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_warning
+                },
+                note: globalTranslate.f2b_PBXFirewallMaxReqSecTooltip_note
             }
         };
     }
