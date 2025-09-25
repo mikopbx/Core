@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global PbxApiClient, $ */
+/* global PbxApiClient, $ */ 
 
 /**
  * FirewallAPI - REST API v3 client for firewall management
@@ -48,23 +48,7 @@ const FirewallAPI = new PbxApiClient({
  * });
  */
 FirewallAPI.getDefault = function(callback) {
-    $.api({
-        url: `${this.apiUrl}:getDefault`,
-        method: 'GET',
-        on: 'now',
-        onSuccess(response) {
-            callback(response);
-        },
-        onFailure(response) {
-            callback(response);
-        },
-        onError() {
-            callback({
-                result: false,
-                messages: { error: ['Network error occurred'] }
-            });
-        }
-    });
+    return this.callCustomMethod('getDefault', {}, callback);
 };
 
 /**
@@ -79,23 +63,7 @@ FirewallAPI.getDefault = function(callback) {
  * });
  */
 FirewallAPI.getBannedIps = function(callback) {
-    $.api({
-        url: `${this.apiUrl}:getBannedIps`,
-        method: 'GET',
-        on: 'now',
-        onSuccess(response) {
-            callback(response);
-        },
-        onFailure(response) {
-            callback(response);
-        },
-        onError() {
-            callback({
-                result: false,
-                messages: { error: ['Network error occurred'] }
-            });
-        }
-    });
+    return this.callCustomMethod('getBannedIps', {}, callback);
 };
 
 /**
@@ -111,24 +79,7 @@ FirewallAPI.getBannedIps = function(callback) {
  * });
  */
 FirewallAPI.unbanIp = function(ip, callback) {
-    $.api({
-        url: `${this.apiUrl}:unbanIp`,
-        method: 'POST',
-        data: { ip: ip },
-        on: 'now',
-        onSuccess(response) {
-            callback(response);
-        },
-        onFailure(response) {
-            callback(response);
-        },
-        onError() {
-            callback({
-                result: false,
-                messages: { error: ['Network error occurred'] }
-            });
-        }
-    });
+    return this.callCustomMethod('unbanIp', { ip: ip }, callback, 'POST');
 };
 
 /**
@@ -143,23 +94,7 @@ FirewallAPI.unbanIp = function(ip, callback) {
  * });
  */
 FirewallAPI.enable = function(callback) {
-    $.api({
-        url: `${this.apiUrl}:enable`,
-        method: 'POST',
-        on: 'now',
-        onSuccess(response) {
-            callback(response);
-        },
-        onFailure(response) {
-            callback(response);
-        },
-        onError() {
-            callback({
-                result: false,
-                messages: { error: ['Network error occurred'] }
-            });
-        }
-    });
+    return this.callCustomMethod('enable', {}, callback, 'POST');
 };
 
 /**
@@ -174,21 +109,5 @@ FirewallAPI.enable = function(callback) {
  * });
  */
 FirewallAPI.disable = function(callback) {
-    $.api({
-        url: `${this.apiUrl}:disable`,
-        method: 'POST',
-        on: 'now',
-        onSuccess(response) {
-            callback(response);
-        },
-        onFailure(response) {
-            callback(response);
-        },
-        onError() {
-            callback({
-                result: false,
-                messages: { error: ['Network error occurred'] }
-            });
-        }
-    });
+    return this.callCustomMethod('disable', {}, callback, 'POST');
 };

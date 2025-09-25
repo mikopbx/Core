@@ -58,7 +58,7 @@ const firewallTable = {
             firewallTable.$container.removeClass('loading');
             
             if (!response || !response.result) {
-                UserMessage.showError(globalTranslate.fw_ErrorLoadingData || 'Error loading firewall rules');
+                UserMessage.showError(globalTranslate.fw_ErrorLoadingData);
                 return;
             }
             
@@ -154,8 +154,8 @@ const firewallTable = {
             <div class="ui info icon message">
                 <i class="info circle icon"></i>
                 <div class="content">
-                    <div class="header">${globalTranslate.fw_DockerEnvironmentNotice || 'Docker Environment'}</div>
-                    <p>${globalTranslate.fw_DockerLimitedServicesInfo || 'Some services have limited protection in Docker environment. Only HTTP, SSH, AMI and SIP protocols are fully supported.'}</p>
+                    <div class="header">${globalTranslate.fw_DockerEnvironmentNotice}</div>
+                    <p>${globalTranslate.fw_DockerLimitedServicesInfo}</p>
                 </div>
             </div>
         `;
@@ -169,7 +169,7 @@ const firewallTable = {
      */
     buildFirewallTable(rules, data) {
         if (!rules || rules.length === 0) {
-            return '<div class="ui message">' + (globalTranslate.fw_NoRulesConfigured || 'No firewall rules configured') + '</div>';
+            return '<div class="ui message">' + globalTranslate.fw_NoRulesConfigured + '</div>';
         }
         
         let html = '<table class="ui selectable very basic compact unstackable table" id="firewall-table">';
@@ -358,7 +358,7 @@ const firewallTable = {
                     // Reload data to refresh the table
                     firewallTable.loadFirewallData();
                 } else {
-                    UserMessage.showMultiString(response?.messages || globalTranslate.fw_ErrorDeletingRule || 'Error deleting rule');
+                    UserMessage.showMultiString(response?.messages || globalTranslate.fw_ErrorDeletingRule);
                     $button.removeClass('loading disabled');
                     // Restore two-steps-delete class if deletion failed
                     $button.addClass('two-steps-delete');

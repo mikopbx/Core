@@ -44,7 +44,7 @@ const firewallTooltips = {
         // Port information
         if (portInfo && portInfo.length > 0) {
             content += `<div class="ui divider"></div>`;
-            content += `<p><strong>${globalTranslate.fw_ServicePortsInfo || 'Used ports'}:</strong></p>`;
+            content += `<p><strong>${globalTranslate.fw_ServicePortsInfo}:</strong></p>`;
             content += '<ul class="ui list">';
             
             portInfo.forEach(port => {
@@ -75,14 +75,14 @@ const firewallTooltips = {
         if (isDocker && isLimited) {
             // Docker limited service - always show host configuration
             content += `<div class="ui warning message">`;
-            content += `<i class="warning icon"></i> ${globalTranslate.fw_DockerLimitedService || 'This service is always enabled in Docker environment. Firewall rules must be configured on the Docker host.'}`;
+            content += `<i class="warning icon"></i> ${globalTranslate.fw_DockerLimitedService}`;
             content += `</div>`;
-            content += `<p><strong>${globalTranslate.fw_DockerConfigureRules || 'Configure firewall rules on Docker host'}:</strong></p>`;
+            content += `<p><strong>${globalTranslate.fw_DockerConfigureRules}:</strong></p>`;
             content += '<div class="ui segment">';
             
             if (showCopyButton) {
                 content += `<div class="ui top right attached label copy-command" style="cursor: pointer;">`;
-                content += `<i class="copy icon"></i> ${globalTranslate.fw_CopyCommand || 'Copy'}`;
+                content += `<i class="copy icon"></i> ${globalTranslate.fw_CopyCommand}`;
                 content += '</div>';
             }
             
@@ -108,13 +108,13 @@ const firewallTooltips = {
         } else if (isDocker) {
             // Docker supported service - just information
             if (action === 'allow') {
-                content += `<p>${globalTranslate.fw_AccessAllowedForSubnet || 'Access will be allowed for subnet'} <strong>${network}</strong></p>`;
+                content += `<p>${globalTranslate.fw_AccessAllowedForSubnet} <strong>${network}</strong></p>`;
             } else {
-                content += `<p>${globalTranslate.fw_AccessBlockedForSubnet || 'Access will be blocked for subnet'} <strong>${network}</strong></p>`;
+                content += `<p>${globalTranslate.fw_AccessBlockedForSubnet} <strong>${network}</strong></p>`;
             }
         } else {
             // Regular environment - show iptables rules
-            content += `<p><strong>${globalTranslate.fw_IptablesRulesApplied || 'Following iptables rules will be applied'}:</strong></p>`;
+            content += `<p><strong>${globalTranslate.fw_IptablesRulesApplied}:</strong></p>`;
             content += '<div class="ui segment">';
             content += '<pre style="font-size: 0.85em; margin: 0;">';
             
@@ -210,9 +210,9 @@ const firewallTooltips = {
         
         try {
             document.execCommand('copy');
-            $label.html(`<i class="check icon"></i> ${globalTranslate.fw_CommandCopied || 'Copied!'}`);
+            $label.html(`<i class="check icon"></i> ${globalTranslate.fw_CommandCopied}`);
             setTimeout(() => {
-                $label.html(`<i class="copy icon"></i> ${globalTranslate.fw_CopyCommand || 'Copy'}`);
+                $label.html(`<i class="copy icon"></i> ${globalTranslate.fw_CopyCommand}`);
             }, 2000);
         } catch (err) {
             console.error('Failed to copy:', err);
@@ -263,49 +263,49 @@ const firewallTooltips = {
         
         if (type === 'newer_block_ip') {
             // Header
-            content += `<div class="header"><b>${globalTranslate.fw_NewerBlockIp || 'Never block IPs'}</b></div>`;
+            content += `<div class="header"><b>${globalTranslate.fw_NewerBlockIp}</b></div>`;
             content += `<div class="ui divider"></div>`;
             
             // Description
-            content += `<p>${globalTranslate.fw_NewerBlockIpTooltip || 'IP addresses from this subnet will never be blocked by Fail2ban service, even after multiple failed login attempts. Use this option for trusted networks such as office network or VPN.'}</p>`;
+            content += `<p>${globalTranslate.fw_NewerBlockIpTooltip}</p>`;
             
             // Effect
             content += `<div class="ui divider"></div>`;
-            content += `<p><strong>${globalTranslate.fw_Effect || 'Effect'}:</strong></p>`;
+            content += `<p><strong>${globalTranslate.fw_Effect}:</strong></p>`;
             
             if (isChecked) {
                 content += `<div class="ui segment">`;
-                content += `<i class="shield alternate icon"></i> ${globalTranslate.fw_Fail2banWillIgnore || 'Fail2ban will ignore failed authentication attempts from'} <strong>${network}</strong>`;
+                content += `<i class="shield alternate icon"></i> ${globalTranslate.fw_Fail2banWillIgnore} <strong>${network}</strong>`;
                 content += `</div>`;
                 content += `<p class="ui warning message">`;
-                content += `<i class="warning icon"></i> ${globalTranslate.fw_SecurityWarning || 'Warning: This reduces security for the specified network. Use only for trusted networks.'}`;
+                content += `<i class="warning icon"></i> ${globalTranslate.fw_SecurityWarning}`;
                 content += `</p>`;
             } else {
-                content += `<p>${globalTranslate.fw_Fail2banWillMonitor || 'Fail2ban will monitor and may block IPs from'} <strong>${network}</strong> ${globalTranslate.fw_AfterFailedAttempts || 'after failed authentication attempts.'}</p>`;
+                content += `<p>${globalTranslate.fw_Fail2banWillMonitor} <strong>${network}</strong> ${globalTranslate.fw_AfterFailedAttempts}</p>`;
             }
             
         } else if (type === 'local_network') {
             // Header
-            content += `<div class="header"><b>${globalTranslate.fw_ItIsLocalNetwork || 'Local network or VPN'}</b></div>`;
+            content += `<div class="header"><b>${globalTranslate.fw_ItIsLocalNetwork}</b></div>`;
             content += `<div class="ui divider"></div>`;
             
             // Description
-            content += `<p>${globalTranslate.fw_LocalNetworkTooltip || 'Specify this option for local networks or VPN where devices connect to MikoPBX directly without NAT. This affects SIP packet processing and allows proper device address detection in the local network.'}</p>`;
+            content += `<p>${globalTranslate.fw_LocalNetworkTooltip}</p>`;
             
             // Effect
             content += `<div class="ui divider"></div>`;
-            content += `<p><strong>${globalTranslate.fw_Effect || 'Effect'}:</strong></p>`;
+            content += `<p><strong>${globalTranslate.fw_Effect}:</strong></p>`;
             
             if (isChecked) {
                 content += `<div class="ui segment">`;
                 content += `<ul class="ui list">`;
-                content += `<li><i class="check icon"></i> ${globalTranslate.fw_DirectSIPRouting || 'SIP packets will be routed directly without NAT handling'}</li>`;
-                content += `<li><i class="check icon"></i> ${globalTranslate.fw_NoContactRewriting || 'Contact headers will not be rewritten'}</li>`;
-                content += `<li><i class="check icon"></i> ${globalTranslate.fw_LocalAddressDetection || 'Device addresses will be detected as local'}</li>`;
+                content += `<li><i class="check icon"></i> ${globalTranslate.fw_DirectSIPRouting}</li>`;
+                content += `<li><i class="check icon"></i> ${globalTranslate.fw_NoContactRewriting}</li>`;
+                content += `<li><i class="check icon"></i> ${globalTranslate.fw_LocalAddressDetection}</li>`;
                 content += `</ul>`;
                 content += `</div>`;
             } else {
-                content += `<p>${globalTranslate.fw_NATHandling || 'Network'} <strong>${network}</strong> ${globalTranslate.fw_WillBeHandledAsExternal || 'will be handled as external network with NAT traversal enabled.'}</p>`;
+                content += `<p>${globalTranslate.fw_NATHandling} <strong>${network}</strong> ${globalTranslate.fw_WillBeHandledAsExternal}</p>`;
             }
         }
         

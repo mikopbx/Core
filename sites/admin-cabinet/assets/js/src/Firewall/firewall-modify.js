@@ -111,7 +111,7 @@ const firewall = {
             
             if (!response || !response.result) {
                 // Show error and stop
-                UserMessage.showError(globalTranslate.fw_ErrorLoadingRecord || 'Error loading firewall rule');
+                UserMessage.showError(globalTranslate.fw_ErrorLoadingRecord);
                 return;
             }
             
