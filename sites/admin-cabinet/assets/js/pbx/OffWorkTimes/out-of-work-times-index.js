@@ -18,7 +18,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, OutOffWorkTimeAPI, SecurityUtils, SemanticLocalization, PbxDataTableIndex, UserMessage */
+/* global globalRootUrl, globalTranslate, OffWorkTimesAPI, SecurityUtils, SemanticLocalization, PbxDataTableIndex, UserMessage */
 
 /**
  * Object for managing the Out-of-Work Times table with REST API v2
@@ -48,8 +48,8 @@ var OutOfWorkTimesTable = {
     // Create instance of base class with Out-of-Work Times specific configuration
     this.dataTableInstance = new PbxDataTableIndex({
       tableId: 'time-frames-table',
-      apiModule: OutOffWorkTimeAPI,
-      routePrefix: 'out-off-work-time',
+      apiModule: OffWorkTimesAPI,
+      routePrefix: 'off-work-times',
       showSuccessMessages: false,
       actionButtons: ['edit', 'copy', 'delete'],
       translations: {
@@ -248,7 +248,7 @@ var OutOfWorkTimesTable = {
 
     if (priorityWasChanged) {
       // Use REST API to update priorities
-      OutOffWorkTimeAPI.changePriorities(priorityData, function (response) {
+      OffWorkTimesAPI.changePriorities(priorityData, function (response) {
         if (response.result) {
           // Reload table to reflect new priorities
           _this.dataTableInstance.dataTable.ajax.reload();
