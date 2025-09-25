@@ -1,0 +1,65 @@
+"use strict";
+
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
+/* global globalRootUrl, PbxApi */
+
+/**
+ * 
+ *
+ * @module UserPageTrackerAPI  
+ */
+var UserPageTrackerAPI = {
+  // User Page Tracker
+  userPageTrackerPageView: "".concat(Config.pbxUrl, "/pbxcore/api/v2/user-page-tracker/pageView"),
+  // Tracks the page view.
+  userPageTrackerPageLeave: "".concat(Config.pbxUrl, "/pbxcore/api/v2/user-page-tracker/pageLeave"),
+  // Tracks the page leave.
+
+  /**
+  * Tracks the page view.
+  *
+  * @param {string} pageName - The name of the page to track.
+  * @returns {void}
+  */
+  UserPageTrackerPageView: function UserPageTrackerPageView(pageName) {
+    var blob = new Blob([JSON.stringify({
+      pageName: pageName
+    })], {
+      type: 'application/json; charset=UTF-8'
+    });
+    navigator.sendBeacon(UserPageTrackerAPI.userPageTrackerPageView, blob);
+  },
+
+  /**
+   * Tracks the page leave.
+   *
+   * @param {string} pageName - The name of the page to track.
+   * @returns {void}
+   */
+  UserPageTrackerPageLeave: function UserPageTrackerPageLeave(pageName) {
+    var blob = new Blob([JSON.stringify({
+      pageName: pageName
+    })], {
+      type: 'application/json; charset=UTF-8'
+    });
+    navigator.sendBeacon(UserPageTrackerAPI.userPageTrackerPageLeave, blob);
+  }
+};
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9QYnhBUEkvdXNlci1wYWdlLXRyYWNrZXItYXBpLmpzIl0sIm5hbWVzIjpbIlVzZXJQYWdlVHJhY2tlckFQSSIsInVzZXJQYWdlVHJhY2tlclBhZ2VWaWV3IiwiQ29uZmlnIiwicGJ4VXJsIiwidXNlclBhZ2VUcmFja2VyUGFnZUxlYXZlIiwiVXNlclBhZ2VUcmFja2VyUGFnZVZpZXciLCJwYWdlTmFtZSIsImJsb2IiLCJCbG9iIiwiSlNPTiIsInN0cmluZ2lmeSIsInR5cGUiLCJuYXZpZ2F0b3IiLCJzZW5kQmVhY29uIiwiVXNlclBhZ2VUcmFja2VyUGFnZUxlYXZlIl0sIm1hcHBpbmdzIjoiOztBQUFBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7O0FBRUE7O0FBRUE7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBLElBQU1BLGtCQUFrQixHQUFHO0FBQ3ZCO0FBQ0FDLEVBQUFBLHVCQUF1QixZQUFLQyxNQUFNLENBQUNDLE1BQVosK0NBRkE7QUFFZ0U7QUFDdkZDLEVBQUFBLHdCQUF3QixZQUFLRixNQUFNLENBQUNDLE1BQVosZ0RBSEQ7QUFHa0U7O0FBRXJGO0FBQ1I7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNJRSxFQUFBQSx1QkFYdUIsbUNBV0NDLFFBWEQsRUFXVztBQUM5QixRQUFNQyxJQUFJLEdBQUUsSUFBSUMsSUFBSixDQUFTLENBQUNDLElBQUksQ0FBQ0MsU0FBTCxDQUFlO0FBQUNKLE1BQUFBLFFBQVEsRUFBRUE7QUFBWCxLQUFmLENBQUQsQ0FBVCxFQUFrRDtBQUFDSyxNQUFBQSxJQUFJLEVBQUc7QUFBUixLQUFsRCxDQUFaO0FBQ0FDLElBQUFBLFNBQVMsQ0FBQ0MsVUFBVixDQUFxQmIsa0JBQWtCLENBQUNDLHVCQUF4QyxFQUFpRU0sSUFBakU7QUFDSCxHQWRzQjs7QUFnQnZCO0FBQ0o7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNJTyxFQUFBQSx3QkF0QnVCLG9DQXNCRVIsUUF0QkYsRUFzQlk7QUFDL0IsUUFBTUMsSUFBSSxHQUFFLElBQUlDLElBQUosQ0FBUyxDQUFDQyxJQUFJLENBQUNDLFNBQUwsQ0FBZTtBQUFDSixNQUFBQSxRQUFRLEVBQUVBO0FBQVgsS0FBZixDQUFELENBQVQsRUFBa0Q7QUFBQ0ssTUFBQUEsSUFBSSxFQUFHO0FBQVIsS0FBbEQsQ0FBWjtBQUNBQyxJQUFBQSxTQUFTLENBQUNDLFVBQVYsQ0FBcUJiLGtCQUFrQixDQUFDSSx3QkFBeEMsRUFBa0VHLElBQWxFO0FBQ0g7QUF6QnNCLENBQTNCIiwic291cmNlc0NvbnRlbnQiOlsiLypcbiAqIE1pa29QQlggLSBmcmVlIHBob25lIHN5c3RlbSBmb3Igc21hbGwgYnVzaW5lc3NcbiAqIENvcHlyaWdodCDCqSAyMDE3LTIwMjUgQWxleGV5IFBvcnRub3YgYW5kIE5pa29sYXkgQmVrZXRvdlxuICpcbiAqIFRoaXMgcHJvZ3JhbSBpcyBmcmVlIHNvZnR3YXJlOiB5b3UgY2FuIHJlZGlzdHJpYnV0ZSBpdCBhbmQvb3IgbW9kaWZ5XG4gKiBpdCB1bmRlciB0aGUgdGVybXMgb2YgdGhlIEdOVSBHZW5lcmFsIFB1YmxpYyBMaWNlbnNlIGFzIHB1Ymxpc2hlZCBieVxuICogdGhlIEZyZWUgU29mdHdhcmUgRm91bmRhdGlvbjsgZWl0aGVyIHZlcnNpb24gMyBvZiB0aGUgTGljZW5zZSwgb3JcbiAqIChhdCB5b3VyIG9wdGlvbikgYW55IGxhdGVyIHZlcnNpb24uXG4gKlxuICogVGhpcyBwcm9ncmFtIGlzIGRpc3RyaWJ1dGVkIGluIHRoZSBob3BlIHRoYXQgaXQgd2lsbCBiZSB1c2VmdWwsXG4gKiBidXQgV0lUSE9VVCBBTlkgV0FSUkFOVFk7IHdpdGhvdXQgZXZlbiB0aGUgaW1wbGllZCB3YXJyYW50eSBvZlxuICogTUVSQ0hBTlRBQklMSVRZIG9yIEZJVE5FU1MgRk9SIEEgUEFSVElDVUxBUiBQVVJQT1NFLiAgU2VlIHRoZVxuICogR05VIEdlbmVyYWwgUHVibGljIExpY2Vuc2UgZm9yIG1vcmUgZGV0YWlscy5cbiAqXG4gKiBZb3Ugc2hvdWxkIGhhdmUgcmVjZWl2ZWQgYSBjb3B5IG9mIHRoZSBHTlUgR2VuZXJhbCBQdWJsaWMgTGljZW5zZSBhbG9uZyB3aXRoIHRoaXMgcHJvZ3JhbS5cbiAqIElmIG5vdCwgc2VlIDxodHRwczovL3d3dy5nbnUub3JnL2xpY2Vuc2VzLz4uXG4gKi9cblxuLyogZ2xvYmFsIGdsb2JhbFJvb3RVcmwsIFBieEFwaSAqL1xuIFxuLyoqXG4gKiBcbiAqXG4gKiBAbW9kdWxlIFVzZXJQYWdlVHJhY2tlckFQSSAgXG4gKi9cbmNvbnN0IFVzZXJQYWdlVHJhY2tlckFQSSA9IHtcbiAgICAvLyBVc2VyIFBhZ2UgVHJhY2tlclxuICAgIHVzZXJQYWdlVHJhY2tlclBhZ2VWaWV3OiBgJHtDb25maWcucGJ4VXJsfS9wYnhjb3JlL2FwaS92Mi91c2VyLXBhZ2UtdHJhY2tlci9wYWdlVmlld2AsIC8vIFRyYWNrcyB0aGUgcGFnZSB2aWV3LlxuICAgIHVzZXJQYWdlVHJhY2tlclBhZ2VMZWF2ZTogYCR7Q29uZmlnLnBieFVybH0vcGJ4Y29yZS9hcGkvdjIvdXNlci1wYWdlLXRyYWNrZXIvcGFnZUxlYXZlYCwgLy8gVHJhY2tzIHRoZSBwYWdlIGxlYXZlLlxuXG4gICAgICAgIC8qKlxuICAgICAqIFRyYWNrcyB0aGUgcGFnZSB2aWV3LlxuICAgICAqXG4gICAgICogQHBhcmFtIHtzdHJpbmd9IHBhZ2VOYW1lIC0gVGhlIG5hbWUgb2YgdGhlIHBhZ2UgdG8gdHJhY2suXG4gICAgICogQHJldHVybnMge3ZvaWR9XG4gICAgICovXG4gICAgVXNlclBhZ2VUcmFja2VyUGFnZVZpZXcocGFnZU5hbWUpIHtcbiAgICAgICAgY29uc3QgYmxvYj0gbmV3IEJsb2IoW0pTT04uc3RyaW5naWZ5KHtwYWdlTmFtZTogcGFnZU5hbWUsfSldLCB7dHlwZSA6ICdhcHBsaWNhdGlvbi9qc29uOyBjaGFyc2V0PVVURi04J30pO1xuICAgICAgICBuYXZpZ2F0b3Iuc2VuZEJlYWNvbihVc2VyUGFnZVRyYWNrZXJBUEkudXNlclBhZ2VUcmFja2VyUGFnZVZpZXcsIGJsb2IpO1xuICAgIH0sXG5cbiAgICAvKipcbiAgICAgKiBUcmFja3MgdGhlIHBhZ2UgbGVhdmUuXG4gICAgICpcbiAgICAgKiBAcGFyYW0ge3N0cmluZ30gcGFnZU5hbWUgLSBUaGUgbmFtZSBvZiB0aGUgcGFnZSB0byB0cmFjay5cbiAgICAgKiBAcmV0dXJucyB7dm9pZH1cbiAgICAgKi9cbiAgICBVc2VyUGFnZVRyYWNrZXJQYWdlTGVhdmUocGFnZU5hbWUpIHtcbiAgICAgICAgY29uc3QgYmxvYj0gbmV3IEJsb2IoW0pTT04uc3RyaW5naWZ5KHtwYWdlTmFtZTogcGFnZU5hbWUsfSldLCB7dHlwZSA6ICdhcHBsaWNhdGlvbi9qc29uOyBjaGFyc2V0PVVURi04J30pO1xuICAgICAgICBuYXZpZ2F0b3Iuc2VuZEJlYWNvbihVc2VyUGFnZVRyYWNrZXJBUEkudXNlclBhZ2VUcmFja2VyUGFnZUxlYXZlLCBibG9iKTtcbiAgICB9LFxufSJdfQ==
