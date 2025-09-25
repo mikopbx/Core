@@ -83,7 +83,7 @@ class SendMetricsAction extends Injectable
 
             // Hypervisor
             $restAnswer = $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
-                '/pbxcore/api/sysinfo/getHypervisorInfo',
+                '/pbxcore/api/v3/sysinfo:getHypervisorInfo',
                 PBXCoreRESTClientProvider::HTTP_METHOD_GET
             ]);
             if ($restAnswer->success){
@@ -92,7 +92,7 @@ class SendMetricsAction extends Injectable
 
             // DMI
             $restAnswer = $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
-                '/pbxcore/api/sysinfo/getDMIInfo',
+                '/pbxcore/api/v3/sysinfo:getDMIInfo',
                 PBXCoreRESTClientProvider::HTTP_METHOD_GET
             ]);
             if ($restAnswer->success){

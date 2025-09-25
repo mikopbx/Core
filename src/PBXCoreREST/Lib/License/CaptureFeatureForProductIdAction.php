@@ -44,11 +44,11 @@ class CaptureFeatureForProductIdAction extends Injectable
 
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        $licFeatureId = $data['licFeatureId'];
-        $licProductId = $data['licProductId'];
+        $licFeatureId = $data['licFeatureId'] ?? $data['featureId'] ?? null;
+        $licProductId = $data['licProductId'] ?? $data['productId'] ?? null;
 
-        if (!isset($licFeatureId, $licProductId)) {
-            $res->messages[] = 'The feature id or product id is empty.';
+        if (empty($licFeatureId) || empty($licProductId)) {
+            $res->messages['error'][] = 'The feature id or product id is empty.';
             return $res;
         }
         $res->success = true;
