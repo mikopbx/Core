@@ -30,27 +30,27 @@ use MikoPBX\PBXCoreREST\Controllers\
     AsteriskRestUsers\RestController as AsteriskRestUsersRestController,
     Cdr\GetController as CdrGetController,
     DialplanApplications\RestController as DialplanApplicationsRestController,
-    Iax\GetController as IaxGetController,
+    Iax\RestController as IaxRestController,
     Modules\ModulesControllerBase,
     Modules\CorePostController as ModulesCorePostController,
     Modules\CoreGetController as ModulesCoreGetController,
     Sip\GetController as SipGetController,
     Sip\PostController as SipPostController,
+    Sip\RestController as SipRestController,
     Storage\GetController as StorageGetController,
     Storage\PostController as StoragePostController,
+    Storage\RestController as StorageRestController,
     Syslog\GetController as SyslogGetController,
     Syslog\PostController as SyslogPostController,
-    Sysinfo\GetController as SysinfoGetController,
-    Sysinfo\PostController as SysinfoPostController,
-    System\GetController as SystemGetController,
-    System\PostController as SystemPostController,
+    Sysinfo\RestController as SysinfoRestController,
+    System\RestController as SystemRestController,
     Firewall\RestController as FirewallRestController,
     NetworkFilters\RestController as NetworkFiltersRestController,
-    Files\GetController as FilesGetController,
-    Files\PostController as FilesPostController,
-    Advice\GetController as AdviceGetController,
+    Files\RestController as FilesRestController,
+    Advice\RestController as AdviceRestController,
     Extensions\GetController as ExtensionsGetController,
     Extensions\PostController as ExtensionsPostController,
+    Extensions\RestController as ExtensionsRestController,
     Employees\RestController as EmployeesRestController,
     Fail2Ban\RestController as Fail2BanRestController,
     CallQueues\RestController as CallQueuesRestController,
@@ -58,22 +58,23 @@ use MikoPBX\PBXCoreREST\Controllers\
     ConferenceRooms\RestController as ConferenceRoomsRestController,
     GeneralSettings\RestController as GeneralSettingsRestController,
     IncomingRoutes\RestController as IncomingRoutesRestController,
+    MailSettings\RestController as MailSettingsRestController,
+    MailSettings\OAuth2CallbackController,
     Network\RestController as NetworkRestController,
     OutboundRoutes\RestController as OutboundRoutesRestController,
-    OutOffWorkTime\RestController as OutOffWorkTimeRestController,
+    OffWorkTimes\RestController as OffWorkTimesRestController,
     CustomFiles\RestController as CustomFilesRestController,
     SoundFiles\RestController as SoundFilesRestController,
+    TimeSettings\RestController as TimeSettingsRestController,
     Users\GetController as UsersGetController,
     Nchan\GetController as NchanGetController,
-    License\GetController as LicenseGetController,
-    License\PostController as LicensePostController,
+    License\RestController as LicenseRestController,
     UserPageTracker\PostController as UserPageTrackerPostController,
     Providers\RestController as ProvidersRestController,
     SipProviders\RestController as SipProvidersRestController,
     IaxProviders\RestController as IaxProvidersRestController,
     AsteriskManagers\RestController as AsteriskManagersRestController,
-    Passwords\GetController as PasswordsGetController,
-    Passwords\PostController as PasswordsPostController,
+    Passwords\RestController as PasswordsRestController,
     Syslog\RestController as SyslogRestController
 };
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
@@ -95,7 +96,7 @@ use Phalcon\Events\Event;
  */
 class RouterProvider implements ServiceProviderInterface
 {
-    public const string SERVICE_NAME = '';
+    public const SERVICE_NAME = '';
 
     /**
      * Register response service provider
@@ -161,7 +162,6 @@ class RouterProvider implements ServiceProviderInterface
             // Class, Method, Route, Handler, ParamsRegex
             [SipGetController::class, 'callAction', '/pbxcore/api/sip/{actionName}', 'get', '/'],
             [SipPostController::class, 'callAction', '/pbxcore/api/sip/{actionName}', 'post', '/'],
-            [IaxGetController::class, 'callAction', '/pbxcore/api/iax/{actionName}', 'get', '/'],
             [CdrGetController::class, 'callAction', '/pbxcore/api/cdr/{actionName}', 'get', '/'],
             [CdrGetController::class, 'callAction', '/pbxcore/api/cdr/v2/{actionName}', 'get', '/'],
         ]);
@@ -170,10 +170,11 @@ class RouterProvider implements ServiceProviderInterface
         $routes = array_merge($routes, RestfulRouteBuilder::buildBatchRoutes([
             FirewallRestController::class => '/pbxcore/api/v3/firewall',
             NetworkFiltersRestController::class => '/pbxcore/api/v3/network-filters',
+            ExtensionsRestController::class => '/pbxcore/api/v3/extensions',
             EmployeesRestController::class => '/pbxcore/api/v3/employees',
             ApiKeysRestController::class => '/pbxcore/api/v3/api-keys',
             OutboundRoutesRestController::class => '/pbxcore/api/v3/outbound-routes',
-            OutOffWorkTimeRestController::class => '/pbxcore/api/v3/out-off-work-time',
+            OffWorkTimesRestController::class => '/pbxcore/api/v3/off-work-times',
             CustomFilesRestController::class => '/pbxcore/api/v3/custom-files',
             AsteriskManagersRestController::class => '/pbxcore/api/v3/asterisk-managers',
             AsteriskRestUsersRestController::class => '/pbxcore/api/v3/asterisk-rest-users',
@@ -200,31 +201,111 @@ class RouterProvider implements ServiceProviderInterface
             '/pbxcore/api/v3/general-settings'
         ));
 
+        // MailSettings OAuth2 callback - specific route
+        $routes[] = [
+            OAuth2CallbackController::class,
+            'oauth2CallbackAction',
+            '/pbxcore/api/v3/mail-settings/oauth2-callback',
+            'get',
+            ''  // No additional params
+        ];
+
+        // MailSettings is a singleton resource - there's only one set of mail settings
+        $routes = array_merge($routes, RestfulRouteBuilder::buildSingletonRoutes(
+            MailSettingsRestController::class,
+            '/pbxcore/api/v3/mail-settings'
+        ));
+
         // Add Syslog RESTful routes (custom methods only, no CRUD)
         $routes = array_merge($routes, RestfulRouteBuilder::buildCustomOnlyRoutes(
             SyslogRestController::class,
             '/pbxcore/api/v3/syslog'
         ));
 
+        // Add Advice RESTful routes (custom methods only, no CRUD)
+        $routes = array_merge($routes, RestfulRouteBuilder::buildCustomOnlyRoutes(
+            AdviceRestController::class,
+            '/pbxcore/api/v3/advice'
+        ));
+
+        // Add SIP RESTful routes (custom methods only, no CRUD)
+        // SIP API needs both collection-level and resource-level custom methods
+        $routes = array_merge($routes, [
+            // Collection-level custom methods (getStatuses, forceCheck all, getPeersStatuses, getRegistry)
+            [SipRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/sip', 'get', ':{customMethod:[a-zA-Z0-9]+}'],
+            [SipRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/sip', 'post', ':{customMethod:[a-zA-Z0-9]+}'],
+            // Resource-level custom methods (getStatus/228, forceCheck/228, getHistory/228, getStats/228, getSecret/228)
+            [SipRestController::class, 'handleResourceCustomRequest', '/pbxcore/api/v3/sip', 'get', '/{id:[a-zA-Z0-9\\-]+}:{customMethod:[a-zA-Z0-9]+}'],
+            [SipRestController::class, 'handleResourceCustomRequest', '/pbxcore/api/v3/sip', 'post', '/{id:[a-zA-Z0-9\\-]+}:{customMethod:[a-zA-Z0-9]+}'],
+        ]);
+
         // Fail2Ban is a singleton resource - there's only one fail2ban configuration
         $routes = array_merge($routes, RestfulRouteBuilder::buildSingletonRoutes(
             Fail2BanRestController::class,
             '/pbxcore/api/v3/fail2ban'
         ));
-        
+
+        // TimeSettings is a singleton resource - there's only one time configuration
+        $routes = array_merge($routes, RestfulRouteBuilder::buildSingletonRoutes(
+            TimeSettingsRestController::class,
+            '/pbxcore/api/v3/time-settings'
+        ));
+
+        // Storage is a singleton resource - there's only one storage configuration
+        $routes = array_merge($routes, RestfulRouteBuilder::buildSingletonRoutes(
+            StorageRestController::class,
+            '/pbxcore/api/v3/storage'
+        ));
+
+        // IAX is a singleton resource - there's only one IAX service configuration
+        $routes = array_merge($routes, RestfulRouteBuilder::buildSingletonRoutes(
+            IaxRestController::class,
+            '/pbxcore/api/v3/iax'
+        ));
+
+        // Passwords is a singleton resource - there's only one password service in the system
+        $routes = array_merge($routes, RestfulRouteBuilder::buildSingletonRoutes(
+            PasswordsRestController::class,
+            '/pbxcore/api/v3/passwords'
+        ));
+
+        // License is a singleton resource - there's only one license in the system
+        $routes = array_merge($routes, RestfulRouteBuilder::buildSingletonRoutes(
+            LicenseRestController::class,
+            '/pbxcore/api/v3/license'
+        ));
+
+        // Sysinfo is a singleton resource - there's only one system in the PBX
+        $routes = array_merge($routes, RestfulRouteBuilder::buildSingletonRoutes(
+            SysinfoRestController::class,
+            '/pbxcore/api/v3/sysinfo'
+        ));
+
+        // Files API - hybrid resource that works with filesystem (not database entities)
+        // Supports both standard REST operations and custom methods
+        $routes = array_merge($routes, [
+            // Standard CRUD operations on files
+            [FilesRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/files', 'get', '/{id:.+}'],       // GET /files/{path}
+            [FilesRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/files', 'put', '/{id:.+}'],       // PUT /files/{path}
+            [FilesRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/files', 'delete', '/{id:.+}'],    // DELETE /files/{path}
+
+            // Custom methods for specialized file operations
+            [FilesRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/files', 'get', ':{customMethod:[a-zA-Z0-9]+}'],     // GET :uploadStatus, :firmwareStatus
+            [FilesRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/files', 'post', ':{customMethod:[a-zA-Z0-9]+}'],    // POST :upload, :downloadFirmware
+        ]);
+
+        // System is a singleton resource with mostly custom methods (commands)
+        $routes = array_merge($routes, RestfulRouteBuilder::buildSingletonRoutes(
+            SystemRestController::class,
+            '/pbxcore/api/v3/system'
+        ));
+
         // ========== More legacy v1/v2 routes ==========
         $routes = array_merge($routes, [
             [StorageGetController::class, 'callAction', '/pbxcore/api/storage/{actionName}', 'get', '/'],
             [StoragePostController::class, 'callAction', '/pbxcore/api/storage/{actionName}', 'post', '/'],
-            [SystemGetController::class, 'callAction', '/pbxcore/api/system/{actionName}', 'get', '/'],
-            [SystemPostController::class, 'callAction', '/pbxcore/api/system/{actionName}', 'post', '/'],
             [SyslogGetController::class, 'callAction', '/pbxcore/api/syslog/{actionName}', 'get', '/'],
             [SyslogPostController::class, 'callAction', '/pbxcore/api/syslog/{actionName}', 'post', '/'],
-            [SysinfoGetController::class, 'callAction', '/pbxcore/api/sysinfo/{actionName}', 'get', '/'],
-            [SysinfoPostController::class, 'callAction', '/pbxcore/api/sysinfo/{actionName}', 'post', '/'],
-            [FilesGetController::class, 'callAction', '/pbxcore/api/files/{actionName}', 'get', '/'],
-            [FilesPostController::class, 'callAction', '/pbxcore/api/files/{actionName}', 'post', '/'],
-            [AdviceGetController::class, 'callAction', '/pbxcore/api/advice/{actionName}', 'get', '/'],
             [ExtensionsGetController::class, 'callAction', '/pbxcore/api/extensions/{actionName}', 'get', '/'],
             [ExtensionsPostController::class, 'callAction', '/pbxcore/api/extensions/{actionName}', 'post', '/'],
 
@@ -236,10 +317,6 @@ class RouterProvider implements ServiceProviderInterface
             // More v1/v2 routes
             [UsersGetController::class, 'callAction', '/pbxcore/api/users/{actionName}', 'get', '/'],
             [NchanGetController::class, 'callAction', '/pbxcore/api/nchan/{queueName}', 'get', '/'],
-            [LicenseGetController::class, 'callAction', '/pbxcore/api/license/{actionName}', 'get', '/'],
-            [LicensePostController::class, 'callAction', '/pbxcore/api/license/{actionName}', 'post', '/'],
-            [PasswordsGetController::class, 'callAction', '/pbxcore/api/v2/passwords/{actionName}', 'get', '/'],
-            [PasswordsPostController::class, 'callAction', '/pbxcore/api/v2/passwords/{actionName}', 'post', '/'],
             [UserPageTrackerPostController::class, 'callAction', '/pbxcore/api/v2/user-page-tracker/{actionName}', 'post', '/'],
 
             // Module routes
