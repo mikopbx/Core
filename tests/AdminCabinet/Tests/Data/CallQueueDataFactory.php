@@ -99,7 +99,7 @@ class CallQueueDataFactory
         ],
         'sales.department.to.change.extension' => [
             'description' => 'Sales department queue, the first line of agents2',
-            'name' => 'Sales department2 <20025>',
+            'name' => 'Sales department2',
             'OldExtension' => 20020,
             'extension' => 20025,
             'seconds_to_ring_each_member' => 15,
