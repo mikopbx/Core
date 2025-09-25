@@ -60,7 +60,7 @@ const storageIndex = {
                 }
             },
         });
-        
+
         // Initialize records save period slider
         storageIndex.$recordsSavePeriodSlider
             .slider({
@@ -81,16 +81,13 @@ const storageIndex = {
                 },
                 onChange: storageIndex.cbAfterSelectSavePeriodSlider,
             });
-        
-        // Set the initial value for the records save period slider
-        const $hiddenField = storageIndex.$formObj.find('input[name="PBXRecordSavePeriod"]');
-        const recordSavePeriod = $hiddenField.val() || '';
-        storageIndex.$recordsSavePeriodSlider
-            .slider('set value', storageIndex.saveRecordsPeriod.indexOf(recordSavePeriod), false);
-        
+
         // Initialize the form
         storageIndex.initializeForm();
-        
+
+        // Load settings from API
+        storageIndex.loadSettings();
+
         // Load storage data on page load
         storageIndex.loadStorageData();
     },
@@ -102,12 +99,31 @@ const storageIndex = {
     cbAfterSelectSavePeriodSlider(value) {
         // Get the save period corresponding to the slider value.
         const savePeriod = storageIndex.saveRecordsPeriod[value];
-        
+
         // Set the form value for 'PBXRecordSavePeriod' to the selected save period.
         storageIndex.$formObj.form('set value', 'PBXRecordSavePeriod', savePeriod);
-        
+
         // Trigger change event to acknowledge the modification
         Form.dataChanged();
+    },
+
+    /**
+     * Load Storage settings from API
+     */
+    loadSettings() {
+        StorageAPI.get((response) => {
+            if (response.result && response.data) {
+                const data = response.data;
+                // Set form values
+                storageIndex.$formObj.form('set values', {
+                    PBXRecordSavePeriod: data.PBXRecordSavePeriod
+                });
+
+                // Update slider
+                const recordSavePeriod = data.PBXRecordSavePeriod || '';
+                storageIndex.$recordsSavePeriodSlider.slider('set value', storageIndex.saveRecordsPeriod.indexOf(recordSavePeriod), false);
+            }
+        });
     },
     
     /**
@@ -117,11 +133,11 @@ const storageIndex = {
         // Show loading state
         $('#storage-usage-container .dimmer').addClass('active');
         $('#storage-details').hide();
-        
-        // Make API call to get storage usage using StorageAPI
-        StorageAPI.getStorageUsage((data) => {
-            if (data !== false) {
-                storageIndex.renderStorageData(data);
+
+        // Make API call to get storage usage using new StorageAPI
+        StorageAPI.getUsage((response) => {
+            if (response.result && response.data) {
+                storageIndex.renderStorageData(response.data);
             } else {
                 $('#storage-usage-container .dimmer').removeClass('active');
                 UserMessage.showMultiString(globalTranslate.st_StorageLoadError);
@@ -225,10 +241,17 @@ const storageIndex = {
      */
     initializeForm() {
         Form.$formObj = storageIndex.$formObj;
-        Form.url = `${globalRootUrl}storage/save`; // Form submission URL
-        Form.validateRules = storageIndex.validateRules; // Form validation rules
-        Form.cbBeforeSendForm = storageIndex.cbBeforeSendForm; // Callback before form is sent
-        Form.cbAfterSendForm = storageIndex.cbAfterSendForm; // Callback after form is sent
+        Form.validateRules = storageIndex.validateRules;
+        Form.cbBeforeSendForm = storageIndex.cbBeforeSendForm;
+        Form.cbAfterSendForm = storageIndex.cbAfterSendForm;
+
+        // Configure REST API settings for Form.js (singleton resource)
+        Form.apiSettings = {
+            enabled: true,
+            apiObject: StorageAPI,
+            saveMethod: 'update' // Using standard PUT for singleton update
+        };
+
         Form.initialize();
     }
 };

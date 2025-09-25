@@ -2,7 +2,7 @@
 
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,15 +35,8 @@ class StorageEditForm extends BaseForm
     {
         parent::initialize($entity, $options);
 
-        // Add storage-related settings
-        foreach ($options as $key => $value) {
-            switch ($key) {
-                case PbxSettings::PBX_RECORD_SAVE_PERIOD:
-                    $this->add(new Hidden($key, ['value' => $value]));
-                    break;
-                default:
-                    break;
-            }
-        }
+        // Add hidden field for record save period
+        // The actual value will be loaded via REST API in JavaScript
+        $this->add(new Hidden(PbxSettings::PBX_RECORD_SAVE_PERIOD));
     }
 }

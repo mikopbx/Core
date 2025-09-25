@@ -1,5 +1,4 @@
 <?php
-
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
@@ -18,27 +17,40 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-namespace MikoPBX\AdminCabinet\Controllers;
+namespace MikoPBX\PBXCoreREST\Lib\Storage;
 
-use MikoPBX\AdminCabinet\Forms\StorageEditForm;
+use MikoPBX\Core\System\Storage;
+use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 
 /**
- * StorageController
+ * Get Storage Usage Action
  *
- * Manages storage information and settings.
- * Data loading is handled via REST API from JavaScript.
+ * Retrieves detailed storage usage statistics by category
+ *
+ * @package MikoPBX\PBXCoreREST\Lib\Storage
  */
-class StorageController extends BaseController
+class GetUsageAction
 {
     /**
-     * Builds the index page for Storage management.
+     * Get storage usage statistics
      *
-     * Data loading is handled via REST API from JavaScript.
-     * This method only sets up the form structure for the view.
+     * @return PBXApiResult
      */
-    public function indexAction(): void
+    public static function main(): PBXApiResult
     {
-        $this->view->form = new StorageEditForm();
-        $this->view->submitMode = null;
+        $res = new PBXApiResult();
+        $res->processor = __METHOD__;
+
+        try {
+            $storage = new Storage();
+            $res->data = $storage->getStorageUsageByCategory();
+            $res->success = true;
+
+        } catch (\Exception $e) {
+            $res->messages['error'][] = $e->getMessage();
+            $res->success = false;
+        }
+
+        return $res;
     }
 }
