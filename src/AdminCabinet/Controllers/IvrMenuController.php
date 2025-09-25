@@ -55,18 +55,4 @@ class IvrMenuController extends BaseController
         // Pass form to JavaScript
         $this->view->form = $form;
     }
-
-
-    /**
-     * Saves the IVR menu
-     * This action is kept for backward compatibility but the actual saving
-     * is handled by the REST API through JavaScript (Form.js integration)
-     */
-    public function saveAction(): void
-    {
-        // This method is intentionally empty as all save operations
-        // are handled through REST API calls from the frontend JavaScript
-        // using Form.js integration with IvrMenuAPI.saveRecord()
-    }
-
 }
