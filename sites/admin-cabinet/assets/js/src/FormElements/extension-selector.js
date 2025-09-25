@@ -34,7 +34,7 @@
  *     excludeExtensions: ['101'],   // Extensions to exclude
  *     includeEmpty: true,           // Include empty option
  *     onChange: (value) => { ... }  // Change callback
- * });
+ * }); 
  * 
  * @module ExtensionSelector
  */
@@ -87,15 +87,15 @@ const ExtensionSelector = {
         const currentValue = (options.data && options.data[fieldId]) || $hiddenInput.val() || '';
         const currentText = this.detectInitialText(fieldId, options.data) || config.placeholder;
         
-        // Build API URL with parameters
-        let apiUrl = '/pbxcore/api/extensions/getForSelect';
+        // Build API URL with parameters using v3 API
+        let apiUrl = '/pbxcore/api/v3/extensions:getForSelect';
         const apiParams = {};
-        
+
         // Add type parameter
         if (config.type && config.type !== 'all') {
             apiParams.type = config.type;
         }
-        
+
         // Add exclude parameter
         if (config.excludeExtensions && config.excludeExtensions.length > 0) {
             apiParams.exclude = config.excludeExtensions.join(',');
@@ -122,7 +122,7 @@ const ExtensionSelector = {
         if (config.includeEmpty) {
             dropdownConfig.emptyOption = {
                 key: '',
-                value: globalTranslate.ex_SelectExtension || 'Select extension'
+                value: globalTranslate.ex_SelectExtension
             };
         }
         
@@ -188,13 +188,13 @@ const ExtensionSelector = {
     getPlaceholderByType(type) {
         switch (type) {
             case 'routing':
-                return globalTranslate.ex_SelectExtension || 'Select extension';
+                return globalTranslate.ex_SelectExtension;
             case 'internal':
-                return globalTranslate.ex_SelectInternalExtension || 'Select internal extension';
+                return globalTranslate.ex_SelectInternalExtension;
             case 'queue':
-                return globalTranslate.ex_SelectQueueExtension || 'Select queue extension';
+                return globalTranslate.ex_SelectQueueExtension;
             default:
-                return globalTranslate.ex_SelectExtension || 'Select extension';
+                return globalTranslate.ex_SelectExtension;
         }
     },
     
@@ -485,10 +485,10 @@ const ExtensionSelector = {
     clearCache(type = null) {
         if (type) {
             // Clear cache for specific type
-            DynamicDropdownBuilder.clearCacheFor('/pbxcore/api/extensions/getForSelect', { type });
+            DynamicDropdownBuilder.clearCacheFor('/pbxcore/api/v3/extensions:getForSelect', { type });
         } else {
             // Clear all extensions cache
-            DynamicDropdownBuilder.clearCacheFor('/pbxcore/api/extensions/getForSelect');
+            DynamicDropdownBuilder.clearCacheFor('/pbxcore/api/v3/extensions:getForSelect');
         }
     },
     
@@ -534,7 +534,7 @@ const ExtensionSelector = {
         
         // Clear cache for this specific configuration
         const cacheKey = this.generateCacheKey(instance.config);
-        DynamicDropdownBuilder.clearCacheFor('/pbxcore/api/extensions/getForSelect', cacheKey);
+        DynamicDropdownBuilder.clearCacheFor('/pbxcore/api/v3/extensions:getForSelect', cacheKey);
         
         // Refresh dropdown
         this.refresh(fieldId);
