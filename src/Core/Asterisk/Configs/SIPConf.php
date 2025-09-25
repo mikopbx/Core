@@ -241,10 +241,12 @@ class SIPConf extends AsteriskConfigClass
                 $context_id = str_replace('-incoming', '', $provider['context_id']);
                 $conf      .= IncomingContexts::generate($contextsData, '', $context_id);
                 $contexts[] = $provider['context_id'];
-                
+
                 // Generate CallerID/DID processing contexts for all providers in this context
-                foreach ($contextsData as $contextProvider) {
-                    if ($this->needsCallerIdDidProcessing($contextProvider) && !in_array($contextProvider['uniqid'], $processedProviders, true)) {
+                foreach ($this->data_providers as $contextProvider) {
+                    if ($contextProvider['context_id'] === $provider['context_id']
+                        && $this->needsCallerIdDidProcessing($contextProvider)
+                        && !in_array($contextProvider['uniqid'], $processedProviders, true)) {
                         $processor = new CallerIdDidProcessor($contextProvider['uniqid'], $contextProvider);
                         $conf .= $processor->generateIncomingProcessingContext();
                         $processedProviders[] = $contextProvider['uniqid'];
