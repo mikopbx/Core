@@ -19,7 +19,11 @@
 
 namespace MikoPBX\PBXCoreREST\Lib;
 
+use MikoPBX\Common\Providers\ManagedCacheProvider;
+use MikoPBX\Core\Workers\WorkerPrepareAdvice;
 use MikoPBX\PBXCoreREST\Lib\Advice\GetAdviceListAction;
+use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
 
 
@@ -47,12 +51,52 @@ class AdviceProcessor extends Injectable
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
         $action = $request['action'];
-        if ('getList' === $action) {
-            $res = GetAdviceListAction::main();
-        } else {
-            $res->messages['error'][] = "Unknown action - $action in ".__CLASS__;
+
+        switch ($action) {
+            case 'getList':
+                $res = GetAdviceListAction::main();
+                break;
+            case 'refresh':
+                $res = self::refreshAdviceCache();
+                break;
+            default:
+                $res->messages['error'][] = "Unknown action - $action in ".__CLASS__;
+                break;
         }
+
         $res->function = $action;
+        return $res;
+    }
+
+    /**
+     * Force refresh of advice cache
+     *
+     * @return PBXApiResult
+     */
+    private static function refreshAdviceCache(): PBXApiResult
+    {
+        $res = new PBXApiResult();
+        $res->processor = __METHOD__;
+
+        try {
+            // Clear the advice cache to force regeneration
+            $di = Di::getDefault();
+            $managedCache = $di->get(ManagedCacheProvider::SERVICE_NAME);
+
+            // Clear all advice cache keys
+            foreach (WorkerPrepareAdvice::ARR_ADVICE_TYPES as $adviceType) {
+                $cacheKey = WorkerPrepareAdvice::getCacheKey($adviceType['type']);
+                $managedCache->delete($cacheKey);
+            }
+
+            // Regenerate advice immediately
+            $res = GetAdviceListAction::main();
+            $res->messages['info'][] = 'Advice cache refreshed successfully';
+
+        } catch (\Exception $e) {
+            $res->messages['error'][] = 'Failed to refresh advice cache: ' . $e->getMessage();
+        }
+
         return $res;
     }
 }
