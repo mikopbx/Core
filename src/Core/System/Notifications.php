@@ -46,7 +46,7 @@ class Notifications
     {
         $this->enableNotifications = PbxSettings::getValueByKey(PbxSettings::MAIL_ENABLE_NOTIFICATIONS) === '1';
 
-        $mailSMTPSenderAddress = PbxSettings::getValueByKey(PbxSettings::MAIL_SMTP_SENDER_ADDRESS) ?? '';
+        $mailSMTPSenderAddress = PbxSettings::getValueByKey(PbxSettings::MAIL_SMTP_SENDER_ADDRESS);
         if (!empty($mailSMTPSenderAddress)) {
             $this->fromAddres = $mailSMTPSenderAddress;
         } else {
@@ -161,11 +161,13 @@ class Notifications
      * @param string $subject The subject of the email.
      * @param string $message The body of the email.
      * @param string $filename The path to the file to be attached (optional).
+     * @param string|null &$errorInfo Reference to store PHPMailer error info
      * @return bool True if the email is sent successfully, false otherwise.
      */
-    public function sendMail(array|string $to, string $subject, string $message, string $filename = ''): bool
+    public function sendMail(array|string $to, string $subject, string $message, string $filename = '', ?string &$errorInfo = null): bool
     {
         if (!$this->enableNotifications) {
+            $errorInfo = 'Email notifications are disabled';
             return false;
         }
         $messages = [];
@@ -186,13 +188,19 @@ class Notifications
             $mail->Body = $message;
 
             if (!self::checkConnection(self::TYPE_PHP_MAILER)) {
+                $errorInfo = 'Could not establish SMTP connection';
                 return false;
             }
             if (!$mail->send()) {
                 $messages[] = $mail->ErrorInfo;
+                $errorInfo = $mail->ErrorInfo;
             }
         } catch (Throwable $e) {
             $messages[] = CriticalErrorsHandler::handleExceptionWithSyslog($e);
+            $errorInfo = $e->getMessage();
+            if (isset($mail) && $mail->ErrorInfo) {
+                $errorInfo .= ' | PHPMailer: ' . $mail->ErrorInfo;
+            }
         }
         if (!empty($messages)) {
             SystemMessages::sysLogMsg('PHPMailer', implode(' ', $messages), LOG_ERR);
@@ -207,16 +215,116 @@ class Notifications
      */
     public function getMailSender(): PHPMailer
     {
+        // Check authentication type
+        $authType = PbxSettings::getValueByKey(PbxSettings::MAIL_SMTP_AUTH_TYPE);
+
+        if ($authType === 'oauth2') {
+            return $this->getOAuth2MailSender();
+        }
+
+        // Default password-based authentication
+        return $this->getPasswordMailSender();
+    }
+
+    /**
+     * Returns PHPMailer with OAuth2 authentication
+     * @return PHPMailer
+     */
+    private function getOAuth2MailSender(): PHPMailer
+    {
         $mail = new PHPMailer();
         $mail->isSMTP();
         $mail->SMTPDebug = 0;
         $mail->Timeout = 5;
         $mail->Host = PbxSettings::getValueByKey(PbxSettings::MAIL_SMTP_HOST);
-        if (PbxSettings::getValueByKey(PbxSettings::MAIL_SMTP_USE_TLS) === "1") {
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port = (int)PbxSettings::getValueByKey(PbxSettings::MAIL_SMTP_PORT);
+        $mail->CharSet = 'UTF-8';
+
+        // OAuth2 authentication
+        $mail->SMTPAuth = true;
+        $mail->AuthType = 'XOAUTH2';
+
+        // Configure encryption with backward compatibility
+        $encryptionType = PbxSettings::getValueByKey(PbxSettings::MAIL_SMTP_USE_TLS);
+        switch ($encryptionType) {
+            case 'ssl':
+                $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+                break;
+            case 'tls':
+            case '1': // Backward compatibility - old value "1" means STARTTLS
+                $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                break;
+            case 'none':
+            case '0': // Backward compatibility - old value "0" means no encryption
+            case '':
+            default:
+                $mail->SMTPSecure = '';
+                $mail->SMTPAutoTLS = false;
+                break;
+        }
+
+        // Set OAuth2 configuration
+        $provider = PbxSettings::getValueByKey(PbxSettings::MAIL_OAUTH2_PROVIDER);
+        SystemMessages::sysLogMsg('PHPMailer', "Configuring OAuth2 for provider: {$provider}", LOG_INFO);
+
+        $oauth = MailOAuth2Service::getOAuthConfig($provider);
+
+        if ($oauth !== null) {
+            $mail->setOAuth($oauth);
+            // Set username for OAuth2 - use SMTP username or fall back to sender address
+            $username = PbxSettings::getValueByKey(PbxSettings::MAIL_SMTP_USERNAME);
+            if (empty($username)) {
+                $username = PbxSettings::getValueByKey(PbxSettings::MAIL_SMTP_SENDER_ADDRESS);
+            }
+            $mail->Username = $username;
+            SystemMessages::sysLogMsg('PHPMailer', "OAuth2 configured for {$mail->Username} on {$mail->Host}:{$mail->Port}", LOG_INFO);
         } else {
-            $mail->SMTPSecure = '';
-            $mail->SMTPAutoTLS = false;
+            SystemMessages::sysLogMsg('PHPMailer', 'Failed to configure OAuth2 - getOAuthConfig returned null', LOG_ERR);
+        }
+
+        // SSL options
+        if (PbxSettings::getValueByKey(PbxSettings::MAIL_SMTP_CERT_CHECK) !== '1') {
+            $mail->SMTPOptions = [
+                'ssl' => [
+                    'verify_peer' => false,
+                    'verify_peer_name' => false,
+                    'allow_self_signed' => true,
+                ],
+            ];
+        }
+
+        return $mail;
+    }
+
+    /**
+     * Returns PHPMailer with password authentication
+     * @return PHPMailer
+     */
+    private function getPasswordMailSender(): PHPMailer
+    {
+        $mail = new PHPMailer();
+        $mail->isSMTP();
+        $mail->SMTPDebug = 0;
+        $mail->Timeout = 5;
+        $mail->Host = PbxSettings::getValueByKey(PbxSettings::MAIL_SMTP_HOST);
+
+        // Configure encryption with backward compatibility
+        $encryptionType = PbxSettings::getValueByKey(PbxSettings::MAIL_SMTP_USE_TLS);
+        switch ($encryptionType) {
+            case 'ssl':
+                $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+                break;
+            case 'tls':
+            case '1': // Backward compatibility - old value "1" means STARTTLS
+                $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                break;
+            case 'none':
+            case '0': // Backward compatibility - old value "0" means no encryption
+            case '':
+            default:
+                $mail->SMTPSecure = '';
+                $mail->SMTPAutoTLS = false;
+                break;
         }
         if (empty(PbxSettings::getValueByKey(PbxSettings::MAIL_SMTP_USERNAME)) && empty(PbxSettings::getValueByKey(PbxSettings::MAIL_SMTP_PASSWORD))) {
             $mail->SMTPAuth = false;
@@ -242,16 +350,74 @@ class Notifications
 
     /**
      * Tests the connection to the PHPMailer mail server.
+     * @param string|null &$errorInfo Reference to store PHPMailer error info
      * @return bool True if the connection is successful, false otherwise.
      */
-    public function testConnectionPHPMailer(): bool
+    public function testConnectionPHPMailer(?string &$errorInfo = null): bool
     {
         $mail = $this->getMailSender();
+
+        // Capture debug output for better error analysis
+        $debugOutput = '';
+        $mail->SMTPDebug = \PHPMailer\PHPMailer\SMTP::DEBUG_CONNECTION;
+        $mail->Debugoutput = function($str, $level) use (&$debugOutput) {
+            $debugOutput .= $str;
+        };
+
         try {
             $result = $mail->smtpConnect();
+            if (!$result) {
+                // Construct comprehensive error info
+                $errors = [];
+
+                // Add PHPMailer ErrorInfo if available
+                if ($mail->ErrorInfo) {
+                    $errors[] = $mail->ErrorInfo;
+                }
+
+                // Extract useful information from debug output
+                if (!empty($debugOutput)) {
+                    $debugLines = explode("\n", $debugOutput);
+                    foreach ($debugLines as $line) {
+                        $line = trim($line);
+                        // Look for specific error patterns
+                        if (strpos($line, 'SMTP ERROR:') !== false ||
+                            strpos($line, 'getaddrinfo') !== false ||
+                            strpos($line, 'Connection refused') !== false ||
+                            strpos($line, '535') !== false ||
+                            strpos($line, 'certificate') !== false) {
+                            $errors[] = $line;
+                        }
+                    }
+                }
+
+                // If we have specific errors, use them; otherwise use generic message
+                $errorInfo = !empty($errors) ? implode(' | ', $errors) : 'SMTP connection failed - no specific error details available';
+            }
         } catch (\Exception $e) {
+            $errors = [$e->getMessage()];
+
+            if ($mail->ErrorInfo) {
+                $errors[] = 'PHPMailer: ' . $mail->ErrorInfo;
+            }
+
+            // Also check debug output for additional context
+            if (!empty($debugOutput)) {
+                $debugLines = explode("\n", $debugOutput);
+                foreach ($debugLines as $line) {
+                    $line = trim($line);
+                    if (strpos($line, 'SMTP ERROR:') !== false) {
+                        $errors[] = $line;
+                        break; // Only add the first SMTP ERROR line to avoid redundancy
+                    }
+                }
+            }
+
+            $errorInfo = implode(' | ', $errors);
+            SystemMessages::sysLogMsg('PHPMailer', 'SMTP connection test failed: ' . $errorInfo, LOG_ERR);
             $result = false;
         }
+
         return $result;
     }
 }

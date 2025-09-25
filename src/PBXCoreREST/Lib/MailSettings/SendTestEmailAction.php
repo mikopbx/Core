@@ -119,6 +119,9 @@ class SendTestEmailAction
             } else {
                 $res->success = false;
 
+                // Analyze PHPMailer error for more specific diagnostics
+                $errorAnalysis = TestConnectionAction::analyzePhpMailerError($phpMailerError, $diagnostics['auth_type'], $translation);
+
                 // Use PHPMailer error if available, otherwise use generic message
                 if ($phpMailerError) {
                     $res->messages['error'][] = $phpMailerError;
@@ -126,11 +129,18 @@ class SendTestEmailAction
                     $res->messages['error'][] = $translation->_('ms_FailedToSendTestEmail');
                 }
 
-                // Add troubleshooting hints
-                $hints = [];
+                // Add detailed error analysis
+                if ($errorAnalysis['detailed_error']) {
+                    $res->messages['error'][] = $errorAnalysis['detailed_error'];
+                }
+
+                // Add troubleshooting hints from error analysis
+                $hints = $errorAnalysis['hints'];
+
+                // Add additional troubleshooting hints specific to test email sending
                 $senderAddress = PbxSettings::getValueByKey(PbxSettings::MAIL_SMTP_SENDER_ADDRESS);
                 if (empty($senderAddress)) {
-                    $hints[] = 'Configure sender email address';
+                    $hints[] = $translation->_('ms_ValidateSenderAddressEmpty');
                 }
                 if ($diagnostics['auth_type'] === 'oauth2') {
                     // Check OAuth2 specifics
@@ -148,7 +158,12 @@ class SendTestEmailAction
                 $res->data = [
                     'sent' => false,
                     'to' => $to,
-                    'diagnostics' => $diagnostics
+                    'diagnostics' => $diagnostics,
+                    'error_details' => [
+                        'raw_error' => $phpMailerError,
+                        'error_type' => $errorAnalysis['error_type'],
+                        'probable_cause' => $errorAnalysis['probable_cause']
+                    ]
                 ];
 
                 // Only add hints if there are any
@@ -156,7 +171,7 @@ class SendTestEmailAction
                     $res->data['hints'] = $hints;
                 }
 
-                SystemMessages::sysLogMsg('SendTestEmailAction', 'Failed to send test email. Diagnostics: ' . json_encode($diagnostics), LOG_WARNING);
+                SystemMessages::sysLogMsg('SendTestEmailAction', 'Failed to send test email. Error: ' . $phpMailerError . '. Analysis: ' . json_encode($errorAnalysis), LOG_WARNING);
             }
 
         } catch (\Exception $e) {

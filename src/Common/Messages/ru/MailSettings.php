@@ -391,6 +391,11 @@ return [
     'ms_DiagnosticCause_password_incorrect' => 'Неверные имя пользователя или пароль',
     'ms_DiagnosticCause_wrong_port_encryption' => 'Неправильный порт или тип шифрования для сервера',
     'ms_DiagnosticCause_unknown_error' => 'Неизвестная ошибка',
+    'ms_DiagnosticCause_dns_resolution_failed' => 'Не удается найти SMTP сервер',
+    'ms_DiagnosticCause_oauth2_gmail_535' => 'Google отклонил OAuth2 аутентификацию',
+    'ms_DiagnosticCause_gmail_app_password_required' => 'Gmail требует пароль приложения',
+    'ms_DiagnosticCause_network_unreachable' => 'SMTP сервер недоступен',
+    'ms_DiagnosticCause_oauth2_connection_auth' => 'Ошибка OAuth2 аутентификации при подключении',
 
     // Detailed errors
     'ms_DiagnosticDetail_oauth2_535_error' => 'OAuth2 авторизация не удалась (ошибка 535) - недействительные учетные данные или истекший токен',
@@ -402,6 +407,11 @@ return [
     'ms_DiagnosticDetail_ssl_certificate_failed' => 'Ошибка проверки SSL сертификата',
     'ms_DiagnosticDetail_ssl_handshake_failed' => 'Ошибка SSL/TLS рукопожатия',
     'ms_DiagnosticDetail_smtp_auth_535_error' => 'Аутентификация SMTP не удалась (535) - неверные имя пользователя/пароль',
+    'ms_DiagnosticDetail_dns_lookup_failed' => 'Система не может найти указанный SMTP сервер в DNS',
+    'ms_DiagnosticDetail_gmail_oauth2_535_error' => 'Google отклонил OAuth2 токены (ошибка 535) - возможно неверный адрес отправителя или истекшие токены',
+    'ms_DiagnosticDetail_gmail_535_app_password' => 'Gmail требует пароль приложения вместо обычного пароля (ошибка 535)',
+    'ms_DiagnosticDetail_server_unreachable' => 'SMTP сервер недоступен по сети - проверьте подключение к интернету или локальной сети',
+    'ms_DiagnosticDetail_oauth2_connection_auth' => 'OAuth2 аутентификация не удалась при попытке подключения к SMTP серверу',
 
     // Hints and suggestions
     'ms_DiagnosticHint_check_sender_matches_oauth2' => 'Проверьте, что адрес отправителя соответствует авторизованной учетной записи OAuth2',
@@ -426,6 +436,13 @@ return [
     'ms_DiagnosticHint_common_port_combinations' => 'Обычные комбинации: 587+TLS, 465+SSL, 25+Нет',
     'ms_DiagnosticHint_gmail_sender_must_match' => 'Для Gmail: адрес отправителя должен совпадать с учетной записью OAuth2 или быть её псевдонимом',
     'ms_DiagnosticHint_check_send_mail_as_settings' => 'Проверьте настройки "Отправка почты от имени" в Gmail',
+    'ms_DiagnosticHint_try_ip_instead_hostname' => 'Попробуйте использовать IP адрес вместо имени хоста',
+    'ms_DiagnosticHint_verify_oauth2_tokens_valid' => 'Проверьте, что OAuth2 токены не истекли',
+    'ms_DiagnosticHint_use_app_specific_password' => 'Используйте пароль приложения вместо основного пароля',
+    'ms_DiagnosticHint_enable_2fa_gmail' => 'Включите двухфакторную аутентификацию и создайте пароль приложения',
+    'ms_DiagnosticHint_verify_username_exact_email' => 'Убедитесь, что имя пользователя - это точный email адрес',
+    'ms_DiagnosticHint_check_server_hostname_port' => 'Проверьте правильность имени сервера и номера порта',
+    'ms_DiagnosticHint_verify_network_connectivity' => 'Проверьте подключение к интернету или локальной сети',
 
     // Diagnostic UI labels
     'ms_DiagnosticConnectionFailed' => 'Подключение не удалось',

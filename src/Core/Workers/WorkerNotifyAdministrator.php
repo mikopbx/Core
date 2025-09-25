@@ -52,7 +52,7 @@ class WorkerNotifyAdministrator extends WorkerBase
                 // Get user data from the API
                 $di = Di::getDefault();
                 $restResponse = $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
-                    '/pbxcore/api/advice/getList',
+                    '/pbxcore/api/v3/advice:getList',
                     PBXCoreRESTClientProvider::HTTP_METHOD_GET
                 ]);
                 $errorMessages = $restResponse->data['advice']['error'] ?? [];

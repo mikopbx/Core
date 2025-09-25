@@ -149,7 +149,7 @@ trait PbxSettingsConstantsTrait
     public const string ARI_ALLOWED_ORIGINS = 'ARIAllowedOrigins';
 
     // Email and notifications settings
-    /** @FieldType('boolean') */
+    /** @FieldType('string') Encryption type: 'none', 'tls', 'ssl' (backward compatible with '0'/'1' boolean values) */
     public const string MAIL_SMTP_USE_TLS = 'MailSMTPUseTLS';
     /** @FieldType('boolean') */
     public const string MAIL_SMTP_CERT_CHECK = 'MailSMTPCertCheck';
@@ -179,6 +179,23 @@ trait PbxSettingsConstantsTrait
     public const string MAIL_TPL_VOICEMAIL_BODY = 'MailTplVoicemailBody';
     /** @FieldType('string') */
     public const string MAIL_TPL_VOICEMAIL_FOOTER = 'MailTplVoicemailFooter';
+
+    // OAuth2 authentication settings
+    /** @FieldType('string') */
+    public const string MAIL_SMTP_AUTH_TYPE = 'MailSMTPAuthType'; // password|oauth2|app_password
+    /** @FieldType('string') */
+    public const string MAIL_OAUTH2_PROVIDER = 'MailOAuth2Provider'; // google|microsoft|yandex|custom
+    /** @FieldType('string') */
+    public const string MAIL_OAUTH2_CLIENT_ID = 'MailOAuth2ClientId';
+    /** @FieldType('string') */
+    public const string MAIL_OAUTH2_CLIENT_SECRET = 'MailOAuth2ClientSecret';
+    /** @FieldType('string') */
+    public const string MAIL_OAUTH2_REFRESH_TOKEN = 'MailOAuth2RefreshToken';
+    /** @FieldType('string') */
+    public const string MAIL_OAUTH2_ACCESS_TOKEN = 'MailOAuth2AccessToken';
+    /** @FieldType('string') */
+    public const string MAIL_OAUTH2_TOKEN_EXPIRES = 'MailOAuth2TokenExpires';
+
     /** @FieldType('string') */
     public const string SYSTEM_NOTIFICATIONS_EMAIL = 'SystemNotificationsEmail';
     /** @FieldType('string') */

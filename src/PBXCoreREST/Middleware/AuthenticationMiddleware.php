@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Middleware;
 
 use MikoPBX\Common\Providers\LoggerAuthProvider;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Http\Request;
 use MikoPBX\PBXCoreREST\Http\Response;
 use MikoPBX\PBXCoreREST\Services\TokenValidationService;
@@ -78,12 +79,16 @@ class AuthenticationMiddleware implements MiddlewareInterface
             return false;
         }
         
+        // Check if this is a public endpoint (no auth required)
+        $isPublicEndpoint = $this->isPublicEndpoint($application);
+
         $isNoAuthApi = $request->thisIsModuleNoAuthRequest($application);
         if (
             true !== $request->isLocalHostRequest()
             && true !== $request->isDebugModeEnabled()
             && true !== $request->isAuthorizedSessionRequest()
             && true !== $isNoAuthApi
+            && true !== $isPublicEndpoint
         ) {
             $loggerAuth = $application->getService(LoggerAuthProvider::SERVICE_NAME);
             $loggerAuth->warning("From: {$request->getClientAddress(true)} UserAgent:{$request->getUserAgent()} Cause: Wrong password");
@@ -119,6 +124,36 @@ class AuthenticationMiddleware implements MiddlewareInterface
         }
 
         return true;
+    }
+
+    /**
+     * Check if this is a public endpoint (no authentication required)
+     *
+     * @param Micro $application
+     * @return bool
+     */
+    private function isPublicEndpoint(Micro $application): bool
+    {
+        /** @var Request $request */
+        $request = $application->getService(RequestProvider::SERVICE_NAME);
+        $uri = $request->getURI();
+
+        // List of public endpoints that don't require authentication
+        $publicEndpoints = [
+            '/pbxcore/api/health' => ['GET'],  // Health check endpoint
+            '/pbxcore/api/v3/mail-settings/oauth2-callback' => ['GET'],  // OAuth2 callback
+        ];
+
+        foreach ($publicEndpoints as $endpoint => $allowedMethods) {
+            if (strpos($uri, $endpoint) === 0) {
+                $method = $request->getMethod();
+                if (in_array($method, $allowedMethods, true)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -170,7 +205,7 @@ class AuthenticationMiddleware implements MiddlewareInterface
         } catch (\Exception $e) {
             // If we can't determine the controller, err on the side of caution
             // and require CSRF protection for state-changing methods
-            error_log("CSRF check error: " . $e->getMessage());
+            SystemMessages::sysLogMsg(__CLASS__, "CSRF check error: " . $e->getMessage(), LOG_WARNING);
         }
 
         // Default: no CSRF protection required (gradual migration)
@@ -208,7 +243,7 @@ class AuthenticationMiddleware implements MiddlewareInterface
             
         } catch (\Exception $e) {
             // Log error but don't expose details
-            error_log("CSRF validation error: " . $e->getMessage());
+            SystemMessages::sysLogMsg(__CLASS__, "CSRF validation error: " . $e->getMessage(), LOG_WARNING);
             return false;
         }
     }

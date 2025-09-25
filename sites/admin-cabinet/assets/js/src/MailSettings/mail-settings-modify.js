@@ -265,6 +265,7 @@ const mailSettings = {
         mailSettings.initializeInputMasks();
         mailSettings.initializeTooltips();
         mailSettings.detectProviderFromEmail();
+        mailSettings.initializeSenderAddressHandler();
 
         // Subscribe to EventBus OAuth2 events
         mailSettings.subscribeToOAuth2Events();
@@ -419,6 +420,9 @@ const mailSettings = {
                                 $('#MailEnableNotifications').closest('.checkbox').checkbox('set unchecked');
                             }
                         }
+
+                        // Update MailSMTPUsername placeholder with MailSMTPSenderAddress value
+                        mailSettings.updateUsernamePlaceholder(data.MailSMTPSenderAddress);
 
                         // Check OAuth2 status if OAuth2 is selected
                         // Radio button is already set by Form.populateFormSilently
@@ -635,6 +639,29 @@ const mailSettings = {
     },
 
     /**
+     * Update MailSMTPUsername placeholder with MailSMTPSenderAddress value
+     * @param {string} senderAddress - Email address from MailSMTPSenderAddress field
+     */
+    updateUsernamePlaceholder(senderAddress) {
+        const $usernameField = $('#MailSMTPUsername');
+        if (senderAddress && senderAddress.trim() !== '') {
+            $usernameField.attr('placeholder', senderAddress);
+        } else {
+            $usernameField.removeAttr('placeholder');
+        }
+    },
+
+    /**
+     * Initialize MailSMTPSenderAddress change handler to update username placeholder
+     */
+    initializeSenderAddressHandler() {
+        $('#MailSMTPSenderAddress').on('input change', (e) => {
+            const senderAddress = $(e.target).val();
+            mailSettings.updateUsernamePlaceholder(senderAddress);
+        });
+    },
+
+    /**
      * Auto-fill SMTP settings based on provider
      * @param {string} provider - Email provider
      */
@@ -824,8 +851,6 @@ const mailSettings = {
     startOAuth2Flow() {
         const provider = $('#MailOAuth2Provider').val() || $('#MailOAuth2Provider-dropdown').dropdown('get value');
 
-        console.log('[MailSettings] Starting OAuth2 flow for provider:', provider);
-
         if (!provider || provider === 'custom') {
             UserMessage.showError(globalTranslate.ms_ValidateOAuth2ProviderEmpty || 'Выберите OAuth2 провайдера');
             return;
@@ -834,10 +859,6 @@ const mailSettings = {
         // Check if Client ID and Secret are configured
         const clientId = $('#MailOAuth2ClientId').val();
         const clientSecret = $('#MailOAuth2ClientSecret').val();
-
-        console.log('[MailSettings] Current form values:');
-        console.log('  ClientId:', clientId);
-        console.log('  ClientSecret:', clientSecret ? '***masked***' : 'empty');
 
         if (!clientId) {
             UserMessage.showError(globalTranslate.ms_ValidateOAuth2ClientIdEmpty || 'Введите Client ID');
@@ -864,14 +885,9 @@ const mailSettings = {
             MailOAuth2ClientSecret: clientSecret
         };
 
-        console.log('[MailSettings] Saving OAuth2 credentials:', data);
-
         // Use MailSettingsAPI for consistent error handling
         MailSettingsAPI.patchSettings(data, (response) => {
-            console.log('[MailSettings] OAuth2 credentials save response:', response);
-
             if (response && response.result) {
-                console.log('[MailSettings] OAuth2 credentials saved successfully');
                 // Credentials saved, now get OAuth2 URL
                 mailSettings.proceedWithOAuth2Flow(provider);
             } else {
@@ -888,11 +904,8 @@ const mailSettings = {
      * Request OAuth2 authorization URL and open authorization window
      */
     requestOAuth2AuthUrl(provider, clientId, clientSecret) {
-        console.log('[MailSettings] Requesting auth URL from API...');
-
         // Request authorization URL from API
         MailSettingsAPI.authorizeOAuth2(provider, clientId, clientSecret, (authUrl) => {
-            console.log('[MailSettings] Received response from API:', authUrl ? 'Got URL' : 'No URL');
 
             if (authUrl) {
                 // Open authorization window
@@ -920,18 +933,14 @@ const mailSettings = {
      * Proceed with OAuth2 flow after credentials are saved
      */
     proceedWithOAuth2Flow(provider) {
-        console.log('[MailSettings] Proceeding with OAuth2 flow for provider:', provider);
-
         // Show loading state
         $('#oauth2-connect').addClass('loading');
 
         // Get OAuth2 URL with saved credentials
         MailSettingsAPI.getOAuth2Url(provider, (response) => {
-            console.log('[MailSettings] OAuth2 URL response:', response);
             $('#oauth2-connect').removeClass('loading');
 
             if (response && response.auth_url) {
-                console.log('[MailSettings] Opening OAuth2 window with URL:', response.auth_url);
 
                 // Open OAuth2 window
                 const width = 600;
@@ -1101,20 +1110,63 @@ const mailSettings = {
                         // Don't show expired token warning if connection is successful
                         // as it means refresh token is working correctly
                         if (diag.oauth2_refresh_token_exists) {
-                            details += ' <span class="ui green label"><i class="check icon"></i>Authorized</span>';
+                            details += ` <span class="ui green label"><i class="check icon"></i>${globalTranslate.ms_DiagnosticAuthorized}</span>`;
                         }
                     }
                     details += '</small>';
                     $result.append(details);
                 }
             } else {
-                const message = response?.messages?.error?.join(', ') || 'Connection failed';
-                $result.addClass('negative').html('<i class="times circle icon"></i> ' + message);
+                // Show simple, user-friendly error message
+                let mainMessage = globalTranslate.ms_DiagnosticConnectionFailed;
 
-                // Show hints if available
+                // Use detailed error analysis if available for better user experience
+                if (response?.data?.error_details?.probable_cause) {
+                    mainMessage = response.data.error_details.probable_cause;
+                }
+
+                $result.addClass('negative').html('<i class="times circle icon"></i> ' + mainMessage);
+
+                // Skip showing error type label - it's too technical for most users
+
+                // Show raw PHPMailer error in a collapsible section only if it's significantly different
+                if (response?.data?.error_details?.raw_error) {
+                    const rawError = response.data.error_details.raw_error;
+                    // Only show technical details if they contain more info than the user message
+                    if (rawError.length > mainMessage.length + 50) {
+                        let detailsHtml = '<div class="ui tiny accordion" style="margin-top: 10px;">';
+                        detailsHtml += `<div class="title"><i class="dropdown icon"></i>${globalTranslate.ms_DiagnosticTechnicalDetails}</div>`;
+                        detailsHtml += `<div class="content"><code style="font-size: 11px; word-break: break-all; display: block; white-space: pre-wrap;">${rawError}</code></div>`;
+                        detailsHtml += '</div>';
+                        $result.append(detailsHtml);
+
+                        // Initialize accordion for technical details
+                        $result.find('.accordion').accordion();
+                    }
+                }
+
+                // Show minimal diagnostics info for failed connections
+                if (response?.data?.diagnostics) {
+                    const diag = response.data.diagnostics;
+                    let details = '<div class="ui divider"></div><small>';
+                    details += `${diag.auth_type.toUpperCase()}: ${diag.smtp_host}:${diag.smtp_port}`;
+                    if (diag.smtp_encryption && diag.smtp_encryption !== 'none') {
+                        details += ` (${diag.smtp_encryption.toUpperCase()})`;
+                    }
+                    details += '</small>';
+                    $result.append(details);
+                }
+
+                // Show hints if available - limit to top 3 most relevant ones
                 if (response?.data?.hints && response.data.hints.length > 0) {
-                    let hints = '<div class="ui divider"></div><strong>Troubleshooting:</strong><ul class="ui list">';
-                    response.data.hints.forEach(hint => {
+                    let hints = '<div class="ui divider"></div><strong>Рекомендации:</strong><ul>';
+                    // Show max 3 hints to avoid overwhelming the user
+                    const relevantHints = response.data.hints.slice(0, 3);
+                    relevantHints.forEach(hint => {
+                        // Skip English hints if we have Russian ones
+                        if (hint.includes('OAuth2 access token expired') && relevantHints.some(h => h.includes('токен'))) {
+                            return;
+                        }
                         hints += `<li>${hint}</li>`;
                     });
                     hints += '</ul>';
@@ -1209,13 +1261,44 @@ const mailSettings = {
                     $result.append(details);
                 }
             } else {
-                const message = response?.messages?.error?.join(', ') || 'Failed to send test email';
+                const message = response?.messages?.error?.join(', ') || globalTranslate.ms_DiagnosticConnectionFailed;
                 $result.addClass('negative').html('<i class="times circle icon"></i> ' + message);
 
-                // Show hints if available
+                // Show detailed error analysis if available
+                if (response?.data?.error_details) {
+                    const errorDetails = response.data.error_details;
+                    let detailsHtml = '<div class="ui divider"></div>';
+
+                    // Skip showing error type label - it's too technical for most users
+
+                    if (errorDetails.probable_cause) {
+                        detailsHtml += `<strong>${globalTranslate.ms_DiagnosticProbableCause}</strong> ${errorDetails.probable_cause}<br>`;
+                    }
+
+                    // Show raw PHPMailer error in a collapsible section
+                    if (errorDetails.raw_error && errorDetails.raw_error !== message) {
+                        detailsHtml += '<div class="ui tiny accordion" style="margin-top: 10px;">';
+                        detailsHtml += `<div class="title"><i class="dropdown icon"></i>${globalTranslate.ms_DiagnosticTechnicalDetails}</div>`;
+                        detailsHtml += `<div class="content"><code style="font-size: 11px; word-break: break-all;">${errorDetails.raw_error}</code></div>`;
+                        detailsHtml += '</div>';
+                    }
+
+                    $result.append(detailsHtml);
+
+                    // Initialize accordion for technical details
+                    $result.find('.accordion').accordion();
+                }
+
+                // Show hints if available - limit to top 3 most relevant ones
                 if (response?.data?.hints && response.data.hints.length > 0) {
-                    let hints = '<div class="ui divider"></div><strong>Troubleshooting:</strong><ul class="ui list">';
-                    response.data.hints.forEach(hint => {
+                    let hints = '<div class="ui divider"></div><strong>Рекомендации:</strong><ul>';
+                    // Show max 3 hints to avoid overwhelming the user
+                    const relevantHints = response.data.hints.slice(0, 3);
+                    relevantHints.forEach(hint => {
+                        // Skip English hints if we have Russian ones
+                        if (hint.includes('OAuth2 access token expired') && relevantHints.some(h => h.includes('токен'))) {
+                            return;
+                        }
                         hints += `<li>${hint}</li>`;
                     });
                     hints += '</ul>';
@@ -1255,13 +1338,10 @@ const mailSettings = {
                 let originalValue = $field.val() || '';
                 let fieldValue = originalValue;
 
-                console.log(`[MailSettings] Processing field ${fieldId}, original value: "${originalValue}"`);
-
                 // For email inputmask, try different approaches to get clean value
                 if (fieldValue) {
                     // Check if value contains placeholder patterns
                     if (fieldValue.includes('_@_') || fieldValue === '@.' || fieldValue === '@' || fieldValue === '_') {
-                        console.log(`[MailSettings] Field ${fieldId} contains placeholder, clearing`);
                         fieldValue = '';
                     } else {
                         // Try to get unmasked value for email fields
@@ -1269,7 +1349,6 @@ const mailSettings = {
                             // Check if inputmask plugin is available
                             if ($field.inputmask && typeof $field.inputmask === 'function') {
                                 const unmaskedValue = $field.inputmask('unmaskedvalue');
-                                console.log(`[MailSettings] Field ${fieldId} unmasked value: "${unmaskedValue}"`);
                                 if (unmaskedValue && unmaskedValue !== fieldValue && !unmaskedValue.includes('_')) {
                                     fieldValue = unmaskedValue;
                                 }
@@ -1279,8 +1358,6 @@ const mailSettings = {
                         }
                     }
                 }
-
-                console.log(`[MailSettings] Final value for ${fieldId}: "${fieldValue}"`);
                 result.data[fieldId] = fieldValue;
             }
         });
@@ -1333,7 +1410,6 @@ const mailSettings = {
         if (typeof EventBus !== 'undefined') {
             // Subscribe to OAuth2 authorization events
             EventBus.subscribe('oauth2-authorization', (data) => {
-                console.log('OAuth2 event received via EventBus:', data);
 
                 if (data.status === 'success') {
                     // Success: refresh OAuth2 status after a short delay

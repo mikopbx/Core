@@ -86,6 +86,13 @@ trait PbxSettingsDefaultValuesTrait
             PbxSettings::MAIL_TPL_VOICEMAIL_SUBJECT => 'VoiceMail from PBX',
             PbxSettings::MAIL_TPL_VOICEMAIL_BODY => 'See attach',
             PbxSettings::MAIL_TPL_VOICEMAIL_FOOTER => '',
+            PbxSettings::MAIL_SMTP_AUTH_TYPE => 'password', // Default to password for existing installations
+            PbxSettings::MAIL_OAUTH2_PROVIDER => '',
+            PbxSettings::MAIL_OAUTH2_CLIENT_ID => '',
+            PbxSettings::MAIL_OAUTH2_CLIENT_SECRET => '',
+            PbxSettings::MAIL_OAUTH2_REFRESH_TOKEN => '',
+            PbxSettings::MAIL_OAUTH2_ACCESS_TOKEN => '',
+            PbxSettings::MAIL_OAUTH2_TOKEN_EXPIRES => '',
             PbxSettings::NTP_SERVER => '0.pool.ntp.org' . PHP_EOL . '1.pool.ntp.org' . PHP_EOL,
             PbxSettings::VOICEMAIL_NOTIFICATIONS_EMAIL => 'admin@mycompany.com',
             PbxSettings::VOICEMAIL_EXTENSION => '*001',
