@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global MediaStreamRecorder, StereoAudioRecorder, PbxApi, sndPlayer, soundFileModifyRest */
+/* global MediaStreamRecorder, StereoAudioRecorder, PbxApi, sndPlayer, soundFileModifyRest, FilesAPI */
 
 /**
  * WebKit sound recorder module.
@@ -165,11 +165,10 @@ const webkitRecorder = {
         const fileURL = URL.createObjectURL(soundFileModifyRest.blob);
         sndPlayer.UpdateSource(fileURL);
         const blobFile = new File([webkitRecorder.chunks[0]], 'blob' + new Date().getTime() + '.wav');
-        PbxApi.FilesUploadFile(blobFile, soundFileModifyRest.cbUploadResumable);
+        FilesAPI.uploadFile(blobFile, soundFileModifyRest.cbUploadResumable);
         webkitRecorder.$recordLabel.removeClass('red');
         webkitRecorder.$stopButton.addClass('disabled');
         webkitRecorder.$recordButton.removeClass('disabled');
-        soundFileModifyRest.$soundFileInput.val('');
     },
 
     /**

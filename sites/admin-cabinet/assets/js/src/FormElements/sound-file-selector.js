@@ -103,7 +103,7 @@ const SoundFileSelector = {
                 category: config.category,
                 includeEmpty: config.includeEmpty ? 'true' : 'false'
             },
-            placeholder: config.placeholder || globalTranslate.sf_SelectAudioFile || 'Select audio file',
+            placeholder: config.placeholder || globalTranslate.sf_SelectAudioFile,
             onChange: (value, text, $choice) => {
                 this.handleSelectionChange(fieldId, value, text, $choice, config);
             }

@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,9 +21,16 @@ namespace MikoPBX\PBXCoreREST\Lib\SoundFiles;
 
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractGetForSelectAction;
 
 /**
  * Action for getting sound files list formatted for dropdown selects
+ *
+ * Extends AbstractGetForSelectAction to leverage:
+ * - Standard select data formatting
+ * - Category filtering
+ * - Empty option support
+ * - Consistent error handling
  *
  * @api {get} /pbxcore/api/v2/sound-files/getForSelect Get sound files for select dropdown
  * @apiVersion 2.0.0
@@ -36,12 +43,13 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
  * @apiSuccess {Boolean} result Operation result
  * @apiSuccess {Array} data List of sound files
  * @apiSuccess {String} data.value File ID (for dropdown value)
+ * @apiSuccess {String} data.text Display name with HTML formatting
+ * @apiSuccess {String} data.name Same as text
  * @apiSuccess {String} data.id File ID
  * @apiSuccess {String} data.category File category (custom/moh)
  * @apiSuccess {String} data.path File path
- * @apiSuccess {String} data.represent Display name with HTML formatting
  */
-class GetForSelectAction
+class GetForSelectAction extends AbstractGetForSelectAction
 {
     /**
      * Get sound files list for dropdown select
@@ -51,54 +59,43 @@ class GetForSelectAction
      */
     public static function main(array $data): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
-
-        try {
-            $category = $data['category'] ?? SoundFiles::CATEGORY_CUSTOM;
-            $includeEmpty = filter_var($data['includeEmpty'] ?? false, FILTER_VALIDATE_BOOLEAN);
-
-            // Validate category
-            if (!in_array($category, [SoundFiles::CATEGORY_CUSTOM, SoundFiles::CATEGORY_MOH], true)) {
-                $category = SoundFiles::CATEGORY_CUSTOM;
-            }
-
-            // Get files by category
-            $soundFiles = SoundFiles::find([
-                'conditions' => 'category = :category:',
-                'bind' => ['category' => $category]
-            ]);
-
-            $soundFilesList = [];
-
-            // Add empty option if requested
-            if ($includeEmpty) {
-                $soundFilesList[] = [
-                    'value' => -1,
-                    'id' => -1,
-                    'category' => '',
-                    'path' => '',
-                    'represent' => '-'
-                ];
-            }
-
-            foreach ($soundFiles as $soundFile) {
-                $soundFilesList[] = [
-                    'value' => $soundFile->id,
-                    'id' => $soundFile->id,
-                    'category' => $soundFile->category,
-                    'path' => $soundFile->path,
-                    'represent' => $soundFile->getRepresent()
-                ];
-            }
-
-            $res->data = $soundFilesList;
-            $res->success = true;
-            
-        } catch (\Exception $e) {
-            $res->messages['error'][] = $e->getMessage();
+        // Validate and set default category
+        $category = $data['category'] ?? SoundFiles::CATEGORY_CUSTOM;
+        if (!in_array($category, [SoundFiles::CATEGORY_CUSTOM, SoundFiles::CATEGORY_MOH], true)) {
+            $data['category'] = SoundFiles::CATEGORY_CUSTOM;
         }
-        
-        return $res;
+
+        return self::executeStandardGetForSelect(
+            SoundFiles::class,
+            $data,
+            'getRepresent',       // Use getRepresent() method for display
+            ['category'],         // Allow filtering by category
+            'name ASC',           // Order by name
+            'id',                 // Use id as value
+            ['category', 'path'], // Include category and path in response
+            self::createSoundFileTransform()  // Custom transform for sound files
+        );
+    }
+
+    /**
+     * Create custom transform function for sound files
+     *
+     * @return callable
+     */
+    private static function createSoundFileTransform(): callable
+    {
+        return function ($soundFile) {
+            $represent = $soundFile->getRepresent();
+
+            return [
+                'value' => $soundFile->id,
+                'text' => $represent,
+                'name' => $represent,
+                'id' => $soundFile->id,
+                'category' => $soundFile->category,
+                'path' => $soundFile->path,
+                'represent' => $represent  // Keep for backward compatibility
+            ];
+        };
     }
 }

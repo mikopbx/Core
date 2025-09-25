@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, Form, PbxApi, sndPlayer, mergingCheckWorker, SoundFilesAPI, UserMessage, Config */
+/* global globalRootUrl, globalTranslate, Form, PbxApi, sndPlayer, SoundFilesAPI, UserMessage, Config, FileUploadEventHandler, FilesAPI, SystemAPI */
 
 /**
  * Sound file modification module with REST API integration
@@ -38,11 +38,6 @@ const soundFileModifyRest = {
      */
     $soundUploadButton: $('#upload-sound-file'),
 
-    /**
-     * jQuery object for the sound file input.
-     * @type {jQuery}
-     */
-    $soundFileInput: $('#file'),
 
     /**
      * jQuery object for the sound file name input.
@@ -119,27 +114,29 @@ const soundFileModifyRest = {
         // Initialize form validation and submission
         soundFileModifyRest.initializeForm();
 
-        // Initialize file upload button
-        soundFileModifyRest.$soundUploadButton.on('click', (e) => {
-            e.preventDefault();
-            $('input:file', $(e.target).parents()).click();
-        });
+        // Initialize file upload using FilesAPI.attachToBtn for unified behavior
+        FilesAPI.attachToBtn('upload-sound-file', ['wav', 'mp3', 'ogg', 'm4a', 'aac'], (action, params) => {
+            switch (action) {
+                case 'fileAdded':
+                    if (params.file) {
+                        // Update name field with filename without extension
+                        soundFileModifyRest.$soundFileName.val(params.file.name.replace(/\.[^/.]+$/, ''));
 
-        // Handle file selection
-        soundFileModifyRest.$soundFileInput.on('change', (e) => {
-            const file = e.target.files[0];
-            if (file === undefined) return;
-            
-            // Update name field with filename without extension
-            soundFileModifyRest.$soundFileName.val(file.name.replace(/\.[^/.]+$/, ''));
-            
-            // Create blob URL for preview
-            soundFileModifyRest.blob = window.URL || window.webkitURL;
-            const fileURL = soundFileModifyRest.blob.createObjectURL(file);
-            sndPlayer.UpdateSource(fileURL);
-            
-            // Upload file using PbxApi (this remains the same as it uses resumable.js)
-            PbxApi.FilesUploadFile(file, soundFileModifyRest.cbUploadResumable);
+                        // Create blob URL for preview
+                        soundFileModifyRest.blob = window.URL || window.webkitURL;
+                        const fileURL = soundFileModifyRest.blob.createObjectURL(params.file.file);
+                        sndPlayer.UpdateSource(fileURL);
+                    }
+                    break;
+                case 'fileSuccess':
+                case 'fileProgress':
+                case 'uploadStart':
+                case 'error':
+                case 'complete':
+                    // Forward all other events to the original callback
+                    soundFileModifyRest.cbUploadResumable(action, params);
+                    break;
+            }
         });
         
         // Listen for data changes to clear cache
@@ -260,9 +257,36 @@ const soundFileModifyRest = {
             UserMessage.showMultiString(`${globalTranslate.sf_UploadError}`);
             return;
         }
-        const fileID = json.data.upload_id;
+
+        const uploadId = json.data.upload_id;
         const filePath = json.data.filename;
-        mergingCheckWorker.initialize(fileID, filePath);
+
+        // NEW: Subscribe to EventBus instead of using polling worker
+        FileUploadEventHandler.subscribe(uploadId, {
+            onMergeStarted: (data) => {
+                soundFileModifyRest.$submitButton.addClass('loading');
+                soundFileModifyRest.$formObj.addClass('loading');
+            },
+
+            onMergeProgress: (data) => {
+                // Update progress indicator if needed
+                console.log(`Sound file merge progress: ${data.progress}%`);
+            },
+
+            onMergeComplete: (data) => {
+                soundFileModifyRest.$submitButton.removeClass('loading');
+                soundFileModifyRest.$formObj.removeClass('loading');
+                // Perform conversion after merge - use the filePath from the response
+                const category = soundFileModifyRest.$formObj.form('get value', 'category');
+                SystemAPI.convertAudioFile({filename: filePath, category: category}, soundFileModifyRest.cbAfterConvertFile);
+            },
+
+            onError: (data) => {
+                soundFileModifyRest.$submitButton.removeClass('loading');
+                soundFileModifyRest.$formObj.removeClass('loading');
+                UserMessage.showMultiString(data.error || globalTranslate.sf_UploadError);
+            }
+        });
     },
 
     /**
@@ -322,7 +346,7 @@ const soundFileModifyRest = {
         if (response.result) {
             // Delete old files from trash bin
             soundFileModifyRest.trashBin.forEach((filepath) => {
-                if (filepath) PbxApi.FilesRemoveAudioFile(filepath);
+                if (filepath) FilesAPI.removeAudioFile(filepath, () => {});
             });
             soundFileModifyRest.trashBin = [];
 
@@ -368,10 +392,7 @@ const soundFileModifyRest = {
     },
 };
 
-// Initialize mergingCheckWorker callback
-if (typeof mergingCheckWorker !== 'undefined') {
-    mergingCheckWorker.cbAfterMerging = soundFileModifyRest.cbAfterConvertFile;
-}
+// Note: mergingCheckWorker.cbAfterMerging is now handled via EventBus in checkStatusFileMerging method
 
 // When the document is ready, initialize the sound file modify form
 $(document).ready(() => {
