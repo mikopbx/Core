@@ -21,9 +21,15 @@ namespace MikoPBX\PBXCoreREST\Lib\CustomFiles;
 
 use MikoPBX\Common\Models\CustomFiles;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractDeleteAction;
 
 /**
  * Action for deleting a custom file
+ *
+ * Extends AbstractDeleteAction to leverage:
+ * - Standard record lookup
+ * - Transaction-based deletion
+ * - Consistent error handling and logging
  *
  * @api {delete} /pbxcore/api/v3/custom-files/:id Delete custom file
  * @apiVersion 3.0.0
@@ -34,9 +40,9 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
  *
  * @apiSuccess {Boolean} result Operation result
  * @apiSuccess {Object} data Deleted file information
- * @apiSuccess {String} data.id Deleted file ID
+ * @apiSuccess {String} data.deleted_id Deleted file ID
  */
-class DeleteRecordAction
+class DeleteRecordAction extends AbstractDeleteAction
 {
     /**
      * Delete custom file by ID
@@ -46,40 +52,14 @@ class DeleteRecordAction
      */
     public static function main(string $id): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
-
-        try {
-            if (empty($id)) {
-                $res->messages['error'][] = 'ID is required';
-                return $res;
-            }
-
-            $file = CustomFiles::findFirstById($id);
-            if (!$file) {
-                $res->messages['error'][] = "Custom file with ID '$id' not found";
-                return $res;
-            }
-
-            // Store file info before deletion
-            $fileInfo = [
-                'id' => $file->id,
-                'filepath' => $file->filepath
-            ];
-
-            // Delete the file
-            if (!$file->delete()) {
-                $res->messages['error'] = $file->getMessages();
-                return $res;
-            }
-
-            $res->data = $fileInfo;
-            $res->success = true;
-
-        } catch (\Exception $e) {
-            $res->messages['error'][] = $e->getMessage();
-        }
-
-        return $res;
+        // CustomFiles don't have extensions or related records
+        // Use simplified delete pattern
+        return self::executeStandardDelete(
+            CustomFiles::class,
+            $id,
+            'Custom file',
+            'Custom file not found',
+            null  // No additional cleanup needed
+        );
     }
 }

@@ -58,7 +58,7 @@ const customFilesTable = {
             actionButtons: ['edit', 'delete'], // Edit and delete buttons for custom files
             translations: {
                 deleteError: globalTranslate.cf_ImpossibleToDeleteFile,
-                deleteDisabledTooltip: globalTranslate.cf_CannotDeleteSystemFile || 'System files cannot be deleted'
+                deleteDisabledTooltip: globalTranslate.cf_CannotDeleteSystemFile
             },
             // Custom delete permission check - only allow delete for custom mode files
             customDeletePermissionCheck: (row) => {

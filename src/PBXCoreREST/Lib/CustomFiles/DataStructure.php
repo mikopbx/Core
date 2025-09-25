@@ -20,6 +20,7 @@
 namespace MikoPBX\PBXCoreREST\Lib\CustomFiles;
 
 use MikoPBX\Common\Models\CustomFiles;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
 
 /**
  * Data structure for custom files
@@ -28,7 +29,7 @@ use MikoPBX\Common\Models\CustomFiles;
  *
  * @package MikoPBX\PBXCoreREST\Lib\CustomFiles
  */
-class DataStructure
+class DataStructure extends AbstractDataStructure
 {
     /**
      * Create data array from CustomFiles model
@@ -40,7 +41,7 @@ class DataStructure
      * @param CustomFiles $model Custom file model instance
      * @return array Complete data structure
      */
-    public static function createFromModel(CustomFiles $model): array
+    public static function createFromModel($model): array
     {
         return [
             'id' => $model->id,
@@ -49,6 +50,26 @@ class DataStructure
             'mode' => $model->mode ?? CustomFiles::MODE_NONE,
             'description' => $model->description ?? '',
             'changed' => $model->changed ?? '0'
+        ];
+    }
+
+    /**
+     * Create simplified data structure for list view
+     *
+     * Optimized version for table display without heavy content field.
+     *
+     * @param CustomFiles $model Custom file model instance
+     * @return array Simplified data structure
+     */
+    public static function createForList($model): array
+    {
+        return [
+            'id' => $model->id,
+            'filepath' => $model->filepath ?? '',
+            'mode' => $model->mode ?? CustomFiles::MODE_NONE,
+            'description' => $model->description ?? '',
+            'changed' => $model->changed ?? '0'
+            // Content excluded for list view performance
         ];
     }
 }

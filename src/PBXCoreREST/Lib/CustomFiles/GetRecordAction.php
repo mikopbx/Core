@@ -21,16 +21,22 @@ namespace MikoPBX\PBXCoreREST\Lib\CustomFiles;
 
 use MikoPBX\Common\Models\CustomFiles;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractGetRecordAction;
 
 /**
  * Action for getting a single custom file by ID
+ *
+ * Extends AbstractGetRecordAction to leverage:
+ * - Standard record retrieval patterns
+ * - Automatic new record structure creation
+ * - Consistent error handling
  *
  * @api {get} /pbxcore/api/v3/custom-files/:id Get custom file by ID
  * @apiVersion 3.0.0
  * @apiName GetRecord
  * @apiGroup CustomFiles
  *
- * @apiParam {String} id Custom file ID
+ * @apiParam {String} id Custom file ID or "new" for new record structure
  *
  * @apiSuccess {Boolean} result Operation result
  * @apiSuccess {Object} data Custom file data
@@ -41,36 +47,47 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
  * @apiSuccess {String} data.description File description
  * @apiSuccess {String} data.changed Changed flag
  */
-class GetRecordAction
+class GetRecordAction extends AbstractGetRecordAction
 {
     /**
-     * Get custom file by ID
+     * Get custom file by ID or create new structure
      *
-     * @param string $id Custom file ID
+     * @param string|null $id Custom file ID or null for new record
      * @return PBXApiResult
      */
-    public static function main(string $id): PBXApiResult
+    public static function main(?string $id = null): PBXApiResult
     {
+        // CustomFiles don't have uniqid and don't need extensions
+        // So we need custom implementation
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
 
         try {
-            if (empty($id)) {
-                $res->messages['error'][] = 'ID is required';
-                return $res;
+            if (empty($id) || $id === 'new') {
+                // Create structure for new record
+                $model = new CustomFiles();
+                $model->id = '';
+                $model->filepath = '';
+                $model->content = '';
+                $model->mode = CustomFiles::MODE_NONE;
+                $model->description = '';
+                $model->changed = '0';
+
+                $res->data = DataStructure::createFromModel($model);
+                $res->success = true;
+            } else {
+                // Find existing record
+                $record = CustomFiles::findFirstById($id);
+
+                if ($record) {
+                    $res->data = DataStructure::createFromModel($record);
+                    $res->success = true;
+                } else {
+                    $res->messages['error'][] = 'Custom file not found';
+                }
             }
-
-            $file = CustomFiles::findFirstById($id);
-            if (!$file) {
-                $res->messages['error'][] = "Custom file with ID '$id' not found";
-                return $res;
-            }
-
-            $res->data = DataStructure::createFromModel($file);
-            $res->success = true;
-
         } catch (\Exception $e) {
-            $res->messages['error'][] = $e->getMessage();
+            return self::handleError($e, $res);
         }
 
         return $res;

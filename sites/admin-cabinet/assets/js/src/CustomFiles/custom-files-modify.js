@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl,globalTranslate, ace, Form, PbxApi, customFilesAPI, PbxApiClient */
+/* global globalRootUrl,globalTranslate, ace, Form, FilesAPI, customFilesAPI, PbxApiClient */
 
 
 /**
@@ -326,17 +326,14 @@ const customFile = {
      */
     onChangeTab(currentTab){
         const filePath = customFile.$formObj.form('get value', 'filepath');
-        const data = {filename: filePath, needOriginal: true, needLogfile: false};
         switch (currentTab) {
             case 'result':
-                data.needOriginal=false;
                 $('.tab[data-tab="result"]').addClass('loading');
-                PbxApi.GetFileContent(data, customFile.cbGetResultFileContentFromServer);
+                FilesAPI.getFileContent(filePath, customFile.cbGetResultFileContentFromServer, false);
                 break;
             case 'original':
-                data.needOriginal=true;
                 $('.tab[data-tab="original"]').addClass('loading');
-                PbxApi.GetFileContent(data, customFile.cbGetOriginalFileContentFromServer);
+                FilesAPI.getFileContent(filePath, customFile.cbGetOriginalFileContentFromServer, true);
                 break;
             case 'editor':
                 break;

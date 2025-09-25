@@ -21,9 +21,17 @@ namespace MikoPBX\PBXCoreREST\Lib\CustomFiles;
 
 use MikoPBX\Common\Models\CustomFiles;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractGetListAction;
 
 /**
  * Action for getting list of custom files
+ *
+ * Extends AbstractGetListAction to leverage:
+ * - Standard list retrieval patterns
+ * - Search functionality
+ * - Ordering support
+ * - Pagination support
+ * - Consistent error handling
  *
  * @api {get} /pbxcore/api/v3/custom-files Get list of custom files
  * @apiVersion 3.0.0
@@ -33,17 +41,13 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
  * @apiParam {Number} [limit=50] Number of records to return
  * @apiParam {Number} [offset=0] Offset for pagination
  * @apiParam {String} [search] Search string for filtering
- * @apiParam {String} [sort] Sort field (filepath, mode, changed)
- * @apiParam {String} [order=asc] Sort order (asc or desc)
+ * @apiParam {String} [order] Sort field (filepath, mode, changed)
+ * @apiParam {String} [orderWay=ASC] Sort order (ASC or DESC)
  *
  * @apiSuccess {Boolean} result Operation result
  * @apiSuccess {Array} data List of custom files
- * @apiSuccess {Object} metadata Pagination metadata
- * @apiSuccess {Number} metadata.total Total number of records
- * @apiSuccess {Number} metadata.limit Records per page
- * @apiSuccess {Number} metadata.offset Current offset
  */
-class GetListAction
+class GetListAction extends AbstractGetListAction
 {
     /**
      * Get list of custom files with optional filtering and pagination
@@ -53,83 +57,17 @@ class GetListAction
      */
     public static function main(array $data): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
-
-        try {
-            // Parse pagination parameters
-            $limit = (int)($data['limit'] ?? 50);
-            $offset = (int)($data['offset'] ?? 0);
-            $search = $data['search'] ?? '';
-            $sort = $data['sort'] ?? 'filepath';
-            $order = strtoupper($data['order'] ?? 'ASC');
-
-            // Validate sort field
-            $allowedSortFields = ['filepath', 'mode', 'changed', 'id'];
-            if (!in_array($sort, $allowedSortFields)) {
-                $sort = 'filepath';
-            }
-
-            // Validate order
-            if (!in_array($order, ['ASC', 'DESC'])) {
-                $order = 'ASC';
-            }
-
-            // Build query conditions
-            $conditions = [];
-            $bind = [];
-
-            if (!empty($search)) {
-                $conditions[] = '(filepath LIKE :search: OR description LIKE :search:)';
-                $bind['search'] = '%' . $search . '%';
-            }
-
-            // Count total records
-            $totalParams = [
-                'columns' => 'COUNT(*) as count'
-            ];
-            if (!empty($conditions)) {
-                $totalParams['conditions'] = implode(' AND ', $conditions);
-                $totalParams['bind'] = $bind;
-            }
-            $totalResult = CustomFiles::findFirst($totalParams);
-            $total = $totalResult ? (int)$totalResult->count : 0;
-
-            // Get records with pagination
-            $params = [
-                'order' => "$sort $order",
-                'limit' => $limit,
-                'offset' => $offset
-            ];
-            if (!empty($conditions)) {
-                $params['conditions'] = implode(' AND ', $conditions);
-                $params['bind'] = $bind;
-            }
-
-            $files = CustomFiles::find($params);
-
-            // Format response data
-            $items = [];
-            foreach ($files as $file) {
-                $items[] = DataStructure::createFromModel($file);
-            }
-
-            $res->data = $items;
-            // Use data array for metadata to avoid dynamic property warning
-            $res->data = [
-                'items' => $items,
-                'metadata' => [
-                    'total' => $total,
-                    'limit' => $limit,
-                    'offset' => $offset
-                ]
-            ];
-            $res->success = true;
-
-        } catch (\Exception $e) {
-            $res->messages['error'][] = $e->getMessage();
-        }
-
-        return $res;
+        // Use standard list execution from parent class
+        return self::executeStandardList(
+            CustomFiles::class,
+            DataStructure::class,
+            $data,
+            [],                                      // Base query options
+            false,                                   // Use createForList() for better performance
+            ['filepath', 'mode', 'changed', 'id'],  // Allowed order fields
+            ['filepath', 'description'],            // Searchable fields
+            null,                                    // No record filter
+            'filepath ASC'                          // Default order
+        );
     }
 }

@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, PbxApiClient, $ */
+/* global globalRootUrl, PbxApiClient, $ */ 
 
 /**
  * CustomFilesAPI - RESTful API client for custom files management
@@ -47,20 +47,7 @@ const customFilesAPI = new PbxApiClient({
  * });
  */
 customFilesAPI.getDefault = function(callback) {
-    $.api({
-        url: `${this.apiUrl}:getDefault`,
-        method: 'GET',
-        on: 'now',
-        onSuccess: (response) => {
-            callback(response);
-        },
-        onFailure: (response) => {
-            callback(response);
-        },
-        onError: () => {
-            callback({result: false, messages: {error: ['Network error']}});
-        }
-    });
+    return this.callCustomMethod('getDefault', {}, callback);
 };
 
 /**
@@ -113,41 +100,13 @@ customFilesAPI.save = function(data, callback) {
         delete apiData.id;
         delete apiData.isNew;
 
-        $.api({
-            url: `${this.apiUrl}/${id}`,
-            method: 'PATCH',
-            data: apiData,
-            on: 'now',
-            onSuccess: (response) => {
-                callback(response);
-            },
-            onFailure: (response) => {
-                callback(response);
-            },
-            onError: () => {
-                callback({result: false, messages: {error: ['Network error']}});
-            }
-        });
+        this.callPatch(apiData, callback, id);
     } else {
         // Create new file
         delete apiData.id;
         delete apiData.isNew;
 
-        $.api({
-            url: this.apiUrl,
-            method: 'POST',
-            data: apiData,
-            on: 'now',
-            onSuccess: (response) => {
-                callback(response);
-            },
-            onFailure: (response) => {
-                callback(response);
-            },
-            onError: () => {
-                callback({result: false, messages: {error: ['Network error']}});
-            }
-        });
+        this.callPost(apiData, callback);
     }
 };
 
@@ -165,20 +124,7 @@ customFilesAPI.save = function(data, callback) {
  * });
  */
 customFilesAPI.getRecord = function(id, callback) {
-    $.api({
-        url: `${this.apiUrl}/${id}`,
-        method: 'GET',
-        on: 'now',
-        onSuccess: (response) => {
-            callback(response);
-        },
-        onFailure: (response) => {
-            callback(response);
-        },
-        onError: () => {
-            callback({result: false, messages: {error: ['Network error']}});
-        }
-    });
+    return this.callGet({}, callback, id);
 };
 
 /**
@@ -186,20 +132,7 @@ customFilesAPI.getRecord = function(id, callback) {
  * This method is needed for PbxDataTableIndex compatibility
  */
 customFilesAPI.getRecords = function(callback) {
-    $.api({
-        url: this.apiUrl,
-        method: 'GET',
-        on: 'now',
-        onSuccess: (response) => {
-            callback(response);
-        },
-        onFailure: (response) => {
-            callback(response);
-        },
-        onError: () => {
-            callback({result: false, messages: {error: ['Network error']}});
-        }
-    });
+    return this.callGet({}, callback);
 };
 
 /**
@@ -209,18 +142,5 @@ customFilesAPI.getRecords = function(callback) {
  * @param {Function} callback - Callback function to handle the response
  */
 customFilesAPI.deleteRecord = function(id, callback) {
-    $.api({
-        url: `${this.apiUrl}/${id}`,
-        method: 'DELETE',
-        on: 'now',
-        onSuccess: (response) => {
-            callback(response);
-        },
-        onFailure: (response) => {
-            callback(response);
-        },
-        onError: () => {
-            callback({result: false, messages: {error: ['Network error']}});
-        }
-    });
+    return this.callDelete(callback, id);
 };
