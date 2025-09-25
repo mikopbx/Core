@@ -74,7 +74,7 @@ class RestController extends BaseRestController
     {
         return [
             'GET' => ['getForSelect', 'getStatuses', 'getStatus', 'getHistory', 'getStats'],
-            'POST' => [] // No write operations allowed
+            'POST' => ['updateStatus']
         ];
     }
     
@@ -109,7 +109,21 @@ class RestController extends BaseRestController
             ]
         ];
     }
-    
+
+    /**
+     * Check if a custom method requires a resource ID
+     *
+     * @param string $method The custom method name
+     * @return bool
+     */
+    protected function isResourceLevelMethod(string $method): bool
+    {
+        // Resource-level methods that require an ID
+        $resourceMethods = ['getStatus', 'getHistory', 'getStats', 'updateStatus'];
+
+        return in_array($method, $resourceMethods, true) || parent::isResourceLevelMethod($method);
+    }
+
     /**
      * Override handleCRUDRequest to provide better error messages for write operations
      * 

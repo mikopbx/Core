@@ -23,6 +23,7 @@ use MikoPBX\Common\Models\Providers;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\Iax;
 use MikoPBX\Common\Models\SipHosts;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
 
@@ -218,11 +219,11 @@ class SaveRecordAction extends AbstractSaveRecordAction
             // Log the status change
             $status = $disabled ? 'disabled' : 'enabled';
             $description = $config->description ?: $provider->note;
-            error_log("Provider '{$description}' ({$providerType}) has been {$status} via API");
+            SystemMessages::sysLogMsg(__CLASS__, "Provider '{$description}' ({$providerType}) has been {$status} via API", LOG_INFO);
             
         } catch (\Exception $e) {
             $res->messages['error'][] = $e->getMessage();
-            error_log("Failed to update provider status: " . $e->getMessage());
+            SystemMessages::sysLogMsg(__CLASS__, "Failed to update provider status: " . $e->getMessage(), LOG_ERROR);
         }
         
         return $res;

@@ -482,7 +482,7 @@ class ProviderBase {
             headerText = `${providerName} (${providerTypeText})`;
         } else {
             // New provider or no name
-            const newProviderText = globalTranslate.pr_NewProvider || 'New Provider';
+            const newProviderText = globalTranslate.pr_NewProvider;
             headerText = `${newProviderText} (${providerTypeText})`;
         }
         

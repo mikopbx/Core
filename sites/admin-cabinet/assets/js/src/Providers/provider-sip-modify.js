@@ -490,7 +490,7 @@ class ProviderSIP extends ProviderBase {
             optional: true,
             rules: [{
                 type: 'customHeader[cid]',
-                prompt: globalTranslate.pr_ValidateCustomHeaderEmpty || 'Please specify valid custom header name',
+                prompt: globalTranslate.pr_ValidateCustomHeaderEmpty,
             }]
         };
 
@@ -499,7 +499,7 @@ class ProviderSIP extends ProviderBase {
             optional: true,
             rules: [{
                 type: 'customHeader[did]',
-                prompt: globalTranslate.pr_ValidateCustomHeaderEmpty || 'Please specify valid custom header name',
+                prompt: globalTranslate.pr_ValidateCustomHeaderEmpty,
             }]
         };
 
@@ -509,7 +509,7 @@ class ProviderSIP extends ProviderBase {
             optional: true,
             rules: [{
                 type: 'regexPattern[cid]',
-                prompt: globalTranslate.pr_ValidateInvalidRegex || 'Invalid regular expression'
+                prompt: globalTranslate.pr_ValidateInvalidRegex
             }]
         };
 
@@ -518,7 +518,7 @@ class ProviderSIP extends ProviderBase {
             optional: true,
             rules: [{
                 type: 'regexPattern[did]',
-                prompt: globalTranslate.pr_ValidateInvalidRegex || 'Invalid regular expression'
+                prompt: globalTranslate.pr_ValidateInvalidRegex
             }]
         };
 
@@ -552,7 +552,7 @@ class ProviderSIP extends ProviderBase {
                     {
                         type: 'regExp',
                         value: '/^[a-zA-Z0-9.-]+$/',
-                        prompt: globalTranslate.pr_ValidationProviderHostInvalidCharacters || 'Host can only contain letters, numbers, dots and hyphens',
+                        prompt: globalTranslate.pr_ValidationProviderHostInvalidCharacters,
                     },
                 ],
             },
@@ -566,7 +566,7 @@ class ProviderSIP extends ProviderBase {
                     {
                         type: 'regExp',
                         value: '^[a-zA-Z0-9_.-]+$',
-                        prompt: globalTranslate.pr_ValidationProviderLoginInvalidCharacters || 'Username can only contain letters, numbers and symbols: _ - .',
+                        prompt: globalTranslate.pr_ValidationProviderLoginInvalidCharacters,
                     },
                 ],
             },
@@ -626,7 +626,7 @@ class ProviderSIP extends ProviderBase {
                     {
                         type: 'regExp',
                         value: '^[a-zA-Z0-9_.-]+$',
-                        prompt: globalTranslate.pr_ValidationProviderLoginInvalidCharacters || 'Username can only contain letters, numbers and symbols: _ - .',
+                        prompt: globalTranslate.pr_ValidationProviderLoginInvalidCharacters,
                     },
                 ],
             },
@@ -681,7 +681,7 @@ class ProviderSIP extends ProviderBase {
                     {
                         type: 'regExp',
                         value: '/^[a-zA-Z0-9.-]+$/',
-                        prompt: globalTranslate.pr_ValidationProviderHostInvalidCharacters || 'Host can only contain letters, numbers, dots and hyphens',
+                        prompt: globalTranslate.pr_ValidationProviderHostInvalidCharacters,
                     },
                 ],
             },
@@ -719,9 +719,9 @@ class ProviderSIP extends ProviderBase {
         const $hostLabelText = $('#hostLabelText');
         
         if (regType === 'outbound') {
-            $hostLabelText.text(globalTranslate.pr_ProviderHostOrIPAddress || 'Provider Host or IP Address');
+            $hostLabelText.text(globalTranslate.pr_ProviderHostOrIPAddress);
         } else if (regType === 'none') {
-            $hostLabelText.text(globalTranslate.pr_RemoteHostOrIPAddress || 'Remote Host or IP Address');
+            $hostLabelText.text(globalTranslate.pr_RemoteHostOrIPAddress);
         }
         // For inbound, the field is hidden so no need to update label
     }

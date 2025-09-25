@@ -213,7 +213,7 @@ const providerModifyStatusWorker = {
             .removeClass('green yellow grey loading')
             .addClass('red');
             
-        const errorText = globalTranslate.pr_StatusError || 'Status Error';
+        const errorText = globalTranslate.pr_StatusError;
         this.$status.html(`<i class="exclamation triangle icon"></i> ${errorText}`);
     },
     
@@ -309,7 +309,7 @@ const providerModifyStatusWorker = {
                 this.$status
                     .removeClass('grey yellow red')
                     .addClass('green')
-                    .html(`<i class="checkmark icon"></i> ${globalTranslate.pr_Online || 'Online'}`);
+                    .html(`<i class="checkmark icon"></i> ${globalTranslate.pr_Online}`);
                 break;
                 
             case 'UNREACHABLE':
@@ -317,7 +317,7 @@ const providerModifyStatusWorker = {
                 this.$status
                     .removeClass('green grey red')
                     .addClass('yellow')
-                    .html(`<i class="exclamation triangle icon"></i> ${globalTranslate.pr_WithoutRegistration || 'Without Registration'}`);
+                    .html(`<i class="exclamation triangle icon"></i> ${globalTranslate.pr_WithoutRegistration}`);
                 break;
                 
             case 'OFF':
@@ -325,7 +325,7 @@ const providerModifyStatusWorker = {
                 this.$status
                     .removeClass('green yellow red')
                     .addClass('grey')
-                    .html(`<i class="minus icon"></i> ${globalTranslate.pr_Offline || 'Offline'}`);
+                    .html(`<i class="minus icon"></i> ${globalTranslate.pr_Offline}`);
                 break;
                 
             case 'REJECTED':
@@ -334,7 +334,7 @@ const providerModifyStatusWorker = {
                 this.$status
                     .removeClass('green yellow red')
                     .addClass('grey')
-                    .html(`<i class="times icon"></i> ${globalTranslate.pr_Offline || 'Offline'}`);
+                    .html(`<i class="times icon"></i> ${globalTranslate.pr_Offline}`);
                 break;
                 
             default:
@@ -354,7 +354,7 @@ const providerModifyStatusWorker = {
         this.$status
             .removeClass('green yellow grey red')
             .addClass('loading')
-            .html(`<i class="spinner loading icon"></i> ${globalTranslate.pr_CheckingStatus || 'Checking...'}`);
+            .html(`<i class="spinner loading icon"></i> ${globalTranslate.pr_CheckingStatus}`);
         
         // Request status for this specific provider via REST API v3
         ProvidersAPI.getStatus(this.providerId, (response) => {
@@ -368,7 +368,7 @@ const providerModifyStatusWorker = {
                 this.$status
                     .removeClass('green yellow red')
                     .addClass('grey')
-                    .html(`<i class="question icon"></i> ${globalTranslate.pr_NotFound || 'Not Found'}`);
+                    .html(`<i class="question icon"></i> ${globalTranslate.pr_NotFound}`);
             } else {
                 this.handleRequestError('Invalid response format');
             }
@@ -382,7 +382,7 @@ const providerModifyStatusWorker = {
         this.$status
             .removeClass('loading green yellow grey')
             .addClass('red')
-            .html(`<i class="exclamation triangle icon"></i> ${globalTranslate.pr_ConnectionError || 'Error'}`);
+            .html(`<i class="exclamation triangle icon"></i> ${globalTranslate.pr_ConnectionError}`);
     },
     
     /**
@@ -717,7 +717,7 @@ const providerModifyStatusWorker = {
         if ($rtt.length) {
             if (statusInfo.rtt !== null && statusInfo.rtt !== undefined) {
                 const rttColor = statusInfo.rtt > 200 ? '#db2828' : statusInfo.rtt > 100 ? '#fbbd08' : '#21ba45';
-                $rtt.text(`${statusInfo.rtt} ${globalTranslate.pr_Milliseconds || 'мс'}`);
+                $rtt.text(`${statusInfo.rtt} ${globalTranslate.pr_Milliseconds}`);
                 $rttContainer.css('color', rttColor);
             } else {
                 $rtt.text('--');
@@ -737,10 +737,9 @@ const providerModifyStatusWorker = {
         // Update state label with actual state text
         if ($stateLabel.length) {
             const stateText = globalTranslate[statusInfo.stateText] || 
-                            statusInfo.stateText || 
-                            statusInfo.state || 
-                            globalTranslate.pr_CurrentState || 
-                            'Состояние';
+                            statusInfo.stateText ||
+                            statusInfo.state ||
+                            globalTranslate.pr_CurrentState;
             $stateLabel.text(stateText);
         }
         
@@ -792,7 +791,7 @@ const providerModifyStatusWorker = {
                     ...providerInfo
                 });
             } else if (!response.result) {
-                UserMessage.showError(globalTranslate.pr_ExportFailed || 'Export failed');
+                UserMessage.showError(globalTranslate.pr_ExportFailed);
             }
         });
     },
@@ -802,7 +801,7 @@ const providerModifyStatusWorker = {
      */
     downloadCSV(events, providerInfo) {
         if (!events || events.length === 0) {
-            UserMessage.showWarning(globalTranslate.pr_NoHistoryToExport || 'No history to export');
+            UserMessage.showWarning(globalTranslate.pr_NoHistoryToExport);
             return;
         }
         
@@ -923,10 +922,10 @@ const providerModifyStatusWorker = {
         const secs = seconds % 60;
         
         // Use localized units
-        const dayUnit = globalTranslate.pr_Days || 'д';
-        const hourUnit = globalTranslate.pr_Hours || 'ч';
-        const minuteUnit = globalTranslate.pr_Minutes || 'м';
-        const secondUnit = globalTranslate.pr_Seconds || 'с';
+        const dayUnit = globalTranslate.pr_Days;
+        const hourUnit = globalTranslate.pr_Hours;
+        const minuteUnit = globalTranslate.pr_Minutes;
+        const secondUnit = globalTranslate.pr_Seconds;
         
         if (days > 0) {
             return `${days}${dayUnit} ${hours}${hourUnit} ${minutes}${minuteUnit}`;

@@ -111,7 +111,7 @@ ProvidersAPI.forceCheck = function(providerId, callback) {
  */
 ProvidersAPI.updateStatus = function(providerId, data, callback) {
     this.callCustomMethod('updateStatus', {id: providerId, ...data}, callback, 'POST');
-};
+}; 
 
 /**
  * SipProvidersAPI - REST API v3 client for SIP providers management

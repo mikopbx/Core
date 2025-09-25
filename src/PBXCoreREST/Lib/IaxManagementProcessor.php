@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,41 +17,47 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
+declare(strict_types=1);
+
 namespace MikoPBX\PBXCoreREST\Lib;
 
 use MikoPBX\PBXCoreREST\Lib\Iax\GetRegistryAction;
 use Phalcon\Di\Injectable;
 
 /**
- * Class IAXStackProcessor
+ * IAX Management Processor
+ *
+ * Handles IAX-related API requests in the v3 REST API.
+ * Processes requests for IAX providers registry and status management.
  *
  * @package MikoPBX\PBXCoreREST\Lib
- *
  */
-class IAXStackProcessor extends Injectable
+class IaxManagementProcessor extends Injectable
 {
     /**
-     * Process the IAX callback request.
+     * Process the IAX management callback request.
      *
-     * @param array $request The request data.
-     * @return PBXApiResult An object containing the result of the API call.
+     * @param array $request The request data containing action and data
+     * @return PBXApiResult An object containing the result of the API call
      */
     public static function callBack(array $request): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
+
         $action = $request['action'];
+        $data = $request['data'] ?? [];
+
         switch ($action) {
             case 'getRegistry':
-                $res = GetRegistryAction::main();
+                $res = GetRegistryAction::main($data);
                 break;
             default:
-                $res->messages['error'][] = "Unknown action - $action in ".__CLASS__;
+                $res->messages['error'][] = "Unknown action - $action in " . __CLASS__;
                 break;
         }
 
         $res->function = $action;
-
         return $res;
     }
 }

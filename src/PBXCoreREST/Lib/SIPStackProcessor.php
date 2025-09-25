@@ -24,6 +24,9 @@ use MikoPBX\PBXCoreREST\Lib\Sip\GetPeersStatusesAction;
 use MikoPBX\PBXCoreREST\Lib\Sip\GetPeerStatusAction;
 use MikoPBX\PBXCoreREST\Lib\Sip\GetRegistryAction;
 use MikoPBX\PBXCoreREST\Lib\Sip\GetSipSecretAction;
+use MikoPBX\PBXCoreREST\Lib\Extensions\GetAllStatusesAction;
+use MikoPBX\PBXCoreREST\Lib\Extensions\GetHistoryAction;
+use MikoPBX\PBXCoreREST\Lib\Extensions\GetStatsAction;
 use Phalcon\Di\Injectable;
 
 /**
@@ -47,6 +50,21 @@ class SIPStackProcessor extends Injectable
     {
         $action = $request['action'];
         $data = $request['data'];
+
+        // Map 'id' parameter to appropriate parameter based on action for RESTful API compatibility
+        if (isset($data['id']) && !empty($data['id'])) {
+            $id = $data['id'];
+            unset($data['id']);
+
+            if (in_array($action, ['getStatus', 'forceCheck', 'getHistory', 'getStats'])) {
+                $data['extension'] = $id;
+            } elseif ($action === 'getSecret') {
+                $data['peer'] = $id;
+            } else {
+                // For other actions, keep as 'id' or map as needed
+                $data['id'] = $id;
+            }
+        }
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
         switch ($action) {
@@ -66,8 +84,60 @@ class SIPStackProcessor extends Injectable
             case 'getSecret':
                 if (!empty($data['number'])) {
                     $res = GetSipSecretAction::main($data['number']);
+                } elseif (!empty($data['peer'])) {
+                    $res = GetSipSecretAction::main($data['peer']);
                 } else {
-                    $res->messages['error'][] = 'Empty number value in POST/GET data';
+                    $res->messages['error'][] = 'Empty number/peer value in POST/GET data';
+                }
+                break;
+            case 'getStatuses':
+            case 'statuses':
+                $res = GetAllStatusesAction::main($data);
+                break;
+            case 'getStatus':
+                if (!empty($data['extension'])) {
+                    // For single extension status, call GetAllStatusesAction and filter result
+                    $allStatuses = GetAllStatusesAction::main($data);
+                    if ($allStatuses->success && isset($allStatuses->data[$data['extension']])) {
+                        $res->success = true;
+                        $res->data = $allStatuses->data[$data['extension']];
+                    } else {
+                        $res->messages['error'][] = 'Extension not found or status unavailable';
+                    }
+                } else {
+                    $res->messages['error'][] = 'Empty extension value in POST/GET data';
+                }
+                break;
+            case 'forceCheck':
+                if (!empty($data['extension'])) {
+                    // Force check for specific extension
+                    $forceData = array_merge($data, ['forceCheck' => true]);
+                    $allStatuses = GetAllStatusesAction::main($forceData);
+                    if ($allStatuses->success && isset($allStatuses->data[$data['extension']])) {
+                        $res->success = true;
+                        $res->data = $allStatuses->data[$data['extension']];
+                        $res->messages['info'][] = 'Force check completed for extension ' . $data['extension'];
+                    } else {
+                        $res->messages['error'][] = 'Extension not found or status check failed';
+                    }
+                } else {
+                    // Force check for all extensions
+                    $forceData = array_merge($data, ['forceCheck' => true]);
+                    $res = GetAllStatusesAction::main($forceData);
+                }
+                break;
+            case 'getHistory':
+                if (!empty($data['extension'])) {
+                    $res = GetHistoryAction::main($data['extension'], $data);
+                } else {
+                    $res->messages['error'][] = 'Empty extension value in POST/GET data';
+                }
+                break;
+            case 'getStats':
+                if (!empty($data['extension'])) {
+                    $res = GetStatsAction::main($data['extension'], $data);
+                } else {
+                    $res->messages['error'][] = 'Empty extension value in POST/GET data';
                 }
                 break;
             default:

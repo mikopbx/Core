@@ -35,9 +35,10 @@ class GetRegistryAction extends Injectable
     /**
      * Retrieves the statuses of IAX providers registration.
      *
+     * @param array $data Request data (currently unused, reserved for future filtering)
      * @return PBXApiResult An object containing the result of the API call.
      */
-    public static function main(): PBXApiResult
+    public static function main(array $data = []): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;

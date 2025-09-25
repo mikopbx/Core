@@ -67,7 +67,7 @@ class SIPProviderDataFactory
             'description' => 'Mango office',
             'host' => 'mango.office.ru',
             'username' => 'mango',
-            'password' => 'office',
+            'password' => 'office123',
             'dtmfmode' => 'inband',
             'port' => 5061,
             'qualify' => true,
@@ -77,7 +77,8 @@ class SIPProviderDataFactory
             'fromuser' => '',
             'fromdomain' => '',
             'manualattributes' => '',
-            // New DID and CallerID fields - testing To: header option
+            // New DID and CallerID fields - testing standard header options (To/From)
+            // When using standard headers, regex fields are not needed
             'did_source' => 'to',
             'did_custom_header' => '',
             'did_parser_start' => '',
@@ -112,12 +113,15 @@ class SIPProviderDataFactory
             'did_custom_header' => 'X-DID-Number',
             'did_parser_start' => '[',
             'did_parser_end' => ']',
-            'did_parser_regex' => '(?<=DID=)\\+?\\d+',
+            // Valid regex patterns that work in both PHP and JavaScript
+            // Use [0-9]+ instead of \d+ to avoid escaping issues
+            'did_parser_regex' => '[0-9]+',
             'cid_source' => 'custom',
             'cid_custom_header' => 'X-Caller-ID',
             'cid_parser_start' => '<',
             'cid_parser_end' => '>',
-            'cid_parser_regex' => '\\+?\\d+',
+            // This pattern extracts phone numbers with optional + prefix
+            'cid_parser_regex' => '[+]?[0-9]+',
             'cid_did_debug' => true,
         ],
         'provider.delete' => [
@@ -127,7 +131,7 @@ class SIPProviderDataFactory
             'description' => 'Provider for delete',
             'host' => 'provider1.office.ru',
             'username' => 'provider1',
-            'password' => 'office2',
+            'password' => 'office123',
             'dtmfmode' => 'inband',
             'port' => 5063,
             'qualify' => true,

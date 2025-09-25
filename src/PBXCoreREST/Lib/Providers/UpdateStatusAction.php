@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Lib\Providers;
 
 use MikoPBX\Common\Models\Providers;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\Common\BaseActionHelper;
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
@@ -82,7 +83,7 @@ class UpdateStatusAction
             // Log the status change
             $status = $disabled ? 'disabled' : 'enabled';
             $description = $result['description'];
-            error_log("Provider '{$description}' ({$providerType}) has been {$status} via API");
+            SystemMessages::sysLogMsg(__CLASS__, "Provider '{$description}' ({$providerType}) has been {$status} via API", LOG_INFO);
             
         } catch (\Exception $e) {
             $res->messages['error'][] = $e->getMessage();

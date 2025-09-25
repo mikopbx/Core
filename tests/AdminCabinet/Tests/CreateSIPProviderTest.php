@@ -21,9 +21,12 @@
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
+use Facebook\WebDriver\WebDriverBy;
+use Facebook\WebDriver\WebDriverExpectedCondition;
 
 /**
  * Base class for SIP provider creation tests
+ * Simplified and unified version using standard trait methods
  */
 abstract class CreateSIPProviderTest extends MikoPBXTestsBase
 {
@@ -59,21 +62,50 @@ abstract class CreateSIPProviderTest extends MikoPBXTestsBase
     /**
      * Create SIP provider
      */
-    public function createSIPProvider(array $params): void
+    protected function createSIPProvider(array $params): void
     {
+        // Navigate to providers page
         $this->clickSidebarMenuItemByHref('/admin-cabinet/providers/index/');
         $this->clickButtonByHref('/admin-cabinet/providers/modifysip');
 
-        $this->fillBasicFields($params);
-        $this->fillAdvancedOptions($params);
-        $this->fillDidAndCallerIdFields($params);
+        // Fill all provider fields
+        $this->fillProviderForm($params);
 
+        // Submit form - scrolling is now automatic in submitForm method
         $this->submitForm('save-provider-form');
-        
+
         // Verify provider was created by checking the ID field
-        $xpath = "//input[@name = 'id']";
-        $input_ProviderID = self::$driver->findElement(\Facebook\WebDriver\WebDriverBy::xpath($xpath));
-        $this->assertNotEmpty($input_ProviderID->getAttribute('value'), 'Provider ID should be set after creation');
+        $this->waitForElement("//input[@name='id']");
+        $providerId = self::$driver->findElement(WebDriverBy::xpath("//input[@name='id']"))->getAttribute('value');
+        $this->assertNotEmpty($providerId, 'Provider ID should be set after creation');
+
+        self::annotate("Provider created with ID: {$providerId}", 'info');
+    }
+
+
+    /**
+     * Fill provider form with all data
+     */
+    protected function fillProviderForm(array $params): void
+    {
+        // Set provider unique ID via JavaScript (readonly field)
+        self::$driver->executeScript(
+            "$('#save-provider-form').form('set value','id','{$params['uniqid']}');"
+        );
+
+        // Basic fields
+        $this->fillBasicFields($params);
+
+        // Advanced options (if accordion needs to be opened)
+        if ($this->hasAdvancedOptions($params)) {
+            $this->openAccordionOnThePage();
+            $this->fillAdvancedFields($params);
+        }
+
+        // DID and CallerID fields (optional)
+        if (isset($params['did_source'])) {
+            $this->fillDidCallerIdFields($params);
+        }
     }
 
     /**
@@ -81,103 +113,170 @@ abstract class CreateSIPProviderTest extends MikoPBXTestsBase
      */
     protected function fillBasicFields(array $params): void
     {
-        // Fix id (previously uniqid)
-        self::$driver->executeScript(
-            "$('#save-provider-form').form('set value','id','{$params['uniqid']}');"
-        );
-
+        // Registration type dropdown
         $this->selectDropdownItem('registration_type', $params['registration_type']);
+
+        // Description
         $this->changeInputField('description', $params['description']);
 
-        if ($params['registration_type'] === 'outbound') {
-            $this->changeInputField('host', $params['host']);
-            $this->changeInputField('username', $params['username']);
-        }
-        if ($params['registration_type'] === 'none') {
-            $this->changeInputField('host', $params['host']);
-        }
-        // For inbound registration, username is automatically set to uniqid and is readonly
-        // so we skip setting it
-        
-        if ($params['registration_type'] !== 'none') {
-            $this->changeInputField('secret', $params['password']);
+        // Fields based on registration type
+        switch ($params['registration_type']) {
+            case 'outbound':
+                $this->changeInputField('host', $params['host']);
+                $this->changeInputField('username', $params['username']);
+                $this->changeInputField('secret', $params['password']);
+                break;
+
+            case 'inbound':
+                // Username is auto-set to uniqid for inbound, password is required
+                $this->changeInputField('secret', $params['password']);
+                break;
+
+            case 'none':
+                $this->changeInputField('host', $params['host']);
+                break;
         }
     }
 
     /**
-     * Fill advanced provider options
+     * Check if provider has advanced options to fill
      */
-    protected function fillAdvancedOptions(array $params): void
+    protected function hasAdvancedOptions(array $params): bool
     {
-        $this->openAccordionOnThePage();
+        return isset($params['port']) ||
+               isset($params['qualify']) ||
+               isset($params['outbound_proxy']) ||
+               isset($params['fromdomain']) ||
+               isset($params['dtmfmode']) ||
+               isset($params['manualattributes']);
+    }
 
-        $this->changeInputField('port', $params['port']);
-        $this->changeCheckBoxState('qualify', $params['qualify']);
-        if ($params['qualify']) {
-            $this->changeInputField('qualifyfreq', $params['qualifyfreq']);
+    /**
+     * Fill advanced provider fields
+     */
+    protected function fillAdvancedFields(array $params): void
+    {
+        // Port
+        if (isset($params['port'])) {
+            $this->changeInputField('port', $params['port']);
         }
 
-        $this->changeInputField('outbound_proxy', $params['outbound_proxy']);
-        if ($params['disablefromuser'] !== false) {
-            $this->changeInputField('fromuser', $params['fromuser']);
+        // Qualify settings
+        if (isset($params['qualify'])) {
+            $this->changeCheckBoxState('qualify', $params['qualify']);
+            if ($params['qualify'] && isset($params['qualifyfreq'])) {
+                $this->changeInputField('qualifyfreq', $params['qualifyfreq']);
+            }
         }
 
-        $this->changeInputField('fromdomain', $params['fromdomain']);
-        $this->changeCheckBoxState('disablefromuser', $params['disablefromuser']);
-        
-        // Use safer dropdown selection for DTMF mode to prevent navigation issues
-        $this->selectDropdownItemWithFallback('dtmfmode', $params['dtmfmode'], true);
-        
-        $this->changeTextAreaValue('manualattributes', $params['manualattributes']);
+        // Outbound proxy
+        if (isset($params['outbound_proxy'])) {
+            $this->changeInputField('outbound_proxy', $params['outbound_proxy']);
+        }
+
+        // From user settings
+        if (isset($params['disablefromuser'])) {
+            $this->changeCheckBoxState('disablefromuser', $params['disablefromuser']);
+            if (!$params['disablefromuser'] && isset($params['fromuser'])) {
+                $this->changeInputField('fromuser', $params['fromuser']);
+            }
+        }
+
+        // From domain
+        if (isset($params['fromdomain'])) {
+            $this->changeInputField('fromdomain', $params['fromdomain']);
+        }
+
+        // DTMF mode
+        if (isset($params['dtmfmode'])) {
+            $this->selectDropdownItem('dtmfmode', $params['dtmfmode']);
+        }
+
+        // Manual attributes
+        if (isset($params['manualattributes'])) {
+            $this->changeTextAreaValue('manualattributes', $params['manualattributes']);
+        }
     }
 
     /**
      * Fill DID and CallerID fields
      */
-    protected function fillDidAndCallerIdFields(array $params): void
+    protected function fillDidCallerIdFields(array $params): void
     {
-        // Skip if fields are not present in test data
-        if (!isset($params['did_source'])) {
-            return;
+        // DID source settings
+        if (isset($params['did_source'])) {
+            $this->selectDropdownItem('did_source', $params['did_source']);
+
+            // Custom DID parser fields
+            if ($params['did_source'] === 'custom') {
+                $this->fillCustomParserFields('did', $params);
+            }
         }
 
-        // Set DID source
-        $this->selectDropdownItem('did_source', $params['did_source']);
-        
-        // If DID source is custom, fill custom fields
-        if ($params['did_source'] === 'custom') {
-            $this->changeInputField('did_custom_header', $params['did_custom_header']);
-            $this->changeInputField('did_parser_start', $params['did_parser_start']);
-            $this->changeInputField('did_parser_end', $params['did_parser_end']);
-            $this->changeInputField('did_parser_regex', $params['did_parser_regex']);
+        // CallerID source settings
+        if (isset($params['cid_source'])) {
+            $this->selectDropdownItem('cid_source', $params['cid_source']);
+
+            // Custom CallerID parser fields
+            if ($params['cid_source'] === 'custom') {
+                $this->fillCustomParserFields('cid', $params);
+            }
         }
-        
-        // Set CallerID source
-        $this->selectDropdownItem('cid_source', $params['cid_source']);
-        
-        // If CallerID source is custom, fill custom fields
-        if ($params['cid_source'] === 'custom') {
-            $this->changeInputField('cid_custom_header', $params['cid_custom_header']);
-            $this->changeInputField('cid_parser_start', $params['cid_parser_start']);
-            $this->changeInputField('cid_parser_end', $params['cid_parser_end']);
-            $this->changeInputField('cid_parser_regex', $params['cid_parser_regex']);
+
+        // Debug checkbox
+        if (isset($params['cid_did_debug'])) {
+            $this->changeCheckBoxState('cid_did_debug', $params['cid_did_debug']);
         }
-        
-        // Set debug checkbox
-        $this->changeCheckBoxState('cid_did_debug', $params['cid_did_debug']);
     }
 
     /**
-     * Verify SIP provider creation
+     * Fill custom parser fields for DID or CallerID
+     */
+    protected function fillCustomParserFields(string $prefix, array $params): void
+    {
+        $fields = ['custom_header', 'parser_start', 'parser_end', 'parser_regex'];
+
+        foreach ($fields as $field) {
+            $key = "{$prefix}_{$field}";
+            if (isset($params[$key])) {
+                $this->changeInputField($key, $params[$key]);
+            }
+        }
+    }
+
+    /**
+     * Verify SIP provider was created correctly
      */
     protected function verifySIPProvider(array $params): void
     {
+        // Navigate back to providers list
         $this->clickSidebarMenuItemByHref('/admin-cabinet/providers/index/');
+
+        // Open the created provider for editing
         $this->clickModifyButtonOnRowWithText($params['description']);
 
+        // Verify all fields
+        $this->verifyProviderForm($params);
+    }
+
+    /**
+     * Verify provider form contains correct data
+     */
+    protected function verifyProviderForm(array $params): void
+    {
+        // Verify basic fields
         $this->verifyBasicFields($params);
-        $this->verifyAdvancedOptions($params);
-        $this->verifyDidAndCallerIdFields($params);
+
+        // Verify advanced fields (if present)
+        if ($this->hasAdvancedOptions($params)) {
+            $this->openAccordionOnThePage();
+            $this->verifyAdvancedFields($params);
+        }
+
+        // Verify DID and CallerID fields (if present)
+        if (isset($params['did_source'])) {
+            $this->verifyDidCallerIdFields($params);
+        }
     }
 
     /**
@@ -185,89 +284,125 @@ abstract class CreateSIPProviderTest extends MikoPBXTestsBase
      */
     protected function verifyBasicFields(array $params): void
     {
+        // Registration type
         $this->assertMenuItemSelected('registration_type', $params['registration_type']);
+
+        // Description
         $this->assertInputFieldValueEqual('description', $params['description']);
 
-        if ($params['registration_type'] === 'outbound') {
-            $this->assertInputFieldValueEqual('host', $params['host']);
-            $this->assertInputFieldValueEqual('username', $params['username']);
-        }
-        if ($params['registration_type'] === 'inbound') {
-            // For inbound registration, username should equal uniqid
-            $this->assertInputFieldValueEqual('username', $params['uniqid']);
-        }
-        if ($params['registration_type'] === 'none') {
-            $this->assertInputFieldValueEqual('host', $params['host']);
-        }
-        
-        if ($params['registration_type'] !== 'none') {
-            // Password is masked only for outbound providers
-            if ($params['registration_type'] === 'outbound') {
+        // Fields based on registration type
+        switch ($params['registration_type']) {
+            case 'outbound':
+                $this->assertInputFieldValueEqual('host', $params['host']);
+                $this->assertInputFieldValueEqual('username', $params['username']);
+                // Password should be masked for outbound
                 $this->assertPasswordFieldIsMasked('secret');
-            } else {
-                // For inbound providers, password is not masked
+                break;
+
+            case 'inbound':
+                // Username should equal uniqid for inbound
+                $this->assertInputFieldValueEqual('username', $params['uniqid']);
+                // Password is visible for inbound
                 $this->assertInputFieldValueEqual('secret', $params['password']);
-            }
+                break;
+
+            case 'none':
+                $this->assertInputFieldValueEqual('host', $params['host']);
+                break;
         }
     }
 
     /**
-     * Verify advanced provider options
+     * Verify advanced provider fields
      */
-    protected function verifyAdvancedOptions(array $params): void
+    protected function verifyAdvancedFields(array $params): void
     {
-        $this->openAccordionOnThePage();
-
-        $this->assertInputFieldValueEqual('port', $params['port']);
-        $this->assertCheckBoxStageIsEqual('qualify', $params['qualify']);
-        if ($params['qualify']) {
-            $this->assertInputFieldValueEqual('qualifyfreq', $params['qualifyfreq']);
+        // Port
+        if (isset($params['port'])) {
+            $this->assertInputFieldValueEqual('port', $params['port']);
         }
 
-        $this->assertInputFieldValueEqual('outbound_proxy', $params['outbound_proxy']);
-        if ($params['disablefromuser'] !== false) {
-            $this->assertInputFieldValueEqual('fromuser', $params['fromuser']);
+        // Qualify settings
+        if (isset($params['qualify'])) {
+            $this->assertCheckBoxStageIsEqual('qualify', $params['qualify']);
+            if ($params['qualify'] && isset($params['qualifyfreq'])) {
+                $this->assertInputFieldValueEqual('qualifyfreq', $params['qualifyfreq']);
+            }
         }
 
-        $this->assertInputFieldValueEqual('fromdomain', $params['fromdomain']);
-        $this->assertCheckBoxStageIsEqual('disablefromuser', $params['disablefromuser']);
-        $this->assertMenuItemSelected('dtmfmode', $params['dtmfmode']);
-        $this->assertTextAreaValueIsEqual('manualattributes', $params['manualattributes']);
+        // Outbound proxy
+        if (isset($params['outbound_proxy'])) {
+            $this->assertInputFieldValueEqual('outbound_proxy', $params['outbound_proxy']);
+        }
+
+        // From user settings
+        if (isset($params['disablefromuser'])) {
+            $this->assertCheckBoxStageIsEqual('disablefromuser', $params['disablefromuser']);
+            if (!$params['disablefromuser'] && isset($params['fromuser'])) {
+                $this->assertInputFieldValueEqual('fromuser', $params['fromuser']);
+            }
+        }
+
+        // From domain
+        if (isset($params['fromdomain'])) {
+            $this->assertInputFieldValueEqual('fromdomain', $params['fromdomain']);
+        }
+
+        // DTMF mode
+        if (isset($params['dtmfmode'])) {
+            $this->assertMenuItemSelected('dtmfmode', $params['dtmfmode']);
+        }
+
+        // Manual attributes
+        if (isset($params['manualattributes'])) {
+            $this->assertTextAreaValueIsEqual('manualattributes', $params['manualattributes']);
+        }
     }
 
     /**
      * Verify DID and CallerID fields
      */
-    protected function verifyDidAndCallerIdFields(array $params): void
+    protected function verifyDidCallerIdFields(array $params): void
     {
-        // Skip verification if fields are not present in test data
-        if (!isset($params['did_source'])) {
-            return;
+        // DID source settings
+        if (isset($params['did_source'])) {
+            $this->assertMenuItemSelected('did_source', $params['did_source']);
+
+            // Custom DID parser fields
+            if ($params['did_source'] === 'custom') {
+                $this->verifyCustomParserFields('did', $params);
+            }
         }
 
-        // Verify DID source dropdown
-        $this->assertMenuItemSelected('did_source', $params['did_source']);
-        
-        // If DID source is custom, verify custom fields
-        if ($params['did_source'] === 'custom') {
-            $this->assertInputFieldValueEqual('did_custom_header', $params['did_custom_header']);
-            $this->assertInputFieldValueEqual('did_parser_start', $params['did_parser_start']);
-            $this->assertInputFieldValueEqual('did_parser_end', $params['did_parser_end']);
-            $this->assertInputFieldValueEqual('did_parser_regex', $params['did_parser_regex']);
+        // CallerID source settings
+        if (isset($params['cid_source'])) {
+            $this->assertMenuItemSelected('cid_source', $params['cid_source']);
+
+            // Custom CallerID parser fields
+            if ($params['cid_source'] === 'custom') {
+                $this->verifyCustomParserFields('cid', $params);
+            }
         }
-        
-        // Verify CallerID source dropdown  
-        $this->assertMenuItemSelected('cid_source', $params['cid_source']);
-        
-        // If CallerID source is custom, verify custom fields
-        if ($params['cid_source'] === 'custom') {
-            $this->assertInputFieldValueEqual('cid_custom_header', $params['cid_custom_header']);
-            $this->assertInputFieldValueEqual('cid_parser_start', $params['cid_parser_start']);
-            $this->assertInputFieldValueEqual('cid_parser_end', $params['cid_parser_end']);
-            $this->assertInputFieldValueEqual('cid_parser_regex', $params['cid_parser_regex']);
+
+        // Debug checkbox
+        if (isset($params['cid_did_debug'])) {
+            $this->assertCheckBoxStageIsEqual('cid_did_debug', $params['cid_did_debug']);
         }
-        
-        // Verify debug checkbox
-        $this->assertCheckBoxStageIsEqual('cid_did_debug', $params['cid_did_debug']);
     }
+
+    /**
+     * Verify custom parser fields for DID or CallerID
+     */
+    protected function verifyCustomParserFields(string $prefix, array $params): void
+    {
+        $fields = ['custom_header', 'parser_start', 'parser_end', 'parser_regex'];
+
+        foreach ($fields as $field) {
+            $key = "{$prefix}_{$field}";
+            if (isset($params[$key])) {
+                $this->assertInputFieldValueEqual($key, $params[$key]);
+            }
+        }
+    }
+
 }

@@ -436,14 +436,14 @@ const ProviderStatusMonitor = {
         // Format and add duration information (now comes as seconds from backend)
         if (stateDuration !== undefined && stateDuration !== null && stateDuration >= 0) {
             const formattedDuration = this.formatDuration(stateDuration);
-            const durationLabel = globalTranslate.pr_StatusDuration || 'Длительность';
+            const durationLabel = globalTranslate.pr_StatusDuration;
             statusSection += `<div class="provider-status-tooltip__status-item">${durationLabel}: <strong>${formattedDuration}</strong></div>`;
             hasStatusInfo = true;
         }
         
         // Add RTT (Round Trip Time) if available
         if (rtt !== undefined && rtt !== null && rtt >= 0) {
-            const rttLabel = globalTranslate.pr_RTT || 'Задержка';
+            const rttLabel = globalTranslate.pr_RTT;
             // Format RTT with color coding
             let rttClass = 'provider-status-tooltip__rtt--good';
             if (rtt > 100) rttClass = 'provider-status-tooltip__rtt--warning';
@@ -455,7 +455,7 @@ const ProviderStatusMonitor = {
         // Format time since last success if provided (now comes as seconds)
         if (timeSinceLastSuccess !== undefined && timeSinceLastSuccess !== null && timeSinceLastSuccess >= 0) {
             const formattedTime = this.formatDuration(timeSinceLastSuccess);
-            const lastSuccessLabel = globalTranslate.pr_LastSuccessTime || 'Последний успех';
+            const lastSuccessLabel = globalTranslate.pr_LastSuccessTime;
             statusSection += `<div class="provider-status-tooltip__status-item provider-status-tooltip__last-success">${lastSuccessLabel}: <strong>${formattedTime} назад</strong></div>`;
             hasStatusInfo = true;
         }
@@ -463,14 +463,14 @@ const ProviderStatusMonitor = {
         // Add success/failure duration if available
         if (successDuration !== undefined && successDuration !== null && successDuration > 0) {
             const formattedDuration = this.formatDuration(successDuration);
-            const successLabel = globalTranslate.pr_SuccessDuration || 'Время работы';
+            const successLabel = globalTranslate.pr_SuccessDuration;
             statusSection += `<div class="provider-status-tooltip__status-item provider-status-tooltip__success-duration">${successLabel}: <strong>${formattedDuration}</strong></div>`;
             hasStatusInfo = true;
         }
         
         if (failureDuration !== undefined && failureDuration !== null && failureDuration > 0) {
             const formattedDuration = this.formatDuration(failureDuration);
-            const failureLabel = globalTranslate.pr_FailureDuration || 'Время сбоя';
+            const failureLabel = globalTranslate.pr_FailureDuration;
             statusSection += `<div class="provider-status-tooltip__status-item provider-status-tooltip__failure-duration">${failureLabel}: <strong>${formattedDuration}</strong></div>`;
             hasStatusInfo = true;
         }
@@ -515,13 +515,13 @@ const ProviderStatusMonitor = {
             
             if (stateDuration) {
                 // Use translated state text if available, otherwise use generic label
-                const stateLabel = stateText ? globalTranslate[stateText] || stateText : globalTranslate.pr_StatusDuration || 'State';
+                const stateLabel = stateText ? globalTranslate[stateText] || stateText : globalTranslate.pr_StatusDuration;
                 durationText += `${stateLabel}: ${this.formatDuration(stateDuration)}`;
             }
             
             if (lastSuccessTime) {
                 const timeAgo = this.formatTimeAgo(lastSuccessTime);
-                const lastSuccessLabel = globalTranslate.pr_LastSuccessTime || 'Last success';
+                const lastSuccessLabel = globalTranslate.pr_LastSuccessTime;
                 if (durationText) durationText += ' | ';
                 durationText += `${lastSuccessLabel}: ${timeAgo}`;
             }
@@ -543,7 +543,7 @@ const ProviderStatusMonitor = {
             let $durationInfo = $row.find('.provider-duration-info');
             if ($durationInfo.length === 0 && $nameColumn.length) {
                 // Add loading placeholder
-                const loadingText = globalTranslate.pr_CheckingProviderStatuses || 'Getting status...';
+                const loadingText = globalTranslate.pr_CheckingProviderStatuses;
                 $nameColumn.append(`<div class="provider-duration-info" style="color: #999; font-size: 0.9em;">${loadingText}</div>`);
             }
         });
@@ -555,7 +555,7 @@ const ProviderStatusMonitor = {
     formatDuration(seconds) {
         if (!seconds || seconds < 0) {
             // Return 0 seconds using translation
-            const zeroFormat = globalTranslate.pr_TimeFormat_Seconds || '%s s';
+            const zeroFormat = globalTranslate.pr_TimeFormat_Seconds;
             return zeroFormat.replace('%s', '0');
         }
         
@@ -568,19 +568,19 @@ const ProviderStatusMonitor = {
         
         // Use translated format strings
         if (days > 0) {
-            const format = globalTranslate.pr_TimeFormat_Days || '%s d';
+            const format = globalTranslate.pr_TimeFormat_Days;
             result.push(format.replace('%s', days));
         }
         if (hours > 0) {
-            const format = globalTranslate.pr_TimeFormat_Hours || '%s h';
+            const format = globalTranslate.pr_TimeFormat_Hours;
             result.push(format.replace('%s', hours));
         }
         if (minutes > 0) {
-            const format = globalTranslate.pr_TimeFormat_Minutes || '%s m';
+            const format = globalTranslate.pr_TimeFormat_Minutes;
             result.push(format.replace('%s', minutes));
         }
         if (secs > 0 || result.length === 0) {
-            const format = globalTranslate.pr_TimeFormat_Seconds || '%s s';
+            const format = globalTranslate.pr_TimeFormat_Seconds;
             result.push(format.replace('%s', secs));
         }
         
@@ -597,7 +597,7 @@ const ProviderStatusMonitor = {
         
         // Use formatDuration to get consistent formatting with translations
         const formattedTime = this.formatDuration(diff);
-        const agoLabel = globalTranslate.pr_TimeAgo || 'ago';
+        const agoLabel = globalTranslate.pr_TimeAgo;
         
         // For very recent times, use special label
         if (diff < 60) {
@@ -779,10 +779,10 @@ const ProviderStatusMonitor = {
         
         // Set appropriate header based on type
         const headers = {
-            'info': globalTranslate.pr_StatusInfo || 'Status Info',
-            'success': globalTranslate.pr_StatusUpdated || 'Status Updated',
-            'error': globalTranslate.pr_StatusError || 'Status Error',
-            'warning': globalTranslate.pr_StatusWarning || 'Status Warning'
+            'info': globalTranslate.pr_StatusInfo,
+            'success': globalTranslate.pr_StatusUpdated,
+            'error': globalTranslate.pr_StatusError,
+            'warning': globalTranslate.pr_StatusWarning
         };
         
         $header.text(headers[type] || 'Status');
@@ -826,7 +826,7 @@ const ProviderStatusMonitor = {
     requestStatusUpdate() {
         // Show loading indicator
         this.showUpdateNotification(
-            globalTranslate.pr_RequestingStatusUpdate || 'Requesting status update...',
+            globalTranslate.pr_RequestingStatusUpdate,
             'info',
             3000
         );
@@ -853,7 +853,7 @@ const ProviderStatusMonitor = {
                     this.showUpdateNotification(message, 'success');
                 } else {
                     this.showUpdateNotification(
-                        globalTranslate.pr_StatusUpdateFailed || 'Status update failed',
+                        globalTranslate.pr_StatusUpdateFailed,
                         'error'
                     );
                 }
@@ -861,13 +861,13 @@ const ProviderStatusMonitor = {
             onFailure: (response) => {
                 const errorMessage = response.messages 
                     ? response.messages.join(', ')
-                    : globalTranslate.pr_StatusUpdateError || 'Error updating provider status';
+                    : globalTranslate.pr_StatusUpdateError;
                     
                 this.showUpdateNotification(errorMessage, 'error');
             },
             onError: () => {
                 this.showUpdateNotification(
-                    globalTranslate.pr_ConnectionError || 'Connection error',
+                    globalTranslate.pr_ConnectionError,
                     'error'
                 );
             }
@@ -908,7 +908,7 @@ const ProviderStatusMonitor = {
     showProviderDetails(providerId) {
         // Show loading state
         this.showUpdateNotification(
-            globalTranslate.pr_LoadingProviderDetails || 'Loading provider details...',
+            globalTranslate.pr_LoadingProviderDetails,
             'info',
             2000
         );
@@ -938,14 +938,14 @@ const ProviderStatusMonitor = {
                         .modal('show');
                 } else {
                     this.showUpdateNotification(
-                        globalTranslate.pr_NoStatusInfo || 'No status information available',
+                        globalTranslate.pr_NoStatusInfo,
                         'warning'
                     );
                 }
             },
             onFailure: () => {
                 this.showUpdateNotification(
-                    globalTranslate.pr_FailedToLoadDetails || 'Failed to load provider details',
+                    globalTranslate.pr_FailedToLoadDetails,
                     'error'
                 );
             }
@@ -984,30 +984,30 @@ const ProviderStatusMonitor = {
             if (totalChecks > 0) {
                 statsHtml = `
                 <div class="ui segment">
-                    <h4>${globalTranslate.pr_Statistics || 'Statistics'}</h4>
+                    <h4>${globalTranslate.pr_Statistics}</h4>
                     <div class="ui four column grid">
                         <div class="column">
                             <div class="ui tiny statistic">
                                 <div class="value">${totalChecks}</div>
-                                <div class="label">${globalTranslate.pr_TotalChecks || 'Total Checks'}</div>
+                                <div class="label">${globalTranslate.pr_TotalChecks}</div>
                             </div>
                         </div>
                         <div class="column">
                             <div class="ui tiny green statistic">
                                 <div class="value">${successCount}</div>
-                                <div class="label">${globalTranslate.pr_Success || 'Success'}</div>
+                                <div class="label">${globalTranslate.pr_Success}</div>
                             </div>
                         </div>
                         <div class="column">
                             <div class="ui tiny red statistic">
                                 <div class="value">${failureCount}</div>
-                                <div class="label">${globalTranslate.pr_Failures || 'Failures'}</div>
+                                <div class="label">${globalTranslate.pr_Failures}</div>
                             </div>
                         </div>
                         <div class="column">
                             <div class="ui tiny ${availability >= 99 ? 'green' : availability >= 95 ? 'yellow' : 'red'} statistic">
                                 <div class="value">${availability}%</div>
-                                <div class="label">${globalTranslate.pr_Availability || 'Availability'}</div>
+                                <div class="label">${globalTranslate.pr_Availability}</div>
                             </div>
                         </div>
                     </div>
@@ -1015,13 +1015,13 @@ const ProviderStatusMonitor = {
                     <div class="ui divider"></div>
                     <div class="ui three column grid">
                         <div class="column">
-                            <strong>${globalTranslate.pr_AverageRTT || 'Average RTT'}:</strong> ${averageRtt} ms
+                            <strong>${globalTranslate.pr_AverageRTT}:</strong> ${averageRtt} ms
                         </div>
                         <div class="column">
-                            <strong>${globalTranslate.pr_MinRTT || 'Min RTT'}:</strong> ${minRtt} ms
+                            <strong>${globalTranslate.pr_MinRTT}:</strong> ${minRtt} ms
                         </div>
                         <div class="column">
-                            <strong>${globalTranslate.pr_MaxRTT || 'Max RTT'}:</strong> ${maxRtt} ms
+                            <strong>${globalTranslate.pr_MaxRTT}:</strong> ${maxRtt} ms
                         </div>
                     </div>` : ''}
                 </div>`;
@@ -1046,7 +1046,7 @@ const ProviderStatusMonitor = {
             
             eventsHtml = `
             <div class="ui segment">
-                <h4>${globalTranslate.pr_RecentEvents || 'Recent Events'}</h4>
+                <h4>${globalTranslate.pr_RecentEvents}</h4>
                 <table class="ui very basic compact table">
                     <tbody>
                         ${eventRows}
@@ -1064,34 +1064,34 @@ const ProviderStatusMonitor = {
                 <div class="content">
                     <div class="ui segments">
                         <div class="ui segment">
-                            <h4>${globalTranslate.pr_ProviderInfo || 'Provider Information'}</h4>
+                            <h4>${globalTranslate.pr_ProviderInfo}</h4>
                             <div class="ui two column grid">
                                 <div class="column">
                                     <div class="ui list">
                                         <div class="item">
-                                            <strong>${globalTranslate.pr_ProviderId || 'Provider ID'}:</strong> ${uniqid}
+                                            <strong>${globalTranslate.pr_ProviderId}:</strong> ${uniqid}
                                         </div>
                                         <div class="item">
-                                            <strong>${globalTranslate.pr_Host || 'Host'}:</strong> ${host}
+                                            <strong>${globalTranslate.pr_Host}:</strong> ${host}
                                         </div>
                                         <div class="item">
-                                            <strong>${globalTranslate.pr_Username || 'Username'}:</strong> ${username}
+                                            <strong>${globalTranslate.pr_Username}:</strong> ${username}
                                         </div>
                                     </div>
                                 </div>
                                 <div class="column">
                                     <div class="ui list">
                                         <div class="item">
-                                            <strong>${globalTranslate.pr_CurrentState || 'Current State'}:</strong> 
+                                            <strong>${globalTranslate.pr_CurrentState}:</strong> 
                                             <span class="ui ${stateColor} text">${globalTranslate[stateDescription] || state}</span>
                                         </div>
                                         <div class="item">
-                                            <strong>${globalTranslate.pr_StateDuration || 'State Duration'}:</strong> 
+                                            <strong>${globalTranslate.pr_StateDuration}:</strong> 
                                             ${this.formatDuration(stateDuration)}
                                         </div>
                                         ${rtt !== null && rtt !== undefined ? `
                                         <div class="item">
-                                            <strong>${globalTranslate.pr_CurrentRTT || 'Current RTT'}:</strong> 
+                                            <strong>${globalTranslate.pr_CurrentRTT}:</strong> 
                                             <span style="color: ${rtt > 200 ? 'red' : rtt > 100 ? 'orange' : 'green'}">
                                                 ${rtt} ms
                                             </span>
@@ -1103,11 +1103,11 @@ const ProviderStatusMonitor = {
                             <div class="ui divider"></div>
                             <div class="ui two column grid">
                                 <div class="column">
-                                    <strong>${globalTranslate.pr_LastSuccess || 'Last Success'}:</strong> 
+                                    <strong>${globalTranslate.pr_LastSuccess}:</strong> 
                                     ${this.formatTimeAgo(lastSuccessTime)}
                                 </div>
                                 <div class="column">
-                                    <strong>${globalTranslate.pr_LastUpdate || 'Last Update'}:</strong> 
+                                    <strong>${globalTranslate.pr_LastUpdate}:</strong> 
                                     ${lastUpdateFormatted || new Date().toLocaleString()}
                                 </div>
                             </div>` : ''}
@@ -1119,14 +1119,14 @@ const ProviderStatusMonitor = {
                 <div class="actions">
                     <button class="ui button" onclick="window.location.href='${globalRootUrl}providers/modify/${uniqid}'">
                         <i class="edit icon"></i>
-                        ${globalTranslate.pr_EditProvider || 'Edit Provider'}
+                        ${globalTranslate.pr_EditProvider}
                     </button>
                     <button class="ui primary button" onclick="ProviderStatusMonitor.requestProviderCheck('${uniqid}')">
                         <i class="sync icon"></i>
-                        ${globalTranslate.pr_CheckNow || 'Check Now'}
+                        ${globalTranslate.pr_CheckNow}
                     </button>
                     <div class="ui cancel button">
-                        ${globalTranslate.pr_Close || 'Close'}
+                        ${globalTranslate.pr_Close}
                     </div>
                 </div>
             </div>
@@ -1148,7 +1148,7 @@ const ProviderStatusMonitor = {
             onSuccess: (response) => {
                 if (response.result) {
                     this.showUpdateNotification(
-                        globalTranslate.pr_CheckRequested || 'Check requested',
+                        globalTranslate.pr_CheckRequested,
                         'success',
                         2000
                     );
@@ -1175,7 +1175,7 @@ const ProviderStatusMonitor = {
             },
             onFailure: () => {
                 this.showUpdateNotification(
-                    globalTranslate.pr_CheckFailed || 'Check failed',
+                    globalTranslate.pr_CheckFailed,
                     'error',
                     3000
                 );
@@ -1192,7 +1192,7 @@ $(document).ready(() => {
             <button class="ui mini labeled icon button provider-refresh-btn" 
                     style="position: absolute; top: 10px; right: 10px; z-index: 100;">
                 <i class="sync icon"></i>
-                ${globalTranslate.pr_RefreshStatus || 'Refresh Status'}
+                ${globalTranslate.pr_RefreshStatus}
             </button>
         `;
         $('.ui.container.segment').css('position', 'relative').append(refreshButton);

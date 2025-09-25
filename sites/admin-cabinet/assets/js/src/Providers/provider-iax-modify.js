@@ -130,9 +130,9 @@ class ProviderIAX extends ProviderBase {
                 <div class="ui warning message" id="iax-deprecation-notice">
                     <i class="close icon"></i>
                     <div class="header">
-                        ${globalTranslate.iax_DeprecationWarningTitle || 'IAX Protocol Notice'}
+                        ${globalTranslate.iax_DeprecationWarningTitle}
                     </div>
-                    <p>${globalTranslate.iax_DeprecationWarningText || 'IAX protocol is deprecated. Consider using SIP instead.'}</p>
+                    <p>${globalTranslate.iax_DeprecationWarningText}</p>
                 </div>
             `;
             $('#iax-warning-placeholder').html(warningHtml);
@@ -159,7 +159,7 @@ class ProviderIAX extends ProviderBase {
                 // Show warning about invalid characters
                 $this.closest('.field').addClass('error');
                 $this.parent().append('<div class="ui pointing red basic label temporary-warning">' +
-                    (globalTranslate.pr_ValidationProviderLoginInvalidCharacters || 'Only letters, numbers, dash and underscore allowed') +
+                    globalTranslate.pr_ValidationProviderLoginInvalidCharacters +
                     '</div>');
                 // Remove warning after 3 seconds
                 setTimeout(() => {
@@ -210,7 +210,7 @@ class ProviderIAX extends ProviderBase {
                     {
                         type: 'regExp',
                         value: '/^[a-zA-Z0-9.-]+$/',
-                        prompt: globalTranslate.pr_ValidationProviderHostInvalidCharacters || 'Host can only contain letters, numbers, dots and hyphens',
+                        prompt: globalTranslate.pr_ValidationProviderHostInvalidCharacters,
                     },
                 ],
             };
@@ -295,7 +295,7 @@ class ProviderIAX extends ProviderBase {
                     {
                         type: 'regExp',
                         value: '/^[a-zA-Z0-9.-]+$/',
-                        prompt: globalTranslate.pr_ValidationProviderHostInvalidCharacters || 'Host can only contain letters, numbers, dots and hyphens',
+                        prompt: globalTranslate.pr_ValidationProviderHostInvalidCharacters,
                     },
                 ],
             };
@@ -410,10 +410,10 @@ class ProviderIAX extends ProviderBase {
                 hidden: ['receiveCalls', 'networkFilter'],
                 required: ['host', 'port', 'username', 'secret'],
                 labels: {
-                    host: globalTranslate.pr_ProviderHostOrIPAddress || 'Provider Host/IP',
-                    port: globalTranslate.pr_ProviderPort || 'Provider Port',
-                    username: globalTranslate.pr_ProviderLogin || 'Login',
-                    secret: globalTranslate.pr_ProviderPassword || 'Password'
+                    host: globalTranslate.pr_ProviderHostOrIPAddress,
+                    port: globalTranslate.pr_ProviderPort,
+                    username: globalTranslate.pr_ProviderLogin,
+                    secret: globalTranslate.pr_ProviderPassword
                 },
                 passwordWidget: {
                     generateButton: false,
@@ -430,9 +430,9 @@ class ProviderIAX extends ProviderBase {
                 required: ['username', 'secret'],
                 optional: ['host', 'port'],
                 labels: {
-                    host: globalTranslate.pr_RemoteHostOrIPAddress || 'Remote Host/IP',
-                    username: globalTranslate.pr_AuthenticationUsername || 'Authentication Username',
-                    secret: globalTranslate.pr_AuthenticationPassword || 'Authentication Password'
+                    host: globalTranslate.pr_RemoteHostOrIPAddress,
+                    username: globalTranslate.pr_AuthenticationUsername,
+                    secret: globalTranslate.pr_AuthenticationPassword
                 },
                 passwordWidget: {
                     generateButton: true,
@@ -450,10 +450,10 @@ class ProviderIAX extends ProviderBase {
                 required: ['host', 'port', 'username'],
                 optional: ['secret'],
                 labels: {
-                    host: globalTranslate.pr_PeerHostOrIPAddress || 'Peer Host/IP',
-                    port: globalTranslate.pr_PeerPort || 'Peer Port',
-                    username: globalTranslate.pr_PeerUsername || 'Peer Username',
-                    secret: globalTranslate.pr_PeerPassword || 'Peer Password'
+                    host: globalTranslate.pr_PeerHostOrIPAddress,
+                    port: globalTranslate.pr_PeerPort,
+                    username: globalTranslate.pr_PeerUsername,
+                    secret: globalTranslate.pr_PeerPassword
                 },
                 passwordWidget: {
                     generateButton: true,

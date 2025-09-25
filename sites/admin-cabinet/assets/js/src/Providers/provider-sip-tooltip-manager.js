@@ -440,28 +440,28 @@ class ProviderSipTooltipManager extends ProviderTooltipManager {
      */
     static getCallerIdSourceTooltip() {
         return {
-            header: globalTranslate.pr_CallerIdSourceTooltip_header || 'CallerID Source',
-            description: globalTranslate.pr_CallerIdSourceTooltip_desc || 'Select the SIP header to extract the caller ID from',
+            header: globalTranslate.pr_CallerIdSourceTooltip_header,
+            description: globalTranslate.pr_CallerIdSourceTooltip_desc,
             list: [
                 {
-                    term: globalTranslate.pr_CallerIdSourceTooltip_default || 'Default',
-                    definition: globalTranslate.pr_CallerIdSourceTooltip_default_desc || 'Use standard Asterisk logic'
+                    term: globalTranslate.pr_CallerIdSourceTooltip_default,
+                    definition: globalTranslate.pr_CallerIdSourceTooltip_default_desc
                 },
                 {
-                    term: globalTranslate.pr_CallerIdSourceTooltip_from || 'FROM',
-                    definition: globalTranslate.pr_CallerIdSourceTooltip_from_desc || 'Extract from FROM header'
+                    term: globalTranslate.pr_CallerIdSourceTooltip_from,
+                    definition: globalTranslate.pr_CallerIdSourceTooltip_from_desc
                 },
                 {
-                    term: globalTranslate.pr_CallerIdSourceTooltip_rpid || 'Remote-Party-ID',
-                    definition: globalTranslate.pr_CallerIdSourceTooltip_rpid_desc || 'Extract from Remote-Party-ID header'
+                    term: globalTranslate.pr_CallerIdSourceTooltip_rpid,
+                    definition: globalTranslate.pr_CallerIdSourceTooltip_rpid_desc
                 },
                 {
-                    term: globalTranslate.pr_CallerIdSourceTooltip_pai || 'P-Asserted-Identity',
-                    definition: globalTranslate.pr_CallerIdSourceTooltip_pai_desc || 'Extract from P-Asserted-Identity header'
+                    term: globalTranslate.pr_CallerIdSourceTooltip_pai,
+                    definition: globalTranslate.pr_CallerIdSourceTooltip_pai_desc
                 },
                 {
-                    term: globalTranslate.pr_CallerIdSourceTooltip_custom || 'Custom',
-                    definition: globalTranslate.pr_CallerIdSourceTooltip_custom_desc || 'Extract from a custom header'
+                    term: globalTranslate.pr_CallerIdSourceTooltip_custom,
+                    definition: globalTranslate.pr_CallerIdSourceTooltip_custom_desc
                 }
             ],
             examples: [
@@ -480,24 +480,24 @@ class ProviderSipTooltipManager extends ProviderTooltipManager {
      */
     static getDidSourceTooltip() {
         return {
-            header: globalTranslate.pr_DidSourceTooltip_header || 'DID Source',
-            description: globalTranslate.pr_DidSourceTooltip_desc || 'Select how to determine the dialed number',
+            header: globalTranslate.pr_DidSourceTooltip_header,
+            description: globalTranslate.pr_DidSourceTooltip_desc,
             list: [
                 {
-                    term: globalTranslate.pr_DidSourceTooltip_default || 'Default',
-                    definition: globalTranslate.pr_DidSourceTooltip_default_desc || 'Use Request-URI'
+                    term: globalTranslate.pr_DidSourceTooltip_default,
+                    definition: globalTranslate.pr_DidSourceTooltip_default_desc
                 },
                 {
-                    term: globalTranslate.pr_DidSourceTooltip_to || 'TO',
-                    definition: globalTranslate.pr_DidSourceTooltip_to_desc || 'Extract from TO header'
+                    term: globalTranslate.pr_DidSourceTooltip_to,
+                    definition: globalTranslate.pr_DidSourceTooltip_to_desc
                 },
                 {
-                    term: globalTranslate.pr_DidSourceTooltip_diversion || 'Diversion',
-                    definition: globalTranslate.pr_DidSourceTooltip_diversion_desc || 'For forwarded calls'
+                    term: globalTranslate.pr_DidSourceTooltip_diversion,
+                    definition: globalTranslate.pr_DidSourceTooltip_diversion_desc
                 },
                 {
-                    term: globalTranslate.pr_DidSourceTooltip_custom || 'Custom',
-                    definition: globalTranslate.pr_DidSourceTooltip_custom_desc || 'Extract from a custom header'
+                    term: globalTranslate.pr_DidSourceTooltip_custom,
+                    definition: globalTranslate.pr_DidSourceTooltip_custom_desc
                 }
             ]
         };
@@ -512,8 +512,8 @@ class ProviderSipTooltipManager extends ProviderTooltipManager {
      */
     static getCustomHeaderTooltip() {
         return {
-            header: globalTranslate.pr_CustomHeaderTooltip_header || 'Custom Header Name',
-            description: globalTranslate.pr_CustomHeaderTooltip_desc || 'Specify the exact SIP header name',
+            header: globalTranslate.pr_CustomHeaderTooltip_header,
+            description: globalTranslate.pr_CustomHeaderTooltip_desc,
             examples: [
                 'X-Caller-ID',
                 'X-Original-Number',
@@ -531,8 +531,8 @@ class ProviderSipTooltipManager extends ProviderTooltipManager {
      */
     static getParserRegexTooltip() {
         return {
-            header: globalTranslate.pr_ParserRegexTooltip_header || 'Regular Expression',
-            description: globalTranslate.pr_ParserRegexTooltip_desc || 'Optional regex for extracting the number',
+            header: globalTranslate.pr_ParserRegexTooltip_header,
+            description: globalTranslate.pr_ParserRegexTooltip_desc,
             examples: [
                 '[0-9]+ - digits only',
                 '[+]?[0-9]+ - digits with optional +',
