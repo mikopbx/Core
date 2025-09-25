@@ -24,7 +24,7 @@
  * Provides a clean interface for incoming routes operations using the new RESTful API.
  * This replaces the legacy v2 API client.
  * 
- * @class IncomingRoutesAPI
+ * @class IncomingRoutesAPI 
  */
 const IncomingRoutesAPI = new PbxApiClient({
     endpoint: '/pbxcore/api/v3/incoming-routes',
@@ -42,23 +42,7 @@ const IncomingRoutesAPI = new PbxApiClient({
  * @param {function} callback - Callback function
  */
 IncomingRoutesAPI.getDefaultRoute = function(callback) {
-    $.api({
-        url: `${this.apiUrl}:getDefaultRoute`,
-        method: 'GET',
-        on: 'now',
-        onSuccess(response) {
-            callback(response);
-        },
-        onFailure(response) {
-            callback(response);
-        },
-        onError() {
-            callback({
-                result: false,
-                messages: { error: ['Network error occurred'] }
-            });
-        }
-    });
+    return this.callCustomMethod('getDefaultRoute', {}, callback);
 };
 
 /**
@@ -68,22 +52,5 @@ IncomingRoutesAPI.getDefaultRoute = function(callback) {
  * @param {function} callback - Callback function
  */
 IncomingRoutesAPI.changePriority = function(priorities, callback) {
-    $.api({
-        url: `${this.apiUrl}:changePriority`,
-        method: 'POST',
-        data: { priorities: priorities },
-        on: 'now',
-        onSuccess(response) {
-            callback(response);
-        },
-        onFailure(response) {
-            callback(response);
-        },
-        onError() {
-            callback({
-                result: false,
-                messages: { error: ['Network error occurred'] }
-            });
-        }
-    });
+    return this.callCustomMethod('changePriority', { priorities: priorities }, callback, 'POST');
 };

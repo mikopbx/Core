@@ -1,0 +1,62 @@
+"use strict";
+
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
+/* global PbxApiClient, $ */
+
+/**
+ * IncomingRoutesAPI - REST API v3 client for incoming routes management
+ * 
+ * Provides a clean interface for incoming routes operations using the new RESTful API.
+ * This replaces the legacy v2 API client.
+ * 
+ * @class IncomingRoutesAPI 
+ */
+var IncomingRoutesAPI = new PbxApiClient({
+  endpoint: '/pbxcore/api/v3/incoming-routes',
+  customMethods: {
+    getDefault: ':getDefault',
+    getDefaultRoute: ':getDefaultRoute',
+    changePriority: ':changePriority',
+    copy: ':copy'
+  }
+});
+/**
+ * Get or create default incoming route (ID=1)
+ *
+ * @param {function} callback - Callback function
+ */
+
+IncomingRoutesAPI.getDefaultRoute = function (callback) {
+  return this.callCustomMethod('getDefaultRoute', {}, callback);
+};
+/**
+ * Change priority of multiple incoming routes
+ *
+ * @param {object} priorities - Map of route ID to new priority value
+ * @param {function} callback - Callback function
+ */
+
+
+IncomingRoutesAPI.changePriority = function (priorities, callback) {
+  return this.callCustomMethod('changePriority', {
+    priorities: priorities
+  }, callback, 'POST');
+};
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9QYnhBUEkvaW5jb21pbmctcm91dGVzLWFwaS5qcyJdLCJuYW1lcyI6WyJJbmNvbWluZ1JvdXRlc0FQSSIsIlBieEFwaUNsaWVudCIsImVuZHBvaW50IiwiY3VzdG9tTWV0aG9kcyIsImdldERlZmF1bHQiLCJnZXREZWZhdWx0Um91dGUiLCJjaGFuZ2VQcmlvcml0eSIsImNvcHkiLCJjYWxsYmFjayIsImNhbGxDdXN0b21NZXRob2QiLCJwcmlvcml0aWVzIl0sIm1hcHBpbmdzIjoiOztBQUFBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7O0FBRUE7O0FBRUE7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBLElBQU1BLGlCQUFpQixHQUFHLElBQUlDLFlBQUosQ0FBaUI7QUFDdkNDLEVBQUFBLFFBQVEsRUFBRSxpQ0FENkI7QUFFdkNDLEVBQUFBLGFBQWEsRUFBRTtBQUNYQyxJQUFBQSxVQUFVLEVBQUUsYUFERDtBQUVYQyxJQUFBQSxlQUFlLEVBQUUsa0JBRk47QUFHWEMsSUFBQUEsY0FBYyxFQUFFLGlCQUhMO0FBSVhDLElBQUFBLElBQUksRUFBRTtBQUpLO0FBRndCLENBQWpCLENBQTFCO0FBVUE7QUFDQTtBQUNBO0FBQ0E7QUFDQTs7QUFDQVAsaUJBQWlCLENBQUNLLGVBQWxCLEdBQW9DLFVBQVNHLFFBQVQsRUFBbUI7QUFDbkQsU0FBTyxLQUFLQyxnQkFBTCxDQUFzQixpQkFBdEIsRUFBeUMsRUFBekMsRUFBNkNELFFBQTdDLENBQVA7QUFDSCxDQUZEO0FBSUE7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBOzs7QUFDQVIsaUJBQWlCLENBQUNNLGNBQWxCLEdBQW1DLFVBQVNJLFVBQVQsRUFBcUJGLFFBQXJCLEVBQStCO0FBQzlELFNBQU8sS0FBS0MsZ0JBQUwsQ0FBc0IsZ0JBQXRCLEVBQXdDO0FBQUVDLElBQUFBLFVBQVUsRUFBRUE7QUFBZCxHQUF4QyxFQUFvRUYsUUFBcEUsRUFBOEUsTUFBOUUsQ0FBUDtBQUNILENBRkQiLCJzb3VyY2VzQ29udGVudCI6WyIvKlxuICogTWlrb1BCWCAtIGZyZWUgcGhvbmUgc3lzdGVtIGZvciBzbWFsbCBidXNpbmVzc1xuICogQ29weXJpZ2h0IMKpIDIwMTctMjAyNSBBbGV4ZXkgUG9ydG5vdiBhbmQgTmlrb2xheSBCZWtldG92XG4gKlxuICogVGhpcyBwcm9ncmFtIGlzIGZyZWUgc29mdHdhcmU6IHlvdSBjYW4gcmVkaXN0cmlidXRlIGl0IGFuZC9vciBtb2RpZnlcbiAqIGl0IHVuZGVyIHRoZSB0ZXJtcyBvZiB0aGUgR05VIEdlbmVyYWwgUHVibGljIExpY2Vuc2UgYXMgcHVibGlzaGVkIGJ5XG4gKiB0aGUgRnJlZSBTb2Z0d2FyZSBGb3VuZGF0aW9uOyBlaXRoZXIgdmVyc2lvbiAzIG9mIHRoZSBMaWNlbnNlLCBvclxuICogKGF0IHlvdXIgb3B0aW9uKSBhbnkgbGF0ZXIgdmVyc2lvbi5cbiAqXG4gKiBUaGlzIHByb2dyYW0gaXMgZGlzdHJpYnV0ZWQgaW4gdGhlIGhvcGUgdGhhdCBpdCB3aWxsIGJlIHVzZWZ1bCxcbiAqIGJ1dCBXSVRIT1VUIEFOWSBXQVJSQU5UWTsgd2l0aG91dCBldmVuIHRoZSBpbXBsaWVkIHdhcnJhbnR5IG9mXG4gKiBNRVJDSEFOVEFCSUxJVFkgb3IgRklUTkVTUyBGT1IgQSBQQVJUSUNVTEFSIFBVUlBPU0UuICBTZWUgdGhlXG4gKiBHTlUgR2VuZXJhbCBQdWJsaWMgTGljZW5zZSBmb3IgbW9yZSBkZXRhaWxzLlxuICpcbiAqIFlvdSBzaG91bGQgaGF2ZSByZWNlaXZlZCBhIGNvcHkgb2YgdGhlIEdOVSBHZW5lcmFsIFB1YmxpYyBMaWNlbnNlIGFsb25nIHdpdGggdGhpcyBwcm9ncmFtLlxuICogSWYgbm90LCBzZWUgPGh0dHBzOi8vd3d3LmdudS5vcmcvbGljZW5zZXMvPi5cbiAqL1xuXG4vKiBnbG9iYWwgUGJ4QXBpQ2xpZW50LCAkICovXG5cbi8qKlxuICogSW5jb21pbmdSb3V0ZXNBUEkgLSBSRVNUIEFQSSB2MyBjbGllbnQgZm9yIGluY29taW5nIHJvdXRlcyBtYW5hZ2VtZW50XG4gKiBcbiAqIFByb3ZpZGVzIGEgY2xlYW4gaW50ZXJmYWNlIGZvciBpbmNvbWluZyByb3V0ZXMgb3BlcmF0aW9ucyB1c2luZyB0aGUgbmV3IFJFU1RmdWwgQVBJLlxuICogVGhpcyByZXBsYWNlcyB0aGUgbGVnYWN5IHYyIEFQSSBjbGllbnQuXG4gKiBcbiAqIEBjbGFzcyBJbmNvbWluZ1JvdXRlc0FQSSBcbiAqL1xuY29uc3QgSW5jb21pbmdSb3V0ZXNBUEkgPSBuZXcgUGJ4QXBpQ2xpZW50KHtcbiAgICBlbmRwb2ludDogJy9wYnhjb3JlL2FwaS92My9pbmNvbWluZy1yb3V0ZXMnLFxuICAgIGN1c3RvbU1ldGhvZHM6IHtcbiAgICAgICAgZ2V0RGVmYXVsdDogJzpnZXREZWZhdWx0JyxcbiAgICAgICAgZ2V0RGVmYXVsdFJvdXRlOiAnOmdldERlZmF1bHRSb3V0ZScsXG4gICAgICAgIGNoYW5nZVByaW9yaXR5OiAnOmNoYW5nZVByaW9yaXR5JyxcbiAgICAgICAgY29weTogJzpjb3B5J1xuICAgIH1cbn0pO1xuXG4vKipcbiAqIEdldCBvciBjcmVhdGUgZGVmYXVsdCBpbmNvbWluZyByb3V0ZSAoSUQ9MSlcbiAqXG4gKiBAcGFyYW0ge2Z1bmN0aW9ufSBjYWxsYmFjayAtIENhbGxiYWNrIGZ1bmN0aW9uXG4gKi9cbkluY29taW5nUm91dGVzQVBJLmdldERlZmF1bHRSb3V0ZSA9IGZ1bmN0aW9uKGNhbGxiYWNrKSB7XG4gICAgcmV0dXJuIHRoaXMuY2FsbEN1c3RvbU1ldGhvZCgnZ2V0RGVmYXVsdFJvdXRlJywge30sIGNhbGxiYWNrKTtcbn07XG5cbi8qKlxuICogQ2hhbmdlIHByaW9yaXR5IG9mIG11bHRpcGxlIGluY29taW5nIHJvdXRlc1xuICpcbiAqIEBwYXJhbSB7b2JqZWN0fSBwcmlvcml0aWVzIC0gTWFwIG9mIHJvdXRlIElEIHRvIG5ldyBwcmlvcml0eSB2YWx1ZVxuICogQHBhcmFtIHtmdW5jdGlvbn0gY2FsbGJhY2sgLSBDYWxsYmFjayBmdW5jdGlvblxuICovXG5JbmNvbWluZ1JvdXRlc0FQSS5jaGFuZ2VQcmlvcml0eSA9IGZ1bmN0aW9uKHByaW9yaXRpZXMsIGNhbGxiYWNrKSB7XG4gICAgcmV0dXJuIHRoaXMuY2FsbEN1c3RvbU1ldGhvZCgnY2hhbmdlUHJpb3JpdHknLCB7IHByaW9yaXRpZXM6IHByaW9yaXRpZXMgfSwgY2FsbGJhY2ssICdQT1NUJyk7XG59OyJdfQ==
