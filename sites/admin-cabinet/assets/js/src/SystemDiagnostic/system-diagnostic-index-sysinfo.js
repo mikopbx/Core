@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-/* global ace, PbxApi */
+/* global ace, SysinfoAPI */
 
 /**
  * Object for managing system diagnostic system information view.
@@ -46,7 +46,7 @@ const systemDiagnosticSysyinfo = {
             if ($(e.target).attr('data-tab') === 'show-sysinfo'
                 && systemDiagnosticSysyinfo.receivedInfo === false) {
                 systemDiagnosticSysyinfo.initializeAce();
-                PbxApi.SysInfoGetInfo(systemDiagnosticSysyinfo.cbUpdateSysinfoText);
+                SysinfoAPI.getInfo(systemDiagnosticSysyinfo.cbUpdateSysinfoText);
             }
         });
     },

@@ -63,19 +63,13 @@ const systemDiagnosticLogs = {
      * jQuery object for the file select dropdown.
      * @type {jQuery}
      */
-    $fileSelectDropDown: $('#system-diagnostic-form .filenames-select'),
+    $fileSelectDropDown: null,
 
     /**
      * Array of log items.
      * @type {Array}
      */
     logsItems: [],
-
-    /**
-     * Default log item.
-     * @type {Object}
-     */
-    defaultLogItem: null,
 
     /**
      * jQuery object for the dimmer.
@@ -90,12 +84,6 @@ const systemDiagnosticLogs = {
     $formObj: $('#system-diagnostic-form'),
 
     /**
-     * jQuery object for the filename.
-     * @type {jQuery}
-     */
-    $fileName: $('#system-diagnostic-form .filename'),
-
-    /**
      * Initializes the system diagnostic logs.
      */
     initialize() {
@@ -103,6 +91,9 @@ const systemDiagnosticLogs = {
 
         // Set the minimum height of the log container
         systemDiagnosticLogs.$dimmer.closest('div').css('min-height', `${aceHeight}px`);
+
+        // Create dropdown UI from hidden input (V5.0 pattern)
+        systemDiagnosticLogs.createDropdownFromHiddenInput();
 
         // Initialize the dropdown menu for log files with tree support
         // Initialize Semantic UI dropdown with custom menu generation
@@ -216,6 +207,34 @@ const systemDiagnosticLogs = {
             systemDiagnosticLogs.viewer.resize();
         }, 300);
     },
+    /**
+     * Creates dropdown UI element from hidden input field (V5.0 pattern)
+     */
+    createDropdownFromHiddenInput() {
+        const $hiddenInput = $('#filenames');
+
+        if (!$hiddenInput.length) {
+            console.error('Hidden input #filenames not found');
+            return;
+        }
+
+        const $dropdown = $('<div>', {
+            id: 'filenames-dropdown',
+            class: 'ui selection dropdown filenames-select fluid'
+        });
+
+        $dropdown.append(
+            $('<i>', { class: 'dropdown icon' }),
+            $('<div>', { class: 'default text' }).text('Select log file'),
+            $('<div>', { class: 'menu' })
+        );
+
+        $hiddenInput.before($dropdown);
+        $hiddenInput.hide();
+
+        systemDiagnosticLogs.$fileSelectDropDown = $dropdown;
+    },
+
     /**
      * Initializes the ACE editor for log viewing.
      */
@@ -525,7 +544,7 @@ const systemDiagnosticLogs = {
         const content = response.data?.content || '';
         systemDiagnosticLogs.viewer.getSession().setValue(content);
         const row = systemDiagnosticLogs.viewer.session.getLength() - 1;
-        const column = systemDiagnosticLogs.viewer.session.getLine(row).length; // or simply Infinity
+        const column = systemDiagnosticLogs.viewer.session.getLine(row).length;
         systemDiagnosticLogs.viewer.gotoLine(row + 1, column);
     },
 

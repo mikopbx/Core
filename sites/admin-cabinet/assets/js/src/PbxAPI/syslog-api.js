@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global PbxApiClient */
+/* global PbxApiClient */ 
 
 /**
  * Syslog API using unified PbxApiClient
