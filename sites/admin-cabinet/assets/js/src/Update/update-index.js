@@ -17,7 +17,7 @@
  */
 
 /* global PbxApi, globalPBXVersion, globalTranslate,
-globalWebAdminLanguage, showdown, UserMessage, upgradeStatusLoopWorker, Config */
+globalWebAdminLanguage, showdown, UserMessage, upgradeStatusLoopWorker, Config, FilesAPI */
 
 /**
  * Object for managing PBX firmware updates.
@@ -139,7 +139,7 @@ const updatePBX = {
                                     updatePBX.$submitButton.addClass('loading');
                                     updatePBX.upgradeInProgress = true;
                                     const data = $('input:file')[0].files[0];
-                                    PbxApi.FilesUploadFile(data, updatePBX.cbResumableUploadFile);
+                                    FilesAPI.uploadFile(data, updatePBX.cbResumableUploadFile);
                                     return true;
                                 },
                             })
@@ -197,7 +197,7 @@ const updatePBX = {
                                 params.size = $aLink.attr('data-size');
                                 $aLink.find('i').addClass('loading');
                                 updatePBX.upgradeInProgress = true;
-                                PbxApi.FilesDownloadNewFirmware(params, updatePBX.cbAfterStartDownloadFirmware);
+                                FilesAPI.downloadFirmware(params, updatePBX.cbAfterStartDownloadFirmware);
                                 return true;
                             },
                         })

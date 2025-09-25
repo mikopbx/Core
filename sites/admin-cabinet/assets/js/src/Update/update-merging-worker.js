@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global PbxApi, globalTranslate, UserMessage */
+/* global PbxApi, globalTranslate, UserMessage, FilesAPI, SystemAPI */
 
 /**
  * Worker object for checking file merging status.
@@ -85,7 +85,7 @@ const mergingCheckWorker = {
      * Worker function for checking file merging status.
      */
     worker() {
-        PbxApi.FilesGetStatusUploadFile(mergingCheckWorker.fileID, mergingCheckWorker.cbAfterResponse);
+        FilesAPI.getUploadStatus(mergingCheckWorker.fileID, mergingCheckWorker.cbAfterResponse);
         mergingCheckWorker.timeoutHandle = window.setTimeout(
             mergingCheckWorker.worker,
             mergingCheckWorker.timeOut,
@@ -110,7 +110,7 @@ const mergingCheckWorker = {
         }
         if (response.d_status === 'UPLOAD_COMPLETE') {
             mergingCheckWorker.$progressBarLabel.text(globalTranslate.upd_UpgradeInProgress);
-            PbxApi.SystemUpgrade(mergingCheckWorker.filePath, updatePBX.cbAfterStartUpdate);
+            SystemAPI.upgrade({filename: mergingCheckWorker.filePath}, updatePBX.cbAfterStartUpdate);
             window.clearTimeout(mergingCheckWorker.timeoutHandle);
         } else if (response.d_status !== undefined) {
             mergingCheckWorker.$progressBarLabel.text(globalTranslate.upd_UploadInProgress);
