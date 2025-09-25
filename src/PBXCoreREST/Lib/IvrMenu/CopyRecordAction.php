@@ -21,18 +21,18 @@ namespace MikoPBX\PBXCoreREST\Lib\IvrMenu;
 
 use MikoPBX\Common\Models\IvrMenu;
 use MikoPBX\Common\Models\IvrMenuActions;
-use MikoPBX\Common\Models\Extensions;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use MikoPBX\Core\System\SystemMessages;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractCopyRecordAction;
 
 /**
  * Action for copying an IVR menu with automatic extension assignment
  *
- * This action creates a copy of an existing IVR menu with:
- * - New unique ID generated automatically
- * - Next available extension number assigned
+ * Extends AbstractCopyRecordAction to leverage:
+ * - Automatic unique ID generation
+ * - Next available extension number assignment
  * - Name prefixed with "copy of"
- * - All settings and actions copied
+ * - Related records copying (IVR menu actions)
+ * - Consistent error handling and logging
  *
  * @api {get} /pbxcore/api/v3/ivr-menu/{id}:copy Copy IVR menu
  * @apiVersion 3.0.0
@@ -48,7 +48,7 @@ use MikoPBX\Core\System\SystemMessages;
  * @apiSuccess {String} data.name Name prefixed with "copy of"
  * @apiSuccess {Array} data.actions Copied IVR menu actions
  */
-class CopyRecordAction
+class CopyRecordAction extends AbstractCopyRecordAction
 {
     /**
      * Copy IVR menu record with new extension and ID
@@ -58,33 +58,42 @@ class CopyRecordAction
      */
     public static function main(string $sourceId): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
+        return self::executeStandardCopy(
+            $sourceId,
+            IvrMenu::class,
+            DataStructure::class,
+            'IVR-',                    // Unique ID prefix
+            [                          // Fields to copy
+                'name',
+                'audio_message_id',
+                'timeout',
+                'timeout_extension',
+                'allow_enter_any_internal_extension',
+                'number_of_repeat',
+                'description'
+            ],
+            true,                      // Needs extension
+            self::createRelatedRecordsCallback(),  // Copy IVR menu actions
+            'IVR menu'                 // Entity type for messages
+        );
+    }
 
-        try {
-            // Find source IVR menu
-            $sourceMenu = IvrMenu::findFirst("uniqid='{$sourceId}'");
-
-            if (!$sourceMenu) {
-                $res->messages['error'][] = "Source IVR menu not found: {$sourceId}";
-                SystemMessages::sysLogMsg(__METHOD__,
-                    "Source IVR menu not found for copy: {$sourceId}",
-                    LOG_WARNING
-                );
-                return $res;
-            }
-
-            // Create new IVR menu model with copied values
-            $newMenu = self::createCopyFromSource($sourceMenu);
-
-            // Get source IVR menu actions
+    /**
+     * Create callback for copying related IVR menu actions
+     *
+     * @return callable
+     */
+    private static function createRelatedRecordsCallback(): callable
+    {
+        return function ($sourceMenu, $newMenu) {
+            // Find source actions
             $sourceActions = IvrMenuActions::find([
                 'conditions' => 'ivr_menu_id = :ivrMenuId:',
                 'bind' => ['ivrMenuId' => $sourceMenu->uniqid],
                 'order' => 'digits ASC'
             ]);
 
-            // Prepare actions array for the copy
+            // Convert to array format for DataStructure
             $actionsArray = [];
             foreach ($sourceActions as $action) {
                 $actionsArray[] = [
@@ -94,47 +103,8 @@ class CopyRecordAction
                 ];
             }
 
-            // Create data structure for the copied IVR menu
-            $res->data = DataStructure::createFromModel($newMenu, $actionsArray);
-            $res->success = true;
-
-        } catch (\Exception $e) {
-            $res->messages['error'][] = $e->getMessage();
-            SystemMessages::sysLogMsg(__METHOD__,
-                "Error copying IVR menu: " . $e->getMessage(),
-                LOG_ERR
-            );
-        }
-
-        return $res;
-    }
-
-    /**
-     * Create copy of IVR menu from source record
-     *
-     * @param IvrMenu $sourceMenu
-     * @return IvrMenu
-     */
-    private static function createCopyFromSource(IvrMenu $sourceMenu): IvrMenu
-    {
-        $newMenu = new IvrMenu();
-
-        // Generate new identifiers
-        $newMenu->id = '';
-        $newMenu->uniqid = IvrMenu::generateUniqueID('IVR-');
-
-        // Get new extension number automatically
-        $newMenu->extension = Extensions::getNextFreeApplicationNumber();
-
-        // Copy all other fields
-        $newMenu->name = 'copy of ' . $sourceMenu->name;
-        $newMenu->audio_message_id = $sourceMenu->audio_message_id;
-        $newMenu->timeout = $sourceMenu->timeout;
-        $newMenu->timeout_extension = $sourceMenu->timeout_extension;
-        $newMenu->allow_enter_any_internal_extension = $sourceMenu->allow_enter_any_internal_extension;
-        $newMenu->number_of_repeat = $sourceMenu->number_of_repeat;
-        $newMenu->description = $sourceMenu->description;
-
-        return $newMenu;
+            // Return actions array to be passed to DataStructure::createFromModel
+            return $actionsArray;
+        };
     }
 }
