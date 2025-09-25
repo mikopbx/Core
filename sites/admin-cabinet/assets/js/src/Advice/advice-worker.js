@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalWebAdminLanguage, sessionStorage, $, i18n */
+/* global globalRootUrl, globalWebAdminLanguage, sessionStorage, $, i18n, AdviceAPI */
 
 /**
  * Advice Worker module.
@@ -69,13 +69,13 @@ const adviceWorker = {
             adviceWorker.cbAfterResponse(data);
         });
         EventBus.subscribe('models-changed', data => {
-            if (data.model === 'MikoPBX\\Common\\Models\\PbxSettings' 
+            if (data.model === 'MikoPBX\\Common\\Models\\PbxSettings'
                 && (data.recordId === 'WebAdminPassword' || data.recordId === 'SSHPassword')
             ) {
-                PbxApi.AdviceGetList(adviceWorker.cbAfterResponse);
+                AdviceAPI.getList(adviceWorker.cbAfterResponse);
             }
         });
-        PbxApi.AdviceGetList(adviceWorker.cbAfterResponse);
+        AdviceAPI.getList(adviceWorker.cbAfterResponse);
     },
 
     /**
