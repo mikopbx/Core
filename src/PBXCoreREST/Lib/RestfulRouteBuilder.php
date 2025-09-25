@@ -125,36 +125,39 @@ class RestfulRouteBuilder
         $routes = [
             // Collection-level custom methods
             // GET /resource:customMethod
-            [$controllerClass, 'handleCustomRequest', $resourcePath, 'get', ':{customMethod:[a-zA-Z]+}'],
+            [$controllerClass, 'handleCustomRequest', $resourcePath, 'get', ':{customMethod:[a-zA-Z0-9]+}'],
             // POST /resource:customMethod
-            [$controllerClass, 'handleCustomRequest', $resourcePath, 'post', ':{customMethod:[a-zA-Z]+}'],
+            [$controllerClass, 'handleCustomRequest', $resourcePath, 'post', ':{customMethod:[a-zA-Z0-9]+}'],
         ];
         
         if ($includeResourceLevel) {
             // Resource-level custom methods
             // GET /resource/{id}:customMethod
-            $routes[] = [$controllerClass, 'handleCustomRequest', $resourcePath, 'get', "/{id:$idPattern}:{customMethod:[a-zA-Z]+}"];
+            $routes[] = [$controllerClass, 'handleResourceCustomRequest', $resourcePath, 'get', "/{id:$idPattern}:{customMethod:[a-zA-Z0-9]+}"];
             // POST /resource/{id}:customMethod
-            $routes[] = [$controllerClass, 'handleCustomRequest', $resourcePath, 'post', "/{id:$idPattern}:{customMethod:[a-zA-Z]+}"];
+            $routes[] = [$controllerClass, 'handleResourceCustomRequest', $resourcePath, 'post', "/{id:$idPattern}:{customMethod:[a-zA-Z0-9]+}"];
         }
         
         return $routes;
     }
     
     /**
-     * Build routes for a simple resource with only custom methods (no CRUD)
+     * Build routes for a resource with only custom methods (no CRUD)
      *
      * @param string $controllerClass Controller class name
      * @param string $resourcePath Resource path
+     * @param array $options Configuration options:
+     *                       - includeResourceLevel: bool - whether to include resource-level custom methods (default: false)
+     *                       - idPattern: string - ID pattern type ('numeric', 'alphanumeric') or custom regex (default: 'alphanumeric')
+     *                       - httpMethods: array - HTTP methods to support for custom routes (default: ['GET', 'POST'])
      * @return array Array of custom-only route definitions
      */
-    public static function buildCustomOnlyRoutes(string $controllerClass, string $resourcePath): array
+    public static function buildCustomOnlyRoutes(string $controllerClass, string $resourcePath, array $options = []): array
     {
-        return [
-            // Collection-level custom methods only
-            [$controllerClass, 'handleCustomRequest', $resourcePath, 'get', ':{customMethod:[a-zA-Z]+}'],
-            [$controllerClass, 'handleCustomRequest', $resourcePath, 'post', ':{customMethod:[a-zA-Z]+}'],
-        ];
+        $includeResourceLevel = $options['includeResourceLevel'] ?? false;
+        $idPattern = self::getIdPattern($options['idPattern'] ?? 'alphanumeric');
+
+        return self::buildCustomMethodRoutes($controllerClass, $resourcePath, $idPattern, $includeResourceLevel);
     }
 
     /**
@@ -180,9 +183,9 @@ class RestfulRouteBuilder
             // Add custom method routes for singleton (no resource-level methods)
             $routes = array_merge($routes, [
                 // GET /resource:customMethod
-                [$controllerClass, 'handleCustomRequest', $resourcePath, 'get', ':{customMethod:[a-zA-Z]+}'],
+                [$controllerClass, 'handleCustomRequest', $resourcePath, 'get', ':{customMethod:[a-zA-Z0-9]+}'],
                 // POST /resource:customMethod
-                [$controllerClass, 'handleCustomRequest', $resourcePath, 'post', ':{customMethod:[a-zA-Z]+}'],
+                [$controllerClass, 'handleCustomRequest', $resourcePath, 'post', ':{customMethod:[a-zA-Z0-9]+}'],
             ]);
         }
 
