@@ -170,14 +170,15 @@ trait FormInteractionTrait
      * Submit form
      *
      * @param string $formId Form identifier
+     * @param bool $scrollAfterSubmit Whether to scroll the page after submission (default: true)
      * @throws \Exception
      */
-    protected function submitForm(string $formId): void
+    protected function submitForm(string $formId, bool $scrollAfterSubmit = true): void
     {
         $this->logTestAction("Submit form", ['id' => $formId]);
 
         try {
-            $this->executeWithRetry(function () use ($formId) {
+            $this->executeWithRetry(function () use ($formId, $scrollAfterSubmit) {
                 $xpath = sprintf('//form[@id="%s"]//ancestor::div[@id="submitbutton"]', $formId);
                 $button = $this->waitForElement($xpath);
                 $this->scrollIntoView($button);
@@ -190,9 +191,84 @@ trait FormInteractionTrait
                         return self::$driver->findElement(WebDriverBy::xpath($xpath))->isEnabled();
                     }
                 );
+
+                // Scroll the page after submission to show any errors or messages
+                if ($scrollAfterSubmit) {
+                    $this->scrollPageAfterFormSubmit();
+                }
             });
         } catch (\Exception $e) {
             $this->handleActionError('submit form', $formId, $e);
+        }
+    }
+
+    /**
+     * Scroll page after form submission to reveal any errors or messages
+     * This is useful for test recordings to show validation errors
+     */
+    protected function scrollPageAfterFormSubmit(): void
+    {
+        // Wait 3 seconds after submit button click
+        sleep(3);
+
+        // Check if page is not reloading/navigating
+        $script = <<<'JS'
+            // Check if we're still on the same page with a form
+            const formStillExists = $('form').length > 0;
+            const isNavigating = document.readyState !== 'complete';
+
+            return {
+                hasForm: formStillExists,
+                isNavigating: isNavigating
+            };
+JS;
+
+        $pageState = self::$driver->executeScript($script);
+
+        // Only scroll if we're still on the same form page and not navigating away
+        if ($pageState && $pageState['hasForm'] && !$pageState['isNavigating']) {
+            // Always perform full page scroll to show all content
+            $this->performFullPageScroll();
+        }
+    }
+
+    /**
+     * Perform a full page scroll (top to bottom and back to top)
+     * Useful for showing all form content in test recordings
+     */
+    protected function performFullPageScroll(): void
+    {
+        // Get page dimensions
+        $pageHeight = self::$driver->executeScript("return document.body.scrollHeight;");
+        $viewportHeight = self::$driver->executeScript("return window.innerHeight;");
+
+        // Only scroll if page is longer than viewport
+        if ($pageHeight > $viewportHeight) {
+            // First ensure we're at the top
+            self::$driver->executeScript("window.scrollTo({top: 0, behavior: 'smooth'});");
+            sleep(1); // 1 second pause at top
+
+            // Smooth scroll to bottom
+            self::$driver->executeScript("
+                window.scrollTo({
+                    top: document.body.scrollHeight,
+                    behavior: 'smooth'
+                });
+            ");
+
+            // Wait for scroll to complete (approximately 2-3 seconds for smooth scroll)
+            sleep(3);
+
+            // Smooth scroll back to top
+            self::$driver->executeScript("
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            ");
+
+            // Wait for scroll to complete
+            sleep(2);
         }
     }
 }

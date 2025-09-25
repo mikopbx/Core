@@ -11,6 +11,7 @@ use Facebook\WebDriver\WebDriverElement;
  * Simplified assertions for MikoPBX V5.0 architecture
  *
  * Focuses on clean, simple assertions that match the actual UI patterns
+ * Note: Dropdown assertions are provided by DropdownInteractionTrait
  */
 trait AssertionTrait
 {
@@ -90,37 +91,116 @@ trait AssertionTrait
     }
 
     /**
-     * Assert dropdown value (V5.0 architecture)
-     * Uses the simplified dropdown methods from DropdownInteractionTrait
+     * Alias for assertCheckboxState for backward compatibility
      *
-     * @param string $fieldName Field name
-     * @param string $expectedValue Expected value
-     * @param string $message Optional failure message
+     * @param string $fieldName Checkbox name
+     * @param bool $expectedState Expected state
+     * @param bool $skipIfNotExist Skip assertion if not found
      */
-    protected function assertDropdownValue(
+    protected function assertCheckBoxStageIsEqual(
         string $fieldName,
-        string $expectedValue,
-        string $message = ''
+        bool $expectedState,
+        bool $skipIfNotExist = false
     ): void {
-        // This method is already in DropdownInteractionTrait
-        // Just call it directly for consistency
-        parent::assertDropdownValue($fieldName, $expectedValue, $message);
+        if ($skipIfNotExist && $this->isCheckboxChecked($fieldName) === null) {
+            return;
+        }
+
+        $this->assertCheckboxState($fieldName, $expectedState);
     }
 
     /**
-     * Assert dropdown text (V5.0 architecture)
+     * Alias for assertTextAreaValueEqual for backward compatibility
+     *
+     * @param string $fieldName Textarea name
+     * @param string $expectedValue Expected value
+     * @param bool $skipIfNotExist Skip assertion if not found
+     */
+    protected function assertTextAreaValueIsEqual(
+        string $fieldName,
+        string $expectedValue,
+        bool $skipIfNotExist = false
+    ): void {
+        if ($skipIfNotExist && $this->getTextAreaValue($fieldName) === null) {
+            return;
+        }
+
+        $this->assertTextAreaValueEqual($fieldName, $expectedValue);
+    }
+
+    /**
+     * Assert that password field is masked (shows XXXXXXXX or similar pattern)
      *
      * @param string $fieldName Field name
-     * @param string $expectedText Expected display text
-     * @param string $message Optional failure message
+     * @param bool $skipIfNotExist Skip assertion if field not found
      */
-    protected function assertDropdownText(
+    protected function assertPasswordFieldIsMasked(
         string $fieldName,
-        string $expectedText,
-        string $message = ''
+        bool $skipIfNotExist = false
     ): void {
-        // This method is already in DropdownInteractionTrait
-        parent::assertDropdownText($fieldName, $expectedText, $message);
+        $actualValue = $this->getInputFieldValue($fieldName);
+
+        if ($actualValue === null) {
+            if ($skipIfNotExist) {
+                return;
+            }
+            $this->fail("Password field '{$fieldName}' not found");
+        }
+
+        // Check if the value matches the masked pattern (all X's or asterisks)
+        $isMasked = preg_match('/^[X*]+$/', $actualValue) === 1;
+        $this->assertTrue(
+            $isMasked,
+            "Password field '{$fieldName}' should be masked but got: {$actualValue}"
+        );
+    }
+
+    /**
+     * Assert menu item is selected (delegates to dropdown assertion)
+     *
+     * @param string $fieldName Field name
+     * @param string $expectedValue Expected value
+     * @param bool $skipIfNotExist Skip if not found
+     */
+    protected function assertMenuItemSelected(
+        string $fieldName,
+        string $expectedValue,
+        bool $skipIfNotExist = false
+    ): void {
+        if ($skipIfNotExist && $this->getDropdownValue($fieldName) === null) {
+            return;
+        }
+
+        // Use dropdown assertion from DropdownInteractionTrait
+        $this->assertDropdownValue($fieldName, $expectedValue);
+    }
+
+    /**
+     * Assert menu item is not selected
+     *
+     * @param string $fieldName Field name
+     * @param string $unexpectedValue Value that should not be selected
+     * @param bool $skipIfNotExist Skip if not found
+     */
+    protected function assertMenuItemNotSelected(
+        string $fieldName,
+        string $unexpectedValue = '',
+        bool $skipIfNotExist = false
+    ): void {
+        $actualValue = $this->getDropdownValue($fieldName);
+
+        if ($actualValue === null) {
+            if ($skipIfNotExist) {
+                return;
+            }
+            $this->fail("Dropdown '{$fieldName}' not found");
+        }
+
+        $this->assertNotEquals(
+            $unexpectedValue,
+            $actualValue,
+            "Dropdown '{$fieldName}' should not have value '{$unexpectedValue}'"
+        );
     }
 
     /**
@@ -156,6 +236,19 @@ trait AssertionTrait
     }
 
     /**
+     * Alias for assertAceEditorValue for backward compatibility
+     *
+     * @param string $editorId ACE editor element ID
+     * @param string $expectedValue Expected value
+     */
+    protected function assertAceEditorValueEqual(
+        string $editorId,
+        string $expectedValue
+    ): void {
+        $this->assertAceEditorValue($editorId, $expectedValue);
+    }
+
+    /**
      * Assert element exists
      *
      * @param string $selector CSS selector or element ID
@@ -187,6 +280,21 @@ trait AssertionTrait
         }
 
         $this->assertNull($element);
+    }
+
+    /**
+     * Assert element not found (alias for backward compatibility)
+     *
+     * @param WebDriverBy $by Element locator
+     * @param string $message Custom failure message
+     */
+    protected function assertElementNotFound(WebDriverBy $by, string $message = ''): void
+    {
+        $elements = self::$driver->findElements($by);
+        if (!empty($elements)) {
+            $this->fail($message ?: "Unexpectedly found element: " . $by->getValue());
+        }
+        $this->assertTrue(true);
     }
 
     /**

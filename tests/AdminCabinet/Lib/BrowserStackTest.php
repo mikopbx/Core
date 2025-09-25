@@ -15,6 +15,7 @@ namespace MikoPBX\Tests\AdminCabinet\Lib;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
 use GuzzleHttp\Client as GuzzleHttpClient;
 use GuzzleHttp\Exception\GuzzleException;
+use MikoPBX\Core\System\SystemMessages;
 use PHPUnit\Framework\TestCase;
 use BrowserStack\Local as BrowserStackLocal;
 use RuntimeException;
@@ -342,7 +343,7 @@ abstract class BrowserStackTest extends TestCase
                 ]
             ]);
         } catch (GuzzleException $e) {
-            error_log("Failed to update test session status: " . $e->getMessage());
+            SystemMessages::sysLogMsg(__CLASS__, "Failed to update test session status: " . $e->getMessage(), LOG_WARNING);
         }
     }
 
@@ -357,7 +358,7 @@ abstract class BrowserStackTest extends TestCase
                 self::$driver = null;
             }
         } catch (\Exception $e) {
-            error_log("Failed to quit WebDriver: " . $e->getMessage());
+            SystemMessages::sysLogMsg(__CLASS__, "Failed to quit WebDriver: " . $e->getMessage(), LOG_WARNING);
         }
 
         try {
@@ -366,7 +367,7 @@ abstract class BrowserStackTest extends TestCase
                 self::$bs_local = null;
             }
         } catch (\Exception $e) {
-            error_log("Failed to stop BrowserStack Local: " . $e->getMessage());
+            SystemMessages::sysLogMsg(__CLASS__, "Failed to stop BrowserStack Local: " . $e->getMessage(), LOG_WARNING);
         }
     }
 

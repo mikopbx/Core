@@ -20,6 +20,7 @@
 
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 use MikoPBX\Tests\AdminCabinet\Tests\Traits\AudioFilesTrait;
 
@@ -36,7 +37,7 @@ abstract class CreateAudioFileTest extends MikoPBXTestsBase
         $data = $this->getAudioFileData();
         if (self::$driver !== null) {
             $this->setSessionName("Audio File Test: " . $data['name']);
-            error_log(sprintf("[BrowserStack] Updated session name for test: %s", $data['name']));
+            SystemMessages::sysLogMsg(__CLASS__, sprintf("[BrowserStack] Updated session name for test: %s", $data['name']), LOG_DEBUG);
         }
     }
 

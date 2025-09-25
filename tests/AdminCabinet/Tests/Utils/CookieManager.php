@@ -22,6 +22,7 @@ namespace MikoPBX\Tests\AdminCabinet\Tests\Utils;
 
 use Facebook\WebDriver\Cookie;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
+use MikoPBX\Core\System\SystemMessages;
 use RuntimeException;
 
 /**
@@ -85,7 +86,7 @@ class CookieManager
 
             return $saved !== false;
         } catch (\Exception $e) {
-            error_log("Failed to save cookies: " . $e->getMessage());
+            SystemMessages::sysLogMsg(__CLASS__, "Failed to save cookies: " . $e->getMessage(), LOG_WARNING);
             return false;
         }
     }
@@ -127,7 +128,7 @@ class CookieManager
 
             return true;
         } catch (\Exception $e) {
-            error_log("Failed to load cookies: " . $e->getMessage());
+            SystemMessages::sysLogMsg(__CLASS__, "Failed to load cookies: " . $e->getMessage(), LOG_WARNING);
             return false;
         }
     }
@@ -150,7 +151,7 @@ class CookieManager
 
             return true;
         } catch (\Exception $e) {
-            error_log("Failed to clear cookies: " . $e->getMessage());
+            SystemMessages::sysLogMsg(__CLASS__, "Failed to clear cookies: " . $e->getMessage(), LOG_WARNING);
             return false;
         }
     }

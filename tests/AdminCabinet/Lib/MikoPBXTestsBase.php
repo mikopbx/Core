@@ -4,6 +4,7 @@ namespace MikoPBX\Tests\AdminCabinet\Lib;
 
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Tests\AdminCabinet\Lib\Traits\AssertionTrait;
 use MikoPBX\Tests\AdminCabinet\Lib\Traits\ElementInteractionTrait;
 use MikoPBX\Tests\AdminCabinet\Lib\Traits\FormInteractionTrait;
@@ -263,7 +264,7 @@ class MikoPBXTestsBase extends BrowserStackTest
             $this->writeToLocalLog($action, $context, $level);
         } catch (\Exception $e) {
             // Log error without throwing to avoid test interruption
-            error_log("Failed to log test action: " . $e->getMessage());
+            SystemMessages::sysLogMsg(__CLASS__, "Failed to log test action: " . $e->getMessage(), LOG_WARNING);
         }
     }
 

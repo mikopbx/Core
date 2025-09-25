@@ -188,7 +188,8 @@ JS;
             }
 
             // Check if dropdown is searchable
-            $isSearchable = strpos($dropdown->getAttribute('class'), 'search') !== false;
+            $classAttribute = $dropdown->getAttribute('class') ?? '';
+            $isSearchable = strpos($classAttribute, 'search') !== false;
 
             // Open dropdown
             $this->scrollIntoView($dropdown);
@@ -429,6 +430,114 @@ JS;
         if ($actualText !== $expectedText) {
             $message = $message ?: "Dropdown '{$fieldName}' text mismatch. Expected: '{$expectedText}', Actual: '{$actualText}'";
             $this->fail($message);
+        }
+    }
+
+    /**
+     * Asserts dropdown display text contains expected string
+     * Useful for checking HTML content with icons
+     *
+     * @param string $fieldName Field name
+     * @param string $expectedSubstring Expected substring in display text
+     * @param string $message Optional assertion message
+     */
+    protected function assertDropdownTextContains(string $fieldName, string $expectedSubstring, string $message = ''): void
+    {
+        $actualText = $this->getDropdownText($fieldName);
+
+        if ($actualText === null) {
+            $this->fail($message ?: "Dropdown '{$fieldName}' not found");
+        }
+
+        if (strpos($actualText, $expectedSubstring) === false) {
+            $message = $message ?: "Dropdown '{$fieldName}' text does not contain expected substring. Expected to contain: '{$expectedSubstring}', Actual: '{$actualText}'";
+            $this->fail($message);
+        }
+    }
+
+    /**
+     * Sets both value and display text in dropdown
+     * V5.0: Helper for cases when both value and text need to be set
+     *
+     * @param string $fieldName Field name
+     * @param string $value Value to set
+     * @param string $text Display text to set
+     * @return bool Success status
+     */
+    protected function setDropdownTextAndValue(string $fieldName, string $value, string $text): bool
+    {
+        $this->logTestAction("Set dropdown text and value", [
+            'field' => $fieldName,
+            'value' => $value,
+            'text' => $text
+        ]);
+
+        try {
+            // Use JavaScript to set both value and text
+            $jsCode = <<<JS
+            (function() {
+                var dropdownId = '{$fieldName}-dropdown';
+                var dropdown = document.getElementById(dropdownId);
+                var hiddenInput = document.getElementById('{$fieldName}');
+
+                if (!dropdown || !hiddenInput) {
+                    return {success: false, error: 'Dropdown or hidden input not found'};
+                }
+
+                // Update hidden input
+                hiddenInput.value = '{$value}';
+
+                // Check if item exists in menu
+                var menuItem = dropdown.querySelector('.menu .item[data-value="{$value}"]');
+
+                // Add temporary item if it doesn't exist (for dynamic values like mobile numbers)
+                if (!menuItem && '{$value}' !== '') {
+                    var menu = dropdown.querySelector('.menu');
+                    if (menu) {
+                        var tempItem = document.createElement('div');
+                        tempItem.className = 'item';
+                        tempItem.setAttribute('data-value', '{$value}');
+                        tempItem.setAttribute('data-text', '{$text}');
+                        tempItem.innerHTML = '{$text}';
+                        menu.appendChild(tempItem);
+                    }
+                }
+
+                // Use Semantic UI API to set value
+                if (window.$ && $.fn && $.fn.dropdown) {
+                    $(dropdown).dropdown('set selected', '{$value}');
+
+                    // Force text update
+                    var textElement = dropdown.querySelector('.text');
+                    if (textElement) {
+                        textElement.innerHTML = '{$text}';
+                    }
+
+                    // Trigger change event
+                    $(hiddenInput).trigger('change');
+
+                    return {success: true, message: 'Value and text set successfully'};
+                } else {
+                    return {success: false, error: 'Semantic UI not available'};
+                }
+            })();
+JS;
+
+            $result = self::$driver->executeScript($jsCode);
+
+            if (is_array($result) && $result['success']) {
+                $this->annotate("Set '{$value}' with text '{$text}' in dropdown '{$fieldName}'", 'info');
+                usleep(self::DROPDOWN_INTERACTION_DELAY * 1000);
+                $this->waitForAjax();
+                return true;
+            } else {
+                $error = $result['error'] ?? 'Unknown error';
+                $this->annotate("Failed to set dropdown text and value: {$error}", 'warning');
+                return false;
+            }
+        } catch (\Exception $e) {
+            $this->annotate("Error setting dropdown text and value: " . $e->getMessage(), 'error');
+            return false;
         }
     }
 }
