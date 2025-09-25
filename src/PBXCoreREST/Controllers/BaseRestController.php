@@ -241,7 +241,22 @@ abstract class BaseRestController extends BaseController
             $requestData
         );
     }
-    
+
+    /**
+     * Handle resource-level custom method requests (e.g., /resource/{id}:method)
+     *
+     * This is an alias for handleCustomRequest optimized for resource-level routes
+     * where the ID and method are passed as separate parameters.
+     *
+     * @param string $id The resource ID
+     * @param string $customMethod The custom method name
+     * @return void
+     */
+    public function handleResourceCustomRequest(string $id, string $customMethod): void
+    {
+        $this->handleCustomRequest($id, $customMethod);
+    }
+
     /**
      * Map HTTP method to processor action
      * 
