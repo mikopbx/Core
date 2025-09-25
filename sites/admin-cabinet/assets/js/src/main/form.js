@@ -23,7 +23,7 @@
  *
  * @module Form
  */
-const Form = {
+const Form = { 
 
     /**
      * jQuery object for the form.
@@ -45,6 +45,7 @@ const Form = {
     $dirrtyField: $('#dirrty'),
 
     url: '',
+    method: 'POST', // HTTP method for form submission (POST, PATCH, PUT, etc.)
     cbBeforeSendForm: '',
     cbAfterSendForm: '',
     $submitButton: $('#submitbutton'),
@@ -69,41 +70,18 @@ const Form = {
          * @type {boolean}
          */
         enabled: false,
-        
+
         /**
          * API object with methods (e.g., ConferenceRoomsAPI)
          * @type {object|null}
          */
         apiObject: null,
-        
+
         /**
          * Method name for saving records
-         * Can be 'auto' for automatic detection based on id field
          * @type {string}
          */
-        saveMethod: 'saveRecord',
-        
-        /**
-         * HTTP method for API calls (can be overridden in cbBeforeSendForm)
-         * Can be 'auto' for automatic detection based on id field
-         * @type {string|null}
-         */
-        httpMethod: null,
-        
-        /**
-         * Enable automatic RESTful method detection
-         * When true, automatically uses:
-         * - POST/create for new records (no id)
-         * - PUT/update for existing records (with id)
-         * @type {boolean}
-         */
-        autoDetectMethod: false,
-        
-        /**
-         * Field name to check for record id
-         * @type {string}
-         */
-        idField: 'id'
+        saveMethod: 'saveRecord'
     },
     
     /**
@@ -387,32 +365,11 @@ const Form = {
         if (Form.apiSettings.enabled && Form.apiSettings.apiObject) {
             // REST API submission
             const apiObject = Form.apiSettings.apiObject;
-            let saveMethod = Form.apiSettings.saveMethod;
-            let httpMethod = Form.apiSettings.httpMethod;
-            
-            // Auto-detect RESTful methods if enabled
-            if (Form.apiSettings.autoDetectMethod) {
-                const idField = Form.apiSettings.idField || 'id';
-                const recordId = formData[idField];
-                const isNew = !recordId || recordId === '';
-                
-                // Auto-detect saveMethod if set to 'auto' or autoDetectMethod is true
-                if (saveMethod === 'auto' || Form.apiSettings.autoDetectMethod) {
-                    saveMethod = isNew ? 'create' : 'update';
-                }
-                
-                // Auto-detect httpMethod if set to 'auto' or autoDetectMethod is true
-                if (httpMethod === 'auto' || Form.apiSettings.autoDetectMethod) {
-                    httpMethod = isNew ? 'POST' : 'PUT';
-                }
-            }
-            
+            const saveMethod = Form.apiSettings.saveMethod || 'saveRecord';
+
+            // Call the API object's method
             if (apiObject && typeof apiObject[saveMethod] === 'function') {
                 console.log('Form: Calling API method', saveMethod, 'with data:', formData);
-                // If httpMethod is specified, pass it in the data
-                if (httpMethod) {
-                    formData._method = httpMethod;
-                }
 
                 apiObject[saveMethod](formData, (response) => {
                     console.log('Form: API response received:', response);
@@ -430,7 +387,7 @@ const Form = {
             $.api({
                 url: Form.url,
                 on: 'now',
-                method: 'POST',
+                method: Form.method || 'POST',
                 processData: Form.processData,
                 contentType: Form.contentType,
                 keyboardShortcuts: Form.keyboardShortcuts,
@@ -598,7 +555,7 @@ const Form = {
                     const loaderHtml = `
                         <div class="ui inverted dimmer">
                             <div class="ui text loader">
-                                ${message || globalTranslate.ex_Loading || 'Loading...'}
+                                ${message || globalTranslate.ex_Loading}
                             </div>
                         </div>`;
                     Form.$formObj.append(loaderHtml);
@@ -799,13 +756,28 @@ const Form = {
                 options.beforePopulate(data);
             }
 
+            // Handle _isNew flag - create/update hidden field if present
+            if (data._isNew !== undefined) {
+                let $isNewField = Form.$formObj.find('input[name="_isNew"]');
+                if ($isNewField.length === 0) {
+                    // Create hidden field if it doesn't exist
+                    $isNewField = $('<input>').attr({
+                        type: 'hidden',
+                        name: '_isNew',
+                        id: '_isNew'
+                    }).appendTo(Form.$formObj);
+                }
+                // Set value (convert boolean to string for form compatibility)
+                $isNewField.val(data._isNew ? 'true' : 'false');
+            }
+
             // Custom population or standard Semantic UI
             if (typeof options.customPopulate === 'function') {
                 options.customPopulate(data);
             } else if (!options.skipSemanticUI) {
                 Form.$formObj.form('set values', data);
             }
-            
+
             // Execute afterPopulate callback if provided
             if (typeof options.afterPopulate === 'function') {
                 options.afterPopulate(data);
