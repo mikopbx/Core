@@ -22,12 +22,10 @@ namespace MikoPBX\PBXCoreREST\Lib;
 
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\PBXCoreREST\Lib\System\ConvertAudioFileAction;
-use MikoPBX\PBXCoreREST\Lib\System\GetDateAction;
+use MikoPBX\PBXCoreREST\Lib\System\DateTimeAction;
 use MikoPBX\PBXCoreREST\Lib\System\GetDeleteStatisticsAction;
 use MikoPBX\PBXCoreREST\Lib\System\RebootAction;
 use MikoPBX\PBXCoreREST\Lib\System\RestoreDefaultSettingsAction;
-use MikoPBX\PBXCoreREST\Lib\System\SendMailAction;
-use MikoPBX\PBXCoreREST\Lib\System\SetDateAction;
 use MikoPBX\PBXCoreREST\Lib\System\ShutdownAction;
 use MikoPBX\PBXCoreREST\Lib\System\UpdateMailSettingsAction;
 use MikoPBX\PBXCoreREST\Lib\System\UpgradeFromImageAction;
@@ -66,17 +64,11 @@ class SystemManagementProcessor extends Injectable
             case 'shutdown':
                 $res = ShutdownAction::main();
                 break;
-            case 'getDate':
-                $res = GetDateAction::main();
-                break;
-            case 'setDate':
-                $res = SetDateAction::main($data);
+            case 'datetime':
+                $res = DateTimeAction::main($data);
                 break;
             case 'updateMailSettings':
                 $res = UpdateMailSettingsAction::main();
-                break;
-            case 'sendMail':
-                $res = SendMailAction::main($data);
                 break;
             case 'upgrade':
                 $imageFileLocation = $data['temp_filename'] ?? '';

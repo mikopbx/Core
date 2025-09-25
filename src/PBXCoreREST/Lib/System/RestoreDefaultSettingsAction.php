@@ -562,6 +562,21 @@ class RestoreDefaultSettingsAction extends Injectable
      */
     private static function resetCodecsToDefaults(): void
     {
+        // First, clean up any duplicate lowercase video codecs that may exist
+        // These could have been created by previous versions of this code
+        $duplicateCodecs = ['jpeg', 'h261', 'vp8', 'vp9'];
+        foreach ($duplicateCodecs as $codecName) {
+            $codec = Codecs::findFirst("name = '$codecName'");
+            if ($codec !== null) {
+                $codec->delete();
+                SystemMessages::sysLogMsg(
+                    __CLASS__,
+                    "Removed duplicate lowercase codec: $codecName",
+                    LOG_INFO
+                );
+            }
+        }
+
         // Define default audio codecs with priorities
         $defaultAudioCodecs = [
             'alaw' => ['priority' => 1, 'disabled' => '0', 'description' => 'G.711 A-law'],
@@ -579,14 +594,15 @@ class RestoreDefaultSettingsAction extends Injectable
         ];
 
         // Define default video codecs with priorities
+        // Note: JPEG, H.261, VP8, VP9 use uppercase names for consistency with migration UpdateConfigsUpToVer202302161
         $defaultVideoCodecs = [
             'h264' => ['priority' => 1, 'disabled' => '0', 'description' => 'H.264'],
             'h263' => ['priority' => 2, 'disabled' => '0', 'description' => 'H.263'],
             'h263p' => ['priority' => 3, 'disabled' => '0', 'description' => 'H.263+'],
-            'vp8' => ['priority' => 4, 'disabled' => '0', 'description' => 'VP8'],
-            'vp9' => ['priority' => 5, 'disabled' => '0', 'description' => 'VP9'],
-            'jpeg' => ['priority' => 6, 'disabled' => '0', 'description' => 'JPEG'],
-            'h261' => ['priority' => 7, 'disabled' => '0', 'description' => 'H.261'],
+            'VP8' => ['priority' => 4, 'disabled' => '0', 'description' => 'vp8'],
+            'VP9' => ['priority' => 5, 'disabled' => '0', 'description' => 'vp9'],
+            'JPEG' => ['priority' => 6, 'disabled' => '0', 'description' => 'jpeg'],
+            'H.261' => ['priority' => 7, 'disabled' => '0', 'description' => 'h261'],
         ];
 
         // Update audio codecs

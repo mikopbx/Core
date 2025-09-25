@@ -23,7 +23,6 @@ namespace MikoPBX\AdminCabinet\Forms;
 use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
-use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
 
 /**
@@ -38,13 +37,9 @@ class SystemDiagnosticForm extends BaseForm
     {
         parent::initialize($entity, $options);
 
-        // Filenames dropdown
-        $filenames = new Select(
-            'filenames',
-            [],
-            ['class' => 'ui fluid selection search dropdown filenames-select']
-        );
-        $this->add($filenames);
+        // Filenames dropdown - V5.0 pattern: hidden input for dynamic dropdown
+        // JavaScript will build the dropdown UI with DynamicDropdownBuilder
+        $this->add(new Hidden('filenames', ['value' => '']));
         $this->add(new Hidden('filename', ['value' => $options['filename']]));
         $this->add(new Text('filter', ['value' => $options['filter']]));
         $this->add(new Numeric('lines', ['value' => '5000']));

@@ -1,8 +1,7 @@
 <?php
-
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,23 +23,29 @@ use MikoPBX\Core\System\System;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Injectable;
 
-/**
- *
- * @package MikoPBX\PBXCoreREST\Lib\System
- */
-class SetDateAction extends Injectable
+class DateTimeAction extends Injectable
 {
     /**
-     *
-     * @return PBXApiResult An object containing the result of the API call.
-     * @throws \Exception
+     * @param array<string, mixed> $data
      */
     public static function main(array $data): PBXApiResult
     {
-        $res            = new PBXApiResult();
+        $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        $timeStamp = intval($data['timestamp']);
-        $res->success = System::setDate($timeStamp, $data['userTimeZone']);
+
+        $httpMethod = $data['httpMethod'] ?? '';
+
+        if ($httpMethod === 'GET') {
+            $res->success = true;
+            $res->data['timestamp'] = time();
+        } elseif ($httpMethod === 'PUT') {
+            $timeStamp = intval($data['timestamp'] ?? 0);
+            $userTimeZone = $data['userTimeZone'] ?? null;
+            $res->success = System::setDate($timeStamp, $userTimeZone);
+        } else {
+            $res->messages['error'][] = "Invalid HTTP method for datetime: $httpMethod";
+        }
+
         return $res;
     }
 }
