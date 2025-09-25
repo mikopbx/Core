@@ -22,8 +22,16 @@ declare(strict_types=1);
 namespace MikoPBX\Common\Providers;
 
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Providers\SessionProvider;
+use MikoPBX\Core\Workers\WorkerExtensionStatusMonitor;
 use MikoPBX\Core\Workers\WorkerModelsEvents;
+use MikoPBX\Core\Workers\WorkerNotifyAdministrator;
+use MikoPBX\Core\Workers\WorkerNotifyByEmail;
+use MikoPBX\Core\Workers\WorkerPrepareAdvice;
+use MikoPBX\Core\Workers\WorkerProviderStatusMonitor;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
+use MikoPBX\PBXCoreREST\Workers\WorkerBulkEmployees;
+use MikoPBX\PBXCoreREST\Workers\WorkerMergeUploadedFile;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
 
@@ -89,15 +97,32 @@ class LanguageProvider implements ServiceProviderInterface
     }
 
     /**
-     * Checks if the process is related to API commands or model events.
+     * Checks if the process is related to API commands, model events, or other workers that send EventBus messages.
      *
      * @param string $processTitle The title of the current process.
-     * @return bool True if it's an API command or model event process, false otherwise.
+     * @return bool True if it's a worker that should use web admin language, false otherwise.
      */
     private function isApiOrModelEventProcess(string $processTitle): bool
     {
-        return str_contains($processTitle, WorkerApiCommands::class) ||
-            str_contains($processTitle, WorkerModelsEvents::class);
+        $eventBusWorkers = [
+            WorkerApiCommands::class,
+            WorkerModelsEvents::class,
+            WorkerBulkEmployees::class,
+            WorkerMergeUploadedFile::class,
+            WorkerExtensionStatusMonitor::class,
+            WorkerNotifyAdministrator::class,
+            WorkerNotifyByEmail::class,
+            WorkerPrepareAdvice::class,
+            WorkerProviderStatusMonitor::class,
+        ];
+
+        foreach ($eventBusWorkers as $workerClass) {
+            if (str_contains($processTitle, $workerClass)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
