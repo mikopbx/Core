@@ -33,8 +33,8 @@ use Phalcon\Di\Injectable;
  * Validates password against security requirements and returns detailed feedback
  * including score, strength level, and improvement suggestions.
  * 
- * @api {post} /pbxcore/api/v2/passwords/validate Validate password
- * @apiVersion 2.0.0
+ * @api {post} /pbxcore/api/v3/passwords:validate Validate password
+ * @apiVersion 3.0.0
  * @apiName ValidatePassword
  * @apiGroup Passwords
  * 

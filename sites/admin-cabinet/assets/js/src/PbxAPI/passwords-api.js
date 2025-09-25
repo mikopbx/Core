@@ -16,13 +16,14 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global Config, PbxApi */
+/* global Config, PbxApi */ 
 
 /**
- * Password validation and generation API
- * @module PasswordValidationAPI
+ * Password validation and generation API (v3)
+ * Uses RESTful v3 endpoints with custom method notation
+ * @module PasswordsAPI
  */
-const PasswordValidationAPI = {
+const PasswordsAPI = {
     /**
      * Validate password strength
      * 
@@ -32,7 +33,7 @@ const PasswordValidationAPI = {
      */
     validatePassword(password, field, callback) {
         $.api({
-            url: `${Config.pbxUrl}/pbxcore/api/v2/passwords/validate`,
+            url: `${Config.pbxUrl}/pbxcore/api/v3/passwords:validate`,
             on: 'now',
             method: 'POST',
             data: {
@@ -61,7 +62,7 @@ const PasswordValidationAPI = {
      */
     generatePassword(length, callback) {
         $.api({
-            url: `${Config.pbxUrl}/pbxcore/api/v2/passwords/generate`,
+            url: `${Config.pbxUrl}/pbxcore/api/v3/passwords:generate`,
             on: 'now',
             method: 'POST',
             data: {
@@ -89,7 +90,7 @@ const PasswordValidationAPI = {
      */
     checkDictionary(password, callback) {
         $.api({
-            url: `${Config.pbxUrl}/pbxcore/api/v2/passwords/checkDictionary`,
+            url: `${Config.pbxUrl}/pbxcore/api/v3/passwords:checkDictionary`,
             on: 'now',
             method: 'POST',
             data: {
@@ -129,7 +130,7 @@ const PasswordValidationAPI = {
             }
             
             timeoutId = setTimeout(() => {
-                PasswordValidationAPI.validatePassword(password, field, callback);
+                PasswordsAPI.validatePassword(password, field, callback);
             }, delay);
         };
     }

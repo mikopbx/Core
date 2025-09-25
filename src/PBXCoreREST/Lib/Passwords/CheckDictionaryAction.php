@@ -33,7 +33,7 @@ use Phalcon\Di\Injectable;
  * Performs lightweight dictionary check to identify common/compromised passwords.
  * Useful for quick validation without full strength analysis.
  * 
- * @api {post} /pbxcore/api/v2/passwords/checkDictionary Check dictionary
+ * @api {post} /pbxcore/api/v3/passwords:checkDictionary Check dictionary
  * @apiVersion 2.0.0
  * @apiName CheckDictionary
  * @apiGroup Passwords

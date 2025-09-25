@@ -33,7 +33,7 @@ use Phalcon\Di\Injectable;
  * Performs efficient batch dictionary checks for multiple passwords.
  * Optimized for checking many passwords at once, reducing overhead.
  * 
- * @api {post} /pbxcore/api/v2/passwords/batchCheckDictionary Batch check dictionary
+ * @api {post} /pbxcore/api/v3/passwords:batchCheckDictionary Batch check dictionary
  * @apiVersion 2.0.0
  * @apiName BatchCheckDictionary
  * @apiGroup Passwords

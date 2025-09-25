@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global PasswordValidationAPI */
+/* global PasswordsAPI */
 
 /**
  * The PasswordScore object provides password scoring functionality
@@ -144,8 +144,8 @@ const PasswordScore = {
             return '';
         }
         
-        // Check if PasswordValidationAPI is available
-        if (typeof PasswordValidationAPI !== 'undefined') {
+        // Check if PasswordsAPI is available
+        if (typeof PasswordsAPI !== 'undefined') {
             // Use cache key
             const cacheKey = `${field || 'default'}:${pass}`;
             
@@ -172,7 +172,7 @@ const PasswordScore = {
             // Debounce API call
             this.validationTimers[timerKey] = setTimeout(() => {
                 // Make async API call with skipDictionary for performance
-                PasswordValidationAPI.validatePassword(pass, field, (result) => {
+                PasswordsAPI.validatePassword(pass, field, (result) => {
                     if (result) {
                         // Cache the result
                         this.validationCache[cacheKey] = result;
@@ -273,8 +273,8 @@ const PasswordScore = {
      * @param {function} callback - Callback function to receive the generated password
      */
     generatePassword(length = 16, callback) {
-        if (typeof PasswordValidationAPI !== 'undefined') {
-            PasswordValidationAPI.generatePassword(length, callback);
+        if (typeof PasswordsAPI !== 'undefined') {
+            PasswordsAPI.generatePassword(length, callback);
         } else if (callback) {
             // Simple fallback generator
             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';

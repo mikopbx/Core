@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalTranslate, PasswordValidationAPI, Form, ClipboardJS */
+/* global globalTranslate, PasswordsAPI, Form, ClipboardJS */
 
 /**
  * Password Widget Module
@@ -202,7 +202,7 @@ const PasswordWidget = {
         // Create button
         const $showHideBtn = $(`
             <button type="button" class="ui basic icon button show-hide-password" 
-                    data-content="${globalTranslate.bt_ToolTipShowPassword || 'Show password'}">
+                    data-content="${globalTranslate.bt_ToolTipShowPassword}">
                 <i class="eye icon"></i>
             </button>
         `);
@@ -229,7 +229,7 @@ const PasswordWidget = {
         // Create button
         const $generateBtn = $(`
             <button type="button" class="ui basic icon button generate-password" 
-                    data-content="${globalTranslate.bt_ToolTipGeneratePassword || 'Generate password'}">
+                    data-content="${globalTranslate.bt_ToolTipGeneratePassword}">
                 <i class="sync icon"></i>
             </button>
         `);
@@ -258,7 +258,7 @@ const PasswordWidget = {
         const $clipboardBtn = $(`
             <button type="button" class="ui basic icon button clipboard" 
                     data-clipboard-text="${currentValue}"
-                    data-content="${globalTranslate.bt_ToolTipCopyPassword || 'Copy password'}">
+                    data-content="${globalTranslate.bt_ToolTipCopyPassword}">
                 <i class="icons">
                     <i class="icon copy"></i>
                     <i class="corner key icon"></i>
@@ -515,7 +515,7 @@ const PasswordWidget = {
         if (options.validation === this.VALIDATION.HARD) {
             rules.push({
                 type: 'empty',
-                prompt: globalTranslate.pw_ValidatePasswordEmpty || 'Password cannot be empty'
+                prompt: globalTranslate.pw_ValidatePasswordEmpty
             });
         }
         
@@ -523,7 +523,7 @@ const PasswordWidget = {
         if (options.minScore > 0 && options.validation === this.VALIDATION.HARD) {
             rules.push({
                 type: 'passwordStrength',
-                prompt: globalTranslate.pw_ValidatePasswordWeak || 'Password is too weak'
+                prompt: globalTranslate.pw_ValidatePasswordWeak
             });
         }
         
@@ -627,8 +627,8 @@ const PasswordWidget = {
         // Debounce API call
         this.validationTimers[instance.fieldId] = setTimeout(() => {
             // Use API if available
-            if (typeof PasswordValidationAPI !== 'undefined') {
-                PasswordValidationAPI.validatePassword(password, instance.fieldId, (result) => {
+            if (typeof PasswordsAPI !== 'undefined') {
+                PasswordsAPI.validatePassword(password, instance.fieldId, (result) => {
                     if (result) {
                         // Cache result
                         this.validationCache[cacheKey] = result;
@@ -830,8 +830,8 @@ const PasswordWidget = {
         };
         
         // Use API if available
-        if (typeof PasswordValidationAPI !== 'undefined') {
-            PasswordValidationAPI.generatePassword(options.generateLength, generateCallback);
+        if (typeof PasswordsAPI !== 'undefined') {
+            PasswordsAPI.generatePassword(options.generateLength, generateCallback);
         } else {
             // Simple local generator
             const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
@@ -941,12 +941,12 @@ const PasswordWidget = {
             // Show password
             $field.attr('type', 'text');
             $icon.removeClass('eye').addClass('eye slash');
-            $showHideBtn.attr('data-content', globalTranslate.bt_ToolTipHidePassword || 'Hide password');
+            $showHideBtn.attr('data-content', globalTranslate.bt_ToolTipHidePassword);
         } else {
             // Hide password
             $field.attr('type', 'password');
             $icon.removeClass('eye slash').addClass('eye');
-            $showHideBtn.attr('data-content', globalTranslate.bt_ToolTipShowPassword || 'Show password');
+            $showHideBtn.attr('data-content', globalTranslate.bt_ToolTipShowPassword);
         }
     },
     

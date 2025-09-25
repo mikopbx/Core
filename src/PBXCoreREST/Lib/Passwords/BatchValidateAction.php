@@ -33,7 +33,7 @@ use Phalcon\Di\Injectable;
  * Validates multiple passwords at once with different contexts.
  * Optimized for performance when checking multiple fields.
  * 
- * @api {post} /pbxcore/api/v2/passwords/batchValidate Batch validate
+ * @api {post} /pbxcore/api/v3/passwords:batchValidate Batch validate
  * @apiVersion 2.0.0
  * @apiName BatchValidate
  * @apiGroup Passwords

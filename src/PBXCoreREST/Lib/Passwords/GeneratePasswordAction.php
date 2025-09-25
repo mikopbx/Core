@@ -33,7 +33,7 @@ use Phalcon\Di\Injectable;
  * Generates cryptographically secure passwords with configurable length
  * and character sets. Includes automatic strength calculation.
  * 
- * @api {post} /pbxcore/api/v2/passwords/generate Generate password
+ * @api {post} /pbxcore/api/v3/passwords:generate Generate password
  * @apiVersion 2.0.0
  * @apiName GeneratePassword
  * @apiGroup Passwords
