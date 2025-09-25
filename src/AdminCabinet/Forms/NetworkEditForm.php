@@ -26,7 +26,6 @@ use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
-use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
 
 /**
@@ -84,17 +83,18 @@ class NetworkEditForm extends BaseForm
                 $this->addCheckBox('dhcp_' . $eth->id, false);
                 $this->add(new Text('ipaddr_' . $eth->id, ['class' => 'ipaddress']));
 
-                // Subnet dropdown - will be populated by JavaScript
+                // Subnet dropdown - V5.0 pattern with SemanticUIDropdown
                 $arrMasks = Cidr::getNetMasks();
-                $this->add(new Select(
+                $this->addSemanticUIDropdown(
                     'subnet_' . $eth->id,
                     $arrMasks,
+                    $eth->subnet ?? '24',  // Default subnet mask
                     [
-                        'using' => ['id', 'name'],
-                        'useEmpty' => false,
-                        'class' => 'ui search selection dropdown',
+                        'clearable' => false,
+                        'forceSelection' => true,
+                        'class' => 'ui search selection dropdown'
                     ]
-                ));
+                );
 
                 $this->add(new Numeric('vlanid_' . $eth->id));
             }

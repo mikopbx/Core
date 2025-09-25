@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl,globalTranslate, Form, PbxApi, NetworkAPI, UserMessage, DynamicDropdownBuilder */
+/* global globalRootUrl,globalTranslate, Form, SysinfoAPI, NetworkAPI, UserMessage, DynamicDropdownBuilder */
 
 /**
  * Object for managing network settings
@@ -126,7 +126,7 @@ const networks = {
         networks.$getMyIpButton.on('click', (e) => {
             e.preventDefault();
             networks.$getMyIpButton.addClass('loading disabled');
-            PbxApi.GetExternalIp(networks.cbAfterGetExternalIp);
+            SysinfoAPI.getExternalIpInfo(networks.cbAfterGetExternalIp);
         });
 
         // Delete additional network interface using REST API
@@ -546,7 +546,7 @@ const networks = {
 
         DynamicDropdownBuilder.buildDropdown('internet_interface', formData, {
             staticOptions: internetInterfaceOptions,
-            placeholder: globalTranslate.nw_SelectInternetInterface || 'Select internet interface'
+            placeholder: globalTranslate.nw_SelectInternetInterface
         });
 
         // Build interface selector for new VLAN only if the field exists
@@ -567,7 +567,7 @@ const networks = {
 
             DynamicDropdownBuilder.buildDropdown('interface_0', { interface_0: '' }, {
                 staticOptions: physicalInterfaceOptions,
-                placeholder: globalTranslate.nw_SelectInterface || 'Select interface',
+                placeholder: globalTranslate.nw_SelectInterface,
                 allowEmpty: true
             });
         }

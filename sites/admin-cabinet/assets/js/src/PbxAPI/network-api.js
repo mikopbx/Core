@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global PbxApiClient */
+/* global PbxApiClient */ 
 
 /**
  * Network Configuration API using unified PbxApiClient
@@ -37,7 +37,6 @@ NetworkAPI.getConfig = function(callback) {
 };
 
 NetworkAPI.saveConfig = function(data, callback) {
-    console.log('NetworkAPI.saveConfig called with data:', data);
     return this.callCustomMethod('saveConfig', data, callback, 'POST');
 };
 
