@@ -1,7 +1,6 @@
 <form class="ui form large" id="sound-file-form">
 <input type="hidden" name="id" id="id" value="{{ recordId }}"/>
 <input type="hidden" name="category" id="category" value="{{ category }}"/>
-<input type="file" name="sound-file" accept=".wav,.mp3,.ogg,.m4a,.aac" style="display: none!important;" id="file"/>
 <input type="hidden" name="sound-file-url" id="sound-file-url"/>
 
 <div class="two fields">
