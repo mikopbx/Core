@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, PbxApi */
+/* global globalRootUrl, PbxApi */ 
 
 /**
  * NetworkFiltersAPI module for working with network filters.
@@ -156,7 +156,7 @@ const NetworkFiltersAPI = {
                 }
             } else {
                 // Fallback to default "none" option
-                const noneText = globalTranslate.ex_NoNetworkFilter || 'Connections from any addresses are allowed';
+                const noneText = globalTranslate.ex_NoNetworkFilter;
                 $select.empty().append(`<option value="none"><i class="globe icon"></i> ${noneText}</option>`);
                 $select.val('none');
                 $dropdown.dropdown('refresh');
