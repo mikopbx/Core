@@ -138,11 +138,11 @@ class WorkerExtensionStatusMonitor extends WorkerRedisBase
         
         // Call the REST API using PBXCoreRESTClientProvider
         try {
-            // Make internal REST API call to get extension statuses
+            // Make internal REST API call to get SIP device statuses (v3)
             $result = $this->di->get(
                 PBXCoreRESTClientProvider::SERVICE_NAME,
                 [
-                    '/pbxcore/api/v2/extensions/getStatuses',
+                    '/pbxcore/api/v3/sip:getStatuses',
                     PBXCoreRESTClientProvider::HTTP_METHOD_GET,
                     [
                         'fromWorker' => true,       // Indicate this is from worker context

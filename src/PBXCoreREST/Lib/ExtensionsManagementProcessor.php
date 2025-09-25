@@ -20,11 +20,7 @@
 namespace MikoPBX\PBXCoreREST\Lib;
 
 use MikoPBX\PBXCoreREST\Lib\Extensions\DropdownsAction;
-use MikoPBX\PBXCoreREST\Lib\Extensions\GetAllStatusesAction;
-use MikoPBX\PBXCoreREST\Lib\Extensions\GetBulkStatusAction;
-use MikoPBX\PBXCoreREST\Lib\Extensions\GetHistoryAction;
 use MikoPBX\PBXCoreREST\Lib\Extensions\GetListAction;
-use MikoPBX\PBXCoreREST\Lib\Extensions\GetStatsAction;
 use MikoPBX\PBXCoreREST\Lib\Extensions\Utils;
 use Phalcon\Di\Injectable;
 
@@ -77,73 +73,6 @@ class ExtensionsManagementProcessor extends Injectable
                     $res = Utils::getPhoneRepresent($data['number']);
                 } else {
                     $res->messages['error'][] = 'Empty number value in POST/GET data';
-                }
-                break;
-            case 'bulkCreate':
-                $res = BulkCreateAction::main($data);
-                break;
-            case 'getBulkStatus':
-                if (!empty($data['processId'])) {
-                    $res = GetBulkStatusAction::main($data['processId']);
-                } else {
-                    $res->messages['error'][] = 'Empty process ID in POST/GET data';
-                }
-                break;
-            case 'cancelBulkProcess':
-                if (!empty($data['processId'])) {
-                    $res = GetBulkStatusAction::cancel($data['processId']);
-                } else {
-                    $res->messages['error'][] = 'Empty process ID in POST/GET data';
-                }
-                break;
-            case 'getStatuses':
-            case 'statuses':
-                $res = GetAllStatusesAction::main($data);
-                break;
-            case 'getStatus':
-                if (!empty($data['extension'])) {
-                    // For single extension status, call GetAllStatusesAction and filter result
-                    $allStatuses = GetAllStatusesAction::main($data);
-                    if ($allStatuses->success && isset($allStatuses->data[$data['extension']])) {
-                        $res->success = true;
-                        $res->data = $allStatuses->data[$data['extension']];
-                    } else {
-                        $res->messages['error'][] = 'Extension not found or status unavailable';
-                    }
-                } else {
-                    $res->messages['error'][] = 'Empty extension value in POST/GET data';
-                }
-                break;
-            case 'forceCheck':
-                if (!empty($data['extension'])) {
-                    // Force check for specific extension
-                    $forceData = array_merge($data, ['forceCheck' => true]);
-                    $allStatuses = GetAllStatusesAction::main($forceData);
-                    if ($allStatuses->success && isset($allStatuses->data[$data['extension']])) {
-                        $res->success = true;
-                        $res->data = $allStatuses->data[$data['extension']];
-                        $res->messages['info'][] = 'Force check completed for extension ' . $data['extension'];
-                    } else {
-                        $res->messages['error'][] = 'Extension not found or status check failed';
-                    }
-                } else {
-                    // Force check for all extensions
-                    $forceData = array_merge($data, ['forceCheck' => true]);
-                    $res = GetAllStatusesAction::main($forceData);
-                }
-                break;
-            case 'getHistory':
-                if (!empty($data['extension'])) {
-                    $res = GetHistoryAction::main($data['extension'], $data);
-                } else {
-                    $res->messages['error'][] = 'Empty extension value in POST/GET data';
-                }
-                break;
-            case 'getStats':
-                if (!empty($data['extension'])) {
-                    $res = GetStatsAction::main($data['extension'], $data);
-                } else {
-                    $res->messages['error'][] = 'Empty extension value in POST/GET data';
                 }
                 break;
             default:

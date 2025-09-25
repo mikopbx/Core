@@ -18,7 +18,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalTranslate, extension, DebuggerInfo, PbxApi */
+/* global globalTranslate, extension, DebuggerInfo, SipAPI */
 
 /**
  * The extensionStatusLoopWorker object.
@@ -71,12 +71,12 @@ var extensionStatusLoopWorker = {
       peer: extension.defaultNumber
     };
     window.clearTimeout(extensionStatusLoopWorker.timeoutHandle);
-    PbxApi.GetPeerStatus(param, extensionStatusLoopWorker.cbRefreshExtensionStatus);
+    SipAPI.getPeerStatus(param, extensionStatusLoopWorker.cbRefreshExtensionStatus);
   },
 
   /**
    * cbRefreshExtensionStatus() - Refreshes peer statuses.
-   * @param {Object} response - The response object from PbxApi.GetPeerStatus.
+   * @param {Object} response - The response object from SipAPI.getPeerStatus.
    */
   cbRefreshExtensionStatus: function cbRefreshExtensionStatus(response) {
     extensionStatusLoopWorker.timeoutHandle = window.setTimeout(extensionStatusLoopWorker.worker, extensionStatusLoopWorker.timeOut);

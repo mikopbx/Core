@@ -286,8 +286,7 @@ const extensionsIndex = {
                 },
                 error: function(xhr, textStatus, error) {
                     // Suppress the default error alert
-                    console.log('DataTable request failed, will retry in 3 seconds');
-                    
+
                     // Clear any existing retry timeout
                     if (extensionsIndex.retryTimeout) {
                         clearTimeout(extensionsIndex.retryTimeout);
@@ -666,9 +665,9 @@ const extensionsIndex = {
      * Request initial extension status on page load
      */
     requestInitialStatus() {
-        if (typeof ExtensionsAPI !== 'undefined') {
+        if (typeof SipAPI !== 'undefined') {
             // Use simplified mode for index page - pass options as first param, callback as second
-            ExtensionsAPI.getStatuses({ simplified: true }, (response) => {
+            SipAPI.getStatuses({ simplified: true }, (response) => {
                 // Manually trigger status update
                 if (response && response.data && typeof ExtensionIndexStatusMonitor !== 'undefined') {
                     ExtensionIndexStatusMonitor.updateAllExtensionStatuses(response.data);

@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, EventBus, ExtensionsAPI */
+/* global globalRootUrl, globalTranslate, EventBus, SipAPI */
 
 /**
  * Extension Index Status Monitor
@@ -191,7 +191,7 @@ const ExtensionIndexStatusMonitor = {
             .addClass('info');
             
         this.$lastUpdateIndicator.find('.content')
-            .text(data.message || globalTranslate.ex_CheckingExtensionStatuses || 'Checking extension statuses...');
+            .text(data.message || globalTranslate.ex_CheckingExtensionStatuses);
             
         // Auto-hide after 3 seconds
         setTimeout(() => {
@@ -217,9 +217,9 @@ const ExtensionIndexStatusMonitor = {
         
         // Show update notification
         const changeCount = data.changes.length;
-        const message = changeCount === 1 
-            ? globalTranslate.ex_OneExtensionStatusChanged || 'One extension status changed'
-            : (globalTranslate.ex_MultipleExtensionStatusesChanged || 'Multiple extension statuses changed').replace('%s', changeCount);
+        const message = changeCount === 1
+            ? globalTranslate.ex_OneExtensionStatusChanged
+            : globalTranslate.ex_MultipleExtensionStatusesChanged.replace('%s', changeCount);
             
         this.showUpdateNotification(message, 'success');
     },
@@ -240,7 +240,7 @@ const ExtensionIndexStatusMonitor = {
      * Handle status error
      */
     handleStatusError(data) {
-        const errorMsg = data.error || globalTranslate.ex_StatusCheckFailed || 'Extension status check failed';
+        const errorMsg = data.error || globalTranslate.ex_StatusCheckFailed;
         this.showUpdateNotification(errorMsg, 'error');
     },
     
@@ -392,8 +392,8 @@ const ExtensionIndexStatusMonitor = {
         // If we have new extensions, request their statuses
         if (newExtensions.length > 0) {
             // Request status for new extensions
-            if (typeof ExtensionsAPI !== 'undefined') {
-                ExtensionsAPI.getStatuses({ simplified: true }, (response) => {
+            if (typeof SipAPI !== 'undefined') {
+                SipAPI.getStatuses({ simplified: true }, (response) => {
                     if (response && response.result && response.data) {
                         // Merge new statuses into cache
                         Object.assign(this.statusCache, response.data);
@@ -457,9 +457,9 @@ const ExtensionIndexStatusMonitor = {
      * Request immediate status update
      */
     requestStatusUpdate() {
-        // Request status via ExtensionsAPI if available
-        if (typeof ExtensionsAPI !== 'undefined') {
-            ExtensionsAPI.getStatuses((response) => {
+        // Request status via SipAPI if available
+        if (typeof SipAPI !== 'undefined') {
+            SipAPI.getStatuses((response) => {
                 if (response && response.result && response.data) {
                     this.updateAllExtensionStatuses(response.data);
                 }

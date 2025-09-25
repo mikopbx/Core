@@ -36,11 +36,6 @@ const avatar = {
         // Dynamic avatar loading will be handled by setAvatarUrl method
         // No need to check src here as it's set in template
 
-        // Bind click event to upload new avatar button
-        $('#upload-new-avatar').off('click.avatar').on('click.avatar', () => {
-            $('#file-select').click();
-        });
-
         // Bind click event to clear avatar button
         $('#clear-avatar').off('click.avatar').on('click.avatar', () => {
             avatar.$picture.attr('src', `${globalRootUrl}assets/img/unknownPerson.jpg`);
@@ -49,41 +44,36 @@ const avatar = {
             extension.$sip_secret.trigger('change');
         });
 
-        // Bind change event to file select input
-        $('#file-select').off('change.avatar').on('change.avatar', (e) => {
-            let image;
-            e.preventDefault();
-            const dataTransfer = 'dataTransfer' in e ? e.dataTransfer.files : [];
-            const images = 'files' in e.target ? e.target.files : dataTransfer;
+        // Use FilesAPI.attachToBtn for unified file upload handling
+        FilesAPI.attachToBtn('upload-new-avatar', ['jpg', 'jpeg', 'png', 'gif'], (action, params) => {
+            if (action === 'fileAdded' && params.file) {
+                let image;
+                const curImage = params.file.file; // Resumable.js file object
 
-            // Process selected images
-            if (images && images.length) {
-                Array.from(images).forEach((curImage) => {
-                    if (typeof curImage !== 'object') return;
+                if (typeof curImage !== 'object') return;
 
-                    // Create new image element and load selected image
-                    image = new Image();
-                    image.src = avatar.createObjectURL(curImage);
-                    image.onload = (event) => {
-                        const args = {
-                            src: event.target,
-                            width: 200,
-                            height: 200,
-                            type: 'image/png',
-                            compress: 90,
-                        };
-
-                        // Resize and crop the image
-                        const mybase64resized = avatar.resizeCrop(args);
-
-                        // Update avatar picture source
-                        avatar.$picture.attr('src', mybase64resized);
-
-                        // Update form value and trigger change event
-                        extension.$formObj.form('set value', 'user_avatar', mybase64resized);
-                        extension.$sip_secret.trigger('change');
+                // Create new image element and load selected image
+                image = new Image();
+                image.src = avatar.createObjectURL(curImage);
+                image.onload = (event) => {
+                    const args = {
+                        src: event.target,
+                        width: 200,
+                        height: 200,
+                        type: 'image/png',
+                        compress: 90,
                     };
-                });
+
+                    // Resize and crop the image
+                    const mybase64resized = avatar.resizeCrop(args);
+
+                    // Update avatar picture source
+                    avatar.$picture.attr('src', mybase64resized);
+
+                    // Update form value and trigger change event
+                    extension.$formObj.form('set value', 'user_avatar', mybase64resized);
+                    extension.$sip_secret.trigger('change');
+                };
             }
         });
     },

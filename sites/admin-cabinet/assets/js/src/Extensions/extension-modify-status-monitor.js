@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, globalWebAdminLanguage, EventBus, ExtensionsAPI, SemanticLocalization */
+/* global globalRootUrl, globalTranslate, globalWebAdminLanguage, EventBus, SipAPI, SemanticLocalization */
 
 /**
  * Extension Modify Status Monitor
@@ -140,7 +140,7 @@ const ExtensionModifyStatusMonitor = {
         
         
         // Make single API call for current status
-        ExtensionsAPI.getStatus(this.currentExtensionId, (response) => {
+        SipAPI.getStatus(this.currentExtensionId, (response) => {
             if (response && response.result && response.data) {
                 this.updateStatus(response.data);
             }
@@ -159,7 +159,7 @@ const ExtensionModifyStatusMonitor = {
         }
 
         // Fetch history from API
-        ExtensionsAPI.getHistory(this.currentExtensionId, (response) => {
+        SipAPI.getHistory(this.currentExtensionId, (response) => {
             if (response && response.result && response.data && response.data.history) {
                 this.displayHistoricalData(response.data.history);
             }
@@ -256,7 +256,7 @@ const ExtensionModifyStatusMonitor = {
             this.$activeDevicesList.html(`
                 <div class="ui message">
                     <div class="content">
-                        ${globalTranslate.ex_NoActiveDevices || 'No active devices'}
+                        ${globalTranslate.ex_NoActiveDevices}
                     </div>
                 </div>
             `);
@@ -326,7 +326,7 @@ const ExtensionModifyStatusMonitor = {
 
                     // Show popup message
                     $label.popup({
-                        content: `${globalTranslate.ex_IpCopied || 'IP copied'}: ${ip}`,
+                        content: `${globalTranslate.ex_IpCopied}: ${ip}`,
                         on: 'manual',
                         position: 'top center'
                     }).popup('show');
@@ -371,7 +371,7 @@ const ExtensionModifyStatusMonitor = {
             this.$deviceHistoryList.html(`
                 <div class="ui message">
                     <div class="content">
-                        ${globalTranslate.ex_NoHistoryAvailable || 'No history available'}
+                        ${globalTranslate.ex_NoHistoryAvailable}
                     </div>
                 </div>
             `);
@@ -417,10 +417,10 @@ const ExtensionModifyStatusMonitor = {
                 // Handle device-specific events
                 if (session.event_type === 'device_removed') {
                     isOnline = false;
-                    eventLabel = ` ${globalTranslate.ex_DeviceDisconnected || 'Disconnected'}`;
+                    eventLabel = ` ${globalTranslate.ex_DeviceDisconnected}`;
                 } else if (session.event_type === 'device_added') {
                     isOnline = true;
-                    eventLabel = ` ${globalTranslate.ex_DeviceConnected || 'Connected'}`;
+                    eventLabel = ` ${globalTranslate.ex_DeviceConnected}`;
                 }
 
                 const rttLabel = this.getRttLabel(session.rtt);
@@ -437,16 +437,16 @@ const ExtensionModifyStatusMonitor = {
                     // Add data attribute with timestamp for live updating
                     durationHtml = `<span class="ui grey text online-duration" style="margin-left: 8px;"
                                           data-online-since="${session.timestamp}">
-                                          ${globalTranslate.ex_Online || 'Online'} ${this.calculateDurationFromNow(session.timestamp)}
+                                          ${globalTranslate.ex_Online} ${this.calculateDurationFromNow(session.timestamp)}
                                      </span>`;
                 } else {
                     // Calculate static duration for historical entries
                     const duration = this.calculateDuration(session.timestamp, sessions[index - 1]?.timestamp);
                     // Format duration with translation
                     const durationText = duration && isOnline
-                        ? `${globalTranslate.ex_Online || 'Online'} ${duration}`
+                        ? `${globalTranslate.ex_Online} ${duration}`
                         : duration
-                            ? `${globalTranslate.ex_Offline || 'Offline'} ${duration}`
+                            ? `${globalTranslate.ex_Offline} ${duration}`
                             : '';
 
                     if (durationText) {
@@ -616,7 +616,7 @@ const ExtensionModifyStatusMonitor = {
             return timeStr;
         } else if (isYesterday) {
             // Use translation for "Yesterday" if available
-            const yesterdayText = globalTranslate.ex_Yesterday || 'Yesterday';
+            const yesterdayText = globalTranslate.ex_Yesterday;
             return `${yesterdayText} ${timeStr}`;
         } else {
             // Format date according to locale
@@ -678,7 +678,7 @@ const ExtensionModifyStatusMonitor = {
             const onlineSince = parseInt($element.data('online-since'), 10);
             if (onlineSince) {
                 const duration = this.calculateDurationFromNow(onlineSince);
-                $element.text(`${globalTranslate.ex_Online || 'Online'} ${duration}`);
+                $element.text(`${globalTranslate.ex_Online} ${duration}`);
             }
         });
     },
@@ -774,7 +774,7 @@ const ExtensionModifyStatusMonitor = {
         });
 
         // Time labels with localization
-        const hoursLabel = globalTranslate.ex_Hours_Short || 'h';
+        const hoursLabel = globalTranslate.ex_Hours_Short;
 
         timelineHtml += `
                 </div>
@@ -783,7 +783,7 @@ const ExtensionModifyStatusMonitor = {
                     <span>18${hoursLabel}</span>
                     <span>12${hoursLabel}</span>
                     <span>6${hoursLabel}</span>
-                    <span>${globalTranslate.ex_Now || 'Now'}</span>
+                    <span>${globalTranslate.ex_Now}</span>
                 </div>
             </div>
         `;

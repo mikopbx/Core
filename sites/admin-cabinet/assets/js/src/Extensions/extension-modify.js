@@ -133,7 +133,7 @@ const extension = {
                 },
                 {
                     type: 'passwordStrength',
-                    prompt: globalTranslate.ex_ValidatePasswordTooWeak || 'Password is too weak for security requirements'
+                    prompt: globalTranslate.ex_ValidatePasswordTooWeak
                 }
             ],
         },
@@ -413,8 +413,8 @@ const extension = {
                 },
                 oncleared: extension.cbOnClearedMobileNumber,
                 oncomplete: extension.cbOnCompleteMobileNumber,
-                onBeforePaste: extension.cbOnMobileNumberBeforePaste,
                 showMaskOnHover: false,
+                // Remove onBeforePaste to prevent conflicts with our custom handler
             },
             match: /[0-9]/,
             replace: '9',
@@ -422,36 +422,79 @@ const extension = {
             listKey: 'mask',
         });
 
-        extension.$mobile_number.on('paste', function(e) {
-            e.preventDefault(); // Предотвращаем стандартное поведение вставки
+        // Add handler for programmatic value changes (for tests and automation)
+        const originalVal = $.fn.val;
+        extension.$mobile_number.off('val.override').on('val.override', function() {
+            const $this = $(this);
+            const args = arguments;
 
-            // Получаем вставленные данные из буфера обмена
+            // If setting a value programmatically
+            if (args.length > 0 && typeof args[0] === 'string') {
+                const newValue = args[0];
+
+                // Temporarily remove mask
+                if ($this.data('inputmask')) {
+                    $this.inputmask('remove');
+                }
+
+                // Set the value
+                originalVal.apply(this, args);
+
+                // Reapply mask after a short delay
+                setTimeout(() => {
+                    $this.trigger('input');
+                }, 10);
+            }
+        });
+
+        extension.$mobile_number.on('paste', function(e) {
+            e.preventDefault(); // Prevent default paste behavior
+
+            // Get pasted data from clipboard
             let pastedData = '';
-            if (e.originalEvent.clipboardData && e.originalEvent.clipboardData.getData) {
+
+            // Try to get data from clipboard event
+            if (e.originalEvent && e.originalEvent.clipboardData && e.originalEvent.clipboardData.getData) {
                 pastedData = e.originalEvent.clipboardData.getData('text');
-            } else if (window.clipboardData && window.clipboardData.getData) { // Для IE
+            } else if (e.clipboardData && e.clipboardData.getData) {
+                // Direct clipboardData access
+                pastedData = e.clipboardData.getData('text');
+            } else if (window.clipboardData && window.clipboardData.getData) {
+                // For IE
                 pastedData = window.clipboardData.getData('text');
             }
 
-            // Проверяем, начинается ли вставленный текст с '+'
-            if (pastedData.charAt(0) === '+') {
-                // Сохраняем '+' и удаляем остальные нежелательные символы
-                var processedData = '+' + pastedData.slice(1).replace(/\D/g, '');
-            } else {
-                // Удаляем все символы, кроме цифр
-                var processedData = pastedData.replace(/\D/g, '');
+            // If we couldn't get clipboard data, don't process
+            if (!pastedData) {
+                return;
             }
 
-            // Вставляем очищенные данные в поле ввода
+            // Process the pasted data
+            let processedData;
+            if (pastedData.charAt(0) === '+') {
+                // Keep '+' and remove other non-digit characters
+                processedData = '+' + pastedData.slice(1).replace(/\D/g, '');
+            } else {
+                // Remove all non-digit characters
+                processedData = pastedData.replace(/\D/g, '');
+            }
+
+            // Insert cleaned data into the input field
             const input = this;
-            const start = input.selectionStart;
-            const end = input.selectionEnd;
-            const currentValue = $(input).val();
+            const start = input.selectionStart || 0;
+            const end = input.selectionEnd || 0;
+            const currentValue = $(input).val() || '';
             const newValue = currentValue.substring(0, start) + processedData + currentValue.substring(end);
+
+            // Temporarily remove mask, set value, then reapply
             extension.$mobile_number.inputmask("remove");
             extension.$mobile_number.val(newValue);
-            // Триггерим событие 'input' для применения маски ввода
-            $(input).trigger('input');
+
+            // Use setTimeout to ensure the value is set before reapplying mask
+            setTimeout(() => {
+                // Trigger input event to reapply the mask
+                $(input).trigger('input');
+            }, 10);
         });
 
         // Set up the input mask for the email input
@@ -510,12 +553,6 @@ const extension = {
         delete result.data.user_id; // Remove user_id field to prevent validation issues
 
         // Determine if this is a new record (check if we have a real ID)
-        const currentId = extension.getRecordId();
-        if (!currentId || currentId === '') {
-            // New extension - add _isNew flag for proper POST/PUT method selection
-            result.data._isNew = true;
-        }
-
         return result;
     },
     /**
@@ -680,7 +717,7 @@ const extension = {
         
         DynamicDropdownBuilder.buildDropdown('sip_networkfilterid', data, {
             apiUrl: `/pbxcore/api/v3/network-filters:getForSelect?categories[]=SIP`,
-            placeholder: globalTranslate.ex_SelectNetworkFilter || 'Select Network Filter',
+            placeholder: globalTranslate.ex_SelectNetworkFilter,
             cache: false
         });
         
@@ -823,7 +860,7 @@ const extension = {
             }
         } else {
             // New employee or no name yet
-            headerText = globalTranslate.ex_CreateNewExtension || 'New Employee';
+            headerText = globalTranslate.ex_CreateNewExtension;
         }
 
         // Update main header content

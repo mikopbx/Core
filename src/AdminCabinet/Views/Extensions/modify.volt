@@ -4,7 +4,6 @@
 
 {{ form.render('id') }}
 {{ form.render('user_avatar') }}
-<input type="file" name="file-select" id="file-select" style="display: none"/>
 
 <div class="ui top attached tabular menu" id="extensions-menu">
         <a class="item active" data-tab="general">{{ t._('ex_GeneralSettings') }}</a>

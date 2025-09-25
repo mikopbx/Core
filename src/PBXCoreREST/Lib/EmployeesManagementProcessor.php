@@ -139,7 +139,7 @@ class EmployeesManagementProcessor extends Injectable
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
         
-        $uploadId = $data['uploadId'] ?? '';
+        $uploadId = $data['upload_id'] ?? '';
         $strategy = $data['strategy'] ?? 'skip_duplicates';
         
         if (empty($uploadId)) {

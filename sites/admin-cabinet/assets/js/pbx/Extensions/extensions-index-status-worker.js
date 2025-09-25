@@ -18,7 +18,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global DebuggerInfo, ExtensionsAPI, globalTranslate */
+/* global DebuggerInfo, ExtensionsAPI, SipAPI, globalTranslate */
 
 /**
  * Legacy Extension Status Loop Worker
@@ -124,13 +124,13 @@ var extensionsStatusLoopWorker = {
    * The worker function requests extension statuses using new API
    */
   worker: function worker() {
-    window.clearTimeout(extensionsStatusLoopWorker.timeoutHandle); // Use new ExtensionsAPI if available, fallback to old PbxApi
+    window.clearTimeout(extensionsStatusLoopWorker.timeoutHandle); // Use new ExtensionsAPI if available, fallback to SipAPI
 
     if (typeof ExtensionsAPI !== 'undefined') {
       ExtensionsAPI.getStatuses(extensionsStatusLoopWorker.cbRefreshExtensionsStatus);
-    } else if (typeof PbxApi !== 'undefined' && PbxApi.GetPeersStatus) {
-      // Legacy fallback
-      PbxApi.GetPeersStatus(extensionsStatusLoopWorker.cbRefreshExtensionsStatusLegacy);
+    } else if (typeof SipAPI !== 'undefined') {
+      // Fallback to SipAPI
+      SipAPI.getPeersStatuses(extensionsStatusLoopWorker.cbRefreshExtensionsStatusLegacy);
     } else {
       console.error('No extension status API available');
       extensionsStatusLoopWorker.scheduleNextCheck();
@@ -164,7 +164,7 @@ var extensionsStatusLoopWorker = {
   },
 
   /**
-   * Legacy callback function for old PbxApi.GetPeersStatus
+   * Legacy callback function for SipAPI.getPeersStatuses
    * @param {Array} response - Legacy response format
    */
   cbRefreshExtensionsStatusLegacy: function cbRefreshExtensionsStatusLegacy(response) {

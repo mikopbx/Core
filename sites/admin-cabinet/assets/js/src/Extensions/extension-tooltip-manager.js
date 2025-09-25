@@ -62,11 +62,10 @@ class ExtensionTooltipManager {
                 });
             } else {
                 // Fallback to direct implementation if TooltipBuilder not available
-                console.warn('TooltipBuilder not available, using fallback implementation');
                 this.initializeFallback(tooltipConfigs);
             }
         } catch (error) {
-            console.error('Failed to initialize extension tooltips:', error);
+            // Failed to initialize extension tooltips
         }
     }
     
