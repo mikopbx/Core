@@ -76,6 +76,10 @@ class StatusUploadFileAction extends Injectable
             $res->data[FilesConstants::D_STATUS_PROGRESS] = file_get_contents($progress_file);
         }
 
+        // Add EventBus channel info to response
+        $res->data['channelId'] = "file-upload-{$upload_id}";
+        $res->data['eventBusEnabled'] = true;
+
         return $res;
     }
 }

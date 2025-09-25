@@ -37,7 +37,7 @@ class FilesManagementProcessor extends Injectable
 {
 
     /**
-     * Processes file upload requests
+     * Processes file management requests for both legacy and v3 API
      *
      * @param array $request
      *
@@ -50,7 +50,9 @@ class FilesManagementProcessor extends Injectable
 
         $action = $request['action'];
         $postData = $request['data'];
+
         switch ($action) {
+            // Legacy actions (maintain compatibility)
             case 'uploadFile':
                 $res = UploadFileAction::main($postData);
                 break;
@@ -62,7 +64,8 @@ class FilesManagementProcessor extends Injectable
                 $res = RemoveAudioFileAction::main($postData['filename']);
                 break;
             case 'getFileContent':
-                $res = GetFileContentAction::main($postData['filename'], $postData['needOriginal'] === 'true');
+                $needOriginal = isset($postData['needOriginal']) && $postData['needOriginal'] === 'true';
+                $res = GetFileContentAction::main($postData['filename'], $needOriginal);
                 break;
             case 'downloadNewFirmware':
                 $res = DownloadNewFirmwareAction::main($postData);
@@ -70,11 +73,88 @@ class FilesManagementProcessor extends Injectable
             case 'firmwareDownloadStatus':
                 $res = FirmwareDownloadStatusAction::main($postData['filename']);
                 break;
+
+            // v3 RESTful actions
+            case 'removeFile':
+                // RESTful DELETE /files/{path} - same as removeAudioFile but more generic
+                $res = RemoveAudioFileAction::main($postData['filename']);
+                break;
+            case 'uploadFileContent':
+                // RESTful PUT /files/{path} - simple content upload
+                $res = self::uploadFileContent($postData);
+                break;
+            case 'uploadStatus':
+                // RESTful GET /files:uploadStatus?id={id}
+                $upload_id = $postData['id'] ?? '';
+                $res = StatusUploadFileAction::main($upload_id);
+                break;
+            case 'downloadFirmware':
+                // RESTful POST /files:downloadFirmware
+                $res = DownloadNewFirmwareAction::main($postData);
+                break;
+            case 'firmwareStatus':
+                // RESTful GET /files:firmwareStatus?filename={name}
+                $res = FirmwareDownloadStatusAction::main($postData['filename']);
+                break;
+
             default:
                 $res->messages['error'][] = "Unknown action - $action in " . __CLASS__;
         }
 
         $res->function = $action;
+
+        return $res;
+    }
+
+    /**
+     * Handle simple file content upload (PUT method)
+     *
+     * @param array $data Request data with filename and content
+     * @return PBXApiResult
+     */
+    private static function uploadFileContent(array $data): PBXApiResult
+    {
+        $res = new PBXApiResult();
+
+        $filename = $data['filename'] ?? '';
+        $content = $data['content'] ?? '';
+
+        if (empty($filename)) {
+            $res->messages['error'][] = 'Filename is required';
+            return $res;
+        }
+
+        if (empty($content)) {
+            $res->messages['error'][] = 'File content is required';
+            return $res;
+        }
+
+        try {
+            // Ensure directory exists
+            $directory = dirname($filename);
+            if (!is_dir($directory) && !mkdir($directory, 0755, true)) {
+                $res->messages['error'][] = "Failed to create directory: $directory";
+                return $res;
+            }
+
+            // Write file content
+            $bytesWritten = file_put_contents($filename, $content);
+
+            if ($bytesWritten === false) {
+                $res->messages['error'][] = "Failed to write file: $filename";
+                return $res;
+            }
+
+            $res->success = true;
+            $res->data = [
+                'filename' => $filename,
+                'size' => $bytesWritten,
+                'message' => 'File uploaded successfully'
+            ];
+
+        } catch (\Exception $e) {
+            $res->messages['error'][] = "Upload failed: " . $e->getMessage();
+        }
 
         return $res;
     }

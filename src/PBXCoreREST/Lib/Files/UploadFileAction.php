@@ -22,6 +22,7 @@ namespace MikoPBX\PBXCoreREST\Lib\Files;
 
 use GuzzleHttp\Psr7\UploadedFile;
 use Http\Factory\Guzzle\StreamFactory;
+use MikoPBX\Common\Providers\EventBusProvider;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
@@ -143,6 +144,25 @@ class UploadFileAction extends Injectable
             unlink($parameters['fullUploadedFileName']);
         }
 
+        // Get EventBus service
+        $eventBus = $di->getShared(EventBusProvider::SERVICE_NAME);
+        $uploadId = $parameters['resumableIdentifier'];
+
+        // Publish upload started event (only on first chunk)
+        if ($parameters['resumableChunkNumber'] == 1) {
+            $eventBus->publish('file-upload', [
+                'event' => 'upload-started',
+                'data' => [
+                    'uploadId' => $uploadId,
+                    'category' => $category,
+                    'fileName' => $parameters['resumableFilename'],
+                    'fileSize' => $parameters['resumableTotalSize'],
+                    'chunksTotal' => $parameters['resumableTotalChunks'],
+                    'timestamp' => time()
+                ]
+            ]);
+        }
+
         foreach ($parameters['files'] as $file_data) {
             if (!self::moveUploadedPartToSeparateDir($parameters, $file_data)) {
                 $res->messages[] = 'Does not found any uploaded chunks on with path ' . $file_data['file_path'];
@@ -152,8 +172,29 @@ class UploadFileAction extends Injectable
             $res->data['upload_id'] = $parameters['resumableIdentifier'];
             $res->data['filename'] = $parameters['fullUploadedFileName'];
 
+            // Publish chunk uploaded event
+            $eventBus->publish('file-upload', [
+                'event' => 'chunk-uploaded',
+                'data' => [
+                    'uploadId' => $uploadId,
+                    'chunkNumber' => $parameters['resumableChunkNumber'],
+                    'chunksTotal' => $parameters['resumableTotalChunks'],
+                    'progress' => round($parameters['resumableChunkNumber'] / $parameters['resumableTotalChunks'] * 100),
+                    'timestamp' => time()
+                ]
+            ]);
+
             if (self::tryToMergeChunksIfAllPartsUploaded($parameters)) {
                 $res->data[FilesConstants::D_STATUS] = FilesConstants::UPLOAD_MERGING;
+
+                // Publish chunks complete event
+                $eventBus->publish('file-upload', [
+                    'event' => 'chunks-complete',
+                    'data' => [
+                        'uploadId' => $uploadId,
+                        'timestamp' => time()
+                    ]
+                ]);
             } else {
                 $res->data[FilesConstants::D_STATUS] = FilesConstants::UPLOAD_WAITING_FOR_NEXT_PART;
             }

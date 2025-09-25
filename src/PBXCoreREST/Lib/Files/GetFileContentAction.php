@@ -44,8 +44,17 @@ class GetFileContentAction extends Injectable
     {
         $res            = new PBXApiResult();
         $res->processor = __METHOD__;
-        $customFile     = CustomFiles::findFirst("filepath = '$filename'");
+
+        // Normalize the file path (add leading slash if missing)
+        if (!str_starts_with($filename, '/')) {
+            $filename = '/' . $filename;
+        }
+
+        // Check if file exists in CustomFiles table
+        $customFile = CustomFiles::findFirst("filepath = '$filename'");
+
         if ($customFile !== null) {
+            // File is registered in CustomFiles - handle as custom file
             $filename_orgn = "{$filename}.orgn";
             if ($needOriginal && file_exists($filename_orgn)) {
                 $filename = $filename_orgn;
@@ -53,10 +62,33 @@ class GetFileContentAction extends Injectable
             $res->success = true;
             $res->data['content'] = mb_convert_encoding('' . file_get_contents($filename), 'UTF-8', 'UTF-8');
         } else {
-            $res->success    = false;
-            $res->messages[] = 'No access to the file ' . $filename;
+            // File is not in CustomFiles - check if it's allowed to be read
+            if (self::isFileInAllowedDirectory($filename) && file_exists($filename)) {
+                // File is in allowed directory and exists - allow reading
+                $res->success = true;
+                $res->data['content'] = mb_convert_encoding('' . file_get_contents($filename), 'UTF-8', 'UTF-8');
+            } else {
+                $res->success    = false;
+                $res->messages[] = 'No access to the file ' . $filename;
+            }
         }
 
         return $res;
+    }
+
+    /**
+     * Check if file path is in one of the allowed directories
+     *
+     * @param string $filepath
+     * @return bool
+     */
+    private static function isFileInAllowedDirectory(string $filepath): bool
+    {
+        foreach (CustomFiles::ALLOWED_DIRECTORIES as $allowedDir) {
+            if (str_starts_with($filepath, $allowedDir)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
