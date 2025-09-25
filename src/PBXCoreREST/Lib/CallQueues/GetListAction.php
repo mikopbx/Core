@@ -17,38 +17,99 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
- namespace MikoPBX\PBXCoreREST\Lib\CallQueues;
+namespace MikoPBX\PBXCoreREST\Lib\CallQueues;
 
 use MikoPBX\Common\Models\CallQueues;
+use MikoPBX\Common\Models\CallQueueMembers;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractGetListAction;
 
 /**
  * Action for getting list of all call queue records
- * 
+ *
+ * Extends AbstractGetListAction to leverage:
+ * - Standard list retrieval patterns
+ * - Search functionality
+ * - Ordering support
+ * - Pagination support
+ * - Consistent error handling
+ *
  * @api {get} /pbxcore/api/v2/call-queues/getList Get all call queue records
  * @apiVersion 2.0.0
  * @apiName GetList
- * @apiGroup DialplanApplications
- * 
+ * @apiGroup CallQueues
+ *
+ * @apiParam {String} [search] Search term for filtering by name
+ * @apiParam {String} [order] Field to order by (name, extension, id)
+ * @apiParam {String} [orderWay] Order direction (ASC/DESC)
+ * @apiParam {Number} [limit] Maximum number of records to return
+ * @apiParam {Number} [offset] Number of records to skip
+ *
  * @apiSuccess {Boolean} result Operation result
  * @apiSuccess {Array} data Array of call queue records
  */
-class GetListAction
+class GetListAction extends AbstractGetListAction
 {
     /**
      * Get list of all call queues with member representations
      *
-     * @param array $data Filter parameters (not used yet)
+     * @param array $data Filter parameters (search, ordering, pagination)
      * @return PBXApiResult
      */
     public static function main(array $data = []): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
+        // Use executeStandardList but with a custom callback to handle members
+        return self::executeStandardListWithRelations(
+            $data,
+            CallQueues::class,
+            DataStructure::class
+        );
+    }
+
+    /**
+     * Execute standard list with related queue members
+     *
+     * Custom implementation to pre-load queue members and avoid N+1 queries
+     *
+     * @param array $requestParams Request parameters
+     * @param string $modelClass Model class name
+     * @param string $dataStructureClass DataStructure class name
+     * @return PBXApiResult
+     */
+    private static function executeStandardListWithRelations(
+        array $requestParams,
+        string $modelClass,
+        string $dataStructureClass
+    ): PBXApiResult {
+        $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
+        $caller = ($trace[1]['class'] ?? 'Unknown') . '::' . ($trace[1]['function'] ?? 'unknown');
+        $res = self::createListResult($caller);
 
         try {
-            $queues = CallQueues::find(['order' => 'name ASC']);
+            $queryOptions = [];
+
+            // Apply search filters
+            $queryOptions = self::applySearchFilters(
+                $queryOptions,
+                $requestParams,
+                ['name', 'description']
+            );
+
+            // Apply ordering
+            $queryOptions = self::applyOrdering(
+                $queryOptions,
+                $requestParams,
+                ['name', 'extension', 'id'],
+                'name ASC'
+            );
+
+            // Apply pagination if requested
+            if (isset($requestParams['limit']) || isset($requestParams['offset'])) {
+                $queryOptions = self::applyPagination($queryOptions, $requestParams);
+            }
+
+            // Get queues
+            $queues = $modelClass::find($queryOptions);
 
             // Pre-load all queue members to avoid N+1 queries
             $queueIds = [];
@@ -59,7 +120,7 @@ class GetListAction
             // Load all members in one query
             $membersByQueue = [];
             if (!empty($queueIds)) {
-                $allMembers = \MikoPBX\Common\Models\CallQueueMembers::find([
+                $allMembers = CallQueueMembers::find([
                     'conditions' => 'queue IN ({queue:array})',
                     'bind' => ['queue' => $queueIds],
                     'order' => 'priority ASC'
@@ -74,18 +135,18 @@ class GetListAction
                 }
             }
 
-            $queuesList = [];
+            // Build result with members
+            $resultData = [];
             foreach ($queues as $queue) {
                 $members = $membersByQueue[$queue->uniqid] ?? [];
-                $queuesList[] = DataStructure::createForList($queue, $members);
+                $resultData[] = $dataStructureClass::createForList($queue, $members);
             }
 
-            $res->data = $queuesList;
+            $res->data = $resultData;
             $res->success = true;
 
         } catch (\Exception $e) {
-            $res->messages['error'][] = $e->getMessage();
-            CriticalErrorsHandler::handleExceptionWithSyslog($e);
+            return self::handleListError($e, $res);
         }
 
         return $res;

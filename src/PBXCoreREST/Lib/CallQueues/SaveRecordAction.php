@@ -74,7 +74,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
             'announce_hold_time' => 'bool',
             'periodic_announce_sound_id' => 'string|empty_to_null',
             'moh_sound_id' => 'string|empty_to_null',
-            'periodic_announce_frequency' => 'int|min:0|max:3600',
+            'periodic_announce_frequency' => 'int|min:0|max:3600|empty_to_null',
             'timeout_to_redirect_to_extension' => 'int|min:0|max:7200',
             'timeout_extension' => 'string|empty_to_null',
             'redirect_to_extension_if_empty' => 'string|empty_to_null',
@@ -181,8 +181,15 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 $queue->announce_hold_time = $convertedData['announce_hold_time'] ?? '0';
                 $queue->periodic_announce_sound_id = $sanitizedData['periodic_announce_sound_id'] ?? null;
                 $queue->moh_sound_id = $sanitizedData['moh_sound_id'] ?? null;
-                $queue->periodic_announce_frequency = $sanitizedData['periodic_announce_frequency'] ?? 0;
-                $queue->timeout_to_redirect_to_extension = $sanitizedData['timeout_to_redirect_to_extension'] ?? 300;
+                // Handle periodic_announce_frequency: convert empty to null for no parameter in config
+                $queue->periodic_announce_frequency = $sanitizedData['periodic_announce_frequency'] ?? null;
+                // Handle timeout_to_redirect_to_extension: treat 0 as empty (infinite wait)
+                $timeout = $sanitizedData['timeout_to_redirect_to_extension'] ?? null;
+                if ($timeout === 0 || $timeout === '0') {
+                    $queue->timeout_to_redirect_to_extension = '';
+                } else {
+                    $queue->timeout_to_redirect_to_extension = $timeout ?? '';
+                }
                 $queue->timeout_extension = $sanitizedData['timeout_extension'] ?? null;
                 $queue->redirect_to_extension_if_empty = $sanitizedData['redirect_to_extension_if_empty'] ?? null;
                 $queue->number_unanswered_calls_to_redirect = $sanitizedData['number_unanswered_calls_to_redirect'] ?? 3;

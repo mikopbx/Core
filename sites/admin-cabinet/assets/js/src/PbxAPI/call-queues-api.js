@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global PbxApiClient */
+/* global PbxApiClient */ 
 
 /**
  * Call Queues API using unified PbxApiClient

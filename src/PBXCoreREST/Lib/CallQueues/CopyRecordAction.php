@@ -23,16 +23,17 @@ use MikoPBX\Common\Models\CallQueues;
 use MikoPBX\Common\Models\CallQueueMembers;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use MikoPBX\Core\System\SystemMessages;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractCopyRecordAction;
 
 /**
  * Action for copying a call queue with automatic extension assignment
  *
- * This action creates a copy of an existing call queue with:
- * - New unique ID generated automatically
- * - Next available extension number assigned
+ * Extends AbstractCopyRecordAction to leverage:
+ * - Automatic unique ID generation
+ * - Next available extension number assignment
  * - Name prefixed with "copy of"
- * - All settings and members copied
+ * - Related records copying (queue members)
+ * - Consistent error handling and logging
  *
  * @api {get} /pbxcore/api/v3/call-queues/{id}:copy Copy call queue
  * @apiVersion 3.0.0
@@ -48,7 +49,7 @@ use MikoPBX\Core\System\SystemMessages;
  * @apiSuccess {String} data.name Name prefixed with "copy of"
  * @apiSuccess {Array} data.members Copied queue members
  */
-class CopyRecordAction
+class CopyRecordAction extends AbstractCopyRecordAction
 {
     /**
      * Copy call queue record with new extension and ID
@@ -58,33 +59,55 @@ class CopyRecordAction
      */
     public static function main(string $sourceId): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
+        return self::executeStandardCopy(
+            $sourceId,
+            CallQueues::class,
+            DataStructure::class,
+            Extensions::TYPE_QUEUE.'-',  // Unique ID prefix
+            [                            // Fields to copy
+                'name',
+                'strategy',
+                'seconds_to_ring_each_member',
+                'seconds_for_wrapup',
+                'recive_calls_while_on_a_call',
+                'caller_hear',
+                'announce_position',
+                'announce_hold_time',
+                'periodic_announce_sound_id',
+                'moh_sound_id',
+                'periodic_announce_frequency',
+                'timeout_to_redirect_to_extension',
+                'timeout_extension',
+                'redirect_to_extension_if_empty',
+                'number_unanswered_calls_to_redirect',
+                'redirect_to_extension_if_unanswered',
+                'number_repeat_unanswered_to_redirect',
+                'redirect_to_extension_if_repeat_exceeded',
+                'callerid_prefix',
+                'description'
+            ],
+            true,                          // Needs extension
+            self::createRelatedRecordsCallback(),  // Copy queue members
+            'Call queue'                  // Entity type for messages
+        );
+    }
 
-        try {
-            // Find source queue
-            $sourceQueue = CallQueues::findFirst("uniqid='{$sourceId}'");
-
-            if (!$sourceQueue) {
-                $res->messages['error'][] = "Source call queue not found: {$sourceId}";
-                SystemMessages::sysLogMsg(__METHOD__,
-                    "Source queue not found for copy: {$sourceId}",
-                    LOG_WARNING
-                );
-                return $res;
-            }
-
-            // Create new queue model with copied values
-            $newQueue = self::createCopyFromSource($sourceQueue);
-
-            // Get source queue members
+    /**
+     * Create callback for copying related queue members
+     *
+     * @return callable
+     */
+    private static function createRelatedRecordsCallback(): callable
+    {
+        return function ($sourceQueue, $newQueue) {
+            // Find source queue members
             $sourceMembers = CallQueueMembers::find([
                 'conditions' => 'queue = :queue:',
                 'bind' => ['queue' => $sourceQueue->uniqid],
                 'order' => 'priority ASC'
             ]);
 
-            // Prepare members array for the copy
+            // Convert to array format for DataStructure
             $membersArray = [];
             foreach ($sourceMembers as $member) {
                 $memberExt = Extensions::findFirstByNumber($member->extension);
@@ -96,60 +119,8 @@ class CopyRecordAction
                 ];
             }
 
-            // Create data structure for the copied queue
-            $res->data = DataStructure::createFromModel($newQueue, $membersArray);
-            $res->success = true;
-
-        } catch (\Exception $e) {
-            $res->messages['error'][] = $e->getMessage();
-            SystemMessages::sysLogMsg(__METHOD__,
-                "Error copying call queue: " . $e->getMessage(),
-                LOG_ERR
-            );
-        }
-
-        return $res;
-    }
-
-    /**
-     * Create copy of CallQueue from source record
-     *
-     * @param CallQueues $sourceQueue
-     * @return CallQueues
-     */
-    private static function createCopyFromSource(CallQueues $sourceQueue): CallQueues
-    {
-        $newQueue = new CallQueues();
-
-        // Generate new identifiers
-        $newQueue->id = '';
-        $newQueue->uniqid = CallQueues::generateUniqueID(Extensions::TYPE_QUEUE.'-');
-
-        // Get new extension number automatically
-        $newQueue->extension = Extensions::getNextFreeApplicationNumber();
-
-        // Copy all other fields
-        $newQueue->name = 'copy of ' . $sourceQueue->name;
-        $newQueue->strategy = $sourceQueue->strategy;
-        $newQueue->seconds_to_ring_each_member = $sourceQueue->seconds_to_ring_each_member;
-        $newQueue->seconds_for_wrapup = $sourceQueue->seconds_for_wrapup;
-        $newQueue->recive_calls_while_on_a_call = $sourceQueue->recive_calls_while_on_a_call;
-        $newQueue->caller_hear = $sourceQueue->caller_hear;
-        $newQueue->announce_position = $sourceQueue->announce_position;
-        $newQueue->announce_hold_time = $sourceQueue->announce_hold_time;
-        $newQueue->periodic_announce_sound_id = $sourceQueue->periodic_announce_sound_id;
-        $newQueue->moh_sound_id = $sourceQueue->moh_sound_id;
-        $newQueue->periodic_announce_frequency = $sourceQueue->periodic_announce_frequency;
-        $newQueue->timeout_to_redirect_to_extension = $sourceQueue->timeout_to_redirect_to_extension;
-        $newQueue->timeout_extension = $sourceQueue->timeout_extension;
-        $newQueue->redirect_to_extension_if_empty = $sourceQueue->redirect_to_extension_if_empty;
-        $newQueue->number_unanswered_calls_to_redirect = $sourceQueue->number_unanswered_calls_to_redirect;
-        $newQueue->redirect_to_extension_if_unanswered = $sourceQueue->redirect_to_extension_if_unanswered;
-        $newQueue->number_repeat_unanswered_to_redirect = $sourceQueue->number_repeat_unanswered_to_redirect;
-        $newQueue->redirect_to_extension_if_repeat_exceeded = $sourceQueue->redirect_to_extension_if_repeat_exceeded;
-        $newQueue->callerid_prefix = $sourceQueue->callerid_prefix;
-        $newQueue->description = $sourceQueue->description;
-
-        return $newQueue;
+            // Return members array to be passed to DataStructure::createFromModel
+            return $membersArray;
+        };
     }
 }

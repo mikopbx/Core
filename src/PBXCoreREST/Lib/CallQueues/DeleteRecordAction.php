@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,14 +21,17 @@ namespace MikoPBX\PBXCoreREST\Lib\CallQueues;
 
 use MikoPBX\Common\Models\CallQueues;
 use MikoPBX\Common\Models\CallQueueMembers;
-use MikoPBX\Common\Models\Extensions;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use MikoPBX\PBXCoreREST\Lib\Common\BaseActionHelper;
-use MikoPBX\Core\System\SystemMessages;
-use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractDeleteAction;
 
 /**
  * Action for deleting call queue record
+ *
+ * Extends AbstractDeleteAction to leverage:
+ * - Standard record lookup with uniqid/id fallback
+ * - Transaction-based deletion
+ * - Extension cleanup
+ * - Consistent error handling and logging
  *
  * @api {delete} /pbxcore/api/v2/call-queues/deleteRecord/:id Delete call queue
  * @apiVersion 2.0.0
@@ -41,99 +44,34 @@ use MikoPBX\Common\Handlers\CriticalErrorsHandler;
  * @apiSuccess {Object} data Deletion result
  * @apiSuccess {String} data.deleted_id ID of deleted record
  */
-class DeleteRecordAction
+class DeleteRecordAction extends AbstractDeleteAction
 {
     /**
-     * Delete call queue record with proper logging
+     * Delete call queue record with related data cleanup
      *
      * @param string $id Record ID to delete (uniqid value for v3 API)
      * @return PBXApiResult
      */
     public static function main(string $id): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
-
-        if (empty($id)) {
-            $res->messages['error'][] = 'Record ID is required';
-            SystemMessages::sysLogMsg(__METHOD__,
-                'Delete attempt with empty ID',
-                LOG_ERR
-            );
-            return $res;
-        }
-
-        try {
-            // v3 API: ID is the uniqid value
-            $queue = CallQueues::findFirst("uniqid='{$id}'");
-
-            if (!$queue) {
-                $res->messages['error'][] = 'Call queue not found';
-                SystemMessages::sysLogMsg(__METHOD__,
-                    "Queue not found for deletion: {$id}",
-                    LOG_WARNING
-                );
-                return $res;
-            }
-
-            $queueName = $queue->name;
-            $queueExtension = $queue->extension;
-
-            // Delete in transaction using BaseActionHelper
-            BaseActionHelper::executeInTransaction(function() use ($queue) {
-                // Delete related queue members
+        return self::executeStandardDelete(
+            CallQueues::class,
+            $id,
+            'Call queue',
+            'Call queue not found',
+            function($queue) {
+                // Delete related queue members before deleting the queue
                 $members = CallQueueMembers::find([
                     'conditions' => 'queue = :queue:',
                     'bind' => ['queue' => $queue->uniqid]
                 ]);
+
                 foreach ($members as $member) {
                     if (!$member->delete()) {
                         throw new \Exception('Failed to delete queue member: ' . implode(', ', $member->getMessages()));
                     }
                 }
-
-                // Delete related extension
-                $extension = Extensions::findFirstByNumber($queue->extension);
-                if ($extension) {
-                    if (!$extension->delete()) {
-                        // Get the error messages
-                        $messages = $extension->getMessages();
-                        $errorMessage = implode(', ', $messages);
-                        
-                        // If the error message contains HTML (constraint violation with links),
-                        // don't add a prefix as it already has proper formatting
-                        if (strpos($errorMessage, '<div class="ui header">') !== false) {
-                            throw new \Exception($errorMessage);
-                        } else {
-                            // For simple error messages, add the prefix
-                            throw new \Exception('Failed to delete extension: ' . $errorMessage);
-                        }
-                    }
-                }
-
-                // Delete call queue itself
-                if (!$queue->delete()) {
-                    throw new \Exception('Failed to delete call queue: ' . implode(', ', $queue->getMessages()));
-                }
-
-                return true;
-            });
-
-            $res->success = true;
-            $res->data = ['deleted_id' => $id];
-
-            // Log successful deletion (following MikoPBX standards)
-            SystemMessages::sysLogMsg(__METHOD__,
-                "Call queue '{$queueName}' ({$queueExtension}) deleted successfully",
-                LOG_INFO
-            );
-
-        } catch (\Exception $e) {
-            $res->messages['error'][] = $e->getMessage();
-            // Use CriticalErrorsHandler for exceptions (following MikoPBX standards)
-            CriticalErrorsHandler::handleExceptionWithSyslog($e);
-        }
-
-        return $res;
+            }
+        );
     }
 }
