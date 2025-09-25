@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, PbxApi, UserMessage, EventBus, Form */
+/* global globalRootUrl, globalTranslate, PbxApi, UserMessage, EventBus, Form, SystemAPI */
 
 /**
  * Module for handling the "Delete All Settings" functionality
@@ -76,10 +76,7 @@ const generalSettingsDeleteAll = {
                     generalSettingsDeleteAll.showDeletingProgress();
                     
                     // When user confirms deletion - pass async channel ID
-                    PbxApi.SystemRestoreDefaultSettings(
-                        generalSettingsDeleteAll.asyncChannelId,
-                        generalSettingsDeleteAll.cbAfterRestoreDefaultSettings
-                    );
+                    SystemAPI.restoreDefault(generalSettingsDeleteAll.cbAfterRestoreDefaultSettings);
                     
                     // Return false to prevent automatic modal closing
                     return false;
@@ -128,19 +125,19 @@ const generalSettingsDeleteAll = {
         $statisticsContent.html(`
             <div class="ui segment">
                 <div class="ui active centered inline loader"></div>
-                <p class="center aligned">${globalTranslate.gs_LoadingStatistics || 'Loading statistics...'}</p>
+                <p class="center aligned">${globalTranslate.gs_LoadingStatistics}</p>
             </div>
         `);
         
         // Get statistics from API
-        PbxApi.SystemGetDeleteStatistics((data) => {
+        SystemAPI.getDeleteStatistics((data) => {
             if (data === false) {
                 // Show error if statistics couldn't be loaded
                 $statisticsContent.html(`
                     <div class="ui segment">
                         <div class="ui error message">
                             <i class="exclamation triangle icon"></i>
-                            ${globalTranslate.gs_ErrorLoadingStatistics || 'Error loading statistics'}
+                            ${globalTranslate.gs_ErrorLoadingStatistics}
                         </div>
                     </div>
                 `);
@@ -154,7 +151,7 @@ const generalSettingsDeleteAll = {
             if (data.users > 0) {
                 statisticsHtml += generalSettingsDeleteAll.createStatisticItem(
                     'users', 
-                    globalTranslate.gs_StatUsers || 'Users/Extensions', 
+                    globalTranslate.gs_StatUsers, 
                     data.extensions || data.users,
                     'user icon'
                 );
@@ -164,7 +161,7 @@ const generalSettingsDeleteAll = {
             if (data.providers > 0) {
                 statisticsHtml += generalSettingsDeleteAll.createStatisticItem(
                     'providers', 
-                    globalTranslate.gs_StatProviders || 'SIP Providers', 
+                    globalTranslate.gs_StatProviders, 
                     data.providers,
                     'server icon'
                 );
@@ -174,7 +171,7 @@ const generalSettingsDeleteAll = {
             if (data.callQueues > 0) {
                 statisticsHtml += generalSettingsDeleteAll.createStatisticItem(
                     'queues', 
-                    globalTranslate.gs_StatCallQueues || 'Call Queues', 
+                    globalTranslate.gs_StatCallQueues, 
                     data.callQueues,
                     'users icon'
                 );
@@ -184,7 +181,7 @@ const generalSettingsDeleteAll = {
             if (data.ivrMenus > 0) {
                 statisticsHtml += generalSettingsDeleteAll.createStatisticItem(
                     'ivr', 
-                    globalTranslate.gs_StatIvrMenus || 'IVR Menus', 
+                    globalTranslate.gs_StatIvrMenus, 
                     data.ivrMenus,
                     'sitemap icon'
                 );
@@ -194,7 +191,7 @@ const generalSettingsDeleteAll = {
             if (data.conferenceRooms > 0) {
                 statisticsHtml += generalSettingsDeleteAll.createStatisticItem(
                     'conferences', 
-                    globalTranslate.gs_StatConferenceRooms || 'Conference Rooms', 
+                    globalTranslate.gs_StatConferenceRooms, 
                     data.conferenceRooms,
                     'video icon'
                 );
@@ -204,7 +201,7 @@ const generalSettingsDeleteAll = {
             if (data.dialplanApplications > 0) {
                 statisticsHtml += generalSettingsDeleteAll.createStatisticItem(
                     'dialplan', 
-                    globalTranslate.gs_StatDialplanApplications || 'Dialplan Applications', 
+                    globalTranslate.gs_StatDialplanApplications, 
                     data.dialplanApplications,
                     'code icon'
                 );
@@ -214,7 +211,7 @@ const generalSettingsDeleteAll = {
             if (data.customSoundFiles > 0) {
                 statisticsHtml += generalSettingsDeleteAll.createStatisticItem(
                     'sounds', 
-                    globalTranslate.gs_StatSoundFiles || 'Custom Sound Files', 
+                    globalTranslate.gs_StatSoundFiles, 
                     data.customSoundFiles,
                     'music icon'
                 );
@@ -224,7 +221,7 @@ const generalSettingsDeleteAll = {
             if (data.mohFiles > 0) {
                 statisticsHtml += generalSettingsDeleteAll.createStatisticItem(
                     'moh', 
-                    globalTranslate.gs_StatMohFiles || 'Music On Hold', 
+                    globalTranslate.gs_StatMohFiles, 
                     data.mohFiles,
                     'volume up icon'
                 );
@@ -235,7 +232,7 @@ const generalSettingsDeleteAll = {
             if (totalRoutes > 0) {
                 statisticsHtml += generalSettingsDeleteAll.createStatisticItem(
                     'routes', 
-                    globalTranslate.gs_StatRoutes || 'Call Routes', 
+                    globalTranslate.gs_StatRoutes, 
                     totalRoutes,
                     'random icon'
                 );
@@ -245,7 +242,7 @@ const generalSettingsDeleteAll = {
             if (data.firewallRules > 0) {
                 statisticsHtml += generalSettingsDeleteAll.createStatisticItem(
                     'firewall', 
-                    globalTranslate.gs_StatFirewallRules || 'Firewall Rules', 
+                    globalTranslate.gs_StatFirewallRules, 
                     data.firewallRules,
                     'shield icon'
                 );
@@ -255,7 +252,7 @@ const generalSettingsDeleteAll = {
             if (data.modules > 0) {
                 statisticsHtml += generalSettingsDeleteAll.createStatisticItem(
                     'modules', 
-                    globalTranslate.gs_StatModules || 'Installed Modules', 
+                    globalTranslate.gs_StatModules, 
                     data.modules,
                     'puzzle piece icon'
                 );
@@ -265,7 +262,7 @@ const generalSettingsDeleteAll = {
             if (data.callHistory > 0) {
                 statisticsHtml += generalSettingsDeleteAll.createStatisticItem(
                     'cdr', 
-                    globalTranslate.gs_StatCallHistory || 'Call History Records', 
+                    globalTranslate.gs_StatCallHistory, 
                     data.callHistory.toLocaleString(),
                     'history icon'
                 );
@@ -276,7 +273,7 @@ const generalSettingsDeleteAll = {
                 const sizeStr = generalSettingsDeleteAll.formatBytes(data.callRecordingsSize || 0);
                 statisticsHtml += generalSettingsDeleteAll.createStatisticItem(
                     'recordings', 
-                    globalTranslate.gs_StatCallRecordings || 'Call Recordings', 
+                    globalTranslate.gs_StatCallRecordings, 
                     `${data.callRecordings.toLocaleString()} (${sizeStr})`,
                     'microphone icon'
                 );
@@ -287,7 +284,7 @@ const generalSettingsDeleteAll = {
                 const sizeStr = generalSettingsDeleteAll.formatBytes(data.backupsSize || 0);
                 statisticsHtml += generalSettingsDeleteAll.createStatisticItem(
                     'backups', 
-                    globalTranslate.gs_StatBackups || 'Backup Files', 
+                    globalTranslate.gs_StatBackups, 
                     `${data.backups} (${sizeStr})`,
                     'archive icon'
                 );
@@ -297,7 +294,7 @@ const generalSettingsDeleteAll = {
             if (data.customFiles > 0) {
                 statisticsHtml += generalSettingsDeleteAll.createStatisticItem(
                     'custom', 
-                    globalTranslate.gs_StatCustomFiles || 'Custom Files', 
+                    globalTranslate.gs_StatCustomFiles, 
                     data.customFiles,
                     'file icon'
                 );
@@ -309,7 +306,7 @@ const generalSettingsDeleteAll = {
                     <div class="ui segment">
                         <div class="ui info message">
                             <i class="info circle icon"></i>
-                            ${globalTranslate.gs_NoDataToDelete || 'No data to delete'}
+                            ${globalTranslate.gs_NoDataToDelete}
                         </div>
                     </div>
                 `;
@@ -375,7 +372,7 @@ const generalSettingsDeleteAll = {
         $content.html(`
             <div class="ui segment">
                 <div class="ui active inverted dimmer">
-                    <div class="ui large text loader">${globalTranslate.gs_DeletingAllSettings || 'Deleting all settings...'}</div>
+                    <div class="ui large text loader">${globalTranslate.gs_DeletingAllSettings}</div>
                 </div>
                 <p>&nbsp;</p>
                 <p>&nbsp;</p>
@@ -399,7 +396,7 @@ const generalSettingsDeleteAll = {
                     <div class="bar">
                         <div class="progress">${stageDetails.progress}%</div>
                     </div>
-                    <div class="label">${stageDetails.messageKey ? globalTranslate[stageDetails.messageKey] || stageDetails.messageKey : stageDetails.message}</div>
+                    <div class="label">${stageDetails.messageKey ? globalTranslate[stageDetails.messageKey] : stageDetails.message}</div>
                 </div>
             </div>
         `;
@@ -430,7 +427,7 @@ const generalSettingsDeleteAll = {
         // Handle restart stage
         if (stage === 'DeleteAll_Stage_Restart' && stageDetails.restart === true) {
             // Just show info message, EventBus will handle the disconnection UI
-            UserMessage.showInformation(globalTranslate.gs_SystemWillRestart || 'System will restart in a few seconds...');
+            UserMessage.showInformation(globalTranslate.gs_SystemWillRestart);
         }
     },
     
@@ -468,7 +465,7 @@ const generalSettingsDeleteAll = {
                 $submitButton
                     .removeClass('positive')
                     .addClass('negative')
-                    .html(`<i class="trash icon"></i> ${globalTranslate.gs_BtnDeleteAll || 'Delete All Settings'}`);
+                    .html(`<i class="trash icon"></i> ${globalTranslate.gs_BtnDeleteAll}`);
             } else {
                 // Restore original button text
                 $submitButton

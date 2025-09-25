@@ -119,12 +119,12 @@ const sshKeysTable = {
                             <a class="ui button copy-key-btn" 
                                data-clipboard-text="${this.escapeHtml(keyData.key)}"
                                data-variation="basic"
-                               data-content="${globalTranslate.bt_ToolTipCopyKey || 'Copy'}">
+                               data-content="${globalTranslate.bt_ToolTipCopyKey}">
                                 <i class="copy icon blue"></i>
                             </a>
                             <a class="ui button delete-key-btn" 
                                data-index="${index}"
-                               data-content="${globalTranslate.bt_ToolTipDelete || 'Delete'}">
+                               data-content="${globalTranslate.bt_ToolTipDelete}">
                                 <i class="trash icon red"></i>
                             </a>
                         </div>
@@ -140,14 +140,14 @@ const sshKeysTable = {
                         <div class="ui form">
                             <div class="field">
                                 <textarea id="new-ssh-key" rows="3" 
-                                    placeholder="${globalTranslate.gs_SSHKeyPlaceholder || 'Paste one or more SSH keys (one per line):\nssh-rsa AAAAB3... user@host1\nssh-ed25519 AAAAC3... user@host2'}"></textarea>
+                                    placeholder="${globalTranslate.gs_SSHKeyPlaceholder}"></textarea>
                             </div>
                             <div class="ui mini buttons">
                                 <button class="ui positive button" id="save-key-btn">
-                                    <i class="check icon"></i> ${globalTranslate.bt_Add || 'Add'}
+                                    <i class="check icon"></i> ${globalTranslate.bt_Add}
                                 </button>
                                 <button class="ui button" id="cancel-key-btn">
-                                    <i class="close icon"></i> ${globalTranslate.bt_Cancel || 'Cancel'}
+                                    <i class="close icon"></i> ${globalTranslate.bt_Cancel}
                                 </button>
                             </div>
                         </div>
@@ -157,7 +157,7 @@ const sshKeysTable = {
                     <td colspan="2">
                         <button class="ui mini basic button" id="show-add-key-btn">
                             <i class="plus icon"></i>
-                            ${globalTranslate.gs_AddKey || 'Add SSH Key'}
+                            ${globalTranslate.gs_AddKey}
                         </button>
                     </td>
                 </tr>
@@ -221,7 +221,7 @@ const sshKeysTable = {
         });
         
         this.clipboard.on('error', () => {
-            UserMessage.showError(globalTranslate.gs_CopyFailed || 'Failed to copy SSH key');
+            UserMessage.showError(globalTranslate.gs_CopyFailed);
         });
     },
     
@@ -329,7 +329,7 @@ const sshKeysTable = {
         
         // Show errors if any
         if (invalidKeys.length > 0) {
-            const message = (globalTranslate.gs_InvalidKeyFormat || 'Invalid SSH key format') + 
+            const message = globalTranslate.gs_InvalidKeyFormat + 
                            ': ' + invalidKeys.join(', ');
             UserMessage.showError(message);
             $input.focus();
@@ -337,7 +337,7 @@ const sshKeysTable = {
         }
         
         if (duplicateKeys.length > 0 && newKeys.length === 0) {
-            const message = (globalTranslate.gs_KeyAlreadyExists || 'These SSH keys already exist') + 
+            const message = globalTranslate.gs_KeyAlreadyExists + 
                            ': ' + duplicateKeys.join(', ');
             UserMessage.showError(message);
             $input.focus();
@@ -359,13 +359,13 @@ const sshKeysTable = {
             
             // Show info about duplicates if any were skipped
             if (duplicateKeys.length > 0) {
-                const message = `${globalTranslate.gs_KeysAdded || 'Added'} ${newKeys.length} ${globalTranslate.gs_Keys || 'key(s)'}. ` +
-                               `${globalTranslate.gs_SkippedDuplicates || 'Skipped duplicates'}: ${duplicateKeys.length}`;
+                const message = `${globalTranslate.gs_KeysAdded} ${newKeys.length} ${globalTranslate.gs_Keys}. ` +
+                               `${globalTranslate.gs_SkippedDuplicates}: ${duplicateKeys.length}`;
                 UserMessage.showInformation(message);
             }
         } else if (duplicateKeys.length > 0) {
             // All keys were duplicates
-            const message = globalTranslate.gs_AllKeysAlreadyExist || 'All provided SSH keys already exist';
+            const message = globalTranslate.gs_AllKeysAlreadyExist;
             UserMessage.showError(message);
             $input.focus();
         }

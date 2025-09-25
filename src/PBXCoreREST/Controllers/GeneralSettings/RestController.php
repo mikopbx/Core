@@ -25,12 +25,12 @@ use MikoPBX\PBXCoreREST\Lib\GeneralSettingsManagementProcessor;
 /**
  * RESTful controller for general settings management (v3 API)
  *
- * Handles both standard CRUD operations and custom methods for system-wide settings.
- * This controller implements a clean RESTful interface with proper HTTP methods.
+ * GeneralSettings is a singleton resource - there's only one set of settings in the system.
+ * This controller implements standard REST operations without resource IDs.
  *
  * @RoutePrefix("/pbxcore/api/v3/general-settings")
  *
- * @examples Standard CRUD operations:
+ * @examples Singleton operations:
  *
  * # Get all general settings
  * curl -X GET http://127.0.0.1/pbxcore/api/v3/general-settings
@@ -62,7 +62,17 @@ use MikoPBX\PBXCoreREST\Lib\GeneralSettingsManagementProcessor;
  */
 class RestController extends BaseRestController
 {
+    /**
+     * The processor class to handle requests
+     * @var string
+     */
     protected string $processorClass = GeneralSettingsManagementProcessor::class;
+
+    /**
+     * Indicates this is a singleton resource
+     * @var bool
+     */
+    protected bool $isSingleton = true;
 
     /**
      * Define allowed custom methods for each HTTP method
@@ -75,59 +85,5 @@ class RestController extends BaseRestController
             'GET' => ['getDefault'],
             'POST' => ['updateCodecs']
         ];
-    }
-
-    /**
-     * Override handleCRUDRequest for singleton resource behavior
-     * GeneralSettings is a singleton - there's only one set of settings
-     *
-     * @param string|null $id Resource ID (ignored for singleton)
-     * @return void
-     */
-    public function handleCRUDRequest(?string $id = null): void
-    {
-        // Validate processor class is set
-        if (empty($this->processorClass)) {
-            $this->sendErrorResponse('Processor class not configured', 500);
-            return;
-        }
-
-        // Sanitize all input data
-        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
-
-        // Get HTTP method and determine action
-        $httpMethod = $this->request->getMethod();
-
-        // Map HTTP method to action for singleton resource
-        $action = match($httpMethod) {
-            'GET' => !empty($id) ? 'getRecord' : 'getList',  // Support both /settings and /settings/{key}
-            'PUT' => 'update',     // Full update
-            'PATCH' => 'patch',    // Partial update
-            'POST' => 'create',    // Can be used for reset or special actions
-            'DELETE' => 'delete',  // Reset to defaults
-            default => null
-        };
-
-        if ($action === null) {
-            $this->sendErrorResponse("Invalid HTTP method: $httpMethod", 405);
-            return;
-        }
-
-        // Add the setting key as ID if provided (for GET /settings/{key})
-        if (!empty($id)) {
-            $requestData['id'] = $id;
-        }
-
-        // For POST/PUT/PATCH operations, pass HTTP method for processors that need it
-        if (in_array($httpMethod, ['POST', 'PUT', 'PATCH'], true)) {
-            $requestData['httpMethod'] = $httpMethod;
-        }
-
-        // Send request to backend worker
-        $this->sendRequestToBackendWorker(
-            $this->processorClass,
-            $action,
-            $requestData
-        );
     }
 }

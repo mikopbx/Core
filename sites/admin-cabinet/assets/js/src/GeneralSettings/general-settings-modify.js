@@ -17,7 +17,7 @@
  */
 
 
-/* global globalRootUrl,globalTranslate, Form, PasswordScore, PbxApi, UserMessage, SoundFileSelector, GeneralSettingsAPI, ClipboardJS, PasswordWidget, PasswordValidationAPI, GeneralSettingsTooltipManager, $ */
+/* global globalRootUrl,globalTranslate, Form, PasswordScore, PbxApi, UserMessage, SoundFileSelector, GeneralSettingsAPI, ClipboardJS, PasswordWidget, PasswordsAPI, GeneralSettingsTooltipManager, $ */
 
 /**
  * A module to handle modification of general settings.
@@ -574,8 +574,8 @@ const generalSettingsModify = {
                     <div class="ui negative icon message password-validate">
                         <i class="exclamation triangle icon"></i>
                         <div class="content">
-                            <div class="header">${globalTranslate.psw_SetPassword || 'Security Warning'}</div>
-                            <p>${globalTranslate.psw_ChangeDefaultPassword || 'You are using the default password. Please change it for security.'}</p>
+                            <div class="header">${globalTranslate.psw_SetPassword}</div>
+                            <p>${globalTranslate.psw_ChangeDefaultPassword}</p>
                         </div>
                     </div>
                 `;
@@ -605,8 +605,8 @@ const generalSettingsModify = {
                         <div class="ui negative icon message password-validate">
                             <i class="exclamation triangle icon"></i>
                             <div class="content">
-                                <div class="header">${globalTranslate.psw_SetPassword || 'Security Warning'}</div>
-                                <p>${globalTranslate.psw_ChangeDefaultPassword || 'You are using the default password. Please change it for security.'}</p>
+                                <div class="header">${globalTranslate.psw_SetPassword}</div>
+                                <p>${globalTranslate.psw_ChangeDefaultPassword}</p>
                             </div>
                         </div>
                     `;
@@ -816,19 +816,19 @@ const generalSettingsModify = {
                     <div class="ui action input fluid cert-display ${statusClass}">
                         <input type="text" value="${generalSettingsModify.escapeHtml(displayText)}" readonly class="truncated-display" />
                         <button class="ui button icon basic copy-btn" data-clipboard-text="${generalSettingsModify.escapeHtml(fullValue)}"
-                                data-variation="basic" data-content="${globalTranslate.bt_ToolTipCopyCert || 'Copy certificate'}">
+                                data-variation="basic" data-content="${globalTranslate.bt_ToolTipCopyCert}">
                             <i class="copy icon blue"></i>
                         </button>
                         <button class="ui button icon basic info-cert-btn"
-                                data-content="${globalTranslate.bt_ToolTipCertInfo || 'Certificate details'}">
+                                data-content="${globalTranslate.bt_ToolTipCertInfo}">
                             <i class="info circle icon blue"></i>
                         </button>
                         <button class="ui button icon basic edit-btn"
-                                data-content="${globalTranslate.bt_ToolTipEdit || 'Edit certificate'}">
+                                data-content="${globalTranslate.bt_ToolTipEdit}">
                             <i class="edit icon blue"></i>
                         </button>
                         <button class="ui button icon basic delete-cert-btn"
-                                data-content="${globalTranslate.bt_ToolTipDelete || 'Delete certificate'}">
+                                data-content="${globalTranslate.bt_ToolTipDelete}">
                             <i class="trash icon red"></i>
                         </button>
                     </div>
@@ -837,14 +837,14 @@ const generalSettingsModify = {
                         <div class="field">
                             <textarea id="WEBHTTPSPublicKey_edit" 
                                       rows="10" 
-                                      placeholder="${globalTranslate.gs_PastePublicCert || 'Paste public certificate here...'}">${fullValue}</textarea>
+                                      placeholder="${globalTranslate.gs_PastePublicCert}">${fullValue}</textarea>
                         </div>
                         <div class="ui mini buttons">
                             <button class="ui positive button save-cert-btn">
-                                <i class="check icon"></i> ${globalTranslate.bt_Save || 'Save'}
+                                <i class="check icon"></i> ${globalTranslate.bt_Save}
                             </button>
                             <button class="ui button cancel-cert-btn">
-                                <i class="close icon"></i> ${globalTranslate.bt_Cancel || 'Cancel'}
+                                <i class="close icon"></i> ${globalTranslate.bt_Cancel}
                             </button>
                         </div>
                     </div>
@@ -920,7 +920,7 @@ const generalSettingsModify = {
             } else {
                 // Show the original field for input with proper placeholder
                 $certPubKeyField.show();
-                $certPubKeyField.attr('placeholder', globalTranslate.gs_PastePublicCert || 'Paste public certificate here...');
+                $certPubKeyField.attr('placeholder', globalTranslate.gs_PastePublicCert);
                 $certPubKeyField.attr('rows', '10');
                 
                 // Ensure change events trigger form validation
@@ -958,11 +958,11 @@ const generalSettingsModify = {
                     <div class="ui action input fluid ssh-key-display">
                         <input type="text" value="${truncated}" readonly class="truncated-display" />
                         <button class="ui button icon basic copy-btn" data-clipboard-text="${generalSettingsModify.escapeHtml(fullValue)}" 
-                                data-variation="basic" data-content="${globalTranslate.bt_ToolTipCopyKey || 'Copy'}">
+                                data-variation="basic" data-content="${globalTranslate.bt_ToolTipCopyKey}">
                             <i class="copy icon blue"></i>
                         </button>
                         <button class="ui button icon basic expand-btn" 
-                                data-content="${globalTranslate.bt_ToolTipExpand || 'Show full key'}">
+                                data-content="${globalTranslate.bt_ToolTipExpand}">
                             <i class="expand icon blue"></i>
                         </button>
                     </div>
@@ -995,7 +995,7 @@ const generalSettingsModify = {
                 // Show the original field as read-only (this is a system-generated key)
                 $sshPubKeyField.show();
                 $sshPubKeyField.attr('readonly', true);
-                $sshPubKeyField.attr('placeholder', globalTranslate.gs_NoSSHPublicKey || 'No SSH public key generated');
+                $sshPubKeyField.attr('placeholder', globalTranslate.gs_NoSSHPublicKey);
             }
         }
         
@@ -1023,14 +1023,14 @@ const generalSettingsModify = {
                     <div class="ui info message private-key-set">
                         <p>
                             <i class="lock icon"></i>
-                            ${globalTranslate.gs_PrivateKeyIsSet || 'Private key is configured'} 
-                            <a href="#" class="replace-key-link">${globalTranslate.gs_Replace || 'Replace'}</a>
+                            ${globalTranslate.gs_PrivateKeyIsSet}
+                            <a href="#" class="replace-key-link">${globalTranslate.gs_Replace}</a>
                         </p>
                     </div>
                     <textarea id="WEBHTTPSPrivateKey_new" name="WEBHTTPSPrivateKey" 
                               rows="10"
                               style="display:none;" 
-                              placeholder="${globalTranslate.gs_PastePrivateKey || 'Paste private key here...'}"></textarea>
+                              placeholder="${globalTranslate.gs_PastePrivateKey}"></textarea>
                 `;
                 
                 $container.append(displayHtml);
@@ -1059,7 +1059,7 @@ const generalSettingsModify = {
             } else {
                 // Show the original field for input with proper placeholder
                 $certPrivKeyField.show();
-                $certPrivKeyField.attr('placeholder', globalTranslate.gs_PastePrivateKey || 'Paste private key here...');
+                $certPrivKeyField.attr('placeholder', globalTranslate.gs_PastePrivateKey);
                 $certPrivKeyField.attr('rows', '10');
                 
                 // Ensure change events trigger form validation
@@ -1097,7 +1097,7 @@ const generalSettingsModify = {
         });
         
         generalSettingsModify.clipboard.on('error', () => {
-            UserMessage.showError(globalTranslate.gs_CopyFailed || 'Failed to copy to clipboard');
+            UserMessage.showError(globalTranslate.gs_CopyFailed);
         });
     },
     
@@ -1304,9 +1304,9 @@ const generalSettingsModify = {
                     messages.forEach(error => {
                         let textContent = '';
                         if (typeof error === 'object' && error.message) {
-                            textContent = globalTranslate[error.message] || error.message;
+                            textContent = globalTranslate[error.message];
                         } else {
-                            textContent = globalTranslate[error] || error;
+                            textContent = globalTranslate[error];
                         }
                         
                         if (!messagesSet.has(textContent)) {
@@ -1420,7 +1420,7 @@ const generalSettingsModify = {
                 $ajamCheckbox.addClass('disabled');
                 
                 // Add tooltip to explain why it's disabled
-                $ajamCheckbox.attr('data-tooltip', globalTranslate.gs_AJAMRequiresAMI || 'AJAM requires AMI to be enabled');
+                $ajamCheckbox.attr('data-tooltip', globalTranslate.gs_AJAMRequiresAMI);
                 $ajamCheckbox.attr('data-position', 'top left');
             } else {
                 // If AMI is enabled, allow AJAM to be toggled
