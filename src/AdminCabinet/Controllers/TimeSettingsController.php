@@ -2,7 +2,7 @@
 
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,142 +20,43 @@
 
 namespace MikoPBX\AdminCabinet\Controllers;
 
-use DateTime;
-use DateTimeZone;
 use MikoPBX\AdminCabinet\Forms\TimeSettingsEditForm;
-use MikoPBX\Common\Models\{PbxSettings};
+use MikoPBX\Common\Models\PbxSettings;
 
+/**
+ * TimeSettingsController
+ *
+ * Simple controller for time settings management.
+ * All data operations are handled through REST API.
+ */
 class TimeSettingsController extends BaseController
 {
     /**
-     * Form for editing and configuring time settings on the station.
+     * Redirects index action to modify page.
+     * Time settings has only one form, no list view.
+     */
+    public function indexAction(): void
+    {
+        $this->forward('time-settings/modify');
+    }
+
+    /**
+     * Handles the modify action for Time Settings.
+     *
+     * Data loading is handled via REST API from JavaScript.
+     * This method sets up the form structure for the modify view.
      */
     public function modifyAction(): void
     {
-        $parameters = [
-            'key IN ({ids:array})',
-            'bind' => ['ids' => $this->getTimeSettingsArray()],
+        // Initialize time settings array with empty values for REST API loading
+        $timeSettings = [
+            PbxSettings::PBX_TIMEZONE => '',
+            PbxSettings::PBX_MANUAL_TIME_SETTINGS => '0',
+            PbxSettings::NTP_SERVER => ''
         ];
 
-        $timeSettingsFields     = PbxSettings::find($parameters);
-        $readibleTimeZones      = $this->generateTimezoneList();
-        $form                   = new TimeSettingsEditForm($timeSettingsFields, $readibleTimeZones);
-        $this->view->form       = $form;
+        // Create form with null entity and settings array
+        $this->view->form = new TimeSettingsEditForm(null, $timeSettings);
         $this->view->submitMode = null;
-    }
-
-    /**
-     * Get the array of time settings.
-     *
-     * @return array Array of time settings keys.
-     */
-    private function getTimeSettingsArray(): array
-    {
-        return [
-            PbxSettings::PBX_TIMEZONE,
-            PbxSettings::NTP_SERVER,
-            PbxSettings::PBX_MANUAL_TIME_SETTINGS,
-        ];
-    }
-
-    /**
-     * Generate an array of time zones.
-     *
-     * @return array Array of time zones.
-     * @throws \DateInvalidTimeZoneException
-     */
-    private function generateTimezoneList(): array
-    {
-        static $regions = [
-            DateTimeZone::AFRICA,
-            DateTimeZone::AMERICA,
-            DateTimeZone::ANTARCTICA,
-            DateTimeZone::ASIA,
-            DateTimeZone::ATLANTIC,
-            DateTimeZone::AUSTRALIA,
-            DateTimeZone::EUROPE,
-            DateTimeZone::INDIAN,
-            DateTimeZone::PACIFIC,
-        ];
-
-        $timezones = [];
-        foreach ($regions as $region) {
-            $timezones[] = DateTimeZone::listIdentifiers($region);
-        }
-        $timezones = array_merge(...$timezones);
-
-        $timezone_offsets = [];
-        foreach ($timezones as $timezone) {
-            $tz                          = new DateTimeZone($timezone);
-            $timezone_offsets[$timezone] = $tz->getOffset(new DateTime());
-        }
-
-        // sort timezone by offset
-        asort($timezone_offsets);
-
-        $timezone_list = [];
-        foreach ($timezone_offsets as $timezone => $offset) {
-            $offset_prefix    = $offset < 0 ? '-' : '+';
-            $absOffset = (int)abs($offset);
-            $offset_formatted = gmdate('H:i', $absOffset);
-
-            $pretty_offset = "UTC$offset_prefix$offset_formatted";
-
-            $timezone_list[$timezone] = "$timezone ($pretty_offset)";
-        }
-
-        return $timezone_list;
-    }
-
-    /**
-     * Save timezone settings
-     */
-    public function saveAction(): void
-    {
-        if (! $this->request->isPost()) {
-            return;
-        }
-
-        $data = $this->request->getPost();
-
-        $this->db->begin();
-        $arrSettings = $this->getTimeSettingsArray();
-        foreach ($arrSettings as $key) {
-            $record = PbxSettings::findFirstByKey($key);
-            if ($record === null) {
-                $record      = new PbxSettings();
-                $record->key = $key;
-            }
-
-            switch ($key) {
-                case PbxSettings::PBX_MANUAL_TIME_SETTINGS:
-                case "***ALL CHECK BOXES ABOVE***":
-                    $record->value = ($data[$key] === 'on') ? '1' : '0';
-                    break;
-                case PbxSettings::NTP_SERVER:
-                    $ntp_servers   = preg_split('/\r\n|\r|\n| |,/', $data[$key]);
-                    if (is_array($ntp_servers)) {
-                        $record->value = implode(PHP_EOL, $ntp_servers);
-                    }
-                    break;
-                default:
-                    if (! array_key_exists($key, $data)) {
-                        continue 2;
-                    }
-                    $record->value = $data[$key];
-            }
-            if ($record->save() === false) {
-                $errors = $record->getMessages();
-                $this->flash->warning(implode('<br>', $errors));
-                $this->view->success = false;
-                $this->db->rollback();
-
-                return;
-            }
-        }
-
-        $this->flash->success($this->translation->_('ms_SuccessfulSaved'));
-        $this->view->success = true;
-        $this->db->commit();
     }
 }

@@ -1,8 +1,9 @@
-{{ form(['action' : 'time-settings/save', 'method': 'post', 'role': 'form', 'class': 'ui large form', 'id':'time-settings-form']) }}
+{{ form(['role': 'form', 'class': 'ui large form', 'id':'time-settings-form']) }}
 <div class="three fields">
     <div class="field">
         <label>{{ t._('ts_TimeZone') }}</label>
         {{ form.render('PBXTimezone') }}
+        <!-- Dropdown will be created here by DynamicDropdownBuilder -->
     </div>
 </div>
 <div class="field">

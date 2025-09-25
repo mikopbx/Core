@@ -22,7 +22,7 @@ namespace MikoPBX\AdminCabinet\Forms;
 
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\TranslationProvider;
-use Phalcon\Forms\Element\Select;
+use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Text;
 use Phalcon\Forms\Element\TextArea;
 
@@ -38,42 +38,19 @@ class TimeSettingsEditForm extends BaseForm
     {
         parent::initialize($entity, $options);
 
-        foreach ($entity as $item) {
-            switch ($item->key) {
-                case PbxSettings::PBX_TIMEZONE:
-                    $ntpserver = new Select(
-                        PbxSettings::PBX_TIMEZONE,
-                        $options,
-                        [
-                            'using' => [
-                                'id',
-                                'name',
-                            ],
-                            'useEmpty' => false,
-                            'value' => $item->value,
-                            'class' => 'ui search selection dropdown',
-                        ]
-                    );
-                    $this->add($ntpserver);
-                    break;
-                case PbxSettings::NTP_SERVER:
-                    $this->add(new TextArea($item->key, ['value' => $item->value, "rows" => 4]));
-                    break;
-                case PbxSettings::PBX_MANUAL_TIME_SETTINGS:
-                    $this->addCheckBox(PbxSettings::PBX_MANUAL_TIME_SETTINGS, intval($item->value) === 1);
-                    break;
-                default:
-                    $this->add(
-                        new Text(
-                            $item->key,
-                            [
-                                'value' => $item->value,
-                            ]
-                        )
-                    );
-            }
-        }
+        // PBX Timezone - using DynamicDropdownBuilder (built by JavaScript)
+        $this->add(new Hidden(PbxSettings::PBX_TIMEZONE));
 
+        // NTP server textarea - data will be loaded via REST API
+        $this->add(new TextArea(PbxSettings::NTP_SERVER, [
+            'value' => '',
+            'rows' => 4
+        ]));
+
+        // Manual time settings checkbox - data will be loaded via REST API
+        $this->addCheckBox(PbxSettings::PBX_MANUAL_TIME_SETTINGS, false);
+
+        // Manual date/time input field - data will be loaded via REST API
         $this->add(new Text('ManualDateTime', ['value' => '']));
     }
 }

@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global moment */
+/* global moment, SystemAPI */
 
 
 /**
@@ -55,7 +55,7 @@ const clockWorker = {
      * Performs the clock worker operations.
      */
     worker() {
-        PbxApi.GetDateTime(clockWorker.cbAfterReceiveDateTimeFromServer);
+        SystemAPI.getDateTime(clockWorker.cbAfterReceiveDateTimeFromServer);
     },
 
     /**
@@ -63,8 +63,8 @@ const clockWorker = {
      * @param {object|boolean} response - The response from the server.
      */
     cbAfterReceiveDateTimeFromServer(response) {
-        const options = {timeZone: timeSettings.$formObj.form('get value', 'PBXTimezone'), timeZoneName: 'short'};
-        if (timeSettings.$formObj.form('get value', 'PBXManualTimeSettings') !== 'on') {
+        const options = {timeZone: timeSettingsModify.$formObj.form('get value', 'PBXTimezone'), timeZoneName: 'short'};
+        if (timeSettingsModify.$formObj.form('get value', 'PBXManualTimeSettings') !== 'on') {
             clockWorker.timeoutHandle = window.setTimeout(
                 clockWorker.worker,
                 1000,
@@ -73,12 +73,21 @@ const clockWorker = {
             options.timeZoneName = undefined;
         }
         if (response !== false) {
-
             const dateTime = new Date(response.timestamp * 1000);
             moment.locale(globalWebAdminLanguage);
-            const m = moment(dateTime,);
-            //timeSettings.$formObj.form('set value', 'ManualDateTime', dateTime.toLocaleString(globalWebAdminLanguage, options));
-            timeSettings.$formObj.form('set value', 'ManualDateTime', m.tz(options.timeZone).format());
+            const m = moment(dateTime);
+
+            // Check if moment-timezone is available and timezone is set
+            let formattedDateTime;
+            if (typeof m.tz === 'function' && options.timeZone) {
+                // Use moment-timezone if available
+                formattedDateTime = m.tz(options.timeZone).format();
+            } else {
+                // Fallback to basic moment formatting
+                formattedDateTime = m.format();
+            }
+
+            timeSettingsModify.$formObj.form('set value', 'ManualDateTime', formattedDateTime);
         }
     }
 };
