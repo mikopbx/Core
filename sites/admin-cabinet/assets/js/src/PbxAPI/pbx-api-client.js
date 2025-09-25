@@ -31,7 +31,7 @@
  * - CSRF token management
  * - Backward compatibility with PbxDataTableIndex
  * 
- * @class PbxApiClient
+ * @class PbxApiClient 
  */
 class PbxApiClient {
     /**
@@ -69,7 +69,7 @@ class PbxApiClient {
         // Check if we should use a custom method for new records
         const isNew = !recordId || recordId === '' || recordId === 'new';
         let url;
-        
+
         if (isNew && this.customMethods.getDefault) {
             // Use custom method for new records
             url = `${this.apiUrl}${this.customMethods.getDefault}`;
@@ -80,12 +80,16 @@ class PbxApiClient {
             // Get existing record by ID
             url = `${this.apiUrl}/${recordId}`;
         }
-        
+
         $.api({
             url: url,
             method: 'GET',
             on: 'now',
             onSuccess(response) {
+                // Set _isNew flag for new records to indicate POST should be used
+                if (isNew && response.data) {
+                    response.data._isNew = true;
+                }
                 callback(response);
             },
             onFailure(response) {
@@ -242,19 +246,20 @@ class PbxApiClient {
      * @param {object|function} dataOrCallback - Data or callback
      * @param {function} [callback] - Callback if first param is data
      * @param {string} [httpMethod] - HTTP method to use (GET or POST), defaults to GET
+     * @param {string} [resourceId] - Resource ID for resource-level methods
      */
-    callCustomMethod(methodName, dataOrCallback, callback, httpMethod = 'GET') {
+    callCustomMethod(methodName, dataOrCallback, callback, httpMethod = 'GET', resourceId = null) {
         // Handle overloaded parameters
         let actualCallback;
         let data = {};
-        
+
         if (typeof dataOrCallback === 'function') {
             actualCallback = dataOrCallback;
         } else {
             data = dataOrCallback || {};
             actualCallback = callback;
         }
-        
+
         const methodPath = this.customMethods[methodName];
         if (!methodPath) {
             actualCallback({
@@ -266,8 +271,11 @@ class PbxApiClient {
         
         // Build URL with ID if provided (for resource-level custom methods)
         let url = this.apiUrl;
-        if (data.id) {
-            // Resource-level method: /api/v3/resource/{id}:method
+        if (resourceId) {
+            // Resource-level method: /api/v3/resource/{id}:method (RESTful standard)
+            url = `${this.apiUrl}/${resourceId}${methodPath}`;
+        } else if (data.id) {
+            // Fallback: Resource-level method: /api/v3/resource/{id}:method
             url = `${this.apiUrl}/${data.id}${methodPath}`;
             // Remove id from data since it's in the URL
             const requestData = {...data};
@@ -319,11 +327,9 @@ class PbxApiClient {
             // Send as JSON to preserve boolean values and complex structures
             ajaxSettings.data = JSON.stringify(data);
             ajaxSettings.contentType = 'application/json';
-            console.log('Sending as JSON:', data);
         } else {
             // Send as regular form data
             ajaxSettings.data = data;
-            console.log('Sending as form data:', data);
         }
 
         $.api(ajaxSettings);
@@ -336,19 +342,14 @@ class PbxApiClient {
      * @returns {boolean} True if new record
      */
     isNewRecord(data) {
-        // Check explicit flag first - if set, use it
+        // The only way to determine - _isNew flag
+        // If flag is not explicitly set, check ID
         if (data._isNew !== undefined) {
-            return data._isNew === true;
+            return data._isNew === true || data._isNew === 'true';
         }
 
-        // Check if it's marked as new
-        if (data.isNew === '1' || data.isNew === true || data.isNew === 'true') return true;
-
-        // Simple check: if no id or empty id, it's a new record
-        // REST API v3 doesn't use uniqid anymore
-        if (!data.id || data.id === '' || data.id === 'new') return true;
-
-        return false;
+        // Fallback to ID check only if flag is not set
+        return !data.id || data.id === '' || data.id === 'new';
     }
     
     /**
@@ -374,6 +375,182 @@ class PbxApiClient {
             }
         }
         return false;
+    }
+
+    /**
+     * Perform GET request (backward compatibility method)
+     * @param {object} params - Query parameters
+     * @param {function} callback - Callback function
+     * @param {string} [id] - Optional record ID for resource-specific requests
+     */
+    callGet(params, callback, id) {
+        let url = this.apiUrl;
+
+        // For non-singleton resources with ID, append ID to URL
+        if (!this.isSingleton && id) {
+            url = `${this.apiUrl}/${id}`;
+        }
+
+        $.api({
+            url: url,
+            on: 'now',
+            method: 'GET',
+            data: params || {},
+            successTest: PbxApi.successTest,
+            onSuccess(response) {
+                callback(response);
+            },
+            onFailure(response) {
+                callback(response);
+            },
+            onError() {
+                callback({result: false, data: []});
+            }
+        });
+    }
+
+    /**
+     * Perform POST request (backward compatibility method)
+     * @param {object} data - Data to send
+     * @param {function} callback - Callback function
+     * @param {string} [id] - Optional resource ID for resource-specific requests
+     */
+    callPost(data, callback, id) {
+        let url = this.apiUrl;
+        if (id) {
+            url = `${this.apiUrl}/${id}`;
+        }
+
+        const hasComplexData = PbxApiClient.hasComplexData(data);
+
+        const ajaxSettings = {
+            url: url,
+            method: 'POST',
+            on: 'now',
+            successTest: PbxApi.successTest,
+            onSuccess(response) {
+                callback(response);
+            },
+            onFailure(response) {
+                callback(response);
+            },
+            onError() {
+                callback({result: false, messages: {error: ['Network error occurred']}});
+            }
+        };
+
+        if (hasComplexData) {
+            ajaxSettings.data = JSON.stringify(data);
+            ajaxSettings.contentType = 'application/json';
+        } else {
+            ajaxSettings.data = data;
+        }
+
+        $.api(ajaxSettings);
+    }
+
+    /**
+     * Perform PUT request (backward compatibility method)
+     * @param {object} data - Data to send
+     * @param {function} callback - Callback function
+     * @param {string} [id] - Optional resource ID for resource-specific requests
+     */
+    callPut(data, callback, id) {
+        let url = this.apiUrl;
+        if (id) {
+            url = `${this.apiUrl}/${id}`;
+        }
+
+        const hasComplexData = PbxApiClient.hasComplexData(data);
+
+        const ajaxSettings = {
+            url: url,
+            method: 'PUT',
+            on: 'now',
+            successTest: PbxApi.successTest,
+            onSuccess(response) {
+                callback(response);
+            },
+            onFailure(response) {
+                callback(response);
+            },
+            onError() {
+                callback({result: false, messages: {error: ['Network error occurred']}});
+            }
+        };
+
+        if (hasComplexData) {
+            ajaxSettings.data = JSON.stringify(data);
+            ajaxSettings.contentType = 'application/json';
+        } else {
+            ajaxSettings.data = data;
+        }
+
+        $.api(ajaxSettings);
+    }
+
+    /**
+     * Perform DELETE request (backward compatibility method)
+     * @param {function} callback - Callback function
+     * @param {string} id - Resource ID to delete
+     */
+    callDelete(callback, id) {
+        const data = {};
+
+        if (typeof globalCsrfTokenKey !== 'undefined' && typeof globalCsrfToken !== 'undefined') {
+            data[globalCsrfTokenKey] = globalCsrfToken;
+        }
+
+        $.api({
+            url: `${this.apiUrl}/${id}`,
+            on: 'now',
+            method: 'DELETE',
+            data: data,
+            successTest: PbxApi.successTest,
+            onSuccess(response) {
+                callback(response);
+            },
+            onFailure(response) {
+                callback(response);
+            },
+            onError() {
+                callback({result: false, messages: {error: ['Network error occurred']}});
+            }
+        });
+    }
+
+    /**
+     * Perform PATCH request (backward compatibility method)
+     * @param {object} data - Data to send
+     * @param {function} callback - Callback function
+     */
+    callPatch(data, callback) {
+        const hasComplexData = PbxApiClient.hasComplexData(data);
+
+        const ajaxSettings = {
+            url: this.apiUrl,
+            method: 'PATCH',
+            on: 'now',
+            successTest: PbxApi.successTest,
+            onSuccess(response) {
+                callback(response);
+            },
+            onFailure(response) {
+                callback(response);
+            },
+            onError() {
+                callback({result: false, messages: {error: ['Network error occurred']}});
+            }
+        };
+
+        if (hasComplexData) {
+            ajaxSettings.data = JSON.stringify(data);
+            ajaxSettings.contentType = 'application/json';
+        } else {
+            ajaxSettings.data = data;
+        }
+
+        $.api(ajaxSettings);
     }
 }
 
