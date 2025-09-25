@@ -174,7 +174,7 @@ const manager = {
 
             if (data === false) {
                 // V5.0: No fallback - show error and stop
-                UserMessage.showError(globalTranslate.am_ErrorLoadingManager || 'Error loading source manager');
+                UserMessage.showError(globalTranslate.am_ErrorLoadingManager);
                 return;
             }
 
@@ -198,7 +198,7 @@ const manager = {
             // Update form title if possible
             const $headerText = $('.ui.header .content');
             if ($headerText.length) {
-                $headerText.text(globalTranslate.am_CopyRecord || 'Copy AMI User');
+                $headerText.text(globalTranslate.am_CopyRecord);
             }
 
             // Focus on username field
@@ -220,7 +220,7 @@ const manager = {
 
             if (data === false) {
                 // V5.0: No fallback - show error and stop
-                UserMessage.showError(globalTranslate.am_ErrorLoadingManager || 'Error loading manager');
+                UserMessage.showError(globalTranslate.am_ErrorLoadingManager);
                 return;
             }
 
@@ -250,7 +250,7 @@ const manager = {
             if (data.isSystem) {
                 manager.$formObj.find('input, select, button').not('.cancel').attr('disabled', true);
                 manager.$formObj.find('.checkbox').addClass('disabled');
-                UserMessage.showMultiString(globalTranslate.am_SystemManagerReadOnly || 'System manager is read-only', UserMessage.INFO);
+                UserMessage.showMultiString(globalTranslate.am_SystemManagerReadOnly, UserMessage.INFO);
             }
         });
     },

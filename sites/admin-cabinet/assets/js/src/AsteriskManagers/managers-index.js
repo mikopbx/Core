@@ -68,7 +68,7 @@ const asteriskManagersIndex = {
                     $('#empty-table-placeholder').hide();
                     $('.add-new-button').show();
                     $('#asterisk-managers-table-container').show();
-                    
+
                     this.renderPermissionsTable(data);
                 }
             } else {
@@ -165,22 +165,22 @@ const asteriskManagersIndex = {
             if (manager.isSystem) {
                 tableHtml += `
                     <a href="${globalRootUrl}asterisk-managers/modify/${manager.id}" 
-                       class="ui button view popuped" data-content="${globalTranslate.bt_View || 'View'}">
+                       class="ui button view popuped" data-content="${globalTranslate.bt_View}">
                         <i class="icon eye blue"></i>
                     </a>
                 `;
             } else {
                 tableHtml += `
                     <a href="${globalRootUrl}asterisk-managers/modify/${manager.id}" 
-                       class="ui button edit popuped" data-content="${globalTranslate.bt_ToolTipEdit || 'Edit'}">
+                       class="ui button edit popuped" data-content="${globalTranslate.bt_ToolTipEdit}">
                         <i class="icon edit blue"></i>
                     </a>
                     <a href="#" data-value="${manager.id}" 
-                       class="ui button copy popuped" data-content="${globalTranslate.bt_ToolTipCopy || 'Copy'}">
+                       class="ui button copy popuped" data-content="${globalTranslate.bt_ToolTipCopy}">
                         <i class="icon copy outline blue"></i>
                     </a>
                     <a href="#" data-value="${manager.id}" 
-                       class="ui button delete two-steps-delete popuped" data-content="${globalTranslate.bt_ToolTipDelete || 'Delete'}">
+                       class="ui button delete two-steps-delete popuped" data-content="${globalTranslate.bt_ToolTipDelete}">
                         <i class="icon trash red"></i>
                     </a>
                 `;
@@ -248,56 +248,56 @@ const asteriskManagersIndex = {
     getPermissionDescriptions() {
         return {
             call: {
-                read: globalTranslate.am_tooltip_call_read || 'View active calls and channel states',
-                write: globalTranslate.am_tooltip_call_write || 'Hangup calls, transfer, park'
+                read: globalTranslate.am_tooltip_call_read,
+                write: globalTranslate.am_tooltip_call_write
             },
             cdr: {
-                read: globalTranslate.am_tooltip_cdr_read || 'Access call detail records',
-                write: globalTranslate.am_tooltip_cdr_write || 'Modify CDR records'
+                read: globalTranslate.am_tooltip_cdr_read,
+                write: globalTranslate.am_tooltip_cdr_write
             },
             originate: {
-                read: globalTranslate.am_tooltip_originate_read || 'View origination status',
-                write: globalTranslate.am_tooltip_originate_write || 'Create new calls, initiate outbound calls'
+                read: globalTranslate.am_tooltip_originate_read,
+                write: globalTranslate.am_tooltip_originate_write
             },
             reporting: {
-                read: globalTranslate.am_tooltip_reporting_read || 'Access system reports and statistics',
-                write: globalTranslate.am_tooltip_reporting_write || 'Generate and export reports'
+                read: globalTranslate.am_tooltip_reporting_read,
+                write: globalTranslate.am_tooltip_reporting_write
             },
             agent: {
-                read: globalTranslate.am_tooltip_agent_read || 'View queue agents status',
-                write: globalTranslate.am_tooltip_agent_write || 'Login/logout agents, pause/unpause'
+                read: globalTranslate.am_tooltip_agent_read,
+                write: globalTranslate.am_tooltip_agent_write
             },
             config: {
-                read: globalTranslate.am_tooltip_config_read || 'View configuration files',
-                write: globalTranslate.am_tooltip_config_write || 'Modify system configuration, reload modules'
+                read: globalTranslate.am_tooltip_config_read,
+                write: globalTranslate.am_tooltip_config_write
             },
             dialplan: {
-                read: globalTranslate.am_tooltip_dialplan_read || 'View dialplan contexts and extensions',
-                write: globalTranslate.am_tooltip_dialplan_write || 'Modify dialplan in real-time'
+                read: globalTranslate.am_tooltip_dialplan_read,
+                write: globalTranslate.am_tooltip_dialplan_write
             },
             dtmf: {
-                read: globalTranslate.am_tooltip_dtmf_read || 'Monitor DTMF events',
-                write: globalTranslate.am_tooltip_dtmf_write || 'Send DTMF tones to channels'
+                read: globalTranslate.am_tooltip_dtmf_read,
+                write: globalTranslate.am_tooltip_dtmf_write
             },
             log: {
-                read: globalTranslate.am_tooltip_log_read || 'View system and application logs',
-                write: globalTranslate.am_tooltip_log_write || 'Rotate logs, change log levels'
+                read: globalTranslate.am_tooltip_log_read,
+                write: globalTranslate.am_tooltip_log_write
             },
             system: {
-                read: globalTranslate.am_tooltip_system_read || 'View system status and information',
-                write: globalTranslate.am_tooltip_system_write || 'Execute system commands, restart services'
+                read: globalTranslate.am_tooltip_system_read,
+                write: globalTranslate.am_tooltip_system_write
             },
             user: {
-                read: globalTranslate.am_tooltip_user_read || 'View user events and device states',
-                write: globalTranslate.am_tooltip_user_write || 'Send user events, update device states'
+                read: globalTranslate.am_tooltip_user_read,
+                write: globalTranslate.am_tooltip_user_write
             },
             verbose: {
-                read: globalTranslate.am_tooltip_verbose_read || 'View verbose messages and debug output',
-                write: globalTranslate.am_tooltip_verbose_write || 'Set verbose levels'
+                read: globalTranslate.am_tooltip_verbose_read,
+                write: globalTranslate.am_tooltip_verbose_write
             },
             command: {
-                read: globalTranslate.am_tooltip_command_read || 'View CLI command output',
-                write: globalTranslate.am_tooltip_command_write || 'Execute Asterisk CLI commands'
+                read: globalTranslate.am_tooltip_command_read,
+                write: globalTranslate.am_tooltip_command_write
             }
         };
     },
@@ -316,28 +316,28 @@ const asteriskManagersIndex = {
         let accessLevel = '';
         let accessColor = '';
         if (hasRead && hasWrite) {
-            accessLevel = globalTranslate.am_tooltip_access_read_write || 'Read/Write';
+            accessLevel = globalTranslate.am_tooltip_access_read_write;
             accessColor = 'green';
         } else if (hasRead) {
-            accessLevel = globalTranslate.am_tooltip_access_read_only || 'Read Only';
+            accessLevel = globalTranslate.am_tooltip_access_read_only;
             accessColor = 'blue';
         } else if (hasWrite) {
-            accessLevel = globalTranslate.am_tooltip_access_write_only || 'Write Only';
+            accessLevel = globalTranslate.am_tooltip_access_write_only;
             accessColor = 'orange';
         }
         
-        const currentAccessLabel = globalTranslate.am_tooltip_current_access || 'Current Access';
+        const currentAccessLabel = globalTranslate.am_tooltip_current_access;
         tooltipData.description = `<span class="ui ${accessColor} text"><strong>${currentAccessLabel}: ${accessLevel}</strong></span>`;
         
         // Add permission details
-        const allowedOperationsLabel = globalTranslate.am_tooltip_allowed_operations || 'Allowed Operations';
+        const allowedOperationsLabel = globalTranslate.am_tooltip_allowed_operations;
         tooltipData.list.push({
             term: allowedOperationsLabel,
             definition: null
         });
         
         if (hasRead) {
-            const readLabel = globalTranslate.am_Read || 'Read';
+            const readLabel = globalTranslate.am_Read;
             tooltipData.list.push({
                 term: readLabel,
                 definition: permDesc.read
@@ -345,7 +345,7 @@ const asteriskManagersIndex = {
         }
         
         if (hasWrite) {
-            const writeLabel = globalTranslate.am_Write || 'Write';
+            const writeLabel = globalTranslate.am_Write;
             tooltipData.list.push({
                 term: writeLabel,
                 definition: permDesc.write
@@ -354,18 +354,18 @@ const asteriskManagersIndex = {
         
         // Add restrictions if any
         if (!hasRead || !hasWrite) {
-            const restrictionsLabel = globalTranslate.am_tooltip_restrictions || 'Restrictions';
+            const restrictionsLabel = globalTranslate.am_tooltip_restrictions;
             tooltipData.list.push({
                 term: restrictionsLabel,
                 definition: null
             });
             
             if (!hasRead) {
-                const cannotReadLabel = globalTranslate.am_tooltip_cannot_read || 'Cannot read';
+                const cannotReadLabel = globalTranslate.am_tooltip_cannot_read;
                 tooltipData.list.push(`${cannotReadLabel}: ${permDesc.read}`);
             }
             if (!hasWrite) {
-                const cannotWriteLabel = globalTranslate.am_tooltip_cannot_write || 'Cannot write';
+                const cannotWriteLabel = globalTranslate.am_tooltip_cannot_write;
                 tooltipData.list.push(`${cannotWriteLabel}: ${permDesc.write}`);
             }
         }
@@ -373,8 +373,8 @@ const asteriskManagersIndex = {
         // Add system manager warning if applicable
         if (isSystem) {
             tooltipData.warning = {
-                header: globalTranslate.am_tooltip_system_manager_warning || 'System Manager',
-                text: globalTranslate.am_tooltip_system_manager_warning_text || 'This is a system manager account. Modifying permissions may affect system operations.'
+                header: globalTranslate.am_tooltip_system_manager_warning,
+                text: globalTranslate.am_tooltip_system_manager_warning_text
             };
         }
         
@@ -427,7 +427,7 @@ const asteriskManagersIndex = {
                         // Reload the entire page to ensure clean state
                         window.location.href = `${globalRootUrl}asterisk-managers/index`;
                     } else {
-                        UserMessage.showMultiString(response?.messages || globalTranslate.am_ErrorDeletingManager || 'Error deleting manager');
+                        UserMessage.showMultiString(response?.messages || globalTranslate.am_ErrorDeletingManager);
                         $button.removeClass('loading disabled');
                         // Restore two-steps-delete class if deletion failed
                         $button.addClass('two-steps-delete');
