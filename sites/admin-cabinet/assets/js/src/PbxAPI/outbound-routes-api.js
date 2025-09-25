@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global PbxApiClient */
+/* global PbxApiClient, $ */ 
 
 /**
  * OutboundRoutesAPI - REST API v3 client for outbound routes management
@@ -34,23 +34,6 @@ const OutboundRoutesAPI = new PbxApiClient({
     }
 });
 
-/**
- * Create new outbound route (wrapper for saveRecord)
- * @param {object} data - Route data
- * @param {function} callback - Callback function
- */
-OutboundRoutesAPI.create = function(data, callback) {
-    this.saveRecord(data, callback);
-};
-
-/**
- * Update existing outbound route (wrapper for saveRecord)
- * @param {object} data - Route data
- * @param {function} callback - Callback function
- */
-OutboundRoutesAPI.update = function(data, callback) {
-    this.saveRecord(data, callback);
-};
 
 /**
  * Change priority of outbound routes
@@ -58,22 +41,5 @@ OutboundRoutesAPI.update = function(data, callback) {
  * @param {function} callback - Callback function
  */
 OutboundRoutesAPI.changePriority = function(priorityData, callback) {
-    $.api({
-        url: `${this.apiUrl}:changePriority`,
-        method: 'POST',
-        data: { priorities: priorityData },
-        on: 'now',
-        onSuccess(response) {
-            callback(response);
-        },
-        onFailure(response) {
-            callback(response);
-        },
-        onError() {
-            callback({
-                result: false,
-                messages: { error: ['Network error occurred'] }
-            });
-        }
-    });
+    return this.callCustomMethod('changePriority', { priorities: priorityData }, callback, 'POST');
 };
