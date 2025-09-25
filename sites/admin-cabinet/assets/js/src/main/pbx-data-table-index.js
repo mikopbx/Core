@@ -30,7 +30,7 @@
  * - Two-step delete confirmation
  * - Double-click editing
  * 
- * @class PbxDataTableIndex
+ * @class PbxDataTableIndex 
  */
 class PbxDataTableIndex {
     /**
@@ -128,7 +128,7 @@ class PbxDataTableIndex {
             this.initializeDataTable();
         } catch (error) {
             console.error('Failed to initialize PbxDataTableIndex:', error);
-            UserMessage.showError(globalTranslate.ex_ErrorInitializingTable || 'Failed to initialize table');
+            UserMessage.showError(globalTranslate.ex_ErrorInitializingTable);
             this.hideLoader();
             this.toggleEmptyPlaceholder(true);
         }
@@ -419,7 +419,7 @@ class PbxDataTableIndex {
         this.toggleEmptyPlaceholder(isEmpty);
         
         if (isEmpty && !isSuccess) {
-            UserMessage.showError(globalTranslate.ex_ErrorLoadingData || 'Failed to load data');
+            UserMessage.showError(globalTranslate.ex_ErrorLoadingData);
         }
         
         if (this.onDataLoaded) {
@@ -650,7 +650,7 @@ class PbxDataTableIndex {
             $loader = $(`
                 <div id="table-data-loader" class="ui segment" style="min-height: 200px; position: relative;">
                     <div class="ui active inverted dimmer">
-                        <div class="ui text loader">${globalTranslate.ex_LoadingData || 'Loading...'}</div>
+                        <div class="ui text loader">${globalTranslate.ex_LoadingData}</div>
                     </div>
                 </div>
             `);
