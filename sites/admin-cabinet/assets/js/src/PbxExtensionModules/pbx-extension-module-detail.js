@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, PbxApi, globalTranslate */
+/* global globalRootUrl, ModulesAPI, globalTranslate */
 
 /**
  * Represents the extension module popup.
@@ -63,7 +63,7 @@ const extensionModuleDetail = {
                             closable: true,
                         })
                         .modal('show');
-                    PbxApi.ModulesGetModuleInfo(params, extensionModuleDetail.cbAfterGetModuleDetails);
+                    ModulesAPI.getModuleInfo(params, extensionModuleDetail.cbAfterGetModuleDetails);
                 }
             }
         });

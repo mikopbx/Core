@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, Form, sessionStorage, globalPBXLicense, UserMessage*/
+/* global globalRootUrl, globalTranslate, Form, sessionStorage, globalPBXLicense, UserMessage, LicenseAPI*/
 
 
 /**
@@ -161,7 +161,7 @@ const keyCheck = {
         keyCheck.$confirmResetButton.on('click', () => {
             keyCheck.$formObj.addClass('loading disabled');
             keyCheck.$confirmResetButton.addClass('loading disabled');
-            PbxApi.LicenseResetLicenseKey(keyCheck.cbAfterResetLicenseKey);
+            LicenseAPI.resetKey(keyCheck.cbAfterResetLicenseKey);
             keyCheck.$resetConfirmModal.modal('hide');
         });
 
@@ -376,7 +376,7 @@ const keyCheck = {
      */
     cbAfterSendForm(response) {
         const formData = keyCheck.$formObj.form('get values');
-        PbxApi.LicenseProcessUserRequest(formData, keyCheck.cbAfterFormProcessing);
+        LicenseAPI.processUserRequest(formData, keyCheck.cbAfterFormProcessing);
     },
 
     /**

@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, PbxApi, globalTranslate, UserMessage */
+/* global globalRootUrl, ModulesAPI, globalTranslate, UserMessage */
 
 /**
  * Class for module uninstallation.
@@ -86,7 +86,7 @@ const deleteModule = {
                     const keepSettings = deleteModule.$keepSettingsCheckbox.checkbox('is checked');
                     params.keepSettings = keepSettings;
                     params.channelId = this.channelId;
-                    PbxApi.ModulesUnInstallModule(params, deleteModule.cbAfterDelete);
+                    ModulesAPI.uninstallModule(params, deleteModule.cbAfterDelete);
                     
                     return true;
                 },

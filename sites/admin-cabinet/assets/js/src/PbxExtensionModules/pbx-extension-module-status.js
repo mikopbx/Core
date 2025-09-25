@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global PbxApi, globalTranslate, UserMessage, EventBus */
+/* global ModulesAPI, globalTranslate, UserMessage, EventBus */
 
 /**
  * Represents the status of an external module.
@@ -80,10 +80,10 @@ class PbxExtensionStatus {
         $('a.button').addClass('disabled');
         this.changeLabelText(globalTranslate.ext_ModuleStatusChanging);
         const params = {
-            moduleUniqueID: this.uniqid,
+            uniqid: this.uniqid,
             channelId: this.channelId,
         };
-        PbxApi.ModulesEnableModule(params);
+        ModulesAPI.enableModule(params);
     }
 
     /**
@@ -95,10 +95,10 @@ class PbxExtensionStatus {
         $('a.button').addClass('disabled');
         this.changeLabelText(globalTranslate.ext_ModuleStatusChanging);
         const params = {
-            moduleUniqueID: this.uniqid,
+            uniqid: this.uniqid,
             channelId: this.channelId,
         };
-        PbxApi.ModulesDisableModule(params);
+        ModulesAPI.disableModule(params);
     }
 
     /**

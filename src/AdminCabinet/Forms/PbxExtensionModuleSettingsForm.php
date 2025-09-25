@@ -22,7 +22,6 @@ namespace MikoPBX\AdminCabinet\Forms;
 
 use MikoPBX\Common\Providers\TranslationProvider;
 use Phalcon\Forms\Element\Hidden;
-use Phalcon\Forms\Element\Select;
 use Phalcon\Forms\Element\Text;
 
 /**
@@ -62,22 +61,17 @@ class PbxExtensionModuleSettingsForm extends BaseForm
             )
         );
 
-        // Left sidebar groups
+        // Left sidebar groups - V5.0 pattern with SemanticUIDropdown
         $menuGroups = $this->di->getElements()->getMenuGroups();
 
-        $groups = new Select(
+        $this->addSemanticUIDropdown(
             'menu-group',
             $menuGroups,
+            $options['group'],
             [
-                'using' => [
-                    'id',
-                    'name',
-                ],
-                'useEmpty' => false,
-                'value' => $options['group'],
-                'class' => 'ui selection dropdown',
+                'clearable' => false,
+                'forceSelection' => true
             ]
         );
-        $this->add($groups);
     }
 }

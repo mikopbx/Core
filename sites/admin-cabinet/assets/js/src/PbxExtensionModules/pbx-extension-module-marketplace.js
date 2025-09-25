@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global PbxApi, globalTranslate, globalPBXVersion */
+/* global PbxApi, globalTranslate, globalPBXVersion, ModulesAPI */
 
 /**
  * Represents list of extension modules.
@@ -69,7 +69,7 @@ const marketplace = {
             return;
         }
         marketplace.isInitialized = true;
-        PbxApi.ModulesGetAvailable(marketplace.cbParseModuleUpdates);
+        ModulesAPI.getAvailable(marketplace.cbParseModuleUpdates);
     },
 
     /**
