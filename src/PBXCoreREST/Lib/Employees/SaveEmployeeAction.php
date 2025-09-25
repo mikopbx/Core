@@ -581,11 +581,11 @@ class SaveEmployeeAction extends AbstractSaveRecordAction
     /**
      * Validate employee data according to web interface rules.
      *
-     * @param array $sanitizedData The sanitized input data
+     * @param array &$sanitizedData The sanitized input data (passed by reference to allow cleaning)
      * @param bool $isCreateOperation Whether this is a create (true) or update (false) operation
      * @return array Array of validation error messages
      */
-    public static function validateEmployeeData(array $sanitizedData, bool $isCreateOperation): array
+    public static function validateEmployeeData(array &$sanitizedData, bool $isCreateOperation): array
     {
         $validationErrors = [];
 
@@ -642,8 +642,15 @@ class SaveEmployeeAction extends AbstractSaveRecordAction
         }
 
         // Validate user_email (optional, email format)
-        if (!empty($sanitizedData['user_email']) && !filter_var($sanitizedData['user_email'], FILTER_VALIDATE_EMAIL)) {
-            $validationErrors[] = TranslationProvider::translate('ex_ValidateEmailEmpty');
+        if (!empty($sanitizedData['user_email'])) {
+            // Check for placeholder values
+            $placeholders = ['_@_._', '@', '_@_', '___@___.___'];
+            if (in_array($sanitizedData['user_email'], $placeholders, true)) {
+                // Clear placeholder value
+                $sanitizedData['user_email'] = '';
+            } elseif (!filter_var($sanitizedData['user_email'], FILTER_VALIDATE_EMAIL)) {
+                $validationErrors[] = TranslationProvider::translate('ex_ValidateEmailEmpty');
+            }
         }
 
         // Validate mobile_number (optional, unique, format)

@@ -56,50 +56,49 @@
             </div>
 
             <!-- Preview Table -->
-            <table class="ui celled table" id="preview-table">
+            <table class="ui celled striped table" id="preview-table">
                 <thead>
                     <tr>
-                        <th>{{ t._('ex_Status') }}</th>
-                        <th>{{ t._('ex_Number') }}</th>
-                        <th>{{ t._('ex_Name') }}</th>
-                        <th>{{ t._('ex_Email') }}</th>
-                        <th>{{ t._('ex_Mobile') }}</th>
-                        <th>{{ t._('ex_ValidationMessage') }}</th>
+                        <th class="collapsing">{{ t._('ex_Number') }}</th>
+                        <th class="collapsing">{{ t._('ex_Name') }}</th>
+                        <th class="collapsing">{{ t._('ex_Mobile') }}</th>
+                        <th class="collapsing">{{ t._('ex_Email') }}</th>
+                        <th class="collapsing">{{ t._('ex_Status') }}</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
             </table>
 
-            <!-- Import Options -->
-            <div class="ui form segment">
-                <h4 class="ui header">{{ t._('ex_ImportOptions') }}</h4>
-                <div class="field">
-                    <label>{{ t._('ex_DuplicateStrategy') }}</label>
-                    <select class="ui dropdown" id="import-strategy">
-                        <option value="skip_duplicates">{{ t._('ex_SkipDuplicates') }}</option>
-                        <option value="update_existing">{{ t._('ex_UpdateExisting') }}</option>
-                        <option value="fail_on_duplicate">{{ t._('ex_FailOnDuplicate') }}</option>
+            <!-- Import Strategy and Action Buttons -->
+            <div class="ui form" id="import-controls" style="margin-top: 1em;">
+                <div class="inline fields">
+                    <div class="field">
+                    <label style="margin-right: 1em;">{{ t._('ex_DuplicateStrategy') }}:</label>
+                    <select class="ui dropdown" id="import-strategy" style="margin-right: 1em;">
+                        <option value="skip_existing">{{ t._('ex_SkipExisting') }}</option>
+                        <option value="update_different">{{ t._('ex_UpdateDifferent') }}</option>
                     </select>
+                    </div>
+                    <div class="field">
+                        <div class="ui icon buttons">
+                        <button class="ui primary button" id="confirm-import">
+                            <i class="check icon"></i>
+                            {{ t._('ex_ConfirmImport') }}
+                        </button>
+                        <button class="ui button" id="cancel-import">
+                            <i class="times icon"></i>
+                            {{ t._('ex_Cancel') }}
+                        </button>
+                        </div>
+                    </div>
                 </div>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="ui buttons">
-                <button class="ui primary button" id="confirm-import">
-                    <i class="check icon"></i>
-                    {{ t._('ex_ConfirmImport') }}
-                </button>
-                <button class="ui button" id="cancel-import">
-                    <i class="times icon"></i>
-                    {{ t._('ex_Cancel') }}
-                </button>
             </div>
         </div>
 
         <!-- Progress Section (hidden initially) -->
         <div id="progress-section" style="display:none;">
             <h3 class="ui header">{{ t._('ex_ImportProgress') }}</h3>
-            
+
             <div class="ui indicating progress" id="import-progress">
                 <div class="bar">
                     <div class="progress"></div>
@@ -107,11 +106,16 @@
                 <div class="label" id="progress-label">{{ t._('ex_ProcessingEmployees') }}</div>
             </div>
 
-            <!-- Live Log -->
-            <div class="ui segment" id="import-log">
-                <h4 class="ui header">{{ t._('ex_ImportLog') }}</h4>
-                <div class="ui list" id="log-messages"></div>
+            <!-- Progress Text (replaces log) -->
+            <div class="ui basic segment" style="padding-top: 0.5em; padding-bottom: 0;">
+                <div class="ui small text" id="progress-text">{{ t._('ex_ImportStarted') }}</div>
             </div>
+
+            <!-- Cancel Button -->
+            <button class="ui red button" id="cancel-import-process" style="margin-top: 0.5em;">
+                <i class="stop icon"></i>
+                {{ t._('ex_CancelImport') }}
+            </button>
         </div>
 
         <!-- Results Section (hidden initially) -->
@@ -120,16 +124,10 @@
             
             <div class="ui message" id="result-message"></div>
             
-            <div class="ui buttons">
-                <button class="ui button" id="new-import">
-                    <i class="redo icon"></i>
-                    {{ t._('ex_NewImport') }}
-                </button>
-                <a href="{{ url('extensions/index') }}" class="ui primary button">
-                    <i class="list icon"></i>
-                    {{ t._('ex_BackToList') }}
-                </a>
-            </div>
+            <button class="ui button" id="new-import">
+                <i class="redo icon"></i>
+                {{ t._('ex_NewImport') }}
+            </button>
         </div>
     </div>
 

@@ -95,7 +95,7 @@ return [
     'ex_ValidateForwardingToBeFilled' => 'В настройках маршрутизации не заполнен номер переадресации по таймауту',
     'ex_ValidateMobileIsNotCorrect' => 'Проверьте правильность ввода мобильного номера',
     'ex_ValidateMobileNumberIsDouble' => 'Мобильный номер уже используется другим сотрудником',
-    'ex_ValidateNumberIsDouble' => 'Номер уже занят',
+    'ex_ValidateNumberIsDouble' => 'Внутренний номер уже занят',
     'ex_ValidateNumberIsEmpty' => 'Внутренний номер сотрудника не заполнен',
     'ex_ValidatePasswordTooWeak' => 'Пароль слишком слабый для требований безопасности',
     'ex_ValidateSecretEmpty' => 'SIP пароль не может быть пустым',
@@ -140,6 +140,21 @@ return [
     'ex_StatusUnavailable' => 'Недоступен',
     'ex_StatusUnknown' => 'Неизвестен',
     'ex_StatusDisabled' => 'Отключен',
+
+    // Import progress translations
+    'ex_Records' => 'записей',
+    'ex_Created' => 'создано',
+    'ex_Updated' => 'обновлено',
+    'ex_Skipped' => 'пропущено',
+    'ex_Errors' => 'ошибок',
+
+    // Import error message templates - cleaner format
+    'ex_ImportErrorEmployee' => 'Строка %line%: %name% (номер %number%)',
+    'ex_ImportErrorEmployeeWithMobile' => 'Строка %line%: %name% (номер %number%, моб. %mobile%)',
+    'ex_ImportErrorBasic' => 'Строка %line%: номер %number%',
+
+    // Specific error messages without number duplication
+    'ex_MobileNumberAlreadyUsed' => 'мобильный номер уже используется',
 
     // Tooltip translations
     'ex_MobileDialstringTooltip_desc' => 'Указывает фактический номер или правило набора при звонке на мобильный внутренний номер сотрудника. Если поле не заполнено, используется значение из поля "Мобильный номер".',
@@ -318,6 +333,8 @@ return [
     'ex_ValidationMessage' => 'Сообщение валидации',
     'ex_ImportOptions' => 'Настройки импорта',
     'ex_DuplicateStrategy' => 'Стратегия обработки дубликатов',
+    'ex_SkipExisting' => 'Пропустить существующих сотрудников',
+    'ex_UpdateDifferent' => 'Перезаписать если данные отличаются',
     'ex_SkipDuplicates' => 'Пропускать дубликаты',
     'ex_UpdateExisting' => 'Обновлять существующие',
     'ex_FailOnDuplicate' => 'Остановка при дубликате',
@@ -332,9 +349,11 @@ return [
     'ex_NewImport' => 'Новый импорт',
     'ex_BackToList' => 'Вернуться к списку',
     'ex_ImportStarted' => 'Импорт начат',
+    'ex_ImportCompleted' => 'Импорт завершен',
     'ex_ImportSuccess' => 'Импорт завершен: создано - {created}, пропущено - {skipped}, ошибок - {failed}',
     'ex_ImportComplete' => 'Импорт завершен',
     'ex_ImportFailed' => 'Ошибка импорта: {error}',
+    'ex_ContinueToExtensions' => 'Перейти к списку',
     
     // Export section
     'ex_ExportSettings' => 'Настройки экспорта',
@@ -355,8 +374,29 @@ return [
     
     // Error messages
     'ex_FileUploadError' => 'Ошибка загрузки файла',
+    'ex_FileUploadMerging' => 'Обработка файла...',
+
+    // Import status translations
+    'ex_ImportStatusValid' => 'Корректно',
+    'ex_ImportStatusDuplicate' => 'Дубликат',
+    'ex_ImportStatusExists' => 'Уже существует',
+    'ex_ImportStatusError' => 'Ошибка',
+    'ex_ImportStatusInvalid' => 'Некорректно',
+    'ex_ImportStatusOverwrite' => 'Перезаписать',
+    'ex_ImportStatusProcessing' => 'Обрабатывается',
+    'ex_ImportStatusCreated' => 'Создан',
+    'ex_ImportStatusUpdated' => 'Обновлен',
+    'ex_ImportStatusSkipped' => 'Пропущен',
+    'ex_ImportStatusNoChanges' => 'Без изменений',
+    'ex_ImportProcessing' => 'Обработка...',
+    'ex_CancelImport' => 'Прервать загрузку',
+    'ex_ImportCancelled' => 'Импорт отменен',
+    'ex_ShowingAllRecords' => 'Отображаем все',
+    'ex_Records' => 'записи',
+    'ex_UseScrollToNavigate' => 'Используйте прокрутку для навигации.',
 
     'ex_Now' => 'Сейчас',
     'ex_Hours_Short' => 'ч',
-    'ex_Yesterday' => 'Вчера'
+    'ex_Yesterday' => 'Вчера',
+    'ex_FailedToLoadData' => 'Не удалось загрузить данные',
 ];

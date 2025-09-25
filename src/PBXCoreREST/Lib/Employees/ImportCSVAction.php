@@ -70,7 +70,7 @@ class ImportCSVAction
      * @param array $data Request data containing:
      *   - filepath: Path to uploaded CSV file
      *   - mode: 'preview' or 'import'
-     *   - strategy: 'skip_duplicates', 'update_existing', or 'fail_on_duplicate'
+     *   - strategy: 'skip_existing', 'update_different', 'skip_duplicates', 'overwrite', or 'fail_on_duplicate'
      * @return PBXApiResult
      */
     public static function main(array $data): PBXApiResult
@@ -80,7 +80,7 @@ class ImportCSVAction
         
         // Support both 'mode' and 'action' parameters for compatibility
         $mode = $data['mode'] ?? $data['action'] ?? 'preview';
-        $strategy = $data['strategy'] ?? 'skip_duplicates';
+        $strategy = $data['strategy'] ?? 'skip_existing';
         
         // Check if we're in import mode with saved data (support both uploadId and upload_id)
         $uploadId = $data['uploadId'] ?? $data['upload_id'] ?? null;
@@ -193,7 +193,7 @@ class ImportCSVAction
                 'errors' => count($validationResult['errors']),
                 'warnings' => count($validationResult['warnings']),
                 'headers' => $headers,
-                'preview' => array_slice($validationResult['preview'], 0, 20), // First 20 records
+                'preview' => $validationResult['preview'], // Show all records for real-time updates
                 'uploadId' => self::saveTemporaryData($records, $validationResult)
             ];
             $res->success = true;
@@ -362,6 +362,8 @@ class ImportCSVAction
                     'row' => $line,
                     'number' => $number,
                     'user_username' => $record['user_username'] ?? '',
+                    'user_email' => $record['user_email'] ?? '',
+                    'mobile_number' => $record['mobile_number'] ?? '',
                     'status' => 'error',
                     'message' => 'Отсутствуют обязательные поля'
                 ];
@@ -379,6 +381,8 @@ class ImportCSVAction
                     'row' => $line,
                     'number' => $number,
                     'user_username' => $record['user_username'],
+                    'user_email' => $record['user_email'] ?? '',
+                    'mobile_number' => $record['mobile_number'] ?? '',
                     'status' => 'duplicate',
                     'message' => 'Дубликат номера в файле'
                 ];
@@ -399,13 +403,17 @@ class ImportCSVAction
                     'row' => $line,
                     'number' => $number,
                     'user_username' => $record['user_username'],
+                    'user_email' => $record['user_email'] ?? '',
+                    'mobile_number' => $record['mobile_number'] ?? '',
                     'status' => 'exists',
                     'message' => 'Номер уже существует'
                 ];
                 
-                if ($strategy === 'skip_duplicates' || $strategy === 'fail_on_duplicate') {
-                    continue;
+                // Handle different strategies for existing employees
+                if ($strategy === 'skip_existing' || $strategy === 'skip_duplicates' || $strategy === 'fail_on_duplicate') {
+                    continue; // Skip further processing for this record
                 }
+                // For 'update_different' and 'overwrite', continue processing to mark as valid
             }
             
             // Validate password if provided
@@ -425,13 +433,20 @@ class ImportCSVAction
                 }
             }
             
-            // Validate email if provided
-            if (!empty($record['user_email']) && !filter_var($record['user_email'], FILTER_VALIDATE_EMAIL)) {
-                $result['warnings'][] = [
-                    'line' => $line,
-                    'type' => 'INVALID_EMAIL',
-                    'message' => TranslationProvider::translate('ex_ImportInvalidEmail')
-                ];
+            // Clean and validate email if provided
+            $emailPlaceholders = ['_@_._', '@', '_@_', '___@___.___'];
+            if (!empty($record['user_email'])) {
+                // Clean placeholder values
+                if (in_array($record['user_email'], $emailPlaceholders, true)) {
+                    $record['user_email'] = '';
+                    $records[$index]['user_email'] = ''; // Update the record
+                } elseif (!filter_var($record['user_email'], FILTER_VALIDATE_EMAIL)) {
+                    $result['warnings'][] = [
+                        'line' => $line,
+                        'type' => 'INVALID_EMAIL',
+                        'message' => TranslationProvider::translate('ex_ImportInvalidEmail')
+                    ];
+                }
             }
             
             // Validate forwarding references
@@ -466,6 +481,7 @@ class ImportCSVAction
                 'number' => $number,
                 'user_username' => $record['user_username'],
                 'user_email' => $record['user_email'] ?? '',
+                'mobile_number' => $record['mobile_number'] ?? '',
                 'status' => 'valid',
                 'message' => 'OK'
             ];

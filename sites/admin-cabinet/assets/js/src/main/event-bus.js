@@ -134,6 +134,26 @@ const EventBus = {
     },
 
     /**
+     * Unsubscribes from an event.
+     * @param {string} event - The event to unsubscribe from.
+     * @param {Function} [callback] - The specific callback function to remove. If not provided, all callbacks for the event are removed.
+     */
+    unsubscribe(event, callback) {
+        if (!this.subscribers[event]) return;
+
+        if (callback) {
+            // Remove specific callback
+            const index = this.subscribers[event].indexOf(callback);
+            if (index !== -1) {
+                this.subscribers[event].splice(index, 1);
+            }
+        } else {
+            // Remove all callbacks for this event
+            delete this.subscribers[event];
+        }
+    },
+
+    /**
      * Publishes an event.
      * @param {string} event - The event to publish.
      * @param {Object} data - The data to be published.

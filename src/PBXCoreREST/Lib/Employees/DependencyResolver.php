@@ -44,26 +44,53 @@ class DependencyResolver
     {
         // Build dependency graph
         $this->buildGraph($employees);
-        
+
+        // Check if there are any dependencies at all
+        $hasDependencies = $this->hasDependencies();
+
+        if (!$hasDependencies) {
+            // No dependencies found, preserve original order
+            return [
+                'sortedEmployees' => $employees,
+                'brokenEdges' => [],
+                'cycles' => []
+            ];
+        }
+
         // Detect cycles
         $this->detectCycles();
-        
+
         // Break cycles and get edges to restore later
         $brokenEdges = $this->breakCycles($employees);
-        
+
         // Perform topological sort
         $sortedOrder = $this->topologicalSort();
-        
+
         // Map sorted numbers back to employee records
         $sortedEmployees = $this->mapToEmployees($sortedOrder, $employees);
-        
+
         return [
             'sortedEmployees' => $sortedEmployees,
             'brokenEdges' => $brokenEdges,
             'cycles' => $this->cycles
         ];
     }
-    
+
+    /**
+     * Check if there are any dependencies in the graph
+     *
+     * @return bool True if any dependencies exist, false otherwise
+     */
+    private function hasDependencies(): bool
+    {
+        foreach ($this->graph as $node) {
+            if (!empty($node['dependencies'])) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * Build dependency graph from employee records
      * 
