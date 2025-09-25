@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global PbxApi, globalTranslate */
+/* global CdrAPI, globalTranslate */
 
 /**
  * Object responsible for handling current calls information.
@@ -62,7 +62,7 @@ const currentCallsWorker = {
      * The main worker function that fetches current calls information.
      */
     worker() {
-        PbxApi.GetActiveChannels(currentCallsWorker.cbGetActiveChannels);
+        CdrAPI.getActiveChannels(currentCallsWorker.cbGetActiveChannels);
         currentCallsWorker.timeoutHandle
             = window.setTimeout(currentCallsWorker.worker, currentCallsWorker.timeOut);
     },

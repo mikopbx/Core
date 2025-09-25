@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global PbxApi */
+/* global SystemAPI */
 
 /**
  * Object responsible for handling system restart and shutdown.
@@ -36,7 +36,7 @@ const restart = {
          */
         $('#restart-button').on('click', (e) => {
             $(e.target).closest('button').addClass('loading');
-            PbxApi.SystemReboot();
+            SystemAPI.reboot(() => {});
         });
 
         /**
@@ -45,7 +45,7 @@ const restart = {
          */
         $('#shutdown-button').on('click', (e) => {
             $(e.target).closest('button').addClass('loading');
-            PbxApi.SystemShutDown();
+            SystemAPI.shutdown(() => {});
         });
     },
 };
