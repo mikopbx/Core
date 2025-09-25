@@ -72,10 +72,13 @@ class SendTestEmailAction
 
             // Set default subject and body
             $subject = $data['subject'] ?? $translation->_('ms_TestEmailSubject');
-            $body = $data['body'] ?? '<h2>' . $translation->_('ms_TestEmailSubject') . '</h2><p>' . $translation->_('ms_TestEmailBody') . '</p>';
 
-            // Add timestamp to body for uniqueness
-            $body .= '<hr><p style="color: #888; font-size: 12px;">Sent at: ' . date('Y-m-d H:i:s') . ' (Server Time)</p>';
+            // Create enhanced test email body with system information
+            if (empty($data['body'])) {
+                $body = self::generateEnhancedTestEmail($translation);
+            } else {
+                $body = $data['body'];
+            }
 
             SystemMessages::sysLogMsg('SendTestEmailAction', "Sending test email to: $to", LOG_INFO);
 
@@ -187,5 +190,127 @@ class SendTestEmailAction
         }
 
         return $res;
+    }
+
+    /**
+     * Generate enhanced test email content with system information
+     *
+     * @param mixed $translation Translation service instance
+     * @return string HTML email content
+     */
+    private static function generateEnhancedTestEmail($translation): string
+    {
+        // Get basic system information
+        $stationName = PbxSettings::getValueByKey(PbxSettings::PBX_NAME) ?: 'MikoPBX';
+        $stationDescription = PbxSettings::getValueByKey(PbxSettings::PBX_DESCRIPTION);
+        $webPort = PbxSettings::getValueByKey(PbxSettings::WEB_PORT) ?: '80';
+        $webHttpsPort = PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PORT) ?: '443';
+
+        // Get mail configuration (non-sensitive)
+        $smtpHost = PbxSettings::getValueByKey(PbxSettings::MAIL_SMTP_HOST);
+        $smtpPort = PbxSettings::getValueByKey(PbxSettings::MAIL_SMTP_PORT);
+        $authType = PbxSettings::getValueByKey(PbxSettings::MAIL_SMTP_AUTH_TYPE);
+        $senderAddress = PbxSettings::getValueByKey(PbxSettings::MAIL_SMTP_SENDER_ADDRESS);
+        $useTLS = PbxSettings::getValueByKey(PbxSettings::MAIL_SMTP_USE_TLS) === '1' ? 'Yes' : 'No';
+
+        // Get OAuth2 provider if applicable
+        $oauth2Provider = '';
+        if ($authType === 'oauth2') {
+            $oauth2Provider = PbxSettings::getValueByKey(PbxSettings::MAIL_OAUTH2_PROVIDER);
+            $oauth2Provider = $oauth2Provider ? ucfirst($oauth2Provider) : 'Unknown';
+        }
+
+        // Get network information
+        $extIpAddress = PbxSettings::getValueByKey(PbxSettings::EXTERNAL_SIP_IP_ADDR);
+        $hostname = gethostname() ?: 'Unknown';
+
+        // Get current time
+        $currentTime = date('Y-m-d H:i:s T');
+
+        // Build HTML email
+        $html = '
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>MikoPBX Test Email</title>
+</head>
+<body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px 8px 0 0;">
+        <h1 style="margin: 0; font-size: 24px;">📧 MikoPBX: ' . $translation->_('ms_TestEmailSubject') . '</h1>
+        <p style="margin: 10px 0 0 0; opacity: 0.9;">' . $translation->_('ms_TestEmailBody') . '</p>
+    </div>
+    <div style="background: white; padding: 20px; border: 1px solid #dee2e6;">
+        <h3 style="color: #495057; border-bottom: 2px solid #e9ecef; padding-bottom: 8px;">📊 PBX System Information</h3>
+
+        <table style="width: 100%; border-collapse: collapse; margin: 10px 0;">
+            <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #f1f3f4; font-weight: bold; width: 30%;">Station Name:</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #f1f3f4;">' . htmlspecialchars($stationName) . '</td>
+            </tr>';
+
+        if (!empty($stationDescription)) {
+            $html .= '
+            <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #f1f3f4; font-weight: bold;">Description:</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #f1f3f4;">' . htmlspecialchars($stationDescription) . '</td>
+            </tr>';
+        }
+
+        $html .= '
+            <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #f1f3f4; font-weight: bold;">Hostname:</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #f1f3f4;">' . htmlspecialchars($hostname) . '</td>
+            </tr>';
+
+        if (!empty($extIpAddress)) {
+            $html .= '
+            <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #f1f3f4; font-weight: bold;">External IP:</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #f1f3f4;">' . htmlspecialchars($extIpAddress) . '</td>
+            </tr>';
+        }
+
+        $html .= '
+            <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #f1f3f4; font-weight: bold;">Web Ports:</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #f1f3f4;">HTTP: ' . htmlspecialchars($webPort) . ', HTTPS: ' . htmlspecialchars($webHttpsPort) . '</td>
+            </tr>';
+
+        $html .= '
+        </table>
+    </div>
+
+    <div style="background: white; padding: 20px; border: 1px solid #dee2e6; margin-top: 1px;">
+        <h3 style="color: #495057; border-bottom: 2px solid #e9ecef; padding-bottom: 8px;">📮 Email Configuration</h3>
+
+        <table style="width: 100%; border-collapse: collapse; margin: 10px 0;">
+            <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #f1f3f4; font-weight: bold; width: 30%;">SMTP Server:</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #f1f3f4;">' . htmlspecialchars($smtpHost) . ':' . htmlspecialchars($smtpPort) . '</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #f1f3f4; font-weight: bold;">Authentication:</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #f1f3f4;">' . strtoupper($authType) . ($oauth2Provider ? ' (' . $oauth2Provider . ')' : '') . '</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #f1f3f4; font-weight: bold;">Sender Address:</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #f1f3f4;">' . htmlspecialchars($senderAddress) . '</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px 0; border-bottom: 1px solid #f1f3f4; font-weight: bold;">Encryption:</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #f1f3f4;">TLS: ' . $useTLS . '</td>
+            </tr>
+        </table>
+    </div>
+
+    <div style="background: #f8f9fa; padding: 15px; border-radius: 0 0 8px 8px; text-align: center; color: #6c757d; font-size: 12px;">
+        <p style="margin: 0;">📅 Sent on ' . htmlspecialchars($currentTime) . '</p>
+        <p style="margin: 5px 0 0 0;">Generated by MikoPBX Email System Test</p>
+    </div>
+</body>
+</html>';
+
+        return $html;
     }
 }

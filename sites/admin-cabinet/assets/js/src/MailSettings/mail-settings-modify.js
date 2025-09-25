@@ -1110,7 +1110,7 @@ const mailSettings = {
                         // Don't show expired token warning if connection is successful
                         // as it means refresh token is working correctly
                         if (diag.oauth2_refresh_token_exists) {
-                            details += ` <span class="ui green label"><i class="check icon"></i>${globalTranslate.ms_DiagnosticAuthorized}</span>`;
+                            details += ` - ${globalTranslate.ms_DiagnosticAuthorized}`;
                         }
                     }
                     details += '</small>';
@@ -1215,9 +1215,8 @@ const mailSettings = {
         $button.addClass('loading');
 
         const data = {
-            to: recipient,
-            subject: 'Test email from MikoPBX',
-            body: '<h2>Test Email</h2><p>This is a test email from your MikoPBX system.</p>'
+            to: recipient
+            // Let the server generate enhanced email content with system info
         };
 
         MailSettingsAPI.sendTestEmail(data, (response) => {
