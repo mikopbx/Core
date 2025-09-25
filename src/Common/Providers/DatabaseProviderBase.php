@@ -67,6 +67,23 @@ abstract class DatabaseProviderBase
 
                 $connection->setNestedTransactionsWithSavepoints(true);
 
+                // Optimize SQLite for better concurrency
+                // Set busy timeout to 5 seconds - wait for lock instead of immediate failure
+                $connection->execute("PRAGMA busy_timeout = 5000");
+
+                // Keep WAL mode for better concurrency (already set, but ensure it)
+                $connection->execute("PRAGMA journal_mode = WAL");
+
+                // Use NORMAL synchronous mode for better performance while maintaining durability
+                // FULL is very safe but slower, NORMAL is good balance
+                $connection->execute("PRAGMA synchronous = NORMAL");
+
+                // Increase cache size to 10MB for better performance
+                $connection->execute("PRAGMA cache_size = -10000");
+
+                // Use memory for temp tables
+                $connection->execute("PRAGMA temp_store = MEMORY");
+
                 if ($dbConfig['debugMode']) {
                     $this->setupDebugMode($connection, $dbConfig);
                 }
