@@ -17,7 +17,7 @@
  */
 
 /* global PbxApiClient */
-
+ 
 /**
  * Asterisk REST Interface (ARI) Users API using unified PbxApiClient
  * All standard CRUD operations are provided by the base class

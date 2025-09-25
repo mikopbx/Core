@@ -1,0 +1,49 @@
+"use strict";
+
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
+/* global PbxApiClient */
+
+/**
+ * Asterisk REST Interface (ARI) Users API using unified PbxApiClient
+ * All standard CRUD operations are provided by the base class
+ */
+var AsteriskRestUsersAPI = new PbxApiClient({
+  endpoint: '/pbxcore/api/v3/asterisk-rest-users',
+  customMethods: {
+    getDefaults: ':getDefaults'
+  }
+}); // Add backward compatibility aliases
+
+AsteriskRestUsersAPI.getDefaults = function (callback) {
+  return this.callCustomMethod('getDefaults', callback);
+}; // Legacy method for compatibility
+
+
+AsteriskRestUsersAPI.getListWithParams = function () {
+  var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+  var callback = arguments.length > 1 ? arguments[1] : undefined;
+  return this.getList(params, callback);
+}; // The PbxApiClient automatically provides:
+// - getList(callback) or getList(params, callback)
+// - getRecord(id, callback) - uses :getDefaults for new records
+// - saveRecord(data, callback) - automatically selects POST/PUT
+// - deleteRecord(id, callback)
+// - callCustomMethod(methodName, data, callback)
+//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIi4uLy4uL3NyYy9QYnhBUEkvYXN0ZXJpc2stcmVzdC11c2Vycy1hcGkuanMiXSwibmFtZXMiOlsiQXN0ZXJpc2tSZXN0VXNlcnNBUEkiLCJQYnhBcGlDbGllbnQiLCJlbmRwb2ludCIsImN1c3RvbU1ldGhvZHMiLCJnZXREZWZhdWx0cyIsImNhbGxiYWNrIiwiY2FsbEN1c3RvbU1ldGhvZCIsImdldExpc3RXaXRoUGFyYW1zIiwicGFyYW1zIiwiZ2V0TGlzdCJdLCJtYXBwaW5ncyI6Ijs7QUFBQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQTtBQUNBOztBQUVBOztBQUVBO0FBQ0E7QUFDQTtBQUNBO0FBQ0EsSUFBTUEsb0JBQW9CLEdBQUcsSUFBSUMsWUFBSixDQUFpQjtBQUMxQ0MsRUFBQUEsUUFBUSxFQUFFLHFDQURnQztBQUUxQ0MsRUFBQUEsYUFBYSxFQUFFO0FBQ1hDLElBQUFBLFdBQVcsRUFBRTtBQURGO0FBRjJCLENBQWpCLENBQTdCLEMsQ0FPQTs7QUFDQUosb0JBQW9CLENBQUNJLFdBQXJCLEdBQW1DLFVBQVNDLFFBQVQsRUFBbUI7QUFDbEQsU0FBTyxLQUFLQyxnQkFBTCxDQUFzQixhQUF0QixFQUFxQ0QsUUFBckMsQ0FBUDtBQUNILENBRkQsQyxDQUlBOzs7QUFDQUwsb0JBQW9CLENBQUNPLGlCQUFyQixHQUF5QyxZQUFnQztBQUFBLE1BQXZCQyxNQUF1Qix1RUFBZCxFQUFjO0FBQUEsTUFBVkgsUUFBVTtBQUNyRSxTQUFPLEtBQUtJLE9BQUwsQ0FBYUQsTUFBYixFQUFxQkgsUUFBckIsQ0FBUDtBQUNILENBRkQsQyxDQUlBO0FBQ0E7QUFDQTtBQUNBO0FBQ0E7QUFDQSIsInNvdXJjZXNDb250ZW50IjpbIi8qXG4gKiBNaWtvUEJYIC0gZnJlZSBwaG9uZSBzeXN0ZW0gZm9yIHNtYWxsIGJ1c2luZXNzXG4gKiBDb3B5cmlnaHQgwqkgMjAxNy0yMDI1IEFsZXhleSBQb3J0bm92IGFuZCBOaWtvbGF5IEJla2V0b3ZcbiAqXG4gKiBUaGlzIHByb2dyYW0gaXMgZnJlZSBzb2Z0d2FyZTogeW91IGNhbiByZWRpc3RyaWJ1dGUgaXQgYW5kL29yIG1vZGlmeVxuICogaXQgdW5kZXIgdGhlIHRlcm1zIG9mIHRoZSBHTlUgR2VuZXJhbCBQdWJsaWMgTGljZW5zZSBhcyBwdWJsaXNoZWQgYnlcbiAqIHRoZSBGcmVlIFNvZnR3YXJlIEZvdW5kYXRpb247IGVpdGhlciB2ZXJzaW9uIDMgb2YgdGhlIExpY2Vuc2UsIG9yXG4gKiAoYXQgeW91ciBvcHRpb24pIGFueSBsYXRlciB2ZXJzaW9uLlxuICpcbiAqIFRoaXMgcHJvZ3JhbSBpcyBkaXN0cmlidXRlZCBpbiB0aGUgaG9wZSB0aGF0IGl0IHdpbGwgYmUgdXNlZnVsLFxuICogYnV0IFdJVEhPVVQgQU5ZIFdBUlJBTlRZOyB3aXRob3V0IGV2ZW4gdGhlIGltcGxpZWQgd2FycmFudHkgb2ZcbiAqIE1FUkNIQU5UQUJJTElUWSBvciBGSVRORVNTIEZPUiBBIFBBUlRJQ1VMQVIgUFVSUE9TRS4gIFNlZSB0aGVcbiAqIEdOVSBHZW5lcmFsIFB1YmxpYyBMaWNlbnNlIGZvciBtb3JlIGRldGFpbHMuXG4gKlxuICogWW91IHNob3VsZCBoYXZlIHJlY2VpdmVkIGEgY29weSBvZiB0aGUgR05VIEdlbmVyYWwgUHVibGljIExpY2Vuc2UgYWxvbmcgd2l0aCB0aGlzIHByb2dyYW0uXG4gKiBJZiBub3QsIHNlZSA8aHR0cHM6Ly93d3cuZ251Lm9yZy9saWNlbnNlcy8+LlxuICovXG5cbi8qIGdsb2JhbCBQYnhBcGlDbGllbnQgKi9cbiBcbi8qKlxuICogQXN0ZXJpc2sgUkVTVCBJbnRlcmZhY2UgKEFSSSkgVXNlcnMgQVBJIHVzaW5nIHVuaWZpZWQgUGJ4QXBpQ2xpZW50XG4gKiBBbGwgc3RhbmRhcmQgQ1JVRCBvcGVyYXRpb25zIGFyZSBwcm92aWRlZCBieSB0aGUgYmFzZSBjbGFzc1xuICovXG5jb25zdCBBc3Rlcmlza1Jlc3RVc2Vyc0FQSSA9IG5ldyBQYnhBcGlDbGllbnQoe1xuICAgIGVuZHBvaW50OiAnL3BieGNvcmUvYXBpL3YzL2FzdGVyaXNrLXJlc3QtdXNlcnMnLFxuICAgIGN1c3RvbU1ldGhvZHM6IHtcbiAgICAgICAgZ2V0RGVmYXVsdHM6ICc6Z2V0RGVmYXVsdHMnXG4gICAgfVxufSk7XG5cbi8vIEFkZCBiYWNrd2FyZCBjb21wYXRpYmlsaXR5IGFsaWFzZXNcbkFzdGVyaXNrUmVzdFVzZXJzQVBJLmdldERlZmF1bHRzID0gZnVuY3Rpb24oY2FsbGJhY2spIHtcbiAgICByZXR1cm4gdGhpcy5jYWxsQ3VzdG9tTWV0aG9kKCdnZXREZWZhdWx0cycsIGNhbGxiYWNrKTtcbn07XG5cbi8vIExlZ2FjeSBtZXRob2QgZm9yIGNvbXBhdGliaWxpdHlcbkFzdGVyaXNrUmVzdFVzZXJzQVBJLmdldExpc3RXaXRoUGFyYW1zID0gZnVuY3Rpb24ocGFyYW1zID0ge30sIGNhbGxiYWNrKSB7XG4gICAgcmV0dXJuIHRoaXMuZ2V0TGlzdChwYXJhbXMsIGNhbGxiYWNrKTtcbn07XG5cbi8vIFRoZSBQYnhBcGlDbGllbnQgYXV0b21hdGljYWxseSBwcm92aWRlczpcbi8vIC0gZ2V0TGlzdChjYWxsYmFjaykgb3IgZ2V0TGlzdChwYXJhbXMsIGNhbGxiYWNrKVxuLy8gLSBnZXRSZWNvcmQoaWQsIGNhbGxiYWNrKSAtIHVzZXMgOmdldERlZmF1bHRzIGZvciBuZXcgcmVjb3Jkc1xuLy8gLSBzYXZlUmVjb3JkKGRhdGEsIGNhbGxiYWNrKSAtIGF1dG9tYXRpY2FsbHkgc2VsZWN0cyBQT1NUL1BVVFxuLy8gLSBkZWxldGVSZWNvcmQoaWQsIGNhbGxiYWNrKVxuLy8gLSBjYWxsQ3VzdG9tTWV0aG9kKG1ldGhvZE5hbWUsIGRhdGEsIGNhbGxiYWNrKSJdfQ==

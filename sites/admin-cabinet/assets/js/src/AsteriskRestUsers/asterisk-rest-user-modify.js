@@ -189,7 +189,7 @@ const AsteriskRestUserModify = {
 
             if (response === false) {
                 // Show error and stop
-                UserMessage.showError(globalTranslate.ari_ErrorLoadingUser || 'Error loading user');
+                UserMessage.showError(globalTranslate.ari_ErrorLoadingUser);
                 return;
             }
 
@@ -216,7 +216,7 @@ const AsteriskRestUserModify = {
                 this.$username.prop('readonly', true);
                 this.$username.closest('.field').addClass('disabled');
                 this.$formObj.find('.generate-password').addClass('disabled');
-                UserMessage.showInformation(globalTranslate.ari_SystemUserReadOnly || 'System user is read-only');
+                UserMessage.showInformation(globalTranslate.ari_SystemUserReadOnly);
             }
         });
     },

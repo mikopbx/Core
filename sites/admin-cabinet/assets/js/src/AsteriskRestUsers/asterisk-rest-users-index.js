@@ -55,7 +55,7 @@ const asteriskRestUsersIndex = {
                         // Add system label for pbxcore user
                         let systemLabel = '';
                         if (row.username === 'pbxcore') {
-                            systemLabel = ' <span class="ui yellow mini label">' + (globalTranslate.ari_SystemUser || 'SYSTEM') + '</span>';
+                            systemLabel = ' <span class="ui yellow mini label">' + globalTranslate.ari_SystemUser + '</span>';
                         }
                         
                         return icon + ' ' + username + description + systemLabel;
@@ -92,7 +92,7 @@ const asteriskRestUsersIndex = {
                     .find(row => row.id === id);
                     
                 if (rowData && rowData.username === 'pbxcore') {
-                    UserMessage.showError(globalTranslate.ari_CannotDeleteSystemUser || 'Cannot delete system user');
+                    UserMessage.showError(globalTranslate.ari_CannotDeleteSystemUser);
                     callback(false);
                     return;
                 }

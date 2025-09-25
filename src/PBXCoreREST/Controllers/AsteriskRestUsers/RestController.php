@@ -62,7 +62,7 @@ use MikoPBX\PBXCoreREST\Lib\AsteriskRestUsersManagementProcessor;
  * curl -X GET http://127.0.0.1/pbxcore/api/v3/asterisk-rest-users:getDefaults
  * 
  * @note For password generation, use the dedicated password API:
- * curl -X GET http://127.0.0.1/pbxcore/api/v2/passwords/generate?length=32
+ * curl -X GET http://127.0.0.1/pbxcore/api/v3/passwords:generate?length=32
  * 
  * @package MikoPBX\PBXCoreREST\Controllers\AsteriskRestUsers
  */
