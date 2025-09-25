@@ -82,17 +82,21 @@ const DynamicDropdownBuilder = {
             currentText = SecurityUtils.sanitizeObjectRepresentations(currentText);
         }
         
+        // Check if we're using placeholder text
+        const isUsingPlaceholder = !currentText;
+
         // Fallback to placeholder or default
         currentText = currentText || config.placeholder || 'Select value';
-        
+
         // Build CSS classes with sanitization
         const baseClasses = ['ui', 'selection', 'dropdown'];
         const additionalClasses = config.additionalClasses || [];
         const allClasses = [...baseClasses, ...additionalClasses].join(' ');
-        
+
         // Build dropdown HTML - FIXED: Create elements with jQuery to properly handle HTML content
         // Only show current value in text display, let API populate menu on click
-        const textClass = currentValue ? 'text' : 'text default';
+        // Use 'default' class when showing placeholder, even if there's a value
+        const textClass = isUsingPlaceholder ? 'text default' : 'text';
         
         // Sanitize fieldName for use in ID attribute
         const safeFieldName = typeof SecurityUtils !== 'undefined' 
