@@ -540,4 +540,30 @@ JS;
             return false;
         }
     }
+
+    /**
+     * Check if element exists in dropdown menu options
+     * Legacy method for backward compatibility with existing tests
+     *
+     * @param string $fieldName Field name of the dropdown
+     * @param string $value Value to search for in dropdown
+     * @return bool True if element exists in dropdown
+     */
+    protected function checkIfElementExistOnDropdownMenu(string $fieldName, string $value): bool
+    {
+        return $this->dropdownHasValue($fieldName, $value);
+    }
+
+    /**
+     * Check if element does NOT exist in dropdown menu options
+     * Legacy method for backward compatibility with existing tests
+     *
+     * @param string $fieldName Field name of the dropdown
+     * @param string $value Value to search for in dropdown
+     * @return bool True if element does NOT exist in dropdown
+     */
+    protected function checkIfElementNotExistOnDropdownMenu(string $fieldName, string $value): bool
+    {
+        return !$this->dropdownHasValue($fieldName, $value);
+    }
 }

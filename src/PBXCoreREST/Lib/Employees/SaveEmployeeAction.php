@@ -69,8 +69,17 @@ class SaveEmployeeAction extends AbstractSaveRecordAction
             $userEntity = self::saveEntities($sanitizedData, $res);
             
             if ($res->success && $userEntity !== null) {
+                // Set reload path for new records (for frontend navigation)
+                $isCreateOperation = empty($sanitizedData['id']) || $sanitizedData['id'] !== $userEntity->id;
+                $reloadPath = $isCreateOperation ? "extensions/modify/{$userEntity->id}" : '';
+
                 $res = GetRecordAction::main($userEntity->id);
                 $res->processor = __METHOD__;
+
+                // Preserve reload path after getting record data
+                if (!empty($reloadPath)) {
+                    $res->reload = $reloadPath;
+                }
             }
             
         } catch (\Exception $e) {
