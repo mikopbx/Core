@@ -24,7 +24,7 @@ require_once 'Globals.php';
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Common\Providers\PBXCoreRESTClientProvider;
 use MikoPBX\Common\Providers\RedisClientProvider;
-use MikoPBX\PBXCoreREST\Lib\UserPageTrackerLib;
+use MikoPBX\PBXCoreREST\Lib\UserPageTracker\UserPageTrackerLib;
 use Throwable;
 
 /**

@@ -25,8 +25,8 @@
  */
 const UserPageTrackerAPI = {
     // User Page Tracker
-    userPageTrackerPageView: `${Config.pbxUrl}/pbxcore/api/v2/user-page-tracker/pageView`, // Tracks the page view.
-    userPageTrackerPageLeave: `${Config.pbxUrl}/pbxcore/api/v2/user-page-tracker/pageLeave`, // Tracks the page leave.
+    userPageTrackerPageView: `${Config.pbxUrl}/pbxcore/api/v3/user-page-tracker:pageView`, // Tracks the page view.
+    userPageTrackerPageLeave: `${Config.pbxUrl}/pbxcore/api/v3/user-page-tracker:pageLeave`, // Tracks the page leave.
 
         /**
      * Tracks the page view.

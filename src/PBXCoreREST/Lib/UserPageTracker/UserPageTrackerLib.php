@@ -17,7 +17,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-namespace MikoPBX\PBXCoreREST\Lib;
+namespace MikoPBX\PBXCoreREST\Lib\UserPageTracker;
 
 use Phalcon\Di\Injectable;
 use MikoPBX\Common\Providers\RedisClientProvider;
@@ -39,13 +39,13 @@ class UserPageTrackerLib extends Injectable
     /**
      * Get the Redis key for tracking a user viewing a specific page
      * 
-     * @param string $userId User session ID
+     * @param string $sessionId User session ID
      * @param string $pageName Page name being viewed
      * @return string Redis key
      */
-    public static function getUserViewingKey(string $userId, string $pageName): string
+    public static function getUserViewingKey(string $sessionId, string $pageName): string
     {
-        return self::USER_KEY_PREFIX . $userId . ':viewing:' . $pageName;
+        return self::USER_KEY_PREFIX . $sessionId . ':viewing:' . $pageName;
     }
     
     /**
@@ -62,12 +62,12 @@ class UserPageTrackerLib extends Injectable
     /**
      * Get the Redis key pattern for finding all user viewing keys
      * 
-     * @param string $userId User session ID
+     * @param string $sessionId User session ID
      * @return string Redis key pattern
      */
-    public static function getUserViewingPattern(string $userId): string
+    public static function getUserViewingPattern(string $sessionId): string
     {
-        return self::USER_KEY_PREFIX . $userId . ':viewing:*';
+        return self::USER_KEY_PREFIX . $sessionId . ':viewing:*';
     }
     
     /**
@@ -88,10 +88,10 @@ class UserPageTrackerLib extends Injectable
      * @param int $expire TTL in seconds (default: 300)
      * @return bool Success status
      */
-    public function recordPageView(string $userId, string $pageName, int $expire = 300): bool
+    public function recordPageView(string $sessionId, string $pageName, int $expire = 300): bool
     {
         try {
-            $keyUser = self::getUserViewingKey($userId, $pageName);
+            $keyUser = self::getUserViewingKey($sessionId, $pageName);
             $keyPage = self::getPageViewersKey($pageName);
             
             // Get Redis with proper prefix handling
@@ -101,7 +101,7 @@ class UserPageTrackerLib extends Injectable
             $redis->set($keyUser, time(), ['EX' => $expire]);
             
             // Add user to page viewers set
-            $redis->sAdd($keyPage, $userId);
+            $redis->sAdd($keyPage, $sessionId);
             $redis->expire($keyPage, $expire);
             
             return true;
@@ -113,14 +113,14 @@ class UserPageTrackerLib extends Injectable
     /**
      * Record that a user left a page
      * 
-     * @param string $userId User session ID
+     * @param string $sessionId User session ID
      * @param string $pageName Page name
      * @return bool Success status
      */
-    public function recordPageLeave(string $userId, string $pageName): bool
+    public function recordPageLeave(string $sessionId, string $pageName): bool
     {
         try {
-            $keyUser = self::getUserViewingKey($userId, $pageName);
+            $keyUser = self::getUserViewingKey($sessionId, $pageName);
             $keyPage = self::getPageViewersKey($pageName);
             
             // Get Redis with proper prefix handling
@@ -130,7 +130,7 @@ class UserPageTrackerLib extends Injectable
             $redis->del($keyUser);
             
             // Remove user from page viewers set
-            $redis->sRem($keyPage, $userId);
+            $redis->sRem($keyPage, $sessionId);
             
             return true;
         } catch (\Throwable $e) {
@@ -182,13 +182,13 @@ class UserPageTrackerLib extends Injectable
     /**
      * Get list of pages a user is currently viewing
      * 
-     * @param string $userId User session ID
+     * @param string $sessionId User session ID
      * @return array Array of page names the user is viewing
      */
-    public function getUserViewingPages(string $userId): array
+    public function getUserViewingPages(string $sessionId): array
     {
         try {
-            $pattern = self::getUserViewingPattern($userId);
+            $pattern = self::getUserViewingPattern($sessionId);
             
             // Get Redis with proper prefix handling
             $redis = $this->di->get(RedisClientProvider::SERVICE_NAME);

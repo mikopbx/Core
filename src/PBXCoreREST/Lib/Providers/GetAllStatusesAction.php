@@ -26,7 +26,7 @@ use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use MikoPBX\PBXCoreREST\Lib\UserPageTrackerLib;
+use MikoPBX\PBXCoreREST\Lib\UserPageTracker\UserPageTrackerLib;
 use Phalcon\Di\Di;
 use Throwable;
 

@@ -21,15 +21,12 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Lib\Extensions;
 
-use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Providers\EventBusProvider;
 use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
-use MikoPBX\Core\System\Util;
-use MikoPBX\Core\System\CriticalErrorsHandler;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use MikoPBX\PBXCoreREST\Lib\UserPageTrackerLib;
+use MikoPBX\PBXCoreREST\Lib\UserPageTracker\UserPageTrackerLib;
 use Phalcon\Di\Di;
 use Throwable;
 

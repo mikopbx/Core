@@ -20,7 +20,7 @@
 namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Providers\EventBusProvider;
-use MikoPBX\PBXCoreREST\Lib\UserPageTrackerLib;
+use MikoPBX\PBXCoreREST\Lib\UserPageTracker\UserPageTrackerLib;
 use Phalcon\Di\Injectable;
 use Throwable;
 
