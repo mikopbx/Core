@@ -23,7 +23,6 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Providers;
 
 use MikoPBX\PBXCoreREST\Controllers\{
-    Users\GetController as UsersGetController,
     Nchan\GetController as NchanGetController,
     MailSettings\OAuth2CallbackController,
     Modules\ModulesControllerBase,
@@ -79,8 +78,6 @@ class RouterProvider implements ServiceProviderInterface
      */
     private const LEGACY_ROUTES = [
         // User routes (both GET and POST)
-        [UsersGetController::class, 'callAction', '/pbxcore/api/users/{actionName}', 'get', '/'],
-        [UsersGetController::class, 'callAction', '/pbxcore/api/users/{actionName}', 'post', '/'],
 
         // Nchan routes
         [NchanGetController::class, 'callAction', '/pbxcore/api/nchan/{queueName}', 'get', '/'],
@@ -161,7 +158,7 @@ class RouterProvider implements ServiceProviderInterface
             $dirName = basename($dir);
 
             // Skip special directories
-            if (in_array($dirName, ['Users', 'Nchan', 'Modules', 'MailSettings'])) {
+            if (in_array($dirName, ['Nchan', 'Modules', 'MailSettings'])) {
                 continue;
             }
 
@@ -246,6 +243,7 @@ class RouterProvider implements ServiceProviderInterface
             'AsteriskRestUsers' => 'asterisk-rest-users',
             'Fail2Ban' => 'fail2ban',
             'UserPageTracker' => 'user-page-tracker',
+            'Users' => 'users',
         ];
 
         // Use specific conversion if available, otherwise auto-convert

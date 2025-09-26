@@ -28,7 +28,7 @@
 const UsersAPI = new PbxApiClient({
     endpoint: '/pbxcore/api/v3/users',
     customMethods: {
-        checkAvailability: ':checkAvailability'
+        checkAvailability: ':available'
     }
 });
 
