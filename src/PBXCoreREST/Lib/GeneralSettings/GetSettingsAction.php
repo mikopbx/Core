@@ -379,27 +379,22 @@ class GetSettingsAction extends AbstractGetRecordAction
             'isDefaultSSHPassword' => false
         ];
         
-        try {
-            // Get default values
-            $defaults = PbxSettings::getDefaultArrayValues();
-            
-            // Get current password hashes from database
-            $currentWebPasswordHash = PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_PASSWORD);
-            $currentSSHPasswordHash = PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD);
-            
-            // Check Web Admin password against default
-            if (isset($defaults[PbxSettings::WEB_ADMIN_PASSWORD])) {
-                $result['isDefaultWebPassword'] = ($currentWebPasswordHash === $defaults[PbxSettings::WEB_ADMIN_PASSWORD]);
-            }
-            
-            // Check SSH password against default
-            if (isset($defaults[PbxSettings::SSH_PASSWORD])) {
-                $result['isDefaultSSHPassword'] = ($currentSSHPasswordHash === $defaults[PbxSettings::SSH_PASSWORD]);
-            }
-            
-        } catch (\Exception $e) {
-            // Log error but don't fail the whole request
-            \MikoPBX\Core\System\Util::sysLogMsg(__METHOD__, "Failed to check default passwords: " . $e->getMessage());
+        
+        // Get default values
+        $defaults = PbxSettings::getDefaultArrayValues();
+        
+        // Get current password hashes from database
+        $currentWebPasswordHash = PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_PASSWORD);
+        $currentSSHPasswordHash = PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD);
+        
+        // Check Web Admin password against default
+        if (isset($defaults[PbxSettings::WEB_ADMIN_PASSWORD])) {
+            $result['isDefaultWebPassword'] = ($currentWebPasswordHash === $defaults[PbxSettings::WEB_ADMIN_PASSWORD]);
+        }
+        
+        // Check SSH password against default
+        if (isset($defaults[PbxSettings::SSH_PASSWORD])) {
+            $result['isDefaultSSHPassword'] = ($currentSSHPasswordHash === $defaults[PbxSettings::SSH_PASSWORD]);
         }
         
         return $result;

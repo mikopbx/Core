@@ -328,7 +328,10 @@ class SaveSettingsAction extends AbstractSaveRecordAction
                 }
             }
         }
-        
+
+        // Handle password synchronization for PATCH requests where only one password field is present
+        self::handlePasswordSynchronization($data, $defaultPbxSettings, $security, $messages['error']);
+
         // Reset cloud provision flag only if something was actually updated
         if (self::$actualUpdatesCount > 0) {
             PbxSettings::setValueByKey(PbxSettings::CLOUD_PROVISIONING, '1', $messages['error']);
@@ -337,7 +340,63 @@ class SaveSettingsAction extends AbstractSaveRecordAction
         $success = count($messages['error']) === 0;
         return ['success' => $success, 'messages' => $messages];
     }
-    
+
+    /**
+     * Handle password synchronization for PATCH requests
+     *
+     * This method ensures that when only one password field is changed in a PATCH request,
+     * the other password is automatically synchronized if it's still at default value.
+     *
+     * @param array $data Request data containing passwords
+     * @param array $defaultPbxSettings Default PBX settings values
+     * @param object $security Security service for password hashing
+     * @param array $errorMessages Reference to error messages array
+     * @return void
+     */
+    private static function handlePasswordSynchronization(array $data, array $defaultPbxSettings, $security, array &$errorMessages): void
+    {
+        $currentSSHPassword = PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD);
+        $currentWEBPassword = PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_PASSWORD);
+
+        $defaultSSHPassword = $defaultPbxSettings[PbxSettings::SSH_PASSWORD];
+        $defaultWEBPassword = $defaultPbxSettings[PbxSettings::WEB_ADMIN_PASSWORD];
+
+        // Case 1: SSH password was changed, but WebAdminPassword was not in the request
+        // Sync WEB password if it's still at default value
+        if (array_key_exists(PbxSettings::SSH_PASSWORD, $data)
+            && !array_key_exists(PbxSettings::WEB_ADMIN_PASSWORD, $data)
+            && ($data[PbxSettings::SSH_PASSWORD] ?? GeneralSettingsEditForm::HIDDEN_PASSWORD) !== GeneralSettingsEditForm::HIDDEN_PASSWORD
+            && $currentWEBPassword === $defaultWEBPassword) {
+
+            $newWEBPassword = $security->hash($data[PbxSettings::SSH_PASSWORD]);
+            $currentWEBPasswordValue = PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_PASSWORD);
+
+            if ($currentWEBPasswordValue !== $newWEBPassword) {
+                PbxSettings::setValueByKey(PbxSettings::WEB_ADMIN_PASSWORD, $newWEBPassword, $errorMessages);
+                self::$actualUpdatesCount++;
+                self::$updatedFields[] = PbxSettings::WEB_ADMIN_PASSWORD . '_synced_from_ssh';
+            }
+        }
+
+        // Case 2: WEB password was changed, but SSHPassword was not in the request
+        // Sync SSH password if it's still at default value
+        if (array_key_exists(PbxSettings::WEB_ADMIN_PASSWORD, $data)
+            && !array_key_exists(PbxSettings::SSH_PASSWORD, $data)
+            && ($data[PbxSettings::WEB_ADMIN_PASSWORD] ?? GeneralSettingsEditForm::HIDDEN_PASSWORD) !== GeneralSettingsEditForm::HIDDEN_PASSWORD
+            && $currentSSHPassword === $defaultSSHPassword) {
+
+            $newSSHPassword = $data[PbxSettings::WEB_ADMIN_PASSWORD];
+            $currentSSHPasswordValue = PbxSettings::getValueByKey(PbxSettings::SSH_PASSWORD);
+
+            if ($currentSSHPasswordValue !== $newSSHPassword) {
+                PbxSettings::setValueByKey(PbxSettings::SSH_PASSWORD, $newSSHPassword, $errorMessages);
+                PbxSettings::setValueByKey(PbxSettings::SSH_PASSWORD_HASH_STRING, md5($newSSHPassword), $errorMessages);
+                self::$actualUpdatesCount++;
+                self::$updatedFields[] = PbxSettings::SSH_PASSWORD . '_synced_from_web';
+            }
+        }
+    }
+
     /**
      * Check if codec data is present in the request
      *
