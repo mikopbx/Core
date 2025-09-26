@@ -19,7 +19,7 @@
 /* global globalRootUrl, sessionStorage, PbxApi, globalTranslate, SecurityUtils, PbxApiClient, Config */
 
 /**
- * ExtensionsAPI - REST API v3 client for extensions management 
+ * ExtensionsAPI - REST API v3 client for extensions management
  *
  * Provides a clean interface for extensions operations using the new RESTful API.
  * Extensions serve as read-only aggregator of numbers from various sources:
@@ -39,19 +39,14 @@ const ExtensionsAPI = new PbxApiClient({
     }
 });
 
-/**
- * This module encapsulates a collection of utility functions related to extensions.
- *
- * @module Extensions
- * @deprecated Use ExtensionsAPI for API calls
- */
-const Extensions = {
+// Add utility methods and aliases to ExtensionsAPI using centralized utility
+PbxApi.extendApiClient(ExtensionsAPI, {
+
     // Debounce timeout storage for different CSS classes
     debounceTimeouts: {},
 
     /**
      * Formats the dropdown results by adding necessary data.
-     * @deprecated Use PbxApi.formatDropdownResults() instead
      * @param {Object} response - Response from the server.
      * @param {Boolean} addEmpty - A flag to decide if an empty object needs to be added to the result.
      * @return {Object} formattedResponse - The formatted response.
@@ -109,7 +104,7 @@ const Extensions = {
                 },
                 cache: false,
                 onResponse: function(response) {
-                    const formattedResponse = Extensions.formatDropdownResults(response, addEmpty);
+                    const formattedResponse = ExtensionsAPI.formatDropdownResults(response, addEmpty);
 
                     // Filter out excluded extensions if specified
                     if (excludeExtensions.length > 0 && formattedResponse.results) {
@@ -139,7 +134,7 @@ const Extensions = {
                 }
             },
             templates: {
-                menu: Extensions.customDropdownMenu,
+                menu: ExtensionsAPI.customDropdownMenu,
             }
         };
     },
@@ -150,7 +145,7 @@ const Extensions = {
      * @returns {Object} The dropdown settings.
      */
     getDropdownSettingsWithEmpty(cbOnChange = null) {
-        return Extensions.getDropdownSettings({
+        return this.getDropdownSettings({
             onChange: cbOnChange,
             type: 'all',
             addEmpty: true,
@@ -164,7 +159,7 @@ const Extensions = {
      * @returns {Object} The dropdown settings.
      */
     getDropdownSettingsWithoutEmpty(cbOnChange = null) {
-        return Extensions.getDropdownSettings({
+        return this.getDropdownSettings({
             onChange: cbOnChange,
             type: 'all',
             addEmpty: false,
@@ -178,7 +173,7 @@ const Extensions = {
      * @returns {Object} The dropdown settings.
      */
     getDropdownSettingsForRouting(cbOnChange = null) {
-        return Extensions.getDropdownSettings({
+        return this.getDropdownSettings({
             onChange: cbOnChange,
             type: 'routing',
             addEmpty: false,
@@ -193,7 +188,7 @@ const Extensions = {
      * @returns {Object} The dropdown settings.
      */
     getDropdownSettingsForRoutingWithExclusion(cbOnChange = null, excludeExtensions = []) {
-        return Extensions.getDropdownSettings({
+        return this.getDropdownSettings({
             onChange: cbOnChange,
             type: 'routing',
             addEmpty: false,
@@ -208,7 +203,7 @@ const Extensions = {
      * @returns {Object} The dropdown settings.
      */
     getDropdownSettingsOnlyInternalWithoutEmpty(cbOnChange = null) {
-        return Extensions.getDropdownSettings({
+        return this.getDropdownSettings({
             onChange: cbOnChange,
             type: 'internal',
             addEmpty: false,
@@ -222,7 +217,7 @@ const Extensions = {
      * @returns {Object} The dropdown settings.
      */
     getDropdownSettingsOnlyInternalWithEmpty(cbOnChange = null) {
-        return Extensions.getDropdownSettings({
+        return this.getDropdownSettings({
             onChange: cbOnChange,
             type: 'internal',
             addEmpty: true,
@@ -282,7 +277,7 @@ const Extensions = {
                         $(`#${className}-error`).removeClass('hidden').html(globalTranslate.ex_ThisNumberIsNotFree);
 
                         // Log the error for debugging
-                        PbxApi.handleApiError('Extensions.checkAvailability', response || 'No response');
+                        PbxApi.handleApiError('ExtensionsAPI.checkAvailability', response || 'No response');
                     }
                 });
             }, 500); // 500ms debounce delay
@@ -299,7 +294,7 @@ const Extensions = {
     getPhoneExtensions(callBack) {
         ExtensionsAPI.getForSelect('phones', (response) => {
             if (response && response.result === true) {
-                const formattedResponse = Extensions.formatDropdownResults(response, false);
+                const formattedResponse = this.formatDropdownResults(response, false);
                 callBack(formattedResponse);
             } else {
                 callBack({ success: false, results: [] });
@@ -316,7 +311,7 @@ const Extensions = {
     getForSelect(callBack, type = 'routing') {
         ExtensionsAPI.getForSelect(type, (response) => {
             if (response && response.result === true) {
-                const formattedResponse = Extensions.formatDropdownResults(response, false);
+                const formattedResponse = this.formatDropdownResults(response, false);
                 callBack(formattedResponse.results);
             } else {
                 callBack([]);
@@ -385,7 +380,7 @@ const Extensions = {
 
         // Fetch phone representations using v3 API
         ExtensionsAPI.getPhonesRepresent(numbers, (response) => {
-            Extensions.cbAfterGetPhonesRepresent(response, htmlClass);
+            this.cbAfterGetPhonesRepresent(response, htmlClass);
         });
     },
 
@@ -428,11 +423,7 @@ const Extensions = {
                 sessionStorage.setItem(number, response.data[number].represent);
             }
         });
-    }
-};
-
-// Add method aliases and utility functions to ExtensionsAPI using centralized utility
-PbxApi.extendApiClient(ExtensionsAPI, {
+    },
 
     /**
      * Get extensions for select dropdown (alias for getForSelect custom method)
@@ -530,126 +521,5 @@ PbxApi.extendApiClient(ExtensionsAPI, {
         } catch (error) {
             return PbxApi.handleApiError('ExtensionsAPI.getPhoneRepresent', error, callback);
         }
-    },
-
-    /**
-     * Formats the dropdown results by adding necessary data.
-     *
-     * @param {Object} response - Response from the server.
-     * @param {Boolean} addEmpty - A flag to decide if an empty object needs to be added to the result.
-     * @return {Object} formattedResponse - The formatted response.
-     */
-    formatDropdownResults(response, addEmpty) {
-        return Extensions.formatDropdownResults(response, addEmpty);
-    },
-
-    /**
-     * Get dropdown settings for extensions (universal method)
-     * @param {function|object} onChangeCallback - Callback when selection changes OR options object
-     * @param {object} options - Additional options (when first param is callback)
-     * @return {object} Settings object for SemanticUIDropdownComponent
-     */
-    getDropdownSettings(onChangeCallback, options) {
-        return Extensions.getDropdownSettings(onChangeCallback, options);
-    },
-
-    /**
-     * Constructs dropdown settings for extensions with an empty field.
-     * @param {Function} cbOnChange - The function to call when the dropdown selection changes.
-     * @returns {Object} The dropdown settings.
-     */
-    getDropdownSettingsWithEmpty(cbOnChange = null) {
-        return Extensions.getDropdownSettingsWithEmpty(cbOnChange);
-    },
-
-    /**
-     * Constructs dropdown settings for extensions without an empty field.
-     * @param {Function} cbOnChange - The function to call when the dropdown selection changes.
-     * @returns {Object} The dropdown settings.
-     */
-    getDropdownSettingsWithoutEmpty(cbOnChange = null) {
-        return Extensions.getDropdownSettingsWithoutEmpty(cbOnChange);
-    },
-
-    /**
-     * Constructs dropdown settings for routing extensions.
-     * @param {Function} cbOnChange - The function to call when the dropdown selection changes.
-     * @returns {Object} The dropdown settings.
-     */
-    getDropdownSettingsForRouting(cbOnChange = null) {
-        return Extensions.getDropdownSettingsForRouting(cbOnChange);
-    },
-
-    /**
-     * Constructs dropdown settings for routing extensions with exclusion support.
-     * @param {Function} cbOnChange - The function to call when the dropdown selection changes.
-     * @param {string[]} excludeExtensions - Array of extension values to exclude from dropdown.
-     * @returns {Object} The dropdown settings.
-     */
-    getDropdownSettingsForRoutingWithExclusion(cbOnChange = null, excludeExtensions = []) {
-        return Extensions.getDropdownSettingsForRoutingWithExclusion(cbOnChange, excludeExtensions);
-    },
-
-    /**
-     * Constructs dropdown settings for internal extensions without an empty field.
-     * @param {Function} cbOnChange - The function to call when the dropdown selection changes.
-     * @returns {Object} The dropdown settings.
-     */
-    getDropdownSettingsOnlyInternalWithoutEmpty(cbOnChange = null) {
-        return Extensions.getDropdownSettingsOnlyInternalWithoutEmpty(cbOnChange);
-    },
-
-    /**
-     * Constructs dropdown settings for internal extensions with an empty field.
-     * @param {Function} cbOnChange - The function to call when the dropdown selection changes.
-     * @returns {Object} The dropdown settings.
-     */
-    getDropdownSettingsOnlyInternalWithEmpty(cbOnChange = null) {
-        return Extensions.getDropdownSettingsOnlyInternalWithEmpty(cbOnChange);
-    },
-
-    /**
-     * Checks if the new extension number is available.
-     * @param {string} oldNumber - The original extension number.
-     * @param {string} newNumber - The new extension number to check.
-     * @param {string} cssClassName - The CSS class name for the input element.
-     * @param {string} userId - The ID of the user associated with the extension.
-     */
-    checkAvailability(oldNumber, newNumber, cssClassName = 'extension', userId = '') {
-        return Extensions.checkAvailability(oldNumber, newNumber, cssClassName, userId);
-    },
-
-    /**
-     * Gets phone extensions.
-     * @param {Function} callBack - The function to call when the phone extensions have been retrieved.
-     */
-    getPhoneExtensions(callBack) {
-        return Extensions.getPhoneExtensions(callBack);
-    },
-
-    /**
-     * Update phone representations for HTML elements with a specific class.
-     * @param {string} htmlClass - The HTML class to identify elements for update.
-     */
-    updatePhonesRepresent(htmlClass) {
-        return Extensions.updatePhonesRepresent(htmlClass);
-    },
-
-    /**
-     * Update the representation of a phone number.
-     * @param {string} number - The phone number to update.
-     */
-    updatePhoneRepresent(number) {
-        return Extensions.updatePhoneRepresent(number);
-    },
-
-    /**
-     * Creates an HTML string for a custom dropdown menu.
-     * @param {Object} response - The response containing dropdown menu options.
-     * @param {Object} fields - The fields in the response to use for the menu options.
-     * @returns {string} The HTML string for the custom dropdown menu.
-     */
-    customDropdownMenu(response, fields) {
-        return Extensions.customDropdownMenu(response, fields);
     }
 });

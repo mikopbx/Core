@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, Extensions, EmployeesAPI, Form,
+/* global globalRootUrl, globalTranslate, ExtensionsAPI, EmployeesAPI, Form,
  InputMaskPatterns, avatar, ExtensionModifyStatusMonitor, ClipboardJS, PasswordWidget, UserMessage */
 
 
@@ -255,7 +255,7 @@ const extension = {
         // Call the `checkAvailability` function on `Extensions` object
         // to check whether the entered phone number is already in use.
         // Parameters: default number, new number, class name of error message (number), user id
-        Extensions.checkAvailability(extension.defaultNumber, newNumber, 'number', userId);
+        ExtensionsAPI.checkAvailability(extension.defaultNumber, newNumber, 'number', userId);
     },
     /**
      * It is executed once an email address has been completely entered.
@@ -285,7 +285,7 @@ const extension = {
         const userId = extension.$formObj.form('get value', 'user_id');
 
         // Dynamic check to see if the selected mobile number is available
-        Extensions.checkAvailability(extension.defaultMobileNumber, newMobileNumber, 'mobile-number', userId);
+        ExtensionsAPI.checkAvailability(extension.defaultMobileNumber, newMobileNumber, 'mobile-number', userId);
 
         // Refill the mobile dialstring if the new mobile number is different than the default or if the mobile dialstring is empty
         if (newMobileNumber !== extension.defaultMobileNumber
@@ -565,7 +565,7 @@ const extension = {
             if (response.data && response.data.number) {
                 extension.defaultNumber = response.data.number;
                 // Update the phone representation with the new default number
-                Extensions.updatePhoneRepresent(extension.defaultNumber);
+                ExtensionsAPI.updatePhoneRepresent(extension.defaultNumber);
             }
             // Form.js will handle all redirect logic based on submitMode and response.reload from server
         } else {

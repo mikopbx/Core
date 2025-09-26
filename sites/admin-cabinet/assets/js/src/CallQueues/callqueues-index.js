@@ -128,8 +128,8 @@ const queueTable = {
                 this.dataTable.ajax.reload();
                 
                 // Update related components
-                if (typeof Extensions !== 'undefined' && Extensions.cbOnDataChanged) {
-                    Extensions.cbOnDataChanged();
+                if (typeof ExtensionsAPI !== 'undefined' && ExtensionsAPI.cbOnDataChanged) {
+                    ExtensionsAPI.cbOnDataChanged();
                 }
             } else {
                 // Show error message (matches conference room behavior)

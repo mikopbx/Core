@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global CdrAPI, globalTranslate */
+/* global CdrAPI, globalTranslate, ExtensionsAPI */
 
 /**
  * Object responsible for handling current calls information.
@@ -91,7 +91,7 @@ const currentCallsWorker = {
         });
         resultUl += '</tbody></table>';
         currentCallsWorker.$currentCallsInfo.html(resultUl);
-        Extensions.updatePhonesRepresent('need-update');
+        ExtensionsAPI.updatePhonesRepresent('need-update');
     },
 };
 

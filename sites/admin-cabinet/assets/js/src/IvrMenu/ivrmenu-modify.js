@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, IvrMenuAPI, Form, globalTranslate, UserMessage, Extensions, SoundFileSelector, ExtensionSelector, TooltipBuilder, FormElements */
+/* global globalRootUrl, IvrMenuAPI, Form, globalTranslate, UserMessage, ExtensionsAPI, SoundFileSelector, ExtensionSelector, TooltipBuilder, FormElements */
 
 /**
  * IVR menu edit form management module
@@ -96,7 +96,7 @@ const ivrMenuModify = {
               const newNumber = ivrMenuModify.$formObj.form('get value', 'extension');
 
               // Execute the availability check for the number
-              Extensions.checkAvailability(ivrMenuModify.defaultExtension, newNumber);
+              ExtensionsAPI.checkAvailability(ivrMenuModify.defaultExtension, newNumber);
           }, 500);
       });
       

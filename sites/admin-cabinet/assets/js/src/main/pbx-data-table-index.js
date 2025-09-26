@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, SemanticLocalization, globalTranslate, UserMessage, Extensions, SecurityUtils */
+/* global globalRootUrl, SemanticLocalization, globalTranslate, UserMessage, ExtensionsAPI, SecurityUtils */
 
 /**
  * Base class for MikoPBX index table management with ACL support
@@ -603,8 +603,8 @@ class PbxDataTableIndex {
             this.dataTable.ajax.reload(reloadCallback, false);
             
             // Update related components
-            if (typeof Extensions !== 'undefined' && Extensions.cbOnDataChanged) {
-                Extensions.cbOnDataChanged();
+            if (typeof ExtensionsAPI !== 'undefined' && ExtensionsAPI.cbOnDataChanged) {
+                ExtensionsAPI.cbOnDataChanged();
             }
             
             // Success message removed - no need to show success for deletion operations

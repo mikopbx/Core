@@ -3,7 +3,7 @@
  * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  */
 
-/* global DialplanApplicationsAPI, Form, SecurityUtils, globalTranslate, Extensions, ace, UserMessage, FormElements */
+/* global DialplanApplicationsAPI, Form, SecurityUtils, globalTranslate, ExtensionsAPI, ace, UserMessage, FormElements */
 
 /**
  * Dialplan application edit form management module with enhanced security
@@ -91,7 +91,7 @@ var dialplanApplicationModify = {
             
             timeoutId = setTimeout(function() {
                 var newNumber = dialplanApplicationModify.$formObj.form('get value', 'extension');
-                Extensions.checkAvailability(dialplanApplicationModify.defaultExtension, newNumber);
+                ExtensionsAPI.checkAvailability(dialplanApplicationModify.defaultExtension, newNumber);
             }, 500);
         });
         

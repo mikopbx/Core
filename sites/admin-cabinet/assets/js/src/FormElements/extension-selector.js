@@ -273,7 +273,7 @@ const ExtensionSelector = {
     
     /**
      * Custom dropdown menu template with categories support
-     * Synchronized with Extensions.customDropdownMenu logic for compatibility
+     * Synchronized with ExtensionsAPI.customDropdownMenu logic for compatibility
      * 
      * @param {object} response - Response from API
      * @param {object} fields - Field configuration
@@ -284,14 +284,14 @@ const ExtensionSelector = {
         let html = '';
         let oldType = '';
         
-        // Use $.each for compatibility with original Extensions.customDropdownMenu
+        // Use $.each for compatibility with original ExtensionsAPI.customDropdownMenu
         $.each(values, (index, option) => {
             const value = option[fields.value] || '';
             const text = option[fields.text] || option[fields.name] || '';
             const type = option.type || '';
             const typeLocalized = option.typeLocalized || '';
             
-            // Add category header if type changed - exact same logic as Extensions.customDropdownMenu
+            // Add category header if type changed - exact same logic as ExtensionsAPI.customDropdownMenu
             if (type !== oldType) {
                 oldType = type;
                 html += '<div class="divider"></div>';

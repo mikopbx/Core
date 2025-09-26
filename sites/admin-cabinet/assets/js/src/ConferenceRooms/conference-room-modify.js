@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, ConferenceRoomsAPI, Form, globalTranslate, UserMessage, Extensions */
+/* global globalRootUrl, ConferenceRoomsAPI, Form, globalTranslate, UserMessage, ExtensionsAPI */
 
 /**
  * Conference room edit form management module
@@ -84,7 +84,7 @@ const conferenceRoomModify = {
                 const newNumber = conferenceRoomModify.$formObj.form('get value', 'extension');
 
                 // Execute the availability check for the number
-                Extensions.checkAvailability(conferenceRoomModify.defaultExtension, newNumber);
+                ExtensionsAPI.checkAvailability(conferenceRoomModify.defaultExtension, newNumber);
             }, 500);
         });
         

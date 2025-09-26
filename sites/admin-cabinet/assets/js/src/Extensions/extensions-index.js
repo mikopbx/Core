@@ -522,8 +522,8 @@ const extensionsIndex = {
             // Reload the datatable to reflect changes
             extensionsIndex.dataTable.ajax.reload(null, false);
             // Call the callback function for data change if it exists.
-            if (typeof Extensions !== 'undefined' && typeof Extensions.cbOnDataChanged === 'function') {
-                Extensions.cbOnDataChanged();
+            if (typeof ExtensionsAPI !== 'undefined' && typeof ExtensionsAPI.cbOnDataChanged === 'function') {
+                ExtensionsAPI.cbOnDataChanged();
             }
         } else {
             // Show an error message if deletion was not successful.
