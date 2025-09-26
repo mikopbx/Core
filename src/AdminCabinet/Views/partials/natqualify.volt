@@ -1,9 +1,9 @@
 <div class="field">
-    <div class="ui toggle checkbox" id="qualify">
+    <div class="ui toggle checkbox">
         {{ form.render('qualify') }}
         <label for="qualify">
             {{ t._('qf_Qualify') }}
-            <i class="small info circle icon field-info-icon" 
+            <i class="small info circle icon field-info-icon"
                data-field="qualify_session"></i>
         </label>
     </div>
