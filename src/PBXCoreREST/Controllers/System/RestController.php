@@ -56,7 +56,6 @@ use MikoPBX\PBXCoreREST\Lib\SystemManagementProcessor;
  *      -H "Content-Type: application/json" \
  *      -d '{"timestamp":1602509882}'
  *
- * @deprecated Email operations moved to /pbxcore/api/v3/mail-settings
  *
  * @examples Utility commands:
  *
