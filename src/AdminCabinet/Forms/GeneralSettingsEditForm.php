@@ -22,7 +22,6 @@ namespace MikoPBX\AdminCabinet\Forms;
 
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\TranslationProvider;
-use MikoPBX\AdminCabinet\Forms\Elements\SemanticUIDropdown;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
 use Phalcon\Forms\Element\Password;

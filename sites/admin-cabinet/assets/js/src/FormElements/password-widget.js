@@ -54,10 +54,6 @@ const PasswordWidget = {
         NONE: 'none'    // No validation
     },
     
-    /**
-     * Cache for validation results
-     */
-    validationCache: {},
     
     /**
      * Timers for debouncing validation
@@ -409,6 +405,20 @@ const PasswordWidget = {
             $field.off('input.passwordWidget change.passwordWidget').on('input.passwordWidget change.passwordWidget', () => {
                 this.handleInput(instance);
             });
+
+            // Paste event - trigger validation immediately after paste
+            $field.off('paste.passwordWidget').on('paste.passwordWidget', () => {
+                // Clear any existing debounce timer for immediate paste validation
+                if (this.validationTimers[instance.fieldId]) {
+                    clearTimeout(this.validationTimers[instance.fieldId]);
+                    delete this.validationTimers[instance.fieldId];
+                }
+
+                // Need timeout because paste content is not immediately available in field value
+                setTimeout(() => {
+                    this.handlePasteInput(instance);
+                }, 10);
+            });
         }
         
         // Update clipboard button when password changes
@@ -421,6 +431,19 @@ const PasswordWidget = {
             // Update all clipboard buttons (widget's and any external ones)
             $('.clipboard').attr('data-clipboard-text', value);
         });
+
+        // Handle paste event for clipboard button update (with delay)
+        $field.on('paste.passwordWidget', () => {
+            setTimeout(() => {
+                const value = $field.val();
+                // Clear validation state on empty
+                if (!value || value === '') {
+                    this.clearValidation(instance);
+                }
+                // Update all clipboard buttons (widget's and any external ones)
+                $('.clipboard').attr('data-clipboard-text', value);
+            }, 10);
+        });
         
         // Focus event - show progress bar when field is focused
         $field.off('focus.passwordWidget').on('focus.passwordWidget', () => {
@@ -431,18 +454,19 @@ const PasswordWidget = {
                 if (instance.elements.$progressSection) {
                     instance.elements.$progressSection.show();
                 }
-                // Trigger validation to update progress bar
+                // Trigger validation to update progress bar when focused (without debounce for initial focus)
                 if (options.validateOnInput) {
                     this.validatePassword(instance, password);
                 }
             }
         });
         
-        // Blur event - hide progress bar when field loses focus
+        // Blur event - hide progress bar when field loses focus only if no warnings
         $field.off('blur.passwordWidget').on('blur.passwordWidget', () => {
             instance.state.isFocused = false;
-            // Hide only progress bar, keep warnings visible
-            if (instance.elements.$progressSection) {
+            // Hide progress bar only if there are no validation warnings visible
+            if (instance.elements.$progressSection &&
+                (!instance.elements.$warnings || instance.elements.$warnings.is(':empty') || !instance.elements.$warnings.is(':visible'))) {
                 instance.elements.$progressSection.hide();
             }
             // Never hide warnings on blur - they should remain visible
@@ -552,100 +576,141 @@ const PasswordWidget = {
     },
     
     /**
-     * Handle input event
+     * Handle input event with debouncing
      * @param {object} instance - Widget instance
      */
     handleInput(instance) {
         const { $field, options } = instance;
         const password = $field.val();
-        
+
         // Skip validation if disabled
         if (options.validation === this.VALIDATION.NONE) {
             return;
         }
-        
+
         // Skip validation for masked passwords
         if (this.isMaskedPassword(password)) {
             this.clearValidation(instance);
             return;
         }
-        
+
         // Skip validation if this is a generated password (already validated in setGeneratedPassword)
         if (instance.state.isGenerated) {
             instance.state.isGenerated = false; // Reset flag for next input
             return;
         }
-        
-        // Validate password only if field is focused
-        if (instance.state.isFocused) {
-            this.validatePassword(instance, password);
+
+        // Always validate password with debounce (don't require focus)
+        this.validatePasswordWithDebounce(instance, password, 500);
+    },
+
+    /**
+     * Handle paste input event without debouncing
+     * @param {object} instance - Widget instance
+     */
+    handlePasteInput(instance) {
+        const { $field, options } = instance;
+        const password = $field.val();
+
+        // Skip validation if disabled
+        if (options.validation === this.VALIDATION.NONE) {
+            return;
         }
+
+        // Skip validation for masked passwords
+        if (this.isMaskedPassword(password)) {
+            this.clearValidation(instance);
+            return;
+        }
+
+        // Validate immediately without debounce for paste
+        this.validatePassword(instance, password);
     },
     
     /**
-     * Validate password
+     * Validate password with debouncing for typing
+     * @param {object} instance - Widget instance
+     * @param {string} password - Password to validate
+     * @param {number} debounceTime - Debounce delay in milliseconds
+     */
+    validatePasswordWithDebounce(instance, password, debounceTime = 500) {
+        // Clear existing timer
+        if (this.validationTimers[instance.fieldId]) {
+            clearTimeout(this.validationTimers[instance.fieldId]);
+        }
+
+        // Show immediate local feedback while waiting (always show progress bar when typing)
+        if (password && password !== '' && !this.isMaskedPassword(password)) {
+            const localScore = this.scorePasswordLocal(password);
+            this.updateProgressBar(instance, localScore);
+
+            // Show progress section when typing (don't require focus for immediate feedback)
+            if (instance.elements.$progressSection) {
+                instance.elements.$progressSection.show();
+            }
+        } else {
+            // Clear validation for empty password
+            this.clearValidation(instance);
+        }
+
+        // Set timer for full validation (including API call and warnings)
+        this.validationTimers[instance.fieldId] = setTimeout(() => {
+            // Only do full validation if field still has the same value
+            if (instance.$field.val() === password) {
+                this.validatePassword(instance, password);
+            }
+        }, debounceTime);
+    },
+
+    /**
+     * Validate password immediately
      * @param {object} instance - Widget instance
      * @param {string} password - Password to validate
      */
     validatePassword(instance, password) {
         const { options } = instance;
-        
+
+        // Clear previous warnings at the start of validation
+        this.hideWarnings(instance);
+
         // Handle empty password
         if (!password || password === '') {
             this.clearValidation(instance);
             return;
         }
-        
-        // Skip validation for masked passwords (server returns these when password is hidden)
-        // Common patterns: xxxxxxx, XXXXXXXX, *******, HIDDEN, etc.
+
+        // Skip validation for masked passwords
         if (this.isMaskedPassword(password)) {
             this.clearValidation(instance);
             return;
         }
-        
-        // Show progress section only if field is focused
-        if (instance.elements.$progressSection && instance.state.isFocused) {
+
+        // Show progress section when validating
+        if (instance.elements.$progressSection) {
             instance.elements.$progressSection.show();
         }
-        
-        // Check cache first
-        const cacheKey = `${instance.fieldId}:${password}`;
-        if (this.validationCache[cacheKey]) {
-            this.handleValidationResult(instance, this.validationCache[cacheKey]);
-            return;
-        }
-        
-        // Clear existing timer
-        if (this.validationTimers[instance.fieldId]) {
-            clearTimeout(this.validationTimers[instance.fieldId]);
-        }
-        
+
         // Show immediate local feedback
         const localScore = this.scorePasswordLocal(password);
         this.updateProgressBar(instance, localScore);
-        
-        // Debounce API call
-        this.validationTimers[instance.fieldId] = setTimeout(() => {
-            // Use API if available
-            if (typeof PasswordsAPI !== 'undefined') {
-                PasswordsAPI.validatePassword(password, instance.fieldId, (result) => {
-                    if (result) {
-                        // Cache result
-                        this.validationCache[cacheKey] = result;
-                        this.handleValidationResult(instance, result);
-                    }
-                });
-            } else {
-                // Use local validation
-                const result = {
-                    score: localScore,
-                    isValid: localScore >= options.minScore,
-                    strength: this.getStrengthLabel(localScore),
-                    messages: []
-                };
-                this.handleValidationResult(instance, result);
-            }
-        }, 700); // Increased debounce for more comfortable typing
+
+        // Use API if available
+        if (typeof PasswordsAPI !== 'undefined') {
+            PasswordsAPI.validatePassword(password, instance.fieldId, (result) => {
+                if (result) {
+                    this.handleValidationResult(instance, result);
+                }
+            });
+        } else {
+            // Use local validation
+            const result = {
+                score: localScore,
+                isValid: localScore >= options.minScore,
+                strength: this.getStrengthLabel(localScore),
+                messages: []
+            };
+            this.handleValidationResult(instance, result);
+        }
     },
     
     /**
@@ -760,9 +825,12 @@ const PasswordWidget = {
      */
     handleValidationResult(instance, result) {
         if (!result) return;
-        
+
         const { options } = instance;
-        
+
+        // Always clear warnings first to ensure clean state
+        this.hideWarnings(instance);
+
         // Update state
         instance.state = {
             isValid: result.isValid || result.score >= options.minScore,
@@ -771,23 +839,21 @@ const PasswordWidget = {
             messages: result.messages || [],
             isGenerated: instance.state.isGenerated
         };
-        
+
         // Update UI
         this.updateProgressBar(instance, result.score);
-        
-        // Show warnings/errors
-        if (options.showWarnings && result.messages && result.messages.length > 0) {
+
+        // Show warnings/errors only if there are messages AND password is not strong enough
+        if (options.showWarnings && result.messages && result.messages.length > 0 && !instance.state.isValid) {
             const messageType = instance.state.isValid ? 'warning' : 'error';
             this.showWarnings(instance, result, messageType);
-        } else {
-            this.hideWarnings(instance);
         }
-        
+
         // Call validation callback
         if (options.onValidate) {
             options.onValidate(instance.state.isValid, result.score, result.messages);
         }
-        
+
         // Update form validation state
         if (Form && Form.$formObj) {
             const fieldName = instance.$field.attr('name') || instance.$field.attr('id');
@@ -1218,13 +1284,5 @@ const PasswordWidget = {
         this.instances.forEach((instance, fieldId) => {
             this.destroy(fieldId);
         });
-        this.validationCache = {};
-    },
-    
-    /**
-     * Clear validation cache
-     */
-    clearCache() {
-        this.validationCache = {};
     }
 };
