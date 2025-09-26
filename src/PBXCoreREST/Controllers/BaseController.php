@@ -83,39 +83,17 @@ class BaseController extends Controller
 
             // Push request to queue
             $pushResult = $redis->rpush(WorkerApiCommands::REDIS_API_QUEUE, json_encode($requestMessage));
-            
-            // Проверяем, что задача действительно добавлена в очередь
+
             if ($pushResult <= 0) {
                 throw new \RuntimeException("Failed to push request to Redis queue");
             }
-            
-            // Проверяем текущий размер очереди и логируем
+
+            // Monitor queue backlog only for critical situations
             $queueLength = $redis->lLen(WorkerApiCommands::REDIS_API_QUEUE);
-            SystemMessages::sysLogMsg(
-                static::class,
-                sprintf(
-                    "Request added to queue: action=%s, id=%s, queue_position=%d/%d",
-                    $actionName,
-                    $requestMessage['request_id'],
-                    $pushResult,
-                    $queueLength
-                ),
-                LOG_DEBUG
-            );
-            
-            // Подсчитываем, сколько активных воркеров доступны для обработки
-            $activeWorkers = $redis->keys('worker_api_commands:*');
-            $runningWorkers = count($activeWorkers);
-            
-            // Если в очереди много запросов, но мало воркеров, логируем предупреждение
-            if ($queueLength > $runningWorkers * 2) {
+            if ($queueLength > 20) { // Only log if significant backlog
                 SystemMessages::sysLogMsg(
                     static::class,
-                    sprintf(
-                        "WARNING: Queue backlog detected - %d requests in queue with only %d workers",
-                        $queueLength,
-                        $runningWorkers
-                    ),
+                    "Queue backlog detected: {$queueLength} requests pending",
                     LOG_WARNING
                 );
             }
@@ -183,16 +161,11 @@ class BaseController extends Controller
                         $responseTime = microtime(true);
                         $responseDelay = $responseTime - $startTime;
                         
-                        // Response received - only log if it took longer than expected (over 1 second)
-                        if ($responseDelay > 1.0) {
+                        // Log only significantly slow responses (>3 seconds)
+                        if ($responseDelay > 3.0) {
                             SystemMessages::sysLogMsg(
                                 static::class,
-                                sprintf(
-                                    "Delayed response for action '%s' received after %.3fs (attempts: %d)",
-                                    $actionName,
-                                    $responseDelay,
-                                    $attempts
-                                ),
+                                "Slow response for action {$actionName}: {$responseDelay}s",
                                 LOG_NOTICE
                             );
                         }
@@ -204,87 +177,32 @@ class BaseController extends Controller
                     // Short sleep before next check
                     usleep($currentInterval);
                     
-                } catch (RedisException $redisException) {
-                    // Specific handling for Redis exceptions
+                } catch (Throwable $exception) {
                     $retryCount++;
-                    
+
                     if ($retryCount > $maxRetries) {
-                        // Log last failed attempt before throwing
                         SystemMessages::sysLogMsg(
                             static::class,
-                            sprintf(
-                                "Max Redis retry attempts exceeded: %s (action: %s)",
-                                $redisException->getMessage(),
-                                $actionName
-                            ),
+                            "Max retry attempts exceeded for action {$actionName}: " . $exception->getMessage(),
                             LOG_ERR
                         );
-                        throw $redisException; // Max retries exceeded
+                        throw $exception;
                     }
-                    
-                    // Log Redis-specific retry attempt
-                    $errorMessage = sprintf(
-                        "Redis connection error during worker request, retrying (%d/%d): %s (action: %s)",
-                        $retryCount, 
-                        $maxRetries, 
-                        $redisException->getMessage(),
-                        $actionName
-                    );
-                    
-                    // Log to system log
-                    SystemMessages::sysLogMsg(static::class, $errorMessage, LOG_WARNING);
-                    
-                    // Also log with error handler for potential Sentry capture
-                    CriticalErrorsHandler::handleExceptionWithSyslog(
-                        new \Exception($errorMessage)
-                    );
-                    
-                    // Exponential backoff with jitter
-                    $sleepTime = min(pow(2, $retryCount) * 100000, 2000000) + mt_rand(0, 100000);
-                    usleep($sleepTime);
-                    
-                    // Reconnect
-                    $redis = $this->di->get(RedisClientProvider::SERVICE_NAME);
-                } catch (Throwable $otherException) {
-                    // Handle other errors with retry
-                    $retryCount++;
-                    
-                    if ($retryCount > $maxRetries) {
-                        // Log last failed attempt before throwing
+
+                    // Log retry attempt only for significant errors
+                    if ($retryCount === 1) {
                         SystemMessages::sysLogMsg(
                             static::class,
-                            sprintf(
-                                "Max retry attempts exceeded for general exception: %s (action: %s)",
-                                $otherException->getMessage(),
-                                $actionName
-                            ),
-                            LOG_ERR
+                            "Connection error for action {$actionName}, retrying: " . $exception->getMessage(),
+                            LOG_WARNING
                         );
-                        throw $otherException; // Max retries exceeded
                     }
-                    
-                    // Log general exception retry attempt
-                    $errorMessage = sprintf(
-                        "Error during worker request, retrying (%d/%d): %s (action: %s)",
-                        $retryCount, 
-                        $maxRetries, 
-                        $otherException->getMessage(),
-                        $actionName
-                    );
-                    
-                    // Log to system log
-                    SystemMessages::sysLogMsg(static::class, $errorMessage, LOG_WARNING);
-                    
-                    // Also log with error handler for potential Sentry capture
-                    CriticalErrorsHandler::handleExceptionWithSyslog(
-                        new \Exception($errorMessage)
-                    );
-                    
-                    // Exponential backoff with jitter
-                    $sleepTime = min(pow(2, $retryCount) * 100000, 2000000) + mt_rand(0, 100000);
+
+                    // Exponential backoff
+                    $sleepTime = min(pow(2, $retryCount) * 100000, 2000000);
                     usleep($sleepTime);
-                    
-                    // Reconnect
+
+                    // Reconnect to Redis
                     $redis = $this->di->get(RedisClientProvider::SERVICE_NAME);
                 }
             }
@@ -302,108 +220,36 @@ class BaseController extends Controller
             if ($response === null) {
                 SystemMessages::sysLogMsg(
                     static::class,
-                    sprintf(
-                        "Request timeout after %.3fs: No response received for action %s",
-                        $totalTime,
-                        $actionName
-                    ),
+                    "Request timeout for action {$actionName}: {$totalTime}s",
                     LOG_WARNING
                 );
                 $this->response->setPayloadError('Request timeout or worker not responding');
                 return;
             }
 
-           // Handle file-based response
-           if (isset($response[WorkerApiCommands::REDIS_RESPONSE_IN_FILE])) {
-            $filename = $response[WorkerApiCommands::REDIS_RESPONSE_IN_FILE];
-            if (file_exists($filename)) {
-                $fileContent = file_get_contents($filename);
-                if ($fileContent !== false) {
-                    // Check if response is compressed
-                    if (isset($response['compressed']) && $response['compressed'] === true) {
-                        $fileContent = gzdecode($fileContent);
-                    }
-                    
-                    $response = unserialize($fileContent);
-                    unlink($filename);
-                    $this->response->setPayloadSuccess($response);
-                } else {
-                    $this->response->setPayloadError('Failed to read response file');
-                }
-            } else {
-                $this->response->setPayloadError('Response file not found');
-            }
-            return;
-        }
-        
-        // Handle compressed Redis-based large response
-        if (isset($response['large_response_redis'])) {
-            $redisKey = $response['large_response_redis'];
-            $compressedData = $redis->get($redisKey);
-            
-            if ($compressedData !== false) {
-                // Clear the key since we're consuming the data
-                $redis->del($redisKey);
-                
-                // Decompress and unserialize the data
-                $data = gzdecode($compressedData);
-                if ($data !== false) {
-                    $response = unserialize($data);
-                    $this->response->setPayloadSuccess($response);
-                } else {
-                    $this->response->setPayloadError('Failed to decompress response data');
-                }
-            } else {
-                $this->response->setPayloadError('Large response data not found in Redis');
-            }
-            return;
-        }
-
-
+            // Handle errors first
             if (array_key_exists(WorkerApiCommands::REDIS_JOB_PROCESSING_ERROR, $response)) {
-                SystemMessages::sysLogMsg(
-                    static::class,
-                    sprintf(
-                        "Setting error response: job_id=%s, error=%s",
-                        $requestMessage['request_id'] ?? 'unknown',
-                        $response[WorkerApiCommands::REDIS_JOB_PROCESSING_ERROR]
-                    ),
-                    LOG_DEBUG
-                );
                 $this->response->setPayloadError($response[WorkerApiCommands::REDIS_JOB_PROCESSING_ERROR]);
-            } else {
-                // Only log response time if it took longer than expected
-                if ($totalTime > 1.0) {
-                    SystemMessages::sysLogMsg(
-                        static::class,
-                        sprintf(
-                            "Slow response for action '%s': %.3fs with %d attempts",
-                            $actionName,
-                            $totalTime,
-                            $attempts
-                        ),
-                        LOG_NOTICE
-                    );
-                }
-                $this->response->setPayloadSuccess($response);
+                return;
             }
+
+            // Handle special responses (files, large data, streaming) with unified method
+            if ($this->handleSpecialResponse($response, $redis)) {
+                return;
+            }
+
+            // Handle normal response
+            $this->response->setPayloadSuccess($response);
 
         } catch (Throwable $e) {
-            // Log the error with detailed information
-            $errorMessage = sprintf(
-                "Error in sendRequestToBackendWorker: %s (processor: %s, action: %s)", 
-                $e->getMessage(),
-                $processor,
-                $actionName
+            // Log and handle error
+            SystemMessages::sysLogMsg(
+                static::class,
+                "Backend worker error for {$processor}::{$actionName}: " . $e->getMessage(),
+                LOG_ERR
             );
-            
-            // Log to system log first for visibility in server logs
-            SystemMessages::sysLogMsg(static::class, $errorMessage, LOG_ERR);
-            
-            // Then use critical error handler for potential Sentry capture
+
             CriticalErrorsHandler::handleExceptionWithSyslog($e);
-            
-            // Return error to client
             $this->response->setPayloadError($e->getMessage());
         }
     }
@@ -477,7 +323,8 @@ class BaseController extends Controller
                 // Pass only necessary session data for ACL
                 $requestMessage['sessionContext'] = [
                     'role' => $sessionData[SessionController::ROLE] ?? null,
-                    'user_id' => $sessionData['user_id'] ?? null,
+                    'user_name' => $sessionData[SessionController::USER_NAME] ?? null,
+                    'session_id' => session_id(), // Add session ID for page tracking
                     'auth_type' => 'session'
                 ];
             }
@@ -522,5 +369,275 @@ class BaseController extends Controller
         }
 
         return $data;
+    }
+
+    /**
+     * Handle special responses from backend worker
+     *
+     * Unified method for handling all types of special responses:
+     * - File-based responses (large data stored in files)
+     * - Redis-based large responses (compressed data in Redis)
+     * - File streaming (fpassthru for audio/downloads)
+     *
+     * @param array $response Response from backend worker
+     * @param mixed $redis Redis client instance
+     * @return bool True if special response was handled, false otherwise
+     */
+    private function handleSpecialResponse(array $response, $redis): bool
+    {
+        // Type 1: File-based response (large serialized data)
+        if (isset($response[WorkerApiCommands::REDIS_RESPONSE_IN_FILE])) {
+            return $this->handleFileBasedResponse($response);
+        }
+
+        // Type 2: Redis-based large response (compressed data)
+        if (isset($response['large_response_redis'])) {
+            return $this->handleLargeRedisResponse($response, $redis);
+        }
+
+        // Type 3: File streaming (audio, downloads)
+        if (isset($response['data']['fpassthru'])) {
+            return $this->handleFileStreaming($response['data']['fpassthru']);
+        }
+
+        return false;
+    }
+
+    /**
+     * Handle file-based response (large serialized data stored in temp files)
+     *
+     * @param array $response Response data
+     * @return bool Always true (response handled)
+     */
+    private function handleFileBasedResponse(array $response): bool
+    {
+        $filename = $response[WorkerApiCommands::REDIS_RESPONSE_IN_FILE];
+
+        if (!file_exists($filename)) {
+            $this->response->setPayloadError('Response file not found');
+            return true;
+        }
+
+        $fileContent = file_get_contents($filename);
+        if ($fileContent === false) {
+            $this->response->setPayloadError('Failed to read response file');
+            return true;
+        }
+
+        // Handle compression if needed
+        if (isset($response['compressed']) && $response['compressed'] === true) {
+            $fileContent = gzdecode($fileContent);
+            if ($fileContent === false) {
+                $this->response->setPayloadError('Failed to decompress response data');
+                return true;
+            }
+        }
+
+        // Deserialize and send response
+        $data = unserialize($fileContent);
+        unlink($filename); // Clean up temp file
+        $this->response->setPayloadSuccess($data);
+
+        return true;
+    }
+
+    /**
+     * Handle large Redis response (compressed data in Redis)
+     *
+     * @param array $response Response data
+     * @param mixed $redis Redis client
+     * @return bool Always true (response handled)
+     */
+    private function handleLargeRedisResponse(array $response, $redis): bool
+    {
+        $redisKey = $response['large_response_redis'];
+        $compressedData = $redis->get($redisKey);
+
+        if ($compressedData === false) {
+            $this->response->setPayloadError('Large response data not found in Redis');
+            return true;
+        }
+
+        // Clean up Redis key
+        $redis->del($redisKey);
+
+        // Decompress and deserialize
+        $data = gzdecode($compressedData);
+        if ($data === false) {
+            $this->response->setPayloadError('Failed to decompress response data');
+            return true;
+        }
+
+        $response = unserialize($data);
+        $this->response->setPayloadSuccess($response);
+
+        return true;
+    }
+
+    /**
+     * Handle file streaming (audio, downloads with Range support)
+     *
+     * @param array $fileData File data from backend
+     * @return bool Always true (response handled)
+     */
+    private function handleFileStreaming(array $fileData): bool
+    {
+        $filename = $fileData['filename'] ?? '';
+
+        if (empty($filename) || !file_exists($filename)) {
+            $this->response->setStatusCode(404, 'File Not Found');
+            $this->response->send();
+            return true;
+        }
+
+        // Get file information
+        $fileSize = filesize($filename);
+        $contentType = $fileData['content_type'] ?? 'application/octet-stream';
+        $downloadName = $fileData['download_name'] ?? null;
+        $needDelete = $fileData['need_delete'] ?? false;
+
+        // Check for Range request (for audio/video seeking)
+        $rangeHeader = $_SERVER['HTTP_RANGE'] ?? null;
+
+        if ($rangeHeader !== null && $this->isStreamableContent($contentType)) {
+            $this->handleRangeRequest($filename, $fileSize, $contentType, $rangeHeader, $downloadName);
+        } else {
+            $this->handleFullFileRequest($filename, $fileSize, $contentType, $downloadName);
+        }
+
+        // Clean up file if requested
+        if ($needDelete && file_exists($filename)) {
+            unlink($filename);
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if content type supports range requests (streaming)
+     *
+     * @param string $contentType MIME type
+     * @return bool
+     */
+    private function isStreamableContent(string $contentType): bool
+    {
+        return str_starts_with($contentType, 'audio/') ||
+               str_starts_with($contentType, 'video/');
+    }
+
+    /**
+     * Handle HTTP Range request for partial content
+     *
+     * @param string $filename File path
+     * @param int $fileSize Total file size
+     * @param string $contentType MIME type
+     * @param string $rangeHeader Range header value
+     * @param string|null $downloadName Optional download filename
+     */
+    private function handleRangeRequest(
+        string $filename,
+        int $fileSize,
+        string $contentType,
+        string $rangeHeader,
+        ?string $downloadName = null
+    ): void {
+        // Parse Range header (e.g., "bytes=0-1023")
+        if (!preg_match('/bytes=(\d+)-(\d*)/', $rangeHeader, $matches)) {
+            $this->response->setStatusCode(416, 'Range Not Satisfiable');
+            $this->response->send();
+            return;
+        }
+
+        $start = (int)$matches[1];
+        $end = !empty($matches[2]) ? (int)$matches[2] : $fileSize - 1;
+
+        // Validate range
+        if ($start >= $fileSize || $end >= $fileSize || $start > $end) {
+            $this->response->setStatusCode(416, 'Range Not Satisfiable');
+            $this->response->setHeader('Content-Range', "bytes */$fileSize");
+            $this->response->send();
+            return;
+        }
+
+        $contentLength = $end - $start + 1;
+
+        // Set partial content headers
+        $this->response->setStatusCode(206, 'Partial Content');
+        $this->response->setHeader('Content-Type', $contentType);
+        $this->response->setHeader('Content-Range', "bytes $start-$end/$fileSize");
+        $this->response->setContentLength($contentLength);
+        $this->response->setHeader('Accept-Ranges', 'bytes');
+        $this->response->setHeader('Content-Transfer-Encoding', 'binary');
+
+        // Set download headers if needed
+        if ($downloadName !== null) {
+            $this->response->setHeader('Content-Disposition', 'attachment; filename="' . $downloadName . '"');
+        } else {
+            $this->response->setHeader('Content-Disposition', 'inline');
+        }
+
+        // Send headers
+        $this->response->sendHeaders();
+
+        // Stream partial content
+        $fp = fopen($filename, 'rb');
+        if ($fp !== false) {
+            fseek($fp, $start);
+            $remaining = $contentLength;
+            $bufferSize = 8192;
+
+            while ($remaining > 0 && !feof($fp)) {
+                $bytesToRead = min($bufferSize, $remaining);
+                $buffer = fread($fp, $bytesToRead);
+                if ($buffer === false) break;
+
+                echo $buffer;
+                $remaining -= strlen($buffer);
+
+                // Flush output to client
+                if (ob_get_level()) {
+                    ob_flush();
+                }
+                flush();
+            }
+            fclose($fp);
+        }
+    }
+
+    /**
+     * Handle full file request
+     *
+     * @param string $filename File path
+     * @param int $fileSize File size
+     * @param string $contentType MIME type
+     * @param string|null $downloadName Optional download filename
+     */
+    private function handleFullFileRequest(
+        string $filename,
+        int $fileSize,
+        string $contentType,
+        ?string $downloadName = null
+    ): void {
+        // Set response headers
+        $this->response->setHeader('Content-Type', $contentType);
+        $this->response->setContentLength($fileSize);
+        $this->response->setHeader('Content-Transfer-Encoding', 'binary');
+        $this->response->setHeader('Accept-Ranges', 'bytes');
+
+        // Set download headers if needed
+        if ($downloadName !== null) {
+            $this->response->setHeader('Content-Disposition', 'attachment; filename="' . $downloadName . '"');
+        } else {
+            $this->response->setHeader('Content-Disposition', 'inline');
+        }
+
+        // Send headers and stream file
+        $this->response->sendHeaders();
+
+        $fp = fopen($filename, 'rb');
+        if ($fp !== false) {
+            fpassthru($fp);
+            fclose($fp);
+        }
     }
 }

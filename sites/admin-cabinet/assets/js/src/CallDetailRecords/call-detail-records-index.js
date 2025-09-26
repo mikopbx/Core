@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, SemanticLocalization, Extensions, moment, globalTranslate, CDRPlayer */
+/* global globalRootUrl, SemanticLocalization, ExtensionsAPI, moment, globalTranslate, CDRPlayer */
 
 /**
  * callDetailRecords module.
@@ -134,7 +134,7 @@ const callDetailRecords = {
              * Draw event - fired once the table has completed a draw.
              */
             drawCallback() {
-                Extensions.updatePhonesRepresent('need-update');
+                ExtensionsAPI.updatePhonesRepresent('need-update');
                 callDetailRecords.togglePaginationControls();
             },
             ordering: false,
@@ -174,7 +174,7 @@ const callDetailRecords = {
                     const id = $(playerRow).attr('id');
                     return new CDRPlayer(id);
                 });
-                Extensions.updatePhonesRepresent('need-update');
+                ExtensionsAPI.updatePhonesRepresent('need-update');
             }
         });
     },
