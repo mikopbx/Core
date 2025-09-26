@@ -22,61 +22,15 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Providers;
 
-use MikoPBX\PBXCoreREST\Lib\RestfulRouteBuilder;
-
-use MikoPBX\PBXCoreREST\Controllers\
-{
-    ApiKeys\RestController as ApiKeysRestController,
-    AsteriskRestUsers\RestController as AsteriskRestUsersRestController,
-    Cdr\GetController as CdrGetController,
-    DialplanApplications\RestController as DialplanApplicationsRestController,
-    Iax\RestController as IaxRestController,
-    Modules\ModulesControllerBase,
-    Modules\CorePostController as ModulesCorePostController,
-    Modules\CoreGetController as ModulesCoreGetController,
-    Sip\GetController as SipGetController,
-    Sip\PostController as SipPostController,
-    Sip\RestController as SipRestController,
-    Storage\GetController as StorageGetController,
-    Storage\PostController as StoragePostController,
-    Storage\RestController as StorageRestController,
-    Syslog\GetController as SyslogGetController,
-    Syslog\PostController as SyslogPostController,
-    Sysinfo\RestController as SysinfoRestController,
-    System\RestController as SystemRestController,
-    Firewall\RestController as FirewallRestController,
-    NetworkFilters\RestController as NetworkFiltersRestController,
-    Files\RestController as FilesRestController,
-    Advice\RestController as AdviceRestController,
-    Extensions\GetController as ExtensionsGetController,
-    Extensions\PostController as ExtensionsPostController,
-    Extensions\RestController as ExtensionsRestController,
-    Employees\RestController as EmployeesRestController,
-    Fail2Ban\RestController as Fail2BanRestController,
-    CallQueues\RestController as CallQueuesRestController,
-    IvrMenu\RestController as IvrMenuRestController,
-    ConferenceRooms\RestController as ConferenceRoomsRestController,
-    GeneralSettings\RestController as GeneralSettingsRestController,
-    IncomingRoutes\RestController as IncomingRoutesRestController,
-    MailSettings\RestController as MailSettingsRestController,
-    MailSettings\OAuth2CallbackController,
-    Network\RestController as NetworkRestController,
-    OutboundRoutes\RestController as OutboundRoutesRestController,
-    OffWorkTimes\RestController as OffWorkTimesRestController,
-    CustomFiles\RestController as CustomFilesRestController,
-    SoundFiles\RestController as SoundFilesRestController,
-    TimeSettings\RestController as TimeSettingsRestController,
+use MikoPBX\PBXCoreREST\Controllers\{
     Users\GetController as UsersGetController,
     Nchan\GetController as NchanGetController,
-    License\RestController as LicenseRestController,
-    UserPageTracker\PostController as UserPageTrackerPostController,
-    Providers\RestController as ProvidersRestController,
-    SipProviders\RestController as SipProvidersRestController,
-    IaxProviders\RestController as IaxProvidersRestController,
-    AsteriskManagers\RestController as AsteriskManagersRestController,
-    Passwords\RestController as PasswordsRestController,
-    Syslog\RestController as SyslogRestController
+    MailSettings\OAuth2CallbackController,
+    Modules\ModulesControllerBase,
+    Modules\CorePostController as ModulesCorePostController,
+    Modules\CoreGetController as ModulesCoreGetController
 };
+
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\RestAPIConfigInterface;
 use MikoPBX\PBXCoreREST\Middleware\AuthenticationMiddleware;
@@ -90,7 +44,10 @@ use Phalcon\Mvc\Micro\Collection;
 use Phalcon\Events\Event;
 
 /**
- * Register Router service
+ * Universal Router Provider with Zero-Configuration Auto-Discovery
+ *
+ * This class automatically discovers and configures routes for all RESTful controllers
+ * using a universal rule set that supports all REST patterns without manual configuration.
  *
  * @package MikoPBX\PBXCoreREST\Providers
  */
@@ -99,9 +56,44 @@ class RouterProvider implements ServiceProviderInterface
     public const SERVICE_NAME = '';
 
     /**
+     * Universal ID patterns - covers ALL possible ID formats
+     */
+    private const UNIVERSAL_ID_PATTERNS = [
+        'any' => '[^/]+',           // Matches anything except slash
+        'numeric' => '[0-9]+',      // Numbers only
+        'alpha' => '[a-zA-Z\\-]+',  // Letters and hyphens
+        'alnum' => '[a-zA-Z0-9\\-_]+', // Alphanumeric with separators
+        'uuid' => '[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}'
+    ];
+
+    /**
+     * Special routes that don't follow standard patterns
+     */
+    private const SPECIAL_ROUTES = [
+        // OAuth2 callback route
+        [OAuth2CallbackController::class, 'oauth2CallbackAction', '/pbxcore/api/v3/mail-settings/oauth2-callback', 'get', ''],
+    ];
+
+    /**
+     * Legacy routes configuration
+     */
+    private const LEGACY_ROUTES = [
+        // User routes (both GET and POST)
+        [UsersGetController::class, 'callAction', '/pbxcore/api/users/{actionName}', 'get', '/'],
+        [UsersGetController::class, 'callAction', '/pbxcore/api/users/{actionName}', 'post', '/'],
+
+        // Nchan routes
+        [NchanGetController::class, 'callAction', '/pbxcore/api/nchan/{queueName}', 'get', '/'],
+
+        // Module routes
+        [ModulesControllerBase::class, 'callActionForModule', '/pbxcore/api/modules/{moduleName}/{actionName}', 'get', '/'],
+        [ModulesControllerBase::class, 'callActionForModule', '/pbxcore/api/modules/{moduleName}/{actionName}', 'post', '/'],
+        [ModulesCoreGetController::class, 'callAction', '/pbxcore/api/modules/core/{actionName}', 'get', '/'],
+        [ModulesCorePostController::class, 'callAction', '/pbxcore/api/modules/core/{actionName}', 'post', '/'],
+    ];
+
+    /**
      * Register response service provider
-     *
-     * @param DiInterface $di The DI container.
      */
     public function register(DiInterface $di): void
     {
@@ -118,230 +110,191 @@ class RouterProvider implements ServiceProviderInterface
     }
 
     /**
-     * Attaches the routes to the application; lazy loaded
-     *
-     * @param Micro                   $application
+     * Attaches the routes to the application
      */
     private function attachRoutes(Micro $application): void
     {
+        $routes = $this->getAllRoutes();
+        $this->mountRoutes($application, $routes);
+    }
 
-        // Add hard coded routes
-        $routes = $this->getRoutes();
+    /**
+     * Get all routes using universal auto-discovery
+     */
+    private function getAllRoutes(): array
+    {
+        $routes = [
+            // Universal auto-discovered RESTful routes
+            ...$this->discoverUniversalRoutes(),
 
-        // Add additional modules routes
-        $additionalRoutes = PBXConfModulesProvider::hookModulesMethod(RestAPIConfigInterface::GET_PBXCORE_REST_ADDITIONAL_ROUTES);
-        $additionalRoutes = array_values($additionalRoutes);
-        $routes = array_merge($routes, ...$additionalRoutes);
+            // Special case routes
+            ...self::SPECIAL_ROUTES,
 
-        // Class, Method, Route, Handler, ParamsRegex
-        foreach ($routes as $route) {
-            $collection = new Collection();
-            $collection
-                ->setHandler($route[0], true)
-                ->setPrefix($route[2])
-                ->{$route[3]}(
-                    $route[4],
-                    $route[1]
-                );
+            // Legacy routes
+            ...self::LEGACY_ROUTES,
+        ];
 
+        // Add module routes if available
+        $moduleRoutes = PBXConfModulesProvider::hookModulesMethod(
+            RestAPIConfigInterface::GET_PBXCORE_REST_ADDITIONAL_ROUTES
+        );
+
+        if (!empty($moduleRoutes)) {
+            $routes = [...$routes, ...array_merge(...array_values($moduleRoutes))];
+        }
+
+        return $routes;
+    }
+
+    /**
+     * Universal route discovery - automatically handles ALL RESTful patterns
+     */
+    private function discoverUniversalRoutes(): array
+    {
+        $routes = [];
+        $controllerPath = __DIR__ . '/../Controllers';
+
+        // Scan all controller directories
+        $directories = glob($controllerPath . '/*', GLOB_ONLYDIR);
+
+        foreach ($directories as $dir) {
+            $dirName = basename($dir);
+
+            // Skip special directories
+            if (in_array($dirName, ['Users', 'Nchan', 'Modules', 'MailSettings'])) {
+                continue;
+            }
+
+            // Look for RestController.php
+            $restControllerFile = $dir . '/RestController.php';
+            if (file_exists($restControllerFile)) {
+                $controllerClass = "MikoPBX\\PBXCoreREST\\Controllers\\{$dirName}\\RestController";
+                $resourcePath = $this->getResourcePathFromDirectory($dirName);
+
+                // Generate UNIVERSAL routes for this controller
+                $routes = [...$routes, ...$this->generateUniversalRoutes($controllerClass, $resourcePath)];
+            }
+        }
+
+        return $routes;
+    }
+
+    /**
+     * Generate universal routes that support ALL REST patterns
+     */
+    private function generateUniversalRoutes(string $controllerClass, string $resourcePath): array
+    {
+        return [
+            // === CUSTOM METHODS (highest priority for proper matching) ===
+
+            // Collection-level custom methods: GET /resource:method, POST /resource:method
+            [$controllerClass, 'handleCustomRequest', $resourcePath, 'get', ':{method:[a-zA-Z][a-zA-Z0-9]*}'],
+            [$controllerClass, 'handleCustomRequest', $resourcePath, 'post', ':{method:[a-zA-Z][a-zA-Z0-9]*}'],
+            [$controllerClass, 'handleCustomRequest', $resourcePath, 'put', ':{method:[a-zA-Z][a-zA-Z0-9]*}'],
+            [$controllerClass, 'handleCustomRequest', $resourcePath, 'patch', ':{method:[a-zA-Z][a-zA-Z0-9]*}'],
+            [$controllerClass, 'handleCustomRequest', $resourcePath, 'delete', ':{method:[a-zA-Z][a-zA-Z0-9]*}'],
+
+            // Resource-level custom methods: GET /resource/{id}:method, POST /resource/{id}:method
+            [$controllerClass, 'handleResourceCustomRequest', $resourcePath, 'get', '/{id:' . self::UNIVERSAL_ID_PATTERNS['any'] . '}:{method:[a-zA-Z][a-zA-Z0-9]*}'],
+            [$controllerClass, 'handleResourceCustomRequest', $resourcePath, 'post', '/{id:' . self::UNIVERSAL_ID_PATTERNS['any'] . '}:{method:[a-zA-Z][a-zA-Z0-9]*}'],
+            [$controllerClass, 'handleResourceCustomRequest', $resourcePath, 'put', '/{id:' . self::UNIVERSAL_ID_PATTERNS['any'] . '}:{method:[a-zA-Z][a-zA-Z0-9]*}'],
+            [$controllerClass, 'handleResourceCustomRequest', $resourcePath, 'patch', '/{id:' . self::UNIVERSAL_ID_PATTERNS['any'] . '}:{method:[a-zA-Z][a-zA-Z0-9]*}'],
+            [$controllerClass, 'handleResourceCustomRequest', $resourcePath, 'delete', '/{id:' . self::UNIVERSAL_ID_PATTERNS['any'] . '}:{method:[a-zA-Z][a-zA-Z0-9]*}'],
+
+            // === STANDARD CRUD OPERATIONS ===
+
+            // Collection operations
+            [$controllerClass, 'handleCRUDRequest', $resourcePath, 'get', '/'],     // List all
+            [$controllerClass, 'handleCRUDRequest', $resourcePath, 'post', '/'],    // Create new
+            [$controllerClass, 'handleCRUDRequest', $resourcePath, 'put', '/'],     // Replace all (bulk)
+            [$controllerClass, 'handleCRUDRequest', $resourcePath, 'patch', '/'],   // Update all (bulk)
+            [$controllerClass, 'handleCRUDRequest', $resourcePath, 'delete', '/'],  // Delete all (dangerous, controlled by processor)
+
+            // Individual resource operations (supports ANY ID format)
+            [$controllerClass, 'handleCRUDRequest', $resourcePath, 'get', '/{id:' . self::UNIVERSAL_ID_PATTERNS['any'] . '}'],     // Get one
+            [$controllerClass, 'handleCRUDRequest', $resourcePath, 'put', '/{id:' . self::UNIVERSAL_ID_PATTERNS['any'] . '}'],     // Replace one
+            [$controllerClass, 'handleCRUDRequest', $resourcePath, 'patch', '/{id:' . self::UNIVERSAL_ID_PATTERNS['any'] . '}'],   // Update one
+            [$controllerClass, 'handleCRUDRequest', $resourcePath, 'delete', '/{id:' . self::UNIVERSAL_ID_PATTERNS['any'] . '}'],  // Delete one
+        ];
+    }
+
+    /**
+     * Convert directory name to resource path using convention
+     * Handles ALL naming patterns automatically
+     */
+    private function getResourcePathFromDirectory(string $dirName): string
+    {
+        // Handle common naming patterns
+        $conversions = [
+            'GeneralSettings' => 'general-settings',
+            'MailSettings' => 'mail-settings',
+            'TimeSettings' => 'time-settings',
+            'NetworkFilters' => 'network-filters',
+            'ApiKeys' => 'api-keys',
+            'OutboundRoutes' => 'outbound-routes',
+            'IncomingRoutes' => 'incoming-routes',
+            'OffWorkTimes' => 'off-work-times',
+            'CustomFiles' => 'custom-files',
+            'SoundFiles' => 'sound-files',
+            'ConferenceRooms' => 'conference-rooms',
+            'CallQueues' => 'call-queues',
+            'IvrMenu' => 'ivr-menu',
+            'DialplanApplications' => 'dialplan-applications',
+            'SipProviders' => 'sip-providers',
+            'IaxProviders' => 'iax-providers',
+            'AsteriskManagers' => 'asterisk-managers',
+            'AsteriskRestUsers' => 'asterisk-rest-users',
+            'Fail2Ban' => 'fail2ban',
+            'UserPageTracker' => 'user-page-tracker',
+        ];
+
+        // Use specific conversion if available, otherwise auto-convert
+        if (isset($conversions[$dirName])) {
+            return '/pbxcore/api/v3/' . $conversions[$dirName];
+        }
+
+        // Auto-convert CamelCase to kebab-case
+        $kebabCase = strtolower(preg_replace('/([a-z])([A-Z])/', '$1-$2', $dirName));
+        return "/pbxcore/api/v3/{$kebabCase}";
+    }
+
+    /**
+     * Mount routes to the application efficiently
+     */
+    private function mountRoutes(Micro $application, array $routes): void
+    {
+        // Group routes by handler and prefix for better performance
+        $collections = [];
+
+        foreach ($routes as [$handler, $method, $prefix, $httpMethod, $pattern]) {
+            $key = $handler . '::' . $prefix;
+
+            if (!isset($collections[$key])) {
+                $collections[$key] = (new Collection())
+                    ->setHandler($handler, true)
+                    ->setPrefix($prefix);
+            }
+
+            $collections[$key]->{$httpMethod}($pattern, $method);
+        }
+
+        // Mount all collections
+        foreach ($collections as $collection) {
             $application->mount($collection);
         }
     }
 
     /**
-     * Returns the array for the routes
-     *
-     * @return array
-     */
-    private function getRoutes(): array
-    {
-        $routes = [];
-        
-        // ========== Legacy v1/v2 API routes ==========
-        $routes = array_merge($routes, [
-            // Class, Method, Route, Handler, ParamsRegex
-            [SipGetController::class, 'callAction', '/pbxcore/api/sip/{actionName}', 'get', '/'],
-            [SipPostController::class, 'callAction', '/pbxcore/api/sip/{actionName}', 'post', '/'],
-            [CdrGetController::class, 'callAction', '/pbxcore/api/cdr/{actionName}', 'get', '/'],
-            [CdrGetController::class, 'callAction', '/pbxcore/api/cdr/v2/{actionName}', 'get', '/'],
-        ]);
-        
-        // ========== v3 RESTful API routes with numeric IDs ==========
-        $routes = array_merge($routes, RestfulRouteBuilder::buildBatchRoutes([
-            FirewallRestController::class => '/pbxcore/api/v3/firewall',
-            NetworkFiltersRestController::class => '/pbxcore/api/v3/network-filters',
-            ExtensionsRestController::class => '/pbxcore/api/v3/extensions',
-            EmployeesRestController::class => '/pbxcore/api/v3/employees',
-            ApiKeysRestController::class => '/pbxcore/api/v3/api-keys',
-            OutboundRoutesRestController::class => '/pbxcore/api/v3/outbound-routes',
-            OffWorkTimesRestController::class => '/pbxcore/api/v3/off-work-times',
-            CustomFilesRestController::class => '/pbxcore/api/v3/custom-files',
-            AsteriskManagersRestController::class => '/pbxcore/api/v3/asterisk-managers',
-            AsteriskRestUsersRestController::class => '/pbxcore/api/v3/asterisk-rest-users',
-        ], ['idPattern' => 'numeric']));
-        
-        // ========== v3 RESTful API routes with alphanumeric IDs ==========
-        $routes = array_merge($routes, RestfulRouteBuilder::buildBatchRoutes([
-            ConferenceRoomsRestController::class => '/pbxcore/api/v3/conference-rooms',
-            CallQueuesRestController::class => '/pbxcore/api/v3/call-queues',
-            IvrMenuRestController::class => '/pbxcore/api/v3/ivr-menu',
-            IncomingRoutesRestController::class => '/pbxcore/api/v3/incoming-routes',
-            SoundFilesRestController::class => '/pbxcore/api/v3/sound-files',
-            DialplanApplicationsRestController::class => '/pbxcore/api/v3/dialplan-applications',
-            ProvidersRestController::class => '/pbxcore/api/v3/providers',
-            SipProvidersRestController::class => '/pbxcore/api/v3/sip-providers',
-            IaxProvidersRestController::class => '/pbxcore/api/v3/iax-providers',
-            NetworkRestController::class => '/pbxcore/api/v3/network',
-        ], ['idPattern' => 'alphanumeric']));
-
-        // ========== v3 RESTful API singleton resources (no ID in path) ==========
-        // GeneralSettings is a singleton resource - there's only one set of general settings
-        $routes = array_merge($routes, RestfulRouteBuilder::buildSingletonRoutes(
-            GeneralSettingsRestController::class,
-            '/pbxcore/api/v3/general-settings'
-        ));
-
-        // MailSettings OAuth2 callback - specific route
-        $routes[] = [
-            OAuth2CallbackController::class,
-            'oauth2CallbackAction',
-            '/pbxcore/api/v3/mail-settings/oauth2-callback',
-            'get',
-            ''  // No additional params
-        ];
-
-        // MailSettings is a singleton resource - there's only one set of mail settings
-        $routes = array_merge($routes, RestfulRouteBuilder::buildSingletonRoutes(
-            MailSettingsRestController::class,
-            '/pbxcore/api/v3/mail-settings'
-        ));
-
-        // Add Syslog RESTful routes (custom methods only, no CRUD)
-        $routes = array_merge($routes, RestfulRouteBuilder::buildCustomOnlyRoutes(
-            SyslogRestController::class,
-            '/pbxcore/api/v3/syslog'
-        ));
-
-        // Add Advice RESTful routes (custom methods only, no CRUD)
-        $routes = array_merge($routes, RestfulRouteBuilder::buildCustomOnlyRoutes(
-            AdviceRestController::class,
-            '/pbxcore/api/v3/advice'
-        ));
-
-        // Add SIP RESTful routes (custom methods only, no CRUD)
-        // SIP API needs both collection-level and resource-level custom methods
-        $routes = array_merge($routes, [
-            // Collection-level custom methods (getStatuses, forceCheck all, getPeersStatuses, getRegistry)
-            [SipRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/sip', 'get', ':{customMethod:[a-zA-Z0-9]+}'],
-            [SipRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/sip', 'post', ':{customMethod:[a-zA-Z0-9]+}'],
-            // Resource-level custom methods (getStatus/228, forceCheck/228, getHistory/228, getStats/228, getSecret/228)
-            [SipRestController::class, 'handleResourceCustomRequest', '/pbxcore/api/v3/sip', 'get', '/{id:[a-zA-Z0-9\\-]+}:{customMethod:[a-zA-Z0-9]+}'],
-            [SipRestController::class, 'handleResourceCustomRequest', '/pbxcore/api/v3/sip', 'post', '/{id:[a-zA-Z0-9\\-]+}:{customMethod:[a-zA-Z0-9]+}'],
-        ]);
-
-        // Fail2Ban is a singleton resource - there's only one fail2ban configuration
-        $routes = array_merge($routes, RestfulRouteBuilder::buildSingletonRoutes(
-            Fail2BanRestController::class,
-            '/pbxcore/api/v3/fail2ban'
-        ));
-
-        // TimeSettings is a singleton resource - there's only one time configuration
-        $routes = array_merge($routes, RestfulRouteBuilder::buildSingletonRoutes(
-            TimeSettingsRestController::class,
-            '/pbxcore/api/v3/time-settings'
-        ));
-
-        // Storage is a singleton resource - there's only one storage configuration
-        $routes = array_merge($routes, RestfulRouteBuilder::buildSingletonRoutes(
-            StorageRestController::class,
-            '/pbxcore/api/v3/storage'
-        ));
-
-        // IAX is a singleton resource - there's only one IAX service configuration
-        $routes = array_merge($routes, RestfulRouteBuilder::buildSingletonRoutes(
-            IaxRestController::class,
-            '/pbxcore/api/v3/iax'
-        ));
-
-        // Passwords is a singleton resource - there's only one password service in the system
-        $routes = array_merge($routes, RestfulRouteBuilder::buildSingletonRoutes(
-            PasswordsRestController::class,
-            '/pbxcore/api/v3/passwords'
-        ));
-
-        // License is a singleton resource - there's only one license in the system
-        $routes = array_merge($routes, RestfulRouteBuilder::buildSingletonRoutes(
-            LicenseRestController::class,
-            '/pbxcore/api/v3/license'
-        ));
-
-        // Sysinfo is a singleton resource - there's only one system in the PBX
-        $routes = array_merge($routes, RestfulRouteBuilder::buildSingletonRoutes(
-            SysinfoRestController::class,
-            '/pbxcore/api/v3/sysinfo'
-        ));
-
-        // Files API - hybrid resource that works with filesystem (not database entities)
-        // Supports both standard REST operations and custom methods
-        $routes = array_merge($routes, [
-            // Standard CRUD operations on files
-            [FilesRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/files', 'get', '/{id:.+}'],       // GET /files/{path}
-            [FilesRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/files', 'put', '/{id:.+}'],       // PUT /files/{path}
-            [FilesRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/files', 'delete', '/{id:.+}'],    // DELETE /files/{path}
-
-            // Custom methods for specialized file operations
-            [FilesRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/files', 'get', ':{customMethod:[a-zA-Z0-9]+}'],     // GET :uploadStatus, :firmwareStatus
-            [FilesRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/files', 'post', ':{customMethod:[a-zA-Z0-9]+}'],    // POST :upload, :downloadFirmware
-        ]);
-
-        // System is a singleton resource with mostly custom methods (commands)
-        $routes = array_merge($routes, RestfulRouteBuilder::buildSingletonRoutes(
-            SystemRestController::class,
-            '/pbxcore/api/v3/system'
-        ));
-
-        // ========== More legacy v1/v2 routes ==========
-        $routes = array_merge($routes, [
-            [StorageGetController::class, 'callAction', '/pbxcore/api/storage/{actionName}', 'get', '/'],
-            [StoragePostController::class, 'callAction', '/pbxcore/api/storage/{actionName}', 'post', '/'],
-            [SyslogGetController::class, 'callAction', '/pbxcore/api/syslog/{actionName}', 'get', '/'],
-            [SyslogPostController::class, 'callAction', '/pbxcore/api/syslog/{actionName}', 'post', '/'],
-            [ExtensionsGetController::class, 'callAction', '/pbxcore/api/extensions/{actionName}', 'get', '/'],
-            [ExtensionsPostController::class, 'callAction', '/pbxcore/api/extensions/{actionName}', 'post', '/'],
-
-            // v2 API routes
-            [ExtensionsGetController::class, 'callAction', '/pbxcore/api/v2/extensions/{actionName}', 'get', '/'],
-            [ExtensionsGetController::class, 'callAction', '/pbxcore/api/v2/extensions/{actionName}/{id:[a-zA-Z0-9\-]+}', 'get', '/'],
-            [ExtensionsPostController::class, 'callAction', '/pbxcore/api/v2/extensions/{actionName}', 'post', '/'],
-
-            // More v1/v2 routes
-            [UsersGetController::class, 'callAction', '/pbxcore/api/users/{actionName}', 'get', '/'],
-            [NchanGetController::class, 'callAction', '/pbxcore/api/nchan/{queueName}', 'get', '/'],
-            [UserPageTrackerPostController::class, 'callAction', '/pbxcore/api/v2/user-page-tracker/{actionName}', 'post', '/'],
-
-            // Module routes
-            [ModulesControllerBase::class, 'callActionForModule', '/pbxcore/api/modules/{moduleName}/{actionName}', 'get', '/'],
-            [ModulesControllerBase::class, 'callActionForModule', '/pbxcore/api/modules/{moduleName}/{actionName}', 'post', '/'],
-            [ModulesCoreGetController::class, 'callAction', '/pbxcore/api/modules/core/{actionName}', 'get', '/'],
-            [ModulesCorePostController::class, 'callAction', '/pbxcore/api/modules/core/{actionName}', 'post', '/'],
-        ]);
-        
-        return $routes;
-    }
-
-    /**
      * Attaches the middleware to the application
-     *
-     * @param Micro   $application
-     * @param Manager $eventsManager
      */
     private function attachMiddleware(Micro $application, Manager $eventsManager): void
     {
-        $middleware = $this->getMiddleware();
+        $middleware = [
+            NotFoundMiddleware::class => 'before',
+            AuthenticationMiddleware::class => 'before',
+            ResponseMiddleware::class => 'after',
+        ];
 
-        /**
-         * Get the events manager and attach the middleware to it
-         */
         foreach ($middleware as $class => $function) {
             $eventsManager->attach('micro', new $class());
             $application->{$function}(new $class());
@@ -349,24 +302,7 @@ class RouterProvider implements ServiceProviderInterface
     }
 
     /**
-     * Returns the array for the middleware with the action to attach
-     *
-     * @return array
-     */
-    private function getMiddleware(): array
-    {
-        return [
-            NotFoundMiddleware::class       => 'before',
-            AuthenticationMiddleware::class => 'before',
-            ResponseMiddleware::class       => 'after',
-        ];
-    }
-
-    /**
      * Attaches the modules hooks to the application
-     *
-     * @param Micro   $application
-     * @param Manager $eventsManager
      */
     private function attachModuleHooks(Micro $application, Manager $eventsManager): void
     {
