@@ -98,7 +98,7 @@ const adviceWorker = {
         let iconBellClass = '';
         
         htmlMessages += `<div class="ui header">${globalTranslate.adv_PopupHeader}</div>`;
-        htmlMessages += '<div class="ui relaxed divided list">';
+        htmlMessages += '<div class="ui relaxed  list">';
 
         if (adviceData.needUpdate !== undefined && adviceData.needUpdate.length > 0) {
             $(window).trigger('SecurityWarning', [adviceData]);
@@ -108,7 +108,7 @@ const adviceWorker = {
             $.each(adviceData.error, (key, value) => {
                 htmlMessages += '<div class="item">';
                 htmlMessages += '<i class="frown outline red icon"></i>';
-                htmlMessages += adviceWorker.translateMessage(value);
+                htmlMessages += '<div class="content">' + adviceWorker.translateMessage(value) + '</div>';
                 htmlMessages += '</div>';
                 countMessages += 1;
             });
@@ -118,7 +118,7 @@ const adviceWorker = {
             $.each(adviceData.warning, (key, value) => {
                 htmlMessages += '<div class="item yellow">';
                 htmlMessages += '<i class="meh outline yellow icon"></i>';
-                htmlMessages += adviceWorker.translateMessage(value);
+                htmlMessages += '<div class="content">' + adviceWorker.translateMessage(value) + '</div>';
                 htmlMessages += '</div>';
                 countMessages += 1;
             });
@@ -128,7 +128,7 @@ const adviceWorker = {
             $.each(adviceData.info, (key, value) => {
                 htmlMessages += '<div class="item">';
                 htmlMessages += '<i class="smile outline blue icon"></i>';
-                htmlMessages += adviceWorker.translateMessage(value);
+                htmlMessages += '<div class="content">' + adviceWorker.translateMessage(value) + '</div>';
                 htmlMessages += '</div>';
                 countMessages += 1;
             });
