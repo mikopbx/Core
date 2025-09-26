@@ -212,8 +212,6 @@ Object.assign(SipAPI, {
             return;
         }
 
-        return this.callCustomMethod('getSecret', { peer }, (response) => {
-                callback(response);
-        });
+        return this.callCustomMethod('getSecret', {}, callback, 'GET', peer);
     }
 });
