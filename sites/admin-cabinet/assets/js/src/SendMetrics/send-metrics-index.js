@@ -39,9 +39,10 @@ const sendMetrics = {
 
     /**
      * Callback function after metrics have been sent.
-     * @param {boolean} result - The result of sending the metrics.
+     * @param {data} result - The result of sending the metrics.
      */
-    cbAfterMetricsSent(result) {
+    cbAfterMetricsSent(data) {
+        const result = data.result;
         if (result === true) {
             sessionStorage.setItem('MetricsAlreadySent', 'true');
         }
