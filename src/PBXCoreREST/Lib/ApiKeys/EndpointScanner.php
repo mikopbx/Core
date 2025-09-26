@@ -41,7 +41,6 @@ class EndpointScanner
      */
     private const EXCLUDED_CONTROLLERS = [
         'UserPageTracker',  // Internal user activity tracking (browser sessions only)
-        'Users',           // User authentication and session management (login/logout)
         'Nchan',          // WebSocket/SSE event streaming (real-time events)
     ];
     
