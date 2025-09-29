@@ -16,40 +16,40 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global Config, PbxApi */ 
+/* global globalRootUrl, Config, PbxApi, PbxApiClient */
 
 /**
- * CdrAPI - Call Detail Records API
+ * CdrAPI - REST API v3 client for call detail records management
  *
  * Provides methods for working with call records and active channels.
  *
  * @class CdrAPI
  */
-const CdrAPI = {
+const CdrAPI = new PbxApiClient({
+    endpoint: '/pbxcore/api/v3/cdr',
+    customMethods: {
+        getActiveChannels: ':getActiveChannels'
+    }
+});
+
+/**
+ * Add method aliases to CdrAPI
+ */
+Object.assign(CdrAPI, {
     /**
      * Get active channels (calls in progress)
      * @param {function} callback - Callback function
      */
     getActiveChannels(callback) {
-        $.api({
-            url: `${Config.pbxUrl}/pbxcore/api/cdr/getActiveChannels`,
-            on: 'now',
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                if (Object.keys(response).length > 0) {
-                    callback(response.data);
-                } else {
-                    callback(false);
-                }
-            },
-            onError(errorMessage, element, xhr) {
-                if (xhr.status === 401) {
-                    window.location = `${globalRootUrl}session/index`;
-                }
-            },
+        return this.callCustomMethod('getActiveChannels', (response) => {
+            if (response && response.result === true && response.data) {
+                callback(response.data);
+            } else {
+                callback(false);
+            }
         });
     }
-};
+});
 
 // Export for use in other modules
 window.CdrAPI = CdrAPI;

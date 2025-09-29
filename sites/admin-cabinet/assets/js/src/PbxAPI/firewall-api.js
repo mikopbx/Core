@@ -36,20 +36,7 @@ const FirewallAPI = new PbxApiClient({
     }
 });
 
-/**
- * Get default values for a new firewall rule
- * 
- * @param {function} callback - Callback function to handle the response
- * @example
- * FirewallAPI.getDefault((response) => {
- *     if (response.result) {
- *         console.log('Default values:', response.data);
- *     }
- * });
- */
-FirewallAPI.getDefault = function(callback) {
-    return this.callCustomMethod('getDefault', {}, callback);
-};
+// Use FirewallAPI.getRecord('new', callback) for default values
 
 /**
  * Get list of banned IP addresses

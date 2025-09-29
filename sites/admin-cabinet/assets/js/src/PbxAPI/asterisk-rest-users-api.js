@@ -25,14 +25,11 @@
 const AsteriskRestUsersAPI = new PbxApiClient({
     endpoint: '/pbxcore/api/v3/asterisk-rest-users',
     customMethods: {
-        getDefaults: ':getDefaults'
+        getDefault: ':getDefault'
     }
 });
 
-// Add backward compatibility aliases
-AsteriskRestUsersAPI.getDefaults = function(callback) {
-    return this.callCustomMethod('getDefaults', callback);
-};
+// Use AsteriskRestUsersAPI.getRecord('new', callback) for default values
 
 // Legacy method for compatibility
 AsteriskRestUsersAPI.getListWithParams = function(params = {}, callback) {
@@ -41,7 +38,7 @@ AsteriskRestUsersAPI.getListWithParams = function(params = {}, callback) {
 
 // The PbxApiClient automatically provides:
 // - getList(callback) or getList(params, callback)
-// - getRecord(id, callback) - uses :getDefaults for new records
+// - getRecord(id, callback) - uses :getDefault for new records
 // - saveRecord(data, callback) - automatically selects POST/PUT
 // - deleteRecord(id, callback)
 // - callCustomMethod(methodName, data, callback)

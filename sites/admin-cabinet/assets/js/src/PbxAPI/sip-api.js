@@ -157,32 +157,6 @@ Object.assign(SipAPI, {
         return this.callCustomMethod('getPeersStatuses', {}, callback);
     },
 
-    /**
-     * Get SIP peer status (legacy compatibility)
-     * @param {object} data - Data with peer information
-     * @param {function} callback - Callback function
-     */
-    getPeerStatus(data, callback) {
-        // Use legacy endpoint for now as it expects different data format
-        $.api({
-            url: `${Config.pbxUrl}/pbxcore/api/sip/getSipPeer`,
-            on: 'now',
-            method: 'POST',
-            data: JSON.stringify(data),
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response.data);
-            },
-            onFailure() {
-                callback(false);
-            },
-            onError(errorMessage, element, xhr) {
-                if (xhr.status === 401) {
-                    window.location = `${globalRootUrl}session/index`;
-                }
-            },
-        });
-    },
 
     /**
      * Get SIP providers registry statuses

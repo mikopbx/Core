@@ -118,9 +118,16 @@ const soundFileModifyRest = {
         FilesAPI.attachToBtn('upload-sound-file', ['wav', 'mp3', 'ogg', 'm4a', 'aac'], (action, params) => {
             switch (action) {
                 case 'fileAdded':
+                    console.log('[sound-file-modify] fileAdded params:', params);
                     if (params.file) {
-                        // Update name field with filename without extension
-                        soundFileModifyRest.$soundFileName.val(params.file.name.replace(/\.[^/.]+$/, ''));
+                        console.log('[sound-file-modify] params.file:', params.file);
+                        // Get filename from resumable.js file object (can be fileName or name)
+                        const fileName = params.file.fileName || params.file.name;
+                        console.log('[sound-file-modify] extracted fileName:', fileName);
+                        if (fileName) {
+                            // Update name field with filename without extension
+                            soundFileModifyRest.$soundFileName.val(fileName.replace(/\.[^/.]+$/, ''));
+                        }
 
                         // Create blob URL for preview
                         soundFileModifyRest.blob = window.URL || window.webkitURL;
@@ -148,13 +155,17 @@ const soundFileModifyRest = {
      */
     loadFormData() {
         const recordId = soundFileModifyRest.getRecordId();
-        
+        const category = soundFileModifyRest.getCategory();
+
         // Show loading state
         soundFileModifyRest.$formObj.addClass('loading');
-        
+
+        // Pass category for new records
+        const params = category ? { category: category } : {};
+
         SoundFilesAPI.getRecord(recordId, (response) => {
             soundFileModifyRest.$formObj.removeClass('loading');
-            
+
             if (response.result) {
                 soundFileModifyRest.populateForm(response.data);
             } else if (recordId && recordId !== 'new') {
@@ -165,7 +176,7 @@ const soundFileModifyRest = {
                     window.location.href = `${globalRootUrl}sound-files/index`;
                 }, 3000);
             }
-        });
+        }, params);
     },
 
     /**
@@ -183,6 +194,27 @@ const soundFileModifyRest = {
         }
 
         return recordIdValue || '';
+    },
+
+    /**
+     * Get category from hidden input field or URL
+     * @returns {string|null} Category (custom/moh) or null
+     */
+    getCategory() {
+        // First check if ID field contains category
+        const recordIdValue = $('#id').val();
+        if (recordIdValue === 'custom' || recordIdValue === 'moh') {
+            return recordIdValue;
+        }
+
+        // Check URL parameters for category
+        const urlParams = new URLSearchParams(window.location.search);
+        const categoryParam = urlParams.get('category');
+        if (categoryParam === 'custom' || categoryParam === 'moh') {
+            return categoryParam;
+        }
+
+        return null;
     },
 
     /**
@@ -225,7 +257,11 @@ const soundFileModifyRest = {
             case 'fileSuccess':
                 const response = PbxApi.tryParseJSON(params.response);
                 if (response !== false && response.data.filename !== undefined) {
-                    soundFileModifyRest.$soundFileName.val(params.file.fileName);
+                    // Get filename from resumable.js file object and remove extension
+                    const fileName = params.file.fileName || params.file.name;
+                    if (fileName) {
+                        soundFileModifyRest.$soundFileName.val(fileName.replace(/\.[^/.]+$/, ''));
+                    }
                     soundFileModifyRest.checkStatusFileMerging(params.response);
                 } else {
                     UserMessage.showMultiString(params, globalTranslate.sf_UploadError);
@@ -278,7 +314,7 @@ const soundFileModifyRest = {
                 soundFileModifyRest.$formObj.removeClass('loading');
                 // Perform conversion after merge - use the filePath from the response
                 const category = soundFileModifyRest.$formObj.form('get value', 'category');
-                SystemAPI.convertAudioFile({filename: filePath, category: category}, soundFileModifyRest.cbAfterConvertFile);
+                SoundFilesAPI.convertAudioFile({temp_filename: filePath, category: category}, soundFileModifyRest.cbAfterConvertFile);
             },
 
             onError: (data) => {
@@ -293,26 +329,50 @@ const soundFileModifyRest = {
      * Callback function after the file is converted to MP3 format.
      * @param {string} filename - The filename of the converted file.
      */
-    cbAfterConvertFile(filename) {
-        if (filename === false) {
+    cbAfterConvertFile(response) {
+        console.log('[sound-file-modify] cbAfterConvertFile response:', response);
+
+        let filename = null;
+
+        // Handle different response formats
+        if (response === false || !response) {
             UserMessage.showMultiString(`${globalTranslate.sf_UploadError}`);
-        } else {
+            return;
+        }
+
+        // Extract filename from response
+        if (typeof response === 'string') {
+            filename = response;
+        } else if (response.result === true && response.data) {
+            // API returns data as array ["/path/to/file"]
+            if (Array.isArray(response.data) && response.data.length > 0) {
+                filename = response.data[0];
+            } else if (typeof response.data === 'string') {
+                filename = response.data;
+            }
+        }
+
+        console.log('[sound-file-modify] extracted filename:', filename);
+
+        if (filename) {
             // Add old file to trash bin for deletion after save
             const oldPath = soundFileModifyRest.$formObj.form('get value', 'path');
             if (oldPath) {
                 soundFileModifyRest.trashBin.push(oldPath);
             }
-            
+
             // Update form with new file path
             soundFileModifyRest.$formObj.form('set value', 'path', filename);
             soundFileModifyRest.$soundFileName.trigger('change');
-            
+
             // Update player with new file using sound-files endpoint
             sndPlayer.UpdateSource(`/pbxcore/api/v3/sound-files:playback?view=${filename}`);
-            
+
             // Remove loading states
             soundFileModifyRest.$submitButton.removeClass('loading');
             soundFileModifyRest.$formObj.removeClass('loading');
+        } else {
+            UserMessage.showMultiString(`${globalTranslate.sf_UploadError}`);
         }
     },
 

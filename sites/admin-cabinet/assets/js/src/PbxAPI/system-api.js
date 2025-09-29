@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global PbxApiClient */
+/* global PbxApiClient, PbxApi, $ */
 
 /**
  * SystemAPI - REST API v3 client for system management operations
@@ -37,137 +37,93 @@ const SystemAPI = new PbxApiClient({
         reboot: ':reboot',
         shutdown: ':shutdown',
 
-        // Email operations (deprecated - use MailSettingsAPI)
-        updateMailSettings: ':updateMailSettings',
-
         // Utilities
-        convertAudioFile: ':convertAudioFile',
         upgrade: ':upgrade',
         restoreDefault: ':restoreDefault',
         getDeleteStatistics: ':getDeleteStatistics'
-    } 
+    }
 });
 
-/**
- * Ping backend to check if it's alive
- * @param {function} callback - Callback function
- */
-SystemAPI.ping = function(callback) {
-    return this.callCustomMethod('ping', {}, callback, 'GET');
-};
+// Add method aliases to SystemAPI
+Object.assign(SystemAPI, {
 
-/**
- * Check if user is authenticated
- * @param {function} callback - Callback function
- */
-SystemAPI.checkAuth = function(callback) {
-    return this.callCustomMethod('checkAuth', {}, callback, 'GET');
-};
+    /**
+     * Ping backend to check if it's alive
+     * @param {function} callback - Callback function
+     */
+    ping(callback) {
+        return this.callCustomMethod('ping', {}, callback, 'GET');
+    },
 
-/**
- * Reboot the system
- * @param {function} callback - Callback function
- */
-SystemAPI.reboot = function(callback) {
-    return this.callCustomMethod('reboot', {}, callback, 'POST');
-};
+    /**
+     * Check if user is authenticated
+     * @param {function} callback - Callback function
+     */
+    checkAuth(callback) {
+        return this.callCustomMethod('checkAuth', {}, callback, 'GET');
+    },
 
-/**
- * Shutdown the system
- * @param {function} callback - Callback function
- */
-SystemAPI.shutdown = function(callback) {
-    return this.callCustomMethod('shutdown', {}, callback, 'POST');
-};
+    /**
+     * Reboot the system
+     * @param {function} callback - Callback function
+     */
+    reboot(callback) {
+        return this.callCustomMethod('reboot', {}, callback, 'POST');
+    },
 
-/**
- * Get current system date and time
- * @param {function} callback - Callback function
- */
-SystemAPI.getDateTime = function(callback) {
-    const url = `${this.endpoint}/datetime`;
+    /**
+     * Shutdown the system
+     * @param {function} callback - Callback function
+     */
+    shutdown(callback) {
+        return this.callCustomMethod('shutdown', {}, callback, 'POST');
+    },
 
-    return $.api({
-        url: url,
-        on: 'now',
-        method: 'GET',
-        successTest: PbxApi.successTest,
-        onSuccess(response) {
-            callback(response);
-        },
-        onFailure(response) {
-            callback(response);
-        }
-    });
-};
+    /**
+     * Get current system date and time
+     * @param {function} callback - Callback function
+     */
+    getDateTime(callback) {
+        return this.callGet({}, callback, 'datetime');
+    },
 
-/**
- * Set system date and time
- * @param {number} timestamp - Unix timestamp
- * @param {function} callback - Callback function
- */
-SystemAPI.setDateTime = function(timestamp, callback) {
-    const url = `${this.endpoint}/datetime`;
+    /**
+     * Set system date and time
+     * @param {number} timestamp - Unix timestamp
+     * @param {function} callback - Callback function
+     */
+    setDateTime(timestamp, callback) {
+        const data = { timestamp: timestamp };
+        return this.callPut(data, callback, 'datetime');
+    },
 
-    return $.api({
-        url: url,
-        on: 'now',
-        method: 'PUT',
-        data: { timestamp: timestamp },
-        successTest: PbxApi.successTest,
-        onSuccess(response) {
-            callback(response);
-        },
-        onFailure(response) {
-            callback(response);
-        }
-    });
-};
+    /**
+     * Upgrade the PBX using uploaded IMG file
+     * @param {object} params - Upgrade parameters
+     * @param {string} params.filename - Path to IMG file
+     * @param {function} callback - Callback function
+     */
+    upgrade(params, callback) {
+        return this.callCustomMethod('upgrade', params, callback, 'POST');
+    },
 
-/**
- * Update and test mail settings
- * @deprecated Use MailSettingsAPI.sendTestEmail() instead
- * @param {function} callback - Callback function
- */
-SystemAPI.updateMailSettings = function(callback) {
-    return this.callCustomMethod('updateMailSettings', {}, callback, 'POST');
-};
+    /**
+     * Restore default system settings
+     * @param {function} callback - Callback function
+     */
+    restoreDefault(callback) {
+        return this.callCustomMethod('restoreDefault', {}, callback, 'POST');
+    },
 
-/**
- * Convert audio file to various codecs using Asterisk
- * @param {object} params - Conversion parameters
- * @param {string} params.filename - Path to audio file
- * @param {function} callback - Callback function
- */
-SystemAPI.convertAudioFile = function(params, callback) {
-    return this.callCustomMethod('convertAudioFile', params, callback, 'POST');
-};
+    /**
+     * Get statistics about what will be deleted during restore
+     * @param {function} callback - Callback function
+     */
+    getDeleteStatistics(callback) {
+        return this.callCustomMethod('getDeleteStatistics', {}, callback, 'GET');
+    }
 
-/**
- * Upgrade the PBX using uploaded IMG file
- * @param {object} params - Upgrade parameters
- * @param {string} params.filename - Path to IMG file
- * @param {function} callback - Callback function
- */
-SystemAPI.upgrade = function(params, callback) {
-    return this.callCustomMethod('upgrade', params, callback, 'POST');
-};
-
-/**
- * Restore default system settings
- * @param {function} callback - Callback function
- */
-SystemAPI.restoreDefault = function(callback) {
-    return this.callCustomMethod('restoreDefault', {}, callback, 'POST');
-};
-
-/**
- * Get statistics about what will be deleted during restore
- * @param {function} callback - Callback function
- */
-SystemAPI.getDeleteStatistics = function(callback) {
-    return this.callCustomMethod('getDeleteStatistics', {}, callback, 'GET');
-};
+});
 
 // Export for use in other modules
 window.SystemAPI = SystemAPI;

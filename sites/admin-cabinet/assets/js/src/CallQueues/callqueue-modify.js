@@ -281,8 +281,13 @@ const callQueueModifyRest = {
             selectedMembers.push($(row).attr('id'));
         });
         
-        // Remove existing dropdown and recreate with new exclusions
-        $('#extensionselect-dropdown').remove();
+        // Properly destroy existing dropdown to avoid animation errors
+        const $existingDropdown = $('#extensionselect-dropdown');
+        if ($existingDropdown.length > 0) {
+            // Stop any ongoing animations and destroy dropdown before removal
+            $existingDropdown.dropdown('destroy');
+            $existingDropdown.remove();
+        }
         ExtensionSelector.instances.delete('extensionselect'); // Clear cached instance
         
         // Rebuild dropdown with exclusion using ExtensionSelector
@@ -372,8 +377,9 @@ const callQueueModifyRest = {
         callQueueModifyRest.$formObj.on('click', '.delete-row-button', (e) => {
             e.preventDefault();
             
-            // Remove the row
-            $(e.target).closest('tr').remove();
+            // Stop any animations and remove the row
+            const $row = $(e.target).closest('tr');
+            $row.transition('stop').remove();
             
             // Update priorities and view
             callQueueModifyRest.updateMemberPriorities();

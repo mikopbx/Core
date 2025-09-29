@@ -39,32 +39,84 @@ const ExtensionsAPI = new PbxApiClient({
     }
 });
 
-// Add utility methods and aliases to ExtensionsAPI using centralized utility
-PbxApi.extendApiClient(ExtensionsAPI, {
-
+// Add method aliases and utility functions to ExtensionsAPI
+Object.assign(ExtensionsAPI, {
     // Debounce timeout storage for different CSS classes
     debounceTimeouts: {},
 
     /**
+     * Get extensions for select dropdown (alias for getForSelect custom method)
+     * @param {string} type - Type of extensions ('all', 'internal', 'phones', 'routing')
+     * @param {function} callback - Callback function
+     */
+    getForSelect(type = 'routing', callback) {
+        // Support old signature where callback is the first parameter
+        if (typeof type === 'function') {
+            callback = type;
+            type = 'routing';
+        }
+
+        return this.callCustomMethod('getForSelect', { type }, callback);
+    },
+
+    /**
+     * Check if extension number is available
+     * @param {string} number - Extension number to check
+     * @param {function} callback - Callback function
+     */
+    available(number, callback) {
+        return this.callCustomMethod('available', { number }, callback, 'POST');
+    },
+
+    /**
+     * Get phone representations for multiple numbers
+     * @param {array} numbers - Array of numbers
+     * @param {function} callback - Callback function
+     */
+    getPhonesRepresent(numbers, callback) {
+        return this.callCustomMethod('getPhonesRepresent', { numbers }, callback, 'POST');
+    },
+
+    /**
+     * Get phone representation for single number
+     * @param {string} number - Phone number
+     * @param {function} callback - Callback function
+     */
+    getPhoneRepresent(number, callback) {
+        return this.callCustomMethod('getPhoneRepresent', { number }, callback, 'POST');
+    },
+
+    /**
      * Formats the dropdown results by adding necessary data.
+     *
      * @param {Object} response - Response from the server.
      * @param {Boolean} addEmpty - A flag to decide if an empty object needs to be added to the result.
      * @return {Object} formattedResponse - The formatted response.
      */
     formatDropdownResults(response, addEmpty) {
-        // Use the centralized utility with security utils for name sanitization
-        const formattedResponse = PbxApi.formatDropdownResults(response, {
-            addEmpty: addEmpty,
-            emptyText: '-',
-            emptyValue: -1
-        });
+        const formattedResponse = {
+            success: false,
+            results: [],
+        };
+        if (addEmpty) {
+            formattedResponse.results.push({
+                name: '-',
+                value: -1,
+                type: '',
+                typeLocalized: '',
+            });
+        }
 
-        // Apply security sanitization to names
-        if (formattedResponse.results && typeof SecurityUtils !== 'undefined') {
-            formattedResponse.results.forEach(item => {
-                if (item.name) {
-                    item.name = SecurityUtils.sanitizeObjectRepresentations(item.name);
-                }
+        if (response) {
+            formattedResponse.success = true;
+            $.each(response.data, (index, item) => {
+                formattedResponse.results.push({
+                    // Safely process name field - allow only specific icon patterns
+                    name: SecurityUtils.sanitizeObjectRepresentations(item.name),
+                    value: item.value,
+                    type: item.type,
+                    typeLocalized: item.typeLocalized,
+                });
             });
         }
 
@@ -145,7 +197,7 @@ PbxApi.extendApiClient(ExtensionsAPI, {
      * @returns {Object} The dropdown settings.
      */
     getDropdownSettingsWithEmpty(cbOnChange = null) {
-        return this.getDropdownSettings({
+        return ExtensionsAPI.getDropdownSettings({
             onChange: cbOnChange,
             type: 'all',
             addEmpty: true,
@@ -159,7 +211,7 @@ PbxApi.extendApiClient(ExtensionsAPI, {
      * @returns {Object} The dropdown settings.
      */
     getDropdownSettingsWithoutEmpty(cbOnChange = null) {
-        return this.getDropdownSettings({
+        return ExtensionsAPI.getDropdownSettings({
             onChange: cbOnChange,
             type: 'all',
             addEmpty: false,
@@ -173,7 +225,7 @@ PbxApi.extendApiClient(ExtensionsAPI, {
      * @returns {Object} The dropdown settings.
      */
     getDropdownSettingsForRouting(cbOnChange = null) {
-        return this.getDropdownSettings({
+        return ExtensionsAPI.getDropdownSettings({
             onChange: cbOnChange,
             type: 'routing',
             addEmpty: false,
@@ -188,7 +240,7 @@ PbxApi.extendApiClient(ExtensionsAPI, {
      * @returns {Object} The dropdown settings.
      */
     getDropdownSettingsForRoutingWithExclusion(cbOnChange = null, excludeExtensions = []) {
-        return this.getDropdownSettings({
+        return ExtensionsAPI.getDropdownSettings({
             onChange: cbOnChange,
             type: 'routing',
             addEmpty: false,
@@ -203,7 +255,7 @@ PbxApi.extendApiClient(ExtensionsAPI, {
      * @returns {Object} The dropdown settings.
      */
     getDropdownSettingsOnlyInternalWithoutEmpty(cbOnChange = null) {
-        return this.getDropdownSettings({
+        return ExtensionsAPI.getDropdownSettings({
             onChange: cbOnChange,
             type: 'internal',
             addEmpty: false,
@@ -217,7 +269,7 @@ PbxApi.extendApiClient(ExtensionsAPI, {
      * @returns {Object} The dropdown settings.
      */
     getDropdownSettingsOnlyInternalWithEmpty(cbOnChange = null) {
-        return this.getDropdownSettings({
+        return ExtensionsAPI.getDropdownSettings({
             onChange: cbOnChange,
             type: 'internal',
             addEmpty: true,
@@ -239,52 +291,44 @@ PbxApi.extendApiClient(ExtensionsAPI, {
             return;
         }
 
-        // Use centralized debounce utility
-        if (!this.debouncedAvailabilityCheck) {
-            this.debouncedAvailabilityCheck = {};
+        // Clear existing timeout for this CSS class
+        if (this.debounceTimeouts[cssClassName]) {
+            clearTimeout(this.debounceTimeouts[cssClassName]);
         }
 
-        // Create debounced function for this CSS class if not exists
-        if (!this.debouncedAvailabilityCheck[cssClassName]) {
-            this.debouncedAvailabilityCheck[cssClassName] = PbxApi.debounce((number, className, userIdParam) => {
-                // Show loading state
-                $(`.ui.input.${className}`).addClass('loading');
+        // Set new timeout with 500ms debounce
+        this.debounceTimeouts[cssClassName] = setTimeout(() => {
+            // Use v3 API through ExtensionsAPI
+            ExtensionsAPI.available(newNumber, (response) => {
+                $(`.ui.input.${cssClassName}`).removeClass('loading');
 
-                // Use v3 API through ExtensionsAPI with error handling
-                ExtensionsAPI.available(number, (response) => {
-                    $(`.ui.input.${className}`).removeClass('loading');
-
-                    if (response && response.result === true && response.data) {
-                        if (response.data['available'] === true) {
-                            $(`.ui.input.${className}`).parent().removeClass('error');
-                            $(`#${className}-error`).addClass('hidden');
-                        } else if (userIdParam.length > 0 && parseInt(response.data['userId']) === parseInt(userIdParam)) {
-                            $(`.ui.input.${className}`).parent().removeClass('error');
-                            $(`#${className}-error`).addClass('hidden');
-                        } else {
-                            $(`.ui.input.${className}`).parent().addClass('error');
-                            let message = `${globalTranslate.ex_ThisNumberIsNotFree}:&nbsp`;
-                            if (globalTranslate[response.data['represent']] !== undefined) {
-                                message = globalTranslate[response.data['represent']];
-                            } else {
-                                message += response.data['represent'];
-                            }
-                            $(`#${className}-error`).removeClass('hidden').html(message);
-                        }
+                if (response && response.result === true && response.data) {
+                    if (response.data['available'] === true) {
+                        $(`.ui.input.${cssClassName}`).parent().removeClass('error');
+                        $(`#${cssClassName}-error`).addClass('hidden');
+                    } else if (userId.length > 0 && parseInt(response.data['userId']) === parseInt(userId)) {
+                        $(`.ui.input.${cssClassName}`).parent().removeClass('error');
+                        $(`#${cssClassName}-error`).addClass('hidden');
                     } else {
-                        // Handle error response using centralized error handler
-                        $(`.ui.input.${className}`).parent().addClass('error');
-                        $(`#${className}-error`).removeClass('hidden').html(globalTranslate.ex_ThisNumberIsNotFree);
-
-                        // Log the error for debugging
-                        PbxApi.handleApiError('ExtensionsAPI.checkAvailability', response || 'No response');
+                        $(`.ui.input.${cssClassName}`).parent().addClass('error');
+                        let message = `${globalTranslate.ex_ThisNumberIsNotFree}:&nbsp`;
+                        if (globalTranslate[response.data['represent']] !== undefined) {
+                            message = globalTranslate[response.data['represent']];
+                        } else {
+                            message += response.data['represent'];
+                        }
+                        $(`#${cssClassName}-error`).removeClass('hidden').html(message);
                     }
-                });
-            }, 500); // 500ms debounce delay
-        }
+                } else {
+                    // Handle error response
+                    $(`.ui.input.${cssClassName}`).parent().addClass('error');
+                    $(`#${cssClassName}-error`).removeClass('hidden').html(globalTranslate.ex_ThisNumberIsNotFree);
+                }
+            });
 
-        // Call the debounced function
-        this.debouncedAvailabilityCheck[cssClassName](newNumber, cssClassName, userId);
+            // Show loading state
+            $(`.ui.input.${cssClassName}`).addClass('loading');
+        }, 500); // 500ms debounce delay
     },
 
     /**
@@ -294,7 +338,7 @@ PbxApi.extendApiClient(ExtensionsAPI, {
     getPhoneExtensions(callBack) {
         ExtensionsAPI.getForSelect('phones', (response) => {
             if (response && response.result === true) {
-                const formattedResponse = this.formatDropdownResults(response, false);
+                const formattedResponse = ExtensionsAPI.formatDropdownResults(response, false);
                 callBack(formattedResponse);
             } else {
                 callBack({ success: false, results: [] });
@@ -308,10 +352,10 @@ PbxApi.extendApiClient(ExtensionsAPI, {
      * @param {Function} callBack - The function to call when the extensions have been retrieved.
      * @param {string} type - The type of extensions to retrieve (all, internal, phones, routing). Default: 'routing'
      */
-    getForSelect(callBack, type = 'routing') {
+    getForSelectCallback(callBack, type = 'routing') {
         ExtensionsAPI.getForSelect(type, (response) => {
             if (response && response.result === true) {
-                const formattedResponse = this.formatDropdownResults(response, false);
+                const formattedResponse = ExtensionsAPI.formatDropdownResults(response, false);
                 callBack(formattedResponse.results);
             } else {
                 callBack([]);
@@ -380,7 +424,7 @@ PbxApi.extendApiClient(ExtensionsAPI, {
 
         // Fetch phone representations using v3 API
         ExtensionsAPI.getPhonesRepresent(numbers, (response) => {
-            this.cbAfterGetPhonesRepresent(response, htmlClass);
+            ExtensionsAPI.cbAfterGetPhonesRepresent(response, htmlClass);
         });
     },
 
@@ -426,100 +470,23 @@ PbxApi.extendApiClient(ExtensionsAPI, {
     },
 
     /**
-     * Get extensions for select dropdown (alias for getForSelect custom method)
-     * @param {string} type - Type of extensions ('all', 'internal', 'phones', 'routing')
-     * @param {function} callback - Callback function
-     * @returns {Object} API call result
+     * Callback method called when extension data changes
+     * This method is called from various parts of the system to notify about changes
      */
-    getForSelect(type = 'routing', callback) {
-        try {
-            // Support old signature where callback is the first parameter
-            if (typeof type === 'function') {
-                callback = type;
-                type = 'routing';
-            }
-
-            const validation = PbxApi.validateApiParams({ type, callback }, {
-                required: ['type', 'callback'],
-                types: { type: 'string', callback: 'function' }
-            });
-
-            if (!validation.isValid) {
-                return PbxApi.handleApiError('ExtensionsAPI.getForSelect', validation.errors.join(', '), callback);
-            }
-
-            return this.callCustomMethod('getForSelect', { type }, callback);
-        } catch (error) {
-            return PbxApi.handleApiError('ExtensionsAPI.getForSelect', error, callback);
-        }
-    },
-
-    /**
-     * Check if extension number is available
-     * @param {string} number - Extension number to check
-     * @param {function} callback - Callback function
-     * @returns {Object} API call result
-     */
-    available(number, callback) {
-        try {
-            const validation = PbxApi.validateApiParams({ number, callback }, {
-                required: ['number', 'callback'],
-                types: { number: 'string', callback: 'function' }
-            });
-
-            if (!validation.isValid) {
-                return PbxApi.handleApiError('ExtensionsAPI.available', validation.errors.join(', '), callback);
-            }
-
-            return this.callCustomMethod('available', { number }, callback, 'POST');
-        } catch (error) {
-            return PbxApi.handleApiError('ExtensionsAPI.available', error, callback);
-        }
-    },
-
-    /**
-     * Get phone representations for multiple numbers
-     * @param {Array} numbers - Array of numbers
-     * @param {function} callback - Callback function
-     * @returns {Object} API call result
-     */
-    getPhonesRepresent(numbers, callback) {
-        try {
-            const validation = PbxApi.validateApiParams({ numbers, callback }, {
-                required: ['numbers', 'callback'],
-                types: { callback: 'function' }
-            });
-
-            if (!validation.isValid) {
-                return PbxApi.handleApiError('ExtensionsAPI.getPhonesRepresent', validation.errors.join(', '), callback);
-            }
-
-            return this.callCustomMethod('getPhonesRepresent', { numbers }, callback, 'POST');
-        } catch (error) {
-            return PbxApi.handleApiError('ExtensionsAPI.getPhonesRepresent', error, callback);
-        }
-    },
-
-    /**
-     * Get phone representation for single number
-     * @param {string} number - Phone number
-     * @param {function} callback - Callback function
-     * @returns {Object} API call result
-     */
-    getPhoneRepresent(number, callback) {
-        try {
-            const validation = PbxApi.validateApiParams({ number, callback }, {
-                required: ['number', 'callback'],
-                types: { number: 'string', callback: 'function' }
-            });
-
-            if (!validation.isValid) {
-                return PbxApi.handleApiError('ExtensionsAPI.getPhoneRepresent', validation.errors.join(', '), callback);
-            }
-
-            return this.callCustomMethod('getPhoneRepresent', { number }, callback, 'POST');
-        } catch (error) {
-            return PbxApi.handleApiError('ExtensionsAPI.getPhoneRepresent', error, callback);
+    cbOnDataChanged() {
+        // Implementation for data change callback
+        // This can be extended to clear caches, refresh dropdowns, etc.
+        if (typeof ExtensionSelector !== 'undefined' && ExtensionSelector.refreshAll) {
+            ExtensionSelector.refreshAll();
         }
     }
 });
+
+/**
+ * Backward compatibility alias
+ * @deprecated Use ExtensionsAPI directly
+ */
+const Extensions = ExtensionsAPI;
+
+// Add specific alias for the old getForSelect method signature
+Extensions.getForSelect = ExtensionsAPI.getForSelectCallback;

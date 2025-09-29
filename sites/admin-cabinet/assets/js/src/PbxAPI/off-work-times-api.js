@@ -35,39 +35,40 @@ const OffWorkTimesAPI = new PbxApiClient({
     }
 });
 
-/**
- * Change priority of multiple time conditions
- *
- * @param {object} priorities - Map of time condition ID to new priority value
- * @param {function} callback - Callback function
- */
-OffWorkTimesAPI.changePriorities = function(priorities, callback) {
-    $.api({
-        url: `${this.apiUrl}:changePriorities`,
-        method: 'POST',
-        data: { priorities: priorities },
-        on: 'now',
-        onSuccess(response) {
-            callback(response);
-        },
-        onFailure(response) {
-            callback(response);
-        },
-        onError() {
-            callback({
-                result: false,
-                messages: { error: ['Network error occurred'] }
-            });
-        }
-    });
-};
+// Add method aliases to OffWorkTimesAPI
+Object.assign(OffWorkTimesAPI, {
 
-/**
- * Get default values for new time condition
- * This is a convenience method that wraps getRecord with null ID
- *
- * @param {function} callback - Callback function
- */
-OffWorkTimesAPI.getDefault = function(callback) {
-    this.getRecord(null, callback);
-};
+    /**
+     * Change priority of multiple time conditions
+     *
+     * @param {object} priorities - Map of time condition ID to new priority value
+     * @param {function} callback - Callback function
+     */
+    changePriorities(priorities, callback) {
+        return this.callCustomMethod('changePriorities', { priorities }, callback, 'POST');
+    },
+
+    /**
+     * Get default values for new time condition
+     * This is a convenience method that wraps getRecord with null ID
+     *
+     * @param {function} callback - Callback function
+     */
+    getDefault(callback) {
+        return this.getRecord(null, callback);
+    },
+
+    /**
+     * Copy time condition
+     *
+     * @param {string} id - Time condition ID to copy
+     * @param {function} callback - Callback function
+     */
+    copy(id, callback) {
+        return this.callCustomMethod('copy', { id }, callback, 'POST');
+    }
+
+});
+
+// Export for use in other modules
+window.OffWorkTimesAPI = OffWorkTimesAPI;

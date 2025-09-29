@@ -16,12 +16,13 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, PbxApi */ 
+/* global globalRootUrl, globalTranslate, PbxApi, PbxApiClient, $ */
 
 /**
- * NetworkFiltersAPI module for working with network filters.
+ * NetworkFiltersAPI - REST API v3 client for network filters management
+ *
  * Provides methods to fetch network filter data for dropdowns.
- * 
+ *
  * API response format:
  * {
  *   result: true,
@@ -30,72 +31,61 @@
  *     { value: '123', represent: '<i class="filter icon"></i> Office Network (192.168.1.0/24)' }
  *   ]
  * }
- * 
- * @module NetworkFiltersAPI
+ *
+ * @class NetworkFiltersAPI
  */
-const NetworkFiltersAPI = {
-    
+const NetworkFiltersAPI = new PbxApiClient({
+    endpoint: '/pbxcore/api/v3/network-filters',
+    customMethods: {
+        getForSelect: ':getForSelect'
+    }
+});
+
+// Add method aliases to NetworkFiltersAPI
+Object.assign(NetworkFiltersAPI, {
+
     /**
      * Get all network filters for dropdown select
      * Returns filters with 'value' and 'represent' fields
-     * 
+     *
      * @param {Function} callback - Callback function that receives data array or false on error
      */
     getNetworksForSelect(callback) {
-        const url = `/pbxcore/api/v3/network-filters:getForSelect`;
-        
-        $.api({
-            url: url,
-            on: 'now',
-            method: 'GET',
-            data: {
-                categories: ['SIP', 'IAX', 'AMI', 'API']
-            },
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
+        const params = {
+            categories: ['SIP', 'IAX', 'AMI', 'API']
+        };
+
+        return this.callCustomMethod('getForSelect', params, (response) => {
+            if (response && response.result === true && response.data) {
                 callback(response.data);
-            },
-            onFailure(response) {
-                callback(false);
-            },
-            onError() {
+            } else {
                 callback(false);
             }
         });
     },
-    
+
     /**
      * Get network filters for dropdown select filtered by categories
      * Returns filters with 'value' and 'represent' fields
-     * 
+     *
      * @param {Function} callback - Callback function that receives data array or false on error
      * @param {Array|string} categories - Filter categories: 'SIP', 'IAX', 'AMI', 'API' (default: ['SIP'])
+     * @param {boolean} includeLocalhost - Include localhost for AMI/API categories
      */
     getForSelect(callback, categories = ['SIP'], includeLocalhost = false) {
-        const url = `/pbxcore/api/v3/network-filters:getForSelect`;
-        
         const params = {
             categories: categories
         };
-        
+
         // Add includeLocalhost flag for AMI/API categories
         if (includeLocalhost && (categories.includes('AMI') || categories.includes('API'))) {
             params.includeLocalhost = true;
         }
-        
-        $.api({
-            url: url,
-            on: 'now',
-            method: 'GET',
-            data: params,
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
+
+        return this.callCustomMethod('getForSelect', params, (response) => {
+            if (response && response.result === true && response.data) {
                 callback(response.data);
-            },
-            onFailure(response) {
-                callback(false);
-            },
-            onError() {
+            } else {
                 callback(false);
             }
         });
@@ -104,7 +94,7 @@ const NetworkFiltersAPI = {
     /**
      * Initialize network filter dropdown
      * @deprecated Use NetworkFilterSelector module instead for better functionality
-     * 
+     *
      * @param {jQuery|string} selector - Dropdown selector or jQuery element
      * @param {Object} options - Configuration options
      * @param {string} options.currentValue - Current selected value
@@ -115,10 +105,10 @@ const NetworkFiltersAPI = {
     initializeDropdown(selector, options = {}) {
         const $select = typeof selector === 'string' ? $(selector) : selector;
         if (!$select || $select.length === 0) return $select;
-        
+
         const currentValue = options.currentValue || 'none';
         const categories = options.providerType === 'IAX' ? ['IAX'] : ['SIP'];
-        
+
         // Initialize Semantic UI dropdown first
         $select.dropdown({
             forceSelection: false,
@@ -126,18 +116,18 @@ const NetworkFiltersAPI = {
                 if (options.onChange) options.onChange(value);
             }
         });
-        
+
         // Get the wrapper element created by Fomantic UI
         const $dropdown = $select.parent('.ui.dropdown');
-        
+
         // Show loading state on wrapper
         $dropdown.addClass('loading');
-        
+
         // Load data and populate dropdown
         this.getForSelect((data) => {
             // Remove loading state from wrapper
             $dropdown.removeClass('loading');
-            
+
             if (data && Array.isArray(data)) {
                 // Clear and populate options
                 $select.empty();
@@ -145,11 +135,11 @@ const NetworkFiltersAPI = {
                     // Use 'represent' field from new API structure
                     $select.append(`<option value="${filter.value}">${filter.represent}</option>`);
                 });
-                
+
                 // Set current value and refresh dropdown
                 $select.val(currentValue);
                 $dropdown.dropdown('refresh');
-                
+
                 // Set selected value if it exists in options
                 if (currentValue && $select.find(`option[value="${currentValue}"]`).length > 0) {
                     $dropdown.dropdown('set selected', currentValue);
@@ -163,11 +153,11 @@ const NetworkFiltersAPI = {
                 $dropdown.dropdown('set selected', 'none');
             }
         }, categories);
-        
+
         return $dropdown;
-    },
-    
-};
+    }
+
+});
 
 // Export as part of window object for use in other modules
 window.NetworkFiltersAPI = NetworkFiltersAPI;

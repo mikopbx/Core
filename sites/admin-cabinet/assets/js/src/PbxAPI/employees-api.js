@@ -31,29 +31,29 @@ const EmployeesAPI = new PbxApiClient({
         getDefault: ':getDefault',
         import: ':import',
         confirmImport: ':confirmImport',
-        cancelImport: ':cancelImport',
         export: ':export',
         exportTemplate: ':exportTemplate',
         batchCreate: ':batchCreate'
     }
 });
 
-// Add method aliases for compatibility and easier use using centralized utility
-PbxApi.extendApiClient(EmployeesAPI, {
+// Add method aliases for compatibility and easier use
+Object.assign(EmployeesAPI, {
     
     /**
      * Get employee record for editing
      * Uses v3 RESTful API: GET /employees/{id} or GET /employees:getDefault for new
      * @param {string} recordId - Employee ID or empty/null for new employee
      * @param {function} callback - Callback function to handle response
-     * @returns {Object} API call result
      */
     getRecord(recordId, callback) {
-        try {
-            // Use standardized getRecord method from pbxapi utilities
-            return PbxApi.standardGetRecord(this, recordId, callback, true, 'getDefault');
-        } catch (error) {
-            return PbxApi.handleApiError('EmployeesAPI.getRecord', error, callback);
+        // Use :getDefault for new records, otherwise GET by ID
+        const isNew = !recordId || recordId === '' || recordId === 'new';
+
+        if (isNew) {
+            return this.callCustomMethod('getDefault', {}, callback);
+        } else {
+            return this.callGet({}, callback, recordId);
         }
     },
     
@@ -62,23 +62,9 @@ PbxApi.extendApiClient(EmployeesAPI, {
      * Uses v3 RESTful API: DELETE /employees/{id}
      * @param {string} id - Employee ID to delete
      * @param {function} callback - Callback function to handle response
-     * @returns {Object} API call result
      */
     deleteRecord(id, callback) {
-        try {
-            const validation = PbxApi.validateApiParams({ id, callback }, {
-                required: ['id', 'callback'],
-                types: { id: 'string', callback: 'function' }
-            });
-
-            if (!validation.isValid) {
-                return PbxApi.handleApiError('EmployeesAPI.deleteRecord', validation.errors.join(', '), callback);
-            }
-
-            return this.callDelete(callback, id);
-        } catch (error) {
-            return PbxApi.handleApiError('EmployeesAPI.deleteRecord', error, callback);
-        }
+        return this.callDelete(callback, id);
     },
     
     /**
@@ -120,19 +106,7 @@ PbxApi.extendApiClient(EmployeesAPI, {
             strategy: strategy
         }, callback, 'POST');
     },
-
-    /**
-     * Cancel running import job
-     * Uses v3 RESTful API: POST /employees:cancelImport
-     * @param {string} jobId - Import job ID
-     * @param {function} callback - Callback function to handle response
-     */
-    cancelImport(jobId, callback) {
-        return this.callCustomMethod('cancelImport', {
-            job_id: jobId
-        }, callback, 'POST');
-    },
-
+    
     /**
      * Export employees to CSV
      * Uses v3 RESTful API: POST /employees:export

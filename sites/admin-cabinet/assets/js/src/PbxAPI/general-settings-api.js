@@ -24,7 +24,7 @@
  * Provides a clean interface for general settings operations.
  * General Settings is a singleton resource - there's only one configuration in the system.
  *
- * @class GeneralSettingsAPI
+ * @class GeneralSettingsAPI 
  */
 const GeneralSettingsAPI = new PbxApiClient({
     endpoint: '/pbxcore/api/v3/general-settings',
@@ -35,29 +35,15 @@ const GeneralSettingsAPI = new PbxApiClient({
     }
 });
 
-// Add method aliases for compatibility and easier use using centralized utility
-PbxApi.extendApiClient(GeneralSettingsAPI, {
+//  Add method aliases for compatibility and easier use
+Object.assign(GeneralSettingsAPI, {
 
     /**
      * Get all general settings (GET /general-settings)
      * @param {Function} callback - Callback function to handle the response
-     * @returns {Object} API call result
      */
     getSettings(callback) {
-        try {
-            const validation = PbxApi.validateApiParams({ callback }, {
-                required: ['callback'],
-                types: { callback: 'function' }
-            });
-
-            if (!validation.isValid) {
-                return PbxApi.handleApiError('GeneralSettingsAPI.getSettings', validation.errors.join(', '), callback);
-            }
-
-            return this.callGet({}, callback);
-        } catch (error) {
-            return PbxApi.handleApiError('GeneralSettingsAPI.getSettings', error, callback);
-        }
+        return this.callGet({}, callback);
     },
 
     /**

@@ -33,22 +33,7 @@ const customFilesAPI = new PbxApiClient({
     }
 });
 
-/**
- * Get default values for a new custom file
- *
- * @param {Function} callback - Callback function to handle the response
- *
- * @example
- * customFilesAPI.getDefault((response) => {
- *     if (response.result) {
- *         // Use default values to initialize new file form
- *         initializeForm(response.data);
- *     }
- * });
- */
-customFilesAPI.getDefault = function(callback) {
-    return this.callCustomMethod('getDefault', {}, callback);
-};
+// Use customFilesAPI.getRecord('new', callback) for default values
 
 /**
  * Save custom file (intelligent create or update)

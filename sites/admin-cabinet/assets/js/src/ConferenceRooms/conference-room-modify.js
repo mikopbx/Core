@@ -123,7 +123,7 @@ const conferenceRoomModify = {
         
         if (!recordId || recordId === '') {
             // New record - get default values
-            ConferenceRoomsAPI.getDefault((response) => {
+            ConferenceRoomsAPI.getRecord('new', (response) => {
                 if (response.result) {
                     conferenceRoomModify.populateForm(response.data);
                     // Get the default extension from the form

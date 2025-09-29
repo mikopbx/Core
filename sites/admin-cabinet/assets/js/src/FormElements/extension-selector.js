@@ -466,14 +466,21 @@ const ExtensionSelector = {
     
     /**
      * Refresh dropdown data
-     * 
+     *
      * @param {string} fieldId - Field ID
      */
     refresh(fieldId) {
-        // Delegate to DynamicDropdownBuilder
         const $dropdown = $(`#${fieldId}-dropdown`);
         if ($dropdown.length) {
-            $dropdown.dropdown('refresh');
+            // Check if dropdown is still attached to DOM before refreshing
+            if ($.contains(document, $dropdown[0])) {
+                // Temporarily disable animations to prevent DOM errors
+                $dropdown.dropdown('hide');
+                $dropdown.dropdown({
+                    silent: true
+                });
+                $dropdown.dropdown('refresh');
+            }
         }
     },
     
@@ -500,18 +507,15 @@ const ExtensionSelector = {
     refreshAll(type = null) {
         // Clear cache first
         this.clearCache(type);
-        
+
         // Refresh each active instance
         this.instances.forEach((instance, fieldId) => {
             if (!type || instance.config.type === type) {
                 // Clear dropdown and reload
                 DynamicDropdownBuilder.clear(fieldId);
-                
-                // Reinitialize dropdown to trigger new API request
-                const $dropdown = $(`#${fieldId}-dropdown`);
-                if ($dropdown.length) {
-                    $dropdown.dropdown('refresh');
-                }
+
+                // Safely refresh dropdown
+                this.refresh(fieldId);
             }
         });
     },

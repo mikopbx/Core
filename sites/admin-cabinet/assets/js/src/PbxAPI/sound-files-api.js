@@ -30,7 +30,8 @@ const SoundFilesAPI = new PbxApiClient({
     customMethods: {
         getDefault: ':getDefault',
         uploadFile: ':uploadFile',
-        getForSelect: ':getForSelect'
+        getForSelect: ':getForSelect',
+        convertAudioFile: ':convertAudioFile'
     }
 });
 
@@ -42,13 +43,14 @@ Object.assign(SoundFilesAPI, {
      * Uses v3 RESTful API: GET /sound-files/{id} or GET /sound-files:getDefault for new
      * @param {string} recordId - Sound file ID or empty/null for new sound file
      * @param {function} callback - Callback function to handle response
+     * @param {object} params - Optional parameters (e.g., category for new records)
      */
-    getRecord(recordId, callback) {
+    getRecord(recordId, callback, params = {}) {
         // Use :getDefault for new records, otherwise GET by ID
         const isNew = !recordId || recordId === '' || recordId === 'new';
 
         if (isNew) {
-            return this.callCustomMethod('getDefault', {}, callback);
+            return this.callCustomMethod('getDefault', params, callback);
         } else {
             return this.callGet({}, callback, recordId);
         }
@@ -97,5 +99,17 @@ Object.assign(SoundFilesAPI, {
                 callback({result: false, data: []});
             }
         });
+    },
+
+    /**
+     * Convert audio file to MP3 format
+     * Uses v3 RESTful API: POST /sound-files:convertAudioFile
+     * @param {object} params - Conversion parameters
+     * @param {string} params.temp_filename - Path to temporary uploaded file
+     * @param {string} params.category - File category (custom/moh)
+     * @param {function} callback - Callback function to handle response
+     */
+    convertAudioFile(params, callback) {
+        return this.callCustomMethod('convertAudioFile', params, callback, 'POST');
     }
 });

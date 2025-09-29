@@ -26,7 +26,7 @@
  * 
  * Features:
  * - Standard RESTful operations (GET, POST, PUT, DELETE)
- * - Custom methods support via colon notation (:getDefault, :getDefaults)
+ * - Custom methods support via colon notation (:getDefault)
  * - Automatic HTTP method selection based on data
  * - CSRF token management
  * - Backward compatibility with PbxDataTableIndex
@@ -73,9 +73,6 @@ class PbxApiClient {
         if (isNew && this.customMethods.getDefault) {
             // Use custom method for new records
             url = `${this.apiUrl}${this.customMethods.getDefault}`;
-        } else if (isNew && this.customMethods.getDefaults) {
-            // Alternative naming
-            url = `${this.apiUrl}${this.customMethods.getDefaults}`;
         } else {
             // Get existing record by ID
             url = `${this.apiUrl}/${recordId}`;

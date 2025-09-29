@@ -30,15 +30,12 @@ const CallQueuesAPI = new PbxApiClient({
     }
 });
 
-// Override getRecordId to handle ID field
-CallQueuesAPI.getRecordId = function(data) {
-    // v3 API uses 'id' field as primary identifier
-    return data.id;
-};
-
 // The PbxApiClient automatically provides:
 // - getList(callback) or getList(params, callback)
 // - getRecord(id, callback) - uses :getDefault for new records
 // - saveRecord(data, callback) - automatically selects POST/PUT
 // - deleteRecord(id, callback)
 // - callCustomMethod(methodName, data, callback)
+
+// Export for use in other modules
+window.CallQueuesAPI = CallQueuesAPI;

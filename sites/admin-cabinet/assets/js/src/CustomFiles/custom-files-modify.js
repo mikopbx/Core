@@ -172,7 +172,7 @@ const customFile = {
 
         if (!fileId || fileId === '') {
             // Load default values for new custom file
-            customFilesAPI.getDefault((response) => {
+            customFilesAPI.getRecord('new', (response) => {
                 if (response.result && response.data) {
                     // Set default values to form fields
                     customFile.$formObj.form('set values', response.data);

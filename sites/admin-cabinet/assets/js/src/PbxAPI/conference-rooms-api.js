@@ -29,11 +29,6 @@ const ConferenceRoomsAPI = new PbxApiClient({
     }
 });
 
-// Add getDefault alias for compatibility
-ConferenceRoomsAPI.getDefault = function(callback) {
-    return this.callCustomMethod('getDefault', callback);
-};
-
 // The PbxApiClient automatically provides:
 // - getList(callback) or getList(params, callback)
 // - getRecord(id, callback) - uses :getDefault for new records

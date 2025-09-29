@@ -191,7 +191,7 @@ var dialplanApplicationModify = {
             });
         } else if (!recordId || recordId === '') {
             // For new records, get default values
-            DialplanApplicationsAPI.getDefault(function(response) {
+            DialplanApplicationsAPI.getRecord('new', function(response) {
                 if (response.result) {
                     dialplanApplicationModify.populateForm(response.data);
                     dialplanApplicationModify.defaultExtension = response.data.extension;

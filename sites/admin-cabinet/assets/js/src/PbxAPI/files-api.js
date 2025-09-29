@@ -37,7 +37,7 @@ const FilesAPI = new PbxApiClient({
 });
 
 // Add methods to FilesAPI using PbxApi utility
-PbxApi.extendApiClient(FilesAPI, {
+Object.assign(FilesAPI, {
 
     /**
      * Get file content by path
@@ -47,24 +47,12 @@ PbxApi.extendApiClient(FilesAPI, {
      * @returns {Object} jQuery API call object
      */
     getFileContent(filePath, callback, needOriginal = false) {
-        try {
-            // Validate parameters
-            const validation = PbxApi.validateApiParams({ filePath, callback }, {
-                required: ['filePath', 'callback'],
-                types: { filePath: 'string', callback: 'function' }
-            });
-
-            if (!validation.isValid) {
-                return PbxApi.handleApiError('FilesAPI.getFileContent', validation.errors.join(', '), callback);
-            }
-
+        
             const encodedPath = encodeURIComponent(filePath);
             const params = needOriginal ? { needOriginal: 'true' } : {};
 
             return this.callGet(params, callback, encodedPath);
-        } catch (error) {
-            return PbxApi.handleApiError('FilesAPI.getFileContent', error, callback);
-        }
+    
     },
 
     /**
@@ -76,43 +64,10 @@ PbxApi.extendApiClient(FilesAPI, {
      * @returns {Object} jQuery API call object
      */
     uploadFileContent(filePath, content, callback, contentType = 'application/octet-stream') {
-        try {
-            // Validate parameters
-            const validation = PbxApi.validateApiParams({ filePath, content, callback }, {
-                required: ['filePath', 'content', 'callback'],
-                types: { filePath: 'string', callback: 'function' }
-            });
+        const encodedPath = encodeURIComponent(filePath);
 
-            if (!validation.isValid) {
-                return PbxApi.handleApiError('FilesAPI.uploadFileContent', validation.errors.join(', '), callback);
-            }
-
-            const encodedPath = encodeURIComponent(filePath);
-
-            // Use custom PUT call with content type header
-            return $.api({
-                url: `${this.apiUrl}/${encodedPath}`,
-                on: 'now',
-                method: 'PUT',
-                data: content,
-                beforeXHR(xhr) {
-                    xhr.setRequestHeader('Content-Type', contentType);
-                    return xhr;
-                },
-                successTest: PbxApi.successTest,
-                onSuccess(response) {
-                    callback(response);
-                },
-                onFailure(response) {
-                    callback(response);
-                },
-                onError(error) {
-                    PbxApi.handleApiError('FilesAPI.uploadFileContent', error, callback);
-                }
-            });
-        } catch (error) {
-            return PbxApi.handleApiError('FilesAPI.uploadFileContent', error, callback);
-        }
+        // Use callPut method with the encoded path as ID
+        return this.callPut(content, callback, encodedPath);
     },
 
     /**
@@ -122,22 +77,11 @@ PbxApi.extendApiClient(FilesAPI, {
      * @returns {Object} jQuery API call object
      */
     deleteFile(filePath, callback) {
-        try {
-            // Validate parameters
-            const validation = PbxApi.validateApiParams({ filePath, callback }, {
-                required: ['filePath', 'callback'],
-                types: { filePath: 'string', callback: 'function' }
-            });
-
-            if (!validation.isValid) {
-                return PbxApi.handleApiError('FilesAPI.deleteFile', validation.errors.join(', '), callback);
-            }
-
+        
+            
             const encodedPath = encodeURIComponent(filePath);
             return this.callDelete(callback, encodedPath);
-        } catch (error) {
-            return PbxApi.handleApiError('FilesAPI.deleteFile', error, callback);
-        }
+      
     },
 
     /**
@@ -147,20 +91,9 @@ PbxApi.extendApiClient(FilesAPI, {
      * @returns {Object} API call result
      */
     uploadChunked(formData, callback) {
-        try {
-            const validation = PbxApi.validateApiParams({ formData, callback }, {
-                required: ['formData', 'callback'],
-                types: { callback: 'function' }
-            });
-
-            if (!validation.isValid) {
-                return PbxApi.handleApiError('FilesAPI.uploadChunked', validation.errors.join(', '), callback);
-            }
-
+      
             return this.callCustomMethod('upload', formData, callback, 'POST');
-        } catch (error) {
-            return PbxApi.handleApiError('FilesAPI.uploadChunked', error, callback);
-        }
+       
     },
 
     /**
@@ -170,21 +103,11 @@ PbxApi.extendApiClient(FilesAPI, {
      * @returns {Object} API call result
      */
     getUploadStatus(uploadId, callback) {
-        try {
-            const validation = PbxApi.validateApiParams({ uploadId, callback }, {
-                required: ['uploadId', 'callback'],
-                types: { uploadId: 'string', callback: 'function' }
-            });
-
-            if (!validation.isValid) {
-                return PbxApi.handleApiError('FilesAPI.getUploadStatus', validation.errors.join(', '), callback);
-            }
+      
 
             const params = { id: uploadId };
             return this.callCustomMethod('uploadStatus', params, callback, 'GET');
-        } catch (error) {
-            return PbxApi.handleApiError('FilesAPI.getUploadStatus', error, callback);
-        }
+       
     },
 
     /**
@@ -196,20 +119,10 @@ PbxApi.extendApiClient(FilesAPI, {
      * @returns {Object} API call result
      */
     downloadFirmware(params, callback) {
-        try {
-            const validation = PbxApi.validateApiParams({ params, callback }, {
-                required: ['params', 'callback'],
-                types: { params: 'object', callback: 'function' }
-            });
-
-            if (!validation.isValid) {
-                return PbxApi.handleApiError('FilesAPI.downloadFirmware', validation.errors.join(', '), callback);
-            }
+       
 
             return this.callCustomMethod('downloadFirmware', params, callback, 'POST');
-        } catch (error) {
-            return PbxApi.handleApiError('FilesAPI.downloadFirmware', error, callback);
-        }
+      
     },
 
     /**
@@ -219,21 +132,11 @@ PbxApi.extendApiClient(FilesAPI, {
      * @returns {Object} API call result
      */
     getFirmwareStatus(filename, callback) {
-        try {
-            const validation = PbxApi.validateApiParams({ filename, callback }, {
-                required: ['filename', 'callback'],
-                types: { filename: 'string', callback: 'function' }
-            });
-
-            if (!validation.isValid) {
-                return PbxApi.handleApiError('FilesAPI.getFirmwareStatus', validation.errors.join(', '), callback);
-            }
+       
 
             const params = { filename: filename };
             return this.callCustomMethod('firmwareStatus', params, callback, 'GET');
-        } catch (error) {
-            return PbxApi.handleApiError('FilesAPI.getFirmwareStatus', error, callback);
-        }
+        
     }
 });
 
@@ -241,15 +144,6 @@ PbxApi.extendApiClient(FilesAPI, {
  * Legacy compatibility methods - these map to the new REST API methods
  * These maintain backward compatibility while using the new standardized methods
  */
-
-/**
- * Legacy: Remove audio file (maps to deleteFile)
- * @param {string} filename - Audio file path
- * @param {function} callback - Callback function
- */
-FilesAPI.removeAudioFile = function(filename, callback) {
-    return this.deleteFile(filename, callback);
-};
 
 /**
  * Legacy: Upload file with params (maps to uploadChunked)
@@ -306,103 +200,62 @@ FilesAPI.configureResumable = function(resumableConfig = {}) {
 };
 
 /**
+ * Setup common Resumable.js event handlers
+ * @param {object} resumableInstance - Resumable.js instance
+ * @param {function} callback - Callback function for events
+ * @param {boolean} autoUpload - Whether to auto-upload on fileAdded event
+ */
+FilesAPI.setupResumableEvents = function(resumableInstance, callback, autoUpload = false) {
+    resumableInstance.on('fileSuccess', (file, response) => {
+        callback('fileSuccess', {file, response});
+    });
+    resumableInstance.on('fileProgress', (file) => {
+        callback('fileProgress', {file});
+    });
+    resumableInstance.on('fileAdded', (file, event) => {
+        if (autoUpload) {
+            resumableInstance.upload();
+        }
+        callback('fileAdded', {file, event});
+    });
+    resumableInstance.on('fileRetry', (file) => {
+        callback('fileRetry', {file});
+    });
+    resumableInstance.on('fileError', (file, message) => {
+        callback('fileError', {file, message});
+    });
+    resumableInstance.on('uploadStart', () => {
+        callback('uploadStart');
+    });
+    resumableInstance.on('complete', () => {
+        callback('complete');
+    });
+    resumableInstance.on('progress', () => {
+        const percent = 100 * resumableInstance.progress();
+        callback('progress', {percent});
+    });
+    resumableInstance.on('error', (message, file) => {
+        callback('error', {message, file});
+    });
+    resumableInstance.on('pause', () => {
+        callback('pause');
+    });
+    resumableInstance.on('cancel', () => {
+        callback('cancel');
+    });
+};
+
+/**
  * Upload file using Resumable.js
  * @param {File} file - File object to upload
  * @param {function} callback - Callback function
  */
 FilesAPI.uploadFile = function(file, callback) {
-    console.log('🔵 FilesAPI.uploadFile started', {
-        fileName: file.name,
-        fileSize: file.size,
-        fileType: file.type
-    });
+    const r = new Resumable(this.configureResumable());
 
-    const r = new Resumable({
-        target: `${Config.pbxUrl}/pbxcore/api/v3/files:upload`,
-        testChunks: false,
-        chunkSize: 3 * 1024 * 1024,
-        simultaneousUploads: 1,
-        maxFiles: 1,
-    });
+    this.setupResumableEvents(r, callback);
 
-    console.log('🔧 Resumable.js configured', {
-        target: `${Config.pbxUrl}/pbxcore/api/v3/files:upload`,
-        chunkSize: 3 * 1024 * 1024
-    });
-
-    // Set up event handlers first
-    r.on('fileSuccess', (file, response) => {
-        console.log('✅ File upload success', {
-            fileName: file.fileName || file.name,
-            response: response
-        });
-        callback('fileSuccess', {file, response});
-    });
-    r.on('fileProgress', (file) => {
-        const progress = Math.round(file.progress() * 100);
-        console.log('📈 File upload progress', {
-            fileName: file.fileName || file.name,
-            progress: progress + '%'
-        });
-        callback('fileProgress', {file});
-    });
-    r.on('fileAdded', (file, event) => {
-        console.log('📁 File added to upload queue', {
-            fileName: file.fileName || file.name,
-            uniqueIdentifier: file.uniqueIdentifier,
-            size: file.size
-        });
-        callback('fileAdded', {file, event});
-        // Upload will start automatically after fileAdded
-    });
-    r.on('fileRetry', (file) => {
-        console.log('🔄 File upload retry', {
-            fileName: file.fileName || file.name
-        });
-        callback('fileRetry', {file});
-    });
-    r.on('fileError', (file, message) => {
-        console.error('❌ File upload error', {
-            fileName: file.fileName || file.name,
-            message: message
-        });
-        callback('fileError', {file, message});
-    });
-    r.on('uploadStart', () => {
-        console.log('🚀 Upload process started');
-        callback('uploadStart');
-    });
-    r.on('complete', () => {
-        console.log('🏁 All uploads completed');
-        callback('complete');
-    });
-    r.on('progress', () => {
-        const percent = 100 * r.progress();
-        console.log('📊 Overall upload progress', {
-            percent: Math.round(percent) + '%'
-        });
-        callback('progress', {percent});
-    });
-    r.on('error', (message, file) => {
-        console.error('💥 Upload error', {
-            message: message,
-            file: file
-        });
-        callback('error', {message, file});
-    });
-    r.on('pause', () => {
-        console.log('⏸️ Upload paused');
-        callback('pause');
-    });
-    r.on('cancel', () => {
-        console.log('⏹️ Upload cancelled');
-        callback('cancel');
-    });
-
-    // Add file and upload - this will trigger fileAdded then uploadStart
-    console.log('➕ Adding file to Resumable.js');
     r.addFile(file);
-    console.log('▶️ Starting upload');
     r.upload();
 };
 
@@ -412,22 +265,13 @@ FilesAPI.uploadFile = function(file, callback) {
  * @param {function} callback - Callback function
  */
 FilesAPI.getStatusUploadFile = function(fileId, callback) {
-    $.api({
-        url: `${Config.pbxUrl}/pbxcore/api/v3/files:uploadStatus`,
-        on: 'now',
-        method: 'POST',
-        data: {id: fileId},
-        successTest: PbxApi.successTest,
-        onSuccess(response) {
+    return this.callCustomMethod('uploadStatus', { id: fileId }, (response) => {
+        if (response && response.result === true && response.data) {
             callback(response.data);
-        },
-        onFailure() {
+        } else {
             callback(false);
-        },
-        onError() {
-            callback(false);
-        },
-    });
+        }
+    }, 'POST');
 };
 
 /**
@@ -437,17 +281,14 @@ FilesAPI.getStatusUploadFile = function(fileId, callback) {
  * @param {function|null} callback - Callback function (optional)
  */
 FilesAPI.removeAudioFile = function(filePath, fileId = null, callback = null) {
-    $.api({
-        url: `${Config.pbxUrl}/pbxcore/api/v3/files`,
-        on: 'now',
-        method: 'POST',
-        data: {filename: filePath},
-        successTest: PbxApi.successTest,
-        onSuccess() {
-            if (callback !== null) {
+    return this.deleteFile(filePath, (response) => {
+        if (callback !== null) {
+            if (response && response.result === true) {
                 callback(fileId);
+            } else {
+                callback(false);
             }
-        },
+        }
     });
 };
 
@@ -457,27 +298,20 @@ FilesAPI.removeAudioFile = function(filePath, fileId = null, callback = null) {
  * @param {function} callback - Callback function
  */
 FilesAPI.downloadNewFirmware = function(params, callback) {
-    $.api({
-        url: `${Config.pbxUrl}/pbxcore/api/v3/files:downloadFirmware`,
-        on: 'now',
-        method: 'POST',
-        data: {
-            md5: params.md5,
-            size: params.size,
-            version: params.version,
-            url: params.updateLink
-        },
-        successTest: PbxApi.successTest,
-        onSuccess(response) {
+    const requestData = {
+        md5: params.md5,
+        size: params.size,
+        version: params.version,
+        url: params.updateLink
+    };
+
+    return this.callCustomMethod('downloadFirmware', requestData, (response) => {
+        if (response && response.result === true && response.data) {
             callback(response.data);
-        },
-        onFailure(response) {
+        } else {
             callback(response);
-        },
-        onError(response) {
-            callback(response);
-        },
-    });
+        }
+    }, 'POST');
 };
 
 /**
@@ -486,22 +320,13 @@ FilesAPI.downloadNewFirmware = function(params, callback) {
  * @param {function} callback - Callback function
  */
 FilesAPI.firmwareDownloadStatus = function(filename, callback) {
-    $.api({
-        url: `${Config.pbxUrl}/pbxcore/api/v3/files:firmwareStatus`,
-        on: 'now',
-        method: 'POST',
-        data: {filename},
-        successTest: PbxApi.successTest,
-        onSuccess(response) {
+    return this.callCustomMethod('firmwareStatus', { filename }, (response) => {
+        if (response && response.result === true && response.data) {
             callback(response.data);
-        },
-        onFailure() {
+        } else {
             callback(false);
-        },
-        onError() {
-            callback(false);
-        },
-    });
+        }
+    }, 'POST');
 };
 
 /**
@@ -511,168 +336,34 @@ FilesAPI.firmwareDownloadStatus = function(filename, callback) {
  * @param {function} callback - Callback function
  */
 FilesAPI.attachToBtn = function(buttonId, fileTypes, callback) {
-    console.log('🔗 FilesAPI.attachToBtn initialized', {
-        buttonId: buttonId,
-        fileTypes: fileTypes,
-        callbackType: typeof callback
-    });
-
     const buttonElement = document.getElementById(buttonId);
     if (!buttonElement) {
-        console.error('❌ Button element not found', { buttonId: buttonId });
         return;
     }
 
-    console.log('✅ Button element found', {
-        buttonId: buttonId,
-        tagName: buttonElement.tagName,
-        className: buttonElement.className
-    });
-
-    const uploadUrl = `${Config.pbxUrl}/pbxcore/api/v3/files:upload`;
-
-    const resumableConfig = {
-        target: uploadUrl,
-        testChunks: false,
-        chunkSize: 3 * 1024 * 1024,
-        maxFiles: 1,
-        simultaneousUploads: 1,
+    const resumableConfig = this.configureResumable({
         fileType: fileTypes,
-    };
+        query: function(file) {
+            const originalName = file.name || file.fileName;
+            const nameWithoutExt = originalName.replace(/\.[^/.]+$/, '');
+            const extension = originalName.split('.').pop();
+            const finalFilename = nameWithoutExt + '.' + extension;
 
-    console.log('🔧 Resumable.js configuration', {
-        config: resumableConfig,
-        uploadUrl: uploadUrl,
-        configPbxUrl: Config?.pbxUrl,
-        fullTarget: resumableConfig.target
+            return {
+                resumableFilename: finalFilename
+            };
+        }
     });
 
     const r = new Resumable(resumableConfig);
 
-    console.log('✅ Resumable.js instance created', {
-        target: r.opts.target,
-        isValidTarget: !!r.opts.target,
-        support: r.support
-    });
-
     try {
         r.assignBrowse(buttonElement);
-        console.log('✅ File browser assigned to button successfully');
     } catch (error) {
-        console.error('❌ Failed to assign browser to button', {
-            buttonId: buttonId,
-            error: error.message
-        });
         return;
     }
 
-    r.on('fileSuccess', (file, response) => {
-        console.log('✅ [attachToBtn] File upload success', {
-            fileName: file.fileName || file.name,
-            response: response,
-            responseType: typeof response,
-            responseLength: response ? response.length : 0
-        });
-
-        // Try to parse and log the response structure
-        try {
-            const parsedResponse = JSON.parse(response);
-            console.log('📊 [attachToBtn] Parsed response structure', {
-                result: parsedResponse.result,
-                hasData: !!parsedResponse.data,
-                dataKeys: parsedResponse.data ? Object.keys(parsedResponse.data) : [],
-                messages: parsedResponse.messages,
-                fullResponse: parsedResponse
-            });
-        } catch (e) {
-            console.log('📊 [attachToBtn] Response is not JSON', {
-                rawResponse: response,
-                parseError: e.message
-            });
-        }
-
-        callback('fileSuccess', {file, response});
-    });
-    r.on('fileProgress', (file) => {
-        const progress = Math.round(file.progress() * 100);
-        console.log('📈 [attachToBtn] File upload progress', {
-            fileName: file.fileName || file.name,
-            progress: progress + '%'
-        });
-        callback('fileProgress', {file});
-    });
-    r.on('fileAdded', (file, event) => {
-        console.log('📁 [attachToBtn] File added to upload queue', {
-            fileName: file.fileName || file.name,
-            uniqueIdentifier: file.uniqueIdentifier,
-            size: file.size,
-            buttonId: buttonId
-        });
-        console.log('▶️ [attachToBtn] Starting upload automatically');
-        r.upload();
-        callback('fileAdded', {file, event});
-    });
-    r.on('fileRetry', (file) => {
-        console.log('🔄 [attachToBtn] File upload retry', {
-            fileName: file.fileName || file.name
-        });
-        callback('fileRetry', {file});
-    });
-    r.on('fileError', (file, message) => {
-        console.error('❌ [attachToBtn] File upload error', {
-            fileName: file.fileName || file.name,
-            message: message,
-            messageType: typeof message,
-            buttonId: buttonId,
-            fileUniqueId: file.uniqueIdentifier,
-            fileSize: file.size
-        });
-
-        // Try to get more detailed error information
-        if (message && typeof message === 'string') {
-            try {
-                const errorObj = JSON.parse(message);
-                console.error('📊 [attachToBtn] Detailed error info', errorObj);
-            } catch (e) {
-                console.error('📊 [attachToBtn] Error message (raw):', message);
-            }
-        }
-
-        callback('fileError', {file, message});
-    });
-    r.on('uploadStart', () => {
-        console.log('🚀 [attachToBtn] Upload process started');
-        callback('uploadStart');
-    });
-    r.on('complete', () => {
-        console.log('🏁 [attachToBtn] All uploads completed');
-        callback('complete');
-    });
-    r.on('progress', () => {
-        const percent = 100 * r.progress();
-        console.log('📊 [attachToBtn] Overall upload progress', {
-            percent: Math.round(percent) + '%'
-        });
-        callback('progress', {percent});
-    });
-    r.on('error', (message, file) => {
-        console.error('💥 [attachToBtn] Upload error', {
-            message: message,
-            file: file,
-            buttonId: buttonId
-        });
-        callback('error', {message, file});
-    });
-    r.on('pause', () => {
-        console.log('⏸️ [attachToBtn] Upload paused');
-        callback('pause');
-    });
-    r.on('cancel', () => {
-        console.log('⏹️ [attachToBtn] Upload cancelled');
-        callback('cancel');
-    });
-
-    console.log('🎯 [attachToBtn] All event handlers registered successfully');
+    this.setupResumableEvents(r, callback, true); // autoUpload = true for button attachments
 };
 
 // Export for use in other modules

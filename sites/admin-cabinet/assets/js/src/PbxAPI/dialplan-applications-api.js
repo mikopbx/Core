@@ -33,20 +33,7 @@ const DialplanApplicationsAPI = new PbxApiClient({
     }
 });
 
-/**
- * Get default values for a new dialplan application
- * 
- * @param {function} callback - Callback function to handle the response
- * @example
- * DialplanApplicationsAPI.getDefault((response) => {
- *     if (response.result) {
- *         console.log('Default values:', response.data);
- *     }
- * });
- */
-DialplanApplicationsAPI.getDefault = function(callback) {
-    return this.callCustomMethod('getDefault', {}, callback);
-};
+// Use DialplanApplicationsAPI.getRecord('new', callback) for default values
 
 /**
  * Copy an existing dialplan application
