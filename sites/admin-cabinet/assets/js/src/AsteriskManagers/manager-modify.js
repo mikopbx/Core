@@ -147,8 +147,6 @@ const manager = {
         const urlParams = new URLSearchParams(window.location.search);
         const copySourceId = urlParams.get('copy-source');
 
-        // Initialize API
-        AsteriskManagersAPI.initialize();
 
         // Handle copy operation
         if (copySourceId) {
@@ -169,16 +167,17 @@ const manager = {
         manager.$formObj.addClass('loading');
 
         // Load copy data from the source manager using the copy endpoint
-        AsteriskManagersAPI.getCopyData(sourceId, (data) => {
+        AsteriskManagersAPI.getCopyData(sourceId, (response) => {
             manager.$formObj.removeClass('loading');
 
-            if (data === false) {
+            if (!response || !response.result) {
                 // V5.0: No fallback - show error and stop
                 UserMessage.showError(globalTranslate.am_ErrorLoadingManager);
                 return;
             }
 
             // The copy endpoint already returns data with cleared ID, username, generated secret, and updated description
+            const data = response.data;
             manager.managerData = data;
 
             // Set hidden field value BEFORE initializing dropdowns
@@ -215,21 +214,22 @@ const manager = {
         manager.$formObj.addClass('loading');
 
         // Always call API - it returns defaults for new records (when ID is empty)
-        AsteriskManagersAPI.getRecord(manager.managerId || '', (data) => {
+        AsteriskManagersAPI.getRecord(manager.managerId || '', (response) => {
             manager.$formObj.removeClass('loading');
 
-            if (data === false) {
+            if (!response || !response.result) {
                 // V5.0: No fallback - show error and stop
                 UserMessage.showError(globalTranslate.am_ErrorLoadingManager);
                 return;
             }
 
+            const data = response.data;
             manager.managerData = data;
-            
+
             // Set hidden field value BEFORE initializing dropdowns
             // This ensures the value is available when dropdown initializes
             $('#networkfilterid').val(data.networkfilterid || 'none');
-            
+
             // Now populate form and initialize elements
             manager.populateForm(data);
             

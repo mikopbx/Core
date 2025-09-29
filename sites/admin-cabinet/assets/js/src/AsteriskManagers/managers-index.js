@@ -56,9 +56,9 @@ const asteriskManagersIndex = {
         $('#asterisk-managers-table-container').html('<div class="ui active centered inline loader"></div>');
         
         // Load data from API
-        AsteriskManagersAPI.getList((data) => {
-            if (data && Array.isArray(data)) {
-                if (data.length === 0) {
+        AsteriskManagersAPI.getList((response) => {
+            if (response && response.result && Array.isArray(response.data)) {
+                if (response.data.length === 0) {
                     // Hide the table container and add button, show placeholder
                     $('#asterisk-managers-table-container').hide();
                     $('.add-new-button').hide();
@@ -69,7 +69,7 @@ const asteriskManagersIndex = {
                     $('.add-new-button').show();
                     $('#asterisk-managers-table-container').show();
 
-                    this.renderPermissionsTable(data);
+                    this.renderPermissionsTable(response.data);
                 }
             } else {
                 $('#asterisk-managers-table-container').html('<div class="ui error message">Failed to load data</div>');
