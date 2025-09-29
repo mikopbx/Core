@@ -59,7 +59,7 @@ use MikoPBX\PBXCoreREST\Lib\AsteriskRestUsersManagementProcessor;
  * @examples Custom method operations:
  * 
  * # Get default values for new ARI user
- * curl -X GET http://127.0.0.1/pbxcore/api/v3/asterisk-rest-users:getDefaults
+ * curl -X GET http://127.0.0.1/pbxcore/api/v3/asterisk-rest-users:getDefault
  * 
  * @note For password generation, use the dedicated password API:
  * curl -X GET http://127.0.0.1/pbxcore/api/v3/passwords:generate?length=32
@@ -82,7 +82,7 @@ class RestController extends BaseRestController
     protected function getAllowedCustomMethods(): array
     {
         return [
-            'GET' => ['getDefaults'],
+            'GET' => ['getDefault'],
             'POST' => [] // No custom POST methods - use standard CRUD operations
         ];
     }

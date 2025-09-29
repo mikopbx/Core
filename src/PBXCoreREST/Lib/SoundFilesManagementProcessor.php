@@ -29,6 +29,7 @@ use MikoPBX\PBXCoreREST\Lib\SoundFiles\PatchRecordAction;
 use MikoPBX\PBXCoreREST\Lib\SoundFiles\GetForSelectAction;
 use MikoPBX\PBXCoreREST\Lib\SoundFiles\UploadFileAction;
 use MikoPBX\PBXCoreREST\Lib\SoundFiles\PlaybackAction;
+use MikoPBX\PBXCoreREST\Lib\SoundFiles\ConvertAudioFileAction;
 use Phalcon\Di\Injectable;
 
 /**
@@ -49,6 +50,7 @@ enum SoundFileAction: string
     case GET_FOR_SELECT = 'getForSelect';
     case UPLOAD_FILE = 'uploadFile';
     case PLAYBACK = 'playback';
+    case CONVERT_AUDIO_FILE = 'convertAudioFile';
 }
 
 /**
@@ -65,10 +67,11 @@ enum SoundFileAction: string
  * - DELETE /sound-files/{id}      -> delete
  *
  * Custom methods:
- * - GET /sound-files:getDefault     -> getDefault
- * - GET /sound-files:getForSelect   -> getForSelect
- * - POST /sound-files:uploadFile    -> uploadFile
- * - GET /sound-files:playback       -> playback
+ * - GET /sound-files:getDefault       -> getDefault
+ * - GET /sound-files:getForSelect     -> getForSelect
+ * - POST /sound-files:uploadFile      -> uploadFile
+ * - GET /sound-files:playback         -> playback
+ * - POST /sound-files:convertAudioFile -> convertAudioFile
  *
  * @package MikoPBX\PBXCoreREST\Lib
  */
@@ -102,8 +105,8 @@ class SoundFilesManagementProcessor extends Injectable
         $res = match ($action) {
             // Standard CRUD operations
             SoundFileAction::GET_LIST => GetListAction::main($data),
-            SoundFileAction::GET_RECORD => GetRecordAction::main($data['id'] ?? ''),
-            SoundFileAction::GET_DEFAULT => GetDefaultAction::main(),
+            SoundFileAction::GET_RECORD => GetRecordAction::main($data['id'] ?? '', $data),
+            SoundFileAction::GET_DEFAULT => GetDefaultAction::main($data),
             SoundFileAction::CREATE => CreateRecordAction::main($data),
             SoundFileAction::UPDATE => UpdateRecordAction::main($data),
             SoundFileAction::PATCH => PatchRecordAction::main($data),
@@ -112,7 +115,8 @@ class SoundFilesManagementProcessor extends Injectable
             // Custom methods
             SoundFileAction::GET_FOR_SELECT => GetForSelectAction::main($data),
             SoundFileAction::UPLOAD_FILE => UploadFileAction::main($data),
-            SoundFileAction::PLAYBACK => PlaybackAction::main($data)
+            SoundFileAction::PLAYBACK => PlaybackAction::main($data),
+            SoundFileAction::CONVERT_AUDIO_FILE => ConvertAudioFileAction::main($data)
         };
 
         $res->function = $actionString;

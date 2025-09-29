@@ -33,11 +33,12 @@ class GetDefaultAction
     /**
      * Get default sound file structure
      *
+     * @param array $data - Request data that may contain category
      * @return PBXApiResult
      */
-    public static function main(): PBXApiResult
+    public static function main(array $data = []): PBXApiResult
     {
         // Delegate to GetRecordAction with null ID for default structure
-        return GetRecordAction::main(null);
+        return GetRecordAction::main(null, $data);
     }
 }

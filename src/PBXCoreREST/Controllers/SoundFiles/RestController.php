@@ -90,7 +90,7 @@ class RestController extends BaseRestController
     {
         return [
             'GET' => ['getDefault', 'getForSelect', 'playback'],
-            'POST' => ['uploadFile']
+            'POST' => ['uploadFile', 'convertAudioFile']
         ];
     }
 

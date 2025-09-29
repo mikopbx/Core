@@ -39,7 +39,7 @@ enum AsteriskRestUserAction: string
 {
     case GET_LIST = 'getList';
     case GET_RECORD = 'getRecord';
-    case GET_DEFAULTS = 'getDefaults';
+    case GET_DEFAULT = 'getDefault';
     case CREATE = 'create';
     case UPDATE = 'update';
     case PATCH = 'patch';
@@ -87,7 +87,7 @@ class AsteriskRestUsersManagementProcessor extends Injectable
         $res = match ($action) {
             AsteriskRestUserAction::GET_LIST => GetListAction::main($data),
             AsteriskRestUserAction::GET_RECORD => GetRecordAction::main($data['id'] ?? ''),
-            AsteriskRestUserAction::GET_DEFAULTS => GetDefaultsAction::main(),
+            AsteriskRestUserAction::GET_DEFAULT => GetDefaultsAction::main(),
             AsteriskRestUserAction::CREATE => CreateRecordAction::main($data),
             AsteriskRestUserAction::UPDATE => UpdateRecordAction::main($data),
             AsteriskRestUserAction::PATCH => PatchRecordAction::main($data),

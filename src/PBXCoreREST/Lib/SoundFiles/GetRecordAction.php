@@ -46,17 +46,26 @@ class GetRecordAction extends AbstractGetRecordAction
     /**
      * Get sound file record
      * @param string|null $id - Record ID or null for new record
+     * @param array $data - Optional data that may contain category for defaults
      * @return PBXApiResult
      */
-    public static function main(?string $id = null): PBXApiResult
+    public static function main(?string $id = null, array $data = []): PBXApiResult
     {
+        // Determine category from data or use default
+        $category = $data['category'] ?? SoundFiles::CATEGORY_CUSTOM;
+
+        // Validate category
+        if (!in_array($category, [SoundFiles::CATEGORY_CUSTOM, SoundFiles::CATEGORY_MOH])) {
+            $category = SoundFiles::CATEGORY_CUSTOM;
+        }
+
         return self::executeStandardGetRecord(
             $id,
             SoundFiles::class,
             DataStructure::class,
             'SOUND-', // Note: SoundFiles doesn't use uniqid, but this is for consistency
             [
-                'category' => SoundFiles::CATEGORY_CUSTOM,
+                'category' => $category,
                 'path' => ''
             ],
             'Sound file not found',

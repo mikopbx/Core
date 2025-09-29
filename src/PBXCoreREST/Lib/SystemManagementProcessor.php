@@ -95,12 +95,6 @@ class SystemManagementProcessor extends Injectable
                     PbxSettings::setValueByKey(PbxSettings::PBX_SETTINGS_WAS_RESET, '1');
                 }
                 break;
-            case 'convertAudioFile':
-                $res = ConvertAudioFileAction::moveSoundFileAccordingToCategory($data['category'], $data['temp_filename']);
-                if ($res->success && $res->data['filename'] !== '') {    
-                    $res = ConvertAudioFileAction::main($res->data['filename']);
-                }
-                break;
             case 'getDeleteStatistics':
                 $res = GetDeleteStatisticsAction::main();
                 break;

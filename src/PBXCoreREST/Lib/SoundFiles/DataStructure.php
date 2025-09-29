@@ -45,10 +45,28 @@ class DataStructure extends AbstractDataStructure
         ];
         
         // Add SoundFiles specific fields
-        $data['path'] = $model->path ?? '';
+        // Ensure path is a string, handle cases where it might be an object/array
+        $pathValue = $model->path ?? '';
+        if (is_object($pathValue) || is_array($pathValue)) {
+            // If path contains an object/array, try to extract string value
+            if (is_object($pathValue) && method_exists($pathValue, '__toString')) {
+                $data['path'] = (string)$pathValue;
+            } elseif (is_array($pathValue) && isset($pathValue['path'])) {
+                $data['path'] = (string)$pathValue['path'];
+            } else {
+                // Fallback to empty string if we can't extract a proper path
+                $data['path'] = '';
+            }
+        } else {
+            $data['path'] = (string)$pathValue;
+        }
+
         $data['category'] = $model->category ?? SoundFiles::CATEGORY_CUSTOM;
-        $data['fileSize'] = file_exists($model->path) ? filesize($model->path) : 0;
-        $data['duration'] = self::getAudioDuration($model->path);
+
+        // Use the corrected path value for file operations
+        $actualPath = $data['path'];
+        $data['fileSize'] = file_exists($actualPath) ? filesize($actualPath) : 0;
+        $data['duration'] = self::getAudioDuration($actualPath);
         
         return $data;
     }

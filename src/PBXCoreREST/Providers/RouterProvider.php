@@ -27,7 +27,8 @@ use MikoPBX\PBXCoreREST\Controllers\{
     MailSettings\OAuth2CallbackController,
     Modules\ModulesControllerBase,
     Modules\CorePostController as ModulesCorePostController,
-    Modules\CoreGetController as ModulesCoreGetController
+    Modules\CoreGetController as ModulesCoreGetController,
+    Files\RestController as FilesRestController
 };
 
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
@@ -71,6 +72,19 @@ class RouterProvider implements ServiceProviderInterface
     private const SPECIAL_ROUTES = [
         // OAuth2 callback route
         [OAuth2CallbackController::class, 'oauth2CallbackAction', '/pbxcore/api/v3/mail-settings/oauth2-callback', 'get', ''],
+
+        // Files controller special routes with support for URL-encoded paths
+        [FilesRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/files', 'get', ':{method:[a-zA-Z][a-zA-Z0-9]*}'],
+        [FilesRestController::class, 'handleCustomRequest', '/pbxcore/api/v3/files', 'post', ':{method:[a-zA-Z][a-zA-Z0-9]*}'],
+        [FilesRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/files', 'get', '/'],
+        [FilesRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/files', 'post', '/'],
+        [FilesRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/files', 'put', '/'],
+        [FilesRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/files', 'delete', '/'],
+        // Special pattern for file paths with URL-encoded slashes - should come last
+        [FilesRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/files', 'get', '/{id:.+}'],
+        [FilesRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/files', 'put', '/{id:.+}'],
+        [FilesRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/files', 'patch', '/{id:.+}'],
+        [FilesRestController::class, 'handleCRUDRequest', '/pbxcore/api/v3/files', 'delete', '/{id:.+}'],
     ];
 
     /**
@@ -158,7 +172,7 @@ class RouterProvider implements ServiceProviderInterface
             $dirName = basename($dir);
 
             // Skip special directories
-            if (in_array($dirName, ['Nchan', 'Modules', 'MailSettings'])) {
+            if (in_array($dirName, ['Nchan', 'Modules', 'MailSettings', 'Files'])) {
                 continue;
             }
 

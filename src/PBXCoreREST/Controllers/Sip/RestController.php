@@ -53,19 +53,6 @@ class RestController extends BaseRestController
      */
     protected string $processorClass = SIPStackProcessor::class;
 
-    /**
-     * Handle resource-level custom requests with ID parameter
-     * For routes like: /sip/{id}:{method}
-     *
-     * @param string $id The resource ID
-     * @param string $customMethod The custom method name
-     * @return void
-     */
-    public function handleResourceCustomRequest(string $id, string $customMethod): void
-    {
-        // Call parent with correct parameter mapping
-        parent::handleCustomRequest($id, $customMethod);
-    }
 
 
     /**
