@@ -1,11 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Common translations
  */
-
-return [
-  
-
     ' - Unmounting partitions...' => 'جداسازی پارتیشن‌های متصل...',
     ' - Unpacking img...' => 'به‌روزرسانی پارتیشن سیستم...',
     '(default value = ' => '(مقدار پیش‌فرض = ',
@@ -244,7 +241,6 @@ return [
     'user' => 'کاربر',
     'version' => 'نسخه',
     'Пропущенный вызов' => 'تماس از دست رفته دارید',
-
     // ADV
     'adv_AmiPasswordWeak' => 'رمز عبور ساده برای کاربر AMI <a href=\'%url%\'>%record%</a>',
     'adv_AvailableNewVersionModule' => 'نسخه جدید ماژول %module% - %ver% موجود است. نسخه فعلی: %currentVer%',
@@ -272,7 +268,6 @@ return [
     'adv_WebPasswordWeak' => 'رمز عبور ساده مدیر در رابط وب <a href=\'%url%\'>تغییر</a>',
     'adv_YouUseDefaultSSHPassword' => 'شما از رمز عبور پیش‌فرض برای دسترسی SSH استفاده می‌کنید - <a href=\'%url%\'>تغییر</a>',
     'adv_YouUseDefaultWebPassword' => 'شما از رمز عبور پیش‌فرض برای ورود به رابط مدیریت استفاده می‌کنید - <a href=\'%url%\'>تغییر</a>',
-
     // AM
     'am_AddNewUser' => 'افزودن کاربر AMI',
     'am_CopyRecord' => 'کپی',
@@ -331,7 +326,6 @@ return [
     'am_tooltip_user_write' => 'ارسال رویدادهای کاربری، به‌روزرسانی وضعیت دستگاه‌ها',
     'am_tooltip_verbose_read' => 'مشاهده پیام‌های تفصیلی و خروجی اشکال‌زدایی',
     'am_tooltip_verbose_write' => 'تنظیم سطح جزئیات پیام‌ها',
-
     // AUTH
     'auth_DefaultCloudPasswordInstructions' => 'رمز عبور پیش‌فرض برابر با شناسه منحصر به فرد ماشین مجازی در کلود است',
     'auth_Login' => 'نام کاربری',
@@ -342,7 +336,6 @@ return [
     'auth_ValidateLoginNotEmpty' => 'نام کاربری را وارد کنید',
     'auth_ValidatePasswordNotEmpty' => 'رمز عبور را وارد کنید',
     'auth_WrongLoginPassword' => 'خطا در احراز هویت، %attempts% تلاش باقی مانده',
-
     // BT
     'bt_Add' => 'افزودن',
     'bt_ApplyChangesToPBX' => 'اعمال تغییرات',
@@ -374,7 +367,6 @@ return [
     'bt_ToolTipRestore' => 'بازیابی',
     'bt_ToolTipShowPassword' => 'نمایش/مخفی کردن رمز عبور',
     'bt_ToolTipUpgradeOnline' => 'به‌روزرسانی آنلاین',
-
     // CAL
     'cal_ApplyBtn' => 'اعمال',
     'cal_CancelBtn' => 'لغو',
@@ -387,11 +379,9 @@ return [
     'cal_Yesterday' => 'دیروز',
     'cal_from' => 'از',
     'cal_to' => 'تا',
-
     // CD
     'cd_Description' => 'نظر',
     'cd_Extensions' => 'شماره تلفن برای این صف',
-
     // CDR
     'cdr_And' => 'و',
     'cdr_ColumnDate' => 'تاریخ تماس',
@@ -405,7 +395,6 @@ return [
     'cdr_FilteredEmptyTitle' => 'هیچ رکوردی با معیارهای تعیین شده یافت نشد',
     'cdr_NoRecordsFound' => 'رکوردی یافت نشد',
     'cdr_TryChangingDate' => 'سعی کنید بازه تاریخ را تغییر دهید',
-
     // CF
     'cf_ColumnMode' => 'حالت',
     'cf_ColumnNote' => 'یادداشت',
@@ -422,11 +411,9 @@ return [
     'cf_Path' => 'مسیر فایل',
     'cf_ResultFileHeader' => 'محتوای فایل با تغییرات',
     'cf_UserEditHeader' => 'ویرایشگر برای اعمال تغییرات',
-
     // DBG
     'dbg_Header' => 'اطلاعات اشکال‌زدایی',
     'dbg_NoDebugInformation' => 'اطلاعاتی وجود ندارد',
-
     // DT
     'dt_First' => '',
     'dt_Info' => 'رکوردهای _START_ تا _END_ از _TOTAL_',
@@ -437,7 +424,6 @@ return [
     'dt_Previous' => 'قبلی',
     'dt_Search' => 'جستجو',
     'dt_TableIsEmpty' => 'داده‌ای برای نمایش وجود ندارد',
-
     // ER
     'er_Home' => 'رفتن به صفحه اصلی',
     'er_InternalServerError' => 'خطای داخلی سرور',
@@ -446,13 +432,10 @@ return [
     'er_PageNotFoundDescription' => 'این صفحه وجود ندارد.',
     'er_Unauthorized' => 'خطای احراز هویت',
     'er_UnauthorizedDescription' => 'شما به این صفحه دسترسی ندارید.',
-
     // ET
     'et_ReadDocumentation' => 'مطالعه مستندات',
-
     // LANG
     'lang_HelpWithTranslateIt' => 'کمک به ترجمه MikoPBX',
-
     // LIC
     'lic_ActivateCoupon' => 'فعال‌سازی کوپن',
     'lic_ActivateCouponButton' => 'فعال‌سازی کوپن',
@@ -533,23 +516,19 @@ return [
     'lic_ValidateCouponEmpty' => 'فیلد اجباری پر نشده - کوپن',
     'lic_ValidateLicenseKeyEmpty' => 'فیلد اجباری پر نشده - کلید مجوز',
     'lic_WrongLicenseKeyOrEmpty' => 'کلید مجوز نادرست وارد شده',
-
     // LOC
     'loc_NoResult' => 'چیزی یافت نشد',
-
     // LOG
     'log_CaptureMessage' => 'جمع‌آوری بسته‌های شبکه را شروع کنید و تماسی برقرار کنید یا عمل دیگری که به خطا منجر می‌شود انجام دهید. 
 <br>سیستم تمام بسته‌هایی که در این لحظه از کارت شبکه عبور می‌کنند را برای تجزیه و تحلیل بعدی ذخیره خواهد کرد.',
     'log_DownloadLogs' => 'دانلود تمام لاگ‌های سیستم',
     'log_StartCapturePCAP' => 'شروع',
     'log_StopCapturePCAP' => 'توقف و دانلود',
-
     // ML
     'ml_EmailNotSended' => 'پیام ارسال نشد',
     'ml_EmailSendedSuccess' => 'ایمیل ارسال شد',
     'ml_EmailTestBody' => 'سلام، اگر این ایمیل در صندوق پستی شما است، یعنی تنظیمات درست است.',
     'ml_EmailTestSubject' => 'ایمیل تست از سیستم تلفنی شما',
-
     // MM
     'mm_ApiKeys' => 'کلیدهای API',
     'mm_AsteriskManagers' => 'دسترسی به AMI',
@@ -585,7 +564,6 @@ return [
     'mm_SystemDiagnostic' => 'لاگ‌های سیستم',
     'mm_TimeSettings' => 'تاریخ و زمان',
     'mm_Update' => 'به‌روزرسانی PBX',
-
     // MO
     'mo_ApplicationShort4Dropdown' => 'برنامه',
     'mo_BeforeDeleteFirst' => 'ارجاع به شیء وجود دارد - %represent%',
@@ -620,43 +598,10 @@ return [
     'mo_SystemExten_voicemail' => 'پست صوتی',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'شماره مشخص شده قبلاً برای - %record% استفاده شده',
     'mo_ThisVlanIdNotUniqueForLanInterfacesModels' => 'در سیستم قبلاً رابطی با همین VLAN وجود دارد',
-
-    // MS
-    'ms_MailEnableNotifications' => 'استفاده از اطلاع‌رسانی',
-    'ms_MailSysadminEmail' => 'ایمیل مدیر سیستم',
-    'ms_MissedCallBody' => 'تماس از دست رفته - متن ایمیل',
-    'ms_MissedCallFooter' => 'تماس از دست رفته - پاورقی',
-    'ms_MissedCallSubject' => 'تماس از دست رفته - موضوع ایمیل',
-    'ms_MissedCalls' => 'تماس‌های از دست رفته',
-    'ms_NotificationTemplatesMissed' => 'قالب - تماس‌های از دست رفته',
-    'ms_NotificationTemplatesVoicemail' => 'قالب - پست صوتی',
-    'ms_SMTPCertCheck' => 'بررسی گواهی سرور',
-    'ms_SMTPFromUsername' => 'نام فرستنده',
-    'ms_SMTPHost' => 'میزبان SMTP',
-    'ms_SMTPPassword' => 'رمز عبور SMTP',
-    'ms_SMTPPort' => 'پورت SMTP',
-    'ms_SMTPSenderAddress' => 'آدرس فرستنده',
-    'ms_SMTPSettings' => 'تنظیمات ارسال پیام',
-    'ms_SMTPUseTLS' => 'استفاده از TLS',
-    'ms_SMTPUsername' => 'نام کاربری SMTP',
-    'ms_SentTestEmailAfterSaveTo' => 'ارسال ایمیل تست به این آدرس',
-    'ms_SuccessfulDeleted' => 'داده‌ها حذف شد',
-    'ms_SuccessfulSaved' => 'تنظیمات ذخیره شد',
-    'ms_SystemEmailForMissed' => 'ایمیل برای اطلاع‌رسانی تماس‌های از دست رفته',
-    'ms_TestEmailBody' => 'اگر این ایمیل را دریافت کرده‌اید، یعنی تنظیمات ایمیل درست انجام شده است.',
-    'ms_TestEmailSentSuccessfully' => 'ایمیل ارسال شد',
-    'ms_TestEmailSubject' => 'تست ارسال ایمیل',
-    'ms_Voicemail' => 'پست صوتی',
-    'ms_VoicemailBody' => 'پست صوتی - متن ایمیل',
-    'ms_VoicemailCommonEmail' => 'ایمیل واحد برای ارسال پیام‌های پست صوتی',
-    'ms_VoicemailFooter' => 'پست صوتی - پاورقی',
-    'ms_VoicemailSubject' => 'پست صوتی - موضوع ایمیل',
-
     // MSG
     'msg_ErrorHeader' => 'خطا',
     'msg_WarningHeader' => 'توجه',
     'msg_infoHeader' => 'اطلاعات',
-
     // PASS
     'pass_CheckSSHPasswordDontMatch' => 'رمزهای عبور وارد شده برای SSH مطابقت ندارند',
     'pass_CheckSSHPasswordEmpty' => 'فیلد پر نشده: SSH',
@@ -665,12 +610,10 @@ return [
     'pass_CheckWebAdminPasswordEmpty' => 'فیلد پر نشده: رمز عبور WEB',
     'pass_CheckWebAdminPasswordSimple' => 'رمز عبور WEB خیلی ساده است.',
     'pass_CheckWebPassErrorChange' => 'تغییر رمز عبور ممکن نیست',
-
     // QF
     'qf_Frequency' => 'فرکانس ارسال بر ثانیه:',
     'qf_Qualify' => 'حفظ نشست NAT',
     'qf_QualifyInstructions' => 'با فعال کردن این گزینه MikoPBX بسته‌های SIP OPTIONS را با فرکانس مشخص ارسال خواهد کرد. این برای حفظ تونل‌سازی NAT در روتر شما ضروری است.',
-
     // RS
     'rs_CurrentCalls' => 'تماس‌های فعال',
     'rs_DateCall' => 'تاریخ شروع',
@@ -679,7 +622,6 @@ return [
     'rs_ShutDownPhoneSystem' => 'خاموش کردن MikoPBX',
     'rs_ShutdownRebootMessage' => 'هنگام راه‌اندازی مجدد یا خاموش کردن تمام تماس‌های فعلی قطع خواهند شد.',
     'rs_Src' => 'از',
-
     // SD
     'sd_CapturePcap' => 'ضبط بسته‌های شبکه',
     'sd_CollectingInfo' => 'جمع‌آوری اطلاعات سرویس',
@@ -697,7 +639,6 @@ return [
     'sd_filter' => 'فیلتر',
     'sd_lines' => 'محدودیت',
     'sd_offset' => 'افست',
-
     // SF
     'sf_AddNewAudioFile' => 'افزودن فایل صوتی جدید',
     'sf_AddNewSoundFile' => 'افزودن فایل صوتی جدید',
@@ -725,7 +666,6 @@ return [
     'sf_ValidationFileNameIsEmpty' => 'نام فایل مشخص نشده',
     'sf_ValidationFileNotSelected' => 'ابتدا فایل صوتی را آپلود کنید',
     'sf_YourBrowserDoesNotSupportAudio' => 'مرورگر شما از المان audio پشتیبانی نمی‌کند',
-
     // SNTRY
     'sntry_ErrorFormEntry' => 'فیلدها پر نشده، اصلاح کنید و دوباره امتحان کنید!',
     'sntry_ErrorGeneric' => 'خطای ناشناخته در ارسال. دوباره امتحان کنید!',
@@ -736,7 +676,6 @@ return [
     'sntry_Subtitle2' => 'لطفاً اقداماتی که منجر به این خطا شدند را شرح دهید.',
     'sntry_SuccessMessage' => 'از کمک شما متشکریم!',
     'sntry_Title' => 'مشکلی پیش آمد!',
-
     // ST
     'st_CallRecordingsRetention' => 'نگهداری ضبط مکالمات',
     'st_CategoryBackups' => 'نسخه‌های پشتیبان',
@@ -758,10 +697,8 @@ return [
     'st_TabStorageInfo' => 'اطلاعات ذخیره‌ساز',
     'st_TabStorageSettings' => 'تنظیمات ذخیره‌سازی',
     'st_Used' => 'اشغال شده',
-
     // THIS
     'this_is' => 'This is ',
-
     // TS
     'ts_CurrentSettings' => 'تنظیمات فعلی',
     'ts_CurrentSystemTime' => 'زمان فعلی',
@@ -771,7 +708,6 @@ return [
     'ts_SystemTime' => 'زمان سیستم',
     'ts_TimeZone' => 'منطقه زمانی',
     'ts_ValidateDateTime' => 'تاریخ نادرست مشخص شده',
-
     // UPD
     'upd_AvailableUpdates' => 'به‌روزرسانی‌های آنلاین موجود',
     'upd_Cancel' => 'لغو',

@@ -1,11 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Common translations
  */
-
-return [
-  
-
     ' - Unmounting partitions...' => 'ניתוק מחיצות...',
     ' - Unpacking img...' => 'עדכון מחיצת המערכת...',
     '(default value = ' => '(ערך ברירת מחדל = ',
@@ -244,7 +241,6 @@ return [
     'user' => 'משתמש',
     'version' => 'גרסה',
     'Пропущенный вызов' => 'יש לך שיחה שלא נענתה',
-
     // ADV
     'adv_AmiPasswordWeak' => 'סיסמה פשוטה אצל משתמש AMI <a href=\'%url%\'>%record%</a>',
     'adv_AvailableNewVersionModule' => 'זמינה גרסה חדשה של מודול %module% - %ver%. גרסה נוכחית: %currentVer%',
@@ -272,7 +268,6 @@ return [
     'adv_WebPasswordWeak' => 'סיסמה פשוטה מנהל בממשק האינטרנט <a href=\'%url%\'>שנה</a>',
     'adv_YouUseDefaultSSHPassword' => 'אתה משתמש בסיסמה ברירת מחדל לגישה ל-SSH - <a href=\'%url%\'>שנה</a>',
     'adv_YouUseDefaultWebPassword' => 'אתה משתמש בסיסמה ברירת מחדל לכניסה לממשק הניהול - <a href=\'%url%\'>שנה</a>',
-
     // AM
     'am_AddNewUser' => 'הוסף משתמש AMI',
     'am_CopyRecord' => 'עותק',
@@ -331,7 +326,6 @@ return [
     'am_tooltip_user_write' => 'שליחת אירועי משתמש, עדכון סטטוסי מכשירים',
     'am_tooltip_verbose_read' => 'צפייה בהודעות מפורטות ופלט ניפוי שגיאות',
     'am_tooltip_verbose_write' => 'הגדרת רמת פירוט הודעות',
-
     // AUTH
     'auth_DefaultCloudPasswordInstructions' => 'הסיסמה ברירת המחדל שווה למזהה הייחודי של המכונה הווירטואלית בענן',
     'auth_Login' => 'התחברות',
@@ -342,7 +336,6 @@ return [
     'auth_ValidateLoginNotEmpty' => 'הזן שם התחברות',
     'auth_ValidatePasswordNotEmpty' => 'הזן סיסמה',
     'auth_WrongLoginPassword' => 'שגיאת התחברות, נותרו לך %attempts% ניסיונות',
-
     // BT
     'bt_Add' => 'הוסף',
     'bt_ApplyChangesToPBX' => 'החל שינויים',
@@ -374,7 +367,6 @@ return [
     'bt_ToolTipRestore' => 'שחזר',
     'bt_ToolTipShowPassword' => 'הצג/הסתר סיסמה',
     'bt_ToolTipUpgradeOnline' => 'עדכן מקוון',
-
     // CAL
     'cal_ApplyBtn' => 'החל',
     'cal_CancelBtn' => 'ביטול',
@@ -387,11 +379,9 @@ return [
     'cal_Yesterday' => 'אתמול',
     'cal_from' => 'מ',
     'cal_to' => 'עד',
-
     // CD
     'cd_Description' => 'הערה',
     'cd_Extensions' => 'מספר טלפון לתור זה',
-
     // CDR
     'cdr_And' => 'ו',
     'cdr_ColumnDate' => 'תאריך השיחה',
@@ -405,7 +395,6 @@ return [
     'cdr_FilteredEmptyTitle' => 'אין רשומות לקריטריונים הנתונים',
     'cdr_NoRecordsFound' => 'לא נמצאו רשומות',
     'cdr_TryChangingDate' => 'נסה לשנות את טווח התאריכים',
-
     // CF
     'cf_ColumnMode' => 'מצב',
     'cf_ColumnNote' => 'הערה',
@@ -422,11 +411,9 @@ return [
     'cf_Path' => 'נתיב לקובץ',
     'cf_ResultFileHeader' => 'תוכן הקובץ עם השינויים',
     'cf_UserEditHeader' => 'עורך לביצוע שינויים',
-
     // DBG
     'dbg_Header' => 'מידע ניפוי שגיאות',
     'dbg_NoDebugInformation' => 'אין מידע',
-
     // DT
     'dt_First' => '',
     'dt_Info' => 'רשומות %START_% עד _%END_% מתוך _%TOTAL_%',
@@ -437,7 +424,6 @@ return [
     'dt_Previous' => 'קודמות',
     'dt_Search' => 'חיפוש',
     'dt_TableIsEmpty' => 'אין נתונים להצגה',
-
     // ER
     'er_Home' => 'עבור לדף הבית',
     'er_InternalServerError' => 'שגיאה פנימית בשרת',
@@ -446,13 +432,10 @@ return [
     'er_PageNotFoundDescription' => 'הדף הזה לא קיים.',
     'er_Unauthorized' => 'שגיאת הרשאה',
     'er_UnauthorizedDescription' => 'אין לך גישה לדף זה.',
-
     // ET
     'et_ReadDocumentation' => 'עיין בתיעוד',
-
     // LANG
     'lang_HelpWithTranslateIt' => 'עזור עם תרגום MikoPBX',
-
     // LIC
     'lic_ActivateCoupon' => 'הפעלת קופון',
     'lic_ActivateCouponButton' => 'הפעל קופון',
@@ -533,23 +516,19 @@ return [
     'lic_ValidateCouponEmpty' => 'לא מולא שדה חובה - קופון',
     'lic_ValidateLicenseKeyEmpty' => 'לא מולא שדה חובה - מפתח רישיון',
     'lic_WrongLicenseKeyOrEmpty' => 'מפתח רישיון הוזן בטעות',
-
     // LOC
     'loc_NoResult' => 'לא נמצא כלום',
-
     // LOG
     'log_CaptureMessage' => 'הפעל איסוף חבילות רשת ובצע שיחה או פעולה אחרת הגורמת לתקלה. 
 <br>המערכת תשמור את כל החבילות העוברות באותו רגע דרך כרטיס הרשת לניתוח נוסף.',
     'log_DownloadLogs' => 'הורד את כל יומני המערכת',
     'log_StartCapturePCAP' => 'התחל',
     'log_StopCapturePCAP' => 'עצור והורד',
-
     // ML
     'ml_EmailNotSended' => 'הודעה לא נשלחה',
     'ml_EmailSendedSuccess' => 'מייל נשלח',
     'ml_EmailTestBody' => 'שלום, אם המייל הזה הגיע לתיבת הדואר שלך, אז ההגדרות נכונות.',
     'ml_EmailTestSubject' => 'מייל בדיקה ממערכת הטלפונים שלך',
-
     // MM
     'mm_ApiKeys' => 'מפתחות API',
     'mm_AsteriskManagers' => 'גישה ל-AMI',
@@ -585,7 +564,6 @@ return [
     'mm_SystemDiagnostic' => 'יומני מערכת',
     'mm_TimeSettings' => 'תאריך ושעה',
     'mm_Update' => 'עדכון PBX',
-
     // MO
     'mo_ApplicationShort4Dropdown' => 'יישום',
     'mo_BeforeDeleteFirst' => 'יש קישורים לאובייקט - %represent%',
@@ -620,43 +598,10 @@ return [
     'mo_SystemExten_voicemail' => 'תיבת קול',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'המספר שצוין כבר בשימוש עבור - %record%',
     'mo_ThisVlanIdNotUniqueForLanInterfacesModels' => 'במערכת כבר יש ממשק עם אותו VLAN',
-
-    // MS
-    'ms_MailEnableNotifications' => 'השתמש בהודעות',
-    'ms_MailSysadminEmail' => 'דואר מנהל המערכת',
-    'ms_MissedCallBody' => 'שיחה שלא נענתה - טקסט מייל',
-    'ms_MissedCallFooter' => 'שיחה שלא נענתה - כותרת תחתונה',
-    'ms_MissedCallSubject' => 'שיחה שלא נענתה - נושא מייל',
-    'ms_MissedCalls' => 'שיחות שלא נענו',
-    'ms_NotificationTemplatesMissed' => 'תבנית - שיחות שלא נענו',
-    'ms_NotificationTemplatesVoicemail' => 'תבנית - תיבת קול',
-    'ms_SMTPCertCheck' => 'בדוק אישור שרת',
-    'ms_SMTPFromUsername' => 'שם שולח',
-    'ms_SMTPHost' => 'מארח SMTP',
-    'ms_SMTPPassword' => 'סיסמה SMTP',
-    'ms_SMTPPort' => 'יציאת SMTP',
-    'ms_SMTPSenderAddress' => 'כתובת שולח',
-    'ms_SMTPSettings' => 'הגדרות שליחת הודעות',
-    'ms_SMTPUseTLS' => 'השתמש ב-TLS',
-    'ms_SMTPUsername' => 'שם משתמש SMTP',
-    'ms_SentTestEmailAfterSaveTo' => 'שלח מייל בדיקה לכתובת זו',
-    'ms_SuccessfulDeleted' => 'הנתונים נמחקו',
-    'ms_SuccessfulSaved' => 'ההגדרות נשמרו',
-    'ms_SystemEmailForMissed' => 'דואר להודעות על שיחות שלא נענו',
-    'ms_TestEmailBody' => 'אם קיבלת את המייל הזה, אז הגדרות הדואר ביצעו נכון.',
-    'ms_TestEmailSentSuccessfully' => 'המייל נשלח',
-    'ms_TestEmailSubject' => 'בדיקת שליחת דואר',
-    'ms_Voicemail' => 'תיבת קול',
-    'ms_VoicemailBody' => 'תיבת קול - טקסט מייל',
-    'ms_VoicemailCommonEmail' => 'דואר מאוחד לשליחת הודעות תיבת קול',
-    'ms_VoicemailFooter' => 'תיבת קול - כותרת תחתונה',
-    'ms_VoicemailSubject' => 'תיבת קול - נושא מייל',
-
     // MSG
     'msg_ErrorHeader' => 'שגיאה',
     'msg_WarningHeader' => 'זהירות',
     'msg_infoHeader' => 'מידע',
-
     // PASS
     'pass_CheckSSHPasswordDontMatch' => 'הסיסמאות שהוזנו ל-SSH לא תואמות',
     'pass_CheckSSHPasswordEmpty' => 'השדה לא מולא: SSH',
@@ -665,12 +610,10 @@ return [
     'pass_CheckWebAdminPasswordEmpty' => 'השדה לא מולא: סיסמה ל-WEB',
     'pass_CheckWebAdminPasswordSimple' => 'הסיסמה ל-WEB פשוטה מדי.',
     'pass_CheckWebPassErrorChange' => 'נכשל בשינוי הסיסמה',
-
     // QF
     'qf_Frequency' => 'תדר שליחה בשניות:',
     'qf_Qualify' => 'תחזק מושב NAT',
     'qf_QualifyInstructions' => 'בעת הפעלת האפשרות הזאת MikoPBX ישלח חבילות SIP OPTIONS בתדר שצוין. זה נחוץ לתמיכה במנהור NAT בנתב שלך.',
-
     // RS
     'rs_CurrentCalls' => 'שיחות פעילות',
     'rs_DateCall' => 'תאריך התחלה',
@@ -679,7 +622,6 @@ return [
     'rs_ShutDownPhoneSystem' => 'כבה MikoPBX',
     'rs_ShutdownRebootMessage' => 'בעת אתחול מחדש או כיבוי כל השיחות הנוכחיות יופסקו.',
     'rs_Src' => 'מי',
-
     // SD
     'sd_CapturePcap' => 'לכידת חבילות רשת',
     'sd_CollectingInfo' => 'איסוף מידע שירותי',
@@ -697,7 +639,6 @@ return [
     'sd_filter' => 'מסנן',
     'sd_lines' => 'מגבלה',
     'sd_offset' => 'היסט',
-
     // SF
     'sf_AddNewAudioFile' => 'הוסף קובץ שמע חדש',
     'sf_AddNewSoundFile' => 'הוסף קובץ שמע חדש',
@@ -725,7 +666,6 @@ return [
     'sf_ValidationFileNameIsEmpty' => 'לא צוין שם קובץ',
     'sf_ValidationFileNotSelected' => 'תחילה העלה קובץ שמע',
     'sf_YourBrowserDoesNotSupportAudio' => 'הדפדפן שלך לא תומך באלמנט audio',
-
     // SNTRY
     'sntry_ErrorFormEntry' => 'השדות לא מולאו, תקן ונסה לשלוח שוב!',
     'sntry_ErrorGeneric' => 'שגיאה לא ידועה בשליחה. נסה שוב!',
@@ -736,7 +676,6 @@ return [
     'sntry_Subtitle2' => 'תאר בבקשה את הפעולות שלך שהביאו לשגיאה זו.',
     'sntry_SuccessMessage' => 'תודה על העזרה!',
     'sntry_Title' => 'משהו השתבש!',
-
     // ST
     'st_CallRecordingsRetention' => 'אחסון הקלטות שיחות',
     'st_CategoryBackups' => 'עותקי גיבוי',
@@ -758,10 +697,8 @@ return [
     'st_TabStorageInfo' => 'מידע על אחסון',
     'st_TabStorageSettings' => 'הגדרות אחסון',
     'st_Used' => 'תפוס',
-
     // THIS
     'this_is' => 'זה ',
-
     // TS
     'ts_CurrentSettings' => 'הגדרות נוכחיות',
     'ts_CurrentSystemTime' => 'שעה נוכחית',
@@ -771,7 +708,6 @@ return [
     'ts_SystemTime' => 'שעון המערכת',
     'ts_TimeZone' => 'אזור זמן',
     'ts_ValidateDateTime' => 'תאריך צוין בטעות',
-
     // UPD
     'upd_AvailableUpdates' => 'זמינים עדכונים מקוונים',
     'upd_Cancel' => 'ביטול',
