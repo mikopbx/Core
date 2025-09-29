@@ -24,7 +24,6 @@ use PHPMailer\PHPMailer\OAuth;
 use League\OAuth2\Client\Provider\Google;
 use League\OAuth2\Client\Provider\GenericProvider;
 use League\OAuth2\Client\Provider\AbstractProvider;
-use League\OAuth2\Client\Token\AccessToken;
 use League\OAuth2\Client\Token\AccessTokenInterface;
 use Phalcon\Di\Di;
 

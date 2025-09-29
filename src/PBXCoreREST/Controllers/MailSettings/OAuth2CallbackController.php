@@ -22,6 +22,7 @@ namespace MikoPBX\PBXCoreREST\Controllers\MailSettings;
 use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\MailOAuth2Service;
 use MikoPBX\Core\System\SystemMessages;
+use MikoPBX\PBXCoreREST\Attributes\{ResourceSecurity, SecurityType};
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use MikoPBX\Common\Providers\EventBusProvider;
 use Phalcon\Mvc\View;
@@ -37,6 +38,7 @@ use function MikoPBX\Common\Config\appPath;
  * @RoutePrefix("/pbxcore/api/v3/mail-settings")
  * @Route("/oauth2-callback", methods=["GET"])
  */
+#[ResourceSecurity('mail_settings_oauth', requirements: [SecurityType::PUBLIC])]
 class OAuth2CallbackController extends BaseController
 {
     /**
@@ -205,16 +207,4 @@ class OAuth2CallbackController extends BaseController
         }
     }
 
-    /**
-     * Check if this controller requires authentication
-     *
-     * OAuth2 callback must be accessible without authentication
-     * as it's called by external OAuth providers.
-     *
-     * @return bool Always returns false for OAuth2 callback
-     */
-    public static function needAuthentication(): bool
-    {
-        return false;
-    }
 }
