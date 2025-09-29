@@ -1,10 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Common translations
  */
-
-return [
-
     ' - Unmounting partitions...' => 'Dismounting mounted disk partitions…',
     ' - Unpacking img...' => 'Updating the system partition…',
     '(default value = ' => '(default value = ',
@@ -247,7 +245,6 @@ return [
     'user' => 'user',
     'version' => 'version',
     'Пропущенный вызов' => 'You have a missed call',
-
     // ADV
     'adv_AmiPasswordWeak' => 'Weak password for AMI user <a href=\'%url%\'>%record%</a>',
     'adv_AriPasswordWeak' => 'Weak password for ARI user <a href=\'%url%\'>%record%</a>',
@@ -276,7 +273,6 @@ return [
     'adv_WebPasswordWeak' => 'Weak administrator password in Web interface <a href=\'%url%\'>change</a>',
     'adv_YouUseDefaultSSHPassword' => 'You are using default password for SSH access - <a href=\'%url%\'>change</a>',
     'adv_YouUseDefaultWebPassword' => 'You are using default password for administrative interface login - <a href=\'%url%\'>change</a>',
-
     // AM
     'am_AddNewUser' => 'Add AMI user',
     'am_CopyRecord' => 'Copy',
@@ -335,7 +331,6 @@ return [
     'am_tooltip_user_write' => 'Send user events, update device states',
     'am_tooltip_verbose_read' => 'View detailed messages and debug output',
     'am_tooltip_verbose_write' => 'Set message detail level',
-
     // AUTH
     'auth_DefaultCloudPasswordInstructions' => 'Default password equals the unique identifier of the virtual machine in the cloud',
     'auth_Login' => 'Login',
@@ -346,7 +341,6 @@ return [
     'auth_ValidateLoginNotEmpty' => 'Enter login',
     'auth_ValidatePasswordNotEmpty' => 'Enter password',
     'auth_WrongLoginPassword' => 'Authorization error, you have %attempts% attempts left',
-
     // BT
     'bt_Add' => 'Add',
     'bt_ApplyChangesToPBX' => 'Apply changes',
@@ -378,7 +372,6 @@ return [
     'bt_ToolTipRestore' => 'Restore',
     'bt_ToolTipShowPassword' => 'Show/hide password',
     'bt_ToolTipUpgradeOnline' => 'Upgrade online',
-
     // CAL
     'cal_ApplyBtn' => 'Apply',
     'cal_CancelBtn' => 'Cancel',
@@ -391,11 +384,9 @@ return [
     'cal_Yesterday' => 'Yesterday',
     'cal_from' => 'from',
     'cal_to' => 'to',
-
     // CD
     'cd_Description' => 'Comment',
     'cd_Extensions' => 'Phone number for this queue',
-
     // CDR
     'cdr_And' => 'and',
     'cdr_ColumnDate' => 'Call date',
@@ -409,7 +400,6 @@ return [
     'cdr_FilteredEmptyTitle' => 'No records matching the specified criteria',
     'cdr_NoRecordsFound' => 'No records found',
     'cdr_TryChangingDate' => 'Try changing the date range',
-
     // CF
     'cf_ColumnMode' => 'Mode',
     'cf_ColumnNote' => 'Note',
@@ -433,11 +423,9 @@ return [
     'cf_ShowOnlyRows' => '%rows% entries',
     'cf_ShowAll' => 'All entries',
     'cf_CannotDeleteSystemFile' => 'System files cannot be deleted',
-
     // DBG
     'dbg_Header' => 'Debug information',
     'dbg_NoDebugInformation' => 'No information',
-
     // DT
     'dt_First' => '',
     'dt_Info' => 'Records from _START_ to _END_ of _TOTAL_',
@@ -448,7 +436,6 @@ return [
     'dt_Previous' => 'Previous',
     'dt_Search' => 'Search',
     'dt_TableIsEmpty' => 'No data to display',
-
     // ER
     'er_Home' => 'Go to start',
     'er_InternalServerError' => 'Internal server error',
@@ -457,13 +444,10 @@ return [
     'er_PageNotFoundDescription' => 'This page does not exist.',
     'er_Unauthorized' => 'Authorization error',
     'er_UnauthorizedDescription' => 'You do not have access to this page.',
-
     // ET
     'et_ReadDocumentation' => 'Read documentation',
-
     // LANG
     'lang_HelpWithTranslateIt' => 'Help translate MikoPBX',
-
     // LIC
     'lic_ActivateCoupon' => 'Coupon activation',
     'lic_ActivateCouponButton' => 'Activate coupon',
@@ -544,23 +528,19 @@ You can get a new key automatically by filling out the registration form.<br>',
     'lic_ValidateCouponEmpty' => 'Required field not filled - coupon',
     'lic_ValidateLicenseKeyEmpty' => 'Required field not filled - License key',
     'lic_WrongLicenseKeyOrEmpty' => 'License key entered incorrectly',
-
     // LOC
     'loc_NoResult' => 'Nothing found',
-
     // LOG
     'log_CaptureMessage' => 'Start network packet collection and make a call or other action that leads to failure. 
 <br>System will save all packets passing through network card at that moment for further analysis.',
     'log_DownloadLogs' => 'Download all system logs',
     'log_StartCapturePCAP' => 'Start',
     'log_StopCapturePCAP' => 'Stop and download',
-
     // ML
     'ml_EmailNotSended' => 'Message not sent',
     'ml_EmailSendedSuccess' => 'Email sent',
     'ml_EmailTestBody' => 'Hello, if this email is in your mailbox, then the settings are correct.',
     'ml_EmailTestSubject' => 'Test email from your telephone system',
-
     // MM
     'mm_ApiKeys' => 'API keys',
     'mm_AsteriskManagers' => 'AMI access',
@@ -596,7 +576,6 @@ You can get a new key automatically by filling out the registration form.<br>',
     'mm_SystemDiagnostic' => 'System logs',
     'mm_TimeSettings' => 'Date and time',
     'mm_Update' => 'PBX update',
-
     // MO
     'mo_ApplicationShort4Dropdown' => 'Application',
     'mo_BeforeDeleteFirst' => 'There are references to the object - %represent%',
@@ -631,43 +610,10 @@ You can get a new key automatically by filling out the registration form.<br>',
     'mo_SystemExten_voicemail' => 'Voicemail',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Specified number is already used for - %record%',
     'mo_ThisVlanIdNotUniqueForLanInterfacesModels' => 'System already has interface with same VLAN',
-
-    // MS
-    'ms_MailEnableNotifications' => 'Use notifications',
-    'ms_MailSysadminEmail' => 'System administrator email',
-    'ms_MissedCallBody' => 'Missed call - email text',
-    'ms_MissedCallFooter' => 'Missed call - footer',
-    'ms_MissedCallSubject' => 'Missed call - email subject',
-    'ms_MissedCalls' => 'Missed calls',
-    'ms_NotificationTemplatesMissed' => 'Template - missed calls',
-    'ms_NotificationTemplatesVoicemail' => 'Template - voicemail',
-    'ms_SMTPCertCheck' => 'Check server certificate',
-    'ms_SMTPFromUsername' => 'Sender name',
-    'ms_SMTPHost' => 'SMTP host',
-    'ms_SMTPPassword' => 'SMTP password',
-    'ms_SMTPPort' => 'SMTP port',
-    'ms_SMTPSenderAddress' => 'Sender address',
-    'ms_SMTPSettings' => 'Message sending settings',
-    'ms_SMTPUseTLS' => 'Use TLS',
-    'ms_SMTPUsername' => 'SMTP login',
-    'ms_SentTestEmailAfterSaveTo' => 'Send test email to this address',
-    'ms_SuccessfulDeleted' => 'Data deleted',
-    'ms_SuccessfulSaved' => 'Settings saved',
-    'ms_SystemEmailForMissed' => 'Email for missed call notifications',
-    'ms_TestEmailBody' => 'If you received this email, then mail settings are configured correctly.',
-    'ms_TestEmailSentSuccessfully' => 'Email sent',
-    'ms_TestEmailSubject' => 'Testing mail sending',
-    'ms_Voicemail' => 'Voicemail',
-    'ms_VoicemailBody' => 'Voicemail - email text',
-    'ms_VoicemailCommonEmail' => 'Common email for sending voicemail messages',
-    'ms_VoicemailFooter' => 'Voicemail - footer',
-    'ms_VoicemailSubject' => 'Voicemail - email subject',
-
     // MSG
     'msg_ErrorHeader' => 'Error',
     'msg_WarningHeader' => 'Warning',
     'msg_infoHeader' => 'Information',
-
     // PASS
     'pass_CheckSSHPasswordDontMatch' => 'Entered SSH passwords do not match',
     'pass_CheckSSHPasswordEmpty' => 'Field not filled: SSH',
@@ -676,12 +622,10 @@ You can get a new key automatically by filling out the registration form.<br>',
     'pass_CheckWebAdminPasswordEmpty' => 'Field not filled: WEB password',
     'pass_CheckWebAdminPasswordSimple' => 'WEB password is too simple.',
     'pass_CheckWebPassErrorChange' => 'Failed to change password',
-
     // QF
     'qf_Frequency' => 'Sending frequency in seconds:',
     'qf_Qualify' => 'Maintain NAT session',
     'qf_QualifyInstructions' => 'When this option is enabled, MikoPBX will send SIP OPTIONS packets at specified frequency. This is necessary to maintain NAT tunneling on your router.',
-
     // RS
     'rs_CurrentCalls' => 'Active calls',
     'rs_DateCall' => 'Start date',
@@ -690,7 +634,6 @@ You can get a new key automatically by filling out the registration form.<br>',
     'rs_ShutDownPhoneSystem' => 'Shutdown MikoPBX',
     'rs_ShutdownRebootMessage' => 'When restarting or shutting down, all current calls will be interrupted.',
     'rs_Src' => 'Who',
-
     // SD
     'sd_CapturePcap' => 'Network packet capture',
     'sd_CollectingInfo' => 'Collecting service information',
@@ -708,7 +651,6 @@ You can get a new key automatically by filling out the registration form.<br>',
     'sd_filter' => 'Filter',
     'sd_lines' => 'Limit',
     'sd_offset' => 'Offset',
-
     // SF
     'sf_AddNewAudioFile' => 'Add new audio file',
     'sf_AddNewSoundFile' => 'Add new sound file',
@@ -736,7 +678,6 @@ You can get a new key automatically by filling out the registration form.<br>',
     'sf_ValidationFileNameIsEmpty' => 'File name not specified',
     'sf_ValidationFileNotSelected' => 'First upload audio file',
     'sf_YourBrowserDoesNotSupportAudio' => 'Your browser does not support audio element',
-
     // SNTRY
     'sntry_ErrorFormEntry' => 'Fields not filled, correct and try submitting again!',
     'sntry_ErrorGeneric' => 'Unknown sending error. Try again!',
@@ -747,7 +688,6 @@ You can get a new key automatically by filling out the registration form.<br>',
     'sntry_Subtitle2' => 'Please describe your actions that led to this error.',
     'sntry_SuccessMessage' => 'Thank you for your help!',
     'sntry_Title' => 'Something went wrong!',
-
     // ST
     'st_CallRecordingsRetention' => 'Call recording storage',
     'st_CategoryBackups' => 'Backups',
@@ -769,10 +709,8 @@ You can get a new key automatically by filling out the registration form.<br>',
     'st_TabStorageInfo' => 'Storage information',
     'st_TabStorageSettings' => 'Storage settings',
     'st_Used' => 'used',
-
     // THIS
     'this_is' => 'This is ',
-
     // TS
     'ts_CurrentSettings' => 'Current settings',
     'ts_CurrentSystemTime' => 'Current time',
@@ -782,7 +720,6 @@ You can get a new key automatically by filling out the registration form.<br>',
     'ts_SystemTime' => 'System time',
     'ts_TimeZone' => 'Timezone',
     'ts_ValidateDateTime' => 'Date incorrectly specified',
-
     // UPD
     'upd_AvailableUpdates' => 'Online updates available',
     'upd_Cancel' => 'Cancel',

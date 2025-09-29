@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Common translations
  */
-
-return [
     ' - Unmounting partitions...' => 'กำลังถอดพาร์ติชั่นดิสก์ที่เมาท์…',
     ' - Unpacking img...' => 'กำลังอัปเดตพาร์ติชันระบบ…',
     '(default value = ' => '(ค่าเริ่มต้น = ',
@@ -544,35 +543,6 @@ return [
     'mo_SystemExten_voicemail' => 'ข้อความเสียง',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'หมายเลขที่ระบุถูกใช้แล้วสำหรับ - %record%',
     'mo_ThisVlanIdNotUniqueForLanInterfacesModels' => 'ระบบมีอินเทอร์เฟซที่มี VLAN เดียวกันอยู่แล้ว',
-    'ms_MailEnableNotifications' => 'ใช้การแจ้งเตือน',
-    'ms_MailSysadminEmail' => 'อีเมลผู้ดูแลระบบ',
-    'ms_MissedCallBody' => 'สายที่ไม่ได้รับ - ข้อความในจดหมาย',
-    'ms_MissedCallFooter' => 'สายที่ไม่ได้รับ - ชั้นใต้ดิน',
-    'ms_MissedCallSubject' => 'สายที่ไม่ได้รับ - หัวเรื่องอีเมล',
-    'ms_MissedCalls' => 'สายที่ไม่ได้รับ',
-    'ms_NotificationTemplatesMissed' => 'แม่แบบ - สายที่ไม่ได้รับ',
-    'ms_NotificationTemplatesVoicemail' => 'เทมเพลต - ข้อความเสียง',
-    'ms_SMTPCertCheck' => 'ตรวจสอบใบรับรองเซิร์ฟเวอร์',
-    'ms_SMTPFromUsername' => 'ชื่อผู้ส่ง',
-    'ms_SMTPHost' => 'โฮสต์ SMTP',
-    'ms_SMTPPassword' => 'รหัสผ่าน SMTP',
-    'ms_SMTPPort' => 'พอร์ต SMTP',
-    'ms_SMTPSenderAddress' => 'ที่อยู่ผู้ส่ง',
-    'ms_SMTPSettings' => 'การตั้งค่าการส่งข้อความ',
-    'ms_SMTPUseTLS' => 'ใช้ TLS',
-    'ms_SMTPUsername' => 'เข้าสู่ระบบ SMTP',
-    'ms_SentTestEmailAfterSaveTo' => 'ส่งอีเมลทดสอบไปยังที่อยู่นี้',
-    'ms_SuccessfulDeleted' => 'ลบข้อมูลแล้ว',
-    'ms_SuccessfulSaved' => 'บันทึกการตั้งค่าแล้ว',
-    'ms_SystemEmailForMissed' => 'อีเมลสำหรับการแจ้งเตือนที่ไม่ได้รับ',
-    'ms_TestEmailBody' => 'หากคุณได้รับจดหมายฉบับนี้ แสดงว่าการตั้งค่าอีเมลของคุณถูกต้อง',
-    'ms_TestEmailSentSuccessfully' => 'ส่งจดหมายแล้ว',
-    'ms_TestEmailSubject' => 'ทดสอบการส่งอีเมล',
-    'ms_Voicemail' => 'ข้อความเสียง',
-    'ms_VoicemailBody' => 'ข้อความเสียง - ข้อความในจดหมาย',
-    'ms_VoicemailCommonEmail' => 'อีเมลเดียวสำหรับการส่งข้อความเสียง',
-    'ms_VoicemailFooter' => 'ข้อความเสียง - ห้องใต้ดิน',
-    'ms_VoicemailSubject' => 'ข้อความเสียง - หัวเรื่อง',
     'msg_ErrorHeader' => 'ข้อผิดพลาด',
     'msg_WarningHeader' => 'ความสนใจ',
     'msg_infoHeader' => 'ข้อมูล',

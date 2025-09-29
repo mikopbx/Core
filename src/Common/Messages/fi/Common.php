@@ -1,11 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Common translations
  */
-
-return [
-  
-
     ' - Unmounting partitions...' => 'Poistetaan asennettuja levyosioita…',
     ' - Unpacking img...' => 'Päivitetään järjestelmäosiota…',
     '(default value = ' => '(oletus = ',
@@ -244,7 +241,6 @@ return [
     'user' => 'käyttäjä',
     'version' => 'versio',
     'Пропущенный вызов' => 'Sinulla on vastaamaton puhelu',
-
     // ADV
     'adv_AmiPasswordWeak' => 'Yksinkertainen salasana AMI-käyttäjälle <a href=\'%url%\'>%record%</a>',
     'adv_AvailableNewVersionModule' => 'Uusi versio moduulista %module% - %ver% saatavilla. Nykyinen versio: %currentVer%',
@@ -272,7 +268,6 @@ return [
     'adv_WebPasswordWeak' => 'Yksinkertainen järjestelmänvalvojan salasana verkkoliittymässä <a href=\'%url%\'>muuta</a>',
     'adv_YouUseDefaultSSHPassword' => 'Käytät oletussalasanaa käyttääksesi SSH:ta - <a href=\'%url%\'>muokkaa</a>',
     'adv_YouUseDefaultWebPassword' => 'Käytät oletussalasanaa kirjautuaksesi hallintaliittymään - <a href=\'%url%\'>muokkaa</a>',
-
     // AM
     'am_AddNewUser' => 'Lisää käyttäjä AMI',
     'am_CopyRecord' => 'Kopio',
@@ -331,7 +326,6 @@ return [
     'am_tooltip_user_write' => 'Käyttäjätapahtumien lähettäminen, laitteiden tilojen päivitys',
     'am_tooltip_verbose_read' => 'Yksityiskohtaisten viestien ja debug-tulosteen katselu',
     'am_tooltip_verbose_write' => 'Viestien yksityiskohtaisuustason asettaminen',
-
     // AUTH
     'auth_DefaultCloudPasswordInstructions' => 'Oletussalasana on sama kuin pilvessä olevan virtuaalikoneen yksilöllinen tunniste',
     'auth_Login' => 'Käyttäjätunnus',
@@ -342,7 +336,6 @@ return [
     'auth_ValidateLoginNotEmpty' => 'Anna käyttäjätunnuksesi',
     'auth_ValidatePasswordNotEmpty' => 'Kirjoita salasanasi',
     'auth_WrongLoginPassword' => 'Valtuutus epäonnistui, sinulla on %attempts% yritystä jäljellä',
-
     // BT
     'bt_Add' => 'Lisää',
     'bt_ApplyChangesToPBX' => 'Ota muutokset käyttöön',
@@ -374,7 +367,6 @@ return [
     'bt_ToolTipRestore' => 'Palauta',
     'bt_ToolTipShowPassword' => 'Näytä/piilota salasana',
     'bt_ToolTipUpgradeOnline' => 'Päivitä verkossa',
-
     // CAL
     'cal_ApplyBtn' => 'Käytä',
     'cal_CancelBtn' => 'Peruuta',
@@ -387,11 +379,9 @@ return [
     'cal_Yesterday' => 'Eilen',
     'cal_from' => 'alkaen',
     'cal_to' => 'saakka',
-
     // CD
     'cd_Description' => 'Kommentti',
     'cd_Extensions' => 'Tämän jonon puhelinnumero',
-
     // CDR
     'cdr_And' => 'ja',
     'cdr_ColumnDate' => 'Soittopäivä',
@@ -405,7 +395,6 @@ return [
     'cdr_FilteredEmptyTitle' => 'Ei tietueita määritetyillä kriteereillä',
     'cdr_NoRecordsFound' => 'Tietueita ei löytynyt',
     'cdr_TryChangingDate' => 'Kokeile muuttaa aikaväliä',
-
     // CF
     'cf_ColumnMode' => 'Tila',
     'cf_ColumnNote' => 'Huomautus',
@@ -422,11 +411,9 @@ return [
     'cf_Path' => 'Tiedoston polku',
     'cf_ResultFileHeader' => 'Tiedoston sisältö muutoksineen',
     'cf_UserEditHeader' => 'Editori muutosten tekemiseen',
-
     // DBG
     'dbg_Header' => 'Virheenkorjaustiedot',
     'dbg_NoDebugInformation' => 'Ei tietoja',
-
     // DT
     'dt_First' => '',
     'dt_Info' => 'Merkinnät _START_–_END_ yhteensä _TOTAL_',
@@ -437,7 +424,6 @@ return [
     'dt_Previous' => 'Edellinen',
     'dt_Search' => 'Haku',
     'dt_TableIsEmpty' => 'Ei näytettävää dataa',
-
     // ER
     'er_Home' => 'Siirry alkuun',
     'er_InternalServerError' => 'Sisäinen palvelinvirhe',
@@ -446,13 +432,10 @@ return [
     'er_PageNotFoundDescription' => 'Tätä sivua ei ole olemassa.',
     'er_Unauthorized' => 'Valtuutusvirhe',
     'er_UnauthorizedDescription' => 'Sinulla ei ole pääsyä tälle sivulle.',
-
     // ET
     'et_ReadDocumentation' => 'Tutustu dokumentaatioon',
-
     // LANG
     'lang_HelpWithTranslateIt' => 'Auta kääntämään MikoPBX',
-
     // LIC
     'lic_ActivateCoupon' => 'Kupongin aktivointi',
     'lic_ActivateCouponButton' => 'Aktivoi kuponki',
@@ -533,23 +516,19 @@ Voit saada uuden avaimen automaattisesti täyttämällä rekisteröintilomakkeen
     'lic_ValidateCouponEmpty' => 'Pakollinen kenttä ei täytetty - kuponki',
     'lic_ValidateLicenseKeyEmpty' => 'Pakollinen kenttä ei täytetty - Lisenssiavain',
     'lic_WrongLicenseKeyOrEmpty' => 'Lisenssiavain syötettiin väärin',
-
     // LOC
     'loc_NoResult' => 'Mitään ei löytynyt',
-
     // LOG
     'log_CaptureMessage' => 'Käynnistä verkkopakettien kerääminen ja soita puhelu tai tee muu toiminto, joka aiheuttaa epäonnistumisen. 
 <br>Järjestelmä tallentaa kaikki tällä hetkellä verkkokortin läpi kulkevat paketit lisäanalyysiä varten.',
     'log_DownloadLogs' => 'Lataa kaikki järjestelmälokit',
     'log_StartCapturePCAP' => 'Aloita',
     'log_StopCapturePCAP' => 'Pysäytä ja lataa',
-
     // ML
     'ml_EmailNotSended' => 'Viestiä ei lähetetty',
     'ml_EmailSendedSuccess' => 'Sähköposti lähetetty',
     'ml_EmailTestBody' => 'Hei, jos sait tämän sähköpostin, asetukset ovat oikein.',
     'ml_EmailTestSubject' => 'Testisähköposti puhelinjärjestelmästäsi',
-
     // MM
     'mm_ApiKeys' => 'API-avaimet',
     'mm_AsteriskManagers' => 'Pääsy AMI:hen',
@@ -585,7 +564,6 @@ Voit saada uuden avaimen automaattisesti täyttämällä rekisteröintilomakkeen
     'mm_SystemDiagnostic' => 'Järjestelmälokit',
     'mm_TimeSettings' => 'Päivämäärä ja aika',
     'mm_Update' => 'PBX-päivitys',
-
     // MO
     'mo_ApplicationShort4Dropdown' => 'Sovellus',
     'mo_BeforeDeleteFirst' => 'Objektiin on linkkejä - %represent%',
@@ -620,43 +598,10 @@ Voit saada uuden avaimen automaattisesti täyttämällä rekisteröintilomakkeen
     'mo_SystemExten_voicemail' => 'Vastaaja',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Määritetty numero on jo käytössä - %record%',
     'mo_ThisVlanIdNotUniqueForLanInterfacesModels' => 'Järjestelmässä on jo liitäntä samaan VLAN:iin',
-
-    // MS
-    'ms_MailEnableNotifications' => 'Käytä ilmoituksia',
-    'ms_MailSysadminEmail' => 'Järjestelmänvalvojan sähköposti',
-    'ms_MissedCallBody' => 'Vastaamaton puhelu - sähköpostin sisältö',
-    'ms_MissedCallFooter' => 'Vastaamaton puhelu - alatunniste',
-    'ms_MissedCallSubject' => 'Vastaamaton puhelu - sähköpostin aihe',
-    'ms_MissedCalls' => 'Vastaamattomat puhelut',
-    'ms_NotificationTemplatesMissed' => 'Malli - vastaamattomat puhelut',
-    'ms_NotificationTemplatesVoicemail' => 'Malli - vastaaja',
-    'ms_SMTPCertCheck' => 'Tarkista palvelimen varmenne',
-    'ms_SMTPFromUsername' => 'Lähettäjän nimi',
-    'ms_SMTPHost' => 'SMTP-palvelin',
-    'ms_SMTPPassword' => 'SMTP-salasana',
-    'ms_SMTPPort' => 'SMTP-portti',
-    'ms_SMTPSenderAddress' => 'Lähettäjän osoite',
-    'ms_SMTPSettings' => 'Viestien lähetysasetukset',
-    'ms_SMTPUseTLS' => 'Käytä TLS:ää',
-    'ms_SMTPUsername' => 'SMTP-käyttäjätunnus',
-    'ms_SentTestEmailAfterSaveTo' => 'Lähetä testisähköposti tähän osoitteeseen',
-    'ms_SuccessfulDeleted' => 'Tiedot poistettu',
-    'ms_SuccessfulSaved' => 'Asetukset tallennettu',
-    'ms_SystemEmailForMissed' => 'Sähköposti vastaamattomien puhelujen ilmoituksia varten',
-    'ms_TestEmailBody' => 'Jos sait tämän sähköpostin, sähköpostiasetukset ovat oikein.',
-    'ms_TestEmailSentSuccessfully' => 'Sähköposti lähetetty',
-    'ms_TestEmailSubject' => 'Sähköpostin lähetyksen testaus',
-    'ms_Voicemail' => 'Vastaaja',
-    'ms_VoicemailBody' => 'Vastaaja - sähköpostin sisältö',
-    'ms_VoicemailCommonEmail' => 'Yhteinen sähköposti vastaajaviestien lähettämiseen',
-    'ms_VoicemailFooter' => 'Vastaaja - alatunniste',
-    'ms_VoicemailSubject' => 'Vastaaja - sähköpostin aihe',
-
     // MSG
     'msg_ErrorHeader' => 'Virhe',
     'msg_WarningHeader' => 'Varoitus',
     'msg_infoHeader' => 'Tiedot',
-
     // PASS
     'pass_CheckSSHPasswordDontMatch' => 'Annetut SSH-salasanat eivät täsmää',
     'pass_CheckSSHPasswordEmpty' => 'Kenttä on tyhjä: SSH',
@@ -665,12 +610,10 @@ Voit saada uuden avaimen automaattisesti täyttämällä rekisteröintilomakkeen
     'pass_CheckWebAdminPasswordEmpty' => 'Kenttä on tyhjä: WEB-salasana',
     'pass_CheckWebAdminPasswordSimple' => 'WEB-salasana on liian yksinkertainen.',
     'pass_CheckWebPassErrorChange' => 'Salasanan vaihto epäonnistui',
-
     // QF
     'qf_Frequency' => 'Lähetystaajuus sekunteina:',
     'qf_Qualify' => 'Ylläpidä NAT-istunto',
     'qf_QualifyInstructions' => 'Kun tämä vaihtoehto on käytössä, MikoPBX lähettää SIP OPTIONS -paketteja määritetyllä taajuudella. Tämä on tarpeen NAT-tunneloinnin tukemiseksi reitittimessäsi.',
-
     // RS
     'rs_CurrentCalls' => 'Aktiiviset puhelut',
     'rs_DateCall' => 'Aloituspäivämäärä',
@@ -679,7 +622,6 @@ Voit saada uuden avaimen automaattisesti täyttämällä rekisteröintilomakkeen
     'rs_ShutDownPhoneSystem' => 'Sammuta MikoPBX',
     'rs_ShutdownRebootMessage' => 'Kun käynnistetään uudelleen tai sammutetaan, kaikki käynnissä olevat puhelut keskeytyvät.',
     'rs_Src' => 'Kuka',
-
     // SD
     'sd_CapturePcap' => 'Kaappaa verkkopaketteja',
     'sd_CollectingInfo' => 'Palvelutietojen kerääminen',
@@ -697,7 +639,6 @@ Voit saada uuden avaimen automaattisesti täyttämällä rekisteröintilomakkeen
     'sd_filter' => 'Suodatin',
     'sd_lines' => 'Raja',
     'sd_offset' => 'Siirtymä',
-
     // SF
     'sf_AddNewAudioFile' => 'Lisää uusi äänitiedosto',
     'sf_AddNewSoundFile' => 'Lisää uusi äänitiedosto',
@@ -725,7 +666,6 @@ Voit saada uuden avaimen automaattisesti täyttämällä rekisteröintilomakkeen
     'sf_ValidationFileNameIsEmpty' => 'Tiedoston nimeä ei ole määritetty',
     'sf_ValidationFileNotSelected' => 'Lataa ensin äänitiedosto',
     'sf_YourBrowserDoesNotSupportAudio' => 'Selaimesi ei tue audio-elementtiä',
-
     // SNTRY
     'sntry_ErrorFormEntry' => 'Kenttiä ei ole täytetty, korjaa ne ja yritä lähettää uudelleen!',
     'sntry_ErrorGeneric' => 'Tuntematon virhe lähetettäessä. Yritä uudelleen!',
@@ -736,7 +676,6 @@ Voit saada uuden avaimen automaattisesti täyttämällä rekisteröintilomakkeen
     'sntry_Subtitle2' => 'Kuvaile toimintasi, jotka johtivat tähän virheeseen.',
     'sntry_SuccessMessage' => 'Kiitos avustasi!',
     'sntry_Title' => 'Jotain meni pieleen!',
-
     // ST
     'st_CallRecordingsRetention' => 'Puhelutallentusten säilytys',
     'st_CategoryBackups' => 'Varmuuskopiot',
@@ -758,10 +697,8 @@ Voit saada uuden avaimen automaattisesti täyttämällä rekisteröintilomakkeen
     'st_TabStorageInfo' => 'Tallennustilan tiedot',
     'st_TabStorageSettings' => 'Tallennusasetukset',
     'st_Used' => 'käytössä',
-
     // THIS
     'this_is' => 'Tämä on ',
-
     // TS
     'ts_CurrentSettings' => 'Nykyiset asetukset',
     'ts_CurrentSystemTime' => 'Nykyinen aika',
@@ -771,7 +708,6 @@ Voit saada uuden avaimen automaattisesti täyttämällä rekisteröintilomakkeen
     'ts_SystemTime' => 'Järjestelmän aika',
     'ts_TimeZone' => 'Aikavyöhyke',
     'ts_ValidateDateTime' => 'Väärä päivämäärä määritetty',
-
     // UPD
     'upd_AvailableUpdates' => 'Online-päivitykset saatavilla',
     'upd_Cancel' => 'Peruuta',

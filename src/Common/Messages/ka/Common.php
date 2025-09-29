@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Common translations
  */
-
-return [
     ' - Unmounting partitions...' => 'დამონტაჟებული დისკის დანაყოფების დემონტაჟი…',
     ' - Unpacking img...' => 'მიმდინარეობს სისტემის დანაყოფის განახლება…',
     '(default value = ' => '(ნაგულისხმევი = ',
@@ -242,7 +241,6 @@ return [
     'Пропущенный вызов' => 'გამოტოვებული ზარი გაქვთ',
     'repApiKeys' => 'API გასაღები - %represent%',
     'repIncomingRoutingTableDefaultRuleName' => 'შემომავალი დამუშავების ნაგულისხმევი წესი',
-
     // ADV
     'adv_AmiPasswordWeak' => 'AMI მომხმარებლის მარტივი პაროლი <a href=\'%url%\'>%record%</a>',
     'adv_AvailableNewVersionModule' => 'ხელმისაწვდომია მოდულის ახალი ვერსია %module% - %ver%. მიმდინარე ვერსია: %currentVer%',
@@ -270,7 +268,6 @@ return [
     'adv_WebPasswordWeak' => 'მარტივი ადმინისტრატორის პაროლი ვებ ინტერფეისში <a href=\'%url%\'>შეცვალეთ</a>',
     'adv_YouUseDefaultSSHPassword' => 'თქვენ იყენებთ ნაგულისხმევ პაროლს SSH წვდომისთვის - <a href=\'%url%\'> შეცვლა </a>',
     'adv_YouUseDefaultWebPassword' => 'თქვენ იყენებთ სტანდარტულ პაროლს ადმინისტრაციული ინტერფეისის შესასვლელად - <a href=\'%url%\'> შეცვალეთ </a>',
-
     // AM
     'am_AddNewUser' => 'დაამატე მომხმარებელი AMI',
     'am_Description' => 'კომენტარი',
@@ -329,7 +326,6 @@ return [
     'am_tooltip_user_write' => 'მომხმარებლის მოვლენების გაგზავნა, მოწყობილობების მდგომარეობების განახლება',
     'am_tooltip_verbose_read' => 'დეტალური შეტყობინებებისა და დიბაგის გამოსავლის ნახვა',
     'am_tooltip_verbose_write' => 'შეტყობინებების დეტალიზაციის დონის დადგენა',
-
     // AUTH
     'auth_DefaultCloudPasswordInstructions' => 'ნაგულისხმევი პაროლი უდრის ღრუბელში არსებული ვირტუალური მანქანის უნიკალურ იდენტიფიკატორს',
     'auth_Login' => 'Შესვლა',
@@ -340,7 +336,6 @@ return [
     'auth_ValidateLoginNotEmpty' => 'შეიყვანეთ სისტემაში',
     'auth_ValidatePasswordNotEmpty' => 'შეიყვანეთ პაროლი',
     'auth_WrongLoginPassword' => 'ავტორიზაცია ვერ მოხერხდა, დაგრჩათ %attempts% მცდელობა',
-
     // BT
     'bt_Add' => 'დამატება',
     'bt_ApplyChangesToPBX' => 'ცვლილებების გამოყენება',
@@ -372,7 +367,6 @@ return [
     'bt_ToolTipRestore' => 'აღდგენა',
     'bt_ToolTipShowPassword' => 'პაროლის ჩვენება/დამალვა',
     'bt_ToolTipUpgradeOnline' => 'განახლება ინტერნეტით',
-
     // CAL
     'cal_ApplyBtn' => 'მიმართვა',
     'cal_CancelBtn' => 'გაუქმება',
@@ -385,11 +379,9 @@ return [
     'cal_Yesterday' => 'Გუშინ',
     'cal_from' => 'დან',
     'cal_to' => 'ავტორი',
-
     // CD
     'cd_Description' => 'კომენტარი',
     'cd_Extensions' => 'ტელეფონის ნომერი ამ რიგისთვის',
-
     // CDR
     'cdr_And' => 'და',
     'cdr_ColumnDate' => 'ზარის თარიღი',
@@ -403,7 +395,6 @@ return [
     'cdr_FilteredEmptyTitle' => 'მითითებული კრიტერიუმების მიხედვით ჩანაწერები არ არის',
     'cdr_NoRecordsFound' => 'ჩანაწერები არ მოიძებნა',
     'cdr_TryChangingDate' => 'სცადეთ თარიღების ინტერვალის შეცვლა',
-
     // CF
     'cf_ColumnMode' => 'რეჟიმი',
     'cf_ColumnNote' => 'შენიშვნა',
@@ -420,11 +411,9 @@ return [
     'cf_Path' => 'ფაილი ფაილისკენ',
     'cf_ResultFileHeader' => 'ფაილის შინაარსი ცვლილებებით',
     'cf_UserEditHeader' => 'რედაქტორი ცვლილებების შესატანად',
-
     // DBG
     'dbg_Header' => 'ინფორმაცია გამართვის შესახებ',
     'dbg_NoDebugInformation' => 'არანაირი ინფორმაცია',
-
     // DT
     'dt_First' => '',
     'dt_Info' => 'ჩანაწერები _START_ დან _END_ მდე _TOTAL_ მდე',
@@ -435,7 +424,6 @@ return [
     'dt_Previous' => 'წინა',
     'dt_Search' => 'ძებნა',
     'dt_TableIsEmpty' => 'ჩვენების მონაცემები არ არის',
-
     // ER
     'er_Home' => 'დაიწყე დასაწყებად',
     'er_InternalServerError' => 'შიდა სერვერის შეცდომა',
@@ -444,13 +432,10 @@ return [
     'er_PageNotFoundDescription' => 'ეს გვერდი არ არსებობს.',
     'er_Unauthorized' => 'ავტორიზაციის შეცდომა',
     'er_UnauthorizedDescription' => 'თქვენ არ გაქვთ ამ გვერდზე წვდომა.',
-
     // ET
     'et_ReadDocumentation' => 'დოკუმენტაციის გაცნობა',
-
     // LANG
     'lang_HelpWithTranslateIt' => 'დახმარება თარგმნეთ MikoPBX',
-
     // LIC
     'lic_ActivateCoupon' => 'კუპონის აქტივაცია',
     'lic_ActivateCouponButton' => 'გაააქტიურეთ კუპონი',
@@ -531,23 +516,19 @@ return [
     'lic_ValidateCouponEmpty' => 'საჭირო ველი არ არის შევსებული - კუპონი',
     'lic_ValidateLicenseKeyEmpty' => 'საჭირო ველი არ არის შევსებული - ლიცენზიის გასაღები',
     'lic_WrongLicenseKeyOrEmpty' => 'ლიცენზიის გასაღები არასწორად არის შეყვანილი',
-
     // LOC
     'loc_NoResult' => 'Არაფერი არ არის ნაპოვნი',
-
     // LOG
     'log_CaptureMessage' => 'დაიწყეთ ქსელის პაკეტების შეგროვება და განახორციელეთ ზარი ან სხვა მოქმედება, რომელიც იწვევს მარცხს.
 <br>სისტემა შეინახავს ყველა პაკეტს, რომელიც ამ მომენტში გადის ქსელის ბარათზე შემდგომი ანალიზისთვის.',
     'log_DownloadLogs' => 'ჩამოტვირთეთ ყველა სისტემის ჟურნალი',
     'log_StartCapturePCAP' => 'დაწყება',
     'log_StopCapturePCAP' => 'შეჩერება და ჩამოტვირთვა',
-
     // ML
     'ml_EmailNotSended' => 'შეტყობინება არ გაიგზავნა',
     'ml_EmailSendedSuccess' => 'Მეილი გაგზავნილია',
     'ml_EmailTestBody' => 'გამარჯობა, თუ ეს წერილი თქვენს ფოსტაშია, მაშინ პარამეტრები სწორია.',
     'ml_EmailTestSubject' => 'სატესტო წერილი თქვენი სატელეფონო სისტემისგან',
-
     // MM
     'mm_ApiKeys' => 'API გასაღებები',
     'mm_AsteriskManagers' => 'AMI წვდომა',
@@ -583,7 +564,6 @@ return [
     'mm_SystemDiagnostic' => 'სისტემის ჟურნალები',
     'mm_TimeSettings' => 'თარიღი და დრო',
     'mm_Update' => 'PBX განახლება',
-
     // MO
     'mo_ApplicationShort4Dropdown' => 'განცხადება',
     'mo_BeforeDeleteFirst' => 'არის მითითებები ობიექტზე - %represent%',
@@ -618,43 +598,10 @@ return [
     'mo_SystemExten_voicemail' => 'Ხმოვანი შეტყობინება',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'მითითებული გაფართოების ნომერი უკვე გამოიყენება',
     'mo_ThisVlanIdNotUniqueForLanInterfacesModels' => 'სისტემას უკვე აქვს იგივე VLAN– ის ინტერფეისი',
-
-    // MS
-    'ms_MailEnableNotifications' => 'გაფრთხილებების გამოყენება',
-    'ms_MailSysadminEmail' => 'სისტემის ადმინისტრატორის ელ',
-    'ms_MissedCallBody' => 'გამოტოვებული ზარი - შეტყობინების ტექსტი',
-    'ms_MissedCallFooter' => 'გამოტოვებული ზარი - სარდაფი',
-    'ms_MissedCallSubject' => 'გამოტოვებული ზარი - ელ.ფოსტის თემა',
-    'ms_MissedCalls' => 'Გამოტოვებული ზარები',
-    'ms_NotificationTemplatesMissed' => 'შაბლონი - გამოტოვებული ზარები',
-    'ms_NotificationTemplatesVoicemail' => 'შაბლონი - ხმოვანი ფოსტა',
-    'ms_SMTPCertCheck' => 'გადაამოწმეთ სერვერის სერტიფიკატი',
-    'ms_SMTPFromUsername' => 'Გამგზავნის სახელი',
-    'ms_SMTPHost' => 'SMTP მასპინძელი',
-    'ms_SMTPPassword' => 'SMTP პაროლი',
-    'ms_SMTPPort' => 'SMTP პორტი',
-    'ms_SMTPSenderAddress' => 'გამგზავნის მისამართი',
-    'ms_SMTPSettings' => 'შეტყობინების გაგზავნის პარამეტრები',
-    'ms_SMTPUseTLS' => 'გამოიყენეთ TLS',
-    'ms_SMTPUsername' => 'SMTP შესვლა',
-    'ms_SentTestEmailAfterSaveTo' => 'გაგზავნეთ საცდელი ელ.წერილი ამ მისამართზე',
-    'ms_SuccessfulDeleted' => 'მონაცემები წაიშალა',
-    'ms_SuccessfulSaved' => 'პარამეტრები შენახულია',
-    'ms_SystemEmailForMissed' => 'ელ.წერილი გამოტოვებული შეტყობინებებისთვის',
-    'ms_TestEmailBody' => 'თუ ეს წერილი მიიღეთ, მაშინ ფოსტის პარამეტრები სწორია.',
-    'ms_TestEmailSentSuccessfully' => 'Მეილი გაგზავნილია',
-    'ms_TestEmailSubject' => 'ფოსტის გაგზავნის ტესტირება',
-    'ms_Voicemail' => 'Ხმოვანი შეტყობინება',
-    'ms_VoicemailBody' => 'ხმოვანი ფოსტა - წერილის ტექსტი',
-    'ms_VoicemailCommonEmail' => 'ხმოვანი ფოსტის შეტყობინებების გაგზავნის ერთი ელ.წერილი',
-    'ms_VoicemailFooter' => 'ხმოვანი ფოსტა - სარდაფი',
-    'ms_VoicemailSubject' => 'ხმოვანი ფოსტა - თემა',
-
     // MSG
     'msg_ErrorHeader' => 'შეცდომა',
     'msg_WarningHeader' => 'ყურადღება',
     'msg_infoHeader' => 'ინფორმაცია',
-
     // PASS
     'pass_CheckSSHPasswordDontMatch' => 'SSH-ისთვის შეყვანილი პაროლები არ ემთხვევა',
     'pass_CheckSSHPasswordEmpty' => 'ველი ცარიელი: SSH',
@@ -663,12 +610,10 @@ return [
     'pass_CheckWebAdminPasswordEmpty' => 'ველი ცარიელია: WEB პაროლი',
     'pass_CheckWebAdminPasswordSimple' => 'WEB პაროლი ძალიან მარტივია.',
     'pass_CheckWebPassErrorChange' => 'პაროლის შეცვლა ვერ მოხერხდა',
-
     // QF
     'qf_Frequency' => 'გაგზავნის სიხშირე წამებში:',
     'qf_Qualify' => 'შეინარჩუნეთ NAT სესია',
     'qf_QualifyInstructions' => 'როდესაც ეს პარამეტრი ჩართულია, PBX გაგზავნის SIP OPTIONS პაკეტებს მითითებულ სიხშირეზე. ეს საჭიროა NAT გვირაბის მხარდასაჭერად თქვენს როუტერზე.',
-
     // RS
     'rs_CurrentCalls' => 'აქტიური ზარები',
     'rs_DateCall' => 'დასაწყისის თარიღი',
@@ -677,7 +622,6 @@ return [
     'rs_ShutDownPhoneSystem' => 'გამორთეთ MikoPBX',
     'rs_ShutdownRebootMessage' => 'გადატვირთვის ან გამორთვის დროს, ყველა მიმდინარე ზარი წყდება.',
     'rs_Src' => 'Ჯანმო',
-
     // SD
     'sd_CapturePcap' => 'ქსელის პაკეტების აღება',
     'sd_CollectingInfo' => 'მომსახურების ინფორმაციის შეგროვება',
@@ -695,7 +639,6 @@ return [
     'sd_filter' => 'ფილტრი',
     'sd_lines' => 'Ზღვარი',
     'sd_offset' => 'კომპენსაცია',
-
     // SF
     'sf_AddNewAudioFile' => 'ახალი აუდიო ფაილის დამატება',
     'sf_AddNewSoundFile' => 'დაამატეთ ახალი ხმოვანი ფაილი',
@@ -723,7 +666,6 @@ return [
     'sf_ValidationFileNameIsEmpty' => 'ფაილის სახელი მითითებული არ არის',
     'sf_ValidationFileNotSelected' => 'ჯერ გადმოწერეთ აუდიო ფაილი',
     'sf_YourBrowserDoesNotSupportAudio' => 'თქვენი ბრაუზერი არ უჭერს მხარს audio ელემენტს',
-
     // SNTRY
     'sntry_ErrorFormEntry' => 'ველები არ არის შევსებული, გამოსწორებულია და ხელახლა სცადეთ გაგზავნა!',
     'sntry_ErrorGeneric' => 'გაგზავნისას უცნობი შეცდომაა. Კიდევ სცადე!',
@@ -734,7 +676,6 @@ return [
     'sntry_Subtitle2' => 'გთხოვთ, აღწეროთ თქვენი ქმედებები, რამაც გამოიწვია ეს შეცდომა.',
     'sntry_SuccessMessage' => 'Მადლობა დახმარებისთვის!',
     'sntry_Title' => 'Რაღაც არასწორად წავიდა!',
-
     // ST
     'st_CallRecordingsRetention' => 'საუბრების ჩანაწერების შენახვა',
     'st_CategoryBackups' => 'სარეზერვო ასლები',
@@ -756,10 +697,8 @@ return [
     'st_TabStorageInfo' => 'საცავის ინფორმაცია',
     'st_TabStorageSettings' => 'შენახვის პარამეტრები',
     'st_Used' => 'დაკავებულია',
-
     // THIS
     'this_is' => 'Ეს არის ',
-
     // TS
     'ts_CurrentSettings' => 'მიმდინარე პარამეტრები',
     'ts_CurrentSystemTime' => 'Მიმდინარე დრო',
@@ -769,7 +708,6 @@ return [
     'ts_SystemTime' => 'სისტემური დრო',
     'ts_TimeZone' => 'Დროის სარტყელი',
     'ts_ValidateDateTime' => 'თარიღი არასწორია',
-
     // UPD
     'upd_AvailableUpdates' => 'ონლაინ განახლებები ხელმისაწვდომია',
     'upd_Cancel' => 'გაუქმება',

@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Common translations
  */
-
-return [
     ' - Unmounting partitions...' => 'Desmontando particiones de disco montadas…',
     ' - Unpacking img...' => 'Actualizando la partición del sistema…',
     '(default value = ' => '(predeterminado = ',
@@ -238,7 +237,6 @@ return [
     'user' => 'usuario',
     'version' => 'versión',
     'Пропущенный вызов' => 'Tienes una llamada perdida',
-
     // ADV
     'adv_AmiPasswordWeak' => 'Contraseña simple de usuario de AMI <a href=\'%url%\'>%record%</a>',
     'adv_AvailableNewVersionModule' => 'Nueva versión del módulo %module% - %ver% disponible. Versión actual: %currentVer%',
@@ -266,7 +264,6 @@ return [
     'adv_WebPasswordWeak' => 'Contraseña de administrador simple en la interfaz web <a href=\'%url%\'>cambiar</a>',
     'adv_YouUseDefaultSSHPassword' => 'Utiliza la contraseña predeterminada para acceder a SSH - <a href=\'%url%\'> change </a>',
     'adv_YouUseDefaultWebPassword' => 'Utiliza la contraseña predeterminada para ingresar a la interfaz administrativa: <a href=\'%url%\'> change </a>',
-
     // AM
     'am_AddNewUser' => 'Añadir usuario AMI',
     'am_Description' => 'Comentario',
@@ -285,7 +282,6 @@ return [
     'am_ValidationAMINameIsEmpty' => 'Nombre de cuenta no especificado',
     'am_ValidationAMISecretIsEmpty' => 'La contraseña no está llena',
     'am_Write' => 'grabar',
-
     // AUTH
     'auth_DefaultCloudPasswordInstructions' => 'La contraseña predeterminada es igual al identificador único de la máquina virtual en la nube',
     'auth_Login' => 'Nombre de usuario',
@@ -296,7 +292,6 @@ return [
     'auth_ValidateLoginNotEmpty' => 'Ingrese inicio de sesión',
     'auth_ValidatePasswordNotEmpty' => 'Ingrese contraseña',
     'auth_WrongLoginPassword' => 'La autorización falló, te quedan %attempts% intentos',
-
     // BT
     'bt_ApplyChangesToPBX' => 'Aplicar cambios',
     'bt_Back' => 'Volver',
@@ -314,7 +309,6 @@ return [
     'bt_ToolTipEdit' => 'Editar',
     'bt_ToolTipRestore' => 'Restaurar',
     'bt_ToolTipUpgradeOnline' => 'Actualización en línea',
-
     // CAL
     'cal_ApplyBtn' => 'Para aplicar',
     'cal_CancelBtn' => 'Cancelar',
@@ -327,11 +321,9 @@ return [
     'cal_Yesterday' => 'Ayer',
     'cal_from' => 'con',
     'cal_to' => 'por',
-
     // CD
     'cd_Description' => 'Comentario',
     'cd_Extensions' => 'Número de teléfono para esta cola',
-
     // CDR
     'cdr_And' => 'y',
     'cdr_ColumnDate' => 'Fecha de llamada',
@@ -339,7 +331,6 @@ return [
     'cdr_ColumnFrom' => 'Quien',
     'cdr_ColumnRecordings' => 'Registros de conversación',
     'cdr_ColumnTo' => 'A',
-
     // CF
     'cf_ColumnMode' => 'El modo',
     'cf_ColumnNote' => 'Una nota',
@@ -356,11 +347,9 @@ return [
     'cf_Path' => 'Ruta del archivo',
     'cf_ResultFileHeader' => 'Contenido del archivo con cambios',
     'cf_UserEditHeader' => 'Editor para hacer cambios',
-
     // DBG
     'dbg_Header' => 'Información de depuración',
     'dbg_NoDebugInformation' => 'Sin información',
-
     // DT
     'dt_Info' => 'Publicaciones de _START_ a _END_ de _TOTAL_',
     'dt_InfoEmpty' => 'No hay entradas que coincidan con los criterios de selección',
@@ -369,7 +358,6 @@ return [
     'dt_Previous' => 'Anterior',
     'dt_Search' => 'Buscar',
     'dt_TableIsEmpty' => 'No hay datos para mostrar',
-
     // ER
     'er_Home' => 'Ir al principio',
     'er_InternalServerError' => 'Error interno del servidor',
@@ -378,10 +366,8 @@ return [
     'er_PageNotFoundDescription' => 'Esta página no existe.',
     'er_Unauthorized' => 'Error de autorización',
     'er_UnauthorizedDescription' => 'No tienes acceso a esta página.',
-
     // LANG
     'lang_HelpWithTranslateIt' => 'Ayuda con la traducción MikoPBX',
-
     // LIC
     'lic_ActivateCoupon' => 'Activación de cupones',
     'lic_ActivateCouponButton' => 'Activar cupón',
@@ -462,23 +448,19 @@ Puede obtener una nueva clave automáticamente completando el formulario de regi
     'lic_ValidateCouponEmpty' => 'El campo requerido no está lleno - cupón',
     'lic_ValidateLicenseKeyEmpty' => 'El campo requerido no está lleno - Clave de licencia',
     'lic_WrongLicenseKeyOrEmpty' => 'Clave de licencia ingresada incorrectamente',
-
     // LOC
     'loc_NoResult' => 'Nada encontrado',
-
     // LOG
     'log_CaptureMessage' => 'Comience a recopilar paquetes de red y realice una llamada u otra acción que provoque la falla.
 <br>El sistema guardará todos los paquetes que pasan en ese momento por la tarjeta de red para su posterior análisis.',
     'log_DownloadLogs' => 'Descargar todos los registros del sistema',
     'log_StartCapturePCAP' => 'Comienzo',
     'log_StopCapturePCAP' => 'Detener y descargar',
-
     // ML
     'ml_EmailNotSended' => 'Mensaje no enviado',
     'ml_EmailSendedSuccess' => 'Email enviado',
     'ml_EmailTestBody' => 'Hola, si esta carta está en su correo, la configuración es correcta.',
     'ml_EmailTestSubject' => 'Carta de prueba de su sistema telefónico',
-
     // MM
     'mm_AsteriskManagers' => 'Acceso AMI',
     'mm_CallDetailRecords' => 'Historial de llamadas',
@@ -512,7 +494,6 @@ Puede obtener una nueva clave automáticamente completando el formulario de regi
     'mm_SystemDiagnostic' => 'Registros del sistema',
     'mm_TimeSettings' => 'Fecha y hora',
     'mm_Update' => 'actualización centralita',
-
     // MO
     'mo_ApplicationShort4Dropdown' => 'App',
     'mo_BeforeDeleteFirst' => 'Hay referencias al objeto - %represent%',
@@ -546,43 +527,10 @@ Puede obtener una nueva clave automáticamente completando el formulario de regi
     'mo_SystemExten_voicemail' => 'Mensaje de voz',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'El número especificado ya está en uso para - %record%',
     'mo_ThisVlanIdNotUniqueForLanInterfacesModels' => 'El sistema ya tiene una interfaz con la misma VLAN',
-
-    // MS
-    'ms_MailEnableNotifications' => 'Usar alertas',
-    'ms_MailSysadminEmail' => 'Correo electrónico del administrador del sistema',
-    'ms_MissedCallBody' => 'Llamada perdida - mensaje de texto',
-    'ms_MissedCallFooter' => 'Llamada Perdida - Sótano',
-    'ms_MissedCallSubject' => 'Llamada perdida - asunto del correo electrónico',
-    'ms_MissedCalls' => 'Llamadas perdidas',
-    'ms_NotificationTemplatesMissed' => 'Patrón: llamadas perdidas',
-    'ms_NotificationTemplatesVoicemail' => 'Plantilla: correo de voz',
-    'ms_SMTPCertCheck' => 'Comprobar certificado del servidor',
-    'ms_SMTPFromUsername' => 'Nombre del remitente',
-    'ms_SMTPHost' => 'Host SMTP',
-    'ms_SMTPPassword' => 'Contraseña SMTP',
-    'ms_SMTPPort' => 'Puerto SMTP',
-    'ms_SMTPSenderAddress' => 'Dirección del remitente',
-    'ms_SMTPSettings' => 'Configuraciones de mensajes',
-    'ms_SMTPUseTLS' => 'Use TLS',
-    'ms_SMTPUsername' => 'Inicio de sesión SMTP',
-    'ms_SentTestEmailAfterSaveTo' => 'Enviar un correo electrónico de prueba a esta dirección',
-    'ms_SuccessfulDeleted' => 'Datos eliminados',
-    'ms_SuccessfulSaved' => 'Configuraciones guardadas',
-    'ms_SystemEmailForMissed' => 'Correo electrónico para notificaciones perdidas',
-    'ms_TestEmailBody' => 'Si recibió esta carta, la configuración del correo es correcta.',
-    'ms_TestEmailSentSuccessfully' => 'Email enviado',
-    'ms_TestEmailSubject' => 'Prueba de envío de correo',
-    'ms_Voicemail' => 'Correo de voz',
-    'ms_VoicemailBody' => 'Correo de voz - mensaje de texto',
-    'ms_VoicemailCommonEmail' => 'Correo electrónico unificado para enviar correos de voz',
-    'ms_VoicemailFooter' => 'Buzón de voz - sótano',
-    'ms_VoicemailSubject' => 'Correo de voz - línea de asunto',
-
     // MSG
     'msg_ErrorHeader' => 'Error',
     'msg_WarningHeader' => 'Atención',
     'msg_infoHeader' => 'Información',
-
     // PASS
     'pass_CheckSSHPasswordDontMatch' => 'Las contraseñas ingresadas para SSH no coinciden',
     'pass_CheckSSHPasswordEmpty' => 'Campo vacío: SSH',
@@ -591,12 +539,10 @@ Puede obtener una nueva clave automáticamente completando el formulario de regi
     'pass_CheckWebAdminPasswordEmpty' => 'El campo está vacío: contraseña WEB',
     'pass_CheckWebAdminPasswordSimple' => 'La contraseña WEB es demasiado simple.',
     'pass_CheckWebPassErrorChange' => 'No se pudo cambiar la contraseña',
-
     // QF
     'qf_Frequency' => 'Frecuencia de envío en segundos:',
     'qf_Qualify' => 'Apoye la sesión NAT',
     'qf_QualifyInstructions' => 'Cuando esta opción está habilitada, el PBX enviará paquetes de OPCIONES SIP en la frecuencia especificada. Esto es necesario para admitir la tunelización NAT en su enrutador.',
-
     // RS
     'rs_CurrentCalls' => 'Llamadas activas',
     'rs_DateCall' => 'Fecha de inicio',
@@ -605,7 +551,6 @@ Puede obtener una nueva clave automáticamente completando el formulario de regi
     'rs_ShutDownPhoneSystem' => 'Apagar MikoPBX',
     'rs_ShutdownRebootMessage' => 'Al reiniciar o apagar, se interrumpirán todas las llamadas actuales.',
     'rs_Src' => 'Quien',
-
     // SD
     'sd_CapturePcap' => 'Captura de paquetes de red',
     'sd_CollectingInfo' => 'Recopilación de información de servicio',
@@ -623,7 +568,6 @@ Puede obtener una nueva clave automáticamente completando el formulario de regi
     'sd_filter' => 'Filtrar',
     'sd_lines' => 'Límite',
     'sd_offset' => 'Compensar',
-
     // SF
     'sf_AddNewSoundFile' => 'Agregar nuevo archivo de sonido',
     'sf_ColumnFile' => 'Nombre',
@@ -641,7 +585,6 @@ Puede obtener una nueva clave automáticamente completando el formulario de regi
     'sf_UploadSoundFileButton' => 'Descargar',
     'sf_ValidationFileNameIsEmpty' => 'Falta el nombre del archivo',
     'sf_ValidationFileNotSelected' => 'Descargue primero el archivo de audio',
-
     // SNTRY
     'sntry_ErrorFormEntry' => 'Los campos no están completos, corrija e intente enviar de nuevo!',
     'sntry_ErrorGeneric' => 'Error de envío desconocido Inténtalo de nuevo!',
@@ -652,10 +595,8 @@ Puede obtener una nueva clave automáticamente completando el formulario de regi
     'sntry_Subtitle2' => 'Describa las acciones que llevaron a este error.',
     'sntry_SuccessMessage' => '¡Gracias por su ayuda!',
     'sntry_Title' => 'Algo salió mal!',
-
     // THIS
     'this_is' => 'Esto es ',
-
     // TS
     'ts_CurrentSettings' => 'Configuraciones actuales',
     'ts_CurrentSystemTime' => 'Hora actual',
@@ -665,7 +606,6 @@ Puede obtener una nueva clave automáticamente completando el formulario de regi
     'ts_SystemTime' => 'Hora del sistema',
     'ts_TimeZone' => 'Zona horaria',
     'ts_ValidateDateTime' => 'La fecha es incorrecta',
-
     // UPD
     'upd_AvailableUpdates' => 'Actualizaciones en línea disponibles',
     'upd_Cancel' => 'Cancelar',

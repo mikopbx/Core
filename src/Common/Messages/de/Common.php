@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Common translations
  */
-
-return [
     ' - Unmounting partitions...' => 'Bereitstellung gemounteter Festplattenpartitionen wird aufgehoben…',
     ' - Unpacking img...' => 'Die Systempartition wird aktualisiert…',
     '(default value = ' => '(Standard = ',
@@ -241,7 +240,6 @@ return [
     'user' => 'Nutzer',
     'version' => 'Ausführung',
     'Пропущенный вызов' => 'Sie haben einen Anruf verpasst',
-
     // ADV
     'adv_AmiPasswordWeak' => 'Einfaches Passwort des AMI-Benutzers <a href=\'%url%\'>%record%</a>',
     'adv_AvailableNewVersionPBX' => 'Neue PBX-Version verfügbar – <a href=\'%url%\'>%ver%</a>',
@@ -268,7 +266,6 @@ return [
     'adv_WebPasswordWeak' => 'Einfaches Administrator-Passwort im Webinterface <a href=\'%url%\'>ändern</a>',
     'adv_YouUseDefaultSSHPassword' => 'Sie benutzen das Default-Passwort für den SSH-Zugang - <a href=\'%url%\'>Ändern!</a>',
     'adv_YouUseDefaultWebPassword' => 'Sie benutzen das Default-Passwort für das Admin-Interface - <a href=\'%url%\'>Ändern!</a>',
-
     // AM
     'am_AddNewUser' => 'Neuen AMI-Nutzer hinzufügen',
     'am_CopyRecord' => 'Kopie',
@@ -327,7 +324,6 @@ return [
     'am_tooltip_user_write' => 'Benutzerereignisse senden, Gerätestatus aktualisieren',
     'am_tooltip_verbose_read' => 'Detaillierte Nachrichten und Debug-Ausgabe anzeigen',
     'am_tooltip_verbose_write' => 'Nachrichtendetailgrad einstellen',
-
     // AUTH
     'auth_DefaultCloudPasswordInstructions' => 'Das Standardkennwort entspricht der eindeutigen Kennung der virtuellen Maschine in der Cloud',
     'auth_Login' => 'Login/Benutzername',
@@ -338,7 +334,6 @@ return [
     'auth_ValidateLoginNotEmpty' => 'Login/Benutzernamen eingeben',
     'auth_ValidatePasswordNotEmpty' => 'Passwort eingeben',
     'auth_WrongLoginPassword' => 'Die Autorisierung ist fehlgeschlagen. Sie haben noch %attempts% Versuche übrig',
-
     // BT
     'bt_Add' => 'Hinzufügen',
     'bt_ApplyChangesToPBX' => 'Änderungen anwenden',
@@ -370,7 +365,6 @@ return [
     'bt_ToolTipEdit' => 'Ändern',
     'bt_ToolTipRestore' => 'Wiederherstellen',
     'bt_ToolTipUpgradeOnline' => 'Online-Upgrade',
-
     // CAL
     'cal_ApplyBtn' => 'Bestätigen',
     'cal_CancelBtn' => 'Abbruch',
@@ -383,11 +377,9 @@ return [
     'cal_Yesterday' => 'gestern',
     'cal_from' => 'von',
     'cal_to' => 'nach',
-
     // CD
     'cd_Description' => 'Bemerkungen',
     'cd_Extensions' => 'Nebenstellennummer/Extension für diese Warteschlange',
-
     // CDR
     'cdr_And' => 'und',
     'cdr_ColumnDate' => 'Anrufdatum',
@@ -395,7 +387,6 @@ return [
     'cdr_ColumnFrom' => 'Von',
     'cdr_ColumnRecordings' => 'Anrufaufzeichnung',
     'cdr_ColumnTo' => 'Zu',
-
     // CF
     'cf_ColumnMode' => 'Einstellung',
     'cf_ColumnNote' => 'Hinweis/Kommentar',
@@ -412,11 +403,9 @@ return [
     'cf_Path' => 'Dateipfad und Name',
     'cf_ResultFileHeader' => 'Dateiinhalt mit Änderungen',
     'cf_UserEditHeader' => 'Editor, um Änderungen vorzunehmen',
-
     // DBG
     'dbg_Header' => 'Informationen zur Fehlersuche/Debugging',
     'dbg_NoDebugInformation' => 'Keine Information',
-
     // DT
     'dt_First' => '',
     'dt_Info' => 'Anzeige der Einträge _START_ bis _END_ aus ingesamt _TOTAL_',
@@ -427,7 +416,6 @@ return [
     'dt_Previous' => 'Zurück',
     'dt_Search' => 'Suchen',
     'dt_TableIsEmpty' => 'Keine Daten zum Anzeigen',
-
     // ER
     'er_Home' => 'zum Anfang',
     'er_InternalServerError' => 'Interner Serverfehler',
@@ -436,10 +424,8 @@ return [
     'er_PageNotFoundDescription' => 'Diese Seite existiert nicht.',
     'er_Unauthorized' => 'Autorisierungsfehler',
     'er_UnauthorizedDescription' => 'Sie haben keinen Zugang zu dieser Seite.',
-
     // LANG
     'lang_HelpWithTranslateIt' => 'Hilfe bei der MikoPBX-Übersetzung',
-
     // LIC
     'lic_ActivateCoupon' => 'Coupon aktivieren',
     'lic_ActivateCouponButton' => 'Coupon aktivieren',
@@ -511,23 +497,19 @@ Sie können automatisch einen neuen Schlüssel erhalten, indem Sie das Registrie
     'lic_ValidateCouponEmpty' => 'Benötigte Angaben fehlen - Coupon',
     'lic_ValidateLicenseKeyEmpty' => 'Benötigte Angaben fehlen - Lizenzschlüssel',
     'lic_WrongLicenseKeyOrEmpty' => 'Lizenzschlüssel falsch eingegeben',
-
     // LOC
     'loc_NoResult' => 'Nichts gefunden',
-
     // LOG
     'log_CaptureMessage' => 'Beginnen Sie mit dem Sammeln von Netzwerkpaketen und tätigen Sie einen Anruf oder eine andere Aktion, die den Fehler verursacht.
 <br>Das System speichert alle Pakete, die zu diesem Zeitpunkt die Netzwerkkarte passieren, zur weiteren Analyse.',
     'log_DownloadLogs' => 'Laden Sie alle Systemprotokolle herunter',
     'log_StartCapturePCAP' => 'Start',
     'log_StopCapturePCAP' => 'Stoppen und herunterladen',
-
     // ML
     'ml_EmailNotSended' => 'Die E-Mail wurde nicht versandt',
     'ml_EmailSendedSuccess' => 'Die E-Mail wurde versandt',
     'ml_EmailTestBody' => 'Wenn Sie diese E-Mail erhalten haben, sind Ihre Einstellung inder Telefonanlage korrekt.',
     'ml_EmailTestSubject' => 'Test-E-Mail der MIKO PBX',
-
     // MM
     'mm_AsteriskManagers' => 'Asterisk Manager Interface (AMI)',
     'mm_CallDetailRecords' => 'Anruf-Historie (CDR)',
@@ -561,7 +543,6 @@ Sie können automatisch einen neuen Schlüssel erhalten, indem Sie das Registrie
     'mm_SystemDiagnostic' => 'System-Log Einträge',
     'mm_TimeSettings' => 'Uhrzeit/Datum',
     'mm_Update' => 'PBX-Update',
-
     // MO
     'mo_ApplicationShort4Dropdown' => 'Applikationen',
     'mo_BeforeDeleteFirst' => 'Es gibt Verweise auf das Objekt - %represent%',
@@ -595,43 +576,10 @@ Sie können automatisch einen neuen Schlüssel erhalten, indem Sie das Registrie
     'mo_SystemExten_voicemail' => 'Voicemail',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Die angegebene Nebenstellennummer wird bereits verwendet',
     'mo_ThisVlanIdNotUniqueForLanInterfacesModels' => 'Das System hat bereits eine Schnisttelle mit der gleichen VLAN ID',
-
-    // MS
-    'ms_MailEnableNotifications' => 'E-Mail-Benachrichtigungen aktivieren',
-    'ms_MailSysadminEmail' => 'Administrator E-Mail-Adresse',
-    'ms_MissedCallBody' => 'Verpasster Anruf - Inhalt der E-Mail',
-    'ms_MissedCallFooter' => 'Verpasster Anruf - Fußzeile/Hinweis',
-    'ms_MissedCallSubject' => 'Verpasster Anruf - Betreff der E-Mail',
-    'ms_MissedCalls' => 'Verpasste Anrufe',
-    'ms_NotificationTemplatesMissed' => 'Muster - verpasste Anrufe',
-    'ms_NotificationTemplatesVoicemail' => 'Vorlage - Voicemail',
-    'ms_SMTPCertCheck' => 'Server-Zertifikate überprüfen',
-    'ms_SMTPFromUsername' => 'E-Mail Absendername',
-    'ms_SMTPHost' => 'SMTP Host (URL/IP)',
-    'ms_SMTPPassword' => 'SMTP Passwort',
-    'ms_SMTPPort' => 'SMTP Port',
-    'ms_SMTPSenderAddress' => 'E-Mail Absenderadresse',
-    'ms_SMTPSettings' => 'SMTP Einstellungen',
-    'ms_SMTPUseTLS' => 'TLS benutzen',
-    'ms_SMTPUsername' => 'SMTP Login/Benutzername',
-    'ms_SentTestEmailAfterSaveTo' => 'Testnachricht wurde gesendet',
-    'ms_SuccessfulDeleted' => 'Daten gelöscht',
-    'ms_SuccessfulSaved' => 'Einstellungen gespeichert',
-    'ms_SystemEmailForMissed' => 'E-Mail für verpasste Benachrichtigungen',
-    'ms_TestEmailBody' => 'Wenn Sie diese E-Mail erhalten haben, sind Ihre Einstellung inder Telefonanlage korrekt.',
-    'ms_TestEmailSentSuccessfully' => 'E-Mail erfolgreich gesendet',
-    'ms_TestEmailSubject' => 'Test-E-Mail der MIKO PBX',
-    'ms_Voicemail' => 'Voicemail',
-    'ms_VoicemailBody' => 'Sprachnachricht/Voicemail - Inhalt der E-Mail',
-    'ms_VoicemailCommonEmail' => 'E-Mail-Adresse zum Empfangen aller Voicemail-Einträge',
-    'ms_VoicemailFooter' => 'Voicemail - Keller',
-    'ms_VoicemailSubject' => 'Sprachnachricht/Voicemail - Betreff der E-Mail',
-
     // MSG
     'msg_ErrorHeader' => 'Error',
     'msg_WarningHeader' => 'Beachtung',
     'msg_infoHeader' => 'Information',
-
     // PASS
     'pass_CheckSSHPasswordDontMatch' => 'Die eingegebenen Passwörter für SSH stimmen nicht überein',
     'pass_CheckSSHPasswordEmpty' => 'Feld leer: SSH',
@@ -640,12 +588,10 @@ Sie können automatisch einen neuen Schlüssel erhalten, indem Sie das Registrie
     'pass_CheckWebAdminPasswordEmpty' => 'Das Feld ist leer: WEB-Passwort',
     'pass_CheckWebAdminPasswordSimple' => 'Das WEB-Passwort ist zu einfach.',
     'pass_CheckWebPassErrorChange' => 'Kennwort konnte nicht geändert werden',
-
     // QF
     'qf_Frequency' => 'Sendehäufigkeit in Sekunden:',
     'qf_Qualify' => 'NAT Session',
     'qf_QualifyInstructions' => 'Wenn diese Option aktiviert ist, sendet die TK-Anlage SIP-OPTIONS-Pakete mit der angegebenen Frequenz. Dies ist erforderlich, um NAT-Tunneling auf Ihrem Router zu ermöglichen.',
-
     // RS
     'rs_CurrentCalls' => 'Aktive Anrufe',
     'rs_DateCall' => 'Start Datum',
@@ -654,7 +600,6 @@ Sie können automatisch einen neuen Schlüssel erhalten, indem Sie das Registrie
     'rs_ShutDownPhoneSystem' => 'Schalten Sie MikoPBX aus',
     'rs_ShutdownRebootMessage' => 'Beim Neustart oder Ausschalten werden alle aktiven Verbindungen unterbrochen.',
     'rs_Src' => 'Quelle',
-
     // SD
     'sd_CapturePcap' => 'Erfassen von Netzwerkpaketen',
     'sd_CollectingInfo' => 'Sammlung von Serviceinformationen',
@@ -672,7 +617,6 @@ Sie können automatisch einen neuen Schlüssel erhalten, indem Sie das Registrie
     'sd_filter' => 'Filter',
     'sd_lines' => 'Grenze',
     'sd_offset' => 'Offset',
-
     // SF
     'sf_AddNewSoundFile' => 'Neue Audio-Datei',
     'sf_ColumnFile' => 'Dateiname',
@@ -690,7 +634,6 @@ Sie können automatisch einen neuen Schlüssel erhalten, indem Sie das Registrie
     'sf_UploadSoundFileButton' => 'Datei auswählen',
     'sf_ValidationFileNameIsEmpty' => 'Name der Audio-Datei fehlt',
     'sf_ValidationFileNotSelected' => 'Wählen Sie zuerst eine Audio-Datei zum Hochladen aus',
-
     // SNTRY
     'sntry_ErrorFormEntry' => 'Felder sind nicht ausgefüllt, korrigieren und erneut senden!',
     'sntry_ErrorGeneric' => 'Unbekannter Fehler beim Senden. Versuchen Sie es nochmal!',
@@ -701,10 +644,8 @@ Sie können automatisch einen neuen Schlüssel erhalten, indem Sie das Registrie
     'sntry_Subtitle2' => 'Wenn Sie uns helfen möchten, teilen Sie uns bitte unten mit, was geschehen ist.',
     'sntry_SuccessMessage' => 'Danke für Ihre Hilfe!',
     'sntry_Title' => 'It looks like we’re having issues!',
-
     // THIS
     'this_is' => 'Das ist ',
-
     // TS
     'ts_CurrentSettings' => 'Aktuelle Einstellung',
     'ts_CurrentSystemTime' => 'Aktuelle Systemzeit',
@@ -714,7 +655,6 @@ Sie können automatisch einen neuen Schlüssel erhalten, indem Sie das Registrie
     'ts_SystemTime' => 'Systemzeit',
     'ts_TimeZone' => 'Zeitzone',
     'ts_ValidateDateTime' => 'Datum ist falsch',
-
     // UPD
     'upd_AvailableUpdates' => 'Online-Updates verfügbar',
     'upd_Cancel' => 'Stornieren',

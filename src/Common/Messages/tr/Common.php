@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Common translations
  */
-
-return [
     ' - Unmounting partitions...' => 'Takılı disk bölümlerinin bağlantısı kesiliyor…',
     ' - Unpacking img...' => 'Sistem bölümü güncelleniyor…',
     '(default value = ' => '(varsayılan = ',
@@ -242,7 +241,6 @@ return [
     'user' => 'kullanıcı',
     'version' => 'versiyon',
     'Пропущенный вызов' => 'Cevapsız aramanız var',
-
     // ADV
     'adv_AmiPasswordWeak' => 'AMI kullanıcı basit parolası <a href=\'%url%\'>%record%</a>',
     'adv_AvailableNewVersionModule' => '%module% - %ver% modülünün yeni sürümü mevcuttur. Mevcut sürüm: %currentVer%',
@@ -270,7 +268,6 @@ return [
     'adv_WebPasswordWeak' => 'Web arayüzünde basit yönetici parolası <a href=\'%url%\'>değiştir</a>',
     'adv_YouUseDefaultSSHPassword' => 'SSH\'ye erişmek için varsayılan şifreyi kullanırsınız - <a href=\'%url%\'> değişiklik </a>',
     'adv_YouUseDefaultWebPassword' => 'Yönetim arayüzüne girmek için varsayılan şifreyi kullanırsınız - <a href=\'%url%\'> değişiklik </a>',
-
     // AM
     'am_AddNewUser' => 'AMI Kullanıcısı Ekle',
     'am_CopyRecord' => 'Kopya',
@@ -329,7 +326,6 @@ return [
     'am_tooltip_user_write' => 'Kullanıcı olayları gönder, cihaz durumlarını güncelle',
     'am_tooltip_verbose_read' => 'Detaylı mesajları ve hata ayıklama çıktısını görüntüle',
     'am_tooltip_verbose_write' => 'Mesaj detay seviyesini ayarla',
-
     // AUTH
     'auth_DefaultCloudPasswordInstructions' => 'Varsayılan şifre, buluttaki sanal makinenin benzersiz tanımlayıcısına eşittir',
     'auth_Login' => 'giriş',
@@ -340,7 +336,6 @@ return [
     'auth_ValidateLoginNotEmpty' => 'Giriş girin',
     'auth_ValidatePasswordNotEmpty' => 'Parola girin',
     'auth_WrongLoginPassword' => 'Yetkilendirme başarısız oldu, %attempts% deneme hakkınız kaldı',
-
     // BT
     'bt_Add' => 'Ekle',
     'bt_ApplyChangesToPBX' => 'Değişiklikleri Uygula',
@@ -372,7 +367,6 @@ return [
     'bt_ToolTipRestore' => 'yeniden Kur',
     'bt_ToolTipShowPassword' => 'Şifreyi göster/gizle',
     'bt_ToolTipUpgradeOnline' => 'Çevrimiçi Güncelleme',
-
     // CAL
     'cal_ApplyBtn' => 'Başvurmak',
     'cal_CancelBtn' => 'iptal',
@@ -385,11 +379,9 @@ return [
     'cal_Yesterday' => 'dün',
     'cal_from' => 'ile',
     'cal_to' => 'üzerinde',
-
     // CD
     'cd_Description' => 'açıklama',
     'cd_Extensions' => 'Bu kuyruk için telefon numarası',
-
     // CDR
     'cdr_And' => 've',
     'cdr_ColumnDate' => 'Çağrı tarihi',
@@ -403,7 +395,6 @@ return [
     'cdr_FilteredEmptyTitle' => 'Belirtilen kriterlere göre kayıt bulunamadı',
     'cdr_NoRecordsFound' => 'Kayıt bulunamadı',
     'cdr_TryChangingDate' => 'Tarih aralığını değiştirmeyi deneyin',
-
     // CF
     'cf_ColumnMode' => 'rejim',
     'cf_ColumnNote' => 'Bir not',
@@ -420,11 +411,9 @@ return [
     'cf_Path' => 'Dosya yolu',
     'cf_ResultFileHeader' => 'Değişiklikler içeren dosya içeriği',
     'cf_UserEditHeader' => 'Değişiklik yapmak için düzenleyici',
-
     // DBG
     'dbg_Header' => 'Hata ayıklama bilgileri',
     'dbg_NoDebugInformation' => 'Bilgi yok',
-
     // DT
     'dt_First' => '',
     'dt_Info' => '_TOTAL_ arasında _START_ - _END_ arası yayın var',
@@ -435,7 +424,6 @@ return [
     'dt_Previous' => 'önceki',
     'dt_Search' => 'arama',
     'dt_TableIsEmpty' => 'Görüntülenecek veri yok',
-
     // ER
     'er_Home' => 'Başlangıca git',
     'er_InternalServerError' => 'Sunucu dahili hatası',
@@ -444,13 +432,10 @@ return [
     'er_PageNotFoundDescription' => 'Bu sayfa mevcut değil.',
     'er_Unauthorized' => 'Yetkilendirme Hatası',
     'er_UnauthorizedDescription' => 'Bu sayfaya erişiminiz yok.',
-
     // ET
     'et_ReadDocumentation' => 'Belgeleri okuyun',
-
     // LANG
     'lang_HelpWithTranslateIt' => 'MikoPBX \'nun Çevirisi',
-
     // LIC
     'lic_ActivateCoupon' => 'Kupon aktivasyonu',
     'lic_ActivateCouponButton' => 'Kuponu etkinleştir',
@@ -531,23 +516,19 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz.<br>',
     'lic_ValidateCouponEmpty' => 'Zorunlu alan dolu - kupon',
     'lic_ValidateLicenseKeyEmpty' => 'Zorunlu alan dolu - Lisans anahtarı',
     'lic_WrongLicenseKeyOrEmpty' => 'Lisans anahtarı yanlış girildi',
-
     // LOC
     'loc_NoResult' => 'Hiçbir şey bulunamadı',
-
     // LOG
     'log_CaptureMessage' => 'Ağ paketlerini toplamaya başlayın ve bir arama yapın veya arızaya neden olan başka bir işlem yapın.
 <br>Sistem, daha fazla analiz için şu anda ağ kartından geçen tüm paketleri kaydedecektir.',
     'log_DownloadLogs' => 'Tüm sistem günlüklerini indirin',
     'log_StartCapturePCAP' => 'Başlat',
     'log_StopCapturePCAP' => 'Durdur ve indir',
-
     // ML
     'ml_EmailNotSended' => 'Mesaj gönderilmedi',
     'ml_EmailSendedSuccess' => 'E-posta gönderildi',
     'ml_EmailTestBody' => 'Merhaba, bu mektup postanızdaysa, ayarlar doğrudur.',
     'ml_EmailTestSubject' => 'Telefon sisteminizden test mektubu',
-
     // MM
     'mm_ApiKeys' => 'API anahtarları',
     'mm_AsteriskManagers' => 'AMI Erişimi',
@@ -583,7 +564,6 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz.<br>',
     'mm_SystemDiagnostic' => 'Sistem Günlükleri',
     'mm_TimeSettings' => 'Tarih ve saat',
     'mm_Update' => 'PBX güncellemesi',
-
     // MO
     'mo_ApplicationShort4Dropdown' => 'uygulama',
     'mo_BeforeDeleteFirst' => 'Nesneye referanslar var - %represent%',
@@ -618,43 +598,10 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz.<br>',
     'mo_SystemExten_voicemail' => 'sesli posta',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Belirtilen numara zaten - %record% için kullanılıyor',
     'mo_ThisVlanIdNotUniqueForLanInterfacesModels' => 'Sistem zaten aynı VLAN\'a sahip bir arayüze sahip',
-
-    // MS
-    'ms_MailEnableNotifications' => 'Uyarıları kullan',
-    'ms_MailSysadminEmail' => 'Sistem Yöneticisi E-postası',
-    'ms_MissedCallBody' => 'Cevapsız çağrı - mesaj metni',
-    'ms_MissedCallFooter' => 'Cevapsız Çağrı - Bodrum',
-    'ms_MissedCallSubject' => 'Cevapsız çağrı - e-posta konusu',
-    'ms_MissedCalls' => 'Cevapsız çağrılar',
-    'ms_NotificationTemplatesMissed' => 'Desen - cevapsız aramalar',
-    'ms_NotificationTemplatesVoicemail' => 'Şablon - Sesli Posta',
-    'ms_SMTPCertCheck' => 'Sunucu sertifikasını kontrol edin',
-    'ms_SMTPFromUsername' => 'Gönderenin adı',
-    'ms_SMTPHost' => 'SMTP ana bilgisayarı',
-    'ms_SMTPPassword' => 'SMTP şifresi',
-    'ms_SMTPPort' => 'SMTP bağlantı noktası',
-    'ms_SMTPSenderAddress' => 'Gönderenin adresi',
-    'ms_SMTPSettings' => 'Mesaj Ayarları',
-    'ms_SMTPUseTLS' => 'TLS kullan',
-    'ms_SMTPUsername' => 'SMTP girişi',
-    'ms_SentTestEmailAfterSaveTo' => 'Bu adrese bir test e-postası gönder',
-    'ms_SuccessfulDeleted' => 'Veriler silindi',
-    'ms_SuccessfulSaved' => 'Ayarlar kaydedildi',
-    'ms_SystemEmailForMissed' => 'Cevapsız bildirimler için e-posta',
-    'ms_TestEmailBody' => 'Bu mektubu aldıysanız, posta ayarları doğrudur.',
-    'ms_TestEmailSentSuccessfully' => 'E-posta gönderildi',
-    'ms_TestEmailSubject' => 'Posta Gönderme Testi',
-    'ms_Voicemail' => 'Sesli mesaj',
-    'ms_VoicemailBody' => 'Sesli mesaj - mesaj metni',
-    'ms_VoicemailCommonEmail' => 'Sesli mesaj göndermek için Birleşik E-posta',
-    'ms_VoicemailFooter' => 'Sesli mesaj - bodrum',
-    'ms_VoicemailSubject' => 'Sesli mesaj - konu satırı',
-
     // MSG
     'msg_ErrorHeader' => 'Hata',
     'msg_WarningHeader' => 'Dikkat',
     'msg_infoHeader' => 'Bilgi',
-
     // PASS
     'pass_CheckSSHPasswordDontMatch' => 'SSH için girilen şifreler eşleşmiyor',
     'pass_CheckSSHPasswordEmpty' => 'Alan boş: SSH',
@@ -663,12 +610,10 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz.<br>',
     'pass_CheckWebAdminPasswordEmpty' => 'Alan boş: WEB şifresi',
     'pass_CheckWebAdminPasswordSimple' => 'WEB şifresi çok basit.',
     'pass_CheckWebPassErrorChange' => 'Şifre değiştirilemedi',
-
     // QF
     'qf_Frequency' => 'Saniye cinsinden gönderme sıklığı:',
     'qf_Qualify' => 'NAT Oturumunu Destekleyin',
     'qf_QualifyInstructions' => 'Bu seçenek etkinleştirildiğinde, PBX belirtilen frekansta SIP OPTIONS paketleri gönderir. Bu, yönlendiricinizde NAT tünellemeyi desteklemek için gereklidir.',
-
     // RS
     'rs_CurrentCalls' => 'Aktif çağrılar',
     'rs_DateCall' => 'Başlangıç tarihi',
@@ -677,7 +622,6 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz.<br>',
     'rs_ShutDownPhoneSystem' => 'MikoPBX\'i kapatın',
     'rs_ShutdownRebootMessage' => 'Yeniden başlatıldığında veya kapatıldığında, mevcut tüm aramalar kesilir.',
     'rs_Src' => 'kim',
-
     // SD
     'sd_CapturePcap' => 'Ağ paketlerini yakalama',
     'sd_CollectingInfo' => 'Servis bilgilerinin toplanması',
@@ -695,7 +639,6 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz.<br>',
     'sd_filter' => 'Filtrele',
     'sd_lines' => 'Sınırı',
     'sd_offset' => 'Ofset',
-
     // SF
     'sf_AddNewAudioFile' => 'Yeni ses dosyası ekle',
     'sf_AddNewSoundFile' => 'Yeni ses dosyası ekle',
@@ -723,7 +666,6 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz.<br>',
     'sf_ValidationFileNameIsEmpty' => 'Eksik dosya adı',
     'sf_ValidationFileNotSelected' => 'Önce ses dosyasını indirin',
     'sf_YourBrowserDoesNotSupportAudio' => 'Tarayıcınız ses öğesini desteklemiyor',
-
     // SNTRY
     'sntry_ErrorFormEntry' => 'Alanlar doldurulmaz, düzeltin ve tekrar göndermeyi deneyin!',
     'sntry_ErrorGeneric' => 'Bilinmeyen gönderme hatası. Tekrar deneyin!',
@@ -734,7 +676,6 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz.<br>',
     'sntry_Subtitle2' => 'Lütfen bu hataya neden olan işlemlerinizi açıklayın.',
     'sntry_SuccessMessage' => 'Yardımlarınız için teşekkür ederim!',
     'sntry_Title' => 'Bir şeyler ters gitti!',
-
     // ST
     'st_CallRecordingsRetention' => 'Arama kayıtlarının tutulması',
     'st_CategoryBackups' => 'Yedeklemeler',
@@ -756,10 +697,8 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz.<br>',
     'st_TabStorageInfo' => 'Depolama bilgileri',
     'st_TabStorageSettings' => 'Depolama ayarları',
     'st_Used' => 'kullanılmış',
-
     // THIS
     'this_is' => 'Bu ',
-
     // TS
     'ts_CurrentSettings' => 'Geçerli ayarlar',
     'ts_CurrentSystemTime' => 'Şimdiki zaman',
@@ -769,7 +708,6 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz.<br>',
     'ts_SystemTime' => 'Sistem zamanı',
     'ts_TimeZone' => 'saat dilimi',
     'ts_ValidateDateTime' => 'Tarih yanlış',
-
     // UPD
     'upd_AvailableUpdates' => 'Çevrimiçi Güncellemeler Mevcut',
     'upd_Cancel' => 'iptal',

@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Common translations
  */
-
-return [
     ' - Unmounting partitions...' => 'Gekoppelde schijfpartities demonteren…',
     ' - Unpacking img...' => 'De systeempartitie bijwerken…',
     '(default value = ' => '(standaard = ',
@@ -242,7 +241,6 @@ return [
     'Пропущенный вызов' => 'Je hebt een gemiste oproep',
     'repApiKeys' => 'API-sleutel - %represent%',
     'repIncomingRoutingTableDefaultRuleName' => 'Standaardregel voor inkomende verwerkingsregel',
-
     // ADV
     'adv_AmiPasswordWeak' => 'Eenvoudig gebruikerswachtwoord AMI <a href=\'%url%\'>%record%</a>',
     'adv_AvailableNewVersionModule' => 'Nieuwe versie van module %module% - %ver% is beschikbaar. Huidige versie: %currentVer%',
@@ -270,7 +268,6 @@ return [
     'adv_WebPasswordWeak' => 'Eenvoudig beheerderswachtwoord in webinterface <a href=\'%url%\'>wijzigen</a>',
     'adv_YouUseDefaultSSHPassword' => 'U gebruikt het standaardwachtwoord voor SSH-toegang - <a href=\'%url%\'>wijzigen</a>',
     'adv_YouUseDefaultWebPassword' => 'U gebruikt het standaardwachtwoord om in te loggen op de beheerdersinterface - <a href=\'%url%\'>wijzigen</a>',
-
     // AM
     'am_AddNewUser' => 'Gebruikers-AMI toevoegen',
     'am_Description' => 'Een reactie',
@@ -329,7 +326,6 @@ return [
     'am_tooltip_user_write' => 'Gebruikersgebeurtenissen verzenden, apparaatstatussen bijwerken',
     'am_tooltip_verbose_read' => 'Gedetailleerde berichten en debug-output bekijken',
     'am_tooltip_verbose_write' => 'Detailniveau van berichten instellen',
-
     // AUTH
     'auth_DefaultCloudPasswordInstructions' => 'Het standaardwachtwoord is gelijk aan de unieke identificatie van de virtuele machine in de cloud',
     'auth_Login' => 'Log in',
@@ -340,7 +336,6 @@ return [
     'auth_ValidateLoginNotEmpty' => 'Voer inloggen in',
     'auth_ValidatePasswordNotEmpty' => 'voer wachtwoord in',
     'auth_WrongLoginPassword' => 'Autorisatie mislukt, u heeft nog %attempts% pogingen over',
-
     // BT
     'bt_Add' => 'Toevoegen',
     'bt_ApplyChangesToPBX' => 'Wijzigingen toepassen',
@@ -372,7 +367,6 @@ return [
     'bt_ToolTipRestore' => 'Herstellen',
     'bt_ToolTipShowPassword' => 'Wachtwoord tonen/verbergen',
     'bt_ToolTipUpgradeOnline' => 'Online bijwerken',
-
     // CAL
     'cal_ApplyBtn' => 'Toepassen',
     'cal_CancelBtn' => 'Annuleren',
@@ -385,11 +379,9 @@ return [
     'cal_Yesterday' => 'Gisteren',
     'cal_from' => 'Met',
     'cal_to' => 'Door',
-
     // CD
     'cd_Description' => 'Een reactie',
     'cd_Extensions' => 'Telefoonnummer voor deze wachtrij',
-
     // CDR
     'cdr_And' => 'En',
     'cdr_ColumnDate' => 'Bel datum',
@@ -403,7 +395,6 @@ return [
     'cdr_FilteredEmptyTitle' => 'Geen records voor opgegeven criteria',
     'cdr_NoRecordsFound' => 'Geen records gevonden',
     'cdr_TryChangingDate' => 'Probeer het datuminterval te wijzigen',
-
     // CF
     'cf_ColumnMode' => 'modus',
     'cf_ColumnNote' => 'De notitie',
@@ -420,11 +411,9 @@ return [
     'cf_Path' => 'Het pad naar het bestand',
     'cf_ResultFileHeader' => 'Bestandsinhoud met wijzigingen',
     'cf_UserEditHeader' => 'Redacteur om wijzigingen aan te brengen',
-
     // DBG
     'dbg_Header' => 'Foutopsporingsinformatie',
     'dbg_NoDebugInformation' => 'Geen informatie',
-
     // DT
     'dt_First' => '',
     'dt_Info' => 'Records van _START_ tot _END_ van _TOTAL_',
@@ -435,7 +424,6 @@ return [
     'dt_Previous' => 'Vorig',
     'dt_Search' => 'Zoekopdracht',
     'dt_TableIsEmpty' => 'geen gegevens om weer te geven',
-
     // ER
     'er_Home' => 'Ga naar begin',
     'er_InternalServerError' => 'Interne Server Fout',
@@ -444,13 +432,10 @@ return [
     'er_PageNotFoundDescription' => 'Deze pagina bestaat niet.',
     'er_Unauthorized' => 'Autorisatie fout',
     'er_UnauthorizedDescription' => 'U heeft geen toegang tot deze pagina.',
-
     // ET
     'et_ReadDocumentation' => 'Documentatie raadplegen',
-
     // LANG
     'lang_HelpWithTranslateIt' => 'Hulp bij MikoPBX-vertaling',
-
     // LIC
     'lic_ActivateCoupon' => 'Coupon activatie',
     'lic_ActivateCouponButton' => 'Waardebon activeren',
@@ -531,23 +516,19 @@ U kunt automatisch een nieuwe sleutel krijgen door het registratieformulier in t
     'lic_ValidateCouponEmpty' => 'Verplicht veld niet ingevuld',
     'lic_ValidateLicenseKeyEmpty' => 'Verplicht veld niet ingevuld - Licentiesleutel',
     'lic_WrongLicenseKeyOrEmpty' => 'Licentiesleutel verkeerd ingevoerd',
-
     // LOC
     'loc_NoResult' => 'Niets gevonden',
-
     // LOG
     'log_CaptureMessage' => 'Begin met het verzamelen van netwerkpakketten en bel of voer een andere actie uit die de storing veroorzaakt.
 <br>Het systeem slaat alle pakketten op die op dit moment door de netwerkkaart gaan voor verdere analyse.',
     'log_DownloadLogs' => 'Download alle systeemlogboeken',
     'log_StartCapturePCAP' => 'Begin',
     'log_StopCapturePCAP' => 'Stoppen en downloaden',
-
     // ML
     'ml_EmailNotSended' => 'Bericht niet verzonden',
     'ml_EmailSendedSuccess' => 'Brief verzonden',
     'ml_EmailTestBody' => 'Hallo, als deze brief in uw mail zit, dan zijn de instellingen correct.',
     'ml_EmailTestSubject' => 'Test e-mail van uw telefoonsysteem',
-
     // MM
     'mm_ApiKeys' => 'API-sleutels',
     'mm_AsteriskManagers' => 'AMI-toegang',
@@ -583,7 +564,6 @@ U kunt automatisch een nieuwe sleutel krijgen door het registratieformulier in t
     'mm_SystemDiagnostic' => 'Systeemlogboeken',
     'mm_TimeSettings' => 'datum en tijd',
     'mm_Update' => 'PBX-update',
-
     // MO
     'mo_ApplicationShort4Dropdown' => 'Sollicitatie',
     'mo_BeforeDeleteFirst' => 'Er zijn verwijzingen naar het object - %represent%',
@@ -618,43 +598,10 @@ U kunt automatisch een nieuwe sleutel krijgen door het registratieformulier in t
     'mo_SystemExten_voicemail' => 'Voicemail',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Het opgegeven nummer is al in gebruik voor - %record%',
     'mo_ThisVlanIdNotUniqueForLanInterfacesModels' => 'Het systeem heeft al een interface met hetzelfde VLAN',
-
-    // MS
-    'ms_MailEnableNotifications' => 'Gebruik waarschuwingen',
-    'ms_MailSysadminEmail' => 'E-mail systeembeheerder',
-    'ms_MissedCallBody' => 'Gemiste oproep - brieftekst',
-    'ms_MissedCallFooter' => 'Gemiste oproep - Kelder',
-    'ms_MissedCallSubject' => 'Gemiste oproep - e-mailonderwerp',
-    'ms_MissedCalls' => 'Gemiste oproepen',
-    'ms_NotificationTemplatesMissed' => 'Sjabloon - gemiste oproepen',
-    'ms_NotificationTemplatesVoicemail' => 'Sjabloon - voicemail',
-    'ms_SMTPCertCheck' => 'Controleer het servercertificaat',
-    'ms_SMTPFromUsername' => 'Naam afzender',
-    'ms_SMTPHost' => 'SMTP-host',
-    'ms_SMTPPassword' => 'SMTP-wachtwoord',
-    'ms_SMTPPort' => 'SMTP-poort',
-    'ms_SMTPSenderAddress' => 'Adres van de afzender',
-    'ms_SMTPSettings' => 'Instellingen voor berichten',
-    'ms_SMTPUseTLS' => 'Gebruik TLS',
-    'ms_SMTPUsername' => 'SMTP-login',
-    'ms_SentTestEmailAfterSaveTo' => 'Stuur een testmail naar dit adres',
-    'ms_SuccessfulDeleted' => 'Gegevens verwijderd',
-    'ms_SuccessfulSaved' => 'Instellingen zijn opgeslagen',
-    'ms_SystemEmailForMissed' => 'E-mail voor gemiste meldingen',
-    'ms_TestEmailBody' => 'Als je deze e-mail hebt ontvangen, dan zijn je mailinstellingen correct.',
-    'ms_TestEmailSentSuccessfully' => 'Brief verzonden',
-    'ms_TestEmailSubject' => 'E-mail testen verzenden',
-    'ms_Voicemail' => 'Voicemail',
-    'ms_VoicemailBody' => 'Voicemail - brieftekst',
-    'ms_VoicemailCommonEmail' => 'Enkele e-mail voor het verzenden van voicemailberichten',
-    'ms_VoicemailFooter' => 'Voicemail - kelder',
-    'ms_VoicemailSubject' => 'Voicemail - e-mailonderwerp',
-
     // MSG
     'msg_ErrorHeader' => 'Fout',
     'msg_WarningHeader' => 'Aandacht',
     'msg_infoHeader' => 'Informatie',
-
     // PASS
     'pass_CheckSSHPasswordDontMatch' => 'De ingevoerde wachtwoorden voor SSH komen niet overeen',
     'pass_CheckSSHPasswordEmpty' => 'Veld leeg: SSH',
@@ -663,12 +610,10 @@ U kunt automatisch een nieuwe sleutel krijgen door het registratieformulier in t
     'pass_CheckWebAdminPasswordEmpty' => 'Het veld is leeg: WEB-wachtwoord',
     'pass_CheckWebAdminPasswordSimple' => 'Het WEB-wachtwoord is te eenvoudig.',
     'pass_CheckWebPassErrorChange' => 'Kan het wachtwoord niet wijzigen',
-
     // QF
     'qf_Frequency' => 'Verzendfrequentie in seconden:',
     'qf_Qualify' => 'NAT-sessie onderhouden',
     'qf_QualifyInstructions' => 'Als deze optie is ingeschakeld, verzendt de PBX SIP OPTIONS-pakketten met de opgegeven frequentie. Dit is vereist om NAT-tunneling op uw router te ondersteunen.',
-
     // RS
     'rs_CurrentCalls' => 'Actieve oproepen',
     'rs_DateCall' => 'begin datum',
@@ -677,7 +622,6 @@ U kunt automatisch een nieuwe sleutel krijgen door het registratieformulier in t
     'rs_ShutDownPhoneSystem' => 'Schakel MikoPBX uit',
     'rs_ShutdownRebootMessage' => 'Bij het opnieuw opstarten of afsluiten worden alle lopende gesprekken beëindigd.',
     'rs_Src' => 'WHO',
-
     // SD
     'sd_CapturePcap' => 'Netwerkpakketten vastleggen',
     'sd_CollectingInfo' => 'Verzameling van service-informatie',
@@ -695,7 +639,6 @@ U kunt automatisch een nieuwe sleutel krijgen door het registratieformulier in t
     'sd_filter' => 'Filter',
     'sd_lines' => 'Begrenzing',
     'sd_offset' => 'Verschuiving',
-
     // SF
     'sf_AddNewAudioFile' => 'Nieuw audiobestand toevoegen',
     'sf_AddNewSoundFile' => 'Voeg een nieuw geluidsbestand toe',
@@ -723,7 +666,6 @@ U kunt automatisch een nieuwe sleutel krijgen door het registratieformulier in t
     'sf_ValidationFileNameIsEmpty' => 'Bestandsnaam niet opgegeven',
     'sf_ValidationFileNotSelected' => 'Download eerst het audiobestand',
     'sf_YourBrowserDoesNotSupportAudio' => 'Uw browser ondersteunt het audio-element niet',
-
     // SNTRY
     'sntry_ErrorFormEntry' => 'Velden zijn niet ingevuld, corrigeer en probeer opnieuw te verzenden!',
     'sntry_ErrorGeneric' => 'Onbekende fout tijdens het verzenden. Probeer het nog eens!',
@@ -734,7 +676,6 @@ U kunt automatisch een nieuwe sleutel krijgen door het registratieformulier in t
     'sntry_Subtitle2' => 'Beschrijf uw acties die tot deze fout hebben geleid.',
     'sntry_SuccessMessage' => 'Dank je voor je hulp!',
     'sntry_Title' => 'Er is iets fout gegaan!',
-
     // ST
     'st_CallRecordingsRetention' => 'Bewaring van gespreksopnames',
     'st_CategoryBackups' => 'Back-ups',
@@ -756,10 +697,8 @@ U kunt automatisch een nieuwe sleutel krijgen door het registratieformulier in t
     'st_TabStorageInfo' => 'Opslaggegevens',
     'st_TabStorageSettings' => 'Opslaginstellingen',
     'st_Used' => 'gebruikt',
-
     // THIS
     'this_is' => 'Dit is ',
-
     // TS
     'ts_CurrentSettings' => 'Huidige Instellingen',
     'ts_CurrentSystemTime' => 'huidige tijd',
@@ -769,7 +708,6 @@ U kunt automatisch een nieuwe sleutel krijgen door het registratieformulier in t
     'ts_SystemTime' => 'Systeemtijd',
     'ts_TimeZone' => 'tijdzone',
     'ts_ValidateDateTime' => 'Datum is onjuist',
-
     // UPD
     'upd_AvailableUpdates' => 'Online-updates beschikbaar',
     'upd_Cancel' => 'Annuleren',

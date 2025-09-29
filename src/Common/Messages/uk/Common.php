@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Common translations
  */
-
-return [
     ' - Unmounting partitions...' => 'Відключаємо змонтовані розділи диска.',
     ' - Unpacking img...' => 'Оновлюємо системний розділ.',
     '(default value = ' => '(Значення за замовчуванням = ',
@@ -242,7 +241,6 @@ return [
     'user' => 'користувач',
     'version' => 'версія',
     'Пропущенный вызов' => 'У вас є пропущений виклик',
-
     // ADV
     'adv_AmiPasswordWeak' => 'Простий пароль у AMI користувача <a href=\'%url%\'>%record%</a>',
     'adv_AvailableNewVersionModule' => 'Доступна нова версія модуля %module% - %ver%. Поточна версія: %currentVer%',
@@ -270,7 +268,6 @@ return [
     'adv_WebPasswordWeak' => 'Простий пароль адміністратора у Web інтерфейсі <a href=\'%url%\'>змінити</a>',
     'adv_YouUseDefaultSSHPassword' => 'Ви використовуєте пароль за замовчуванням для доступу до SSH - <a href=\'%url%\'>змінити</a>',
     'adv_YouUseDefaultWebPassword' => 'Ви використовуєте пароль за замовчуванням для входу в адміністративний інтерфейс - <a href=\'%url%\'>змінити</a>',
-
     // AM
     'am_AddNewUser' => 'Додати AMI користувача',
     'am_Description' => 'Коментар',
@@ -329,7 +326,6 @@ return [
     'am_tooltip_user_write' => 'Відправка користувацьких подій, оновлення станів пристроїв',
     'am_tooltip_verbose_read' => 'Перегляд детальних повідомлень та відлагоджувального виводу',
     'am_tooltip_verbose_write' => 'Встановлення рівня деталізації повідомлень',
-
     // AUTH
     'auth_DefaultCloudPasswordInstructions' => 'Пароль за замовчуванням дорівнює унікальному ідентифікатору віртуальної машини у хмарі',
     'auth_Login' => 'Логін',
@@ -340,7 +336,6 @@ return [
     'auth_ValidateLoginNotEmpty' => 'Введіть логін',
     'auth_ValidatePasswordNotEmpty' => 'Введіть пароль',
     'auth_WrongLoginPassword' => 'Помилка авторизації, у вас залишилося %attempts% спроб',
-
     // BT
     'bt_Add' => 'Додати',
     'bt_ApplyChangesToPBX' => 'Застосувати зміни',
@@ -372,7 +367,6 @@ return [
     'bt_ToolTipRestore' => 'Відновити',
     'bt_ToolTipShowPassword' => 'Показати/приховати пароль',
     'bt_ToolTipUpgradeOnline' => 'Оновити онлайн',
-
     // CAL
     'cal_ApplyBtn' => 'Застосувати',
     'cal_CancelBtn' => 'Скасувати',
@@ -385,11 +379,9 @@ return [
     'cal_Yesterday' => 'Вчора',
     'cal_from' => 'з',
     'cal_to' => 'по',
-
     // CD
     'cd_Description' => 'Коментар',
     'cd_Extensions' => 'Номер телефону для цієї черги',
-
     // CDR
     'cdr_And' => 'та',
     'cdr_ColumnDate' => 'Дата дзвінка',
@@ -403,7 +395,6 @@ return [
     'cdr_FilteredEmptyTitle' => 'Немає записів за заданими критеріями',
     'cdr_NoRecordsFound' => 'Записів не знайдено',
     'cdr_TryChangingDate' => 'Спробуйте змінити інтервал дат',
-
     // CF
     'cf_ColumnMode' => 'Режим',
     'cf_ColumnNote' => 'Замітка',
@@ -420,11 +411,9 @@ return [
     'cf_Path' => 'Шлях до файлу',
     'cf_ResultFileHeader' => 'Вміст файлу із змінами',
     'cf_UserEditHeader' => 'Редактор для внесення змін',
-
     // DBG
     'dbg_Header' => 'Налагоджувальна інформація',
     'dbg_NoDebugInformation' => 'Немає інформації',
-
     // DT
     'dt_First' => '',
     'dt_Info' => 'Записи з _START_ по _END_ із _TOTAL_',
@@ -435,7 +424,6 @@ return [
     'dt_Previous' => 'Попередні',
     'dt_Search' => 'Пошук',
     'dt_TableIsEmpty' => 'Немає даних для відображення',
-
     // ER
     'er_Home' => 'Перейти в початок',
     'er_InternalServerError' => 'Внутрішня помилка сервера',
@@ -444,13 +432,10 @@ return [
     'er_PageNotFoundDescription' => 'Ця сторінка не існує.',
     'er_Unauthorized' => 'Помилка авторизації',
     'er_UnauthorizedDescription' => 'У вас немає доступу до цієї сторінки.',
-
     // ET
     'et_ReadDocumentation' => 'Ознайомитися з документацією',
-
     // LANG
     'lang_HelpWithTranslateIt' => 'Допомогти з перекладом MikoPBX',
-
     // LIC
     'lic_ActivateCoupon' => 'Активація купона',
     'lic_ActivateCouponButton' => 'Активувати купон',
@@ -531,23 +516,19 @@ return [
     'lic_ValidateCouponEmpty' => 'Не заповнене обов\'язкове поле - купон',
     'lic_ValidateLicenseKeyEmpty' => 'Не заповнене обов\'язкове поле - Ліцензійний ключ',
     'lic_WrongLicenseKeyOrEmpty' => 'Некоректно введено ліцензійний ключ',
-
     // LOC
     'loc_NoResult' => 'Нічого не знайдено',
-
     // LOG
     'log_CaptureMessage' => 'Запустіть збір мережних пакетів і здійсніть дзвінок або іншу дію, що призводить до збою.
 <br>Система збереже всі пакети, які проходять в цей момент через мережну карту для подальшого аналізу.',
     'log_DownloadLogs' => 'Завантажити усі логи',
     'log_StartCapturePCAP' => 'старт',
     'log_StopCapturePCAP' => 'Зупинити і завантажити',
-
     // ML
     'ml_EmailNotSended' => 'Повідомлення не відправлено',
     'ml_EmailSendedSuccess' => 'Лист відправлено',
     'ml_EmailTestBody' => 'Привіт, якщо цей лист у вас в пошті, це означає, що налаштування правильні.',
     'ml_EmailTestSubject' => 'Тестовий лист з вашої телефонної системи',
-
     // MM
     'mm_ApiKeys' => 'API ключі',
     'mm_AsteriskManagers' => 'Доступ до AMI',
@@ -583,7 +564,6 @@ return [
     'mm_SystemDiagnostic' => 'Системні логи',
     'mm_TimeSettings' => 'Дата і час',
     'mm_Update' => 'Оновлення PBX',
-
     // MO
     'mo_ApplicationShort4Dropdown' => 'Застосунок',
     'mo_BeforeDeleteFirst' => 'Є посилання на об\'єкт - %represent%',
@@ -618,43 +598,10 @@ return [
     'mo_SystemExten_voicemail' => 'Голосова пошта',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Цей номер вже використовується для - %record%',
     'mo_ThisVlanIdNotUniqueForLanInterfacesModels' => 'В системі вже є інтерфейс з таким же VLAN',
-
-    // MS
-    'ms_MailEnableNotifications' => 'Використовувати оповіщення',
-    'ms_MailSysadminEmail' => 'Email системного адміністратора',
-    'ms_MissedCallBody' => 'Пропущений виклик - текст листа',
-    'ms_MissedCallFooter' => 'Пропущений виклик - підвал',
-    'ms_MissedCallSubject' => 'Пропущений виклик - тема листа',
-    'ms_MissedCalls' => 'Пропущені виклики',
-    'ms_NotificationTemplatesMissed' => 'Шаблон - пропущені виклики',
-    'ms_NotificationTemplatesVoicemail' => 'Шаблон - голосова пошта',
-    'ms_SMTPCertCheck' => 'Перевіряти сертифікат сервера',
-    'ms_SMTPFromUsername' => 'Ім\'я відправника',
-    'ms_SMTPHost' => 'SMTP хост',
-    'ms_SMTPPassword' => 'SMTP пароль',
-    'ms_SMTPPort' => 'SMTP порт',
-    'ms_SMTPSenderAddress' => 'Адреса відправника',
-    'ms_SMTPSettings' => 'Налаштування надсилання повідомлень',
-    'ms_SMTPUseTLS' => 'Використовувати TLS',
-    'ms_SMTPUsername' => 'SMTP логін',
-    'ms_SentTestEmailAfterSaveTo' => 'Надіслати тестовий лист на цю адресу',
-    'ms_SuccessfulDeleted' => 'Дані видалені',
-    'ms_SuccessfulSaved' => 'Налаштування збережені',
-    'ms_SystemEmailForMissed' => 'Email для повідомлень про пропущені',
-    'ms_TestEmailBody' => 'Якщо ви отримали цей лист, це означає, що налаштування пошти виконані правильно.',
-    'ms_TestEmailSentSuccessfully' => 'Лист відправлено',
-    'ms_TestEmailSubject' => 'Тестування відправки пошти',
-    'ms_Voicemail' => 'Голосова пошта',
-    'ms_VoicemailBody' => 'Голосова пошта - текст листа',
-    'ms_VoicemailCommonEmail' => 'Єдиний Email для відправки повідомлень голосової пошти',
-    'ms_VoicemailFooter' => 'Голосова пошта - підвал',
-    'ms_VoicemailSubject' => 'Голосова пошта - тема листа',
-
     // MSG
     'msg_ErrorHeader' => 'Помилка',
     'msg_WarningHeader' => 'Увага',
     'msg_infoHeader' => 'інформація',
-
     // PASS
     'pass_CheckSSHPasswordDontMatch' => 'Введені паролі для SSH не співпадають',
     'pass_CheckSSHPasswordEmpty' => 'Поле не заповнено: SSH',
@@ -663,12 +610,10 @@ return [
     'pass_CheckWebAdminPasswordEmpty' => 'Поле не заповнено: пароль для WEB',
     'pass_CheckWebAdminPasswordSimple' => 'Пароль для WEB дуже простий.',
     'pass_CheckWebPassErrorChange' => 'Не вдалося змінити пароль',
-
     // QF
     'qf_Frequency' => 'Частота відправлення за секунди:',
     'qf_Qualify' => 'Підтримувати NAT сесію',
     'qf_QualifyInstructions' => 'При включенні цієї опції АТС відправлятиме SIP OPTIONS пакети із зазначеною частотою. Це необхідно для підтримки NAT тунелювання на маршрутизаторі.',
-
     // RS
     'rs_CurrentCalls' => 'Активні виклики',
     'rs_DateCall' => 'Дата початку',
@@ -677,7 +622,6 @@ return [
     'rs_ShutDownPhoneSystem' => 'Вимкнути MikoPBX',
     'rs_ShutdownRebootMessage' => 'При перезавантаженні або виключенні всі поточні виклики будуть перервані.',
     'rs_Src' => 'Хто',
-
     // SD
     'sd_CapturePcap' => 'Захоплення мережевих пакетів',
     'sd_CollectingInfo' => 'Збір службової інформації',
@@ -695,7 +639,6 @@ return [
     'sd_filter' => 'Фільтр',
     'sd_lines' => 'ліміт',
     'sd_offset' => 'офсет',
-
     // SF
     'sf_AddNewAudioFile' => 'Додати новий аудіофайл',
     'sf_AddNewSoundFile' => 'Додати новий звуковий файл',
@@ -723,7 +666,6 @@ return [
     'sf_ValidationFileNameIsEmpty' => 'Не вказано ім\'я файлу',
     'sf_ValidationFileNotSelected' => 'Спочатку завантажте аудіофайл',
     'sf_YourBrowserDoesNotSupportAudio' => 'Ваш браузер не підтримує елемент audio',
-
     // SNTRY
     'sntry_ErrorFormEntry' => 'Не заповнені поля, відкоригуйте і спробуйте відправити ще раз!',
     'sntry_ErrorGeneric' => 'Невідома помилка при відправці. Спробуйте ще раз!',
@@ -734,7 +676,6 @@ return [
     'sntry_Subtitle2' => 'Опишіть будь ласка ваші дії, які призвели до цієї помилки.',
     'sntry_SuccessMessage' => 'Дякую за вашу допомогу!',
     'sntry_Title' => 'Щось пішло не так!',
-
     // ST
     'st_CallRecordingsRetention' => 'Зберігання записів розмов',
     'st_CategoryBackups' => 'Резервні копії',
@@ -756,10 +697,8 @@ return [
     'st_TabStorageInfo' => 'Інформація про сховище',
     'st_TabStorageSettings' => 'Налаштування зберігання',
     'st_Used' => 'зайнято',
-
     // THIS
     'this_is' => 'This is ',
-
     // TS
     'ts_CurrentSettings' => 'Поточні параметри',
     'ts_CurrentSystemTime' => 'Поточний час',
@@ -769,7 +708,6 @@ return [
     'ts_SystemTime' => 'Системний час',
     'ts_TimeZone' => 'Таймзона',
     'ts_ValidateDateTime' => 'Невірно вказана дата',
-
     // UPD
     'upd_AvailableUpdates' => 'Доступні онлайн оновлення',
     'upd_Cancel' => 'Скасувати',

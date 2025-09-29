@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Common translations
  */
-
-return [
     ' - Unmounting partitions...' => 'Smontaggio delle partizioni del disco montate in corso…',
     ' - Unpacking img...' => 'Aggiornamento della partizione di sistema in corso…',
     '(default value = ' => '(predefinito = ',
@@ -242,7 +241,6 @@ return [
     'user' => 'utente',
     'version' => 'versione',
     'Пропущенный вызов' => 'Hai una chiamata persa',
-
     // ADV
     'adv_AmiPasswordWeak' => 'Password semplice utente AMI <a href=\'%url%\'>%record%</a>',
     'adv_AvailableNewVersionModule' => 'È disponibile una nuova versione del modulo %module% - %ver%. Versione corrente: %currentVer%',
@@ -270,7 +268,6 @@ return [
     'adv_WebPasswordWeak' => 'Semplice password amministratore nell\'interfaccia Web <a href=\'%url%\'>modifica</a>',
     'adv_YouUseDefaultSSHPassword' => 'Si utilizza la password predefinita per accedere a SSH - <a href=\'%url%\'> modifica </a>',
     'adv_YouUseDefaultWebPassword' => 'Si utilizza la password predefinita per accedere all\'interfaccia amministrativa - <a href=\'%url%\'> modifica </a>',
-
     // AM
     'am_AddNewUser' => 'Aggiungi utente AMI',
     'am_CopyRecord' => 'Copia',
@@ -329,7 +326,6 @@ return [
     'am_tooltip_user_write' => 'Inviare eventi utente, aggiornare stati dispositivi',
     'am_tooltip_verbose_read' => 'Visualizza messaggi dettagliati e output debug',
     'am_tooltip_verbose_write' => 'Impostare livello dettaglio messaggi',
-
     // AUTH
     'auth_DefaultCloudPasswordInstructions' => 'La password predefinita è uguale all\'identificatore univoco della macchina virtuale nel cloud',
     'auth_Login' => 'accesso',
@@ -340,7 +336,6 @@ return [
     'auth_ValidateLoginNotEmpty' => 'Inserisci il login',
     'auth_ValidatePasswordNotEmpty' => 'Inserisci la password',
     'auth_WrongLoginPassword' => 'Autorizzazione fallita, ti restano %attempts% tentativi',
-
     // BT
     'bt_Add' => 'Aggiungi',
     'bt_ApplyChangesToPBX' => 'Applica modifiche',
@@ -372,7 +367,6 @@ return [
     'bt_ToolTipEdit' => 'emendare',
     'bt_ToolTipRestore' => 'ristabilire',
     'bt_ToolTipUpgradeOnline' => 'Aggiornamento online',
-
     // CAL
     'cal_ApplyBtn' => 'Per applicare',
     'cal_CancelBtn' => 'cancellazione',
@@ -385,11 +379,9 @@ return [
     'cal_Yesterday' => 'ieri',
     'cal_from' => 'con',
     'cal_to' => 'su',
-
     // CD
     'cd_Description' => 'commento',
     'cd_Extensions' => 'Numero di telefono per questa coda',
-
     // CDR
     'cdr_And' => 'e',
     'cdr_ColumnDate' => 'Data della chiamata',
@@ -403,7 +395,6 @@ return [
     'cdr_FilteredEmptyTitle' => 'Nessun record per i criteri specificati',
     'cdr_NoRecordsFound' => 'Nessun record trovato',
     'cdr_TryChangingDate' => 'Prova a cambiare l\'intervallo di date',
-
     // CF
     'cf_ColumnMode' => 'regime',
     'cf_ColumnNote' => 'Una nota',
@@ -420,11 +411,9 @@ return [
     'cf_Path' => 'Percorso del file',
     'cf_ResultFileHeader' => 'Contenuto del file con modifiche',
     'cf_UserEditHeader' => 'Editor per apportare modifiche',
-
     // DBG
     'dbg_Header' => 'Informazioni di debug',
     'dbg_NoDebugInformation' => 'Nessuna informazione',
-
     // DT
     'dt_First' => '',
     'dt_Info' => 'Post da _START_ a _END_ di _TOTAL_',
@@ -435,7 +424,6 @@ return [
     'dt_Previous' => 'precedente',
     'dt_Search' => 'cerca',
     'dt_TableIsEmpty' => 'Nessun dato da visualizzare',
-
     // ER
     'er_Home' => 'Vai all\'inizio',
     'er_InternalServerError' => 'Errore interno del server',
@@ -444,13 +432,10 @@ return [
     'er_PageNotFoundDescription' => 'Questa pagina non esiste.',
     'er_Unauthorized' => 'Errore di autorizzazione',
     'er_UnauthorizedDescription' => 'Non hai accesso a questa pagina.',
-
     // ET
     'et_ReadDocumentation' => 'Leggi la documentazione',
-
     // LANG
     'lang_HelpWithTranslateIt' => 'Aiuto con la traduzione di MikoPBX',
-
     // LIC
     'lic_ActivateCoupon' => 'Attivazione coupon',
     'lic_ActivateCouponButton' => 'Attiva coupon',
@@ -531,23 +516,19 @@ Puoi ottenere una nuova chiave automaticamente compilando il modulo di registraz
     'lic_ValidateCouponEmpty' => 'Il campo obbligatorio non è compilato - coupon',
     'lic_ValidateLicenseKeyEmpty' => 'Il campo obbligatorio non è compilato - Chiave di licenza',
     'lic_WrongLicenseKeyOrEmpty' => 'Chiave di licenza inserita in modo errato',
-
     // LOC
     'loc_NoResult' => 'Nulla trovato',
-
     // LOG
     'log_CaptureMessage' => 'Inizia a raccogliere i pacchetti di rete ed effettua una chiamata o un\'altra azione che causa l\'errore.
 <br>Il sistema salverà tutti i pacchetti che passano in questo momento attraverso la scheda di rete per ulteriori analisi.',
     'log_DownloadLogs' => 'Scarica tutti i log di sistema',
     'log_StartCapturePCAP' => 'Inizio',
     'log_StopCapturePCAP' => 'Fermati e scarica',
-
     // ML
     'ml_EmailNotSended' => 'Messaggio non inviato',
     'ml_EmailSendedSuccess' => 'Email inviata',
     'ml_EmailTestBody' => 'Ciao, se questa lettera è nella tua posta, le impostazioni sono corrette.',
     'ml_EmailTestSubject' => 'Lettera di prova dal tuo sistema telefonico',
-
     // MM
     'mm_ApiKeys' => 'Chiavi API',
     'mm_AsteriskManagers' => 'Accesso AMI',
@@ -583,7 +564,6 @@ Puoi ottenere una nuova chiave automaticamente compilando il modulo di registraz
     'mm_SystemDiagnostic' => 'Registri di sistema',
     'mm_TimeSettings' => 'Data e ora',
     'mm_Update' => 'Aggiornamento centralino',
-
     // MO
     'mo_ApplicationShort4Dropdown' => 'applicazione',
     'mo_BeforeDeleteFirst' => 'Ci sono riferimenti all\'oggetto - %represent%',
@@ -618,43 +598,10 @@ Puoi ottenere una nuova chiave automaticamente compilando il modulo di registraz
     'mo_SystemExten_voicemail' => 'Segreteria telefonica',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Il numero specificato è già in uso per - %record%',
     'mo_ThisVlanIdNotUniqueForLanInterfacesModels' => 'Il sistema ha già un\'interfaccia con la stessa VLAN',
-
-    // MS
-    'ms_MailEnableNotifications' => 'Usa avvisi',
-    'ms_MailSysadminEmail' => 'Email dell\'amministratore di sistema',
-    'ms_MissedCallBody' => 'Chiamata persa: testo del messaggio',
-    'ms_MissedCallFooter' => 'Chiamata persa - Cantina',
-    'ms_MissedCallSubject' => 'Chiamata persa: oggetto dell\'email',
-    'ms_MissedCalls' => 'Chiamate perse',
-    'ms_NotificationTemplatesMissed' => 'Pattern: chiamate perse',
-    'ms_NotificationTemplatesVoicemail' => 'Modello: messaggio vocale',
-    'ms_SMTPCertCheck' => 'Controlla il certificato del server',
-    'ms_SMTPFromUsername' => 'Nome del mittente',
-    'ms_SMTPHost' => 'Host SMTP',
-    'ms_SMTPPassword' => 'Password SMTP',
-    'ms_SMTPPort' => 'Porta SMTP',
-    'ms_SMTPSenderAddress' => 'Indirizzo del mittente',
-    'ms_SMTPSettings' => 'Impostazioni messaggio',
-    'ms_SMTPUseTLS' => 'Usa TLS',
-    'ms_SMTPUsername' => 'Login SMTP',
-    'ms_SentTestEmailAfterSaveTo' => 'Invia un\'e-mail di prova a questo indirizzo',
-    'ms_SuccessfulDeleted' => 'Dati cancellati',
-    'ms_SuccessfulSaved' => 'Impostazioni salvate',
-    'ms_SystemEmailForMissed' => 'Email per le notifiche perse',
-    'ms_TestEmailBody' => 'Se hai ricevuto questa lettera, le impostazioni di posta sono corrette.',
-    'ms_TestEmailSentSuccessfully' => 'Email inviata',
-    'ms_TestEmailSubject' => 'Test di invio della posta',
-    'ms_Voicemail' => 'Voicemail',
-    'ms_VoicemailBody' => 'Voicemail: testo del messaggio',
-    'ms_VoicemailCommonEmail' => 'Email unificata per l\'invio di messaggi vocali',
-    'ms_VoicemailFooter' => 'Segreteria telefonica - seminterrato',
-    'ms_VoicemailSubject' => 'Voicemail - riga dell\'oggetto',
-
     // MSG
     'msg_ErrorHeader' => 'Errore',
     'msg_WarningHeader' => 'Attenzione',
     'msg_infoHeader' => 'Informazione',
-
     // PASS
     'pass_CheckSSHPasswordDontMatch' => 'Le password immesse per SSH non corrispondono',
     'pass_CheckSSHPasswordEmpty' => 'Campo vuoto: SSH',
@@ -663,12 +610,10 @@ Puoi ottenere una nuova chiave automaticamente compilando il modulo di registraz
     'pass_CheckWebAdminPasswordEmpty' => 'Il campo è vuoto: Password WEB',
     'pass_CheckWebAdminPasswordSimple' => 'La password WEB è troppo semplice.',
     'pass_CheckWebPassErrorChange' => 'Impossibile modificare la password',
-
     // QF
     'qf_Frequency' => 'Frequenza di invio in secondi:',
     'qf_Qualify' => 'Sostieni la sessione NAT',
     'qf_QualifyInstructions' => 'Quando questa opzione è abilitata, il PBX invierà i pacchetti SIP OPTIONS alla frequenza specificata. Ciò è necessario per supportare il tunneling NAT sul router.',
-
     // RS
     'rs_CurrentCalls' => 'Chiamate attive',
     'rs_DateCall' => 'Data d\'inizio',
@@ -677,7 +622,6 @@ Puoi ottenere una nuova chiave automaticamente compilando il modulo di registraz
     'rs_ShutDownPhoneSystem' => 'Spegni MikoPBX',
     'rs_ShutdownRebootMessage' => 'Al riavvio o allo spegnimento, tutte le chiamate correnti verranno interrotte.',
     'rs_Src' => 'che',
-
     // SD
     'sd_CapturePcap' => 'Catturare i pacchetti di rete',
     'sd_CollectingInfo' => 'Raccolta di informazioni di servizio',
@@ -695,7 +639,6 @@ Puoi ottenere una nuova chiave automaticamente compilando il modulo di registraz
     'sd_filter' => 'Filtro',
     'sd_lines' => 'Limite',
     'sd_offset' => 'Compensare',
-
     // SF
     'sf_AddNewAudioFile' => 'Aggiungi nuovo file audio',
     'sf_AddNewSoundFile' => 'Aggiungi nuovo file audio',
@@ -723,7 +666,6 @@ Puoi ottenere una nuova chiave automaticamente compilando il modulo di registraz
     'sf_ValidationFileNameIsEmpty' => 'Nome file mancante',
     'sf_ValidationFileNotSelected' => 'Scarica prima il file audio',
     'sf_YourBrowserDoesNotSupportAudio' => 'Il tuo browser non supporta l\'elemento audio',
-
     // SNTRY
     'sntry_ErrorFormEntry' => 'I campi non sono compilati, corretti e prova a inviare di nuovo!',
     'sntry_ErrorGeneric' => 'Errore di invio sconosciuto. Riprova!',
@@ -734,7 +676,6 @@ Puoi ottenere una nuova chiave automaticamente compilando il modulo di registraz
     'sntry_Subtitle2' => 'Descrivi le tue azioni che hanno portato a questo errore.',
     'sntry_SuccessMessage' => 'Grazie per l\'aiuto!',
     'sntry_Title' => 'Qualcosa è andato storto!',
-
     // ST
     'st_CallRecordingsRetention' => 'Conservazione registrazioni chiamate',
     'st_CategoryBackups' => 'Backup',
@@ -756,10 +697,8 @@ Puoi ottenere una nuova chiave automaticamente compilando il modulo di registraz
     'st_TabStorageInfo' => 'Informazioni archiviazione',
     'st_TabStorageSettings' => 'Impostazioni archiviazione',
     'st_Used' => 'utilizzato',
-
     // THIS
     'this_is' => 'Questo è ',
-
     // TS
     'ts_CurrentSettings' => 'Impostazioni correnti',
     'ts_CurrentSystemTime' => 'Ora corrente',
@@ -769,7 +708,6 @@ Puoi ottenere una nuova chiave automaticamente compilando il modulo di registraz
     'ts_SystemTime' => 'Ora di sistema',
     'ts_TimeZone' => 'fuso orario',
     'ts_ValidateDateTime' => 'La data non è corretta',
-
     // UPD
     'upd_AvailableUpdates' => 'Aggiornamenti online disponibili',
     'upd_Cancel' => 'cancellazione',

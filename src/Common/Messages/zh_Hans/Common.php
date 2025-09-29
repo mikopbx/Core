@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Common translations
  */
-
-return [
     ' - Unmounting partitions...' => '正在卸载已安装的磁盘分区…',
     ' - Unpacking img...' => '正在更新系统分区…',
     '(default value = ' => '（默认= ',
@@ -242,7 +241,6 @@ return [
     'user' => '用户',
     'version' => '版',
     'Пропущенный вызов' => '你有一个未接来电',
-
     // ADV
     'adv_AmiPasswordWeak' => 'AMI用户简单密码<a href=\'%url%\'>%record%</a>',
     'adv_AvailableNewVersionModule' => '模块 %module% - %ver% 的新版本现已发布。当前版本：%currentVer%',
@@ -270,7 +268,6 @@ return [
     'adv_WebPasswordWeak' => 'Web 界面中的简单管理员密码 <a href=\'%url%\'>更改</a>',
     'adv_YouUseDefaultSSHPassword' => '您使用默认密码访问SSH-<a href=\'%url%\'>更改</a>',
     'adv_YouUseDefaultWebPassword' => '您使用默认密码进入管理界面-<a href=\'%url%\'>更改</a>',
-
     // AM
     'am_AddNewUser' => '添加AMI用户',
     'am_Description' => '评注',
@@ -329,7 +326,6 @@ return [
     'am_tooltip_user_write' => '发送用户事件，更新设备状态',
     'am_tooltip_verbose_read' => '查看详细消息和调试输出',
     'am_tooltip_verbose_write' => '设置消息详细级别',
-
     // AUTH
     'auth_DefaultCloudPasswordInstructions' => '默认密码等于虚拟机在云中的唯一标识符',
     'auth_Login' => '用户名',
@@ -340,7 +336,6 @@ return [
     'auth_ValidateLoginNotEmpty' => '输入登录名',
     'auth_ValidatePasswordNotEmpty' => '输入密码',
     'auth_WrongLoginPassword' => '授权失败，您还有 %attempts% 次尝试机会',
-
     // BT
     'bt_Add' => '添加',
     'bt_ApplyChangesToPBX' => '套用变更',
@@ -372,7 +367,6 @@ return [
     'bt_ToolTipRestore' => '恢复原状',
     'bt_ToolTipShowPassword' => '显示/隐藏密码',
     'bt_ToolTipUpgradeOnline' => '在线更新',
-
     // CAL
     'cal_ApplyBtn' => '申请',
     'cal_CancelBtn' => '取消',
@@ -385,11 +379,9 @@ return [
     'cal_Yesterday' => '昨天',
     'cal_from' => '与',
     'cal_to' => '由',
-
     // CD
     'cd_Description' => '评注',
     'cd_Extensions' => '此队列的电话号码',
-
     // CDR
     'cdr_And' => '和',
     'cdr_ColumnDate' => '通话日期',
@@ -403,7 +395,6 @@ return [
     'cdr_FilteredEmptyTitle' => '根据给定条件没有记录',
     'cdr_NoRecordsFound' => '未找到记录',
     'cdr_TryChangingDate' => '尝试更改日期间隔',
-
     // CF
     'cf_ColumnMode' => '模式',
     'cf_ColumnNote' => '笔记',
@@ -420,11 +411,9 @@ return [
     'cf_Path' => '档案路径',
     'cf_ResultFileHeader' => '文件内容发生变化',
     'cf_UserEditHeader' => '编辑器进行更改',
-
     // DBG
     'dbg_Header' => '调试信息',
     'dbg_NoDebugInformation' => '暂无信息',
-
     // DT
     'dt_First' => '',
     'dt_Info' => '从_TOTAL_的_START_至_END_发布',
@@ -435,7 +424,6 @@ return [
     'dt_Previous' => '上一个',
     'dt_Search' => '搜寻',
     'dt_TableIsEmpty' => '没有数据可显示',
-
     // ER
     'er_Home' => '转到开头',
     'er_InternalServerError' => '服务器内部错误',
@@ -444,13 +432,10 @@ return [
     'er_PageNotFoundDescription' => '该页面不存在。',
     'er_Unauthorized' => '授权错误',
     'er_UnauthorizedDescription' => '您无权访问此页面。',
-
     // ET
     'et_ReadDocumentation' => '阅读文档',
-
     // LANG
     'lang_HelpWithTranslateIt' => 'MikoPBX翻译帮助',
-
     // LIC
     'lic_ActivateCoupon' => '优惠券激活',
     'lic_ActivateCouponButton' => '激活优惠券',
@@ -531,23 +516,19 @@ return [
     'lic_ValidateCouponEmpty' => '必填字段未填写-优惠券',
     'lic_ValidateLicenseKeyEmpty' => '必填字段未填写-许可证密钥',
     'lic_WrongLicenseKeyOrEmpty' => '许可证密钥输入不正确',
-
     // LOC
     'loc_NoResult' => '没找到',
-
     // LOG
     'log_CaptureMessage' => '开始收集网络数据包并进行呼叫或其他导致失败的操作。
 <br>系统会保存此时通过网卡的所有数据包，以供进一步分析。',
     'log_DownloadLogs' => '下载所有系统日志',
     'log_StartCapturePCAP' => '开始',
     'log_StopCapturePCAP' => '停止并下载',
-
     // ML
     'ml_EmailNotSended' => '消息未发送',
     'ml_EmailSendedSuccess' => '电子邮件已发送',
     'ml_EmailTestBody' => '嗨，如果这封信在您的邮件中，则说明设置正确。',
     'ml_EmailTestSubject' => '电话系统的测试信',
-
     // MM
     'mm_ApiKeys' => 'API密钥',
     'mm_AsteriskManagers' => 'AMI访问',
@@ -583,7 +564,6 @@ return [
     'mm_SystemDiagnostic' => '系统日志',
     'mm_TimeSettings' => '日期和时间',
     'mm_Update' => '集团电话更新',
-
     // MO
     'mo_ApplicationShort4Dropdown' => '应用程式',
     'mo_BeforeDeleteFirst' => '有对该对象的引用 - %represent%',
@@ -618,43 +598,10 @@ return [
     'mo_SystemExten_voicemail' => '语音信箱',
     'mo_ThisNumberNotUniqueForExtensionsModels' => '指定的号码已被用于 - %record%',
     'mo_ThisVlanIdNotUniqueForLanInterfacesModels' => '系统已经有一个具有相同VLAN的接口',
-
-    // MS
-    'ms_MailEnableNotifications' => '使用警报',
-    'ms_MailSysadminEmail' => '系统管理员电子邮件',
-    'ms_MissedCallBody' => '未接来电-短信',
-    'ms_MissedCallFooter' => '未接来电-地下室',
-    'ms_MissedCallSubject' => '未接来电-电子邮件主题',
-    'ms_MissedCalls' => '未接来电',
-    'ms_NotificationTemplatesMissed' => '模式-未接来电',
-    'ms_NotificationTemplatesVoicemail' => '模板-语音信箱',
-    'ms_SMTPCertCheck' => '检查服务器证书',
-    'ms_SMTPFromUsername' => '发件人姓名',
-    'ms_SMTPHost' => 'SMTP主机',
-    'ms_SMTPPassword' => 'SMTP密码',
-    'ms_SMTPPort' => 'SMTP端口',
-    'ms_SMTPSenderAddress' => '发件人地址',
-    'ms_SMTPSettings' => '讯息设定',
-    'ms_SMTPUseTLS' => '使用TLS',
-    'ms_SMTPUsername' => 'SMTP登录',
-    'ms_SentTestEmailAfterSaveTo' => '发送测试电子邮件到该地址',
-    'ms_SuccessfulDeleted' => '资料已删除',
-    'ms_SuccessfulSaved' => '设置已保存',
-    'ms_SystemEmailForMissed' => '错过通知的电子邮件',
-    'ms_TestEmailBody' => '如果您收到这封信，则邮件设置正确。',
-    'ms_TestEmailSentSuccessfully' => '电子邮件已发送',
-    'ms_TestEmailSubject' => '邮件发送测试',
-    'ms_Voicemail' => '语音信箱',
-    'ms_VoicemailBody' => '语音信箱-讯息文字',
-    'ms_VoicemailCommonEmail' => '统一电子邮件，用于发送语音邮件',
-    'ms_VoicemailFooter' => '语音信箱-地下室',
-    'ms_VoicemailSubject' => '语音信箱-主题行',
-
     // MSG
     'msg_ErrorHeader' => '错误',
     'msg_WarningHeader' => '注意',
     'msg_infoHeader' => '信息',
-
     // PASS
     'pass_CheckSSHPasswordDontMatch' => '输入的 SSH 密码不匹配',
     'pass_CheckSSHPasswordEmpty' => '字段为空：SSH',
@@ -663,12 +610,10 @@ return [
     'pass_CheckWebAdminPasswordEmpty' => '该字段为空：WEB 密码',
     'pass_CheckWebAdminPasswordSimple' => 'WEB密码太简单了。',
     'pass_CheckWebPassErrorChange' => '更改密码失败',
-
     // QF
     'qf_Frequency' => '发送频率（以秒为单位）：',
     'qf_Qualify' => '支持NAT会话',
     'qf_QualifyInstructions' => '启用此选项后，PBX 将以指定的频率发送 SIP OPTIONS 数据包。这是支持路由器上的 NAT 隧道所必需的。',
-
     // RS
     'rs_CurrentCalls' => '通话中',
     'rs_DateCall' => '开始日期',
@@ -677,7 +622,6 @@ return [
     'rs_ShutDownPhoneSystem' => '关闭 MikoPBX',
     'rs_ShutdownRebootMessage' => '重新启动或关闭时，所有当前通话都会中断。',
     'rs_Src' => '是谁',
-
     // SD
     'sd_CapturePcap' => '捕获网络数据包',
     'sd_CollectingInfo' => '收集服务信息',
@@ -695,7 +639,6 @@ return [
     'sd_filter' => '过滤',
     'sd_lines' => '限制',
     'sd_offset' => '抵消',
-
     // SF
     'sf_AddNewAudioFile' => '添加新音频文件',
     'sf_AddNewSoundFile' => '添加新的声音文件',
@@ -723,7 +666,6 @@ return [
     'sf_ValidationFileNameIsEmpty' => '缺少文件名',
     'sf_ValidationFileNotSelected' => '首先下载音频文件',
     'sf_YourBrowserDoesNotSupportAudio' => '您的浏览器不支持音频元素',
-
     // SNTRY
     'sntry_ErrorFormEntry' => '字段未填写，请更正并尝试再次发送！',
     'sntry_ErrorGeneric' => '未知的发送错误。再试一次！',
@@ -734,7 +676,6 @@ return [
     'sntry_Subtitle2' => '请描述导致此错误的操作。',
     'sntry_SuccessMessage' => '感谢您的帮助！',
     'sntry_Title' => '出问题了！',
-
     // ST
     'st_CallRecordingsRetention' => '通话录音保留',
     'st_CategoryBackups' => '备份',
@@ -756,10 +697,8 @@ return [
     'st_TabStorageInfo' => '存储信息',
     'st_TabStorageSettings' => '存储设置',
     'st_Used' => '已使用',
-
     // THIS
     'this_is' => '这是 ',
-
     // TS
     'ts_CurrentSettings' => '当前设置',
     'ts_CurrentSystemTime' => '当前时间',
@@ -769,7 +708,6 @@ return [
     'ts_SystemTime' => '系统时间',
     'ts_TimeZone' => '时区',
     'ts_ValidateDateTime' => '日期不正确',
-
     // UPD
     'upd_AvailableUpdates' => '提供在线更新',
     'upd_Cancel' => '取消',

@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Common translations
  */
-
-return [
     ' - Unmounting partitions...' => 'Demonterar monterade diskpartitioner…',
     ' - Unpacking img...' => 'Uppdaterar systempartitionen…',
     '(default value = ' => '(standard = ',
@@ -544,35 +543,6 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'mo_SystemExten_voicemail' => 'Röstbrevlåda',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Det angivna numret används redan för - %record%',
     'mo_ThisVlanIdNotUniqueForLanInterfacesModels' => 'Systemet har redan ett gränssnitt med samma VLAN',
-    'ms_MailEnableNotifications' => 'Använd varningar',
-    'ms_MailSysadminEmail' => 'Systemadministratörs-e-post',
-    'ms_MissedCallBody' => 'Missat samtal - meddelandetext',
-    'ms_MissedCallFooter' => 'Missat samtal - källare',
-    'ms_MissedCallSubject' => 'Missat samtal - e-postämne',
-    'ms_MissedCalls' => 'Missade samtal',
-    'ms_NotificationTemplatesMissed' => 'Mönster - missade samtal',
-    'ms_NotificationTemplatesVoicemail' => 'Mall - Röstmeddelande',
-    'ms_SMTPCertCheck' => 'Kontrollera servercertifikatet',
-    'ms_SMTPFromUsername' => 'Avsändarens namn',
-    'ms_SMTPHost' => 'SMTP-värd',
-    'ms_SMTPPassword' => 'SMTP-lösenord',
-    'ms_SMTPPort' => 'SMTP-port',
-    'ms_SMTPSenderAddress' => 'Avsändaradress',
-    'ms_SMTPSettings' => 'Meddelandeinställningar',
-    'ms_SMTPUseTLS' => 'Använd TLS',
-    'ms_SMTPUsername' => 'SMTP-inloggning',
-    'ms_SentTestEmailAfterSaveTo' => 'Skicka ett testmeddelande till den här adressen',
-    'ms_SuccessfulDeleted' => 'Data raderas',
-    'ms_SuccessfulSaved' => 'Inställningar sparade',
-    'ms_SystemEmailForMissed' => 'E-post för missade aviseringar',
-    'ms_TestEmailBody' => 'Om du fick det här brevet är e-postinställningarna korrekta.',
-    'ms_TestEmailSentSuccessfully' => 'E-post skickat',
-    'ms_TestEmailSubject' => 'Testning av e-postsändning',
-    'ms_Voicemail' => 'Voicemail',
-    'ms_VoicemailBody' => 'Röstbrevlåda - textmeddelande',
-    'ms_VoicemailCommonEmail' => 'Unified Email för att skicka röstmeddelanden',
-    'ms_VoicemailFooter' => 'Röstmeddelande - källare',
-    'ms_VoicemailSubject' => 'Röstbrevlåda - ämnesrad',
     'msg_ErrorHeader' => 'Fel',
     'msg_WarningHeader' => 'Uppmärksamhet',
     'msg_infoHeader' => 'Information',
