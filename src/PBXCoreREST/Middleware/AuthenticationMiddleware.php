@@ -62,7 +62,10 @@ class AuthenticationMiddleware implements MiddlewareInterface
             
             if ($validationResult->isValid()) {
                 // Store token info in request for logging and context
-                $request->setTokenInfo($validationResult->getTokenInfo());
+                $tokenInfo = $validationResult->getTokenInfo();
+                if ($tokenInfo !== null) {
+                    $request->setTokenInfo($tokenInfo);
+                }
                 // Bearer token authenticated successfully, skip other checks
                 return true;
             }
@@ -85,7 +88,6 @@ class AuthenticationMiddleware implements MiddlewareInterface
         $isNoAuthApi = $request->thisIsModuleNoAuthRequest($application);
         if (
             true !== $request->isLocalHostRequest()
-            && true !== $request->isDebugModeEnabled()
             && true !== $request->isAuthorizedSessionRequest()
             && true !== $isNoAuthApi
             && true !== $isPublicEndpoint
@@ -227,10 +229,9 @@ class AuthenticationMiddleware implements MiddlewareInterface
             
             // Get token key and expected value
             $tokenKey = $security->getTokenKey();
-            $expectedToken = $security->getToken();
             
             // Get request data based on content type
-            $requestData = $this->getRequestData($request);
+            $requestData = $request->getData();
             
             // Check if token exists in request
             if (!isset($requestData[$tokenKey])) {
@@ -248,41 +249,4 @@ class AuthenticationMiddleware implements MiddlewareInterface
         }
     }
 
-    /**
-     * Get request data based on content type and HTTP method
-     *
-     * @param Request $request
-     * @return array
-     */
-    private function getRequestData(Request $request): array
-    {
-        $contentType = $request->getContentType();
-        
-        // Handle JSON content type
-        if (strpos($contentType, 'application/json') !== false) {
-            $rawBody = $request->getRawBody();
-            return json_decode($rawBody, true) ?: [];
-        }
-        
-        // Handle form data based on HTTP method
-        $method = $request->getMethod();
-        switch ($method) {
-            case 'POST':
-                return $request->getPost();
-            case 'PUT':
-                return $request->getPut();
-            case 'PATCH':
-            case 'DELETE':
-                // For DELETE/PATCH, try POST data first, then raw body
-                $postData = $request->getPost();
-                if (!empty($postData)) {
-                    return $postData;
-                }
-                // Fallback to parsing raw body
-                parse_str($request->getRawBody(), $data);
-                return $data ?: [];
-            default:
-                return [];
-        }
-    }
 }

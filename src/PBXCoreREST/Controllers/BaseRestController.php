@@ -21,6 +21,9 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Controllers;
 
+use MikoPBX\PBXCoreREST\Attributes\{HttpMapping, ResourceSecurity, ActionType};
+use MikoPBX\PBXCoreREST\Services\SecurityResolver;
+
 /**
  * Base RESTful controller for v3 API endpoints
  * 
@@ -40,10 +43,17 @@ abstract class BaseRestController extends BaseController
     /**
      * The processor class to handle requests
      * Must be defined in child classes
-     * 
+     *
      * @var string
      */
     protected string $processorClass = '';
+
+    /**
+     * Security resolver for automatic action type detection
+     *
+     * @var SecurityResolver|null
+     */
+    protected ?SecurityResolver $securityResolver = null;
     
     /**
      * Map of HTTP methods to processor actions
@@ -75,19 +85,50 @@ abstract class BaseRestController extends BaseController
     ];
     
     /**
+     * Get HTTP mapping from attributes or fallback to default implementation
+     *
+     * @return HttpMapping|null
+     */
+    protected function getHttpMapping(): ?HttpMapping
+    {
+        $reflection = new \ReflectionClass($this);
+        $attributes = $reflection->getAttributes(HttpMapping::class);
+
+        if (!empty($attributes)) {
+            return $attributes[0]->newInstance();
+        }
+
+        return null;
+    }
+
+    /**
      * Define allowed custom methods for each HTTP method
-     * Should be overridden in child classes
-     * 
-     * Example:
-     * return [
-     *     'GET' => ['getDefault', 'getStatuses'],
-     *     'POST' => ['export', 'import', 'batchDelete']
-     * ];
-     * 
+     * Uses HttpMapping attribute if available, otherwise fallback to legacy method
+     *
      * @return array<string, array<string>>
      */
     protected function getAllowedCustomMethods(): array
     {
+        $httpMapping = $this->getHttpMapping();
+
+        if ($httpMapping !== null) {
+            $result = [];
+
+            foreach ($httpMapping->mapping as $method => $operations) {
+                $ops = is_string($operations) ? [$operations] : $operations;
+                $customOps = array_intersect($ops, $httpMapping->customMethods);
+
+                if (!empty($customOps)) {
+                    $result[strtoupper($method)] = array_values($customOps);
+                } else {
+                    $result[strtoupper($method)] = [];
+                }
+            }
+
+            return $result;
+        }
+
+        // Legacy fallback
         return [
             'GET' => [],
             'POST' => []
@@ -107,17 +148,23 @@ abstract class BaseRestController extends BaseController
     
     /**
      * Check if a custom method requires a resource ID
-     * Can be overridden in child classes
-     * 
+     * Uses HttpMapping attribute if available, otherwise fallback to legacy method
+     *
      * @param string $method The custom method name
      * @return bool
      */
     protected function isResourceLevelMethod(string $method): bool
     {
-        // Define default resource-level methods
+        $httpMapping = $this->getHttpMapping();
+
+        if ($httpMapping !== null) {
+            return $httpMapping->requiresResourceId($method);
+        }
+
+        // Legacy fallback - define default resource-level methods
         $resourceLevelMethods = [
             'getStatus',
-            'getHistory', 
+            'getHistory',
             'getStats',
             'forceCheck',
             'updateStatus',
@@ -126,8 +173,79 @@ abstract class BaseRestController extends BaseController
             'reset',
             'restart'
         ];
-        
+
         return in_array($method, $resourceLevelMethods, true);
+    }
+
+    /**
+     * Get security resolver instance
+     */
+    public function getSecurityResolver(): SecurityResolver
+    {
+        if ($this->securityResolver === null) {
+            $this->securityResolver = new SecurityResolver();
+        }
+
+        return $this->securityResolver;
+    }
+
+    /**
+     * Get ResourceSecurity for a method (hybrid approach)
+     */
+    public function getResourceSecurity(string $methodName): ?ResourceSecurity
+    {
+        try {
+            $reflection = new \ReflectionMethod($this, $methodName);
+            return $this->getSecurityResolver()->getResourceSecurity($reflection);
+        } catch (\ReflectionException $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Get action type for a method (hybrid approach)
+     */
+    public function getActionType(string $methodName): ActionType
+    {
+        try {
+            $reflection = new \ReflectionMethod($this, $methodName);
+            return $this->getSecurityResolver()->resolveActionType($reflection);
+        } catch (\ReflectionException $e) {
+            return ActionType::READ;
+        }
+    }
+
+    /**
+     * Get permission string for a method (resource:action format)
+     */
+    public function getMethodPermission(string $methodName): ?string
+    {
+        try {
+            $reflection = new \ReflectionMethod($this, $methodName);
+            return $this->getSecurityResolver()->getMethodPermission($reflection);
+        } catch (\ReflectionException $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Get all permissions for this controller
+     *
+     * @return array<string>
+     */
+    public function getControllerPermissions(): array
+    {
+        return $this->getSecurityResolver()->extractControllerPermissions(static::class);
+    }
+
+    /**
+     * Get security analysis for this controller
+     *
+     * @return array<string, mixed>
+     */
+    public function getSecurityAnalysis(): array
+    {
+        return $this->getSecurityResolver()->analyzeControllerSecurity(static::class);
     }
     
     /**
@@ -146,7 +264,7 @@ abstract class BaseRestController extends BaseController
         
         // Sanitize all input data
         $requestData = self::sanitizeData($this->request->getData(), $this->filter);
-        
+
         // Add ID to request data if provided in URL
         if (!empty($id)) {
             $requestData['id'] = $id;
@@ -228,7 +346,7 @@ abstract class BaseRestController extends BaseController
         
         // Sanitize all input data
         $requestData = self::sanitizeData($this->request->getData(), $this->filter);
-        
+
         // Add ID if provided for resource-specific custom methods
         if (!empty($id)) {
             $requestData['id'] = $id;

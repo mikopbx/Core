@@ -21,6 +21,7 @@ namespace MikoPBX\PBXCoreREST\Controllers\ApiKeys;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\ApiKeysManagementProcessor;
+use MikoPBX\PBXCoreREST\Attributes\{ResourceSecurity, SecurityType, HttpMapping};
 
 /**
  * RESTful controller for API keys management (v3 API)
@@ -69,6 +70,20 @@ use MikoPBX\PBXCoreREST\Lib\ApiKeysManagementProcessor;
  * 
  * @package MikoPBX\PBXCoreREST\Controllers\ApiKeys
  */
+#[ResourceSecurity('api_keys', requirements: [SecurityType::LOCALHOST, SecurityType::SESSION])]  // No API_KEY access for API key management
+#[HttpMapping(
+    mapping: [
+        'GET' => ['getList', 'getRecord', 'getDefault', 'getAvailableControllers'],
+        'POST' => ['create', 'generateKey'],
+        'PUT' => ['update'],
+        'PATCH' => ['patch'],
+        'DELETE' => ['delete']
+    ],
+    resourceLevelMethods: ['getRecord', 'update', 'patch', 'delete'],
+    collectionLevelMethods: ['getList', 'create'],
+    customMethods: ['getDefault', 'getAvailableControllers', 'generateKey'],
+    idPattern: '[0-9]+'
+)]
 class RestController extends BaseRestController
 {
     /**
@@ -77,16 +92,4 @@ class RestController extends BaseRestController
      */
     protected string $processorClass = ApiKeysManagementProcessor::class;
     
-    /**
-     * Define allowed custom methods for each HTTP method
-     * 
-     * @return array<string, array<string>>
-     */
-    protected function getAllowedCustomMethods(): array
-    {
-        return [
-            'GET' => ['getDefault', 'getAvailableControllers'],
-            'POST' => ['generateKey']
-        ];
-    }
 }

@@ -172,7 +172,7 @@ class RouterProvider implements ServiceProviderInterface
             $dirName = basename($dir);
 
             // Skip special directories
-            if (in_array($dirName, ['Nchan', 'Modules', 'MailSettings', 'Files'])) {
+            if (in_array($dirName, ['Nchan', 'Modules', 'Files'])) {
                 continue;
             }
 
@@ -195,6 +195,9 @@ class RouterProvider implements ServiceProviderInterface
      */
     private function generateUniversalRoutes(string $controllerClass, string $resourcePath): array
     {
+        // Check if controller has custom ID pattern via HttpMapping attribute
+        $idPattern = $this->getCustomIdPattern($controllerClass);
+
         return [
             // === CUSTOM METHODS (highest priority for proper matching) ===
 
@@ -206,11 +209,11 @@ class RouterProvider implements ServiceProviderInterface
             [$controllerClass, 'handleCustomRequest', $resourcePath, 'delete', ':{method:[a-zA-Z][a-zA-Z0-9]*}'],
 
             // Resource-level custom methods: GET /resource/{id}:method, POST /resource/{id}:method
-            [$controllerClass, 'handleResourceCustomRequest', $resourcePath, 'get', '/{id:' . self::UNIVERSAL_ID_PATTERNS['any'] . '}:{method:[a-zA-Z][a-zA-Z0-9]*}'],
-            [$controllerClass, 'handleResourceCustomRequest', $resourcePath, 'post', '/{id:' . self::UNIVERSAL_ID_PATTERNS['any'] . '}:{method:[a-zA-Z][a-zA-Z0-9]*}'],
-            [$controllerClass, 'handleResourceCustomRequest', $resourcePath, 'put', '/{id:' . self::UNIVERSAL_ID_PATTERNS['any'] . '}:{method:[a-zA-Z][a-zA-Z0-9]*}'],
-            [$controllerClass, 'handleResourceCustomRequest', $resourcePath, 'patch', '/{id:' . self::UNIVERSAL_ID_PATTERNS['any'] . '}:{method:[a-zA-Z][a-zA-Z0-9]*}'],
-            [$controllerClass, 'handleResourceCustomRequest', $resourcePath, 'delete', '/{id:' . self::UNIVERSAL_ID_PATTERNS['any'] . '}:{method:[a-zA-Z][a-zA-Z0-9]*}'],
+            [$controllerClass, 'handleResourceCustomRequest', $resourcePath, 'get', '/{id:' . $idPattern . '}:{method:[a-zA-Z][a-zA-Z0-9]*}'],
+            [$controllerClass, 'handleResourceCustomRequest', $resourcePath, 'post', '/{id:' . $idPattern . '}:{method:[a-zA-Z][a-zA-Z0-9]*}'],
+            [$controllerClass, 'handleResourceCustomRequest', $resourcePath, 'put', '/{id:' . $idPattern . '}:{method:[a-zA-Z][a-zA-Z0-9]*}'],
+            [$controllerClass, 'handleResourceCustomRequest', $resourcePath, 'patch', '/{id:' . $idPattern . '}:{method:[a-zA-Z][a-zA-Z0-9]*}'],
+            [$controllerClass, 'handleResourceCustomRequest', $resourcePath, 'delete', '/{id:' . $idPattern . '}:{method:[a-zA-Z][a-zA-Z0-9]*}'],
 
             // === STANDARD CRUD OPERATIONS ===
 
@@ -222,11 +225,35 @@ class RouterProvider implements ServiceProviderInterface
             [$controllerClass, 'handleCRUDRequest', $resourcePath, 'delete', '/'],  // Delete all (dangerous, controlled by processor)
 
             // Individual resource operations (supports ANY ID format)
-            [$controllerClass, 'handleCRUDRequest', $resourcePath, 'get', '/{id:' . self::UNIVERSAL_ID_PATTERNS['any'] . '}'],     // Get one
-            [$controllerClass, 'handleCRUDRequest', $resourcePath, 'put', '/{id:' . self::UNIVERSAL_ID_PATTERNS['any'] . '}'],     // Replace one
-            [$controllerClass, 'handleCRUDRequest', $resourcePath, 'patch', '/{id:' . self::UNIVERSAL_ID_PATTERNS['any'] . '}'],   // Update one
-            [$controllerClass, 'handleCRUDRequest', $resourcePath, 'delete', '/{id:' . self::UNIVERSAL_ID_PATTERNS['any'] . '}'],  // Delete one
+            [$controllerClass, 'handleCRUDRequest', $resourcePath, 'get', '/{id:' . $idPattern . '}'],     // Get one
+            [$controllerClass, 'handleCRUDRequest', $resourcePath, 'put', '/{id:' . $idPattern . '}'],     // Replace one
+            [$controllerClass, 'handleCRUDRequest', $resourcePath, 'patch', '/{id:' . $idPattern . '}'],   // Update one
+            [$controllerClass, 'handleCRUDRequest', $resourcePath, 'delete', '/{id:' . $idPattern . '}'],  // Delete one
         ];
+    }
+
+    /**
+     * Get custom ID pattern from controller's HttpMapping attribute
+     */
+    private function getCustomIdPattern(string $controllerClass): string
+    {
+        if (!class_exists($controllerClass)) {
+            return self::UNIVERSAL_ID_PATTERNS['any'];
+        }
+
+        try {
+            $reflection = new \ReflectionClass($controllerClass);
+            $httpMappingAttributes = $reflection->getAttributes(\MikoPBX\PBXCoreREST\Attributes\HttpMapping::class);
+
+            if (!empty($httpMappingAttributes)) {
+                $httpMapping = $httpMappingAttributes[0]->newInstance();
+                return $httpMapping->getIdPattern();
+            }
+        } catch (\ReflectionException $e) {
+            // Fallback to default pattern
+        }
+
+        return self::UNIVERSAL_ID_PATTERNS['any'];
     }
 
     /**
@@ -258,6 +285,7 @@ class RouterProvider implements ServiceProviderInterface
             'Fail2Ban' => 'fail2ban',
             'UserPageTracker' => 'user-page-tracker',
             'Users' => 'users',
+            'OpenAPI' => 'openapi',
         ];
 
         // Use specific conversion if available, otherwise auto-convert
