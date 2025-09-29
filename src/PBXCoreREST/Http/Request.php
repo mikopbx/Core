@@ -120,49 +120,63 @@ class Request extends PhRequest
 
     /**
      * Get request data regardless of content type or HTTP method
-     * Handles both JSON and form-encoded data
-     * 
-     * @return array The parsed request data
+     * Handles both JSON and form-encoded data, always includes query parameters
+     *
+     * Query parameters take precedence over body data to allow parameter override
+     *
+     * @return array The parsed request data with query parameters merged
      */
     public function getData(): array
     {
+        $queryData = $this->getQuery();
+        $bodyData = [];
+
         $contentType = $this->getContentType();
-        
+
         // Handle JSON content type
         if (strpos($contentType, 'application/json') !== false) {
             $rawBody = $this->getRawBody();
             if (!empty($rawBody)) {
                 $jsonData = json_decode($rawBody, true);
                 if (json_last_error() === JSON_ERROR_NONE && is_array($jsonData)) {
-                    return $jsonData;
+                    $bodyData = $jsonData;
                 }
             }
-            return [];
+        } else {
+            // Handle form data based on HTTP method
+            $method = $this->getMethod();
+            switch ($method) {
+                case 'POST':
+                    $bodyData = $this->getPost();
+                    break;
+                case 'PUT':
+                    $bodyData = $this->getPut();
+                    break;
+                case 'PATCH':
+                    $bodyData = $this->getPatch();
+                    break;
+                case 'DELETE':
+                    // DELETE can have body data
+                    $postData = $this->getPost();
+                    if (!empty($postData)) {
+                        $bodyData = $postData;
+                    } else {
+                        // Fallback to parsing raw body
+                        parse_str($this->getRawBody(), $data);
+                        $bodyData = $data ?: [];
+                    }
+                    break;
+                case 'GET':
+                    // For GET, body data is empty
+                    $bodyData = [];
+                    break;
+                default:
+                    $bodyData = [];
+            }
         }
-        
-        // Handle form data based on HTTP method
-        $method = $this->getMethod();
-        switch ($method) {
-            case 'POST':
-                return $this->getPost();
-            case 'PUT':
-                return $this->getPut();
-            case 'PATCH':
-                return $this->getPatch();
-            case 'DELETE':
-                // DELETE can have body data
-                $postData = $this->getPost();
-                if (!empty($postData)) {
-                    return $postData;
-                }
-                // Fallback to parsing raw body
-                parse_str($this->getRawBody(), $data);
-                return $data ?: [];
-            case 'GET':
-                return $this->getQuery();
-            default:
-                return [];
-        }
+
+        // Merge body data with query parameters, query parameters take precedence
+        return array_merge($bodyData, $queryData);
     }
 
     /**
