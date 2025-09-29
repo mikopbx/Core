@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Common translations
  */
-
-return [
     ' - Unmounting partitions...' => 'Odpojování připojených diskových oddílů…',
     ' - Unpacking img...' => 'Aktualizace systémového oddílu…',
     '(default value = ' => '(výchozí = ',
@@ -242,7 +241,6 @@ return [
     'user' => 'uživatel',
     'version' => 'verze',
     'Пропущенный вызов' => 'Máte zmeškaný hovor',
-
     // ADV
     'adv_AmiPasswordWeak' => 'Jednoduché heslo uživatele AMI <a href=\'%url%\'>%record%</a>',
     'adv_AvailableNewVersionModule' => 'Nová verze modulu %module% - %ver% je k dispozici. Aktuální verze: %currentVer%',
@@ -270,7 +268,6 @@ return [
     'adv_WebPasswordWeak' => 'Jednoduché heslo správce ve webovém rozhraní <a href=\'%url%\'>změnit</a>',
     'adv_YouUseDefaultSSHPassword' => 'Pomocí výchozího hesla získáte přístup k SSH - <a href=\'%url%\'> změna </a>',
     'adv_YouUseDefaultWebPassword' => 'Pomocí výchozího hesla vstoupíte do administrativního rozhraní - <a href=\'%url%\'> změna </a>',
-
     // AM
     'am_AddNewUser' => 'Přidat uživatele AMI',
     'am_CopyRecord' => 'Kopie',
@@ -329,7 +326,6 @@ return [
     'am_tooltip_user_write' => 'Odesílání uživatelských událostí, aktualizace stavů zařízení',
     'am_tooltip_verbose_read' => 'Zobrazení podrobných zpráv a ladicího výstupu',
     'am_tooltip_verbose_write' => 'Nastavení úrovně podrobností zpráv',
-
     // AUTH
     'auth_DefaultCloudPasswordInstructions' => 'Výchozí heslo se rovná jedinečnému identifikátoru virtuálního počítače v cloudu',
     'auth_Login' => 'Uživatelské jméno',
@@ -340,7 +336,6 @@ return [
     'auth_ValidateLoginNotEmpty' => 'Zadejte přihlašovací jméno',
     'auth_ValidatePasswordNotEmpty' => 'Zadejte heslo',
     'auth_WrongLoginPassword' => 'Autorizace se nezdařila, zbývá %attempts% pokusů',
-
     // BT
     'bt_Add' => 'Přidat',
     'bt_ApplyChangesToPBX' => 'Použít změny',
@@ -372,7 +367,6 @@ return [
     'bt_ToolTipRestore' => 'Obnovit',
     'bt_ToolTipShowPassword' => 'Zobrazit/skrýt heslo',
     'bt_ToolTipUpgradeOnline' => 'Aktualizujte online',
-
     // CAL
     'cal_ApplyBtn' => 'Chcete-li se přihlásit',
     'cal_CancelBtn' => 'Zrušit',
@@ -385,11 +379,9 @@ return [
     'cal_Yesterday' => 'Včera',
     'cal_from' => 's',
     'cal_to' => 'od',
-
     // CD
     'cd_Description' => 'Komentář',
     'cd_Extensions' => 'Telefonní číslo pro tuto frontu',
-
     // CDR
     'cdr_And' => 'a',
     'cdr_ColumnDate' => 'Datum volání',
@@ -403,7 +395,6 @@ return [
     'cdr_FilteredEmptyTitle' => 'Žádné záznamy podle zadaných kritérií',
     'cdr_NoRecordsFound' => 'Nebyly nalezeny žádné záznamy',
     'cdr_TryChangingDate' => 'Zkuste změnit rozmezí dat',
-
     // CF
     'cf_ColumnMode' => 'Režim',
     'cf_ColumnNote' => 'Poznámka',
@@ -420,11 +411,9 @@ return [
     'cf_Path' => 'Cesta k souboru',
     'cf_ResultFileHeader' => 'Obsah souboru se změnami',
     'cf_UserEditHeader' => 'Editor pro provedení změn',
-
     // DBG
     'dbg_Header' => 'Ladit informace',
     'dbg_NoDebugInformation' => 'Žádné informace',
-
     // DT
     'dt_First' => '',
     'dt_Info' => 'Záznamy od _START_ do _END_ z _TOTAL_',
@@ -435,7 +424,6 @@ return [
     'dt_Search' => 'Hledat',
     'dt_Last' => '',
     'dt_TableIsEmpty' => 'Žádná data k zobrazení',
-
     // ER
     'er_Home' => 'Přejít na začátek',
     'er_InternalServerError' => 'Interní chyba serveru',
@@ -444,13 +432,10 @@ return [
     'er_PageNotFoundDescription' => 'Tato stránka neexistuje.',
     'er_Unauthorized' => 'Chyba autorizace',
     'er_UnauthorizedDescription' => 'K této stránce nemáte přístup.',
-
     // ET
     'et_ReadDocumentation' => 'Seznámit se s dokumentací',
-
     // LANG
     'lang_HelpWithTranslateIt' => 'Pomoc s překladem MikoPBX',
-
     // LIC
     'lic_ActivateCoupon' => 'Aktivace kupónu',
     'lic_ActivateCouponButton' => 'Aktivujte kupón',
@@ -531,23 +516,19 @@ Nový klíč můžete získat automaticky vyplněním registračního formulář
     'lic_ValidateCouponEmpty' => 'Povinné pole není vyplněno - kupón',
     'lic_ValidateLicenseKeyEmpty' => 'Povinné pole není vyplněno - licenční klíč',
     'lic_WrongLicenseKeyOrEmpty' => 'Licenční klíč zadán nesprávně',
-
     // LOC
     'loc_NoResult' => 'Nic nenalezeno',
-
     // LOG
     'log_CaptureMessage' => 'Začněte shromažďovat síťové pakety a proveďte volání nebo jinou akci, která způsobí selhání.
 <br>Systém uloží všechny pakety procházející v tuto chvíli síťovou kartou pro další analýzu.',
     'log_DownloadLogs' => 'Stáhněte si všechny systémové protokoly',
     'log_StartCapturePCAP' => 'Start',
     'log_StopCapturePCAP' => 'Zastavit a stáhnout',
-
     // ML
     'ml_EmailNotSended' => 'Zpráva nebyla odeslána',
     'ml_EmailSendedSuccess' => 'E-mail byl odeslán',
     'ml_EmailTestBody' => 'Ahoj, pokud je tento dopis ve vaší poště, nastavení je správné.',
     'ml_EmailTestSubject' => 'Vyzkoušejte dopis z vašeho telefonního systému',
-
     // MM
     'mm_ApiKeys' => 'API klíče',
     'mm_AsteriskManagers' => 'Přístup k AMI',
@@ -583,7 +564,6 @@ Nový klíč můžete získat automaticky vyplněním registračního formulář
     'mm_SystemDiagnostic' => 'Systémové protokoly',
     'mm_TimeSettings' => 'Datum a čas',
     'mm_Update' => 'Aktualizace PBX',
-
     // MO
     'mo_ApplicationShort4Dropdown' => 'Aplikace',
     'mo_BeforeDeleteFirst' => 'Existují odkazy na objekt - %represent%',
@@ -618,43 +598,10 @@ Nový klíč můžete získat automaticky vyplněním registračního formulář
     'mo_SystemExten_voicemail' => 'Hlasová pošta',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Zadané číslo je již obsazeno pro - %record%',
     'mo_ThisVlanIdNotUniqueForLanInterfacesModels' => 'Systém již má rozhraní se stejnou VLAN',
-
-    // MS
-    'ms_MailEnableNotifications' => 'Použijte upozornění',
-    'ms_MailSysadminEmail' => 'E-mail správce systému',
-    'ms_MissedCallBody' => 'Zmeškaný hovor - text zprávy',
-    'ms_MissedCallFooter' => 'Zmeškané volání - suterén',
-    'ms_MissedCallSubject' => 'Zmeškaný hovor - předmět e-mailu',
-    'ms_MissedCalls' => 'Zmeškané hovory',
-    'ms_NotificationTemplatesMissed' => 'Vzor - zmeškané hovory',
-    'ms_NotificationTemplatesVoicemail' => 'Šablona - hlasová schránka',
-    'ms_SMTPCertCheck' => 'Zkontrolujte certifikát serveru',
-    'ms_SMTPFromUsername' => 'Jméno odesílatele',
-    'ms_SMTPHost' => 'Hostitel SMTP',
-    'ms_SMTPPassword' => 'Heslo SMTP',
-    'ms_SMTPPort' => 'Port SMTP',
-    'ms_SMTPSenderAddress' => 'Adresa odesílatele',
-    'ms_SMTPSettings' => 'Nastavení zprávy',
-    'ms_SMTPUseTLS' => 'Použijte TLS',
-    'ms_SMTPUsername' => 'Přihlášení k SMTP',
-    'ms_SentTestEmailAfterSaveTo' => 'Na tuto adresu pošlete zkušební e-mail',
-    'ms_SuccessfulDeleted' => 'Data byla smazána',
-    'ms_SuccessfulSaved' => 'Nastavení bylo uloženo',
-    'ms_SystemEmailForMissed' => 'E-mail pro zmeškaná upozornění',
-    'ms_TestEmailBody' => 'Pokud jste obdrželi tento dopis, nastavení pošty je správné.',
-    'ms_TestEmailSentSuccessfully' => 'E-mail byl odeslán',
-    'ms_TestEmailSubject' => 'Testování odesílání pošty',
-    'ms_Voicemail' => 'Hlasová schránka',
-    'ms_VoicemailBody' => 'Hlasová schránka - text zprávy',
-    'ms_VoicemailCommonEmail' => 'Unified Email pro zasílání hlasových zpráv',
-    'ms_VoicemailFooter' => 'Hlasová schránka - suterén',
-    'ms_VoicemailSubject' => 'Hlasová schránka - předmět',
-
     // MSG
     'msg_ErrorHeader' => 'Chyba',
     'msg_WarningHeader' => 'Pozornost',
     'msg_infoHeader' => 'Informace',
-
     // PASS
     'pass_CheckSSHPasswordDontMatch' => 'Zadaná hesla pro SSH se neshodují',
     'pass_CheckSSHPasswordEmpty' => 'Prázdné pole: SSH',
@@ -663,12 +610,10 @@ Nový klíč můžete získat automaticky vyplněním registračního formulář
     'pass_CheckWebAdminPasswordEmpty' => 'Pole je prázdné: WEB heslo',
     'pass_CheckWebAdminPasswordSimple' => 'Webové heslo je příliš jednoduché.',
     'pass_CheckWebPassErrorChange' => 'Změna hesla se nezdařila',
-
     // QF
     'qf_Frequency' => 'Frekvence odesílání v sekundách:',
     'qf_Qualify' => 'Podpora NAT Session',
     'qf_QualifyInstructions' => 'Pokud je tato možnost povolena, ústředna bude odesílat pakety SIP OPTIONS na zadané frekvenci. To je nutné pro podporu tunelování NAT na vašem routeru.',
-
     // RS
     'rs_CurrentCalls' => 'Aktivní hovory',
     'rs_DateCall' => 'Datum zahájení',
@@ -677,7 +622,6 @@ Nový klíč můžete získat automaticky vyplněním registračního formulář
     'rs_ShutDownPhoneSystem' => 'Vypněte MikoPBX',
     'rs_ShutdownRebootMessage' => 'Při restartování nebo vypnutí budou všechny aktuální hovory přerušeny.',
     'rs_Src' => 'Kdo',
-
     // SD
     'sd_CapturePcap' => 'Zachycování síťových paketů',
     'sd_CollectingInfo' => 'Shromažďování informací o službách',
@@ -695,7 +639,6 @@ Nový klíč můžete získat automaticky vyplněním registračního formulář
     'sd_filter' => 'Filtr',
     'sd_lines' => 'Omezit',
     'sd_offset' => 'Ofset',
-
     // SF
     'sf_AddNewAudioFile' => 'Přidat nový audio soubor',
     'sf_ColumnFile' => 'Jméno',
@@ -726,7 +669,6 @@ Nový klíč můžete získat automaticky vyplněním registračního formulář
     'sf_ValidationFileNameIsEmpty' => 'Chybí název souboru',
     'sf_ValidationFileNotSelected' => 'Nejprve nahrajte audio soubor',
     'sf_YourBrowserDoesNotSupportAudio' => 'Váš prohlížeč nepodporuje audio prvek',
-
     // SNTRY
     'sntry_ErrorFormEntry' => 'Pole nejsou vyplněna, opravena a zkuste odeslat znovu!',
     'sntry_ErrorGeneric' => 'Neznámá chyba při odesílání. Zkuste to znovu!',
@@ -737,7 +679,6 @@ Nový klíč můžete získat automaticky vyplněním registračního formulář
     'sntry_Subtitle2' => 'Popište prosím své akce, které vedly k této chybě.',
     'sntry_SuccessMessage' => 'Děkuji za vaší pomoc!',
     'sntry_Title' => 'Něco se pokazilo!',
-
     // ST
     'st_CallRecordingsRetention' => 'Uchovávání záznamů hovorů',
     'st_CategoryBackups' => 'Záložní kopie',
@@ -759,10 +700,8 @@ Nový klíč můžete získat automaticky vyplněním registračního formulář
     'st_TabStorageInfo' => 'Informace o úložišti',
     'st_TabStorageSettings' => 'Nastavení úložiště',
     'st_Used' => 'použito',
-
     // THIS
     'this_is' => 'Tohle je ',
-
     // TS
     'ts_CurrentSettings' => 'Aktuální nastavení',
     'ts_CurrentSystemTime' => 'Aktuální čas',
@@ -772,7 +711,6 @@ Nový klíč můžete získat automaticky vyplněním registračního formulář
     'ts_SystemTime' => 'Systémový čas',
     'ts_TimeZone' => 'Časové pásmo',
     'ts_ValidateDateTime' => 'Datum je nesprávné',
-
     // UPD
     'upd_AvailableUpdates' => 'Dostupné online aktualizace',
     'upd_Cancel' => 'Zrušit',

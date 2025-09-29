@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Common translations
  */
-
-return [
     ' - Unmounting partitions...' => 'マウントされたディスク パーティションをマウント解除しています…',
     ' - Unpacking img...' => 'システム パーティションを更新しています…',
     '(default value = ' => '（デフォルト= ',
@@ -242,7 +241,6 @@ return [
     'Пропущенный вызов' => '不在着信があります',
     'repApiKeys' => 'APIキー - %represent%',
     'repIncomingRoutingTableDefaultRuleName' => 'デフォルトの着信処理ルール',
-
     // ADV
     'adv_AmiPasswordWeak' => 'AMI ユーザーの簡易パスワード <a href=\'%url%\'>%record%</a>',
     'adv_AvailableNewVersionModule' => 'モジュール%module% - %ver%の新バージョンが利用可能になりました。現在のバージョン: %currentVer%',
@@ -270,7 +268,6 @@ return [
     'adv_WebPasswordWeak' => 'Web インターフェースの簡易管理者パスワード <a href=\'%url%\'>変更</a>',
     'adv_YouUseDefaultSSHPassword' => 'デフォルトのパスワードを使用してSSHにアクセスします-<a href=\'%url%\'>変更</a>',
     'adv_YouUseDefaultWebPassword' => 'デフォルトのパスワードを使用して管理インターフェースに入ります-<a href=\'%url%\'>変更</a>',
-
     // AM
     'am_AddNewUser' => 'AMIユーザーを追加',
     'am_Description' => '解説',
@@ -329,7 +326,6 @@ return [
     'am_tooltip_user_write' => 'ユーザーイベントの送信、デバイス状態の更新',
     'am_tooltip_verbose_read' => '詳細メッセージとデバッグ出力の表示',
     'am_tooltip_verbose_write' => 'メッセージ詳細レベルの設定',
-
     // AUTH
     'auth_DefaultCloudPasswordInstructions' => 'デフォルトのパスワードは、クラウド内の仮想マシンの一意の識別子と同じです。',
     'auth_Login' => 'ユーザー名',
@@ -340,7 +336,6 @@ return [
     'auth_ValidateLoginNotEmpty' => 'ログインを入力してください',
     'auth_ValidatePasswordNotEmpty' => 'パスワードを入力してください',
     'auth_WrongLoginPassword' => '認証に失敗しました。残り %attempts% 回の試行が残っています',
-
     // BT
     'bt_ApplyChangesToPBX' => '変更を適用',
     'bt_Back' => '戻る',
@@ -372,7 +367,6 @@ return [
     'bt_ToolTipDeleteCert' => '証明書を削除',
     'bt_ToolTipEditCert' => '証明書を編集',
     'bt_ToolTipExpand' => '完全なキーを表示',
-
     // CAL
     'cal_ApplyBtn' => '応募するには',
     'cal_CancelBtn' => 'キャンセルする',
@@ -385,11 +379,9 @@ return [
     'cal_Yesterday' => '昨日',
     'cal_from' => 'と',
     'cal_to' => 'によって',
-
     // CD
     'cd_Description' => '解説',
     'cd_Extensions' => 'このキューの電話番号',
-
     // CDR
     'cdr_And' => 'と',
     'cdr_ColumnDate' => '呼び出し日',
@@ -403,7 +395,6 @@ return [
     'cdr_FilteredEmptyTitle' => '指定された条件に一致する記録がありません',
     'cdr_NoRecordsFound' => '記録が見つかりません',
     'cdr_TryChangingDate' => '日付範囲を変更してみてください',
-
     // CF
     'cf_ColumnMode' => 'モード',
     'cf_ColumnNote' => 'メモ',
@@ -420,11 +411,9 @@ return [
     'cf_Path' => 'ファイルパス',
     'cf_ResultFileHeader' => '変更を伴うファイルの内容',
     'cf_UserEditHeader' => '変更を加える編集者',
-
     // DBG
     'dbg_Header' => 'デバッグ情報',
     'dbg_NoDebugInformation' => '情報なし',
-
     // DT
     'dt_First' => '',
     'dt_Last' => '',
@@ -435,7 +424,6 @@ return [
     'dt_Previous' => '前へ',
     'dt_Search' => '検索する',
     'dt_TableIsEmpty' => '表示するデータがありません',
-
     // ER
     'er_Home' => 'はじめに',
     'er_InternalServerError' => 'サーバーの内部エラー',
@@ -444,13 +432,10 @@ return [
     'er_PageNotFoundDescription' => 'このページは存在しません。',
     'er_Unauthorized' => '認可エラー',
     'er_UnauthorizedDescription' => 'このページにアクセスできません。',
-
     // ET
     'et_ReadDocumentation' => 'ドキュメントを読む',
-
     // LANG
     'lang_HelpWithTranslateIt' => 'MikoPBX変換のヘルプ',
-
     // LIC
     'lic_ActivateCoupon' => 'クーポンアクティベーション',
     'lic_ActivateCouponButton' => 'クーポンを有効化',
@@ -531,23 +516,19 @@ return [
     'lic_ValidateCouponEmpty' => '必須フィールドに入力されていません-クーポン',
     'lic_ValidateLicenseKeyEmpty' => '必須フィールドに入力されていません-ライセンスキー',
     'lic_WrongLicenseKeyOrEmpty' => 'ライセンスキーが間違って入力されました',
-
     // LOC
     'loc_NoResult' => '何も見つかりませんでした',
-
     // LOG
     'log_CaptureMessage' => 'ネットワーク パケットの収集を開始し、失敗の原因となる通話またはその他のアクションを実行します。
 <br>システムは、さらなる分析のために、現時点でネットワーク カードを通過するすべてのパケットを保存します。',
     'log_DownloadLogs' => 'すべてのシステム ログをダウンロードする',
     'log_StartCapturePCAP' => '開始',
     'log_StopCapturePCAP' => '停止してダウンロード',
-
     // ML
     'ml_EmailNotSended' => 'メッセージは送信されませんでした',
     'ml_EmailSendedSuccess' => 'メールを送信しました',
     'ml_EmailTestBody' => 'こんにちは、この手紙がメールにある場合、設定は正しいです。',
     'ml_EmailTestSubject' => '電話システムからのテストレター',
-
     // MM
     'mm_ApiKeys' => 'APIキー',
     'mm_AsteriskManagers' => 'AMIアクセス',
@@ -583,7 +564,6 @@ return [
     'mm_SystemDiagnostic' => 'システムログ',
     'mm_TimeSettings' => '日時',
     'mm_Update' => 'PBXの更新',
-
     // MO
     'mo_ApplicationShort4Dropdown' => 'アプリ',
     'mo_BeforeDeleteFirst' => 'オブジェクトへの参照があります - %represent%',
@@ -618,43 +598,10 @@ return [
     'mo_SystemExten_voicemail' => 'ボイスメール',
     'mo_ThisNumberNotUniqueForExtensionsModels' => '指定された番号は既に使用されています - %record%',
     'mo_ThisVlanIdNotUniqueForLanInterfacesModels' => 'システムにはすでに同じVLANのインターフェースがあります',
-
-    // MS
-    'ms_MailEnableNotifications' => 'アラートを使用する',
-    'ms_MailSysadminEmail' => 'システム管理者のメール',
-    'ms_MissedCallBody' => '不在着信-メッセージテキスト',
-    'ms_MissedCallFooter' => '不在着信-地下室',
-    'ms_MissedCallSubject' => '不在着信-メールの件名',
-    'ms_MissedCalls' => '不在着信',
-    'ms_NotificationTemplatesMissed' => 'パターン-不在着信',
-    'ms_NotificationTemplatesVoicemail' => 'テンプレート-ボイスメール',
-    'ms_SMTPCertCheck' => 'サーバー証明書を確認する',
-    'ms_SMTPFromUsername' => '送信者名',
-    'ms_SMTPHost' => 'SMTPホスト',
-    'ms_SMTPPassword' => 'SMTPパスワード',
-    'ms_SMTPPort' => 'SMTPポート',
-    'ms_SMTPSenderAddress' => '送信者アドレス',
-    'ms_SMTPSettings' => 'メッセージ設定',
-    'ms_SMTPUseTLS' => 'TLSを使用する',
-    'ms_SMTPUsername' => 'SMTPログイン',
-    'ms_SentTestEmailAfterSaveTo' => 'このアドレスにテストメールを送信する',
-    'ms_SuccessfulDeleted' => 'データを削除しました',
-    'ms_SuccessfulSaved' => '設定を保存しました',
-    'ms_SystemEmailForMissed' => '通知を逃した場合の電子メール',
-    'ms_TestEmailBody' => 'この手紙を受け取った場合、メール設定は正しいです。',
-    'ms_TestEmailSentSuccessfully' => 'メールを送信しました',
-    'ms_TestEmailSubject' => 'メール送信テスト',
-    'ms_Voicemail' => 'ボイスメール',
-    'ms_VoicemailBody' => 'ボイスメール-メッセージテキスト',
-    'ms_VoicemailCommonEmail' => 'ボイスメールを送信するための統合メール',
-    'ms_VoicemailFooter' => 'ボイスメール-地下',
-    'ms_VoicemailSubject' => 'ボイスメール-件名',
-
     // MSG
     'msg_ErrorHeader' => 'エラー',
     'msg_WarningHeader' => '注意',
     'msg_infoHeader' => '情報',
-
     // PASS
     'pass_CheckSSHPasswordDontMatch' => '入力したSSHのパスワードが一致しません',
     'pass_CheckSSHPasswordEmpty' => '空のフィールド：SSH',
@@ -663,12 +610,10 @@ return [
     'pass_CheckWebAdminPasswordEmpty' => 'フィールドは空です：WEBパスワード',
     'pass_CheckWebAdminPasswordSimple' => 'WEBパスワードが単純すぎます。',
     'pass_CheckWebPassErrorChange' => 'パスワードの変更に失敗しました',
-
     // QF
     'qf_Frequency' => '送信頻度 (秒):',
     'qf_Qualify' => 'NATセッションをサポート',
     'qf_QualifyInstructions' => 'このオプションを有効にすると、PBX は指定された頻度で SIP OPTIONS パケットを送信します。これは、ルーターで NAT トンネリングをサポートするために必要です。',
-
     // RS
     'rs_CurrentCalls' => 'アクティブな通話',
     'rs_DateCall' => '開始日',
@@ -677,7 +622,6 @@ return [
     'rs_ShutDownPhoneSystem' => 'MikoPBX をオフにする',
     'rs_ShutdownRebootMessage' => '再起動またはシャットダウンすると、現在のすべての呼び出しが中断されます。',
     'rs_Src' => 'だれ',
-
     // SD
     'sd_CapturePcap' => 'ネットワークパケットのキャプチャ',
     'sd_CollectingInfo' => 'サービス情報の収集',
@@ -695,7 +639,6 @@ return [
     'sd_filter' => 'フィルタ',
     'sd_lines' => '制限',
     'sd_offset' => 'オフセット',
-
     // SF
     'sf_AddNewSoundFile' => '新しいサウンドファイルを追加',
     'sf_ColumnFile' => '名',
@@ -723,7 +666,6 @@ return [
     'sf_PlayAudioFile' => '音声ファイルを再生',
     'sf_SoundFileDeleted' => '音声ファイルが削除されました',
     'sf_YourBrowserDoesNotSupportAudio' => 'お使いのブラウザはaudio要素をサポートしていません',
-
     // SNTRY
     'sntry_ErrorFormEntry' => 'フィールドが入力されていません。修正して、もう一度送信してください！',
     'sntry_ErrorGeneric' => '不明な送信エラー。もう一度お試しください！',
@@ -734,7 +676,6 @@ return [
     'sntry_Subtitle2' => 'このエラーの原因となったアクションを説明してください。',
     'sntry_SuccessMessage' => 'ご協力ありがとうございました！',
     'sntry_Title' => '問題が発生しました！',
-
     // ST
     'st_CallRecordingsRetention' => '通話記録の保持',
     'st_CategoryBackups' => 'バックアップ',
@@ -756,10 +697,8 @@ return [
     'st_TabStorageInfo' => 'ストレージ情報',
     'st_TabStorageSettings' => 'ストレージ設定',
     'st_Used' => '使用済み',
-
     // THIS
     'this_is' => 'これは ',
-
     // TS
     'ts_CurrentSettings' => '現在の設定',
     'ts_CurrentSystemTime' => '現在の時間',
@@ -769,7 +708,6 @@ return [
     'ts_SystemTime' => 'システム時間',
     'ts_TimeZone' => 'タイムゾーン',
     'ts_ValidateDateTime' => '日付が正しくない',
-
     // UPD
     'upd_AvailableUpdates' => '利用可能なオンラインアップデート',
     'upd_Cancel' => 'キャンセルする',

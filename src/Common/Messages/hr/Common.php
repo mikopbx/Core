@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Common translations
  */
-
-return [
     ' - Unmounting partitions...' => 'Demontaža montiranih particija diska…',
     ' - Unpacking img...' => 'Ažuriranje sistemske particije…',
     '(default value = ' => '(zadano = ',
@@ -242,7 +241,6 @@ return [
     'user' => 'korisnik',
     'version' => 'verzija',
     'Пропущенный вызов' => 'Imate propušteni poziv',
-
     // ADV
     'adv_AmiPasswordWeak' => 'Jednostavna lozinka za AMI korisnika <a href=\'%url%\'>%record%</a>',
     'adv_AvailableNewVersionModule' => 'Dostupna je nova verzija modula %module% - %ver%. Trenutna verzija: %currentVer%',
@@ -270,7 +268,6 @@ return [
     'adv_WebPasswordWeak' => 'Jednostavna administratorska lozinka u web sučelju <a href=\'%url%\'>promjena</a>',
     'adv_YouUseDefaultSSHPassword' => 'Koristite zadanu lozinku za pristup SSH-u - <a href=\'%url%\'>uredi</a>',
     'adv_YouUseDefaultWebPassword' => 'Koristite zadanu lozinku za prijavu na administrativno sučelje - <a href=\'%url%\'>uredi</a>',
-
     // AM
     'am_AddNewUser' => 'Dodaj korisnika AMI',
     'am_CopyRecord' => 'Kopija',
@@ -329,7 +326,6 @@ return [
     'am_tooltip_user_write' => 'Slanje korisničkih događaja, ažuriranje stanja uređaja',
     'am_tooltip_verbose_read' => 'Pregled detaljnih poruka i debug izlaza',
     'am_tooltip_verbose_write' => 'Postavljanje razine detaljnosti poruka',
-
     // AUTH
     'auth_DefaultCloudPasswordInstructions' => 'Zadana lozinka jednaka je jedinstvenom identifikatoru virtualnog stroja u oblaku',
     'auth_Login' => 'Prijava',
@@ -340,7 +336,6 @@ return [
     'auth_ValidateLoginNotEmpty' => 'Unesite svoju prijavu',
     'auth_ValidatePasswordNotEmpty' => 'Unesite svoju lozinku',
     'auth_WrongLoginPassword' => 'Autorizacija nije uspjela, imate još %attempts% pokušaja',
-
     // BT
     'bt_Add' => 'Dodaj',
     'bt_ApplyChangesToPBX' => 'Primijeni promjene',
@@ -372,7 +367,6 @@ return [
     'bt_ToolTipRestore' => 'Vratiti',
     'bt_ToolTipShowPassword' => 'Prikaži/sakrij lozinku',
     'bt_ToolTipUpgradeOnline' => 'Ažurirajte online',
-
     // CAL
     'cal_ApplyBtn' => 'primijeniti',
     'cal_CancelBtn' => 'Otkazati',
@@ -385,11 +379,9 @@ return [
     'cal_Yesterday' => 'Jučer',
     'cal_from' => 'S',
     'cal_to' => 'Po',
-
     // CD
     'cd_Description' => 'Komentar',
     'cd_Extensions' => 'Telefonski broj za ovaj red',
-
     // CDR
     'cdr_And' => 'I',
     'cdr_ColumnDate' => 'Datum poziva',
@@ -403,7 +395,6 @@ return [
     'cdr_FilteredEmptyTitle' => 'Nema zapisa za dane kriterije',
     'cdr_NoRecordsFound' => 'Nisu pronađeni zapisi',
     'cdr_TryChangingDate' => 'Pokušajte promijeniti raspon datuma',
-
     // CF
     'cf_ColumnMode' => 'Način rada',
     'cf_ColumnNote' => 'Bilješka',
@@ -420,11 +411,9 @@ return [
     'cf_Path' => 'Put do datoteke',
     'cf_ResultFileHeader' => 'Sadržaj datoteke s promjenama',
     'cf_UserEditHeader' => 'Urednik za unos izmjena',
-
     // DBG
     'dbg_Header' => 'Informacije o otklanjanju pogrešaka',
     'dbg_NoDebugInformation' => 'Nema informacija',
-
     // DT
     'dt_First' => '',
     'dt_Info' => 'Unosi _START_ do _END_ od _TOTAL_',
@@ -435,7 +424,6 @@ return [
     'dt_Previous' => 'Prethodno',
     'dt_Search' => 'Pretraživanje',
     'dt_TableIsEmpty' => 'Nema podataka za prikaz',
-
     // ER
     'er_Home' => 'Idi na vrh',
     'er_InternalServerError' => 'Interna pogreška poslužitelja',
@@ -444,13 +432,10 @@ return [
     'er_PageNotFoundDescription' => 'Ova stranica ne postoji.',
     'er_Unauthorized' => 'Pogreška autorizacije',
     'er_UnauthorizedDescription' => 'Nemate pristup ovoj stranici.',
-
     // ET
     'et_ReadDocumentation' => 'Pogledajte dokumentaciju',
-
     // LANG
     'lang_HelpWithTranslateIt' => 'Pomoć oko prijevoda MikoPBX',
-
     // LIC
     'lic_ActivateCoupon' => 'Aktivacija kupona',
     'lic_ActivateCouponButton' => 'Aktivirajte kupon',
@@ -531,23 +516,19 @@ Novi ključ možete dobiti automatski ispunjavanjem obrasca za registraciju.<br>
     'lic_ValidateCouponEmpty' => 'Neispunjeno obavezno polje - kupon',
     'lic_ValidateLicenseKeyEmpty' => 'Obavezno polje nije popunjeno - Licencni ključ',
     'lic_WrongLicenseKeyOrEmpty' => 'Ključ licence je netočno unesen',
-
     // LOC
     'loc_NoResult' => 'Ništa nije pronađeno',
-
     // LOG
     'log_CaptureMessage' => 'Počnite prikupljati mrežne pakete i uputite poziv ili drugu radnju koja uzrokuje kvar. 
 <br>Sustav će spremiti sve pakete koji u ovom trenutku prolaze kroz mrežnu karticu za daljnju analizu.',
     'log_DownloadLogs' => 'Preuzmite sve zapisnike sustava',
     'log_StartCapturePCAP' => 'Start',
     'log_StopCapturePCAP' => 'Zaustavite i preuzmite',
-
     // ML
     'ml_EmailNotSended' => 'Poruka nije poslana',
     'ml_EmailSendedSuccess' => 'Pismo poslano',
     'ml_EmailTestBody' => 'Pozdrav, ako imate ovo pismo u svojoj pošti, onda su postavke ispravne.',
     'ml_EmailTestSubject' => 'Testirajte e-poštu iz svog telefonskog sustava',
-
     // MM
     'mm_ApiKeys' => 'API ključevi',
     'mm_AsteriskManagers' => 'Pristup AMI-ju',
@@ -583,7 +564,6 @@ Novi ključ možete dobiti automatski ispunjavanjem obrasca za registraciju.<br>
     'mm_SystemDiagnostic' => 'Dnevnici sustava',
     'mm_TimeSettings' => 'Datum i vrijeme',
     'mm_Update' => 'PBX ažuriranje',
-
     // MO
     'mo_ApplicationShort4Dropdown' => 'Primjena',
     'mo_BeforeDeleteFirst' => 'Postoje poveznice na objekt - %represent%',
@@ -618,43 +598,10 @@ Novi ključ možete dobiti automatski ispunjavanjem obrasca za registraciju.<br>
     'mo_SystemExten_voicemail' => 'Govorna pošta',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Navedeni broj se već koristi za - %record%',
     'mo_ThisVlanIdNotUniqueForLanInterfacesModels' => 'Sustav već ima sučelje s istim VLAN-om',
-
-    // MS
-    'ms_MailEnableNotifications' => 'Koristite upozorenja',
-    'ms_MailSysadminEmail' => 'Email administratora sustava',
-    'ms_MissedCallBody' => 'Propušteni poziv - tekst pisma',
-    'ms_MissedCallFooter' => 'Propušten poziv - podrum',
-    'ms_MissedCallSubject' => 'Propušten poziv - predmet e-pošte',
-    'ms_MissedCalls' => 'Propušteni pozivi',
-    'ms_NotificationTemplatesMissed' => 'Predložak - propušteni pozivi',
-    'ms_NotificationTemplatesVoicemail' => 'Predložak - govorna pošta',
-    'ms_SMTPCertCheck' => 'Provjerite certifikat poslužitelja',
-    'ms_SMTPFromUsername' => 'Ime pošiljatelja',
-    'ms_SMTPHost' => 'SMTP host',
-    'ms_SMTPPassword' => 'SMTP lozinka',
-    'ms_SMTPPort' => 'SMTP port',
-    'ms_SMTPSenderAddress' => 'Adresa pošiljatelja',
-    'ms_SMTPSettings' => 'Postavke slanja poruka',
-    'ms_SMTPUseTLS' => 'Koristite TLS',
-    'ms_SMTPUsername' => 'SMTP prijava',
-    'ms_SentTestEmailAfterSaveTo' => 'Pošaljite testnu e-poštu na ovu adresu',
-    'ms_SuccessfulDeleted' => 'Podaci izbrisani',
-    'ms_SuccessfulSaved' => 'Postavke su spremljene',
-    'ms_SystemEmailForMissed' => 'Email za propuštene obavijesti',
-    'ms_TestEmailBody' => 'Ako ste primili ovo pismo, to znači da su vaše postavke pošte ispravne.',
-    'ms_TestEmailSentSuccessfully' => 'Pismo poslano',
-    'ms_TestEmailSubject' => 'Testiranje slanja pošte',
-    'ms_Voicemail' => 'Govorna pošta',
-    'ms_VoicemailBody' => 'Govorna pošta - tekst pisma',
-    'ms_VoicemailCommonEmail' => 'Jedna e-pošta za slanje poruka govorne pošte',
-    'ms_VoicemailFooter' => 'Govorna pošta - podrum',
-    'ms_VoicemailSubject' => 'Govorna pošta - predmet',
-
     // MSG
     'msg_ErrorHeader' => 'Greška',
     'msg_WarningHeader' => 'Pažnja',
     'msg_infoHeader' => 'Informacija',
-
     // PASS
     'pass_CheckSSHPasswordDontMatch' => 'Unesene SSH lozinke se ne podudaraju',
     'pass_CheckSSHPasswordEmpty' => 'Polje je prazno: SSH',
@@ -663,12 +610,10 @@ Novi ključ možete dobiti automatski ispunjavanjem obrasca za registraciju.<br>
     'pass_CheckWebAdminPasswordEmpty' => 'Polje je prazno: lozinka za WEB',
     'pass_CheckWebAdminPasswordSimple' => 'Lozinka za WEB je prejednostavna.',
     'pass_CheckWebPassErrorChange' => 'Promjena lozinke nije uspjela',
-
     // QF
     'qf_Frequency' => 'Učestalost slanja u sekundama:',
     'qf_Qualify' => 'Podržava NAT sesiju',
     'qf_QualifyInstructions' => 'Kada je ova opcija uključena, MikoPBX će slati SIP OPTIONS pakete na navedenoj frekvenciji. Ovo je neophodno za podršku NAT tuneliranja na vašem usmjerivaču.',
-
     // RS
     'rs_CurrentCalls' => 'Aktivni pozivi',
     'rs_DateCall' => 'datum početka',
@@ -677,7 +622,6 @@ Novi ključ možete dobiti automatski ispunjavanjem obrasca za registraciju.<br>
     'rs_ShutDownPhoneSystem' => 'Isključite MikoPBX',
     'rs_ShutdownRebootMessage' => 'Prilikom ponovnog pokretanja ili gašenja, svi pozivi u tijeku bit će prekinuti.',
     'rs_Src' => 'WHO',
-
     // SD
     'sd_CapturePcap' => 'Hvatanje mrežnih paketa',
     'sd_CollectingInfo' => 'Prikupljanje servisnih informacija',
@@ -695,7 +639,6 @@ Novi ključ možete dobiti automatski ispunjavanjem obrasca za registraciju.<br>
     'sd_filter' => 'Filter',
     'sd_lines' => 'Ograničiti',
     'sd_offset' => 'Pomak',
-
     // SF
     'sf_AddNewAudioFile' => 'Dodaj novu audio datoteku',
     'sf_AddNewSoundFile' => 'Dodajte novu zvučnu datoteku',
@@ -723,7 +666,6 @@ Novi ključ možete dobiti automatski ispunjavanjem obrasca za registraciju.<br>
     'sf_ValidationFileNameIsEmpty' => 'Naziv datoteke nije naveden',
     'sf_ValidationFileNotSelected' => 'Prvo preuzmite audio datoteku',
     'sf_YourBrowserDoesNotSupportAudio' => 'Vaš pregljednik ne podržava audio element',
-
     // SNTRY
     'sntry_ErrorFormEntry' => 'Polja nisu popunjena, ispravite ih i pokušajte ponovno poslati!',
     'sntry_ErrorGeneric' => 'Nepoznata greška prilikom slanja. Pokušajte ponovno!',
@@ -734,10 +676,8 @@ Novi ključ možete dobiti automatski ispunjavanjem obrasca za registraciju.<br>
     'sntry_Subtitle2' => 'Opišite svoje postupke koji su doveli do ove pogreške.',
     'sntry_SuccessMessage' => 'Hvala na pomoći!',
     'sntry_Title' => 'Nešto nije u redu!',
-
     // THIS
     'this_is' => 'Ovo je ',
-
     // TS
     'ts_CurrentSettings' => 'Trenutne postavke',
     'ts_CurrentSystemTime' => 'Trenutno vrijeme',
@@ -747,7 +687,6 @@ Novi ključ možete dobiti automatski ispunjavanjem obrasca za registraciju.<br>
     'ts_SystemTime' => 'Vrijeme sustava',
     'ts_TimeZone' => 'Vremenska zona',
     'ts_ValidateDateTime' => 'Netočan datum',
-
     // UPD
     'upd_AvailableUpdates' => 'Dostupna su mrežna ažuriranja',
     'upd_Cancel' => 'Otkazati',
@@ -767,7 +706,6 @@ Novi ključ možete dobiti automatski ispunjavanjem obrasca za registraciju.<br>
     'upd_UploadError' => 'Pogreška prilikom preuzimanja ažuriranja',
     'upd_UploadInProgress' => 'Datoteka ažuriranja se preuzima…',
     'upd_VersionColumn' => 'Verzija',
-
     // ST
     'st_CallRecordingsRetention' => 'Čuvanje snimaka razgovora',
     'st_CategoryBackups' => 'Sigurnosne kopije',

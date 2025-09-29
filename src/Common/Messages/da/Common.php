@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Common translations
  */
-
-return [
     ' - Unmounting partitions...' => 'Afmonterer monterede diskpartitioner…',
     ' - Unpacking img...' => 'Opdaterer systempartitionen…',
     '(default value = ' => '(standard = ',
@@ -242,7 +241,6 @@ return [
     'user' => 'bruger',
     'version' => 'version',
     'Пропущенный вызов' => 'Du har et ubesvaret opkald',
-
     // ADV
     'adv_AmiPasswordWeak' => 'AMI brugerenkel adgangskode <a href=\'%url%\'>%record%</a>',
     'adv_AvailableNewVersionModule' => 'Ny version af modulet %module% - %ver% er tilgængelig. Nuværende version: %currentVer%',
@@ -270,7 +268,6 @@ return [
     'adv_WebPasswordWeak' => 'Enkel administratoradgangskode i webgrænsefladen <a href=\'%url%\'>change</a>',
     'adv_YouUseDefaultSSHPassword' => 'Du bruger standardadgangskoden for at få adgang til SSH - <a href=\'%url%\'> ændring </a>',
     'adv_YouUseDefaultWebPassword' => 'Du bruger standardadgangskoden til at åbne den administrative grænseflade - <a href=\'%url%\'> ændring </a>',
-
     // AM
     'am_AddNewUser' => 'Tilføj AMI-bruger',
     'am_CopyRecord' => 'Kopi',
@@ -329,7 +326,6 @@ return [
     'am_tooltip_user_write' => 'Afsendelse af brugereventser, opdatering af enhedsstatus',
     'am_tooltip_verbose_read' => 'Visning af detaljerede meddelelser og debug output',
     'am_tooltip_verbose_write' => 'Indstilling af meddelelsesdetalje niveau',
-
     // AUTH
     'auth_DefaultCloudPasswordInstructions' => 'Standardadgangskoden er lig med den unikke identifikator for den virtuelle maskine i skyen',
     'auth_Login' => 'logon',
@@ -340,7 +336,6 @@ return [
     'auth_ValidateLoginNotEmpty' => 'Indtast login',
     'auth_ValidatePasswordNotEmpty' => 'Indtast adgangskode',
     'auth_WrongLoginPassword' => 'Godkendelse mislykkedes, du har %attempts% forsøg tilbage',
-
     // BT
     'bt_Add' => 'Tilføj',
     'bt_ApplyChangesToPBX' => 'Anvend ændringer',
@@ -372,7 +367,6 @@ return [
     'bt_ToolTipRestore' => 'Genetabler',
     'bt_ToolTipShowPassword' => 'Vis/skjul kodeord',
     'bt_ToolTipUpgradeOnline' => 'Opdater online',
-
     // CAL
     'cal_ApplyBtn' => 'At anvende',
     'cal_CancelBtn' => 'annullering',
@@ -385,11 +379,9 @@ return [
     'cal_Yesterday' => 'i går',
     'cal_from' => 'med',
     'cal_to' => 'på',
-
     // CD
     'cd_Description' => 'kommentar',
     'cd_Extensions' => 'Telefonnummer til denne kø',
-
     // CDR
     'cdr_And' => 'og',
     'cdr_ColumnDate' => 'Opkaldsdato',
@@ -403,7 +395,6 @@ return [
     'cdr_FilteredEmptyTitle' => 'Ingen poster for angivne kriterier',
     'cdr_NoRecordsFound' => 'Ingen poster fundet',
     'cdr_TryChangingDate' => 'Prøv at ændre datointerval',
-
     // CF
     'cf_ColumnMode' => 'regime',
     'cf_ColumnNote' => 'En note',
@@ -420,11 +411,9 @@ return [
     'cf_Path' => 'Filsti',
     'cf_ResultFileHeader' => 'Filindhold med ændringer',
     'cf_UserEditHeader' => 'Editor til at foretage ændringer',
-
     // DBG
     'dbg_Header' => 'Fejlfinding af oplysninger',
     'dbg_NoDebugInformation' => 'Ingen information',
-
     // DT
     'dt_First' => '',
     'dt_Info' => 'Poster fra _START_ til _END_ af _TOTAL_',
@@ -435,7 +424,6 @@ return [
     'dt_Search' => 'søg',
     'dt_Last' => '',
     'dt_TableIsEmpty' => 'Ingen data at vise',
-
     // ER
     'er_Home' => 'Gå til begyndelsen',
     'er_InternalServerError' => 'Serverens interne fejl',
@@ -444,13 +432,10 @@ return [
     'er_PageNotFoundDescription' => 'Denne side findes ikke.',
     'er_Unauthorized' => 'Autoriseringsfejl',
     'er_UnauthorizedDescription' => 'Du har ikke adgang til denne side.',
-
     // ET
     'et_ReadDocumentation' => 'Læs dokumentationen',
-
     // LANG
     'lang_HelpWithTranslateIt' => 'Hjælp med MikoPBX-oversættelse',
-
     // LIC
     'lic_ActivateCoupon' => 'Kuponaktivering',
     'lic_ActivateCouponButton' => 'Aktivér kupon',
@@ -531,23 +516,19 @@ Du kan få en ny nøgle automatisk ved at udfylde registreringsformularen.<br>',
     'lic_ValidateCouponEmpty' => 'Det krævede felt udfyldes ikke - kupon',
     'lic_ValidateLicenseKeyEmpty' => 'Påkrævet felt er ikke udfyldt - Licensnøgle',
     'lic_WrongLicenseKeyOrEmpty' => 'Licensnøgle indtastet forkert',
-
     // LOC
     'loc_NoResult' => 'Intet fundet',
-
     // LOG
     'log_CaptureMessage' => 'Begynd at indsamle netværkspakker og foretag et opkald eller en anden handling, der forårsager fejlen.
 <br>Systemet gemmer alle pakker, der på nuværende tidspunkt passerer gennem netværkskortet til yderligere analyse.',
     'log_DownloadLogs' => 'Download alle systemlogfiler',
     'log_StartCapturePCAP' => 'Start',
     'log_StopCapturePCAP' => 'Stop og download',
-
     // ML
     'ml_EmailNotSended' => 'Beskeden er ikke sendt',
     'ml_EmailSendedSuccess' => 'E-mail sendt',
     'ml_EmailTestBody' => 'Hej, hvis dette brev er i din mail, er indstillingerne korrekte.',
     'ml_EmailTestSubject' => 'Testbrev fra dit telefonsystem',
-
     // MM
     'mm_ApiKeys' => 'API nøgler',
     'mm_AsteriskManagers' => 'AMI adgang',
@@ -583,7 +564,6 @@ Du kan få en ny nøgle automatisk ved at udfylde registreringsformularen.<br>',
     'mm_SystemDiagnostic' => 'Systemlogfiler',
     'mm_TimeSettings' => 'Dato og klokkeslæt',
     'mm_Update' => 'PBX-opdatering',
-
     // MO
     'mo_ApplicationShort4Dropdown' => 'Applikation',
     'mo_BeforeDeleteFirst' => 'Der er referencer til objektet - %represent%',
@@ -618,43 +598,10 @@ Du kan få en ny nøgle automatisk ved at udfylde registreringsformularen.<br>',
     'mo_SystemExten_voicemail' => 'Voice mail',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Det angivne nummer er allerede i brug for - %record%',
     'mo_ThisVlanIdNotUniqueForLanInterfacesModels' => 'Systemet har allerede en grænseflade med det samme VLAN',
-
-    // MS
-    'ms_MailEnableNotifications' => 'Brug alarmer',
-    'ms_MailSysadminEmail' => 'Systemadministrator-e-mail',
-    'ms_MissedCallBody' => 'Ubesvarede opkald - tekstmeddelelse',
-    'ms_MissedCallFooter' => 'Mistet opkald - kælder',
-    'ms_MissedCallSubject' => 'Ubesvarede opkald - emne med e-mail',
-    'ms_MissedCalls' => 'Ubesvarede opkald',
-    'ms_NotificationTemplatesMissed' => 'Mønster - ubesvarede opkald',
-    'ms_NotificationTemplatesVoicemail' => 'Skabelon - telefonsvarer',
-    'ms_SMTPCertCheck' => 'Kontroller servercertifikatet',
-    'ms_SMTPFromUsername' => 'Afsender navn',
-    'ms_SMTPHost' => 'SMTP vært',
-    'ms_SMTPPassword' => 'SMTP-adgangskode',
-    'ms_SMTPPort' => 'SMTP-port',
-    'ms_SMTPSenderAddress' => 'Afsender adresse',
-    'ms_SMTPSettings' => 'Meddelelsesindstillinger',
-    'ms_SMTPUseTLS' => 'Brug TLS',
-    'ms_SMTPUsername' => 'SMTP-login',
-    'ms_SentTestEmailAfterSaveTo' => 'Send en test-e-mail til denne adresse',
-    'ms_SuccessfulDeleted' => 'Data slettet',
-    'ms_SuccessfulSaved' => 'Indstillinger gemt',
-    'ms_SystemEmailForMissed' => 'E-mail for ubesvarede meddelelser',
-    'ms_TestEmailBody' => 'Hvis du har modtaget dette brev, er mailindstillingerne korrekte.',
-    'ms_TestEmailSentSuccessfully' => 'E-mail sendt',
-    'ms_TestEmailSubject' => 'Test af e-mail-afsendelse',
-    'ms_Voicemail' => 'Voicemail',
-    'ms_VoicemailBody' => 'Voicemail - meddelelsestekst',
-    'ms_VoicemailCommonEmail' => 'Unified Email til afsendelse af voicemails',
-    'ms_VoicemailFooter' => 'Telefonsvarer - kælder',
-    'ms_VoicemailSubject' => 'Voicemail - emnelinje',
-
     // MSG
     'msg_ErrorHeader' => 'Fejl',
     'msg_WarningHeader' => 'Opmærksomhed',
     'msg_infoHeader' => 'Information',
-
     // PASS
     'pass_CheckSSHPasswordDontMatch' => 'De indtastede adgangskoder til SSH stemmer ikke overens',
     'pass_CheckSSHPasswordEmpty' => 'Tomt felt: SSH',
@@ -663,12 +610,10 @@ Du kan få en ny nøgle automatisk ved at udfylde registreringsformularen.<br>',
     'pass_CheckWebAdminPasswordEmpty' => 'Feltet er tomt: WEB-adgangskode',
     'pass_CheckWebAdminPasswordSimple' => 'WEB-adgangskoden er for enkel.',
     'pass_CheckWebPassErrorChange' => 'Kunne ikke ændre adgangskoden',
-
     // QF
     'qf_Frequency' => 'Sendefrekvens i sekunder:',
     'qf_Qualify' => 'Support NAT-session',
     'qf_QualifyInstructions' => 'Når denne indstilling er aktiveret, sender PBX\'en SIP OPTIONS-pakker med den specificerede frekvens. Dette er nødvendigt for at understøtte NAT-tunneling på din router.',
-
     // RS
     'rs_CurrentCalls' => 'Aktive opkald',
     'rs_DateCall' => 'Startdato',
@@ -677,7 +622,6 @@ Du kan få en ny nøgle automatisk ved at udfylde registreringsformularen.<br>',
     'rs_ShutDownPhoneSystem' => 'Sluk MikoPBX',
     'rs_ShutdownRebootMessage' => 'Når du genstarter eller lukker, afbrydes alle aktuelle opkald.',
     'rs_Src' => 'der',
-
     // SD
     'sd_CapturePcap' => 'Optagelse af netværkspakker',
     'sd_CollectingInfo' => 'Indsamling af serviceoplysninger',
@@ -695,7 +639,6 @@ Du kan få en ny nøgle automatisk ved at udfylde registreringsformularen.<br>',
     'sd_filter' => 'Filter',
     'sd_lines' => 'Begrænse',
     'sd_offset' => 'Offset',
-
     // SF
     'sf_AddNewAudioFile' => 'Tilføj ny lydfil',
     'sf_AddNewSoundFile' => 'Tilføj ny lydfil',
@@ -723,7 +666,6 @@ Du kan få en ny nøgle automatisk ved at udfylde registreringsformularen.<br>',
     'sf_SoundFileDeleted' => 'Lydfil slettet',
     'sf_ValidationFileNotSelected' => 'Upload lydfil først',
     'sf_YourBrowserDoesNotSupportAudio' => 'Din browser understøtter ikke audio element',
-
     // SNTRY
     'sntry_ErrorFormEntry' => 'Felter udfyldes ikke, rigtigt og prøv at sende igen!',
     'sntry_ErrorGeneric' => 'Ukendt sendefejl. Prøv igen!',
@@ -734,7 +676,6 @@ Du kan få en ny nøgle automatisk ved at udfylde registreringsformularen.<br>',
     'sntry_Subtitle2' => 'Beskriv dine handlinger, der førte til denne fejl.',
     'sntry_SuccessMessage' => 'Tak for din hjælp!',
     'sntry_Title' => 'Der gik noget galt!',
-
     // ST
     'st_CallRecordingsRetention' => 'Opbevaring af samtaleregistreringer',
     'st_CategoryBackups' => 'Sikkerhedskopiering',
@@ -756,10 +697,8 @@ Du kan få en ny nøgle automatisk ved at udfylde registreringsformularen.<br>',
     'st_TabStorageInfo' => 'Lageroplysninger',
     'st_TabStorageSettings' => 'Lagerindstillinger',
     'st_Used' => 'brugt',
-
     // THIS
     'this_is' => 'Dette er ',
-
     // TS
     'ts_CurrentSettings' => 'Aktuelle indstillinger',
     'ts_CurrentSystemTime' => 'Nuværende tid',
@@ -769,7 +708,6 @@ Du kan få en ny nøgle automatisk ved at udfylde registreringsformularen.<br>',
     'ts_SystemTime' => 'Systemtid',
     'ts_TimeZone' => 'tidszone',
     'ts_ValidateDateTime' => 'Dato er forkert',
-
     // UPD
     'upd_AvailableUpdates' => 'Onlineopdateringer tilgængelige',
     'upd_Cancel' => 'annullering',

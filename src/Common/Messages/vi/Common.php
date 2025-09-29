@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Common translations
  */
-
-return [
     ' - Unmounting partitions...' => 'Đang gỡ bỏ các phân vùng đĩa được gắn…',
     ' - Unpacking img...' => 'Đang cập nhật phân vùng hệ thống…',
     '(default value = ' => '(mặc định = ',
@@ -242,7 +241,6 @@ return [
     'user' => 'người dùng',
     'version' => 'phiên bản',
     'Пропущенный вызов' => 'Bạn có một cuộc gọi nhỡ',
-
     // ADV
     'adv_AmiPasswordWeak' => 'Mật khẩu đơn giản của người dùng AMI <a href=\'%url%\'>%record%</a>',
     'adv_AvailableNewVersionModule' => 'Phiên bản mới của module %module% - %ver% đã có sẵn. Phiên bản hiện tại: %currentVer%',
@@ -270,7 +268,6 @@ return [
     'adv_WebPasswordWeak' => 'Mật khẩu quản trị viên đơn giản trong giao diện Web <a href=\'%url%\'>thay đổi</a>',
     'adv_YouUseDefaultSSHPassword' => 'Bạn sử dụng mật khẩu mặc định để truy cập SSH - <a href=\'%url%\'> thay đổi </a>',
     'adv_YouUseDefaultWebPassword' => 'Bạn sử dụng mật khẩu mặc định để vào giao diện quản trị - <a href=\'%url%\'> thay đổi </a>',
-
     // AM
     'am_AddNewUser' => 'Thêm người dùng AMI',
     'am_Description' => 'Bình luận',
@@ -329,7 +326,6 @@ return [
     'am_tooltip_user_write' => 'Gửi sự kiện người dùng, cập nhật trạng thái thiết bị',
     'am_tooltip_verbose_read' => 'Xem thông báo chi tiết và đầu ra gỡ lỗi',
     'am_tooltip_verbose_write' => 'Đặt mức chi tiết thông báo',
-
     // AUTH
     'auth_DefaultCloudPasswordInstructions' => 'Mật khẩu mặc định bằng mã định danh duy nhất của máy ảo trên đám mây',
     'auth_Login' => 'Tên đăng nhập',
@@ -340,7 +336,6 @@ return [
     'auth_ValidateLoginNotEmpty' => 'Nhập đăng nhập',
     'auth_ValidatePasswordNotEmpty' => 'Nhập mật khẩu',
     'auth_WrongLoginPassword' => 'Việc ủy quyền không thành công, bạn còn %attempts% lần thử',
-
     // BT
     'bt_Add' => 'Thêm',
     'bt_ApplyChangesToPBX' => 'Áp dụng thay đổi',
@@ -372,7 +367,6 @@ return [
     'bt_ToolTipRestore' => 'Khôi phục',
     'bt_ToolTipShowPassword' => 'Hiển thị/ẩn mật khẩu',
     'bt_ToolTipUpgradeOnline' => 'Cập nhật trực tuyến',
-
     // CAL
     'cal_ApplyBtn' => 'Để áp dụng',
     'cal_CancelBtn' => 'Hủy bỏ',
@@ -385,11 +379,9 @@ return [
     'cal_Yesterday' => 'Hôm qua',
     'cal_from' => 'với',
     'cal_to' => 'bởi',
-
     // CD
     'cd_Description' => 'Bình luận',
     'cd_Extensions' => 'Số điện thoại cho hàng đợi này',
-
     // CDR
     'cdr_And' => 'và',
     'cdr_ColumnDate' => 'Ngày gọi',
@@ -403,7 +395,6 @@ return [
     'cdr_FilteredEmptyTitle' => 'Không có bản ghi theo tiêu chí đã cho',
     'cdr_NoRecordsFound' => 'Không tìm thấy bản ghi',
     'cdr_TryChangingDate' => 'Thử thay đổi khoảng thời gian',
-
     // CF
     'cf_ColumnMode' => 'Chế độ',
     'cf_ColumnNote' => 'Một lưu ý',
@@ -420,11 +411,9 @@ return [
     'cf_Path' => 'Đường dẫn tệp',
     'cf_ResultFileHeader' => 'Nội dung tệp có thay đổi',
     'cf_UserEditHeader' => 'Trình chỉnh sửa để thực hiện thay đổi',
-
     // DBG
     'dbg_Header' => 'Thông tin gỡ lỗi',
     'dbg_NoDebugInformation' => 'Không có thông tin',
-
     // DT
     'dt_First' => '',
     'dt_Info' => 'Bài đăng từ _START_ đến _END_ trong số _TOTAL_',
@@ -435,7 +424,6 @@ return [
     'dt_Previous' => 'Trước đó',
     'dt_Search' => 'Tìm kiếm',
     'dt_TableIsEmpty' => 'Không có dữ liệu để hiển thị',
-
     // ER
     'er_Home' => 'Bắt đầu',
     'er_InternalServerError' => 'Lỗi nội bộ máy chủ',
@@ -444,13 +432,10 @@ return [
     'er_PageNotFoundDescription' => 'Trang này không tồn tại.',
     'er_Unauthorized' => 'Lỗi ủy quyền',
     'er_UnauthorizedDescription' => 'Bạn không có quyền truy cập vào trang này.',
-
     // ET
     'et_ReadDocumentation' => 'Đọc tài liệu',
-
     // LANG
     'lang_HelpWithTranslateIt' => 'Trợ giúp với Dịch thuật MikoPBX',
-
     // LIC
     'lic_ActivateCoupon' => 'Kích hoạt phiếu giảm giá',
     'lic_ActivateCouponButton' => 'Kích hoạt phiếu giảm giá',
@@ -531,23 +516,19 @@ Bạn có thể tự động nhận khóa mới bằng cách điền vào biểu
     'lic_ValidateCouponEmpty' => 'Trường bắt buộc không được điền - phiếu giảm giá',
     'lic_ValidateLicenseKeyEmpty' => 'Trường bắt buộc không được điền - Khóa giấy phép',
     'lic_WrongLicenseKeyOrEmpty' => 'Key bản quyền nhập sai',
-
     // LOC
     'loc_NoResult' => 'Không tìm thấy gì',
-
     // LOG
     'log_CaptureMessage' => 'Bắt đầu thu thập các gói mạng và thực hiện cuộc gọi hoặc hành động khác gây ra lỗi.
 <br>Hệ thống sẽ lưu tất cả các gói đi vào thời điểm này thông qua card mạng để phân tích thêm.',
     'log_DownloadLogs' => 'Tải xuống tất cả nhật ký hệ thống',
     'log_StartCapturePCAP' => 'Khởi đầu',
     'log_StopCapturePCAP' => 'Dừng lại và tải xuống',
-
     // ML
     'ml_EmailNotSended' => 'Tin nhắn không được gửi',
     'ml_EmailSendedSuccess' => 'Email đã gửi',
     'ml_EmailTestBody' => 'Xin chào, nếu thư này có trong thư của bạn, thì cài đặt chính xác.',
     'ml_EmailTestSubject' => 'Thư kiểm tra từ hệ thống điện thoại của bạn',
-
     // MM
     'mm_ApiKeys' => 'Khóa API',
     'mm_AsteriskManagers' => 'Truy cập AMI',
@@ -583,7 +564,6 @@ Bạn có thể tự động nhận khóa mới bằng cách điền vào biểu
     'mm_SystemDiagnostic' => 'Nhật ký hệ thống',
     'mm_TimeSettings' => 'Ngày giờ',
     'mm_Update' => 'cập nhật tổng đài',
-
     // MO
     'mo_ApplicationShort4Dropdown' => 'Ứng dụng',
     'mo_BeforeDeleteFirst' => 'Có tham chiếu đến đối tượng - %represent%',
@@ -618,43 +598,10 @@ Bạn có thể tự động nhận khóa mới bằng cách điền vào biểu
     'mo_SystemExten_voicemail' => 'Hộp thư thoại',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Số lượng được chỉ định đã được sử dụng cho - %record%',
     'mo_ThisVlanIdNotUniqueForLanInterfacesModels' => 'Hệ thống đã có giao diện với cùng Vlan',
-
-    // MS
-    'ms_MailEnableNotifications' => 'Sử dụng cảnh báo',
-    'ms_MailSysadminEmail' => 'Quản trị viên hệ thống Email',
-    'ms_MissedCallBody' => 'Cuộc gọi nhỡ - tin nhắn văn bản',
-    'ms_MissedCallFooter' => 'Cuộc gọi nhỡ - Tầng hầm',
-    'ms_MissedCallSubject' => 'Cuộc gọi nhỡ - chủ đề email',
-    'ms_MissedCalls' => 'Cuộc gọi nhỡ',
-    'ms_NotificationTemplatesMissed' => 'Mẫu - cuộc gọi nhỡ',
-    'ms_NotificationTemplatesVoicemail' => 'Mẫu - Thư thoại',
-    'ms_SMTPCertCheck' => 'Kiểm tra chứng chỉ máy chủ',
-    'ms_SMTPFromUsername' => 'Tên người gửi',
-    'ms_SMTPHost' => 'Máy chủ SMTP',
-    'ms_SMTPPassword' => 'Mật khẩu SMTP',
-    'ms_SMTPPort' => 'Cổng SMTP',
-    'ms_SMTPSenderAddress' => 'Địa chỉ người gửi',
-    'ms_SMTPSettings' => 'Cài đặt tin nhắn',
-    'ms_SMTPUseTLS' => 'Sử dụng TLS',
-    'ms_SMTPUsername' => 'Đăng nhập SMTP',
-    'ms_SentTestEmailAfterSaveTo' => 'Gửi email kiểm tra đến địa chỉ này',
-    'ms_SuccessfulDeleted' => 'Dữ liệu đã bị xóa',
-    'ms_SuccessfulSaved' => 'Đã lưu cài đặt',
-    'ms_SystemEmailForMissed' => 'Email cho các thông báo bị nhỡ',
-    'ms_TestEmailBody' => 'Nếu bạn nhận được thư này, thì cài đặt thư là chính xác.',
-    'ms_TestEmailSentSuccessfully' => 'Email đã gửi',
-    'ms_TestEmailSubject' => 'Kiểm tra gửi thư',
-    'ms_Voicemail' => 'Thư thoại',
-    'ms_VoicemailBody' => 'Thư thoại - tin nhắn văn bản',
-    'ms_VoicemailCommonEmail' => 'Email hợp nhất để gửi thư thoại',
-    'ms_VoicemailFooter' => 'Thư thoại - tầng hầm',
-    'ms_VoicemailSubject' => 'Thư thoại - dòng chủ đề',
-
     // MSG
     'msg_ErrorHeader' => 'lỗi',
     'msg_WarningHeader' => 'Chú ý',
     'msg_infoHeader' => 'Thông tin',
-
     // PASS
     'pass_CheckSSHPasswordDontMatch' => 'Mật khẩu đã nhập cho SSH không khớp',
     'pass_CheckSSHPasswordEmpty' => 'Trường trống: SSH',
@@ -663,12 +610,10 @@ Bạn có thể tự động nhận khóa mới bằng cách điền vào biểu
     'pass_CheckWebAdminPasswordEmpty' => 'Trường trống: Mật khẩu WEB',
     'pass_CheckWebAdminPasswordSimple' => 'Mật khẩu WEB quá đơn giản.',
     'pass_CheckWebPassErrorChange' => 'Không thay đổi được mật khẩu',
-
     // QF
     'qf_Frequency' => 'Tần suất gửi tính bằng giây:',
     'qf_Qualify' => 'Hỗ trợ phiên NAT',
     'qf_QualifyInstructions' => 'Khi tùy chọn này được bật, PBX sẽ gửi các gói SIP OPTIONS ở tần số đã chỉ định. Điều này là cần thiết để hỗ trợ đường hầm NAT trên bộ định tuyến của bạn.',
-
     // RS
     'rs_CurrentCalls' => 'Cuộc gọi hoạt động',
     'rs_DateCall' => 'Ngày bắt đầu',
@@ -677,7 +622,6 @@ Bạn có thể tự động nhận khóa mới bằng cách điền vào biểu
     'rs_ShutDownPhoneSystem' => 'Tắt MikoPBX',
     'rs_ShutdownRebootMessage' => 'Khi khởi động lại hoặc tắt, tất cả các cuộc gọi hiện tại sẽ bị gián đoạn.',
     'rs_Src' => 'Ai',
-
     // SD
     'sd_CapturePcap' => 'Chụp các gói mạng',
     'sd_CollectingInfo' => 'Thu thập thông tin dịch vụ',
@@ -695,7 +639,6 @@ Bạn có thể tự động nhận khóa mới bằng cách điền vào biểu
     'sd_filter' => 'Bộ lọc',
     'sd_lines' => 'Giới hạn',
     'sd_offset' => 'Bù lại',
-
     // SF
     'sf_AddNewAudioFile' => 'Thêm tệp âm thanh mới',
     'sf_AddNewSoundFile' => 'Thêm tập tin âm thanh mới',
@@ -723,7 +666,6 @@ Bạn có thể tự động nhận khóa mới bằng cách điền vào biểu
     'sf_ValidationFileNameIsEmpty' => 'Tên tập tin bị thiếu',
     'sf_ValidationFileNotSelected' => 'Tải xuống tệp âm thanh trước',
     'sf_YourBrowserDoesNotSupportAudio' => 'Trình duyệt của bạn không hỗ trợ phần tử âm thanh',
-
     // SNTRY
     'sntry_ErrorFormEntry' => 'Các trường không được điền, sửa và cố gắng gửi lại!',
     'sntry_ErrorGeneric' => 'Lỗi gửi không xác định. Hãy thử lại!',
@@ -734,7 +676,6 @@ Bạn có thể tự động nhận khóa mới bằng cách điền vào biểu
     'sntry_Subtitle2' => 'Vui lòng mô tả hành động của bạn dẫn đến lỗi này.',
     'sntry_SuccessMessage' => 'Cảm ơn sự giúp đỡ của bạn!',
     'sntry_Title' => 'Đã xảy ra lỗi!',
-
     // ST
     'st_CallRecordingsRetention' => 'Lưu trữ bản ghi cuộc gọi',
     'st_CategoryBackups' => 'Bản sao lưu',
@@ -756,10 +697,8 @@ Bạn có thể tự động nhận khóa mới bằng cách điền vào biểu
     'st_TabStorageInfo' => 'Thông tin lưu trữ',
     'st_TabStorageSettings' => 'Cài đặt lưu trữ',
     'st_Used' => 'đã sử dụng',
-
     // THIS
     'this_is' => 'Đây là ',
-
     // TS
     'ts_CurrentSettings' => 'Cài đặt hiện tại',
     'ts_CurrentSystemTime' => 'Thời gian hiện tại',
@@ -769,7 +708,6 @@ Bạn có thể tự động nhận khóa mới bằng cách điền vào biểu
     'ts_SystemTime' => 'Thời gian hệ thống',
     'ts_TimeZone' => 'Múi giờ',
     'ts_ValidateDateTime' => 'Ngày không chính xác',
-
     // UPD
     'upd_AvailableUpdates' => 'Cập nhật trực tuyến có sẵn',
     'upd_Cancel' => 'Hủy bỏ',

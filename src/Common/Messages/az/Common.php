@@ -1,11 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Common translations
  */
-
-return [
-  
-
     ' - Unmounting partitions...' => 'Quraşdırılmış disk bölmələri sökülür…',
     ' - Unpacking img...' => 'Sistem bölməsi yenilənir…',
     '(default value = ' => '(standart = ',
@@ -244,7 +241,6 @@ return [
     'user' => 'istifadəçi',
     'version' => 'versiya',
     'Пропущенный вызов' => 'Buraxılmış zənginiz var',
-
     // ADV
     'adv_AmiPasswordWeak' => 'AMI istifadəçisi üçün sadə parol <a href=\'%url%\'>%record%</a>',
     'adv_AvailableNewVersionModule' => '%module% - %ver% modulunun yeni versiyası mövcuddur. Cari versiya: %currentVer%',
@@ -272,7 +268,6 @@ return [
     'adv_WebPasswordWeak' => 'Veb interfeysində sadə administrator parolu <a href=\'%url%\'>dəyişiklik</a>',
     'adv_YouUseDefaultSSHPassword' => 'Siz SSH girişi üçün standart paroldan istifadə edirsiniz - <a href=\'%url%\'>dəyişiklik</a>',
     'adv_YouUseDefaultWebPassword' => 'Siz inzibati interfeysə daxil olmaq üçün standart paroldan istifadə edirsiniz - <a href=\'%url%\'>dəyişiklik</a>',
-
     // AM
     'am_AddNewUser' => 'Yeni AMI istifadəçisi əlavə et',
     'am_CopyRecord' => 'Kopya',
@@ -331,7 +326,6 @@ return [
     'am_tooltip_user_write' => 'İstifadəçi hadisələrinin göndərilməsi, cihaz statuslarının yenilənməsi',
     'am_tooltip_verbose_read' => 'Ətraflı mesajlar və debug çıxışına baxış',
     'am_tooltip_verbose_write' => 'Mesaj detallığı səviyyəsinin təyin edilməsi',
-
     // AUTH
     'auth_DefaultCloudPasswordInstructions' => 'Standart parol buluddakı virtual maşının unikal identifikatoruna bərabərdir',
     'auth_Login' => 'Daxil ol',
@@ -342,7 +336,6 @@ return [
     'auth_ValidateLoginNotEmpty' => 'Giriş daxil edin',
     'auth_ValidatePasswordNotEmpty' => 'parol daxil edin',
     'auth_WrongLoginPassword' => 'Avtorizasiya uğursuz oldu, %attempts% cəhdiniz qalıb',
-
     // BT
     'bt_Add' => 'Əlavə et',
     'bt_ApplyChangesToPBX' => 'Dəyişiklikləri Tətbiq edin',
@@ -374,7 +367,6 @@ return [
     'bt_ToolTipRestore' => 'Yenidən qurun',
     'bt_ToolTipShowPassword' => 'Parolu göstər/gizlə',
     'bt_ToolTipUpgradeOnline' => 'Onlayn yeniləyin',
-
     // CAL
     'cal_ApplyBtn' => 'Müraciət edin',
     'cal_CancelBtn' => 'Ləğv et',
@@ -387,11 +379,9 @@ return [
     'cal_Yesterday' => 'Dünən',
     'cal_from' => 'ilə',
     'cal_to' => 'haqqında',
-
     // CD
     'cd_Description' => 'Şərh',
     'cd_Extensions' => 'Bu növbə üçün telefon nömrəsi',
-
     // CDR
     'cdr_And' => 'və',
     'cdr_ColumnDate' => 'Zəng tarixi',
@@ -405,7 +395,6 @@ return [
     'cdr_FilteredEmptyTitle' => 'Verilən meyarlar üzrə qeyd yoxdur',
     'cdr_NoRecordsFound' => 'Qeydlər tapılmadı',
     'cdr_TryChangingDate' => 'Tarix intervalını dəyişdirməyə çalışın',
-
     // CF
     'cf_ColumnMode' => 'Rejim',
     'cf_ColumnNote' => 'Qeyd',
@@ -422,11 +411,9 @@ return [
     'cf_Path' => 'Fayla gedən yol',
     'cf_ResultFileHeader' => 'Dəyişikliklərlə fayl məzmunu',
     'cf_UserEditHeader' => 'Dəyişikliklər etmək üçün redaktor',
-
     // DBG
     'dbg_Header' => 'Sazlama Məlumatı',
     'dbg_NoDebugInformation' => 'İnformasiya yoxdur',
-
     // DT
     'dt_First' => '',
     'dt_Info' => '_TOTAL_-dan _START_-dən _END_-ə qədər qeydlər',
@@ -437,7 +424,6 @@ return [
     'dt_Previous' => 'Əvvəlki',
     'dt_Search' => 'Axtar',
     'dt_TableIsEmpty' => 'Göstəriləcək məlumat yoxdur',
-
     // ER
     'er_Home' => 'Başlamaq üçün gedin',
     'er_InternalServerError' => 'Daxili Server Xətası',
@@ -446,13 +432,10 @@ return [
     'er_PageNotFoundDescription' => 'Bu səhifə mövcud deyil.',
     'er_Unauthorized' => 'Avtorizasiya xətası',
     'er_UnauthorizedDescription' => 'Sizin bu səhifəyə girişiniz yoxdur.',
-
     // ET
     'et_ReadDocumentation' => 'Sənədlərlə tanış olun',
-
     // LANG
     'lang_HelpWithTranslateIt' => 'MikoPBX tərcüməsində kömək edin',
-
     // LIC
     'lic_ActivateCoupon' => 'Kuponun aktivləşdirilməsi',
     'lic_ActivateCouponButton' => 'Kuponu aktivləşdirin',
@@ -533,23 +516,19 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'lic_ValidateCouponEmpty' => 'Tələb olunan sahə doldurulmayıb - kupon',
     'lic_ValidateLicenseKeyEmpty' => 'Tələb olunan sahə doldurulmayıb - Lisenziya açarı',
     'lic_WrongLicenseKeyOrEmpty' => 'Lisenziya açarı səhv daxil edilib',
-
     // LOC
     'loc_NoResult' => 'Heç nə tapılmadı',
-
     // LOG
     'log_CaptureMessage' => 'Şəbəkə paketlərini toplamağa başlayın və uğursuzluğa səbəb olan zəng və ya digər hərəkətləri edin. 
 <br>Sistem bu anda şəbəkə kartından keçən bütün paketləri əlavə təhlil üçün saxlayacaq.',
     'log_DownloadLogs' => 'Bütün sistem qeydlərini yükləyin',
     'log_StartCapturePCAP' => 'Başlamaq',
     'log_StopCapturePCAP' => 'Dayan və endir',
-
     // ML
     'ml_EmailNotSended' => 'Mesaj göndərilmədi',
     'ml_EmailSendedSuccess' => 'Məktub göndərildi',
     'ml_EmailTestBody' => 'Salam, əgər bu məktub sizin poçtunuzdadırsa, deməli, parametrlər düzgündür.',
     'ml_EmailTestSubject' => 'Telefon sisteminizdən e-poçtu sınayın',
-
     // MM
     'mm_ApiKeys' => 'API açarları',
     'mm_AsteriskManagers' => 'AMI Girişi',
@@ -585,7 +564,6 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'mm_SystemDiagnostic' => 'Sistem qeydləri',
     'mm_TimeSettings' => 'Tarix və saat',
     'mm_Update' => 'PBX yeniləməsi',
-
     // MO
     'mo_ApplicationShort4Dropdown' => 'Ərizə',
     'mo_BeforeDeleteFirst' => 'Obyektə istinadlar var - %represent%',
@@ -620,43 +598,10 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'mo_SystemExten_voicemail' => 'Səsli poçt',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Göstərilən nömrə artıq %record% üçün istifadə olunur',
     'mo_ThisVlanIdNotUniqueForLanInterfacesModels' => 'Sistem artıq eyni VLAN ilə interfeysə malikdir',
-
-    // MS
-    'ms_MailEnableNotifications' => 'Xəbərdarlıqlardan istifadə edin',
-    'ms_MailSysadminEmail' => 'Sistem administratoru e-poçtu',
-    'ms_MissedCallBody' => 'Buraxılmış zəng - məktub mətni',
-    'ms_MissedCallFooter' => 'Buraxılmış Zəng - Zirzəmi',
-    'ms_MissedCallSubject' => 'Buraxılmış zəng - e-poçt mövzusu',
-    'ms_MissedCalls' => 'Buraxılmış zənglər',
-    'ms_NotificationTemplatesMissed' => 'Şablon - buraxılmış zənglər',
-    'ms_NotificationTemplatesVoicemail' => 'Şablon - səsli poçt',
-    'ms_SMTPCertCheck' => 'Server sertifikatını yoxlayın',
-    'ms_SMTPFromUsername' => 'Göndərən adı',
-    'ms_SMTPHost' => 'SMTP hostu',
-    'ms_SMTPPassword' => 'SMTP parolu',
-    'ms_SMTPPort' => 'SMTP portu',
-    'ms_SMTPSenderAddress' => 'Göndərənin ünvanı',
-    'ms_SMTPSettings' => 'Mesajlaşma parametrləri',
-    'ms_SMTPUseTLS' => 'TLS istifadə edin',
-    'ms_SMTPUsername' => 'SMTP girişi',
-    'ms_SentTestEmailAfterSaveTo' => 'Bu ünvana test e-poçtu göndərin',
-    'ms_SuccessfulDeleted' => 'Məlumatlar silindi',
-    'ms_SuccessfulSaved' => 'Parametrlər saxlandı',
-    'ms_SystemEmailForMissed' => 'Buraxılmış bildirişlər üçün e-poçt',
-    'ms_TestEmailBody' => 'Bu e-məktubu almısınızsa, poçt parametrləriniz düzgündür.',
-    'ms_TestEmailSentSuccessfully' => 'Məktub göndərildi',
-    'ms_TestEmailSubject' => 'Poçt testinin göndərilməsi',
-    'ms_Voicemail' => 'Səsli poçt',
-    'ms_VoicemailBody' => 'Səsli poçt - məktub mətni',
-    'ms_VoicemailCommonEmail' => 'Səsli poçt mesajları göndərmək üçün Tək E-poçt',
-    'ms_VoicemailFooter' => 'Səsli poçt - zirzəmi',
-    'ms_VoicemailSubject' => 'Səsli poçt - e-poçt mövzusu',
-
     // MSG
     'msg_ErrorHeader' => 'Xəta',
     'msg_WarningHeader' => 'Diqqət',
     'msg_infoHeader' => 'Məlumat',
-
     // PASS
     'pass_CheckSSHPasswordDontMatch' => 'SSH üçün daxil edilmiş parollar uyğun gəlmir',
     'pass_CheckSSHPasswordEmpty' => 'Sahə boş: SSH',
@@ -665,12 +610,10 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'pass_CheckWebAdminPasswordEmpty' => 'Sahə boşdur: WEB parolu',
     'pass_CheckWebAdminPasswordSimple' => 'WEB parolu çox sadədir.',
     'pass_CheckWebPassErrorChange' => 'Parolu dəyişmək alınmadı',
-
     // QF
     'qf_Frequency' => 'Tezliyi saniyələrlə göndərin:',
     'qf_Qualify' => 'NAT sessiyasını qoruyun',
     'qf_QualifyInstructions' => 'Bu seçim aktiv olduqda, MikoPBX SIP OPTIONS paketlərini müəyyən olunmuş tezlikdə göndərəcək. Bu, marşrutlaşdırıcınızda NAT tunelini dəstəkləmək üçün tələb olunur.',
-
     // RS
     'rs_CurrentCalls' => 'Aktiv zənglər',
     'rs_DateCall' => 'Başlama tarixi',
@@ -679,7 +622,6 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'rs_ShutDownPhoneSystem' => 'MikoPBX-i söndürün',
     'rs_ShutdownRebootMessage' => 'Yenidən başladıqda və ya bağlandıqda bütün davam edən zənglər dayandırılacaq.',
     'rs_Src' => 'Kim',
-
     // SD
     'sd_CapturePcap' => 'Şəbəkə paketlərinin tutulması',
     'sd_CollectingInfo' => 'Xidmət məlumatlarının toplanması',
@@ -697,7 +639,6 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'sd_filter' => 'Filtr',
     'sd_lines' => 'Limit',
     'sd_offset' => 'Ofset',
-
     // SF
     'sf_AddNewAudioFile' => 'Yeni audio fayl əlavə et',
     'sf_AddNewSoundFile' => 'Yeni səs faylı əlavə edin',
@@ -725,7 +666,6 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'sf_ValidationFileNameIsEmpty' => 'Fayl adı göstərilməyib',
     'sf_ValidationFileNotSelected' => 'Əvvəlcə audio faylı yükləyin',
     'sf_YourBrowserDoesNotSupportAudio' => 'Brauzeriniz audio elementini dəstəkləmir',
-
     // SNTRY
     'sntry_ErrorFormEntry' => 'Sahələr doldurulmayıb, düzəldin və yenidən göndərməyə çalışın!',
     'sntry_ErrorGeneric' => 'Göndərmə zamanı naməlum xəta. Yenidən cəhd elə!',
@@ -736,7 +676,6 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'sntry_Subtitle2' => 'Bu xətaya səbəb olan hərəkətlərinizi təsvir edin.',
     'sntry_SuccessMessage' => 'Yardımınız üçün təşəkkür edirik!',
     'sntry_Title' => 'Nəsə xəta baş verdi!',
-
     // ST
     'st_CallRecordingsRetention' => 'Zəng qeydlərinin saxlanması',
     'st_CategoryBackups' => 'Ehtiyat nüsxələr',
@@ -758,10 +697,8 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'st_TabStorageInfo' => 'Yaddaş məlumatları',
     'st_TabStorageSettings' => 'Saxlama parametrləri',
     'st_Used' => 'məşğul',
-
     // THIS
     'this_is' => 'Budur ',
-
     // TS
     'ts_CurrentSettings' => 'Cari Parametrlər',
     'ts_CurrentSystemTime' => 'Cari vaxt',
@@ -771,7 +708,6 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'ts_SystemTime' => 'Sistem vaxtı',
     'ts_TimeZone' => 'Vaxt zonası',
     'ts_ValidateDateTime' => 'Tarix səhvdir',
-
     // UPD
     'upd_AvailableUpdates' => 'Onlayn yeniləmələr mövcuddur',
     'upd_Cancel' => 'Ləğv et',

@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Common translations
  */
-
-return [
     ' - Unmounting partitions...' => 'Se demontează partițiile de disc montate…',
     ' - Unpacking img...' => 'Se actualizează partiția de sistem…',
     '(default value = ' => '(implicit = ',
@@ -242,7 +241,6 @@ return [
     'user' => 'utilizator',
     'version' => 'Versiune',
     'Пропущенный вызов' => 'Ai un apel ratat',
-
     // ADV
     'adv_AmiPasswordWeak' => 'Parolă simplă pentru utilizatorul AMI <a href=\'%url%\'>%record%</a>',
     'adv_AvailableNewVersionModule' => 'Noua versiune a modulului %module% - %ver% este disponibilă. Versiunea curentă: %currentVer%',
@@ -270,7 +268,6 @@ return [
     'adv_WebPasswordWeak' => 'Parola simplă de administrator în interfața web <a href=\'%url%\'>schimbați</a>',
     'adv_YouUseDefaultSSHPassword' => 'Utilizați parola implicită pentru accesul SSH - <a href=\'%url%\'>modificați</a>',
     'adv_YouUseDefaultWebPassword' => 'Utilizați parola implicită pentru a vă conecta la interfața administrativă - <a href=\'%url%\'>schimbați</a>',
-
     // AM
     'am_AddNewUser' => 'Adăugați AMI utilizator',
     'am_CopyRecord' => 'Copie',
@@ -329,7 +326,6 @@ return [
     'am_tooltip_user_write' => 'Trimiteți evenimente utilizator, actualizați stările dispozitivelor',
     'am_tooltip_verbose_read' => 'Visualizați mesajele detaliate și ieșirea de depanare',
     'am_tooltip_verbose_write' => 'Setați nivelul de detaliu al mesajelor',
-
     // AUTH
     'auth_DefaultCloudPasswordInstructions' => 'Parola implicită este egală cu identificatorul unic al mașinii virtuale din cloud',
     'auth_Login' => 'Log in',
@@ -340,7 +336,6 @@ return [
     'auth_ValidateLoginNotEmpty' => 'Introduceți autentificare',
     'auth_ValidatePasswordNotEmpty' => 'Introdu parola',
     'auth_WrongLoginPassword' => 'Autorizarea nu a reușit, mai aveți %attempts% încercări',
-
     // BT
     'bt_Add' => 'Adăuga',
     'bt_ApplyChangesToPBX' => 'Aplica schimbarile',
@@ -372,7 +367,6 @@ return [
     'bt_ToolTipRestore' => 'Restabili',
     'bt_ToolTipShowPassword' => 'Afișați/ascundeți parola',
     'bt_ToolTipUpgradeOnline' => 'Actualizare online',
-
     // CAL
     'cal_ApplyBtn' => 'Aplica',
     'cal_CancelBtn' => 'Anulează',
@@ -385,11 +379,9 @@ return [
     'cal_Yesterday' => 'ieri',
     'cal_from' => 'cu',
     'cal_to' => 'de catre',
-
     // CD
     'cd_Description' => 'Un comentariu',
     'cd_Extensions' => 'Numărul de telefon pentru această coadă',
-
     // CDR
     'cdr_And' => 'și',
     'cdr_ColumnDate' => 'Data apelului',
@@ -403,7 +395,6 @@ return [
     'cdr_FilteredEmptyTitle' => 'Nu au fost găsite înregistrări pentru criteriile specificate',
     'cdr_NoRecordsFound' => 'Nu au fost găsite înregistrări',
     'cdr_TryChangingDate' => 'Încercați să schimbați intervalul de date',
-
     // CF
     'cf_ColumnMode' => 'modul',
     'cf_ColumnNote' => 'O notă',
@@ -420,11 +411,9 @@ return [
     'cf_Path' => 'Calea către fișier',
     'cf_ResultFileHeader' => 'Conținutul fișierului cu modificări',
     'cf_UserEditHeader' => 'Editor pentru a face modificări',
-
     // DBG
     'dbg_Header' => 'Informații de depanare',
     'dbg_NoDebugInformation' => 'Nici o informatie',
-
     // DT
     'dt_First' => '',
     'dt_Info' => 'Înregistrări de la _START_ la _END_ din _TOTAL_',
@@ -435,7 +424,6 @@ return [
     'dt_Previous' => 'Anterior',
     'dt_Search' => 'Căutare',
     'dt_TableIsEmpty' => 'Nu există date de afișat',
-
     // ER
     'er_Home' => 'Du-te la început',
     'er_InternalServerError' => 'Eroare internă de server',
@@ -444,13 +432,10 @@ return [
     'er_PageNotFoundDescription' => 'Această pagină nu există.',
     'er_Unauthorized' => 'Eroare de autorizare',
     'er_UnauthorizedDescription' => 'Nu aveți acces la această pagină.',
-
     // ET
     'et_ReadDocumentation' => 'Citiți documentația',
-
     // LANG
     'lang_HelpWithTranslateIt' => 'Ajutați la traducerea MikoPBX',
-
     // LIC
     'lic_ActivateCoupon' => 'Activarea cuponului',
     'lic_ActivateCouponButton' => 'Activează cuponul',
@@ -531,23 +516,19 @@ Puteți obține automat o cheie nouă completând formularul de înregistrare.<b
     'lic_ValidateCouponEmpty' => 'Câmpul obligatoriu nu este completat - cupon',
     'lic_ValidateLicenseKeyEmpty' => 'Câmpul obligatoriu nu este completat - Cheia de licență',
     'lic_WrongLicenseKeyOrEmpty' => 'Cheia de licență a fost introdusă incorect',
-
     // LOC
     'loc_NoResult' => 'Nu s-a găsit nimic',
-
     // LOG
     'log_CaptureMessage' => 'Porniți colectarea pachetelor de rețea și faceți un apel sau o altă acțiune care să cauzeze o defecțiune.
 <br>Sistemul va salva toate pachetele care trec prin placa de rețea în acest moment pentru analiză ulterioară.',
     'log_DownloadLogs' => 'Descărcați toate jurnalele de sistem',
     'log_StartCapturePCAP' => 'Start',
     'log_StopCapturePCAP' => 'Opriți și descărcați',
-
     // ML
     'ml_EmailNotSended' => 'Mesajul nu a fost trimis',
     'ml_EmailSendedSuccess' => 'E-mail trimis',
     'ml_EmailTestBody' => 'Bună ziua, dacă această scrisoare este în e-mailul dvs., atunci setările sunt corecte.',
     'ml_EmailTestSubject' => 'E-mail de test de la sistemul dvs. telefonic',
-
     // MM
     'mm_ApiKeys' => 'Chei API',
     'mm_AsteriskManagers' => 'Acces AMI',
@@ -583,7 +564,6 @@ Puteți obține automat o cheie nouă completând formularul de înregistrare.<b
     'mm_SystemDiagnostic' => 'Jurnalele sistemului',
     'mm_TimeSettings' => 'Data și ora',
     'mm_Update' => 'Actualizare PBX',
-
     // MO
     'mo_ApplicationShort4Dropdown' => 'Aplicație',
     'mo_BeforeDeleteFirst' => 'Există referințe la obiect - %represent%',
@@ -618,43 +598,10 @@ Puteți obține automat o cheie nouă completând formularul de înregistrare.<b
     'mo_SystemExten_voicemail' => 'Mesagerie vocală',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Numărul specificat este deja în uz pentru - %record%',
     'mo_ThisVlanIdNotUniqueForLanInterfacesModels' => 'Sistemul are deja o interfață cu același VLAN',
-
-    // MS
-    'ms_MailEnableNotifications' => 'Utilizați alertele',
-    'ms_MailSysadminEmail' => 'E-mailul administratorului de sistem',
-    'ms_MissedCallBody' => 'Apel ratat - textul mesajului',
-    'ms_MissedCallFooter' => 'Apel ratat - subsol',
-    'ms_MissedCallSubject' => 'Apel ratat - subiectul e-mailului',
-    'ms_MissedCalls' => 'Apeluri ratate',
-    'ms_NotificationTemplatesMissed' => 'Șablon - apeluri ratate',
-    'ms_NotificationTemplatesVoicemail' => 'Șablon - mesagerie vocală',
-    'ms_SMTPCertCheck' => 'Verificați certificatul serverului',
-    'ms_SMTPFromUsername' => 'Numele expeditorului',
-    'ms_SMTPHost' => 'Gazda SMTP',
-    'ms_SMTPPassword' => 'Parola SMTP',
-    'ms_SMTPPort' => 'Port SMTP',
-    'ms_SMTPSenderAddress' => 'Adresa expeditorului',
-    'ms_SMTPSettings' => 'Setări de trimitere a mesajelor',
-    'ms_SMTPUseTLS' => 'Utilizați TLS',
-    'ms_SMTPUsername' => 'Autentificare SMTP',
-    'ms_SentTestEmailAfterSaveTo' => 'Trimiteți un mesaj de testare la această adresă',
-    'ms_SuccessfulDeleted' => 'Date șterse',
-    'ms_SuccessfulSaved' => 'Setările au fost salvate',
-    'ms_SystemEmailForMissed' => 'E-mail pentru notificări de apeluri ratate',
-    'ms_TestEmailBody' => 'Dacă ați primit acest mesaj, setările de e-mail sunt corecte.',
-    'ms_TestEmailSentSuccessfully' => 'E-mail trimis',
-    'ms_TestEmailSubject' => 'Testarea trimiterii e-mailurilor',
-    'ms_Voicemail' => 'Mesagerie vocală',
-    'ms_VoicemailBody' => 'Mesagerie vocală - textul mesajului',
-    'ms_VoicemailCommonEmail' => 'E-mail unificat pentru trimiterea mesajelor de voce',
-    'ms_VoicemailFooter' => 'Mesagerie vocală - subsol',
-    'ms_VoicemailSubject' => 'Mesagerie vocală - linia de subiect',
-
     // MSG
     'msg_ErrorHeader' => 'Eroare',
     'msg_WarningHeader' => 'Atenţie',
     'msg_infoHeader' => 'Informații',
-
     // PASS
     'pass_CheckSSHPasswordDontMatch' => 'Parolele introduse pentru SSH nu se potrivesc',
     'pass_CheckSSHPasswordEmpty' => 'Câmp gol: SSH',
@@ -663,12 +610,10 @@ Puteți obține automat o cheie nouă completând formularul de înregistrare.<b
     'pass_CheckWebAdminPasswordEmpty' => 'Câmpul este gol: parola pentru WEB',
     'pass_CheckWebAdminPasswordSimple' => 'Parola pentru WEB este prea simplă.',
     'pass_CheckWebPassErrorChange' => 'Nu s-a putut schimba parola',
-
     // QF
     'qf_Frequency' => 'Frecvența de trimitere în secunde:',
     'qf_Qualify' => 'Mențineți sesiunea NAT',
     'qf_QualifyInstructions' => 'Când această opțiune este activată, PBX va trimite pachete SIP OPTIONS la frecvența specificată. Acest lucru este necesar pentru a oferi suport pentru tunelarea NAT pe routerul dvs.',
-
     // RS
     'rs_CurrentCalls' => 'Apeluri active',
     'rs_DateCall' => 'Data de început',
@@ -677,7 +622,6 @@ Puteți obține automat o cheie nouă completând formularul de înregistrare.<b
     'rs_ShutDownPhoneSystem' => 'Opriți MikoPBX',
     'rs_ShutdownRebootMessage' => 'La repornire sau închidere, toate apelurile curente vor fi întrerupte.',
     'rs_Src' => 'De',
-
     // SD
     'sd_CapturePcap' => 'Capturarea pachetelor de rețea',
     'sd_CollectingInfo' => 'Colectarea informațiilor de servicii',
@@ -695,7 +639,6 @@ Puteți obține automat o cheie nouă completând formularul de înregistrare.<b
     'sd_filter' => 'Filtru',
     'sd_lines' => 'Limita',
     'sd_offset' => 'Offset',
-
     // SF
     'sf_AddNewAudioFile' => 'Adăugați fișier audio nou',
     'sf_AddNewSoundFile' => 'Adăugați un fișier de sunet nou',
@@ -723,7 +666,6 @@ Puteți obține automat o cheie nouă completând formularul de înregistrare.<b
     'sf_ValidationFileNameIsEmpty' => 'Numele fișierului nu este specificat',
     'sf_ValidationFileNotSelected' => 'Descărcați mai întâi fișierul audio',
     'sf_YourBrowserDoesNotSupportAudio' => 'Browserul dvs. nu acceptă elementul audio',
-
     // SNTRY
     'sntry_ErrorFormEntry' => 'Câmpurile nu sunt completate, corectați și încercați să trimiteți din nou!',
     'sntry_ErrorGeneric' => 'Eroare necunoscută la trimitere. Încearcă din nou!',
@@ -734,7 +676,6 @@ Puteți obține automat o cheie nouă completând formularul de înregistrare.<b
     'sntry_Subtitle2' => 'Vă rugăm să descrieți acțiunile dvs. care au dus la această eroare.',
     'sntry_SuccessMessage' => 'Multumesc pentru ajutor!',
     'sntry_Title' => 'Ceva n-a mers bine!',
-
     // ST
     'st_CallRecordingsRetention' => 'Păstrarea înregistrărilor de apeluri',
     'st_CategoryBackups' => 'Copii de rezervă',
@@ -756,10 +697,8 @@ Puteți obține automat o cheie nouă completând formularul de înregistrare.<b
     'st_TabStorageInfo' => 'Informații de depozitare',
     'st_TabStorageSettings' => 'Setări de depozitare',
     'st_Used' => 'folosit',
-
     // THIS
     'this_is' => 'Acesta este ',
-
     // TS
     'ts_CurrentSettings' => 'Setările curente',
     'ts_CurrentSystemTime' => 'Ora curentă',
@@ -769,7 +708,6 @@ Puteți obține automat o cheie nouă completând formularul de înregistrare.<b
     'ts_SystemTime' => 'timpul sistemului',
     'ts_TimeZone' => 'Fusul orar',
     'ts_ValidateDateTime' => 'Data este introdusă incorect',
-
     // UPD
     'upd_AvailableUpdates' => 'Actualizări online disponibile',
     'upd_Cancel' => 'Anulează',

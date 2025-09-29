@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Common translations
  */
-
-return [
     ' - Unmounting partitions...' => 'Αποσυναρμολόγηση τοποθετημένων διαμερισμάτων δίσκων…',
     ' - Unpacking img...' => 'Ενημέρωση του διαμερίσματος συστήματος…',
     '(default value = ' => '(προεπιλογή = ',
@@ -238,7 +237,6 @@ return [
     'user' => 'χρήστης',
     'version' => 'εκδοχή',
     'Пропущенный вызов' => 'Έχετε μια αναπάντητη κλήση',
-
     // ADV
     'adv_AmiPasswordWeak' => 'Απλός κωδικός πρόσβασης χρήστη AMI <a href=\'%url%\'>%record%</a>',
     'adv_AvailableNewVersionPBX' => 'Διαθέσιμη νέα έκδοση PBX - <a href=\'%url%\'>%ver%</a>',
@@ -265,7 +263,6 @@ return [
     'adv_WebPasswordWeak' => 'Απλός κωδικός πρόσβασης διαχειριστή στη διεπαφή Ιστού <a href=\'%url%\'>αλλαγή</a>',
     'adv_YouUseDefaultSSHPassword' => 'Χρησιμοποιείτε τον προεπιλεγμένο κωδικό πρόσβασης για πρόσβαση στο SSH - <a href=\'%url%\'>change</a>',
     'adv_YouUseDefaultWebPassword' => 'Χρησιμοποιείτε τον προεπιλεγμένο κωδικό πρόσβασης για να συνδεθείτε στη διεπαφή διαχείρισης - <a href=\'%url%\'>αλλαγή</a>',
-
     // AM
     'am_AddNewUser' => 'Προσθήκη χρήστη AMI',
     'am_Description' => 'Σχόλιο',
@@ -284,7 +281,6 @@ return [
     'am_ValidationAMINameIsEmpty' => 'Το όνομα λογαριασμού δεν προσδιορίζεται',
     'am_ValidationAMISecretIsEmpty' => 'Ο κωδικός δεν έχει συμπληρωθεί',
     'am_Write' => 'Ρεκόρ',
-
     // AUTH
     'auth_DefaultCloudPasswordInstructions' => 'Ο προεπιλεγμένος κωδικός πρόσβασης είναι ίσος με το μοναδικό αναγνωριστικό της εικονικής μηχανής στο cloud',
     'auth_Login' => 'Σύνδεση',
@@ -295,7 +291,6 @@ return [
     'auth_ValidateLoginNotEmpty' => 'Εισαγάγετε τη σύνδεση',
     'auth_ValidatePasswordNotEmpty' => 'εισάγετε τον κωδικό πρόσβασης',
     'auth_WrongLoginPassword' => 'Η εξουσιοδότηση απέτυχε, απομένουν %attempts% προσπάθειες',
-
     // BT
     'bt_ApplyChangesToPBX' => 'Εφαρμογή αλλαγών',
     'bt_Back' => 'Πίσω',
@@ -313,7 +308,6 @@ return [
     'bt_ToolTipEdit' => 'Αλλαγή',
     'bt_ToolTipRestore' => 'Ιδρύω πάλι',
     'bt_ToolTipUpgradeOnline' => 'Ενημέρωση διαδικτυακά',
-
     // CAL
     'cal_ApplyBtn' => 'Ισχύουν',
     'cal_CancelBtn' => 'Ματαίωση',
@@ -326,11 +320,9 @@ return [
     'cal_Yesterday' => 'Εχθές',
     'cal_from' => 'Με',
     'cal_to' => 'επί',
-
     // CD
     'cd_Description' => 'Σχόλιο',
     'cd_Extensions' => 'Αριθμός τηλεφώνου για αυτήν την ουρά',
-
     // CDR
     'cdr_And' => 'και',
     'cdr_ColumnDate' => 'Ημερομηνία κλήσης',
@@ -338,7 +330,6 @@ return [
     'cdr_ColumnFrom' => 'ΠΟΥ',
     'cdr_ColumnRecordings' => 'Ηχογραφήσεις κλήσεων',
     'cdr_ColumnTo' => 'Σε ποιον',
-
     // CF
     'cf_ColumnMode' => 'Τρόπος',
     'cf_ColumnNote' => 'Το σημείωμα',
@@ -355,11 +346,9 @@ return [
     'cf_Path' => 'Η διαδρομή προς το αρχείο',
     'cf_ResultFileHeader' => 'Περιεχόμενο αρχείου με αλλαγές',
     'cf_UserEditHeader' => 'Editor για να κάνετε αλλαγές',
-
     // DBG
     'dbg_Header' => 'Πληροφορίες εντοπισμού σφαλμάτων',
     'dbg_NoDebugInformation' => 'Καμία πληροφορία',
-
     // DT
     'dt_Info' => 'Εγγραφές από _START_ έως _END_ από _TOTAL_',
     'dt_InfoEmpty' => 'Δεν υπάρχουν εγγραφές που να ταιριάζουν με τα κριτήρια επιλογής',
@@ -368,7 +357,6 @@ return [
     'dt_Previous' => 'Προηγούμενος',
     'dt_Search' => 'Αναζήτηση',
     'dt_TableIsEmpty' => 'Δεν υπάρχουν δεδομένα προς εμφάνιση',
-
     // ER
     'er_Home' => 'Πηγαίνετε για να ξεκινήσετε',
     'er_InternalServerError' => 'Εσωτερικό Σφάλμα Διακομιστή',
@@ -377,10 +365,8 @@ return [
     'er_PageNotFoundDescription' => 'Αυτή η σελίδα δεν υπάρχει.',
     'er_Unauthorized' => 'Σφάλμα εξουσιοδότησης',
     'er_UnauthorizedDescription' => 'Δεν έχετε πρόσβαση σε αυτή τη σελίδα.',
-
     // LANG
     'lang_HelpWithTranslateIt' => 'Βοήθεια με τη μετάφραση MikoPBX',
-
     // LIC
     'lic_ActivateCoupon' => 'Ενεργοποίηση κουπονιού',
     'lic_ActivateCouponButton' => 'Ενεργοποίηση κουπονιού',
@@ -452,23 +438,19 @@ return [
     'lic_ValidateCouponEmpty' => 'Το υποχρεωτικό πεδίο δεν έχει συμπληρωθεί',
     'lic_ValidateLicenseKeyEmpty' => 'Το υποχρεωτικό πεδίο δεν έχει συμπληρωθεί - Κλειδί άδειας χρήσης',
     'lic_WrongLicenseKeyOrEmpty' => 'Το κλειδί άδειας χρήσης εισήχθη λανθασμένα',
-
     // LOC
     'loc_NoResult' => 'Δεν βρέθηκε τίποτα',
-
     // LOG
     'log_CaptureMessage' => 'Ξεκινήστε να συλλέγετε πακέτα δικτύου και πραγματοποιήστε μια κλήση ή άλλη ενέργεια που προκαλεί την αποτυχία.
 <br>Το σύστημα θα αποθηκεύσει όλα τα πακέτα που περνούν αυτή τη στιγμή μέσω της κάρτας δικτύου για περαιτέρω ανάλυση.',
     'log_DownloadLogs' => 'Λήψη όλων των αρχείων καταγραφής συστήματος',
     'log_StartCapturePCAP' => 'Αρχή',
     'log_StopCapturePCAP' => 'Διακοπή και λήψη',
-
     // ML
     'ml_EmailNotSended' => 'Το μήνυμα δεν στάλθηκε',
     'ml_EmailSendedSuccess' => 'Η επιστολή εστάλη',
     'ml_EmailTestBody' => 'Γεια σας, αν αυτό το γράμμα βρίσκεται στην αλληλογραφία σας, τότε οι ρυθμίσεις είναι σωστές.',
     'ml_EmailTestSubject' => 'Δοκιμή email από το τηλεφωνικό σας σύστημα',
-
     // MM
     'mm_AsteriskManagers' => 'Πρόσβαση AMI',
     'mm_CallDetailRecords' => 'Ιστορικό κλήσεων',
@@ -502,7 +484,6 @@ return [
     'mm_SystemDiagnostic' => 'Αρχεία καταγραφής συστήματος',
     'mm_TimeSettings' => 'Ημερομηνία και ώρα',
     'mm_Update' => 'Ενημέρωση PBX',
-
     // MO
     'mo_ApplicationShort4Dropdown' => 'Εφαρμογή',
     'mo_BeforeDeleteFirst' => 'Υπάρχουν αναφορές στο αντικείμενο - %represent%',
@@ -536,43 +517,10 @@ return [
     'mo_SystemExten_voicemail' => 'Φωνητικό ταχυδρομείο',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Ο καθορισμένος αριθμός επέκτασης χρησιμοποιείται ήδη',
     'mo_ThisVlanIdNotUniqueForLanInterfacesModels' => 'Το σύστημα έχει ήδη διεπαφή με το ίδιο VLAN',
-
-    // MS
-    'ms_MailEnableNotifications' => 'Χρησιμοποιήστε ειδοποιήσεις',
-    'ms_MailSysadminEmail' => 'Email διαχειριστή συστήματος',
-    'ms_MissedCallBody' => 'Αναπάντητη κλήση - κείμενο επιστολής',
-    'ms_MissedCallFooter' => 'Αναπάντητη κλήση - Υπόγειο',
-    'ms_MissedCallSubject' => 'Αναπάντητη κλήση - θέμα email',
-    'ms_MissedCalls' => 'Αναπάντητες κλήσεις',
-    'ms_NotificationTemplatesMissed' => 'Πρότυπο - αναπάντητες κλήσεις',
-    'ms_NotificationTemplatesVoicemail' => 'Πρότυπο - τηλεφωνητής',
-    'ms_SMTPCertCheck' => 'Ελέγξτε το πιστοποιητικό διακομιστή',
-    'ms_SMTPFromUsername' => 'Ονομα αποστολέα',
-    'ms_SMTPHost' => 'SMTP host',
-    'ms_SMTPPassword' => 'Κωδικός πρόσβασης SMTP',
-    'ms_SMTPPort' => 'Θύρα SMTP',
-    'ms_SMTPSenderAddress' => 'Η διευθυνση του αποστολεα',
-    'ms_SMTPSettings' => 'Ρυθμίσεις μηνυμάτων',
-    'ms_SMTPUseTLS' => 'Χρησιμοποιήστε το TLS',
-    'ms_SMTPUsername' => 'Είσοδος SMTP',
-    'ms_SentTestEmailAfterSaveTo' => 'Στείλτε ένα δοκιμαστικό email σε αυτή τη διεύθυνση',
-    'ms_SuccessfulDeleted' => 'Τα δεδομένα διαγράφηκαν',
-    'ms_SuccessfulSaved' => 'Οι ρυθμίσεις έχουν αποθηκευτεί',
-    'ms_SystemEmailForMissed' => 'Email για αναπάντητες ειδοποιήσεις',
-    'ms_TestEmailBody' => 'Εάν λάβατε αυτό το μήνυμα ηλεκτρονικού ταχυδρομείου, τότε οι ρυθμίσεις αλληλογραφίας σας είναι σωστές.',
-    'ms_TestEmailSentSuccessfully' => 'Η επιστολή εστάλη',
-    'ms_TestEmailSubject' => 'Δοκιμή αποστολής αλληλογραφίας',
-    'ms_Voicemail' => 'Φωνητικό ταχυδρομείο',
-    'ms_VoicemailBody' => 'Φωνητικό ταχυδρομείο - κείμενο επιστολής',
-    'ms_VoicemailCommonEmail' => 'Ενιαίο email για αποστολή μηνυμάτων τηλεφωνητή',
-    'ms_VoicemailFooter' => 'Φωνητικό ταχυδρομείο - υπόγειο',
-    'ms_VoicemailSubject' => 'Φωνητικό ταχυδρομείο - θέμα email',
-
     // MSG
     'msg_ErrorHeader' => 'Λάθος',
     'msg_WarningHeader' => 'Προσοχή',
     'msg_infoHeader' => 'Πληροφορίες',
-
     // PASS
     'pass_CheckSSHPasswordDontMatch' => 'Οι εισαγόμενοι κωδικοί πρόσβασης για το SSH δεν ταιριάζουν',
     'pass_CheckSSHPasswordEmpty' => 'Κενό πεδίο: SSH',
@@ -581,12 +529,10 @@ return [
     'pass_CheckWebAdminPasswordEmpty' => 'Το πεδίο είναι κενό: Κωδικός πρόσβασης WEB',
     'pass_CheckWebAdminPasswordSimple' => 'Ο κωδικός πρόσβασης WEB είναι πολύ απλός.',
     'pass_CheckWebPassErrorChange' => 'Αποτυχία αλλαγής κωδικού πρόσβασης',
-
     // QF
     'qf_Frequency' => 'Συχνότητα αποστολής σε δευτερόλεπτα:',
     'qf_Qualify' => 'Διατήρηση συνεδρίας NAT',
     'qf_QualifyInstructions' => 'Όταν αυτή η επιλογή είναι ενεργοποιημένη, το PBX θα στέλνει πακέτα SIP OPTIONS στην καθορισμένη συχνότητα. Αυτό απαιτείται για την υποστήριξη της σήραγγας NAT στο δρομολογητή σας.',
-
     // RS
     'rs_CurrentCalls' => 'Ενεργές κλήσεις',
     'rs_DateCall' => 'την ημερομηνία έναρξης',
@@ -595,7 +541,6 @@ return [
     'rs_ShutDownPhoneSystem' => 'Απενεργοποιήστε το MikoPBX',
     'rs_ShutdownRebootMessage' => 'Κατά την επανεκκίνηση ή τον τερματισμό λειτουργίας, όλες οι κλήσεις που βρίσκονται σε εξέλιξη θα τερματιστούν.',
     'rs_Src' => 'ΠΟΥ',
-
     // SD
     'sd_CapturePcap' => 'Λήψη πακέτων δικτύου',
     'sd_CollectingInfo' => 'Συλλογή πληροφοριών υπηρεσίας',
@@ -613,7 +558,6 @@ return [
     'sd_filter' => 'Φίλτρο',
     'sd_lines' => 'Οριο',
     'sd_offset' => 'Αντισταθμίζεται',
-
     // SF
     'sf_AddNewSoundFile' => 'Προσθήκη νέου αρχείου ήχου',
     'sf_ColumnFile' => 'Ονομα',
@@ -631,7 +575,6 @@ return [
     'sf_UploadSoundFileButton' => 'Κατεβάστε',
     'sf_ValidationFileNameIsEmpty' => 'Το όνομα αρχείου δεν προσδιορίζεται',
     'sf_ValidationFileNotSelected' => 'Κατεβάστε πρώτα το αρχείο ήχου',
-
     // SNTRY
     'sntry_ErrorFormEntry' => 'Τα πεδία δεν έχουν συμπληρωθεί, διορθώστε και προσπαθήστε να στείλετε ξανά!',
     'sntry_ErrorGeneric' => 'Άγνωστο σφάλμα κατά την υποβολή. Προσπάθησε ξανά!',
@@ -642,10 +585,8 @@ return [
     'sntry_Subtitle2' => 'Περιγράψτε τις ενέργειές σας που οδήγησαν σε αυτό το σφάλμα.',
     'sntry_SuccessMessage' => 'Σας ευχαριστώ για τη βοήθειά σας!',
     'sntry_Title' => 'Κάτι πήγε στραβά!',
-
     // THIS
     'this_is' => 'Αυτό είναι ',
-
     // TS
     'ts_CurrentSettings' => 'Τρέχουσες Ρυθμίσεις',
     'ts_CurrentSystemTime' => 'τρέχουσα ώρα',
@@ -655,7 +596,6 @@ return [
     'ts_SystemTime' => 'ώρα συστήματος',
     'ts_TimeZone' => 'ζώνη ώρας',
     'ts_ValidateDateTime' => 'Η ημερομηνία είναι λανθασμένη',
-
     // UPD
     'upd_AvailableUpdates' => 'Διαθέσιμες διαδικτυακές ενημερώσεις',
     'upd_Cancel' => 'Ματαίωση',

@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Common translations
  */
-
-return [
     ' - Unmounting partitions...' => 'Felszerelt lemezpartíciók eltávolítása…',
     ' - Unpacking img...' => 'A rendszerpartíció frissítése…',
     '(default value = ' => '(alapértelmezett = ',
@@ -242,7 +241,6 @@ return [
     'user' => 'felhasználó',
     'version' => 'változat',
     'Пропущенный вызов' => 'Nem fogadott hívása van',
-
     // ADV
     'adv_AmiPasswordWeak' => 'Egyszerű jelszó az AMI-felhasználók számára <a href=\'%url%\'>%record%</a>',
     'adv_AvailableNewVersionModule' => 'Az %module% - %ver% modul új verziója elérhető. Jelenlegi verzió: %currentVer%',
@@ -270,7 +268,6 @@ return [
     'adv_WebPasswordWeak' => 'Egyszerű rendszergazdai jelszó a webes felületen <a href=\'%url%\'>módosítás</a>',
     'adv_YouUseDefaultSSHPassword' => 'Az alapértelmezett jelszót használja az SSH eléréséhez – <a href=\'%url%\'>szerkesztés</a>',
     'adv_YouUseDefaultWebPassword' => 'Az alapértelmezett jelszót használja az adminisztrációs felületre való bejelentkezéshez - <a href=\'%url%\'>szerkesztés</a>',
-
     // AM
     'am_AddNewUser' => 'AMI felhasználó hozzáadása',
     'am_CopyRecord' => 'Másolat',
@@ -329,7 +326,6 @@ return [
     'am_tooltip_user_write' => 'Felhasználói események küldése, eszközállapotok frissítése',
     'am_tooltip_verbose_read' => 'Részletes üzenetek és hibakeresési kimenet megtekintése',
     'am_tooltip_verbose_write' => 'Üzenetek részletességi szintjének beállítása',
-
     // AUTH
     'auth_DefaultCloudPasswordInstructions' => 'Az alapértelmezett jelszó megegyezik a felhőben lévő virtuális gép egyedi azonosítójával',
     'auth_Login' => 'Belépés',
@@ -340,7 +336,6 @@ return [
     'auth_ValidateLoginNotEmpty' => 'Adja meg a bejelentkezést',
     'auth_ValidatePasswordNotEmpty' => 'írd be a jelszót',
     'auth_WrongLoginPassword' => 'Az engedélyezés nem sikerült, még %attempts% próbálkozása van hátra',
-
     // BT
     'bt_Add' => 'Hozzáadás',
     'bt_ApplyChangesToPBX' => 'Módosítások elfogadása',
@@ -372,7 +367,6 @@ return [
     'bt_ToolTipEdit' => 'változás',
     'bt_ToolTipRestore' => 'visszaállítás',
     'bt_ToolTipUpgradeOnline' => 'Frissítés online',
-
     // CAL
     'cal_ApplyBtn' => 'Alkalmaz',
     'cal_CancelBtn' => 'Megszünteti',
@@ -385,11 +379,9 @@ return [
     'cal_Yesterday' => 'Tegnap',
     'cal_from' => 'Val vel',
     'cal_to' => 'Által',
-
     // CD
     'cd_Description' => 'Egy komment',
     'cd_Extensions' => 'A sor telefonszáma',
-
     // CDR
     'cdr_And' => 'És',
     'cdr_ColumnDate' => 'Hívás dátuma',
@@ -403,7 +395,6 @@ return [
     'cdr_FilteredEmptyTitle' => 'Nincsenek rekordok a megadott kritériumok alapján',
     'cdr_NoRecordsFound' => 'Nem találhatók rekordok',
     'cdr_TryChangingDate' => 'Próbálja meg módosítani a dátumintervallumot',
-
     // CF
     'cf_ColumnMode' => 'Mód',
     'cf_ColumnNote' => 'A jegyzet',
@@ -420,11 +411,9 @@ return [
     'cf_Path' => 'A fájl elérési útja',
     'cf_ResultFileHeader' => 'A fájl tartalma változtatásokkal',
     'cf_UserEditHeader' => 'Szerkesztő a változtatásokhoz',
-
     // DBG
     'dbg_Header' => 'Hibakeresési információk',
     'dbg_NoDebugInformation' => 'Nincs információ',
-
     // DT
     'dt_First' => '',
     'dt_Info' => '_START_-_END_ bejegyzések _TOTAL_',
@@ -435,7 +424,6 @@ return [
     'dt_Previous' => 'Előző',
     'dt_Search' => 'Keresés',
     'dt_TableIsEmpty' => 'nincs megjeleníthető adat',
-
     // ER
     'er_Home' => 'Ugrás a tetejére',
     'er_InternalServerError' => 'Belső Szerverhiba',
@@ -444,13 +432,10 @@ return [
     'er_PageNotFoundDescription' => 'Ez az oldal nem létezik.',
     'er_Unauthorized' => 'Engedélyezési hiba',
     'er_UnauthorizedDescription' => 'Nincs hozzáférése ehhez az oldalhoz.',
-
     // ET
     'et_ReadDocumentation' => 'Olvassa el a dokumentációt',
-
     // LANG
     'lang_HelpWithTranslateIt' => 'Segítség a MikoPBX fordításában',
-
     // LIC
     'lic_ActivateCoupon' => 'Kupon aktiválás',
     'lic_ActivateCouponButton' => 'Kupon aktiválása',
@@ -531,23 +516,19 @@ A regisztrációs űrlap kitöltésével automatikusan új kulcsot kaphat.<br>',
     'lic_ValidateCouponEmpty' => 'A kötelező mező nincs kitöltve - kupon',
     'lic_ValidateLicenseKeyEmpty' => 'A kötelező mező nincs kitöltve - Licenckulcs',
     'lic_WrongLicenseKeyOrEmpty' => 'A licenckulcsot helytelenül adta meg',
-
     // LOC
     'loc_NoResult' => 'Nincs találat',
-
     // LOG
     'log_CaptureMessage' => 'Kezdje el gyűjteni a hálózati csomagokat, és indítson hívást vagy más műveletet, amely a hibát okozza. 
 <br>A rendszer elmenti a hálózati kártyán jelenleg áthaladó összes csomagot további elemzés céljából.',
     'log_DownloadLogs' => 'Töltse le az összes rendszernaplót',
     'log_StartCapturePCAP' => 'Rajt',
     'log_StopCapturePCAP' => 'Állj le és töltsd le',
-
     // ML
     'ml_EmailNotSended' => 'Az üzenetet nem küldték el',
     'ml_EmailSendedSuccess' => 'Levél elküldve',
     'ml_EmailTestBody' => 'Üdvözöljük, ha ez a levél van a levelében, akkor a beállítások helyesek.',
     'ml_EmailTestSubject' => 'Tesztelje az e-maileket a telefonrendszeréből',
-
     // MM
     'mm_ApiKeys' => 'API kulcsok',
     'mm_AsteriskManagers' => 'Hozzáférés az AMI-hez',
@@ -583,7 +564,6 @@ A regisztrációs űrlap kitöltésével automatikusan új kulcsot kaphat.<br>',
     'mm_SystemDiagnostic' => 'Rendszernaplók',
     'mm_TimeSettings' => 'Dátum és idő',
     'mm_Update' => 'PBX frissítés',
-
     // MO
     'mo_ApplicationShort4Dropdown' => 'Alkalmazás',
     'mo_BeforeDeleteFirst' => 'Vannak linkek az objektumhoz - %represent%',
@@ -618,43 +598,10 @@ A regisztrációs űrlap kitöltésével automatikusan új kulcsot kaphat.<br>',
     'mo_SystemExten_voicemail' => 'Hangposta',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'A megadott szám már foglalt a következőhöz: - %record%',
     'mo_ThisVlanIdNotUniqueForLanInterfacesModels' => 'A rendszer már rendelkezik interfésszel ugyanazzal a VLAN-nal',
-
-    // MS
-    'ms_MailEnableNotifications' => 'Figyelmeztetések használata',
-    'ms_MailSysadminEmail' => 'Rendszergazda e-mail',
-    'ms_MissedCallBody' => 'Nem fogadott hívás - a levél szövege',
-    'ms_MissedCallFooter' => 'Nem fogadott hívás - pince',
-    'ms_MissedCallSubject' => 'Nem fogadott hívás – e-mail tárgya',
-    'ms_MissedCalls' => 'Nem fogadott hívások',
-    'ms_NotificationTemplatesMissed' => 'Sablon – nem fogadott hívások',
-    'ms_NotificationTemplatesVoicemail' => 'Sablon – hangposta',
-    'ms_SMTPCertCheck' => 'Ellenőrizze a kiszolgáló tanúsítványát',
-    'ms_SMTPFromUsername' => 'Küldő neve',
-    'ms_SMTPHost' => 'SMTP gazdagép',
-    'ms_SMTPPassword' => 'SMTP jelszó',
-    'ms_SMTPPort' => 'SMTP port',
-    'ms_SMTPSenderAddress' => 'A feladó címe',
-    'ms_SMTPSettings' => 'Üzenetküldési beállítások',
-    'ms_SMTPUseTLS' => 'Használja a TLS-t',
-    'ms_SMTPUsername' => 'SMTP bejelentkezés',
-    'ms_SentTestEmailAfterSaveTo' => 'Küldjön teszt e-mailt erre a címre',
-    'ms_SuccessfulDeleted' => 'Adatok törölve',
-    'ms_SuccessfulSaved' => 'A beállítások elmentve',
-    'ms_SystemEmailForMissed' => 'E-mail az elmulasztott értesítésekről',
-    'ms_TestEmailBody' => 'Ha megkapta ezt a levelet, az azt jelenti, hogy a levelezési beállításai helyesek.',
-    'ms_TestEmailSentSuccessfully' => 'Levél elküldve',
-    'ms_TestEmailSubject' => 'Levélküldés tesztelése',
-    'ms_Voicemail' => 'Hangposta',
-    'ms_VoicemailBody' => 'Hangposta - a levél szövege',
-    'ms_VoicemailCommonEmail' => 'Egyetlen e-mail hangpostaüzenetek küldéséhez',
-    'ms_VoicemailFooter' => 'Hangposta - pince',
-    'ms_VoicemailSubject' => 'Hangposta - tárgysor',
-
     // MSG
     'msg_ErrorHeader' => 'Hiba',
     'msg_WarningHeader' => 'Figyelem',
     'msg_infoHeader' => 'Információ',
-
     // PASS
     'pass_CheckSSHPasswordDontMatch' => 'A megadott SSH jelszavak nem egyeznek',
     'pass_CheckSSHPasswordEmpty' => 'A mező üres: SSH',
@@ -663,12 +610,10 @@ A regisztrációs űrlap kitöltésével automatikusan új kulcsot kaphat.<br>',
     'pass_CheckWebAdminPasswordEmpty' => 'A mező üres: a WEB jelszava',
     'pass_CheckWebAdminPasswordSimple' => 'A WEB jelszó túl egyszerű.',
     'pass_CheckWebPassErrorChange' => 'Nem sikerült megváltoztatni a jelszót',
-
     // QF
     'qf_Frequency' => 'Küldési gyakoriság másodpercben:',
     'qf_Qualify' => 'NAT munkamenet támogatása',
     'qf_QualifyInstructions' => 'Ha ez az opció engedélyezve van, a MikoPBX SIP OPTIONS csomagokat küld a megadott gyakorisággal. Erre azért van szükség, hogy támogassa a NAT alagútkezelést az útválasztón.',
-
     // RS
     'rs_CurrentCalls' => 'Aktív hívások',
     'rs_DateCall' => 'kezdő dátum',
@@ -677,7 +622,6 @@ A regisztrációs űrlap kitöltésével automatikusan új kulcsot kaphat.<br>',
     'rs_ShutDownPhoneSystem' => 'Kapcsolja ki a MikoPBX-et',
     'rs_ShutdownRebootMessage' => 'Újraindításkor vagy leállításkor minden folyamatban lévő hívás megszakad.',
     'rs_Src' => 'WHO',
-
     // SD
     'sd_CapturePcap' => 'Hálózati csomagok rögzítése',
     'sd_CollectingInfo' => 'Szolgáltatási információk gyűjtése',
@@ -695,7 +639,6 @@ A regisztrációs űrlap kitöltésével automatikusan új kulcsot kaphat.<br>',
     'sd_filter' => 'Szűrő',
     'sd_lines' => 'Határ',
     'sd_offset' => 'Offset',
-
     // SF
     'sf_AddNewAudioFile' => 'Új hangfájl hozzáadása',
     'sf_AddNewSoundFile' => 'Új hangfájl hozzáadása',
@@ -723,7 +666,6 @@ A regisztrációs űrlap kitöltésével automatikusan új kulcsot kaphat.<br>',
     'sf_ValidationFileNameIsEmpty' => 'A fájlnév nincs megadva',
     'sf_ValidationFileNotSelected' => 'Először töltse le a hangfájlt',
     'sf_YourBrowserDoesNotSupportAudio' => 'A böngésző nem támogatja az audio elemet',
-
     // SNTRY
     'sntry_ErrorFormEntry' => 'A mezők nincsenek kitöltve, kérjük javítsa ki és próbálja meg újra elküldeni!',
     'sntry_ErrorGeneric' => 'Ismeretlen hiba a küldés során. Próbáld újra!',
@@ -734,7 +676,6 @@ A regisztrációs űrlap kitöltésével automatikusan új kulcsot kaphat.<br>',
     'sntry_Subtitle2' => 'Kérjük, írja le azokat a lépéseket, amelyek ehhez a hibához vezettek.',
     'sntry_SuccessMessage' => 'Köszönöm a segítségedet!',
     'sntry_Title' => 'Valami elromlott!',
-
     // ST
     'st_CallRecordingsRetention' => 'Hívásrögzítések tárolása',
     'st_CategoryBackups' => 'Biztonsági mentések',
@@ -756,10 +697,8 @@ A regisztrációs űrlap kitöltésével automatikusan új kulcsot kaphat.<br>',
     'st_TabStorageInfo' => 'Tárolási információk',
     'st_TabStorageSettings' => 'Tárolási beállítások',
     'st_Used' => 'használt',
-
     // THIS
     'this_is' => 'Ez ',
-
     // TS
     'ts_CurrentSettings' => 'Jelenlegi beállítások',
     'ts_CurrentSystemTime' => 'Aktuális idő',
@@ -769,7 +708,6 @@ A regisztrációs űrlap kitöltésével automatikusan új kulcsot kaphat.<br>',
     'ts_SystemTime' => 'rendszeridő',
     'ts_TimeZone' => 'Időzóna',
     'ts_ValidateDateTime' => 'Helytelen dátum',
-
     // UPD
     'upd_AvailableUpdates' => 'Online frissítések elérhetők',
     'upd_Cancel' => 'Megszünteti',
