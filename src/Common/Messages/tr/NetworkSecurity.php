@@ -95,7 +95,7 @@ return [
     'fw_RequiredPorts' => 'Gerekli portlar:',
     'fw_SecurityWarning' => 'Uyarı: Bu, belirtilen ağ için güvenliği azaltır. Sadece güvenilir ağlar için kullanın.',
     'fw_ServicePortsInfo' => 'Kullanılan portlar',
-    'fw_WillBeHandledAsExternal' => 'NAT traversal etkin olarak dış ağ olarak işlenecek.'},
+    'fw_WillBeHandledAsExternal' => 'NAT traversal etkin olarak dış ağ olarak işlenecek.',
     'fw_ajamDescription' => 'AJAM - yıldız yöneticisi api\'sine http / https üzerinden erişim',
     'fw_amiDescription' => 'AMI - telnet üzerinden yıldız yöneticisi api\'ye erişim',
     'fw_ctiDescription' => 'CTI - telefon paneli bağlantısı',
