@@ -32,7 +32,7 @@ return [
     'f2b_ValidateBanTimeRange' => 'Geçersiz engelleme süresi',
     'f2b_ValidateFindTimeRange' => 'Yetkilendirme girişimleri için yanlış analiz süresi',
     'f2b_ValidateMaxRetryRange' => 'Retries parametresi sayısı doğru ayarlanmadı',
-    'f2b_WhiteList' => 'Asla engellenmeyen adres ve alt ağların listesi (boşlukla ayrılmış)'},
+    'f2b_WhiteList' => 'Asla engellenmeyen adres ve alt ağların listesi (boşlukla ayrılmış)',
 
     // FW
     'fw_AccessAllowedForSubnet' => 'Alt ağ için erişime izin verilecek',

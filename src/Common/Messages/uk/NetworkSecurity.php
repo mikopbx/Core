@@ -95,7 +95,7 @@ return [
     'fw_RequiredPorts' => 'Необхідні порти:',
     'fw_SecurityWarning' => 'Увага: Це знижує безпеку для вказаної мережі. Використовуйте тільки для довірених мереж.',
     'fw_ServicePortsInfo' => 'Використовувані порти',
-    'fw_WillBeHandledAsExternal' => 'буде оброблятись як зовнішня мережа з увімкненим NAT traversal.'
+    'fw_WillBeHandledAsExternal' => 'буде оброблятись як зовнішня мережа з увімкненим NAT traversal.',
     'fw_ajamDescription' => 'AJAM - доступ до asterisk manager api через http/https',
     'fw_amiDescription' => 'AMI - доступ до asterisk manager api через telnet',
     'fw_ctiDescription' => 'CTI - підключення панелі телефонії',
