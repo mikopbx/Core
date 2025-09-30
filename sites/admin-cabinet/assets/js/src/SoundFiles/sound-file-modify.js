@@ -115,6 +115,7 @@ const soundFileModifyRest = {
         soundFileModifyRest.initializeForm();
 
         // Initialize file upload using FilesAPI.attachToBtn for unified behavior
+        // Pass 'sound-file' as inputName for test compatibility
         FilesAPI.attachToBtn('upload-sound-file', ['wav', 'mp3', 'ogg', 'm4a', 'aac'], (action, params) => {
             switch (action) {
                 case 'fileAdded':
@@ -144,7 +145,7 @@ const soundFileModifyRest = {
                     soundFileModifyRest.cbUploadResumable(action, params);
                     break;
             }
-        });
+        }, 'sound-file');
         
         // Listen for data changes to clear cache
         window.addEventListener('ConfigDataChanged', soundFileModifyRest.cbOnDataChanged);

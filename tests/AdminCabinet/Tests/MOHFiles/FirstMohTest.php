@@ -36,4 +36,9 @@ class FirstMohTest extends CreateMOHAudioFileTest
     {
         return MOHAudioFilesDataFactory::getAudioFileData('first.moh');
     }
+    
+    public function testCreateMOHFile(): void
+    {
+        parent::testCreateMOHFile();
+    }
 }

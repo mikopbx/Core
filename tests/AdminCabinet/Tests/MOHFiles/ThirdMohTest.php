@@ -36,4 +36,9 @@ class ThirdMohTest extends CreateMOHAudioFileTest
     {
         return MOHAudioFilesDataFactory::getAudioFileData('third.moh');
     }
+
+    public function testCreateMOHFile(): void
+    {
+        parent::testCreateMOHFile();
+    }
 }

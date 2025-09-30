@@ -334,8 +334,9 @@ FilesAPI.firmwareDownloadStatus = function(filename, callback) {
  * @param {string} buttonId - Button ID
  * @param {string[]} fileTypes - Array of allowed file types
  * @param {function} callback - Callback function
+ * @param {string|null} inputName - Optional name attribute for the file input (for test compatibility)
  */
-FilesAPI.attachToBtn = function(buttonId, fileTypes, callback) {
+FilesAPI.attachToBtn = function(buttonId, fileTypes, callback, inputName = null) {
     const buttonElement = document.getElementById(buttonId);
     if (!buttonElement) {
         return;
@@ -359,6 +360,13 @@ FilesAPI.attachToBtn = function(buttonId, fileTypes, callback) {
 
     try {
         r.assignBrowse(buttonElement);
+
+        // Add name attribute to the dynamically created file input for test compatibility
+        // Resumable.js creates the input inside the button element
+        const fileInput = buttonElement.querySelector('input[type="file"]');
+        if (fileInput && inputName) {
+            fileInput.setAttribute('name', inputName);
+        }
     } catch (error) {
         return;
     }

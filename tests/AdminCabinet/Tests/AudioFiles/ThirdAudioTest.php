@@ -37,4 +37,9 @@ class ThirdAudioTest extends CreateAudioFileTest
     {
         return AudioFilesDataFactory::getAudioFileData('third.audio');
     }
+
+    public function testCreateAudioFile(): void
+    {
+        parent::testCreateAudioFile();
+    }
 }
