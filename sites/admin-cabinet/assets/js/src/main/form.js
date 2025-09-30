@@ -595,7 +595,10 @@ const Form = {
      */
     showErrorMessages(errors) {
         if (Array.isArray(errors)) {
-            const errorText = errors.join('<br>');
+            // Convert newlines to <br> for proper HTML display
+            const errorText = errors
+                .map(error => error.replace(/\n/g, '<br>'))
+                .join('<br>');
             Form.$formObj.after(`<div class="ui error message ajax">${errorText}</div>`);
         } else if (typeof errors === 'object') {
             // Field-specific errors
@@ -603,11 +606,15 @@ const Form = {
                 const $field = Form.$formObj.find(`[name="${field}"]`);
                 if ($field.length) {
                     $field.closest('.field').addClass('error');
-                    $field.after(`<div class="ui pointing red label">${message}</div>`);
+                    // Convert newlines to <br> for field-specific errors too
+                    const formattedMessage = message.replace(/\n/g, '<br>');
+                    $field.after(`<div class="ui pointing red label">${formattedMessage}</div>`);
                 }
             });
         } else {
-            Form.$formObj.after(`<div class="ui error message ajax">${errors}</div>`);
+            // Convert newlines to <br> for string errors
+            const formattedError = errors.replace(/\n/g, '<br>');
+            Form.$formObj.after(`<div class="ui error message ajax">${formattedError}</div>`);
         }
     },
     
