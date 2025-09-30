@@ -28,18 +28,22 @@ use MikoPBX\Common\Providers\TranslationProvider;
 
 /**
  * Abstract base class for REST API data structure creation
- * 
+ *
  * Provides unified patterns for:
  * - Boolean field formatting for frontend consumption
  * - Extension and sound file representation generation
  * - Standardized data structure formats
  * - Optional text field escaping for specific contexts
- * 
+ *
  * Follows "Store Clean, Escape at Edge" principle:
  * - REST API returns raw sanitized data
  * - HTML escaping is done by presentation layer only when needed
- * 
+ *
  * Eliminates code duplication between CallQueues, IVR Menu, and other modules.
+ *
+ * @method static array<string, mixed> getListItemSchema() Get OpenAPI schema for list item (from OpenApiSchemaProvider)
+ * @method static array<string, mixed> getDetailSchema() Get OpenAPI schema for detail view (from OpenApiSchemaProvider)
+ * @method static array<string, array<string, mixed>> getRelatedSchemas() Get related schemas (from OpenApiSchemaProvider)
  */
 abstract class AbstractDataStructure
 {
@@ -391,7 +395,7 @@ abstract class AbstractDataStructure
 
     /**
      * Add network filter field pair with representation
-     * 
+     *
      * Common pattern for creating network filter field + representation field pairs.
      * Always returns 'none' instead of empty string for API consistency.
      *
@@ -406,5 +410,239 @@ abstract class AbstractDataStructure
         $data[$fieldName] = !empty($networkFilterId) ? (string)$networkFilterId : 'none';
         $data[$fieldName . '_represent'] = self::getNetworkFilterRepresentation($networkFilterId);
         return $data;
+    }
+
+    /**
+     * Format data according to OpenAPI schema
+     *
+     * Automatically applies type conversions based on the schema definition.
+     * This replaces manual formatting methods like formatBooleanFields() and convertIntegerFields().
+     *
+     * The schema is obtained from the DataStructure class that implements OpenApiSchemaProvider.
+     *
+     * @param array<string, mixed> $data Data to format
+     * @param string $schemaType Schema type to use: 'list' or 'detail'
+     * @return array<string, mixed> Data with types formatted according to schema
+     */
+    protected static function formatBySchema(array $data, string $schemaType = 'detail'): array
+    {
+        // Check if implementing class provides OpenAPI schema
+        if (!is_subclass_of(static::class, OpenApiSchemaProvider::class)) {
+            return $data; // No schema available, return unchanged
+        }
+
+        // Get appropriate schema
+        $schema = match ($schemaType) {
+            'list' => static::getListItemSchema(),
+            'detail' => static::getDetailSchema(),
+            default => static::getDetailSchema()
+        };
+
+        // Apply schema formatting
+        return SchemaFormatter::format($data, $schema);
+    }
+
+    /**
+     * Validate data against OpenAPI schema
+     *
+     * Checks if the data structure matches the OpenAPI schema definition.
+     * Returns array of validation errors (empty array if valid).
+     *
+     * This is useful for:
+     * - Development/debugging to catch schema mismatches
+     * - Ensuring API responses match documentation
+     * - Quality assurance testing
+     *
+     * @param array<string, mixed> $data Data to validate
+     * @param string $schemaType Schema type to use: 'list' or 'detail'
+     * @return array<string> Validation error messages (empty if valid)
+     */
+    protected static function validateAgainstSchema(array $data, string $schemaType = 'detail'): array
+    {
+        // Check if implementing class provides OpenAPI schema
+        if (!is_subclass_of(static::class, OpenApiSchemaProvider::class)) {
+            return []; // No schema available, cannot validate
+        }
+
+        // Get appropriate schema
+        $schema = match ($schemaType) {
+            'list' => static::getListItemSchema(),
+            'detail' => static::getDetailSchema(),
+            default => static::getDetailSchema()
+        };
+
+        // Validate against schema
+        return SchemaValidator::validate($data, $schema);
+    }
+
+    /**
+     * Check if data is valid against OpenAPI schema
+     *
+     * Convenience method that returns boolean instead of error array.
+     *
+     * @param array<string, mixed> $data Data to validate
+     * @param string $schemaType Schema type to use: 'list' or 'detail'
+     * @return bool True if data is valid, false otherwise
+     */
+    protected static function isValidAgainstSchema(array $data, string $schemaType = 'detail'): bool
+    {
+        $errors = static::validateAgainstSchema($data, $schemaType);
+        return empty($errors);
+    }
+
+    /**
+     * Format data and log validation warnings if schema validation fails
+     *
+     * This method combines formatting and optional validation in one call.
+     * Useful for development/staging environments to catch schema issues early.
+     *
+     * @param array<string, mixed> $data Data to format
+     * @param string $schemaType Schema type to use: 'list' or 'detail'
+     * @param bool $validateAfterFormat Whether to validate data after formatting (default: false)
+     * @return array<string, mixed> Formatted data
+     */
+    protected static function formatAndValidate(array $data, string $schemaType = 'detail', bool $validateAfterFormat = false): array
+    {
+        // Format data first
+        $formatted = static::formatBySchema($data, $schemaType);
+
+        // Optionally validate (typically enabled in development mode)
+        if ($validateAfterFormat) {
+            $errors = static::validateAgainstSchema($formatted, $schemaType);
+
+            if (!empty($errors)) {
+                // Log validation errors without throwing exceptions
+                // This allows development to continue while identifying issues
+                $className = basename(str_replace('\\', '/', static::class));
+                $errorMessage = "Schema validation warnings in {$className}::{$schemaType}: " . implode('; ', $errors);
+
+                // Log to system log
+                if (class_exists('\MikoPBX\Core\System\SystemMessages')) {
+                    \MikoPBX\Core\System\SystemMessages::sysLogMsg(
+                        static::class . '::' . __FUNCTION__,
+                        $errorMessage,
+                        LOG_WARNING
+                    );
+                }
+            }
+        }
+
+        return $formatted;
+    }
+
+    /**
+     * Create default data structure from OpenAPI schema
+     *
+     * Generates a default data structure by reading the OpenAPI schema and
+     * creating appropriate default values for each field based on its type.
+     *
+     * This method eliminates the need for manual createForNew* methods by
+     * using the schema as the single source of truth for data structure.
+     *
+     * Default value generation rules:
+     * - Uses 'default' from schema if present
+     * - Optionally uses 'example' from schema (disabled by default for new records)
+     * - Falls back to type-based defaults:
+     *   - boolean → false
+     *   - integer → 0
+     *   - number → 0
+     *   - string → '' (or first enum value for enums)
+     *   - array → []
+     *   - object → {}
+     *
+     * The resulting data structure has proper types as defined in the schema.
+     *
+     * @param string $schemaType Schema type to use: 'list' or 'detail'
+     * @param array<string, mixed> $overrides Optional field values to override defaults
+     * @param bool $useExamples Whether to use 'example' values from schema (false = use type defaults)
+     * @return array<string, mixed> Default data structure with proper types
+     */
+    public static function createFromSchema(
+        string $schemaType = 'detail',
+        array $overrides = [],
+        bool $useExamples = false
+    ): array
+    {
+        // Check if implementing class provides OpenAPI schema
+        if (!is_subclass_of(static::class, OpenApiSchemaProvider::class)) {
+            return $overrides; // No schema available, return overrides only
+        }
+
+        // Get appropriate schema
+        $schema = match ($schemaType) {
+            'list' => static::getListItemSchema(),
+            'detail' => static::getDetailSchema(),
+            default => static::getDetailSchema()
+        };
+
+        // Build default data structure from schema properties
+        $data = [];
+
+        if (isset($schema['properties']) && is_array($schema['properties'])) {
+            foreach ($schema['properties'] as $fieldName => $fieldSchema) {
+                // Skip if override is provided
+                if (array_key_exists($fieldName, $overrides)) {
+                    $data[$fieldName] = $overrides[$fieldName];
+                    continue;
+                }
+
+                // Generate default value based on schema
+                $data[$fieldName] = self::getDefaultValueForField($fieldSchema, $useExamples);
+            }
+        }
+
+        // Merge any additional overrides not in schema
+        foreach ($overrides as $fieldName => $value) {
+            if (!array_key_exists($fieldName, $data)) {
+                $data[$fieldName] = $value;
+            }
+        }
+
+        // Apply schema formatting to ensure proper types
+        return static::formatBySchema($data, $schemaType);
+    }
+
+    /**
+     * Get default value for a field based on its OpenAPI schema
+     *
+     * Priority:
+     * 1. 'default' property in schema (always used if present)
+     * 2. 'example' property in schema (only if $useExamples = true)
+     * 3. First enum value (for enum fields)
+     * 4. Type-based default value
+     *
+     * @param array<string, mixed> $fieldSchema Field schema definition
+     * @param bool $useExamples Whether to use 'example' values from schema
+     * @return mixed Default value for the field
+     */
+    private static function getDefaultValueForField(array $fieldSchema, bool $useExamples = false)
+    {
+        // Priority 1: Use 'default' from schema (always used if present)
+        if (array_key_exists('default', $fieldSchema)) {
+            return $fieldSchema['default'];
+        }
+
+        // Priority 2: Use 'example' from schema (only if $useExamples = true)
+        if ($useExamples && array_key_exists('example', $fieldSchema)) {
+            return $fieldSchema['example'];
+        }
+
+        // Priority 3: For enums, use first value as default
+        if (isset($fieldSchema['enum']) && is_array($fieldSchema['enum']) && !empty($fieldSchema['enum'])) {
+            return $fieldSchema['enum'][0];
+        }
+
+        // Priority 4: Type-based defaults
+        $type = $fieldSchema['type'] ?? 'string';
+
+        return match ($type) {
+            'boolean' => false,
+            'integer' => 0,
+            'number' => 0,
+            'string' => '',
+            'array' => [],
+            'object' => [],
+            default => null
+        };
     }
 }

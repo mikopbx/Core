@@ -230,6 +230,7 @@ abstract class AbstractDeleteAction
             $record = self::findRecordById($modelClass, $id);
             if (!$record) {
                 $res->messages['error'][] = $notFoundMessage;
+                $res->httpCode = 404; // Not Found
                 return $res;
             }
 
@@ -269,11 +270,19 @@ abstract class AbstractDeleteAction
 
             $res->success = true;
             $res->data = [];
+            $res->httpCode = 200; // OK (for v4 could be 204 No Content)
 
             // Log successful operation
             self::logSuccessfulDelete($entityType, $entityName, $entityExtension, $res->processor);
 
         } catch (\Exception $e) {
+            // Check if error is due to constraint violation (record in use)
+            $errorMessage = $e->getMessage();
+            if (strpos($errorMessage, 'FOREIGN KEY') !== false ||
+                strpos($errorMessage, 'constraint') !== false ||
+                strpos($errorMessage, 'is in use') !== false) {
+                $res->httpCode = 409; // Conflict
+            }
             return self::handleDeleteError($e, $res);
         }
 

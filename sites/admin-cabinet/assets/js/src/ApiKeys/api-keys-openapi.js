@@ -79,6 +79,7 @@ const ApiKeysOpenAPI = {
         $('.toc').hide();
         ApiKeysOpenAPI.$mainContainer.parent().removeClass('article');
         $('#page-header').hide();
+        $('#content-frame').removeClass('grey').addClass('basic');
 
         try {
             // Hide loading immediately as Elements will show its own loader
@@ -92,8 +93,8 @@ const ApiKeysOpenAPI = {
             apiElement.setAttribute('apiDescriptionUrl', ApiKeysOpenAPI.specUrl);
             apiElement.setAttribute('router', 'hash');
             apiElement.setAttribute('layout', 'sidebar');
-            apiElement.setAttribute('hideInternal', 'false');
-            apiElement.setAttribute('hideTryIt', 'false');
+            // Note: Don't set hideInternal or hideTryIt - they default to false (shown)
+            // Boolean attributes: presence = true, absence = false
             apiElement.setAttribute('tryItCredentialsPolicy', 'include');
 
             // Clear container and append element
@@ -101,11 +102,88 @@ const ApiKeysOpenAPI = {
             container.innerHTML = '';
             container.appendChild(apiElement);
 
+            // Override Stoplight Elements inline styles to remove max-width restriction
+            ApiKeysOpenAPI.addCustomStyles();
+
             console.log('Stoplight Elements initialized successfully');
 
         } catch (error) {
             console.error('Failed to initialize Stoplight Elements:', error);
             ApiKeysOpenAPI.showError(error.message);
+        }
+    },
+
+    /**
+     * Add custom CSS to override Stoplight Elements default styles
+     * Uses MutationObserver and delayed forced styling to ensure styles are applied
+     */
+    addCustomStyles() {
+        // Add style tag immediately
+        const style = document.createElement('style');
+        style.id = 'stoplight-custom-styles';
+        style.textContent = `
+            /* Remove container max-width to allow full-width layout */
+            .sl-py-16 {
+                max-width: none !important;
+                width: 100% !important;
+            }
+
+            /* Override Stoplight Elements inline max-width for example column */
+            [data-testid="two-column-right"] {
+                max-width: none !important;
+                width: 50% !important;
+            }
+
+            /* Adjust left column width accordingly */
+            [data-testid="two-column-left"] {
+                width: 50% !important;
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Force apply inline styles to override Stoplight Elements defaults
+        const applyForcedStyles = () => {
+            const rightColumn = document.querySelector('[data-testid="two-column-right"]');
+            const leftColumn = document.querySelector('[data-testid="two-column-left"]');
+            const container = document.querySelector('.sl-py-16[style*="max-width"]');
+
+            if (container) {
+                container.style.maxWidth = '100%';
+                container.style.width = '100%';
+            }
+
+            if (rightColumn) {
+                rightColumn.style.maxWidth = 'none';
+                rightColumn.style.width = '50%';
+            }
+
+            if (leftColumn) {
+                leftColumn.style.width = '50%';
+            }
+        };
+
+        // Apply styles after Elements loads (multiple attempts to ensure they stick)
+        setTimeout(applyForcedStyles, 500);
+        setTimeout(applyForcedStyles, 1000);
+        setTimeout(applyForcedStyles, 2000);
+
+        // Watch for when elements appear and reapply styles
+        const observer = new MutationObserver((mutations) => {
+            applyForcedStyles();
+        });
+
+        // Start observing the container for changes
+        const elementsContainer = document.getElementById('elements-container');
+        if (elementsContainer) {
+            observer.observe(elementsContainer, {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: ['style']
+            });
+
+            // Disconnect observer after 5 seconds
+            setTimeout(() => observer.disconnect(), 5000);
         }
     },
 

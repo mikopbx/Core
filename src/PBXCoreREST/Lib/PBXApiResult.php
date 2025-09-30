@@ -62,7 +62,15 @@ class PBXApiResult
      * @var string
      */
     public string $function;
-    
+
+    /**
+     * HTTP status code for the response (null = default 200 for success, 400 for error)
+     * Used for v4 API proper HTTP semantics
+     *
+     * @var int|null
+     */
+    public ?int $httpCode = null;
+
     /**
      * Reload path for frontend navigation after successful operation
      *
@@ -98,12 +106,17 @@ class PBXApiResult
             'processor' => $this->processor,
             'pid'       => getmypid(),
         ];
-        
+
+        // Include HTTP status code if set (for v4 API)
+        if ($this->httpCode !== null) {
+            $result['httpCode'] = $this->httpCode;
+        }
+
         // Include reload path if set
         if (!empty($this->reload)) {
             $result['reload'] = $this->reload;
         }
-        
+
         return $result;
     }
 }

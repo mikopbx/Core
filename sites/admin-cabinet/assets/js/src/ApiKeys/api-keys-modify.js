@@ -462,9 +462,7 @@ const apiKeysModify = {
         
         // Only copy if we have the actual full API key (for new or regenerated keys)
         if (actualApiKey && actualApiKey.trim() !== '') {
-            // Add Authorization: Bearer prefix
-            const fullAuthHeader = `Authorization: Bearer ${actualApiKey}`;
-            navigator.clipboard.writeText(fullAuthHeader).then(() => {
+            navigator.clipboard.writeText(actualApiKey).then(() => {
                 // Silent copy
             });
         }

@@ -27,10 +27,12 @@ use MikoPBX\PBXCoreREST\Attributes\{
     ApiOperation,
     ApiParameter,
     ApiResponse,
+    ApiDataSchema,
     HttpMapping,
     ResourceSecurity,
     ActionType
 };
+use MikoPBX\PBXCoreREST\Lib\Common\OpenApiSchemaProvider;
 use Phalcon\Di\Injectable;
 use ReflectionClass;
 use ReflectionMethod;
@@ -53,6 +55,13 @@ class ApiMetadataRegistry extends Injectable
      * @var array<string, mixed>
      */
     private array $metadataCache = [];
+
+    /**
+     * Registered data schemas from DataStructure classes
+     *
+     * @var array<string, array<string, mixed>>
+     */
+    private array $registeredSchemas = [];
 
 
     /**
@@ -252,6 +261,26 @@ class ApiMetadataRegistry extends Injectable
                 ];
             }
 
+            // Scan for ApiDataSchema attributes
+            $dataSchemaAttributes = $method->getAttributes(ApiDataSchema::class);
+            foreach ($dataSchemaAttributes as $attribute) {
+                /** @var ApiDataSchema $dataSchema */
+                $dataSchema = $attribute->newInstance();
+
+                // Register the schema if it's valid
+                if ($dataSchema->isValidSchemaClass()) {
+                    $schemaName = $dataSchema->getSchemaName();
+                    $methodMetadata['dataSchema'] = [
+                        'schemaClass' => $dataSchema->schemaClass,
+                        'type' => $dataSchema->type,
+                        'schemaName' => $schemaName,
+                        'isArray' => $dataSchema->isArray
+                    ];
+
+                    // Register schema for later inclusion in OpenAPI spec
+                    $this->registerSchemaFromClass($dataSchema->schemaClass, $schemaName, $dataSchema->type);
+                }
+            }
 
             // Scan for ResourceSecurity attributes (new system)
             $resourceSecurityAttributes = $method->getAttributes(ResourceSecurity::class);
@@ -310,7 +339,7 @@ class ApiMetadataRegistry extends Injectable
                 'version' => '3.0.0',
                 'contact' => [
                     'name' => 'MikoPBX Support',
-                    'url' => 'https://mikopbx.com',
+                    'url' => 'https://www.mikopbx.com',
                     'email' => 'support@mikopbx.com'
                 ],
                 'license' => [
@@ -318,16 +347,7 @@ class ApiMetadataRegistry extends Injectable
                     'url' => 'https://www.gnu.org/licenses/gpl-3.0.html'
                 ]
             ],
-            'servers' => [
-                [
-                    'url' => 'http://localhost:8081/',
-                    'description' => 'MikoPBX API'
-                ],
-                [
-                    'url' => 'https://maclic.miko.ru:8445/',
-                    'description' => 'MikoPBX API'
-                ]
-            ],
+            'servers' => $this->generateServers(),
             'paths' => [],
             'components' => [
                 'schemas' => $this->generateSchemas(),
@@ -463,6 +483,9 @@ class ApiMetadataRegistry extends Injectable
     /**
      * Generate standard schemas for OpenAPI
      *
+     * Includes both base PBXApiResult schema and any registered data schemas
+     * from DataStructure classes that implement OpenApiSchemaProvider.
+     *
      * @return array<string, mixed> Schemas
      */
     private function generateSchemas(): array
@@ -471,9 +494,45 @@ class ApiMetadataRegistry extends Injectable
         // All API responses follow the same structure regardless of success/error status
         $baseSchema = $this->getPBXApiResultSchema();
 
-        return [
+        $schemas = [
             'PBXApiResult' => $baseSchema
         ];
+
+        // Add registered data schemas from DataStructure classes with translated descriptions
+        foreach ($this->registeredSchemas as $schemaName => $schema) {
+            $schemas[$schemaName] = $this->translateSchemaDescriptions($schema);
+        }
+
+        return $schemas;
+    }
+
+    /**
+     * Recursively translate all 'description' fields in a schema
+     *
+     * Walks through the schema array and translates any 'description' fields
+     * that look like translation keys.
+     *
+     * @param array<string, mixed> $schema Schema to translate
+     * @return array<string, mixed> Schema with translated descriptions
+     */
+    private function translateSchemaDescriptions(array $schema): array
+    {
+        $result = [];
+
+        foreach ($schema as $key => $value) {
+            if ($key === 'description' && is_string($value)) {
+                // Translate description if it looks like a translation key
+                $result[$key] = $this->translateText($value);
+            } elseif (is_array($value)) {
+                // Recursively translate nested arrays
+                $result[$key] = $this->translateSchemaDescriptions($value);
+            } else {
+                // Keep other values as-is
+                $result[$key] = $value;
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -488,9 +547,147 @@ class ApiMetadataRegistry extends Injectable
                 'type' => 'http',
                 'scheme' => 'bearer',
                 'bearerFormat' => 'JWT',
-                'description' => 'Bearer token authentication using JWT. API keys can be generated in the web interface under Settings → API Keys.'
+                'description' => $this->translateText('rest_security_bearerAuth_description')
             ]
         ];
+    }
+
+    /**
+     * Generate servers list dynamically based on system network settings
+     * Provides both HTTP and HTTPS variants using configured network interfaces
+     *
+     * @return array<int, array<string, string>> Servers configuration
+     */
+    private function generateServers(): array
+    {
+        $servers = [];
+
+        try {
+            // Get port settings from database
+            $httpsPort = \MikoPBX\Common\Models\PbxSettings::getValueByKey(
+                \MikoPBX\Common\Models\PbxSettings::WEB_HTTPS_PORT
+            );
+            $httpPort = \MikoPBX\Common\Models\PbxSettings::getValueByKey(
+                \MikoPBX\Common\Models\PbxSettings::WEB_PORT
+            );
+            $redirectToHttps = \MikoPBX\Common\Models\PbxSettings::getValueByKey(
+                \MikoPBX\Common\Models\PbxSettings::REDIRECT_TO_HTTPS
+            );
+
+            // Get network addresses from database
+            $addresses = $this->getNetworkAddresses();
+
+            // Process local network addresses first
+            if (!empty($addresses['local'])) {
+                foreach ($addresses['local'] as $address) {
+                    // Add HTTPS server
+                    $httpsUrl = $httpsPort === '443'
+                        ? "https://{$address}/"
+                        : "https://{$address}:{$httpsPort}/";
+                    $servers[] = [
+                        'url' => $httpsUrl,
+                        'description' => 'HTTPS (Local network)'
+                    ];
+
+                    // Add HTTP server only if redirect is disabled
+                    if ($redirectToHttps !== '1' && !empty($httpPort)) {
+                        $httpUrl = $httpPort === '80'
+                            ? "http://{$address}/"
+                            : "http://{$address}:{$httpPort}/";
+                        $servers[] = [
+                            'url' => $httpUrl,
+                            'description' => 'HTTP (Local network)'
+                        ];
+                    }
+                }
+            }
+
+            // Process external network addresses
+            if (!empty($addresses['external'])) {
+                foreach ($addresses['external'] as $address) {
+                    // Add HTTPS server
+                    $httpsUrl = $httpsPort === '443'
+                        ? "https://{$address}/"
+                        : "https://{$address}:{$httpsPort}/";
+                    $servers[] = [
+                        'url' => $httpsUrl,
+                        'description' => 'HTTPS (External network)'
+                    ];
+
+                    // Add HTTP server only if redirect is disabled
+                    if ($redirectToHttps !== '1' && !empty($httpPort)) {
+                        $httpUrl = $httpPort === '80'
+                            ? "http://{$address}/"
+                            : "http://{$address}:{$httpPort}/";
+                        $servers[] = [
+                            'url' => $httpUrl,
+                            'description' => 'HTTP (External network)'
+                        ];
+                    }
+                }
+            }
+
+        } catch (\Exception $e) {
+            // Fallback to localhost if database is not available
+            $servers = [
+                [
+                    'url' => 'https://localhost:8445/',
+                    'description' => 'Development server (HTTPS)'
+                ],
+                [
+                    'url' => 'http://localhost:8081/',
+                    'description' => 'Development server (HTTP)'
+                ]
+            ];
+        }
+
+        // If no servers were added, use fallback
+        if (empty($servers)) {
+            $servers = [
+                [
+                    'url' => 'https://localhost:8445/',
+                    'description' => 'Development server (HTTPS)'
+                ],
+                [
+                    'url' => 'http://localhost:8081/',
+                    'description' => 'Development server (HTTP)'
+                ]
+            ];
+        }
+
+        return $servers;
+    }
+
+    /**
+     * Get network addresses from LanInterfaces model
+     * Similar to SystemMessages::getNetworkAddresses()
+     *
+     * @return array<string, array<int, string>> Array with 'local' and 'external' addresses
+     */
+    private function getNetworkAddresses(): array
+    {
+        $addresses = ['local' => [], 'external' => []];
+
+        try {
+            $interfaces = \MikoPBX\Common\Models\LanInterfaces::find("disabled='0'");
+            if ($interfaces !== false && is_iterable($interfaces)) {
+                foreach ($interfaces as $interface) {
+                    if (!empty($interface->ipaddr)) {
+                        $addresses['local'][] = $interface->ipaddr;
+                    }
+                    if (!empty($interface->exthostname)) {
+                        $addresses['external'][] = strtok($interface->exthostname, ':');
+                    }
+                    if (!empty($interface->extipaddr)) {
+                        $addresses['external'][] = strtok($interface->extipaddr, ':');
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            // If database is not available, return empty arrays
+        }
+
+        return $addresses;
     }
 
     /**
@@ -531,8 +728,8 @@ class ApiMetadataRegistry extends Injectable
             return [];
         }
 
-        // Remove /pbxcore/api/v3 prefix from paths to make them relative to server URL
-        $basePath = preg_replace('#^/pbxcore/api/v3#', '', $basePath);
+        // Keep full paths as defined in ApiResource attributes
+        // Do not modify basePath - it contains the complete path with version
 
         // Generate collection-level paths (without {id})
         $collectionPath = $basePath;
@@ -542,8 +739,23 @@ class ApiMetadataRegistry extends Injectable
         $resourcePath = $basePath . '/{id}';
         $paths[$resourcePath] = [];
 
+        // Extract resource name from tags for placeholder replacement
+        // Translate the tag to get the localized resource name
+        $tags = $resource['resource']['tags'] ?? [];
+        $resourceTag = !empty($tags) ? $tags[0] : '';
+        // Translate tag directly as it may contain spaces (e.g., "Call Queues")
+        $resourceName = !empty($resourceTag) ? TranslationProvider::translate($resourceTag) : '';
+
+        // Get list of custom methods to exclude from standard processing
+        $customMethods = $httpMapping['custom'] ?? [];
+
         // Process each operation
         foreach ($resource['operations'] ?? [] as $operationName => $operation) {
+            // Skip custom methods - they will be processed separately
+            if (in_array($operationName, $customMethods)) {
+                continue;
+            }
+
             $operationData = $operation['operations'][0] ?? [];
             $parameters = $operation['parameters'] ?? [];
             $responses = $operation['responses'] ?? [];
@@ -571,7 +783,7 @@ class ApiMetadataRegistry extends Injectable
                         'operationId' => $operationData['operationId'] ?? $operationName,
                         'tags' => $resource['resource']['tags'] ?? [],
                         'parameters' => $this->generateParametersForOperation($parameters, $requiresId),
-                        'responses' => $this->generateResponsesForOperation($responses),
+                        'responses' => $this->generateResponsesForOperation($responses, $resourceName, $operation['dataSchema'] ?? null),
                         'security' => $this->generateSecurityForOperation($combinedSecurity)
                     ];
 
@@ -614,7 +826,7 @@ class ApiMetadataRegistry extends Injectable
                         'operationId' => $operationData['operationId'] ?? $customMethod,
                         'tags' => $resource['resource']['tags'] ?? [],
                         'parameters' => $this->generateParametersForOperation($parameters, $isResourceLevel),
-                        'responses' => $this->generateResponsesForOperation($responses),
+                        'responses' => $this->generateResponsesForOperation($responses, $resourceName, $operation['dataSchema'] ?? null),
                         'security' => $this->generateSecurityForOperation($combinedSecurity)
                     ]
                 ];
@@ -704,23 +916,29 @@ class ApiMetadataRegistry extends Injectable
 
     /**
      * Generate responses for OpenAPI operation
+     *
+     * @param array<int, mixed> $responses Response metadata
+     * @param string $resourceName Resource name for placeholder replacement
+     * @param array<string, mixed>|null $dataSchema Data schema metadata from ApiDataSchema attribute
+     * @return array<string, mixed> OpenAPI responses
      */
-    private function generateResponsesForOperation(array $responses): array
+    private function generateResponsesForOperation(array $responses, string $resourceName = '', ?array $dataSchema = null): array
     {
         $openApiResponses = [];
 
         foreach ($responses as $response) {
             $statusCode = (string)$response['statusCode'];
 
-            // Translate description
-            $description = $this->translateText($response['description']);
+            // Translate description with resource name placeholder
+            $placeholders = !empty($resourceName) ? ['resourceName' => $resourceName] : [];
+            $description = $this->translateText($response['description'], $placeholders);
 
             $openApiResponses[$statusCode] = [
                 'description' => $description
             ];
 
-            // Always use PBXApiResult schema structure
-            $schema = $this->getPBXApiResultSchema();
+            // Build schema based on available data schema
+            $schema = $this->buildResponseSchema($dataSchema, $statusCode);
 
             // If we have an example, add it
             if (isset($response['example'])) {
@@ -755,6 +973,54 @@ class ApiMetadataRegistry extends Injectable
         }
 
         return $openApiResponses;
+    }
+
+    /**
+     * Build response schema combining PBXApiResult with typed data schema
+     *
+     * @param array<string, mixed>|null $dataSchema Data schema metadata
+     * @param string $statusCode HTTP status code
+     * @return array<string, mixed> OpenAPI schema definition
+     */
+    private function buildResponseSchema(?array $dataSchema, string $statusCode): array
+    {
+        $baseSchema = $this->getPBXApiResultSchema();
+
+        // Only use typed schema for successful responses (2xx)
+        if ($dataSchema === null || !str_starts_with($statusCode, '2')) {
+            return $baseSchema;
+        }
+
+        // Build typed data property schema
+        $dataPropertySchema = [
+            '$ref' => "#/components/schemas/{$dataSchema['schemaName']}"
+        ];
+
+        // Wrap in array if needed
+        if ($dataSchema['isArray'] === true) {
+            $dataPropertySchema = [
+                'type' => 'array',
+                'items' => $dataPropertySchema
+            ];
+        }
+
+        // Create inline schema with typed data property
+        // Using inline schema instead of allOf for better OpenAPI UI compatibility
+        // Some UI tools (like Stoplight Elements) show allOf as separate objects
+        return [
+            'type' => 'object',
+            'description' => $baseSchema['description'],
+            'properties' => [
+                'result' => $baseSchema['properties']['result'],
+                'data' => $dataPropertySchema, // Override with typed schema
+                'messages' => $baseSchema['properties']['messages'],
+                'function' => $baseSchema['properties']['function'],
+                'processor' => $baseSchema['properties']['processor'],
+                'pid' => $baseSchema['properties']['pid'],
+                'reload' => $baseSchema['properties']['reload']
+            ],
+            'required' => $baseSchema['required']
+        ];
     }
 
     /**
@@ -980,5 +1246,52 @@ class ApiMetadataRegistry extends Injectable
 
         // Return as-is if it doesn't look like a translation key
         return $text;
+    }
+
+    /**
+     * Register schema from DataStructure class
+     *
+     * Extracts OpenAPI schema from a class that implements OpenApiSchemaProvider
+     * and stores it for later inclusion in the OpenAPI specification.
+     *
+     * @param class-string $schemaClass DataStructure class name
+     * @param string $schemaName Schema name for OpenAPI components
+     * @param string $type Schema type: 'list', 'detail', or 'custom'
+     * @return void
+     */
+    private function registerSchemaFromClass(string $schemaClass, string $schemaName, string $type): void
+    {
+        // Skip if already registered
+        if (isset($this->registeredSchemas[$schemaName])) {
+            return;
+        }
+
+        // Verify class exists and implements interface
+        if (!class_exists($schemaClass)) {
+            return;
+        }
+
+        $interfaces = class_implements($schemaClass);
+        if (!isset($interfaces[OpenApiSchemaProvider::class])) {
+            return;
+        }
+
+        // Get schema based on type
+        $schema = match ($type) {
+            'list' => $schemaClass::getListItemSchema(),
+            'detail' => $schemaClass::getDetailSchema(),
+            default => $schemaClass::getDetailSchema()
+        };
+
+        // Register main schema
+        $this->registeredSchemas[$schemaName] = $schema;
+
+        // Register related schemas
+        $relatedSchemas = $schemaClass::getRelatedSchemas();
+        foreach ($relatedSchemas as $relatedName => $relatedSchema) {
+            if (!isset($this->registeredSchemas[$relatedName])) {
+                $this->registeredSchemas[$relatedName] = $relatedSchema;
+            }
+        }
     }
 }

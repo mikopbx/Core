@@ -39,6 +39,7 @@ class Response extends PhResponse
     public const int OK = 200;
     public const int CREATED = 201;
     public const int ACCEPTED = 202;
+    public const int NO_CONTENT = 204;
     public const int MOVED_PERMANENTLY = 301;
     public const int FOUND = 302;
     public const int TEMPORARY_REDIRECT = 307;
@@ -47,11 +48,15 @@ class Response extends PhResponse
     public const int UNAUTHORIZED = 401;
     public const int FORBIDDEN = 403;
     public const int NOT_FOUND = 404;
+    public const int CONFLICT = 409;
     public const int INTERNAL_SERVER_ERROR = 500;
     public const int NOT_IMPLEMENTED = 501;
     public const int BAD_GATEWAY = 502;
     private array $codes = [
         200 => 'OK',
+        201 => 'Created',
+        202 => 'Accepted',
+        204 => 'No Content',
         301 => 'Moved Permanently',
         302 => 'Found',
         307 => 'Temporary Redirect',
@@ -60,6 +65,7 @@ class Response extends PhResponse
         401 => 'Unauthorized',
         403 => 'Forbidden',
         404 => 'Not Found',
+        409 => 'Conflict',
         500 => 'Internal Server Error',
         501 => 'Not Implemented',
         502 => 'Bad Gateway',
@@ -123,12 +129,14 @@ class Response extends PhResponse
     /**
      * Set the payload code as Error.
      *
-     * @param string $detail
+     * @param string $detail Error detail message
+     * @param int $httpCode HTTP status code (default 400 Bad Request)
      * @return Response
      */
-    public function setPayloadError(string $detail = ''): Response
+    public function setPayloadError(string $detail = '', int $httpCode = 400): Response
     {
         $this->setJsonContent(['errors' => [$detail]]);
+        $this->setStatusCode($httpCode);
 
         return $this;
     }
@@ -154,13 +162,15 @@ class Response extends PhResponse
     /**
      * Set the payload code as Success.
      *
-     * @param array|string|null $content
+     * @param array|string|null $content Response content
+     * @param int $httpCode HTTP status code (default 200 OK)
      * @return Response
      */
-    public function setPayloadSuccess(array|string|null $content = []): Response
+    public function setPayloadSuccess(array|string|null $content = [], int $httpCode = 200): Response
     {
         $data = (true === is_array($content)) ? $content : ['data' => $content];
         $this->setJsonContent($data);
+        $this->setStatusCode($httpCode);
 
         return $this;
     }
