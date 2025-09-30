@@ -181,7 +181,7 @@ class ResourceSecurity
      */
     public static function readOnly(string $resource, ?array $requirements = null): self
     {
-        $defaultRequirements = $requirements ?? [SecurityType::LOCALHOST, SecurityType::SESSION, SecurityType::API_KEY];
+        $defaultRequirements = $requirements ?? [SecurityType::LOCALHOST, SecurityType::SESSION, SecurityType::BEARER_TOKEN];
         return new self($resource, ActionType::READ, $defaultRequirements);
     }
 
@@ -193,7 +193,7 @@ class ResourceSecurity
      */
     public static function write(string $resource, ?array $requirements = null): self
     {
-        $defaultRequirements = $requirements ?? [SecurityType::LOCALHOST, SecurityType::SESSION, SecurityType::API_KEY];
+        $defaultRequirements = $requirements ?? [SecurityType::LOCALHOST, SecurityType::SESSION, SecurityType::BEARER_TOKEN];
         return new self($resource, ActionType::WRITE, $defaultRequirements);
     }
 
@@ -250,7 +250,7 @@ class ResourceSecurity
      */
     public static function apiKeyOnly(string $resource, ?ActionType $action = null): self
     {
-        return new self($resource, $action, [SecurityType::API_KEY]);
+        return new self($resource, $action, [SecurityType::BEARER_TOKEN]);
     }
 
     /**
@@ -258,6 +258,6 @@ class ResourceSecurity
      */
     public static function allAccess(string $resource, ?ActionType $action = null): self
     {
-        return new self($resource, $action, [SecurityType::LOCALHOST, SecurityType::SESSION, SecurityType::API_KEY]);
+        return new self($resource, $action, [SecurityType::LOCALHOST, SecurityType::SESSION, SecurityType::BEARER_TOKEN]);
     }
 }

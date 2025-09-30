@@ -27,7 +27,7 @@ namespace MikoPBX\PBXCoreREST\Attributes;
  * Reflects the three main access channels in MikoPBX:
  * 1. LOCALHOST - Direct local access without authentication
  * 2. SESSION - Web interface with user roles and ACL
- * 3. API_KEY - Bearer token access with scope-based permissions
+ * 3. BEARER_TOKEN - Bearer token access with scope-based permissions
  */
 enum SecurityType: string
 {
@@ -42,9 +42,9 @@ enum SecurityType: string
     case SESSION = 'session';
 
     /**
-     * API key access - requires Bearer token with specific scopes
+     * Bearer token access - requires Authorization: Bearer token with specific scopes
      */
-    case API_KEY = 'api_key';
+    case BEARER_TOKEN = 'bearer_token';
 
     /**
      * Public access - no authentication required (OAuth callbacks, webhooks)
@@ -59,7 +59,7 @@ enum SecurityType: string
         return match($this) {
             self::LOCALHOST => 'Local host access - no authentication required for 127.0.0.1',
             self::SESSION => 'Web session access - requires user login with roles and permissions',
-            self::API_KEY => 'API key access - requires Bearer token with specific scopes',
+            self::BEARER_TOKEN => 'Bearer token access - requires Authorization: Bearer token with specific scopes',
             self::PUBLIC => 'Public access - no authentication required for anyone'
         };
     }
@@ -71,7 +71,7 @@ enum SecurityType: string
     {
         return match($this) {
             self::LOCALHOST, self::PUBLIC => false,
-            self::SESSION, self::API_KEY => true
+            self::SESSION, self::BEARER_TOKEN => true
         };
     }
 
@@ -81,7 +81,7 @@ enum SecurityType: string
     public function supportsResourcePermissions(): bool
     {
         return match($this) {
-            self::SESSION, self::API_KEY => true,
+            self::SESSION, self::BEARER_TOKEN => true,
             self::LOCALHOST, self::PUBLIC => false
         };
     }
@@ -94,7 +94,7 @@ enum SecurityType: string
         return match($this) {
             self::PUBLIC => 1,      // Check public first
             self::LOCALHOST => 2,   // Then localhost
-            self::API_KEY => 3,     // Then API key
+            self::BEARER_TOKEN => 3, // Then Bearer token
             self::SESSION => 4      // Session last (most complex)
         };
     }

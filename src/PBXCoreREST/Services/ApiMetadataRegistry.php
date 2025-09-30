@@ -21,12 +21,12 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Services;
 
+use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
     ApiParameter,
     ApiResponse,
-    ApiSecurity,
     HttpMapping,
     ResourceSecurity,
     ActionType
@@ -142,12 +142,6 @@ class ApiMetadataRegistry extends Injectable
             ];
         }
 
-        // Scan for ApiSecurity attributes
-        $securityAttributes = $reflection->getAttributes(ApiSecurity::class);
-        foreach ($securityAttributes as $attribute) {
-            $security = $attribute->newInstance();
-            $metadata['security'][] = $security->getAclRules();
-        }
 
         // Scan for ResourceSecurity attributes (new system)
         $resourceSecurityAttributes = $reflection->getAttributes(ResourceSecurity::class);
@@ -258,12 +252,6 @@ class ApiMetadataRegistry extends Injectable
                 ];
             }
 
-            // Scan for ApiSecurity attributes
-            $securityAttributes = $method->getAttributes(ApiSecurity::class);
-            foreach ($securityAttributes as $attribute) {
-                $security = $attribute->newInstance();
-                $methodMetadata['security'][] = $security->getAclRules();
-            }
 
             // Scan for ResourceSecurity attributes (new system)
             $resourceSecurityAttributes = $method->getAttributes(ResourceSecurity::class);
@@ -332,8 +320,12 @@ class ApiMetadataRegistry extends Injectable
             ],
             'servers' => [
                 [
-                    'url' => '/pbxcore/api/v3',
-                    'description' => 'MikoPBX API v3'
+                    'url' => 'http://localhost:8081/',
+                    'description' => 'MikoPBX API'
+                ],
+                [
+                    'url' => 'https://maclic.miko.ru:8445/',
+                    'description' => 'MikoPBX API'
                 ]
             ],
             'paths' => [],
@@ -342,7 +334,7 @@ class ApiMetadataRegistry extends Injectable
                 'securitySchemes' => $this->generateSecuritySchemes()
             ],
             'security' => [
-                ['sessionAuth' => []]
+                ['bearerAuth' => []]
             ],
             'tags' => $this->generateTags($metadata)
         ];
@@ -475,36 +467,12 @@ class ApiMetadataRegistry extends Injectable
      */
     private function generateSchemas(): array
     {
+        // Use the centralized PBXApiResult schema
+        // All API responses follow the same structure regardless of success/error status
+        $baseSchema = $this->getPBXApiResultSchema();
+
         return [
-            'ErrorResponse' => [
-                'type' => 'object',
-                'properties' => [
-                    'result' => ['type' => 'boolean', 'example' => false],
-                    'messages' => [
-                        'type' => 'object',
-                        'properties' => [
-                            'error' => [
-                                'type' => 'array',
-                                'items' => ['type' => 'string']
-                            ]
-                        ]
-                    ],
-                    'processor' => ['type' => 'string'],
-                    'function' => ['type' => 'string'],
-                    'pid' => ['type' => 'integer']
-                ]
-            ],
-            'SuccessResponse' => [
-                'type' => 'object',
-                'properties' => [
-                    'result' => ['type' => 'boolean', 'example' => true],
-                    'data' => ['type' => 'object'],
-                    'messages' => ['type' => 'object'],
-                    'processor' => ['type' => 'string'],
-                    'function' => ['type' => 'string'],
-                    'pid' => ['type' => 'integer']
-                ]
-            ]
+            'PBXApiResult' => $baseSchema
         ];
     }
 
@@ -516,17 +484,11 @@ class ApiMetadataRegistry extends Injectable
     private function generateSecuritySchemes(): array
     {
         return [
-            'sessionAuth' => [
-                'type' => 'apiKey',
-                'in' => 'cookie',
-                'name' => 'PHPSESSID',
-                'description' => 'Session-based authentication using PHP session cookie'
-            ],
-            'apiKeyAuth' => [
-                'type' => 'apiKey',
-                'in' => 'header',
-                'name' => 'X-API-Key',
-                'description' => 'API key authentication'
+            'bearerAuth' => [
+                'type' => 'http',
+                'scheme' => 'bearer',
+                'bearerFormat' => 'JWT',
+                'description' => 'Bearer token authentication using JWT. API keys can be generated in the web interface under Settings → API Keys.'
             ]
         ];
     }
@@ -569,6 +531,9 @@ class ApiMetadataRegistry extends Injectable
             return [];
         }
 
+        // Remove /pbxcore/api/v3 prefix from paths to make them relative to server URL
+        $basePath = preg_replace('#^/pbxcore/api/v3#', '', $basePath);
+
         // Generate collection-level paths (without {id})
         $collectionPath = $basePath;
         $paths[$collectionPath] = [];
@@ -596,14 +561,18 @@ class ApiMetadataRegistry extends Injectable
 
                     $targetPath = $requiresId ? $resourcePath : $collectionPath;
 
+                    // Merge class-level and method-level security
+                    $methodSecurity = $operation['security'] ?? [];
+                    $combinedSecurity = array_merge($resource['security'] ?? [], $methodSecurity);
+
                     $paths[$targetPath][$method] = [
-                        'summary' => $operationData['summary'] ?? '',
-                        'description' => $operationData['description'] ?? '',
+                        'summary' => $this->translateText($operationData['summary'] ?? ''),
+                        'description' => $this->translateText($operationData['description'] ?? ''),
                         'operationId' => $operationData['operationId'] ?? $operationName,
                         'tags' => $resource['resource']['tags'] ?? [],
                         'parameters' => $this->generateParametersForOperation($parameters, $requiresId),
                         'responses' => $this->generateResponsesForOperation($responses),
-                        'security' => $this->generateSecurityForOperation($resource['security'] ?? [])
+                        'security' => $this->generateSecurityForOperation($combinedSecurity)
                     ];
 
                     // Add request body for POST/PUT/PATCH
@@ -634,15 +603,19 @@ class ApiMetadataRegistry extends Injectable
                     $basePath . '/{id}:' . $customMethod :
                     $basePath . ':' . $customMethod;
 
+                // Merge class-level and method-level security
+                $methodSecurity = $operation['security'] ?? [];
+                $combinedSecurity = array_merge($resource['security'] ?? [], $methodSecurity);
+
                 $paths[$customPath] = [
                     'get' => [
-                        'summary' => $operationData['summary'] ?? '',
-                        'description' => $operationData['description'] ?? '',
+                        'summary' => $this->translateText($operationData['summary'] ?? ''),
+                        'description' => $this->translateText($operationData['description'] ?? ''),
                         'operationId' => $operationData['operationId'] ?? $customMethod,
                         'tags' => $resource['resource']['tags'] ?? [],
                         'parameters' => $this->generateParametersForOperation($parameters, $isResourceLevel),
                         'responses' => $this->generateResponsesForOperation($responses),
-                        'security' => $this->generateSecurityForOperation($resource['security'] ?? [])
+                        'security' => $this->generateSecurityForOperation($combinedSecurity)
                     ]
                 ];
             }
@@ -699,7 +672,7 @@ class ApiMetadataRegistry extends Injectable
             $openApiParam = [
                 'name' => $param['name'],
                 'in' => $param['in'],
-                'description' => $param['description'],
+                'description' => $this->translateText($param['description']),
                 'required' => $param['required'] ?? false,
                 'schema' => [
                     'type' => $param['type']
@@ -738,14 +711,44 @@ class ApiMetadataRegistry extends Injectable
 
         foreach ($responses as $response) {
             $statusCode = (string)$response['statusCode'];
+
+            // Translate description
+            $description = $this->translateText($response['description']);
+
             $openApiResponses[$statusCode] = [
-                'description' => $response['description']
+                'description' => $description
             ];
 
-            if (!empty($response['example'])) {
+            // Always use PBXApiResult schema structure
+            $schema = $this->getPBXApiResultSchema();
+
+            // If we have an example, add it
+            if (isset($response['example'])) {
+                $exampleData = json_decode($response['example'], true);
+
+                // If example is null or decoding failed, create a basic PBXApiResult structure
+                if ($exampleData === null) {
+                    $exampleData = [
+                        'result' => true,
+                        'data' => new \stdClass(),
+                        'messages' => new \stdClass(),
+                        'function' => '',
+                        'processor' => '',
+                        'pid' => 0
+                    ];
+                }
+
                 $openApiResponses[$statusCode]['content'] = [
                     'application/json' => [
-                        'example' => json_decode($response['example'], true)
+                        'schema' => $schema,
+                        'example' => $exampleData
+                    ]
+                ];
+            } else {
+                // No example provided, use schema only
+                $openApiResponses[$statusCode]['content'] = [
+                    'application/json' => [
+                        'schema' => $schema
                     ]
                 ];
             }
@@ -755,16 +758,107 @@ class ApiMetadataRegistry extends Injectable
     }
 
     /**
+     * Get standard PBXApiResult schema for OpenAPI
+     * This matches the structure returned by PBXApiResult::getResult()
+     *
+     * @return array<string, mixed> OpenAPI schema definition
+     */
+    private function getPBXApiResultSchema(): array
+    {
+        return [
+            'type' => 'object',
+            'description' => $this->translateText('rest_schema_PBXApiResult'),
+            'properties' => [
+                'result' => [
+                    'type' => 'boolean',
+                    'description' => $this->translateText('rest_schema_result')
+                ],
+                'data' => [
+                    'type' => 'object',
+                    'description' => $this->translateText('rest_schema_data'),
+                    'additionalProperties' => true
+                ],
+                'messages' => [
+                    'type' => 'object',
+                    'description' => $this->translateText('rest_schema_messages'),
+                    'properties' => [
+                        'error' => [
+                            'type' => 'array',
+                            'description' => $this->translateText('rest_schema_messages_error'),
+                            'items' => ['type' => 'string']
+                        ],
+                        'info' => [
+                            'type' => 'array',
+                            'description' => $this->translateText('rest_schema_messages_info'),
+                            'items' => ['type' => 'string']
+                        ],
+                        'warning' => [
+                            'type' => 'array',
+                            'description' => $this->translateText('rest_schema_messages_warning'),
+                            'items' => ['type' => 'string']
+                        ]
+                    ],
+                    'additionalProperties' => true
+                ],
+                'function' => [
+                    'type' => 'string',
+                    'description' => $this->translateText('rest_schema_function')
+                ],
+                'processor' => [
+                    'type' => 'string',
+                    'description' => $this->translateText('rest_schema_processor')
+                ],
+                'pid' => [
+                    'type' => 'integer',
+                    'description' => $this->translateText('rest_schema_pid')
+                ],
+                'reload' => [
+                    'type' => 'string',
+                    'description' => $this->translateText('rest_schema_reload')
+                ]
+            ],
+            'required' => ['result', 'data', 'messages', 'function', 'processor', 'pid']
+        ];
+    }
+
+    /**
      * Generate security for OpenAPI operation
      */
     private function generateSecurityForOperation(array $security): array
     {
-        $openApiSecurity = [];
-
-        foreach ($security as $securityRule) {
-            if (in_array('session', $securityRule['requirements'] ?? [])) {
-                $openApiSecurity[] = ['sessionAuth' => $securityRule['permissions'] ?? []];
+        // If the last security rule (method-level) is PUBLIC, it overrides all previous rules (class-level)
+        // This allows methods to override class-level security requirements
+        if (!empty($security)) {
+            $lastRule = end($security);
+            $lastRequirements = $lastRule['requirements'] ?? [];
+            if (in_array('public', $lastRequirements)) {
+                // Public endpoints don't require authentication
+                return [];
             }
+        }
+
+        // First pass: check if any security rule allows public access
+        foreach ($security as $securityRule) {
+            $requirements = $securityRule['requirements'] ?? [];
+            if (in_array('public', $requirements)) {
+                // Public endpoints don't require authentication
+                return [];
+            }
+        }
+
+        // Second pass: build security requirements
+        // Only bearerAuth is exposed in public REST API documentation
+        // Session and localhost are internal authentication mechanisms not documented in OpenAPI
+        $openApiSecurity = [];
+        foreach ($security as $securityRule) {
+            $requirements = $securityRule['requirements'] ?? [];
+
+            // Convert SecurityType requirements to OpenAPI security schemes
+            if (in_array('bearer_token', $requirements)) {
+                $openApiSecurity[] = ['bearerAuth' => $securityRule['permissions'] ?? []];
+            }
+            // Note: session and localhost authentication are not documented in OpenAPI
+            // as they are internal mechanisms not intended for public API consumers
         }
 
         return $openApiSecurity;
@@ -860,5 +954,31 @@ class ApiMetadataRegistry extends Injectable
         ];
 
         return $patterns[$methodName] ?? "Perform {$action} operation on {$resource}";
+    }
+
+    /**
+     * Translate text using TranslationProvider
+     *
+     * If the text looks like a translation key (no spaces), it will be translated.
+     * Otherwise, returns the text as-is.
+     *
+     * @param string $text Text or translation key to translate
+     * @param array<string, mixed> $placeholders Optional placeholders for translation
+     * @return string Translated text or original text if not a key
+     */
+    private function translateText(string $text, array $placeholders = []): string
+    {
+        if (empty($text)) {
+            return $text;
+        }
+
+        // Check if this looks like a translation key (no spaces, no special chars except underscore and digits)
+        // Translation keys typically follow pattern: rest_resource_Action or param_name or rest_response_200_default
+        if (!str_contains($text, ' ') && preg_match('/^[a-z0-9_]+$/i', $text)) {
+            return TranslationProvider::translate($text, $placeholders);
+        }
+
+        // Return as-is if it doesn't look like a translation key
+        return $text;
     }
 }

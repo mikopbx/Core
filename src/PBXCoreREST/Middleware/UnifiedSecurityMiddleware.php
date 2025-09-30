@@ -32,7 +32,7 @@ use Phalcon\Http\Response;
  * Handles all three access channels:
  * 1. LOCALHOST - Direct access from 127.0.0.1
  * 2. SESSION - Web interface with user roles and ACL
- * 3. API_KEY - Bearer token with scope-based permissions
+ * 3. BEARER_TOKEN - Bearer token with scope-based permissions
  *
  * @package MikoPBX\PBXCoreREST\Middleware
  */
@@ -99,7 +99,7 @@ class UnifiedSecurityMiddleware
         return match ($securityType) {
             SecurityType::PUBLIC => $this->checkPublicAccess(),
             SecurityType::LOCALHOST => $this->checkLocalhostAccess($request),
-            SecurityType::API_KEY => $this->checkApiKeyAccess($request, $permission),
+            SecurityType::BEARER_TOKEN => $this->checkApiKeyAccess($request, $permission),
             SecurityType::SESSION => $this->checkSessionAccess($request, $user, $permission)
         };
     }

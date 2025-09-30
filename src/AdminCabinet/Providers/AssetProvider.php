@@ -1084,6 +1084,14 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/PbxAPI/api-keys-api.js', true)
                 ->addJs('js/pbx/PbxAPI/network-filters-api.js', true)
                 ->addJs('js/pbx/ApiKeys/api-keys-modify.js', true);
+        } elseif ($action === 'openapi') {
+            // Stoplight Elements assets
+            $this->headerCollectionCSS
+                ->addCss('css/vendor/stoplight-elements/styles.min.css', true)
+                ->addCss('css/ApiKeys/openapi.css', true);
+            $this->footerCollectionJS
+                ->addJs('js/vendor/stoplight-elements/web-components.min.js', true)
+                ->addJs('js/pbx/ApiKeys/api-keys-openapi.js', true);
         }
     }
     

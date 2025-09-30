@@ -70,7 +70,7 @@ use MikoPBX\PBXCoreREST\Attributes\{ResourceSecurity, SecurityType, HttpMapping}
  * 
  * @package MikoPBX\PBXCoreREST\Controllers\ApiKeys
  */
-#[ResourceSecurity('api_keys', requirements: [SecurityType::LOCALHOST, SecurityType::SESSION])]  // No API_KEY access for API key management
+#[ResourceSecurity('api_keys', requirements: [SecurityType::LOCALHOST, SecurityType::SESSION])]  // No BEARER_TOKEN access for API key management
 #[HttpMapping(
     mapping: [
         'GET' => ['getList', 'getRecord', 'getDefault', 'getAvailableControllers'],

@@ -52,7 +52,7 @@ use MikoPBX\PBXCoreREST\Lib\MailSettingsManagementProcessor;
                 'Includes connection testing and automated token refresh capabilities.',
     processor: MailSettingsManagementProcessor::class
 )]
-#[ResourceSecurity('mail_settings', requirements: [SecurityType::LOCALHOST, SecurityType::SESSION, SecurityType::API_KEY])]
+#[ResourceSecurity('mail_settings', requirements: [SecurityType::LOCALHOST, SecurityType::SESSION, SecurityType::BEARER_TOKEN])]
 #[HttpMapping(
     mapping: [
         'GET' => ['getList', 'getOAuth2Url'],

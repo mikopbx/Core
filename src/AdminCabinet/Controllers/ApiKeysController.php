@@ -34,7 +34,7 @@ class ApiKeysController extends BaseController
     {
         // The data will load by DataTable AJAX
     }
-    
+
     /**
      * Edit API key details.
      *
@@ -44,5 +44,14 @@ class ApiKeysController extends BaseController
     {
         // Create form with empty/default structure - JavaScript will load everything
         $this->view->form = new ApiKeyEditForm();
+    }
+
+    /**
+     * Display Swagger UI for API documentation
+     */
+    public function openapiAction(): void
+    {
+        // Set page title for OpenAPI documentation
+        $this->view->title = $this->translation->_('ak_OpenAPIDocumentation');
     }
 }

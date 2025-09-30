@@ -144,4 +144,14 @@ return [
     'ak_ApiKeyUsageTooltip_warning_header' => 'Предупреждение о безопасности',
     'ak_ApiKeyUsageTooltip_warning' => 'Никогда не делитесь своим API ключом и не сохраняйте его в системе контроля версий. Обращайтесь с ним как с паролем.',
     'ak_ApiKeyUsageTooltip_note' => 'В целях безопасности отображаются только первые и последние 5 символов ключа.',
+
+    // OpenAPI/Swagger UI
+    'ak_ApiDocumentation' => 'Документация API',
+    'ak_LoadingApiDocumentation' => 'Загрузка документации API...',
+    'ak_OpenAPIDocumentation' => 'Документация OpenAPI',
+    'ak_SwaggerLoadError' => 'Ошибка загрузки документации API',
+    'ak_SwaggerLoadErrorDesc' => 'Не удалось загрузить спецификацию API. Проверьте подключение и попробуйте снова.',
+    'ak_RetryLoad' => 'Повторить',
+    'ak_AuthenticationRequired' => 'Требуется аутентификация',
+    'ak_PleaseLoginFirst' => 'Пожалуйста, войдите в систему для доступа к API',
 ];

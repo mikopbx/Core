@@ -50,7 +50,7 @@ class ApiKeyEditForm extends BaseForm
         ]));
 
         // API Key field
-                $this->add(new Hidden('api_key'));
+        $this->add(new Hidden('api_key'));
 
         // Network filter - using DynamicDropdownBuilder (built by JavaScript)
         $this->add(new Hidden('networkfilterid'));

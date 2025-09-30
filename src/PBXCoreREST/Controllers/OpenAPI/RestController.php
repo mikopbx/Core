@@ -17,326 +17,181 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-declare(strict_types=1);
-
 namespace MikoPBX\PBXCoreREST\Controllers\OpenAPI;
 
-use MikoPBX\PBXCoreREST\Controllers\BaseController;
-use MikoPBX\PBXCoreREST\Services\ApiMetadataRegistry;
+use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
+use MikoPBX\PBXCoreREST\Lib\OpenAPIManagementProcessor;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
     ApiParameter,
     ApiResponse,
+    SecurityType,
+    ParameterLocation,
+    HttpMapping,
     ResourceSecurity,
-    ActionType,
-    SecurityType
+    ActionType
 };
-use Phalcon\Http\Response;
 
 /**
- * OpenAPI specification and documentation controller
+ * RESTful controller for OpenAPI specification management (v3 API)
  *
- * Provides endpoints for retrieving OpenAPI specification and serving
- * API documentation interfaces like Swagger UI.
+ * Provides comprehensive access to OpenAPI documentation and metadata for the MikoPBX REST API.
+ * Implements singleton resource pattern as there's only one OpenAPI specification in the system.
  *
  * @package MikoPBX\PBXCoreREST\Controllers\OpenAPI
+ *
+ * @see https://cloud.google.com/apis/design - Google API Design Guide
+ * @see https://spec.openapis.org/oas/v3.1.0 - OpenAPI 3.1 Specification
  */
 #[ApiResource(
     path: '/pbxcore/api/v3/openapi',
-    tags: ['OpenAPI'],
-    description: 'OpenAPI specification and documentation endpoints'
+    tags: ['OpenAPI Documentation'],
+    description: 'OpenAPI specification and documentation management for MikoPBX REST API. ' .
+                'Provides access to API documentation, ACL rules, validation schemas, and metadata. ' .
+                'Singleton resource pattern - only one specification exists. ' .
+                'All endpoints require authentication for security.',
+    processor: OpenAPIManagementProcessor::class
 )]
-#[ResourceSecurity('openapi', requirements: [SecurityType::PUBLIC])]
-class RestController extends BaseController
+#[ResourceSecurity('openapi', requirements: [SecurityType::LOCALHOST, SecurityType::SESSION, SecurityType::BEARER_TOKEN])]
+#[HttpMapping(
+    mapping: [
+        'GET' => ['getList', 'getSpecification', 'getAclRules', 'getValidationSchemas'],
+        'POST' => ['clearCache'],
+        'DELETE' => ['clearCache']
+    ],
+    resourceLevelMethods: [],
+    collectionLevelMethods: ['getList', 'clearCache'],
+    customMethods: ['getSpecification', 'getAclRules', 'getValidationSchemas', 'clearCache']
+)]
+class RestController extends BaseRestController
 {
     /**
-     * List of API controller classes to scan for metadata
+     * The processor class to handle requests
+     * @var string
      */
-    private const API_CONTROLLERS = [
-        \MikoPBX\PBXCoreREST\Controllers\ApiKeys\RestController::class,
-        \MikoPBX\PBXCoreREST\Controllers\AsteriskManagers\RestController::class,
-        \MikoPBX\PBXCoreREST\Controllers\CallQueues\RestController::class,
-        \MikoPBX\PBXCoreREST\Controllers\MailSettings\RestController::class,
-        \MikoPBX\PBXCoreREST\Controllers\MailSettings\OAuth2CallbackController::class,
-        // Add more controllers as they are migrated to attributes
-    ];
+    protected string $processorClass = OpenAPIManagementProcessor::class;
 
     /**
-     * Get OpenAPI specification in JSON format
+     * Indicates this is a singleton resource
+     * @var bool
+     */
+    protected bool $isSingleton = true;
+
+    /**
+     * Get OpenAPI specification
+     *
+     * @route GET /pbxcore/api/v3/openapi
      */
     #[ApiOperation(
         summary: 'Get OpenAPI specification',
-        description: 'Returns the complete OpenAPI 3.1 specification for MikoPBX REST API in JSON format'
+        description: 'Retrieve the complete OpenAPI 3.1 specification for MikoPBX REST API in JSON or YAML format',
+        operationId: 'getOpenAPISpecification'
     )]
-    #[ApiParameter('format', 'string', 'Output format', enum: ['json', 'yaml'], default: 'json')]
-    #[ApiResponse(200, 'OpenAPI specification retrieved successfully')]
+    #[ApiParameter(
+        name: 'format',
+        type: 'string',
+        description: 'Output format for the specification',
+        in: ParameterLocation::QUERY,
+        required: false,
+        enum: ['json', 'yaml'],
+        default: 'json',
+        example: 'json'
+    )]
+    #[ApiResponse(200, 'OpenAPI specification retrieved successfully', example: '{"openapi":"3.1.0","info":{"title":"MikoPBX REST API","version":"3.0.0","description":"Comprehensive REST API for MikoPBX management"},"servers":[{"url":"http://127.0.0.1/pbxcore/api/v3","description":"Local MikoPBX instance"}],"paths":{}}')]
     #[ApiResponse(500, 'Failed to generate specification', 'ErrorResponse')]
-    public function getSpecificationAction(): Response
+    #[ResourceSecurity('openapi', ActionType::READ, [SecurityType::PUBLIC])]
+    public function getList(): void
     {
-        try {
-            $format = $this->request->getQuery('format', 'string', 'json');
-
-            // Get metadata registry from DI container
-            $registry = $this->getDI()->getShared('apiMetadataRegistry');
-            if (!$registry instanceof ApiMetadataRegistry) {
-                $registry = new ApiMetadataRegistry();
-            }
-
-            // Scan controllers for metadata
-            $metadata = $registry->scanControllers(self::API_CONTROLLERS);
-
-            // Generate OpenAPI specification
-            $openapi = $registry->generateOpenAPISpec($metadata);
-
-            // Set appropriate content type and return response
-            if ($format === 'yaml') {
-                $this->response->setContentType('application/x-yaml');
-                $content = yaml_emit($openapi);
-            } else {
-                $this->response->setContentType('application/json');
-                $content = json_encode($openapi, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-            }
-
-            $this->response->setContent($content);
-
-            // Add cache headers for performance
-            $this->response->setHeader('Cache-Control', 'public, max-age=3600');
-            $this->response->setHeader('ETag', md5($content));
-
-            return $this->response;
-
-        } catch (\Exception $e) {
-            $this->response->setStatusCode(500, 'Internal Server Error');
-            $this->response->setJsonContent([
-                'error' => 'Failed to generate OpenAPI specification',
-                'message' => $e->getMessage()
-            ]);
-            return $this->response;
-        }
+        // Implementation handled by BaseRestController
     }
 
     /**
-     * Serve Swagger UI for API documentation
+     * Get OpenAPI specification (alias for getList)
+     *
+     * @route GET /pbxcore/api/v3/openapi:getSpecification
      */
     #[ApiOperation(
-        summary: 'Swagger UI documentation interface',
-        description: 'Serves the Swagger UI interface for interactive API documentation and testing'
+        summary: 'Get OpenAPI specification (explicit)',
+        description: 'Retrieve the complete OpenAPI 3.1 specification for MikoPBX REST API in JSON or YAML format. This is an explicit alias for the main GET endpoint.',
+        operationId: 'getOpenAPISpecificationExplicit'
     )]
-    #[ApiResponse(200, 'Swagger UI HTML page')]
-    public function docsAction(): Response
+    #[ApiParameter(
+        name: 'format',
+        type: 'string',
+        description: 'Output format for the specification',
+        in: ParameterLocation::QUERY,
+        required: false,
+        enum: ['json', 'yaml'],
+        default: 'json',
+        example: 'yaml'
+    )]
+    #[ApiResponse(200, 'OpenAPI specification retrieved successfully')]
+    #[ApiResponse(500, 'Failed to generate specification', 'ErrorResponse')]
+    #[ResourceSecurity('openapi', ActionType::READ, [SecurityType::PUBLIC])]
+    public function getSpecification(): void
     {
-        $specUrl = '/pbxcore/api/v3/openapi/specification';
-
-        $swaggerHtml = $this->generateSwaggerUI($specUrl);
-
-        $this->response->setContentType('text/html');
-        $this->response->setContent($swaggerHtml);
-
-        return $this->response;
+        // Implementation handled by BaseRestController
     }
 
     /**
      * Get ACL rules extracted from API metadata
+     *
+     * @route GET /pbxcore/api/v3/openapi:getAclRules
      */
     #[ApiOperation(
         summary: 'Get API ACL rules',
-        description: 'Returns ACL rules extracted from API attributes for integration with MikoPBX ACL system'
+        description: 'Extract ACL rules from API attributes for integration with MikoPBX access control system. Returns resource-action mappings and security requirements.',
+        operationId: 'getAPIAclRules'
     )]
-    #[ResourceSecurity('openapi', ActionType::READ, [SecurityType::PUBLIC])]
-    #[ApiResponse(200, 'ACL rules retrieved successfully')]
-    #[ApiResponse(403, 'Admin access required', 'ErrorResponse')]
-    public function getAclRulesAction(): Response
+    #[ApiResponse(200, 'ACL rules retrieved successfully', example: '{"jsonapi":{"version":"1.0"},"result":true,"data":{"resources":{"general_settings":{"actions":["read","write"],"methods":["GET","PUT","PATCH"]},"extensions":{"actions":["read","write","delete"],"methods":["GET","POST","PUT","DELETE"]}},"permissions":["general_settings:read","general_settings:write","extensions:read","extensions:write","extensions:delete"]},"messages":[],"function":"getAclRules","processor":"MikoPBX\\\\PBXCoreREST\\\\Lib\\\\OpenAPI\\\\GetAclRulesAction::main","pid":1408}')]
+    #[ApiResponse(500, 'Failed to extract ACL rules', 'ErrorResponse')]
+    #[ApiResponse(401, 'Authentication required', 'ErrorResponse')]
+    #[ApiResponse(403, 'Insufficient permissions', 'ErrorResponse')]
+    #[ResourceSecurity('openapi', ActionType::read)]
+    public function getAclRules(): void
     {
-        // Debug: Log that we got here
-        error_log("DEBUG: getAclRulesAction called");
-
-        try {
-            // Get metadata registry
-            $registry = $this->getDI()->getShared('apiMetadataRegistry');
-            if (!$registry instanceof ApiMetadataRegistry) {
-                $registry = new ApiMetadataRegistry();
-            }
-
-            error_log("DEBUG: Registry created, scanning controllers");
-
-            // Scan controllers and extract ACL rules
-            $metadata = $registry->scanControllers(self::API_CONTROLLERS);
-            $aclRules = $registry->extractACLRules($metadata);
-
-            error_log("DEBUG: ACL rules extracted: " . json_encode($aclRules));
-
-            $this->response->setJsonContent([
-                'result' => true,
-                'data' => $aclRules,
-                'timestamp' => time()
-            ]);
-
-            return $this->response;
-
-        } catch (\Exception $e) {
-            error_log("DEBUG: Exception in getAclRulesAction: " . $e->getMessage());
-            $this->response->setStatusCode(500, 'Internal Server Error');
-            $this->response->setJsonContent([
-                'result' => false,
-                'error' => 'Failed to extract ACL rules',
-                'message' => $e->getMessage()
-            ]);
-            return $this->response;
-        }
+        // Implementation handled by BaseRestController
     }
 
     /**
      * Get validation schemas for API endpoints
+     *
+     * @route GET /pbxcore/api/v3/openapi:getValidationSchemas
      */
     #[ApiOperation(
         summary: 'Get API validation schemas',
-        description: 'Returns validation schemas extracted from API attributes for request validation'
+        description: 'Extract validation schemas from API attributes for request/response validation. Returns JSON Schema definitions for all documented endpoints.',
+        operationId: 'getAPIValidationSchemas'
     )]
-    #[ResourceSecurity('openapi', ActionType::READ, [SecurityType::SESSION])]
-    #[ApiResponse(200, 'Validation schemas retrieved successfully')]
-    #[ApiResponse(403, 'Admin access required', 'ErrorResponse')]
-    public function getValidationSchemasAction(): Response
+    #[ApiResponse(200, 'Validation schemas retrieved successfully', example: '{"jsonapi":{"version":"1.0"},"result":true,"data":{"schemas":{"GeneralSettingsRequest":{"type":"object","properties":{"PBXName":{"type":"string","maxLength":255},"PBXLanguage":{"type":"string","enum":["en","ru","de","es"]}},"required":["PBXName"]},"ExtensionRequest":{"type":"object","properties":{"number":{"type":"string","pattern":"^[0-9]+$"},"name":{"type":"string","maxLength":100}},"required":["number","name"]}}},"messages":[],"function":"getValidationSchemas","processor":"MikoPBX\\\\PBXCoreREST\\\\Lib\\\\OpenAPI\\\\GetValidationSchemasAction::main","pid":1408}')]
+    #[ApiResponse(401, 'Authentication required', 'ErrorResponse')]
+    #[ApiResponse(403, 'Insufficient permissions', 'ErrorResponse')]
+    #[ApiResponse(500, 'Failed to extract validation schemas', 'ErrorResponse')]
+    #[ResourceSecurity('openapi', ActionType::read, [SecurityType::SESSION])]
+    public function getValidationSchemas(): void
     {
-        try {
-            // Get metadata registry
-            $registry = $this->getDI()->getShared('apiMetadataRegistry');
-            if (!$registry instanceof ApiMetadataRegistry) {
-                $registry = new ApiMetadataRegistry();
-            }
-
-            // Scan controllers and extract validation schemas
-            $metadata = $registry->scanControllers(self::API_CONTROLLERS);
-            $schemas = $registry->getValidationSchemas($metadata);
-
-            $this->response->setJsonContent([
-                'result' => true,
-                'data' => $schemas,
-                'timestamp' => time()
-            ]);
-
-            return $this->response;
-
-        } catch (\Exception $e) {
-            $this->response->setStatusCode(500, 'Internal Server Error');
-            $this->response->setJsonContent([
-                'result' => false,
-                'error' => 'Failed to extract validation schemas',
-                'message' => $e->getMessage()
-            ]);
-            return $this->response;
-        }
+        // Implementation handled by BaseRestController
     }
 
     /**
-     * Clear metadata cache
+     * Clear OpenAPI metadata cache
+     *
+     * @route POST /pbxcore/api/v3/openapi:clearCache
+     * @route DELETE /pbxcore/api/v3/openapi:clearCache
      */
     #[ApiOperation(
         summary: 'Clear API metadata cache',
-        description: 'Clears the cached API metadata to force re-scanning of controllers'
+        description: 'Clear cached API metadata to force re-scanning of controllers and regeneration of OpenAPI specification. Useful after API changes or updates.',
+        operationId: 'clearOpenAPICache'
     )]
-    #[ResourceSecurity('openapi', ActionType::WRITE, [SecurityType::SESSION])]
-    #[ApiResponse(200, 'Cache cleared successfully')]
-    #[ApiResponse(403, 'Admin access required', 'ErrorResponse')]
-    public function clearCacheAction(): Response
+    #[ApiResponse(200, 'Cache cleared successfully', example: '{"jsonapi":{"version":"1.0"},"result":true,"data":{"message":"API metadata cache cleared successfully"},"messages":["Cache cleared successfully"],"function":"clearCache","processor":"MikoPBX\\\\PBXCoreREST\\\\Lib\\\\OpenAPI\\\\ClearCacheAction::main","pid":1408}')]
+    #[ApiResponse(401, 'Authentication required', 'ErrorResponse')]
+    #[ApiResponse(403, 'Insufficient permissions', 'ErrorResponse')]
+    #[ApiResponse(500, 'Failed to clear cache', 'ErrorResponse')]
+    #[ResourceSecurity('openapi', ActionType::write, [SecurityType::SESSION])]
+    public function clearCache(): void
     {
-        try {
-            // Get metadata registry
-            $registry = $this->getDI()->getShared('apiMetadataRegistry');
-            if (!$registry instanceof ApiMetadataRegistry) {
-                $registry = new ApiMetadataRegistry();
-            }
-
-            $registry->clearCache();
-
-            $this->response->setJsonContent([
-                'result' => true,
-                'message' => 'API metadata cache cleared successfully'
-            ]);
-
-            return $this->response;
-
-        } catch (\Exception $e) {
-            $this->response->setStatusCode(500, 'Internal Server Error');
-            $this->response->setJsonContent([
-                'result' => false,
-                'error' => 'Failed to clear cache',
-                'message' => $e->getMessage()
-            ]);
-            return $this->response;
-        }
-    }
-
-    /**
-     * Generate Swagger UI HTML
-     *
-     * @param string $specUrl URL to the OpenAPI specification
-     * @return string HTML content for Swagger UI
-     */
-    private function generateSwaggerUI(string $specUrl): string
-    {
-        return <<<HTML
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>MikoPBX API Documentation</title>
-    <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui.css" />
-    <link rel="icon" type="image/png" href="https://unpkg.com/swagger-ui-dist@5.9.0/favicon-32x32.png" sizes="32x32" />
-    <link rel="icon" type="image/png" href="https://unpkg.com/swagger-ui-dist@5.9.0/favicon-16x16.png" sizes="16x16" />
-    <style>
-        html {
-            box-sizing: border-box;
-            overflow: -moz-scrollbars-vertical;
-            overflow-y: scroll;
-        }
-        *, *:before, *:after {
-            box-sizing: inherit;
-        }
-        body {
-            margin:0;
-            background: #fafafa;
-        }
-        .swagger-ui .topbar {
-            background-color: #2c3e50;
-        }
-        .swagger-ui .topbar .download-url-wrapper {
-            display: none;
-        }
-    </style>
-</head>
-<body>
-    <div id="swagger-ui"></div>
-
-    <script src="https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui-bundle.js"></script>
-    <script src="https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui-standalone-preset.js"></script>
-    <script>
-        window.onload = function() {
-            const ui = SwaggerUIBundle({
-                url: '{$specUrl}',
-                dom_id: '#swagger-ui',
-                deepLinking: true,
-                presets: [
-                    SwaggerUIBundle.presets.apis,
-                    SwaggerUIStandalonePreset
-                ],
-                plugins: [
-                    SwaggerUIBundle.plugins.DownloadUrl
-                ],
-                layout: "StandaloneLayout",
-                tryItOutEnabled: true,
-                requestInterceptor: function(request) {
-                    // Add session handling if needed
-                    return request;
-                },
-                responseInterceptor: function(response) {
-                    return response;
-                }
-            });
-        };
-    </script>
-</body>
-</html>
-HTML;
+        // Implementation handled by BaseRestController
     }
 }

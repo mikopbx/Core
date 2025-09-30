@@ -1,6 +1,9 @@
 <div id="add-new-button">
     {% if isAllowed('save') %}
-        {{ link_to("api-keys/modify", '<i class="add circle icon"></i> '~t._('ak_AddNewApiKey'), "class": "ui blue button") }}
+        <div class="ui buttons">
+            {{ link_to("api-keys/modify", '<i class="add circle icon"></i> '~t._('ak_AddNewApiKey'), "class": "ui blue button") }}
+            {{ link_to("api-keys/openapi", '<i class="code icon"></i> '~t._('ak_ApiDocumentation'), "class": "ui basic blue button") }}
+        </div>
     {% endif %}
 </div>
 
@@ -22,6 +25,9 @@
 </div>
 
 <div id="empty-table-placeholder" style="display: none;">
+    {% set dropdownItems = [
+        {'link': url('api-keys/openapi'), 'icon': 'code', 'text': t._('ak_ApiDocumentation')}
+    ] %}
     {{ partial("partials/emptyTablePlaceholder", [
         'icon': 'key',
         'title': t._('ak_EmptyTableTitle'),
@@ -29,6 +35,7 @@
         'addButtonText': '<i class="add circle icon"></i> '~t._('ak_AddNewApiKey'),
         'addButtonLink': 'api-keys/modify',
         'showButton': isAllowed('save'),
-        'documentationLink': 'https://wiki.mikopbx.com/api-keys'
+        'documentationLink': 'https://wiki.mikopbx.com/api-keys',
+        'dropdownItems': dropdownItems
     ]) }}
 </div>
