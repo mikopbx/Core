@@ -132,14 +132,6 @@
     <div class="field max-width-300">
         <label>{{ t._('tf_PeriodAction') }}</label>
         {{ form.render('action') }}
-        <div class="ui selection dropdown action-select">
-            <i class="dropdown icon"></i>
-            <div class="default text">{{ t._('tf_SelectAction') }}</div>
-            <div class="menu">
-                <div class="item" data-value="playmessage">{{ t._('tf_SelectActionPlayMessage') }}</div>
-                <div class="item" data-value="extension">{{ t._('tf_SelectActionRedirectToExtension') }}</div>
-            </div>
-        </div>
     </div>
     
     <div class="field max-width-800" id="extension-row" style="display:none;">

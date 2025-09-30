@@ -65,9 +65,23 @@ class TimeFrameEditForm extends BaseForm
         $this->add(new Hidden('priority'));
         
         // Hidden fields for dropdown values (populated by JS)
+        $this->addSemanticUIDropdown(
+            'action',
+            [
+                'playmessage' => $this->translation->_('tf_SelectActionPlayMessage'),
+                'extension' => $this->translation->_('tf_SelectActionRedirectToExtension'),
+            ],
+            'playmessage', // Default value, actual value will come from REST API
+            [
+                'clearable' => false,
+                'forceSelection' => true,
+                'placeholder' => $this->translation->_('tf_SelectAction')
+            ]
+        );
+
+
         $this->add(new Hidden('extension'));
         $this->add(new Hidden('audio_message_id'));
-        $this->add(new Hidden('action', ['value' => $entity?->action ?? '']));
         $this->add(new Hidden('calType', ['value' => $entity?->calType ?? 'timeframe']));
         $this->add(new Hidden('weekday_from'));
         $this->add(new Hidden('weekday_to'));
