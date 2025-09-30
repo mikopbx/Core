@@ -229,7 +229,9 @@ class BaseController extends Controller
 
             // Handle errors first
             if (array_key_exists(WorkerApiCommands::REDIS_JOB_PROCESSING_ERROR, $response)) {
-                $this->response->setPayloadError($response[WorkerApiCommands::REDIS_JOB_PROCESSING_ERROR]);
+                // Extract HTTP code for error response (default 400)
+                $httpCode = $response['httpCode'] ?? 400;
+                $this->response->setPayloadError($response[WorkerApiCommands::REDIS_JOB_PROCESSING_ERROR], $httpCode);
                 return;
             }
 
@@ -238,8 +240,18 @@ class BaseController extends Controller
                 return;
             }
 
-            // Handle normal response
-            $this->response->setPayloadSuccess($response);
+            // Handle normal response with proper HTTP status code
+            // Extract httpCode from response (default to 200 for success, 400 for error)
+            if (isset($response['result']) && $response['result'] === false) {
+                // Error response
+                $httpCode = $response['httpCode'] ?? 400;
+                $errorMessage = $response['messages']['error'][0] ?? 'Unknown error';
+                $this->response->setPayloadError($errorMessage, $httpCode);
+            } else {
+                // Success response
+                $httpCode = $response['httpCode'] ?? 200;
+                $this->response->setPayloadSuccess($response, $httpCode);
+            }
 
         } catch (Throwable $e) {
             // Log and handle error

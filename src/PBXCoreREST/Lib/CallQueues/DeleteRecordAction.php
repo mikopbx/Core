@@ -61,11 +61,13 @@ class DeleteRecordAction extends AbstractDeleteAction
             'Call queue not found',
             function($queue) {
                 // Delete related queue members before deleting the queue
+                /** @var \Phalcon\Mvc\Model\Resultset\Simple $members */
                 $members = CallQueueMembers::find([
                     'conditions' => 'queue = :queue:',
                     'bind' => ['queue' => $queue->uniqid]
                 ]);
 
+                /** @var CallQueueMembers $member */
                 foreach ($members as $member) {
                     if (!$member->delete()) {
                         throw new \Exception('Failed to delete queue member: ' . implode(', ', $member->getMessages()));

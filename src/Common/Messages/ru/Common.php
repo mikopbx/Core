@@ -19,6 +19,7 @@ return [
     'August' => 'Август',
     'BreadcrumbAdminCabinet' => 'Административный интерфейс',
     'BreadcrumbApiKeys' => 'API ключи',
+    'BreadcrumbApiKeysopenapi' => 'OpenAPI документация',
     'BreadcrumbAsteriskManagers' => 'Asterisk Manager Interface (AMI)',
     'BreadcrumbAsteriskManagersmodify' => 'Настройка учетной записи',
     'BreadcrumbAsteriskRestUsers' => 'Asterisk REST Interface (ARI)',

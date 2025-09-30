@@ -49,7 +49,7 @@ class CallQueues extends ModelsBase
     /**
      * Name of the call queue.
      *
-     * @Column(type="string", nullable=true)
+     * @Column(type="string", length=100, nullable=true)
      */
     public ?string $name = '';
 
@@ -181,14 +181,14 @@ class CallQueues extends ModelsBase
     /**
      * Caller ID prefix for the call queue.
      *
-     * @Column(type="string", nullable=true)
+     * @Column(type="string", length=50, nullable=true)
      */
     public ?string $callerid_prefix = '';
 
     /**
      * Description of the call queue.
      *
-     * @Column(type="string", nullable=true)
+     * @Column(type="string", length=500, nullable=true)
      */
     public ?string $description = '';
 

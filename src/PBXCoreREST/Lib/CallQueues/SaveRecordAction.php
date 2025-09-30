@@ -53,39 +53,16 @@ class SaveRecordAction extends AbstractSaveRecordAction
     /**
      * Save call queue record with comprehensive validation and proper logging
      *
-     * @param array $data Data to save
+     * @param array<string, mixed> $data Data to save
      * @return PBXApiResult
      */
     public static function main(array $data): PBXApiResult
     {
         $res = self::createApiResult(__METHOD__);
 
-        // Define sanitization rules - no HTML escaping as it's handled at output level
-        $sanitizationRules = [
-            'id' => 'string|max:50',
-            'name' => 'string|max:100',
-            'extension' => 'string|regex:/^[0-9]{2,8}$/|max:8',
-            'strategy' => 'string|in:ringall,leastrecent,fewestcalls,random,rrmemory,linear',
-            'seconds_to_ring_each_member' => 'int|min:1|max:300',
-            'seconds_for_wrapup' => 'int|min:0|max:300',
-            'recive_calls_while_on_a_call' => 'bool',
-            'caller_hear' => 'string|in:ringing,musiconhold',
-            'announce_position' => 'bool',
-            'announce_hold_time' => 'bool',
-            'periodic_announce_sound_id' => 'string|empty_to_null',
-            'moh_sound_id' => 'string|empty_to_null',
-            'periodic_announce_frequency' => 'int|min:0|max:3600|empty_to_null',
-            'timeout_to_redirect_to_extension' => 'int|min:0|max:7200',
-            'timeout_extension' => 'string|empty_to_null',
-            'redirect_to_extension_if_empty' => 'string|empty_to_null',
-            'number_unanswered_calls_to_redirect' => 'int|min:1|max:20',
-            'redirect_to_extension_if_unanswered' => 'string|empty_to_null',
-            'number_repeat_unanswered_to_redirect' => 'int|min:1|max:20',
-            'redirect_to_extension_if_repeat_exceeded' => 'string|empty_to_null',
-            'callerid_prefix' => 'string|max:20|empty_to_null',
-            'description' => 'string|max:500|empty_to_null',
-            'members' => 'array'
-        ];
+        // Get sanitization rules automatically from OpenAPI schema
+        // This eliminates duplication between schema and validation rules
+        $sanitizationRules = DataStructure::getSanitizationRules();
 
         // Text fields for unified processing (no HTML decoding, just sanitization)
         $textFields = ['name', 'description', 'callerid_prefix'];
@@ -110,7 +87,18 @@ class SaveRecordAction extends AbstractSaveRecordAction
 
         // Sanitize members data
         if (isset($data['members'])) {
-            $sanitizedData['members'] = self::sanitizeMembersData($data['members']);
+            // Decode JSON string if needed
+            if (is_string($data['members'])) {
+                $decoded = json_decode($data['members'], true);
+                // Ensure decoded value is an array, fallback to empty array if not
+                $members = is_array($decoded) ? $decoded : [];
+            } elseif (is_array($data['members'])) {
+                $members = $data['members'];
+            } else {
+                // If members is neither string nor array, use empty array
+                $members = [];
+            }
+            $sanitizedData['members'] = self::sanitizeMembersData($members);
         }
 
         // Validate required fields using unified approach
@@ -132,10 +120,12 @@ class SaveRecordAction extends AbstractSaveRecordAction
 
         // Get or create model
         // v3 API: 'id' field contains uniqid value
-        if (!empty($sanitizedData['id'])) {
+        $isNewRecord = empty($sanitizedData['id']);
+        if (!$isNewRecord) {
             $queue = CallQueues::findFirst("uniqid='{$sanitizedData['id']}'");
             if (!$queue) {
                 $res->messages['error'][] = 'Call queue not found';
+                $res->httpCode = 404; // Not Found
                 SystemMessages::sysLogMsg(__METHOD__,
                     "Queue not found for update: " . $sanitizedData['id'],
                     LOG_WARNING
@@ -150,6 +140,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
         // Check extension uniqueness using unified approach
         if (!self::checkExtensionUniqueness($sanitizedData['extension'], $queue->extension)) {
             $res->messages['error'][] = 'Extension number already exists';
+            $res->httpCode = 409; // Conflict
             return $res;
         }
 
@@ -164,21 +155,24 @@ class SaveRecordAction extends AbstractSaveRecordAction
                     $queue->extension
                 );
 
+                // Get default values from schema for fallback
+                $defaults = DataStructure::createFromSchema('detail');
+
                 // Update CallQueue with unified data handling
                 $queue->extension = $sanitizedData['extension'];
                 $queue->name = $sanitizedData['name'];
-                $queue->strategy = $sanitizedData['strategy'] ?? 'ringall';
-                $queue->seconds_to_ring_each_member = $sanitizedData['seconds_to_ring_each_member'] ?? 15;
-                $queue->seconds_for_wrapup = $sanitizedData['seconds_for_wrapup'] ?? 15;
-                $queue->caller_hear = $sanitizedData['caller_hear'] ?? 'ringing';
+                $queue->strategy = $sanitizedData['strategy'] ?? $defaults['strategy'];
+                $queue->seconds_to_ring_each_member = $sanitizedData['seconds_to_ring_each_member'] ?? $defaults['seconds_to_ring_each_member'];
+                $queue->seconds_for_wrapup = $sanitizedData['seconds_for_wrapup'] ?? $defaults['seconds_for_wrapup'];
+                $queue->caller_hear = $sanitizedData['caller_hear'] ?? $defaults['caller_hear'];
 
                 // Convert boolean values using unified approach
                 $booleanFields = ['recive_calls_while_on_a_call', 'announce_position', 'announce_hold_time'];
                 $convertedData = self::convertBooleanFields($sanitizedData, $booleanFields);
-                
-                $queue->recive_calls_while_on_a_call = $convertedData['recive_calls_while_on_a_call'] ?? '0';
-                $queue->announce_position = $convertedData['announce_position'] ?? '0';
-                $queue->announce_hold_time = $convertedData['announce_hold_time'] ?? '0';
+
+                $queue->recive_calls_while_on_a_call = $convertedData['recive_calls_while_on_a_call'] ?? ($defaults['recive_calls_while_on_a_call'] ? '1' : '0');
+                $queue->announce_position = $convertedData['announce_position'] ?? ($defaults['announce_position'] ? '1' : '0');
+                $queue->announce_hold_time = $convertedData['announce_hold_time'] ?? ($defaults['announce_hold_time'] ? '1' : '0');
                 $queue->periodic_announce_sound_id = $sanitizedData['periodic_announce_sound_id'] ?? null;
                 $queue->moh_sound_id = $sanitizedData['moh_sound_id'] ?? null;
                 // Handle periodic_announce_frequency: convert empty to null for no parameter in config
@@ -230,6 +224,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
             });
 
             // Get updated members for response
+            /** @var \Phalcon\Mvc\Model\Resultset\Simple $members */
             $members = CallQueueMembers::find([
                 'conditions' => 'queue = :queue:',
                 'bind' => ['queue' => $savedQueue->uniqid],
@@ -250,6 +245,8 @@ class SaveRecordAction extends AbstractSaveRecordAction
 
             $res->data = DataStructure::createFromModel($savedQueue, $membersArray);
             $res->success = true;
+            // Set proper HTTP status code: 201 for creation, 200 for update
+            $res->httpCode = $isNewRecord ? 201 : 200;
 
             // Add reload path for page refresh after save
             $res->reload = "call-queues/modify/{$savedQueue->uniqid}";
@@ -268,8 +265,8 @@ class SaveRecordAction extends AbstractSaveRecordAction
     /**
      * Sanitize members data array
      *
-     * @param array $members Raw members data
-     * @return array Sanitized members data
+     * @param array<int, array<string, mixed>> $members Raw members data
+     * @return array<int, array<string, mixed>> Sanitized members data
      */
     private static function sanitizeMembersData(array $members): array
     {

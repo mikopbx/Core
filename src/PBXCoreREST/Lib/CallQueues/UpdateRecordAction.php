@@ -34,7 +34,7 @@ class UpdateRecordAction extends AbstractSaveRecordAction
     /**
      * Update an existing call queue record (full update).
      *
-     * @param array $data Call queue data with all fields to replace existing
+     * @param array<string, mixed> $data Call queue data with all fields to replace existing
      * @return PBXApiResult
      */
     public static function main(array $data): PBXApiResult

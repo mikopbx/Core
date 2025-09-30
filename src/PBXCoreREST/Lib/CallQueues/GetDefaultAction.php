@@ -46,7 +46,10 @@ class GetDefaultAction
 {
     /**
      * Get default values for a new call queue
-     * 
+     *
+     * Uses OpenAPI schema to generate default data structure automatically,
+     * ensuring consistency between API documentation and implementation.
+     *
      * @return PBXApiResult
      */
     public static function main(): PBXApiResult
@@ -57,22 +60,21 @@ class GetDefaultAction
         try {
             // Generate unique ID for the new call queue using ModelsBase method
             $uniqid = CallQueues::generateUniqueID(Extensions::TYPE_QUEUE);
-            
+
             // Get next available extension number using centralized method
             $extensionNumber = Extensions::getNextFreeApplicationNumber();
-            
-            // Get base structure from DataStructure
-            $data = DataStructure::createForNewQueue();
-            
-            // Update with generated values
-            // Use 'id' field for uniqid value (v3 API simplified structure)
-            $data['id'] = $uniqid;
-            $data['extension'] = $extensionNumber;
-            $data['isNew'] = '1';
-            
+
+            // Create default data structure from OpenAPI schema with overrides
+            // The schema provides default values for all fields with proper types
+            $data = DataStructure::createFromSchema('detail', [
+                'id' => $uniqid,
+                'extension' => $extensionNumber,
+                'isNew' => '1'  // Special flag for frontend to indicate new record
+            ]);
+
             $res->data = $data;
             $res->success = true;
-            
+
         } catch (\Exception $e) {
             $res->messages['error'][] = $e->getMessage();
         }

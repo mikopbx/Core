@@ -101,6 +101,7 @@ class CopyRecordAction extends AbstractCopyRecordAction
     {
         return function ($sourceQueue, $newQueue) {
             // Find source queue members
+            /** @var \Phalcon\Mvc\Model\Resultset\Simple $sourceMembers */
             $sourceMembers = CallQueueMembers::find([
                 'conditions' => 'queue = :queue:',
                 'bind' => ['queue' => $sourceQueue->uniqid],
@@ -109,6 +110,7 @@ class CopyRecordAction extends AbstractCopyRecordAction
 
             // Convert to array format for DataStructure
             $membersArray = [];
+            /** @var \MikoPBX\Common\Models\CallQueueMembers $member */
             foreach ($sourceMembers as $member) {
                 $memberExt = Extensions::findFirstByNumber($member->extension);
                 $membersArray[] = [

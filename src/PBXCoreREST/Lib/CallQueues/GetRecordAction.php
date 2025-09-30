@@ -58,9 +58,18 @@ class GetRecordAction extends AbstractGetRecordAction
         $res->processor = __METHOD__;
 
         if (empty($id) || $id === 'new') {
-            // Create structure for new record with default values
-            $newQueue = self::createNewRecord();
-            $res->data = DataStructure::createFromModel($newQueue, []);
+            // Create default data structure from OpenAPI schema
+            // For backward compatibility with "new" ID parameter
+            // Note: Prefer using GetDefaultAction (:getDefault endpoint) for new records
+            $uniqid = CallQueues::generateUniqueID(Extensions::TYPE_QUEUE.'-');
+            $extensionNumber = Extensions::getNextFreeApplicationNumber();
+
+            $res->data = DataStructure::createFromSchema('detail', [
+                'id' => $uniqid,
+                'extension' => $extensionNumber,
+                'isNew' => '1',
+                'members' => []
+            ]);
             $res->success = true;
         } else {
             // Find existing record
@@ -69,6 +78,7 @@ class GetRecordAction extends AbstractGetRecordAction
 
             if ($queue) {
                 // Get queue members with their representations
+                /** @var \Phalcon\Mvc\Model\Resultset\Simple $members */
                 $members = CallQueueMembers::find([
                     'conditions' => 'queue = :queue:',
                     'bind' => ['queue' => $queue->uniqid],
@@ -76,6 +86,7 @@ class GetRecordAction extends AbstractGetRecordAction
                 ]);
 
                 $membersArray = [];
+                /** @var CallQueueMembers $member */
                 foreach ($members as $member) {
                     $memberExt = Extensions::findFirstByNumber($member->extension);
                     $membersArray[] = [
@@ -90,6 +101,7 @@ class GetRecordAction extends AbstractGetRecordAction
                 $res->success = true;
             } else {
                 $res->messages['error'][] = 'Call queue not found';
+                $res->httpCode = 404; // Not Found
                 SystemMessages::sysLogMsg(__METHOD__,
                     "Call queue not found: {$id}",
                     LOG_WARNING
@@ -98,39 +110,6 @@ class GetRecordAction extends AbstractGetRecordAction
         }
 
         return $res;
-    }
-
-    /**
-     * Create new CallQueue record with default values
-     * 
-     * @return CallQueues
-     */
-    private static function createNewRecord(): CallQueues
-    {
-        $newQueue = new CallQueues();
-        $newQueue->id = '';
-        $newQueue->uniqid = CallQueues::generateUniqueID(Extensions::TYPE_QUEUE.'-');
-        $newQueue->extension = Extensions::getNextFreeApplicationNumber();
-        $newQueue->name = '';
-        $newQueue->strategy = 'ringall';
-        $newQueue->seconds_to_ring_each_member = '15';
-        $newQueue->seconds_for_wrapup = '15';
-        $newQueue->recive_calls_while_on_a_call = '0'; // Will be converted to boolean false in DataStructure (unchecked by default)
-        $newQueue->caller_hear = 'ringing';
-        $newQueue->announce_position = '0'; // Will be converted to boolean false in DataStructure (unchecked by default)
-        $newQueue->announce_hold_time = '0'; // Will be converted to boolean false in DataStructure (unchecked by default)
-        $newQueue->periodic_announce_frequency = '0';
-        $newQueue->timeout_to_redirect_to_extension = '300';
-        $newQueue->timeout_extension = '';
-        $newQueue->redirect_to_extension_if_empty = '';
-        $newQueue->number_unanswered_calls_to_redirect = '3';
-        $newQueue->redirect_to_extension_if_unanswered = '';
-        $newQueue->number_repeat_unanswered_to_redirect = '3';
-        $newQueue->redirect_to_extension_if_repeat_exceeded = '';
-        $newQueue->callerid_prefix = '';
-        $newQueue->description = '';
-        
-        return $newQueue;
     }
 
 }

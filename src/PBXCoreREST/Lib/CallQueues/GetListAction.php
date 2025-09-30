@@ -53,7 +53,7 @@ class GetListAction extends AbstractGetListAction
     /**
      * Get list of all call queues with member representations
      *
-     * @param array $data Filter parameters (search, ordering, pagination)
+     * @param array<string, mixed> $data Filter parameters (search, ordering, pagination)
      * @return PBXApiResult
      */
     public static function main(array $data = []): PBXApiResult
@@ -71,7 +71,7 @@ class GetListAction extends AbstractGetListAction
      *
      * Custom implementation to pre-load queue members and avoid N+1 queries
      *
-     * @param array $requestParams Request parameters
+     * @param array<string, mixed> $requestParams Request parameters
      * @param string $modelClass Model class name
      * @param string $dataStructureClass DataStructure class name
      * @return PBXApiResult
@@ -120,6 +120,7 @@ class GetListAction extends AbstractGetListAction
             // Load all members in one query
             $membersByQueue = [];
             if (!empty($queueIds)) {
+                /** @var \Phalcon\Mvc\Model\Resultset\Simple $allMembers */
                 $allMembers = CallQueueMembers::find([
                     'conditions' => 'queue IN ({queue:array})',
                     'bind' => ['queue' => $queueIds],
@@ -127,6 +128,7 @@ class GetListAction extends AbstractGetListAction
                 ]);
 
                 // Group members by queue
+                /** @var CallQueueMembers $member */
                 foreach ($allMembers as $member) {
                     if (!isset($membersByQueue[$member->queue])) {
                         $membersByQueue[$member->queue] = [];

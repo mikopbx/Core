@@ -129,7 +129,9 @@ class BaseActionHelper
                         break;
                     case 'max':
                         if (is_string($value)) {
-                            $value = substr($value, 0, (int)$ruleValue);
+                            // Use mb_substr for proper UTF-8 multibyte character handling
+                            // This ensures correct truncation for cyrillic, chinese, emoji, etc.
+                            $value = mb_substr($value, 0, (int)$ruleValue, 'UTF-8');
                         }
                         break;
                     case 'regex':

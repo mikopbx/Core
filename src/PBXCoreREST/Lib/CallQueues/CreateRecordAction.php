@@ -19,8 +19,6 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\CallQueues;
 
-use MikoPBX\Common\Models\CallQueues;
-use MikoPBX\Common\Models\Extensions;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\Core\System\SystemMessages;
@@ -36,7 +34,7 @@ class CreateRecordAction extends AbstractSaveRecordAction
     /**
      * Create a new call queue record.
      *
-     * @param array $data Call queue data to save
+     * @param array<string, mixed> $data Call queue data to save
      * @return PBXApiResult
      */
     public static function main(array $data): PBXApiResult
