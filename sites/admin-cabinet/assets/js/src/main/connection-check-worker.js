@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalDebugMode, EventSource */
+/* global globalDebugMode, EventSource, SystemAPI */
 
 /**
  * The connectionCheckWorker object is responsible for checking
@@ -55,21 +55,41 @@ const connectionCheckWorker = {
 
             // Reload the page if the error count exceeds a certain threshold
             if (connectionCheckWorker.errorCounts > 5) {
-                window.location.reload();
+                let pingTimeout;
+                let pingCompleted = false;
+
+                // Set timeout for ping request (3 seconds)
+                pingTimeout = setTimeout(() => {
+                    if (!pingCompleted) {
+                        pingCompleted = true;
+                    }
+                }, 3000);
+
+                // Before reload, check if backend is fully ready with ping
+                SystemAPI.ping((response) => {
+                    if (pingCompleted) {
+                        return; // Timeout already fired
+                    }
+                    clearTimeout(pingTimeout);
+                    pingCompleted = true;
+
+                    if (response && response.result === true) {
+                        // Backend is fully ready, safe to reload
+                        window.location.reload();
+                    }
+                });
             }
 
             // Reset the error count
             connectionCheckWorker.errorCounts = 0;
 
         } else if (connectionCheckWorker.errorCounts > 3) {
-
             // If the connection is unsuccessful and error count exceeds a threshold, show the connection dimmer
             connectionCheckWorker.$connectionDimmer.dimmer('show');
 
             // Increment the error count
             connectionCheckWorker.errorCounts += 1;
         } else {
-
             // Increment the error count
             connectionCheckWorker.errorCounts += 1;
         }

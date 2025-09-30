@@ -85,34 +85,71 @@ const EventBus = {
             console.error('WebSocket Error:', error);
             EventBus.publish('connection-status', false);
         };
-    
+
         // Handle connection break
         EventBus.socket.onclose = (event) => {
             EventBus.publish('connection-status', false);
-            
+
             // Check if this was a 403 Forbidden error
             if (event.code === 1006 || event.code === 1008) {
                 // Increment error counter
                 EventBus.forbidden403Count++;
-                console.warn(`WebSocket authentication error: ${EventBus.forbidden403Count} consecutive 403 errors`);
-                
-                // If we've had 3 consecutive 403 errors, reload the page
+
+                // If we've had 3 consecutive 403 errors, check if backend is ready before reload
                 if (EventBus.forbidden403Count >= 3) {
-                    console.warn('Three consecutive 403 errors detected. Reloading page due to possible authentication loss.');
-                    window.location.reload();
-                    return;
+                    // Check if SystemAPI is available
+                    if (typeof SystemAPI !== 'undefined') {
+                        let pingTimeout;
+                        let pingCompleted = false;
+
+                        // Set timeout for ping request (3 seconds)
+                        pingTimeout = setTimeout(() => {
+                            if (!pingCompleted) {
+                                EventBus.forbidden403Count = 2; // Keep counter high to retry ping soon
+                                pingCompleted = true;
+
+                                // Schedule reconnection after timeout
+                                setTimeout(() => {
+                                    EventBus.startListenPushNotifications();
+                                }, 2000);
+                            }
+                        }, 3000);
+
+                        SystemAPI.ping((response) => {
+                            if (pingCompleted) {
+                                return; // Timeout already fired
+                            }
+                            clearTimeout(pingTimeout);
+                            pingCompleted = true;
+
+                            if (response && response.result === true) {
+                                window.location.reload();
+                            } else {
+                                EventBus.forbidden403Count = 2; // Keep counter high to retry ping soon
+
+                                // Schedule reconnection after failed ping
+                                setTimeout(() => {
+                                    EventBus.startListenPushNotifications();
+                                }, 2000);
+                            }
+                        });
+                    } else {
+                        // If SystemAPI not available, reload as before
+                        window.location.reload();
+                    }
+                    return; // Exit early, reconnection will be triggered by ping callback or timeout
                 }
             } else {
                 // Reset counter for other types of errors
                 EventBus.forbidden403Count = 0;
             }
-            
+
             // Schedule reconnection in 2 seconds
             setTimeout(() => {
                 EventBus.startListenPushNotifications();
             }, 2000);
         };
-    
+
         // Handle connection open
         EventBus.socket.onopen = () => {
             EventBus.publish('connection-status', true);
