@@ -63,7 +63,7 @@ const outOfWorkTimeRecord = {
     $descriptionField: $('#description'),
     
     // Dropdown elements
-    $actionDropdown: $('.action-select'),
+    $actionDropdown: $('#action-dropdown'),
     $calTypeDropdown: $('.calType-select'),
     $weekdayFromDropdown: $('.weekday-from-select'),
     $weekdayToDropdown: $('.weekday-to-select'),
