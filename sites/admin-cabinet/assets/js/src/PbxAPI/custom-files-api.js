@@ -64,28 +64,46 @@ const customFilesAPI = new PbxApiClient({
  *     mode: 'override'
  * }, callback);
  */
+/**
+ * Encode UTF-8 string to base64
+ * Handles Unicode characters (Russian, Chinese, etc.)
+ *
+ * @param {string} str - UTF-8 string to encode
+ * @returns {string} Base64 encoded string
+ */
+customFilesAPI.utf8ToBase64 = function(str) {
+    // Use TextEncoder for modern browsers (better than deprecated escape/unescape)
+    if (typeof TextEncoder !== 'undefined') {
+        const utf8Bytes = new TextEncoder().encode(str);
+        let binaryString = '';
+        utf8Bytes.forEach(byte => {
+            binaryString += String.fromCharCode(byte);
+        });
+        return btoa(binaryString);
+    } else {
+        // Fallback for older browsers
+        return btoa(unescape(encodeURIComponent(str)));
+    }
+};
+
 customFilesAPI.save = function(data, callback) {
     // Prepare data for API
     const apiData = { ...data };
 
-    // Handle content encoding - check if it's already base64
-    if (apiData.content) {
-        // Simple check if content is already base64 encoded
-        // Base64 strings match the pattern: ^[A-Za-z0-9+/]*={0,2}$
-        const isBase64 = /^[A-Za-z0-9+/]*={0,2}$/.test(apiData.content.replace(/\s/g, ''));
-        if (!isBase64) {
-            // Encode to base64 if not already encoded
-            apiData.content = btoa(apiData.content);
-        }
+    // Handle content encoding
+    // Content from cbBeforeSendForm is always plain text from Ace editor,
+    // so we always need to encode it to base64 with UTF-8 support
+    if (apiData.content && apiData.content !== '') {
+        // Encode to base64 with UTF-8 support (handles Russian, Chinese, etc.)
+        apiData.content = customFilesAPI.utf8ToBase64(apiData.content);
     }
 
     if (apiData.id && apiData.id !== '') {
         // Update existing file using PATCH for partial update
-        const id = apiData.id;
-        delete apiData.id;
+        // IMPORTANT: Keep id in data for PATCH request (server expects it in request body)
         delete apiData.isNew;
 
-        this.callPatch(apiData, callback, id);
+        this.callPatch(apiData, callback);
     } else {
         // Create new file
         delete apiData.id;

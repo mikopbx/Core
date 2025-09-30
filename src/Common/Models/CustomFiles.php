@@ -225,11 +225,18 @@ class CustomFiles extends ModelsBase
      * Get a user-friendly error message for security violations
      *
      * @param string $filepath The file path that was rejected
-     * @return string Error message
+     * @return string Error message with list of allowed directories
      */
     public static function getSecurityErrorMessage(string $filepath): string
     {
-        return "Security error: File path '$filepath' is not in an allowed directory. " .
-               "Custom files can only be created in specific system directories.";
+        $allowedDirsList = array_map(
+            fn($dir) => "  • $dir",
+            self::ALLOWED_DIRECTORIES
+        );
+        $allowedDirs = implode("\n", $allowedDirsList);
+
+        return "Security error: File path '$filepath' is not in an allowed directory.\n\n" .
+               "Allowed directories:\n" .
+               "$allowedDirs";
     }
 }

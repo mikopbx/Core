@@ -1,6 +1,7 @@
 {{ form(['action' : 'custom-files/save', 'method': 'post', 'role': 'form', 'class': 'ui form large', 'id':'custom-file-form']) }}
 {{ form.render('id') }}
 {{ form.render('content') }}
+{{ form.render('mode-custom-value') }}
 
 <div class="field max-width-800" id="filepath-field">
     <label>{{ t._('cf_ColumnPath') }}</label>

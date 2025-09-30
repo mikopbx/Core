@@ -51,7 +51,12 @@ class CustomFilesEditForm extends BaseForm
         // Description field
         $this->addTextArea('description', '', 65);
 
+        // Hidden input for custom mode (technical mode not shown in dropdown)
+        $this->add(new Hidden('mode-custom-value'));
+
         // Mode selection dropdown - using addSemanticUIDropdown for consistency
+        // Note: MODE_CUSTOM is excluded - it's a technical mode set automatically by the system
+        // for user-created files via hidden input and should not be manually selectable
         $this->addSemanticUIDropdown(
             'mode',
             [
@@ -59,7 +64,6 @@ class CustomFilesEditForm extends BaseForm
                 CustomFiles::MODE_APPEND => $this->translation->_("cf_FileActionsAppend"),
                 CustomFiles::MODE_OVERRIDE => $this->translation->_("cf_FileActionsOverride"),
                 CustomFiles::MODE_SCRIPT => $this->translation->_("cf_FileActionsScript"),
-                CustomFiles::MODE_CUSTOM => $this->translation->_("cf_FileActionsCustom"),
             ],
             CustomFiles::MODE_NONE,  // Default value
             [

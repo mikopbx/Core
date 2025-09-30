@@ -64,12 +64,12 @@ class GetRecordAction extends AbstractGetRecordAction
 
         try {
             if (empty($id) || $id === 'new') {
-                // Create structure for new record
+                // Create structure for new record - new files are always custom mode
                 $model = new CustomFiles();
                 $model->id = '';
                 $model->filepath = '';
                 $model->content = '';
-                $model->mode = CustomFiles::MODE_NONE;
+                $model->mode = CustomFiles::MODE_CUSTOM;  // New files are user-created custom files
                 $model->description = '';
                 $model->changed = '0';
 

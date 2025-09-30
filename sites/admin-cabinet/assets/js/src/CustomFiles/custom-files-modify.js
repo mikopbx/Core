@@ -45,6 +45,12 @@ const customFile = {
     $modeDropDown: $('#mode-dropdown'),
 
     /**
+     * jQuery object for the hidden custom mode input.
+     * @type {jQuery}
+     */
+    $modeCustomInput: $('#mode-custom-value'),
+
+    /**
      * jQuery object for the tab with original file content.
      * @type {jQuery}
      */
@@ -107,12 +113,75 @@ const customFile = {
     },
 
     /**
+     * Decode base64 string to UTF-8
+     * Handles Unicode characters (Russian, Chinese, etc.)
+     *
+     * @param {string} base64Str - Base64 encoded string
+     * @returns {string} UTF-8 decoded string
+     */
+    base64ToUtf8(base64Str) {
+        try {
+            // Decode base64 to binary string
+            const binaryString = atob(base64Str);
+
+            // Use TextDecoder for modern browsers
+            if (typeof TextDecoder !== 'undefined') {
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                return new TextDecoder().decode(bytes);
+            } else {
+                // Fallback for older browsers
+                return decodeURIComponent(escape(binaryString));
+            }
+        } catch(e) {
+            console.error('Failed to decode base64:', e);
+            return base64Str; // Return as-is if decode fails
+        }
+    },
+
+    /**
+     * Get current mode value (from dropdown or hidden input for custom mode)
+     * @returns {string} Current mode value
+     */
+    getCurrentMode() {
+        // Check if custom mode is active (hidden input has value)
+        const customModeValue = customFile.$modeCustomInput.val();
+        if (customModeValue === 'custom') {
+            return 'custom';
+        }
+        // Otherwise return dropdown value
+        return customFile.$formObj.form('get value', 'mode');
+    },
+
+    /**
+     * Set mode value (using dropdown for standard modes, hidden input for custom mode)
+     * @param {string} mode - Mode to set
+     */
+    setMode(mode) {
+        if (mode === 'custom') {
+            // Set custom mode via hidden input
+            customFile.$modeCustomInput.val('custom');
+            // Hide dropdown for custom files
+            customFile.$modeDropDown.parent().parent().hide();
+        } else {
+            // Clear custom mode
+            customFile.$modeCustomInput.val('');
+            // Set standard mode via dropdown
+            customFile.$modeDropDown.dropdown('set selected', mode);
+            // Show dropdown
+            customFile.$modeDropDown.parent().parent().show();
+        }
+    },
+
+    /**
      * Updates the filepath field state based on whether the file is user-created (MODE_CUSTOM) or system-managed.
      * User-created files have editable filepath but cannot be created (only for new files),
      * system-managed files have read-only filepath.
      */
     updateFilepathFieldState() {
-        const mode = customFile.$formObj.form('get value', 'mode');
+        const mode = customFile.getCurrentMode();
         const isUserCreated = mode === 'custom';
         const fileId = customFile.$formObj.form('get value', 'id');
 
@@ -147,6 +216,7 @@ const customFile = {
         customFile.$filepathInput = $('#filepath');
         customFile.$filepathField = $('#filepath-field');
         customFile.$modeDropDown = $('#mode-dropdown');
+        customFile.$modeCustomInput = $('#mode-custom-value');
 
         // Enable tab navigation with history support
         customFile.$tabMenu.tab({
@@ -174,20 +244,24 @@ const customFile = {
             // Load default values for new custom file
             customFilesAPI.getRecord('new', (response) => {
                 if (response.result && response.data) {
-                    // Set default values to form fields
-                    customFile.$formObj.form('set values', response.data);
+                    // Store mode separately to handle it correctly
+                    const mode = response.data.mode || 'none';
+
+                    // Remove mode from response before setting form values
+                    const formData = {...response.data};
+                    delete formData.mode;  // Don't let form('set values') handle mode
+
+                    // Set default values to form fields (without mode)
+                    customFile.$formObj.form('set values', formData);
 
                     // For new files with MODE_CUSTOM
-                    if (response.data.mode === 'custom') {
+                    if (mode === 'custom') {
                         // Make filepath editable for new custom files
                         customFile.$filepathInput.prop('readonly', false);
                         customFile.$filepathField.removeClass('disabled');
 
-                        // IMPORTANT: Set mode value to 'custom' in dropdown before hiding
-                        customFile.$modeDropDown.dropdown('set selected', 'custom');
-
-                        // Hide mode selector for custom files
-                        customFile.$modeDropDown.parent().parent().hide();
+                        // Set mode to 'custom' using hidden input
+                        customFile.setMode('custom');
 
                         // Show only editor tab for custom mode
                         customFile.$tabMenu.tab('change tab', 'editor');
@@ -201,22 +275,17 @@ const customFile = {
 
                         // Initialize empty content in editor for new custom files
                         if (response.data.content) {
-                            // If default content provided (base64), decode it
-                            try {
-                                const decodedContent = atob(response.data.content);
-                                customFile.editor.setValue(decodedContent);
-                            } catch(e) {
-                                customFile.editor.setValue(response.data.content);
-                            }
+                            // If default content provided (base64), decode it with UTF-8 support
+                            const decodedContent = customFile.base64ToUtf8(response.data.content);
+                            customFile.editor.setValue(decodedContent);
                         } else {
                             // Set empty content for new custom file
                             customFile.editor.setValue('');
                         }
                         customFile.editor.clearSelection();
                     } else {
-                        // For other modes, use standard behavior
-                        const mode = response.data.mode || 'none';
-                        customFile.$modeDropDown.dropdown('set selected', mode);
+                        // For other modes, use standard behavior (mode already extracted above)
+                        customFile.setMode(mode);
                         customFile.cbOnChangeMode(mode);
                         customFile.updateFilepathFieldState();
                     }
@@ -229,40 +298,33 @@ const customFile = {
                     // Store base64 content separately and remove from form data
                     const base64Content = response.data.content;
 
-                    // Remove content from response before setting form values
-                    // (content will be taken from ACE editor on save)
-                    const formData = {...response.data};
-                    delete formData.content;
-
-                    // Set form values from API response (without content)
-                    customFile.$formObj.form('set values', formData);
-
-                    // Decode base64 content and set in editor
-                    if (base64Content) {
-                        try {
-                            const decodedContent = atob(base64Content);
-                            customFile.editor.setValue(decodedContent);
-                            customFile.editor.clearSelection();
-                        } catch(e) {
-                            // If base64 decode fails, use content as-is
-                            customFile.editor.setValue(base64Content);
-                            customFile.editor.clearSelection();
-                        }
-                    }
-
-                    // Set mode and trigger UI update
+                    // Store mode separately to handle it correctly
                     const mode = response.data.mode || 'none';
 
+                    // Remove content and mode from response before setting form values
+                    // (content will be taken from ACE editor on save, mode will be set separately)
+                    const formData = {...response.data};
+                    delete formData.content;
+                    delete formData.mode;  // Don't let form('set values') handle mode
+
+                    // Set form values from API response (without content and mode)
+                    customFile.$formObj.form('set values', formData);
+
+                    // Decode base64 content and set in editor with UTF-8 support
+                    if (base64Content) {
+                        const decodedContent = customFile.base64ToUtf8(base64Content);
+                        customFile.editor.setValue(decodedContent);
+                        customFile.editor.clearSelection();
+                    }
+
+                    // Set mode and trigger UI update (mode already extracted above)
                     if (mode === 'custom') {
                         // For existing custom files - filepath is read-only
                         customFile.$filepathInput.prop('readonly', true);
                         customFile.$filepathField.addClass('disabled');
 
-                        // IMPORTANT: Set mode value to 'custom' in dropdown before hiding
-                        customFile.$modeDropDown.dropdown('set selected', 'custom');
-
-                        // Hide mode selector for custom files - they cannot change mode
-                        customFile.$modeDropDown.parent().parent().hide();
+                        // Set mode to 'custom' using hidden input
+                        customFile.setMode('custom');
 
                         // Show only editor tab for custom mode
                         customFile.$tabMenu.tab('change tab', 'editor');
@@ -275,7 +337,7 @@ const customFile = {
                         $('.item[data-tab="result"]').hide();
                     } else {
                         // For system files - use standard behavior
-                        customFile.$modeDropDown.dropdown('set selected', mode);
+                        customFile.setMode(mode);
                         customFile.cbOnChangeMode(mode);
                         customFile.updateFilepathFieldState();
                     }
@@ -345,8 +407,8 @@ const customFile = {
      * Adjusts the Ace editor settings accordingly.
      */
     hideShowCode() {
-        // Retrieve 'mode' value from the form
-        const mode = customFile.$formObj.form('get value', 'mode');
+        // Retrieve 'mode' value (from dropdown or hidden input for custom mode)
+        const mode = customFile.getCurrentMode();
 
         // Get current content from editor (not from form, as form doesn't have it anymore)
         let content = customFile.editor.getValue();
@@ -555,26 +617,18 @@ const customFile = {
      */
     cbBeforeSendForm(settings) {
         const result = settings;
+
+        // IMPORTANT: Get mode BEFORE form('get values') to prevent dropdown from overriding it
+        const mode = customFile.getCurrentMode();
+
+        // Get all form values
         result.data = customFile.$formObj.form('get values');
 
-        // Get mode from form
-        let mode = customFile.$formObj.form('get value', 'mode');
+        // Override mode with the correct value (from getCurrentMode)
+        result.data.mode = mode;
 
-        // IMPORTANT: Check if dropdown is hidden (indicator of custom file)
-        // When dropdown is hidden, it might return incorrect value
-        if (customFile.$modeDropDown.parent().parent().is(':hidden')) {
-            // This is a custom file, force mode to be 'custom'
-            mode = 'custom';
-            result.data.mode = 'custom';
-            console.log('Custom file detected (dropdown hidden), forcing mode to custom');
-        }
-
-        // Additional check: Ensure mode stays 'custom' for custom files
-        if (mode === 'custom' || (result.data.mode === 'custom')) {
-            // Force mode to stay 'custom' for custom files
-            result.data.mode = 'custom';
-            mode = 'custom';
-        }
+        // Remove technical field from data
+        delete result.data['mode-custom-value'];
 
         // Get content from Ace editor based on mode
         switch (mode) {
@@ -589,12 +643,6 @@ const customFile = {
                 } else {
                     const editorContent = customFile.editor.getValue();
                     result.data.content = editorContent;
-
-                    // Debug: log content for custom mode
-                    if (mode === 'custom') {
-                        console.log('Saving custom file with content length:', editorContent.length);
-                        console.log('First 100 chars:', editorContent.substring(0, 100));
-                    }
                 }
                 break;
             case 'none':
