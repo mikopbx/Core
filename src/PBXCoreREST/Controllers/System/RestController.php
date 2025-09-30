@@ -126,7 +126,7 @@ class RestController extends BaseRestController
      * @param string|null $customMethod Custom method name (if ID is present)
      * @return void
      */
-    public function handleCustomAction(?string $idOrMethod = null, ?string $customMethod = null): void
+    public function handleCustomRequest(?string $idOrMethod = null, ?string $customMethod = null): void
     {
         $id = null;
         $actualMethod = null;

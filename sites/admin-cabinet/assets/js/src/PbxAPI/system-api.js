@@ -28,6 +28,7 @@
  */
 const SystemAPI = new PbxApiClient({
     endpoint: '/pbxcore/api/v3/system',
+    singleton: true,
     customMethods: {
         // Health check methods
         ping: ':ping',
@@ -36,6 +37,9 @@ const SystemAPI = new PbxApiClient({
         // Power management
         reboot: ':reboot',
         shutdown: ':shutdown',
+
+        // Date/time operations
+        datetime: ':datetime',
 
         // Utilities
         upgrade: ':upgrade',
@@ -84,7 +88,7 @@ Object.assign(SystemAPI, {
      * @param {function} callback - Callback function
      */
     getDateTime(callback) {
-        return this.callGet({}, callback, 'datetime');
+        return this.callCustomMethod('datetime', {}, callback, 'GET');
     },
 
     /**
@@ -94,7 +98,7 @@ Object.assign(SystemAPI, {
      */
     setDateTime(timestamp, callback) {
         const data = { timestamp: timestamp };
-        return this.callPut(data, callback, 'datetime');
+        return this.callCustomMethod('datetime', data, callback, 'PUT');
     },
 
     /**
