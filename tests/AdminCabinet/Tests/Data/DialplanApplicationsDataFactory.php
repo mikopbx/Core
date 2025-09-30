@@ -30,7 +30,6 @@ class DialplanApplicationsDataFactory
      */
     public const TYPE_PLAINTEXT = 'plaintext';
     public const TYPE_PHP_AGI = 'php';
-    public const TYPE_REST_API = 'rest';
     
     /**
      * Dialplan applications data storage
@@ -39,7 +38,7 @@ class DialplanApplicationsDataFactory
     private static array $dialplanApplicationsData = [
         'echo.test' => [
             'name' => 'Echo Test Application',
-            'extension' => '500',
+            'extension' => '2300108',
             'type' => self::TYPE_PLAINTEXT,
             'applicationlogic' => 'NoOp(Echo test started)
 Answer()
@@ -50,7 +49,7 @@ Hangup()',
         ],
         'time.announcement' => [
             'name' => 'Time Announcement',
-            'extension' => '501',
+            'extension' => '2300109',
             'type' => self::TYPE_PLAINTEXT,
             'applicationlogic' => 'Answer()
 Wait(1)
@@ -62,7 +61,7 @@ Hangup()',
         ],
         'weather.service' => [
             'name' => 'Weather Information',
-            'extension' => '502',
+            'extension' => '2300110',
             'type' => self::TYPE_PHP_AGI,
             'applicationlogic' => '<?php
 // Weather service AGI script
@@ -79,7 +78,7 @@ $agi->hangup();
         ],
         'callback.service' => [
             'name' => 'Callback Service',
-            'extension' => '503',
+            'extension' => '2300111',
             'type' => self::TYPE_PLAINTEXT,
             'applicationlogic' => 'Answer()
 Read(CALLBACK_NUMBER,please-enter-your-callback-number,10,,,3,10)
@@ -91,7 +90,7 @@ Hangup()',
         ],
         'voicemail.check' => [
             'name' => 'Voicemail Check',
-            'extension' => '504',
+            'extension' => '2300112',
             'type' => self::TYPE_PLAINTEXT,
             'applicationlogic' => 'Answer()
 VoiceMailMain(${CALLERID(num)}@default)
@@ -101,7 +100,7 @@ Hangup()',
         ],
         'conference.info' => [
             'name' => 'Conference Information',
-            'extension' => '505',
+            'extension' => '2300113',
             'type' => self::TYPE_PLAINTEXT,
             'applicationlogic' => 'Answer()
 Playback(conference-info)
@@ -114,7 +113,7 @@ Hangup()',
         ],
         'directory.service' => [
             'name' => 'Company Directory',
-            'extension' => '506',
+            'extension' => '2300114',
             'type' => self::TYPE_PLAINTEXT,
             'applicationlogic' => 'Answer()
 Directory(default,default,f)
@@ -122,17 +121,9 @@ Hangup()',
             'uniqid' => 'APP-DIR-001',
             'description' => 'Company directory by name',
         ],
-        'rest.api.example' => [
-            'name' => 'REST API Example',
-            'extension' => '507',
-            'type' => self::TYPE_REST_API,
-            'applicationlogic' => 'https://api.example.com/pbx/dialplan',
-            'uniqid' => 'APP-REST-001',
-            'description' => 'Example of REST API integration',
-        ],
         'music.on.hold.test' => [
             'name' => 'Music On Hold Test',
-            'extension' => '508',
+            'extension' => '2300115',
             'type' => self::TYPE_PLAINTEXT,
             'applicationlogic' => 'Answer()
 MusicOnHold(default,30)
@@ -142,7 +133,7 @@ Hangup()',
         ],
         'call.recording.test' => [
             'name' => 'Call Recording Test',
-            'extension' => '509',
+            'extension' => '2300116',
             'type' => self::TYPE_PLAINTEXT,
             'applicationlogic' => 'Answer()
 Playback(this-call-may-be-monitored-or-recorded)
@@ -155,7 +146,7 @@ Hangup()',
         ],
         'emergency.announcement' => [
             'name' => 'Emergency Announcement',
-            'extension' => '999',
+            'extension' => '2300117',
             'type' => self::TYPE_PLAINTEXT,
             'applicationlogic' => 'Answer()
 Playback(emergency-announcement)
@@ -167,7 +158,7 @@ Goto(main-ivr,s,1)',
         ],
         'custom.php.logic' => [
             'name' => 'Custom PHP Logic',
-            'extension' => '510',
+            'extension' => '2300118',
             'type' => self::TYPE_PHP_AGI,
             'applicationlogic' => '<?php
 // Custom PHP AGI application
@@ -264,13 +255,4 @@ $agi->hangup();
         return self::getApplicationsByType(self::TYPE_PHP_AGI);
     }
 
-    /**
-     * Get REST API applications
-     *
-     * @return array REST API applications
-     */
-    public static function getRestApplications(): array
-    {
-        return self::getApplicationsByType(self::TYPE_REST_API);
-    }
 }

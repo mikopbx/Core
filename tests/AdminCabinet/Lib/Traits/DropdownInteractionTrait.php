@@ -178,61 +178,97 @@ JS;
     {
         $this->logTestAction("Select dropdown with UI", ['field' => $fieldName, 'value' => $value]);
 
-        try {
-            $dropdown = $this->findDropdown($fieldName);
-            if (!$dropdown) {
-                if ($skipIfNotExist) {
+        $maxRetries = 3;
+        $retryCount = 0;
+
+        while ($retryCount < $maxRetries) {
+            try {
+                $dropdown = $this->findDropdown($fieldName);
+                if (!$dropdown) {
+                    if ($skipIfNotExist) {
+                        return false;
+                    }
+                    throw new RuntimeException("Dropdown '{$fieldName}' not found");
+                }
+
+                // Check if dropdown is searchable
+                $classAttribute = $dropdown->getAttribute('class') ?? '';
+                $isSearchable = strpos($classAttribute, 'search') !== false;
+
+                // Open dropdown
+                $this->scrollIntoView($dropdown);
+                $dropdown->click();
+
+                // Wait for menu to appear
+                self::$driver->wait(self::DROPDOWN_TIMEOUT)->until(
+                    WebDriverExpectedCondition::presenceOfElementLocated(
+                        WebDriverBy::cssSelector("#{$fieldName}-dropdown .menu.visible")
+                    )
+                );
+
+                // Use search if available
+                if ($isSearchable) {
+                    // Re-find dropdown to get fresh reference after opening
+                    $dropdown = $this->findDropdown($fieldName);
+                    $searchInput = $dropdown->findElement(WebDriverBy::cssSelector('input.search'));
+                    $searchInput->clear();
+                    $searchInput->sendKeys($value);
+
+                    // Wait for menu to stabilize after filtering
+                    // The menu rebuilds on each keystroke, so we need to wait longer
+                    usleep(800000); // 800ms wait for menu to rebuild
+
+                    // Wait until the specific item appears in the menu
+                    $itemSelector = ".menu.visible .item[data-value='{$value}']";
+                    self::$driver->wait(self::DROPDOWN_TIMEOUT)->until(
+                        WebDriverExpectedCondition::presenceOfElementLocated(
+                            WebDriverBy::cssSelector("#{$fieldName}-dropdown {$itemSelector}")
+                        )
+                    );
+                }
+
+                // IMPORTANT: Re-find dropdown and item to get fresh DOM references
+                // This prevents stale element reference errors
+                $dropdown = $this->findDropdown($fieldName);
+                $itemSelector = ".menu.visible .item[data-value='{$value}']";
+                $menuItem = $dropdown->findElement(WebDriverBy::cssSelector($itemSelector));
+
+                // Scroll into view and click immediately
+                $this->scrollIntoView($menuItem);
+                $menuItem->click();
+
+                // Wait for dropdown to close
+                usleep(self::DROPDOWN_INTERACTION_DELAY * 1000);
+                $this->waitForAjax();
+
+                return true;
+
+            } catch (\Facebook\WebDriver\Exception\StaleElementReferenceException $e) {
+                $retryCount++;
+                $this->annotate("Stale element reference on attempt {$retryCount}, retrying...", 'warning');
+
+                if ($retryCount >= $maxRetries) {
+                    $this->annotate("Failed after {$maxRetries} attempts due to stale elements", 'error');
                     return false;
                 }
-                throw new RuntimeException("Dropdown '{$fieldName}' not found");
-            }
 
-            // Check if dropdown is searchable
-            $classAttribute = $dropdown->getAttribute('class') ?? '';
-            $isSearchable = strpos($classAttribute, 'search') !== false;
+                // Wait before retry
+                usleep(500000);
+                continue;
 
-            // Open dropdown
-            $this->scrollIntoView($dropdown);
-            $dropdown->click();
-
-            // Wait for menu to appear
-            self::$driver->wait(self::DROPDOWN_TIMEOUT)->until(
-                WebDriverExpectedCondition::presenceOfElementLocated(
-                    WebDriverBy::cssSelector("#{$fieldName}-dropdown .menu.visible")
-                )
-            );
-
-            // Use search if available
-            if ($isSearchable) {
-                $searchInput = $dropdown->findElement(WebDriverBy::cssSelector('input.search'));
-                $searchInput->clear();
-                $searchInput->sendKeys($value);
-                usleep(500000); // Wait for search results
-            }
-
-            // Find and click the item
-            $itemSelector = ".menu.visible .item[data-value='{$value}']";
-            $menuItem = $dropdown->findElement(WebDriverBy::cssSelector($itemSelector));
-
-            $this->scrollIntoView($menuItem);
-            $menuItem->click();
-
-            // Wait for dropdown to close
-            usleep(self::DROPDOWN_INTERACTION_DELAY * 1000);
-            $this->waitForAjax();
-
-            return true;
-
-        } catch (NoSuchElementException $e) {
-            if ($skipIfNotExist) {
-                $this->annotate("Value '{$value}' not found in dropdown '{$fieldName}'", 'info');
+            } catch (NoSuchElementException $e) {
+                if ($skipIfNotExist) {
+                    $this->annotate("Value '{$value}' not found in dropdown '{$fieldName}'", 'info');
+                    return false;
+                }
+                throw new RuntimeException("Value '{$value}' not found in dropdown '{$fieldName}'");
+            } catch (\Exception $e) {
+                $this->annotate("Error selecting dropdown with UI: " . $e->getMessage(), 'error');
                 return false;
             }
-            throw new RuntimeException("Value '{$value}' not found in dropdown '{$fieldName}'");
-        } catch (\Exception $e) {
-            $this->annotate("Error selecting dropdown with UI: " . $e->getMessage(), 'error');
-            return false;
         }
+
+        return false;
     }
 
     /**

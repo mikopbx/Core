@@ -242,10 +242,17 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
             $textarea->clear();
             $textarea->sendKeys($keysValue);
 
-            // Click the save button
+            // Try to click the save button (might be hidden if Enter was pressed during input)
             $saveButtonXpath = "//button[@id='save-key-btn']";
-            $saveButton = self::$driver->findElement(WebDriverBy::xpath($saveButtonXpath));
-            $saveButton->click();
+            $saveButtons = self::$driver->findElements(WebDriverBy::xpath($saveButtonXpath));
+            
+            if (!empty($saveButtons) && $saveButtons[0]->isDisplayed()) {
+                // Save button is visible, click it
+                $saveButtons[0]->click();
+            } else {
+                // Save button is hidden (likely because Enter was pressed), this is normal behavior
+                self::annotate("Save button is hidden - key was likely saved automatically via Enter", 'info');
+            }
 
             // Wait for the key to be added (add button row should be visible again)
             self::$driver->wait(10, 500)->until(
