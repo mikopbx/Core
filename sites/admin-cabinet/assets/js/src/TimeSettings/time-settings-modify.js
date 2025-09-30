@@ -84,13 +84,8 @@ const timeSettingsModify = {
                 // Populate form with API data
                 timeSettingsModify.populateForm(response.data);
 
-                // Apply UI state
+                // Apply UI state (this will start/stop worker as needed)
                 timeSettingsModify.toggleDisabledFieldClass();
-
-                // Start clock worker if not manual time
-                if (response.data.PBXManualTimeSettings !== '1') {
-                    clockWorker.restartWorker();
-                }
             } else {
                 UserMessage.showMultiString(response.messages);
             }
@@ -154,9 +149,12 @@ const timeSettingsModify = {
         if (timeSettingsModify.$formObj.form('get value', 'PBXManualTimeSettings') === 'on') {
             $('#SetDateTimeBlock').removeClass('disabled');
             $('#SetNtpServerBlock').addClass('disabled');
+            // Stop clock worker in manual mode
+            clockWorker.stopWorker();
         } else {
             $('#SetNtpServerBlock').removeClass('disabled');
             $('#SetDateTimeBlock').addClass('disabled');
+            // Start clock worker in automatic mode
             clockWorker.restartWorker();
         }
     },

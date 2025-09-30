@@ -35,6 +35,11 @@ const clockWorker = {
      * @type {object|null}
      */
     options: null,
+    /**
+     * Flag to indicate if worker is running
+     * @type {boolean}
+     */
+    isRunning: false,
 
     /**
      * Initializes the clock worker.
@@ -47,8 +52,22 @@ const clockWorker = {
      * Restarts the clock worker.
      */
     restartWorker() {
-        window.clearTimeout(clockWorker.timeoutHandle);
+        // Stop any existing worker first
+        clockWorker.stopWorker();
+        // Start new worker
+        clockWorker.isRunning = true;
         clockWorker.worker();
+    },
+
+    /**
+     * Stops the clock worker.
+     */
+    stopWorker() {
+        clockWorker.isRunning = false;
+        if (clockWorker.timeOutHandle) {
+            window.clearTimeout(clockWorker.timeOutHandle);
+            clockWorker.timeOutHandle = 0;
+        }
     },
 
     /**
@@ -64,16 +83,20 @@ const clockWorker = {
      */
     cbAfterReceiveDateTimeFromServer(response) {
         const options = {timeZone: timeSettingsModify.$formObj.form('get value', 'PBXTimezone'), timeZoneName: 'short'};
-        if (timeSettingsModify.$formObj.form('get value', 'PBXManualTimeSettings') !== 'on') {
+
+        // Check if worker should continue running
+        if (clockWorker.isRunning && timeSettingsModify.$formObj.form('get value', 'PBXManualTimeSettings') !== 'on') {
             clockWorker.timeoutHandle = window.setTimeout(
                 clockWorker.worker,
                 1000,
             );
         } else {
             options.timeZoneName = undefined;
+            clockWorker.isRunning = false;
         }
-        if (response !== false) {
-            const dateTime = new Date(response.timestamp * 1000);
+
+        if (response !== false && response.result === true && response.data) {
+            const dateTime = new Date(response.data.timestamp * 1000);
             moment.locale(globalWebAdminLanguage);
             const m = moment(dateTime);
 
@@ -91,8 +114,3 @@ const clockWorker = {
         }
     }
 };
-
-// When the document is ready, initialize the time settings worker
-$(document).ready(() => {
-    clockWorker.initialize();
-});
