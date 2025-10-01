@@ -42,7 +42,13 @@ class MOHAudioFilesDataFactory
             'name' => 'The third MOH audio record',
             'filename' => 'first_noel.mp3',
             'description' => 'Christmas Music'
-        ]
+        ],
+        'out_work_times.moh' => [
+            'id'=>'2',
+            'name' => 'out_work_times',
+            'filename' => 'first_noel.mp3',
+            'description' => '',
+        ],
     ];
 
     public static function getAudioFileData(string $key): array

@@ -55,6 +55,15 @@ class AudioFilesDataFactory
             'description' => 'Christmas Music (For Delete)',
             'type' => 'custom',
             'for_delete' => true
+        ],
+        'miko_hello.audio' => [
+            'id'=>'1',
+            'path'=>'/storage/usbdisk1/mikopbx/media/custom/miko_hello',
+            'name' => 'miko_hello',
+            'filename' => 'blind_willie.mp3',
+            'description' => '',
+            'type' => 'custom',
+            'for_delete' => false
         ]
     ];
 

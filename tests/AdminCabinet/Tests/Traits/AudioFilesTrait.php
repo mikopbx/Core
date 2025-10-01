@@ -68,6 +68,9 @@ trait AudioFilesTrait
     {
         $this->clickButtonByHref('/admin-cabinet/sound-files/modify/' . $params['type']);
         $this->uploadAndProcessFile($params['path']);
+        if (isset($params['id'])) {
+            $this->changeInputField('id', $params['id']);
+        }
         $this->changeInputField('name', $params['name']);
         $this->submitForm('sound-file-form');
     }
@@ -80,5 +83,8 @@ trait AudioFilesTrait
         $this->navigateToAudioFiles();
         $this->clickModifyButtonOnRowWithText($name);
         $this->assertInputFieldValueEqual('name', $name);
+        if (isset($params['id'])) {
+            $this->assertInputFieldValueEqual('id', $params['id']);
+        }
     }
 }

@@ -202,10 +202,9 @@ trait NavigationTrait
      */
     protected function openAccordionOnThePage(string $selector = ''): void
     {
-        $this->logTestAction("Open accordion", ['selector' => $selector]);
-
         try {
-            $xpath = $selector ?: '//div[contains(@class, "ui") and contains(@class, "accordion")]';
+            $xpath = $selector ?: '//div[contains(@class, "ui") and contains(@class, "accordion")]//div[contains(@class, "title")]';
+            $this->logTestAction("Open accordion", ['selector' => $xpath]);
             $accordion = $this->waitForElement($xpath);
             $this->scrollIntoView($accordion);
             $accordion->click();
@@ -287,24 +286,56 @@ trait NavigationTrait
      * Wait for AJAX requests to complete
      *
      * @param int $timeout Timeout in seconds
+     * @param bool $waitForStart Wait for AJAX to start before checking completion
      */
-    protected function waitForAjax(int $timeout = self::NAVIGATION['timeouts']['ajax']): void
+    protected function waitForAjax(int $timeout = self::NAVIGATION['timeouts']['ajax'], bool $waitForStart = true): void
     {
         try {
+            // If waitForStart is true, first give time for AJAX to start
+            if ($waitForStart) {
+                usleep(100000); // 100ms initial delay
+                
+                // Wait for AJAX to start (jQuery.active > 0) with short timeout
+                try {
+                    self::$driver->wait(2, 100)->until(
+                        function () {
+                            $ajaxActive = self::$driver->executeScript(
+                                'return (typeof jQuery != "undefined") ? jQuery.active > 0 : false'
+                            );
+                            return $ajaxActive;
+                        }
+                    );
+                } catch (TimeoutException $e) {
+                    // No AJAX started, continue anyway
+                }
+            }
+
+            // Wait for all AJAX requests to complete
             self::$driver->wait($timeout, self::NAVIGATION['wait_intervals']['default'])->until(
                 function () {
                     try {
+                        // Check jQuery AJAX
                         $ajaxComplete = self::$driver->executeScript(
                             'return (typeof jQuery != "undefined") ? jQuery.active == 0 : true'
                         );
-                        return $ajaxComplete;
+                        
+                        if (!$ajaxComplete) {
+                            return false;
+                        }
+                        
+                        // Check for Semantic UI dimmers/loaders
+                        $noActiveDimmers = self::$driver->executeScript(
+                            'return document.querySelectorAll(".ui.dimmer.active, .ui.loader.active").length === 0'
+                        );
+                        
+                        return $noActiveDimmers;
                     } catch (\Exception $e) {
                         self::annotate("Error checking AJAX status: " . $e->getMessage());
                         return true;
                     }
                 }
             );
-        } catch (\Exception $e) {
+        } catch (TimeoutException $e) {
             self::annotate("Timeout waiting for AJAX: " . $e->getMessage());
         }
     }

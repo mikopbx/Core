@@ -74,6 +74,9 @@ abstract class CreateMOHAudioFileTest extends MikoPBXTestsBase
 
         $this->uploadAndWaitForFile($params);
         $this->setFileName($params['name']);
+        if (isset($params['id'])) {
+            $this->changeInputField('id', $params['id']);
+        }
 
         $this->submitForm('sound-file-form');
     }
@@ -133,5 +136,8 @@ abstract class CreateMOHAudioFileTest extends MikoPBXTestsBase
         $this->clickModifyButtonOnRowWithText($fullName);
 
         $this->assertInputFieldValueEqual('name', $fullName);
+        if (isset($params['id'])) {
+            $this->assertInputFieldValueEqual('id', $params['id']);
+        }
     }
 }

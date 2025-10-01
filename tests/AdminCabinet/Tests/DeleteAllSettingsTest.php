@@ -957,7 +957,7 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
         $settings['web_admin_password'] = $this->testsConfig['password'] ?? '';
         
         // Get PBX name
-        $settings['pbx_name'] = $this->getInputFieldValue('PBXName');
+        $settings['pbx_name'] = $this->getInputFieldValue('Name');
         
         // Get language setting
         $settings['pbx_language'] = $this->getDropdownSelectedValue('PBXLanguage');
@@ -969,8 +969,8 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
         $this->waitForAjax();
         
         // Get web port settings
-        $settings['web_port'] = $this->getInputFieldValue('WebPort');
-        $settings['web_https_port'] = $this->getInputFieldValue('WebHTTPSPort');
+        $settings['web_port'] = $this->getInputFieldValue('WEBPort');
+        $settings['web_https_port'] = $this->getInputFieldValue('WEBHTTPSPort');
         
         // Switch to SSH tab to get SSH port
         $sshTabXpath = "//a[@data-tab='ssh']";
@@ -1002,7 +1002,7 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
         $this->clickSidebarMenuItemByHref('/admin-cabinet/general-settings/modify/');
         
         // Verify PBX name (it's reset to default)
-        $currentPbxName = $this->getInputFieldValue('PBXName');
+        $currentPbxName = $this->getInputFieldValue('Name');
         self::annotate("PBX Name: Expected default 'MikoPBX', Got: '$currentPbxName'");
         
         // Verify language setting preserved
@@ -1016,10 +1016,10 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
         $this->waitForAjax();
         
         // Verify web port settings preserved
-        $currentWebPort = $this->getInputFieldValue('WebPort');
-        $this->assertEquals($savedSettings['web_port'], $currentWebPort, "Web port should be preserved");
+        $currentWEBPort = $this->getInputFieldValue('WEBPort');
+        $this->assertEquals($savedSettings['web_port'], $currentWEBPort, "Web port should be preserved");
         
-        $currentHttpsPort = $this->getInputFieldValue('WebHTTPSPort');
+        $currentHttpsPort = $this->getInputFieldValue('WEBHTTPSPort');
         $this->assertEquals($savedSettings['web_https_port'], $currentHttpsPort, "HTTPS port should be preserved");
         
         // Switch to SSH tab to verify SSH port
@@ -1098,9 +1098,9 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
             
             // Click on "Управление лицензией" tab using JavaScript click
             try {
-                $licensingTabXpath = "//div[@id='pbx-extensions-tab-menu']//div[contains(text(), 'Управление лицензией')]";
+                $licensingTabXpath = "//a[@data-tab='licensing']";
                 $licensingTab = self::$driver->findElement(WebDriverBy::xpath($licensingTabXpath));
-                self::$driver->executeScript("arguments[0].click();", [$licensingTab]);
+                $licensingTab->click();
                 $this->waitForAjax();
                 sleep(2); // Additional wait for content to load
                 
