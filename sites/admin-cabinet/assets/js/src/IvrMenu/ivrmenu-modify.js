@@ -235,26 +235,31 @@ const ivrMenuModify = {
       // Clear existing actions except template
       $('.action-row:not(#row-template)').remove();
       ivrMenuModify.actionsRowsCount = 0;
-      
-      actions.forEach((action, index) => {
-          // Create row with proper index-based data structure for V5.0
-          const rowIndex = index + 1;
-          ivrMenuModify.addNewActionRow({
-              digits: action.digits,
-              extension: action.extension,
-              extensionRepresent: action.extension_represent || '',
-              rowIndex: rowIndex // Pass row index for proper field naming
+
+      if (actions.length > 0) {
+          actions.forEach((action, index) => {
+              // Create row with proper index-based data structure for V5.0
+              const rowIndex = index + 1;
+              ivrMenuModify.addNewActionRow({
+                  digits: action.digits,
+                  extension: action.extension,
+                  extensionRepresent: action.extension_represent || '',
+                  rowIndex: rowIndex // Pass row index for proper field naming
+              });
           });
-      });
-      
+      } else {
+          // For new forms with default values, automatically add the first empty row
+          ivrMenuModify.addNewActionRow();
+      }
+
       // Initialize action extension dropdowns once after all actions are populated
       ivrMenuModify.initializeActionExtensionsDropdowns();
-      
+
       // Re-initialize dirty checking AFTER all form data (including actions) is populated
       if (Form.enableDirrity) {
           Form.initializeDirrity();
       }
-      
+
   },
   
   /**
