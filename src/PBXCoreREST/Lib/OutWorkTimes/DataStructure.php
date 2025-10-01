@@ -60,8 +60,9 @@ class DataStructure extends AbstractDataStructure
             // Return dates as-is (timestamps) for API, not formatted for display
             'date_from' => $model->date_from ?? '',
             'date_to' => $model->date_to ?? '',
-            'weekday_from' => $model->weekday_from ?? '',
-            'weekday_to' => $model->weekday_to ?? '',
+            // Return -1 for empty weekday values to match API v3 conventions
+            'weekday_from' => empty($model->weekday_from) ? '-1' : $model->weekday_from,
+            'weekday_to' => empty($model->weekday_to) ? '-1' : $model->weekday_to,
             'time_from' => $model->time_from ?? '',
             'time_to' => $model->time_to ?? '',
             'calUrl' => $model->calUrl ?? '',
@@ -150,8 +151,9 @@ class DataStructure extends AbstractDataStructure
             'calType' => 'timeframe',
             'date_from' => '',
             'date_to' => '',
-            'weekday_from' => '',
-            'weekday_to' => '',
+            // Return -1 for empty weekday values to match API v3 conventions
+            'weekday_from' => '-1',
+            'weekday_to' => '-1',
             'time_from' => '00:00',
             'time_to' => '23:59',
             'priority' => '0',
