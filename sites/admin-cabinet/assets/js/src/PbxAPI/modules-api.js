@@ -57,13 +57,13 @@ const ModulesAPI = {
             on: 'now',
             successTest: PbxApi.successTest,
             onSuccess(response) {
-                callback(response.data);
+                callback(response.data, true);
             },
             onFailure(response) {
-                callback(response);
+                callback(response, false);
             },
             onError() {
-                callback(false);
+                callback(false, false);
             }
         });
     },
@@ -82,14 +82,18 @@ const ModulesAPI = {
             method: 'POST',
             data: params,
             successTest: PbxApi.successTest,
+            beforeXHR(xhr) {
+                xhr.setRequestHeader ('X-Async-Response-Channel-Id', params.channelId);
+                return xhr;
+            },
             onSuccess(response) {
-                callback(response);
+                callback(response, true);
             },
             onFailure(response) {
-                callback(response);
+                callback(response, false);
             },
             onError() {
-                callback(false);
+                callback(false, false);
             }
         });
     },
@@ -106,40 +110,19 @@ const ModulesAPI = {
             on: 'now',
             method: 'POST',
             data: params,
+            beforeXHR(xhr) {
+                xhr.setRequestHeader ('X-Async-Response-Channel-Id', params.channelId);
+                return xhr;
+            },
             successTest: PbxApi.successTest,
             onSuccess(response) {
-                callback(response);
+                callback(response, true);
             },
             onFailure(response) {
-                callback(response);
+                callback(response, false);
             },
             onError() {
-                callback(false);
-            }
-        });
-    },
-
-    /**
-     * Checks the status of a module installation
-     * @param {string} filePath - Path to the module package
-     * @param {function} callback - Callback function
-     */
-    getModuleInstallationStatus(filePath, callback) {
-        $.api({
-            url: this.endpoints.statusOfModuleInstallation,
-            on: 'now',
-            method: 'POST',
-            data: { filePath },
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                if (response !== undefined && response.data !== undefined) {
-                    callback(response.data);
-                }
-            },
-            onError(errorMessage, element, xhr) {
-                if (xhr.status === 401) {
-                    window.location = `${globalRootUrl}session/index`;
-                }
+                callback(false, false);
             }
         });
     },
@@ -157,14 +140,18 @@ const ModulesAPI = {
             method: 'POST',
             data: params,
             successTest: PbxApi.successTest,
+            beforeXHR(xhr) {
+                xhr.setRequestHeader ('X-Async-Response-Channel-Id', params.channelId);
+                return xhr;
+            },
             onSuccess(response) {
-                if (callback) callback(response);
+                if (callback) callback(response, true);
             },
             onFailure(response) {
-                if (callback) callback(response);
+                if (callback) callback(response, false);
             },
             onError() {
-                if (callback) callback(false);
+                if (callback) callback(false, false);
             }
         });
     },
@@ -181,15 +168,19 @@ const ModulesAPI = {
             on: 'now',
             method: 'POST',
             data: params,
+            beforeXHR(xhr) {
+                xhr.setRequestHeader ('X-Async-Response-Channel-Id', params.channelId);
+                return xhr;
+            },
             successTest: PbxApi.successTest,
             onSuccess(response) {
-                if (callback) callback(response);
+                if (callback) callback(response, true);
             },
             onFailure(response) {
-                if (callback) callback(response);
+                if (callback) callback(response, false);
             },
             onError() {
-                if (callback) callback(false);
+                if (callback) callback(false, false);
             }
         });
     },
@@ -207,15 +198,19 @@ const ModulesAPI = {
             on: 'now',
             method: 'POST',
             data: params,
+            beforeXHR(xhr) {
+                xhr.setRequestHeader ('X-Async-Response-Channel-Id', params.channelId);
+                return xhr;
+            },
             successTest: PbxApi.successTest,
             onSuccess(response) {
-                callback(response);
+                callback(response, true);
             },
             onFailure(response) {
-                callback(response);
+                callback(response, false);
             },
             onError() {
-                callback(false);
+                callback(false, false);
             }
         });
     },
@@ -234,13 +229,13 @@ const ModulesAPI = {
             data: params,
             successTest: PbxApi.successTest,
             onSuccess(response) {
-                callback(response);
+                callback(response, true);
             },
             onFailure(response) {
-                callback(response);
+                callback(response, false);
             },
             onError() {
-                callback(false);
+                callback(false, false);
             }
         });
     },
@@ -257,181 +252,21 @@ const ModulesAPI = {
             method: 'POST',
             data: params,
             successTest: PbxApi.successTest,
+            beforeXHR(xhr) {
+                xhr.setRequestHeader ('X-Async-Response-Channel-Id', params.channelId);
+                return xhr;
+            },
             onSuccess(response) {
-                callback(response);
+                callback(response, true);
             },
             onFailure(response) {
-                callback(response);
+                callback(response, false);
             },
             onError() {
-                callback(false);
+                callback(false, false);
             }
         });
     },
-
-    /**
-     * Starts module download in background
-     * @param {object} params - Download parameters
-     * @param {string} params.uniqid - Module unique ID
-     * @param {string} params.md5 - MD5 checksum
-     * @param {string} params.size - File size
-     * @param {string} params.updateLink - Download URL
-     * @param {function} callback - Callback function
-     */
-    moduleStartDownload(params, callback) {
-        $.api({
-            url: this.endpoints.moduleStartDownload,
-            on: 'now',
-            method: 'POST',
-            data: params,
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response.data);
-            },
-            onError() {
-                callback(false);
-            }
-        });
-    },
-
-    /**
-     * Gets module download status
-     * @param {string} moduleUniqueID - Module unique ID
-     * @param {function} callback - Callback function
-     * @param {boolean} [failureCallback] - Whether to call callback on failure
-     */
-    moduleDownloadStatus(moduleUniqueID, callback, failureCallback = true) {
-        $.api({
-            url: this.endpoints.moduleDownloadStatus,
-            on: 'now',
-            method: 'POST',
-            data: { uniqid: moduleUniqueID },
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response.data);
-            },
-            onFailure() {
-                if (failureCallback) callback(false);
-            },
-            onError() {
-                if (failureCallback) callback(false);
-            }
-        });
-    },
-
-    /**
-     * Retrieves module metadata from an uploaded zip archive
-     * @param {string} filePath - Path to zip file
-     * @param {function} callback - Callback function
-     */
-    getMetadataFromModulePackage(filePath, callback) {
-        $.api({
-            url: this.endpoints.getMetadataFromModulePackage,
-            on: 'now',
-            method: 'POST',
-            data: { filePath },
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(true, response);
-            },
-            onError(errorMessage, element, xhr) {
-                if (xhr.status === 401) {
-                    window.location = `${globalRootUrl}session/index`;
-                }
-                callback(false, errorMessage);
-            },
-            onFailure(response) {
-                callback(false, response);
-            }
-        });
-    },
-
-    /**
-     * Retrieves the installation link for a module
-     * @param {object} params - Link parameters
-     * @param {string} params.uniqid - Module unique ID
-     * @param {function} callback - Callback function
-     */
-    getModuleLink(params, callback) {
-        $.api({
-            url: this.endpoints.getModuleLink,
-            on: 'now',
-            method: 'POST',
-            data: params,
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response.data);
-            },
-            onError() {
-                callback(false);
-            }
-        });
-    },
-
-    /**
-     * Helper method to attach file upload to button with Resumable.js
-     * @param {string} buttonId - Button element ID
-     * @param {string[]} fileTypes - Allowed file types
-     * @param {function} callback - Callback function for upload events
-     */
-    uploadFileAttachToBtn(buttonId, fileTypes, callback) {
-        const r = new Resumable({
-            target: `${Config.pbxUrl}/pbxcore/api/v3/files:upload`,
-            testChunks: false,
-            chunkSize: 3 * 1024 * 1024,
-            maxFiles: 1,
-            simultaneousUploads: 1,
-            fileType: fileTypes,
-        });
-
-        r.assignBrowse(document.getElementById(buttonId));
-        r.on('fileSuccess', (file, response) => {
-            callback('fileSuccess', {file, response});
-        });
-        r.on('fileProgress', (file) => {
-            callback('fileProgress', {file});
-        });
-        r.on('fileAdded', (file, event) => {
-            r.upload();
-            callback('fileAdded', {file, event});
-        });
-        r.on('fileRetry', (file) => {
-            callback('fileRetry', {file});
-        });
-        r.on('fileError', (file, message) => {
-            callback('fileError', {file, message});
-        });
-        r.on('uploadStart', () => {
-            callback('uploadStart');
-        });
-        r.on('complete', () => {
-            callback('complete');
-        });
-        r.on('progress', () => {
-            const percent = 100 * r.progress();
-            callback('progress', {percent});
-        });
-        r.on('error', (message, file) => {
-            callback('error', {message, file});
-        });
-        r.on('pause', () => {
-            callback('pause');
-        });
-        r.on('cancel', () => {
-            callback('cancel');
-        });
-        r.on('chunkingStart', (file) => {
-            callback('chunkingStart', {file});
-        });
-        r.on('chunkingProgress', (file, ratio) => {
-            callback('chunkingProgress', {file, ratio});
-        });
-        r.on('chunkingComplete', (file) => {
-            callback('chunkingComplete', {file});
-        });
-
-        return r;
-    }
 };
 
 // Export for use in other modules

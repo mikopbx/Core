@@ -196,13 +196,14 @@ const keyCheck = {
 
     /**
      * Callback function triggered after resetting the license key.
-     * @param {boolean} response - The response indicating the success of the license key reset.
+     * @param {Object} response - The response indicating the success of the license key reset.
+     * @param {boolean} isSuccessful - Whether the request was successful
      */
-    cbAfterResetLicenseKey(response) {
+    cbAfterResetLicenseKey(response, isSuccessful) {
         // Remove the loading and disabled classes
         keyCheck.$formObj.removeClass('loading disabled');
         keyCheck.$confirmResetButton.removeClass('loading disabled');
-        if (response !== false) {
+        if (isSuccessful && response !== false) {
             window.location.reload();
         }
     },
@@ -210,11 +211,12 @@ const keyCheck = {
     /**
      * Callback function triggered after retrieving the license information.
      * @param {Object} response - The response containing the license information.
+     * @param {boolean} isSuccessful - Whether the request was successful
      */
-    cbAfterGetLicenseInfo(response) {
-        if (response.licenseInfo !== undefined) {
+    cbAfterGetLicenseInfo(response, isSuccessful) {
+        if (isSuccessful && response.data.licenseInfo !== undefined) {
             // License information is available
-            keyCheck.showLicenseInfo(response.licenseInfo);
+            keyCheck.showLicenseInfo(response.data.licenseInfo);
             keyCheck.$licenseDetailInfo.show();
         } else {
             // License information is not available

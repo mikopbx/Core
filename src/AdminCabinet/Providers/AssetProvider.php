@@ -503,6 +503,7 @@ class AssetProvider implements ServiceProviderInterface
     {
         if ($action === 'manage') {
             $this->footerCollectionJS
+                ->addJs('js/pbx/PbxAPI/cdr-api.js', true)
                 ->addJs('js/pbx/Restart/restart-manage.js', true)
                 ->addJs('js/pbx/Restart/current-calls-worker.js', true);
         }

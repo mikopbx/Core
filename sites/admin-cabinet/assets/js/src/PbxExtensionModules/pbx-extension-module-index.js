@@ -67,7 +67,6 @@ const extensionModules = {
                 if ($(this).data('tab') === 'licensing'){
                     LicenseAPI.getLicenseInfo(keyCheck.cbAfterGetLicenseInfo);
                 }
-
             }
         });
 

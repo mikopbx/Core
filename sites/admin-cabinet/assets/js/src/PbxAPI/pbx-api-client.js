@@ -87,16 +87,16 @@ class PbxApiClient {
                 if (isNew && response.data) {
                     response.data._isNew = true;
                 }
-                callback(response);
+                callback(response, true);
             },
             onFailure(response) {
-                callback(response);
+                callback(response, false);
             },
             onError() {
                 callback({
                     result: false,
                     messages: {error: ['Network error occurred']}
-                });
+                }, false);
             }
         });
     }
@@ -132,17 +132,17 @@ class PbxApiClient {
             data: params,
             successTest: PbxApi.successTest,
             onSuccess(response) {
-                actualCallback(response);
+                actualCallback(response, true);
             },
             onFailure(response) {
                 // Ensure we return a structure with result and data fields
                 if (response && !response.hasOwnProperty('data')) {
                     response.data = [];
                 }
-                actualCallback(response);
+                actualCallback(response, false);
             },
             onError() {
-                actualCallback({result: false, data: []});
+                actualCallback({result: false, data: []}, false);
             }
         });
     }
@@ -192,20 +192,20 @@ class PbxApiClient {
                 return settings;
             },
             onSuccess(response) {
-                callback(response);
+                callback(response, true);
             },
             onFailure(response) {
-                callback(response);
+                callback(response, false);
             },
             onError() {
                 callback({
                     result: false,
                     messages: {error: ['Network error occurred']}
-                });
+                }, false);
             }
         });
     }
-    
+
     /**
      * Delete record
      * @param {string} recordId - Record ID to delete
@@ -226,17 +226,17 @@ class PbxApiClient {
             data: data,
             successTest: PbxApi.successTest,
             onSuccess(response) {
-                callback(response);
+                callback(response, true);
             },
             onFailure(response) {
-                callback(response);
+                callback(response, false);
             },
             onError() {
-                callback(false);
+                callback(false, false);
             }
         });
     }
-    
+
     /**
      * Call a custom method
      * @param {string} methodName - Method name
@@ -307,16 +307,16 @@ class PbxApiClient {
             on: 'now',
             successTest: PbxApi.successTest,
             onSuccess(response) {
-                actualCallback(response);
+                actualCallback(response, true);
             },
             onFailure(response) {
-                actualCallback(response);
+                actualCallback(response, false);
             },
             onError() {
                 actualCallback({
                     result: false,
                     messages: {error: ['Network error occurred']}
-                });
+                }, false);
             }
         };
 
@@ -395,13 +395,13 @@ class PbxApiClient {
             data: params || {},
             successTest: PbxApi.successTest,
             onSuccess(response) {
-                callback(response);
+                callback(response, true);
             },
             onFailure(response) {
-                callback(response);
+                callback(response, false);
             },
             onError() {
-                callback({result: false, data: []});
+                callback({result: false, data: []}, false);
             }
         });
     }
@@ -426,13 +426,13 @@ class PbxApiClient {
             on: 'now',
             successTest: PbxApi.successTest,
             onSuccess(response) {
-                callback(response);
+                callback(response, true);
             },
             onFailure(response) {
-                callback(response);
+                callback(response, false);
             },
             onError() {
-                callback({result: false, messages: {error: ['Network error occurred']}});
+                callback({result: false, messages: {error: ['Network error occurred']}}, false);
             }
         };
 
@@ -466,13 +466,13 @@ class PbxApiClient {
             on: 'now',
             successTest: PbxApi.successTest,
             onSuccess(response) {
-                callback(response);
+                callback(response, true);
             },
             onFailure(response) {
-                callback(response);
+                callback(response, false);
             },
             onError() {
-                callback({result: false, messages: {error: ['Network error occurred']}});
+                callback({result: false, messages: {error: ['Network error occurred']}}, false);
             }
         };
 
@@ -505,13 +505,13 @@ class PbxApiClient {
             data: data,
             successTest: PbxApi.successTest,
             onSuccess(response) {
-                callback(response);
+                callback(response, true);
             },
             onFailure(response) {
-                callback(response);
+                callback(response, false);
             },
             onError() {
-                callback({result: false, messages: {error: ['Network error occurred']}});
+                callback({result: false, messages: {error: ['Network error occurred']}}, false);
             }
         });
     }
@@ -530,13 +530,13 @@ class PbxApiClient {
             on: 'now',
             successTest: PbxApi.successTest,
             onSuccess(response) {
-                callback(response);
+                callback(response, true);
             },
             onFailure(response) {
-                callback(response);
+                callback(response, false);
             },
             onError() {
-                callback({result: false, messages: {error: ['Network error occurred']}});
+                callback({result: false, messages: {error: ['Network error occurred']}}, false);
             }
         };
 
