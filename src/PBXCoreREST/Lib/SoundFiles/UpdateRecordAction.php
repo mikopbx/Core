@@ -47,6 +47,9 @@ class UpdateRecordAction
             return $res;
         }
 
+        // Mark this as an UPDATE operation via PUT method
+        $data['httpMethod'] = 'PUT';
+
         // Delegate to SaveRecordAction for full update
         return SaveRecordAction::main($data);
     }

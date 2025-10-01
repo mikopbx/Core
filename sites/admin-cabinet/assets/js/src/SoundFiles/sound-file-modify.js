@@ -76,6 +76,12 @@ const soundFileModifyRest = {
     $dropDowns: $('#sound-file-form .dropdown'),
 
     /**
+     * Track if this is a new sound file (not existing in database)
+     * @type {boolean}
+     */
+    isNewSoundFile: false,
+
+    /**
      * Validation rules for the form fields before submission.
      *
      * @type {object}
@@ -158,6 +164,9 @@ const soundFileModifyRest = {
         const recordId = soundFileModifyRest.getRecordId();
         const category = soundFileModifyRest.getCategory();
 
+        // Determine if this is a new sound file
+        soundFileModifyRest.isNewSoundFile = !recordId || recordId === '' || recordId === 'new';
+
         // Show loading state
         soundFileModifyRest.$formObj.addClass('loading');
 
@@ -168,6 +177,19 @@ const soundFileModifyRest = {
             soundFileModifyRest.$formObj.removeClass('loading');
 
             if (response.result) {
+                // Update isNewSoundFile based on actual data from server
+                // New sound files won't have an id in the response data
+                if (!response.data.id || response.data.id === '') {
+                    soundFileModifyRest.isNewSoundFile = true;
+                } else {
+                    soundFileModifyRest.isNewSoundFile = false;
+                }
+
+                // Set the _isNew flag for new sound files
+                if (soundFileModifyRest.isNewSoundFile) {
+                    response.data._isNew = true;
+                }
+
                 soundFileModifyRest.populateForm(response.data);
             } else if (recordId && recordId !== 'new') {
                 // Show error if trying to load non-existent record
@@ -223,6 +245,21 @@ const soundFileModifyRest = {
      * @param {object} data - Sound file data from API
      */
     populateForm(data) {
+        // Save the _isNew flag in a hidden field if present
+        if (data._isNew !== undefined) {
+            if ($('#_isNew').length === 0) {
+                // Create hidden field if it doesn't exist
+                $('<input>').attr({
+                    type: 'hidden',
+                    id: '_isNew',
+                    name: '_isNew',
+                    value: data._isNew ? 'true' : 'false'
+                }).appendTo(soundFileModifyRest.$formObj);
+            } else {
+                $('#_isNew').val(data._isNew ? 'true' : 'false');
+            }
+        }
+
         // Use unified silent population approach
         Form.populateFormSilently(data, {
             afterPopulate: (formData) => {
@@ -232,7 +269,7 @@ const soundFileModifyRest = {
                     const audioUrl = `/pbxcore/api/v3/sound-files:playback?view=${formData.path}`;
                     sndPlayer.UpdateSource(audioUrl);
                 }
-                
+
                 // Save initial values for dirrity checking
                 if (Form.enableDirrity) {
                     Form.saveInitialValues();
@@ -386,16 +423,6 @@ const soundFileModifyRest = {
         const result = settings;
         result.data = soundFileModifyRest.$formObj.form('get values');
 
-        // Add flag to indicate if this is a new record for proper HTTP method selection
-        const currentId = result.data.id;
-        if (!currentId || currentId === '' || currentId === 'custom' || currentId === 'moh') {
-            result.data._isNew = true;
-            // Clear the ID for new records
-            if (currentId === 'custom' || currentId === 'moh') {
-                result.data.id = '';
-            }
-        }
-
         return result;
     },
 
@@ -413,6 +440,18 @@ const soundFileModifyRest = {
 
             // Update form with new data if provided
             if (response.data) {
+                // If this was a new sound file that was saved, update state
+                if (soundFileModifyRest.isNewSoundFile && response.data.id) {
+                    // Update the form ID field
+                    $('#id').val(response.data.id);
+
+                    // Update isNewSoundFile flag
+                    soundFileModifyRest.isNewSoundFile = false;
+
+                    // Remove _isNew flag from form
+                    $('#_isNew').remove();
+                }
+
                 soundFileModifyRest.populateForm(response.data);
             }
 

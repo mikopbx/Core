@@ -38,8 +38,9 @@ class CreateRecordAction
      */
     public static function main(array $data): PBXApiResult
     {
-        // Ensure ID is not set for new records
-        unset($data['id']);
+        // Mark this as a CREATE operation via POST method
+        // ID is allowed for pre-generated IDs (like when copying)
+        $data['httpMethod'] = 'POST';
 
         // Delegate to SaveRecordAction for creation
         return SaveRecordAction::main($data);

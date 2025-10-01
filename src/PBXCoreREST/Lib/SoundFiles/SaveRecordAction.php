@@ -53,7 +53,14 @@ class SaveRecordAction
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        
+
+        // Determine if this is a CREATE or UPDATE operation based on HTTP method
+        // For saveRecord action:
+        // - POST method = CREATE operation (even with pre-generated ID)
+        // - PUT method = UPDATE operation (must find existing record)
+        $httpMethod = $data['httpMethod'] ?? null;
+        unset($data['httpMethod']); // Remove from data to avoid saving it
+
         // Data sanitization
         $sanitizationRules = [
             'id' => 'int',
@@ -63,7 +70,7 @@ class SaveRecordAction
             'path' => 'string|max:500'
         ];
         $data = BaseActionHelper::sanitizeData($data, $sanitizationRules);
-        
+
         // Validate required fields
         $validationRules = [
             'name' => [
@@ -75,16 +82,25 @@ class SaveRecordAction
             $res->messages['error'] = $validationErrors;
             return $res;
         }
-        
-        // Get or create model
-        if (!empty($data['id'])) {
+
+        // Determine if this is a CREATE or UPDATE operation
+        $isCreateOperation = ($httpMethod === 'POST');
+
+        // Get or create model based on operation type
+        if (!$isCreateOperation && !empty($data['id'])) {
+            // UPDATE operation - file must exist
             $file = SoundFiles::findFirstById($data['id']);
             if (!$file) {
                 $res->messages['error'][] = 'api_SoundFileNotFound';
                 return $res;
             }
         } else {
+            // CREATE operation - create new sound file
             $file = new SoundFiles();
+            // Use provided ID if available (pre-generated), otherwise auto-increment
+            if (!empty($data['id'])) {
+                $file->id = $data['id'];
+            }
         }
         
         try {
@@ -113,9 +129,11 @@ class SaveRecordAction
             
             $res->data = DataStructure::createFromModel($savedFile);
             $res->success = true;
-            
-            // Add reload path for page refresh after save
-            $res->reload = "sound-files/modify/{$savedFile->id}";
+
+            // Set reload URL for new records (POST requests)
+            if ($httpMethod === 'POST') {
+                $res->reload = "sound-files/modify/{$savedFile->id}";
+            }
             
         } catch (\Exception $e) {
             $res->messages['error'][] = $e->getMessage();

@@ -59,6 +59,9 @@ class PatchRecordAction
         $existingData = $record->toArray();
         $mergedData = array_merge($existingData, $data);
 
+        // Mark this as a PATCH operation
+        $mergedData['httpMethod'] = 'PATCH';
+
         // Delegate to SaveRecordAction with merged data
         return SaveRecordAction::main($mergedData);
     }

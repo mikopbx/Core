@@ -124,4 +124,32 @@ class SoundFiles extends ModelsBase
             ]
         );
     }
+
+    /**
+     * Delete physical sound file and related converted files after record deletion
+     */
+    public function afterDelete(): void
+    {
+        if (empty($this->path)) {
+            return;
+        }
+
+        // Delete the main file
+        if (file_exists($this->path)) {
+            unlink($this->path);
+        }
+
+        // Remove extension to get base filename
+        $pathinfo = pathinfo($this->path);
+        $baseFilename = $pathinfo['dirname'] . '/' . $pathinfo['filename'];
+
+        // Delete all related converted files (.wav, .mp3, .g722, .gsm, .ulaw)
+        $extensions = ['wav', 'mp3', 'g722', 'gsm', 'ulaw'];
+        foreach ($extensions as $ext) {
+            $convertedFile = "$baseFilename.$ext";
+            if ($convertedFile !== $this->path && file_exists($convertedFile)) {
+                unlink($convertedFile);
+            }
+        }
+    }
 }

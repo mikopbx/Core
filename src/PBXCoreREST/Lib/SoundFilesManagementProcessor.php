@@ -101,6 +101,11 @@ class SoundFilesManagementProcessor extends Injectable
             return $res;
         }
 
+        // For create/update actions, pass httpMethod from request level to data
+        if (in_array($action, [SoundFileAction::CREATE, SoundFileAction::UPDATE, SoundFileAction::PATCH], true) && isset($request['httpMethod'])) {
+            $data['httpMethod'] = $request['httpMethod'];
+        }
+
         // Execute action using match expression (PHP 8)
         $res = match ($action) {
             // Standard CRUD operations
