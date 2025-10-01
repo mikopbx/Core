@@ -140,7 +140,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
         // Check extension uniqueness using unified approach
         if (!self::checkExtensionUniqueness($sanitizedData['extension'], $queue->extension)) {
             $res->messages['error'][] = 'Extension number already exists';
-            $res->httpCode = 409; // Conflict
+            $res->httpCode = 409; // Conflict - proper RESTful code
             return $res;
         }
 

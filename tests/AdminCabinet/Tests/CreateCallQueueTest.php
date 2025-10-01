@@ -69,8 +69,8 @@ abstract class CreateCallQueueTest extends MikoPBXTestsBase
         $this->clickButtonByHref('/admin-cabinet/call-queues/modify');
 
         $this->fillBasicFields($params);
-        $this->addAgents($params['agents']);
         $this->fillAdvancedOptions($params);
+        $this->addAgents($params['agents']);
 
         $this->submitForm('queue-form');
         $this->waitForAjax();
@@ -86,6 +86,7 @@ abstract class CreateCallQueueTest extends MikoPBXTestsBase
         );
 
         $this->changeTextAreaValue('description', $params['description']);
+        $this->changeInputField('extension', $params['extension']);
         $this->changeInputField('name', $params['name']);
         $this->selectDropdownItem('strategy', $params['strategy']);
     }
@@ -107,7 +108,6 @@ abstract class CreateCallQueueTest extends MikoPBXTestsBase
     {
         $this->openAccordionOnThePage();
 
-        $this->changeInputField('extension', $params['extension']);
         $this->changeInputField('seconds_to_ring_each_member', $params['seconds_to_ring_each_member']);
         $this->changeInputField('seconds_for_wrapup', $params['seconds_for_wrapup']);
         $this->changeCheckBoxState('recive_calls_while_on_a_call', $params['recive_calls_while_on_a_call']);

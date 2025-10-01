@@ -1,4 +1,4 @@
-{{ form(['action' : 'call-queues/save', 'method': 'post', 'role': 'form', 'class': 'ui large form','id':'queue-form']) }}
+{{ form(['action' : 'call-queues/save', 'method': 'post', 'role': 'form', 'class': 'ui form','id':'queue-form']) }}
 {{ form.render('id') }}
 {{ form.render('uniqid') }}
 <input type="hidden" name="{{ security.getTokenKey() }}" value="{{ security.getToken() }}"/>
@@ -11,9 +11,9 @@
     <label for="name">{{ t._('cq_Name') }}</label>
     {{ form.render('name') }}
 </div>
-<div class="field max-width-200">
+<div class="field">
     <label for="extension">{{ t._('cd_Extensions') }}</label>
-    <div class="ui icon input extension">
+    <div class="ui icon input extension field max-width-200">
         <i class="search icon"></i>
         {{ form.render('extension') }}
     </div>
@@ -156,6 +156,9 @@
 
     </div>
 </div>
+
+<div class='hidden divider'></div>
+<div class='ui divider'></div>
 
 {{ partial("partials/submitbutton",['indexurl':'call-queues/index/']) }}
 
