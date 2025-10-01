@@ -241,12 +241,14 @@ class BaseController extends Controller
             }
 
             // Handle normal response with proper HTTP status code
-            // Extract httpCode from response (default to 200 for success, 400 for error)
+            // RESTful API: Use proper HTTP codes for different scenarios
+            // - 200 OK for success
+            // - 422 Unprocessable Entity for validation errors
+            // - 409 Conflict for constraint violations
             if (isset($response['result']) && $response['result'] === false) {
-                // Error response
-                $httpCode = $response['httpCode'] ?? 400;
-                $errorMessage = $response['messages']['error'][0] ?? 'Unknown error';
-                $this->response->setPayloadError($errorMessage, $httpCode);
+                // Business error - use appropriate HTTP code (422 for validation, 409 for conflicts)
+                $httpCode = $response['httpCode'] ?? 422;
+                $this->response->setPayloadSuccess($response, $httpCode);
             } else {
                 // Success response
                 $httpCode = $response['httpCode'] ?? 200;

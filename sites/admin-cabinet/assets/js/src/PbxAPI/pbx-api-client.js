@@ -59,6 +59,95 @@ class PbxApiClient {
             this.endpoints[methodName] = `${this.apiUrl}${methodPath}`;
         }
     }
+
+    /**
+     * Custom success test for RESTful API with proper HTTP codes
+     * Treats business errors (4xx) as failures, not network errors
+     *
+     * @param {object} response - Server response
+     * @param {XMLHttpRequest} xhr - XMLHttpRequest object
+     * @returns {boolean} - True if request was successful
+     */
+    successTest(response, xhr) {
+        // If we have a valid response object with result field, use it
+        if (response && typeof response.result !== 'undefined') {
+            return response.result === true;
+        }
+
+        // For responses without result field, check HTTP status
+        // 2xx = success, 4xx/5xx = failure (but not network error)
+        const status = xhr ? xhr.status : 200;
+        return status >= 200 && status < 300;
+    }
+
+    /**
+     * Custom error handler for RESTful API
+     * Distinguishes between business errors (4xx) and real network errors
+     *
+     * @param {XMLHttpRequest} xhr - XMLHttpRequest object
+     * @param {function} onFailureCallback - Callback for business errors (4xx)
+     * @param {function} onErrorCallback - Callback for network errors
+     */
+    handleError(xhr, onFailureCallback, onErrorCallback) {
+        const status = xhr.status;
+
+        // Business errors (4xx) - validation, conflicts, etc.
+        // These have response body with error details
+        if (status >= 400 && status < 500) {
+            try {
+                const response = JSON.parse(xhr.responseText);
+                // Call onFailure with parsed response
+                onFailureCallback(response);
+            } catch (e) {
+                // If can't parse JSON, treat as network error
+                onErrorCallback();
+            }
+        }
+        // Server errors (5xx) or network errors (0)
+        else {
+            onErrorCallback();
+        }
+    }
+
+    /**
+     * Get base API settings with proper error handling
+     * This standardizes error handling across all API calls
+     *
+     * @param {function} successCallback - Called on successful response (2xx + result=true)
+     * @param {function} failureCallback - Called on business errors (4xx or result=false)
+     * @returns {object} - API settings object for $.api()
+     */
+    getBaseApiSettings(successCallback, failureCallback) {
+        const self = this;
+        return {
+            on: 'now',
+            successTest(response, xhr) {
+                return self.successTest(response, xhr);
+            },
+            onSuccess(response) {
+                successCallback(response, true);
+            },
+            onFailure(response) {
+                failureCallback(response, false);
+            },
+            onError(errorMessage, element, xhr) {
+                // Only handle real network errors (5xx, timeout, connection refused)
+                // For 4xx errors, Semantic UI already called onFailure, so skip
+                const status = xhr ? xhr.status : 0;
+
+                // Skip if this is a business error (4xx) - already handled by onFailure
+                if (status >= 400 && status < 500) {
+                    return;
+                }
+
+                // Real network/server error - show generic message
+                failureCallback({
+                    result: false,
+                    messages: {error: ['Network error occurred']}
+                }, false);
+            }
+        };
+    }
     
     /**
      * Get record by ID or get default values for new record
@@ -78,26 +167,21 @@ class PbxApiClient {
             url = `${this.apiUrl}/${recordId}`;
         }
 
-        $.api({
-            url: url,
-            method: 'GET',
-            on: 'now',
-            onSuccess(response) {
+        const apiSettings = this.getBaseApiSettings(
+            (response) => {
                 // Set _isNew flag for new records to indicate POST should be used
                 if (isNew && response.data) {
                     response.data._isNew = true;
                 }
                 callback(response, true);
             },
-            onFailure(response) {
-                callback(response, false);
-            },
-            onError() {
-                callback({
-                    result: false,
-                    messages: {error: ['Network error occurred']}
-                }, false);
-            }
+            callback
+        );
+
+        $.api({
+            url: url,
+            method: 'GET',
+            ...apiSettings
         });
     }
     
@@ -125,25 +209,22 @@ class PbxApiClient {
             actualCallback = callback;
         }
 
-        $.api({
-            url: this.apiUrl,
-            on: 'now',
-            method: 'GET',
-            data: params,
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                actualCallback(response, true);
-            },
-            onFailure(response) {
+        const apiSettings = this.getBaseApiSettings(
+            (response) => actualCallback(response, true),
+            (response) => {
                 // Ensure we return a structure with result and data fields
                 if (response && !response.hasOwnProperty('data')) {
                     response.data = [];
                 }
                 actualCallback(response, false);
-            },
-            onError() {
-                actualCallback({result: false, data: []}, false);
             }
+        );
+
+        $.api({
+            url: this.apiUrl,
+            method: 'GET',
+            data: params,
+            ...apiSettings
         });
     }
     
@@ -219,21 +300,16 @@ class PbxApiClient {
             data[globalCsrfTokenKey] = globalCsrfToken;
         }
         
+        const apiSettings = this.getBaseApiSettings(
+            (response) => callback(response, true),
+            callback
+        );
+
         $.api({
             url: `${this.apiUrl}/${recordId}`,
-            on: 'now',
             method: 'DELETE',
             data: data,
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response, true);
-            },
-            onFailure(response) {
-                callback(response, false);
-            },
-            onError() {
-                callback(false, false);
-            }
+            ...apiSettings
         });
     }
 
@@ -301,23 +377,15 @@ class PbxApiClient {
         }
 
         // Use JSON for complex data, form encoding for simple data
+        const apiSettings = this.getBaseApiSettings(
+            (response) => actualCallback(response, true),
+            actualCallback
+        );
+
         const ajaxSettings = {
             url: url,
             method: httpMethod,
-            on: 'now',
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                actualCallback(response, true);
-            },
-            onFailure(response) {
-                actualCallback(response, false);
-            },
-            onError() {
-                actualCallback({
-                    result: false,
-                    messages: {error: ['Network error occurred']}
-                }, false);
-            }
+            ...apiSettings
         };
 
         if (hasComplexData) {
@@ -388,21 +456,16 @@ class PbxApiClient {
             url = `${this.apiUrl}/${id}`;
         }
 
+        const apiSettings = this.getBaseApiSettings(
+            (response) => callback(response, true),
+            callback
+        );
+
         $.api({
             url: url,
-            on: 'now',
             method: 'GET',
             data: params || {},
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response, true);
-            },
-            onFailure(response) {
-                callback(response, false);
-            },
-            onError() {
-                callback({result: false, data: []}, false);
-            }
+            ...apiSettings
         });
     }
 
@@ -419,21 +482,15 @@ class PbxApiClient {
         }
 
         const hasComplexData = PbxApiClient.hasComplexData(data);
+        const apiSettings = this.getBaseApiSettings(
+            (response) => callback(response, true),
+            callback
+        );
 
         const ajaxSettings = {
             url: url,
             method: 'POST',
-            on: 'now',
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response, true);
-            },
-            onFailure(response) {
-                callback(response, false);
-            },
-            onError() {
-                callback({result: false, messages: {error: ['Network error occurred']}}, false);
-            }
+            ...apiSettings
         };
 
         if (hasComplexData) {
@@ -459,21 +516,15 @@ class PbxApiClient {
         }
 
         const hasComplexData = PbxApiClient.hasComplexData(data);
+        const apiSettings = this.getBaseApiSettings(
+            (response) => callback(response, true),
+            callback
+        );
 
         const ajaxSettings = {
             url: url,
             method: 'PUT',
-            on: 'now',
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response, true);
-            },
-            onFailure(response) {
-                callback(response, false);
-            },
-            onError() {
-                callback({result: false, messages: {error: ['Network error occurred']}}, false);
-            }
+            ...apiSettings
         };
 
         if (hasComplexData) {
@@ -498,21 +549,16 @@ class PbxApiClient {
             data[globalCsrfTokenKey] = globalCsrfToken;
         }
 
+        const apiSettings = this.getBaseApiSettings(
+            (response) => callback(response, true),
+            callback
+        );
+
         $.api({
             url: `${this.apiUrl}/${id}`,
-            on: 'now',
             method: 'DELETE',
             data: data,
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response, true);
-            },
-            onFailure(response) {
-                callback(response, false);
-            },
-            onError() {
-                callback({result: false, messages: {error: ['Network error occurred']}}, false);
-            }
+            ...apiSettings
         });
     }
 
@@ -523,21 +569,15 @@ class PbxApiClient {
      */
     callPatch(data, callback) {
         const hasComplexData = PbxApiClient.hasComplexData(data);
+        const apiSettings = this.getBaseApiSettings(
+            (response) => callback(response, true),
+            callback
+        );
 
         const ajaxSettings = {
             url: this.apiUrl,
             method: 'PATCH',
-            on: 'now',
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response, true);
-            },
-            onFailure(response) {
-                callback(response, false);
-            },
-            onError() {
-                callback({result: false, messages: {error: ['Network error occurred']}}, false);
-            }
+            ...apiSettings
         };
 
         if (hasComplexData) {

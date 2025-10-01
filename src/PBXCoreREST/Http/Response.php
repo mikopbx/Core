@@ -135,7 +135,15 @@ class Response extends PhResponse
      */
     public function setPayloadError(string $detail = '', int $httpCode = 400): Response
     {
-        $this->setJsonContent(['errors' => [$detail]]);
+        // Unified format compatible with VBX API Result structure
+        $this->setJsonContent([
+            'result' => false,
+            'data' => [],
+            'messages' => ['error' => [$detail]],
+            'function' => '',
+            'processor' => '',
+            'pid' => getmypid()
+        ]);
         $this->setStatusCode($httpCode);
 
         return $this;
@@ -149,12 +157,20 @@ class Response extends PhResponse
      */
     public function setPayloadErrors(Messages $errors): Response
     {
-        $data = [];
+        $errorMessages = [];
         foreach ($errors as $error) {
-            $data[] = $error->getMessage();
+            $errorMessages[] = $error->getMessage();
         }
 
-        $this->setJsonContent(['errors' => $data]);
+        // Unified format compatible with VBX API Result structure
+        $this->setJsonContent([
+            'result' => false,
+            'data' => [],
+            'messages' => ['error' => $errorMessages],
+            'function' => '',
+            'processor' => '',
+            'pid' => getmypid()
+        ]);
 
         return $this;
     }
