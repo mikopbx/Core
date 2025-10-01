@@ -59,7 +59,7 @@ class RouterProvider implements ServiceProviderInterface
      * Universal ID patterns - covers ALL possible ID formats
      */
     private const UNIVERSAL_ID_PATTERNS = [
-        'any' => '[^/]+',           // Matches anything except slash
+        'any' => '[^/:]+',          // Matches anything except slash and colon (for custom methods)
         'numeric' => '[0-9]+',      // Numbers only
         'alpha' => '[a-zA-Z\\-]+',  // Letters and hyphens
         'alnum' => '[a-zA-Z0-9\\-_]+', // Alphanumeric with separators

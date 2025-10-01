@@ -281,7 +281,7 @@ abstract class AbstractDeleteAction
             if (strpos($errorMessage, 'FOREIGN KEY') !== false ||
                 strpos($errorMessage, 'constraint') !== false ||
                 strpos($errorMessage, 'is in use') !== false) {
-                $res->httpCode = 409; // Conflict
+                $res->httpCode = 409; // Conflict - proper RESTful code
             }
             return self::handleDeleteError($e, $res);
         }
