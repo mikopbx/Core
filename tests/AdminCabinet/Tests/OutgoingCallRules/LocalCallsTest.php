@@ -43,4 +43,9 @@ class LocalCallsTest extends CreateOutgoingCallRuleTest
     {
         return OutgoingCallRulesDataFactory::getRuleData('local.calls');
     }
+
+    public function testCreateOutgoingCallRule(): void
+    {   
+        parent::testCreateOutgoingCallRule();
+    }
 }

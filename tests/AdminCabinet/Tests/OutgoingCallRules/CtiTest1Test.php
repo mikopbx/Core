@@ -43,4 +43,9 @@ class CtiTest1Test extends CreateOutgoingCallRuleTest
     {
         return OutgoingCallRulesDataFactory::getRuleData('cti.test.1');
     }
+
+    public function testCreateOutgoingCallRule(): void
+    {   
+        parent::testCreateOutgoingCallRule();
+    }
 }

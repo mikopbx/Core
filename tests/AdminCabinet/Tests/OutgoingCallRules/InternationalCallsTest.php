@@ -43,4 +43,9 @@ class InternationalCallsTest extends CreateOutgoingCallRuleTest
     {
         return OutgoingCallRulesDataFactory::getRuleData('international.calls');
     }
+
+    public function testCreateOutgoingCallRule(): void
+    {   
+        parent::testCreateOutgoingCallRule();
+    }
 }
