@@ -83,11 +83,22 @@ const EventBus = {
         // Handle errors
         EventBus.socket.onerror = (error) => {
             console.error('WebSocket Error:', error);
+
+            // Don't publish connection status if we're already redirecting to login
+            if (typeof PbxApiClient !== 'undefined' && PbxApiClient.isRedirectingToLogin) {
+                return;
+            }
+
             EventBus.publish('connection-status', false);
         };
 
         // Handle connection break
         EventBus.socket.onclose = (event) => {
+            // Don't attempt reconnection if we're already redirecting to login
+            if (typeof PbxApiClient !== 'undefined' && PbxApiClient.isRedirectingToLogin) {
+                return;
+            }
+
             EventBus.publish('connection-status', false);
 
             // Check if this was a 403 Forbidden error

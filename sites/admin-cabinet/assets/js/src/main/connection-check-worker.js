@@ -49,6 +49,11 @@ const connectionCheckWorker = {
      * @param {boolean} result - The result of the connection check.
      */
     cbAfterResponse(result) {
+        // Don't show dimmer if we're already redirecting to login page
+        if (typeof PbxApiClient !== 'undefined' && PbxApiClient.isRedirectingToLogin) {
+            return;
+        }
+
         if (result === true) {
             // If the connection is successful, hide the connection dimmer
             connectionCheckWorker.$connectionDimmer.dimmer('hide');

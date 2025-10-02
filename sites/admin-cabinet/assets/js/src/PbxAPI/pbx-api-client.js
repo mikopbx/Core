@@ -20,20 +20,28 @@
 
 /**
  * PbxApiClient - Unified REST API v3 client for all entities
- * 
+ *
  * This class provides a standard interface for all CRUD operations
  * and eliminates code duplication across API modules.
- * 
+ *
  * Features:
  * - Standard RESTful operations (GET, POST, PUT, DELETE)
  * - Custom methods support via colon notation (:getDefault)
  * - Automatic HTTP method selection based on data
  * - CSRF token management
  * - Backward compatibility with PbxDataTableIndex
- * 
- * @class PbxApiClient 
+ * - Global authorization error handling (401/403)
+ *
+ * @class PbxApiClient
  */
 class PbxApiClient {
+    /**
+     * Flag to prevent multiple redirects on auth errors
+     * @type {boolean}
+     * @static
+     */
+    static isRedirectingToLogin = false;
+
     /**
      * Create a new API client instance
      * @param {object} config - Configuration object
@@ -58,6 +66,31 @@ class PbxApiClient {
         for (const [methodName, methodPath] of Object.entries(this.customMethods)) {
             this.endpoints[methodName] = `${this.apiUrl}${methodPath}`;
         }
+    }
+
+    /**
+     * Handle authorization errors (401) by redirecting to login
+     * Note: 403 Forbidden is NOT handled here as it may indicate access denied to a specific resource,
+     * not session expiration. Session loss is indicated by 401 Unauthorized only.
+     * @param {number} status - HTTP status code
+     * @static
+     */
+    static handleAuthError(status) {
+        // Only handle 401 Unauthorized - this indicates session loss
+        // 403 Forbidden means access denied to a resource (user lacks permissions)
+        if (status === 401) {
+            // Prevent multiple redirects
+            if (!PbxApiClient.isRedirectingToLogin) {
+                PbxApiClient.isRedirectingToLogin = true;
+
+                // Redirect to login page after a short delay to allow any pending operations to complete
+                setTimeout(() => {
+                    window.location.href = '/admin/session/index';
+                }, 100);
+            }
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -127,13 +160,24 @@ class PbxApiClient {
             onSuccess(response) {
                 successCallback(response, true);
             },
-            onFailure(response) {
+            onFailure(response, xhr) {
+                // Check for authorization errors and redirect to login if needed
+                const status = xhr ? xhr.status : 0;
+                if (PbxApiClient.handleAuthError(status)) {
+                    return; // Don't call callback if redirecting
+                }
+
                 failureCallback(response, false);
             },
             onError(errorMessage, element, xhr) {
                 // Only handle real network errors (5xx, timeout, connection refused)
                 // For 4xx errors, Semantic UI already called onFailure, so skip
                 const status = xhr ? xhr.status : 0;
+
+                // Check for authorization errors and redirect to login if needed
+                if (PbxApiClient.handleAuthError(status)) {
+                    return; // Don't call callback if redirecting
+                }
 
                 // Skip if this is a business error (4xx) - already handled by onFailure
                 if (status >= 400 && status < 500) {
