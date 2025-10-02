@@ -35,6 +35,8 @@ const soundFilesTable = {
     initialize() {
         // Initialize tabs
         $('#sound-files-menu .item').tab({
+            history: true,
+            historyType: 'hash',
             onVisible: (tabPath) => {
                 soundFilesTable.activeCategory = tabPath;
                 soundFilesTable.loadSoundFiles(tabPath);
