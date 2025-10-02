@@ -169,8 +169,12 @@ JS;
      * Selects dropdown value with UI interaction (click-based)
      * Fallback method when JavaScript selection doesn't work
      *
+     * Supports two selection modes:
+     * 1. By data-value attribute (exact match)
+     * 2. By text content (substring match) if value not found by data-value
+     *
      * @param string $fieldName Field name
-     * @param string $value Value to select
+     * @param string $value Value to select (data-value or text substring)
      * @param bool $skipIfNotExist Skip if value doesn't exist
      * @return bool Success status
      */
@@ -217,21 +221,40 @@ JS;
                     // Wait for menu to stabilize after filtering
                     // The menu rebuilds on each keystroke, so we need to wait longer
                     usleep(800000); // 800ms wait for menu to rebuild
-
-                    // Wait until the specific item appears in the menu
-                    $itemSelector = ".menu.visible .item[data-value='{$value}']";
-                    self::$driver->wait(self::DROPDOWN_TIMEOUT)->until(
-                        WebDriverExpectedCondition::presenceOfElementLocated(
-                            WebDriverBy::cssSelector("#{$fieldName}-dropdown {$itemSelector}")
-                        )
-                    );
                 }
 
-                // IMPORTANT: Re-find dropdown and item to get fresh DOM references
+                // IMPORTANT: Re-find dropdown to get fresh DOM reference
                 // This prevents stale element reference errors
                 $dropdown = $this->findDropdown($fieldName);
-                $itemSelector = ".menu.visible .item[data-value='{$value}']";
-                $menuItem = $dropdown->findElement(WebDriverBy::cssSelector($itemSelector));
+
+                // Try to find item by data-value first
+                $menuItem = null;
+                try {
+                    $itemSelector = ".menu.visible .item[data-value='{$value}']";
+                    $menuItem = $dropdown->findElement(WebDriverBy::cssSelector($itemSelector));
+                    $this->annotate("Found dropdown item by data-value: {$value}", 'debug');
+                } catch (NoSuchElementException $e) {
+                    // If not found by data-value, try to find by text content
+                    $this->annotate("Item not found by data-value, searching by text: {$value}", 'debug');
+
+                    // Get all visible menu items
+                    $allItems = $dropdown->findElements(WebDriverBy::cssSelector('.menu.visible .item'));
+
+                    foreach ($allItems as $item) {
+                        $itemText = $item->getText();
+                        // Check if item text contains the search value (case-insensitive substring match)
+                        if (stripos($itemText, $value) !== false) {
+                            $menuItem = $item;
+                            $itemValue = $item->getAttribute('data-value');
+                            $this->annotate("Found dropdown item by text: '{$itemText}' (data-value: {$itemValue})", 'debug');
+                            break;
+                        }
+                    }
+
+                    if ($menuItem === null) {
+                        throw new NoSuchElementException("Item not found by data-value or text: {$value}");
+                    }
+                }
 
                 // Scroll into view and click immediately
                 $this->scrollIntoView($menuItem);
