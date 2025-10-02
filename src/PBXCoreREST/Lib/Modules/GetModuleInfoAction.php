@@ -66,31 +66,47 @@ class GetModuleInfoAction  extends Injectable
             $PBXVersion = (string)str_ireplace('-dev', '', $PBXVersion);
             $body = '';
             $client = new GuzzleHttp\Client();
-            try {
-                $request = $client->request(
-                    'POST',
-                    'https://releases.mikopbx.com/releases/v1/mikopbx/getModuleInfo',
-                    [
-                        'headers' => [
-                            'Content-Type' => 'application/json; charset=utf-8',
-                        ],
-                        'json' => [
-                            'PBXVER' => $PBXVersion,
-                            'LANGUAGE'=> $WebUiLanguage,
-                            'GUID'=> $moduleUniqueID,
-                        ],
-                        'timeout' => 5,
-                    ]
-                );
-                $code = $request->getStatusCode();
-                if ($code === Response::OK){
-                    $body = $request->getBody()->getContents();
-                    $managedCache->set($cacheKey, $body, 3600);
+
+            $maxAttempts = 3;
+            $attemptDelay = 2; // seconds
+            $code = Response::INTERNAL_SERVER_ERROR;
+
+            for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+                try {
+                    $request = $client->request(
+                        'POST',
+                        'https://releases.mikopbx.com/releases/v1/mikopbx/getModuleInfo',
+                        [
+                            'headers' => [
+                                'Content-Type' => 'application/json; charset=utf-8',
+                            ],
+                            'json' => [
+                                'PBXVER' => $PBXVersion,
+                                'LANGUAGE'=> $WebUiLanguage,
+                                'GUID'=> $moduleUniqueID,
+                            ],
+                            'timeout' => 15,
+                        ]
+                    );
+                    $code = $request->getStatusCode();
+                    if ($code === Response::OK){
+                        $body = $request->getBody()->getContents();
+                        $managedCache->set($cacheKey, $body, 3600);
+                        break; // Success - exit loop
+                    }
+                } catch (\Throwable $e) {
+                    $code = Response::INTERNAL_SERVER_ERROR;
+                    $errorMessage = "Attempt $attempt/$maxAttempts failed: " . $e->getMessage();
+                    SystemMessages::sysLogMsg(static::class, $errorMessage);
+
+                    if ($attempt < $maxAttempts) {
+                        // Wait before next attempt
+                        sleep($attemptDelay);
+                    } else {
+                        // Last attempt failed - add to response messages
+                        $res->messages[] = $e->getMessage();
+                    }
                 }
-            } catch (\Throwable $e) {
-                $code = Response::INTERNAL_SERVER_ERROR;
-                SystemMessages::sysLogMsg(static::class, $e->getMessage());
-                $res->messages[] = $e->getMessage();
             }
 
             if ($code !== Response::OK) {

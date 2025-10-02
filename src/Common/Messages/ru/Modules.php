@@ -98,4 +98,11 @@ return [
     'ext_ValidateCaptionEmpty' => 'Не заполнено название пункта меню',
     'ext_Version' => 'Версия',
     'ext_WrongGetModuleLink' => 'Ошибка получения файла модуля из репозитория',
+
+    // Module package validation errors
+    'ext_FileNotFound' => 'Файл модуля не найден: %filePath%',
+    'ext_CorruptedZipFile' => 'ZIP-файл модуля поврежден или имеет неверный формат: %filePath%. Код ошибки: %errorCode%',
+    'ext_ModuleJsonNotFound' => 'В архиве модуля %filePath% не найден файл module.json',
+    'ext_InvalidModuleJson' => 'Файл module.json в архиве %filePath% содержит невалидный JSON: %error%',
+    'ext_MissingModuleUniqueID' => 'В файле module.json архива %filePath% отсутствует обязательное поле moduleUniqueID',
 ];

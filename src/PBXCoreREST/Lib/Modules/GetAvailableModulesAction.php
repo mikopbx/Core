@@ -82,39 +82,55 @@ class GetAvailableModulesAction  extends Injectable
         $res->processor = __METHOD__;
         $PBXVersion = PbxSettings::getValueByKey(PbxSettings::PBX_VERSION);
         $PBXVersion = (string)str_ireplace('-dev', '', $PBXVersion);
-        
+
         $body = '';
         $client = new GuzzleHttp\Client();
-        try {
-            $request = $client->request(
-                'POST',
-                'https://releases.mikopbx.com/releases/v1/mikopbx/getAvailableModules',
-                [
-                    'headers' => [
-                        'Content-Type' => 'application/json; charset=utf-8',
-                    ],
-                    'json' => [
-                        'PBXVER' => $PBXVersion,
-                        'LANGUAGE' => $WebUiLanguage,
-                    ],
-                    'timeout' => 15,
-                ]
-            );
-            $code = $request->getStatusCode();
-            if ($code === Response::OK) {
-                $body = $request->getBody()->getContents();
-                $res->data = json_decode($body ?? '', true) ?? [];
-                
-                if (is_array($res->data)) {
-                    $managedCache->set($cacheKey, $res->data, 3600);
+
+        $maxAttempts = 3;
+        $attemptDelay = 2; // seconds
+        $code = Response::INTERNAL_SERVER_ERROR;
+
+        for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+            try {
+                $request = $client->request(
+                    'POST',
+                    'https://releases.mikopbx.com/releases/v1/mikopbx/getAvailableModules',
+                    [
+                        'headers' => [
+                            'Content-Type' => 'application/json; charset=utf-8',
+                        ],
+                        'json' => [
+                            'PBXVER' => $PBXVersion,
+                            'LANGUAGE' => $WebUiLanguage,
+                        ],
+                        'timeout' => 15,
+                    ]
+                );
+                $code = $request->getStatusCode();
+                if ($code === Response::OK) {
+                    $body = $request->getBody()->getContents();
+                    $res->data = json_decode($body ?? '', true) ?? [];
+
+                    if (is_array($res->data)) {
+                        $managedCache->set($cacheKey, $res->data, 3600);
+                    }
+                    break; // Success - exit loop
+                } else {
+                    SystemMessages::sysLogMsg(static::class, "API request failed with code: $code");
                 }
-            } else {
-                SystemMessages::sysLogMsg(static::class, "API request failed with code: $code");
+            } catch (\Throwable $e) {
+                $code = Response::INTERNAL_SERVER_ERROR;
+                $errorMessage = "Attempt $attempt/$maxAttempts failed: " . $e->getMessage();
+                SystemMessages::sysLogMsg(static::class, $errorMessage);
+
+                if ($attempt < $maxAttempts) {
+                    // Wait before next attempt
+                    sleep($attemptDelay);
+                } else {
+                    // Last attempt failed - add to response messages
+                    $res->messages[] = $e->getMessage();
+                }
             }
-        } catch (\Throwable $e) {
-            $code = Response::INTERNAL_SERVER_ERROR;
-            SystemMessages::sysLogMsg(static::class, $e->getMessage());
-            $res->messages[] = $e->getMessage();
         }
 
         if ($code !== Response::OK) {
