@@ -297,14 +297,14 @@ trait NavigationTrait
                 
                 // Wait for AJAX to start (jQuery.active > 0) with short timeout
                 try {
-                    // self::$driver->wait(2, 100)->until(
-                    //     function () {
-                    //         $ajaxActive = self::$driver->executeScript(
-                    //             'return (typeof jQuery != "undefined") ? jQuery.active > 0 : false'
-                    //         );
-                    //         return $ajaxActive;
-                    //     }
-                    // );
+                    self::$driver->wait(2, 100)->until(
+                        function () {
+                            $ajaxActive = self::$driver->executeScript(
+                                'return (typeof jQuery != "undefined") ? jQuery.active > 0 : false'
+                            );
+                            return $ajaxActive;
+                        }
+                    );
                 } catch (TimeoutException $e) {
                     // No AJAX started, continue anyway
                 }
