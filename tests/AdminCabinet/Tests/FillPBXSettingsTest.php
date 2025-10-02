@@ -216,6 +216,7 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
 
     /**
      * Fill SSH keys using the table interface
+     * Handles multiple SSH keys separated by newlines
      */
     protected function fillSSHKeysTable(string $keysValue): void
     {
@@ -237,22 +238,21 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
                 )
             );
 
-            // Enter the SSH keys
-            $textarea = self::$driver->findElement(WebDriverBy::xpath($textareaXpath));
-            $textarea->clear();
-            $textarea->sendKeys($keysValue);
+            // Set the textarea value using JavaScript to avoid triggering keydown events
+            // that would prematurely save after each newline character.
+            // The JS code splits keys by '\n' (line 294 in ssh-keys-table.js),
+            // so we need the keys separated by newlines in the textarea.
+            $escapedKeysValue = json_encode($keysValue);
+            $script = "document.getElementById('new-ssh-key').value = {$escapedKeysValue};";
+            self::$driver->executeScript($script);
 
-            // Try to click the save button (might be hidden if Enter was pressed during input)
+            self::annotate("Entered " . (substr_count($keysValue, "\n") + 1) . " SSH key(s)", 'info');
+
+            // Click the save button
             $saveButtonXpath = "//button[@id='save-key-btn']";
-            $saveButtons = self::$driver->findElements(WebDriverBy::xpath($saveButtonXpath));
-            
-            if (!empty($saveButtons) && $saveButtons[0]->isDisplayed()) {
-                // Save button is visible, click it
-                $saveButtons[0]->click();
-            } else {
-                // Save button is hidden (likely because Enter was pressed), this is normal behavior
-                self::annotate("Save button is hidden - key was likely saved automatically via Enter", 'info');
-            }
+            $saveButton = self::$driver->findElement(WebDriverBy::xpath($saveButtonXpath));
+            $this->scrollIntoView($saveButton);
+            $saveButton->click();
 
             // Wait for the key to be added (add button row should be visible again)
             self::$driver->wait(10, 500)->until(
@@ -260,6 +260,11 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
                     WebDriverBy::xpath($addButtonXpath)
                 )
             );
+
+            // Give a moment for the keys to be processed and rendered
+            usleep(500000); // 0.5 seconds
+
+            self::annotate("Successfully added SSH key(s)", 'success');
         } catch (\Exception $e) {
             self::annotate("Failed to add SSH keys via table interface: " . $e->getMessage(), 'error');
             throw new \RuntimeException("Failed to add SSH keys: " . $e->getMessage());
@@ -358,6 +363,7 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
 
     /**
      * Verify SSH keys in the table
+     * Validates both the count and content of SSH keys
      */
     protected function verifySSHKeysTable(string $expectedKeys): void
     {
@@ -372,40 +378,74 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
                 )
             );
 
-            // Get all key cells
+            // Count the expected keys (filter out empty lines and comments)
+            $expectedKeyLines = array_filter(
+                array_map('trim', explode("\n", trim($expectedKeys))),
+                function($line) {
+                    return !empty($line) && !str_starts_with($line, '#');
+                }
+            );
+            $expectedCount = count($expectedKeyLines);
+
+            // Get all key cells from the visible table
             $keyCellsXpath = $tableXpath . "//td[@class='ssh-key-cell']/code";
             $keyCells = self::$driver->findElements(WebDriverBy::xpath($keyCellsXpath));
-
-            if (empty($keyCells)) {
-                throw new \RuntimeException("No SSH keys found in the table");
-            }
-
-            // Count the expected keys
-            $expectedKeyLines = array_filter(explode("\n", trim($expectedKeys)));
-            $expectedCount = count($expectedKeyLines);
             $actualCount = count($keyCells);
 
-            if ($actualCount !== $expectedCount) {
-                self::annotate("SSH key count mismatch - Expected: $expectedCount, Actual: $actualCount", 'warning');
+            if (empty($keyCells)) {
+                throw new \RuntimeException("No SSH keys found in the table (expected {$expectedCount} key(s))");
             }
 
-            // For verification, we'll check that at least one key row exists
-            // The actual key value is truncated in the display, so we can't compare directly
-            // Instead, we verify that the hidden field contains the expected value
+            // Verify count matches
+            if ($actualCount !== $expectedCount) {
+                $errorMsg = sprintf(
+                    "SSH key count mismatch - Expected: %d, Actual: %d",
+                    $expectedCount,
+                    $actualCount
+                );
+                self::annotate($errorMsg, 'error');
+
+                // For debugging, show the first few characters of expected vs actual
+                $hiddenFieldXpath = "//textarea[@id='SSHAuthorizedKeys']";
+                $hiddenField = self::$driver->findElement(WebDriverBy::xpath($hiddenFieldXpath));
+                $actualValue = $hiddenField->getAttribute('value');
+
+                self::annotate("Expected keys:\n" . $expectedKeys, 'info');
+                self::annotate("Actual keys:\n" . $actualValue, 'info');
+
+                throw new \RuntimeException($errorMsg);
+            }
+
+            // Verify the hidden field contains the expected value
+            // This is the authoritative source as it's what gets saved
             $hiddenFieldXpath = "//textarea[@id='SSHAuthorizedKeys']";
             $hiddenField = self::$driver->findElement(WebDriverBy::xpath($hiddenFieldXpath));
             $actualValue = $hiddenField->getAttribute('value');
 
-            // Normalize the values for comparison
+            // Normalize the values for comparison (trim whitespace)
             $expectedNormalized = trim($expectedKeys);
             $actualNormalized = trim($actualValue);
 
             if ($actualNormalized !== $expectedNormalized) {
-                self::annotate("SSH keys mismatch - Expected: $expectedNormalized, Actual: $actualNormalized", 'error');
+                self::annotate("SSH keys content mismatch", 'error');
+                self::annotate("Expected:\n" . $expectedNormalized, 'info');
+                self::annotate("Actual:\n" . $actualNormalized, 'info');
+
+                // Show where the difference starts
+                $minLength = min(strlen($expectedNormalized), strlen($actualNormalized));
+                for ($i = 0; $i < $minLength; $i++) {
+                    if ($expectedNormalized[$i] !== $actualNormalized[$i]) {
+                        self::annotate("First difference at position {$i}", 'info');
+                        self::annotate("Expected char: " . ord($expectedNormalized[$i]) . " ('{$expectedNormalized[$i]}')", 'info');
+                        self::annotate("Actual char: " . ord($actualNormalized[$i]) . " ('{$actualNormalized[$i]}')", 'info');
+                        break;
+                    }
+                }
+
                 throw new \RuntimeException("SSH keys do not match expected value");
             }
 
-            self::annotate("SSH keys verified successfully (" . $actualCount . " key(s) present)", 'success');
+            self::annotate("SSH keys verified successfully ({$actualCount} key(s) present)", 'success');
         } catch (\Exception $e) {
             self::annotate("Failed to verify SSH keys: " . $e->getMessage(), 'error');
             throw new \RuntimeException("Failed to verify SSH keys: " . $e->getMessage());
