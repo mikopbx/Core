@@ -27,23 +27,16 @@ class NetworkController extends BaseController
 {
     /**
      * Lan cards settings form
-     * All data is loaded via JavaScript from REST API
+     * All structure and data are generated dynamically via JavaScript from REST API
      */
     public function modifyAction(): void
     {
-        // Create empty model for form structure only
-        $emptyModel = new LanInterfaces();
+        // Empty form - all structure will be generated dynamically in JavaScript
+        $form = new NetworkEditForm();
 
-        // Create form structure without any data
-        $form = new NetworkEditForm($emptyModel, ['eths' => []]);
-
-        // Pass empty structure to view
-        // All actual data will be loaded via REST API
         $this->view->setVars(
             [
                 'form' => $form,
-                'eths' => [],
-                'deletableEths' => [],
                 'submitMode' => null,
             ]
         );

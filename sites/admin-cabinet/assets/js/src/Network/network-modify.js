@@ -115,13 +115,7 @@ const networks = {
         });
         networks.$dropDowns.dropdown();
 
-        // Handles the change event of the 'dhcp-checkbox'.
-        $('.dhcp-checkbox')
-            .checkbox({
-                onChange() {
-                    networks.toggleDisabledFieldClass();
-                },
-            });
+        // DHCP checkbox handlers will be bound after tabs are created dynamically
 
         networks.$getMyIpButton.on('click', (e) => {
             e.preventDefault();
@@ -129,39 +123,7 @@ const networks = {
             SysinfoAPI.getExternalIpInfo(networks.cbAfterGetExternalIp);
         });
 
-        // Delete additional network interface using REST API
-        $('.delete-interface').on('click', function(e) {
-            e.preventDefault();
-            const $button = $(this);
-            const interfaceId = $button.attr('data-value');
-
-            $button.addClass('loading disabled');
-
-            NetworkAPI.deleteRecord(interfaceId, (response) => {
-                $button.removeClass('loading disabled');
-
-                if (response.result) {
-                    window.location.reload();
-                } else {
-                    UserMessage.showMultiString(response.messages);
-                }
-            });
-        });
-
-        // Clear additional network settings
-        $('.delete-interface-0').on('click', () => {
-            const initialValues = {
-                interface_0: '',
-                name_0: '',
-                dhcp_0: 'on',
-                ipaddr_0: '',
-                subnet_0: '0',
-            };
-            networks.$formObj.form('set values', initialValues);
-            $('#interface_0').dropdown('restore defaults');
-            $('#dhcp-0-checkbox').checkbox('check');
-            $('#eth-interfaces-menu .item').tab('change tab', $('#eth-interfaces-menu a.item').first().attr('data-tab'));
-        });
+        // Delete button handler will be bound after tabs are created dynamically
         networks.$ipaddressInput.inputmask({alias: 'ip', 'placeholder': '_'});
 
         networks.initializeForm();
@@ -478,7 +440,6 @@ const networks = {
 
                 // Initialize UI after loading data
                 networks.toggleDisabledFieldClass();
-                $('#eth-interfaces-menu .item').tab();
 
                 // Hide form elements connected with non docker installations
                 if (response.data.isDocker) {
@@ -493,65 +454,68 @@ const networks = {
     },
 
     /**
-     * Populate form with configuration data
+     * Create interface tabs and forms dynamically from REST API data
      */
-    populateForm(data) {
-        console.log('populateForm called with data:', data);
-        // Set interfaces data
-        if (data.interfaces) {
-            data.interfaces.forEach(iface => {
-                const id = iface.id;
-                Object.keys(iface).forEach(key => {
-                    if (key !== 'id') {
-                        const fieldName = `${key}_${id}`;
-                        if (networks.$formObj.find(`[name="${fieldName}"]`).length > 0) {
-                            networks.$formObj.form('set value', fieldName, iface[key]);
-                        }
-                    }
-                });
+    createInterfaceTabs(data) {
+        const $menu = $('#eth-interfaces-menu');
+        const $content = $('#eth-interfaces-content');
 
-                // Set checkbox states (boolean values from API)
-                if (iface.dhcp) {
-                    $(`#dhcp-${id}-checkbox`).checkbox('check');
-                } else {
-                    $(`#dhcp-${id}-checkbox`).checkbox('uncheck');
-                }
-            });
-        }
+        // Clear existing content
+        $menu.empty();
+        $content.empty();
 
-        // Set template for new interface
-        if (data.template) {
-            Object.keys(data.template).forEach(key => {
-                if (key !== 'id') {
-                    const fieldName = `${key}_0`;
-                    if (networks.$formObj.find(`[name="${fieldName}"]`).length > 0) {
-                        networks.$formObj.form('set value', fieldName, data.template[key]);
-                    }
-                }
-            });
-        }
-
-        // Build internet interface dropdown dynamically
-        // Prepare options from interfaces
-        const internetInterfaceOptions = data.interfaces.map(iface => ({
-            value: iface.id.toString(),
-            text: iface.name || `${iface.interface}${iface.vlanid !== '0' ? `.${iface.vlanid}` : ''}`,
-            name: iface.name || `${iface.interface}${iface.vlanid !== '0' ? `.${iface.vlanid}` : ''}`
-        }));
-
-        // Build dropdown with DynamicDropdownBuilder
-        const formData = {
-            internet_interface: data.internetInterfaceId?.toString() || ''
-        };
-
-        DynamicDropdownBuilder.buildDropdown('internet_interface', formData, {
-            staticOptions: internetInterfaceOptions,
-            placeholder: globalTranslate.nw_SelectInternetInterface
+        // Find interfaces that can be deleted (have multiple VLANs)
+        const deletableInterfaces = [];
+        const interfaceCount = {};
+        data.interfaces.forEach(iface => {
+            interfaceCount[iface.interface] = (interfaceCount[iface.interface] || 0) + 1;
+        });
+        Object.keys(interfaceCount).forEach(ifaceName => {
+            if (interfaceCount[ifaceName] > 1) {
+                deletableInterfaces.push(ifaceName);
+            }
         });
 
-        // Build interface selector for new VLAN only if the field exists
-        if ($('#interface_0').length > 0) {
-            // Get unique physical interfaces (without VLANs)
+        // Create tabs for existing interfaces
+        data.interfaces.forEach((iface, index) => {
+            const tabId = iface.id;
+            const tabLabel = `${iface.name || iface.interface} (${iface.interface}${iface.vlanid !== '0' && iface.vlanid !== 0 ? `.${iface.vlanid}` : ''})`;
+            const isActive = index === 0;
+
+            // Create tab menu item
+            $menu.append(`
+                <a class="item ${isActive ? 'active' : ''}" data-tab="${tabId}">
+                    ${tabLabel}
+                </a>
+            `);
+
+            // Create tab content
+            const canDelete = deletableInterfaces.includes(iface.interface);
+            const deleteButton = canDelete ? `
+                <a class="ui icon left labeled button delete-interface" data-value="${tabId}">
+                    <i class="icon trash"></i>${globalTranslate.nw_DeleteCurrentInterface}
+                </a>
+            ` : '';
+
+            $content.append(networks.createInterfaceForm(iface, isActive, deleteButton));
+        });
+
+        // Create template tab for new VLAN
+        if (data.template) {
+            const template = data.template;
+            template.id = 0;
+
+            // Add "+" tab menu item
+            $menu.append(`
+                <a class="item" data-tab="0">
+                    <i class="icon plus"></i>
+                </a>
+            `);
+
+            // Create template form with interface selector
+            $content.append(networks.createTemplateForm(template, data.interfaces));
+
+            // Build interface selector dropdown for template
             const physicalInterfaces = {};
             data.interfaces.forEach(iface => {
                 if (!physicalInterfaces[iface.interface]) {
@@ -571,6 +535,231 @@ const networks = {
                 allowEmpty: true
             });
         }
+
+        // Initialize tabs
+        $('#eth-interfaces-menu .item').tab();
+        $('#eth-interfaces-menu .item').first().trigger('click');
+
+        // Initialize subnet dropdowns
+        $('select[name^="subnet_"]').dropdown();
+
+        // Re-bind delete button handlers
+        $('.delete-interface').off('click').on('click', function(e) {
+            e.preventDefault();
+            const $button = $(this);
+            const interfaceId = $button.attr('data-value');
+
+            $button.addClass('loading disabled');
+
+            NetworkAPI.deleteRecord(interfaceId, (response) => {
+                $button.removeClass('loading disabled');
+
+                if (response.result) {
+                    window.location.reload();
+                } else {
+                    UserMessage.showMultiString(response.messages);
+                }
+            });
+        });
+
+        // Re-bind DHCP checkbox handlers
+        $('.dhcp-checkbox').checkbox({
+            onChange() {
+                networks.toggleDisabledFieldClass();
+            },
+        });
+
+        // Re-bind IP address input masks
+        $('.ipaddress').inputmask({alias: 'ip', 'placeholder': '_'});
+    },
+
+    /**
+     * Create form for existing interface
+     */
+    createInterfaceForm(iface, isActive, deleteButton) {
+        const id = iface.id;
+
+        return `
+            <div class="ui bottom attached tab segment ${isActive ? 'active' : ''}" data-tab="${id}">
+                <input type="hidden" name="interface_${id}" value="${iface.interface}" />
+
+                <div class="field">
+                    <label>${globalTranslate.nw_InterfaceName}</label>
+                    <div class="field max-width-400">
+                        <input type="text" name="name_${id}" value="${iface.name || ''}" />
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="ui segment">
+                        <div class="ui toggle checkbox dhcp-checkbox" id="dhcp-${id}-checkbox">
+                            <input type="checkbox" name="dhcp_${id}" ${iface.dhcp ? 'checked' : ''} />
+                            <label>${globalTranslate.nw_UseDHCP}</label>
+                        </div>
+                    </div>
+                </div>
+
+                <input type="hidden" name="notdhcp_${id}" id="not-dhcp-${id}"/>
+
+                <div class="fields" id="ip-address-group-${id}">
+                    <div class="field">
+                        <label>${globalTranslate.nw_IPAddress}</label>
+                        <div class="field max-width-400">
+                            <input type="text" class="ipaddress" name="ipaddr_${id}" value="${iface.ipaddr || ''}" />
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>${globalTranslate.nw_NetworkMask}</label>
+                        <div class="field max-width-400">
+                            <select name="subnet_${id}" class="ui search selection dropdown" id="subnet-${id}">
+                                ${networks.getSubnetOptions(iface.subnet || '24')}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>${globalTranslate.nw_VlanID}</label>
+                    <div class="field max-width-100">
+                        <input type="number" name="vlanid_${id}" value="${iface.vlanid || '0'}" />
+                    </div>
+                </div>
+
+                ${deleteButton}
+            </div>
+        `;
+    },
+
+    /**
+     * Create form for new VLAN template
+     */
+    createTemplateForm(template, interfaces) {
+        const id = 0;
+
+        return `
+            <div class="ui bottom attached tab segment" data-tab="${id}">
+                <div class="field">
+                    <label>${globalTranslate.nw_SelectInterface}</label>
+                    <div class="field max-width-400">
+                        <input type="hidden" name="interface_${id}" id="interface_${id}" />
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>${globalTranslate.nw_InterfaceName}</label>
+                    <div class="field max-width-400">
+                        <input type="text" name="name_${id}" id="name_${id}" value="" />
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="ui segment">
+                        <div class="ui toggle checkbox dhcp-checkbox" id="dhcp-${id}-checkbox">
+                            <input type="checkbox" name="dhcp_${id}" checked />
+                            <label>${globalTranslate.nw_UseDHCP}</label>
+                        </div>
+                    </div>
+                </div>
+
+                <input type="hidden" name="notdhcp_${id}" id="not-dhcp-${id}"/>
+
+                <div class="fields" id="ip-address-group-${id}">
+                    <div class="field">
+                        <label>${globalTranslate.nw_IPAddress}</label>
+                        <div class="field max-width-400">
+                            <input type="text" class="ipaddress" name="ipaddr_${id}" value="" />
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label>${globalTranslate.nw_NetworkMask}</label>
+                        <div class="field max-width-400">
+                            <select name="subnet_${id}" class="ui search selection dropdown" id="subnet-${id}">
+                                ${networks.getSubnetOptions('0')}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>${globalTranslate.nw_VlanID}</label>
+                    <div class="field max-width-100">
+                        <input type="number" name="vlanid_${id}" value="4095" />
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+
+    /**
+     * Get subnet mask options HTML
+     */
+    getSubnetOptions(selectedValue) {
+        // Network masks from Cidr::getNetMasks() (krsort SORT_NUMERIC)
+        const masks = [
+            {value: '32', text: '32 - 255.255.255.255'},
+            {value: '31', text: '31 - 255.255.255.254'},
+            {value: '30', text: '30 - 255.255.255.252'},
+            {value: '29', text: '29 - 255.255.255.248'},
+            {value: '28', text: '28 - 255.255.255.240'},
+            {value: '27', text: '27 - 255.255.255.224'},
+            {value: '26', text: '26 - 255.255.255.192'},
+            {value: '25', text: '25 - 255.255.255.128'},
+            {value: '24', text: '24 - 255.255.255.0'},
+            {value: '23', text: '23 - 255.255.255.254'},
+            {value: '22', text: '22 - 255.255.252.0'},
+            {value: '21', text: '21 - 255.255.248.0'},
+            {value: '20', text: '20 - 255.255.240.0'},
+            {value: '19', text: '19 - 255.255.224.0'},
+            {value: '18', text: '18 - 255.255.192.0'},
+            {value: '17', text: '17 - 255.255.128.0'},
+            {value: '16', text: '16 - 255.255.0.0'},
+            {value: '15', text: '15 - 255.254.0.0'},
+            {value: '14', text: '14 - 255.252.0.0'},
+            {value: '13', text: '13 - 255.248.0.0'},
+            {value: '12', text: '12 - 255.240.0.0'},
+            {value: '11', text: '11 - 255.224.0.0'},
+            {value: '10', text: '10 - 255.192.0.0'},
+            {value: '9', text: '9 - 255.128.0.0'},
+            {value: '8', text: '8 - 255.0.0.0'},
+            {value: '7', text: '7 - 254.0.0.0'},
+            {value: '6', text: '6 - 252.0.0.0'},
+            {value: '5', text: '5 - 248.0.0.0'},
+            {value: '4', text: '4 - 240.0.0.0'},
+            {value: '3', text: '3 - 224.0.0.0'},
+            {value: '2', text: '2 - 192.0.0.0'},
+            {value: '1', text: '1 - 128.0.0.0'},
+            {value: '0', text: '0 - 0.0.0.0'},
+        ];
+
+        return masks.map(mask =>
+            `<option value="${mask.value}" ${mask.value === selectedValue ? 'selected' : ''}>${mask.text}</option>`
+        ).join('');
+    },
+
+    /**
+     * Populate form with configuration data
+     */
+    populateForm(data) {
+        console.log('populateForm called with data:', data);
+
+        // Create interface tabs and forms dynamically
+        networks.createInterfaceTabs(data);
+
+        // Build internet interface dropdown dynamically
+        const internetInterfaceOptions = data.interfaces.map(iface => ({
+            value: iface.id.toString(),
+            text: iface.name || `${iface.interface}${iface.vlanid !== '0' ? `.${iface.vlanid}` : ''}`,
+            name: iface.name || `${iface.interface}${iface.vlanid !== '0' ? `.${iface.vlanid}` : ''}`
+        }));
+
+        const formData = {
+            internet_interface: data.internetInterfaceId?.toString() || ''
+        };
+
+        DynamicDropdownBuilder.buildDropdown('internet_interface', formData, {
+            staticOptions: internetInterfaceOptions,
+            placeholder: globalTranslate.nw_SelectInternetInterface
+        });
 
         // Set NAT settings
         if (data.nat) {

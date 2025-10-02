@@ -71,33 +71,7 @@ class NetworkEditForm extends BaseForm
         // Internet interface selector - DynamicDropdownBuilder will build the dropdown
         $this->add(new Hidden('internet_interface'));
 
-        // Template for new interface - DynamicDropdownBuilder will build the dropdown
-        $this->add(new Hidden('interface_0'));
-
-        // Create minimal structure for interfaces if provided
-        // This is only for form field structure, actual data loads via REST API
-        if (!empty($options['eths'])) {
-            foreach ($options['eths'] as $eth) {
-                $this->add(new Hidden('interface_' . $eth->id));
-                $this->add(new Text('name_' . $eth->id));
-                $this->addCheckBox('dhcp_' . $eth->id, false);
-                $this->add(new Text('ipaddr_' . $eth->id, ['class' => 'ipaddress']));
-
-                // Subnet dropdown - V5.0 pattern with SemanticUIDropdown
-                $arrMasks = Cidr::getNetMasks();
-                $this->addSemanticUIDropdown(
-                    'subnet_' . $eth->id,
-                    $arrMasks,
-                    $eth->subnet ?? '24',  // Default subnet mask
-                    [
-                        'clearable' => false,
-                        'forceSelection' => true,
-                        'class' => 'ui search selection dropdown'
-                    ]
-                );
-
-                $this->add(new Numeric('vlanid_' . $eth->id));
-            }
-        }
+        // All interface tabs and form fields will be created dynamically in JavaScript
+        // based on data from REST API
     }
 }
