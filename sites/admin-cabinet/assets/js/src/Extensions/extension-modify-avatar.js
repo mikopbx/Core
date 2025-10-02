@@ -75,7 +75,7 @@ const avatar = {
                     extension.$sip_secret.trigger('change');
                 };
             }
-        });
+        },'file-select');
     },
 
     // Resize and crop the image
