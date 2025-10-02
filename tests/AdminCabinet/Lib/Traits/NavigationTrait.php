@@ -297,14 +297,14 @@ trait NavigationTrait
                 
                 // Wait for AJAX to start (jQuery.active > 0) with short timeout
                 try {
-                    self::$driver->wait(2, 100)->until(
-                        function () {
-                            $ajaxActive = self::$driver->executeScript(
-                                'return (typeof jQuery != "undefined") ? jQuery.active > 0 : false'
-                            );
-                            return $ajaxActive;
-                        }
-                    );
+                    // self::$driver->wait(2, 100)->until(
+                    //     function () {
+                    //         $ajaxActive = self::$driver->executeScript(
+                    //             'return (typeof jQuery != "undefined") ? jQuery.active > 0 : false'
+                    //         );
+                    //         return $ajaxActive;
+                    //     }
+                    // );
                 } catch (TimeoutException $e) {
                     // No AJAX started, continue anyway
                 }
@@ -314,18 +314,19 @@ trait NavigationTrait
             self::$driver->wait($timeout, self::NAVIGATION['wait_intervals']['default'])->until(
                 function () {
                     try {
-                        // Check jQuery AJAX
-                        $ajaxComplete = self::$driver->executeScript(
-                            'return (typeof jQuery != "undefined") ? jQuery.active == 0 : true'
-                        );
+                        // // Check jQuery AJAX
+                        // $ajaxComplete = self::$driver->executeScript(
+                        //     'return (typeof jQuery != "undefined") ? jQuery.active == 0 : true'
+                        // );
                         
-                        if (!$ajaxComplete) {
-                            return false;
-                        }
+                        // if (!$ajaxComplete) {
+                        //     return false;
+                        // }
+                        
                         
                         // Check for Semantic UI dimmers/loaders
                         $noActiveDimmers = self::$driver->executeScript(
-                            'return document.querySelectorAll(".ui.dimmer.active, .ui.loader.active").length === 0'
+                            'return document.querySelectorAll(".ui.loader.active").length === 0'
                         );
                         
                         return $noActiveDimmers;

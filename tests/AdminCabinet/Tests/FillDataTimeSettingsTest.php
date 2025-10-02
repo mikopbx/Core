@@ -68,12 +68,15 @@ class FillDataTimeSettingsTest extends MikoPBXTestsBase
         $this->submitForm('time-settings-form');
 
         // Wait for 15 seconds until Nginx is restarted
-        sleep(10);
+        sleep(15);
 
         // Wait for the system to be ready after services restart
         if (!$this->waitForSystemReady()) {
             self::annotate("Warning: System did not respond within expected timeframe", 'warning');
         }
+
+        // Re-login after time change (session is lost due to Redis TTL being affected by time change)
+        $this->reLoginAfterTimeChange();
 
         // Verify settings with retry mechanism
         $this->verifyTimeSettings($params);
@@ -146,9 +149,27 @@ class FillDataTimeSettingsTest extends MikoPBXTestsBase
     }
 
     /**
+     * Re-login after time change
+     * When system time changes, Redis session TTL becomes invalid and session is lost
+     * This method performs a fresh login to restore the session
+     */
+    protected function reLoginAfterTimeChange(): void
+    {
+        self::annotate("Re-logging in after time change");
+
+        // Get login credentials
+        $loginData = $this->loginDataProvider();
+
+        // Perform login (this will handle cookie restoration or fresh login)
+        $this->loginOnMikoPBX($loginData[0][0]);
+
+        self::annotate("Re-login successful", 'success');
+    }
+
+    /**
      * Waits for the system to be ready after restarting services
      * Uses a retry mechanism with exponential backoff
-     * 
+     *
      * @param int $maxAttempts Maximum number of attempts
      * @param int $initialDelay Initial delay in milliseconds
      * @return bool True if system is ready, false otherwise

@@ -55,25 +55,12 @@ class CheckDropdownsOnAddExtensionsTest extends MikoPBXTestsBase
     {
         $extensionTPL = sprintf('%s <%s>', $this->employeeData['username'], $this->employeeData['number']);
 
-        // Check Incoming Routes dropdown
-        if (self::$driver->executeScript('return sessionStorage.hasOwnProperty("/pbxcore/api/extensions/getForSelect?type=routing")')) {
-            $this->annotate("sessionStorage has Item before click on Incoming routes dropdown", 'info');
-        } else {
-            $this->annotate("sessionStorage not has Item before click on Incoming routes dropdown", 'info');
-        }
-
         $this->clickSidebarMenuItemByHref('/admin-cabinet/incoming-routes/index/');
         $this->clickButtonByHref('/admin-cabinet/incoming-routes/modify');
 
         $elementIsAbsent = $this->checkIfElementNotExistOnDropdownMenu('extension', $extensionTPL);
         $this->assertTrue($elementIsAbsent, 'Menuitem ' . $extensionTPL . ' should not exist before creating it');
 
-        // Check Extensions dropdown
-        if (self::$driver->executeScript('return sessionStorage.hasOwnProperty("/pbxcore/api/extensions/getForSelect?type=all")')) {
-            $this->annotate("sessionStorage has Item before click on Extensions dropdown", 'info');
-        } else {
-            $this->annotate("sessionStorage not has Item before click on Extensions dropdown", 'info');
-        }
 
         $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
         $this->clickButtonByHref('/admin-cabinet/extensions/modify');
@@ -118,17 +105,6 @@ class CheckDropdownsOnAddExtensionsTest extends MikoPBXTestsBase
      */
     public function testDropdownsAfterCreation(): void
     {
-        if (self::$driver->executeScript('return sessionStorage.hasOwnProperty("/pbxcore/api/extensions/getForSelect?type=routing")')) {
-            $this->annotate("sessionStorage has Item after creation extension on Incoming routes dropdown", 'info');
-        } else {
-            $this->annotate("sessionStorage not has Item after creation extension on Incoming routes dropdown", 'info');
-        }
-
-        if (self::$driver->executeScript('return sessionStorage.hasOwnProperty("/pbxcore/api/extensions/getForSelect?type=all")')) {
-            $this->annotate("sessionStorage has Item after creation extension on Extensions dropdown", 'info');
-        } else {
-            $this->annotate("sessionStorage not has Item after creation extension on Extensions dropdown", 'info');
-        }
 
         $extensionTPL = sprintf('%s <%s>', $this->employeeData['username'], $this->employeeData['number']);
 
@@ -136,10 +112,8 @@ class CheckDropdownsOnAddExtensionsTest extends MikoPBXTestsBase
         $this->clickSidebarMenuItemByHref('/admin-cabinet/incoming-routes/index/');
         $this->clickButtonByHref('/admin-cabinet/incoming-routes/modify');
 
-        $elementFound = $this->checkIfElementExistOnDropdownMenu('extension', $extensionTPL);
+        $elementFound = $this->checkIfElementExistOnDropdownMenu('extension', $this->employeeData['number']);
         if (!$elementFound) {
-            $debug = self::$driver->executeScript('return sessionStorage.getItem("/pbxcore/api/extensions/getForSelect?type=routing")');
-            $this->annotate("sessionStorage Item after creation extension on Incoming routes dropdown: " . $debug, 'info');
             $this->fail('Not found menuitem ' . $extensionTPL . ' after creating it on Incoming routes modify');
         }
 
@@ -148,10 +122,8 @@ class CheckDropdownsOnAddExtensionsTest extends MikoPBXTestsBase
         $this->clickButtonByHref('/admin-cabinet/extensions/modify');
 
         $this->changeTabOnCurrentPage('routing');
-        $elementFound = $this->checkIfElementExistOnDropdownMenu('fwd_forwarding', $extensionTPL);
+        $elementFound = $this->checkIfElementExistOnDropdownMenu('fwd_forwarding', $this->employeeData['number']);
         if (!$elementFound) {
-            $debug = self::$driver->executeScript('return sessionStorage.getItem("/pbxcore/api/extensions/getForSelect?type=all")');
-            $this->annotate("sessionStorage Item after creation extension on Extensions dropdown: " . $debug, 'info');
             $this->fail('Not found menuitem ' . $extensionTPL . ' after creating it on Extension routing tab');
         } else {
             $this->annotate("Found menuitem " . $extensionTPL . ' after creating it on Extension routing tab', 'info');

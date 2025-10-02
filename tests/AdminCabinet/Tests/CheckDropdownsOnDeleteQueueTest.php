@@ -93,8 +93,6 @@ class CheckDropdownsOnDeleteQueueTest extends MikoPBXTestsBase
 
         // Asserts
         if (!$elementFound) {
-            $debug = self::$driver->executeScript('return sessionStorage.getItem("/pbxcore/api/extensions/getForSelect?type=routing")');    
-            $this->annotate("sessionStorage Item after creation extension on Incoming routes dropdown: " . $debug, 'info');
             $this->fail('Not found menuitem ' . $this->queueData['extension'] . ' after creating it on Incoming routes modify ' . PHP_EOL);
         }
 
@@ -107,8 +105,6 @@ class CheckDropdownsOnDeleteQueueTest extends MikoPBXTestsBase
 
         // Asserts
         if (!$elementFound) {
-            $debug = self::$driver->executeScript('return sessionStorage.getItem("/pbxcore/api/extensions/getForSelect?type=all")');
-            $this->annotate("sessionStorage Item after creation extension on Extensions dropdown: " . $debug, 'info');
             $this->fail('Not found menuitem ' . $this->queueData['extension'] . ' after creating it on Extension routing tab ' . PHP_EOL);
         }
 
@@ -127,8 +123,6 @@ class CheckDropdownsOnDeleteQueueTest extends MikoPBXTestsBase
 
         // Asserts
         if ($elementFound) {
-            $debug = self::$driver->executeScript('return sessionStorage.getItem("/pbxcore/api/extensions/getForSelect?type=routing")');
-            $this->annotate("sessionStorage Item after deletion extension on Incoming routes dropdown: " . $debug, 'info');
             $this->fail('Found menuitem ' . $this->queueData['extension'] . ' before creating it on Incoming routes modify ' . PHP_EOL);
         }
 
@@ -141,8 +135,6 @@ class CheckDropdownsOnDeleteQueueTest extends MikoPBXTestsBase
 
         // Asserts
         if ($elementFound) {
-            $debug = self::$driver->executeScript('return sessionStorage.getItem("/pbxcore/api/extensions/getForSelect?type=all")');
-            $this->annotate("sessionStorage Item after deletion extension on Extensions dropdown: " . $debug, 'info');
             $this->fail('Found menuitem ' . $this->queueData['extension'] . ' before creating it on Extension routing tab ' . PHP_EOL);
         }
     }

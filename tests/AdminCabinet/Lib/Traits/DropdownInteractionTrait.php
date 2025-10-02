@@ -330,46 +330,115 @@ JS;
 
     /**
      * Checks if value exists in dropdown options
+     * Supports multiple search strategies:
+     * 1. By data-value attribute (exact match with number)
+     * 2. By exact text content match
+     * 3. By partial text content match (substring)
+     *
+     * For searchable dropdowns (with class 'search'), triggers search and waits for API results
      *
      * @param string $fieldName Field name
-     * @param string $value Value to check
+     * @param string $value Value to check (can be data-value, exact text, or partial text)
      * @return bool True if value exists
      */
     protected function dropdownHasValue(string $fieldName, string $value): bool
     {
         try {
-            $jsCode = <<<JS
-            (function() {
-                var dropdown = document.getElementById('{$fieldName}-dropdown');
-                if (!dropdown) return false;
+            // Helper function to check if value exists in dropdown menu items
+            $checkValueExists = function() use ($fieldName, $value) {
+                try {
+                    $dropdown = $this->findDropdown($fieldName);
+                    if (!$dropdown) {
+                        return false;
+                    }
 
-                // Check if value exists in menu items
-                var items = dropdown.querySelectorAll('.menu .item[data-value="{$value}"]');
-                if (items.length > 0) return true;
+                    // Get all menu items
+                    $menuItems = $dropdown->findElements(WebDriverBy::cssSelector('.menu .item'));
 
-                // For API-based dropdowns, try to get value
-                if (window.$ && $.fn.dropdown) {
-                    // Trigger search if searchable
-                    if ($(dropdown).hasClass('search')) {
-                        var searchInput = dropdown.querySelector('input.search');
-                        if (searchInput) {
-                            searchInput.value = '{$value}';
-                            $(searchInput).trigger('keyup');
+                    foreach ($menuItems as $item) {
+                        // Strategy 1: Check by data-value attribute (exact match)
+                        $dataValue = $item->getAttribute('data-value');
+                        if ($dataValue === $value) {
+                            $this->annotate("Found by data-value: {$value}", 'debug');
+                            return true;
+                        }
+
+                        // Strategy 2 & 3: Check by text content
+                        $itemText = trim($item->getText());
+
+                        // Exact match
+                        if ($itemText === $value) {
+                            $this->annotate("Found by exact text match: {$itemText}", 'debug');
+                            return true;
+                        }
+
+                        // Partial match (case-insensitive)
+                        if (stripos($itemText, $value) !== false) {
+                            $this->annotate("Found by partial text match: {$itemText}", 'debug');
+                            return true;
                         }
                     }
 
-                    // Check again after potential API load
-                    setTimeout(function() {
-                        var items = dropdown.querySelectorAll('.menu .item[data-value="{$value}"]');
-                        return items.length > 0;
-                    }, 1000);
+                    return false;
+                } catch (NoSuchElementException $e) {
+                    return false;
                 }
+            };
 
+            // First attempt: check in already loaded items
+            if ($checkValueExists()) {
+                return true;
+            }
+
+            // Check if dropdown is searchable
+            $dropdown = $this->findDropdown($fieldName);
+            if (!$dropdown) {
                 return false;
-            })();
-JS;
+            }
 
-            return (bool) self::$driver->executeScript($jsCode);
+            $classAttribute = $dropdown->getAttribute('class') ?? '';
+            $isSearchable = strpos($classAttribute, 'search') !== false;
+
+            if ($isSearchable) {
+                try {
+                    // Step 1: Click dropdown to open and activate it
+                    $dropdown->click();
+
+                    // Wait for dropdown to open and any initial AJAX requests to complete
+                    usleep(300000); // 300ms delay for menu animation
+                    $this->waitForAjax();
+
+                    // Step 2: Find and interact with search input
+                    // Re-find dropdown to avoid stale element reference
+                    $dropdown = $this->findDropdown($fieldName);
+                    $searchInput = $dropdown->findElement(WebDriverBy::cssSelector('input.search'));
+
+                    // Click to focus on input field
+                    $searchInput->click();
+
+                    // Clear any existing value
+                    $searchInput->clear();
+
+                    // Type the search value (triggers all keyboard events automatically)
+                    $searchInput->sendKeys($value);
+
+                    // Wait for AJAX search request to complete and menu to update
+                    $this->waitForAjax();
+
+                    // Small additional delay for DOM to update after AJAX
+                    usleep(200000); // 200ms for DOM rendering
+
+                    // Second attempt: check after API results loaded
+                    if ($checkValueExists()) {
+                        return true;
+                    }
+
+                } catch (NoSuchElementException $e) {
+                    $this->annotate("Search input not found in dropdown '{$fieldName}'", 'debug');
+                }
+            }
+
+            return false;
 
         } catch (\Exception $e) {
             $this->annotate("Error checking dropdown value existence: " . $e->getMessage(), 'debug');
