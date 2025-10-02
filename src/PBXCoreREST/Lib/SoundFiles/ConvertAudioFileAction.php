@@ -182,14 +182,13 @@ class ConvertAudioFileAction extends Injectable
         $res->processor = __METHOD__;
         $res->success = true;
 
+        // Determine target directory based on category
         switch ($category) {
             case SoundFiles::CATEGORY_MOH:
-                $mohDir = Directories::getDir(Directories::AST_MOH_DIR);
-                $res->data['filename'] = "$mohDir/" . basename($uploadedFilename);
+                $targetDir = Directories::getDir(Directories::AST_MOH_DIR);
                 break;
             case SoundFiles::CATEGORY_CUSTOM:
-                $mediaDir = Directories::getDir(Directories::AST_CUSTOM_SOUND_DIR);
-                $res->data['filename'] = "$mediaDir/" . basename($uploadedFilename);
+                $targetDir = Directories::getDir(Directories::AST_CUSTOM_SOUND_DIR);
                 break;
             default:
                 $res->success = false;
@@ -197,8 +196,42 @@ class ConvertAudioFileAction extends Injectable
                 return $res;
         }
 
+        // Generate unique filename to prevent conflicts
+        $originalBasename = basename($uploadedFilename);
+        $pathInfo = pathinfo($originalBasename);
+        $filename = $pathInfo['filename'];
+        $extension = $pathInfo['extension'] ?? '';
+
+        // Build target path
+        $targetPath = "$targetDir/$originalBasename";
+
+        // If file already exists, make it unique by adding timestamp and counter
+        if (file_exists($targetPath)) {
+            $timestamp = date('Ymd_His');
+            $counter = 1;
+
+            do {
+                $uniqueFilename = "{$filename}_{$timestamp}_{$counter}";
+                if (!empty($extension)) {
+                    $uniqueFilename .= ".{$extension}";
+                }
+                $targetPath = "$targetDir/$uniqueFilename";
+                $counter++;
+            } while (file_exists($targetPath) && $counter < 100);
+
+            // Safety check - if we couldn't find a unique name after 100 tries
+            if ($counter >= 100) {
+                $res->success = false;
+                $res->messages['error'][] = "Could not generate unique filename after 100 attempts";
+                return $res;
+            }
+        }
+
+        $res->data['filename'] = $targetPath;
+
+        // Move file to target location
         $mv = Util::which('mv');
-        Processes::mwExec("$mv {$uploadedFilename} {$res->data['filename']}");
+        Processes::mwExec("$mv {$uploadedFilename} {$targetPath}");
 
         return $res;
     }

@@ -270,6 +270,14 @@ const soundFileModifyRest = {
                     sndPlayer.UpdateSource(audioUrl);
                 }
 
+                // Update back-to-list button URL with current category
+                if (formData.category) {
+                    const $backButton = $('#back-to-list-button');
+                    if ($backButton.length > 0) {
+                        $backButton.attr('href', `${globalRootUrl}sound-files/index#${formData.category}`);
+                    }
+                }
+
                 // Save initial values for dirrity checking
                 if (Form.enableDirrity) {
                     Form.saveInitialValues();

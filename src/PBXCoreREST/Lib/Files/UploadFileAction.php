@@ -126,8 +126,10 @@ class UploadFileAction extends Injectable
         }
 
         $fileName = (string)pathinfo($parameters['resumableFilename'], PATHINFO_FILENAME);
-        $fileName = preg_replace('/[\W]/', '', $fileName);
-        if (strlen($fileName) < 10) {
+        // Remove unsafe characters but keep hyphens and underscores
+        $fileName = preg_replace('/[^\w\-]/', '', $fileName);
+        // Add unique prefix only for very short filenames to avoid collisions
+        if (strlen($fileName) < 5) {
             $fileName = '' . md5(microtime()) . '-' . $fileName;
         }
         $extension = (string)pathinfo($parameters['resumableFilename'], PATHINFO_EXTENSION);
