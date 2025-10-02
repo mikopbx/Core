@@ -37,9 +37,9 @@ use MikoPBX\Core\System\Configs\PbxConf;
 use MikoPBX\Core\System\Configs\SyslogConf;
 use MikoPBX\Core\System\Upgrade\UpdateDatabase;
 use MikoPBX\Modules\PbxExtensionUtils;
-use MikoPBX\PBXCoreREST\Lib\System\ConvertAudioFileAction;
-use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
+use MikoPBX\PBXCoreREST\Lib\SoundFiles\ConvertAudioFileAction;
 
+use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Phalcon\Di\Injectable;
 use function MikoPBX\Common\Config\appPath;
 
@@ -81,7 +81,7 @@ class Storage extends Injectable
 
                 // Copy the sound file to the new path
                 if (copy($soundFile->path, $newPath)) {
-                    ConvertAudioFileAction::main($newPath);
+                    ConvertAudioFileAction::convertAudioFile($newPath);
 
                     // Update the sound file path and extension
                     $soundFile->path = Util::trimExtensionForFile($newPath) . ".mp3";
