@@ -63,8 +63,8 @@ class RestController extends BaseRestController
     protected function getAllowedCustomMethods(): array
     {
         return [
-            'GET' => ['getStatuses', 'getStatus', 'getHistory', 'getStats', 'getPeersStatuses', 'getRegistry', 'getSecret'],
-            'POST' => ['forceCheck']
+            'GET' => ['getStatuses', 'getStatus', 'getHistory', 'getStats', 'getPeersStatuses', 'getRegistry', 'getSecret', 'getAuthFailureStats'],
+            'POST' => ['forceCheck', 'processAuthFailures', 'clearAuthFailureStats']
         ];
     }
 
@@ -81,7 +81,9 @@ class RestController extends BaseRestController
             'getHistory',
             'getStats',
             'forceCheck',
-            'getSecret'
+            'getSecret',
+            'getAuthFailureStats',
+            'clearAuthFailureStats'
         ];
 
         return in_array($method, $resourceLevelMethods, true);

@@ -24,6 +24,9 @@ use MikoPBX\PBXCoreREST\Lib\Sip\GetPeersStatusesAction;
 use MikoPBX\PBXCoreREST\Lib\Sip\GetPeerStatusAction;
 use MikoPBX\PBXCoreREST\Lib\Sip\GetRegistryAction;
 use MikoPBX\PBXCoreREST\Lib\Sip\GetSipSecretAction;
+use MikoPBX\PBXCoreREST\Lib\Sip\ProcessAuthFailuresAction;
+use MikoPBX\PBXCoreREST\Lib\Sip\GetAuthFailureStatsAction;
+use MikoPBX\PBXCoreREST\Lib\Sip\ClearAuthFailureStatsAction;
 use MikoPBX\PBXCoreREST\Lib\Extensions\GetAllStatusesAction;
 use MikoPBX\PBXCoreREST\Lib\Extensions\GetHistoryAction;
 use MikoPBX\PBXCoreREST\Lib\Extensions\GetStatsAction;
@@ -136,6 +139,27 @@ class SIPStackProcessor extends Injectable
             case 'getStats':
                 if (!empty($data['extension'])) {
                     $res = GetStatsAction::main($data['extension'], $data);
+                } else {
+                    $res->messages['error'][] = 'Empty extension value in POST/GET data';
+                }
+                break;
+            case 'processAuthFailures':
+                $res = ProcessAuthFailuresAction::main($data);
+                break;
+            case 'getAuthFailureStats':
+                if (!empty($data['extension'])) {
+                    $res = GetAuthFailureStatsAction::main($data['extension']);
+                } elseif (!empty($data['id'])) {
+                    $res = GetAuthFailureStatsAction::main($data['id']);
+                } else {
+                    $res->messages['error'][] = 'Empty extension value in POST/GET data';
+                }
+                break;
+            case 'clearAuthFailureStats':
+                if (!empty($data['extension'])) {
+                    $res = ClearAuthFailureStatsAction::main($data['extension']);
+                } elseif (!empty($data['id'])) {
+                    $res = ClearAuthFailureStatsAction::main($data['id']);
                 } else {
                     $res->messages['error'][] = 'Empty extension value in POST/GET data';
                 }
