@@ -424,6 +424,26 @@ Sets minimum width for advice bell on main menu header
     min-width: 50px;
 }
 
+/**
+Prevent icon and text wrapping in advice popup
+ */
+#advice .item {
+    display: flex;
+    align-items: flex-start;
+    white-space: nowrap;
+}
+
+#advice .item i.icon {
+    flex-shrink: 0;
+    margin-right: 0.5em;
+    margin-top: 0.2em;
+}
+
+#advice .item .content {
+    flex: 1;
+    white-space: normal;
+}
+
 
 /**
 Sets padding to correct show slider labels inside segment block
