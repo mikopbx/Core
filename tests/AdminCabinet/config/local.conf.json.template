@@ -11,20 +11,18 @@
         "fixSessionCapabilities": true,
         "remoteFiles": true,
         "browserName": "Chrome",
-        "browserstack": {
-            "console": "verbose",
-            "local": false,
-            "networkLogs": true,
-            "debug": true,
-            "webdriver": {
+        "browserstack.webdriver": {
                     "timeout_options": {
                       "timeout": 15000,
                        "retry_attempts": 3
                     },
                     "keep_alive": true,
                     "start_process": false
-                  }
-        },
+                  },
+        "browserstack.debug": false,
+        "browserstack.local": false,
+        "browserstack.console": "verbose",
+        "browserstack.networkLogs": true,
         "browserstack.chrome": {
             "extends": "browserstack",
             "desiredCapabilities": {

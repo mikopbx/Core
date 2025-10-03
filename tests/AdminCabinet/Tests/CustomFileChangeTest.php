@@ -109,9 +109,21 @@ class CustomFileChangeTest extends MikoPBXTestsBase
         // Assert that the selected mode matches
         $this->assertMenuItemSelected('mode', $params['mode']);
 
-        // Find the hidden value and assert that it matches the file contents
-        $hiddenValue = self::$driver->findElement(WebDriverBy::xpath("//*[@id = 'content']"));
-        $this->assertEquals($params['fileContents'], $hiddenValue->getAttribute('value'));
+        // Wait for ACE editor to be initialized
+        self::$driver->wait(10, 500)->until(
+            function () {
+                return self::$driver->executeScript(
+                    'return typeof ace !== "undefined" && ace.edit("user-edit-config") !== null'
+                );
+            }
+        );
+
+        // Get content from ACE editor (the content is not synced to hidden field until form submission)
+        $aceValue = self::$driver->executeScript(
+            'return ace.edit("user-edit-config").getValue();'
+        );
+
+        $this->assertEquals($params['fileContents'], $aceValue);
     }
 
     /**

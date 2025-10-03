@@ -169,7 +169,8 @@ trait LoginTrait
             $xpath = '//form[@id="login-form"]//ancestor::div[@id="submitbutton"]';
             $submitButton = self::$driver->findElement(WebDriverBy::xpath($xpath));
             $submitButton->click();
-            $this->waitForAjax();
+            // Wait for AJAX login request to start and complete
+            $this->waitForAjax(10, true);
         } catch (\Exception $e) {
             throw new RuntimeException('Failed to submit login form: ' . $e->getMessage());
         }
@@ -209,7 +210,7 @@ trait LoginTrait
      * @param int $timeoutInSeconds Maximum time to wait for the menu to appear
      * @return bool True if login completed successfully, false otherwise
      */
-    private function isUserLoggedIn(int $timeoutInSeconds = 30): bool
+    protected function isUserLoggedIn(int $timeoutInSeconds = 30): bool
     {
         try {
             // Create a WebDriverWait instance with appropriate timeout and polling interval

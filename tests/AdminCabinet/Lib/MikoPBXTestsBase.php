@@ -12,6 +12,7 @@ use MikoPBX\Tests\AdminCabinet\Lib\Traits\NavigationTrait;
 use MikoPBX\Tests\AdminCabinet\Lib\Traits\DropdownInteractionTrait;
 use MikoPBX\Tests\AdminCabinet\Tests\Traits\LoginTrait;
 use MikoPBX\Tests\AdminCabinet\Lib\Traits\ScreenshotTrait;
+use MikoPBX\Tests\AdminCabinet\Lib\Traits\TableSearchTrait;
 use MikoPBX\Tests\AdminCabinet\Lib\Exceptions\TestException;
 use RuntimeException;
 
@@ -27,6 +28,7 @@ class MikoPBXTestsBase extends BrowserStackTest
     use LoginTrait;
     use ScreenshotTrait;
     use AssertionTrait;
+    use TableSearchTrait;
 
 
     /**

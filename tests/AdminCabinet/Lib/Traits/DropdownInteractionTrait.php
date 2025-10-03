@@ -385,30 +385,36 @@ JS;
                 }
             };
 
-            // First attempt: check in already loaded items
-            if ($checkValueExists()) {
-                return true;
-            }
-
-            // Check if dropdown is searchable
+            // Get dropdown element
             $dropdown = $this->findDropdown($fieldName);
             if (!$dropdown) {
                 return false;
             }
 
+            // Step 1: Always click dropdown to activate it and trigger AJAX data loading
+            try {
+                $dropdown->click();
+
+                // Wait for dropdown to open and any initial AJAX requests to complete
+                usleep(300000); // 300ms delay for menu animation
+                $this->waitForAjax();
+
+                // First check: see if value exists in loaded items
+                if ($checkValueExists()) {
+                    return true;
+                }
+
+            } catch (\Exception $e) {
+                $this->annotate("Error clicking dropdown '{$fieldName}': " . $e->getMessage(), 'debug');
+                return false;
+            }
+
+            // Step 2: If dropdown is searchable, try search functionality
             $classAttribute = $dropdown->getAttribute('class') ?? '';
             $isSearchable = strpos($classAttribute, 'search') !== false;
 
             if ($isSearchable) {
                 try {
-                    // Step 1: Click dropdown to open and activate it
-                    $dropdown->click();
-
-                    // Wait for dropdown to open and any initial AJAX requests to complete
-                    usleep(300000); // 300ms delay for menu animation
-                    $this->waitForAjax();
-
-                    // Step 2: Find and interact with search input
                     // Re-find dropdown to avoid stale element reference
                     $dropdown = $this->findDropdown($fieldName);
                     $searchInput = $dropdown->findElement(WebDriverBy::cssSelector('input.search'));
@@ -428,7 +434,7 @@ JS;
                     // Small additional delay for DOM to update after AJAX
                     usleep(200000); // 200ms for DOM rendering
 
-                    // Second attempt: check after API results loaded
+                    // Second check: after search results loaded
                     if ($checkValueExists()) {
                         return true;
                     }

@@ -24,7 +24,8 @@ trait NavigationTrait
             'click' => 5,
             'wait' => 30,
             'animation' => 1,
-            'ajax' => 30
+            'ajax' => 10,  // Reduced from 30s to 10s
+            'ajax_start' => 0.5  // Timeout for waiting AJAX to start
         ],
         'retries' => [
             'navigation' => 3,
@@ -36,7 +37,8 @@ trait NavigationTrait
         ],
         'wait_intervals' => [
             'default' => 500,
-            'animation' => 100
+            'animation' => 100,
+            'ajax' => 100  // Fast polling for AJAX completion
         ]
     ];
 
@@ -286,18 +288,28 @@ trait NavigationTrait
      * Wait for AJAX requests to complete
      *
      * @param int $timeout Timeout in seconds
-     * @param bool $waitForStart Wait for AJAX to start before checking completion
+     * @param bool $waitForStart Wait for AJAX to start before checking completion (use only when necessary)
      */
-    protected function waitForAjax(int $timeout = self::NAVIGATION['timeouts']['ajax'], bool $waitForStart = true): void
+    protected function waitForAjax(int $timeout = self::NAVIGATION['timeouts']['ajax'], bool $waitForStart = false): void
     {
         try {
-            // If waitForStart is true, first give time for AJAX to start
+            // EARLY EXIT: Quick check if page is already ready
+            $isReady = self::$driver->executeScript(
+                'return (typeof jQuery == "undefined" || jQuery.active == 0) &&
+                        document.querySelectorAll(".ui.loader.active").length === 0'
+            );
+
+            if ($isReady) {
+                return; // Page already ready, no need to wait
+            }
+
+            // If waitForStart is true, give time for AJAX to start
             if ($waitForStart) {
                 usleep(100000); // 100ms initial delay
-                
-                // Wait for AJAX to start (jQuery.active > 0) with short timeout
+
+                // Wait for AJAX to start (jQuery.active > 0) with reduced timeout
                 try {
-                    self::$driver->wait(2, 100)->until(
+                    self::$driver->wait(self::NAVIGATION['timeouts']['ajax_start'], 50)->until(
                         function () {
                             $ajaxActive = self::$driver->executeScript(
                                 'return (typeof jQuery != "undefined") ? jQuery.active > 0 : false'
@@ -306,38 +318,39 @@ trait NavigationTrait
                         }
                     );
                 } catch (TimeoutException $e) {
-                    // No AJAX started, continue anyway
+                    // No AJAX started within timeout, continue to completion check
                 }
             }
 
-            // Wait for all AJAX requests to complete
-            self::$driver->wait($timeout, self::NAVIGATION['wait_intervals']['default'])->until(
+            // Wait for all AJAX requests to complete with faster polling interval
+            self::$driver->wait($timeout, self::NAVIGATION['wait_intervals']['ajax'])->until(
                 function () {
                     try {
-                        // // Check jQuery AJAX
-                        // $ajaxComplete = self::$driver->executeScript(
-                        //     'return (typeof jQuery != "undefined") ? jQuery.active == 0 : true'
-                        // );
-                        
-                        // if (!$ajaxComplete) {
-                        //     return false;
-                        // }
-                        
-                        
+                        // Check jQuery AJAX
+                        $ajaxComplete = self::$driver->executeScript(
+                            'return (typeof jQuery != "undefined") ? jQuery.active == 0 : true'
+                        );
+
+                        if (!$ajaxComplete) {
+                            return false;
+                        }
+
                         // Check for Semantic UI dimmers/loaders
                         $noActiveDimmers = self::$driver->executeScript(
                             'return document.querySelectorAll(".ui.loader.active").length === 0'
                         );
-                        
+
                         return $noActiveDimmers;
                     } catch (\Exception $e) {
-                        self::annotate("Error checking AJAX status: " . $e->getMessage());
-                        return true;
+                        // Log error but don't fail silently - let caller handle it
+                        self::annotate("Error checking AJAX status: " . $e->getMessage(), 'warning');
+                        // Return false to retry instead of assuming success
+                        return false;
                     }
                 }
             );
         } catch (TimeoutException $e) {
-            self::annotate("Timeout waiting for AJAX: " . $e->getMessage());
+            self::annotate("Timeout waiting for AJAX completion: " . $e->getMessage(), 'warning');
         }
     }
 

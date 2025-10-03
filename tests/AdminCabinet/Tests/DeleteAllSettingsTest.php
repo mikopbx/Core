@@ -19,23 +19,23 @@
 
 namespace MikoPBX\Tests\AdminCabinet\Tests;
 
+use Facebook\WebDriver\Exception\TimeoutException;
 use Facebook\WebDriver\WebDriverBy;
 use Facebook\WebDriver\WebDriverExpectedCondition;
 use Facebook\WebDriver\WebDriverWait;
-use Facebook\WebDriver\Exception\TimeoutException;
-use Facebook\WebDriver\Exception\NoSuchElementException;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
-use MikoPBX\Tests\AdminCabinet\Tests\SIPProviders\PctelTest;
 use MikoPBX\Tests\AdminCabinet\Tests\CallQueues\SalesDepartmentTest;
-use MikoPBX\Tests\AdminCabinet\Tests\Extensions\SmithJamesTest;
-use MikoPBX\Tests\AdminCabinet\Tests\Extensions\BrownBrandonTest;
-use MikoPBX\Tests\AdminCabinet\Tests\Extensions\CollinsMelanieTest;
-use MikoPBX\Tests\AdminCabinet\Tests\IVRMenus\MainIvrMenuTest;
 use MikoPBX\Tests\AdminCabinet\Tests\ConferenceRooms\BoardConferenceTest;
 use MikoPBX\Tests\AdminCabinet\Tests\DialplanApplications\EchoTestTest;
+use MikoPBX\Tests\AdminCabinet\Tests\Extensions\BrownBrandonTest;
+use MikoPBX\Tests\AdminCabinet\Tests\Extensions\CollinsMelanieTest;
+use MikoPBX\Tests\AdminCabinet\Tests\Extensions\SmithJamesTest;
 use MikoPBX\Tests\AdminCabinet\Tests\FirewallRules\MikoNetworkTest;
-use MikoPBX\Tests\AdminCabinet\Tests\IncomingCallRules\FirstRuleTest;
+use MikoPBX\Tests\AdminCabinet\Tests\IVRMenus\SecondIvrMenuTest;
+use MikoPBX\Tests\AdminCabinet\Tests\IncomingCallRules\SecondRuleTest;
 use MikoPBX\Tests\AdminCabinet\Tests\OutgoingCallRules\LocalCallsTest;
+use MikoPBX\Tests\AdminCabinet\Tests\SIPProviders\PctelTest;
+use MikoPBX\Tests\AdminCabinet\Tests\FillPBXSettingsTest;
 
 /**
  * Class DeleteAllSettingsTest
@@ -45,12 +45,6 @@ use MikoPBX\Tests\AdminCabinet\Tests\OutgoingCallRules\LocalCallsTest;
  */
 class DeleteAllSettingsTest extends MikoPBXTestsBase
 {
-    /**
-     * Cache for existence checks to avoid repeated navigation
-     * 
-     * @var array
-     */
-    private array $existenceCache = [];
     /**
      * Set up before each test
      */
@@ -148,275 +142,219 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
         );
         
         // Verify we're still on the same page and data is intact
-        $this->assertTextPresent('Danger Zone');
+        $xpath = "//*[contains(text(), 'Danger Zone')]";
+        $elements = self::$driver->findElements(WebDriverBy::xpath($xpath));
+        $this->assertGreaterThan(0, count($elements), "Text 'Danger Zone' should be present on page");
         
         self::annotate("Cancel operation successful - modal closed without deleting data");
     }
 
-    /**
-     * Check if an extension exists by searching for it in the extensions list
-     * 
-     * @param string $extensionName The extension name to search for
-     * @return bool True if extension exists, false otherwise
-     */
-    private function extensionExists(string $extensionName): bool
-    {
-        return $this->entityExists('/admin-cabinet/extensions/index/', $extensionName);
-    }
-
-    /**
-     * Check if a SIP provider exists by searching for it in the providers list
-     * 
-     * @param string $providerName The provider name to search for
-     * @return bool True if provider exists, false otherwise
-     */
-    private function providerExists(string $providerName): bool
-    {
-        return $this->entityExists('/admin-cabinet/providers/index/', $providerName);
-    }
-
-    /**
-     * Check if an entity exists in a specific section (with caching)
-     * 
-     * @param string $sectionUrl The URL of the section to check
-     * @param string $entityName The entity name to search for
-     * @return bool True if entity exists, false otherwise
-     */
-    private function entityExists(string $sectionUrl, string $entityName): bool
-    {
-        $cacheKey = $sectionUrl . '|' . $entityName;
-        
-        // Check cache first
-        if (isset($this->existenceCache[$cacheKey])) {
-            self::annotate("Using cached result for $entityName in $sectionUrl: " . ($this->existenceCache[$cacheKey] ? 'exists' : 'not exists'));
-            return $this->existenceCache[$cacheKey];
-        }
-        
-        try {
-            // Navigate to the section
-            $this->clickSidebarMenuItemByHref($sectionUrl);
-            $this->waitForAjax();
-            
-            // Search for the entity name in the page content
-            $xpath = "//*[contains(text(), '$entityName')]";
-            $elements = self::$driver->findElements(WebDriverBy::xpath($xpath));
-            
-            $exists = count($elements) > 0;
-            
-            // Cache the result
-            $this->existenceCache[$cacheKey] = $exists;
-            
-            return $exists;
-        } catch (\Exception $e) {
-            self::annotate("Error checking entity existence for $entityName in $sectionUrl: " . $e->getMessage());
-            // Cache negative result
-            $this->existenceCache[$cacheKey] = false;
-            return false;
-        }
-    }
-
-    /**
-     * Clear the existence cache to ensure fresh checks
-     */
-    private function clearExistenceCache(): void
-    {
-        $this->existenceCache = [];
-        self::annotate("Cleared existence cache");
-    }
 
     /**
      * Creates all types of test data for deletion test
      */
     private function createTestData(): void
     {
-        self::annotate("Creating test data for deletion using ObjectCreationHelper - with existence checks");
-        
-        // Clear cache to ensure fresh checks
-        $this->clearExistenceCache();
-        
-        // Create test extensions using existing test classes - with existence checks
-        // Check and create James Smith extension
-        if (!$this->extensionExists('Smith James')) {
-            try {
-                $jamesTest = new SmithJamesTest();
-                $jamesTest->setUp();
-                $jamesTest->testCreateExtension();
-                self::annotate("Created James Smith extension");
-            } catch (\Exception $e) {
-                self::annotate("James Smith extension creation failed: " . $e->getMessage());
-            }
-        } else {
-            self::annotate("James Smith extension already exists - skipping creation");
-        }
-        
-        // Check and create Brandon Brown extension
-        if (!$this->extensionExists('Brown Brandon')) {
-            try {
-                $brandonTest = new BrownBrandonTest();
-                $brandonTest->setUp();
-                $brandonTest->testCreateExtension();
-                self::annotate("Created Brandon Brown extension");
-            } catch (\Exception $e) {
-                self::annotate("Brandon Brown extension creation failed: " . $e->getMessage());
-            }
-        } else {
-            self::annotate("Brandon Brown extension already exists - skipping creation");
-        }
-        
-        // Check and create Melanie Collins extension
-        if (!$this->extensionExists('Collins Melanie')) {
-            try {
-                $melanieTest = new CollinsMelanieTest();
-                $melanieTest->setUp();
-                $melanieTest->testCreateExtension();
-                self::annotate("Created Melanie Collins extension");
-            } catch (\Exception $e) {
-                self::annotate("Melanie Collins extension creation failed: " . $e->getMessage());
-            }
-        } else {
-            self::annotate("Melanie Collins extension already exists - skipping creation");
-        }
+        self::annotate("Creating test data for deletion - all checks are performed in real-time");
 
-        // Create SIP provider using existing test class - with existence check
-        if (!$this->providerExists('PCTEL')) {
-            try {
-                $providerTest = new PctelTest();
-                $providerTest->setUp();
-                $providerTest->testCreateSIPProvider();
-                self::annotate("Created PCTEL SIP provider");
-            } catch (\Exception $e) {
-                self::annotate("PCTEL provider creation failed: " . $e->getMessage());
-            }
-        } else {
-            self::annotate("PCTEL provider already exists - skipping creation");
-        }
+        // Create test extensions
+        $this->createTestExtensions();
 
-        // Create incoming and outgoing routes using existing test classes - with existence checks
-        // Check and create incoming route
-        if (!$this->entityExists('/admin-cabinet/incoming-routes/index/', 'First rule')) {
-            try {
-                $incomingTest = new FirstRuleTest();
-                $incomingTest->setUp();
-                $incomingTest->testCreateIncomingCallRule();
-                self::annotate("Created First rule incoming route");
-            } catch (\Exception $e) {
-                self::annotate("Incoming route creation failed: " . $e->getMessage());
-            }
-        } else {
-            self::annotate("First rule incoming route already exists - skipping creation");
-        }
-        
-        // Check and create outgoing route
-        if (!$this->entityExists('/admin-cabinet/outbound-routes/index/', 'Local outgoing calls')) {
-            try {
-                $outgoingTest = new LocalCallsTest();
-                $outgoingTest->setUp();
-                $outgoingTest->testCreateOutgoingCallRule();
-                self::annotate("Created Local outgoing calls route");
-            } catch (\Exception $e) {
-                self::annotate("Outgoing route creation failed: " . $e->getMessage());
-            }
-        } else {
-            self::annotate("Local outgoing calls route already exists - skipping creation");
-        }
+        // Create SIP provider
+        $this->createTestProvider();
 
-        // Create call queue using existing test class - with existence check
-        if (!$this->entityExists('/admin-cabinet/call-queues/index/', 'Sales department')) {
-            try {
-                $queueTest = new SalesDepartmentTest();
-                $queueTest->setUp();
-                $queueTest->testCreateCallQueue();
-                self::annotate("Created Sales department call queue");
-            } catch (\Exception $e) {
-                self::annotate("Call queue creation failed: " . $e->getMessage());
-            }
-        } else {
-            self::annotate("Sales department call queue already exists - skipping creation");
-        }
+        // Create incoming and outgoing routes
+        $this->createTestRoutes();
 
-        // Create IVR menu using CreateIVRMenuTest
+        // Create call queue
+        $this->createTestCallQueue();
+
+        // Create IVR menu
         $this->createTestIVRMenu();
 
-        // Create conference room using CreateConferenceRoomsTest
+        // Create conference room
         $this->createTestConferenceRoom();
 
-        // Create dialplan application using CreateDialPlanApplicationTest
+        // Create dialplan application
         $this->createTestDialplanApplication();
 
-        // Create network filter using existing test class - with existence check
-        if (!$this->entityExists('/admin-cabinet/firewall/index/', 'MikoNetwork')) {
-            try {
-                $firewallTest = new MikoNetworkTest();
-                $firewallTest->setUp();
-                $firewallTest->testCreateFirewallRule();
-                self::annotate("Created MikoNetwork firewall rule");
-            } catch (\Exception $e) {
-                self::annotate("Firewall rule creation failed: " . $e->getMessage());
-            }
-        } else {
-            self::annotate("MikoNetwork firewall rule already exists - skipping creation");
-        }
-        
-        // Modify codec settings (disable some and change priorities)
+        // Create firewall rule
+        $this->createTestFirewallRule();
+
+        // Modify codec settings
         $this->modifyCodecSettings();
     }
 
+    /**
+     * Create test extensions
+     */
+    private function createTestExtensions(): void
+    {
+        $extensions = [
+            ['name' => 'Smith James', 'class' => SmithJamesTest::class],
+            ['name' => 'Brown Brandon', 'class' => BrownBrandonTest::class],
+            ['name' => 'Collins Melanie', 'class' => CollinsMelanieTest::class],
+        ];
+
+        foreach ($extensions as $extension) {
+            $this->createEntityIfNotExists(
+                $extension['name'],
+                $extension['class'],
+                'testCreateExtension',
+                fn($name) => $this->extensionExistsBySearch($name)
+            );
+        }
+    }
 
     /**
-     * Create test IVR menu - with existence check
+     * Create test SIP provider
+     */
+    private function createTestProvider(): void
+    {
+        $this->createEntityIfNotExists(
+            'PCTEL',
+            PctelTest::class,
+            'testCreateSIPProvider',
+            fn($name) => $this->providerExistsBySearch($name),
+            'SIP provider'
+        );
+    }
+
+    /**
+     * Create test routes (incoming and outgoing)
+     */
+    private function createTestRoutes(): void
+    {
+        $routes = [
+            [
+                'name' => 'Second rule',
+                'class' => SecondRuleTest::class,
+                'method' => 'testCreateIncomingCallRule',
+                'url' => '/admin-cabinet/incoming-routes/index/',
+                'type' => 'incoming route'
+            ],
+            [
+                'name' => 'Local outgoing calls',
+                'class' => LocalCallsTest::class,
+                'method' => 'testCreateOutgoingCallRule',
+                'url' => '/admin-cabinet/outbound-routes/index/',
+                'type' => 'outgoing route'
+            ],
+        ];
+
+        foreach ($routes as $route) {
+            $this->createEntityIfNotExists(
+                $route['name'],
+                $route['class'],
+                $route['method'],
+                fn($name) => $this->searchEntityInTable($route['url'], $name),
+                $route['type']
+            );
+        }
+    }
+
+    /**
+     * Create test call queue
+     */
+    private function createTestCallQueue(): void
+    {
+        $this->createEntityIfNotExists(
+            'Sales department',
+            SalesDepartmentTest::class,
+            'testCreateCallQueue',
+            fn($name) => $this->callQueueExistsBySearch($name),
+            'call queue'
+        );
+    }
+
+    /**
+     * Generic method to create entity if it doesn't exist
+     *
+     * @param string $entityName Name of the entity to create
+     * @param class-string<MikoPBXTestsBase> $testClass Test class to instantiate
+     * @param string $testMethod Method to call on test class
+     * @param callable(string): bool $existsCallback Callback to check if entity exists
+     * @param string $entityType Type description for logging (defaults to 'extension')
+     */
+    private function createEntityIfNotExists(
+        string $entityName,
+        string $testClass,
+        string $testMethod,
+        callable $existsCallback,
+        string $entityType = 'extension'
+    ): void {
+        if (!$existsCallback($entityName)) {
+            try {
+                /** @var MikoPBXTestsBase $testInstance */
+                $testInstance = new $testClass();
+                $testInstance->setUp();
+                if (method_exists($testInstance, $testMethod)) {
+                    $testInstance->$testMethod();
+                }
+                self::annotate("Created $entityName $entityType");
+            } catch (\Exception $e) {
+                self::annotate("$entityName $entityType creation failed: " . $e->getMessage());
+            }
+        } else {
+            self::annotate("$entityName $entityType already exists - skipping creation");
+        }
+    }
+
+
+    /**
+     * Create test firewall rule
+     */
+    private function createTestFirewallRule(): void
+    {
+        $this->createEntityIfNotExists(
+            'MikoNetwork',
+            MikoNetworkTest::class,
+            'testCreateFirewallRule',
+            fn($name) => $this->firewallRuleExistsBySearch($name),
+            'firewall rule'
+        );
+    }
+
+    /**
+     * Create test IVR menu
      */
     private function createTestIVRMenu(): void
     {
-        if (!$this->entityExists('/admin-cabinet/ivr-menu/index/', 'Main IVR menu')) {
-            try {
-                $ivrTest = new MainIvrMenuTest();
-                $ivrTest->setUp();
-                $ivrTest->testCreateIVRMenu();
-                self::annotate("Created Main IVR menu");
-            } catch (\Exception $e) {
-                self::annotate("IVR menu creation failed: " . $e->getMessage());
-            }
-        } else {
-            self::annotate("Main IVR menu already exists - skipping creation");
-        }
+        $this->createEntityIfNotExists(
+            'Second IVR menu',
+            SecondIvrMenuTest::class,
+            'testCreateIVRMenu',
+            fn($name) => $this->ivrMenuExistsBySearch($name),
+            'IVR menu'
+        );
     }
 
     /**
-     * Create test conference room - with existence check
+     * Create test conference room
      */
     private function createTestConferenceRoom(): void
     {
-        if (!$this->entityExists('/admin-cabinet/conference-rooms/index/', 'Sales Team Conference')) {
-            try {
-                $confTest = new BoardConferenceTest();
-                $confTest->setUp();
-                $confTest->testCreateConferenceRoom();
-                self::annotate("Created Sales Team Conference room");
-            } catch (\Exception $e) {
-                self::annotate("Conference room creation failed: " . $e->getMessage());
-            }
-        } else {
-            self::annotate("Sales Team Conference room already exists - skipping creation");
-        }
+        $this->createEntityIfNotExists(
+            'Sales Team Conference',
+            BoardConferenceTest::class,
+            'testCreateConferenceRoom',
+            fn($name) => $this->conferenceRoomExistsBySearch($name),
+            'conference room'
+        );
     }
 
     /**
-     * Create test dialplan application - with existence check
+     * Create test dialplan application
      */
     private function createTestDialplanApplication(): void
     {
-        if (!$this->entityExists('/admin-cabinet/dialplan-applications/index/', 'Echo Test Application')) {
-            try {
-                $appTest = new EchoTestTest();
-                $appTest->setUp();
-                $appTest->testCreateDialplanApplication();
-                self::annotate("Created Echo Test Application");
-            } catch (\Exception $e) {
-                self::annotate("Dialplan application creation failed: " . $e->getMessage());
-            }
-        } else {
-            self::annotate("Echo Test Application already exists - skipping creation");
-        }
+        $this->createEntityIfNotExists(
+            'Echo Test Application',
+            EchoTestTest::class,
+            'testCreateDialplanApplication',
+            fn($name) => $this->dialplanApplicationExistsBySearch($name),
+            'dialplan application'
+        );
     }
 
 
@@ -427,109 +365,92 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
     private function modifyCodecSettings(): void
     {
         self::annotate("Modifying codec settings for reset test");
-        
+
         // Navigate to General Settings
         $this->clickSidebarMenuItemByHref('/admin-cabinet/general-settings/modify/');
-        
-        // Click on Audio/Video codecs tab
-        $codecsTabXpath = "//a[@data-tab='codecs']";
-        $codecsTab = self::$driver->findElement(WebDriverBy::xpath($codecsTabXpath));
-        $codecsTab->click();
-        
-        // Wait for tab content to load
-        $this->waitForAjax();
-        
-        // Wait for codec tables to be visible
-        $wait = new WebDriverWait(self::$driver, 10);
-        $wait->until(
-            WebDriverExpectedCondition::presenceOfElementLocated(
-                WebDriverBy::xpath("//table//tr[contains(@class, 'codec-row')]")
-            )
-        );
-        
-        // Additional wait for Semantic UI initialization
-        sleep(2);
-        
-        // Disable some audio codecs (using display names)
-        $codecsToDisable = ['Opus', 'G.722', 'iLBC', 'H.264', 'VP8'];
-        
-        foreach ($codecsToDisable as $codecName) {
-            try {
-                // Find the codec row by label text (based on real HTML structure)
-                $codecRowXpath = "//tr[@class='codec-row']//label[text()='$codecName']";
-                $labelElement = self::$driver->findElement(WebDriverBy::xpath($codecRowXpath));
-                $codecRow = $labelElement->findElement(WebDriverBy::xpath("./ancestor::tr[@class='codec-row']"));
-                
-                // Get the input checkbox
-                $inputElement = $codecRow->findElement(WebDriverBy::xpath(".//input[@type='checkbox']"));
-                
-                // Check if it's currently enabled
-                $isEnabled = $inputElement->getAttribute('checked') !== null;
-                
-                if ($isEnabled) {
-                    // Click the checkbox div to toggle it
-                    $toggleDiv = $codecRow->findElement(WebDriverBy::xpath(".//div[contains(@class, 'ui toggle checkbox')]"));
-                    $toggleDiv->click();
-                    self::annotate("Disabled codec: $codecName");
-                    // Wait for animation to complete
-                    sleep(1);
-                } else {
-                    self::annotate("Codec $codecName was already disabled");
-                }
-            } catch (\Exception $e) {
-                self::annotate("Error disabling codec $codecName: " . $e->getMessage());
-            }
+
+        // Create instance of FillPBXSettingsTest to use its codec handling methods
+        $fillSettingsHelper = new FillPBXSettingsTest();
+        $fillSettingsHelper->setUp();
+
+        // Define codecs to disable (using codec IDs as used in FillPBXSettingsTest)
+        $codecsToDisable = [
+            'codec_opus',   // Opus
+            'codec_g722',   // G.722
+            'codec_ilbc',   // iLBC
+            'codec_h264',   // H.264
+            'codec_vp8',    // VP8
+        ];
+
+        foreach ($codecsToDisable as $codecId) {
+            $fillSettingsHelper->handleCodecSetting($codecId, false);
         }
-        
+
         // Save the changes
         $this->submitForm('general-settings-form');
         $this->waitForAjax();
-        
-        self::annotate("Codec settings modified - some codecs disabled");
+
+        self::annotate("Codec settings modified - some codecs disabled using FillPBXSettingsTest::handleCodecSetting");
     }
 
     /**
-     * Verify all test data was created successfully
+     * Verify all test data was created successfully using search
      */
     private function verifyTestDataExists(): void
     {
-        self::annotate("Verifying test data exists");
-        
-        // Clear cache to ensure fresh verification
-        $this->clearExistenceCache();
+        self::annotate("Verifying test data exists - real-time checks using search");
 
         // Check extensions
-        $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
-        $this->assertTextPresent('Smith James');
-        $this->assertTextPresent('Brown Brandon');
-        $this->assertTextPresent('Collins Melanie');
+        $this->assertTrue(
+            $this->extensionExistsBySearch('Smith James'),
+            'Extension "Smith James" not found'
+        );
+        $this->assertTrue(
+            $this->extensionExistsBySearch('Brown Brandon'),
+            'Extension "Brown Brandon" not found'
+        );
+        $this->assertTrue(
+            $this->extensionExistsBySearch('Collins Melanie'),
+            'Extension "Collins Melanie" not found'
+        );
 
         // Check provider
-        $this->clickSidebarMenuItemByHref('/admin-cabinet/providers/index/');
-        $this->assertTextPresent('PCTEL');
+        $this->assertTrue(
+            $this->providerExistsBySearch('PCTEL'),
+            'Provider "PCTEL" not found'
+        );
 
         // Check routes
-        $this->clickSidebarMenuItemByHref('/admin-cabinet/incoming-routes/index/');
-        $this->assertTextPresent('First rule');
-        
-        $this->clickSidebarMenuItemByHref('/admin-cabinet/outbound-routes/index/');
-        $this->assertTextPresent('Local outgoing calls');
+        $this->assertTrue(
+            $this->incomingRouteExistsBySearch('Second rule'),
+            'Incoming route "Second rule" not found'
+        );
+        $this->assertTrue(
+            $this->outgoingRouteExistsBySearch('Local outgoing calls'),
+            'Outgoing route "Local outgoing calls" not found'
+        );
 
         // Check other entities
-        $this->clickSidebarMenuItemByHref('/admin-cabinet/call-queues/index/');
-        $this->assertTextPresent('Sales department');
-
-        $this->clickSidebarMenuItemByHref('/admin-cabinet/ivr-menu/index/');
-        $this->assertTextPresent('Main IVR menu');
-
-        $this->clickSidebarMenuItemByHref('/admin-cabinet/conference-rooms/index/');
-        $this->assertTextPresent('Sales Team Conference');
-
-        $this->clickSidebarMenuItemByHref('/admin-cabinet/dialplan-applications/index/');
-        $this->assertTextPresent('Echo Test Application');
-
-        $this->clickSidebarMenuItemByHref('/admin-cabinet/firewall/index/');
-        $this->assertTextPresent('MikoNetwork');
+        $this->assertTrue(
+            $this->callQueueExistsBySearch('Sales department'),
+            'Call queue "Sales department" not found'
+        );
+        $this->assertTrue(
+            $this->ivrMenuExistsBySearch('Second IVR menu'),
+            'IVR menu "Second IVR menu" not found'
+        );
+        $this->assertTrue(
+            $this->conferenceRoomExistsBySearch('Sales Team Conference'),
+            'Conference room "Sales Team Conference" not found'
+        );
+        $this->assertTrue(
+            $this->dialplanApplicationExistsBySearch('Echo Test Application'),
+            'Dialplan application "Echo Test Application" not found'
+        );
+        $this->assertTrue(
+            $this->firewallRuleExistsBySearch('MikoNetwork'),
+            'Firewall rule "MikoNetwork" not found'
+        );
     }
 
     /**
@@ -630,43 +551,62 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
      */
     private function verifyDataDeleted(): void
     {
-        self::annotate("Verifying data was deleted");
+        self::annotate("Verifying data was deleted using search");
 
         // Re-login if needed (in case session was cleared)
         $this->ensureLoggedIn();
 
-        // Check extensions - only default should remain
-        $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
-        $this->assertTextNotPresent('Smith James');
-        $this->assertTextNotPresent('Brown Brandon');
-        $this->assertTextNotPresent('Collins Melanie');
+        // Check extensions deleted
+        $this->assertFalse(
+            $this->extensionExistsBySearch('Smith James'),
+            'Extension "Smith James" should have been deleted'
+        );
+        $this->assertFalse(
+            $this->extensionExistsBySearch('Brown Brandon'),
+            'Extension "Brown Brandon" should have been deleted'
+        );
+        $this->assertFalse(
+            $this->extensionExistsBySearch('Collins Melanie'),
+            'Extension "Collins Melanie" should have been deleted'
+        );
 
         // Check provider deleted
-        $this->clickSidebarMenuItemByHref('/admin-cabinet/providers/index/');
-        $this->assertTextNotPresent('PCTEL');
+        $this->assertFalse(
+            $this->providerExistsBySearch('PCTEL'),
+            'Provider "PCTEL" should have been deleted'
+        );
 
         // Check routes deleted
-        $this->clickSidebarMenuItemByHref('/admin-cabinet/incoming-routes/index/');
-        $this->assertTextNotPresent('First rule');
-        
-        $this->clickSidebarMenuItemByHref('/admin-cabinet/outbound-routes/index/');
-        $this->assertTextNotPresent('Local outgoing calls');
+        $this->assertFalse(
+            $this->incomingRouteExistsBySearch('Second rule'),
+            'Incoming route "Second rule" should have been deleted'
+        );
+        $this->assertFalse(
+            $this->outgoingRouteExistsBySearch('Local outgoing calls'),
+            'Outgoing route "Local outgoing calls" should have been deleted'
+        );
 
         // Check other entities deleted
-        $this->clickSidebarMenuItemByHref('/admin-cabinet/call-queues/index/');
-        $this->assertTextNotPresent('Sales department');
-
-        $this->clickSidebarMenuItemByHref('/admin-cabinet/ivr-menu/index/');
-        $this->assertTextNotPresent('Main IVR menu');
-
-        $this->clickSidebarMenuItemByHref('/admin-cabinet/conference-rooms/index/');
-        $this->assertTextNotPresent('Sales Team Conference');
-
-        $this->clickSidebarMenuItemByHref('/admin-cabinet/dialplan-applications/index/');
-        $this->assertTextNotPresent('Echo Test Application');
-
-        $this->clickSidebarMenuItemByHref('/admin-cabinet/firewall/index/');
-        $this->assertTextNotPresent('MikoNetwork');
+        $this->assertFalse(
+            $this->callQueueExistsBySearch('Sales department'),
+            'Call queue "Sales department" should have been deleted'
+        );
+        $this->assertFalse(
+            $this->ivrMenuExistsBySearch('Second IVR menu'),
+            'IVR menu "Second IVR menu" should have been deleted'
+        );
+        $this->assertFalse(
+            $this->conferenceRoomExistsBySearch('Sales Team Conference'),
+            'Conference room "Sales Team Conference" should have been deleted'
+        );
+        $this->assertFalse(
+            $this->dialplanApplicationExistsBySearch('Echo Test Application'),
+            'Dialplan application "Echo Test Application" should have been deleted'
+        );
+        $this->assertFalse(
+            $this->firewallRuleExistsBySearch('MikoNetwork'),
+            'Firewall rule "MikoNetwork" should have been deleted'
+        );
     }
 
     /**
@@ -694,6 +634,7 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
 
     /**
      * Ensure user is logged in (helper for re-login after reset)
+     * Uses LoginTrait::isUserLoggedIn() for consistent login handling
      */
     private function ensureLoggedIn(): void
     {
@@ -704,27 +645,18 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
                 self::$driver->get($this->testsConfig['url']);
                 sleep(2);
             }
-            
-            // Check if we're on login page
-            $loginElements = self::$driver->findElements(WebDriverBy::id('login-form'));
-            if (count($loginElements) > 0) {
-                // We're on login page, need to login
-                self::annotate("On login page, logging in...");
-                $this->loginToPBX();
+
+            // Use LoginTrait method to check if user is logged in
+            if ($this->isUserLoggedIn(5)) {
+                self::annotate("Already logged in");
                 return;
             }
-            
-            // Check if we're logged in by looking for top menu
-            $topMenuElements = self::$driver->findElements(WebDriverBy::id('top-menu-search'));
-            if (count($topMenuElements) === 0) {
-                // Not logged in, navigate to base URL and login
-                self::annotate("Not logged in, navigating to login page...");
-                self::$driver->get($this->testsConfig['url']);
-                sleep(2);
-                $this->loginToPBX();
-            } else {
-                self::annotate("Already logged in");
-            }
+
+            // Not logged in, navigate to login page and login
+            self::annotate("Not logged in, navigating to login page...");
+            self::$driver->get($this->testsConfig['url']);
+            sleep(2);
+            $this->loginToPBX();
         } catch (\Exception $e) {
             // Error checking login status, try to login
             self::annotate("Error checking login status: " . $e->getMessage());
@@ -733,26 +665,6 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
             sleep(2);
             $this->loginToPBX();
         }
-    }
-
-    /**
-     * Assert text is present on the page
-     */
-    private function assertTextPresent(string $text): void
-    {
-        $xpath = "//*[contains(text(), '$text')]";
-        $elements = self::$driver->findElements(WebDriverBy::xpath($xpath));
-        $this->assertGreaterThan(0, count($elements), "Text '$text' should be present on page");
-    }
-
-    /**
-     * Assert text is not present on the page
-     */
-    private function assertTextNotPresent(string $text): void
-    {
-        $xpath = "//*[contains(text(), '$text')]";
-        $elements = self::$driver->findElements(WebDriverBy::xpath($xpath));
-        $this->assertEquals(0, count($elements), "Text '$text' should not be present on page");
     }
 
     /**
@@ -809,16 +721,6 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
             $text = $element->getText();
             self::annotate("Statistic item: $text");
         }
-    }
-
-    /**
-     * Assert text is present in the modal
-     */
-    private function assertModalContainsText(string $text): void
-    {
-        $xpath = "//div[@id='delete-all-modal']//*[contains(text(), '$text')]";
-        $elements = self::$driver->findElements(WebDriverBy::xpath($xpath));
-        $this->assertGreaterThan(0, count($elements), "Text '$text' should be present in modal");
     }
 
     /**
@@ -957,10 +859,11 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
         $settings['web_admin_password'] = $this->testsConfig['password'] ?? '';
         
         // Get PBX name
-        $settings['pbx_name'] = $this->getInputFieldValue('Name');
-        
-        // Get language setting
-        $settings['pbx_language'] = $this->getDropdownSelectedValue('PBXLanguage');
+        $nameElement = self::$driver->findElement(WebDriverBy::id('Name'));
+        $settings['pbx_name'] = $nameElement->getAttribute('value') ?? '';
+
+        // Get language setting (using DropdownInteractionTrait)
+        $settings['pbx_language'] = $this->getDropdownValue('PBXLanguage') ?? '';
         
         // Get port settings from Web-интерфейс tab
         $webTabXpath = "//a[@data-tab='web']";
@@ -969,8 +872,11 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
         $this->waitForAjax();
         
         // Get web port settings
-        $settings['web_port'] = $this->getInputFieldValue('WEBPort');
-        $settings['web_https_port'] = $this->getInputFieldValue('WEBHTTPSPort');
+        $webPortElement = self::$driver->findElement(WebDriverBy::id('WEBPort'));
+        $settings['web_port'] = $webPortElement->getAttribute('value') ?? '';
+
+        $webHttpsPortElement = self::$driver->findElement(WebDriverBy::id('WEBHTTPSPort'));
+        $settings['web_https_port'] = $webHttpsPortElement->getAttribute('value') ?? '';
         
         // Switch to SSH tab to get SSH port
         $sshTabXpath = "//a[@data-tab='ssh']";
@@ -979,7 +885,8 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
         $this->waitForAjax();
         
         // Get SSH port setting
-        $settings['ssh_port'] = $this->getInputFieldValue('SSHPort');
+        $sshPortElement = self::$driver->findElement(WebDriverBy::id('SSHPort'));
+        $settings['ssh_port'] = $sshPortElement->getAttribute('value') ?? '';
         
         // Get license information from the modules section
         $settings['license_key'] = $this->getLicenseKey();
@@ -1002,11 +909,12 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
         $this->clickSidebarMenuItemByHref('/admin-cabinet/general-settings/modify/');
         
         // Verify PBX name (it's reset to default)
-        $currentPbxName = $this->getInputFieldValue('Name');
+        $nameElement = self::$driver->findElement(WebDriverBy::id('Name'));
+        $currentPbxName = $nameElement->getAttribute('value') ?? '';
         self::annotate("PBX Name: Expected default 'MikoPBX', Got: '$currentPbxName'");
-        
-        // Verify language setting preserved
-        $currentLanguage = $this->getDropdownSelectedValue('PBXLanguage');
+
+        // Verify language setting preserved (using DropdownInteractionTrait)
+        $currentLanguage = $this->getDropdownValue('PBXLanguage') ?? '';
         $this->assertEquals($savedSettings['pbx_language'], $currentLanguage, "Language setting should be preserved");
         
         // Verify port settings from Web-интерфейс tab
@@ -1016,10 +924,12 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
         $this->waitForAjax();
         
         // Verify web port settings preserved
-        $currentWEBPort = $this->getInputFieldValue('WEBPort');
+        $webPortElement = self::$driver->findElement(WebDriverBy::id('WEBPort'));
+        $currentWEBPort = $webPortElement->getAttribute('value') ?? '';
         $this->assertEquals($savedSettings['web_port'], $currentWEBPort, "Web port should be preserved");
-        
-        $currentHttpsPort = $this->getInputFieldValue('WEBHTTPSPort');
+
+        $webHttpsPortElement = self::$driver->findElement(WebDriverBy::id('WEBHTTPSPort'));
+        $currentHttpsPort = $webHttpsPortElement->getAttribute('value') ?? '';
         $this->assertEquals($savedSettings['web_https_port'], $currentHttpsPort, "HTTPS port should be preserved");
         
         // Switch to SSH tab to verify SSH port
@@ -1029,7 +939,8 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
         $this->waitForAjax();
         
         // Verify SSH port setting preserved
-        $currentSshPort = $this->getInputFieldValue('SSHPort');
+        $sshPortElement = self::$driver->findElement(WebDriverBy::id('SSHPort'));
+        $currentSshPort = $sshPortElement->getAttribute('value') ?? '';
         $this->assertEquals($savedSettings['ssh_port'], $currentSshPort, "SSH port should be preserved");
         
         // Verify admin login still works (we're logged in)
@@ -1047,38 +958,6 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
         self::annotate("Critical settings verification completed");
     }
 
-    /**
-     * Get input field value
-     * 
-     * @param string $fieldId Field ID
-     * @return string Field value
-     */
-    private function getInputFieldValue(string $fieldId): string
-    {
-        try {
-            $element = self::$driver->findElement(WebDriverBy::id($fieldId));
-            return $element->getAttribute('value') ?? '';
-        } catch (\Exception $e) {
-            return '';
-        }
-    }
-
-    /**
-     * Get selected value from dropdown
-     * 
-     * @param string $dropdownId Dropdown ID
-     * @return string Selected value
-     */
-    protected function getDropdownSelectedValue(string $dropdownId): string
-    {
-        try {
-            // Semantic UI dropdown - get the selected value from hidden input
-            $hiddenInput = self::$driver->findElement(WebDriverBy::name($dropdownId));
-            return $hiddenInput->getAttribute('value') ?? '';
-        } catch (\Exception $e) {
-            return '';
-        }
-    }
 
     /**
      * Get license key from the modules licensing section
@@ -1134,189 +1013,23 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
     }
 
     /**
-     * Verify codecs were reset to default values and priorities
+     * Verify codecs were reset to default values (all enabled)
      */
     private function verifyCodecDefaults(): void
     {
         self::annotate("Verifying codec defaults after reset");
-        
+
         // Navigate to General Settings
         $this->clickSidebarMenuItemByHref('/admin-cabinet/general-settings/modify/');
-        
-        // Click on Audio/Video codecs tab
-        $codecsTabXpath = "//a[@data-tab='codecs']";
-        $codecsTab = self::$driver->findElement(WebDriverBy::xpath($codecsTabXpath));
-        $codecsTab->click();
-        
-        // Wait for tab content to load
-        $this->waitForAjax();
-        
-        // Wait for codec tables to be visible (based on real HTML structure)
-        $wait = new WebDriverWait(self::$driver, 10);
-        
-        // Wait for the audio codecs table to be present
-        $wait->until(
-            WebDriverExpectedCondition::presenceOfElementLocated(
-                WebDriverBy::id('audio-codecs-table')
-            )
-        );
-        
-        // Wait for codec rows to be present
-        $wait->until(
-            WebDriverExpectedCondition::presenceOfElementLocated(
-                WebDriverBy::xpath("//table[@id='audio-codecs-table']//tr[@class='codec-row']")
-            )
-        );
-        
-        self::annotate("Codec tables loaded successfully");
-        
-        // Additional wait for Semantic UI initialization
-        sleep(2);
-        
-        // Expected codec descriptions in display order (all should be enabled after reset)
-        $expectedAudioCodecs = [
-            'G.711 A-law',
-            'G.711 μ-law', 
-            'Opus',
-            'G.722',
-            'G.729',
-            'iLBC',
-            'G.726',
-            'GSM',
-            'ADPCM',
-            'LPC-10',
-            'Speex',
-            'Signed Linear PCM'
-        ];
-        
-        $expectedVideoCodecs = [
-            'H.264',
-            'H.263',
-            'H.263+',
-            'VP8',
-            'VP9',
-            'JPEG',
-            'H.261'
-        ];
-        
-        // Verify audio codecs are all enabled
-        self::annotate("Checking audio codecs");
-        
-        // Use the correct selector based on real HTML structure
-        $audioCodecRows = self::$driver->findElements(
-            WebDriverBy::xpath("//table[@id='audio-codecs-table']//tbody//tr[@class='codec-row']")
-        );
-        
-        if (empty($audioCodecRows)) {
-            // Fallback: try without tbody
-            $audioCodecRows = self::$driver->findElements(
-                WebDriverBy::xpath("//table[@id='audio-codecs-table']//tr[@class='codec-row']")
-            );
-        }
-        
-        self::annotate("Found " . count($audioCodecRows) . " audio codec rows");
-        
-        $foundAudioCodecs = [];
-        foreach ($audioCodecRows as $index => $row) {
-            // Get codec name from the label (based on real HTML structure)
-            $labelElement = $row->findElement(WebDriverBy::xpath(".//label"));
-            $codecDescription = trim($labelElement->getText());
-            
-            // Debug: log the row HTML for the first few codecs
-            if ($index < 3) {
-                self::annotate("Audio codec row " . ($index + 1) . " HTML: " . substr($row->getAttribute('outerHTML'), 0, 200) . "...");
-            }
-            
-            // Check if toggle is enabled (based on real HTML structure)
-            $inputElement = $row->findElement(WebDriverBy::xpath(".//input[@type='checkbox']"));
-            $isEnabled = $inputElement->getAttribute('checked') !== null;
-            
-            // Get the priority - try multiple approaches 
-            $priority = $row->getAttribute('data-value');
-            if (empty($priority)) {
-                // Fallback: use row index + 1 as priority
-                $priority = $index + 1;
-            }
-            
-            self::annotate("Audio codec: $codecDescription, Priority: $priority, Enabled: " . ($isEnabled ? 'Yes' : 'No'));
-            
-            // All codecs should be enabled after reset
-            $this->assertTrue($isEnabled, "Audio codec $codecDescription should be enabled after reset");
-            
-            // Check priority order (should match our expected order) - but be flexible
-            $expectedPriority = $index + 1;
-            $actualPriority = intval($priority);
-            
-            // Only check priority if we have actual priority data
-            if ($actualPriority > 0) {
-                $this->assertEquals($expectedPriority, $actualPriority, "Audio codec $codecDescription should have priority $expectedPriority, got $actualPriority");
-            } else {
-                self::annotate("No priority data available for audio codec $codecDescription, skipping priority check");
-            }
-            
-            $foundAudioCodecs[] = $codecDescription;
-        }
-        
-        // Verify video codecs are all enabled
-        self::annotate("Checking video codecs");
-        
-        // Use the correct selector based on real HTML structure
-        $videoCodecRows = self::$driver->findElements(
-            WebDriverBy::xpath("//table[@id='video-codecs-table']//tbody//tr[@class='codec-row']")
-        );
-        
-        if (empty($videoCodecRows)) {
-            // Fallback: try without tbody
-            $videoCodecRows = self::$driver->findElements(
-                WebDriverBy::xpath("//table[@id='video-codecs-table']//tr[@class='codec-row']")
-            );
-        }
-        
-        self::annotate("Found " . count($videoCodecRows) . " video codec rows");
-        
-        $foundVideoCodecs = [];
-        foreach ($videoCodecRows as $index => $row) {
-            // Get codec name from the label (based on real HTML structure)
-            $labelElement = $row->findElement(WebDriverBy::xpath(".//label"));
-            $codecDescription = trim($labelElement->getText());
-            
-            // Debug: log the row HTML for the first few codecs
-            if ($index < 3) {
-                self::annotate("Video codec row " . ($index + 1) . " HTML: " . substr($row->getAttribute('outerHTML'), 0, 200) . "...");
-            }
-            
-            // Check if toggle is enabled (based on real HTML structure)
-            $inputElement = $row->findElement(WebDriverBy::xpath(".//input[@type='checkbox']"));
-            $isEnabled = $inputElement->getAttribute('checked') !== null;
-            
-            // Get the priority - try multiple approaches 
-            $priority = $row->getAttribute('data-value');
-            if (empty($priority)) {
-                // Fallback: use row index + 1 as priority
-                $priority = $index + 1;
-            }
-            
-            self::annotate("Video codec: $codecDescription, Priority: $priority, Enabled: " . ($isEnabled ? 'Yes' : 'No'));
-            
-            // All codecs should be enabled after reset
-            $this->assertTrue($isEnabled, "Video codec $codecDescription should be enabled after reset");
-            
-            // Check priority order (should match our expected order) - but be flexible
-            $expectedPriority = $index + 1;
-            $actualPriority = intval($priority);
-            
-            // Only check priority if we have actual priority data
-            if ($actualPriority > 0) {
-                $this->assertEquals($expectedPriority, $actualPriority, "Video codec $codecDescription should have priority $expectedPriority, got $actualPriority");
-            } else {
-                self::annotate("No priority data available for video codec $codecDescription, skipping priority check");
-            }
-            
-            $foundVideoCodecs[] = $codecDescription;
-        }
-        
-        self::annotate("Codec defaults verification completed");
-        self::annotate("Found " . count($foundAudioCodecs) . " audio codecs and " . count($foundVideoCodecs) . " video codecs, all enabled");
+
+        // Create instance of FillPBXSettingsTest to use its codec verification method
+        $fillSettingsHelper = new FillPBXSettingsTest();
+        $fillSettingsHelper->setUp();
+
+        // Verify all codecs are enabled (default state after reset)
+        $fillSettingsHelper->verifyAllCodecsEnabled(true);
+
+        self::annotate("Codec defaults verification completed using FillPBXSettingsTest::verifyAllCodecsEnabled");
     }
 
 }

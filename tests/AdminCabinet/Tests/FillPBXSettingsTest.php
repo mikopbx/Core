@@ -91,7 +91,7 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
      * Handle codec checkbox settings
      * Codec checkboxes have different ID structure in the HTML
      */
-    protected function handleCodecSetting(string $key, bool $enabled): void
+    public function handleCodecSetting(string $key, bool $enabled): void
     {
         try {
             // Navigate to the codec tab first
@@ -144,7 +144,7 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
     /**
      * Find the tab that contains codec settings
      */
-    protected function findCodecTab(): ?string
+    public function findCodecTab(): ?string
     {
         // Look for the audio-codecs-table to find its parent tab
         $xpath = "//table[@id='audio-codecs-table']/ancestor::div[contains(@class, 'ui') and contains(@class, 'tab')]";
@@ -265,6 +265,11 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
             usleep(500000); // 0.5 seconds
 
             self::annotate("Successfully added SSH key(s)", 'success');
+
+            // Give a moment for the keys to be processed and rendered
+            usleep(500000); // 0.5 seconds
+
+            self::annotate("Successfully added SSH key(s)", 'success');
         } catch (\Exception $e) {
             self::annotate("Failed to add SSH keys via table interface: " . $e->getMessage(), 'error');
             throw new \RuntimeException("Failed to add SSH keys: " . $e->getMessage());
@@ -315,7 +320,7 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
     /**
      * Verify codec checkbox setting
      */
-    protected function verifyCodecSetting(string $key, bool $expectedState): void
+    public function verifyCodecSetting(string $key, bool $expectedState): void
     {
         try {
             // Navigate to the codec tab first
@@ -359,6 +364,68 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
             self::annotate("Failed to verify codec {$key}: " . $e->getMessage(), 'error');
             throw $e;
         }
+    }
+
+    /**
+     * Verify that all codecs are enabled (after reset to defaults)
+     *
+     * @param bool $expectedState Expected state for all codecs (true = enabled, false = disabled)
+     */
+    public function verifyAllCodecsEnabled(bool $expectedState = true): void
+    {
+        self::annotate("Verifying all codecs are " . ($expectedState ? 'enabled' : 'disabled'));
+
+        // Navigate to codec tab
+        $codecTab = $this->findCodecTab();
+        if ($codecTab) {
+            $this->navigateToTab($codecTab);
+        }
+
+        // Wait for codec tables to load
+        $wait = new \Facebook\WebDriver\WebDriverWait(self::$driver, 10);
+        $wait->until(
+            \Facebook\WebDriver\WebDriverExpectedCondition::presenceOfElementLocated(
+                WebDriverBy::id('audio-codecs-table')
+            )
+        );
+
+        sleep(1); // Wait for Semantic UI initialization
+
+        // Get all codec checkboxes
+        $audioCodecCheckboxes = self::$driver->findElements(
+            WebDriverBy::xpath("//table[@id='audio-codecs-table']//input[@type='checkbox' and starts-with(@name, 'codec_')]")
+        );
+
+        $videoCodecCheckboxes = self::$driver->findElements(
+            WebDriverBy::xpath("//table[@id='video-codecs-table']//input[@type='checkbox' and starts-with(@name, 'codec_')]")
+        );
+
+        $allCodecCheckboxes = array_merge($audioCodecCheckboxes, $videoCodecCheckboxes);
+
+        self::annotate("Found " . count($audioCodecCheckboxes) . " audio codecs and " . count($videoCodecCheckboxes) . " video codecs");
+
+        $errors = [];
+        foreach ($allCodecCheckboxes as $checkbox) {
+            $codecName = $checkbox->getAttribute('name');
+            $isEnabled = $checkbox->isSelected();
+
+            if ($isEnabled !== $expectedState) {
+                $errors[] = sprintf(
+                    "Codec %s: expected %s, got %s",
+                    $codecName,
+                    $expectedState ? 'enabled' : 'disabled',
+                    $isEnabled ? 'enabled' : 'disabled'
+                );
+            } else {
+                self::annotate("Codec {$codecName} is correctly " . ($expectedState ? 'enabled' : 'disabled'));
+            }
+        }
+
+        if (!empty($errors)) {
+            throw new \RuntimeException("Codec verification failed:\n" . implode("\n", $errors));
+        }
+
+        self::annotate("All codecs verification completed successfully");
     }
 
     /**
