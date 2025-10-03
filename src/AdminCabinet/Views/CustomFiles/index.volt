@@ -11,7 +11,7 @@
                 <div class="ui right action left icon fluid input">
                     <i class="search link icon" id="search-icon"></i>
                     <input type="search" id="global-search" name="global-search" placeholder="{{ t._('cf_EnterSearchPhrase') }}"
-                           aria-controls="custom-files-table">
+                           aria-controls="custom-files-table" class="prompt" autocomplete="off">
                     <div class="ui basic floating dropdown button" id="page-length-select">
                         <div class="text">{{ t._('cf_CalculateAutomatically') }}</div>
                         <i class="dropdown icon"></i>

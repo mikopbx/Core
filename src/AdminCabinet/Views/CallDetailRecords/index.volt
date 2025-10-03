@@ -8,7 +8,7 @@
         <div class="ui eleven wide column">
             <div class="ui icon fluid input">
                 <input type="search" id="globalsearch" placeholder="{{ t._('Enter search') }}"
-                       aria-controls="KeysTable">
+                       aria-controls="cdr-table" autocomplete="off">
                 <i class="icon search"></i>
             </div>
         </div>

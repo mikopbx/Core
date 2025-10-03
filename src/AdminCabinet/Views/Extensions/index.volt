@@ -29,7 +29,7 @@
                 <div class="ui search right action left icon fluid input" id="search-extensions-input">
                     <i class="search link icon" id="search-icon"></i>
                     <input type="search" id="global-search" name="global-search" placeholder="{{ t._('ex_EnterSearchPhrase') }}"
-                           aria-controls="KeysTable" class="prompt">
+                           aria-controls="extensions-table" class="prompt" autocomplete="off">
                     <div class="results"></div>
                     <div class="ui basic floating search dropdown button" id="page-length-select">
                         <div class="text">{{ t._('ex_CalculateAutomatically') }}</div>
