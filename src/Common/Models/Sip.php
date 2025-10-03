@@ -88,7 +88,7 @@ class Sip extends ModelsBase
     public ?string $extension = '';
 
     /**
-     * Type of SIP account
+     * Type of SIP account (peer, friend)
      *
      * @Column(type="string", nullable=true)
      */
@@ -429,10 +429,10 @@ class Sip extends ModelsBase
     /**
      * Generates a random SIP password.
      *
-     * @param int $length Password length (default: 16)
+     * @param int $length Password length (default: 9)
      * @return string The generated SIP password.
      */
-    public static function generateSipPassword(int $length = 16): string
+    public static function generateSipPassword(int $length = 9): string
     {
         return PasswordService::generate(['length' => $length]);
     }
