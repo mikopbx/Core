@@ -70,7 +70,7 @@ class OutOfWorkPeriodsDataFactory
             'audio_message_id' => '1',
             'allowRestriction' => true,
             'inbound-rules-table' => [
-                '13' => false,
+                '13' => true,
                 '14' => false,
                 '15' => true,
             ]
@@ -88,7 +88,7 @@ class OutOfWorkPeriodsDataFactory
             'audio_message_id' => '1',
             'allowRestriction' => true,
             'inbound-rules-table' => [
-                '13' => true,
+                '13' => false,
                 '14' => true,
                 '15' => false,
             ]

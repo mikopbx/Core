@@ -296,7 +296,9 @@ trait NavigationTrait
             // EARLY EXIT: Quick check if page is already ready
             $isReady = self::$driver->executeScript(
                 'return (typeof jQuery == "undefined" || jQuery.active == 0) &&
-                        document.querySelectorAll(".ui.loader.active").length === 0'
+                        document.querySelectorAll(".ui.loader.active").length === 0 &&
+                        !document.querySelector("form.loading") &&
+                        !document.querySelector("#submitbutton.disabled")'
             );
 
             if ($isReady) {
@@ -322,6 +324,9 @@ trait NavigationTrait
                 }
             }
 
+            // Small delay to allow form submission to start
+            usleep(150000); // 150ms to let submit button change state
+
             // Wait for all AJAX requests to complete with faster polling interval
             self::$driver->wait($timeout, self::NAVIGATION['wait_intervals']['ajax'])->until(
                 function () {
@@ -340,7 +345,25 @@ trait NavigationTrait
                             'return document.querySelectorAll(".ui.loader.active").length === 0'
                         );
 
-                        return $noActiveDimmers;
+                        if (!$noActiveDimmers) {
+                            return false;
+                        }
+
+                        // Check form is not in loading state
+                        $formNotLoading = self::$driver->executeScript(
+                            'return !document.querySelector("form.loading")'
+                        );
+
+                        if (!$formNotLoading) {
+                            return false;
+                        }
+
+                        // Check submit button is not disabled (form processing complete)
+                        $submitButtonReady = self::$driver->executeScript(
+                            'return !document.querySelector("#submitbutton.disabled")'
+                        );
+
+                        return $submitButtonReady;
                     } catch (\Exception $e) {
                         // Log error but don't fail silently - let caller handle it
                         self::annotate("Error checking AJAX status: " . $e->getMessage(), 'warning');

@@ -70,7 +70,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
             'timeout' => 'int',
             'extension' => 'string|max:32',
             'audio_message_id' => 'string|max:64|empty_to_null',
-            'note' => 'string|sanitize|max:255|empty_to_null'
+            'note' => 'string|sanitize|max:1024|empty_to_null'
         ];
         
         // Text fields for unified processing
