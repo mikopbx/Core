@@ -536,12 +536,33 @@ const networks = {
             });
         }
 
+        // Initialize subnet dropdowns using DynamicDropdownBuilder
+        data.interfaces.forEach((iface) => {
+            const fieldName = `subnet_${iface.id}`;
+            const formData = {};
+            formData[fieldName] = iface.subnet || '24';
+
+            DynamicDropdownBuilder.buildDropdown(fieldName, formData, {
+                staticOptions: networks.getSubnetOptionsArray(),
+                placeholder: globalTranslate.nw_SelectNetworkMask,
+                allowEmpty: false,
+                additionalClasses: ['search']  // Add search class for searchable dropdown
+            });
+        });
+
+        // Initialize subnet dropdown for template (id = 0)
+        if (data.template) {
+            DynamicDropdownBuilder.buildDropdown('subnet_0', { subnet_0: '24' }, {
+                staticOptions: networks.getSubnetOptionsArray(),
+                placeholder: globalTranslate.nw_SelectNetworkMask,
+                allowEmpty: false,
+                additionalClasses: ['search']  // Add search class for searchable dropdown
+            });
+        }
+
         // Initialize tabs
         $('#eth-interfaces-menu .item').tab();
         $('#eth-interfaces-menu .item').first().trigger('click');
-
-        // Initialize subnet dropdowns
-        $('select[name^="subnet_"]').dropdown();
 
         // Re-bind delete button handlers
         $('.delete-interface').off('click').on('click', function(e) {
@@ -611,9 +632,7 @@ const networks = {
                     <div class="field">
                         <label>${globalTranslate.nw_NetworkMask}</label>
                         <div class="field max-width-400">
-                            <select name="subnet_${id}" class="ui search selection dropdown" id="subnet-${id}">
-                                ${networks.getSubnetOptions(iface.subnet || '24')}
-                            </select>
+                            <input type="hidden" id="subnet_${id}" name="subnet_${id}" value="${iface.subnet || '24'}" />
                         </div>
                     </div>
                 </div>
@@ -673,9 +692,7 @@ const networks = {
                     <div class="field">
                         <label>${globalTranslate.nw_NetworkMask}</label>
                         <div class="field max-width-400">
-                            <select name="subnet_${id}" class="ui search selection dropdown" id="subnet-${id}">
-                                ${networks.getSubnetOptions('0')}
-                            </select>
+                            <input type="hidden" id="subnet_${id}" name="subnet_${id}" value="24" />
                         </div>
                     </div>
                 </div>
@@ -691,11 +708,12 @@ const networks = {
     },
 
     /**
-     * Get subnet mask options HTML
+     * Get subnet mask options array for DynamicDropdownBuilder
+     * @returns {Array} Array of subnet mask options
      */
-    getSubnetOptions(selectedValue) {
+    getSubnetOptionsArray() {
         // Network masks from Cidr::getNetMasks() (krsort SORT_NUMERIC)
-        const masks = [
+        return [
             {value: '32', text: '32 - 255.255.255.255'},
             {value: '31', text: '31 - 255.255.255.254'},
             {value: '30', text: '30 - 255.255.255.252'},
@@ -730,10 +748,6 @@ const networks = {
             {value: '1', text: '1 - 128.0.0.0'},
             {value: '0', text: '0 - 0.0.0.0'},
         ];
-
-        return masks.map(mask =>
-            `<option value="${mask.value}" ${mask.value === selectedValue ? 'selected' : ''}>${mask.text}</option>`
-        ).join('');
     },
 
     /**
