@@ -23,6 +23,7 @@ require_once 'Globals.php';
 
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Common\Providers\PBXCoreRESTClientProvider;
+use MikoPBX\PBXCoreREST\Lib\UserPageTracker\UserPageTrackerLib;
 use Throwable;
 
 /**
@@ -36,13 +37,21 @@ use Throwable;
  */
 class WorkerAuthFailureMonitor extends WorkerRedisBase
 {
-    // Monitoring intervals (seconds)
-    private const CHECK_INTERVAL = 10;           // Check logs every 10 seconds
+    // Adaptive monitoring intervals (seconds)
+    private const ACTIVE_USER_INTERVAL = 30;     // When users are viewing extension pages
+    private const IDLE_INTERVAL = 300;           // When no users active (5 minutes)
     private const ERROR_BACKOFF_INTERVAL = 30;   // After errors
 
     // Cache keys
     private const HEALTH_KEY = 'Extensions:AuthFailureMonitor:health';
 
+    // Extension pages tracked (same as WorkerExtensionStatusMonitor)
+    private const EXTENSION_PAGES = [
+        'AdminCabinet/Extensions/index',
+        'AdminCabinet/Extensions/modify'
+    ];
+
+    private ?UserPageTrackerLib $pageTracker = null;
     private int $lastCheckTime = 0;
 
     /**
@@ -74,7 +83,7 @@ class WorkerAuthFailureMonitor extends WorkerRedisBase
             try {
                 $this->executeMonitoringCycle();
 
-                sleep(self::CHECK_INTERVAL);
+                sleep($this->getOptimalSleepInterval());
 
             } catch (Throwable $e) {
                 $this->handleWorkerError($e);
@@ -88,6 +97,9 @@ class WorkerAuthFailureMonitor extends WorkerRedisBase
      */
     private function initialize(): void
     {
+        // Initialize unified page tracker
+        $this->pageTracker = new UserPageTrackerLib();
+
         SystemMessages::sysLogMsg(
             static::class,
             "Auth failure monitor initialized",
@@ -100,11 +112,16 @@ class WorkerAuthFailureMonitor extends WorkerRedisBase
      */
     private function executeMonitoringCycle(): void
     {
-        $this->lastCheckTime = time();
+        $pollInterval = $this->getMonitoringInterval();
+
+        // Only check if enough time has passed
+        if (!$this->shouldPerformStatusCheck($pollInterval)) {
+            return;
+        }
 
         SystemMessages::sysLogMsg(
             static::class,
-            "Calling SIP processAuthFailures API",
+            "Calling SIP processAuthFailures API, poll interval: {$pollInterval}s",
             LOG_DEBUG
         );
 
@@ -122,6 +139,7 @@ class WorkerAuthFailureMonitor extends WorkerRedisBase
             );
 
             if ($result->success) {
+                $this->lastCheckTime = time();
                 $this->updateHealthStatus('active');
 
                 $processedCount = $result->data['processed'] ?? 0;
@@ -153,6 +171,66 @@ class WorkerAuthFailureMonitor extends WorkerRedisBase
 
 
     /**
+     * Get monitoring interval based on simplified 2-state system
+     */
+    private function getMonitoringInterval(): int
+    {
+        // Active users on extension pages = frequent updates (30 seconds)
+        if ($this->hasActiveUsersOnExtensionPages()) {
+            return self::ACTIVE_USER_INTERVAL;
+        }
+
+        // No users on extension pages = idle monitoring (5 minutes)
+        return self::IDLE_INTERVAL;
+    }
+
+    /**
+     * Check if we have active users on extension pages
+     */
+    private function hasActiveUsersOnExtensionPages(): bool
+    {
+        try {
+            $hasActiveUsers = $this->pageTracker->hasActiveViewers(self::EXTENSION_PAGES);
+
+            SystemMessages::sysLogMsg(
+                static::class,
+                "Active users on extension pages: " . ($hasActiveUsers ? 'true' : 'false'),
+                LOG_DEBUG
+            );
+
+            return $hasActiveUsers;
+        } catch (Throwable $e) {
+            // On error, assume active to be safe
+            return true;
+        }
+    }
+
+    /**
+     * Determine if we should perform status check based on interval
+     */
+    private function shouldPerformStatusCheck(int $interval): bool
+    {
+        $currentTime = time();
+        if ($currentTime - $this->lastCheckTime >= $interval) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Get optimal sleep interval to prevent excessive CPU usage
+     */
+    private function getOptimalSleepInterval(): int
+    {
+        $interval = $this->getMonitoringInterval();
+        // Always sleep at least 2 seconds to prevent CPU spinning
+        // For active monitoring (30s), sleep 2s between checks
+        // For idle monitoring (300s), sleep 10s between checks
+        return min($interval, $interval <= 30 ? 2 : 10);
+    }
+
+    /**
      * Update worker health status
      */
     private function updateHealthStatus(string $status = 'active', ?string $errorMessage = null): void
@@ -162,6 +240,8 @@ class WorkerAuthFailureMonitor extends WorkerRedisBase
                 'status' => $status,
                 'timestamp' => time(),
                 'last_check' => $this->lastCheckTime,
+                'monitoring_interval' => $this->getMonitoringInterval(),
+                'active_users' => $this->hasActiveUsersOnExtensionPages(),
                 'pid' => getmypid()
             ];
 

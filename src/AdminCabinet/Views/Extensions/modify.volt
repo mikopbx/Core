@@ -201,6 +201,35 @@
             </div>
         </div>
     </div>
+
+    <div class="ui divider"></div>
+
+    <!-- Security section -->
+    <h3 class="ui header">
+        <i class="shield icon"></i>
+        <div class="content">
+            {{ t._('ex_Security') }}
+        </div>
+    </h3>
+    <div id="security-info" class="ui basic segment">
+        <table id="security-failed-auth-table" class="ui very compact single line table">
+            <thead>
+                <tr>
+                    <th>{{ t._('ex_SecurityIP') }}</th>
+                    <th>{{ t._('ex_SecurityFailedAttempts') }}</th>
+                    <th>{{ t._('ex_SecurityLastAttempt') }}</th>
+                    <th class="center aligned">{{ t._('ex_SecurityActions') }}</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <div id="no-security-data" class="ui placeholder segment" style="display: none;">
+            <div class="ui icon header">
+                <i class="shield icon"></i>
+                {{ t._('ex_SecurityNoFailures') }}
+            </div>
+        </div>
+    </div>
 </div>
 
 {{ partial("PbxExtensionModules/hookVoltBlock",

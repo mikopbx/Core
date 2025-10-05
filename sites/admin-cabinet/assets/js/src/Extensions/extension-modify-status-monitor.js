@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, globalWebAdminLanguage, EventBus, SipAPI, SemanticLocalization */
+/* global globalRootUrl, globalTranslate, globalWebAdminLanguage, EventBus, SipAPI, FirewallAPI, UserMessage, SemanticLocalization */
 
 /**
  * Extension Modify Status Monitor
@@ -37,7 +37,15 @@ const ExtensionModifyStatusMonitor = {
     $statusLabel: null,
     $activeDevicesList: null,
     $deviceHistoryList: null,
-    
+    $securityTable: null,
+    $noSecurityData: null,
+
+    /**
+     * Security data
+     */
+    securityData: {},
+    bannedIps: {},
+
     /**
      * Update interval timer
      */
@@ -65,6 +73,9 @@ const ExtensionModifyStatusMonitor = {
 
         // Make single initial API call
         this.loadInitialStatus();
+
+        // Load security data
+        this.loadSecurityData();
 
         // Start timer for updating online durations
         this.startDurationUpdateTimer();
@@ -122,6 +133,8 @@ const ExtensionModifyStatusMonitor = {
         this.$statusLabel = $('#status');
         this.$activeDevicesList = $('#active-devices-list');
         this.$deviceHistoryList = $('#device-history-list');
+        this.$securityTable = $('#security-failed-auth-table');
+        this.$noSecurityData = $('#no-security-data');
     },
     
     /**
@@ -175,6 +188,11 @@ const ExtensionModifyStatusMonitor = {
                 this.handleEventBusMessage(message);
             });
         }
+
+        // Refresh security data on config changes
+        window.addEventListener('ConfigDataChanged', () => {
+            this.loadSecurityData();
+        });
     },
     
     /**
@@ -802,6 +820,131 @@ const ExtensionModifyStatusMonitor = {
             delay: {
                 show: 300,
                 hide: 100
+            }
+        });
+    },
+
+    /**
+     * Load authentication failure statistics and banned IPs
+     */
+    loadSecurityData() {
+        const extension = this.currentExtensionId;
+
+        if (!extension) {
+            return;
+        }
+
+        // Fetch auth failures via SipAPI
+        SipAPI.getAuthFailureStats(extension, (response) => {
+            if (response && response.result) {
+                this.securityData = response.data || {};
+            } else {
+                this.securityData = {};
+            }
+
+            // Fetch banned IPs via FirewallAPI
+            FirewallAPI.getBannedIps((bannedResponse) => {
+                if (bannedResponse && bannedResponse.result) {
+                    this.bannedIps = bannedResponse.data || {};
+                } else {
+                    this.bannedIps = {};
+                }
+
+                // Render the combined data
+                this.renderSecurityTable();
+            });
+        });
+    },
+
+    /**
+     * Render security table with color-coded rows
+     * Red row = banned IP, Green row = not banned
+     */
+    renderSecurityTable() {
+        const tbody = this.$securityTable.find('tbody');
+        tbody.empty();
+
+        const failures = this.securityData;
+
+        if (!failures || Object.keys(failures).length === 0) {
+            this.$securityTable.hide();
+            this.$noSecurityData.show();
+            return;
+        }
+
+        this.$securityTable.show();
+        this.$noSecurityData.hide();
+
+        // Iterate through failed auth IPs
+        Object.entries(failures).forEach(([ip, stats]) => {
+            const isBanned = this.bannedIps.hasOwnProperty(ip);
+
+            // Use Fomantic UI table row states
+            // 'negative' = red row (banned)
+            // 'positive' = green row (not banned)
+            const rowClass = isBanned ? 'negative' : 'positive';
+
+            const lastAttempt = new Date(stats.last_attempt * 1000).toLocaleString();
+
+            // Show unban button only for banned IPs
+            const actionButton = isBanned
+                ? `<button class="ui mini red icon button unban-ip"
+                           data-ip="${ip}"
+                           data-tooltip="${globalTranslate.ex_SecurityUnban}"
+                           data-position="left center">
+                       <i class="unlock icon"></i>
+                   </button>`
+                : '';
+
+            const row = `
+                <tr class="${rowClass}">
+                    <td><strong>${ip}</strong></td>
+                    <td>${stats.count}</td>
+                    <td>${lastAttempt}</td>
+                    <td class="center aligned">${actionButton}</td>
+                </tr>
+            `;
+
+            tbody.append(row);
+        });
+
+        // Initialize tooltips for unban buttons
+        this.$securityTable.find('[data-tooltip]').popup();
+
+        // Bind unban button handlers
+        this.$securityTable.find('.unban-ip').on('click', (e) => {
+            this.handleUnbanClick(e);
+        });
+    },
+
+    /**
+     * Handle unban button click
+     * @param {Event} e - Click event
+     */
+    handleUnbanClick(e) {
+        e.preventDefault();
+        const $button = $(e.currentTarget);
+        const ip = $button.data('ip');
+
+        if (!ip) {
+            return;
+        }
+
+        $button.addClass('loading disabled');
+
+        // Call FirewallAPI to unban IP
+        FirewallAPI.unbanIp(ip, (response) => {
+            if (response && response.result) {
+                // Just reload security data - table will update visually
+                // Red row will become green row
+                ExtensionModifyStatusMonitor.loadSecurityData();
+            } else {
+                // Only show error message
+                const errorMsg = response && response.messages
+                    ? response.messages
+                    : {error: ['Failed to unban IP']};
+                UserMessage.showMultiString(errorMsg);
+                $button.removeClass('loading disabled');
             }
         });
     },

@@ -399,4 +399,13 @@ return [
     'ex_Hours_Short' => 'ч',
     'ex_Yesterday' => 'Вчера',
     'ex_FailedToLoadData' => 'Не удалось загрузить данные',
+
+    // Security section
+    'ex_Security' => 'Безопасность',
+    'ex_SecurityIP' => 'IP адрес',
+    'ex_SecurityFailedAttempts' => 'Попыток',
+    'ex_SecurityLastAttempt' => 'Последняя попытка',
+    'ex_SecurityActions' => 'Действия',
+    'ex_SecurityUnban' => 'Разблокировать',
+    'ex_SecurityNoFailures' => 'Попыток неверной авторизации не обнаружено',
 ];

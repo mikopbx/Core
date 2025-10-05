@@ -36,7 +36,9 @@ const SipAPI = new PbxApiClient({
         getStats: ':getStats',
         getPeersStatuses: ':getPeersStatuses',
         getRegistry: ':getRegistry',
-        getSecret: ':getSecret'
+        getSecret: ':getSecret',
+        getAuthFailureStats: ':getAuthFailureStats',
+        clearAuthFailureStats: ':clearAuthFailureStats'
     }
 });
 
@@ -187,5 +189,35 @@ Object.assign(SipAPI, {
         }
 
         return this.callCustomMethod('getSecret', {}, callback, 'GET', peer);
+    },
+
+    /**
+     * Get authentication failure statistics for extension
+     * @param {string} extension - Extension number
+     * @param {function} callback - Callback function to handle response
+     */
+    getAuthFailureStats(extension, callback) {
+        if (!extension) {
+            console.error('SipAPI.getAuthFailureStats: extension parameter is required');
+            if (callback) callback({result: false, messages: {error: ['Extension parameter is required']}});
+            return;
+        }
+
+        return this.callCustomMethod('getAuthFailureStats', {}, callback, 'GET', extension);
+    },
+
+    /**
+     * Clear authentication failure statistics for extension
+     * @param {string} extension - Extension number
+     * @param {function} callback - Callback function to handle response
+     */
+    clearAuthFailureStats(extension, callback) {
+        if (!extension) {
+            console.error('SipAPI.clearAuthFailureStats: extension parameter is required');
+            if (callback) callback({result: false, messages: {error: ['Extension parameter is required']}});
+            return;
+        }
+
+        return this.callCustomMethod('clearAuthFailureStats', {}, callback, 'POST', extension);
     }
 });
