@@ -24,8 +24,11 @@ use Error;
 use JsonException;
 use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Providers\BeanstalkConnectionModelsProvider;
+use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
 use ReflectionClass;
+use Throwable;
 
 require_once 'Globals.php';
 
@@ -43,6 +46,7 @@ class DockerEntrypoint extends Injectable
     private array $settings;
     private string $stageMessage = '';
     private float $stageStartTime = 0.0;
+    private array $changedPbxSettings = [];
 
     /**
      * Constructor for the DockerEntrypoint class.
@@ -136,6 +140,9 @@ class DockerEntrypoint extends Injectable
 
         // Start the MikoPBX system.
         $this->startTheMikoPBXSystem();
+
+        // Send accumulated changes to backend worker
+        $this->sendChangesToBackend();
     }
 
     /**
@@ -394,6 +401,7 @@ class DockerEntrypoint extends Injectable
                 $res = Processes::mwExec($command, $out);
                 if ($res === 0) {
                     SystemMessages::sysLogMsg(__METHOD__, " - Update $key to '$newValue' in m_PbxSettings", LOG_DEBUG);
+                    $this->changedPbxSettings[] = $key;
                     return true;
                 } else {
                     SystemMessages::sysLogMsg(__METHOD__, " - Update $key failed: " . implode($out) . PHP_EOL . 'Command:' . PHP_EOL . $command, LOG_ERR);
@@ -405,13 +413,14 @@ class DockerEntrypoint extends Injectable
             $reflection = new ReflectionClass(PbxSettings::class);
             $constants = $reflection->getConstants();
             $isValidConstant = in_array($key, $constants, true);
-            
+
             if ($isValidConstant) {
                 // Insert new setting
                 $command = "$sqlite3 $dbPath \"INSERT INTO m_PbxSettings (key, value) VALUES ('$key', '$newValue')\"";
                 $res = Processes::mwExec($command, $out);
                 if ($res === 0) {
                     SystemMessages::sysLogMsg(__METHOD__, " - Insert $key with value '$newValue' in m_PbxSettings", LOG_DEBUG);
+                    $this->changedPbxSettings[] = $key;
                     return true;
                 } else {
                     SystemMessages::sysLogMsg(__METHOD__, " - Insert $key failed: " . implode($out) . PHP_EOL . 'Command:' . PHP_EOL . $command, LOG_ERR);
@@ -436,6 +445,58 @@ class DockerEntrypoint extends Injectable
             '/etc/rc/bootup 2>/dev/null && ' .
             '/etc/rc/bootup_pbx 2>/dev/null';
         passthru($commands);
+    }
+
+    /**
+     * Sends accumulated PbxSettings changes to backend worker through Beanstalk queue.
+     * This ensures that configuration changes made during Docker startup are properly
+     * processed by WorkerModelsEvents for system reconfiguration.
+     *
+     * @return void
+     */
+    private function sendChangesToBackend(): void
+    {
+        if (empty($this->changedPbxSettings)) {
+            return;
+        }
+
+        // Wait for DI to become available after system startup
+        $maxAttempts = 30;
+        $di = null;
+        for ($i = 0; $i < $maxAttempts; $i++) {
+            try {
+                $di = Di::getDefault();
+                if ($di !== null) {
+                    break;
+                }
+            } catch (Throwable $e) {
+                // DI not yet initialized
+            }
+            sleep(1);
+        }
+
+        if ($di === null) {
+            SystemMessages::sysLogMsg(__METHOD__, "DI not available after {$maxAttempts} seconds, cannot send changes", LOG_ERR);
+            return;
+        }
+
+        try {
+            $queue = $di->getShared(BeanstalkConnectionModelsProvider::SERVICE_NAME);
+
+            foreach ($this->changedPbxSettings as $key) {
+                $jobData = json_encode([
+                    'source' => BeanstalkConnectionModelsProvider::SOURCE_MODELS_CHANGED,
+                    'model' => PbxSettings::class,
+                    'recordId' => $key,
+                    'action' => 'afterSave',
+                    'changedFields' => [$key],
+                ]);
+                $queue->publish($jobData);
+                SystemMessages::sysLogMsg(__METHOD__, " - Sent change notification for PbxSettings key: $key", LOG_DEBUG);
+            }
+        } catch (Throwable $e) {
+            SystemMessages::sysLogMsg(__METHOD__, "Failed to send changes to backend: {$e->getMessage()}", LOG_ERR);
+        }
     }
 }
 
