@@ -21,7 +21,6 @@
 namespace MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice;
 
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Providers\PBXCoreRESTClientProvider;
 use MikoPBX\Core\System\PasswordService;
 use Phalcon\Di\Injectable;
 

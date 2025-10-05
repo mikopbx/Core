@@ -22,7 +22,6 @@ namespace MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\Users;
-use MikoPBX\Common\Providers\PBXCoreRESTClientProvider;
 use MikoPBX\Core\System\PasswordService;
 use Phalcon\Di\Injectable;
 
@@ -47,7 +46,7 @@ class CheckSIPPasswords extends Injectable
             'conditions' => 'weakSecret="0"'
         ];
 
-        $sipRecordsToCheck = SIP::find($parameters);
+        $sipRecordsToCheck = Sip::find($parameters);
         
         if ($sipRecordsToCheck->count() > 0) {
             // Collect all passwords for batch checking
