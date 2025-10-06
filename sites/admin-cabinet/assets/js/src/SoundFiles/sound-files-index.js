@@ -72,7 +72,8 @@ const soundFilesTable = {
     renderSoundFiles(files, category) {
         const $container = category === 'custom' ? $('.ui.tab[data-tab="custom"]') : $('.ui.tab[data-tab="moh"]');
         const tableId = category === 'custom' ? 'custom-sound-files-table' : 'moh-sound-files-table';
-        
+        const $addButton = category === 'custom' ? $('#add-new-custom-button') : $('#add-new-moh-button');
+
         // Clean up existing sound players
         Object.keys(soundFilesTable.soundPlayers).forEach(playerId => {
             if (soundFilesTable.soundPlayers[playerId]) {
@@ -85,22 +86,22 @@ const soundFilesTable = {
                 delete soundFilesTable.soundPlayers[playerId];
             }
         });
-        
+
         // Destroy existing DataTable if exists
         const existingTable = $(`#${tableId}`);
         if (existingTable.length && $.fn.DataTable.isDataTable(existingTable)) {
             existingTable.DataTable().destroy();
         }
-        
+
         // Remove only the table and its wrapper, preserve the grid structure
         $container.find('.dataTables_wrapper').remove();
         $container.find('> table').remove(); // Direct child tables only
         $container.find('.ui.placeholder.segment').remove();
-        
+
         // Find the grid structure or create a placeholder for table
         let $gridRow = $container.find('.ui.grid').first();
         let $tableContainer = $container;
-        
+
         // If grid exists, place table after it
         if ($gridRow.length > 0) {
             // Check if we already have a table container div after grid
@@ -112,13 +113,18 @@ const soundFilesTable = {
             $tableContainer = $existingContainer;
             $tableContainer.empty();
         }
-        
+
         if (files.length === 0) {
+            // Hide the add button when showing empty placeholder
+            $addButton.hide();
             // Show empty placeholder
             const emptyHtml = soundFilesTable.getEmptyPlaceholder(category);
             $tableContainer.append(emptyHtml);
             return;
         }
+
+        // Show the add button when displaying data
+        $addButton.show();
         
         // Build table using template structure
         let tableHtml = `<table class="ui selectable very compact unstackable table" id="${tableId}">
@@ -252,7 +258,7 @@ const soundFilesTable = {
     },
     
     /**
-     * Get empty placeholder HTML
+     * Get empty placeholder HTML matching partials/emptyTablePlaceholder.volt structure
      */
     getEmptyPlaceholder(category) {
         const linkPath = category === 'custom' ? 'sound-files/modify/custom' : 'sound-files/modify/moh';
@@ -261,9 +267,21 @@ const soundFilesTable = {
                 <i class="music icon"></i>
                 ${globalTranslate.sf_EmptyTableTitle}
             </div>
-            <p>${globalTranslate.sf_EmptyTableDescription}</p>
-            <div class="ui primary button" onclick="window.location='${globalRootUrl}${linkPath}'">
-                <i class="add circle icon"></i> ${globalTranslate.sf_AddNewSoundFile}
+            <div class="inline">
+                <div class="ui text">
+                    ${globalTranslate.sf_EmptyTableDescription}
+                </div>
+            </div>
+            <div style="margin-top: 1em;">
+                <a href="https://wiki.mikopbx.com/sound-files" target="_blank" class="ui basic tiny button prevent-word-wrap">
+                    <i class="question circle outline icon"></i>
+                    ${globalTranslate.et_ReadDocumentation}
+                </a>
+            </div>
+            <div style="margin-top: 1em; text-align: center;">
+                <a href="${globalRootUrl}${linkPath}" class="ui blue button prevent-word-wrap">
+                    <i class="add circle icon"></i> ${globalTranslate.sf_AddNewSoundFile}
+                </a>
             </div>
         </div>`;
     },
