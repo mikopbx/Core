@@ -24,18 +24,20 @@ use Facebook\WebDriver\WebDriverBy;
 use Facebook\WebDriver\WebDriverExpectedCondition;
 use Facebook\WebDriver\WebDriverWait;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
-use MikoPBX\Tests\AdminCabinet\Tests\CallQueues\SalesDepartmentTest;
+use MikoPBX\Tests\AdminCabinet\Tests\AudioFiles\MikoHelloAudioTest;
+use MikoPBX\Tests\AdminCabinet\Tests\CallQueues\AccountantDepartmentTest;
 use MikoPBX\Tests\AdminCabinet\Tests\ConferenceRooms\BoardConferenceTest;
 use MikoPBX\Tests\AdminCabinet\Tests\DialplanApplications\EchoTestTest;
 use MikoPBX\Tests\AdminCabinet\Tests\Extensions\BrownBrandonTest;
 use MikoPBX\Tests\AdminCabinet\Tests\Extensions\CollinsMelanieTest;
 use MikoPBX\Tests\AdminCabinet\Tests\Extensions\SmithJamesTest;
+use MikoPBX\Tests\AdminCabinet\Tests\FillPBXSettingsTest;
 use MikoPBX\Tests\AdminCabinet\Tests\FirewallRules\MikoNetworkTest;
 use MikoPBX\Tests\AdminCabinet\Tests\IVRMenus\SecondIvrMenuTest;
 use MikoPBX\Tests\AdminCabinet\Tests\IncomingCallRules\SecondRuleTest;
 use MikoPBX\Tests\AdminCabinet\Tests\OutgoingCallRules\LocalCallsTest;
 use MikoPBX\Tests\AdminCabinet\Tests\SIPProviders\PctelTest;
-use MikoPBX\Tests\AdminCabinet\Tests\FillPBXSettingsTest;
+use MikoPBX\Tests\AdminCabinet\Tests\Traits\EntityCreationTrait;
 
 /**
  * Class DeleteAllSettingsTest
@@ -45,6 +47,8 @@ use MikoPBX\Tests\AdminCabinet\Tests\FillPBXSettingsTest;
  */
 class DeleteAllSettingsTest extends MikoPBXTestsBase
 {
+    use EntityCreationTrait;
+
     /**
      * Set up before each test
      */
@@ -157,6 +161,18 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
     {
         self::annotate("Creating test data for deletion - all checks are performed in real-time");
 
+        // Create firewall rule
+        $this->createTestFirewallRule();
+        
+        // Create conference room
+        $this->createTestConferenceRoom();
+
+        // Create dialplan application
+        $this->createTestDialplanApplication();
+
+        // Modify PBX settings
+        $this->modifyPBXSettings();
+
         // Create test extensions
         $this->createTestExtensions();
 
@@ -169,21 +185,25 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
         // Create call queue
         $this->createTestCallQueue();
 
+        // Create Sound file
+        $this->createTestSoundFile();
+
         // Create IVR menu
         $this->createTestIVRMenu();
 
-        // Create conference room
-        $this->createTestConferenceRoom();
-
-        // Create dialplan application
-        $this->createTestDialplanApplication();
-
-        // Create firewall rule
-        $this->createTestFirewallRule();
-
-        // Modify codec settings
-        $this->modifyCodecSettings();
     }
+
+    private function createTestSoundFile(): void
+    {
+        $this->createEntityIfNotExists(
+            'miko_hello',
+            MikoHelloAudioTest::class,
+            'testCreateAudioFile',
+            fn($name) => $this->soundFileExistsBySearch($name),
+            'audio file'
+        );
+    }
+
 
     /**
      * Create test extensions
@@ -216,7 +236,7 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
             PctelTest::class,
             'testCreateSIPProvider',
             fn($name) => $this->providerExistsBySearch($name),
-            'SIP provider'
+            'PCTEL'
         );
     }
 
@@ -259,46 +279,14 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
     private function createTestCallQueue(): void
     {
         $this->createEntityIfNotExists(
-            'Sales department',
-            SalesDepartmentTest::class,
+            'Accountant department',
+            AccountantDepartmentTest::class,
             'testCreateCallQueue',
             fn($name) => $this->callQueueExistsBySearch($name),
             'call queue'
         );
     }
 
-    /**
-     * Generic method to create entity if it doesn't exist
-     *
-     * @param string $entityName Name of the entity to create
-     * @param class-string<MikoPBXTestsBase> $testClass Test class to instantiate
-     * @param string $testMethod Method to call on test class
-     * @param callable(string): bool $existsCallback Callback to check if entity exists
-     * @param string $entityType Type description for logging (defaults to 'extension')
-     */
-    private function createEntityIfNotExists(
-        string $entityName,
-        string $testClass,
-        string $testMethod,
-        callable $existsCallback,
-        string $entityType = 'extension'
-    ): void {
-        if (!$existsCallback($entityName)) {
-            try {
-                /** @var MikoPBXTestsBase $testInstance */
-                $testInstance = new $testClass();
-                $testInstance->setUp();
-                if (method_exists($testInstance, $testMethod)) {
-                    $testInstance->$testMethod();
-                }
-                self::annotate("Created $entityName $entityType");
-            } catch (\Exception $e) {
-                self::annotate("$entityName $entityType creation failed: " . $e->getMessage());
-            }
-        } else {
-            self::annotate("$entityName $entityType already exists - skipping creation");
-        }
-    }
 
 
     /**
@@ -362,35 +350,11 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
     /**
      * Modify codec settings to test reset functionality
      */
-    private function modifyCodecSettings(): void
+    private function modifyPBXSettings(): void
     {
-        self::annotate("Modifying codec settings for reset test");
-
-        // Navigate to General Settings
-        $this->clickSidebarMenuItemByHref('/admin-cabinet/general-settings/modify/');
-
-        // Create instance of FillPBXSettingsTest to use its codec handling methods
         $fillSettingsHelper = new FillPBXSettingsTest();
         $fillSettingsHelper->setUp();
-
-        // Define codecs to disable (using codec IDs as used in FillPBXSettingsTest)
-        $codecsToDisable = [
-            'codec_opus',   // Opus
-            'codec_g722',   // G.722
-            'codec_ilbc',   // iLBC
-            'codec_h264',   // H.264
-            'codec_vp8',    // VP8
-        ];
-
-        foreach ($codecsToDisable as $codecId) {
-            $fillSettingsHelper->handleCodecSetting($codecId, false);
-        }
-
-        // Save the changes
-        $this->submitForm('general-settings-form');
-        $this->waitForAjax();
-
-        self::annotate("Codec settings modified - some codecs disabled using FillPBXSettingsTest::handleCodecSetting");
+        $fillSettingsHelper->testFillPBXSettings();
     }
 
     /**

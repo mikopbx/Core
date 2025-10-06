@@ -32,7 +32,7 @@ class ModuleDataFactory
     private static array $moduleData = [
         'autoprovision' => [
             'moduleId' => 'ModuleAutoprovision',
-            'enable' => true,
+            'enable' => false,
         ],
         'backup' => [
             'moduleId' => 'ModuleBackup',

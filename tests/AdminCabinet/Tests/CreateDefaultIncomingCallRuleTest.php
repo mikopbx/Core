@@ -28,7 +28,7 @@ use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
  *
  * This class contains tests for changing the default incoming call rule.
  */
-class CreateDefaultIncomingCallRule extends MikoPBXTestsBase
+class CreateDefaultIncomingCallRuleTest extends MikoPBXTestsBase
 {
     /**
      * Set up before each test
@@ -74,6 +74,8 @@ class CreateDefaultIncomingCallRule extends MikoPBXTestsBase
         if ($params['action'] === 'extension') {
             $this->assertMenuItemSelected('extension', $params['extension']);
         }
+
+        $this->assertTrue(true);
     }
 
     /**

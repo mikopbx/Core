@@ -294,4 +294,19 @@ trait TableSearchTrait
             null // Use DataTable built-in search
         );
     }
+
+
+    /**
+     * Check if an sound file exists by searching for it in the extensions table
+     *
+     * @param string $soundFileName Sound file name to search for (e.g., 'Smith James')
+     * @return bool True if sound file exists, false otherwise
+     */
+    protected function soundFileExistsBySearch(string $soundFileName): bool
+    {
+        return $this->searchEntityInTable(
+            '/admin-cabinet/sound-files/index/',
+            $soundFileName
+        );
+    }
 }

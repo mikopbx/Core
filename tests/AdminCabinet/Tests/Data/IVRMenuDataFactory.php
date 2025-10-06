@@ -33,7 +33,7 @@ class IVRMenuDataFactory
         'second.ivr.menu' => [
             'description' => 'Second level IVR menu, with extra menu items',
             'name' => 'Second IVR menu',
-            'audio_message_id' => '2',
+            'audio_message_id' => '1',
             'menuItems' => [
                 '1' => '10003246',
                 '2' => '000063',

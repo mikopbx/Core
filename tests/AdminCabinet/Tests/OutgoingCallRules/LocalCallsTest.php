@@ -29,7 +29,7 @@ use MikoPBX\Tests\AdminCabinet\Tests\Data\OutgoingCallRulesDataFactory;
  * Rule Type: Local
  * Name: Local outgoing calls
  * Pattern: (7|8)
- * Provider: SIP-PROVIDER-34F7CCFE873B9DABD91CC8D75342CB43
+ * Provider: SIP-1683372701
  * Description: Rule for handling local landline calls
  * 
  * Number Handling:

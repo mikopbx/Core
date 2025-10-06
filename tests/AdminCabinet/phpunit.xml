@@ -80,7 +80,7 @@
         </testsuite>
 
         <testsuite name="IncomingCallRulesBeforeCreate">
-            <file>Tests/CreateDefaultIncomingCallRule.php</file>
+            <file>Tests/CreateDefaultIncomingCallRuleTest.php</file>
         </testsuite>
 
         <testsuite name="IncomingCallRules">  

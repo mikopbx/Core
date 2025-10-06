@@ -30,8 +30,8 @@ class IncomingCallRulesDataFactory
      */
     private static array $rulesData = [
         'first.rule' => [
-            'rulename' => 'First rule',
-            'note' => '',
+            'rulename' => 'First rule rulename',
+            'note' => 'First rule note',
             'provider' => 'none',
             'providerName' => '',
             'number' => '74952293042',
@@ -41,8 +41,8 @@ class IncomingCallRulesDataFactory
         ],
         'second.rule' => [
             'rulename' => 'Second rule',
-            'note' => '',
-            'provider' => 'SIP-PROVIDER-34F7CCFE873B9DABD91CC8D75342CB43',
+            'note' => 'Second rule',
+            'provider' => 'SIP-1683372701',
             'providerName' => '',
             'number' => '74952293043',
             'extension' => '202',

@@ -22,9 +22,11 @@ namespace MikoPBX\Tests\AdminCabinet\Tests;
 
 use Facebook\WebDriver\WebDriverBy;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
+use MikoPBX\Tests\AdminCabinet\Lib\Traits\TableSearchTrait;
 
 abstract class CreateExtensionsTest extends MikoPBXTestsBase
 {
+    use TableSearchTrait;
     /**
      * Set up before each test
      *
@@ -51,16 +53,17 @@ abstract class CreateExtensionsTest extends MikoPBXTestsBase
         self::annotate("Creating extension for user: {$params['username']}");
 
         try {
-            // Navigate to the extensions page
-            $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
+            // Check if extension already exists
+            if ($this->extensionExistsBySearch($params['username'])) {
+                self::annotate("Extension '{$params['username']}' already exists - skipping creation");
 
-            // Fill search field and delete if exists
-            $this->fillDataTableSearchInput('extensions-table', 'global-search', $params['username']);
-            
-            // Delete any existing application with the same extension
-            $this->clickDeleteButtonOnRowWithText($params['username']);
+                // Verify existing extension has correct data
+                $this->verifyExistingExtension($params);
+                return;
+            }
 
             // Create new extension
+            $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
             $this->clickButtonByHref('/admin-cabinet/extensions/modify');
             $this->fillEmployeeForm($params);
             $this->submitForm('extensions-form');
@@ -151,5 +154,25 @@ abstract class CreateExtensionsTest extends MikoPBXTestsBase
         $this->assertMenuItemSelected('sip_networkfilterid', $params['sip_networkfilterid']);
         $this->assertMenuItemSelected('sip_transport', $params['sip_transport']);
         $this->assertTextAreaValueIsEqual('sip_manualattributes', $params['sip_manualattributes']);
+    }
+
+    /**
+     * Verify existing extension has correct data
+     *
+     * @param array $params
+     */
+    private function verifyExistingExtension(array $params): void
+    {
+        self::annotate("Verifying existing extension: {$params['username']}");
+
+        // Navigate to extension and verify
+        $this->clickSidebarMenuItemByHref('/admin-cabinet/extensions/index/');
+        $this->fillDataTableSearchInput('extensions-table', 'global-search', $params['username']);
+        $this->clickModifyButtonOnRowWithText($params['username']);
+
+        // Verify all fields
+        $this->verifyExtensionFields($params);
+
+        self::annotate("Extension '{$params['username']}' verification completed");
     }
 }

@@ -27,7 +27,7 @@ use MikoPBX\Tests\AdminCabinet\Tests\Data\IncomingCallRulesDataFactory;
  * Test class for creating Second rule
  * 
  * Name: Second rule
- * Provider: SIP-PROVIDER-34F7CCFE873B9DABD91CC8D75342CB43
+ * Provider: SIP-1683372701
  * Number: 74952293043
  * Extension: 202
  * Description: Rule with SIP provider
