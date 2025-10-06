@@ -204,15 +204,7 @@ class WorkerExtensionStatusMonitor extends WorkerRedisBase
     private function hasActiveUsersOnExtensionPages(): bool
     {
         try {
-            $hasActiveUsers = $this->pageTracker->hasActiveViewers(self::EXTENSION_PAGES);
-            
-            SystemMessages::sysLogMsg(
-                static::class,
-                "Active users on extension pages: " . ($hasActiveUsers ? 'true' : 'false'),
-                LOG_DEBUG
-            );
-            
-            return $hasActiveUsers;
+            return $this->pageTracker->hasActiveViewers(self::EXTENSION_PAGES);
         } catch (Throwable $e) {
             // On error, assume active to be safe
             return true;
