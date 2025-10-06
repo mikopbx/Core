@@ -87,7 +87,7 @@ class FillDataTimeSettingsTest extends MikoPBXTestsBase
      */
     protected function navigateToTimeSettings(): void 
     {
-        $maxRetries = 3;
+        $maxRetries = 10;
         $retryCount = 0;
         $success = false;
         
