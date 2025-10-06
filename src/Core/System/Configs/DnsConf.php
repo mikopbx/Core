@@ -79,6 +79,18 @@ class DnsConf extends SystemConfigClass
             $resolveConf .= "domain {$data_hostname['domain']}\n";
         }
 
+        // In Docker environment, preserve Docker's embedded DNS server (127.0.0.11)
+        // This is required for container name resolution within Docker networks
+        $dockerDns = null;
+        if (Util::isDocker() && file_exists('/etc/resolv.conf')) {
+            $currentResolv = file_get_contents('/etc/resolv.conf');
+            if (preg_match('/nameserver\s+(127\.0\.0\.11)/', $currentResolv, $matches)) {
+                $dockerDns = $matches[1];
+                // Add Docker DNS first for container name resolution
+                $resolveConf .= "nameserver $dockerDns\n";
+            }
+        }
+
         // Append local nameserver to resolv.conf
         $resolveConf .= "nameserver 127.0.0.1\n";
 
