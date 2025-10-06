@@ -79,7 +79,7 @@ class SoundFiles extends ModelsBase
             CallQueues::class,
             'periodic_announce_sound_id',
             [
-                "alias" => "CallQueues",
+                "alias" => "CallQueuesPeriodicAnnounce",
                 "foreignKey" => [
                     "allowNulls" => true,
                     "action" => Relation::ACTION_RESTRICT,
@@ -91,7 +91,7 @@ class SoundFiles extends ModelsBase
             CallQueues::class,
             'moh_sound_id',
             [
-                "alias" => "CallQueues",
+                "alias" => "CallQueuesMoh",
                 "foreignKey" => [
                     "allowNulls" => true,
                     "action" => Relation::ACTION_RESTRICT,

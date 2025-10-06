@@ -320,34 +320,50 @@ class ModelsBase extends Model
                 // Extract the related model name from the error message
                 $arrMessageParts = explode('Common\\Models\\', $errorMessage->getMessage());
                 if (count($arrMessageParts) === 2) {
-                    $relatedModel = $arrMessageParts[1];
+                    $relatedModelClass = 'MikoPBX\\Common\\Models\\' . $arrMessageParts[1];
                 } else {
-                    $relatedModel = $errorMessage->getMessage();
+                    $relatedModelClass = $errorMessage->getMessage();
                 }
-                
-                // Get the related records
-                $relatedRecords = $this->getRelated($relatedModel);
-                
-                if ($relatedRecords === false) {
-                    // Throw an exception if there is an error in the model relationship
-                    throw new Model\Exception('Error on models relationship ' . $errorMessage);
-                }
-                
-                // Store dependencies grouped by relation
-                if (!isset($dependencyGroups[$relatedModel])) {
-                    $dependencyGroups[$relatedModel] = [];
-                }
-                
-                if ($relatedRecords instanceof Resultset) {
-                    // If there are multiple related records, iterate through them
-                    foreach ($relatedRecords as $item) {
-                        if ($item instanceof ModelsBase) {
-                            $dependencyGroups[$relatedModel][] = $item;
+
+                // Find all relations to this model class (there can be multiple with different aliases)
+                $relations = $this->_modelsManager->getRelations(get_class($this));
+                $foundRelations = false;
+
+                foreach ($relations as $relation) {
+                    // Check if this relation points to the related model class
+                    if ($relation->getReferencedModel() === $relatedModelClass) {
+                        $foundRelations = true;
+                        $alias = $relation->getOptions()['alias'] ?? null;
+
+                        if ($alias) {
+                            // Get the related records using the alias
+                            $relatedRecords = $this->getRelated($alias);
+
+                            if ($relatedRecords !== false) {
+                                // Store dependencies grouped by model class
+                                if (!isset($dependencyGroups[$relatedModelClass])) {
+                                    $dependencyGroups[$relatedModelClass] = [];
+                                }
+
+                                if ($relatedRecords instanceof Resultset) {
+                                    // If there are multiple related records, iterate through them
+                                    foreach ($relatedRecords as $item) {
+                                        if ($item instanceof ModelsBase) {
+                                            $dependencyGroups[$relatedModelClass][] = $item;
+                                        }
+                                    }
+                                } elseif ($relatedRecords instanceof ModelsBase) {
+                                    // If there is a single related record, add it
+                                    $dependencyGroups[$relatedModelClass][] = $relatedRecords;
+                                }
+                            }
                         }
                     }
-                } elseif ($relatedRecords instanceof ModelsBase) {
-                    // If there is a single related record, add it
-                    $dependencyGroups[$relatedModel][] = $relatedRecords;
+                }
+
+                if (!$foundRelations) {
+                    // Throw an exception if there is an error in the model relationship
+                    throw new Model\Exception('Error on models relationship ' . $errorMessage);
                 }
             }
         }
