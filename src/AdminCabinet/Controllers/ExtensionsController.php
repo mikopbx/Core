@@ -21,7 +21,6 @@
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\ExtensionEditForm;
-use MikoPBX\Common\Models\{Extensions, Sip};
 
 class ExtensionsController extends BaseController
 {

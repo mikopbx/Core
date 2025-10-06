@@ -20,20 +20,21 @@
 
 /**
  * Password Widget Module
- * 
+ *
  * A comprehensive password field component that provides:
  * - Password generation
  * - Strength validation with real-time feedback
  * - Visual progress indicator
  * - API-based validation with local fallback
  * - Form validation integration
- * 
+ *
  * Usage:
  * const widget = PasswordWidget.init('#myPasswordField', {
  *     mode: 'full',              // 'full' | 'generate-only' | 'display-only' | 'disabled'
  *     validation: 'soft',        // 'hard' | 'soft' | 'none'
  *     minScore: 60,
  *     generateLength: 16,
+ *     includeSpecial: true,      // Include special characters in generated passwords
  *     onValidate: (isValid, score, messages) => { ... }
  * });
  */
@@ -72,6 +73,7 @@ const PasswordWidget = {
         showWarnings: true,
         minScore: 60,
         generateLength: 16,
+        includeSpecial: true,       // Include special characters in generated passwords
         validateOnInput: true,
         checkOnLoad: false,
         onValidate: null,        // Callback: (isValid, score, messages) => void
@@ -871,36 +873,39 @@ const PasswordWidget = {
      */
     generatePassword(instance) {
         const { options } = instance;
-        
+
         // Show loading state
         if (instance.elements.$generateBtn) {
             instance.elements.$generateBtn.addClass('loading');
         }
-        
+
         // Generate password
         const generateCallback = (result) => {
             const password = typeof result === 'string' ? result : result.password;
-            
+
             // Set password
             this.setGeneratedPassword(instance, password);
-            
+
             // Remove loading state
             if (instance.elements.$generateBtn) {
                 instance.elements.$generateBtn.removeClass('loading');
             }
-            
+
             // Call callback
             if (options.onGenerate) {
                 options.onGenerate(password);
             }
         };
-        
+
         // Use API if available
         if (typeof PasswordsAPI !== 'undefined') {
             PasswordsAPI.generatePassword(options.generateLength, generateCallback);
         } else {
-            // Simple local generator
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
+            // Simple local generator with configurable special characters
+            let chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            if (options.includeSpecial) {
+                chars += '!@#$%^&*';
+            }
             let password = '';
             for (let i = 0; i < options.generateLength; i++) {
                 password += chars.charAt(Math.floor(Math.random() * chars.length));

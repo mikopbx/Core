@@ -792,7 +792,8 @@ const extension = {
             validateOnInput: true,        // Validate as user types
             checkOnLoad: true, // Always validate if password field has value
             minScore: 30,                 // SIP passwords have lower minimum score requirement
-            generateLength: 32,           // Generate 32 character passwords for better security
+            generateLength: 20,           // 20 chars max for Grandstream GDMS compatibility
+            includeSpecial: false,        // Exclude special characters for SIP compatibility
             onGenerate: (password) => {
                 // Trigger form change to enable save button
                 Form.dataChanged();

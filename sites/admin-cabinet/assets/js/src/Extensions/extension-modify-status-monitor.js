@@ -269,11 +269,12 @@ const ExtensionModifyStatusMonitor = {
         if (!this.$activeDevicesList || !Array.isArray(devices)) {
             return;
         }
-        
+
         if (devices.length === 0) {
             this.$activeDevicesList.html(`
-                <div class="ui message">
-                    <div class="content">
+                <div class="ui placeholder segment">
+                    <div class="ui icon header">
+                        <i class="desktop icon"></i>
                         ${globalTranslate.ex_NoActiveDevices}
                     </div>
                 </div>
@@ -387,8 +388,9 @@ const ExtensionModifyStatusMonitor = {
 
         if (historyData.length === 0) {
             this.$deviceHistoryList.html(`
-                <div class="ui message">
-                    <div class="content">
+                <div class="ui placeholder segment">
+                    <div class="ui icon header">
+                        <i class="history icon"></i>
                         ${globalTranslate.ex_NoHistoryAvailable}
                     </div>
                 </div>
@@ -882,7 +884,7 @@ const ExtensionModifyStatusMonitor = {
             // Use Fomantic UI table row states
             // 'negative' = red row (banned)
             // 'positive' = green row (not banned)
-            const rowClass = isBanned ? 'negative' : 'positive';
+            const rowClass = isBanned ? 'negative' : '';
 
             const lastAttempt = new Date(stats.last_attempt * 1000).toLocaleString();
 

@@ -175,11 +175,10 @@
         </div>
     </h3>
     <div id="active-devices-list">
-        <div class="ui relaxed divided list">
-            <div class="item">
-                <div class="content">
-                    <div class="description">{{ t._('ex_NoActiveDevices') }}</div>
-                </div>
+        <div class="ui placeholder segment">
+            <div class="ui icon header">
+                <i class="desktop icon"></i>
+                {{ t._('ex_NoActiveDevices') }}
             </div>
         </div>
     </div>
@@ -193,11 +192,10 @@
         </div>
     </h3>
     <div id="device-history-list">
-        <div class="ui relaxed divided list">
-            <div class="item">
-                <div class="content">
-                    <div class="description">{{ t._('ex_NoHistoryAvailable') }}</div>
-                </div>
+        <div class="ui placeholder segment">
+            <div class="ui icon header">
+                <i class="history icon"></i>
+                {{ t._('ex_NoHistoryAvailable') }}
             </div>
         </div>
     </div>
@@ -206,13 +204,12 @@
 
     <!-- Security section -->
     <h3 class="ui header">
-        <i class="shield icon"></i>
         <div class="content">
             {{ t._('ex_Security') }}
         </div>
     </h3>
-    <div id="security-info" class="ui basic segment">
-        <table id="security-failed-auth-table" class="ui very compact single line table">
+    <div id="security-info">
+        <table id="security-failed-auth-table" class="ui very compact single line table" style="display: none;">
             <thead>
                 <tr>
                     <th>{{ t._('ex_SecurityIP') }}</th>
@@ -223,7 +220,7 @@
             </thead>
             <tbody></tbody>
         </table>
-        <div id="no-security-data" class="ui placeholder segment" style="display: none;">
+        <div id="no-security-data" class="ui placeholder segment">
             <div class="ui icon header">
                 <i class="shield icon"></i>
                 {{ t._('ex_SecurityNoFailures') }}

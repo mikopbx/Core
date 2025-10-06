@@ -20,13 +20,14 @@
 
 namespace MikoPBX\AdminCabinet\Forms;
 
+use MikoPBX\AdminCabinet\Forms\Elements\SemanticUIDropdown;
+use MikoPBX\AdminCabinet\Library\SecurityHelper;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\WebUIConfigInterface;
-use MikoPBX\AdminCabinet\Library\SecurityHelper;
-use MikoPBX\AdminCabinet\Forms\Elements\SemanticUIDropdown;
 use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\TextArea;
 use Phalcon\Forms\Form;
+use stdClass;
 
 /**
  * @property \MikoPBX\Common\Providers\TranslationProvider translation
@@ -35,6 +36,9 @@ abstract class BaseForm extends Form
 {
     public function initialize($entity = null, $options = null): void
     {
+        if ($entity === null) {
+            $entity = new stdClass();
+        }
         PBXConfModulesProvider::hookModulesMethod(
             WebUIConfigInterface::ON_BEFORE_FORM_INITIALIZE,
             [$this, $entity, $options]

@@ -429,12 +429,12 @@ class Sip extends ModelsBase
     /**
      * Generates a random SIP password.
      *
-     * @param int $length Password length (default: 9)
+     * @param int $length Password length (default: 20) for Grandstream GDMS compatibility without special characters
      * @return string The generated SIP password.
      */
-    public static function generateSipPassword(int $length = 9): string
+    public static function generateSipPassword(int $length = 20): string
     {
-        return PasswordService::generate(['length' => $length]);
+        return PasswordService::generate(['length' => $length, 'includeSpecial' => false]);
     }
 
     /**
