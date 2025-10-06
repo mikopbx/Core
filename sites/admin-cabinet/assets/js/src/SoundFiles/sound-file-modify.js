@@ -356,8 +356,7 @@ const soundFileModifyRest = {
             },
 
             onMergeComplete: (data) => {
-                soundFileModifyRest.$submitButton.removeClass('loading');
-                soundFileModifyRest.$formObj.removeClass('loading');
+                // Keep loading state during conversion
                 // Perform conversion after merge - use the filePath from the response
                 const category = soundFileModifyRest.$formObj.form('get value', 'category');
                 SoundFilesAPI.convertAudioFile({temp_filename: filePath, category: category}, soundFileModifyRest.cbAfterConvertFile);
