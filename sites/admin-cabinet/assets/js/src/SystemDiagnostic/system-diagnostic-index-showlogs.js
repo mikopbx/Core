@@ -84,6 +84,12 @@ const systemDiagnosticLogs = {
     $formObj: $('#system-diagnostic-form'),
 
     /**
+     * Flag to prevent duplicate API calls during initialization
+     * @type {boolean}
+     */
+    isInitializing: true,
+
+    /**
      * Initializes the system diagnostic logs.
      */
     initialize() {
@@ -197,7 +203,7 @@ const systemDiagnosticLogs = {
      */
     adjustLogHeight() {
         setTimeout(() => {
-            let aceHeight = window.innerHeight - systemDiagnosticLogs.$logContent.offset().top - 25;
+            let aceHeight = window.innerHeight - systemDiagnosticLogs.$logContent.offset().top - 55;
             if (document.fullscreenElement) {
                 // If fullscreen mode is active
                 aceHeight = window.innerHeight - 80;
@@ -382,6 +388,11 @@ const systemDiagnosticLogs = {
      * Handles hash changes to update the selected file
      */
     handleHashChange() {
+        // Skip during initialization to prevent duplicate API calls
+        if (systemDiagnosticLogs.isInitializing) {
+            return;
+        }
+
         const hash = window.location.hash;
         if (hash && hash.startsWith('#file=')) {
             const filePath = decodeURIComponent(hash.substring(6));
@@ -465,28 +476,27 @@ const systemDiagnosticLogs = {
         if (selectedItem) {
             // Use setTimeout to ensure dropdown is fully initialized
             setTimeout(() => {
+                // Setting selected value will trigger onChange callback which calls updateLogFromServer()
                 systemDiagnosticLogs.$fileSelectDropDown.dropdown('set selected', selectedItem.value);
                 // Force refresh the dropdown to show the selected value
                 systemDiagnosticLogs.$fileSelectDropDown.dropdown('refresh');
                 // Also set the text to show full path
                 systemDiagnosticLogs.$fileSelectDropDown.dropdown('set text', selectedItem.value);
-                // Automatically load the log content when a file is pre-selected
                 systemDiagnosticLogs.$formObj.form('set value', 'filename', selectedItem.value);
-                systemDiagnosticLogs.updateLogFromServer();
             }, 100);
         } else if (defVal) {
             // If we have a default value but no item was marked as selected,
             // try to find and select it manually
-            const itemToSelect = systemDiagnosticLogs.logsItems.find(item => 
+            const itemToSelect = systemDiagnosticLogs.logsItems.find(item =>
                 item.type === 'file' && item.value === defVal
             );
             if (itemToSelect) {
                 setTimeout(() => {
+                    // Setting selected value will trigger onChange callback which calls updateLogFromServer()
                     systemDiagnosticLogs.$fileSelectDropDown.dropdown('set selected', itemToSelect.value);
                     systemDiagnosticLogs.$fileSelectDropDown.dropdown('refresh');
                     systemDiagnosticLogs.$fileSelectDropDown.dropdown('set text', itemToSelect.value);
                     systemDiagnosticLogs.$formObj.form('set value', 'filename', itemToSelect.value);
-                    systemDiagnosticLogs.updateLogFromServer();
                 }, 100);
             } else {
                 // Hide the dimmer after loading only if no file is selected
@@ -496,6 +506,11 @@ const systemDiagnosticLogs = {
             // Hide the dimmer after loading only if no file is selected
             systemDiagnosticLogs.$dimmer.removeClass('active');
         }
+
+        // Mark initialization as complete to allow hashchange handler to work
+        setTimeout(() => {
+            systemDiagnosticLogs.isInitializing = false;
+        }, 200);
     },
 
     /**
