@@ -85,7 +85,7 @@ class PbxApiClient {
 
                 // Redirect to login page after a short delay to allow any pending operations to complete
                 setTimeout(() => {
-                    window.location.href = '/admin/session/index';
+                    window.location.href = `${globalRootUrl}session/index`;
                 }, 100);
             }
             return true;
@@ -408,18 +408,6 @@ class PbxApiClient {
             data[globalCsrfTokenKey] = globalCsrfToken;
         }
 
-        // Check if data contains boolean or complex values
-        let hasComplexData = false;
-        for (const key in data) {
-            if (data.hasOwnProperty(key)) {
-                const value = data[key];
-                if (typeof value === 'boolean' || typeof value === 'object' || Array.isArray(value)) {
-                    hasComplexData = true;
-                    break;
-                }
-            }
-        }
-
         // Use JSON for complex data, form encoding for simple data
         const apiSettings = this.getBaseApiSettings(
             (response) => actualCallback(response, true),
@@ -432,13 +420,22 @@ class PbxApiClient {
             ...apiSettings
         };
 
-        if (hasComplexData) {
-            // Send as JSON to preserve boolean values and complex structures
-            ajaxSettings.data = JSON.stringify(data);
-            ajaxSettings.contentType = 'application/json';
-        } else {
-            // Send as regular form data
+        // For GET requests, always use query parameters (no JSON in body)
+        // For POST/PUT/DELETE, use JSON for complex data (objects, arrays)
+        if (httpMethod === 'GET') {
+            // GET requests: send as query parameters
             ajaxSettings.data = data;
+        } else {
+            // POST/PUT/DELETE: check if we need JSON encoding
+            const hasComplexData = PbxApiClient.hasComplexData(data);
+            if (hasComplexData) {
+                // Send as JSON to preserve complex structures
+                ajaxSettings.data = JSON.stringify(data);
+                ajaxSettings.contentType = 'application/json';
+            } else {
+                // Send as regular form data
+                ajaxSettings.data = data;
+            }
         }
 
         $.api(ajaxSettings);
