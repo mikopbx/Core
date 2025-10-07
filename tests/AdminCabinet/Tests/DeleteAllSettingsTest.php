@@ -396,8 +396,8 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
 
         // Check other entities
         $this->assertTrue(
-            $this->callQueueExistsBySearch('Sales department'),
-            'Call queue "Sales department" not found'
+            $this->callQueueExistsBySearch('Accountant department'),
+            'Call queue "Accountant department" not found'
         );
         $this->assertTrue(
             $this->ivrMenuExistsBySearch('Second IVR menu'),
@@ -552,8 +552,8 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
 
         // Check other entities deleted
         $this->assertFalse(
-            $this->callQueueExistsBySearch('Sales department'),
-            'Call queue "Sales department" should have been deleted'
+            $this->callQueueExistsBySearch('Accountant department'),
+            'Call queue "Accountant department" should have been deleted'
         );
         $this->assertFalse(
             $this->ivrMenuExistsBySearch('Second IVR menu'),
