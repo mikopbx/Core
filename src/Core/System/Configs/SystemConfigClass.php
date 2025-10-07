@@ -118,7 +118,9 @@ class SystemConfigClass extends Injectable implements SystemConfigInterface
     public function deleteMonitConf(): bool
     {
         $confPath = $this->getMainMonitConfFile();
-        unlink($confPath);
+        if (file_exists($confPath)) {
+            unlink($confPath);
+        }
         return true;
     }
 
@@ -170,7 +172,7 @@ class SystemConfigClass extends Injectable implements SystemConfigInterface
             " $additionalGrep | $this->busyBoxPath awk -F ' ' '{print \$2}'";
 
         $pid = Processes::getPidOfProcess($this::PROC_NAME);
-        return 'OK' === trim(shell_exec($command) ?? '') || !empty($pid);
+        return 'OK' === trim((string)shell_exec($command)) || !empty($pid);
     }
 
     /**
