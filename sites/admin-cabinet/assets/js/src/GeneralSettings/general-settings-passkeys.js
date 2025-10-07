@@ -1,0 +1,422 @@
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
+/* global globalTranslate, PasskeysAPI, UserMessage, ClipboardJS */
+
+/**
+ * GeneralSettingsPasskeys object is responsible for managing Passkeys in General Settings
+ *
+ * @module GeneralSettingsPasskeys
+ */
+const GeneralSettingsPasskeys = {
+    /**
+     * jQuery object for the container
+     * @type {jQuery}
+     */
+    $container: null,
+
+    /**
+     * Array of passkeys
+     * @type {Array}
+     */
+    passkeys: [],
+
+    /**
+     * Clipboard instance for copy functionality
+     * @type {ClipboardJS}
+     */
+    clipboard: null,
+
+    /**
+     * Initialize the Passkeys management module
+     */
+    initialize() {
+        this.$container = $('#passkeys-container');
+
+        if (this.$container.length === 0) {
+            return;
+        }
+
+        // Check if WebAuthn is supported
+        if (!window.PublicKeyCredential) {
+            this.renderUnsupportedMessage();
+            return;
+        }
+
+        this.loadPasskeys();
+        this.bindEventHandlers();
+    },
+
+    /**
+     * Render unsupported browser message
+     */
+    renderUnsupportedMessage() {
+        const html = `
+            <div class="ui warning message">
+                <i class="warning icon"></i>
+                ${globalTranslate.pk_NotSupported}
+            </div>
+        `;
+        this.$container.html(html);
+    },
+
+    /**
+     * Load passkeys from server
+     */
+    loadPasskeys() {
+        PasskeysAPI.getList((response) => {
+            if (response.result && response.data) {
+                this.passkeys = response.data;
+            } else {
+                this.passkeys = [];
+            }
+            this.renderTable();
+        });
+    },
+
+    /**
+     * Render the passkeys table
+     */
+    renderTable() {
+        let html = `
+            <table class="ui very basic table" id="passkeys-table">
+                <tbody>
+        `;
+
+        if (this.passkeys.length === 0) {
+            // Show placeholder when no passkeys
+            html += `
+                <tr id="passkeys-empty-row">
+                    <td colspan="2">
+                        <div class="ui placeholder segment">
+                            <div class="ui icon header">
+                                <i class="key icon"></i>
+                                ${globalTranslate.pk_NoPasskeys}
+                            </div>
+                            <div class="inline">
+                                <div class="ui text">
+                                    ${globalTranslate.pk_EmptyDescription}
+                                </div>
+                            </div>
+                            <div style="margin-top: 1em;">
+                                <a href="https://docs.mikopbx.com" target="_blank"
+                                   class="ui basic tiny button prevent-word-wrap">
+                                    <i class="question circle outline icon"></i>
+                                    ${globalTranslate.pk_ReadDocs}
+                                </a>
+                            </div>
+                            <div style="margin-top: 1em; text-align: center;">
+                                <button type="button" class="ui blue button prevent-word-wrap" id="add-passkey-button">
+                                    <i class="add circle icon"></i>
+                                    ${globalTranslate.pk_AddPasskey}
+                                </button>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        } else {
+            // Show existing passkeys
+            this.passkeys.forEach((passkey) => {
+                const lastUsed = passkey.last_used_at
+                    ? this.formatDate(passkey.last_used_at)
+                    : globalTranslate.pk_NeverUsed || 'Never used';
+
+                html += `
+                    <tr data-id="${passkey.id}">
+                        <td class="passkey-cell">
+                            <div style="margin-bottom: 0.3em;">
+                                <strong>${this.escapeHtml(passkey.name)}</strong>
+                            </div>
+                            <div style="font-size: 0.85em; color: rgba(0,0,0,.4);">
+                                ${globalTranslate.pk_ColumnLastUsed}: ${lastUsed}
+                            </div>
+                        </td>
+                        <td class="right aligned collapsing">
+                            <a class="ui basic icon button two-steps-delete delete-passkey-btn"
+                               data-id="${passkey.id}"
+                               data-content="${globalTranslate.pk_Delete}">
+                                <i class="trash icon red"></i>
+                            </a>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            // Add button row
+            html += `
+                <tr id="add-passkey-row">
+                    <td colspan="2">
+                        <button class="ui mini basic button" id="add-passkey-button">
+                            <i class="plus icon"></i>
+                            ${globalTranslate.pk_AddPasskey}
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }
+
+        html += `
+                </tbody>
+            </table>
+        `;
+
+        this.$container.html(html);
+
+        // Initialize tooltips
+        this.$container.find('[data-content]').popup();
+    },
+
+    /**
+     * Format date for display
+     * @param {string} dateString - ISO date string
+     * @returns {string} Formatted date
+     */
+    formatDate(dateString) {
+        if (!dateString) return '-';
+        const date = new Date(dateString);
+        return date.toLocaleString();
+    },
+
+    /**
+     * Bind event handlers
+     */
+    bindEventHandlers() {
+        // Add passkey button (delegated)
+        this.$container.on('click', '#add-passkey-button', (e) => {
+            e.preventDefault();
+            GeneralSettingsPasskeys.registerNewPasskey();
+        });
+
+        // Delete button (delegated)
+        // Only trigger deletion on second click (when two-steps-delete class is removed)
+        this.$container.on('click', '.delete-passkey-btn:not(.two-steps-delete)', (e) => {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            const passkeyId = $(e.currentTarget).data('id');
+            GeneralSettingsPasskeys.deletePasskey(passkeyId);
+        });
+    },
+
+    /**
+     * Generate passkey name based on browser and device information
+     * @returns {string} Generated passkey name
+     */
+    generatePasskeyName() {
+        const ua = navigator.userAgent;
+        let browser = 'Browser';
+        let os = 'Unknown OS';
+        let device = '';
+
+        // Detect browser
+        if (ua.indexOf('Edg') > -1) {
+            browser = 'Edge';
+        } else if (ua.indexOf('Chrome') > -1) {
+            browser = 'Chrome';
+        } else if (ua.indexOf('Safari') > -1) {
+            browser = 'Safari';
+        } else if (ua.indexOf('Firefox') > -1) {
+            browser = 'Firefox';
+        } else if (ua.indexOf('Opera') > -1 || ua.indexOf('OPR') > -1) {
+            browser = 'Opera';
+        }
+
+        // Detect OS
+        if (ua.indexOf('Win') > -1) {
+            os = 'Windows';
+        } else if (ua.indexOf('Mac') > -1) {
+            os = 'macOS';
+        } else if (ua.indexOf('Linux') > -1) {
+            os = 'Linux';
+        } else if (ua.indexOf('Android') > -1) {
+            os = 'Android';
+        } else if (ua.indexOf('iPhone') > -1 || ua.indexOf('iPad') > -1) {
+            os = ua.indexOf('iPhone') > -1 ? 'iPhone' : 'iPad';
+        }
+
+        // Detect device type for mobile
+        if (ua.indexOf('Mobile') > -1 && os !== 'Android' && os !== 'iPhone' && os !== 'iPad') {
+            device = ' Mobile';
+        }
+
+        // Build name
+        const timestamp = new Date().toLocaleDateString();
+        return `${browser} on ${os}${device} (${timestamp})`;
+    },
+
+    /**
+     * Register new passkey using WebAuthn
+     */
+    async registerNewPasskey() {
+        // Auto-generate passkey name based on browser/device
+        const passkeyName = GeneralSettingsPasskeys.generatePasskeyName();
+
+        const $button = $('#add-passkey-button');
+        $button.addClass('loading disabled');
+
+        try {
+            // Step 1: Get challenge from server
+            PasskeysAPI.registrationStart(passkeyName, async (response) => {
+                if (!response.result) {
+                    $button.removeClass('loading disabled');
+                    UserMessage.showMultiString(response.messages);
+                    return;
+                }
+
+                try {
+                    // Step 2: Call WebAuthn API
+                    const publicKeyOptions = GeneralSettingsPasskeys.prepareCredentialCreationOptions(response.data);
+                    const credential = await navigator.credentials.create({ publicKey: publicKeyOptions });
+
+                    // Step 3: Send attestation to server
+                    const attestationData = GeneralSettingsPasskeys.prepareAttestationData(credential, response.data, passkeyName);
+
+                    PasskeysAPI.registrationFinish(attestationData, (finishResponse) => {
+                        $button.removeClass('loading disabled');
+
+                        if (finishResponse.result) {
+                            GeneralSettingsPasskeys.loadPasskeys();
+                        } else {
+                            UserMessage.showMultiString(finishResponse.messages);
+                        }
+                    });
+                } catch (error) {
+                    $button.removeClass('loading disabled');
+                    console.error('WebAuthn registration error:', error);
+
+                    // Handle user cancellation gracefully
+                    if (error.name === 'NotAllowedError') {
+                        UserMessage.showError(globalTranslate.pk_RegisterCancelled || 'Registration was cancelled');
+                    } else {
+                        UserMessage.showError(`${globalTranslate.pk_RegisterError}: ${error.message}`);
+                    }
+                }
+            });
+        } catch (error) {
+            $button.removeClass('loading disabled');
+            console.error('Registration start error:', error);
+            UserMessage.showError(`${globalTranslate.pk_RegisterError}: ${error.message}`);
+        }
+    },
+
+    /**
+     * Prepare credential creation options for WebAuthn API
+     * @param {object} serverData - Data from server
+     * @returns {object} PublicKeyCredentialCreationOptions
+     */
+    prepareCredentialCreationOptions(serverData) {
+        return {
+            challenge: GeneralSettingsPasskeys.base64urlToArrayBuffer(serverData.challenge),
+            rp: serverData.rp,
+            user: {
+                id: GeneralSettingsPasskeys.base64urlToArrayBuffer(serverData.user.id),
+                name: serverData.user.name,
+                displayName: serverData.user.displayName,
+            },
+            pubKeyCredParams: serverData.pubKeyCredParams,
+            authenticatorSelection: serverData.authenticatorSelection,
+            timeout: serverData.timeout || 60000,
+            attestation: serverData.attestation || 'none',
+        };
+    },
+
+    /**
+     * Prepare attestation data to send to server
+     * @param {PublicKeyCredential} credential - Credential from WebAuthn
+     * @param {object} serverData - Original server data with sessionId
+     * @param {string} passkeyName - Generated passkey name
+     * @returns {object} Attestation data
+     */
+    prepareAttestationData(credential, serverData, passkeyName) {
+        const response = credential.response;
+
+        return {
+            sessionId: serverData.sessionId,
+            credentialId: GeneralSettingsPasskeys.arrayBufferToBase64url(credential.rawId),
+            name: passkeyName,
+            attestationObject: GeneralSettingsPasskeys.arrayBufferToBase64url(response.attestationObject),
+            clientDataJSON: GeneralSettingsPasskeys.arrayBufferToBase64url(response.clientDataJSON),
+        };
+    },
+
+    /**
+     * Delete passkey (without confirmation - using two-steps-delete mechanism)
+     * @param {string} passkeyId - ID of passkey to delete
+     */
+    deletePasskey(passkeyId) {
+        PasskeysAPI.deleteRecord(passkeyId, (response) => {
+            if (response.result) {
+                GeneralSettingsPasskeys.loadPasskeys();
+            } else {
+                UserMessage.showMultiString(response.messages);
+            }
+        });
+    },
+
+    /**
+     * Convert base64url string to ArrayBuffer
+     * @param {string} base64url - Base64url encoded string
+     * @returns {ArrayBuffer}
+     */
+    base64urlToArrayBuffer(base64url) {
+        const padding = '='.repeat((4 - (base64url.length % 4)) % 4);
+        const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/') + padding;
+        const rawData = window.atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+        for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray.buffer;
+    },
+
+    /**
+     * Convert ArrayBuffer to base64url string
+     * @param {ArrayBuffer} buffer - ArrayBuffer to convert
+     * @returns {string} Base64url encoded string
+     */
+    arrayBufferToBase64url(buffer) {
+        const bytes = new Uint8Array(buffer);
+        let binary = '';
+        for (let i = 0; i < bytes.byteLength; i++) {
+            binary += String.fromCharCode(bytes[i]);
+        }
+        const base64 = window.btoa(binary);
+        return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+    },
+
+    /**
+     * Escape HTML for safe display
+     * @param {string} text Text to escape
+     * @return {string} Escaped text
+     */
+    escapeHtml(text) {
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, m => map[m]);
+    }
+};
+
+// Initialize when document is ready
+$(document).ready(() => {
+    GeneralSettingsPasskeys.initialize();
+});

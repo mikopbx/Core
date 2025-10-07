@@ -38,6 +38,8 @@ interface WebUIConfigInterface
 {
     public const string AUTHENTICATE_USER = 'authenticateUser';
 
+    public const string GET_PASSKEY_SESSION_DATA = 'getPasskeySessionData';
+
     public const string ON_AFTER_ACL_LIST_PREPARED = 'onAfterACLPrepared';
 
     public const string ON_BEFORE_HEADER_MENU_SHOW = 'onBeforeHeaderMenuShow';

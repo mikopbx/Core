@@ -71,6 +71,7 @@ use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadTimezoneAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadVoicemailAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadWorkerCallEventsAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\RestartPBXCoreAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\UpdatePasskeysLoginAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\ProcessCustomFiles;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\ProcessOtherModels;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\ProcessPBXSettings;
@@ -318,7 +319,8 @@ class WorkerModelsEvents extends WorkerBase
             ReloadRecordSavePeriodAction::class,
             ReloadAdviceAction::class,
             ReloadCloudDescriptionAction::class,
-            ReloadCloudParametersAction::class
+            ReloadCloudParametersAction::class,
+            UpdatePasskeysLoginAction::class
         ];
     }
 
