@@ -4,591 +4,455 @@ This file provides guidance to Claude Code (claude.ai/code) for REST API develop
 
 ## REST API Architecture Overview
 
-MikoPBX REST API uses a queue-based architecture with the following components:
-
-1. **Frontend (Nginx)** → Routes requests to PHP-FPM
-2. **Controllers** → Handle HTTP requests, validate input, send to workers
-3. **Redis Queue** → Stores API requests for processing
-4. **Worker Processes** → Pull requests from queue, execute business logic
-5. **Processors** → Contain actual business logic for API actions
-6. **Response** → Sent back through Redis with support for large payloads
-
-### Request Flow
+MikoPBX REST API uses a queue-based architecture:
 
 ```
-HTTP Request → Controller → Redis Queue → Worker → Processor → Redis Response → HTTP Response
+HTTP Request → Middleware (Auth/CSRF) → Controller → Redis Queue → Worker → Processor (enum+match) → Action → DataStructure → Response
 ```
+
+**API Versions:**
+- **v3 API** (Current) - `/pbxcore/api/v3/` - PHP 8 attributes, OpenAPI 3.1, Google API Design Guide
+- **Legacy API** - `/pbxcore/api/` - Backward compatibility
 
 ## Core Components
 
-### 1. Controllers
+### 1. Controllers (v3 API)
 
-Controllers handle incoming HTTP requests and are organized by resource type:
+**Reference:** `src/PBXCoreREST/Controllers/CallQueues/RestController.php`
+
+Controllers use PHP 8 attributes and extend `BaseRestController`:
 
 ```php
-// Example: src/PBXCoreREST/Controllers/Extensions/PostController.php
-class PostController extends BaseController
+#[ApiResource(path: '/pbxcore/api/v3/call-queues', tags: ['Call Queues'])]
+#[ResourceSecurity('call_queues', requirements: [SecurityType::SESSION, SecurityType::BEARER_TOKEN])]
+#[HttpMapping(
+    mapping: ['GET' => ['getList', 'getRecord'], 'POST' => ['create'], ...],
+    resourceLevelMethods: ['getRecord', 'update', 'patch', 'delete'],
+    collectionLevelMethods: ['getList', 'create'],
+    customMethods: ['getDefault', 'copy'],
+    idPattern: 'QUEUE-[A-Z0-9]{8,}'
+)]
+class RestController extends BaseRestController
 {
-    public function callAction(string $actionName): void
-    {
-        // Sanitize input data
-        $postData = self::sanitizeData($this->request->getPost(), $this->filter);
-        
-        // Send to backend worker
-        $this->sendRequestToBackendWorker(
-            ExtensionsManagementProcessor::class, 
-            $actionName, 
-            $postData
-        );
-    }
+    protected string $processorClass = CallQueuesManagementProcessor::class;
+
+    // Methods documented with attributes, implementation in BaseRestController
+    public function getList(): void {}
+    public function getRecord(string $id): void {}
 }
 ```
+
+**Key Features:**
+- Zero implementation needed - `BaseRestController` handles routing
+- Automatic OpenAPI generation from attributes
+- Auto-discovery by `RouterProvider` - no route registration needed
 
 ### 2. Processors
 
-Processors contain the business logic and handle specific actions:
+**Reference:** `src/PBXCoreREST/Lib/CallQueuesManagementProcessor.php`
+
+Type-safe dispatching with PHP 8 enums and match expressions:
 
 ```php
-// Example: src/PBXCoreREST/Lib/ExtensionsManagementProcessor.php
-class ExtensionsManagementProcessor extends Injectable
+enum CallQueueAction: string {
+    case GET_LIST = 'getList';
+    case CREATE = 'create';
+    // ...
+}
+
+class CallQueuesManagementProcessor extends Injectable
 {
     public static function callBack(array $request): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $action = $request['action'];
-        $data = $request['data'];
-        
-        switch ($action) {
-            case 'getRecord':
-                $res = GetRecordAction::main($data['id'] ?? '');
-                break;
-            case 'saveRecord':
-                $res = SaveRecordAction::main($data);
-                break;
-            // ... other actions
-        }
-        
-        return $res;
+        $action = CallQueueAction::tryFrom($request['action']);
+
+        return match ($action) {
+            CallQueueAction::GET_LIST => GetListAction::main($request['data']),
+            CallQueueAction::CREATE => CreateRecordAction::main($request['data']),
+            // ...
+        };
     }
 }
 ```
 
-### 3. Workers
+### 3. Action Classes
 
-The main worker that processes API requests:
+**Reference:** `src/PBXCoreREST/Lib/CallQueues/GetListAction.php`
+
+One action = one class with static `main()` method:
 
 ```php
-// src/PBXCoreREST/Workers/WorkerApiCommands.php
-class WorkerApiCommands extends WorkerRedisBase
+class GetListAction extends AbstractGetListAction
 {
-    // Redis queue for API requests
-    public const string REDIS_API_QUEUE = 'api:requests';
-    
-    // Processes requests from the queue
-    public function start(array $argv): void
+    public static function main(array $data = []): PBXApiResult
     {
-        while (!$this->isShuttingDown) {
-            // Get job from queue
-            $result = $this->redis->blpop([self::REDIS_API_QUEUE], 5);
-            
-            // Process the job
-            $this->processJobDirect($jobId, $requestData);
-        }
+        return self::executeStandardList(
+            $data,
+            CallQueues::class,
+            DataStructure::class,
+            ['name', 'description'],  // Search fields
+            ['name', 'extension'],    // Sort fields
+            'name ASC'               // Default order
+        );
     }
 }
 ```
 
-### 4. API Result Structure
+**Available Abstract Classes:**
+- `AbstractGetListAction` - List with search/sort/pagination
+- `AbstractGetRecordAction` - Single record by ID
+- `AbstractCreateAction` - Create with validation
+- `AbstractUpdateAction` - Full replacement
+- `AbstractPatchAction` - Partial update
+- `AbstractDeleteAction` - Delete with checks
 
-All API responses follow a standard structure:
+### 4. DataStructure
+
+**Reference:** `src/PBXCoreREST/Lib/CallQueues/DataStructure.php`
+
+Transform models and provide OpenAPI schemas:
 
 ```php
-class PBXApiResult
+class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvider
 {
-    public bool $success = false;
-    public array $data = [];
-    public array $messages = [];
-    public string $processor = '';
-    public string $function = '';
-    
-    public function getResult(): array
+    use SearchIndexTrait;
+
+    public static function createFromModel($model): array
+    {
+        $data = self::createBaseStructure($model);
+        $data['id'] = $model->uniqid;  // Use uniqid for v3 API
+
+        // Add fields with representations
+        $data = self::addMultipleExtensionFields($data, [...]);
+        $data = self::addSoundFileField($data, 'moh_sound_id', $model->moh_sound_id);
+
+        return self::formatBySchema($data, 'detail');
+    }
+
+    public static function getDetailSchema(): array
     {
         return [
-            'result' => $this->success,
-            'data' => $this->data,
-            'messages' => $this->messages,
-            'function' => $this->function,
-            'processor' => $this->processor,
-            'pid' => getmypid(),
+            'type' => 'object',
+            'properties' => [
+                'id' => ['type' => 'string', 'pattern' => '^QUEUE-[A-Z0-9]{8}$'],
+                'timeout' => ['type' => 'integer', 'minimum' => 0, 'maximum' => 300],
+                'enabled' => ['type' => 'boolean', 'default' => false]
+            ]
         ];
     }
 }
 ```
+
+**Key Methods:**
+- `createFromModel()` - Detail view with all fields
+- `createForList()` - List view with search index
+- `getDetailSchema()` - OpenAPI schema for validation/conversion
+- `getListItemSchema()` - Schema for list items
+- `formatBySchema()` - Auto-convert types (string→int, string→bool)
+
+## PHP Attributes
+
+**Available Attributes:**
+
+| Attribute | Level | Purpose |
+|-----------|-------|---------|
+| `#[ApiResource]` | Class | Resource metadata, tags, processor |
+| `#[HttpMapping]` | Class | HTTP method mapping, custom methods, ID pattern |
+| `#[ResourceSecurity]` | Class | Security requirements, ACL |
+| `#[ApiOperation]` | Method | Operation summary, description, operationId |
+| `#[ApiParameter]` | Method | Parameters (query, path, body) |
+| `#[ApiResponse]` | Method | Response codes and schemas |
+| `#[ApiDataSchema]` | Method | Link to DataStructure class |
 
 ## Creating New API Endpoints
 
-### 1. Define Routes
+### Quick Start
 
-Add routes in `src/PBXCoreREST/Providers/RouterProvider.php`:
+1. **Create Controller:** `src/PBXCoreREST/Controllers/YourResource/RestController.php`
+2. **Create Processor:** `src/PBXCoreREST/Lib/YourResourceManagementProcessor.php` (with enum)
+3. **Create Actions:** `src/PBXCoreREST/Lib/YourResource/*Action.php`
+4. **Create DataStructure:** `src/PBXCoreREST/Lib/YourResource/DataStructure.php`
+5. **Done!** Routes auto-discovered by `RouterProvider`
+
+### Example Structure
+
+```
+src/PBXCoreREST/
+├── Controllers/
+│   └── YourResource/
+│       └── RestController.php          # Attributes only, no implementation
+├── Lib/
+│   ├── YourResourceManagementProcessor.php  # Enum + match dispatch
+│   └── YourResource/
+│       ├── DataStructure.php           # Model → API format + schemas
+│       ├── GetListAction.php           # extends AbstractGetListAction
+│       ├── GetRecordAction.php         # extends AbstractGetRecordAction
+│       ├── CreateRecordAction.php      # extends AbstractCreateAction
+│       ├── UpdateRecordAction.php      # extends AbstractUpdateAction
+│       ├── PatchRecordAction.php       # extends AbstractPatchAction
+│       └── DeleteRecordAction.php      # extends AbstractDeleteAction
+```
+
+**Generated Routes:**
+- `GET /pbxcore/api/v3/your-resource` → getList
+- `GET /pbxcore/api/v3/your-resource/{id}` → getRecord
+- `POST /pbxcore/api/v3/your-resource` → create
+- `PUT /pbxcore/api/v3/your-resource/{id}` → update
+- `PATCH /pbxcore/api/v3/your-resource/{id}` → patch
+- `DELETE /pbxcore/api/v3/your-resource/{id}` → delete
+
+### Custom Methods (Google API Design Guide)
+
+Collection-level: `GET /resource:method`
+Resource-level: `GET /resource/{id}:method`
 
 ```php
-private function getRoutes(): array
-{
-    return [
-        // [Controller, Method, Route, HTTP Method, Regex]
-        [MyResourceGetController::class, 'callAction', '/pbxcore/api/my-resource/{actionName}', 'get', '/'],
-        [MyResourcePostController::class, 'callAction', '/pbxcore/api/my-resource/{actionName}', 'post', '/'],
-    ];
-}
-```
-
-### 2. Create Controllers
-
-Create GET and POST controllers in `src/PBXCoreREST/Controllers/MyResource/`:
-
-```php
-// GetController.php
-namespace MikoPBX\PBXCoreREST\Controllers\MyResource;
-
-class GetController extends BaseController
-{
-    public function callAction(string $actionName): void
-    {
-        $getData = $this->request->getQuery();
-        $this->sendRequestToBackendWorker(
-            MyResourceProcessor::class,
-            $actionName,
-            $getData
-        );
-    }
-}
-
-// PostController.php  
-class PostController extends BaseController
-{
-    public function callAction(string $actionName): void
-    {
-        $postData = self::sanitizeData($this->request->getPost(), $this->filter);
-        $this->sendRequestToBackendWorker(
-            MyResourceProcessor::class,
-            $actionName,
-            $postData
-        );
-    }
-}
-```
-
-### 3. Create Processor
-
-Create processor in `src/PBXCoreREST/Lib/MyResourceProcessor.php`:
-
-```php
-class MyResourceProcessor extends Injectable
-{
-    public static function callBack(array $request): PBXApiResult
-    {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
-        
-        $action = $request['action'];
-        $data = $request['data'];
-        
-        switch ($action) {
-            case 'list':
-                $res = self::getList($data);
-                break;
-            case 'create':
-                $res = self::create($data);
-                break;
-            case 'update':
-                $res = self::update($data);
-                break;
-            case 'delete':
-                $res = self::delete($data);
-                break;
-            default:
-                $res->messages['error'][] = "Unknown action - $action";
-        }
-        
-        $res->function = $action;
-        return $res;
-    }
-    
-    private static function getList(array $data): PBXApiResult
-    {
-        $res = new PBXApiResult();
-        
-        // Business logic here
-        $records = MyModel::find();
-        
-        $res->data = $records->toArray();
-        $res->success = true;
-        
-        return $res;
-    }
-}
-```
-
-### 4. Create Action Classes (Optional)
-
-For complex operations, create dedicated action classes:
-
-```php
-// src/PBXCoreREST/Lib/MyResource/CreateAction.php
-class CreateAction
-{
-    public static function main(array $data): PBXApiResult
-    {
-        $res = new PBXApiResult();
-        
-        // Validation
-        if (empty($data['name'])) {
-            $res->messages['error'][] = 'Name is required';
-            return $res;
-        }
-        
-        // Create record
-        $record = new MyModel();
-        $record->name = $data['name'];
-        
-        if ($record->save()) {
-            $res->success = true;
-            $res->data = ['id' => $record->id];
-        } else {
-            $res->messages['error'] = $record->getMessages();
-        }
-        
-        return $res;
-    }
-}
-```
-
-## JavaScript Client Usage
-
-### 1. Define API Endpoints
-
-Add endpoints to `sites/admin-cabinet/assets/js/src/PbxAPI/pbxapi.js`:
-
-```javascript
-const PbxApi = {
-    // Your API endpoints
-    myResourceList: `${Config.pbxUrl}/pbxcore/api/my-resource/list`,
-    myResourceCreate: `${Config.pbxUrl}/pbxcore/api/my-resource/create`,
-    myResourceUpdate: `${Config.pbxUrl}/pbxcore/api/my-resource/update`,
-    myResourceDelete: `${Config.pbxUrl}/pbxcore/api/my-resource/delete`,
-    
-    // ... existing endpoints
-};
-```
-
-### 2. Create API Methods
-
-```javascript
-// GET request example
-MyResourceGetList(callback) {
-    $.api({
-        url: PbxApi.myResourceList,
-        on: 'now',
-        successTest: PbxApi.successTest,
-        onSuccess(response) {
-            callback(response.data);
-        },
-        onFailure() {
-            callback(false);
-        }
-    });
-},
-
-// POST request example
-MyResourceCreate(data, callback) {
-    $.api({
-        url: PbxApi.myResourceCreate,
-        on: 'now',
-        method: 'POST',
-        data: data,
-        successTest: PbxApi.successTest,
-        onSuccess(response) {
-            callback(response.data);
-        },
-        onFailure(response) {
-            callback(response.messages);
-        }
-    });
-},
-
-// Async request with channel
-MyResourceProcess(params, callback) {
-    $.api({
-        url: PbxApi.myResourceProcess,
-        on: 'now',
-        method: 'POST',
-        data: params,
-        beforeXHR(xhr) {
-            xhr.setRequestHeader('X-Async-Response-Channel-Id', params.channelId);
-            return xhr;
-        },
-        successTest: PbxApi.successTest,
-        onSuccess(response) {
-            callback(response);
-        }
-    });
-}
-```
-
-## Module API Extension
-
-Modules can extend the REST API without modifying core code.
-
-### 1. Module Routes
-
-Modules use the standard route pattern:
-```
-/pbxcore/api/modules/{moduleName}/{actionName}
-```
-
-### 2. Module API Implementation
-
-In your module's main class:
-
-```php
-class ModuleNameConf extends ConfigClass implements CoreAPIInterface
-{
-    /**
-     * Process module API requests
-     * 
-     * @param array $request
-     */
-    public function moduleRestAPICallback(array $request): void
-    {
-        $action = $request['action'];
-        $data = $request['data'];
-        
-        switch ($action) {
-            case 'status':
-                $this->getModuleStatus();
-                break;
-            case 'customAction':
-                $this->processCustomAction($data);
-                break;
-            default:
-                ProcessorClass::responseError('Unknown action');
-        }
-    }
-    
-    private function getModuleStatus(): void
-    {
-        $response = [
-            'status' => 'active',
-            'version' => '1.0.0'
-        ];
-        
-        ProcessorClass::responseSuccess($response);
-    }
-}
-```
-
-### 3. No-Auth Endpoints
-
-For endpoints that don't require authentication (webhooks, provisioning):
-
-```php
-public function needAuthentication(string $action): bool
-{
-    // List actions that don't need authentication
-    $noAuthActions = ['webhook', 'provision', 'callback'];
-    
-    return !in_array($action, $noAuthActions);
-}
-```
-
-## Common Patterns
-
-### 1. CRUD Operations
-
-Standard pattern for CRUD operations:
-
-```php
-// List all records
-case 'list':
-    $records = Model::find();
-    $res->data = $records->toArray();
-    $res->success = true;
-    break;
-
-// Get single record
-case 'get':
-    $record = Model::findFirst($data['id']);
-    if ($record) {
-        $res->data = $record->toArray();
-        $res->success = true;
-    } else {
-        $res->messages['error'][] = 'Record not found';
-    }
-    break;
-
-// Create record
-case 'create':
-    $record = new Model();
-    $record->assign($data);
-    if ($record->save()) {
-        $res->data = ['id' => $record->id];
-        $res->success = true;
-    } else {
-        $res->messages['error'] = $record->getMessages();
-    }
-    break;
-
-// Update record
-case 'update':
-    $record = Model::findFirst($data['id']);
-    if ($record) {
-        $record->assign($data);
-        if ($record->save()) {
-            $res->success = true;
-        } else {
-            $res->messages['error'] = $record->getMessages();
-        }
-    }
-    break;
-
-// Delete record
-case 'delete':
-    $record = Model::findFirst($data['id']);
-    if ($record && $record->delete()) {
-        $res->success = true;
-    } else {
-        $res->messages['error'][] = 'Failed to delete record';
-    }
-    break;
-```
-
-### 2. File Handling
-
-For file uploads and downloads:
-
-```php
-// File upload (uses Resumable.js)
-case 'uploadFile':
-    $uploadDir = $this->di->getShared('config')->path('www.uploadDir');
-    $res = FilesManagementProcessor::uploadFile($uploadDir);
-    break;
-
-// File download
-case 'downloadFile':
-    $filePath = $data['path'];
-    if (file_exists($filePath)) {
-        $res->data = [
-            'fpassthru' => [
-                'filename' => $filePath,
-                'need_delete' => false
-            ]
-        ];
-        $res->success = true;
-    }
-    break;
-```
-
-### 3. Async Operations
-
-For long-running operations:
-
-```php
-// In your processor
-if ($request['async'] === true) {
-    // Return immediate response
-    $res->success = true;
-    $res->messages['info'][] = 'Processing started';
-    
-    // Continue processing in background
-    // Results will be sent to asyncChannelId
-}
-```
-
-### 4. Error Handling
-
-Consistent error handling:
-
-```php
-try {
-    // Your code here
-    $res->success = true;
-} catch (\Exception $e) {
-    $res->messages['error'][] = $e->getMessage();
-    CriticalErrorsHandler::handleExceptionWithSyslog($e);
-}
+#[HttpMapping(customMethods: ['export', 'import'])]
+// In enum: case EXPORT = 'export';
+// Routes: /resource:export, /resource/{id}:import
 ```
 
 ## Authentication
 
-The API uses session-based authentication with these checks:
+**Reference:** `src/PBXCoreREST/Middleware/AuthenticationMiddleware.php`
 
-1. **Local requests** - Always allowed (127.0.0.1)
-2. **Debug mode** - Allowed if debug header present
-3. **Session auth** - Valid admin session cookie
-4. **Module no-auth** - Specific module endpoints
+### Methods (in priority order):
 
-Authentication is handled by `AuthenticationMiddleware`:
+1. **JWT Bearer Token** (15 min) - `/pbxcore/api/v3/auth:login`
+   ```bash
+   curl -X POST http://127.0.0.1:8081/pbxcore/api/v3/auth:login \
+        -H "Content-Type: application/json" \
+        -d '{"login":"admin","password":"your-password"}'
+   # Use: -H "Authorization: Bearer eyJ0eXAi..."
+   ```
+
+2. **API Keys** (no expiration) - `/admin-cabinet/api-keys/`
+   ```bash
+   curl -H "Authorization: Bearer miko_ak_1234567890abcdef..."
+   ```
+
+3. **Session** - Browser access with CSRF protection
+
+4. **Localhost** - Always allowed (127.0.0.1)
+
+5. **Public Endpoints** - No auth required:
+   - `/pbxcore/api/health`
+   - `/pbxcore/api/v3/auth:login`
+   - `/pbxcore/api/v3/auth:refresh`
+   - `/pbxcore/api/v3/passkeys:*`
+
+## Common Patterns
+
+### CRUD with Abstract Classes
 
 ```php
-// Check order in middleware
-if (
-    true !== $request->isLocalHostRequest()
-    && true !== $request->isDebugModeEnabled()
-    && true !== $request->isAuthorizedSessionRequest()
-    && true !== $isNoAuthApi
-) {
-    // Return 401 Unauthorized
+// List
+class GetListAction extends AbstractGetListAction {
+    public static function main(array $data = []): PBXApiResult {
+        return self::executeStandardList($data, Model::class, DataStructure::class,
+            ['name'], ['name'], 'name ASC');
+    }
+}
+
+// Get
+class GetRecordAction extends AbstractGetRecordAction {
+    public static function main(string $id): PBXApiResult {
+        return self::executeStandardGet($id, Model::class, DataStructure::class);
+    }
+}
+
+// Create
+class CreateRecordAction extends AbstractCreateAction {
+    public static function main(array $data): PBXApiResult {
+        return self::executeStandardCreate($data, Model::class, DataStructure::class);
+    }
 }
 ```
 
-## Performance Considerations
+### N+1 Prevention
 
-1. **Worker Pool** - Multiple workers process requests in parallel (default: 3)
-2. **Redis Queue** - Efficient job distribution
-3. **Large Responses** - Automatic compression for responses > 1MB
-4. **Timeouts** - Default 30s, configurable per request
-5. **Async Requests** - Use for long operations
+Pre-load related data in one query:
 
-## Testing API Endpoints
+```php
+$queues = CallQueues::find($queryOptions);
+$queueIds = array_column($queues->toArray(), 'uniqid');
+
+// Load all members at once
+$allMembers = CallQueueMembers::find([
+    'conditions' => 'queue IN ({ids:array})',
+    'bind' => ['ids' => $queueIds]
+]);
+
+// Group by queue
+foreach ($allMembers as $member) {
+    $membersByQueue[$member->queue][] = $member;
+}
+```
+
+### File Downloads
+
+```php
+$res->data = [
+    'fpassthru' => [
+        'filename' => $filePath,
+        'content_type' => 'application/octet-stream',
+        'download_name' => basename($filePath),
+        'need_delete' => false
+    ]
+];
+```
+
+### Error Handling
+
+```php
+try {
+    // Business logic
+    $res->success = true;
+} catch (ValidationException $e) {
+    $res->messages['error'][] = $e->getMessage();
+    $res->httpCode = 422;  // Unprocessable Entity
+} catch (ConflictException $e) {
+    $res->httpCode = 409;  // Conflict
+} catch (\Exception $e) {
+    $res->httpCode = 500;
+    CriticalErrorsHandler::handleExceptionWithSyslog($e);
+}
+```
+
+## HTTP Status Codes
+
+```php
+200 => 'OK'                     // GET, PUT, PATCH, DELETE success
+201 => 'Created'                // POST success
+400 => 'Bad Request'            // Invalid format
+401 => 'Unauthorized'           // No/invalid auth
+403 => 'Forbidden'              // No permission
+404 => 'Not Found'              // Resource missing
+409 => 'Conflict'               // Duplicate/constraint
+422 => 'Unprocessable Entity'   // Validation error
+500 => 'Internal Server Error'  // Unexpected error
+```
+
+## Testing
 
 ```bash
-# Test with curl
-curl -X GET http://127.0.0.1/pbxcore/api/extensions/getForSelect?type=all
+# Login
+TOKEN=$(curl -s -X POST http://127.0.0.1:8081/pbxcore/api/v3/auth:login \
+  -H "Content-Type: application/json" \
+  -d '{"login":"admin","password":"123456789MikoPBX#1"}' | jq -r '.data.accessToken')
 
-# Test with authentication
-curl -X POST -H "Cookie: PHPSESSID=your-session-id" \
-     -d '{"number":"101"}' \
-     http://127.0.0.1/pbxcore/api/extensions/available
+# GET list
+curl -X GET "http://127.0.0.1:8081/pbxcore/api/v3/call-queues?limit=10" \
+  -H "Authorization: Bearer $TOKEN"
 
-# Test async request
-curl -X POST -H "X-Async-Response-Channel-Id: test-channel" \
-     -d '{"action":"process"}' \
-     http://127.0.0.1/pbxcore/api/system/upgrade
+# POST create
+curl -X POST "http://127.0.0.1:8081/pbxcore/api/v3/call-queues" \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"name":"Test Queue","extension":"2200777"}'
+
+# PATCH update
+curl -X PATCH "http://127.0.0.1:8081/pbxcore/api/v3/call-queues/QUEUE-CF423A55" \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"strategy":"random"}'
+
+# Custom method
+curl -X GET "http://127.0.0.1:8081/pbxcore/api/v3/call-queues:getDefault" \
+  -H "Authorization: Bearer $TOKEN"
 ```
+
+## Module API Extension
+
+**Reference:** Module implementation in module's config class
+
+```php
+class ModuleConf extends ConfigClass implements RestAPIConfigInterface
+{
+    public function moduleRestAPICallback(array $request): void
+    {
+        $action = $request['action'];
+        $processor = match ($action) {
+            'getRoles' => GetRolesProcessor::class,
+            default => null
+        };
+
+        if ($processor === null) {
+            ProcessorClass::responseError('Unknown action', 400);
+            return;
+        }
+
+        ProcessorClass::responseSuccess($processor::process($request['data']));
+    }
+
+    public function needAuthentication(string $action): bool
+    {
+        return !in_array($action, ['webhook', 'provision']);
+    }
+}
+```
+
+**Routes:** `/pbxcore/api/modules/{moduleName}/{actionName}`
 
 ## Best Practices
 
-1. **Always validate input** in processors
-2. **Use action classes** for complex operations
-3. **Return consistent responses** using PBXApiResult
-4. **Handle errors gracefully** with try-catch
-5. **Log important operations** for debugging
-6. **Use transactions** for database operations
-7. **Implement proper authentication** for sensitive endpoints
-8. **Document API changes** in comments
-9. **Use type hints** for better code clarity
-10. **Follow existing patterns** in the codebase
-11. RESTART THE CONTAINER if you change any backend code 
-    
-## ABSOLUTE RULES:
+### Code Organization
+- One Action = One Class with single `main()` method
+- Use Abstract Classes for standard CRUD
+- Use Enums + Match for type-safe dispatching
+- Early returns for validation
 
-- NO PARTIAL IMPLEMENTATION
-- NO SIMPLIFICATION : no "//This is simplified stuff for now, complete implementation would blablabla"
-- NO CODE DUPLICATION : check existing codebase to reuse functions and constants Read files before writing new functions. Use common sense function name to find them easily.
-- NO DEAD CODE : either use or delete from codebase completely
-- IMPLEMENT TEST FOR EVERY FUNCTIONS
-- NO CHEATER TESTS : test must be accurate, reflect real usage and be designed to reveal flaws. No useless tests! Design tests to be verbose so we can use them for debuging.
-- NO INCONSISTENT NAMING - read existing codebase naming patterns.
-- NO OVER-ENGINEERING - Don't add unnecessary abstractions, factory patterns, or middleware when simple functions would work. Don't think "enterprise" when you need "working"
-- NO MIXED CONCERNS - Don't put validation logic inside API handlers, database queries inside UI components, etc. instead of proper separation
-- NO RESOURCE LEAKS - Don't forget to close database connections, clear timeouts, remove event listeners, or clean up file handles
+### API Design
+- Follow REST principles and HTTP methods
+- Use Google API Design Guide for custom methods
+- Always version APIs: `/api/v3/`
+- Implement pagination for lists
+
+### Data Handling
+- Never return raw models - use DataStructure
+- Define OpenAPI schemas for type conversion
+- Include representation fields for dropdowns
+- Use uniqid for v3 API IDs
+
+### Security
+- Prefer JWT for sessions, API Keys for integrations
+- Sanitize in controller, validate in action
+- Use parameterized queries (never string concatenation)
+- CSRF protection enabled by default
+
+### Performance
+- Pre-load related data (avoid N+1)
+- Implement pagination
+- Use database indexes on search/sort fields
+- Use async for operations >30s
+
+## ABSOLUTE RULES
+
+- **NO PARTIAL IMPLEMENTATION** - Complete all features
+- **NO CODE DUPLICATION** - Reuse existing functions
+- **NO DEAD CODE** - Delete unused code
+- **IMPLEMENT TESTS** - Every action needs tests
+- **NO INCONSISTENT NAMING** - Follow patterns
+- **NO MIXED CONCERNS** - Separation of responsibilities
+- **RESTART CONTAINER** - After backend changes
+- **USE ENUMS** - For type-safe dispatching
+- **MATCH EXPRESSIONS** - Not switch
+- **PHP 8 ATTRIBUTES** - For all v3 endpoints
+- **OPENAPI SCHEMAS** - Define in DataStructure
+- **FOLLOW GOOGLE API DESIGN** - For custom methods
+
+## Reference Files
+
+**Study these implementations:**
+- Controller: `src/PBXCoreREST/Controllers/CallQueues/RestController.php`
+- Processor: `src/PBXCoreREST/Lib/CallQueuesManagementProcessor.php`
+- Action: `src/PBXCoreREST/Lib/CallQueues/GetListAction.php`
+- DataStructure: `src/PBXCoreREST/Lib/CallQueues/DataStructure.php`
+- Base: `src/PBXCoreREST/Controllers/BaseRestController.php`
+- Router: `src/PBXCoreREST/Providers/RouterProvider.php`
+- Middleware: `src/PBXCoreREST/Middleware/AuthenticationMiddleware.php`
+
+## External Resources
+
+- [Google API Design Guide](https://cloud.google.com/apis/design)
+- [OpenAPI 3.1 Specification](https://spec.openapis.org/oas/v3.1.0)
+- [RESTful API Design](https://restfulapi.net/)
+- [HTTP Status Codes](https://httpstatuses.com/)

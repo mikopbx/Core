@@ -39,10 +39,16 @@ use Phalcon\Mvc\Micro;
 class Request extends PhRequest
 {
     /**
-     * Bearer token information stored after successful validation
+     * Bearer token information stored after successful validation (API Keys)
      * @var array|null
      */
     private ?array $tokenInfo = null;
+
+    /**
+     * JWT payload stored after successful JWT validation
+     * @var array<string, mixed>|null
+     */
+    private ?array $jwtPayload = null;
     
     /**
      * Check the header of a request to understand if it needs async response or not
@@ -247,12 +253,33 @@ class Request extends PhRequest
     
     /**
      * Get Bearer token info
-     * 
+     *
      * @return array|null
      */
     public function getTokenInfo(): ?array
     {
         return $this->tokenInfo;
+    }
+
+    /**
+     * Set JWT payload after successful JWT validation
+     *
+     * @param array<string, mixed> $payload
+     * @return void
+     */
+    public function setJwtPayload(array $payload): void
+    {
+        $this->jwtPayload = $payload;
+    }
+
+    /**
+     * Get JWT payload
+     *
+     * @return array<string, mixed>|null
+     */
+    public function getJwtPayload(): ?array
+    {
+        return $this->jwtPayload;
     }
 
     /**

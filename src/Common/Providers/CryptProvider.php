@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace MikoPBX\AdminCabinet\Providers;
+namespace MikoPBX\Common\Providers;
 
 use MikoPBX\Common\Models\PbxSettings;
 use Phalcon\Encryption\Crypt;
@@ -29,9 +29,12 @@ use Phalcon\Di\ServiceProviderInterface;
 use Phalcon\Encryption\Security\Random;
 
 /**
- * Initializes Crypt provider
+ * Initializes Crypt provider for cookie and session encryption
  *
- * @package MikoPBX\AdminCabinet\Providers
+ * Shared between AdminCabinet and REST API contexts.
+ * Uses encryption key from PbxSettings database.
+ *
+ * @package MikoPBX\Common\Providers
  */
 class CryptProvider implements ServiceProviderInterface
 {

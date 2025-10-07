@@ -50,9 +50,18 @@ const EventBus = {
 
     /**
      * Initializes the event bus.
+     * Waits for TokenManager to be ready before starting WebSocket connection.
      */
     initialize() {
-        EventBus.startListenPushNotifications();
+        // Wait for TokenManager to be ready before starting WebSocket
+        if (typeof window.tokenManagerReady !== 'undefined') {
+            window.tokenManagerReady.then(() => {
+                EventBus.startListenPushNotifications();
+            });
+        } else {
+            // Fallback: start immediately if TokenManager not available
+            EventBus.startListenPushNotifications();
+        }
     },
 
     /**
@@ -61,15 +70,22 @@ const EventBus = {
      */
     startListenPushNotifications() {
         let subPath = `/pbxcore/api/nchan/sub/${EventBus.channelId}`;
-    
+
         // Close existing connection if any
         if (EventBus.socket) {
             EventBus.socket.close();
         }
-    
+
         // Create a WebSocket connection
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${window.location.host}${subPath}?msg_id=-1`;
+        let wsUrl = `${protocol}//${window.location.host}${subPath}?msg_id=-1`;
+
+        // Add JWT token to query string if available
+        // WebSocket cannot send Authorization header, so we pass token in URL
+        if (typeof TokenManager !== 'undefined' && TokenManager.accessToken) {
+            wsUrl += `&token=${encodeURIComponent(TokenManager.accessToken)}`;
+        }
+
         EventBus.socket = new WebSocket(wsUrl);
     
         // Handle messages
@@ -106,49 +122,19 @@ const EventBus = {
                 // Increment error counter
                 EventBus.forbidden403Count++;
 
-                // If we've had 3 consecutive 403 errors, check if backend is ready before reload
+                // JWT authentication: Don't reload page on 403 errors
+                // WebSocket authentication errors are non-critical
+                // Just log and retry connection after delay
                 if (EventBus.forbidden403Count >= 3) {
-                    // Check if SystemAPI is available
-                    if (typeof SystemAPI !== 'undefined') {
-                        let pingTimeout;
-                        let pingCompleted = false;
+                    console.warn('EventBus: Multiple WebSocket 403 errors. This is normal for JWT auth if server doesn\'t support token in query string yet.');
+                    // Don't reload page - just schedule reconnection
+                    EventBus.forbidden403Count = 0; // Reset counter
 
-                        // Set timeout for ping request (3 seconds)
-                        pingTimeout = setTimeout(() => {
-                            if (!pingCompleted) {
-                                EventBus.forbidden403Count = 2; // Keep counter high to retry ping soon
-                                pingCompleted = true;
-
-                                // Schedule reconnection after timeout
-                                setTimeout(() => {
-                                    EventBus.startListenPushNotifications();
-                                }, 2000);
-                            }
-                        }, 3000);
-
-                        SystemAPI.ping((response) => {
-                            if (pingCompleted) {
-                                return; // Timeout already fired
-                            }
-                            clearTimeout(pingTimeout);
-                            pingCompleted = true;
-
-                            if (response && response.result === true) {
-                                window.location.reload();
-                            } else {
-                                EventBus.forbidden403Count = 2; // Keep counter high to retry ping soon
-
-                                // Schedule reconnection after failed ping
-                                setTimeout(() => {
-                                    EventBus.startListenPushNotifications();
-                                }, 2000);
-                            }
-                        });
-                    } else {
-                        // If SystemAPI not available, reload as before
-                        window.location.reload();
-                    }
-                    return; // Exit early, reconnection will be triggered by ping callback or timeout
+                    // Try reconnection after longer delay (30 seconds)
+                    setTimeout(() => {
+                        EventBus.startListenPushNotifications();
+                    }, 30000);
+                    return;
                 }
             } else {
                 // Reset counter for other types of errors

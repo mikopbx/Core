@@ -93,8 +93,8 @@ class RouterProvider implements ServiceProviderInterface
     private const LEGACY_ROUTES = [
         // User routes (both GET and POST)
 
-        // Nchan routes
-        [NchanGetController::class, 'callAction', '/pbxcore/api/nchan/{queueName}', 'get', '/'],
+        // Nchan routes (exclude validate-token which is handled by SPECIAL_ROUTES)
+        [NchanGetController::class, 'callAction', '/pbxcore/api/nchan/{queueName:(?!validate-token)[a-zA-Z0-9_-]+}', 'get', '/'],
 
         // Module routes
         [ModulesControllerBase::class, 'callActionForModule', '/pbxcore/api/modules/{moduleName}/{actionName}', 'get', '/'],
@@ -135,11 +135,11 @@ class RouterProvider implements ServiceProviderInterface
     private function getAllRoutes(): array
     {
         $routes = [
+            // Special case routes (must be BEFORE universal routes for priority)
+            ...self::SPECIAL_ROUTES,
+
             // Universal auto-discovered RESTful routes
             ...$this->discoverUniversalRoutes(),
-
-            // Special case routes
-            ...self::SPECIAL_ROUTES,
 
             // Legacy routes
             ...self::LEGACY_ROUTES,
@@ -264,6 +264,7 @@ class RouterProvider implements ServiceProviderInterface
     {
         // Handle common naming patterns
         $conversions = [
+            'Auth' => 'auth',
             'GeneralSettings' => 'general-settings',
             'MailSettings' => 'mail-settings',
             'TimeSettings' => 'time-settings',

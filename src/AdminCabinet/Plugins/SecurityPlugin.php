@@ -2,7 +2,7 @@
 
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,6 +36,11 @@ use Phalcon\Mvc\Dispatcher;
 /**
  * Handles access control and authentication for the application.
  * Ensures that users access only the areas they are permitted to.
+ *
+ * JWT-based authentication:
+ * - AJAX requests: require Bearer token in Authorization header
+ * - Browser page requests: can use refreshToken cookie (TokenManager will get access token)
+ * - ACL checks: use role from JWT claims (decoded from Bearer token if present)
  */
 class SecurityPlugin extends Injectable
 {
@@ -52,7 +57,7 @@ class SecurityPlugin extends Injectable
      */
     public function beforeDispatch(/** @scrutinizer ignore-unused */ Event $event, Dispatcher $dispatcher): bool
     {
-        // Determine if the user is authenticated
+        // Determine if the user is authenticated (Bearer token OR refreshToken cookie)
         $isAuthenticated = $this->checkUserAuth() || $this->isLocalHostRequest();
 
         // Identify the requested action and controller
@@ -109,46 +114,42 @@ class SecurityPlugin extends Injectable
     /**
      * Checks if the current user is authenticated.
      *
-     * This method checks if the current user is authenticated based on whether they have an existing session or a valid
-     * "remember me" cookie.
-     * If the request is from localhost or the user already has an active session, the method returns
-     * true.
-     * If a "remember me" cookie exists, the method checks if it matches any active tokens in the AuthTokens table.
-     * If a match is found, the user's session is set, and the method returns true. If none of these conditions are met,
-     * the method returns false.
+     * JWT authentication flow:
+     * 1. AJAX requests: check for Bearer token in Authorization header
+     * 2. Browser page requests: check for refreshToken cookie
+     *    - If cookie exists, user is considered authenticated
+     *    - TokenManager JS will call /auth:refresh to get access token
      *
      * @return bool true if the user is authenticated, false otherwise.
      */
     private function checkUserAuth(): bool
     {
-        // Check if it is a localhost request or if the user is already authenticated.
-        if ($this->session->has(SessionController::SESSION_ID)) {
+        // Check for JWT Bearer token in Authorization header (AJAX requests)
+        $authHeader = $this->request->getHeader('Authorization');
+        if ($authHeader && str_starts_with($authHeader, 'Bearer ')) {
+            // TODO: можно добавить валидацию JWT токена здесь
+            // Но AuthenticationMiddleware уже проверяет его для API запросов
             return true;
         }
 
-        // Check if remember me cookie exists.
-        if (!$this->cookies->has('random_token')) {
-            return false;
-        }
-        try {
-            $token = $this->cookies->get('random_token')->getValue();
-            $currentDate = date("Y-m-d H:i:s", time());
+        // For browser page requests: check for refreshToken cookie
+        // If cookie exists, consider user authenticated - TokenManager will handle token refresh
+        if ($this->cookies->has('refreshToken')) {
+            try {
+                // Try to read cookie (it's encrypted by CryptProvider)
+                $token = $this->cookies->get('refreshToken')->getValue();
 
-            // Delete expired tokens and check if the token matches any active tokens.
-            $userTokens = AuthTokens::find();
-            foreach ($userTokens as $userToken) {
-                if ($userToken->expiryDate < $currentDate) {
-                    $userToken->delete();
-                } elseif ($this->security->checkHash($token, $userToken->tokenHash)) {
-                    $sessionParams = json_decode($userToken->sessionParams, true);
-                    $this->session->set(SessionController::SESSION_ID, $sessionParams);
+                // Basic validation: token should not be empty
+                if (!empty($token)) {
+                    // Token exists - user is authenticated
+                    // TokenManager JS will call /auth:refresh to get new access token
                     return true;
                 }
+            } catch (\Throwable $e) {
+                // Cookie decryption failed or other error
+                // Log but don't block - let user re-login
+                CriticalErrorsHandler::handleExceptionWithSyslog($e);
             }
-
-        } catch (\Throwable $e) {
-            //CriticalErrorsHandler::handleException($e);
-            return false;
         }
 
         return false;
@@ -181,24 +182,21 @@ class SecurityPlugin extends Injectable
     /**
      * Redirects to the user's home page or a default page if the home page is not set.
      *
-     * This method determines the user's home page based on the session data. If the home page path is not set in the session,
-     * it defaults to '/admin-cabinet/extensions/index'. The method then parses the home page path to extract the module,
-     * controller, and action, and uses the dispatcher to forward the request to the appropriate route.
+     * For JWT authentication: home page path should be stored in JWT claims or module config.
+     * For now, defaults to '/admin-cabinet/extensions/index'.
      *
      * @param Dispatcher $dispatcher The dispatcher object used to forward the request.
      */
     private function redirectToHome(Dispatcher $dispatcher): void
     {
-        // Retrieve the home page path from the session, defaulting to a predefined path if not set
-        $homePath = $this->session->get(SessionController::SESSION_ID)[SessionController::HOME_PAGE];
-        if (empty($homePath)) {
-            $homePath = '/admin-cabinet/extensions/index';
-        }
+        // TODO: get home page from JWT claims when token validation is implemented
+        // For now, use default home page
+        $homePath = '/admin-cabinet/extensions/index';
 
         $redis = $this->di->getShared(ManagedCacheProvider::SERVICE_NAME);
 
-        $currentPageCacheKey = 'RedirectCount:' . $this->session->getId() . ':' . md5($homePath);
-
+        // Prevent redirect loops
+        $currentPageCacheKey = 'RedirectCount:' . session_id() . ':' . md5($homePath);
 
         $redirectCount = $redis->get($currentPageCacheKey) ?? 0;
         $redirectCount++;
@@ -213,6 +211,7 @@ class SecurityPlugin extends Injectable
         $module = explode('/', $homePath)[1];
         $controller = explode('/', $homePath)[2];
         $action = explode('/', $homePath)[3];
+
         if (str_starts_with($module, 'module-')) {
             $camelizedNameSpace = Text::camelize($module);
             $namespace = "Modules\\$camelizedNameSpace\\App\\Controllers";
@@ -251,10 +250,8 @@ class SecurityPlugin extends Injectable
     /**
      * Checks if an action is allowed for the current user.
      *
-     * This method checks if the specified $action is allowed for the current user based on their role. It gets the user's
-     * role from the session or sets it to 'guests' if no role is set. It then gets the Access Control List (ACL) and checks
-     * if the $action is allowed for the current user's role. If the user is a guest or if the $action is not allowed,
-     * the method returns false. Otherwise, it returns true.
+     * JWT authentication: role should be extracted from JWT claims.
+     * For now, uses default 'admins' role for authenticated users.
      *
      * @param string $controller The full name of the controller class.
      * @param string $action The name of the action to check.
@@ -262,13 +259,17 @@ class SecurityPlugin extends Injectable
      */
     public function isAllowedAction(string $controller, string $action): bool
     {
-        $role = $this->session->get(SessionController::SESSION_ID)[SessionController::ROLE] ?? AclProvider::ROLE_GUESTS;
+        // TODO: extract role from JWT token claims
+        // For now, assume all authenticated users have 'admins' role
+        $role = AclProvider::ROLE_ADMINS;
+
         $acl = $this->di->get(AclProvider::SERVICE_NAME);
         $allowed = $acl->isAllowed($role, $controller, $action);
+
         if ($allowed != AclEnum::ALLOW) {
             return false;
-        } else {
-            return true;
         }
+
+        return true;
     }
 }

@@ -100,7 +100,7 @@ class AssetProvider implements ServiceProviderInterface
                 }
 
                 $assets->makeSentryAssets();
-                $assets->makeHeaderAssets($session, $dispatcher);
+                $assets->makeHeaderAssets($session, $dispatcher, $di);
 
                 // Generates Controllers assets
                 $method_name = "make{$controller}Assets";
@@ -166,8 +166,9 @@ class AssetProvider implements ServiceProviderInterface
      *
      * @param $session
      * @param Dispatcher $dispatcher
+     * @param DiInterface $di
      */
-    private function makeHeaderAssets($session, Dispatcher $dispatcher): void
+    private function makeHeaderAssets($session, Dispatcher $dispatcher, DiInterface $di): void
     {
         $this->semanticCollectionCSS
             ->addCss('css/vendor/semantic/grid.min.css', true)
@@ -192,7 +193,8 @@ class AssetProvider implements ServiceProviderInterface
             //->addJs('js/vendor/requirejs.org/require.min.js', true,true,['data-main'=>'/admin-cabinet/assets/js/pbx/main/header.js'])
             ->addJs('js/pbx/main/header.js', true)
             ->addJs('js/vendor/jquery.min.js', true)
-            ->addJs('js/pbx/main/security-utils.js', true); // Global security utilities
+            ->addJs('js/pbx/main/security-utils.js', true) // Global security utilities
+            ->addJs('js/pbx/main/token-manager.js', true); // JWT token manager (init in footer.js)
 
         $this->footerCollectionJS
             ->addJs('js/pbx/main/form.js', true)
@@ -207,8 +209,28 @@ class AssetProvider implements ServiceProviderInterface
             ->addJs('js/vendor/semantic/transition.min.js', true)
             ->addJs('js/vendor/semantic/checkbox.min.js', true);
 
+        // JWT-based authentication check: Bearer token OR refreshToken cookie
+        // Check for JWT Bearer token in Authorization header (AJAX requests)
+        $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+        $hasBearerToken = str_starts_with($authHeader, 'Bearer ');
+
+        // Check for refreshToken cookie (browser page requests)
+        // Need to use cookies service to decrypt the cookie
+        $cookies = $di->get('cookies');
+        $hasRefreshToken = false;
+        if ($cookies->has('refreshToken')) {
+            try {
+                $token = $cookies->get('refreshToken')->getValue();
+                $hasRefreshToken = !empty($token);
+            } catch (\Throwable $e) {
+                // Cookie decryption failed - ignore
+            }
+        }
+
+        $isAuthenticated = $hasBearerToken || $hasRefreshToken;
+
         // If the user is logged in, let's generate the required CSS caches.
-        if ($session->has(SessionController::SESSION_ID)) {
+        if ($isAuthenticated) {
             $this->semanticCollectionCSS
                 ->addCss('css/vendor/semantic/menu.min.css', true)
                 ->addCss('css/vendor/semantic/sidebar.min.css', true)
@@ -240,7 +262,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/PbxAPI/advice-api.js', true)
                 ->addJs('js/pbx/PbxAPI/files-api.js', true)
                 ->addJs('js/pbx/PbxAPI/system-api.js', true)
-                ->addJs('js/src/PbxAPI/user-page-tracker-api.js', true)
+                ->addJs('js/pbx/PbxAPI/user-page-tracker-api.js', true)
                 ->addJs('js/pbx/main/TooltipBuilder.js', true)
                 ->addJs('js/pbx/main/event-bus.js', true)
                 ->addJs('js/pbx/main/file-upload-event-handler.js', true)
@@ -782,9 +804,14 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/FormElements/sound-file-selector.js', true)
                 ->addJs('js/pbx/GeneralSettings/ssh-keys-table.js', true)
                 ->addJs('js/pbx/PbxAPI/general-settings-api.js', true)
+                ->addJs('js/pbx/PbxAPI/passkeys-api.js', true)
                 ->addJs('js/pbx/GeneralSettings/general-settings-tooltip-manager.js', true)
                 ->addJs(
                     'js/pbx/GeneralSettings/general-settings-modify.js',
+                    true
+                )
+                ->addJs(
+                    'js/pbx/GeneralSettings/general-settings-passkeys.js',
                     true
                 )
                 ->addJs(

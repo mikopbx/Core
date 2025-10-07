@@ -48,6 +48,7 @@ use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadTimezoneAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadVoicemailAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadWorkerCallEventsAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\RestartPBXCoreAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\UpdatePasskeysLoginAction;
 use Phalcon\Di\Injectable;
 
 class ProcessPBXSettings extends Injectable
@@ -398,6 +399,16 @@ class ProcessPBXSettings extends Injectable
             ],
             'actions' => [
                 ReloadAdviceAction::class,
+            ],
+        ];
+
+        // Update passkeys when admin login changes
+        $tables[] = [
+            'keys' => [
+                PbxSettings::WEB_ADMIN_LOGIN,
+            ],
+            'actions' => [
+                UpdatePasskeysLoginAction::class,
             ],
         ];
 

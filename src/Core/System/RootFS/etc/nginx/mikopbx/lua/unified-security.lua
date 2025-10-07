@@ -1,5 +1,13 @@
 -- MikoPBX Unified Security Filter
--- Combines IP filtering, session validation, rate limiting, and basic attack protection
+-- Combines JWT validation (via PHP), IP filtering, rate limiting, and basic attack protection
+-- JWT validation is delegated to PHP endpoint /pbxcore/api/nchan/validate-token for consistency
+--
+-- ARCHITECTURE NOTES:
+-- - This script runs at SERVER level when firewall is enabled (PBX_FIREWALL_ENABLED=1)
+-- - Related: access-nchan.lua handles WebSocket-specific JWT validation
+-- - Both scripts use validate_jwt_via_php() with same PHP endpoint
+-- - Keep validation logic synchronized between both files
+--
 -- Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
 
 local redis = require "resty.redis"
@@ -41,6 +49,48 @@ local rate_limit_burst = 20  -- burst allowance
 local rate_limit_block_time = 300  -- block time in seconds (5 minutes)
 local rate_limit_progressive_multiplier = 2  -- multiply block time for repeat offenders
 
+-- ===== JWT VALIDATION FUNCTIONS =====
+
+-- Extract token from Authorization header
+local function extract_bearer_token(auth_header)
+    if not auth_header then
+        return nil
+    end
+    local token = string.match(auth_header, "^Bearer%s+(.+)$")
+    return token
+end
+
+-- Validate JWT token via PHP endpoint
+local function validate_jwt_via_php(token)
+    if not token or token == "" then
+        return false
+    end
+
+    -- Check cache first
+    local jwt_cache_key = "jwt:valid:" .. token
+    local cached_result = access_cache:get(jwt_cache_key)
+
+    if cached_result == "1" then
+        return true
+    elseif cached_result == "0" then
+        return false
+    end
+
+    -- Validate via PHP endpoint
+    local res = ngx.location.capture("/pbxcore/api/v3/auth:validate-token?token=" .. ngx.escape_uri(token))
+
+    local is_valid = (res.status == 200)
+
+    -- Cache the result (valid tokens for 60s, invalid for 10s)
+    if is_valid then
+        access_cache:set(jwt_cache_key, "1", 60)
+    else
+        access_cache:set(jwt_cache_key, "0", 10)
+    end
+
+    return is_valid
+end
+
 -- ===== COMMON FUNCTIONS =====
 
 -- Check if IP is localhost
@@ -64,33 +114,33 @@ local function ip_in_network(ip, network)
     if ip == network then
         return true
     end
-    
+
     local pos = string.find(network, "/")
     if not pos then
         return false
     end
-    
+
     local net_addr = string.sub(network, 1, pos - 1)
     local mask_bits = tonumber(string.sub(network, pos + 1))
-    
+
     local function ip_to_number(addr)
         local a, b, c, d = addr:match("(%d+)%.(%d+)%.(%d+)%.(%d+)")
         if not a then return nil end
         return tonumber(a) * 16777216 + tonumber(b) * 65536 + tonumber(c) * 256 + tonumber(d)
     end
-    
+
     local ip_num = ip_to_number(ip)
     local net_num = ip_to_number(net_addr)
-    
+
     if not ip_num or not net_num or not mask_bits then
         return false
     end
-    
+
     local mask = 0
     for i = 1, mask_bits do
         mask = mask + 2^(32 - i)
     end
-    
+
     return (ip_num - ip_num % 2^(32 - mask_bits)) == (net_num - net_num % 2^(32 - mask_bits))
 end
 
@@ -98,19 +148,19 @@ end
 local function connect_to_redis()
     local red = redis:new()
     red:set_timeout(1000)
-    
+
     local ok, err = red:connect(redis_host, redis_port)
     if not ok then
         ngx.log(ngx.ERR, "Failed to connect to Redis: ", err)
         return nil
     end
-    
+
     local ok, err = red:select(redis_db)
     if not ok then
         ngx.log(ngx.ERR, "Failed to select Redis database: ", err)
         return nil
     end
-    
+
     return red
 end
 
@@ -120,7 +170,7 @@ local function check_basic_security()
     local uri = ngx.var.uri
     local args = ngx.var.args
     local user_agent = ngx.var.http_user_agent or ""
-    
+
     -- Check for SQL injection patterns
     local sql_patterns = {
         "union%s+select",
@@ -136,7 +186,7 @@ local function check_basic_security()
         "1=1",
         "1' or '1'='1"
     }
-    
+
     local check_string = string.lower(uri .. (args or "") .. user_agent)
     for _, pattern in ipairs(sql_patterns) do
         if string.match(check_string, pattern) then
@@ -144,19 +194,19 @@ local function check_basic_security()
             return false
         end
     end
-    
+
     -- Check for path traversal
     if string.match(uri, "%.%.") or string.match(uri, "//") then
         ngx.log(ngx.WARN, "Path traversal attempt from: ", client_ip)
         return false
     end
-    
+
     -- Check for null bytes
     if string.match(uri, "%z") or (args and string.match(args, "%z")) then
         ngx.log(ngx.WARN, "Null byte injection attempt from: ", client_ip)
         return false
     end
-    
+
     return true
 end
 
@@ -169,13 +219,13 @@ local function is_static_resource()
         "%.css$", "%.js$", "%.jpg$", "%.jpeg$", "%.png$", "%.gif$", "%.ico$",
         "%.svg$", "%.woff$", "%.woff2$", "%.ttf$", "%.eot$", "%.map$"
     }
-    
+
     for _, pattern in ipairs(static_extensions) do
         if string.match(uri, pattern) then
             return true
         end
     end
-    
+
     return false
 end
 
@@ -183,34 +233,34 @@ local function check_rate_limit(is_authenticated)
     if not rate_limit_enabled then
         return true
     end
-    
+
     -- Skip rate limiting for static resources
     if is_static_resource() then
         return true
     end
-    
+
     -- Check if IP is already blocked for rate limiting
     local rate_block_key = "rate_blocked:" .. client_ip
     local block_info = rate_limit_cache:get(rate_block_key)
-    
+
     if block_info then
         return false
     end
-    
+
     -- Progressive blocking check
     local offense_key = "rate_offenses:" .. client_ip
     local offense_count = tonumber(rate_limit_cache:get(offense_key) or "0")
-    
+
     -- Get current counter using atomic increment
     local rate_key = "rate:" .. client_ip
     local current_count, err = rate_limit_cache:incr(rate_key, 1)
-    
+
     if not current_count then
         -- Key doesn't exist, initialize it
         rate_limit_cache:set(rate_key, 1, rate_limit_window)
         current_count = 1
     end
-    
+
     -- Determine limit based on request type
     local limit = rate_limit_requests
     if is_authenticated then
@@ -218,24 +268,24 @@ local function check_rate_limit(is_authenticated)
     elseif string.match(ngx.var.uri, "^/pbxcore/api/") then
         limit = rate_limit_requests_api
     end
-    
+
     -- Add burst allowance
     local effective_limit = limit + rate_limit_burst
-    
+
     if current_count > effective_limit then
         -- Calculate progressive block time
         local block_time = rate_limit_block_time * (rate_limit_progressive_multiplier ^ offense_count)
         if block_time > 3600 then -- Cap at 1 hour
             block_time = 3600
         end
-        
+
         -- Block IP for excessive requests
         rate_limit_cache:set(rate_block_key, "1", block_time)
-        
+
         -- Increment offense counter
         offense_count = offense_count + 1
         rate_limit_cache:set(offense_key, offense_count, 86400) -- Remember for 24 hours
-        
+
         -- Also add to Redis for persistence
         local red = connect_to_redis()
         if red then
@@ -243,53 +293,46 @@ local function check_rate_limit(is_authenticated)
             red:setex(key, block_time, tostring(offense_count))
             red:set_keepalive(10000, 100)
         end
-        
-        ngx.log(ngx.WARN, "Rate limit exceeded for IP: ", client_ip, 
-                " count: ", current_count, "/", effective_limit, 
+
+        ngx.log(ngx.WARN, "Rate limit exceeded for IP: ", client_ip,
+                " count: ", current_count, "/", effective_limit,
                 " offenses: ", offense_count, " block_time: ", block_time)
         return false
     end
-    
+
     -- Log warning when approaching limit
     if current_count > (limit * 0.8) then
-        ngx.log(ngx.NOTICE, "IP approaching rate limit: ", client_ip, 
+        ngx.log(ngx.NOTICE, "IP approaching rate limit: ", client_ip,
                 " count: ", current_count, "/", limit)
     end
-    
+
     return true
 end
 
--- ===== SESSION VALIDATION =====
+-- ===== AUTHENTICATION VALIDATION =====
 
-local function check_session()
+local function check_auth()
     if not session_check_required then
         return true
     end
-    
-    local session_id = ngx.var.cookie_PHPSESSID or "default_session_id"
-    local cache_key = session_id .. ngx.var.uri
-    local is_allowed = access_cache:get(cache_key)
-    
-    if is_allowed == nil then
-        -- Check with backend
-        local backend_url = "/pbxcore/api/system/checkAuth"
-        local res = ngx.location.capture(backend_url, {
-            method = ngx.HTTP_GET,
-            args = { view = ngx.var.arg_view }
-        })
-        
-        if res.status == ngx.HTTP_OK then
-            is_allowed = true
-            access_cache:set(cache_key, is_allowed, 60)
-        else
-            is_allowed = false
-            if res.status == ngx.HTTP_FORBIDDEN then
-                access_cache:set(cache_key, is_allowed, 60)
+
+    -- Check JWT Bearer token (via PHP endpoint)
+    local auth_header = ngx.var.http_authorization
+    if auth_header then
+        local token = extract_bearer_token(auth_header)
+        if token then
+            -- Validate JWT via PHP endpoint
+            if validate_jwt_via_php(token) then
+                -- JWT is valid - authenticated user
+                return true
+            else
+                ngx.log(ngx.INFO, "JWT validation failed via PHP endpoint")
             end
         end
     end
-    
-    return is_allowed
+
+    -- No valid authentication found
+    return false
 end
 
 -- ===== IP FILTERING (FROM ip-filter-redis.lua) =====
@@ -299,13 +342,13 @@ local function is_firewall_enabled()
     if enabled ~= nil then
         return enabled == "1"
     end
-    
+
     local red = connect_to_redis()
     if not red then
         firewall_state_cache:set("enabled", "0", 30)
         return false
     end
-    
+
     local keys, err = red:keys(REDIS_PREFIX .. "*")
     if err then
         ngx.log(ngx.ERR, "Failed to check firewall status: ", err)
@@ -313,31 +356,31 @@ local function is_firewall_enabled()
         red:set_keepalive(10000, 100)
         return false
     end
-    
+
     enabled = (#keys > 0) and "1" or "0"
     firewall_state_cache:set("enabled", enabled, 30)
     red:set_keepalive(10000, 100)
-    
+
     return enabled == "1"
 end
 
 local function check_whitelist()
     local whitelist_key = "whitelist:" .. client_ip
     local is_whitelisted = blocked_ips_cache:get(whitelist_key)
-    
+
     if is_whitelisted == nil then
         local red = connect_to_redis()
         if not red then
             return false
         end
-        
+
         local res, err = red:smembers(REDIS_PREFIX .. CATEGORY_WHITELIST)
         if err then
             ngx.log(ngx.ERR, "Failed to get whitelist: ", err)
             red:set_keepalive(10000, 100)
             return false
         end
-        
+
         is_whitelisted = "0"
         if res then
             for _, allowed_ip in ipairs(res) do
@@ -347,38 +390,38 @@ local function check_whitelist()
                 end
             end
         end
-        
+
         blocked_ips_cache:set(whitelist_key, is_whitelisted, cache_ttl)
         red:set_keepalive(10000, 100)
     end
-    
+
     return is_whitelisted == "1"
 end
 
 local function check_blacklist()
     local block_key = "blocked:" .. client_ip
     local is_blocked = blocked_ips_cache:get(block_key)
-    
+
     if is_blocked == nil then
         local red = connect_to_redis()
         if not red then
             return false
         end
-        
+
         local key = REDIS_PREFIX .. CATEGORY_HTTP .. ":" .. client_ip
         local res, err = red:exists(key)
-        
+
         if err then
             ngx.log(ngx.ERR, "Failed to check blocked IP: ", err)
             red:set_keepalive(10000, 100)
             return false
         end
-        
+
         is_blocked = (res == 1) and "1" or "0"
         blocked_ips_cache:set(block_key, is_blocked, cache_ttl)
         red:set_keepalive(10000, 100)
     end
-    
+
     return is_blocked == "1"
 end
 
@@ -427,12 +470,12 @@ if check_blacklist() then
     return ngx.exit(ngx.HTTP_FORBIDDEN)
 end
 
--- 5. Check session if required
+-- 5. Check authentication (JWT or session) if required
 local is_authenticated = false
 if session_check_required then
-    is_authenticated = check_session()
+    is_authenticated = check_auth()
     if not is_authenticated then
-        ngx.log(ngx.WARN, "Access denied for unauthenticated session from: ", client_ip)
+        ngx.log(ngx.WARN, "Access denied for unauthenticated request from: ", client_ip)
         ngx.status = ngx.HTTP_FORBIDDEN
         ngx.say("Authentication required")
         return ngx.exit(ngx.HTTP_FORBIDDEN)

@@ -334,20 +334,38 @@ class BaseController extends Controller
             $sessionData = $session->get(SessionController::SESSION_ID);
             
             if ($sessionData) {
+                // Get origin for WebAuthn and other security features
+                $origin = $this->request->getScheme() . '://' . $this->request->getHttpHost();
+
                 // Pass only necessary session data for ACL
                 $requestMessage['sessionContext'] = [
                     'role' => $sessionData[SessionController::ROLE] ?? null,
                     'user_name' => $sessionData[SessionController::USER_NAME] ?? null,
                     'session_id' => session_id(), // Add session ID for page tracking
-                    'auth_type' => 'session'
+                    'auth_type' => 'session',
+                    'origin' => $origin // For WebAuthn RP ID validation
                 ];
             }
         } elseif ($this->request->isBearerTokenRequest()) {
-            // For Bearer tokens - just mark auth type, no user context
-            $requestMessage['sessionContext'] = [
+            // Get origin for WebAuthn and other security features
+            $origin = $this->request->getScheme() . '://' . $this->request->getHttpHost();
+
+            // For Bearer tokens - include user context from JWT payload or API key
+            $sessionContext = [
                 'auth_type' => 'bearer_token',
-                'token_id' => $this->request->getTokenInfo()['id'] ?? null
+                'token_id' => $this->request->getTokenInfo()['id'] ?? null,
+                'origin' => $origin // For WebAuthn RP ID validation
             ];
+
+            // If JWT token, add user info from payload
+            $jwtPayload = $this->request->getJwtPayload();
+            if ($jwtPayload) {
+                $sessionContext['user_name'] = $jwtPayload['userId'] ?? null;
+                $sessionContext['role'] = $jwtPayload['role'] ?? null;
+                $sessionContext['session_id'] = $jwtPayload['jti'] ?? null; // JWT ID as session ID
+            }
+
+            $requestMessage['sessionContext'] = $sessionContext;
         }
 
         return array($requestMessage['debug'], $requestMessage);

@@ -1,7 +1,6 @@
 {{ form(['action' : 'call-queues/save', 'method': 'post', 'role': 'form', 'class': 'ui form','id':'queue-form']) }}
 {{ form.render('id') }}
 {{ form.render('uniqid') }}
-<input type="hidden" name="{{ security.getTokenKey() }}" value="{{ security.getToken() }}"/>
 <input type="hidden" id="copy-from-id" value="{{ copyFromId }}"/>
 <div class="ui ribbon label" id="queue-extension-number">
     <i class="phone icon"></i> <span id="extension-display"></span>

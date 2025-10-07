@@ -22,7 +22,6 @@ declare(strict_types=1);
 namespace MikoPBX\AdminCabinet\Config;
 
 use MikoPBX\AdminCabinet\Providers\AssetProvider;
-use MikoPBX\AdminCabinet\Providers\CryptProvider;
 use MikoPBX\AdminCabinet\Providers\DispatcherProvider;
 use MikoPBX\AdminCabinet\Providers\ElementsProvider;
 use MikoPBX\AdminCabinet\Providers\FlashProvider;
@@ -32,6 +31,7 @@ use MikoPBX\AdminCabinet\Providers\VoltProvider;
 use MikoPBX\Common\Providers\AclProvider;
 use MikoPBX\Common\Providers\BeanstalkConnectionModelsProvider;
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
+use MikoPBX\Common\Providers\CryptProvider;
 use MikoPBX\Common\Providers\EventBusProvider;
 use MikoPBX\Common\Providers\LanguageProvider;
 use MikoPBX\Common\Providers\LoggerAuthProvider;

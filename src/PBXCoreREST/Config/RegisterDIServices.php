@@ -24,6 +24,7 @@ namespace MikoPBX\PBXCoreREST\Config;
 use MikoPBX\Common\Providers\{AclProvider,
     BeanstalkConnectionModelsProvider,
     CDRDatabaseProvider,
+    CryptProvider,
     LoggerAuthProvider,
     LoggerProvider,
     MainDatabaseProvider,
@@ -103,6 +104,9 @@ class RegisterDIServices
 
             // Inject sessions
             SessionProvider::class,
+
+            // Inject crypto provider
+            CryptProvider::class,
 
             // Inject Access control lists provider
             AclProvider::class,

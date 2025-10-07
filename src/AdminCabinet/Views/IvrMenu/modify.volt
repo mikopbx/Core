@@ -1,7 +1,6 @@
 {{ form(['action' : 'ivr-menu/save', 'method': 'post', 'role': 'form', 'class': 'ui large form','id':'ivr-menu-form']) }}
 {{ form.render('id') }}
 {{ form.render('isNew') }}
-<input type="hidden" name="{{ security.getTokenKey() }}" value="{{ security.getToken() }}"/>
 <input type="hidden" id="copy-from-id" value="{{ copyFromId }}"/>
 <div class="ui ribbon label" id="ivr-menu-extension-number">
     <i class="phone icon"></i> {{ extension|e }}

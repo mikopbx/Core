@@ -22,10 +22,35 @@ namespace MikoPBX\Common\Models;
 /**
  * Class AuthTokens
  *
+ * SQLite storage for long-lived authentication tokens.
+ *
+ * Token storage strategy:
+ * - TOKEN_TYPE_REMEMBER_ME: Stored in SQLite (this table) - Long-lived web app tokens
+ *
+ * For JWT refresh tokens, see RedisTokenStorage class which provides:
+ * - O(1) lookup performance (vs O(n) SQLite scan)
+ * - Automatic TTL expiration
+ * - No need for hash verification loop
+ *
  * @package MikoPBX\Common\Models
+ * @see \MikoPBX\Common\Library\Auth\RedisTokenStorage For JWT refresh token storage
+ *
+ * @Indexes(
+ *     [name='userid', columns=['userId'], type=''],
+ *     [name='tokenhash', columns=['tokenHash'], type=''],
+ *     [name='tokentype', columns=['tokenType'], type=''],
+ *     [name='jti', columns=['jti'], type=''],
+ *     [name='expirydate', columns=['expiryDate'], type=''],
+ *     [name='lastusedat', columns=['userId', 'tokenType'], type='']
+ * )
  */
 class AuthTokens extends ModelsBase
 {
+    /**
+     * Token types
+     */
+    public const string TOKEN_TYPE_REMEMBER_ME = 'remember_me';  // Web app remember me (stored in SQLite)
+
     /**
      * @Primary
      * @Identity
@@ -34,18 +59,39 @@ class AuthTokens extends ModelsBase
     public $id;
 
     /**
-     * Hashed token value
+     * Hashed token value (indexed for fast lookup)
      *
      * @Column(type="string", nullable=true)
      */
     public ?string $tokenHash = '';
 
     /**
-     * Serialized session parameters
+     * User identifier (for quick filtering)
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $userId = '';
+
+    /**
+     * Token type: remember_me, refresh, api
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $tokenType = self::TOKEN_TYPE_REMEMBER_ME;
+
+    /**
+     * Serialized session parameters (for remember_me tokens)
      *
      * @Column(type="string", nullable=true)
      */
     public ?string $sessionParams = '';
+
+    /**
+     * JWT ID for access tokens (for revocation)
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $jti = '';
 
     /**
      * Expiry date of the token
@@ -53,6 +99,27 @@ class AuthTokens extends ModelsBase
      * @Column(type="string", nullable=false)
      */
     public ?string $expiryDate = '';
+
+    /**
+     * Last used timestamp (for rotation and analytics)
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $lastUsedAt = '';
+
+    /**
+     * Client IP address (for security)
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $clientIp = '';
+
+    /**
+     * User agent (for analytics and security)
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $userAgent = '';
 
 
     /**
@@ -62,6 +129,24 @@ class AuthTokens extends ModelsBase
     {
         $this->setSource('m_AuthTokens');
         parent::initialize();
+    }
+
+    /**
+     * Check if token is expired
+     *
+     * @return bool
+     */
+    public function isExpired(): bool
+    {
+        return strtotime($this->expiryDate) < time();
+    }
+
+    /**
+     * Update last used timestamp
+     */
+    public function touch(): void
+    {
+        $this->lastUsedAt = date('Y-m-d H:i:s');
     }
 
 }

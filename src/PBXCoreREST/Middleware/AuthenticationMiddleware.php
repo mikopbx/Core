@@ -26,6 +26,7 @@ use MikoPBX\Common\Providers\LoggerAuthProvider;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Http\Request;
 use MikoPBX\PBXCoreREST\Http\Response;
+use MikoPBX\PBXCoreREST\Lib\Auth\JWTHelper;
 use MikoPBX\PBXCoreREST\Services\TokenValidationService;
 use MikoPBX\PBXCoreREST\Providers\RequestProvider;
 use MikoPBX\PBXCoreREST\Providers\ResponseProvider;
@@ -57,27 +58,46 @@ class AuthenticationMiddleware implements MiddlewareInterface
 
         // Check Bearer token authentication first
         if ($request->hasBearerToken()) {
+            $token = $request->getBearerToken();
+
+            // Validate token is not null
+            if ($token === null) {
+                $loggerAuth = $application->getService(LoggerAuthProvider::SERVICE_NAME);
+                $loggerAuth->warning("Bearer token is null");
+                $this->halt($application, $response::UNAUTHORIZED, 'Invalid Bearer token');
+                return false;
+            }
+
+            // Try JWT authentication first (short-lived access tokens from /auth:login)
+            $jwtPayload = JWTHelper::validate($token);
+            if ($jwtPayload !== null) {
+                // JWT is valid - store payload in request for access in controllers
+                $request->setJwtPayload($jwtPayload);
+                return true;
+            }
+
+            // JWT invalid/expired, try API Key authentication (long-lived Bearer tokens)
             $tokenValidator = new TokenValidationService($application->getDI());
             $validationResult = $tokenValidator->validate($request);
-            
+
             if ($validationResult->isValid()) {
                 // Store token info in request for logging and context
                 $tokenInfo = $validationResult->getTokenInfo();
                 if ($tokenInfo !== null) {
                     $request->setTokenInfo($tokenInfo);
                 }
-                // Bearer token authenticated successfully, skip other checks
+                // API Key authenticated successfully
                 return true;
             }
-            
-            // Log failed Bearer token attempt
+
+            // Both JWT and API Key validation failed
             $loggerAuth = $application->getService(LoggerAuthProvider::SERVICE_NAME);
             $loggerAuth->warning("Bearer token auth failed - From: {$request->getClientAddress(true)} Token: ***{$validationResult->getTokenSuffix()} Error: {$validationResult->getError()}");
-            
+
             $this->halt(
                 $application,
                 $response::UNAUTHORIZED,
-                'Invalid Bearer token'
+                'Invalid or expired Bearer token'
             );
             return false;
         }
@@ -86,6 +106,7 @@ class AuthenticationMiddleware implements MiddlewareInterface
         $isPublicEndpoint = $this->isPublicEndpoint($application);
 
         $isNoAuthApi = $request->thisIsModuleNoAuthRequest($application);
+
         if (
             true !== $request->isLocalHostRequest()
             && true !== $request->isAuthorizedSessionRequest()
@@ -104,6 +125,7 @@ class AuthenticationMiddleware implements MiddlewareInterface
 
         if (
             true !== $isNoAuthApi
+            && true !== $isPublicEndpoint
             && true !== $request->isLocalHostRequest()
             && true !== $request->isAllowedAction($application)
         ) {
@@ -112,16 +134,6 @@ class AuthenticationMiddleware implements MiddlewareInterface
                  $response::FORBIDDEN,
                  'The route is not allowed'
              );
-            return false;
-        }
-
-        // CSRF protection for state-changing operations
-        if ($this->requiresCsrfProtection($request, $application) && !$this->validateCsrfToken($request, $application)) {
-            $this->halt(
-                $application,
-                $response::FORBIDDEN,
-                'CSRF token validation failed'
-            );
             return false;
         }
 
@@ -139,16 +151,23 @@ class AuthenticationMiddleware implements MiddlewareInterface
         /** @var Request $request */
         $request = $application->getService(RequestProvider::SERVICE_NAME);
         $uri = $request->getURI();
+        $method = $request->getMethod();
 
         // List of public endpoints that don't require authentication
         $publicEndpoints = [
             '/pbxcore/api/health' => ['GET'],  // Health check endpoint
             '/pbxcore/api/v3/mail-settings/oauth2-callback' => ['GET'],  // OAuth2 callback
+            '/pbxcore/api/v3/passkeys:checkAvailability' => ['GET'],  // Passkey availability check
+            '/pbxcore/api/v3/passkeys:authenticationStart' => ['GET'],  // WebAuthn login start
+            '/pbxcore/api/v3/passkeys:authenticationFinish' => ['POST'],  // WebAuthn login finish
+            '/pbxcore/api/v3/auth:login' => ['POST'],  // JWT authentication login
+            '/pbxcore/api/v3/auth:refresh' => ['POST'],  // JWT token refresh
+            '/pbxcore/api/v3/user-page-tracker:pageView' => ['POST'],  // Page analytics (optional session tracking)
+            '/pbxcore/api/v3/user-page-tracker:pageLeave' => ['POST'],  // Page analytics (optional session tracking)
         ];
 
         foreach ($publicEndpoints as $endpoint => $allowedMethods) {
             if (strpos($uri, $endpoint) === 0) {
-                $method = $request->getMethod();
                 if (in_array($method, $allowedMethods, true)) {
                     return true;
                 }
@@ -156,97 +175,6 @@ class AuthenticationMiddleware implements MiddlewareInterface
         }
 
         return false;
-    }
-
-    /**
-     * Check if the request requires CSRF protection
-     *
-     * @param Request $request
-     * @param Micro $application
-     * @return bool
-     */
-    private function requiresCsrfProtection(Request $request, Micro $application): bool
-    {
-        // CSRF protection is required for state-changing HTTP methods
-        $method = $request->getMethod();
-        $protectedMethods = ['POST', 'PUT', 'PATCH', 'DELETE'];
-        
-        if (!in_array($method, $protectedMethods)) {
-            return false;
-        }
-
-        // Skip CSRF for localhost and debug mode
-        if ($request->isLocalHostRequest() || $request->isDebugModeEnabled()) {
-            return false;
-        }
-        
-        // Skip CSRF for Bearer token authenticated requests
-        if ($request->hasBearerToken()) {
-            return false;
-        }
-
-        // Check if the controller opts into CSRF protection
-        try {
-            $router = $application->getRouter();
-            $controllerName = $router->getControllerName();
-            
-            if (!empty($controllerName)) {
-                // Build full controller class name
-                $controllerClass = "MikoPBX\\PBXCoreREST\\Controllers\\{$controllerName}";
-                
-                // Check if controller class exists and has CSRF protection enabled
-                if (class_exists($controllerClass)) {
-                    $reflection = new \ReflectionClass($controllerClass);
-                    
-                    // Check if controller has REQUIRES_CSRF_PROTECTION constant set to true
-                    if ($reflection->hasConstant('REQUIRES_CSRF_PROTECTION')) {
-                        return $reflection->getConstant('REQUIRES_CSRF_PROTECTION') === true;
-                    }
-                }
-            }
-        } catch (\Exception $e) {
-            // If we can't determine the controller, err on the side of caution
-            // and require CSRF protection for state-changing methods
-            SystemMessages::sysLogMsg(__CLASS__, "CSRF check error: " . $e->getMessage(), LOG_WARNING);
-        }
-
-        // Default: no CSRF protection required (gradual migration)
-        return false;
-    }
-
-    /**
-     * Validate CSRF token from the request
-     *
-     * @param Request $request
-     * @param Micro $application
-     * @return bool
-     */
-    private function validateCsrfToken(Request $request, Micro $application): bool
-    {
-        try {
-            // Get security service
-            $security = $application->getDI()->getShared('security');
-            
-            // Get token key and expected value
-            $tokenKey = $security->getTokenKey();
-            
-            // Get request data based on content type
-            $requestData = $request->getData();
-            
-            // Check if token exists in request
-            if (!isset($requestData[$tokenKey])) {
-                return false;
-            }
-            
-            // Validate token
-            $providedToken = $requestData[$tokenKey];
-            return $security->checkToken($tokenKey, $providedToken);
-            
-        } catch (\Exception $e) {
-            // Log error but don't expose details
-            SystemMessages::sysLogMsg(__CLASS__, "CSRF validation error: " . $e->getMessage(), LOG_WARNING);
-            return false;
-        }
     }
 
 }

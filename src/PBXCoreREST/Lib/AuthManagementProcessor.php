@@ -19,34 +19,37 @@
 
 namespace MikoPBX\PBXCoreREST\Lib;
 
-use MikoPBX\PBXCoreREST\Lib\UserPageTracker\PageViewAction;
-use MikoPBX\PBXCoreREST\Lib\UserPageTracker\PageLeaveAction;
+use MikoPBX\PBXCoreREST\Lib\Auth\LoginAction;
+use MikoPBX\PBXCoreREST\Lib\Auth\RefreshAction;
+use MikoPBX\PBXCoreREST\Lib\Auth\LogoutAction;
 use Phalcon\Di\Injectable;
 
 /**
- * Available actions for user page tracker
+ * Available actions for authentication management
  */
-enum UserPageTrackerAction: string
+enum AuthAction: string
 {
-    case PAGE_VIEW = 'pageView';
-    case PAGE_LEAVE = 'pageLeave';
+    case LOGIN = 'login';
+    case REFRESH = 'refresh';
+    case LOGOUT = 'logout';
 }
 
 /**
- * Class UserPageTrackerProcessor
+ * Class AuthManagementProcessor
  *
- * Processes user page tracking requests
+ * Processes authentication and token management requests
  *
  * RESTful API mapping:
- * - POST /user-page-tracker:pageView -> pageView
- * - POST /user-page-tracker:pageLeave -> pageLeave
+ * - POST /auth:login   -> login   (PUBLIC)
+ * - POST /auth:refresh -> refresh (PUBLIC, reads cookie)
+ * - POST /auth:logout  -> logout  (BEARER_TOKEN required)
  *
  * @package MikoPBX\PBXCoreREST\Lib
  */
-class UserPageTrackerProcessor extends Injectable
+class AuthManagementProcessor extends Injectable
 {
     /**
-     * Processes user page tracking requests with type-safe enum matching
+     * Processes authentication management requests with type-safe enum matching
      *
      * @param array<string, mixed> $request
      *
@@ -57,32 +60,38 @@ class UserPageTrackerProcessor extends Injectable
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
 
+        // Validate action parameter
+        if (!isset($request['action']) || !is_string($request['action'])) {
+            $res->messages['error'][] = "Missing or invalid action parameter in " . __CLASS__;
+            $res->function = '';
+            return $res;
+        }
+
         $actionString = $request['action'];
-        $data = $request['data'];
-        $sessionContext = $request['sessionContext'] ?? [];
 
-        // Type-safe action matching with enum
-        $action = UserPageTrackerAction::tryFrom($actionString);
-
-        if ($action === null) {
-            $res->messages['error'][] = "Unknown action - $actionString in " . __CLASS__;
+        // Validate data parameter
+        if (!isset($request['data']) || !is_array($request['data'])) {
+            $res->messages['error'][] = "Missing or invalid data parameter in " . __CLASS__;
             $res->function = $actionString;
             return $res;
         }
 
-        // Get session_id from session context (used for page tracking)
-        // Session ID is optional - if not available, we still track the page view
-        // but without user association (anonymous tracking)
-        $sessionId = $sessionContext['session_id'] ?? '';
+        $data = $request['data'];
 
-        // Add session_id to data for actions (this is the browser session ID)
-        // Empty sessionId means anonymous tracking
-        $data['sessionId'] = $sessionId;
+        // Type-safe action matching with enum
+        $action = AuthAction::tryFrom($actionString);
+
+        if ($action === null) {
+            $res->messages['error'][] = "Unknown action - {$actionString} in " . __CLASS__;
+            $res->function = $actionString;
+            return $res;
+        }
 
         // Execute action using match expression (PHP 8)
         $res = match ($action) {
-            UserPageTrackerAction::PAGE_VIEW => PageViewAction::main($data),
-            UserPageTrackerAction::PAGE_LEAVE => PageLeaveAction::main($data),
+            AuthAction::LOGIN => LoginAction::main($data),
+            AuthAction::REFRESH => RefreshAction::main($data),
+            AuthAction::LOGOUT => LogoutAction::main($data),
         };
 
         $res->function = $actionString;

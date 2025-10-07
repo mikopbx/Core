@@ -1,6 +1,6 @@
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl,globalTranslate,Form */
+/* global globalRootUrl,globalTranslate,Form,Config */
 
 const loginForm = {
     /**
@@ -32,10 +32,22 @@ const loginForm = {
     $submitButton: $('#submitbutton'),
 
     /**
+     * The jQuery object for the password field.
+     * @type {jQuery}
+     */
+    $passwordField: $('#password'),
+
+    /**
      * The jQuery object for the checkboxes.
      * @type {jQuery}
      */
     $checkBoxes: $('.checkbox'),
+
+    /**
+     * Passkey login button
+     * @type {jQuery}
+     */
+    $passkeyButton: $('#passkey-login-button'),
 
     /**
      * Validation rules for the form fields before submission.
@@ -67,51 +79,305 @@ const loginForm = {
      * Initializes the login form functionality.
      */
     initialize() {
-        loginForm.initializeForm();
-        $('input')
-            .keyup((event) => {
-                if (event.keyCode === 13) {
-                    loginForm.$submitButton.click();
-                }
-            })
-            .on('input', () => {
-                $('.message.ajax').remove();
-            });
+        loginForm.checkPasskeySupport();
+        loginForm.bindEvents();
+        loginForm.initializeFormValidation();
         loginForm.$checkBoxes.checkbox();
     },
 
     /**
-     * Callback function to be called before the form is sent
-     * @param {Object} settings - The current settings of the form
-     * @returns {Object} - The updated settings of the form
+     * Check if browser supports WebAuthn and hide passkey button if not
      */
-    cbBeforeSendForm(settings) {
-        const result = settings;
-        result.data = loginForm.$formObj.form('get values');
-        let backUri = `${location.pathname}${location.search}`;
-        result.data.backUri = backUri.replace(globalRootUrl, '');
-        return result;
+    checkPasskeySupport() {
+        if (window.PublicKeyCredential === undefined) {
+            loginForm.$passkeyButton.hide();
+        }
     },
 
     /**
-     * Callback function to be called after the form has been sent.
-     * @param {Object} response - The response from the server after the form is sent
+     * Bind form events
      */
-    cbAfterSendForm(response) {
+    bindEvents() {
+        // Prevent default form submission - we use AJAX only
+        loginForm.$formObj.on('submit', (e) => {
+            e.preventDefault();
+            return false;
+        });
 
+        // Handle submit button click - password authentication via REST API
+        loginForm.$submitButton.on('click', (e) => {
+            e.preventDefault();
+            loginForm.$formObj.form('validate form');
+            if (loginForm.$formObj.form('is valid')) {
+                loginForm.submitLogin();
+            }
+        });
+
+        // Handle enter key on password field
+        loginForm.$passwordField.on('keypress', (e) => {
+            if (e.which === 13) {
+                e.preventDefault();
+                loginForm.$submitButton.click();
+            }
+        });
+
+        // Handle passkey button click - usernameless authentication
+        loginForm.$passkeyButton.on('click', (e) => {
+            e.preventDefault();
+            loginForm.authenticateWithPasskey();
+        });
+
+        // Clear error messages on input
+        $('input').on('input', () => {
+            $('.message.ajax').remove();
+        });
     },
 
     /**
-     * Initialize the form with custom settings
+     * Submit login via REST API /pbxcore/api/v3/auth:login
+     * Получает JWT access token и refresh token cookie
      */
-    initializeForm() {
-        Form.$formObj = loginForm.$formObj;
-        Form.url = `${globalRootUrl}session/start`; // Form submission URL
-        Form.validateRules = loginForm.validateRules; // Form validation rules
-        Form.cbBeforeSendForm = loginForm.cbBeforeSendForm; // Callback before form is sent
-        Form.cbAfterSendForm = loginForm.cbAfterSendForm; // Callback after form is sent
-        Form.keyboardShortcuts = false;
-        Form.initialize();
+    async submitLogin() {
+        loginForm.$submitButton.addClass('loading disabled');
+        $('.message.ajax').remove();
+
+        try {
+            const response = await $.ajax({
+                url: '/pbxcore/api/v3/auth:login',
+                method: 'POST',
+                dataType: 'json',
+                data: {
+                    login: $('#login').val(),
+                    password: $('#password').val(),
+                    rememberMe: $('#rememberMeCheckBox').is(':checked')
+                }
+            });
+
+            console.log('[LOGIN] API Response:', {
+                result: response.result,
+                hasData: !!response.data,
+                hasAccessToken: !!(response.data && response.data.accessToken),
+                tokenLength: response.data?.accessToken?.length,
+                expiresIn: response.data?.expiresIn
+            });
+
+            if (response.result && response.data && response.data.accessToken) {
+                // Save JWT in TokenManager (in memory, NOT localStorage!)
+                console.log('[LOGIN] Storing access token in TokenManager...');
+                TokenManager.setAccessToken(
+                    response.data.accessToken,
+                    response.data.expiresIn
+                );
+                console.log('[LOGIN] Token stored, redirecting...');
+
+                // Refresh token is already set in httpOnly cookie automatically
+                // Redirect to home page
+                window.location = `${globalRootUrl}extensions/index`;
+            } else {
+                console.error('[LOGIN] Invalid response:', response);
+                loginForm.showError(response.messages || { error: [globalTranslate.auth_WrongLoginPassword] });
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+
+            if (error.responseJSON && error.responseJSON.messages) {
+                loginForm.showError(error.responseJSON.messages);
+            } else {
+                loginForm.showError({ error: [globalTranslate.auth_WrongLoginPassword] });
+            }
+        } finally {
+            loginForm.$submitButton.removeClass('loading disabled');
+        }
+    },
+
+    /**
+     * Authenticate user with Passkey (usernameless flow)
+     * Browser will show all available passkeys for this domain
+     */
+    async authenticateWithPasskey() {
+        // Show loading state
+        loginForm.$submitButton.addClass('loading disabled');
+        loginForm.$passkeyButton.addClass('loading disabled');
+        $('.message.ajax').remove();
+
+        try {
+            // Get origin for WebAuthn
+            const origin = window.location.origin;
+
+            // Step 1: Get challenge from REST API (without login - usernameless)
+            const startResponse = await $.ajax({
+                url: '/pbxcore/api/v3/passkeys:authenticationStart',
+                method: 'GET',
+                data: { origin }, // No login parameter - usernameless authentication
+            });
+
+            if (!startResponse.result || !startResponse.data) {
+                loginForm.$submitButton.removeClass('loading disabled');
+                loginForm.$passkeyButton.removeClass('loading disabled');
+                loginForm.showError(startResponse.messages || [globalTranslate.pk_LoginError]);
+                return;
+            }
+
+            // Step 2: Call WebAuthn API - browser will show all available passkeys
+            const publicKeyOptions = loginForm.prepareCredentialRequestOptions(startResponse.data);
+            const assertion = await navigator.credentials.get({ publicKey: publicKeyOptions });
+
+            // Step 3: Send assertion to REST API for verification
+            const assertionData = loginForm.prepareAssertionData(assertion, startResponse.data);
+            const finishResponse = await $.ajax({
+                url: '/pbxcore/api/v3/passkeys:authenticationFinish',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(assertionData),
+            });
+
+            loginForm.$submitButton.removeClass('loading disabled');
+            loginForm.$passkeyButton.removeClass('loading disabled');
+
+            if (finishResponse.result) {
+                // Start session via SessionController
+                await loginForm.createSessionFromPasskey(finishResponse.data);
+            } else {
+                loginForm.showError(finishResponse.messages || [globalTranslate.pk_LoginError]);
+            }
+        } catch (error) {
+            loginForm.$submitButton.removeClass('loading disabled');
+            loginForm.$passkeyButton.removeClass('loading disabled');
+            console.error('Passkey authentication error:', error);
+
+            // Check if user cancelled
+            if (error.name === 'NotAllowedError') {
+                // User cancelled - don't show error
+                return;
+            }
+
+            // Real error - show message
+            loginForm.showError([`${globalTranslate.pk_LoginError}: ${error.message}`]);
+        }
+    },
+
+    /**
+     * Login with passkey authentication using sessionToken
+     * SessionToken is exchanged for JWT tokens via REST API
+     */
+    async createSessionFromPasskey(authData) {
+        try {
+            // Check if remember me is selected
+            const rememberMe = $('#rememberMeCheckBox').is(':checked');
+
+            // Exchange sessionToken for JWT tokens via REST API
+            const response = await $.ajax({
+                url: '/pbxcore/api/v3/auth:login',
+                method: 'POST',
+                dataType: 'json',
+                data: {
+                    sessionToken: authData.sessionToken,
+                    rememberMe: rememberMe
+                }
+            });
+
+            if (response.result && response.data && response.data.accessToken) {
+                // Save JWT in TokenManager (in memory, NOT localStorage!)
+                TokenManager.setAccessToken(
+                    response.data.accessToken,
+                    response.data.expiresIn
+                );
+
+                // Refresh token is already set in httpOnly cookie automatically
+                // Redirect to home page
+                window.location = `${globalRootUrl}extensions/index`;
+            } else {
+                loginForm.showError(response.messages || [globalTranslate.pk_LoginError]);
+            }
+        } catch (error) {
+            console.error('Passkey login error:', error);
+            loginForm.showError([globalTranslate.pk_LoginError]);
+        }
+    },
+
+    /**
+     * Prepare credential request options for WebAuthn API
+     */
+    prepareCredentialRequestOptions(serverData) {
+        return {
+            challenge: loginForm.base64urlToArrayBuffer(serverData.challenge),
+            timeout: serverData.timeout || 60000,
+            rpId: serverData.rpId,
+            allowCredentials: serverData.allowCredentials.map(cred => ({
+                type: 'public-key',
+                id: loginForm.base64urlToArrayBuffer(cred.id),
+            })),
+            userVerification: serverData.userVerification || 'preferred',
+        };
+    },
+
+    /**
+     * Prepare assertion data to send to server
+     */
+    prepareAssertionData(assertion, serverData) {
+        const response = assertion.response;
+
+        return {
+            sessionId: serverData.sessionId,
+            credentialId: loginForm.arrayBufferToBase64url(assertion.rawId),
+            authenticatorData: loginForm.arrayBufferToBase64url(response.authenticatorData),
+            clientDataJSON: loginForm.arrayBufferToBase64url(response.clientDataJSON),
+            signature: loginForm.arrayBufferToBase64url(response.signature),
+            userHandle: response.userHandle ? loginForm.arrayBufferToBase64url(response.userHandle) : null,
+        };
+    },
+
+    /**
+     * Convert base64url string to ArrayBuffer
+     */
+    base64urlToArrayBuffer(base64url) {
+        const padding = '='.repeat((4 - (base64url.length % 4)) % 4);
+        const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/') + padding;
+        const rawData = window.atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+        for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray.buffer;
+    },
+
+    /**
+     * Convert ArrayBuffer to base64url string
+     */
+    arrayBufferToBase64url(buffer) {
+        const bytes = new Uint8Array(buffer);
+        let binary = '';
+        for (let i = 0; i < bytes.byteLength; i++) {
+            binary += String.fromCharCode(bytes[i]);
+        }
+        const base64 = window.btoa(binary);
+        return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+    },
+
+    /**
+     * Show error message
+     */
+    showError(messages) {
+        const errorHtml = Array.isArray(messages)
+            ? messages.join('<br>')
+            : (messages.error ? messages.error.join('<br>') : 'Unknown error');
+
+        loginForm.$formObj.before(`<div class="ui error message ajax">${errorHtml}</div>`);
+    },
+
+    /**
+     * Initialize form validation using Fomantic UI
+     */
+    initializeFormValidation() {
+        loginForm.$formObj.form({
+            fields: loginForm.validateRules,
+            onSuccess(event) {
+                // Prevent default form submission if event exists
+                if (event && event.preventDefault) {
+                    event.preventDefault();
+                }
+            }
+        });
     },
 };
 
@@ -119,4 +385,3 @@ const loginForm = {
 $(document).ready(() => {
     loginForm.initialize();
 });
-

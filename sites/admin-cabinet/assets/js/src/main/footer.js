@@ -32,12 +32,33 @@ if (typeof Number.isFinite !== 'function') {
     };
 }
 
-// When the document is ready, initialize the footer
-$(document).ready(() => {
+// Initialize footer immediately (script is loaded at bottom of page, DOM is already ready)
+(async () => {
+    // Wait for TokenManager initialization to complete
+    // (TokenManager.initialize() is called automatically in token-manager.js)
+    if (window.tokenManagerReady) {
+        const authorized = await window.tokenManagerReady;
+
+        if (!authorized) {
+            // No valid refresh token → TokenManager already redirected to login
+            // Remove loading overlay before redirect
+            $('#content-frame').removeClass('loading');
+            if (!$('#content-frame').hasClass('grey')){
+                $('#content-frame').removeClass('segment');
+            }
+            return;
+        }
+
+        // TokenManager initialized successfully
+        // Global AJAX interceptor is set up
+        // Access token will be automatically included in all requests
+    }
+
+    // Initialize footer UI elements
     $('.popuped').popup();
     $('div[data-content], a[data-content]').popup();
     $('#content-frame').removeClass('loading');
     if (!$('#content-frame').hasClass('grey')){
         $('#content-frame').removeClass('segment');
     }
-});
+})();

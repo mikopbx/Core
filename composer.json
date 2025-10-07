@@ -19,8 +19,12 @@
         "ext-sqlite3": "*",
         "ext-xdebug": "*",
         "ext-zip": "*",
+        "aego/oauth2-yandex": "^0.2",
         "filp/whoops": "^2.15.2",
         "guzzlehttp/guzzle": "^7.5.3",
+        "lbuchs/webauthn": "^2.0",
+        "league/oauth2-client": "^2.7",
+        "league/oauth2-google": "^4.0",
         "pda/pheanstalk": "^4.0",
         "php-mime-mail-parser/php-mime-mail-parser": "^7.0",
         "php-school/cli-menu": "^4.0",
@@ -30,10 +34,7 @@
         "psr/log": "^1.0.1",
         "repejota/nats": "0.8.4",
         "sentry/sdk": "^3.3.0",
-        "league/oauth2-client": "^2.7",
-        "league/oauth2-google": "^4.0",
-        "thenetworg/oauth2-azure": "^2.2",
-        "aego/oauth2-yandex": "^0.2"
+        "thenetworg/oauth2-azure": "^2.2"
     },
     "require-dev": {
         "roave/security-advisories": "dev-master",
