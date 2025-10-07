@@ -671,6 +671,8 @@ const extensionsIndex = {
                 // Manually trigger status update
                 if (response && response.data && typeof ExtensionIndexStatusMonitor !== 'undefined') {
                     ExtensionIndexStatusMonitor.updateAllExtensionStatuses(response.data);
+                    // Mark initial load as complete to allow subsequent pagination requests
+                    ExtensionIndexStatusMonitor.isInitialLoadComplete = true;
                 }
             });
         }

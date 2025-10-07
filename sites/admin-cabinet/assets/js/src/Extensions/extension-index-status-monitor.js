@@ -29,6 +29,7 @@
 const ExtensionIndexStatusMonitor = {
     channelId: 'extension-status',
     isInitialized: false,
+    isInitialLoadComplete: false,
     lastUpdateTime: 0,
     statusCache: {},
     
@@ -376,19 +377,25 @@ const ExtensionIndexStatusMonitor = {
      * Request statuses only for extensions not in cache
      */
     requestStatusesForNewExtensions() {
+        // Don't make duplicate request during initial load
+        // The initial request is handled by extensions-index.js:requestInitialStatus()
+        if (!this.isInitialLoadComplete) {
+            return;
+        }
+
         const newExtensions = [];
-        
+
         // Find all visible extension rows
         $('tr.extension-row').each((index, element) => {
             const $row = $(element);
             const extensionId = $row.attr('id') || $row.attr('data-value');
-            
+
             if (extensionId && !this.statusCache[extensionId]) {
                 // Extension not in cache, add to list
                 newExtensions.push(extensionId);
             }
         });
-        
+
         // If we have new extensions, request their statuses
         if (newExtensions.length > 0) {
             // Request status for new extensions
