@@ -177,25 +177,34 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 $readKey = $perm . '_read';
                 $writeKey = $perm . '_write';
                 
-                // Build permission value: 'read', 'write', 'read,write', or ''
-                $permValue = [];
-                
+                // Build permission value: 'read', 'write', 'readwrite', or ''
+                $hasRead = false;
+                $hasWrite = false;
+
                 if (isset($permissions[$readKey])) {
                     $readValue = $permissions[$readKey];
                     if ($readValue === true || $readValue === 'true' || $readValue === 1 || $readValue === '1') {
-                        $permValue[] = 'read';
+                        $hasRead = true;
                     }
                 }
-                
+
                 if (isset($permissions[$writeKey])) {
                     $writeValue = $permissions[$writeKey];
                     if ($writeValue === true || $writeValue === 'true' || $writeValue === 1 || $writeValue === '1') {
-                        $permValue[] = 'write';
+                        $hasWrite = true;
                     }
                 }
-                
+
                 // Set the permission field in the model
-                $manager->$perm = implode(',', $permValue);
+                if ($hasRead && $hasWrite) {
+                    $manager->$perm = 'readwrite';
+                } elseif ($hasRead) {
+                    $manager->$perm = 'read';
+                } elseif ($hasWrite) {
+                    $manager->$perm = 'write';
+                } else {
+                    $manager->$perm = '';
+                }
             }
         } else {
             // Clear all permissions if not provided
