@@ -33,6 +33,7 @@ abstract class FilesConstants
     public const string UPLOAD_MERGING = 'MERGING';
     public const string UPLOAD_WAITING_FOR_NEXT_PART = 'WAITING_FOR_NEXT_PART';
     public const string UPLOAD_COMPLETE = 'UPLOAD_COMPLETE';
+    public const string UPLOAD_FAILED = 'UPLOAD_FAILED';
 
     public const string D_STATUS  = 'd_status';
     public const string D_STATUS_PROGRESS = 'd_status_progress';

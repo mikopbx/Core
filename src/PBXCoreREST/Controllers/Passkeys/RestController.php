@@ -23,62 +23,190 @@ namespace MikoPBX\PBXCoreREST\Controllers\Passkeys;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\PasskeysManagementProcessor;
+use MikoPBX\PBXCoreREST\Lib\Passkeys\DataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
+    ApiOperation,
+    ApiParameter,
+    ApiResponse,
+    ApiDataSchema,
     HttpMapping,
     ResourceSecurity,
-    ActionType,
-    SecurityType
+    SecurityType,
+    ParameterLocation
 };
 
 /**
- * Passkeys REST Controller
+ * RESTful controller for WebAuthn passkeys management (v3 API)
  *
- * Handles WebAuthn passkey registration and authentication.
+ * Comprehensive passkey management following Google API Design Guide patterns.
+ * Implements CRUD operations for passkey management and WebAuthn authentication flows.
  * Supports both authenticated (registration/management) and public (authentication) endpoints.
  *
  * @package MikoPBX\PBXCoreREST\Controllers\Passkeys
+ *
+ * @see https://cloud.google.com/apis/design - Google API Design Guide
+ * @see https://www.w3.org/TR/webauthn-2/ - WebAuthn Specification
+ * @see https://spec.openapis.org/oas/v3.1.0 - OpenAPI 3.1 Specification
  */
 #[ApiResource(
     path: '/pbxcore/api/v3/passkeys',
     tags: ['Passkeys', 'Authentication'],
-    processor: PasskeysManagementProcessor::class,
-    description: 'WebAuthn passkey management and authentication'
+    description: 'WebAuthn passkey management and authentication for passwordless login. ' .
+                'Supports FIDO2/WebAuthn standards for secure biometric and hardware key authentication. ' .
+                'Provides registration flow for authenticated users and authentication flow for public access.',
+    processor: PasskeysManagementProcessor::class
 )]
+#[ResourceSecurity('passkeys', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
 #[HttpMapping(
     mapping: [
         'GET' => ['getList', 'getRecord', 'checkAvailability', 'authenticationStart'],
-        'POST' => ['registrationStart', 'registrationFinish', 'authenticationFinish'],
-        'PATCH' => ['update'],
+        'POST' => ['create', 'registrationStart', 'registrationFinish', 'authenticationFinish'],
+        'PATCH' => ['patch'],
         'DELETE' => ['delete']
     ],
+    resourceLevelMethods: ['getRecord', 'patch', 'delete'],
+    collectionLevelMethods: ['getList', 'create'],
     customMethods: ['checkAvailability', 'authenticationStart', 'registrationStart', 'registrationFinish', 'authenticationFinish'],
-    resourceLevelMethods: []
-)]
-#[ResourceSecurity(
-    'passkeys',
-    ActionType::WRITE,
-    [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN],
-    description: 'Default security for passkey management operations'
+    idPattern: '[0-9]+'
 )]
 class RestController extends BaseRestController
 {
     /**
-     * @var string Processor class for handling requests
+     * The processor class to handle requests
+     * @var string
      */
     protected string $processorClass = PasskeysManagementProcessor::class;
 
     /**
-     * Check if user has any passkeys registered (PUBLIC - no auth required)
-     * Lightweight check for UI to determine if passkey login should be offered
+     * Get list of all passkeys for authenticated user
      *
-     * GET /pbxcore/api/v3/passkeys:checkAvailability?login=admin
+     * @route GET /pbxcore/api/v3/passkeys
      */
-    #[ResourceSecurity(
-        'passkeys_check',
-        ActionType::READ,
-        [SecurityType::PUBLIC]
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'list',
+        isArray: true
     )]
+    #[ApiOperation(
+        summary: 'rest_pk_GetList',
+        description: 'rest_pk_GetListDesc',
+        operationId: 'getPasskeysList'
+    )]
+    #[ApiResponse(200, 'rest_response_200_list')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function getList(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Get a specific passkey by ID
+     *
+     * @route GET /pbxcore/api/v3/passkeys/{id}
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
+    #[ApiOperation(
+        summary: 'rest_pk_GetRecord',
+        description: 'rest_pk_GetRecordDesc',
+        operationId: 'getPasskeyById'
+    )]
+    #[ApiParameter('id', 'integer', 'rest_param_id', ParameterLocation::PATH, required: true, example: 1)]
+    #[ApiResponse(200, 'rest_response_200_get')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    public function getRecord(string $id): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Create a new passkey (alias for registrationStart)
+     *
+     * @route POST /pbxcore/api/v3/passkeys
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
+    #[ApiOperation(
+        summary: 'rest_pk_Create',
+        description: 'rest_pk_CreateDesc',
+        operationId: 'createPasskey'
+    )]
+    #[ApiParameter('name', 'string', 'rest_param_pk_name', ParameterLocation::QUERY, required: false, maxLength: 100, example: 'My YubiKey')]
+    #[ApiResponse(201, 'rest_response_201_created')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function create(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Update passkey name or metadata
+     *
+     * @route PATCH /pbxcore/api/v3/passkeys/{id}
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
+    #[ApiOperation(
+        summary: 'rest_pk_Patch',
+        description: 'rest_pk_PatchDesc',
+        operationId: 'patchPasskey'
+    )]
+    #[ApiParameter('id', 'integer', 'rest_param_id', ParameterLocation::PATH, required: true, example: 1)]
+    #[ApiParameter('name', 'string', 'rest_param_pk_name', ParameterLocation::QUERY, required: false, maxLength: 100, example: 'Updated YubiKey Name')]
+    #[ApiResponse(200, 'rest_response_200_patched')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    public function patch(string $id): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Delete a passkey
+     *
+     * @route DELETE /pbxcore/api/v3/passkeys/{id}
+     */
+    #[ApiOperation(
+        summary: 'rest_pk_Delete',
+        description: 'rest_pk_DeleteDesc',
+        operationId: 'deletePasskey'
+    )]
+    #[ApiParameter('id', 'integer', 'rest_param_id', ParameterLocation::PATH, required: true, example: 1)]
+    #[ApiResponse(200, 'rest_response_200_deleted')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    public function delete(string $id): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Check if user has any passkeys registered (PUBLIC - no auth required)
+     *
+     * @route GET /pbxcore/api/v3/passkeys:checkAvailability
+     */
+    #[ApiOperation(
+        summary: 'rest_pk_CheckAvailability',
+        description: 'rest_pk_CheckAvailabilityDesc',
+        operationId: 'checkPasskeyAvailability'
+    )]
+    #[ApiParameter('login', 'string', 'rest_param_pk_login', ParameterLocation::QUERY, required: true, maxLength: 100, example: 'admin')]
+    #[ApiResponse(200, 'rest_response_200_get')]
     public function checkAvailability(): void
     {
         // Implementation handled by BaseRestController
@@ -86,15 +214,18 @@ class RestController extends BaseRestController
 
     /**
      * Start WebAuthn registration (authenticated users only)
-     * Returns publicKeyCredentialCreationOptions for navigator.credentials.create()
      *
-     * POST /pbxcore/api/v3/passkeys:registrationStart
+     * @route POST /pbxcore/api/v3/passkeys:registrationStart
      */
-    #[ResourceSecurity(
-        'passkeys_registration',
-        ActionType::WRITE,
-        [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN]
+    #[ApiOperation(
+        summary: 'rest_pk_RegistrationStart',
+        description: 'rest_pk_RegistrationStartDesc',
+        operationId: 'startPasskeyRegistration'
     )]
+    #[ApiParameter('name', 'string', 'rest_param_pk_name', ParameterLocation::QUERY, required: false, maxLength: 100, example: 'My Security Key')]
+    #[ApiResponse(200, 'rest_response_200_get')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
     public function registrationStart(): void
     {
         // Implementation handled by BaseRestController
@@ -102,15 +233,23 @@ class RestController extends BaseRestController
 
     /**
      * Finish WebAuthn registration (authenticated users only)
-     * Verifies attestation and stores credential
      *
-     * POST /pbxcore/api/v3/passkeys:registrationFinish
+     * @route POST /pbxcore/api/v3/passkeys:registrationFinish
      */
-    #[ResourceSecurity(
-        'passkeys_registration',
-        ActionType::WRITE,
-        [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN]
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
     )]
+    #[ApiOperation(
+        summary: 'rest_pk_RegistrationFinish',
+        description: 'rest_pk_RegistrationFinishDesc',
+        operationId: 'finishPasskeyRegistration'
+    )]
+    #[ApiParameter('credential', 'object', 'rest_param_pk_credential', ParameterLocation::QUERY, required: true, example: '{"id":"...","rawId":"...","response":{...}}')]
+    #[ApiResponse(201, 'rest_response_201_created')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
     public function registrationFinish(): void
     {
         // Implementation handled by BaseRestController
@@ -118,15 +257,17 @@ class RestController extends BaseRestController
 
     /**
      * Start WebAuthn authentication (PUBLIC - no auth required)
-     * Returns publicKeyCredentialRequestOptions for navigator.credentials.get()
      *
-     * GET /pbxcore/api/v3/passkeys:authenticationStart?login=admin
+     * @route GET /pbxcore/api/v3/passkeys:authenticationStart
      */
-    #[ResourceSecurity(
-        'passkeys_auth',
-        ActionType::READ,
-        [SecurityType::PUBLIC]
+    #[ApiOperation(
+        summary: 'rest_pk_AuthenticationStart',
+        description: 'rest_pk_AuthenticationStartDesc',
+        operationId: 'startPasskeyAuthentication'
     )]
+    #[ApiParameter('login', 'string', 'rest_param_pk_login', ParameterLocation::QUERY, required: true, maxLength: 100, example: 'admin')]
+    #[ApiResponse(200, 'rest_response_200_get')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
     public function authenticationStart(): void
     {
         // Implementation handled by BaseRestController
@@ -134,15 +275,18 @@ class RestController extends BaseRestController
 
     /**
      * Finish WebAuthn authentication (PUBLIC - no auth required)
-     * Verifies assertion and returns session data
      *
-     * POST /pbxcore/api/v3/passkeys:authenticationFinish
+     * @route POST /pbxcore/api/v3/passkeys:authenticationFinish
      */
-    #[ResourceSecurity(
-        'passkeys_auth',
-        ActionType::WRITE,
-        [SecurityType::PUBLIC]
+    #[ApiOperation(
+        summary: 'rest_pk_AuthenticationFinish',
+        description: 'rest_pk_AuthenticationFinishDesc',
+        operationId: 'finishPasskeyAuthentication'
     )]
+    #[ApiParameter('credential', 'object', 'rest_param_pk_credential', ParameterLocation::QUERY, required: true, example: '{"id":"...","rawId":"...","response":{...}}')]
+    #[ApiResponse(200, 'rest_response_200_auth_login')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_invalid_credentials', 'PBXApiResult')]
     public function authenticationFinish(): void
     {
         // Implementation handled by BaseRestController

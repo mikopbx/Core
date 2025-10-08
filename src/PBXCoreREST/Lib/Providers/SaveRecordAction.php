@@ -19,6 +19,7 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Providers;
 
+use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\Providers;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\Iax;
@@ -316,8 +317,13 @@ class SaveRecordAction extends AbstractSaveRecordAction
             // CREATE operation - create new provider
             $provider = new Providers();
             // Use provided ID if available (pre-generated), otherwise generate new one
-            $provider->uniqid = !empty($data['id']) ? $data['id'] : 
-                                Providers::generateUniqueID($data['type'] . '-TRUNK-');
+            $prefix = match($data['type']) {
+                'SIP' => Extensions::PREFIX_TRUNK_SIP,
+                'IAX' => Extensions::PREFIX_TRUNK_IAX,
+                default => $data['type'] . '-TRUNK'
+            };
+            $provider->uniqid = !empty($data['id']) ? $data['id'] :
+                                Providers::generateUniqueID($prefix);
             $provider->type = $data['type'];
         }
         

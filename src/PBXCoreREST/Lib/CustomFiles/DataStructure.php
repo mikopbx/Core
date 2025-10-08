@@ -21,15 +21,17 @@ namespace MikoPBX\PBXCoreREST\Lib\CustomFiles;
 
 use MikoPBX\Common\Models\CustomFiles;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
+use MikoPBX\PBXCoreREST\Lib\Common\OpenApiSchemaProvider;
 
 /**
  * Data structure for custom files
  *
  * Creates consistent data format for API responses.
+ * Implements OpenApiSchemaProvider to provide typed schemas for OpenAPI specification.
  *
  * @package MikoPBX\PBXCoreREST\Lib\CustomFiles
  */
-class DataStructure extends AbstractDataStructure
+class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvider
 {
     /**
      * Create data array from CustomFiles model
@@ -71,5 +73,179 @@ class DataStructure extends AbstractDataStructure
             'changed' => $model->changed ?? '0'
             // Content excluded for list view performance
         ];
+    }
+
+    /**
+     * Get OpenAPI schema for custom file list item
+     *
+     * This schema matches the structure returned by createForList() method.
+     * Used for GET /api/v3/custom-files endpoint (list of custom files).
+     *
+     * @return array<string, mixed> OpenAPI schema definition
+     */
+    public static function getListItemSchema(): array
+    {
+        return [
+            'type' => 'object',
+            'required' => ['id', 'filepath', 'mode'],
+            'properties' => [
+                'id' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_cf_id',
+                    'pattern' => '^[0-9]+$',
+                    'example' => '15'
+                ],
+                'filepath' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_cf_filepath',
+                    'maxLength' => 500,
+                    'example' => '/etc/asterisk/custom.conf'
+                ],
+                'mode' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_cf_mode',
+                    'enum' => ['override', 'append', 'script', 'none'],
+                    'example' => 'append'
+                ],
+                'description' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_cf_description',
+                    'maxLength' => 500,
+                    'example' => 'Custom Asterisk configuration'
+                ],
+                'changed' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_cf_changed',
+                    'enum' => ['0', '1'],
+                    'example' => '0'
+                ]
+            ]
+        ];
+    }
+
+    /**
+     * Get OpenAPI schema for detailed custom file record
+     *
+     * This schema matches the structure returned by createFromModel() method.
+     * Used for GET /api/v3/custom-files/{id}, POST, PUT, PATCH endpoints.
+     *
+     * @return array<string, mixed> OpenAPI schema definition
+     */
+    public static function getDetailSchema(): array
+    {
+        return [
+            'type' => 'object',
+            'required' => ['id', 'filepath', 'mode', 'content'],
+            'properties' => [
+                'id' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_cf_id',
+                    'pattern' => '^[0-9]+$',
+                    'example' => '15'
+                ],
+                'filepath' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_cf_filepath',
+                    'maxLength' => 500,
+                    'example' => '/etc/asterisk/custom.conf'
+                ],
+                'content' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_cf_content',
+                    'example' => 'W2dlbmVyYWxdCmRlYnVnPXllcw=='
+                ],
+                'mode' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_cf_mode',
+                    'enum' => ['override', 'append', 'script', 'none'],
+                    'default' => 'none',
+                    'example' => 'append'
+                ],
+                'description' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_cf_description',
+                    'maxLength' => 500,
+                    'example' => 'Custom Asterisk configuration'
+                ],
+                'changed' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_cf_changed',
+                    'enum' => ['0', '1'],
+                    'default' => '0',
+                    'example' => '0'
+                ]
+            ]
+        ];
+    }
+
+    /**
+     * Get related schemas for OpenAPI components
+     *
+     * @return array<string, array<string, mixed>> Related schemas
+     */
+    public static function getRelatedSchemas(): array
+    {
+        return [];
+    }
+
+    /**
+     * Generate sanitization rules from OpenAPI schema
+     *
+     * Converts OpenAPI schema constraints into SystemSanitizer format.
+     * This eliminates duplication between schema definition and validation rules.
+     *
+     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
+     */
+    public static function getSanitizationRules(): array
+    {
+        $schema = static::getDetailSchema();
+        $rules = [];
+
+        if (!isset($schema['properties'])) {
+            return $rules;
+        }
+
+        foreach ($schema['properties'] as $fieldName => $fieldSchema) {
+            $ruleParts = [];
+
+            // Add type
+            $type = $fieldSchema['type'] ?? 'string';
+            $ruleParts[] = match ($type) {
+                'integer' => 'int',
+                'number' => 'float',
+                'boolean' => 'bool',
+                'array' => 'array',
+                default => 'string'
+            };
+
+            // Add constraints
+            if (isset($fieldSchema['minLength'])) {
+                $ruleParts[] = 'min:' . $fieldSchema['minLength'];
+            }
+            if (isset($fieldSchema['maxLength'])) {
+                $ruleParts[] = 'max:' . $fieldSchema['maxLength'];
+            }
+            if (isset($fieldSchema['minimum'])) {
+                $ruleParts[] = 'min:' . $fieldSchema['minimum'];
+            }
+            if (isset($fieldSchema['maximum'])) {
+                $ruleParts[] = 'max:' . $fieldSchema['maximum'];
+            }
+            if (isset($fieldSchema['pattern']) && is_string($fieldSchema['pattern'])) {
+                $pattern = str_replace('^', '', $fieldSchema['pattern']);
+                $pattern = str_replace('$', '', $pattern);
+                $ruleParts[] = 'regex:/' . $pattern . '/';
+            }
+            if (isset($fieldSchema['enum']) && is_array($fieldSchema['enum'])) {
+                $ruleParts[] = 'in:' . implode(',', $fieldSchema['enum']);
+            }
+            if (isset($fieldSchema['nullable']) && $fieldSchema['nullable'] === true) {
+                $ruleParts[] = 'empty_to_null';
+            }
+
+            $rules[$fieldName] = implode('|', $ruleParts);
+        }
+
+        return $rules;
     }
 }

@@ -21,51 +21,125 @@ namespace MikoPBX\PBXCoreREST\Controllers\Advice;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\AdviceProcessor;
+use MikoPBX\PBXCoreREST\Lib\Advice\DataStructure;
+use MikoPBX\PBXCoreREST\Attributes\{
+    ApiResource,
+    ApiOperation,
+    ApiParameter,
+    ApiResponse,
+    ApiDataSchema,
+    SecurityType,
+    ParameterLocation,
+    HttpMapping,
+    ResourceSecurity
+};
 
 /**
  * RESTful controller for system advice and notifications (v3 API)
  *
- * Provides system notifications about configuration issues, security warnings,
- * and recommendations. This is a read-only resource with custom methods only.
- *
- * @RoutePrefix("/pbxcore/api/v3/advice")
- *
- * @examples Custom methods:
- * GET    /pbxcore/api/v3/advice:getList     - Get all system advice/notifications
- * GET    /pbxcore/api/v3/advice:refresh     - Force refresh advice cache
+ * Comprehensive system advice and notifications management following Google API Design Guide patterns.
+ * Provides configuration recommendations, security warnings, and system health notifications.
  *
  * @package MikoPBX\PBXCoreREST\Controllers\Advice
+ *
+ * @see https://cloud.google.com/apis/design - Google API Design Guide
+ * @see https://spec.openapis.org/oas/v3.1.0 - OpenAPI 3.1 Specification
  */
+#[ApiResource(
+    path: '/pbxcore/api/v3/advice',
+    tags: ['System Advice'],
+    description: 'System advice and notification management for PBX health monitoring. ' .
+                'Provides automated analysis of system configuration, security recommendations, ' .
+                'performance warnings, and best practice suggestions. This is a read-only resource ' .
+                'with custom methods for retrieving and refreshing system advice.',
+    processor: AdviceProcessor::class
+)]
+#[ResourceSecurity('advice', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
+#[HttpMapping(
+    mapping: [
+        'GET' => ['getList', 'refresh'],
+        'POST' => ['refresh']
+    ],
+    resourceLevelMethods: [],
+    collectionLevelMethods: ['getList', 'refresh'],
+    customMethods: ['getList', 'refresh'],
+    idPattern: ''
+)]
 class RestController extends BaseRestController
 {
     /**
      * The processor class to handle requests
+     * @var string
      */
     protected string $processorClass = AdviceProcessor::class;
 
+
     /**
-     * Define allowed custom methods for each HTTP method
+     * Get list of all system advice and notifications
      *
-     * @return array<string, array<string>>
+     * @route GET /pbxcore/api/v3/advice:getList
      */
-    protected function getAllowedCustomMethods(): array
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'list'
+    )]
+    #[ApiOperation(
+        summary: 'rest_advice_GetList',
+        description: 'rest_advice_GetListDesc',
+        operationId: 'getAdviceList'
+    )]
+    #[ApiParameter(
+        name: 'category',
+        type: 'string',
+        description: 'rest_param_advice_category',
+        in: ParameterLocation::QUERY,
+        enum: ['security', 'configuration', 'performance', 'maintenance', 'updates'],
+        example: 'security'
+    )]
+    #[ApiParameter(
+        name: 'severity',
+        type: 'string',
+        description: 'rest_param_advice_severity',
+        in: ParameterLocation::QUERY,
+        enum: ['critical', 'warning', 'info'],
+        example: 'warning'
+    )]
+    #[ApiResponse(200, 'rest_response_200_list')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function getList(): void
     {
-        return [
-            'GET' => ['getList', 'refresh'],
-            'POST' => ['refresh'] // Allow POST for refresh operations
-        ];
+        // Implementation handled by BaseRestController
     }
 
     /**
-     * Check if a custom method requires a resource ID
-     * Since advice is a collection-level resource, no methods require IDs
+     * Refresh system advice cache
      *
-     * @param string $method The custom method name
-     * @return bool
+     * @route GET /pbxcore/api/v3/advice:refresh
+     * @route POST /pbxcore/api/v3/advice:refresh
      */
-    protected function isResourceLevelMethod(string $method): bool
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'list'
+    )]
+    #[ApiOperation(
+        summary: 'rest_advice_Refresh',
+        description: 'rest_advice_RefreshDesc',
+        operationId: 'refreshAdvice'
+    )]
+    #[ApiParameter(
+        name: 'force',
+        type: 'boolean',
+        description: 'rest_param_advice_force',
+        in: ParameterLocation::QUERY,
+        default: false,
+        example: true
+    )]
+    #[ApiResponse(200, 'rest_response_200_refreshed')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function refresh(): void
     {
-        // All advice methods are collection-level
-        return false;
+        // Implementation handled by BaseRestController
     }
 }

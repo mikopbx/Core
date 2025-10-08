@@ -302,7 +302,7 @@ class SaveEmployeeAction extends AbstractSaveRecordAction
         $extension = Extensions::findFirst($parameters);
         if ($extension === null) {
             $extension = new Extensions();
-            $extension->uniqid = Extensions::generateUniqueID();
+            $extension->uniqid = Extensions::generateUniqueID(Extensions::PREFIX_EXTENSION);
             $extension->show_in_phonebook = '1';
             $extension->public_access = '1';
             $extension->is_general_user_number = '1';

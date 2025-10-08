@@ -16,257 +16,176 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global Config, PbxApi, Resumable */
+/* global Config, PbxApi, PbxApiClient */
 
 /**
- * ModulesAPI - API client for module management operations
+ * ModulesAPI - Modern v3 API client for module management operations
  *
- * Provides methods for installing, uninstalling, enabling, disabling modules,
- * checking module status, and managing module updates.
+ * Uses unified PbxApiClient for standard RESTful operations following Google API Design Guide patterns.
+ * All custom methods follow the :methodName convention with automatic async channel header support.
+ *
+ * Standard CRUD operations available via PbxApiClient:
+ * - getList(params, callback) - GET /pbxcore/api/v3/modules
+ * - getRecord(id, callback) - GET /pbxcore/api/v3/modules/{id}
+ * - saveRecord(data, callback) - POST/PUT /pbxcore/api/v3/modules[/{id}]
+ * - deleteRecord(id, callback) - DELETE /pbxcore/api/v3/modules/{id}
+ *
+ * Custom methods (Google API Design Guide):
+ * - getAvailable(callback) - GET /pbxcore/api/v3/modules:getAvailableModules
+ * - getModuleInfo(params, callback) - GET /pbxcore/api/v3/modules/{id}:getModuleInfo
+ * - installFromRepo(params, callback) - POST /pbxcore/api/v3/modules/{id}:installFromRepo
+ * - installFromPackage(params, callback) - POST /pbxcore/api/v3/modules:installFromPackage
+ * - enableModule(params, callback) - POST /pbxcore/api/v3/modules/{id}:enable
+ * - disableModule(params, callback) - POST /pbxcore/api/v3/modules/{id}:disable
+ * - uninstallModule(params, callback) - POST /pbxcore/api/v3/modules/{id}:uninstall
+ * - updateAll(params, callback) - POST /pbxcore/api/v3/modules:updateAll
  *
  * @class ModulesAPI
  */
-const ModulesAPI = {
+const ModulesAPI = new PbxApiClient({
+    endpoint: '/pbxcore/api/v3/modules',
+    customMethods: {
+        getDefault: ':getDefault',
+        getAvailableModules: ':getAvailableModules',
+        getModuleInfo: ':getModuleInfo',
+        getModuleLink: ':getModuleLink',
+        installFromRepo: ':installFromRepo',
+        installFromPackage: ':installFromPackage',
+        enable: ':enable',
+        disable: ':disable',
+        uninstall: ':uninstall',
+        updateAll: ':updateAll',
+        startDownload: ':startDownload',
+        downloadStatus: ':downloadStatus',
+        getMetadataFromModulePackage: ':getMetadataFromModulePackage',
+        installationStatus: ':installationStatus'
+    }
+});
 
-    /**
-     * Module management endpoints
-     */
-    endpoints: {
-        moduleStartDownload: `${Config.pbxUrl}/pbxcore/api/modules/core/moduleStartDownload`,
-        moduleDownloadStatus: `${Config.pbxUrl}/pbxcore/api/modules/core/moduleDownloadStatus`,
-        installFromPackage: `${Config.pbxUrl}/pbxcore/api/modules/core/installFromPackage`,
-        installFromRepo: `${Config.pbxUrl}/pbxcore/api/modules/core/installFromRepo`,
-        statusOfModuleInstallation: `${Config.pbxUrl}/pbxcore/api/modules/core/statusOfModuleInstallation`,
-        enableModule: `${Config.pbxUrl}/pbxcore/api/modules/core/enableModule`,
-        disableModule: `${Config.pbxUrl}/pbxcore/api/modules/core/disableModule`,
-        uninstallModule: `${Config.pbxUrl}/pbxcore/api/modules/core/uninstallModule`,
-        getAvailableModules: `${Config.pbxUrl}/pbxcore/api/modules/core/getAvailableModules`,
-        getModuleLink: `${Config.pbxUrl}/pbxcore/api/modules/core/getModuleLink`,
-        updateAll: `${Config.pbxUrl}/pbxcore/api/modules/core/updateAll`,
-        getMetadataFromModulePackage: `${Config.pbxUrl}/pbxcore/api/modules/core/getMetadataFromModulePackage`,
-        getModuleInfo: `${Config.pbxUrl}/pbxcore/api/modules/core/getModuleInfo`
-    },
+/**
+ * Retrieves available modules from MIKO repository
+ * @param {function} callback - Callback function (response, success)
+ */
+ModulesAPI.getAvailable = function(callback) {
+    this.callCustomMethod('getAvailableModules', (response, success) => {
+        if (success && response.data) {
+            callback(response.data, true);
+        } else {
+            callback(response, false);
+        }
+    }, undefined, 'GET');
+};
 
-    /**
-     * Retrieves available modules from MIKO repository
-     * @param {function} callback - Callback function
-     */
-    getAvailable(callback) {
-        $.api({
-            url: this.endpoints.getAvailableModules,
-            on: 'now',
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response.data, true);
-            },
-            onFailure(response) {
-                callback(response, false);
-            },
-            onError() {
-                callback(false, false);
-            }
-        });
-    },
+/**
+ * Installs a new module from a repository
+ * @param {object} params - Installation parameters
+ * @param {string} params.uniqid - Module unique ID
+ * @param {string} params.releaseId - Release ID to install
+ * @param {string} params.channelId - Async channel ID (auto-added to header)
+ * @param {function} callback - Callback function (response, success)
+ */
+ModulesAPI.installFromRepo = function(params, callback) {
+    const requestData = {
+        releaseId: params.releaseId || 0,
+        asyncChannelId: params.channelId // Will be auto-extracted to header by PbxApiClient
+    };
 
-    /**
-     * Installs a new module from a repository
-     * @param {object} params - Installation parameters
-     * @param {string} params.uniqid - Module unique ID
-     * @param {string} params.releaseId - Release ID to install
-     * @param {function} callback - Callback function
-     */
-    installFromRepo(params, callback) {
-        $.api({
-            url: this.endpoints.installFromRepo,
-            on: 'now',
-            method: 'POST',
-            data: params,
-            successTest: PbxApi.successTest,
-            beforeXHR(xhr) {
-                xhr.setRequestHeader ('X-Async-Response-Channel-Id', params.channelId);
-                return xhr;
-            },
-            onSuccess(response) {
-                callback(response, true);
-            },
-            onFailure(response) {
-                callback(response, false);
-            },
-            onError() {
-                callback(false, false);
-            }
-        });
-    },
+    this.callCustomMethod('installFromRepo', requestData, callback, 'POST', params.uniqid);
+};
 
-    /**
-     * Installs a new module from an uploaded zip archive
-     * @param {object} params - Installation parameters
-     * @param {string} params.filePath - Path to uploaded zip file
-     * @param {function} callback - Callback function
-     */
-    installFromPackage(params, callback) {
-        $.api({
-            url: this.endpoints.installFromPackage,
-            on: 'now',
-            method: 'POST',
-            data: params,
-            beforeXHR(xhr) {
-                xhr.setRequestHeader ('X-Async-Response-Channel-Id', params.channelId);
-                return xhr;
-            },
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response, true);
-            },
-            onFailure(response) {
-                callback(response, false);
-            },
-            onError() {
-                callback(false, false);
-            }
-        });
-    },
+/**
+ * Installs a new module from an uploaded zip archive
+ * @param {object} params - Installation parameters
+ * @param {string} params.filePath - Path to uploaded zip file
+ * @param {string} params.fileId - File upload ID
+ * @param {string} params.channelId - Async channel ID (auto-added to header)
+ * @param {function} callback - Callback function (response, success)
+ */
+ModulesAPI.installFromPackage = function(params, callback) {
+    const requestData = {
+        filePath: params.filePath,
+        fileId: params.fileId,
+        asyncChannelId: params.channelId // Will be auto-extracted to header by PbxApiClient
+    };
 
-    /**
-     * Enables an extension module
-     * @param {object} params - Enable parameters
-     * @param {string} params.uniqid - Module unique ID
-     * @param {function} [callback] - Optional callback function
-     */
-    enableModule(params, callback) {
-        $.api({
-            url: this.endpoints.enableModule,
-            on: 'now',
-            method: 'POST',
-            data: params,
-            successTest: PbxApi.successTest,
-            beforeXHR(xhr) {
-                xhr.setRequestHeader ('X-Async-Response-Channel-Id', params.channelId);
-                return xhr;
-            },
-            onSuccess(response) {
-                if (callback) callback(response, true);
-            },
-            onFailure(response) {
-                if (callback) callback(response, false);
-            },
-            onError() {
-                if (callback) callback(false, false);
-            }
-        });
-    },
+    this.callCustomMethod('installFromPackage', requestData, callback, 'POST');
+};
 
-    /**
-     * Disables an extension module
-     * @param {object} params - Disable parameters
-     * @param {string} params.uniqid - Module unique ID
-     * @param {function} [callback] - Optional callback function
-     */
-    disableModule(params, callback) {
-        $.api({
-            url: this.endpoints.disableModule,
-            on: 'now',
-            method: 'POST',
-            data: params,
-            beforeXHR(xhr) {
-                xhr.setRequestHeader ('X-Async-Response-Channel-Id', params.channelId);
-                return xhr;
-            },
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                if (callback) callback(response, true);
-            },
-            onFailure(response) {
-                if (callback) callback(response, false);
-            },
-            onError() {
-                if (callback) callback(false, false);
-            }
-        });
-    },
+/**
+ * Enables an extension module
+ * @param {object} params - Enable parameters
+ * @param {string} params.uniqid - Module unique ID
+ * @param {string} params.channelId - Async channel ID (auto-added to header)
+ * @param {function} [callback] - Optional callback function (response, success)
+ */
+ModulesAPI.enableModule = function(params, callback) {
+    const requestData = {
+        asyncChannelId: params.channelId // Will be auto-extracted to header by PbxApiClient
+    };
 
-    /**
-     * Uninstalls an extension module
-     * @param {object} params - Uninstall parameters
-     * @param {string} params.uniqid - Module unique ID
-     * @param {boolean} [params.keepSettings=false] - Keep module settings
-     * @param {function} callback - Callback function
-     */
-    uninstallModule(params, callback) {
-        $.api({
-            url: this.endpoints.uninstallModule,
-            on: 'now',
-            method: 'POST',
-            data: params,
-            beforeXHR(xhr) {
-                xhr.setRequestHeader ('X-Async-Response-Channel-Id', params.channelId);
-                return xhr;
-            },
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response, true);
-            },
-            onFailure(response) {
-                callback(response, false);
-            },
-            onError() {
-                callback(false, false);
-            }
-        });
-    },
+    this.callCustomMethod('enable', requestData, callback, 'POST', params.uniqid);
+};
 
-    /**
-     * Retrieves module information from the repository
-     * @param {object} params - Module info parameters
-     * @param {string} params.uniqid - Module unique ID
-     * @param {function} callback - Callback function
-     */
-    getModuleInfo(params, callback) {
-        $.api({
-            url: this.endpoints.getModuleInfo,
-            on: 'now',
-            method: 'POST',
-            data: params,
-            successTest: PbxApi.successTest,
-            onSuccess(response) {
-                callback(response, true);
-            },
-            onFailure(response) {
-                callback(response, false);
-            },
-            onError() {
-                callback(false, false);
-            }
-        });
-    },
+/**
+ * Disables an extension module
+ * @param {object} params - Disable parameters
+ * @param {string} params.uniqid - Module unique ID
+ * @param {string} params.channelId - Async channel ID (auto-added to header)
+ * @param {string} [params.reason] - Disable reason
+ * @param {string} [params.reasonText] - Disable reason text
+ * @param {function} [callback] - Optional callback function (response, success)
+ */
+ModulesAPI.disableModule = function(params, callback) {
+    const requestData = {
+        asyncChannelId: params.channelId, // Will be auto-extracted to header by PbxApiClient
+        reason: params.reason || '',
+        reasonText: params.reasonText || ''
+    };
 
-    /**
-     * Updates all installed modules
-     * @param {object} params - Update parameters
-     * @param {function} callback - Callback function
-     */
-    updateAll(params, callback) {
-        $.api({
-            url: this.endpoints.updateAll,
-            on: 'now',
-            method: 'POST',
-            data: params,
-            successTest: PbxApi.successTest,
-            beforeXHR(xhr) {
-                xhr.setRequestHeader ('X-Async-Response-Channel-Id', params.channelId);
-                return xhr;
-            },
-            onSuccess(response) {
-                callback(response, true);
-            },
-            onFailure(response) {
-                callback(response, false);
-            },
-            onError() {
-                callback(false, false);
-            }
-        });
-    },
+    this.callCustomMethod('disable', requestData, callback, 'POST', params.uniqid);
+};
+
+/**
+ * Uninstalls an extension module
+ * @param {object} params - Uninstall parameters
+ * @param {string} params.uniqid - Module unique ID
+ * @param {boolean} [params.keepSettings=false] - Keep module settings
+ * @param {string} params.channelId - Async channel ID (auto-added to header)
+ * @param {function} callback - Callback function (response, success)
+ */
+ModulesAPI.uninstallModule = function(params, callback) {
+    const requestData = {
+        keepSettings: params.keepSettings || false,
+        asyncChannelId: params.channelId // Will be auto-extracted to header by PbxApiClient
+    };
+
+    this.callCustomMethod('uninstall', requestData, callback, 'POST', params.uniqid);
+};
+
+/**
+ * Retrieves module information from the repository
+ * @param {object} params - Module info parameters
+ * @param {string} params.uniqid - Module unique ID
+ * @param {function} callback - Callback function (response, success)
+ */
+ModulesAPI.getModuleInfo = function(params, callback) {
+    this.callCustomMethod('getModuleInfo', {}, callback, 'GET', params.uniqid);
+};
+
+/**
+ * Updates all installed modules
+ * @param {object} params - Update parameters
+ * @param {array} params.modulesForUpdate - Array of module IDs to update
+ * @param {string} params.channelId - Async channel ID (auto-added to header)
+ * @param {function} callback - Callback function (response, success)
+ */
+ModulesAPI.updateAll = function(params, callback) {
+    const requestData = {
+        modulesForUpdate: params.modulesForUpdate,
+        asyncChannelId: params.channelId // Will be auto-extracted to header by PbxApiClient
+    };
+
+    this.callCustomMethod('updateAll', requestData, callback, 'POST');
 };
 
 // Export for use in other modules

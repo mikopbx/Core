@@ -120,24 +120,33 @@
                  }
              }
              
-             // Find or create record
+             // Get or create model
+             // Determine if this is CREATE or UPDATE by checking if record exists in DB
+             $app = null;
+             $isNewRecord = true;
+
              // Support both 'id' (REST v3) and 'uniqid' (legacy) fields
              $recordId = $sanitizedData['id'] ?? $sanitizedData['uniqid'] ?? null;
-             
+
              if (!empty($recordId)) {
-                 // Try to find by uniqid first (REST v3 uses uniqid as id)
+                 // Try to find existing dialplan application by provided ID
                  $app = DialplanApplications::findFirstByUniqid($recordId);
                  if (!$app) {
                      // Fallback to numeric id for backward compatibility
                      $app = DialplanApplications::findFirstById($recordId);
                  }
-                 if (!$app) {
-                     $res->messages['error'][] = 'api_DialplanApplicationNotFound';
-                     return $res;
+                 if ($app) {
+                     // Record exists - this is UPDATE operation
+                     $isNewRecord = false;
                  }
-             } else {
+             }
+
+             if ($isNewRecord) {
+                 // CREATE operation - create new dialplan application
                  $app = new DialplanApplications();
-                 $app->uniqid = DialplanApplications::generateUniqueID('DIALPLAN-');
+                 // Use provided ID if available (for migrations/imports), otherwise generate new one
+                 $app->uniqid = !empty($recordId) ? $recordId :
+                                 DialplanApplications::generateUniqueID(Extensions::PREFIX_DIALPLAN);
              }
              
             // Check extension uniqueness using unified approach

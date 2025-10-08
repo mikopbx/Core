@@ -32,20 +32,10 @@ use MikoPBX\PBXCoreREST\Services\ApiMetadataRegistry;
 class GetValidationSchemasAction
 {
     /**
-     * List of API controller classes to scan for metadata
-     */
-    private const API_CONTROLLERS = [
-        \MikoPBX\PBXCoreREST\Controllers\ApiKeys\RestController::class,
-        \MikoPBX\PBXCoreREST\Controllers\AsteriskManagers\RestController::class,
-        \MikoPBX\PBXCoreREST\Controllers\CallQueues\RestController::class,
-        \MikoPBX\PBXCoreREST\Controllers\GeneralSettings\RestController::class,
-        \MikoPBX\PBXCoreREST\Controllers\MailSettings\RestController::class,
-        \MikoPBX\PBXCoreREST\Controllers\TimeSettings\RestController::class,
-        // Add more controllers as they are migrated to attributes
-    ];
-
-    /**
      * Get validation schemas for API endpoints
+     *
+     * Automatically discovers all REST API controllers and extracts
+     * validation schemas from their API attributes for request validation.
      *
      * @return PBXApiResult
      */
@@ -54,11 +44,14 @@ class GetValidationSchemasAction
         $res = new PBXApiResult();
 
         try {
+            // Automatically discover all controllers
+            $controllers = ControllerDiscovery::discoverAll();
+
             // Create metadata registry instance directly
             $registry = new ApiMetadataRegistry();
 
             // Scan controllers and extract validation schemas
-            $metadata = $registry->scanControllers(self::API_CONTROLLERS);
+            $metadata = $registry->scanControllers($controllers);
             $schemas = $registry->getValidationSchemas($metadata);
 
             $res->data = $schemas;

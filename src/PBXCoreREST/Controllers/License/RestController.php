@@ -21,41 +21,49 @@ namespace MikoPBX\PBXCoreREST\Controllers\License;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\LicenseManagementProcessor;
+use MikoPBX\PBXCoreREST\Lib\License\DataStructure;
+use MikoPBX\PBXCoreREST\Attributes\{
+    ApiResource,
+    ApiOperation,
+    ApiParameter,
+    ApiResponse,
+    ApiDataSchema,
+    SecurityType,
+    ParameterLocation,
+    HttpMapping,
+    ResourceSecurity
+};
 
 /**
  * RESTful controller for license management (v3 API)
  *
- * License is a singleton resource - there's only one license in the system.
- * This controller implements custom methods for license operations.
- *
- * @RoutePrefix("/pbxcore/api/v3/license")
- *
- * @examples Custom method operations:
- *
- * # Get license information
- * curl -X GET http://127.0.0.1/pbxcore/api/v3/license:getLicenseInfo
- *
- * # Check connection with license server
- * curl -X GET http://127.0.0.1/pbxcore/api/v3/license:ping
- *
- * # Send PBX metrics to license server
- * curl -X GET http://127.0.0.1/pbxcore/api/v3/license:sendPBXMetrics
- *
- * # Reset license key
- * curl -X GET http://127.0.0.1/pbxcore/api/v3/license:resetKey
- *
- * # Process user license request (update key, activate coupon)
- * curl -X POST http://127.0.0.1/pbxcore/api/v3/license:processUserRequest \
- *      -H "Content-Type: application/json" \
- *      -d '{"licKey":"MIKO-XXX-XXX","coupon":"COUPON123"}'
- *
- * # Capture feature for product
- * curl -X POST http://127.0.0.1/pbxcore/api/v3/license:captureFeatureForProductId \
- *      -H "Content-Type: application/json" \
- *      -d '{"productId":"MODULE-ID","featureId":"FEATURE-ID"}'
+ * License management following singleton resource pattern.
+ * Implements custom methods for license operations with automatic OpenAPI generation.
  *
  * @package MikoPBX\PBXCoreREST\Controllers\License
+ *
+ * @see https://cloud.google.com/apis/design - Google API Design Guide
+ * @see https://spec.openapis.org/oas/v3.1.0 - OpenAPI 3.1 Specification
  */
+#[ApiResource(
+    path: '/pbxcore/api/v3/license',
+    tags: ['License'],
+    description: 'License management for MikoPBX system. ' .
+                'Features include license activation, validation, key management, ' .
+                'feature capture for products, metrics reporting, and license server connectivity checks.',
+    processor: LicenseManagementProcessor::class
+)]
+#[ResourceSecurity('license', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
+#[HttpMapping(
+    mapping: [
+        'GET' => ['getLicenseInfo', 'ping', 'sendPBXMetrics', 'resetKey'],
+        'POST' => ['processUserRequest', 'captureFeatureForProductId']
+    ],
+    resourceLevelMethods: [],
+    collectionLevelMethods: [],
+    customMethods: ['getLicenseInfo', 'ping', 'sendPBXMetrics', 'resetKey', 'processUserRequest', 'captureFeatureForProductId'],
+    idPattern: null
+)]
 class RestController extends BaseRestController
 {
     /**
@@ -70,16 +78,157 @@ class RestController extends BaseRestController
      */
     protected bool $isSingleton = true;
 
+
     /**
-     * Define allowed custom methods for each HTTP method
+     * Get current license information
      *
-     * @return array<string, array<string>>
+     * @route GET /pbxcore/api/v3/license:getLicenseInfo
      */
-    protected function getAllowedCustomMethods(): array
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
+    #[ApiOperation(
+        summary: 'rest_lic_GetLicenseInfo',
+        description: 'rest_lic_GetLicenseInfoDesc',
+        operationId: 'getLicenseInfo'
+    )]
+    #[ApiResponse(200, 'rest_response_200_get')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function getLicenseInfo(): void
     {
-        return [
-            'GET' => ['resetKey', 'getLicenseInfo', 'sendPBXMetrics', 'ping'],
-            'POST' => ['processUserRequest', 'captureFeatureForProductId']
-        ];
+        // Implementation handled by BaseRestController
     }
+
+    /**
+     * Check connection with license server
+     *
+     * @route GET /pbxcore/api/v3/license:ping
+     */
+    #[ApiOperation(
+        summary: 'rest_lic_Ping',
+        description: 'rest_lic_PingDesc',
+        operationId: 'pingLicenseServer'
+    )]
+    #[ApiResponse(200, 'rest_response_200_test')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
+    public function ping(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Send PBX metrics to license server
+     *
+     * @route GET /pbxcore/api/v3/license:sendPBXMetrics
+     */
+    #[ApiOperation(
+        summary: 'rest_lic_SendPBXMetrics',
+        description: 'rest_lic_SendPBXMetricsDesc',
+        operationId: 'sendPBXMetrics'
+    )]
+    #[ApiResponse(200, 'rest_response_200_updated')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
+    public function sendPBXMetrics(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Reset license key
+     *
+     * @route GET /pbxcore/api/v3/license:resetKey
+     */
+    #[ApiOperation(
+        summary: 'rest_lic_ResetKey',
+        description: 'rest_lic_ResetKeyDesc',
+        operationId: 'resetLicenseKey'
+    )]
+    #[ApiResponse(200, 'rest_response_200_updated')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function resetKey(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Process user license request (update key, activate coupon)
+     *
+     * @route POST /pbxcore/api/v3/license:processUserRequest
+     */
+    #[ApiOperation(
+        summary: 'rest_lic_ProcessUserRequest',
+        description: 'rest_lic_ProcessUserRequestDesc',
+        operationId: 'processUserLicenseRequest'
+    )]
+    #[ApiParameter(
+        name: 'licKey',
+        type: 'string',
+        description: 'rest_param_lic_licKey',
+        in: ParameterLocation::QUERY,
+        required: false,
+        pattern: '^MIKO-[A-Z0-9]{3}-[A-Z0-9]{3}$',
+        example: 'MIKO-ABC-123'
+    )]
+    #[ApiParameter(
+        name: 'coupon',
+        type: 'string',
+        description: 'rest_param_lic_coupon',
+        in: ParameterLocation::QUERY,
+        required: false,
+        maxLength: 50,
+        example: 'PROMO2024'
+    )]
+    #[ApiResponse(200, 'rest_response_200_updated')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
+    public function processUserRequest(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Capture feature for product
+     *
+     * @route POST /pbxcore/api/v3/license:captureFeatureForProductId
+     */
+    #[ApiOperation(
+        summary: 'rest_lic_CaptureFeature',
+        description: 'rest_lic_CaptureFeatureDesc',
+        operationId: 'captureFeatureForProduct'
+    )]
+    #[ApiParameter(
+        name: 'productId',
+        type: 'string',
+        description: 'rest_param_lic_productId',
+        in: ParameterLocation::QUERY,
+        required: true,
+        example: 'ModuleSmartIVR'
+    )]
+    #[ApiParameter(
+        name: 'featureId',
+        type: 'string',
+        description: 'rest_param_lic_featureId',
+        in: ParameterLocation::QUERY,
+        required: true,
+        example: 'AdvancedCallRouting'
+    )]
+    #[ApiResponse(200, 'rest_response_200_updated')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    public function captureFeatureForProductId(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
 }

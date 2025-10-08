@@ -108,7 +108,7 @@ class CopyRecordAction
 
         // Generate new identifiers
         $newCondition->id = null;
-        $newCondition->uniqid = OutWorkTimes::generateUniqueID('OUT-WORK-TIME-');
+        $newCondition->uniqid = OutWorkTimes::generateUniqueID(Extensions::PREFIX_OUT_WORK_TIME);
 
         // Copy all fields with modifications
         $newCondition->description = 'copy of ' . ($sourceCondition->description ?? '');

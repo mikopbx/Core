@@ -21,15 +21,27 @@ namespace MikoPBX\PBXCoreREST\Controllers\ConferenceRooms;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\ConferenceRoomsManagementProcessor;
+use MikoPBX\PBXCoreREST\Lib\ConferenceRooms\DataStructure;
+use MikoPBX\PBXCoreREST\Attributes\{
+    ApiResource,
+    ApiOperation,
+    ApiParameter,
+    ApiResponse,
+    ApiDataSchema,
+    SecurityType,
+    ParameterLocation,
+    HttpMapping,
+    ResourceSecurity
+};
 
 /**
  * RESTful controller for conference rooms management (v3 API)
- * 
+ *
  * Handles both standard CRUD operations and custom methods following Google API Design Guide patterns.
  * This controller implements a clean RESTful interface with proper HTTP methods and resource-oriented URLs.
- * 
- * @RoutePrefix("/pbxcore/api/v3/conference-rooms")
- * 
+ *
+ * @package MikoPBX\PBXCoreREST\Controllers\ConferenceRooms
+ *
  * @examples Standard CRUD operations:
  * 
  * # List all conference rooms with pagination and filtering
@@ -60,22 +72,251 @@ use MikoPBX\PBXCoreREST\Lib\ConferenceRoomsManagementProcessor;
  * 
  * # Get default values for new conference room
  * curl -X GET http://127.0.0.1/pbxcore/api/v3/conference-rooms:getDefault
- * 
+ *
  * @package MikoPBX\PBXCoreREST\Controllers\ConferenceRooms
  */
+#[ApiResource(
+    path: '/pbxcore/api/v3/conference-rooms',
+    tags: ['Conference Rooms'],
+    description: 'Conference room management for multi-party audio conferencing.',
+    processor: ConferenceRoomsManagementProcessor::class
+)]
+#[ResourceSecurity('conference_rooms', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
+#[HttpMapping(
+    mapping: [
+        'GET' => ['getList', 'getRecord', 'getDefault'],
+        'POST' => ['create'],
+        'PUT' => ['update'],
+        'PATCH' => ['patch'],
+        'DELETE' => ['delete']
+    ],
+    resourceLevelMethods: ['getRecord', 'update', 'patch', 'delete'],
+    collectionLevelMethods: ['getList', 'create'],
+    customMethods: ['getDefault'],
+    idPattern: ['CONFERENCE-', 'CONFERENCE-ROOM-', 'CONFERENCE']  // Support: CONFERENCE-xxx, CONFERENCE-ROOM-xxx, CONFERENCExxx
+)]
 class RestController extends BaseRestController
 {
     protected string $processorClass = ConferenceRoomsManagementProcessor::class;
-    
+
+
     /**
-     * Define allowed custom methods for each HTTP method
-     * 
-     * @return array<string, array<string>>
+     * Get list of all conference rooms with pagination and filtering
+     *
+     * @route GET /pbxcore/api/v3/conference-rooms
      */
-    protected function getAllowedCustomMethods(): array
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'list',
+        isArray: true
+    )]
+    #[ApiOperation(
+        summary: 'rest_cr_GetList',
+        description: 'rest_cr_GetListDesc',
+        operationId: 'getConferenceRoomsList'
+    )]
+    #[ApiParameter(
+        name: 'limit',
+        type: 'integer',
+        description: 'rest_param_limit',
+        in: ParameterLocation::QUERY,
+        minimum: 1,
+        maximum: 100,
+        default: 20,
+        example: 20
+    )]
+    #[ApiParameter(
+        name: 'offset',
+        type: 'integer',
+        description: 'rest_param_offset',
+        in: ParameterLocation::QUERY,
+        minimum: 0,
+        default: 0,
+        example: 0
+    )]
+    #[ApiParameter(
+        name: 'search',
+        type: 'string',
+        description: 'rest_param_search',
+        in: ParameterLocation::QUERY,
+        maxLength: 255,
+        example: 'sales'
+    )]
+    #[ApiParameter(
+        name: 'order',
+        type: 'string',
+        description: 'rest_param_order',
+        in: ParameterLocation::QUERY,
+        enum: ['name', 'extension'],
+        default: 'name',
+        example: 'name'
+    )]
+    #[ApiParameter(
+        name: 'orderWay',
+        type: 'string',
+        description: 'rest_param_orderWay',
+        in: ParameterLocation::QUERY,
+        enum: ['ASC', 'DESC'],
+        default: 'ASC',
+        example: 'ASC'
+    )]
+    #[ApiResponse(200, 'rest_response_200_list')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function getList(): void
     {
-        return [
-            'GET' => ['getDefault']
-        ];
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Get a specific conference room by ID
+     *
+     * @route GET /pbxcore/api/v3/conference-rooms/{id}
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
+    #[ApiOperation(
+        summary: 'rest_cr_GetRecord',
+        description: 'rest_cr_GetRecordDesc',
+        operationId: 'getConferenceRoomById'
+    )]
+    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^CONFERENCE-[A-Z0-9]{8,}$', example: 'CONFERENCE-ABCD1234')]
+    #[ApiResponse(200, 'rest_response_200_get')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    public function getRecord(string $id): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Create a new conference room
+     *
+     * @route POST /pbxcore/api/v3/conference-rooms
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
+    #[ApiOperation(
+        summary: 'rest_cr_Create',
+        description: 'rest_cr_CreateDesc',
+        operationId: 'createConferenceRoom'
+    )]
+    #[ApiParameter('name', 'string', 'rest_param_cr_name', ParameterLocation::QUERY, required: true, maxLength: 100, example: 'Sales Conference')]
+    #[ApiParameter('extension', 'string', 'rest_param_cr_extension', ParameterLocation::QUERY, required: true, pattern: '^[0-9]{2,8}$', example: '3000')]
+    #[ApiParameter('pinCode', 'string', 'rest_param_cr_pincode', ParameterLocation::QUERY, required: false, maxLength: 20, example: '1234')]
+    #[ApiResponse(201, 'rest_response_201_created')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(409, 'rest_response_409_conflict', 'PBXApiResult')]
+    public function create(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Update an existing conference room (full replacement)
+     *
+     * @route PUT /pbxcore/api/v3/conference-rooms/{id}
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
+    #[ApiOperation(
+        summary: 'rest_cr_Update',
+        description: 'rest_cr_UpdateDesc',
+        operationId: 'updateConferenceRoom'
+    )]
+    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^CONFERENCE-[A-Z0-9]{8,}$', example: 'CONFERENCE-ABCD1234')]
+    #[ApiParameter('name', 'string', 'rest_param_cr_name', ParameterLocation::QUERY, required: true, maxLength: 100, example: 'Updated Conference')]
+    #[ApiParameter('extension', 'string', 'rest_param_cr_extension', ParameterLocation::QUERY, required: true, pattern: '^[0-9]{2,8}$', example: '3000')]
+    #[ApiParameter('pinCode', 'string', 'rest_param_cr_pincode', ParameterLocation::QUERY, required: false, maxLength: 20, example: '5678')]
+    #[ApiResponse(200, 'rest_response_200_updated')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    #[ApiResponse(409, 'rest_response_409_conflict', 'PBXApiResult')]
+    public function update(string $id): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Partially update an existing conference room
+     *
+     * @route PATCH /pbxcore/api/v3/conference-rooms/{id}
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
+    #[ApiOperation(
+        summary: 'rest_cr_Patch',
+        description: 'rest_cr_PatchDesc',
+        operationId: 'patchConferenceRoom'
+    )]
+    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^CONFERENCE-[A-Z0-9]{8,}$', example: 'CONFERENCE-ABCD1234')]
+    #[ApiParameter('name', 'string', 'rest_param_cr_name', ParameterLocation::QUERY, required: false, maxLength: 100, example: 'Patched name')]
+    #[ApiParameter('extension', 'string', 'rest_param_cr_extension', ParameterLocation::QUERY, required: false, pattern: '^[0-9]{2,8}$', example: '3001')]
+    #[ApiParameter('pinCode', 'string', 'rest_param_cr_pincode', ParameterLocation::QUERY, required: false, maxLength: 20, example: '9999')]
+    #[ApiResponse(200, 'rest_response_200_patched')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    public function patch(string $id): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Delete a conference room
+     *
+     * @route DELETE /pbxcore/api/v3/conference-rooms/{id}
+     */
+    #[ApiOperation(
+        summary: 'rest_cr_Delete',
+        description: 'rest_cr_DeleteDesc',
+        operationId: 'deleteConferenceRoom'
+    )]
+    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^CONFERENCE-[A-Z0-9]{8,}$', example: 'CONFERENCE-ABCD1234')]
+    #[ApiResponse(200, 'rest_response_200_deleted')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    #[ApiResponse(409, 'rest_response_409_conflict', 'PBXApiResult')]
+    public function delete(string $id): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+
+    /**
+     * Get default template for new conference room
+     *
+     * @route GET /pbxcore/api/v3/conference-rooms:getDefault
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
+    #[ApiOperation(
+        summary: 'rest_cr_GetDefault',
+        description: 'rest_cr_GetDefaultDesc',
+        operationId: 'getConferenceRoomDefault'
+    )]
+    #[ApiResponse(200, 'rest_response_200_default')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function getDefault(): void
+    {
+        // Implementation handled by BaseRestController
     }
 }

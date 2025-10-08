@@ -21,31 +21,45 @@ namespace MikoPBX\PBXCoreREST\Controllers\Sysinfo;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\SysinfoManagementProcessor;
+use MikoPBX\PBXCoreREST\Attributes\{
+    ApiResource,
+    ApiOperation,
+    ApiResponse,
+    SecurityType,
+    HttpMapping,
+    ResourceSecurity
+};
 
 /**
- * RESTful controller for system information management (v3 API)
+ * RESTful controller for system information (v3 API)
  *
- * Sysinfo is a singleton resource - there's only one system in the PBX.
- * This controller implements custom methods for retrieving system information.
- *
- * @RoutePrefix("/pbxcore/api/v3/sysinfo")
- *
- * @examples Custom method operations:
- *
- * # Get complete system information
- * curl -X GET http://127.0.0.1/pbxcore/api/v3/sysinfo:getInfo
- *
- * # Get external IP address information
- * curl -X GET http://127.0.0.1/pbxcore/api/v3/sysinfo:getExternalIpInfo
- *
- * # Get hypervisor information
- * curl -X GET http://127.0.0.1/pbxcore/api/v3/sysinfo:getHypervisorInfo
- *
- * # Get DMI (Desktop Management Interface) information
- * curl -X GET http://127.0.0.1/pbxcore/api/v3/sysinfo:getDMIInfo
+ * Singleton resource providing comprehensive system information and diagnostics.
+ * Read-only interface for retrieving hardware, network, and virtualization details.
+ * Implements custom methods for various system information aspects.
  *
  * @package MikoPBX\PBXCoreREST\Controllers\Sysinfo
+ *
+ * @see https://cloud.google.com/apis/design - Google API Design Guide
+ * @see https://spec.openapis.org/oas/v3.1.0 - OpenAPI 3.1 Specification
  */
+#[ApiResource(
+    path: '/pbxcore/api/v3/sysinfo',
+    tags: ['System Information', 'Diagnostics'],
+    description: 'System information and diagnostics singleton resource. ' .
+                'Provides comprehensive details about hardware, network configuration, virtualization platform, and DMI data. ' .
+                'Read-only interface for system monitoring and troubleshooting.',
+    processor: SysinfoManagementProcessor::class
+)]
+#[ResourceSecurity('sysinfo', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
+#[HttpMapping(
+    mapping: [
+        'GET' => ['getInfo', 'getExternalIpInfo', 'getHypervisorInfo', 'getDMIInfo']
+    ],
+    resourceLevelMethods: [],
+    collectionLevelMethods: [],
+    customMethods: ['getInfo', 'getExternalIpInfo', 'getHypervisorInfo', 'getDMIInfo'],
+    idPattern: ''
+)]
 class RestController extends BaseRestController
 {
     /**
@@ -61,15 +75,74 @@ class RestController extends BaseRestController
     protected bool $isSingleton = true;
 
     /**
-     * Define allowed custom methods for each HTTP method
+     * Get complete system information
      *
-     * @return array<string, array<string>>
+     * @route GET /pbxcore/api/v3/sysinfo:getInfo
      */
-    protected function getAllowedCustomMethods(): array
+    #[ApiOperation(
+        summary: 'rest_sysinfo_GetInfo',
+        description: 'rest_sysinfo_GetInfoDesc',
+        operationId: 'getSystemInfo'
+    )]
+    #[ApiResponse(200, 'rest_response_200_get')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function getInfo(): void
     {
-        return [
-            'GET' => ['getInfo', 'getExternalIpInfo', 'getHypervisorInfo', 'getDMIInfo'],
-            'POST' => []
-        ];
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Get external IP address information
+     *
+     * @route GET /pbxcore/api/v3/sysinfo:getExternalIpInfo
+     */
+    #[ApiOperation(
+        summary: 'rest_sysinfo_GetExternalIp',
+        description: 'rest_sysinfo_GetExternalIpDesc',
+        operationId: 'getExternalIpInfo'
+    )]
+    #[ApiResponse(200, 'rest_response_200_get')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function getExternalIpInfo(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Get hypervisor/virtualization information
+     *
+     * @route GET /pbxcore/api/v3/sysinfo:getHypervisorInfo
+     */
+    #[ApiOperation(
+        summary: 'rest_sysinfo_GetHypervisor',
+        description: 'rest_sysinfo_GetHypervisorDesc',
+        operationId: 'getHypervisorInfo'
+    )]
+    #[ApiResponse(200, 'rest_response_200_get')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function getHypervisorInfo(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Get DMI (Desktop Management Interface) information
+     *
+     * @route GET /pbxcore/api/v3/sysinfo:getDMIInfo
+     */
+    #[ApiOperation(
+        summary: 'rest_sysinfo_GetDMI',
+        description: 'rest_sysinfo_GetDMIDesc',
+        operationId: 'getDMIInfo'
+    )]
+    #[ApiResponse(200, 'rest_response_200_get')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function getDMIInfo(): void
+    {
+        // Implementation handled by BaseRestController
     }
 }

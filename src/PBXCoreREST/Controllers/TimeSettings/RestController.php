@@ -19,6 +19,15 @@
 
 namespace MikoPBX\PBXCoreREST\Controllers\TimeSettings;
 
+use MikoPBX\PBXCoreREST\Attributes\ApiDataSchema;
+use MikoPBX\PBXCoreREST\Attributes\ApiOperation;
+use MikoPBX\PBXCoreREST\Attributes\ApiParameter;
+use MikoPBX\PBXCoreREST\Attributes\ApiResource;
+use MikoPBX\PBXCoreREST\Attributes\ApiResponse;
+use MikoPBX\PBXCoreREST\Attributes\HttpMapping;
+use MikoPBX\PBXCoreREST\Attributes\ParameterLocation;
+use MikoPBX\PBXCoreREST\Attributes\ResourceSecurity;
+use MikoPBX\PBXCoreREST\Attributes\SecurityType;
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\TimeSettingsManagementProcessor;
 
@@ -27,26 +36,25 @@ use MikoPBX\PBXCoreREST\Lib\TimeSettingsManagementProcessor;
  *
  * Time Settings is a singleton resource - there's only one time configuration in the system.
  * This controller implements standard REST operations without resource IDs.
- *
- * @RoutePrefix("/pbxcore/api/v3/time-settings")
- *
- * @examples Singleton operations:
- *
- * # Get Time Settings (singleton GET)
- * curl -X GET http://127.0.0.1/pbxcore/api/v3/time-settings
- *
- * # Update Time Settings (singleton PUT)
- * curl -X PUT http://127.0.0.1/pbxcore/api/v3/time-settings \
- *      -H "Content-Type: application/json" \
- *      -d '{"PBXTimezone":"Europe/Moscow","NTPServer":"pool.ntp.org","PBXManualTimeSettings":"false"}'
- *
- * # Partially update settings (singleton PATCH)
- * curl -X PATCH http://127.0.0.1/pbxcore/api/v3/time-settings \
- *      -H "Content-Type: application/json" \
- *      -d '{"PBXTimezone":"Asia/Tokyo"}'
- *
- * @package MikoPBX\PBXCoreREST\Controllers\TimeSettings
  */
+#[ApiResource(
+    path: '/pbxcore/api/v3/time-settings',
+    tags: ['Time Settings'],
+    description: 'Comprehensive time and timezone management for MikoPBX. This singleton resource provides access to system time configuration including timezone selection, NTP server settings, and manual time adjustment. Essential for ensuring accurate call timestamps, scheduled tasks execution, and system log correlation. Supports automatic time synchronization via NTP or manual time setting for isolated networks.',
+    processor: TimeSettingsManagementProcessor::class
+)]
+#[ResourceSecurity('time-settings', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
+#[HttpMapping(
+    mapping: [
+        'GET' => ['getRecord', 'getAvailableTimezones'],
+        'PUT' => ['update'],
+        'PATCH' => ['patch']
+    ],
+    resourceLevelMethods: [],
+    collectionLevelMethods: ['getAvailableTimezones'],
+    customMethods: ['getAvailableTimezones'],
+    idPattern: null
+)]
 class RestController extends BaseRestController
 {
     /**
@@ -60,6 +68,187 @@ class RestController extends BaseRestController
      * @var bool
      */
     protected bool $isSingleton = true;
+
+    // ============================================================================
+    // Standard CRUD Operations (Singleton)
+    // ============================================================================
+
+    /**
+     * Get time settings configuration
+     *
+     * Returns the current time and timezone configuration including selected timezone,
+     * NTP server settings, manual time setting mode, and current system time.
+     * As a singleton resource, this endpoint returns the single time configuration
+     * without requiring an ID.
+     */
+    #[ApiOperation(
+        summary: 'rest_ts_GetRecord',
+        description: 'rest_ts_GetRecordDesc',
+        operationId: 'getTimeSettings'
+    )]
+    #[ApiResponse(
+        statusCode: 200,
+        description: 'Successful response with time settings',
+        schema: '#/components/schemas/TimeSettings'
+    )]
+    public function getRecord(): void
+    {
+        parent::handleCRUDRequest();
+    }
+
+    /**
+     * Update time settings configuration
+     *
+     * Completely replaces the time settings configuration. All fields must be provided.
+     * Use PATCH endpoint for partial updates. Changes to timezone affect call timestamps
+     * and scheduled task execution. NTP server changes trigger immediate time synchronization.
+     * Manual time setting disables NTP synchronization.
+     */
+    #[ApiOperation(
+        summary: 'rest_ts_Update',
+        description: 'rest_ts_UpdateDesc',
+        operationId: 'updateTimeSettings'
+    )]
+    #[ApiParameter(
+        name: 'PBXTimezone',
+        type: 'string',
+        in: ParameterLocation::QUERY,
+        description: 'rest_param_ts_timezone',
+        required: true,
+        example: 'Europe/Moscow'
+    )]
+    #[ApiParameter(
+        name: 'NTPServer',
+        type: 'string',
+        in: ParameterLocation::QUERY,
+        description: 'rest_param_ts_ntp_server',
+        required: false,
+        example: 'pool.ntp.org'
+    )]
+    #[ApiParameter(
+        name: 'PBXManualTimeSettings',
+        type: 'string',
+        in: ParameterLocation::QUERY,
+        description: 'rest_param_ts_manual_mode',
+        required: false,
+        enum: ['true', 'false'],
+        default: 'false'
+    )]
+    #[ApiParameter(
+        name: 'ManualDateTime',
+        type: 'string',
+        in: ParameterLocation::QUERY,
+        description: 'rest_param_ts_manual_datetime',
+        required: false,
+        format: 'date-time',
+        example: '2025-10-08T10:30:00'
+    )]
+    #[ApiResponse(
+        statusCode: 200,
+        description: 'Time settings updated successfully',
+        schema: '#/components/schemas/TimeSettings'
+    )]
+    #[ApiResponse(statusCode: 400, description: 'Invalid timezone or configuration data')]
+    public function update(): void
+    {
+        parent::handleCRUDRequest();
+    }
+
+    /**
+     * Partially update time settings configuration
+     *
+     * Updates only the specified fields in the time settings configuration.
+     * Useful for changing timezone without affecting NTP settings, or updating
+     * NTP server without changing timezone. Unspecified fields remain unchanged.
+     */
+    #[ApiOperation(
+        summary: 'rest_ts_Patch',
+        description: 'rest_ts_PatchDesc',
+        operationId: 'patchTimeSettings'
+    )]
+    #[ApiParameter(
+        name: 'PBXTimezone',
+        type: 'string',
+        in: ParameterLocation::QUERY,
+        description: 'rest_param_ts_timezone',
+        required: false,
+        example: 'Europe/Moscow'
+    )]
+    #[ApiParameter(
+        name: 'NTPServer',
+        type: 'string',
+        in: ParameterLocation::QUERY,
+        description: 'rest_param_ts_ntp_server',
+        required: false,
+        example: 'pool.ntp.org'
+    )]
+    #[ApiParameter(
+        name: 'PBXManualTimeSettings',
+        type: 'string',
+        in: ParameterLocation::QUERY,
+        description: 'rest_param_ts_manual_mode',
+        required: false,
+        enum: ['true', 'false']
+    )]
+    #[ApiParameter(
+        name: 'ManualDateTime',
+        type: 'string',
+        in: ParameterLocation::QUERY,
+        description: 'rest_param_ts_manual_datetime',
+        required: false,
+        format: 'date-time',
+        example: '2025-10-08T10:30:00'
+    )]
+    #[ApiResponse(
+        statusCode: 200,
+        description: 'Time settings partially updated',
+        schema: '#/components/schemas/TimeSettings'
+    )]
+    #[ApiResponse(statusCode: 400, description: 'Invalid timezone or configuration data')]
+    public function patch(): void
+    {
+        parent::handleCRUDRequest();
+    }
+
+    // ============================================================================
+    // Custom READ Operations
+    // ============================================================================
+
+    /**
+     * Get list of available timezones
+     *
+     * Returns a comprehensive list of all available timezones in IANA format.
+     * Includes timezone identifiers, display names, and UTC offsets.
+     * Useful for populating timezone selection dropdowns in user interfaces.
+     * Timezones are grouped by region for easier navigation.
+     */
+    #[ApiOperation(
+        summary: 'rest_ts_GetAvailableTimezones',
+        description: 'rest_ts_GetAvailableTimezonesDesc',
+        operationId: 'getAvailableTimezones'
+    )]
+    #[ApiResponse(
+        statusCode: 200,
+        description: 'Successful response with available timezones',
+        content: [
+            'application/json' => [
+                'schema' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'success' => ['type' => 'boolean', 'example' => true],
+                        'data' => [
+                            'type' => 'array',
+                            'items' => ['$ref' => '#/components/schemas/Timezone']
+                        ]
+                    ]
+                ]
+            ]
+        ]
+    )]
+    public function getAvailableTimezones(): void
+    {
+        // Implemented by processor
+    }
 
     /**
      * Define allowed custom methods for each HTTP method

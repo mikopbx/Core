@@ -229,7 +229,7 @@ abstract class AbstractDeleteAction
             // Find record
             $record = self::findRecordById($modelClass, $id);
             if (!$record) {
-                $res->messages['error'][] = $notFoundMessage;
+                $res->messages['error'][] = $notFoundMessage . " (ID: {$id})";
                 $res->httpCode = 404; // Not Found
                 return $res;
             }

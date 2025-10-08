@@ -119,7 +119,7 @@ class GetRecordAction extends AbstractGetRecordAction
                     LOG_DEBUG
                 );
             } else {
-                $res->messages['error'][] = 'Dialplan application not found';
+                $res->messages['error'][] = "Dialplan application not found (ID: {$id})";
                 SystemMessages::sysLogMsg(__METHOD__,
                     "Dialplan application not found: {$id}",
                     LOG_WARNING
@@ -141,7 +141,7 @@ class GetRecordAction extends AbstractGetRecordAction
     {
         $newApp = new DialplanApplications();
         // For REST API v3, uniqid will be used as id in DataStructure
-        $newApp->uniqid = DialplanApplications::generateUniqueID('DIALPLAN-');
+        $newApp->uniqid = DialplanApplications::generateUniqueID(Extensions::PREFIX_DIALPLAN);
         $newApp->extension = Extensions::getNextFreeApplicationNumber();
         $newApp->name = '';
         $newApp->hint = '';
@@ -163,7 +163,7 @@ class GetRecordAction extends AbstractGetRecordAction
         $newApp = new DialplanApplications();
         
         // Generate new uniqid for copy
-        $newApp->uniqid = DialplanApplications::generateUniqueID('DIALPLAN-');
+        $newApp->uniqid = DialplanApplications::generateUniqueID(Extensions::PREFIX_DIALPLAN);
         
         // Get new extension number
         $newApp->extension = Extensions::getNextFreeApplicationNumber();

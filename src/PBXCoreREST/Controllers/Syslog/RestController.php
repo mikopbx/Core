@@ -21,89 +21,211 @@ namespace MikoPBX\PBXCoreREST\Controllers\Syslog;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\SysLogsManagementProcessor;
+use MikoPBX\PBXCoreREST\Attributes\{
+    ApiResource,
+    ApiOperation,
+    ApiParameter,
+    ApiResponse,
+    SecurityType,
+    ParameterLocation,
+    HttpMapping,
+    ResourceSecurity
+};
 
 /**
  * RESTful controller for system logs management (v3 API)
  *
- * Handles log file operations, capture, and archive management following Google API Design Guide patterns.
- * This controller implements a clean RESTful interface with proper HTTP methods and resource-oriented URLs.
- *
- * @RoutePrefix("/pbxcore/api/v3/syslog")
- *
- * @examples Standard operations:
- *
- * # List all available log files
- * curl -X GET "http://127.0.0.1/pbxcore/api/v3/syslog:getLogsList"
- *
- * # Get content from a specific log file
- * curl -X POST http://127.0.0.1/pbxcore/api/v3/syslog:getLogFromFile \
- *      -H "Content-Type: application/json" \
- *      -d '{"filename":"asterisk/messages","filter":"","lines":"500"}'
- *
- * # Start log capture with tcpdump
- * curl -X POST http://127.0.0.1/pbxcore/api/v3/syslog:startCapture
- *
- * # Stop capture and prepare archive
- * curl -X POST http://127.0.0.1/pbxcore/api/v3/syslog:stopCapture
- *
- * # Prepare logs archive without stopping capture
- * curl -X POST http://127.0.0.1/pbxcore/api/v3/syslog:prepareArchive
- *
- * # Download specific log file
- * curl -X POST http://127.0.0.1/pbxcore/api/v3/syslog:downloadLogFile \
- *      -H "Content-Type: application/json" \
- *      -d '{"filename":"asterisk/messages"}'
- *
- * # Download prepared logs archive
- * curl -X POST http://127.0.0.1/pbxcore/api/v3/syslog:downloadArchive \
- *      -H "Content-Type: application/json" \
- *      -d '{"filename":"/tmp/logs.zip"}'
- *
- * # Erase log file content
- * curl -X POST http://127.0.0.1/pbxcore/api/v3/syslog:eraseFile \
- *      -H "Content-Type: application/json" \
- *      -d '{"filename":"asterisk/messages"}'
+ * Comprehensive log management including viewing, downloading, archiving and capturing.
+ * Provides access to system logs (Asterisk, PHP, system), network capture with tcpdump,
+ * and archive generation for troubleshooting and diagnostics.
  *
  * @package MikoPBX\PBXCoreREST\Controllers\Syslog
+ *
+ * @see https://cloud.google.com/apis/design - Google API Design Guide
+ * @see https://spec.openapis.org/oas/v3.1.0 - OpenAPI 3.1 Specification
  */
+#[ApiResource(
+    path: '/pbxcore/api/v3/syslog',
+    tags: ['System Logs', 'Diagnostics'],
+    description: 'System logs management and diagnostics tools. ' .
+                'Provides access to system logs, log filtering, network packet capture, and archive generation. ' .
+                'Essential for troubleshooting and system monitoring.',
+    processor: SysLogsManagementProcessor::class
+)]
+#[ResourceSecurity('syslog', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
+#[HttpMapping(
+    mapping: [
+        'GET' => ['getLogsList'],
+        'POST' => ['getLogFromFile', 'startCapture', 'stopCapture', 'prepareArchive', 'downloadLogFile', 'downloadArchive', 'eraseFile']
+    ],
+    resourceLevelMethods: [],
+    collectionLevelMethods: [],
+    customMethods: ['getLogsList', 'getLogFromFile', 'startCapture', 'stopCapture', 'prepareArchive', 'downloadLogFile', 'downloadArchive', 'eraseFile'],
+    idPattern: ''
+)]
 class RestController extends BaseRestController
 {
+    /**
+     * The processor class to handle requests
+     * @var string
+     */
     protected string $processorClass = SysLogsManagementProcessor::class;
 
     /**
-     * Define allowed custom methods for each HTTP method
+     * Get list of available log files
      *
-     * @return array<string, array<string>>
+     * @route GET /pbxcore/api/v3/syslog:getLogsList
      */
-    protected function getAllowedCustomMethods(): array
+    #[ApiOperation(
+        summary: 'rest_syslog_GetLogsList',
+        description: 'rest_syslog_GetLogsListDesc',
+        operationId: 'getSystemLogsList'
+    )]
+    #[ApiResponse(200, 'rest_response_200_list')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function getLogsList(): void
     {
-        return [
-            'GET' => [
-                'getLogsList'
-            ],
-            'POST' => [
-                'getLogFromFile',
-                'startCapture',
-                'stopCapture',
-                'prepareArchive',
-                'downloadLogFile',
-                'downloadArchive',
-                'eraseFile'
-            ]
-        ];
+        // Implementation handled by BaseRestController
     }
 
     /**
-     * Check if a custom method requires a resource ID
-     * Overridden because syslog methods are mostly collection-level
+     * Get content from specific log file
      *
-     * @param string $method The custom method name
-     * @return bool
+     * @route POST /pbxcore/api/v3/syslog:getLogFromFile
      */
-    protected function isResourceLevelMethod(string $method): bool
+    #[ApiOperation(
+        summary: 'rest_syslog_GetLogFromFile',
+        description: 'rest_syslog_GetLogFromFileDesc',
+        operationId: 'getLogContent'
+    )]
+    #[ApiParameter('filename', 'string', 'rest_param_syslog_filename', ParameterLocation::QUERY, required: true, example: 'asterisk/messages')]
+    #[ApiParameter('filter', 'string', 'rest_param_syslog_filter', ParameterLocation::QUERY, required: false, maxLength: 200, example: 'ERROR')]
+    #[ApiParameter('lines', 'integer', 'rest_param_syslog_lines', ParameterLocation::QUERY, required: false, minimum: 1, maximum: 10000, default: 500, example: 500)]
+    #[ApiResponse(200, 'rest_response_200_log_content')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    public function getLogFromFile(): void
     {
-        // None of the syslog custom methods require a resource ID
-        // They all operate at the collection level
-        return false;
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Start network packet capture with tcpdump
+     *
+     * @route POST /pbxcore/api/v3/syslog:startCapture
+     */
+    #[ApiOperation(
+        summary: 'rest_syslog_StartCapture',
+        description: 'rest_syslog_StartCaptureDesc',
+        operationId: 'startPacketCapture'
+    )]
+    #[ApiResponse(200, 'rest_response_200_started')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function startCapture(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Stop network packet capture
+     *
+     * @route POST /pbxcore/api/v3/syslog:stopCapture
+     */
+    #[ApiOperation(
+        summary: 'rest_syslog_StopCapture',
+        description: 'rest_syslog_StopCaptureDesc',
+        operationId: 'stopPacketCapture'
+    )]
+    #[ApiResponse(200, 'rest_response_200_stopped')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function stopCapture(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Prepare logs archive for download
+     *
+     * @route POST /pbxcore/api/v3/syslog:prepareArchive
+     */
+    #[ApiOperation(
+        summary: 'rest_syslog_PrepareArchive',
+        description: 'rest_syslog_PrepareArchiveDesc',
+        operationId: 'prepareLogsArchive'
+    )]
+    #[ApiResponse(200, 'rest_response_200_archive_prepared')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function prepareArchive(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Download specific log file
+     *
+     * @route POST /pbxcore/api/v3/syslog:downloadLogFile
+     */
+    #[ApiOperation(
+        summary: 'rest_syslog_DownloadLogFile',
+        description: 'rest_syslog_DownloadLogFileDesc',
+        operationId: 'downloadLogFile'
+    )]
+    #[ApiParameter('filename', 'string', 'rest_param_syslog_filename', ParameterLocation::QUERY, required: true, example: 'asterisk/messages')]
+    #[ApiResponse(200, 'rest_response_200_file_download')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    public function downloadLogFile(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Download prepared logs archive
+     *
+     * @route POST /pbxcore/api/v3/syslog:downloadArchive
+     */
+    #[ApiOperation(
+        summary: 'rest_syslog_DownloadArchive',
+        description: 'rest_syslog_DownloadArchiveDesc',
+        operationId: 'downloadLogsArchive'
+    )]
+    #[ApiParameter('filename', 'string', 'rest_param_syslog_archive_filename', ParameterLocation::QUERY, required: true, example: '/tmp/logs.zip')]
+    #[ApiResponse(200, 'rest_response_200_file_download')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    public function downloadArchive(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Erase log file content
+     *
+     * @route POST /pbxcore/api/v3/syslog:eraseFile
+     */
+    #[ApiOperation(
+        summary: 'rest_syslog_EraseFile',
+        description: 'rest_syslog_EraseFileDesc',
+        operationId: 'eraseLogFile'
+    )]
+    #[ApiParameter('filename', 'string', 'rest_param_syslog_filename', ParameterLocation::QUERY, required: true, example: 'asterisk/messages')]
+    #[ApiResponse(200, 'rest_response_200_deleted')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    public function eraseFile(): void
+    {
+        // Implementation handled by BaseRestController
     }
 }

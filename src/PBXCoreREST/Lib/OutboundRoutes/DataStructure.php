@@ -24,13 +24,17 @@ namespace MikoPBX\PBXCoreREST\Lib\OutboundRoutes;
 use MikoPBX\Common\Models\OutgoingRoutingTable;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
+use MikoPBX\PBXCoreREST\Lib\Common\OpenApiSchemaProvider;
 
 /**
- * Data structure for Outbound Routes.
- * 
+ * Data structure for Outbound Routes
+ *
+ * Creates consistent data format for API responses.
+ * Implements OpenApiSchemaProvider to provide typed schemas for OpenAPI specification.
+ *
  * @package MikoPBX\PBXCoreREST\Lib\OutboundRoutes
  */
-class DataStructure extends AbstractDataStructure
+class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvider
 {
     /**
      * Create complete data array from OutgoingRoutingTable model.
@@ -195,7 +199,7 @@ class DataStructure extends AbstractDataStructure
     
     /**
      * Get provider data including name and status.
-     * 
+     *
      * @param mixed $provider Provider model or null
      * @return array Provider data with name, type, and disabled status
      */
@@ -208,18 +212,138 @@ class DataStructure extends AbstractDataStructure
                 'provider_disabled' => false,
             ];
         }
-        
+
         $isDisabled = false;
         $modelType = ucfirst($provider->type);
-        
+
         if (isset($provider->$modelType) && isset($provider->$modelType->disabled)) {
             $isDisabled = $provider->$modelType->disabled === '1';
         }
-        
+
         return [
             'providerid_represent' => $provider->getRepresent(),
             'provider_type' => $provider->type,
             'provider_disabled' => $isDisabled,
         ];
+    }
+
+    /**
+     * Get OpenAPI schema for outbound route list item
+     *
+     * @return array<string, mixed>
+     */
+    public static function getListItemSchema(): array
+    {
+        return [
+            'type' => 'object',
+            'required' => ['id', 'rulename', 'priority'],
+            'properties' => [
+                'id' => ['type' => 'string', 'description' => 'rest_schema_obr_id', 'example' => '15'],
+                'rulename' => ['type' => 'string', 'description' => 'rest_schema_obr_rulename', 'maxLength' => 100, 'example' => 'International Calls'],
+                'priority' => ['type' => 'integer', 'description' => 'rest_schema_obr_priority', 'minimum' => 0, 'example' => 1],
+                'numberbeginswith' => ['type' => 'string', 'description' => 'rest_schema_obr_numberbeginswith', 'maxLength' => 20, 'example' => '00'],
+                'restnumbers' => ['type' => 'string', 'description' => 'rest_schema_obr_restnumbers', 'example' => '9'],
+                'trimfrombegin' => ['type' => 'string', 'description' => 'rest_schema_obr_trimfrombegin', 'example' => '0'],
+                'prepend' => ['type' => 'string', 'description' => 'rest_schema_obr_prepend', 'maxLength' => 20, 'example' => '8'],
+                'note' => ['type' => 'string', 'description' => 'rest_schema_obr_note', 'maxLength' => 500],
+                'providerid' => ['type' => 'string', 'description' => 'rest_schema_obr_providerid', 'example' => 'SIP-PROVIDER-1234'],
+                'providerid_represent' => ['type' => 'string', 'description' => 'rest_schema_obr_providerid_represent'],
+                'provider_disabled' => ['type' => 'boolean', 'description' => 'rest_schema_obr_provider_disabled', 'example' => false],
+                'ruleDescription' => ['type' => 'string', 'description' => 'rest_schema_obr_ruleDescription']
+            ]
+        ];
+    }
+
+    /**
+     * Get OpenAPI schema for detailed outbound route record
+     *
+     * @return array<string, mixed>
+     */
+    public static function getDetailSchema(): array
+    {
+        return [
+            'type' => 'object',
+            'required' => ['id', 'rulename', 'priority'],
+            'properties' => [
+                'id' => ['type' => 'string', 'description' => 'rest_schema_obr_id', 'example' => '15'],
+                'rulename' => ['type' => 'string', 'description' => 'rest_schema_obr_rulename', 'maxLength' => 100, 'example' => 'International Calls'],
+                'providerid' => ['type' => 'string', 'description' => 'rest_schema_obr_providerid', 'example' => 'SIP-PROVIDER-1234'],
+                'providerid_represent' => ['type' => 'string', 'description' => 'rest_schema_obr_providerid_represent'],
+                'provider_type' => ['type' => 'string', 'description' => 'rest_schema_obr_provider_type', 'enum' => ['SIP', 'IAX2']],
+                'provider_disabled' => ['type' => 'boolean', 'description' => 'rest_schema_obr_provider_disabled', 'example' => false],
+                'priority' => ['type' => 'integer', 'description' => 'rest_schema_obr_priority', 'minimum' => 0, 'default' => 0, 'example' => 1],
+                'numberbeginswith' => ['type' => 'string', 'description' => 'rest_schema_obr_numberbeginswith', 'maxLength' => 20, 'example' => '00'],
+                'restnumbers' => ['type' => 'string', 'description' => 'rest_schema_obr_restnumbers', 'default' => '9', 'example' => '9'],
+                'trimfrombegin' => ['type' => 'string', 'description' => 'rest_schema_obr_trimfrombegin', 'default' => '0', 'example' => '0'],
+                'prepend' => ['type' => 'string', 'description' => 'rest_schema_obr_prepend', 'maxLength' => 20, 'example' => '8'],
+                'note' => ['type' => 'string', 'description' => 'rest_schema_obr_note', 'maxLength' => 500],
+                'represent' => ['type' => 'string', 'description' => 'rest_schema_obr_represent']
+            ]
+        ];
+    }
+
+    /**
+     * Get related schemas for OpenAPI components
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    public static function getRelatedSchemas(): array
+    {
+        return [];
+    }
+
+    /**
+     * Generate sanitization rules from OpenAPI schema
+     *
+     * @return array<string, string>
+     */
+    public static function getSanitizationRules(): array
+    {
+        $schema = static::getDetailSchema();
+        $rules = [];
+
+        if (!isset($schema['properties'])) {
+            return $rules;
+        }
+
+        foreach ($schema['properties'] as $fieldName => $fieldSchema) {
+            $ruleParts = [];
+
+            $type = $fieldSchema['type'] ?? 'string';
+            $ruleParts[] = match ($type) {
+                'integer' => 'int',
+                'number' => 'float',
+                'boolean' => 'bool',
+                'array' => 'array',
+                default => 'string'
+            };
+
+            if (isset($fieldSchema['minLength'])) {
+                $ruleParts[] = 'min:' . $fieldSchema['minLength'];
+            }
+            if (isset($fieldSchema['maxLength'])) {
+                $ruleParts[] = 'max:' . $fieldSchema['maxLength'];
+            }
+            if (isset($fieldSchema['minimum'])) {
+                $ruleParts[] = 'min:' . $fieldSchema['minimum'];
+            }
+            if (isset($fieldSchema['maximum'])) {
+                $ruleParts[] = 'max:' . $fieldSchema['maximum'];
+            }
+            if (isset($fieldSchema['pattern']) && is_string($fieldSchema['pattern'])) {
+                $pattern = str_replace(['^', '$'], '', $fieldSchema['pattern']);
+                $ruleParts[] = 'regex:/' . $pattern . '/';
+            }
+            if (isset($fieldSchema['enum']) && is_array($fieldSchema['enum'])) {
+                $ruleParts[] = 'in:' . implode(',', $fieldSchema['enum']);
+            }
+            if (isset($fieldSchema['nullable']) && $fieldSchema['nullable'] === true) {
+                $ruleParts[] = 'empty_to_null';
+            }
+
+            $rules[$fieldName] = implode('|', $ruleParts);
+        }
+
+        return $rules;
     }
 }

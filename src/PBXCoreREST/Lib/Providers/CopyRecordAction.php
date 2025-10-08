@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Lib\Providers;
 
+use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\Providers;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\Iax;
@@ -119,7 +120,12 @@ class CopyRecordAction
 
         // Generate new identifiers
         $newProvider->id = null;
-        $newProvider->uniqid = Providers::generateUniqueID($sourceProvider->type);
+        $prefix = match($sourceProvider->type) {
+            'SIP' => Extensions::PREFIX_TRUNK_SIP,
+            'IAX' => Extensions::PREFIX_TRUNK_IAX,
+            default => $sourceProvider->type . '-TRUNK'
+        };
+        $newProvider->uniqid = Providers::generateUniqueID($prefix);
 
         // Copy all fields with modifications
         $newProvider->type = $sourceProvider->type;

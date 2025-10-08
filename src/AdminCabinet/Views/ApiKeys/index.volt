@@ -25,9 +25,6 @@
 </div>
 
 <div id="empty-table-placeholder" style="display: none;">
-    {% set dropdownItems = [
-        {'link': url('api-keys/openapi'), 'icon': 'code', 'text': t._('ak_ApiDocumentation')}
-    ] %}
     {{ partial("partials/emptyTablePlaceholder", [
         'icon': 'key',
         'title': t._('ak_EmptyTableTitle'),
@@ -35,7 +32,6 @@
         'addButtonText': '<i class="add circle icon"></i> '~t._('ak_AddNewApiKey'),
         'addButtonLink': 'api-keys/modify',
         'showButton': isAllowed('save'),
-        'documentationLink': 'https://wiki.mikopbx.com/api-keys',
-        'dropdownItems': dropdownItems
+        'documentationLink': url('api-keys/openapi')
     ]) }}
 </div>

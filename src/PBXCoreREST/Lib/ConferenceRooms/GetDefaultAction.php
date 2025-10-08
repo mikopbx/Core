@@ -57,7 +57,7 @@ class GetDefaultAction
         try {
             // Generate unique ID for the new conference room
             
-            $uniqid = ConferenceRooms::generateUniqueID(Extensions::TYPE_CONFERENCE);
+            $uniqid = ConferenceRooms::generateUniqueID(Extensions::PREFIX_CONFERENCE);
             
             // Get next available extension number using centralized method
             $extensionNumber = Extensions::getNextFreeApplicationNumber();

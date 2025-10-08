@@ -21,6 +21,18 @@ namespace MikoPBX\PBXCoreREST\Controllers\Fail2Ban;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\Fail2BanManagementProcessor;
+use MikoPBX\PBXCoreREST\Lib\Fail2Ban\DataStructure;
+use MikoPBX\PBXCoreREST\Attributes\{
+    ApiResource,
+    ApiOperation,
+    ApiParameter,
+    ApiResponse,
+    ApiDataSchema,
+    SecurityType,
+    ParameterLocation,
+    HttpMapping,
+    ResourceSecurity
+};
 
 /**
  * RESTful controller for Fail2Ban management (v3 API)
@@ -47,6 +59,28 @@ use MikoPBX\PBXCoreREST\Lib\Fail2BanManagementProcessor;
  *
  * @package MikoPBX\PBXCoreREST\Controllers\Fail2Ban
  */
+#[ApiResource(
+    path: '/pbxcore/api/v3/fail2ban',
+    tags: ['Fail2Ban'],
+    description: 'Comprehensive Fail2Ban intrusion prevention management. Provides singleton REST operations for configuring ban policies, timeouts, and IP whitelists. Automatically blocks malicious IP addresses after detecting repeated failed authentication attempts.',
+    processor: Fail2BanManagementProcessor::class
+)]
+#[ResourceSecurity(
+    'fail2ban',
+    requirements: [SecurityType::BEARER_TOKEN],
+    description: 'rest_security_bearer'
+)]
+#[HttpMapping(
+    mapping: [
+        'GET' => ['getRecord'],
+        'PUT' => ['update'],
+        'PATCH' => ['patch']
+    ],
+    resourceLevelMethods: [],
+    collectionLevelMethods: ['getRecord', 'update', 'patch'],
+    customMethods: [],
+    idPattern: ''
+)]
 class RestController extends BaseRestController
 {
     /**
@@ -60,4 +94,179 @@ class RestController extends BaseRestController
      * @var bool
      */
     protected bool $isSingleton = true;
+
+    /**
+     * Get Fail2Ban settings (singleton resource)
+     *
+     * Retrieves the current Fail2Ban configuration including ban policies,
+     * timeouts, IP whitelist, and firewall settings.
+     *
+     * @route GET /pbxcore/api/v3/fail2ban
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
+    #[ApiOperation(
+        summary: 'rest_f2b_GetRecord',
+        description: 'rest_f2b_GetRecordDesc',
+        operationId: 'getFail2BanSettings'
+    )]
+    #[ApiResponse(200, 'rest_response_200_get')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
+    public function getRecord(?string $id = null): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Update Fail2Ban settings (singleton resource - full replacement)
+     *
+     * Replaces the entire Fail2Ban configuration with new values.
+     * All fields should be provided for complete configuration.
+     *
+     * @route PUT /pbxcore/api/v3/fail2ban
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
+    #[ApiOperation(
+        summary: 'rest_f2b_Update',
+        description: 'rest_f2b_UpdateDesc',
+        operationId: 'updateFail2BanSettings'
+    )]
+    #[ApiParameter(
+        name: 'maxretry',
+        type: 'integer',
+        description: 'rest_param_f2b_maxretry',
+        in: ParameterLocation::QUERY,
+        required: false,
+        minimum: 1,
+        maximum: 100,
+        default: 5,
+        example: 5
+    )]
+    #[ApiParameter(
+        name: 'bantime',
+        type: 'integer',
+        description: 'rest_param_f2b_bantime',
+        in: ParameterLocation::QUERY,
+        required: false,
+        minimum: 60,
+        default: 86400,
+        example: 86400
+    )]
+    #[ApiParameter(
+        name: 'findtime',
+        type: 'integer',
+        description: 'rest_param_f2b_findtime',
+        in: ParameterLocation::QUERY,
+        required: false,
+        minimum: 60,
+        default: 1800,
+        example: 1800
+    )]
+    #[ApiParameter(
+        name: 'whitelist',
+        type: 'string',
+        description: 'rest_param_f2b_whitelist',
+        in: ParameterLocation::QUERY,
+        required: false,
+        maxLength: 500,
+        example: '192.168.1.0/24,10.0.0.0/8'
+    )]
+    #[ApiParameter(
+        name: 'PBXFirewallMaxReqSec',
+        type: 'string',
+        description: 'rest_param_f2b_maxreqsec',
+        in: ParameterLocation::QUERY,
+        required: false,
+        maxLength: 10,
+        default: '100',
+        example: '100'
+    )]
+    #[ApiResponse(200, 'rest_response_200_updated')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(422, 'rest_response_422_validation', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
+    public function update(?string $id = null): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Partially update Fail2Ban settings (singleton resource)
+     *
+     * Updates only the specified fields in the Fail2Ban configuration.
+     * Other fields remain unchanged. Useful for updating individual settings.
+     *
+     * @route PATCH /pbxcore/api/v3/fail2ban
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
+    #[ApiOperation(
+        summary: 'rest_f2b_Patch',
+        description: 'rest_f2b_PatchDesc',
+        operationId: 'patchFail2BanSettings'
+    )]
+    #[ApiParameter(
+        name: 'maxretry',
+        type: 'integer',
+        description: 'rest_param_f2b_maxretry',
+        in: ParameterLocation::QUERY,
+        required: false,
+        minimum: 1,
+        maximum: 100,
+        example: 10
+    )]
+    #[ApiParameter(
+        name: 'bantime',
+        type: 'integer',
+        description: 'rest_param_f2b_bantime',
+        in: ParameterLocation::QUERY,
+        required: false,
+        minimum: 60,
+        example: 86400
+    )]
+    #[ApiParameter(
+        name: 'findtime',
+        type: 'integer',
+        description: 'rest_param_f2b_findtime',
+        in: ParameterLocation::QUERY,
+        required: false,
+        minimum: 60,
+        example: 1800
+    )]
+    #[ApiParameter(
+        name: 'whitelist',
+        type: 'string',
+        description: 'rest_param_f2b_whitelist',
+        in: ParameterLocation::QUERY,
+        required: false,
+        maxLength: 500,
+        example: '192.168.1.0/24'
+    )]
+    #[ApiParameter(
+        name: 'PBXFirewallMaxReqSec',
+        type: 'string',
+        description: 'rest_param_f2b_maxreqsec',
+        in: ParameterLocation::QUERY,
+        required: false,
+        maxLength: 10,
+        example: '100'
+    )]
+    #[ApiResponse(200, 'rest_response_200_patched')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(422, 'rest_response_422_validation', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
+    public function patch(?string $id = null): void
+    {
+        // Implementation handled by BaseRestController
+    }
 }

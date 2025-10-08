@@ -29,12 +29,18 @@ use Phalcon\Http\Response;
 /**
  * Unified security middleware for MikoPBX REST API
  *
+ * NOTE: This middleware is implemented but NOT YET INTEGRATED into the middleware chain.
+ * Currently, public endpoint checking is handled by AuthenticationMiddleware using
+ * ResourceSecurity attributes. This class will be activated when fine-grained
+ * authorization based on scopes and permissions is needed.
+ *
  * Handles all three access channels:
- * 1. LOCALHOST - Direct access from 127.0.0.1
- * 2. SESSION - Web interface with user roles and ACL
+ * 1. PUBLIC - No authentication required (SecurityType::PUBLIC)
+ * 2. LOCALHOST - Direct access from 127.0.0.1
  * 3. BEARER_TOKEN - Bearer token with scope-based permissions
  *
  * @package MikoPBX\PBXCoreREST\Middleware
+ * @see AuthenticationMiddleware Uses ResourceSecurity for public endpoint detection
  */
 class UnifiedSecurityMiddleware
 {

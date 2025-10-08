@@ -164,7 +164,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'id' => [
                     'type' => 'string',
                     'description' => 'rest_schema_cq_id',
-                    'pattern' => '^QUEUE-[A-Z0-9]{8}$',
+                    'pattern' => '^QUEUE-[A-Z0-9]{8,32}$',
                     'example' => 'QUEUE-CF423A55'
                 ],
                 'extension' => [
@@ -229,7 +229,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'id' => [
                     'type' => 'string',
                     'description' => 'rest_schema_cq_id',
-                    'pattern' => '^QUEUE-[A-Z0-9]{8}$',
+                    'pattern' => '^QUEUE-[A-Z0-9]{8,32}$',
                     'example' => 'QUEUE-CF423A55'
                 ],
                 'extension' => [

@@ -21,22 +21,48 @@ namespace MikoPBX\PBXCoreREST\Controllers\Iax;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\IaxManagementProcessor;
+use MikoPBX\PBXCoreREST\Lib\Iax\DataStructure;
+use MikoPBX\PBXCoreREST\Attributes\{
+    ApiResource,
+    ApiOperation,
+    ApiParameter,
+    ApiResponse,
+    ApiDataSchema,
+    SecurityType,
+    ParameterLocation,
+    HttpMapping,
+    ResourceSecurity
+};
 
 /**
  * RESTful controller for IAX management (v3 API)
  *
- * IAX is a singleton resource - there's only one IAX service in the system.
+ * IAX (Inter-Asterisk eXchange) protocol management for trunk provider connections.
  * This controller implements custom methods for IAX operations.
  *
- * @RoutePrefix("/pbxcore/api/v3/iax")
- *
- * @examples Custom method operations:
- *
- * # Get IAX providers registry status
- * curl -X GET http://127.0.0.1/pbxcore/api/v3/iax:getRegistry
- *
  * @package MikoPBX\PBXCoreREST\Controllers\Iax
+ *
+ * @see https://cloud.google.com/apis/design - Google API Design Guide
+ * @see https://spec.openapis.org/oas/v3.1.0 - OpenAPI 3.1 Specification
  */
+#[ApiResource(
+    path: '/pbxcore/api/v3/iax',
+    tags: ['IAX'],
+    description: 'IAX (Inter-Asterisk eXchange) protocol management for VoIP trunk provider connections. ' .
+                'Provides real-time monitoring of IAX provider registration status, peer connectivity states, ' .
+                'and response times for IAX-based SIP trunks.',
+    processor: IaxManagementProcessor::class
+)]
+#[ResourceSecurity('iax', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
+#[HttpMapping(
+    mapping: [
+        'GET' => ['getRegistry']
+    ],
+    resourceLevelMethods: [],
+    collectionLevelMethods: [],
+    customMethods: ['getRegistry'],
+    idPattern: null
+)]
 class RestController extends BaseRestController
 {
     /**
@@ -46,21 +72,35 @@ class RestController extends BaseRestController
     protected string $processorClass = IaxManagementProcessor::class;
 
     /**
-     * Indicates this is a singleton resource
+     * Indicates this is a singleton resource (no CRUD operations)
      * @var bool
      */
     protected bool $isSingleton = true;
 
     /**
-     * Define allowed custom methods for each HTTP method
+     * Get IAX providers registry status
      *
-     * @return array<string, array<string>>
+     * Returns real-time registration status and connectivity information
+     * for all configured IAX providers.
+     *
+     * @route GET /pbxcore/api/v3/iax:getRegistry
      */
-    protected function getAllowedCustomMethods(): array
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'registry',
+        isArray: true
+    )]
+    #[ApiOperation(
+        summary: 'rest_iax_GetRegistry',
+        description: 'rest_iax_GetRegistryDesc',
+        operationId: 'getIaxRegistry'
+    )]
+    #[ApiResponse(200, 'rest_response_200_iax_registry')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
+    public function getRegistry(): void
     {
-        return [
-            'GET' => ['getRegistry'],
-            'POST' => []
-        ];
+        // Implementation handled by BaseRestController
     }
 }

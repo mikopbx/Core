@@ -57,7 +57,7 @@ class PatchRecordAction
         
         if (!$existingRecord->success) {
             $res = new PBXApiResult();
-            $res->messages['error'][] = 'Employee not found for patch operation';
+            $res->messages['error'][] = "Employee not found for patch operation (ID: {$data['id']})";
             return $res;
         }
         

@@ -21,16 +21,17 @@ namespace MikoPBX\PBXCoreREST\Controllers\AsteriskManagers;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\AsteriskManagersManagementProcessor;
+use MikoPBX\PBXCoreREST\Lib\AsteriskManagers\DataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
     ApiParameter,
     ApiResponse,
+    ApiDataSchema,
     SecurityType,
     ParameterLocation,
     HttpMapping,
-    ResourceSecurity,
-    ActionType
+    ResourceSecurity
 };
 
 /**
@@ -80,15 +81,20 @@ class RestController extends BaseRestController
      *
      * @route GET /pbxcore/api/v3/asterisk-managers
      */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'list',
+        isArray: true
+    )]
     #[ApiOperation(
-        summary: 'Get Asterisk managers list',
-        description: 'Retrieve paginated list of Asterisk Manager Interface (AMI) users with optional filtering by username, search term, and sorting options',
+        summary: 'rest_am_GetList',
+        description: 'rest_am_GetListDesc',
         operationId: 'getAsteriskManagersList'
     )]
     #[ApiParameter(
         name: 'limit',
         type: 'integer',
-        description: 'Maximum number of records to return',
+        description: 'rest_param_limit',
         in: ParameterLocation::QUERY,
         minimum: 1,
         maximum: 100,
@@ -98,7 +104,7 @@ class RestController extends BaseRestController
     #[ApiParameter(
         name: 'offset',
         type: 'integer',
-        description: 'Number of records to skip for pagination',
+        description: 'rest_param_offset',
         in: ParameterLocation::QUERY,
         minimum: 0,
         default: 0,
@@ -107,7 +113,7 @@ class RestController extends BaseRestController
     #[ApiParameter(
         name: 'search',
         type: 'string',
-        description: 'Search term for filtering by username or description',
+        description: 'rest_param_search',
         in: ParameterLocation::QUERY,
         maxLength: 255,
         example: 'admin'
@@ -115,7 +121,7 @@ class RestController extends BaseRestController
     #[ApiParameter(
         name: 'order',
         type: 'string',
-        description: 'Field to order results by',
+        description: 'rest_param_order',
         in: ParameterLocation::QUERY,
         enum: ['username', 'description'],
         default: 'username',
@@ -124,17 +130,15 @@ class RestController extends BaseRestController
     #[ApiParameter(
         name: 'orderWay',
         type: 'string',
-        description: 'Sort direction',
+        description: 'rest_param_orderWay',
         in: ParameterLocation::QUERY,
         enum: ['ASC', 'DESC'],
         default: 'ASC',
         example: 'ASC'
     )]
-    #[ApiResponse(200, 'List of Asterisk managers retrieved successfully', example: '{"jsonapi":{"version":"1.0"},"result":true,"data":[{"id":"53","username":"LocalhostUser","description":"System user for localhost access","represent":"<i class=\"user secret icon\"></i> LocalhostUser","search_index":"localhostuser system user for localhost access"}],"messages":[],"function":"getList","processor":"MikoPBX\\\\PBXCoreREST\\\\Lib\\\\AsteriskManagers\\\\GetListAction::main","pid":1408,"meta":{"timestamp":"2025-09-29T12:10:32+03:00","hash":"4cf6b85219952014f2a06b4d77dad1a7f38cd886"}}')]
-    #[ApiResponse(400, 'Invalid query parameters', 'ErrorResponse')]
-    #[ApiResponse(401, 'Authentication required', 'ErrorResponse')]
-    #[ApiResponse(403, 'Insufficient permissions', 'ErrorResponse')]
-    #[ResourceSecurity('asterisk_managers', ActionType::READ)]
+    #[ApiResponse(200, 'rest_response_200_list')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
     public function getList(): void
     {
         // Implementation handled by BaseRestController
@@ -145,25 +149,21 @@ class RestController extends BaseRestController
      *
      * @route GET /pbxcore/api/v3/asterisk-managers/{id}
      */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
     #[ApiOperation(
-        summary: 'Get Asterisk manager',
-        description: 'Retrieve detailed information about a specific Asterisk Manager Interface user',
+        summary: 'rest_am_GetRecord',
+        description: 'rest_am_GetRecordDesc',
         operationId: 'getAsteriskManager'
     )]
-    #[ApiParameter(
-        name: 'id',
-        type: 'string',
-        description: 'Unique identifier of the Asterisk manager',
-        in: ParameterLocation::PATH,
-        required: true,
-        example: '53'
-    )]
-    #[ApiResponse(200, 'Asterisk manager retrieved successfully', example: '{"jsonapi":{"version":"1.0"},"result":true,"data":{"id":"53","username":"LocalhostUser","secret":"","description":"System user for localhost access","call":"all","cdr":"all","agent":"all","call_timeout":"5","permissions":"system,call,log,verbose,command,agent,user,config,command,dtmf,reporting,cdr,dialplan,originate","disabled":"0"},"messages":[],"function":"getRecord","processor":"MikoPBX\\\\PBXCoreREST\\\\Lib\\\\AsteriskManagers\\\\GetRecordAction::main","pid":1408}')]
-    #[ApiResponse(404, 'Asterisk manager not found', 'ErrorResponse')]
-    #[ApiResponse(401, 'Authentication required', 'ErrorResponse')]
-    #[ApiResponse(403, 'Insufficient permissions', 'ErrorResponse')]
-    #[ResourceSecurity('asterisk_managers', ActionType::READ)]
-    public function getRecord(): void
+    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[0-9]+$', example: '53')]
+    #[ApiResponse(200, 'rest_response_200_get')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    public function getRecord(string $id): void
     {
         // Implementation handled by BaseRestController
     }
@@ -173,24 +173,28 @@ class RestController extends BaseRestController
      *
      * @route POST /pbxcore/api/v3/asterisk-managers
      */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
     #[ApiOperation(
-        summary: 'Create Asterisk manager',
-        description: 'Create a new Asterisk Manager Interface user with specified permissions and authentication',
+        summary: 'rest_am_Create',
+        description: 'rest_am_CreateDesc',
         operationId: 'createAsteriskManager'
     )]
-    #[ApiParameter('username', 'string', 'AMI username (must be unique)', ParameterLocation::QUERY, required: true, maxLength: 50, example: 'admin')]
-    #[ApiParameter('secret', 'string', 'AMI password for authentication', ParameterLocation::QUERY, required: true, maxLength: 255, example: 'securePassword123')]
-    #[ApiParameter('description', 'string', 'Description of the AMI user', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'Administrator account for monitoring')]
-    #[ApiParameter('call', 'string', 'Call control permissions', ParameterLocation::QUERY, required: false, enum: ['all', 'no'], default: 'all', example: 'all')]
-    #[ApiParameter('cdr', 'string', 'CDR access permissions', ParameterLocation::QUERY, required: false, enum: ['all', 'no'], default: 'all', example: 'all')]
-    #[ApiParameter('agent', 'string', 'Agent permissions', ParameterLocation::QUERY, required: false, enum: ['all', 'no'], default: 'all', example: 'all')]
-    #[ApiParameter('call_timeout', 'integer', 'Call timeout in seconds', ParameterLocation::QUERY, required: false, minimum: 1, maximum: 300, default: 5, example: 10)]
-    #[ApiParameter('disabled', 'boolean', 'Whether the account is disabled', ParameterLocation::QUERY, required: false, default: false, example: false)]
-    #[ApiResponse(201, 'Asterisk manager created successfully', example: '{"jsonapi":{"version":"1.0"},"result":true,"data":{"id":"54","username":"admin","description":"Administrator account"},"messages":["Asterisk manager created successfully"],"function":"create","processor":"MikoPBX\\\\PBXCoreREST\\\\Lib\\\\AsteriskManagers\\\\CreateAction::main","pid":1408}')]
-    #[ApiResponse(400, 'Invalid request data or username already exists', 'ErrorResponse')]
-    #[ApiResponse(401, 'Authentication required', 'ErrorResponse')]
-    #[ApiResponse(403, 'Insufficient permissions', 'ErrorResponse')]
-    #[ResourceSecurity('asterisk_managers', ActionType::WRITE)]
+    #[ApiParameter('username', 'string', 'rest_param_am_username', ParameterLocation::QUERY, required: true, maxLength: 50, example: 'admin')]
+    #[ApiParameter('secret', 'string', 'rest_param_am_secret', ParameterLocation::QUERY, required: true, maxLength: 255, example: 'securePassword123')]
+    #[ApiParameter('description', 'string', 'rest_param_am_description', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'Administrator account')]
+    #[ApiParameter('call', 'string', 'rest_param_am_call', ParameterLocation::QUERY, required: false, enum: ['all', 'no'], default: 'all', example: 'all')]
+    #[ApiParameter('cdr', 'string', 'rest_param_am_cdr', ParameterLocation::QUERY, required: false, enum: ['all', 'no'], default: 'all', example: 'all')]
+    #[ApiParameter('agent', 'string', 'rest_param_am_agent', ParameterLocation::QUERY, required: false, enum: ['all', 'no'], default: 'all', example: 'all')]
+    #[ApiParameter('call_timeout', 'integer', 'rest_param_am_call_timeout', ParameterLocation::QUERY, required: false, minimum: 1, maximum: 300, default: 5, example: 10)]
+    #[ApiParameter('disabled', 'boolean', 'rest_param_am_disabled', ParameterLocation::QUERY, required: false, default: false, example: false)]
+    #[ApiResponse(201, 'rest_response_201_created')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(409, 'rest_response_409_conflict', 'PBXApiResult')]
     public function create(): void
     {
         // Implementation handled by BaseRestController
@@ -201,26 +205,30 @@ class RestController extends BaseRestController
      *
      * @route PUT /pbxcore/api/v3/asterisk-managers/{id}
      */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
     #[ApiOperation(
-        summary: 'Update Asterisk manager',
-        description: 'Replace all fields of an existing Asterisk Manager Interface user. All fields will be updated.',
+        summary: 'rest_am_Update',
+        description: 'rest_am_UpdateDesc',
         operationId: 'updateAsteriskManager'
     )]
-    #[ApiParameter('id', 'string', 'Unique identifier of the Asterisk manager', ParameterLocation::PATH, required: true, example: '53')]
-    #[ApiParameter('username', 'string', 'AMI username (must be unique)', ParameterLocation::QUERY, required: true, maxLength: 50, example: 'admin2')]
-    #[ApiParameter('secret', 'string', 'AMI password for authentication', ParameterLocation::QUERY, required: true, maxLength: 255, example: 'newSecurePassword123')]
-    #[ApiParameter('description', 'string', 'Description of the AMI user', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'Updated administrator account')]
-    #[ApiParameter('call', 'string', 'Call control permissions', ParameterLocation::QUERY, required: false, enum: ['all', 'no'], default: 'all', example: 'all')]
-    #[ApiParameter('cdr', 'string', 'CDR access permissions', ParameterLocation::QUERY, required: false, enum: ['all', 'no'], default: 'all', example: 'all')]
-    #[ApiParameter('agent', 'string', 'Agent permissions', ParameterLocation::QUERY, required: false, enum: ['all', 'no'], default: 'all', example: 'all')]
-    #[ApiParameter('disabled', 'boolean', 'Whether the account is disabled', ParameterLocation::QUERY, required: false, default: false, example: false)]
-    #[ApiResponse(200, 'Asterisk manager updated successfully', example: '{"jsonapi":{"version":"1.0"},"result":true,"data":{"id":"53","username":"admin2","description":"Updated administrator account"},"messages":["Asterisk manager updated successfully"],"function":"update","processor":"MikoPBX\\\\PBXCoreREST\\\\Lib\\\\AsteriskManagers\\\\UpdateAction::main","pid":1408}')]
-    #[ApiResponse(400, 'Invalid request data', 'ErrorResponse')]
-    #[ApiResponse(404, 'Asterisk manager not found', 'ErrorResponse')]
-    #[ApiResponse(401, 'Authentication required', 'ErrorResponse')]
-    #[ApiResponse(403, 'Insufficient permissions', 'ErrorResponse')]
-    #[ResourceSecurity('asterisk_managers', ActionType::WRITE)]
-    public function update(): void
+    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[0-9]+$', example: '53')]
+    #[ApiParameter('username', 'string', 'rest_param_am_username', ParameterLocation::QUERY, required: true, maxLength: 50, example: 'admin2')]
+    #[ApiParameter('secret', 'string', 'rest_param_am_secret', ParameterLocation::QUERY, required: true, maxLength: 255, example: 'newSecurePassword123')]
+    #[ApiParameter('description', 'string', 'rest_param_am_description', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'Updated administrator account')]
+    #[ApiParameter('call', 'string', 'rest_param_am_call', ParameterLocation::QUERY, required: false, enum: ['all', 'no'], default: 'all', example: 'all')]
+    #[ApiParameter('cdr', 'string', 'rest_param_am_cdr', ParameterLocation::QUERY, required: false, enum: ['all', 'no'], default: 'all', example: 'all')]
+    #[ApiParameter('agent', 'string', 'rest_param_am_agent', ParameterLocation::QUERY, required: false, enum: ['all', 'no'], default: 'all', example: 'all')]
+    #[ApiParameter('disabled', 'boolean', 'rest_param_am_disabled', ParameterLocation::QUERY, required: false, default: false, example: false)]
+    #[ApiResponse(200, 'rest_response_200_updated')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    #[ApiResponse(409, 'rest_response_409_conflict', 'PBXApiResult')]
+    public function update(string $id): void
     {
         // Implementation handled by BaseRestController
     }
@@ -230,23 +238,26 @@ class RestController extends BaseRestController
      *
      * @route PATCH /pbxcore/api/v3/asterisk-managers/{id}
      */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
     #[ApiOperation(
-        summary: 'Patch Asterisk manager',
-        description: 'Partially update an Asterisk Manager Interface user. Only provided fields will be modified.',
+        summary: 'rest_am_Patch',
+        description: 'rest_am_PatchDesc',
         operationId: 'patchAsteriskManager'
     )]
-    #[ApiParameter('id', 'string', 'Unique identifier of the Asterisk manager', ParameterLocation::PATH, required: true, example: '53')]
-    #[ApiParameter('username', 'string', 'AMI username (must be unique)', ParameterLocation::QUERY, required: false, maxLength: 50, example: 'admin_updated')]
-    #[ApiParameter('secret', 'string', 'AMI password for authentication', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'updatedPassword123')]
-    #[ApiParameter('description', 'string', 'Description of the AMI user', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'Updated description')]
-    #[ApiParameter('disabled', 'boolean', 'Whether the account is disabled', ParameterLocation::QUERY, required: false, example: true)]
-    #[ApiResponse(200, 'Asterisk manager patched successfully', example: '{"jsonapi":{"version":"1.0"},"result":true,"data":{"id":"53","username":"admin_updated","description":"Updated description"},"messages":["Asterisk manager updated successfully"],"function":"patch","processor":"MikoPBX\\\\PBXCoreREST\\\\Lib\\\\AsteriskManagers\\\\PatchAction::main","pid":1408}')]
-    #[ApiResponse(400, 'Invalid request data', 'ErrorResponse')]
-    #[ApiResponse(404, 'Asterisk manager not found', 'ErrorResponse')]
-    #[ApiResponse(401, 'Authentication required', 'ErrorResponse')]
-    #[ApiResponse(403, 'Insufficient permissions', 'ErrorResponse')]
-    #[ResourceSecurity('asterisk_managers', ActionType::WRITE)]
-    public function patch(): void
+    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[0-9]+$', example: '53')]
+    #[ApiParameter('username', 'string', 'rest_param_am_username', ParameterLocation::QUERY, required: false, maxLength: 50, example: 'admin_updated')]
+    #[ApiParameter('secret', 'string', 'rest_param_am_secret', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'updatedPassword123')]
+    #[ApiParameter('description', 'string', 'rest_param_am_description', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'Updated description')]
+    #[ApiParameter('disabled', 'boolean', 'rest_param_am_disabled', ParameterLocation::QUERY, required: false, example: true)]
+    #[ApiResponse(200, 'rest_response_200_patched')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    public function patch(string $id): void
     {
         // Implementation handled by BaseRestController
     }
@@ -257,35 +268,39 @@ class RestController extends BaseRestController
      * @route DELETE /pbxcore/api/v3/asterisk-managers/{id}
      */
     #[ApiOperation(
-        summary: 'Delete Asterisk manager',
-        description: 'Permanently delete an Asterisk Manager Interface user. This action cannot be undone.',
+        summary: 'rest_am_Delete',
+        description: 'rest_am_DeleteDesc',
         operationId: 'deleteAsteriskManager'
     )]
-    #[ApiParameter('id', 'string', 'Unique identifier of the Asterisk manager', ParameterLocation::PATH, required: true, example: '53')]
-    #[ApiResponse(200, 'Asterisk manager deleted successfully', example: '{"jsonapi":{"version":"1.0"},"result":true,"messages":["Asterisk manager deleted successfully"],"function":"delete","processor":"MikoPBX\\\\PBXCoreREST\\\\Lib\\\\AsteriskManagers\\\\DeleteAction::main","pid":1408}')]
-    #[ApiResponse(404, 'Asterisk manager not found', 'ErrorResponse')]
-    #[ApiResponse(401, 'Authentication required', 'ErrorResponse')]
-    #[ApiResponse(403, 'Insufficient permissions', 'ErrorResponse')]
-    #[ResourceSecurity('asterisk_managers', ActionType::WRITE)]
-    public function delete(): void
+    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[0-9]+$', example: '53')]
+    #[ApiResponse(200, 'rest_response_200_deleted')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    #[ApiResponse(409, 'rest_response_409_conflict', 'PBXApiResult')]
+    public function delete(string $id): void
     {
         // Implementation handled by BaseRestController
     }
+
 
     /**
      * Get default values for new Asterisk manager
      *
      * @route GET /pbxcore/api/v3/asterisk-managers:getDefault
      */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
     #[ApiOperation(
-        summary: 'Get default Asterisk manager values',
-        description: 'Retrieve default configuration values for creating a new Asterisk Manager Interface user',
+        summary: 'rest_am_GetDefault',
+        description: 'rest_am_GetDefaultDesc',
         operationId: 'getAsteriskManagerDefaults'
     )]
-    #[ApiResponse(200, 'Default values retrieved successfully', example: '{"jsonapi":{"version":"1.0"},"result":true,"data":{"username":"","secret":"","description":"","call":"all","cdr":"all","agent":"all","call_timeout":"5","permissions":"system,call,log,verbose,command,agent,user,config,command,dtmf,reporting,cdr,dialplan,originate","disabled":"0"},"messages":[],"function":"getDefault","processor":"MikoPBX\\\\PBXCoreREST\\\\Lib\\\\AsteriskManagers\\\\GetDefaultAction::main","pid":1408}')]
-    #[ApiResponse(401, 'Authentication required', 'ErrorResponse')]
-    #[ApiResponse(403, 'Insufficient permissions', 'ErrorResponse')]
-    #[ResourceSecurity('asterisk_managers', ActionType::READ)]
+    #[ApiResponse(200, 'rest_response_200_default')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
     public function getDefault(): void
     {
         // Implementation handled by BaseRestController
@@ -296,18 +311,21 @@ class RestController extends BaseRestController
      *
      * @route GET /pbxcore/api/v3/asterisk-managers/{id}:copy
      */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
     #[ApiOperation(
-        summary: 'Copy Asterisk manager',
-        description: 'Create a copy of an existing Asterisk Manager Interface user with modified username',
+        summary: 'rest_am_Copy',
+        description: 'rest_am_CopyDesc',
         operationId: 'copyAsteriskManager'
     )]
-    #[ApiParameter('id', 'string', 'Unique identifier of the Asterisk manager to copy', ParameterLocation::PATH, required: true, example: '53')]
-    #[ApiResponse(200, 'Asterisk manager template for copying retrieved successfully', example: '{"jsonapi":{"version":"1.0"},"result":true,"data":{"username":"LocalhostUser_copy","secret":"","description":"System user for localhost access (Copy)","call":"all","cdr":"all","agent":"all","call_timeout":"5","permissions":"system,call,log,verbose,command,agent,user,config,command,dtmf,reporting,cdr,dialplan,originate","disabled":"0"},"messages":[],"function":"copy","processor":"MikoPBX\\\\PBXCoreREST\\\\Lib\\\\AsteriskManagers\\\\CopyAction::main","pid":1408}')]
-    #[ApiResponse(404, 'Asterisk manager not found', 'ErrorResponse')]
-    #[ApiResponse(401, 'Authentication required', 'ErrorResponse')]
-    #[ApiResponse(403, 'Insufficient permissions', 'ErrorResponse')]
-    #[ResourceSecurity('asterisk_managers', ActionType::READ)]
-    public function copy(): void
+    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[0-9]+$', example: '53')]
+    #[ApiResponse(200, 'rest_response_200_copied')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    public function copy(string $id): void
     {
         // Implementation handled by BaseRestController
     }

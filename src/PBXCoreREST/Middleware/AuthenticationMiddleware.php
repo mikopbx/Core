@@ -23,16 +23,18 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Middleware;
 
 use MikoPBX\Common\Providers\LoggerAuthProvider;
-use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Http\Request;
 use MikoPBX\PBXCoreREST\Http\Response;
 use MikoPBX\PBXCoreREST\Lib\Auth\JWTHelper;
 use MikoPBX\PBXCoreREST\Services\TokenValidationService;
+use MikoPBX\PBXCoreREST\Services\SecurityResolver;
 use MikoPBX\PBXCoreREST\Providers\RequestProvider;
 use MikoPBX\PBXCoreREST\Providers\ResponseProvider;
 use MikoPBX\PBXCoreREST\Traits\ResponseTrait;
 use Phalcon\Mvc\Micro;
 use Phalcon\Mvc\Micro\MiddlewareInterface;
+use ReflectionClass;
+use ReflectionMethod;
 
 /**
  * Class AuthenticationMiddleware
@@ -56,7 +58,39 @@ class AuthenticationMiddleware implements MiddlewareInterface
         /** @var Response $response */
         $response = $application->getService(ResponseProvider::SERVICE_NAME);
 
-        // Check Bearer token authentication first
+        // Check if this is a public endpoint or no-auth API FIRST (before Bearer token validation)
+        // This allows public endpoints to work even with invalid/expired tokens
+        $isPublicEndpoint = $this->isPublicEndpoint($application);
+        $isNoAuthApi = $request->thisIsModuleNoAuthRequest($application);
+
+        // Public endpoints and no-auth APIs can be accessed without any authentication
+        if ($isPublicEndpoint || $isNoAuthApi) {
+            // Still validate Bearer token if present (for optional authentication)
+            if ($request->hasBearerToken()) {
+                $token = $request->getBearerToken();
+                if ($token !== null) {
+                    // Try JWT authentication
+                    $jwtPayload = JWTHelper::validate($token);
+                    if ($jwtPayload !== null) {
+                        $request->setJwtPayload($jwtPayload);
+                    } else {
+                        // Try API Key authentication
+                        $tokenValidator = new TokenValidationService($application->getDI());
+                        $validationResult = $tokenValidator->validate($request);
+                        if ($validationResult->isValid()) {
+                            $tokenInfo = $validationResult->getTokenInfo();
+                            if ($tokenInfo !== null) {
+                                $request->setTokenInfo($tokenInfo);
+                            }
+                        }
+                        // Note: We don't fail here - public endpoints work without valid token
+                    }
+                }
+            }
+            return true; // Allow access to public endpoints regardless of token validity
+        }
+
+        // Check Bearer token authentication for non-public endpoints
         if ($request->hasBearerToken()) {
             $token = $request->getBearerToken();
 
@@ -101,46 +135,27 @@ class AuthenticationMiddleware implements MiddlewareInterface
             );
             return false;
         }
-        
-        // Check if this is a public endpoint (no auth required)
-        $isPublicEndpoint = $this->isPublicEndpoint($application);
 
-        $isNoAuthApi = $request->thisIsModuleNoAuthRequest($application);
-
-        if (
-            true !== $request->isLocalHostRequest()
-            && true !== $isNoAuthApi
-            && true !== $isPublicEndpoint
-        ) {
-            $loggerAuth = $application->getService(LoggerAuthProvider::SERVICE_NAME);
-            $loggerAuth->warning("From: {$request->getClientAddress(true)} UserAgent:{$request->getUserAgent()} Cause: No valid authentication");
-            $this->halt(
-                $application,
-                $response::UNAUTHORIZED,
-                'The user isn\'t authenticated.'
-            );
-            return false;
+        // No Bearer token provided - check if localhost
+        if ($request->isLocalHostRequest()) {
+            // Localhost has full access without any authentication
+            return true;
         }
 
-        if (
-            true !== $isNoAuthApi
-            && true !== $isPublicEndpoint
-            && true !== $request->isLocalHostRequest()
-            && true !== $request->isAllowedAction($application)
-        ) {
-             $this->halt(
-                 $application,
-                 $response::FORBIDDEN,
-                 'The route is not allowed'
-             );
-            return false;
-        }
-
-        return true;
+        // Not localhost and no valid authentication
+        $loggerAuth = $application->getService(LoggerAuthProvider::SERVICE_NAME);
+        $loggerAuth->warning("From: {$request->getClientAddress(true)} UserAgent:{$request->getUserAgent()} Cause: No valid authentication");
+        $this->halt(
+            $application,
+            $response::UNAUTHORIZED,
+            'The user isn\'t authenticated.'
+        );
+        return false;
     }
 
     /**
      * Check if this is a public endpoint (no authentication required)
+     * Uses hardcoded list since getActiveHandler() is not available during middleware
      *
      * @param Micro $application
      * @return bool
@@ -154,7 +169,6 @@ class AuthenticationMiddleware implements MiddlewareInterface
 
         // List of public endpoints that don't require authentication
         $publicEndpoints = [
-            '/pbxcore/api/health' => ['GET'],  // Health check endpoint
             '/pbxcore/api/v3/mail-settings/oauth2-callback' => ['GET'],  // OAuth2 callback
             '/pbxcore/api/v3/passkeys:checkAvailability' => ['GET'],  // Passkey availability check
             '/pbxcore/api/v3/passkeys:authenticationStart' => ['GET'],  // WebAuthn login start
@@ -165,6 +179,7 @@ class AuthenticationMiddleware implements MiddlewareInterface
             '/pbxcore/api/v3/user-page-tracker:pageLeave' => ['POST'],  // Page analytics (optional session tracking)
             '/pbxcore/api/v3/system:changeLanguage' => ['POST', 'PATCH'],  // Language change on login page
             '/pbxcore/api/v3/system:getAvailableLanguages' => ['GET'],  // Get available languages on login page
+            '/pbxcore/api/v3/system:ping' => ['GET'],  // Health check endpoint
         ];
 
         foreach ($publicEndpoints as $endpoint => $allowedMethods) {

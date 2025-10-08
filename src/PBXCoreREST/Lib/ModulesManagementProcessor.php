@@ -83,14 +83,14 @@ class ModulesManagementProcessor extends Injectable
                     break;
                 case 'installFromRepo':
                     $asyncChannelId = $request['asyncChannelId'];
-                    $moduleUniqueID = $data['uniqid'];
+                    $moduleUniqueID = $data['uniqid'] ?? $data['id'];
                     $releaseId = intval($data['releaseId']??0);
                     $installer = new InstallFromRepoAction($asyncChannelId, $moduleUniqueID, $releaseId);
                     $installer->start();
                     $res->success = true;
                     break;
                 case 'getModuleInfo':
-                    $moduleUniqueID = $data['uniqid'];
+                    $moduleUniqueID = $data['uniqid'] ?? $data['id'] ?? '';
                     $res = GetModuleInfoAction::main($moduleUniqueID);
                     break;
                 case 'statusOfModuleInstallation':
@@ -99,19 +99,19 @@ class ModulesManagementProcessor extends Injectable
                     break;
                 case 'enableModule':
                     $asyncChannelId = $request['asyncChannelId'];
-                    $moduleUniqueID = $data['uniqid'];
+                    $moduleUniqueID = $data['uniqid'] ?? $data['id'];
                     $res = EnableModuleAction::main($moduleUniqueID, $asyncChannelId);
                     break;
                 case 'disableModule':
                     $asyncChannelId = $request['asyncChannelId']??'internal-request';
-                    $moduleUniqueID = $data['uniqid'];
+                    $moduleUniqueID = $data['uniqid'] ?? $data['id'];
                     $reason = $data['reason']??'';
                     $reasonText = $data['reasonText']??'';
                     $res = DisableModuleAction::main($moduleUniqueID, $reason, $reasonText, $asyncChannelId);
                     break;
                 case 'uninstallModule':
                     $asyncChannelId = $request['asyncChannelId'];
-                    $moduleUniqueID = $data['uniqid'];
+                    $moduleUniqueID = $data['uniqid'] ?? $data['id'];
                     $keepSettings = $data['keepSettings'] === 'true';
                     $uninstaller = new UninstallModuleAction( $asyncChannelId, $moduleUniqueID, $keepSettings);
                     $uninstaller->start();

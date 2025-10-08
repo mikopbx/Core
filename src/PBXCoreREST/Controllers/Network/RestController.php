@@ -21,55 +21,240 @@ namespace MikoPBX\PBXCoreREST\Controllers\Network;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\NetworkManagementProcessor;
+use MikoPBX\PBXCoreREST\Lib\Network\DataStructure;
+use MikoPBX\PBXCoreREST\Attributes\{
+    ApiResource,
+    ApiOperation,
+    ApiParameter,
+    ApiResponse,
+    ApiDataSchema,
+    SecurityType,
+    ParameterLocation,
+    HttpMapping,
+    ResourceSecurity
+};
 
 /**
  * RESTful controller for network configuration management (v3 API)
  *
- * Handles network interfaces and NAT settings configuration following Google API Design Guide patterns.
- * This controller implements a clean RESTful interface with proper HTTP methods and resource-oriented URLs.
- *
- * @RoutePrefix("/pbxcore/api/v3/network")
- *
- * @examples Standard CRUD operations:
- *
- * # List all network interfaces
- * curl -X GET http://127.0.0.1/pbxcore/api/v3/network
- *
- * # Get specific network interface
- * curl -X GET http://127.0.0.1/pbxcore/api/v3/network/1
- *
- * # Delete network interface
- * curl -X DELETE http://127.0.0.1/pbxcore/api/v3/network/2
- *
- * @examples Custom method operations:
- *
- * # Get complete network configuration for form
- * curl -X GET http://127.0.0.1/pbxcore/api/v3/network:getConfig
- *
- * # Save complete network configuration
- * curl -X POST http://127.0.0.1/pbxcore/api/v3/network:saveConfig \
- *      -H "Content-Type: application/json" \
- *      -d '{"interfaces":[...],"nat":{...}}'
- *
- * # Get NAT settings
- * curl -X GET http://127.0.0.1/pbxcore/api/v3/network:getNatSettings
+ * Network configuration management following Google API Design Guide patterns.
+ * Implements operations for network interfaces and NAT settings with automatic OpenAPI generation.
  *
  * @package MikoPBX\PBXCoreREST\Controllers\Network
+ *
+ * @see https://cloud.google.com/apis/design - Google API Design Guide
+ * @see https://spec.openapis.org/oas/v3.1.0 - OpenAPI 3.1 Specification
  */
+#[ApiResource(
+    path: '/pbxcore/api/v3/network',
+    tags: ['Network'],
+    description: 'Network configuration management for MikoPBX system. ' .
+                'Features include network interface management (Ethernet, VLAN), ' .
+                'IP address configuration (DHCP, Static), gateway settings, DNS configuration, ' .
+                'and NAT/STUN settings for VoIP connectivity.',
+    processor: NetworkManagementProcessor::class
+)]
+#[ResourceSecurity('network', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
+#[HttpMapping(
+    mapping: [
+        'GET' => ['getList', 'getRecord', 'getConfig', 'getNatSettings'],
+        'POST' => ['saveConfig'],
+        'DELETE' => ['delete']
+    ],
+    resourceLevelMethods: ['getRecord', 'delete'],
+    collectionLevelMethods: ['getList'],
+    customMethods: ['getConfig', 'saveConfig', 'getNatSettings'],
+    idPattern: '[0-9]+'
+)]
 class RestController extends BaseRestController
 {
+    /**
+     * The processor class to handle requests
+     * @var string
+     */
     protected string $processorClass = NetworkManagementProcessor::class;
 
+
     /**
-     * Define allowed custom methods for each HTTP method
+     * Get list of all network interfaces
      *
-     * @return array<string, array<string>>
+     * @route GET /pbxcore/api/v3/network
      */
-    protected function getAllowedCustomMethods(): array
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'list',
+        isArray: true
+    )]
+    #[ApiOperation(
+        summary: 'rest_net_GetList',
+        description: 'rest_net_GetListDesc',
+        operationId: 'getNetworkInterfacesList'
+    )]
+    #[ApiResponse(200, 'rest_response_200_list')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function getList(): void
     {
-        return [
-            'GET' => ['getConfig', 'getNatSettings'],
-            'POST' => ['saveConfig']
-        ];
+        // Implementation handled by BaseRestController
     }
+
+    /**
+     * Get a specific network interface by ID
+     *
+     * @route GET /pbxcore/api/v3/network/{id}
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
+    #[ApiOperation(
+        summary: 'rest_net_GetRecord',
+        description: 'rest_net_GetRecordDesc',
+        operationId: 'getNetworkInterfaceById'
+    )]
+    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[0-9]+$', example: '1')]
+    #[ApiResponse(200, 'rest_response_200_get')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    public function getRecord(string $id): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Delete a network interface
+     *
+     * @route DELETE /pbxcore/api/v3/network/{id}
+     */
+    #[ApiOperation(
+        summary: 'rest_net_Delete',
+        description: 'rest_net_DeleteDesc',
+        operationId: 'deleteNetworkInterface'
+    )]
+    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[0-9]+$', example: '2')]
+    #[ApiResponse(200, 'rest_response_200_deleted')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    #[ApiResponse(409, 'rest_response_409_conflict', 'PBXApiResult')]
+    public function delete(string $id): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+
+    /**
+     * Get complete network configuration
+     *
+     * @route GET /pbxcore/api/v3/network:getConfig
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'config'
+    )]
+    #[ApiOperation(
+        summary: 'rest_net_GetConfig',
+        description: 'rest_net_GetConfigDesc',
+        operationId: 'getNetworkConfiguration'
+    )]
+    #[ApiResponse(200, 'rest_response_200_get')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function getConfig(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Save complete network configuration
+     *
+     * @route POST /pbxcore/api/v3/network:saveConfig
+     */
+    #[ApiOperation(
+        summary: 'rest_net_SaveConfig',
+        description: 'rest_net_SaveConfigDesc',
+        operationId: 'saveNetworkConfiguration'
+    )]
+    #[ApiParameter(
+        name: 'interfaces',
+        type: 'array',
+        description: 'rest_param_net_interfaces',
+        in: ParameterLocation::QUERY,
+        required: true,
+        example: '[{"id":"1","dhcp":true,"interface":"eth0"},{"id":"2","dhcp":false,"interface":"eth1","ipaddr":"192.168.1.1","subnet":"255.255.255.0"}]'
+    )]
+    #[ApiParameter(
+        name: 'gateway',
+        type: 'string',
+        description: 'rest_param_net_gateway',
+        in: ParameterLocation::QUERY,
+        required: false,
+        pattern: '^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$',
+        example: '192.168.1.1'
+    )]
+    #[ApiParameter(
+        name: 'primarydns',
+        type: 'string',
+        description: 'rest_param_net_primarydns',
+        in: ParameterLocation::QUERY,
+        required: false,
+        pattern: '^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$',
+        example: '8.8.8.8'
+    )]
+    #[ApiParameter(
+        name: 'secondarydns',
+        type: 'string',
+        description: 'rest_param_net_secondarydns',
+        in: ParameterLocation::QUERY,
+        required: false,
+        pattern: '^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$',
+        example: '8.8.4.4'
+    )]
+    #[ApiParameter(
+        name: 'hostname',
+        type: 'string',
+        description: 'rest_param_net_hostname',
+        in: ParameterLocation::QUERY,
+        required: false,
+        maxLength: 255,
+        example: 'mikopbx-server'
+    )]
+    #[ApiParameter(
+        name: 'domain',
+        type: 'string',
+        description: 'rest_param_net_domain',
+        in: ParameterLocation::QUERY,
+        required: false,
+        maxLength: 255,
+        example: 'example.com'
+    )]
+    #[ApiResponse(200, 'rest_response_200_updated')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(409, 'rest_response_409_conflict', 'PBXApiResult')]
+    public function saveConfig(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Get NAT settings for VoIP connectivity
+     *
+     * @route GET /pbxcore/api/v3/network:getNatSettings
+     */
+    #[ApiOperation(
+        summary: 'rest_net_GetNatSettings',
+        description: 'rest_net_GetNatSettingsDesc',
+        operationId: 'getNetworkNatSettings'
+    )]
+    #[ApiResponse(200, 'rest_response_200_get')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function getNatSettings(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
 }

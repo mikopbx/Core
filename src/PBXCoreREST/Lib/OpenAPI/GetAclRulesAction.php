@@ -21,6 +21,7 @@ namespace MikoPBX\PBXCoreREST\Lib\OpenAPI;
 
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Services\ApiMetadataRegistry;
+use MikoPBX\PBXCoreREST\Lib\OpenAPI\ControllerDiscovery;
 
 /**
  * Get ACL rules extracted from API metadata
@@ -32,20 +33,10 @@ use MikoPBX\PBXCoreREST\Services\ApiMetadataRegistry;
 class GetAclRulesAction
 {
     /**
-     * List of API controller classes to scan for metadata
-     */
-    private const API_CONTROLLERS = [
-        \MikoPBX\PBXCoreREST\Controllers\ApiKeys\RestController::class,
-        \MikoPBX\PBXCoreREST\Controllers\AsteriskManagers\RestController::class,
-        \MikoPBX\PBXCoreREST\Controllers\CallQueues\RestController::class,
-        \MikoPBX\PBXCoreREST\Controllers\GeneralSettings\RestController::class,
-        \MikoPBX\PBXCoreREST\Controllers\MailSettings\RestController::class,
-        \MikoPBX\PBXCoreREST\Controllers\TimeSettings\RestController::class,
-        // Add more controllers as they are migrated to attributes
-    ];
-
-    /**
      * Get ACL rules extracted from API metadata
+     *
+     * Automatically discovers all REST API controllers and extracts their ACL rules
+     * from API attributes for integration with MikoPBX ACL system.
      *
      * @return PBXApiResult
      */
@@ -54,11 +45,14 @@ class GetAclRulesAction
         $res = new PBXApiResult();
 
         try {
+            // Automatically discover all controllers
+            $controllers = ControllerDiscovery::discoverAll();
+
             // Create metadata registry instance directly
             $registry = new ApiMetadataRegistry();
 
             // Scan controllers and extract ACL rules
-            $metadata = $registry->scanControllers(self::API_CONTROLLERS);
+            $metadata = $registry->scanControllers($controllers);
             $aclRules = $registry->extractACLRules($metadata);
 
             $res->data = $aclRules;

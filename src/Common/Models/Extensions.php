@@ -59,6 +59,18 @@ class Extensions extends ModelsBase
     public const string TYPE_SYSTEM = 'SYSTEM';
     public const string TYPE_PARKING = 'PARKING';
 
+    // Prefixes for unique ID generation
+    public const string PREFIX_SIP = 'SIP-PHONE';
+    public const string PREFIX_EXTERNAL = 'EXTERNAL';
+    public const string PREFIX_EXTENSION = 'EXT';
+    public const string PREFIX_DIALPLAN = 'DIALPLAN';
+    public const string PREFIX_IVR = 'IVR';
+    public const string PREFIX_QUEUE = 'QUEUE';
+    public const string PREFIX_CONFERENCE = 'CONFERENCE';
+    public const string PREFIX_TRUNK_SIP = 'SIP-TRUNK';
+    public const string PREFIX_TRUNK_IAX = 'IAX-TRUNK';
+    public const string PREFIX_OUT_WORK_TIME = 'OUT-WORK-TIME';
+
     /**
      * @Primary
      * @Identity

@@ -58,7 +58,7 @@ class GetDefaultAction
         
         try {
             // Generate unique ID for the new IVR menu (use 'IVR' prefix without spaces)
-            $uniqid = IvrMenu::generateUniqueID('IVR');
+            $uniqid = IvrMenu::generateUniqueID(Extensions::PREFIX_IVR);
             
             // Get next available extension number using centralized method
             $extensionNumber = Extensions::getNextFreeApplicationNumber();

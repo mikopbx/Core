@@ -24,17 +24,22 @@ namespace MikoPBX\Common\Library\Auth;
 /**
  * Redis Token Storage - High-performance token storage for JWT refresh tokens
  *
- * Uses Redis for O(1) token lookup instead of O(n) SQLite scanning.
- * SQLite AuthTokens table is reserved for long-lived remember-me tokens only.
+ * Uses Redis for O(1) token lookup and automatic TTL-based expiration.
+ * All refresh tokens (including "Remember Me" functionality) are stored in Redis.
  *
  * Architecture:
  * - Key: refresh_token:{sha256(token)} - Fast hash-based lookup
  * - Value: JSON with session data (userId, role, clientIp, userAgent, createdAt)
  * - TTL: 30 days - Automatic cleanup by Redis
  *
- * Performance comparison:
- * - SQLite: 100+ checkHash operations × 200ms = ~20+ seconds (O(n))
+ * Remember Me functionality:
+ * - When rememberMe=true: Cookie expires in 30 days (matches Redis TTL)
+ * - When rememberMe=false: Cookie is session-only (expires on browser close)
+ * - In both cases, the refresh token is stored in Redis with 30-day TTL
+ *
+ * Performance:
  * - Redis: 1 hash lookup = ~1ms (O(1))
+ * - No database scanning required
  *
  * @package MikoPBX\Common\Library\Auth
  */

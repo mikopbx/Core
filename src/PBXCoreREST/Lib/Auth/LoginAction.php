@@ -135,9 +135,12 @@ class LoginAction
         // Authentication failed
         if ($sessionParams === null) {
             // Increment failed attempt counter
-            self::checkRateLimit($clientIp, true, $cache);
+            $remainingAttempts = self::checkRateLimit($clientIp, true, $cache);
 
-            $res->messages['error'][] = TranslationProvider::translate('auth_WrongLoginPassword');
+            $res->messages['error'][] = TranslationProvider::translate(
+                'auth_WrongLoginPassword',
+                ['attempts' => $remainingAttempts]
+            );
             return $res;
         }
 

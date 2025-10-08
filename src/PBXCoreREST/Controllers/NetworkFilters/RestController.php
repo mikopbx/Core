@@ -21,63 +21,175 @@ namespace MikoPBX\PBXCoreREST\Controllers\NetworkFilters;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\NetworkFiltersManagementProcessor;
+use MikoPBX\PBXCoreREST\Lib\NetworkFilters\DataStructure;
+use MikoPBX\PBXCoreREST\Attributes\{
+    ApiResource,
+    ApiOperation,
+    ApiParameter,
+    ApiResponse,
+    ApiDataSchema,
+    SecurityType,
+    ParameterLocation,
+    HttpMapping,
+    ResourceSecurity
+};
 
 /**
- * NetworkFilters REST Controller (Read-Only)
- * 
- * Provides read-only access to network filters for dropdown lists.
+ * RESTful controller for network filters management (v3 API) - Read-Only
+ *
+ * Network filters provide read-only access to firewall rules for dropdown lists.
  * Actual filter management is done through the Firewall API.
- * 
- * Routes:
- * - GET    /api/v3/network-filters          - Get list of all network filters
- * - GET    /api/v3/network-filters/{id}     - Get specific network filter
- * 
- * Custom methods:
- * - GET    /api/v3/network-filters:getForSelect - Get filters for dropdown with category filtering
- * 
- * Special features:
- * - Support for localhost (127.0.0.1) option for AMI/API categories
- * - Category-based filtering (SIP, IAX, AMI, API)
- * 
+ * Implements read operations with automatic OpenAPI generation.
+ *
  * @package MikoPBX\PBXCoreREST\Controllers\NetworkFilters
+ *
+ * @see https://cloud.google.com/apis/design - Google API Design Guide
+ * @see https://spec.openapis.org/oas/v3.1.0 - OpenAPI 3.1 Specification
  */
+#[ApiResource(
+    path: '/pbxcore/api/v3/network-filters',
+    tags: ['Network Filters'],
+    description: 'Read-only access to network filters (firewall rules) for UI dropdown lists. ' .
+                'Supports category-based filtering (SIP, IAX, AMI, API) and includes special localhost option. ' .
+                'For creating/updating filters, use the Firewall API.',
+    processor: NetworkFiltersManagementProcessor::class
+)]
+#[ResourceSecurity('network_filters', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
+#[HttpMapping(
+    mapping: [
+        'GET' => ['getList', 'getRecord', 'getForSelect']
+    ],
+    resourceLevelMethods: ['getRecord'],
+    collectionLevelMethods: ['getList'],
+    customMethods: ['getForSelect'],
+    idPattern: '[0-9]+'
+)]
 class RestController extends BaseRestController
 {
     /**
-     * Processor class for handling network filters operations
-     * 
+     * The processor class to handle requests
      * @var string
      */
     protected string $processorClass = NetworkFiltersManagementProcessor::class;
-    
+
+
     /**
-     * Define allowed custom methods for each HTTP method
-     * 
-     * @return array<string, array<string>>
-     */
-    protected function getAllowedCustomMethods(): array
-    {
-        return [
-            'GET' => ['getForSelect']
-        ];
-    }
-    
-    /**
-     * Check if a custom method requires a resource ID
+     * Get list of all network filters
      *
-     * @param string $method The custom method name
-     * @return bool
+     * @route GET /pbxcore/api/v3/network-filters
      */
-    protected function isResourceLevelMethod(string $method): bool
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'list',
+        isArray: true
+    )]
+    #[ApiOperation(
+        summary: 'rest_nf_GetList',
+        description: 'rest_nf_GetListDesc',
+        operationId: 'getNetworkFiltersList'
+    )]
+    #[ApiParameter(
+        name: 'limit',
+        type: 'integer',
+        description: 'rest_param_limit',
+        in: ParameterLocation::QUERY,
+        minimum: 1,
+        maximum: 1000,
+        default: 20,
+        example: 20
+    )]
+    #[ApiParameter(
+        name: 'offset',
+        type: 'integer',
+        description: 'rest_param_offset',
+        in: ParameterLocation::QUERY,
+        minimum: 0,
+        default: 0,
+        example: 0
+    )]
+    #[ApiParameter(
+        name: 'search',
+        type: 'string',
+        description: 'rest_param_search',
+        in: ParameterLocation::QUERY,
+        maxLength: 255,
+        example: '192.168'
+    )]
+    #[ApiResponse(200, 'rest_response_200_list')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
+    public function getList(): void
     {
-        // Collection-level methods that don't require an ID
-        $collectionMethods = ['getForSelect'];
-        
-        if (in_array($method, $collectionMethods, true)) {
-            return false;
-        }
-        
-        // Default to parent implementation
-        return parent::isResourceLevelMethod($method);
+        // Implementation handled by BaseRestController
     }
+
+    /**
+     * Get a specific network filter by ID
+     *
+     * @route GET /pbxcore/api/v3/network-filters/{id}
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
+    #[ApiOperation(
+        summary: 'rest_nf_GetRecord',
+        description: 'rest_nf_GetRecordDesc',
+        operationId: 'getNetworkFilterById'
+    )]
+    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[0-9]+$', example: '1')]
+    #[ApiResponse(200, 'rest_response_200_get')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
+    public function getRecord(string $id): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+
+    /**
+     * Get network filters for dropdown/select with category filtering
+     *
+     * @route GET /pbxcore/api/v3/network-filters:getForSelect
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'list',
+        isArray: true
+    )]
+    #[ApiOperation(
+        summary: 'rest_nf_GetForSelect',
+        description: 'rest_nf_GetForSelectDesc',
+        operationId: 'getNetworkFiltersForSelect'
+    )]
+    #[ApiParameter(
+        name: 'category',
+        type: 'string',
+        description: 'rest_param_nf_category',
+        in: ParameterLocation::QUERY,
+        required: false,
+        enum: ['SIP', 'IAX', 'AMI', 'API'],
+        example: 'SIP'
+    )]
+    #[ApiParameter(
+        name: 'includeLocalhost',
+        type: 'boolean',
+        description: 'rest_param_nf_includeLocalhost',
+        in: ParameterLocation::QUERY,
+        required: false,
+        default: false,
+        example: true
+    )]
+    #[ApiResponse(200, 'rest_response_200_list')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
+    public function getForSelect(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
 }

@@ -28,6 +28,7 @@ use MikoPBX\Core\System\SslCertificateService;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractGetRecordAction;
 use MikoPBX\PBXCoreREST\Lib\Common\FieldTypeResolver;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\PBXCoreREST\Lib\GeneralSettings\DataStructure;
 
 /**
  * GetSettingsAction - retrieves general settings with optional filtering
@@ -169,13 +170,13 @@ class GetSettingsAction extends AbstractGetRecordAction
             
             // Check if passwords are default (for warning display)
             $passwordValidation = self::checkDefaultPasswords();
-            
-            // Return both settings and codecs
-            $res->data = [
-                'settings' => $formattedSettings,
-                'codecs' => $codecs,
-                'passwordValidation' => $passwordValidation
-            ];
+
+            // Format data using DataStructure for consistent OpenAPI schema compliance
+            $res->data = DataStructure::createFromData(
+                $formattedSettings,
+                $codecs,
+                $passwordValidation
+            );
             $res->success = true;
             
         } catch (\Exception $e) {

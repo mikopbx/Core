@@ -22,6 +22,7 @@ namespace MikoPBX\PBXCoreREST\Lib\NetworkFilters;
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\FirewallRules;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\PBXCoreREST\Lib\NetworkFilters\DataStructure;
 
 /**
  * GetListAction
@@ -66,30 +67,10 @@ class GetListAction
             
             $filters = NetworkFilters::find($parameters);
             $items = [];
-            
+
             foreach ($filters as $filter) {
-                $item = [
-                    'id' => $filter->id,
-                    'description' => $filter->description,
-                    'permit' => $filter->permit,
-                    'deny' => $filter->deny,
-                    'newer_block_ip' => $filter->newer_block_ip === '1',
-                    'local_network' => $filter->local_network === '1',
-                    'rules' => []
-                ];
-                
-                // Get associated firewall rules
-                $rules = $filter->FirewallRules;
-                foreach ($rules as $rule) {
-                    $item['rules'][$rule->category] = [
-                        'action' => $rule->action,
-                        'portfrom' => $rule->portfrom,
-                        'portto' => $rule->portto,
-                        'protocol' => $rule->protocol
-                    ];
-                }
-                
-                $items[] = $item;
+                // Use DataStructure for consistent formatting
+                $items[] = DataStructure::createForList($filter);
             }
             
             // Apply pagination if requested

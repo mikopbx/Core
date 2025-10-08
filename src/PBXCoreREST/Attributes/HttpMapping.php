@@ -40,14 +40,15 @@ class HttpMapping
      * @param array<string> $resourceLevelMethods Methods that require resource ID
      * @param array<string> $collectionLevelMethods Methods that work on collection
      * @param array<string> $customMethods Custom methods that don't follow standard CRUD
-     * @param string|null $idPattern Custom regex pattern for resource IDs (overrides default [^/]+)
+     * @param string|array<string>|null $idPattern Custom regex pattern for resource IDs (overrides default [^/]+).
+     *                                             Can be a string regex or array of ID prefixes (e.g., ['CONFERENCE-', 'QUEUE-'])
      */
     public function __construct(
         public readonly array $mapping = [],
         public readonly array $resourceLevelMethods = [],
         public readonly array $collectionLevelMethods = [],
         public readonly array $customMethods = [],
-        public readonly ?string $idPattern = null
+        public readonly string|array|null $idPattern = null
     ) {
     }
 
@@ -142,10 +143,22 @@ class HttpMapping
 
     /**
      * Get the custom ID pattern or default
+     *
+     * @return string|array<string> Returns regex string or array of ID prefixes
      */
-    public function getIdPattern(): string
+    public function getIdPattern(): string|array
     {
         return $this->idPattern ?? '[^/]+';
+    }
+
+    /**
+     * Check if idPattern is array of prefixes
+     *
+     * @return bool True if idPattern is an array
+     */
+    public function hasMultipleIdPrefixes(): bool
+    {
+        return is_array($this->idPattern);
     }
 
     /**

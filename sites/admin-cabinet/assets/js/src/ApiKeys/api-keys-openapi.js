@@ -74,7 +74,7 @@ const ApiKeysOpenAPI = {
     /**
      * Initialize Stoplight Elements
      */
-    initializeElements() {
+    async initializeElements() {
         ApiKeysOpenAPI.$mainContainer.removeClass('container');
         $('.toc').hide();
         ApiKeysOpenAPI.$mainContainer.parent().removeClass('article');
@@ -82,6 +82,19 @@ const ApiKeysOpenAPI = {
         $('#content-frame').removeClass('grey').addClass('basic');
 
         try {
+            // Fetch OpenAPI specification with authentication
+            // We need to use $.ajax instead of fetch to get JWT token automatically
+            const response = await $.ajax({
+                url: ApiKeysOpenAPI.specUrl,
+                method: 'GET',
+                dataType: 'json'
+            });
+
+            // Check if response is valid
+            if (!response || typeof response !== 'object') {
+                throw new Error('Invalid OpenAPI specification received');
+            }
+
             // Hide loading immediately as Elements will show its own loader
             $('#elements-loading').hide();
             ApiKeysOpenAPI.$container.show();
@@ -89,8 +102,7 @@ const ApiKeysOpenAPI = {
             // Create the Elements API component
             const apiElement = document.createElement('elements-api');
 
-            // Set attributes
-            apiElement.setAttribute('apiDescriptionUrl', ApiKeysOpenAPI.specUrl);
+            // Set attributes - pass JSON directly instead of URL to avoid auth issues
             apiElement.setAttribute('router', 'hash');
             apiElement.setAttribute('layout', 'sidebar');
             // Note: Don't set hideInternal or hideTryIt - they default to false (shown)
@@ -102,6 +114,9 @@ const ApiKeysOpenAPI = {
             container.innerHTML = '';
             container.appendChild(apiElement);
 
+            // Set the specification document (must be done after appendChild)
+            apiElement.apiDescriptionDocument = response;
+
             // Override Stoplight Elements inline styles to remove max-width restriction
             ApiKeysOpenAPI.addCustomStyles();
 
@@ -109,7 +124,7 @@ const ApiKeysOpenAPI = {
 
         } catch (error) {
             console.error('Failed to initialize Stoplight Elements:', error);
-            ApiKeysOpenAPI.showError(error.message);
+            ApiKeysOpenAPI.showError(error.message || error.statusText || 'Unknown error');
         }
     },
 

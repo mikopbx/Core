@@ -22,13 +22,17 @@ namespace MikoPBX\PBXCoreREST\Lib\SoundFiles;
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
+use MikoPBX\PBXCoreREST\Lib\Common\OpenApiSchemaProvider;
 
 /**
- * Data structure for sound files
- * 
+ * Data structure for sound files with OpenAPI schema support
+ *
+ * Provides consistent data format for audio file records in REST API responses.
+ * Implements OpenApiSchemaProvider to provide typed schemas for OpenAPI specification.
+ *
  * @package MikoPBX\PBXCoreREST\Lib\SoundFiles
  */
-class DataStructure extends AbstractDataStructure
+class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvider
 {
     /**
      * Create complete data array from SoundFiles model
@@ -73,13 +77,19 @@ class DataStructure extends AbstractDataStructure
     
     /**
      * Create simplified data array for list view
+     *
      * @param mixed $model
-     * @return array
+     * @return array<string, mixed> Simplified data structure for table display
      */
     public static function createForList($model): array
     {
         // For list view, include all data (sound files don't have heavy relations)
-        return self::createFromModel($model);
+        $data = self::createFromModel($model);
+
+        // Apply OpenAPI list schema formatting to ensure proper types
+        $data = self::formatBySchema($data, 'list');
+
+        return $data;
     }
     
     /**
@@ -105,5 +115,101 @@ class DataStructure extends AbstractDataStructure
         }
         
         return '00:00';
+    }
+
+    /**
+     * Get OpenAPI schema for sound file list item
+     *
+     * @return array<string, mixed> OpenAPI schema definition
+     */
+    public static function getListItemSchema(): array
+    {
+        return [
+            'type' => 'object',
+            'required' => ['id', 'name'],
+            'properties' => [
+                'id' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_sf_id',
+                    'example' => '1'
+                ],
+                'name' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_sf_name',
+                    'maxLength' => 255,
+                    'example' => 'welcome.wav'
+                ],
+                'description' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_sf_description',
+                    'maxLength' => 500,
+                    'example' => 'Welcome message for IVR'
+                ],
+                'path' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_sf_path',
+                    'maxLength' => 500,
+                    'example' => '/storage/usbdisk1/mikopbx/media/custom/welcome.wav'
+                ],
+                'category' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_sf_category',
+                    'enum' => ['custom', 'moh'],
+                    'default' => 'custom',
+                    'example' => 'custom'
+                ],
+                'fileSize' => [
+                    'type' => 'integer',
+                    'description' => 'rest_schema_sf_file_size',
+                    'minimum' => 0,
+                    'example' => 524288
+                ],
+                'duration' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_sf_duration',
+                    'pattern' => '^[0-9]{2}:[0-9]{2}$',
+                    'example' => '01:45'
+                ]
+            ]
+        ];
+    }
+
+    /**
+     * Get OpenAPI schema for detailed sound file record
+     *
+     * @return array<string, mixed> OpenAPI schema definition
+     */
+    public static function getDetailSchema(): array
+    {
+        // For sound files, detail and list schemas are identical
+        return self::getListItemSchema();
+    }
+
+    /**
+     * Get related schemas for OpenAPI components
+     *
+     * @return array<string, array<string, mixed>> Related schemas
+     */
+    public static function getRelatedSchemas(): array
+    {
+        return [];
+    }
+
+    /**
+     * Generate sanitization rules from OpenAPI schema
+     *
+     * @return array<string, string> Sanitization rules
+     */
+    public static function getSanitizationRules(): array
+    {
+        return [
+            'id' => 'string',
+            'name' => 'string|max:255',
+            'description' => 'string|max:500',
+            'path' => 'string|max:500',
+            'category' => 'string|in:custom,moh',
+            'fileSize' => 'int|min:0',
+            'duration' => 'string|regex:/^[0-9]{2}:[0-9]{2}$/'
+        ];
     }
 }

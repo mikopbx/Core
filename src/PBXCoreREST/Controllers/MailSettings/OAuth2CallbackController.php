@@ -22,7 +22,16 @@ namespace MikoPBX\PBXCoreREST\Controllers\MailSettings;
 use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\MailOAuth2Service;
 use MikoPBX\Core\System\SystemMessages;
-use MikoPBX\PBXCoreREST\Attributes\{ResourceSecurity, SecurityType};
+use MikoPBX\PBXCoreREST\Attributes\{
+    ApiResource,
+    ApiOperation,
+    ApiParameter,
+    ApiResponse,
+    SecurityType,
+    ParameterLocation,
+    HttpMapping,
+    ResourceSecurity
+};
 use MikoPBX\PBXCoreREST\Controllers\BaseController;
 use MikoPBX\Common\Providers\EventBusProvider;
 use Phalcon\Mvc\View;
@@ -34,19 +43,92 @@ use function MikoPBX\Common\Config\appPath;
  *
  * Handles OAuth2 authorization callbacks from email providers.
  * This is a public endpoint that doesn't require authentication.
+ * Returns an HTML page instead of JSON for browser-based OAuth2 flows.
  *
  * @RoutePrefix("/pbxcore/api/v3/mail-settings")
- * @Route("/oauth2-callback", methods=["GET"])
+ *
+ * @examples OAuth2 callback (triggered by provider):
+ *
+ * # Successful authorization callback
+ * https://mikopbx.example.com/pbxcore/api/v3/mail-settings/oauth2-callback?code=AUTH_CODE&state=STATE_TOKEN
+ *
+ * # Failed authorization callback
+ * https://mikopbx.example.com/pbxcore/api/v3/mail-settings/oauth2-callback?error=access_denied&error_description=User+denied+access
+ *
+ * @package MikoPBX\PBXCoreREST\Controllers\MailSettings
  */
-#[ResourceSecurity('mail_settings_oauth', requirements: [SecurityType::PUBLIC])]
+#[ApiResource(
+    path: '/pbxcore/api/v3/mail-settings/oauth2-callback',
+    tags: ['Mail Settings'],
+    description: 'OAuth2 authorization callback handler for email provider authentication. This is a public endpoint that processes OAuth2 authorization codes and returns an HTML page to communicate results to the parent window. Used for Google, Microsoft, and other OAuth2-based email providers.'
+)]
+#[ResourceSecurity(
+    'oauth2_callback',
+    requirements: [SecurityType::PUBLIC],
+    description: 'rest_security_public'
+)]
+#[HttpMapping(
+    mapping: [
+        'GET' => ['oauth2Callback']
+    ],
+    resourceLevelMethods: [],
+    collectionLevelMethods: ['oauth2Callback'],
+    customMethods: ['oauth2Callback']
+)]
 class OAuth2CallbackController extends BaseController
 {
     /**
      * Process OAuth2 callback from provider
      *
      * This method handles the OAuth2 callback directly without going through workers.
-     * It returns an HTML page that communicates the result to the parent window.
+     * It returns an HTML page that communicates the result to the parent window via postMessage.
+     *
+     * @route GET /pbxcore/api/v3/mail-settings/oauth2-callback
      */
+    #[ApiOperation(
+        summary: 'rest_mail_OAuth2Callback',
+        description: 'rest_mail_OAuth2CallbackDesc',
+        operationId: 'processOAuth2Callback'
+    )]
+    #[ApiParameter(
+        name: 'code',
+        type: 'string',
+        description: 'rest_param_oauth_code',
+        in: ParameterLocation::QUERY,
+        required: false,
+        maxLength: 500,
+        example: '4/0AY0e-g7xKq...'
+    )]
+    #[ApiParameter(
+        name: 'state',
+        type: 'string',
+        description: 'rest_param_oauth_state',
+        in: ParameterLocation::QUERY,
+        required: false,
+        maxLength: 255,
+        example: 'abc123def456'
+    )]
+    #[ApiParameter(
+        name: 'error',
+        type: 'string',
+        description: 'rest_param_oauth_error',
+        in: ParameterLocation::QUERY,
+        required: false,
+        maxLength: 100,
+        example: 'access_denied'
+    )]
+    #[ApiParameter(
+        name: 'error_description',
+        type: 'string',
+        description: 'rest_param_oauth_error_desc',
+        in: ParameterLocation::QUERY,
+        required: false,
+        maxLength: 500,
+        example: 'User denied access'
+    )]
+    #[ApiResponse(200, 'rest_response_200_oauth_html', 'text/html')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'text/html')]
+    #[ApiResponse(500, 'rest_response_500_error', 'text/html')]
     public function oauth2CallbackAction(): void
     {
         // Get callback parameters
@@ -81,13 +163,11 @@ class OAuth2CallbackController extends BaseController
 
             if ($success) {
                 $message = $translation->_('ms_OAuth2AuthorizationSuccess');
-            } else {
+            } elseif (is_string($result) && $result !== '') {
                 // If result is not boolean, it might be an error message
-                if (is_string($result) && !empty($result)) {
-                    $message = $result; // Use the actual error message from service
-                } else {
-                    $message = $translation->_('ms_OAuth2ProcessingFailed');
-                }
+                $message = $result; // Use the actual error message from service
+            } else {
+                $message = $translation->_('ms_OAuth2ProcessingFailed');
             }
         }
 

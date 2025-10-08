@@ -27,17 +27,23 @@ use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
+use MikoPBX\PBXCoreREST\Lib\Common\OpenApiSchemaProvider;
 use MikoPBX\PBXCoreREST\Lib\Common\SearchIndexTrait;
 
 /**
  * Data structure for out-of-work-time conditions
- * 
+ *
+ * Creates consistent data format for API responses.
+ * Implements OpenApiSchemaProvider to provide typed schemas for OpenAPI specification.
+ *
  * Provides methods to transform model data into API response format.
  * Implements two patterns:
  * - createFromModel: Full data structure with all relationships
  * - createForList: Lightweight structure for list display
+ *
+ * @package MikoPBX\PBXCoreREST\Lib\OutWorkTimes
  */
-class DataStructure extends AbstractDataStructure
+class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvider
 {
     use SearchIndexTrait;
     /**
@@ -374,7 +380,7 @@ class DataStructure extends AbstractDataStructure
     
     /**
      * Format date for display, handling both unix timestamps and Y-m-d format
-     * 
+     *
      * @param string $date Date string (could be timestamp or Y-m-d format)
      * @return string Formatted date in Y-m-d format
      */
@@ -383,24 +389,333 @@ class DataStructure extends AbstractDataStructure
         if (empty($date)) {
             return '';
         }
-        
+
         // Check if it's a unix timestamp (numeric string)
         if (is_numeric($date)) {
             return date('Y-m-d', (int)$date);
         }
-        
+
         // Check if it's already in Y-m-d format
         if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
             return $date;
         }
-        
+
         // Try to parse other date formats
         $timestamp = strtotime($date);
         if ($timestamp !== false) {
             return date('Y-m-d', $timestamp);
         }
-        
+
         // Return as-is if we can't parse it
         return $date;
+    }
+
+    /**
+     * Get OpenAPI schema for time condition list item
+     *
+     * This schema matches the structure returned by createForList() method.
+     * Used for GET /api/v3/off-work-times endpoint (list of time conditions).
+     *
+     * @return array<string, mixed> OpenAPI schema definition
+     */
+    public static function getListItemSchema(): array
+    {
+        return [
+            'type' => 'object',
+            'required' => ['id', 'name', 'priority'],
+            'properties' => [
+                'id' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_id',
+                    'example' => '15'
+                ],
+                'name' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_name',
+                    'maxLength' => 255,
+                    'example' => 'Weekend Schedule'
+                ],
+                'description' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_description',
+                    'maxLength' => 500,
+                    'example' => 'Routing for weekend calls'
+                ],
+                'shot_description' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_shot_description',
+                    'maxLength' => 50,
+                    'example' => 'Routing for weekend calls'
+                ],
+                'calType' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_calType',
+                    'enum' => ['timeframe', 'caldav', 'ical'],
+                    'example' => 'timeframe'
+                ],
+                'calendarPeriods' => [
+                    'type' => 'array',
+                    'description' => 'rest_schema_owt_calendarPeriods',
+                    'items' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'icon' => ['type' => 'string'],
+                            'text' => ['type' => 'string'],
+                            'type' => ['type' => 'string', 'enum' => ['date', 'weekday', 'time', 'calendar']]
+                        ]
+                    ]
+                ],
+                'allowRestriction' => [
+                    'type' => 'boolean',
+                    'description' => 'rest_schema_owt_allowRestriction',
+                    'example' => false
+                ],
+                'action' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_action',
+                    'enum' => ['extension', 'playmessage'],
+                    'example' => 'extension'
+                ],
+                'actionDisplay' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_actionDisplay',
+                    'example' => '<i class="phone icon"></i>Transfer to 201'
+                ],
+                'priority' => [
+                    'type' => 'integer',
+                    'description' => 'rest_schema_owt_priority',
+                    'minimum' => 0,
+                    'example' => 1
+                ],
+                'search_index' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_search_index'
+                ]
+            ]
+        ];
+    }
+
+    /**
+     * Get OpenAPI schema for detailed time condition record
+     *
+     * This schema matches the structure returned by createFromModel() method.
+     * Used for GET /api/v3/off-work-times/{id}, POST, PUT, PATCH endpoints.
+     *
+     * @return array<string, mixed> OpenAPI schema definition
+     */
+    public static function getDetailSchema(): array
+    {
+        return [
+            'type' => 'object',
+            'required' => ['id', 'name'],
+            'properties' => [
+                'id' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_id',
+                    'example' => '15'
+                ],
+                'name' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_name',
+                    'maxLength' => 255,
+                    'example' => 'Weekend Schedule'
+                ],
+                'description' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_description',
+                    'maxLength' => 500,
+                    'example' => 'Routing for weekend calls'
+                ],
+                'calType' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_calType',
+                    'enum' => ['timeframe', 'caldav', 'ical'],
+                    'default' => 'timeframe',
+                    'example' => 'timeframe'
+                ],
+                'date_from' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_date_from',
+                    'format' => 'date',
+                    'example' => '2025-01-01'
+                ],
+                'date_to' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_date_to',
+                    'format' => 'date',
+                    'example' => '2025-12-31'
+                ],
+                'weekday_from' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_weekday_from',
+                    'enum' => ['-1', '1', '2', '3', '4', '5', '6', '7'],
+                    'example' => '1'
+                ],
+                'weekday_to' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_weekday_to',
+                    'enum' => ['-1', '1', '2', '3', '4', '5', '6', '7'],
+                    'example' => '5'
+                ],
+                'time_from' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_time_from',
+                    'pattern' => '^([01][0-9]|2[0-3]):[0-5][0-9]$',
+                    'example' => '09:00'
+                ],
+                'time_to' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_time_to',
+                    'pattern' => '^([01][0-9]|2[0-3]):[0-5][0-9]$',
+                    'example' => '18:00'
+                ],
+                'calUrl' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_calUrl',
+                    'format' => 'uri',
+                    'example' => 'https://calendar.example.com/cal.ics'
+                ],
+                'calUser' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_calUser',
+                    'maxLength' => 100,
+                    'example' => 'admin'
+                ],
+                'calSecret' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_calSecret',
+                    'maxLength' => 100,
+                    'example' => 'XXXXXX'
+                ],
+                'priority' => [
+                    'type' => 'integer',
+                    'description' => 'rest_schema_owt_priority',
+                    'minimum' => 0,
+                    'default' => 0,
+                    'example' => 1
+                ],
+                'allowRestriction' => [
+                    'type' => 'boolean',
+                    'description' => 'rest_schema_owt_allowRestriction',
+                    'default' => false,
+                    'example' => false
+                ],
+                'allowedExtensions' => [
+                    'type' => 'array',
+                    'description' => 'rest_schema_owt_allowedExtensions',
+                    'items' => ['type' => 'string'],
+                    'example' => ['201', '202']
+                ],
+                'incomingRouteIds' => [
+                    'type' => 'array',
+                    'description' => 'rest_schema_owt_incomingRouteIds',
+                    'items' => ['type' => 'integer'],
+                    'example' => [1, 2, 3]
+                ],
+                'action' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_action',
+                    'enum' => ['extension', 'playmessage'],
+                    'default' => 'extension',
+                    'example' => 'extension'
+                ],
+                'extension' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_extension',
+                    'pattern' => '^[0-9]*$',
+                    'example' => '201'
+                ],
+                'extension_represent' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_extension_represent',
+                    'example' => '<i class="user icon"></i> John Doe <201>'
+                ],
+                'audio_message_id' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_audio_message_id',
+                    'example' => '45'
+                ],
+                'audio_message_id_represent' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_audio_message_id_represent',
+                    'example' => '<i class="sound icon"></i> Closed Message'
+                ],
+                'search_index' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_search_index'
+                ]
+            ]
+        ];
+    }
+
+    /**
+     * Get related schemas for OpenAPI components
+     *
+     * @return array<string, array<string, mixed>> Related schemas
+     */
+    public static function getRelatedSchemas(): array
+    {
+        return [];
+    }
+
+    /**
+     * Generate sanitization rules from OpenAPI schema
+     *
+     * Converts OpenAPI schema constraints into SystemSanitizer format.
+     * This eliminates duplication between schema definition and validation rules.
+     *
+     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
+     */
+    public static function getSanitizationRules(): array
+    {
+        $schema = static::getDetailSchema();
+        $rules = [];
+
+        if (!isset($schema['properties'])) {
+            return $rules;
+        }
+
+        foreach ($schema['properties'] as $fieldName => $fieldSchema) {
+            $ruleParts = [];
+
+            // Add type
+            $type = $fieldSchema['type'] ?? 'string';
+            $ruleParts[] = match ($type) {
+                'integer' => 'int',
+                'number' => 'float',
+                'boolean' => 'bool',
+                'array' => 'array',
+                default => 'string'
+            };
+
+            // Add constraints
+            if (isset($fieldSchema['minLength'])) {
+                $ruleParts[] = 'min:' . $fieldSchema['minLength'];
+            }
+            if (isset($fieldSchema['maxLength'])) {
+                $ruleParts[] = 'max:' . $fieldSchema['maxLength'];
+            }
+            if (isset($fieldSchema['minimum'])) {
+                $ruleParts[] = 'min:' . $fieldSchema['minimum'];
+            }
+            if (isset($fieldSchema['maximum'])) {
+                $ruleParts[] = 'max:' . $fieldSchema['maximum'];
+            }
+            if (isset($fieldSchema['pattern']) && is_string($fieldSchema['pattern'])) {
+                $pattern = str_replace('^', '', $fieldSchema['pattern']);
+                $pattern = str_replace('$', '', $pattern);
+                $ruleParts[] = 'regex:/' . $pattern . '/';
+            }
+            if (isset($fieldSchema['enum']) && is_array($fieldSchema['enum'])) {
+                $ruleParts[] = 'in:' . implode(',', $fieldSchema['enum']);
+            }
+            if (isset($fieldSchema['nullable']) && $fieldSchema['nullable'] === true) {
+                $ruleParts[] = 'empty_to_null';
+            }
+
+            $rules[$fieldName] = implode('|', $ruleParts);
+        }
+
+        return $rules;
     }
 }

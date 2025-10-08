@@ -104,23 +104,25 @@ class SaveRecordAction extends AbstractSaveRecordAction
         }
         
         // Get or create model
-        // For POST (new records), id contains pre-generated uniqid but record doesn't exist yet
-        // For PUT (updates), id contains existing uniqid and record must exist
+        // Determine if this is CREATE or UPDATE by checking if record exists in DB
         $room = null;
-        
+        $isNewRecord = true;
+
         if (!empty($sanitizedData['id'])) {
-            // Try to find existing record
+            // Try to find existing conference room by provided ID
             $room = ConferenceRooms::findFirstByUniqid($sanitizedData['id']);
-            
-            if (!$room) {
-                // If no existing record found, this must be a new record with pre-generated uniqid
-                $room = new ConferenceRooms();
-                $room->uniqid = $sanitizedData['id'];
+            if ($room) {
+                // Record exists - this is UPDATE operation
+                $isNewRecord = false;
             }
-        } else {
-            // No id provided, create completely new record
+        }
+
+        if ($isNewRecord) {
+            // CREATE operation - create new conference room
             $room = new ConferenceRooms();
-            $room->uniqid = ConferenceRooms::generateUniqueID(Extensions::TYPE_CONFERENCE.'-');
+            // Use provided ID if available (for migrations/imports), otherwise generate new one
+            $room->uniqid = !empty($sanitizedData['id']) ? $sanitizedData['id'] :
+                            ConferenceRooms::generateUniqueID(Extensions::PREFIX_CONFERENCE);
         }
         
         // Check extension uniqueness using parent method

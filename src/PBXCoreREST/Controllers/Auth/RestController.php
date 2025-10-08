@@ -119,7 +119,7 @@ class RestController extends BaseRestController
         // Parent already set the response content, we just need to add cookies
         $responseContent = $this->response->getContent();
 
-        SystemMessages::sysLogMsg(__CLASS__, "Auth cookie handling - Response content length: " . strlen($responseContent ?? ''), LOG_DEBUG);
+        SystemMessages::sysLogMsg(__CLASS__, "Auth cookie handling - Response content length: " . (is_string($responseContent) ? strlen($responseContent) : 0), LOG_DEBUG);
 
         if (!is_string($responseContent) || empty($responseContent)) {
             SystemMessages::sysLogMsg(__CLASS__, "Auth cookie handling - No response content", LOG_DEBUG);
@@ -395,7 +395,7 @@ class RestController extends BaseRestController
      *
      * @route POST /pbxcore/api/v3/auth:logout
      */
-    #[ResourceSecurity('auth_logout', requirements: [SecurityType::JWT])]
+    #[ResourceSecurity('auth_logout', requirements: [SecurityType::BEARER_TOKEN])]
     #[ApiOperation(
         summary: 'rest_auth_Logout',
         description: 'rest_auth_LogoutDesc',

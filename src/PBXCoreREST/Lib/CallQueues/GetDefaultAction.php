@@ -59,7 +59,7 @@ class GetDefaultAction
 
         try {
             // Generate unique ID for the new call queue using ModelsBase method
-            $uniqid = CallQueues::generateUniqueID(Extensions::TYPE_QUEUE);
+            $uniqid = CallQueues::generateUniqueID(Extensions::PREFIX_QUEUE);
 
             // Get next available extension number using centralized method
             $extensionNumber = Extensions::getNextFreeApplicationNumber();

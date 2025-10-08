@@ -562,97 +562,68 @@ class ApiMetadataRegistry extends Injectable
     {
         $servers = [];
 
-        try {
-            // Get port settings from database
-            $httpsPort = \MikoPBX\Common\Models\PbxSettings::getValueByKey(
-                \MikoPBX\Common\Models\PbxSettings::WEB_HTTPS_PORT
-            );
-            $httpPort = \MikoPBX\Common\Models\PbxSettings::getValueByKey(
-                \MikoPBX\Common\Models\PbxSettings::WEB_PORT
-            );
-            $redirectToHttps = \MikoPBX\Common\Models\PbxSettings::getValueByKey(
-                \MikoPBX\Common\Models\PbxSettings::REDIRECT_TO_HTTPS
-            );
+        // Get port settings from database
+        $httpsPort = \MikoPBX\Common\Models\PbxSettings::getValueByKey(
+            \MikoPBX\Common\Models\PbxSettings::WEB_HTTPS_PORT
+        );
+        $httpPort = \MikoPBX\Common\Models\PbxSettings::getValueByKey(
+            \MikoPBX\Common\Models\PbxSettings::WEB_PORT
+        );
+        $redirectToHttps = \MikoPBX\Common\Models\PbxSettings::getValueByKey(
+            \MikoPBX\Common\Models\PbxSettings::REDIRECT_TO_HTTPS
+        );
 
-            // Get network addresses from database
-            $addresses = $this->getNetworkAddresses();
+        // Get network addresses from database
+        $addresses = $this->getNetworkAddresses();
 
-            // Process local network addresses first
-            if (!empty($addresses['local'])) {
-                foreach ($addresses['local'] as $address) {
-                    // Add HTTPS server
-                    $httpsUrl = $httpsPort === '443'
-                        ? "https://{$address}/"
-                        : "https://{$address}:{$httpsPort}/";
+        // Process local network addresses first
+        if (!empty($addresses['local'])) {
+            foreach ($addresses['local'] as $address) {
+                // Add HTTPS server
+                $httpsUrl = $httpsPort === '443'
+                    ? "https://{$address}/"
+                    : "https://{$address}:{$httpsPort}/";
+                $servers[] = [
+                    'url' => $httpsUrl,
+                    'description' => 'HTTPS (Local network)'
+                ];
+
+                // Add HTTP server only if redirect is disabled
+                if ($redirectToHttps !== '1' && !empty($httpPort)) {
+                    $httpUrl = $httpPort === '80'
+                        ? "http://{$address}/"
+                        : "http://{$address}:{$httpPort}/";
                     $servers[] = [
-                        'url' => $httpsUrl,
-                        'description' => 'HTTPS (Local network)'
+                        'url' => $httpUrl,
+                        'description' => 'HTTP (Local network)'
                     ];
-
-                    // Add HTTP server only if redirect is disabled
-                    if ($redirectToHttps !== '1' && !empty($httpPort)) {
-                        $httpUrl = $httpPort === '80'
-                            ? "http://{$address}/"
-                            : "http://{$address}:{$httpPort}/";
-                        $servers[] = [
-                            'url' => $httpUrl,
-                            'description' => 'HTTP (Local network)'
-                        ];
-                    }
                 }
             }
-
-            // Process external network addresses
-            if (!empty($addresses['external'])) {
-                foreach ($addresses['external'] as $address) {
-                    // Add HTTPS server
-                    $httpsUrl = $httpsPort === '443'
-                        ? "https://{$address}/"
-                        : "https://{$address}:{$httpsPort}/";
-                    $servers[] = [
-                        'url' => $httpsUrl,
-                        'description' => 'HTTPS (External network)'
-                    ];
-
-                    // Add HTTP server only if redirect is disabled
-                    if ($redirectToHttps !== '1' && !empty($httpPort)) {
-                        $httpUrl = $httpPort === '80'
-                            ? "http://{$address}/"
-                            : "http://{$address}:{$httpPort}/";
-                        $servers[] = [
-                            'url' => $httpUrl,
-                            'description' => 'HTTP (External network)'
-                        ];
-                    }
-                }
-            }
-
-        } catch (\Exception $e) {
-            // Fallback to localhost if database is not available
-            $servers = [
-                [
-                    'url' => 'https://localhost:8445/',
-                    'description' => 'Development server (HTTPS)'
-                ],
-                [
-                    'url' => 'http://localhost:8081/',
-                    'description' => 'Development server (HTTP)'
-                ]
-            ];
         }
 
-        // If no servers were added, use fallback
-        if (empty($servers)) {
-            $servers = [
-                [
-                    'url' => 'https://localhost:8445/',
-                    'description' => 'Development server (HTTPS)'
-                ],
-                [
-                    'url' => 'http://localhost:8081/',
-                    'description' => 'Development server (HTTP)'
-                ]
-            ];
+        // Process external network addresses
+        if (!empty($addresses['external'])) {
+            foreach ($addresses['external'] as $address) {
+                // Add HTTPS server
+                $httpsUrl = $httpsPort === '443'
+                    ? "https://{$address}/"
+                    : "https://{$address}:{$httpsPort}/";
+                $servers[] = [
+                    'url' => $httpsUrl,
+                    'description' => 'HTTPS (External network)'
+                ];
+
+                // Add HTTP server only if redirect is disabled
+                if ($redirectToHttps !== '1' && !empty($httpPort)) {
+                    $httpUrl = $httpPort === '80'
+                        ? "http://{$address}/"
+                        : "http://{$address}:{$httpPort}/";
+                    $servers[] = [
+                        'url' => $httpUrl,
+                        'description' => 'HTTP (External network)'
+                    ];
+                }
+            }
         }
 
         return $servers;
@@ -668,23 +639,19 @@ class ApiMetadataRegistry extends Injectable
     {
         $addresses = ['local' => [], 'external' => []];
 
-        try {
-            $interfaces = \MikoPBX\Common\Models\LanInterfaces::find("disabled='0'");
-            if ($interfaces !== false && is_iterable($interfaces)) {
-                foreach ($interfaces as $interface) {
-                    if (!empty($interface->ipaddr)) {
-                        $addresses['local'][] = $interface->ipaddr;
-                    }
-                    if (!empty($interface->exthostname)) {
-                        $addresses['external'][] = strtok($interface->exthostname, ':');
-                    }
-                    if (!empty($interface->extipaddr)) {
-                        $addresses['external'][] = strtok($interface->extipaddr, ':');
-                    }
+        $interfaces = \MikoPBX\Common\Models\LanInterfaces::find("disabled='0'");
+        if ($interfaces !== false && is_iterable($interfaces)) {
+            foreach ($interfaces as $interface) {
+                if (!empty($interface->ipaddr)) {
+                    $addresses['local'][] = $interface->ipaddr;
+                }
+                if (!empty($interface->exthostname)) {
+                    $addresses['external'][] = strtok($interface->exthostname, ':');
+                }
+                if (!empty($interface->extipaddr)) {
+                    $addresses['external'][] = strtok($interface->extipaddr, ':');
                 }
             }
-        } catch (\Exception $e) {
-            // If database is not available, return empty arrays
         }
 
         return $addresses;

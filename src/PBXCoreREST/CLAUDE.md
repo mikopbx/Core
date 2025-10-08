@@ -217,30 +217,85 @@ Resource-level: `GET /resource/{id}:method`
 
 **Reference:** `src/PBXCoreREST/Middleware/AuthenticationMiddleware.php`
 
-### Methods (in priority order):
+### JWT Token Architecture
+
+MikoPBX uses a dual-token system following OAuth 2.0 best practices:
+
+**Access Token (JWT)**:
+- Type: JSON Web Token with HS256 signature
+- Lifetime: 15 minutes (900 seconds)
+- Storage: Client memory (NOT in cookies)
+- Transmission: `Authorization: Bearer <token>` header
+- Payload: `{userId, role, language, iat, exp, nbf}`
+- Cannot be revoked server-side (stateless)
+
+**Refresh Token**:
+- Type: Random hex string (64 characters)
+- Lifetime: 30 days (2592000 seconds)
+- Storage: Redis with SHA256 hash key
+- Transmission: httpOnly cookie `refreshToken`
+- Security: Automatic rotation on each refresh
+- Can be revoked: Deleted from Redis on logout
+
+**Token Storage**:
+```
+Redis Key: refresh_token:{sha256(token)}
+Redis Value: {userId, role, clientIp, userAgent, createdAt, lastUsedAt}
+TTL: 30 days (automatic cleanup by Redis)
+```
+
+**Remember Me**:
+- When `rememberMe=true`: Cookie expires in 30 days
+- When `rememberMe=false`: Session cookie (expires on browser close)
+- Both use same Redis storage with 30-day TTL
+
+### Authentication Methods (in priority order):
 
 1. **JWT Bearer Token** (15 min) - `/pbxcore/api/v3/auth:login`
    ```bash
+   # Login and get access token
    curl -X POST http://127.0.0.1:8081/pbxcore/api/v3/auth:login \
-        -H "Content-Type: application/json" \
-        -d '{"login":"admin","password":"your-password"}'
-   # Use: -H "Authorization: Bearer eyJ0eXAi..."
+        -H "Content-Type: application/x-www-form-urlencoded" \
+        -d "login=admin&password=123456789MikoPBX#1&rememberMe=true" \
+        -c cookies.txt | python3 -c "import sys, json; print(json.load(sys.stdin)['data']['accessToken'])"
+
+   # Use access token in API calls
+   curl -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..." \
+        http://127.0.0.1:8081/pbxcore/api/v3/extensions
+
+   # Refresh access token (uses cookie automatically)
+   curl -X POST http://127.0.0.1:8081/pbxcore/api/v3/auth:refresh \
+        -b cookies.txt -c cookies.txt | python3 -c "import sys, json; print(json.load(sys.stdin)['data']['accessToken'])"
+
+   # Logout (invalidates refresh token in Redis)
+   curl -X POST http://127.0.0.1:8081/pbxcore/api/v3/auth:logout \
+        -H "Authorization: Bearer <token>" -b cookies.txt
    ```
 
 2. **API Keys** (no expiration) - `/admin-cabinet/api-keys/`
    ```bash
-   curl -H "Authorization: Bearer miko_ak_1234567890abcdef..."
+   curl -H "Authorization: Bearer miko_ak_1234567890abcdef..." \
+        http://127.0.0.1:8081/pbxcore/api/v3/extensions
    ```
 
-3. **Session** - Browser access with CSRF protection
 
-4. **Localhost** - Always allowed (127.0.0.1)
+3. **Localhost** - Always allowed (127.0.0.1)
 
-5. **Public Endpoints** - No auth required:
+4. **Public Endpoints** - No auth required:
    - `/pbxcore/api/health`
    - `/pbxcore/api/v3/auth:login`
    - `/pbxcore/api/v3/auth:refresh`
+   - `/pbxcore/api/v3/auth:logout` (public but requires token for deletion)
    - `/pbxcore/api/v3/passkeys:*`
+
+**Security Features**:
+- httpOnly cookies prevent XSS attacks
+- Secure flag ensures HTTPS-only transmission
+- SameSite=Strict prevents CSRF attacks
+- Token rotation on refresh prevents replay attacks
+- Device tracking (IP + User-Agent)
+- Rate limiting on failed login attempts
+- Automatic cleanup of expired tokens (Redis TTL)
 
 ## Common Patterns
 
@@ -336,30 +391,149 @@ try {
 
 ## Testing
 
+### JSON Parsing Utilities
+
+The MikoPBX container doesn't include `jq` by default. Use these alternatives:
+
+**Python (recommended):**
 ```bash
-# Login
-TOKEN=$(curl -s -X POST http://127.0.0.1:8081/pbxcore/api/v3/auth:login \
-  -H "Content-Type: application/json" \
-  -d '{"login":"admin","password":"123456789MikoPBX#1"}' | jq -r '.data.accessToken')
+# Pretty print JSON
+curl ... | python3 -m json.tool
 
-# GET list
-curl -X GET "http://127.0.0.1:8081/pbxcore/api/v3/call-queues?limit=10" \
-  -H "Authorization: Bearer $TOKEN"
-
-# POST create
-curl -X POST "http://127.0.0.1:8081/pbxcore/api/v3/call-queues" \
-  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
-  -d '{"name":"Test Queue","extension":"2200777"}'
-
-# PATCH update
-curl -X PATCH "http://127.0.0.1:8081/pbxcore/api/v3/call-queues/QUEUE-CF423A55" \
-  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
-  -d '{"strategy":"random"}'
-
-# Custom method
-curl -X GET "http://127.0.0.1:8081/pbxcore/api/v3/call-queues:getDefault" \
-  -H "Authorization: Bearer $TOKEN"
+# Extract specific field
+TOKEN=$(echo "$RESPONSE" | python3 -c "import sys, json; print(json.load(sys.stdin)['data']['accessToken'])")
 ```
+
+**PHP:**
+```bash
+TOKEN=$(echo "$RESPONSE" | php -r '$json = json_decode(stream_get_contents(STDIN), true); echo $json["data"]["accessToken"];')
+```
+
+**grep/cut (simple extraction):**
+```bash
+TOKEN=$(echo "$RESPONSE" | grep -o '"accessToken":"[^"]*"' | cut -d'"' -f4)
+```
+
+### Manual Testing with curl
+
+```bash
+# Step 1: Login and save tokens
+RESPONSE=$(curl -s -X POST http://127.0.0.1:8081/pbxcore/api/v3/auth:login \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "login=admin&password=123456789MikoPBX#1&rememberMe=true" \
+  -c cookies.txt)
+
+# Extract access token
+TOKEN=$(echo "$RESPONSE" | python3 -c "import sys, json; print(json.load(sys.stdin)['data']['accessToken'])")
+echo "Access Token: $TOKEN"
+
+# Step 2: Use token for API calls
+# GET list with search and pagination
+curl -X GET "http://127.0.0.1:8081/pbxcore/api/v3/call-queues?search=support&limit=10&offset=0" \
+  -H "Authorization: Bearer $TOKEN" | python3 -m json.tool
+
+# GET single record
+curl -X GET "http://127.0.0.1:8081/pbxcore/api/v3/call-queues/QUEUE-CF423A55" \
+  -H "Authorization: Bearer $TOKEN" | python3 -m json.tool
+
+# POST create new record
+curl -X POST "http://127.0.0.1:8081/pbxcore/api/v3/call-queues" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name":"Test Queue",
+    "extension":"2200777",
+    "strategy":"ringall",
+    "timeout":300,
+    "enabled":true
+  }' | python3 -m json.tool
+
+# PUT full update (replaces all fields)
+curl -X PUT "http://127.0.0.1:8081/pbxcore/api/v3/call-queues/QUEUE-CF423A55" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name":"Updated Queue",
+    "extension":"2200777",
+    "strategy":"random"
+  }' | python3 -m json.tool
+
+# PATCH partial update (only specified fields)
+curl -X PATCH "http://127.0.0.1:8081/pbxcore/api/v3/call-queues/QUEUE-CF423A55" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"strategy":"random","enabled":false}' | python3 -m json.tool
+
+# DELETE record
+curl -X DELETE "http://127.0.0.1:8081/pbxcore/api/v3/call-queues/QUEUE-CF423A55" \
+  -H "Authorization: Bearer $TOKEN" | python3 -m json.tool
+
+# Custom collection-level method
+curl -X GET "http://127.0.0.1:8081/pbxcore/api/v3/call-queues:getDefault" \
+  -H "Authorization: Bearer $TOKEN" | python3 -m json.tool
+
+# Custom resource-level method
+curl -X POST "http://127.0.0.1:8081/pbxcore/api/v3/call-queues/QUEUE-CF423A55:copy" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"newExtension":"2200888"}' | python3 -m json.tool
+
+# Step 3: Refresh token when access token expires
+NEW_TOKEN=$(curl -s -X POST http://127.0.0.1:8081/pbxcore/api/v3/auth:refresh \
+  -b cookies.txt -c cookies.txt | python3 -c "import sys, json; print(json.load(sys.stdin)['data']['accessToken'])")
+echo "New Access Token: $NEW_TOKEN"
+
+# Step 4: Logout
+curl -X POST "http://127.0.0.1:8081/pbxcore/api/v3/auth:logout" \
+  -H "Authorization: Bearer $TOKEN" \
+  -b cookies.txt | python3 -m json.tool
+```
+
+### Automated Testing Script
+
+**Reference:** `test-jwt-auth.sh` in project root
+
+Complete bash script for testing JWT authentication flow:
+- Login with username/password
+- Access protected endpoints with JWT token
+- Refresh token mechanism
+- Token rotation verification
+- Logout and token invalidation
+
+Run with:
+```bash
+PBX_HOST=localhost PBX_PORT=8081 PBX_PASSWORD='123456789MikoPBX#1' ./test-jwt-auth.sh
+```
+
+### Testing Checklist
+
+✅ **Authentication:**
+- [ ] Login returns 200 with accessToken and refreshToken cookie
+- [ ] Access token works in Authorization header
+- [ ] Refresh token rotates on each refresh
+- [ ] Logout deletes refresh token from Redis
+- [ ] Old access token still works after logout (until expiry)
+
+✅ **CRUD Operations:**
+- [ ] GET list returns paginated results
+- [ ] GET list search/filter works
+- [ ] GET record by ID returns single item
+- [ ] POST create returns 201 with new ID
+- [ ] PUT update returns 200
+- [ ] PATCH partial update returns 200
+- [ ] DELETE returns 200
+
+✅ **Validation:**
+- [ ] Invalid data returns 422 with error messages
+- [ ] Missing required fields returns 422
+- [ ] Duplicate unique fields returns 409
+- [ ] Invalid ID format returns 404
+
+✅ **Security:**
+- [ ] Unauthorized requests return 401
+- [ ] Forbidden actions return 403
+- [ ] CSRF protection enabled for session auth
+- [ ] Rate limiting on login attempts
 
 ## Module API Extension
 

@@ -42,19 +42,21 @@ class CreateRecordAction extends AbstractSaveRecordAction
         $res = self::createApiResult(__METHOD__);
 
         try {
-            // For create operation, ensure no ID is passed to SaveRecordAction
-            // This tells SaveRecordAction to create a new record
-            unset($data['id']);
+            // For create operation, allow custom ID if provided (for migrations/imports)
+            // ID validation is handled by SaveRecordAction via OpenAPI schema rules
+            // If no ID provided, SaveRecordAction will generate one automatically
+
+            // Remove legacy uniqid field if present (use 'id' instead in v3 API)
             unset($data['uniqid']);
-            
+
             // Use existing SaveRecordAction logic for actual save
             $res = SaveRecordAction::main($data);
-            
+
             // If successful, publish event for new queue creation
             if ($res->success && isset($res->data['id'])) {
                 SystemMessages::sysLogMsg(__CLASS__, 'New call queue created: ' . $res->data['id'], LOG_INFO);
             }
-            
+
         } catch (\Exception $e) {
             return self::handleError($e, $res);
         }

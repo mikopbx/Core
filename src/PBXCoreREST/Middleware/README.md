@@ -8,10 +8,19 @@ The middleware should be executed in the following order:
 
 ```
 1. AuthenticationMiddleware  → Who are you?
-2. UnifiedSecurityMiddleware → What can you access?
+2. UnifiedSecurityMiddleware → What can you access? (NOT YET INTEGRATED - planned for future)
 3. ApiValidationMiddleware   → Are your parameters valid?
 4. Controller               → Execute the action
 ```
+
+**Current Status:**
+- ✅ **AuthenticationMiddleware** - Fully implemented and active
+  - Now uses `ResourceSecurity` attributes for public endpoint detection
+  - Replaced hardcoded list with dynamic attribute-based checking
+- ⏳ **UnifiedSecurityMiddleware** - Implemented but NOT yet integrated
+  - Code is ready but not added to middleware chain
+  - Will be activated when fine-grained authorization is needed
+- ❓ **ApiValidationMiddleware** - Not yet implemented
 
 ## Middleware Responsibilities
 

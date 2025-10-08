@@ -21,62 +21,50 @@ namespace MikoPBX\PBXCoreREST\Controllers\System;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\SystemManagementProcessor;
+use MikoPBX\PBXCoreREST\Attributes\{
+    ApiResource,
+    ApiOperation,
+    ApiParameter,
+    ApiResponse,
+    SecurityType,
+    ParameterLocation,
+    HttpMapping,
+    ResourceSecurity
+};
 
 /**
  * RESTful controller for system management (v3 API)
  *
- * System is a singleton resource representing the PBX system itself.
- * Most operations are custom methods (commands) rather than CRUD operations.
- *
- * @RoutePrefix("/pbxcore/api/v3/system")
- *
- * @examples Power management commands:
- *
- * # Reboot the system
- * curl -X POST http://127.0.0.1/pbxcore/api/v3/system:reboot
- *
- * # Shutdown the system
- * curl -X POST http://127.0.0.1/pbxcore/api/v3/system:shutdown
- *
- * @examples Health check commands:
- *
- * # Ping backend
- * curl -X GET http://127.0.0.1/pbxcore/api/v3/system:ping
- *
- * # Check authentication
- * curl -X GET http://127.0.0.1/pbxcore/api/v3/system:checkAuth
- *
- * @examples Date/Time operations:
- *
- * # Get current system date and time
- * curl -X GET http://127.0.0.1/pbxcore/api/v3/system:datetime
- *
- * # Set system date and time
- * curl -X PUT http://127.0.0.1/pbxcore/api/v3/system:datetime \
- *      -H "Content-Type: application/json" \
- *      -d '{"timestamp":1602509882}'
- *
- *
- * @examples Utility commands:
- *
- * # Convert audio file
- * curl -X POST http://127.0.0.1/pbxcore/api/v3/system:convertAudioFile \
- *      -H "Content-Type: application/json" \
- *      -d '{"filename":"/tmp/audio.mp3"}'
- *
- * # Upgrade system from image
- * curl -X POST http://127.0.0.1/pbxcore/api/v3/system:upgrade \
- *      -H "Content-Type: application/json" \
- *      -d '{"filename":"/tmp/mikopbx.img"}'
- *
- * # Restore default settings
- * curl -X POST http://127.0.0.1/pbxcore/api/v3/system:restoreDefault
- *
- * # Get delete statistics before restore
- * curl -X GET http://127.0.0.1/pbxcore/api/v3/system:getDeleteStatistics
+ * Singleton resource for system-wide operations and management.
+ * Provides power management, health checks, datetime operations, language settings,
+ * and system maintenance commands. All operations are custom methods.
  *
  * @package MikoPBX\PBXCoreREST\Controllers\System
+ *
+ * @see https://cloud.google.com/apis/design - Google API Design Guide
+ * @see https://spec.openapis.org/oas/v3.1.0 - OpenAPI 3.1 Specification
  */
+#[ApiResource(
+    path: '/pbxcore/api/v3/system',
+    tags: ['System Management', 'Power'],
+    description: 'System-wide management singleton resource. ' .
+                'Provides power management (reboot, shutdown), health monitoring (ping, checkAuth), ' .
+                'datetime operations, language settings, audio conversion, system upgrades and factory reset.',
+    processor: SystemManagementProcessor::class
+)]
+#[ResourceSecurity('system', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
+#[HttpMapping(
+    mapping: [
+        'GET' => ['ping', 'checkAuth', 'getDeleteStatistics', 'datetime', 'getAvailableLanguages'],
+        'PUT' => ['datetime'],
+        'POST' => ['reboot', 'shutdown', 'updateMailSettings', 'convertAudioFile', 'upgrade', 'restoreDefault', 'changeLanguage'],
+        'PATCH' => ['changeLanguage']
+    ],
+    resourceLevelMethods: [],
+    collectionLevelMethods: [],
+    customMethods: ['ping', 'checkAuth', 'getDeleteStatistics', 'datetime', 'getAvailableLanguages', 'reboot', 'shutdown', 'updateMailSettings', 'convertAudioFile', 'upgrade', 'restoreDefault', 'changeLanguage'],
+    idPattern: ''
+)]
 class RestController extends BaseRestController
 {
     /**
@@ -92,73 +80,229 @@ class RestController extends BaseRestController
     protected bool $isSingleton = true;
 
     /**
-     * Define allowed custom methods for each HTTP method
+     * Ping backend to check if it's alive (PUBLIC - health check endpoint)
      *
-     * @return array<string, array<string>>
+     * @route GET /pbxcore/api/v3/system:ping
      */
-    protected function getAllowedCustomMethods(): array
+    #[ResourceSecurity('system_ping', requirements: [SecurityType::PUBLIC])]
+    #[ApiOperation(
+        summary: 'rest_system_Ping',
+        description: 'rest_system_PingDesc',
+        operationId: 'pingSystem'
+    )]
+    #[ApiResponse(200, 'rest_response_200_pong')]
+    public function ping(): void
     {
-        return [
-            'GET' => [
-                'ping',
-                'checkAuth',
-                'getDeleteStatistics',
-                'datetime',
-                'getAvailableLanguages'
-            ],
-            'PUT' => [
-                'datetime'
-            ],
-            'POST' => [
-                'reboot',
-                'shutdown',
-                'updateMailSettings',
-                'convertAudioFile',
-                'upgrade',
-                'restoreDefault',
-                'changeLanguage'
-            ],
-            'PATCH' => [
-                'changeLanguage'
-            ]
-        ];
+        // Implementation handled by BaseRestController
     }
 
     /**
-     * Override to add HTTP method to request data for datetime custom method
+     * Check if user is authenticated
      *
-     * @param string|null $idOrMethod Resource ID or custom method name
-     * @param string|null $customMethod Custom method name (if ID is present)
-     * @return void
+     * @route GET /pbxcore/api/v3/system:checkAuth
      */
-    public function handleCustomRequest(?string $idOrMethod = null, ?string $customMethod = null): void
+    #[ApiOperation(
+        summary: 'rest_system_CheckAuth',
+        description: 'rest_system_CheckAuthDesc',
+        operationId: 'checkAuthentication'
+    )]
+    #[ApiResponse(200, 'rest_response_200_authenticated')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    public function checkAuth(): void
     {
-        $id = null;
-        $actualMethod = null;
+        // Implementation handled by BaseRestController
+    }
 
-        if ($customMethod !== null) {
-            $id = $idOrMethod;
-            $actualMethod = $customMethod;
-        } else {
-            $actualMethod = $idOrMethod;
-        }
-
+    /**
+     * Get system date and time
+     *
+     * @route GET /pbxcore/api/v3/system:datetime
+     */
+    #[ApiOperation(
+        summary: 'rest_system_GetDatetime',
+        description: 'rest_system_GetDatetimeDesc',
+        operationId: 'getSystemDatetime'
+    )]
+    #[ApiResponse(200, 'rest_response_200_get')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function datetime(): void
+    {
         $requestData = self::sanitizeData($this->request->getData(), $this->filter);
-
-        // Add HTTP method for datetime action
-        if ($actualMethod === 'datetime') {
-            $requestData['httpMethod'] = $this->request->getMethod();
-        }
-
-        // Add ID if provided for resource-specific custom methods
-        if (!empty($id)) {
-            $requestData['id'] = $id;
-        }
+        $requestData['httpMethod'] = $this->request->getMethod();
 
         $this->sendRequestToBackendWorker(
             $this->processorClass,
-            $actualMethod,
+            'datetime',
             $requestData
         );
+    }
+
+    /**
+     * Get available interface languages (PUBLIC - used on login page)
+     *
+     * @route GET /pbxcore/api/v3/system:getAvailableLanguages
+     */
+    #[ResourceSecurity('system_languages', requirements: [SecurityType::PUBLIC])]
+    #[ApiOperation(
+        summary: 'rest_system_GetAvailableLanguages',
+        description: 'rest_system_GetAvailableLanguagesDesc',
+        operationId: 'getAvailableLanguages'
+    )]
+    #[ApiResponse(200, 'rest_response_200_list')]
+    public function getAvailableLanguages(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Get statistics about data to be deleted before factory reset
+     *
+     * @route GET /pbxcore/api/v3/system:getDeleteStatistics
+     */
+    #[ApiOperation(
+        summary: 'rest_system_GetDeleteStatistics',
+        description: 'rest_system_GetDeleteStatisticsDesc',
+        operationId: 'getDeleteStatistics'
+    )]
+    #[ApiResponse(200, 'rest_response_200_stats')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function getDeleteStatistics(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Reboot the system
+     *
+     * @route POST /pbxcore/api/v3/system:reboot
+     */
+    #[ApiOperation(
+        summary: 'rest_system_Reboot',
+        description: 'rest_system_RebootDesc',
+        operationId: 'rebootSystem'
+    )]
+    #[ApiResponse(200, 'rest_response_200_rebooting')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function reboot(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Shutdown the system
+     *
+     * @route POST /pbxcore/api/v3/system:shutdown
+     */
+    #[ApiOperation(
+        summary: 'rest_system_Shutdown',
+        description: 'rest_system_ShutdownDesc',
+        operationId: 'shutdownSystem'
+    )]
+    #[ApiResponse(200, 'rest_response_200_shutting_down')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function shutdown(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Update mail settings (legacy method)
+     *
+     * @route POST /pbxcore/api/v3/system:updateMailSettings
+     */
+    #[ApiOperation(
+        summary: 'rest_system_UpdateMailSettings',
+        description: 'rest_system_UpdateMailSettingsDesc',
+        operationId: 'updateMailSettings'
+    )]
+    #[ApiResponse(200, 'rest_response_200_updated')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function updateMailSettings(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Convert audio file to system format
+     *
+     * @route POST /pbxcore/api/v3/system:convertAudioFile
+     */
+    #[ApiOperation(
+        summary: 'rest_system_ConvertAudioFile',
+        description: 'rest_system_ConvertAudioFileDesc',
+        operationId: 'convertAudioFile'
+    )]
+    #[ApiParameter('filename', 'string', 'rest_param_system_audio_filename', ParameterLocation::QUERY, required: true, maxLength: 500, example: '/tmp/audio.mp3')]
+    #[ApiResponse(200, 'rest_response_200_converted')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function convertAudioFile(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Upgrade system from image file
+     *
+     * @route POST /pbxcore/api/v3/system:upgrade
+     */
+    #[ApiOperation(
+        summary: 'rest_system_Upgrade',
+        description: 'rest_system_UpgradeDesc',
+        operationId: 'upgradeSystem'
+    )]
+    #[ApiParameter('filename', 'string', 'rest_param_system_upgrade_filename', ParameterLocation::QUERY, required: true, maxLength: 500, example: '/tmp/mikopbx.img')]
+    #[ApiResponse(200, 'rest_response_200_upgrading')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function upgrade(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Restore system to factory defaults
+     *
+     * @route POST /pbxcore/api/v3/system:restoreDefault
+     */
+    #[ApiOperation(
+        summary: 'rest_system_RestoreDefault',
+        description: 'rest_system_RestoreDefaultDesc',
+        operationId: 'restoreToDefaults'
+    )]
+    #[ApiResponse(200, 'rest_response_200_restoring')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function restoreDefault(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Change system interface language (PUBLIC - used on login page)
+     *
+     * @route POST /pbxcore/api/v3/system:changeLanguage
+     * @route PATCH /pbxcore/api/v3/system:changeLanguage
+     */
+    #[ResourceSecurity('system_change_language', requirements: [SecurityType::PUBLIC])]
+    #[ApiOperation(
+        summary: 'rest_system_ChangeLanguage',
+        description: 'rest_system_ChangeLanguageDesc',
+        operationId: 'changeLanguage'
+    )]
+    #[ApiParameter('language', 'string', 'rest_param_system_language', ParameterLocation::QUERY, required: true, enum: ['en', 'ru', 'de', 'es', 'fr', 'pt', 'uk'], example: 'ru')]
+    #[ApiResponse(200, 'rest_response_200_updated')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    public function changeLanguage(): void
+    {
+        // Implementation handled by BaseRestController
     }
 }

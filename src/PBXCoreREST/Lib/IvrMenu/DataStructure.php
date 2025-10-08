@@ -20,16 +20,20 @@
 namespace MikoPBX\PBXCoreREST\Lib\IvrMenu;
 
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
+use MikoPBX\PBXCoreREST\Lib\Common\OpenApiSchemaProvider;
 use MikoPBX\PBXCoreREST\Lib\Common\SearchIndexTrait;
 use MikoPBX\Common\Models\Extensions;
 
 
 /**
- * Data structure for IVR menu
- * 
+ * Data structure for IVR menu with OpenAPI schema support
+ *
+ * Provides consistent data format for IVR (Interactive Voice Response) menu records.
+ * Implements OpenApiSchemaProvider to provide typed schemas for OpenAPI specification.
+ *
  * @package MikoPBX\PBXCoreREST\Lib\IvrMenu
  */
-class DataStructure extends AbstractDataStructure
+class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvider
 {
     use SearchIndexTrait;
     /**
@@ -151,7 +155,258 @@ class DataStructure extends AbstractDataStructure
         // Generate search index automatically from all fields
         // This will use all _represent fields and extract extension numbers
         $data['search_index'] = self::generateAutoSearchIndex($data);
-        
+
+        // Apply OpenAPI schema formatting
+        $data = self::formatBySchema($data, 'list');
+
         return $data;
+    }
+
+    /**
+     * Get OpenAPI schema for IVR menu list item
+     *
+     * @return array<string, mixed> OpenAPI schema definition
+     */
+    public static function getListItemSchema(): array
+    {
+        return [
+            'type' => 'object',
+            'required' => ['id', 'extension', 'name'],
+            'properties' => [
+                'id' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ivr_id',
+                    'example' => 'IVR-MENU-12345'
+                ],
+                'extension' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ivr_extension',
+                    'pattern' => '^[0-9]{2,8}$',
+                    'example' => '2000'
+                ],
+                'name' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ivr_name',
+                    'maxLength' => 255,
+                    'example' => 'Main Menu'
+                ],
+                'description' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ivr_description',
+                    'maxLength' => 500,
+                    'example' => 'Company main IVR menu'
+                ],
+                'timeout' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ivr_timeout',
+                    'pattern' => '^[0-9]{1,2}$',
+                    'example' => '7'
+                ],
+                'number_of_repeat' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ivr_repeat',
+                    'pattern' => '^[0-9]{1,2}$',
+                    'example' => '3'
+                ],
+                'timeout_extension' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ivr_timeout_ext',
+                    'example' => '100'
+                ],
+                'timeout_extension_represent' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ivr_timeout_ext_repr',
+                    'example' => '<i class="phone icon"></i> Operator <100>'
+                ],
+                'timeoutExtensionRepresent' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ivr_timeout_ext_repr_alt',
+                    'example' => '<i class="phone icon"></i> Operator <100>'
+                ],
+                'represent' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ivr_represent',
+                    'example' => '<i class="sitemap icon"></i> Main Menu <2000>'
+                ],
+                'actions' => [
+                    'type' => 'array',
+                    'description' => 'rest_schema_ivr_actions',
+                    'items' => [
+                        '$ref' => '#/components/schemas/IvrMenuActionSimple'
+                    ]
+                ],
+                'search_index' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ivr_search_index',
+                    'example' => 'Main Menu 2000 Operator'
+                ]
+            ]
+        ];
+    }
+
+    /**
+     * Get OpenAPI schema for detailed IVR menu record
+     *
+     * @return array<string, mixed> OpenAPI schema definition
+     */
+    public static function getDetailSchema(): array
+    {
+        return [
+            'type' => 'object',
+            'required' => ['id', 'extension', 'name'],
+            'properties' => [
+                'id' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ivr_id',
+                    'example' => 'IVR-MENU-12345'
+                ],
+                'extension' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ivr_extension',
+                    'pattern' => '^[0-9]{2,8}$',
+                    'example' => '2000'
+                ],
+                'name' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ivr_name',
+                    'maxLength' => 255,
+                    'example' => 'Main Menu'
+                ],
+                'description' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ivr_description',
+                    'maxLength' => 500,
+                    'example' => 'Company main IVR menu'
+                ],
+                'timeout' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ivr_timeout',
+                    'pattern' => '^[0-9]{1,2}$',
+                    'default' => '7',
+                    'example' => '7'
+                ],
+                'number_of_repeat' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ivr_repeat',
+                    'pattern' => '^[0-9]{1,2}$',
+                    'default' => '3',
+                    'example' => '3'
+                ],
+                'allow_enter_any_internal_extension' => [
+                    'type' => 'boolean',
+                    'description' => 'rest_schema_ivr_allow_direct',
+                    'default' => false,
+                    'example' => true
+                ],
+                'timeout_extension' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ivr_timeout_ext',
+                    'example' => '100'
+                ],
+                'timeout_extension_represent' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ivr_timeout_ext_repr',
+                    'example' => '<i class="phone icon"></i> Operator <100>'
+                ],
+                'audio_message_id' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ivr_audio_id',
+                    'example' => '1'
+                ],
+                'audio_message_id_represent' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ivr_audio_repr',
+                    'example' => '<i class="file audio icon"></i> welcome.wav'
+                ],
+                'actions' => [
+                    'type' => 'array',
+                    'description' => 'rest_schema_ivr_actions',
+                    'items' => [
+                        '$ref' => '#/components/schemas/IvrMenuAction'
+                    ]
+                ],
+                'search_index' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ivr_search_index',
+                    'example' => 'Main Menu 2000 Operator Sales'
+                ]
+            ]
+        ];
+    }
+
+    /**
+     * Get related schemas for OpenAPI components
+     *
+     * @return array<string, array<string, mixed>> Related schemas
+     */
+    public static function getRelatedSchemas(): array
+    {
+        return [
+            'IvrMenuAction' => [
+                'type' => 'object',
+                'required' => ['digits', 'extension'],
+                'properties' => [
+                    'id' => [
+                        'type' => 'string',
+                        'description' => 'rest_schema_ivr_action_id',
+                        'example' => '1'
+                    ],
+                    'digits' => [
+                        'type' => 'string',
+                        'description' => 'rest_schema_ivr_action_digits',
+                        'pattern' => '^[0-9#*]{1,10}$',
+                        'example' => '1'
+                    ],
+                    'extension' => [
+                        'type' => 'string',
+                        'description' => 'rest_schema_ivr_action_extension',
+                        'example' => '201'
+                    ],
+                    'extension_represent' => [
+                        'type' => 'string',
+                        'description' => 'rest_schema_ivr_action_ext_repr',
+                        'example' => '<i class="phone icon"></i> Sales <201>'
+                    ]
+                ]
+            ],
+            'IvrMenuActionSimple' => [
+                'type' => 'object',
+                'required' => ['digits'],
+                'properties' => [
+                    'digits' => [
+                        'type' => 'string',
+                        'description' => 'rest_schema_ivr_action_digits',
+                        'pattern' => '^[0-9#*]{1,10}$',
+                        'example' => '1'
+                    ],
+                    'represent' => [
+                        'type' => 'string',
+                        'description' => 'rest_schema_ivr_action_repr',
+                        'example' => '<i class="phone icon"></i> Sales <201>'
+                    ]
+                ]
+            ]
+        ];
+    }
+
+    /**
+     * Generate sanitization rules from OpenAPI schema
+     *
+     * @return array<string, string> Sanitization rules
+     */
+    public static function getSanitizationRules(): array
+    {
+        return [
+            'extension' => 'string|regex:/^[0-9]{2,8}$/',
+            'name' => 'string|max:255',
+            'description' => 'string|max:500',
+            'timeout' => 'string|regex:/^[0-9]{1,2}$/',
+            'number_of_repeat' => 'string|regex:/^[0-9]{1,2}$/',
+            'allow_enter_any_internal_extension' => 'bool',
+            'timeout_extension' => 'string',
+            'audio_message_id' => 'string',
+            // Action validation
+            'digits' => 'string|regex:/^[0-9#*]{1,10}$/'
+        ];
     }
 }

@@ -22,71 +22,98 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Lib\DialplanApplications;
 
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
+use MikoPBX\PBXCoreREST\Lib\Common\SearchIndexTrait;
+use MikoPBX\PBXCoreREST\Lib\Common\OpenApiSchemaProvider;
 
 /**
- * Data structure for Dialplan Applications
- * 
+ * Data structure for Dialplan Applications with OpenAPI schema support
+ *
+ * Creates consistent data format for API responses with automatic validation
+ * and type conversion based on OpenAPI schema definitions.
+ *
+ * Implements OpenApiSchemaProvider to provide typed schemas for OpenAPI specification.
+ *
  * @package MikoPBX\PBXCoreREST\Lib\DialplanApplications
  */
-class DataStructure extends AbstractDataStructure
+class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvider
 {
+    use SearchIndexTrait;
     /**
      * Create complete data array from DialplanApplications model
-     * 
+     *
+     * Following "Store Clean, Escape at Edge" principle:
+     * Returns raw data that was sanitized on input. HTML escaping
+     * is the responsibility of the presentation layer.
+     *
      * @param \MikoPBX\Common\Models\DialplanApplications $model
-     * @return array
+     * @return array<string, mixed> Complete data structure
      */
     public static function createFromModel($model): array
     {
-        // Use uniqid as id for REST API v3
-        $data = [
-            'id' => $model->uniqid,
-            'extension' => $model->extension ?? '',
-            'name' => $model->name ?? '',
-            'description' => $model->description ?? '',
-            'hint' => $model->hint ?? '',
-            'applicationlogic' => $model->getApplicationlogic(), // Decoded logic for editing
-            'type' => $model->type ?? 'php'
-        ];
-        
-        // Handle null values for consistent JSON output
-        $data = self::handleNullValues($data, ['hint', 'description']);
-        
+        // Start with base structure (raw data, no HTML escaping)
+        $data = self::createBaseStructure($model);
+
+        // Replace numeric id with uniqid for v3 API
+        $data['id'] = $model->uniqid;
+        unset($data['uniqid']); // Remove uniqid field to avoid duplication
+
+        // Add all dialplan application fields from model (raw values)
+        $data['extension'] = $model->extension ?? '';
+        $data['hint'] = $model->hint ?? '';
+        $data['applicationlogic'] = $model->getApplicationlogic(); // Decoded logic for editing
+        $data['type'] = $model->type ?? 'php';
+
+        // Apply OpenAPI schema formatting to convert types automatically
+        // This replaces manual type conversions
+        // The schema defines which fields should be string, integer, or other types
+        $data = self::formatBySchema($data, 'detail');
+
         return $data;
     }
     
     /**
-     * Create simplified data array for list view
-     * 
+     * Create simplified data structure for list display
+     *
      * @param \MikoPBX\Common\Models\DialplanApplications $model
-     * @return array
+     * @return array<string, mixed> Simplified data structure for table display
      */
     public static function createForList($model): array
     {
-        // Use uniqid as id for REST API v3
-        $data = [
-            'id' => $model->uniqid,
-            'extension' => $model->extension ?? '',
-            'name' => $model->name ?? '',
-            'description' => $model->description ?? '',
-            'type' => $model->type ?? 'php',
-            'hint' => $model->hint ?? ''
-        ];
-        
-        // Add represent field for dropdown display
-        if (method_exists($model, 'getRepresent')) {
-            $data['represent'] = $model->getRepresent();
-        }
-        
-        // Handle null values for consistent JSON output
-        $data = self::handleNullValues($data, ['hint', 'description']);
-        
+        // Use unified base method for list creation
+        $data = parent::createForList($model);
+
+        // Replace numeric id with uniqid for v3 API
+        $data['id'] = $model->uniqid;
+        unset($data['uniqid']); // Remove uniqid field to avoid duplication
+
+        // Add dialplan application specific fields for list display
+        $data['extension'] = $model->extension ?? '';
+        $data['type'] = $model->type ?? 'php';
+        $data['hint'] = $model->hint ?? '';
+
+        // Create represent field for display
+        // Note: The represent field contains HTML markup and will be escaped by the frontend when needed
+        $icon = match($data['type']) {
+            'echo' => 'microphone',
+            'playback' => 'play',
+            default => 'code'
+        };
+        $data['represent'] = "<i class=\"{$icon} icon\"></i> " . ($model->name ?? '') . " <{$model->extension}>";
+
+        // Generate search index automatically from all fields
+        // This will use all _represent fields and extract extension numbers
+        $data['search_index'] = self::generateAutoSearchIndex($data);
+
+        // Apply OpenAPI list schema formatting to ensure proper types
+        // This guarantees consistency with API documentation
+        $data = self::formatBySchema($data, 'list');
+
         return $data;
     }
     
     /**
      * Create data structure for dropdown/select options
-     * 
+     *
      * @param \MikoPBX\Common\Models\DialplanApplications $model
      * @return array
      */
@@ -98,5 +125,199 @@ class DataStructure extends AbstractDataStructure
             'name' => $model->name ?? '',
             'represent' => method_exists($model, 'getRepresent') ? $model->getRepresent() : ($model->name ?? '')
         ];
+    }
+
+    /**
+     * Get OpenAPI schema for dialplan application list item
+     *
+     * This schema matches the structure returned by createForList() method.
+     * Used for GET /api/v3/dialplan-applications endpoint (list of applications).
+     *
+     * @return array<string, mixed> OpenAPI schema definition
+     */
+    public static function getListItemSchema(): array
+    {
+        return [
+            'type' => 'object',
+            'required' => ['id', 'extension', 'name', 'type', 'represent'],
+            'properties' => [
+                'id' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_da_id',
+                    'pattern' => '^DIALPLAN-[A-Z0-9]{8,32}$',
+                    'example' => 'DIALPLAN-ABCD1234'
+                ],
+                'extension' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_da_extension',
+                    'pattern' => '^[0-9*#]{2,8}$',
+                    'example' => '999'
+                ],
+                'name' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_da_name',
+                    'maxLength' => 100,
+                    'example' => 'Echo Test'
+                ],
+                'description' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_da_description',
+                    'maxLength' => 500,
+                    'example' => 'Test echo application'
+                ],
+                'type' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_da_type',
+                    'enum' => ['php', 'plaintext', 'python3', 'lua', 'ael', 'none'],
+                    'example' => 'php'
+                ],
+                'hint' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_da_hint',
+                    'maxLength' => 255,
+                    'example' => 'BLF hint for line status'
+                ],
+                'represent' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_da_represent',
+                    'example' => '<i class="code icon"></i> Echo Test <999>'
+                ],
+                'search_index' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_da_search_index',
+                    'example' => 'echo test 999 test echo application'
+                ]
+            ]
+        ];
+    }
+
+    /**
+     * Get OpenAPI schema for detailed dialplan application record
+     *
+     * This schema matches the structure returned by createFromModel() method.
+     * Used for GET /api/v3/dialplan-applications/{id}, POST, PUT, PATCH endpoints.
+     *
+     * @return array<string, mixed> OpenAPI schema definition
+     */
+    public static function getDetailSchema(): array
+    {
+        return [
+            'type' => 'object',
+            'required' => ['id', 'extension', 'name', 'type'],
+            'properties' => [
+                'id' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_da_id',
+                    'pattern' => '^DIALPLAN-[A-Z0-9]{8,32}$',
+                    'example' => 'DIALPLAN-ABCD1234'
+                ],
+                'extension' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_da_extension',
+                    'pattern' => '^[0-9*#]{2,8}$',
+                    'example' => '999'
+                ],
+                'name' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_da_name',
+                    'maxLength' => 100,
+                    'example' => 'Echo Test'
+                ],
+                'description' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_da_description',
+                    'maxLength' => 500,
+                    'example' => 'Test echo application'
+                ],
+                'type' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_da_type',
+                    'enum' => ['php', 'plaintext', 'python3', 'lua', 'ael', 'none'],
+                    'default' => 'php',
+                    'example' => 'php'
+                ],
+                'hint' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_da_hint',
+                    'maxLength' => 255,
+                    'example' => 'BLF hint for line status'
+                ],
+                'applicationlogic' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_da_applicationlogic',
+                    'example' => '<?php\n// PHP code here'
+                ]
+            ]
+        ];
+    }
+
+    /**
+     * Get related schemas for OpenAPI components
+     *
+     * Returns schemas for nested objects used in dialplan application responses.
+     *
+     * @return array<string, array<string, mixed>> Related schemas
+     */
+    public static function getRelatedSchemas(): array
+    {
+        return [];
+    }
+
+    /**
+     * Generate sanitization rules from OpenAPI schema
+     *
+     * Converts OpenAPI schema constraints into SystemSanitizer format.
+     * This eliminates duplication between schema definition and validation rules.
+     *
+     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
+     */
+    public static function getSanitizationRules(): array
+    {
+        $schema = static::getDetailSchema();
+        $rules = [];
+
+        if (!isset($schema['properties'])) {
+            return $rules;
+        }
+
+        foreach ($schema['properties'] as $fieldName => $fieldSchema) {
+            $ruleParts = [];
+
+            // Add type
+            $type = $fieldSchema['type'] ?? 'string';
+            $ruleParts[] = match ($type) {
+                'integer' => 'int',
+                'number' => 'float',
+                'boolean' => 'bool',
+                'array' => 'array',
+                default => 'string'
+            };
+
+            // Add constraints
+            if (isset($fieldSchema['minimum'])) {
+                $ruleParts[] = 'min:' . $fieldSchema['minimum'];
+            }
+            if (isset($fieldSchema['maximum'])) {
+                $ruleParts[] = 'max:' . $fieldSchema['maximum'];
+            }
+            if (isset($fieldSchema['maxLength'])) {
+                $ruleParts[] = 'max:' . $fieldSchema['maxLength'];
+            }
+            if (isset($fieldSchema['pattern']) && is_string($fieldSchema['pattern'])) {
+                $pattern = str_replace('^', '', $fieldSchema['pattern']);
+                $pattern = str_replace('$', '', $pattern);
+                $ruleParts[] = 'regex:/' . $pattern . '/';
+            }
+            if (isset($fieldSchema['enum']) && is_array($fieldSchema['enum'])) {
+                $ruleParts[] = 'in:' . implode(',', $fieldSchema['enum']);
+            }
+            if (isset($fieldSchema['nullable']) && $fieldSchema['nullable'] === true) {
+                $ruleParts[] = 'empty_to_null';
+            }
+
+            $rules[$fieldName] = implode('|', $ruleParts);
+        }
+
+        return $rules;
     }
 }

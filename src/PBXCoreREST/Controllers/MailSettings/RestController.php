@@ -19,19 +19,20 @@
 
 namespace MikoPBX\PBXCoreREST\Controllers\MailSettings;
 
+use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
+use MikoPBX\PBXCoreREST\Lib\MailSettingsManagementProcessor;
+use MikoPBX\PBXCoreREST\Lib\MailSettings\DataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
     ApiParameter,
     ApiResponse,
+    ApiDataSchema,
     SecurityType,
     ParameterLocation,
     HttpMapping,
-    ResourceSecurity,
-    ActionType
+    ResourceSecurity
 };
-use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
-use MikoPBX\PBXCoreREST\Lib\MailSettingsManagementProcessor;
 
 /**
  * RESTful controller for mail settings management (v3 API)
@@ -55,7 +56,7 @@ use MikoPBX\PBXCoreREST\Lib\MailSettingsManagementProcessor;
 #[ResourceSecurity('mail_settings', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
 #[HttpMapping(
     mapping: [
-        'GET' => ['getList', 'getOAuth2Url'],
+        'GET' => ['getList', 'getOAuth2Url', 'getDiagnostics', 'getDefault'],
         'POST' => ['testConnection', 'sendTestEmail', 'refreshToken'],
         'PUT' => ['update'],
         'PATCH' => ['patch'],
@@ -63,7 +64,7 @@ use MikoPBX\PBXCoreREST\Lib\MailSettingsManagementProcessor;
     ],
     resourceLevelMethods: [],
     collectionLevelMethods: ['getList', 'update', 'patch', 'reset'],
-    customMethods: ['getOAuth2Url', 'testConnection', 'sendTestEmail', 'refreshToken'],
+    customMethods: ['getOAuth2Url', 'testConnection', 'sendTestEmail', 'refreshToken', 'getDiagnostics', 'getDefault'],
     idPattern: ''
 )]
 class RestController extends BaseRestController
@@ -75,15 +76,18 @@ class RestController extends BaseRestController
      *
      * @route GET /pbxcore/api/v3/mail-settings
      */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
     #[ApiOperation(
-        summary: 'Get mail settings',
-        description: 'Retrieve current SMTP configuration and authentication settings',
+        summary: 'rest_ms_GetRecord',
+        description: 'rest_ms_GetRecordDesc',
         operationId: 'getMailSettings'
     )]
-    #[ApiResponse(200, 'Mail settings retrieved successfully', example: '{"result":true,"data":{"MailSMTPHost":"smtp.gmail.com","MailSMTPPort":"587","MailSMTPAuthType":"oauth2","MailSMTPUsername":"admin@company.com","MailSMTPUseTLS":"1","MailFromUsername":"PBX System","MailFromAddress":"admin@company.com","MailEnableNotifications":"1"}}')]
-    #[ApiResponse(401, 'Authentication required', 'ErrorResponse')]
-    #[ApiResponse(403, 'Insufficient permissions', 'ErrorResponse')]
-    #[ResourceSecurity('mail_settings', ActionType::READ)]
+    #[ApiResponse(200, 'rest_response_200_get')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
     public function getList(): void
     {
         // Implementation handled by BaseRestController
@@ -94,25 +98,28 @@ class RestController extends BaseRestController
      *
      * @route PUT /pbxcore/api/v3/mail-settings
      */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
     #[ApiOperation(
-        summary: 'Update mail settings',
-        description: 'Replace all mail configuration settings. All fields will be updated.',
+        summary: 'rest_ms_Update',
+        description: 'rest_ms_UpdateDesc',
         operationId: 'updateMailSettings'
     )]
-    #[ApiParameter('MailSMTPHost', 'string', 'SMTP server hostname', ParameterLocation::QUERY, required: true, maxLength: 255, example: 'smtp.gmail.com')]
-    #[ApiParameter('MailSMTPPort', 'integer', 'SMTP server port', ParameterLocation::QUERY, required: true, minimum: 1, maximum: 65535, example: 587)]
-    #[ApiParameter('MailSMTPAuthType', 'string', 'Authentication method', ParameterLocation::QUERY, required: false, enum: ['none', 'plain', 'login', 'oauth2'], default: 'none', example: 'oauth2')]
-    #[ApiParameter('MailSMTPUsername', 'string', 'SMTP username/email', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'admin@company.com')]
-    #[ApiParameter('MailSMTPPassword', 'string', 'SMTP password (for plain/login auth)', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'password123')]
-    #[ApiParameter('MailSMTPUseTLS', 'boolean', 'Use TLS encryption', ParameterLocation::QUERY, required: false, default: true, example: true)]
-    #[ApiParameter('MailFromUsername', 'string', 'Sender display name', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'PBX System')]
-    #[ApiParameter('MailFromAddress', 'string', 'Sender email address', ParameterLocation::QUERY, required: true, maxLength: 255, example: 'admin@company.com')]
-    #[ApiParameter('MailEnableNotifications', 'boolean', 'Enable email notifications', ParameterLocation::QUERY, required: false, default: true, example: true)]
-    #[ApiResponse(200, 'Mail settings updated successfully', example: '{"result":true,"data":{"MailSMTPHost":"smtp.gmail.com","MailSMTPPort":"587","MailSMTPAuthType":"oauth2"},"messages":["Settings updated successfully"]}')]
-    #[ApiResponse(400, 'Invalid request data', 'ErrorResponse', example: '{"result":false,"messages":{"error":["MailSMTPHost is required","Invalid port number"]}}')]
-    #[ApiResponse(401, 'Authentication required', 'ErrorResponse')]
-    #[ApiResponse(403, 'Insufficient permissions', 'ErrorResponse')]
-    #[ResourceSecurity('mail_settings', ActionType::WRITE)]
+    #[ApiParameter('MailSMTPHost', 'string', 'rest_param_ms_smtp_host', ParameterLocation::QUERY, required: true, maxLength: 255, example: 'smtp.gmail.com')]
+    #[ApiParameter('MailSMTPPort', 'integer', 'rest_param_ms_smtp_port', ParameterLocation::QUERY, required: true, minimum: 1, maximum: 65535, example: 587)]
+    #[ApiParameter('MailSMTPAuthType', 'string', 'rest_param_ms_auth_type', ParameterLocation::QUERY, required: false, enum: ['none', 'plain', 'login', 'oauth2'], default: 'none', example: 'oauth2')]
+    #[ApiParameter('MailSMTPUsername', 'string', 'rest_param_ms_username', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'admin@company.com')]
+    #[ApiParameter('MailSMTPPassword', 'string', 'rest_param_ms_password', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'password123')]
+    #[ApiParameter('MailSMTPUseTLS', 'boolean', 'rest_param_ms_use_tls', ParameterLocation::QUERY, required: false, default: true, example: true)]
+    #[ApiParameter('MailFromUsername', 'string', 'rest_param_ms_from_username', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'PBX System')]
+    #[ApiParameter('MailFromAddress', 'string', 'rest_param_ms_from_address', ParameterLocation::QUERY, required: true, maxLength: 255, example: 'admin@company.com')]
+    #[ApiParameter('MailEnableNotifications', 'boolean', 'rest_param_ms_enable_notifications', ParameterLocation::QUERY, required: false, default: true, example: true)]
+    #[ApiResponse(200, 'rest_response_200_updated')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
     public function update(): void
     {
         // Implementation handled by BaseRestController
@@ -123,20 +130,23 @@ class RestController extends BaseRestController
      *
      * @route PATCH /pbxcore/api/v3/mail-settings
      */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
     #[ApiOperation(
-        summary: 'Patch mail settings',
-        description: 'Partially update mail configuration. Only provided fields will be modified.',
+        summary: 'rest_ms_Patch',
+        description: 'rest_ms_PatchDesc',
         operationId: 'patchMailSettings'
     )]
-    #[ApiParameter('MailSMTPHost', 'string', 'SMTP server hostname', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'smtp.outlook.com')]
-    #[ApiParameter('MailSMTPPort', 'integer', 'SMTP server port', ParameterLocation::QUERY, required: false, minimum: 1, maximum: 65535, example: 587)]
-    #[ApiParameter('MailSMTPAuthType', 'string', 'Authentication method', ParameterLocation::QUERY, required: false, enum: ['none', 'plain', 'login', 'oauth2'], example: 'oauth2')]
-    #[ApiParameter('MailEnableNotifications', 'boolean', 'Enable email notifications', ParameterLocation::QUERY, required: false, example: false)]
-    #[ApiResponse(200, 'Mail settings patched successfully', example: '{"result":true,"data":{"MailSMTPHost":"smtp.outlook.com","MailSMTPAuthType":"oauth2"},"messages":["Settings updated successfully"]}')]
-    #[ApiResponse(400, 'Invalid request data', 'ErrorResponse')]
-    #[ApiResponse(401, 'Authentication required', 'ErrorResponse')]
-    #[ApiResponse(403, 'Insufficient permissions', 'ErrorResponse')]
-    #[ResourceSecurity('mail_settings', ActionType::WRITE)]
+    #[ApiParameter('MailSMTPHost', 'string', 'rest_param_ms_smtp_host', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'smtp.outlook.com')]
+    #[ApiParameter('MailSMTPPort', 'integer', 'rest_param_ms_smtp_port', ParameterLocation::QUERY, required: false, minimum: 1, maximum: 65535, example: 587)]
+    #[ApiParameter('MailSMTPAuthType', 'string', 'rest_param_ms_auth_type', ParameterLocation::QUERY, required: false, enum: ['none', 'plain', 'login', 'oauth2'], example: 'oauth2')]
+    #[ApiParameter('MailEnableNotifications', 'boolean', 'rest_param_ms_enable_notifications', ParameterLocation::QUERY, required: false, example: false)]
+    #[ApiResponse(200, 'rest_response_200_patched')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
     public function patch(): void
     {
         // Implementation handled by BaseRestController
@@ -148,14 +158,13 @@ class RestController extends BaseRestController
      * @route DELETE /pbxcore/api/v3/mail-settings
      */
     #[ApiOperation(
-        summary: 'Reset mail settings',
-        description: 'Reset all mail configuration to default values. This action cannot be undone.',
+        summary: 'rest_ms_Reset',
+        description: 'rest_ms_ResetDesc',
         operationId: 'resetMailSettings'
     )]
-    #[ApiResponse(200, 'Mail settings reset successfully', example: '{"result":true,"messages":["Mail settings reset to defaults"]}')]
-    #[ApiResponse(401, 'Authentication required', 'ErrorResponse')]
-    #[ApiResponse(403, 'Insufficient permissions', 'ErrorResponse')]
-    #[ResourceSecurity('mail_settings', ActionType::WRITE)]
+    #[ApiResponse(200, 'rest_response_200_deleted')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
     public function reset(): void
     {
         // Implementation handled by BaseRestController
@@ -167,19 +176,18 @@ class RestController extends BaseRestController
      * @route POST /pbxcore/api/v3/mail-settings:testConnection
      */
     #[ApiOperation(
-        summary: 'Test SMTP connection',
-        description: 'Test SMTP connection with current or provided configuration settings',
+        summary: 'rest_ms_TestConnection',
+        description: 'rest_ms_TestConnectionDesc',
         operationId: 'testMailConnection'
     )]
-    #[ApiParameter('MailSMTPHost', 'string', 'SMTP server to test (optional, uses current if not provided)', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'smtp.gmail.com')]
-    #[ApiParameter('MailSMTPPort', 'integer', 'SMTP port to test', ParameterLocation::QUERY, required: false, minimum: 1, maximum: 65535, example: 587)]
-    #[ApiParameter('MailSMTPUsername', 'string', 'Username for test', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'test@company.com')]
-    #[ApiParameter('MailSMTPPassword', 'string', 'Password for test', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'testpassword')]
-    #[ApiResponse(200, 'Connection test completed', example: '{"result":true,"data":{"connection_status":"success","response_time_ms":234,"server_info":"220 smtp.gmail.com ESMTP"},"messages":["SMTP connection successful"]}')]
-    #[ApiResponse(400, 'Connection test failed', 'ErrorResponse', example: '{"result":false,"messages":{"error":["Failed to connect to SMTP server: Connection refused"]}}')]
-    #[ApiResponse(401, 'Authentication required', 'ErrorResponse')]
-    #[ApiResponse(403, 'Insufficient permissions', 'ErrorResponse')]
-    #[ResourceSecurity('mail_settings', ActionType::WRITE)]
+    #[ApiParameter('MailSMTPHost', 'string', 'rest_param_ms_smtp_host', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'smtp.gmail.com')]
+    #[ApiParameter('MailSMTPPort', 'integer', 'rest_param_ms_smtp_port', ParameterLocation::QUERY, required: false, minimum: 1, maximum: 65535, example: 587)]
+    #[ApiParameter('MailSMTPUsername', 'string', 'rest_param_ms_username', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'test@company.com')]
+    #[ApiParameter('MailSMTPPassword', 'string', 'rest_param_ms_password', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'testpassword')]
+    #[ApiResponse(200, 'rest_response_200_test')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
     public function testConnection(): void
     {
         // Implementation handled by BaseRestController
@@ -191,18 +199,17 @@ class RestController extends BaseRestController
      * @route POST /pbxcore/api/v3/mail-settings:sendTestEmail
      */
     #[ApiOperation(
-        summary: 'Send test email',
-        description: 'Send a test email using current mail configuration to verify settings',
+        summary: 'rest_ms_SendTestEmail',
+        description: 'rest_ms_SendTestEmailDesc',
         operationId: 'sendTestEmail'
     )]
-    #[ApiParameter('to', 'string', 'Recipient email address', ParameterLocation::QUERY, required: true, maxLength: 255, example: 'admin@company.com')]
-    #[ApiParameter('subject', 'string', 'Email subject line', ParameterLocation::QUERY, required: false, maxLength: 255, default: 'MikoPBX Test Email', example: 'Test Email from PBX')]
-    #[ApiParameter('body', 'string', 'Email body content', ParameterLocation::QUERY, required: false, maxLength: 5000, default: 'This is a test email from MikoPBX system.', example: 'Test message to verify mail configuration.')]
-    #[ApiResponse(200, 'Test email sent successfully', example: '{"result":true,"data":{"message_id":"<abc123@company.com>","sent_to":"admin@company.com"},"messages":["Test email sent successfully"]}')]
-    #[ApiResponse(400, 'Failed to send email', 'ErrorResponse', example: '{"result":false,"messages":{"error":["Failed to send email: SMTP authentication failed"]}}')]
-    #[ApiResponse(401, 'Authentication required', 'ErrorResponse')]
-    #[ApiResponse(403, 'Insufficient permissions', 'ErrorResponse')]
-    #[ResourceSecurity('mail_settings', ActionType::WRITE)]
+    #[ApiParameter('to', 'string', 'rest_param_ms_test_email_to', ParameterLocation::QUERY, required: true, maxLength: 255, example: 'admin@company.com')]
+    #[ApiParameter('subject', 'string', 'rest_param_ms_test_email_subject', ParameterLocation::QUERY, required: false, maxLength: 255, default: 'MikoPBX Test Email', example: 'Test Email from PBX')]
+    #[ApiParameter('body', 'string', 'rest_param_ms_test_email_body', ParameterLocation::QUERY, required: false, maxLength: 5000, default: 'This is a test email from MikoPBX system.', example: 'Test message to verify mail configuration.')]
+    #[ApiResponse(200, 'rest_response_200_test')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
     public function sendTestEmail(): void
     {
         // Implementation handled by BaseRestController
@@ -214,17 +221,16 @@ class RestController extends BaseRestController
      * @route GET /pbxcore/api/v3/mail-settings:getOAuth2Url
      */
     #[ApiOperation(
-        summary: 'Get OAuth2 authorization URL',
-        description: 'Generate OAuth2 authorization URL for mail provider (Gmail, Outlook, etc.)',
+        summary: 'rest_ms_GetOAuth2Url',
+        description: 'rest_ms_GetOAuth2UrlDesc',
         operationId: 'getOAuth2AuthUrl'
     )]
-    #[ApiParameter('provider', 'string', 'OAuth2 provider', ParameterLocation::QUERY, required: true, enum: ['google', 'microsoft', 'yahoo'], example: 'google')]
-    #[ApiParameter('redirect_uri', 'string', 'OAuth2 redirect URI', ParameterLocation::QUERY, required: false, maxLength: 500, example: 'https://pbx.company.com/pbxcore/api/v3/mail-settings/oauth2-callback')]
-    #[ApiResponse(200, 'OAuth2 URL generated successfully', example: '{"result":true,"data":{"auth_url":"https://accounts.google.com/o/oauth2/auth?client_id=123&redirect_uri=...","state":"random_state_string","provider":"google"},"messages":["Authorization URL generated"]}')]
-    #[ApiResponse(400, 'Invalid provider or configuration', 'ErrorResponse', example: '{"result":false,"messages":{"error":["OAuth2 not configured for provider: unknown_provider"]}}')]
-    #[ApiResponse(401, 'Authentication required', 'ErrorResponse')]
-    #[ApiResponse(403, 'Insufficient permissions', 'ErrorResponse')]
-    #[ResourceSecurity('mail_settings', ActionType::READ)]
+    #[ApiParameter('provider', 'string', 'rest_param_ms_oauth2_provider', ParameterLocation::QUERY, required: true, enum: ['google', 'microsoft', 'yahoo'], example: 'google')]
+    #[ApiParameter('redirect_uri', 'string', 'rest_param_ms_oauth2_redirect_uri', ParameterLocation::QUERY, required: false, maxLength: 500, example: 'https://pbx.company.com/pbxcore/api/v3/mail-settings/oauth2-callback')]
+    #[ApiResponse(200, 'rest_response_200_generated')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
     public function getOAuth2Url(): void
     {
         // Implementation handled by BaseRestController
@@ -236,16 +242,15 @@ class RestController extends BaseRestController
      * @route POST /pbxcore/api/v3/mail-settings:refreshToken
      */
     #[ApiOperation(
-        summary: 'Refresh OAuth2 token',
-        description: 'Refresh expired OAuth2 access token using stored refresh token',
+        summary: 'rest_ms_RefreshToken',
+        description: 'rest_ms_RefreshTokenDesc',
         operationId: 'refreshOAuth2Token'
     )]
-    #[ApiParameter('provider', 'string', 'OAuth2 provider to refresh token for', ParameterLocation::QUERY, required: false, enum: ['google', 'microsoft', 'yahoo'], example: 'google')]
-    #[ApiResponse(200, 'Token refreshed successfully', example: '{"result":true,"data":{"access_token":"new_access_token","expires_in":3600,"token_type":"Bearer"},"messages":["OAuth2 token refreshed successfully"]}')]
-    #[ApiResponse(400, 'Token refresh failed', 'ErrorResponse', example: '{"result":false,"messages":{"error":["Failed to refresh token: Invalid refresh token"]}}')]
-    #[ApiResponse(401, 'Authentication required', 'ErrorResponse')]
-    #[ApiResponse(403, 'Insufficient permissions', 'ErrorResponse')]
-    #[ResourceSecurity('mail_settings', ActionType::WRITE)]
+    #[ApiParameter('provider', 'string', 'rest_param_ms_oauth2_provider', ParameterLocation::QUERY, required: false, enum: ['google', 'microsoft', 'yahoo'], example: 'google')]
+    #[ApiResponse(200, 'rest_response_200_refreshed')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
     public function refreshToken(): void
     {
         // Implementation handled by BaseRestController
@@ -253,34 +258,43 @@ class RestController extends BaseRestController
 
 
     /**
-     * Override action mapping for singleton resource behavior
-     * MailSettings is a singleton - there's only one set of settings
+     * Get diagnostics information about mail settings
      *
-     * @return array<string, array<string, string>>
+     * @route GET /pbxcore/api/v3/mail-settings:getDiagnostics
      */
-    protected function getActionMapping(): array
+    #[ApiOperation(
+        summary: 'rest_ms_GetDiagnostics',
+        description: 'rest_ms_GetDiagnosticsDesc',
+        operationId: 'getMailDiagnostics'
+    )]
+    #[ApiResponse(200, 'rest_response_200_get')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function getDiagnostics(): void
     {
-        return [
-            'GET' => [
-                'collection' => 'getList',
-                'resource' => 'getList'  // Singleton: same action for both
-            ],
-            'POST' => [
-                'collection' => 'create',  // Not used for singleton, but required for custom methods
-                'resource' => 'create'
-            ],
-            'PUT' => [
-                'collection' => 'update',
-                'resource' => 'update'
-            ],
-            'PATCH' => [
-                'collection' => 'patch',
-                'resource' => 'patch'
-            ],
-            'DELETE' => [
-                'collection' => 'reset',  // Reset to defaults
-                'resource' => 'reset'
-            ]
-        ];
+        // Implementation handled by BaseRestController
     }
+
+    /**
+     * Get default mail settings template
+     *
+     * @route GET /pbxcore/api/v3/mail-settings:getDefault
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
+    #[ApiOperation(
+        summary: 'rest_ms_GetDefault',
+        description: 'rest_ms_GetDefaultDesc',
+        operationId: 'getMailSettingsDefault'
+    )]
+    #[ApiResponse(200, 'rest_response_200_default')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function getDefault(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
 }

@@ -442,10 +442,10 @@ class Sip extends ModelsBase
      *
      * @return string The generated unique id.
      */
-    public static function generateUniqueID($alias=''):string
+    public static function generateUniqueID(string $alias = ''):string
     {
         if (empty($alias)){
-            $alias = Extensions::TYPE_SIP.'-PHONE-';
+            $alias = Extensions::PREFIX_SIP;
         }
         return parent::generateUniqueID($alias);
     }

@@ -21,56 +21,236 @@ namespace MikoPBX\PBXCoreREST\Lib\ConferenceRooms;
 
 use MikoPBX\Common\Models\ConferenceRooms;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
+use MikoPBX\PBXCoreREST\Lib\Common\OpenApiSchemaProvider;
 
 /**
- * Data structure for conference rooms
- * 
- * Extends AbstractDataStructure to leverage common functionality:
- * - Boolean field formatting
- * - Extension representation helpers
- * - Text field processing
- * 
+ * Data structure for conference rooms with OpenAPI schema support
+ *
+ * Provides consistent data format for conference room records in REST API responses.
+ * Implements OpenApiSchemaProvider to provide typed schemas for OpenAPI specification.
+ *
  * @package MikoPBX\PBXCoreREST\Lib\ConferenceRooms
  */
-class DataStructure extends AbstractDataStructure
+class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvider
 {
     /**
      * Create full data array from ConferenceRooms model
-     * 
+     *
+     * Following "Store Clean, Escape at Edge" principle:
+     * Returns raw data that was sanitized on input. HTML escaping
+     * is the responsibility of the presentation layer.
+     *
      * Used for detailed views and single record retrieval.
      * Uses uniqid as the primary identifier for clean API design.
-     * 
+     *
      * @param ConferenceRooms $model
-     * @return array
+     * @return array<string, mixed> Complete data structure with representation fields
      */
     public static function createFromModel($model): array
     {
-        return [
-            'id' => $model->uniqid,
-            'extension' => $model->extension,
-            'name' => $model->name,
-            'pinCode' => $model->pinCode ?? '',
-            'represent' => $model->getRepresent()
-        ];
+        // Start with base structure (raw data, no HTML escaping)
+        $data = self::createBaseStructure($model);
+
+        // Replace numeric id with uniqid for v3 API
+        $data['id'] = $model->uniqid;
+        unset($data['uniqid']); // Remove uniqid field to avoid duplication
+
+        // Add conference room specific fields
+        $data['extension'] = $model->extension;
+        $data['pinCode'] = $model->pinCode ?? '';
+
+        // Apply OpenAPI schema formatting to convert types automatically
+        // This replaces manual formatBooleanFields(), handleNullValues(), etc.
+        // The schema defines which fields should be boolean, integer, or string
+        $data = self::formatBySchema($data, 'detail');
+
+        return $data;
     }
     
     /**
      * Create optimized data array for list view
-     * 
+     *
      * Returns data needed for list display.
      * Uses uniqid as the primary identifier for clean API design.
-     * 
+     *
      * @param ConferenceRooms $model
-     * @return array
+     * @return array<string, mixed> Simplified data structure for table display
      */
     public static function createForList($model): array
     {
+        // Use unified base method for list creation
+        $data = parent::createForList($model);
+
+        // Replace numeric id with uniqid for v3 API
+        $data['id'] = $model->uniqid;
+        unset($data['uniqid']); // Remove uniqid field to avoid duplication
+
+        // Add conference room specific fields for list display
+        $data['extension'] = $model->extension;
+        $data['pinCode'] = $model->pinCode ?? '';
+
+        // Apply OpenAPI list schema formatting to ensure proper types
+        // This guarantees consistency with API documentation
+        $data = self::formatBySchema($data, 'list');
+
+        return $data;
+    }
+
+    /**
+     * Get OpenAPI schema for conference room list item
+     *
+     * This schema matches the structure returned by createForList() method.
+     * Used for GET /api/v3/conference-rooms endpoint (list of conference rooms).
+     *
+     * @return array<string, mixed> OpenAPI schema definition
+     */
+    public static function getListItemSchema(): array
+    {
         return [
-            'id' => $model->uniqid,
-            'extension' => $model->extension,
-            'name' => $model->name,
-            'pinCode' => $model->pinCode ?? '',
-            'represent' => $model->getRepresent()
+            'type' => 'object',
+            'required' => ['id', 'extension', 'name'],
+            'properties' => [
+                'id' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_cr_id',
+                    'pattern' => '^CONFERENCE-[A-Z0-9]{8,}$',
+                    'example' => 'CONFERENCE-ABCD1234'
+                ],
+                'extension' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_cr_extension',
+                    'pattern' => '^[0-9]{2,8}$',
+                    'example' => '3000'
+                ],
+                'name' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_cr_name',
+                    'maxLength' => 100,
+                    'example' => 'Sales Conference'
+                ],
+                'pinCode' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_cr_pincode',
+                    'maxLength' => 20,
+                    'example' => '1234'
+                ],
+                'represent' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_cr_represent',
+                    'example' => '<i class="users icon"></i> Sales Conference <3000>'
+                ]
+            ]
         ];
+    }
+
+    /**
+     * Get OpenAPI schema for detailed conference room record
+     *
+     * This schema matches the structure returned by createFromModel() method.
+     * Used for GET /api/v3/conference-rooms/{id}, POST, PUT, PATCH endpoints.
+     *
+     * @return array<string, mixed> OpenAPI schema definition
+     */
+    public static function getDetailSchema(): array
+    {
+        return [
+            'type' => 'object',
+            'required' => ['id', 'extension', 'name'],
+            'properties' => [
+                'id' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_cr_id',
+                    'pattern' => '^CONFERENCE-[A-Z0-9]{8,}$',
+                    'example' => 'CONFERENCE-ABCD1234'
+                ],
+                'extension' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_cr_extension',
+                    'pattern' => '^[0-9]{2,8}$',
+                    'example' => '3000'
+                ],
+                'name' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_cr_name',
+                    'maxLength' => 100,
+                    'example' => 'Sales Conference'
+                ],
+                'pinCode' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_cr_pincode',
+                    'maxLength' => 20,
+                    'example' => '1234'
+                ],
+                'represent' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_cr_represent',
+                    'example' => '<i class="users icon"></i> Sales Conference <3000>'
+                ]
+            ]
+        ];
+    }
+
+    /**
+     * Get related schemas for OpenAPI components
+     *
+     * @return array<string, array<string, mixed>> Related schemas
+     */
+    public static function getRelatedSchemas(): array
+    {
+        return [];
+    }
+
+    /**
+     * Generate sanitization rules from OpenAPI schema
+     *
+     * Converts OpenAPI schema constraints into SystemSanitizer format.
+     * This eliminates duplication between schema definition and validation rules.
+     *
+     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
+     */
+    public static function getSanitizationRules(): array
+    {
+        $schema = static::getDetailSchema();
+        $rules = [];
+
+        if (!isset($schema['properties'])) {
+            return $rules;
+        }
+
+        foreach ($schema['properties'] as $fieldName => $fieldSchema) {
+            // Skip computed/read-only fields
+            if (in_array($fieldName, ['represent'])) {
+                continue;
+            }
+
+            $ruleParts = [];
+
+            // Add type
+            $type = $fieldSchema['type'] ?? 'string';
+            $ruleParts[] = match ($type) {
+                'integer' => 'int',
+                'number' => 'float',
+                'boolean' => 'bool',
+                'array' => 'array',
+                default => 'string'
+            };
+
+            // Add constraints
+            if (isset($fieldSchema['maxLength'])) {
+                $ruleParts[] = 'max:' . $fieldSchema['maxLength'];
+            }
+            if (isset($fieldSchema['pattern']) && is_string($fieldSchema['pattern'])) {
+                $pattern = str_replace('^', '', $fieldSchema['pattern']);
+                $pattern = str_replace('$', '', $pattern);
+                $ruleParts[] = 'regex:/' . $pattern . '/';
+            }
+            if (isset($fieldSchema['nullable']) && $fieldSchema['nullable'] === true) {
+                $ruleParts[] = 'empty_to_null';
+            }
+
+            $rules[$fieldName] = implode('|', $ruleParts);
+        }
+
+        return $rules;
     }
 }

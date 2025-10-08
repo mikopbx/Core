@@ -70,7 +70,7 @@ class DeleteRecordAction
             // Find user by ID (convert to int to ensure proper type)
             $user = Users::findFirstById($id);
             if (!$user) {
-                $res->messages['error'][] = 'Employee not found';
+                $res->messages['error'][] = "Employee not found (ID: {$id})";
                 return $res;
             }
 

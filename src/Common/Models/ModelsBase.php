@@ -557,6 +557,6 @@ class ModelsBase extends Model
             CriticalErrorsHandler::handleExceptionWithSyslog($e);
             $hash = md5(microtime());
         }
-        return $alias . strtoupper($hash);
+        return $alias . '-' . strtoupper($hash);
     }
 }

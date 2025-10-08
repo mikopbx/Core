@@ -26,8 +26,6 @@ use MikoPBX\PBXCoreREST\Controllers\{
     Nchan\GetController as NchanGetController,
     MailSettings\OAuth2CallbackController,
     Modules\ModulesControllerBase,
-    Modules\CorePostController as ModulesCorePostController,
-    Modules\CoreGetController as ModulesCoreGetController,
     Files\RestController as FilesRestController
 };
 
@@ -96,11 +94,11 @@ class RouterProvider implements ServiceProviderInterface
         // Nchan routes (exclude validate-token which is handled by SPECIAL_ROUTES)
         [NchanGetController::class, 'callAction', '/pbxcore/api/nchan/{queueName:(?!validate-token)[a-zA-Z0-9_-]+}', 'get', '/'],
 
-        // Module routes
+        // Module routes (legacy - only for third-party modules)
         [ModulesControllerBase::class, 'callActionForModule', '/pbxcore/api/modules/{moduleName}/{actionName}', 'get', '/'],
         [ModulesControllerBase::class, 'callActionForModule', '/pbxcore/api/modules/{moduleName}/{actionName}', 'post', '/'],
-        [ModulesCoreGetController::class, 'callAction', '/pbxcore/api/modules/core/{actionName}', 'get', '/'],
-        [ModulesCorePostController::class, 'callAction', '/pbxcore/api/modules/core/{actionName}', 'post', '/'],
+
+        // Note: CoreGetController and CorePostController removed - use /pbxcore/api/v3/modules instead
     ];
 
     /**
@@ -171,8 +169,8 @@ class RouterProvider implements ServiceProviderInterface
         foreach ($directories as $dir) {
             $dirName = basename($dir);
 
-            // Skip special directories
-            if (in_array($dirName, ['Nchan', 'Modules', 'Files'])) {
+            // Skip special directories (Modules now uses universal routing)
+            if (in_array($dirName, ['Nchan', 'Files'])) {
                 continue;
             }
 
@@ -196,8 +194,70 @@ class RouterProvider implements ServiceProviderInterface
     private function generateUniversalRoutes(string $controllerClass, string $resourcePath): array
     {
         // Check if controller has custom ID pattern via HttpMapping attribute
-        $idPattern = $this->getCustomIdPattern($controllerClass);
+        $idPatterns = $this->getCustomIdPattern($controllerClass);
 
+        // If idPattern is an array, create separate routes for each prefix
+        if (is_array($idPatterns)) {
+            return $this->generateRoutesForMultiplePrefixes($controllerClass, $resourcePath, $idPatterns);
+        }
+
+        // Single pattern - use existing logic
+        return $this->generateRoutesForSinglePattern($controllerClass, $resourcePath, $idPatterns);
+    }
+
+    /**
+     * Generate routes for multiple ID prefixes
+     */
+    private function generateRoutesForMultiplePrefixes(string $controllerClass, string $resourcePath, array $prefixes): array
+    {
+        $routes = [
+            // === CUSTOM METHODS (highest priority for proper matching) ===
+
+            // Collection-level custom methods: GET /resource:method, POST /resource:method
+            [$controllerClass, 'handleCustomRequest', $resourcePath, 'get', ':{method:[a-zA-Z][a-zA-Z0-9]*}'],
+            [$controllerClass, 'handleCustomRequest', $resourcePath, 'post', ':{method:[a-zA-Z][a-zA-Z0-9]*}'],
+            [$controllerClass, 'handleCustomRequest', $resourcePath, 'put', ':{method:[a-zA-Z][a-zA-Z0-9]*}'],
+            [$controllerClass, 'handleCustomRequest', $resourcePath, 'patch', ':{method:[a-zA-Z][a-zA-Z0-9]*}'],
+            [$controllerClass, 'handleCustomRequest', $resourcePath, 'delete', ':{method:[a-zA-Z][a-zA-Z0-9]*}'],
+
+            // === STANDARD CRUD OPERATIONS ===
+
+            // Collection operations
+            [$controllerClass, 'handleCRUDRequest', $resourcePath, 'get', '/'],     // List all
+            [$controllerClass, 'handleCRUDRequest', $resourcePath, 'post', '/'],    // Create new
+            [$controllerClass, 'handleCRUDRequest', $resourcePath, 'put', '/'],     // Replace all (bulk)
+            [$controllerClass, 'handleCRUDRequest', $resourcePath, 'patch', '/'],   // Update all (bulk)
+            [$controllerClass, 'handleCRUDRequest', $resourcePath, 'delete', '/'],  // Delete all (dangerous, controlled by processor)
+        ];
+
+        // Add resource-level routes for each prefix
+        foreach ($prefixes as $prefix) {
+            // Escape prefix for regex and add pattern for the rest of ID
+            $escapedPrefix = preg_quote($prefix, '/');
+            $fullPattern = $escapedPrefix . '[A-Za-z0-9-]+';
+
+            // Resource-level custom methods for this prefix
+            $routes[] = [$controllerClass, 'handleResourceCustomRequest', $resourcePath, 'get', '/{id:' . $fullPattern . '}:{method:[a-zA-Z][a-zA-Z0-9]*}'];
+            $routes[] = [$controllerClass, 'handleResourceCustomRequest', $resourcePath, 'post', '/{id:' . $fullPattern . '}:{method:[a-zA-Z][a-zA-Z0-9]*}'];
+            $routes[] = [$controllerClass, 'handleResourceCustomRequest', $resourcePath, 'put', '/{id:' . $fullPattern . '}:{method:[a-zA-Z][a-zA-Z0-9]*}'];
+            $routes[] = [$controllerClass, 'handleResourceCustomRequest', $resourcePath, 'patch', '/{id:' . $fullPattern . '}:{method:[a-zA-Z][a-zA-Z0-9]*}'];
+            $routes[] = [$controllerClass, 'handleResourceCustomRequest', $resourcePath, 'delete', '/{id:' . $fullPattern . '}:{method:[a-zA-Z][a-zA-Z0-9]*}'];
+
+            // Individual resource operations for this prefix
+            $routes[] = [$controllerClass, 'handleCRUDRequest', $resourcePath, 'get', '/{id:' . $fullPattern . '}'];     // Get one
+            $routes[] = [$controllerClass, 'handleCRUDRequest', $resourcePath, 'put', '/{id:' . $fullPattern . '}'];     // Replace one
+            $routes[] = [$controllerClass, 'handleCRUDRequest', $resourcePath, 'patch', '/{id:' . $fullPattern . '}'];   // Update one
+            $routes[] = [$controllerClass, 'handleCRUDRequest', $resourcePath, 'delete', '/{id:' . $fullPattern . '}'];  // Delete one
+        }
+
+        return $routes;
+    }
+
+    /**
+     * Generate routes for single ID pattern
+     */
+    private function generateRoutesForSinglePattern(string $controllerClass, string $resourcePath, string $idPattern): array
+    {
         return [
             // === CUSTOM METHODS (highest priority for proper matching) ===
 
@@ -234,8 +294,10 @@ class RouterProvider implements ServiceProviderInterface
 
     /**
      * Get custom ID pattern from controller's HttpMapping attribute
+     *
+     * @return string|array<string> Returns regex string or array of ID prefixes
      */
-    private function getCustomIdPattern(string $controllerClass): string
+    private function getCustomIdPattern(string $controllerClass): string|array
     {
         if (!class_exists($controllerClass)) {
             return self::UNIVERSAL_ID_PATTERNS['any'];
@@ -247,7 +309,9 @@ class RouterProvider implements ServiceProviderInterface
 
             if (!empty($httpMappingAttributes)) {
                 $httpMapping = $httpMappingAttributes[0]->newInstance();
-                return $httpMapping->getIdPattern();
+                $pattern = $httpMapping->getIdPattern();
+                // Return pattern as-is (can be string or array)
+                return $pattern;
             }
         } catch (\ReflectionException $e) {
             // Fallback to default pattern
@@ -286,6 +350,7 @@ class RouterProvider implements ServiceProviderInterface
             'Fail2Ban' => 'fail2ban',
             'UserPageTracker' => 'user-page-tracker',
             'Users' => 'users',
+            'Modules' => 'modules',
             'OpenAPI' => 'openapi',
         ];
 

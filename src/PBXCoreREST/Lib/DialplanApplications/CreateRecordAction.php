@@ -56,7 +56,7 @@ class CreateRecordAction
             $record = new DialplanApplications();
             
             // Generate unique ID using standard method (creates short ID like IVR)
-            $record->uniqid = DialplanApplications::generateUniqueID('DIALPLAN-');
+            $record->uniqid = DialplanApplications::generateUniqueID(Extensions::PREFIX_DIALPLAN);
             $record->name = $data['name'];
             $record->extension = $data['extension'];
             $record->hint = $data['hint'] ?? '';

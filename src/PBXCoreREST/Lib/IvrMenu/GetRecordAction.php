@@ -118,7 +118,7 @@ class GetRecordAction extends AbstractGetRecordAction
     {
         $newMenu = new IvrMenu();
         $newMenu->id = '';
-        $newMenu->uniqid = IvrMenu::generateUniqueID('IVR-');
+        $newMenu->uniqid = IvrMenu::generateUniqueID(Extensions::PREFIX_IVR);
         $newMenu->extension = Extensions::getNextFreeApplicationNumber();
         $newMenu->name = '';
         $newMenu->audio_message_id = '';

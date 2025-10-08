@@ -385,7 +385,10 @@ class PbxApiClient {
             });
             return;
         }
-        
+
+        // Extract async channel ID if present (used for long-running operations)
+        const asyncChannelId = data.asyncChannelId || data.channelId;
+
         // Build URL with ID if provided (for resource-level custom methods)
         let url = this.apiUrl;
         if (resourceId) {
@@ -402,7 +405,7 @@ class PbxApiClient {
             // Collection-level method: /api/v3/resource:method
             url = `${this.apiUrl}${methodPath}`;
         }
-        
+
         // Add CSRF token for POST requests
         if (httpMethod === 'POST' && typeof globalCsrfTokenKey !== 'undefined' && typeof globalCsrfToken !== 'undefined') {
             data[globalCsrfTokenKey] = globalCsrfToken;
@@ -419,6 +422,14 @@ class PbxApiClient {
             method: httpMethod,
             ...apiSettings
         };
+
+        // Add async channel header if provided
+        if (asyncChannelId) {
+            ajaxSettings.beforeXHR = (xhr) => {
+                xhr.setRequestHeader('X-Async-Response-Channel-Id', asyncChannelId);
+                return xhr;
+            };
+        }
 
         // For GET requests, always use query parameters (no JSON in body)
         // For POST/PUT/DELETE, use JSON for complex data (objects, arrays)

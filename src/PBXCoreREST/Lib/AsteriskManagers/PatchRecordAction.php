@@ -51,7 +51,7 @@ class PatchRecordAction
             // Find existing model
             $model = AsteriskManagerUsers::findFirstById($data['id']);
             if (!$model) {
-                $res->messages['error'][] = 'AMI user not found';
+                $res->messages['error'][] = "AMI user not found (ID: {$data['id']})";
                 return $res;
             }
 

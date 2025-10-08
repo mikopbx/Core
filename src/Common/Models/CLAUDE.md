@@ -596,16 +596,6 @@ Inherits all fields from `CallDetailRecordsBase`
 - belongsTo → `Extensions`, `SoundFiles`
 - hasMany → `OutWorkTimesRouts`
 
-### AuthTokens
-
-**Table**: `m_AuthTokens`  
-**Purpose**: Authentication tokens
-
-**Key Fields**:
-- `tokenHash` (string) - Token hash
-- `sessionParams` (string) - Session data (JSON)
-- `expiryDate` (string) - Expiration timestamp
-
 ### LongPollSubscribe
 
 **Table**: `m_LongPollSubscribe`  

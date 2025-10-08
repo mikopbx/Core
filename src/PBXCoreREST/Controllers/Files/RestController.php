@@ -19,10 +19,20 @@
 
 namespace MikoPBX\PBXCoreREST\Controllers\Files;
 
-use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
-use MikoPBX\PBXCoreREST\Http\Response;
 use MikoPBX\PBXCoreREST\Lib\FilesManagementProcessor;
+use MikoPBX\PBXCoreREST\Lib\Files\DataStructure;
+use MikoPBX\PBXCoreREST\Attributes\{
+    ApiResource,
+    ApiOperation,
+    ApiParameter,
+    ApiResponse,
+    ApiDataSchema,
+    SecurityType,
+    ParameterLocation,
+    HttpMapping,
+    ResourceSecurity
+};
 
 /**
  * RESTful controller for file management (v3 API)
@@ -66,6 +76,29 @@ use MikoPBX\PBXCoreREST\Lib\FilesManagementProcessor;
  *
  * @package MikoPBX\PBXCoreREST\Controllers\Files
  */
+#[ApiResource(
+    path: '/pbxcore/api/v3/files',
+    tags: ['Files'],
+    description: 'Comprehensive file management operations. Provides REST operations for reading, uploading, and deleting files, plus custom methods for chunked uploads and firmware downloads. Supports both simple PUT uploads and resumable chunked uploads via Resumable.js protocol.',
+    processor: FilesManagementProcessor::class
+)]
+#[ResourceSecurity(
+    'files',
+    requirements: [SecurityType::BEARER_TOKEN],
+    description: 'rest_security_bearer'
+)]
+#[HttpMapping(
+    mapping: [
+        'GET' => ['getRecord', 'uploadStatus', 'firmwareStatus'],
+        'PUT' => ['update'],
+        'DELETE' => ['delete'],
+        'POST' => ['upload', 'downloadFirmware']
+    ],
+    resourceLevelMethods: ['getRecord', 'update', 'delete'],
+    collectionLevelMethods: [],
+    customMethods: ['upload', 'uploadStatus', 'downloadFirmware', 'firmwareStatus'],
+    idPattern: '.+'  // Allow any file path as ID
+)]
 class RestController extends BaseRestController
 {
     /**
@@ -75,205 +108,265 @@ class RestController extends BaseRestController
     protected string $processorClass = FilesManagementProcessor::class;
 
     /**
-     * Define allowed custom methods for each HTTP method
+     * Get file content by path
      *
-     * @return array<string, array<string>>
+     * Retrieves the content of a file specified by its path.
+     * The path should be URL-encoded to handle special characters.
+     *
+     * @route GET /pbxcore/api/v3/files/{id}
      */
-    protected function getAllowedCustomMethods(): array
+    #[ApiOperation(
+        summary: 'rest_file_GetRecord',
+        description: 'rest_file_GetRecordDesc',
+        operationId: 'getFileContent'
+    )]
+    #[ApiParameter(
+        name: 'id',
+        type: 'string',
+        description: 'rest_param_file_path',
+        in: ParameterLocation::PATH,
+        required: true,
+        maxLength: 500,
+        example: 'etc/asterisk/asterisk.conf'
+    )]
+    #[ApiResponse(200, 'rest_response_200_file_content')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
+    public function getRecord(string $id): void
     {
-        return [
-            'GET' => ['uploadStatus', 'firmwareStatus'],
-            'POST' => ['upload', 'downloadFirmware']
-        ];
+        // Implementation handled by BaseRestController
     }
 
     /**
-     * Override to handle file path parameters and custom upload logic
+     * Upload or update file content (simple upload)
      *
-     * @param string|null $id File path (URL encoded)
-     * @return void
+     * Uploads file content using PUT method with raw body.
+     * Suitable for simple file uploads without chunking.
+     *
+     * @route PUT /pbxcore/api/v3/files/{id}
      */
-    public function handleCRUDRequest(?string $id = null): void
+    #[ApiOperation(
+        summary: 'rest_file_Update',
+        description: 'rest_file_UpdateDesc',
+        operationId: 'uploadFileContent'
+    )]
+    #[ApiParameter(
+        name: 'id',
+        type: 'string',
+        description: 'rest_param_file_path',
+        in: ParameterLocation::PATH,
+        required: true,
+        maxLength: 500,
+        example: 'tmp/config.txt'
+    )]
+    #[ApiResponse(200, 'rest_response_200_uploaded')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
+    public function update(string $id): void
     {
-        // Validate processor class is set
-        if (empty($this->processorClass)) {
-            $this->sendErrorResponse('Processor class not configured', 500);
-            return;
-        }
-
-        // Get HTTP method and sanitize data
-        $httpMethod = $this->request->getMethod();
-        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
-
-        // Handle file path parameter
-        if (!empty($id)) {
-            // Decode URL-encoded file path
-            $filePath = urldecode($id);
-
-            // Security: Validate file path to prevent directory traversal
-            if (!$this->isValidFilePath($filePath)) {
-                $this->sendErrorResponse('Invalid file path', 400);
-                return;
-            }
-
-            $requestData['filename'] = $filePath;
-        }
-
-        // Map HTTP method to action
-        $action = match($httpMethod) {
-            'GET' => 'getFileContent',
-            'PUT' => 'uploadFile',      // Simple file upload
-            'DELETE' => 'removeFile',   // File deletion
-            default => null
-        };
-
-        if ($action === null) {
-            $this->sendErrorResponse("Invalid HTTP method: $httpMethod", 405);
-            return;
-        }
-
-        // For PUT requests, handle simple file upload
-        if ($httpMethod === 'PUT' && !empty($requestData['filename'])) {
-            $this->handleSimpleUpload($requestData);
-            return;
-        }
-
-        // Send request to backend worker
-        $this->sendRequestToBackendWorker(
-            $this->processorClass,
-            $action,
-            $requestData
-        );
+        // Implementation handled by BaseRestController
     }
 
     /**
-     * Override to handle chunked upload with file validation
+     * Delete file by path
      *
-     * @param string|null $idOrMethod ID or custom method name
-     * @param string|null $customMethod Custom method name (when ID is provided)
-     * @return void
+     * Removes a file from the filesystem.
+     * The path should be URL-encoded.
+     *
+     * @route DELETE /pbxcore/api/v3/files/{id}
      */
-    public function handleCustomRequest(?string $idOrMethod = null, ?string $customMethod = null): void
+    #[ApiOperation(
+        summary: 'rest_file_Delete',
+        description: 'rest_file_DeleteDesc',
+        operationId: 'deleteFile'
+    )]
+    #[ApiParameter(
+        name: 'id',
+        type: 'string',
+        description: 'rest_param_file_path',
+        in: ParameterLocation::PATH,
+        required: true,
+        maxLength: 500,
+        example: 'storage/usbdisk1/mikopbx/tmp/audio.wav'
+    )]
+    #[ApiResponse(204, 'rest_response_204_deleted')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
+    public function delete(string $id): void
     {
-        // Determine the actual custom method
-        $method = $customMethod ?? $idOrMethod;
-
-        // Handle upload method specially due to multipart/form-data
-        if ($method === 'upload' && $this->request->getMethod() === 'POST') {
-            $this->handleChunkedUpload();
-            return;
-        }
-
-        // Use parent implementation for other custom methods
-        parent::handleCustomRequest($idOrMethod, $customMethod);
+        // Implementation handled by BaseRestController
     }
 
     /**
-     * Handle chunked file upload (Resumable.js support)
+     * Upload file in chunks (Resumable.js protocol)
      *
-     * @return void
+     * Handles chunked file uploads compatible with Resumable.js library.
+     * Supports large file uploads by splitting into smaller chunks.
+     *
+     * @route POST /pbxcore/api/v3/files:upload
      */
-    private function handleChunkedUpload(): void
+    #[ApiOperation(
+        summary: 'rest_file_Upload',
+        description: 'rest_file_UploadDesc',
+        operationId: 'uploadFileChunked'
+    )]
+    #[ApiParameter(
+        name: 'resumableIdentifier',
+        type: 'string',
+        description: 'rest_param_file_resumable_id',
+        in: ParameterLocation::QUERY,
+        required: true,
+        maxLength: 255,
+        example: '12345'
+    )]
+    #[ApiParameter(
+        name: 'resumableChunkNumber',
+        type: 'integer',
+        description: 'rest_param_file_chunk_number',
+        in: ParameterLocation::QUERY,
+        required: true,
+        minimum: 1,
+        example: 1
+    )]
+    #[ApiParameter(
+        name: 'resumableTotalChunks',
+        type: 'integer',
+        description: 'rest_param_file_total_chunks',
+        in: ParameterLocation::QUERY,
+        required: true,
+        minimum: 1,
+        example: 10
+    )]
+    #[ApiParameter(
+        name: 'resumableFilename',
+        type: 'string',
+        description: 'rest_param_file_resumable_name',
+        in: ParameterLocation::QUERY,
+        required: true,
+        maxLength: 255,
+        example: 'firmware.img'
+    )]
+    #[ApiResponse(200, 'rest_response_200_chunk_uploaded')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
+    public function upload(): void
     {
-        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
-
-        // Process uploaded files
-        if ($this->request->hasFiles() > 0) {
-            $identifier = preg_replace(['#[/\\\\]#','/\.\./'], ['',''], $requestData['resumableIdentifier'])??'';
-            $identifier = trim($identifier);
-
-            if (!preg_match('/^[a-zA-Z0-9_-]+$/', $identifier)) {
-                $this->sendErrorResponse('Invalid identifier', 400);
-                return;
-            }
-
-            if (strlen($identifier) > 255) {
-                $this->sendErrorResponse('Identifier too long', 400);
-                return;
-            }
-
-            $requestData['resumableIdentifier'] = $identifier;
-
-            foreach ($this->request->getUploadedFiles() as $file) {
-                $requestData['files'][]= [
-                    'file_path' => $file->getTempName(),
-                    'file_size' => $file->getSize(),
-                    'file_error'=> $file->getError(),
-                    'file_name' => $file->getName(),
-                    'file_type' => $file->getType()
-                ];
-
-                if ($file->getError()) {
-                    $message = 'Error ' . $file->getError() . ' in file ' . $file->getTempName();
-                    $this->sendErrorResponse($message, 400);
-                    SystemMessages::sysLogMsg('UploadFile', $message, LOG_ERR);
-                    return;
-                }
-            }
-
-            usleep(100000); // Brief delay as in original implementation
-        }
-
-        // Send to backend worker
-        $this->sendRequestToBackendWorker(
-            $this->processorClass,
-            'uploadFile',
-            $requestData
-        );
+        // Implementation handled by BaseRestController
     }
 
     /**
-     * Handle simple file upload via PUT method
+     * Check upload status
      *
-     * @param array $requestData Request data including filename
-     * @return void
+     * Retrieves the current status of a chunked file upload.
+     * Used by Resumable.js to determine which chunks have been uploaded.
+     *
+     * @route GET /pbxcore/api/v3/files:uploadStatus
      */
-    private function handleSimpleUpload(array $requestData): void
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
+    #[ApiOperation(
+        summary: 'rest_file_UploadStatus',
+        description: 'rest_file_UploadStatusDesc',
+        operationId: 'getUploadStatus'
+    )]
+    #[ApiParameter(
+        name: 'id',
+        type: 'string',
+        description: 'rest_param_file_resumable_id',
+        in: ParameterLocation::QUERY,
+        required: true,
+        maxLength: 255,
+        example: '12345'
+    )]
+    #[ApiResponse(200, 'rest_response_200_upload_status')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
+    public function uploadStatus(): void
     {
-        // Get raw body content for PUT upload
-        $content = $this->request->getRawBody();
-
-        if (empty($content)) {
-            $this->sendErrorResponse('No file content provided', 400);
-            return;
-        }
-
-        // Add content to request data
-        $requestData['content'] = $content;
-        $requestData['contentType'] = $this->request->getContentType();
-
-        // Send to backend worker
-        $this->sendRequestToBackendWorker(
-            $this->processorClass,
-            'uploadFileContent',
-            $requestData
-        );
+        // Implementation handled by BaseRestController
     }
 
     /**
-     * Validate file path to prevent directory traversal attacks
+     * Download firmware from external URL
      *
-     * @param string $filePath File path to validate
-     * @return bool True if path is valid
+     * Initiates download of firmware file from a remote URL.
+     * Supports optional MD5 checksum verification.
+     *
+     * @route POST /pbxcore/api/v3/files:downloadFirmware
      */
-    private function isValidFilePath(string $filePath): bool
+    #[ApiOperation(
+        summary: 'rest_file_DownloadFirmware',
+        description: 'rest_file_DownloadFirmwareDesc',
+        operationId: 'downloadFirmware'
+    )]
+    #[ApiParameter(
+        name: 'url',
+        type: 'string',
+        description: 'rest_param_file_firmware_url',
+        in: ParameterLocation::QUERY,
+        required: true,
+        maxLength: 1000,
+        example: 'https://example.com/firmware.img'
+    )]
+    #[ApiParameter(
+        name: 'md5',
+        type: 'string',
+        description: 'rest_param_file_firmware_md5',
+        in: ParameterLocation::QUERY,
+        required: false,
+        maxLength: 32,
+        example: 'abc123def456'
+    )]
+    #[ApiResponse(200, 'rest_response_200_firmware_downloading')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
+    public function downloadFirmware(): void
     {
-        // Check for directory traversal patterns
-        if (strpos($filePath, '..') !== false) {
-            return false;
-        }
+        // Implementation handled by BaseRestController
+    }
 
-        // Check for null bytes
-        if (strpos($filePath, "\0") !== false) {
-            return false;
-        }
-
-        // Path should not be empty
-        if (empty(trim($filePath))) {
-            return false;
-        }
-
-        // Additional security checks can be added here
-        return true;
+    /**
+     * Check firmware download status
+     *
+     * Retrieves the current status of a firmware download operation.
+     * Returns progress information and completion status.
+     *
+     * @route GET /pbxcore/api/v3/files:firmwareStatus
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'list'
+    )]
+    #[ApiOperation(
+        summary: 'rest_file_FirmwareStatus',
+        description: 'rest_file_FirmwareStatusDesc',
+        operationId: 'getFirmwareDownloadStatus'
+    )]
+    #[ApiParameter(
+        name: 'filename',
+        type: 'string',
+        description: 'rest_param_file_firmware_name',
+        in: ParameterLocation::QUERY,
+        required: true,
+        maxLength: 255,
+        example: 'firmware.img'
+    )]
+    #[ApiResponse(200, 'rest_response_200_firmware_status')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
+    public function firmwareStatus(): void
+    {
+        // Implementation handled by BaseRestController
     }
 }

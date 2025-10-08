@@ -21,16 +21,17 @@ namespace MikoPBX\PBXCoreREST\Controllers\GeneralSettings;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\GeneralSettingsManagementProcessor;
+use MikoPBX\PBXCoreREST\Lib\GeneralSettings\DataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
     ApiParameter,
     ApiResponse,
+    ApiDataSchema,
     SecurityType,
     ParameterLocation,
     HttpMapping,
-    ResourceSecurity,
-    ActionType
+    ResourceSecurity
 };
 
 /**
@@ -47,25 +48,24 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ApiResource(
     path: '/pbxcore/api/v3/general-settings',
     tags: ['General Settings'],
-    description: 'System-wide configuration management for MikoPBX core settings. ' .
-                'Includes PBX identification, network settings, codec preferences, voicemail configuration, ' .
-                'call routing defaults, security parameters, and system behavior controls. ' .
-                'Singleton resource pattern - only one configuration exists.',
+    description: 'Comprehensive system-wide configuration management. ' .
+                'Provides access to PBX general settings including system name, language, timezone, ' .
+                'web/SSH access configuration, SIP settings, recording options, and codec management. ' .
+                'Implements singleton resource pattern.',
     processor: GeneralSettingsManagementProcessor::class
 )]
 #[ResourceSecurity('general_settings', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
 #[HttpMapping(
     mapping: [
         'GET' => ['getList', 'getRecord', 'getDefault'],
-        'POST' => ['updateCodecs'],
         'PUT' => ['update'],
         'PATCH' => ['patch'],
-        'DELETE' => ['reset']
+        'POST' => ['updateCodecs']
     ],
     resourceLevelMethods: ['getRecord'],
-    collectionLevelMethods: ['getList', 'update', 'patch', 'reset'],
+    collectionLevelMethods: ['getList', 'update', 'patch', 'getDefault', 'updateCodecs'],
     customMethods: ['getDefault', 'updateCodecs'],
-    idPattern: '[A-Za-z][A-Za-z0-9_]*'
+    idPattern: '[a-zA-Z_]+'
 )]
 class RestController extends BaseRestController
 {
@@ -87,15 +87,19 @@ class RestController extends BaseRestController
      *
      * @route GET /pbxcore/api/v3/general-settings
      */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
     #[ApiOperation(
-        summary: 'Get general settings',
-        description: 'Retrieve all system-wide configuration settings as a single JSON object',
+        summary: 'rest_gs_GetRecord',
+        description: 'rest_gs_GetRecordDesc',
         operationId: 'getGeneralSettings'
     )]
-    #[ApiResponse(200, 'General settings retrieved successfully', example: '{"jsonapi":{"version":"1.0"},"result":true,"data":{"PBXName":"MikoPBX","PBXDescription":"Small Business PBX","PBXLanguage":"en","PBXTimezone":"UTC","PBXRecordCalls":"all","VoicemailNotifyByEmail":"1","SystemNotificationsEmail":"admin@company.com"},"messages":[],"function":"getList","processor":"MikoPBX\\\\PBXCoreREST\\\\Lib\\\\GeneralSettings\\\\GetListAction::main","pid":1408}')]
-    #[ApiResponse(401, 'Authentication required', 'ErrorResponse')]
-    #[ApiResponse(403, 'Insufficient permissions', 'ErrorResponse')]
-    #[ResourceSecurity('general_settings', ActionType::READ)]
+    #[ApiResponse(200, 'rest_response_200_get')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
     public function getList(): void
     {
         // Implementation handled by BaseRestController
@@ -107,54 +111,48 @@ class RestController extends BaseRestController
      * @route GET /pbxcore/api/v3/general-settings/{key}
      */
     #[ApiOperation(
-        summary: 'Get specific setting',
-        description: 'Retrieve a specific configuration setting by its key name',
+        summary: 'rest_gs_GetSetting',
+        description: 'rest_gs_GetSettingDesc',
         operationId: 'getGeneralSetting'
     )]
-    #[ApiParameter(
-        name: 'key',
-        type: 'string',
-        description: 'Configuration setting key name',
-        in: ParameterLocation::PATH,
-        required: true,
-        example: 'PBXName'
-    )]
-    #[ApiResponse(200, 'Setting retrieved successfully', example: '{"jsonapi":{"version":"1.0"},"result":true,"data":{"key":"PBXName","value":"MikoPBX","description":"PBX system name"},"messages":[],"function":"getRecord","processor":"MikoPBX\\\\PBXCoreREST\\\\Lib\\\\GeneralSettings\\\\GetRecordAction::main","pid":1408}')]
-    #[ApiResponse(404, 'Setting not found', 'ErrorResponse')]
-    #[ApiResponse(401, 'Authentication required', 'ErrorResponse')]
-    #[ApiResponse(403, 'Insufficient permissions', 'ErrorResponse')]
-    #[ResourceSecurity('general_settings', ActionType::READ)]
-    public function getRecord(): void
+    #[ApiParameter('key', 'string', 'rest_param_gs_key', ParameterLocation::PATH, required: true, maxLength: 100, example: 'PBXName')]
+    #[ApiResponse(200, 'rest_response_200_get')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
+    public function getRecord(string $key): void
     {
         // Implementation handled by BaseRestController
     }
 
     /**
-     * Update all general settings (full replacement)
+     * Update general settings (full replacement)
      *
      * @route PUT /pbxcore/api/v3/general-settings
      */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
     #[ApiOperation(
-        summary: 'Update general settings',
-        description: 'Replace all general settings with provided configuration. All settings will be updated to match the request.',
+        summary: 'rest_gs_Update',
+        description: 'rest_gs_UpdateDesc',
         operationId: 'updateGeneralSettings'
     )]
-    #[ApiParameter('PBXName', 'string', 'PBX system name', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'Company PBX')]
-    #[ApiParameter('PBXDescription', 'string', 'PBX system description', ParameterLocation::QUERY, required: false, maxLength: 500, example: 'Main office telephone system')]
-    #[ApiParameter('PBXLanguage', 'string', 'Default system language', ParameterLocation::QUERY, required: false, enum: ['en', 'ru', 'de', 'es', 'fr', 'it', 'pt', 'uk'], default: 'en', example: 'en')]
-    #[ApiParameter('PBXTimezone', 'string', 'System timezone', ParameterLocation::QUERY, required: false, maxLength: 50, example: 'America/New_York')]
-    #[ApiParameter('PBXRecordCalls', 'string', 'Call recording mode', ParameterLocation::QUERY, required: false, enum: ['all', 'internal', 'external', 'none'], default: 'none', example: 'all')]
-    #[ApiParameter('VoicemailNotifyByEmail', 'boolean', 'Enable voicemail email notifications', ParameterLocation::QUERY, required: false, default: false, example: true)]
-    #[ApiParameter('SystemNotificationsEmail', 'string', 'System notifications email address', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'admin@company.com')]
-    #[ApiParameter('SSHPassword', 'string', 'SSH access password', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'securePassword123')]
-    #[ApiParameter('WEBPort', 'integer', 'Web interface port', ParameterLocation::QUERY, required: false, minimum: 1, maximum: 65535, default: 80, example: 8080)]
-    #[ApiParameter('WEBHTTPSPort', 'integer', 'HTTPS web interface port', ParameterLocation::QUERY, required: false, minimum: 1, maximum: 65535, default: 443, example: 8443)]
-    #[ApiResponse(200, 'General settings updated successfully', example: '{"jsonapi":{"version":"1.0"},"result":true,"data":{"PBXName":"Company PBX","PBXDescription":"Main office telephone system"},"messages":["Settings updated successfully"],"function":"update","processor":"MikoPBX\\\\PBXCoreREST\\\\Lib\\\\GeneralSettings\\\\UpdateAction::main","pid":1408}')]
-    #[ApiResponse(400, 'Invalid request data', 'ErrorResponse')]
-    #[ApiResponse(401, 'Authentication required', 'ErrorResponse')]
-    #[ApiResponse(403, 'Insufficient permissions', 'ErrorResponse')]
-    #[ResourceSecurity('general_settings', ActionType::WRITE)]
-    public function update(): void
+    #[ApiParameter('PBXName', 'string', 'rest_param_gs_pbxname', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'Company PBX')]
+    #[ApiParameter('PBXDescription', 'string', 'rest_param_gs_pbxdescription', ParameterLocation::QUERY, required: false, maxLength: 500, example: 'Main office telephone system')]
+    #[ApiParameter('PBXLanguage', 'string', 'rest_param_gs_pbxlanguage', ParameterLocation::QUERY, required: false, enum: ['en', 'ru', 'de', 'es', 'fr', 'it', 'pt', 'uk'], example: 'en')]
+    #[ApiParameter('PBXRecordCalls', 'string', 'rest_param_gs_pbxrecordcalls', ParameterLocation::QUERY, required: false, enum: ['all', 'internal', 'external', 'none'], example: 'all')]
+    #[ApiParameter('WebPort', 'integer', 'rest_param_gs_webport', ParameterLocation::QUERY, required: false, minimum: 1, maximum: 65535, example: 8080)]
+    #[ApiParameter('SIPPort', 'integer', 'rest_param_gs_sipport', ParameterLocation::QUERY, required: false, minimum: 1, maximum: 65535, example: 5060)]
+    #[ApiResponse(200, 'rest_response_200_updated')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(422, 'rest_response_422_validation', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
+    public function update(?string $id = null): void
     {
         // Implementation handled by BaseRestController
     }
@@ -164,40 +162,24 @@ class RestController extends BaseRestController
      *
      * @route PATCH /pbxcore/api/v3/general-settings
      */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
     #[ApiOperation(
-        summary: 'Patch general settings',
-        description: 'Partially update general settings. Only provided fields will be modified, others remain unchanged.',
+        summary: 'rest_gs_Patch',
+        description: 'rest_gs_PatchDesc',
         operationId: 'patchGeneralSettings'
     )]
-    #[ApiParameter('PBXName', 'string', 'PBX system name', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'Updated PBX Name')]
-    #[ApiParameter('PBXDescription', 'string', 'PBX system description', ParameterLocation::QUERY, required: false, maxLength: 500, example: 'Updated description')]
-    #[ApiParameter('PBXLanguage', 'string', 'Default system language', ParameterLocation::QUERY, required: false, enum: ['en', 'ru', 'de', 'es', 'fr', 'it', 'pt', 'uk'], example: 'ru')]
-    #[ApiParameter('VoicemailNotifyByEmail', 'boolean', 'Enable voicemail email notifications', ParameterLocation::QUERY, required: false, example: false)]
-    #[ApiResponse(200, 'General settings patched successfully', example: '{"jsonapi":{"version":"1.0"},"result":true,"data":{"PBXName":"Updated PBX Name","PBXLanguage":"ru"},"messages":["Settings updated successfully"],"function":"patch","processor":"MikoPBX\\\\PBXCoreREST\\\\Lib\\\\GeneralSettings\\\\PatchAction::main","pid":1408}')]
-    #[ApiResponse(400, 'Invalid request data', 'ErrorResponse')]
-    #[ApiResponse(401, 'Authentication required', 'ErrorResponse')]
-    #[ApiResponse(403, 'Insufficient permissions', 'ErrorResponse')]
-    #[ResourceSecurity('general_settings', ActionType::WRITE)]
-    public function patch(): void
-    {
-        // Implementation handled by BaseRestController
-    }
-
-    /**
-     * Reset general settings to defaults
-     *
-     * @route DELETE /pbxcore/api/v3/general-settings
-     */
-    #[ApiOperation(
-        summary: 'Reset general settings',
-        description: 'Reset all general settings to their default values. This action cannot be undone.',
-        operationId: 'resetGeneralSettings'
-    )]
-    #[ApiResponse(200, 'General settings reset successfully', example: '{"jsonapi":{"version":"1.0"},"result":true,"messages":["General settings reset to defaults"],"function":"reset","processor":"MikoPBX\\\\PBXCoreREST\\\\Lib\\\\GeneralSettings\\\\ResetAction::main","pid":1408}')]
-    #[ApiResponse(401, 'Authentication required', 'ErrorResponse')]
-    #[ApiResponse(403, 'Insufficient permissions', 'ErrorResponse')]
-    #[ResourceSecurity('general_settings', ActionType::WRITE)]
-    public function reset(): void
+    #[ApiParameter('PBXName', 'string', 'rest_param_gs_pbxname', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'Updated PBX Name')]
+    #[ApiParameter('PBXLanguage', 'string', 'rest_param_gs_pbxlanguage', ParameterLocation::QUERY, required: false, enum: ['en', 'ru', 'de', 'es', 'fr', 'it', 'pt', 'uk'], example: 'ru')]
+    #[ApiResponse(200, 'rest_response_200_patched')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(422, 'rest_response_422_validation', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
+    public function patch(?string $id = null): void
     {
         // Implementation handled by BaseRestController
     }
@@ -207,15 +189,19 @@ class RestController extends BaseRestController
      *
      * @route GET /pbxcore/api/v3/general-settings:getDefault
      */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
     #[ApiOperation(
-        summary: 'Get default general settings',
-        description: 'Retrieve default configuration values for all general settings',
+        summary: 'rest_gs_GetDefault',
+        description: 'rest_gs_GetDefaultDesc',
         operationId: 'getGeneralSettingsDefaults'
     )]
-    #[ApiResponse(200, 'Default values retrieved successfully', example: '{"jsonapi":{"version":"1.0"},"result":true,"data":{"PBXName":"MikoPBX","PBXDescription":"","PBXLanguage":"en","PBXTimezone":"UTC","PBXRecordCalls":"none","VoicemailNotifyByEmail":"0","SystemNotificationsEmail":"","WEBPort":"80","WEBHTTPSPort":"443"},"messages":[],"function":"getDefault","processor":"MikoPBX\\\\PBXCoreREST\\\\Lib\\\\GeneralSettings\\\\GetDefaultAction::main","pid":1408}')]
-    #[ApiResponse(401, 'Authentication required', 'ErrorResponse')]
-    #[ApiResponse(403, 'Insufficient permissions', 'ErrorResponse')]
-    #[ResourceSecurity('general_settings', ActionType::READ)]
+    #[ApiResponse(200, 'rest_response_200_default')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
     public function getDefault(): void
     {
         // Implementation handled by BaseRestController
@@ -227,16 +213,17 @@ class RestController extends BaseRestController
      * @route POST /pbxcore/api/v3/general-settings:updateCodecs
      */
     #[ApiOperation(
-        summary: 'Update codec configuration',
-        description: 'Update the system-wide codec priority and availability settings for audio/video calls',
+        summary: 'rest_gs_UpdateCodecs',
+        description: 'rest_gs_UpdateCodecsDesc',
         operationId: 'updateCodecsConfiguration'
     )]
-    #[ApiParameter('codecs', 'array', 'Array of codec configurations with priority and enabled status', ParameterLocation::QUERY, required: true, example: '[{"name":"alaw","priority":0,"disabled":false},{"name":"ulaw","priority":1,"disabled":false},{"name":"g729","priority":2,"disabled":true}]')]
-    #[ApiResponse(200, 'Codec configuration updated successfully', example: '{"jsonapi":{"version":"1.0"},"result":true,"data":{"codecs_updated":3,"codecs_disabled":1},"messages":["Codec configuration updated successfully"],"function":"updateCodecs","processor":"MikoPBX\\\\PBXCoreREST\\\\Lib\\\\GeneralSettings\\\\UpdateCodecsAction::main","pid":1408}')]
-    #[ApiResponse(400, 'Invalid codec configuration', 'ErrorResponse')]
-    #[ApiResponse(401, 'Authentication required', 'ErrorResponse')]
-    #[ApiResponse(403, 'Insufficient permissions', 'ErrorResponse')]
-    #[ResourceSecurity('general_settings', ActionType::WRITE)]
+    #[ApiParameter('codecs', 'array', 'rest_param_gs_codecs', ParameterLocation::QUERY, required: true, example: '[{"name":"alaw","priority":0,"disabled":false}]')]
+    #[ApiResponse(200, 'rest_response_200_codecs_updated')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(422, 'rest_response_422_validation', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
     public function updateCodecs(): void
     {
         // Implementation handled by BaseRestController

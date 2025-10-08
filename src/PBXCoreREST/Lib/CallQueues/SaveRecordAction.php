@@ -120,21 +120,25 @@ class SaveRecordAction extends AbstractSaveRecordAction
 
         // Get or create model
         // v3 API: 'id' field contains uniqid value
-        $isNewRecord = empty($sanitizedData['id']);
-        if (!$isNewRecord) {
+        // Determine if this is CREATE or UPDATE by checking if record exists in DB
+        $queue = null;
+        $isNewRecord = true;
+
+        if (!empty($sanitizedData['id'])) {
+            // Try to find existing queue by provided ID
             $queue = CallQueues::findFirst("uniqid='{$sanitizedData['id']}'");
-            if (!$queue) {
-                $res->messages['error'][] = 'Call queue not found';
-                $res->httpCode = 404; // Not Found
-                SystemMessages::sysLogMsg(__METHOD__,
-                    "Queue not found for update: " . $sanitizedData['id'],
-                    LOG_WARNING
-                );
-                return $res;
+            if ($queue) {
+                // Record exists - this is UPDATE operation
+                $isNewRecord = false;
             }
-        } else {
+        }
+
+        if ($isNewRecord) {
+            // CREATE operation - create new queue
             $queue = new CallQueues();
-            $queue->uniqid = CallQueues::generateUniqueID(Extensions::TYPE_QUEUE.'-');
+            // Use provided ID if available (for migrations/imports), otherwise generate new one
+            $queue->uniqid = !empty($sanitizedData['id']) ? $sanitizedData['id'] :
+                            CallQueues::generateUniqueID(Extensions::PREFIX_QUEUE);
         }
 
         // Check extension uniqueness using unified approach

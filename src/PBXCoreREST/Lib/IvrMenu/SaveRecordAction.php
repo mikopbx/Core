@@ -111,26 +111,28 @@ class SaveRecordAction extends AbstractSaveRecordAction
         }
         
         // Get or create model
-        // For POST (new records), id contains pre-generated uniqid but record doesn't exist yet
-        // For PUT (updates), id contains existing uniqid and record must exist
+        // Determine if this is CREATE or UPDATE by checking if record exists in DB
         $ivrMenu = null;
-        
+        $isNewRecord = true;
+
         if (!empty($sanitizedData['id'])) {
-            // Try to find existing record by uniqid
+            // Try to find existing IVR menu by provided ID
             $ivrMenu = IvrMenu::findFirst([
                 'conditions' => 'uniqid = :uniqid:',
                 'bind' => ['uniqid' => $sanitizedData['id']]
             ]);
-            
-            if (!$ivrMenu) {
-                // If no existing record found, this must be a new record with pre-generated uniqid
-                $ivrMenu = new IvrMenu();
-                $ivrMenu->uniqid = $sanitizedData['id'];
+            if ($ivrMenu) {
+                // Record exists - this is UPDATE operation
+                $isNewRecord = false;
             }
-        } else {
-            // No id provided, create completely new record
+        }
+
+        if ($isNewRecord) {
+            // CREATE operation - create new IVR menu
             $ivrMenu = new IvrMenu();
-            $ivrMenu->uniqid = IvrMenu::generateUniqueID('IVR');
+            // Use provided ID if available (for migrations/imports), otherwise generate new one
+            $ivrMenu->uniqid = !empty($sanitizedData['id']) ? $sanitizedData['id'] :
+                            IvrMenu::generateUniqueID(Extensions::PREFIX_IVR);
         }
         
         // Check extension uniqueness using unified approach

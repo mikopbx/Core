@@ -61,7 +61,7 @@ class GetRecordAction extends AbstractGetRecordAction
             // Create default data structure from OpenAPI schema
             // For backward compatibility with "new" ID parameter
             // Note: Prefer using GetDefaultAction (:getDefault endpoint) for new records
-            $uniqid = CallQueues::generateUniqueID(Extensions::TYPE_QUEUE.'-');
+            $uniqid = CallQueues::generateUniqueID(Extensions::PREFIX_QUEUE);
             $extensionNumber = Extensions::getNextFreeApplicationNumber();
 
             $res->data = DataStructure::createFromSchema('detail', [

@@ -25,17 +25,35 @@ use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\Users;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
 use MikoPBX\PBXCoreREST\Lib\Common\AvatarHelper;
+use MikoPBX\PBXCoreREST\Lib\Common\OpenApiSchemaProvider;
+use MikoPBX\PBXCoreREST\Lib\Common\SearchIndexTrait;
 
 /**
- * Data structure for employees following Extensions DataStructure pattern from 1 month ago
+ * Data structure for employees with extension and forwarding representations
+ *
+ * Creates consistent data format for API responses including representation
+ * fields needed for proper dropdown display with icons and security.
+ *
+ * Implements OpenApiSchemaProvider to provide typed schemas for OpenAPI specification.
+ *
+ * @package MikoPBX\PBXCoreREST\Lib\Employees
  */
-class DataStructure extends AbstractDataStructure
+class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvider
 {
+    use SearchIndexTrait;
+
     /**
-     * Create complete data array from Users model.
-     * 
-     * @param \MikoPBX\Common\Models\Users $model
-     * @return array
+     * Create complete data array from Users model with representation fields
+     *
+     * This method generates all necessary representation fields for proper
+     * dropdown display in the frontend.
+     *
+     * Following "Store Clean, Escape at Edge" principle:
+     * Returns raw data that was sanitized on input. HTML escaping
+     * is the responsibility of the presentation layer.
+     *
+     * @param \MikoPBX\Common\Models\Users $user
+     * @return array<string, mixed> Complete data structure with representation fields
      */
     public static function createFromModel(Users $user): array
     {
@@ -101,14 +119,63 @@ class DataStructure extends AbstractDataStructure
                 $data['mobile_dialstring'] = $externalPhone->dialstring;
             }
         }
-    
+
+        // Apply OpenAPI schema formatting to convert types automatically
+        $data = self::formatBySchema($data, 'detail');
+
+        return $data;
+    }
+
+    /**
+     * Create simplified data structure for list display
+     *
+     * @param \MikoPBX\Common\Models\Users $model User model instance
+     * @return array<string, mixed> Simplified data structure for table display
+     */
+    public static function createForList($model): array
+    {
+        // Use unified base method for list creation
+        $data = parent::createForList($model);
+
+        // Type cast to Users for IDE support
+        if (!$model instanceof Users) {
+            return $data;
+        }
+        $user = $model;
+
+        // Add employee specific fields for list display
+        $data['id'] = $user->id;
+        $data['user_username'] = $user->username ?? '';
+        $data['user_email'] = $user->email ?? '';
+        $data['user_avatar'] = AvatarHelper::getAvatarUrl($user->avatar ?? '');
+
+        // Get extension number
+        $sipExtension = Extensions::findFirst([
+            'conditions' => 'type = :type: AND is_general_user_number = "1" AND userid = :userid:',
+            'bind' => [
+                'type' => Extensions::TYPE_SIP,
+                'userid' => $user->id
+            ]
+        ]);
+
+        $data['number'] = $sipExtension?->number ?? '';
+
+        // Create custom represent field for employee display
+        $data['represent'] = '<i class="user outline icon"></i> ' . ($user->username ?? '') . " <{$data['number']}>";
+
+        // Generate search index automatically from all fields
+        $data['search_index'] = self::generateAutoSearchIndex($data);
+
+        // Apply OpenAPI list schema formatting to ensure proper types
+        $data = self::formatBySchema($data, 'list');
+
         return $data;
     }
 
     /**
      * Create structure for new employee
      *
-     * @return array Default employee data structure
+     * @return array<string, mixed> Default employee data structure
      */
     public static function createForNewEmployee(): array
     {
@@ -136,5 +203,273 @@ class DataStructure extends AbstractDataStructure
         $data = parent::addExtensionField($data, 'fwd_forwardingonunavailable', '');
 
         return $data;
+    }
+
+    /**
+     * Get OpenAPI schema for employee list item
+     *
+     * This schema matches the structure returned by createForList() method.
+     * Used for GET /api/v3/employees endpoint (list of employees).
+     *
+     * @return array<string, mixed> OpenAPI schema definition
+     */
+    public static function getListItemSchema(): array
+    {
+        return [
+            'type' => 'object',
+            'required' => ['id', 'user_username', 'number', 'represent'],
+            'properties' => [
+                'id' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_emp_id',
+                    'example' => '1'
+                ],
+                'user_username' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_emp_username',
+                    'maxLength' => 100,
+                    'example' => 'john.doe'
+                ],
+                'user_email' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_emp_email',
+                    'format' => 'email',
+                    'maxLength' => 255,
+                    'example' => 'john.doe@company.com'
+                ],
+                'user_avatar' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_emp_avatar',
+                    'format' => 'uri',
+                    'example' => '/admin-cabinet/assets/img/avatars/user1.jpg'
+                ],
+                'number' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_emp_number',
+                    'pattern' => '^[0-9]{2,8}$',
+                    'example' => '200'
+                ],
+                'represent' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_emp_represent',
+                    'example' => '<i class="user outline icon"></i> john.doe <200>'
+                ],
+                'search_index' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_emp_search_index',
+                    'example' => 'john.doe 200 john.doe@company.com'
+                ]
+            ]
+        ];
+    }
+
+    /**
+     * Get OpenAPI schema for detailed employee record
+     *
+     * This schema matches the structure returned by createFromModel() method.
+     * Used for GET /api/v3/employees/{id}, POST, PUT, PATCH endpoints.
+     *
+     * @return array<string, mixed> OpenAPI schema definition
+     */
+    public static function getDetailSchema(): array
+    {
+        return [
+            'type' => 'object',
+            'required' => ['id', 'user_username', 'number'],
+            'properties' => [
+                'id' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_emp_id',
+                    'example' => '1'
+                ],
+                'user_username' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_emp_username',
+                    'maxLength' => 100,
+                    'example' => 'john.doe'
+                ],
+                'user_email' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_emp_email',
+                    'format' => 'email',
+                    'maxLength' => 255,
+                    'example' => 'john.doe@company.com'
+                ],
+                'user_avatar' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_emp_avatar',
+                    'format' => 'uri',
+                    'example' => '/admin-cabinet/assets/img/avatars/user1.jpg'
+                ],
+                'number' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_emp_number',
+                    'pattern' => '^[0-9]{2,8}$',
+                    'example' => '200'
+                ],
+                'extensions_length' => [
+                    'type' => 'integer',
+                    'description' => 'rest_schema_emp_extensions_length',
+                    'minimum' => 2,
+                    'maximum' => 8,
+                    'example' => 3
+                ],
+                'sip_secret' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_emp_sip_secret',
+                    'maxLength' => 100,
+                    'example' => 'StrongP@ssw0rd123'
+                ],
+                'sip_dtmfmode' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_emp_sip_dtmfmode',
+                    'enum' => ['auto', 'auto_info', 'inband', 'rfc2833', 'info'],
+                    'default' => 'auto',
+                    'example' => 'rfc2833'
+                ],
+                'sip_transport' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_emp_sip_transport',
+                    'enum' => ['udp', 'tcp', 'tls', 'udp,tcp', 'udp,tcp,tls'],
+                    'default' => 'udp',
+                    'example' => 'udp,tcp'
+                ],
+                'sip_manualattributes' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_emp_sip_manualattributes',
+                    'example' => 'deny=0.0.0.0/0.0.0.0\npermit=192.168.1.0/255.255.255.0'
+                ],
+                'sip_enableRecording' => [
+                    'type' => 'boolean',
+                    'description' => 'rest_schema_emp_sip_enableRecording',
+                    'default' => true,
+                    'example' => true
+                ],
+                'sip_networkfilterid' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_emp_sip_networkfilterid',
+                    'example' => '1'
+                ],
+                'sip_networkfilterid_represent' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_emp_sip_networkfilterid_represent'
+                ],
+                'fwd_ringlength' => [
+                    'type' => 'integer',
+                    'description' => 'rest_schema_emp_fwd_ringlength',
+                    'minimum' => 5,
+                    'maximum' => 180,
+                    'default' => 45,
+                    'example' => 30
+                ],
+                'fwd_forwarding' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_emp_fwd_forwarding',
+                    'example' => '201'
+                ],
+                'fwd_forwarding_represent' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_emp_fwd_forwarding_represent'
+                ],
+                'fwd_forwardingonbusy' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_emp_fwd_forwardingonbusy',
+                    'example' => '202'
+                ],
+                'fwd_forwardingonbusy_represent' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_emp_fwd_forwardingonbusy_represent'
+                ],
+                'fwd_forwardingonunavailable' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_emp_fwd_forwardingonunavailable',
+                    'example' => '203'
+                ],
+                'fwd_forwardingonunavailable_represent' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_emp_fwd_forwardingonunavailable_represent'
+                ],
+                'mobile_number' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_emp_mobile_number',
+                    'maxLength' => 50,
+                    'example' => '79991234567'
+                ],
+                'mobile_dialstring' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_emp_mobile_dialstring',
+                    'maxLength' => 255,
+                    'example' => '79991234567'
+                ]
+            ]
+        ];
+    }
+
+    /**
+     * Generate sanitization rules from OpenAPI schema
+     *
+     * Converts OpenAPI schema constraints into SystemSanitizer format.
+     * This eliminates duplication between schema definition and validation rules.
+     *
+     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
+     */
+    public static function getSanitizationRules(): array
+    {
+        $schema = static::getDetailSchema();
+        $rules = [];
+
+        if (!isset($schema['properties'])) {
+            return $rules;
+        }
+
+        foreach ($schema['properties'] as $fieldName => $fieldSchema) {
+            $ruleParts = [];
+
+            // Add type
+            $type = $fieldSchema['type'] ?? 'string';
+            $ruleParts[] = match ($type) {
+                'integer' => 'int',
+                'number' => 'float',
+                'boolean' => 'bool',
+                'array' => 'array',
+                default => 'string'
+            };
+
+            // Add constraints
+            if (isset($fieldSchema['minimum'])) {
+                $ruleParts[] = 'min:' . $fieldSchema['minimum'];
+            }
+            if (isset($fieldSchema['maximum'])) {
+                $ruleParts[] = 'max:' . $fieldSchema['maximum'];
+            }
+            if (isset($fieldSchema['maxLength'])) {
+                $ruleParts[] = 'max:' . $fieldSchema['maxLength'];
+            }
+            if (isset($fieldSchema['pattern']) && is_string($fieldSchema['pattern'])) {
+                $pattern = str_replace('^', '', $fieldSchema['pattern']);
+                $pattern = str_replace('$', '', $pattern);
+                $ruleParts[] = 'regex:/' . $pattern . '/';
+            }
+            if (isset($fieldSchema['enum']) && is_array($fieldSchema['enum'])) {
+                $ruleParts[] = 'in:' . implode(',', $fieldSchema['enum']);
+            }
+            if (isset($fieldSchema['nullable']) && $fieldSchema['nullable'] === true) {
+                $ruleParts[] = 'empty_to_null';
+            }
+
+            $rules[$fieldName] = implode('|', $ruleParts);
+        }
+
+        return $rules;
+    }
+
+    /**
+     * Get related schemas
+     *
+     * @return array<string> List of related schema names
+     */
+    public static function getRelatedSchemas(): array
+    {
+        return [];
     }
 }

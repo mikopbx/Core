@@ -21,72 +21,302 @@ namespace MikoPBX\PBXCoreREST\Controllers\Sip;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\SIPStackProcessor;
+use MikoPBX\PBXCoreREST\Lib\Sip\DataStructure;
+use MikoPBX\PBXCoreREST\Attributes\{
+    ApiResource,
+    ApiOperation,
+    ApiParameter,
+    ApiResponse,
+    ApiDataSchema,
+    SecurityType,
+    ParameterLocation,
+    HttpMapping,
+    ResourceSecurity
+};
 
 /**
  * RESTful controller for SIP device status monitoring (v3 API)
  *
- * Handles SIP device monitoring operations following Google API Design Guide patterns.
- * This controller is focused on device monitoring and doesn't provide CRUD operations
- * as SIP devices are managed through Extensions.
- *
- * @RoutePrefix("/pbxcore/api/v3/sip")
- *
- * @examples Collection-level operations:
- * GET    /pbxcore/api/v3/sip:getStatuses        - Get all device statuses
- * POST   /pbxcore/api/v3/sip:forceCheck         - Force check all devices
- * GET    /pbxcore/api/v3/sip:getPeersStatuses   - Get peers statuses (legacy)
- * GET    /pbxcore/api/v3/sip:getRegistry        - Get registry statuses (legacy)
- *
- * @examples Resource-level operations:
- * GET    /pbxcore/api/v3/sip:getStatus/101      - Get status for extension 101
- * POST   /pbxcore/api/v3/sip:forceCheck/101     - Force check extension 101
- * GET    /pbxcore/api/v3/sip:getHistory/101     - Get history for extension 101
- * GET    /pbxcore/api/v3/sip:getStats/101       - Get stats for extension 101
- * GET    /pbxcore/api/v3/sip:getSecret/101      - Get SIP secret for extension 101
+ * Provides comprehensive SIP device monitoring and status information.
+ * This is a read-only monitoring controller - SIP devices are managed through Extensions controller.
+ * Implements custom methods for device status, history, statistics, and registry information.
  *
  * @package MikoPBX\PBXCoreREST\Controllers\Sip
+ *
+ * @see https://cloud.google.com/apis/design - Google API Design Guide
+ * @see https://spec.openapis.org/oas/v3.1.0 - OpenAPI 3.1 Specification
  */
+#[ApiResource(
+    path: '/pbxcore/api/v3/sip',
+    tags: ['SIP', 'Monitoring'],
+    description: 'SIP device status monitoring and statistics. ' .
+                'Provides real-time status information for SIP endpoints, peers, and registry. ' .
+                'Read-only monitoring interface - device configuration is managed via Extensions API.',
+    processor: SIPStackProcessor::class
+)]
+#[ResourceSecurity('sip', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
+#[HttpMapping(
+    mapping: [
+        'GET' => ['getStatuses', 'getStatus', 'getHistory', 'getStats', 'getPeersStatuses', 'getRegistry', 'getSecret', 'getAuthFailureStats'],
+        'POST' => ['forceCheck', 'processAuthFailures', 'clearAuthFailureStats']
+    ],
+    resourceLevelMethods: ['getStatus', 'getHistory', 'getStats', 'forceCheck', 'getSecret', 'getAuthFailureStats', 'clearAuthFailureStats'],
+    collectionLevelMethods: ['getStatuses', 'getPeersStatuses', 'getRegistry', 'processAuthFailures'],
+    customMethods: ['getStatuses', 'getStatus', 'getHistory', 'getStats', 'getPeersStatuses', 'getRegistry', 'getSecret', 'forceCheck', 'getAuthFailureStats', 'processAuthFailures', 'clearAuthFailureStats'],
+    idPattern: '[0-9A-Za-z_-]+'
+)]
 class RestController extends BaseRestController
 {
     /**
      * The processor class to handle requests
+     * @var string
      */
     protected string $processorClass = SIPStackProcessor::class;
 
-
-
     /**
-     * Define allowed custom methods for each HTTP method
+     * Get statuses of all SIP devices
      *
-     * @return array<string, array<string>>
+     * @route GET /pbxcore/api/v3/sip:getStatuses
      */
-    protected function getAllowedCustomMethods(): array
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'list',
+        isArray: true
+    )]
+    #[ApiOperation(
+        summary: 'rest_sip_GetStatuses',
+        description: 'rest_sip_GetStatusesDesc',
+        operationId: 'getSipStatuses'
+    )]
+    #[ApiResponse(200, 'rest_response_200_list')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function getStatuses(): void
     {
-        return [
-            'GET' => ['getStatuses', 'getStatus', 'getHistory', 'getStats', 'getPeersStatuses', 'getRegistry', 'getSecret', 'getAuthFailureStats'],
-            'POST' => ['forceCheck', 'processAuthFailures', 'clearAuthFailureStats']
-        ];
+        // Implementation handled by BaseRestController
     }
 
     /**
-     * Check if a custom method requires a resource ID
+     * Get status of specific SIP device
      *
-     * @param string $method The custom method name
-     * @return bool
+     * @route GET /pbxcore/api/v3/sip:getStatus/{extension}
      */
-    protected function isResourceLevelMethod(string $method): bool
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
+    #[ApiOperation(
+        summary: 'rest_sip_GetStatus',
+        description: 'rest_sip_GetStatusDesc',
+        operationId: 'getSipStatus'
+    )]
+    #[ApiParameter('extension', 'string', 'rest_param_sip_extension', ParameterLocation::PATH, required: true, example: '201')]
+    #[ApiResponse(200, 'rest_response_200_get')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    public function getStatus(string $extension): void
     {
-        $resourceLevelMethods = [
-            'getStatus',
-            'getHistory',
-            'getStats',
-            'forceCheck',
-            'getSecret',
-            'getAuthFailureStats',
-            'clearAuthFailureStats'
-        ];
-
-        return in_array($method, $resourceLevelMethods, true);
+        // Implementation handled by BaseRestController
     }
 
+    /**
+     * Get connection history for SIP device
+     *
+     * @route GET /pbxcore/api/v3/sip:getHistory/{extension}
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'history',
+        isArray: true
+    )]
+    #[ApiOperation(
+        summary: 'rest_sip_GetHistory',
+        description: 'rest_sip_GetHistoryDesc',
+        operationId: 'getSipHistory'
+    )]
+    #[ApiParameter('extension', 'string', 'rest_param_sip_extension', ParameterLocation::PATH, required: true, example: '201')]
+    #[ApiParameter('limit', 'integer', 'rest_param_limit', ParameterLocation::QUERY, required: false, minimum: 1, maximum: 100, default: 20, example: 20)]
+    #[ApiResponse(200, 'rest_response_200_history')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    public function getHistory(string $extension): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Get statistics for SIP device
+     *
+     * @route GET /pbxcore/api/v3/sip:getStats/{extension}
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'stats'
+    )]
+    #[ApiOperation(
+        summary: 'rest_sip_GetStats',
+        description: 'rest_sip_GetStatsDesc',
+        operationId: 'getSipStats'
+    )]
+    #[ApiParameter('extension', 'string', 'rest_param_sip_extension', ParameterLocation::PATH, required: true, example: '201')]
+    #[ApiResponse(200, 'rest_response_200_stats')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    public function getStats(string $extension): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Get SIP peers statuses (legacy method)
+     *
+     * @route GET /pbxcore/api/v3/sip:getPeersStatuses
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'list',
+        isArray: true
+    )]
+    #[ApiOperation(
+        summary: 'rest_sip_GetPeersStatuses',
+        description: 'rest_sip_GetPeersStatusesDesc',
+        operationId: 'getSipPeersStatuses'
+    )]
+    #[ApiResponse(200, 'rest_response_200_list')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function getPeersStatuses(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Get SIP registry statuses (legacy method)
+     *
+     * @route GET /pbxcore/api/v3/sip:getRegistry
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'registry',
+        isArray: true
+    )]
+    #[ApiOperation(
+        summary: 'rest_sip_GetRegistry',
+        description: 'rest_sip_GetRegistryDesc',
+        operationId: 'getSipRegistry'
+    )]
+    #[ApiResponse(200, 'rest_response_200_list')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function getRegistry(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Get SIP secret for extension
+     *
+     * @route GET /pbxcore/api/v3/sip:getSecret/{extension}
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'secret'
+    )]
+    #[ApiOperation(
+        summary: 'rest_sip_GetSecret',
+        description: 'rest_sip_GetSecretDesc',
+        operationId: 'getSipSecret'
+    )]
+    #[ApiParameter('extension', 'string', 'rest_param_sip_extension', ParameterLocation::PATH, required: true, example: '201')]
+    #[ApiResponse(200, 'rest_response_200_get')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    public function getSecret(string $extension): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Get authentication failure statistics
+     *
+     * @route GET /pbxcore/api/v3/sip:getAuthFailureStats/{extension}
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'authFailureStats'
+    )]
+    #[ApiOperation(
+        summary: 'rest_sip_GetAuthFailureStats',
+        description: 'rest_sip_GetAuthFailureStatsDesc',
+        operationId: 'getSipAuthFailureStats'
+    )]
+    #[ApiParameter('extension', 'string', 'rest_param_sip_extension', ParameterLocation::PATH, required: true, example: '201')]
+    #[ApiResponse(200, 'rest_response_200_stats')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function getAuthFailureStats(string $extension): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Force check of SIP device status
+     *
+     * @route POST /pbxcore/api/v3/sip:forceCheck/{extension}
+     */
+    #[ApiOperation(
+        summary: 'rest_sip_ForceCheck',
+        description: 'rest_sip_ForceCheckDesc',
+        operationId: 'forceSipCheck'
+    )]
+    #[ApiParameter('extension', 'string', 'rest_param_sip_extension', ParameterLocation::PATH, required: true, example: '201')]
+    #[ApiResponse(200, 'rest_response_200_force_check')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    public function forceCheck(string $extension): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Process authentication failures
+     *
+     * @route POST /pbxcore/api/v3/sip:processAuthFailures
+     */
+    #[ApiOperation(
+        summary: 'rest_sip_ProcessAuthFailures',
+        description: 'rest_sip_ProcessAuthFailuresDesc',
+        operationId: 'processSipAuthFailures'
+    )]
+    #[ApiResponse(200, 'rest_response_200_get')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function processAuthFailures(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Clear authentication failure statistics
+     *
+     * @route POST /pbxcore/api/v3/sip:clearAuthFailureStats/{extension}
+     */
+    #[ApiOperation(
+        summary: 'rest_sip_ClearAuthFailureStats',
+        description: 'rest_sip_ClearAuthFailureStatsDesc',
+        operationId: 'clearSipAuthFailureStats'
+    )]
+    #[ApiParameter('extension', 'string', 'rest_param_sip_extension', ParameterLocation::PATH, required: true, example: '201')]
+    #[ApiResponse(200, 'rest_response_200_deleted')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function clearAuthFailureStats(string $extension): void
+    {
+        // Implementation handled by BaseRestController
+    }
 }

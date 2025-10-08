@@ -66,7 +66,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
     resourceLevelMethods: ['getRecord', 'update', 'patch', 'delete', 'copy'],
     collectionLevelMethods: ['getList', 'create'],
     customMethods: ['getDefault', 'copy'],
-    idPattern: 'QUEUE-[A-Z0-9]{8,}'
+    idPattern: 'QUEUE-[A-Fa-f0-9]{8,}'  // Support both new (8 chars) and legacy (32+ chars MD5) formats
 )]
 class RestController extends BaseRestController
 {

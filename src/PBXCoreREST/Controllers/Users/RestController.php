@@ -21,6 +21,18 @@ namespace MikoPBX\PBXCoreREST\Controllers\Users;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\UsersManagementProcessor;
+use MikoPBX\PBXCoreREST\Lib\Users\DataStructure;
+use MikoPBX\PBXCoreREST\Attributes\{
+    ApiResource,
+    ApiOperation,
+    ApiParameter,
+    ApiResponse,
+    ApiDataSchema,
+    SecurityType,
+    ParameterLocation,
+    HttpMapping,
+    ResourceSecurity
+};
 
 /**
  * RESTful controller for users management (v3 API)
@@ -63,6 +75,26 @@ use MikoPBX\PBXCoreREST\Lib\UsersManagementProcessor;
  *
  * @package MikoPBX\PBXCoreREST\Controllers\Users
  */
+#[ApiResource(
+    path: '/pbxcore/api/v3/users',
+    tags: ['Users'],
+    description: 'User account management for admin interface access. Supports full CRUD operations plus custom methods for email availability checking. Users can authenticate to the admin interface and have personalized settings like language and avatar.',
+    processor: UsersManagementProcessor::class
+)]
+#[ResourceSecurity('users', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
+#[HttpMapping(
+    mapping: [
+        'GET' => ['getList', 'getRecord', 'available'],
+        'POST' => ['create'],
+        'PUT' => ['update'],
+        'PATCH' => ['patch'],
+        'DELETE' => ['delete']
+    ],
+    resourceLevelMethods: ['getRecord', 'update', 'patch', 'delete'],
+    collectionLevelMethods: ['getList', 'create', 'available'],
+    customMethods: ['available'],
+    idPattern: '[0-9]+'
+)]
 class RestController extends BaseRestController
 {
     /**
@@ -72,15 +104,240 @@ class RestController extends BaseRestController
     protected string $processorClass = UsersManagementProcessor::class;
 
     /**
-     * Define allowed custom methods for each HTTP method
+     * List all users
      *
-     * @return array<string, array<string>>
+     * Retrieves a paginated list of all users in the system.
+     * Supports filtering, sorting, and pagination.
+     *
+     * @route GET /pbxcore/api/v3/users
      */
-    protected function getAllowedCustomMethods(): array
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'list'
+    )]
+    #[ApiOperation(
+        summary: 'rest_users_GetList',
+        description: 'rest_users_GetListDesc',
+        operationId: 'listUsers'
+    )]
+    #[ApiParameter(
+        name: 'limit',
+        type: 'integer',
+        description: 'rest_param_limit',
+        in: ParameterLocation::QUERY,
+        required: false,
+        minimum: 1,
+        maximum: 1000,
+        default: 100,
+        example: 20
+    )]
+    #[ApiParameter(
+        name: 'offset',
+        type: 'integer',
+        description: 'rest_param_offset',
+        in: ParameterLocation::QUERY,
+        required: false,
+        minimum: 0,
+        default: 0,
+        example: 0
+    )]
+    #[ApiResponse(200, 'rest_response_200_list', 'UserList')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
+    public function getList(): void
     {
-        return [
-            'GET' => ['available'],
-            'POST' => []
-        ];
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Get a specific user by ID
+     *
+     * Retrieves detailed information about a specific user.
+     *
+     * @route GET /pbxcore/api/v3/users/{id}
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
+    #[ApiOperation(
+        summary: 'rest_users_GetRecord',
+        description: 'rest_users_GetRecordDesc',
+        operationId: 'getUser'
+    )]
+    #[ApiParameter(
+        name: 'id',
+        type: 'integer',
+        description: 'rest_param_id',
+        in: ParameterLocation::PATH,
+        required: true,
+        example: 1
+    )]
+    #[ApiResponse(200, 'rest_response_200_detail', 'User')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
+    public function getRecord(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Create a new user
+     *
+     * Creates a new user account with the provided data.
+     *
+     * @route POST /pbxcore/api/v3/users
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
+    #[ApiOperation(
+        summary: 'rest_users_Create',
+        description: 'rest_users_CreateDesc',
+        operationId: 'createUser'
+    )]
+    #[ApiResponse(201, 'rest_response_201_created', 'User')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(409, 'rest_response_409_conflict', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
+    public function create(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Update (replace) a user
+     *
+     * Replaces all fields of an existing user with the provided data.
+     *
+     * @route PUT /pbxcore/api/v3/users/{id}
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
+    #[ApiOperation(
+        summary: 'rest_users_Update',
+        description: 'rest_users_UpdateDesc',
+        operationId: 'updateUser'
+    )]
+    #[ApiParameter(
+        name: 'id',
+        type: 'integer',
+        description: 'rest_param_id',
+        in: ParameterLocation::PATH,
+        required: true,
+        example: 1
+    )]
+    #[ApiResponse(200, 'rest_response_200_updated', 'User')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    #[ApiResponse(409, 'rest_response_409_conflict', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
+    public function update(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Patch (partially update) a user
+     *
+     * Updates only the specified fields of an existing user.
+     *
+     * @route PATCH /pbxcore/api/v3/users/{id}
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
+    #[ApiOperation(
+        summary: 'rest_users_Patch',
+        description: 'rest_users_PatchDesc',
+        operationId: 'patchUser'
+    )]
+    #[ApiParameter(
+        name: 'id',
+        type: 'integer',
+        description: 'rest_param_id',
+        in: ParameterLocation::PATH,
+        required: true,
+        example: 1
+    )]
+    #[ApiResponse(200, 'rest_response_200_updated', 'User')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    #[ApiResponse(409, 'rest_response_409_conflict', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
+    public function patch(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Delete a user
+     *
+     * Permanently removes a user from the system.
+     *
+     * @route DELETE /pbxcore/api/v3/users/{id}
+     */
+    #[ApiOperation(
+        summary: 'rest_users_Delete',
+        description: 'rest_users_DeleteDesc',
+        operationId: 'deleteUser'
+    )]
+    #[ApiParameter(
+        name: 'id',
+        type: 'integer',
+        description: 'rest_param_id',
+        in: ParameterLocation::PATH,
+        required: true,
+        example: 1
+    )]
+    #[ApiResponse(204, 'rest_response_204_deleted')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
+    public function delete(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Check email availability
+     *
+     * Checks if a specific email address is available for use.
+     * This is useful for validating user input during registration or email updates.
+     *
+     * @route GET /pbxcore/api/v3/users:available
+     */
+    #[ApiOperation(
+        summary: 'rest_users_Available',
+        description: 'rest_users_AvailableDesc',
+        operationId: 'checkEmailAvailability'
+    )]
+    #[ApiParameter(
+        name: 'email',
+        type: 'string',
+        description: 'rest_param_users_email',
+        in: ParameterLocation::QUERY,
+        required: true,
+        format: 'email',
+        example: 'test@example.com'
+    )]
+    #[ApiResponse(200, 'rest_response_200_availability_checked', 'UserAvailability')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
+    public function available(): void
+    {
+        // Implementation handled by BaseRestController
     }
 }

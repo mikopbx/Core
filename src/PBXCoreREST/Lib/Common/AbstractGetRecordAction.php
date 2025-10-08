@@ -223,24 +223,24 @@ abstract class AbstractGetRecordAction
             } else {
                 // Find existing record
                 $record = self::findRecordById($modelClass, $id);
-                
+
                 if ($record) {
                     // Execute callback for additional data loading
                     $additionalData = null;
                     if ($existingRecordCallback) {
                         $additionalData = $existingRecordCallback($record);
                     }
-                    
+
                     // Create data structure (pass additional data if callback provided it)
                     if ($additionalData !== null) {
                         $res->data = $dataStructureClass::createFromModel($record, $additionalData);
                     } else {
                         $res->data = $dataStructureClass::createFromModel($record);
                     }
-                    
+
                     $res->success = true;
                 } else {
-                    $res->messages['error'][] = $notFoundMessage;
+                    $res->messages['error'][] = $notFoundMessage . " (ID: {$id})";
                 }
             }
             

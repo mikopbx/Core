@@ -21,62 +21,370 @@ namespace MikoPBX\PBXCoreREST\Controllers\IncomingRoutes;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\IncomingRoutesManagementProcessor;
+use MikoPBX\PBXCoreREST\Lib\IncomingRoutes\DataStructure;
+use MikoPBX\PBXCoreREST\Attributes\{
+    ApiResource,
+    ApiOperation,
+    ApiParameter,
+    ApiResponse,
+    ApiDataSchema,
+    SecurityType,
+    ParameterLocation,
+    HttpMapping,
+    ResourceSecurity
+};
 
 /**
  * RESTful controller for incoming routes management (v3 API)
- * 
- * Handles both standard CRUD operations and custom methods following Google API Design Guide patterns.
- * This controller implements a clean RESTful interface with proper HTTP methods and resource-oriented URLs.
- * 
- * @RoutePrefix("/pbxcore/api/v3/incoming-routes")
- * 
- * @examples Standard CRUD operations:
- * 
- * # List all incoming routes with optional filtering
- * curl -X GET "http://127.0.0.1/pbxcore/api/v3/incoming-routes?limit=20&offset=0&search=office"
- * 
- * # Get specific incoming route
- * curl -X GET http://127.0.0.1/pbxcore/api/v3/incoming-routes/INC-ROUTE-123
- * 
- * # Create new incoming route
- * curl -X POST http://127.0.0.1/pbxcore/api/v3/incoming-routes \
- *      -H "Content-Type: application/json" \
- *      -d '{"number":"1234567890","extension":"100","priority":1}'
- * 
- * # Full update (replace) incoming route
- * curl -X PUT http://127.0.0.1/pbxcore/api/v3/incoming-routes/INC-ROUTE-123 \
- *      -H "Content-Type: application/json" \
- *      -d '{"number":"9876543210","extension":"200","priority":2}'
- * 
- * # Partial update (modify) incoming route
- * curl -X PATCH http://127.0.0.1/pbxcore/api/v3/incoming-routes/INC-ROUTE-123 \
- *      -H "Content-Type: application/json" \
- *      -d '{"extension":"300"}'
- * 
- * # Delete incoming route
- * curl -X DELETE http://127.0.0.1/pbxcore/api/v3/incoming-routes/INC-ROUTE-123
- * 
- * @examples Custom method operations:
- * 
- * # Get default values for new incoming route
- * curl -X GET http://127.0.0.1/pbxcore/api/v3/incoming-routes:getDefault
- * 
+ *
+ * Comprehensive incoming route management following Google API Design Guide patterns.
+ * Implements full CRUD operations plus custom methods with automatic OpenAPI generation.
+ *
  * @package MikoPBX\PBXCoreREST\Controllers\IncomingRoutes
+ *
+ * @see https://cloud.google.com/apis/design - Google API Design Guide
+ * @see https://spec.openapis.org/oas/v3.1.0 - OpenAPI 3.1 Specification
  */
+#[ApiResource(
+    path: '/pbxcore/api/v3/incoming-routes',
+    tags: ['Incoming Routes'],
+    description: 'Comprehensive incoming route management for call routing and DID number handling. ' .
+                'Features include provider-based routing, number pattern matching, priority management, ' .
+                'timeout configuration, extension forwarding, and audio message playback.',
+    processor: IncomingRoutesManagementProcessor::class
+)]
+#[ResourceSecurity('incoming_routes', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
+#[HttpMapping(
+    mapping: [
+        'GET' => ['getList', 'getRecord', 'getDefault', 'getDefaultRoute'],
+        'POST' => ['create', 'changePriority', 'copy'],
+        'PUT' => ['update'],
+        'PATCH' => ['patch'],
+        'DELETE' => ['delete']
+    ],
+    resourceLevelMethods: ['getRecord', 'update', 'patch', 'delete', 'copy'],
+    collectionLevelMethods: ['getList', 'create'],
+    customMethods: ['getDefault', 'getDefaultRoute', 'changePriority', 'copy'],
+    idPattern: '[0-9]+'
+)]
 class RestController extends BaseRestController
 {
-    protected string $processorClass = IncomingRoutesManagementProcessor::class;
-    
     /**
-     * Define allowed custom methods for each HTTP method
-     *
-     * @return array<string, array<string>>
+     * The processor class to handle requests
+     * @var string
      */
-    protected function getAllowedCustomMethods(): array
+    protected string $processorClass = IncomingRoutesManagementProcessor::class;
+
+
+    /**
+     * Get list of all incoming routes with pagination and filtering
+     *
+     * @route GET /pbxcore/api/v3/incoming-routes
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'list',
+        isArray: true
+    )]
+    #[ApiOperation(
+        summary: 'rest_ir_GetList',
+        description: 'rest_ir_GetListDesc',
+        operationId: 'getIncomingRoutesList'
+    )]
+    #[ApiParameter(
+        name: 'limit',
+        type: 'integer',
+        description: 'rest_param_limit',
+        in: ParameterLocation::QUERY,
+        minimum: 1,
+        maximum: 100,
+        default: 20,
+        example: 20
+    )]
+    #[ApiParameter(
+        name: 'offset',
+        type: 'integer',
+        description: 'rest_param_offset',
+        in: ParameterLocation::QUERY,
+        minimum: 0,
+        default: 0,
+        example: 0
+    )]
+    #[ApiParameter(
+        name: 'search',
+        type: 'string',
+        description: 'rest_param_search',
+        in: ParameterLocation::QUERY,
+        maxLength: 255,
+        example: '74952345678'
+    )]
+    #[ApiParameter(
+        name: 'order',
+        type: 'string',
+        description: 'rest_param_order',
+        in: ParameterLocation::QUERY,
+        enum: ['priority', 'number', 'extension', 'rulename'],
+        default: 'priority',
+        example: 'priority'
+    )]
+    #[ApiParameter(
+        name: 'orderWay',
+        type: 'string',
+        description: 'rest_param_orderWay',
+        in: ParameterLocation::QUERY,
+        enum: ['ASC', 'DESC'],
+        default: 'ASC',
+        example: 'ASC'
+    )]
+    #[ApiParameter(
+        name: 'providerid',
+        type: 'string',
+        description: 'rest_param_ir_providerid_filter',
+        in: ParameterLocation::QUERY,
+        example: 'SIP-PROVIDER-123456'
+    )]
+    #[ApiResponse(200, 'rest_response_200_list')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function getList(): void
     {
-        return [
-            'GET' => ['getDefault', 'getDefaultRoute'],
-            'POST' => ['changePriority', 'copy']
-        ];
+        // Implementation handled by BaseRestController
     }
+
+    /**
+     * Get a specific incoming route by ID
+     *
+     * @route GET /pbxcore/api/v3/incoming-routes/{id}
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
+    #[ApiOperation(
+        summary: 'rest_ir_GetRecord',
+        description: 'rest_ir_GetRecordDesc',
+        operationId: 'getIncomingRouteById'
+    )]
+    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[0-9]+$', example: '42')]
+    #[ApiResponse(200, 'rest_response_200_get')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    public function getRecord(string $id): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Create a new incoming route
+     *
+     * @route POST /pbxcore/api/v3/incoming-routes
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
+    #[ApiOperation(
+        summary: 'rest_ir_Create',
+        description: 'rest_ir_CreateDesc',
+        operationId: 'createIncomingRoute'
+    )]
+    // Request body parameters for create operation
+    #[ApiParameter('rulename', 'string', 'rest_param_ir_rulename', ParameterLocation::QUERY, required: false, maxLength: 100, example: 'Office Main Line')]
+    #[ApiParameter('number', 'string', 'rest_param_ir_number', ParameterLocation::QUERY, required: false, pattern: '^[0-9*#+]*$', maxLength: 50, example: '74952345678')]
+    #[ApiParameter('providerid', 'string', 'rest_param_ir_providerid', ParameterLocation::QUERY, required: false, example: 'SIP-PROVIDER-123456')]
+    #[ApiParameter('priority', 'integer', 'rest_param_ir_priority', ParameterLocation::QUERY, required: false, minimum: 0, maximum: 9999, default: 0, example: 1)]
+    #[ApiParameter('timeout', 'integer', 'rest_param_ir_timeout', ParameterLocation::QUERY, required: false, minimum: 0, maximum: 600, default: 0, example: 15)]
+    #[ApiParameter('extension', 'string', 'rest_param_ir_extension', ParameterLocation::QUERY, required: true, pattern: '^[0-9]{2,8}$', example: '201')]
+    #[ApiParameter('audio_message_id', 'string', 'rest_param_ir_audio_message_id', ParameterLocation::QUERY, required: false, example: '43')]
+    #[ApiParameter('note', 'string', 'rest_param_ir_note', ParameterLocation::QUERY, required: false, maxLength: 500, example: 'Main office number routing')]
+    #[ApiResponse(201, 'rest_response_201_created')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(409, 'rest_response_409_conflict', 'PBXApiResult')]
+    public function create(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Update an existing incoming route (full replacement)
+     *
+     * @route PUT /pbxcore/api/v3/incoming-routes/{id}
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
+    #[ApiOperation(
+        summary: 'rest_ir_Update',
+        description: 'rest_ir_UpdateDesc',
+        operationId: 'updateIncomingRoute'
+    )]
+    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[0-9]+$', example: '42')]
+    #[ApiParameter('rulename', 'string', 'rest_param_ir_rulename', ParameterLocation::QUERY, required: false, maxLength: 100, example: 'Updated Office Line')]
+    #[ApiParameter('number', 'string', 'rest_param_ir_number', ParameterLocation::QUERY, required: false, pattern: '^[0-9*#+]*$', maxLength: 50, example: '74959876543')]
+    #[ApiParameter('providerid', 'string', 'rest_param_ir_providerid', ParameterLocation::QUERY, required: false, example: 'SIP-PROVIDER-987654')]
+    #[ApiParameter('priority', 'integer', 'rest_param_ir_priority', ParameterLocation::QUERY, required: false, minimum: 0, maximum: 9999, example: 2)]
+    #[ApiParameter('timeout', 'integer', 'rest_param_ir_timeout', ParameterLocation::QUERY, required: false, minimum: 0, maximum: 600, example: 20)]
+    #[ApiParameter('extension', 'string', 'rest_param_ir_extension', ParameterLocation::QUERY, required: true, pattern: '^[0-9]{2,8}$', example: '202')]
+    #[ApiResponse(200, 'rest_response_200_updated')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    #[ApiResponse(409, 'rest_response_409_conflict', 'PBXApiResult')]
+    public function update(string $id): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Partially update an existing incoming route
+     *
+     * @route PATCH /pbxcore/api/v3/incoming-routes/{id}
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
+    #[ApiOperation(
+        summary: 'rest_ir_Patch',
+        description: 'rest_ir_PatchDesc',
+        operationId: 'patchIncomingRoute'
+    )]
+    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[0-9]+$', example: '42')]
+    #[ApiParameter('rulename', 'string', 'rest_param_ir_rulename', ParameterLocation::QUERY, required: false, maxLength: 100, example: 'Updated Office Line')]
+    #[ApiParameter('number', 'string', 'rest_param_ir_number', ParameterLocation::QUERY, required: false, pattern: '^[0-9*#+]*$', maxLength: 50, example: '74959876543')]
+    #[ApiParameter('priority', 'integer', 'rest_param_ir_priority', ParameterLocation::QUERY, required: false, minimum: 0, maximum: 9999, example: 5)]
+    #[ApiParameter('timeout', 'integer', 'rest_param_ir_timeout', ParameterLocation::QUERY, required: false, minimum: 0, maximum: 600, example: 25)]
+    #[ApiParameter('extension', 'string', 'rest_param_ir_extension', ParameterLocation::QUERY, required: false, pattern: '^[0-9]{2,8}$', example: '203')]
+    #[ApiResponse(200, 'rest_response_200_patched')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    public function patch(string $id): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Delete an incoming route
+     *
+     * @route DELETE /pbxcore/api/v3/incoming-routes/{id}
+     */
+    #[ApiOperation(
+        summary: 'rest_ir_Delete',
+        description: 'rest_ir_DeleteDesc',
+        operationId: 'deleteIncomingRoute'
+    )]
+    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[0-9]+$', example: '42')]
+    #[ApiResponse(200, 'rest_response_200_deleted')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    #[ApiResponse(409, 'rest_response_409_conflict', 'PBXApiResult')]
+    public function delete(string $id): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+
+    /**
+     * Get default template for new incoming route
+     *
+     * @route GET /pbxcore/api/v3/incoming-routes:getDefault
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
+    #[ApiOperation(
+        summary: 'rest_ir_GetDefault',
+        description: 'rest_ir_GetDefaultDesc',
+        operationId: 'getIncomingRouteDefault'
+    )]
+    #[ApiResponse(200, 'rest_response_200_default')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function getDefault(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Get or create the default incoming route (catch-all route with ID=1)
+     *
+     * @route GET /pbxcore/api/v3/incoming-routes:getDefaultRoute
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
+    #[ApiOperation(
+        summary: 'rest_ir_GetDefaultRoute',
+        description: 'rest_ir_GetDefaultRouteDesc',
+        operationId: 'getIncomingRouteDefaultRoute'
+    )]
+    #[ApiResponse(200, 'rest_response_200_get')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function getDefaultRoute(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Copy an existing incoming route
+     *
+     * @route POST /pbxcore/api/v3/incoming-routes/{id}:copy
+     */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
+    #[ApiOperation(
+        summary: 'rest_ir_Copy',
+        description: 'rest_ir_CopyDesc',
+        operationId: 'copyIncomingRoute'
+    )]
+    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[0-9]+$', example: '42')]
+    #[ApiResponse(201, 'rest_response_201_copied')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    public function copy(string $id): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Update priority order for multiple incoming routes
+     *
+     * @route POST /pbxcore/api/v3/incoming-routes:changePriority
+     */
+    #[ApiOperation(
+        summary: 'rest_ir_ChangePriority',
+        description: 'rest_ir_ChangePriorityDesc',
+        operationId: 'changeIncomingRoutePriority'
+    )]
+    #[ApiParameter(
+        name: 'priorities',
+        type: 'array',
+        description: 'rest_param_ir_priorities',
+        in: ParameterLocation::QUERY,
+        required: true,
+        example: '[{"id":"1","priority":0},{"id":"42","priority":1},{"id":"15","priority":2}]'
+    )]
+    #[ApiResponse(200, 'rest_response_200_updated')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    public function changePriority(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
 }

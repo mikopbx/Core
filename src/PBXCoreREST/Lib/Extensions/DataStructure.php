@@ -2,7 +2,7 @@
 
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,129 +21,250 @@
 namespace MikoPBX\PBXCoreREST\Lib\Extensions;
 
 use MikoPBX\Common\Models\Extensions;
-use MikoPBX\Common\Models\ExternalPhones;
-use MikoPBX\Common\Models\IncomingRoutingTable;
-use MikoPBX\Common\Models\Sip;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
+use MikoPBX\PBXCoreREST\Lib\Common\OpenApiSchemaProvider;
 
-class DataStructure
+/**
+ * Data structure for extensions
+ *
+ * Creates consistent data format for API responses.
+ * Implements OpenApiSchemaProvider to provide typed schemas for OpenAPI specification.
+ *
+ * @package MikoPBX\PBXCoreREST\Lib\Extensions
+ */
+class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvider
 {
-    public ?string $id;
-
-    public string $type = Extensions::TYPE_SIP;
-
-    public string $show_in_phonebook = '1';
-    public string $is_general_user_number = '1';
-    public string $public_access = '0';
-
-    public string $number = '';
-
-    public ?string $user_id = '';
-    public string $user_avatar = '';
-    public string $user_username = '';
-    public string $user_email = '';
-    public string $mobile_uniqid = '';
-    public string $mobile_number = '';
-    public string $mobile_dialstring = '';
-    public ?string $sip_uniqid = '';
-
-    public string $sip_secret = '';
-    public string $sip_type = 'peer';
-    public string $sip_qualify = '1';
-    public int $sip_qualifyfreq = 60;
-    public string $sip_enableRecording = '1';
-    public string $sip_dtmfmode = 'auto';
-    public string $sip_transport = '';
-    public string $sip_networkfilterid = 'none';
-    public string $sip_manualattributes = '';
-    public int $fwd_ringlength = 45;
-    public string $fwd_forwarding = '';
-    public string $fwd_forwardingonbusy = '';
-    public string $fwd_forwardingonunavailable = '';
-
     /**
-     * DataStructure constructor.
+     * Create data array from Extensions model
      *
-     * Initializes a DataStructure instance with provided data.
-     * If certain properties are empty, it assigns default values.
+     * Following "Store Clean, Escape at Edge" principle:
+     * Returns raw data that was sanitized on input. HTML escaping
+     * is the responsibility of the presentation layer.
      *
-     * @param array $data The input data to initialize the DataStructure.
+     * @param Extensions $model Extension model instance
+     * @return array<string, mixed> Complete data structure
      */
-    public function __construct(array $data)
+    public static function createFromModel($model): array
     {
-        // Use Reflection to get information about the class properties.
-        $reflectionClass = new \ReflectionClass($this);
-        $properties = $reflectionClass->getProperties();
+        // Start with base structure
+        $data = self::createBaseStructure($model);
 
-        foreach ($properties as $property) {
-            $propName = $property->getName();
+        // Add all extension fields from model
+        $data['id'] = $model->number;
+        $data['number'] = $model->number;
+        $data['type'] = $model->type ?? Extensions::TYPE_SIP;
+        $data['callerid'] = $model->callerid ?? '';
+        $data['userid'] = $model->userid ?? '';
+        $data['show_in_phonebook'] = $model->show_in_phonebook ?? '1';
+        $data['public_access'] = $model->public_access ?? '0';
+        $data['is_general_user_number'] = $model->is_general_user_number ?? '1';
 
-            // Continue if the property doesn't exist in the data array.
-            if (!array_key_exists($propName, $data)) {
-                continue;
-            }
+        // Apply OpenAPI schema formatting to convert types automatically
+        $data = self::formatBySchema($data, 'detail');
 
-            // Use Reflection to get the type of the property.
-            $type = $property->getType();
-
-            // Assign a default value based on the type.
-            switch ($type->getName()) {
-                case 'string':
-                    $this->$propName = $data[$propName] ?? '';
-                    break;
-                case 'int':
-                    $this->$propName = intval($data[$propName]) ?? 0;
-                    break;
-                // You can add more types here if needed
-            }
-        }
-
-        // Fill empty values
-        if (empty($this->sip_uniqid)) {
-            $this->sip_uniqid = Sip::generateUniqueID();
-        }
-        if (empty($this->sip_secret)) {
-            $this->sip_secret = Sip::generateSipPassword();
-        }
-        if (empty($this->mobile_uniqid)) {
-            $this->mobile_uniqid = ExternalPhones::generateUniqueID();
-        }
-        if (empty($this->sip_networkfilterid)) {
-            $this->sip_networkfilterid = 'none';
-        }
-        if (empty($this->sip_dtmfmode)) {
-            $this->sip_dtmfmode = 'auto';
-        }
-
-        // Sanitize extension
-        if (!empty($this->number)) {
-            $this->number = preg_replace('/\D/', '', $this->number);
-        }
-        if (empty($this->number)) {
-            $this->number = Extensions::getNextInternalNumber();
-        }
-
-        // Sanitize mobile numbers
-        if (!empty($this->mobile_number)) {
-            $this->mobile_number = preg_replace('/\D/', '', $this->mobile_number);
-        }
-        if (empty($this->mobile_dialstring)) {
-            $this->mobile_dialstring = $this->mobile_number;
-        }
-        $properties = ['fwd_forwarding', 'fwd_forwardingonunavailable', 'fwd_forwardingonbusy'];
-        foreach ($properties as $property) {
-            if (!empty($this->{$property}) && !in_array($this->{$property}, [IncomingRoutingTable::ACTION_VOICEMAIL, IncomingRoutingTable::ACTION_BUSY, IncomingRoutingTable::ACTION_HANGUP], true)) {
-                $this->{$property} = preg_replace('/\D/', '', $this->{$property});
-            }
-        }
+        return $data;
     }
 
     /**
-     * Convert the DataStructure object to an associative array.
+     * Create simplified data structure for list view
      *
-     * @return array The DataStructure object as an associative array.
+     * @param Extensions $model Extension model instance
+     * @return array<string, mixed> Simplified data structure
      */
-    public function toArray(): array
+    public static function createForList($model): array
     {
-        return get_object_vars($this);
+        // Use unified base method for list creation
+        $data = parent::createForList($model);
+
+        // Add extension specific fields for list display
+        $data['id'] = $model->number;
+        $data['number'] = $model->number;
+        $data['type'] = $model->type ?? Extensions::TYPE_SIP;
+        $data['callerid'] = $model->callerid ?? '';
+
+        // Apply OpenAPI list schema formatting
+        $data = self::formatBySchema($data, 'list');
+
+        return $data;
+    }
+
+    /**
+     * Get OpenAPI schema for extension list item
+     *
+     * This schema matches the structure returned by createForList() method.
+     * Used for GET /api/v3/extensions endpoint (list of extensions).
+     *
+     * @return array<string, mixed> OpenAPI schema definition
+     */
+    public static function getListItemSchema(): array
+    {
+        return [
+            'type' => 'object',
+            'required' => ['id', 'number', 'type'],
+            'properties' => [
+                'id' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ext_id',
+                    'pattern' => '^[0-9]{2,8}$',
+                    'example' => '201'
+                ],
+                'number' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ext_number',
+                    'pattern' => '^[0-9]{2,8}$',
+                    'example' => '201'
+                ],
+                'type' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ext_type',
+                    'enum' => ['SIP', 'IAX', 'QUEUE', 'IVR', 'CONFERENCE', 'EXTERNAL'],
+                    'example' => 'SIP'
+                ],
+                'callerid' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ext_callerid',
+                    'maxLength' => 100,
+                    'example' => 'John Doe'
+                ]
+            ]
+        ];
+    }
+
+    /**
+     * Get OpenAPI schema for detailed extension record
+     *
+     * This schema matches the structure returned by createFromModel() method.
+     * Used for GET /api/v3/extensions/{id}, POST, PUT, PATCH endpoints.
+     *
+     * @return array<string, mixed> OpenAPI schema definition
+     */
+    public static function getDetailSchema(): array
+    {
+        return [
+            'type' => 'object',
+            'required' => ['number', 'type'],
+            'properties' => [
+                'id' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ext_id',
+                    'pattern' => '^[0-9]{2,8}$',
+                    'example' => '201'
+                ],
+                'number' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ext_number',
+                    'pattern' => '^[0-9]{2,8}$',
+                    'example' => '201'
+                ],
+                'type' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ext_type',
+                    'enum' => ['SIP', 'IAX', 'QUEUE', 'IVR', 'CONFERENCE', 'EXTERNAL'],
+                    'default' => 'SIP',
+                    'example' => 'SIP'
+                ],
+                'callerid' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ext_callerid',
+                    'maxLength' => 100,
+                    'example' => 'John Doe'
+                ],
+                'userid' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ext_userid',
+                    'pattern' => '^[0-9]*$',
+                    'example' => '12'
+                ],
+                'show_in_phonebook' => [
+                    'type' => 'boolean',
+                    'description' => 'rest_schema_ext_show_in_phonebook',
+                    'default' => true,
+                    'example' => true
+                ],
+                'public_access' => [
+                    'type' => 'boolean',
+                    'description' => 'rest_schema_ext_public_access',
+                    'default' => false,
+                    'example' => false
+                ],
+                'is_general_user_number' => [
+                    'type' => 'boolean',
+                    'description' => 'rest_schema_ext_is_general_user_number',
+                    'default' => true,
+                    'example' => true
+                ]
+            ]
+        ];
+    }
+
+    /**
+     * Get related schemas for OpenAPI components
+     *
+     * @return array<string, array<string, mixed>> Related schemas
+     */
+    public static function getRelatedSchemas(): array
+    {
+        return [];
+    }
+
+    /**
+     * Generate sanitization rules from OpenAPI schema
+     *
+     * Converts OpenAPI schema constraints into SystemSanitizer format.
+     * This eliminates duplication between schema definition and validation rules.
+     *
+     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
+     */
+    public static function getSanitizationRules(): array
+    {
+        $schema = static::getDetailSchema();
+        $rules = [];
+
+        if (!isset($schema['properties'])) {
+            return $rules;
+        }
+
+        foreach ($schema['properties'] as $fieldName => $fieldSchema) {
+            $ruleParts = [];
+
+            // Add type
+            $type = $fieldSchema['type'] ?? 'string';
+            $ruleParts[] = match ($type) {
+                'integer' => 'int',
+                'number' => 'float',
+                'boolean' => 'bool',
+                'array' => 'array',
+                default => 'string'
+            };
+
+            // Add constraints
+            if (isset($fieldSchema['minLength'])) {
+                $ruleParts[] = 'min:' . $fieldSchema['minLength'];
+            }
+            if (isset($fieldSchema['maxLength'])) {
+                $ruleParts[] = 'max:' . $fieldSchema['maxLength'];
+            }
+            if (isset($fieldSchema['minimum'])) {
+                $ruleParts[] = 'min:' . $fieldSchema['minimum'];
+            }
+            if (isset($fieldSchema['maximum'])) {
+                $ruleParts[] = 'max:' . $fieldSchema['maximum'];
+            }
+            if (isset($fieldSchema['pattern']) && is_string($fieldSchema['pattern'])) {
+                $pattern = str_replace('^', '', $fieldSchema['pattern']);
+                $pattern = str_replace('$', '', $pattern);
+                $ruleParts[] = 'regex:/' . $pattern . '/';
+            }
+            if (isset($fieldSchema['enum']) && is_array($fieldSchema['enum'])) {
+                $ruleParts[] = 'in:' . implode(',', $fieldSchema['enum']);
+            }
+            if (isset($fieldSchema['nullable']) && $fieldSchema['nullable'] === true) {
+                $ruleParts[] = 'empty_to_null';
+            }
+
+            $rules[$fieldName] = implode('|', $ruleParts);
+        }
+
+        return $rules;
     }
 }

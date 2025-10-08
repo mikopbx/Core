@@ -21,6 +21,7 @@ namespace MikoPBX\PBXCoreREST\Lib\NetworkFilters;
 
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\PBXCoreREST\Lib\NetworkFilters\DataStructure;
 
 /**
  * GetRecordAction
@@ -52,35 +53,15 @@ class GetRecordAction
             }
             
             $filter = NetworkFilters::findFirstById($id);
-            
+
             if (!$filter) {
                 $res->messages['error'][] = "Network filter with ID $id not found";
                 $res->success = false;
                 return $res;
             }
-            
-            $result = [
-                'id' => $filter->id,
-                'description' => $filter->description,
-                'permit' => $filter->permit,
-                'deny' => $filter->deny,
-                'newer_block_ip' => $filter->newer_block_ip === '1',
-                'local_network' => $filter->local_network === '1',
-                'rules' => []
-            ];
-            
-            // Get associated firewall rules
-            $rules = $filter->FirewallRules;
-            foreach ($rules as $rule) {
-                $result['rules'][$rule->category] = [
-                    'action' => $rule->action,
-                    'portfrom' => $rule->portfrom,
-                    'portto' => $rule->portto,
-                    'protocol' => $rule->protocol
-                ];
-            }
-            
-            $res->data = $result;
+
+            // Use DataStructure for consistent formatting
+            $res->data = DataStructure::createFromModel($filter);
             $res->success = true;
             
         } catch (\Exception $e) {

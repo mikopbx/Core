@@ -23,14 +23,18 @@ namespace MikoPBX\PBXCoreREST\Lib\IncomingRoutes;
 
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
+use MikoPBX\PBXCoreREST\Lib\Common\OpenApiSchemaProvider;
 use MikoPBX\PBXCoreREST\Lib\Common\SearchIndexTrait;
 
 /**
  * Data structure for Incoming Routes
- * 
+ *
+ * Creates consistent data format for API responses.
+ * Implements OpenApiSchemaProvider to provide typed schemas for OpenAPI specification.
+ *
  * @package MikoPBX\PBXCoreREST\Lib\IncomingRoutes
  */
-class DataStructure extends AbstractDataStructure
+class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvider
 {
     use SearchIndexTrait;
     /**
@@ -237,7 +241,7 @@ class DataStructure extends AbstractDataStructure
     
     /**
      * Extract extension data from model
-     * 
+     *
      * @param \MikoPBX\Common\Models\Extensions|null $extension
      * @return array Extension data array
      */
@@ -246,5 +250,271 @@ class DataStructure extends AbstractDataStructure
         return [
             'extension_represent' => $extension?->getRepresent() ?? '',
         ];
+    }
+
+    /**
+     * Get OpenAPI schema for incoming route list item
+     *
+     * This schema matches the structure returned by createForList() method.
+     * Used for GET /api/v3/incoming-routes endpoint (list of routes).
+     *
+     * @return array<string, mixed> OpenAPI schema definition
+     */
+    public static function getListItemSchema(): array
+    {
+        return [
+            'type' => 'object',
+            'required' => ['id', 'priority'],
+            'properties' => [
+                'id' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ir_id',
+                    'pattern' => '^[0-9]+$',
+                    'example' => '15'
+                ],
+                'number' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ir_number',
+                    'maxLength' => 50,
+                    'example' => '74951234567'
+                ],
+                'priority' => [
+                    'type' => 'integer',
+                    'description' => 'rest_schema_ir_priority',
+                    'minimum' => 0,
+                    'example' => 1
+                ],
+                'timeout' => [
+                    'type' => 'integer',
+                    'description' => 'rest_schema_ir_timeout',
+                    'minimum' => 0,
+                    'maximum' => 300,
+                    'example' => 45
+                ],
+                'extension' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ir_extension',
+                    'pattern' => '^[0-9]*$',
+                    'example' => '201'
+                ],
+                'note' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ir_note',
+                    'maxLength' => 500,
+                    'example' => 'Route for main office line'
+                ],
+                'rulename' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ir_rulename',
+                    'maxLength' => 100,
+                    'example' => 'Main Office Route'
+                ],
+                'providerid' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ir_providerid',
+                    'example' => 'SIP-PROVIDER-1234'
+                ],
+                'providerid_represent' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ir_providerid_represent',
+                    'example' => '<i class="globe icon"></i> Main Provider'
+                ],
+                'provider_disabled' => [
+                    'type' => 'boolean',
+                    'description' => 'rest_schema_ir_provider_disabled',
+                    'example' => false
+                ],
+                'extension_represent' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ir_extension_represent',
+                    'example' => '<i class="user icon"></i> John Doe <201>'
+                ],
+                'rule_represent' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ir_rule_represent',
+                    'example' => 'When <span class="provider">Main Provider</span> receives call to 74951234567, forward to <span class="callerid">John Doe <201></span>'
+                ],
+                'search_index' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ir_search_index',
+                    'example' => 'main office route 74951234567 201 john doe'
+                ]
+            ]
+        ];
+    }
+
+    /**
+     * Get OpenAPI schema for detailed incoming route record
+     *
+     * This schema matches the structure returned by createFromModel() method.
+     * Used for GET /api/v3/incoming-routes/{id}, POST, PUT, PATCH endpoints.
+     *
+     * @return array<string, mixed> OpenAPI schema definition
+     */
+    public static function getDetailSchema(): array
+    {
+        return [
+            'type' => 'object',
+            'required' => ['id', 'priority'],
+            'properties' => [
+                'id' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ir_id',
+                    'pattern' => '^[0-9]+$',
+                    'example' => '15'
+                ],
+                'rulename' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ir_rulename',
+                    'maxLength' => 100,
+                    'example' => 'Main Office Route'
+                ],
+                'number' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ir_number',
+                    'maxLength' => 50,
+                    'example' => '74951234567'
+                ],
+                'providerid' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ir_providerid',
+                    'example' => 'SIP-PROVIDER-1234'
+                ],
+                'providerid_represent' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ir_providerid_represent',
+                    'example' => '<i class="globe icon"></i> Main Provider'
+                ],
+                'provider_type' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ir_provider_type',
+                    'enum' => ['SIP', 'IAX2'],
+                    'example' => 'SIP'
+                ],
+                'provider_disabled' => [
+                    'type' => 'boolean',
+                    'description' => 'rest_schema_ir_provider_disabled',
+                    'example' => false
+                ],
+                'priority' => [
+                    'type' => 'integer',
+                    'description' => 'rest_schema_ir_priority',
+                    'minimum' => 0,
+                    'default' => 1,
+                    'example' => 1
+                ],
+                'timeout' => [
+                    'type' => 'integer',
+                    'description' => 'rest_schema_ir_timeout',
+                    'minimum' => 0,
+                    'maximum' => 300,
+                    'default' => 45,
+                    'example' => 45
+                ],
+                'extension' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ir_extension',
+                    'pattern' => '^[0-9]*$',
+                    'example' => '201'
+                ],
+                'extension_represent' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ir_extension_represent',
+                    'example' => '<i class="user icon"></i> John Doe <201>'
+                ],
+                'audio_message_id' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ir_audio_message_id',
+                    'example' => '45'
+                ],
+                'audio_message_id_represent' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ir_audio_message_id_represent',
+                    'example' => '<i class="sound icon"></i> Welcome Message'
+                ],
+                'note' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ir_note',
+                    'maxLength' => 500,
+                    'example' => 'Route for main office line'
+                ],
+                'search_index' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ir_search_index',
+                    'example' => 'main office route 74951234567 201 john doe'
+                ]
+            ]
+        ];
+    }
+
+    /**
+     * Get related schemas for OpenAPI components
+     *
+     * @return array<string, array<string, mixed>> Related schemas
+     */
+    public static function getRelatedSchemas(): array
+    {
+        return [];
+    }
+
+    /**
+     * Generate sanitization rules from OpenAPI schema
+     *
+     * Converts OpenAPI schema constraints into SystemSanitizer format.
+     * This eliminates duplication between schema definition and validation rules.
+     *
+     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
+     */
+    public static function getSanitizationRules(): array
+    {
+        $schema = static::getDetailSchema();
+        $rules = [];
+
+        if (!isset($schema['properties'])) {
+            return $rules;
+        }
+
+        foreach ($schema['properties'] as $fieldName => $fieldSchema) {
+            $ruleParts = [];
+
+            // Add type
+            $type = $fieldSchema['type'] ?? 'string';
+            $ruleParts[] = match ($type) {
+                'integer' => 'int',
+                'number' => 'float',
+                'boolean' => 'bool',
+                'array' => 'array',
+                default => 'string'
+            };
+
+            // Add constraints
+            if (isset($fieldSchema['minLength'])) {
+                $ruleParts[] = 'min:' . $fieldSchema['minLength'];
+            }
+            if (isset($fieldSchema['maxLength'])) {
+                $ruleParts[] = 'max:' . $fieldSchema['maxLength'];
+            }
+            if (isset($fieldSchema['minimum'])) {
+                $ruleParts[] = 'min:' . $fieldSchema['minimum'];
+            }
+            if (isset($fieldSchema['maximum'])) {
+                $ruleParts[] = 'max:' . $fieldSchema['maximum'];
+            }
+            if (isset($fieldSchema['pattern']) && is_string($fieldSchema['pattern'])) {
+                $pattern = str_replace('^', '', $fieldSchema['pattern']);
+                $pattern = str_replace('$', '', $pattern);
+                $ruleParts[] = 'regex:/' . $pattern . '/';
+            }
+            if (isset($fieldSchema['enum']) && is_array($fieldSchema['enum'])) {
+                $ruleParts[] = 'in:' . implode(',', $fieldSchema['enum']);
+            }
+            if (isset($fieldSchema['nullable']) && $fieldSchema['nullable'] === true) {
+                $ruleParts[] = 'empty_to_null';
+            }
+
+            $rules[$fieldName] = implode('|', $ruleParts);
+        }
+
+        return $rules;
     }
 }
