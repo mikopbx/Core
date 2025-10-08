@@ -231,11 +231,17 @@ const TokenManager = {
         };
 
         // Also set up error handler
-        $(document).ajaxError((event, xhr) => {
+        $(document).ajaxError((event, xhr, settings) => {
             // Handle unauthorized errors
             if (xhr.status === 401) {
-                // Token expired or invalid → logout
-                self.logout();
+                // Check if we're on login page - don't trigger logout loop
+                const isLoginPage = window.location.pathname.includes('/session/index') ||
+                                   window.location.pathname.includes('/session/');
+
+                if (!isLoginPage) {
+                    // Token expired or invalid → logout
+                    self.logout();
+                }
             }
         });
 
@@ -298,6 +304,20 @@ const TokenManager = {
      * - Redirects to login page
      */
     async logout() {
+        // Check if already on login page - prevent redirect loop
+        const isLoginPage = window.location.pathname.includes('/session/index') ||
+                           window.location.pathname.includes('/session/');
+
+        if (isLoginPage) {
+            // Already on login page - just clear state, no redirect
+            this.accessToken = null;
+            if (this.refreshTimer) {
+                clearTimeout(this.refreshTimer);
+                this.refreshTimer = null;
+            }
+            return;
+        }
+
         // Prevent multiple logout calls
         if (!this.accessToken) {
             window.location = `${globalRootUrl}session/index`;
