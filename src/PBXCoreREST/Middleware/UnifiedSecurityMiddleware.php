@@ -99,8 +99,7 @@ class UnifiedSecurityMiddleware
         return match ($securityType) {
             SecurityType::PUBLIC => $this->checkPublicAccess(),
             SecurityType::LOCALHOST => $this->checkLocalhostAccess($request),
-            SecurityType::BEARER_TOKEN => $this->checkApiKeyAccess($request, $permission),
-            SecurityType::SESSION => $this->checkSessionAccess($request, $user, $permission)
+            SecurityType::BEARER_TOKEN => $this->checkApiKeyAccess($request, $permission)
         };
     }
 
@@ -113,7 +112,7 @@ class UnifiedSecurityMiddleware
     }
 
     /**
-     * Check localhost access
+     * Check localhost access (internal authorization, not exposed in OpenAPI)
      */
     private function checkLocalhostAccess(Request $request): SecurityTypeResult
     {
@@ -177,34 +176,6 @@ class UnifiedSecurityMiddleware
         }
 
         return false;
-    }
-
-    /**
-     * Check session access using existing authentication context
-     */
-    private function checkSessionAccess(Request $request, ?object $user, ?string $permission): SecurityTypeResult
-    {
-        // Check if AuthenticationMiddleware already validated session
-        if (!$request->isAuthorizedSessionRequest()) {
-            return new SecurityTypeResult(false, 'No valid session found');
-        }
-
-        // If permission required, check it using MikoPBX's existing ACL system
-        if ($permission && !$this->checkUserPermission($permission)) {
-            return new SecurityTypeResult(false, "User lacks required permission: $permission");
-        }
-
-        return new SecurityTypeResult(true, "Session access granted");
-    }
-
-    /**
-     * Check user permission using MikoPBX's existing ACL system
-     */
-    private function checkUserPermission(string $permission): bool
-    {
-        // TODO: Integrate with MikoPBX's existing ACL system
-        // For now, return true as AuthenticationMiddleware already validated session
-        return true;
     }
 
     /**

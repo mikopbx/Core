@@ -254,11 +254,6 @@ class SaveSettingsAction extends AbstractSaveRecordAction
                     
                 case PbxSettings::SEND_METRICS:
                     $newValue = FieldTypeResolver::convertForStorage($data[$key], PbxSettings::class, $key);
-                    // Store in session as well
-                    if ($di->has('session')) {
-                        $session = $di->getShared('session');
-                        $session->set(PbxSettings::SEND_METRICS, $newValue);
-                    }
                     break;
                     
                 case PbxSettings::PBX_FEATURE_TRANSFER_DIGIT_TIMEOUT:

@@ -109,10 +109,20 @@ class RefreshAction
 
         $userId = $sessionParams[SessionController::USER_NAME] ?? '';
 
+        // Determine language for JWT payload
+        // Priority: 1) stored in refresh token, 2) system settings (backward compatibility)
+        $language = isset($sessionParams['language']) && is_string($sessionParams['language'])
+            ? $sessionParams['language']
+            : \MikoPBX\Common\Models\PbxSettings::getValueByKey(\MikoPBX\Common\Models\PbxSettings::WEB_ADMIN_LANGUAGE);
+
+        // Update session params with language (ensures it's preserved during rotation)
+        $sessionParams['language'] = $language;
+
         // Generate new JWT access token
         $accessToken = JWTHelper::generate([
             'userId' => $userId,
             'role' => $sessionParams[SessionController::ROLE] ?? 'user',
+            'language' => $language,
         ], JWTHelper::ACCESS_TOKEN_TTL);
 
         // Token rotation (optional, for enhanced security)

@@ -21,11 +21,9 @@
 namespace MikoPBX\AdminCabinet\Plugins;
 
 use MikoPBX\AdminCabinet\Controllers\ErrorsController;
-use MikoPBX\AdminCabinet\Controllers\LanguageController;
 use MikoPBX\AdminCabinet\Controllers\SessionController;
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Library\Text;
-use MikoPBX\Common\Models\AuthTokens;
 use MikoPBX\Common\Providers\AclProvider;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use Phalcon\Acl\Enum as AclEnum;
@@ -69,7 +67,6 @@ class SecurityPlugin extends Injectable
         // Define controllers accessible without authentication
         $publicControllers = [
             SessionController::class,
-            LanguageController::class,
             ErrorsController::class
         ];
 
@@ -124,8 +121,29 @@ class SecurityPlugin extends Injectable
      */
     private function checkUserAuth(): bool
     {
+        return self::isAuthenticated($this->request, $this->cookies);
+    }
+
+    /**
+     * Static method to check if user is authenticated.
+     * Can be reused across different parts of the application.
+     *
+     * JWT authentication flow:
+     * 1. AJAX requests: check for Bearer token in Authorization header
+     * 2. Browser page requests: check for refreshToken cookie
+     *    - If cookie exists, user is considered authenticated
+     *    - TokenManager JS will call /auth:refresh to get access token
+     *
+     * @param \Phalcon\Http\RequestInterface $request Request object
+     * @param \Phalcon\Http\Response\CookiesInterface $cookies Cookies object
+     * @return bool true if the user is authenticated, false otherwise.
+     */
+    public static function isAuthenticated(
+        \Phalcon\Http\RequestInterface $request,
+        \Phalcon\Http\Response\CookiesInterface $cookies
+    ): bool {
         // Check for JWT Bearer token in Authorization header (AJAX requests)
-        $authHeader = $this->request->getHeader('Authorization');
+        $authHeader = $request->getHeader('Authorization');
         if ($authHeader && str_starts_with($authHeader, 'Bearer ')) {
             // TODO: можно добавить валидацию JWT токена здесь
             // Но AuthenticationMiddleware уже проверяет его для API запросов
@@ -134,10 +152,10 @@ class SecurityPlugin extends Injectable
 
         // For browser page requests: check for refreshToken cookie
         // If cookie exists, consider user authenticated - TokenManager will handle token refresh
-        if ($this->cookies->has('refreshToken')) {
+        if ($cookies->has('refreshToken')) {
             try {
                 // Try to read cookie (it's encrypted by CryptProvider)
-                $token = $this->cookies->get('refreshToken')->getValue();
+                $token = $cookies->get('refreshToken')->getValue();
 
                 // Basic validation: token should not be empty
                 if (!empty($token)) {

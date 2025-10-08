@@ -53,7 +53,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
                 'All endpoints require authentication for security.',
     processor: OpenAPIManagementProcessor::class
 )]
-#[ResourceSecurity('openapi', requirements: [SecurityType::LOCALHOST, SecurityType::SESSION, SecurityType::BEARER_TOKEN])]
+#[ResourceSecurity('openapi', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
 #[HttpMapping(
     mapping: [
         'GET' => ['getList', 'getSpecification', 'getAclRules', 'getValidationSchemas'],
@@ -168,7 +168,7 @@ class RestController extends BaseRestController
     #[ApiResponse(401, 'Authentication required', 'ErrorResponse')]
     #[ApiResponse(403, 'Insufficient permissions', 'ErrorResponse')]
     #[ApiResponse(500, 'Failed to extract validation schemas', 'ErrorResponse')]
-    #[ResourceSecurity('openapi', ActionType::read, [SecurityType::SESSION])]
+    #[ResourceSecurity('openapi', ActionType::read, [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
     public function getValidationSchemas(): void
     {
         // Implementation handled by BaseRestController
@@ -189,7 +189,7 @@ class RestController extends BaseRestController
     #[ApiResponse(401, 'Authentication required', 'ErrorResponse')]
     #[ApiResponse(403, 'Insufficient permissions', 'ErrorResponse')]
     #[ApiResponse(500, 'Failed to clear cache', 'ErrorResponse')]
-    #[ResourceSecurity('openapi', ActionType::write, [SecurityType::SESSION])]
+    #[ResourceSecurity('openapi', ActionType::write, [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
     public function clearCache(): void
     {
         // Implementation handled by BaseRestController

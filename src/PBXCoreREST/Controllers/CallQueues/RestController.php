@@ -54,7 +54,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
                 'and automatic call routing.',
     processor: CallQueuesManagementProcessor::class
 )]
-#[ResourceSecurity('call_queues', requirements: [SecurityType::LOCALHOST, SecurityType::SESSION, SecurityType::BEARER_TOKEN])]
+#[ResourceSecurity('call_queues', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
 #[HttpMapping(
     mapping: [
         'GET' => ['getList', 'getRecord', 'getDefault', 'copy'],

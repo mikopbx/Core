@@ -58,7 +58,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ResourceSecurity(
     'passkeys',
     ActionType::WRITE,
-    [SecurityType::SESSION, SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN],
+    [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN],
     description: 'Default security for passkey management operations'
 )]
 class RestController extends BaseRestController
@@ -93,7 +93,7 @@ class RestController extends BaseRestController
     #[ResourceSecurity(
         'passkeys_registration',
         ActionType::WRITE,
-        [SecurityType::SESSION, SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN]
+        [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN]
     )]
     public function registrationStart(): void
     {
@@ -109,7 +109,7 @@ class RestController extends BaseRestController
     #[ResourceSecurity(
         'passkeys_registration',
         ActionType::WRITE,
-        [SecurityType::SESSION, SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN]
+        [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN]
     )]
     public function registrationFinish(): void
     {

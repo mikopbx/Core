@@ -181,7 +181,7 @@ class ResourceSecurity
      */
     public static function readOnly(string $resource, ?array $requirements = null): self
     {
-        $defaultRequirements = $requirements ?? [SecurityType::LOCALHOST, SecurityType::SESSION, SecurityType::BEARER_TOKEN];
+        $defaultRequirements = $requirements ?? [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN];
         return new self($resource, ActionType::READ, $defaultRequirements);
     }
 
@@ -193,31 +193,31 @@ class ResourceSecurity
      */
     public static function write(string $resource, ?array $requirements = null): self
     {
-        $defaultRequirements = $requirements ?? [SecurityType::LOCALHOST, SecurityType::SESSION, SecurityType::BEARER_TOKEN];
+        $defaultRequirements = $requirements ?? [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN];
         return new self($resource, ActionType::WRITE, $defaultRequirements);
     }
 
     /**
-     * Create admin resource security (session and localhost only)
+     * Create admin resource security (localhost only for security)
      *
      * @param string $resource
      * @param array<SecurityType>|null $requirements
      */
     public static function admin(string $resource, ?array $requirements = null): self
     {
-        $defaultRequirements = $requirements ?? [SecurityType::LOCALHOST, SecurityType::SESSION];
+        $defaultRequirements = $requirements ?? [SecurityType::LOCALHOST];
         return new self($resource, ActionType::ADMIN, $defaultRequirements);
     }
 
     /**
-     * Create sensitive resource security (session and localhost only)
+     * Create sensitive resource security (localhost only for security)
      *
      * @param string $resource
      * @param array<SecurityType>|null $requirements
      */
     public static function sensitive(string $resource, ?array $requirements = null): self
     {
-        $defaultRequirements = $requirements ?? [SecurityType::LOCALHOST, SecurityType::SESSION];
+        $defaultRequirements = $requirements ?? [SecurityType::LOCALHOST];
         return new self($resource, ActionType::SENSITIVE, $defaultRequirements);
     }
 
@@ -238,14 +238,6 @@ class ResourceSecurity
     }
 
     /**
-     * Create session-only resource security
-     */
-    public static function sessionOnly(string $resource, ?ActionType $action = null): self
-    {
-        return new self($resource, $action, [SecurityType::SESSION]);
-    }
-
-    /**
      * Create API key-only resource security
      */
     public static function apiKeyOnly(string $resource, ?ActionType $action = null): self
@@ -254,10 +246,10 @@ class ResourceSecurity
     }
 
     /**
-     * Create resource security with all access types (default)
+     * Create resource security with all access types (localhost + bearer token)
      */
     public static function allAccess(string $resource, ?ActionType $action = null): self
     {
-        return new self($resource, $action, [SecurityType::LOCALHOST, SecurityType::SESSION, SecurityType::BEARER_TOKEN]);
+        return new self($resource, $action, [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN]);
     }
 }

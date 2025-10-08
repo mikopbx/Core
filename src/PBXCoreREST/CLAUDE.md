@@ -24,7 +24,7 @@ Controllers use PHP 8 attributes and extend `BaseRestController`:
 
 ```php
 #[ApiResource(path: '/pbxcore/api/v3/call-queues', tags: ['Call Queues'])]
-#[ResourceSecurity('call_queues', requirements: [SecurityType::SESSION, SecurityType::BEARER_TOKEN])]
+#[ResourceSecurity('call_queues', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]  // LOCALHOST = internal auth, not in OpenAPI
 #[HttpMapping(
     mapping: ['GET' => ['getList', 'getRecord'], 'POST' => ['create'], ...],
     resourceLevelMethods: ['getRecord', 'update', 'patch', 'delete'],
@@ -208,6 +208,7 @@ Resource-level: `GET /resource/{id}:method`
 
 ```php
 #[HttpMapping(customMethods: ['export', 'import'])]
+// Note: SecurityType::LOCALHOST is for internal authorization only, not exposed in OpenAPI
 // In enum: case EXPORT = 'export';
 // Routes: /resource:export, /resource/{id}:import
 ```

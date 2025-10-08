@@ -53,7 +53,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
                 'Singleton resource pattern - only one configuration exists.',
     processor: GeneralSettingsManagementProcessor::class
 )]
-#[ResourceSecurity('general_settings', requirements: [SecurityType::LOCALHOST, SecurityType::SESSION, SecurityType::BEARER_TOKEN])]
+#[ResourceSecurity('general_settings', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
 #[HttpMapping(
     mapping: [
         'GET' => ['getList', 'getRecord', 'getDefault'],

@@ -80,7 +80,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
 /**
  * Call Queues REST Controller
  */
-#[ResourceSecurity('call_queues', requirements: [SecurityType::LOCALHOST, SecurityType::SESSION, SecurityType::API_KEY])]
+#[ResourceSecurity('call_queues', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]  // LOCALHOST = internal auth only
 class RestController extends BaseRestController
 {
     /**
@@ -157,17 +157,18 @@ UnifiedSecurityMiddleware checks security types in priority order:
 
 1. **PUBLIC** (priority 1) - No authentication required
 2. **LOCALHOST** (priority 2) - Only 127.0.0.1 access
-3. **API_KEY** (priority 3) - Bearer token with scopes
-4. **SESSION** (priority 4) - Web session with ACL
+3. **BEARER_TOKEN** (priority 3) - JWT or API Key with scopes
 
 Higher priority types are checked first. If any type grants access, the check succeeds.
+
+**Note**: `SecurityType::LOCALHOST` is for internal authorization only and is **not exposed in OpenAPI** documentation.
 
 ## Common Patterns
 
 ### API Key Management (Security Isolation)
 ```php
-#[ResourceSecurity('api_keys', requirements: [SecurityType::LOCALHOST, SecurityType::SESSION])]
-// No API_KEY access - prevents API keys from managing themselves
+#[ResourceSecurity('api_keys', requirements: [SecurityType::LOCALHOST])]
+// Localhost only for security - prevents remote API key self-management
 ```
 
 ### Public Endpoints
@@ -178,8 +179,8 @@ Higher priority types are checked first. If any type grants access, the check su
 
 ### Admin-Only Operations
 ```php
-#[ResourceSecurity('system', ActionType::ADMIN, [SecurityType::LOCALHOST, SecurityType::SESSION])]
-// Only localhost and admin sessions
+#[ResourceSecurity('system', ActionType::ADMIN, [SecurityType::LOCALHOST])]
+// Localhost only for admin operations
 ```
 
 ### Read-Write Separation

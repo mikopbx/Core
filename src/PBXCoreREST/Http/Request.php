@@ -22,11 +22,9 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Http;
 
-use MikoPBX\AdminCabinet\Controllers\SessionController;
 use MikoPBX\Common\Providers\AclProvider;
 use MikoPBX\Common\Providers\ConfigProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
-use MikoPBX\Common\Providers\SessionProvider;
 use MikoPBX\Modules\Config\RestAPIConfigInterface;
 use Phalcon\Acl\Enum as AclEnum;
 use Phalcon\Http\Request as PhRequest;
@@ -196,16 +194,6 @@ class Request extends PhRequest
     }
 
     /**
-     * Check if the request has an authorized session.
-     *
-     * @return bool
-     */
-    public function isAuthorizedSessionRequest(): bool
-    {
-        return $this->getDI()->getShared(SessionProvider::SERVICE_NAME)->has(SessionController::SESSION_ID);
-    }
-    
-    /**
      * Check if request has Bearer token in Authorization header
      * 
      * @return bool
@@ -292,6 +280,8 @@ class Request extends PhRequest
      *
      * The next we request the ACL table and check if it allows or not
      *
+     * Role is extracted from JWT token payload (set by AuthenticationMiddleware during token validation)
+     *
      * @param $api
      * @return bool
      */
@@ -300,7 +290,9 @@ class Request extends PhRequest
         $pattern = $api->router->getMatches()[0] ?? '';
         $partsOfPattern = explode('/', $pattern);
         if (count($partsOfPattern) === 5) {
-            $role = $api->getSharedService(SessionProvider::SERVICE_NAME)->get(SessionController::SESSION_ID)[SessionController::ROLE] ?? AclProvider::ROLE_GUESTS;
+            // Get role from JWT payload (set by AuthenticationMiddleware)
+            $role = $this->jwtPayload['role'] ?? AclProvider::ROLE_GUESTS;
+
             $acl =  $api->getSharedService(AclProvider::SERVICE_NAME);
             $controller = "/$partsOfPattern[1]/$partsOfPattern[2]/$partsOfPattern[3]";
             $action = "/$partsOfPattern[4]";

@@ -32,6 +32,10 @@ use Phalcon\Storage\SerializerFactory;
 /**
  * Registers the session service provider.
  *
+ * @deprecated This provider is deprecated and will be removed in a future version.
+ *             Use JWT-based authentication instead (see JWTHelper, AuthenticationMiddleware).
+ *             Sessions are no longer used for authentication - all auth is handled via JWT tokens.
+ *
  * @package MikoPBX\Common\Providers
  */
 class SessionProvider implements ServiceProviderInterface

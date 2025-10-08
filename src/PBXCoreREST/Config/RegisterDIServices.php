@@ -39,7 +39,6 @@ use MikoPBX\Common\Providers\{AclProvider,
     RegistryProvider,
     ManagedCacheProvider,
     SentryErrorHandlerProvider,
-    SessionProvider,
     LanguageProvider,
     TranslationProvider,
     WhoopsErrorHandlerProvider,
@@ -101,9 +100,6 @@ class RegisterDIServices
             ResponseProvider::class,
             RequestProvider::class,
             RouterProvider::class,
-
-            // Inject sessions
-            SessionProvider::class,
 
             // Inject crypto provider
             CryptProvider::class,

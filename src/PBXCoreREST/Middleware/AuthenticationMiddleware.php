@@ -109,12 +109,11 @@ class AuthenticationMiddleware implements MiddlewareInterface
 
         if (
             true !== $request->isLocalHostRequest()
-            && true !== $request->isAuthorizedSessionRequest()
             && true !== $isNoAuthApi
             && true !== $isPublicEndpoint
         ) {
             $loggerAuth = $application->getService(LoggerAuthProvider::SERVICE_NAME);
-            $loggerAuth->warning("From: {$request->getClientAddress(true)} UserAgent:{$request->getUserAgent()} Cause: Wrong password");
+            $loggerAuth->warning("From: {$request->getClientAddress(true)} UserAgent:{$request->getUserAgent()} Cause: No valid authentication");
             $this->halt(
                 $application,
                 $response::UNAUTHORIZED,
@@ -164,6 +163,8 @@ class AuthenticationMiddleware implements MiddlewareInterface
             '/pbxcore/api/v3/auth:refresh' => ['POST'],  // JWT token refresh
             '/pbxcore/api/v3/user-page-tracker:pageView' => ['POST'],  // Page analytics (optional session tracking)
             '/pbxcore/api/v3/user-page-tracker:pageLeave' => ['POST'],  // Page analytics (optional session tracking)
+            '/pbxcore/api/v3/system:changeLanguage' => ['POST', 'PATCH'],  // Language change on login page
+            '/pbxcore/api/v3/system:getAvailableLanguages' => ['GET'],  // Get available languages on login page
         ];
 
         foreach ($publicEndpoints as $endpoint => $allowedMethods) {

@@ -24,25 +24,21 @@ namespace MikoPBX\PBXCoreREST\Attributes;
 /**
  * Security requirement types for MikoPBX API
  *
- * Reflects the three main access channels in MikoPBX:
- * 1. LOCALHOST - Direct local access without authentication
- * 2. SESSION - Web interface with user roles and ACL
- * 3. BEARER_TOKEN - Bearer token access with scope-based permissions
+ * Reflects the two main access channels in MikoPBX:
+ * 1. LOCALHOST - Internal authorization (not exposed in OpenAPI documentation)
+ * 2. BEARER_TOKEN - JWT or API Key authentication (documented in OpenAPI)
  */
 enum SecurityType: string
 {
     /**
-     * Local host access (127.0.0.1) - always allowed for debugging and internal operations
+     * Local host access (127.0.0.1) - internal authorization for debugging and system operations
+     * Not exposed in OpenAPI documentation as it's only available to localhost requests
      */
     case LOCALHOST = 'localhost';
 
     /**
-     * Web session access - requires user authentication with roles and ACL permissions
-     */
-    case SESSION = 'session';
-
-    /**
      * Bearer token access - requires Authorization: Bearer token with specific scopes
+     * Can be either JWT (short-lived) or API Key (long-lived)
      */
     case BEARER_TOKEN = 'bearer_token';
 
@@ -57,9 +53,8 @@ enum SecurityType: string
     public function getDescription(): string
     {
         return match($this) {
-            self::LOCALHOST => 'Local host access - no authentication required for 127.0.0.1',
-            self::SESSION => 'Web session access - requires user login with roles and permissions',
-            self::BEARER_TOKEN => 'Bearer token access - requires Authorization: Bearer token with specific scopes',
+            self::LOCALHOST => 'Local host access - internal authorization for 127.0.0.1 (not in OpenAPI)',
+            self::BEARER_TOKEN => 'Bearer token access - requires Authorization: Bearer token (JWT or API Key)',
             self::PUBLIC => 'Public access - no authentication required for anyone'
         };
     }
@@ -71,7 +66,7 @@ enum SecurityType: string
     {
         return match($this) {
             self::LOCALHOST, self::PUBLIC => false,
-            self::SESSION, self::BEARER_TOKEN => true
+            self::BEARER_TOKEN => true
         };
     }
 
@@ -81,7 +76,7 @@ enum SecurityType: string
     public function supportsResourcePermissions(): bool
     {
         return match($this) {
-            self::SESSION, self::BEARER_TOKEN => true,
+            self::BEARER_TOKEN => true,
             self::LOCALHOST, self::PUBLIC => false
         };
     }
@@ -92,10 +87,9 @@ enum SecurityType: string
     public function getPriority(): int
     {
         return match($this) {
-            self::PUBLIC => 1,      // Check public first
-            self::LOCALHOST => 2,   // Then localhost
-            self::BEARER_TOKEN => 3, // Then Bearer token
-            self::SESSION => 4      // Session last (most complex)
+            self::PUBLIC => 1,       // Check public first
+            self::LOCALHOST => 2,    // Then localhost (internal)
+            self::BEARER_TOKEN => 3  // Then Bearer token
         };
     }
 }

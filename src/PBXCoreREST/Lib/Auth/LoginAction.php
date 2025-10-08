@@ -146,10 +146,17 @@ class LoginAction
             ? $sessionParams[SessionController::USER_NAME]
             : '';
 
+        // Determine language for JWT payload
+        // Priority: 1) request parameter, 2) system settings
+        $language = isset($data['language']) && is_string($data['language'])
+            ? $data['language']
+            : \MikoPBX\Common\Models\PbxSettings::getValueByKey(\MikoPBX\Common\Models\PbxSettings::WEB_ADMIN_LANGUAGE);
+
         // Generate JWT access token
         $accessToken = JWTHelper::generate([
             'userId' => $userId,
             'role' => $sessionParams[SessionController::ROLE] ?? 'user',
+            'language' => $language,
         ], JWTHelper::ACCESS_TOKEN_TTL);
 
         // Generate refresh token
@@ -167,6 +174,7 @@ class LoginAction
             'userId' => $userId,
             'clientIp' => $clientIp,
             'userAgent' => $userAgent,
+            'language' => $language,
         ]);
 
         if (!$tokenStorage->save($refreshToken, $tokenData, JWTHelper::REFRESH_TOKEN_TTL)) {

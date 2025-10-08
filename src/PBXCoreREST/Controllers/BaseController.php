@@ -22,16 +22,13 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Controllers;
 
-use MikoPBX\AdminCabinet\Controllers\SessionController;
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Providers\RedisClientProvider;
-use MikoPBX\Common\Providers\SessionProvider;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Lib\PbxExtensionsProcessor;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use Phalcon\Filter\Filter;
 use Phalcon\Mvc\Controller;
-use RedisException;
 use Throwable;
 
 /**
@@ -41,11 +38,6 @@ use Throwable;
  */
 class BaseController extends Controller
 {
-    /**
-     * Indicates whether this controller requires CSRF protection
-     * Controllers can override this constant to opt-in to CSRF protection
-     */
-    public const bool REQUIRES_CSRF_PROTECTION = true;
     /**
      * Send a request to the backend worker.
      *
@@ -326,27 +318,9 @@ class BaseController extends Controller
         
         // Add HTTP method to help backend distinguish between CREATE and UPDATE operations
         $requestMessage['httpMethod'] = $this->request->getMethod();
-        
-        // Pass session context for ACL modules (like ModuleUsersUI)
-        // Only for session-based requests, not for API keys
-        if ($this->request->isAuthorizedSessionRequest()) {
-            $session = $this->di->get(SessionProvider::SERVICE_NAME);
-            $sessionData = $session->get(SessionController::SESSION_ID);
-            
-            if ($sessionData) {
-                // Get origin for WebAuthn and other security features
-                $origin = $this->request->getScheme() . '://' . $this->request->getHttpHost();
 
-                // Pass only necessary session data for ACL
-                $requestMessage['sessionContext'] = [
-                    'role' => $sessionData[SessionController::ROLE] ?? null,
-                    'user_name' => $sessionData[SessionController::USER_NAME] ?? null,
-                    'session_id' => session_id(), // Add session ID for page tracking
-                    'auth_type' => 'session',
-                    'origin' => $origin // For WebAuthn RP ID validation
-                ];
-            }
-        } elseif ($this->request->isBearerTokenRequest()) {
+        // Pass authentication context for WebAuthn and other security features
+        if ($this->request->isBearerTokenRequest()) {
             // Get origin for WebAuthn and other security features
             $origin = $this->request->getScheme() . '://' . $this->request->getHttpHost();
 

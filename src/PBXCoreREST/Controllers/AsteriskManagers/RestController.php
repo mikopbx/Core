@@ -52,7 +52,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
                 'Features include permission management, secure authentication, and administrative access controls.',
     processor: AsteriskManagersManagementProcessor::class
 )]
-#[ResourceSecurity('asterisk_managers', requirements: [SecurityType::LOCALHOST, SecurityType::SESSION, SecurityType::BEARER_TOKEN])]
+#[ResourceSecurity('asterisk_managers', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
 #[HttpMapping(
     mapping: [
         'GET' => ['getList', 'getRecord', 'getDefault', 'copy'],

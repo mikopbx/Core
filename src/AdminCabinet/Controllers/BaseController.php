@@ -19,7 +19,7 @@
 
 namespace MikoPBX\AdminCabinet\Controllers;
 
-use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use MikoPBX\AdminCabinet\Plugins\SecurityPlugin;
 use MikoPBX\Common\Library\Text;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
@@ -116,7 +116,7 @@ class BaseController extends Controller
         $this->view->urlToLogo = $this->url->get('assets/img/logo-mikopbx.svg');
         $this->view->urlToController = $this->url->get($this->controllerNameUnCamelized);
         $this->view->represent = '';
-        $this->view->WebAdminLanguage = PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_LANGUAGE);
+        $this->view->WebAdminLanguage = $this->language;
         $this->view->submitMode = 'SaveSettings';
         $this->view->lastSentryEventId = $this->setLastSentryEventId();
         $this->view->PBXVersion = PbxSettings::getValueByKey(PbxSettings::PBX_VERSION);
@@ -451,7 +451,7 @@ class BaseController extends Controller
      * Checks if the current user is authenticated using JWT tokens.
      *
      * This method provides a unified authentication check across all controllers.
-     * It uses the same logic as SecurityPlugin::checkUserAuth() to ensure consistency.
+     * It uses the same logic as SecurityPlugin::isAuthenticated() to ensure consistency.
      *
      * JWT authentication flow:
      * 1. AJAX requests: check for Bearer token in Authorization header
@@ -463,32 +463,6 @@ class BaseController extends Controller
      */
     protected function isAuthenticated(): bool
     {
-        // Check for JWT Bearer token in Authorization header (AJAX requests)
-        $authHeader = $this->request->getHeader('Authorization');
-        if ($authHeader && str_starts_with($authHeader, 'Bearer ')) {
-            return true;
-        }
-
-        // For browser page requests: check for refreshToken cookie
-        // If cookie exists, consider user authenticated - TokenManager will handle token refresh
-        if ($this->cookies->has('refreshToken')) {
-            try {
-                // Try to read cookie (it's encrypted by CryptProvider)
-                $token = $this->cookies->get('refreshToken')->getValue();
-
-                // Basic validation: token should not be empty
-                if (!empty($token)) {
-                    // Token exists - user is authenticated
-                    // TokenManager JS will call /auth:refresh to get new access token
-                    return true;
-                }
-            } catch (\Throwable $e) {
-                // Cookie decryption failed or other error
-                // Log but don't block - let user re-login
-                CriticalErrorsHandler::handleExceptionWithSyslog($e);
-            }
-        }
-
-        return false;
+        return SecurityPlugin::isAuthenticated($this->request, $this->cookies);
     }
 }
