@@ -41,12 +41,4 @@ class LicensingController extends BaseController
         // Perform the redirect
         $response->redirect($redirectUrl)->send();
     }
-
-    /**
-     * After some changes on form, we will refresh some session cache
-     */
-    public function saveAction(): void
-    {
-        $this->session->remove(PbxSettings::PBX_LICENSE);
-    }
 }

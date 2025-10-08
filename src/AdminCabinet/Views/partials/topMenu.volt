@@ -23,10 +23,9 @@
     </a>
     <a class="item hide-on-mobile hide-on-tablet" href="{{ urlToSupport }}" target="_blank"><i
                 class="icon conversation"></i> {{ t._("topMenu_Support") }}</a>
-    <div class="ui search dropdown item" id="web-admin-language-selector">
-        <input type="hidden" name="WebAdminLanguage">
-        <div class="text"></div>
-        <i class="dropdown icon"></i>
+    {# Language dropdown will be built dynamically by DynamicDropdownBuilder #}
+    <div class="item">
+        <input type="hidden" id="WEB_ADMIN_LANGUAGE" name="WebAdminLanguage">
     </div>
     <a class="item hide-on-mobile" id="show-advice-button"><i class="grey icon bell"></i></a>
     <a class="item" href="{{ url.get('session') }}/end"><i class="icon sign out"></i> {{ t._("mm_Logout") }}</a>

@@ -271,7 +271,9 @@ window.SecurityUtils = {
         
         iTags.forEach(tag => {
             const className = tag.className;
-            if (!allowedIconClasses.includes(className)) {
+            // Check if class is in whitelist or is a Fomantic UI flag
+            const isFlagIcon = /^flag\s+[\w\s]+$/.test(className.trim());
+            if (!allowedIconClasses.includes(className) && !isFlagIcon) {
                 isSafe = false;
             }
         });

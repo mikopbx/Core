@@ -7,11 +7,8 @@
 </h1>
 {{ form(['action' : '','method': 'post', 'class': 'ui large form segment', 'id' :'login-form']) }}
 <h6 class="ui center aligned header">
-    <div class="ui dropdown" id="web-admin-language-selector">
-        <input type="hidden" name="WebAdminLanguage">
-        <div class="text"></div>
-        <i class="dropdown icon"></i>
-    </div>
+    {# Language dropdown will be built dynamically by DynamicDropdownBuilder #}
+    <input type="hidden" id="WEB_ADMIN_LANGUAGE" name="WebAdminLanguage">
 </h6>
 
 {# Login field - always visible #}

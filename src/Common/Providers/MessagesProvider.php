@@ -99,8 +99,8 @@ class MessagesProvider implements ServiceProviderInterface
                     }
                 }
 
-                // Load language static array
-                $translates = array_merge($translates, self::getAvailableLanguages());
+                // Load language static array from LanguageProvider
+                $translates = array_merge($translates, self::getLanguageTranslations());
 
                 if ($cacheKey) {
                     $di->get(ManagedCacheProvider::SERVICE_NAME)->set($cacheKey, $translates);
@@ -167,41 +167,20 @@ class MessagesProvider implements ServiceProviderInterface
     }
 
     /**
-     * Retrieve the list of available languages for system selectors.
-     * Each language is represented in its own native language.
+     * Generate translation keys for language names (ex_Russian => 'Русский')
+     * Uses LanguageProvider::AVAILABLE_LANGUAGES as single source of truth
      *
-     * @return array An associative array where keys are language codes and values are language names in their native form.
+     * @return array Translation keys mapped to native language names
      */
-    public static function getAvailableLanguages():array
+    private static function getLanguageTranslations(): array
     {
-        return [
-            'ex_Russian' => 'Русский',
-            'ex_English' => 'English',
-            'ex_EnglishUK' => 'English (UK)',
-            'ex_Japanese' => '日本語',
-            'ex_Deutsch' => 'Deutsch',
-            'ex_Danish' => 'Dansk',
-            'ex_Spanish' => 'Español',
-            'ex_Greek' => 'Ελληνικά',
-            'ex_French' => 'Français',
-            'ex_Italian' => 'Italiano',
-            'ex_Portuguese' => 'Português',
-            'ex_PortugueseBrazil' => 'Português (Brasil)',
-            'ex_Ukrainian' => 'Українська',
-            'ex_Vietnamese' => 'Tiếng Việt',
-            'ex_Chinese' => '中文',
-            'ex_Polish' => 'Polski',
-            'ex_Dutch' => 'Nederlands',
-            'ex_Swedish' => 'Svenska',
-            'ex_Czech' => 'Čeština',
-            'ex_Turkish' => 'Türkçe',
-            'ex_Georgian' => 'ქართული',
-            'ex_Azerbaijan' => 'Azərbaycan',
-            'ex_Romanian' => 'Română',
-            'ex_Thai' => 'ไทย',
-            'ex_Finnish' => 'Suomi',
-            'ex_Hungarian' => 'Magyar',
-            'ex_Croatian' => 'Hrvatski',
-        ];
+        $translations = [];
+
+        // Build translations directly from LanguageProvider constant
+        foreach (LanguageProvider::AVAILABLE_LANGUAGES as $info) {
+            $translations[$info['translationKey']] = $info['name'];
+        }
+
+        return $translations;
     }
 }

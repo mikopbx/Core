@@ -29,7 +29,6 @@
     var globalModuleUniqueId = '{{ globalModuleUniqueId }}';
 		var globalLastSentryEventId = '{{ lastSentryEventId }}';
 		var globalWebAdminLanguage = '{{ WebAdminLanguage }}';
-		var globalAvailableLanguages = '{{ AvailableLanguages }}';
     var globalCurrentPage = '{{ currentPage }}';
     </script>
 

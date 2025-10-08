@@ -22,12 +22,10 @@ declare(strict_types=1);
 
 namespace MikoPBX\AdminCabinet\Providers;
 
-use MikoPBX\AdminCabinet\Controllers\SessionController;
 use MikoPBX\AdminCabinet\Plugins\AssetManager;
 use MikoPBX\Common\Providers\LanguageProvider;
 use MikoPBX\Common\Providers\MessagesProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
-use MikoPBX\Common\Providers\SessionProvider;
 use MikoPBX\Core\System\Configs\SentryConf;
 use MikoPBX\Core\System\Network;
 use MikoPBX\Core\System\Util;
@@ -82,9 +80,6 @@ class AssetProvider implements ServiceProviderInterface
         $di->set(
             self::SERVICE_NAME,
             function () use ($di) {
-
-                $session = $di->get(SessionProvider::SERVICE_NAME);
-
                 $assets = new AssetProvider();
 
                 // Module and PBX version caching for proper PBX operation when installing modules.
@@ -100,7 +95,7 @@ class AssetProvider implements ServiceProviderInterface
                 }
 
                 $assets->makeSentryAssets();
-                $assets->makeHeaderAssets($session, $dispatcher, $di);
+                $assets->makeHeaderAssets($dispatcher, $di);
 
                 // Generates Controllers assets
                 $method_name = "make{$controller}Assets";
@@ -168,7 +163,7 @@ class AssetProvider implements ServiceProviderInterface
      * @param Dispatcher $dispatcher
      * @param DiInterface $di
      */
-    private function makeHeaderAssets($session, Dispatcher $dispatcher, DiInterface $di): void
+    private function makeHeaderAssets(Dispatcher $dispatcher, DiInterface $di): void
     {
         $this->semanticCollectionCSS
             ->addCss('css/vendor/semantic/grid.min.css', true)
@@ -198,6 +193,7 @@ class AssetProvider implements ServiceProviderInterface
 
         $this->footerCollectionJS
             ->addJs('js/pbx/main/form.js', true)
+            ->addJs('js/pbx/FormElements/dynamic-dropdown-builder.js', true) // Required for language selector
             ->addJs('js/pbx/Language/language-select.js', true);
 
         $this->semanticCollectionJS

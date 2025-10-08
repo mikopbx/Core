@@ -89,7 +89,9 @@ const DynamicDropdownBuilder = {
         currentText = currentText || config.placeholder || 'Select value';
 
         // Build CSS classes with sanitization
-        const baseClasses = ['ui', 'selection', 'dropdown'];
+        // Allow custom base classes or use default with 'selection'
+        const defaultBaseClasses = ['ui', 'selection', 'dropdown'];
+        const baseClasses = config.baseClasses || defaultBaseClasses;
         const additionalClasses = config.additionalClasses || [];
         const allClasses = [...baseClasses, ...additionalClasses].join(' ');
 
@@ -196,6 +198,7 @@ const DynamicDropdownBuilder = {
             allowAdditions: false,
             fullTextSearch: true,
             forceSelection: false,
+            preserveHTML: true, // Allow HTML in dropdown text (for icons, flags, etc.)
             
             onChange: (value, text, $choice) => {
                 // Automatic synchronization with hidden input

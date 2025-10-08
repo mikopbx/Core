@@ -22,7 +22,6 @@ declare(strict_types=1);
 namespace MikoPBX\Common\Providers;
 
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Providers\SessionProvider;
 use MikoPBX\Core\Workers\WorkerExtensionStatusMonitor;
 use MikoPBX\Core\Workers\WorkerModelsEvents;
 use MikoPBX\Core\Workers\WorkerNotifyAdministrator;
@@ -39,6 +38,47 @@ class LanguageProvider implements ServiceProviderInterface
 {
     public const string SERVICE_NAME = 'language';
     public const string PREFERRED_LANG_WEB = 'PREFERRED_LANG_WEB';
+
+    /**
+     * Available languages with metadata
+     * Single source of truth for all web admin languages
+     *
+     * Structure:
+     * - code: language code (ISO 639-1)
+     * - name: native language name
+     * - flag: Fomantic UI flag class
+     * - translationKey: translation key for use in MessagesProvider (ex_Russian, ex_English, etc.)
+     *
+     * @var array<string, array{name: string, flag: string, translationKey: string}>
+     */
+    public const array AVAILABLE_LANGUAGES = [
+        'en' => ['name' => 'English', 'flag' => 'united kingdom', 'translationKey' => 'ex_English'],
+        'ru' => ['name' => 'Русский', 'flag' => 'russia', 'translationKey' => 'ex_Russian'],
+        'de' => ['name' => 'Deutsch', 'flag' => 'germany', 'translationKey' => 'ex_Deutsch'],
+        'es' => ['name' => 'Español', 'flag' => 'spain', 'translationKey' => 'ex_Spanish'],
+        'el' => ['name' => 'Ελληνικά', 'flag' => 'greece', 'translationKey' => 'ex_Greek'],
+        'fr' => ['name' => 'Français', 'flag' => 'france', 'translationKey' => 'ex_French'],
+        'pt' => ['name' => 'Português', 'flag' => 'portugal', 'translationKey' => 'ex_Portuguese'],
+        'pt_BR' => ['name' => 'Português (Brasil)', 'flag' => 'brazil', 'translationKey' => 'ex_PortugueseBrazil'],
+        'uk' => ['name' => 'Українська', 'flag' => 'ukraine', 'translationKey' => 'ex_Ukrainian'],
+        'ka' => ['name' => 'ქართული', 'flag' => 'georgia', 'translationKey' => 'ex_Georgian'],
+        'it' => ['name' => 'Italiano', 'flag' => 'italy', 'translationKey' => 'ex_Italian'],
+        'da' => ['name' => 'Dansk', 'flag' => 'denmark', 'translationKey' => 'ex_Danish'],
+        'nl' => ['name' => 'Nederlands', 'flag' => 'netherlands', 'translationKey' => 'ex_Dutch'],
+        'pl' => ['name' => 'Polski', 'flag' => 'poland', 'translationKey' => 'ex_Polish'],
+        'sv' => ['name' => 'Svenska', 'flag' => 'sweden', 'translationKey' => 'ex_Swedish'],
+        'cs' => ['name' => 'Čeština', 'flag' => 'czech republic', 'translationKey' => 'ex_Czech'],
+        'tr' => ['name' => 'Türkçe', 'flag' => 'turkey', 'translationKey' => 'ex_Turkish'],
+        'ja' => ['name' => '日本語', 'flag' => 'japan', 'translationKey' => 'ex_Japanese'],
+        'vi' => ['name' => 'Tiếng Việt', 'flag' => 'vietnam', 'translationKey' => 'ex_Vietnamese'],
+        'az' => ['name' => 'Azərbaycan', 'flag' => 'azerbaijan', 'translationKey' => 'ex_Azerbaijan'],
+        'ro' => ['name' => 'Română', 'flag' => 'romania', 'translationKey' => 'ex_Romanian'],
+        'th' => ['name' => 'ไทย', 'flag' => 'thailand', 'translationKey' => 'ex_Thai'],
+        'hu' => ['name' => 'Magyar', 'flag' => 'hungary', 'translationKey' => 'ex_Hungarian'],
+        'fi' => ['name' => 'Suomi', 'flag' => 'finland', 'translationKey' => 'ex_Finnish'],
+        'hr' => ['name' => 'Hrvatski', 'flag' => 'croatia', 'translationKey' => 'ex_Croatian'],
+        'zh_Hans' => ['name' => '中文', 'flag' => 'china', 'translationKey' => 'ex_Chinese'],
+    ];
 
     /**
      * Registers the language service provider.
@@ -128,18 +168,27 @@ class LanguageProvider implements ServiceProviderInterface
     /**
      * Determines the language for web environment.
      *
+     * Priority:
+     * 1. JWT token payload (for authenticated users)
+     * 2. System settings (default fallback)
+     *
      * @param DiInterface $di Dependency Injection container.
      * @return string Language code.
      */
     private function getLanguageForWeb(DiInterface $di): string
     {
-        $session = $di->getShared(SessionProvider::SERVICE_NAME);
-        $language = $session->get(PbxSettings::WEB_ADMIN_LANGUAGE) ?? '';
-
-        if (empty($language)) {
-            $language = PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_LANGUAGE);
+        // Check JWT token first (for authenticated users)
+        if ($di->has('request')) {
+            $request = $di->getShared('request');
+            if (method_exists($request, 'getJwtPayload')) {
+                $jwtPayload = $request->getJwtPayload();
+                if ($jwtPayload !== null && isset($jwtPayload['language']) && is_string($jwtPayload['language'])) {
+                    return $jwtPayload['language'];
+                }
+            }
         }
 
-        return $language;
+        // Fall back to system settings
+        return PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_LANGUAGE);
     }
 }

@@ -103,7 +103,8 @@ class RestController extends BaseRestController
                 'ping',
                 'checkAuth',
                 'getDeleteStatistics',
-                'datetime'
+                'datetime',
+                'getAvailableLanguages'
             ],
             'PUT' => [
                 'datetime'
@@ -114,7 +115,11 @@ class RestController extends BaseRestController
                 'updateMailSettings',
                 'convertAudioFile',
                 'upgrade',
-                'restoreDefault'
+                'restoreDefault',
+                'changeLanguage'
+            ],
+            'PATCH' => [
+                'changeLanguage'
             ]
         ];
     }
