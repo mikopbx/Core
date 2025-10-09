@@ -46,6 +46,13 @@ class JWTHelper
     public const REFRESH_TOKEN_TTL = 2592000; // 30 days
 
     /**
+     * Leeway time for clock skew and system time changes (seconds)
+     * Allows tokens to remain valid even if system time changes by up to this amount
+     * Standard practice is 5-10 minutes to handle NTP sync and manual time adjustments
+     */
+    public const LEEWAY = 600; // 10 minutes
+
+    /**
      * Generate JWT token
      *
      * @param array<string, mixed> $payload Payload data (userId, login, etc.)
@@ -123,13 +130,17 @@ class JWTHelper
             return null;
         }
 
-        // Check expiration
-        if (isset($payload['exp']) && is_int($payload['exp']) && $payload['exp'] < time()) {
+        $now = time();
+
+        // Check expiration with leeway (allows for clock skew and system time changes)
+        // Token is considered expired only if current time > exp + leeway
+        if (isset($payload['exp']) && is_int($payload['exp']) && ($payload['exp'] + self::LEEWAY) < $now) {
             return null; // Token expired
         }
 
-        // Check not before
-        if (isset($payload['nbf']) && is_int($payload['nbf']) && $payload['nbf'] > time()) {
+        // Check not before with leeway (allows for clock skew and system time changes)
+        // Token is considered valid if current time + leeway >= nbf
+        if (isset($payload['nbf']) && is_int($payload['nbf']) && ($payload['nbf'] - self::LEEWAY) > $now) {
             return null; // Token not yet valid
         }
 

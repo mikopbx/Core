@@ -161,7 +161,7 @@ class RestController extends BaseRestController
                 $isSecure,                                   // secure (true for HTTPS, false for HTTP)
                 null,                                        // domain (current domain)
                 true,                                        // httpOnly (no JS access)
-                ['samesite' => 'Strict']                     // options (CSRF protection)
+                ['samesite' => 'Lax']                        // options (CSRF protection, allows top-level navigation)
             );  // Cookie will be encrypted by CryptProvider (token is already hashed)
         }
 
@@ -175,7 +175,7 @@ class RestController extends BaseRestController
                 $isSecure,                                   // secure (match protocol)
                 null,                                        // domain
                 true,                                        // httpOnly
-                ['samesite' => 'Strict']                     // options
+                ['samesite' => 'Lax']                        // options
             );  // Clear cookie
         }
 

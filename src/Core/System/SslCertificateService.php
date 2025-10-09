@@ -104,29 +104,37 @@ class SslCertificateService
             // Get organization name from PBX name
             $pbxName = PbxSettings::getValueByKey(PbxSettings::PBX_NAME);
             $organizationName = !empty($pbxName) ? $pbxName : 'MikoPBX User';
-            
-            // Get common name - try external host first, then hostname
+
+            // Get external SIP parameters for certificate
             $externalHost = PbxSettings::getValueByKey(PbxSettings::EXTERNAL_SIP_HOST_NAME);
+            $externalIp = PbxSettings::getValueByKey(PbxSettings::EXTERNAL_SIP_IP_ADDR);
+
+            // Determine common name - prefer hostname over IP, fallback to system hostname
             if (!empty($externalHost)) {
                 $commonName = $externalHost;
+            } elseif (!empty($externalIp)) {
+                $commonName = $externalIp;
             } else {
                 $commonName = gethostname() ?: 'localhost';
             }
-            
+
             // Get email from system notifications
             $systemEmail = PbxSettings::getValueByKey(PbxSettings::SYSTEM_NOTIFICATIONS_EMAIL);
             if (empty($systemEmail) || !filter_var($systemEmail, FILTER_VALIDATE_EMAIL)) {
                 $systemEmail = 'admin@' . ($commonName !== 'localhost' ? $commonName : 'localhost.localdomain');
             }
-            
+
             $options = [
                 "countryName" => $countryCode,
                 "stateOrProvinceName" => 'State',
-                "localityName" => 'City', 
+                "localityName" => 'City',
                 "organizationName" => $organizationName,
                 "organizationalUnitName" => 'PBX System',
                 "commonName" => $commonName,
                 "emailAddress" => $systemEmail,
+                // Store external parameters for SAN generation
+                "_externalHost" => $externalHost,
+                "_externalIp" => $externalIp,
             ];
         }
 
@@ -149,14 +157,75 @@ class SslCertificateService
             SystemMessages::sysLogMsg(__METHOD__, 'Failed to generate private key: ' . openssl_error_string(), LOG_ERR);
             return ['PublicKey' => '', 'PrivateKey' => ''];
         }
-        
+
         $csr = openssl_csr_new($options, $privateKey, $configArgsCsr);
         if ($csr === false) {
             SystemMessages::sysLogMsg(__METHOD__, 'Failed to generate CSR: ' . openssl_error_string(), LOG_ERR);
             return ['PublicKey' => '', 'PrivateKey' => ''];
         }
-        
-        $x509 = openssl_csr_sign($csr, null, $privateKey, self::DEFAULT_CERT_VALIDITY_DAYS, $configArgsCsr);
+
+        // Create a temporary config file with SAN extension
+        // Modern browsers (especially Safari) require Subject Alternative Name (SAN)
+        // Use EXTERNAL_SIP_HOST_NAME and EXTERNAL_SIP_IP_ADDR for SAN entries
+        $commonName = $options['commonName'] ?? 'localhost';
+        $externalHost = $options['_externalHost'] ?? '';
+        $externalIp = $options['_externalIp'] ?? '';
+
+        $tempConfigFile = tempnam(sys_get_temp_dir(), 'ssl_config_');
+        $configContent = <<<EOD
+[req]
+distinguished_name = req_distinguished_name
+req_extensions = v3_req
+
+[req_distinguished_name]
+
+[v3_req]
+basicConstraints = CA:FALSE
+keyUsage = nonRepudiation, digitalSignature, keyEncipherment
+subjectAltName = @alt_names
+
+[alt_names]
+EOD;
+
+        // Build SAN entries based on external SIP settings
+        $sanIndex = 1;
+
+        // Add external hostname to SAN if specified
+        if (!empty($externalHost) && !filter_var($externalHost, FILTER_VALIDATE_IP)) {
+            $configContent .= "\nDNS.{$sanIndex} = {$externalHost}";
+            $sanIndex++;
+        }
+
+        // Add external IP to SAN if specified
+        if (!empty($externalIp) && filter_var($externalIp, FILTER_VALIDATE_IP)) {
+            $configContent .= "\nIP.{$sanIndex} = {$externalIp}";
+            $sanIndex++;
+        }
+
+        // If no external parameters, fall back to commonName
+        if ($sanIndex === 1) {
+            if (filter_var($commonName, FILTER_VALIDATE_IP)) {
+                $configContent .= "\nIP.1 = {$commonName}";
+            } else {
+                $configContent .= "\nDNS.1 = {$commonName}";
+            }
+        }
+
+        file_put_contents($tempConfigFile, $configContent);
+
+        // Add the config file and extensions to CSR config
+        $configArgsCsrWithSan = array_merge($configArgsCsr, [
+            'config' => $tempConfigFile,
+            'x509_extensions' => 'v3_req',
+        ]);
+
+        $x509 = openssl_csr_sign($csr, null, $privateKey, self::DEFAULT_CERT_VALIDITY_DAYS, $configArgsCsrWithSan);
+
+        // Clean up temporary config file
+        if (file_exists($tempConfigFile)) {
+            unlink($tempConfigFile);
+        }
+
         if ($x509 === false) {
             SystemMessages::sysLogMsg(__METHOD__, 'Failed to sign certificate: ' . openssl_error_string(), LOG_ERR);
             return ['PublicKey' => '', 'PrivateKey' => ''];

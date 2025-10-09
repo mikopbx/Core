@@ -86,11 +86,24 @@ const loginForm = {
     },
 
     /**
-     * Check if browser supports WebAuthn and hide passkey button if not
+     * Check if browser supports WebAuthn and connection is secure
+     * WebAuthn requires HTTPS or localhost
+     * Hide passkey button and OR divider if not supported
      */
     checkPasskeySupport() {
-        if (window.PublicKeyCredential === undefined) {
+        const isLocalhost = window.location.hostname === 'localhost' ||
+                           window.location.hostname === '127.0.0.1' ||
+                           window.location.hostname === '[::1]';
+        const isSecure = window.location.protocol === 'https:';
+        const hasWebAuthn = window.PublicKeyCredential !== undefined;
+
+        // Show passkey button only if:
+        // 1. Browser supports WebAuthn AND
+        // 2. Connection is HTTPS OR localhost
+        if (!hasWebAuthn || (!isSecure && !isLocalhost)) {
             loginForm.$passkeyButton.hide();
+            // Also hide the OR divider
+            $('.ui.horizontal.divider').hide();
         }
     },
 
@@ -162,17 +175,12 @@ const loginForm = {
             });
 
             if (response.result && response.data && response.data.accessToken) {
-                // Save JWT in TokenManager (in memory, NOT localStorage!)
-                console.log('[LOGIN] Storing access token in TokenManager...');
-                TokenManager.setAccessToken(
-                    response.data.accessToken,
-                    response.data.expiresIn
-                );
-                console.log('[LOGIN] Token stored, redirecting...');
+                console.log('[LOGIN] Login successful, access token received');
+                console.log('[LOGIN] Refresh cookie should be set, testing with immediate refresh...');
 
-                // Refresh token is already set in httpOnly cookie automatically
-                // Redirect to home page
-                window.location = `${globalRootUrl}extensions/index`;
+                // Test refresh token cookie by calling /auth:refresh immediately
+                // This verifies the cookie is working before redirecting
+                loginForm.testRefreshAndRedirect();
             } else {
                 console.error('[LOGIN] Invalid response:', response);
                 loginForm.showError(response.messages || { error: [globalTranslate.auth_WrongLoginPassword] });
@@ -187,6 +195,49 @@ const loginForm = {
             }
         } finally {
             loginForm.$submitButton.removeClass('loading disabled');
+        }
+    },
+
+    /**
+     * Test refresh token cookie and redirect if successful
+     * Called immediately after login to verify cookie is set correctly
+     */
+    async testRefreshAndRedirect() {
+        try {
+            // Wait 100ms for browser to process Set-Cookie header
+            // The cookie is set in the response, but browsers need time to store it
+            // before it's available for the next request
+            console.log('[LOGIN] Waiting for browser to process Set-Cookie header...');
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            console.log('[LOGIN] Calling /auth:refresh to test cookie...');
+            const response = await $.ajax({
+                url: '/pbxcore/api/v3/auth:refresh',
+                method: 'POST',
+                dataType: 'json',
+            });
+
+            console.log('[LOGIN] Refresh response:', response);
+
+            if (response.result && response.data && response.data.accessToken) {
+                console.log('[LOGIN] Refresh successful! Cookie is working.');
+                console.log('[LOGIN] Storing new access token and redirecting...');
+
+                // Store the NEW access token from refresh
+                TokenManager.setAccessToken(
+                    response.data.accessToken,
+                    response.data.expiresIn
+                );
+
+                // Now redirect - we know the cookie works
+                window.location = `${globalRootUrl}extensions/index`;
+            } else {
+                console.error('[LOGIN] Refresh failed - cookie not working');
+                loginForm.showError({ error: [globalTranslate.auth_RefreshTokenError || 'Refresh token error'] });
+            }
+        } catch (error) {
+            console.error('[LOGIN] Refresh test failed:', error);
+            loginForm.showError({ error: [globalTranslate.auth_RefreshTokenError || 'Refresh token error'] });
         }
     },
 
@@ -277,15 +328,9 @@ const loginForm = {
             });
 
             if (response.result && response.data && response.data.accessToken) {
-                // Save JWT in TokenManager (in memory, NOT localStorage!)
-                TokenManager.setAccessToken(
-                    response.data.accessToken,
-                    response.data.expiresIn
-                );
-
-                // Refresh token is already set in httpOnly cookie automatically
-                // Redirect to home page
-                window.location = `${globalRootUrl}extensions/index`;
+                console.log('[PASSKEY] Login successful, testing refresh cookie...');
+                // Test refresh token cookie before redirect
+                loginForm.testRefreshAndRedirect();
             } else {
                 loginForm.showError(response.messages || [globalTranslate.pk_LoginError]);
             }

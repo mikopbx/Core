@@ -94,6 +94,7 @@ class LoginAction
         $di = Di::getDefault();
         if ($di === null) {
             $res->messages['error'][] = 'Dependency injection container not available';
+            $res->httpCode = 500;
             return $res;
         }
 
@@ -107,6 +108,7 @@ class LoginAction
                 'auth_TooManyLoginAttempts',
                 ['interval' => self::ATTEMPTS_INTERVAL]
             );
+            $res->httpCode = 429; // Too Many Requests
             return $res;
         }
 
@@ -129,6 +131,7 @@ class LoginAction
         }
         else {
             $res->messages['error'][] = TranslationProvider::translate('auth_LoginPasswordRequired');
+            $res->httpCode = 400; // Bad Request - missing required parameters
             return $res;
         }
 
@@ -141,6 +144,7 @@ class LoginAction
                 'auth_WrongLoginPassword',
                 ['attempts' => $remainingAttempts]
             );
+            $res->httpCode = 401; // Unauthorized - invalid credentials
             return $res;
         }
 

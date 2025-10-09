@@ -80,12 +80,14 @@ class RefreshAction
         $di = Di::getDefault();
         if ($di === null) {
             $res->messages['error'][] = 'Dependency injection container not available';
+            $res->httpCode = 500;
             return $res;
         }
 
-        // Check refresh token from cookie
-        if (empty($refreshToken)) {
+        // Check refresh token from cookie - validate type for PHPStan
+        if (!is_string($refreshToken) || empty($refreshToken)) {
             $res->messages['error'][] = TranslationProvider::translate('auth_RefreshTokenMissing');
+            $res->httpCode = 401; // Unauthorized - missing credentials
             return $res;
         }
 
@@ -98,12 +100,14 @@ class RefreshAction
 
         if ($sessionParams === null) {
             $res->messages['error'][] = TranslationProvider::translate('auth_RefreshTokenExpired');
+            $res->httpCode = 401; // Unauthorized - invalid/expired token
             return $res;
         }
 
         // Validate session params structure
         if (empty($sessionParams) || !is_array($sessionParams)) {
             $res->messages['error'][] = TranslationProvider::translate('auth_InvalidSessionData');
+            $res->httpCode = 401; // Unauthorized - corrupted session
             return $res;
         }
 
@@ -143,6 +147,7 @@ class RefreshAction
             // Rotate token in Redis (deletes old, creates new)
             if (!$tokenStorage->rotate($refreshToken, $newRefreshToken, $sessionParams, JWTHelper::REFRESH_TOKEN_TTL)) {
                 $res->messages['error'][] = TranslationProvider::translate('auth_TokenUpdateFailed');
+                $res->httpCode = 500; // Internal server error - storage failure
                 return $res;
             }
 
