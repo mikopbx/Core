@@ -1193,19 +1193,19 @@ const generalSettingsModify = {
     cbBeforeSendForm(settings) {
         const result = settings;
 
-        // Handle certificate fields - only send if user actually entered new values
+        // Handle private key field
         if (result.data.WEBHTTPSPrivateKey !== undefined) {
             const privateKeyValue = result.data.WEBHTTPSPrivateKey;
-            // If the field is empty or contains the hidden password, don't send it
-            if (privateKeyValue === '' || privateKeyValue === generalSettingsModify.hiddenPassword) {
+            // Only skip sending if the value equals hidden password (unchanged)
+            // Send empty string to clear the private key on server
+            if (privateKeyValue === generalSettingsModify.hiddenPassword) {
                 delete result.data.WEBHTTPSPrivateKey;
             }
+            // Empty string '' will be sent to clear the certificate
         }
 
-        // Same for public key - don't send empty values
-        if (result.data.WEBHTTPSPublicKey !== undefined && result.data.WEBHTTPSPublicKey === '') {
-            delete result.data.WEBHTTPSPublicKey;
-        }
+        // For public key - send empty values to allow clearing
+        // Do not delete empty strings - they mean user wants to clear the certificate
 
         // Clean up unnecessary fields before sending
         const fieldsToRemove = [
