@@ -22,6 +22,10 @@ namespace MikoPBX\PBXCoreREST\Lib\SysLogs;
 use MikoPBX\Core\System\Directories;
 use MikoPBX\PBXCoreREST\Lib\Files\RestAPIFilesUtils;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\PBXCoreREST\Lib\Common\BaseActionHelper;
+use MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor;
+use MikoPBX\PBXCoreREST\Lib\Common\ParameterDefaultsExtractor;
+use MikoPBX\PBXCoreREST\Controllers\Syslog\RestController;
 use Phalcon\Di\Injectable;
 use ZipArchive;
 
@@ -35,17 +39,44 @@ class DownloadLogFileAction extends Injectable
     /**
      * Prepares a downloadable link for a log file with the provided name.
      *
-     * @param string $filename The name of the log file.
-     * @param bool $archive Whether to archive the file before download.
+     * Uses unified sanitization approach with ParameterSanitizationExtractor
+     * for consistent parameter handling.
+     *
+     * @param array<string, mixed> $data An array containing the following parameters:
+     *                    - filename (string): The name of the log file.
+     *                    - archive (bool): Whether to archive the file before download.
      *
      * @return PBXApiResult An object containing the result of the API call.
      *
      */
-    public static function main(string $filename, bool $archive = false): PBXApiResult
+    public static function main(array $data): PBXApiResult
     {
-        $res            = new PBXApiResult();
+        $res = new PBXApiResult();
         $res->processor = __METHOD__;
-        $filename       = Directories::getDir(Directories::CORE_LOGS_DIR) . '/' . $filename;
+
+        // Get sanitization rules automatically from controller attributes
+        // Single Source of Truth - rules extracted from #[ApiParameter] attributes
+        $sanitizationRules = ParameterSanitizationExtractor::extractFromController(
+            RestController::class,
+            'downloadLogFile'
+        );
+
+        // Sanitize input data using unified approach
+        $sanitizedData = BaseActionHelper::sanitizeData($data, $sanitizationRules);
+
+        // Apply defaults from controller attributes automatically
+        // Single Source of Truth - defaults extracted from #[ApiParameter] attributes
+        $sanitizedData = ParameterDefaultsExtractor::applyDefaults(
+            RestController::class,
+            'downloadLogFile',
+            $sanitizedData
+        );
+
+        // Extract validated parameters
+        $filename = (string)($sanitizedData['filename'] ?? '');
+        $archive = (bool)($sanitizedData['archive'] ?? false);
+
+        $filename = Directories::getDir(Directories::CORE_LOGS_DIR) . '/' . $filename;
         if ( ! file_exists($filename)) {
             $res->success    = false;
             $res->messages[] = 'File does not exist ' . $filename;

@@ -24,6 +24,9 @@ use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\PBXCoreREST\Lib\Common\BaseActionHelper;
+use MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor;
+use MikoPBX\PBXCoreREST\Controllers\Syslog\RestController;
 use Phalcon\Di\Injectable;
 
 /**
@@ -36,15 +39,33 @@ class EraseFileAction extends Injectable
     /**
      * Erase log file with the provided name.
      *
-     * @param string $filename The name of the log file.
+     * Uses unified sanitization approach with ParameterSanitizationExtractor
+     * for consistent parameter handling.
+     *
+     * @param array<string, mixed> $data An array containing the following parameters:
+     *                    - filename (string): The name of the log file.
      *
      * @return PBXApiResult An object containing the result of the API call.
      *
      */
-    public static function main(string $filename): PBXApiResult
+    public static function main(array $data): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
+
+        // Get sanitization rules automatically from controller attributes
+        // Single Source of Truth - rules extracted from #[ApiParameter] attributes
+        $sanitizationRules = ParameterSanitizationExtractor::extractFromController(
+            RestController::class,
+            'eraseFile'
+        );
+
+        // Sanitize input data using unified approach
+        $sanitizedData = BaseActionHelper::sanitizeData($data, $sanitizationRules);
+
+        // Extract validated parameters
+        $filename = (string)($sanitizedData['filename'] ?? '');
+
         $filename = Directories::getDir(Directories::CORE_LOGS_DIR) . '/' . $filename;
         if (!file_exists($filename)) {
             $res->success = false;

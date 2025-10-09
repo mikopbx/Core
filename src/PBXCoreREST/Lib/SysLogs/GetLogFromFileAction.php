@@ -23,6 +23,10 @@ use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\PBXCoreREST\Lib\Common\BaseActionHelper;
+use MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor;
+use MikoPBX\PBXCoreREST\Lib\Common\ParameterDefaultsExtractor;
+use MikoPBX\PBXCoreREST\Controllers\Syslog\RestController;
 use Phalcon\Di\Injectable;
 
 /**
@@ -35,23 +39,51 @@ class GetLogFromFileAction extends Injectable
     /**
      * Gets partially filtered log file strings.
      *
-     * @param array $data An array containing the following parameters:
+     * Uses unified sanitization approach with ParameterSanitizationExtractor
+     * and ParameterDefaultsExtractor for consistent parameter handling.
+     *
+     * @param array<string, mixed> $data An array containing the following parameters:
      *                    - filename (string): The name of the log file.
      *                    - filter (string): The filter string.
-     *                    - lines (int): The number of lines to return.
-     *                    - offset (int): The number of lines to skip.
+     *                    - logLevel (string): Log level filter (ERROR, WARNING, NOTICE, INFO, DEBUG).
+     *                    - lines (int): The number of lines to return (default: 500, max: 10000).
+     *                    - offset (int): The number of lines to skip (default: 0).
+     *                    - dateFrom (string): Start date filter (YYYY-MM-DD HH:MM:SS or timestamp).
+     *                    - dateTo (string): End date filter (YYYY-MM-DD HH:MM:SS or timestamp).
      *
      * @return PBXApiResult An object containing the result of the API call.
      */
     public static function main(array $data): PBXApiResult
     {
-        $filename = (string)($data['filename'] ?? '');
-        $filter = (string)($data['filter'] ?? '');
-        $lines = (int)($data['lines'] ?? '');
-        $offset = (int)($data['offset'] ?? '');
-
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
+
+        // Get sanitization rules automatically from controller attributes
+        // Single Source of Truth - rules extracted from #[ApiParameter] attributes
+        $sanitizationRules = ParameterSanitizationExtractor::extractFromController(
+            RestController::class,
+            'getLogFromFile'
+        );
+
+        // Sanitize input data using unified approach
+        $sanitizedData = BaseActionHelper::sanitizeData($data, $sanitizationRules);
+
+        // Apply defaults from controller attributes automatically
+        // Single Source of Truth - defaults extracted from #[ApiParameter] attributes
+        $sanitizedData = ParameterDefaultsExtractor::applyDefaults(
+            RestController::class,
+            'getLogFromFile',
+            $sanitizedData
+        );
+
+        // Extract validated parameters
+        $filename = (string)($sanitizedData['filename'] ?? '');
+        $filter = (string)($sanitizedData['filter'] ?? '');
+        $logLevel = isset($sanitizedData['logLevel']) ? strtoupper((string)$sanitizedData['logLevel']) : '';
+        $lines = (int)($sanitizedData['lines'] ?? 500);
+        $offset = (int)($sanitizedData['offset'] ?? 0);
+        $dateFrom = (string)($sanitizedData['dateFrom'] ?? '');
+        $dateTo = (string)($sanitizedData['dateTo'] ?? '');
         $filename = Directories::getDir(Directories::CORE_LOGS_DIR) . '/' . $filename;
         if (!file_exists($filename)) {
             $res->success = false;
@@ -123,10 +155,19 @@ class GetLogFromFileAction extends Injectable
             } else {
                 $fileToProcess = $filename;
             }
-            
-            if (empty($filter)) {
-                $cmd = "$tail -n $linesPlusOffset $fileToProcess";
-            } else {
+
+            // Track all commands for debug
+            $commandChain = [];
+            if ($isArchive && isset($decompressedFile)) {
+                $commandChain[] = "Decompressed: $filename -> $decompressedFile";
+            }
+            $commandChain[] = "Source file: $fileToProcess";
+
+            // Step 1: Apply text filter (grep) if provided
+            $textFilteredFile = $fileToProcess;
+            $needsTextFilter = !empty($filter) && is_string($filter);
+
+            if ($needsTextFilter) {
                 // Split filter by & and escape each part separately
                 $filterParts = explode('&', $filter);
                 $grepArgs = [];
@@ -136,22 +177,88 @@ class GetLogFromFileAction extends Injectable
                         $grepArgs[] = '-e ' . escapeshellarg($part);
                     }
                 }
+
                 if (!empty($grepArgs)) {
-                    $cmd = "$grep --text -h " . implode(' ', $grepArgs) . " -F $fileToProcess | $tail -n $linesPlusOffset";
-                } else {
-                    $cmd = "$tail -n $linesPlusOffset $fileToProcess";
+                    $textFilteredFile = $cacheDir . '/' . uniqid('text_filtered_', true) . '.log';
+                    $grepCmd = "$grep --text -h " . implode(' ', $grepArgs) . " -F $fileToProcess > $textFilteredFile";
+                    Processes::mwExec($grepCmd);
+                    $commandChain[] = "Text filter: $grepCmd";
                 }
             }
-            if ($offset > 0) {
-                $cmd .= " | $head -n $lines";
+
+            // Step 1.5: Apply log level filter if provided
+            $levelFilteredFile = $textFilteredFile;
+            $validLogLevels = ['ERROR', 'WARNING', 'NOTICE', 'INFO', 'DEBUG'];
+            $needsLevelFilter = !empty($logLevel) && in_array($logLevel, $validLogLevels, true);
+
+            if ($needsLevelFilter) {
+                $levelFilteredFile = $cacheDir . '/' . uniqid('level_filtered_', true) . '.log';
+
+                // Build comprehensive pattern for different log formats
+                $levelPattern = self::buildLogLevelPattern($logLevel);
+
+                $grepCmd = "$grep --text -E " . escapeshellarg($levelPattern) . " $textFilteredFile > $levelFilteredFile";
+                Processes::mwExec($grepCmd);
+                $textFilteredFile = $levelFilteredFile;
+                $commandChain[] = "Level filter ($logLevel): $grepCmd";
+            }
+
+            // Step 2: Apply time-based filtering if dateFrom/dateTo provided
+            $finalFilteredFile = $textFilteredFile;
+            $needsTimeFilter = !empty($dateFrom) || !empty($dateTo);
+
+            if ($needsTimeFilter) {
+                // Convert dateFrom/dateTo to timestamps
+                $timestampFrom = null;
+                $timestampTo = null;
+
+                if (!empty($dateFrom) && is_string($dateFrom)) {
+                    if (is_numeric($dateFrom)) {
+                        $timestampFrom = (int)$dateFrom;
+                    } else {
+                        $parsed = strtotime($dateFrom);
+                        $timestampFrom = $parsed !== false ? $parsed : null;
+                    }
+                }
+
+                if (!empty($dateTo) && is_string($dateTo)) {
+                    if (is_numeric($dateTo)) {
+                        $timestampTo = (int)$dateTo;
+                    } else {
+                        $parsed = strtotime($dateTo);
+                        $timestampTo = $parsed !== false ? $parsed : null;
+                    }
+                }
+
+                // Create temporary time-filtered file
+                $timeFilteredFile = $cacheDir . '/' . uniqid('time_filtered_', true) . '.log';
+                self::filterLogByTime($textFilteredFile, $timeFilteredFile, $timestampFrom, $timestampTo);
+                $finalFilteredFile = $timeFilteredFile;
+                $commandChain[] = "Time filter: PHP filterLogByTime($textFilteredFile -> $timeFilteredFile, from=$timestampFrom, to=$timestampTo)";
+            }
+
+            // Step 3: Apply offset/lines pagination
+            // For time-based filtering, use head to get first N lines (chronological order)
+            // For offset-based filtering, use tail to get last N lines
+            if ($needsTimeFilter) {
+                // Time-based: get first N lines in chronological order
+                $cmd = "$head -n $lines $finalFilteredFile";
+            } else {
+                // Offset-based: traditional tail behavior
+                $cmd = "$tail -n $linesPlusOffset $finalFilteredFile";
+                if ($offset > 0) {
+                    $cmd .= " | $head -n $lines";
+                }
             }
 
             $sed = Util::which('sed');
             $cmd .= ' | ' . $sed . ' -E \'s/\\\\([tnrfvb]|040)/ /g\'';
             $cmd .= " > $filenameTmp";
 
+            $commandChain[] = "Final output: $cmd";
+
             Processes::mwExec($cmd);
-            $res->data['cmd'] = $cmd;
+            $res->data['command_chain'] = $commandChain;
             $res->data['filename'] = $filenameTmp;
             
             // Check if temporary file was created successfully
@@ -165,7 +272,7 @@ class GetLogFromFileAction extends Injectable
                 $output = [];
                 $returnCode = 0;
                 exec($cmdDirect, $output, $returnCode);
-                
+
                 if ($returnCode === 0) {
                     $res->data['content'] = mb_convert_encoding(implode("\n", $output), 'UTF-8', 'UTF-8');
                 } else {
@@ -173,13 +280,178 @@ class GetLogFromFileAction extends Injectable
                     $res->messages['warning'][] = 'No matching log entries found or command execution failed';
                 }
             }
+
+            // Extract actual time range from loaded content
+            if (!empty($res->data['content'])) {
+                $contentLines = explode("\n", $res->data['content']);
+                $contentLines = array_filter($contentLines); // Remove empty lines
+
+                if (count($contentLines) > 0) {
+                    // Get first and last line timestamps
+                    $firstLine = reset($contentLines);
+                    $lastLine = end($contentLines);
+
+                    $firstTimestamp = LogTimestampParser::parseTimestamp($firstLine);
+                    $lastTimestamp = LogTimestampParser::parseTimestamp($lastLine);
+
+                    if ($firstTimestamp && $lastTimestamp) {
+                        $res->data['actual_range'] = [
+                            'start' => $firstTimestamp,
+                            'end' => $lastTimestamp,
+                            'lines_count' => count($contentLines),
+                            'truncated' => count($contentLines) >= $lines
+                        ];
+                    }
+                }
+            }
             
-            // Clean up decompressed file if it was created
+            // Clean up temporary files
             if ($isArchive && !empty($decompressedFile) && file_exists($decompressedFile)) {
                 @unlink($decompressedFile);
+            }
+
+            if ($needsTextFilter && $textFilteredFile !== $fileToProcess && file_exists($textFilteredFile)) {
+                @unlink($textFilteredFile);
+            }
+
+            if ($needsTimeFilter && $finalFilteredFile !== $textFilteredFile && file_exists($finalFilteredFile)) {
+                @unlink($finalFilteredFile);
             }
         }
 
         return $res;
+    }
+
+    /**
+     * Build log level pattern for grep command supporting multiple log formats
+     *
+     * Supports the following log formats:
+     * - Asterisk: [WARNING], [ERROR], [NOTICE], [INFO], [DEBUG]
+     * - PHP: PHP Fatal error, PHP Warning, PHP Notice, PHP Deprecated
+     * - Syslog: daemon.error, daemon.warn, daemon.notice, daemon.info, daemon.debug
+     * - Nginx: [error], [warn], [notice], [info], [debug]
+     * - Fail2ban: WARNING, ERROR, INFO, DEBUG
+     *
+     * @param string $logLevel Target log level (ERROR, WARNING, NOTICE, INFO, DEBUG)
+     * @return string Regex pattern for grep -E
+     */
+    private static function buildLogLevelPattern(string $logLevel): string
+    {
+        // Level mapping dictionary for different log formats
+        // Using word boundaries \b for flexible matching
+        $levelMappings = [
+            'ERROR' => [
+                // Word boundary patterns (matches ] ERROR[, [ERROR], ERROR , etc)
+                '\\bERROR\\b',
+                '\\berror\\b',
+                '\\bERR\\b',
+                '\\berr\\b',
+                '\\bCRITICAL\\b',
+                '\\bFATAL\\b',
+                // PHP formats
+                'PHP Fatal error',
+                'PHP Parse error',
+                // Syslog formats (all facilities)
+                '\\.err\\b',
+                '\\.crit\\b',
+                '\\.emerg\\b',
+                '\\.alert\\b',
+            ],
+            'WARNING' => [
+                // Word boundary patterns (matches ] WARNING[, [WARNING], WARNING , etc)
+                '\\bWARNING\\b',
+                '\\bwarning\\b',
+                '\\bWARN\\b',
+                '\\bwarn\\b',
+                // PHP formats
+                'PHP Warning',
+                'PHP Deprecated',
+                // Syslog formats (all facilities)
+                '\\.warn\\b',
+                '\\.warning\\b',
+            ],
+            'NOTICE' => [
+                // Word boundary patterns
+                '\\bNOTICE\\b',
+                '\\bnotice\\b',
+                // Syslog formats (all facilities)
+                '\\.notice\\b',
+            ],
+            'INFO' => [
+                // Word boundary patterns
+                '\\bINFO\\b',
+                '\\binfo\\b',
+                '\\bINF\\b',
+                '\\binf\\b',
+                // Syslog formats (all facilities: daemon, cron, user, authpriv, etc.)
+                '\\.info\\b',
+            ],
+            'DEBUG' => [
+                // Word boundary patterns
+                '\\bDEBUG\\b',
+                '\\bdebug\\b',
+                '\\bDBG\\b',
+                '\\bdbg\\b',
+                // Syslog formats (all facilities)
+                '\\.debug\\b',
+            ],
+        ];
+
+        // Get patterns for this level, default to simple pattern if not found
+        $patterns = $levelMappings[$logLevel] ?? ['\\[' . $logLevel . '\\]', ' ' . $logLevel . ' '];
+
+        // Join all patterns with OR operator
+        return implode('|', $patterns);
+    }
+
+    /**
+     * Filter log file by time range
+     *
+     * @param string $sourceFile Source log file path
+     * @param string $targetFile Target filtered file path
+     * @param int|null $timestampFrom Start timestamp (inclusive)
+     * @param int|null $timestampTo End timestamp (inclusive)
+     * @return void
+     */
+    private static function filterLogByTime(string $sourceFile, string $targetFile, ?int $timestampFrom, ?int $timestampTo): void
+    {
+        $handle = fopen($sourceFile, 'r');
+        if ($handle === false) {
+            return;
+        }
+
+        $targetHandle = fopen($targetFile, 'w');
+        if ($targetHandle === false) {
+            fclose($handle);
+            return;
+        }
+
+        while (($line = fgets($handle)) !== false) {
+            $timestamp = LogTimestampParser::parseTimestamp($line);
+
+            // If we can't parse timestamp, include the line (might be continuation of previous log entry)
+            if ($timestamp === null) {
+                fwrite($targetHandle, $line);
+                continue;
+            }
+
+            // Check if timestamp is within range
+            $includeTime = true;
+
+            if ($timestampFrom !== null && $timestamp < $timestampFrom) {
+                $includeTime = false;
+            }
+
+            if ($timestampTo !== null && $timestamp > $timestampTo) {
+                $includeTime = false;
+            }
+
+            if ($includeTime) {
+                fwrite($targetHandle, $line);
+            }
+        }
+
+        fclose($handle);
+        fclose($targetHandle);
     }
 }

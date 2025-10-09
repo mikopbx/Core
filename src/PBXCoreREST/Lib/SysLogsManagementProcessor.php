@@ -23,6 +23,7 @@ use MikoPBX\PBXCoreREST\Lib\SysLogs\DownloadLogFileAction;
 use MikoPBX\PBXCoreREST\Lib\SysLogs\DownloadLogsArchiveAction;
 use MikoPBX\PBXCoreREST\Lib\SysLogs\EraseFileAction;
 use MikoPBX\PBXCoreREST\Lib\SysLogs\GetLogFromFileAction;
+use MikoPBX\PBXCoreREST\Lib\SysLogs\GetLogTimeRangeAction;
 use MikoPBX\PBXCoreREST\Lib\SysLogs\GetLogsListAction;
 use MikoPBX\PBXCoreREST\Lib\SysLogs\PrepareLogAction;
 use MikoPBX\PBXCoreREST\Lib\SysLogs\StartLogAction;
@@ -36,6 +37,7 @@ enum SyslogAction: string
     // Custom methods for log operations
     case GET_LOGS_LIST = 'getLogsList';
     case GET_LOG_FROM_FILE = 'getLogFromFile';
+    case GET_LOG_TIME_RANGE = 'getLogTimeRange';
     case START_CAPTURE = 'startCapture';
     case STOP_CAPTURE = 'stopCapture';
     case PREPARE_ARCHIVE = 'prepareArchive';
@@ -52,6 +54,7 @@ enum SyslogAction: string
  * Custom methods:
  * - GET  /syslog:getLogsList      -> Get list of available log files
  * - POST /syslog:getLogFromFile   -> Get content from specific log file
+ * - POST /syslog:getLogTimeRange  -> Get available time range for specific log file
  * - POST /syslog:startCapture     -> Start log capture with tcpdump
  * - POST /syslog:stopCapture      -> Stop capture and prepare archive
  * - POST /syslog:prepareArchive   -> Prepare logs archive without stopping capture
@@ -75,8 +78,12 @@ class SysLogsManagementProcessor extends Injectable
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
 
-        $actionString = $request['action'];
-        $data = $request['data'];
+        $actionValue = $request['action'] ?? '';
+        $actionString = is_string($actionValue) ? $actionValue : '';
+
+        $dataValue = $request['data'] ?? [];
+        /** @var array<string, mixed> $data */
+        $data = is_array($dataValue) ? $dataValue : [];
 
         // Type-safe action matching with enum
         $action = SyslogAction::tryFrom($actionString);
@@ -88,18 +95,17 @@ class SysLogsManagementProcessor extends Injectable
         }
 
         // Execute action using match expression (PHP 8)
+        // All actions now use unified parameter validation with ParameterSanitizationExtractor
         $res = match ($action) {
             SyslogAction::GET_LOGS_LIST => GetLogsListAction::main(),
             SyslogAction::GET_LOG_FROM_FILE => GetLogFromFileAction::main($data),
+            SyslogAction::GET_LOG_TIME_RANGE => GetLogTimeRangeAction::main($data),
             SyslogAction::START_CAPTURE => StartLogAction::main(),
             SyslogAction::STOP_CAPTURE => PrepareLogAction::main(true),
             SyslogAction::PREPARE_ARCHIVE => PrepareLogAction::main(false),
-            SyslogAction::DOWNLOAD_LOG_FILE => DownloadLogFileAction::main(
-                $data['filename'] ?? '',
-                $data['archive'] ?? false
-            ),
-            SyslogAction::DOWNLOAD_ARCHIVE => DownloadLogsArchiveAction::main($data['filename'] ?? ''),
-            SyslogAction::ERASE_FILE => EraseFileAction::main($data['filename'] ?? ''),
+            SyslogAction::DOWNLOAD_LOG_FILE => DownloadLogFileAction::main($data),
+            SyslogAction::DOWNLOAD_ARCHIVE => DownloadLogsArchiveAction::main($data),
+            SyslogAction::ERASE_FILE => EraseFileAction::main($data),
         };
 
         $res->function = $actionString;

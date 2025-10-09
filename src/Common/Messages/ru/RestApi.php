@@ -564,7 +564,9 @@ return [
     'rest_syslog_GetLogsList' => 'Получить список лог файлов',
     'rest_syslog_GetLogsListDesc' => 'Получить список всех доступных лог файлов системы (Asterisk, PHP, система, модули)',
     'rest_syslog_GetLogFromFile' => 'Получить содержимое лога',
-    'rest_syslog_GetLogFromFileDesc' => 'Получить содержимое указанного лог файла с возможностью фильтрации и ограничения количества строк',
+    'rest_syslog_GetLogFromFileDesc' => 'Получить содержимое указанного лог файла с возможностью фильтрации по тексту, времени и ограничения количества строк',
+    'rest_syslog_GetLogTimeRange' => 'Получить временной диапазон лога',
+    'rest_syslog_GetLogTimeRangeDesc' => 'Получить доступный временной диапазон (первая и последняя запись) для указанного лог файла',
     'rest_syslog_StartCapture' => 'Начать захват пакетов',
     'rest_syslog_StartCaptureDesc' => 'Начать захват сетевых пакетов с помощью tcpdump для диагностики сетевых проблем',
     'rest_syslog_StopCapture' => 'Остановить захват пакетов',
@@ -1148,7 +1150,11 @@ return [
     // Syslog specific parameters
     'rest_param_syslog_filename' => 'Путь к лог файлу относительно директории логов (например asterisk/messages или system/messages)',
     'rest_param_syslog_filter' => 'Текст для фильтрации строк лога (grep поиск)',
+    'rest_param_syslog_log_level' => 'Уровень логирования для фильтрации (ERROR, WARNING, NOTICE, INFO, DEBUG)',
     'rest_param_syslog_lines' => 'Количество последних строк лога для вывода',
+    'rest_param_syslog_offset' => 'Количество строк для пропуска с конца (используется вместе с lines для пагинации)',
+    'rest_param_syslog_date_from' => 'Начало временного диапазона для фильтрации (формат: YYYY-MM-DD HH:MM:SS или unix timestamp)',
+    'rest_param_syslog_date_to' => 'Конец временного диапазона для фильтрации (формат: YYYY-MM-DD HH:MM:SS или unix timestamp)',
     'rest_param_syslog_archive_filename' => 'Путь к файлу архива логов',
 
     // Fail2Ban specific parameters
@@ -1211,6 +1217,7 @@ return [
     'rest_response_200_audio_stream' => 'Аудио поток передается',
     'rest_response_200_file_content' => 'Содержимое файла получено',
     'rest_response_200_log_content' => 'Содержимое лог файла получено',
+    'rest_response_200_log_time_range' => 'Временной диапазон лога получен',
     'rest_response_200_archive_prepared' => 'Архив логов подготовлен для скачивания',
     'rest_response_200_file_download' => 'Файл готов к скачиванию',
     'rest_response_200_chunk_uploaded' => 'Чанк файла загружен успешно',

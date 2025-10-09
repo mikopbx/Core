@@ -687,6 +687,13 @@ return [
     'sd_TimeRange' => 'Временной диапазон',
     'sd_DateFrom' => 'От',
     'sd_DateTo' => 'До',
+    'sd_LogLevel' => 'Уровень логирования',
+    'sd_AllLevels' => 'Все уровни',
+    'sd_Error' => 'Ошибка',
+    'sd_Warning' => 'Предупреждение',
+    'sd_Notice' => 'Уведомление',
+    'sd_Info' => 'Информация',
+    'sd_Debug' => 'Отладка',
     'sd_QuickPeriod' => 'Быстрый выбор',
     'sd_LastHour' => 'Последний час',
     'sd_Last3Hours' => 'Последние 3 часа',
@@ -694,6 +701,8 @@ return [
     'sd_Today' => 'Сегодня',
     'sd_LoadingPrevious' => 'Загрузка предыдущих записей...',
     'sd_LoadingNext' => 'Загрузка следующих записей...',
+    'sd_LoadPrevious' => 'Загрузить предыдущие',
+    'sd_LoadNext' => 'Загрузить следующие',
 
     // SF
     'sf_AddNewAudioFile' => 'Добавить новый аудиофайл',

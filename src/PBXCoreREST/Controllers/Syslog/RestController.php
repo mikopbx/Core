@@ -56,11 +56,11 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[HttpMapping(
     mapping: [
         'GET' => ['getLogsList'],
-        'POST' => ['getLogFromFile', 'startCapture', 'stopCapture', 'prepareArchive', 'downloadLogFile', 'downloadArchive', 'eraseFile']
+        'POST' => ['getLogFromFile', 'getLogTimeRange', 'startCapture', 'stopCapture', 'prepareArchive', 'downloadLogFile', 'downloadArchive', 'eraseFile']
     ],
     resourceLevelMethods: [],
     collectionLevelMethods: [],
-    customMethods: ['getLogsList', 'getLogFromFile', 'startCapture', 'stopCapture', 'prepareArchive', 'downloadLogFile', 'downloadArchive', 'eraseFile'],
+    customMethods: ['getLogsList', 'getLogFromFile', 'getLogTimeRange', 'startCapture', 'stopCapture', 'prepareArchive', 'downloadLogFile', 'downloadArchive', 'eraseFile'],
     idPattern: ''
 )]
 class RestController extends BaseRestController
@@ -101,13 +101,38 @@ class RestController extends BaseRestController
     )]
     #[ApiParameter('filename', 'string', 'rest_param_syslog_filename', ParameterLocation::QUERY, required: true, example: 'asterisk/messages')]
     #[ApiParameter('filter', 'string', 'rest_param_syslog_filter', ParameterLocation::QUERY, required: false, maxLength: 200, example: 'ERROR')]
+    #[ApiParameter('logLevel', 'string', 'rest_param_syslog_log_level', ParameterLocation::QUERY, required: false, example: 'ERROR')]
     #[ApiParameter('lines', 'integer', 'rest_param_syslog_lines', ParameterLocation::QUERY, required: false, minimum: 1, maximum: 10000, default: 500, example: 500)]
+    #[ApiParameter('offset', 'integer', 'rest_param_syslog_offset', ParameterLocation::QUERY, required: false, minimum: 0, default: 0, example: 0)]
+    #[ApiParameter('dateFrom', 'string', 'rest_param_syslog_date_from', ParameterLocation::QUERY, required: false, example: '2025-10-09 08:00:00')]
+    #[ApiParameter('dateTo', 'string', 'rest_param_syslog_date_to', ParameterLocation::QUERY, required: false, example: '2025-10-09 09:00:00')]
     #[ApiResponse(200, 'rest_response_200_log_content')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
     #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
     public function getLogFromFile(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Get available time range for specific log file
+     *
+     * @route POST /pbxcore/api/v3/syslog:getLogTimeRange
+     */
+    #[ApiOperation(
+        summary: 'rest_syslog_GetLogTimeRange',
+        description: 'rest_syslog_GetLogTimeRangeDesc',
+        operationId: 'getLogTimeRange'
+    )]
+    #[ApiParameter('filename', 'string', 'rest_param_syslog_filename', ParameterLocation::QUERY, required: true, example: 'asterisk/messages')]
+    #[ApiResponse(200, 'rest_response_200_log_time_range')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    public function getLogTimeRange(): void
     {
         // Implementation handled by BaseRestController
     }
@@ -177,6 +202,7 @@ class RestController extends BaseRestController
         operationId: 'downloadLogFile'
     )]
     #[ApiParameter('filename', 'string', 'rest_param_syslog_filename', ParameterLocation::QUERY, required: true, example: 'asterisk/messages')]
+    #[ApiParameter('archive', 'boolean', 'rest_param_syslog_archive', ParameterLocation::QUERY, required: false, default: false, example: false)]
     #[ApiResponse(200, 'rest_response_200_file_download')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]

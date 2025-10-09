@@ -394,10 +394,14 @@ class AssetProvider implements ServiceProviderInterface
     {
         if ($action === 'index') {
             $this->headerCollectionCSS
+                ->addCss('css/vendor/semantic/slider.min.css', true)
                 ->addCss('css/SystemDiagnostic/index.css', true);
             $this->footerCollectionJS
+                ->addJs('js/vendor/semantic/slider.min.js', true)
                 ->addJs('js/pbx/PbxAPI/syslog-api.js', true)
                 ->addJs('js/pbx/SystemDiagnostic/system-diagnostic-index.js', true)
+                ->addJs('js/pbx/SystemDiagnostic/system-diagnostic-svg-timeline.js', true)
+                ->addJs('js/pbx/SystemDiagnostic/system-diagnostic-time-slider.js', true)
                 ->addJs('js/pbx/SystemDiagnostic/system-diagnostic-index-showlogs-worker.js', true)
                 ->addJs('js/pbx/SystemDiagnostic/system-diagnostic-index-showlogs.js', true)
                 ->addJs('js/pbx/SystemDiagnostic/system-diagnostic-index-sysinfo.js', true)

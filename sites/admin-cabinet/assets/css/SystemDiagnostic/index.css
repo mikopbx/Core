@@ -25,3 +25,297 @@
     color: #2185d0;
 }
 
+/* Log level dropdown with colored icons - V5.0 pattern */
+#logLevel-dropdown {
+    min-width: 150px;
+}
+
+/* Log level dropdown menu items */
+#logLevel-dropdown.ui.dropdown .menu > .item {
+    padding: 10px 12px !important;
+    transition: all 0.15s ease;
+}
+
+#logLevel-dropdown.ui.dropdown .menu > .item:hover {
+    background: #f8f9fa !important;
+}
+
+/* Log level icons in dropdown */
+#logLevel-dropdown.ui.dropdown .menu > .item i.icon,
+#logLevel-dropdown.ui.dropdown > .text i.icon {
+    margin-right: 8px;
+    font-size: 1.1em;
+}
+
+/* Colored icons for log levels */
+#logLevel-dropdown i.red.icon {
+    color: #db2828 !important;
+}
+
+#logLevel-dropdown i.orange.icon {
+    color: #f2711c !important;
+}
+
+#logLevel-dropdown i.blue.icon {
+    color: #2185d0 !important;
+}
+
+#logLevel-dropdown i.grey.icon {
+    color: #767676 !important;
+}
+
+#logLevel-dropdown i.purple.icon {
+    color: #a333c8 !important;
+}
+
+/* Time slider container - compact */
+#time-slider-container {
+    min-height: 24px;
+    margin: 0;
+    padding: 0;
+    background: #fafafa;
+    border: 1px solid #e0e0e0;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+/* SVG Timeline styles */
+.timeline-svg {
+    display: block;
+    cursor: default;
+    user-select: none;
+}
+
+/* Timeline labels */
+.timeline-label {
+    font-size: 11px;
+    fill: #767676;
+    font-family: var(--g-text-body-font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+}
+
+/* Selection range */
+.timeline-selection {
+    fill: rgba(63, 143, 255, 0.15);
+    cursor: move;
+    transition: fill 0.1s;
+}
+
+.timeline-selection:hover {
+    fill: rgba(63, 143, 255, 0.25);
+}
+
+/* Selection handles */
+.timeline-handle {
+    fill: #3f8fff;
+    cursor: ew-resize;
+    transition: fill 0.1s;
+}
+
+.timeline-handle:hover {
+    fill: #2674e6;
+}
+
+/* Now line */
+.timeline-now {
+    stroke: #ff4d4f;
+    stroke-width: 2;
+    pointer-events: none;
+}
+
+/* Code container positioning */
+.code-container {
+    position: relative;
+}
+
+/* ACE editor container - dynamic height */
+.log-content-readonly {
+    min-height: calc(100vh - 400px);
+    height: auto !important;
+}
+
+/* Fullscreen toggle button */
+.fullscreen-toggle-btn {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 42px;
+    height: 42px;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    z-index: 1000;
+}
+
+.fullscreen-toggle-btn:hover {
+    background: rgba(0, 0, 0, 0.85);
+    transform: scale(1.05);
+}
+
+.fullscreen-toggle-btn i.icon {
+    color: white;
+    font-size: 20px;
+    margin: 0;
+}
+
+/* Fullscreen mode adjustments */
+.fullscreen .log-content-readonly {
+    min-height: calc(100vh - 100px);
+}
+
+:fullscreen #system-logs-segment {
+    padding: 20px;
+    background: #1e1e1e;
+}
+
+:fullscreen .code-container {
+    height: calc(100vh - 140px);
+}
+
+/* Modern time navigation container - single line layout without border */
+.time-navigation-modern {
+    padding: 0;
+    margin-bottom: 12px;
+}
+
+/* Inline controls: period buttons + timeline */
+.time-controls-inline {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Quick period buttons - compact */
+.quick-period-buttons {
+    display: flex;
+    gap: 3px;
+}
+
+.period-btn {
+    background: #f5f5f5;
+    border: 1px solid #d0d0d0;
+    border-radius: 3px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.2s;
+    line-height: 1.2;
+}
+
+.period-btn:hover {
+    background: #e8e8e8;
+    border-color: #b0b0b0;
+}
+
+.period-btn.active {
+    background: #3f8fff;
+    border-color: #3f8fff;
+    color: white;
+}
+
+/* Now button */
+.now-btn {
+    background: #ffffff;
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    padding: 6px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.now-btn:hover {
+    background: #f5f5f5;
+    border-color: #b0b0b0;
+}
+
+/* Timeline inline - takes remaining width */
+.time-slider-inline {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Log level filters */
+.log-level-filters {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #e8e8e8;
+}
+
+.filter-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #666;
+    margin: 0;
+}
+
+.level-filter-buttons {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.level-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #ffffff;
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #555;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.level-btn:hover {
+    background: #f8f8f8;
+    border-color: #b0b0b0;
+}
+
+.level-btn.active {
+    background: #f0f7ff;
+    border-color: #3f8fff;
+    color: #3f8fff;
+}
+
+/* Level indicator dots */
+.level-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.level-indicator.all {
+    background: linear-gradient(135deg, #52c41a 0%, #faad14 33%, #ff4d4f 66%, #1890ff 100%);
+}
+
+.level-indicator.error {
+    background: #ff4d4f;
+}
+
+.level-indicator.warning {
+    background: #faad14;
+}
+
+.level-indicator.info {
+    background: #52c41a;
+}
+
+.level-indicator.debug {
+    background: #1890ff;
+}
+
+

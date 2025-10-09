@@ -27,6 +27,7 @@ const SyslogAPI = new PbxApiClient({
     customMethods: {
         getLogsList: ':getLogsList',
         getLogFromFile: ':getLogFromFile',
+        getLogTimeRange: ':getLogTimeRange',
         startCapture: ':startCapture',
         stopCapture: ':stopCapture',
         prepareArchive: ':prepareArchive',
@@ -48,11 +49,21 @@ SyslogAPI.getLogsList = function(callback) {
 
 /**
  * Get content from a specific log file
- * @param {object} params - Parameters including filename, filter, lines
+ * @param {object} params - Parameters including filename, filter, lines, dateFrom, dateTo
  * @param {function} callback - Callback function
  */
 SyslogAPI.getLogFromFile = function(params, callback) {
     return this.callCustomMethod('getLogFromFile', params, callback, 'POST');
+};
+
+/**
+ * Get time range for a log file
+ * @param {string} filename - Log file path
+ * @param {function} callback - Callback function
+ * @returns {Promise} Promise with time range data
+ */
+SyslogAPI.getLogTimeRange = function(filename, callback) {
+    return this.callCustomMethod('getLogTimeRange', { filename: filename }, callback, 'POST');
 };
 
 /**

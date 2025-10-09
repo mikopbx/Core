@@ -41,6 +41,10 @@ class SystemDiagnosticForm extends BaseForm
         // JavaScript will build the dropdown UI with DynamicDropdownBuilder
         $this->add(new Hidden('filenames', ['value' => '']));
         $this->add(new Hidden('filename', ['value' => $options['filename']]));
+
+        // Log level filter - V5.0 pattern: hidden input, dropdown created by DynamicDropdownBuilder
+        $this->add(new Hidden('logLevel', ['value' => '']));
+
         $this->add(new Text('filter', ['value' => $options['filter']]));
         $this->add(new Numeric('lines', ['value' => '5000']));
         $this->add(new Numeric('offset', ['value' => '0']));

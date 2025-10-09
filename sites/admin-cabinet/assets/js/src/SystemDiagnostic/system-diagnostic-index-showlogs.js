@@ -15,8 +15,8 @@
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-/* global ace, PbxApi, SyslogAPI, updateLogViewWorker, Ace, UserMessage */
- 
+/* global ace, PbxApi, SyslogAPI, updateLogViewWorker, Ace, UserMessage, SVGTimeline */
+
 /**
  * Represents the system diagnostic logs object.
  *
@@ -90,6 +90,24 @@ const systemDiagnosticLogs = {
     isInitializing: true,
 
     /**
+     * Flag indicating if time slider mode is enabled
+     * @type {boolean}
+     */
+    timeSliderEnabled: false,
+
+    /**
+     * Current time range for the selected log file
+     * @type {object|null}
+     */
+    currentTimeRange: null,
+
+    /**
+     * Flag indicating if auto-update mode is active
+     * @type {boolean}
+     */
+    isAutoUpdateActive: false,
+
+    /**
      * Initializes the system diagnostic logs.
      */
     initialize() {
@@ -124,8 +142,51 @@ const systemDiagnosticLogs = {
         // Fetch the list of log files
         SyslogAPI.getLogsList(systemDiagnosticLogs.cbFormatDropdownResults);
 
-        // Event listener for "Show Log" button click
-        systemDiagnosticLogs.$showBtn.on('click', (e) => {
+        // Initialize log level dropdown - V5.0 pattern with DynamicDropdownBuilder
+        systemDiagnosticLogs.initializeLogLevelDropdown();
+
+        // Event listener for quick period buttons
+        $(document).on('click', '.period-btn', (e) => {
+            e.preventDefault();
+            const $btn = $(e.currentTarget);
+            const period = $btn.data('period');
+
+            // Update active state
+            $('.period-btn').removeClass('active');
+            $btn.addClass('active');
+
+            systemDiagnosticLogs.applyQuickPeriod(period);
+        });
+
+        // Event listener for "Now" button
+        $(document).on('click', '.now-btn', (e) => {
+            e.preventDefault();
+            if (systemDiagnosticLogs.currentTimeRange) {
+                const end = systemDiagnosticLogs.currentTimeRange.end;
+                const oneHour = 3600;
+                const start = Math.max(end - oneHour, systemDiagnosticLogs.currentTimeRange.start);
+                SVGTimeline.setRange(start, end);
+                systemDiagnosticLogs.loadLogByTimeRange(start, end);
+                $('.period-btn').removeClass('active');
+                $('.period-btn[data-period="3600"]').addClass('active');
+            }
+        });
+
+        // Event listener for log level filter buttons
+        $(document).on('click', '.level-btn', (e) => {
+            e.preventDefault();
+            const $btn = $(e.currentTarget);
+            const level = $btn.data('level');
+
+            // Update active state
+            $('.level-btn').removeClass('active');
+            $btn.addClass('active');
+
+            systemDiagnosticLogs.applyLogLevelFilter(level);
+        });
+
+        // Event listener for "Show Log" button click (delegated)
+        $(document).on('click', '#show-last-log', (e) => {
             e.preventDefault();
             systemDiagnosticLogs.updateLogFromServer();
         });
@@ -135,28 +196,31 @@ const systemDiagnosticLogs = {
             systemDiagnosticLogs.handleHashChange();
         });
 
-        // Event listener for "Download Log" button click
-        systemDiagnosticLogs.$downloadBtn.on('click', (e) => {
+        // Event listener for "Download Log" button click (delegated)
+        $(document).on('click', '#download-file', (e) => {
             e.preventDefault();
             const data = systemDiagnosticLogs.$formObj.form('get values');
             SyslogAPI.downloadLogFile(data.filename, true, systemDiagnosticLogs.cbDownloadFile);
         });
 
-        // Event listener for "Auto Refresh" button click
-        systemDiagnosticLogs.$showAutoBtn.on('click', (e) => {
+        // Event listener for "Auto Refresh" button click (delegated)
+        $(document).on('click', '#show-last-log-auto', (e) => {
             e.preventDefault();
-            const $reloadIcon = systemDiagnosticLogs.$showAutoBtn.find('i.refresh');
+            const $button = $('#show-last-log-auto');
+            const $reloadIcon = $button.find('.icons i.refresh');
             if ($reloadIcon.hasClass('loading')) {
                 $reloadIcon.removeClass('loading');
+                systemDiagnosticLogs.isAutoUpdateActive = false;
                 updateLogViewWorker.stop();
             } else {
                 $reloadIcon.addClass('loading');
+                systemDiagnosticLogs.isAutoUpdateActive = true;
                 updateLogViewWorker.initialize();
             }
         });
 
-        // Event listener for the "Erase file" button click
-        systemDiagnosticLogs.$eraseBtn.on('click', (e) => {
+        // Event listener for the "Erase file" button click (delegated)
+        $(document).on('click', '#erase-file', (e) => {
             e.preventDefault();
             systemDiagnosticLogs.eraseCurrentFileContent();
         });
@@ -213,6 +277,58 @@ const systemDiagnosticLogs = {
             systemDiagnosticLogs.viewer.resize();
         }, 300);
     },
+    /**
+     * Initialize log level dropdown - V5.0 pattern with HTML icons
+     * Static dropdown with colored icons and translations
+     */
+    initializeLogLevelDropdown() {
+        const $hiddenInput = $('#logLevel');
+
+        // Check if dropdown already exists
+        if ($('#logLevel-dropdown').length) {
+            return;
+        }
+
+        // Create dropdown HTML with colored icons
+        const $dropdown = $('<div>', {
+            id: 'logLevel-dropdown',
+            class: 'ui selection dropdown'
+        });
+
+        const $text = $('<div>', { class: 'text' }).text(globalTranslate.sd_AllLevels);
+        const $icon = $('<i>', { class: 'dropdown icon' });
+        const $menu = $('<div>', { class: 'menu' });
+
+        // Build menu items with colored icons
+        const items = [
+            { value: '', text: globalTranslate.sd_AllLevels, icon: '' },
+            { value: 'ERROR', text: globalTranslate.sd_Error, icon: '<i class="exclamation circle red icon"></i>' },
+            { value: 'WARNING', text: globalTranslate.sd_Warning, icon: '<i class="exclamation triangle orange icon"></i>' },
+            { value: 'NOTICE', text: globalTranslate.sd_Notice, icon: '<i class="info circle blue icon"></i>' },
+            { value: 'INFO', text: globalTranslate.sd_Info, icon: '<i class="circle grey icon"></i>' },
+            { value: 'DEBUG', text: globalTranslate.sd_Debug, icon: '<i class="bug purple icon"></i>' }
+        ];
+
+        items.forEach(item => {
+            const $item = $('<div>', {
+                class: 'item',
+                'data-value': item.value
+            }).html(item.icon + item.text);
+            $menu.append($item);
+        });
+
+        $dropdown.append($text, $icon, $menu);
+        $hiddenInput.after($dropdown);
+
+        // Initialize Semantic UI dropdown
+        $dropdown.dropdown({
+            onChange: (value) => {
+                $hiddenInput.val(value).trigger('change');
+                systemDiagnosticLogs.updateLogFromServer();
+            }
+        });
+    },
+
     /**
      * Creates dropdown UI element from hidden input field (V5.0 pattern)
      */
@@ -429,7 +545,10 @@ const systemDiagnosticLogs = {
     cbFormatDropdownResults(response) {
         // Check if response is valid
         if (!response || !response.result || !response.data || !response.data.files) {
-            systemDiagnosticLogs.$dimmer.removeClass('active');
+            // Hide dimmer only if not in auto-update mode
+            if (!systemDiagnosticLogs.isAutoUpdateActive) {
+                systemDiagnosticLogs.$dimmer.removeClass('active');
+            }
             return;
         }
 
@@ -500,11 +619,15 @@ const systemDiagnosticLogs = {
                 }, 100);
             } else {
                 // Hide the dimmer after loading only if no file is selected
-                systemDiagnosticLogs.$dimmer.removeClass('active');
+                if (!systemDiagnosticLogs.isAutoUpdateActive) {
+                    systemDiagnosticLogs.$dimmer.removeClass('active');
+                }
             }
         } else {
             // Hide the dimmer after loading only if no file is selected
-            systemDiagnosticLogs.$dimmer.removeClass('active');
+            if (!systemDiagnosticLogs.isAutoUpdateActive) {
+                systemDiagnosticLogs.$dimmer.removeClass('active');
+            }
         }
 
         // Mark initialization as complete to allow hashchange handler to work
@@ -530,15 +653,274 @@ const systemDiagnosticLogs = {
         // Update URL hash with the selected file
         window.location.hash = 'file=' + encodeURIComponent(value);
 
-        systemDiagnosticLogs.updateLogFromServer();
+        // Check if time range is available for this file
+        systemDiagnosticLogs.checkTimeRangeAvailability(value);
+    },
+
+    /**
+     * Check if time range is available for the selected log file
+     * @param {string} filename - Log file path
+     */
+    async checkTimeRangeAvailability(filename) {
+        // Show dimmer only if not in auto-update mode
+        if (!systemDiagnosticLogs.isAutoUpdateActive) {
+            systemDiagnosticLogs.$dimmer.addClass('active');
+        }
+
+        try {
+            // Try to get time range for this file
+            SyslogAPI.getLogTimeRange(filename, (response) => {
+                if (response && response.result && response.data && response.data.time_range) {
+                    // Time range is available - use time-based navigation
+                    systemDiagnosticLogs.initializeNavigation(response.data);
+                } else {
+                    // Time range not available - use line number fallback
+                    systemDiagnosticLogs.initializeNavigation(null);
+                }
+            });
+        } catch (error) {
+            console.error('Error checking time range:', error);
+            // Fallback to line number mode
+            systemDiagnosticLogs.initializeNavigation(null);
+        }
+    },
+
+    /**
+     * Initialize universal navigation with time or line number mode
+     * @param {object} timeRangeData - Time range data from API (optional)
+     */
+    initializeNavigation(timeRangeData) {
+        if (timeRangeData && timeRangeData.time_range) {
+            // Time-based mode
+            this.timeSliderEnabled = true;
+            this.currentTimeRange = timeRangeData.time_range;
+
+            // Show period buttons for time-based navigation
+            $('#period-buttons').show();
+
+            // Set server timezone offset
+            if (timeRangeData.server_timezone_offset !== undefined) {
+                SVGTimeline.serverTimezoneOffset = timeRangeData.server_timezone_offset;
+                console.log('Time mode - Server timezone offset:', timeRangeData.server_timezone_offset, 'seconds');
+            }
+
+            // Initialize SVG timeline with time range
+            SVGTimeline.initialize('#time-slider-container', this.currentTimeRange);
+
+            // Set callback for time window changes
+            SVGTimeline.onRangeChange = (start, end) => {
+                systemDiagnosticLogs.loadLogByTimeRange(start, end);
+            };
+
+            // Load initial chunk (last hour by default)
+            const oneHour = 3600;
+            const initialStart = Math.max(this.currentTimeRange.end - oneHour, this.currentTimeRange.start);
+            this.loadLogByTimeRange(initialStart, this.currentTimeRange.end);
+        } else {
+            // Line number fallback mode
+            this.timeSliderEnabled = false;
+            this.currentTimeRange = null;
+
+            // Hide period buttons in line number mode
+            $('#period-buttons').hide();
+
+            // Initialize SVG timeline with line numbers
+            // For now, use default range until we get total line count
+            const lineRange = { start: 0, end: 10000 };
+            SVGTimeline.initialize('#time-slider-container', lineRange, 'lines');
+
+            // Set callback for line range changes
+            SVGTimeline.onRangeChange = (start, end) => {
+                // Load by line numbers (offset/lines)
+                systemDiagnosticLogs.loadLogByLines(Math.floor(start), Math.ceil(end - start));
+            };
+
+            // Load initial lines
+            this.updateLogFromServer();
+        }
+    },
+
+    /**
+     * Load log by line numbers (for files without timestamps)
+     * @param {number} offset - Starting line number
+     * @param {number} lines - Number of lines to load
+     */
+    loadLogByLines(offset, lines) {
+        // Show dimmer only if not in auto-update mode
+        if (!systemDiagnosticLogs.isAutoUpdateActive) {
+            systemDiagnosticLogs.$dimmer.addClass('active');
+        }
+
+        const params = {
+            filename: this.$formObj.form('get value', 'filename'),
+            filter: this.$formObj.form('get value', 'filter') || '',
+            logLevel: this.$formObj.form('get value', 'logLevel') || '',
+            offset: Math.max(0, offset),
+            lines: Math.min(5000, Math.max(100, lines))
+        };
+
+        SyslogAPI.getLogFromFile(params, (response) => {
+            // Hide dimmer only if not in auto-update mode
+            if (!systemDiagnosticLogs.isAutoUpdateActive) {
+                systemDiagnosticLogs.$dimmer.removeClass('active');
+            }
+            if (response && response.result && response.data && 'content' in response.data) {
+                // Set content in editor (even if empty)
+                this.viewer.setValue(response.data.content || '', -1);
+
+                // Go to the beginning
+                this.viewer.gotoLine(1);
+                this.viewer.scrollToLine(0, true, true, () => {});
+            }
+        });
+    },
+
+    /**
+     * Load log by time range
+     * @param {number} startTimestamp - Start timestamp
+     * @param {number} endTimestamp - End timestamp
+     */
+    async loadLogByTimeRange(startTimestamp, endTimestamp) {
+        // Show dimmer only if not in auto-update mode
+        if (!systemDiagnosticLogs.isAutoUpdateActive) {
+            systemDiagnosticLogs.$dimmer.addClass('active');
+        }
+
+        const params = {
+            filename: this.$formObj.form('get value', 'filename'),
+            filter: this.$formObj.form('get value', 'filter') || '',
+            logLevel: this.$formObj.form('get value', 'logLevel') || '',
+            dateFrom: startTimestamp,
+            dateTo: endTimestamp,
+            lines: 5000 // Maximum lines to load
+        };
+
+        try {
+            SyslogAPI.getLogFromFile(params, (response) => {
+                if (response && response.result && response.data && 'content' in response.data) {
+                    // Set content in editor (even if empty)
+                    this.viewer.setValue(response.data.content || '', -1);
+
+                    // Go to the end of the log
+                    const row = this.viewer.session.getLength() - 1;
+                    const column = this.viewer.session.getLine(row).length;
+                    this.viewer.gotoLine(row + 1, column);
+
+                    // Adjust slider to actual loaded time range (silently)
+                    if (response.data.actual_range) {
+                        const actual = response.data.actual_range;
+
+                        // Update SVGTimeline selected range to match actual loaded data
+                        // This updates the slider to show the real time range that was loaded
+                        SVGTimeline.updateSelectedRange(actual.start, actual.end);
+
+                        // Log for debugging only
+                        if (actual.truncated) {
+                            console.log(
+                                `Log data limited to ${actual.lines_count} lines. ` +
+                                `Showing time range: [${actual.start} - ${actual.end}]`
+                            );
+                        }
+                    }
+                }
+
+                // Hide dimmer only if not in auto-update mode
+                if (!systemDiagnosticLogs.isAutoUpdateActive) {
+                    systemDiagnosticLogs.$dimmer.removeClass('active');
+                }
+            });
+        } catch (error) {
+            console.error('Error loading log by time range:', error);
+            // Hide dimmer only if not in auto-update mode
+            if (!systemDiagnosticLogs.isAutoUpdateActive) {
+                systemDiagnosticLogs.$dimmer.removeClass('active');
+            }
+        }
+    },
+
+    /**
+     * Apply quick period selection
+     * @param {string|number} period - Period identifier or seconds
+     */
+    applyQuickPeriod(period) {
+        if (!this.currentTimeRange) {
+            return;
+        }
+
+        let start;
+        let end = this.currentTimeRange.end;
+
+        if (period === 'today') {
+            // Today from 00:00
+            const now = new Date(end * 1000);
+            const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            start = Math.floor(todayStart.getTime() / 1000);
+        } else {
+            // Period in seconds
+            const seconds = parseInt(period);
+            start = Math.max(end - seconds, this.currentTimeRange.start);
+        }
+
+        // Update SVG timeline
+        SVGTimeline.setRange(start, end);
+        this.loadLogByTimeRange(start, end);
+    },
+
+    /**
+     * Apply log level filter
+     * @param {string} level - Log level (all, error, warning, info, debug)
+     */
+    applyLogLevelFilter(level) {
+        let filterPattern = '';
+
+        // Create regex pattern based on level
+        switch (level) {
+            case 'error':
+                filterPattern = 'ERROR|CRITICAL|FATAL';
+                break;
+            case 'warning':
+                filterPattern = 'WARNING|WARN';
+                break;
+            case 'info':
+                filterPattern = 'INFO';
+                break;
+            case 'debug':
+                filterPattern = 'DEBUG';
+                break;
+            case 'all':
+            default:
+                filterPattern = '';
+                break;
+        }
+
+        // Update filter field
+        this.$formObj.form('set value', 'filter', filterPattern);
+
+        // Reload logs with new filter
+        this.updateLogFromServer();
     },
 
     /**
      * Fetches the log file content from the server.
      */
     updateLogFromServer() {
-        const params = systemDiagnosticLogs.$formObj.form('get values');
-        SyslogAPI.getLogFromFile(params, systemDiagnosticLogs.cbUpdateLogText);
+        if (this.timeSliderEnabled) {
+            // In time slider mode, reload current window
+            if (this.currentTimeRange) {
+                // In time slider mode, reload last hour
+                const oneHour = 3600;
+                const startTimestamp = Math.max(this.currentTimeRange.end - oneHour, this.currentTimeRange.start);
+                this.loadLogByTimeRange(
+                    startTimestamp,
+                    this.currentTimeRange.end
+                );
+            }
+        } else {
+            // Line number mode
+            const params = systemDiagnosticLogs.$formObj.form('get values');
+            params.lines = 5000; // Max lines
+            SyslogAPI.getLogFromFile(params, systemDiagnosticLogs.cbUpdateLogText);
+        }
     },
 
     /**
@@ -546,7 +928,10 @@ const systemDiagnosticLogs = {
      * @param {Object} response - The response from API.
      */
     cbUpdateLogText(response) {
-        systemDiagnosticLogs.$dimmer.removeClass('active');
+        // Hide dimmer only if not in auto-update mode
+        if (!systemDiagnosticLogs.isAutoUpdateActive) {
+            systemDiagnosticLogs.$dimmer.removeClass('active');
+        }
 
         // Handle v3 API response structure
         if (!response || !response.result) {

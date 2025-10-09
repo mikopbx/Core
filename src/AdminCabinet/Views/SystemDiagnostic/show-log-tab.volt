@@ -4,34 +4,28 @@
     </div>
     <form class="ui form" id="system-diagnostic-form">
         {{ form.render('filename') }}
-        <input type="hidden" name="offset" id="offset" value=0/>
         <div class="fields">
-            <div class="eight wide field">
+            <div class="five wide field">
                 <label for="filenames">{{ t._('sd_Filename') }}</label>
                 <div class="fluid field">
                     {{ form.render('filenames') }}
                 </div>
             </div>
-            <div class="field">
-                <label for="offset">{{ t._('sd_offset') }}</label>
-                <div class="field max-width-100">
-                    {{ form.render('offset') }}
-                </div>
+
+            <div class="two wide field">
+                <label for="logLevel">{{ t._('sd_LogLevel') }}</label>
+                {{ form.render('logLevel') }}
             </div>
-            <div class="field">
-                <label for="lines">{{ t._('sd_lines') }}</label>
-                <div class="field max-width-100">
-                    {{ form.render('lines') }}
-                </div>
-            </div>
-            <div class="four wide field">
+
+            <div class="six wide field">
                 <label>{{ t._('sd_filter') }}</label>
-                <div class="field max-width-400">{{ form.render('filter') }}</div>
+                {{ form.render('filter') }}
             </div>
-            <div class="ui right floated field">
+
+            <div class="three wide field">
                 <label>&nbsp;</label>
                 <div class="ui buttons">
-                    <div class="ui icon button" id="download-file" data-content="{{ t._('sd_ToolTipDownload') }}" ><i class="download icon"></i></div>
+                    <div class="ui icon button" id="download-file" data-content="{{ t._('sd_ToolTipDownload') }}"><i class="download icon"></i></div>
                     <div class="ui icon button" id="show-last-log" data-content="{{ t._('sd_ToolTipRefresh') }}"><i class="refresh icon"></i></div>
                     <div class="ui icon button" id="show-last-log-auto" data-content="{{ t._('sd_ToolTipAutoUpdate') }}">
                         <i class="icons">
@@ -43,11 +37,32 @@
                 </div>
             </div>
         </div>
+
+        {# Universal navigation - compact single line #}
+        <div id="universal-navigation">
+            <div class="time-navigation-modern">
+                {# Period buttons + timeline in one row #}
+                <div class="time-controls-inline">
+                    <div class="quick-period-buttons" id="period-buttons">
+                        <button type="button" class="period-btn" data-period="3600">1h</button>
+                        <button type="button" class="period-btn" data-period="10800">3h</button>
+                        <button type="button" class="period-btn" data-period="43200">12h</button>
+                        <button type="button" class="period-btn" data-period="86400">1d</button>
+                        <button type="button" class="period-btn" data-period="604800">1w</button>
+                        <button type="button" class="period-btn" data-period="1209600">2w</button>
+                    </div>
+                    <div class="time-slider-inline">
+                        <div id="time-slider-container"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </form>
     <div class="code-container">
         <div id="log-content-readonly" class="log-content-readonly">
             <pre></pre>
         </div>
+
         <div class="fullscreen-toggle-btn">
             <i class="inverted expand icon"></i>
         </div>

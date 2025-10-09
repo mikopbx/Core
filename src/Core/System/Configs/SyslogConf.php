@@ -122,7 +122,7 @@ class SyslogConf extends SystemConfigClass
         $conf = PHP_EOL .
                 '$ModLoad imuxsock' . PHP_EOL .
                 'template(name="mikopbx" type="string"' . PHP_EOL .
-                '  string="%TIMESTAMP:::date-rfc3164% %syslogfacility-text%.%syslogseverity-text% %syslogtag% %msg%\n"' . "\n" .
+                '  string="%TIMESTAMP:::date-year%-%TIMESTAMP:::date-month%-%TIMESTAMP:::date-day% %TIMESTAMP:::date-hour%:%TIMESTAMP:::date-minute%:%TIMESTAMP:::date-second% %syslogfacility-text%.%syslogseverity-text% %syslogtag% %msg%\n"' . "\n" .
                 ')' . PHP_EOL .
                 '$ActionFileDefaultTemplate mikopbx' . PHP_EOL .
                 '$IncludeConfig /etc/rsyslog.d/*.conf' . PHP_EOL .

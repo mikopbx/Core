@@ -19,7 +19,7 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\SysLogs;
 
-use MikoPBX\PBXCoreREST\Lib\Files\RestAPIFilesUtils;
+use MikoPBX\Core\System\Directories;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\Common\BaseActionHelper;
 use MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor;
@@ -27,22 +27,20 @@ use MikoPBX\PBXCoreREST\Controllers\Syslog\RestController;
 use Phalcon\Di\Injectable;
 
 /**
- * Requests a zipped archive containing logs and PCAP file
- * Checks if archive ready it returns a download link.
+ * Gets the available time range for a log file
  *
  * @package MikoPBX\PBXCoreREST\Lib\SysLogs
  */
-class DownloadLogsArchiveAction extends Injectable
+class GetLogTimeRangeAction extends Injectable
 {
     /**
-     * Requests a zipped archive containing logs and PCAP file
-     * Checks if archive ready it returns a download link.
+     * Gets the available time range for a log file
      *
      * Uses unified sanitization approach with ParameterSanitizationExtractor
      * for consistent parameter handling.
      *
      * @param array<string, mixed> $data An array containing the following parameters:
-     *                    - filename (string): Path to the archive file.
+     *                    - filename (string): The name of the log file.
      *
      * @return PBXApiResult An object containing the result of the API call.
      */
@@ -55,7 +53,7 @@ class DownloadLogsArchiveAction extends Injectable
         // Single Source of Truth - rules extracted from #[ApiParameter] attributes
         $sanitizationRules = ParameterSanitizationExtractor::extractFromController(
             RestController::class,
-            'downloadArchive'
+            'getLogTimeRange'
         );
 
         // Sanitize input data using unified approach
@@ -64,18 +62,35 @@ class DownloadLogsArchiveAction extends Injectable
         // Extract validated parameters
         $filename = (string)($sanitizedData['filename'] ?? '');
 
-        $progress_file = "$filename.progress";
-        if (!file_exists($progress_file)) {
-            $res->messages[] = 'Archive does not exist. Try again!';
-        } elseif (file_exists($progress_file) && file_get_contents($progress_file) === '100') {
-            $res->data['status'] = "READY";
-            $res->data['filename'] = RestAPIFilesUtils::makeFileLinkForDownload($filename, 'MikoPBXLogs_');
-            $res->success          = true;
-        } else {
-            $res->success = true;
-            $res->data['status'] = "PREPARING";
-            $res->data['progress'] = file_get_contents($progress_file);
+        $fullPath = Directories::getDir(Directories::CORE_LOGS_DIR) . '/' . $filename;
+
+        if (!file_exists($fullPath)) {
+            $res->success = false;
+            $res->messages[] = 'Log file not found: ' . $filename;
+            return $res;
         }
+
+        if (!is_readable($fullPath)) {
+            $res->success = false;
+            $res->messages[] = 'No read access to the file: ' . $filename;
+            return $res;
+        }
+
+        // Get time range using LogTimestampParser
+        $timeRange = LogTimestampParser::getLogTimeRange($fullPath);
+
+        $res->success = true;
+        $res->data = [
+            'filename' => $filename,
+            'time_range' => [
+                'start' => $timeRange['start'],
+                'end' => $timeRange['end'],
+                'start_formatted' => $timeRange['start_formatted'],
+                'end_formatted' => $timeRange['end_formatted'],
+            ],
+            'total_lines' => $timeRange['total_lines'],
+            'server_timezone_offset' => (new \DateTime())->getOffset(), // Server timezone offset in seconds
+        ];
 
         return $res;
     }
