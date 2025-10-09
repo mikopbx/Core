@@ -81,20 +81,35 @@ class SessionController extends BaseController
      */
     public function endAction(): void
     {
+        // Determine if connection is secure (HTTPS)
+        $isSecure = $this->request->isSecure();
+
         // Clear refresh token cookie (JWT refresh token)
         $this->cookies->set(
             'refreshToken',
             '',
             time() - 3600,  // Expire in the past
             '/',
-            true,           // secure
+            $isSecure,      // secure (match protocol)
             null,           // domain
             true,           // httpOnly
             ['samesite' => 'Strict']
         );
 
-        // Redirect to login page
-        $this->response->redirect('/session/index');
+        // CRITICAL: Send cookies to browser before redirect
+        $this->cookies->send();
+
+        // Check if this is an AJAX request (called from logout())
+        if ($this->request->isAjax()) {
+            // Return JSON response for AJAX calls
+            $this->response->setJsonContent([
+                'result' => true,
+                'message' => 'Cookie cleared'
+            ]);
+        } else {
+            // Redirect to login page for normal requests
+            $this->response->redirect('/session/index');
+        }
     }
 
 

@@ -83,7 +83,14 @@ trait LoginTrait
     }
 
     /**
-     * Try to login using saved cookies
+     * Try to login using saved cookies (JWT refresh token)
+     *
+     * With JWT authentication:
+     * 1. loadCookies() restores refreshToken cookie
+     * 2. Navigate to page triggers TokenManager.initialize()
+     * 3. TokenManager calls /auth:refresh using refreshToken cookie
+     * 4. New accessToken is stored in memory
+     * 5. User is authenticated
      *
      * @return bool
      */
@@ -94,12 +101,31 @@ trait LoginTrait
         }
 
         try {
+            self::annotate('Attempting to restore session using refreshToken cookie');
+
             // Navigate to dashboard or protected page
             self::$driver->navigate()->to($GLOBALS['SERVER_PBX']);
+
+            // Wait for initial AJAX requests (including TokenManager.initialize())
+            $this->waitForAjax();
+
+            // Give TokenManager extra time to complete /auth:refresh request
+            // and obtain new access token from refresh token cookie
+            sleep(2);
+
+            // Wait for any subsequent AJAX after token refresh
             $this->waitForAjax();
 
             // Check if login was successful
-            return $this->isUserLoggedIn();
+            $isLoggedIn = $this->isUserLoggedIn();
+
+            if ($isLoggedIn) {
+                self::annotate('Session restored successfully via JWT refresh token');
+            } else {
+                self::annotate('Session restoration failed - refresh token may be expired');
+            }
+
+            return $isLoggedIn;
         } catch (\Exception $e) {
             self::annotate('Cookie login failed: ' . $e->getMessage());
             return false;
@@ -107,7 +133,15 @@ trait LoginTrait
     }
 
     /**
-     * Perform login using credentials
+     * Perform login using credentials (JWT authentication)
+     *
+     * Flow:
+     * 1. Fill login form with username/password
+     * 2. JavaScript calls /pbxcore/api/v3/auth:login via AJAX
+     * 3. Server returns accessToken (saved in memory by TokenManager)
+     * 4. Server sets refreshToken in httpOnly cookie
+     * 5. Browser stores cookies (including refreshToken)
+     * 6. CookieManager saves all cookies for reuse in next test
      *
      * @param array $params Login parameters
      * @return void

@@ -72,6 +72,9 @@ class SecurityPlugin extends Injectable
 
         // Handle unauthenticated access to non-public controllers
         if (!$isAuthenticated && !in_array($controllerClass, $publicControllers)) {
+            // Clear any stale cookies before redirect to prevent loops
+            $this->clearAuthCookies();
+
             // AJAX requests receive a 403 response
             if ($this->request->isAjax()) {
                 $this->response->setStatusCode(403, 'Forbidden')->setContent('This user is not authorized')->send();
@@ -85,11 +88,18 @@ class SecurityPlugin extends Injectable
 
         // Authenticated users: validate access to the requested resource
         if ($isAuthenticated) {
-            // Redirect to home if the controller is missing or irrelevant
-            if (
-                !class_exists($controllerClass)
-                || ($controllerClass === SessionController::class && strtoupper($action) !== 'END')
-            ) {
+            // Handle authenticated users on login page (except END action)
+            // This can happen when refreshToken cookie exists but is expired in Redis
+            if ($controllerClass === SessionController::class && strtoupper($action) !== 'END') {
+                // Clear stale cookies to prevent redirect loop
+                $this->clearAuthCookies();
+
+                // Allow access to login page (don't redirect to home)
+                return true;
+            }
+
+            // Redirect to home if the controller is missing
+            if (!class_exists($controllerClass)) {
                 $this->redirectToHome($dispatcher);
                 return true;
             }
@@ -121,7 +131,20 @@ class SecurityPlugin extends Injectable
      */
     private function checkUserAuth(): bool
     {
-        return self::isAuthenticated($this->request, $this->cookies);
+        $isAuth = self::isAuthenticated($this->request, $this->cookies);
+
+        // Debug logging
+        if (class_exists(\MikoPBX\Core\System\SystemMessages::class)) {
+            $hasBearer = $this->request->getHeader('Authorization') ? 'yes' : 'no';
+            $hasCookie = $this->cookies->has('refreshToken') ? 'yes' : 'no';
+            \MikoPBX\Core\System\SystemMessages::sysLogMsg(
+                __METHOD__,
+                "Auth check: result={$isAuth}, Bearer={$hasBearer}, Cookie={$hasCookie}, URI={$this->request->getURI()}",
+                LOG_DEBUG
+            );
+        }
+
+        return $isAuth;
     }
 
     /**
@@ -181,6 +204,41 @@ class SecurityPlugin extends Injectable
     public function isLocalHostRequest(): bool
     {
         return ($_SERVER['REMOTE_ADDR'] === '127.0.0.1');
+    }
+
+    /**
+     * Clear authentication cookies to prevent login loops.
+     * Called when user is not authenticated but has stale cookies.
+     */
+    private function clearAuthCookies(): void
+    {
+        // Determine if connection is secure (HTTPS)
+        $isSecure = $this->request->isSecure();
+
+        // Clear refresh token cookie
+        if ($this->cookies->has('refreshToken')) {
+            $this->cookies->set(
+                'refreshToken',
+                '',
+                time() - 3600,  // Expire in the past
+                '/',
+                $isSecure,      // secure (match protocol)
+                null,           // domain
+                true,           // httpOnly
+                ['samesite' => 'Strict']
+            );
+
+            // Send cookies to browser
+            $this->cookies->send();
+
+            if (class_exists(\MikoPBX\Core\System\SystemMessages::class)) {
+                \MikoPBX\Core\System\SystemMessages::sysLogMsg(
+                    __METHOD__,
+                    "Cleared stale refreshToken cookie for unauthenticated user",
+                    LOG_DEBUG
+                );
+            }
+        }
     }
 
     /**

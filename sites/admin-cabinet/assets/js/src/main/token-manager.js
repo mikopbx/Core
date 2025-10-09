@@ -49,6 +49,12 @@ const TokenManager = {
     isRefreshing: false,
 
     /**
+     * Flag to prevent multiple initializations
+     * @type {boolean}
+     */
+    isInitialized: false,
+
+    /**
      * Initialize TokenManager
      * - Attempts to refresh access token using refresh token cookie
      * - Redirects to login if no valid refresh token
@@ -59,15 +65,28 @@ const TokenManager = {
      * @returns {Promise<boolean>} true if authentication successful
      */
     async initialize() {
+        console.log('TokenManager.initialize() called');
+
+        // Prevent multiple initializations
+        if (this.isInitialized) {
+            console.log('TokenManager already initialized, skipping');
+            return this.accessToken !== null;
+        }
+
         // Try to get access token using refresh token cookie
         const hasToken = await this.startupRefresh();
 
+        console.log('Startup refresh result:', hasToken);
+
         if (!hasToken) {
             // No valid refresh token → redirect to login
+            console.log('No valid token - redirecting to login');
             window.location = `${globalRootUrl}session/index`;
             return false;
         }
 
+        console.log('TokenManager initialized successfully');
+        this.isInitialized = true;
         return true;
     },
 
@@ -78,13 +97,17 @@ const TokenManager = {
      * @returns {Promise<boolean>} true if refresh successful
      */
     async startupRefresh() {
+        console.log('TokenManager.startupRefresh() called');
+
         if (this.isRefreshing) {
+            console.log('Already refreshing, skipping');
             return false;
         }
 
         this.isRefreshing = true;
 
         try {
+            console.log('Calling /auth:refresh to get access token');
             const response = await $.ajax({
                 url: '/pbxcore/api/v3/auth:refresh',
                 method: 'POST',
@@ -93,18 +116,21 @@ const TokenManager = {
                 headers: {}
             });
 
+            console.log('Refresh response:', response);
+
             if (response.result && response.data && response.data.accessToken) {
+                console.log('Got access token, expires in:', response.data.expiresIn);
                 this.setAccessToken(
                     response.data.accessToken,
                     response.data.expiresIn
                 );
                 return true;
             } else {
-                console.log('Refresh token expired or invalid');
+                console.log('Refresh token expired or invalid - no accessToken in response');
                 return false;
             }
         } catch (error) {
-            console.log('No valid refresh token:', error);
+            console.log('Refresh failed:', error.status, error.statusText, error.responseJSON);
             return false;
         } finally {
             this.isRefreshing = false;
@@ -118,6 +144,7 @@ const TokenManager = {
      * @param {number} expiresIn Token lifetime in seconds
      */
     setAccessToken(token, expiresIn) {
+        console.log('Setting access token, expires in:', expiresIn, 'seconds');
         this.accessToken = token;
 
         // Clear existing timer
@@ -128,6 +155,8 @@ const TokenManager = {
         // Schedule silent refresh 2 minutes before expiration
         // Default: 900s (15 min) - 120s = 780s (13 min)
         const refreshAt = Math.max((expiresIn - 120), 60) * 1000;
+
+        console.log('Silent refresh scheduled in:', refreshAt / 1000, 'seconds');
 
         this.refreshTimer = setTimeout(() => {
             this.silentRefresh();
@@ -301,31 +330,64 @@ const TokenManager = {
      * Logout - clear tokens and redirect to login
      * - Calls REST API to invalidate refresh token
      * - Clears access token from memory
+     * - Deletes refreshToken cookie from browser
      * - Redirects to login page
      */
     async logout() {
+        console.log('TokenManager.logout() called');
+
         // Check if already on login page - prevent redirect loop
         const isLoginPage = window.location.pathname.includes('/session/index') ||
                            window.location.pathname.includes('/session/');
 
         if (isLoginPage) {
-            // Already on login page - just clear state, no redirect
+            console.log('Already on login page - clearing state and cookie');
+            // Already on login page - clear state
             this.accessToken = null;
             if (this.refreshTimer) {
                 clearTimeout(this.refreshTimer);
                 this.refreshTimer = null;
             }
+
+            // CRITICAL: Clear httpOnly cookie via server-side AJAX endpoint
+            // This prevents authentication loop when refreshToken exists but is expired
+            $.ajax({
+                url: `${globalRootUrl}session/end`,
+                method: 'POST',
+                async: false, // Synchronous to ensure cookie is cleared
+                success: () => {
+                    console.log('Cookie cleared via /session/end');
+                },
+                error: (_jqXHR, status, error) => {
+                    console.log('Error clearing cookie:', status, error);
+                }
+            });
             return;
         }
 
         // Prevent multiple logout calls
         if (!this.accessToken) {
+            console.log('No access token - clearing cookie via /session/end');
+            // CRITICAL: Clear httpOnly cookie via server-side endpoint before redirect
+            try {
+                $.ajax({
+                    url: `${globalRootUrl}session/end`,
+                    method: 'POST',
+                    async: false, // Synchronous to ensure cookie is cleared before redirect
+                    success: () => {
+                        console.log('Cookie cleared via /session/end');
+                    }
+                });
+            } catch (e) {
+                console.log('Error clearing cookie:', e);
+            }
             window.location = `${globalRootUrl}session/index`;
             return;
         }
 
         try {
-            // Call logout endpoint to invalidate refresh token
+            // Call logout endpoint to invalidate refresh token in Redis
+            console.log('Calling /auth:logout API');
             await $.ajax({
                 url: '/pbxcore/api/v3/auth:logout',
                 method: 'POST',
@@ -333,8 +395,12 @@ const TokenManager = {
                     Authorization: `Bearer ${this.accessToken}`
                 }
             });
+            console.log('Logout API call successful');
         } catch (error) {
-            console.log('Logout error (ignored):', error);
+            console.log('Logout API error:', error.status, error.statusText);
+            // If API fails (e.g., 401 with expired token), we still need to clear the cookie
+            // Use server-side session/end endpoint as fallback to clear httpOnly cookie
+            console.log('Using /session/end fallback to clear cookie');
         }
 
         // Clear local state
@@ -344,8 +410,37 @@ const TokenManager = {
             this.refreshTimer = null;
         }
 
-        // Redirect to login page
-        window.location = `${globalRootUrl}session/index`;
+        // CRITICAL: Redirect to /session/end which clears httpOnly cookie server-side
+        // This prevents authentication loop when refreshToken cookie exists but is expired
+        console.log('Redirecting to /session/end to clear cookie');
+        window.location = `${globalRootUrl}session/end`;
+    },
+
+    /**
+     * Delete refreshToken cookie from browser
+     *
+     * IMPORTANT: httpOnly cookies CANNOT be deleted via JavaScript (document.cookie).
+     * They can only be cleared by the server via Set-Cookie header.
+     *
+     * The /auth:logout endpoint handles cookie deletion on server side.
+     * This method exists for non-httpOnly fallback scenarios only.
+     *
+     * For httpOnly cookies, we rely on:
+     * 1. Server-side cookie deletion in /auth:logout response
+     * 2. SessionController.endAction() which also clears the cookie
+     */
+    deleteRefreshTokenCookie() {
+        console.log('Attempting to delete refreshToken cookie (client-side)');
+
+        // NOTE: This won't work for httpOnly cookies, but try anyway for non-httpOnly fallback
+        document.cookie = 'refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; SameSite=Strict';
+
+        // For HTTPS (secure flag)
+        if (window.location.protocol === 'https:') {
+            document.cookie = 'refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; secure; SameSite=Strict';
+        }
+
+        console.log('Client-side cookie deletion attempted (httpOnly cookies require server-side deletion)');
     },
 
     /**
@@ -369,15 +464,22 @@ TokenManager.setupGlobalAjax();
 // Check if we're on login page - if not, start initialization right away
 // This ensures the promise exists before ANY other script runs
 if (typeof window !== 'undefined') {
-    const isLoginPage = window.location.pathname.includes('/session/index') ||
-                       window.location.pathname.includes('/session/');
+    // Prevent multiple initializations on the same page
+    if (!window.tokenManagerReady) {
+        console.log('Creating tokenManagerReady promise');
 
-    if (!isLoginPage) {
-        // Not login page - start TokenManager initialization immediately
-        // This happens BEFORE $(document).ready, ensuring token is ready ASAP
-        window.tokenManagerReady = TokenManager.initialize();
+        const isLoginPage = window.location.pathname.includes('/session/index') ||
+                           window.location.pathname.includes('/session/');
+
+        if (!isLoginPage) {
+            // Not login page - start TokenManager initialization immediately
+            // This happens BEFORE $(document).ready, ensuring token is ready ASAP
+            window.tokenManagerReady = TokenManager.initialize();
+        } else {
+            // Login page - resolve immediately (no authentication needed)
+            window.tokenManagerReady = Promise.resolve(true);
+        }
     } else {
-        // Login page - resolve immediately (no authentication needed)
-        window.tokenManagerReady = Promise.resolve(true);
+        console.log('tokenManagerReady already exists, skipping initialization');
     }
 }

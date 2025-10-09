@@ -47,20 +47,48 @@ Tests use traits to organize and share functionality:
 
 ## Authentication System
 
-### Cookie-based Session Management
+### JWT-based Authentication with Cookie Persistence
+
+MikoPBX uses a modern JWT authentication system with two tokens:
+
+**Access Token (15 minutes)**
+- Short-lived JWT token for API requests
+- Stored **only in browser memory** (TokenManager) - NOT in localStorage/cookies
+- Automatically included in all AJAX requests via `Authorization: Bearer` header
+- Auto-refreshed 2 minutes before expiration
+
+**Refresh Token (30 days)**
+- Long-lived token stored in **httpOnly cookie** (XSS protection)
+- Set by server during login (`/pbxcore/api/v3/auth:login`)
+- Used to obtain new access tokens (`/pbxcore/api/v3/auth:refresh`)
+- Survives browser restarts
+
+### Test Authentication Flow
+
+#### First Test (Full Login)
 ```php
-// Authentication flow in LoginTrait
-1. Try to restore session from cookies
-2. If failed, perform regular login
-3. Use alternative password if primary fails
-4. Save cookies for subsequent tests
+// 1. User fills login form with username/password
+// 2. JavaScript submits to /pbxcore/api/v3/auth:login
+// 3. Server returns accessToken (saved to memory) + sets refreshToken cookie
+// 4. Browser navigates to dashboard
+// 5. CookieManager.saveCookies() saves all cookies including refreshToken
 ```
 
-### Login Process
-- **Primary credentials**: From test configuration
+#### Subsequent Tests (Cookie Restoration)
+```php
+// 1. CookieManager.loadCookies() restores refreshToken cookie
+// 2. Browser navigates to page
+// 3. TokenManager.initialize() calls /auth:refresh using refreshToken cookie
+// 4. Server returns new accessToken (saved to memory)
+// 5. User is authenticated without entering password
+```
+
+### Login Process Details
+- **Primary credentials**: From test configuration (`admin` / `123456789MikoPBX#1`)
 - **Fallback password**: `password2` parameter for changed passwords
 - **Session indicator**: `#top-menu-search` element presence
-- **Cookie storage**: Enables session reuse across test runs
+- **Cookie storage**: Enables session reuse across test runs via refreshToken
+- **Auto-recovery**: If refreshToken expires, tests fall back to full login
 
 ## Writing Tests
 
@@ -220,7 +248,11 @@ BROWSER=chrome ./vendor/bin/phpunit tests/AdminCabinet/Tests/
 1. **Element not found**: Add explicit waits
 2. **Stale element**: Re-find element after page updates
 3. **Timing issues**: Use `waitForAjax()` after actions
-4. **Session issues**: Check cookie handling
+4. **Session issues (JWT)**:
+   - Check that refreshToken cookie is being saved/restored
+   - Verify TokenManager has time to complete /auth:refresh (add sleep(2) after page load)
+   - Check BrowserStack logs for 401 Unauthorized errors
+   - Ensure cookie domain matches test environment
 
 ### Debug Tools
 - BrowserStack session recordings
@@ -311,3 +343,115 @@ Tests are designed to run in CI/CD pipelines:
 - Use efficient selectors
 - Leverage session caching
 - Parallelize where possible
+
+## JWT Authentication Troubleshooting
+
+### Verifying JWT Flow in Tests
+
+**Check Cookie Storage Location**
+```bash
+# Default: /tmp/selenium_cookies/
+# Override: Set SELENIUM_COOKIE_DIR environment variable
+echo $SELENIUM_COOKIE_DIR
+ls -la /tmp/selenium_cookies/
+```
+
+**Verify refreshToken Cookie in Saved Cookies**
+```bash
+# After first test run, check saved cookie file
+cat /tmp/selenium_cookies/cookies_*.json | jq '.[] | select(.name=="refreshToken")'
+
+# Expected output:
+{
+  "name": "refreshToken",
+  "value": "eyJ0eXAiOiJKV1QiLCJhbGc...",
+  "domain": "your-pbx-domain",
+  "path": "/",
+  "httpOnly": true,
+  "secure": true
+}
+```
+
+**Monitor BrowserStack Console Logs**
+
+In BrowserStack session, check browser console for:
+```
+[LOGIN] API Response: {result: true, hasData: true, hasAccessToken: true}
+[LOGIN] Storing access token in TokenManager...
+[LOGIN] Token stored, redirecting...
+
+// On subsequent page loads:
+TokenManager.initialize() -> /auth:refresh -> success
+```
+
+**Common JWT Test Failures**
+
+| Symptom | Cause | Solution |
+|---------|-------|----------|
+| Tests fail on 2nd run | refreshToken not saved | Check CookieManager.saveCookies() called after login |
+| Stuck on login page | TokenManager timeout | Add sleep(2) after navigate in tryLoginWithCookies() |
+| 401 Unauthorized | refreshToken expired | Delete cookie file, force fresh login |
+| Token not in headers | AJAX before TokenManager ready | Ensure window.tokenManagerReady promise |
+
+### Manual Verification Steps
+
+**1. Test Cookie Persistence**
+```php
+// In your test:
+$this->cookieManager->saveCookies();
+$cookies = self::$driver->manage()->getCookies();
+$hasRefreshToken = false;
+foreach ($cookies as $cookie) {
+    if ($cookie->getName() === 'refreshToken') {
+        $hasRefreshToken = true;
+        self::annotate("RefreshToken found: " . substr($cookie->getValue(), 0, 20) . "...");
+    }
+}
+$this->assertTrue($hasRefreshToken, 'RefreshToken cookie not found');
+```
+
+**2. Verify TokenManager Initialization**
+```php
+// Add to test after navigation:
+$script = "return window.TokenManager && window.TokenManager.isAuthenticated();";
+$isAuth = self::$driver->executeScript($script);
+self::annotate("TokenManager authenticated: " . ($isAuth ? 'YES' : 'NO'));
+$this->assertTrue($isAuth, 'TokenManager not authenticated');
+```
+
+**3. Check Network Activity**
+```php
+// In BrowserStack, enable network logs via capabilities:
+'browserstack.networkLogs' => 'true'
+
+// Then check for:
+// - POST /pbxcore/api/v3/auth:login (first test)
+// - POST /pbxcore/api/v3/auth:refresh (subsequent tests)
+// - All other requests should have Authorization: Bearer header
+```
+
+### Best Practices for JWT Tests
+
+1. **Always allow time for TokenManager**
+   ```php
+   $this->waitForAjax();
+   sleep(2); // TokenManager.initialize() async call
+   $this->waitForAjax();
+   ```
+
+2. **Use BrowserStack annotations**
+   ```php
+   self::annotate('Attempting JWT token refresh');
+   self::annotate('Session restored successfully');
+   ```
+
+3. **Clean cookie storage between test suites**
+   ```bash
+   # Before running full suite:
+   rm -rf /tmp/selenium_cookies/
+   ```
+
+4. **Monitor token expiration in long tests**
+   - Access token: 15 min (auto-refreshed at 13 min)
+   - Refresh token: 30 days
+   - Long-running tests (>13 min) will auto-refresh transparently
