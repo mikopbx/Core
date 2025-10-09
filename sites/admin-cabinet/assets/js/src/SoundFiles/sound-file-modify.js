@@ -310,18 +310,22 @@ const soundFileModifyRest = {
                     }
                     soundFileModifyRest.checkStatusFileMerging(params.response);
                 } else {
+                    soundFileModifyRest.$submitButton.removeClass('loading');
+                    soundFileModifyRest.$formObj.removeClass('loading');
                     UserMessage.showMultiString(params, globalTranslate.sf_UploadError);
                 }
                 break;
             case 'uploadStart':
                 soundFileModifyRest.$formObj.addClass('loading');
                 break;
+            case 'fileError':
             case 'error':
                 soundFileModifyRest.$submitButton.removeClass('loading');
                 soundFileModifyRest.$formObj.removeClass('loading');
-                UserMessage.showMultiString(params, globalTranslate.sf_UploadError);
+                UserMessage.showMultiString(params.message || params, globalTranslate.sf_UploadError);
                 break;
             default:
+                // Other events don't need handling
         }
     },
 

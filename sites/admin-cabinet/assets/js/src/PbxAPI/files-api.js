@@ -186,6 +186,16 @@ FilesAPI.statusUploadFile = function(uploadId, callback) {
  * @returns {object} Updated configuration
  */
 FilesAPI.configureResumable = function(resumableConfig = {}) {
+    // Get Authorization header from TokenManager
+    const headers = {
+        'X-Requested-With': 'XMLHttpRequest'
+    };
+
+    // Add Bearer token if available (for JWT authentication)
+    if (typeof TokenManager !== 'undefined' && TokenManager.accessToken) {
+        headers['Authorization'] = `Bearer ${TokenManager.accessToken}`;
+    }
+
     return Object.assign({
         target: `${Config.pbxUrl}/pbxcore/api/v3/files:upload`,
         testChunks: false,
@@ -193,9 +203,7 @@ FilesAPI.configureResumable = function(resumableConfig = {}) {
         simultaneousUploads: 1,
         maxFiles: 1,
         fileType: ['*'],
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        }
+        headers: headers
     }, resumableConfig);
 };
 
@@ -249,14 +257,32 @@ FilesAPI.setupResumableEvents = function(resumableInstance, callback, autoUpload
  * Upload file using Resumable.js
  * @param {File} file - File object to upload
  * @param {function} callback - Callback function
+ * @param {string[]} allowedFileTypes - Optional array of allowed file extensions (e.g., ['wav', 'mp3'])
  */
-FilesAPI.uploadFile = function(file, callback) {
-    const r = new Resumable(this.configureResumable());
+FilesAPI.uploadFile = function(file, callback, allowedFileTypes = ['*']) {
+    const r = new Resumable(this.configureResumable({
+        fileType: allowedFileTypes
+    }));
 
-    this.setupResumableEvents(r, callback);
+    // Setup events BEFORE adding file to capture fileAdded event
+    this.setupResumableEvents(r, callback, false);
 
     r.addFile(file);
+
+    // If file was not added (validation failed), stop here
+    if (r.files.length === 0) {
+        callback('error', {message: 'File type not allowed or validation failed'});
+        return;
+    }
+
     r.upload();
+
+    // Retry if upload doesn't start
+    setTimeout(() => {
+        if (!r.isUploading() && r.files.length > 0) {
+            r.upload();
+        }
+    }, 100);
 };
 
 /**

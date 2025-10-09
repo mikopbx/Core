@@ -3,69 +3,83 @@
 <input type="hidden" name="category" id="category" value="{{ category }}"/>
 <input type="hidden" name="sound-file-url" id="sound-file-url"/>
 
-<div class="two fields">
-    <div class="field">
-        <div class="ui segment">
-            <h3 class="ui header">{{ t._('sf_UploadNewSoundFile') }}</h3>
-            <button class="ui large button" id="upload-sound-file">
+{# Source Selection Section #}
+<div class="ui segment">
+   
+    <div class="two fields">
+        <div class="field">
+            <label><i class="cloud upload icon"></i> {{ t._('sf_UploadNewSoundFile') }}</label>
+            <button class="ui fluid large button" id="upload-sound-file">
                 <i class="cloud upload alternate icon"></i>
                 {{ t._('sf_UploadSoundFileButton') }}
             </button>
         </div>
-    </div>
-    <div class="field" id="only-https-field">
-        <div class="ui segment">
-            <h3 class="ui header">{{ t._('sf_RecordNewSoundFile') }}</h3>
-            <div class="field">
-                <div id="buttons">
-                    <i class="circle icon" id="record-label"></i>
-                    <div class="ui buttons">
-                        <button class="ui large button" id="start-record-button">
-                            {{ t._('sf_StartRecordSoundFileButton') }}
-                        </button>
-                        <div class="ui floating dropdown icon button disabled" id="select-audio-button">
-                            <i class="dropdown icon"></i>
-                            <div class="menu" id="audio-input-select"></div>
-                        </div>
-                    </div>
-                    <button class="ui large button" id="stop-record-button">
-                        {{ t._('sf_StopRecordSoundFileButton') }}
-                    </button>
+        <div class="field" id="only-https-field">
+            <label><i class="microphone icon"></i> {{ t._('sf_RecordNewSoundFile') }}</label>
+            <div class="ui fluid large buttons">
+                <button class="ui button" id="start-record-button">
+                    <i class="circle icon red" id="record-label"></i>
+                    {{ t._('sf_StartRecordSoundFileButton') }}
+                </button>
+                <div class="ui floating dropdown icon button disabled" id="select-audio-button">
+                    <i class="dropdown icon"></i>
+                    <div class="menu" id="audio-input-select"></div>
                 </div>
+                <button class="ui button" id="stop-record-button">
+                    <i class="stop icon"></i>
+                    {{ t._('sf_StopRecordSoundFileButton') }}
+                </button>
             </div>
         </div>
     </div>
 </div>
 
-<div class="field" id="audio-player-segment" style="display: none;">
-    <audio id="audio-player" preload="auto">
+{# Preview Player Section #}
+<div class="ui segment" id="audio-player-segment" style="display: none;">
+  
+    <audio id="audio-player" preload="none">
         <source src="" type="audio/mp3">
     </audio>
-    <div class="ui segment">
-        <div class="fields">
-            <div class="one wide field">
-                <button class="ui icon button" id="play-button"><i class="icon play"></i></button>
-            </div>
-            <div class="fourteen wide field">
-                <div class="ui range" id="play-slider"></div>
-            </div>
-        </div>
+    <table class="ui very basic table" style="margin-top: 0;">
+        <tr id="sound-file-player-row">
+            <td class="one wide center aligned">
+                <button class="ui large basic icon button play-button">
+                    <i class="ui icon play"></i>
+                </button>
+            </td>
+            <td>
+                <div class="ui range cdr-player"></div>
+            </td>
+            <td class="two wide center aligned">
+                <span class="cdr-duration" style="font-size: 1.1em;">00:00</span>
+            </td>
+            <td class="one wide center aligned">
+                <button class="ui large basic icon button download-button" id="download-button">
+                    <i class="ui icon download"></i>
+                </button>
+            </td>
+        </tr>
+    </table>
+</div>
+
+{# File Information Section #}
+<div class="ui segment">
+   
+
+    <div class="field">
+        <label>{{ t._('sf_Filename') }}</label>
+        <input type="text" name="name" id="name" placeholder="{{ t._('sf_FilenamePlaceholder') }}" />
     </div>
-</div>
 
-<div class="field">
-    <label>{{ t._('sf_Filename') }}</label>
-    <input type="text" name="name" id="name" />
-</div>
+    <div class="field disabled">
+        <label>{{ t._('cf_Path') }}</label>
+        <input type="text" name="path" id="path" readonly />
+    </div>
 
-<div class="field disabled">
-    <label>{{ t._('cf_Path') }}</label>
-    <input type="text" name="path" id="path" readonly />
-</div>
-
-<div class="field">
-    <label>{{ t._('sf_Description') }}</label>
-    <textarea name="description" id="description" rows="3"></textarea>
+    <div class="field">
+        <label>{{ t._('sf_Description') }}</label>
+        <textarea name="description" id="description" rows="3" placeholder="{{ t._('sf_DescriptionPlaceholder') }}"></textarea>
+    </div>
 </div>
 
 {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('Fields')]) }}

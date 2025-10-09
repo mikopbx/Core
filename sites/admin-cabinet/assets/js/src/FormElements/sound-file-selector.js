@@ -318,7 +318,7 @@ const SoundFileSelector = {
     
     /**
      * Play sound file
-     * 
+     *
      * @param {string} fileId - File ID to play
      * @param {object} instance - Selector instance
      */
@@ -327,10 +327,10 @@ const SoundFileSelector = {
         SoundFilesAPI.getRecord(fileId, (response) => {
             if (response.result && response.data && response.data.path) {
                 this.currentlyPlayingId = fileId;
-                this.audioPlayer.src = `/pbxcore/api/v3/sound-files:playback?view=${encodeURIComponent(response.data.path)}`;
-                this.audioPlayer.play().catch(error => {
-                    this.stopPlayback();
-                });
+                const apiUrl = `/pbxcore/api/v3/sound-files:playback?view=${encodeURIComponent(response.data.path)}`;
+
+                // Load authenticated audio source
+                this.loadAuthenticatedAudio(apiUrl, instance);
             } else {
                 // If failed to get file info, revert icon back to play
                 if (instance.playButton) {
@@ -339,6 +339,77 @@ const SoundFileSelector = {
             }
         });
     },
+
+    /**
+     * Load audio from authenticated API endpoint
+     *
+     * @param {string} apiUrl - API URL requiring Bearer token
+     * @param {object} instance - Selector instance
+     */
+    loadAuthenticatedAudio(apiUrl, instance) {
+        // Build full URL
+        let fullUrl;
+        if (apiUrl.startsWith('http')) {
+            fullUrl = apiUrl;
+        } else if (apiUrl.startsWith('/pbxcore/')) {
+            // API path - use base URL without admin-cabinet path
+            const baseUrl = window.location.origin;
+            fullUrl = `${baseUrl}${apiUrl}`;
+        } else {
+            fullUrl = `${globalRootUrl}${apiUrl.replace(/^\//, '')}`;
+        }
+
+        // Prepare headers with Bearer token
+        const headers = {
+            'X-Requested-With': 'XMLHttpRequest'
+        };
+
+        if (typeof TokenManager !== 'undefined' && TokenManager.accessToken) {
+            headers['Authorization'] = `Bearer ${TokenManager.accessToken}`;
+        }
+
+        // Fetch audio file with authentication
+        fetch(fullUrl, { headers })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                // Extract duration from header if available
+                const duration = response.headers.get('X-Audio-Duration');
+                if (duration) {
+                    console.log(`Audio duration: ${duration}s`);
+                }
+
+                return response.blob();
+            })
+            .then(blob => {
+                // Revoke previous blob URL if exists
+                if (this.audioPlayer.src && this.audioPlayer.src.startsWith('blob:')) {
+                    URL.revokeObjectURL(this.audioPlayer.src);
+                }
+
+                // Create and set new blob URL
+                const blobUrl = URL.createObjectURL(blob);
+                this.audioPlayer.src = blobUrl;
+
+                // Play audio
+                this.audioPlayer.play().catch(error => {
+                    console.error('Audio playback failed:', error);
+                    this.stopPlayback();
+                });
+            })
+            .catch(error => {
+                console.error('Failed to load audio:', error);
+                this.stopPlayback();
+
+                // Revert play button icon
+                if (instance.playButton) {
+                    instance.playButton.find('i').removeClass('pause').addClass('play');
+                }
+            });
+    },
+
     
     /**
      * Stop audio playback

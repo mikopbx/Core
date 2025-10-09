@@ -58,13 +58,14 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[HttpMapping(
     mapping: [
         'GET' => ['getList', 'getRecord', 'getDefault', 'getForSelect', 'playback'],
+        'HEAD' => ['playback'],
         'POST' => ['create', 'uploadFile', 'convertAudioFile'],
         'PUT' => ['update'],
         'PATCH' => ['patch'],
         'DELETE' => ['delete']
     ],
-    resourceLevelMethods: ['getRecord', 'update', 'patch', 'delete', 'playback'],
-    collectionLevelMethods: ['getList', 'create'],
+    resourceLevelMethods: ['getRecord', 'update', 'patch', 'delete'],
+    collectionLevelMethods: ['getList', 'create', 'playback'],
     customMethods: ['getDefault', 'getForSelect', 'uploadFile', 'convertAudioFile', 'playback'],
     idPattern: '[a-zA-Z0-9_-]+'
 )]
@@ -269,19 +270,22 @@ class RestController extends BaseRestController
     /**
      * Play back sound file (stream audio)
      *
-     * @route GET /pbxcore/api/v3/sound-files/{id}:playback
+     * @route GET /pbxcore/api/v3/sound-files:playback
      */
     #[ApiOperation(
         summary: 'rest_sf_Playback',
         description: 'rest_sf_PlaybackDesc',
         operationId: 'playSoundFile'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, example: 'custom_welcome')]
+    #[ApiParameter('view', 'string', 'rest_param_file_path', ParameterLocation::QUERY, required: true, example: '/storage/usbdisk1/mikopbx/media/custom/file.mp3')]
+    #[ApiParameter('download', 'integer', 'rest_param_download_flag', ParameterLocation::QUERY, required: false, example: 1)]
+    #[ApiParameter('filename', 'string', 'rest_param_download_name', ParameterLocation::QUERY, required: false, example: 'audio.mp3')]
     #[ApiResponse(200, 'rest_response_200_audio_stream')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
     #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
-    public function playback(string $id): void
+    public function playback(): void
     {
         // Implementation handled by BaseRestController
     }

@@ -29,14 +29,29 @@ class CDRPlayer {
         this.id = id;
         this.html5Audio = document.getElementById(`audio-player-${id}`);
         const $row = $(`#${id}`);
+
+        // Check if already initialized to prevent double processing
+        if ($row.hasClass('initialized')) {
+            return;
+        }
+
         this.$pButton = $row.find('i.play'); // Play button
         this.$dButton = $row.find('i.download'); // Download button
         this.$slider = $row.find('div.cdr-player'); // Slider element
         this.$spanDuration = $row.find('span.cdr-duration'); // Duration span element
+
+        // Clean up previous event listeners
         this.html5Audio.removeEventListener('timeupdate', this.cbOnMetadataLoaded, false);
         this.html5Audio.removeEventListener('loadedmetadata', this.cbTimeUpdate, false);
         this.$pButton.unbind();
         this.$dButton.unbind();
+
+        // Store original src in data-src attribute for authenticated loading
+        const originalSrc = this.html5Audio.getAttribute('src');
+        if (originalSrc && originalSrc.includes('/pbxcore/api/')) {
+            this.html5Audio.setAttribute('data-src', originalSrc);
+            this.html5Audio.removeAttribute('src'); // Remove direct src
+        }
 
         // Play button event listener
         this.$pButton.on('click', (e) => {
@@ -47,10 +62,14 @@ class CDRPlayer {
         // Download button event listener
         this.$dButton.on('click', (e) => {
             e.preventDefault();
-            window.location = $(e.target).attr('data-value');
+            const downloadUrl = $(e.target).attr('data-value');
+            if (downloadUrl) {
+                this.downloadFile(downloadUrl);
+            }
         });
 
-        this.html5Audio.addEventListener('loadedmetadata', this.cbOnMetadataLoaded, false);
+        // Loaded metadata event listener
+        this.html5Audio.addEventListener('loadedmetadata', this.cbOnMetadataLoaded.bind(this), false);
 
         // timeupdate event listener
         this.html5Audio.addEventListener('timeupdate', this.cbTimeUpdate, false);
@@ -67,6 +86,12 @@ class CDRPlayer {
             cbTimeUpdate: this.cbTimeUpdate,
             spanDuration: this.$spanDuration,
         });
+
+        // Mark as initialized
+        $row.addClass('initialized');
+
+        // Load metadata on initialization
+        this.loadMetadata();
     }
 
     /**
@@ -140,18 +165,250 @@ class CDRPlayer {
     }
 
     /**
+     * Load metadata (duration) without loading the full audio file.
+     * Makes a HEAD request to get X-Audio-Duration header.
+     */
+    loadMetadata() {
+        const sourceSrc = this.html5Audio.getAttribute('data-src');
+        if (!sourceSrc || !sourceSrc.includes('/pbxcore/api/')) {
+            return;
+        }
+
+        // Build full URL
+        let fullUrl;
+        if (sourceSrc.startsWith('http')) {
+            fullUrl = sourceSrc;
+        } else if (sourceSrc.startsWith('/pbxcore/')) {
+            const baseUrl = window.location.origin;
+            fullUrl = `${baseUrl}${sourceSrc}`;
+        } else {
+            fullUrl = `${globalRootUrl}${sourceSrc.replace(/^\//, '')}`;
+        }
+
+        // Prepare headers with Bearer token
+        const headers = {
+            'X-Requested-With': 'XMLHttpRequest'
+        };
+
+        if (typeof TokenManager !== 'undefined' && TokenManager.accessToken) {
+            headers['Authorization'] = `Bearer ${TokenManager.accessToken}`;
+        }
+
+        // Make HEAD request to get only headers (no body download)
+        fetch(fullUrl, {
+            method: 'HEAD',
+            headers
+        })
+        .then(response => {
+            if (!response.ok) {
+                return;
+            }
+
+            // Extract duration from header
+            const durationSeconds = response.headers.get('X-Audio-Duration');
+            if (durationSeconds) {
+                const duration = parseFloat(durationSeconds);
+                if (duration > 0) {
+                    const date = new Date(null);
+                    date.setSeconds(parseInt(duration, 10));
+                    const dateStr = date.toISOString();
+                    const hours = parseInt(dateStr.substr(11, 2), 10);
+                    let formatted;
+                    if (hours === 0) {
+                        formatted = dateStr.substr(14, 5);
+                    } else if (hours < 10) {
+                        formatted = dateStr.substr(12, 7);
+                    } else {
+                        formatted = dateStr.substr(11, 8);
+                    }
+                    this.$spanDuration.text(`00:00/${formatted}`);
+                }
+            }
+        })
+        .catch(() => {
+            // Silently fail - metadata is not critical
+        });
+    }
+
+    /**
      * Plays or pauses the audio file.
      */
     play() {
-        // start music
-        if (this.html5Audio.paused) {
+        // Check if audio already has a blob source loaded
+        if (this.html5Audio.src && this.html5Audio.src.startsWith('blob:')) {
+            // Blob already loaded, just toggle play/pause
+            if (this.html5Audio.paused) {
+                this.html5Audio.play();
+                this.$pButton.removeClass('play').addClass('pause');
+            } else {
+                this.html5Audio.pause();
+                this.$pButton.removeClass('pause').addClass('play');
+            }
+            return;
+        }
+
+        // Need to load source first
+        let sourceSrc = this.html5Audio.getAttribute('data-src') || '';
+
+        // If source is an API endpoint, load with authentication
+        if (sourceSrc && sourceSrc.includes('/pbxcore/api/')) {
+            this.loadAuthenticatedSource(sourceSrc);
+            return;
+        }
+
+        // Fallback for non-API sources or already loaded
+        if (this.html5Audio.paused && this.html5Audio.duration) {
             this.html5Audio.play();
-            // remove play, add pause
             this.$pButton.removeClass('play').addClass('pause');
-        } else { // pause music
+        } else if (!this.html5Audio.paused) {
             this.html5Audio.pause();
-            // remove pause, add play
             this.$pButton.removeClass('pause').addClass('play');
+        }
+    }
+
+    /**
+     * Load audio from authenticated API endpoint using fetch + Bearer token
+     * @param {string} apiUrl - The API URL requiring authentication
+     */
+    loadAuthenticatedSource(apiUrl) {
+        // Build full URL
+        let fullUrl;
+        if (apiUrl.startsWith('http')) {
+            fullUrl = apiUrl;
+        } else if (apiUrl.startsWith('/pbxcore/')) {
+            const baseUrl = window.location.origin;
+            fullUrl = `${baseUrl}${apiUrl}`;
+        } else {
+            fullUrl = `${globalRootUrl}${apiUrl.replace(/^\//, '')}`;
+        }
+
+        // Prepare headers with Bearer token
+        const headers = {
+            'X-Requested-With': 'XMLHttpRequest'
+        };
+
+        if (typeof TokenManager !== 'undefined' && TokenManager.accessToken) {
+            headers['Authorization'] = `Bearer ${TokenManager.accessToken}`;
+        }
+
+        // Fetch audio file with authentication
+        fetch(fullUrl, { headers })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                // Extract duration from header if available
+                const durationSeconds = response.headers.get('X-Audio-Duration');
+                if (durationSeconds) {
+                    const duration = parseFloat(durationSeconds);
+                    if (duration > 0) {
+                        const date = new Date(null);
+                        date.setSeconds(parseInt(duration, 10));
+                        const dateStr = date.toISOString();
+                        const hours = parseInt(dateStr.substr(11, 2), 10);
+                        let formatted;
+                        if (hours === 0) {
+                            formatted = dateStr.substr(14, 5);
+                        } else if (hours < 10) {
+                            formatted = dateStr.substr(12, 7);
+                        } else {
+                            formatted = dateStr.substr(11, 8);
+                        }
+                        this.$spanDuration.text(`00:00/${formatted}`);
+                    }
+                }
+
+                return response.blob();
+            })
+            .then(blob => {
+                // Create blob URL from response
+                const blobUrl = URL.createObjectURL(blob);
+
+                // Revoke previous blob URL if exists
+                if (this.html5Audio.src && this.html5Audio.src.startsWith('blob:')) {
+                    URL.revokeObjectURL(this.html5Audio.src);
+                }
+
+                // Set blob URL directly to audio element
+                this.html5Audio.src = blobUrl;
+                this.html5Audio.load();
+
+                // Auto-play after loading
+                this.html5Audio.oncanplaythrough = () => {
+                    this.html5Audio.play();
+                    this.$pButton.removeClass('play').addClass('pause');
+                    this.html5Audio.oncanplaythrough = null;
+                };
+            })
+            .catch(error => {
+                UserMessage.showMultiString(error.message, globalTranslate.cdr_AudioFileLoadError);
+            });
+    }
+
+    /**
+     * Download file with authentication
+     * @param {string} downloadUrl - Download URL requiring Bearer token
+     */
+    downloadFile(downloadUrl) {
+        // Check if it's an API URL that requires authentication
+        if (downloadUrl.includes('/pbxcore/api/')) {
+            // Build full URL
+            const fullUrl = downloadUrl.startsWith('http') ? downloadUrl : `${globalRootUrl}${downloadUrl.replace(/^\//, '')}`;
+
+            // Prepare headers with Bearer token
+            const headers = {
+                'X-Requested-With': 'XMLHttpRequest'
+            };
+
+            if (typeof TokenManager !== 'undefined' && TokenManager.accessToken) {
+                headers['Authorization'] = `Bearer ${TokenManager.accessToken}`;
+            }
+
+            // Fetch file with authentication
+            fetch(fullUrl, { headers })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+
+                    // Get filename from Content-Disposition header or URL
+                    const disposition = response.headers.get('Content-Disposition');
+                    let filename = 'call-record.mp3';
+                    if (disposition && disposition.includes('filename=')) {
+                        const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(disposition);
+                        if (matches != null && matches[1]) {
+                            filename = matches[1].replace(/['"]/g, '');
+                        }
+                    } else {
+                        // Try to extract from URL parameters
+                        const urlParams = new URLSearchParams(downloadUrl.split('?')[1]);
+                        const filenameParam = urlParams.get('filename');
+                        if (filenameParam) {
+                            filename = filenameParam;
+                        }
+                    }
+
+                    return response.blob().then(blob => ({ blob, filename }));
+                })
+                .then(({ blob, filename }) => {
+                    // Create download link
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                })
+                .catch(error => {
+                    UserMessage.showMultiString(error.message, globalTranslate.cdr_AudioFileDownloadError);
+                });
+        } else {
+            // Legacy direct file URL (no auth needed)
+            window.location = downloadUrl;
         }
     }
 

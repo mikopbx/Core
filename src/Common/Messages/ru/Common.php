@@ -412,6 +412,8 @@ return [
     'cdr_FilteredEmptyTitle' => 'Нет записей по заданным критериям',
     'cdr_NoRecordsFound' => 'Записей не найдено',
     'cdr_TryChangingDate' => 'Попробуйте изменить интервал дат',
+    'cdr_AudioFileLoadError' => 'Ошибка загрузки аудиофайла',
+    'cdr_AudioFileDownloadError' => 'Ошибка скачивания аудиофайла',
 
     // CF
     'cf_ColumnMode' => 'Режим',
@@ -682,6 +684,16 @@ return [
     'sd_filter' => 'Фильтр',
     'sd_lines' => 'Лимит',
     'sd_offset' => 'Офсет',
+    'sd_TimeRange' => 'Временной диапазон',
+    'sd_DateFrom' => 'От',
+    'sd_DateTo' => 'До',
+    'sd_QuickPeriod' => 'Быстрый выбор',
+    'sd_LastHour' => 'Последний час',
+    'sd_Last3Hours' => 'Последние 3 часа',
+    'sd_Last12Hours' => 'Последние 12 часов',
+    'sd_Today' => 'Сегодня',
+    'sd_LoadingPrevious' => 'Загрузка предыдущих записей...',
+    'sd_LoadingNext' => 'Загрузка следующих записей...',
 
     // SF
     'sf_AddNewAudioFile' => 'Добавить новый аудиофайл',
@@ -692,10 +704,12 @@ return [
     'sf_Description' => 'Описание',
     'sf_EmptyTableDescription' => 'Звуковые файлы используются для приветствий, музыки на удержании и голосовых подсказок',
     'sf_EmptyTableTitle' => 'Загрузите звуковые файлы',
+    'sf_DescriptionPlaceholder' => 'Введите описание звукового файла (необязательно)',
     'sf_EnterDescription' => 'Введите описание (необязательно)',
     'sf_EnterSoundFileName' => 'Введите имя звукового файла',
     'sf_FileNotFound' => 'Ошибка - невозможно воспроизвести файл',
     'sf_Filename' => 'Имя файла записи',
+    'sf_FilenamePlaceholder' => 'Например: приветствие, музыка_ожидания, голосовое_меню',
     'sf_ImpossibleToDeleteSoundFile' => 'Не удалось удалить звуковой файл',
     'sf_MusicOnHold' => 'Музыка на удержании',
     'sf_PlayAudioFile' => 'Воспроизвести аудиофайл',

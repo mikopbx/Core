@@ -159,13 +159,16 @@ const webkitRecorder = {
      * Callback function called when media recorder is stopped.
      */
     cbOnStopMediaRecorder() {
-        console.log('data available after MediaStreamRecorder.stop() called.');
         soundFileModifyRest.blob = new Blob(webkitRecorder.chunks);
-        console.log('recorder stopped');
         const fileURL = URL.createObjectURL(soundFileModifyRest.blob);
         sndPlayer.UpdateSource(fileURL);
-        const blobFile = new File([webkitRecorder.chunks[0]], 'blob' + new Date().getTime() + '.wav');
-        FilesAPI.uploadFile(blobFile, soundFileModifyRest.cbUploadResumable);
+
+        // Create File object from all chunks
+        const blobFile = new File(webkitRecorder.chunks, 'blob' + new Date().getTime() + '.wav', { type: 'audio/wav' });
+
+        // Upload with allowed file types for sound files
+        FilesAPI.uploadFile(blobFile, soundFileModifyRest.cbUploadResumable, ['wav', 'mp3', 'ogg', 'm4a', 'aac']);
+
         webkitRecorder.$recordLabel.removeClass('red');
         webkitRecorder.$stopButton.addClass('disabled');
         webkitRecorder.$recordButton.removeClass('disabled');

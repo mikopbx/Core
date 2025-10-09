@@ -19,6 +19,7 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Cdr;
 
+use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Injectable;
 
@@ -70,15 +71,30 @@ class PlaybackAction extends Injectable
         $fileInfo = pathinfo($filename);
         $mimeType = self::getAudioMimeType($fileInfo['extension'] ?? '');
 
+        // Get audio duration for metadata
+        $duration = self::getAudioDuration($filename);
+
         // Prepare file data for streaming (unified with SoundFiles approach)
         $res->data = [
             'fpassthru' => [
                 'filename' => $filename,
                 'content_type' => $mimeType,
                 'download_name' => $data['filename'] ?? null,
-                'need_delete' => false
+                'need_delete' => false,
+                'additional_headers' => []
             ]
         ];
+
+        // Add duration header if available
+        if ($duration > 0) {
+            $res->data['fpassthru']['additional_headers']['X-Audio-Duration'] = (string)$duration;
+        }
+
+        // Add file size header
+        $fileSize = filesize($filename);
+        if ($fileSize !== false) {
+            $res->data['fpassthru']['additional_headers']['Content-Length'] = (string)$fileSize;
+        }
 
         $res->success = true;
         return $res;
@@ -119,5 +135,34 @@ class PlaybackAction extends Injectable
             'aac' => 'audio/aac',
             default => 'audio/wav'
         };
+    }
+
+    /**
+     * Get audio file duration in seconds using soxi
+     *
+     * @param string $filePath Path to audio file
+     * @return float Duration in seconds (0 if unable to determine)
+     */
+    private static function getAudioDuration(string $filePath): float
+    {
+        // Check if soxi is available (part of sox package)
+        $soxi = Util::which('soxi');
+        if (empty($soxi)) {
+            return 0.0;
+        }
+
+        // Use soxi -D to get duration in seconds
+        $cmd = "{$soxi} -D " . escapeshellarg($filePath) . " 2>/dev/null";
+        $output = [];
+        $returnCode = 0;
+
+        exec($cmd, $output, $returnCode);
+
+        if ($returnCode === 0 && !empty($output[0])) {
+            $duration = (float)trim($output[0]);
+            return $duration > 0 ? $duration : 0.0;
+        }
+
+        return 0.0;
     }
 }

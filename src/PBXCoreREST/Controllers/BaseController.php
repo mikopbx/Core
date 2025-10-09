@@ -501,6 +501,12 @@ class BaseController extends Controller
         $contentType = $fileData['content_type'] ?? 'application/octet-stream';
         $downloadName = $fileData['download_name'] ?? null;
         $needDelete = $fileData['need_delete'] ?? false;
+        $additionalHeaders = $fileData['additional_headers'] ?? [];
+
+        // Add additional headers (e.g., X-Audio-Duration)
+        foreach ($additionalHeaders as $headerName => $headerValue) {
+            $this->response->setHeader($headerName, $headerValue);
+        }
 
         // Check for Range request (for audio/video seeking)
         $rangeHeader = $_SERVER['HTTP_RANGE'] ?? null;

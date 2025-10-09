@@ -105,15 +105,30 @@ class PlaybackAction
         $extension = Util::getExtensionOfFile($filePath);
         $contentType = self::MIME_TYPES[$extension] ?? 'application/octet-stream';
 
+        // Get audio duration for metadata
+        $duration = self::getAudioDuration($filePath);
+
         // Prepare response data for file streaming
         $res->success = true;
         $res->data = [
             'fpassthru' => [
                 'filename' => $filePath,
                 'need_delete' => false,
-                'content_type' => $contentType
+                'content_type' => $contentType,
+                'additional_headers' => []
             ]
         ];
+
+        // Add duration header if available
+        if ($duration > 0) {
+            $res->data['fpassthru']['additional_headers']['X-Audio-Duration'] = (string)$duration;
+        }
+
+        // Add file size header
+        $fileSize = filesize($filePath);
+        if ($fileSize !== false) {
+            $res->data['fpassthru']['additional_headers']['Content-Length'] = (string)$fileSize;
+        }
 
         // Handle download mode
         if (!empty($data['download'])) {
@@ -122,5 +137,34 @@ class PlaybackAction
         }
 
         return $res;
+    }
+
+    /**
+     * Get audio file duration in seconds using soxi
+     *
+     * @param string $filePath Path to audio file
+     * @return float Duration in seconds (0 if unable to determine)
+     */
+    private static function getAudioDuration(string $filePath): float
+    {
+        // Check if soxi is available (part of sox package)
+        $soxi = Util::which('soxi');
+        if (empty($soxi)) {
+            return 0.0;
+        }
+
+        // Use soxi -D to get duration in seconds
+        $cmd = "{$soxi} -D " . escapeshellarg($filePath) . " 2>/dev/null";
+        $output = [];
+        $returnCode = 0;
+
+        exec($cmd, $output, $returnCode);
+
+        if ($returnCode === 0 && !empty($output[0])) {
+            $duration = (float)trim($output[0]);
+            return $duration > 0 ? $duration : 0.0;
+        }
+
+        return 0.0;
     }
 }

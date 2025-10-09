@@ -57,7 +57,8 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ResourceSecurity('cdr', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
 #[HttpMapping(
     mapping: [
-        'GET' => ['getList', 'getRecord', 'getActiveCalls', 'getActiveChannels', 'playback']
+        'GET' => ['getList', 'getRecord', 'getActiveCalls', 'getActiveChannels', 'playback'],
+        'HEAD' => ['playback']
     ],
     resourceLevelMethods: ['getRecord'],
     collectionLevelMethods: ['getList'],

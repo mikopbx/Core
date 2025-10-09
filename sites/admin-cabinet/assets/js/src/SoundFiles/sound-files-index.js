@@ -207,13 +207,13 @@ const soundFilesTable = {
                 <table>
                     <tr>
                         <td class="one wide">
-                            ${file.path ? 
+                            ${file.path ?
                                 `<button class="ui tiny basic icon button play-button">
                                      <i class="ui icon play"></i>
                                  </button>
-                                 <audio preload="metadata" id="audio-player-${file.id}">
-                                     <source src="${playPath}"/>
-                                 </audio>` : 
+                                 <audio preload="none" id="audio-player-${file.id}" data-src="${playPath}">
+                                     <source src=""/>
+                                 </audio>` :
                                 `<button class="ui tiny basic icon button play-button disabled">
                                      <i class="ui icon play disabled"></i>
                                  </button>

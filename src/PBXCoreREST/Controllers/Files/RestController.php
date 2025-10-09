@@ -19,6 +19,7 @@
 
 namespace MikoPBX\PBXCoreREST\Controllers\Files;
 
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\FilesManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\Files\DataStructure;
@@ -257,7 +258,7 @@ class RestController extends BaseRestController
     #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
     public function upload(): void
     {
-        // Implementation handled by BaseRestController
+        $this->handleChunkedUpload();
     }
 
     /**
@@ -368,5 +369,84 @@ class RestController extends BaseRestController
     public function firmwareStatus(): void
     {
         // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Override handleCustomRequest to route custom methods to controller methods
+     *
+     * For Files controller, custom methods like 'upload' should call controller methods
+     * (which prepare file data) before sending to worker, not send directly to worker.
+     *
+     * @param string|null $idOrMethod
+     * @param string|null $customMethod
+     * @return void
+     */
+    public function handleCustomRequest(?string $idOrMethod = null, ?string $customMethod = null): void
+    {
+        // Determine the actual method name
+        $actualMethod = $customMethod ?? $idOrMethod;
+
+        // If a corresponding public method exists in this controller, call it
+        if ($actualMethod && method_exists($this, $actualMethod) && (new \ReflectionMethod($this, $actualMethod))->isPublic()) {
+            $this->$actualMethod();
+            return;
+        }
+
+        // Otherwise, use default behavior (send directly to worker)
+        parent::handleCustomRequest($idOrMethod, $customMethod);
+    }
+
+    /**
+     * Handle chunked file upload (Resumable.js support)
+     *
+     * @return void
+     */
+    private function handleChunkedUpload(): void
+    {
+        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
+
+        // Process uploaded files
+        if ($this->request->hasFiles() > 0) {
+            $identifier = preg_replace(['#[/\\\\]#','/\.\./'], ['',''], $requestData['resumableIdentifier'])??'';
+            $identifier = trim($identifier);
+
+            if (!preg_match('/^[a-zA-Z0-9_-]+$/', $identifier)) {
+                $this->sendErrorResponse('Invalid identifier', 400);
+                return;
+            }
+
+            if (strlen($identifier) > 255) {
+                $this->sendErrorResponse('Identifier too long', 400);
+                return;
+            }
+
+            $requestData['resumableIdentifier'] = $identifier;
+
+            foreach ($this->request->getUploadedFiles() as $file) {
+                $requestData['files'][]= [
+                    'file_path' => $file->getTempName(),
+                    'file_size' => $file->getSize(),
+                    'file_error'=> $file->getError(),
+                    'file_name' => $file->getName(),
+                    'file_type' => $file->getType()
+                ];
+
+                if ($file->getError()) {
+                    $message = 'Error ' . $file->getError() . ' in file ' . $file->getTempName();
+                    $this->sendErrorResponse($message, 400);
+                    SystemMessages::sysLogMsg('UploadFile', $message, LOG_ERR);
+                    return;
+                }
+            }
+
+            usleep(100000); // Brief delay as in original implementation
+        }
+
+        // Send to backend worker with 'uploadFile' action (legacy action name)
+        $this->sendRequestToBackendWorker(
+            $this->processorClass,
+            'uploadFile',
+            $requestData
+        );
     }
 }
