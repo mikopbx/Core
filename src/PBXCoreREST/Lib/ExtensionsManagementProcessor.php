@@ -47,6 +47,9 @@ class ExtensionsManagementProcessor extends Injectable
         $action = $request['action'];
         $data = $request['data'];
         switch ($action) {
+            case 'getList':
+                $res = GetListAction::main($data);
+                break;
             case 'getForSelect':
                 $res = DropdownsAction::getForSelect(
                     $data['type'] ?? 'all',

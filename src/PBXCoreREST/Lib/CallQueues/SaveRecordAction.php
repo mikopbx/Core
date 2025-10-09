@@ -25,6 +25,9 @@ use MikoPBX\Common\Models\Extensions;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
 use MikoPBX\PBXCoreREST\Lib\Common\SystemSanitizer;
+use MikoPBX\PBXCoreREST\Lib\Common\ParameterDefaultsExtractor;
+use MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor;
+use MikoPBX\PBXCoreREST\Controllers\CallQueues\RestController;
 use MikoPBX\Core\System\SystemMessages;
 
 /**
@@ -60,16 +63,31 @@ class SaveRecordAction extends AbstractSaveRecordAction
     {
         $res = self::createApiResult(__METHOD__);
 
-        // Get sanitization rules automatically from OpenAPI schema
-        // This eliminates duplication between schema and validation rules
-        $sanitizationRules = DataStructure::getSanitizationRules();
+        // Get sanitization rules automatically from controller attributes
+        // Single Source of Truth - rules extracted from #[ApiParameter] attributes
+        $sanitizationRules = ParameterSanitizationExtractor::extractFromController(
+            RestController::class,
+            'create'
+        );
 
         // Text fields for unified processing (no HTML decoding, just sanitization)
         $textFields = ['name', 'description', 'callerid_prefix'];
 
+        // Preserve critical fields before sanitization (may not be in create rules)
+        $recordId = $data['id'] ?? null;
+        $recordExtension = $data['extension'] ?? null;
+
         try {
             // Unified data sanitization using new approach - no HTML entity decoding
             $sanitizedData = self::sanitizeInputData($data, $sanitizationRules, $textFields);
+
+            // Restore critical fields after sanitization (essential for UPDATE/PATCH)
+            if ($recordId !== null) {
+                $sanitizedData['id'] = $recordId;
+            }
+            if ($recordExtension !== null) {
+                $sanitizedData['extension'] = $recordExtension;
+            }
 
             // Sanitize routing destination fields
             $routingFields = [
@@ -101,16 +119,20 @@ class SaveRecordAction extends AbstractSaveRecordAction
             $sanitizedData['members'] = self::sanitizeMembersData($members);
         }
 
-        // Validate required fields using unified approach
+        // Validate required fields - extension required only for CREATE
         $validationRules = [
             'name' => [
                 ['type' => 'required', 'message' => 'Queue name is required']
-            ],
-            'extension' => [
-                ['type' => 'required', 'message' => 'Extension number is required'],
-                ['type' => 'regex', 'pattern' => '/^[0-9]{2,8}$/', 'message' => 'Extension must be 2-8 digits']
             ]
         ];
+
+        // Extension required only for CREATE operation
+        if (empty($sanitizedData['id'])) {
+            $validationRules['extension'] = [
+                ['type' => 'required', 'message' => 'Extension number is required'],
+                ['type' => 'regex', 'pattern' => '/^[0-9]{2,8}$/', 'message' => 'Extension must be 2-8 digits']
+            ];
+        }
 
         $validationErrors = self::validateRequiredFields($sanitizedData, $validationRules);
         if (!empty($validationErrors)) {
@@ -141,14 +163,27 @@ class SaveRecordAction extends AbstractSaveRecordAction
                             CallQueues::generateUniqueID(Extensions::PREFIX_QUEUE);
         }
 
-        // Check extension uniqueness using unified approach
-        if (!self::checkExtensionUniqueness($sanitizedData['extension'], $queue->extension)) {
+        // For PATCH/UPDATE - if extension not provided, use existing value
+        if (!$isNewRecord && empty($sanitizedData['extension'])) {
+            $sanitizedData['extension'] = $queue->extension;
+        }
+
+        // Check extension uniqueness using unified approach (only if extension provided)
+        if (!empty($sanitizedData['extension']) && !self::checkExtensionUniqueness($sanitizedData['extension'], $queue->extension)) {
             $res->messages['error'][] = 'Extension number already exists';
             $res->httpCode = 409; // Conflict - proper RESTful code
             return $res;
         }
 
         try {
+            // Apply defaults from controller attributes automatically
+            // Single Source of Truth - defaults extracted from #[ApiParameter] attributes
+            $sanitizedData = ParameterDefaultsExtractor::applyDefaults(
+                RestController::class,
+                'create',
+                $sanitizedData
+            );
+
             // Save in transaction using unified approach
             $savedQueue = self::executeInTransaction(function() use ($queue, $sanitizedData) {
                 // Update/create Extension using unified approach
@@ -159,24 +194,21 @@ class SaveRecordAction extends AbstractSaveRecordAction
                     $queue->extension
                 );
 
-                // Get default values from schema for fallback
-                $defaults = DataStructure::createFromSchema('detail');
-
-                // Update CallQueue with unified data handling
+                // Update CallQueue - all fields now have proper defaults applied
                 $queue->extension = $sanitizedData['extension'];
                 $queue->name = $sanitizedData['name'];
-                $queue->strategy = $sanitizedData['strategy'] ?? $defaults['strategy'];
-                $queue->seconds_to_ring_each_member = $sanitizedData['seconds_to_ring_each_member'] ?? $defaults['seconds_to_ring_each_member'];
-                $queue->seconds_for_wrapup = $sanitizedData['seconds_for_wrapup'] ?? $defaults['seconds_for_wrapup'];
-                $queue->caller_hear = $sanitizedData['caller_hear'] ?? $defaults['caller_hear'];
+                $queue->strategy = $sanitizedData['strategy'];
+                $queue->seconds_to_ring_each_member = $sanitizedData['seconds_to_ring_each_member'];
+                $queue->seconds_for_wrapup = $sanitizedData['seconds_for_wrapup'];
+                $queue->caller_hear = $sanitizedData['caller_hear'];
 
                 // Convert boolean values using unified approach
                 $booleanFields = ['recive_calls_while_on_a_call', 'announce_position', 'announce_hold_time'];
                 $convertedData = self::convertBooleanFields($sanitizedData, $booleanFields);
 
-                $queue->recive_calls_while_on_a_call = $convertedData['recive_calls_while_on_a_call'] ?? ($defaults['recive_calls_while_on_a_call'] ? '1' : '0');
-                $queue->announce_position = $convertedData['announce_position'] ?? ($defaults['announce_position'] ? '1' : '0');
-                $queue->announce_hold_time = $convertedData['announce_hold_time'] ?? ($defaults['announce_hold_time'] ? '1' : '0');
+                $queue->recive_calls_while_on_a_call = $convertedData['recive_calls_while_on_a_call'];
+                $queue->announce_position = $convertedData['announce_position'];
+                $queue->announce_hold_time = $convertedData['announce_hold_time'];
                 $queue->periodic_announce_sound_id = $sanitizedData['periodic_announce_sound_id'] ?? null;
                 $queue->moh_sound_id = $sanitizedData['moh_sound_id'] ?? null;
                 // Handle periodic_announce_frequency: convert empty to null for no parameter in config

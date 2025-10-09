@@ -39,8 +39,8 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     /**
      * Create complete data array from IvrMenu model including actions
      * @param \MikoPBX\Common\Models\IvrMenu $model
-     * @param array|bool $actionsOrInclude Actions array for copy mode, or boolean to include actions
-     * @return array
+     * @param array<int, array<string, mixed>>|bool $actionsOrInclude Actions array for copy mode, or boolean to include actions
+     * @return array<string, mixed>
      */
     public static function createFromModel($model, $actionsOrInclude = true): array
     {
@@ -127,7 +127,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     /**
      * Create simplified data array for list view
      * @param \MikoPBX\Common\Models\IvrMenu $model
-     * @return array
+     * @return array<string, mixed>
      */
     public static function createForList($model): array
     {
@@ -197,16 +197,18 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                     'example' => 'Company main IVR menu'
                 ],
                 'timeout' => [
-                    'type' => 'string',
+                    'type' => 'integer',
                     'description' => 'rest_schema_ivr_timeout',
-                    'pattern' => '^[0-9]{1,2}$',
-                    'example' => '7'
+                    'minimum' => 1,
+                    'maximum' => 60,
+                    'example' => 7
                 ],
                 'number_of_repeat' => [
-                    'type' => 'string',
+                    'type' => 'integer',
                     'description' => 'rest_schema_ivr_repeat',
-                    'pattern' => '^[0-9]{1,2}$',
-                    'example' => '3'
+                    'minimum' => 0,
+                    'maximum' => 10,
+                    'example' => 3
                 ],
                 'timeout_extension' => [
                     'type' => 'string',
@@ -279,18 +281,20 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                     'example' => 'Company main IVR menu'
                 ],
                 'timeout' => [
-                    'type' => 'string',
+                    'type' => 'integer',
                     'description' => 'rest_schema_ivr_timeout',
-                    'pattern' => '^[0-9]{1,2}$',
-                    'default' => '7',
-                    'example' => '7'
+                    'minimum' => 1,
+                    'maximum' => 60,
+                    'default' => 7,
+                    'example' => 7
                 ],
                 'number_of_repeat' => [
-                    'type' => 'string',
+                    'type' => 'integer',
                     'description' => 'rest_schema_ivr_repeat',
-                    'pattern' => '^[0-9]{1,2}$',
-                    'default' => '3',
-                    'example' => '3'
+                    'minimum' => 0,
+                    'maximum' => 10,
+                    'default' => 3,
+                    'example' => 3
                 ],
                 'allow_enter_any_internal_extension' => [
                     'type' => 'boolean',
@@ -390,23 +394,18 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
 
     /**
-     * Generate sanitization rules from OpenAPI schema
+     * Generate sanitization rules automatically from controller attributes
      *
-     * @return array<string, string> Sanitization rules
+     * Uses ParameterSanitizationExtractor to extract rules from #[ApiParameter] attributes.
+     * This ensures Single Source of Truth - rules defined only in controller attributes.
+     *
+     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
      */
     public static function getSanitizationRules(): array
     {
-        return [
-            'extension' => 'string|regex:/^[0-9]{2,8}$/',
-            'name' => 'string|max:255',
-            'description' => 'string|max:500',
-            'timeout' => 'string|regex:/^[0-9]{1,2}$/',
-            'number_of_repeat' => 'string|regex:/^[0-9]{1,2}$/',
-            'allow_enter_any_internal_extension' => 'bool',
-            'timeout_extension' => 'string',
-            'audio_message_id' => 'string',
-            // Action validation
-            'digits' => 'string|regex:/^[0-9#*]{1,10}$/'
-        ];
+        return \MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor::extractFromController(
+            \MikoPBX\PBXCoreREST\Controllers\IvrMenu\RestController::class,
+            'create'
+        );
     }
 }

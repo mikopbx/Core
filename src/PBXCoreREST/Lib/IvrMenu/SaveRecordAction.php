@@ -25,6 +25,9 @@ use MikoPBX\Common\Models\Extensions;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
 use MikoPBX\PBXCoreREST\Lib\Common\SystemSanitizer;
+use MikoPBX\PBXCoreREST\Lib\Common\ParameterDefaultsExtractor;
+use MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor;
+use MikoPBX\PBXCoreREST\Controllers\IvrMenu\RestController;
 
 /**
  * Action for saving IVR menu record
@@ -54,33 +57,38 @@ class SaveRecordAction extends AbstractSaveRecordAction
 {
     /**
      * Save IVR menu record
-     * @param array $data - Data to save
+     * @param array<string, mixed> $data - Data to save
      * @return PBXApiResult
      */
     public static function main(array $data): PBXApiResult
     {
         $res = self::createApiResult(__METHOD__);
-        
-        // Define sanitization rules - use 'sanitize' for text fields to follow "Store Raw, Escape at Edge"
-        $sanitizationRules = [
-            'id' => 'string|max:50', // Now id is actually uniqid (string)
-            'isNew' => 'string|max:1', // Flag for new records
-            'name' => 'string|sanitize|max:100',
-            'extension' => 'string|regex:/^[0-9]{2,8}$/|max:8',
-            'audio_message_id' => 'string|max:50|empty_to_null',
-            'timeout' => 'int|min:0|max:99',
-            'timeout_extension' => 'string|max:20|empty_to_null',
-            'allow_enter_any_internal_extension' => 'bool',
-            'number_of_repeat' => 'int|min:0|max:99',
-            'description' => 'string|sanitize|max:2000'
-        ];
+
+        // Get sanitization rules automatically from controller attributes
+        // Single Source of Truth - rules extracted from #[ApiParameter] attributes
+        $sanitizationRules = ParameterSanitizationExtractor::extractFromController(
+            RestController::class,
+            'create'
+        );
         
         // Text fields for unified processing (no HTML decoding, just sanitization)
         $textFields = ['name', 'description'];
 
+        // Preserve critical fields before sanitization (may not be in create rules)
+        $recordId = $data['id'] ?? null;
+        $recordExtension = $data['extension'] ?? null;
+
         try {
             // Unified data sanitization using new approach - no HTML entity decoding
             $sanitizedData = self::sanitizeInputData($data, $sanitizationRules, $textFields);
+
+            // Restore critical fields after sanitization (essential for UPDATE/PATCH)
+            if ($recordId !== null) {
+                $sanitizedData['id'] = $recordId;
+            }
+            if ($recordExtension !== null) {
+                $sanitizedData['extension'] = $recordExtension;
+            }
 
             // Sanitize routing destination fields
             $sanitizedData = self::sanitizeRoutingDestinations($sanitizedData, ['timeout_extension'], 20);
@@ -94,16 +102,21 @@ class SaveRecordAction extends AbstractSaveRecordAction
         $actionsData = self::sanitizeActionsData($data['actions'] ?? []);
         $sanitizedData['actions'] = $actionsData;
         
-        // Validate required fields using unified approach
+        // Validate required fields - extension required only for CREATE
         $validationRules = [
             'name' => [
                 ['type' => 'required', 'message' => 'IVR menu name is required']
-            ],
-            'extension' => [
-                ['type' => 'required', 'message' => 'Extension number is required'],
-                ['type' => 'regex', 'pattern' => '/^[0-9]{2,8}$/', 'message' => 'Extension must be 2-8 digits']
             ]
         ];
+
+        // Extension required only for CREATE operation
+        if (empty($sanitizedData['id'])) {
+            $validationRules['extension'] = [
+                ['type' => 'required', 'message' => 'Extension number is required'],
+                ['type' => 'regex', 'pattern' => '/^[0-9]{2,8}$/', 'message' => 'Extension must be 2-8 digits']
+            ];
+        }
+
         $validationErrors = self::validateRequiredFields($sanitizedData, $validationRules);
         if (!empty($validationErrors)) {
             $res->messages['error'] = $validationErrors;
@@ -134,14 +147,28 @@ class SaveRecordAction extends AbstractSaveRecordAction
             $ivrMenu->uniqid = !empty($sanitizedData['id']) ? $sanitizedData['id'] :
                             IvrMenu::generateUniqueID(Extensions::PREFIX_IVR);
         }
-        
-        // Check extension uniqueness using unified approach
-        if (!self::checkExtensionUniqueness($sanitizedData['extension'], $ivrMenu->extension)) {
+
+        // For PATCH/UPDATE - if extension not provided, use existing value
+        if (!$isNewRecord && empty($sanitizedData['extension'])) {
+            $sanitizedData['extension'] = $ivrMenu->extension;
+        }
+
+        // Check extension uniqueness using unified approach (only if extension provided)
+        if (!empty($sanitizedData['extension']) && !self::checkExtensionUniqueness($sanitizedData['extension'], $ivrMenu->extension)) {
             $res->messages['error'][] = 'Extension number already exists';
+            $res->httpCode = 409; // Conflict - proper RESTful code
             return $res;
         }
         
         try {
+            // Apply defaults from controller attributes automatically
+            // Single Source of Truth - defaults extracted from #[ApiParameter] attributes
+            $sanitizedData = ParameterDefaultsExtractor::applyDefaults(
+                RestController::class,
+                'create',
+                $sanitizedData
+            );
+
             // Save in transaction using unified approach
             $savedIvrMenu = self::executeInTransaction(function() use ($ivrMenu, $sanitizedData) {
                 // Update/create Extension using unified approach
@@ -151,20 +178,20 @@ class SaveRecordAction extends AbstractSaveRecordAction
                     Extensions::TYPE_IVR_MENU,
                     $ivrMenu->extension
                 );
-                
-                // Update IVR Menu with unified data handling
+
+                // Update IVR Menu - all fields now have proper defaults applied
                 $ivrMenu->extension = $sanitizedData['extension'];
                 $ivrMenu->name = $sanitizedData['name'];
                 $ivrMenu->audio_message_id = $sanitizedData['audio_message_id'] ?? '';
-                $ivrMenu->timeout = $sanitizedData['timeout'] ?? '7';
+                $ivrMenu->timeout = $sanitizedData['timeout'];
                 $ivrMenu->timeout_extension = $sanitizedData['timeout_extension'] ?? '';
-                $ivrMenu->number_of_repeat = $sanitizedData['number_of_repeat'] ?? '3';
+                $ivrMenu->number_of_repeat = $sanitizedData['number_of_repeat'];
                 $ivrMenu->description = $sanitizedData['description'] ?? '';
 
                 // Convert boolean values using unified approach
                 $booleanFields = ['allow_enter_any_internal_extension'];
                 $convertedData = self::convertBooleanFields($sanitizedData, $booleanFields);
-                $ivrMenu->allow_enter_any_internal_extension = $convertedData['allow_enter_any_internal_extension'] ?? '0';
+                $ivrMenu->allow_enter_any_internal_extension = $convertedData['allow_enter_any_internal_extension'];
                 
                 if (!$ivrMenu->save()) {
                     throw new \Exception(implode(', ', $ivrMenu->getMessages()));
@@ -179,7 +206,8 @@ class SaveRecordAction extends AbstractSaveRecordAction
                         'conditions' => 'ivr_menu_id = :uniqid:',
                         'bind' => ['uniqid' => $ivrMenu->uniqid]
                     ]);
-                    if ($existingActions && !$existingActions->delete()) {
+                    /** @phpstan-ignore-next-line */
+                    if ($existingActions->count() > 0 && !$existingActions->delete()) {
                         throw new \Exception('Failed to delete existing actions');
                     }
                 }
@@ -207,7 +235,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
     /**
      * Update IVR menu actions
      * @param string $ivrMenuId
-     * @param array|string $actionsData
+     * @param array<int, array<string, mixed>>|string $actionsData
      * @throws \Exception
      */
     private static function updateIvrMenuActions(string $ivrMenuId, $actionsData): void
@@ -267,15 +295,16 @@ class SaveRecordAction extends AbstractSaveRecordAction
         }
         
         $deletedActions = IvrMenuActions::find($parameters);
-        if ($deletedActions && !$deletedActions->delete()) {
+        /** @phpstan-ignore-next-line */
+        if ($deletedActions->count() > 0 && !$deletedActions->delete()) {
             throw new \Exception('Failed to delete old actions');
         }
     }
     
     /**
      * Sanitize actions data safely
-     * @param array|string $actionsData
-     * @return array
+     * @param array<int, array<string, mixed>>|string $actionsData
+     * @return array<int, array<string, string>>
      * @throws \Exception
      */
     private static function sanitizeActionsData($actionsData): array

@@ -23,6 +23,8 @@ use MikoPBX\Common\Models\ConferenceRooms;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
+use MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor;
+use MikoPBX\PBXCoreREST\Controllers\ConferenceRooms\RestController;
 
 /**
  * Action for saving conference room record
@@ -55,47 +57,63 @@ class SaveRecordAction extends AbstractSaveRecordAction
 {
     /**
      * Save conference room record
-     * 
-     * @param array $data Data to save
+     *
+     * @param array<string, mixed> $data Data to save
      * @return PBXApiResult
      */
     public static function main(array $data): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
-        
-        // Define sanitization rules
-        $sanitizationRules = [
-            'id' => 'string|max:50',  // Changed to string for uniqid
-            'name' => 'string|max:100',
-            'extension' => 'string|regex:/^[0-9]{2,8}$/|max:8',
-            'pinCode' => 'string|regex:/^[0-9]*$/|max:20|empty_to_null',
-            'currentTab' => 'string|max:50'
-        ];
-        
-        // Sanitize input data using parent method
+        $res = self::createApiResult(__METHOD__);
+
+        // Get sanitization rules automatically from controller attributes
+        // Single Source of Truth - rules extracted from #[ApiParameter] attributes
+        $sanitizationRules = ParameterSanitizationExtractor::extractFromController(
+            RestController::class,
+            'create'
+        );
+
+        // Text fields for unified processing (no HTML decoding, just sanitization)
+        $textFields = ['name'];
+
+        // Preserve critical fields before sanitization (may not be in create rules)
+        $recordId = $data['id'] ?? null;
+        $recordExtension = $data['extension'] ?? null;
+
+        // Sanitize input data using unified approach
         try {
             $sanitizedData = self::sanitizeInputData(
-                $data, 
+                $data,
                 $sanitizationRules,
-                ['name']  // Text fields to process
+                $textFields
             );
+
+            // Restore critical fields after sanitization (essential for UPDATE/PATCH)
+            if ($recordId !== null) {
+                $sanitizedData['id'] = $recordId;
+            }
+            if ($recordExtension !== null) {
+                $sanitizedData['extension'] = $recordExtension;
+            }
         } catch (\Exception $e) {
             $res->messages['error'][] = $e->getMessage();
             return $res;
         }
         
-        // Define validation rules
+        // Validate required fields - extension required only for CREATE
         $validationRules = [
             'name' => [
                 ['type' => 'required', 'message' => 'Conference room name is required']
-            ],
-            'extension' => [
-                ['type' => 'required', 'message' => 'Extension number is required'],
-                ['type' => 'regex', 'pattern' => '/^[0-9]{2,8}$/', 'message' => 'Extension must be 2-8 digits']
             ]
         ];
-        
+
+        // Extension required only for CREATE operation
+        if (empty($sanitizedData['id'])) {
+            $validationRules['extension'] = [
+                ['type' => 'required', 'message' => 'Extension number is required'],
+                ['type' => 'regex', 'pattern' => '/^[0-9]{2,8}$/', 'message' => 'Extension must be 2-8 digits']
+            ];
+        }
+
         // Validate required fields using parent method
         $validationErrors = self::validateRequiredFields($sanitizedData, $validationRules);
         if (!empty($validationErrors)) {
@@ -124,56 +142,57 @@ class SaveRecordAction extends AbstractSaveRecordAction
             $room->uniqid = !empty($sanitizedData['id']) ? $sanitizedData['id'] :
                             ConferenceRooms::generateUniqueID(Extensions::PREFIX_CONFERENCE);
         }
-        
-        // Check extension uniqueness using parent method
-        if (!self::checkExtensionUniqueness($sanitizedData['extension'], $room->extension)) {
+
+        // For PATCH/UPDATE - if extension not provided, use existing value
+        if (!$isNewRecord && empty($sanitizedData['extension'])) {
+            $sanitizedData['extension'] = $room->extension;
+        }
+
+        // Check extension uniqueness using unified approach (only if extension provided)
+        if (!empty($sanitizedData['extension']) && !self::checkExtensionUniqueness($sanitizedData['extension'], $room->extension)) {
             $res->messages['error'][] = 'Extension number already exists';
+            $res->httpCode = 409; // Conflict - proper RESTful code
             return $res;
         }
-        
+
         try {
-            // Save in transaction using parent method
+            // Save in transaction using unified approach
             $savedRoom = self::executeInTransaction(function() use ($room, $sanitizedData) {
-                // Update/create Extension
-                $extension = Extensions::findFirstByNumber($room->extension);
-                if (!$extension) {
-                    $extension = new Extensions();
-                    $extension->type = Extensions::TYPE_CONFERENCE;
-                    $extension->show_in_phonebook = '1';
-                    $extension->public_access = '1';
-                }
-                
-                $extension->number = $sanitizedData['extension'];
-                $extension->callerid = $sanitizedData['name'];
-                
-                if (!$extension->save()) {
-                    throw new \Exception(implode(', ', $extension->getMessages()));
-                }
-                
+                // Update/create Extension using unified approach
+                self::createOrUpdateExtension(
+                    $sanitizedData['extension'],
+                    $sanitizedData['name'],
+                    Extensions::TYPE_CONFERENCE,
+                    $room->extension
+                );
+
                 // Update ConferenceRoom
                 $room->extension = $sanitizedData['extension'];
                 $room->name = $sanitizedData['name'];
                 $room->pinCode = $sanitizedData['pinCode'] ?? '';
-                
+
                 if (!$room->save()) {
-                    throw new \Exception(implode(', ', $room->getMessages()));
+                    throw new \Exception('Failed to save conference room: ' . implode(', ', $room->getMessages()));
                 }
-                
+
                 return $room;
             });
-            
+
             $res->data = DataStructure::createFromModel($savedRoom);
-            $res->data['isNew'] = '0';  // After save, it's no longer new
             $res->success = true;
-            
+
+            // Set proper HTTP status code: 201 for creation, 200 for update
+            $res->httpCode = $isNewRecord ? 201 : 200;
+
             // Add reload path for page refresh after save
             $res->reload = "conference-rooms/modify/{$savedRoom->uniqid}";
-            
-            // Handle tab preservation if requested
-            self::handleTabPreservation($sanitizedData, $res);
-            
+
+            // Log successful operation using unified approach
+            self::logSuccessfulSave('Conference room', $savedRoom->name, $savedRoom->extension, __METHOD__);
+
         } catch (\Exception $e) {
-            $res = self::handleSaveError($e, $res);
+            // Handle save error using unified approach
+            return self::handleError($e, $res);
         }
         
         return $res;
