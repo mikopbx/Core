@@ -332,15 +332,27 @@ const keyCheck = {
     },
 
     /**
-     * After update license key, get new one, activate coupon
-     * @param response
-     * @param success
+     * Callback function to be called before the form is sent
+     * @param {Object} settings - The current settings of the form
+     * @returns {Object} - The updated settings of the form
      */
-    cbAfterFormProcessing(response, success) {
+    cbBeforeSendForm(settings) {
+        const result = settings;
+        // Get form values for API
+        result.data = keyCheck.$formObj.form('get values');
+        return result;
+    },
+
+    /**
+     * Callback function to be called after the form has been sent.
+     * @param {Object} response - The response from the server after the form is sent
+     */
+    cbAfterSendForm(response) {
         keyCheck.$formObj.removeClass('loading');
         keyCheck.$saveKeyButton.removeClass('loading disabled');
         keyCheck.$activateCouponButton.removeClass('loading disabled');
-        if (success === true) {
+
+        if (response.result === true) {
             if (typeof response.data.PBXLicense !== 'undefined') {
                 globalPBXLicense = response.data.PBXLicense;
                 keyCheck.$formObj.form('set value', 'licKey', response.data.PBXLicense);
@@ -350,10 +362,10 @@ const keyCheck = {
             keyCheck.$formObj.form('set value', 'coupon', '');
 
             keyCheck.initialize();
-            if (response.messages.length !== 0) {
+            if (response.messages && response.messages.length !== 0) {
                 UserMessage.showMultiString(response.messages);
             }
-        } else if (response.messages.license!==undefined){
+        } else if (response.messages && response.messages.license !== undefined){
             UserMessage.showLicenseError(globalTranslate.lic_GeneralError, response.messages.license);
         } else {
             UserMessage.showMultiString(response.messages, globalTranslate.lic_GeneralError);
@@ -364,32 +376,20 @@ const keyCheck = {
     },
 
     /**
-     * Callback function to be called before the form is sent
-     * @param {Object} settings - The current settings of the form
-     * @returns {Object} - The updated settings of the form
-     */
-    cbBeforeSendForm(settings) {
-        return settings;
-    },
-
-    /**
-     * Callback function to be called after the form has been sent.
-     * @param {Object} response - The response from the server after the form is sent
-     */
-    cbAfterSendForm(response) {
-        const formData = keyCheck.$formObj.form('get values');
-        LicenseAPI.processUserRequest(formData, keyCheck.cbAfterFormProcessing);
-    },
-
-    /**
      * Initialize the form with custom settings
      */
     initializeForm() {
         Form.$formObj = keyCheck.$formObj;
-        Form.url = `${globalRootUrl}licensing/save`; // Form submission URL
+        Form.url = '#'; // Not used with REST API
         Form.validateRules = keyCheck.validateRules; // Form validation rules
         Form.cbBeforeSendForm = keyCheck.cbBeforeSendForm; // Callback before form is sent
         Form.cbAfterSendForm = keyCheck.cbAfterSendForm; // Callback after form is sent
+
+        // Configure REST API settings (modern pattern)
+        Form.apiSettings.enabled = true;
+        Form.apiSettings.apiObject = LicenseAPI;
+        Form.apiSettings.saveMethod = 'processUserRequest';
+
         Form.initialize();
     },
 };

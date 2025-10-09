@@ -75,6 +75,8 @@ class GetLicenseInfoAction extends Injectable
         } else {
             $translation = $di->get(TranslationProvider::SERVICE_NAME);
             $res->messages['error'][] = $translation->_('lic_WrongLicenseKeyOrEmpty');
+            $res->success = false;
+            $res->httpCode = 400; // Bad Request - invalid or empty license key
         }
         return $res;
     }

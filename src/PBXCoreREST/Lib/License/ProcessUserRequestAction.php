@@ -52,7 +52,15 @@ class ProcessUserRequestAction extends Injectable
         if (strlen($data['licKey']) === 28 && Text::startsWith($data['licKey'], 'MIKO-')) {
             ModelsBase::clearCache(PbxSettings::class);
             $oldLicKey =  PbxSettings::getValueByKey(PbxSettings::PBX_LICENSE);
-            if ($oldLicKey !== $data['licKey']) {
+
+            // Check if key has changed or if we need to validate existing key
+            if ($oldLicKey === $data['licKey']) {
+                // Key hasn't changed - return success without re-validation
+                $res->data[PbxSettings::PBX_LICENSE] = $data['licKey'];
+                $res->messages['info'][] = $translation->_('lic_SuccessfulActivation');
+                $res->success = true;
+            } else {
+                // Key has changed - validate it
                 $licenseInfo = $license->getLicenseInfo($data['licKey']);
                 if ($licenseInfo['success'] && $licenseInfo['result'] instanceof SimpleXMLElement) {
                     PbxSettings::setValueByKey(PbxSettings::PBX_LICENSE, $data['licKey']);
@@ -61,15 +69,32 @@ class ProcessUserRequestAction extends Injectable
                     $res->data[PbxSettings::PBX_LICENSE] = $data['licKey'];
                     $res->messages['info'][] = $translation->_('lic_SuccessfulActivation');
                     $res->success = true;
-                } elseif (!$licenseInfo['success'] && str_contains($licenseInfo['error'], '2026')) {
-                    $res->messages['license'][] = $translation->_('lic_FailedCheckLicense2026');
-                    $res->success = false;
                 } elseif (!$licenseInfo['success'] && !empty($licenseInfo['error'])) {
-                    $res->messages['license'][] = $licenseInfo['error'];
+                    // Use translateLicenseErrorMessage to handle all error codes
+                    $translatedError = $license->translateLicenseErrorMessage($licenseInfo['error']);
+                    $res->messages['license'][] = $translatedError;
                     $res->success = false;
+
+                    // Determine HTTP code based on Zephir library response code
+                    $errorCode = $licenseInfo['code'] ?? 0;
+
+                    if ($errorCode === 400 || str_contains($licenseInfo['error'], '2026')) {
+                        // Invalid license key - client error
+                        $res->httpCode = 400; // Bad Request
+                    } elseif ($errorCode === 0) {
+                        // Connection error - no response from GNATS
+                        $res->httpCode = 503; // Service Unavailable
+                    } elseif ($errorCode >= 500) {
+                        // Server error from license server
+                        $res->httpCode = 502; // Bad Gateway
+                    } else {
+                        // Other client errors (invalid format, etc.)
+                        $res->httpCode = 400; // Bad Request
+                    }
                 } else {
                     $res->messages['license'][] = $translation->_('lic_FailedCheckLicense');
                     $res->success = false;
+                    $res->httpCode = 502; // Bad Gateway - unexpected response
                 }
             }
             if (!empty($data['coupon'])) {
@@ -80,6 +105,7 @@ class ProcessUserRequestAction extends Injectable
                 } else {
                     $res->messages['license'][] = $license->translateLicenseErrorMessage((string)$result);
                     $res->success = false;
+                    $res->httpCode = 502; // Bad Gateway - license server communication error
                 }
             }
         } else { // Only add trial for a license key
@@ -97,6 +123,7 @@ class ProcessUserRequestAction extends Injectable
                 // No internet connection, or wrong data sent to license server, or something else
                 $res->messages['license'][] = $license->translateLicenseErrorMessage($newLicenseKey);
                 $res->success = false;
+                $res->httpCode = 502; // Bad Gateway - license server communication error
             }
         }
         return $res;
