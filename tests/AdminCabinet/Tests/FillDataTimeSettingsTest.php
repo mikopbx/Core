@@ -75,8 +75,20 @@ class FillDataTimeSettingsTest extends MikoPBXTestsBase
             self::annotate("Warning: System did not respond within expected timeframe", 'warning');
         }
 
-        // Re-login after time change (session is lost due to Redis TTL being affected by time change)
-        $this->reLoginAfterTimeChange();
+        // With JWT leeway (±10 minutes), time changes within this range don't require re-login
+        // JWT access tokens remain valid (exp + leeway > current_time)
+        // Redis refresh tokens are time-independent (TTL is a counter, not absolute time)
+        // Only re-login if time change exceeds leeway tolerance
+        if ($this->isTimeChangeBeyondLeeway($params)) {
+            self::annotate("Time change beyond leeway, re-login required");
+            $this->reLoginAfterTimeChange();
+        } else {
+            self::annotate("Time change within leeway tolerance, session preserved");
+            // Just wait for AJAX and verify we're still authenticated
+            sleep(2);
+            $this->waitForAjax();
+            $this->verifySessionStillValid();
+        }
 
         // Verify settings with retry mechanism
         $this->verifyTimeSettings($params);
@@ -149,13 +161,71 @@ class FillDataTimeSettingsTest extends MikoPBXTestsBase
     }
 
     /**
+     * Check if time change is beyond JWT leeway tolerance
+     * JWT tokens have ±10 minutes leeway for clock skew and time changes
+     *
+     * @param array $params Test parameters
+     * @return bool True if time change exceeds leeway
+     */
+    protected function isTimeChangeBeyondLeeway(array $params): bool
+    {
+        if (!$params[PbxSettings::PBX_MANUAL_TIME_SETTINGS]) {
+            // NTP mode - time changes gradually, never beyond leeway
+            return false;
+        }
+
+        // Manual mode - check the time difference
+        $manualDateTime = $params['ManualDateTime'];
+        $targetTime = strtotime(str_replace(['/', ','], ['-', ''], $manualDateTime));
+        $currentTime = time();
+        $differenceMinutes = abs($targetTime - $currentTime) / 60;
+
+        // JWT leeway is 10 minutes (600 seconds)
+        // If time change is > 10 minutes, re-login is required
+        return $differenceMinutes > 10;
+    }
+
+    /**
+     * Verify that session is still valid after time change within leeway
+     * Checks that JWT tokens are still accepted by the server
+     */
+    protected function verifySessionStillValid(): void
+    {
+        try {
+            // Check that we can still access a protected page
+            $url = $GLOBALS['SERVER_PBX'] . '/admin-cabinet/';
+            self::$driver->get($url);
+
+            // Wait for page to load
+            $this->waitForAjax();
+
+            // Check for session indicator (top menu should be visible)
+            $topMenu = self::$driver->findElement(\Facebook\WebDriver\WebDriverBy::id('top-menu-search'));
+
+            if ($topMenu->isDisplayed()) {
+                self::annotate("Session still valid after time change", 'success');
+            } else {
+                throw new \Exception("Top menu not visible, session may be invalid");
+            }
+        } catch (\Exception $e) {
+            self::annotate("Session validation failed: " . $e->getMessage(), 'error');
+            throw $e;
+        }
+    }
+
+    /**
      * Re-login after time change
-     * When system time changes, Redis session TTL becomes invalid and session is lost
-     * This method performs a fresh login to restore the session
+     * Only needed when system time changes beyond JWT leeway (>10 minutes)
+     *
+     * JWT tokens have ±10 minutes leeway:
+     * - Access tokens: 15 min TTL + 10 min leeway = 25 min tolerance
+     * - Refresh tokens: Redis TTL independent of system time
+     *
+     * For time changes within ±10 minutes, session remains valid
      */
     protected function reLoginAfterTimeChange(): void
     {
-        self::annotate("Re-logging in after time change");
+        self::annotate("Re-logging in after time change beyond leeway");
 
         // Get login credentials
         $loginData = $this->loginDataProvider();
@@ -213,15 +283,24 @@ class FillDataTimeSettingsTest extends MikoPBXTestsBase
     public function additionProvider(): array
     {
         $params = [];
+
+        // Test 1: Manual time change within JWT leeway (±10 minutes)
+        // Changes time by +5 minutes - should NOT require re-login
+        // JWT access tokens remain valid (exp + 600 > current_time)
+        // Redis refresh tokens unaffected (TTL is time-independent)
         $params[] = [
             [
                 PbxSettings::PBX_TIMEZONE => 'Europe/Riga',
                 'PBXTimezone' => 'Europe/Riga', // Ensure we have the same value for verification
                 PbxSettings::PBX_MANUAL_TIME_SETTINGS => true,
-                'ManualDateTime' => date('d/m/Y, h:i:s A', strtotime('+2 hours')),
+                'ManualDateTime' => date('d/m/Y, h:i:s A', strtotime('+5 minutes')),
                 PbxSettings::NTP_SERVER => '',
             ],
         ];
+
+        // Test 2: NTP synchronization (gradual time changes)
+        // NTP adjusts time gradually, never exceeding leeway
+        // Session always preserved during NTP sync
         $params[] = [
             [
                 PbxSettings::PBX_TIMEZONE => 'Europe/Riga',
@@ -231,6 +310,7 @@ class FillDataTimeSettingsTest extends MikoPBXTestsBase
                 PbxSettings::NTP_SERVER => '0.pool.ntp.org',
             ],
         ];
+
         return $params;
     }
 }

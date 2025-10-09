@@ -11,6 +11,6 @@ parameters:
     editorUrl: 'phpstorm://open?file=%%file%%&line=%%line%%'
     tmpDir: %currentWorkingDirectory%/build/phpstan
     ignoreErrors:
-        - 
+        -
             message: '#Path in require_once\(\) "Globals\.php" is not a file or it does not exist#'
             path: '*'

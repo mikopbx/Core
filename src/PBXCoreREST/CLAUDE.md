@@ -253,23 +253,34 @@ TTL: 30 days (automatic cleanup by Redis)
 
 1. **JWT Bearer Token** (15 min) - `/pbxcore/api/v3/auth:login`
    ```bash
-   # Login and get access token
-   curl -X POST http://127.0.0.1:8081/pbxcore/api/v3/auth:login \
+    # 1. Получаем access token
+    TOKEN=$(curl -s -k -X POST 'https://maclic.miko.ru:8445/pbxcore/api/v3/auth:login' \
         -H "Content-Type: application/x-www-form-urlencoded" \
-        -d "login=admin&password=123456789MikoPBX#1&rememberMe=true" \
-        -c cookies.txt | python3 -c "import sys, json; print(json.load(sys.stdin)['data']['accessToken'])"
+        -d "login=admin&password=123456789MikoPBX%231&rememberMe=true" \
+        -c cookies.txt | python3 -c "import sys, json; print(json.load(sys.stdin)['data']['accessToken'])")
 
-   # Use access token in API calls
-   curl -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..." \
-        http://127.0.0.1:8081/pbxcore/api/v3/extensions
+    echo "Access Token: ${TOKEN:0:30}..."
 
-   # Refresh access token (uses cookie automatically)
-   curl -X POST http://127.0.0.1:8081/pbxcore/api/v3/auth:refresh \
-        -b cookies.txt -c cookies.txt | python3 -c "import sys, json; print(json.load(sys.stdin)['data']['accessToken'])"
+    # 2. Используем token для запроса к ресурсу
+    curl -s -k -X GET 'https://maclic.miko.ru:8445/pbxcore/api/v3/extensions' \
+        -H "Authorization: Bearer $TOKEN" | python3 -m json.tool
 
-   # Logout (invalidates refresh token in Redis)
-   curl -X POST http://127.0.0.1:8081/pbxcore/api/v3/auth:logout \
-        -H "Authorization: Bearer <token>" -b cookies.txt
+    # 3. Refresh token (автоматически из cookie)
+    NEW_TOKEN=$(curl -s -k -X POST 'https://maclic.miko.ru:8445/pbxcore/api/v3/auth:refresh' \
+        -b cookies.txt -c cookies.txt | python3 -c "import sys, json; print(json.load(sys.stdin)['data']['accessToken'])")
+
+    echo "New Token: ${NEW_TOKEN:0:30}..."
+
+    # 4. Logout
+    curl -s -k -X POST 'https://maclic.miko.ru:8445/pbxcore/api/v3/auth:logout' \
+        -H "Authorization: Bearer $TOKEN" \
+        -b cookies.txt | python3 -m json.tool
+
+    Или в одну строку для быстрого теста:
+    curl -s -k -X GET 'https://maclic.miko.ru:8445/pbxcore/api/v3/extensions' \
+        -H "Authorization: Bearer $(curl -s -k -X POST 'https://maclic.miko.ru:8445/pbxcore/api/v3/auth:login' \
+        -d 'login=admin&password=123456789MikoPBX%231' | python3 -c 'import sys,json;print(json.load(sys.stdin)["data"]["accessToken"])')" \
+        | python3 -m json.tool | head -50
    ```
 
 2. **API Keys** (no expiration) - `/admin-cabinet/api-keys/`
