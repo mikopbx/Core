@@ -186,15 +186,20 @@ FilesAPI.statusUploadFile = function(uploadId, callback) {
  * @returns {object} Updated configuration
  */
 FilesAPI.configureResumable = function(resumableConfig = {}) {
-    // Get Authorization header from TokenManager
-    const headers = {
-        'X-Requested-With': 'XMLHttpRequest'
-    };
+    // Use a function for headers to get the latest token dynamically
+    // Resumable.js will call this function before each request
+    const headersFunction = function() {
+        const headers = {
+            'X-Requested-With': 'XMLHttpRequest'
+        };
 
-    // Add Bearer token if available (for JWT authentication)
-    if (typeof TokenManager !== 'undefined' && TokenManager.accessToken) {
-        headers['Authorization'] = `Bearer ${TokenManager.accessToken}`;
-    }
+        // Add Bearer token if available (for JWT authentication)
+        if (typeof TokenManager !== 'undefined' && TokenManager.accessToken) {
+            headers['Authorization'] = `Bearer ${TokenManager.accessToken}`;
+        }
+
+        return headers;
+    };
 
     return Object.assign({
         target: `${Config.pbxUrl}/pbxcore/api/v3/files:upload`,
@@ -203,7 +208,7 @@ FilesAPI.configureResumable = function(resumableConfig = {}) {
         simultaneousUploads: 1,
         maxFiles: 1,
         fileType: ['*'],
-        headers: headers
+        headers: headersFunction
     }, resumableConfig);
 };
 

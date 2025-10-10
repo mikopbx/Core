@@ -385,7 +385,24 @@ const soundFileModifyRest = {
 
         // Handle different response formats
         if (response === false || !response) {
-            UserMessage.showMultiString(`${globalTranslate.sf_UploadError}`);
+            soundFileModifyRest.$submitButton.removeClass('loading');
+            soundFileModifyRest.$formObj.removeClass('loading');
+            UserMessage.showMultiString(`${globalTranslate.sf_ConvertError}`);
+            return;
+        }
+
+        // Check for conversion error in response
+        if (response.result === false) {
+            soundFileModifyRest.$submitButton.removeClass('loading');
+            soundFileModifyRest.$formObj.removeClass('loading');
+
+            // Show detailed error message if available
+            if (response.messages && response.messages.error && response.messages.error.length > 0) {
+                const errorMessage = response.messages.error.join('<br>');
+                UserMessage.showMultiString(errorMessage, globalTranslate.sf_ConvertError);
+            } else {
+                UserMessage.showMultiString(globalTranslate.sf_ConvertErrorDetails, globalTranslate.sf_ConvertError);
+            }
             return;
         }
 
@@ -421,7 +438,9 @@ const soundFileModifyRest = {
             soundFileModifyRest.$submitButton.removeClass('loading');
             soundFileModifyRest.$formObj.removeClass('loading');
         } else {
-            UserMessage.showMultiString(`${globalTranslate.sf_UploadError}`);
+            soundFileModifyRest.$submitButton.removeClass('loading');
+            soundFileModifyRest.$formObj.removeClass('loading');
+            UserMessage.showMultiString(globalTranslate.sf_ConvertErrorDetails, globalTranslate.sf_ConvertError);
         }
     },
 
