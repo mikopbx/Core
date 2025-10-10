@@ -7,8 +7,29 @@
 </h1>
 {{ form(['action' : '','method': 'post', 'class': 'ui large form segment', 'id' :'login-form']) }}
 <h6 class="ui center aligned header">
-    {# Language dropdown will be built dynamically by DynamicDropdownBuilder #}
-    <input type="hidden" id="WEB_ADMIN_LANGUAGE" name="WebAdminLanguage">
+    {# Language dropdown - static list, no API calls on load #}
+    <div class="ui dropdown" id="language-selector">
+        <input type="hidden" name="WebAdminLanguage" value="{{ WebAdminLanguage }}">
+        <div class="text">
+            {% if availableLanguages[WebAdminLanguage] is defined %}
+                <i class="flag {{ availableLanguages[WebAdminLanguage]['flag'] }}"></i>
+                {{ availableLanguages[WebAdminLanguage]['name'] }}
+            {% endif %}
+        </div>
+        <i class="dropdown icon"></i>
+        <div class="menu">
+            <a class="item" target="_blank" href="https://weblate.mikopbx.com/engage/mikopbx/">
+                <i class="pencil alternate icon"></i> {{ t._('lang_HelpWithTranslateIt') }}
+            </a>
+            <div class="divider"></div>
+            {% for code, info in availableLanguages %}
+                <div class="item" data-value="{{ code }}">
+                    <i class="flag {{ info['flag'] }}"></i>
+                    {{ info['name'] }}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
 </h6>
 
 {# Login field - always visible #}

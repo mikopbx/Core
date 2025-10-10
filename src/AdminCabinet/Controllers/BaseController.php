@@ -117,6 +117,10 @@ class BaseController extends Controller
         $this->view->urlToController = $this->url->get($this->controllerNameUnCamelized);
         $this->view->represent = '';
         $this->view->WebAdminLanguage = $this->language;
+
+        // Prepare available languages array for static dropdown
+        $this->view->availableLanguages = \MikoPBX\Common\Providers\LanguageProvider::AVAILABLE_LANGUAGES;
+
         $this->view->submitMode = 'SaveSettings';
         $this->view->lastSentryEventId = $this->setLastSentryEventId();
         $this->view->PBXVersion = PbxSettings::getValueByKey(PbxSettings::PBX_VERSION);
