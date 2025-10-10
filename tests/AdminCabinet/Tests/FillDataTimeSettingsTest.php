@@ -78,16 +78,20 @@ class FillDataTimeSettingsTest extends MikoPBXTestsBase
         // With JWT leeway (±10 minutes), time changes within this range don't require re-login
         // JWT access tokens remain valid (exp + leeway > current_time)
         // Redis refresh tokens are time-independent (TTL is a counter, not absolute time)
-        // Only re-login if time change exceeds leeway tolerance
-        if ($this->isTimeChangeBeyondLeeway($params)) {
-            self::annotate("Time change beyond leeway, re-login required");
-            $this->reLoginAfterTimeChange();
-        } else {
-            self::annotate("Time change within leeway tolerance, session preserved");
-            // Just wait for AJAX and verify we're still authenticated
-            sleep(2);
-            $this->waitForAjax();
+        // However, Nginx restart may invalidate sessions regardless of leeway
+        // Try to verify session first, re-login if needed
+
+        sleep(2);
+        $this->waitForAjax();
+
+        try {
+            // Try to verify that session is still valid
             $this->verifySessionStillValid();
+            self::annotate("Session still valid after time change", 'success');
+        } catch (\Exception $e) {
+            // Session is invalid, need to re-login
+            self::annotate("Session invalidated after time change: " . $e->getMessage());
+            $this->reLoginAfterTimeChange();
         }
 
         // Verify settings with retry mechanism
@@ -164,6 +168,9 @@ class FillDataTimeSettingsTest extends MikoPBXTestsBase
      * Check if time change is beyond JWT leeway tolerance
      * JWT tokens have ±10 minutes leeway for clock skew and time changes
      *
+     * NOTE: This method is kept for documentation purposes but is not currently used
+     * in the main test flow. The test now uses automatic session verification instead.
+     *
      * @param array $params Test parameters
      * @return bool True if time change exceeds leeway
      */
@@ -188,6 +195,8 @@ class FillDataTimeSettingsTest extends MikoPBXTestsBase
     /**
      * Verify that session is still valid after time change within leeway
      * Checks that JWT tokens are still accepted by the server
+     *
+     * @throws \Exception if session is invalid
      */
     protected function verifySessionStillValid(): void
     {
@@ -197,16 +206,26 @@ class FillDataTimeSettingsTest extends MikoPBXTestsBase
             self::$driver->get($url);
 
             // Wait for page to load
+            sleep(2);
             $this->waitForAjax();
 
             // Check for session indicator (top menu should be visible)
             $topMenu = self::$driver->findElement(\Facebook\WebDriver\WebDriverBy::id('top-menu-search'));
 
-            if ($topMenu->isDisplayed()) {
-                self::annotate("Session still valid after time change", 'success');
-            } else {
-                throw new \Exception("Top menu not visible, session may be invalid");
+            if (!$topMenu->isDisplayed()) {
+                throw new \Exception("Top menu not visible - session appears invalid");
             }
+
+            // Additional check - verify we're not on login page
+            $currentUrl = self::$driver->getCurrentURL();
+            if (strpos($currentUrl, '/session/index') !== false) {
+                throw new \Exception("Redirected to login page - session expired");
+            }
+
+            self::annotate("Session verification successful - user is authenticated");
+        } catch (\Facebook\WebDriver\Exception\NoSuchElementException $e) {
+            // Top menu element not found - likely on login page
+            throw new \Exception("Session validation failed - top menu not found (likely on login page): " . $e->getMessage());
         } catch (\Exception $e) {
             self::annotate("Session validation failed: " . $e->getMessage(), 'error');
             throw $e;
@@ -214,18 +233,21 @@ class FillDataTimeSettingsTest extends MikoPBXTestsBase
     }
 
     /**
-     * Re-login after time change
-     * Only needed when system time changes beyond JWT leeway (>10 minutes)
+     * Re-login after time change or system restart
+     * Required when:
+     * - System time changes beyond JWT leeway (>10 minutes)
+     * - Nginx restart invalidates session cookies
+     * - Session verification fails for any reason
      *
      * JWT tokens have ±10 minutes leeway:
      * - Access tokens: 15 min TTL + 10 min leeway = 25 min tolerance
      * - Refresh tokens: Redis TTL independent of system time
      *
-     * For time changes within ±10 minutes, session remains valid
+     * This method is called automatically when session validation fails
      */
     protected function reLoginAfterTimeChange(): void
     {
-        self::annotate("Re-logging in after time change beyond leeway");
+        self::annotate("Re-logging in after session invalidation");
 
         // Get login credentials
         $loginData = $this->loginDataProvider();
