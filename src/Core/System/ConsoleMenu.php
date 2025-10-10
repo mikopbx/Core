@@ -23,6 +23,7 @@ namespace MikoPBX\Core\System;
 use Closure;
 use Exception;
 use LucidFrame\Console\ConsoleTable;
+use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\Storage as StorageModel;
 use MikoPBX\Common\Providers\TranslationProvider;
@@ -57,111 +58,206 @@ class ConsoleMenu
     public function setupLan(CliMenuBuilder $menuBuilder): void
     {
         $menuBuilder->setTitle(Util::translate('Choose action'))
-            ->addItem(
-                '[1] ' . Util::translate('Configuring using DHCP'),
-                function (CliMenu $menu) {
-                    // Action for DHCP configuration
-                    echo Util::translate('The LAN interface will now be configured via DHCP...');
-                    $network = new Network();
-                    $data = [];
-                    $data['dhcp'] = 1;
-                    $network->updateNetSettings($data);
-                    $network->lanConfigure();
-                    $nginxConf = new NginxConf();
-                    $nginxConf->reStart();
-                    sleep(1);
-                    if ($parent = $menu->getParent()) {
-                        $menu->closeThis();
-                        $parent->open();
-                    }
-                }
-            )
-            ->addItem(
-                '[2] ' . Util::translate('Manual setting'),
-                function (CliMenu $menu) {
-                    // Action for manual LAN setting
-                    $network = new Network();
-
-                    // Set style for input menu
-                    $style = (new MenuStyle())
-                        ->setBg('white')
-                        ->setFg('black');
-
-                    // Validate IP address input
-                    $input_ip = new class (new InputIO($menu, $menu->getTerminal()), $style) extends Text {
-                        public function validate(string $input): bool
-                        {
-                            return Verify::isIpAddress($input);
-                        }
-                    };
-
-                    // Prompt for new LAN IP address
-                    $elDialog = $input_ip
-                        ->setPromptText(Util::translate('Enter the new LAN IP address: '))
-                        ->setValidationFailedText(Util::translate('WARNING'))
-                        ->ask();
-                    $lanIp = $elDialog->fetch();
-
-                    // Prompt for subnet mask
-                    $helloText = Util::translate('Subnet masks are to be entered as bit counts (as in CIDR notation).');
-                    $input_bits = new class (new InputIO($menu, $menu->getTerminal()), $style) extends Text {
-                        public function validate(string $input): bool
-                        {
-                            echo $input;
-                            return (is_numeric($input) && ($input >= 1) && ($input <= 32));
-                        }
-                    };
-                    $elDialog = $input_bits
-                        ->setPromptText($helloText)
-                        ->setValidationFailedText('e.g. 32 = 255.255.255.255, 24 = 255.255.255.0')
-                        ->ask();
-                    $lanBits = $elDialog->fetch();
-
-                    // Prompt for LAN gateway IP address
-                    $elDialog = $input_ip
-                        ->setPromptText(Util::translate('Enter the LAN gateway IP address: '))
-                        ->setValidationFailedText(Util::translate('WARNING'))
-                        ->ask();
-                    $gwIp = $elDialog->fetch();
-
-                    // Prompt for LAN DNS IP address
-                    $elDialog = $input_ip
-                        ->setPromptText(Util::translate('Enter the LAN DNS IP address: '))
-                        ->setValidationFailedText(Util::translate('WARNING'))
-                        ->ask();
-                    $dnsip = $elDialog->fetch();
-
-                    // Update network settings and configure LAN
-                    $data = [];
-                    $data['ipaddr'] = $lanIp;
-                    $data['subnet'] = $lanBits;
-                    $data['gateway'] = $gwIp;
-                    $data['primarydns'] = $dnsip;
-                    $data['dhcp'] = '0';
-
-                    echo Util::translate('The LAN interface will now be configured ...');
-                    $network->updateNetSettings($data);
-
-                    $dnsConf = new DnsConf();
-                    $dnsConf->resolveConfGenerate($network->getHostDNS());
-                    $dnsConf->reStart();
-
-                    $network->lanConfigure();
-                    $nginxConf = new NginxConf();
-                    $nginxConf->reStart();
-
-                    sleep(1);
-                    if ($parent = $menu->getParent()) {
-                        $menu->closeThis();
-                        $parent->open();
-                    }
-                }
-            )
+            ->addItem('[1] ' . Util::translate('Configuring using DHCP'), Closure::fromCallable([$this, 'setupLanAuto']))
+            ->addItem('[2] ' . Util::translate('Manual setting'), Closure::fromCallable([$this, 'setupLanManual']))
+            ->addItem('[3] ' . Util::translate('Set internet interface'), Closure::fromCallable([$this, 'setupInternetInterface']))
             ->setWidth(75)
             ->setBackgroundColour('black', 'black')
             ->enableAutoShortcuts()
             ->disableDefaultItems()
-            ->addItem('[3] ' . Util::translate('Cancel'), new GoBackAction());
+            ->addItem('[4] ' . Util::translate('Cancel'), new GoBackAction());
+    }
+
+    public function setupInternetInterface(CliMenu $menu):void
+    {
+        $ethName = $this->setupEthParams($menu);
+        if(empty($ethName)){
+            return;
+        }
+        echo Util::translate('The LAN interface will now be configured via DHCP...');
+        $network = new Network();
+        $data = [];
+        $data['interface'] = $ethName;
+        $data['internet'] = intval($ethName);
+        $network->updateNetSettings($data);
+        $network->lanConfigure();
+
+        sleep(1);
+        if ($parent = $menu->getParent()) {
+            $menu->closeThis();
+            $parent->open();
+        }
+    }
+
+    /**
+     * Return LAN params
+     * @param $menu
+     * @return array
+     */
+    private function setupEthParams(CliMenu $menu):string
+    {
+        $ethName    = '';
+        $lan = LanInterfaces::find(['columns' => 'interface'])->toArray();
+        $lan = array_column($lan, 'interface');
+        if(count($lan)>1){
+            // Set style for input menu
+            $style = (new MenuStyle())
+                ->setBg('white')
+                ->setFg('black');
+
+            $inputEth = new class(new InputIO($menu, $menu->getTerminal()), $style, $lan) extends Text {
+                private array $lan;
+                public function __construct(InputIO $inputIO, $style, array $lan)
+                {
+                    parent::__construct($inputIO, $style); // если Text принимает эти аргументы
+                    $this->lan = $lan;
+                }
+                public function validate(string $input): bool
+                {
+                    return in_array($input, $this->lan);
+                }
+            };
+            $elDialog = $inputEth
+                ->setPromptText(Util::translate('Enter interface name... '.implode(',', $lan).': '))
+                ->setValidationFailedText(Util::translate('WARNING'))
+                ->ask();
+            $ethName = $elDialog->fetch();
+        }elseif(empty($lan)){
+            echo Util::translate("Interface not found");
+            sleep(1);
+            if ($parent = $menu->getParent()) {
+                $menu->closeThis();
+                $parent->open();
+            }
+        }else{
+            $ethName = $lan[0];
+        }
+        return $ethName;
+    }
+
+    /**
+     * DHCP setting LAN
+     * @param CliMenu $menu
+     * @return void
+     */
+    public function setupLanAuto (CliMenu $menu) {
+        $ethName = $this->setupEthParams($menu);
+        if(empty($ethName)){
+            return;
+        }
+        // Action for DHCP configuration
+        echo Util::translate('The LAN interface will now be configured via DHCP...');
+        $network = new Network();
+        $data = [];
+        $data['dhcp'] = 1;
+        $data['interface'] = $ethName;
+
+        $network->updateNetSettings($data);
+        $network->lanConfigure();
+        $nginxConf = new NginxConf();
+        $nginxConf->reStart();
+        sleep(1);
+        if ($parent = $menu->getParent()) {
+            $menu->closeThis();
+            $parent->open();
+        }
+    }
+
+    /**
+     * Manual setting LAN
+     * @param CliMenu $menu
+     * @return void
+     */
+    public function setupLanManual (CliMenu $menu):void
+    {
+        $ethName = $this->setupEthParams($menu);
+        if(empty($ethName)){
+            return;
+        }
+        // Action for manual LAN setting
+        $network = new Network();
+        // Set style for input menu
+        $style = (new MenuStyle())
+            ->setBg('white')
+            ->setFg('black');
+        // Validate IP address input
+        $input_ip = new class (new InputIO($menu, $menu->getTerminal()), $style) extends Text {
+            public function validate(string $input): bool
+            {
+                return Verify::isIpAddress($input);
+            }
+        };
+
+        // Prompt for new LAN IP address
+        $elDialog = $input_ip
+            ->setPromptText(Util::translate('Enter the new LAN IP address: '))
+            ->setValidationFailedText(Util::translate('WARNING'))
+            ->ask();
+        $lanIp = $elDialog->fetch();
+
+        // Prompt for subnet mask
+        $helloText = Util::translate('Subnet masks are to be entered as bit counts (as in CIDR notation).');
+        $input_bits = new class (new InputIO($menu, $menu->getTerminal()), $style) extends Text {
+            public function validate(string $input): bool
+            {
+                echo $input;
+                return (is_numeric($input) && ($input >= 1) && ($input <= 32));
+            }
+        };
+        $elDialog = $input_bits
+            ->setPromptText($helloText)
+            ->setValidationFailedText('e.g. 32 = 255.255.255.255, 24 = 255.255.255.0')
+            ->ask();
+        $lanBits = $elDialog->fetch();
+
+        // Prompt for LAN gateway IP address
+        $elDialog = $input_ip
+            ->setPromptText(Util::translate('Enter the LAN gateway IP address: '))
+            ->setValidationFailedText(Util::translate('WARNING'))
+            ->ask();
+        $gwIp = $elDialog->fetch();
+
+        // Update network settings and configure LAN
+        $data = [];
+
+        $filter = [
+            "interface = :interface: AND internet = '1'",
+            'bind' => [
+                'interface' => $ethName
+            ]
+        ];
+        $res = LanInterfaces::findFirst($filter);
+        if($res){
+            // Prompt for LAN DNS IP address
+            // Internet intarface only
+            $elDialog = $input_ip
+                ->setPromptText(Util::translate('Enter the LAN DNS IP address: '))
+                ->setValidationFailedText(Util::translate('WARNING'))
+                ->ask();
+            $data['primarydns'] = $elDialog->fetch();
+        }
+        $data['interface'] = $ethName;
+        $data['ipaddr'] = $lanIp;
+        $data['subnet'] = $lanBits;
+        $data['gateway'] = $gwIp;
+        $data['dhcp'] = 0;
+
+        echo Util::translate('The LAN interface will now be configured ...');
+        $network->updateNetSettings($data);
+
+        $dnsConf = new DnsConf();
+        $dnsConf->resolveConfGenerate($network->getHostDNS());
+        $dnsConf->reStart();
+
+        $network->lanConfigure();
+        $nginxConf = new NginxConf();
+        $nginxConf->reStart();
+
+        sleep(1);
+        if ($parent = $menu->getParent()) {
+            $menu->closeThis();
+            $parent->open();
+        }
     }
 
     /**

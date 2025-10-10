@@ -370,26 +370,40 @@ class Network extends Injectable
     /**
      * Updates the network settings with the provided data.
      * @param array $data The network settings data to update.
+     * return bool
      */
-    public function updateNetSettings(array $data): void
+    public function updateNetSettings(array $data): bool
     {
-        $res = LanInterfaces::findFirst("internet = '1'");
-        $update_inet = false;
+        if(isset( $data['internet']) ){
+            $filter = [
+                "interface <> :interface: AND internet = '1'",
+                'bind' => [
+                    'interface' => $data['interface']
+                ]
+            ];
+            $res = LanInterfaces::findFirst($filter);
+            if($res){
+                $res->internet = 0;
+                $res->save();
+            }
+        }
+        $filter = [
+            "interface = :interface:",
+            'bind' => [
+                'interface' => $data['interface']
+            ]
+        ];
+        $res = LanInterfaces::findFirst($filter);
         if ($res === null) {
-            // If no interface with internet connection is found, get the first interface.
-            $res = LanInterfaces::findFirst();
-            $update_inet = true;
+            return false;
         }
-
-        if ($res !== null) {
-            foreach ($data as $key => $value) {
-                $res->$key = $value;
-            }
-            if ($update_inet === true) {
-                $res->internet = 1;
-            }
-            $res->save();
+        foreach ($data as $key => $value) {
+            $res->$key = $value;
         }
+        if(isset($data['internet'])){
+            $res->internet = 1;
+        }
+        return $res->save();
     }
 
     /**
