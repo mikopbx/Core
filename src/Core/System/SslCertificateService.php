@@ -158,6 +158,13 @@ class SslCertificateService
             return ['PublicKey' => '', 'PrivateKey' => ''];
         }
 
+        // Extract external parameters before creating CSR (they're not valid DN fields)
+        $externalHost = $options['_externalHost'] ?? '';
+        $externalIp = $options['_externalIp'] ?? '';
+
+        // Remove internal fields from DN options
+        unset($options['_externalHost'], $options['_externalIp']);
+
         $csr = openssl_csr_new($options, $privateKey, $configArgsCsr);
         if ($csr === false) {
             SystemMessages::sysLogMsg(__METHOD__, 'Failed to generate CSR: ' . openssl_error_string(), LOG_ERR);
@@ -168,8 +175,6 @@ class SslCertificateService
         // Modern browsers (especially Safari) require Subject Alternative Name (SAN)
         // Use EXTERNAL_SIP_HOST_NAME and EXTERNAL_SIP_IP_ADDR for SAN entries
         $commonName = $options['commonName'] ?? 'localhost';
-        $externalHost = $options['_externalHost'] ?? '';
-        $externalIp = $options['_externalIp'] ?? '';
 
         $tempConfigFile = tempnam(sys_get_temp_dir(), 'ssl_config_');
         $configContent = <<<EOD
