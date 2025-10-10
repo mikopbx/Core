@@ -130,8 +130,9 @@ const generalSettingsDeleteAll = {
         `);
         
         // Get statistics from API
-        SystemAPI.getDeleteStatistics((data) => {
-            if (data === false) {
+        SystemAPI.getDeleteStatistics((response) => {
+            // Check for API errors
+            if (!response || response.result === false) {
                 // Show error if statistics couldn't be loaded
                 $statisticsContent.html(`
                     <div class="ui segment">
@@ -143,163 +144,166 @@ const generalSettingsDeleteAll = {
                 `);
                 return;
             }
-            
+
+            // Extract data from response
+            const data = response.data || {};
+
             // Build statistics HTML
             let statisticsHtml = '';
-            
+
             // Users and extensions
             if (data.users > 0) {
                 statisticsHtml += generalSettingsDeleteAll.createStatisticItem(
-                    'users', 
-                    globalTranslate.gs_StatUsers, 
+                    'users',
+                    globalTranslate.gs_StatUsers,
                     data.extensions || data.users,
                     'user icon'
                 );
             }
-            
+
             // Providers
             if (data.providers > 0) {
                 statisticsHtml += generalSettingsDeleteAll.createStatisticItem(
-                    'providers', 
-                    globalTranslate.gs_StatProviders, 
+                    'providers',
+                    globalTranslate.gs_StatProviders,
                     data.providers,
                     'server icon'
                 );
             }
-            
+
             // Call queues
             if (data.callQueues > 0) {
                 statisticsHtml += generalSettingsDeleteAll.createStatisticItem(
-                    'queues', 
-                    globalTranslate.gs_StatCallQueues, 
+                    'queues',
+                    globalTranslate.gs_StatCallQueues,
                     data.callQueues,
                     'users icon'
                 );
             }
-            
+
             // IVR Menus
             if (data.ivrMenus > 0) {
                 statisticsHtml += generalSettingsDeleteAll.createStatisticItem(
-                    'ivr', 
-                    globalTranslate.gs_StatIvrMenus, 
+                    'ivr',
+                    globalTranslate.gs_StatIvrMenus,
                     data.ivrMenus,
                     'sitemap icon'
                 );
             }
-            
+
             // Conference rooms
             if (data.conferenceRooms > 0) {
                 statisticsHtml += generalSettingsDeleteAll.createStatisticItem(
-                    'conferences', 
-                    globalTranslate.gs_StatConferenceRooms, 
+                    'conferences',
+                    globalTranslate.gs_StatConferenceRooms,
                     data.conferenceRooms,
                     'video icon'
                 );
             }
-            
+
             // Dialplan applications
             if (data.dialplanApplications > 0) {
                 statisticsHtml += generalSettingsDeleteAll.createStatisticItem(
-                    'dialplan', 
-                    globalTranslate.gs_StatDialplanApplications, 
+                    'dialplan',
+                    globalTranslate.gs_StatDialplanApplications,
                     data.dialplanApplications,
                     'code icon'
                 );
             }
-            
+
             // Sound files
             if (data.customSoundFiles > 0) {
                 statisticsHtml += generalSettingsDeleteAll.createStatisticItem(
-                    'sounds', 
-                    globalTranslate.gs_StatSoundFiles, 
+                    'sounds',
+                    globalTranslate.gs_StatSoundFiles,
                     data.customSoundFiles,
                     'music icon'
                 );
             }
-            
+
             // MOH (Music On Hold) files
             if (data.mohFiles > 0) {
                 statisticsHtml += generalSettingsDeleteAll.createStatisticItem(
-                    'moh', 
-                    globalTranslate.gs_StatMohFiles, 
+                    'moh',
+                    globalTranslate.gs_StatMohFiles,
                     data.mohFiles,
                     'volume up icon'
                 );
             }
-            
+
             // Routes
             const totalRoutes = (data.incomingRoutes || 0) + (data.outgoingRoutes || 0);
             if (totalRoutes > 0) {
                 statisticsHtml += generalSettingsDeleteAll.createStatisticItem(
-                    'routes', 
-                    globalTranslate.gs_StatRoutes, 
+                    'routes',
+                    globalTranslate.gs_StatRoutes,
                     totalRoutes,
                     'random icon'
                 );
             }
-            
+
             // Firewall rules
             if (data.firewallRules > 0) {
                 statisticsHtml += generalSettingsDeleteAll.createStatisticItem(
-                    'firewall', 
-                    globalTranslate.gs_StatFirewallRules, 
+                    'firewall',
+                    globalTranslate.gs_StatFirewallRules,
                     data.firewallRules,
                     'shield icon'
                 );
             }
-            
+
             // Modules
             if (data.modules > 0) {
                 statisticsHtml += generalSettingsDeleteAll.createStatisticItem(
-                    'modules', 
-                    globalTranslate.gs_StatModules, 
+                    'modules',
+                    globalTranslate.gs_StatModules,
                     data.modules,
                     'puzzle piece icon'
                 );
             }
-            
+
             // Call history
             if (data.callHistory > 0) {
                 statisticsHtml += generalSettingsDeleteAll.createStatisticItem(
-                    'cdr', 
-                    globalTranslate.gs_StatCallHistory, 
+                    'cdr',
+                    globalTranslate.gs_StatCallHistory,
                     data.callHistory.toLocaleString(),
                     'history icon'
                 );
             }
-            
+
             // Call recordings
             if (data.callRecordings > 0) {
                 const sizeStr = generalSettingsDeleteAll.formatBytes(data.callRecordingsSize || 0);
                 statisticsHtml += generalSettingsDeleteAll.createStatisticItem(
-                    'recordings', 
-                    globalTranslate.gs_StatCallRecordings, 
+                    'recordings',
+                    globalTranslate.gs_StatCallRecordings,
                     `${data.callRecordings.toLocaleString()} (${sizeStr})`,
                     'microphone icon'
                 );
             }
-            
+
             // Backups
             if (data.backups > 0) {
                 const sizeStr = generalSettingsDeleteAll.formatBytes(data.backupsSize || 0);
                 statisticsHtml += generalSettingsDeleteAll.createStatisticItem(
-                    'backups', 
-                    globalTranslate.gs_StatBackups, 
+                    'backups',
+                    globalTranslate.gs_StatBackups,
                     `${data.backups} (${sizeStr})`,
                     'archive icon'
                 );
             }
-            
+
             // Custom files
             if (data.customFiles > 0) {
                 statisticsHtml += generalSettingsDeleteAll.createStatisticItem(
-                    'custom', 
-                    globalTranslate.gs_StatCustomFiles, 
+                    'custom',
+                    globalTranslate.gs_StatCustomFiles,
                     data.customFiles,
                     'file icon'
                 );
             }
-            
+
             // If no data will be deleted
             if (statisticsHtml === '') {
                 statisticsHtml = `
@@ -311,7 +315,7 @@ const generalSettingsDeleteAll = {
                     </div>
                 `;
             }
-            
+
             // Update modal content
             $statisticsContent.html(statisticsHtml);
         });
