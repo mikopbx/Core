@@ -57,15 +57,15 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ResourceSecurity('modules', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
 #[HttpMapping(
     mapping: [
-        'GET' => ['getList', 'getRecord', 'getDefault', 'getAvailableModules', 'getModuleInfo', 'getModuleLink', 'downloadStatus', 'installationStatus'],
-        'POST' => ['create', 'installFromRepo', 'installFromPackage', 'enable', 'disable', 'uninstall', 'updateAll', 'startDownload', 'getMetadataFromModulePackage'],
+        'GET' => ['getList', 'getRecord', 'getDefault', 'getAvailableModules', 'getModuleInfo', 'getModuleLink', 'getDownloadStatus', 'getInstallationStatus'],
+        'POST' => ['create', 'installFromRepo', 'installFromPackage', 'enable', 'disable', 'uninstall', 'updateAll', 'startDownload', 'getMetadataFromPackage'],
         'PUT' => ['update'],
         'PATCH' => ['patch'],
         'DELETE' => ['delete']
     ],
-    resourceLevelMethods: ['getRecord', 'update', 'patch', 'delete', 'getModuleInfo', 'getModuleLink', 'installFromRepo', 'enable', 'disable', 'uninstall', 'startDownload', 'downloadStatus'],
-    collectionLevelMethods: ['getList', 'create', 'getDefault', 'getAvailableModules', 'installFromPackage', 'updateAll', 'getMetadataFromModulePackage', 'installationStatus'],
-    customMethods: ['getDefault', 'getAvailableModules', 'getModuleInfo', 'getModuleLink', 'installFromRepo', 'installFromPackage', 'enable', 'disable', 'uninstall', 'updateAll', 'startDownload', 'downloadStatus', 'getMetadataFromModulePackage', 'installationStatus'],
+    resourceLevelMethods: ['getRecord', 'update', 'patch', 'delete', 'getModuleInfo', 'getModuleLink', 'installFromRepo', 'enable', 'disable', 'uninstall', 'startDownload', 'getDownloadStatus'],
+    collectionLevelMethods: ['getList', 'create', 'getDefault', 'getAvailableModules', 'installFromPackage', 'updateAll', 'getMetadataFromPackage', 'getInstallationStatus'],
+    customMethods: ['getDefault', 'getAvailableModules', 'getModuleInfo', 'getModuleLink', 'installFromRepo', 'installFromPackage', 'enable', 'disable', 'uninstall', 'updateAll', 'startDownload', 'getDownloadStatus', 'getMetadataFromPackage', 'getInstallationStatus'],
     idPattern: '[A-Za-z][A-Za-z0-9]*'
 )]
 class RestController extends BaseRestController
@@ -440,7 +440,7 @@ class RestController extends BaseRestController
     #[ApiOperation(
         summary: 'rest_mod_Enable',
         description: 'rest_mod_EnableDesc',
-        operationId: 'enableModule'
+        operationId: 'enable'
     )]
     #[ApiParameter('id', 'string', 'rest_param_module_id', ParameterLocation::PATH, required: true, example: 'ModuleTemplate')]
     #[ApiParameter('asyncChannelId', 'string', 'rest_param_async_channel_id', ParameterLocation::QUERY, required: false, example: 'enable-123')]
@@ -451,13 +451,7 @@ class RestController extends BaseRestController
     #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
     public function enable(string $id): void
     {
-        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
-        $requestData['uniqid'] = $id;
-        $this->sendRequestToBackendWorker(
-            $this->processorClass,
-            'enableModule',
-            $requestData
-        );
+        // Implementation handled by BaseRestController via handleCustomRequest
     }
 
     /**
@@ -468,7 +462,7 @@ class RestController extends BaseRestController
     #[ApiOperation(
         summary: 'rest_mod_Disable',
         description: 'rest_mod_DisableDesc',
-        operationId: 'disableModule'
+        operationId: 'disable'
     )]
     #[ApiParameter('id', 'string', 'rest_param_module_id', ParameterLocation::PATH, required: true, example: 'ModuleTemplate')]
     #[ApiParameter('reason', 'string', 'rest_param_module_disable_reason', ParameterLocation::QUERY, required: false, example: 'manual')]
@@ -481,13 +475,7 @@ class RestController extends BaseRestController
     #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
     public function disable(string $id): void
     {
-        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
-        $requestData['uniqid'] = $id;
-        $this->sendRequestToBackendWorker(
-            $this->processorClass,
-            'disableModule',
-            $requestData
-        );
+        // Implementation handled by BaseRestController via handleCustomRequest
     }
 
     /**
@@ -498,7 +486,7 @@ class RestController extends BaseRestController
     #[ApiOperation(
         summary: 'rest_mod_Uninstall',
         description: 'rest_mod_UninstallDesc',
-        operationId: 'uninstallModule'
+        operationId: 'uninstall'
     )]
     #[ApiParameter('id', 'string', 'rest_param_module_id', ParameterLocation::PATH, required: true, example: 'ModuleTemplate')]
     #[ApiParameter('keepSettings', 'boolean', 'rest_param_module_keep_settings', ParameterLocation::QUERY, required: false, default: false, example: false)]
@@ -510,13 +498,7 @@ class RestController extends BaseRestController
     #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
     public function uninstall(string $id): void
     {
-        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
-        $requestData['uniqid'] = $id;
-        $this->sendRequestToBackendWorker(
-            $this->processorClass,
-            'uninstallModule',
-            $requestData
-        );
+        // Implementation handled by BaseRestController via handleCustomRequest
     }
 
     /**
@@ -580,7 +562,7 @@ class RestController extends BaseRestController
     #[ApiOperation(
         summary: 'rest_mod_StartDownload',
         description: 'rest_mod_StartDownloadDesc',
-        operationId: 'moduleStartDownload'
+        operationId: 'startDownload'
     )]
     #[ApiParameter('id', 'string', 'rest_param_module_id', ParameterLocation::PATH, required: true, example: 'ModuleTemplate')]
     #[ApiParameter('url', 'string', 'rest_param_module_download_url', ParameterLocation::QUERY, required: true, example: 'https://releases.mikopbx.com/modules/ModuleTemplate-1.0.0.zip')]
@@ -591,45 +573,33 @@ class RestController extends BaseRestController
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
     public function startDownload(string $id): void
     {
-        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
-        $requestData['uniqid'] = $id;
-        $this->sendRequestToBackendWorker(
-            $this->processorClass,
-            'moduleStartDownload',
-            $requestData
-        );
+        // Implementation handled by BaseRestController via handleCustomRequest
     }
 
     /**
      * Get module download status
      *
-     * @route GET /pbxcore/api/v3/modules/{id}:downloadStatus
+     * @route GET /pbxcore/api/v3/modules/{id}:getDownloadStatus
      */
     #[ApiOperation(
         summary: 'rest_mod_DownloadStatus',
         description: 'rest_mod_DownloadStatusDesc',
-        operationId: 'moduleDownloadStatus'
+        operationId: 'getDownloadStatus'
     )]
     #[ApiParameter('id', 'string', 'rest_param_module_id', ParameterLocation::PATH, required: true, example: 'ModuleTemplate')]
     #[ApiResponse(200, 'rest_response_200_get')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
     #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
-    public function downloadStatus(string $id): void
+    public function getDownloadStatus(string $id): void
     {
-        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
-        $requestData['uniqid'] = $id;
-        $this->sendRequestToBackendWorker(
-            $this->processorClass,
-            'moduleDownloadStatus',
-            $requestData
-        );
+        // Implementation handled by BaseRestController via handleCustomRequest
     }
 
     /**
      * Get metadata from module package
      *
-     * @route POST /pbxcore/api/v3/modules:getMetadataFromModulePackage
+     * @route POST /pbxcore/api/v3/modules:getMetadataFromPackage
      */
     #[ApiDataSchema(
         schemaClass: DataStructure::class,
@@ -638,44 +608,34 @@ class RestController extends BaseRestController
     #[ApiOperation(
         summary: 'rest_mod_GetMetadataFromPackage',
         description: 'rest_mod_GetMetadataFromPackageDesc',
-        operationId: 'getMetadataFromModulePackage'
+        operationId: 'getMetadataFromPackage'
     )]
     #[ApiParameter('filePath', 'string', 'rest_param_module_file_path', ParameterLocation::QUERY, required: true, example: '/tmp/module.zip')]
     #[ApiResponse(200, 'rest_response_200_get')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
-    public function getMetadataFromModulePackage(): void
+    public function getMetadataFromPackage(): void
     {
-        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
-        $this->sendRequestToBackendWorker(
-            $this->processorClass,
-            'getMetadataFromModulePackage',
-            $requestData
-        );
+        // Implementation handled by BaseRestController via handleCustomRequest
     }
 
     /**
      * Get module installation status
      *
-     * @route GET /pbxcore/api/v3/modules:installationStatus
+     * @route GET /pbxcore/api/v3/modules:getInstallationStatus
      */
     #[ApiOperation(
         summary: 'rest_mod_InstallationStatus',
         description: 'rest_mod_InstallationStatusDesc',
-        operationId: 'statusOfModuleInstallation'
+        operationId: 'getInstallationStatus'
     )]
     #[ApiParameter('filePath', 'string', 'rest_param_module_file_path', ParameterLocation::QUERY, required: true, example: '/tmp/module.zip')]
     #[ApiResponse(200, 'rest_response_200_get')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
-    public function installationStatus(): void
+    public function getInstallationStatus(): void
     {
-        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
-        $this->sendRequestToBackendWorker(
-            $this->processorClass,
-            'statusOfModuleInstallation',
-            $requestData
-        );
+        // Implementation handled by BaseRestController via handleCustomRequest
     }
 }

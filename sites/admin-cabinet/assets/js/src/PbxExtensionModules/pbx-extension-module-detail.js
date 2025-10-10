@@ -101,13 +101,12 @@ const extensionModuleDetail = {
      * Callback function to handle the response after fetching module details from the API.
      * It populates the module detail popup with the retrieved data, including name, logo, version, and other module-specific information.
      *
-     * @param {boolean} result - A boolean indicating if the API request was successful.
-     * @param {Object} response - The data returned from the API request, expected to contain module details such as name,
-     *                            logo URL, version, and other relevant information.
+     * @param {Object} repoData - The module data returned from the API request, containing module details such as name,
+     *                            logo URL, version, releases, and other relevant information.
+     * @param {boolean} success - A boolean indicating if the API request was successful.
      */
-    cbAfterGetModuleDetails(result, response) {
-        if(result) {
-            const repoData = response.data;
+    cbAfterGetModuleDetails(repoData, success) {
+        if(success) {
 
             const $newPopup = extensionModuleDetail.$moduleDetailPopup;
 

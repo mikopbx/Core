@@ -59,13 +59,13 @@ class ModulesManagementProcessor extends Injectable
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
             switch ($action) {
-                case 'moduleStartDownload':
+                case 'startDownload':
                     $module = $request['data']['uniqid'];
                     $url = $request['data']['url'];
                     $md5 = $request['data']['md5'];
                     $res = StartDownloadAction::main($module, $url, $md5);
                     break;
-                case 'moduleDownloadStatus':
+                case 'getDownloadStatus':
                     $module = $request['data']['uniqid'];
                     $res = DownloadStatusAction::main($module);
                     break;
@@ -77,7 +77,7 @@ class ModulesManagementProcessor extends Injectable
                     $installer->start();
                     $res->success = true;
                     break;
-                case 'getMetadataFromModulePackage':
+                case 'getMetadataFromPackage':
                     $filePath = $data['filePath'];
                     $res = GetMetadataFromModulePackageAction::main($filePath);
                     break;
@@ -93,23 +93,23 @@ class ModulesManagementProcessor extends Injectable
                     $moduleUniqueID = $data['uniqid'] ?? $data['id'] ?? '';
                     $res = GetModuleInfoAction::main($moduleUniqueID);
                     break;
-                case 'statusOfModuleInstallation':
+                case 'getInstallationStatus':
                     $filePath = $data['filePath'];
                     $res = StatusOfModuleInstallationAction::main($filePath);
                     break;
-                case 'enableModule':
+                case 'enable':
                     $asyncChannelId = $request['asyncChannelId'];
                     $moduleUniqueID = $data['uniqid'] ?? $data['id'];
                     $res = EnableModuleAction::main($moduleUniqueID, $asyncChannelId);
                     break;
-                case 'disableModule':
+                case 'disable':
                     $asyncChannelId = $request['asyncChannelId']??'internal-request';
                     $moduleUniqueID = $data['uniqid'] ?? $data['id'];
                     $reason = $data['reason']??'';
                     $reasonText = $data['reasonText']??'';
                     $res = DisableModuleAction::main($moduleUniqueID, $reason, $reasonText, $asyncChannelId);
                     break;
-                case 'uninstallModule':
+                case 'uninstall':
                     $asyncChannelId = $request['asyncChannelId'];
                     $moduleUniqueID = $data['uniqid'] ?? $data['id'];
                     $keepSettings = $data['keepSettings'] === 'true';

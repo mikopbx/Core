@@ -170,8 +170,11 @@ abstract class BaseRestController extends BaseController
             'updateStatus',
             'enable',
             'disable',
+            'uninstall',
             'reset',
-            'restart'
+            'restart',
+            'startDownload',
+            'getDownloadStatus'
         ];
 
         return in_array($method, $resourceLevelMethods, true);
@@ -309,11 +312,11 @@ abstract class BaseRestController extends BaseController
             $this->sendErrorResponse('Processor class not configured', 500);
             return;
         }
-        
+
         // Determine if this is a collection-level or resource-level request
         $id = null;
         $actualMethod = null;
-        
+
         if ($customMethod !== null) {
             // Resource-level: /resource/{id}:method
             $id = $idOrMethod;
@@ -322,28 +325,28 @@ abstract class BaseRestController extends BaseController
             // Collection-level: /resource:method
             $actualMethod = $idOrMethod;
         }
-        
+
         // Validate method name
         if (empty($actualMethod)) {
             $this->sendErrorResponse('Custom method name is required', 400);
             return;
         }
-        
+
         // Check if method is allowed for this HTTP method
         $httpMethod = $this->request->getMethod();
         $allowedMethods = $this->getAllowedCustomMethods();
-        
+
         if (!isset($allowedMethods[$httpMethod]) || !in_array($actualMethod, $allowedMethods[$httpMethod], true)) {
             $this->sendErrorResponse("Method '$actualMethod' is not allowed with HTTP $httpMethod", 405);
             return;
         }
-        
+
         // Validate resource-level methods have an ID
         if ($this->isResourceLevelMethod($actualMethod) && empty($id)) {
             $this->sendErrorResponse("Method '$actualMethod' requires a resource ID", 400);
             return;
         }
-        
+
         // Sanitize all input data
         $requestData = self::sanitizeData($this->request->getData(), $this->filter);
 
@@ -351,13 +354,29 @@ abstract class BaseRestController extends BaseController
         if (!empty($id)) {
             $requestData['id'] = $id;
         }
-        
-        // Send request to backend worker with custom method as action
+
+        // Map custom method name to processor action (can be overridden in child classes)
+        $processorAction = $this->mapCustomMethodToAction($actualMethod);
+
+        // Send request to backend worker with mapped action
         $this->sendRequestToBackendWorker(
             $this->processorClass,
-            $actualMethod,
+            $processorAction,
             $requestData
         );
+    }
+
+    /**
+     * Map custom method name to processor action
+     * Override in child classes to provide custom mapping
+     *
+     * @param string $methodName The custom method name from the route
+     * @return string The processor action name
+     */
+    protected function mapCustomMethodToAction(string $methodName): string
+    {
+        // Default: use method name as-is
+        return $methodName;
     }
 
     /**

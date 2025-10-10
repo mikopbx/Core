@@ -253,6 +253,11 @@ class PbxApiClient {
             actualCallback = callback;
         }
 
+        // Ensure callback is a function
+        if (typeof actualCallback !== 'function') {
+            actualCallback = () => {};
+        }
+
         const apiSettings = this.getBaseApiSettings(
             (response) => actualCallback(response, true),
             (response) => {
@@ -375,6 +380,11 @@ class PbxApiClient {
         } else {
             data = dataOrCallback || {};
             actualCallback = callback;
+        }
+
+        // Ensure callback is a function (use noop if not provided)
+        if (typeof actualCallback !== 'function') {
+            actualCallback = () => {}; // Empty callback for fire-and-forget calls
         }
 
         const methodPath = this.customMethods[methodName];

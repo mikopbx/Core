@@ -56,9 +56,9 @@ const ModulesAPI = new PbxApiClient({
         uninstall: ':uninstall',
         updateAll: ':updateAll',
         startDownload: ':startDownload',
-        downloadStatus: ':downloadStatus',
-        getMetadataFromModulePackage: ':getMetadataFromModulePackage',
-        installationStatus: ':installationStatus'
+        getDownloadStatus: ':getDownloadStatus',
+        getMetadataFromPackage: ':getMetadataFromPackage',
+        getInstallationStatus: ':getInstallationStatus'
     }
 });
 
@@ -166,10 +166,16 @@ ModulesAPI.uninstallModule = function(params, callback) {
  * Retrieves module information from the repository
  * @param {object} params - Module info parameters
  * @param {string} params.uniqid - Module unique ID
- * @param {function} callback - Callback function (response, success)
+ * @param {function} callback - Callback function (data, success)
  */
 ModulesAPI.getModuleInfo = function(params, callback) {
-    this.callCustomMethod('getModuleInfo', {}, callback, 'GET', params.uniqid);
+    this.callCustomMethod('getModuleInfo', {}, (response, success) => {
+        if (success && response.data) {
+            callback(response.data, true);
+        } else {
+            callback(response, false);
+        }
+    }, 'GET', params.uniqid);
 };
 
 /**
