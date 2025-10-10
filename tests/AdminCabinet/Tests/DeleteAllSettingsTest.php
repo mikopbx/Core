@@ -26,7 +26,7 @@ use Facebook\WebDriver\WebDriverWait;
 use MikoPBX\Tests\AdminCabinet\Lib\MikoPBXTestsBase;
 use MikoPBX\Tests\AdminCabinet\Tests\AudioFiles\MikoHelloAudioTest;
 use MikoPBX\Tests\AdminCabinet\Tests\CallQueues\AccountantDepartmentTest;
-use MikoPBX\Tests\AdminCabinet\Tests\ConferenceRooms\BoardConferenceTest;
+use MikoPBX\Tests\AdminCabinet\Tests\ConferenceRooms\SalesConferenceTest;
 use MikoPBX\Tests\AdminCabinet\Tests\DialplanApplications\EchoTestTest;
 use MikoPBX\Tests\AdminCabinet\Tests\Extensions\BrownBrandonTest;
 use MikoPBX\Tests\AdminCabinet\Tests\Extensions\CollinsMelanieTest;
@@ -144,11 +144,14 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
                 WebDriverBy::id('delete-all-modal')
             )
         );
+
+        $phrase = self::$driver->executeScript("return globalTranslate.gs_BtnDeleteAll;");
+        self::annotate("Using delete phrase: '$phrase'");
         
         // Verify we're still on the same page and data is intact
-        $xpath = "//*[contains(text(), 'Danger Zone')]";
+        $xpath = "//*[contains(text(), '$phrase')]";
         $elements = self::$driver->findElements(WebDriverBy::xpath($xpath));
-        $this->assertGreaterThan(0, count($elements), "Text 'Danger Zone' should be present on page");
+        $this->assertGreaterThan(0, count($elements), "Text '$phrase' should be present on page");
         
         self::annotate("Cancel operation successful - modal closed without deleting data");
     }
@@ -179,17 +182,17 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
         // Create SIP provider
         $this->createTestProvider();
 
-        // Create incoming and outgoing routes
-        $this->createTestRoutes();
+        // Create Sound file
+        $this->createTestSoundFile();
 
         // Create call queue
         $this->createTestCallQueue();
 
-        // Create Sound file
-        $this->createTestSoundFile();
-
         // Create IVR menu
         $this->createTestIVRMenu();
+
+        // Create incoming and outgoing routes
+        $this->createTestRoutes();
 
     }
 
@@ -324,7 +327,7 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
     {
         $this->createEntityIfNotExists(
             'Sales Team Conference',
-            BoardConferenceTest::class,
+            SalesConferenceTest::class,
             'testCreateConferenceRoom',
             fn($name) => $this->conferenceRoomExistsBySearch($name),
             'conference room'
@@ -502,11 +505,11 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
             }
             
             // Fallback to a common phrase if pattern doesn't match
-            return "DELETE ALL SETTINGS";
+            return "delete all";
         } catch (\Exception $e) {
             // If we can't find the label, use a default phrase
             // This should be updated based on the actual translation
-            return "удалить всё"; // Default to Russian as it's commonly used
+            return "delete all"; // Default to Russian as it's commonly used
         }
     }
 

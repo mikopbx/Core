@@ -77,19 +77,21 @@ trait TableSearchTrait
                     );
                     self::annotate("Using DataTable built-in search input");
                 } catch (NoSuchElementException $e) {
-                    self::annotate("No search input found (neither custom nor DataTable)");
-                    return false;
+                    self::annotate("No search input found (neither custom nor DataTable), searching static table");
                 }
             }
 
-            // Clear and fill the search input
-            $searchInput->clear();
-            sleep(1); // Small delay to ensure clear is processed
-            $searchInput->sendKeys($searchQuery);
+            // If search input is available, use it to filter the table
+            if ($searchInput !== null) {
+                // Clear and fill the search input
+                $searchInput->clear();
+                sleep(1); // Small delay to ensure clear is processed
+                $searchInput->sendKeys($searchQuery);
 
-            // Wait for search to process (DataTable triggers on keyup)
-            sleep(2);
-            $this->waitForAjax();
+                // Wait for search to process (DataTable triggers on keyup)
+                sleep(2);
+                $this->waitForAjax();
+            }
 
             // Check if any rows are visible in the table
             // Try to find the text in the table body

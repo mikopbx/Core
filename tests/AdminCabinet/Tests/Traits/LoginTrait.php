@@ -61,9 +61,10 @@ trait LoginTrait
      *
      * @dataProvider loginDataProvider
      * @param array $params Login parameters
+     * @param bool $skipCookieRestore Skip cookie restoration attempt (useful for login tests)
      * @return void
      */
-    public function LoginOnMikoPbx(array $params): void
+    public function LoginOnMikoPbx(array $params, bool $skipCookieRestore = false): void
     {
         if ($this->cookieManager === null) {
             $this->initializeCookieManager();
@@ -71,8 +72,8 @@ trait LoginTrait
 
         $this->waitForAjax();
 
-        // Try to restore session from cookies
-        if ($this->tryLoginWithCookies()) {
+        // Try to restore session from cookies (skip for login tests to save time)
+        if (!$skipCookieRestore && $this->tryLoginWithCookies()) {
             self::annotate('Successfully logged in using saved session');
             $this->assertTrue(true);
             return;
@@ -106,18 +107,13 @@ trait LoginTrait
             // Navigate to dashboard or protected page
             self::$driver->navigate()->to($GLOBALS['SERVER_PBX']);
 
-            // Wait for initial AJAX requests (including TokenManager.initialize())
-            $this->waitForAjax();
-
-            // Give TokenManager extra time to complete /auth:refresh request
-            // and obtain new access token from refresh token cookie
-            sleep(2);
-
-            // Wait for any subsequent AJAX after token refresh
-            $this->waitForAjax();
+            // Give TokenManager time to initialize and call /auth:refresh
+            // No need to wait for ALL AJAX - just the JWT refresh
+            usleep(1500000); // 1.5 seconds for JWT refresh
 
             // Check if login was successful
-            $isLoggedIn = $this->isUserLoggedIn();
+            // isUserLoggedIn will wait up to 10 seconds for menu to appear
+            $isLoggedIn = $this->isUserLoggedIn(10);
 
             if ($isLoggedIn) {
                 self::annotate('Session restored successfully via JWT refresh token');
@@ -153,19 +149,16 @@ trait LoginTrait
         $this->cookieManager->clearAll();
 
         $this->waitForAjax();
-        
-        // Check if login form exists, if not - try to refresh up to 5 times
-        $maxRefreshAttempts = 5;
-        $refreshAttempt = 0;
-        $formFound = $this->isLoginFormPresent();
-        
-        while (!$formFound && $refreshAttempt < $maxRefreshAttempts) {
-            self::annotate('Login form not found, refreshing page. Attempt ' . ($refreshAttempt + 1));
+
+        // Quick check if login form exists
+        if (!$this->isLoginFormPresent()) {
+            self::annotate('Login form not found on first load, refreshing once');
             self::$driver->navigate()->refresh();
-            sleep(5); // Wait 5 seconds between attempts
-            $this->waitForAjax();
-            $formFound = $this->isLoginFormPresent();
-            $refreshAttempt++;
+            $this->waitForAjax(5); // Shorter timeout for refresh
+
+            if (!$this->isLoginFormPresent()) {
+                throw new RuntimeException('Login form not found after page refresh');
+            }
         }
 
         // First attempt with primary password
@@ -203,8 +196,10 @@ trait LoginTrait
             $xpath = '//form[@id="login-form"]//ancestor::div[@id="submitbutton"]';
             $submitButton = self::$driver->findElement(WebDriverBy::xpath($xpath));
             $submitButton->click();
-            // Wait for AJAX login request to start and complete
-            $this->waitForAjax(10, true);
+
+            // Just wait for login AJAX to start - no need to wait for ALL AJAX to complete
+            // The isUserLoggedIn() method will check if we're actually logged in
+            usleep(500000); // 500ms for login request to start
         } catch (\Exception $e) {
             throw new RuntimeException('Failed to submit login form: ' . $e->getMessage());
         }
@@ -222,13 +217,21 @@ trait LoginTrait
             $errorMessages = self::$driver->findElements(WebDriverBy::xpath($xpath));
 
             foreach ($errorMessages as $errorMessage) {
-                if ($errorMessage->isDisplayed()) {
-                    return true;
+                try {
+                    if ($errorMessage->isDisplayed()) {
+                        return true;
+                    }
+                } catch (\Facebook\WebDriver\Exception\StaleElementReferenceException $e) {
+                    // Element became stale (page redirected) - means login succeeded
+                    return false;
                 }
             }
+        } catch (\Facebook\WebDriver\Exception\StaleElementReferenceException $e) {
+            // Page redirected during element search - login likely succeeded
+            return false;
         } catch (\Exception $e) {
             // If we can't check for errors, assume login hasn't failed
-            self::annotate('Warning: Could not check for login errors: ' . $e->getMessage());
+            // This is intentionally quiet to avoid noise in logs for successful logins
         }
 
         return false;
@@ -244,7 +247,7 @@ trait LoginTrait
      * @param int $timeoutInSeconds Maximum time to wait for the menu to appear
      * @return bool True if login completed successfully, false otherwise
      */
-    protected function isUserLoggedIn(int $timeoutInSeconds = 30): bool
+    protected function isUserLoggedIn(int $timeoutInSeconds = 10): bool
     {
         try {
             // Create a WebDriverWait instance with appropriate timeout and polling interval

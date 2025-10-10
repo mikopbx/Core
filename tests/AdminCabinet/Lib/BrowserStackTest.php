@@ -277,7 +277,16 @@ abstract class BrowserStackTest extends TestCase
         }
 
         self::$driver->manage()->window()->maximize();
-        self::$driver->get($GLOBALS['SERVER_PBX']);
+
+        // Only navigate if we're not already on the target domain
+        // This preserves cookies between tests
+        $currentUrl = self::$driver->getCurrentURL();
+        $targetDomain = parse_url($GLOBALS['SERVER_PBX'], PHP_URL_HOST);
+        $currentDomain = parse_url($currentUrl, PHP_URL_HOST);
+
+        if ($currentDomain !== $targetDomain) {
+            self::$driver->get($GLOBALS['SERVER_PBX']);
+        }
     }
 
     /**

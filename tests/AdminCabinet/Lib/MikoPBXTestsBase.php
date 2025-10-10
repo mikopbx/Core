@@ -37,6 +37,11 @@ class MikoPBXTestsBase extends BrowserStackTest
     private static bool $isLoggedIn = false;
 
     /**
+     * @var bool Flag to skip auto-login in setUp (useful for login tests)
+     */
+    protected bool $skipAutoLogin = false;
+
+    /**
      * Set up before class
      */
     public static function setUpBeforeClass(): void
@@ -55,8 +60,8 @@ class MikoPBXTestsBase extends BrowserStackTest
     {
 
         parent::setUp();
-        // Perform login if not already logged in
-        if (!self::$isLoggedIn) {
+        // Perform login if not already logged in and not explicitly skipped
+        if (!self::$isLoggedIn && !$this->skipAutoLogin) {
             // Get login credentials from data provider
             $loginData = $this->loginDataProvider();
             $this->loginOnMikoPBX($loginData[0][0]);
