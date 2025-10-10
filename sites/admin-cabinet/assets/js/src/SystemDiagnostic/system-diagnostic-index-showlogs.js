@@ -225,8 +225,15 @@ const systemDiagnosticLogs = {
             systemDiagnosticLogs.eraseCurrentFileContent();
         });
 
-        // Event listener for Enter keypress on input fields
-        $('input').keyup((event) => {
+        // Event listener for "Clear Filter" button click (delegated)
+        $(document).on('click', '#clear-filter-btn', (e) => {
+            e.preventDefault();
+            systemDiagnosticLogs.$formObj.form('set value', 'filter', '');
+            systemDiagnosticLogs.updateLogFromServer();
+        });
+
+        // Event listener for Enter keypress only on filter input field
+        $(document).on('keyup', '#filter', (event) => {
             if (event.keyCode === 13) {
                 systemDiagnosticLogs.updateLogFromServer();
             }
@@ -653,8 +660,28 @@ const systemDiagnosticLogs = {
         // Update URL hash with the selected file
         window.location.hash = 'file=' + encodeURIComponent(value);
 
+        // Reset filters only if user manually changed the file (not during initialization)
+        if (!systemDiagnosticLogs.isInitializing) {
+            systemDiagnosticLogs.resetFilters();
+        }
+
         // Check if time range is available for this file
         systemDiagnosticLogs.checkTimeRangeAvailability(value);
+    },
+
+    /**
+     * Reset all filters when changing log files
+     */
+    resetFilters() {
+        // Deactivate all quick-period buttons
+        $('.period-btn').removeClass('active');
+
+        // Reset logLevel dropdown to default (All Levels - empty value)
+        $('#logLevel-dropdown').dropdown('set selected', '');
+        systemDiagnosticLogs.$formObj.form('set value', 'logLevel', '');
+
+        // Clear filter input field
+        systemDiagnosticLogs.$formObj.form('set value', 'filter', '');
     },
 
     /**
@@ -701,7 +728,6 @@ const systemDiagnosticLogs = {
             // Set server timezone offset
             if (timeRangeData.server_timezone_offset !== undefined) {
                 SVGTimeline.serverTimezoneOffset = timeRangeData.server_timezone_offset;
-                console.log('Time mode - Server timezone offset:', timeRangeData.server_timezone_offset, 'seconds');
             }
 
             // Initialize SVG timeline with time range
@@ -839,31 +865,17 @@ const systemDiagnosticLogs = {
     },
 
     /**
-     * Apply quick period selection
-     * @param {string|number} period - Period identifier or seconds
+     * Apply quick period selection (Yandex Cloud LogViewer style)
+     * @param {number} periodSeconds - Period in seconds
      */
-    applyQuickPeriod(period) {
+    applyQuickPeriod(periodSeconds) {
         if (!this.currentTimeRange) {
             return;
         }
 
-        let start;
-        let end = this.currentTimeRange.end;
-
-        if (period === 'today') {
-            // Today from 00:00
-            const now = new Date(end * 1000);
-            const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            start = Math.floor(todayStart.getTime() / 1000);
-        } else {
-            // Period in seconds
-            const seconds = parseInt(period);
-            start = Math.max(end - seconds, this.currentTimeRange.start);
-        }
-
-        // Update SVG timeline
-        SVGTimeline.setRange(start, end);
-        this.loadLogByTimeRange(start, end);
+        // Use new applyPeriod method that handles visible range and auto-centering
+        SVGTimeline.applyPeriod(periodSeconds);
+        // Callback will be triggered automatically by SVGTimeline
     },
 
     /**

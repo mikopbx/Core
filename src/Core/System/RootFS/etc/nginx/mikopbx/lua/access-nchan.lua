@@ -27,9 +27,6 @@ end
 -- Token present - validate via PHP endpoint (internal location with camelCase method name)
 local res = ngx.location.capture("/pbxcore/api/v3/auth:validateToken?token=" .. ngx.escape_uri(token))
 
--- Log the response for debugging
-ngx.log(ngx.ERR, "[access-nchan] PHP response status: ", res.status, " body: ", res.body or "empty")
-
 if res.status == 200 then
     -- JWT token is valid - allow access
     ngx.log(ngx.NOTICE, "[access-nchan] Token validated successfully")

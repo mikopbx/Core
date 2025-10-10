@@ -681,6 +681,7 @@ return [
     'sd_ToolTipErase' => 'Очистить файл',
     'sd_ToolTipFullscreen' => 'Развернуть на весь экран',
     'sd_ToolTipRefresh' => 'Получить последнюю версию лог файла',
+    'sd_ClearFilter' => 'Очистить фильтр',
     'sd_filter' => 'Фильтр',
     'sd_lines' => 'Лимит',
     'sd_offset' => 'Офсет',

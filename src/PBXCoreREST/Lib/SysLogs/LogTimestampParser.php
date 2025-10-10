@@ -146,7 +146,10 @@ class LogTimestampParser
      */
     private static function getFirstTimestamp(string $filename): ?int
     {
-        $handle = fopen($filename, 'r');
+        // Check if file is gzipped
+        $isGzipped = str_ends_with($filename, '.gz');
+        $handle = $isGzipped ? gzopen($filename, 'r') : fopen($filename, 'r');
+
         if ($handle === false) {
             return null;
         }
@@ -155,7 +158,7 @@ class LogTimestampParser
         $maxLines = 100; // Check first 100 lines max
         $lineCount = 0;
 
-        while (($line = fgets($handle)) !== false && $lineCount < $maxLines) {
+        while (($line = $isGzipped ? gzgets($handle) : fgets($handle)) !== false && $lineCount < $maxLines) {
             $lineCount++;
             $timestamp = self::parseTimestamp($line);
             if ($timestamp !== null) {
@@ -163,7 +166,7 @@ class LogTimestampParser
             }
         }
 
-        fclose($handle);
+        $isGzipped ? gzclose($handle) : fclose($handle);
         return $timestamp;
     }
 
@@ -176,7 +179,16 @@ class LogTimestampParser
     private static function getLastTimestamp(string $filename): ?int
     {
         $maxLines = 100; // Check last 100 lines max
-        $lines = self::readLastLines($filename, $maxLines);
+
+        // Check if file is gzipped
+        $isGzipped = str_ends_with($filename, '.gz');
+
+        // For gzipped files, read all lines since seeking backward is not efficient
+        if ($isGzipped) {
+            $lines = self::readAllLinesGzipped($filename, $maxLines);
+        } else {
+            $lines = self::readLastLines($filename, $maxLines);
+        }
 
         // Parse from last to first
         for ($i = count($lines) - 1; $i >= 0; $i--) {
@@ -239,6 +251,33 @@ class LogTimestampParser
     }
 
     /**
+     * Read all lines from gzipped file, keeping only last N lines
+     *
+     * @param string $filename Full path to gzipped log file
+     * @param int $maxLines Maximum number of lines to keep
+     * @return array<int, string> Array of last lines
+     */
+    private static function readAllLinesGzipped(string $filename, int $maxLines): array
+    {
+        $handle = gzopen($filename, 'r');
+        if ($handle === false) {
+            return [];
+        }
+
+        $lines = [];
+        while (($line = gzgets($handle)) !== false) {
+            $lines[] = $line;
+            // Keep only last N lines to avoid memory issues
+            if (count($lines) > $maxLines) {
+                array_shift($lines);
+            }
+        }
+
+        gzclose($handle);
+        return $lines;
+    }
+
+    /**
      * Count total lines in file
      *
      * @param string $filename Full path to log file
@@ -246,19 +285,23 @@ class LogTimestampParser
      */
     private static function countLines(string $filename): int
     {
-        $handle = fopen($filename, 'r');
+        // Check if file is gzipped
+        $isGzipped = str_ends_with($filename, '.gz');
+        $handle = $isGzipped ? gzopen($filename, 'r') : fopen($filename, 'r');
+
         if ($handle === false) {
             return 0;
         }
 
         $lines = 0;
         while (!feof($handle)) {
-            if (fgets($handle) !== false) {
+            $line = $isGzipped ? gzgets($handle) : fgets($handle);
+            if ($line !== false) {
                 $lines++;
             }
         }
 
-        fclose($handle);
+        $isGzipped ? gzclose($handle) : fclose($handle);
         return $lines;
     }
 }

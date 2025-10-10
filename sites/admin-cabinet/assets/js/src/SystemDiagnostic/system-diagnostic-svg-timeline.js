@@ -36,25 +36,37 @@ const SVGTimeline = {
     svg: null,
 
     /**
-     * Time range boundaries
+     * Full available range (entire log file)
      * @type {object}
      */
-    timeRange: null,
+    fullRange: {
+        start: null,
+        end: null
+    },
 
     /**
-     * Server timezone offset in seconds
-     * @type {number}
+     * Visible range on timeline (controlled by period buttons and zoom)
+     * @type {object}
      */
-    serverTimezoneOffset: 0,
+    visibleRange: {
+        start: null,
+        end: null
+    },
 
     /**
-     * Current selected range
+     * Selected range for data loading (always 1/4 of visibleRange, centered)
      * @type {object}
      */
     selectedRange: {
         start: null,
         end: null
     },
+
+    /**
+     * Server timezone offset in seconds
+     * @type {number}
+     */
+    serverTimezoneOffset: 0,
 
     /**
      * Dimensions - compact version
@@ -74,14 +86,14 @@ const SVGTimeline = {
         active: false,
         handle: null, // 'left', 'right', 'range'
         startX: 0,
-        startLeft: 0,
-        startRight: 0
+        startSelectedStart: 0,
+        startSelectedEnd: 0
     },
 
     /**
-     * Initialize timeline
+     * Initialize timeline (Yandex Cloud LogViewer style)
      * @param {string|HTMLElement} container - Container selector or element
-     * @param {object} timeRange - Time range with start and end timestamps
+     * @param {object} timeRange - Full time range with start and end timestamps
      */
     initialize(container, timeRange) {
         this.container = typeof container === 'string'
@@ -93,13 +105,35 @@ const SVGTimeline = {
             return;
         }
 
-        this.timeRange = timeRange;
+        // Store full range (entire log file)
+        this.fullRange.start = timeRange.start;
+        this.fullRange.end = timeRange.end;
         this.dimensions.width = this.container.offsetWidth;
 
-        // Set initial selection (last hour)
-        const oneHour = 3600;
-        this.selectedRange.end = timeRange.end;
-        this.selectedRange.start = Math.max(timeRange.end - oneHour, timeRange.start);
+        // Determine initial visible range based on total duration
+        const totalDuration = timeRange.end - timeRange.start;
+        let initialVisibleDuration;
+
+        if (totalDuration > 86400 * 7) {
+            // If logs span more than 7 days, show last 24 hours as visible
+            initialVisibleDuration = 86400; // 24 hours
+        } else if (totalDuration > 86400) {
+            // If logs span 1-7 days, show last 12 hours
+            initialVisibleDuration = 43200; // 12 hours
+        } else if (totalDuration > 3600 * 6) {
+            // If logs span 6-24 hours, show last 6 hours
+            initialVisibleDuration = 21600; // 6 hours
+        } else {
+            // For shorter logs, show entire range
+            initialVisibleDuration = totalDuration;
+        }
+
+        // Set visible range (what user sees on timeline)
+        this.visibleRange.end = timeRange.end;
+        this.visibleRange.start = Math.max(timeRange.end - initialVisibleDuration, timeRange.start);
+
+        // Calculate selected range as 1/4 of visible range, centered
+        this.calculateCenteredSelection();
 
         // Create SVG structure
         this.createSVG();
@@ -111,37 +145,109 @@ const SVGTimeline = {
     },
 
     /**
-     * Calculate adaptive time step based on range duration
-     * @param {number} duration - Duration in seconds
-     * @returns {object} Step configuration {value, label}
+     * Calculate centered selection (1/4 of visible range, positioned at center)
      */
-    calculateAdaptiveStep(duration) {
-        // Time steps in seconds with labels
+    calculateCenteredSelection() {
+        const visibleDuration = this.visibleRange.end - this.visibleRange.start;
+        const selectedDuration = visibleDuration / 4;
+        const visibleCenter = this.visibleRange.start + (visibleDuration / 2);
+
+        this.selectedRange.start = visibleCenter - (selectedDuration / 2);
+        this.selectedRange.end = visibleCenter + (selectedDuration / 2);
+
+        // Ensure selected range stays within visible range
+        if (this.selectedRange.start < this.visibleRange.start) {
+            this.selectedRange.start = this.visibleRange.start;
+            this.selectedRange.end = this.visibleRange.start + selectedDuration;
+        }
+        if (this.selectedRange.end > this.visibleRange.end) {
+            this.selectedRange.end = this.visibleRange.end;
+            this.selectedRange.start = this.visibleRange.end - selectedDuration;
+        }
+    },
+
+    /**
+     * Calculate adaptive time step based on range duration and available width
+     * Ensures labels are not closer than 2cm (~75px at standard DPI)
+     *
+     * @param {number} duration - Duration in seconds
+     * @param {number} availableWidth - Available width in pixels
+     * @returns {object} Step configuration {value, label, format}
+     */
+    calculateAdaptiveStep(duration, availableWidth) {
+        // Time steps in seconds with labels (from smallest to largest)
         const steps = [
-            { value: 300, label: '5 min', format: 'HH:MM' },        // 5 minutes
-            { value: 1800, label: '30 min', format: 'HH:MM' },      // 30 minutes
-            { value: 3600, label: '1 hour', format: 'HH:MM' },      // 1 hour
-            { value: 43200, label: '12 hours', format: 'HH:MM' },   // 0.5 day
-            { value: 86400, label: '1 day', format: 'MM-DD' }       // 1 day
+            { value: 1, label: '1 sec', format: 'HH:MM:SS' },        // 1 second
+            { value: 5, label: '5 sec', format: 'HH:MM:SS' },        // 5 seconds
+            { value: 10, label: '10 sec', format: 'HH:MM:SS' },      // 10 seconds
+            { value: 30, label: '30 sec', format: 'HH:MM:SS' },      // 30 seconds
+            { value: 60, label: '1 min', format: 'HH:MM' },          // 1 minute
+            { value: 300, label: '5 min', format: 'HH:MM' },         // 5 minutes
+            { value: 600, label: '10 min', format: 'HH:MM' },        // 10 minutes
+            { value: 1800, label: '30 min', format: 'HH:MM' },       // 30 minutes
+            { value: 3600, label: '1 hour', format: 'HH:MM' },       // 1 hour
+            { value: 10800, label: '3 hours', format: 'HH:MM' },     // 3 hours
+            { value: 21600, label: '6 hours', format: 'HH:MM' },     // 6 hours
+            { value: 43200, label: '12 hours', format: 'HH:MM' },    // 12 hours
+            { value: 86400, label: '1 day', format: 'MM-DD' },       // 1 day
+            { value: 259200, label: '3 days', format: 'MM-DD' },     // 3 days
+            { value: 604800, label: '1 week', format: 'MM-DD' },     // 7 days
+            { value: 2592000, label: '1 month', format: 'MM-DD' }    // 30 days
         ];
 
-        // Calculate optimal number of labels (between 4 and 16)
-        const targetLabels = 8;
+        // Minimum spacing between labels: 2cm ≈ 75px (at 96 DPI)
+        // Using 80px to be safe and account for label width
+        const minSpacingPx = 80;
 
+        // Calculate maximum number of labels that fit with minimum spacing
+        const maxLabels = Math.floor(availableWidth / minSpacingPx);
+
+        // Ensure at least 2 labels, but not more than available space allows
+        const targetMinLabels = Math.max(2, Math.min(4, maxLabels));
+        const targetMaxLabels = Math.max(targetMinLabels, maxLabels);
+
+        // Find step that produces appropriate number of labels
         for (let i = 0; i < steps.length; i++) {
             const numLabels = Math.floor(duration / steps[i].value);
-            if (numLabels <= targetLabels * 2 && numLabels >= 2) {
+
+            // Check if this step produces acceptable number of labels
+            if (numLabels >= targetMinLabels && numLabels <= targetMaxLabels) {
                 return steps[i];
             }
         }
 
-        // For very short durations, use smallest step
-        if (duration < steps[0].value * 2) {
-            return steps[0];
+        // If no perfect match, find closest match
+        let bestStep = steps[0];
+        let bestDiff = Infinity;
+
+        for (let i = 0; i < steps.length; i++) {
+            const numLabels = Math.floor(duration / steps[i].value);
+
+            // For very short durations, prefer step that produces at least 2 labels
+            if (duration < steps[0].value * targetMinLabels) {
+                if (numLabels >= 2) {
+                    return steps[i];
+                }
+                continue;
+            }
+
+            // Calculate difference from ideal range
+            let diff;
+            if (numLabels < targetMinLabels) {
+                diff = (targetMinLabels - numLabels) * 2; // Penalize too few labels more
+            } else if (numLabels > targetMaxLabels) {
+                diff = numLabels - targetMaxLabels; // Penalize too many labels
+            } else {
+                diff = 0; // Within acceptable range
+            }
+
+            if (diff < bestDiff) {
+                bestDiff = diff;
+                bestStep = steps[i];
+            }
         }
 
-        // For very long durations, use largest step
-        return steps[steps.length - 1];
+        return bestStep;
     },
 
     /**
@@ -182,54 +288,56 @@ const SVGTimeline = {
 
     /**
      * Draw timeline ticks and labels
+     * Uses VISIBLE range for adaptive scaling (Yandex Cloud style)
      */
     drawTicks() {
-        const { start, end } = this.timeRange;
-        const duration = end - start;
         const { width, height, padding } = this.dimensions;
         const availableWidth = width - (padding * 2);
 
-        console.log('drawTicks:', { start, end, duration, width, availableWidth });
+        // Use visible range for both positioning and step calculation
+        const visibleDuration = this.visibleRange.end - this.visibleRange.start;
 
-        // Get adaptive step for this time range
-        const step = this.calculateAdaptiveStep(duration);
-        console.log('Adaptive step:', step);
+        // Get adaptive step based on VISIBLE duration and available width
+        const step = this.calculateAdaptiveStep(visibleDuration, availableWidth);
 
-        // Round start to nearest step interval
-        const roundedStart = Math.floor(start / step.value) * step.value;
-        console.log('roundedStart:', roundedStart);
+        // Round visible range to nearest step interval
+        const roundedStart = Math.floor(this.visibleRange.start / step.value) * step.value;
 
-        // Draw major ticks at discrete intervals
+        // Store major tick positions for collision detection
+        const majorTickPositions = new Set();
+
+        // Draw major ticks at discrete intervals within visible range
         let timestamp = roundedStart;
-        let tickCount = 0;
-        while (timestamp <= end) {
-            if (timestamp >= start) {
-                const x = padding + ((timestamp - start) / duration) * availableWidth;
+        while (timestamp <= this.visibleRange.end) {
+            if (timestamp >= this.visibleRange.start) {
+                // Calculate position relative to VISIBLE range (not full range!)
+                const x = padding + ((timestamp - this.visibleRange.start) / visibleDuration) * availableWidth;
+                majorTickPositions.add(Math.round(timestamp));
 
                 // Major tick - bottom (compact)
                 this.drawTick(x, height - 6, 4, '#767676');
 
-                // Label - centered vertically (compact)
-                this.drawLabel(x, height / 2 + 3, this.formatTime(timestamp));
-                tickCount++;
+                // Label - centered vertically (compact) with format from step
+                this.drawLabel(x, height / 2 + 3, this.formatTime(timestamp, step.format));
             }
             timestamp += step.value;
         }
-        console.log('Drew', tickCount, 'ticks');
 
         // Draw minor ticks between major ones (5 per interval)
-        timestamp = roundedStart;
+        let minorTimestamp = roundedStart;
         const minorStep = step.value / 5;
-        while (timestamp <= end) {
-            if (timestamp >= start) {
-                const x = padding + ((timestamp - start) / duration) * availableWidth;
-
-                // Only draw if not a major tick position (compact)
-                if ((timestamp - roundedStart) % step.value !== 0) {
+        while (minorTimestamp <= this.visibleRange.end) {
+            if (minorTimestamp >= this.visibleRange.start) {
+                // Check if this is not a major tick position
+                const roundedMinorTimestamp = Math.round(minorTimestamp);
+                if (!majorTickPositions.has(roundedMinorTimestamp)) {
+                    // Calculate position relative to VISIBLE range
+                    const x = padding + ((minorTimestamp - this.visibleRange.start) / visibleDuration) * availableWidth;
+                    // Minor tick - shorter and lighter
                     this.drawTick(x, height - 5, 2, '#d4d4d5');
                 }
             }
-            timestamp += minorStep;
+            minorTimestamp += minorStep;
         }
     },
 
@@ -288,7 +396,8 @@ const SVGTimeline = {
     getTextBBox(text) {
         // Approximate size based on font size and character count
         const fontSize = 11;
-        const charWidth = 6; // Average character width for font-size 11px
+        // Use monospace width for time labels (seconds format is longer)
+        const charWidth = text.includes(':') ? 6.5 : 6; // Wider for time formats
         return {
             width: text.length * charWidth,
             height: fontSize + 2
@@ -296,16 +405,16 @@ const SVGTimeline = {
     },
 
     /**
-     * Draw selection range
+     * Draw selection range (relative to visible range)
      */
     drawSelection() {
-        const { start, end } = this.timeRange;
-        const duration = end - start;
+        const visibleDuration = this.visibleRange.end - this.visibleRange.start;
         const { width, padding } = this.dimensions;
         const availableWidth = width - (padding * 2);
 
-        const leftPercent = ((this.selectedRange.start - start) / duration) * 100;
-        const rightPercent = ((this.selectedRange.end - start) / duration) * 100;
+        // Calculate position relative to VISIBLE range
+        const leftPercent = ((this.selectedRange.start - this.visibleRange.start) / visibleDuration) * 100;
+        const rightPercent = ((this.selectedRange.end - this.visibleRange.start) / visibleDuration) * 100;
         const widthPercent = rightPercent - leftPercent;
 
         const x = padding + (leftPercent / 100) * availableWidth;
@@ -345,19 +454,20 @@ const SVGTimeline = {
     },
 
     /**
-     * Draw "Now" line
+     * Draw "Now" line (relative to visible range)
      */
     drawNowLine() {
-        const { start, end } = this.timeRange;
         const now = Math.floor(Date.now() / 1000);
 
-        if (now < start || now > end) return;
+        // Only draw if "now" is within visible range
+        if (now < this.visibleRange.start || now > this.visibleRange.end) return;
 
-        const duration = end - start;
+        const visibleDuration = this.visibleRange.end - this.visibleRange.start;
         const { width, padding } = this.dimensions;
         const availableWidth = width - (padding * 2);
 
-        const x = padding + ((now - start) / duration) * availableWidth;
+        // Calculate position relative to VISIBLE range
+        const x = padding + ((now - this.visibleRange.start) / visibleDuration) * availableWidth;
 
         const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
         line.setAttribute('x1', x);
@@ -371,33 +481,32 @@ const SVGTimeline = {
     /**
      * Format timestamp to time string (server time)
      * @param {number} timestamp - Unix timestamp in UTC
-     * @returns {string} Formatted time (HH:MM) in server timezone
+     * @param {string} format - Format type: 'HH:MM:SS', 'HH:MM', or 'MM-DD'
+     * @returns {string} Formatted time/date in server timezone
      */
-    formatTime(timestamp) {
+    formatTime(timestamp, format = 'HH:MM') {
         // Create date from UTC timestamp, then add server offset to get milliseconds
         // serverTimezoneOffset is in seconds, timestamp is in seconds
         const serverTimeMs = (timestamp + this.serverTimezoneOffset) * 1000;
         const date = new Date(serverTimeMs);
 
-        // Use getUTCHours/Minutes because we've already adjusted the timestamp
-        const hours = String(date.getUTCHours()).padStart(2, '0');
-        const minutes = String(date.getUTCMinutes()).padStart(2, '0');
-
-        // Debug for first call
-        if (!this._debugLogged) {
-            console.log('formatTime debug:', {
-                originalTimestamp: timestamp,
-                serverOffsetSeconds: this.serverTimezoneOffset,
-                serverOffsetHours: this.serverTimezoneOffset / 3600,
-                serverTimeMs: serverTimeMs,
-                formatted: `${hours}:${minutes}`,
-                dateUTC: new Date(timestamp * 1000).toISOString(),
-                dateServer: date.toISOString()
-            });
-            this._debugLogged = true;
+        if (format === 'MM-DD') {
+            // Format as month-day for long ranges
+            const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(date.getUTCDate()).padStart(2, '0');
+            return `${month}-${day}`;
+        } else if (format === 'HH:MM:SS') {
+            // Format as time with seconds for very short ranges
+            const hours = String(date.getUTCHours()).padStart(2, '0');
+            const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+            const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+            return `${hours}:${minutes}:${seconds}`;
+        } else {
+            // Format as time (HH:MM) for shorter ranges
+            const hours = String(date.getUTCHours()).padStart(2, '0');
+            const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+            return `${hours}:${minutes}`;
         }
-
-        return `${hours}:${minutes}`;
     },
 
     /**
@@ -422,6 +531,8 @@ const SVGTimeline = {
         this.dragging.active = true;
         this.dragging.handle = handle;
         this.dragging.startX = e.clientX;
+        this.dragging.startSelectedStart = this.selectedRange.start;
+        this.dragging.startSelectedEnd = this.selectedRange.end;
 
         const rect = this.container.getBoundingClientRect();
         this.dragging.containerLeft = rect.left;
@@ -431,7 +542,7 @@ const SVGTimeline = {
     },
 
     /**
-     * Handle mouse move
+     * Handle mouse move (Yandex Cloud LogViewer style)
      * @param {MouseEvent} e - Mouse event
      */
     handleMouseMove(e) {
@@ -440,28 +551,33 @@ const SVGTimeline = {
         const deltaX = e.clientX - this.dragging.startX;
         const { padding } = this.dimensions;
         const availableWidth = this.dragging.containerWidth - (padding * 2);
-        const duration = this.timeRange.end - this.timeRange.start;
+        const visibleDuration = this.visibleRange.end - this.visibleRange.start;
 
-        const deltaTime = (deltaX / availableWidth) * duration;
+        // Calculate time delta relative to VISIBLE range
+        const deltaTime = (deltaX / availableWidth) * visibleDuration;
 
         if (this.dragging.handle === 'left') {
-            let newStart = this.selectedRange.start + deltaTime;
-            newStart = Math.max(this.timeRange.start, Math.min(newStart, this.selectedRange.end - 60));
+            // Resizing from left - adjust visible range accordingly
+            let newStart = this.dragging.startSelectedStart + deltaTime;
+            newStart = Math.max(this.fullRange.start, Math.min(newStart, this.selectedRange.end - 60));
             this.selectedRange.start = newStart;
         } else if (this.dragging.handle === 'right') {
-            let newEnd = this.selectedRange.end + deltaTime;
-            newEnd = Math.min(this.timeRange.end, Math.max(newEnd, this.selectedRange.start + 60));
+            // Resizing from right - adjust visible range accordingly
+            let newEnd = this.dragging.startSelectedEnd + deltaTime;
+            newEnd = Math.min(this.fullRange.end, Math.max(newEnd, this.selectedRange.start + 60));
             this.selectedRange.end = newEnd;
         } else if (this.dragging.handle === 'range') {
+            // Dragging entire range - move it within visible range
             const rangeWidth = this.selectedRange.end - this.selectedRange.start;
-            let newStart = this.selectedRange.start + deltaTime;
-            let newEnd = this.selectedRange.end + deltaTime;
+            let newStart = this.dragging.startSelectedStart + deltaTime;
+            let newEnd = this.dragging.startSelectedEnd + deltaTime;
 
-            if (newStart < this.timeRange.start) {
-                newStart = this.timeRange.start;
+            // Keep within full range bounds
+            if (newStart < this.fullRange.start) {
+                newStart = this.fullRange.start;
                 newEnd = newStart + rangeWidth;
-            } else if (newEnd > this.timeRange.end) {
-                newEnd = this.timeRange.end;
+            } else if (newEnd > this.fullRange.end) {
+                newEnd = this.fullRange.end;
                 newStart = newEnd - rangeWidth;
             }
 
@@ -469,19 +585,83 @@ const SVGTimeline = {
             this.selectedRange.end = newEnd;
         }
 
-        this.dragging.startX = e.clientX;
         this.render();
     },
 
     /**
-     * Handle mouse up
+     * Handle mouse up (Yandex Cloud LogViewer style)
+     * After drag: recenter and adjust visible range
      */
     handleMouseUp() {
         if (this.dragging.active) {
+            const wasResizing = this.dragging.handle === 'left' || this.dragging.handle === 'right';
+            const wasDragging = this.dragging.handle === 'range';
+
             this.dragging.active = false;
             this.dragging.handle = null;
 
-            // Trigger callback
+            if (wasResizing) {
+                // User resized selection → adjust visible range to be 4x selection
+                // and recenter selection within new visible range
+                const selectedDuration = this.selectedRange.end - this.selectedRange.start;
+                const newVisibleDuration = selectedDuration * 4;
+                const selectedCenter = this.selectedRange.start + (selectedDuration / 2);
+
+                // Calculate new visible range centered on selection
+                let newVisibleStart = selectedCenter - (newVisibleDuration / 2);
+                let newVisibleEnd = selectedCenter + (newVisibleDuration / 2);
+
+                // Keep within full range bounds
+                if (newVisibleStart < this.fullRange.start) {
+                    newVisibleStart = this.fullRange.start;
+                    newVisibleEnd = Math.min(newVisibleStart + newVisibleDuration, this.fullRange.end);
+                }
+                if (newVisibleEnd > this.fullRange.end) {
+                    newVisibleEnd = this.fullRange.end;
+                    newVisibleStart = Math.max(newVisibleEnd - newVisibleDuration, this.fullRange.start);
+                }
+
+                this.visibleRange.start = newVisibleStart;
+                this.visibleRange.end = newVisibleEnd;
+
+                // Recalculate centered selection (1/4 of new visible range)
+                this.calculateCenteredSelection();
+
+                // Deactivate all period buttons
+                if (typeof $ !== 'undefined') {
+                    $('.period-btn').removeClass('active');
+                }
+
+            } else if (wasDragging) {
+                // User dragged selection → shift visible range to keep selection centered
+                const selectedCenter = this.selectedRange.start + ((this.selectedRange.end - this.selectedRange.start) / 2);
+                const visibleDuration = this.visibleRange.end - this.visibleRange.start;
+
+                // Calculate new visible range to keep selection at center
+                let newVisibleStart = selectedCenter - (visibleDuration / 2);
+                let newVisibleEnd = selectedCenter + (visibleDuration / 2);
+
+                // Keep within full range bounds
+                if (newVisibleStart < this.fullRange.start) {
+                    newVisibleStart = this.fullRange.start;
+                    newVisibleEnd = newVisibleStart + visibleDuration;
+                }
+                if (newVisibleEnd > this.fullRange.end) {
+                    newVisibleEnd = this.fullRange.end;
+                    newVisibleStart = newVisibleEnd - visibleDuration;
+                }
+
+                this.visibleRange.start = newVisibleStart;
+                this.visibleRange.end = newVisibleEnd;
+
+                // Recalculate centered selection
+                this.calculateCenteredSelection();
+            }
+
+            // Render with new ranges
+            this.render();
+
+            // Trigger callback to load data
             if (this.onRangeChange) {
                 this.onRangeChange(
                     Math.round(this.selectedRange.start),
@@ -499,7 +679,34 @@ const SVGTimeline = {
     },
 
     /**
-     * Set selected range
+     * Apply period from quick-period-buttons (Yandex Cloud style)
+     * Sets visible range and auto-centers selection
+     * @param {number} periodSeconds - Period in seconds (e.g., 3600 for 1h)
+     */
+    applyPeriod(periodSeconds) {
+        const period = parseInt(periodSeconds);
+
+        // Set visible range to last N seconds
+        this.visibleRange.end = this.fullRange.end;
+        this.visibleRange.start = Math.max(this.fullRange.end - period, this.fullRange.start);
+
+        // Auto-center selection (1/4 of visible range)
+        this.calculateCenteredSelection();
+
+        // Render
+        this.render();
+
+        // Trigger callback to load data
+        if (this.onRangeChange) {
+            this.onRangeChange(
+                Math.round(this.selectedRange.start),
+                Math.round(this.selectedRange.end)
+            );
+        }
+    },
+
+    /**
+     * Set selected range (deprecated - use applyPeriod instead)
      * @param {number} start - Start timestamp
      * @param {number} end - End timestamp
      */
@@ -512,13 +719,44 @@ const SVGTimeline = {
     /**
      * Update selected range to actual loaded data (without triggering onRangeChange)
      * Used when backend returns different range due to 5000 line limit
+     * Synchronously updates both visible range and selected range to maintain 1/4 ratio
      * @param {number} start - Actual start timestamp
      * @param {number} end - Actual end timestamp
      */
     updateSelectedRange(start, end) {
+        // Set selected range to actual loaded data
         this.selectedRange.start = start;
         this.selectedRange.end = end;
+
+        // Calculate new visible range as 4x of selected range
+        const selectedDuration = end - start;
+        const newVisibleDuration = selectedDuration * 4;
+        const selectedCenter = start + (selectedDuration / 2);
+
+        // Center visible range around selected range
+        let newVisibleStart = selectedCenter - (newVisibleDuration / 2);
+        let newVisibleEnd = selectedCenter + (newVisibleDuration / 2);
+
+        // Keep within full range bounds
+        if (newVisibleStart < this.fullRange.start) {
+            newVisibleStart = this.fullRange.start;
+            newVisibleEnd = Math.min(newVisibleStart + newVisibleDuration, this.fullRange.end);
+        }
+        if (newVisibleEnd > this.fullRange.end) {
+            newVisibleEnd = this.fullRange.end;
+            newVisibleStart = Math.max(newVisibleEnd - newVisibleDuration, this.fullRange.start);
+        }
+
+        // Update visible range
+        this.visibleRange.start = newVisibleStart;
+        this.visibleRange.end = newVisibleEnd;
+
+        // Recalculate centered selection to ensure 1/4 ratio is maintained
+        this.calculateCenteredSelection();
+
+        // Render with new ranges
         this.render();
+
         // Note: Does NOT trigger onRangeChange callback
     },
 

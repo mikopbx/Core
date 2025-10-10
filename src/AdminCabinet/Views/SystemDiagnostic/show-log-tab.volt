@@ -19,7 +19,10 @@
 
             <div class="six wide field">
                 <label>{{ t._('sd_filter') }}</label>
-                {{ form.render('filter') }}
+                <div class="ui icon input">
+                    {{ form.render('filter') }}
+                    <i class="link grey times icon clear-filter-btn" id="clear-filter-btn" data-content="{{ t._('sd_ClearFilter') }}"></i>
+                </div>
             </div>
 
             <div class="three wide field">
