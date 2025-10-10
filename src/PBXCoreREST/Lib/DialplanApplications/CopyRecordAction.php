@@ -22,16 +22,16 @@ namespace MikoPBX\PBXCoreREST\Lib\DialplanApplications;
 use MikoPBX\Common\Models\DialplanApplications;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use MikoPBX\Core\System\SystemMessages;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractCopyRecordAction;
 
 /**
  * Action for copying a dialplan application with automatic extension assignment
  *
- * This action creates a copy of an existing dialplan application with:
- * - New unique ID generated automatically
- * - Next available extension number assigned
+ * Extends AbstractCopyRecordAction to leverage:
+ * - Automatic unique ID generation
+ * - Next available extension number assignment
  * - Name prefixed with "copy of"
- * - All settings and application logic copied
+ * - Consistent error handling and logging
  *
  * @api {get} /pbxcore/api/v3/dialplan-applications/{id}:copy Copy dialplan application
  * @apiVersion 3.0.0
@@ -42,12 +42,12 @@ use MikoPBX\Core\System\SystemMessages;
  *
  * @apiSuccess {Boolean} result Operation result
  * @apiSuccess {Object} data Copied dialplan application data ready for creation
- * @apiSuccess {String} data.id Empty string (new record)
+ * @apiSuccess {String} data.id New unique identifier
  * @apiSuccess {String} data.extension New extension number (automatically assigned)
  * @apiSuccess {String} data.name Name prefixed with "copy of"
  * @apiSuccess {String} data.applicationlogic Copied application code
  */
-class CopyRecordAction
+class CopyRecordAction extends AbstractCopyRecordAction
 {
     /**
      * Copy dialplan application record with new extension and ID
@@ -57,73 +57,21 @@ class CopyRecordAction
      */
     public static function main(string $sourceId): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
-
-        try {
-            // Find source dialplan application - try uniqid first, then numeric id
-            $sourceApp = DialplanApplications::findFirst([
-                'conditions' => 'uniqid = :uniqid: OR id = :id:',
-                'bind' => ['uniqid' => $sourceId, 'id' => $sourceId]
-            ]);
-
-            if (!$sourceApp) {
-                $res->messages['error'][] = "Source dialplan application not found: {$sourceId}";
-                SystemMessages::sysLogMsg(__METHOD__,
-                    "Source dialplan application not found for copy: {$sourceId}",
-                    LOG_WARNING
-                );
-                return $res;
-            }
-
-            // Create new dialplan application model with copied values
-            $newApp = self::createCopyFromSource($sourceApp);
-
-            // Create data structure for the copied dialplan application
-            $res->data = DataStructure::createFromModel($newApp);
-            // Override ID to be empty for copy (new unsaved record)
-            $res->data['id'] = '';
-            $res->success = true;
-
-            SystemMessages::sysLogMsg(__METHOD__,
-                "Dialplan application copied from '{$sourceApp->name}' to '{$newApp->name}'",
-                LOG_DEBUG
-            );
-
-        } catch (\Exception $e) {
-            $res->messages['error'][] = $e->getMessage();
-            SystemMessages::sysLogMsg(__METHOD__,
-                "Error copying dialplan application: " . $e->getMessage(),
-                LOG_ERR
-            );
-        }
-
-        return $res;
-    }
-
-    /**
-     * Create copy of dialplan application from source record
-     *
-     * @param DialplanApplications $sourceApp
-     * @return DialplanApplications
-     */
-    private static function createCopyFromSource(DialplanApplications $sourceApp): DialplanApplications
-    {
-        $newApp = new DialplanApplications();
-
-        // Don't generate uniqid here - it will be generated on save
-        // This is a new unsaved record, so it should not have an ID yet
-        
-        // Get new extension number automatically
-        $newApp->extension = Extensions::getNextFreeApplicationNumber();
-        
-        // Copy all other fields
-        $newApp->name = 'copy of ' . $sourceApp->name;
-        $newApp->hint = $sourceApp->hint;
-        $newApp->applicationlogic = $sourceApp->applicationlogic;
-        $newApp->type = $sourceApp->type;
-        $newApp->description = $sourceApp->description;
-        
-        return $newApp;
+        return self::executeStandardCopy(
+            $sourceId,
+            DialplanApplications::class,
+            DataStructure::class,
+            Extensions::PREFIX_DIALPLAN,  // Unique ID prefix (tilde will be added by generateUniqueID)
+            [                             // Fields to copy
+                'name',
+                'hint',
+                'applicationlogic',
+                'type',
+                'description'
+            ],
+            true,                         // Needs extension
+            null,                         // No related records
+            'Dialplan application'        // Entity type for messages
+        );
     }
 }

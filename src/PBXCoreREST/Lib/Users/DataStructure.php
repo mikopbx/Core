@@ -195,18 +195,18 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
 
     /**
-     * Generate sanitization rules from OpenAPI schema
+     * Generate sanitization rules automatically from controller attributes
      *
-     * @return array<string, string> Sanitization rules
+     * Uses ParameterSanitizationExtractor to extract rules from #[ApiParameter] attributes.
+     * This ensures Single Source of Truth - rules defined only in controller attributes.
+     *
+     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
      */
     public static function getSanitizationRules(): array
     {
-        return [
-            'id' => 'int',
-            'email' => 'string|email|max:255',
-            'username' => 'string|min:3|max:50',
-            'language' => 'string|in:en,ru,de,es,fr,pt,uk,it,cs,tr,ja,vi,zh_Hans,pl,sv,nl,ka,ar,az,fa,ro',
-            'avatar' => 'string|max:500|empty_to_null'
-        ];
+        return \MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor::extractFromController(
+            \MikoPBX\PBXCoreREST\Controllers\Users\RestController::class,
+            'create'
+        );
     }
 }

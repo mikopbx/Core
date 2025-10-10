@@ -17,7 +17,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-namespace MikoPBX\PBXCoreREST\Lib\AsteriskManagers;
+namespace MikoPBX\PBXCoreREST\Lib\IvrMenu;
 
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
@@ -25,16 +25,16 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 
 /**
  * CreateRecordAction
- * Creates a new AMI user.
+ * Creates a new IVR menu record.
  *
- * @package MikoPBX\PBXCoreREST\Lib\AsteriskManagers
+ * @package MikoPBX\PBXCoreREST\Lib\IvrMenu
  */
 class CreateRecordAction extends AbstractSaveRecordAction
 {
     /**
-     * Create a new AMI user.
+     * Create a new IVR menu record.
      *
-     * @param array<string, mixed> $data AMI user data to save
+     * @param array<string, mixed> $data IVR menu data to save
      * @return PBXApiResult
      */
     public static function main(array $data): PBXApiResult
@@ -43,8 +43,8 @@ class CreateRecordAction extends AbstractSaveRecordAction
 
         try {
             // For create operation, allow custom ID if provided (for migrations/imports)
-            // ID validation is handled by SaveRecordAction
-            // If no ID provided, SaveRecordAction will use auto-increment
+            // ID validation is handled by SaveRecordAction via OpenAPI schema rules
+            // If no ID provided, SaveRecordAction will generate one automatically
 
             // Remove legacy uniqid field if present (use 'id' instead in v3 API)
             unset($data['uniqid']);
@@ -52,9 +52,9 @@ class CreateRecordAction extends AbstractSaveRecordAction
             // Use existing SaveRecordAction logic for actual save
             $res = SaveRecordAction::main($data);
 
-            // If successful, publish event for new AMI user creation
+            // If successful, publish event for new IVR menu creation
             if ($res->success && isset($res->data['id'])) {
-                SystemMessages::sysLogMsg(__CLASS__, 'New AMI user created: ' . $res->data['id'], LOG_INFO);
+                SystemMessages::sysLogMsg(__CLASS__, 'New IVR menu created: ' . $res->data['id'], LOG_INFO);
             }
 
         } catch (\Exception $e) {

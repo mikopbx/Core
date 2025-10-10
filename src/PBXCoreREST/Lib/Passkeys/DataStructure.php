@@ -41,7 +41,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      * Returns raw data that was sanitized on input. HTML escaping
      * is the responsibility of the presentation layer.
      *
-     * @param \MikoPBX\Common\Models\WebAuthnCredentials $model Passkey model instance
+     * @param \MikoPBX\Common\Models\UserPasskeys $model Passkey model instance
      * @return array<string, mixed> Complete data structure
      */
     public static function createFromModel($model): array
@@ -68,7 +68,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     /**
      * Create simplified data array for list view
      *
-     * @param \MikoPBX\Common\Models\WebAuthnCredentials $model
+     * @param \MikoPBX\Common\Models\UserPasskeys $model
      * @return array<string, mixed> Simplified data structure for table display
      */
     public static function createForList($model): array
@@ -182,22 +182,21 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
 
     /**
-     * Generate sanitization rules from OpenAPI schema
+     * Generate sanitization rules automatically from controller attributes
      *
-     * @return array<string, string> Sanitization rules
+     * Uses ParameterSanitizationExtractor to extract rules from #[ApiParameter] attributes.
+     * This ensures Single Source of Truth - rules defined only in controller attributes.
+     *
+     * For Passkeys resource, we extract from the 'create' method which handles
+     * passkey registration with user-provided parameters.
+     *
+     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
      */
     public static function getSanitizationRules(): array
     {
-        return [
-            'id' => 'int',
-            'user_id' => 'int',
-            'name' => 'string|max:255',
-            'credential_id' => 'string',
-            'public_key' => 'string',
-            'counter' => 'int',
-            'aaguid' => 'string|max:36',
-            'transports' => 'array',
-            'user_agent' => 'string|max:500'
-        ];
+        return \MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor::extractFromController(
+            \MikoPBX\PBXCoreREST\Controllers\Passkeys\RestController::class,
+            'create'
+        );
     }
 }

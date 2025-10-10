@@ -284,7 +284,7 @@ class CallQueues extends ModelsBase
             [
                 'alias' => 'SoundFiles',
                 'foreignKey' => [
-                    'allowNulls' => false,
+                    'allowNulls' => true,
                     'action' => Relation::NO_ACTION,
                 ],
             ]
@@ -299,7 +299,7 @@ class CallQueues extends ModelsBase
             [
                 'alias' => 'MohSoundFiles',
                 'foreignKey' => [
-                    'allowNulls' => false,
+                    'allowNulls' => true,
                     'action' => Relation::NO_ACTION,
                 ],
             ]

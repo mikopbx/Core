@@ -26,9 +26,7 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
 use MikoPBX\PBXCoreREST\Lib\Common\SystemSanitizer;
 use MikoPBX\PBXCoreREST\Lib\Common\ParameterDefaultsExtractor;
-use MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor;
 use MikoPBX\PBXCoreREST\Controllers\CallQueues\RestController;
-use MikoPBX\Core\System\SystemMessages;
 
 /**
  * Action for saving call queue record with comprehensive validation
@@ -63,12 +61,9 @@ class SaveRecordAction extends AbstractSaveRecordAction
     {
         $res = self::createApiResult(__METHOD__);
 
-        // Get sanitization rules automatically from controller attributes
-        // Single Source of Truth - rules extracted from #[ApiParameter] attributes
-        $sanitizationRules = ParameterSanitizationExtractor::extractFromController(
-            RestController::class,
-            'create'
-        );
+        // Get sanitization rules from DataStructure (Single Source of Truth)
+        // Uses getParameterDefinitions() to generate rules automatically
+        $sanitizationRules = DataStructure::getSanitizationRules();
 
         // Text fields for unified processing (no HTML decoding, just sanitization)
         $textFields = ['name', 'description', 'callerid_prefix'];
@@ -209,10 +204,19 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 $queue->recive_calls_while_on_a_call = $convertedData['recive_calls_while_on_a_call'];
                 $queue->announce_position = $convertedData['announce_position'];
                 $queue->announce_hold_time = $convertedData['announce_hold_time'];
-                $queue->periodic_announce_sound_id = $sanitizedData['periodic_announce_sound_id'] ?? null;
-                $queue->moh_sound_id = $sanitizedData['moh_sound_id'] ?? null;
+
+                // Handle sound file IDs: convert empty string to null, otherwise use value
+                $queue->periodic_announce_sound_id = !empty($sanitizedData['periodic_announce_sound_id'])
+                    ? $sanitizedData['periodic_announce_sound_id']
+                    : null;
+                $queue->moh_sound_id = !empty($sanitizedData['moh_sound_id'])
+                    ? $sanitizedData['moh_sound_id']
+                    : null;
+
                 // Handle periodic_announce_frequency: convert empty to null for no parameter in config
-                $queue->periodic_announce_frequency = $sanitizedData['periodic_announce_frequency'] ?? null;
+                $queue->periodic_announce_frequency = !empty($sanitizedData['periodic_announce_frequency'])
+                    ? $sanitizedData['periodic_announce_frequency']
+                    : null;
                 // Handle timeout_to_redirect_to_extension: treat 0 as empty (infinite wait)
                 $timeout = $sanitizedData['timeout_to_redirect_to_extension'] ?? null;
                 if ($timeout === 0 || $timeout === '0') {

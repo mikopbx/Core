@@ -93,9 +93,9 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
 
     /**
      * Create data structure for dropdown/select options.
-     * 
+     *
      * @param \MikoPBX\Common\Models\AsteriskRestUsers $model
-     * @return array
+     * @return array<string, mixed>
      */
     public static function createForSelect($model): array
     {
@@ -109,7 +109,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     /**
      * Create default structure for new ARI user.
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public static function createDefault(): array
     {
@@ -238,56 +238,18 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
 
     /**
-     * Generate sanitization rules from OpenAPI schema
+     * Generate sanitization rules automatically from controller attributes
      *
-     * Converts OpenAPI schema constraints into SystemSanitizer format.
-     * This eliminates duplication between schema definition and validation rules.
+     * Uses ParameterSanitizationExtractor to extract rules from #[ApiParameter] attributes.
+     * This ensures Single Source of Truth - rules defined only in controller attributes.
      *
      * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
      */
     public static function getSanitizationRules(): array
     {
-        $schema = static::getDetailSchema();
-        $rules = [];
-
-        if (!isset($schema['properties'])) {
-            return $rules;
-        }
-
-        foreach ($schema['properties'] as $fieldName => $fieldSchema) {
-            // Skip computed/read-only fields
-            if (in_array($fieldName, ['weakPassword', 'applicationsSummary', 'applicationsCount'])) {
-                continue;
-            }
-
-            $ruleParts = [];
-
-            // Add type
-            $type = $fieldSchema['type'] ?? 'string';
-            $ruleParts[] = match ($type) {
-                'integer' => 'int',
-                'number' => 'float',
-                'boolean' => 'bool',
-                'array' => 'array',
-                default => 'string'
-            };
-
-            // Add constraints
-            if (isset($fieldSchema['maxLength'])) {
-                $ruleParts[] = 'max:' . $fieldSchema['maxLength'];
-            }
-            if (isset($fieldSchema['pattern']) && is_string($fieldSchema['pattern'])) {
-                $pattern = str_replace('^', '', $fieldSchema['pattern']);
-                $pattern = str_replace('$', '', $pattern);
-                $ruleParts[] = 'regex:/' . $pattern . '/';
-            }
-            if (isset($fieldSchema['nullable']) && $fieldSchema['nullable'] === true) {
-                $ruleParts[] = 'empty_to_null';
-            }
-
-            $rules[$fieldName] = implode('|', $ruleParts);
-        }
-
-        return $rules;
+        return \MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor::extractFromController(
+            \MikoPBX\PBXCoreREST\Controllers\AsteriskRestUsers\RestController::class,
+            'create'
+        );
     }
 }

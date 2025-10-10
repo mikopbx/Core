@@ -44,27 +44,22 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function createFromModel($model, $actionsOrInclude = true): array
     {
-        // Create custom structure without calling createBaseStructure to avoid duplicate fields
-        // Use only 'id' field that contains the uniqid value
-        $data = [
-            'id' => $model->uniqid ?? '',
-            'extension' => $model->extension ?? '',
-            'name' => $model->name ?? '',
-            'description' => $model->description ?? ''
-        ];
-        
-        // Add IVR menu specific fields
-        $data['timeout'] = $model->timeout ?? '7';
-        $data['number_of_repeat'] = $model->number_of_repeat ?? '3';
+        // Start with base structure (raw data, no HTML escaping)
+        $data = self::createBaseStructure($model);
 
-        // Convert boolean fields for frontend consumption
-        $booleanFields = ['allow_enter_any_internal_extension'];
-        $data = self::formatBooleanFields($data + [
-            'allow_enter_any_internal_extension' => $model->allow_enter_any_internal_extension ?? '0'
-        ], $booleanFields);
+        // Replace numeric id with uniqid for v3 API
+        $data['id'] = $model->uniqid;
+        unset($data['uniqid']); // Remove uniqid field to avoid duplication
+
+        // Add IVR menu specific fields (defaults defined in OpenAPI schema)
+        $data['timeout'] = $model->timeout;
+        $data['number_of_repeat'] = $model->number_of_repeat;
+        $data['allow_enter_any_internal_extension'] = $model->allow_enter_any_internal_extension;
 
         // Add extension fields with representations using unified approach
-        $data = self::addExtensionField($data, 'timeout_extension', $model->timeout_extension);
+        $data = self::addMultipleExtensionFields($data, [
+            'timeout_extension' => $model->timeout_extension,
+        ]);
 
         // Add sound file field using standard naming convention: field_name_represent
         $data = self::addSoundFileField($data, 'audio_message_id', $model->audio_message_id);
@@ -120,7 +115,11 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         
         // Generate search index automatically
         $data['search_index'] = self::generateAutoSearchIndex($data);
-        
+
+        // Apply OpenAPI schema formatting to convert types automatically
+        // This replaces manual formatBooleanFields() and ensures consistency with schema
+        $data = self::formatBySchema($data, 'detail');
+
         return $data;
     }
     
@@ -131,14 +130,22 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function createForList($model): array
     {
-        $data = self::createFromModel($model, false);
-        
-        // Add represent field identical to IvrMenu->getRepresent()
-        $data['represent'] = $model->getRepresent();
-        
+        // Use unified base method for list creation
+        $data = parent::createForList($model);
+
+        // Replace numeric id with uniqid for v3 API
+        $data['id'] = $model->uniqid;
+        unset($data['uniqid']); // Remove uniqid field to avoid duplication
+
+        // Add IVR menu specific fields for list display (defaults defined in OpenAPI schema)
+        $data['timeout'] = $model->timeout;
+        $data['number_of_repeat'] = $model->number_of_repeat;
+        $data['timeout_extension'] = $model->timeout_extension;
+
         // Add timeout extension representation
+        $data['timeout_extension_represent'] = self::getExtensionRepresentation($model->timeout_extension);
         $data['timeoutExtensionRepresent'] = $model->TimeoutExtensions?->getRepresent() ?? '';
-        
+
         // Add simplified actions summary
         $actions = [];
         foreach ($model->IvrMenuActions as $action) {
@@ -151,7 +158,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             return (int)$a['digits'] <=> (int)$b['digits'];
         });
         $data['actions'] = $actions;
-        
+
         // Generate search index automatically from all fields
         // This will use all _represent fields and extract extension numbers
         $data['search_index'] = self::generateAutoSearchIndex($data);
@@ -165,55 +172,192 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     /**
      * Get OpenAPI schema for IVR menu list item
      *
+     * Builds schema from getParameterDefinitions() to avoid duplication.
+     *
      * @return array<string, mixed> OpenAPI schema definition
      */
     public static function getListItemSchema(): array
     {
+        $definitions = self::getParameterDefinitions();
+        $requestFields = $definitions['request'];
+        $responseFields = $definitions['response'];
+
+        // List view includes: id, name, extension, description, timeout, number_of_repeat,
+        // timeout_extension, timeout_extension_represent, timeoutExtensionRepresent,
+        // represent, actions (simplified), search_index
         return [
             'type' => 'object',
             'required' => ['id', 'extension', 'name'],
             'properties' => [
+                'id' => $responseFields['id'],
+                'extension' => $requestFields['extension'],
+                'name' => $requestFields['name'],
+                'description' => $requestFields['description'],
+                'timeout' => $requestFields['timeout'],
+                'number_of_repeat' => $requestFields['number_of_repeat'],
+                'timeout_extension' => $requestFields['timeout_extension'],
+                'timeout_extension_represent' => $responseFields['timeout_extension_represent'],
+                'timeoutExtensionRepresent' => $responseFields['timeoutExtensionRepresent'],
+                'represent' => $responseFields['represent'],
+                'actions' => [
+                    'type' => 'array',
+                    'description' => $requestFields['actions']['description'],
+                    'items' => [
+                        '$ref' => '#/components/schemas/IvrMenuActionSimple'
+                    ]
+                ],
+                'search_index' => $responseFields['search_index']
+            ]
+        ];
+    }
+
+    /**
+     * Get OpenAPI schema for detailed IVR menu record
+     *
+     * Builds schema from getParameterDefinitions() to avoid duplication.
+     *
+     * @return array<string, mixed> OpenAPI schema definition
+     */
+    public static function getDetailSchema(): array
+    {
+        $definitions = self::getParameterDefinitions();
+        $requestFields = $definitions['request'];
+        $responseFields = $definitions['response'];
+
+        // Detail view includes all request fields + response-only fields
+        return [
+            'type' => 'object',
+            'required' => ['id', 'extension', 'name'],
+            'properties' => [
+                'id' => $responseFields['id'],
+                'extension' => $requestFields['extension'],
+                'name' => $requestFields['name'],
+                'description' => $requestFields['description'],
+                'timeout' => $requestFields['timeout'],
+                'number_of_repeat' => $requestFields['number_of_repeat'],
+                'allow_enter_any_internal_extension' => $requestFields['allow_enter_any_internal_extension'],
+                'timeout_extension' => $requestFields['timeout_extension'],
+                'timeout_extension_represent' => $responseFields['timeout_extension_represent'],
+                'audio_message_id' => $requestFields['audio_message_id'],
+                'audio_message_id_represent' => $responseFields['audio_message_id_represent'],
+                'actions' => [
+                    'type' => 'array',
+                    'description' => $requestFields['actions']['description'],
+                    'items' => [
+                        '$ref' => '#/components/schemas/IvrMenuAction'
+                    ]
+                ],
+                'search_index' => $responseFields['search_index']
+            ]
+        ];
+    }
+
+    /**
+     * Get related schemas for OpenAPI components
+     *
+     * Inherits from getParameterDefinitions()['related'] section.
+     * This implements Single Source of Truth pattern.
+     *
+     * @return array<string, array<string, mixed>> Related schemas
+     */
+    public static function getRelatedSchemas(): array
+    {
+        $definitions = self::getParameterDefinitions();
+        return $definitions['related'] ?? [];
+    }
+
+    /**
+     * Get all field definitions (request parameters + response-only fields + related schemas)
+     *
+     * Single Source of Truth for ALL definitions in IVR Menu API.
+     *
+     * Structure:
+     * - 'request': Request parameters (used in API requests, referenced by ApiParameterRef)
+     * - 'response': Response-only fields (only in API responses, not in requests)
+     * - 'related': Related schemas for nested objects (referenced by $ref in OpenAPI)
+     *
+     * This eliminates duplication between:
+     * - Controller attributes (via ApiParameterRef)
+     * - getListItemSchema() (inherits from here)
+     * - getDetailSchema() (inherits from here)
+     * - getRelatedSchemas() (inherits from here)
+     * - getSanitizationRules() (generated from here)
+     *
+     * @return array<string, array<string, array<string, mixed>>> Field definitions
+     */
+    public static function getParameterDefinitions(): array
+    {
+        return [
+            // ========== REQUEST PARAMETERS ==========
+            // Used in API requests (POST, PUT, PATCH) AND responses (GET)
+            // Referenced by ApiParameterRef in Controller
+            'request' => [
+                'name' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_ivr_name',
+                    'maxLength' => 255,
+                    'example' => 'Main Menu'
+                ],
+                'extension' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_ivr_extension',
+                    'pattern' => '^[0-9]{2,8}$',
+                    'example' => '2000'
+                ],
+                'description' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_ivr_description',
+                    'maxLength' => 500,
+                    'example' => 'Company main menu'
+                ],
+                'timeout' => [
+                    'type' => 'integer',
+                    'description' => 'rest_param_ivr_timeout',
+                    'minimum' => 1,
+                    'maximum' => 60,
+                    'default' => 7,
+                    'example' => 7
+                ],
+                'timeout_extension' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_ivr_timeout_extension',
+                    'pattern' => '^[0-9]{2,8}$',
+                    'example' => '201'
+                ],
+                'number_of_repeat' => [
+                    'type' => 'integer',
+                    'description' => 'rest_param_ivr_number_of_repeat',
+                    'minimum' => 0,
+                    'maximum' => 10,
+                    'default' => 3,
+                    'example' => 3
+                ],
+                'allow_enter_any_internal_extension' => [
+                    'type' => 'boolean',
+                    'description' => 'rest_param_ivr_allow_enter_any_internal_extension',
+                    'default' => false,
+                    'example' => true
+                ],
+                'audio_message_id' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_ivr_audio_message_id',
+                    'example' => '12'
+                ],
+                'actions' => [
+                    'type' => 'array',
+                    'description' => 'rest_param_ivr_actions',
+                    'example' => '[{"digits":"1","extension":"201"},{"digits":"2","extension":"202"}]'
+                ],
+            ],
+
+            // ========== RESPONSE-ONLY FIELDS ==========
+            // Only in API responses, not in requests
+            // Used by getListItemSchema() and getDetailSchema()
+            'response' => [
                 'id' => [
                     'type' => 'string',
                     'description' => 'rest_schema_ivr_id',
                     'example' => 'IVR-MENU-12345'
-                ],
-                'extension' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ivr_extension',
-                    'pattern' => '^[0-9]{2,8}$',
-                    'example' => '2000'
-                ],
-                'name' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ivr_name',
-                    'maxLength' => 255,
-                    'example' => 'Main Menu'
-                ],
-                'description' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ivr_description',
-                    'maxLength' => 500,
-                    'example' => 'Company main IVR menu'
-                ],
-                'timeout' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_ivr_timeout',
-                    'minimum' => 1,
-                    'maximum' => 60,
-                    'example' => 7
-                ],
-                'number_of_repeat' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_ivr_repeat',
-                    'minimum' => 0,
-                    'maximum' => 10,
-                    'example' => 3
-                ],
-                'timeout_extension' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ivr_timeout_ext',
-                    'example' => '100'
                 ],
                 'timeout_extension_represent' => [
                     'type' => 'string',
@@ -225,187 +369,75 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                     'description' => 'rest_schema_ivr_timeout_ext_repr_alt',
                     'example' => '<i class="phone icon"></i> Operator <100>'
                 ],
-                'represent' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ivr_represent',
-                    'example' => '<i class="sitemap icon"></i> Main Menu <2000>'
-                ],
-                'actions' => [
-                    'type' => 'array',
-                    'description' => 'rest_schema_ivr_actions',
-                    'items' => [
-                        '$ref' => '#/components/schemas/IvrMenuActionSimple'
-                    ]
-                ],
-                'search_index' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ivr_search_index',
-                    'example' => 'Main Menu 2000 Operator'
-                ]
-            ]
-        ];
-    }
-
-    /**
-     * Get OpenAPI schema for detailed IVR menu record
-     *
-     * @return array<string, mixed> OpenAPI schema definition
-     */
-    public static function getDetailSchema(): array
-    {
-        return [
-            'type' => 'object',
-            'required' => ['id', 'extension', 'name'],
-            'properties' => [
-                'id' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ivr_id',
-                    'example' => 'IVR-MENU-12345'
-                ],
-                'extension' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ivr_extension',
-                    'pattern' => '^[0-9]{2,8}$',
-                    'example' => '2000'
-                ],
-                'name' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ivr_name',
-                    'maxLength' => 255,
-                    'example' => 'Main Menu'
-                ],
-                'description' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ivr_description',
-                    'maxLength' => 500,
-                    'example' => 'Company main IVR menu'
-                ],
-                'timeout' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_ivr_timeout',
-                    'minimum' => 1,
-                    'maximum' => 60,
-                    'default' => 7,
-                    'example' => 7
-                ],
-                'number_of_repeat' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_ivr_repeat',
-                    'minimum' => 0,
-                    'maximum' => 10,
-                    'default' => 3,
-                    'example' => 3
-                ],
-                'allow_enter_any_internal_extension' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_schema_ivr_allow_direct',
-                    'default' => false,
-                    'example' => true
-                ],
-                'timeout_extension' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ivr_timeout_ext',
-                    'example' => '100'
-                ],
-                'timeout_extension_represent' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ivr_timeout_ext_repr',
-                    'example' => '<i class="phone icon"></i> Operator <100>'
-                ],
-                'audio_message_id' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ivr_audio_id',
-                    'example' => '1'
-                ],
                 'audio_message_id_represent' => [
                     'type' => 'string',
                     'description' => 'rest_schema_ivr_audio_repr',
                     'example' => '<i class="file audio icon"></i> welcome.wav'
                 ],
-                'actions' => [
-                    'type' => 'array',
-                    'description' => 'rest_schema_ivr_actions',
-                    'items' => [
-                        '$ref' => '#/components/schemas/IvrMenuAction'
-                    ]
+                'represent' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ivr_represent',
+                    'example' => '<i class="sitemap icon"></i> Main Menu <2000>'
                 ],
                 'search_index' => [
                     'type' => 'string',
                     'description' => 'rest_schema_ivr_search_index',
                     'example' => 'Main Menu 2000 Operator Sales'
                 ]
-            ]
-        ];
-    }
-
-    /**
-     * Get related schemas for OpenAPI components
-     *
-     * @return array<string, array<string, mixed>> Related schemas
-     */
-    public static function getRelatedSchemas(): array
-    {
-        return [
-            'IvrMenuAction' => [
-                'type' => 'object',
-                'required' => ['digits', 'extension'],
-                'properties' => [
-                    'id' => [
-                        'type' => 'string',
-                        'description' => 'rest_schema_ivr_action_id',
-                        'example' => '1'
-                    ],
-                    'digits' => [
-                        'type' => 'string',
-                        'description' => 'rest_schema_ivr_action_digits',
-                        'pattern' => '^[0-9#*]{1,10}$',
-                        'example' => '1'
-                    ],
-                    'extension' => [
-                        'type' => 'string',
-                        'description' => 'rest_schema_ivr_action_extension',
-                        'example' => '201'
-                    ],
-                    'extension_represent' => [
-                        'type' => 'string',
-                        'description' => 'rest_schema_ivr_action_ext_repr',
-                        'example' => '<i class="phone icon"></i> Sales <201>'
-                    ]
-                ]
             ],
-            'IvrMenuActionSimple' => [
-                'type' => 'object',
-                'required' => ['digits'],
-                'properties' => [
-                    'digits' => [
-                        'type' => 'string',
-                        'description' => 'rest_schema_ivr_action_digits',
-                        'pattern' => '^[0-9#*]{1,10}$',
-                        'example' => '1'
-                    ],
-                    'represent' => [
-                        'type' => 'string',
-                        'description' => 'rest_schema_ivr_action_repr',
-                        'example' => '<i class="phone icon"></i> Sales <201>'
+
+            // ========== RELATED SCHEMAS ==========
+            // Nested object schemas referenced by $ref in OpenAPI
+            // Used by getRelatedSchemas() method
+            'related' => [
+                'IvrMenuAction' => [
+                    'type' => 'object',
+                    'required' => ['digits', 'extension'],
+                    'properties' => [
+                        'id' => [
+                            'type' => 'string',
+                            'description' => 'rest_schema_ivr_action_id',
+                            'example' => '1'
+                        ],
+                        'digits' => [
+                            'type' => 'string',
+                            'description' => 'rest_schema_ivr_action_digits',
+                            'pattern' => '^[0-9#*]{1,10}$',
+                            'example' => '1'
+                        ],
+                        'extension' => [
+                            'type' => 'string',
+                            'description' => 'rest_schema_ivr_action_extension',
+                            'example' => '201'
+                        ],
+                        'extension_represent' => [
+                            'type' => 'string',
+                            'description' => 'rest_schema_ivr_action_ext_repr',
+                            'example' => '<i class="phone icon"></i> Sales <201>'
+                        ]
+                    ]
+                ],
+                'IvrMenuActionSimple' => [
+                    'type' => 'object',
+                    'required' => ['digits'],
+                    'properties' => [
+                        'digits' => [
+                            'type' => 'string',
+                            'description' => 'rest_schema_ivr_action_digits',
+                            'pattern' => '^[0-9#*]{1,10}$',
+                            'example' => '1'
+                        ],
+                        'represent' => [
+                            'type' => 'string',
+                            'description' => 'rest_schema_ivr_action_repr',
+                            'example' => '<i class="phone icon"></i> Sales <201>'
+                        ]
                     ]
                 ]
             ]
         ];
     }
 
-    /**
-     * Generate sanitization rules automatically from controller attributes
-     *
-     * Uses ParameterSanitizationExtractor to extract rules from #[ApiParameter] attributes.
-     * This ensures Single Source of Truth - rules defined only in controller attributes.
-     *
-     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
-     */
-    public static function getSanitizationRules(): array
-    {
-        return \MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor::extractFromController(
-            \MikoPBX\PBXCoreREST\Controllers\IvrMenu\RestController::class,
-            'create'
-        );
-    }
+    // getSanitizationRules() inherited from AbstractDataStructure
+    // No need to override - uses getParameterDefinitions() automatically
 }

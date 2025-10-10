@@ -26,6 +26,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
     ApiParameter,
+    ApiParameterRef,
     ApiResponse,
     ApiDataSchema,
     SecurityType,
@@ -183,16 +184,16 @@ class RestController extends BaseRestController
         description: 'rest_ivr_CreateDesc',
         operationId: 'createIvrMenu'
     )]
-    // Request body parameters for create operation
-    #[ApiParameter('name', 'string', 'rest_param_ivr_name', ParameterLocation::QUERY, required: true, maxLength: 255, example: 'Main Menu')]
-    #[ApiParameter('extension', 'string', 'rest_param_ivr_extension', ParameterLocation::QUERY, required: true, pattern: '^[0-9]{2,8}$', example: '2000')]
-    #[ApiParameter('description', 'string', 'rest_param_ivr_description', ParameterLocation::QUERY, required: false, maxLength: 500, example: 'Company main menu')]
-    #[ApiParameter('timeout', 'integer', 'rest_param_ivr_timeout', ParameterLocation::QUERY, required: false, minimum: 1, maximum: 60, default: 7, example: 7)]
-    #[ApiParameter('timeout_extension', 'string', 'rest_param_ivr_timeout_extension', ParameterLocation::QUERY, required: false, pattern: '^[0-9]{2,8}$', example: '201')]
-    #[ApiParameter('number_of_repeat', 'integer', 'rest_param_ivr_number_of_repeat', ParameterLocation::QUERY, required: false, minimum: 0, maximum: 10, default: 3, example: 3)]
-    #[ApiParameter('allow_enter_any_internal_extension', 'boolean', 'rest_param_ivr_allow_enter_any_internal_extension', ParameterLocation::QUERY, required: false, default: false, example: true)]
-    #[ApiParameter('audio_message_id', 'string', 'rest_param_ivr_audio_message_id', ParameterLocation::QUERY, required: false, example: '12')]
-    #[ApiParameter('actions', 'array', 'rest_param_ivr_actions', ParameterLocation::QUERY, required: false, example: '[{"digits":"1","extension":"201"},{"digits":"2","extension":"202"}]')]
+    // ✨ Lightweight references to DataStructure::getParameterDefinitions()['request']
+    #[ApiParameterRef('name', required: true)]
+    #[ApiParameterRef('extension', required: true)]
+    #[ApiParameterRef('description')]
+    #[ApiParameterRef('timeout')]
+    #[ApiParameterRef('timeout_extension')]
+    #[ApiParameterRef('number_of_repeat')]
+    #[ApiParameterRef('allow_enter_any_internal_extension')]
+    #[ApiParameterRef('audio_message_id')]
+    #[ApiParameterRef('actions')]
     #[ApiResponse(201, 'rest_response_201_created')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -218,15 +219,16 @@ class RestController extends BaseRestController
         operationId: 'updateIvrMenu'
     )]
     #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^IVR-[A-Z0-9]+$', example: 'IVR-A1B2C3D4')]
-    #[ApiParameter('name', 'string', 'rest_param_ivr_name', ParameterLocation::QUERY, required: true, maxLength: 255, example: 'Updated Main Menu')]
-    #[ApiParameter('extension', 'string', 'rest_param_ivr_extension', ParameterLocation::QUERY, required: true, pattern: '^[0-9]{2,8}$', example: '2000')]
-    #[ApiParameter('description', 'string', 'rest_param_ivr_description', ParameterLocation::QUERY, required: false, maxLength: 500, example: 'Updated company main menu')]
-    #[ApiParameter('timeout', 'integer', 'rest_param_ivr_timeout', ParameterLocation::QUERY, required: false, minimum: 1, maximum: 60, default: 7, example: 10)]
-    #[ApiParameter('timeout_extension', 'string', 'rest_param_ivr_timeout_extension', ParameterLocation::QUERY, required: false, pattern: '^[0-9]{2,8}$', example: '201')]
-    #[ApiParameter('number_of_repeat', 'integer', 'rest_param_ivr_number_of_repeat', ParameterLocation::QUERY, required: false, minimum: 0, maximum: 10, default: 3, example: 3)]
-    #[ApiParameter('allow_enter_any_internal_extension', 'boolean', 'rest_param_ivr_allow_enter_any_internal_extension', ParameterLocation::QUERY, required: false, default: false, example: true)]
-    #[ApiParameter('audio_message_id', 'string', 'rest_param_ivr_audio_message_id', ParameterLocation::QUERY, required: false, example: '12')]
-    #[ApiParameter('actions', 'array', 'rest_param_ivr_actions', ParameterLocation::QUERY, required: false, example: '[{"digits":"1","extension":"201"},{"digits":"2","extension":"202"}]')]
+    // ✨ Lightweight references to DataStructure::getParameterDefinitions()['request']
+    #[ApiParameterRef('name', required: true)]
+    #[ApiParameterRef('extension', required: true)]
+    #[ApiParameterRef('description')]
+    #[ApiParameterRef('timeout')]
+    #[ApiParameterRef('timeout_extension')]
+    #[ApiParameterRef('number_of_repeat')]
+    #[ApiParameterRef('allow_enter_any_internal_extension')]
+    #[ApiParameterRef('audio_message_id')]
+    #[ApiParameterRef('actions')]
     #[ApiResponse(200, 'rest_response_200_updated')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -253,10 +255,11 @@ class RestController extends BaseRestController
         operationId: 'patchIvrMenu'
     )]
     #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^IVR-[A-Z0-9]+$', example: 'IVR-A1B2C3D4')]
-    #[ApiParameter('name', 'string', 'rest_param_ivr_name', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'Updated Menu Name')]
-    #[ApiParameter('description', 'string', 'rest_param_ivr_description', ParameterLocation::QUERY, required: false, maxLength: 500, example: 'Updated description')]
-    #[ApiParameter('timeout', 'integer', 'rest_param_ivr_timeout', ParameterLocation::QUERY, required: false, minimum: 1, maximum: 60, example: 10)]
-    #[ApiParameter('number_of_repeat', 'integer', 'rest_param_ivr_number_of_repeat', ParameterLocation::QUERY, required: false, minimum: 0, maximum: 10, example: 5)]
+    // ✨ Lightweight references to DataStructure::getParameterDefinitions()['request']
+    #[ApiParameterRef('name')]
+    #[ApiParameterRef('description')]
+    #[ApiParameterRef('timeout')]
+    #[ApiParameterRef('number_of_repeat')]
     #[ApiResponse(200, 'rest_response_200_patched')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]

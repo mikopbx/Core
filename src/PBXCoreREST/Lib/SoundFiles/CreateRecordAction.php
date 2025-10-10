@@ -19,30 +19,48 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\SoundFiles;
 
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 
 /**
- * Action for creating new sound file record
- *
- * Creates a new sound file record in the database
+ * CreateRecordAction
+ * Creates a new sound file record.
  *
  * @package MikoPBX\PBXCoreREST\Lib\SoundFiles
  */
 class CreateRecordAction
 {
     /**
-     * Create new sound file record
+     * Create a new sound file record.
      *
-     * @param array $data Sound file data
+     * @param array<string, mixed> $data Sound file data to save
      * @return PBXApiResult
      */
     public static function main(array $data): PBXApiResult
     {
-        // Mark this as a CREATE operation via POST method
-        // ID is allowed for pre-generated IDs (like when copying)
-        $data['httpMethod'] = 'POST';
+        // Note: SoundFiles uses a special httpMethod flag to distinguish CREATE vs UPDATE
+        // This is maintained for backward compatibility with existing SaveRecordAction logic
 
-        // Delegate to SaveRecordAction for creation
-        return SaveRecordAction::main($data);
+        try {
+            // Mark this as a CREATE operation via POST method
+            // ID is allowed for pre-generated IDs (like when copying records)
+            $data['httpMethod'] = 'POST';
+
+            // Use existing SaveRecordAction logic for actual save
+            $res = SaveRecordAction::main($data);
+
+            // If successful, log the creation event
+            if ($res->success && isset($res->data['id'])) {
+                SystemMessages::sysLogMsg(__CLASS__, 'New sound file created: ' . $res->data['id'], LOG_INFO);
+            }
+
+            return $res;
+
+        } catch (\Exception $e) {
+            $res = new PBXApiResult();
+            $res->processor = __METHOD__;
+            $res->messages['error'][] = $e->getMessage();
+            return $res;
+        }
     }
 }

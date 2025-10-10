@@ -184,29 +184,22 @@ class DataStructure implements OpenApiSchemaProvider
     }
 
     /**
-     * Generate sanitization rules from OpenAPI schema
+     * Generate sanitization rules automatically from controller attributes
      *
-     * For Files API this provides input validation rules for file operations.
+     * Uses ParameterSanitizationExtractor to extract rules from #[ApiParameter] attributes.
+     * This ensures Single Source of Truth - rules defined only in controller attributes.
      *
-     * @return array<string, string> Sanitization rules
+     * For Files resource, we extract from the 'upload' method which contains
+     * the most comprehensive set of file operation parameters.
+     *
+     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
      */
     public static function getSanitizationRules(): array
     {
-        return [
-            // Upload parameters
-            'resumableIdentifier' => 'string|max:255',
-            'resumableChunkNumber' => 'int|min:1',
-            'resumableTotalChunks' => 'int|min:1',
-            'resumableFilename' => 'string|max:255',
-
-            // Firmware download parameters
-            'url' => 'string|max:1000',
-            'md5' => 'string|max:32',
-            'filename' => 'string|max:255',
-
-            // File path
-            'id' => 'string|max:500'
-        ];
+        return \MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor::extractFromController(
+            \MikoPBX\PBXCoreREST\Controllers\Files\RestController::class,
+            'upload'
+        );
     }
 
     /**

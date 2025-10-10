@@ -17,7 +17,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-namespace MikoPBX\PBXCoreREST\Lib\AsteriskManagers;
+namespace MikoPBX\PBXCoreREST\Lib\ApiKeys;
 
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
@@ -25,16 +25,16 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 
 /**
  * CreateRecordAction
- * Creates a new AMI user.
+ * Creates a new API key record.
  *
- * @package MikoPBX\PBXCoreREST\Lib\AsteriskManagers
+ * @package MikoPBX\PBXCoreREST\Lib\ApiKeys
  */
 class CreateRecordAction extends AbstractSaveRecordAction
 {
     /**
-     * Create a new AMI user.
+     * Create a new API key record.
      *
-     * @param array<string, mixed> $data AMI user data to save
+     * @param array<string, mixed> $data API key data to save
      * @return PBXApiResult
      */
     public static function main(array $data): PBXApiResult
@@ -44,7 +44,7 @@ class CreateRecordAction extends AbstractSaveRecordAction
         try {
             // For create operation, allow custom ID if provided (for migrations/imports)
             // ID validation is handled by SaveRecordAction
-            // If no ID provided, SaveRecordAction will use auto-increment
+            // If no ID provided, SaveRecordAction will generate one automatically
 
             // Remove legacy uniqid field if present (use 'id' instead in v3 API)
             unset($data['uniqid']);
@@ -52,9 +52,9 @@ class CreateRecordAction extends AbstractSaveRecordAction
             // Use existing SaveRecordAction logic for actual save
             $res = SaveRecordAction::main($data);
 
-            // If successful, publish event for new AMI user creation
+            // If successful, publish event for new API key creation
             if ($res->success && isset($res->data['id'])) {
-                SystemMessages::sysLogMsg(__CLASS__, 'New AMI user created: ' . $res->data['id'], LOG_INFO);
+                SystemMessages::sysLogMsg(__CLASS__, 'New API key created: ' . $res->data['id'], LOG_INFO);
             }
 
         } catch (\Exception $e) {

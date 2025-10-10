@@ -59,6 +59,7 @@ class BaseController extends Controller
         int $priority = 0
     ): void {
         [$debug, $requestMessage] = $this->prepareRequestMessage($processor, $payload, $actionName, $moduleName);
+
         if ($debug) {
             $maxTimeout = 9999;
         } else {
@@ -91,7 +92,12 @@ class BaseController extends Controller
             }
 
             if ($requestMessage['async']) {
-                $this->response->setPayloadSuccess(['success' => true]);
+                $this->response->setPayloadSuccess([
+                    'success' => true,
+                    'processor' => $processor,
+                    'action' => $actionName
+                ]);
+                $this->response->send();
                 return;
             }
 
@@ -334,9 +340,13 @@ class BaseController extends Controller
             // If JWT token, add user info from payload
             $jwtPayload = $this->request->getJwtPayload();
             if ($jwtPayload) {
-                $sessionContext['user_name'] = $jwtPayload['userId'] ?? null;
+                $userId = $jwtPayload['userId'] ?? null;
+                $sessionContext['user_name'] = $userId;
                 $sessionContext['role'] = $jwtPayload['role'] ?? null;
-                $sessionContext['session_id'] = $jwtPayload['jti'] ?? null; // JWT ID as session ID
+                // Use userId as session_id for WebAuthn challenge storage
+                // Each user can have one active challenge at a time
+                // JWT tokens don't have 'jti' field, so we use userId instead
+                $sessionContext['session_id'] = $userId;
             }
 
             $requestMessage['sessionContext'] = $sessionContext;

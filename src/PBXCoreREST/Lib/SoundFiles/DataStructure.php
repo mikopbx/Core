@@ -37,7 +37,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     /**
      * Create complete data array from SoundFiles model
      * @param mixed $model SoundFiles model instance
-     * @return array
+     * @return array<string, mixed>
      */
     public static function createFromModel($model): array
     {
@@ -196,20 +196,18 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
 
     /**
-     * Generate sanitization rules from OpenAPI schema
+     * Generate sanitization rules automatically from controller attributes
      *
-     * @return array<string, string> Sanitization rules
+     * Uses ParameterSanitizationExtractor to extract rules from #[ApiParameter] attributes.
+     * This ensures Single Source of Truth - rules defined only in controller attributes.
+     *
+     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
      */
     public static function getSanitizationRules(): array
     {
-        return [
-            'id' => 'string',
-            'name' => 'string|max:255',
-            'description' => 'string|max:500',
-            'path' => 'string|max:500',
-            'category' => 'string|in:custom,moh',
-            'fileSize' => 'int|min:0',
-            'duration' => 'string|regex:/^[0-9]{2}:[0-9]{2}$/'
-        ];
+        return \MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor::extractFromController(
+            \MikoPBX\PBXCoreREST\Controllers\SoundFiles\RestController::class,
+            'create'
+        );
     }
 }

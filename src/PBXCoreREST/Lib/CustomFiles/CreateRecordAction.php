@@ -20,37 +20,32 @@
 namespace MikoPBX\PBXCoreREST\Lib\CustomFiles;
 
 use MikoPBX\Common\Models\CustomFiles;
+use MikoPBX\Core\System\SystemMessages;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 
 /**
- * Action for creating a new custom file
+ * CreateRecordAction
+ * Creates a new custom file record.
  *
- * @api {post} /pbxcore/api/v3/custom-files Create new custom file
- * @apiVersion 3.0.0
- * @apiName CreateRecord
- * @apiGroup CustomFiles
+ * Note: This class has custom implementation due to specific requirements:
+ * - Security-critical path validation
+ * - Base64 content encoding/decoding
+ * - Immediate file application to filesystem
  *
- * @apiParam {String} filepath File path (required, must be unique)
- * @apiParam {String} [content] File content (base64 encoded)
- * @apiParam {String} [mode=none] File mode (none, append, override, script)
- * @apiParam {String} [description] File description
- *
- * @apiSuccess {Boolean} result Operation result
- * @apiSuccess {Object} data Created custom file data
- * @apiSuccess {String} data.id New file ID
+ * @package MikoPBX\PBXCoreREST\Lib\CustomFiles
  */
-class CreateRecordAction
+class CreateRecordAction extends AbstractSaveRecordAction
 {
     /**
-     * Create new custom file
+     * Create a new custom file.
      *
-     * @param array $data Custom file data
+     * @param array<string, mixed> $data Custom file data
      * @return PBXApiResult
      */
     public static function main(array $data): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
+        $res = self::createApiResult(__METHOD__);
 
         try {
             // Validate required fields
@@ -118,8 +113,11 @@ class CreateRecordAction
             // Add reload URL for frontend navigation
             $res->reload = "custom-files/modify/{$file->id}";
 
+            // Log successful creation
+            SystemMessages::sysLogMsg(__CLASS__, 'New custom file created: ' . $file->id . ' (' . $file->filepath . ')', LOG_INFO);
+
         } catch (\Exception $e) {
-            $res->messages['error'][] = $e->getMessage();
+            return self::handleError($e, $res);
         }
 
         return $res;

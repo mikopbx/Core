@@ -19,40 +19,48 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Employees;
 
+use MikoPBX\Core\System\SystemMessages;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 
 /**
- * Class CreateRecordAction
- * 
- * Handles POST /employees - Creates a new employee record
- * 
- * This is a wrapper around SaveEmployeeAction that ensures we're creating a new record
- * with all required fields provided.
- * 
+ * CreateRecordAction
+ * Creates a new employee record.
+ *
  * @package MikoPBX\PBXCoreREST\Lib\Employees
  */
-class CreateRecordAction
+class CreateRecordAction extends AbstractSaveRecordAction
 {
     /**
-     * Create a new employee record
-     * 
-     * @param array $data Employee data from request
+     * Create a new employee record.
+     *
+     * @param array<string, mixed> $data Employee data to save
      * @return PBXApiResult
      */
     public static function main(array $data): PBXApiResult
     {
-        // For create operation, ensure we don't have an ID or it's empty
-        // This prevents accidentally updating an existing record
-        if (!empty($data['id'])) {
-            $res = new PBXApiResult();
-            $res->messages['error'][] = 'Cannot create employee with existing ID. Use PUT or PATCH to update.';
-            return $res;
+        $res = self::createApiResult(__METHOD__);
+
+        try {
+            // For create operation, allow custom ID if provided (for migrations/imports)
+            // ID validation is handled by SaveEmployeeAction
+            // If no ID provided, SaveEmployeeAction will use auto-increment
+
+            // Remove legacy uniqid field if present (use 'id' instead in v3 API)
+            unset($data['uniqid']);
+
+            // Use existing SaveEmployeeAction logic for actual save
+            $res = SaveEmployeeAction::main($data);
+
+            // If successful, publish event for new employee creation
+            if ($res->success && isset($res->data['id'])) {
+                SystemMessages::sysLogMsg(__CLASS__, 'New employee created: ' . $res->data['id'], LOG_INFO);
+            }
+
+        } catch (\Exception $e) {
+            return self::handleError($e, $res);
         }
-        
-        // Mark as new record for SaveEmployeeAction
-        $data['id'] = '';
-        
-        // Use SaveEmployeeAction for actual creation
-        return SaveEmployeeAction::main($data);
+
+        return $res;
     }
 }

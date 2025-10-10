@@ -26,11 +26,11 @@ use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
     ApiParameter,
+    ApiParameterRef,
     ApiResponse,
     ApiDataSchema,
     HttpMapping,
-    ResourceSecurity,
-    ActionType
+    ResourceSecurity
 };
 use MikoPBX\PBXCoreREST\Lib\Common\OpenApiSchemaProvider;
 use Phalcon\Di\Injectable;
@@ -279,6 +279,20 @@ class ApiMetadataRegistry extends Injectable
 
                     // Register schema for later inclusion in OpenAPI spec
                     $this->registerSchemaFromClass($dataSchema->schemaClass, $schemaName, $dataSchema->type);
+                }
+            }
+
+            // Scan for ApiParameterRef attributes (lightweight references to DataStructure definitions)
+            $parameterRefAttributes = $method->getAttributes(ApiParameterRef::class);
+            foreach ($parameterRefAttributes as $attribute) {
+                /** @var ApiParameterRef $paramRef */
+                $paramRef = $attribute->newInstance();
+
+                // Resolve parameter definition from DataStructure
+                $resolvedParam = $this->resolveParameterRef($paramRef, $methodMetadata['dataSchema'] ?? null);
+
+                if ($resolvedParam !== null) {
+                    $methodMetadata['parameters'][] = $resolvedParam;
                 }
             }
 
@@ -1213,6 +1227,71 @@ class ApiMetadataRegistry extends Injectable
 
         // Return as-is if it doesn't look like a translation key
         return $text;
+    }
+
+    /**
+     * Resolve ApiParameterRef to full parameter definition
+     *
+     * Takes a lightweight ApiParameterRef and resolves it to a full parameter definition
+     * by looking up the parameter in DataStructure::getParameterDefinitions() and merging
+     * with any overrides specified in the ApiParameterRef.
+     *
+     * This implements the Single Source of Truth pattern where parameter definitions
+     * are stored in DataStructure and referenced by lightweight attributes in controllers.
+     *
+     * @param ApiParameterRef $paramRef Parameter reference to resolve
+     * @param array<string, mixed>|null $dataSchema DataSchema metadata from ApiDataSchema attribute
+     * @return array<string, mixed>|null Resolved parameter definition, or null if not found
+     */
+    private function resolveParameterRef(ApiParameterRef $paramRef, ?array $dataSchema): ?array
+    {
+        // Need dataSchema to get schemaClass
+        if ($dataSchema === null || !isset($dataSchema['schemaClass'])) {
+            return null;
+        }
+
+        $schemaClass = $dataSchema['schemaClass'];
+
+        // Verify class exists and has getParameterDefinitions method
+        if (!class_exists($schemaClass) || !method_exists($schemaClass, 'getParameterDefinitions')) {
+            return null;
+        }
+
+        // Get parameter definitions from DataStructure
+        $definitions = $schemaClass::getParameterDefinitions();
+        $requestParams = $definitions['request'] ?? [];
+
+        // Find parameter definition by name
+        if (!isset($requestParams[$paramRef->parameterName])) {
+            return null;
+        }
+
+        $baseDefinition = $requestParams[$paramRef->parameterName];
+
+        // Merge with overrides from ApiParameterRef
+        $overrides = $paramRef->getOverrides();
+
+        // Build full parameter definition
+        $resolved = [
+            'name' => $paramRef->parameterName,
+            'type' => $baseDefinition['type'] ?? 'string',
+            'description' => $overrides['description'] ?? $baseDefinition['description'] ?? '',
+            'in' => isset($overrides['in']) ? $overrides['in']->value : 'query',
+            'required' => $overrides['required'] ?? false,
+            'default' => $overrides['default'] ?? $baseDefinition['default'] ?? null,
+            'example' => $overrides['example'] ?? $baseDefinition['example'] ?? null,
+            'enum' => $overrides['enum'] ?? $baseDefinition['enum'] ?? null,
+            'format' => $baseDefinition['format'] ?? null,
+            'minimum' => $overrides['minimum'] ?? $baseDefinition['minimum'] ?? null,
+            'maximum' => $overrides['maximum'] ?? $baseDefinition['maximum'] ?? null,
+            'minLength' => $baseDefinition['minLength'] ?? null,
+            'maxLength' => $overrides['maxLength'] ?? $baseDefinition['maxLength'] ?? null,
+            'pattern' => $overrides['pattern'] ?? $baseDefinition['pattern'] ?? null,
+            'deprecated' => false,
+            'validationRules' => [] // Will be populated if needed
+        ];
+
+        return $resolved;
     }
 
     /**

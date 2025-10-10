@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Lib\License;
 
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
 use MikoPBX\PBXCoreREST\Lib\Common\OpenApiSchemaProvider;
 
 /**
@@ -29,9 +30,11 @@ use MikoPBX\PBXCoreREST\Lib\Common\OpenApiSchemaProvider;
  * Provides OpenAPI schemas for license management endpoints.
  * This is a singleton resource - there is only one license per system.
  *
+ * Implements Single Source of Truth pattern via getParameterDefinitions().
+ *
  * @package MikoPBX\PBXCoreREST\Lib\License
  */
-class DataStructure implements OpenApiSchemaProvider
+class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvider
 {
     /**
      * Get detail schema for license information
@@ -49,9 +52,9 @@ class DataStructure implements OpenApiSchemaProvider
                 'licenseKey' => [
                     'type' => 'string',
                     'description' => 'rest_schema_lic_licenseKey',
-                    'pattern' => '^MIKO-[A-Z0-9]{3}-[A-Z0-9]{3}$',
+                    'pattern' => '^MIKO-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}$',
                     'nullable' => true,
-                    'example' => 'MIKO-ABC-123'
+                    'example' => 'MIKO-GW9DC-EE22D-WB83S-C88PG'
                 ],
                 'companyName' => [
                     'type' => 'string',
@@ -133,185 +136,161 @@ class DataStructure implements OpenApiSchemaProvider
     /**
      * Get related schemas for License responses
      *
+     * Inherits from getParameterDefinitions()['related'] section.
+     * This implements Single Source of Truth pattern.
+     *
      * @return array<string, array<string, mixed>>
      */
     public static function getRelatedSchemas(): array
     {
+        $definitions = self::getParameterDefinitions();
+        return $definitions['related'] ?? [];
+    }
+
+    /**
+     * Get all field definitions (request parameters + response-only fields + related schemas)
+     *
+     * Single Source of Truth for ALL definitions in License API.
+     *
+     * Structure:
+     * - 'request': Request parameters (used in API requests, referenced by ApiParameterRef)
+     * - 'response': Response-only fields (only in API responses, not in requests)
+     * - 'related': Related schemas for nested objects (referenced by $ref in OpenAPI)
+     *
+     * This eliminates duplication between:
+     * - Controller attributes (via ApiParameterRef)
+     * - getDetailSchema() (inherits from here)
+     * - getRelatedSchemas() (inherits from here)
+     * - getSanitizationRules() (generated from here)
+     *
+     * @return array<string, array<string, array<string, mixed>>> Field definitions
+     */
+    public static function getParameterDefinitions(): array
+    {
         return [
-            'LicenseProduct' => [
-                'type' => 'object',
-                'required' => ['productId', 'productName'],
-                'properties' => [
-                    'productId' => [
-                        'type' => 'string',
-                        'description' => 'rest_schema_lic_productId',
-                        'example' => 'ModuleSmartIVR'
-                    ],
-                    'productName' => [
-                        'type' => 'string',
-                        'description' => 'rest_schema_lic_productName',
-                        'example' => 'Smart IVR Module'
-                    ],
-                    'version' => [
-                        'type' => 'string',
-                        'description' => 'rest_schema_lic_productVersion',
-                        'pattern' => '^[0-9]+\.[0-9]+\.[0-9]+$',
-                        'example' => '1.2.3'
-                    ],
-                    'isActive' => [
-                        'type' => 'boolean',
-                        'description' => 'rest_schema_lic_productIsActive',
-                        'example' => true
-                    ]
-                ]
+            // ========== REQUEST PARAMETERS ==========
+            // Used in API requests (POST)
+            // Referenced by ApiParameterRef in Controller
+            'request' => [
+                'licKey' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_lic_licKey',
+                    'pattern' => '^MIKO-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}$',
+                    'example' => 'MIKO-GW9DC-EE22D-WB83S-C88PG'
+                ],
+                'coupon' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_lic_coupon',
+                    'pattern' => '^MIKOUPD-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}$',
+                    'example' => 'MIKOUPD-GK0DC-QE11D-WN87S-C88PF'
+                ],
+                'productId' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_lic_productId',
+                    'example' => 'ModuleSmartIVR'
+                ],
+                'featureId' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_lic_featureId',
+                    'example' => 'AdvancedCallRouting'
+                ],
             ],
-            'LicenseFeature' => [
-                'type' => 'object',
-                'required' => ['featureId', 'featureName'],
-                'properties' => [
-                    'featureId' => [
-                        'type' => 'string',
-                        'description' => 'rest_schema_lic_featureId',
-                        'example' => 'AdvancedCallRouting'
-                    ],
-                    'featureName' => [
-                        'type' => 'string',
-                        'description' => 'rest_schema_lic_featureName',
-                        'example' => 'Advanced Call Routing'
-                    ],
-                    'isEnabled' => [
-                        'type' => 'boolean',
-                        'description' => 'rest_schema_lic_featureIsEnabled',
-                        'example' => true
-                    ],
-                    'expirationDate' => [
-                        'type' => 'string',
-                        'description' => 'rest_schema_lic_featureExpirationDate',
-                        'format' => 'date',
-                        'nullable' => true,
-                        'example' => '2025-12-31'
-                    ]
-                ]
+
+            // ========== RESPONSE-ONLY FIELDS ==========
+            // Only in API responses, not in requests
+            // Used by getDetailSchema()
+            'response' => [
+                // Response fields are already defined in getDetailSchema()
+                // No need to duplicate here as they're not used for sanitization
             ],
-            'LicenseUserRequest' => [
-                'type' => 'object',
-                'properties' => [
-                    'licKey' => [
-                        'type' => 'string',
-                        'description' => 'rest_param_lic_licKey',
-                        'pattern' => '^MIKO-[A-Z0-9]{3}-[A-Z0-9]{3}$',
-                        'example' => 'MIKO-ABC-123'
-                    ],
-                    'coupon' => [
-                        'type' => 'string',
-                        'description' => 'rest_param_lic_coupon',
-                        'maxLength' => 50,
-                        'example' => 'PROMO2024'
+
+            // ========== RELATED SCHEMAS ==========
+            // Nested object schemas referenced by $ref in OpenAPI
+            // Used by getRelatedSchemas() method
+            'related' => [
+                'LicenseProduct' => [
+                    'type' => 'object',
+                    'required' => ['productId', 'productName'],
+                    'properties' => [
+                        'productId' => [
+                            'type' => 'string',
+                            'description' => 'rest_schema_lic_productId',
+                            'example' => 'ModuleSmartIVR'
+                        ],
+                        'productName' => [
+                            'type' => 'string',
+                            'description' => 'rest_schema_lic_productName',
+                            'example' => 'Smart IVR Module'
+                        ],
+                        'version' => [
+                            'type' => 'string',
+                            'description' => 'rest_schema_lic_productVersion',
+                            'pattern' => '^[0-9]+\.[0-9]+\.[0-9]+$',
+                            'example' => '1.2.3'
+                        ],
+                        'isActive' => [
+                            'type' => 'boolean',
+                            'description' => 'rest_schema_lic_productIsActive',
+                            'example' => true
+                        ]
                     ]
-                ]
-            ],
-            'LicenseCaptureFeatureRequest' => [
-                'type' => 'object',
-                'required' => ['productId', 'featureId'],
-                'properties' => [
-                    'productId' => [
-                        'type' => 'string',
-                        'description' => 'rest_param_lic_productId',
-                        'example' => 'ModuleSmartIVR'
-                    ],
-                    'featureId' => [
-                        'type' => 'string',
-                        'description' => 'rest_param_lic_featureId',
-                        'example' => 'AdvancedCallRouting'
+                ],
+
+                'LicenseFeature' => [
+                    'type' => 'object',
+                    'required' => ['featureId', 'featureName'],
+                    'properties' => [
+                        'featureId' => [
+                            'type' => 'string',
+                            'description' => 'rest_schema_lic_featureId',
+                            'example' => 'AdvancedCallRouting'
+                        ],
+                        'featureName' => [
+                            'type' => 'string',
+                            'description' => 'rest_schema_lic_featureName',
+                            'example' => 'Advanced Call Routing'
+                        ],
+                        'isEnabled' => [
+                            'type' => 'boolean',
+                            'description' => 'rest_schema_lic_featureIsEnabled',
+                            'example' => true
+                        ],
+                        'expirationDate' => [
+                            'type' => 'string',
+                            'description' => 'rest_schema_lic_featureExpirationDate',
+                            'format' => 'date',
+                            'nullable' => true,
+                            'example' => '2025-12-31'
+                        ]
                     ]
-                ]
-            ],
-            'LicensePingResponse' => [
-                'type' => 'object',
-                'required' => ['success', 'message'],
-                'properties' => [
-                    'success' => [
-                        'type' => 'boolean',
-                        'description' => 'rest_schema_lic_ping_success',
-                        'example' => true
-                    ],
-                    'message' => [
-                        'type' => 'string',
-                        'description' => 'rest_schema_lic_ping_message',
-                        'example' => 'License server is reachable'
-                    ],
-                    'responseTime' => [
-                        'type' => 'integer',
-                        'description' => 'rest_schema_lic_ping_responseTime',
-                        'minimum' => 0,
-                        'example' => 125
+                ],
+
+                'LicensePingResponse' => [
+                    'type' => 'object',
+                    'required' => ['success', 'message'],
+                    'properties' => [
+                        'success' => [
+                            'type' => 'boolean',
+                            'description' => 'rest_schema_lic_ping_success',
+                            'example' => true
+                        ],
+                        'message' => [
+                            'type' => 'string',
+                            'description' => 'rest_schema_lic_ping_message',
+                            'example' => 'License server is reachable'
+                        ],
+                        'responseTime' => [
+                            'type' => 'integer',
+                            'description' => 'rest_schema_lic_ping_responseTime',
+                            'minimum' => 0,
+                            'example' => 125
+                        ]
                     ]
-                ]
+                ],
             ]
         ];
     }
 
-    /**
-     * Generate sanitization rules from OpenAPI schema
-     *
-     * Converts OpenAPI schema constraints into SystemSanitizer format.
-     * This eliminates duplication between schema definition and validation rules.
-     *
-     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
-     */
-    public static function getSanitizationRules(): array
-    {
-        $schema = static::getDetailSchema();
-        $rules = [];
-
-        if (!isset($schema['properties'])) {
-            return $rules;
-        }
-
-        foreach ($schema['properties'] as $fieldName => $fieldSchema) {
-            $ruleParts = [];
-
-            // Add type
-            $type = $fieldSchema['type'] ?? 'string';
-            $ruleParts[] = match ($type) {
-                'integer' => 'int',
-                'number' => 'float',
-                'boolean' => 'bool',
-                'array' => 'array',
-                default => 'string'
-            };
-
-            // Add constraints
-            if (isset($fieldSchema['minLength'])) {
-                $ruleParts[] = 'min:' . $fieldSchema['minLength'];
-            }
-            if (isset($fieldSchema['maxLength'])) {
-                $ruleParts[] = 'max:' . $fieldSchema['maxLength'];
-            }
-            if (isset($fieldSchema['minimum'])) {
-                $ruleParts[] = 'min:' . $fieldSchema['minimum'];
-            }
-            if (isset($fieldSchema['maximum'])) {
-                $ruleParts[] = 'max:' . $fieldSchema['maximum'];
-            }
-            if (isset($fieldSchema['pattern']) && is_string($fieldSchema['pattern'])) {
-                $pattern = str_replace('^', '', $fieldSchema['pattern']);
-                $pattern = str_replace('$', '', $pattern);
-                $ruleParts[] = 'regex:/' . $pattern . '/';
-            }
-            if (isset($fieldSchema['enum']) && is_array($fieldSchema['enum'])) {
-                $ruleParts[] = 'in:' . implode(',', $fieldSchema['enum']);
-            }
-            if (isset($fieldSchema['nullable']) && $fieldSchema['nullable'] === true) {
-                $ruleParts[] = 'empty_to_null';
-            }
-            if (isset($fieldSchema['format']) && $fieldSchema['format'] === 'email') {
-                $ruleParts[] = 'email';
-            }
-
-            $rules[$fieldName] = implode('|', $ruleParts);
-        }
-
-        return $rules;
-    }
+    // getSanitizationRules() inherited from AbstractDataStructure
+    // No need to override - uses getParameterDefinitions() automatically
 }

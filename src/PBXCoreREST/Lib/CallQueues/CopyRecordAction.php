@@ -63,7 +63,7 @@ class CopyRecordAction extends AbstractCopyRecordAction
             $sourceId,
             CallQueues::class,
             DataStructure::class,
-            Extensions::TYPE_QUEUE.'-',  // Unique ID prefix
+            Extensions::PREFIX_QUEUE,    // Unique ID prefix (tilde will be added by generateUniqueID)
             [                            // Fields to copy
                 'name',
                 'strategy',

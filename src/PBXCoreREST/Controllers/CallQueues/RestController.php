@@ -26,6 +26,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
     ApiParameter,
+    ApiParameterRef,
     ApiResponse,
     ApiDataSchema,
     SecurityType,
@@ -137,14 +138,8 @@ class RestController extends BaseRestController
         default: 'ASC',
         example: 'ASC'
     )]
-    #[ApiParameter(
-        name: 'strategy',
-        type: 'string',
-        description: 'rest_param_strategy',
-        in: ParameterLocation::QUERY,
-        enum: ['ringall', 'rrmemory', 'linear', 'random', 'leastrecent'],
-        example: 'ringall'
-    )]
+    // ✨ Filter parameter using reference (inherits enum from definitions)
+    #[ApiParameterRef('strategy')]
     #[ApiResponse(200, 'rest_response_200_list')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -191,19 +186,30 @@ class RestController extends BaseRestController
         description: 'rest_cq_CreateDesc',
         operationId: 'createCallQueue'
     )]
-    // Request body parameters for create operation
-    #[ApiParameter('name', 'string', 'rest_param_cq_name', ParameterLocation::QUERY, required: true, maxLength: 100, example: 'Sales Queue')]
-    #[ApiParameter('extension', 'string', 'rest_param_cq_extension', ParameterLocation::QUERY, required: true, pattern: '^[0-9]{2,8}$', example: '2200100')]
-    #[ApiParameter('description', 'string', 'rest_param_cq_description', ParameterLocation::QUERY, required: false, maxLength: 500, example: 'Queue for sales department calls')]
-    #[ApiParameter('strategy', 'string', 'rest_param_cq_strategy', ParameterLocation::QUERY, required: false, enum: ['ringall', 'leastrecent', 'fewestcalls', 'random', 'rrmemory', 'linear'], default: 'ringall', example: 'ringall')]
-    #[ApiParameter('seconds_to_ring_each_member', 'integer', 'rest_param_cq_seconds_to_ring', ParameterLocation::QUERY, required: false, minimum: 1, maximum: 300, default: 15, example: 20)]
-    #[ApiParameter('seconds_for_wrapup', 'integer', 'rest_param_cq_seconds_for_wrapup', ParameterLocation::QUERY, required: false, minimum: 0, maximum: 300, default: 15, example: 10)]
-    #[ApiParameter('recive_calls_while_on_a_call', 'boolean', 'rest_param_cq_recive_calls_while_on_call', ParameterLocation::QUERY, required: false, default: false, example: false)]
-    #[ApiParameter('caller_hear', 'string', 'rest_param_cq_caller_hear', ParameterLocation::QUERY, required: false, enum: ['ringing', 'musiconhold', 'mohClass'], default: 'ringing', example: 'musiconhold')]
-    #[ApiParameter('announce_position', 'boolean', 'rest_param_cq_announce_position', ParameterLocation::QUERY, required: false, default: false, example: true)]
-    #[ApiParameter('announce_hold_time', 'boolean', 'rest_param_cq_announce_hold_time', ParameterLocation::QUERY, required: false, default: false, example: false)]
-    #[ApiParameter('moh_sound_id', 'string', 'rest_param_cq_moh_sound_id', ParameterLocation::QUERY, required: false, example: '43')]
-    #[ApiParameter('members', 'array', 'rest_param_cq_members', ParameterLocation::QUERY, required: false, example: '[{"extension":"200","priority":1},{"extension":"202","priority":2}]')]
+    // ✨ Lightweight references to DataStructure::getParameterDefinitions()['request']
+    // All constraints (enum, pattern, maxLength, min/max, defaults) inherited from definitions
+    #[ApiParameterRef('name', required: true)]
+    #[ApiParameterRef('extension', required: true)]
+    #[ApiParameterRef('description')]
+    #[ApiParameterRef('strategy')]
+    #[ApiParameterRef('seconds_to_ring_each_member')]
+    #[ApiParameterRef('seconds_for_wrapup')]
+    #[ApiParameterRef('recive_calls_while_on_a_call')]
+    #[ApiParameterRef('caller_hear')]
+    #[ApiParameterRef('announce_position')]
+    #[ApiParameterRef('announce_hold_time')]
+    #[ApiParameterRef('moh_sound_id')]
+    #[ApiParameterRef('periodic_announce_sound_id')]
+    #[ApiParameterRef('periodic_announce_frequency')]
+    #[ApiParameterRef('timeout_to_redirect_to_extension')]
+    #[ApiParameterRef('timeout_extension')]
+    #[ApiParameterRef('redirect_to_extension_if_empty')]
+    #[ApiParameterRef('redirect_to_extension_if_unanswered')]
+    #[ApiParameterRef('number_unanswered_calls_to_redirect')]
+    #[ApiParameterRef('redirect_to_extension_if_repeat_exceeded')]
+    #[ApiParameterRef('number_repeat_unanswered_to_redirect')]
+    #[ApiParameterRef('callerid_prefix')]
+    #[ApiParameterRef('members')]
     #[ApiResponse(201, 'rest_response_201_created')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -229,9 +235,10 @@ class RestController extends BaseRestController
         operationId: 'updateCallQueue'
     )]
     #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^QUEUE-[A-Z0-9]+$', example: 'QUEUE-2EDC283C')]
-    #[ApiParameter('name', 'string', 'rest_param_cq_name', ParameterLocation::QUERY, required: true, maxLength: 100, example: 'Updated Sales Queue')]
-    #[ApiParameter('extension', 'string', 'rest_param_cq_extension', ParameterLocation::QUERY, required: true, pattern: '^[0-9]{2,8}$', example: '2200100')]
-    #[ApiParameter('strategy', 'string', 'rest_param_cq_strategy', ParameterLocation::QUERY, required: false, enum: ['ringall', 'leastrecent', 'fewestcalls', 'random', 'rrmemory', 'linear'], default: 'ringall', example: 'leastrecent')]
+    // ✨ Lightweight references with optional overrides
+    #[ApiParameterRef('name', required: true, example: 'Updated Sales Queue')]
+    #[ApiParameterRef('extension', required: true)]
+    #[ApiParameterRef('strategy', example: 'leastrecent')]
     #[ApiResponse(200, 'rest_response_200_updated')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -258,10 +265,11 @@ class RestController extends BaseRestController
         operationId: 'patchCallQueue'
     )]
     #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^QUEUE-[A-Z0-9]+$', example: 'QUEUE-2EDC283C')]
-    #[ApiParameter('name', 'string', 'rest_param_cq_name', ParameterLocation::QUERY, required: false, maxLength: 100, example: 'Updated Sales Queue')]
-    #[ApiParameter('description', 'string', 'rest_param_cq_description', ParameterLocation::QUERY, required: false, maxLength: 500, example: 'Updated description')]
-    #[ApiParameter('strategy', 'string', 'rest_param_cq_strategy', ParameterLocation::QUERY, required: false, enum: ['ringall', 'leastrecent', 'fewestcalls', 'random', 'rrmemory', 'linear'], example: 'leastrecent')]
-    #[ApiParameter('seconds_to_ring_each_member', 'integer', 'rest_param_cq_seconds_to_ring', ParameterLocation::QUERY, required: false, minimum: 1, maximum: 300, example: 25)]
+    // ✨ Lightweight references (all optional in PATCH)
+    #[ApiParameterRef('name', example: 'Updated Sales Queue')]
+    #[ApiParameterRef('description', example: 'Updated description')]
+    #[ApiParameterRef('strategy', example: 'leastrecent')]
+    #[ApiParameterRef('seconds_to_ring_each_member', example: 25)]
     #[ApiResponse(200, 'rest_response_200_patched')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]

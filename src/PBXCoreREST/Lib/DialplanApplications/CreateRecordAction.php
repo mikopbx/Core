@@ -23,26 +23,33 @@ namespace MikoPBX\PBXCoreREST\Lib\DialplanApplications;
 
 use MikoPBX\Common\Models\DialplanApplications;
 use MikoPBX\Common\Models\Extensions;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 
 /**
- * Create new dialplan application
+ * CreateRecordAction
+ * Creates a new dialplan application record.
+ *
+ * Note: This class has custom implementation due to specific requirements:
+ * - Creates both DialplanApplications and Extensions records
+ * - Handles applicationlogic encoding
+ * - Triggers dialplan reload
  *
  * @package MikoPBX\PBXCoreREST\Lib\DialplanApplications
  */
-class CreateRecordAction
+class CreateRecordAction extends AbstractSaveRecordAction
 {
     /**
-     * Create a new dialplan application
+     * Create a new dialplan application.
      *
-     * @param array $data Request data
+     * @param array<string, mixed> $data Request data
      * @return PBXApiResult
      */
     public static function main(array $data): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
+        $res = self::createApiResult(__METHOD__);
         
         try {
             // Validate required fields
@@ -111,14 +118,17 @@ class CreateRecordAction
 
             // Reload dialplan
             $di->get('pbxConfigurator')->reloadDialplan();
-            
+
+            // Log successful creation
+            SystemMessages::sysLogMsg(__CLASS__, 'New dialplan application created: ' . $record->uniqid, LOG_INFO);
+
         } catch (\Exception $e) {
             if (isset($db) && $db->isUnderTransaction()) {
                 $db->rollback();
             }
-            $res->messages['error'][] = $e->getMessage();
+            return self::handleError($e, $res);
         }
-        
+
         return $res;
     }
     

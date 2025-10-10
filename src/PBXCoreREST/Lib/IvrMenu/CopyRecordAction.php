@@ -21,6 +21,7 @@ namespace MikoPBX\PBXCoreREST\Lib\IvrMenu;
 
 use MikoPBX\Common\Models\IvrMenu;
 use MikoPBX\Common\Models\IvrMenuActions;
+use MikoPBX\Common\Models\Extensions;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractCopyRecordAction;
 
@@ -62,7 +63,7 @@ class CopyRecordAction extends AbstractCopyRecordAction
             $sourceId,
             IvrMenu::class,
             DataStructure::class,
-            'IVR-',                    // Unique ID prefix
+            Extensions::PREFIX_IVR,    // Unique ID prefix (tilde will be added by generateUniqueID)
             [                          // Fields to copy
                 'name',
                 'audio_message_id',

@@ -25,11 +25,10 @@ use MikoPBX\PBXCoreREST\Lib\License\DataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
-    ApiParameter,
+    ApiParameterRef,
     ApiResponse,
     ApiDataSchema,
     SecurityType,
-    ParameterLocation,
     HttpMapping,
     ResourceSecurity
 };
@@ -162,29 +161,18 @@ class RestController extends BaseRestController
      *
      * @route POST /pbxcore/api/v3/license:processUserRequest
      */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
     #[ApiOperation(
         summary: 'rest_lic_ProcessUserRequest',
         description: 'rest_lic_ProcessUserRequestDesc',
         operationId: 'processUserLicenseRequest'
     )]
-    #[ApiParameter(
-        name: 'licKey',
-        type: 'string',
-        description: 'rest_param_lic_licKey',
-        in: ParameterLocation::QUERY,
-        required: false,
-        pattern: '^MIKO-[A-Z0-9]{3}-[A-Z0-9]{3}$',
-        example: 'MIKO-ABC-123'
-    )]
-    #[ApiParameter(
-        name: 'coupon',
-        type: 'string',
-        description: 'rest_param_lic_coupon',
-        in: ParameterLocation::QUERY,
-        required: false,
-        maxLength: 50,
-        example: 'PROMO2024'
-    )]
+    // ✨ Lightweight references to DataStructure::getParameterDefinitions()['request']
+    #[ApiParameterRef('licKey')]
+    #[ApiParameterRef('coupon')]
     #[ApiResponse(200, 'rest_response_200_updated')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -200,27 +188,18 @@ class RestController extends BaseRestController
      *
      * @route POST /pbxcore/api/v3/license:captureFeatureForProductId
      */
+    #[ApiDataSchema(
+        schemaClass: DataStructure::class,
+        type: 'detail'
+    )]
     #[ApiOperation(
         summary: 'rest_lic_CaptureFeature',
         description: 'rest_lic_CaptureFeatureDesc',
         operationId: 'captureFeatureForProduct'
     )]
-    #[ApiParameter(
-        name: 'productId',
-        type: 'string',
-        description: 'rest_param_lic_productId',
-        in: ParameterLocation::QUERY,
-        required: true,
-        example: 'ModuleSmartIVR'
-    )]
-    #[ApiParameter(
-        name: 'featureId',
-        type: 'string',
-        description: 'rest_param_lic_featureId',
-        in: ParameterLocation::QUERY,
-        required: true,
-        example: 'AdvancedCallRouting'
-    )]
+    // ✨ Lightweight references to DataStructure::getParameterDefinitions()['request']
+    #[ApiParameterRef('productId', required: true)]
+    #[ApiParameterRef('featureId', required: true)]
     #[ApiResponse(200, 'rest_response_200_updated')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]

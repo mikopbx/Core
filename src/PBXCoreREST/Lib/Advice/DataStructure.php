@@ -145,18 +145,20 @@ class DataStructure implements OpenApiSchemaProvider
     }
 
     /**
-     * Generate sanitization rules from OpenAPI schema
+     * Generate sanitization rules automatically from controller attributes
      *
-     * For Advice this is minimal since it's a read-only resource.
+     * Uses ParameterSanitizationExtractor to extract rules from #[ApiParameter] attributes.
+     * This ensures Single Source of Truth - rules defined only in controller attributes.
      *
-     * @return array<string, string> Sanitization rules
+     * For read-only resources like Advice, we extract from the primary query method (getList).
+     *
+     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
      */
     public static function getSanitizationRules(): array
     {
-        return [
-            'category' => 'string|in:security,configuration,performance,maintenance,updates',
-            'severity' => 'string|in:critical,warning,info',
-            'force' => 'bool'
-        ];
+        return \MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor::extractFromController(
+            \MikoPBX\PBXCoreREST\Controllers\Advice\RestController::class,
+            'getList'
+        );
     }
 }

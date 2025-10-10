@@ -225,28 +225,21 @@ class DataStructure implements OpenApiSchemaProvider
     }
 
     /**
-     * Generate sanitization rules from OpenAPI schema
+     * Generate sanitization rules automatically from controller attributes
      *
-     * @return array<string, string> Sanitization rules
+     * Uses ParameterSanitizationExtractor to extract rules from #[ApiParameter] attributes.
+     * This ensures Single Source of Truth - rules defined only in controller attributes.
+     *
+     * For singleton resources like MailSettings, we extract from the 'update' method.
+     *
+     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
      */
     public static function getSanitizationRules(): array
     {
-        return [
-            'MailSMTPHost' => 'string|max:255',
-            'MailSMTPPort' => 'int|min:1|max:65535',
-            'MailSMTPAuthType' => 'string|in:none,plain,login,oauth2',
-            'MailSMTPUsername' => 'string|max:255',
-            'MailSMTPPassword' => 'string|max:255',
-            'MailSMTPUseTLS' => 'bool',
-            'MailFromUsername' => 'string|max:255',
-            'MailFromAddress' => 'string|max:255',
-            'MailEnableNotifications' => 'bool',
-            // OAuth2 fields
-            'MailSMTPOAuth2ClientId' => 'string|max:500',
-            'MailSMTPOAuth2ClientSecret' => 'string|max:500',
-            'MailSMTPOAuth2RefreshToken' => 'string|max:1000',
-            'MailSMTPOAuth2Provider' => 'string|in:gmail,outlook,custom'
-        ];
+        return \MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor::extractFromController(
+            \MikoPBX\PBXCoreREST\Controllers\MailSettings\RestController::class,
+            'update'
+        );
     }
 
     /**

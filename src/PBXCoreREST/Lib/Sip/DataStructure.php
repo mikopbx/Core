@@ -352,67 +352,24 @@ class DataStructure implements OpenApiSchemaProvider
     }
 
     /**
-     * Generate sanitization rules from OpenAPI schema
+     * Generate sanitization rules automatically from controller attributes
      *
-     * Converts OpenAPI schema constraints into SystemSanitizer format.
-     * This eliminates duplication between schema definition and validation rules.
+     * Uses ParameterSanitizationExtractor to extract rules from #[ApiParameter] attributes.
+     * This ensures Single Source of Truth - rules defined only in controller attributes.
      *
-     * Note: SIP is read-only for monitoring, so sanitization rules are
-     * primarily for filtering parameters, not for data modification.
+     * For SIP monitoring resource, we extract from the 'getHistory' method which has
+     * the most comprehensive set of query parameters for filtering.
+     *
+     * Note: SIP is read-only for monitoring, so sanitization rules are primarily
+     * for query filtering parameters, not for data modification.
      *
      * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
      */
     public static function getSanitizationRules(): array
     {
-        $schema = static::getDetailSchema();
-        $rules = [];
-
-        if (!isset($schema['properties']) || !is_array($schema['properties'])) {
-            return $rules;
-        }
-
-        foreach ($schema['properties'] as $fieldName => $fieldSchema) {
-            if (!is_array($fieldSchema)) {
-                continue;
-            }
-
-            $ruleParts = [];
-
-            // Add type
-            $type = $fieldSchema['type'] ?? 'string';
-            $ruleParts[] = match ($type) {
-                'integer' => 'int',
-                'number' => 'float',
-                'boolean' => 'bool',
-                'array' => 'array',
-                default => 'string'
-            };
-
-            // Add constraints
-            if (isset($fieldSchema['minimum']) && is_numeric($fieldSchema['minimum'])) {
-                $ruleParts[] = 'min:' . $fieldSchema['minimum'];
-            }
-            if (isset($fieldSchema['maximum']) && is_numeric($fieldSchema['maximum'])) {
-                $ruleParts[] = 'max:' . $fieldSchema['maximum'];
-            }
-            if (isset($fieldSchema['maxLength']) && is_numeric($fieldSchema['maxLength'])) {
-                $ruleParts[] = 'max:' . $fieldSchema['maxLength'];
-            }
-            if (isset($fieldSchema['pattern']) && is_string($fieldSchema['pattern'])) {
-                $pattern = str_replace('^', '', $fieldSchema['pattern']);
-                $pattern = str_replace('$', '', $pattern);
-                $ruleParts[] = 'regex:/' . $pattern . '/';
-            }
-            if (isset($fieldSchema['enum']) && is_array($fieldSchema['enum'])) {
-                $ruleParts[] = 'in:' . implode(',', $fieldSchema['enum']);
-            }
-            if (isset($fieldSchema['nullable']) && $fieldSchema['nullable'] === true) {
-                $ruleParts[] = 'empty_to_null';
-            }
-
-            $rules[$fieldName] = implode('|', $ruleParts);
-        }
-
-        return $rules;
+        return \MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor::extractFromController(
+            \MikoPBX\PBXCoreREST\Controllers\Sip\RestController::class,
+            'getHistory'
+        );
     }
 }

@@ -26,7 +26,6 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
 use MikoPBX\PBXCoreREST\Lib\Common\SystemSanitizer;
 use MikoPBX\PBXCoreREST\Lib\Common\ParameterDefaultsExtractor;
-use MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor;
 use MikoPBX\PBXCoreREST\Controllers\IvrMenu\RestController;
 
 /**
@@ -64,13 +63,10 @@ class SaveRecordAction extends AbstractSaveRecordAction
     {
         $res = self::createApiResult(__METHOD__);
 
-        // Get sanitization rules automatically from controller attributes
-        // Single Source of Truth - rules extracted from #[ApiParameter] attributes
-        $sanitizationRules = ParameterSanitizationExtractor::extractFromController(
-            RestController::class,
-            'create'
-        );
-        
+        // Get sanitization rules from DataStructure (Single Source of Truth)
+        // Uses getParameterDefinitions() to generate rules automatically
+        $sanitizationRules = DataStructure::getSanitizationRules();
+
         // Text fields for unified processing (no HTML decoding, just sanitization)
         $textFields = ['name', 'description'];
 
@@ -191,7 +187,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 // Convert boolean values using unified approach
                 $booleanFields = ['allow_enter_any_internal_extension'];
                 $convertedData = self::convertBooleanFields($sanitizedData, $booleanFields);
-                $ivrMenu->allow_enter_any_internal_extension = $convertedData['allow_enter_any_internal_extension'];
+                $ivrMenu->allow_enter_any_internal_extension = $convertedData['allow_enter_any_internal_extension'] ?? false;
                 
                 if (!$ivrMenu->save()) {
                     throw new \Exception(implode(', ', $ivrMenu->getMessages()));
@@ -336,7 +332,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
             // Sanitize digits field (should be digits, *, #, max 10 chars)
             if (isset($action['digits'])) {
                 $digits = (string)$action['digits'];
-                $digits = preg_replace('/[^0-9*#]/', '', $digits);
+                $digits = preg_replace('/[^0-9*#]/', '', $digits) ?? '';
                 $sanitizedAction['digits'] = substr($digits, 0, 10);
             }
             

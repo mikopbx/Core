@@ -47,13 +47,13 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         // Start with base structure
         $data = self::createBaseStructure($model);
         
-        // Add outbound route specific fields
+        // Add outbound route specific fields (defaults defined in OpenAPI schema)
         $data['rulename'] = $model->rulename ?? '';
         $data['providerid'] = $model->providerid ?? '';  // Unified field name
         $data['priority'] = (int)($model->priority ?? 0);
         $data['numberbeginswith'] = $model->numberbeginswith ?? '';
-        $data['restnumbers'] = $model->restnumbers ?? '9';
-        $data['trimfrombegin'] = $model->trimfrombegin ?? '0';
+        $data['restnumbers'] = $model->restnumbers;  // Default '9' in schema
+        $data['trimfrombegin'] = $model->trimfrombegin;  // Default '0' in schema
         $data['prepend'] = $model->prepend ?? '';
         $data['note'] = $model->note ?? '';
         
@@ -62,10 +62,14 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         
         // Add representation
         $data['represent'] = $model->getRepresent();
-        
+
         // Handle null values for consistent JSON output
         $data = self::handleNullValues($data, ['rulename', 'providerid', 'numberbeginswith', 'prepend', 'note']);
-        
+
+        // Apply OpenAPI schema formatting to convert types automatically
+        // This ensures consistency with API documentation
+        $data = self::formatBySchema($data, 'detail');
+
         return $data;
     }
     
@@ -79,12 +83,12 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     {
         $data = self::createBaseStructure($model);
         
-        // Add essential fields for list display
+        // Add essential fields for list display (defaults defined in OpenAPI schema)
         $data['rulename'] = $model->rulename ?? '';
         $data['priority'] = (int)($model->priority ?? 0);
         $data['numberbeginswith'] = $model->numberbeginswith ?? '';
-        $data['restnumbers'] = $model->restnumbers ?? '9';
-        $data['trimfrombegin'] = $model->trimfrombegin ?? '0';
+        $data['restnumbers'] = $model->restnumbers;  // Default '9' in schema
+        $data['trimfrombegin'] = $model->trimfrombegin;  // Default '0' in schema
         $data['prepend'] = $model->prepend ?? '';
         $data['note'] = $model->note ?? '';
         
@@ -96,10 +100,13 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         
         // Generate ready-to-use description for the rule
         $data['ruleDescription'] = self::generateRuleDescription($model);
-        
+
         // Handle null values for consistent JSON output
         $data = self::handleNullValues($data, ['rulename', 'numberbeginswith', 'prepend', 'note']);
-        
+
+        // Apply OpenAPI list schema formatting to ensure proper types
+        $data = self::formatBySchema($data, 'list');
+
         return $data;
     }
     
@@ -242,8 +249,8 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'rulename' => ['type' => 'string', 'description' => 'rest_schema_obr_rulename', 'maxLength' => 100, 'example' => 'International Calls'],
                 'priority' => ['type' => 'integer', 'description' => 'rest_schema_obr_priority', 'minimum' => 0, 'example' => 1],
                 'numberbeginswith' => ['type' => 'string', 'description' => 'rest_schema_obr_numberbeginswith', 'maxLength' => 20, 'example' => '00'],
-                'restnumbers' => ['type' => 'string', 'description' => 'rest_schema_obr_restnumbers', 'example' => '9'],
-                'trimfrombegin' => ['type' => 'string', 'description' => 'rest_schema_obr_trimfrombegin', 'example' => '0'],
+                'restnumbers' => ['type' => 'string', 'description' => 'rest_schema_obr_restnumbers', 'default' => '9', 'example' => '9'],
+                'trimfrombegin' => ['type' => 'string', 'description' => 'rest_schema_obr_trimfrombegin', 'default' => '0', 'example' => '0'],
                 'prepend' => ['type' => 'string', 'description' => 'rest_schema_obr_prepend', 'maxLength' => 20, 'example' => '8'],
                 'note' => ['type' => 'string', 'description' => 'rest_schema_obr_note', 'maxLength' => 500],
                 'providerid' => ['type' => 'string', 'description' => 'rest_schema_obr_providerid', 'example' => 'SIP-PROVIDER-1234'],
@@ -293,57 +300,18 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
 
     /**
-     * Generate sanitization rules from OpenAPI schema
+     * Generate sanitization rules automatically from controller attributes
      *
-     * @return array<string, string>
+     * Uses ParameterSanitizationExtractor to extract rules from #[ApiParameter] attributes.
+     * This ensures Single Source of Truth - rules defined only in controller attributes.
+     *
+     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
      */
     public static function getSanitizationRules(): array
     {
-        $schema = static::getDetailSchema();
-        $rules = [];
-
-        if (!isset($schema['properties'])) {
-            return $rules;
-        }
-
-        foreach ($schema['properties'] as $fieldName => $fieldSchema) {
-            $ruleParts = [];
-
-            $type = $fieldSchema['type'] ?? 'string';
-            $ruleParts[] = match ($type) {
-                'integer' => 'int',
-                'number' => 'float',
-                'boolean' => 'bool',
-                'array' => 'array',
-                default => 'string'
-            };
-
-            if (isset($fieldSchema['minLength'])) {
-                $ruleParts[] = 'min:' . $fieldSchema['minLength'];
-            }
-            if (isset($fieldSchema['maxLength'])) {
-                $ruleParts[] = 'max:' . $fieldSchema['maxLength'];
-            }
-            if (isset($fieldSchema['minimum'])) {
-                $ruleParts[] = 'min:' . $fieldSchema['minimum'];
-            }
-            if (isset($fieldSchema['maximum'])) {
-                $ruleParts[] = 'max:' . $fieldSchema['maximum'];
-            }
-            if (isset($fieldSchema['pattern']) && is_string($fieldSchema['pattern'])) {
-                $pattern = str_replace(['^', '$'], '', $fieldSchema['pattern']);
-                $ruleParts[] = 'regex:/' . $pattern . '/';
-            }
-            if (isset($fieldSchema['enum']) && is_array($fieldSchema['enum'])) {
-                $ruleParts[] = 'in:' . implode(',', $fieldSchema['enum']);
-            }
-            if (isset($fieldSchema['nullable']) && $fieldSchema['nullable'] === true) {
-                $ruleParts[] = 'empty_to_null';
-            }
-
-            $rules[$fieldName] = implode('|', $ruleParts);
-        }
-
-        return $rules;
+        return \MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor::extractFromController(
+            \MikoPBX\PBXCoreREST\Controllers\OutboundRoutes\RestController::class,
+            'create'
+        );
     }
 }

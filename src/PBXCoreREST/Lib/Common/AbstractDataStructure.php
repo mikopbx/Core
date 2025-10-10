@@ -645,4 +645,97 @@ abstract class AbstractDataStructure
             default => null
         };
     }
+
+    /**
+     * Generate sanitization rules from parameter definitions
+     *
+     * Universal method that generates sanitization rules by reading parameter definitions
+     * from getParameterDefinitions()['request'] section. This eliminates code duplication
+     * across all DataStructure classes that implement the getParameterDefinitions pattern.
+     *
+     * Converts OpenAPI schema constraints to sanitization rule format:
+     * - type → base type (string, integer, boolean, array)
+     * - enum → in:value1,value2,...
+     * - pattern → regex:/pattern/ (auto-adds delimiters)
+     * - maxLength → max:value
+     * - minimum → min:value (for integers)
+     * - maximum → max:value (for integers)
+     *
+     * Usage:
+     * ```php
+     * // Direct usage (no need to override in child classes)
+     * $rules = DataStructure::getSanitizationRules();
+     * ```
+     *
+     * Requires child class to implement:
+     * - getParameterDefinitions() returning ['request' => [...], 'response' => [...]]
+     *
+     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
+     */
+    public static function getSanitizationRules(): array
+    {
+        // Check if child class implements getParameterDefinitions()
+        if (!method_exists(static::class, 'getParameterDefinitions')) {
+            return [];
+        }
+
+        $definitions = static::getParameterDefinitions();
+        $requestParams = $definitions['request'] ?? [];
+
+        if (empty($requestParams)) {
+            return [];
+        }
+
+        $rules = [];
+
+        foreach ($requestParams as $field => $definition) {
+            $sanitizationParts = [];
+
+            // Add type (required)
+            $type = $definition['type'] ?? 'string';
+            $sanitizationParts[] = $type;
+
+            // Add type-specific constraints
+            if ($type === 'string') {
+                // Pattern validation
+                // Convert OpenAPI pattern (^pattern$) to PHP regex (/^pattern$/)
+                if (isset($definition['pattern'])) {
+                    $pattern = $definition['pattern'];
+                    // Add delimiters if not present
+                    if (!preg_match('/^[\/#~]/', $pattern)) {
+                        $pattern = '/' . $pattern . '/';
+                    }
+                    $sanitizationParts[] = 'regex:' . $pattern;
+                }
+
+                // Max length constraint
+                if (isset($definition['maxLength'])) {
+                    $sanitizationParts[] = 'max:' . $definition['maxLength'];
+                }
+
+                // Enum (allowed values)
+                if (isset($definition['enum'])) {
+                    $sanitizationParts[] = 'in:' . implode(',', $definition['enum']);
+                }
+            } elseif ($type === 'integer' || $type === 'number') {
+                // Minimum value
+                if (isset($definition['minimum'])) {
+                    $sanitizationParts[] = 'min:' . $definition['minimum'];
+                }
+
+                // Maximum value
+                if (isset($definition['maximum'])) {
+                    $sanitizationParts[] = 'max:' . $definition['maximum'];
+                }
+            } elseif ($type === 'boolean') {
+                $sanitizationParts[] = 'boolean';
+            } elseif ($type === 'array') {
+                $sanitizationParts[] = 'array';
+            }
+
+            $rules[$field] = implode('|', $sanitizationParts);
+        }
+
+        return $rules;
+    }
 }

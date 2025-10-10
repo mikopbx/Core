@@ -49,12 +49,15 @@ use MikoPBX\Common\Handlers\CriticalErrorsHandler;
  *             $sourceId,
  *             MyModel::class,
  *             DataStructure::class,
- *             'MY-',                    // Unique ID prefix
- *             ['field1', 'field2'],     // Fields to copy
- *             true,                     // Needs extension
- *             function($source) {       // Copy related records
- *                 return RelatedModel::find(['parent_id' => $source->id]);
- *             }
+ *             Extensions::PREFIX_QUEUE,    // Unique ID prefix (tilde added by generateUniqueID)
+ *             ['field1', 'field2'],        // Fields to copy
+ *             true,                        // Needs extension
+ *             function($source, $new) {    // Copy related records (optional)
+ *                 $related = RelatedModel::find(['parent_id' => $source->id]);
+ *                 return array_map(fn($r) => ['id' => '', 'field' => $r->field], $related);
+ *             },
+ *             'My Entity',                 // Entity type for error messages
+ *             'name'                       // Name field for "copy of" prefix (default: 'name')
  *         );
  *     }
  * }

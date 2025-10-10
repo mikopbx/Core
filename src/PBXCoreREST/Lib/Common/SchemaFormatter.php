@@ -92,10 +92,17 @@ class SchemaFormatter
     {
         // Handle null values
         if ($value === null) {
-            if (isset($fieldSchema['nullable']) && $fieldSchema['nullable'] === true) {
-                return null; // Keep null for nullable fields
+            // Priority 1: Use schema-defined default (Single Source of Truth)
+            if (array_key_exists('default', $fieldSchema)) {
+                return $fieldSchema['default'];
             }
-            // Convert null to appropriate default for non-nullable fields
+
+            // Priority 2: Keep null for explicitly nullable fields
+            if (isset($fieldSchema['nullable']) && $fieldSchema['nullable'] === true) {
+                return null;
+            }
+
+            // Priority 3: Use type-appropriate default as fallback
             return self::getDefaultForType($fieldSchema['type'] ?? 'string');
         }
 
@@ -213,7 +220,8 @@ class SchemaFormatter
         }
 
         if (is_array($value)) {
-            return json_encode($value);
+            $encoded = json_encode($value);
+            return $encoded !== false ? $encoded : '';
         }
 
         return '';

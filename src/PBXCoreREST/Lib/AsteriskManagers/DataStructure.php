@@ -110,9 +110,9 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
 
     /**
      * Create data structure for dropdown/select options.
-     * 
+     *
      * @param \MikoPBX\Common\Models\AsteriskManagerUsers $model
-     * @return array
+     * @return array<string, mixed>
      */
     public static function createForSelect($model): array
     {
@@ -125,9 +125,9 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
 
     /**
      * Extract permissions from model and return as comma-separated strings.
-     * 
+     *
      * @param \MikoPBX\Common\Models\AsteriskManagerUsers $model
-     * @return array ['read' => string, 'write' => string]
+     * @return array<string, string> ['read' => string, 'write' => string]
      */
     private static function extractPermissionsFromModel($model): array
     {
@@ -154,8 +154,8 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     
     /**
      * Get list of available permission categories.
-     * 
-     * @return array
+     *
+     * @return list<string>
      */
     private static function getAvailablePermissions(): array
     {
@@ -179,10 +179,10 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     
     /**
      * Parse permissions strings into boolean fields.
-     * 
+     *
      * @param string $readPermissions Comma-separated read permissions
      * @param string $writePermissions Comma-separated write permissions
-     * @return array Boolean fields for each permission
+     * @return array<string, bool> Boolean fields for each permission
      */
     public static function parsePermissionsToBoolean(string $readPermissions, string $writePermissions): array
     {
@@ -202,9 +202,9 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     
     /**
      * Parse permissions string into array.
-     * 
+     *
      * @param string $permissions Comma-separated permissions
-     * @return array
+     * @return list<string>
      */
     private static function parsePermissions(string $permissions): array
     {
@@ -240,7 +240,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     /**
      * Create default data structure for a new AMI manager.
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public static function createForNewManager(): array
     {
@@ -426,57 +426,18 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
 
     /**
-     * Generate sanitization rules from OpenAPI schema
+     * Generate sanitization rules automatically from controller attributes
      *
-     * Converts OpenAPI schema constraints into SystemSanitizer format.
-     * This eliminates duplication between schema definition and validation rules.
+     * Uses ParameterSanitizationExtractor to extract rules from #[ApiParameter] attributes.
+     * This ensures Single Source of Truth - rules defined only in controller attributes.
      *
      * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
      */
     public static function getSanitizationRules(): array
     {
-        $schema = static::getDetailSchema();
-        $rules = [];
-
-        if (!isset($schema['properties'])) {
-            return $rules;
-        }
-
-        foreach ($schema['properties'] as $fieldName => $fieldSchema) {
-            // Skip computed/read-only fields
-            if (in_array($fieldName, ['isSystem', 'networkfilter_represent', 'permissions', 'readPermissionsSummary', 'writePermissionsSummary'])) {
-                continue;
-            }
-
-            $ruleParts = [];
-
-            // Add type
-            $type = $fieldSchema['type'] ?? 'string';
-            $ruleParts[] = match ($type) {
-                'integer' => 'int',
-                'number' => 'float',
-                'boolean' => 'bool',
-                'array' => 'array',
-                'object' => 'array',
-                default => 'string'
-            };
-
-            // Add constraints
-            if (isset($fieldSchema['maxLength'])) {
-                $ruleParts[] = 'max:' . $fieldSchema['maxLength'];
-            }
-            if (isset($fieldSchema['pattern']) && is_string($fieldSchema['pattern'])) {
-                $pattern = str_replace('^', '', $fieldSchema['pattern']);
-                $pattern = str_replace('$', '', $pattern);
-                $ruleParts[] = 'regex:/' . $pattern . '/';
-            }
-            if (isset($fieldSchema['nullable']) && $fieldSchema['nullable'] === true) {
-                $ruleParts[] = 'empty_to_null';
-            }
-
-            $rules[$fieldName] = implode('|', $ruleParts);
-        }
-
-        return $rules;
+        return \MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor::extractFromController(
+            \MikoPBX\PBXCoreREST\Controllers\AsteriskManagers\RestController::class,
+            'create'
+        );
     }
 }

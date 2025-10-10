@@ -19,36 +19,48 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\ConferenceRooms;
 
+use MikoPBX\Core\System\SystemMessages;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 
 /**
- * Action for creating new conference room
- * 
- * @api {post} /pbxcore/api/v3/conference-rooms Create new conference room
- * @apiVersion 3.0.0
- * @apiName CreateConferenceRoom
- * @apiGroup ConferenceRooms
- * 
- * @apiParam {String} extension Extension number
- * @apiParam {String} name Conference name
- * @apiParam {String} [pinCode] PIN code for access
- * 
- * @apiSuccess {Boolean} result Operation result
- * @apiSuccess {Object} data Created conference room data
- * @apiSuccess {String} data.id Unique identifier
+ * CreateRecordAction
+ * Creates a new conference room record.
+ *
+ * @package MikoPBX\PBXCoreREST\Lib\ConferenceRooms
  */
-class CreateRecordAction
+class CreateRecordAction extends AbstractSaveRecordAction
 {
     /**
-     * Create new conference room
-     * 
-     * @param array $data Conference room data
+     * Create a new conference room record.
+     *
+     * @param array<string, mixed> $data Conference room data to save
      * @return PBXApiResult
      */
     public static function main(array $data): PBXApiResult
     {
-        // Use SaveRecordAction for actual creation
-        // This maintains consistency with existing implementation
-        return SaveRecordAction::main($data);
+        $res = self::createApiResult(__METHOD__);
+
+        try {
+            // For create operation, allow custom ID if provided (for migrations/imports)
+            // ID validation is handled by SaveRecordAction via OpenAPI schema rules
+            // If no ID provided, SaveRecordAction will generate one automatically
+
+            // Remove legacy uniqid field if present (use 'id' instead in v3 API)
+            unset($data['uniqid']);
+
+            // Use existing SaveRecordAction logic for actual save
+            $res = SaveRecordAction::main($data);
+
+            // If successful, publish event for new conference room creation
+            if ($res->success && isset($res->data['id'])) {
+                SystemMessages::sysLogMsg(__CLASS__, 'New conference room created: ' . $res->data['id'], LOG_INFO);
+            }
+
+        } catch (\Exception $e) {
+            return self::handleError($e, $res);
+        }
+
+        return $res;
     }
 }

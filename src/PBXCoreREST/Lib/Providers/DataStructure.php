@@ -75,7 +75,11 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         
         // Handle null values for consistent JSON output
         $data = self::handleNullValues($data, ['note']);
-        
+
+        // Apply OpenAPI schema formatting to convert types automatically
+        // This ensures consistency with API documentation
+        $data = self::formatBySchema($data, 'detail');
+
         return $data;
     }
     
@@ -124,7 +128,10 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         
         // Generate status class for UI
         $data['statusClass'] = $data['disabled'] ? 'grey' : '';
-        
+
+        // Apply OpenAPI list schema formatting to ensure proper types
+        $data = self::formatBySchema($data, 'list');
+
         return $data;
     }
     
@@ -599,33 +606,18 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
 
     /**
-     * Generate sanitization rules from OpenAPI schema
+     * Generate sanitization rules automatically from controller attributes
      *
-     * Note: Rules are kept minimal for providers as they have complex polymorphic structure.
+     * Uses ParameterSanitizationExtractor to extract rules from #[ApiParameter] attributes.
+     * This ensures Single Source of Truth - rules defined only in controller attributes.
      *
-     * @return array<string, string> Sanitization rules
+     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
      */
     public static function getSanitizationRules(): array
     {
-        return [
-            'type' => 'string|in:SIP,IAX',
-            'description' => 'string|max:255',
-            'note' => 'string|max:500',
-            'disabled' => 'bool',
-            'username' => 'string|max:100',
-            'secret' => 'string|max:100',
-            'host' => 'string|max:255',
-            'port' => 'int|min:1|max:65535',
-            'registration_type' => 'string|in:none,outbound,inbound',
-            'networkfilterid' => 'string',
-            'receive_calls_without_auth' => 'bool',
-            // SIP specific
-            'transport' => 'string',
-            'qualify' => 'bool',
-            'qualifyfreq' => 'int|min:10|max:3600',
-            'dtmfmode' => 'string|in:auto,auto_info,inband,rfc2833,info',
-            'disablefromuser' => 'bool',
-            'cid_did_debug' => 'bool'
-        ];
+        return \MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor::extractFromController(
+            \MikoPBX\PBXCoreREST\Controllers\Providers\RestController::class,
+            'create'
+        );
     }
 }

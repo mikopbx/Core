@@ -48,12 +48,12 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     use SearchIndexTrait;
     /**
      * Create full data structure from model
-     * 
+     *
      * Used for single record retrieval and after save operations.
      * Includes all fields and loaded relationships.
-     * 
+     *
      * @param mixed $model Time condition model (OutWorkTimes)
-     * @return array Full data structure
+     * @return array<string, mixed> Full data structure
      */
     public static function createFromModel($model): array
     {
@@ -99,12 +99,12 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     
     /**
      * Create lightweight data structure for list display
-     * 
+     *
      * Used for list operations to optimize performance.
      * Excludes heavy relationships and detailed info.
-     * 
+     *
      * @param mixed $model Time condition model
-     * @return array Lightweight data structure
+     * @return array<string, mixed> Lightweight data structure
      */
     public static function createForList($model): array
     {
@@ -145,8 +145,8 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     
     /**
      * Create template for new record
-     * 
-     * @return array New record template with defaults
+     *
+     * @return array<string, mixed> New record template with defaults
      */
     public static function createNewRecord(): array
     {
@@ -179,9 +179,9 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     
     /**
      * Get calendar periods for display matching original structure
-     * 
+     *
      * @param OutWorkTimes $model
-     * @return array Calendar period items
+     * @return list<array<string, string>> Calendar period items
      */
     private static function getCalendarPeriodsForDisplay(OutWorkTimes $model): array
     {
@@ -240,9 +240,9 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     
     /**
      * Get action information for display
-     * 
+     *
      * @param OutWorkTimes $model
-     * @return array Action information
+     * @return array<string, mixed> Action information
      */
     private static function getActionInfo(OutWorkTimes $model): array
     {
@@ -258,8 +258,12 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 
                 // Get translation service and use the same key as in template
                 $di = \Phalcon\Di\Di::getDefault();
-                $translation = $di->get(TranslationProvider::SERVICE_NAME);
-                $actionText = $translation->_('tf_ActionPlayMessage', ['message' => $audioMessage]);
+                if ($di !== null) {
+                    $translation = $di->get(TranslationProvider::SERVICE_NAME);
+                    $actionText = $translation->_('tf_ActionPlayMessage', ['message' => $audioMessage]);
+                } else {
+                    $actionText = 'Play message: ' . $audioMessage;
+                }
                 
                 // Create HTML with sound icon and translated text (don't escape HTML as translation contains safe HTML)
                 $display = '<i class="file audio outline icon"></i>' . $actionText;
@@ -271,8 +275,12 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 
                 // Get translation service and use the same key as in template
                 $di = \Phalcon\Di\Di::getDefault();
-                $translation = $di->get(TranslationProvider::SERVICE_NAME);
-                $actionText = $translation->_('tf_ActionTransferToExtension', ['extension' => $extension]);
+                if ($di !== null) {
+                    $translation = $di->get(TranslationProvider::SERVICE_NAME);
+                    $actionText = $translation->_('tf_ActionTransferToExtension', ['extension' => $extension]);
+                } else {
+                    $actionText = 'Transfer to extension: ' . $extension;
+                }
                 
                 // Create HTML with phone icon and translated text (don't escape HTML as translation contains safe HTML)
                 $display = '<i class="phone icon"></i>' . $actionText;
@@ -299,22 +307,26 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             return '';
         }
         
-        // Get translation service
-        $di = \Phalcon\Di\Di::getDefault();
-        $translation = $di->get(TranslationProvider::SERVICE_NAME);
-        
         // Map weekday numbers to translation keys (using same logic as original form)
         $weekdayKeys = [
             1 => 'Mon',
-            2 => 'Tue', 
+            2 => 'Tue',
             3 => 'Wed',
             4 => 'Thu',
             5 => 'Fri',
             6 => 'Sat',
             7 => 'Sun'
         ];
-        
-        return $translation->_($weekdayKeys[$weekday]);
+
+        // Get translation service
+        $di = \Phalcon\Di\Di::getDefault();
+        if ($di !== null) {
+            $translation = $di->get(TranslationProvider::SERVICE_NAME);
+            return $translation->_($weekdayKeys[$weekday]);
+        }
+
+        // Fallback if DI not available
+        return $weekdayKeys[$weekday];
     }
     
     /**
@@ -344,9 +356,9 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     
     /**
      * Get IDs of incoming routes associated with time condition
-     * 
+     *
      * @param int $conditionId Time condition ID
-     * @return array Array of incoming route IDs
+     * @return list<int> Array of incoming route IDs
      */
     private static function getIncomingRouteIds(int $conditionId): array
     {
@@ -356,9 +368,11 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'conditions' => 'timeConditionId = :conditionId:',
             'bind' => ['conditionId' => $conditionId]
         ]);
-        
-        foreach ($associations as $association) {
-            $routeIds[] = (int)$association->routId;
+
+        if ($associations !== false) {
+            foreach ($associations as $association) {
+                $routeIds[] = (int)$association->routId;
+            }
         }
         
         return $routeIds;
@@ -366,9 +380,9 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     
     /**
      * Get allowed extensions for time condition
-     * 
+     *
      * @param int $conditionId Time condition ID
-     * @return array Array of allowed extension numbers
+     * @return list<string> Array of allowed extension numbers
      */
     private static function getAllowedExtensions(int $conditionId): array
     {
@@ -659,63 +673,18 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
 
     /**
-     * Generate sanitization rules from OpenAPI schema
+     * Generate sanitization rules automatically from controller attributes
      *
-     * Converts OpenAPI schema constraints into SystemSanitizer format.
-     * This eliminates duplication between schema definition and validation rules.
+     * Uses ParameterSanitizationExtractor to extract rules from #[ApiParameter] attributes.
+     * This ensures Single Source of Truth - rules defined only in controller attributes.
      *
      * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
      */
     public static function getSanitizationRules(): array
     {
-        $schema = static::getDetailSchema();
-        $rules = [];
-
-        if (!isset($schema['properties'])) {
-            return $rules;
-        }
-
-        foreach ($schema['properties'] as $fieldName => $fieldSchema) {
-            $ruleParts = [];
-
-            // Add type
-            $type = $fieldSchema['type'] ?? 'string';
-            $ruleParts[] = match ($type) {
-                'integer' => 'int',
-                'number' => 'float',
-                'boolean' => 'bool',
-                'array' => 'array',
-                default => 'string'
-            };
-
-            // Add constraints
-            if (isset($fieldSchema['minLength'])) {
-                $ruleParts[] = 'min:' . $fieldSchema['minLength'];
-            }
-            if (isset($fieldSchema['maxLength'])) {
-                $ruleParts[] = 'max:' . $fieldSchema['maxLength'];
-            }
-            if (isset($fieldSchema['minimum'])) {
-                $ruleParts[] = 'min:' . $fieldSchema['minimum'];
-            }
-            if (isset($fieldSchema['maximum'])) {
-                $ruleParts[] = 'max:' . $fieldSchema['maximum'];
-            }
-            if (isset($fieldSchema['pattern']) && is_string($fieldSchema['pattern'])) {
-                $pattern = str_replace('^', '', $fieldSchema['pattern']);
-                $pattern = str_replace('$', '', $pattern);
-                $ruleParts[] = 'regex:/' . $pattern . '/';
-            }
-            if (isset($fieldSchema['enum']) && is_array($fieldSchema['enum'])) {
-                $ruleParts[] = 'in:' . implode(',', $fieldSchema['enum']);
-            }
-            if (isset($fieldSchema['nullable']) && $fieldSchema['nullable'] === true) {
-                $ruleParts[] = 'empty_to_null';
-            }
-
-            $rules[$fieldName] = implode('|', $ruleParts);
-        }
-
-        return $rules;
+        return \MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor::extractFromController(
+            \MikoPBX\PBXCoreREST\Controllers\OffWorkTimes\RestController::class,
+            'create'
+        );
     }
 }

@@ -153,19 +153,21 @@ class DataStructure implements OpenApiSchemaProvider
     }
 
     /**
-     * Generate sanitization rules from OpenAPI schema
+     * Generate sanitization rules automatically from controller attributes
      *
-     * For UserPageTracker this provides input validation rules.
+     * Uses ParameterSanitizationExtractor to extract rules from #[ApiParameter] attributes.
+     * This ensures Single Source of Truth - rules defined only in controller attributes.
      *
-     * @return array<string, string> Sanitization rules
+     * For UserPageTracker resource, we extract from the 'pageView' method.
+     *
+     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
      */
     public static function getSanitizationRules(): array
     {
-        return [
-            'pageName' => 'string|max:255',
-            'expire' => 'int|min:60|max:86400',
-            'sessionId' => 'string'
-        ];
+        return \MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor::extractFromController(
+            \MikoPBX\PBXCoreREST\Controllers\UserPageTracker\RestController::class,
+            'pageView'
+        );
     }
 
     /**

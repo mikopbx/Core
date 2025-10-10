@@ -17,7 +17,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-namespace MikoPBX\PBXCoreREST\Lib\AsteriskManagers;
+namespace MikoPBX\PBXCoreREST\Lib\OutboundRoutes;
 
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
@@ -25,16 +25,16 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 
 /**
  * CreateRecordAction
- * Creates a new AMI user.
+ * Creates a new outbound route record.
  *
- * @package MikoPBX\PBXCoreREST\Lib\AsteriskManagers
+ * @package MikoPBX\PBXCoreREST\Lib\OutboundRoutes
  */
 class CreateRecordAction extends AbstractSaveRecordAction
 {
     /**
-     * Create a new AMI user.
+     * Create a new outbound route record.
      *
-     * @param array<string, mixed> $data AMI user data to save
+     * @param array<string, mixed> $data Outbound route data to save
      * @return PBXApiResult
      */
     public static function main(array $data): PBXApiResult
@@ -52,9 +52,9 @@ class CreateRecordAction extends AbstractSaveRecordAction
             // Use existing SaveRecordAction logic for actual save
             $res = SaveRecordAction::main($data);
 
-            // If successful, publish event for new AMI user creation
+            // If successful, publish event for new outbound route creation
             if ($res->success && isset($res->data['id'])) {
-                SystemMessages::sysLogMsg(__CLASS__, 'New AMI user created: ' . $res->data['id'], LOG_INFO);
+                SystemMessages::sysLogMsg(__CLASS__, 'New outbound route created: ' . $res->data['id'], LOG_INFO);
             }
 
         } catch (\Exception $e) {
