@@ -78,7 +78,8 @@ class GeneralSettingsTooltipManager {
             'SSHAuthorizedKeys': this.getSSHAuthorizedKeysTooltip(),
             'SSH_ID_RSA_PUB': this.getSSH_ID_RSA_PUBTooltip(),
             'WEBHTTPSPublicKey': this.getWEBHTTPSPublicKeyTooltip(),
-            'WEBHTTPSPrivateKey': this.getWEBHTTPSPrivateKeyTooltip()
+            'WEBHTTPSPrivateKey': this.getWEBHTTPSPrivateKeyTooltip(),
+            'Passkeys': this.getPasskeysTooltip()
         };
     }
 
@@ -1489,6 +1490,73 @@ class GeneralSettingsTooltipManager {
             ],
             note: globalTranslate.gs_WEBHTTPSPrivateKeyTooltip_note,
             footer: globalTranslate.gs_WEBHTTPSPrivateKeyTooltip_footer
+        };
+    }
+
+    /**
+     * Get Passkeys tooltip configuration
+     *
+     * @private
+     * @static
+     * @returns {Object} Tooltip configuration for Passkeys field
+     */
+    static getPasskeysTooltip() {
+        return {
+            header: globalTranslate.pk_PasskeysTooltip_header,
+            description: globalTranslate.pk_PasskeysTooltip_desc,
+            list: [
+                {
+                    term: globalTranslate.pk_PasskeysTooltip_what_is,
+                    definition: globalTranslate.pk_PasskeysTooltip_what_is_desc
+                }
+            ],
+            list2: [
+                {
+                    term: globalTranslate.pk_PasskeysTooltip_supported_methods,
+                    definition: null
+                }
+            ],
+            list3: [
+                globalTranslate.pk_PasskeysTooltip_method_biometric,
+                globalTranslate.pk_PasskeysTooltip_method_hardware,
+                globalTranslate.pk_PasskeysTooltip_method_platform
+            ],
+            list4: [
+                {
+                    term: globalTranslate.pk_PasskeysTooltip_advantages,
+                    definition: null
+                }
+            ],
+            list5: [
+                globalTranslate.pk_PasskeysTooltip_advantage_security,
+                globalTranslate.pk_PasskeysTooltip_advantage_speed,
+                globalTranslate.pk_PasskeysTooltip_advantage_no_passwords,
+                globalTranslate.pk_PasskeysTooltip_advantage_unique
+            ],
+            list6: [
+                {
+                    term: globalTranslate.pk_PasskeysTooltip_how_to_use,
+                    definition: null
+                }
+            ],
+            list7: [
+                globalTranslate.pk_PasskeysTooltip_use_step_1,
+                globalTranslate.pk_PasskeysTooltip_use_step_2,
+                globalTranslate.pk_PasskeysTooltip_use_step_3
+            ],
+            list8: [
+                {
+                    term: globalTranslate.pk_PasskeysTooltip_compatibility,
+                    definition: globalTranslate.pk_PasskeysTooltip_compatibility_desc
+                }
+            ],
+            list9: [
+                {
+                    term: globalTranslate.pk_PasskeysTooltip_security,
+                    definition: globalTranslate.pk_PasskeysTooltip_security_desc
+                }
+            ],
+            note: globalTranslate.pk_PasskeysTooltip_note
         };
     }
 
