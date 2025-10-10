@@ -17,8 +17,10 @@
         </div>
         <div class="results"></div>
     </div>
-    <a class="item hide-on-mobile hide-on-tablet" href="{{ urlToWiki }}" target="_blank" data-content="{{ t._("GoToWikiDocumentation") }}"
-       data-variation="wide">
+    <a class="item hide-on-mobile hide-on-tablet wiki-help-link" href="#"
+       data-controller="{{ controllerName }}" data-action="{{ actionName }}"
+       {% if globalModuleUniqueId %}data-module-id="{{ globalModuleUniqueId }}"{% endif %}
+       data-content="{{ t._("GoToWikiDocumentation") }}" data-variation="wide">
         <i class="question icon"></i>
     </a>
     <a class="item hide-on-mobile hide-on-tablet" href="{{ urlToSupport }}" target="_blank"><i

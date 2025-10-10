@@ -7,11 +7,11 @@
                 {{ t._('Breadcrumb'~controllerName) }}
                 <div class="sub header">{{ t._('SubHeader'~controllerName) }}
                     ( {{ t._('ext_Version') }} {{ module['version'] }})
-                    {% if not urlToWiki is empty %}
-                        <a href="{{ urlToWiki }}" target="_blank"
-                           data-content="{{ t._("GoToWikiDocumentation") }}"
-                           data-variation="wide"><i class="small blue question icon circular label"></i></a>
-                    {% endif %}
+                    <a class="wiki-help-link" href="#"
+                       data-controller="{{ controllerName }}" data-action="{{ actionName }}"
+                       {% if globalModuleUniqueId %}data-module-id="{{ globalModuleUniqueId }}"{% endif %}
+                       data-content="{{ t._("GoToWikiDocumentation") }}"
+                       data-variation="wide"><i class="small blue question icon circular label"></i></a>
                 </div>
             </div>
         </h1>

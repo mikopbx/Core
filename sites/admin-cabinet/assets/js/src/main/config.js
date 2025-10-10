@@ -31,5 +31,6 @@ const Config = {
     pbxUrl: globalDebugMode ? '//172.16.32.72' : '',
     updateUrl: 'https://releases.mikopbx.com/releases/v1/mikopbx/',
     keyManagementUrl: `https://lm.mikopbx.com/client-cabinet/session/index/${globalPBXLicense}/?language=${globalLicenseLanguage}`,
-    keyManagementSite: 'https://lm.mikopbx.com'
+    keyManagementSite: 'https://lm.mikopbx.com',
+    webAdminLanguage: globalWebAdminLanguage || 'en'
 };

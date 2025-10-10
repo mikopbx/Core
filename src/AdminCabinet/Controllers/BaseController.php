@@ -87,8 +87,7 @@ class BaseController extends Controller
             $this->view->PBXLicense = '';
         }
 
-        // Set URLs for Wiki and Support based on language
-        $this->view->urlToWiki = "https://wiki.mikopbx.com/{$this->controllerNameUnCamelized}";
+        // Set Support URL based on language
         if ($this->language === 'ru') {
             $this->view->urlToSupport = 'https://www.mikopbx.ru/support/?fromPBX=true';
         } else {

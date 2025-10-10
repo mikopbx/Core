@@ -274,8 +274,8 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/Security/check-passwords.js', true)
                 ->addJs('js/pbx/SendMetrics/send-metrics-index.js', true)
                 ->addJs('js/pbx/TopMenuSearch/top-menu-search.js', true)
-                ->addJs('js/pbx/FormElements/dynamic-dropdown-builder.js', true)   
-                ->addJs('js/pbx/WikiLinksReplacement/wiki-links-replacement-worker.js', true);
+                ->addJs('js/pbx/FormElements/dynamic-dropdown-builder.js', true)
+                ->addJs('js/pbx/PbxAPI/wiki-links-api.js', true);
 
             // We can disable module status toggle from module controller, using the showModuleStatusToggle variable
             $isExternalModulePage = str_starts_with($dispatcher->getNamespaceName(), 'Modules');
