@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, EventBus */
+/* global globalRootUrl, globalTranslate, EventBus, ProvidersAPI */
 
 /**
  * Provider Status Monitor
@@ -830,46 +830,26 @@ const ProviderStatusMonitor = {
             'info',
             3000
         );
-        
-        // Request status via REST API
-        $.api({
-            url: `${globalRootUrl}providers/api/statuses`,
-            method: 'GET',
-            data: {
-                force: true // Force immediate update
-            },
-            on: 'now',
-            onSuccess: (response) => {
-                if (response.result && response.data) {
-                    // Process the status data
-                    this.updateAllProviderStatuses(response.data);
-                    
-                    // Show success notification
-                    const providerCount = this.countProviders(response.data);
-                    const message = globalTranslate.pr_StatusUpdateComplete
-                        ? globalTranslate.pr_StatusUpdateComplete.replace('%s', providerCount)
-                        : `Status updated for ${providerCount} providers`;
-                    
-                    this.showUpdateNotification(message, 'success');
-                } else {
-                    this.showUpdateNotification(
-                        globalTranslate.pr_StatusUpdateFailed,
-                        'error'
-                    );
-                }
-            },
-            onFailure: (response) => {
-                const errorMessage = response.messages 
-                    ? response.messages.join(', ')
-                    : globalTranslate.pr_StatusUpdateError;
-                    
+
+        // Request status via REST API using ProvidersAPI
+        ProvidersAPI.getStatuses((response) => {
+            if (response.success && response.data) {
+                // Process the status data
+                this.updateAllProviderStatuses(response.data);
+
+                // Show success notification
+                const providerCount = this.countProviders(response.data);
+                const message = globalTranslate.pr_StatusUpdateComplete
+                    ? globalTranslate.pr_StatusUpdateComplete.replace('%s', providerCount)
+                    : `Status updated for ${providerCount} providers`;
+
+                this.showUpdateNotification(message, 'success');
+            } else {
+                const errorMessage = response.messages
+                    ? (Array.isArray(response.messages) ? response.messages.join(', ') : response.messages)
+                    : globalTranslate.pr_StatusUpdateFailed;
+
                 this.showUpdateNotification(errorMessage, 'error');
-            },
-            onError: () => {
-                this.showUpdateNotification(
-                    globalTranslate.pr_ConnectionError,
-                    'error'
-                );
             }
         });
     },
@@ -912,42 +892,32 @@ const ProviderStatusMonitor = {
             'info',
             2000
         );
-        
-        // Fetch fresh details from API
-        $.api({
-            url: `${globalRootUrl}providers/api/status/${providerId}`,
-            method: 'GET',
-            on: 'now',
-            onSuccess: (response) => {
-                if (response.result && response.data) {
-                    // Create detailed status modal content
-                    const modalContent = this.buildStatusDetailsModal(providerId, response.data);
-                    
-                    // Remove any existing modal
-                    $('#provider-status-details-modal').remove();
-                    
-                    // Show modal using Fomantic UI
-                    $('body').append(modalContent);
-                    $('#provider-status-details-modal')
-                        .modal({
-                            closable: true,
-                            onHidden: function() {
-                                $(this).remove();
-                            }
-                        })
-                        .modal('show');
-                } else {
-                    this.showUpdateNotification(
-                        globalTranslate.pr_NoStatusInfo,
-                        'warning'
-                    );
-                }
-            },
-            onFailure: () => {
-                this.showUpdateNotification(
-                    globalTranslate.pr_FailedToLoadDetails,
-                    'error'
-                );
+
+        // Fetch fresh details from API using ProvidersAPI
+        ProvidersAPI.getStatus(providerId, (response) => {
+            if (response.success && response.data) {
+                // Create detailed status modal content
+                const modalContent = this.buildStatusDetailsModal(providerId, response.data);
+
+                // Remove any existing modal
+                $('#provider-status-details-modal').remove();
+
+                // Show modal using Fomantic UI
+                $('body').append(modalContent);
+                $('#provider-status-details-modal')
+                    .modal({
+                        closable: true,
+                        onHidden: function() {
+                            $(this).remove();
+                        }
+                    })
+                    .modal('show');
+            } else {
+                const errorMessage = response.messages
+                    ? (Array.isArray(response.messages) ? response.messages.join(', ') : response.messages)
+                    : globalTranslate.pr_NoStatusInfo;
+
+                this.showUpdateNotification(errorMessage, 'warning');
             }
         });
     },
@@ -1137,48 +1107,39 @@ const ProviderStatusMonitor = {
      * Request immediate check for specific provider
      */
     requestProviderCheck(providerId) {
-        $.api({
-            url: `${globalRootUrl}providers/api/status/${providerId}`,
-            method: 'GET',
-            data: {
-                forceCheck: true,
-                refreshFromAmi: true
-            },
-            on: 'now',
-            onSuccess: (response) => {
-                if (response.result) {
-                    this.showUpdateNotification(
-                        globalTranslate.pr_CheckRequested,
-                        'success',
-                        2000
-                    );
-                    
-                    // Update modal with fresh data if still open
-                    if ($('#provider-status-details-modal').length && response.data) {
-                        $('#provider-status-details-modal').modal('hide');
-                        // Show updated modal with fresh data
-                        setTimeout(() => {
-                            const modalContent = this.buildStatusDetailsModal(providerId, response.data);
-                            $('#provider-status-details-modal').remove();
-                            $('body').append(modalContent);
-                            $('#provider-status-details-modal')
-                                .modal({
-                                    closable: true,
-                                    onHidden: function() {
-                                        $(this).remove();
-                                    }
-                                })
-                                .modal('show');
-                        }, 500);
-                    }
-                }
-            },
-            onFailure: () => {
+        // Use ProvidersAPI.forceCheck for forcing a status check
+        ProvidersAPI.forceCheck(providerId, (response) => {
+            if (response.success) {
                 this.showUpdateNotification(
-                    globalTranslate.pr_CheckFailed,
-                    'error',
-                    3000
+                    globalTranslate.pr_CheckRequested,
+                    'success',
+                    2000
                 );
+
+                // Update modal with fresh data if still open
+                if ($('#provider-status-details-modal').length && response.data) {
+                    $('#provider-status-details-modal').modal('hide');
+                    // Show updated modal with fresh data
+                    setTimeout(() => {
+                        const modalContent = this.buildStatusDetailsModal(providerId, response.data);
+                        $('#provider-status-details-modal').remove();
+                        $('body').append(modalContent);
+                        $('#provider-status-details-modal')
+                            .modal({
+                                closable: true,
+                                onHidden: function() {
+                                    $(this).remove();
+                                }
+                            })
+                            .modal('show');
+                    }, 500);
+                }
+            } else {
+                const errorMessage = response.messages
+                    ? (Array.isArray(response.messages) ? response.messages.join(', ') : response.messages)
+                    : globalTranslate.pr_CheckFailed;
+
+                this.showUpdateNotification(errorMessage, 'error', 3000);
             }
         });
     }
