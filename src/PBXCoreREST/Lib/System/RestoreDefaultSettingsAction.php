@@ -22,6 +22,7 @@ namespace MikoPBX\PBXCoreREST\Lib\System;
 
 use MikoPBX\Common\Models\ApiKeys;
 use MikoPBX\Common\Models\AsteriskManagerUsers;
+use MikoPBX\Common\Models\AsteriskRestUsers;
 use MikoPBX\Common\Models\CallQueueMembers;
 use MikoPBX\Common\Models\CallQueues;
 use MikoPBX\Common\Models\Codecs;
@@ -39,6 +40,7 @@ use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\SoundFiles;
+use MikoPBX\Common\Models\UserPasskeys;
 use MikoPBX\Common\Models\Users;
 use MikoPBX\Core\Asterisk\CdrDb;
 use MikoPBX\Core\System\Directories;
@@ -386,7 +388,9 @@ class RestoreDefaultSettingsAction extends Injectable
             [Sip::class => ''], // All SIP providers
             [Iax::class => ''], // All IAX providers
             [AsteriskManagerUsers::class => ''],
+            [AsteriskRestUsers::class => ''], // All ARI users
             [ApiKeys::class => ''], // All Bearer tokens
+            [UserPasskeys::class => ''], // All WebAuthn passkeys
             [Extensions::class => 'type="' . Extensions::TYPE_IVR_MENU . '"'],  // IVR Menu
             [Extensions::class => 'type="' . Extensions::TYPE_CONFERENCE . '"'],  // CONFERENCE
             [Extensions::class => 'type="' . Extensions::TYPE_QUEUE . '"'],  // QUEUE

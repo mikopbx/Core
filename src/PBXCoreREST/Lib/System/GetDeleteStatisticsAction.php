@@ -20,6 +20,8 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\System;
 
+use MikoPBX\Common\Models\ApiKeys;
+use MikoPBX\Common\Models\AsteriskRestUsers;
 use MikoPBX\Common\Models\CallQueues;
 use MikoPBX\Common\Models\ConferenceRooms;
 use MikoPBX\Common\Models\DialplanApplications;
@@ -29,10 +31,12 @@ use MikoPBX\Common\Models\IncomingRoutingTable;
 use MikoPBX\Common\Models\IvrMenu;
 use MikoPBX\Common\Models\OutgoingRoutingTable;
 use MikoPBX\Common\Models\OutWorkTimes;
+use MikoPBX\Common\Models\OutWorkTimesRouts;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\Providers;
 use MikoPBX\Common\Models\SipHosts;
 use MikoPBX\Common\Models\SoundFiles;
+use MikoPBX\Common\Models\UserPasskeys;
 use MikoPBX\Common\Models\Users;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
@@ -59,21 +63,30 @@ class GetDeleteStatisticsAction
         try {
             $stats = [];
             $di = \Phalcon\Di\Di::getDefault();
-            
+            if ($di === null) {
+                throw new \Exception('DI container is not available');
+            }
+
             // Count users (extensions) - excluding root user
             $rootUserId = Users::findFirst('id=1');
-            $usersCount = Users::count("id != 1");
+            $usersCount = Users::count(['conditions' => 'id != 1']);
             $stats['users'] = $usersCount;
             
             // Count extensions (excluding root extension)
             $rootExtensionNumber = '10000';
             if ($rootUserId) {
-                $rootExtension = Extensions::findFirst("userid='{$rootUserId->id}'");
+                $rootExtension = Extensions::findFirst([
+                    'conditions' => 'userid = :userid:',
+                    'bind' => ['userid' => $rootUserId->id]
+                ]);
                 if ($rootExtension) {
                     $rootExtensionNumber = $rootExtension->number;
                 }
             }
-            $extensionsCount = Extensions::count("number != '{$rootExtensionNumber}'");
+            $extensionsCount = Extensions::count([
+                'conditions' => 'number != :number:',
+                'bind' => ['number' => $rootExtensionNumber]
+            ]);
             $stats['extensions'] = $extensionsCount;
             
             // Count providers
@@ -93,25 +106,51 @@ class GetDeleteStatisticsAction
             
             // Count Dialplan Applications (excluding system applications)
             $systemDialplanApps = ['000063', '000064', '10003246'];
-            $stats['dialplanApplications'] = DialplanApplications::count("extension NOT IN ('" . implode("','", $systemDialplanApps) . "')");
-            
+            $stats['dialplanApplications'] = DialplanApplications::count([
+                'conditions' => 'extension NOT IN ({apps:array})',
+                'bind' => ['apps' => $systemDialplanApps]
+            ]);
+
             // Count Sound Files (custom only)
-            $stats['customSoundFiles'] = SoundFiles::count("category = '" . SoundFiles::CATEGORY_CUSTOM . "'");
-            
+            $stats['customSoundFiles'] = SoundFiles::count([
+                'conditions' => 'category = :category:',
+                'bind' => ['category' => SoundFiles::CATEGORY_CUSTOM]
+            ]);
+
             // Count MOH (Music On Hold) files
-            $stats['mohFiles'] = SoundFiles::count("category = '" . SoundFiles::CATEGORY_MOH . "'");
-            
+            $stats['mohFiles'] = SoundFiles::count([
+                'conditions' => 'category = :category:',
+                'bind' => ['category' => SoundFiles::CATEGORY_MOH]
+            ]);
+
             // Count Incoming Routes
-            $stats['incomingRoutes'] = IncomingRoutingTable::count("priority != 9999");
+            $stats['incomingRoutes'] = IncomingRoutingTable::count([
+                'conditions' => 'priority != 9999'
+            ]);
             
             // Count Outgoing Routes
             $stats['outgoingRoutes'] = OutgoingRoutingTable::count();
-            
+
+            // Count Out-of-Work Time conditions
+            $stats['outWorkTimes'] = OutWorkTimes::count();
+
+            // Count Out-of-Work Time route associations
+            $stats['outWorkTimesRouts'] = OutWorkTimesRouts::count();
+
             // Count Network Filters
             $stats['firewallRules'] = FirewallRules::count();
-            
+
             // Count Installed Modules
             $stats['modules'] = PbxExtensionModules::count();
+
+            // Count REST API Keys
+            $stats['apiKeys'] = ApiKeys::count();
+
+            // Count Asterisk REST Interface (ARI) Users
+            $stats['asteriskRestUsers'] = AsteriskRestUsers::count();
+
+            // Count WebAuthn Passkeys
+            $stats['userPasskeys'] = UserPasskeys::count();
             
             // Get CDR stats
             try {
@@ -156,10 +195,10 @@ class GetDeleteStatisticsAction
     
     /**
      * Get directory statistics (file count and total size)
-     * 
+     *
      * @param string $path Directory path
      * @param string $pattern File pattern (optional)
-     * @return array
+     * @return array{count: int, size: int}
      */
     private static function getDirectoryStats(string $path, string $pattern = '*'): array
     {

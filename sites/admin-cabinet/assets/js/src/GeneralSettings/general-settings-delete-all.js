@@ -304,6 +304,56 @@ const generalSettingsDeleteAll = {
                 );
             }
 
+            // Out-of-Work Time conditions
+            if (data.outWorkTimes > 0) {
+                statisticsHtml += generalSettingsDeleteAll.createStatisticItem(
+                    'outWorkTimes',
+                    globalTranslate.gs_StatOutWorkTimes,
+                    data.outWorkTimes,
+                    'clock outline icon'
+                );
+            }
+
+            // Out-of-Work Time route associations
+            if (data.outWorkTimesRouts > 0) {
+                statisticsHtml += generalSettingsDeleteAll.createStatisticItem(
+                    'outWorkTimesRouts',
+                    globalTranslate.gs_StatOutWorkTimesRouts,
+                    data.outWorkTimesRouts,
+                    'linkify icon'
+                );
+            }
+
+            // REST API Keys
+            if (data.apiKeys > 0) {
+                statisticsHtml += generalSettingsDeleteAll.createStatisticItem(
+                    'apiKeys',
+                    globalTranslate.gs_StatApiKeys,
+                    data.apiKeys,
+                    'key icon'
+                );
+            }
+
+            // Asterisk REST Interface (ARI) Users
+            if (data.asteriskRestUsers > 0) {
+                statisticsHtml += generalSettingsDeleteAll.createStatisticItem(
+                    'asteriskRestUsers',
+                    globalTranslate.gs_StatAsteriskRestUsers,
+                    data.asteriskRestUsers,
+                    'plug icon'
+                );
+            }
+
+            // WebAuthn Passkeys
+            if (data.userPasskeys > 0) {
+                statisticsHtml += generalSettingsDeleteAll.createStatisticItem(
+                    'userPasskeys',
+                    globalTranslate.gs_StatUserPasskeys,
+                    data.userPasskeys,
+                    'fingerprint icon'
+                );
+            }
+
             // If no data will be deleted
             if (statisticsHtml === '') {
                 statisticsHtml = `

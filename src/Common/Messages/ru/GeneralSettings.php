@@ -192,6 +192,11 @@ return [
     'gs_StatCallRecordings' => 'Записи разговоров',
     'gs_StatBackups' => 'Резервные копии',
     'gs_StatCustomFiles' => 'Пользовательские файлы',
+    'gs_StatOutWorkTimes' => 'Правила нерабочего времени',
+    'gs_StatOutWorkTimesRouts' => 'Связи правил нерабочего времени с маршрутами',
+    'gs_StatApiKeys' => 'REST API ключи',
+    'gs_StatAsteriskRestUsers' => 'ARI пользователи',
+    'gs_StatUserPasskeys' => 'WebAuthn ключи (беспарольный вход)',
     'gs_PBXRecordAnnouncementIn' => 'Выберите предупреждение о записи разговоров для входящих вызовов',
     'gs_PBXRecordAnnouncementOut' => 'Выберите предупреждение о записи разговоров для исходящих вызовов',
 

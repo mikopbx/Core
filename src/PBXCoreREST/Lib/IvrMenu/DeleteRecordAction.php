@@ -54,18 +54,26 @@ class DeleteRecordAction extends AbstractDeleteAction
             'api_IvrMenuNotFound',
             function($ivrMenu) {
                 // Manually delete IvrMenuActions since NO_ACTION is set in the relation
+                /** @var \Phalcon\Mvc\Model\Resultset\Simple $actions */
                 $actions = \MikoPBX\Common\Models\IvrMenuActions::find([
                     'conditions' => 'ivr_menu_id = :uniqid:',
                     'bind' => ['uniqid' => $ivrMenu->uniqid]
                 ]);
-                
-                if ($actions) {
-                    foreach ($actions as $action) {
-                        if (!$action->delete()) {
-                            throw new \Exception('Failed to delete IVR menu actions: ' . implode(', ', $action->getMessages()));
-                        }
+
+                $deletedCount = 0;
+                /** @var \MikoPBX\Common\Models\IvrMenuActions $action */
+                foreach ($actions as $action) {
+                    if (!$action->delete()) {
+                        throw new \Exception('Failed to delete IVR menu actions: ' . implode(', ', $action->getMessages()));
                     }
+                    $deletedCount++;
                 }
+
+                // Return cleanup statistics
+                return [
+                    'deleted_count' => $deletedCount,
+                    'deleted_type' => 'IVR menu action'
+                ];
             }
         );
     }

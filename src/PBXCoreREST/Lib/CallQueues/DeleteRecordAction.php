@@ -67,12 +67,20 @@ class DeleteRecordAction extends AbstractDeleteAction
                     'bind' => ['queue' => $queue->uniqid]
                 ]);
 
+                $deletedCount = 0;
                 /** @var CallQueueMembers $member */
                 foreach ($members as $member) {
                     if (!$member->delete()) {
                         throw new \Exception('Failed to delete queue member: ' . implode(', ', $member->getMessages()));
                     }
+                    $deletedCount++;
                 }
+
+                // Return cleanup statistics
+                return [
+                    'deleted_count' => $deletedCount,
+                    'deleted_type' => 'queue member'
+                ];
             }
         );
     }

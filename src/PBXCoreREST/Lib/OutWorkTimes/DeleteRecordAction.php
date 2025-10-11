@@ -71,47 +71,61 @@ class DeleteRecordAction extends AbstractDeleteAction
         try {
             // Use Phalcon transaction manager directly
             $di = \Phalcon\Di\Di::getDefault();
+            if ($di === null) {
+                throw new \Exception('DI container is not available');
+            }
+            /** @var \Phalcon\Db\Adapter\Pdo\Postgresql|\Phalcon\Db\Adapter\Pdo\Sqlite $db */
             $db = $di->getShared('db');
             $db->begin();
-            
+
             $transactionResult = false;
+            $deletedAssociationsCount = 0;
+
             try {
                 // Delete related incoming route associations
+                /** @var \Phalcon\Mvc\Model\Resultset\Simple $associations */
                 $associations = OutWorkTimesRouts::find([
                     'conditions' => 'timeConditionId = :conditionId:',
                     'bind' => ['conditionId' => $condition->id]
                 ]);
-                
+
+                /** @var OutWorkTimesRouts $association */
                 foreach ($associations as $association) {
                     if (!$association->delete()) {
                         throw new \Exception('Failed to delete route association: ' . implode(', ', $association->getMessages()));
                     }
+                    $deletedAssociationsCount++;
                 }
-                
+
                 // Delete the main record
                 if (!$condition->delete()) {
                     throw new \Exception('Failed to delete time condition: ' . implode(', ', $condition->getMessages()));
                 }
-                
+
                 $db->commit();
-                $transactionResult = true;
             } catch (\Exception $e) {
                 $db->rollback();
                 throw $e;
             }
-            
-            if ($transactionResult) {
-                $res->success = true;
-                $res->data = ['deleted_id' => $id];
-                $res->reload = 'off-work-times/index';
-                
-                // Log successful deletion with description
-                \MikoPBX\Core\System\SystemMessages::sysLogMsg(
-                    __METHOD__,
-                    "Time condition '{$conditionDescription}' (ID: {$id}) deleted successfully",
-                    LOG_INFO
-                );
+
+            // Transaction succeeded if we reach here
+            $res->success = true;
+            $res->data = [
+                'deleted_id' => $id,
+                'deleted_associations_count' => $deletedAssociationsCount
+            ];
+            $res->reload = 'off-work-times/index';
+
+            // Log successful deletion with description and associated records count
+            $logMessage = "Time condition '{$conditionDescription}' (ID: {$id}) deleted successfully";
+            if ($deletedAssociationsCount > 0) {
+                $logMessage .= " along with {$deletedAssociationsCount} incoming route association(s)";
             }
+            \MikoPBX\Core\System\SystemMessages::sysLogMsg(
+                __METHOD__,
+                $logMessage,
+                LOG_INFO
+            );
         } catch (\Exception $e) {
             $res->messages['error'][] = $e->getMessage();
             \MikoPBX\Common\Handlers\CriticalErrorsHandler::handleExceptionWithSyslog($e);

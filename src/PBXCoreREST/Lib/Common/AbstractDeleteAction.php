@@ -70,12 +70,12 @@ abstract class AbstractDeleteAction
 
     /**
      * Validate delete parameters
-     * 
+     *
      * Performs standard validation on delete request parameters.
      * Currently validates that ID is not empty, but can be extended.
      *
      * @param string $id Record ID to validate
-     * @return array Array of validation errors (empty if valid)
+     * @return array<string> Array of validation errors (empty if valid)
      */
     protected static function validateDeleteParameters(string $id): array
     {
@@ -190,13 +190,13 @@ abstract class AbstractDeleteAction
 
     /**
      * Standard delete operation with extension cleanup
-     * 
+     *
      * Implements the most common delete pattern:
      * 1. Validate parameters
      * 2. Find record
      * 3. Delete in transaction (extension + main record)
      * 4. Log success
-     * 
+     *
      * This covers ~80% of delete use cases. For complex cases with additional
      * related records, implement custom delete logic in the concrete class.
      *
@@ -204,7 +204,9 @@ abstract class AbstractDeleteAction
      * @param string $id Record ID to delete
      * @param string $entityType Human-readable entity type for logging
      * @param string $notFoundMessage Error message when record not found
-     * @param callable|null $additionalCleanup Optional callback for additional cleanup
+     * @param callable|null $additionalCleanup Optional callback for additional cleanup.
+     *                                         Should return array with cleanup statistics:
+     *                                         ['deleted_count' => int, 'deleted_type' => string]
      * @return PBXApiResult Delete operation result
      */
     protected static function executeStandardDelete(
@@ -238,16 +240,23 @@ abstract class AbstractDeleteAction
             $entityName = $record->name ?? $record->description ?? $record->rulename ?? (string)($record->id ?? 'Unknown');
             $entityExtension = $record->extension ?? '';
 
-            // Delete in transaction
-            self::executeDeleteInTransaction(function() use ($record, $additionalCleanup) {
-                // Execute additional cleanup if provided
+            // Delete in transaction and collect cleanup statistics
+            $cleanupStats = self::executeDeleteInTransaction(function() use ($record, $additionalCleanup) {
+                $stats = [];
+
+                // Execute additional cleanup if provided and collect statistics
                 if ($additionalCleanup) {
-                    $additionalCleanup($record);
+                    $cleanupResult = $additionalCleanup($record);
+                    // If callback returns statistics, merge them
+                    if (is_array($cleanupResult)) {
+                        $stats = array_merge($stats, $cleanupResult);
+                    }
                 }
 
                 // Delete associated extension (common pattern)
                 if (!empty($record->extension)) {
                     self::deleteAssociatedExtension($record->extension);
+                    $stats['deleted_extension'] = true;
                 }
 
                 // Delete main record
@@ -265,15 +274,30 @@ abstract class AbstractDeleteAction
                     throw new \Exception($errorMessage);
                 }
 
-                return true;
+                return $stats;
             });
 
             $res->success = true;
-            $res->data = [];
+            $res->data = is_array($cleanupStats) ? $cleanupStats : [];
             $res->httpCode = 200; // OK (for v4 could be 204 No Content)
 
-            // Log successful operation
-            self::logSuccessfulDelete($entityType, $entityName, $entityExtension, $res->processor);
+            // Build log message with cleanup statistics
+            $logMessage = "{$entityType} '{$entityName}' ({$entityExtension}) deleted successfully";
+            if (is_array($cleanupStats) && !empty($cleanupStats)) {
+                $statsParts = [];
+                if (isset($cleanupStats['deleted_count']) && $cleanupStats['deleted_count'] > 0) {
+                    $type = $cleanupStats['deleted_type'] ?? 'related record';
+                    $statsParts[] = "{$cleanupStats['deleted_count']} {$type}(s)";
+                }
+                if (isset($cleanupStats['deleted_extension']) && $cleanupStats['deleted_extension']) {
+                    $statsParts[] = "associated extension";
+                }
+                if (!empty($statsParts)) {
+                    $logMessage .= " along with " . implode(' and ', $statsParts);
+                }
+            }
+
+            SystemMessages::sysLogMsg($res->processor, $logMessage, LOG_INFO);
 
         } catch (\Exception $e) {
             // Check if error is due to constraint violation (record in use)
