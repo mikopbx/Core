@@ -126,8 +126,10 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
         $deleteInput->clear();
         $deleteInput->sendKeys($deletePhrase);
         
-        // Submit the form to trigger modal
-        $this->submitForm('general-settings-form');
+         // Click the "Delete all settings" button (which is dynamically replaced)
+        $deleteButtonXpath = "//div[@id='submitbutton' and contains(@class, 'negative')]";
+        $deleteButton = self::$driver->findElement(WebDriverBy::xpath($deleteButtonXpath));
+        $deleteButton->click();
         
         // Wait for modal to appear
         $this->waitForModal();
@@ -450,8 +452,13 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
         $deleteInput->clear();
         $deleteInput->sendKeys($deletePhrase);
         
-        // Submit the form to trigger modal
-        $this->submitForm('general-settings-form');
+        // Wait for the button to be replaced by JavaScript
+        sleep(2);
+        
+        // Click the "Delete all settings" button (which is dynamically replaced)
+        $deleteButtonXpath = "//div[@id='submitbutton' and contains(@class, 'negative')]";
+        $deleteButton = self::$driver->findElement(WebDriverBy::xpath($deleteButtonXpath));
+        $deleteButton->click();
         
         // Wait for modal to appear
         $this->waitForModal();
@@ -460,11 +467,10 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
         $this->verifyDeleteStatisticsInModal();
         
         // Click confirm button in modal
-        $confirmButtonXpath = "//div[@id='delete-all-modal']//div[@class='actions']//div[contains(@class, 'approve')]";
-        $confirmButton = self::$driver->findElement(WebDriverBy::xpath($confirmButtonXpath));
+        $confirmButton = self::$driver->findElement(WebDriverBy::id('confirm-delete-all'));
         $confirmButton->click();
         
-        // Wait for the delete process to start and complete
+        // Wait for the delete process to start and complete  
         $this->waitForDeleteProcessToComplete();
         
         // Wait for system restart
@@ -681,12 +687,17 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
         // Verify specific items we created are shown (users/extensions)
         // The modal should show we have created test data
         $modalContent = self::$driver->findElement(WebDriverBy::id('delete-statistics-content'))->getText();
-        self::annotate("Modal statistics content: " . substr($modalContent, 0, 200) . "...");
-        
+        $sanitizedContent = str_replace(["\n", "\r", "\t"], ' ', substr($modalContent, 0, 200));
+        self::annotate("Modal statistics content: " . $sanitizedContent . "...");
+
         // Log the statistics for debugging
+        $itemCount = 0;
         foreach ($statisticsElements as $element) {
             $text = $element->getText();
-            self::annotate("Statistic item: $text");
+            // Sanitize text to prevent JSON encoding issues
+            $sanitizedText = str_replace(["\n", "\r", "\t"], ' ', $text);
+            $sanitizedText = mb_substr($sanitizedText, 0, 100); // Limit length
+            self::annotate("Statistic item " . (++$itemCount) . ": " . $sanitizedText);
         }
     }
 
@@ -810,8 +821,8 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
 
     /**
      * Save critical settings before deletion
-     * 
-     * @return array Array of critical settings
+     *
+     * @return array<string, mixed> Array of critical settings
      */
     private function saveCriticalSettings(): array
     {
@@ -865,8 +876,8 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
 
     /**
      * Verify critical settings were preserved after deletion
-     * 
-     * @param array $savedSettings Settings saved before deletion
+     *
+     * @param array<string, mixed> $savedSettings Settings saved before deletion
      */
     private function verifyCriticalSettingsPreserved(array $savedSettings): void
     {

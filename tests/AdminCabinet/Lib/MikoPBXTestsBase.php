@@ -114,16 +114,29 @@ class MikoPBXTestsBase extends BrowserStackTest
      */
     public static function annotate(string $text, string $level = 'info'): void
     {
-        $data = [
-            'action' => 'annotate',
-            'arguments' => [
-                'level' => $level,
-                'data' => $text
-            ]
-        ];
+        try {
+            if (self::$driver === null) {
+                return;
+            }
 
-        $command = 'browserstack_executor: ' . json_encode($data);
-        self::$driver->executeScript($command);
+            // Sanitize text to prevent JSON encoding issues
+            $sanitizedText = str_replace(["\r\n", "\r", "\n"], ' ', $text);
+            $sanitizedText = mb_substr($sanitizedText, 0, 500); // Limit to 500 chars to avoid BrowserStack limits
+
+            $data = [
+                'action' => 'annotate',
+                'arguments' => [
+                    'level' => $level,
+                    'data' => $sanitizedText
+                ]
+            ];
+
+            $command = 'browserstack_executor: ' . json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            self::$driver->executeScript($command);
+        } catch (\Exception $e) {
+            // Silently fail - annotation is not critical for test execution
+            error_log("Failed to send BrowserStack annotation: " . $e->getMessage());
+        }
     }
 
     /**
@@ -134,16 +147,29 @@ class MikoPBXTestsBase extends BrowserStackTest
      */
     public static function setSessionStatus(string $text, string $status = 'failed'): void
     {
-        $data = [
-            'action' => 'setSessionStatus',
-            'arguments' => [
-                'status' => $status,
-                'reason' => substr($text, 0, 256)
-            ]
-        ];
+        try {
+            if (self::$driver === null) {
+                return;
+            }
 
-        $command = 'browserstack_executor: ' . json_encode($data);
-        self::$driver->executeScript($command);
+            // Sanitize text to prevent JSON encoding issues
+            $sanitizedText = str_replace(["\r\n", "\r", "\n"], ' ', $text);
+            $sanitizedText = substr($sanitizedText, 0, 256);
+
+            $data = [
+                'action' => 'setSessionStatus',
+                'arguments' => [
+                    'status' => $status,
+                    'reason' => $sanitizedText
+                ]
+            ];
+
+            $command = 'browserstack_executor: ' . json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            self::$driver->executeScript($command);
+        } catch (\Exception $e) {
+            // Silently fail - status update is not critical for test execution
+            error_log("Failed to set BrowserStack session status: " . $e->getMessage());
+        }
     }
 
 
@@ -159,15 +185,28 @@ class MikoPBXTestsBase extends BrowserStackTest
      */
     public static function setSessionName(string $name): void
     {
-        $data = [
-            'action' => 'setSessionName',
-            'arguments' => [
-                'name' => $name
-            ]
-        ];
+        try {
+            if (self::$driver === null) {
+                return;
+            }
 
-        $command = 'browserstack_executor: ' . json_encode($data);
-        self::$driver->executeScript($command);
+            // Sanitize text to prevent JSON encoding issues
+            $sanitizedName = str_replace(["\r\n", "\r", "\n"], ' ', $name);
+            $sanitizedName = substr($sanitizedName, 0, 100);
+
+            $data = [
+                'action' => 'setSessionName',
+                'arguments' => [
+                    'name' => $sanitizedName
+                ]
+            ];
+
+            $command = 'browserstack_executor: ' . json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            self::$driver->executeScript($command);
+        } catch (\Exception $e) {
+            // Silently fail - session name update is not critical for test execution
+            error_log("Failed to set BrowserStack session name: " . $e->getMessage());
+        }
     }
 
     /**
@@ -255,7 +294,7 @@ class MikoPBXTestsBase extends BrowserStackTest
      * Log test action with context
      *
      * @param string $action Description of the action
-     * @param array $context Additional context data
+     * @param array<string, mixed> $context Additional context data
      * @param string $level Log level (info, warning, error)
      */
     protected function logTestAction(string $action, array $context = [], string $level = 'info'): void
@@ -279,7 +318,7 @@ class MikoPBXTestsBase extends BrowserStackTest
      * Format message for BrowserStack annotation ensuring proper JSON encoding
      *
      * @param string $action Action description
-     * @param array $context Context data
+     * @param array<string, mixed> $context Context data
      * @return string
      */
     private function formatAnnotationMessage(string $action, array $context = []): string
@@ -305,7 +344,7 @@ class MikoPBXTestsBase extends BrowserStackTest
      * Write test action to local log file
      *
      * @param string $action Action description
-     * @param array $context Context data
+     * @param array<string, mixed> $context Context data
      * @param string $level Log level
      */
     private function writeToLocalLog(string $action, array $context, string $level): void
