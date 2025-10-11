@@ -96,6 +96,10 @@ const networks = {
                     type: 'extenalIpHost',
                     prompt: globalTranslate.nw_ValidateExtIppaddrOrHostIsEmpty,
                 },
+                {
+                    type: 'validHostname',
+                    prompt: globalTranslate.nw_ValidateHostnameInvalid,
+                },
             ],
         },
     },
@@ -955,6 +959,26 @@ $.fn.form.settings.rules.extenalIpHost = () => {
         }
     }
     return true;
+};
+
+/**
+ * Custom form validation rule for checking if value is a valid hostname
+ * @param {string} value - The value to validate as hostname
+ * @returns {boolean} - True if valid hostname, false otherwise
+ */
+$.fn.form.settings.rules.validHostname = (value) => {
+    if (!value || value === '') {
+        return true; // Empty is handled by extenalIpHost rule
+    }
+
+    // RFC 952/RFC 1123 hostname validation
+    // - Labels separated by dots
+    // - Each label 1-63 chars
+    // - Only alphanumeric and hyphens
+    // - Cannot start/end with hyphen
+    // - Total length max 253 chars
+    const hostnameRegex = /^(?=.{1,253}$)(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(\.[a-zA-Z0-9-]{1,63}(?<!-))*$/;
+    return hostnameRegex.test(value);
 };
 
 

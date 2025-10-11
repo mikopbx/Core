@@ -638,6 +638,13 @@ return [
     'mo_SystemExten_voicemail' => 'Голосовая почта',
     'mo_ThisNumberNotUniqueForExtensionsModels' => 'Указанный номер уже используется для - %record%',
     'mo_ThisVlanIdNotUniqueForLanInterfacesModels' => 'В системе уже есть интерфейс с таким же VLAN',
+    'mo_InvalidIpAddress' => 'Некорректный IP адрес интерфейса',
+    'mo_InvalidExternalIpAddress' => 'Некорректный внешний IP адрес',
+    'mo_InvalidGatewayIpAddress' => 'Некорректный IP адрес шлюза',
+    'mo_InvalidPrimaryDnsIpAddress' => 'Некорректный IP адрес первичного DNS сервера',
+    'mo_InvalidSecondaryDnsIpAddress' => 'Некорректный IP адрес вторичного DNS сервера',
+    'mo_InvalidHostname' => 'Некорректное имя хоста',
+    'mo_InvalidExternalHostname' => 'Некорректное внешнее имя хоста',
 
     // MS - Moved to MailSettings.php
 

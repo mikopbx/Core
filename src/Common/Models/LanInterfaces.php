@@ -22,6 +22,7 @@ namespace MikoPBX\Common\Models;
 
 use Phalcon\Filter\Validation;
 use Phalcon\Filter\Validation\Validator\Uniqueness as UniquenessValidator;
+use Phalcon\Filter\Validation\Validator\Callback as CallbackValidator;
 
 /**
  * Class LanInterfaces
@@ -169,6 +170,8 @@ class LanInterfaces extends ModelsBase
     public function validation(): bool
     {
         $validation = new Validation();
+
+        // Unique interface+vlanid combination
         $validation->add(
             ['interface', 'vlanid'],
             new UniquenessValidator(
@@ -178,6 +181,184 @@ class LanInterfaces extends ModelsBase
             )
         );
 
+        // Validate IP address fields
+        $validation->add(
+            'ipaddr',
+            new CallbackValidator(
+                [
+                    'callback' => function () {
+                        return $this->validateIpField($this->ipaddr);
+                    },
+                    'message' => $this->t('mo_InvalidIpAddress'),
+                ]
+            )
+        );
+
+        $validation->add(
+            'extipaddr',
+            new CallbackValidator(
+                [
+                    'callback' => function () {
+                        return $this->validateIpWithOptionalPort($this->extipaddr);
+                    },
+                    'message' => $this->t('mo_InvalidExternalIpAddress'),
+                ]
+            )
+        );
+
+        $validation->add(
+            'gateway',
+            new CallbackValidator(
+                [
+                    'callback' => function () {
+                        return $this->validateIpField($this->gateway);
+                    },
+                    'message' => $this->t('mo_InvalidGatewayIpAddress'),
+                ]
+            )
+        );
+
+        $validation->add(
+            'primarydns',
+            new CallbackValidator(
+                [
+                    'callback' => function () {
+                        return $this->validateIpField($this->primarydns);
+                    },
+                    'message' => $this->t('mo_InvalidPrimaryDnsIpAddress'),
+                ]
+            )
+        );
+
+        $validation->add(
+            'secondarydns',
+            new CallbackValidator(
+                [
+                    'callback' => function () {
+                        return $this->validateIpField($this->secondarydns);
+                    },
+                    'message' => $this->t('mo_InvalidSecondaryDnsIpAddress'),
+                ]
+            )
+        );
+
+        // Validate hostname fields
+        $validation->add(
+            'hostname',
+            new CallbackValidator(
+                [
+                    'callback' => function () {
+                        return $this->validateHostnameField($this->hostname);
+                    },
+                    'message' => $this->t('mo_InvalidHostname'),
+                ]
+            )
+        );
+
+        $validation->add(
+            'exthostname',
+            new CallbackValidator(
+                [
+                    'callback' => function () {
+                        return $this->validateHostnameField($this->exthostname);
+                    },
+                    'message' => $this->t('mo_InvalidExternalHostname'),
+                ]
+            )
+        );
+
         return $this->validate($validation);
+    }
+
+    /**
+     * Validates an IP address field (allows empty)
+     *
+     * @param string|null $value IP address to validate
+     * @return bool True if valid or empty, false otherwise
+     */
+    private function validateIpField(?string $value): bool
+    {
+        // Empty values are allowed
+        if (empty($value)) {
+            return true;
+        }
+
+        return filter_var($value, FILTER_VALIDATE_IP) !== false;
+    }
+
+    /**
+     * Validates an IP address with optional port
+     *
+     * @param string|null $value IP address with optional port (e.g., "192.168.1.1:5060")
+     * @return bool True if valid or empty, false otherwise
+     */
+    private function validateIpWithOptionalPort(?string $value): bool
+    {
+        // Empty values are allowed
+        if (empty($value)) {
+            return true;
+        }
+
+        // Check if there's a port
+        if (strpos($value, ':') !== false) {
+            $parts = explode(':', $value);
+            if (count($parts) !== 2) {
+                return false;
+            }
+
+            [$ip, $port] = $parts;
+
+            // Validate IP
+            if (filter_var($ip, FILTER_VALIDATE_IP) === false) {
+                return false;
+            }
+
+            // Validate port (1-65535)
+            if (!ctype_digit($port) || (int)$port < 1 || (int)$port > 65535) {
+                return false;
+            }
+
+            return true;
+        }
+
+        // No port, just validate IP
+        return filter_var($value, FILTER_VALIDATE_IP) !== false;
+    }
+
+    /**
+     * Validates a hostname field (allows empty)
+     *
+     * @param string|null $value Hostname to validate
+     * @return bool True if valid or empty, false otherwise
+     */
+    private function validateHostnameField(?string $value): bool
+    {
+        // Empty values are allowed
+        if (empty($value)) {
+            return true;
+        }
+
+        // Check length (max 253 characters total)
+        if (strlen($value) > 253) {
+            return false;
+        }
+
+        // Split into labels
+        $labels = explode('.', $value);
+
+        foreach ($labels as $label) {
+            // Check label length (1-63 characters)
+            $labelLength = strlen($label);
+            if ($labelLength < 1 || $labelLength > 63) {
+                return false;
+            }
+
+            // Check label format: only alphanumeric and hyphens, cannot start/end with hyphen
+            if (!preg_match('/^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/', $label)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

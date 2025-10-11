@@ -101,13 +101,25 @@ class SslCertificateService
             ];
             $countryCode = $countryMap[$language] ?? 'XX';
             
-            // Get organization name from PBX name
+            // Get organization name from PBX name (sanitize to ASCII only)
             $pbxName = PbxSettings::getValueByKey(PbxSettings::PBX_NAME);
             $organizationName = !empty($pbxName) ? $pbxName : 'MikoPBX User';
+            // Remove non-ASCII characters from organization name
+            $organizationName = preg_replace('/[^\x20-\x7E]/', '', $organizationName);
+            if (empty($organizationName)) {
+                $organizationName = 'MikoPBX User';
+            }
 
             // Get external SIP parameters for certificate
             $externalHost = PbxSettings::getValueByKey(PbxSettings::EXTERNAL_SIP_HOST_NAME);
             $externalIp = PbxSettings::getValueByKey(PbxSettings::EXTERNAL_SIP_IP_ADDR);
+
+            // Validate hostname - only ASCII alphanumeric, dots, hyphens
+            if (!empty($externalHost) && !preg_match('/^[a-zA-Z0-9.-]+$/', $externalHost)) {
+                // Invalid hostname with non-ASCII or special characters
+                SystemMessages::sysLogMsg(__METHOD__, "Invalid external hostname '$externalHost' contains non-ASCII characters, ignoring", LOG_WARNING);
+                $externalHost = '';
+            }
 
             // Determine common name - prefer hostname over IP, fallback to system hostname
             if (!empty($externalHost)) {

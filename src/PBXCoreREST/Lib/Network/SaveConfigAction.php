@@ -53,6 +53,14 @@ class SaveConfigAction
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
 
+        // Validate input data
+        list($isValid, $validationMessages) = self::validateInputData($data);
+        if (!$isValid) {
+            $res->messages['error'] = $validationMessages;
+            $res->success = false;
+            return $res;
+        }
+
         $di = Di::getDefault();
         $db = $di->get('db');
 
@@ -87,6 +95,147 @@ class SaveConfigAction
         }
 
         return $res;
+    }
+
+    /**
+     * Validates input data for network configuration
+     *
+     * @param array $data Configuration data to validate
+     * @return array Returns [bool $isValid, array $messages]
+     */
+    private static function validateInputData(array $data): array
+    {
+        $messages = [];
+
+        // Validate external IP address if provided
+        if (!empty($data['extipaddr'])) {
+            if (!self::validateIpAddressWithOptionalPort($data['extipaddr'])) {
+                $messages[] = 'Invalid external IP address format. Use format: 192.168.1.1 or 192.168.1.1:5060';
+            }
+        }
+
+        // Validate external hostname if provided
+        if (!empty($data['exthostname'])) {
+            if (!self::validateHostname($data['exthostname'])) {
+                $messages[] = 'Invalid hostname format. Use only letters, numbers, hyphens and dots. Example: example.com or mikopbx.local';
+            }
+        }
+
+        // Check that at least one of extipaddr or exthostname is provided when NAT is enabled
+        if (($data['usenat'] ?? false) && empty($data['extipaddr']) && empty($data['exthostname'])) {
+            $messages[] = 'Either external IP address or hostname must be provided when NAT is enabled';
+        }
+
+        // Validate interface IP addresses
+        foreach ($data as $key => $value) {
+            if (preg_match('/^ipaddr_(\d+)$/', $key, $matches) && !empty($value)) {
+                $interfaceId = $matches[1];
+                // Skip validation if DHCP is enabled for this interface
+                if (!($data["dhcp_{$interfaceId}"] ?? false)) {
+                    if (!self::validateIpAddress($value)) {
+                        $messages[] = "Invalid IP address for interface {$interfaceId}: {$value}";
+                    }
+                }
+            }
+        }
+
+        // Validate gateway if provided
+        if (!empty($data['gateway']) && !self::validateIpAddress($data['gateway'])) {
+            $messages[] = 'Invalid gateway IP address';
+        }
+
+        // Validate DNS servers if provided
+        if (!empty($data['primarydns']) && !self::validateIpAddress($data['primarydns'])) {
+            $messages[] = 'Invalid primary DNS server IP address';
+        }
+
+        if (!empty($data['secondarydns']) && !self::validateIpAddress($data['secondarydns'])) {
+            $messages[] = 'Invalid secondary DNS server IP address';
+        }
+
+        // Validate hostname if provided
+        if (!empty($data['hostname']) && !self::validateHostname($data['hostname'])) {
+            $messages[] = 'Invalid local hostname format';
+        }
+
+        return [empty($messages), $messages];
+    }
+
+    /**
+     * Validates IP address format
+     *
+     * @param string $ip IP address to validate
+     * @return bool True if valid, false otherwise
+     */
+    private static function validateIpAddress(string $ip): bool
+    {
+        return filter_var($ip, FILTER_VALIDATE_IP) !== false;
+    }
+
+    /**
+     * Validates IP address with optional port
+     *
+     * @param string $ipWithPort IP address with optional port (e.g., "192.168.1.1:5060")
+     * @return bool True if valid, false otherwise
+     */
+    private static function validateIpAddressWithOptionalPort(string $ipWithPort): bool
+    {
+        // Check if there's a port
+        if (strpos($ipWithPort, ':') !== false) {
+            $parts = explode(':', $ipWithPort);
+            if (count($parts) !== 2) {
+                return false;
+            }
+
+            [$ip, $port] = $parts;
+
+            // Validate IP
+            if (!self::validateIpAddress($ip)) {
+                return false;
+            }
+
+            // Validate port (1-65535)
+            if (!ctype_digit($port) || (int)$port < 1 || (int)$port > 65535) {
+                return false;
+            }
+
+            return true;
+        }
+
+        // No port, just validate IP
+        return self::validateIpAddress($ipWithPort);
+    }
+
+    /**
+     * Validates hostname according to RFC 952 and RFC 1123
+     *
+     * @param string $hostname Hostname to validate
+     * @return bool True if valid, false otherwise
+     */
+    private static function validateHostname(string $hostname): bool
+    {
+        // Check length (max 253 characters total)
+        if (strlen($hostname) > 253) {
+            return false;
+        }
+
+        // Split into labels
+        $labels = explode('.', $hostname);
+
+        foreach ($labels as $label) {
+            // Check label length (1-63 characters)
+            $labelLength = strlen($label);
+            if ($labelLength < 1 || $labelLength > 63) {
+                return false;
+            }
+
+            // Check label format: only alphanumeric and hyphens, cannot start/end with hyphen
+            if (!preg_match('/^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/', $label)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

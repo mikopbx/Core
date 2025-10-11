@@ -136,6 +136,7 @@ return [
     'nw_ValidateDHCPOnVlansDontSupport' => 'DHCP у VLAN подсетей не поддерживается',
     'nw_ValidateExtIppaddrNotRight' => 'Ошибка заполнения внешнего IP адреса маршрутизатора',
     'nw_ValidateExtIppaddrOrHostIsEmpty' => 'Необходимо заполнить или внешний IP маршрутизатора, или его DNS имя',
+    'nw_ValidateHostnameInvalid' => 'Некорректное имя хоста. Используйте только буквы, цифры, дефис и точки. Например: example.com или mikopbx.local',
     'nw_ValidateIppaddrIsEmpty' => 'Не заполнен IP адрес сетевого интерфейса',
     'nw_ValidateIppaddrNotRight' => 'IP адрес сетевого интерфейса указан некорректно',
     'nw_ValidateNameIsNotBeEmpty' => 'Не заполнено название интерфейса',
