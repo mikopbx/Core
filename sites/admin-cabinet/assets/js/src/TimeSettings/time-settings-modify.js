@@ -69,6 +69,9 @@ const timeSettingsModify = {
             },
         });
 
+        // Initialize clock worker
+        clockWorker.initialize();
+
         timeSettingsModify.initializeForm();
     },
 
@@ -147,16 +150,18 @@ const timeSettingsModify = {
      */
     toggleDisabledFieldClass() {
         if (timeSettingsModify.$formObj.form('get value', 'PBXManualTimeSettings') === 'on') {
-            $('#SetDateTimeBlock').removeClass('disabled');
-            $('#SetNtpServerBlock').addClass('disabled');
-            // Stop clock worker in manual mode
-            clockWorker.stopWorker();
+            $('#SetDateTimeBlock').show();
+            $('#SetNtpServerBlock').hide();
+            // Reset the touched flag when switching to manual mode
+            // This allows auto-population until user makes their first edit
+            clockWorker.manualFieldTouched = false;
         } else {
-            $('#SetNtpServerBlock').removeClass('disabled');
-            $('#SetDateTimeBlock').addClass('disabled');
-            // Start clock worker in automatic mode
-            clockWorker.restartWorker();
+            $('#SetNtpServerBlock').show();
+            $('#SetDateTimeBlock').hide();
+            // Reset touched flag in automatic mode
+            clockWorker.manualFieldTouched = false;
         }
+        // Worker always runs to update the read-only current time display
     },
 
     /**

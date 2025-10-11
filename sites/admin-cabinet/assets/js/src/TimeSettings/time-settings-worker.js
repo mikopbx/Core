@@ -42,9 +42,20 @@ const clockWorker = {
     isRunning: false,
 
     /**
+     * Flag to track if manual field has been modified by user
+     * @type {boolean}
+     */
+    manualFieldTouched: false,
+
+    /**
      * Initializes the clock worker.
      */
     initialize() {
+        // Track when user modifies the manual datetime field
+        $('#ManualDateTime').on('change input', () => {
+            clockWorker.manualFieldTouched = true;
+        });
+
         clockWorker.restartWorker();
     },
 
@@ -82,35 +93,40 @@ const clockWorker = {
      * @param {object|boolean} response - The response from the server.
      */
     cbAfterReceiveDateTimeFromServer(response) {
-        const options = {timeZone: timeSettingsModify.$formObj.form('get value', 'PBXTimezone'), timeZoneName: 'short'};
+        const timezone = timeSettingsModify.$formObj.form('get value', 'PBXTimezone');
+        const isManualMode = timeSettingsModify.$formObj.form('get value', 'PBXManualTimeSettings') === 'on';
 
-        // Check if worker should continue running
-        if (clockWorker.isRunning && timeSettingsModify.$formObj.form('get value', 'PBXManualTimeSettings') !== 'on') {
+        // Worker should ALWAYS continue running to update the read-only field
+        if (clockWorker.isRunning) {
             clockWorker.timeoutHandle = window.setTimeout(
                 clockWorker.worker,
                 1000,
             );
-        } else {
-            options.timeZoneName = undefined;
-            clockWorker.isRunning = false;
         }
 
         if (response !== false && response.result === true && response.data) {
             const dateTime = new Date(response.data.timestamp * 1000);
             moment.locale(globalWebAdminLanguage);
-            const m = moment(dateTime);
+            let m;
 
-            // Check if moment-timezone is available and timezone is set
+            // Format datetime with timezone if available
             let formattedDateTime;
-            if (typeof m.tz === 'function' && options.timeZone) {
-                // Use moment-timezone if available
-                formattedDateTime = m.tz(options.timeZone).format();
+            if (typeof moment.tz === 'function' && timezone) {
+                m = moment.tz(dateTime, timezone);
+                // Use consistent format for both fields: YYYY-MM-DD HH:mm:ss
+                formattedDateTime = m.format('YYYY-MM-DD HH:mm:ss');
             } else {
-                // Fallback to basic moment formatting
-                formattedDateTime = m.format();
+                m = moment(dateTime);
+                formattedDateTime = m.format('YYYY-MM-DD HH:mm:ss');
             }
 
-            timeSettingsModify.$formObj.form('set value', 'ManualDateTime', formattedDateTime);
+            // ALWAYS update the read-only current system time display
+            $('#CurrentSystemTime').val(formattedDateTime);
+
+            // Update editable field ONLY in automatic mode OR if user hasn't touched it yet
+            if (!isManualMode || !clockWorker.manualFieldTouched) {
+                timeSettingsModify.$formObj.form('set value', 'ManualDateTime', formattedDateTime);
+            }
         }
     }
 };

@@ -128,14 +128,7 @@ class RestController extends BaseRestController
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
     public function datetime(): void
     {
-        $requestData = self::sanitizeData($this->request->getData(), $this->filter);
-        $requestData['httpMethod'] = $this->request->getMethod();
-
-        $this->sendRequestToBackendWorker(
-            $this->processorClass,
-            'datetime',
-            $requestData
-        );
+        // Implementation handled by BaseRestController
     }
 
     /**

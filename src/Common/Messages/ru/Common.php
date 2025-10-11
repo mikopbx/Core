@@ -777,7 +777,8 @@ return [
 
     // TS
     'ts_CurrentSettings' => 'Текущие настройки',
-    'ts_CurrentSystemTime' => 'Текущее время',
+    'ts_CurrentSystemTime' => 'Текущее системное время',
+    'ts_SetDateTime' => 'Установить новое время',
     'ts_ManualAdjustDateTime' => 'Корректировать время вручную',
     'ts_ModifySettings' => 'Новые настройки',
     'ts_NTPServer' => 'NTP сервера',
