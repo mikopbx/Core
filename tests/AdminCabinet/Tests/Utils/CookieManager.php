@@ -83,8 +83,15 @@ class CookieManager
                 json_encode($cookieData, JSON_PRETTY_PRINT)
             );
 
+            if ($saved === false) {
+                error_log("CookieManager: Failed to save cookies to {$this->cookieStorage}");
+            } else {
+                error_log("CookieManager: Saved " . count($cookieData) . " cookies to {$this->cookieStorage}");
+            }
+
             return $saved !== false;
         } catch (\Exception $e) {
+            error_log("CookieManager: Exception while saving cookies: " . $e->getMessage());
             return false;
         }
     }
@@ -97,14 +104,18 @@ class CookieManager
     public function loadCookies(): bool
     {
         if (!file_exists($this->cookieStorage)) {
+            error_log("CookieManager: Cookie file does not exist: {$this->cookieStorage}");
             return false;
         }
 
         try {
             $cookieData = json_decode(file_get_contents($this->cookieStorage), true);
             if (!is_array($cookieData)) {
+                error_log("CookieManager: Invalid cookie data in {$this->cookieStorage}");
                 return false;
             }
+
+            error_log("CookieManager: Loading " . count($cookieData) . " cookies from {$this->cookieStorage}");
 
             // Delete all existing cookies first
             $this->driver->manage()->deleteAllCookies();
@@ -124,8 +135,10 @@ class CookieManager
                 $this->driver->manage()->addCookie($cookie);
             }
 
+            error_log("CookieManager: Successfully loaded and applied cookies");
             return true;
         } catch (\Exception $e) {
+            error_log("CookieManager: Exception while loading cookies: " . $e->getMessage());
             return false;
         }
     }

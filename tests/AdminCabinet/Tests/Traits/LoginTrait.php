@@ -49,10 +49,13 @@ trait LoginTrait
             throw new RuntimeException('Could not extract domain from SERVER_PBX');
         }
 
+        // Use /tmp for cookie storage (writable, persists during test run)
+        $cookieDir = getenv('SELENIUM_COOKIE_DIR') ?: '/tmp/selenium_cookies';
+
         $this->cookieManager = new CookieManager(
             self::$driver,
             $domain,
-            getenv('SELENIUM_COOKIE_DIR')
+            $cookieDir
         );
     }
 
@@ -98,14 +101,26 @@ trait LoginTrait
     private function tryLoginWithCookies(): bool
     {
         if (!$this->cookieManager->loadCookies()) {
+            self::annotate('No saved cookies found - will perform full login');
             return false;
         }
 
         try {
-            self::annotate('Attempting to restore session using refreshToken cookie');
+            self::annotate('Saved cookies loaded - attempting to restore session');
 
-            // Navigate to dashboard or protected page
-            self::$driver->navigate()->to($GLOBALS['SERVER_PBX']);
+            // Check if we're already on the target page
+            $currentUrl = self::$driver->getCurrentURL();
+            $targetUrl = $GLOBALS['SERVER_PBX'];
+
+            // Only refresh if we're already on the same domain (to apply cookies)
+            // Don't navigate if we're already there - it would clear cookies!
+            if (strpos($currentUrl, parse_url($targetUrl, PHP_URL_HOST)) !== false) {
+                // Already on correct domain - just refresh to apply cookies
+                self::$driver->navigate()->refresh();
+            } else {
+                // Need to navigate to the domain first
+                self::$driver->navigate()->to($targetUrl);
+            }
 
             // Give TokenManager time to initialize and call /auth:refresh
             // No need to wait for ALL AJAX - just the JWT refresh
@@ -174,14 +189,16 @@ trait LoginTrait
 
         if (!$this->isUserLoggedIn()) {
             throw new RuntimeException('Login failed: Credentials not accepted');
-        } else {
-            $this->assertTrue(true);
         }
 
-        // Save successful login cookies
-        if (!$this->cookieManager->saveCookies()) {
+        // Save successful login cookies BEFORE assertTrue
+        if ($this->cookieManager->saveCookies()) {
+            self::annotate('Successfully saved authentication cookies for future tests');
+        } else {
             self::annotate('Warning: Failed to save authentication cookies');
         }
+
+        $this->assertTrue(true);
     }
 
     /**
