@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, IvrMenuAPI, Form, globalTranslate, UserMessage, ExtensionsAPI, SoundFileSelector, ExtensionSelector, TooltipBuilder, FormElements */
+/* global globalRootUrl, IvrMenuAPI, Form, globalTranslate, UserMessage, ExtensionsAPI, SoundFileSelector, ExtensionSelector, IvrMenuTooltipManager, FormElements */
 
 /**
  * IVR menu edit form management module
@@ -588,88 +588,11 @@ const ivrMenuModify = {
   },
 
   /**
-   * Initialize tooltips for form fields
+   * Initialize tooltips for form fields using IvrMenuTooltipManager
    */
   initializeTooltips() {
-      // Configuration for each field tooltip - using proper translation keys from Route.php
-      const tooltipConfigs = {
-          number_of_repeat: {
-              header: globalTranslate.iv_NumberOfRepeatTooltip_header,
-              description: globalTranslate.iv_NumberOfRepeatTooltip_desc,
-              note: globalTranslate.iv_NumberOfRepeatTooltip_note
-          },
-          
-          timeout: {
-              header: globalTranslate.iv_TimeoutTooltip_header,
-              description: globalTranslate.iv_TimeoutTooltip_desc,
-              list: [
-                  globalTranslate.iv_TimeoutTooltip_list1,
-                  globalTranslate.iv_TimeoutTooltip_list2,
-                  globalTranslate.iv_TimeoutTooltip_list3
-              ],
-              note: globalTranslate.iv_TimeoutTooltip_note
-          },
-          
-          timeout_extension: {
-              header: globalTranslate.iv_TimeoutExtensionTooltip_header,
-              description: globalTranslate.iv_TimeoutExtensionTooltip_desc,
-              list: [
-                  globalTranslate.iv_TimeoutExtensionTooltip_list1,
-                  globalTranslate.iv_TimeoutExtensionTooltip_list2,
-                  globalTranslate.iv_TimeoutExtensionTooltip_list3
-              ],
-              note: globalTranslate.iv_TimeoutExtensionTooltip_note
-          },
-          
-          allow_enter_any_internal_extension: {
-              header: globalTranslate.iv_AllowEnterAnyInternalExtensionTooltip_header,
-              description: globalTranslate.iv_AllowEnterAnyInternalExtensionTooltip_desc,
-              list: [
-                  {
-                      term: globalTranslate.iv_AllowEnterAnyInternalExtensionTooltip_list_header,
-                      definition: null
-                  },
-                  globalTranslate.iv_AllowEnterAnyInternalExtensionTooltip_list1,
-                  globalTranslate.iv_AllowEnterAnyInternalExtensionTooltip_list2,
-                  globalTranslate.iv_AllowEnterAnyInternalExtensionTooltip_list3,
-                  globalTranslate.iv_AllowEnterAnyInternalExtensionTooltip_list4
-              ],
-              note: globalTranslate.iv_AllowEnterAnyInternalExtensionTooltip_note
-          },
-          
-          extension: {
-              header: globalTranslate.iv_ExtensionTooltip_header,
-              description: globalTranslate.iv_ExtensionTooltip_desc,
-              note: globalTranslate.iv_ExtensionTooltip_note
-          },
-          
-          audio_message_id: {
-              header: globalTranslate.iv_AudioMessageIdTooltip_header,
-              description: globalTranslate.iv_AudioMessageIdTooltip_desc,
-              list: [
-                  {
-                      term: globalTranslate.iv_AudioMessageIdTooltip_content_header,
-                      definition: null
-                  },
-                  globalTranslate.iv_AudioMessageIdTooltip_content1,
-                  globalTranslate.iv_AudioMessageIdTooltip_content2,
-                  globalTranslate.iv_AudioMessageIdTooltip_content3
-              ],
-              list2: [
-                  {
-                      term: globalTranslate.iv_AudioMessageIdTooltip_recommendations_header,
-                      definition: null
-                  },
-                  globalTranslate.iv_AudioMessageIdTooltip_rec1,
-                  globalTranslate.iv_AudioMessageIdTooltip_rec2,
-                  globalTranslate.iv_AudioMessageIdTooltip_rec3
-              ],
-              note: globalTranslate.iv_AudioMessageIdTooltip_note
-          }
-      };
-
-      // Use TooltipBuilder to initialize tooltips
-      TooltipBuilder.initialize(tooltipConfigs);
+      // Delegate tooltip initialization to IvrMenuTooltipManager
+      IvrMenuTooltipManager.initialize();
   }
 };
 

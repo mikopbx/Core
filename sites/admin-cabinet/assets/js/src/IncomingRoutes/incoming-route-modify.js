@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global $, globalRootUrl, globalTranslate, Extensions, Form, IncomingRoutesAPI, ProvidersAPI, UserMessage, SoundFileSelector, SecurityUtils, FormElements, TooltipBuilder, DynamicDropdownBuilder, ExtensionSelector */
+/* global $, globalRootUrl, globalTranslate, Extensions, Form, IncomingRoutesAPI, ProvidersAPI, UserMessage, SoundFileSelector, SecurityUtils, FormElements, IncomingRouteTooltipManager, DynamicDropdownBuilder, ExtensionSelector */
 
 /**
  * Object for managing incoming route record
@@ -293,131 +293,11 @@ const incomingRouteModify = {
     },
 
     /**
-     * Initialize tooltips for form fields
+     * Initialize tooltips for form fields using IncomingRouteTooltipManager
      */
     initializeTooltips() {
-        // Configuration for each field tooltip
-        const tooltipConfigs = {
-            provider: {
-                header: globalTranslate.ir_provider_tooltip_header,
-                description: globalTranslate.ir_provider_tooltip_desc,
-                list: [
-                    globalTranslate.ir_provider_tooltip_item1,
-                    globalTranslate.ir_provider_tooltip_item2,
-                    {
-                        term: globalTranslate.ir_provider_tooltip_priority_header,
-                        definition: null
-                    },
-                    globalTranslate.ir_provider_tooltip_priority1,
-                    globalTranslate.ir_provider_tooltip_priority2
-                ],
-                note: globalTranslate.ir_provider_tooltip_example
-            },
-
-            number: {
-                header: globalTranslate.ir_number_tooltip_header,
-                description: globalTranslate.ir_number_tooltip_desc,
-                list: [
-                    {
-                        term: globalTranslate.ir_number_tooltip_types_header,
-                        definition: null
-                    },
-                    globalTranslate.ir_number_tooltip_type1,
-                    globalTranslate.ir_number_tooltip_type2,
-                    globalTranslate.ir_number_tooltip_type3,
-                    globalTranslate.ir_number_tooltip_type4,
-                    {
-                        term: globalTranslate.ir_number_tooltip_masks_header,
-                        definition: null
-                    },
-                    globalTranslate.ir_number_tooltip_mask1,
-                    globalTranslate.ir_number_tooltip_mask2,
-                    globalTranslate.ir_number_tooltip_mask3,
-                    globalTranslate.ir_number_tooltip_mask4,
-                    globalTranslate.ir_number_tooltip_mask5
-                ],
-                list2: [
-                    {
-                        term: globalTranslate.ir_number_tooltip_priority_header,
-                        definition: null
-                    },
-                    globalTranslate.ir_number_tooltip_priority1,
-                    globalTranslate.ir_number_tooltip_priority2,
-                    globalTranslate.ir_number_tooltip_priority3,
-                    globalTranslate.ir_number_tooltip_priority4
-                ],
-                note: globalTranslate.ir_number_tooltip_note
-            },
-
-            audio_message_id: {
-                header: globalTranslate.ir_audio_message_id_tooltip_header,
-                description: globalTranslate.ir_audio_message_id_tooltip_desc,
-                list: [
-                    {
-                        term: globalTranslate.ir_audio_message_id_tooltip_when_header,
-                        definition: null
-                    },
-                    globalTranslate.ir_audio_message_id_tooltip_when1,
-                    globalTranslate.ir_audio_message_id_tooltip_when2,
-                    globalTranslate.ir_audio_message_id_tooltip_when3
-                ],
-                list2: [
-                    {
-                        term: globalTranslate.ir_audio_message_id_tooltip_targets_header,
-                        definition: null
-                    },
-                    globalTranslate.ir_audio_message_id_tooltip_target1,
-                    globalTranslate.ir_audio_message_id_tooltip_target2,
-                    globalTranslate.ir_audio_message_id_tooltip_target3,
-                    globalTranslate.ir_audio_message_id_tooltip_target4
-                ],
-                list3: [
-                    {
-                        term: globalTranslate.ir_audio_message_id_tooltip_examples_header,
-                        definition: null
-                    },
-                    globalTranslate.ir_audio_message_id_tooltip_example1,
-                    globalTranslate.ir_audio_message_id_tooltip_example2,
-                    globalTranslate.ir_audio_message_id_tooltip_example3
-                ]
-            },
-
-            timeout: {
-                header: globalTranslate.ir_timeout_tooltip_header,
-                description: globalTranslate.ir_timeout_tooltip_desc,
-                list: [
-                    {
-                        term: globalTranslate.ir_timeout_tooltip_behavior_header,
-                        definition: null
-                    },
-                    globalTranslate.ir_timeout_tooltip_behavior1,
-                    globalTranslate.ir_timeout_tooltip_behavior2,
-                    globalTranslate.ir_timeout_tooltip_behavior3,
-                    globalTranslate.ir_timeout_tooltip_behavior4
-                ],
-                list2: [
-                    {
-                        term: globalTranslate.ir_timeout_tooltip_values_header,
-                        definition: null
-                    },
-                    globalTranslate.ir_timeout_tooltip_value1,
-                    globalTranslate.ir_timeout_tooltip_value2,
-                    globalTranslate.ir_timeout_tooltip_value3
-                ],
-                list3: [
-                    {
-                        term: globalTranslate.ir_timeout_tooltip_chain_header,
-                        definition: null
-                    },
-                    globalTranslate.ir_timeout_tooltip_chain1,
-                    globalTranslate.ir_timeout_tooltip_chain2,
-                    globalTranslate.ir_timeout_tooltip_chain3
-                ]
-            }
-        };
-
-        // Use TooltipBuilder to initialize tooltips
-        TooltipBuilder.initialize(tooltipConfigs);
+        // Delegate tooltip initialization to IncomingRouteTooltipManager
+        IncomingRouteTooltipManager.initialize();
     },
 
     /**

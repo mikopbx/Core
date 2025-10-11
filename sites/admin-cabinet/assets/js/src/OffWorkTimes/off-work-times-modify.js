@@ -16,9 +16,9 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global $ globalRootUrl Extensions moment Form globalTranslate 
+/* global $ globalRootUrl Extensions moment Form globalTranslate
    SemanticLocalization SoundFileSelector UserMessage SecurityUtils
-   IncomingRoutesAPI OffWorkTimesAPI DynamicDropdownBuilder ExtensionSelector */
+   IncomingRoutesAPI OffWorkTimesAPI DynamicDropdownBuilder ExtensionSelector OffWorkTimesTooltipManager */
 
 /**
  * Module for managing out-of-work time settings
@@ -1163,36 +1163,11 @@ const outOfWorkTimeRecord = {
     },
     
     /**
-     * Initialize tooltips for form fields using TooltipBuilder
+     * Initialize tooltips for form fields using OffWorkTimesTooltipManager
      */
     initializeTooltips() {
-        // Configuration for each field tooltip
-        const tooltipConfigs = {
-            calUrl: {
-                header: globalTranslate.tf_CalUrlTooltip_header,
-                description: globalTranslate.tf_CalUrlTooltip_desc,
-                list: [
-                    { term: globalTranslate.tf_CalUrlTooltip_caldav_header, definition: null },
-                    globalTranslate.tf_CalUrlTooltip_caldav_google,
-                    globalTranslate.tf_CalUrlTooltip_caldav_nextcloud,
-                    globalTranslate.tf_CalUrlTooltip_caldav_yandex
-                ],
-                list2: [
-                    { term: globalTranslate.tf_CalUrlTooltip_icalendar_header, definition: null },
-                    globalTranslate.tf_CalUrlTooltip_icalendar_desc
-                ],
-                examples: [
-                    globalTranslate.tf_CalUrlTooltip_example_google,
-                    globalTranslate.tf_CalUrlTooltip_example_nextcloud,
-                    globalTranslate.tf_CalUrlTooltip_example_ics
-                ],
-                examplesHeader: globalTranslate.tf_CalUrlTooltip_examples_header,
-                note: globalTranslate.tf_CalUrlTooltip_note
-            }
-        };
-        
-        // Use TooltipBuilder to initialize tooltips
-        TooltipBuilder.initialize(tooltipConfigs);
+        // Delegate tooltip initialization to OffWorkTimesTooltipManager
+        OffWorkTimesTooltipManager.initialize();
     }
 };
 

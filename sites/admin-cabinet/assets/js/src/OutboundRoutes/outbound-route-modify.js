@@ -8,7 +8,7 @@
  * (at your option) any later version.
  */
 
-/* global globalRootUrl, globalTranslate, Form, OutboundRoutesAPI, ProvidersAPI, UserMessage, TooltipBuilder, DynamicDropdownBuilder */
+/* global globalRootUrl, globalTranslate, Form, OutboundRoutesAPI, ProvidersAPI, UserMessage, OutboundRouteTooltipManager, DynamicDropdownBuilder */
 
 /**
  * Object for managing outbound route settings
@@ -270,180 +270,11 @@ const outboundRoute = {
     },
     
     /**
-     * Initialize tooltips for form fields
+     * Initialize tooltips for form fields using OutboundRouteTooltipManager
      */
     initializeTooltips() {
-        // Configuration for each field tooltip
-        const tooltipConfigs = {
-            numberbeginswith: {
-                header: globalTranslate.or_numberbeginswith_tooltip_header,
-                description: globalTranslate.or_numberbeginswith_tooltip_desc,
-                list: [
-                    {
-                        term: globalTranslate.or_numberbeginswith_tooltip_patterns_header,
-                        definition: null
-                    },
-                    globalTranslate.or_numberbeginswith_tooltip_pattern1,
-                    globalTranslate.or_numberbeginswith_tooltip_pattern2,
-                    globalTranslate.or_numberbeginswith_tooltip_pattern3,
-                    globalTranslate.or_numberbeginswith_tooltip_pattern4,
-                    globalTranslate.or_numberbeginswith_tooltip_pattern5,
-                    globalTranslate.or_numberbeginswith_tooltip_pattern6,
-                    globalTranslate.or_numberbeginswith_tooltip_pattern7
-                ],
-                list2: [
-                    {
-                        term: globalTranslate.or_numberbeginswith_tooltip_advanced_header,
-                        definition: null
-                    },
-                    globalTranslate.or_numberbeginswith_tooltip_advanced1,
-                    globalTranslate.or_numberbeginswith_tooltip_advanced2,
-                    globalTranslate.or_numberbeginswith_tooltip_advanced3
-                ],
-                list3: [
-                    {
-                        term: globalTranslate.or_numberbeginswith_tooltip_limitations_header,
-                        definition: null
-                    },
-                    globalTranslate.or_numberbeginswith_tooltip_limitation1,
-                    globalTranslate.or_numberbeginswith_tooltip_limitation2,
-                    globalTranslate.or_numberbeginswith_tooltip_limitation3
-                ],
-                warning: {
-                    text: globalTranslate.or_numberbeginswith_tooltip_warning
-                },
-                note: globalTranslate.or_numberbeginswith_tooltip_note
-            },
-            
-            restnumbers: {
-                header: globalTranslate.or_restnumbers_tooltip_header,
-                description: globalTranslate.or_restnumbers_tooltip_desc,
-                list: [
-                    {
-                        term: globalTranslate.or_restnumbers_tooltip_values_header,
-                        definition: null
-                    },
-                    globalTranslate.or_restnumbers_tooltip_value1,
-                    globalTranslate.or_restnumbers_tooltip_value2,
-                    globalTranslate.or_restnumbers_tooltip_value3
-                ],
-                list2: [
-                    {
-                        term: globalTranslate.or_restnumbers_tooltip_examples_header,
-                        definition: null
-                    },
-                    globalTranslate.or_restnumbers_tooltip_example1,
-                    globalTranslate.or_restnumbers_tooltip_example2,
-                    globalTranslate.or_restnumbers_tooltip_example3,
-                    globalTranslate.or_restnumbers_tooltip_example4,
-                    globalTranslate.or_restnumbers_tooltip_example5,
-                    globalTranslate.or_restnumbers_tooltip_example6
-                ],
-                list3: [
-                    {
-                        term: globalTranslate.or_restnumbers_tooltip_limitations_header,
-                        definition: null
-                    },
-                    globalTranslate.or_restnumbers_tooltip_limitation1,
-                    globalTranslate.or_restnumbers_tooltip_limitation2,
-                    globalTranslate.or_restnumbers_tooltip_limitation3
-                ],
-                note: globalTranslate.or_restnumbers_tooltip_note
-            },
-            
-            trimfrombegin: {
-                header: globalTranslate.or_trimfrombegin_tooltip_header,
-                description: globalTranslate.or_trimfrombegin_tooltip_desc,
-                list: [
-                    {
-                        term: globalTranslate.or_trimfrombegin_tooltip_why_header,
-                        definition: null
-                    },
-                    globalTranslate.or_trimfrombegin_tooltip_why1,
-                    globalTranslate.or_trimfrombegin_tooltip_why2,
-                    globalTranslate.or_trimfrombegin_tooltip_why3
-                ],
-                list2: [
-                    {
-                        term: globalTranslate.or_trimfrombegin_tooltip_examples_header,
-                        definition: null
-                    },
-                    globalTranslate.or_trimfrombegin_tooltip_example1,
-                    globalTranslate.or_trimfrombegin_tooltip_example2,
-                    globalTranslate.or_trimfrombegin_tooltip_example3,
-                    globalTranslate.or_trimfrombegin_tooltip_example4
-                ],
-                list3: [
-                    {
-                        term: globalTranslate.or_trimfrombegin_tooltip_limitation_header,
-                        definition: null
-                    },
-                    globalTranslate.or_trimfrombegin_tooltip_limitation1,
-                    globalTranslate.or_trimfrombegin_tooltip_limitation2
-                ],
-                note: globalTranslate.or_trimfrombegin_tooltip_note
-            },
-            
-            prepend: {
-                header: globalTranslate.or_prepend_tooltip_header,
-                description: globalTranslate.or_prepend_tooltip_desc,
-                list: [
-                    {
-                        term: globalTranslate.or_prepend_tooltip_usage_header,
-                        definition: null
-                    },
-                    globalTranslate.or_prepend_tooltip_usage1,
-                    globalTranslate.or_prepend_tooltip_usage2,
-                    globalTranslate.or_prepend_tooltip_usage3
-                ],
-                list2: [
-                    {
-                        term: globalTranslate.or_prepend_tooltip_examples_header,
-                        definition: null
-                    },
-                    globalTranslate.or_prepend_tooltip_example1,
-                    globalTranslate.or_prepend_tooltip_example2,
-                    globalTranslate.or_prepend_tooltip_example3
-                ],
-                list3: [
-                    {
-                        term: globalTranslate.or_prepend_tooltip_limitations_header,
-                        definition: null
-                    },
-                    globalTranslate.or_prepend_tooltip_limitation1,
-                    globalTranslate.or_prepend_tooltip_limitation2,
-                    globalTranslate.or_prepend_tooltip_limitation3
-                ],
-                note: globalTranslate.or_prepend_tooltip_note
-            },
-            
-            provider: {
-                header: globalTranslate.or_provider_tooltip_header,
-                description: globalTranslate.or_provider_tooltip_desc,
-                list: [
-                    {
-                        term: globalTranslate.or_provider_tooltip_important_header,
-                        definition: null
-                    },
-                    globalTranslate.or_provider_tooltip_important1,
-                    globalTranslate.or_provider_tooltip_important2,
-                    globalTranslate.or_provider_tooltip_important3
-                ],
-                list2: [
-                    {
-                        term: globalTranslate.or_provider_tooltip_priority_header,
-                        definition: null
-                    },
-                    globalTranslate.or_provider_tooltip_priority1,
-                    globalTranslate.or_provider_tooltip_priority2,
-                    globalTranslate.or_provider_tooltip_priority3
-                ],
-                note: globalTranslate.or_provider_tooltip_note
-            }
-        };
-        
-        // Use TooltipBuilder to initialize tooltips
-        TooltipBuilder.initialize(tooltipConfigs);
+        // Delegate tooltip initialization to OutboundRouteTooltipManager
+        OutboundRouteTooltipManager.initialize();
     }
 };
 

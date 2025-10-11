@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, Form, UserMessage, ApiKeysAPI, DynamicDropdownBuilder, FormElements, SemanticLocalization, TooltipBuilder */
+/* global globalRootUrl, globalTranslate, Form, UserMessage, ApiKeysAPI, DynamicDropdownBuilder, FormElements, SemanticLocalization, ApiKeysTooltipManager */
 
 /**
  * API key edit form management module
@@ -168,60 +168,11 @@ const apiKeysModify = {
     },
 
     /**
-     * Initialize tooltips for form fields
+     * Initialize tooltips for form fields using ApiKeysTooltipManager
      */
     initializeTooltips() {
-        const tooltipConfigs = {
-            api_key_usage: {
-                header: globalTranslate.ak_ApiKeyUsageTooltip_header,
-                description: globalTranslate.ak_ApiKeyUsageTooltip_desc,
-                list: [
-                    {
-                        term: globalTranslate.ak_ApiKeyUsageTooltip_auth_header,
-                        definition: null
-                    },
-                    globalTranslate.ak_ApiKeyUsageTooltip_auth_format,
-                ],
-                examples: [
-                    'Authorization: Bearer YOUR_API_KEY'
-                ],
-                list2: [
-                    {
-                        term: globalTranslate.ak_ApiKeyUsageTooltip_example_header,
-                        definition: null
-                    }
-                ],
-                list3: [
-                    {
-                        term: 'curl',
-                        definition: '<br>&nbsp&nbsp'+globalTranslate.ak_ApiKeyUsageTooltip_curl_example
-                    },
-                    {
-                        term: 'JavaScript',
-                        definition: '<br>&nbsp&nbsp'+globalTranslate.ak_ApiKeyUsageTooltip_js_example
-                    },
-                    {
-                        term: 'PHP',
-                        definition: '<br>&nbsp&nbsp'+globalTranslate.ak_ApiKeyUsageTooltip_php_example
-                    }
-                ],
-                warning: {
-                    header: globalTranslate.ak_ApiKeyUsageTooltip_warning_header,
-                    text: globalTranslate.ak_ApiKeyUsageTooltip_warning
-                },
-                note: globalTranslate.ak_ApiKeyUsageTooltip_note
-            }
-        };
-        
-        // Initialize tooltips using TooltipBuilder if available
-        if (typeof TooltipBuilder !== 'undefined') {
-            TooltipBuilder.initialize(tooltipConfigs, {
-                selector: '.field-info-icon',
-                position: 'top left',
-                hoverable: true,
-                variation: 'flowing wide'
-            });
-        }
+        // Delegate tooltip initialization to ApiKeysTooltipManager
+        ApiKeysTooltipManager.initialize();
     },
 
     /**

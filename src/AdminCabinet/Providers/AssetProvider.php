@@ -359,6 +359,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/PbxAPI/sound-files-api.js', true)
                 ->addJs('js/pbx/FormElements/extension-selector.js', true)
                 ->addJs('js/pbx/FormElements/sound-file-selector.js', true)
+                ->addJs('js/pbx/CallQueues/callqueue-tooltip-manager.js', true)
                 ->addJs('js/pbx/CallQueues/callqueue-modify.js', true);
         }
     }
@@ -658,6 +659,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/PbxAPI/sound-files-api.js', true)
                 ->addJs('js/pbx/FormElements/extension-selector.js', true)
                 ->addJs('js/pbx/FormElements/sound-file-selector.js', true)
+                ->addJs('js/pbx/OffWorkTimes/off-work-times-tooltip-manager.js', true)
                 ->addJs('js/pbx/OffWorkTimes/off-work-times-modify.js', true);
         }
     }
@@ -681,6 +683,7 @@ class AssetProvider implements ServiceProviderInterface
         } elseif ($action === 'modify') {
             $this->footerCollectionJS
                 ->addJs('js/pbx/PbxAPI/outbound-routes-api.js', true)
+                ->addJs('js/pbx/OutboundRoutes/outbound-route-tooltip-manager.js', true)
                 ->addJs('js/pbx/OutboundRoutes/outbound-route-modify.js', true);
         }
     }
@@ -744,6 +747,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/PbxAPI/sound-files-api.js', true)
                 ->addJs('js/pbx/FormElements/extension-selector.js', true)          // Extensions
                 ->addJs('js/pbx/FormElements/sound-file-selector.js', true)         // Sound files
+                ->addJs('js/pbx/IvrMenu/ivrmenu-tooltip-manager.js', true)
                 ->addJs('js/pbx/IvrMenu/ivrmenu-modify.js', true);
         }
     }
@@ -774,6 +778,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/PbxAPI/incoming-routes-api.js', true)
                 ->addJs('js/pbx/FormElements/sound-file-selector.js', true)
                 ->addJs('js/pbx/FormElements/extension-selector.js', true)
+                ->addJs('js/pbx/IncomingRoutes/incoming-route-tooltip-manager.js', true)
                 ->addJs('js/pbx/IncomingRoutes/incoming-route-modify.js', true);
         }
     }
@@ -1112,6 +1117,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/vendor/datatable/dataTables.semanticui.min.js', true)
                 ->addJs('js/pbx/PbxAPI/api-keys-api.js', true)
                 ->addJs('js/pbx/PbxAPI/network-filters-api.js', true)
+                ->addJs('js/pbx/ApiKeys/api-keys-tooltip-manager.js', true)
                 ->addJs('js/pbx/ApiKeys/api-keys-modify.js', true);
         } elseif ($action === 'openapi') {
             // Stoplight Elements assets

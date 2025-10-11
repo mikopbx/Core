@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, CallQueuesAPI, Extensions, Form, SoundFileSelector, UserMessage, SecurityUtils, DynamicDropdownBuilder, ExtensionSelector, TooltipBuilder, FormElements */
+/* global globalRootUrl, globalTranslate, CallQueuesAPI, Extensions, Form, SoundFileSelector, UserMessage, SecurityUtils, DynamicDropdownBuilder, ExtensionSelector, CallQueueTooltipManager, FormElements */
 
 /**
  * Modern Call Queue Form Management Module
@@ -713,92 +713,11 @@ const callQueueModifyRest = {
     },
 
     /**
-     * Initialize tooltips for form fields
+     * Initialize tooltips for form fields using CallQueueTooltipManager
      */
     initializeTooltips() {
-        // Configuration for each field tooltip - using proper translation keys from Route.php
-        const tooltipConfigs = {
-            callerid_prefix: {
-                header: globalTranslate.cq_CallerIDPrefixTooltip_header,
-                description: globalTranslate.cq_CallerIDPrefixTooltip_desc,
-                list: [
-                    {
-                        term: globalTranslate.cq_CallerIDPrefixTooltip_purposes,
-                        definition: null
-                    },
-                    globalTranslate.cq_CallerIDPrefixTooltip_purpose_identify,
-                    globalTranslate.cq_CallerIDPrefixTooltip_purpose_priority,
-                    globalTranslate.cq_CallerIDPrefixTooltip_purpose_stats
-                ],
-                list2: [
-                    {
-                        term: globalTranslate.cq_CallerIDPrefixTooltip_how_it_works,
-                        definition: null
-                    },
-                    globalTranslate.cq_CallerIDPrefixTooltip_example
-                ],
-                list3: [
-                    {
-                        term: globalTranslate.cq_CallerIDPrefixTooltip_examples_header,
-                        definition: null
-                    },
-                    globalTranslate.cq_CallerIDPrefixTooltip_examples
-                ],
-                note: globalTranslate.cq_CallerIDPrefixTooltip_note
-            },
-            
-            seconds_to_ring_each_member: {
-                header: globalTranslate.cq_SecondsToRingEachMemberTooltip_header,
-                description: globalTranslate.cq_SecondsToRingEachMemberTooltip_desc,
-                list: [
-                    {
-                        term: globalTranslate.cq_SecondsToRingEachMemberTooltip_strategies_header,
-                        definition: null
-                    },
-                    `${globalTranslate.cq_SecondsToRingEachMemberTooltip_linear} - ${globalTranslate.cq_SecondsToRingEachMemberTooltip_linear_desc}`,
-                    `${globalTranslate.cq_SecondsToRingEachMemberTooltip_ringall} - ${globalTranslate.cq_SecondsToRingEachMemberTooltip_ringall_desc}`
-                ],
-                list2: [
-                    {
-                        term: globalTranslate.cq_SecondsToRingEachMemberTooltip_recommendations_header,
-                        definition: null
-                    },
-                    globalTranslate.cq_SecondsToRingEachMemberTooltip_rec_short,
-                    globalTranslate.cq_SecondsToRingEachMemberTooltip_rec_medium,
-                    globalTranslate.cq_SecondsToRingEachMemberTooltip_rec_long
-                ],
-                note: globalTranslate.cq_SecondsToRingEachMemberTooltip_note
-            },
-            
-            seconds_for_wrapup: {
-                header: globalTranslate.cq_SecondsForWrapupTooltip_header,
-                description: globalTranslate.cq_SecondsForWrapupTooltip_desc,
-                list: [
-                    {
-                        term: globalTranslate.cq_SecondsForWrapupTooltip_purposes_header,
-                        definition: null
-                    },
-                    globalTranslate.cq_SecondsForWrapupTooltip_purpose_notes,
-                    globalTranslate.cq_SecondsForWrapupTooltip_purpose_crm,
-                    globalTranslate.cq_SecondsForWrapupTooltip_purpose_prepare,
-                    globalTranslate.cq_SecondsForWrapupTooltip_purpose_break
-                ],
-                list2: [
-                    {
-                        term: globalTranslate.cq_SecondsForWrapupTooltip_recommendations_header,
-                        definition: null
-                    },
-                    globalTranslate.cq_SecondsForWrapupTooltip_rec_none,
-                    globalTranslate.cq_SecondsForWrapupTooltip_rec_short,
-                    globalTranslate.cq_SecondsForWrapupTooltip_rec_medium,
-                    globalTranslate.cq_SecondsForWrapupTooltip_rec_long
-                ],
-                note: globalTranslate.cq_SecondsForWrapupTooltip_note
-            }
-        };
-        
-        // Use TooltipBuilder to initialize tooltips
-        TooltipBuilder.initialize(tooltipConfigs);
+        // Delegate tooltip initialization to CallQueueTooltipManager
+        CallQueueTooltipManager.initialize();
     },
 
     /**
