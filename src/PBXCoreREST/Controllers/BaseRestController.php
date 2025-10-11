@@ -355,6 +355,9 @@ abstract class BaseRestController extends BaseController
             $requestData['id'] = $id;
         }
 
+        // Add HTTP method to request data (some processors need to differentiate between GET/PUT/POST/PATCH)
+        $requestData['httpMethod'] = $httpMethod;
+
         // Map custom method name to processor action (can be overridden in child classes)
         $processorAction = $this->mapCustomMethodToAction($actualMethod);
 

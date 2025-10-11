@@ -176,6 +176,13 @@ class SaveConfigAction
                         } else {
                             $eth->$name = $data['hostname'] ?? '';
                         }
+
+                        // Synchronize external hostname to EXTERNAL_SIP_HOST_NAME
+                        // This ensures SSL certificates are regenerated with the new hostname
+                        if (!empty($eth->$name)) {
+                            $messages = [];
+                            PbxSettings::setValueByKey(PbxSettings::EXTERNAL_SIP_HOST_NAME, trim($eth->$name), $messages);
+                        }
                     } else {
                         $eth->$name = '';
                     }

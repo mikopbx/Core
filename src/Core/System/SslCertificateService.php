@@ -504,12 +504,26 @@ EOD;
             if (file_exists($fallbackCertPath) && file_exists($fallbackKeyPath)) {
                 $publicKey = file_get_contents($fallbackCertPath);
                 $privateKey = file_get_contents($fallbackKeyPath);
-                
+
                 // Validate fallback certificates (they might be expired)
                 if (!self::validateCertificatePair($publicKey, $privateKey, $service)) {
                     // Fallback certificates are invalid, regenerate
                     $publicKey = '';
                     $privateKey = '';
+                } else {
+                    // Check if hostname changed - if so, regenerate certificate
+                    $certDetails = openssl_x509_parse($publicKey);
+                    if ($certDetails !== false) {
+                        $currentCommonName = $certDetails['subject']['CN'] ?? '';
+                        $externalHost = PbxSettings::getValueByKey(PbxSettings::EXTERNAL_SIP_HOST_NAME);
+
+                        if (!empty($externalHost) && $currentCommonName !== $externalHost) {
+                            // Hostname changed - regenerate certificate with new hostname
+                            SystemMessages::sysLogMsg($service, "Hostname changed from '$currentCommonName' to '$externalHost', regenerating certificate", LOG_INFO);
+                            $publicKey = '';
+                            $privateKey = '';
+                        }
+                    }
                 }
             }
             

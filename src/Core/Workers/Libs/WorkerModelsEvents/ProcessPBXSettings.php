@@ -241,6 +241,7 @@ class ProcessPBXSettings extends Injectable
                 PbxSettings::WEB_HTTPS_PUBLIC_KEY,
                 PbxSettings::WEB_HTTPS_PRIVATE_KEY,
                 PbxSettings::REDIRECT_TO_HTTPS,
+                PbxSettings::EXTERNAL_SIP_HOST_NAME,  // Regenerate SSL certificates when hostname changes
             ],
             'actions' => [
                 ReloadNginxAction::class,
