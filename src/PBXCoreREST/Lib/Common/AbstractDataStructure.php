@@ -738,4 +738,140 @@ abstract class AbstractDataStructure
 
         return $rules;
     }
+
+    /**
+     * Apply default values from parameter definitions to data array
+     *
+     * This method extracts default values from getParameterDefinitions()['request']
+     * and applies them to fields that are missing in the input data.
+     *
+     * This replaces the need for ParameterDefaultsExtractor::applyDefaults() which
+     * only works with full #[ApiParameter] attributes, not with #[ApiParameterRef].
+     *
+     * Usage in SaveRecordAction:
+     * ```php
+     * // OLD (works only with full ApiParameter):
+     * $sanitizedData = ParameterDefaultsExtractor::applyDefaults(
+     *     RestController::class,
+     *     'create',
+     *     $sanitizedData
+     * );
+     *
+     * // NEW (works with ApiParameterRef, uses DataStructure as Single Source of Truth):
+     * $sanitizedData = DataStructure::applyDefaults($sanitizedData);
+     * ```
+     *
+     * @param array<string, mixed> $data Input data array
+     * @return array<string, mixed> Data array with defaults applied
+     */
+    public static function applyDefaults(array $data): array
+    {
+        // Check if child class implements getParameterDefinitions()
+        if (!method_exists(static::class, 'getParameterDefinitions')) {
+            return $data;
+        }
+
+        $definitions = static::getParameterDefinitions();
+        $requestParams = $definitions['request'] ?? [];
+
+        if (empty($requestParams)) {
+            return $data;
+        }
+
+        // Apply defaults only for missing keys
+        foreach ($requestParams as $fieldName => $fieldDef) {
+            if (isset($fieldDef['default']) && !array_key_exists($fieldName, $data)) {
+                $data[$fieldName] = $fieldDef['default'];
+            }
+        }
+
+        return $data;
+    }
+
+    /**
+     * Validate input data against OpenAPI schema constraints
+     *
+     * This method validates input data against constraints defined in getParameterDefinitions()['request']:
+     * - enum: Value must be one of allowed values
+     * - minimum/maximum: Integer/number must be within range
+     * - pattern: String must match regex (already validated in SaveRecordAction)
+     *
+     * Usage in SaveRecordAction (after applyDefaults, before saving):
+     * ```php
+     * // Apply defaults
+     * $sanitizedData = DataStructure::applyDefaults($sanitizedData);
+     *
+     * // Validate constraints
+     * $validationErrors = DataStructure::validateInputData($sanitizedData);
+     * if (!empty($validationErrors)) {
+     *     $res->messages['error'] = $validationErrors;
+     *     $res->httpCode = 422;
+     *     return $res;
+     * }
+     * ```
+     *
+     * @param array<string, mixed> $data Input data array to validate
+     * @return array<string> Validation error messages (empty if valid)
+     */
+    public static function validateInputData(array $data): array
+    {
+        // Check if child class implements getParameterDefinitions()
+        if (!method_exists(static::class, 'getParameterDefinitions')) {
+            return [];
+        }
+
+        $definitions = static::getParameterDefinitions();
+        $requestParams = $definitions['request'] ?? [];
+
+        if (empty($requestParams)) {
+            return [];
+        }
+
+        $errors = [];
+
+        foreach ($requestParams as $fieldName => $fieldDef) {
+            // Skip validation if field is not present in data
+            if (!array_key_exists($fieldName, $data)) {
+                continue;
+            }
+
+            $value = $data[$fieldName];
+            $type = $fieldDef['type'] ?? 'string';
+
+            // Validate enum constraint
+            if (isset($fieldDef['enum']) && is_array($fieldDef['enum'])) {
+                if (!in_array($value, $fieldDef['enum'], true)) {
+                    $allowedValues = implode(', ', $fieldDef['enum']);
+                    $errors[] = "Field '{$fieldName}' must be one of: {$allowedValues}";
+                }
+            }
+
+            // Validate range constraints for integers/numbers
+            if ($type === 'integer' || $type === 'number') {
+                $numericValue = is_numeric($value) ? (int)$value : null;
+
+                if ($numericValue !== null) {
+                    // Check minimum
+                    if (isset($fieldDef['minimum']) && $numericValue < $fieldDef['minimum']) {
+                        $errors[] = "Field '{$fieldName}' must be at least {$fieldDef['minimum']} (got {$numericValue})";
+                    }
+
+                    // Check maximum
+                    if (isset($fieldDef['maximum']) && $numericValue > $fieldDef['maximum']) {
+                        $errors[] = "Field '{$fieldName}' must be at most {$fieldDef['maximum']} (got {$numericValue})";
+                    }
+                }
+            }
+
+            // Validate string length (maxLength)
+            if ($type === 'string' && isset($fieldDef['maxLength'])) {
+                $length = is_string($value) ? mb_strlen($value, 'UTF-8') : 0;
+                if ($length > $fieldDef['maxLength']) {
+                    $errors[] = "Field '{$fieldName}' must be at most {$fieldDef['maxLength']} characters (got {$length})";
+                }
+            }
+        }
+
+        return $errors;
+    }
 }
