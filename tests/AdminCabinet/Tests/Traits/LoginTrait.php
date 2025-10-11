@@ -108,6 +108,10 @@ trait LoginTrait
         try {
             self::annotate('Saved cookies loaded - attempting to restore session');
 
+            // Debug: Check cookies before refresh
+            $cookiesBeforeRefresh = self::$driver->manage()->getCookies();
+            self::annotate('Cookies BEFORE refresh: ' . count($cookiesBeforeRefresh));
+
             // Check if we're already on the target page
             $currentUrl = self::$driver->getCurrentURL();
             $targetUrl = $GLOBALS['SERVER_PBX'];
@@ -116,11 +120,21 @@ trait LoginTrait
             // Don't navigate if we're already there - it would clear cookies!
             if (strpos($currentUrl, parse_url($targetUrl, PHP_URL_HOST)) !== false) {
                 // Already on correct domain - just refresh to apply cookies
+                self::annotate('Already on target domain - refreshing page');
                 self::$driver->navigate()->refresh();
             } else {
                 // Need to navigate to the domain first
+                self::annotate('Navigating to target domain: ' . $targetUrl);
                 self::$driver->navigate()->to($targetUrl);
             }
+
+            // Debug: Check cookies after refresh
+            $cookiesAfterRefresh = self::$driver->manage()->getCookies();
+            self::annotate('Cookies AFTER refresh: ' . count($cookiesAfterRefresh));
+
+            // List cookie names
+            $cookieNames = array_map(function($c) { return $c->getName(); }, $cookiesAfterRefresh);
+            self::annotate('Cookie names: ' . implode(', ', $cookieNames));
 
             // Give TokenManager time to initialize and call /auth:refresh
             // No need to wait for ALL AJAX - just the JWT refresh

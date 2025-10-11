@@ -17,6 +17,11 @@
   -->
 
  <phpunit bootstrap="../../vendor/autoload.php">
+    <logging>
+        <junit outputFile="reports/junit.xml"/>
+        <testdoxHtml outputFile="reports/testdox.html"/>
+        <testdoxText outputFile="reports/testdox.txt"/>
+    </logging>
     <testsuites>
         <testsuite name="TestMikoPBXPasswords">
             <file>Tests/ChangeWeakPasswordTest.php</file>
@@ -57,6 +62,11 @@
 
         <testsuite name="DialplanApplications">
             <directory>Tests/DialplanApplications</directory>
+        </testsuite>
+
+        <testsuite name="NetworkSettings">
+            <file>Tests/CreateFail2BanRulesTest.php</file>
+            <directory>Tests/FirewallRules</directory>
         </testsuite>
 
         <testsuite name="Extensions">       
@@ -118,11 +128,6 @@
 
         <testsuite name="OtherTestMikoPBX">
             <file>Tests/NetworkInterfacesTest.php</file>
-        </testsuite>
-
-        <testsuite name="NetworkSettings">
-            <file>Tests/CreateFail2BanRulesTest.php</file>
-            <directory>Tests/FirewallRules</directory>
         </testsuite>
         
         <testsuite name="PBXExtensions"> 
