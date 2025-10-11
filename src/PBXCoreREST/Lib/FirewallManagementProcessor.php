@@ -22,9 +22,7 @@ namespace MikoPBX\PBXCoreREST\Lib;
 use MikoPBX\PBXCoreREST\Lib\Firewall\GetListAction;
 use MikoPBX\PBXCoreREST\Lib\Firewall\GetRecordAction;
 use MikoPBX\PBXCoreREST\Lib\Firewall\GetDefaultAction;
-use MikoPBX\PBXCoreREST\Lib\Firewall\CreateRecordAction;
-use MikoPBX\PBXCoreREST\Lib\Firewall\UpdateRecordAction;
-use MikoPBX\PBXCoreREST\Lib\Firewall\PatchRecordAction;
+use MikoPBX\PBXCoreREST\Lib\Firewall\SaveRecordAction;
 use MikoPBX\PBXCoreREST\Lib\Firewall\DeleteRecordAction;
 use MikoPBX\PBXCoreREST\Lib\Firewall\EnableFirewallAction;
 use MikoPBX\PBXCoreREST\Lib\Firewall\DisableFirewallAction;
@@ -107,11 +105,12 @@ class FirewallManagementProcessor extends Injectable
             FirewallAction::GET_LIST => GetListAction::main($data),
             FirewallAction::GET_RECORD => GetRecordAction::main($data['id'] ?? null),
             FirewallAction::GET_DEFAULT => GetDefaultAction::main(),
-            FirewallAction::CREATE => CreateRecordAction::main($data),
-            FirewallAction::UPDATE => UpdateRecordAction::main($data),
-            FirewallAction::PATCH => PatchRecordAction::main($data),
+            // Unified save action handles CREATE, UPDATE (PUT), and PATCH
+            FirewallAction::CREATE => SaveRecordAction::main($data),
+            FirewallAction::UPDATE => SaveRecordAction::main($data),
+            FirewallAction::PATCH => SaveRecordAction::main($data),
             FirewallAction::DELETE => DeleteRecordAction::main($data['id'] ?? ''),
-            
+
             // Firewall-specific operations
             FirewallAction::ENABLE_FIREWALL => EnableFirewallAction::main(),
             FirewallAction::DISABLE_FIREWALL => DisableFirewallAction::main(),

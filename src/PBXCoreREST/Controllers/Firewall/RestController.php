@@ -240,13 +240,22 @@ class RestController extends BaseRestController
         operationId: 'createFirewallRule'
     )]
     #[ApiParameter(
-        name: 'permit',
+        name: 'network',
         type: 'string',
-        description: 'rest_param_fw_permit',
+        description: 'rest_param_fw_network',
         in: ParameterLocation::QUERY,
         required: true,
-        maxLength: 100,
-        example: '192.168.1.0/24'
+        maxLength: 15,
+        example: '192.168.1.0'
+    )]
+    #[ApiParameter(
+        name: 'subnet',
+        type: 'string',
+        description: 'rest_param_fw_subnet',
+        in: ParameterLocation::QUERY,
+        required: true,
+        pattern: '^[0-9]{1,2}$',
+        example: '24'
     )]
     #[ApiParameter(
         name: 'description',
@@ -300,13 +309,22 @@ class RestController extends BaseRestController
         example: '1'
     )]
     #[ApiParameter(
-        name: 'permit',
+        name: 'network',
         type: 'string',
-        description: 'rest_param_fw_permit',
+        description: 'rest_param_fw_network',
         in: ParameterLocation::QUERY,
         required: true,
-        maxLength: 100,
-        example: '192.168.1.0/24'
+        maxLength: 15,
+        example: '192.168.1.0'
+    )]
+    #[ApiParameter(
+        name: 'subnet',
+        type: 'string',
+        description: 'rest_param_fw_subnet',
+        in: ParameterLocation::QUERY,
+        required: true,
+        pattern: '^[0-9]{1,2}$',
+        example: '24'
     )]
     #[ApiParameter(
         name: 'description',
@@ -361,13 +379,22 @@ class RestController extends BaseRestController
         example: '1'
     )]
     #[ApiParameter(
-        name: 'permit',
+        name: 'network',
         type: 'string',
-        description: 'rest_param_fw_permit',
+        description: 'rest_param_fw_network',
         in: ParameterLocation::QUERY,
         required: false,
-        maxLength: 100,
-        example: '192.168.1.0/24'
+        maxLength: 15,
+        example: '192.168.1.0'
+    )]
+    #[ApiParameter(
+        name: 'subnet',
+        type: 'string',
+        description: 'rest_param_fw_subnet',
+        in: ParameterLocation::QUERY,
+        required: false,
+        pattern: '^[0-9]{1,2}$',
+        example: '24'
     )]
     #[ApiParameter(
         name: 'description',

@@ -318,9 +318,15 @@ const firewall = {
 
         // Add currentRules to formData
         formData.currentRules = currentRules;
-        
+
         // newer_block_ip and local_network are already boolean thanks to convertCheckboxesToBool
-        
+
+        // Mark as new record if we don't have an ID (for correct POST/PUT selection)
+        // This is critical for creating records with predefined IDs
+        if (!firewall.recordId || firewall.recordId === '') {
+            formData._isNew = true;
+        }
+
         result.data = formData;
         return result;
     },

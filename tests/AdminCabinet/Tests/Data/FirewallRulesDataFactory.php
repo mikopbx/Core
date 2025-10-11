@@ -37,6 +37,7 @@ class FirewallRulesDataFactory
      */
     private static array $rulesData = [
         'miko.network' => [
+            'id' => 4,
             'description' => 'MikoNetwork',
             'network' => '172.16.32.0',
             'subnet' => 24,
@@ -52,6 +53,7 @@ class FirewallRulesDataFactory
             ],
         ],
         'nikolay.macbook' => [
+            'id' => 5,
             'description' => 'Nikolay macbook',
             'network' => '172.16.32.69',
             'subnet' => 32,
@@ -67,6 +69,7 @@ class FirewallRulesDataFactory
             ],
         ],
         'miko.vpn' => [
+            'id' => 6,
             'description' => 'MIKOVPN',
             'network' => '172.16.34.0',
             'subnet' => 24,

@@ -75,6 +75,7 @@ abstract class CreateFirewallRuleTest extends MikoPBXTestsBase
      */
     protected function fillBasicInfo(array $params): void
     {
+        $this->changeInputField('id', $params['id']);
         $this->changeInputField('description', $params['description']);
         $this->changeInputField('network', $params['network']);
         $this->selectDropdownItem('subnet', $params['subnet']);
@@ -109,6 +110,7 @@ abstract class CreateFirewallRuleTest extends MikoPBXTestsBase
      */
     protected function verifyBasicInfo(array $params): void
     {
+        $this->assertInputFieldValueEqual('id', $params['id']);
         $this->assertInputFieldValueEqual('description', $params['description']);
         $this->assertInputFieldValueEqual('network', $params['network']);
         $this->assertMenuItemSelected('subnet', $params['subnet']);
