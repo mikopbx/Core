@@ -19,37 +19,37 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Employees;
 
-use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractUpdateAction;
 
 /**
- * Class UpdateRecordAction
- * 
+ * UpdateRecordAction
+ *
  * Handles PUT /employees/{id} - Full update of an employee record
- * 
- * This is a wrapper around SaveEmployeeAction that ensures we're updating an existing record
+ *
+ * This is a wrapper around SaveRecordAction that ensures we're updating an existing record
  * with a complete replacement of all data. PUT requests should provide all fields.
- * 
+ *
  * @package MikoPBX\PBXCoreREST\Lib\Employees
  */
-class UpdateRecordAction
+class UpdateRecordAction extends AbstractUpdateAction
 {
     /**
-     * Update an employee record (full replacement)
-     * 
-     * @param array $data Employee data from request
-     * @return PBXApiResult
+     * Get human-readable entity name for error messages
+     *
+     * @return string Entity name in lowercase
      */
-    public static function main(array $data): PBXApiResult
+    protected static function getEntityName(): string
     {
-        // For update operation, we must have an ID
-        if (empty($data['id'])) {
-            $res = new PBXApiResult();
-            $res->messages['error'][] = 'Employee ID is required for update operation';
-            return $res;
-        }
-        
-        // PUT expects all fields to be provided for full replacement
-        // SaveEmployeeAction will handle the actual update logic
-        return SaveEmployeeAction::main($data);
+        return 'employee';
+    }
+
+    /**
+     * Get SaveRecordAction class for this entity
+     *
+     * @return string Fully qualified SaveRecordAction class name
+     */
+    protected static function getSaveActionClass(): string
+    {
+        return SaveRecordAction::class;
     }
 }

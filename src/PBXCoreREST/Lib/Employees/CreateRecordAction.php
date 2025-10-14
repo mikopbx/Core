@@ -19,48 +19,36 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Employees;
 
-use MikoPBX\Core\System\SystemMessages;
-use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
-use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractCreateAction;
 
 /**
  * CreateRecordAction
  * Creates a new employee record.
  *
+ * Delegates to SaveRecordAction for actual creation.
+ * Ensures operation is CREATE by not providing ID.
+ *
  * @package MikoPBX\PBXCoreREST\Lib\Employees
  */
-class CreateRecordAction extends AbstractSaveRecordAction
+class CreateRecordAction extends AbstractCreateAction
 {
     /**
-     * Create a new employee record.
+     * Get human-readable entity name for logging
      *
-     * @param array<string, mixed> $data Employee data to save
-     * @return PBXApiResult
+     * @return string Entity name in lowercase
      */
-    public static function main(array $data): PBXApiResult
+    protected static function getEntityName(): string
     {
-        $res = self::createApiResult(__METHOD__);
+        return 'employee';
+    }
 
-        try {
-            // For create operation, allow custom ID if provided (for migrations/imports)
-            // ID validation is handled by SaveEmployeeAction
-            // If no ID provided, SaveEmployeeAction will use auto-increment
-
-            // Remove legacy uniqid field if present (use 'id' instead in v3 API)
-            unset($data['uniqid']);
-
-            // Use existing SaveEmployeeAction logic for actual save
-            $res = SaveEmployeeAction::main($data);
-
-            // If successful, publish event for new employee creation
-            if ($res->success && isset($res->data['id'])) {
-                SystemMessages::sysLogMsg(__CLASS__, 'New employee created: ' . $res->data['id'], LOG_INFO);
-            }
-
-        } catch (\Exception $e) {
-            return self::handleError($e, $res);
-        }
-
-        return $res;
+    /**
+     * Get SaveRecordAction class for this entity
+     *
+     * @return string Fully qualified SaveRecordAction class name
+     */
+    protected static function getSaveActionClass(): string
+    {
+        return SaveRecordAction::class;
     }
 }

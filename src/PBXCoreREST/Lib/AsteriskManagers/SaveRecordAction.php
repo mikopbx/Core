@@ -25,120 +25,227 @@ use MikoPBX\Common\Models\AsteriskManagerUsers;
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
-use MikoPBX\Core\System\Util;
 
 /**
- * Save Asterisk manager record action.
+ * ✨ REFERENCE IMPLEMENTATION: AsteriskManagers Save Action
+ *
+ * This follows the canonical 7-phase pattern with complex permissions structure.
+ * Single Source of Truth pattern - all definitions in DataStructure::getParameterDefinitions()
+ *
+ * Processing Pipeline (7 Phases):
+ * 1. SANITIZE: Clean user input (XSS, SQL injection prevention)
+ * 2. VALIDATE REQUIRED: Check required fields (username, secret)
+ * 3. DETERMINE OPERATION: Detect CREATE vs UPDATE/PATCH
+ * 4. APPLY DEFAULTS: Add missing values (CREATE only!) - password, permissions, networkfilterid
+ * 5. VALIDATE SCHEMA: Check constraints (maxLength, pattern)
+ * 6. SAVE: Transaction with permissions processing
+ * 7. BUILD RESPONSE: Format data using DataStructure
+ *
+ * Permissions Note: 13 permission categories, each with read/write boolean flags
  *
  * @package MikoPBX\PBXCoreREST\Lib\AsteriskManagers
  */
 class SaveRecordAction extends AbstractSaveRecordAction
 {
     /**
-     * Save (create or update) Asterisk manager.
+     * Save Asterisk manager with comprehensive validation
      *
-     * @param array $data Manager data
-     * @return PBXApiResult
+     * Handles CREATE, UPDATE (PUT), and PATCH operations:
+     * - CREATE: New record with auto-generated password if not provided
+     * - UPDATE: Full replacement of existing record
+     * - PATCH: Partial update of existing record
+     *
+     * @param array<string, mixed> $data Input data from API request
+     * @return PBXApiResult Result with data/errors and HTTP status code
      */
     public static function main(array $data): PBXApiResult
     {
         $res = self::createApiResult(__METHOD__);
 
-        // Define sanitization rules
-        $sanitizationRules = [
-            'id' => 'int',
-            'username' => 'string|sanitize|max:32',
-            'secret' => 'string|max:64',
-            'description' => 'string|sanitize|max:255|empty_to_null',
-            'networkfilterid' => 'string|max:64|empty_to_null',
-            'permissions' => 'array',
-            'call_limit' => 'int',
-        ];
-        
-        // Text fields for unified processing
+        // ============================================================
+        // PHASE 1: DATA SANITIZATION
+        // WHY: Security - never trust user input
+        // ============================================================
+
+        $sanitizationRules = DataStructure::getSanitizationRules();
         $textFields = ['username', 'description'];
 
+        // Preserve ID field that may not be in sanitization rules
+        $recordId = $data['id'] ?? null;
+
         try {
-            // Sanitize input data
+            // Sanitize: remove dangerous chars, trim whitespace, normalize format
             $sanitizedData = self::sanitizeInputData($data, $sanitizationRules, $textFields);
-            
-            // Validate required fields
-            $validationErrors = self::validateRequiredFields(
-                $sanitizedData,
-                ['username' => [['type' => 'required', 'message' => 'Username is required']]]
-            );
-            
-            if (!empty($validationErrors)) {
-                $res->messages['error'] = $validationErrors;
-                return $res;
+
+            // Restore preserved field (essential for UPDATE/PATCH operations)
+            if ($recordId !== null) {
+                $sanitizedData['id'] = $recordId;
             }
 
-            // Find existing or create new
-            if (!empty($sanitizedData['id'])) {
-                $manager = AsteriskManagerUsers::findFirstById($sanitizedData['id']);
-                if (!$manager) {
-                    $res->messages['error'][] = "Manager with ID {$sanitizedData['id']} not found";
-                    return $res;
-                }
+            // Special handling for networkfilterid: convert 'none' to null
+            if (isset($sanitizedData['networkfilterid']) &&
+                ($sanitizedData['networkfilterid'] === 'none' || $sanitizedData['networkfilterid'] === '')) {
+                $sanitizedData['networkfilterid'] = null;
+            }
+
+        } catch (\Exception $e) {
+            $res->messages['error'][] = $e->getMessage();
+            return $res;
+        }
+
+        // ============================================================
+        // PHASE 2: REQUIRED FIELDS VALIDATION
+        // WHY: Fail fast - don't waste resources on invalid data
+        // ============================================================
+
+        $validationRules = [
+            'username' => [
+                ['type' => 'required', 'message' => 'Username is required'],
+                ['type' => 'minLength', 'value' => 1, 'message' => 'Username must not be empty']
+            ]
+        ];
+
+        $validationErrors = self::validateRequiredFields($sanitizedData, $validationRules);
+        if (!empty($validationErrors)) {
+            $res->messages['error'] = $validationErrors;
+            return $res;
+        }
+
+        // ============================================================
+        // PHASE 3: DETERMINE OPERATION TYPE
+        // WHY: Different logic for new vs existing records
+        // ============================================================
+
+        $manager = null;
+        $isNewRecord = true;
+
+        if (!empty($sanitizedData['id'])) {
+            // Try to find existing record by numeric ID
+            $manager = AsteriskManagerUsers::findFirstById($sanitizedData['id']);
+
+            if ($manager) {
+                // Record exists - UPDATE or PATCH operation
+                $isNewRecord = false;
             } else {
-                $manager = new AsteriskManagerUsers();
-                $manager->uniqid = strtoupper('AMI-' . md5(time() . $sanitizedData['username']));
-            }
-
-            // Check for duplicate username
-            if (!self::checkUsernameUniqueness($sanitizedData['username'], $manager->id)) {
-                $res->messages['error'][] = "Manager with username '{$sanitizedData['username']}' already exists";
+                $res->messages['error'][] = "Manager with ID {$sanitizedData['id']} not found";
+                $res->httpCode = 404;
                 return $res;
             }
+        }
 
-            // Save in transaction
-            $savedManager = self::executeInTransaction(function() use ($manager, $sanitizedData) {
-                // Update fields
-                $manager->username = $sanitizedData['username'];
-                
-                // Only update password if provided
-                if (!empty($sanitizedData['secret'])) {
-                    $manager->secret = $sanitizedData['secret'];
-                } elseif (empty($manager->secret)) {
-                    // Generate password for new manager if not provided
-                    $manager->secret = Util::generateRandomString(16);
+        if ($isNewRecord) {
+            // CREATE: Initialize new manager
+            $manager = new AsteriskManagerUsers();
+            $manager->uniqid = strtoupper('AMI-' . md5(time() . $sanitizedData['username']));
+        }
+
+        // Check for duplicate username
+        if (!self::checkUsernameUniqueness($sanitizedData['username'], $manager->id ?? null)) {
+            $res->messages['error'][] = "Manager with username '{$sanitizedData['username']}' already exists";
+            $res->httpCode = 409; // Conflict
+            return $res;
+        }
+
+        // ============================================================
+        // PHASE 4: APPLY DEFAULTS (CREATE ONLY!)
+        // WHY CREATE: New records need complete dataset with all fields
+        // WHY NOT UPDATE/PATCH: Would overwrite existing values with defaults!
+        // ============================================================
+
+        if ($isNewRecord) {
+            $sanitizedData = DataStructure::applyDefaults($sanitizedData);
+
+            // Auto-generate password if not provided
+            if (empty($sanitizedData['secret'])) {
+                $sanitizedData['secret'] = AsteriskManagerUsers::generateAMIPassword();
+            }
+        }
+
+        // ============================================================
+        // PHASE 5: SCHEMA VALIDATION
+        // WHY: Validate AFTER defaults to check complete dataset
+        // ============================================================
+
+        // Schema validation (minLength/maxLength, pattern constraints)
+        $schemaErrors = DataStructure::validateInputData($sanitizedData);
+        if (!empty($schemaErrors)) {
+            $res->messages['error'] = $schemaErrors;
+            $res->httpCode = 422; // Unprocessable Entity
+            return $res;
+        }
+
+        // ============================================================
+        // PHASE 6: SAVE TO DATABASE
+        // WHY: All-or-nothing transaction
+        // ============================================================
+
+        try {
+            $savedManager = self::executeInTransaction(function() use ($manager, $sanitizedData, $isNewRecord) {
+                // Update username
+                if (isset($sanitizedData['username'])) {
+                    $manager->username = $sanitizedData['username'];
                 }
 
-                // Process permissions
-                self::processPermissions($manager, $sanitizedData['permissions'] ?? []);
-                
-                // Process network filter
-                self::processNetworkFilter($manager, $sanitizedData);
+                // Update password (only if provided)
+                if (isset($sanitizedData['secret']) && !empty($sanitizedData['secret'])) {
+                    $manager->secret = $sanitizedData['secret'];
+                } elseif ($isNewRecord && empty($manager->secret)) {
+                    // Fallback: generate password for new manager
+                    $manager->secret = AsteriskManagerUsers::generateAMIPassword();
+                }
 
-                // Set other fields
-                $manager->description = $sanitizedData['description'] ?? '';
-                $manager->call_limit = (int)($sanitizedData['call_limit'] ?? 0);
+                // Update description (PATCH support with isset())
+                if (isset($sanitizedData['description'])) {
+                    $manager->description = $sanitizedData['description'];
+                } elseif ($isNewRecord) {
+                    $manager->description = '';
+                }
+
+                // Process permissions if provided
+                if (isset($sanitizedData['permissions'])) {
+                    self::processPermissions($manager, $sanitizedData['permissions']);
+                } elseif ($isNewRecord) {
+                    // Clear all permissions for new manager with no permissions
+                    self::processPermissions($manager, []);
+                }
+
+                // Process network filter
+                if (isset($sanitizedData['networkfilterid']) || $isNewRecord) {
+                    self::processNetworkFilter($manager, $sanitizedData);
+                }
 
                 // Save manager
                 if (!$manager->save()) {
                     throw new \Exception('Failed to save manager: ' . implode(', ', $manager->getMessages()));
                 }
-                
+
                 return $manager;
             });
 
-            $res->success = true;
+            // ============================================================
+            // PHASE 7: BUILD RESPONSE
+            // WHY: Consistent API format using DataStructure transformation
+            // ============================================================
+
             $res->data = DataStructure::createFromModel($savedManager);
-            
-            // Only set reload for new records
-            if (empty($sanitizedData['id'])) {
+            $res->success = true;
+            $res->httpCode = $isNewRecord ? 201 : 200; // 201 Created, 200 OK
+
+            if ($isNewRecord) {
                 $res->reload = "asterisk-managers/modify/{$savedManager->id}";
             }
-            
+
+            self::logSuccessfulSave('Asterisk manager', $savedManager->username, (string)$savedManager->id, __METHOD__);
+
         } catch (\Exception $e) {
             return self::handleError($e, $res);
         }
 
         return $res;
     }
-    
+
     /**
-     * Check username uniqueness.
+     * Check username uniqueness
      *
      * @param string $username Username to check
      * @param int|null $currentId Current manager ID (for updates)
@@ -153,30 +260,36 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 'id' => $currentId ?? 0,
             ],
         ]);
-        
+
         return $existingManager === null;
     }
-    
+
     /**
-     * Process permissions from request data.
+     * Process permissions from request data
+     *
+     * Converts boolean permission flags to model format:
+     * - true/true => 'readwrite'
+     * - true/false => 'read'
+     * - false/true => 'write'
+     * - false/false => ''
      *
      * @param AsteriskManagerUsers $manager Manager model
-     * @param array $permissions Permissions data from request
+     * @param array<string, mixed> $permissions Permissions data from request
      */
     private static function processPermissions(AsteriskManagerUsers $manager, array $permissions): void
     {
         $availablePermissions = [
-            'call', 'cdr', 'originate', 'reporting', 'agent', 'config', 
+            'call', 'cdr', 'originate', 'reporting', 'agent', 'config',
             'dialplan', 'dtmf', 'log', 'system', 'user', 'verbose', 'command'
         ];
-        
+
         if (!empty($permissions)) {
-            // New format with boolean fields
+            // Process boolean permission fields
             foreach ($availablePermissions as $perm) {
                 // Handle both boolean and string values from JavaScript
                 $readKey = $perm . '_read';
                 $writeKey = $perm . '_write';
-                
+
                 // Build permission value: 'read', 'write', 'readwrite', or ''
                 $hasRead = false;
                 $hasWrite = false;
@@ -213,131 +326,36 @@ class SaveRecordAction extends AbstractSaveRecordAction
             }
         }
     }
-    
+
     /**
-     * Process network filter settings.
+     * Process network filter settings
+     *
+     * If networkfilterid is provided, use the filter's permit/deny values.
+     * Otherwise, use default localhost-only access.
      *
      * @param AsteriskManagerUsers $manager Manager model
-     * @param array $data Request data
+     * @param array<string, mixed> $data Request data
      */
     private static function processNetworkFilter(AsteriskManagerUsers $manager, array $data): void
     {
-        if (!empty($data['networkfilterid'])) {
+        if (!empty($data['networkfilterid']) && $data['networkfilterid'] !== null) {
             $manager->networkfilterid = $data['networkfilterid'];
-            
+
             // Get permit/deny from network filter
             $filter = NetworkFilters::findFirstById($data['networkfilterid']);
             if ($filter) {
                 $manager->permit = $filter->permit;
                 $manager->deny = $filter->deny;
+            } else {
+                // Fallback to localhost if filter not found
+                $manager->permit = '127.0.0.1/255.255.255.255';
+                $manager->deny = '0.0.0.0/0.0.0.0';
             }
         } else {
+            // No network filter - use default localhost access
             $manager->networkfilterid = null;
-            $manager->permit = $data['permit'] ?? '127.0.0.1/255.255.255.255';
-            $manager->deny = $data['deny'] ?? '0.0.0.0/0.0.0.0';
+            $manager->permit = '127.0.0.1/255.255.255.255';
+            $manager->deny = '0.0.0.0/0.0.0.0';
         }
-    }
-
-    /**
-     * Process data for saving (used by Create/Update/Patch actions).
-     *
-     * @param AsteriskManagerUsers $manager Manager model
-     * @param array $data Data to process
-     * @param bool $partial Whether this is a partial update (patch)
-     * @return array Result with 'success', 'id', and 'messages' keys
-     */
-    public static function processData(AsteriskManagerUsers $manager, array $data, bool $partial = false): array
-    {
-        $result = [
-            'success' => false,
-            'id' => null,
-            'messages' => []
-        ];
-
-        // Define sanitization rules
-        $sanitizationRules = [
-            'username' => 'string|sanitize|max:32',
-            'secret' => 'string|max:64',
-            'description' => 'string|sanitize|max:255|empty_to_null',
-            'networkfilterid' => 'string|max:64|empty_to_null',
-            'permissions' => 'array',
-        ];
-        
-        // Text fields for unified processing
-        $textFields = ['username', 'description'];
-
-        try {
-            // Sanitize input data
-            $sanitizedData = self::sanitizeInputData($data, $sanitizationRules, $textFields);
-            
-            // For full update, validate required fields
-            if (!$partial) {
-                $validationErrors = self::validateRequiredFields(
-                    $sanitizedData,
-                    ['username' => [['type' => 'required', 'message' => 'Username is required']]]
-                );
-                
-                if (!empty($validationErrors)) {
-                    $result['messages']['error'] = $validationErrors;
-                    return $result;
-                }
-            }
-
-            // Check for duplicate username if it's being changed
-            if (isset($sanitizedData['username']) && 
-                !self::checkUsernameUniqueness($sanitizedData['username'], $manager->id)) {
-                $result['messages']['error'][] = "Manager with username '{$sanitizedData['username']}' already exists";
-                return $result;
-            }
-
-            // Save in transaction
-            $savedManager = self::executeInTransaction(function() use ($manager, $sanitizedData, $partial) {
-                // Update fields based on whether it's partial or full update
-                if (!$partial || isset($sanitizedData['username'])) {
-                    $manager->username = $sanitizedData['username'];
-                }
-                
-                // Only update password if provided
-                if (isset($sanitizedData['secret']) && !empty($sanitizedData['secret'])) {
-                    $manager->secret = $sanitizedData['secret'];
-                } elseif (!$partial && empty($manager->secret)) {
-                    // Generate password for new manager if not provided
-                    $manager->secret = AsteriskManagerUsers::generateAMIPassword();
-                }
-
-                // Process permissions if provided
-                if (isset($sanitizedData['permissions'])) {
-                    self::processPermissions($manager, $sanitizedData['permissions']);
-                } elseif (!$partial) {
-                    // Clear all permissions for full update if not provided
-                    self::processPermissions($manager, []);
-                }
-                
-                // Process network filter if provided
-                if (isset($sanitizedData['networkfilterid']) || !$partial) {
-                    self::processNetworkFilter($manager, $sanitizedData);
-                }
-
-                // Set other fields if provided or not partial
-                if (!$partial || isset($sanitizedData['description'])) {
-                    $manager->description = $sanitizedData['description'] ?? '';
-                }
-
-                // Save manager
-                if (!$manager->save()) {
-                    throw new \Exception('Failed to save manager: ' . implode(', ', $manager->getMessages()));
-                }
-                
-                return $manager;
-            });
-
-            $result['success'] = true;
-            $result['id'] = $savedManager->id;
-            
-        } catch (\Exception $e) {
-            $result['messages']['error'][] = $e->getMessage();
-        }
-
-        return $result;
     }
 }

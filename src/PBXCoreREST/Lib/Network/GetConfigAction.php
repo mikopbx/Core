@@ -20,7 +20,9 @@
 namespace MikoPBX\PBXCoreREST\Lib\Network;
 
 use MikoPBX\Common\Models\LanInterfaces;
+use MikoPBX\Common\Models\NetworkStaticRoutes;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\System\Network as NetworkSystem;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Di;
@@ -62,6 +64,9 @@ class GetConfigAction
             $interfaces = [];
             $deletableInterfaces = [];
 
+            // Initialize Network system for getting current IP addresses
+            $networkSystem = new NetworkSystem();
+
             foreach ($networkInterfaces as $record) {
                 if ($record->disabled !== '1') {
                     $interfaceData = $record->toArray();
@@ -69,6 +74,43 @@ class GetConfigAction
                     $interfaceData['dhcp'] = $interfaceData['dhcp'] === '1';
                     $interfaceData['internet'] = $interfaceData['internet'] === '1';
                     $interfaceData['disabled'] = $interfaceData['disabled'] === '1';
+
+                    // Ensure subnet has a valid value
+                    if (empty($interfaceData['subnet']) || $interfaceData['subnet'] === '0') {
+                        $interfaceData['subnet'] = '24';
+                    }
+
+                    // Get current IP address from system (especially useful when DHCP is enabled)
+                    // Determine the actual interface name (including VLAN)
+                    $actualInterfaceName = $interfaceData['interface'];
+                    if ($interfaceData['vlanid'] > 0) {
+                        $actualInterfaceName = "vlan{$interfaceData['vlanid']}";
+                    }
+
+                    try {
+                        $currentInterface = $networkSystem->getInterface($actualInterfaceName);
+                        // Add current system values (useful when DHCP is enabled and DB values are empty)
+                        $interfaceData['currentIpaddr'] = $currentInterface['ipaddr'] ?? '';
+                        $interfaceData['currentSubnet'] = $currentInterface['subnet'] ?? '';
+                        $interfaceData['currentGateway'] = $currentInterface['gateway'] ?? '';
+
+                        // When DHCP is enabled, use current values from system instead of DB
+                        // This ensures we always show actual DHCP-provided values
+                        if ($interfaceData['dhcp']) {
+                            if (!empty($interfaceData['currentIpaddr'])) {
+                                $interfaceData['ipaddr'] = $interfaceData['currentIpaddr'];
+                            }
+                            if (!empty($interfaceData['currentSubnet'])) {
+                                $interfaceData['subnet'] = $interfaceData['currentSubnet'];
+                            }
+                        }
+                    } catch (\Throwable $e) {
+                        // If we can't get current interface info, leave fields empty
+                        $interfaceData['currentIpaddr'] = '';
+                        $interfaceData['currentSubnet'] = '';
+                        $interfaceData['currentGateway'] = '';
+                    }
+
                     $interfaces[] = $interfaceData;
                 }
             }
@@ -91,7 +133,7 @@ class GetConfigAction
                 'interface' => '',
                 'name' => '',
                 'vlanid' => '4095',
-                'subnet' => '0',
+                'subnet' => '24',
                 'ipaddr' => '',
                 'gateway' => '',
                 'hostname' => '',
@@ -133,6 +175,39 @@ class GetConfigAction
                 'secondarydns' => $internetInterface ? $internetInterface->secondarydns : '',
             ];
 
+            // Load static routes (ordered by priority)
+            $staticRoutes = NetworkStaticRoutes::find([
+                'order' => 'priority ASC'
+            ]);
+
+            $routesData = [];
+            foreach ($staticRoutes as $route) {
+                $routesData[] = [
+                    'id' => (string)$route->id,
+                    'network' => $route->network,
+                    'subnet' => $route->subnet,
+                    'gateway' => $route->gateway,
+                    'interface' => $route->interface ?? '',
+                    'priority' => $route->priority
+                ];
+            }
+
+            // Build list of available interfaces for static routes dropdown
+            $availableInterfaces = [];
+            foreach ($networkInterfaces as $record) {
+                if ($record->disabled !== '1') {
+                    $interfaceName = $record->interface;
+                    if ($record->vlanid > 0) {
+                        $interfaceName = "vlan{$record->vlanid}";
+                    }
+                    $label = !empty($record->name) ? "{$interfaceName} ({$record->name})" : $interfaceName;
+                    $availableInterfaces[] = [
+                        'value' => $interfaceName,
+                        'label' => $label
+                    ];
+                }
+            }
+
             $res->data = [
                 'interfaces' => $interfaces,
                 'template' => $template,
@@ -142,6 +217,8 @@ class GetConfigAction
                 'ports' => $portSettings,
                 'settings' => $additionalSettings,
                 'isDocker' => Util::isDocker(),
+                'staticRoutes' => $routesData,
+                'availableInterfaces' => $availableInterfaces,
             ];
 
             $res->success = true;

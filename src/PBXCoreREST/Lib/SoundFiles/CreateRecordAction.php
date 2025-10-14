@@ -19,48 +19,32 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\SoundFiles;
 
-use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractCreateAction;
 
 /**
- * CreateRecordAction
- * Creates a new sound file record.
+ * Create new sound file record
+ *
+ * Delegates to SaveRecordAction for actual creation.
+ * Ensures operation is CREATE by not providing ID.
  *
  * @package MikoPBX\PBXCoreREST\Lib\SoundFiles
  */
-class CreateRecordAction
+class CreateRecordAction extends AbstractCreateAction
 {
     /**
-     * Create a new sound file record.
+     * Create new sound file record
      *
-     * @param array<string, mixed> $data Sound file data to save
-     * @return PBXApiResult
+     * @param array<string, mixed> $data Sound file data
+     * @return PBXApiResult Result with created record data
      */
     public static function main(array $data): PBXApiResult
     {
-        // Note: SoundFiles uses a special httpMethod flag to distinguish CREATE vs UPDATE
-        // This is maintained for backward compatibility with existing SaveRecordAction logic
+        // Ensure this is a CREATE operation by removing ID
+        // SaveRecordAction will detect CREATE operation when ID is empty
+        unset($data['id']);
 
-        try {
-            // Mark this as a CREATE operation via POST method
-            // ID is allowed for pre-generated IDs (like when copying records)
-            $data['httpMethod'] = 'POST';
-
-            // Use existing SaveRecordAction logic for actual save
-            $res = SaveRecordAction::main($data);
-
-            // If successful, log the creation event
-            if ($res->success && isset($res->data['id'])) {
-                SystemMessages::sysLogMsg(__CLASS__, 'New sound file created: ' . $res->data['id'], LOG_INFO);
-            }
-
-            return $res;
-
-        } catch (\Exception $e) {
-            $res = new PBXApiResult();
-            $res->processor = __METHOD__;
-            $res->messages['error'][] = $e->getMessage();
-            return $res;
-        }
+        // Delegate to SaveRecordAction for unified logic
+        return SaveRecordAction::main($data);
     }
 }

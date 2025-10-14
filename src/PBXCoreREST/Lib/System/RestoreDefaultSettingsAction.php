@@ -394,7 +394,7 @@ class RestoreDefaultSettingsAction extends Injectable
             [Extensions::class => 'type="' . Extensions::TYPE_IVR_MENU . '"'],  // IVR Menu
             [Extensions::class => 'type="' . Extensions::TYPE_CONFERENCE . '"'],  // CONFERENCE
             [Extensions::class => 'type="' . Extensions::TYPE_QUEUE . '"'],  // QUEUE
-            [Users::class => 'id>"1"'], // All except root with their extensions
+            [Users::class => ''], // Delete all users with their extensions
             [CustomFiles::class => ''],
             [NetworkFilters::class => ''] // Delete all network filters
         ];

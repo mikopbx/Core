@@ -21,17 +21,18 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Lib\AsteriskRestUsers;
 
-use MikoPBX\Common\Models\AsteriskRestUsers;
-use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractCreateAction;
 
 /**
  * Create new ARI user action.
  *
+ * Delegates to SaveRecordAction for actual creation.
+ * Ensures operation is CREATE by not providing ID.
+ *
  * @package MikoPBX\PBXCoreREST\Lib\AsteriskRestUsers
  */
-class CreateRecordAction extends AbstractSaveRecordAction
+class CreateRecordAction extends AbstractCreateAction
 {
     /**
      * Create new ARI user.
@@ -41,69 +42,11 @@ class CreateRecordAction extends AbstractSaveRecordAction
      */
     public static function main(array $data): PBXApiResult
     {
-        $res = self::createApiResult(__METHOD__);
+        // Ensure this is a CREATE operation by removing ID
+        // SaveRecordAction will detect CREATE operation when ID is empty
+        unset($data['id']);
 
-        try {
-            // Create new model instance
-            $record = new AsteriskRestUsers();
-            
-            // Set required fields
-            $record->username = $data['username'] ?? '';
-            
-            // Generate secure password if not provided
-            if (!empty($data['password'])) {
-                $record->password = $data['password'];
-            } else {
-                $record->password = AsteriskRestUsers::generateARIPassword();
-            }
-            
-            // Set optional fields
-            $record->description = $data['description'] ?? '';
-            
-            
-            // Handle applications
-            if (!empty($data['applications']) && is_array($data['applications'])) {
-                $record->setApplicationsArray($data['applications']);
-            } else {
-                $record->applications = '';
-            }
-            
-            // Validate required fields
-            if (empty($record->username)) {
-                $res->messages['error'][] = 'Username is required';
-                return $res;
-            }
-            
-            // Check for duplicate username
-            $existing = AsteriskRestUsers::findFirst([
-                'conditions' => 'username = :username:',
-                'bind' => ['username' => $record->username]
-            ]);
-            
-            if ($existing) {
-                $res->messages['error'][] = 'Username already exists';
-                return $res;
-            }
-            
-            // Save record
-            if (!$record->save()) {
-                $errors = $record->getMessages();
-                foreach ($errors as $error) {
-                    $res->messages['error'][] = $error->getMessage();
-                }
-                return $res;
-            }
-            
-            // Build response data
-            $res->data = DataStructure::createFromModel($record);
-            $res->success = true;
-            // Add reload URL for frontend navigation
-            $res->reload = "asterisk-rest-users/modify/{$record->id}";
-            
-        } catch (\Exception $e) {
-            return self::handleError($e, $res);
-        }
-
-        return $res;
+        // Delegate to SaveRecordAction for unified logic
+        return SaveRecordAction::main($data);
     }
 }

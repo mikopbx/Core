@@ -19,9 +19,7 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\CallQueues;
 
-use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
-use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use MikoPBX\Core\System\SystemMessages;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractCreateAction;
 
 /**
  * CreateRecordAction
@@ -29,38 +27,21 @@ use MikoPBX\Core\System\SystemMessages;
  *
  * @package MikoPBX\PBXCoreREST\Lib\CallQueues
  */
-class CreateRecordAction extends AbstractSaveRecordAction
+class CreateRecordAction extends AbstractCreateAction
 {
     /**
-     * Create a new call queue record.
-     *
-     * @param array<string, mixed> $data Call queue data to save
-     * @return PBXApiResult
+     * {@inheritdoc}
      */
-    public static function main(array $data): PBXApiResult
+    protected static function getEntityName(): string
     {
-        $res = self::createApiResult(__METHOD__);
+        return 'call queue';
+    }
 
-        try {
-            // For create operation, allow custom ID if provided (for migrations/imports)
-            // ID validation is handled by SaveRecordAction via OpenAPI schema rules
-            // If no ID provided, SaveRecordAction will generate one automatically
-
-            // Remove legacy uniqid field if present (use 'id' instead in v3 API)
-            unset($data['uniqid']);
-
-            // Use existing SaveRecordAction logic for actual save
-            $res = SaveRecordAction::main($data);
-
-            // If successful, publish event for new queue creation
-            if ($res->success && isset($res->data['id'])) {
-                SystemMessages::sysLogMsg(__CLASS__, 'New call queue created: ' . $res->data['id'], LOG_INFO);
-            }
-
-        } catch (\Exception $e) {
-            return self::handleError($e, $res);
-        }
-
-        return $res;
+    /**
+     * {@inheritdoc}
+     */
+    protected static function getSaveActionClass(): string
+    {
+        return SaveRecordAction::class;
     }
 }

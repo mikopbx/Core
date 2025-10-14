@@ -74,12 +74,7 @@ class GetRecordAction extends AbstractGetRecordAction
         if ($isNew) {
             // Create structure for new record with default values
             $newProvider = self::createNewRecord($type);
-            $res->data = DataStructure::createFromModel($newProvider);
-            
-            // Clear the ID field for new providers
-            // The frontend should treat this as a new provider (POST request)
-            $res->data['id'] = '';
-            
+            $res->data = DataStructure::createFromModel($newProvider);    
             $res->success = true;
         } else {
             // Find existing record
@@ -98,7 +93,7 @@ class GetRecordAction extends AbstractGetRecordAction
     
     /**
      * Create new provider record with default values
-     * 
+     *
      * @param string $type Provider type (SIP or IAX)
      * @return Providers
      */
@@ -106,14 +101,19 @@ class GetRecordAction extends AbstractGetRecordAction
     {
         $newProvider = new Providers();
         $newProvider->id = '';
-        $newProvider->uniqid = ''; // Will be generated on actual creation
+
+        // Generate uniqid for new providers using standard method
+        // Format: SIP-TRUNK-XXXX or IAX-TRUNK-XXXX (4 random hex chars)
+        $newProvider->uniqid = Providers::generateUniqueID($type);
+
         $newProvider->type = $type;
         $newProvider->note = '';
-        
+
         // Create model instances with defaults to use DataStructure
         if ($type === 'SIP') {
             $config = new Sip();
-            $config->uniqid = ''; // No ID for new providers
+            // Use same temporary uniqid for SIP config
+            $config->uniqid = $newProvider->uniqid;
             $config->disabled = '0';
             $config->username = '';
             $config->secret = '';
@@ -138,7 +138,7 @@ class GetRecordAction extends AbstractGetRecordAction
             $config->disablefromuser = '0';
             $config->noregister = '0';
             $config->receive_calls_without_auth = '0';
-            
+
             // CallerID and DID source defaults
             $config->cid_source = Sip::CALLERID_SOURCE_DEFAULT;
             $config->cid_custom_header = '';
@@ -151,14 +151,15 @@ class GetRecordAction extends AbstractGetRecordAction
             $config->did_parser_end = '';
             $config->did_parser_regex = '';
             $config->cid_did_debug = '0';
-            
+
             // Attach SIP config to provider
             $newProvider->Sip = $config;
-            $newProvider->sipuid = ''; // No ID for new providers
+            $newProvider->sipuid = $newProvider->uniqid;
         } else {
             // IAX-specific defaults
             $config = new Iax();
-            $config->uniqid = ''; // No ID for new providers
+            // Use same temporary uniqid for IAX config
+            $config->uniqid = $newProvider->uniqid;
             $config->disabled = '0';
             $config->username = '';
             $config->secret = '';
@@ -173,12 +174,12 @@ class GetRecordAction extends AbstractGetRecordAction
             $config->manualattributes = '';
             $config->noregister = '0';
             $config->receive_calls_without_auth = '0';
-            
+
             // Attach IAX config to provider
             $newProvider->Iax = $config;
-            $newProvider->iaxuid = ''; // No ID for new providers
+            $newProvider->iaxuid = $newProvider->uniqid;
         }
-        
+
         return $newProvider;
     }
     

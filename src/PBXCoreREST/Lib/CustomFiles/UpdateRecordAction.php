@@ -17,145 +17,39 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
+declare(strict_types=1);
+
 namespace MikoPBX\PBXCoreREST\Lib\CustomFiles;
 
-use MikoPBX\Common\Models\CustomFiles;
-use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractUpdateAction;
 
 /**
- * Action for full update (replacement) of a custom file
+ * Full update (replace) custom file action.
  *
- * @api {put} /pbxcore/api/v3/custom-files/:id Update custom file
- * @apiVersion 3.0.0
- * @apiName UpdateRecord
- * @apiGroup CustomFiles
+ * Delegates to SaveRecordAction for actual update.
+ * Ensures ID is provided and record exists.
  *
- * @apiParam {String} id Custom file ID
- * @apiParam {String} filepath File path (required, must be unique)
- * @apiParam {String} content File content (base64 encoded)
- * @apiParam {String} mode File mode (none, append, override, script)
- * @apiParam {String} description File description
- *
- * @apiSuccess {Boolean} result Operation result
- * @apiSuccess {Object} data Updated custom file data
+ * @package MikoPBX\PBXCoreREST\Lib\CustomFiles
  */
-class UpdateRecordAction
+class UpdateRecordAction extends AbstractUpdateAction
 {
     /**
-     * Full update of custom file (replaces all fields)
+     * Get human-readable entity name for error messages
      *
-     * @param array $data Custom file data including ID
-     * @return PBXApiResult
+     * @return string Entity name in lowercase
      */
-    public static function main(array $data): PBXApiResult
+    protected static function getEntityName(): string
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
+        return 'custom file';
+    }
 
-        try {
-            // Validate ID
-            if (empty($data['id'])) {
-                $res->messages['error'][] = 'ID is required';
-                return $res;
-            }
-
-            // Find existing file
-            $file = CustomFiles::findFirstById($data['id']);
-            if (!$file) {
-                $res->messages['error'][] = "Custom file with ID '{$data['id']}' not found";
-                return $res;
-            }
-
-            // Validate required fields for update
-            if (empty($data['filepath'])) {
-                $res->messages['error'][] = 'File path is required';
-                return $res;
-            }
-
-            // Security check: ensure file is in allowed directory
-            if (!CustomFiles::isPathAllowed($data['filepath'])) {
-                $res->messages['error'][] = CustomFiles::getSecurityErrorMessage($data['filepath']);
-                return $res;
-            }
-
-            // Check if filepath is unique (if changed)
-            if ($file->filepath !== $data['filepath']) {
-                $existing = CustomFiles::findFirst([
-                    'conditions' => 'filepath = :filepath: AND id != :id:',
-                    'bind' => [
-                        'filepath' => $data['filepath'],
-                        'id' => $data['id']
-                    ]
-                ]);
-                if ($existing) {
-                    $res->messages['error'][] = "File with path '{$data['filepath']}' already exists";
-                    return $res;
-                }
-            }
-
-            // Update all fields (full replacement)
-            $file->filepath = $data['filepath'];
-
-            // Handle content
-            if (isset($data['content'])) {
-                // If content is not base64 encoded, encode it
-                if (base64_decode($data['content'], true) === false) {
-                    $file->setContent($data['content']);
-                } else {
-                    $file->content = $data['content'];
-                }
-            } else {
-                $file->setContent('');
-            }
-
-            // Set mode (protect MODE_CUSTOM from changes)
-            $originalMode = $file->mode;
-            if ($originalMode === CustomFiles::MODE_CUSTOM) {
-                // MODE_CUSTOM files cannot have their mode changed
-                $file->mode = CustomFiles::MODE_CUSTOM;
-            } else {
-                // For non-custom files, allow mode changes
-                $file->mode = $data['mode'] ?? CustomFiles::MODE_NONE;
-                if (!in_array($file->mode, [
-                    CustomFiles::MODE_NONE,
-                    CustomFiles::MODE_APPEND,
-                    CustomFiles::MODE_OVERRIDE,
-                    CustomFiles::MODE_SCRIPT,
-                    CustomFiles::MODE_CUSTOM  // Allow setting MODE_CUSTOM for new records through PUT
-                ])) {
-                    $file->mode = CustomFiles::MODE_NONE;
-                }
-            }
-
-            // Set other fields
-            $file->description = $data['description'] ?? '';
-            $file->changed = '1'; // Mark as changed
-
-            // If content is empty, force mode to none (except for MODE_CUSTOM files)
-            if (empty($file->getContent()) && $file->mode !== CustomFiles::MODE_CUSTOM) {
-                $file->mode = CustomFiles::MODE_NONE;
-            }
-
-            // Save the file
-            if (!$file->save()) {
-                $res->messages['error'] = $file->getMessages();
-                return $res;
-            }
-
-            // Force immediate application of custom file to filesystem
-            if ($file->mode === CustomFiles::MODE_CUSTOM) {
-                // Directly apply the file using the action class
-                $applyAction = new \MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ApplyCustomFilesAction();
-                $applyAction->execute(['fileId' => $file->id]);
-            }
-
-            $res->data = DataStructure::createFromModel($file);
-            $res->success = true;
-
-        } catch (\Exception $e) {
-            $res->messages['error'][] = $e->getMessage();
-        }
-
-        return $res;
+    /**
+     * Get SaveRecordAction class for this entity
+     *
+     * @return string Fully qualified SaveRecordAction class name
+     */
+    protected static function getSaveActionClass(): string
+    {
+        return SaveRecordAction::class;
     }
 }

@@ -21,102 +21,35 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Lib\AsteriskRestUsers;
 
-use MikoPBX\Common\Models\AsteriskRestUsers;
-use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractUpdateAction;
 
 /**
  * Full update (replace) ARI user action.
  *
+ * Delegates to SaveRecordAction for actual update.
+ * Ensures ID is provided and record exists.
+ *
  * @package MikoPBX\PBXCoreREST\Lib\AsteriskRestUsers
  */
-class UpdateRecordAction extends AbstractSaveRecordAction
+class UpdateRecordAction extends AbstractUpdateAction
 {
     /**
-     * Full update of ARI user.
-     * This is a PUT operation that replaces all fields.
+     * Get human-readable entity name for error messages
      *
-     * @param array $data User data with ID
-     * @return PBXApiResult
+     * @return string Entity name in lowercase
      */
-    public static function main(array $data): PBXApiResult
+    protected static function getEntityName(): string
     {
-        $res = self::createApiResult(__METHOD__);
+        return 'ARI user';
+    }
 
-        try {
-            // Validate ID
-            if (empty($data['id'])) {
-                $res->messages['error'][] = 'ID is required';
-                return $res;
-            }
-            
-            // Find existing record
-            $record = AsteriskRestUsers::findFirstById($data['id']);
-            
-            if (!$record) {
-                $res->messages['error'][] = 'Record not found';
-                return $res;
-            }
-            
-            // Update all fields (PUT replaces everything)
-            $record->username = $data['username'] ?? '';
-            
-            // Only update password if provided
-            if (!empty($data['password'])) {
-                $record->password = $data['password'];
-            }
-            
-            $record->description = $data['description'] ?? '';
-            
-            // Handle applications
-            if (isset($data['applications'])) {
-                if (is_array($data['applications']) && !empty($data['applications'])) {
-                    $record->setApplicationsArray($data['applications']);
-                } else {
-                    $record->applications = '';
-                }
-            } else {
-                // PUT should replace all fields, so clear if not provided
-                $record->applications = '';
-            }
-            
-            // Validate required fields
-            if (empty($record->username)) {
-                $res->messages['error'][] = 'Username is required';
-                return $res;
-            }
-            
-            // Check for duplicate username (excluding current record)
-            $existing = AsteriskRestUsers::findFirst([
-                'conditions' => 'username = :username: AND id != :id:',
-                'bind' => [
-                    'username' => $record->username,
-                    'id' => $record->id
-                ]
-            ]);
-            
-            if ($existing) {
-                $res->messages['error'][] = 'Username already exists';
-                return $res;
-            }
-            
-            // Save record
-            if (!$record->save()) {
-                $errors = $record->getMessages();
-                foreach ($errors as $error) {
-                    $res->messages['error'][] = $error->getMessage();
-                }
-                return $res;
-            }
-            
-            // Build response data
-            $res->data = DataStructure::createFromModel($record);
-            $res->success = true;
-            
-        } catch (\Exception $e) {
-            return self::handleError($e, $res);
-        }
-
-        return $res;
+    /**
+     * Get SaveRecordAction class for this entity
+     *
+     * @return string Fully qualified SaveRecordAction class name
+     */
+    protected static function getSaveActionClass(): string
+    {
+        return SaveRecordAction::class;
     }
 }

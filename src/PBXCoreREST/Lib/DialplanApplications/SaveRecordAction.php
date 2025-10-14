@@ -188,12 +188,14 @@
             $res->data = DataStructure::createFromModel($savedApp);
             $res->success = true;
             $res->reload = "dialplan-applications/modify/{$savedApp->uniqid}";
-            
+
             // Handle tab preservation for multi-tab forms
             self::handleTabPreservation($data, $res);
-            
+
             // Log successful operation using unified approach
             self::logSuccessfulSave('Dialplan application', $savedApp->name, $savedApp->extension, __METHOD__);
+
+            // Note: Dialplan reload is handled automatically by system mechanism
             
         } catch (\Exception $e) {
             // Handle save error using unified approach

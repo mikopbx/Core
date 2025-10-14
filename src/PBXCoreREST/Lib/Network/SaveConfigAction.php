@@ -20,6 +20,7 @@
 namespace MikoPBX\PBXCoreREST\Lib\Network;
 
 use MikoPBX\Common\Models\LanInterfaces;
+use MikoPBX\Common\Models\NetworkStaticRoutes;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
@@ -83,11 +84,20 @@ class SaveConfigAction
                 return $res;
             }
 
+            // Save static routes
+            list($result, $messages) = self::saveStaticRoutes($data);
+            if (!$result) {
+                $res->messages['error'] = $messages;
+                $db->rollback();
+                return $res;
+            }
+
             $db->commit();
 
             // Return updated configuration
             $res = GetConfigAction::main();
             $res->messages['success'][] = 'Network configuration saved successfully';
+            $res->reload = 'network/modify';
 
         } catch (\Exception $e) {
             $db->rollback();
@@ -110,20 +120,20 @@ class SaveConfigAction
         // Validate external IP address if provided
         if (!empty($data['extipaddr'])) {
             if (!self::validateIpAddressWithOptionalPort($data['extipaddr'])) {
-                $messages[] = 'Invalid external IP address format. Use format: 192.168.1.1 or 192.168.1.1:5060';
+                $messages[] = 'nw_ValidateExtIppaddrNotRight';
             }
         }
 
         // Validate external hostname if provided
         if (!empty($data['exthostname'])) {
             if (!self::validateHostname($data['exthostname'])) {
-                $messages[] = 'Invalid hostname format. Use only letters, numbers, hyphens and dots. Example: example.com or mikopbx.local';
+                $messages[] = 'nw_ValidateHostnameInvalid';
             }
         }
 
         // Check that at least one of extipaddr or exthostname is provided when NAT is enabled
         if (($data['usenat'] ?? false) && empty($data['extipaddr']) && empty($data['exthostname'])) {
-            $messages[] = 'Either external IP address or hostname must be provided when NAT is enabled';
+            $messages[] = 'nw_ValidateExtIppaddrOrHostIsEmpty';
         }
 
         // Validate interface IP addresses
@@ -133,29 +143,38 @@ class SaveConfigAction
                 // Skip validation if DHCP is enabled for this interface
                 if (!($data["dhcp_{$interfaceId}"] ?? false)) {
                     if (!self::validateIpAddress($value)) {
-                        $messages[] = "Invalid IP address for interface {$interfaceId}: {$value}";
+                        $messages[] = 'nw_ValidateIppaddrNotRight';
                     }
                 }
             }
         }
 
-        // Validate gateway if provided
-        if (!empty($data['gateway']) && !self::validateIpAddress($data['gateway'])) {
-            $messages[] = 'Invalid gateway IP address';
-        }
+        // Validate gateway, DNS, and hostname (interface-specific format with _{id})
+        foreach ($data as $key => $value) {
+            if (empty($value)) {
+                continue;
+            }
 
-        // Validate DNS servers if provided
-        if (!empty($data['primarydns']) && !self::validateIpAddress($data['primarydns'])) {
-            $messages[] = 'Invalid primary DNS server IP address';
-        }
+            // Check gateway fields (gateway_{id})
+            if (preg_match('/^gateway_\d+$/', $key)) {
+                if (!self::validateIpAddress($value)) {
+                    $messages[] = 'nw_ValidateGatewayNotRight';
+                }
+            }
 
-        if (!empty($data['secondarydns']) && !self::validateIpAddress($data['secondarydns'])) {
-            $messages[] = 'Invalid secondary DNS server IP address';
-        }
+            // Check primary DNS fields (primarydns_{id})
+            if (preg_match('/^primarydns_\d+$/', $key)) {
+                if (!self::validateIpAddress($value)) {
+                    $messages[] = 'nw_ValidatePrimaryDNSNotRight';
+                }
+            }
 
-        // Validate hostname if provided
-        if (!empty($data['hostname']) && !self::validateHostname($data['hostname'])) {
-            $messages[] = 'Invalid local hostname format';
+            // Check secondary DNS fields (secondarydns_{id})
+            if (preg_match('/^secondarydns_\d+$/', $key)) {
+                if (!self::validateIpAddress($value)) {
+                    $messages[] = 'nw_ValidateSecondaryDNSNotRight';
+                }
+            }
         }
 
         return [empty($messages), $messages];
@@ -250,9 +269,30 @@ class SaveConfigAction
         $messages = [];
         $isDocker = Util::isDocker();
 
+        // Collect interfaces to delete from form
+        $interfacesToDelete = [];
+        foreach ($data as $key => $value) {
+            if (preg_match('/^disabled_(\d+)$/', $key, $matches) && $value) {
+                $interfacesToDelete[] = (int)$matches[1];
+            }
+        }
+
         // Update existing interface settings
         foreach ($networkInterfaces as $eth) {
+            // Check if this interface should be deleted
+            if (in_array((int)$eth->id, $interfacesToDelete, true)) {
+                if ($eth->delete() === false) {
+                    foreach ($eth->getMessages() as $message) {
+                        $messages[] = $message->getMessage();
+                    }
+                    return [false, $messages];
+                }
+                continue; // Skip to next interface
+            }
+
+            // Update interface settings
             self::fillEthStructure($eth, $data, $isDocker);
+
             if ($eth->save() === false) {
                 foreach ($eth->getMessages() as $message) {
                     $messages[] = $message->getMessage();
@@ -289,6 +329,7 @@ class SaveConfigAction
     private static function fillEthStructure(LanInterfaces $eth, array $data, bool $isDocker): void
     {
         foreach ($eth as $name => $value) {
+            // Check if this interface is selected as internet interface
             $itIsInternetInterface = isset($data['internet_interface']) && intval($eth->id) === intval($data['internet_interface']);
 
             switch ($name) {
@@ -352,11 +393,11 @@ class SaveConfigAction
 
                 case 'ipaddr':
                 case 'subnet':
+                    // Save IP/subnet values even when DHCP is enabled (like gateway/DNS)
+                    // This stores the current DHCP-provided values for display
                     $eth->$name = '';
                     if (array_key_exists($name . '_' . $eth->id, $data)) {
-                        $eth->$name = ($data['dhcp_' . $eth->id] ?? false)
-                            ? ''
-                            : ($data[$name . '_' . $eth->id] ?? '');
+                        $eth->$name = $data[$name . '_' . $eth->id] ?? '';
                     }
                     break;
 
@@ -369,16 +410,26 @@ class SaveConfigAction
                     }
                     break;
 
-                case 'domain':
-                case 'hostname':
                 case 'gateway':
                 case 'primarydns':
                 case 'secondarydns':
-                    if (array_key_exists($name, $data) && $itIsInternetInterface) {
-                        $eth->$name = $data[$name];
+                    // Use only new interface-specific format (field_name_{id})
+                    if ($itIsInternetInterface) {
+                        $fieldKey = $name . '_' . $eth->id;
+                        $eth->$name = array_key_exists($fieldKey, $data) ? $data[$fieldKey] : '';
                     } else {
                         $eth->$name = '';
                     }
+                    break;
+
+                case 'hostname':
+                    // Hostname is not used in new UI, always empty
+                    $eth->$name = '';
+                    break;
+
+                case 'domain':
+                    // Domain field is not used in new UI, always empty
+                    $eth->$name = '';
                     break;
 
                 default:
@@ -426,5 +477,79 @@ class SaveConfigAction
 
         $result = count($messages) === 0;
         return [$result, $messages];
+    }
+
+    /**
+     * Saves static route configurations
+     *
+     * @param array $data Configuration data containing staticRoutes array
+     * @return array Returns [bool $success, array $messages]
+     */
+    private static function saveStaticRoutes(array $data): array
+    {
+        $messages = [];
+
+        // Check if staticRoutes data is provided
+        if (!isset($data['staticRoutes']) || !is_array($data['staticRoutes'])) {
+            // No routes to save, skip
+            return [true, []];
+        }
+
+        try {
+            // Collect IDs of routes that should be kept
+            $routeIdsToKeep = [];
+            foreach ($data['staticRoutes'] as $routeData) {
+                if (isset($routeData['id']) && !empty($routeData['id']) && !str_starts_with($routeData['id'], 'new_')) {
+                    $routeIdsToKeep[] = $routeData['id'];
+                }
+            }
+
+            // Delete routes that are not in the list
+            $existingRoutes = NetworkStaticRoutes::find();
+            foreach ($existingRoutes as $route) {
+                if (!in_array($route->id, $routeIdsToKeep, false)) {
+                    if ($route->delete() === false) {
+                        foreach ($route->getMessages() as $message) {
+                            $messages[] = $message->getMessage();
+                        }
+                        return [false, $messages];
+                    }
+                }
+            }
+
+            // Create or update routes
+            foreach ($data['staticRoutes'] as $index => $routeData) {
+                // Find existing route or create new one
+                $route = null;
+                if (isset($routeData['id']) && !empty($routeData['id']) && !str_starts_with($routeData['id'], 'new_')) {
+                    $route = NetworkStaticRoutes::findFirstById($routeData['id']);
+                }
+
+                if (!$route) {
+                    $route = new NetworkStaticRoutes();
+                }
+
+                // Set route data
+                $route->network = $routeData['network'] ?? '';
+                $route->subnet = $routeData['subnet'] ?? '24';
+                $route->gateway = $routeData['gateway'] ?? '';
+                $route->interface = $routeData['interface'] ?? '';
+                $route->priority = $routeData['priority'] ?? ($index + 1);
+
+                // Save route
+                if (!$route->save()) {
+                    foreach ($route->getMessages() as $message) {
+                        $messages[] = $message->getMessage();
+                    }
+                    return [false, $messages];
+                }
+            }
+
+            return [true, []];
+
+        } catch (\Exception $e) {
+            $messages[] = $e->getMessage();
+            return [false, $messages];
+        }
     }
 }

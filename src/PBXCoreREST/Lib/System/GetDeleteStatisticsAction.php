@@ -67,27 +67,23 @@ class GetDeleteStatisticsAction
                 throw new \Exception('DI container is not available');
             }
 
-            // Count users (extensions) - excluding root user
-            $rootUserId = Users::findFirst('id=1');
-            $usersCount = Users::count(['conditions' => 'id != 1']);
-            $stats['users'] = $usersCount;
-            
-            // Count extensions (excluding root extension)
-            $rootExtensionNumber = '10000';
-            if ($rootUserId) {
-                $rootExtension = Extensions::findFirst([
-                    'conditions' => 'userid = :userid:',
-                    'bind' => ['userid' => $rootUserId->id]
-                ]);
-                if ($rootExtension) {
-                    $rootExtensionNumber = $rootExtension->number;
-                }
-            }
-            $extensionsCount = Extensions::count([
-                'conditions' => 'number != :number:',
-                'bind' => ['number' => $rootExtensionNumber]
+            // Count all users
+            $stats['users'] = Users::count();
+
+            // Count all extensions (excluding system extensions)
+            $systemExtensions = [
+                '000063',   // Reads back the extension
+                '000064',   // 0000MILLI
+                '10003246', // Echo test
+                'hangup',   // System Extension
+                'busy',     // System Extension
+                'did2user', // System Extension
+                'voicemail',// System Extension
+            ];
+            $stats['extensions'] = Extensions::count([
+                'conditions' => 'number NOT IN ({numbers:array})',
+                'bind' => ['numbers' => $systemExtensions]
             ]);
-            $stats['extensions'] = $extensionsCount;
             
             // Count providers
             $stats['providers'] = Providers::count();

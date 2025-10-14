@@ -23,315 +23,463 @@ namespace MikoPBX\PBXCoreREST\Lib\OutWorkTimes;
 
 use MikoPBX\Common\Models\OutWorkTimes;
 use MikoPBX\Common\Models\OutWorkTimesRouts;
-use MikoPBX\Common\Models\IncomingRoutingTable;
-use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
+use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\System\SystemMessages;
 
 /**
- * Action for saving out-of-work-time condition record
- * 
- * Extends AbstractSaveRecordAction to leverage unified save patterns.
- * Handles complex relationships with incoming routes and allowed extensions.
- * 
- * @api {post} /pbxcore/api/v2/out-work-times/saveRecord Create time condition
- * @api {put} /pbxcore/api/v2/out-work-times/saveRecord/:id Update time condition
- * @apiVersion 2.0.0
- * @apiName SaveRecord
- * @apiGroup OutWorkTimes
- * 
- * @apiParam {String} [id] Record ID (for update)
- * @apiParam {String} [description] Description
- * @apiParam {String} calType Calendar type (CalendarType enum)
- * @apiParam {String} [date_from] Start date (for date range)
- * @apiParam {String} [date_to] End date (for date range)
- * @apiParam {String} [weekday_from] Start weekday (for weekday range)
- * @apiParam {String} [weekday_to] End weekday (for weekday range)
- * @apiParam {String} [time_from] Start time (HH:MM format)
- * @apiParam {String} [time_to] End time (HH:MM format)
- * @apiParam {String} [calUrl] CalDAV calendar URL
- * @apiParam {String} [calUser] CalDAV username
- * @apiParam {String} [calSecret] CalDAV password/secret
- * @apiParam {String} [failover_extension] Failover extension
- * @apiParam {String} [audio_message_id] Audio message ID
- * @apiParam {Number} [priority] Priority (auto-assigned if empty)
- * @apiParam {Boolean} [enabled] Status
- * @apiParam {Array} [allowedExtensions] Allowed extension numbers
- * @apiParam {Array} [incomingRouteIds] Associated incoming route IDs
- * @apiParam {String} [currentTab] Current tab for preservation
- * 
- * @apiSuccess {Boolean} success Operation result
- * @apiSuccess {Object} data Saved time condition data
- * @apiSuccess {String} reload URL for page reload
- * @apiSuccess {String} [data.redirectTab] Tab to redirect to
+ * ✨ REFERENCE IMPLEMENTATION: OutWorkTimes Save Action (Complex Validation)
+ *
+ * This follows the canonical 7-phase pattern with complex time period validation.
+ * Single Source of Truth pattern - all definitions in DataStructure::getParameterDefinitions()
+ *
+ * Processing Pipeline (7 Phases):
+ * 1. SANITIZE: Clean user input (XSS, SQL injection prevention)
+ * 2. VALIDATE REQUIRED: Check required fields (description)
+ * 3. DETERMINE OPERATION: Detect CREATE vs UPDATE/PATCH
+ * 4. APPLY DEFAULTS: Add missing values (CREATE only!) - calType, priority, allowRestriction
+ * 5. VALIDATE SCHEMA: Check constraints + complex business rules
+ * 6. SAVE: Transaction with nested relationships (incomingRoutes, allowedExtensions)
+ * 7. BUILD RESPONSE: Format data using DataStructure
+ *
+ * Complex Validation:
+ * - Time period validation (time_from/time_to format HH:MM)
+ * - Date range validation (date_from before date_to)
+ * - Weekday validation (1-7 or -1 for empty)
+ * - Action-specific validation (extension vs playmessage)
+ * - CalType-specific validation (timeframe vs caldav/ical)
+ * - Password masking (XXXXXXXX pattern preserved on UPDATE)
+ *
+ * @package MikoPBX\PBXCoreREST\Lib\OutWorkTimes
  */
 class SaveRecordAction extends AbstractSaveRecordAction
 {
     /**
-     * Save out-of-work-time condition record
-     * 
-     * @param array $data Data to save
-     * @return PBXApiResult
+     * Save out-of-work-time condition with comprehensive validation
+     *
+     * Handles CREATE, UPDATE (PUT), and PATCH operations:
+     * - CREATE: New record with auto-increment priority
+     * - UPDATE: Full replacement of existing record
+     * - PATCH: Partial update of existing record
+     *
+     * @param array<string, mixed> $data Input data from API request
+     * @return PBXApiResult Result with data/errors and HTTP status code
      */
     public static function main(array $data): PBXApiResult
     {
         $res = self::createApiResult(__METHOD__);
-        
-        // Define sanitization rules
-        $sanitizationRules = [
-            'id' => 'int',
-            'description' => 'string|sanitize|max:255|empty_to_null',
-            'calType' => 'string|max:32',
-            'date_from' => 'string|date|empty_to_null',
-            'date_to' => 'string|date|empty_to_null',
-            'weekday_from' => 'int|min:1|max:7|empty_to_null',
-            'weekday_to' => 'int|min:1|max:7|empty_to_null',
-            'time_from' => 'string|time|empty_to_null',
-            'time_to' => 'string|time|empty_to_null',
-            'calUrl' => 'string|sanitize|max:512|empty_to_null',
-            'calUser' => 'string|sanitize|max:255|empty_to_null',
-            'calSecret' => 'string|sanitize|max:255|empty_to_null',
-            'action' => 'string|max:32',
-            'extension' => 'string|max:32|empty_to_null',
-            'audio_message_id' => 'string|max:64|empty_to_null',
-            'priority' => 'int',
-            'allowRestriction' => 'bool',
-            'allowedExtensions' => 'array',
-            'incomingRouteIds' => 'array',
-            'currentTab' => 'string|max:32' // For tab preservation
-        ];
-        
-        // Text fields for unified processing
-        $textFields = ['description'];
-        
-        // Routing fields that need special validation
-        $routingFields = ['extension'];
+
+        // ============================================================
+        // PHASE 1: DATA SANITIZATION
+        // WHY: Security - never trust user input
+        // ============================================================
+
+        $sanitizationRules = DataStructure::getSanitizationRules();
+        $textFields = ['description', 'calUser'];
+
+        // Preserve ID and nested arrays
+        $recordId = $data['id'] ?? null;
+        $incomingRouteIds = $data['incomingRouteIds'] ?? null;
+        $allowedExtensions = $data['allowedExtensions'] ?? null;
 
         try {
-            // Sanitize only allowed fields
-            $allowedData = array_intersect_key($data, $sanitizationRules);
-            
-            // Unified data sanitization
-            $sanitizedData = self::sanitizeInputData($allowedData, $sanitizationRules, $textFields);
-            
-            // Sanitize routing destinations
-            if (!empty($routingFields)) {
-                $sanitizedData = self::sanitizeRoutingDestinations($sanitizedData, $routingFields);
+            // Sanitize: remove dangerous chars, trim whitespace, normalize format
+            $sanitizedData = self::sanitizeInputData($data, $sanitizationRules, $textFields);
+
+            // Restore preserved fields
+            if ($recordId !== null) {
+                $sanitizedData['id'] = $recordId;
             }
-            
-            // Convert boolean fields
-            $sanitizedData = self::convertBooleanFields($sanitizedData, ['allowRestriction']);
-            
-            // Apply defaults
-            $sanitizedData = self::applyDefaults($sanitizedData, [
-                'priority' => 0,
-                'allowRestriction' => '0'
-            ]);
-            
-            // Validate data based on action and calendar type
-            $validationErrors = self::validateTimeConditionData($sanitizedData);
-            
-            if (!empty($validationErrors)) {
-                $res->messages['error'] = $validationErrors;
+            if ($incomingRouteIds !== null) {
+                $sanitizedData['incomingRouteIds'] = is_array($incomingRouteIds) ? $incomingRouteIds : [];
+            }
+            if ($allowedExtensions !== null) {
+                $sanitizedData['allowedExtensions'] = is_array($allowedExtensions) ? $allowedExtensions : [];
+            }
+
+            // Sanitize routing extension field
+            if (isset($sanitizedData['extension'])) {
+                $sanitizedData = self::sanitizeRoutingDestinations($sanitizedData, ['extension'], 8);
+            }
+
+            // Convert weekday values: empty string → -1
+            if (isset($sanitizedData['weekday_from']) && $sanitizedData['weekday_from'] === '') {
+                $sanitizedData['weekday_from'] = '-1';
+            }
+            if (isset($sanitizedData['weekday_to']) && $sanitizedData['weekday_to'] === '') {
+                $sanitizedData['weekday_to'] = '-1';
+            }
+
+        } catch (\Exception $e) {
+            $res->messages['error'][] = $e->getMessage();
+            return $res;
+        }
+
+        // ============================================================
+        // PHASE 2: REQUIRED FIELDS VALIDATION
+        // WHY: Fail fast - don't waste resources on invalid data
+        // ============================================================
+
+        $validationRules = [
+            'description' => [
+                ['type' => 'required', 'message' => 'Description is required'],
+                ['type' => 'minLength', 'value' => 1, 'message' => 'Description must not be empty']
+            ]
+        ];
+
+        $validationErrors = self::validateRequiredFields($sanitizedData, $validationRules);
+        if (!empty($validationErrors)) {
+            $res->messages['error'] = $validationErrors;
+            return $res;
+        }
+
+        // ============================================================
+        // PHASE 3: DETERMINE OPERATION TYPE
+        // WHY: Different logic for new vs existing records
+        // ============================================================
+
+        $condition = null;
+        $isNewRecord = true;
+
+        if (!empty($sanitizedData['id'])) {
+            // Try to find existing record by numeric ID
+            $condition = OutWorkTimes::findFirstById($sanitizedData['id']);
+
+            if ($condition) {
+                // Record exists - UPDATE or PATCH operation
+                $isNewRecord = false;
+            } else {
+                $res->messages['error'][] = "Time condition with ID {$sanitizedData['id']} not found";
+                $res->httpCode = 404;
                 return $res;
             }
-            
-            // Find or create record
-            if (!empty($sanitizedData['id'])) {
-                $condition = OutWorkTimes::findFirstById($sanitizedData['id']);
-                if (!$condition) {
-                    $res->messages['error'][] = 'api_OutWorkTimeNotFound';
-                    return $res;
-                }
-            } else {
-                $condition = new OutWorkTimes();
-            }
-            
-            // Handle priority
+        }
+
+        if ($isNewRecord) {
+            // CREATE: Initialize new time condition
+            $condition = new OutWorkTimes();
+        }
+
+        // ============================================================
+        // PHASE 4: APPLY DEFAULTS (CREATE ONLY!)
+        // WHY CREATE: New records need complete dataset with all fields
+        // WHY NOT UPDATE/PATCH: Would overwrite existing values with defaults!
+        // ============================================================
+
+        if ($isNewRecord) {
+            $sanitizedData = DataStructure::applyDefaults($sanitizedData);
+
+            // Auto-assign priority if not provided
             if (empty($sanitizedData['priority'])) {
                 $maxPriority = OutWorkTimes::maximum(['column' => 'priority']);
                 $sanitizedData['priority'] = (int)$maxPriority + 1;
             }
-            
-            // Save in transaction
-            $savedCondition = self::executeInTransaction(function() use ($condition, $sanitizedData) {
-                // Update condition fields
-                $condition->description = $sanitizedData['description'] ?? '';
-                $condition->calType = $sanitizedData['calType'] ?? '';
-                $condition->date_from = $sanitizedData['date_from'] ?? '';
-                $condition->date_to = $sanitizedData['date_to'] ?? '';
-                $condition->weekday_from = isset($sanitizedData['weekday_from']) && $sanitizedData['weekday_from'] !== null ? (string)$sanitizedData['weekday_from'] : '';
-                $condition->weekday_to = isset($sanitizedData['weekday_to']) && $sanitizedData['weekday_to'] !== null ? (string)$sanitizedData['weekday_to'] : '';
-                $condition->time_from = $sanitizedData['time_from'] ?? '';
-                $condition->time_to = $sanitizedData['time_to'] ?? '';
-                $condition->calUrl = $sanitizedData['calUrl'] ?? '';
-                $condition->calUser = $sanitizedData['calUser'] ?? '';
-                
-                // Only update password if it's not the masked value and not empty
-                // If it's 'XXXXXX' (masked) or empty, keep the existing password
-                if (!empty($sanitizedData['calSecret']) && $sanitizedData['calSecret'] !== 'XXXXXX') {
-                    $condition->calSecret = $sanitizedData['calSecret'];
-                } elseif (empty($sanitizedData['calSecret'])) {
-                    // If empty string is sent, clear the password
-                    $condition->calSecret = null;
+        }
+
+        // ============================================================
+        // PHASE 5: SCHEMA VALIDATION (Complex Business Rules!)
+        // WHY: Validate AFTER defaults to check complete dataset
+        // ============================================================
+
+        // Schema validation (enum, pattern, maxLength)
+        $schemaErrors = DataStructure::validateInputData($sanitizedData);
+        if (!empty($schemaErrors)) {
+            $res->messages['error'] = $schemaErrors;
+            $res->httpCode = 422; // Unprocessable Entity
+            return $res;
+        }
+
+        // Complex business rules validation
+        $businessErrors = self::validateTimePeriods($sanitizedData);
+        if (!empty($businessErrors)) {
+            $res->messages['error'] = array_merge(
+                $res->messages['error'] ?? [],
+                $businessErrors
+            );
+            $res->httpCode = 422;
+            return $res;
+        }
+
+        // ============================================================
+        // PHASE 6: SAVE TO DATABASE
+        // WHY: All-or-nothing transaction with nested relationships
+        // ============================================================
+
+        try {
+            $savedCondition = self::executeInTransaction(function() use ($condition, $sanitizedData, $isNewRecord) {
+                // Update description
+                if (isset($sanitizedData['description'])) {
+                    $condition->description = $sanitizedData['description'];
                 }
-                // If 'XXXXXX' is sent, we don't update the field at all (keep existing value)
-                
-                $condition->action = $sanitizedData['action'] ?? '';
-                $condition->extension = $sanitizedData['extension'] ?? '';
-                $condition->audio_message_id = $sanitizedData['audio_message_id'] ?? '';
-                $condition->priority = (string)$sanitizedData['priority'];
-                $condition->allowRestriction = $sanitizedData['allowRestriction'] ?? '0';
-                
+
+                // Update calendar type (PATCH support with isset())
+                if (isset($sanitizedData['calType'])) {
+                    $condition->calType = $sanitizedData['calType'];
+                } elseif ($isNewRecord) {
+                    $condition->calType = 'timeframe';
+                }
+
+                // Update date range (PATCH support with isset())
+                if (isset($sanitizedData['date_from'])) {
+                    $condition->date_from = $sanitizedData['date_from'];
+                } elseif ($isNewRecord) {
+                    $condition->date_from = '';
+                }
+                if (isset($sanitizedData['date_to'])) {
+                    $condition->date_to = $sanitizedData['date_to'];
+                } elseif ($isNewRecord) {
+                    $condition->date_to = '';
+                }
+
+                // Update weekday range (PATCH support with isset())
+                if (isset($sanitizedData['weekday_from'])) {
+                    $condition->weekday_from = $sanitizedData['weekday_from'] === '-1' ? '' : $sanitizedData['weekday_from'];
+                } elseif ($isNewRecord) {
+                    $condition->weekday_from = '';
+                }
+                if (isset($sanitizedData['weekday_to'])) {
+                    $condition->weekday_to = $sanitizedData['weekday_to'] === '-1' ? '' : $sanitizedData['weekday_to'];
+                } elseif ($isNewRecord) {
+                    $condition->weekday_to = '';
+                }
+
+                // Update time range (PATCH support with isset())
+                if (isset($sanitizedData['time_from'])) {
+                    $condition->time_from = $sanitizedData['time_from'];
+                } elseif ($isNewRecord) {
+                    $condition->time_from = '00:00';
+                }
+                if (isset($sanitizedData['time_to'])) {
+                    $condition->time_to = $sanitizedData['time_to'];
+                } elseif ($isNewRecord) {
+                    $condition->time_to = '23:59';
+                }
+
+                // Update CalDAV/iCal fields (PATCH support with isset())
+                if (isset($sanitizedData['calUrl'])) {
+                    $condition->calUrl = $sanitizedData['calUrl'];
+                } elseif ($isNewRecord) {
+                    $condition->calUrl = '';
+                }
+                if (isset($sanitizedData['calUser'])) {
+                    $condition->calUser = $sanitizedData['calUser'];
+                } elseif ($isNewRecord) {
+                    $condition->calUser = '';
+                }
+
+                // Password masking: only update if not masked value
+                if (isset($sanitizedData['calSecret'])) {
+                    if ($sanitizedData['calSecret'] !== 'XXXXXXXX' && $sanitizedData['calSecret'] !== '') {
+                        $condition->calSecret = $sanitizedData['calSecret'];
+                    } elseif ($sanitizedData['calSecret'] === '') {
+                        $condition->calSecret = '';
+                    }
+                    // If 'XXXXXXXX', keep existing value (don't update)
+                } elseif ($isNewRecord) {
+                    $condition->calSecret = '';
+                }
+
+                // Update action (PATCH support with isset())
+                if (isset($sanitizedData['action'])) {
+                    $condition->action = $sanitizedData['action'];
+                } elseif ($isNewRecord) {
+                    $condition->action = 'extension';
+                }
+
+                // Update extension (PATCH support with isset())
+                if (isset($sanitizedData['extension'])) {
+                    $condition->extension = $sanitizedData['extension'];
+                } elseif ($isNewRecord) {
+                    $condition->extension = '';
+                }
+
+                // Update audio message (PATCH support with isset())
+                if (isset($sanitizedData['audio_message_id'])) {
+                    $condition->audio_message_id = $sanitizedData['audio_message_id'];
+                } elseif ($isNewRecord) {
+                    $condition->audio_message_id = '';
+                }
+
+                // Update priority (PATCH support with isset())
+                if (isset($sanitizedData['priority'])) {
+                    $condition->priority = (string)$sanitizedData['priority'];
+                } elseif ($isNewRecord) {
+                    $condition->priority = '0';
+                }
+
+                // Update restriction flag (PATCH support with isset())
+                if (isset($sanitizedData['allowRestriction'])) {
+                    $boolFields = ['allowRestriction'];
+                    $converted = self::convertBooleanFields($sanitizedData, $boolFields);
+                    $condition->allowRestriction = $converted['allowRestriction'];
+                } elseif ($isNewRecord) {
+                    $condition->allowRestriction = '0';
+                }
+
+                // Save time condition
                 if (!$condition->save()) {
                     throw new \Exception('Failed to save time condition: ' . implode(', ', $condition->getMessages()));
                 }
-                
-                // Update related incoming routes
+
+                // Update nested relationships (PATCH support with isset())
                 if (isset($sanitizedData['incomingRouteIds'])) {
                     self::updateIncomingRoutes((int)$condition->id, $sanitizedData['incomingRouteIds']);
                 }
-                
-                // Update allowed extensions
+
                 if (isset($sanitizedData['allowedExtensions'])) {
                     self::updateAllowedExtensions((int)$condition->id, $sanitizedData['allowedExtensions']);
                 }
-                
+
                 return $condition;
             });
-            
+
+            // ============================================================
+            // PHASE 7: BUILD RESPONSE
+            // WHY: Consistent API format using DataStructure transformation
+            // ============================================================
+
             $res->data = DataStructure::createFromModel($savedCondition);
             $res->success = true;
-            
-            // Only set reload for new records
-            if (empty($data['id'])) {
+            $res->httpCode = $isNewRecord ? 201 : 200; // 201 Created, 200 OK
+
+            if ($isNewRecord) {
                 $res->reload = "off-work-times/modify/{$savedCondition->id}";
             }
-            
-            // Handle tab preservation
-            self::handleTabPreservation($data, $res);
-            
-            // Log successful operation
+
             self::logSuccessfulSave(
                 'Time condition',
                 $savedCondition->description ?: 'Time Condition #' . $savedCondition->id,
                 (string)$savedCondition->id,
                 __METHOD__
             );
-            
+
         } catch (\Exception $e) {
-            return self::handleSaveError($e, $res);
+            return self::handleError($e, $res);
         }
-        
+
         return $res;
     }
-    
+
     /**
-     * Validate time condition data with all business rules
-     * 
-     * @param array $data Sanitized data
-     * @return array Validation errors
+     * Validate time periods with complex business rules
+     *
+     * Validates:
+     * - Action-specific fields (extension vs playmessage)
+     * - Time format (HH:MM pattern)
+     * - Date range (start before end)
+     * - Weekday range (1-7)
+     * - CalType-specific requirements (CalDAV/iCal URL)
+     * - At least one time condition for timeframe type
+     *
+     * WHY: Business logic validation ensures data integrity
+     *
+     * @param array<string, mixed> $data Sanitized data
+     * @return array<string> List of validation errors (empty if valid)
      */
-    private static function validateTimeConditionData(array $data): array
+    private static function validateTimePeriods(array $data): array
     {
         $errors = [];
         $di = \Phalcon\Di\Di::getDefault();
-        $t = $di->get(TranslationProvider::SERVICE_NAME);
-        
-        // Get action and calType
+        $t = $di !== null ? $di->get(TranslationProvider::SERVICE_NAME) : null;
+
         $action = $data['action'] ?? '';
         $calType = $data['calType'] ?? '';
-        
+
         // Validate action-specific fields
         if ($action === 'extension') {
-            // Extension is required when action is 'extension'
             if (empty($data['extension']) || trim($data['extension']) === '') {
-                $errors[] = $t->_('tf_ValidateExtensionEmpty');
+                $errors[] = $t ? $t->_('tf_ValidateExtensionEmpty') : 'Extension is required when action is extension';
             }
         } elseif ($action === 'playmessage') {
-            // Audio message is required when action is 'playmessage'
             if (empty($data['audio_message_id']) || trim($data['audio_message_id']) === '') {
-                $errors[] = $t->_('tf_ValidateAudioMessageEmpty');
+                $errors[] = $t ? $t->_('tf_ValidateAudioMessageEmpty') : 'Audio message is required when action is playmessage';
             }
         }
-        
-        // Validate time format if provided
+
+        // Validate time format (HH:MM)
         $timePattern = '/^([01]?[0-9]|2[0-3]):([0-5]?[0-9])$/';
         if (!empty($data['time_from']) && !preg_match($timePattern, $data['time_from'])) {
-            $errors[] = $t->_('tf_ValidateCheckTimeInterval');
+            $errors[] = $t ? $t->_('tf_ValidateCheckTimeInterval') : 'Invalid time format for time_from';
         }
         if (!empty($data['time_to']) && !preg_match($timePattern, $data['time_to'])) {
-            $errors[] = $t->_('tf_ValidateCheckTimeInterval');
+            $errors[] = $t ? $t->_('tf_ValidateCheckTimeInterval') : 'Invalid time format for time_to';
         }
-        
+
         // If one time is set, both must be set
         if ((!empty($data['time_from']) && empty($data['time_to'])) ||
             (empty($data['time_from']) && !empty($data['time_to']))) {
-            $errors[] = $t->_('tf_ValidateCheckTimeInterval');
+            $errors[] = $t ? $t->_('tf_ValidateCheckTimeInterval') : 'Both time_from and time_to must be specified';
         }
-        
+
         // Validate calendar-specific fields
-        if ($calType === 'CALDAV' || $calType === 'ICAL') {
+        if ($calType === 'caldav' || $calType === 'ical') {
             // CalDAV/iCal requires URL
             if (empty($data['calUrl']) || trim($data['calUrl']) === '') {
-                $errors[] = $t->_('tf_ValidateCalUri');
+                $errors[] = $t ? $t->_('tf_ValidateCalUri') : 'Calendar URL is required for CalDAV/iCal';
             }
             // Validate URL format if provided
             if (!empty($data['calUrl']) && !filter_var($data['calUrl'], FILTER_VALIDATE_URL)) {
-                $errors[] = $t->_('tf_ValidateCalUri');
+                $errors[] = $t ? $t->_('tf_ValidateCalUri') : 'Invalid calendar URL format';
             }
         } elseif ($calType === '' || $calType === 'timeframe') {
             // For timeframe type, at least one condition must be specified
             $hasDateRange = !empty($data['date_from']) || !empty($data['date_to']);
-            $hasWeekdayRange = !empty($data['weekday_from']) || !empty($data['weekday_to']);
+            $hasWeekdayRange = (!empty($data['weekday_from']) && $data['weekday_from'] !== '-1') ||
+                               (!empty($data['weekday_to']) && $data['weekday_to'] !== '-1');
             $hasTimeRange = !empty($data['time_from']) || !empty($data['time_to']);
-            
+
             if (!$hasDateRange && !$hasWeekdayRange && !$hasTimeRange) {
-                // At least one time condition must be specified
-                $errors[] = $t->_('tf_ValidateAtLeastOneCondition');
+                $errors[] = $t ? $t->_('tf_ValidateAtLeastOneCondition') : 'At least one time condition must be specified';
             }
-            
+
             // Validate date range if provided
             if ($hasDateRange) {
                 if ((!empty($data['date_from']) && empty($data['date_to'])) ||
                     (empty($data['date_from']) && !empty($data['date_to']))) {
-                    $errors[] = $t->_('tf_ValidateDateRangeComplete');
+                    $errors[] = $t ? $t->_('tf_ValidateDateRangeComplete') : 'Both date_from and date_to must be specified';
                 }
                 // Check if start date is before end date
                 if (!empty($data['date_from']) && !empty($data['date_to'])) {
                     $startTimestamp = is_numeric($data['date_from']) ? (int)$data['date_from'] : strtotime($data['date_from']);
                     $endTimestamp = is_numeric($data['date_to']) ? (int)$data['date_to'] : strtotime($data['date_to']);
                     if ($startTimestamp > $endTimestamp) {
-                        $errors[] = $t->_('tf_ValidateDateRangeOrder');
+                        $errors[] = $t ? $t->_('tf_ValidateDateRangeOrder') : 'Start date must be before end date';
                     }
                 }
             }
-            
+
             // Validate weekday range if provided
             if ($hasWeekdayRange) {
-                if ((!empty($data['weekday_from']) && empty($data['weekday_to'])) ||
-                    (empty($data['weekday_from']) && !empty($data['weekday_to']))) {
-                    $errors[] = $t->_('tf_ValidateWeekdayRangeComplete');
+                $weekdayFrom = $data['weekday_from'] ?? '-1';
+                $weekdayTo = $data['weekday_to'] ?? '-1';
+
+                if (($weekdayFrom !== '-1' && $weekdayTo === '-1') ||
+                    ($weekdayFrom === '-1' && $weekdayTo !== '-1')) {
+                    $errors[] = $t ? $t->_('tf_ValidateWeekdayRangeComplete') : 'Both weekday_from and weekday_to must be specified';
                 }
-                // Validate weekday values (1-7)
-                if (!empty($data['weekday_from']) && ((int)$data['weekday_from'] < 1 || (int)$data['weekday_from'] > 7)) {
-                    $errors[] = $t->_('tf_ValidateWeekdayInvalid');
+
+                // Validate weekday values (1-7 or -1)
+                if ($weekdayFrom !== '-1' && ((int)$weekdayFrom < 1 || (int)$weekdayFrom > 7)) {
+                    $errors[] = $t ? $t->_('tf_ValidateWeekdayInvalid') : 'Weekday must be between 1 and 7';
                 }
-                if (!empty($data['weekday_to']) && ((int)$data['weekday_to'] < 1 || (int)$data['weekday_to'] > 7)) {
-                    $errors[] = $t->_('tf_ValidateWeekdayInvalid');
+                if ($weekdayTo !== '-1' && ((int)$weekdayTo < 1 || (int)$weekdayTo > 7)) {
+                    $errors[] = $t ? $t->_('tf_ValidateWeekdayInvalid') : 'Weekday must be between 1 and 7';
                 }
             }
         }
-        
+
         return $errors;
     }
-    
+
     /**
      * Update associated incoming routes
-     * 
+     *
+     * Deletes existing associations and creates new ones.
+     * Maintains referential integrity with incoming routes.
+     *
      * @param int $conditionId Time condition ID
-     * @param array $routeIds Incoming route IDs
+     * @param array<int> $routeIds Incoming route IDs
      * @return void
      */
     private static function updateIncomingRoutes(int $conditionId, array $routeIds): void
@@ -341,36 +489,40 @@ class SaveRecordAction extends AbstractSaveRecordAction
             'conditions' => 'timeConditionId = :conditionId:',
             'bind' => ['conditionId' => $conditionId]
         ]);
-        
-        foreach ($existingAssociations as $association) {
-            $association->delete();
+
+        if ($existingAssociations !== false) {
+            foreach ($existingAssociations as $association) {
+                $association->delete();
+            }
         }
-        
+
         // Create new associations
         foreach ($routeIds as $routeId) {
             if (empty($routeId)) {
                 continue;
             }
-            
+
             $association = new OutWorkTimesRouts();
             $association->timeConditionId = $conditionId;
             $association->routId = (int)$routeId;
             $association->save();
         }
     }
-    
+
     /**
      * Update allowed extensions for time condition
-     * 
+     *
+     * Placeholder for extension restriction logic.
+     * Implementation depends on database schema.
+     *
      * @param int $conditionId Time condition ID
-     * @param array $extensions Extension numbers
+     * @param array<string> $extensions Extension numbers
      * @return void
      */
     private static function updateAllowedExtensions(int $conditionId, array $extensions): void
     {
         // This would update a related table for allowed extensions
         // Implementation depends on your database schema
-        // For now, this is a placeholder
         SystemMessages::sysLogMsg(
             __METHOD__,
             "Updating allowed extensions for condition {$conditionId}: " . implode(', ', $extensions),

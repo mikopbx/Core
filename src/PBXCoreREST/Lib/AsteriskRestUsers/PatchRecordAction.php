@@ -22,102 +22,55 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Lib\AsteriskRestUsers;
 
 use MikoPBX\Common\Models\AsteriskRestUsers;
-use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractPatchAction;
 
 /**
  * Partial update (modify) ARI user action.
  *
+ * Delegates to SaveRecordAction with intelligent merge.
+ * Only updates fields that are explicitly provided.
+ *
  * @package MikoPBX\PBXCoreREST\Lib\AsteriskRestUsers
  */
-class PatchRecordAction extends AbstractSaveRecordAction
+class PatchRecordAction extends AbstractPatchAction
 {
     /**
-     * Partial update of ARI user.
-     * This is a PATCH operation that only updates provided fields.
+     * Get human-readable entity name for error messages
      *
-     * @param array $data User data with ID and fields to update
-     * @return PBXApiResult
+     * @return string Entity name in lowercase
      */
-    public static function main(array $data): PBXApiResult
+    protected static function getEntityName(): string
     {
-        $res = self::createApiResult(__METHOD__);
+        return 'ARI user';
+    }
 
-        try {
-            // Validate ID
-            if (empty($data['id'])) {
-                $res->messages['error'][] = 'ID is required';
-                return $res;
-            }
-            
-            // Find existing record
-            $record = AsteriskRestUsers::findFirstById($data['id']);
-            
-            if (!$record) {
-                $res->messages['error'][] = 'Record not found';
-                return $res;
-            }
-            
-            // Update only provided fields (PATCH updates only what's sent)
-            if (isset($data['username'])) {
-                $record->username = $data['username'];
-            }
-            
-            if (isset($data['password']) && $data['password'] !== '') {
-                $record->password = $data['password'];
-            }
-            
-            if (isset($data['description'])) {
-                $record->description = $data['description'];
-            }
-            
-            if (isset($data['applications'])) {
-                if (is_array($data['applications'])) {
-                    $record->setApplicationsArray($data['applications']);
-                } else {
-                    $record->applications = '';
-                }
-            }
-            
-            // Validate username if it was changed
-            if (isset($data['username']) && empty($record->username)) {
-                $res->messages['error'][] = 'Username cannot be empty';
-                return $res;
-            }
-            
-            // Check for duplicate username if it was changed
-            if (isset($data['username'])) {
-                $existing = AsteriskRestUsers::findFirst([
-                    'conditions' => 'username = :username: AND id != :id:',
-                    'bind' => [
-                        'username' => $record->username,
-                        'id' => $record->id
-                    ]
-                ]);
-                
-                if ($existing) {
-                    $res->messages['error'][] = 'Username already exists';
-                    return $res;
-                }
-            }
-            
-            // Save record
-            if (!$record->save()) {
-                $errors = $record->getMessages();
-                foreach ($errors as $error) {
-                    $res->messages['error'][] = $error->getMessage();
-                }
-                return $res;
-            }
-            
-            // Build response data
-            $res->data = DataStructure::createFromModel($record);
-            $res->success = true;
-            
-        } catch (\Exception $e) {
-            return self::handleError($e, $res);
-        }
+    /**
+     * Get Model class for this entity
+     *
+     * @return string Fully qualified Model class name
+     */
+    protected static function getModelClass(): string
+    {
+        return AsteriskRestUsers::class;
+    }
 
-        return $res;
+    /**
+     * Get DataStructure class for this entity
+     *
+     * @return string Fully qualified DataStructure class name
+     */
+    protected static function getDataStructureClass(): string
+    {
+        return DataStructure::class;
+    }
+
+    /**
+     * Get SaveRecordAction class for this entity
+     *
+     * @return string Fully qualified SaveRecordAction class name
+     */
+    protected static function getSaveActionClass(): string
+    {
+        return SaveRecordAction::class;
     }
 }

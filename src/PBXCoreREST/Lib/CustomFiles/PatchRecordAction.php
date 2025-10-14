@@ -17,142 +17,60 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
+declare(strict_types=1);
+
 namespace MikoPBX\PBXCoreREST\Lib\CustomFiles;
 
 use MikoPBX\Common\Models\CustomFiles;
-use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractPatchAction;
 
 /**
- * Action for partial update of a custom file
+ * Partial update (modify) custom file action.
  *
- * @api {patch} /pbxcore/api/v3/custom-files/:id Partially update custom file
- * @apiVersion 3.0.0
- * @apiName PatchRecord
- * @apiGroup CustomFiles
+ * Delegates to SaveRecordAction with intelligent merge.
+ * Only updates fields that are explicitly provided.
  *
- * @apiParam {String} id Custom file ID
- * @apiParam {String} [filepath] File path (must be unique if provided)
- * @apiParam {String} [content] File content (base64 encoded)
- * @apiParam {String} [mode] File mode (none, append, override, script)
- * @apiParam {String} [description] File description
- *
- * @apiSuccess {Boolean} result Operation result
- * @apiSuccess {Object} data Updated custom file data
+ * @package MikoPBX\PBXCoreREST\Lib\CustomFiles
  */
-class PatchRecordAction
+class PatchRecordAction extends AbstractPatchAction
 {
     /**
-     * Partial update of custom file (updates only provided fields)
+     * Get human-readable entity name for error messages
      *
-     * @param array $data Custom file data including ID
-     * @return PBXApiResult
+     * @return string Entity name in lowercase
      */
-    public static function main(array $data): PBXApiResult
+    protected static function getEntityName(): string
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
+        return 'custom file';
+    }
 
-        try {
-            // Validate ID
-            if (empty($data['id'])) {
-                $res->messages['error'][] = 'ID is required';
-                return $res;
-            }
+    /**
+     * Get Model class for this entity
+     *
+     * @return string Fully qualified Model class name
+     */
+    protected static function getModelClass(): string
+    {
+        return CustomFiles::class;
+    }
 
-            // Find existing file
-            $file = CustomFiles::findFirstById($data['id']);
-            if (!$file) {
-                $res->messages['error'][] = "Custom file with ID '{$data['id']}' not found";
-                return $res;
-            }
+    /**
+     * Get DataStructure class for this entity
+     *
+     * @return string Fully qualified DataStructure class name
+     */
+    protected static function getDataStructureClass(): string
+    {
+        return DataStructure::class;
+    }
 
-            // Track if any changes were made
-            $hasChanges = false;
-
-            // Update filepath if provided
-            if (isset($data['filepath']) && $data['filepath'] !== $file->filepath) {
-                // Check if new filepath is unique
-                $existing = CustomFiles::findFirst([
-                    'conditions' => 'filepath = :filepath: AND id != :id:',
-                    'bind' => [
-                        'filepath' => $data['filepath'],
-                        'id' => $data['id']
-                    ]
-                ]);
-                if ($existing) {
-                    $res->messages['error'][] = "File with path '{$data['filepath']}' already exists";
-                    return $res;
-                }
-                $file->filepath = $data['filepath'];
-                $hasChanges = true;
-            }
-
-            // Update content if provided
-            if (isset($data['content'])) {
-                $oldContent = $file->getContent();
-                // If content is not base64 encoded, encode it
-                if (base64_decode($data['content'], true) === false) {
-                    $file->setContent($data['content']);
-                } else {
-                    $file->content = $data['content'];
-                }
-                if ($oldContent !== $file->getContent()) {
-                    $hasChanges = true;
-                }
-            }
-
-            // Update mode if provided (but not for MODE_CUSTOM files)
-            if (isset($data['mode']) && $file->mode !== CustomFiles::MODE_CUSTOM) {
-                // Only allow mode changes for non-custom files
-                if (in_array($data['mode'], [
-                    CustomFiles::MODE_NONE,
-                    CustomFiles::MODE_APPEND,
-                    CustomFiles::MODE_OVERRIDE,
-                    CustomFiles::MODE_SCRIPT
-                ])) {
-                    if ($file->mode !== $data['mode']) {
-                        $file->mode = $data['mode'];
-                        $hasChanges = true;
-                    }
-                }
-            }
-            // IMPORTANT: Never change mode for custom files
-            // Custom files must always remain MODE_CUSTOM
-
-            // Update description if provided
-            if (isset($data['description']) && $file->description !== $data['description']) {
-                $file->description = $data['description'];
-                $hasChanges = true;
-            }
-
-            // If content is empty, force mode to none (except for MODE_CUSTOM files)
-            if (empty($file->getContent()) &&
-                $file->mode !== CustomFiles::MODE_NONE &&
-                $file->mode !== CustomFiles::MODE_CUSTOM) {
-                $file->mode = CustomFiles::MODE_NONE;
-                $hasChanges = true;
-            }
-
-            // Mark as changed if there were updates
-            if ($hasChanges) {
-                $file->changed = '1';
-            }
-
-            // Save the file if there were changes
-            if ($hasChanges) {
-                if (!$file->save()) {
-                    $res->messages['error'] = $file->getMessages();
-                    return $res;
-                }
-            }
-
-            $res->data = DataStructure::createFromModel($file);
-            $res->success = true;
-
-        } catch (\Exception $e) {
-            $res->messages['error'][] = $e->getMessage();
-        }
-
-        return $res;
+    /**
+     * Get SaveRecordAction class for this entity
+     *
+     * @return string Fully qualified SaveRecordAction class name
+     */
+    protected static function getSaveActionClass(): string
+    {
+        return SaveRecordAction::class;
     }
 }

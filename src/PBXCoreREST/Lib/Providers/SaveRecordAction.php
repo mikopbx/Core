@@ -19,7 +19,6 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Providers;
 
-use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\Providers;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\Iax;
@@ -29,130 +28,590 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
 
 /**
- * Action for saving provider record
- * 
- * @api {post} /pbxcore/api/v2/providers/saveRecord Create provider
- * @api {put} /pbxcore/api/v2/providers/saveRecord/:id Update provider
- * @apiVersion 2.0.0
- * @apiName SaveRecord
+ * ✨ REFERENCE IMPLEMENTATION: Provider Save Action (Polymorphic)
+ *
+ * This follows the canonical 7-phase pattern with polymorphic schema support (SIP + IAX).
+ * Single Source of Truth pattern - all definitions in DataStructure::getParameterDefinitions()
+ *
+ * Processing Pipeline (7 Phases):
+ * 1. SANITIZE: Clean user input (XSS, SQL injection prevention)
+ * 2. VALIDATE REQUIRED: Check required fields (type, description, registration_type)
+ * 3. DETERMINE OPERATION: Detect CREATE vs UPDATE/PATCH
+ * 4. APPLY DEFAULTS: Add missing values (CREATE only!) type-specific defaults
+ * 5. VALIDATE SCHEMA: Check enum/range constraints + business rules
+ * 6. SAVE: Transaction with model + type-specific config (SIP/IAX)
+ * 7. BUILD RESPONSE: Format data using DataStructure
+ *
+ * @api {post} /pbxcore/api/v3/providers Create provider
+ * @api {put} /pbxcore/api/v3/providers/:id Full update
+ * @api {patch} /pbxcore/api/v3/providers/:id Partial update
+ * @apiVersion 3.0.0
+ * @apiName SaveProvider
  * @apiGroup Providers
- * 
- * @apiParam {String} [id] Record ID (for update)
- * @apiParam {String} type Provider type (SIP/IAX)
- * @apiParam {String} note Provider description
- * @apiParam {Object} config Provider configuration (type-specific)
- * 
- * @apiSuccess {Boolean} result Operation result
- * @apiSuccess {Object} data Saved provider data
- * @apiSuccess {String} reload URL for page reload
  */
 class SaveRecordAction extends AbstractSaveRecordAction
 {
     /**
-     * Save provider record
-     * 
-     * @param array $data Data to save
-     * @return PBXApiResult
+     * Save provider with comprehensive validation (polymorphic SIP/IAX)
+     *
+     * @param array<string, mixed> $data Input data from API request
+     * @return PBXApiResult Result with data/errors and HTTP status code
      */
     public static function main(array $data): PBXApiResult
     {
         $res = self::createApiResult(__METHOD__);
 
-        // Check if this is a status-only update (contains only id, type, disabled)
-        $isStatusUpdate = isset($data['id']) && isset($data['type']) && isset($data['disabled']) && 
+        // ============================================================
+        // SPECIAL CASE: Status-only update (lightweight operation)
+        // WHY: Allows quick enable/disable without full validation
+        // ============================================================
+
+        $isStatusUpdate = isset($data['id']) && isset($data['type']) && isset($data['disabled']) &&
                           count(array_diff_key($data, array_flip(['id', 'type', 'disabled']))) === 0;
-        
+
         if ($isStatusUpdate) {
             return self::updateStatusOnly($data, $res);
         }
-        
-        // Determine if this is a CREATE or UPDATE operation based on HTTP method
-        // For saveRecord action:
-        // - POST method = CREATE operation (even with pre-generated ID)
-        // - PUT method = UPDATE operation (must find existing record)
-        $httpMethod = $data['httpMethod'] ?? null;
-        unset($data['httpMethod']); // Remove from data to avoid saving it
-        
-        // Define sanitization rules based on provider type
-        $providerType = strtoupper($data['type'] ?? 'SIP');
-        
-        // Common sanitization rules
-        $sanitizationRules = [
-            'id' => 'string|max:64',  // Provider ID is a string like "SIP-TRUNK-XXXXX"
-            'type' => 'string|upper|max:3',
-            'note' => 'string|sanitize|max:255|empty_to_null',
-        ];
-        
-        // Type-specific sanitization rules
-        if ($providerType === 'SIP') {
-            $sanitizationRules = array_merge($sanitizationRules, self::getSipSanitizationRules());
-        } else {
-            $sanitizationRules = array_merge($sanitizationRules, self::getIaxSanitizationRules());
-        }
-        
-        // Text fields for unified processing
+
+        // ============================================================
+        // PHASE 1: DATA SANITIZATION
+        // Clean user input to prevent XSS, SQL injection, etc.
+        // WHY: Security first - never trust user input
+        // ============================================================
+
+        $sanitizationRules = DataStructure::getSanitizationRules();
         $textFields = ['note', 'description', 'manualattributes'];
-        
+
+        // Preserve ID field (not in sanitization rules, uses uniqid)
+        $recordId = $data['id'] ?? null;
+
+        // Determine provider type for type-specific validation
+        $providerType = strtoupper($data['type'] ?? 'SIP');
+
         try {
-            // Sanitize only allowed fields
-            $allowedData = array_intersect_key($data, $sanitizationRules);
-            
-            // Unified data sanitization using new approach
-            $sanitizedData = self::sanitizeInputData($allowedData, $sanitizationRules, $textFields);
-            
-            // Provide defaults for missing bool fields
-            $boolFields = ['disabled', 'qualify', 'disablefromuser', 'receive_calls_without_auth'];
-            foreach ($boolFields as $field) {
-                if (!array_key_exists($field, $sanitizedData) && isset($sanitizationRules[$field]) && $sanitizationRules[$field] === 'bool') {
-                    $sanitizedData[$field] = false;
+            // Sanitize: remove dangerous chars, trim whitespace, normalize format
+            $sanitizedData = self::sanitizeInputData($data, $sanitizationRules, $textFields);
+
+            // Restore preserved ID field (essential for UPDATE/PATCH operations)
+            if ($recordId !== null) {
+                $sanitizedData['id'] = $recordId;
+            }
+
+            // Force uppercase for type
+            if (isset($sanitizedData['type'])) {
+                $sanitizedData['type'] = strtoupper($sanitizedData['type']);
+            }
+
+            // Handle 'none' value for networkfilterid
+            if (isset($sanitizedData['networkfilterid']) &&
+                ($sanitizedData['networkfilterid'] === 'none' || $sanitizedData['networkfilterid'] === '')) {
+                $sanitizedData['networkfilterid'] = null;
+            }
+
+        } catch (\Exception $e) {
+            $res->messages['error'][] = $e->getMessage();
+            return $res;
+        }
+
+        // ============================================================
+        // PHASE 2: REQUIRED FIELDS VALIDATION
+        // Check required fields before database operations
+        // WHY: Fail fast - don't waste resources on incomplete data
+        // ============================================================
+
+        $validationRules = [
+            'type' => [
+                ['type' => 'required', 'message' => 'Provider type is required'],
+                ['type' => 'enum', 'values' => ['SIP', 'IAX'], 'message' => 'Provider type must be SIP or IAX']
+            ],
+            'description' => [
+                ['type' => 'required', 'message' => 'Provider description is required']
+            ],
+            'registration_type' => [
+                ['type' => 'required', 'message' => 'Registration type is required'],
+                ['type' => 'enum', 'values' => ['none', 'outbound', 'inbound'],
+                 'message' => 'Registration type must be: none, outbound, or inbound']
+            ]
+        ];
+
+        $validationErrors = self::validateRequiredFields($sanitizedData, $validationRules);
+        if (!empty($validationErrors)) {
+            $res->messages['error'] = $validationErrors;
+            return $res;
+        }
+
+        // ============================================================
+        // PHASE 3: DETERMINE OPERATION TYPE
+        // Detect CREATE vs UPDATE/PATCH and prepare model
+        // WHY: Different logic for new vs existing records
+        // ============================================================
+
+        $provider = null;
+        $isNewRecord = true;
+
+        if (!empty($sanitizedData['id'])) {
+            // Try to find existing record by uniqid
+            $provider = Providers::findFirstByUniqid($sanitizedData['id']);
+
+            if ($provider) {
+                // Record exists - UPDATE or PATCH operation
+                $isNewRecord = false;
+
+                // Type cannot be changed on existing provider
+                if ($provider->type !== $sanitizedData['type']) {
+                    $res->messages['error'][] = 'Cannot change provider type after creation';
+                    return $res;
                 }
-            }
-            
-            // Validate provider type
-            if (!in_array($sanitizedData['type'], ['SIP', 'IAX'])) {
-                $res->messages['error'][] = 'api_InvalidProviderType';
+            } else {
+                // ID provided but record not found
+                $res->messages['error'][] = 'Provider not found';
+                $res->httpCode = 404;
                 return $res;
             }
-            
-            // Validate required fields
-            $validationErrors = self::validateProviderData($sanitizedData);
-            if (!empty($validationErrors)) {
-                $res->messages['error'] = $validationErrors;
-                return $res;
+        }
+
+        if ($isNewRecord) {
+            // CREATE: Initialize new provider
+            $provider = new Providers();
+            $provider->type = $sanitizedData['type'];
+            $provider->uniqid = !empty($sanitizedData['id']) ? $sanitizedData['id'] :
+                                Providers::generateUniqueID($sanitizedData['type']);
+        }
+
+        // ============================================================
+        // PHASE 4: APPLY DEFAULTS (CREATE ONLY!)
+        // Add missing field defaults from schema
+        // WHY CREATE: New records need complete data with sensible defaults
+        // WHY NOT UPDATE/PATCH: Would overwrite existing values!
+        // ============================================================
+
+        if ($isNewRecord) {
+            // ✅ CREATE: Apply defaults for missing fields
+            // Type-specific defaults: SIP uses port 5060, IAX uses 4569
+            $sanitizedData = DataStructure::applyDefaults($sanitizedData);
+
+            // Override port default based on provider type
+            if (!isset($sanitizedData['port']) || empty($sanitizedData['port'])) {
+                $sanitizedData['port'] = ($providerType === 'IAX') ? 4569 : 5060;
             }
-            
-            // Save in transaction, passing the HTTP method info
-            $savedProvider = self::executeInTransaction(function() use ($sanitizedData, $httpMethod) {
-                return self::saveProviderInTransaction($sanitizedData, $httpMethod);
+        }
+        // ❌ UPDATE/PATCH: Do NOT apply defaults (would overwrite existing values!)
+
+        // ============================================================
+        // PHASE 5: SCHEMA VALIDATION
+        // Validate enum, min/max constraints + business rules
+        // WHY: Validate AFTER defaults to check complete dataset
+        // ============================================================
+
+        $schemaErrors = DataStructure::validateInputData($sanitizedData);
+        if (!empty($schemaErrors)) {
+            $res->messages['error'] = $schemaErrors;
+            $res->httpCode = 422; // Unprocessable Entity
+            return $res;
+        }
+
+        // Business rules validation (depends on registration_type)
+        $businessErrors = self::validateBusinessRules($sanitizedData, $isNewRecord, $provider);
+        if (!empty($businessErrors)) {
+            $res->messages['error'] = $businessErrors;
+            $res->httpCode = 422;
+            return $res;
+        }
+
+        // ============================================================
+        // PHASE 6: SAVE TO DATABASE
+        // Transaction ensures atomicity (provider + SIP/IAX config)
+        // WHY: All-or-nothing - either complete save or complete rollback
+        // ============================================================
+
+        try {
+            $savedProvider = self::executeInTransaction(function() use ($provider, $sanitizedData, $isNewRecord) {
+
+                // Update Providers model
+                $provider->note = $sanitizedData['note'] ?? '';
+
+                if (!$provider->save()) {
+                    throw new \Exception('Failed to save provider: ' . implode(', ', $provider->getMessages()));
+                }
+
+                // Save type-specific configuration
+                if ($sanitizedData['type'] === 'SIP') {
+                    self::saveSipConfiguration($provider, $sanitizedData, $isNewRecord);
+                } else {
+                    self::saveIaxConfiguration($provider, $sanitizedData, $isNewRecord);
+                }
+
+                return $provider;
             });
-            
+
+            // ============================================================
+            // PHASE 7: BUILD RESPONSE
+            // Format data using DataStructure (representations, types, etc.)
+            // WHY: Consistent API response format with all computed fields
+            // ============================================================
+
             $res->data = DataStructure::createFromModel($savedProvider);
             $res->success = true;
-            
-            // Set reload URL for new records (POST requests)
-            if ($httpMethod === 'POST') {
-                // Convert type to lowercase for URL (modifysip, modifyiax)
+            $res->httpCode = $isNewRecord ? 201 : 200; // 201 Created, 200 OK
+
+            // Set reload path for frontend navigation
+            // WHY: Frontend needs to know where to redirect after save
+            if ($isNewRecord) {
                 $urlType = strtolower($savedProvider->type);
                 $res->reload = "providers/modify{$urlType}/{$savedProvider->uniqid}";
             }
-            
+
             // Log successful operation
             $configType = ucfirst(strtolower($savedProvider->type));
             $config = $savedProvider->$configType;
             $description = $config ? $config->description : $savedProvider->note;
             self::logSuccessfulSave('Provider', $description, $savedProvider->type, __METHOD__);
-            
+
         } catch (\Exception $e) {
-            // Handle save error using unified approach
-            return self::handleSaveError($e, $res);
+            return self::handleError($e, $res);
         }
-        
+
         return $res;
     }
-    
+
+    /**
+     * Validate business rules based on registration type
+     *
+     * Different registration types have different requirements:
+     * - outbound: requires host, username, password
+     * - inbound: requires username, password (unless receive_without_auth)
+     * - none: requires host, username, password
+     *
+     * @param array $data Sanitized data
+     * @param bool $isNewRecord True if creating new provider
+     * @param Providers|null $provider Existing provider for updates
+     * @return array Error messages
+     */
+    private static function validateBusinessRules(array $data, bool $isNewRecord, ?Providers $provider): array
+    {
+        $errors = [];
+        $regType = $data['registration_type'] ?? '';
+
+        // Host validation - required for outbound and none
+        if (in_array($regType, ['outbound', 'none'])) {
+            if (empty($data['host']) || trim($data['host']) === '') {
+                $errors[] = \MikoPBX\Common\Providers\TranslationProvider::translate('pr_ValidationProviderHostIsEmpty');
+            }
+        }
+
+        // Username and password validation based on registration type
+        if ($regType === 'outbound' || $regType === 'none') {
+            if (empty($data['username']) || trim($data['username']) === '') {
+                $errors[] = \MikoPBX\Common\Providers\TranslationProvider::translate('pr_ValidationProviderLogin');
+            }
+
+            // For UPDATE: password is optional if it's masked
+            $passwordRequired = true;
+            if (!$isNewRecord && isset($data['secret']) && $data['secret'] === 'XXXXXXXX') {
+                $passwordRequired = false;
+            }
+
+            if ($passwordRequired && (empty($data['secret']) || trim($data['secret']) === '')) {
+                $errors[] = \MikoPBX\Common\Providers\TranslationProvider::translate('pr_ValidationProviderPasswordEmpty');
+            }
+        }
+
+        // Inbound registration validation
+        if ($regType === 'inbound') {
+            if (empty($data['username']) || trim($data['username']) === '') {
+                $errors[] = \MikoPBX\Common\Providers\TranslationProvider::translate('pr_ValidationProviderLogin');
+            }
+
+            // Password optional if receive_calls_without_auth enabled
+            $receiveWithoutAuth = $data['receive_calls_without_auth'] ?? false;
+            $passwordProvided = !empty($data['secret']) && trim($data['secret']) !== '' && $data['secret'] !== 'XXXXXXXX';
+
+            if (!$receiveWithoutAuth && !$passwordProvided && $isNewRecord) {
+                $errors[] = \MikoPBX\Common\Providers\TranslationProvider::translate('pr_ValidationProviderPasswordEmpty');
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Save SIP configuration
+     *
+     * @param Providers $provider Provider model
+     * @param array $data Configuration data
+     * @param bool $isNewRecord True if creating new record
+     * @throws \Exception
+     */
+    private static function saveSipConfiguration(Providers $provider, array $data, bool $isNewRecord): void
+    {
+        // Find or create SIP configuration
+        $sip = $provider->Sip ?: new Sip();
+        $sip->uniqid = $provider->uniqid;
+
+        // Boolean fields for conversion
+        $booleanFields = ['disabled', 'qualify', 'disablefromuser', 'receive_calls_without_auth', 'cid_did_debug'];
+        $data = self::convertBooleanFields($data, $booleanFields);
+
+        // Update fields using isset() for PATCH support
+        if (isset($data['disabled'])) {
+            $sip->disabled = $data['disabled'];
+        } elseif ($isNewRecord) {
+            $sip->disabled = '0';
+        }
+
+        if (isset($data['username'])) {
+            $sip->username = $data['username'];
+        }
+
+        // Handle password update (never overwrite with masked value)
+        if (isset($data['secret'])) {
+            if ($data['registration_type'] === 'outbound' && $data['secret'] === 'XXXXXXXX') {
+                // Keep existing password - do nothing
+            } else {
+                $sip->secret = $data['secret'];
+            }
+        } elseif ($isNewRecord) {
+            $sip->secret = '';
+        }
+
+        if (isset($data['host'])) {
+            $sip->host = $data['host'];
+        }
+
+        if (isset($data['port'])) {
+            $sip->port = (string)$data['port'];
+        } elseif ($isNewRecord) {
+            $sip->port = '5060';
+        }
+
+        if (isset($data['transport'])) {
+            $sip->transport = $data['transport'];
+        } elseif ($isNewRecord) {
+            $sip->transport = 'UDP';
+        }
+
+        if (isset($data['qualify'])) {
+            $sip->qualify = $data['qualify'];
+        } elseif ($isNewRecord) {
+            $sip->qualify = '1';
+        }
+
+        if (isset($data['qualifyfreq'])) {
+            $sip->qualifyfreq = (string)$data['qualifyfreq'];
+        } elseif ($isNewRecord) {
+            $sip->qualifyfreq = '60';
+        }
+
+        if (isset($data['registration_type'])) {
+            $sip->registration_type = $data['registration_type'];
+        } elseif ($isNewRecord) {
+            $sip->registration_type = 'none';
+        }
+
+        if (isset($data['description'])) {
+            $sip->description = $data['description'];
+        }
+
+        if (isset($data['networkfilterid'])) {
+            $sip->networkfilterid = $data['networkfilterid'] ?: '';
+        }
+
+        if (isset($data['manualattributes'])) {
+            $sip->manualattributes = $data['manualattributes'];
+        }
+
+        if (isset($data['dtmfmode'])) {
+            $sip->dtmfmode = $data['dtmfmode'];
+        } elseif ($isNewRecord) {
+            $sip->dtmfmode = 'auto';
+        }
+
+        if (isset($data['fromuser'])) {
+            $sip->fromuser = $data['fromuser'];
+        }
+
+        if (isset($data['fromdomain'])) {
+            $sip->fromdomain = $data['fromdomain'];
+        }
+
+        if (isset($data['outbound_proxy'])) {
+            $sip->outbound_proxy = $data['outbound_proxy'];
+        }
+
+        if (isset($data['disablefromuser'])) {
+            $sip->disablefromuser = $data['disablefromuser'];
+        } elseif ($isNewRecord) {
+            $sip->disablefromuser = '0';
+        }
+
+        if (isset($data['receive_calls_without_auth'])) {
+            $sip->receive_calls_without_auth = $data['receive_calls_without_auth'];
+        } elseif ($isNewRecord) {
+            $sip->receive_calls_without_auth = '0';
+        }
+
+        // CallerID and DID fields
+        if (isset($data['cid_source'])) $sip->cid_source = $data['cid_source'];
+        elseif ($isNewRecord) $sip->cid_source = Sip::CALLERID_SOURCE_DEFAULT;
+
+        if (isset($data['cid_custom_header'])) $sip->cid_custom_header = $data['cid_custom_header'];
+        if (isset($data['cid_parser_start'])) $sip->cid_parser_start = $data['cid_parser_start'];
+        if (isset($data['cid_parser_end'])) $sip->cid_parser_end = $data['cid_parser_end'];
+        if (isset($data['cid_parser_regex'])) $sip->cid_parser_regex = $data['cid_parser_regex'];
+
+        if (isset($data['did_source'])) $sip->did_source = $data['did_source'];
+        elseif ($isNewRecord) $sip->did_source = Sip::DID_SOURCE_DEFAULT;
+
+        if (isset($data['did_custom_header'])) $sip->did_custom_header = $data['did_custom_header'];
+        if (isset($data['did_parser_start'])) $sip->did_parser_start = $data['did_parser_start'];
+        if (isset($data['did_parser_end'])) $sip->did_parser_end = $data['did_parser_end'];
+        if (isset($data['did_parser_regex'])) $sip->did_parser_regex = $data['did_parser_regex'];
+
+        if (isset($data['cid_did_debug'])) {
+            $sip->cid_did_debug = $data['cid_did_debug'];
+        } elseif ($isNewRecord) {
+            $sip->cid_did_debug = '0';
+        }
+
+        // Fixed fields for providers
+        $sip->type = 'friend';
+        $sip->nat = 'auto_force';
+        $sip->noregister = '0';
+        $sip->extension = '';
+
+        if (!$sip->save()) {
+            throw new \Exception('Failed to save SIP configuration: ' . implode(', ', $sip->getMessages()));
+        }
+
+        // Update provider reference
+        $provider->sipuid = $sip->uniqid;
+        $provider->save();
+
+        // Handle additional hosts
+        if (isset($data['additionalHosts'])) {
+            self::updateAdditionalHosts($sip->uniqid, $data['additionalHosts']);
+        }
+    }
+
+    /**
+     * Save IAX configuration
+     *
+     * @param Providers $provider Provider model
+     * @param array $data Configuration data
+     * @param bool $isNewRecord True if creating new record
+     * @throws \Exception
+     */
+    private static function saveIaxConfiguration(Providers $provider, array $data, bool $isNewRecord): void
+    {
+        // Find or create IAX configuration
+        $iax = $provider->Iax ?: new Iax();
+        $iax->uniqid = $provider->uniqid;
+
+        // Boolean fields for conversion
+        $booleanFields = ['disabled', 'receive_calls_without_auth'];
+        $data = self::convertBooleanFields($data, $booleanFields);
+
+        // Update fields using isset() for PATCH support
+        if (isset($data['disabled'])) {
+            $iax->disabled = $data['disabled'];
+        } elseif ($isNewRecord) {
+            $iax->disabled = '0';
+        }
+
+        if (isset($data['username'])) {
+            $iax->username = $data['username'];
+        }
+
+        // Handle password update (never overwrite with masked value)
+        if (isset($data['secret'])) {
+            if ($data['registration_type'] === 'outbound' && $data['secret'] === 'XXXXXXXX') {
+                // Keep existing password - do nothing
+            } else {
+                $iax->secret = $data['secret'];
+            }
+        } elseif ($isNewRecord) {
+            $iax->secret = '';
+        }
+
+        if (isset($data['host'])) {
+            $iax->host = $data['host'];
+        }
+
+        if (isset($data['port'])) {
+            $iax->port = (string)$data['port'];
+        } elseif ($isNewRecord) {
+            $iax->port = '4569';
+        }
+
+        if (isset($data['registration_type'])) {
+            $iax->registration_type = $data['registration_type'];
+        } elseif ($isNewRecord) {
+            $iax->registration_type = 'none';
+        }
+
+        if (isset($data['description'])) {
+            $iax->description = $data['description'];
+        }
+
+        if (isset($data['manualattributes'])) {
+            $iax->manualattributes = $data['manualattributes'];
+        }
+
+        if (isset($data['networkfilterid'])) {
+            $iax->networkfilterid = $data['networkfilterid'] ?: '';
+        }
+
+        if (isset($data['receive_calls_without_auth'])) {
+            $iax->receive_calls_without_auth = $data['receive_calls_without_auth'];
+        } elseif ($isNewRecord) {
+            $iax->receive_calls_without_auth = '0';
+        }
+
+        // Fixed fields for providers
+        $iax->qualify = '1';
+        $iax->noregister = '0';
+
+        if (!$iax->save()) {
+            throw new \Exception('Failed to save IAX configuration: ' . implode(', ', $iax->getMessages()));
+        }
+
+        // Update provider reference
+        $provider->iaxuid = $iax->uniqid;
+        $provider->save();
+    }
+
+    /**
+     * Update additional SIP hosts
+     *
+     * @param string $sipUniqid SIP unique identifier
+     * @param array $hosts Array of host configurations
+     */
+    private static function updateAdditionalHosts(string $sipUniqid, array $hosts): void
+    {
+        // Delete existing hosts
+        $existingHosts = SipHosts::find([
+            'conditions' => 'provider_id = :uid:',
+            'bind' => ['uid' => $sipUniqid]
+        ]);
+
+        foreach ($existingHosts as $host) {
+            $host->delete();
+        }
+
+        // Add new hosts
+        foreach ($hosts as $hostData) {
+            if (!empty($hostData['address'])) {
+                $sipHost = new SipHosts();
+                $sipHost->provider_id = $sipUniqid;
+                $sipHost->address = $hostData['address'];
+                $sipHost->save();
+            }
+        }
+    }
+
     /**
      * Update provider status only (lightweight operation)
-     * 
+     *
      * @param array $data Data containing id, type, disabled
      * @param PBXApiResult $res Result object
      * @return PBXApiResult
@@ -164,14 +623,14 @@ class SaveRecordAction extends AbstractSaveRecordAction
             $providerId = trim($data['id']);
             $providerType = strtoupper(trim($data['type']));
             $disabled = isset($data['disabled']) ? (bool)$data['disabled'] : false;
-            
+
             // Validate provider type
             if (!in_array($providerType, ['SIP', 'IAX'])) {
-                $res->messages['error'][] = 'api_InvalidProviderType';
+                $res->messages['error'][] = 'Invalid provider type';
                 return $res;
             }
-            
-            // Find provider by uniqid (id in API contains uniqid value)
+
+            // Find provider
             $provider = Providers::findFirst([
                 'conditions' => 'uniqid = :id: AND type = :type:',
                 'bind' => [
@@ -179,35 +638,27 @@ class SaveRecordAction extends AbstractSaveRecordAction
                     'type' => $providerType
                 ]
             ]);
-            
+
             if (!$provider) {
-                $res->messages['error'][] = 'api_ProviderNotFound';
+                $res->messages['error'][] = 'Provider not found';
+                $res->httpCode = 404;
                 return $res;
             }
-            
-            // Update status in the type-specific table
-            if ($providerType === 'SIP') {
-                $config = $provider->Sip;
-                if (!$config) {
-                    $res->messages['error'][] = 'api_SipConfigNotFound';
-                    return $res;
-                }
-            } else {
-                $config = $provider->Iax;
-                if (!$config) {
-                    $res->messages['error'][] = 'api_IaxConfigNotFound';
-                    return $res;
-                }
+
+            // Update status in type-specific table
+            $config = $providerType === 'SIP' ? $provider->Sip : $provider->Iax;
+            if (!$config) {
+                $res->messages['error'][] = 'Provider configuration not found';
+                return $res;
             }
-            
-            // Update disabled status
+
             $config->disabled = $disabled ? '1' : '0';
-            
+
             if (!$config->save()) {
                 $res->messages['error'] = $config->getMessages();
                 return $res;
             }
-            
+
             // Return updated data
             $res->data = [
                 'id' => $provider->uniqid,
@@ -216,401 +667,17 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 'description' => $config->description ?? $provider->note
             ];
             $res->success = true;
-            
-            // Log the status change
+
+            // Log status change
             $status = $disabled ? 'disabled' : 'enabled';
             $description = $config->description ?: $provider->note;
-            SystemMessages::sysLogMsg(__CLASS__, "Provider '{$description}' ({$providerType}) has been {$status} via API", LOG_INFO);
-            
+            SystemMessages::sysLogMsg(__CLASS__, "Provider '{$description}' ({$providerType}) {$status} via API", LOG_INFO);
+
         } catch (\Exception $e) {
             $res->messages['error'][] = $e->getMessage();
             SystemMessages::sysLogMsg(__CLASS__, "Failed to update provider status: " . $e->getMessage(), LOG_ERROR);
         }
-        
-        return $res;
-    }
-    
-    /**
-     * Get SIP-specific sanitization rules
-     * 
-     * @return array
-     */
-    private static function getSipSanitizationRules(): array
-    {
-        return [
-            'disabled' => 'bool',
-            'username' => 'string|max:64',
-            'secret' => 'string|max:64',
-            'host' => 'string|max:255',
-            'port' => 'int',
-            'transport' => 'string|upper|max:10',
-            'qualify' => 'bool',
-            'qualifyfreq' => 'int',
-            'registration_type' => 'string|max:20',
-            'description' => 'string|sanitize|max:255',
-            'networkfilterid' => 'string|max:64|empty_to_null',
-            'manualattributes' => 'string|sanitize|max:1024|empty_to_null',
-            'dtmfmode' => 'string|max:20',
-            'fromuser' => 'string|max:64|empty_to_null',
-            'fromdomain' => 'string|max:255|empty_to_null',
-            'outbound_proxy' => 'string|max:255|empty_to_null',
-            'disablefromuser' => 'bool',
-            'receive_calls_without_auth' => 'bool',
-            'additionalHosts' => 'array',
-            // CallerID and DID source fields
-            'cid_source' => 'string|max:20',
-            'cid_custom_header' => 'string|max:100|empty_to_null',
-            'cid_parser_start' => 'string|max:10|empty_to_null',
-            'cid_parser_end' => 'string|max:10|empty_to_null',
-            'cid_parser_regex' => 'string|max:255|empty_to_null',
-            'did_source' => 'string|max:20',
-            'did_custom_header' => 'string|max:100|empty_to_null',
-            'did_parser_start' => 'string|max:10|empty_to_null',
-            'did_parser_end' => 'string|max:10|empty_to_null',
-            'did_parser_regex' => 'string|max:255|empty_to_null',
-            'cid_did_debug' => 'bool',
-        ];
-    }
-    
-    /**
-     * Get IAX-specific sanitization rules
-     * 
-     * @return array
-     */
-    private static function getIaxSanitizationRules(): array
-    {
-        return [
-            'disabled' => 'bool',
-            'username' => 'string|max:64',
-            'secret' => 'string|max:64',
-            'host' => 'string|max:255',
-            'port' => 'int',
-            'registration_type' => 'string|max:20',
-            'description' => 'string|sanitize|max:255',
-            'manualattributes' => 'string|sanitize|max:1024|empty_to_null',
-            'networkfilterid' => 'string|max:64|empty_to_null',
-            'receive_calls_without_auth' => 'bool',
-        ];
-    }
-    
-    /**
-     * Save provider and configuration in transaction
-     * 
-     * @param array $data Sanitized data
-     * @param string|null $httpMethod HTTP method used for the request
-     * @return Providers Saved provider model
-     * @throws \Exception
-     */
-    private static function saveProviderInTransaction(array $data, ?string $httpMethod = null): Providers
-    {
-        // Determine if this is a CREATE or UPDATE operation
-        $isCreateOperation = ($httpMethod === 'POST');
 
-        // Find or create provider based on operation type
-        if (!$isCreateOperation && !empty($data['id'])) {
-            // UPDATE operation - provider must exist
-            $provider = Providers::findFirstByUniqid($data['id']);
-            if (!$provider) {
-                throw new \Exception('Provider not found');
-            }
-        } else {
-            // CREATE operation - create new provider
-            $provider = new Providers();
-            // Use provided ID if available (pre-generated), otherwise generate new one
-            $prefix = match($data['type']) {
-                'SIP' => Extensions::PREFIX_TRUNK_SIP,
-                'IAX' => Extensions::PREFIX_TRUNK_IAX,
-                default => $data['type'] . '-TRUNK'
-            };
-            $provider->uniqid = !empty($data['id']) ? $data['id'] :
-                                Providers::generateUniqueID($prefix);
-            $provider->type = $data['type'];
-        }
-        
-        $provider->note = $data['note'] ?? '';
-        
-        // Save provider first
-        if (!$provider->save()) {
-            throw new \Exception('Failed to save provider: ' . implode(', ', $provider->getMessages()));
-        }
-        
-        // Update type-specific configuration
-        if ($data['type'] === 'SIP') {
-            self::saveSipConfiguration($provider, $data);
-        } else {
-            self::saveIaxConfiguration($provider, $data);
-        }
-        
-        return $provider;
-    }
-    
-    /**
-     * Save SIP configuration
-     * 
-     * @param Providers $provider Provider model
-     * @param array $data Configuration data
-     * @throws \Exception
-     */
-    private static function saveSipConfiguration(Providers $provider, array $data): void
-    {
-        // Find or create SIP configuration
-        $sip = $provider->Sip ?: new Sip();
-        $sip->uniqid = $provider->uniqid;
-        
-        // Define boolean fields for SIP
-        $booleanFields = ['disabled', 'qualify', 'disablefromuser', 'receive_calls_without_auth', 'cid_did_debug'];
-        
-        // Convert boolean fields using parent method
-        $data = self::convertBooleanFields($data, $booleanFields);
-        
-        // Update fields
-        $sip->disabled = $data['disabled'] ?? '0';
-        $sip->username = $data['username'] ?? '';
-        
-        // Handle password update based on registration type
-        if (isset($data['secret'])) {
-            // For outbound registration, check if password is masked
-            if ($data['registration_type'] === 'outbound' && $data['secret'] === 'XXXXXXXX') {
-                // Don't update password if it's masked value for outbound
-                // Keep existing password - do nothing
-            } else {
-                // Update password for all other cases
-                $sip->secret = $data['secret'];
-            }
-        } elseif (!$provider->Sip) {
-            // New provider - set empty password if not provided
-            $sip->secret = '';
-        }
-        
-        $sip->host = $data['host'] ?? '';
-        $sip->port = (string)($data['port'] ?? 5060);
-        $sip->transport = $data['transport'] ?? 'UDP';
-        $sip->type = 'friend'; // Always use friend for providers
-        $sip->qualify = $data['qualify'] ?? '0';
-        $sip->qualifyfreq = (string)($data['qualifyfreq'] ?? 60);
-        $sip->registration_type = $data['registration_type'] ?? 'none';
-        $sip->extension = ''; // Always empty for providers
-        $sip->description = $data['description'] ?? '';
-        // Handle network filter: 'none' means empty string in DB
-        $networkfilterid = $data['networkfilterid'] ?? 'none';
-        $sip->networkfilterid = ($networkfilterid === 'none' || $networkfilterid === '') ? '' : $networkfilterid;
-        $sip->manualattributes = $data['manualattributes'] ?? '';
-        $sip->dtmfmode = $data['dtmfmode'] ?? 'auto';
-        $sip->nat = 'auto_force'; // Always use auto_force for providers
-        $sip->fromuser = $data['fromuser'] ?? '';
-        $sip->fromdomain = $data['fromdomain'] ?? '';
-        $sip->outbound_proxy = $data['outbound_proxy'] ?? '';
-        $sip->disablefromuser = $data['disablefromuser'] ?? '0';
-        $sip->noregister = '0'; // Always 0 for providers
-        $sip->receive_calls_without_auth = $data['receive_calls_without_auth'] ?? '0';
-        
-        // CallerID and DID source fields
-        $sip->cid_source = $data['cid_source'] ?? Sip::CALLERID_SOURCE_DEFAULT;
-        $sip->cid_custom_header = $data['cid_custom_header'] ?? '';
-        $sip->cid_parser_start = $data['cid_parser_start'] ?? '';
-        $sip->cid_parser_end = $data['cid_parser_end'] ?? '';
-        $sip->cid_parser_regex = $data['cid_parser_regex'] ?? '';
-        $sip->did_source = $data['did_source'] ?? Sip::DID_SOURCE_DEFAULT;
-        $sip->did_custom_header = $data['did_custom_header'] ?? '';
-        $sip->did_parser_start = $data['did_parser_start'] ?? '';
-        $sip->did_parser_end = $data['did_parser_end'] ?? '';
-        $sip->did_parser_regex = $data['did_parser_regex'] ?? '';
-        $sip->cid_did_debug = $data['cid_did_debug'] ?? '0';
-        
-        if (!$sip->save()) {
-            throw new \Exception('Failed to save SIP configuration: ' . implode(', ', $sip->getMessages()));
-        }
-        
-        // Update provider reference
-        $provider->sipuid = $sip->uniqid;
-        $provider->save();
-        
-        // Handle additional hosts
-        if (isset($data['additionalHosts'])) {
-            self::updateAdditionalHosts($sip->uniqid, $data['additionalHosts']);
-        }
-    }
-    
-    /**
-     * Save IAX configuration
-     * 
-     * @param Providers $provider Provider model
-     * @param array $data Configuration data
-     * @throws \Exception
-     */
-    private static function saveIaxConfiguration(Providers $provider, array $data): void
-    {
-        // Find or create IAX configuration
-        $iax = $provider->Iax ?: new Iax();
-        $iax->uniqid = $provider->uniqid;
-        
-        // Define boolean fields for IAX
-        $booleanFields = ['disabled', 'receive_calls_without_auth'];
-        
-        // Convert boolean fields using parent method
-        $data = self::convertBooleanFields($data, $booleanFields);
-        
-        // Update fields
-        $iax->disabled = $data['disabled'] ?? '0';
-        $iax->username = $data['username'] ?? '';
-        
-        // Handle password update based on registration type
-        if (isset($data['secret'])) {
-            // For outbound registration, check if password is masked
-            if ($data['registration_type'] === 'outbound' && $data['secret'] === 'XXXXXXXX') {
-                // Don't update password if it's masked value for outbound
-                // Keep existing password - do nothing
-            } else {
-                // Update password for all other cases
-                $iax->secret = $data['secret'];
-            }
-        } elseif (!$provider->Iax) {
-            // New provider - set empty password if not provided
-            $iax->secret = '';
-        }
-        
-        $iax->host = $data['host'] ?? '';
-        $iax->port = (string)($data['port'] ?? 4569);
-        $iax->qualify = '1'; // Always enabled for providers
-        $iax->registration_type = $data['registration_type'] ?? 'none';
-        $iax->description = $data['description'] ?? '';
-        $iax->manualattributes = $data['manualattributes'] ?? '';
-        $iax->noregister = '0'; // Always 0 for providers
-        $iax->receive_calls_without_auth = $data['receive_calls_without_auth'] ?? '0';
-        $networkfilterid = $data['networkfilterid'] ?? 'none';
-        $iax->networkfilterid = ($networkfilterid === 'none' || $networkfilterid === '') ? '' : $networkfilterid;
-        
-        if (!$iax->save()) {
-            throw new \Exception('Failed to save IAX configuration: ' . implode(', ', $iax->getMessages()));
-        }
-        
-        // Update provider reference
-        $provider->iaxuid = $iax->uniqid;
-        $provider->save();
-    }
-    
-    /**
-     * Update additional SIP hosts
-     * 
-     * @param string $sipUniqid SIP unique identifier
-     * @param array $hosts Array of host configurations
-     */
-    private static function updateAdditionalHosts(string $sipUniqid, array $hosts): void
-    {
-        // Delete existing hosts
-        $existingHosts = SipHosts::find([
-            'conditions' => 'provider_id = :uid:',
-            'bind' => ['uid' => $sipUniqid]
-        ]);
-        
-        foreach ($existingHosts as $host) {
-            $host->delete();
-        }
-        
-        // Add new hosts
-        foreach ($hosts as $hostData) {
-            if (!empty($hostData['address'])) {
-                $sipHost = new SipHosts();
-                $sipHost->provider_id = $sipUniqid;
-                $sipHost->address = $hostData['address'];
-                $sipHost->save();
-            }
-        }
-    }
-    
-    /**
-     * Validate provider data
-     * 
-     * @param array $data Provider data to validate
-     * @return array Array of validation error messages
-     */
-    private static function validateProviderData(array $data): array
-    {
-        $errors = [];
-        
-        // Provider type specific validation
-        if ($data['type'] === 'SIP') {
-            // Registration type validation
-            if (empty($data['registration_type'])) {
-                $errors[] = \MikoPBX\Common\Providers\TranslationProvider::translate('pr_ValidationRegistrationTypeRequired');
-            }
-            
-            $regType = $data['registration_type'] ?? '';
-            
-            // Host validation - required for outbound and none, optional for inbound
-            if (in_array($regType, ['outbound', 'none']) && (empty($data['host']) || trim($data['host']) === '')) {
-                $errors[] = \MikoPBX\Common\Providers\TranslationProvider::translate('pr_ValidationProviderHostIsEmpty');
-            }
-            
-            // Username and password validation for outbound registration
-            if ($regType === 'outbound') {
-                if (empty($data['username']) || trim($data['username']) === '') {
-                    $errors[] = \MikoPBX\Common\Providers\TranslationProvider::translate('pr_ValidationProviderLogin');
-                }
-                if (empty($data['secret']) || trim($data['secret']) === '') {
-                    $errors[] = \MikoPBX\Common\Providers\TranslationProvider::translate('pr_ValidationProviderPasswordEmpty');
-                }
-            }
-            
-            // For inbound registration, username is required
-            if ($regType === 'inbound') {
-                if (empty($data['username']) || trim($data['username']) === '') {
-                    $errors[] = \MikoPBX\Common\Providers\TranslationProvider::translate('pr_ValidationProviderLogin');
-                }
-                // Password is optional if receive_calls_without_auth is enabled
-                if (empty($data['receive_calls_without_auth']) && (empty($data['secret']) || trim($data['secret']) === '')) {
-                    $errors[] = \MikoPBX\Common\Providers\TranslationProvider::translate('pr_ValidationProviderPasswordEmpty');
-                }
-            }
-        } elseif ($data['type'] === 'IAX') {
-            // Registration type validation
-            if (empty($data['registration_type'])) {
-                $errors[] = \MikoPBX\Common\Providers\TranslationProvider::translate('pr_ValidationRegistrationTypeRequired');
-            }
-            
-            $regType = $data['registration_type'] ?? '';
-            
-            // Host validation - required for outbound and none, optional for inbound
-            if (in_array($regType, ['outbound', 'none']) && (empty($data['host']) || trim($data['host']) === '')) {
-                $errors[] = \MikoPBX\Common\Providers\TranslationProvider::translate('pr_ValidationProviderHostIsEmpty');
-            }
-            
-            // Username and password validation based on registration type
-            if ($regType === 'outbound' || $regType === 'none') {
-                if (empty($data['username']) || trim($data['username']) === '') {
-                    $errors[] = \MikoPBX\Common\Providers\TranslationProvider::translate('pr_ValidationProviderLogin');
-                }
-                if (empty($data['secret']) || trim($data['secret']) === '') {
-                    $errors[] = \MikoPBX\Common\Providers\TranslationProvider::translate('pr_ValidationProviderPasswordEmpty');
-                }
-            }
-            
-            // For inbound registration, username is required
-            if ($regType === 'inbound') {
-                if (empty($data['username']) || trim($data['username']) === '') {
-                    $errors[] = \MikoPBX\Common\Providers\TranslationProvider::translate('pr_ValidationProviderLogin');
-                }
-                // Password is optional if receive_calls_without_auth is enabled
-                if (empty($data['receive_calls_without_auth']) && (empty($data['secret']) || trim($data['secret']) === '')) {
-                    $errors[] = \MikoPBX\Common\Providers\TranslationProvider::translate('pr_ValidationProviderPasswordEmpty');
-                }
-            }
-        }
-        
-        // Common validations
-        // Provider name/description validation
-        if (empty($data['description']) || trim($data['description']) === '') {
-            $errors[] = \MikoPBX\Common\Providers\TranslationProvider::translate('pr_ValidationProviderNameIsEmpty');
-        }
-        
-        // Port validation if provided
-        if (!empty($data['port'])) {
-            $port = intval($data['port']);
-            if ($port < 1 || $port > 65535) {
-                $errors[] = \MikoPBX\Common\Providers\TranslationProvider::translate('pr_ValidationProviderPortInvalid');
-            }
-        }
-        
-        return $errors;
+        return $res;
     }
 }

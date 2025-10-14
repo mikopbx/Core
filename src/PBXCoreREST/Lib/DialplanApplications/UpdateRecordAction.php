@@ -22,159 +22,56 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Lib\DialplanApplications;
 
 use MikoPBX\Common\Models\DialplanApplications;
-use MikoPBX\Common\Models\Extensions;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 
 /**
- * Full update of dialplan application (replace all fields)
+ * UpdateRecordAction
+ * Updates an existing dialplan application record (full update - PUT).
+ *
+ * Uses standard pattern: validate ID exists, then delegate to SaveRecordAction.
+ * Dialplan reload is handled by SaveRecordAction automatically.
  *
  * @package MikoPBX\PBXCoreREST\Lib\DialplanApplications
  */
-class UpdateRecordAction
+class UpdateRecordAction extends AbstractSaveRecordAction
 {
     /**
-     * Perform full update of dialplan application
+     * Update an existing dialplan application record (full update).
      *
-     * @param array $data Request data
+     * @param array<string, mixed> $data Dialplan application data with all fields to replace existing
      * @return PBXApiResult
      */
     public static function main(array $data): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
-        
+        $res = self::createApiResult(__METHOD__);
+
         try {
-            // Find existing record by uniqid (passed as id in REST API v3)
-            $uniqid = $data['id'] ?? '';
-            if (empty($uniqid)) {
-                $res->messages['error'][] = 'ID is required for update';
+            // Validate that ID is provided
+            if (empty($data['id'])) {
+                $res->messages['error'][] = 'Dialplan application ID is required for update';
                 return $res;
             }
-            
-            $record = DialplanApplications::findFirstByUniqid($uniqid);
-            if (!$record) {
-                $res->messages['error'][] = "Dialplan application with ID {$uniqid} not found";
+
+            // v3 API: ID is the uniqid value
+            $app = DialplanApplications::findFirst("uniqid='{$data['id']}'");
+
+            if (!$app) {
+                $res->messages['error'][] = "Dialplan application not found: {$data['id']}";
                 return $res;
             }
-            
-            // Validate required fields
-            $validationResult = self::validateData($data, $record);
-            if (!$validationResult['success']) {
-                $res->messages['error'] = $validationResult['errors'];
-                return $res;
-            }
-            
-            // Start transaction
-            $di = \Phalcon\Di\Di::getDefault();
-            $db = $di->get('db');
-            $db->begin();
-            
-            // Update extension if changed
-            if ($record->extension !== $data['extension']) {
-                $extension = Extensions::findFirst([
-                    'conditions' => 'uniqid = :uniqid: AND type = :type:',
-                    'bind' => [
-                        'uniqid' => $record->uniqid,
-                        'type' => Extensions::TYPE_DIALPLAN_APPLICATION
-                    ]
-                ]);
-                
-                if ($extension) {
-                    $extension->number = $data['extension'];
-                    $extension->callerid = $data['name'];
-                    
-                    if (!$extension->save()) {
-                        $db->rollback();
-                        $res->messages['error'] = $extension->getMessages();
-                        return $res;
-                    }
-                }
-            }
-            
-            // Update all fields (full replacement)
-            $record->name = $data['name'];
-            $record->extension = $data['extension'];
-            $record->hint = $data['hint'] ?? '';
-            $record->description = $data['description'] ?? '';
-            $record->type = $data['type'] ?? 'php';
-            
-            // Update application logic
-            if (isset($data['applicationlogic'])) {
-                $record->setApplicationlogic($data['applicationlogic']);
-            }
-            
-            // Save changes
-            if (!$record->save()) {
-                $db->rollback();
-                $res->messages['error'] = $record->getMessages();
-                return $res;
-            }
-            
-            // Commit transaction
-            $db->commit();
-            
-            // Return updated record data
-            $res->data = DataStructure::createFromModel($record);
-            $res->success = true;
-            
-            // Reload dialplan
-            $di->get('pbxConfigurator')->reloadDialplan();
-            
+
+            // Ensure id field with uniqid value is preserved for SaveRecordAction
+            $data['id'] = $app->uniqid;
+
+            // Use existing SaveRecordAction logic for actual update
+            // Note: Dialplan reload is handled automatically by system mechanism
+            $res = SaveRecordAction::main($data);
+
         } catch (\Exception $e) {
-            if (isset($db) && $db->isUnderTransaction()) {
-                $db->rollback();
-            }
-            $res->messages['error'][] = $e->getMessage();
+            return self::handleError($e, $res);
         }
-        
+
         return $res;
-    }
-    
-    /**
-     * Validate input data for update
-     *
-     * @param array $data
-     * @param DialplanApplications $existingRecord
-     * @return array
-     */
-    private static function validateData(array $data, DialplanApplications $existingRecord): array
-    {
-        $errors = [];
-        
-        // Check required fields
-        if (empty($data['name'])) {
-            $errors[] = 'Name is required';
-        }
-        
-        if (empty($data['extension'])) {
-            $errors[] = 'Extension is required';
-        } else {
-            // Check if extension is numeric
-            if (!is_numeric($data['extension'])) {
-                $errors[] = 'Extension must be numeric';
-            }
-            
-            // Check if extension is already in use by another record
-            if ($data['extension'] !== $existingRecord->extension) {
-                $existingExtension = Extensions::findFirst([
-                    'conditions' => 'number = :number:',
-                    'bind' => ['number' => $data['extension']]
-                ]);
-                
-                if ($existingExtension) {
-                    $errors[] = "Extension {$data['extension']} is already in use";
-                }
-            }
-        }
-        
-        // Validate type
-        if (!empty($data['type']) && !in_array($data['type'], ['php', 'plaintext', 'lua', 'agi'])) {
-            $errors[] = 'Invalid application type';
-        }
-        
-        return [
-            'success' => empty($errors),
-            'errors' => $errors
-        ];
     }
 }

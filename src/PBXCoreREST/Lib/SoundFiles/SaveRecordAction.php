@@ -1,7 +1,7 @@
 <?php
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2024 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,125 +20,196 @@
 namespace MikoPBX\PBXCoreREST\Lib\SoundFiles;
 
 use MikoPBX\Common\Models\SoundFiles;
-use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use MikoPBX\PBXCoreREST\Lib\Common\BaseActionHelper;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
 
 /**
- * Action for saving sound file record
- * 
- * @api {post} /pbxcore/api/v2/sound-files/saveRecord Create sound file
- * @api {put} /pbxcore/api/v2/sound-files/saveRecord/:id Update sound file
- * @apiVersion 2.0.0
- * @apiName SaveRecord
- * @apiGroup SoundFiles
- * 
- * @apiParam {String} [id] Record ID (for update)
- * @apiParam {String} name File name/description
- * @apiParam {String} [description] File description
- * @apiParam {String} [category] File category
- * 
- * @apiSuccess {Boolean} result Operation result
- * @apiSuccess {Object} data Saved sound file data
- * @apiSuccess {String} reload URL for page reload
+ * ✨ REFERENCE IMPLEMENTATION: SoundFiles Save Action
+ *
+ * This follows the canonical 7-phase pattern with file metadata management.
+ * Single Source of Truth pattern - all definitions in DataStructure::getParameterDefinitions()
+ *
+ * Processing Pipeline (7 Phases):
+ * 1. SANITIZE: Clean user input (XSS, SQL injection prevention)
+ * 2. VALIDATE REQUIRED: Check required fields (name)
+ * 3. DETERMINE OPERATION: Detect CREATE vs UPDATE/PATCH
+ * 4. APPLY DEFAULTS: Add missing values (CREATE only!) - category, description
+ * 5. VALIDATE SCHEMA: Check constraints (maxLength, enum)
+ * 6. SAVE: Transaction with file metadata
+ * 7. BUILD RESPONSE: Format data using DataStructure
+ *
+ * Note: Actual file upload is handled separately (UploadFileAction)
+ *
+ * @package MikoPBX\PBXCoreREST\Lib\SoundFiles
  */
-class SaveRecordAction
+class SaveRecordAction extends AbstractSaveRecordAction
 {
     /**
-     * Save sound file record
-     * @param array $data - Data to save
-     * @return PBXApiResult
+     * Save sound file metadata with comprehensive validation
+     *
+     * Handles CREATE, UPDATE (PUT), and PATCH operations:
+     * - CREATE: New record with auto-increment ID
+     * - UPDATE: Full replacement of existing record
+     * - PATCH: Partial update of existing record
+     *
+     * @param array<string, mixed> $data Input data from API request
+     * @return PBXApiResult Result with data/errors and HTTP status code
      */
     public static function main(array $data): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
+        $res = self::createApiResult(__METHOD__);
 
-        // Determine if this is a CREATE or UPDATE operation based on HTTP method
-        // For saveRecord action:
-        // - POST method = CREATE operation (even with pre-generated ID)
-        // - PUT method = UPDATE operation (must find existing record)
-        $httpMethod = $data['httpMethod'] ?? null;
-        unset($data['httpMethod']); // Remove from data to avoid saving it
+        // ============================================================
+        // PHASE 1: DATA SANITIZATION
+        // WHY: Security - never trust user input
+        // ============================================================
 
-        // Data sanitization
-        $sanitizationRules = [
-            'id' => 'int',
-            'name' => 'string|html_escape|max:255',
-            'description' => 'string|html_escape|max:1000|empty_to_null',
-            'category' => 'string|max:50',
-            'path' => 'string|max:500'
-        ];
-        $data = BaseActionHelper::sanitizeData($data, $sanitizationRules);
+        $sanitizationRules = DataStructure::getSanitizationRules();
+        $textFields = ['name', 'description'];
 
-        // Validate required fields
+        // Preserve ID field that may not be in sanitization rules
+        $recordId = $data['id'] ?? null;
+
+        try {
+            // Sanitize: remove dangerous chars, trim whitespace, normalize format
+            $sanitizedData = self::sanitizeInputData($data, $sanitizationRules, $textFields);
+
+            // Restore preserved field (essential for UPDATE/PATCH operations)
+            if ($recordId !== null) {
+                $sanitizedData['id'] = $recordId;
+            }
+
+        } catch (\Exception $e) {
+            $res->messages['error'][] = $e->getMessage();
+            return $res;
+        }
+
+        // ============================================================
+        // PHASE 2: REQUIRED FIELDS VALIDATION
+        // WHY: Fail fast - don't waste resources on invalid data
+        // ============================================================
+
         $validationRules = [
             'name' => [
-                ['type' => 'required', 'message' => 'Sound file name is required']
+                ['type' => 'required', 'message' => 'Sound file name is required'],
+                ['type' => 'minLength', 'value' => 1, 'message' => 'Name must not be empty']
             ]
         ];
-        $validationErrors = BaseActionHelper::validateData($data, $validationRules);
+
+        $validationErrors = self::validateRequiredFields($sanitizedData, $validationRules);
         if (!empty($validationErrors)) {
             $res->messages['error'] = $validationErrors;
             return $res;
         }
 
-        // Determine if this is a CREATE or UPDATE operation
-        $isCreateOperation = ($httpMethod === 'POST');
+        // ============================================================
+        // PHASE 3: DETERMINE OPERATION TYPE
+        // WHY: Different logic for new vs existing records
+        // ============================================================
 
-        // Get or create model based on operation type
-        if (!$isCreateOperation && !empty($data['id'])) {
-            // UPDATE operation - file must exist
-            $file = SoundFiles::findFirstById($data['id']);
-            if (!$file) {
-                $res->messages['error'][] = 'api_SoundFileNotFound';
+        $soundFile = null;
+        $isNewRecord = true;
+
+        if (!empty($sanitizedData['id'])) {
+            // Try to find existing record by numeric ID
+            $soundFile = SoundFiles::findFirstById($sanitizedData['id']);
+
+            if ($soundFile) {
+                // Record exists - UPDATE or PATCH operation
+                $isNewRecord = false;
+            } else {
+                $res->messages['error'][] = "Sound file with ID {$sanitizedData['id']} not found";
+                $res->httpCode = 404;
                 return $res;
             }
-        } else {
-            // CREATE operation - create new sound file
-            $file = new SoundFiles();
-            // Use provided ID if available (pre-generated), otherwise auto-increment
-            if (!empty($data['id'])) {
-                $file->id = $data['id'];
-            }
         }
-        
-        try {
-            // Save in transaction using BaseActionHelper
-            $savedFile = BaseActionHelper::executeInTransaction(function() use ($file, $data) {
-                // Update model fields
-                $file->name = $data['name'];
-                $file->description = $data['description'] ?? '';
-                
-                // Set category only for new files or if explicitly provided
-                if (empty($file->id) || !empty($data['category'])) {
-                    $file->category = $data['category'] ?? SoundFiles::CATEGORY_CUSTOM;
-                }
-                
-                // Update path if provided
-                if (!empty($data['path'])) {
-                    $file->path = $data['path'];
-                }
-                
-                if (!$file->save()) {
-                    throw new \Exception(implode(', ', $file->getMessages()));
-                }
-                
-                return $file;
-            });
-            
-            $res->data = DataStructure::createFromModel($savedFile);
-            $res->success = true;
 
-            // Set reload URL for new records (POST requests)
-            if ($httpMethod === 'POST') {
-                $res->reload = "sound-files/modify/{$savedFile->id}";
-            }
-            
-        } catch (\Exception $e) {
-            $res->messages['error'][] = $e->getMessage();
+        if ($isNewRecord) {
+            // CREATE: Initialize new sound file
+            $soundFile = new SoundFiles();
         }
-        
+
+        // ============================================================
+        // PHASE 4: APPLY DEFAULTS (CREATE ONLY!)
+        // WHY CREATE: New records need complete dataset with all fields
+        // WHY NOT UPDATE/PATCH: Would overwrite existing values with defaults!
+        // ============================================================
+
+        if ($isNewRecord) {
+            $sanitizedData = DataStructure::applyDefaults($sanitizedData);
+        }
+
+        // ============================================================
+        // PHASE 5: SCHEMA VALIDATION
+        // WHY: Validate AFTER defaults to check complete dataset
+        // ============================================================
+
+        // Schema validation (minLength/maxLength, enum constraints)
+        $schemaErrors = DataStructure::validateInputData($sanitizedData);
+        if (!empty($schemaErrors)) {
+            $res->messages['error'] = $schemaErrors;
+            $res->httpCode = 422; // Unprocessable Entity
+            return $res;
+        }
+
+        // ============================================================
+        // PHASE 6: SAVE TO DATABASE
+        // WHY: All-or-nothing transaction
+        // ============================================================
+
+        try {
+            $savedSoundFile = self::executeInTransaction(function() use ($soundFile, $sanitizedData, $isNewRecord) {
+                // Update name
+                if (isset($sanitizedData['name'])) {
+                    $soundFile->name = $sanitizedData['name'];
+                }
+
+                // Update description (PATCH support with isset())
+                if (isset($sanitizedData['description'])) {
+                    $soundFile->description = $sanitizedData['description'];
+                } elseif ($isNewRecord) {
+                    $soundFile->description = '';
+                }
+
+                // Update category (PATCH support with isset())
+                if (isset($sanitizedData['category'])) {
+                    $soundFile->category = $sanitizedData['category'];
+                } elseif ($isNewRecord) {
+                    $soundFile->category = SoundFiles::CATEGORY_CUSTOM;
+                }
+
+                // Update path if provided (PATCH support with isset())
+                if (isset($sanitizedData['path'])) {
+                    $soundFile->path = $sanitizedData['path'];
+                }
+
+                // Save sound file
+                if (!$soundFile->save()) {
+                    throw new \Exception('Failed to save sound file: ' . implode(', ', $soundFile->getMessages()));
+                }
+
+                return $soundFile;
+            });
+
+            // ============================================================
+            // PHASE 7: BUILD RESPONSE
+            // WHY: Consistent API format using DataStructure transformation
+            // ============================================================
+
+            $res->data = DataStructure::createFromModel($savedSoundFile);
+            $res->success = true;
+            $res->httpCode = $isNewRecord ? 201 : 200; // 201 Created, 200 OK
+
+            if ($isNewRecord) {
+                $res->reload = "sound-files/modify/{$savedSoundFile->id}";
+            }
+
+            self::logSuccessfulSave('Sound file', $savedSoundFile->name, (string)$savedSoundFile->id, __METHOD__);
+
+        } catch (\Exception $e) {
+            return self::handleError($e, $res);
+        }
+
         return $res;
     }
 }

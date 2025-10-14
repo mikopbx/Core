@@ -64,8 +64,8 @@ class PatchRecordAction
         // Perform intelligent merge of data
         $mergedData = self::intelligentMerge($existingRecord->data, $data);
         
-        // Use SaveEmployeeAction with fully merged data
-        return SaveEmployeeAction::main($mergedData);
+        // Use SaveRecordAction with fully merged data
+        return SaveRecordAction::main($mergedData);
     }
     
     /**

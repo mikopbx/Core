@@ -118,14 +118,9 @@ class CopyRecordAction
     {
         $newProvider = new Providers();
 
-        // Generate new identifiers
+        // Generate new identifiers using model's method
         $newProvider->id = null;
-        $prefix = match($sourceProvider->type) {
-            'SIP' => Extensions::PREFIX_TRUNK_SIP,
-            'IAX' => Extensions::PREFIX_TRUNK_IAX,
-            default => $sourceProvider->type . '-TRUNK'
-        };
-        $newProvider->uniqid = Providers::generateUniqueID($prefix);
+        $newProvider->uniqid = Providers::generateUniqueID($sourceProvider->type);
 
         // Copy all fields with modifications
         $newProvider->type = $sourceProvider->type;

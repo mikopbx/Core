@@ -26,10 +26,6 @@ use MikoPBX\PBXCoreREST\Lib\OutboundRoutes\{
     DeleteRecordAction,
     ChangePriorityAction,
     GetDefaultAction,
-    CreateAction,
-    UpdateAction,
-    PatchAction,
-    DeleteAction,
     CopyRecordAction
 };
 use Phalcon\Di\Injectable;
@@ -90,10 +86,10 @@ class OutboundRoutesManagementProcessor extends Injectable
         $res = match ($action) {
             OutboundRouteAction::GET_RECORD => GetRecordAction::main($data['id'] ?? null, $data['copy-source'] ?? null),
             OutboundRouteAction::GET_LIST => GetListAction::main($data),
-            OutboundRouteAction::CREATE => CreateAction::main($data),
-            OutboundRouteAction::UPDATE => UpdateAction::main($data),
-            OutboundRouteAction::PATCH => PatchAction::main($data),
-            OutboundRouteAction::DELETE => DeleteAction::main($data['id'] ?? ''),
+            OutboundRouteAction::CREATE => SaveRecordAction::main($data),
+            OutboundRouteAction::UPDATE => SaveRecordAction::main($data),
+            OutboundRouteAction::PATCH => SaveRecordAction::main($data),
+            OutboundRouteAction::DELETE => DeleteRecordAction::main($data['id'] ?? ''),
             OutboundRouteAction::CHANGE_PRIORITY => ChangePriorityAction::main($data),
             OutboundRouteAction::GET_DEFAULT => GetDefaultAction::main(),
             OutboundRouteAction::COPY => CopyRecordAction::main($data['id'] ?? ''),

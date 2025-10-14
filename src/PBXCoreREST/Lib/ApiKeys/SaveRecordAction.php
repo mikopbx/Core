@@ -25,140 +25,300 @@ use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
 use MikoPBX\PBXCoreREST\Services\TokenValidationService;
 
 /**
- * Action for saving (creating or updating) API key record
- * 
- * @api {post} /pbxcore/api/v2/api-keys/saveRecord Save API key record
- * @apiVersion 2.0.0
- * @apiName SaveRecord
- * @apiGroup ApiKeys
- * 
- * @apiParam {String} [id] API key ID (for update)
- * @apiParam {String} description Description of the API key
- * @apiParam {String} [key] API key value (for new records)
- * @apiParam {Array} [allowed_paths] Array of allowed API paths
- * @apiParam {String} [networkfilterid] Network filter ID
- * @apiParam {Boolean} [full_permissions] Full permissions flag
- * 
- * @apiSuccess {Boolean} result Operation result
- * @apiSuccess {Object} data Saved record data
+ * ✨ REFERENCE IMPLEMENTATION: ApiKeys Save Action (Security Critical)
+ *
+ * This follows the canonical 7-phase pattern with security-critical path validation.
+ * Single Source of Truth pattern - all definitions in DataStructure::getParameterDefinitions()
+ *
+ * Processing Pipeline (7 Phases):
+ * 1. SANITIZE: Clean user input (XSS, SQL injection prevention)
+ * 2. VALIDATE REQUIRED: Check required fields (description, key for CREATE)
+ * 3. DETERMINE OPERATION: Detect CREATE vs UPDATE/PATCH
+ * 4. APPLY DEFAULTS: Add missing values (CREATE only!) - networkfilterid, full_permissions, allowed_paths
+ * 5. VALIDATE SCHEMA: Check constraints + path format validation (security!)
+ * 6. SAVE: Transaction with bcrypt hashing + cache clearing
+ * 7. BUILD RESPONSE: Format data using DataStructure
+ *
+ * Security Note: Path validation is CRITICAL - prevents unauthorized API access
+ *
+ * @package MikoPBX\PBXCoreREST\Lib\ApiKeys
  */
 class SaveRecordAction extends AbstractSaveRecordAction
 {
     /**
-     * Save API key record (create new or update existing)
-     * 
-     * @param array $data Record data
-     * @return PBXApiResult
+     * Save API key with comprehensive validation
+     *
+     * Handles CREATE, UPDATE (PUT), and PATCH operations:
+     * - CREATE: New record with auto-generated key if not provided
+     * - UPDATE: Full replacement of existing record
+     * - PATCH: Partial update of existing record
+     *
+     * @param array<string, mixed> $data Input data from API request
+     * @return PBXApiResult Result with data/errors and HTTP status code
      */
     public static function main(array $data): PBXApiResult
     {
         $res = self::createApiResult(__METHOD__);
-        
+
+        // ============================================================
+        // PHASE 1: DATA SANITIZATION
+        // WHY: Security - never trust user input
+        // ============================================================
+
+        $sanitizationRules = DataStructure::getSanitizationRules();
+        $textFields = ['description'];
+
+        // Preserve ID field that may not be in sanitization rules
+        $recordId = $data['id'] ?? null;
+
         try {
-            // Define sanitization rules
-            $sanitizationRules = [
-                'id' => FILTER_SANITIZE_NUMBER_INT,
-                'description' => FILTER_SANITIZE_SPECIAL_CHARS,
-                'key' => FILTER_DEFAULT,
-                'networkfilterid' => FILTER_DEFAULT,
-                'full_permissions' => FILTER_DEFAULT,
-            ];
-            
-            // Sanitize input data including text fields
-            $sanitizedData = self::sanitizeInputData(
-                $data,
-                $sanitizationRules,
-                ['description']  // Text fields to process
-            );
-            
-            // Handle allowed_paths separately (it's already an array)
-            if (isset($data['allowed_paths'])) {
-                $sanitizedData['allowed_paths'] = $data['allowed_paths'];
+            // Sanitize: remove dangerous chars, trim whitespace, normalize format
+            $sanitizedData = self::sanitizeInputData($data, $sanitizationRules, $textFields);
+
+            // Restore preserved field (essential for UPDATE/PATCH operations)
+            if ($recordId !== null) {
+                $sanitizedData['id'] = $recordId;
             }
-            
-            // Execute save in transaction
-            $result = self::executeInTransaction(function() use ($sanitizedData) {
-                // Find existing or create new
-                if (!empty($sanitizedData['id'])) {
-                    $apiKey = ApiKeys::findFirst($sanitizedData['id']);
-                    if (!$apiKey) {
-                        throw new \Exception('API key not found');
-                    }
-                    $isNew = false;
-                } else {
-                    $apiKey = new ApiKeys();
-                    $isNew = true;
+
+            // Special handling for networkfilterid: convert 'none' to null
+            if (isset($sanitizedData['networkfilterid']) &&
+                ($sanitizedData['networkfilterid'] === 'none' || $sanitizedData['networkfilterid'] === '')) {
+                $sanitizedData['networkfilterid'] = null;
+            }
+
+            // Special handling for allowed_paths array
+            if (isset($data['allowed_paths'])) {
+                if (is_array($data['allowed_paths'])) {
+                    // Sanitize each path
+                    $sanitizedData['allowed_paths'] = array_map(function($path) {
+                        return filter_var($path, FILTER_SANITIZE_URL);
+                    }, $data['allowed_paths']);
+                } elseif (is_string($data['allowed_paths'])) {
+                    // Try to decode JSON string
+                    $decoded = json_decode($data['allowed_paths'], true);
+                    $sanitizedData['allowed_paths'] = is_array($decoded) ? $decoded : [];
                 }
-                
-                // Process API key for new records or regeneration
-                if (!empty($sanitizedData['key'])) {
-                    $apiKey->key_hash = password_hash($sanitizedData['key'], PASSWORD_BCRYPT);
-                    $apiKey->key_suffix = substr($sanitizedData['key'], -4);
-                    $apiKey->key_display = DataStructure::generateKeyDisplay($sanitizedData['key']);
-                } elseif ($isNew) {
-                    throw new \Exception('API key is required for new records');
-                }
-                
-                // Update fields
+            }
+
+        } catch (\Exception $e) {
+            $res->messages['error'][] = $e->getMessage();
+            return $res;
+        }
+
+        // ============================================================
+        // PHASE 2: REQUIRED FIELDS VALIDATION
+        // WHY: Fail fast - don't waste resources on invalid data
+        // ============================================================
+
+        $validationRules = [
+            'description' => [
+                ['type' => 'required', 'message' => 'Description is required'],
+                ['type' => 'minLength', 'value' => 1, 'message' => 'Description must not be empty']
+            ]
+        ];
+
+        $validationErrors = self::validateRequiredFields($sanitizedData, $validationRules);
+        if (!empty($validationErrors)) {
+            $res->messages['error'] = $validationErrors;
+            return $res;
+        }
+
+        // ============================================================
+        // PHASE 3: DETERMINE OPERATION TYPE
+        // WHY: Different logic for new vs existing records
+        // ============================================================
+
+        $apiKey = null;
+        $isNewRecord = true;
+
+        if (!empty($sanitizedData['id'])) {
+            // Try to find existing record by numeric ID
+            $apiKey = ApiKeys::findFirstById($sanitizedData['id']);
+
+            if ($apiKey) {
+                // Record exists - UPDATE or PATCH operation
+                $isNewRecord = false;
+            } else {
+                $res->messages['error'][] = "API key with ID {$sanitizedData['id']} not found";
+                $res->httpCode = 404;
+                return $res;
+            }
+        }
+
+        if ($isNewRecord) {
+            // CREATE: Initialize new API key
+            $apiKey = new ApiKeys();
+
+            // Key is required for new records
+            if (empty($sanitizedData['key'])) {
+                // Auto-generate key if not provided
+                $sanitizedData['key'] = ApiKeys::generateApiKey();
+            }
+        }
+
+        // ============================================================
+        // PHASE 4: APPLY DEFAULTS (CREATE ONLY!)
+        // WHY CREATE: New records need complete dataset with all fields
+        // WHY NOT UPDATE/PATCH: Would overwrite existing values with defaults!
+        // ============================================================
+
+        if ($isNewRecord) {
+            $sanitizedData = DataStructure::applyDefaults($sanitizedData);
+        }
+
+        // ============================================================
+        // PHASE 5: SCHEMA VALIDATION (Security Critical!)
+        // WHY: Validate AFTER defaults to check complete dataset
+        // ============================================================
+
+        // Schema validation (minLength/maxLength, pattern constraints)
+        $schemaErrors = DataStructure::validateInputData($sanitizedData);
+        if (!empty($schemaErrors)) {
+            $res->messages['error'] = $schemaErrors;
+            $res->httpCode = 422; // Unprocessable Entity
+            return $res;
+        }
+
+        // Security-critical path validation
+        if (isset($sanitizedData['allowed_paths']) && is_array($sanitizedData['allowed_paths'])) {
+            $pathErrors = self::validateAllowedPaths($sanitizedData['allowed_paths']);
+            if (!empty($pathErrors)) {
+                $res->messages['error'] = array_merge(
+                    $res->messages['error'] ?? [],
+                    $pathErrors
+                );
+                $res->httpCode = 422;
+                return $res;
+            }
+        }
+
+        // ============================================================
+        // PHASE 6: SAVE TO DATABASE
+        // WHY: All-or-nothing transaction with bcrypt hashing
+        // ============================================================
+
+        try {
+            $savedApiKey = self::executeInTransaction(function() use ($apiKey, $sanitizedData, $isNewRecord) {
+                // Update description
                 if (isset($sanitizedData['description'])) {
                     $apiKey->description = $sanitizedData['description'];
                 }
-                
-                // Handle allowed_paths
+
+                // Process API key (hash with bcrypt)
+                if (isset($sanitizedData['key']) && !empty($sanitizedData['key'])) {
+                    $key = $sanitizedData['key'];
+                    $apiKey->key_hash = password_hash($key, PASSWORD_BCRYPT);
+                    $apiKey->key_suffix = substr($key, -4);
+                    $apiKey->key_display = DataStructure::generateKeyDisplay($key);
+                }
+
+                // Update network filter (PATCH support with isset())
+                if (isset($sanitizedData['networkfilterid'])) {
+                    $apiKey->networkfilterid = $sanitizedData['networkfilterid'];
+                } elseif ($isNewRecord) {
+                    $apiKey->networkfilterid = null;
+                }
+
+                // Update full_permissions (PATCH support with isset())
+                if (isset($sanitizedData['full_permissions'])) {
+                    $boolFields = ['full_permissions'];
+                    $converted = self::convertBooleanFields($sanitizedData, $boolFields);
+                    $apiKey->full_permissions = $converted['full_permissions'];
+                } elseif ($isNewRecord) {
+                    $apiKey->full_permissions = '0';
+                }
+
+                // Update allowed_paths (PATCH support with isset())
                 if (isset($sanitizedData['allowed_paths'])) {
                     if (is_array($sanitizedData['allowed_paths'])) {
                         $apiKey->allowed_paths = json_encode($sanitizedData['allowed_paths']);
                     } else {
                         $apiKey->allowed_paths = $sanitizedData['allowed_paths'];
                     }
+                } elseif ($isNewRecord) {
+                    $apiKey->allowed_paths = json_encode([]);
                 }
-                
-                // Handle network filter
-                if (isset($sanitizedData['networkfilterid'])) {
-                    $value = $sanitizedData['networkfilterid'];
-                    $apiKey->networkfilterid = (!empty($value) && $value !== 'none') ? $value : null;
+
+                // Set timestamps
+                if ($isNewRecord) {
+                    $apiKey->created_at = date('Y-m-d H:i:s');
                 }
-                
-                // Handle full_permissions boolean field
-                if (isset($sanitizedData['full_permissions'])) {
-                    $value = $sanitizedData['full_permissions'];
-                    if (is_string($value)) {
-                        $value = strtolower($value);
-                        $apiKey->full_permissions = ($value === 'true' || $value === '1') ? '1' : '0';
-                    } else {
-                        $apiKey->full_permissions = $value ? '1' : '0';
-                    }
-                }
-                
-                // Save the record
+
+                // Save API key
                 if (!$apiKey->save()) {
-                    $errors = [];
-                    foreach ($apiKey->getMessages() as $message) {
-                        $errors[] = $message->getMessage();
-                    }
-                    throw new \Exception('Failed to save API key: ' . implode(', ', $errors));
+                    throw new \Exception('Failed to save API key: ' . implode(', ', $apiKey->getMessages()));
                 }
-                
+
                 // Clear validation cache for this key
                 TokenValidationService::clearCache((int)$apiKey->id);
-                
+
                 return $apiKey;
             });
-            
-            // Return success with updated data structure
-            $res->data = DataStructure::createFromModel($result);
+
+            // ============================================================
+            // PHASE 7: BUILD RESPONSE
+            // WHY: Consistent API format using DataStructure transformation
+            // ============================================================
+
+            $res->data = DataStructure::createFromModel($savedApiKey);
             $res->success = true;
-            
-            // Add reload path for page refresh after save
-            $res->reload = "api-keys/modify/{$result->id}";
-            
-            // Handle tab preservation if requested
-            self::handleTabPreservation($data, $res);
-            
+            $res->httpCode = $isNewRecord ? 201 : 200; // 201 Created, 200 OK
+
+            if ($isNewRecord) {
+                $res->reload = "api-keys/modify/{$savedApiKey->id}";
+            }
+
+            self::logSuccessfulSave('API key', $savedApiKey->description, (string)$savedApiKey->id, __METHOD__);
+
         } catch (\Exception $e) {
             return self::handleError($e, $res);
         }
-        
+
         return $res;
+    }
+
+    /**
+     * Validate allowed paths format (Security Critical!)
+     *
+     * Validates:
+     * - Path format: must start with /api/v{number}/
+     * - Path components: only lowercase letters, numbers, hyphens
+     * - No dangerous characters (../, //, etc.)
+     *
+     * WHY: Prevents unauthorized API access through path manipulation
+     *
+     * @param array<string> $paths Paths to validate
+     * @return array<string> List of validation errors (empty if valid)
+     */
+    private static function validateAllowedPaths(array $paths): array
+    {
+        $errors = [];
+
+        foreach ($paths as $index => $path) {
+            // Check path format using regex
+            if (!preg_match('#^/api/v[0-9]+/[a-z0-9-]+(/[a-z0-9-]+)*$#', $path)) {
+                $errors[] = "Invalid path format at index $index: '$path'. Must match pattern /api/v{number}/{resource}[/{resource}]";
+                continue;
+            }
+
+            // Check for dangerous path components
+            if (strpos($path, '../') !== false || strpos($path, '//') !== false) {
+                $errors[] = "Dangerous path component at index $index: '$path' contains ../ or //";
+                continue;
+            }
+
+            // Check minimum length
+            if (strlen($path) < 10) {
+                $errors[] = "Path too short at index $index: '$path' (minimum 10 characters)";
+                continue;
+            }
+
+            // Check maximum length
+            if (strlen($path) > 255) {
+                $errors[] = "Path too long at index $index: '$path' (maximum 255 characters)";
+            }
+        }
+
+        return $errors;
     }
 }

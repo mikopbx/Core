@@ -22,179 +22,65 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Lib\DialplanApplications;
 
 use MikoPBX\Common\Models\DialplanApplications;
-use MikoPBX\Common\Models\Extensions;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 
 /**
- * Partial update of dialplan application (modify specific fields)
+ * PatchRecordAction
+ * Partially updates a dialplan application record (PATCH).
+ *
+ * Uses schema-based approach to merge existing data with patch updates,
+ * eliminating manual field mapping and ensuring consistency.
+ * Dialplan reload is handled by SaveRecordAction automatically.
  *
  * @package MikoPBX\PBXCoreREST\Lib\DialplanApplications
  */
-class PatchRecordAction
+class PatchRecordAction extends AbstractSaveRecordAction
 {
     /**
-     * Perform partial update of dialplan application
+     * Partially update a dialplan application record.
      *
-     * @param array $data Request data
+     * @param array<string, mixed> $data Partial dialplan application data to update
      * @return PBXApiResult
      */
     public static function main(array $data): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
-        
+        $res = self::createApiResult(__METHOD__);
+
         try {
-            // Find existing record by uniqid (passed as id in REST API v3)
-            $uniqid = $data['id'] ?? '';
-            if (empty($uniqid)) {
-                $res->messages['error'][] = 'ID is required for patch';
+            // Validate that ID is provided
+            if (empty($data['id'])) {
+                $res->messages['error'][] = 'Dialplan application ID is required for patch';
                 return $res;
             }
-            
-            $record = DialplanApplications::findFirstByUniqid($uniqid);
-            if (!$record) {
-                $res->messages['error'][] = "Dialplan application with ID {$uniqid} not found";
+
+            // v3 API: ID is the uniqid value
+            $app = DialplanApplications::findFirst("uniqid='{$data['id']}'");
+
+            if (!$app) {
+                $res->messages['error'][] = "Dialplan application not found: {$data['id']}";
                 return $res;
             }
-            
-            // Start transaction
-            $di = \Phalcon\Di\Di::getDefault();
-            $db = $di->get('db');
-            $db->begin();
-            
-            $hasChanges = false;
-            
-            // Update only provided fields
-            if (isset($data['name'])) {
-                if (empty($data['name'])) {
-                    $db->rollback();
-                    $res->messages['error'][] = 'Name cannot be empty';
-                    return $res;
-                }
-                $record->name = $data['name'];
-                $hasChanges = true;
-                
-                // Update extension callerid
-                $extension = Extensions::findFirst([
-                    'conditions' => 'uniqid = :uniqid: AND type = :type:',
-                    'bind' => [
-                        'uniqid' => $record->uniqid,
-                        'type' => Extensions::TYPE_DIALPLAN_APPLICATION
-                    ]
-                ]);
-                
-                if ($extension) {
-                    $extension->callerid = $data['name'];
-                    if (!$extension->save()) {
-                        $db->rollback();
-                        $res->messages['error'] = $extension->getMessages();
-                        return $res;
-                    }
-                }
-            }
-            
-            if (isset($data['extension'])) {
-                if (empty($data['extension'])) {
-                    $db->rollback();
-                    $res->messages['error'][] = 'Extension cannot be empty';
-                    return $res;
-                }
-                
-                if (!is_numeric($data['extension'])) {
-                    $db->rollback();
-                    $res->messages['error'][] = 'Extension must be numeric';
-                    return $res;
-                }
-                
-                // Check if extension is already in use by another record
-                if ($data['extension'] !== $record->extension) {
-                    $existingExtension = Extensions::findFirst([
-                        'conditions' => 'number = :number:',
-                        'bind' => ['number' => $data['extension']]
-                    ]);
-                    
-                    if ($existingExtension) {
-                        $db->rollback();
-                        $res->messages['error'][] = "Extension {$data['extension']} is already in use";
-                        return $res;
-                    }
-                    
-                    // Update extension number
-                    $extension = Extensions::findFirst([
-                        'conditions' => 'uniqid = :uniqid: AND type = :type:',
-                        'bind' => [
-                            'uniqid' => $record->uniqid,
-                            'type' => Extensions::TYPE_DIALPLAN_APPLICATION
-                        ]
-                    ]);
-                    
-                    if ($extension) {
-                        $extension->number = $data['extension'];
-                        if (!$extension->save()) {
-                            $db->rollback();
-                            $res->messages['error'] = $extension->getMessages();
-                            return $res;
-                        }
-                    }
-                    
-                    $record->extension = $data['extension'];
-                    $hasChanges = true;
-                }
-            }
-            
-            if (isset($data['hint'])) {
-                $record->hint = $data['hint'];
-                $hasChanges = true;
-            }
-            
-            if (isset($data['description'])) {
-                $record->description = $data['description'];
-                $hasChanges = true;
-            }
-            
-            if (isset($data['type'])) {
-                if (!in_array($data['type'], ['php', 'plaintext', 'lua', 'agi'])) {
-                    $db->rollback();
-                    $res->messages['error'][] = 'Invalid application type';
-                    return $res;
-                }
-                $record->type = $data['type'];
-                $hasChanges = true;
-            }
-            
-            if (isset($data['applicationlogic'])) {
-                $record->setApplicationlogic($data['applicationlogic']);
-                $hasChanges = true;
-            }
-            
-            // Save changes if any
-            if ($hasChanges) {
-                if (!$record->save()) {
-                    $db->rollback();
-                    $res->messages['error'] = $record->getMessages();
-                    return $res;
-                }
-            }
-            
-            // Commit transaction
-            $db->commit();
-            
-            // Return updated record data
-            $res->data = DataStructure::createFromModel($record);
-            $res->success = true;
-            
-            // Reload dialplan if there were changes
-            if ($hasChanges) {
-                $di->get('pbxConfigurator')->reloadDialplan();
-            }
-            
+
+            // Build full data by creating structure from model
+            // This uses DataStructure to get complete current state
+            $currentData = DataStructure::createFromModel($app);
+
+            // Merge patch data on top of current data
+            // This ensures only provided fields are updated
+            $fullData = array_merge($currentData, $data);
+
+            // Ensure ID is preserved (v3 API uses uniqid)
+            $fullData['id'] = $app->uniqid;
+
+            // Use existing SaveRecordAction logic for actual update
+            // Note: Dialplan reload is handled automatically by system mechanism
+            $res = SaveRecordAction::main($fullData);
+
         } catch (\Exception $e) {
-            if (isset($db) && $db->isUnderTransaction()) {
-                $db->rollback();
-            }
-            $res->messages['error'][] = $e->getMessage();
+            return self::handleError($e, $res);
         }
-        
+
         return $res;
     }
 }
