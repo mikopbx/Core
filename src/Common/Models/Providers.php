@@ -174,4 +174,21 @@ class Providers extends ModelsBase
 
         return $this->validate($validation);
     }
+
+    /**
+     * Generates a random unique id for provider based on type
+     *
+     * @param string $type Provider type (SIP or IAX)
+     * @return string The generated unique id (e.g., SIP-TRUNK-XXXX or IAX-TRUNK-XXXX)
+     */
+    public static function generateUniqueID(string $type = 'SIP'): string
+    {
+        $prefix = match($type) {
+            'SIP' => Extensions::PREFIX_TRUNK_SIP,
+            'IAX' => Extensions::PREFIX_TRUNK_IAX,
+            default => $type . '-TRUNK'
+        };
+
+        return parent::generateUniqueID($prefix);
+    }
 }

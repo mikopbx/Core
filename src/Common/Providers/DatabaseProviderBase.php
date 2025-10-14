@@ -65,24 +65,55 @@ abstract class DatabaseProviderBase
                     ]
                 ]);
 
-                $connection->setNestedTransactionsWithSavepoints(true);
+                /**
+                 * IMPORTANT: Nested transactions with savepoints are DISABLED for SQLite.
+                 *
+                 * SQLite has a limitation where savepoints cannot be created while other SQL statements
+                 * are in progress. When this setting is enabled, Phalcon attempts to create savepoints
+                 * for nested begin() calls, which leads to errors:
+                 * "SQLSTATE[HY000]: General error: 5 cannot open savepoint - SQL statements in progress"
+                 *
+                 * This occurs frequently in our codebase when:
+                 * 1. executeInTransaction() calls $db->begin() (starts transaction)
+                 * 2. Model->save() triggers beforeSave/afterSave hooks that execute SELECT queries
+                 * 3. Foreign key constraints trigger additional SELECT queries
+                 * 4. Nested operations try to begin() again (would create savepoint)
+                 * 5. SQLite rejects savepoint creation because statements from step 2-3 are still active
+                 *
+                 * By disabling savepoints:
+                 * - Nested begin() calls are silently ignored (safe, as we're already in transaction)
+                 * - Only the outermost transaction's commit/rollback takes effect
+                 * - All operations still protected by the outer transaction
+                 * - No impact on Phalcon's ORM snapshot mechanism (different feature, stored in PHP memory)
+                 *
+                 * Note: This does NOT affect:
+                 * - Model snapshots (keepSnapshots) - works independently in PHP memory
+                 * - Change tracking (getUpdatedFields, getSnapshotData) - continues to function normally
+                 * - Transaction safety - outer transaction still protects all operations
+                 *
+                 * References:
+                 * - Issue: Database locking affecting ~20% of write operations in REST API v3
+                 * @see https://www.sqlite.org/lang_savepoint.html - SQLite savepoint documentation
+                 * @see BaseActionHelper::executeInTransaction() - Smart transaction handling
+                 */
+                $connection->setNestedTransactionsWithSavepoints(false);
 
-                // // Optimize SQLite for better concurrency
-                // // Set busy timeout to 5 seconds - wait for lock instead of immediate failure
-                // $connection->execute("PRAGMA busy_timeout = 5000");
+                // Optimize SQLite for better concurrency
+                // Set busy timeout to 5 seconds - wait for lock instead of immediate failure
+                $connection->execute("PRAGMA busy_timeout = 5000");
 
-                // // Keep WAL mode for better concurrency (already set, but ensure it)
-                // $connection->execute("PRAGMA journal_mode = WAL");
+                // Keep WAL mode for better concurrency (already set, but ensure it)
+                $connection->execute("PRAGMA journal_mode = WAL");
 
-                // // Use NORMAL synchronous mode for better performance while maintaining durability
-                // // FULL is very safe but slower, NORMAL is good balance
-                // $connection->execute("PRAGMA synchronous = NORMAL");
+                // Use NORMAL synchronous mode for better performance while maintaining durability
+                // FULL is very safe but slower, NORMAL is good balance
+                $connection->execute("PRAGMA synchronous = NORMAL");
 
-                // // Increase cache size to 10MB for better performance
-                // $connection->execute("PRAGMA cache_size = -10000");
+                // Increase cache size to 10MB for better performance
+                $connection->execute("PRAGMA cache_size = -10000");
 
-                // // Use memory for temp tables
-                // $connection->execute("PRAGMA temp_store = MEMORY");
+                // Use memory for temp tables
+                $connection->execute("PRAGMA temp_store = MEMORY");
 
                 if ($dbConfig['debugMode']) {
                     $this->setupDebugMode($connection, $dbConfig);

@@ -1,0 +1,192 @@
+<?php
+
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
+namespace MikoPBX\Common\Models;
+
+use Phalcon\Filter\Validation;
+use Phalcon\Filter\Validation\Validator\Uniqueness as UniquenessValidator;
+use Phalcon\Filter\Validation\Validator\Callback as CallbackValidator;
+
+/**
+ * Class NetworkStaticRoutes
+ *
+ * Model for storing static network routes configuration.
+ * Routes are applied when there are multiple network interfaces.
+ *
+ * @package MikoPBX\Common\Models
+ */
+class NetworkStaticRoutes extends ModelsBase
+{
+    /**
+     * @Primary
+     * @Identity
+     * @Column(type="integer", nullable=false)
+     */
+    public $id;
+
+    /**
+     * Network address (e.g., 192.168.10.0)
+     *
+     * @Column(type="string", nullable=false)
+     */
+    public ?string $network = '';
+
+    /**
+     * Subnet mask in CIDR notation (0-32)
+     *
+     * @Column(type="string", nullable=false)
+     */
+    public ?string $subnet = '24';
+
+    /**
+     * Gateway IP address (e.g., 192.168.1.1)
+     *
+     * @Column(type="string", nullable=false)
+     */
+    public ?string $gateway = '';
+
+    /**
+     * Network interface name (e.g., eth0, vlan100)
+     * Empty string means automatic selection by kernel
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $interface = '';
+
+    /**
+     * Priority (used for ordering)
+     *
+     * @Column(type="integer", nullable=false)
+     */
+    public ?int $priority = 0;
+
+    /**
+     * Initialize the model.
+     */
+    public function initialize(): void
+    {
+        $this->setSource('m_NetworkStaticRoutes');
+        parent::initialize();
+    }
+
+    /**
+     * Perform validation on the model.
+     *
+     * @return bool Whether the validation was successful or not.
+     */
+    public function validation(): bool
+    {
+        $validation = new Validation();
+
+        // Unique network+subnet combination
+        $validation->add(
+            ['network', 'subnet'],
+            new UniquenessValidator(
+                [
+                    'message' => $this->t('mo_ThisNetworkRouteAlreadyExists'),
+                ]
+            )
+        );
+
+        // Validate network address
+        $validation->add(
+            'network',
+            new CallbackValidator(
+                [
+                    'callback' => function () {
+                        return $this->validateIpField($this->network);
+                    },
+                    'message' => $this->t('mo_InvalidNetworkAddress'),
+                ]
+            )
+        );
+
+        // Validate gateway address
+        $validation->add(
+            'gateway',
+            new CallbackValidator(
+                [
+                    'callback' => function () {
+                        return $this->validateIpField($this->gateway);
+                    },
+                    'message' => $this->t('mo_InvalidGatewayAddress'),
+                ]
+            )
+        );
+
+        // Validate subnet mask (CIDR notation: 0-32)
+        $validation->add(
+            'subnet',
+            new CallbackValidator(
+                [
+                    'callback' => function () {
+                        return $this->validateSubnetField($this->subnet);
+                    },
+                    'message' => $this->t('mo_InvalidSubnetMask'),
+                ]
+            )
+        );
+
+        return $this->validate($validation);
+    }
+
+    /**
+     * Validates an IP address field (allows empty)
+     *
+     * @param string|null $value IP address to validate
+     * @return bool True if valid or empty, false otherwise
+     */
+    private function validateIpField(?string $value): bool
+    {
+        // Empty values are not allowed for static routes
+        if (empty($value)) {
+            return false;
+        }
+
+        return filter_var($value, FILTER_VALIDATE_IP) !== false;
+    }
+
+    /**
+     * Validates a subnet mask field in CIDR notation (0-32)
+     *
+     * @param string|null $value Subnet mask to validate
+     * @return bool True if valid, false otherwise
+     */
+    private function validateSubnetField(?string $value): bool
+    {
+        // Empty values are not allowed
+        if (empty($value) && $value !== '0') {
+            return false;
+        }
+
+        // Check if it's a number
+        if (!ctype_digit($value)) {
+            return false;
+        }
+
+        // Check range (0-32)
+        $intValue = (int)$value;
+        if ($intValue < 0 || $intValue > 32) {
+            return false;
+        }
+
+        return true;
+    }
+}

@@ -224,6 +224,38 @@ class PbxSettings extends ModelsBase
             )
         );
 
+        // Validate port values (must be in range 1-65535)
+        $portKeys = [
+            self::WEB_PORT,
+            self::WEB_HTTPS_PORT,
+            self::SSH_PORT,
+            self::SIP_PORT,
+            self::TLS_PORT,
+            self::EXTERNAL_SIP_PORT,
+            self::EXTERNAL_TLS_PORT,
+            self::IAX_PORT,
+            self::AMI_PORT,
+            self::AJAM_PORT,
+            self::AJAM_PORT_TLS,
+            self::RTP_PORT_FROM,
+            self::RTP_PORT_TO,
+            self::MAIL_SMTP_PORT,
+        ];
+
+        if (in_array($this->key, $portKeys, true)) {
+            $port = (int)$this->value;
+            if ($port < 1 || $port > 65535) {
+                $this->appendMessage(
+                    new \Phalcon\Messages\Message(
+                        "Port value must be between 1 and 65535, got: {$this->value}",
+                        'value',
+                        'PortRange'
+                    )
+                );
+                return false;
+            }
+        }
+
         return $this->validate($validation);
     }
 }

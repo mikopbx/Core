@@ -19,8 +19,8 @@
 
 namespace MikoPBX\Core\System\Upgrade\Releases;
 
-use MikoPBX\Common\Models\{Extensions, IncomingRoutingTable};
-use MikoPBX\Core\System\Upgrade\UpgradeSystemConfigInterface;
+use MikoPBX\Common\Models\{Extensions, IncomingRoutingTable, Users};
+use MikoPBX\Core\System\{SystemMessages, Upgrade\UpgradeSystemConfigInterface};
 use Phalcon\Di\Injectable;
 
 /**
@@ -56,9 +56,12 @@ class UpdateConfigsUpToVer20241212 extends Injectable implements UpgradeSystemCo
     {
         // Step 1: Ensure all system extensions exist
         $this->ensureSystemExtensionsExist();
-        
+
         // Step 2: Migrate legacy action-based routing to extension-based
         $this->migrateLegacyActions();
+
+        // Step 3: Remove legacy root user (id=1) if exists
+        $this->removeLegacyRootUser();
     }
     
     /**
@@ -87,8 +90,8 @@ class UpdateConfigsUpToVer20241212 extends Injectable implements UpgradeSystemCo
                 $extension->number = $number;
                 $extension->type = Extensions::TYPE_SYSTEM;
                 $extension->callerid = $name . ' System Extension';
-                $extension->public_access = 0;
-                $extension->show_in_phonebook = 0;
+                $extension->public_access = '0';
+                $extension->show_in_phonebook = '0';
                 $extension->save();
                 
                 echo "Created system extension: $number\n";
@@ -111,8 +114,13 @@ class UpdateConfigsUpToVer20241212 extends Injectable implements UpgradeSystemCo
     {
         // Find all incoming routes
         $routes = IncomingRoutingTable::find();
+        if (!is_iterable($routes)) {
+            return;
+        }
+
         $migratedCount = 0;
-        
+
+        /** @var IncomingRoutingTable $route */
         foreach ($routes as $route) {
             $migrated = false;
             
@@ -137,6 +145,84 @@ class UpdateConfigsUpToVer20241212 extends Injectable implements UpgradeSystemCo
         
         if ($migratedCount > 0) {
             echo "Migrated $migratedCount incoming routes from action-based to extension-based routing\n";
+        }
+    }
+
+    /**
+     * Remove legacy root user (id=1) and associated extensions from old system versions.
+     *
+     * In old versions of MikoPBX (before refactoring), a "root user" with id=1 was automatically
+     * created with extension number 10000. This is no longer needed and should be removed during upgrade.
+     *
+     * @return void
+     */
+    private function removeLegacyRootUser(): void
+    {
+        // Find user with id=1 (legacy root user)
+        $legacyUser = Users::findFirst('id=1');
+
+        if ($legacyUser === null) {
+            // No legacy user found, nothing to do
+            return;
+        }
+
+        SystemMessages::sysLogMsg(
+            __METHOD__,
+            "Found legacy root user (id=1, email: {$legacyUser->email}). Removing...",
+            LOG_INFO
+        );
+
+        // Find and delete all extensions associated with this user
+        $userExtensions = Extensions::find([
+            'conditions' => 'userid = :userid:',
+            'bind' => ['userid' => $legacyUser->id]
+        ]);
+
+        if (!is_iterable($userExtensions)) {
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                'No extensions found for legacy user, proceeding with user deletion',
+                LOG_INFO
+            );
+            $userExtensions = [];
+        }
+
+        $deletedExtensions = 0;
+        /** @var Extensions $extension */
+        foreach ($userExtensions as $extension) {
+            if ($extension->delete()) {
+                $deletedExtensions++;
+                SystemMessages::sysLogMsg(
+                    __METHOD__,
+                    "Deleted legacy extension: {$extension->number} (type: {$extension->type})",
+                    LOG_INFO
+                );
+            } else {
+                $messages = implode(', ', $extension->getMessages());
+                SystemMessages::sysLogMsg(
+                    __METHOD__,
+                    "Failed to delete extension {$extension->number}: {$messages}",
+                    LOG_WARNING
+                );
+            }
+        }
+
+        // Delete the user record (CASCADE should delete remaining references)
+        if ($legacyUser->delete()) {
+            echo "Removed legacy root user (id=1) and {$deletedExtensions} associated extension(s)\n";
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                "Successfully removed legacy root user (id=1) and {$deletedExtensions} extension(s)",
+                LOG_INFO
+            );
+        } else {
+            $messages = implode(', ', $legacyUser->getMessages());
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                "Failed to delete legacy root user: {$messages}",
+                LOG_ERR
+            );
+            echo "Warning: Could not remove legacy root user (id=1): {$messages}\n";
         }
     }
 }
