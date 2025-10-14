@@ -1,0 +1,23 @@
+<!--
+ ~ Performance-optimized configuration for AudioFiles tests
+ ~ Uses processIsolation="false" to share single BrowserStack session
+ ~ Reduces test time from ~8-9 minutes to ~4-5 minutes
+  -->
+<phpunit
+        bootstrap="../../vendor/autoload.php"
+        backupGlobals="false"
+        backupStaticAttributes="false"
+        verbose="true"
+        colors="true"
+        convertErrorsToExceptions="true"
+        convertNoticesToExceptions="true"
+        convertWarningsToExceptions="true"
+        processIsolation="false"
+        stopOnFailure="false"
+>
+    <testsuites>
+        <testsuite name="AudioFiles">
+            <directory>Tests/AudioFiles</directory>
+        </testsuite>
+    </testsuites>
+</phpunit>

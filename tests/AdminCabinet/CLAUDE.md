@@ -47,7 +47,7 @@ Tests use traits to organize and share functionality:
 
 ## Authentication System
 
-### JWT-based Authentication with Cookie Persistence
+### JWT-based Authentication
 
 MikoPBX uses a modern JWT authentication system with two tokens:
 
@@ -61,34 +61,28 @@ MikoPBX uses a modern JWT authentication system with two tokens:
 - Long-lived token stored in **httpOnly cookie** (XSS protection)
 - Set by server during login (`/pbxcore/api/v3/auth:login`)
 - Used to obtain new access tokens (`/pbxcore/api/v3/auth:refresh`)
-- Survives browser restarts
+- Cannot be accessed or restored via JavaScript/WebDriver (security restriction)
 
 ### Test Authentication Flow
 
-#### First Test (Full Login)
+Each test session performs a fresh login:
 ```php
 // 1. User fills login form with username/password
 // 2. JavaScript submits to /pbxcore/api/v3/auth:login
 // 3. Server returns accessToken (saved to memory) + sets refreshToken cookie
-// 4. Browser navigates to dashboard
-// 5. CookieManager.saveCookies() saves all cookies including refreshToken
+// 4. User is authenticated for this browser session
+// 5. Cookies persist naturally within the session
 ```
 
-#### Subsequent Tests (Cookie Restoration)
-```php
-// 1. CookieManager.loadCookies() restores refreshToken cookie
-// 2. Browser navigates to page
-// 3. TokenManager.initialize() calls /auth:refresh using refreshToken cookie
-// 4. Server returns new accessToken (saved to memory)
-// 5. User is authenticated without entering password
-```
+**Important:** Cookie persistence between test sessions doesn't work due to httpOnly restrictions.
+WebDriver cannot restore httpOnly cookies. To share sessions within a test suite, use
+`processIsolation="false"` in phpunit.xml.
 
 ### Login Process Details
 - **Primary credentials**: From test configuration (`admin` / `123456789MikoPBX#1`)
 - **Fallback password**: `password2` parameter for changed passwords
 - **Session indicator**: `#top-menu-search` element presence
-- **Cookie storage**: Enables session reuse across test runs via refreshToken
-- **Auto-recovery**: If refreshToken expires, tests fall back to full login
+- **Session sharing**: Use `processIsolation="false"` to share session across tests in same suite
 
 ## Writing Tests
 
@@ -249,10 +243,10 @@ BROWSER=chrome ./vendor/bin/phpunit tests/AdminCabinet/Tests/
 2. **Stale element**: Re-find element after page updates
 3. **Timing issues**: Use `waitForAjax()` after actions
 4. **Session issues (JWT)**:
-   - Check that refreshToken cookie is being saved/restored
-   - Verify TokenManager has time to complete /auth:refresh (add sleep(2) after page load)
+   - Verify TokenManager has time to complete /auth:refresh (add sleep(1) after page load)
    - Check BrowserStack logs for 401 Unauthorized errors
-   - Ensure cookie domain matches test environment
+   - Ensure each test process performs fresh login
+   - For shared sessions, use `processIsolation="false"`
 
 ### Debug Tools
 - BrowserStack session recordings
@@ -346,71 +340,37 @@ Tests are designed to run in CI/CD pipelines:
 
 ## JWT Authentication Troubleshooting
 
-### Verifying JWT Flow in Tests
+### Understanding httpOnly Cookie Limitation
 
-**Check Cookie Storage Location**
-```bash
-# Default: /tmp/selenium_cookies/
-# Override: Set SELENIUM_COOKIE_DIR environment variable
-echo $SELENIUM_COOKIE_DIR
-ls -la /tmp/selenium_cookies/
-```
+**Important:** WebDriver cannot save or restore httpOnly cookies due to browser security restrictions. This means:
+- Each test process requires a fresh login
+- Cookies persist naturally within a single browser session
+- To share sessions across multiple tests, use `processIsolation="false"` in phpunit.xml
 
-**Verify refreshToken Cookie in Saved Cookies**
-```bash
-# After first test run, check saved cookie file
-cat /tmp/selenium_cookies/cookies_*.json | jq '.[] | select(.name=="refreshToken")'
+### Monitoring JWT Flow in BrowserStack
 
-# Expected output:
-{
-  "name": "refreshToken",
-  "value": "eyJ0eXAiOiJKV1QiLCJhbGc...",
-  "domain": "your-pbx-domain",
-  "path": "/",
-  "httpOnly": true,
-  "secure": true
-}
-```
-
-**Monitor BrowserStack Console Logs**
-
-In BrowserStack session, check browser console for:
+**Check Browser Console Logs:**
 ```
 [LOGIN] API Response: {result: true, hasData: true, hasAccessToken: true}
 [LOGIN] Storing access token in TokenManager...
 [LOGIN] Token stored, redirecting...
 
-// On subsequent page loads:
+// On subsequent page loads within same session:
 TokenManager.initialize() -> /auth:refresh -> success
 ```
 
-**Common JWT Test Failures**
+**Common JWT Test Issues**
 
 | Symptom | Cause | Solution |
 |---------|-------|----------|
-| Tests fail on 2nd run | refreshToken not saved | Check CookieManager.saveCookies() called after login |
-| Stuck on login page | TokenManager timeout | Add sleep(2) after navigate in tryLoginWithCookies() |
-| 401 Unauthorized | refreshToken expired | Delete cookie file, force fresh login |
-| Token not in headers | AJAX before TokenManager ready | Ensure window.tokenManagerReady promise |
+| Stuck on login page | TokenManager timeout | Add `waitForAjax()` after navigation |
+| 401 Unauthorized | Token expired mid-test | Login timeout - tests should complete within 15 min |
+| Token not in headers | AJAX before TokenManager ready | Ensure `waitForAjax()` before API calls |
+| Login fails intermittently | Form not fully loaded | Add explicit wait for login form elements |
 
-### Manual Verification Steps
+### Debugging Test Authentication
 
-**1. Test Cookie Persistence**
-```php
-// In your test:
-$this->cookieManager->saveCookies();
-$cookies = self::$driver->manage()->getCookies();
-$hasRefreshToken = false;
-foreach ($cookies as $cookie) {
-    if ($cookie->getName() === 'refreshToken') {
-        $hasRefreshToken = true;
-        self::annotate("RefreshToken found: " . substr($cookie->getValue(), 0, 20) . "...");
-    }
-}
-$this->assertTrue($hasRefreshToken, 'RefreshToken cookie not found');
-```
-
-**2. Verify TokenManager Initialization**
+**1. Verify TokenManager Initialization**
 ```php
 // Add to test after navigation:
 $script = "return window.TokenManager && window.TokenManager.isAuthenticated();";
@@ -419,39 +379,48 @@ self::annotate("TokenManager authenticated: " . ($isAuth ? 'YES' : 'NO'));
 $this->assertTrue($isAuth, 'TokenManager not authenticated');
 ```
 
-**3. Check Network Activity**
+**2. Check Network Activity in BrowserStack**
 ```php
-// In BrowserStack, enable network logs via capabilities:
+// Enable network logs via capabilities:
 'browserstack.networkLogs' => 'true'
 
-// Then check for:
-// - POST /pbxcore/api/v3/auth:login (first test)
-// - POST /pbxcore/api/v3/auth:refresh (subsequent tests)
-// - All other requests should have Authorization: Bearer header
+// Expected requests:
+// - POST /pbxcore/api/v3/auth:login (on login)
+// - POST /pbxcore/api/v3/auth:refresh (on page load with valid refreshToken)
+// - All AJAX requests should have Authorization: Bearer header
+```
+
+**3. Verify Login Form Presence**
+```php
+// Check if login form exists before attempting login:
+$loginForm = self::$driver->findElement(WebDriverBy::id('login-form'));
+$this->assertTrue($loginForm->isDisplayed(), 'Login form not visible');
 ```
 
 ### Best Practices for JWT Tests
 
-1. **Always allow time for TokenManager**
+1. **Allow time for TokenManager initialization**
    ```php
    $this->waitForAjax();
-   sleep(2); // TokenManager.initialize() async call
-   $this->waitForAjax();
+   sleep(1); // Give TokenManager time to complete /auth:refresh
    ```
 
-2. **Use BrowserStack annotations**
+2. **Use BrowserStack annotations for debugging**
    ```php
-   self::annotate('Attempting JWT token refresh');
-   self::annotate('Session restored successfully');
+   self::annotate('Performing login');
+   self::annotate('Navigating to extensions page');
+   self::annotate('Form submitted successfully');
    ```
 
-3. **Clean cookie storage between test suites**
-   ```bash
-   # Before running full suite:
-   rm -rf /tmp/selenium_cookies/
+3. **Share sessions within test suite for performance**
+   ```xml
+   <!-- In phpunit.xml -->
+   <phpunit processIsolation="false">
+       <!-- Tests share same browser session, avoiding repeated logins -->
+   </phpunit>
    ```
 
 4. **Monitor token expiration in long tests**
    - Access token: 15 min (auto-refreshed at 13 min)
-   - Refresh token: 30 days
-   - Long-running tests (>13 min) will auto-refresh transparently
+   - Refresh token: 30 days (persists within browser session)
+   - Tests longer than 13 minutes will trigger automatic token refresh

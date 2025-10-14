@@ -13,3 +13,25 @@ build
 .config.json
 docs
 .playwright-mcp
+
+# Python cache directories
+tests/api/__pycache__/
+tests/api/.pytest_cache/
+tests/api/.hypothesis/
+tests/api/**/__pycache__/
+
+# Python compiled files
+tests/api/*.pyc
+tests/api/**/*.pyc
+
+# Temporary/debug files
+tests/api/debug_*.py
+tests/api/DEBUGGING_NOTES.md
+tests/api/IMPLEMENTATION_SUMMARY.md
+tests/api/STATUS.md
+
+# Log files and temporary data
+tests/api/*.log
+tests/api/**/*.log
+tests/api/*.tmp
+tests/api/**/*.tmp
