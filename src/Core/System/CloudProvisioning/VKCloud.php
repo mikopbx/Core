@@ -23,6 +23,7 @@ namespace MikoPBX\Core\System\CloudProvisioning;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp;
+use GuzzleHttp\Promise\PromiseInterface;
 use MikoPBX\Core\System\SystemMessages;
 
 /**
@@ -43,6 +44,38 @@ class VKCloud extends CloudProvider
     public function __construct()
     {
         $this->client = new Client(['timeout' => self::HTTP_TIMEOUT]);
+    }
+
+    /**
+     * Performs an asynchronous check to determine if this cloud provider is available.
+     *
+     * @return PromiseInterface Promise that resolves to bool
+     */
+    public function checkAvailability(): PromiseInterface
+    {
+        // Try OpenStack metadata endpoint first (VK Cloud specific)
+        $promise = $this->client->requestAsync('GET', 'http://169.254.169.254/openstack/latest/meta_data.json', [
+            'timeout' => self::HTTP_TIMEOUT,
+            'http_errors' => false
+        ]);
+
+        return $promise->then(
+            function ($response) {
+                if ($response->getStatusCode() === 200) {
+                    $metadata = json_decode($response->getBody()->getContents(), true) ?? [];
+
+                    // Check for VK Cloud specific fields in OpenStack metadata
+                    if (isset($metadata['project_id']) ||
+                        (isset($metadata['meta']) && isset($metadata['meta']['vkcloud_project_id']))) {
+                        return true;
+                    }
+                }
+                return false;
+            },
+            function () {
+                return false;
+            }
+        );
     }
 
     /**
@@ -112,7 +145,7 @@ class VKCloud extends CloudProvider
 
             // Check instance-id format (VK Cloud typically has a specific format)
             $instanceId = $this->getMetaDataVCS('instance-id');
-            if (!empty($instanceId) && strlen($instanceId) > 10) {
+            if ($instanceId !== '' && strlen($instanceId) > 10) {
                 // Check for Vultr specific instance ID format (numeric)
                 if (is_numeric($instanceId)) {
                     return false; // Likely Vultr, not VK Cloud

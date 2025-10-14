@@ -22,6 +22,8 @@ namespace MikoPBX\Core\System\CloudProvisioning;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Promise\Create;
+use GuzzleHttp\Promise\PromiseInterface;
 use MikoPBX\Core\System\SystemMessages;
 
 class YandexCloud extends CloudProvider
@@ -33,6 +35,39 @@ class YandexCloud extends CloudProvider
     public function __construct()
     {
         $this->client = new Client(['timeout' => self::HTTP_TIMEOUT]);
+    }
+
+    /**
+     * Performs an asynchronous check to determine if this cloud provider is available.
+     *
+     * @return PromiseInterface Promise that resolves to bool
+     */
+    public function checkAvailability(): PromiseInterface
+    {
+        $promise = $this->client->requestAsync('GET', 'http://169.254.169.254/computeMetadata/v1/instance/', [
+            'query' => ['recursive' => 'true', 'alt' => 'json'],
+            'headers' => ['Metadata-Flavor' => 'Google']
+        ]);
+
+        return $promise->then(
+            function ($response) {
+                if ($response->getStatusCode() !== 200) {
+                    return false;
+                }
+
+                $metadata = json_decode($response->getBody()->getContents(), true) ?? [];
+
+                // Verify that metadata not contains the 'serviceAccounts' with 'gserviceaccount' in any value
+                if (empty($metadata['id']) || !$this->notContainsGoogleDomain($metadata)) {
+                    return false;
+                }
+
+                return true;
+            },
+            function () {
+                return false;
+            }
+        );
     }
 
     /**

@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Core\System\CloudProvisioning;
 
+use GuzzleHttp\Promise\PromiseInterface;
 use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\SystemMessages;
@@ -29,6 +30,14 @@ abstract class CloudProvider
     protected const int HTTP_TIMEOUT = 3;
 
     abstract public function provision(): bool;
+
+    /**
+     * Performs an asynchronous check to determine if this cloud provider is available.
+     * Returns a Promise that resolves to boolean indicating availability.
+     *
+     * @return PromiseInterface Promise that resolves to bool
+     */
+    abstract public function checkAvailability(): PromiseInterface;
 
     /**
      * Updates the SSH keys.
@@ -127,7 +136,8 @@ abstract class CloudProvider
      */
     protected function updateSSHCredentials(string $sshLogin, string $hashSalt): void
     {
-        $data = md5(shell_exec(Util::which('ifconfig'))??'' . $hashSalt . time());
+        $ifconfigOutput = shell_exec(Util::which('ifconfig'));
+        $data = md5(($ifconfigOutput ?? '') . $hashSalt . time());
         $this->updatePbxSettings(PbxSettings::SSH_LOGIN, $sshLogin);
         $this->updatePbxSettings(PbxSettings::SSH_PASSWORD, $data);
         $this->updatePbxSettings(PbxSettings::SSH_DISABLE_SSH_PASSWORD, '1');

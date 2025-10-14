@@ -71,6 +71,14 @@ class NetworkStaticRoutes extends ModelsBase
     public ?string $interface = '';
 
     /**
+     * Route description/comment
+     * User-provided explanation for this route
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $description = '';
+
+    /**
      * Priority (used for ordering)
      *
      * @Column(type="integer", nullable=false)

@@ -23,6 +23,7 @@ namespace MikoPBX\Core\System\CloudProvisioning;
 use MikoPBX\Core\System\SystemMessages;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Promise\PromiseInterface;
 
 class AlibabaCloud extends CloudProvider
 {
@@ -37,6 +38,29 @@ class AlibabaCloud extends CloudProvider
     public function __construct()
     {
         $this->client = new Client(['timeout' => self::HTTP_TIMEOUT]);
+    }
+
+    /**
+     * Performs an asynchronous check to determine if this cloud provider is available.
+     *
+     * @return PromiseInterface Promise that resolves to bool
+     */
+    public function checkAvailability(): PromiseInterface
+    {
+        $promise = $this->client->requestAsync('GET', self::METADATA_BASE_URL . 'instance-id');
+
+        return $promise->then(
+            function ($response) {
+                if ($response->getStatusCode() === 200) {
+                    $instanceId = trim($response->getBody()->getContents());
+                    return !empty($instanceId);
+                }
+                return false;
+            },
+            function () {
+                return false;
+            }
+        );
     }
 
     /**

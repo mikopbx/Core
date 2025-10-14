@@ -22,6 +22,7 @@ namespace MikoPBX\Core\System\CloudProvisioning;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Promise\PromiseInterface;
 use MikoPBX\Core\System\SystemMessages;
 
 /**
@@ -49,6 +50,30 @@ class VultrCloud extends CloudProvider
     public function __construct()
     {
         $this->client = new Client(['timeout' => self::HTTP_TIMEOUT]);
+    }
+
+    /**
+     * Performs an asynchronous check to determine if this cloud provider is available.
+     *
+     * @return PromiseInterface Promise that resolves to bool
+     */
+    public function checkAvailability(): PromiseInterface
+    {
+        $promise = $this->client->requestAsync('GET', self::METADATA_ENDPOINT);
+
+        return $promise->then(
+            function ($response) {
+                if ($response->getStatusCode() !== 200) {
+                    return false;
+                }
+
+                $metadata = json_decode($response->getBody()->getContents(), true) ?? [];
+                return $this->isVultrInstance($metadata);
+            },
+            function () {
+                return false;
+            }
+        );
     }
 
     /**

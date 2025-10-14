@@ -63,6 +63,7 @@ class GetConfigAction
             $networkInterfaces = LanInterfaces::find();
             $interfaces = [];
             $deletableInterfaces = [];
+            $availableInterfaces = []; // Collect available interfaces for static routes
 
             // Initialize Network system for getting current IP addresses
             $networkSystem = new NetworkSystem();
@@ -112,6 +113,18 @@ class GetConfigAction
                     }
 
                     $interfaces[] = $interfaceData;
+
+                    // Build available interface for static routes dropdown
+                    // Use the actual interface name (with VLAN if applicable)
+                    $interfaceName = $record->interface;
+                    if ($record->vlanid > 0) {
+                        $interfaceName = "vlan{$record->vlanid}";
+                    }
+                    $label = !empty($record->name) ? "{$interfaceName} ({$record->name})" : $interfaceName;
+                    $availableInterfaces[] = [
+                        'value' => $interfaceName,
+                        'label' => $label
+                    ];
                 }
             }
 
@@ -188,24 +201,9 @@ class GetConfigAction
                     'subnet' => $route->subnet,
                     'gateway' => $route->gateway,
                     'interface' => $route->interface ?? '',
+                    'description' => $route->description ?? '',
                     'priority' => $route->priority
                 ];
-            }
-
-            // Build list of available interfaces for static routes dropdown
-            $availableInterfaces = [];
-            foreach ($networkInterfaces as $record) {
-                if ($record->disabled !== '1') {
-                    $interfaceName = $record->interface;
-                    if ($record->vlanid > 0) {
-                        $interfaceName = "vlan{$record->vlanid}";
-                    }
-                    $label = !empty($record->name) ? "{$interfaceName} ({$record->name})" : $interfaceName;
-                    $availableInterfaces[] = [
-                        'value' => $interfaceName,
-                        'label' => $label
-                    ];
-                }
             }
 
             $res->data = [

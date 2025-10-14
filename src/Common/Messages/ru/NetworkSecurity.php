@@ -158,6 +158,9 @@ return [
     'nw_VlanID' => 'VLAN ID',
     'nw_Interface' => 'Интерфейс',
     'nw_Auto' => 'Авто',
+    'nw_RouteDescription' => 'Описание',
+    'nw_RouteDescriptionPlaceholder' => 'Опишите назначение маршрута',
+    'rest_schema_net_route_description' => 'Описание маршрута для внутренней документации',
 
     // Fail2Ban Tooltips
     // Max Retry tooltip

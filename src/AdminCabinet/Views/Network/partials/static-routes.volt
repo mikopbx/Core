@@ -10,6 +10,7 @@
                     <th>{{ t._("nw_Subnet") }}</th>
                     <th>{{ t._("nw_Gateway") }}</th>
                     <th>{{ t._("nw_Interface") }}</th>
+                    <th>{{ t._("nw_RouteDescription") }}</th>
                     <th style="width: 50px;"></th>
                 </tr>
             </thead>
@@ -28,6 +29,9 @@
                     </td>
                     <td>
                         <div class="interface-dropdown-container"></div>
+                    </td>
+                    <td>
+                        <input type="text" class="description-input" placeholder="{{ t._('nw_RouteDescriptionPlaceholder') }}" />
                     </td>
                     <td class="right aligned collapsing">
                         <div class="ui tiny basic icon buttons action-buttons">

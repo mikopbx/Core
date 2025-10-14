@@ -23,6 +23,7 @@ namespace MikoPBX\Core\System\CloudProvisioning;
 use MikoPBX\Core\System\SystemMessages;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Promise\PromiseInterface;
 
 class AzureCloud extends CloudProvider
 {
@@ -33,6 +34,40 @@ class AzureCloud extends CloudProvider
     public function __construct()
     {
         $this->client = new Client(['timeout' => self::HTTP_TIMEOUT]);
+    }
+
+    /**
+     * Performs an asynchronous check to determine if this cloud provider is available.
+     *
+     * @return PromiseInterface Promise that resolves to bool
+     */
+    public function checkAvailability(): PromiseInterface
+    {
+        $promise = $this->client->requestAsync('GET', 'http://169.254.169.254/metadata/instance', [
+            'query' => ['api-version' => '2020-09-01', 'format' => 'json'],
+            'headers' => ['Metadata' => 'true']
+        ]);
+
+        return $promise->then(
+            function ($response) {
+                if ($response->getStatusCode() !== 200) {
+                    return false;
+                }
+
+                $metadata = json_decode($response->getBody()->getContents(), true);
+
+                // Verify Azure specific metadata
+                if (empty($metadata['compute']['vmId']) ||
+                    ($metadata['compute']['azEnvironment'] ?? '') !== 'AzurePublicCloud') {
+                    return false;
+                }
+
+                return true;
+            },
+            function () {
+                return false;
+            }
+        );
     }
 
     /**

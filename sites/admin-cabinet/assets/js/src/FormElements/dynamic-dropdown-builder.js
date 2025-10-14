@@ -296,6 +296,17 @@ const DynamicDropdownBuilder = {
 
         // Initialize native Fomantic UI dropdown
         $dropdown.dropdown(settings);
+
+        // Set selected value for static options after initialization
+        if (config.staticOptions) {
+            const currentValue = $hiddenInput.val();
+            if (currentValue) {
+                // Use setTimeout to ensure dropdown is fully initialized
+                setTimeout(() => {
+                    $dropdown.dropdown('set selected', currentValue);
+                }, 10);
+            }
+        }
     },
     
     /**

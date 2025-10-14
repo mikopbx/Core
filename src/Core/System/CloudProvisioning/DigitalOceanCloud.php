@@ -22,6 +22,7 @@ namespace MikoPBX\Core\System\CloudProvisioning;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Promise\PromiseInterface;
 use MikoPBX\Core\System\SystemMessages;
 
 class DigitalOceanCloud extends CloudProvider
@@ -38,6 +39,47 @@ class DigitalOceanCloud extends CloudProvider
     public function __construct()
     {
         $this->client = new Client(['timeout' => self::HTTP_TIMEOUT]);
+    }
+
+    /**
+     * Performs an asynchronous check to determine if this cloud provider is available.
+     *
+     * @return PromiseInterface Promise that resolves to bool
+     */
+    public function checkAvailability(): PromiseInterface
+    {
+        $promise = $this->client->requestAsync('GET', self::METADATA_BASE_URL . 'vendor-data', [
+            'timeout' => self::HTTP_TIMEOUT,
+            'http_errors' => false,
+        ]);
+
+        return $promise->then(
+            function ($response) {
+                if ($response->getStatusCode() !== 200) {
+                    return false;
+                }
+
+                $vendorData = $response->getBody()->getContents();
+
+                // Check for DigitalOcean-specific patterns in vendor data
+                $doPatterns = [
+                    'DigitalOcean resolver',
+                    'DNS=67.207.67.',
+                    'logger -t DigitalOcean'
+                ];
+
+                foreach ($doPatterns as $pattern) {
+                    if (str_contains($vendorData, $pattern)) {
+                        return true;
+                    }
+                }
+
+                return false;
+            },
+            function () {
+                return false;
+            }
+        );
     }
 
     /**

@@ -23,6 +23,7 @@ namespace MikoPBX\Core\System\CloudProvisioning;
 use MikoPBX\Core\System\SystemMessages;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Promise\PromiseInterface;
 
 class GoogleCloud extends CloudProvider
 {
@@ -34,6 +35,39 @@ class GoogleCloud extends CloudProvider
     }
 
     public const string CloudID = 'GoogleCloud';
+
+    /**
+     * Performs an asynchronous check to determine if this cloud provider is available.
+     *
+     * @return PromiseInterface Promise that resolves to bool
+     */
+    public function checkAvailability(): PromiseInterface
+    {
+        $promise = $this->client->requestAsync('GET', 'http://169.254.169.254/computeMetadata/v1/instance/', [
+            'query' => ['recursive' => 'true'],
+            'headers' => ['Metadata-Flavor' => 'Google']
+        ]);
+
+        return $promise->then(
+            function ($response) {
+                if ($response->getStatusCode() !== 200) {
+                    return false;
+                }
+
+                $metadata = json_decode($response->getBody()->getContents(), true) ?? [];
+
+                // Verify that metadata contains 'gserviceaccount' and has id
+                if (empty($metadata['id']) || !$this->containsGoogleDomain($metadata)) {
+                    return false;
+                }
+
+                return true;
+            },
+            function () {
+                return false;
+            }
+        );
+    }
 
     /**
      * Performs the Google Cloud provisioning using the Metadata Service.

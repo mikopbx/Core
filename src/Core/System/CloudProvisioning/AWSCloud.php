@@ -23,6 +23,7 @@ namespace MikoPBX\Core\System\CloudProvisioning;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp;
+use GuzzleHttp\Promise\PromiseInterface;
 use MikoPBX\Core\System\SystemMessages;
 
 class AWSCloud extends CloudProvider
@@ -34,6 +35,33 @@ class AWSCloud extends CloudProvider
     public function __construct()
     {
         $this->client = new Client(['timeout' => self::HTTP_TIMEOUT]);
+    }
+
+    /**
+     * Performs an asynchronous check to determine if this cloud provider is available.
+     *
+     * @return PromiseInterface Promise that resolves to bool
+     */
+    public function checkAvailability(): PromiseInterface
+    {
+        $url = 'http://169.254.169.254/latest/meta-data/services/partition';
+        $promise = $this->client->requestAsync('GET', $url, [
+            'timeout' => self::HTTP_TIMEOUT,
+            'http_errors' => false
+        ]);
+
+        return $promise->then(
+            function ($response) {
+                if ($response->getStatusCode() === 200) {
+                    $body = $response->getBody()->getContents();
+                    return $body === 'aws';
+                }
+                return false;
+            },
+            function () {
+                return false;
+            }
+        );
     }
 
     /**
@@ -74,7 +102,7 @@ class AWSCloud extends CloudProvider
         $this->updateSSHKeys($sshKey);
 
         // Update SSH and WEB passwords using some unique identifier from the metadata
-        $vmId = $this->getMetaDataAWS('instance-id') ?? '';
+        $vmId = $this->getMetaDataAWS('instance-id');
         $this->updateSSHCredentials('ec2-user', $vmId);
         $this->updateWebPassword($vmId);
 

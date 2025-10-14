@@ -253,6 +253,12 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                                 'description' => 'rest_schema_net_route_interface',
                                 'example' => 'eth0'
                             ],
+                            'description' => [
+                                'type' => 'string',
+                                'description' => 'rest_schema_net_route_description',
+                                'maxLength' => 255,
+                                'example' => 'Route for office network'
+                            ],
                             'priority' => [
                                 'type' => 'integer',
                                 'description' => 'rest_schema_net_route_priority',
@@ -430,7 +436,8 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                         'network' => '192.168.10.0',
                         'subnet' => '24',
                         'gateway' => '192.168.1.1',
-                        'interface' => '' // Empty = auto
+                        'interface' => '', // Empty = auto
+                        'description' => 'Office network route'
                     ]]
                 ]
             ],

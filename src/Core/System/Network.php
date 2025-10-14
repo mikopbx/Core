@@ -20,6 +20,7 @@
 namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Models\LanInterfaces;
+use MikoPBX\Common\Models\NetworkStaticRoutes;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Configs\DnsConf;
 use MikoPBX\Core\Utilities\SubnetCalculator;
@@ -746,26 +747,75 @@ class Network extends Injectable
     }
 
     /**
-     * Add custom static routes based on the `/etc/static-routes` file.
+     * Add custom static routes from database and legacy `/etc/static-routes` file.
      *
      * @param string $interface The network interface to add routes to, e.g., eth0 (optional)
      * @return void
      */
     protected function addCustomStaticRoutes(string $interface = ''): void
     {
+        $arr_commands = [];
+
+        // Load static routes from database (ordered by priority)
+        /** @var NetworkStaticRoutes[] $staticRoutes */
+        $staticRoutes = NetworkStaticRoutes::find([
+            'order' => 'priority ASC'
+        ]);
+
+        if (count($staticRoutes) > 0) {
+            $route = Util::which('route');
+
+            foreach ($staticRoutes as $routeData) {
+                // Skip if interface filter is specified and doesn't match
+                if (!empty($interface) && !empty($routeData->interface) && $routeData->interface !== $interface) {
+                    continue;
+                }
+
+                $network = trim($routeData->network);
+                $subnet = trim($routeData->subnet);
+                $gateway = trim($routeData->gateway);
+                $iface = trim($routeData->interface ?? '');
+
+                // Validate required fields
+                if (empty($network) || empty($subnet) || empty($gateway)) {
+                    SystemMessages::sysLogMsg(__METHOD__, "Skipping invalid route: network=$network, subnet=$subnet, gateway=$gateway");
+                    continue;
+                }
+
+                // Build route command: route add -net 192.168.10.0/24 gw 192.168.1.1 dev eth0
+                $command = "$route add -net $network/$subnet gw $gateway";
+
+                // Add interface if specified (empty = auto-detect)
+                if (!empty($iface)) {
+                    $command .= " dev $iface";
+                }
+
+                $arr_commands[] = $command;
+                SystemMessages::sysLogMsg(__METHOD__, "Adding static route: $network/$subnet via $gateway" . (!empty($iface) ? " dev $iface" : ''));
+            }
+        }
+
+        // Legacy support: Load routes from /etc/static-routes file
         Util::fileWriteContent('/etc/static-routes', '');
 
         $grep = Util::which('grep');
         $awk = Util::which('awk');
         $cat = Util::which('cat');
+
         if (empty($interface)) {
             $command = "$cat /etc/static-routes | $grep '^rout' | $awk -F ';' '{print $1}'";
         } else {
             $command = "$cat /etc/static-routes | $grep '^rout' | $awk -F ';' '{print $1}' | $grep '$interface'";
         }
-        $arr_commands = [];
-        Processes::mwExec($command, $arr_commands);
-        Processes::mwExecCommands($arr_commands, $out, 'rout');
+
+        $legacy_commands = [];
+        Processes::mwExec($command, $legacy_commands);
+        $arr_commands = array_merge($arr_commands, $legacy_commands);
+
+        // Execute all route commands
+        if (count($arr_commands) > 0) {
+            Processes::mwExecCommands($arr_commands, $out, 'static-routes');
+        }
     }
 
     /**

@@ -534,6 +534,7 @@ class SaveConfigAction
                 $route->subnet = $routeData['subnet'] ?? '24';
                 $route->gateway = $routeData['gateway'] ?? '';
                 $route->interface = $routeData['interface'] ?? '';
+                $route->description = $routeData['description'] ?? '';
                 $route->priority = $routeData['priority'] ?? ($index + 1);
 
                 // Save route

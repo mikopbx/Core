@@ -20,6 +20,7 @@
 
 namespace MikoPBX\Core\System;
 
+use GuzzleHttp\Promise\Utils;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\CloudProvisioning\AlibabaCloud;
 use MikoPBX\Core\System\CloudProvisioning\AWSCloud;
@@ -42,7 +43,7 @@ class CloudProvisioning
 {
     /**
      * Starts the cloud provisioning process.
-     * @return array Returns array with 'success' boolean and 'cloudId' string (if successful)
+     * @return array{success: bool, cloudId: string, alreadyDone?: bool} Returns array with 'success' boolean and 'cloudId' string (if successful)
      */
     public static function start(): array
     {
@@ -61,26 +62,50 @@ class CloudProvisioning
             AzureCloud::CloudID => new AzureCloud(),
             AWSCloud::CloudID => new AWSCloud(),
             DigitalOceanCloud::CloudID => new DigitalOceanCloud(),
-            AlibabaCloud::CloudID=>new AlibabaCloud(),
+            AlibabaCloud::CloudID => new AlibabaCloud(),
             VultrCloud::CloudID => new VultrCloud()
         ];
 
+        $message = "   |- Checking cloud providers in parallel...";
+        SystemMessages::echoToTeletype($message);
+
+        // Create promises for parallel availability checking
+        $promises = [];
+        foreach ($providers as $cloudId => $provider) {
+            $promises[$cloudId] = $provider->checkAvailability();
+        }
+
+        // Wait for all promises to settle
+        try {
+            $results = Utils::settle($promises)->wait();
+        } catch (\Throwable $e) {
+            SystemMessages::sysLogMsg(__CLASS__, "Error during parallel cloud check: " . $e->getMessage());
+            $results = [];
+        }
+
+        SystemMessages::teletypeEchoResult($message, SystemMessages::RESULT_DONE);
+
+        // Find the first available cloud provider
         $provisioningSuccessful = false;
         $successfulCloudId = '';
-        foreach ($providers as $cloudId => $provider) {
-            $message = "   |- Attempting to provision on $cloudId";
-            SystemMessages::echoToTeletype($message);
-            if ($provider->provision()) {
-                self::afterProvisioning($provider, $cloudId);
-                SystemMessages::teletypeEchoResult($message, SystemMessages::RESULT_DONE);
-                $provisioningSuccessful = true;
-                $successfulCloudId = $cloudId;
-                // Provisioning succeeded, break out of the loop
-                break;
+
+        foreach ($results as $cloudId => $result) {
+            if ($result['state'] === 'fulfilled' && $result['value'] === true) {
+                $message = "   |- Attempting to provision on $cloudId";
+                SystemMessages::echoToTeletype($message);
+
+                $provider = $providers[$cloudId];
+                if ($provider->provision()) {
+                    self::afterProvisioning($provider, $cloudId);
+                    SystemMessages::teletypeEchoResult($message, SystemMessages::RESULT_DONE);
+                    $provisioningSuccessful = true;
+                    $successfulCloudId = $cloudId;
+                    break;
+                }
+                SystemMessages::teletypeEchoResult($message, SystemMessages::RESULT_SKIPPED);
             }
-            SystemMessages::teletypeEchoResult($message, SystemMessages::RESULT_SKIPPED);
         }
-        
+
         return ['success' => $provisioningSuccessful, 'cloudId' => $successfulCloudId];
     }
 

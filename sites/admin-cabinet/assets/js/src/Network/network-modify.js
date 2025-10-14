@@ -1027,14 +1027,14 @@ const networks = {
             });
         }
 
-        // Load static routes if provided
-        if (data.staticRoutes) {
-            StaticRoutesManager.loadRoutes(data.staticRoutes);
-        }
-
-        // Store available interfaces for static routes
+        // Store available interfaces for static routes FIRST (before loading routes)
         if (data.availableInterfaces) {
             StaticRoutesManager.availableInterfaces = data.availableInterfaces;
+        }
+
+        // Load static routes AFTER availableInterfaces are set
+        if (data.staticRoutes) {
+            StaticRoutesManager.loadRoutes(data.staticRoutes);
         }
 
         // Re-initialize dirty checking after population is complete
@@ -1211,8 +1211,42 @@ const StaticRoutesManager = {
         });
 
         // Input change handlers
-        StaticRoutesManager.$table.on('input change', '.network-input, .gateway-input', () => {
+        StaticRoutesManager.$table.on('input change', '.network-input, .gateway-input, .description-input', () => {
             Form.dataChanged();
+        });
+
+        // Paste handlers for IP address fields (enable clipboard paste with inputmask)
+        StaticRoutesManager.$table.on('paste', '.network-input, .gateway-input', function(e) {
+            e.preventDefault();
+
+            // Get pasted data from clipboard
+            let pastedData = '';
+            if (e.originalEvent && e.originalEvent.clipboardData && e.originalEvent.clipboardData.getData) {
+                pastedData = e.originalEvent.clipboardData.getData('text');
+            } else if (e.clipboardData && e.clipboardData.getData) {
+                pastedData = e.clipboardData.getData('text');
+            } else if (window.clipboardData && window.clipboardData.getData) {
+                pastedData = window.clipboardData.getData('text'); // For IE
+            }
+
+            // Clean the pasted data (remove extra spaces, keep only valid IP characters)
+            const cleanedData = pastedData.trim().replace(/[^0-9.]/g, '');
+
+            // Get the input element
+            const $input = $(this);
+
+            // Temporarily remove mask
+            $input.inputmask('remove');
+
+            // Set the cleaned value
+            $input.val(cleanedData);
+
+            // Reapply the mask after a short delay
+            setTimeout(() => {
+                $input.inputmask({alias: 'ip', placeholder: '_'});
+                $input.trigger('input');
+                Form.dataChanged();
+            }, 10);
         });
     },
 
@@ -1262,7 +1296,8 @@ const StaticRoutesManager = {
             network: $sourceRow.find('.network-input').val(),
             subnet: $(`#${subnetDropdownId}`).val(),
             gateway: $sourceRow.find('.gateway-input').val(),
-            interface: $(`#${interfaceDropdownId}`).val() || ''
+            interface: $(`#${interfaceDropdownId}`).val() || '',
+            description: $sourceRow.find('.description-input').val()
         };
 
         // Add new route with copied data
@@ -1291,6 +1326,7 @@ const StaticRoutesManager = {
         if (routeData) {
             $newRow.find('.network-input').val(routeData.network);
             $newRow.find('.gateway-input').val(routeData.gateway);
+            $newRow.find('.description-input').val(routeData.description || '');
         }
 
         // Add to table
@@ -1307,7 +1343,7 @@ const StaticRoutesManager = {
         // Initialize interface dropdown for this row
         StaticRoutesManager.initializeInterfaceDropdown($newRow, routeData?.interface || '');
 
-        // Initialize input masks
+        // Initialize inputmask for IP address fields
         $newRow.find('.ipaddress').inputmask({alias: 'ip', placeholder: '_'});
 
         StaticRoutesManager.updatePriorities();
@@ -1357,8 +1393,12 @@ const StaticRoutesManager = {
             }))
         ];
 
+        // Prepare form data for DynamicDropdownBuilder
+        const formData = {};
+        formData[dropdownId] = selectedValue || ''; // Ensure we pass empty string for "Auto"
+
         DynamicDropdownBuilder.buildDropdown(dropdownId,
-            { [dropdownId]: selectedValue },
+            formData,
             {
                 staticOptions: options,
                 placeholder: globalTranslate.nw_SelectInterface,
@@ -1414,6 +1454,7 @@ const StaticRoutesManager = {
                 subnet: $(`#${subnetDropdownId}`).val(),
                 gateway: $row.find('.gateway-input').val(),
                 interface: $(`#${interfaceDropdownId}`).val() || '',
+                description: $row.find('.description-input').val(),
                 priority: index + 1
             });
         });
