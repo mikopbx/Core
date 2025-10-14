@@ -32,40 +32,58 @@ class SystemSanitizer
 {
     /**
      * Get sanitization rule for extension fields that allows numeric extensions and system values
-     * 
+     *
+     * Returns rules in array format to avoid issues with pipe characters in regex patterns.
+     *
      * @param int $maxLength Maximum length for numeric extensions (default: 20 for phone numbers)
      * @param bool $allowEmpty Whether to allow empty values (default: true)
-     * @return string Sanitization rule
+     * @return array Sanitization rule as array
      */
-    public static function getExtensionSanitizationRule(int $maxLength = 20, bool $allowEmpty = true): string
+    public static function getExtensionSanitizationRule(int $maxLength = 20, bool $allowEmpty = true): array
     {
-        $emptyRule = $allowEmpty ? '|empty_to_null' : '';
-        
+        $rules = ['string'];
+
         // Get system extensions from database
         $systemExtensions = Extensions::getSystemExtensions();
-        
+
         if (!empty($systemExtensions)) {
-            // Create regex pattern that allows:
-            // 1. Numeric extensions/phone numbers (1-20 digits)
-            // 2. System extension values from database
-            $systemValues = implode('|', array_map('preg_quote', $systemExtensions));
-            $pattern = "/^([0-9]{1,{$maxLength}}|{$systemValues})$/";
+            // Filter out empty values and escape for regex with delimiter
+            $systemExtensions = array_filter($systemExtensions, fn($ext) => !empty($ext));
+
+            if (!empty($systemExtensions)) {
+                // Create regex pattern that allows:
+                // 1. Numeric extensions/phone numbers (1-20 digits)
+                // 2. System extension values from database
+                // IMPORTANT: Pass '/' as second parameter to preg_quote to escape the delimiter
+                $systemValues = implode('|', array_map(fn($ext) => preg_quote($ext, '/'), $systemExtensions));
+                $pattern = "/^([0-9]{1,{$maxLength}}|{$systemValues})$/";
+            } else {
+                // All system extensions were empty, allow only numeric
+                $pattern = "/^[0-9]{1,{$maxLength}}$/";
+            }
         } else {
             // If no system extensions found, allow only numeric
             $pattern = "/^[0-9]{1,{$maxLength}}$/";
         }
-        
-        return "string|regex:{$pattern}|max:{$maxLength}{$emptyRule}";
+
+        $rules[] = "regex:{$pattern}";
+        $rules[] = "max:{$maxLength}";
+
+        if ($allowEmpty) {
+            $rules[] = 'empty_to_null';
+        }
+
+        return $rules;
     }
 
     /**
      * Get sanitization rule for routing fields that allows numeric extensions and system extensions
-     * 
+     *
      * @param int $maxLength Maximum length for numeric extensions (default: 20 for phone numbers)
      * @param bool $allowEmpty Whether to allow empty values (default: true)
-     * @return string Sanitization rule
+     * @return array Sanitization rule as array
      */
-    public static function getRoutingSanitizationRule(int $maxLength = 20, bool $allowEmpty = true): string
+    public static function getRoutingSanitizationRule(int $maxLength = 20, bool $allowEmpty = true): array
     {
         // For routing, we use the same rules as extensions since system extensions can be routing destinations
         return self::getExtensionSanitizationRule($maxLength, $allowEmpty);
@@ -82,10 +100,12 @@ class SystemSanitizer
     {
         // Check if it's a system extension from database
         $systemExtensions = Extensions::getSystemExtensions();
+        // Filter out empty values
+        $systemExtensions = array_filter($systemExtensions, fn($ext) => !empty($ext));
         if (in_array($value, $systemExtensions, true)) {
             return true;
         }
-        
+
         // Check if it's a numeric extension/phone number
         return preg_match("/^[0-9]{1,{$maxLength}}$/", $value) === 1;
     }
@@ -113,13 +133,15 @@ class SystemSanitizer
     public static function sanitizeExtension(string $value, int $maxLength = 20): string
     {
         $value = trim($value);
-        
+
         // If it's a system extension, return as-is
         $systemExtensions = Extensions::getSystemExtensions();
+        // Filter out empty values
+        $systemExtensions = array_filter($systemExtensions, fn($ext) => !empty($ext));
         if (in_array($value, $systemExtensions, true)) {
             return $value;
         }
-        
+
         // For numeric values, remove non-numeric characters and limit length
         $numericValue = preg_replace('/[^0-9]/', '', $value);
         return substr($numericValue, 0, $maxLength);

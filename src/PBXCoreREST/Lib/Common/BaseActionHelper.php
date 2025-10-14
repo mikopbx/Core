@@ -116,7 +116,11 @@ class BaseActionHelper
     
     /**
      * Sanitize data using Filter
-     * 
+     *
+     * Accepts rules in two formats:
+     * 1. Array format (recommended): ['field' => ['string', 'regex:/pattern/', 'max:20']]
+     * 2. String format (legacy): ['field' => 'string|regex:/pattern/|max:20']
+     *
      * @param array $data Data to sanitize
      * @param array $rules Sanitization rules
      * @return array Sanitized data
@@ -126,17 +130,25 @@ class BaseActionHelper
         // Create filter through factory
         $factory = new FilterFactory();
         $filter = $factory->newInstance();
-        
+
         $sanitized = [];
-        
+
         foreach ($rules as $field => $rule) {
             if (!isset($data[$field])) {
                 continue;
             }
-            
+
             $value = $data[$field];
-            $ruleParts = explode('|', $rule);
-            
+
+            // Convert string rules to array format for unified processing
+            if (is_string($rule)) {
+                // Legacy string format - kept for backward compatibility
+                $ruleParts = explode('|', $rule);
+            } else {
+                // Modern array format (recommended)
+                $ruleParts = $rule;
+            }
+
             foreach ($ruleParts as $rulePart) {
                 if (strpos($rulePart, ':') !== false) {
                     [$ruleType, $ruleValue] = explode(':', $rulePart, 2);
@@ -144,7 +156,7 @@ class BaseActionHelper
                     $ruleType = $rulePart;
                     $ruleValue = null;
                 }
-                
+
                 switch ($ruleType) {
                     case 'string':
                         // Only trim, don't use $filter->string() as it encodes HTML entities
@@ -173,8 +185,20 @@ class BaseActionHelper
                         }
                         break;
                     case 'regex':
-                        if ($ruleValue && !preg_match($ruleValue, $value)) {
-                            $value = preg_replace('/[^0-9]/', '', $value); // Fallback for numbers
+                        if ($ruleValue) {
+                            // Wrap preg_match in error handler to catch regex errors with field context
+                            $previousErrorHandler = set_error_handler(function($errno, $errstr) use ($field, $ruleValue) {
+                                throw new \Exception("Regex error in field '{$field}' with pattern '{$ruleValue}': {$errstr}");
+                            });
+
+                            try {
+                                if (!preg_match($ruleValue, $value)) {
+                                    $value = preg_replace('/[^0-9]/', '', $value); // Fallback for numbers
+                                }
+                            } finally {
+                                // Restore previous error handler
+                                restore_error_handler();
+                            }
                         }
                         break;
                     case 'empty_to_null':
@@ -182,10 +206,10 @@ class BaseActionHelper
                         break;
                 }
             }
-            
+
             $sanitized[$field] = $value;
         }
-        
+
         return $sanitized;
     }
     
@@ -215,8 +239,20 @@ class BaseActionHelper
                         break;
                     case 'regex':
                         $pattern = $rule['pattern'] ?? '';
-                        if (!empty($value) && $pattern && !preg_match($pattern, $value)) {
-                            $errors[$field] = $message;
+                        if (!empty($value) && $pattern) {
+                            // Wrap preg_match in error handler to catch regex errors with field context
+                            set_error_handler(function($errno, $errstr) use ($field, $pattern) {
+                                throw new \Exception("Regex validation error in field '{$field}' with pattern '{$pattern}': {$errstr}");
+                            });
+
+                            try {
+                                if (!preg_match($pattern, $value)) {
+                                    $errors[$field] = $message;
+                                }
+                            } finally {
+                                // Restore previous error handler
+                                restore_error_handler();
+                            }
                         }
                         break;
                     case 'min_length':

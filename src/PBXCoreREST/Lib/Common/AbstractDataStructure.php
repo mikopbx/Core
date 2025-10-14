@@ -653,6 +653,14 @@ abstract class AbstractDataStructure
      * from getParameterDefinitions()['request'] section. This eliminates code duplication
      * across all DataStructure classes that implement the getParameterDefinitions pattern.
      *
+     * Returns rules in array format (each rule is an array of constraints):
+     * ```php
+     * [
+     *     'field_name' => ['string', 'regex:/^([0-9]+|none)$/', 'max:20'],
+     *     'other_field' => ['int', 'min:0', 'max:100']
+     * ]
+     * ```
+     *
      * Converts OpenAPI schema constraints to sanitization rule format:
      * - type → base type (string, integer, boolean, array)
      * - enum → in:value1,value2,...
@@ -670,7 +678,7 @@ abstract class AbstractDataStructure
      * Requires child class to implement:
      * - getParameterDefinitions() returning ['request' => [...], 'response' => [...]]
      *
-     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
+     * @return array<string, array<string>> Sanitization rules in format 'field' => ['type', 'constraint:value']
      */
     public static function getSanitizationRules(): array
     {
@@ -733,7 +741,9 @@ abstract class AbstractDataStructure
                 $sanitizationParts[] = 'array';
             }
 
-            $rules[$field] = implode('|', $sanitizationParts);
+            // Store as array instead of pipe-separated string
+            // This prevents issues with regex patterns containing pipe characters
+            $rules[$field] = $sanitizationParts;
         }
 
         return $rules;
