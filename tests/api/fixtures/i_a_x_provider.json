@@ -1,0 +1,48 @@
+{
+  "voxlink.iax": {
+    "type": "iax",
+    "uniqid": "IAX-1683372799",
+    "description": "VoxlinkIAX",
+    "host": "vox.link.ru",
+    "username": "line1",
+    "password": "voxvoxSecret",
+    "registration_type": "outbound",
+    "noregister": false,
+    "receive_calls_without_auth": false,
+    "manualattributes": ""
+  },
+  "provider.iax.delete": {
+    "type": "iax",
+    "uniqid": "IAX-1683372823",
+    "description": "Provider IAX for delete",
+    "host": "iax.delete.ru",
+    "username": "providerName",
+    "password": "providerPassword",
+    "registration_type": "outbound",
+    "receive_calls_without_auth": false,
+    "manualattributes": "",
+    "possibleToDelete": true
+  },
+  "provider.iax.inbound": {
+    "type": "iax",
+    "uniqid": "IAX-1683372850",
+    "description": "Inbound IAX Provider",
+    "host": "test-INBOUND.miko.ru",
+    "username": "IAX-TRUNK-93BE1B99",
+    "password": "inboundSecret123",
+    "registration_type": "inbound",
+    "receive_calls_without_auth": true,
+    "manualattributes": "language=ru"
+  },
+  "provider.iax.noregistration": {
+    "type": "iax",
+    "uniqid": "IAX-1683372875",
+    "description": "No Registration IAX Provider",
+    "host": "no-registration.miko.ru",
+    "username": "IAX-TRUNK-93BE1B99",
+    "password": "noRegSecret456",
+    "registration_type": "none",
+    "receive_calls_without_auth": true,
+    "manualattributes": "language=en"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "second.ivr.menu": {
+    "description": "'Second level IVR menu",
+    "name": "Second IVR menu",
+    "audio_message_id": "1",
+    "menuItems": "ARRAY",
+    "2": "000063",
+    "3": "000064"
+  },
+  "main.ivr.menu": {
+    "description": "'First level IVR menu",
+    "name": "Main IVR menu",
+    "audio_message_id": "1",
+    "menuItems": "ARRAY",
+    "2": "202",
+    "3": "203"
+  }
+}

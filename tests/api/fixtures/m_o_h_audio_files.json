@@ -1,0 +1,17 @@
+{
+  "first.moh": {
+    "name": "The first MOH audio record",
+    "filename": "250Hz_44100Hz_16bit_05sec.wav",
+    "description": "250Hz Test Tone"
+  },
+  "second.moh": {
+    "name": "The second MOH audio record",
+    "filename": "blind_willie.mp3",
+    "description": "Blues Music"
+  },
+  "third.moh": {
+    "name": "The third MOH audio record",
+    "filename": "first_noel.mp3",
+    "description": "Christmas Music"
+  }
+}

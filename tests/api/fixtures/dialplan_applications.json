@@ -1,0 +1,82 @@
+{
+  "echo.test": {
+    "name": "Echo Test Application",
+    "extension": "2300108",
+    "type": "self::TYPE_PLAINTEXT",
+    "applicationlogic": "NoOp(Echo test started)\nAnswer()\nEcho()\nHangup()",
+    "uniqid": "APP-ECHO-001",
+    "description": "Simple echo test for audio verification"
+  },
+  "time.announcement": {
+    "name": "Time Announcement",
+    "extension": "2300109",
+    "type": "self::TYPE_PLAINTEXT",
+    "applicationlogic": "'Answer()\nWait(1)\nSayUnixTime(",
+    "uniqid": "APP-TIME-001",
+    "description": "Announces current time to caller"
+  },
+  "weather.service": {
+    "name": "Weather Information",
+    "extension": "2300110",
+    "type": "self::TYPE_PHP_AGI",
+    "applicationlogic": "<?php\n// Weather service AGI script\nrequire_once \"phpagi.php\";\n$agi = new AGI();\n\n$agi->answer();\n$agi->stream_file(\"welcome\");\n$agi->say_digits(\"123\");\n$agi->hangup();\n?>",
+    "uniqid": "APP-WEATHER-001",
+    "description": "Weather information service using PHP AGI"
+  },
+  "callback.service": {
+    "name": "Callback Service",
+    "extension": "2300111",
+    "type": "self::TYPE_PLAINTEXT",
+    "applicationlogic": "'Answer()\nRead(CALLBACK_NUMBER",
+    "uniqid": "APP-CALLBACK-001",
+    "description": "Allows callers to request a callback"
+  },
+  "voicemail.check": {
+    "name": "Voicemail Check",
+    "extension": "2300112",
+    "type": "self::TYPE_PLAINTEXT",
+    "applicationlogic": "Answer()\nVoiceMailMain(${CALLERID(num)}@default)\nHangup()",
+    "uniqid": "APP-VM-001",
+    "description": "Direct voicemail access for users"
+  },
+  "conference.info": {
+    "name": "Conference Information",
+    "extension": "2300113",
+    "type": "self::TYPE_PLAINTEXT",
+    "applicationlogic": "Answer()\nPlayback(conference-info)\nPlayback(for-sales-press-1)\nPlayback(for-support-press-2)\nWaitExten(5)\nHangup()",
+    "uniqid": "APP-CONFINFO-001",
+    "description": "Provides conference room information"
+  },
+  "directory.service": {
+    "name": "Company Directory",
+    "extension": "2300114",
+    "type": "self::TYPE_PLAINTEXT",
+    "applicationlogic": "'Answer()\nDirectory(default",
+    "uniqid": "APP-DIR-001",
+    "description": "Company directory by name"
+  },
+  "music.on.hold.test": {
+    "name": "Music On Hold Test",
+    "extension": "2300115",
+    "type": "self::TYPE_PLAINTEXT",
+    "applicationlogic": "'Answer()\nMusicOnHold(default",
+    "uniqid": "APP-MOH-001",
+    "description": "Tests music on hold for 30 seconds"
+  },
+  "call.recording.test": {
+    "name": "Call Recording Test",
+    "extension": "2300116",
+    "type": "self::TYPE_PLAINTEXT",
+    "applicationlogic": "Answer()\nPlayback(this-call-may-be-monitored-or-recorded)\nMixMonitor(test-${UNIQUEID}.wav)\nEcho()\nStopMixMonitor()\nHangup()",
+    "uniqid": "APP-REC-001",
+    "description": "Tests call recording functionality"
+  },
+  "emergency.announcement": {
+    "name": "Emergency Announcement",
+    "extension": "2300117",
+    "type": "self::TYPE_PLAINTEXT",
+    "applicationlogic": "'Answer()\nPlayback(emergency-announcement)\nPlayback(please-standby)\nWait(5)\nGoto(main-ivr",
+    "uniqid": "APP-EMRG-001",
+    "description": "Emergency announcement system"
+  }
+}

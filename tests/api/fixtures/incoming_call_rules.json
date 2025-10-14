@@ -1,0 +1,32 @@
+{
+  "first.rule": {
+    "rulename": "First rule rulename",
+    "note": "First rule note",
+    "provider": "none",
+    "providerName": "",
+    "number": "74952293042",
+    "extension": "201",
+    "timeout": "14",
+    "description": "Basic incoming call rule without provider"
+  },
+  "second.rule": {
+    "rulename": "Second rule",
+    "note": "Second rule",
+    "provider": "SIP-1683372701",
+    "providerName": "",
+    "number": "74952293043",
+    "extension": "202",
+    "timeout": "16",
+    "description": "Rule with SIP provider"
+  },
+  "test.provider.rule": {
+    "rulename": "Rule for test provider",
+    "note": "'1. The client calls in the company\n2. The client hears a voice message\n3. The client dials any extension which exists on PBX (201",
+    "provider": "SIP-1683372744",
+    "providerName": "Provider for CTI tests",
+    "number": "",
+    "extension": "202",
+    "timeout": "50",
+    "description": "Complex routing rule with IVR logic"
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "first.audio": {
+    "name": "The first audio record",
+    "filename": "250Hz_44100Hz_16bit_05sec.wav",
+    "description": "250Hz Test Tone",
+    "type": "custom",
+    "for_delete": false
+  },
+  "second.audio": {
+    "name": "The second audio record",
+    "filename": "blind_willie.mp3",
+    "description": "Blues Music",
+    "type": "custom",
+    "for_delete": false
+  },
+  "third.audio": {
+    "name": "The third audio record",
+    "filename": "first_noel.mp3",
+    "description": "Christmas Music",
+    "type": "custom",
+    "for_delete": false
+  },
+  "fourth.audio": {
+    "name": "The fourth audio record",
+    "filename": "first_noel.mp3",
+    "description": "Christmas Music (For Delete)",
+    "type": "custom",
+    "for_delete": true
+  },
+  "miko_hello.audio": {
+    "id": "1",
+    "path": "/storage/usbdisk1/mikopbx/media/custom/miko_hello",
+    "name": "miko_hello",
+    "filename": "blind_willie.mp3",
+    "description": "",
+    "type": "custom",
+    "for_delete": false
+  }
+}
