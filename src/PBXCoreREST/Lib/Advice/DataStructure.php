@@ -19,6 +19,7 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Advice;
 
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
 use MikoPBX\PBXCoreREST\Lib\Common\OpenApiSchemaProvider;
 
 /**
@@ -29,7 +30,7 @@ use MikoPBX\PBXCoreREST\Lib\Common\OpenApiSchemaProvider;
  *
  * @package MikoPBX\PBXCoreREST\Lib\Advice
  */
-class DataStructure implements OpenApiSchemaProvider
+class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvider
 {
     /**
      * Format advice data for API response
@@ -48,6 +49,7 @@ class DataStructure implements OpenApiSchemaProvider
     /**
      * Get OpenAPI schema for advice list response
      *
+     * ✨ Inherits field definitions from getParameterDefinitions() - Single Source of Truth.
      * This schema matches the structure returned by GetAdviceListAction.
      * Used for GET /api/v3/advice endpoint.
      *
@@ -55,38 +57,41 @@ class DataStructure implements OpenApiSchemaProvider
      */
     public static function getListItemSchema(): array
     {
-        return [
-            'type' => 'object',
-            'properties' => [
-                'advice' => [
-                    'type' => 'object',
-                    'description' => 'rest_schema_advice_advice',
-                    'additionalProperties' => [
-                        'type' => 'array',
-                        'items' => [
-                            '$ref' => '#/components/schemas/AdviceItem'
-                        ]
-                    ],
-                    'example' => [
-                        'security' => [
-                            [
-                                'messageTpl' => 'adv_weak_password_detected',
-                                'messageParams' => ['extension' => '200'],
-                                'severity' => 'warning',
-                                'category' => 'security'
-                            ]
-                        ],
-                        'configuration' => [
-                            [
-                                'messageTpl' => 'adv_voicemail_not_configured',
-                                'messageParams' => [],
-                                'severity' => 'info',
-                                'category' => 'configuration'
-                            ]
-                        ]
+        $definitions = self::getParameterDefinitions();
+        $responseFields = $definitions['response'];
+
+        $properties = [];
+
+        // ✨ Inherit ALL response-only fields (NO duplication!)
+        foreach ($responseFields as $field => $definition) {
+            $properties[$field] = $definition;
+        }
+
+        // Add example data to advice field
+        if (isset($properties['advice'])) {
+            $properties['advice']['example'] = [
+                'security' => [
+                    [
+                        'messageTpl' => 'adv_weak_password_detected',
+                        'messageParams' => ['extension' => '200'],
+                        'severity' => 'warning',
+                        'category' => 'security'
+                    ]
+                ],
+                'configuration' => [
+                    [
+                        'messageTpl' => 'adv_voicemail_not_configured',
+                        'messageParams' => [],
+                        'severity' => 'info',
+                        'category' => 'configuration'
                     ]
                 ]
-            ]
+            ];
+        }
+
+        return [
+            'type' => 'object',
+            'properties' => $properties
         ];
     }
 
@@ -105,60 +110,92 @@ class DataStructure implements OpenApiSchemaProvider
     /**
      * Get related schemas for OpenAPI components
      *
+     * ✨ Inherits from getParameterDefinitions()['related'] section - Single Source of Truth.
      * Returns schemas for nested objects used in advice responses.
      *
      * @return array<string, array<string, mixed>> Related schemas
      */
     public static function getRelatedSchemas(): array
     {
+        $definitions = self::getParameterDefinitions();
+        return $definitions['related'] ?? [];
+    }
+
+    /**
+     * Get parameter definitions (Single Source of Truth)
+     *
+     * WHY: Centralizes advice parameter definitions and nested schemas.
+     * Advice is a read-only monitoring resource - no create/update operations.
+     *
+     * @return array<string, array<string, mixed>> Parameter definitions
+     */
+    public static function getParameterDefinitions(): array
+    {
         return [
-            'AdviceItem' => [
-                'type' => 'object',
-                'required' => ['messageTpl', 'severity', 'category'],
-                'properties' => [
-                    'messageTpl' => [
-                        'type' => 'string',
-                        'description' => 'rest_schema_advice_message_tpl',
-                        'example' => 'adv_weak_password_detected'
-                    ],
-                    'messageParams' => [
-                        'type' => 'object',
-                        'description' => 'rest_schema_advice_message_params',
-                        'additionalProperties' => true,
-                        'example' => ['extension' => '200']
-                    ],
-                    'severity' => [
-                        'type' => 'string',
-                        'description' => 'rest_schema_advice_severity',
-                        'enum' => ['critical', 'warning', 'info'],
-                        'example' => 'warning'
-                    ],
-                    'category' => [
-                        'type' => 'string',
-                        'description' => 'rest_schema_advice_category',
-                        'enum' => ['security', 'configuration', 'performance', 'maintenance', 'updates'],
-                        'example' => 'security'
+            'request' => [
+                // Query parameters for filtering (Advice is read-only)
+                'category' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_advice_category_filter',
+                    'enum' => ['security', 'configuration', 'performance', 'maintenance', 'updates'],
+                    'sanitize' => 'string',
+                    'example' => 'security'
+                ],
+                'severity' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_advice_severity_filter',
+                    'enum' => ['critical', 'warning', 'info'],
+                    'sanitize' => 'string',
+                    'example' => 'warning'
+                ]
+            ],
+            'response' => [
+                // Response-only fields
+                'advice' => [
+                    'type' => 'object',
+                    'description' => 'rest_schema_advice_advice',
+                    'additionalProperties' => [
+                        'type' => 'array',
+                        'items' => ['$ref' => '#/components/schemas/AdviceItem']
+                    ]
+                ]
+            ],
+            // ========== RELATED SCHEMAS ==========
+            // Nested object schemas referenced by $ref in OpenAPI
+            'related' => [
+                'AdviceItem' => [
+                    'type' => 'object',
+                    'required' => ['messageTpl', 'severity', 'category'],
+                    'properties' => [
+                        'messageTpl' => [
+                            'type' => 'string',
+                            'description' => 'rest_schema_advice_message_tpl',
+                            'example' => 'adv_weak_password_detected'
+                        ],
+                        'messageParams' => [
+                            'type' => 'object',
+                            'description' => 'rest_schema_advice_message_params',
+                            'additionalProperties' => true,
+                            'example' => ['extension' => '200']
+                        ],
+                        'severity' => [
+                            'type' => 'string',
+                            'description' => 'rest_schema_advice_severity',
+                            'enum' => ['critical', 'warning', 'info'],
+                            'example' => 'warning'
+                        ],
+                        'category' => [
+                            'type' => 'string',
+                            'description' => 'rest_schema_advice_category',
+                            'enum' => ['security', 'configuration', 'performance', 'maintenance', 'updates'],
+                            'example' => 'security'
+                        ]
                     ]
                 ]
             ]
         ];
     }
 
-    /**
-     * Generate sanitization rules automatically from controller attributes
-     *
-     * Uses ParameterSanitizationExtractor to extract rules from #[ApiParameter] attributes.
-     * This ensures Single Source of Truth - rules defined only in controller attributes.
-     *
-     * For read-only resources like Advice, we extract from the primary query method (getList).
-     *
-     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
-     */
-    public static function getSanitizationRules(): array
-    {
-        return \MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor::extractFromController(
-            \MikoPBX\PBXCoreREST\Controllers\Advice\RestController::class,
-            'getList'
-        );
-    }
+    // getSanitizationRules() inherited from AbstractDataStructure
+    // Auto-generated from getParameterDefinitions() - Single Source of Truth
 }

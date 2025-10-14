@@ -19,6 +19,7 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Iax;
 
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
 use MikoPBX\PBXCoreREST\Lib\Common\OpenApiSchemaProvider;
 
 /**
@@ -31,11 +32,12 @@ use MikoPBX\PBXCoreREST\Lib\Common\OpenApiSchemaProvider;
  *
  * @package MikoPBX\PBXCoreREST\Lib\Iax
  */
-class DataStructure implements OpenApiSchemaProvider
+class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvider
 {
     /**
      * Get OpenAPI schema for IAX registry status item
      *
+     * ✨ Inherits field definitions from getParameterDefinitions() - Single Source of Truth.
      * This schema matches the structure returned by GetRegistryAction.
      * Used for GET /api/v3/iax:getRegistry endpoint.
      *
@@ -43,11 +45,63 @@ class DataStructure implements OpenApiSchemaProvider
      */
     public static function getRegistrySchema(): array
     {
+        $definitions = self::getParameterDefinitions();
+        $responseFields = $definitions['response'];
+
+        $properties = [];
+
+        // ✨ Inherit ALL response-only fields (NO duplication!)
+        foreach ($responseFields as $field => $definition) {
+            $properties[$field] = $definition;
+        }
+
         return [
             'type' => 'object',
             'required' => ['id', 'state', 'username', 'host', 'noregister'],
             'description' => 'rest_schema_iax_registry_item',
-            'properties' => [
+            'properties' => $properties
+        ];
+    }
+
+    /**
+     * Get OpenAPI schema for IAX list item
+     *
+     * For IAX, we don't have a traditional list, so this returns the registry schema.
+     *
+     * @return array<string, mixed> OpenAPI schema definition
+     */
+    public static function getListItemSchema(): array
+    {
+        return self::getRegistrySchema();
+    }
+
+    /**
+     * Get OpenAPI schema for detailed IAX record
+     *
+     * For IAX singleton resource, detail and registry schemas are the same.
+     *
+     * @return array<string, mixed> OpenAPI schema definition
+     */
+    public static function getDetailSchema(): array
+    {
+        return self::getRegistrySchema();
+    }
+
+    /**
+     * Get parameter definitions (Single Source of Truth)
+     *
+     * WHY: Centralizes IAX parameter definitions.
+     * IAX is a read-only monitoring resource - no request parameters needed.
+     *
+     * @return array<string, array<string, mixed>> Parameter definitions
+     */
+    public static function getParameterDefinitions(): array
+    {
+        return [
+            'request' => [
+                // No request parameters - IAX is read-only monitoring
+            ],
+            'response' => [
                 'id' => [
                     'type' => 'string',
                     'description' => 'rest_schema_iax_id',
@@ -82,64 +136,11 @@ class DataStructure implements OpenApiSchemaProvider
                     'type' => 'string',
                     'description' => 'rest_schema_iax_time_response',
                     'example' => '15MS'
-                ],
+                ]
             ]
         ];
     }
 
-    /**
-     * Get OpenAPI schema for IAX list item
-     *
-     * For IAX, we don't have a traditional list, so this returns the registry schema.
-     *
-     * @return array<string, mixed> OpenAPI schema definition
-     */
-    public static function getListItemSchema(): array
-    {
-        return self::getRegistrySchema();
-    }
-
-    /**
-     * Get OpenAPI schema for detailed IAX record
-     *
-     * For IAX singleton resource, detail and registry schemas are the same.
-     *
-     * @return array<string, mixed> OpenAPI schema definition
-     */
-    public static function getDetailSchema(): array
-    {
-        return self::getRegistrySchema();
-    }
-
-    /**
-     * Get related schemas for OpenAPI components
-     *
-     * IAX does not have nested objects, so no related schemas are needed.
-     *
-     * @return array<string, array<string, mixed>> Related schemas
-     */
-    public static function getRelatedSchemas(): array
-    {
-        return [];
-    }
-
-    /**
-     * Generate sanitization rules automatically from controller attributes
-     *
-     * Uses ParameterSanitizationExtractor to extract rules from #[ApiParameter] attributes.
-     * This ensures Single Source of Truth - rules defined only in controller attributes.
-     *
-     * For IAX monitoring resource, we extract from the 'getRegistry' method.
-     * IAX is read-only for monitoring, so sanitization rules are primarily
-     * for query filtering parameters, not for data modification.
-     *
-     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
-     */
-    public static function getSanitizationRules(): array
-    {
-        return \MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor::extractFromController(
-            \MikoPBX\PBXCoreREST\Controllers\Iax\RestController::class,
-            'getRegistry'
-        );
-    }
+    // getSanitizationRules() inherited from AbstractDataStructure
+    // Auto-generated from getParameterDefinitions() - Single Source of Truth
 }

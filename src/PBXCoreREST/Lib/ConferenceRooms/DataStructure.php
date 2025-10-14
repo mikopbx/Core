@@ -66,7 +66,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
 
         return $data;
     }
-    
+
     /**
      * Create optimized data array for list view
      *
@@ -99,6 +99,9 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     /**
      * Get OpenAPI schema for conference room list item
      *
+     * Uses getParameterDefinitions() as Single Source of Truth (NO duplication!).
+     * Inherits request parameters + response-only fields.
+     *
      * This schema matches the structure returned by createForList() method.
      * Used for GET /api/v3/conference-rooms endpoint (list of conference rooms).
      *
@@ -106,45 +109,42 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function getListItemSchema(): array
     {
+        $definitions = self::getParameterDefinitions();
+        $requestParams = $definitions['request'];
+        $responseFields = $definitions['response'];
+
+        $properties = [];
+
+        // ✨ Inherit request parameters used in list view
+        $listFields = ['extension', 'name', 'pinCode'];
+        foreach ($listFields as $field) {
+            if (isset($requestParams[$field])) {
+                $properties[$field] = $requestParams[$field];
+                // Transform description key: rest_param_* → rest_schema_*
+                $properties[$field]['description'] = str_replace('rest_param_', 'rest_schema_', $properties[$field]['description']);
+            }
+        }
+
+        // ✨ Inherit response-only fields for list (NO duplication!)
+        $listResponseFields = ['id', 'represent'];
+        foreach ($listResponseFields as $field) {
+            if (isset($responseFields[$field])) {
+                $properties[$field] = $responseFields[$field];
+            }
+        }
+
         return [
             'type' => 'object',
             'required' => ['id', 'extension', 'name'],
-            'properties' => [
-                'id' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cr_id',
-                    'pattern' => '^CONFERENCE-[A-Z0-9]{8,}$',
-                    'example' => 'CONFERENCE-ABCD1234'
-                ],
-                'extension' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cr_extension',
-                    'pattern' => '^[0-9]{2,8}$',
-                    'example' => '3000'
-                ],
-                'name' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cr_name',
-                    'maxLength' => 100,
-                    'example' => 'Sales Conference'
-                ],
-                'pinCode' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cr_pincode',
-                    'maxLength' => 20,
-                    'example' => '1234'
-                ],
-                'represent' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cr_represent',
-                    'example' => '<i class="users icon"></i> Sales Conference <3000>'
-                ]
-            ]
+            'properties' => $properties
         ];
     }
 
     /**
      * Get OpenAPI schema for detailed conference room record
+     *
+     * Uses getParameterDefinitions() as Single Source of Truth (NO duplication!).
+     * Inherits ALL request parameters + response-only fields.
      *
      * This schema matches the structure returned by createFromModel() method.
      * Used for GET /api/v3/conference-rooms/{id}, POST, PUT, PATCH endpoints.
@@ -153,66 +153,109 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function getDetailSchema(): array
     {
+        $definitions = self::getParameterDefinitions();
+        $requestParams = $definitions['request'];
+        $responseFields = $definitions['response'];
+
+        $properties = [];
+
+        // ✨ Inherit ALL request parameters for detail view (NO duplication!)
+        foreach ($requestParams as $field => $definition) {
+            $properties[$field] = $definition;
+            // Transform description key: rest_param_* → rest_schema_*
+            $properties[$field]['description'] = str_replace('rest_param_', 'rest_schema_', $properties[$field]['description']);
+        }
+
+        // ✨ Inherit response-only fields for detail (NO duplication!)
+        foreach ($responseFields as $field => $definition) {
+            $properties[$field] = $definition;
+        }
+
         return [
             'type' => 'object',
             'required' => ['id', 'extension', 'name'],
-            'properties' => [
-                'id' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cr_id',
-                    'pattern' => '^CONFERENCE-[A-Z0-9]{8,}$',
-                    'example' => 'CONFERENCE-ABCD1234'
-                ],
-                'extension' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cr_extension',
-                    'pattern' => '^[0-9]{2,8}$',
-                    'example' => '3000'
-                ],
-                'name' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cr_name',
-                    'maxLength' => 100,
-                    'example' => 'Sales Conference'
-                ],
-                'pinCode' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cr_pincode',
-                    'maxLength' => 20,
-                    'example' => '1234'
-                ],
-                'represent' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cr_represent',
-                    'example' => '<i class="users icon"></i> Sales Conference <3000>'
-                ]
-            ]
+            'properties' => $properties
         ];
     }
 
     /**
      * Get related schemas for OpenAPI components
      *
-     * @return array<string, array<string, mixed>> Related schemas
+     * Conference rooms don't use nested schemas, so this returns empty array.
+     *
+     * @return array<string, array<string, mixed>> Related schemas (empty for this resource)
      */
-    public static function getRelatedSchemas(): array
+    /**
+     * Get all field definitions (request parameters + response-only fields)
+     *
+     * Single Source of Truth for ALL definitions in conference rooms API.
+     *
+     * Structure:
+     * - 'request': Request parameters (used in API requests, referenced by ApiParameterRef)
+     * - 'response': Response-only fields (only in API responses, not in requests)
+     *
+     * This eliminates duplication between:
+     * - Controller attributes (via ApiParameterRef)
+     * - getListItemSchema() (inherits from here)
+     * - getDetailSchema() (inherits from here)
+     *
+     * @return array<string, array<string, array<string, mixed>>> Field definitions
+     */
+    public static function getParameterDefinitions(): array
     {
-        return [];
+        return [
+            // ========== REQUEST PARAMETERS ==========
+            // Used in API requests (POST, PUT, PATCH)
+            // Referenced by ApiParameterRef in Controller
+            'request' => [
+                'name' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_cr_name',
+                    'maxLength' => 100,
+                    'example' => 'Sales Conference'
+                ],
+                'extension' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_cr_extension',
+                    'pattern' => '^[0-9]{2,8}$',
+                    'example' => '3000'
+                ],
+                'pinCode' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_cr_pincode',
+                    'maxLength' => 20,
+                    'example' => '1234'
+                ],
+                'description' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_cr_description',
+                    'maxLength' => 500,
+                    'example' => 'Weekly sales team conference'
+                ],
+            ],
+
+            // ========== RESPONSE-ONLY FIELDS ==========
+            // Only in API responses, not in requests
+            // Used by getListItemSchema() and getDetailSchema()
+            'response' => [
+                // ID field (used in both list and detail schemas)
+                'id' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_cr_id',
+                    'pattern' => '^CONFERENCE-[A-Z0-9]{8,32}$',
+                    'example' => 'CONFERENCE-ABCD1234'
+                ],
+
+                // Represent field (for list schema)
+                'represent' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_cr_represent',
+                    'example' => '<i class="users icon"></i> Sales Conference <3000>'
+                ],
+            ]
+        ];
     }
 
-    /**
-     * Generate sanitization rules automatically from controller attributes
-     *
-     * Uses ParameterSanitizationExtractor to extract rules from #[ApiParameter] attributes.
-     * This ensures Single Source of Truth - rules defined only in controller attributes.
-     *
-     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
-     */
-    public static function getSanitizationRules(): array
-    {
-        return \MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor::extractFromController(
-            \MikoPBX\PBXCoreREST\Controllers\ConferenceRooms\RestController::class,
-            'create'
-        );
-    }
+    // getSanitizationRules() inherited from AbstractDataStructure
+    // No need to override - uses getParameterDefinitions() automatically
 }

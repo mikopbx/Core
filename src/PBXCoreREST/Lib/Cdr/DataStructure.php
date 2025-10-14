@@ -119,6 +119,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     /**
      * Get OpenAPI schema for detailed CDR record
      *
+     * ✨ Inherits field definitions from getParameterDefinitions() - Single Source of Truth.
      * This schema matches the structure returned by createFromModel() method.
      * Used for GET /api/v3/cdr/{id} endpoint.
      *
@@ -126,11 +127,102 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function getDetailSchema(): array
     {
+        $definitions = self::getParameterDefinitions();
+        $responseFields = $definitions['response'];
+
+        $properties = [];
+
+        // ✨ Inherit ALL response-only fields (NO duplication!)
+        // CDR is read-only, so all fields come from response section
+        foreach ($responseFields as $field => $definition) {
+            $properties[$field] = $definition;
+        }
+
         return [
             'type' => 'object',
             'required' => ['id', 'start', 'src_num', 'dst_num', 'disposition'],
             'description' => 'rest_schema_cdr_detail',
-            'properties' => [
+            'properties' => $properties
+        ];
+    }
+
+    /**
+     * Get related schemas for OpenAPI components
+     *
+     * CDR does not have nested objects, so no related schemas are needed.
+     *
+     * @return array<string, array<string, mixed>> Related schemas
+     */
+    /**
+     * Get parameter definitions (Single Source of Truth)
+     *
+     * WHY: Centralizes CDR query parameter definitions.
+     * CDR is a read-only resource, so only query filtering parameters are defined.
+     *
+     * @return array<string, array<string, mixed>> Parameter definitions
+     */
+    public static function getParameterDefinitions(): array
+    {
+        return [
+            'request' => [
+                // Query parameters for filtering (CDR is read-only)
+                // These are NOT CDR record fields, but query/filter parameters
+                'limit' => [
+                    'type' => 'integer',
+                    'description' => 'rest_param_limit',
+                    'minimum' => 1,
+                    'maximum' => 1000,
+                    'default' => 50,
+                    'sanitize' => 'int',
+                    'example' => 50
+                ],
+                'offset' => [
+                    'type' => 'integer',
+                    'description' => 'rest_param_offset',
+                    'minimum' => 0,
+                    'default' => 0,
+                    'sanitize' => 'int',
+                    'example' => 0
+                ],
+                'dateFrom' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_cdr_dateFrom',
+                    'format' => 'date-time',
+                    'sanitize' => 'string',
+                    'example' => '2025-01-01T00:00:00'
+                ],
+                'dateTo' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_cdr_dateTo',
+                    'format' => 'date-time',
+                    'sanitize' => 'string',
+                    'example' => '2025-01-31T23:59:59'
+                ],
+                // Playback parameters (custom :getRecordFile method)
+                'view' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_cdr_view',
+                    'maxLength' => 500,
+                    'sanitize' => 'string',
+                    'example' => '/storage/usbdisk1/mikopbx/voicemailbackup/monitor/2025/01/15/call-123.mp3'
+                ],
+                'download' => [
+                    'type' => 'boolean',
+                    'description' => 'rest_param_cdr_download',
+                    'default' => false,
+                    'sanitize' => 'bool',
+                    'example' => false
+                ],
+                'filename' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_cdr_filename',
+                    'maxLength' => 255,
+                    'sanitize' => 'string',
+                    'example' => 'call-recording.mp3'
+                ]
+            ],
+            'response' => [
+                // CDR record fields (read-only, returned in responses)
                 'id' => [
                     'type' => 'integer',
                     'description' => 'rest_schema_cdr_id',
@@ -261,39 +353,11 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                     'type' => 'string',
                     'description' => 'rest_schema_cdr_verbose_call_id',
                     'example' => ''
-                ],
+                ]
             ]
         ];
     }
 
-    /**
-     * Get related schemas for OpenAPI components
-     *
-     * CDR does not have nested objects, so no related schemas are needed.
-     *
-     * @return array<string, array<string, mixed>> Related schemas
-     */
-    public static function getRelatedSchemas(): array
-    {
-        return [];
-    }
-
-    /**
-     * Generate sanitization rules automatically from controller attributes
-     *
-     * Uses ParameterSanitizationExtractor to extract rules from #[ApiParameter] attributes.
-     * This ensures Single Source of Truth - rules defined only in controller attributes.
-     *
-     * For read-only resources like CDR, we extract from the 'getList' method.
-     * CDR sanitization rules are primarily for query filtering parameters.
-     *
-     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
-     */
-    public static function getSanitizationRules(): array
-    {
-        return \MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor::extractFromController(
-            \MikoPBX\PBXCoreREST\Controllers\Cdr\RestController::class,
-            'getList'
-        );
-    }
+    // getSanitizationRules() inherited from AbstractDataStructure
+    // Auto-generated from getParameterDefinitions() - Single Source of Truth
 }

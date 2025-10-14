@@ -126,6 +126,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     /**
      * Get OpenAPI schema for ARI user list item
      *
+     * ✨ Inherits field definitions from getParameterDefinitions() - Single Source of Truth.
      * This schema matches the structure returned by createForList() method.
      * Used for GET /api/v3/asterisk-rest-users endpoint (list of ARI users).
      *
@@ -133,27 +134,150 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function getListItemSchema(): array
     {
+        $definitions = self::getParameterDefinitions();
+        $requestParams = $definitions['request'];
+        $responseFields = $definitions['response'];
+
+        $properties = [];
+
+        // ✨ Inherit request parameters used in list view (NO duplication!)
+        $listFields = ['username', 'description'];
+        foreach ($listFields as $field) {
+            if (isset($requestParams[$field])) {
+                $properties[$field] = $requestParams[$field];
+                // Transform description key: rest_param_* → rest_schema_*
+                $properties[$field]['description'] = str_replace('rest_param_', 'rest_schema_', $properties[$field]['description']);
+                // Remove sanitization and validation-only properties
+                unset($properties[$field]['sanitize'], $properties[$field]['minLength'], $properties[$field]['required']);
+            }
+        }
+
+        // ✨ Inherit response-only fields for list (NO duplication!)
+        $listResponseFields = ['id', 'applicationsSummary', 'applicationsCount'];
+        foreach ($listResponseFields as $field) {
+            if (isset($responseFields[$field])) {
+                $properties[$field] = $responseFields[$field];
+            }
+        }
+
         return [
             'type' => 'object',
             'required' => ['id', 'username'],
-            'properties' => [
+            'properties' => $properties
+        ];
+    }
+
+    /**
+     * Get OpenAPI schema for detailed ARI user record
+     *
+     * ✨ Inherits field definitions from getParameterDefinitions() - Single Source of Truth.
+     * This schema matches the structure returned by createFromModel() method.
+     * Used for GET /api/v3/asterisk-rest-users/{id}, POST, PUT, PATCH endpoints.
+     *
+     * @return array<string, mixed> OpenAPI schema definition
+     */
+    public static function getDetailSchema(): array
+    {
+        $definitions = self::getParameterDefinitions();
+        $requestParams = $definitions['request'];
+        $responseFields = $definitions['response'];
+
+        $properties = [];
+
+        // ✨ Inherit ALL request parameters for detail view (NO duplication!)
+        foreach ($requestParams as $field => $definition) {
+            // Skip writeOnly fields if any exist
+            if (isset($definition['writeOnly']) && $definition['writeOnly']) {
+                continue;
+            }
+
+            $properties[$field] = $definition;
+            // Transform description key: rest_param_* → rest_schema_*
+            $properties[$field]['description'] = str_replace('rest_param_', 'rest_schema_', $properties[$field]['description']);
+            // Remove sanitization and validation-only properties
+            unset($properties[$field]['sanitize'], $properties[$field]['minLength'], $properties[$field]['required']);
+        }
+
+        // ✨ Inherit response-only fields for detail (NO duplication!)
+        $detailResponseFields = ['id'];
+        foreach ($detailResponseFields as $field) {
+            if (isset($responseFields[$field])) {
+                $properties[$field] = $responseFields[$field];
+            }
+        }
+
+        return [
+            'type' => 'object',
+            'required' => ['id', 'username', 'password'],
+            'properties' => $properties
+        ];
+    }
+
+    /**
+     * Get parameter definitions (Single Source of Truth)
+     *
+     * Defines all field schemas, validation rules, defaults, and sanitization rules in one place.
+     * This replaces legacy ParameterSanitizationExtractor pattern.
+     *
+     * @return array<string, array<string, mixed>> Parameter definitions
+     */
+    public static function getParameterDefinitions(): array
+    {
+        return [
+            'request' => [
+                'username' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_aru_username',
+                    'minLength' => 1,
+                    'maxLength' => 50,
+                    'sanitize' => 'text',
+                    'required' => true,
+                    'example' => 'api_user'
+                ],
+                'password' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_aru_password',
+                    'minLength' => 8,
+                    'maxLength' => 255,
+                    'sanitize' => 'string',
+                    'required' => true,
+                    'example' => 'SecurePass123'
+                ],
+                'applications' => [
+                    'type' => 'array',
+                    'description' => 'rest_param_aru_applications',
+                    'items' => [
+                        'type' => 'string',
+                        'maxLength' => 100
+                    ],
+                    'sanitize' => 'array',
+                    'default' => [],
+                    'example' => ['app1', 'app2']
+                ],
+                'description' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_aru_description',
+                    'maxLength' => 255,
+                    'sanitize' => 'text',
+                    'default' => '',
+                    'example' => 'API user for call control'
+                ],
+                'weakPassword' => [
+                    'type' => 'integer',
+                    'description' => 'rest_param_aru_weak_password',
+                    'enum' => [0, 1],
+                    'sanitize' => 'int',
+                    'default' => 0,
+                    'example' => 0
+                ]
+            ],
+            'response' => [
+                // Auto-generated ID field (readOnly, not accepted in requests)
                 'id' => [
                     'type' => 'string',
                     'description' => 'rest_schema_aru_id',
                     'pattern' => '^[0-9]+$',
                     'example' => '5'
-                ],
-                'username' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_aru_username',
-                    'maxLength' => 50,
-                    'example' => 'api_user'
-                ],
-                'description' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_aru_description',
-                    'maxLength' => 255,
-                    'example' => 'API user for call control'
                 ],
                 'applicationsSummary' => [
                     'type' => 'string',
@@ -170,86 +294,6 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         ];
     }
 
-    /**
-     * Get OpenAPI schema for detailed ARI user record
-     *
-     * This schema matches the structure returned by createFromModel() method.
-     * Used for GET /api/v3/asterisk-rest-users/{id}, POST, PUT, PATCH endpoints.
-     *
-     * @return array<string, mixed> OpenAPI schema definition
-     */
-    public static function getDetailSchema(): array
-    {
-        return [
-            'type' => 'object',
-            'required' => ['id', 'username', 'password'],
-            'properties' => [
-                'id' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_aru_id',
-                    'pattern' => '^[0-9]+$',
-                    'example' => '5'
-                ],
-                'username' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_aru_username',
-                    'maxLength' => 50,
-                    'example' => 'api_user'
-                ],
-                'password' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_aru_password',
-                    'maxLength' => 255,
-                    'example' => 'SecurePass123'
-                ],
-                'applications' => [
-                    'type' => 'array',
-                    'description' => 'rest_schema_aru_applications',
-                    'items' => [
-                        'type' => 'string',
-                        'example' => 'app1'
-                    ],
-                    'example' => ['app1', 'app2']
-                ],
-                'description' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_aru_description',
-                    'maxLength' => 255,
-                    'example' => 'API user for call control'
-                ],
-                'weakPassword' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_aru_weak_password',
-                    'enum' => [0, 1],
-                    'example' => 0
-                ]
-            ]
-        ];
-    }
-
-    /**
-     * Get related schemas for OpenAPI components
-     *
-     * @return array<string, array<string, mixed>> Related schemas
-     */
-    public static function getRelatedSchemas(): array
-    {
-        return [];
-    }
-
-    /**
-     * Generate sanitization rules automatically from controller attributes
-     *
-     * Uses ParameterSanitizationExtractor to extract rules from #[ApiParameter] attributes.
-     * This ensures Single Source of Truth - rules defined only in controller attributes.
-     *
-     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
-     */
-    public static function getSanitizationRules(): array
-    {
-        return \MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor::extractFromController(
-            \MikoPBX\PBXCoreREST\Controllers\AsteriskRestUsers\RestController::class,
-            'create'
-        );
-    }
+    // getSanitizationRules() inherited from AbstractDataStructure
+    // Auto-generated from getParameterDefinitions() - Single Source of Truth
 }

@@ -78,6 +78,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     /**
      * Get OpenAPI schema for custom file list item
      *
+     * ✨ Inherits field definitions from getParameterDefinitions() - Single Source of Truth.
      * This schema matches the structure returned by createForList() method.
      * Used for GET /api/v3/custom-files endpoint (list of custom files).
      *
@@ -85,47 +86,43 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function getListItemSchema(): array
     {
+        $definitions = self::getParameterDefinitions();
+        $requestParams = $definitions['request'];
+        $responseFields = $definitions['response'];
+
+        $properties = [];
+
+        // ✨ Inherit request parameters used in list view (NO duplication!)
+        $listFields = ['filepath', 'mode', 'description', 'changed'];
+        foreach ($listFields as $field) {
+            if (isset($requestParams[$field])) {
+                $properties[$field] = $requestParams[$field];
+                // Transform description key: rest_param_* → rest_schema_*
+                $properties[$field]['description'] = str_replace('rest_param_', 'rest_schema_', $properties[$field]['description']);
+                // Remove sanitization and validation-only properties
+                unset($properties[$field]['sanitize'], $properties[$field]['minLength'], $properties[$field]['required']);
+            }
+        }
+
+        // ✨ Inherit response-only fields for list (NO duplication!)
+        $listResponseFields = ['id'];
+        foreach ($listResponseFields as $field) {
+            if (isset($responseFields[$field])) {
+                $properties[$field] = $responseFields[$field];
+            }
+        }
+
         return [
             'type' => 'object',
             'required' => ['id', 'filepath', 'mode'],
-            'properties' => [
-                'id' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cf_id',
-                    'pattern' => '^[0-9]+$',
-                    'example' => '15'
-                ],
-                'filepath' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cf_filepath',
-                    'maxLength' => 500,
-                    'example' => '/etc/asterisk/custom.conf'
-                ],
-                'mode' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cf_mode',
-                    'enum' => ['override', 'append', 'script', 'none'],
-                    'example' => 'append'
-                ],
-                'description' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cf_description',
-                    'maxLength' => 500,
-                    'example' => 'Custom Asterisk configuration'
-                ],
-                'changed' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cf_changed',
-                    'enum' => ['0', '1'],
-                    'example' => '0'
-                ]
-            ]
+            'properties' => $properties
         ];
     }
 
     /**
      * Get OpenAPI schema for detailed custom file record
      *
+     * ✨ Inherits field definitions from getParameterDefinitions() - Single Source of Truth.
      * This schema matches the structure returned by createFromModel() method.
      * Used for GET /api/v3/custom-files/{id}, POST, PUT, PATCH endpoints.
      *
@@ -133,74 +130,106 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function getDetailSchema(): array
     {
+        $definitions = self::getParameterDefinitions();
+        $requestParams = $definitions['request'];
+        $responseFields = $definitions['response'];
+
+        $properties = [];
+
+        // ✨ Inherit ALL request parameters for detail view (NO duplication!)
+        foreach ($requestParams as $field => $definition) {
+            // Skip writeOnly fields if any exist
+            if (isset($definition['writeOnly']) && $definition['writeOnly']) {
+                continue;
+            }
+
+            $properties[$field] = $definition;
+            // Transform description key: rest_param_* → rest_schema_*
+            $properties[$field]['description'] = str_replace('rest_param_', 'rest_schema_', $properties[$field]['description']);
+            // Remove sanitization and validation-only properties
+            unset($properties[$field]['sanitize'], $properties[$field]['minLength'], $properties[$field]['required']);
+        }
+
+        // ✨ Inherit response-only fields for detail (NO duplication!)
+        $detailResponseFields = ['id'];
+        foreach ($detailResponseFields as $field) {
+            if (isset($responseFields[$field])) {
+                $properties[$field] = $responseFields[$field];
+            }
+        }
+
         return [
             'type' => 'object',
             'required' => ['id', 'filepath', 'mode', 'content'],
-            'properties' => [
-                'id' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cf_id',
-                    'pattern' => '^[0-9]+$',
-                    'example' => '15'
-                ],
+            'properties' => $properties
+        ];
+    }
+
+    /**
+     * Get parameter definitions (Single Source of Truth)
+     *
+     * Defines all field schemas, validation rules, defaults, and sanitization rules in one place.
+     * This replaces legacy ParameterSanitizationExtractor pattern.
+     *
+     * @return array<string, array<string, mixed>> Parameter definitions
+     */
+    public static function getParameterDefinitions(): array
+    {
+        return [
+            'request' => [
                 'filepath' => [
                     'type' => 'string',
-                    'description' => 'rest_schema_cf_filepath',
+                    'description' => 'rest_param_cf_filepath',
+                    'minLength' => 1,
                     'maxLength' => 500,
+                    'sanitize' => 'string',
+                    'required' => true,
                     'example' => '/etc/asterisk/custom.conf'
                 ],
                 'content' => [
                     'type' => 'string',
-                    'description' => 'rest_schema_cf_content',
+                    'description' => 'rest_param_cf_content',
+                    'sanitize' => 'string',
+                    'required' => true,
                     'example' => 'W2dlbmVyYWxdCmRlYnVnPXllcw=='
                 ],
                 'mode' => [
                     'type' => 'string',
-                    'description' => 'rest_schema_cf_mode',
+                    'description' => 'rest_param_cf_mode',
                     'enum' => ['override', 'append', 'script', 'none'],
+                    'sanitize' => 'string',
                     'default' => 'none',
                     'example' => 'append'
                 ],
                 'description' => [
                     'type' => 'string',
-                    'description' => 'rest_schema_cf_description',
+                    'description' => 'rest_param_cf_description',
                     'maxLength' => 500,
+                    'sanitize' => 'text',
+                    'default' => '',
                     'example' => 'Custom Asterisk configuration'
                 ],
                 'changed' => [
                     'type' => 'string',
-                    'description' => 'rest_schema_cf_changed',
+                    'description' => 'rest_param_cf_changed',
                     'enum' => ['0', '1'],
+                    'sanitize' => 'string',
                     'default' => '0',
                     'example' => '0'
+                ]
+            ],
+            'response' => [
+                // Auto-generated ID field (readOnly, not accepted in requests)
+                'id' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_cf_id',
+                    'pattern' => '^[0-9]+$',
+                    'example' => '15'
                 ]
             ]
         ];
     }
 
-    /**
-     * Get related schemas for OpenAPI components
-     *
-     * @return array<string, array<string, mixed>> Related schemas
-     */
-    public static function getRelatedSchemas(): array
-    {
-        return [];
-    }
-
-    /**
-     * Generate sanitization rules automatically from controller attributes
-     *
-     * Uses ParameterSanitizationExtractor to extract rules from #[ApiParameter] attributes.
-     * This ensures Single Source of Truth - rules defined only in controller attributes.
-     *
-     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
-     */
-    public static function getSanitizationRules(): array
-    {
-        return \MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor::extractFromController(
-            \MikoPBX\PBXCoreREST\Controllers\CustomFiles\RestController::class,
-            'create'
-        );
-    }
+    // getSanitizationRules() inherited from AbstractDataStructure
+    // Auto-generated from getParameterDefinitions() - Single Source of Truth
 }

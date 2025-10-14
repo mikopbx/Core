@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Lib\MailSettings;
 
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
 use MikoPBX\PBXCoreREST\Lib\Common\OpenApiSchemaProvider;
 
 /**
@@ -32,7 +33,7 @@ use MikoPBX\PBXCoreREST\Lib\Common\OpenApiSchemaProvider;
  *
  * @package MikoPBX\PBXCoreREST\Lib\MailSettings
  */
-class DataStructure implements OpenApiSchemaProvider
+class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvider
 {
     /**
      * Format mail settings data for API response
@@ -61,14 +62,158 @@ class DataStructure implements OpenApiSchemaProvider
     /**
      * Get OpenAPI schema for detailed mail settings record
      *
+     * ✨ Inherits field definitions from getParameterDefinitions() - Single Source of Truth.
+     * This schema matches the structure returned by MailSettings endpoints.
+     *
      * @return array<string, mixed> OpenAPI schema definition
      */
     public static function getDetailSchema(): array
     {
+        $definitions = self::getParameterDefinitions();
+        $responseFields = $definitions['response'];
+
+        $properties = [];
+
+        // ✨ Inherit ALL response-only fields (NO duplication!)
+        foreach ($responseFields as $field => $definition) {
+            $properties[$field] = $definition;
+        }
+
         return [
             'type' => 'object',
             'required' => ['MailSMTPHost', 'MailSMTPPort', 'MailFromAddress'],
-            'properties' => [
+            'properties' => $properties
+        ];
+    }
+
+    /**
+     * Get related schemas for OpenAPI components
+     *
+     * ✨ Inherits from getParameterDefinitions()['related'] section - Single Source of Truth.
+     *
+     * @return array<string, array<string, mixed>> Related schemas
+     */
+    public static function getRelatedSchemas(): array
+    {
+        $definitions = self::getParameterDefinitions();
+        return $definitions['related'] ?? [];
+    }
+
+    /**
+     * Get parameter definitions (Single Source of Truth)
+     *
+     * WHY: Centralizes mail settings parameter definitions.
+     * MailSettings is a singleton resource for SMTP and OAuth2 configuration.
+     *
+     * @return array<string, array<string, mixed>> Parameter definitions
+     */
+    public static function getParameterDefinitions(): array
+    {
+        return [
+            'request' => [
+                // SMTP basic settings
+                'MailSMTPHost' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_ms_smtp_host',
+                    'maxLength' => 255,
+                    'sanitize' => 'string',
+                    'required' => true,
+                    'example' => 'smtp.gmail.com'
+                ],
+                'MailSMTPPort' => [
+                    'type' => 'integer',
+                    'description' => 'rest_param_ms_smtp_port',
+                    'minimum' => 1,
+                    'maximum' => 65535,
+                    'default' => 587,
+                    'sanitize' => 'int',
+                    'required' => true,
+                    'example' => 587
+                ],
+                'MailSMTPAuthType' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_ms_auth_type',
+                    'enum' => ['none', 'plain', 'login', 'oauth2'],
+                    'default' => 'none',
+                    'sanitize' => 'string',
+                    'example' => 'oauth2'
+                ],
+                'MailSMTPUsername' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_ms_username',
+                    'maxLength' => 255,
+                    'sanitize' => 'string',
+                    'example' => 'admin@company.com'
+                ],
+                'MailSMTPPassword' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_ms_password',
+                    'maxLength' => 255,
+                    'sanitize' => 'string',
+                    'example' => 'password123'
+                ],
+                'MailSMTPUseTLS' => [
+                    'type' => 'boolean',
+                    'description' => 'rest_param_ms_use_tls',
+                    'default' => true,
+                    'sanitize' => 'bool',
+                    'example' => true
+                ],
+                // From settings
+                'MailFromUsername' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_ms_from_username',
+                    'maxLength' => 255,
+                    'sanitize' => 'string',
+                    'example' => 'PBX System'
+                ],
+                'MailFromAddress' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_ms_from_address',
+                    'maxLength' => 255,
+                    'sanitize' => 'string',
+                    'required' => true,
+                    'example' => 'admin@company.com'
+                ],
+                'MailEnableNotifications' => [
+                    'type' => 'boolean',
+                    'description' => 'rest_param_ms_enable_notifications',
+                    'default' => true,
+                    'sanitize' => 'bool',
+                    'example' => true
+                ],
+                // OAuth2 settings
+                'MailSMTPOAuth2ClientId' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_ms_oauth2_client_id',
+                    'maxLength' => 500,
+                    'sanitize' => 'string',
+                    'example' => '123456789-abcdefg.apps.googleusercontent.com'
+                ],
+                'MailSMTPOAuth2ClientSecret' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_ms_oauth2_client_secret',
+                    'maxLength' => 500,
+                    'sanitize' => 'string',
+                    'example' => 'GOCSPX-AbCdEfGhIjKlMnOpQrStUvWxYz'
+                ],
+                'MailSMTPOAuth2RefreshToken' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_ms_oauth2_refresh_token',
+                    'maxLength' => 1000,
+                    'sanitize' => 'string',
+                    'example' => '1//0gABC...'
+                ],
+                'MailSMTPOAuth2Provider' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_ms_oauth2_provider',
+                    'enum' => ['gmail', 'outlook', 'custom'],
+                    'sanitize' => 'string',
+                    'example' => 'gmail'
+                ]
+            ],
+            'response' => [
+                // All mail settings fields (with rest_schema_* keys)
                 'MailSMTPHost' => [
                     'type' => 'string',
                     'description' => 'rest_schema_ms_smtp_host',
@@ -128,7 +273,6 @@ class DataStructure implements OpenApiSchemaProvider
                     'default' => true,
                     'example' => true
                 ],
-                // OAuth2 specific fields
                 'MailSMTPOAuth2ClientId' => [
                     'type' => 'string',
                     'description' => 'rest_schema_ms_oauth2_client_id',
@@ -173,74 +317,52 @@ class DataStructure implements OpenApiSchemaProvider
                     'description' => 'rest_schema_ms_error_message',
                     'example' => ''
                 ]
-            ]
-        ];
-    }
-
-    /**
-     * Get related schemas for OpenAPI components
-     *
-     * @return array<string, array<string, mixed>> Related schemas
-     */
-    public static function getRelatedSchemas(): array
-    {
-        return [
-            'MailTestResult' => [
-                'type' => 'object',
-                'properties' => [
-                    'success' => [
-                        'type' => 'boolean',
-                        'description' => 'rest_schema_ms_test_success',
-                        'example' => true
-                    ],
-                    'message' => [
-                        'type' => 'string',
-                        'description' => 'rest_schema_ms_test_message',
-                        'example' => 'Connection successful'
-                    ],
-                    'details' => [
-                        'type' => 'object',
-                        'description' => 'rest_schema_ms_test_details',
-                        'additionalProperties' => true
-                    ]
-                ]
             ],
-            'OAuth2Url' => [
-                'type' => 'object',
-                'properties' => [
-                    'authUrl' => [
-                        'type' => 'string',
-                        'description' => 'rest_schema_ms_oauth2_url',
-                        'format' => 'uri',
-                        'example' => 'https://accounts.google.com/o/oauth2/auth?...'
-                    ],
-                    'state' => [
-                        'type' => 'string',
-                        'description' => 'rest_schema_ms_oauth2_state',
-                        'example' => 'random_state_string'
+            // ========== RELATED SCHEMAS ==========
+            // Nested object schemas for test results and OAuth2 URLs
+            'related' => [
+                'MailTestResult' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'success' => [
+                            'type' => 'boolean',
+                            'description' => 'rest_schema_ms_test_success',
+                            'example' => true
+                        ],
+                        'message' => [
+                            'type' => 'string',
+                            'description' => 'rest_schema_ms_test_message',
+                            'example' => 'Connection successful'
+                        ],
+                        'details' => [
+                            'type' => 'object',
+                            'description' => 'rest_schema_ms_test_details',
+                            'additionalProperties' => true
+                        ]
+                    ]
+                ],
+                'OAuth2Url' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'authUrl' => [
+                            'type' => 'string',
+                            'description' => 'rest_schema_ms_oauth2_url',
+                            'format' => 'uri',
+                            'example' => 'https://accounts.google.com/o/oauth2/auth?...'
+                        ],
+                        'state' => [
+                            'type' => 'string',
+                            'description' => 'rest_schema_ms_oauth2_state',
+                            'example' => 'random_state_string'
+                        ]
                     ]
                 ]
             ]
         ];
     }
 
-    /**
-     * Generate sanitization rules automatically from controller attributes
-     *
-     * Uses ParameterSanitizationExtractor to extract rules from #[ApiParameter] attributes.
-     * This ensures Single Source of Truth - rules defined only in controller attributes.
-     *
-     * For singleton resources like MailSettings, we extract from the 'update' method.
-     *
-     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
-     */
-    public static function getSanitizationRules(): array
-    {
-        return \MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor::extractFromController(
-            \MikoPBX\PBXCoreREST\Controllers\MailSettings\RestController::class,
-            'update'
-        );
-    }
+    // getSanitizationRules() inherited from AbstractDataStructure
+    // Auto-generated from getParameterDefinitions() - Single Source of Truth
 
     /**
      * Format data by OpenAPI schema
@@ -251,7 +373,7 @@ class DataStructure implements OpenApiSchemaProvider
      * @param string $schemaType Schema type ('list' or 'detail')
      * @return array<string, mixed> Formatted data
      */
-    protected static function formatBySchema(array $data, string $schemaType): array
+    protected static function formatBySchema(array $data, string $schemaType = 'detail'): array
     {
         // Get the appropriate schema
         $schema = $schemaType === 'list'

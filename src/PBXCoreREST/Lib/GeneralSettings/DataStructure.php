@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Lib\GeneralSettings;
 
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
 use MikoPBX\PBXCoreREST\Lib\Common\OpenApiSchemaProvider;
 
 /**
@@ -34,7 +35,7 @@ use MikoPBX\PBXCoreREST\Lib\Common\OpenApiSchemaProvider;
  *
  * @package MikoPBX\PBXCoreREST\Lib\GeneralSettings
  */
-class DataStructure implements OpenApiSchemaProvider
+class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvider
 {
     /**
      * Format settings data using OpenAPI schema
@@ -63,7 +64,7 @@ class DataStructure implements OpenApiSchemaProvider
      * @param string $schemaType Schema type ('detail' or 'list')
      * @return array<string, mixed> Formatted data
      */
-    private static function formatBySchema(array $data, string $schemaType): array
+    protected static function formatBySchema(array $data, string $schemaType = 'detail'): array
     {
         $schema = $schemaType === 'detail' ? self::getDetailSchema() : self::getListItemSchema();
 
@@ -91,7 +92,7 @@ class DataStructure implements OpenApiSchemaProvider
      * @param array<string, mixed> $fieldSchema Field schema definition
      * @return mixed Converted value
      */
-    private static function convertByType(mixed $value, array $fieldSchema): mixed
+    protected static function convertByType(mixed $value, array $fieldSchema): mixed
     {
         $type = $fieldSchema['type'] ?? 'string';
 
@@ -119,6 +120,7 @@ class DataStructure implements OpenApiSchemaProvider
     /**
      * Get OpenAPI schema for detailed general settings record
      *
+     * ✨ Inherits field definitions from getParameterDefinitions() - Single Source of Truth.
      * This schema matches the structure returned by GetSettingsAction.
      * Used for GET /api/v3/general-settings, PUT, PATCH endpoints.
      *
@@ -126,9 +128,63 @@ class DataStructure implements OpenApiSchemaProvider
      */
     public static function getDetailSchema(): array
     {
+        $definitions = self::getParameterDefinitions();
+        $responseFields = $definitions['response'];
+
+        $properties = [];
+
+        // ✨ Inherit ALL response fields (NO duplication!)
+        foreach ($responseFields as $field => $definition) {
+            $properties[$field] = $definition;
+        }
+
         return [
             'type' => 'object',
-            'properties' => [
+            'properties' => $properties
+        ];
+    }
+
+    /**
+     * Get related schemas for OpenAPI components
+     *
+     * ✨ Inherits from getParameterDefinitions()['related'] section - Single Source of Truth.
+     *
+     * @return array<string, array<string, mixed>> Related schemas
+     */
+    public static function getRelatedSchemas(): array
+    {
+        $definitions = self::getParameterDefinitions();
+        return $definitions['related'] ?? [];
+    }
+
+    /**
+     * Get parameter definitions (Single Source of Truth)
+     *
+     * WHY: Centralizes general settings parameter definitions.
+     * GeneralSettings is a singleton resource containing all PBX settings.
+     *
+     * @return array<string, array<string, mixed>> Parameter definitions
+     */
+    public static function getParameterDefinitions(): array
+    {
+        return [
+            'request' => [
+                // Key-value pairs structure for settings
+                'settings' => [
+                    'type' => 'object',
+                    'description' => 'rest_param_gs_settings',
+                    'sanitize' => 'array',
+                    'example' => [PbxSettings::PBX_NAME => 'Company PBX']
+                ],
+                // Codecs array
+                'codecs' => [
+                    'type' => 'array',
+                    'description' => 'rest_param_gs_codecs',
+                    'sanitize' => 'array',
+                    'example' => [['name' => 'alaw', 'priority' => 0]]
+                ]
+            ],
+            'response' => [
                 'settings' => [
                     'type' => 'object',
                     'description' => 'rest_schema_gs_settings',
@@ -367,71 +423,46 @@ class DataStructure implements OpenApiSchemaProvider
                         ]
                     ]
                 ]
-            ]
-        ];
-    }
-
-    /**
-     * Get related schemas for OpenAPI components
-     *
-     * Returns schemas for nested objects used in general settings responses.
-     *
-     * @return array<string, array<string, mixed>> Related schemas
-     */
-    public static function getRelatedSchemas(): array
-    {
-        return [
-            'Codec' => [
-                'type' => 'object',
-                'required' => ['name', 'type', 'priority', 'disabled'],
-                'properties' => [
-                    'name' => [
-                        'type' => 'string',
-                        'description' => 'rest_schema_codec_name',
-                        'example' => 'alaw'
-                    ],
-                    'type' => [
-                        'type' => 'string',
-                        'description' => 'rest_schema_codec_type',
-                        'enum' => ['audio', 'video'],
-                        'example' => 'audio'
-                    ],
-                    'priority' => [
-                        'type' => 'integer',
-                        'description' => 'rest_schema_codec_priority',
-                        'minimum' => 0,
-                        'example' => 0
-                    ],
-                    'disabled' => [
-                        'type' => 'boolean',
-                        'description' => 'rest_schema_codec_disabled',
-                        'example' => false
-                    ],
-                    'description' => [
-                        'type' => 'string',
-                        'description' => 'rest_schema_codec_description',
-                        'example' => 'G.711 a-law'
+            ],
+            // ========== RELATED SCHEMAS ==========
+            'related' => [
+                'Codec' => [
+                    'type' => 'object',
+                    'required' => ['name', 'type', 'priority', 'disabled'],
+                    'properties' => [
+                        'name' => [
+                            'type' => 'string',
+                            'description' => 'rest_schema_codec_name',
+                            'example' => 'alaw'
+                        ],
+                        'type' => [
+                            'type' => 'string',
+                            'description' => 'rest_schema_codec_type',
+                            'enum' => ['audio', 'video'],
+                            'example' => 'audio'
+                        ],
+                        'priority' => [
+                            'type' => 'integer',
+                            'description' => 'rest_schema_codec_priority',
+                            'minimum' => 0,
+                            'example' => 0
+                        ],
+                        'disabled' => [
+                            'type' => 'boolean',
+                            'description' => 'rest_schema_codec_disabled',
+                            'example' => false
+                        ],
+                        'description' => [
+                            'type' => 'string',
+                            'description' => 'rest_schema_codec_description',
+                            'example' => 'G.711 a-law'
+                        ]
                     ]
                 ]
             ]
         ];
     }
 
-    /**
-     * Generate sanitization rules automatically from controller attributes
-     *
-     * Uses ParameterSanitizationExtractor to extract rules from #[ApiParameter] attributes.
-     * This ensures Single Source of Truth - rules defined only in controller attributes.
-     *
-     * For singleton resources like GeneralSettings, we extract from the 'update' method.
-     *
-     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
-     */
-    public static function getSanitizationRules(): array
-    {
-        return \MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor::extractFromController(
-            \MikoPBX\PBXCoreREST\Controllers\GeneralSettings\RestController::class,
-            'update'
-        );
-    }
+    // getSanitizationRules() inherited from AbstractDataStructure
+    // Auto-generated from getParameterDefinitions() - Single Source of Truth
 }

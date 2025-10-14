@@ -26,7 +26,7 @@ use MikoPBX\PBXCoreREST\Lib\Common\SearchIndexTrait;
 use MikoPBX\PBXCoreREST\Lib\Common\OpenApiSchemaProvider;
 
 /**
- * Data structure for Dialplan Applications with OpenAPI schema support
+ * Data structure for dialplan applications with OpenAPI schema support
  *
  * Creates consistent data format for API responses with automatic validation
  * and type conversion based on OpenAPI schema definitions.
@@ -38,6 +38,7 @@ use MikoPBX\PBXCoreREST\Lib\Common\OpenApiSchemaProvider;
 class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvider
 {
     use SearchIndexTrait;
+
     /**
      * Create complete data array from DialplanApplications model
      *
@@ -70,7 +71,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
 
         return $data;
     }
-    
+
     /**
      * Create simplified data structure for list display
      *
@@ -110,7 +111,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
 
         return $data;
     }
-    
+
     /**
      * Create data structure for dropdown/select options
      *
@@ -130,6 +131,9 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     /**
      * Get OpenAPI schema for dialplan application list item
      *
+     * Uses getParameterDefinitions() as Single Source of Truth (NO duplication!).
+     * Inherits request parameters + response-only fields.
+     *
      * This schema matches the structure returned by createForList() method.
      * Used for GET /api/v3/dialplan-applications endpoint (list of applications).
      *
@@ -137,51 +141,173 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function getListItemSchema(): array
     {
+        $definitions = self::getParameterDefinitions();
+        $requestParams = $definitions['request'];
+        $responseFields = $definitions['response'];
+
+        $properties = [];
+
+        // ✨ Inherit request parameters used in list view
+        $listFields = ['extension', 'name', 'description', 'type', 'hint'];
+        foreach ($listFields as $field) {
+            if (isset($requestParams[$field])) {
+                $properties[$field] = $requestParams[$field];
+                // Transform description key: rest_param_* → rest_schema_*
+                $properties[$field]['description'] = str_replace('rest_param_', 'rest_schema_', $properties[$field]['description']);
+
+                // Override examples for list display (optional, can be different from create)
+                if ($field === 'extension') {
+                    $properties[$field]['example'] = '999';
+                } elseif ($field === 'name') {
+                    $properties[$field]['example'] = 'Echo Test';
+                }
+            }
+        }
+
+        // ✨ Inherit response-only fields for list (NO duplication!)
+        $listResponseFields = ['id', 'represent', 'search_index'];
+        foreach ($listResponseFields as $field) {
+            if (isset($responseFields[$field])) {
+                $properties[$field] = $responseFields[$field];
+            }
+        }
+
         return [
             'type' => 'object',
             'required' => ['id', 'extension', 'name', 'type', 'represent'],
-            'properties' => [
+            'properties' => $properties
+        ];
+    }
+
+    /**
+     * Get OpenAPI schema for detailed dialplan application record
+     *
+     * Uses getParameterDefinitions() as Single Source of Truth (NO duplication!).
+     * Inherits ALL request parameters + response-only fields.
+     *
+     * This schema matches the structure returned by createFromModel() method.
+     * Used for GET /api/v3/dialplan-applications/{id}, POST, PUT, PATCH endpoints.
+     *
+     * @return array<string, mixed> OpenAPI schema definition
+     */
+    public static function getDetailSchema(): array
+    {
+        $definitions = self::getParameterDefinitions();
+        $requestParams = $definitions['request'];
+        $responseFields = $definitions['response'];
+
+        $properties = [];
+
+        // ✨ Inherit ALL request parameters for detail view (NO duplication!)
+        foreach ($requestParams as $field => $definition) {
+            $properties[$field] = $definition;
+            // Transform description key: rest_param_* → rest_schema_*
+            $properties[$field]['description'] = str_replace('rest_param_', 'rest_schema_', $properties[$field]['description']);
+        }
+
+        // ✨ Inherit response-only fields for detail (NO duplication!)
+        $detailResponseFields = ['id'];
+        foreach ($detailResponseFields as $field) {
+            if (isset($responseFields[$field])) {
+                $properties[$field] = $responseFields[$field];
+            }
+        }
+
+        return [
+            'type' => 'object',
+            'required' => ['id', 'extension', 'name', 'type'],
+            'properties' => $properties
+        ];
+    }
+
+    /**
+     * Get related schemas for OpenAPI components
+     *
+     * Dialplan applications don't use nested schemas, so this returns empty array.
+     *
+     * @return array<string, array<string, mixed>> Related schemas (empty for this resource)
+     */
+    /**
+     * Get all field definitions (request parameters + response-only fields)
+     *
+     * Single Source of Truth for ALL definitions in dialplan applications API.
+     *
+     * Structure:
+     * - 'request': Request parameters (used in API requests, referenced by ApiParameterRef)
+     * - 'response': Response-only fields (only in API responses, not in requests)
+     *
+     * This eliminates duplication between:
+     * - Controller attributes (via ApiParameterRef)
+     * - getListItemSchema() (inherits from here)
+     * - getDetailSchema() (inherits from here)
+     *
+     * @return array<string, array<string, array<string, mixed>>> Field definitions
+     */
+    public static function getParameterDefinitions(): array
+    {
+        return [
+            // ========== REQUEST PARAMETERS ==========
+            // Used in API requests (POST, PUT, PATCH)
+            // Referenced by ApiParameterRef in Controller
+            'request' => [
+                'name' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_da_name',
+                    'maxLength' => 50,
+                    'example' => 'Echo Test'
+                ],
+                'extension' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_da_extension',
+                    'pattern' => '^[0-9#+\\*|X]{1,64}$',
+                    'example' => '999'
+                ],
+                'description' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_da_description',
+                    'maxLength' => 2000,
+                    'example' => 'Test echo application'
+                ],
+                'type' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_da_type',
+                    'enum' => ['php', 'plaintext', 'python3', 'lua', 'ael', 'none'],
+                    'default' => 'php',
+                    'example' => 'php'
+                ],
+                'hint' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_da_hint',
+                    'maxLength' => 255,
+                    'example' => 'BLF hint for line status'
+                ],
+                'applicationlogic' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_da_applicationlogic',
+                    'example' => '<?php\n// PHP code here'
+                ]
+            ],
+
+            // ========== RESPONSE-ONLY FIELDS ==========
+            // Only in API responses, not in requests
+            // Used by getListItemSchema() and getDetailSchema()
+            'response' => [
+                // ID field (used in both list and detail schemas)
                 'id' => [
                     'type' => 'string',
                     'description' => 'rest_schema_da_id',
                     'pattern' => '^DIALPLAN-[A-Z0-9]{8,32}$',
                     'example' => 'DIALPLAN-ABCD1234'
                 ],
-                'extension' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_da_extension',
-                    'pattern' => '^[0-9*#]{2,8}$',
-                    'example' => '999'
-                ],
-                'name' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_da_name',
-                    'maxLength' => 100,
-                    'example' => 'Echo Test'
-                ],
-                'description' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_da_description',
-                    'maxLength' => 500,
-                    'example' => 'Test echo application'
-                ],
-                'type' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_da_type',
-                    'enum' => ['php', 'plaintext', 'python3', 'lua', 'ael', 'none'],
-                    'example' => 'php'
-                ],
-                'hint' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_da_hint',
-                    'maxLength' => 255,
-                    'example' => 'BLF hint for line status'
-                ],
+
+                // Represent field (for list schema)
                 'represent' => [
                     'type' => 'string',
                     'description' => 'rest_schema_da_represent',
                     'example' => '<i class="code icon"></i> Echo Test <999>'
                 ],
+
+                // Search index (for list schema)
                 'search_index' => [
                     'type' => 'string',
                     'description' => 'rest_schema_da_search_index',
@@ -191,91 +317,6 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         ];
     }
 
-    /**
-     * Get OpenAPI schema for detailed dialplan application record
-     *
-     * This schema matches the structure returned by createFromModel() method.
-     * Used for GET /api/v3/dialplan-applications/{id}, POST, PUT, PATCH endpoints.
-     *
-     * @return array<string, mixed> OpenAPI schema definition
-     */
-    public static function getDetailSchema(): array
-    {
-        return [
-            'type' => 'object',
-            'required' => ['id', 'extension', 'name', 'type'],
-            'properties' => [
-                'id' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_da_id',
-                    'pattern' => '^DIALPLAN-[A-Z0-9]{8,32}$',
-                    'example' => 'DIALPLAN-ABCD1234'
-                ],
-                'extension' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_da_extension',
-                    'pattern' => '^[0-9*#]{2,8}$',
-                    'example' => '999'
-                ],
-                'name' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_da_name',
-                    'maxLength' => 100,
-                    'example' => 'Echo Test'
-                ],
-                'description' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_da_description',
-                    'maxLength' => 500,
-                    'example' => 'Test echo application'
-                ],
-                'type' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_da_type',
-                    'enum' => ['php', 'plaintext', 'python3', 'lua', 'ael', 'none'],
-                    'default' => 'php',
-                    'example' => 'php'
-                ],
-                'hint' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_da_hint',
-                    'maxLength' => 255,
-                    'example' => 'BLF hint for line status'
-                ],
-                'applicationlogic' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_da_applicationlogic',
-                    'example' => '<?php\n// PHP code here'
-                ]
-            ]
-        ];
-    }
-
-    /**
-     * Get related schemas for OpenAPI components
-     *
-     * Returns schemas for nested objects used in dialplan application responses.
-     *
-     * @return array<string, array<string, mixed>> Related schemas
-     */
-    public static function getRelatedSchemas(): array
-    {
-        return [];
-    }
-
-    /**
-     * Generate sanitization rules automatically from controller attributes
-     *
-     * Uses ParameterSanitizationExtractor to extract rules from #[ApiParameter] attributes.
-     * This ensures Single Source of Truth - rules defined only in controller attributes.
-     *
-     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
-     */
-    public static function getSanitizationRules(): array
-    {
-        return \MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor::extractFromController(
-            \MikoPBX\PBXCoreREST\Controllers\DialplanApplications\RestController::class,
-            'create'
-        );
-    }
+    // getSanitizationRules() inherited from AbstractDataStructure
+    // No need to override - uses getParameterDefinitions() automatically
 }

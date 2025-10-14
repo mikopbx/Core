@@ -272,38 +272,223 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      * This schema matches the structure returned by createForList() method.
      * Used for GET /api/v3/asterisk-managers endpoint (list of managers).
      *
+     * Inherits ALL fields from getParameterDefinitions() (NO duplication!)
+     *
      * @return array<string, mixed> OpenAPI schema definition
      */
     public static function getListItemSchema(): array
     {
+        $definitions = self::getParameterDefinitions();
+        $requestParams = $definitions['request'];
+        $responseFields = $definitions['response'];
+
+        $properties = [];
+
+        // ✨ Inherit request parameters used in list view
+        $listFields = ['username', 'description', 'networkfilterid'];
+        foreach ($listFields as $field) {
+            if (isset($requestParams[$field])) {
+                $properties[$field] = $requestParams[$field];
+                // Transform description key: rest_param_* → rest_schema_*
+                $properties[$field]['description'] = str_replace('rest_param_', 'rest_schema_', $properties[$field]['description']);
+            }
+        }
+
+        // ✨ Inherit response-only fields for list (NO duplication!)
+        $listResponseFields = ['id', 'readPermissionsSummary', 'writePermissionsSummary', 'isSystem'];
+        foreach ($listResponseFields as $field) {
+            if (isset($responseFields[$field])) {
+                $properties[$field] = $responseFields[$field];
+            }
+        }
+
         return [
             'type' => 'object',
             'required' => ['id', 'username'],
-            'properties' => [
+            'properties' => $properties
+        ];
+    }
+
+    /**
+     * Get OpenAPI schema for detailed Asterisk manager record
+     *
+     * This schema matches the structure returned by createFromModel() method.
+     * Used for GET /api/v3/asterisk-managers/{id}, POST, PUT, PATCH endpoints.
+     *
+     * Inherits ALL fields from getParameterDefinitions() (NO duplication!)
+     *
+     * @return array<string, mixed> OpenAPI schema definition
+     */
+    public static function getDetailSchema(): array
+    {
+        $definitions = self::getParameterDefinitions();
+        $requestParams = $definitions['request'];
+        $responseFields = $definitions['response'];
+
+        $properties = [];
+
+        // ✨ Inherit ALL request parameters for detail view (NO duplication!)
+        foreach ($requestParams as $field => $definition) {
+            // Skip writeOnly fields if any exist
+            if (isset($definition['writeOnly']) && $definition['writeOnly']) {
+                continue;
+            }
+
+            $properties[$field] = $definition;
+            // Transform description key: rest_param_* → rest_schema_*
+            $properties[$field]['description'] = str_replace('rest_param_', 'rest_schema_', $properties[$field]['description']);
+        }
+
+        // ✨ Inherit response-only fields for detail (NO duplication!)
+        $detailResponseFields = ['id', 'networkfilter_represent', 'isSystem'];
+        foreach ($detailResponseFields as $field) {
+            if (isset($responseFields[$field])) {
+                $properties[$field] = $responseFields[$field];
+            }
+        }
+
+        return [
+            'type' => 'object',
+            'required' => ['id', 'username', 'secret'],
+            'properties' => $properties
+        ];
+    }
+
+    /**
+     * Get parameter definitions for Asterisk managers (Single Source of Truth)
+     *
+     * Defines all field properties in one central location:
+     * - Data types and validation constraints
+     * - Sanitization rules for security
+     * - Default values for new records
+     * - OpenAPI documentation
+     *
+     * @return array<string, array<string, array<string, mixed>>> Parameter definitions
+     */
+    public static function getParameterDefinitions(): array
+    {
+        $availablePermissions = self::getAvailablePermissions();
+
+        // Build permission fields dynamically
+        $permissionFields = [];
+        foreach ($availablePermissions as $perm) {
+            $permissionFields[$perm . '_read'] = [
+                'type' => 'boolean',
+                'description' => "rest_schema_am_perm_{$perm}_read",
+                'sanitize' => 'bool',
+                'default' => false,
+                'example' => false
+            ];
+            $permissionFields[$perm . '_write'] = [
+                'type' => 'boolean',
+                'description' => "rest_schema_am_perm_{$perm}_write",
+                'sanitize' => 'bool',
+                'default' => false,
+                'example' => false
+            ];
+        }
+
+        return [
+            'request' => [
+                'username' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_am_username',
+                    'minLength' => 1,
+                    'maxLength' => 50,
+                    'sanitize' => 'text',
+                    'required' => true,
+                    'example' => 'admin'
+                ],
+                'secret' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_am_secret',
+                    'maxLength' => 255,
+                    'sanitize' => 'string',
+                    'required' => true, // Required for CREATE, but auto-generated if empty
+                    'example' => 'securePassword123'
+                ],
+                'description' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_am_description',
+                    'maxLength' => 255,
+                    'sanitize' => 'text',
+                    'default' => '',
+                    'example' => 'Administrator account'
+                ],
+                'networkfilterid' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_am_networkfilterid',
+                    'pattern' => '^([0-9]+|none)$',
+                    'sanitize' => 'string',
+                    'default' => 'none',
+                    'example' => '5'
+                ],
+                'permissions' => [
+                    'type' => 'object',
+                    'description' => 'rest_param_am_permissions',
+                    'properties' => $permissionFields,
+                    'sanitize' => 'array', // Special handling in SaveRecordAction
+                    'default' => array_fill_keys(array_keys($permissionFields), false),
+                    'example' => [
+                        'call_read' => true,
+                        'call_write' => false,
+                        'cdr_read' => true,
+                        'cdr_write' => false,
+                        'originate_read' => false,
+                        'originate_write' => false,
+                        'reporting_read' => true,
+                        'reporting_write' => false,
+                        'agent_read' => true,
+                        'agent_write' => true,
+                        'config_read' => false,
+                        'config_write' => false,
+                        'dialplan_read' => false,
+                        'dialplan_write' => false,
+                        'dtmf_read' => false,
+                        'dtmf_write' => false,
+                        'log_read' => false,
+                        'log_write' => false,
+                        'system_read' => false,
+                        'system_write' => false,
+                        'user_read' => true,
+                        'user_write' => false,
+                        'verbose_read' => false,
+                        'verbose_write' => false,
+                        'command_read' => false,
+                        'command_write' => false
+                    ]
+                ],
+                'read' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_am_read',
+                    'sanitize' => 'string',
+                    'readOnly' => true, // Calculated from permissions
+                    'example' => 'call,cdr,agent'
+                ],
+                'write' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_am_write',
+                    'sanitize' => 'string',
+                    'readOnly' => true, // Calculated from permissions
+                    'example' => 'all'
+                ]
+            ],
+            'response' => [
                 'id' => [
                     'type' => 'string',
                     'description' => 'rest_schema_am_id',
                     'pattern' => '^[0-9]+$',
                     'example' => '53'
                 ],
-                'username' => [
+                'networkfilter_represent' => [
                     'type' => 'string',
-                    'description' => 'rest_schema_am_username',
-                    'maxLength' => 50,
-                    'example' => 'admin'
+                    'description' => 'rest_schema_am_networkfilter_represent',
+                    'example' => '<i class="filter icon"></i> Office Network'
                 ],
-                'description' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_am_description',
-                    'maxLength' => 255,
-                    'example' => 'Administrator account'
-                ],
-                'networkfilterid' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_am_networkfilterid',
-                    'pattern' => '^([0-9]+|none)$',
-                    'default' => 'none',
-                    'example' => '5'
+                'isSystem' => [
+                    'type' => 'boolean',
+                    'description' => 'rest_schema_am_is_system',
+                    'example' => false
                 ],
                 'readPermissionsSummary' => [
                     'type' => 'string',
@@ -314,130 +499,11 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                     'type' => 'string',
                     'description' => 'rest_schema_am_write_permissions_summary',
                     'example' => 'all'
-                ],
-                'isSystem' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_schema_am_is_system',
-                    'example' => false
                 ]
             ]
         ];
     }
 
-    /**
-     * Get OpenAPI schema for detailed Asterisk manager record
-     *
-     * This schema matches the structure returned by createFromModel() method.
-     * Used for GET /api/v3/asterisk-managers/{id}, POST, PUT, PATCH endpoints.
-     *
-     * @return array<string, mixed> OpenAPI schema definition
-     */
-    public static function getDetailSchema(): array
-    {
-        $permissionFields = [];
-        $availablePermissions = self::getAvailablePermissions();
-
-        // Generate schema for each permission boolean field
-        foreach ($availablePermissions as $perm) {
-            $permissionFields[$perm . '_read'] = [
-                'type' => 'boolean',
-                'description' => "rest_schema_am_perm_{$perm}_read",
-                'example' => false
-            ];
-            $permissionFields[$perm . '_write'] = [
-                'type' => 'boolean',
-                'description' => "rest_schema_am_perm_{$perm}_write",
-                'example' => false
-            ];
-        }
-
-        return [
-            'type' => 'object',
-            'required' => ['id', 'username', 'secret'],
-            'properties' => [
-                'id' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_am_id',
-                    'pattern' => '^[0-9]+$',
-                    'example' => '53'
-                ],
-                'username' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_am_username',
-                    'maxLength' => 50,
-                    'example' => 'admin'
-                ],
-                'secret' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_am_secret',
-                    'maxLength' => 255,
-                    'example' => 'securePassword123'
-                ],
-                'read' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_am_read',
-                    'example' => 'call,cdr,agent'
-                ],
-                'write' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_am_write',
-                    'example' => 'all'
-                ],
-                'description' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_am_description',
-                    'maxLength' => 255,
-                    'example' => 'Administrator account'
-                ],
-                'networkfilterid' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_am_networkfilterid',
-                    'pattern' => '^([0-9]+|none)$',
-                    'default' => 'none',
-                    'example' => '5'
-                ],
-                'networkfilter_represent' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_am_networkfilter_represent',
-                    'example' => '<i class="filter icon"></i> Office Network'
-                ],
-                'permissions' => [
-                    'type' => 'object',
-                    'description' => 'rest_schema_am_permissions',
-                    'properties' => $permissionFields
-                ],
-                'isSystem' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_schema_am_is_system',
-                    'example' => false
-                ]
-            ]
-        ];
-    }
-
-    /**
-     * Get related schemas for OpenAPI components
-     *
-     * @return array<string, array<string, mixed>> Related schemas
-     */
-    public static function getRelatedSchemas(): array
-    {
-        return [];
-    }
-
-    /**
-     * Generate sanitization rules automatically from controller attributes
-     *
-     * Uses ParameterSanitizationExtractor to extract rules from #[ApiParameter] attributes.
-     * This ensures Single Source of Truth - rules defined only in controller attributes.
-     *
-     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
-     */
-    public static function getSanitizationRules(): array
-    {
-        return \MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor::extractFromController(
-            \MikoPBX\PBXCoreREST\Controllers\AsteriskManagers\RestController::class,
-            'create'
-        );
-    }
+    // getSanitizationRules() inherited from AbstractDataStructure
+    // Auto-generated from getParameterDefinitions() - Single Source of Truth
 }

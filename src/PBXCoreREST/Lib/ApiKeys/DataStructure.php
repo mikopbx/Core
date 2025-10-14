@@ -136,77 +136,51 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      * This schema matches the structure returned by createForList() method.
      * Used for GET /api/v3/api-keys endpoint (list of API keys).
      *
+     * Inherits ALL fields from getParameterDefinitions() (NO duplication!):
+     * - Request parameters from 'request' section
+     * - Response-only fields from 'response' section
+     *
      * @return array<string, mixed> OpenAPI schema definition
      */
     public static function getListItemSchema(): array
     {
+        $definitions = self::getParameterDefinitions();
+        $requestParams = $definitions['request'];
+        $responseFields = $definitions['response'];
+
+        $properties = [];
+
+        // ✨ Inherit request parameters used in list view
+        $listFields = ['description', 'full_permissions'];
+        foreach ($listFields as $field) {
+            if (isset($requestParams[$field])) {
+                $properties[$field] = $requestParams[$field];
+                // Transform description key: rest_param_* → rest_schema_*
+                $properties[$field]['description'] = str_replace('rest_param_', 'rest_schema_', $properties[$field]['description']);
+            }
+        }
+
+        // ✨ Inherit response-only fields for list (NO duplication!)
+        $listResponseFields = ['id', 'created_at', 'last_used_at', 'key_display', 'has_key',
+                               'allowed_paths_count', 'has_network_filter', 'represent'];
+        foreach ($listResponseFields as $field) {
+            if (isset($responseFields[$field])) {
+                $properties[$field] = $responseFields[$field];
+            }
+        }
+
         return [
             'type' => 'object',
             'required' => ['id', 'description', 'created_at'],
-            'properties' => [
-                'id' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ak_id',
-                    'pattern' => '^[0-9]+$',
-                    'example' => '12'
-                ],
-                'description' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ak_description',
-                    'maxLength' => 255,
-                    'example' => 'CRM Integration Key'
-                ],
-                'created_at' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ak_created_at',
-                    'format' => 'date-time',
-                    'example' => '2025-01-15 10:30:00'
-                ],
-                'last_used_at' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ak_last_used_at',
-                    'format' => 'date-time',
-                    'nullable' => true,
-                    'example' => '2025-01-20 14:25:30'
-                ],
-                'allowed_paths_count' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_ak_allowed_paths_count',
-                    'minimum' => 0,
-                    'example' => 3
-                ],
-                'has_network_filter' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_schema_ak_has_network_filter',
-                    'example' => true
-                ],
-                'has_key' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_schema_ak_has_key',
-                    'example' => true
-                ],
-                'key_display' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ak_key_display',
-                    'example' => 'abcd1...xyz89'
-                ],
-                'full_permissions' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_schema_ak_full_permissions',
-                    'default' => false,
-                    'example' => false
-                ],
-                'represent' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ak_represent',
-                    'example' => '<i class="key icon"></i> CRM Integration Key'
-                ]
-            ]
+            'properties' => $properties
         ];
     }
 
     /**
      * Get OpenAPI schema for detailed API key record
+     *
+     * Uses getParameterDefinitions() as Single Source of Truth (NO duplication!).
+     * Inherits ALL request parameters + response-only fields.
      *
      * This schema matches the structure returned by createFromModel() method.
      * Used for GET /api/v3/api-keys/{id}, POST, PUT, PATCH endpoints.
@@ -215,66 +189,153 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function getDetailSchema(): array
     {
+        $definitions = self::getParameterDefinitions();
+        $requestParams = $definitions['request'];
+        $responseFields = $definitions['response'];
+
+        $properties = [];
+
+        // ✨ Inherit ALL request parameters for detail view (NO duplication!)
+        foreach ($requestParams as $field => $definition) {
+            // Skip writeOnly fields (like 'key' which is never returned)
+            if (isset($definition['writeOnly']) && $definition['writeOnly']) {
+                continue;
+            }
+
+            $properties[$field] = $definition;
+            // Transform description key: rest_param_* → rest_schema_*
+            $properties[$field]['description'] = str_replace('rest_param_', 'rest_schema_', $properties[$field]['description']);
+        }
+
+        // ✨ Inherit response-only fields for detail (NO duplication!)
+        $detailResponseFields = [
+            'id',
+            'created_at',
+            'last_used_at',
+            'key_display',
+            'has_key',
+            'allowed_paths_count',
+            'has_network_filter',
+            'networkfilter_represent',
+            'represent'
+        ];
+
+        foreach ($detailResponseFields as $field) {
+            if (isset($responseFields[$field])) {
+                $properties[$field] = $responseFields[$field];
+            }
+        }
+
         return [
             'type' => 'object',
             'required' => ['id', 'description', 'created_at'],
-            'properties' => [
+            'properties' => $properties
+        ];
+    }
+
+    /**
+     * Get all field definitions (request parameters + response-only fields)
+     *
+     * Single Source of Truth for ALL definitions in API keys API.
+     *
+     * Structure:
+     * - 'request': Request parameters (used in API requests, referenced by ApiParameterRef)
+     * - 'response': Response-only fields (only in API responses, not in requests)
+     *
+     * This eliminates duplication between:
+     * - Controller attributes (via ApiParameterRef)
+     * - getListItemSchema() (inherits from here)
+     * - getDetailSchema() (inherits from here)
+     *
+     * @return array<string, array<string, array<string, mixed>>> Field definitions
+     */
+    public static function getParameterDefinitions(): array
+    {
+        return [
+            // ========== REQUEST PARAMETERS ==========
+            // Used in API requests (POST, PUT, PATCH)
+            // Referenced by ApiParameterRef in Controller
+            'request' => [
+                'description' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_ak_description',
+                    'minLength' => 1,
+                    'maxLength' => 255,
+                    'required' => true,
+                    'example' => 'CRM Integration Key'
+                ],
+                'key' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_ak_key',
+                    'minLength' => 32,
+                    'maxLength' => 255,
+                    'required' => true, // Required for CREATE (auto-generated if not provided)
+                    'writeOnly' => true, // Never returned in responses
+                    'example' => 'miko_ak_1234567890abcdef1234567890abcdef'
+                ],
+                'networkfilterid' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_ak_networkfilterid',
+                    'pattern' => '^([0-9]+|none)$',
+                    'default' => 'none',
+                    'example' => '5'
+                ],
+                'full_permissions' => [
+                    'type' => 'boolean',
+                    'description' => 'rest_param_ak_full_permissions',
+                    'default' => false,
+                    'example' => false
+                ],
+                'allowed_paths' => [
+                    'type' => 'array',
+                    'description' => 'rest_param_ak_allowed_paths',
+                    'items' => [
+                        'type' => 'string',
+                        'pattern' => '^/api/v[0-9]+/[a-z0-9-]+(/[a-z0-9-]+)*$',
+                        'example' => '/api/v3/employees'
+                    ],
+                    'default' => [],
+                    'example' => ['/api/v3/employees', '/api/v3/extensions']
+                ]
+            ],
+
+            // ========== RESPONSE-ONLY FIELDS ==========
+            // Only in API responses, not in requests
+            // Used by getListItemSchema() and getDetailSchema()
+            'response' => [
+                // ID field (used in both list and detail schemas)
                 'id' => [
                     'type' => 'string',
                     'description' => 'rest_schema_ak_id',
                     'pattern' => '^[0-9]+$',
                     'example' => '12'
                 ],
-                'description' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ak_description',
-                    'maxLength' => 255,
-                    'example' => 'CRM Integration Key'
-                ],
+
+                // Timestamps
                 'created_at' => [
                     'type' => 'string',
-                    'description' => 'rest_schema_ak_created_at',
                     'format' => 'date-time',
+                    'description' => 'rest_schema_ak_created_at',
                     'example' => '2025-01-15 10:30:00'
                 ],
                 'last_used_at' => [
                     'type' => 'string',
-                    'description' => 'rest_schema_ak_last_used_at',
                     'format' => 'date-time',
                     'nullable' => true,
+                    'description' => 'rest_schema_ak_last_used_at',
                     'example' => '2025-01-20 14:25:30'
                 ],
-                'networkfilterid' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ak_networkfilterid',
-                    'pattern' => '^([0-9]+|none)$',
-                    'default' => 'none',
-                    'example' => '5'
-                ],
-                'networkfilter_represent' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ak_networkfilter_represent',
-                    'example' => '<i class="filter icon"></i> Office Network'
-                ],
-                'has_network_filter' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_schema_ak_has_network_filter',
-                    'example' => true
-                ],
+
+                // Computed fields
                 'key_display' => [
                     'type' => 'string',
                     'description' => 'rest_schema_ak_key_display',
                     'example' => 'abcd1...xyz89'
                 ],
-                'allowed_paths' => [
-                    'type' => 'array',
-                    'description' => 'rest_schema_ak_allowed_paths',
-                    'items' => [
-                        'type' => 'string',
-                        'pattern' => '^/api/v[0-9]+/[a-z-]+',
-                        'example' => '/api/v3/employees'
-                    ],
-                    'example' => ['/api/v3/employees', '/api/v3/extensions']
+                'has_key' => [
+                    'type' => 'boolean',
+                    'description' => 'rest_schema_ak_has_key',
+                    'example' => true
                 ],
                 'allowed_paths_count' => [
                     'type' => 'integer',
@@ -282,16 +343,17 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                     'minimum' => 0,
                     'example' => 2
                 ],
-                'has_key' => [
+                'has_network_filter' => [
                     'type' => 'boolean',
-                    'description' => 'rest_schema_ak_has_key',
+                    'description' => 'rest_schema_ak_has_network_filter',
                     'example' => true
                 ],
-                'full_permissions' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_schema_ak_full_permissions',
-                    'default' => false,
-                    'example' => false
+
+                // Representation fields
+                'networkfilter_represent' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_ak_networkfilter_represent',
+                    'example' => '<i class="filter icon"></i> Office Network'
                 ],
                 'represent' => [
                     'type' => 'string',
@@ -302,29 +364,6 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         ];
     }
 
-    /**
-     * Get related schemas for OpenAPI components
-     *
-     * @return array<string, array<string, mixed>> Related schemas
-     */
-    public static function getRelatedSchemas(): array
-    {
-        return [];
-    }
-
-    /**
-     * Generate sanitization rules automatically from controller attributes
-     *
-     * Uses ParameterSanitizationExtractor to extract rules from #[ApiParameter] attributes.
-     * This ensures Single Source of Truth - rules defined only in controller attributes.
-     *
-     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
-     */
-    public static function getSanitizationRules(): array
-    {
-        return \MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor::extractFromController(
-            \MikoPBX\PBXCoreREST\Controllers\ApiKeys\RestController::class,
-            'create'
-        );
-    }
+    // getSanitizationRules() inherited from AbstractDataStructure
+    // Auto-generated from getParameterDefinitions() - Single Source of Truth
 }

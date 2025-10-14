@@ -110,116 +110,61 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     /**
      * Get OpenAPI schema for modules
      *
+     * ✨ Inherits field definitions from getParameterDefinitions() - Single Source of Truth.
+     *
      * @param string $type Schema type ('list', 'detail', or 'default')
      * @return array<string, mixed> OpenAPI schema definition
      */
     public static function getOpenApiSchema(string $type = 'detail'): array
     {
-        $baseProperties = [
-            'id' => [
-                'type' => 'string',
-                'description' => 'rest_param_module_id',
-                'example' => 'ModuleTemplate'
-            ],
-            'name' => [
-                'type' => 'string',
-                'description' => 'rest_param_module_name',
-                'example' => 'Module Template'
-            ],
-            'version' => [
-                'type' => 'string',
-                'description' => 'rest_param_module_version',
-                'example' => '1.0.0'
-            ],
-            'developer' => [
-                'type' => 'string',
-                'description' => 'rest_param_module_developer',
-                'example' => 'MIKO LLC'
-            ],
-            'description' => [
-                'type' => 'string',
-                'description' => 'rest_param_module_description',
-                'example' => 'Template module for developers'
-            ],
-            'disabled' => [
-                'type' => 'boolean',
-                'description' => 'rest_param_module_disabled',
-                'example' => false
-            ],
-        ];
+        $definitions = self::getParameterDefinitions();
+        $responseFields = $definitions['response'];
+
+        // ✨ Inherit common fields (NO duplication!)
+        $commonFields = ['id', 'name', 'version', 'developer', 'description', 'disabled'];
+        $properties = [];
+        foreach ($commonFields as $field) {
+            if (isset($responseFields[$field])) {
+                $properties[$field] = $responseFields[$field];
+            }
+        }
 
         if ($type === 'detail') {
+            // ✨ Add detail-specific fields from response section
+            $detailFields = ['path', 'min_pbx_version', 'max_pbx_version'];
+            foreach ($detailFields as $field) {
+                if (isset($responseFields[$field])) {
+                    $properties[$field] = $responseFields[$field];
+                }
+            }
+
             return [
                 'type' => 'object',
-                'properties' => array_merge($baseProperties, [
-                    'path' => [
-                        'type' => 'string',
-                        'description' => 'rest_param_module_path',
-                        'example' => '/usr/www/src/Modules/ModuleTemplate'
-                    ],
-                    'min_pbx_version' => [
-                        'type' => 'string',
-                        'description' => 'rest_param_module_min_pbx_version',
-                        'example' => '2024.1.0'
-                    ],
-                    'max_pbx_version' => [
-                        'type' => 'string',
-                        'description' => 'rest_param_module_max_pbx_version',
-                        'example' => '2025.12.31'
-                    ],
-                ]),
+                'properties' => $properties,
                 'required' => ['id', 'name', 'version']
             ];
         }
 
         if ($type === 'list') {
+            // ✨ Add list-specific fields from response section
+            $listFields = ['installed', 'commercial'];
+            foreach ($listFields as $field) {
+                if (isset($responseFields[$field])) {
+                    $properties[$field] = $responseFields[$field];
+                }
+            }
+
             return [
                 'type' => 'object',
-                'properties' => array_merge($baseProperties, [
-                    'installed' => [
-                        'type' => 'boolean',
-                        'description' => 'rest_param_module_installed',
-                        'example' => true
-                    ],
-                    'commercial' => [
-                        'type' => 'boolean',
-                        'description' => 'rest_param_module_commercial',
-                        'example' => false
-                    ],
-                ]),
+                'properties' => $properties,
                 'required' => ['id', 'name', 'version']
             ];
         }
 
-        // default type
+        // default type - just common fields
         return [
             'type' => 'object',
-            'properties' => [
-                'id' => [
-                    'type' => 'string',
-                    'example' => ''
-                ],
-                'name' => [
-                    'type' => 'string',
-                    'example' => ''
-                ],
-                'version' => [
-                    'type' => 'string',
-                    'example' => '1.0.0'
-                ],
-                'developer' => [
-                    'type' => 'string',
-                    'example' => ''
-                ],
-                'description' => [
-                    'type' => 'string',
-                    'example' => ''
-                ],
-                'disabled' => [
-                    'type' => 'boolean',
-                    'example' => false
-                ],
-            ]
+            'properties' => $properties
         ];
     }
 
@@ -268,4 +213,182 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'uniqid'
         ];
     }
+
+    /**
+     * Get parameter definitions (Single Source of Truth)
+     *
+     * WHY: Centralizes module parameter definitions.
+     * Modules resource handles module installation, configuration, and management.
+     *
+     * @return array<string, array<string, mixed>> Parameter definitions
+     */
+    public static function getParameterDefinitions(): array
+    {
+        return [
+            'request' => [
+                // Module identification
+                'id' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_module_id',
+                    'maxLength' => 100,
+                    'sanitize' => 'string',
+                    'example' => 'ModuleTemplate'
+                ],
+                'uniqid' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_module_uniqid',
+                    'maxLength' => 100,
+                    'sanitize' => 'string',
+                    'example' => 'ModuleTemplate'
+                ],
+                // Module metadata
+                'name' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_module_name',
+                    'maxLength' => 255,
+                    'sanitize' => 'string',
+                    'example' => 'Module Template'
+                ],
+                'version' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_module_version',
+                    'maxLength' => 50,
+                    'sanitize' => 'string',
+                    'example' => '1.0.0'
+                ],
+                'developer' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_module_developer',
+                    'maxLength' => 255,
+                    'sanitize' => 'string',
+                    'example' => 'MIKO LLC'
+                ],
+                'description' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_module_description',
+                    'maxLength' => 1000,
+                    'sanitize' => 'string',
+                    'example' => 'Template module for developers'
+                ],
+                'disabled' => [
+                    'type' => 'boolean',
+                    'description' => 'rest_param_module_disabled',
+                    'default' => false,
+                    'sanitize' => 'bool',
+                    'example' => false
+                ],
+                // Installation parameters
+                'release_id' => [
+                    'type' => 'integer',
+                    'description' => 'rest_param_module_release_id',
+                    'minimum' => 0,
+                    'sanitize' => 'int',
+                    'example' => 12345
+                ],
+                'filePath' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_module_file_path',
+                    'maxLength' => 500,
+                    'sanitize' => 'string',
+                    'example' => '/tmp/ModuleTemplate.zip'
+                ],
+                // Query parameters for list filtering
+                'search' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_search',
+                    'maxLength' => 255,
+                    'sanitize' => 'string',
+                    'example' => 'Template'
+                ],
+                'limit' => [
+                    'type' => 'integer',
+                    'description' => 'rest_param_limit',
+                    'minimum' => 1,
+                    'maximum' => 100,
+                    'default' => 20,
+                    'sanitize' => 'int',
+                    'example' => 20
+                ],
+                'offset' => [
+                    'type' => 'integer',
+                    'description' => 'rest_param_offset',
+                    'minimum' => 0,
+                    'default' => 0,
+                    'sanitize' => 'int',
+                    'example' => 0
+                ],
+                'order' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_order',
+                    'enum' => ['name', 'version', 'developer', 'disabled'],
+                    'default' => 'name',
+                    'sanitize' => 'string',
+                    'example' => 'name'
+                ]
+            ],
+            'response' => [
+                // Common module fields
+                'id' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_module_id',
+                    'example' => 'ModuleTemplate'
+                ],
+                'name' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_module_name',
+                    'example' => 'Module Template'
+                ],
+                'version' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_module_version',
+                    'example' => '1.0.0'
+                ],
+                'developer' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_module_developer',
+                    'example' => 'MIKO LLC'
+                ],
+                'description' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_module_description',
+                    'example' => 'Template module for developers'
+                ],
+                'disabled' => [
+                    'type' => 'boolean',
+                    'description' => 'rest_schema_module_disabled',
+                    'example' => false
+                ],
+                // Detail-specific fields
+                'path' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_module_path',
+                    'example' => '/usr/www/src/Modules/ModuleTemplate'
+                ],
+                'min_pbx_version' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_module_min_pbx_version',
+                    'example' => '2024.1.0'
+                ],
+                'max_pbx_version' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_module_max_pbx_version',
+                    'example' => '2025.12.31'
+                ],
+                // List-specific fields
+                'installed' => [
+                    'type' => 'boolean',
+                    'description' => 'rest_schema_module_installed',
+                    'example' => true
+                ],
+                'commercial' => [
+                    'type' => 'boolean',
+                    'description' => 'rest_schema_module_commercial',
+                    'example' => false
+                ]
+            ]
+        ];
+    }
+
+    // getSanitizationRules() inherited from AbstractDataStructure
+    // Auto-generated from getParameterDefinitions() - Single Source of Truth
 }

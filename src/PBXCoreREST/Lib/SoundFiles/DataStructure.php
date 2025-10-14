@@ -120,43 +120,107 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     /**
      * Get OpenAPI schema for sound file list item
      *
+     * ✨ Inherits field definitions from getParameterDefinitions() - Single Source of Truth.
+     * This schema matches the structure returned by createForList() method.
+     * Used for GET /api/v3/sound-files endpoint (list of sound files).
+     *
      * @return array<string, mixed> OpenAPI schema definition
      */
     public static function getListItemSchema(): array
     {
+        $definitions = self::getParameterDefinitions();
+        $requestParams = $definitions['request'];
+        $responseFields = $definitions['response'];
+
+        $properties = [];
+
+        // ✨ Inherit ALL request parameters for list view (NO duplication!)
+        foreach ($requestParams as $field => $definition) {
+            $properties[$field] = $definition;
+            // Transform description key: rest_param_* → rest_schema_*
+            $properties[$field]['description'] = str_replace('rest_param_', 'rest_schema_', $properties[$field]['description']);
+            // Remove sanitization and validation-only properties
+            unset($properties[$field]['sanitize'], $properties[$field]['minLength'], $properties[$field]['required']);
+        }
+
+        // ✨ Inherit response-only fields for list (NO duplication!)
+        $listResponseFields = ['id', 'fileSize', 'duration'];
+        foreach ($listResponseFields as $field) {
+            if (isset($responseFields[$field])) {
+                $properties[$field] = $responseFields[$field];
+            }
+        }
+
         return [
             'type' => 'object',
             'required' => ['id', 'name'],
-            'properties' => [
-                'id' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_sf_id',
-                    'example' => '1'
-                ],
+            'properties' => $properties
+        ];
+    }
+
+    /**
+     * Get OpenAPI schema for detailed sound file record
+     *
+     * @return array<string, mixed> OpenAPI schema definition
+     */
+    public static function getDetailSchema(): array
+    {
+        // For sound files, detail and list schemas are identical
+        return self::getListItemSchema();
+    }
+
+    /**
+     * Get parameter definitions for OpenAPI and validation
+     *
+     * Single Source of Truth for all field definitions.
+     * Used for sanitization, validation, defaults, and OpenAPI schema generation.
+     *
+     * @return array<string, mixed> Parameter definitions
+     */
+    public static function getParameterDefinitions(): array
+    {
+        return [
+            'request' => [
                 'name' => [
                     'type' => 'string',
-                    'description' => 'rest_schema_sf_name',
+                    'description' => 'rest_param_sf_name',
+                    'minLength' => 1,
                     'maxLength' => 255,
+                    'sanitize' => 'text',
+                    'required' => true,
                     'example' => 'welcome.wav'
                 ],
                 'description' => [
                     'type' => 'string',
-                    'description' => 'rest_schema_sf_description',
+                    'description' => 'rest_param_sf_description',
                     'maxLength' => 500,
+                    'sanitize' => 'text',
+                    'default' => '',
                     'example' => 'Welcome message for IVR'
                 ],
                 'path' => [
                     'type' => 'string',
-                    'description' => 'rest_schema_sf_path',
+                    'description' => 'rest_param_sf_path',
                     'maxLength' => 500,
+                    'sanitize' => 'string',
                     'example' => '/storage/usbdisk1/mikopbx/media/custom/welcome.wav'
                 ],
                 'category' => [
                     'type' => 'string',
-                    'description' => 'rest_schema_sf_category',
-                    'enum' => ['custom', 'moh'],
-                    'default' => 'custom',
-                    'example' => 'custom'
+                    'description' => 'rest_param_sf_category',
+                    'enum' => [SoundFiles::CATEGORY_CUSTOM, SoundFiles::CATEGORY_MOH],
+                    'sanitize' => 'string',
+                    'default' => SoundFiles::CATEGORY_CUSTOM,
+                    'example' => SoundFiles::CATEGORY_CUSTOM
+                ]
+            ],
+            'response' => [
+                // Auto-generated ID field (readOnly, not accepted in requests)
+                'id' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_sf_id',
+                    'pattern' => '^[0-9]+$',
+                    'example' => '1'
                 ],
                 'fileSize' => [
                     'type' => 'integer',
@@ -174,40 +238,6 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         ];
     }
 
-    /**
-     * Get OpenAPI schema for detailed sound file record
-     *
-     * @return array<string, mixed> OpenAPI schema definition
-     */
-    public static function getDetailSchema(): array
-    {
-        // For sound files, detail and list schemas are identical
-        return self::getListItemSchema();
-    }
-
-    /**
-     * Get related schemas for OpenAPI components
-     *
-     * @return array<string, array<string, mixed>> Related schemas
-     */
-    public static function getRelatedSchemas(): array
-    {
-        return [];
-    }
-
-    /**
-     * Generate sanitization rules automatically from controller attributes
-     *
-     * Uses ParameterSanitizationExtractor to extract rules from #[ApiParameter] attributes.
-     * This ensures Single Source of Truth - rules defined only in controller attributes.
-     *
-     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
-     */
-    public static function getSanitizationRules(): array
-    {
-        return \MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor::extractFromController(
-            \MikoPBX\PBXCoreREST\Controllers\SoundFiles\RestController::class,
-            'create'
-        );
-    }
+    // getSanitizationRules() inherited from AbstractDataStructure
+    // Auto-generated from getParameterDefinitions() - Single Source of Truth
 }

@@ -146,48 +146,40 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      * This schema matches the structure returned by createForList() method.
      * Used for GET /api/v3/firewall endpoint (list of rules).
      *
+     * Inherits ALL fields from getParameterDefinitions() (NO duplication!)
+     *
      * @return array<string, mixed> OpenAPI schema definition
      */
     public static function getListItemSchema(): array
     {
+        $definitions = self::getParameterDefinitions();
+        $requestParams = $definitions['request'];
+        $responseFields = $definitions['response'];
+
+        $properties = [];
+
+        // ✨ Inherit request parameters used in list view
+        $listFields = ['permit', 'description'];
+        foreach ($listFields as $field) {
+            if (isset($requestParams[$field])) {
+                $properties[$field] = $requestParams[$field];
+                // Transform description key: rest_param_* → rest_schema_*
+                $properties[$field]['description'] = str_replace('rest_param_', 'rest_schema_', $properties[$field]['description']);
+            }
+        }
+
+        // ✨ Inherit response-only fields for list (NO duplication!)
+        $listResponseFields = ['id', 'represent', 'active_rules', 'search_index'];
+        foreach ($listResponseFields as $field) {
+            if (isset($responseFields[$field])) {
+                $properties[$field] = $responseFields[$field];
+            }
+        }
+
         return [
             'type' => 'object',
             'required' => ['id', 'permit'],
-            'properties' => [
-                'id' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_fw_id',
-                    'example' => '1'
-                ],
-                'permit' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_fw_permit',
-                    'maxLength' => 100,
-                    'example' => '192.168.1.0/24'
-                ],
-                'description' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_fw_description',
-                    'maxLength' => 255,
-                    'example' => 'Local network'
-                ],
-                'represent' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_fw_represent',
-                    'example' => '<i class="shield alternate icon"></i> Local network'
-                ],
-                'active_rules' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_fw_active_rules',
-                    'minimum' => 0,
-                    'example' => 3
-                ],
-                'search_index' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_fw_search_index',
-                    'example' => 'local network 192.168.1.0/24'
-                ]
-            ]
+            'properties' => $properties
         ];
     }
 
@@ -197,48 +189,164 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      * This schema matches the structure returned by createFromModel() method.
      * Used for GET /api/v3/firewall/{id}, POST, PUT, PATCH endpoints.
      *
+     * Inherits ALL fields from getParameterDefinitions() (NO duplication!)
+     *
      * @return array<string, mixed> OpenAPI schema definition
      */
     public static function getDetailSchema(): array
     {
+        $definitions = self::getParameterDefinitions();
+        $requestParams = $definitions['request'];
+        $responseFields = $definitions['response'];
+
+        $properties = [];
+
+        // ✨ Inherit ALL request parameters for detail view (NO duplication!)
+        foreach ($requestParams as $field => $definition) {
+            // Skip readOnly fields (like 'permit' which is calculated from network/subnet)
+            // Actually, permit IS included in responses, so don't skip it
+            // Skip writeOnly fields if any exist
+            if (isset($definition['writeOnly']) && $definition['writeOnly']) {
+                continue;
+            }
+
+            $properties[$field] = $definition;
+            // Transform description key: rest_param_* → rest_schema_*
+            $properties[$field]['description'] = str_replace('rest_param_', 'rest_schema_', $properties[$field]['description']);
+        }
+
+        // ✨ Inherit response-only fields for detail (NO duplication!)
+        $detailResponseFields = ['id', 'represent', 'search_index', 'rules'];
+        foreach ($detailResponseFields as $field) {
+            if (isset($responseFields[$field])) {
+                $properties[$field] = $responseFields[$field];
+            }
+        }
+
         return [
             'type' => 'object',
             'required' => ['permit'],
-            'properties' => [
-                'id' => [
+            'properties' => $properties
+        ];
+    }
+
+    /**
+     * Get parameter definitions for firewall rules (Single Source of Truth)
+     *
+     * Defines all field properties in one central location:
+     * - Data types and validation constraints
+     * - Sanitization rules for security
+     * - Default values for new records
+     * - OpenAPI documentation
+     *
+     * @return array<string, array<string, array<string, mixed>>> Parameter definitions
+     */
+    public static function getParameterDefinitions(): array
+    {
+        return [
+            'request' => [
+                'network' => [
                     'type' => 'string',
-                    'description' => 'rest_schema_fw_id',
-                    'example' => '1'
+                    'description' => 'rest_param_fw_network',
+                    'pattern' => '^(\d{1,3}\.){3}\d{1,3}$', // IPv4 format
+                    'sanitize' => 'string',
+                    'required' => true, // Required for CREATE
+                    'example' => '192.168.1.0'
+                ],
+                'subnet' => [
+                    'type' => 'integer',
+                    'description' => 'rest_param_fw_subnet',
+                    'minimum' => 0,
+                    'maximum' => 32, // CIDR notation for IPv4
+                    'sanitize' => 'int',
+                    'required' => true, // Required for CREATE
+                    'example' => 24
                 ],
                 'permit' => [
                     'type' => 'string',
-                    'description' => 'rest_schema_fw_permit',
+                    'description' => 'rest_param_fw_permit',
                     'maxLength' => 100,
+                    'sanitize' => 'string',
+                    'readOnly' => true, // Calculated from network/subnet
                     'example' => '192.168.1.0/24'
                 ],
                 'deny' => [
                     'type' => 'string',
-                    'description' => 'rest_schema_fw_deny',
+                    'description' => 'rest_param_fw_deny',
                     'maxLength' => 100,
-                    'example' => ''
+                    'sanitize' => 'string',
+                    'default' => '0.0.0.0/0',
+                    'example' => '0.0.0.0/0'
                 ],
                 'description' => [
                     'type' => 'string',
-                    'description' => 'rest_schema_fw_description',
+                    'description' => 'rest_param_fw_description',
                     'maxLength' => 255,
+                    'sanitize' => 'text',
+                    'default' => '',
                     'example' => 'Local network'
                 ],
                 'newer_block_ip' => [
                     'type' => 'boolean',
-                    'description' => 'rest_schema_fw_newer_block_ip',
+                    'description' => 'rest_param_fw_newer_block_ip',
+                    'sanitize' => 'bool',
                     'default' => false,
                     'example' => false
                 ],
                 'local_network' => [
                     'type' => 'boolean',
-                    'description' => 'rest_schema_fw_local_network',
+                    'description' => 'rest_param_fw_local_network',
+                    'sanitize' => 'bool',
                     'default' => false,
                     'example' => false
+                ],
+                'currentRules' => [
+                    'type' => 'object',
+                    'description' => 'rest_param_fw_current_rules',
+                    'additionalProperties' => [
+                        'type' => 'boolean'
+                    ],
+                    'sanitize' => 'array', // Special handling in SaveRecordAction
+                    'default' => [
+                        'SIP' => true,
+                        'WEB' => true,
+                        'SSH' => false,
+                        'AMI' => false,
+                        'CTI' => false,
+                        'ICMP' => true,
+                    ],
+                    'example' => [
+                        'SIP' => true,
+                        'WEB' => true,
+                        'SSH' => false,
+                        'AMI' => false,
+                        'CTI' => false,
+                        'ICMP' => true
+                    ]
+                ]
+            ],
+            'response' => [
+                'id' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_fw_id',
+                    'pattern' => '^[0-9]+$',
+                    'example' => '1'
+                ],
+                'represent' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_fw_represent',
+                    'example' => '<i class="shield alternate icon"></i> Local network'
+                ],
+                'search_index' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_fw_search_index',
+                    'example' => 'local network 192.168.1.0/24'
+                ],
+                'active_rules' => [
+                    'type' => 'integer',
+                    'description' => 'rest_schema_fw_active_rules',
+                    'minimum' => 0,
+                    'example' => 3
                 ],
                 'rules' => [
                     'type' => 'object',
@@ -255,44 +363,12 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                         'CTI' => 'block',
                         'ICMP' => 'allow'
                     ]
-                ],
-                'represent' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_fw_represent',
-                    'example' => '<i class="shield alternate icon"></i> Local network'
-                ],
-                'search_index' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_fw_search_index',
-                    'example' => 'local network 192.168.1.0/24'
                 ]
             ]
         ];
     }
 
-    /**
-     * Generate sanitization rules automatically from controller attributes
-     *
-     * Uses ParameterSanitizationExtractor to extract rules from #[ApiParameter] attributes.
-     * This ensures Single Source of Truth - rules defined only in controller attributes.
-     *
-     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
-     */
-    public static function getSanitizationRules(): array
-    {
-        return \MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor::extractFromController(
-            \MikoPBX\PBXCoreREST\Controllers\Firewall\RestController::class,
-            'create'
-        );
-    }
+    // getSanitizationRules() inherited from AbstractDataStructure
+    // Auto-generated from getParameterDefinitions() - Single Source of Truth
 
-    /**
-     * Get related schemas
-     *
-     * @return array<string> List of related schema names
-     */
-    public static function getRelatedSchemas(): array
-    {
-        return [];
-    }
 }

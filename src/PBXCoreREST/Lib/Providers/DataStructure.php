@@ -267,6 +267,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     /**
      * Get OpenAPI schema for provider list item
      *
+     * ✨ Inherits field definitions from getParameterDefinitions() - Single Source of Truth.
      * This schema matches the structure returned by createForList() method.
      * Works for both SIP and IAX providers.
      *
@@ -274,86 +275,43 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function getListItemSchema(): array
     {
+        $definitions = self::getParameterDefinitions();
+        $requestParams = $definitions['request'];
+        $responseFields = $definitions['response'];
+
+        $properties = [];
+
+        // ✨ Inherit request parameters used in list view (NO duplication!)
+        $listFields = ['type', 'description', 'note', 'disabled', 'username', 'host', 'port', 'registration_type', 'transport'];
+        foreach ($listFields as $field) {
+            if (isset($requestParams[$field])) {
+                $properties[$field] = $requestParams[$field];
+                // Transform description key: rest_param_* → rest_schema_*
+                $properties[$field]['description'] = str_replace('rest_param_', 'rest_schema_', $properties[$field]['description']);
+                // Remove sanitization and validation-only properties
+                unset($properties[$field]['sanitize'], $properties[$field]['minLength'], $properties[$field]['required']);
+            }
+        }
+
+        // ✨ Inherit response-only fields for list (NO duplication!)
+        $listResponseFields = ['id', 'represent', 'statusClass'];
+        foreach ($listResponseFields as $field) {
+            if (isset($responseFields[$field])) {
+                $properties[$field] = $responseFields[$field];
+            }
+        }
+
         return [
             'type' => 'object',
             'required' => ['id', 'type', 'disabled'],
-            'properties' => [
-                'id' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_provider_id',
-                    'example' => 'SIP-PROVIDER-12345'
-                ],
-                'type' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_provider_type',
-                    'enum' => ['SIP', 'IAX'],
-                    'example' => 'SIP'
-                ],
-                'description' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_provider_description',
-                    'maxLength' => 255,
-                    'example' => 'Main SIP Trunk'
-                ],
-                'note' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_provider_note',
-                    'maxLength' => 500,
-                    'example' => 'Provider notes'
-                ],
-                'disabled' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_schema_provider_disabled',
-                    'example' => false
-                ],
-                'username' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_provider_username',
-                    'maxLength' => 100,
-                    'example' => 'trunk001'
-                ],
-                'host' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_provider_host',
-                    'maxLength' => 255,
-                    'example' => 'sip.provider.com'
-                ],
-                'port' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_provider_port',
-                    'minimum' => 1,
-                    'maximum' => 65535,
-                    'example' => 5060
-                ],
-                'registration_type' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_provider_registration_type',
-                    'enum' => ['none', 'outbound', 'inbound'],
-                    'example' => 'outbound'
-                ],
-                'transport' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_provider_transport',
-                    'enum' => ['UDP', 'TCP', 'TLS', 'UDP,TCP', 'UDP,TCP,TLS'],
-                    'example' => 'UDP'
-                ],
-                'represent' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_provider_represent',
-                    'example' => '<i class="globe icon"></i> Main SIP Trunk'
-                ],
-                'statusClass' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_provider_status_class',
-                    'example' => ''
-                ]
-            ]
+            'properties' => $properties
         ];
     }
 
     /**
      * Get OpenAPI schema for detailed provider record
      *
+     * ✨ Inherits field definitions from getParameterDefinitions() - Single Source of Truth.
      * This schema is polymorphic - contains both SIP and IAX specific fields.
      * The 'type' field determines which fields are relevant.
      *
@@ -361,219 +319,38 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function getDetailSchema(): array
     {
+        $definitions = self::getParameterDefinitions();
+        $requestParams = $definitions['request'];
+        $responseFields = $definitions['response'];
+
+        $properties = [];
+
+        // ✨ Inherit ALL request parameters for detail view (NO duplication!)
+        foreach ($requestParams as $field => $definition) {
+            // Skip writeOnly fields if any exist
+            if (isset($definition['writeOnly']) && $definition['writeOnly']) {
+                continue;
+            }
+
+            $properties[$field] = $definition;
+            // Transform description key: rest_param_* → rest_schema_*
+            $properties[$field]['description'] = str_replace('rest_param_', 'rest_schema_', $properties[$field]['description']);
+            // Remove sanitization and validation-only properties
+            unset($properties[$field]['sanitize'], $properties[$field]['minLength'], $properties[$field]['required']);
+        }
+
+        // ✨ Inherit response-only fields for detail (NO duplication!)
+        $detailResponseFields = ['id', 'networkfilter_represent'];
+        foreach ($detailResponseFields as $field) {
+            if (isset($responseFields[$field])) {
+                $properties[$field] = $responseFields[$field];
+            }
+        }
+
         return [
             'type' => 'object',
             'required' => ['id', 'type'],
-            'properties' => [
-                'id' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_provider_id',
-                    'example' => 'SIP-PROVIDER-12345'
-                ],
-                'type' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_provider_type',
-                    'enum' => ['SIP', 'IAX'],
-                    'example' => 'SIP'
-                ],
-                'description' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_provider_description',
-                    'maxLength' => 255,
-                    'example' => 'Main SIP Trunk'
-                ],
-                'note' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_provider_note',
-                    'maxLength' => 500,
-                    'example' => 'Additional notes'
-                ],
-                'disabled' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_schema_provider_disabled',
-                    'example' => false
-                ],
-                'username' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_provider_username',
-                    'maxLength' => 100,
-                    'example' => 'trunk001'
-                ],
-                'secret' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_provider_secret',
-                    'maxLength' => 100,
-                    'example' => 'SecurePass123'
-                ],
-                'host' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_provider_host',
-                    'maxLength' => 255,
-                    'example' => 'sip.provider.com'
-                ],
-                'port' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_provider_port',
-                    'minimum' => 1,
-                    'maximum' => 65535,
-                    'example' => 5060
-                ],
-                'registration_type' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_provider_registration_type',
-                    'enum' => ['none', 'outbound', 'inbound'],
-                    'example' => 'outbound'
-                ],
-                'manualattributes' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_provider_manualattributes',
-                    'example' => 'context=from-trunk\nallow=ulaw,alaw'
-                ],
-                'networkfilterid' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_provider_networkfilterid',
-                    'pattern' => '^([0-9]+|none)$',
-                    'example' => '1'
-                ],
-                'networkfilter_represent' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_provider_networkfilter_represent',
-                    'example' => '<i class="filter icon"></i> Office Network'
-                ],
-                'receive_calls_without_auth' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_schema_provider_receive_without_auth',
-                    'default' => false,
-                    'example' => true
-                ],
-                // SIP-specific fields
-                'transport' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_provider_transport',
-                    'enum' => ['UDP', 'TCP', 'TLS', 'UDP,TCP', 'UDP,TCP,TLS'],
-                    'example' => 'UDP'
-                ],
-                'qualify' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_schema_provider_qualify',
-                    'default' => true,
-                    'example' => true
-                ],
-                'qualifyfreq' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_provider_qualifyfreq',
-                    'minimum' => 10,
-                    'maximum' => 3600,
-                    'default' => 60,
-                    'example' => 60
-                ],
-                'dtmfmode' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_provider_dtmfmode',
-                    'enum' => ['auto', 'auto_info', 'inband', 'rfc2833', 'info'],
-                    'default' => 'auto',
-                    'example' => 'rfc2833'
-                ],
-                'fromuser' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_provider_fromuser',
-                    'maxLength' => 100,
-                    'example' => 'customuser'
-                ],
-                'fromdomain' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_provider_fromdomain',
-                    'maxLength' => 255,
-                    'example' => 'mydomain.com'
-                ],
-                'outbound_proxy' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_provider_outbound_proxy',
-                    'maxLength' => 255,
-                    'example' => 'proxy.provider.com:5060'
-                ],
-                'disablefromuser' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_schema_provider_disablefromuser',
-                    'default' => false,
-                    'example' => false
-                ],
-                // CallerID and DID source fields (SIP only)
-                'cid_source' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_provider_cid_source',
-                    'example' => 'default'
-                ],
-                'cid_custom_header' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_provider_cid_custom_header',
-                    'maxLength' => 100,
-                    'example' => 'X-CallerID'
-                ],
-                'cid_parser_start' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_provider_cid_parser_start',
-                    'maxLength' => 50,
-                    'example' => '<'
-                ],
-                'cid_parser_end' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_provider_cid_parser_end',
-                    'maxLength' => 50,
-                    'example' => '>'
-                ],
-                'cid_parser_regex' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_provider_cid_parser_regex',
-                    'maxLength' => 255,
-                    'example' => '/(\d+)/'
-                ],
-                'did_source' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_provider_did_source',
-                    'example' => 'default'
-                ],
-                'did_custom_header' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_provider_did_custom_header',
-                    'maxLength' => 100,
-                    'example' => 'X-DID'
-                ],
-                'did_parser_start' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_provider_did_parser_start',
-                    'maxLength' => 50,
-                    'example' => '<'
-                ],
-                'did_parser_end' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_provider_did_parser_end',
-                    'maxLength' => 50,
-                    'example' => '>'
-                ],
-                'did_parser_regex' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_provider_did_parser_regex',
-                    'maxLength' => 255,
-                    'example' => '/(\d+)/'
-                ],
-                'cid_did_debug' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_schema_provider_cid_did_debug',
-                    'default' => false,
-                    'example' => false
-                ],
-                'additionalHosts' => [
-                    'type' => 'array',
-                    'description' => 'rest_schema_provider_additional_hosts',
-                    'items' => [
-                        '$ref' => '#/components/schemas/ProviderHost'
-                    ],
-                    'example' => [
-                        ['id' => '1', 'address' => 'backup.provider.com']
-                    ]
-                ]
-            ]
+            'properties' => $properties
         ];
     }
 
@@ -606,18 +383,300 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
 
     /**
-     * Generate sanitization rules automatically from controller attributes
+     * Get complete parameter definitions for request and response
      *
-     * Uses ParameterSanitizationExtractor to extract rules from #[ApiParameter] attributes.
-     * This ensures Single Source of Truth - rules defined only in controller attributes.
+     * Polymorphic schema - contains fields for both SIP and IAX providers.
+     * The 'type' field determines which fields are relevant.
      *
-     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
+     * @return array<string, array<string, mixed>> Parameter definitions
      */
-    public static function getSanitizationRules(): array
+    public static function getParameterDefinitions(): array
     {
-        return \MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor::extractFromController(
-            \MikoPBX\PBXCoreREST\Controllers\Providers\RestController::class,
-            'create'
-        );
+        return [
+            'request' => [
+                // Common fields
+                'type' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_provider_type',
+                    'enum' => ['SIP', 'IAX'],
+                    'sanitize' => 'string',
+                    'required' => true,
+                    'example' => 'SIP'
+                ],
+                'note' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_provider_note',
+                    'maxLength' => 500,
+                    'sanitize' => 'text',
+                    'default' => '',
+                    'example' => 'Additional provider notes'
+                ],
+                'description' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_provider_description',
+                    'minLength' => 1,
+                    'maxLength' => 255,
+                    'sanitize' => 'text',
+                    'required' => true,
+                    'example' => 'Main SIP Trunk'
+                ],
+                'disabled' => [
+                    'type' => 'boolean',
+                    'description' => 'rest_param_provider_disabled',
+                    'sanitize' => 'bool',
+                    'default' => false,
+                    'example' => false
+                ],
+                'username' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_provider_username',
+                    'maxLength' => 100,
+                    'sanitize' => 'string',
+                    'example' => 'trunk001'
+                ],
+                'secret' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_provider_secret',
+                    'maxLength' => 100,
+                    'sanitize' => 'string',
+                    'example' => 'SecurePass123'
+                ],
+                'host' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_provider_host',
+                    'maxLength' => 255,
+                    'sanitize' => 'string',
+                    'example' => 'sip.provider.com'
+                ],
+                'port' => [
+                    'type' => 'integer',
+                    'description' => 'rest_param_provider_port',
+                    'minimum' => 1,
+                    'maximum' => 65535,
+                    'sanitize' => 'int',
+                    'default' => 5060,  // SIP default, IAX uses 4569
+                    'example' => 5060
+                ],
+                'registration_type' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_provider_registration_type',
+                    'enum' => ['none', 'outbound', 'inbound'],
+                    'sanitize' => 'string',
+                    'required' => true,
+                    'example' => 'outbound'
+                ],
+                'manualattributes' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_provider_manualattributes',
+                    'sanitize' => 'text',
+                    'default' => '',
+                    'example' => 'context=from-trunk\nallow=ulaw,alaw'
+                ],
+                'networkfilterid' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_provider_networkfilterid',
+                    'pattern' => '^([0-9]+|none)$',
+                    'sanitize' => 'string',
+                    'default' => 'none',
+                    'example' => '1'
+                ],
+                'receive_calls_without_auth' => [
+                    'type' => 'boolean',
+                    'description' => 'rest_param_provider_receive_without_auth',
+                    'sanitize' => 'bool',
+                    'default' => false,
+                    'example' => true
+                ],
+
+                // SIP-specific fields
+                'transport' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_provider_transport',
+                    'enum' => ['UDP', 'TCP', 'TLS', 'UDP,TCP', 'UDP,TCP,TLS'],
+                    'sanitize' => 'string',
+                    'default' => 'UDP',
+                    'example' => 'UDP'
+                ],
+                'qualify' => [
+                    'type' => 'boolean',
+                    'description' => 'rest_param_provider_qualify',
+                    'sanitize' => 'bool',
+                    'default' => true,
+                    'example' => true
+                ],
+                'qualifyfreq' => [
+                    'type' => 'integer',
+                    'description' => 'rest_param_provider_qualifyfreq',
+                    'minimum' => 10,
+                    'maximum' => 3600,
+                    'sanitize' => 'int',
+                    'default' => 60,
+                    'example' => 60
+                ],
+                'dtmfmode' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_provider_dtmfmode',
+                    'enum' => ['auto', 'auto_info', 'inband', 'rfc2833', 'info'],
+                    'sanitize' => 'string',
+                    'default' => 'auto',
+                    'example' => 'rfc2833'
+                ],
+                'fromuser' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_provider_fromuser',
+                    'maxLength' => 100,
+                    'sanitize' => 'string',
+                    'default' => '',
+                    'example' => 'customuser'
+                ],
+                'fromdomain' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_provider_fromdomain',
+                    'maxLength' => 255,
+                    'sanitize' => 'string',
+                    'default' => '',
+                    'example' => 'mydomain.com'
+                ],
+                'outbound_proxy' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_provider_outbound_proxy',
+                    'maxLength' => 255,
+                    'sanitize' => 'string',
+                    'default' => '',
+                    'example' => 'proxy.provider.com:5060'
+                ],
+                'disablefromuser' => [
+                    'type' => 'boolean',
+                    'description' => 'rest_param_provider_disablefromuser',
+                    'sanitize' => 'bool',
+                    'default' => false,
+                    'example' => false
+                ],
+
+                // CallerID and DID source fields (SIP only)
+                'cid_source' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_provider_cid_source',
+                    'sanitize' => 'string',
+                    'default' => 'default',
+                    'example' => 'default'
+                ],
+                'cid_custom_header' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_provider_cid_custom_header',
+                    'maxLength' => 100,
+                    'sanitize' => 'string',
+                    'default' => '',
+                    'example' => 'X-CallerID'
+                ],
+                'cid_parser_start' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_provider_cid_parser_start',
+                    'maxLength' => 50,
+                    'sanitize' => 'string',
+                    'default' => '',
+                    'example' => '<'
+                ],
+                'cid_parser_end' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_provider_cid_parser_end',
+                    'maxLength' => 50,
+                    'sanitize' => 'string',
+                    'default' => '',
+                    'example' => '>'
+                ],
+                'cid_parser_regex' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_provider_cid_parser_regex',
+                    'maxLength' => 255,
+                    'sanitize' => 'string',
+                    'default' => '',
+                    'example' => '/(\d+)/'
+                ],
+                'did_source' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_provider_did_source',
+                    'sanitize' => 'string',
+                    'default' => 'default',
+                    'example' => 'default'
+                ],
+                'did_custom_header' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_provider_did_custom_header',
+                    'maxLength' => 100,
+                    'sanitize' => 'string',
+                    'default' => '',
+                    'example' => 'X-DID'
+                ],
+                'did_parser_start' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_provider_did_parser_start',
+                    'maxLength' => 50,
+                    'sanitize' => 'string',
+                    'default' => '',
+                    'example' => '<'
+                ],
+                'did_parser_end' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_provider_did_parser_end',
+                    'maxLength' => 50,
+                    'sanitize' => 'string',
+                    'default' => '',
+                    'example' => '>'
+                ],
+                'did_parser_regex' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_provider_did_parser_regex',
+                    'maxLength' => 255,
+                    'sanitize' => 'string',
+                    'default' => '',
+                    'example' => '/(\d+)/'
+                ],
+                'cid_did_debug' => [
+                    'type' => 'boolean',
+                    'description' => 'rest_param_provider_cid_did_debug',
+                    'sanitize' => 'bool',
+                    'default' => false,
+                    'example' => false
+                ],
+                'additionalHosts' => [
+                    'type' => 'array',
+                    'description' => 'rest_param_provider_additional_hosts',
+                    'items' => [
+                        '$ref' => '#/components/schemas/ProviderHost'
+                    ],
+                    'default' => [],
+                    'example' => [
+                        ['id' => '1', 'address' => 'backup.provider.com']
+                    ]
+                ]
+            ],
+            'response' => [
+                // Auto-generated ID field (uniqid format, readOnly)
+                'id' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_provider_id',
+                    'example' => 'SIP-PROVIDER-12345'
+                ],
+                'represent' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_provider_represent',
+                    'example' => '<i class="globe icon"></i> Main SIP Trunk'
+                ],
+                'statusClass' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_provider_status_class',
+                    'example' => ''
+                ],
+                'networkfilter_represent' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_provider_networkfilter_represent',
+                    'example' => '<i class="filter icon"></i> Office Network'
+                ]
+            ]
+        ];
     }
+
+    // getSanitizationRules() inherited from AbstractDataStructure
+    // Auto-generated from getParameterDefinitions() - Single Source of Truth
 }

@@ -39,6 +39,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     /**
      * Get detail schema for license information
      *
+     * ✨ Inherits field definitions from getParameterDefinitions() - Single Source of Truth.
      * This schema defines the structure for license data responses.
      * Used for GET /api/v3/license:getLicenseInfo endpoint.
      *
@@ -46,80 +47,19 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function getDetailSchema(): array
     {
+        $definitions = self::getParameterDefinitions();
+        $responseFields = $definitions['response'];
+
+        $properties = [];
+
+        // ✨ Inherit ALL response-only fields (NO duplication!)
+        foreach ($responseFields as $field => $definition) {
+            $properties[$field] = $definition;
+        }
+
         return [
             'type' => 'object',
-            'properties' => [
-                'licenseKey' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_lic_licenseKey',
-                    'pattern' => '^MIKO-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}$',
-                    'nullable' => true,
-                    'example' => 'MIKO-GW9DC-EE22D-WB83S-C88PG'
-                ],
-                'companyName' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_lic_companyName',
-                    'maxLength' => 255,
-                    'example' => 'Acme Corporation'
-                ],
-                'email' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_lic_email',
-                    'format' => 'email',
-                    'maxLength' => 255,
-                    'example' => 'admin@example.com'
-                ],
-                'licenseType' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_lic_licenseType',
-                    'enum' => ['trial', 'commercial', 'free'],
-                    'example' => 'commercial'
-                ],
-                'expirationDate' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_lic_expirationDate',
-                    'format' => 'date',
-                    'nullable' => true,
-                    'example' => '2025-12-31'
-                ],
-                'products' => [
-                    'type' => 'array',
-                    'description' => 'rest_schema_lic_products',
-                    'items' => [
-                        '$ref' => '#/components/schemas/LicenseProduct'
-                    ]
-                ],
-                'features' => [
-                    'type' => 'array',
-                    'description' => 'rest_schema_lic_features',
-                    'items' => [
-                        '$ref' => '#/components/schemas/LicenseFeature'
-                    ]
-                ],
-                'maxUsers' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_lic_maxUsers',
-                    'minimum' => 0,
-                    'nullable' => true,
-                    'example' => 50
-                ],
-                'currentUsers' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_lic_currentUsers',
-                    'minimum' => 0,
-                    'example' => 25
-                ],
-                'isValid' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_schema_lic_isValid',
-                    'example' => true
-                ],
-                'serverResponse' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_lic_serverResponse',
-                    'example' => 'License is active and valid'
-                ]
-            ]
+            'properties' => $properties
         ];
     }
 
@@ -200,8 +140,76 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             // Only in API responses, not in requests
             // Used by getDetailSchema()
             'response' => [
-                // Response fields are already defined in getDetailSchema()
-                // No need to duplicate here as they're not used for sanitization
+                'licenseKey' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_lic_licenseKey',
+                    'pattern' => '^MIKO-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}$',
+                    'nullable' => true,
+                    'example' => 'MIKO-GW9DC-EE22D-WB83S-C88PG'
+                ],
+                'companyName' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_lic_companyName',
+                    'maxLength' => 255,
+                    'example' => 'Acme Corporation'
+                ],
+                'email' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_lic_email',
+                    'format' => 'email',
+                    'maxLength' => 255,
+                    'example' => 'admin@example.com'
+                ],
+                'licenseType' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_lic_licenseType',
+                    'enum' => ['trial', 'commercial', 'free'],
+                    'example' => 'commercial'
+                ],
+                'expirationDate' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_lic_expirationDate',
+                    'format' => 'date',
+                    'nullable' => true,
+                    'example' => '2025-12-31'
+                ],
+                'products' => [
+                    'type' => 'array',
+                    'description' => 'rest_schema_lic_products',
+                    'items' => [
+                        '$ref' => '#/components/schemas/LicenseProduct'
+                    ]
+                ],
+                'features' => [
+                    'type' => 'array',
+                    'description' => 'rest_schema_lic_features',
+                    'items' => [
+                        '$ref' => '#/components/schemas/LicenseFeature'
+                    ]
+                ],
+                'maxUsers' => [
+                    'type' => 'integer',
+                    'description' => 'rest_schema_lic_maxUsers',
+                    'minimum' => 0,
+                    'nullable' => true,
+                    'example' => 50
+                ],
+                'currentUsers' => [
+                    'type' => 'integer',
+                    'description' => 'rest_schema_lic_currentUsers',
+                    'minimum' => 0,
+                    'example' => 25
+                ],
+                'isValid' => [
+                    'type' => 'boolean',
+                    'description' => 'rest_schema_lic_isValid',
+                    'example' => true
+                ],
+                'serverResponse' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_lic_serverResponse',
+                    'example' => 'License is active and valid'
+                ]
             ],
 
             // ========== RELATED SCHEMAS ==========

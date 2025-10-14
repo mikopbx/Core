@@ -45,13 +45,4 @@ class DataStructure extends FirewallDataStructure
     // - formatBySchema()
     // - generateAutoSearchIndex()
 
-    /**
-     * Get related schemas
-     *
-     * @return array<string> List of related schema names
-     */
-    public static function getRelatedSchemas(): array
-    {
-        return [];
-    }
 }

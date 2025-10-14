@@ -72,97 +72,87 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     /**
      * Get OpenAPI schema for user list item
      *
+     * ✨ Inherits field definitions from getParameterDefinitions() - Single Source of Truth.
+     * This schema matches the structure returned by createForList() method.
+     * Used for GET /api/v3/users endpoint (list of users).
+     *
      * @return array<string, mixed> OpenAPI schema definition
      */
     public static function getListItemSchema(): array
     {
+        $definitions = self::getParameterDefinitions();
+        $requestParams = $definitions['request'];
+        $responseFields = $definitions['response'];
+
+        $properties = [];
+
+        // ✨ Inherit ALL request parameters for list view (NO duplication!)
+        foreach ($requestParams as $field => $definition) {
+            $properties[$field] = $definition;
+            // Transform description key: rest_param_* → rest_schema_*
+            $properties[$field]['description'] = str_replace('rest_param_', 'rest_schema_', $properties[$field]['description']);
+            // Remove sanitization and validation-only properties
+            unset($properties[$field]['sanitize'], $properties[$field]['minLength'], $properties[$field]['required']);
+        }
+
+        // ✨ Inherit response-only fields for list (NO duplication!)
+        $listResponseFields = ['id'];
+        foreach ($listResponseFields as $field) {
+            if (isset($responseFields[$field])) {
+                $properties[$field] = $responseFields[$field];
+            }
+        }
+
         return [
             'type' => 'object',
             'required' => ['id', 'email', 'username'],
-            'properties' => [
-                'id' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_users_id',
-                    'example' => 1
-                ],
-                'email' => [
-                    'type' => 'string',
-                    'format' => 'email',
-                    'description' => 'rest_schema_users_email',
-                    'maxLength' => 255,
-                    'example' => 'admin@example.com'
-                ],
-                'username' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_users_username',
-                    'minLength' => 3,
-                    'maxLength' => 50,
-                    'example' => 'admin'
-                ],
-                'language' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_users_language',
-                    'enum' => ['en', 'ru', 'de', 'es', 'fr', 'pt', 'uk', 'it', 'cs', 'tr', 'ja', 'vi', 'zh_Hans', 'pl', 'sv', 'nl', 'ka', 'ar', 'az', 'fa', 'ro'],
-                    'default' => 'en',
-                    'example' => 'en'
-                ],
-                'avatar' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_users_avatar',
-                    'maxLength' => 500,
-                    'nullable' => true,
-                    'example' => '/assets/img/avatars/admin.png'
-                ]
-            ]
+            'properties' => $properties
         ];
     }
 
     /**
      * Get OpenAPI schema for detailed user record
      *
+     * ✨ Inherits field definitions from getParameterDefinitions() - Single Source of Truth.
+     * This schema matches the structure returned by createFromModel() method.
+     * Used for GET /api/v3/users/{id}, POST, PUT, PATCH endpoints.
+     *
      * @return array<string, mixed> OpenAPI schema definition
      */
     public static function getDetailSchema(): array
     {
+        $definitions = self::getParameterDefinitions();
+        $requestParams = $definitions['request'];
+        $responseFields = $definitions['response'];
+
+        $properties = [];
+
+        // ✨ Inherit ALL request parameters for detail view (NO duplication!)
+        foreach ($requestParams as $field => $definition) {
+            // Skip writeOnly fields if any exist
+            if (isset($definition['writeOnly']) && $definition['writeOnly']) {
+                continue;
+            }
+
+            $properties[$field] = $definition;
+            // Transform description key: rest_param_* → rest_schema_*
+            $properties[$field]['description'] = str_replace('rest_param_', 'rest_schema_', $properties[$field]['description']);
+            // Remove sanitization and validation-only properties
+            unset($properties[$field]['sanitize'], $properties[$field]['minLength'], $properties[$field]['required']);
+        }
+
+        // ✨ Inherit response-only fields for detail (NO duplication!)
+        $detailResponseFields = ['id'];
+        foreach ($detailResponseFields as $field) {
+            if (isset($responseFields[$field])) {
+                $properties[$field] = $responseFields[$field];
+            }
+        }
+
         return [
             'type' => 'object',
             'required' => ['id', 'email', 'username'],
-            'properties' => [
-                'id' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_users_id',
-                    'readOnly' => true,
-                    'example' => 1
-                ],
-                'email' => [
-                    'type' => 'string',
-                    'format' => 'email',
-                    'description' => 'rest_schema_users_email',
-                    'maxLength' => 255,
-                    'example' => 'admin@example.com'
-                ],
-                'username' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_users_username',
-                    'minLength' => 3,
-                    'maxLength' => 50,
-                    'example' => 'admin'
-                ],
-                'language' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_users_language',
-                    'enum' => ['en', 'ru', 'de', 'es', 'fr', 'pt', 'uk', 'it', 'cs', 'tr', 'ja', 'vi', 'zh_Hans', 'pl', 'sv', 'nl', 'ka', 'ar', 'az', 'fa', 'ro'],
-                    'default' => 'en',
-                    'example' => 'en'
-                ],
-                'avatar' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_users_avatar',
-                    'maxLength' => 500,
-                    'nullable' => true,
-                    'example' => '/assets/img/avatars/admin.png'
-                ]
-            ]
+            'properties' => $properties
         ];
     }
 
@@ -195,18 +185,65 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
 
     /**
-     * Generate sanitization rules automatically from controller attributes
+     * Get parameter definitions (Single Source of Truth)
      *
-     * Uses ParameterSanitizationExtractor to extract rules from #[ApiParameter] attributes.
-     * This ensures Single Source of Truth - rules defined only in controller attributes.
+     * WHY: Centralizes user management parameter definitions.
+     * Users resource handles web interface user accounts.
      *
-     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
+     * @return array<string, array<string, mixed>> Parameter definitions
      */
-    public static function getSanitizationRules(): array
+    public static function getParameterDefinitions(): array
     {
-        return \MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor::extractFromController(
-            \MikoPBX\PBXCoreREST\Controllers\Users\RestController::class,
-            'create'
-        );
+        return [
+            'request' => [
+                // User credentials
+                'email' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_users_email',
+                    'format' => 'email',
+                    'maxLength' => 255,
+                    'sanitize' => 'string',
+                    'required' => true,
+                    'example' => 'admin@example.com'
+                ],
+                'username' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_users_username',
+                    'minLength' => 3,
+                    'maxLength' => 50,
+                    'sanitize' => 'string',
+                    'required' => true,
+                    'example' => 'admin'
+                ],
+                // User preferences
+                'language' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_users_language',
+                    'enum' => ['en', 'ru', 'de', 'es', 'fr', 'pt', 'uk', 'it', 'cs', 'tr', 'ja', 'vi', 'zh_Hans', 'pl', 'sv', 'nl', 'ka', 'ar', 'az', 'fa', 'ro'],
+                    'default' => 'en',
+                    'sanitize' => 'string',
+                    'example' => 'en'
+                ],
+                'avatar' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_users_avatar',
+                    'maxLength' => 500,
+                    'sanitize' => 'string',
+                    'example' => '/assets/img/avatars/admin.png'
+                ]
+            ],
+            'response' => [
+                // Auto-generated ID field (readOnly, not accepted in requests)
+                'id' => [
+                    'type' => 'integer',
+                    'description' => 'rest_schema_users_id',
+                    'readOnly' => true,
+                    'example' => 1
+                ]
+            ]
+        ];
     }
+
+    // getSanitizationRules() inherited from AbstractDataStructure
+    // Auto-generated from getParameterDefinitions() - Single Source of Truth
 }

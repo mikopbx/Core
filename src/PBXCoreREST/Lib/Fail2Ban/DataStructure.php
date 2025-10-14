@@ -87,6 +87,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     /**
      * Get OpenAPI schema for Fail2Ban singleton resource
      *
+     * ✨ Inherits field definitions from getParameterDefinitions() - Single Source of Truth.
      * This schema matches the structure returned by createFromModel() method.
      * Used for GET /api/v3/fail2ban, PUT, PATCH endpoints.
      *
@@ -94,46 +95,24 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function getDetailSchema(): array
     {
+        $definitions = self::getParameterDefinitions();
+        $requestParams = $definitions['request'];
+
+        $properties = [];
+
+        // ✨ Inherit ALL request parameters (NO duplication!)
+        foreach ($requestParams as $field => $definition) {
+            $properties[$field] = $definition;
+            // Transform description key: rest_param_* → rest_schema_*
+            $properties[$field]['description'] = str_replace('rest_param_', 'rest_schema_', $properties[$field]['description']);
+            // Remove sanitization and validation-only properties
+            unset($properties[$field]['sanitize'], $properties[$field]['required']);
+        }
+
         return [
             'type' => 'object',
             'required' => ['maxretry', 'bantime', 'findtime'],
-            'properties' => [
-                'maxretry' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_f2b_maxretry',
-                    'minimum' => 1,
-                    'maximum' => 100,
-                    'default' => 5,
-                    'example' => 5
-                ],
-                'bantime' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_f2b_bantime',
-                    'minimum' => 60,
-                    'default' => 86400,
-                    'example' => 86400
-                ],
-                'findtime' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_f2b_findtime',
-                    'minimum' => 60,
-                    'default' => 1800,
-                    'example' => 1800
-                ],
-                'whitelist' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_f2b_whitelist',
-                    'maxLength' => 500,
-                    'example' => '192.168.1.0/24,10.0.0.0/8'
-                ],
-                'PBXFirewallMaxReqSec' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_f2b_maxreqsec',
-                    'maxLength' => 10,
-                    'default' => '100',
-                    'example' => '100'
-                ]
-            ]
+            'properties' => $properties
         ];
     }
 
@@ -150,28 +129,65 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
 
     /**
-     * Generate sanitization rules automatically from controller attributes
+     * Get parameter definitions (Single Source of Truth)
      *
-     * Uses ParameterSanitizationExtractor to extract rules from #[ApiParameter] attributes.
-     * This ensures Single Source of Truth - rules defined only in controller attributes.
+     * WHY: Centralizes Fail2Ban parameter definitions.
+     * Fail2Ban is a singleton resource - only one configuration exists.
      *
-     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
+     * @return array<string, array<string, mixed>> Parameter definitions
      */
-    public static function getSanitizationRules(): array
+    public static function getParameterDefinitions(): array
     {
-        return \MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor::extractFromController(
-            \MikoPBX\PBXCoreREST\Controllers\Fail2Ban\RestController::class,
-            'update'
-        );
+        return [
+            'request' => [
+                'maxretry' => [
+                    'type' => 'integer',
+                    'description' => 'rest_param_f2b_maxretry',
+                    'minimum' => 1,
+                    'maximum' => 100,
+                    'default' => 5,
+                    'sanitize' => 'int',
+                    'required' => true,
+                    'example' => 5
+                ],
+                'bantime' => [
+                    'type' => 'integer',
+                    'description' => 'rest_param_f2b_bantime',
+                    'minimum' => 60,
+                    'default' => 86400,
+                    'sanitize' => 'int',
+                    'required' => true,
+                    'example' => 86400
+                ],
+                'findtime' => [
+                    'type' => 'integer',
+                    'description' => 'rest_param_f2b_findtime',
+                    'minimum' => 60,
+                    'default' => 1800,
+                    'sanitize' => 'int',
+                    'required' => true,
+                    'example' => 1800
+                ],
+                'whitelist' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_f2b_whitelist',
+                    'maxLength' => 500,
+                    'sanitize' => 'string',
+                    'example' => '192.168.1.0/24,10.0.0.0/8'
+                ],
+                'PBXFirewallMaxReqSec' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_f2b_maxreqsec',
+                    'maxLength' => 10,
+                    'default' => '100',
+                    'sanitize' => 'string',
+                    'example' => '100'
+                ]
+            ]
+        ];
     }
 
-    /**
-     * Get related schemas
-     *
-     * @return array<string> List of related schema names
-     */
-    public static function getRelatedSchemas(): array
-    {
-        return [];
-    }
+    // getSanitizationRules() inherited from AbstractDataStructure
+    // Auto-generated from getParameterDefinitions() - Single Source of Truth
+
 }

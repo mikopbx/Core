@@ -20,12 +20,13 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\WikiLinks;
 
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
 use MikoPBX\PBXCoreREST\Lib\Common\OpenApiSchemaProvider;
 
 /**
  * Data structure for wiki links responses
  */
-class DataStructure implements OpenApiSchemaProvider
+class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvider
 {
     /**
      * Create response data structure from URL
@@ -41,21 +42,26 @@ class DataStructure implements OpenApiSchemaProvider
     /**
      * Get OpenAPI schema for wiki link response
      *
+     * ✨ Inherits field definitions from getParameterDefinitions() - Single Source of Truth.
+     *
      * @return array OpenAPI schema
      */
     public static function getDetailSchema(): array
     {
+        $definitions = self::getParameterDefinitions();
+        $responseFields = $definitions['response'];
+
+        $properties = [];
+
+        // ✨ Inherit ALL response-only fields (NO duplication!)
+        foreach ($responseFields as $field => $definition) {
+            $properties[$field] = $definition;
+        }
+
         return [
             'type' => 'object',
             'required' => ['url'],
-            'properties' => [
-                'url' => [
-                    'type' => 'string',
-                    'format' => 'uri',
-                    'description' => 'Documentation URL',
-                    'example' => 'https://docs.mikopbx.com/mikopbx/v/english/manual/telephony/extensions'
-                ]
-            ]
+            'properties' => $properties
         ];
     }
 
@@ -66,7 +72,7 @@ class DataStructure implements OpenApiSchemaProvider
      * @param string $schemaType Schema type ('detail' or 'list')
      * @return array Formatted data
      */
-    private static function formatBySchema(array $data, string $schemaType): array
+    protected static function formatBySchema(array $data, string $schemaType = 'detail'): array
     {
         $schema = match ($schemaType) {
             'detail' => self::getDetailSchema(),
@@ -95,12 +101,38 @@ class DataStructure implements OpenApiSchemaProvider
     }
 
     /**
-     * Get related schemas (none for this simple endpoint)
+     * Get parameter definitions (Single Source of Truth)
      *
-     * @return array
+     * WHY: Centralizes wiki links parameter definitions.
+     * WikiLinks is a utility resource that generates documentation URLs.
+     *
+     * @return array<string, array<string, mixed>> Parameter definitions
      */
-    public static function getRelatedSchemas(): array
+    public static function getParameterDefinitions(): array
     {
-        return [];
+        return [
+            'request' => [
+                // Page identifier for documentation lookup
+                'page' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_wl_page',
+                    'maxLength' => 255,
+                    'sanitize' => 'string',
+                    'required' => true,
+                    'example' => 'extensions-index'
+                ]
+            ],
+            'response' => [
+                'url' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_wl_url',
+                    'format' => 'uri',
+                    'example' => 'https://docs.mikopbx.com/mikopbx/v/english/manual/telephony/extensions'
+                ]
+            ]
+        ];
     }
+
+    // getSanitizationRules() inherited from AbstractDataStructure
+    // Auto-generated from getParameterDefinitions() - Single Source of Truth
 }

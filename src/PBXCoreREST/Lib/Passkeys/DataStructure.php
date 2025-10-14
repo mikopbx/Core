@@ -92,16 +92,167 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     /**
      * Get OpenAPI schema for list item (implements OpenApiSchemaProvider interface)
      *
+     * ✨ Inherits field definitions from getParameterDefinitions() - Single Source of Truth.
+     *
      * @return array<string, mixed> OpenAPI schema definition
      */
     public static function getListItemSchema(): array
     {
+        $definitions = self::getParameterDefinitions();
+        $responseFields = $definitions['response'];
+
+        $properties = [];
+
+        // ✨ Inherit specific fields for list view (NO duplication!)
+        $listFields = ['id', 'user_id', 'name', 'created_at', 'last_used_at'];
+        foreach ($listFields as $field) {
+            if (isset($responseFields[$field])) {
+                $properties[$field] = $responseFields[$field];
+            }
+        }
+
         return [
             'type' => 'object',
-            'properties' => [
+            'properties' => $properties
+        ];
+    }
+
+    /**
+     * Get OpenAPI schema for detail view
+     *
+     * ✨ Inherits field definitions from getParameterDefinitions() - Single Source of Truth.
+     *
+     * @return array<string, mixed> OpenAPI schema definition
+     */
+    public static function getDetailSchema(): array
+    {
+        $definitions = self::getParameterDefinitions();
+        $responseFields = $definitions['response'];
+
+        $properties = [];
+
+        // ✨ Inherit ALL response fields for detail view (NO duplication!)
+        foreach ($responseFields as $field => $definition) {
+            $properties[$field] = $definition;
+        }
+
+        return [
+            'type' => 'object',
+            'properties' => $properties
+        ];
+    }
+
+    /**
+     * Get parameter definitions (Single Source of Truth)
+     *
+     * WHY: Centralizes passkey parameter definitions.
+     * Passkeys resource handles WebAuthn passkey registration and authentication.
+     *
+     * @return array<string, array<string, mixed>> Parameter definitions
+     */
+    public static function getParameterDefinitions(): array
+    {
+        return [
+            'request' => [
+                // Passkey identification
+                'id' => [
+                    'type' => 'integer',
+                    'description' => 'rest_param_pk_id',
+                    'minimum' => 1,
+                    'sanitize' => 'int',
+                    'example' => 1
+                ],
+                'user_id' => [
+                    'type' => 'integer',
+                    'description' => 'rest_param_pk_user_id',
+                    'minimum' => 1,
+                    'sanitize' => 'int',
+                    'example' => 1
+                ],
+                // Passkey metadata
+                'name' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_pk_name',
+                    'maxLength' => 100,
+                    'sanitize' => 'string',
+                    'example' => 'My YubiKey 5'
+                ],
+                // WebAuthn credential data
+                'credential' => [
+                    'type' => 'object',
+                    'description' => 'rest_param_pk_credential',
+                    'sanitize' => 'array',
+                    'example' => ['id' => '...', 'rawId' => '...', 'response' => []]
+                ],
+                'credential_id' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_pk_credential_id',
+                    'maxLength' => 500,
+                    'sanitize' => 'string',
+                    'example' => 'Base64EncodedCredentialId...'
+                ],
+                'public_key' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_pk_public_key',
+                    'maxLength' => 1000,
+                    'sanitize' => 'string',
+                    'example' => 'Base64EncodedPublicKey...'
+                ],
+                'counter' => [
+                    'type' => 'integer',
+                    'description' => 'rest_param_pk_counter',
+                    'minimum' => 0,
+                    'default' => 0,
+                    'sanitize' => 'int',
+                    'example' => 0
+                ],
+                'aaguid' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_pk_aaguid',
+                    'maxLength' => 100,
+                    'sanitize' => 'string',
+                    'example' => '00000000-0000-0000-0000-000000000000'
+                ],
+                'transports' => [
+                    'type' => 'array',
+                    'description' => 'rest_param_pk_transports',
+                    'sanitize' => 'array',
+                    'example' => ['usb', 'nfc']
+                ],
+                // Authentication parameters
+                'login' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_pk_login',
+                    'maxLength' => 100,
+                    'sanitize' => 'string',
+                    'required' => true,
+                    'example' => 'admin'
+                ],
+                // Query parameters for list filtering
+                'limit' => [
+                    'type' => 'integer',
+                    'description' => 'rest_param_limit',
+                    'minimum' => 1,
+                    'maximum' => 100,
+                    'default' => 20,
+                    'sanitize' => 'int',
+                    'example' => 20
+                ],
+                'offset' => [
+                    'type' => 'integer',
+                    'description' => 'rest_param_offset',
+                    'minimum' => 0,
+                    'default' => 0,
+                    'sanitize' => 'int',
+                    'example' => 0
+                ]
+            ],
+            'response' => [
+                // Auto-generated ID field (readOnly, not accepted in requests)
                 'id' => [
                     'type' => 'integer',
                     'description' => 'rest_schema_pk_id',
+                    'readOnly' => true,
                     'example' => 1
                 ],
                 'user_id' => [
@@ -113,6 +264,27 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                     'type' => 'string',
                     'description' => 'rest_schema_pk_name',
                     'example' => 'My YubiKey 5'
+                ],
+                'credential_id' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_pk_credential_id',
+                    'example' => 'Base64EncodedCredentialId...'
+                ],
+                'counter' => [
+                    'type' => 'integer',
+                    'description' => 'rest_schema_pk_counter',
+                    'example' => 15
+                ],
+                'aaguid' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_pk_aaguid',
+                    'example' => '00000000-0000-0000-0000-000000000000'
+                ],
+                'transports' => [
+                    'type' => 'array',
+                    'items' => ['type' => 'string'],
+                    'description' => 'rest_schema_pk_transports',
+                    'example' => ['usb', 'nfc']
                 ],
                 'created_at' => [
                     'type' => 'string',
@@ -126,77 +298,16 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                     'nullable' => true,
                     'description' => 'rest_schema_pk_last_used_at',
                     'example' => '2025-01-16 14:25:30'
+                ],
+                'user_agent' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_pk_user_agent',
+                    'example' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)...'
                 ]
             ]
         ];
     }
 
-    /**
-     * Get OpenAPI schema for detail view
-     *
-     * @return array<string, mixed> OpenAPI schema definition
-     */
-    public static function getDetailSchema(): array
-    {
-        $baseSchema = self::getListItemSchema();
-
-        // Add additional fields for detail view
-        $baseSchema['properties']['credential_id'] = [
-            'type' => 'string',
-            'description' => 'rest_schema_pk_credential_id',
-            'example' => 'Base64EncodedCredentialId...'
-        ];
-        $baseSchema['properties']['counter'] = [
-            'type' => 'integer',
-            'description' => 'rest_schema_pk_counter',
-            'example' => 15
-        ];
-        $baseSchema['properties']['aaguid'] = [
-            'type' => 'string',
-            'description' => 'rest_schema_pk_aaguid',
-            'example' => '00000000-0000-0000-0000-000000000000'
-        ];
-        $baseSchema['properties']['transports'] = [
-            'type' => 'array',
-            'items' => ['type' => 'string'],
-            'description' => 'rest_schema_pk_transports',
-            'example' => ['usb', 'nfc']
-        ];
-        $baseSchema['properties']['user_agent'] = [
-            'type' => 'string',
-            'description' => 'rest_schema_pk_user_agent',
-            'example' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)...'
-        ];
-
-        return $baseSchema;
-    }
-
-    /**
-     * Get related schemas for OpenAPI components
-     *
-     * @return array<string, array<string, mixed>> Related schemas
-     */
-    public static function getRelatedSchemas(): array
-    {
-        return [];
-    }
-
-    /**
-     * Generate sanitization rules automatically from controller attributes
-     *
-     * Uses ParameterSanitizationExtractor to extract rules from #[ApiParameter] attributes.
-     * This ensures Single Source of Truth - rules defined only in controller attributes.
-     *
-     * For Passkeys resource, we extract from the 'create' method which handles
-     * passkey registration with user-provided parameters.
-     *
-     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
-     */
-    public static function getSanitizationRules(): array
-    {
-        return \MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor::extractFromController(
-            \MikoPBX\PBXCoreREST\Controllers\Passkeys\RestController::class,
-            'create'
-        );
-    }
+    // getSanitizationRules() inherited from AbstractDataStructure
+    // Auto-generated from getParameterDefinitions() - Single Source of Truth
 }

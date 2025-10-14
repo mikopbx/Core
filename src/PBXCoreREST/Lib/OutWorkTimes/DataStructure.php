@@ -663,28 +663,283 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
 
     /**
-     * Get related schemas for OpenAPI components
+     * Get parameter definitions for OpenAPI and validation
      *
-     * @return array<string, array<string, mixed>> Related schemas
+     * Single Source of Truth for all field definitions.
+     * Used for sanitization, validation, defaults, and OpenAPI schema generation.
+     *
+     * @return array<string, mixed> Parameter definitions
      */
-    public static function getRelatedSchemas(): array
+    public static function getParameterDefinitions(): array
     {
-        return [];
+        return [
+            'request' => [
+                'id' => [
+                    'type' => 'integer',
+                    'description' => 'rest_param_owt_id',
+                    'sanitize' => 'int',
+                    'example' => 15
+                ],
+                'description' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_owt_description',
+                    'maxLength' => 500,
+                    'sanitize' => 'text',
+                    'required' => true,
+                    'example' => 'Weekend Schedule'
+                ],
+                'calType' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_owt_calType',
+                    'enum' => ['timeframe', 'caldav', 'ical'],
+                    'sanitize' => 'string',
+                    'default' => 'timeframe',
+                    'example' => 'timeframe'
+                ],
+                'date_from' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_owt_date_from',
+                    'format' => 'date',
+                    'sanitize' => 'string',
+                    'example' => '2025-01-01'
+                ],
+                'date_to' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_owt_date_to',
+                    'format' => 'date',
+                    'sanitize' => 'string',
+                    'example' => '2025-12-31'
+                ],
+                'weekday_from' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_owt_weekday_from',
+                    'enum' => ['-1', '1', '2', '3', '4', '5', '6', '7'],
+                    'sanitize' => 'string',
+                    'default' => '-1',
+                    'example' => '1'
+                ],
+                'weekday_to' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_owt_weekday_to',
+                    'enum' => ['-1', '1', '2', '3', '4', '5', '6', '7'],
+                    'sanitize' => 'string',
+                    'default' => '-1',
+                    'example' => '5'
+                ],
+                'time_from' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_owt_time_from',
+                    'pattern' => '^([01][0-9]|2[0-3]):[0-5][0-9]$',
+                    'sanitize' => 'string',
+                    'default' => '00:00',
+                    'example' => '09:00'
+                ],
+                'time_to' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_owt_time_to',
+                    'pattern' => '^([01][0-9]|2[0-3]):[0-5][0-9]$',
+                    'sanitize' => 'string',
+                    'default' => '23:59',
+                    'example' => '18:00'
+                ],
+                'calUrl' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_owt_calUrl',
+                    'format' => 'uri',
+                    'maxLength' => 512,
+                    'sanitize' => 'string',
+                    'example' => 'https://calendar.example.com/cal.ics'
+                ],
+                'calUser' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_owt_calUser',
+                    'maxLength' => 255,
+                    'sanitize' => 'text',
+                    'example' => 'admin'
+                ],
+                'calSecret' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_owt_calSecret',
+                    'maxLength' => 255,
+                    'sanitize' => 'string',
+                    'writeOnly' => true,
+                    'example' => 'password123'
+                ],
+                'action' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_owt_action',
+                    'enum' => ['extension', 'playmessage'],
+                    'sanitize' => 'string',
+                    'default' => 'extension',
+                    'example' => 'extension'
+                ],
+                'extension' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_owt_extension',
+                    'pattern' => '^[0-9]{2,8}$',
+                    'sanitize' => 'string',
+                    'example' => '201'
+                ],
+                'audio_message_id' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_owt_audio_message_id',
+                    'sanitize' => 'string',
+                    'example' => '45'
+                ],
+                'priority' => [
+                    'type' => 'integer',
+                    'description' => 'rest_param_owt_priority',
+                    'minimum' => 0,
+                    'sanitize' => 'int',
+                    'default' => 0,
+                    'example' => 1
+                ],
+                'allowRestriction' => [
+                    'type' => 'boolean',
+                    'description' => 'rest_param_owt_allowRestriction',
+                    'sanitize' => 'bool',
+                    'default' => false,
+                    'example' => false
+                ],
+                'allowedExtensions' => [
+                    'type' => 'array',
+                    'description' => 'rest_param_owt_allowedExtensions',
+                    'items' => ['type' => 'string'],
+                    'sanitize' => 'array',
+                    'default' => [],
+                    'example' => ['201', '202']
+                ],
+                'incomingRouteIds' => [
+                    'type' => 'array',
+                    'description' => 'rest_param_owt_incomingRouteIds',
+                    'items' => ['type' => 'integer'],
+                    'sanitize' => 'array',
+                    'default' => [],
+                    'example' => [1, 2, 3]
+                ]
+            ],
+            'response' => [
+                'id' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_id',
+                    'example' => '15'
+                ],
+                'name' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_name',
+                    'example' => 'Weekend Schedule'
+                ],
+                'description' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_description',
+                    'example' => 'Routing for weekend calls'
+                ],
+                'calType' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_calType',
+                    'enum' => ['timeframe', 'caldav', 'ical'],
+                    'example' => 'timeframe'
+                ],
+                'date_from' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_date_from',
+                    'example' => '2025-01-01'
+                ],
+                'date_to' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_date_to',
+                    'example' => '2025-12-31'
+                ],
+                'weekday_from' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_weekday_from',
+                    'example' => '1'
+                ],
+                'weekday_to' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_weekday_to',
+                    'example' => '5'
+                ],
+                'time_from' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_time_from',
+                    'example' => '09:00'
+                ],
+                'time_to' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_time_to',
+                    'example' => '18:00'
+                ],
+                'calUrl' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_calUrl',
+                    'example' => 'https://calendar.example.com/cal.ics'
+                ],
+                'calUser' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_calUser',
+                    'example' => 'admin'
+                ],
+                'calSecret' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_calSecret',
+                    'example' => 'XXXXXX'
+                ],
+                'action' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_action',
+                    'example' => 'extension'
+                ],
+                'extension' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_extension',
+                    'example' => '201'
+                ],
+                'extension_represent' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_extension_represent',
+                    'example' => '<i class="user icon"></i> John Doe <201>'
+                ],
+                'audio_message_id' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_audio_message_id',
+                    'example' => '45'
+                ],
+                'audio_message_id_represent' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_audio_message_id_represent',
+                    'example' => '<i class="sound icon"></i> Closed Message'
+                ],
+                'priority' => [
+                    'type' => 'integer',
+                    'description' => 'rest_schema_owt_priority',
+                    'example' => 1
+                ],
+                'allowRestriction' => [
+                    'type' => 'boolean',
+                    'description' => 'rest_schema_owt_allowRestriction',
+                    'example' => false
+                ],
+                'allowedExtensions' => [
+                    'type' => 'array',
+                    'description' => 'rest_schema_owt_allowedExtensions',
+                    'items' => ['type' => 'string'],
+                    'example' => ['201', '202']
+                ],
+                'incomingRouteIds' => [
+                    'type' => 'array',
+                    'description' => 'rest_schema_owt_incomingRouteIds',
+                    'items' => ['type' => 'integer'],
+                    'example' => [1, 2, 3]
+                ],
+                'search_index' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_owt_search_index'
+                ]
+            ]
+        ];
     }
 
-    /**
-     * Generate sanitization rules automatically from controller attributes
-     *
-     * Uses ParameterSanitizationExtractor to extract rules from #[ApiParameter] attributes.
-     * This ensures Single Source of Truth - rules defined only in controller attributes.
-     *
-     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
-     */
-    public static function getSanitizationRules(): array
-    {
-        return \MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor::extractFromController(
-            \MikoPBX\PBXCoreREST\Controllers\OffWorkTimes\RestController::class,
-            'create'
-        );
-    }
+    // getSanitizationRules() inherited from AbstractDataStructure
+    // Auto-generated from getParameterDefinitions() - Single Source of Truth
 }

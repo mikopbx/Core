@@ -237,81 +237,219 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     /**
      * Get OpenAPI schema for outbound route list item
      *
+     * ✨ Inherits field definitions from getParameterDefinitions() - Single Source of Truth.
+     * This schema matches the structure returned by createForList() method.
+     * Used for GET /api/v3/outbound-routes endpoint (list of outbound routes).
+     *
      * @return array<string, mixed>
      */
     public static function getListItemSchema(): array
     {
+        $definitions = self::getParameterDefinitions();
+        $requestParams = $definitions['request'];
+        $responseFields = $definitions['response'];
+
+        $properties = [];
+
+        // ✨ Inherit request parameters used in list view (NO duplication!)
+        $listFields = ['rulename', 'priority', 'numberbeginswith', 'restnumbers', 'trimfrombegin', 'prepend', 'note', 'providerid'];
+        foreach ($listFields as $field) {
+            if (isset($requestParams[$field])) {
+                $properties[$field] = $requestParams[$field];
+                // Transform description key: rest_param_* → rest_schema_*
+                $properties[$field]['description'] = str_replace('rest_param_', 'rest_schema_', $properties[$field]['description']);
+                // Remove sanitization and validation-only properties
+                unset($properties[$field]['sanitize'], $properties[$field]['minLength'], $properties[$field]['required']);
+            }
+        }
+
+        // ✨ Inherit response-only fields for list (NO duplication!)
+        $listResponseFields = ['id', 'providerid_represent', 'provider_disabled', 'ruleDescription'];
+        foreach ($listResponseFields as $field) {
+            if (isset($responseFields[$field])) {
+                $properties[$field] = $responseFields[$field];
+            }
+        }
+
         return [
             'type' => 'object',
             'required' => ['id', 'rulename', 'priority'],
-            'properties' => [
-                'id' => ['type' => 'string', 'description' => 'rest_schema_obr_id', 'example' => '15'],
-                'rulename' => ['type' => 'string', 'description' => 'rest_schema_obr_rulename', 'maxLength' => 100, 'example' => 'International Calls'],
-                'priority' => ['type' => 'integer', 'description' => 'rest_schema_obr_priority', 'minimum' => 0, 'example' => 1],
-                'numberbeginswith' => ['type' => 'string', 'description' => 'rest_schema_obr_numberbeginswith', 'maxLength' => 20, 'example' => '00'],
-                'restnumbers' => ['type' => 'string', 'description' => 'rest_schema_obr_restnumbers', 'default' => '9', 'example' => '9'],
-                'trimfrombegin' => ['type' => 'string', 'description' => 'rest_schema_obr_trimfrombegin', 'default' => '0', 'example' => '0'],
-                'prepend' => ['type' => 'string', 'description' => 'rest_schema_obr_prepend', 'maxLength' => 20, 'example' => '8'],
-                'note' => ['type' => 'string', 'description' => 'rest_schema_obr_note', 'maxLength' => 500],
-                'providerid' => ['type' => 'string', 'description' => 'rest_schema_obr_providerid', 'example' => 'SIP-PROVIDER-1234'],
-                'providerid_represent' => ['type' => 'string', 'description' => 'rest_schema_obr_providerid_represent'],
-                'provider_disabled' => ['type' => 'boolean', 'description' => 'rest_schema_obr_provider_disabled', 'example' => false],
-                'ruleDescription' => ['type' => 'string', 'description' => 'rest_schema_obr_ruleDescription']
-            ]
+            'properties' => $properties
         ];
     }
 
     /**
      * Get OpenAPI schema for detailed outbound route record
      *
+     * ✨ Inherits field definitions from getParameterDefinitions() - Single Source of Truth.
+     * This schema matches the structure returned by createFromModel() method.
+     * Used for GET /api/v3/outbound-routes/{id}, POST, PUT, PATCH endpoints.
+     *
      * @return array<string, mixed>
      */
     public static function getDetailSchema(): array
     {
+        $definitions = self::getParameterDefinitions();
+        $requestParams = $definitions['request'];
+        $responseFields = $definitions['response'];
+
+        $properties = [];
+
+        // ✨ Inherit ALL request parameters for detail view (NO duplication!)
+        foreach ($requestParams as $field => $definition) {
+            // Skip writeOnly fields if any exist
+            if (isset($definition['writeOnly']) && $definition['writeOnly']) {
+                continue;
+            }
+
+            $properties[$field] = $definition;
+            // Transform description key: rest_param_* → rest_schema_*
+            $properties[$field]['description'] = str_replace('rest_param_', 'rest_schema_', $properties[$field]['description']);
+            // Remove sanitization and validation-only properties
+            unset($properties[$field]['sanitize'], $properties[$field]['minLength'], $properties[$field]['required']);
+        }
+
+        // ✨ Inherit response-only fields for detail (NO duplication!)
+        $detailResponseFields = ['id', 'providerid_represent', 'provider_type', 'provider_disabled', 'represent'];
+        foreach ($detailResponseFields as $field) {
+            if (isset($responseFields[$field])) {
+                $properties[$field] = $responseFields[$field];
+            }
+        }
+
         return [
             'type' => 'object',
             'required' => ['id', 'rulename', 'priority'],
-            'properties' => [
-                'id' => ['type' => 'string', 'description' => 'rest_schema_obr_id', 'example' => '15'],
-                'rulename' => ['type' => 'string', 'description' => 'rest_schema_obr_rulename', 'maxLength' => 100, 'example' => 'International Calls'],
-                'providerid' => ['type' => 'string', 'description' => 'rest_schema_obr_providerid', 'example' => 'SIP-PROVIDER-1234'],
-                'providerid_represent' => ['type' => 'string', 'description' => 'rest_schema_obr_providerid_represent'],
-                'provider_type' => ['type' => 'string', 'description' => 'rest_schema_obr_provider_type', 'enum' => ['SIP', 'IAX2']],
-                'provider_disabled' => ['type' => 'boolean', 'description' => 'rest_schema_obr_provider_disabled', 'example' => false],
-                'priority' => ['type' => 'integer', 'description' => 'rest_schema_obr_priority', 'minimum' => 0, 'default' => 0, 'example' => 1],
-                'numberbeginswith' => ['type' => 'string', 'description' => 'rest_schema_obr_numberbeginswith', 'maxLength' => 20, 'example' => '00'],
-                'restnumbers' => ['type' => 'string', 'description' => 'rest_schema_obr_restnumbers', 'default' => '9', 'example' => '9'],
-                'trimfrombegin' => ['type' => 'string', 'description' => 'rest_schema_obr_trimfrombegin', 'default' => '0', 'example' => '0'],
-                'prepend' => ['type' => 'string', 'description' => 'rest_schema_obr_prepend', 'maxLength' => 20, 'example' => '8'],
-                'note' => ['type' => 'string', 'description' => 'rest_schema_obr_note', 'maxLength' => 500],
-                'represent' => ['type' => 'string', 'description' => 'rest_schema_obr_represent']
-            ]
+            'properties' => $properties
         ];
     }
 
     /**
-     * Get related schemas for OpenAPI components
+     * ✨ Single Source of Truth: Parameter Definitions
      *
-     * @return array<string, array<string, mixed>>
+     * Centralizes ALL parameter definitions for outbound routes in ONE place.
+     * This replaces:
+     * - Controller ApiParameter attributes (now use ApiParameterRef)
+     * - Inline sanitization rules in SaveRecordAction
+     * - Manual default values scattered across code
+     * - Schema definitions (getDetailSchema/getListItemSchema now reference this)
+     *
+     * Benefits:
+     * - Change field constraint in ONE place → affects validation, sanitization, defaults, OpenAPI
+     * - No duplication, no drift between different definitions
+     * - Automatic validation (enum, min/max, pattern) via validateInputData()
+     * - Automatic defaults via applyDefaults()
+     * - Automatic sanitization rules via getSanitizationRules()
+     *
+     * @return array{request: array<string, array<string, mixed>>, response: array<string, array<string, mixed>>}
      */
-    public static function getRelatedSchemas(): array
+    public static function getParameterDefinitions(): array
     {
-        return [];
+        return [
+            'request' => [
+                'rulename' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_obr_rulename',
+                    'minLength' => 1,
+                    'maxLength' => 100,
+                    'sanitize' => 'text',
+                    'required' => true,
+                    'example' => 'International Calls'
+                ],
+                'providerid' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_obr_providerid',
+                    'sanitize' => 'string',
+                    'required' => true,
+                    'example' => 'SIP-PROVIDER-1234'
+                ],
+                'priority' => [
+                    'type' => 'integer',
+                    'description' => 'rest_param_obr_priority',
+                    'minimum' => 0,
+                    'maximum' => 9999,
+                    'sanitize' => 'int',
+                    'default' => 0,
+                    'example' => 1
+                ],
+                'numberbeginswith' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_obr_numberbeginswith',
+                    'maxLength' => 20,
+                    'sanitize' => 'string',
+                    'example' => '00'
+                ],
+                'restnumbers' => [
+                    'type' => 'integer',
+                    'description' => 'rest_param_obr_restnumbers',
+                    'minimum' => -1,
+                    'maximum' => 20,
+                    'sanitize' => 'int',
+                    'default' => -1,
+                    'example' => 9
+                ],
+                'trimfrombegin' => [
+                    'type' => 'integer',
+                    'description' => 'rest_param_obr_trimfrombegin',
+                    'minimum' => 0,
+                    'maximum' => 30,
+                    'sanitize' => 'int',
+                    'default' => 0,
+                    'example' => 0
+                ],
+                'prepend' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_obr_prepend',
+                    'maxLength' => 20,
+                    'sanitize' => 'string',
+                    'example' => '8'
+                ],
+                'note' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_obr_note',
+                    'maxLength' => 500,
+                    'sanitize' => 'text',
+                    'example' => 'Route for international calls'
+                ]
+            ],
+            'response' => [
+                // Auto-generated ID field (readOnly, not accepted in requests)
+                'id' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_obr_id',
+                    'pattern' => '^[0-9]+$',
+                    'example' => '15'
+                ],
+                'providerid_represent' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_obr_providerid_represent',
+                    'example' => '<i class="globe icon"></i> Main Provider'
+                ],
+                'provider_type' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_obr_provider_type',
+                    'enum' => ['SIP', 'IAX2'],
+                    'example' => 'SIP'
+                ],
+                'provider_disabled' => [
+                    'type' => 'boolean',
+                    'description' => 'rest_schema_obr_provider_disabled',
+                    'example' => false
+                ],
+                'ruleDescription' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_obr_ruleDescription',
+                    'example' => 'Numbers starting with 00 and 9 digits via <span>Provider</span>'
+                ],
+                'represent' => [
+                    'type' => 'string',
+                    'description' => 'rest_schema_obr_represent',
+                    'example' => 'International Calls'
+                ]
+            ]
+        ];
     }
 
-    /**
-     * Generate sanitization rules automatically from controller attributes
-     *
-     * Uses ParameterSanitizationExtractor to extract rules from #[ApiParameter] attributes.
-     * This ensures Single Source of Truth - rules defined only in controller attributes.
-     *
-     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
-     */
-    public static function getSanitizationRules(): array
-    {
-        return \MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor::extractFromController(
-            \MikoPBX\PBXCoreREST\Controllers\OutboundRoutes\RestController::class,
-            'create'
-        );
-    }
+    // getSanitizationRules() inherited from AbstractDataStructure
+    // Auto-generated from getParameterDefinitions() - Single Source of Truth
 }

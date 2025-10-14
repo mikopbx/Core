@@ -98,35 +98,34 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function getListItemSchema(): array
     {
+        $definitions = self::getParameterDefinitions();
+        $requestParams = $definitions['request'];
+        $responseFields = $definitions['response'] ?? [];
+
+        $properties = [];
+
+        // ✨ Inherit request parameters used in list view
+        $listFields = ['number', 'type', 'callerid'];
+        foreach ($listFields as $field) {
+            if (isset($requestParams[$field])) {
+                $properties[$field] = $requestParams[$field];
+                // Transform description key: rest_param_* → rest_schema_*
+                $properties[$field]['description'] = str_replace('rest_param_', 'rest_schema_', $properties[$field]['description']);
+            }
+        }
+
+        // ✨ Inherit response-only fields for list (NO duplication!)
+        $listResponseFields = ['id'];
+        foreach ($listResponseFields as $field) {
+            if (isset($responseFields[$field])) {
+                $properties[$field] = $responseFields[$field];
+            }
+        }
+
         return [
             'type' => 'object',
             'required' => ['id', 'number', 'type'],
-            'properties' => [
-                'id' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ext_id',
-                    'pattern' => '^[0-9]{2,8}$',
-                    'example' => '201'
-                ],
-                'number' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ext_number',
-                    'pattern' => '^[0-9]{2,8}$',
-                    'example' => '201'
-                ],
-                'type' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ext_type',
-                    'enum' => ['SIP', 'IAX', 'QUEUE', 'IVR', 'CONFERENCE', 'EXTERNAL'],
-                    'example' => 'SIP'
-                ],
-                'callerid' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ext_callerid',
-                    'maxLength' => 100,
-                    'example' => 'John Doe'
-                ]
-            ]
+            'properties' => $properties
         ];
     }
 
@@ -136,90 +135,170 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      * This schema matches the structure returned by createFromModel() method.
      * Used for GET /api/v3/extensions/{id}, POST, PUT, PATCH endpoints.
      *
+     * Inherits ALL fields from getParameterDefinitions() (NO duplication!)
+     *
      * @return array<string, mixed> OpenAPI schema definition
      */
     public static function getDetailSchema(): array
     {
+        $definitions = self::getParameterDefinitions();
+        $requestParams = $definitions['request'];
+        $responseFields = $definitions['response'] ?? [];
+
+        $properties = [];
+
+        // ✨ Inherit ALL request parameters for detail view (NO duplication!)
+        foreach ($requestParams as $field => $definition) {
+            // Skip query parameters (limit, offset, search, order, orderWay)
+            if (in_array($field, ['limit', 'offset', 'search', 'order', 'orderWay'])) {
+                continue;
+            }
+
+            // Skip writeOnly fields if any exist
+            if (isset($definition['writeOnly']) && $definition['writeOnly']) {
+                continue;
+            }
+
+            $properties[$field] = $definition;
+            // Transform description key: rest_param_* → rest_schema_*
+            $properties[$field]['description'] = str_replace('rest_param_', 'rest_schema_', $properties[$field]['description']);
+        }
+
+        // ✨ Inherit response-only fields for detail (NO duplication!)
+        $detailResponseFields = ['id'];
+        foreach ($detailResponseFields as $field) {
+            if (isset($responseFields[$field])) {
+                $properties[$field] = $responseFields[$field];
+            }
+        }
+
         return [
             'type' => 'object',
             'required' => ['number', 'type'],
-            'properties' => [
+            'properties' => $properties
+        ];
+    }
+
+    /**
+     * Get parameter definitions (Single Source of Truth)
+     *
+     * WHY: Centralizes all extension parameter definitions in one place.
+     * Includes both CRUD fields and query filtering parameters.
+     *
+     * @return array<string, array<string, mixed>> Parameter definitions
+     */
+    public static function getParameterDefinitions(): array
+    {
+        return [
+            'request' => [
+                'number' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_ext_number',
+                    'pattern' => '^[0-9]{2,8}$',
+                    'minLength' => 2,
+                    'maxLength' => 8,
+                    'sanitize' => 'string',
+                    'required' => true,
+                    'example' => '201'
+                ],
+                'type' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_ext_type',
+                    'enum' => ['SIP', 'IAX', 'QUEUE', 'IVR', 'CONFERENCE', 'EXTERNAL'],
+                    'default' => 'SIP',
+                    'sanitize' => 'string',
+                    'required' => true,
+                    'example' => 'SIP'
+                ],
+                'callerid' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_ext_callerid',
+                    'maxLength' => 100,
+                    'sanitize' => 'string',
+                    'example' => 'John Doe'
+                ],
+                'userid' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_ext_userid',
+                    'pattern' => '^[0-9]*$',
+                    'sanitize' => 'string',
+                    'example' => '12'
+                ],
+                'show_in_phonebook' => [
+                    'type' => 'boolean',
+                    'description' => 'rest_param_ext_show_in_phonebook',
+                    'default' => true,
+                    'sanitize' => 'bool',
+                    'example' => true
+                ],
+                'public_access' => [
+                    'type' => 'boolean',
+                    'description' => 'rest_param_ext_public_access',
+                    'default' => false,
+                    'sanitize' => 'bool',
+                    'example' => false
+                ],
+                'is_general_user_number' => [
+                    'type' => 'boolean',
+                    'description' => 'rest_param_ext_is_general_user_number',
+                    'default' => true,
+                    'sanitize' => 'bool',
+                    'example' => true
+                ],
+                // Query parameters for getList
+                'limit' => [
+                    'type' => 'integer',
+                    'description' => 'rest_param_limit',
+                    'minimum' => 1,
+                    'maximum' => 100,
+                    'default' => 20,
+                    'sanitize' => 'int',
+                    'example' => 20
+                ],
+                'offset' => [
+                    'type' => 'integer',
+                    'description' => 'rest_param_offset',
+                    'minimum' => 0,
+                    'default' => 0,
+                    'sanitize' => 'int',
+                    'example' => 0
+                ],
+                'search' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_search',
+                    'maxLength' => 255,
+                    'sanitize' => 'string',
+                    'example' => '200'
+                ],
+                'order' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_order',
+                    'enum' => ['number', 'type', 'callerid'],
+                    'default' => 'number',
+                    'sanitize' => 'string',
+                    'example' => 'number'
+                ],
+                'orderWay' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_orderWay',
+                    'enum' => ['ASC', 'DESC'],
+                    'default' => 'ASC',
+                    'sanitize' => 'string',
+                    'example' => 'ASC'
+                ]
+            ],
+            'response' => [
+                // Computed identifier (alias for number)
                 'id' => [
                     'type' => 'string',
                     'description' => 'rest_schema_ext_id',
                     'pattern' => '^[0-9]{2,8}$',
                     'example' => '201'
-                ],
-                'number' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ext_number',
-                    'pattern' => '^[0-9]{2,8}$',
-                    'example' => '201'
-                ],
-                'type' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ext_type',
-                    'enum' => ['SIP', 'IAX', 'QUEUE', 'IVR', 'CONFERENCE', 'EXTERNAL'],
-                    'default' => 'SIP',
-                    'example' => 'SIP'
-                ],
-                'callerid' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ext_callerid',
-                    'maxLength' => 100,
-                    'example' => 'John Doe'
-                ],
-                'userid' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ext_userid',
-                    'pattern' => '^[0-9]*$',
-                    'example' => '12'
-                ],
-                'show_in_phonebook' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_schema_ext_show_in_phonebook',
-                    'default' => true,
-                    'example' => true
-                ],
-                'public_access' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_schema_ext_public_access',
-                    'default' => false,
-                    'example' => false
-                ],
-                'is_general_user_number' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_schema_ext_is_general_user_number',
-                    'default' => true,
-                    'example' => true
                 ]
             ]
         ];
     }
 
-    /**
-     * Get related schemas for OpenAPI components
-     *
-     * @return array<string, array<string, mixed>> Related schemas
-     */
-    public static function getRelatedSchemas(): array
-    {
-        return [];
-    }
-
-    /**
-     * Generate sanitization rules automatically from controller attributes
-     *
-     * Uses ParameterSanitizationExtractor to extract rules from #[ApiParameter] attributes.
-     * This ensures Single Source of Truth - rules defined only in controller attributes.
-     *
-     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
-     */
-    public static function getSanitizationRules(): array
-    {
-        return \MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor::extractFromController(
-            \MikoPBX\PBXCoreREST\Controllers\Extensions\RestController::class,
-            'create'
-        );
-    }
+    // getSanitizationRules() inherited from AbstractDataStructure
+    // Auto-generated from getParameterDefinitions() - Single Source of Truth
 }

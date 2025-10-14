@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Lib\UserPageTracker;
 
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
 use MikoPBX\PBXCoreREST\Lib\Common\OpenApiSchemaProvider;
 
 /**
@@ -31,7 +32,7 @@ use MikoPBX\PBXCoreREST\Lib\Common\OpenApiSchemaProvider;
  *
  * @package MikoPBX\PBXCoreREST\Lib\UserPageTracker
  */
-class DataStructure implements OpenApiSchemaProvider
+class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvider
 {
     /**
      * Format page view response data
@@ -71,49 +72,100 @@ class DataStructure implements OpenApiSchemaProvider
     /**
      * Get OpenAPI schema for page tracking response (list view)
      *
+     * ✨ Inherits field definitions from getParameterDefinitions() - Single Source of Truth.
      * This schema is used for pageLeave responses.
      *
      * @return array<string, mixed> OpenAPI schema definition
      */
     public static function getListItemSchema(): array
     {
+        $definitions = self::getParameterDefinitions();
+        $responseFields = $definitions['response'];
+
+        $properties = [];
+
+        // ✨ Inherit specific fields for list view (NO duplication!)
+        $listFields = ['sessionId', 'pageName', 'timestamp'];
+        foreach ($listFields as $field) {
+            if (isset($responseFields[$field])) {
+                $properties[$field] = $responseFields[$field];
+            }
+        }
+
         return [
             'type' => 'object',
             'required' => ['sessionId', 'pageName', 'timestamp'],
-            'properties' => [
-                'sessionId' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_upt_session_id',
-                    'example' => 'sess_abc123def456'
-                ],
-                'pageName' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_upt_page_name',
-                    'maxLength' => 255,
-                    'example' => 'extensions-index'
-                ],
-                'timestamp' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_upt_timestamp',
-                    'example' => 1704984123
-                ]
-            ]
+            'properties' => $properties
         ];
     }
 
     /**
      * Get OpenAPI schema for detailed page tracking response
      *
+     * ✨ Inherits field definitions from getParameterDefinitions() - Single Source of Truth.
      * This schema is used for pageView responses.
      *
      * @return array<string, mixed> OpenAPI schema definition
      */
     public static function getDetailSchema(): array
     {
+        $definitions = self::getParameterDefinitions();
+        $responseFields = $definitions['response'];
+
+        $properties = [];
+
+        // ✨ Inherit ALL response fields for detail view (NO duplication!)
+        foreach ($responseFields as $field => $definition) {
+            $properties[$field] = $definition;
+        }
+
         return [
             'type' => 'object',
             'required' => ['sessionId', 'pageName', 'expire', 'timestamp'],
-            'properties' => [
+            'properties' => $properties
+        ];
+    }
+
+    /**
+     * Get parameter definitions (Single Source of Truth)
+     *
+     * WHY: Centralizes user page tracking parameter definitions.
+     * UserPageTracker is a tracking-only resource without database models.
+     *
+     * @return array<string, array<string, mixed>> Parameter definitions
+     */
+    public static function getParameterDefinitions(): array
+    {
+        return [
+            'request' => [
+                // Page tracking parameters
+                'sessionId' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_upt_session_id',
+                    'maxLength' => 100,
+                    'sanitize' => 'string',
+                    'required' => true,
+                    'example' => 'sess_abc123def456'
+                ],
+                'pageName' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_upt_page_name',
+                    'maxLength' => 255,
+                    'sanitize' => 'string',
+                    'required' => true,
+                    'example' => 'extensions-index'
+                ],
+                'expire' => [
+                    'type' => 'integer',
+                    'description' => 'rest_param_upt_expire',
+                    'minimum' => 60,
+                    'maximum' => 86400,
+                    'default' => 300,
+                    'sanitize' => 'int',
+                    'example' => 300
+                ]
+            ],
+            'response' => [
                 'sessionId' => [
                     'type' => 'string',
                     'description' => 'rest_schema_upt_session_id',
@@ -142,33 +194,8 @@ class DataStructure implements OpenApiSchemaProvider
         ];
     }
 
-    /**
-     * Get related schemas for OpenAPI components
-     *
-     * @return array<string, array<string, mixed>> Related schemas
-     */
-    public static function getRelatedSchemas(): array
-    {
-        return [];
-    }
-
-    /**
-     * Generate sanitization rules automatically from controller attributes
-     *
-     * Uses ParameterSanitizationExtractor to extract rules from #[ApiParameter] attributes.
-     * This ensures Single Source of Truth - rules defined only in controller attributes.
-     *
-     * For UserPageTracker resource, we extract from the 'pageView' method.
-     *
-     * @return array<string, string> Sanitization rules in format 'field' => 'type|constraint:value'
-     */
-    public static function getSanitizationRules(): array
-    {
-        return \MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor::extractFromController(
-            \MikoPBX\PBXCoreREST\Controllers\UserPageTracker\RestController::class,
-            'pageView'
-        );
-    }
+    // getSanitizationRules() inherited from AbstractDataStructure
+    // Auto-generated from getParameterDefinitions() - Single Source of Truth
 
     /**
      * Format data by OpenAPI schema
@@ -179,7 +206,7 @@ class DataStructure implements OpenApiSchemaProvider
      * @param string $schemaType Schema type ('list' or 'detail')
      * @return array<string, mixed> Formatted data
      */
-    protected static function formatBySchema(array $data, string $schemaType): array
+    protected static function formatBySchema(array $data, string $schemaType = 'detail'): array
     {
         // Get the appropriate schema
         $schema = $schemaType === 'list'
