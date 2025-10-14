@@ -603,18 +603,23 @@ const extension = {
      */
     loadExtensionData() {
         const recordId = extension.getRecordId();
-        
+
         // Use 'new' as ID for new records to get default values from server
         const apiId = recordId === '' ? 'new' : recordId;
-        
+
         // Hide monitoring elements for new employees
         if (apiId === 'new') {
             $('#status').hide(); // Hide status label
             $('a[data-tab="status"]').hide(); // Hide monitoring tab
         }
-        
+
         EmployeesAPI.getRecord(apiId, (response) => {
             if (response.result) {
+                // Mark as new record if we don't have an ID (following CallQueues pattern)
+                if (!recordId || recordId === '') {
+                    response.data._isNew = true;
+                }
+
                 extension.populateFormWithData(response.data);
                 // Store default values after data load
                 extension.defaultNumber = response.data.number || '';
@@ -666,7 +671,7 @@ const extension = {
                 
                 // Set avatar URL dynamically from API data
                 avatar.setAvatarUrl(formData.user_avatar);
-                
+
                 // Initialize extension modify status monitor after form is populated
                 if (typeof ExtensionModifyStatusMonitor !== 'undefined') {
                     ExtensionModifyStatusMonitor.initialize();

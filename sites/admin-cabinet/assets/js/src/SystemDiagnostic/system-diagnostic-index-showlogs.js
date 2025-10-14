@@ -836,16 +836,28 @@ const systemDiagnosticLogs = {
                     if (response.data.actual_range) {
                         const actual = response.data.actual_range;
 
-                        // Update SVGTimeline selected range to match actual loaded data
-                        // This updates the slider to show the real time range that was loaded
-                        SVGTimeline.updateSelectedRange(actual.start, actual.end);
+                        // Only sync selectedRange if backend returned meaningful data
+                        // Don't sync if backend returned very short range (< 10% of requested)
+                        // because it means there's just little data in the log, not a 5000-line truncation
+                        const requestedDuration = endTimestamp - startTimestamp;
+                        const actualDuration = actual.end - actual.start;
+                        const durationRatio = actualDuration / requestedDuration;
 
-                        // Log for debugging only
-                        if (actual.truncated) {
-                            console.log(
-                                `Log data limited to ${actual.lines_count} lines. ` +
-                                `Showing time range: [${actual.start} - ${actual.end}]`
-                            );
+                        if (durationRatio >= 0.1 || actual.truncated) {
+                            // Backend returned substantial data OR explicitly truncated
+                            // Update SVGTimeline selected range to match actual loaded data
+                            SVGTimeline.updateSelectedRange(actual.start, actual.end);
+
+                            // Log for debugging only
+                            if (actual.truncated) {
+                                console.log(
+                                    `Log data limited to ${actual.lines_count} lines. ` +
+                                    `Showing time range: [${actual.start} - ${actual.end}]`
+                                );
+                            }
+                        } else {
+                            // Backend returned very short range - keep user's selection
+                            console.debug('⚠️ Backend returned short range (' + actualDuration + 's / ' + requestedDuration + 's = ' + (durationRatio * 100).toFixed(1) + '%), keeping user selection');
                         }
                     }
                 }

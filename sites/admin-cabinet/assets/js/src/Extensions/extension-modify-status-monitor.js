@@ -59,6 +59,17 @@ const ExtensionModifyStatusMonitor = {
             return;
         }
 
+        // Check if this is a new extension (not yet saved in database)
+        // Check hidden field directly instead of using Semantic UI form API
+        const $isNewField = $('#extensions-form input[name="_isNew"]');
+        const isNew = $isNewField.length > 0 && $isNewField.val() === 'true';
+
+        // Skip status monitoring for new extensions
+        if (isNew) {
+            this.isInitialized = true;
+            return;
+        }
+
         // Get extension number from form
         this.currentExtensionId = this.extractExtensionId();
         if (!this.currentExtensionId) {

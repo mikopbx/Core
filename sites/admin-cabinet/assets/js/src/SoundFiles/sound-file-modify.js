@@ -245,22 +245,8 @@ const soundFileModifyRest = {
      * @param {object} data - Sound file data from API
      */
     populateForm(data) {
-        // Save the _isNew flag in a hidden field if present
-        if (data._isNew !== undefined) {
-            if ($('#_isNew').length === 0) {
-                // Create hidden field if it doesn't exist
-                $('<input>').attr({
-                    type: 'hidden',
-                    id: '_isNew',
-                    name: '_isNew',
-                    value: data._isNew ? 'true' : 'false'
-                }).appendTo(soundFileModifyRest.$formObj);
-            } else {
-                $('#_isNew').val(data._isNew ? 'true' : 'false');
-            }
-        }
-
         // Use unified silent population approach
+        // Form.populateFormSilently will handle _isNew flag automatically (lines 766-779 in form.js)
         Form.populateFormSilently(data, {
             afterPopulate: (formData) => {
                 // Update audio player if path exists

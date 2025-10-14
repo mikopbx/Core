@@ -80,7 +80,7 @@ Object.assign(PasswordsAPI, {
                     callback(false);
                 }
             }
-        }, 'POST');
+        }, 'GET');
     },
 
     /**

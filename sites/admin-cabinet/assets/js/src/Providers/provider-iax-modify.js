@@ -29,26 +29,50 @@ class ProviderIAX extends ProviderBase {
     
     /**
      * Initialize the provider form
+     * Override to add IAX-specific initialization
      */
     initialize() {
+        // Call parent initialize - this handles the full flow:
+        // 1. initializeUIComponents()
+        // 2. initializeEventHandlers()
+        // 3. initializeForm()
+        // 4. loadFormData()
         super.initialize();
-        
-        // IAX-specific initialization
+    }
+
+    /**
+     * Override initializeUIComponents to add IAX-specific UI initialization
+     */
+    initializeUIComponents() {
+        // Call parent first
+        super.initializeUIComponents();
+
+        // IAX-specific UI components
         this.initializeIaxWarningMessage();
-        this.initializeRealtimeValidation();
-        this.initializeRegistrationTypeHandlers();
-        
+
         // Initialize tabs
         this.initializeTabs();
-        
+    }
+
+    /**
+     * Override initializeEventHandlers to add IAX-specific handlers
+     */
+    initializeEventHandlers() {
+        // Call parent first
+        super.initializeEventHandlers();
+
+        // IAX-specific event handlers
+        this.initializeRealtimeValidation();
+        this.initializeRegistrationTypeHandlers();
+
         // Re-validate form when receive_calls_without_auth changes
         $('#receive_calls_without_auth.checkbox').checkbox('setting', 'onChange', () => {
             const regType = $('#registration_type').val();
-            
+
             // Clear any existing error on secret field
             this.$formObj.form('remove prompt', 'secret');
             this.$secret.closest('.field').removeClass('error');
-            
+
             // For inbound registration, validate based on checkbox state
             if (regType === 'inbound') {
                 const isChecked = $('#receive_calls_without_auth').checkbox('is checked');
@@ -59,11 +83,11 @@ class ProviderIAX extends ProviderBase {
                     }, 100);
                 }
             }
-            
+
             // Mark form as changed
             Form.dataChanged();
         });
-        
+
         // Initialize field help tooltips
         this.initializeFieldTooltips();
     }

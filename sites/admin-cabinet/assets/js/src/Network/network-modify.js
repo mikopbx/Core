@@ -49,33 +49,6 @@ const networks = {
      * @type {object}
      */
     validateRules: {
-        gateway: {
-            optional: true,
-            rules: [
-                {
-                    type: 'ipaddr',
-                    prompt: globalTranslate.nw_ValidateIppaddrNotRight,
-                },
-            ],
-        },
-        primarydns: {
-            optional: true,
-            rules: [
-                {
-                    type: 'ipaddr',
-                    prompt: globalTranslate.nw_ValidateIppaddrNotRight,
-                },
-            ],
-        },
-        secondarydns: {
-            optional: true,
-            rules: [
-                {
-                    type: 'ipaddr',
-                    prompt: globalTranslate.nw_ValidateIppaddrNotRight,
-                },
-            ],
-        },
         extipaddr: {
             optional: true,
             rules: [
@@ -132,10 +105,14 @@ const networks = {
 
         networks.initializeForm();
 
+        // Initialize static routes manager
+        StaticRoutesManager.initialize();
+
         // Hide form elements connected with non docker installations
-        if (networks.$formObj.form('get value','is-docker')==="1") {
-            networks.$notShowOnDockerDivs.hide();
-        }
+        // TEMPORARY: Commented out for local Docker testing
+        // if (networks.$formObj.form('get value','is-docker')==="1") {
+        //     networks.$notShowOnDockerDivs.hide();
+        // }
     },
 
     /**
@@ -224,13 +201,28 @@ const networks = {
     toggleDisabledFieldClass() {
         $('#eth-interfaces-menu a').each((index, obj) => {
             const eth = $(obj).attr('data-tab');
-            if ($(`#dhcp-${eth}-checkbox`).checkbox('is unchecked')) {
-                $(`#ip-address-group-${eth}`).removeClass('disabled');
-                $(`#not-dhcp-${eth}`).val('1');
-            } else {
-                $(`#ip-address-group-${eth}`).addClass('disabled');
+            const $dhcpCheckbox = $(`#dhcp-${eth}-checkbox`);
+            const isDhcpEnabled = $dhcpCheckbox.checkbox('is checked');
+
+            // Find IP address and subnet fields
+            const $ipField = $(`input[name="ipaddr_${eth}"]`);
+            // DynamicDropdownBuilder creates dropdown with id pattern: fieldName-dropdown
+            const $subnetDropdown = $(`#subnet_${eth}-dropdown`);
+
+            if (isDhcpEnabled) {
+                // DHCP enabled -> make IP/subnet read-only and add disabled class
+                $ipField.prop('readonly', true);
+                $ipField.closest('.field').addClass('disabled');
+                $subnetDropdown.addClass('disabled');
                 $(`#not-dhcp-${eth}`).val('');
+            } else {
+                // DHCP disabled -> make IP/subnet editable
+                $ipField.prop('readonly', false);
+                $ipField.closest('.field').removeClass('disabled');
+                $subnetDropdown.removeClass('disabled');
+                $(`#not-dhcp-${eth}`).val('1');
             }
+
             networks.addNewFormRules(eth);
         });
 
@@ -288,35 +280,40 @@ const networks = {
         const ipaddrClass = `ipaddr_${newRowId}`;
 
         // Define the form validation rules for the 'ipaddr' field
-        networks.validateRules[ipaddrClass] = {
-            identifier: ipaddrClass,
-            depends: `not-dhcp-${newRowId}`,
-            rules: [
-                {
-                    type: 'empty',
-                    prompt: globalTranslate.nw_ValidateIppaddrIsEmpty,
-                },
-                {
-                    type: 'ipaddr',
-                    prompt: globalTranslate.nw_ValidateIppaddrNotRight,
-                },
-            ],
-        };
+        // For template interface (id=0), add dependency on interface selection
+        if (newRowId === 0 || newRowId === '0') {
+            networks.validateRules[ipaddrClass] = {
+                identifier: ipaddrClass,
+                depends: `interface_${newRowId}`,  // Template: validate only if interface is selected
+                rules: [
+                    {
+                        type: 'empty',
+                        prompt: globalTranslate.nw_ValidateIppaddrIsEmpty,
+                    },
+                    {
+                        type: 'ipaddr',
+                        prompt: globalTranslate.nw_ValidateIppaddrNotRight,
+                    },
+                ],
+            };
+        } else {
+            networks.validateRules[ipaddrClass] = {
+                identifier: ipaddrClass,
+                depends: `notdhcp_${newRowId}`,  // Real interface: validate only if DHCP is OFF
+                rules: [
+                    {
+                        type: 'empty',
+                        prompt: globalTranslate.nw_ValidateIppaddrIsEmpty,
+                    },
+                    {
+                        type: 'ipaddr',
+                        prompt: globalTranslate.nw_ValidateIppaddrNotRight,
+                    },
+                ],
+            };
+        }
 
-        // Define the class for the 'dhcp' field in the new row
-        const dhcpClass = `dhcp_${newRowId}`;
-
-        // Define the form validation rules for the 'dhcp' field
-        networks.validateRules[dhcpClass] = {
-            identifier: dhcpClass,
-            depends: `interface_${newRowId}`,
-            rules: [
-                {
-                    type: `dhcpOnVlanNetworks[${newRowId}]`,
-                    prompt: globalTranslate.nw_ValidateDHCPOnVlansDontSupport,
-                },
-            ],
-        };
+        // DHCP validation removed - DHCP checkbox is disabled for VLAN interfaces
 
     },
 
@@ -326,11 +323,12 @@ const networks = {
      * @returns {Object} - The updated settings of the form
      */
     cbBeforeSendForm(settings) {
-        console.log('cbBeforeSendForm called with settings:', settings);
-
         // Create a new object with all settings properties
         const result = Object.assign({}, settings);
         result.data = {};
+
+        // Collect static routes
+        result.data.staticRoutes = StaticRoutesManager.collectRoutes();
 
         // Manually collect form values to avoid any DOM-related issues
         // Collect all regular input fields
@@ -371,13 +369,25 @@ const networks = {
         networks.$formObj.find('.dhcp-checkbox').each((index, obj) => {
             const inputId = $(obj).attr('id');
             const rowId = inputId.replace('dhcp-', '').replace('-checkbox', '');
-            result.data[`dhcp_${rowId}`] = $(obj).checkbox('is checked');
+
+            // For disabled checkboxes, read actual input state instead of Fomantic UI API
+            const $checkbox = $(obj);
+            const $input = $checkbox.find('input[type="checkbox"]');
+            const isDisabled = $checkbox.hasClass('disabled') || $input.prop('disabled');
+
+            if (isDisabled) {
+                // For disabled checkboxes, read the actual input checked state
+                result.data[`dhcp_${rowId}`] = $input.prop('checked') === true;
+            } else {
+                // For enabled checkboxes, use Fomantic UI API
+                result.data[`dhcp_${rowId}`] = $checkbox.checkbox('is checked');
+            }
         });
 
-        // Ensure internet_interface is included (from dynamic dropdown)
-        const internetInterfaceValue = $('#internet_interface').val();
-        if (internetInterfaceValue) {
-            result.data.internet_interface = String(internetInterfaceValue);
+        // Collect internet radio button
+        const $checkedRadio = $('input[name="internet_interface"]:checked');
+        if ($checkedRadio.length > 0) {
+            result.data.internet_interface = String($checkedRadio.val());
         }
 
         // Map form field names to API field names for ports
@@ -395,9 +405,6 @@ const networks = {
             }
         });
 
-        console.log('cbBeforeSendForm returning result:', result);
-        console.log('cbBeforeSendForm result.data:', result.data);
-
         return result;
     },
 
@@ -406,7 +413,7 @@ const networks = {
      * @param {Object} response - The response from the server after the form is sent
      */
     cbAfterSendForm(response) {
-        console.log('cbAfterSendForm called with response:', response);
+        // Response handled by Form
     },
 
     /**
@@ -418,6 +425,7 @@ const networks = {
         Form.validateRules = networks.validateRules; // Form validation rules
         Form.cbBeforeSendForm = networks.cbBeforeSendForm; // Callback before form is sent
         Form.cbAfterSendForm = networks.cbAfterSendForm; // Callback after form is sent
+        Form.inline = true; // Show inline errors next to fields
 
         // Configure REST API
         Form.apiSettings.enabled = true;
@@ -435,23 +443,20 @@ const networks = {
      * Load network configuration via REST API
      */
     loadConfiguration() {
-        console.log('Loading configuration from REST API...');
         NetworkAPI.getConfig((response) => {
-            console.log('NetworkAPI.getConfig response:', response);
             if (response.result && response.data) {
-                console.log('Configuration data received:', response.data);
                 networks.populateForm(response.data);
 
                 // Initialize UI after loading data
                 networks.toggleDisabledFieldClass();
 
                 // Hide form elements connected with non docker installations
-                if (response.data.isDocker) {
-                    networks.$formObj.form('set value', 'is-docker', '1');
-                    networks.$notShowOnDockerDivs.hide();
-                }
+                // TEMPORARY: Commented out for local Docker testing
+                // if (response.data.isDocker) {
+                //     networks.$formObj.form('set value', 'is-docker', '1');
+                //     networks.$notShowOnDockerDivs.hide();
+                // }
             } else {
-                console.error('Failed to load configuration:', response.messages);
                 UserMessage.showMultiString(response.messages);
             }
         });
@@ -468,18 +473,6 @@ const networks = {
         $menu.empty();
         $content.empty();
 
-        // Find interfaces that can be deleted (have multiple VLANs)
-        const deletableInterfaces = [];
-        const interfaceCount = {};
-        data.interfaces.forEach(iface => {
-            interfaceCount[iface.interface] = (interfaceCount[iface.interface] || 0) + 1;
-        });
-        Object.keys(interfaceCount).forEach(ifaceName => {
-            if (interfaceCount[ifaceName] > 1) {
-                deletableInterfaces.push(ifaceName);
-            }
-        });
-
         // Create tabs for existing interfaces
         data.interfaces.forEach((iface, index) => {
             const tabId = iface.id;
@@ -494,7 +487,8 @@ const networks = {
             `);
 
             // Create tab content
-            const canDelete = deletableInterfaces.includes(iface.interface);
+            // Only VLAN interfaces can be deleted (vlanid > 0)
+            const canDelete = parseInt(iface.vlanid, 10) > 0;
             const deleteButton = canDelete ? `
                 <a class="ui icon left labeled button delete-interface" data-value="${tabId}">
                     <i class="icon trash"></i>${globalTranslate.nw_DeleteCurrentInterface}
@@ -544,7 +538,8 @@ const networks = {
         data.interfaces.forEach((iface) => {
             const fieldName = `subnet_${iface.id}`;
             const formData = {};
-            formData[fieldName] = iface.subnet || '24';
+            // Convert subnet to string for dropdown matching
+            formData[fieldName] = String(iface.subnet || '24');
 
             DynamicDropdownBuilder.buildDropdown(fieldName, formData, {
                 staticOptions: networks.getSubnetOptionsArray(),
@@ -568,23 +563,37 @@ const networks = {
         $('#eth-interfaces-menu .item').tab();
         $('#eth-interfaces-menu .item').first().trigger('click');
 
+        // Update static routes section visibility
+        StaticRoutesManager.updateVisibility();
+
         // Re-bind delete button handlers
+        // Delete button removes TAB from form and marks interface as disabled
+        // Actual deletion happens on form submit
         $('.delete-interface').off('click').on('click', function(e) {
             e.preventDefault();
             const $button = $(this);
             const interfaceId = $button.attr('data-value');
 
-            $button.addClass('loading disabled');
+            // Remove the TAB menu item
+            $(`#eth-interfaces-menu a[data-tab="${interfaceId}"]`).remove();
 
-            NetworkAPI.deleteRecord(interfaceId, (response) => {
-                $button.removeClass('loading disabled');
+            // Remove the TAB content
+            const $tabContent = $(`#eth-interfaces-content .tab[data-tab="${interfaceId}"]`);
+            $tabContent.remove();
 
-                if (response.result) {
-                    window.location.reload();
-                } else {
-                    UserMessage.showMultiString(response.messages);
-                }
-            });
+            // Add hidden field to mark this interface as disabled
+            networks.$formObj.append(`<input type="hidden" name="disabled_${interfaceId}" value="1" />`);
+
+            // Switch to first available tab
+            const $firstTab = $('#eth-interfaces-menu a.item').first();
+            if ($firstTab.length > 0) {
+                $firstTab.tab('change tab', $firstTab.attr('data-tab'));
+            }
+
+            // Mark form as changed to enable submit button
+            if (Form.enableDirrity) {
+                Form.checkValues();
+            }
         });
 
         // Re-bind DHCP checkbox handlers
@@ -596,6 +605,171 @@ const networks = {
 
         // Re-bind IP address input masks
         $('.ipaddress').inputmask({alias: 'ip', 'placeholder': '_'});
+
+        // Add VLAN ID change handlers to control DHCP checkbox state
+        $('input[name^="vlanid_"]').off('input change').on('input change', function() {
+            const $vlanInput = $(this);
+            const interfaceId = $vlanInput.attr('name').replace('vlanid_', '');
+            const vlanValue = parseInt($vlanInput.val(), 10) || 0;
+            const $dhcpCheckbox = $(`#dhcp-${interfaceId}-checkbox`);
+
+            if (vlanValue > 0) {
+                // Disable DHCP checkbox for VLAN interfaces
+                $dhcpCheckbox.addClass('disabled');
+                $dhcpCheckbox.checkbox('uncheck');
+                $dhcpCheckbox.checkbox('set disabled');
+                $dhcpCheckbox.find('input').prop('disabled', true);
+            } else {
+                // Enable DHCP checkbox for non-VLAN interfaces
+                $dhcpCheckbox.removeClass('disabled');
+                $dhcpCheckbox.checkbox('set enabled');
+                $dhcpCheckbox.find('input').prop('disabled', false);
+            }
+            // Update disabled field classes
+            networks.toggleDisabledFieldClass();
+        });
+
+        // Trigger the handler for existing VLAN interfaces to apply initial state
+        $('input[name^="vlanid_"]').trigger('change');
+
+        // Initialize internet radio buttons with Fomantic UI
+        $('.internet-radio').checkbox();
+
+        // Add internet radio button change handler
+        $('input[name="internet_interface"]').off('change').on('change', function() {
+            const selectedInterfaceId = $(this).val();
+
+            // Hide all DNS/Gateway groups
+            $('[class^="dns-gateway-group-"]').hide();
+
+            // Show DNS/Gateway group for selected internet interface
+            $(`.dns-gateway-group-${selectedInterfaceId}`).show();
+
+            // Update TAB icons - add globe icon to selected, remove from others
+            $('#eth-interfaces-menu a').each((index, tab) => {
+                const $tab = $(tab);
+                const tabId = $tab.attr('data-tab');
+
+                // Remove existing globe icon
+                $tab.find('.globe.icon').remove();
+
+                // Add globe icon to selected internet interface TAB
+                if (tabId === selectedInterfaceId) {
+                    $tab.prepend('<i class="globe icon"></i>');
+                }
+            });
+
+            // Mark form as changed
+            if (Form.enableDirrity) {
+                Form.checkValues();
+            }
+        });
+
+        // Update DNS/Gateway readonly state when DHCP changes
+        $('.dhcp-checkbox').off('change.dnsgateway').on('change.dnsgateway', function() {
+            const $checkbox = $(this);
+            const interfaceId = $checkbox.attr('id').replace('dhcp-', '').replace('-checkbox', '');
+            const isDhcpEnabled = $checkbox.checkbox('is checked');
+
+            // Find DNS/Gateway fields for this interface
+            const $dnsGatewayGroup = $(`.dns-gateway-group-${interfaceId}`);
+            const $dnsGatewayFields = $dnsGatewayGroup.find('input[name^="gateway_"], input[name^="primarydns_"], input[name^="secondarydns_"]');
+
+            if (isDhcpEnabled) {
+                // DHCP enabled -> make DNS/Gateway read-only
+                $dnsGatewayFields.prop('readonly', true);
+                $dnsGatewayFields.closest('.field').addClass('disabled');
+            } else {
+                // DHCP disabled -> make DNS/Gateway editable
+                $dnsGatewayFields.prop('readonly', false);
+                $dnsGatewayFields.closest('.field').removeClass('disabled');
+            }
+        });
+
+        // Trigger initial TAB icon update for checked radio button
+        const $checkedRadio = $('input[name="internet_interface"]:checked');
+        if ($checkedRadio.length > 0) {
+            $checkedRadio.trigger('change');
+        }
+
+        // Apply initial disabled state for DHCP-enabled interfaces
+        // Call after all dropdowns are created
+        networks.toggleDisabledFieldClass();
+
+        // Re-save initial form values and re-bind event handlers for dynamically created inputs
+        // This is essential for form change detection to work with dynamic tabs
+        if (Form.enableDirrity) {
+            // Override Form methods to manually collect all field values (including from tabs)
+            const originalSaveInitialValues = Form.saveInitialValues;
+            const originalCheckValues = Form.checkValues;
+
+            Form.saveInitialValues = function() {
+                // Get values from Fomantic UI (may miss dynamically created tab fields)
+                const fomanticValues = networks.$formObj.form('get values');
+
+                // Manually collect all field values to catch fields that Fomantic UI misses
+                const manualValues = {};
+                networks.$formObj.find('input, select, textarea').each(function() {
+                    const $field = $(this);
+                    const name = $field.attr('name') || $field.attr('id');
+                    if (name) {
+                        if ($field.attr('type') === 'checkbox') {
+                            manualValues[name] = $field.is(':checked');
+                        } else if ($field.attr('type') === 'radio') {
+                            if ($field.is(':checked')) {
+                                manualValues[name] = $field.val();
+                            }
+                        } else {
+                            manualValues[name] = $field.val();
+                        }
+                    }
+                });
+
+                // Merge both (manual values override Fomantic values for fields that exist in both)
+                Form.oldFormValues = Object.assign({}, fomanticValues, manualValues);
+            };
+
+            Form.checkValues = function() {
+                // Get values from Fomantic UI
+                const fomanticValues = networks.$formObj.form('get values');
+
+                // Manually collect all field values
+                const manualValues = {};
+                networks.$formObj.find('input, select, textarea').each(function() {
+                    const $field = $(this);
+                    const name = $field.attr('name') || $field.attr('id');
+                    if (name) {
+                        if ($field.attr('type') === 'checkbox') {
+                            manualValues[name] = $field.is(':checked');
+                        } else if ($field.attr('type') === 'radio') {
+                            if ($field.is(':checked')) {
+                                manualValues[name] = $field.val();
+                            }
+                        } else {
+                            manualValues[name] = $field.val();
+                        }
+                    }
+                });
+
+                // Merge both
+                const newFormValues = Object.assign({}, fomanticValues, manualValues);
+
+                if (JSON.stringify(Form.oldFormValues) === JSON.stringify(newFormValues)) {
+                    Form.$submitButton.addClass('disabled');
+                    Form.$dropdownSubmit.addClass('disabled');
+                } else {
+                    Form.$submitButton.removeClass('disabled');
+                    Form.$dropdownSubmit.removeClass('disabled');
+                }
+            };
+
+            if (typeof Form.saveInitialValues === 'function') {
+                Form.saveInitialValues();
+            }
+            if (typeof Form.setEvents === 'function') {
+                Form.setEvents();
+            }
+        }
     },
 
     /**
@@ -603,6 +777,12 @@ const networks = {
      */
     createInterfaceForm(iface, isActive, deleteButton) {
         const id = iface.id;
+        const isInternetInterface = iface.internet || false;
+
+        // DNS/Gateway fields visibility and read-only state
+        const dnsGatewayVisible = isInternetInterface ? '' : 'style="display:none;"';
+        const dnsGatewayReadonly = iface.dhcp ? 'readonly' : '';
+        const dnsGatewayDisabledClass = iface.dhcp ? 'disabled' : '';
 
         return `
             <div class="ui bottom attached tab segment ${isActive ? 'active' : ''}" data-tab="${id}">
@@ -617,8 +797,17 @@ const networks = {
 
                 <div class="field">
                     <div class="ui segment">
-                        <div class="ui toggle checkbox dhcp-checkbox" id="dhcp-${id}-checkbox">
-                            <input type="checkbox" name="dhcp_${id}" ${iface.dhcp ? 'checked' : ''} />
+                        <div class="ui toggle checkbox internet-radio" id="internet-${id}-radio">
+                            <input type="radio" name="internet_interface" value="${id}" ${isInternetInterface ? 'checked' : ''} />
+                            <label><i class="globe icon"></i> ${globalTranslate.nw_InternetInterface || 'Internet Interface'}</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="ui segment">
+                        <div class="ui toggle checkbox dhcp-checkbox${iface.vlanid > 0 ? ' disabled' : ''}" id="dhcp-${id}-checkbox">
+                            <input type="checkbox" name="dhcp_${id}" ${iface.vlanid > 0 ? '' : (iface.dhcp ? 'checked' : '')} ${iface.vlanid > 0 ? 'disabled' : ''} />
                             <label>${globalTranslate.nw_UseDHCP}</label>
                         </div>
                     </div>
@@ -636,7 +825,7 @@ const networks = {
                     <div class="field">
                         <label>${globalTranslate.nw_NetworkMask}</label>
                         <div class="field max-width-400">
-                            <input type="hidden" id="subnet_${id}" name="subnet_${id}" value="${iface.subnet || '24'}" />
+                            <input type="hidden" id="subnet_${id}" name="subnet_${id}" value="${iface.subnet || ''}" />
                         </div>
                     </div>
                 </div>
@@ -645,6 +834,31 @@ const networks = {
                     <label>${globalTranslate.nw_VlanID}</label>
                     <div class="field max-width-100">
                         <input type="number" name="vlanid_${id}" value="${iface.vlanid || '0'}" />
+                    </div>
+                </div>
+
+                <div class="dns-gateway-group-${id}" ${dnsGatewayVisible}>
+                    <div class="ui horizontal divider">${globalTranslate.nw_InternetSettings || 'Internet Settings'}</div>
+
+                    <div class="field">
+                        <label>${globalTranslate.nw_Gateway}</label>
+                        <div class="field max-width-400 ${dnsGatewayDisabledClass}">
+                            <input type="text" class="ipaddress" name="gateway_${id}" value="${iface.gateway || ''}" ${dnsGatewayReadonly} />
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label>${globalTranslate.nw_PrimaryDNS}</label>
+                        <div class="field max-width-400 ${dnsGatewayDisabledClass}">
+                            <input type="text" class="ipaddress" name="primarydns_${id}" value="${iface.primarydns || ''}" ${dnsGatewayReadonly} />
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label>${globalTranslate.nw_SecondaryDNS}</label>
+                        <div class="field max-width-400 ${dnsGatewayDisabledClass}">
+                            <input type="text" class="ipaddress" name="secondarydns_${id}" value="${iface.secondarydns || ''}" ${dnsGatewayReadonly} />
+                        </div>
                     </div>
                 </div>
 
@@ -758,36 +972,15 @@ const networks = {
      * Populate form with configuration data
      */
     populateForm(data) {
-        console.log('populateForm called with data:', data);
-
         // Create interface tabs and forms dynamically
         networks.createInterfaceTabs(data);
 
-        // Build internet interface dropdown dynamically
-        const internetInterfaceOptions = data.interfaces.map(iface => ({
-            value: iface.id.toString(),
-            text: iface.name || `${iface.interface}${iface.vlanid !== '0' ? `.${iface.vlanid}` : ''}`,
-            name: iface.name || `${iface.interface}${iface.vlanid !== '0' ? `.${iface.vlanid}` : ''}`
-        }));
-
-        const formData = {
-            internet_interface: data.internetInterfaceId?.toString() || ''
-        };
-
-        DynamicDropdownBuilder.buildDropdown('internet_interface', formData, {
-            staticOptions: internetInterfaceOptions,
-            placeholder: globalTranslate.nw_SelectInternetInterface
-        });
-
         // Set NAT settings
         if (data.nat) {
-            console.log('Setting NAT settings:', data.nat);
             // Boolean values from API
             if (data.nat.usenat) {
-                console.log('Checking usenat checkbox');
                 $('#usenat-checkbox').checkbox('check');
             } else {
-                console.log('Unchecking usenat checkbox');
                 $('#usenat-checkbox').checkbox('uncheck');
             }
             networks.$formObj.form('set value', 'extipaddr', data.nat.extipaddr || '');
@@ -797,10 +990,8 @@ const networks = {
             const $autoUpdateCheckbox = networks.$formObj.find('input[name="autoUpdateExternalIp"]').parent('.checkbox');
             if ($autoUpdateCheckbox.length > 0) {
                 if (data.nat.AUTO_UPDATE_EXTERNAL_IP || data.nat.autoUpdateExternalIp) {
-                    console.log('Checking autoUpdateExternalIp checkbox');
                     $autoUpdateCheckbox.checkbox('check');
                 } else {
-                    console.log('Unchecking autoUpdateExternalIp checkbox');
                     $autoUpdateCheckbox.checkbox('uncheck');
                 }
             }
@@ -808,8 +999,6 @@ const networks = {
 
         // Set port settings
         if (data.ports) {
-            console.log('Setting port values:', data.ports);
-
             // Map API field names to form field names
             const portFieldMapping = {
                 'EXTERNAL_SIP_PORT': 'externalSIPPort',
@@ -823,7 +1012,6 @@ const networks = {
             Object.keys(data.ports).forEach(key => {
                 const formFieldName = portFieldMapping[key] || key;
                 const value = data.ports[key];
-                console.log(`Setting port field ${formFieldName} to value ${value}`);
                 networks.$formObj.form('set value', formFieldName, value);
             });
 
@@ -839,9 +1027,20 @@ const networks = {
             });
         }
 
-        // Save initial values for dirty checking
+        // Load static routes if provided
+        if (data.staticRoutes) {
+            StaticRoutesManager.loadRoutes(data.staticRoutes);
+        }
+
+        // Store available interfaces for static routes
+        if (data.availableInterfaces) {
+            StaticRoutesManager.availableInterfaces = data.availableInterfaces;
+        }
+
+        // Re-initialize dirty checking after population is complete
+        // This ensures the button is disabled and all dynamically created fields are tracked
         if (Form.enableDirrity) {
-            Form.saveInitialValues();
+            Form.initializeDirrity();
         }
     },
 };
@@ -931,21 +1130,7 @@ $.fn.form.settings.rules.checkVlan = (vlanValue, param) => {
     return result;
 };
 
-/**
- * Custom form validation rule for checking if DHCP is enabled on VLAN networks.
- * @param {string} value - The value of the input field.
- * @param {string} param - The parameter for the rule.
- * @returns {boolean} - True if the DHCP is not enabled on the VLAN network, false otherwise.
- */
-$.fn.form.settings.rules.dhcpOnVlanNetworks = (value, param) => {
-    let result = true;
-    const vlanValue = networks.$formObj.form('get value', `vlanid_${param}`);
-    const dhcpValue = networks.$formObj.form('get value', `dhcp_${param}`);
-    if (vlanValue > 0 && dhcpValue === 'on') {
-        result = false;
-    }
-    return result;
-};
+// DHCP validation rule removed - DHCP checkbox is disabled for VLAN interfaces, no validation needed
 
 /**
  * Custom form validation rule for checking the presence of external IP host information.
@@ -981,6 +1166,260 @@ $.fn.form.settings.rules.validHostname = (value) => {
     return hostnameRegex.test(value);
 };
 
+
+/**
+ * Static Routes Manager Module
+ *
+ * Manages static route configuration when multiple network interfaces exist
+ */
+const StaticRoutesManager = {
+    $table: $('#static-routes-table'),
+    $section: $('#static-routes-section'),
+    $addButton: $('#add-new-route'),
+    routes: [],
+    availableInterfaces: [], // Will be populated from REST API
+
+    /**
+     * Initialize static routes management
+     */
+    initialize() {
+        // Hide section if less than 2 interfaces
+        StaticRoutesManager.updateVisibility();
+
+        // Initialize drag-and-drop
+        StaticRoutesManager.initializeDragAndDrop();
+
+        // Add button handler
+        StaticRoutesManager.$addButton.on('click', (e) => {
+            e.preventDefault();
+            StaticRoutesManager.addRoute();
+        });
+
+        // Delete button handler (delegated)
+        StaticRoutesManager.$table.on('click', '.delete-route-button', (e) => {
+            e.preventDefault();
+            $(e.target).closest('tr').remove();
+            StaticRoutesManager.updatePriorities();
+            Form.dataChanged();
+        });
+
+        // Copy button handler (delegated)
+        StaticRoutesManager.$table.on('click', '.copy-route-button', (e) => {
+            e.preventDefault();
+            const $sourceRow = $(e.target).closest('tr');
+            StaticRoutesManager.copyRoute($sourceRow);
+        });
+
+        // Input change handlers
+        StaticRoutesManager.$table.on('input change', '.network-input, .gateway-input', () => {
+            Form.dataChanged();
+        });
+    },
+
+    /**
+     * Initialize or reinitialize drag-and-drop functionality
+     */
+    initializeDragAndDrop() {
+        // Destroy existing tableDnD if it exists
+        if (StaticRoutesManager.$table.data('tableDnD')) {
+            StaticRoutesManager.$table.tableDnDUpdate();
+        }
+
+        // Initialize drag-and-drop
+        StaticRoutesManager.$table.tableDnD({
+            onDrop: () => {
+                StaticRoutesManager.updatePriorities();
+                Form.dataChanged();
+            },
+            dragHandle: '.dragHandle'
+        });
+    },
+
+    /**
+     * Update visibility based on number of interfaces
+     */
+    updateVisibility() {
+        // Show/hide section based on number of interfaces
+        const interfaceCount = $('#eth-interfaces-menu a.item').not('[data-tab="0"]').length;
+        if (interfaceCount > 1) {
+            StaticRoutesManager.$section.show();
+        } else {
+            StaticRoutesManager.$section.hide();
+        }
+    },
+
+    /**
+     * Copy a route row (create duplicate)
+     * @param {jQuery} $sourceRow - Source row to copy
+     */
+    copyRoute($sourceRow) {
+        const routeId = $sourceRow.attr('data-route-id');
+        const subnetDropdownId = `subnet-route-${routeId}`;
+        const interfaceDropdownId = `interface-route-${routeId}`;
+
+        // Collect data from source row
+        const routeData = {
+            network: $sourceRow.find('.network-input').val(),
+            subnet: $(`#${subnetDropdownId}`).val(),
+            gateway: $sourceRow.find('.gateway-input').val(),
+            interface: $(`#${interfaceDropdownId}`).val() || ''
+        };
+
+        // Add new route with copied data
+        StaticRoutesManager.addRoute(routeData);
+
+        // Reinitialize drag-and-drop after adding route
+        StaticRoutesManager.initializeDragAndDrop();
+    },
+
+    /**
+     * Add a new route row
+     * @param {Object} routeData - Route data (optional)
+     */
+    addRoute(routeData = null) {
+        const $template = $('.route-row-template').last();
+        const $newRow = $template.clone(true);
+        const routeId = routeData?.id || `new_${Date.now()}`;
+
+        $newRow
+            .removeClass('route-row-template')
+            .addClass('route-row')
+            .attr('data-route-id', routeId)
+            .show();
+
+        // Set values if provided
+        if (routeData) {
+            $newRow.find('.network-input').val(routeData.network);
+            $newRow.find('.gateway-input').val(routeData.gateway);
+        }
+
+        // Add to table
+        const $existingRows = $('.route-row');
+        if ($existingRows.length === 0) {
+            $template.after($newRow);
+        } else {
+            $existingRows.last().after($newRow);
+        }
+
+        // Initialize subnet dropdown for this row
+        StaticRoutesManager.initializeSubnetDropdown($newRow, routeData?.subnet || '24');
+
+        // Initialize interface dropdown for this row
+        StaticRoutesManager.initializeInterfaceDropdown($newRow, routeData?.interface || '');
+
+        // Initialize input masks
+        $newRow.find('.ipaddress').inputmask({alias: 'ip', placeholder: '_'});
+
+        StaticRoutesManager.updatePriorities();
+        Form.dataChanged();
+    },
+
+    /**
+     * Initialize subnet dropdown for a route row
+     * @param {jQuery} $row - Row element
+     * @param {string} selectedValue - Selected subnet value
+     */
+    initializeSubnetDropdown($row, selectedValue) {
+        const $container = $row.find('.subnet-dropdown-container');
+        const dropdownId = `subnet-route-${$row.attr('data-route-id')}`;
+
+        $container.html(`<input type="hidden" id="${dropdownId}" />`);
+
+        DynamicDropdownBuilder.buildDropdown(dropdownId,
+            { [dropdownId]: selectedValue },
+            {
+                staticOptions: networks.getSubnetOptionsArray(),
+                placeholder: globalTranslate.nw_SelectNetworkMask,
+                allowEmpty: false,
+                additionalClasses: ['search'],
+                onChange: () => Form.dataChanged()
+            }
+        );
+    },
+
+    /**
+     * Initialize interface dropdown for a route row
+     * @param {jQuery} $row - Row element
+     * @param {string} selectedValue - Selected interface value (empty string = auto)
+     */
+    initializeInterfaceDropdown($row, selectedValue) {
+        const $container = $row.find('.interface-dropdown-container');
+        const dropdownId = `interface-route-${$row.attr('data-route-id')}`;
+
+        $container.html(`<input type="hidden" id="${dropdownId}" />`);
+
+        // Build dropdown options: "Auto" + available interfaces
+        const options = [
+            { value: '', text: globalTranslate.nw_Auto || 'Auto' },
+            ...StaticRoutesManager.availableInterfaces.map(iface => ({
+                value: iface.value,
+                text: iface.label
+            }))
+        ];
+
+        DynamicDropdownBuilder.buildDropdown(dropdownId,
+            { [dropdownId]: selectedValue },
+            {
+                staticOptions: options,
+                placeholder: globalTranslate.nw_SelectInterface,
+                allowEmpty: false,
+                onChange: () => Form.dataChanged()
+            }
+        );
+    },
+
+    /**
+     * Update route priorities based on table order
+     */
+    updatePriorities() {
+        $('.route-row').each((index, row) => {
+            $(row).attr('data-priority', index + 1);
+        });
+    },
+
+    /**
+     * Load routes from data
+     * @param {Array} routesData - Array of route objects
+     */
+    loadRoutes(routesData) {
+        // Clear existing routes
+        $('.route-row').remove();
+
+        // Add each route
+        if (routesData && routesData.length > 0) {
+            routesData.forEach(route => {
+                StaticRoutesManager.addRoute(route);
+            });
+        }
+
+        // Reinitialize drag-and-drop after adding routes
+        StaticRoutesManager.initializeDragAndDrop();
+    },
+
+    /**
+     * Collect routes from table
+     * @returns {Array} Array of route objects
+     */
+    collectRoutes() {
+        const routes = [];
+        $('.route-row').each((index, row) => {
+            const $row = $(row);
+            const routeId = $row.attr('data-route-id');
+            const subnetDropdownId = `subnet-route-${routeId}`;
+            const interfaceDropdownId = `interface-route-${routeId}`;
+
+            routes.push({
+                id: routeId.startsWith('new_') ? null : routeId,
+                network: $row.find('.network-input').val(),
+                subnet: $(`#${subnetDropdownId}`).val(),
+                gateway: $row.find('.gateway-input').val(),
+                interface: $(`#${interfaceDropdownId}`).val() || '',
+                priority: index + 1
+            });
+        });
+        return routes;
+    }
+};
 
 /**
  *  Initialize network settings form on document ready

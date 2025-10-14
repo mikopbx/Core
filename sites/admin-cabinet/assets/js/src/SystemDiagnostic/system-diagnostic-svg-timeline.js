@@ -108,10 +108,20 @@ const SVGTimeline = {
         // Store full range (entire log file)
         this.fullRange.start = timeRange.start;
         this.fullRange.end = timeRange.end;
+
+        // Ensure minimum duration to prevent division by zero
+        const MIN_DURATION = 60; // 1 minute minimum
+        if (this.fullRange.end - this.fullRange.start < MIN_DURATION) {
+            // Expand range symmetrically around the single timestamp
+            const center = this.fullRange.start;
+            this.fullRange.start = center - (MIN_DURATION / 2);
+            this.fullRange.end = center + (MIN_DURATION / 2);
+        }
+
         this.dimensions.width = this.container.offsetWidth;
 
-        // Determine initial visible range based on total duration
-        const totalDuration = timeRange.end - timeRange.start;
+        // Determine initial visible range based on total duration (use adjusted fullRange)
+        const totalDuration = this.fullRange.end - this.fullRange.start;
         let initialVisibleDuration;
 
         if (totalDuration > 86400 * 7) {
@@ -128,9 +138,9 @@ const SVGTimeline = {
             initialVisibleDuration = totalDuration;
         }
 
-        // Set visible range (what user sees on timeline)
-        this.visibleRange.end = timeRange.end;
-        this.visibleRange.start = Math.max(timeRange.end - initialVisibleDuration, timeRange.start);
+        // Set visible range (what user sees on timeline) - use adjusted fullRange
+        this.visibleRange.end = this.fullRange.end;
+        this.visibleRange.start = Math.max(this.fullRange.end - initialVisibleDuration, this.fullRange.start);
 
         // Calculate selected range as 1/4 of visible range, centered
         this.calculateCenteredSelection();
@@ -282,8 +292,12 @@ const SVGTimeline = {
         // Draw "Now" line (middle layer)
         this.drawNowLine();
 
-        // Draw selection range last (foreground layer)
+        // Draw selection range (foreground layer)
         this.drawSelection();
+
+        // Draw data boundaries last (top layer) - red lines marking actual log data
+        // Must be drawn AFTER selection to avoid being covered by blue rect
+        this.drawDataBoundaries();
     },
 
     /**
@@ -296,6 +310,12 @@ const SVGTimeline = {
 
         // Use visible range for both positioning and step calculation
         const visibleDuration = this.visibleRange.end - this.visibleRange.start;
+
+        // Safety check: prevent division by zero
+        if (visibleDuration <= 0) {
+            console.warn('SVGTimeline: visibleDuration is zero or negative, skipping tick drawing');
+            return;
+        }
 
         // Get adaptive step based on VISIBLE duration and available width
         const step = this.calculateAdaptiveStep(visibleDuration, availableWidth);
@@ -412,6 +432,12 @@ const SVGTimeline = {
         const { width, padding } = this.dimensions;
         const availableWidth = width - (padding * 2);
 
+        // Safety check: prevent division by zero
+        if (visibleDuration <= 0) {
+            console.warn('SVGTimeline: visibleDuration is zero or negative, skipping selection drawing');
+            return;
+        }
+
         // Calculate position relative to VISIBLE range
         const leftPercent = ((this.selectedRange.start - this.visibleRange.start) / visibleDuration) * 100;
         const rightPercent = ((this.selectedRange.end - this.visibleRange.start) / visibleDuration) * 100;
@@ -463,6 +489,13 @@ const SVGTimeline = {
         if (now < this.visibleRange.start || now > this.visibleRange.end) return;
 
         const visibleDuration = this.visibleRange.end - this.visibleRange.start;
+
+        // Safety check: prevent division by zero
+        if (visibleDuration <= 0) {
+            console.warn('SVGTimeline: visibleDuration is zero or negative, skipping now line drawing');
+            return;
+        }
+
         const { width, padding } = this.dimensions;
         const availableWidth = width - (padding * 2);
 
@@ -476,6 +509,74 @@ const SVGTimeline = {
         line.setAttribute('y2', this.dimensions.height);
         line.setAttribute('class', 'timeline-now');
         this.svg.appendChild(line);
+    },
+
+    /**
+     * Draw data boundaries (red lines marking actual log data range)
+     * Shows where actual data starts and ends within the visible range
+     */
+    drawDataBoundaries() {
+        const visibleDuration = this.visibleRange.end - this.visibleRange.start;
+
+        // Safety check: prevent division by zero
+        if (visibleDuration <= 0) {
+            return;
+        }
+
+        const { width, height, padding } = this.dimensions;
+        const availableWidth = width - (padding * 2);
+
+        // Draw start boundary (left red line)
+        // If fullRange.start is before visibleRange.start, draw at left edge
+        // If fullRange.start is within visible range, draw at its position
+        // If fullRange.start is after visibleRange.end, don't draw
+        if (this.fullRange.start <= this.visibleRange.end) {
+            let xStart;
+            if (this.fullRange.start < this.visibleRange.start) {
+                // Data starts before visible range - draw at left edge
+                xStart = padding;
+            } else {
+                // Data starts within visible range - draw at its position
+                xStart = padding + ((this.fullRange.start - this.visibleRange.start) / visibleDuration) * availableWidth;
+            }
+
+            const lineStart = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            lineStart.setAttribute('x1', xStart);
+            lineStart.setAttribute('y1', 0);
+            lineStart.setAttribute('x2', xStart);
+            lineStart.setAttribute('y2', height);
+            lineStart.setAttribute('stroke', '#db2828');
+            lineStart.setAttribute('stroke-width', '3');
+            lineStart.setAttribute('stroke-dasharray', '5,3');
+            lineStart.setAttribute('opacity', '0.8');
+            this.svg.appendChild(lineStart);
+        }
+
+        // Draw end boundary (right red line)
+        // If fullRange.end is after visibleRange.end, draw at right edge
+        // If fullRange.end is within visible range, draw at its position
+        // If fullRange.end is before visibleRange.start, don't draw
+        if (this.fullRange.end >= this.visibleRange.start) {
+            let xEnd;
+            if (this.fullRange.end > this.visibleRange.end) {
+                // Data ends after visible range - draw at right edge
+                xEnd = padding + availableWidth;
+            } else {
+                // Data ends within visible range - draw at its position
+                xEnd = padding + ((this.fullRange.end - this.visibleRange.start) / visibleDuration) * availableWidth;
+            }
+
+            const lineEnd = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            lineEnd.setAttribute('x1', xEnd);
+            lineEnd.setAttribute('y1', 0);
+            lineEnd.setAttribute('x2', xEnd);
+            lineEnd.setAttribute('y2', height);
+            lineEnd.setAttribute('stroke', '#db2828');
+            lineEnd.setAttribute('stroke-width', '3');
+            lineEnd.setAttribute('stroke-dasharray', '5,3');
+            lineEnd.setAttribute('opacity', '0.8');
+            this.svg.appendChild(lineEnd);
+        }
     },
 
     /**
@@ -553,34 +654,33 @@ const SVGTimeline = {
         const availableWidth = this.dragging.containerWidth - (padding * 2);
         const visibleDuration = this.visibleRange.end - this.visibleRange.start;
 
+        // Safety check: prevent division by zero
+        if (visibleDuration <= 0 || availableWidth <= 0) {
+            console.warn('SVGTimeline: Invalid dimensions for mouse move calculation');
+            return;
+        }
+
         // Calculate time delta relative to VISIBLE range
         const deltaTime = (deltaX / availableWidth) * visibleDuration;
 
         if (this.dragging.handle === 'left') {
-            // Resizing from left - adjust visible range accordingly
+            // Resizing from left - allow free movement
             let newStart = this.dragging.startSelectedStart + deltaTime;
-            newStart = Math.max(this.fullRange.start, Math.min(newStart, this.selectedRange.end - 60));
+            // Only enforce minimum width of 60 seconds
+            newStart = Math.min(newStart, this.selectedRange.end - 60);
             this.selectedRange.start = newStart;
         } else if (this.dragging.handle === 'right') {
-            // Resizing from right - adjust visible range accordingly
+            // Resizing from right - allow free movement
             let newEnd = this.dragging.startSelectedEnd + deltaTime;
-            newEnd = Math.min(this.fullRange.end, Math.max(newEnd, this.selectedRange.start + 60));
+            // Only enforce minimum width of 60 seconds
+            newEnd = Math.max(newEnd, this.selectedRange.start + 60);
             this.selectedRange.end = newEnd;
         } else if (this.dragging.handle === 'range') {
-            // Dragging entire range - move it within visible range
-            const rangeWidth = this.selectedRange.end - this.selectedRange.start;
+            // Dragging entire range - allow free movement
             let newStart = this.dragging.startSelectedStart + deltaTime;
             let newEnd = this.dragging.startSelectedEnd + deltaTime;
 
-            // Keep within full range bounds
-            if (newStart < this.fullRange.start) {
-                newStart = this.fullRange.start;
-                newEnd = newStart + rangeWidth;
-            } else if (newEnd > this.fullRange.end) {
-                newEnd = this.fullRange.end;
-                newStart = newEnd - rangeWidth;
-            }
-
+            // No bounds checking - allow dragging anywhere
             this.selectedRange.start = newStart;
             this.selectedRange.end = newEnd;
         }
@@ -590,7 +690,7 @@ const SVGTimeline = {
 
     /**
      * Handle mouse up (Yandex Cloud LogViewer style)
-     * After drag: recenter and adjust visible range
+     * After drag: preserve user's manual selection and adjust visible range
      */
     handleMouseUp() {
         if (this.dragging.active) {
@@ -600,32 +700,41 @@ const SVGTimeline = {
             this.dragging.active = false;
             this.dragging.handle = null;
 
+            const handleType = wasResizing ? (this.dragging.handle === 'left' ? 'left' : 'right') : 'range';
+            console.debug('🖱️ SVGTimeline.handleMouseUp() - ' + (wasResizing ? 'resize' : 'drag') + ' handle: ' + handleType);
+
             if (wasResizing) {
                 // User resized selection → adjust visible range to be 4x selection
-                // and recenter selection within new visible range
+                // PRESERVE user's manual selection (do NOT recalculate it!)
                 const selectedDuration = this.selectedRange.end - this.selectedRange.start;
                 const newVisibleDuration = selectedDuration * 4;
                 const selectedCenter = this.selectedRange.start + (selectedDuration / 2);
 
                 // Calculate new visible range centered on selection
-                let newVisibleStart = selectedCenter - (newVisibleDuration / 2);
-                let newVisibleEnd = selectedCenter + (newVisibleDuration / 2);
-
-                // Keep within full range bounds
-                if (newVisibleStart < this.fullRange.start) {
-                    newVisibleStart = this.fullRange.start;
-                    newVisibleEnd = Math.min(newVisibleStart + newVisibleDuration, this.fullRange.end);
-                }
-                if (newVisibleEnd > this.fullRange.end) {
-                    newVisibleEnd = this.fullRange.end;
-                    newVisibleStart = Math.max(newVisibleEnd - newVisibleDuration, this.fullRange.start);
-                }
+                // NOTE: Allow visibleRange to extend BEYOND fullRange to maintain 1/4 ratio
+                const newVisibleStart = selectedCenter - (newVisibleDuration / 2);
+                const newVisibleEnd = selectedCenter + (newVisibleDuration / 2);
 
                 this.visibleRange.start = newVisibleStart;
                 this.visibleRange.end = newVisibleEnd;
 
-                // Recalculate centered selection (1/4 of new visible range)
-                this.calculateCenteredSelection();
+                console.debug('↔️ User RESIZED selection: ' +
+                    this.formatTime(this.selectedRange.start, 'HH:MM:SS') + ' → ' +
+                    this.formatTime(this.selectedRange.end, 'HH:MM:SS') +
+                    ' (' + Math.round(selectedDuration) + 's)');
+                console.debug('   Calculated visibleRange (4x): ' +
+                    this.formatTime(newVisibleStart, 'HH:MM:SS') + ' → ' +
+                    this.formatTime(newVisibleEnd, 'HH:MM:SS') +
+                    ' (' + Math.round(newVisibleDuration) + 's)');
+                console.debug('   Extends beyond fullRange? before=' +
+                    (newVisibleStart < this.fullRange.start) +
+                    ' after=' + (newVisibleEnd > this.fullRange.end));
+                console.debug('   fullRange bounds: ' +
+                    this.formatTime(this.fullRange.start, 'HH:MM:SS') + ' → ' +
+                    this.formatTime(this.fullRange.end, 'HH:MM:SS'));
+
+                // Do NOT call calculateCenteredSelection() here!
+                // The user's manual selection (e.g., 9:45-9:50) must be preserved
 
                 // Deactivate all period buttons
                 if (typeof $ !== 'undefined') {
@@ -634,34 +743,58 @@ const SVGTimeline = {
 
             } else if (wasDragging) {
                 // User dragged selection → shift visible range to keep selection centered
+                // PRESERVE user's manual selection (do NOT recalculate it!)
                 const selectedCenter = this.selectedRange.start + ((this.selectedRange.end - this.selectedRange.start) / 2);
                 const visibleDuration = this.visibleRange.end - this.visibleRange.start;
 
                 // Calculate new visible range to keep selection at center
-                let newVisibleStart = selectedCenter - (visibleDuration / 2);
-                let newVisibleEnd = selectedCenter + (visibleDuration / 2);
-
-                // Keep within full range bounds
-                if (newVisibleStart < this.fullRange.start) {
-                    newVisibleStart = this.fullRange.start;
-                    newVisibleEnd = newVisibleStart + visibleDuration;
-                }
-                if (newVisibleEnd > this.fullRange.end) {
-                    newVisibleEnd = this.fullRange.end;
-                    newVisibleStart = newVisibleEnd - visibleDuration;
-                }
+                // NOTE: Allow visibleRange to extend BEYOND fullRange
+                const newVisibleStart = selectedCenter - (visibleDuration / 2);
+                const newVisibleEnd = selectedCenter + (visibleDuration / 2);
 
                 this.visibleRange.start = newVisibleStart;
                 this.visibleRange.end = newVisibleEnd;
 
-                // Recalculate centered selection
-                this.calculateCenteredSelection();
+                console.debug('↔️ User DRAGGED selection: ' +
+                    this.formatTime(this.selectedRange.start, 'HH:MM:SS') + ' → ' +
+                    this.formatTime(this.selectedRange.end, 'HH:MM:SS'));
+                console.debug('   Shifted visibleRange: ' +
+                    this.formatTime(newVisibleStart, 'HH:MM:SS') + ' → ' +
+                    this.formatTime(newVisibleEnd, 'HH:MM:SS'));
+
+                // Do NOT call calculateCenteredSelection() here!
+                // The user's manual selection must be preserved
             }
 
             // Render with new ranges
             this.render();
 
-            // Trigger callback to load data
+            // DEBUG: Show final state after render
+            console.debug('📊 FINAL state after mouse interaction:');
+            console.debug('   fullRange: ' +
+                this.formatTime(this.fullRange.start, 'HH:MM:SS') + ' → ' +
+                this.formatTime(this.fullRange.end, 'HH:MM:SS') +
+                ' (' + Math.round(this.fullRange.end - this.fullRange.start) + 's)');
+            console.debug('   visibleRange: ' +
+                this.formatTime(this.visibleRange.start, 'HH:MM:SS') + ' → ' +
+                this.formatTime(this.visibleRange.end, 'HH:MM:SS') +
+                ' (' + Math.round(this.visibleRange.end - this.visibleRange.start) + 's)' +
+                ' extends: before=' + (this.visibleRange.start < this.fullRange.start) +
+                ' after=' + (this.visibleRange.end > this.fullRange.end));
+            console.debug('   selectedRange: ' +
+                this.formatTime(this.selectedRange.start, 'HH:MM:SS') + ' → ' +
+                this.formatTime(this.selectedRange.end, 'HH:MM:SS') +
+                ' (' + Math.round(this.selectedRange.end - this.selectedRange.start) + 's)' +
+                ' ratio=' + ((this.selectedRange.end - this.selectedRange.start) / (this.visibleRange.end - this.visibleRange.start) * 100).toFixed(1) + '%');
+
+            // DEBUG: Show what we're sending to backend
+            console.debug('📤 SENDING to backend: ' +
+                this.formatTime(this.selectedRange.start, 'HH:MM:SS') + ' → ' +
+                this.formatTime(this.selectedRange.end, 'HH:MM:SS') +
+                ' (' + Math.round(this.selectedRange.end - this.selectedRange.start) + 's)' +
+                ' [timestamps: ' + Math.round(this.selectedRange.start) + ' - ' + Math.round(this.selectedRange.end) + ']');
+
+            // Trigger callback to load data with user's ACTUAL selected range
             if (this.onRangeChange) {
                 this.onRangeChange(
                     Math.round(this.selectedRange.start),
@@ -686,6 +819,9 @@ const SVGTimeline = {
     applyPeriod(periodSeconds) {
         const period = parseInt(periodSeconds);
 
+        const periodLabel = period >= 86400 ? (period / 86400) + 'd' : period >= 3600 ? (period / 3600) + 'h' : (period / 60) + 'm';
+        console.debug('⏱️ User clicked period button: ' + periodLabel + ' (' + period + 's)');
+
         // Set visible range to last N seconds
         this.visibleRange.end = this.fullRange.end;
         this.visibleRange.start = Math.max(this.fullRange.end - period, this.fullRange.start);
@@ -693,8 +829,32 @@ const SVGTimeline = {
         // Auto-center selection (1/4 of visible range)
         this.calculateCenteredSelection();
 
+        console.debug('📐 Period applied, visibleRange: ' +
+            this.formatTime(this.visibleRange.start, 'HH:MM:SS') + ' → ' +
+            this.formatTime(this.visibleRange.end, 'HH:MM:SS'));
+        console.debug('   Auto-centered selection (1/4): ' +
+            this.formatTime(this.selectedRange.start, 'HH:MM:SS') + ' → ' +
+            this.formatTime(this.selectedRange.end, 'HH:MM:SS'));
+
         // Render
         this.render();
+
+        console.debug('📊 FINAL state after period button:');
+        console.debug('   fullRange: ' +
+            this.formatTime(this.fullRange.start, 'HH:MM:SS') + ' → ' +
+            this.formatTime(this.fullRange.end, 'HH:MM:SS'));
+        console.debug('   visibleRange: ' +
+            this.formatTime(this.visibleRange.start, 'HH:MM:SS') + ' → ' +
+            this.formatTime(this.visibleRange.end, 'HH:MM:SS'));
+        console.debug('   selectedRange: ' +
+            this.formatTime(this.selectedRange.start, 'HH:MM:SS') + ' → ' +
+            this.formatTime(this.selectedRange.end, 'HH:MM:SS') +
+            ' ratio=' + ((this.selectedRange.end - this.selectedRange.start) / (this.visibleRange.end - this.visibleRange.start) * 100).toFixed(1) + '%');
+
+        console.debug('📤 SENDING to backend (period button): ' +
+            this.formatTime(this.selectedRange.start, 'HH:MM:SS') + ' → ' +
+            this.formatTime(this.selectedRange.end, 'HH:MM:SS') +
+            ' [timestamps: ' + Math.round(this.selectedRange.start) + ' - ' + Math.round(this.selectedRange.end) + ']');
 
         // Trigger callback to load data
         if (this.onRangeChange) {
@@ -724,6 +884,26 @@ const SVGTimeline = {
      * @param {number} end - Actual end timestamp
      */
     updateSelectedRange(start, end) {
+        console.debug('📥 RECEIVED from backend: ' +
+            this.formatTime(start, 'HH:MM:SS') + ' → ' +
+            this.formatTime(end, 'HH:MM:SS') +
+            ' (' + Math.round(end - start) + 's)' +
+            ' [timestamps: ' + start + ' - ' + end + ']');
+
+        // Ensure minimum duration to prevent division by zero
+        const MIN_DURATION = 60; // 1 minute minimum
+        if (end - start < MIN_DURATION) {
+            console.debug('⚠️ Duration too short, expanding to MIN_DURATION', {
+                original: Math.round(end - start) + 's',
+                expanded: MIN_DURATION + 's'
+            });
+
+            // Expand range symmetrically around the single timestamp
+            const center = start;
+            start = center - (MIN_DURATION / 2);
+            end = center + (MIN_DURATION / 2);
+        }
+
         // Set selected range to actual loaded data
         this.selectedRange.start = start;
         this.selectedRange.end = end;
@@ -734,28 +914,47 @@ const SVGTimeline = {
         const selectedCenter = start + (selectedDuration / 2);
 
         // Center visible range around selected range
-        let newVisibleStart = selectedCenter - (newVisibleDuration / 2);
-        let newVisibleEnd = selectedCenter + (newVisibleDuration / 2);
+        // NOTE: visibleRange can extend BEYOND fullRange to maintain 1/4 ratio
+        // This creates empty space around the actual data
+        const newVisibleStart = selectedCenter - (newVisibleDuration / 2);
+        const newVisibleEnd = selectedCenter + (newVisibleDuration / 2);
 
-        // Keep within full range bounds
-        if (newVisibleStart < this.fullRange.start) {
-            newVisibleStart = this.fullRange.start;
-            newVisibleEnd = Math.min(newVisibleStart + newVisibleDuration, this.fullRange.end);
-        }
-        if (newVisibleEnd > this.fullRange.end) {
-            newVisibleEnd = this.fullRange.end;
-            newVisibleStart = Math.max(newVisibleEnd - newVisibleDuration, this.fullRange.start);
-        }
-
-        // Update visible range
+        // Update visible range (no bounds check - allow extending beyond fullRange)
         this.visibleRange.start = newVisibleStart;
         this.visibleRange.end = newVisibleEnd;
 
-        // Recalculate centered selection to ensure 1/4 ratio is maintained
-        this.calculateCenteredSelection();
+        console.debug('🔄 Backend data synced, selectedRange: ' +
+            this.formatTime(this.selectedRange.start, 'HH:MM:SS') + ' → ' +
+            this.formatTime(this.selectedRange.end, 'HH:MM:SS') +
+            ' (' + Math.round(selectedDuration) + 's)');
+        console.debug('   Calculated visibleRange (4x): ' +
+            this.formatTime(newVisibleStart, 'HH:MM:SS') + ' → ' +
+            this.formatTime(newVisibleEnd, 'HH:MM:SS') +
+            ' (' + Math.round(newVisibleDuration) + 's)');
+        console.debug('   Extends beyond fullRange? before=' +
+            (newVisibleStart < this.fullRange.start) +
+            ' after=' + (newVisibleEnd > this.fullRange.end));
+
+        // Note: Do NOT recalculate selectedRange here!
+        // selectedRange is already set from backend's actual data (lines 493-494)
+        // and should remain fixed to match the real loaded data range
 
         // Render with new ranges
         this.render();
+
+        console.debug('📊 FINAL state after backend sync:');
+        console.debug('   fullRange: ' +
+            this.formatTime(this.fullRange.start, 'HH:MM:SS') + ' → ' +
+            this.formatTime(this.fullRange.end, 'HH:MM:SS'));
+        console.debug('   visibleRange: ' +
+            this.formatTime(this.visibleRange.start, 'HH:MM:SS') + ' → ' +
+            this.formatTime(this.visibleRange.end, 'HH:MM:SS') +
+            ' extends: before=' + (this.visibleRange.start < this.fullRange.start) +
+            ' after=' + (this.visibleRange.end > this.fullRange.end));
+        console.debug('   selectedRange: ' +
+            this.formatTime(this.selectedRange.start, 'HH:MM:SS') + ' → ' +
+            this.formatTime(this.selectedRange.end, 'HH:MM:SS') +
+            ' ratio=' + ((this.selectedRange.end - this.selectedRange.start) / (this.visibleRange.end - this.visibleRange.start) * 100).toFixed(1) + '%');
 
         // Note: Does NOT trigger onRangeChange callback
     },

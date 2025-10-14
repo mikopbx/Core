@@ -67,9 +67,32 @@ class ProviderBase {
     }
 
     /**
-     * Initialize the provider form
+     * Initialize the provider form following CallQueues pattern
+     *
+     * Flow:
+     * 1. Initialize UI components first (synchronous)
+     * 2. Initialize form with validation
+     * 3. Load data from API (asynchronous, last)
      */
     initialize() {
+        // 1. Initialize UI components first (synchronous)
+        this.initializeUIComponents();
+
+        // 2. Initialize event handlers
+        this.initializeEventHandlers();
+
+        // 3. Initialize form with REST API settings (before loading data)
+        this.initializeForm();
+
+        // 4. Load form data via REST API (last, after all UI is initialized)
+        this.loadFormData();
+    }
+
+    /**
+     * Load form data via REST API
+     * This is called last, after all UI components are initialized
+     */
+    loadFormData() {
         const providerId = $('#id').val() || '';
         const currentDescription = this.$description.val() || '';
 
@@ -93,99 +116,105 @@ class ProviderBase {
         // Show loading state
         this.showLoadingState();
 
+        // Update header immediately for better UX
+        this.updatePageHeader(currentDescription);
+
         if (copyParam || copyFromId) {
             // Copy mode - use the new RESTful copy endpoint
             const sourceId = copyParam || copyFromId;
             this.isCopyMode = true;
             this.isNewProvider = true; // Copy creates a new provider
 
-            // Update header immediately for better UX
-            this.updatePageHeader(currentDescription);
-
             // Call the copy custom method
             apiClient.callCustomMethod('copy', {id: sourceId}, (response) => {
                 this.hideLoadingState();
-                this.handleProviderDataResponse(response, ''); // Empty ID for new provider
+                if (response.result && response.data) {
+                    // Mark as new record for copy
+                    response.data._isNew = true;
+
+                    this.populateForm(response.data);
+
+                    // Mark form as changed to enable save button
+                    Form.dataChanged();
+                } else {
+                    // Show error
+                    UserMessage.showMultiString(response.messages);
+                }
             });
         } else {
             // Determine if this is a new provider
             this.isNewProvider = !providerId || providerId === '' || providerId === 'new';
 
-            // Update header immediately for better UX
-            this.updatePageHeader(currentDescription);
-
             // Use getRecord method from PbxApiClient
             // It automatically handles new records (calls getDefault) and existing records
             apiClient.getRecord(providerId || 'new', (response) => {
                 this.hideLoadingState();
-                this.handleProviderDataResponse(response, providerId);
+                if (response.result && response.data) {
+                    // Mark as new record if we don't have an ID
+                    if (!response.data.id || response.data.id === '') {
+                        response.data._isNew = true;
+                        this.isNewProvider = true;
+                    }
+
+                    this.populateForm(response.data);
+                } else {
+                    // Show error for existing records that failed to load
+                    if (providerId && providerId !== 'new') {
+                        UserMessage.showMultiString(response.messages);
+                    }
+                }
             });
         }
     }
-    
+
     /**
-     * Handle provider data response from API
-     * @param {Object} response - API response
-     * @param {string} providerId - Provider ID
+     * Populate form with data from REST API
+     * Following CallQueues pattern with initializeDropdownsWithData
+     * @param {Object} data - Form data from API
      */
-    handleProviderDataResponse(response, providerId) {
+    populateForm(data) {
+        // Store provider data for later use
+        this.providerData = data;
 
-            if (response.result && response.data) {
-                // Store provider data for later use
-                this.providerData = response.data;
+        // Update isNewProvider based on actual data from server
+        if (!data.id || data.id === '') {
+            this.isNewProvider = true;
+        } else {
+            this.isNewProvider = false;
+        }
 
-                // Update isNewProvider based on actual data from server
-                // New providers won't have an id in the response data
-                if (!response.data.id || response.data.id === '') {
-                    this.isNewProvider = true;
-                } else {
-                    this.isNewProvider = false;
-                }
+        // Use unified silent population approach (CallQueues pattern)
+        Form.populateFormSilently(data, {
+            beforePopulate: (formData) => {
+                // Initialize dropdowns first with form data (only once)
+                this.initializeDropdownsWithData(data);
+            },
+            afterPopulate: (formData) => {
+                // Manually populate specific fields if needed by child classes
+                this.populateFormData(data);
 
-                // Set the _isNew flag for new providers
-                if (this.isNewProvider) {
-                    response.data._isNew = true;
-                }
-
-                this.populateFormData(response.data);
-            } else if (providerId && providerId !== 'new') {
-                UserMessage.showMultiString(response.messages);
+                // Update visibility based on loaded data
+                this.updateVisibilityElements();
             }
-            
-            // Initialize dynamic dropdowns with API data (V5.0 pattern)
-            // For both new and existing records - API provides complete data with defaults
-            const dropdownData = (response.result && response.data) ? response.data : {};
-            this.initializeDropdownsWithData(dropdownData);
-            
-            // Continue with initialization
-            this.initializeUIComponents();
-            
-            this.initializeEventHandlers();
-            this.initializeForm();
-            this.updateVisibilityElements();
-            
-            // Mark form as changed if in copy mode to enable save button
-            if (this.isCopyMode) {
-                Form.dataChanged();
-            }
-            
-        // Initialize tooltip popups
-        this.$popuped.popup();
-        
-        // Prevent browser password manager for generated passwords
-        this.$secret.on('focus', () => {
-            this.$secret.attr('autocomplete', 'new-password');
         });
+
+        // Initialize tooltip popups after form is populated
+        this.$popuped.popup();
     }
 
     /**
      * Initialize UI components
+     * Called first, before data loading
      */
     initializeUIComponents() {
+        // Initialize basic UI components (synchronous)
         this.$checkBoxes.checkbox();
         this.initializeAccordion();
-        
-        // Dynamic dropdowns are initialized after data is loaded with provider data
+
+        // Initialize tooltip popups
+        this.$popuped.popup();
+
+        // Dynamic dropdowns are initialized later in initializeDropdownsWithData (after data is loaded)
     }
     
     /**
@@ -263,15 +292,21 @@ class ProviderBase {
 
     /**
      * Initialize event handlers
+     * Called after UI components, before form initialization
      */
     initializeEventHandlers() {
         const self = this;
-        
+
         // Update header when provider name changes
         this.$description.on('input', function() {
             self.updatePageHeader($(this).val());
         });
-        
+
+        // Prevent browser password manager for generated passwords
+        this.$secret.on('focus', () => {
+            this.$secret.attr('autocomplete', 'new-password');
+        });
+
         // Initialize password widget
         this.initializePasswordWidget();
     }
@@ -406,56 +441,20 @@ class ProviderBase {
     }
     
     /**
-     * Populate form with data from API
+     * Populate provider-specific form fields
+     * Called from populateForm() after Form.populateFormSilently()
+     * Override in child classes for provider-specific field population
      * @param {object} data - Provider data from API
      */
     populateFormData(data) {
-
-        // Save the _isNew flag in a hidden field if present
-        if (data._isNew !== undefined) {
-            if ($('#_isNew').length === 0) {
-                // Create hidden field if it doesn't exist
-                $('<input>').attr({
-                    type: 'hidden',
-                    id: '_isNew',
-                    name: '_isNew',
-                    value: data._isNew ? 'true' : 'false'
-                }).appendTo(this.$formObj);
-            } else {
-                $('#_isNew').val(data._isNew ? 'true' : 'false');
-            }
-        }
-
-        // Common fields
-        if (data.id) {
-            $('#id').val(data.id);
-        }
+        // Update page header with provider name
         if (data.description) {
-            this.$description.val(data.description);
-            // Update page header with provider name and type
             this.updatePageHeader(data.description);
         }
-        if (data.note) {
-            $('#note').val(data.note);
-        }
 
-        // Common provider fields - backend provides defaults
-        $('#username').val(data.username || '');
-        this.$secret.val(data.secret || '');
-        $('#host').val(data.host || '');
-        $('#registration_type').val(data.registration_type || '');
-        $('#networkfilterid').val(data.networkfilterid || '');
-        $('#manualattributes').val(data.manualattributes || '');
-        $('#port').val(data.port || '');
-
-        // Common checkboxes - handle both string '1' and boolean true
-        // These checkboxes use standard HTML checkbox behavior
-        $('#qualify').prop('checked', data.qualify === '1' || data.qualify === true);
-        $('#receive_calls_without_auth').prop('checked', data.receive_calls_without_auth === '1' || data.receive_calls_without_auth === true);
-        $('#noregister').prop('checked', data.noregister === '1' || data.noregister === true);
-
-        // Disabled state - this is a hidden field, not a checkbox
-        $('#disabled').val(data.disabled ? '1' : '0');
+        // Most fields are now handled by Form.populateFormSilently()
+        // This method is for special cases or provider-specific fields
+        // Override in child classes (ProviderSIP, ProviderIAX) as needed
     }
 
     

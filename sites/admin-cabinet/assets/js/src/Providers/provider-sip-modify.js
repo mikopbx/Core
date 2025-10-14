@@ -99,11 +99,25 @@ class ProviderSIP extends ProviderBase {
 
     /**
      * Initialize the provider form
+     * Override to add SIP-specific initialization
      */
     initialize() {
-        super.initialize(); 
-        
-        // SIP-specific initialization
+        // Call parent initialize - this handles the full flow:
+        // 1. initializeUIComponents()
+        // 2. initializeEventHandlers()
+        // 3. initializeForm()
+        // 4. loadFormData()
+        super.initialize();
+    }
+
+    /**
+     * Override initializeUIComponents to add SIP-specific UI initialization
+     */
+    initializeUIComponents() {
+        // Call parent first
+        super.initializeUIComponents();
+
+        // SIP-specific UI components
         this.$qualifyToggle.checkbox({
             onChange: () => {
                 if (this.$qualifyToggle.checkbox('is checked')) {
@@ -114,29 +128,38 @@ class ProviderSIP extends ProviderBase {
             },
         });
 
-        $('input[name="disablefromuser"]').on('change', () => {
-            this.updateVisibilityElements();
-            Form.dataChanged();
-        });
-        
-        // Initialize SIP-specific static dropdowns
+        // Initialize debug checkbox - using parent container with class selector
+        $('#cid_did_debug').parent('.checkbox').checkbox();
+
+        // Initialize SIP-specific static dropdowns (PHP-rendered)
         this.initializeDtmfModeDropdown();
         this.initializeTransportDropdown();
         this.initializeCallerIdSourceDropdown();
         this.initializeDidSourceDropdown();
-        
-        // Initialize debug checkbox - using parent container with class selector
-        $('#cid_did_debug').parent('.checkbox').checkbox();
-        
-        // Initialize field help tooltips
-        ProviderSipTooltipManager.initialize();
-        
+
         // Initialize tabs
         this.initializeTabs();
-        
+    }
+
+    /**
+     * Override initializeEventHandlers to add SIP-specific handlers
+     */
+    initializeEventHandlers() {
+        // Call parent first
+        super.initializeEventHandlers();
+
+        // SIP-specific event handlers
+        $('input[name="disablefromuser"]').on('change', () => {
+            this.updateVisibilityElements();
+            Form.dataChanged();
+        });
+
         // Initialize SIP-specific components
         this.initializeSipEventHandlers();
         this.updateHostsTableView();
+
+        // Initialize field help tooltips
+        ProviderSipTooltipManager.initialize();
     }
     
     /**
@@ -381,63 +404,44 @@ class ProviderSIP extends ProviderBase {
     }
     
     /**
-     * Override populateFormData to handle SIP-specific data
+     * Override initializeDropdownsWithData to set SIP-specific dropdown values
+     * Called from parent's populateForm() in beforePopulate callback
+     * @param {object} data - Provider data from API
+     */
+    initializeDropdownsWithData(data = {}) {
+        // Call parent first (initializes common dropdowns like networkfilterid)
+        super.initializeDropdownsWithData(data);
+
+        // SIP-specific dropdowns are already initialized in initializeUIComponents
+        // Just set their values from API data
+        const dropdownUpdates = [
+            { selector: '#dtmfmode-dropdown', value: data.dtmfmode || '' },
+            { selector: '#transport-dropdown', value: data.transport || '' },
+            { selector: '#registration_type-dropdown', value: data.registration_type || '' },
+            { selector: '#cid_source-dropdown', value: data.cid_source || '' },
+            { selector: '#did_source-dropdown', value: data.did_source || '' }
+        ];
+
+        dropdownUpdates.forEach(({ selector, value }) => {
+            const $dropdown = $(selector);
+            if ($dropdown.length > 0) {
+                $dropdown.dropdown('set selected', value);
+            }
+        });
+    }
+
+    /**
+     * Override populateFormData to handle SIP-specific fields
+     * Called from parent's populateForm() in afterPopulate callback
+     * Most fields are handled by Form.populateFormSilently()
      * @param {object} data - Provider data from API
      */
     populateFormData(data) {
-        // Call parent method first for common fields
+        // Call parent method first
         super.populateFormData(data);
-        
-        if (this.providerType === 'SIP') {
-            // SIP-specific fields - backend provides defaults
-            $('#dtmfmode').val(data.dtmfmode || '');
-            $('#transport').val(data.transport || '');
-            $('#fromuser').val(data.fromuser || '');
-            $('#fromdomain').val(data.fromdomain || '');
-            $('#outbound_proxy').val(data.outbound_proxy || '');
-            
-            // SIP-specific checkboxes
-            if (data.disablefromuser === '1' || data.disablefromuser === true) $('#disablefromuser').prop('checked', true);
-            
-            // Qualify frequency - backend provides default
-            $('#qualifyfreq').val(data.qualifyfreq || '');
-            
-            // CallerID/DID fields
-            $('#cid_source').val(data.cid_source || 'default');
-            $('#did_source').val(data.did_source || 'default');
-            $('#cid_custom_header').val(data.cid_custom_header || '');
-            $('#cid_parser_start').val(data.cid_parser_start || '');
-            $('#cid_parser_end').val(data.cid_parser_end || '');
-            $('#cid_parser_regex').val(data.cid_parser_regex || '');
-            $('#did_custom_header').val(data.did_custom_header || '');
-            $('#did_parser_start').val(data.did_parser_start || '');
-            $('#did_parser_end').val(data.did_parser_end || '');
-            $('#did_parser_regex').val(data.did_parser_regex || '');
-            
-            // Update cid_did_debug checkbox
-            if (data.cid_did_debug === '1' || data.cid_did_debug === true) {
-                $('#cid_did_debug').prop('checked', true);
-            } else {
-                $('#cid_did_debug').prop('checked', false);
-            }
-            
-            // Update dropdown values - backend provides defaults, just set selected values
-            const dropdownUpdates = [
-                { selector: '#dtmfmode-dropdown', value: data.dtmfmode || '' },
-                { selector: '#transport-dropdown', value: data.transport || '' },
-                { selector: '#registration_type-dropdown', value: data.registration_type || '' },
-                { selector: '#cid_source-dropdown', value: data.cid_source || '' },
-                { selector: '#did_source-dropdown', value: data.did_source || '' }
-            ];
-            
-            dropdownUpdates.forEach(({ selector, value }) => {
-                const $dropdown = $(selector);
-                if ($dropdown.length > 0) {
-                    $dropdown.dropdown('set selected', value);
-                }
-            });
-            
-            // Additional hosts - populate after form is ready
+
+        // Additional hosts - populate after form is ready
+        if (data.additionalHosts) {
             this.populateAdditionalHosts(data.additionalHosts);
         }
     }
@@ -802,6 +806,8 @@ class ProviderSIP extends ProviderBase {
         
         // Handle username field
         if (config.readonlyUsername) {
+            // For inbound registration, username should match provider ID
+            // Backend always returns ID (temporary for new providers like SIP-NEW-XXXXXXXX)
             fields.username.val(providerId).attr('readonly', '');
         } else {
             // Reset username if it matches provider ID when not inbound
