@@ -21,140 +21,28 @@
 namespace MikoPBX\Tests\AdminCabinet\Tests\Traits;
 
 use Facebook\WebDriver\WebDriverBy;
-use MikoPBX\Tests\AdminCabinet\Tests\Utils\CookieManager;
 use RuntimeException;
 
 /**
  * Trait LoginTrait
- * Handles authentication in tests with improved cookie management
+ * Handles authentication in tests
+ *
+ * Note: Cookie persistence between test sessions doesn't work due to httpOnly cookie restrictions.
+ * Each test session performs a fresh login. Use processIsolation="false" in phpunit.xml
+ * to share sessions within a test suite.
  */
 trait LoginTrait
 {
-    private ?CookieManager $cookieManager = null;
-
     /**
-     * Initialize cookie manager
-     *
-     * @return void
-     */
-    protected function initializeCookieManager(): void
-    {
-        if (!isset($GLOBALS['SERVER_PBX'])) {
-            throw new RuntimeException('SERVER_PBX global variable is not set');
-        }
-
-        // Extract domain from SERVER_PBX global
-        $domain = parse_url($GLOBALS['SERVER_PBX'], PHP_URL_HOST);
-        if (!$domain) {
-            throw new RuntimeException('Could not extract domain from SERVER_PBX');
-        }
-
-        // Use /tmp for cookie storage (writable, persists during test run)
-        $cookieDir = getenv('SELENIUM_COOKIE_DIR') ?: '/tmp/selenium_cookies';
-
-        $this->cookieManager = new CookieManager(
-            self::$driver,
-            $domain,
-            $cookieDir
-        );
-    }
-
-    /**
-     * Test the login functionality
+     * Perform login on MikoPBX
      *
      * @dataProvider loginDataProvider
      * @param array $params Login parameters
-     * @param bool $skipCookieRestore Skip cookie restoration attempt (useful for login tests)
      * @return void
      */
-    public function LoginOnMikoPbx(array $params, bool $skipCookieRestore = false): void
+    public function LoginOnMikoPbx(array $params): void
     {
-        if ($this->cookieManager === null) {
-            $this->initializeCookieManager();
-        }
-
-        $this->waitForAjax();
-
-        // Try to restore session from cookies (skip for login tests to save time)
-        if (!$skipCookieRestore && $this->tryLoginWithCookies()) {
-            self::annotate('Successfully logged in using saved session');
-            $this->assertTrue(true);
-            return;
-        }
-
-        // Perform regular login
         $this->performLogin($params);
-    }
-
-    /**
-     * Try to login using saved cookies (JWT refresh token)
-     *
-     * With JWT authentication:
-     * 1. loadCookies() restores refreshToken cookie
-     * 2. Navigate to page triggers TokenManager.initialize()
-     * 3. TokenManager calls /auth:refresh using refreshToken cookie
-     * 4. New accessToken is stored in memory
-     * 5. User is authenticated
-     *
-     * @return bool
-     */
-    private function tryLoginWithCookies(): bool
-    {
-        if (!$this->cookieManager->loadCookies()) {
-            self::annotate('No saved cookies found - will perform full login');
-            return false;
-        }
-
-        try {
-            self::annotate('Saved cookies loaded - attempting to restore session');
-
-            // Debug: Check cookies before refresh
-            $cookiesBeforeRefresh = self::$driver->manage()->getCookies();
-            self::annotate('Cookies BEFORE refresh: ' . count($cookiesBeforeRefresh));
-
-            // Check if we're already on the target page
-            $currentUrl = self::$driver->getCurrentURL();
-            $targetUrl = $GLOBALS['SERVER_PBX'];
-
-            // Only refresh if we're already on the same domain (to apply cookies)
-            // Don't navigate if we're already there - it would clear cookies!
-            if (strpos($currentUrl, parse_url($targetUrl, PHP_URL_HOST)) !== false) {
-                // Already on correct domain - just refresh to apply cookies
-                self::annotate('Already on target domain - refreshing page');
-                self::$driver->navigate()->refresh();
-            } else {
-                // Need to navigate to the domain first
-                self::annotate('Navigating to target domain: ' . $targetUrl);
-                self::$driver->navigate()->to($targetUrl);
-            }
-
-            // Debug: Check cookies after refresh
-            $cookiesAfterRefresh = self::$driver->manage()->getCookies();
-            self::annotate('Cookies AFTER refresh: ' . count($cookiesAfterRefresh));
-
-            // List cookie names
-            $cookieNames = array_map(function($c) { return $c->getName(); }, $cookiesAfterRefresh);
-            self::annotate('Cookie names: ' . implode(', ', $cookieNames));
-
-            // Give TokenManager time to initialize and call /auth:refresh
-            // No need to wait for ALL AJAX - just the JWT refresh
-            usleep(1500000); // 1.5 seconds for JWT refresh
-
-            // Check if login was successful
-            // isUserLoggedIn will wait up to 10 seconds for menu to appear
-            $isLoggedIn = $this->isUserLoggedIn(10);
-
-            if ($isLoggedIn) {
-                self::annotate('Session restored successfully via JWT refresh token');
-            } else {
-                self::annotate('Session restoration failed - refresh token may be expired');
-            }
-
-            return $isLoggedIn;
-        } catch (\Exception $e) {
-            self::annotate('Cookie login failed: ' . $e->getMessage());
-            return false;
-        }
     }
 
     /**
@@ -165,8 +53,7 @@ trait LoginTrait
      * 2. JavaScript calls /pbxcore/api/v3/auth:login via AJAX
      * 3. Server returns accessToken (saved in memory by TokenManager)
      * 4. Server sets refreshToken in httpOnly cookie
-     * 5. Browser stores cookies (including refreshToken)
-     * 6. CookieManager saves all cookies for reuse in next test
+     * 5. User is authenticated for this browser session
      *
      * @param array $params Login parameters
      * @return void
@@ -174,16 +61,12 @@ trait LoginTrait
      */
     private function performLogin(array $params): void
     {
-        // Clear any existing cookies before login attempt
-        $this->cookieManager->clearAll();
-
-        $this->waitForAjax();
-
-        // Quick check if login form exists
+        // Quick check if login form exists (without waiting for all AJAX)
         if (!$this->isLoginFormPresent()) {
             self::annotate('Login form not found on first load, refreshing once');
             self::$driver->navigate()->refresh();
-            $this->waitForAjax(5); // Shorter timeout for refresh
+            // Give page a moment to load after refresh
+            usleep(500000); // 500ms
 
             if (!$this->isLoginFormPresent()) {
                 throw new RuntimeException('Login form not found after page refresh');
@@ -205,13 +88,6 @@ trait LoginTrait
             throw new RuntimeException('Login failed: Credentials not accepted');
         }
 
-        // Save successful login cookies BEFORE assertTrue
-        if ($this->cookieManager->saveCookies()) {
-            self::annotate('Successfully saved authentication cookies for future tests');
-        } else {
-            self::annotate('Warning: Failed to save authentication cookies');
-        }
-
         $this->assertTrue(true);
     }
 
@@ -230,7 +106,7 @@ trait LoginTrait
 
             // Just wait for login AJAX to start - no need to wait for ALL AJAX to complete
             // The isUserLoggedIn() method will check if we're actually logged in
-            usleep(500000); // 500ms for login request to start
+            usleep(300000); // 300ms for login request to start
         } catch (\Exception $e) {
             throw new RuntimeException('Failed to submit login form: ' . $e->getMessage());
         }
