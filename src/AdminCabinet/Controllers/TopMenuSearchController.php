@@ -62,9 +62,6 @@ class TopMenuSearchController extends BaseController
             $records = call_user_func([$itemClass, 'find']);
             $categoryItems = [];
             foreach ($records as $record) {
-                if ($itemClass === Users::class && $record->id === '1') {
-                    continue; // Admin
-                }
                 $this->addMenuItem($categoryItems, $record, $itemClass);
             }
             usort($categoryItems, [__CLASS__, 'sortItemsArray']);

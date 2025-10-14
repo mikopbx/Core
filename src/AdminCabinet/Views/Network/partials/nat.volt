@@ -1,30 +1,5 @@
 <h4 class="ui dividing header">{{ t._("nw_NetworkAddressTranslations") }}</h4>
 
-<div class="field">
-    <label for="internet_interface"> {{ t._('nw_InternetInterface') }}</label>
-    <div class="field max-width-400">
-        {{ form.render('internet_interface') }}
-    </div>
-</div>
-
-<div class="field do-not-show-if-docker">
-    <label for="gateway">{{ t._('nw_GatewayAddress') }}</label>
-    <div class="field max-width-400">
-        {{ form.render('gateway') }}
-    </div>
-</div>
-
-<div class="field do-not-show-if-docker">
-    <label>{{ t._('nw_DNSAddresses') }}</label>
-    <div class="fields">
-        <div class="field max-width-250">
-            {{ form.render('primarydns') }}
-        </div>
-        <div class="field max-width-250">
-            {{ form.render('secondarydns') }}
-        </div>
-    </div>
-</div>
 <div class="ui segment">
     <div class="field">
         <div class="ui toggle checkbox" id="usenat-checkbox">

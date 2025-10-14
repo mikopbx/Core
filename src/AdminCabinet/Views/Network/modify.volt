@@ -1,4 +1,4 @@
-{{ form(['action' : 'network/save','method': 'post', 'role': 'form', 'class': 'ui form large', 'id':'network-form']) }}
+{{ form(['action' : 'network/save','method': 'post', 'role': 'form', 'class': 'ui form', 'id':'network-form']) }}
 
 <input type="hidden" name="is-docker" value="{{ isDocker }}">
 
@@ -11,6 +11,10 @@
 
 <div class="do-not-show-if-docker">
     {{ partial("Network/partials/interfaces") }}
+</div>
+
+<div class="do-not-show-if-docker">
+    {{ partial("Network/partials/static-routes") }}
 </div>
 
 {{ partial("Network/partials/nat") }}

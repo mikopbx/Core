@@ -304,9 +304,9 @@ class Elements extends Injectable
 
     // Array of controllers that are hidden in menu in the Docker installation
     private array $_hiddenInDocker = [
-        RestartController::class,
-        UpdateController::class,
-        TimeSettingsController::class
+        // RestartController::class,
+        // UpdateController::class,
+        // TimeSettingsController::class
     ];
 
     /**

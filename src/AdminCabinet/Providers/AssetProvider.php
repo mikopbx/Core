@@ -697,6 +697,7 @@ class AssetProvider implements ServiceProviderInterface
     {
         if ($action === 'modify') {
             $this->footerCollectionJS
+                ->addJs('js/vendor/jquery.tablednd.js', true)
                 //->addJs('js/vendor/inputmask/inputmask.js', true)
                 ->addJs('js/vendor/inputmask/jquery.inputmask.min.js', true)
                 ->addJs('js/vendor/inputmask/bindings/inputmask.binding.js', true)
