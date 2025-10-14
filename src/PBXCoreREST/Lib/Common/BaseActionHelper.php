@@ -30,25 +30,63 @@ use Phalcon\Filter\FilterFactory;
 class BaseActionHelper
 {
     /**
-     * Execute operation in transaction
-     * 
+     * Execute operation in transaction with smart nesting support
+     *
+     * This method provides safe transaction handling that works correctly with
+     * disabled savepoints in SQLite. It detects if a transaction is already active
+     * and only manages the outermost transaction.
+     *
+     * Behavior:
+     * - If NO transaction is active: begin() → execute → commit()/rollback()
+     * - If transaction IS active: just execute (let outer transaction manage commit/rollback)
+     *
+     * This prevents issues with SQLite savepoints while maintaining transaction safety:
+     * - All operations are still protected by the outer transaction
+     * - No "cannot open savepoint" errors
+     * - Nested calls work correctly
+     *
+     * Example flow:
+     * ```
+     * executeInTransaction(function() {           // Starts transaction
+     *     $model1->save();                        // Protected
+     *     executeInTransaction(function() {       // Detects active transaction
+     *         $model2->save();                    // Still protected by outer transaction
+     *     });                                     // No commit here
+     *     $model3->save();                        // Protected
+     * });                                         // Commits all changes here
+     * ```
+     *
      * @param callable $callback Function to execute in transaction
      * @return mixed Result of callback execution
-     * @throws \Exception
+     * @throws \Exception Re-throws any exception after rollback (if we started the transaction)
      */
     public static function executeInTransaction(callable $callback)
     {
         $di = Di::getDefault();
         $db = $di->get(MainDatabaseProvider::SERVICE_NAME);
-        
-        $db->begin();
-        
+
+        // Check if we're already in a transaction
+        $alreadyInTransaction = $db->isUnderTransaction();
+
+        // Only begin if not already in transaction
+        if (!$alreadyInTransaction) {
+            $db->begin();
+        }
+
         try {
             $result = $callback();
-            $db->commit();
+
+            // Only commit if we started the transaction
+            if (!$alreadyInTransaction) {
+                $db->commit();
+            }
+
             return $result;
         } catch (\Exception $e) {
-            $db->rollback();
+            // Only rollback if we started the transaction
+            if (!$alreadyInTransaction) {
+                $db->rollback();
+            }
             throw $e;
         }
     }

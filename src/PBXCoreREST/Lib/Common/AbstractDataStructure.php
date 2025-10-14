@@ -874,4 +874,33 @@ abstract class AbstractDataStructure
 
         return $errors;
     }
+
+    /**
+     * Get related schemas for OpenAPI components
+     *
+     * Default implementation returns empty array - no related/nested schemas.
+     * Override this method in child classes that have nested objects or reusable schema components.
+     *
+     * Related schemas are additional schema definitions that should be registered in OpenAPI
+     * components section and can be referenced via $ref in main schemas.
+     *
+     * Example of override:
+     * ```php
+     * public static function getRelatedSchemas(): array
+     * {
+     *     return [
+     *         'MemberObject' => [
+     *             'type' => 'object',
+     *             'properties' => [...]
+     *         ]
+     *     ];
+     * }
+     * ```
+     *
+     * @return array<string, array<string, mixed>> Map of schema name to schema definition
+     */
+    public static function getRelatedSchemas(): array
+    {
+        return [];
+    }
 }
