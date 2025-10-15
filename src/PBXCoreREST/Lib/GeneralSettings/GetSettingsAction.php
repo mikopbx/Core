@@ -26,18 +26,17 @@ use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Core\System\SslCertificateService;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractGetRecordAction;
-use MikoPBX\PBXCoreREST\Lib\Common\FieldTypeResolver;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\GeneralSettings\DataStructure;
 
 /**
  * GetSettingsAction - retrieves general settings with optional filtering
- * 
+ *
  * Can retrieve:
  * - All settings when no key/keys specified
  * - Single setting when 'key' is provided (returns as key-value pair)
  * - Multiple specific settings when 'keys' array is provided
- * 
+ *
  * Returns settings with proper type conversion for API consumption:
  * - Boolean fields converted from "1"/"0" strings to true/false
  * - Integer fields converted from strings to integers
@@ -45,88 +44,6 @@ use MikoPBX\PBXCoreREST\Lib\GeneralSettings\DataStructure;
  */
 class GetSettingsAction extends AbstractGetRecordAction
 {
-    /**
-     * List of settings that should be exposed through the General Settings API
-     * Settings not in this list are managed by other controllers or are system-only
-     * 
-     * @var array<string>
-     */
-    private const ALLOWED_SETTINGS = [
-        // General settings shown in the form
-        PbxSettings::PBX_NAME,
-        PbxSettings::PBX_DESCRIPTION,
-        PbxSettings::PBX_LANGUAGE,
-        PbxSettings::PBX_INTERNAL_EXTENSION_LENGTH,
-        PbxSettings::PBX_ALLOW_GUEST_CALLS,
-        PbxSettings::RESTART_EVERY_NIGHT,
-        PbxSettings::SEND_METRICS,
-        
-        // Web settings
-        PbxSettings::WEB_PORT,
-        PbxSettings::WEB_HTTPS_PORT,
-        PbxSettings::WEB_HTTPS_PUBLIC_KEY,
-        PbxSettings::WEB_HTTPS_PRIVATE_KEY,
-        PbxSettings::REDIRECT_TO_HTTPS,
-        PbxSettings::WEB_ADMIN_LOGIN,
-        PbxSettings::WEB_ADMIN_PASSWORD,
-        
-        // SSH settings
-        PbxSettings::SSH_PORT,
-        PbxSettings::SSH_LOGIN,
-        PbxSettings::SSH_PASSWORD,
-        PbxSettings::SSH_DISABLE_SSH_PASSWORD,
-        PbxSettings::SSH_AUTHORIZED_KEYS,
-        PbxSettings::SSH_ID_RSA_PUB,
-        PbxSettings::SSH_RSA_KEY,
-        PbxSettings::SSH_DSS_KEY,
-        PbxSettings::SSH_ECDSA_KEY,
-        
-        // SIP settings
-        PbxSettings::SIP_PORT,
-        PbxSettings::TLS_PORT,
-        PbxSettings::RTP_PORT_FROM,
-        PbxSettings::RTP_PORT_TO,
-        PbxSettings::RTP_STUN_SERVER,
-        PbxSettings::SIP_AUTH_PREFIX,
-        PbxSettings::USE_WEB_RTC,
-        PbxSettings::SIP_DEFAULT_EXPIRY,
-        PbxSettings::SIP_MIN_EXPIRY,
-        PbxSettings::SIP_MAX_EXPIRY,
-        
-        // Recording settings
-        PbxSettings::PBX_RECORD_CALLS,
-        PbxSettings::PBX_RECORD_CALLS_INNER,
-        PbxSettings::PBX_SPLIT_AUDIO_THREAD,
-        PbxSettings::PBX_RECORD_ANNOUNCEMENT_IN,
-        PbxSettings::PBX_RECORD_ANNOUNCEMENT_OUT,
-        
-        // AMI/AJAM/ARI settings
-        PbxSettings::AMI_ENABLED,
-        PbxSettings::AMI_PORT,
-        PbxSettings::AJAM_ENABLED,
-        PbxSettings::AJAM_PORT,
-        PbxSettings::AJAM_PORT_TLS,
-        PbxSettings::ARI_ENABLED,
-        PbxSettings::ARI_ALLOWED_ORIGINS,
-        
-        // Features settings
-        PbxSettings::PBX_CALL_PARKING_EXT,
-        PbxSettings::PBX_CALL_PARKING_START_SLOT,
-        PbxSettings::PBX_CALL_PARKING_END_SLOT,
-        PbxSettings::PBX_FEATURE_ATTENDED_TRANSFER,
-        PbxSettings::PBX_FEATURE_BLIND_TRANSFER,
-        PbxSettings::PBX_FEATURE_PICKUP_EXTEN,
-        PbxSettings::PBX_FEATURE_ATXFER_NO_ANSWER_TIMEOUT,
-        PbxSettings::PBX_FEATURE_DIGIT_TIMEOUT,
-        PbxSettings::PBX_FEATURE_TRANSFER_DIGIT_TIMEOUT,
-        
-        // IAX settings (if shown in form)
-        PbxSettings::IAX_PORT,
-        
-        // Hidden/internal settings that are still needed by the form
-        PbxSettings::SSH_PASSWORD_HASH_STRING,
-        PbxSettings::CLOUD_PROVISIONING,
-    ];
     
     /**
      * Get general settings with optional filtering
@@ -195,9 +112,12 @@ class GetSettingsAction extends AbstractGetRecordAction
     private static function getSingleSetting(string $key): PBXApiResult
     {
         $res = self::createApiResult(__METHOD__);
-        
+
+        // Get allowed settings from DataStructure (Single Source of Truth)
+        $allowedSettings = DataStructure::getAllowedSettings();
+
         // Check if this setting is allowed to be exposed
-        if (!in_array($key, self::ALLOWED_SETTINGS, true)) {
+        if (!in_array($key, $allowedSettings, true)) {
             $res->messages['error'][] = "Setting '{$key}' is not accessible through this API";
             return $res;
         }
@@ -216,8 +136,8 @@ class GetSettingsAction extends AbstractGetRecordAction
             $decoded = base64_decode($value, true);
             $convertedValue = $decoded !== false ? $decoded : $value;
         } else {
-            // Convert to proper type
-            $convertedValue = FieldTypeResolver::convertToApiFormat($value, PbxSettings::class, $key);
+            // Convert to proper type using DataStructure (Single Source of Truth)
+            $convertedValue = DataStructure::convertValueToApiFormat($key, $value);
         }
         
         // Return as key-value pair (consistent with multiple settings format)
@@ -236,18 +156,21 @@ class GetSettingsAction extends AbstractGetRecordAction
     private static function getMultipleSettings(array $keys): PBXApiResult
     {
         $res = self::createApiResult(__METHOD__);
-        
+
+        // Get allowed settings from DataStructure (Single Source of Truth)
+        $allowedSettings = DataStructure::getAllowedSettings();
+
         $result = [];
         $unknownKeys = [];
         $deniedKeys = [];
-        
+
         foreach ($keys as $key) {
             if (!is_string($key)) {
                 continue;
             }
-            
+
             // Check if this setting is allowed to be exposed
-            if (!in_array($key, self::ALLOWED_SETTINGS, true)) {
+            if (!in_array($key, $allowedSettings, true)) {
                 $deniedKeys[] = $key;
                 continue;
             }
@@ -260,7 +183,7 @@ class GetSettingsAction extends AbstractGetRecordAction
                 continue;
             }
             
-            $result[$key] = FieldTypeResolver::convertToApiFormat($value, PbxSettings::class, $key);
+            $result[$key] = DataStructure::convertValueToApiFormat($key, $value);
         }
         
         // Add warning about denied keys if any
@@ -281,20 +204,23 @@ class GetSettingsAction extends AbstractGetRecordAction
     
     /**
      * Filter settings to only include allowed ones
-     * 
+     *
      * @param array<string, string> $settings All settings from database
      * @return array<string, string> Filtered settings
      */
     private static function filterAllowedSettings(array $settings): array
     {
         $filtered = [];
-        
-        foreach (self::ALLOWED_SETTINGS as $key) {
+
+        // Get allowed settings from DataStructure (Single Source of Truth)
+        $allowedSettings = DataStructure::getAllowedSettings();
+
+        foreach ($allowedSettings as $key) {
             if (array_key_exists($key, $settings)) {
                 $filtered[$key] = $settings[$key];
             }
         }
-        
+
         return $filtered;
     }
     
@@ -332,8 +258,8 @@ class GetSettingsAction extends AbstractGetRecordAction
                     $result[$key] = '';
                 }
             } else {
-                // Use FieldTypeResolver for all other conversions
-                $result[$key] = FieldTypeResolver::convertToApiFormat($value, PbxSettings::class, $key);
+                // Use DataStructure for type conversion (Single Source of Truth)
+                $result[$key] = DataStructure::convertValueToApiFormat($key, $value);
             }
         }
         

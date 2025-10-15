@@ -492,10 +492,10 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'transport' => [
                     'type' => 'string',
                     'description' => 'rest_param_provider_transport',
-                    'enum' => ['UDP', 'TCP', 'TLS', 'UDP,TCP', 'UDP,TCP,TLS'],
+                    'enum' => ['udp', 'tcp', 'tls'],
                     'sanitize' => 'string',
-                    'default' => 'UDP',
-                    'example' => 'UDP'
+                    'default' => 'udp',
+                    'example' => 'udp'
                 ],
                 'qualify' => [
                     'type' => 'boolean',
@@ -516,10 +516,10 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'dtmfmode' => [
                     'type' => 'string',
                     'description' => 'rest_param_provider_dtmfmode',
-                    'enum' => ['auto', 'auto_info', 'inband', 'rfc2833', 'info'],
+                    'enum' => ['auto', 'auto_info', 'inband', 'rfc4733', 'info'],
                     'sanitize' => 'string',
                     'default' => 'auto',
-                    'example' => 'rfc2833'
+                    'example' => 'rfc4733'
                 ],
                 'fromuser' => [
                     'type' => 'string',

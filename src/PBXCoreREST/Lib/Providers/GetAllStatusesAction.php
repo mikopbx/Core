@@ -170,6 +170,14 @@ class GetAllStatusesAction extends AbstractProviderStatusAction
             $lastType = $lastStatuses[$type] ?? [];
             $currentType = $currentStatuses[$type] ?? [];
             
+            // Convert stdClass to array for iteration
+            if ($lastType instanceof \stdClass) {
+                $lastType = (array)$lastType;
+            }
+            if ($currentType instanceof \stdClass) {
+                $currentType = (array)$currentType;
+            }
+            
             foreach ($currentType as $providerId => $status) {
                 $lastStatus = $lastType[$providerId] ?? null;
                 
@@ -237,6 +245,11 @@ class GetAllStatusesAction extends AbstractProviderStatusAction
     private static function updateAllProviderStatistics(array $statuses, $redis): void
     {
         foreach ($statuses as $type => $providers) {
+            // Convert stdClass to array for iteration
+            if ($providers instanceof \stdClass) {
+                $providers = (array)$providers;
+            }
+            
             foreach ($providers as $providerId => $status) {
                 self::updateDailyStatistics($providerId, $status, $redis);
             }

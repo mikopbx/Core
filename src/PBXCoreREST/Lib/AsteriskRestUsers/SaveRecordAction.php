@@ -213,9 +213,9 @@ class SaveRecordAction extends AbstractSaveRecordAction
 
                 // Update weakPassword flag (PATCH support with isset())
                 if (isset($sanitizedData['weakPassword'])) {
-                    $record->weakPassword = (int)$sanitizedData['weakPassword'];
+                    $record->weakPassword = (string)$sanitizedData['weakPassword'];
                 } elseif ($isCreateOperation) {
-                    $record->weakPassword = 0;
+                    $record->weakPassword = '0'; //Unknown password status
                 }
 
                 // Save record

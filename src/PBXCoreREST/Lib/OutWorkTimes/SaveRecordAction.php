@@ -190,8 +190,28 @@ class SaveRecordAction extends AbstractSaveRecordAction
             return $res;
         }
 
+        // For PATCH/UPDATE operations, merge with existing values for validation
+        // WHY: Business validation needs complete dataset, not just changed fields
+        $dataForValidation = $sanitizedData;
+        if (!$isNewRecord && $condition !== null) {
+            // Build complete dataset by merging existing values with new ones
+            $dataForValidation = [
+                'action' => $sanitizedData['action'] ?? $condition->action,
+                'extension' => $sanitizedData['extension'] ?? $condition->extension,
+                'audio_message_id' => $sanitizedData['audio_message_id'] ?? $condition->audio_message_id,
+                'calType' => $sanitizedData['calType'] ?? $condition->calType,
+                'calUrl' => $sanitizedData['calUrl'] ?? $condition->calUrl,
+                'time_from' => $sanitizedData['time_from'] ?? $condition->time_from,
+                'time_to' => $sanitizedData['time_to'] ?? $condition->time_to,
+                'date_from' => $sanitizedData['date_from'] ?? $condition->date_from,
+                'date_to' => $sanitizedData['date_to'] ?? $condition->date_to,
+                'weekday_from' => $sanitizedData['weekday_from'] ?? (empty($condition->weekday_from) ? '-1' : $condition->weekday_from),
+                'weekday_to' => $sanitizedData['weekday_to'] ?? (empty($condition->weekday_to) ? '-1' : $condition->weekday_to),
+            ];
+        }
+
         // Complex business rules validation
-        $businessErrors = self::validateTimePeriods($sanitizedData);
+        $businessErrors = self::validateTimePeriods($dataForValidation);
         if (!empty($businessErrors)) {
             $res->messages['error'] = array_merge(
                 $res->messages['error'] ?? [],

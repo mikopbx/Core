@@ -55,7 +55,8 @@ use MikoPBX\PBXCoreREST\Lib\Providers\DataStructure;
     resourceLevelMethods: ['getStatus', 'getHistory', 'getStats', 'updateStatus'],
     collectionLevelMethods: ['getForSelect', 'getStatuses'],
     customMethods: ['getForSelect', 'getStatuses', 'getStatus', 'getHistory', 'getStats', 'updateStatus'],
-    idPattern: ['SIP-', 'IAX-', 'SIP-PROVIDER-', 'IAX-PROVIDER-']  // Modern: SIP-xxx / IAX-xxx, Legacy: SIP-PROVIDER-xxx / IAX-PROVIDER-xxx
+    idPattern: ['SIP-', 'IAX-', 'SIP-PROVIDER-', 'IAX-PROVIDER-', 'SIP-TRUNK-', 'IAX-TRUNK-']  // Modern: SIP-TRUNK-xxx , IAX-TRUNK-xxx, Legacy: SIP-PROVIDER-xxx, IAX-PROVIDER-xxx, SIP-xxx, IAX-xxx
+    // ✨ NEW: idPattern supports arrays for multiple prefixes
 )]
 class RestController extends BaseRestController
 {

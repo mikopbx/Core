@@ -24,7 +24,8 @@ namespace MikoPBX\PBXCoreREST\Lib\MailSettings;
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\PasswordService;
-use MikoPBX\PBXCoreREST\Lib\Common\FieldTypeResolver;
+use MikoPBX\PBXCoreREST\Lib\Common\BaseActionHelper;
+use MikoPBX\PBXCoreREST\Lib\MailSettings\DataStructure;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Di;
 
@@ -53,9 +54,16 @@ class UpdateRecordAction
         try {
             $db->begin();
 
-            // Clean and validate email fields
-            $data = self::cleanEmailFields($data);
-            $emailValidation = self::validateEmailFields($data);
+            // ============ PHASE 1: SANITIZATION ============
+            // WHY: Security - never trust user input
+            // Email fields with 'sanitize' => 'email' will have placeholders replaced
+            $sanitizationRules = DataStructure::getSanitizationRules();
+            $data = BaseActionHelper::sanitizeData($data, $sanitizationRules);
+
+            // ============ PHASE 2: FIELD VALIDATION ============
+            // WHY: Validate email format after sanitization
+            // Ensures only valid emails are saved (no placeholders or invalid formats)
+            $emailValidation = DataStructure::validateEmailFields($data);
             if (!$emailValidation['valid']) {
                 foreach ($emailValidation['messages'] as $message) {
                     $res->messages['error'][] = $message;
@@ -63,7 +71,9 @@ class UpdateRecordAction
                 return $res;
             }
 
-            // Validate password if password auth is used
+            // ============ PHASE 3: AUTH-SPECIFIC VALIDATION ============
+            // WHY: Password validation only applies to password auth type
+            // OAuth2 uses tokens instead of passwords
             if (($data[PbxSettings::MAIL_SMTP_AUTH_TYPE] ?? 'password') === 'password') {
                 $passwordValidation = self::validatePassword($data);
                 if (!$passwordValidation['valid']) {
@@ -74,8 +84,10 @@ class UpdateRecordAction
                 }
             }
 
-            // Define mail setting keys
-            $mailSettingKeys = self::getMailSettingKeys();
+            // ============ PHASE 4: UPDATE SETTINGS ============
+            // WHY: Process each mail setting from the Single Source of Truth
+            // Get mail setting keys from DataStructure (Single Source of Truth)
+            $mailSettingKeys = DataStructure::getAllMailSettingKeys();
 
             // Update all mail settings
             $updatedCount = 0;
@@ -102,7 +114,7 @@ class UpdateRecordAction
 
                 // Convert value to storage format based on field type
                 // For boolean fields: true/false -> "1"/"0"
-                $value = FieldTypeResolver::convertForStorage($value, PbxSettings::class, $key);
+                $value = DataStructure::convertValueForStorage($key, $value);
 
                 // Save setting
                 $record = PbxSettings::findFirstByKey($key);
@@ -144,120 +156,6 @@ class UpdateRecordAction
         }
 
         return $res;
-    }
-
-    /**
-     * Get all mail setting keys
-     *
-     * @return array List of mail setting keys
-     */
-    private static function getMailSettingKeys(): array
-    {
-        return [
-            // Basic SMTP settings
-            PbxSettings::MAIL_SMTP_HOST,
-            PbxSettings::MAIL_SMTP_PORT,
-            PbxSettings::MAIL_SMTP_USERNAME,
-            PbxSettings::MAIL_SMTP_PASSWORD,
-            PbxSettings::MAIL_SMTP_USE_TLS,
-            PbxSettings::MAIL_SMTP_CERT_CHECK,
-            PbxSettings::MAIL_SMTP_FROM_USERNAME,
-            PbxSettings::MAIL_SMTP_SENDER_ADDRESS,
-            PbxSettings::MAIL_ENABLE_NOTIFICATIONS,
-
-            // OAuth2 settings
-            PbxSettings::MAIL_SMTP_AUTH_TYPE,
-            PbxSettings::MAIL_OAUTH2_PROVIDER,
-            PbxSettings::MAIL_OAUTH2_CLIENT_ID,
-            PbxSettings::MAIL_OAUTH2_CLIENT_SECRET,
-            PbxSettings::MAIL_OAUTH2_REFRESH_TOKEN,
-            PbxSettings::MAIL_OAUTH2_ACCESS_TOKEN,
-            PbxSettings::MAIL_OAUTH2_TOKEN_EXPIRES,
-
-            // Email templates
-            PbxSettings::MAIL_TPL_MISSED_CALL_SUBJECT,
-            PbxSettings::MAIL_TPL_MISSED_CALL_BODY,
-            PbxSettings::MAIL_TPL_MISSED_CALL_FOOTER,
-            PbxSettings::MAIL_TPL_VOICEMAIL_SUBJECT,
-            PbxSettings::MAIL_TPL_VOICEMAIL_BODY,
-            PbxSettings::MAIL_TPL_VOICEMAIL_FOOTER,
-
-            // Notification emails
-            PbxSettings::SYSTEM_NOTIFICATIONS_EMAIL,
-            PbxSettings::SYSTEM_EMAIL_FOR_MISSED,
-            PbxSettings::VOICEMAIL_NOTIFICATIONS_EMAIL
-        ];
-    }
-
-
-    /**
-     * Clean email fields by removing placeholder values
-     *
-     * @param array $data Settings data
-     * @return array Cleaned data
-     */
-    private static function cleanEmailFields(array $data): array
-    {
-        $emailFields = [
-            PbxSettings::MAIL_SMTP_SENDER_ADDRESS,
-            PbxSettings::SYSTEM_NOTIFICATIONS_EMAIL,
-            PbxSettings::SYSTEM_EMAIL_FOR_MISSED,
-            PbxSettings::VOICEMAIL_NOTIFICATIONS_EMAIL
-        ];
-
-        $placeholders = ['_@_._', '@', '_@_', '___@___.___'];
-
-        foreach ($emailFields as $field) {
-            if (isset($data[$field]) && in_array($data[$field], $placeholders, true)) {
-                // Replace placeholder with empty string
-                $data[$field] = '';
-            }
-        }
-
-        return $data;
-    }
-
-    /**
-     * Validate email fields
-     *
-     * @param array $data Settings data
-     * @return array Validation result
-     */
-    private static function validateEmailFields(array $data): array
-    {
-        $emailFields = [
-            PbxSettings::MAIL_SMTP_SENDER_ADDRESS => 'Sender address',
-            PbxSettings::SYSTEM_NOTIFICATIONS_EMAIL => 'System notifications email',
-            PbxSettings::SYSTEM_EMAIL_FOR_MISSED => 'Missed calls email',
-            PbxSettings::VOICEMAIL_NOTIFICATIONS_EMAIL => 'Voicemail notifications email'
-        ];
-
-        $errors = [];
-
-        foreach ($emailFields as $field => $fieldName) {
-            if (!isset($data[$field]) || empty($data[$field])) {
-                // Email fields can be empty - they are optional
-                continue;
-            }
-
-            $value = $data[$field];
-
-            // Check for placeholder values that should not be saved
-            if (in_array($value, ['_@_._', '@', '_@_', '___@___.___'], true)) {
-                $errors[] = "$fieldName contains invalid placeholder value. Please enter a valid email or leave empty.";
-                continue;
-            }
-
-            // Validate email format
-            if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
-                $errors[] = "$fieldName is not a valid email address: $value";
-            }
-        }
-
-        return [
-            'valid' => empty($errors),
-            'messages' => $errors
-        ];
     }
 
     /**

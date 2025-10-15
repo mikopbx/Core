@@ -55,7 +55,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         $data['applications'] = $model->getApplicationsArray();
 
         // Add password strength indicator
-        $data['weakPassword'] = (int)($model->weakPassword ?? 0);
+        $data['weakPassword'] = (string)($model->weakPassword ?? '0');
 
         // Apply OpenAPI schema formatting to convert types automatically
         // This replaces manual formatBooleanFields(), handleNullValues(), etc.
@@ -119,7 +119,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'password' => '',
             'applications' => [],
             'description' => '',
-            'weakPassword' => 0,
+            'weakPassword' => '0',
         ];
     }
 
@@ -263,12 +263,12 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                     'example' => 'API user for call control'
                 ],
                 'weakPassword' => [
-                    'type' => 'integer',
+                    'type' => 'string',
                     'description' => 'rest_param_aru_weak_password',
-                    'enum' => [0, 1],
-                    'sanitize' => 'int',
-                    'default' => 0,
-                    'example' => 0
+                    'enum' => ['0', '1', '2'], // 2 - Weak password, 1 - OK, 0 - Unknown password status
+                    'sanitize' => 'enum',
+                    'default' => '0',
+                    'example' => '2' // Weak password
                 ]
             ],
             'response' => [

@@ -33,18 +33,22 @@ use MikoPBX\PBXCoreREST\Lib\Common\AbstractCreateAction;
 class CreateRecordAction extends AbstractCreateAction
 {
     /**
-     * Create new sound file record
+     * Get human-readable entity name for logging
      *
-     * @param array<string, mixed> $data Sound file data
-     * @return PBXApiResult Result with created record data
+     * @return string Entity name in lowercase
      */
-    public static function main(array $data): PBXApiResult
+    protected static function getEntityName(): string
     {
-        // Ensure this is a CREATE operation by removing ID
-        // SaveRecordAction will detect CREATE operation when ID is empty
-        unset($data['id']);
+        return 'sound file';
+    }
 
-        // Delegate to SaveRecordAction for unified logic
-        return SaveRecordAction::main($data);
+    /**
+     * Get SaveRecordAction class for this entity
+     *
+     * @return string Fully qualified SaveRecordAction class name
+     */
+    protected static function getSaveActionClass(): string
+    {
+        return SaveRecordAction::class;
     }
 }

@@ -65,7 +65,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
     resourceLevelMethods: ['getRecord', 'update', 'patch', 'delete', 'getStatus', 'forceCheck', 'updateStatus', 'copy'],
     collectionLevelMethods: ['getList', 'create', 'getStatuses', 'getHistory', 'getStats'],
     customMethods: ['getDefault', 'getStatuses', 'getStatus', 'getHistory', 'getStats', 'copy', 'forceCheck', 'updateStatus'],
-    idPattern: ['IAX-', 'IAX-PROVIDER-']  // Modern: IAX-xxx, Legacy: IAX-PROVIDER-xxx
+    idPattern: ['IAX-', 'IAX-PROVIDER-', 'IAX-TRUNK-']  // Modern: IAX-TRUNK-xxx, Legacy: IAX-PROVIDER-xxx, IAX-xxx 
 )]
 class RestController extends BaseRestController
 {

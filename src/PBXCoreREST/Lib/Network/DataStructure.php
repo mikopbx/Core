@@ -19,6 +19,7 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Network;
 
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
 use MikoPBX\PBXCoreREST\Lib\Common\OpenApiSchemaProvider;
 
@@ -79,6 +80,22 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     {
         $definitions = self::getParameterDefinitions();
         return $definitions['related']['NetworkInterface'] ?? [];
+    }
+
+
+    /**
+     * Get default value for a field from Single Source of Truth
+     *
+     * WHY: Eliminates duplication by using PbxSettingsDefaultValuesTrait.
+     * Ensures consistency across the entire application.
+     *
+     * @param string $fieldName The PbxSettings constant name
+     * @return mixed The default value from PbxSettingsDefaultValuesTrait
+     */
+    public static function getDefaultValue(string $fieldName): mixed
+    {
+        $defaults = PbxSettings::getDefaultArrayValues();
+        return $defaults[$fieldName] ?? null;
     }
 
     /**
@@ -151,35 +168,41 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                     'type' => 'object',
                     'description' => 'rest_schema_net_config_ports',
                     'properties' => [
-                        'SIP_PORT' => [
+                        PbxSettings::SIP_PORT => [
                             'type' => 'string',
                             'description' => 'rest_schema_net_ports_sip',
-                            'example' => '5060'
+                            'example' => (string)self::getDefaultValue(PbxSettings::SIP_PORT),
+                            'default' => (string)self::getDefaultValue(PbxSettings::SIP_PORT)
                         ],
-                        'EXTERNAL_SIP_PORT' => [
+                        PbxSettings::EXTERNAL_SIP_PORT => [
                             'type' => 'string',
                             'description' => 'rest_schema_net_ports_external_sip',
-                            'example' => '5060'
+                            'example' => (string)self::getDefaultValue(PbxSettings::EXTERNAL_SIP_PORT),
+                            'default' => (string)self::getDefaultValue(PbxSettings::EXTERNAL_SIP_PORT)
                         ],
-                        'TLS_PORT' => [
+                        PbxSettings::TLS_PORT => [
                             'type' => 'string',
                             'description' => 'rest_schema_net_ports_tls',
-                            'example' => '5061'
+                            'example' => (string)self::getDefaultValue(PbxSettings::TLS_PORT),
+                            'default' => (string)self::getDefaultValue(PbxSettings::TLS_PORT)
                         ],
-                        'EXTERNAL_TLS_PORT' => [
+                        PbxSettings::EXTERNAL_TLS_PORT => [
                             'type' => 'string',
                             'description' => 'rest_schema_net_ports_external_tls',
-                            'example' => '5061'
+                            'example' => (string)self::getDefaultValue(PbxSettings::EXTERNAL_TLS_PORT),
+                            'default' => (string)self::getDefaultValue(PbxSettings::EXTERNAL_TLS_PORT)
                         ],
-                        'RTP_PORT_FROM' => [
+                        PbxSettings::RTP_PORT_FROM => [
                             'type' => 'string',
                             'description' => 'rest_schema_net_ports_rtp_from',
-                            'example' => '10000'
+                            'example' => (string)self::getDefaultValue(PbxSettings::RTP_PORT_FROM),
+                            'default' => (string)self::getDefaultValue(PbxSettings::RTP_PORT_FROM)
                         ],
-                        'RTP_PORT_TO' => [
+                        PbxSettings::RTP_PORT_TO => [
                             'type' => 'string',
                             'description' => 'rest_schema_net_ports_rtp_to',
-                            'example' => '10200'
+                            'example' => (string)self::getDefaultValue(PbxSettings::RTP_PORT_TO),
+                            'default' => (string)self::getDefaultValue(PbxSettings::RTP_PORT_TO)
                         ],
                     ]
                 ],

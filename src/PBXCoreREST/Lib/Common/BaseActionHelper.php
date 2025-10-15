@@ -177,6 +177,19 @@ class BaseActionHelper
                     case 'html_escape':
                         $value = htmlspecialchars($value, ENT_QUOTES);
                         break;
+                    case 'email':
+                        // Email sanitization: remove placeholder values and trim
+                        // Common placeholder values that should be treated as empty
+                        $placeholders = ['_@_._', '@', '_@_', '___@___.___'];
+
+                        if (in_array($value, $placeholders, true)) {
+                            // Replace placeholder with empty string
+                            $value = '';
+                        } else {
+                            // Trim whitespace and sanitize email format
+                            $value = filter_var(trim($value), FILTER_SANITIZE_EMAIL);
+                        }
+                        break;
                     case 'max':
                         if (is_string($value)) {
                             // Use mb_substr for proper UTF-8 multibyte character handling

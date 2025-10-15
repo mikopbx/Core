@@ -544,13 +544,24 @@ abstract class AbstractProviderStatusAction extends Injectable
             if ($cachedDataJson !== null) {
                 $cachedData = json_decode($cachedDataJson, true);
                 if ($cachedData && isset($cachedData['statuses'])) {
-                    return $cachedData['statuses'];
+                    // Ensure empty arrays are converted to stdClass for consistent JSON encoding
+                    $statuses = $cachedData['statuses'];
+                    if (isset($statuses['sip']) && is_array($statuses['sip']) && empty($statuses['sip'])) {
+                        $statuses['sip'] = new \stdClass();
+                    }
+                    if (isset($statuses['iax']) && is_array($statuses['iax']) && empty($statuses['iax'])) {
+                        $statuses['iax'] = new \stdClass();
+                    }
+                    return $statuses;
                 }
             }
         } catch (Throwable $e) {
             // Ignore cache errors
         }
-        return [];
+        return [
+            'sip' => new \stdClass(),
+            'iax' => new \stdClass()
+        ];
     }
 
     /**
@@ -860,8 +871,8 @@ abstract class AbstractProviderStatusAction extends Injectable
     {
         try {
             $statuses = [
-                'sip' => [],
-                'iax' => []
+                'sip' => new \stdClass(),
+                'iax' => new \stdClass()
             ];
 
             // If specific provider requested, get its type first
@@ -874,24 +885,32 @@ abstract class AbstractProviderStatusAction extends Injectable
                 if ($provider['type'] === 'sip') {
                     $sipStatuses = self::getSipProviderStatuses();
                     if ($sipStatuses !== null && isset($sipStatuses[$specificProviderId])) {
-                        $statuses['sip'][$specificProviderId] = $sipStatuses[$specificProviderId];
+                        $statuses['sip'] = [$specificProviderId => $sipStatuses[$specificProviderId]];
+                    } else {
+                        $statuses['sip'] = new \stdClass();
                     }
                 } elseif ($provider['type'] === 'iax') {
                     $iaxStatuses = self::getIaxProviderStatuses();
                     if ($iaxStatuses !== null && isset($iaxStatuses[$specificProviderId])) {
-                        $statuses['iax'][$specificProviderId] = $iaxStatuses[$specificProviderId];
+                        $statuses['iax'] = [$specificProviderId => $iaxStatuses[$specificProviderId]];
+                    } else {
+                        $statuses['iax'] = new \stdClass();
                     }
                 }
             } else {
                 // Get all provider statuses
                 $sipStatuses = self::getSipProviderStatuses();
-                if ($sipStatuses !== null) {
+                if ($sipStatuses !== null && !empty($sipStatuses)) {
                     $statuses['sip'] = $sipStatuses;
+                } else {
+                    $statuses['sip'] = new \stdClass();
                 }
                 
                 $iaxStatuses = self::getIaxProviderStatuses();
-                if ($iaxStatuses !== null) {
+                if ($iaxStatuses !== null && !empty($iaxStatuses)) {
                     $statuses['iax'] = $iaxStatuses;
+                } else {
+                    $statuses['iax'] = new \stdClass();
                 }
             }
             

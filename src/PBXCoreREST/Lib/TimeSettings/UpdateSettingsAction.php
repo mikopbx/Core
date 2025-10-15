@@ -25,8 +25,8 @@ use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
-use MikoPBX\PBXCoreREST\Lib\Common\FieldTypeResolver;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\PBXCoreREST\Lib\TimeSettings\DataStructure;
 use Phalcon\Di\Di;
 
 /**
@@ -86,7 +86,7 @@ class UpdateSettingsAction
                     case PbxSettings::PBX_MANUAL_TIME_SETTINGS:
                         // Convert API format (boolean) to storage format (string)
                         if (isset($data[$key])) {
-                            $record->value = FieldTypeResolver::convertForStorage($data[$key], PbxSettings::class, $key);
+                            $record->value = DataStructure::convertValueForStorage($key, $data[$key]);
                         }
                         break;
 

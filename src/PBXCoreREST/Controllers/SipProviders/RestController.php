@@ -65,7 +65,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
     resourceLevelMethods: ['getRecord', 'update', 'patch', 'delete', 'getStatus', 'forceCheck', 'updateStatus', 'copy'],
     collectionLevelMethods: ['getList', 'create', 'getStatuses', 'getHistory', 'getStats'],
     customMethods: ['getDefault', 'getStatuses', 'getStatus', 'getHistory', 'getStats', 'copy', 'forceCheck', 'updateStatus'],
-    idPattern: ['SIP-', 'SIP-PROVIDER-']  // Modern: SIP-xxx, Legacy: SIP-PROVIDER-xxx
+    idPattern: ['SIP-', 'SIP-PROVIDER-', 'SIP-TRUNK-']  // Modern: SIP-TRUNK-xxx, Legacy: SIP-PROVIDER-xxx, SIP-xxx
 )]
 class RestController extends BaseRestController
 {

@@ -438,8 +438,76 @@ abstract class AbstractDataStructure
             default => static::getDetailSchema()
         };
 
-        // Apply schema formatting
-        return SchemaFormatter::format($data, $schema);
+        // Apply schema formatting with proper type conversion
+        return self::convertDataBySchema($data, $schema);
+    }
+
+    /**
+     * Convert data values based on OpenAPI schema definition
+     *
+     * Recursively processes data structure and converts values to proper types
+     * based on the schema definition. Handles nested objects and arrays.
+     *
+     * @param array<string, mixed> $data Data to convert
+     * @param array<string, mixed> $schema OpenAPI schema definition
+     * @return array<string, mixed> Data with converted types
+     */
+    protected static function convertDataBySchema(array $data, array $schema): array
+    {
+        if (!isset($schema['properties'])) {
+            return $data;
+        }
+
+        $formatted = [];
+        foreach ($data as $key => $value) {
+            if (isset($schema['properties'][$key])) {
+                $fieldSchema = $schema['properties'][$key];
+                $formatted[$key] = self::convertValueBySchema($value, $fieldSchema);
+            } else {
+                $formatted[$key] = $value;
+            }
+        }
+
+        return $formatted;
+    }
+
+    /**
+     * Convert a single value based on its schema definition
+     *
+     * Handles type conversion for primitive types and recursively processes
+     * nested objects and arrays.
+     *
+     * @param mixed $value Raw value to convert
+     * @param array<string, mixed> $fieldSchema Field schema definition
+     * @return mixed Converted value with proper type
+     */
+    protected static function convertValueBySchema(mixed $value, array $fieldSchema): mixed
+    {
+        $type = $fieldSchema['type'] ?? 'string';
+
+        // Special handling for object type with nested properties
+        if ($type === 'object' && isset($fieldSchema['properties']) && is_array($value)) {
+            return self::convertDataBySchema($value, $fieldSchema);
+        }
+
+        // Special handling for arrays with item schema
+        if ($type === 'array' && isset($fieldSchema['items']) && is_array($value)) {
+            $convertedArray = [];
+            foreach ($value as $item) {
+                $convertedArray[] = self::convertValueBySchema($item, $fieldSchema['items']);
+            }
+            return $convertedArray;
+        }
+
+        // Convert primitive types
+        return match ($type) {
+            'boolean' => in_array($value, ['1', 1, true, 'true'], true),
+            'integer' => is_numeric($value) ? (int)$value : $value,
+            'number' => is_numeric($value) ? (float)$value : $value,
+            'array' => is_array($value) ? $value : [],
+            'object' => is_array($value) ? $value : [],
+            default => is_array($value) ? $value : (string)$value
+        };
     }
 
     /**
@@ -703,6 +771,12 @@ abstract class AbstractDataStructure
             $type = $definition['type'] ?? 'string';
             $sanitizationParts[] = $type;
 
+            // Add custom sanitization type if specified (email, text, etc.)
+            // This handles special sanitization like 'email' which replaces placeholders
+            if (isset($definition['sanitize'])) {
+                $sanitizationParts[] = $definition['sanitize'];
+            }
+
             // Add type-specific constraints
             if ($type === 'string') {
                 // Pattern validation
@@ -912,5 +986,121 @@ abstract class AbstractDataStructure
     public static function getRelatedSchemas(): array
     {
         return [];
+    }
+
+    /**
+     * Convert value to API format using field type from Single Source of Truth
+     *
+     * WHY: Provides a universal method for converting values based on field type
+     * defined in DataStructure::getParameterDefinitions() instead of relying on
+     * external type resolvers or annotations.
+     *
+     * This method should be used in all actions that need to convert database
+     * values to API format, ensuring consistency across the entire API.
+     *
+     * Usage in actions:
+     * ```php
+     * // Convert single value
+     * $apiValue = DataStructure::convertValueToApiFormat('fieldName', $dbValue);
+     *
+     * // Convert entire settings array
+     * foreach ($settings as $key => $value) {
+     *     $result[$key] = DataStructure::convertValueToApiFormat($key, $value);
+     * }
+     * ```
+     *
+     * @param string $fieldName Field name to determine type from definitions
+     * @param mixed $value Raw value to convert (usually from database)
+     * @return mixed Converted value based on field type
+     */
+    public static function convertValueToApiFormat(string $fieldName, mixed $value): mixed
+    {
+        // Get field type from DataStructure if it implements the method
+        // This provides type determination from Single Source of Truth
+        $type = 'string'; // Default type
+
+        if (method_exists(static::class, 'getFieldType')) {
+            // Use specialized getFieldType method if available (e.g., GeneralSettings)
+            $type = static::getFieldType($fieldName);
+        } elseif (method_exists(static::class, 'getParameterDefinitions')) {
+            // Extract type from parameter definitions
+            $definitions = static::getParameterDefinitions();
+
+            // Check in response section first (most complete)
+            if (isset($definitions['response'][$fieldName]['type'])) {
+                $type = $definitions['response'][$fieldName]['type'];
+            } elseif (isset($definitions['request'][$fieldName]['type'])) {
+                $type = $definitions['request'][$fieldName]['type'];
+            }
+
+            // Special handling for password fields based on naming
+            if (str_contains(strtolower($fieldName), 'password') ||
+                str_contains(strtolower($fieldName), 'secret') ||
+                str_contains(strtolower($fieldName), 'private_key')) {
+                $type = 'password';
+            }
+        }
+
+        // Convert based on type
+        return match ($type) {
+            'boolean' => in_array($value, ['1', 1, true, 'true'], true),
+            'integer' => is_numeric($value) ? (int)$value : $value,
+            'float', 'number' => is_numeric($value) ? (float)$value : $value,
+            'password' => '********', // Standard API password mask
+            'array' => is_string($value) ? json_decode($value, true) ?? [] : (array)$value,
+            'object' => is_string($value) ? json_decode($value, true) ?? [] : (array)$value,
+            default => (string)$value
+        };
+    }
+
+    /**
+     * Convert value from API format to storage format
+     *
+     * WHY: Provides centralized type conversion for database storage.
+     * Ensures boolean values are stored as '0'/'1' strings, not 'true'/'false'.
+     * Replaces FieldTypeResolver::convertForStorage() for Single Source of Truth pattern.
+     *
+     * This method is the inverse of convertValueToApiFormat() and ensures
+     * consistent data storage format across the entire application.
+     *
+     * Usage in SaveRecordAction:
+     * ```php
+     * // Convert boolean field before saving
+     * $storageValue = DataStructure::convertValueForStorage('enabled', $apiValue);
+     * $model->enabled = $storageValue;
+     * ```
+     *
+     * @param string $fieldName Field name to determine type from definitions
+     * @param mixed $value Value from API request to convert for storage
+     * @return string Value formatted for database storage (always string)
+     */
+    public static function convertValueForStorage(string $fieldName, mixed $value): string
+    {
+        // Get field type from DataStructure if it implements the method
+        $type = 'string'; // Default type
+
+        if (method_exists(static::class, 'getFieldType')) {
+            // Use specialized getFieldType method if available (e.g., GeneralSettings)
+            $type = static::getFieldType($fieldName);
+        } elseif (method_exists(static::class, 'getParameterDefinitions')) {
+            // Extract type from parameter definitions
+            $definitions = static::getParameterDefinitions();
+
+            // Check in request section first (input data)
+            if (isset($definitions['request'][$fieldName]['type'])) {
+                $type = $definitions['request'][$fieldName]['type'];
+            } elseif (isset($definitions['response'][$fieldName]['type'])) {
+                $type = $definitions['response'][$fieldName]['type'];
+            }
+        }
+
+        // Convert based on type
+        return match ($type) {
+            'boolean' => in_array($value, [true, 'true', '1', 1, 'on'], true) ? '1' : '0',
+            'integer' => (string)(is_numeric($value) ? (int)$value : $value),
+            'float', 'number' => (string)(is_numeric($value) ? (float)$value : $value),
+            'array', 'object' => is_array($value) ? json_encode($value) : (string)$value,
+            default => (string)$value
+        };
     }
 }

@@ -35,18 +35,18 @@ use MikoPBX\PBXCoreREST\Lib\Common\AbstractCreateAction;
 class CreateRecordAction extends AbstractCreateAction
 {
     /**
-     * Create new ARI user.
-     *
-     * @param array $data User data
-     * @return PBXApiResult
+     * {@inheritdoc}
      */
-    public static function main(array $data): PBXApiResult
+    protected static function getEntityName(): string
     {
-        // Ensure this is a CREATE operation by removing ID
-        // SaveRecordAction will detect CREATE operation when ID is empty
-        unset($data['id']);
+        return 'ARI user';
+    }
 
-        // Delegate to SaveRecordAction for unified logic
-        return SaveRecordAction::main($data);
+    /**
+     * {@inheritdoc}
+     */
+    protected static function getSaveActionClass(): string
+    {
+        return SaveRecordAction::class;
     }
 }

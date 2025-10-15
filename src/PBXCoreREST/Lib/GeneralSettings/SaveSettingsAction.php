@@ -27,7 +27,7 @@ use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\PasswordService;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
-use MikoPBX\PBXCoreREST\Lib\Common\FieldTypeResolver;
+use MikoPBX\PBXCoreREST\Lib\GeneralSettings\DataStructure;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Di;
 
@@ -208,27 +208,31 @@ class SaveSettingsAction extends AbstractSaveRecordAction
         $messages = ['error' => []];
         $defaultPbxSettings = PbxSettings::getDefaultArrayValues();
         $di = Di::getDefault();
-        
+
         // Reset update counter and field list
         self::$actualUpdatesCount = 0;
         self::$updatedFields = [];
-        
+
         // Get security service for password hashing
         $security = $di->getShared('security');
-        
+
+        // Get list of read-only settings
+        $readOnlySettings = DataStructure::getReadOnlySettings();
+
         foreach ($defaultPbxSettings as $key => $defaultValue) {
             // Skip if this key is not in the request data
             if (!array_key_exists($key, $data)) {
+                continue;
+            }
+
+            // Skip read-only fields
+            if (in_array($key, $readOnlySettings, true)) {
                 continue;
             }
             
             $newValue = null;
             
             switch ($key) {
-                case PbxSettings::SSH_ID_RSA_PUB:
-                    // Skip SSH public key, it's read-only
-                    continue 2;
-                    
                 case PbxSettings::SSH_AUTHORIZED_KEYS:
                     // Process SSH authorized keys from array format if needed
                     $newValue = self::processAuthorizedKeys($data[$key]);
@@ -253,7 +257,7 @@ class SaveSettingsAction extends AbstractSaveRecordAction
                     break;
                     
                 case PbxSettings::SEND_METRICS:
-                    $newValue = FieldTypeResolver::convertForStorage($data[$key], PbxSettings::class, $key);
+                    $newValue = DataStructure::convertValueForStorage($key, $data[$key]);
                     break;
                     
                 case PbxSettings::PBX_FEATURE_TRANSFER_DIGIT_TIMEOUT:
@@ -265,11 +269,7 @@ class SaveSettingsAction extends AbstractSaveRecordAction
                 case PbxSettings::SIP_AUTH_PREFIX:
                     $newValue = trim($data[$key]);
                     break;
-                    
-                case PbxSettings::SSH_ID_RSA_PUB:
-                    // This field is readonly in the form, skip it
-                    continue 2;
-                    
+
                 case PbxSettings::WEB_ADMIN_PASSWORD:
                     if ($data[$key] !== GeneralSettingsEditForm::HIDDEN_PASSWORD) {
                         // User changed Web password
@@ -304,8 +304,8 @@ class SaveSettingsAction extends AbstractSaveRecordAction
 
                 default:
                     // Check if this is a boolean field and convert accordingly
-                    if (FieldTypeResolver::isFieldType(PbxSettings::class, $key, 'boolean')) {
-                        $newValue = FieldTypeResolver::convertForStorage($data[$key], PbxSettings::class, $key);
+                    if (DataStructure::getFieldType($key) === 'boolean') {
+                        $newValue = DataStructure::convertValueForStorage($key, $data[$key]);
                     } else {
                         // For all other settings, use value as-is
                         $newValue = $data[$key];

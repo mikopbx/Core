@@ -24,7 +24,6 @@ namespace MikoPBX\PBXCoreREST\Lib\GeneralSettings;
 use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractGetRecordAction;
-use MikoPBX\PBXCoreREST\Lib\Common\FieldTypeResolver;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 
 /**
@@ -50,7 +49,7 @@ class GetDefaultAction extends AbstractGetRecordAction
             // Get default values from model
             $defaultSettings = PbxSettings::getDefaultArrayValues();
 
-            // Filter out special markers
+            // Filter out special markers and convert to API format
             $filteredSettings = [];
             foreach ($defaultSettings as $key => $value) {
                 // Skip special marker keys
@@ -58,26 +57,23 @@ class GetDefaultAction extends AbstractGetRecordAction
                     continue;
                 }
 
-                // Convert to API format
-                $filteredSettings[$key] = FieldTypeResolver::convertToApiFormat(
-                    $value,
-                    PbxSettings::class,
-                    $key
-                );
+                // Use DataStructure to determine field type (Single Source of Truth)
+                // This ensures consistency with parameter definitions
+                $filteredSettings[$key] = DataStructure::convertValueToApiFormat($key, $value);
             }
 
             // Get default codec configuration
             $codecs = self::getDefaultCodecs();
 
-            // Return structured response
-            $res->data = [
-                'settings' => $filteredSettings,
-                'codecs' => $codecs,
-                'passwordValidation' => [
+            // Return structured response using DataStructure for consistency
+            $res->data = DataStructure::createFromData(
+                $filteredSettings,
+                $codecs,
+                [
                     'isDefaultWebPassword' => true,
                     'isDefaultSSHPassword' => true
                 ]
-            ];
+            );
             $res->success = true;
 
         } catch (\Exception $e) {

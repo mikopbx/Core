@@ -71,7 +71,7 @@ trait PbxSettingsDefaultValuesTrait
             PbxSettings::WEB_HTTPS_PUBLIC_KEY => '',
             PbxSettings::WEB_HTTPS_PRIVATE_KEY => '',
             PbxSettings::REDIRECT_TO_HTTPS => '1',
-            PbxSettings::MAIL_SMTP_USE_TLS => '0',
+            PbxSettings::MAIL_SMTP_USE_TLS => 'none',
             PbxSettings::MAIL_SMTP_CERT_CHECK => '0',
             PbxSettings::MAIL_SMTP_HOST => '',
             PbxSettings::MAIL_SMTP_PORT => '25',

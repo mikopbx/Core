@@ -72,8 +72,10 @@ class ExtensionsManagementProcessor extends Injectable
                 }
                 break;
             case 'getPhoneRepresent':
-                if (!empty($data['number'])) {
-                    $res = Utils::getPhoneRepresent($data['number']);
+                // Support both 'number' (collection-level) and 'id' (resource-level)
+                $number = $data['number'] ?? $data['id'] ?? null;
+                if (!empty($number)) {
+                    $res = Utils::getPhoneRepresent($number);
                 } else {
                     $res->messages['error'][] = 'Empty number value in POST/GET data';
                 }

@@ -22,7 +22,7 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Lib\MailSettings;
 
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\PBXCoreREST\Lib\Common\FieldTypeResolver;
+use MikoPBX\PBXCoreREST\Lib\MailSettings\DataStructure;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 
 /**
@@ -46,41 +46,8 @@ class GetListAction
         $res->processor = __METHOD__;
 
         try {
-            // Define all mail-related setting keys
-            $mailSettingKeys = [
-                // Basic SMTP settings
-                PbxSettings::MAIL_SMTP_HOST,
-                PbxSettings::MAIL_SMTP_PORT,
-                PbxSettings::MAIL_SMTP_USERNAME,
-                PbxSettings::MAIL_SMTP_PASSWORD,
-                PbxSettings::MAIL_SMTP_USE_TLS,
-                PbxSettings::MAIL_SMTP_CERT_CHECK,
-                PbxSettings::MAIL_SMTP_FROM_USERNAME,
-                PbxSettings::MAIL_SMTP_SENDER_ADDRESS,
-                PbxSettings::MAIL_ENABLE_NOTIFICATIONS,
-
-                // OAuth2 settings
-                PbxSettings::MAIL_SMTP_AUTH_TYPE,
-                PbxSettings::MAIL_OAUTH2_PROVIDER,
-                PbxSettings::MAIL_OAUTH2_CLIENT_ID,
-                PbxSettings::MAIL_OAUTH2_CLIENT_SECRET,
-                PbxSettings::MAIL_OAUTH2_REFRESH_TOKEN,
-                PbxSettings::MAIL_OAUTH2_ACCESS_TOKEN,
-                PbxSettings::MAIL_OAUTH2_TOKEN_EXPIRES,
-
-                // Email templates
-                PbxSettings::MAIL_TPL_MISSED_CALL_SUBJECT,
-                PbxSettings::MAIL_TPL_MISSED_CALL_BODY,
-                PbxSettings::MAIL_TPL_MISSED_CALL_FOOTER,
-                PbxSettings::MAIL_TPL_VOICEMAIL_SUBJECT,
-                PbxSettings::MAIL_TPL_VOICEMAIL_BODY,
-                PbxSettings::MAIL_TPL_VOICEMAIL_FOOTER,
-
-                // Notification emails
-                PbxSettings::SYSTEM_NOTIFICATIONS_EMAIL,
-                PbxSettings::SYSTEM_EMAIL_FOR_MISSED,
-                PbxSettings::VOICEMAIL_NOTIFICATIONS_EMAIL
-            ];
+            // Get all mail-related setting keys from DataStructure (Single Source of Truth)
+            $mailSettingKeys = DataStructure::getAllMailSettingKeys();
 
             // Retrieve settings
             $settings = [];
@@ -91,8 +58,8 @@ class GetListAction
                 if (self::isSensitiveField($key) && !empty($value)) {
                     $value = self::maskSensitiveData($key, $value);
                 } else {
-                    // Convert to API format based on field type (boolean fields become true/false)
-                    $value = FieldTypeResolver::convertToApiFormat($value, PbxSettings::class, $key);
+                    // Convert to API format using DataStructure (Single Source of Truth)
+                    $value = DataStructure::convertValueToApiFormat($key, $value);
                 }
 
                 $settings[$key] = $value;

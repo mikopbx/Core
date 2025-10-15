@@ -24,8 +24,8 @@ namespace MikoPBX\PBXCoreREST\Lib\TimeSettings;
 use DateTime;
 use DateTimeZone;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\PBXCoreREST\Lib\Common\FieldTypeResolver;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use MikoPBX\PBXCoreREST\Lib\TimeSettings\DataStructure;
 
 /**
  * Get Time Settings action
@@ -49,18 +49,18 @@ class GetSettingsAction
         try {
             $settings = [];
 
-            // Get settings from database
+            // Get settings from database using DataStructure (Single Source of Truth)
             $parameters = [
                 'key IN ({ids:array})',
-                'bind' => ['ids' => self::getTimeSettingsKeys()],
+                'bind' => ['ids' => DataStructure::getTimeSettingsKeys()],
             ];
 
             /** @var \Phalcon\Mvc\Model\Resultset\Simple<PbxSettings> $timeSettingsFields */
             $timeSettingsFields = PbxSettings::find($parameters);
 
             foreach ($timeSettingsFields as $field) {
-                // Use FieldTypeResolver to convert values to proper types
-                $value = FieldTypeResolver::convertToApiFormat($field->value, PbxSettings::class, $field->key);
+                // Use DataStructure to convert values to proper types (Single Source of Truth)
+                $value = DataStructure::convertValueToApiFormat($field->key, $field->value);
 
                 switch ($field->key) {
                     case PbxSettings::PBX_TIMEZONE:
@@ -100,20 +100,6 @@ class GetSettingsAction
         }
 
         return $res;
-    }
-
-    /**
-     * Get the array of time settings keys
-     *
-     * @return array<string> Array of time settings keys
-     */
-    private static function getTimeSettingsKeys(): array
-    {
-        return [
-            PbxSettings::PBX_TIMEZONE,
-            PbxSettings::NTP_SERVER,
-            PbxSettings::PBX_MANUAL_TIME_SETTINGS,
-        ];
     }
 
     /**

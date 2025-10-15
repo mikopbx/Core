@@ -359,10 +359,10 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'sip_dtmfmode' => [
                     'type' => 'string',
                     'description' => 'rest_param_emp_sip_dtmfmode',
-                    'enum' => ['auto', 'auto_info', 'inband', 'rfc2833', 'info'],
+                    'enum' => ['auto', 'auto_info', 'inband', 'rfc4733', 'info'],
                     'sanitize' => 'string',
                     'default' => 'auto',
-                    'example' => 'rfc2833'
+                    'example' => 'rfc4733'
                 ],
                 'sip_transport' => [
                     'type' => 'string',

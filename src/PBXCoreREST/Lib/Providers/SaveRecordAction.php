@@ -19,13 +19,14 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Providers;
 
+use MikoPBX\Common\Models\Iax;
 use MikoPBX\Common\Models\Providers;
 use MikoPBX\Common\Models\Sip;
-use MikoPBX\Common\Models\Iax;
 use MikoPBX\Common\Models\SipHosts;
+use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\System\SystemMessages;
-use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
+use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 
 /**
  * ✨ REFERENCE IMPLEMENTATION: Provider Save Action (Polymorphic)
@@ -148,6 +149,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
 
         $provider = null;
         $isNewRecord = true;
+        $httpMethod = strtoupper($data['httpMethod']);
 
         if (!empty($sanitizedData['id'])) {
             // Try to find existing record by uniqid
@@ -164,9 +166,14 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 }
             } else {
                 // ID provided but record not found
-                $res->messages['error'][] = 'Provider not found';
-                $res->httpCode = 404;
-                return $res;
+                // For POST (create) - allow predefined ID
+                // For PUT/PATCH (update) - require existing record
+                if ($httpMethod !== 'POST') {
+                    $res->messages['error'][] = 'Provider not found';
+                    $res->httpCode = 404;
+                    return $res;
+                }
+                // For POST: continue with new record creation using predefined ID
             }
         }
 
@@ -295,14 +302,14 @@ class SaveRecordAction extends AbstractSaveRecordAction
         // Host validation - required for outbound and none
         if (in_array($regType, ['outbound', 'none'])) {
             if (empty($data['host']) || trim($data['host']) === '') {
-                $errors[] = \MikoPBX\Common\Providers\TranslationProvider::translate('pr_ValidationProviderHostIsEmpty');
+                $errors[] = TranslationProvider::translate('pr_ValidationProviderHostIsEmpty');
             }
         }
 
         // Username and password validation based on registration type
         if ($regType === 'outbound' || $regType === 'none') {
             if (empty($data['username']) || trim($data['username']) === '') {
-                $errors[] = \MikoPBX\Common\Providers\TranslationProvider::translate('pr_ValidationProviderLogin');
+                $errors[] = TranslationProvider::translate('pr_ValidationProviderLogin');
             }
 
             // For UPDATE: password is optional if it's masked
@@ -312,14 +319,14 @@ class SaveRecordAction extends AbstractSaveRecordAction
             }
 
             if ($passwordRequired && (empty($data['secret']) || trim($data['secret']) === '')) {
-                $errors[] = \MikoPBX\Common\Providers\TranslationProvider::translate('pr_ValidationProviderPasswordEmpty');
+                $errors[] = TranslationProvider::translate('pr_ValidationProviderPasswordEmpty');
             }
         }
 
         // Inbound registration validation
         if ($regType === 'inbound') {
             if (empty($data['username']) || trim($data['username']) === '') {
-                $errors[] = \MikoPBX\Common\Providers\TranslationProvider::translate('pr_ValidationProviderLogin');
+                $errors[] = TranslationProvider::translate('pr_ValidationProviderLogin');
             }
 
             // Password optional if receive_calls_without_auth enabled
@@ -327,7 +334,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
             $passwordProvided = !empty($data['secret']) && trim($data['secret']) !== '' && $data['secret'] !== 'XXXXXXXX';
 
             if (!$receiveWithoutAuth && !$passwordProvided && $isNewRecord) {
-                $errors[] = \MikoPBX\Common\Providers\TranslationProvider::translate('pr_ValidationProviderPasswordEmpty');
+                $errors[] = TranslationProvider::translate('pr_ValidationProviderPasswordEmpty');
             }
         }
 

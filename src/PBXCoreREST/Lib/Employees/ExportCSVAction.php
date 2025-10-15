@@ -341,7 +341,7 @@ class ExportCSVAction
                 'mobile_number' => '',
                 'mobile_dialstring' => '',
                 'sip_secret' => 'StrongPass456!',
-                'sip_dtmfmode' => 'rfc2833',
+                'sip_dtmfmode' => 'rfc4733',
                 'sip_transport' => 'tcp',
                 'sip_enableRecording' => 'false',
                 'sip_networkfilterid' => '',
