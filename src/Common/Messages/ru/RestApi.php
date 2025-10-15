@@ -1117,6 +1117,16 @@ return [
     'rest_param_fw_description' => 'Описание правила файервола',
     'rest_param_fw_rules' => 'Объект с правилами доступа для различных сервисов (SIP, WEB, SSH и т.д.)',
     'rest_param_fw_ip' => 'IP адрес для разблокировки',
+    
+    // Banned IPs response schema
+    'rest_schema_banned_ip_map' => 'Карта IP адресов и информации об их блокировках',
+    'rest_schema_banned_ip_country' => 'ISO 3166-1 alpha-2 код страны (например US, RU, CN). Пустая строка если страна не определена.',
+    'rest_schema_banned_ip_country_name' => 'Полное название страны на английском языке. Пустая строка если страна не определена.',
+    'rest_schema_banned_ip_bans' => 'Список записей о блокировках данного IP в различных jail',
+    'rest_schema_banned_ip_jail' => 'Название jail Fail2ban, который заблокировал этот IP',
+    'rest_schema_banned_ip_timeofban' => 'UNIX timestamp момента блокировки IP адреса',
+    'rest_schema_banned_ip_timeunban' => 'UNIX timestamp момента когда IP будет разблокирован',
+    'rest_schema_banned_ip_version' => 'Маркер версии API',
 
     // OAuth2 callback parameters
     'rest_param_oauth_code' => 'Код авторизации OAuth2 от провайдера',

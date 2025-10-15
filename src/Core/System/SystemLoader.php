@@ -27,6 +27,7 @@ use MikoPBX\Core\System\Configs\BeanstalkConf;
 use MikoPBX\Core\System\Configs\CronConf;
 use MikoPBX\Core\System\Configs\DnsConf;
 use MikoPBX\Core\System\Configs\Fail2BanConf;
+use MikoPBX\Core\System\Configs\GeoIP2Conf;
 use MikoPBX\Core\System\Configs\IptablesConf;
 use MikoPBX\Core\System\Configs\MonitConf;
 use MikoPBX\Core\System\Configs\NTPConf;
@@ -341,6 +342,14 @@ class SystemLoader extends Injectable
             $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
         }
 
+        // Extract GeoIP2 database to storage
+        $this->echoStartMsg(' - Extracting GeoIP2 database...');
+        if (!$this->isRecoveryMode) {
+            $geoip2Conf = new GeoIP2Conf();
+            $this->echoResultMsg($geoip2Conf->start() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_SKIPPED);
+        } else {
+            $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
+        }
 
         // Apply user-created custom files (after Redis is started)
         $this->echoStartMsg(' - Applying user-created custom files...');

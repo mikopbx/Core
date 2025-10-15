@@ -114,8 +114,10 @@ const fail2BanIndex = {
 
         FirewallAPI.getBannedIps(fail2BanIndex.cbGetBannedIpList);
 
-        fail2BanIndex.$bannedIpListTable.on('click', fail2BanIndex.$unbanButtons, (e) => {
-            const unbannedIp = $(e.target).attr('data-value');
+        fail2BanIndex.$bannedIpListTable.on('click', '.unban-button', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const unbannedIp = $(e.currentTarget).attr('data-value');
             fail2BanIndex.$bannedIpListTable.addClass('loading');
             FirewallAPI.unbanIp(unbannedIp, fail2BanIndex.cbAfterUnBanIp);
         });
@@ -229,7 +231,11 @@ const fail2BanIndex = {
         // Prepare the new data to be added
         let newData = [];
         Object.keys(bannedIps).forEach(ip => {
-            const bans = bannedIps[ip];
+            const ipData = bannedIps[ip];
+            const bans = ipData.bans || [];
+            const country = ipData.country || '';
+            const countryName = ipData.countryName || '';
+            
             // Combine all reasons and dates for this IP into one string
             let reasonsDatesCombined = bans.map(ban => {
                 const blockDate = new Date(ban.timeofban * 1000).toLocaleString();
@@ -240,17 +246,34 @@ const fail2BanIndex = {
                 return `${reason} - ${blockDate}`;
             }).join('<br>'); // Use line breaks to separate each reason-date pair
 
-            // Construct a row: IP, Combined Reasons and Dates, Unban Button
+            // Build IP display with country flag if available
+            let ipDisplay = ip;
+            if (country) {
+                // Add country flag with popup tooltip
+                ipDisplay = `<span class="country-flag" data-content="${countryName}" data-position="top center"><i class="flag ${country.toLowerCase()}"></i></span>${ip}`;
+            }
+
+            // Construct a row: IP with Country, Combined Reasons and Dates, Unban Button
             const row = [
-                ip,
+                ipDisplay,
                 reasonsDatesCombined,
-                `<button class="ui icon basic mini button right floated unban-button" data-value="${ip}"><i class="icon trash red"></i>${globalTranslate.f2b_Unban}</button>`
+                `<button class="ui icon basic mini button right floated unban-button" data-value="${ip}"><i class="icon trash red"></i> ${globalTranslate.f2b_Unban}</button>`
             ];
             newData.push(row);
         });
 
         // Add the new data and redraw the table
         fail2BanIndex.dataTable.rows.add(newData).draw();
+        
+        // Initialize popups for country flags
+        fail2BanIndex.$bannedIpListTable.find('.country-flag').popup({
+            hoverable: true,
+            position: 'top center',
+            delay: {
+                show: 300,
+                hide: 100
+            }
+        });
     },
 
     // This callback method is used after an IP has been unbanned.

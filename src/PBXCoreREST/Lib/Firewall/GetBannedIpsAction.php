@@ -19,7 +19,9 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Firewall;
 
+use GeoIp2\Database\Reader;
 use MikoPBX\Core\System\Configs\Fail2BanConf;
+use MikoPBX\Core\System\Configs\GeoIP2Conf;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
@@ -33,6 +35,13 @@ use Phalcon\Di\Injectable;
  */
 class GetBannedIpsAction extends Injectable
 {
+    /**
+     * GeoIP2 database reader instance
+     *
+     * @var Reader|null
+     */
+    private static ?Reader $geoReader = null;
+
     /**
      * Retrieve a list of banned IP addresses or get data for a specific IP address.
      *
@@ -48,6 +57,57 @@ class GetBannedIpsAction extends Injectable
     }
 
     /**
+     * Initialize GeoIP2 reader if available
+     *
+     * @return void
+     */
+    private static function initGeoReader(): void
+    {
+        if (self::$geoReader !== null) {
+            return;
+        }
+
+        $dbPath = GeoIP2Conf::getDatabasePath();
+        if ($dbPath !== null) {
+            try {
+                self::$geoReader = new Reader($dbPath);
+            } catch (\Throwable $e) {
+                self::$geoReader = null;
+            }
+        }
+    }
+
+    /**
+     * Get country information for an IP address
+     *
+     * @param string $ip IP address to lookup
+     * @return array Country information (isoCode and name)
+     */
+    private static function getCountryInfo(string $ip): array
+    {
+        $result = [
+            'isoCode' => '',
+            'name' => '',
+        ];
+
+        self::initGeoReader();
+
+        if (self::$geoReader === null) {
+            return $result;
+        }
+
+        try {
+            $record = self::$geoReader->country($ip);
+            $result['isoCode'] = $record->country->isoCode ?? '';
+            $result['name'] = $record->country->name ?? '';
+        } catch (\Throwable $e) {
+            // IP not found or error - return empty data
+        }
+
+        return $result;
+    }
+
+    /**
      * Retrieve a list of banned IP addresses with their corresponding ban and unban timestamps.
      *
      * @return array An array containing the banned IP addresses and their timestamps.
@@ -55,6 +115,10 @@ class GetBannedIpsAction extends Injectable
     public static function getBanIpWithTime():array
     {
         $groupedResults = [];
+        
+        
+        return $groupedResults;
+        
         $sep = '"|"';
         $sepSpace = '" "';
         $fail2banPath = Util::which(Fail2BanConf::FB_CLIENT_BIN);
@@ -82,12 +146,17 @@ class GetBannedIpsAction extends Injectable
 
                 // Check if this IP is already in the result array.
                 if (!isset($groupedResults[$ip])) {
-                    // If not, initialize it.
-                    $groupedResults[$ip] = [];
+                    // If not, initialize it and add country info
+                    $countryInfo = self::getCountryInfo($ip);
+                    $groupedResults[$ip] = [
+                        'country' => $countryInfo['isoCode'],
+                        'countryName' => $countryInfo['name'],
+                        'bans' => [],
+                    ];
                 }
 
                 // Append the ban details to the existing array for this IP.
-                $groupedResults[$ip][] = [
+                $groupedResults[$ip]['bans'][] = [
                     'jail' => "{$jail}_v2",
                     'timeofban' => self::time2stamp($ipData[1]),
                     'timeunban' => self::time2stamp($ipData[2]),

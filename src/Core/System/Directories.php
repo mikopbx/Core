@@ -33,6 +33,7 @@ class Directories extends Injectable
     public const string CORE_LOGS_DIR = 'core.logsDir';
     public const string CORE_MEDIA_MOUNT_POINT_DIR = 'core.mediaMountPoint';
     public const string CORE_FAIL2AN_DB_DIR = 'core.fail2banDbDir';
+    public const string CORE_GEOIP2_DB_DIR = 'core.geoip2DbDir';
     public const string AST_VAR_LIB_DIR = 'asterisk.astvarlibdir';
     public const string AST_ETC_DIR = 'asterisk.astetcdir';
     public const string AST_MOD_DIR = 'asterisk.astmoddir';
@@ -60,6 +61,7 @@ class Directories extends Injectable
         self::CORE_LOGS_DIR => '/var/log',
         self::CORE_MEDIA_MOUNT_POINT_DIR => '/mountpoint',
         self::CORE_FAIL2AN_DB_DIR => '/mountpoint/mikopbx/fail2ban',
+        self::CORE_GEOIP2_DB_DIR => '/mountpoint/mikopbx/geoip2',
         self::AST_VAR_LIB_DIR => '/offload/asterisk',
         self::AST_ETC_DIR => '/etc/asterisk',
         self::AST_MOD_DIR => '/offload/asterisk/modules',

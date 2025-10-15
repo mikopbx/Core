@@ -56,7 +56,8 @@
     "confBackupDir": "/mountpoint/mikopbx/backup/db",
     "logsDir": "/mountpoint/mikopbx/log",
     "mediaMountPoint": "/mountpoint",
-    "fail2banDbDir": "/mountpoint/mikopbx/fail2ban"
+    "fail2banDbDir": "/mountpoint/mikopbx/fail2ban",
+    "geoip2DbDir": "/mountpoint/mikopbx/geoip2"
   },
   "www": {
     "uploadDir": "/mountpoint/mikopbx/tmp/www_cache/upload_cache",

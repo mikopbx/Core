@@ -892,9 +892,21 @@ const ExtensionModifyStatusMonitor = {
         Object.entries(failures).forEach(([ip, stats]) => {
             const isBanned = this.bannedIps.hasOwnProperty(ip);
 
+            // Get country information if IP is banned
+            let ipDisplay = ip;
+            if (isBanned && this.bannedIps[ip]) {
+                const ipData = this.bannedIps[ip];
+                const country = ipData.country || '';
+                const countryName = ipData.countryName || '';
+                
+                if (country) {
+                    // Add country flag with popup tooltip
+                    ipDisplay = `<span class="country-flag" data-content="${countryName}" data-position="top center"><i class="flag ${country.toLowerCase()}"></i></span>${ip}`;
+                }
+            }
+
             // Use Fomantic UI table row states
             // 'negative' = red row (banned)
-            // 'positive' = green row (not banned)
             const rowClass = isBanned ? 'negative' : '';
 
             const lastAttempt = new Date(stats.last_attempt * 1000).toLocaleString();
@@ -911,7 +923,7 @@ const ExtensionModifyStatusMonitor = {
 
             const row = `
                 <tr class="${rowClass}">
-                    <td><strong>${ip}</strong></td>
+                    <td><strong>${ipDisplay}</strong></td>
                     <td>${stats.count}</td>
                     <td>${lastAttempt}</td>
                     <td class="center aligned">${actionButton}</td>
@@ -923,6 +935,16 @@ const ExtensionModifyStatusMonitor = {
 
         // Initialize tooltips for unban buttons
         this.$securityTable.find('[data-tooltip]').popup();
+        
+        // Initialize popups for country flags
+        this.$securityTable.find('.country-flag').popup({
+            hoverable: true,
+            position: 'top center',
+            delay: {
+                show: 300,
+                hide: 100
+            }
+        });
 
         // Bind unban button handlers
         this.$securityTable.find('.unban-ip').on('click', (e) => {
