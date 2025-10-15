@@ -66,8 +66,9 @@ class SaveSettingsAction extends AbstractSaveRecordAction
         $res = self::createApiResult(__METHOD__);
         
         try {
-            // Use data as is - expecting key-value pairs
-            $settingsData = $data;
+            // Extract settings from nested structure if present
+            // API can send either flat structure or nested with 'settings' key
+            $settingsData = $data['settings'] ?? $data;
             // Password validation first - fail fast if passwords are weak
             $passwordCheckFail = self::validatePasswords($settingsData);
             if (!empty($passwordCheckFail)) {
