@@ -215,6 +215,8 @@ Custom methods (Google API Design):
 - Collection: `GET /resource:method`
 - Resource: `GET /resource/{id}:method`
 
+**Important:** When using array-based `idPattern` (e.g., `['SIP-', 'IAX-', 'SIP-TRUNK-']`), the router automatically generates patterns that exclude colons and slashes (`[^/:]+`) to ensure proper parsing of `/{id}:method` routes.
+
 ## HTTP Status Codes
 
 ```

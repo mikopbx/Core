@@ -33,6 +33,8 @@ use function MikoPBX\Common\Config\appPath;
 
 class UpdateSystemConfig extends Injectable
 {
+    public $isTheFirstMessage = true;
+
     /**
      * Updates settings after every new release
      */
@@ -55,13 +57,13 @@ class UpdateSystemConfig extends Injectable
                 }
             }
             uksort($upgradeClasses, [__CLASS__, "sortArrayByReleaseNumber"]);
-
+            
             foreach ($upgradeClasses as $releaseNumber => $upgradeClass) {
                 if (version_compare($previous_version, $releaseNumber, '<')) {
                     $processor = new $upgradeClass();
                     $processor->processUpdate();
                     $message = '   |- UpdateConfigs: Upgrade system up to ' . $releaseNumber;
-                    SystemMessages::echoStartMsg($message);
+                    $message = $this->publishMessage($message);
                     SystemMessages::echoResultMsg($message);
                 }
             }
@@ -117,5 +119,22 @@ class UpdateSystemConfig extends Injectable
     private function sortArrayByReleaseNumber($a, $b): bool|int
     {
         return version_compare($a, $b);
+    }
+
+
+     /**
+     * Publishes a message with PHP_EOL if the first message
+     *
+     * @param string $msg
+     * @return string
+     */
+    private function publishMessage(string $msg): string
+    {
+        if ($this->isTheFirstMessage) {   
+            $msg = PHP_EOL.$msg;
+            $this->isTheFirstMessage = false;
+        }
+        SystemMessages::echoStartMsg($msg);
+        return $msg;
     }
 }

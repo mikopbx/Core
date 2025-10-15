@@ -45,6 +45,8 @@ use function MikoPBX\Common\Config\appPath;
  */
 class UpdateDatabase extends Injectable
 {
+
+    public $isTheFirstMessage = true;
     /**
      * Updates database structure according to models annotations
      */
@@ -293,10 +295,10 @@ class UpdateDatabase extends Injectable
 
         // Starting the transaction
         $connectionService->begin();
-
         if (! $connectionService->tableExists($tableName)) {
+            
             $msg = '   |- UpdateDatabase: Create new table: ' . $tableName;
-            SystemMessages::echoWithSyslog($msg);
+            $msg = $this->publishMessage($msg);
             $result = $connectionService->createTable($tableName, '', $columnsNew);
             SystemMessages::echoResult($msg);
         } else {
@@ -304,8 +306,9 @@ class UpdateDatabase extends Injectable
             $currentColumnsArr = $connectionService->describeColumns($tableName, '');
 
             if ($this->isTableStructureNotEqual($currentColumnsArr, $columns)) {
+               
                 $msg = '   |- UpdateDatabase: Upgrade table: ' . $tableName;
-                SystemMessages::echoWithSyslog($msg);
+                $msg = $this->publishMessage($msg);
                 // Create new table and copy all data
                 $currentStateColumnList = [];
                 $oldColNames            = []; // Old columns names
@@ -442,7 +445,7 @@ DROP TABLE  $tableName";
                 && ! array_key_exists($indexName, $indexes)
             ) {
                 $msg = " - UpdateDatabase: Delete index: $indexName ";
-                SystemMessages::echoWithSyslog($msg);
+                $msg = $this->publishMessage($msg);
                 $result += $connectionService->dropIndex($tableName, '', $indexName);
                 SystemMessages::echoResult($msg);
             }
@@ -454,19 +457,35 @@ DROP TABLE  $tableName";
                 $currentIndex = $currentIndexes[$indexName];
                 if ($describedIndex->getColumns() !== $currentIndex->getColumns()) {
                     $msg = " - UpdateDatabase: Update index: $indexName ";
-                    SystemMessages::echoWithSyslog($msg);
+                    $msg = $this->publishMessage($msg);
                     $result += $connectionService->dropIndex($tableName, '', $indexName);
                     $result += $connectionService->addIndex($tableName, '', $describedIndex);
                     SystemMessages::echoResult($msg);
                 }
             } else {
                 $msg = " - UpdateDatabase: Add new index: $indexName ";
-                SystemMessages::echoWithSyslog($msg);
+                $msg = $this->publishMessage($msg);
                 $result += $connectionService->addIndex($tableName, '', $describedIndex);
                 SystemMessages::echoResult($msg);
             }
         }
 
         return $result;
+    }
+
+    /**
+     * Publishes a message with PHP_EOL if the first message
+     *
+     * @param string $msg
+     * @return string
+     */
+    private function publishMessage(string $msg): string
+    {
+        if ($this->isTheFirstMessage) {   
+            $msg = PHP_EOL.$msg;
+            $this->isTheFirstMessage = false;
+        }
+        SystemMessages::echoStartMsg($msg);
+        return $msg;
     }
 }

@@ -66,7 +66,7 @@ class CloudProvisioning
             VultrCloud::CloudID => new VultrCloud()
         ];
 
-        $message = "   |- Checking cloud providers in parallel...";
+        $message = PHP_EOL."   |- Checking cloud providers in parallel...";
         SystemMessages::echoToTeletype($message);
 
         // Create promises for parallel availability checking

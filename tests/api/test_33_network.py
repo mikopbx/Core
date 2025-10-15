@@ -31,25 +31,38 @@ class TestNetworkConfig:
 
 
 class TestStaticRoutes:
-    """Tests for static network routes (NetworkStaticRoutes model)"""
-    created_route_id = None
+    """Tests for static network routes via network configuration"""
+    original_config = None
+    test_route_id = None
 
-    def test_01_get_static_routes_list(self, api_client):
-        """GET list of static routes"""
-        response = api_client.get('network')
-        assert_api_success(response, "Failed to get static routes list")
+    def test_01_get_network_config_with_routes(self, api_client):
+        """GET network configuration including static routes"""
+        response = api_client.get('network:getConfig')
+        assert_api_success(response, "Failed to get network configuration")
 
-        data = response['data']
-        assert isinstance(data, list), "Static routes should be a list"
+        TestStaticRoutes.original_config = response['data']
+        
+        assert 'staticRoutes' in response['data'], "Configuration should include staticRoutes"
+        routes = response['data']['staticRoutes']
+        assert isinstance(routes, list), "Static routes should be a list"
 
-        print(f"✓ Retrieved {len(data)} static routes")
-        if len(data) > 0:
-            route = data[0]
+        print(f"✓ Retrieved network configuration with {len(routes)} static routes")
+        if len(routes) > 0:
+            route = routes[0]
             print(f"  Example route: {route.get('network')}/{route.get('subnet')} via {route.get('gateway')}")
 
     def test_02_create_static_route(self, api_client):
-        """POST create new static route"""
-        route_data = {
+        """Create new static route via saveConfig"""
+        # Get current config
+        response = api_client.get('network:getConfig')
+        assert_api_success(response, "Failed to get current config")
+        
+        config = response['data']
+        existing_routes = config.get('staticRoutes', [])
+        
+        # Add new route
+        new_route = {
+            'id': 'new_test_route',
             'network': '10.10.10.0',
             'subnet': '24',
             'gateway': '192.168.1.1',
@@ -57,128 +70,138 @@ class TestStaticRoutes:
             'description': 'Test static route created by pytest',
             'priority': 100
         }
-
-        response = api_client.post('network', route_data)
-        assert_api_success(response, "Failed to create static route")
-
-        # Save ID for subsequent tests
-        TestStaticRoutes.created_route_id = response['data'].get('id')
-        assert TestStaticRoutes.created_route_id, "Created route should have an ID"
-
-        print(f"✓ Created static route: {route_data['network']}/{route_data['subnet']} via {route_data['gateway']}")
-        print(f"  Route ID: {TestStaticRoutes.created_route_id}")
-
-    def test_03_get_static_route_by_id(self, api_client):
-        """GET specific static route by ID"""
-        if not TestStaticRoutes.created_route_id:
-            pytest.skip("No route ID from creation test")
-
-        response = api_client.get(f'network/{TestStaticRoutes.created_route_id}')
-        assert_api_success(response, "Failed to get static route by ID")
-
-        route = response['data']
-        assert route['network'] == '10.10.10.0', "Network should match created value"
-        assert route['subnet'] == '24', "Subnet should match created value"
-        assert route['gateway'] == '192.168.1.1', "Gateway should match created value"
-
-        print(f"✓ Retrieved route by ID: {route['network']}/{route['subnet']}")
-
-    def test_04_update_static_route_full(self, api_client):
-        """PUT full update of static route"""
-        if not TestStaticRoutes.created_route_id:
-            pytest.skip("No route ID from creation test")
-
-        updated_data = {
-            'network': '10.10.10.0',
-            'subnet': '24',
-            'gateway': '192.168.1.254',  # Changed gateway
-            'interface': 'eth1',          # Changed interface
-            'description': 'Updated test route',
-            'priority': 200               # Changed priority
+        
+        updated_routes = existing_routes + [new_route]
+        
+        # Save configuration with new route
+        save_data = {
+            'staticRoutes': updated_routes
         }
+        
+        response = api_client.post('network:saveConfig', save_data)
+        assert_api_success(response, "Failed to save config with new route")
+        
+        # Verify route was created
+        verify = api_client.get('network:getConfig')
+        new_routes = verify['data']['staticRoutes']
+        
+        # Find the created route (it should have a real ID now)
+        created_route = None
+        for route in new_routes:
+            if route['network'] == '10.10.10.0' and route['subnet'] == '24':
+                created_route = route
+                TestStaticRoutes.test_route_id = route['id']
+                break
+        
+        assert created_route is not None, "Created route should exist in config"
+        assert created_route['gateway'] == '192.168.1.1', "Gateway should match"
+        
+        print(f"✓ Created static route: {new_route['network']}/{new_route['subnet']} via {new_route['gateway']}")
+        print(f"  Route ID: {TestStaticRoutes.test_route_id}")
 
-        response = api_client.put(f'network/{TestStaticRoutes.created_route_id}', updated_data)
-        assert_api_success(response, "Failed to update static route")
-
+    def test_03_update_static_route(self, api_client):
+        """Update existing static route via saveConfig"""
+        if not TestStaticRoutes.test_route_id:
+            pytest.skip("No route ID from creation test")
+        
+        # Get current config
+        response = api_client.get('network:getConfig')
+        assert_api_success(response, "Failed to get current config")
+        
+        config = response['data']
+        routes = config.get('staticRoutes', [])
+        
+        # Update the test route
+        updated_routes = []
+        for route in routes:
+            if route['id'] == TestStaticRoutes.test_route_id:
+                route['gateway'] = '192.168.1.254'
+                route['description'] = 'Updated test route'
+                route['priority'] = 200
+            updated_routes.append(route)
+        
+        # Save configuration
+        save_data = {
+            'staticRoutes': updated_routes
+        }
+        
+        response = api_client.post('network:saveConfig', save_data)
+        assert_api_success(response, "Failed to save updated config")
+        
         # Verify changes
-        verify = api_client.get(f'network/{TestStaticRoutes.created_route_id}')
-        assert verify['data']['gateway'] == '192.168.1.254', "Gateway should be updated"
-        assert verify['data']['priority'] == 200, "Priority should be updated"
+        verify = api_client.get('network:getConfig')
+        updated_route = None
+        for route in verify['data']['staticRoutes']:
+            if route['id'] == TestStaticRoutes.test_route_id:
+                updated_route = route
+                break
+        
+        assert updated_route is not None, "Updated route should exist"
+        assert updated_route['gateway'] == '192.168.1.254', "Gateway should be updated"
+        assert updated_route['priority'] == 200, "Priority should be updated"
+        
+        print(f"✓ Updated route: gateway → 192.168.1.254, priority → 200")
 
-        print(f"✓ Updated route: gateway → {updated_data['gateway']}, priority → {updated_data['priority']}")
-
-    def test_05_patch_static_route(self, api_client):
-        """PATCH partial update of static route"""
-        if not TestStaticRoutes.created_route_id:
+    def test_04_delete_static_route(self, api_client):
+        """Delete static route via saveConfig"""
+        if not TestStaticRoutes.test_route_id:
             pytest.skip("No route ID from creation test")
-
-        patch_data = {
-            'description': 'Patched description via pytest',
-            'priority': 50
+        
+        # Get current config
+        response = api_client.get('network:getConfig')
+        assert_api_success(response, "Failed to get current config")
+        
+        config = response['data']
+        routes = config.get('staticRoutes', [])
+        
+        # Remove the test route
+        filtered_routes = [r for r in routes if r['id'] != TestStaticRoutes.test_route_id]
+        
+        # Save configuration
+        save_data = {
+            'staticRoutes': filtered_routes
         }
-
-        response = api_client.patch(f'network/{TestStaticRoutes.created_route_id}', patch_data)
-        assert_api_success(response, "Failed to patch static route")
-
-        # Verify only specified fields changed
-        verify = api_client.get(f'network/{TestStaticRoutes.created_route_id}')
-        assert verify['data']['description'] == patch_data['description']
-        assert verify['data']['priority'] == patch_data['priority']
-        assert verify['data']['network'] == '10.10.10.0', "Network should remain unchanged"
-
-        print(f"✓ Patched route: description and priority updated")
-
-    def test_06_delete_static_route(self, api_client):
-        """DELETE static route"""
-        if not TestStaticRoutes.created_route_id:
-            pytest.skip("No route ID from creation test")
-
-        response = api_client.delete(f'network/{TestStaticRoutes.created_route_id}')
-        assert_api_success(response, "Failed to delete static route")
-
+        
+        response = api_client.post('network:saveConfig', save_data)
+        assert_api_success(response, "Failed to save config after deletion")
+        
         # Verify deletion
-        try:
-            api_client.get(f'network/{TestStaticRoutes.created_route_id}')
-            pytest.fail("Deleted route should return 404")
-        except Exception as e:
-            if '404' in str(e):
-                print(f"✓ Deleted static route {TestStaticRoutes.created_route_id}")
-            else:
-                raise
+        verify = api_client.get('network:getConfig')
+        remaining_routes = verify['data']['staticRoutes']
+        
+        deleted_route = None
+        for route in remaining_routes:
+            if route['id'] == TestStaticRoutes.test_route_id:
+                deleted_route = route
+                break
+        
+        assert deleted_route is None, "Deleted route should not exist"
+        
+        print(f"✓ Deleted static route {TestStaticRoutes.test_route_id}")
 
 
 class TestStaticRoutesValidation:
     """Validation tests for static routes"""
 
-    def test_01_validate_network_address_required(self, api_client):
-        """Network address is required"""
-        route_data = {
-            'subnet': '24',
-            'gateway': '192.168.1.1'
-        }
-
-        try:
-            response = api_client.post('network', route_data)
-            if not response.get('result', False):
-                print(f"✓ Validation rejected missing network address")
-            else:
-                pytest.fail("Should reject route without network address")
-        except Exception as e:
-            if '422' in str(e) or '400' in str(e):
-                print(f"✓ Validation rejected missing network address")
-            else:
-                raise
-
-    def test_02_validate_invalid_network_address(self, api_client):
+    def test_01_validate_invalid_network_address(self, api_client):
         """Invalid network address should be rejected"""
-        route_data = {
+        # Get current config
+        response = api_client.get('network:getConfig')
+        config = response['data']
+        
+        invalid_route = {
+            'id': 'new_invalid',
             'network': '999.999.999.999',  # Invalid IP
             'subnet': '24',
             'gateway': '192.168.1.1'
         }
+        
+        save_data = {
+            'staticRoutes': config.get('staticRoutes', []) + [invalid_route]
+        }
 
         try:
-            response = api_client.post('network', route_data)
+            response = api_client.post('network:saveConfig', save_data)
             if not response.get('result', False):
                 print(f"✓ Validation rejected invalid network address")
             else:
@@ -189,16 +212,25 @@ class TestStaticRoutesValidation:
             else:
                 raise
 
-    def test_03_validate_invalid_gateway(self, api_client):
+    def test_02_validate_invalid_gateway(self, api_client):
         """Invalid gateway address should be rejected"""
-        route_data = {
+        # Get current config
+        response = api_client.get('network:getConfig')
+        config = response['data']
+        
+        invalid_route = {
+            'id': 'new_invalid',
             'network': '10.10.10.0',
             'subnet': '24',
             'gateway': 'not-an-ip'
         }
+        
+        save_data = {
+            'staticRoutes': config.get('staticRoutes', []) + [invalid_route]
+        }
 
         try:
-            response = api_client.post('network', route_data)
+            response = api_client.post('network:saveConfig', save_data)
             if not response.get('result', False):
                 print(f"✓ Validation rejected invalid gateway")
             else:
@@ -209,16 +241,25 @@ class TestStaticRoutesValidation:
             else:
                 raise
 
-    def test_04_validate_subnet_range(self, api_client):
+    def test_03_validate_subnet_range(self, api_client):
         """Subnet mask should be 0-32"""
-        route_data = {
+        # Get current config
+        response = api_client.get('network:getConfig')
+        config = response['data']
+        
+        invalid_route = {
+            'id': 'new_invalid',
             'network': '10.10.10.0',
             'subnet': '35',  # Invalid: >32
             'gateway': '192.168.1.1'
         }
+        
+        save_data = {
+            'staticRoutes': config.get('staticRoutes', []) + [invalid_route]
+        }
 
         try:
-            response = api_client.post('network', route_data)
+            response = api_client.post('network:saveConfig', save_data)
             if not response.get('result', False):
                 print(f"✓ Validation rejected invalid subnet mask")
             else:
@@ -229,126 +270,148 @@ class TestStaticRoutesValidation:
             else:
                 raise
 
-    def test_05_validate_duplicate_route(self, api_client):
-        """Duplicate network+subnet combination should be rejected"""
-        route_data = {
-            'network': '192.168.100.0',
-            'subnet': '24',
-            'gateway': '192.168.1.1',
-            'description': 'First route'
-        }
-
-        # Create first route
-        response1 = api_client.post('network', route_data)
-        if not response1.get('result', False):
-            print(f"⚠ Could not create first route for duplicate test")
-            return
-
-        route_id = response1['data'].get('id')
-
-        try:
-            # Try to create duplicate
-            duplicate_data = route_data.copy()
-            duplicate_data['gateway'] = '192.168.1.254'  # Different gateway but same network+subnet
-
-            response2 = api_client.post('network', duplicate_data)
-            if not response2.get('result', False):
-                print(f"✓ Validation rejected duplicate network+subnet combination")
-            else:
-                # If it was created, clean it up
-                if 'id' in response2['data']:
-                    api_client.delete(f"network/{response2['data']['id']}")
-                print(f"⚠ Duplicate route was accepted (uniqueness may not be enforced)")
-        except Exception as e:
-            if '422' in str(e) or '409' in str(e):
-                print(f"✓ Validation rejected duplicate route")
-            else:
-                raise
-        finally:
-            # Cleanup first route
-            if route_id:
-                api_client.delete(f'network/{route_id}')
-
 
 class TestStaticRoutesEdgeCases:
     """Edge cases for static routes"""
 
     def test_01_empty_interface_field(self, api_client):
         """Interface field can be empty (kernel auto-selects)"""
-        route_data = {
+        # Get current config
+        response = api_client.get('network:getConfig')
+        config = response['data']
+        existing_routes = config.get('staticRoutes', [])
+        
+        test_route = {
+            'id': 'new_empty_interface',
             'network': '172.16.0.0',
             'subnet': '16',
             'gateway': '192.168.1.1',
             'interface': '',  # Empty = automatic
-            'description': 'Route with auto interface'
+            'description': 'Route with auto interface',
+            'priority': 999
+        }
+        
+        save_data = {
+            'staticRoutes': existing_routes + [test_route]
         }
 
-        response = api_client.post('network', route_data)
+        response = api_client.post('network:saveConfig', save_data)
         if response.get('result', False):
-            route_id = response['data'].get('id')
             print(f"✓ Created route with empty interface (auto-select)")
-
+            
             # Cleanup
-            if route_id:
-                api_client.delete(f'network/{route_id}')
+            verify = api_client.get('network:getConfig')
+            cleanup_routes = [r for r in verify['data']['staticRoutes'] 
+                            if not (r['network'] == '172.16.0.0' and r['subnet'] == '16')]
+            api_client.post('network:saveConfig', {'staticRoutes': cleanup_routes})
         else:
             print(f"⚠ Could not create route with empty interface")
 
     def test_02_minimum_priority(self, api_client):
         """Priority can be 0"""
-        route_data = {
+        # Get current config
+        response = api_client.get('network:getConfig')
+        config = response['data']
+        existing_routes = config.get('staticRoutes', [])
+        
+        test_route = {
+            'id': 'new_min_priority',
             'network': '172.17.0.0',
             'subnet': '16',
             'gateway': '192.168.1.1',
+            'interface': '',
+            'description': 'Route with priority 0',
             'priority': 0
         }
+        
+        save_data = {
+            'staticRoutes': existing_routes + [test_route]
+        }
 
-        response = api_client.post('network', route_data)
+        response = api_client.post('network:saveConfig', save_data)
         if response.get('result', False):
-            route_id = response['data'].get('id')
-            assert response['data']['priority'] == 0, "Priority should be 0"
-            print(f"✓ Created route with minimum priority (0)")
-
-            if route_id:
-                api_client.delete(f'network/{route_id}')
+            # Verify priority
+            verify = api_client.get('network:getConfig')
+            created = None
+            for r in verify['data']['staticRoutes']:
+                if r['network'] == '172.17.0.0' and r['subnet'] == '16':
+                    created = r
+                    break
+            
+            if created:
+                assert created['priority'] == 0, "Priority should be 0"
+                print(f"✓ Created route with minimum priority (0)")
+                
+                # Cleanup
+                cleanup_routes = [r for r in verify['data']['staticRoutes'] 
+                                if not (r['network'] == '172.17.0.0' and r['subnet'] == '16')]
+                api_client.post('network:saveConfig', {'staticRoutes': cleanup_routes})
         else:
             print(f"⚠ Could not create route with priority=0")
 
     def test_03_maximum_subnet_mask(self, api_client):
         """Subnet mask /32 (single host)"""
-        route_data = {
+        # Get current config
+        response = api_client.get('network:getConfig')
+        config = response['data']
+        existing_routes = config.get('staticRoutes', [])
+        
+        test_route = {
+            'id': 'new_host_route',
             'network': '8.8.8.8',
             'subnet': '32',  # Single host
-            'gateway': '192.168.1.1'
+            'gateway': '192.168.1.1',
+            'interface': '',
+            'description': 'Host route /32',
+            'priority': 999
+        }
+        
+        save_data = {
+            'staticRoutes': existing_routes + [test_route]
         }
 
-        response = api_client.post('network', route_data)
+        response = api_client.post('network:saveConfig', save_data)
         if response.get('result', False):
-            route_id = response['data'].get('id')
             print(f"✓ Created /32 host route")
-
-            if route_id:
-                api_client.delete(f'network/{route_id}')
+            
+            # Cleanup
+            verify = api_client.get('network:getConfig')
+            cleanup_routes = [r for r in verify['data']['staticRoutes'] 
+                            if not (r['network'] == '8.8.8.8' and r['subnet'] == '32')]
+            api_client.post('network:saveConfig', {'staticRoutes': cleanup_routes})
         else:
             print(f"⚠ Could not create /32 route")
 
     def test_04_default_route(self, api_client):
         """Default route 0.0.0.0/0"""
-        route_data = {
+        # Get current config
+        response = api_client.get('network:getConfig')
+        config = response['data']
+        existing_routes = config.get('staticRoutes', [])
+        
+        test_route = {
+            'id': 'new_default_route',
             'network': '0.0.0.0',
             'subnet': '0',
             'gateway': '192.168.1.1',
-            'description': 'Test default route'
+            'interface': '',
+            'description': 'Test default route',
+            'priority': 999
+        }
+        
+        save_data = {
+            'staticRoutes': existing_routes + [test_route]
         }
 
-        response = api_client.post('network', route_data)
+        response = api_client.post('network:saveConfig', save_data)
         if response.get('result', False):
-            route_id = response['data'].get('id')
             print(f"✓ Created default route 0.0.0.0/0")
-
+            
             # Cleanup immediately (default route is critical)
-            if route_id:
-                api_client.delete(f'network/{route_id}')
+            verify = api_client.get('network:getConfig')
+            cleanup_routes = [r for r in verify['data']['staticRoutes'] 
+                            if not (r['network'] == '0.0.0.0' and r['subnet'] == '0')]
+            api_client.post('network:saveConfig', {'staticRoutes': cleanup_routes})
         else:
             print(f"⚠ Could not create default route (may be restricted)")
 

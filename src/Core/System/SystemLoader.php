@@ -233,7 +233,9 @@ class SystemLoader extends Injectable
         $this->echoStartMsg(' - Updating database structure...');
         $dbUpdater = new UpdateDatabase();
         $dbUpdater->updateDatabaseStructure();
-        $this->echoResultMsg();
+        if ($dbUpdater->isTheFirstMessage){
+            $this->echoResultMsg();
+        }
 
         // Create directories required by modules after DB upgrade
         $this->echoStartMsg(' - Creating modules links and folders...');
@@ -244,8 +246,10 @@ class SystemLoader extends Injectable
         $this->echoStartMsg(' - Updating system configuration...');
         $confUpdate = new UpdateSystemConfig();
         $confUpdate->updateConfigs();
-        $this->echoResultMsg();
-
+        if ($confUpdate->isTheFirstMessage){
+            $this->echoResultMsg();
+        }
+        
         if (!$this->isDocker && !$this->isRecoveryMode) {
             // Configure VM tools
             $this->echoStartMsg(' - Configuring VM tools...');

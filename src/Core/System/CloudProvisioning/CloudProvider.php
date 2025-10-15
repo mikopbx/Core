@@ -31,6 +31,8 @@ abstract class CloudProvider
 
     abstract public function provision(): bool;
 
+    private $isTheFirstMessage = true;
+
     /**
      * Performs an asynchronous check to determine if this cloud provider is available.
      * Returns a Promise that resolves to boolean indicating availability.
@@ -72,7 +74,7 @@ abstract class CloudProvider
         $setting->value = $data;
         $result = $setting->save();
         $message = "      |- Update PbxSettings - $keyName ... ";
-        SystemMessages::echoToTeletype($message);
+        $this->publishMessage($message);
         if ($result) {
             SystemMessages::teletypeEchoResult($message);
         } else {
@@ -102,7 +104,7 @@ abstract class CloudProvider
                 PbxSettings::setValueByKey(PbxSettings::AUTO_UPDATE_EXTERNAL_IP, '1');
             }
             $message = "      |- Update LAN settings external IP: $extipaddr";
-            SystemMessages::echoToTeletype($message);
+            $this->publishMessage($message);
             $result = $lanData->save();
             if ($result) {
                 SystemMessages::teletypeEchoResult($message);
@@ -111,7 +113,7 @@ abstract class CloudProvider
             }
         } else {
             $message = "      |- LAN interface not found";
-            SystemMessages::echoToTeletype($message);
+            $this->publishMessage($message);
             SystemMessages::teletypeEchoResult($message, SystemMessages::RESULT_SKIPPED);
         }
     }
@@ -158,4 +160,18 @@ abstract class CloudProvider
         $this->updatePbxSettings(PbxSettings::PBX_DESCRIPTION, PbxSettings::DEFAULT_CLOUD_PASSWORD_DESCRIPTION);
     }
 
+    /**
+     * Publishes a message with PHP_EOL if the first message
+     *
+     * @param string $msg
+     * @return void
+     */
+    private function publishMessage(string $msg): void
+    {
+        if ($this->isTheFirstMessage) {   
+            $msg = PHP_EOL.$msg;
+            $this->isTheFirstMessage = false;
+        }
+        SystemMessages::echoToTeletype($msg);
+    }
 }

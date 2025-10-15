@@ -145,7 +145,7 @@ def test_employee_full_crud_cycle(api_client, employee_fixtures):
         # Only update specific fields
         patch_data = {
             'user_username': 'Patched CRUD User',
-            'sip_dtmfmode': 'rfc2833'
+            'sip_dtmfmode': 'rfc4733'
         }
 
         print(f"Patching fields:")
