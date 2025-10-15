@@ -19,7 +19,6 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Firewall;
 
-use GeoIp2\Database\Reader;
 use MikoPBX\Core\System\Configs\Fail2BanConf;
 use MikoPBX\Core\System\Configs\GeoIP2Conf;
 use MikoPBX\Core\System\Processes;
@@ -36,13 +35,6 @@ use Phalcon\Di\Injectable;
 class GetBannedIpsAction extends Injectable
 {
     /**
-     * GeoIP2 database reader instance
-     *
-     * @var Reader|null
-     */
-    private static ?Reader $geoReader = null;
-
-    /**
      * Retrieve a list of banned IP addresses or get data for a specific IP address.
      *
      * @return PBXApiResult An object containing the result of the API call.
@@ -54,57 +46,6 @@ class GetBannedIpsAction extends Injectable
         $res->success = true;
         $res->data = self::getBanIpWithTime();
         return $res;
-    }
-
-    /**
-     * Initialize GeoIP2 reader if available
-     *
-     * @return void
-     */
-    private static function initGeoReader(): void
-    {
-        if (self::$geoReader !== null) {
-            return;
-        }
-
-        $dbPath = GeoIP2Conf::getDatabasePath();
-        if ($dbPath !== null) {
-            try {
-                self::$geoReader = new Reader($dbPath);
-            } catch (\Throwable $e) {
-                self::$geoReader = null;
-            }
-        }
-    }
-
-    /**
-     * Get country information for an IP address
-     *
-     * @param string $ip IP address to lookup
-     * @return array Country information (isoCode and name)
-     */
-    private static function getCountryInfo(string $ip): array
-    {
-        $result = [
-            'isoCode' => '',
-            'name' => '',
-        ];
-
-        self::initGeoReader();
-
-        if (self::$geoReader === null) {
-            return $result;
-        }
-
-        try {
-            $record = self::$geoReader->country($ip);
-            $result['isoCode'] = $record->country->isoCode ?? '';
-            $result['name'] = $record->country->name ?? '';
-        } catch (\Throwable $e) {
-            // IP not found or error - return empty data
-        }
-
-        return $result;
     }
 
     /**
@@ -147,7 +88,7 @@ class GetBannedIpsAction extends Injectable
                 // Check if this IP is already in the result array.
                 if (!isset($groupedResults[$ip])) {
                     // If not, initialize it and add country info
-                    $countryInfo = self::getCountryInfo($ip);
+                    $countryInfo = GeoIP2Conf::getCountryByIp($ip);
                     $groupedResults[$ip] = [
                         'country' => $countryInfo['isoCode'],
                         'countryName' => $countryInfo['name'],

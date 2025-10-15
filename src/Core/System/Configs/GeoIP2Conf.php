@@ -20,6 +20,7 @@
 
 namespace MikoPBX\Core\System\Configs;
 
+use GeoIp2\Database\Reader;
 use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
@@ -45,6 +46,13 @@ class GeoIP2Conf extends SystemConfigClass
      * Database filename (uncompressed)
      */
     private const string DB_FILENAME = 'GeoLite2-Country.mmdb';
+    
+    /**
+     * GeoIP2 database reader instance (singleton)
+     *
+     * @var Reader|null
+     */
+    private static ?Reader $geoReader = null;
 
     /**
      * Start the service - extract GeoIP2 database to storage if needed
@@ -102,6 +110,88 @@ class GeoIP2Conf extends SystemConfigClass
         $dbPath = Directories::getDir(Directories::CORE_GEOIP2_DB_DIR) . '/' . self::DB_FILENAME;
         
         return file_exists($dbPath) ? $dbPath : null;
+    }
+    
+    /**
+     * Initialize GeoIP2 reader if available
+     *
+     * @return void
+     */
+    private static function initGeoReader(): void
+    {
+        if (self::$geoReader !== null) {
+            return;
+        }
+
+        $dbPath = self::getDatabasePath();
+        if ($dbPath !== null) {
+            try {
+                self::$geoReader = new Reader($dbPath);
+            } catch (\Throwable $e) {
+                SystemMessages::sysLogMsg(__METHOD__, 'Failed to initialize GeoIP2 reader: ' . $e->getMessage(), LOG_WARNING);
+                self::$geoReader = null;
+            }
+        }
+    }
+    
+    /**
+     * Check if IP address is private, local or bogon network
+     *
+     * @param string $ip IP address to check
+     * @return bool True if IP is private/local/bogon
+     */
+    private static function isPrivateOrLocalIp(string $ip): bool
+    {
+        // Validate IP format
+        if (!filter_var($ip, FILTER_VALIDATE_IP)) {
+            return true; // Invalid IP treated as local
+        }
+        
+        // Check for private, reserved, or local IP ranges
+        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Get country information for an IP address
+     *
+     * @param string $ip IP address to lookup
+     * @return array Country information with keys: isoCode, name
+     */
+    public static function getCountryByIp(string $ip): array
+    {
+        $result = [
+            'isoCode' => '',
+            'name' => '',
+        ];
+        
+        // Check for private/local/bogon networks first
+        if (self::isPrivateOrLocalIp($ip)) {
+            $result['isoCode'] = 'LOCAL';
+            $result['name'] = 'Local/Private Network';
+            return $result;
+        }
+
+        // Initialize reader if needed
+        self::initGeoReader();
+
+        if (self::$geoReader === null) {
+            return $result;
+        }
+
+        try {
+            $record = self::$geoReader->country($ip);
+            $result['isoCode'] = $record->country->isoCode ?? '';
+            $result['name'] = $record->country->name ?? '';
+        } catch (\Throwable $e) {
+            // IP not found in database or error - return empty data
+            SystemMessages::sysLogMsg(__METHOD__, "Failed to lookup IP {$ip}: " . $e->getMessage(), LOG_DEBUG);
+        }
+
+        return $result;
     }
 }
 

@@ -21,6 +21,7 @@ namespace MikoPBX\Core\Workers;
 
 require_once 'Globals.php';
 
+use MikoPBX\Core\System\Configs\GeoIP2Conf;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Common\Providers\PBXCoreRESTClientProvider;
 use MikoPBX\Common\Providers\RedisClientProvider;
@@ -255,10 +256,17 @@ class WorkerExtensionStatusMonitor extends WorkerRedisBase
                 
                 $deviceId = $device['id'];
                 $isOnline = strtolower($device['state']) === 'ok';
+                $ip = $device['ip'] ?? '';
+                
+                // Get country info for the IP
+                $countryInfo = GeoIP2Conf::getCountryByIp($ip);
+                
                 $deviceInfo = [
-                    'ip' => $device['ip'] ?? '',
+                    'ip' => $ip,
                     'port' => $device['port'] ?? '',
                     'user_agent' => $device['user_agent'] ?? '',
+                    'country' => $countryInfo['isoCode'],
+                    'country_name' => $countryInfo['name'],
                 ];
                 
                 if ($isOnline) {
