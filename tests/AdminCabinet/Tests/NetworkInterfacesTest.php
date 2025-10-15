@@ -64,13 +64,15 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
         $this->changeInputField('ipaddr_0', $params['ipaddr_0']);
         $this->selectDropdownItem('subnet_0', $params['subnet_0']);
         $this->changeInputField('vlanid_0', $params['vlanid_0']);
-        $this->selectDropdownItem('internet_interface', $params['internet_interface']);
-        $this->changeInputField('gateway', $params['gateway']);
-        $this->changeInputField('primarydns', $params['primarydns']);
-        $this->changeInputField('secondarydns', $params['secondarydns']);
+        
+
+        
         $this->changeCheckBoxState('usenat', $params['usenat']);
         $this->changeInputField('extipaddr', $params['extipaddr']);
         $this->changeInputField('exthostname', $params['exthostname']);
+        $this->changeInputField('externalSIPPort', $params['externalSIPPort']);
+        $this->changeInputField('externalTLSPort', $params['externalTLSPort']);
+        $this->changeInputField('hostname', $params['hostname']);
 
         // Submit the network form.
         $this->submitForm('network-form');
@@ -91,13 +93,14 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
         $this->assertInputFieldValueEqual('ipaddr_' . $index, $params['ipaddr_0']);
         $this->assertMenuItemSelected('subnet_' . $index, $params['subnet_0']);
         $this->assertInputFieldValueEqual('vlanid_' . $index, $params['vlanid_0']);
-        $this->assertMenuItemSelected('internet_interface', $params['internet_interface']);
-        $this->assertInputFieldValueEqual('gateway', $params['gateway']);
-        $this->assertInputFieldValueEqual('primarydns', $params['primarydns']);
-        $this->assertInputFieldValueEqual('secondarydns', $params['secondarydns']);
+        
+        
         $this->assertCheckBoxStageIsEqual('usenat', $params['usenat']);
         $this->assertInputFieldValueEqual('extipaddr', $params['extipaddr']);
         $this->assertInputFieldValueEqual('exthostname', $params['exthostname']);
+        $this->assertInputFieldValueEqual('externalSIPPort', $params['externalSIPPort']);
+        $this->assertInputFieldValueEqual('externalTLSPort', $params['externalTLSPort']);
+        $this->assertInputFieldValueEqual('hostname', $params['hostname']);
     }
 
     /**
@@ -117,13 +120,12 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
                 'ipaddr_0' => '172.16.39.12',
                 'subnet_0' => 24,
                 'vlanid_0' => 22,
-                'internet_interface' => 1,
-                'gateway' => '172.16.32.15',
-                'primarydns' => '172.16.32.10',
-                'secondarydns' => '172.16.32.5',
                 'usenat' => true,
                 'extipaddr' => '93.188.43.143',
                 'exthostname' => 'testMikoPBX.miko.ru',
+                'externalSIPPort' => 5062,
+                'externalTLSPort' => 5063,
+                'hostname'=>'testMikoPBX.local'
             ]
         ];
         return $params;

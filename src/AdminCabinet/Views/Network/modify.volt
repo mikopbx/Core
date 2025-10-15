@@ -13,11 +13,11 @@
     {{ partial("Network/partials/interfaces") }}
 </div>
 
+{{ partial("Network/partials/nat") }}
+
 <div class="do-not-show-if-docker">
     {{ partial("Network/partials/static-routes") }}
 </div>
-
-{{ partial("Network/partials/nat") }}
 
 {{ partial("partials/submitbutton",['indexurl':'']) }}
 

@@ -1176,6 +1176,8 @@ const StaticRoutesManager = {
     $table: $('#static-routes-table'),
     $section: $('#static-routes-section'),
     $addButton: $('#add-new-route'),
+    $tableContainer: null,
+    $emptyPlaceholder: null,
     routes: [],
     availableInterfaces: [], // Will be populated from REST API
 
@@ -1183,6 +1185,10 @@ const StaticRoutesManager = {
      * Initialize static routes management
      */
     initialize() {
+        // Cache elements
+        StaticRoutesManager.$emptyPlaceholder = $('#static-routes-empty-placeholder');
+        StaticRoutesManager.$tableContainer = $('#static-routes-table-container');
+
         // Hide section if less than 2 interfaces
         StaticRoutesManager.updateVisibility();
 
@@ -1195,11 +1201,18 @@ const StaticRoutesManager = {
             StaticRoutesManager.addRoute();
         });
 
+        // Add first route button handler (in empty placeholder)
+        $(document).on('click', '#add-first-route-button', (e) => {
+            e.preventDefault();
+            StaticRoutesManager.addRoute();
+        });
+
         // Delete button handler (delegated)
         StaticRoutesManager.$table.on('click', '.delete-route-button', (e) => {
             e.preventDefault();
             $(e.target).closest('tr').remove();
             StaticRoutesManager.updatePriorities();
+            StaticRoutesManager.updateEmptyState();
             Form.dataChanged();
         });
 
@@ -1308,6 +1321,22 @@ const StaticRoutesManager = {
     },
 
     /**
+     * Update empty state visibility
+     */
+    updateEmptyState() {
+        const $existingRows = $('.route-row');
+        if ($existingRows.length === 0) {
+            // Show empty placeholder, hide table container
+            StaticRoutesManager.$emptyPlaceholder.show();
+            StaticRoutesManager.$tableContainer.hide();
+        } else {
+            // Hide empty placeholder, show table container
+            StaticRoutesManager.$emptyPlaceholder.hide();
+            StaticRoutesManager.$tableContainer.show();
+        }
+    },
+
+    /**
      * Add a new route row
      * @param {Object} routeData - Route data (optional)
      */
@@ -1347,6 +1376,7 @@ const StaticRoutesManager = {
         $newRow.find('.ipaddress').inputmask({alias: 'ip', placeholder: '_'});
 
         StaticRoutesManager.updatePriorities();
+        StaticRoutesManager.updateEmptyState();
         Form.dataChanged();
     },
 
@@ -1430,6 +1460,9 @@ const StaticRoutesManager = {
             routesData.forEach(route => {
                 StaticRoutesManager.addRoute(route);
             });
+        } else {
+            // Show empty state if no routes
+            StaticRoutesManager.updateEmptyState();
         }
 
         // Reinitialize drag-and-drop after adding routes
