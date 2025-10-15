@@ -166,7 +166,9 @@ class PbxSettings extends ModelsBase
         $record->value = $value;
         $result = $record->save();
         if (!$result) {
-            $messages[] = $record->getMessages();
+            foreach ($record->getMessages() as $message) {
+                $messages[] = $message->getMessage();
+            }
         } else {
             $redis = Di::GetDefault()->getShared(ManagedCacheProvider::SERVICE_NAME)->getAdapter();
             $redis->hset(self::CACHE_KEY, $key, $value);

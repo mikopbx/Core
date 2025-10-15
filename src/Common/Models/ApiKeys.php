@@ -135,4 +135,14 @@ class ApiKeys extends ModelsBase
         }
     }
     
+    /**
+     * Generate a secure random API key (64-character hexadecimal)
+     * 
+     * @return string Generated API key
+     */
+    public static function generateApiKey(): string
+    {
+        return bin2hex(random_bytes(32));
+    }
+    
 }

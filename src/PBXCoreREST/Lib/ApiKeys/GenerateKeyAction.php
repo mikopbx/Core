@@ -19,8 +19,9 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\ApiKeys;
 
-use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
+use MikoPBX\Common\Models\ApiKeys;
+use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 
 /**
  * Action for generating a new API key
@@ -49,7 +50,7 @@ class GenerateKeyAction
         
         try {
             // Generate secure random API key
-            $apiKey = bin2hex(random_bytes(32));
+            $apiKey = ApiKeys::generateApiKey();
             
             $res->data = ['key' => $apiKey];
             $res->success = true;

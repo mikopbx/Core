@@ -22,7 +22,6 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Lib\CustomFiles;
 
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractCreateAction;
-use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 
 /**
  * Create new custom file action.
@@ -35,18 +34,22 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 class CreateRecordAction extends AbstractCreateAction
 {
     /**
-     * Create new custom file.
+     * Get human-readable entity name for logging
      *
-     * @param array $data Custom file data
-     * @return PBXApiResult
+     * @return string Entity name in lowercase
      */
-    public static function main(array $data): PBXApiResult
+    protected static function getEntityName(): string
     {
-        // Ensure this is a CREATE operation by removing ID
-        // SaveRecordAction will detect CREATE operation when ID is empty
-        unset($data['id']);
+        return 'custom file';
+    }
 
-        // Delegate to SaveRecordAction for unified logic
-        return SaveRecordAction::main($data);
+    /**
+     * Get SaveRecordAction class for this entity
+     *
+     * @return string Fully qualified SaveRecordAction class name
+     */
+    protected static function getSaveActionClass(): string
+    {
+        return SaveRecordAction::class;
     }
 }

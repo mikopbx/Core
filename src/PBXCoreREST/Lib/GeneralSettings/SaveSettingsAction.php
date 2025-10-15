@@ -91,14 +91,14 @@ class SaveSettingsAction extends AbstractSaveRecordAction
                 // Update PBX settings with special handling for various field types
                 $updateResult = self::updatePBXSettings($settingsData);
                 if (!$updateResult['success']) {
-                    throw new \Exception(implode(', ', $updateResult['messages']['error'] ?? []));
+                    throw new \Exception(self::flattenErrorMessages($updateResult['messages']['error'] ?? []));
                 }
                 
                 // Update codecs if codec data is present
                 if (self::hasCodecData($settingsData)) {
                     $codecResult = self::updateCodecs($settingsData);
                     if (!$codecResult['success']) {
-                        throw new \Exception(implode(', ', $codecResult['messages']['error'] ?? []));
+                        throw new \Exception(self::flattenErrorMessages($codecResult['messages']['error'] ?? []));
                     }
                 }
                 
@@ -106,7 +106,7 @@ class SaveSettingsAction extends AbstractSaveRecordAction
                 if (self::parkingSettingsChanged($settingsData)) {
                     $parkingResult = self::updateParkingExtensions($settingsData);
                     if (!$parkingResult['success']) {
-                        throw new \Exception(implode(', ', $parkingResult['messages']['error'] ?? []));
+                        throw new \Exception(self::flattenErrorMessages($parkingResult['messages']['error'] ?? []));
                     }
                 }
                 
@@ -138,6 +138,36 @@ class SaveSettingsAction extends AbstractSaveRecordAction
         }
         
         return $res;
+    }
+    
+    /**
+     * Flatten error messages array that may contain nested arrays
+     * 
+     * @param array $errors Error messages that may be strings or arrays
+     * @return string Flattened error message string
+     */
+    private static function flattenErrorMessages(array $errors): string
+    {
+        $flatMessages = [];
+        
+        foreach ($errors as $error) {
+            if (is_array($error)) {
+                // Handle nested arrays (e.g., from getMessages())
+                foreach ($error as $nestedError) {
+                    if (is_object($nestedError) && method_exists($nestedError, 'getMessage')) {
+                        $flatMessages[] = $nestedError->getMessage();
+                    } elseif (is_string($nestedError)) {
+                        $flatMessages[] = $nestedError;
+                    }
+                }
+            } elseif (is_object($error) && method_exists($error, 'getMessage')) {
+                $flatMessages[] = $error->getMessage();
+            } elseif (is_string($error)) {
+                $flatMessages[] = $error;
+            }
+        }
+        
+        return implode(', ', $flatMessages);
     }
     
     /**

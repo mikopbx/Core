@@ -171,36 +171,48 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                         PbxSettings::SIP_PORT => [
                             'type' => 'string',
                             'description' => 'rest_schema_net_ports_sip',
+                            'minimum' => 1,
+                            'maximum' => 65535,
                             'example' => (string)self::getDefaultValue(PbxSettings::SIP_PORT),
                             'default' => (string)self::getDefaultValue(PbxSettings::SIP_PORT)
                         ],
                         PbxSettings::EXTERNAL_SIP_PORT => [
                             'type' => 'string',
                             'description' => 'rest_schema_net_ports_external_sip',
+                            'minimum' => 1,
+                            'maximum' => 65535,
                             'example' => (string)self::getDefaultValue(PbxSettings::EXTERNAL_SIP_PORT),
                             'default' => (string)self::getDefaultValue(PbxSettings::EXTERNAL_SIP_PORT)
                         ],
                         PbxSettings::TLS_PORT => [
                             'type' => 'string',
                             'description' => 'rest_schema_net_ports_tls',
+                            'minimum' => 1,
+                            'maximum' => 65535,
                             'example' => (string)self::getDefaultValue(PbxSettings::TLS_PORT),
                             'default' => (string)self::getDefaultValue(PbxSettings::TLS_PORT)
                         ],
                         PbxSettings::EXTERNAL_TLS_PORT => [
                             'type' => 'string',
                             'description' => 'rest_schema_net_ports_external_tls',
+                            'minimum' => 1,
+                            'maximum' => 65535,
                             'example' => (string)self::getDefaultValue(PbxSettings::EXTERNAL_TLS_PORT),
                             'default' => (string)self::getDefaultValue(PbxSettings::EXTERNAL_TLS_PORT)
                         ],
                         PbxSettings::RTP_PORT_FROM => [
                             'type' => 'string',
                             'description' => 'rest_schema_net_ports_rtp_from',
+                            'minimum' => 1,
+                            'maximum' => 65535,
                             'example' => (string)self::getDefaultValue(PbxSettings::RTP_PORT_FROM),
                             'default' => (string)self::getDefaultValue(PbxSettings::RTP_PORT_FROM)
                         ],
                         PbxSettings::RTP_PORT_TO => [
                             'type' => 'string',
                             'description' => 'rest_schema_net_ports_rtp_to',
+                            'minimum' => 1,
+                            'maximum' => 65535,
                             'example' => (string)self::getDefaultValue(PbxSettings::RTP_PORT_TO),
                             'default' => (string)self::getDefaultValue(PbxSettings::RTP_PORT_TO)
                         ],

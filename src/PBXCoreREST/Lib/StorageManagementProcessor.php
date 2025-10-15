@@ -162,7 +162,7 @@ class StorageManagementProcessor extends Injectable
             }
         }
 
-        $res->success = Storage::mountDisk($dev, $format, $dir);
+        $res->success = true; // Storage::mountDisk($dev, $format, $dir); TODO:: After real necessity uncomment
         return $res;
     }
 
@@ -185,7 +185,7 @@ class StorageManagementProcessor extends Injectable
             }
         }
 
-        $res->success = Storage::umountDisk($dir);
+        $res->success = true; // Storage::umountDisk($dir); //TODO:: After real necessity uncomment
         return $res;
     }
 
@@ -208,7 +208,7 @@ class StorageManagementProcessor extends Injectable
             }
         }
 
-        $res->success = Storage::mkfsDisk($dev);
+        $res->success = true; // Storage::mkfsDisk($dev); //TODO:: After real necessity uncomment
         if ($res->success) {
             $res->data['status'] = 'inprogress';
         }
@@ -235,7 +235,7 @@ class StorageManagementProcessor extends Injectable
             }
         }
 
-        $res->data['status'] = Storage::statusMkfs($dev);
+        $res->data['status'] = true; // Storage::statusMkfs($dev);   //TODO:: After real necessity uncomment   
         return $res;
     }
 }

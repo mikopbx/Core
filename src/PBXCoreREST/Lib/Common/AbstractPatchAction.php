@@ -21,7 +21,10 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Lib\Common;
 
+use MikoPBX\Common\Providers\ModelsMetadataProvider;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
+use Phalcon\Di\Di;
+use Phalcon\Mvc\Model\MetaData;
 
 /**
  * Abstract base class for partially updating records via REST API (PATCH operation)
@@ -144,7 +147,21 @@ abstract class AbstractPatchAction extends AbstractSaveRecordAction
 
             // Get model class and find existing record
             $modelClass = static::getModelClass();
-            $record = $modelClass::findFirst("uniqid='{$data['id']}'");
+            
+            // Check if model has 'uniqid' field using DI metadata service
+            $di = Di::getDefault();
+            /** @var MetaData $metaData */
+            $metaData = $di->get(ModelsMetadataProvider::SERVICE_NAME);
+            $dummyModel = new $modelClass();
+            $attributes = $metaData->getAttributes($dummyModel);
+            $hasUniqid = in_array('uniqid', $attributes);
+            
+            // Find record by appropriate field
+            if ($hasUniqid) {
+                $record = $modelClass::findFirst("uniqid='{$data['id']}'");
+            } else {
+                $record = $modelClass::findFirstById($data['id']);
+            }
 
             if (!$record) {
                 $entityName = static::getEntityName();
@@ -161,8 +178,8 @@ abstract class AbstractPatchAction extends AbstractSaveRecordAction
             // This ensures only provided fields are updated
             $fullData = array_merge($currentData, $data);
 
-            // Ensure ID is preserved (v3 API uses uniqid)
-            $fullData['id'] = $record->uniqid;
+            // Ensure ID is preserved (v3 API uses uniqid for most models, id for some)
+            $fullData['id'] = $hasUniqid ? $record->uniqid : $record->id;
 
             // Get SaveRecordAction class and call main method
             $saveActionClass = static::getSaveActionClass();
