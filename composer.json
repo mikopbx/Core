@@ -34,7 +34,8 @@
         "psr/log": "^1.0.1",
         "repejota/nats": "0.8.4",
         "sentry/sdk": "^3.3.0",
-        "thenetworg/oauth2-azure": "^2.2"
+        "thenetworg/oauth2-azure": "^2.2",
+        "geoip2/geoip2": "v3.2.0"
     },
     "require-dev": {
         "roave/security-advisories": "dev-master",
