@@ -61,7 +61,7 @@ abstract class DatabaseProviderBase
                     'options' => [
                         \PDO::ATTR_TIMEOUT => 30,
                         \PDO::ATTR_PERSISTENT => false,
-                        \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+                        \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION
                     ]
                 ]);
 
@@ -98,22 +98,22 @@ abstract class DatabaseProviderBase
                  */
                 $connection->setNestedTransactionsWithSavepoints(false);
 
-                // Optimize SQLite for better concurrency
-                // Set busy timeout to 5 seconds - wait for lock instead of immediate failure
-                $connection->execute("PRAGMA busy_timeout = 5000");
+                // // Optimize SQLite for better concurrency
+                // // Set busy timeout to 5 seconds - wait for lock instead of immediate failure
+                // $connection->execute("PRAGMA busy_timeout = 5000");
 
-                // Keep WAL mode for better concurrency (already set, but ensure it)
-                $connection->execute("PRAGMA journal_mode = WAL");
+                // // Keep WAL mode for better concurrency (already set, but ensure it)
+                // $connection->execute("PRAGMA journal_mode = WAL");
 
-                // Use NORMAL synchronous mode for better performance while maintaining durability
-                // FULL is very safe but slower, NORMAL is good balance
-                $connection->execute("PRAGMA synchronous = NORMAL");
+                // // Use NORMAL synchronous mode for better performance while maintaining durability
+                // // FULL is very safe but slower, NORMAL is good balance
+                // $connection->execute("PRAGMA synchronous = NORMAL");
 
-                // Increase cache size to 10MB for better performance
-                $connection->execute("PRAGMA cache_size = -10000");
+                // // Increase cache size to 10MB for better performance
+                // $connection->execute("PRAGMA cache_size = -10000");
 
-                // Use memory for temp tables
-                $connection->execute("PRAGMA temp_store = MEMORY");
+                // // Use memory for temp tables
+                // $connection->execute("PRAGMA temp_store = MEMORY");
 
                 if ($dbConfig['debugMode']) {
                     $this->setupDebugMode($connection, $dbConfig);
