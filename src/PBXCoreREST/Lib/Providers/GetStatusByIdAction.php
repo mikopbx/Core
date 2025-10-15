@@ -106,7 +106,8 @@ class GetStatusByIdAction extends AbstractProviderStatusAction
                     $typesToCheck = $providerType ? [$providerType] : ['sip', 'iax'];
                     
                     foreach ($typesToCheck as $type) {
-                        if (isset($freshStatuses[$type][$providerId])) {
+                        // Check if $freshStatuses[$type] is an array (not stdClass) before accessing
+                        if (is_array($freshStatuses[$type]) && isset($freshStatuses[$type][$providerId])) {
                             $statusData = $freshStatuses[$type][$providerId];
                             break;
                         }
@@ -115,7 +116,8 @@ class GetStatusByIdAction extends AbstractProviderStatusAction
                     // If not found with provided type, check all types as fallback
                     if ($statusData === null && $providerType) {
                         foreach (['sip', 'iax'] as $type) {
-                            if ($type !== $providerType && isset($freshStatuses[$type][$providerId])) {
+                            // Check if $freshStatuses[$type] is an array (not stdClass) before accessing
+                            if ($type !== $providerType && is_array($freshStatuses[$type]) && isset($freshStatuses[$type][$providerId])) {
                                 $statusData = $freshStatuses[$type][$providerId];
                                 break;
                             }

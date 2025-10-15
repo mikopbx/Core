@@ -279,8 +279,9 @@ class RouterProvider implements ServiceProviderInterface
         if (!empty($patterns) && $patterns !== ['']) {
             foreach ($patterns as $pattern) {
                 // For array patterns (prefixes), escape and add suffix; for string patterns, use as-is
+                // Note: Use [^/:] to explicitly exclude colon and slash from ID pattern for proper /{id}:{method} parsing
                 $idPattern = is_numeric(array_key_first($patterns)) && count($patterns) > 1
-                    ? preg_quote($pattern, '/') . '[A-Za-z0-9-]+'
+                    ? preg_quote($pattern, '/') . '[^/:]+'
                     : $pattern;
 
                 // Generate resource-level custom methods
@@ -338,8 +339,9 @@ class RouterProvider implements ServiceProviderInterface
         // Add resource-level routes for each pattern
         foreach ($patterns as $pattern) {
             // For array patterns (prefixes), escape and add suffix; for string patterns, use as-is
+            // Note: Use [^/:] to explicitly exclude colon and slash from ID pattern for proper /{id}:{method} parsing
             $idPattern = is_numeric(array_key_first($patterns)) && count($patterns) > 1
-                ? preg_quote($pattern, '/') . '[A-Za-z0-9-]+'
+                ? preg_quote($pattern, '/') . '[^/:]+'
                 : $pattern;
 
             // Resource-level custom methods
