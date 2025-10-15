@@ -56,7 +56,7 @@ const generalSettingsModify = {
     /**
      * If password set, it will be hided from web ui.
      */
-    hiddenPassword: 'xxxxxxx',
+    hiddenPassword: '********',
 
     /**
      * Sound file field IDs
@@ -1011,7 +1011,7 @@ const generalSettingsModify = {
             $container.find('.private-key-set, #WEBHTTPSPrivateKey_new').remove();
             
             // Check if private key exists (password masking logic)
-            // The field will contain 'xxxxxxx' if a private key is set
+            // The field will contain '********' if a private key is set
             const currentValue = $certPrivKeyField.val();
             const hasValue = currentValue === generalSettingsModify.hiddenPassword;
             

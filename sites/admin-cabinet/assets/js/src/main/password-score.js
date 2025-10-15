@@ -131,7 +131,7 @@ const PasswordScore = {
         }
         
         // If password is empty or hidden placeholder, hide the progress
-        if (!pass || pass === 'xxxxxxx') {
+        if (!pass || pass === '********') {
             if (bar) {
                 bar.progress({
                     percent: 0,

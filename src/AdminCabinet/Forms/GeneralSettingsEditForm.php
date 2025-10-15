@@ -35,7 +35,7 @@ use Phalcon\Forms\Element\Text;
  */
 class GeneralSettingsEditForm extends BaseForm
 {
-    public const string HIDDEN_PASSWORD = 'xxxxxxx';
+    public const string HIDDEN_PASSWORD = '********';
 
     public function initialize($entity = null, $options = null): void
     {

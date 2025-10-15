@@ -131,7 +131,7 @@ class ChangeWeakPasswordTest extends MikoPBXTestsBase
         $params[] = [
             [
                 'password'       => '123456789MikoPBX#1',
-                'checkPassword'  => 'xxxxxxx',
+                'checkPassword'  => '********',
             ],
         ];
 
