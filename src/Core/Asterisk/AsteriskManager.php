@@ -382,6 +382,8 @@ class AsteriskManager
     private function waitResponseReadCompletePart(string $event_text, array &$parameters): void
     {
         $settings = [
+            'Bridge channel listing will follow'=> ['BridgeInfoComplete'],
+            'Bridge listing will follow'        => ['BridgeListComplete'],
             'Queue status will follow'          => ['QueueStatusComplete'],
             'Channels will follow'              => ['CoreShowChannelsComplete'],
             'Result will follow'                => ['DBGetComplete', 'DBGetTreeComplete'],
@@ -643,7 +645,7 @@ class AsteriskManager
             SystemMessages::sysLogMsg('AMI', "Unable to connect to manager $server ($errno): $errStr", LOG_ERR);
             return false;
         }
-        stream_set_timeout($this->socket, 1, 0);
+        stream_set_timeout($this->socket, 2, 0);
 
         // read the header
         $str = $this->getStringDataFromSocket();
