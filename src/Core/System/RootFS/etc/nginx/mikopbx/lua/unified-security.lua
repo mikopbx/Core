@@ -43,7 +43,7 @@ local RATE_LIMIT_PREFIX = "_PH_REDIS_CLIENT:rate_limit:"
 -- Rate limiting settings
 local rate_limit_requests = 180  -- requests per minute for anonymous
 local rate_limit_requests_auth = 600  -- requests per minute for authenticated
-local rate_limit_requests_api = 120  -- requests per minute for API endpoints
+local rate_limit_requests_api = 180  -- requests per minute for API endpoints
 local rate_limit_window = 60  -- window in seconds
 local rate_limit_burst = 20  -- burst allowance
 local rate_limit_block_time = 300  -- block time in seconds (5 minutes)

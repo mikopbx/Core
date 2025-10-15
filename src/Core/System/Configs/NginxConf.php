@@ -343,8 +343,12 @@ class NginxConf extends SystemConfigClass
         $redisVars .= "    # Security configuration\n";
         $redisVars .= "    set \$is_docker '" . (Util::isDocker() ? '1' : '0') . "';\n";
         $redisVars .= "    set \$security_mode 'balanced';\n";
-        $redisVars .= "    set \$rate_limit_enabled '1';\n";
         $redisVars .= "    set \$session_check_required '0';\n";
+
+        // Rate limiting can be disabled via environment variable for testing
+        $rateLimitEnabled = getenv('MIKOPBX_RATE_LIMIT_ENABLED')??'1';
+        $rateLimitEnabled = ($rateLimitEnabled === '0') ? '0' : '1';
+        $redisVars .= "    set \$rate_limit_enabled '$rateLimitEnabled';\n";
         $redisVars .= "    \n";
         $redisVars .= "    # Security filtering via Lua\n";
         $redisVars .= "    access_by_lua_file /etc/nginx/mikopbx/lua/unified-security.lua;\n";
