@@ -43,8 +43,19 @@ Parameters:
             </div>
         </div>
     {% endif %}
-    {% if documentationLink and (showDocumentationLink is not defined or showDocumentationLink) %}
+
+
+    {% if (showDocumentationLink is not defined or showDocumentationLink) %}
         <div style="margin-top: 1em;">
+            {% if documentationLink %}
+                <a href="{{documentationLink}}" 
+            target="_blank" 
+            class="ui basic tiny button prevent-word-wrap">
+                <i class="question circle outline icon"></i>
+                {{ t._('et_ReadDocumentation') }}
+            </a>
+
+            {% else %}
             <a href="#" 
             data-controller="{{ controllerName }}" 
             data-action="{{ actionName }}" 
@@ -54,6 +65,8 @@ Parameters:
                 <i class="question circle outline icon"></i>
                 {{ t._('et_ReadDocumentation') }}
             </a>
+            {% endif %}
+            
         </div>
     {% endif %}
     {% if showButton %}
