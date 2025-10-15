@@ -45,7 +45,12 @@ Parameters:
     {% endif %}
     {% if documentationLink and (showDocumentationLink is not defined or showDocumentationLink) %}
         <div style="margin-top: 1em;">
-            <a href="{{ documentationLink }}" target="_blank" class="ui basic tiny button prevent-word-wrap">
+            <a href="#" 
+            data-controller="{{ controllerName }}" 
+            data-action="{{ actionName }}" 
+            {% if globalModuleUniqueId %}data-module-id="{{ globalModuleUniqueId }}"{% endif %} 
+            target="_blank" 
+            class="ui basic tiny button prevent-word-wrap wiki-help-link">
                 <i class="question circle outline icon"></i>
                 {{ t._('et_ReadDocumentation') }}
             </a>
