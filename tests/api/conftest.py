@@ -180,6 +180,80 @@ class MikoPBXClient:
         response.raise_for_status()
         return response.json()
 
+    def upload_file(self, path: str, file_path: str, params: Optional[Dict] = None) -> Dict[str, Any]:
+        """
+        Upload file using Resumable.js protocol (chunked upload)
+
+        Args:
+            path: API endpoint path (e.g., 'files:upload' or 'sound-files:uploadFile')
+            file_path: Absolute path to file to upload
+            params: Optional additional parameters
+
+        Returns:
+            API response dictionary
+
+        Example:
+            response = client.upload_file(
+                'files:upload',
+                '/path/to/sample.wav',
+                params={'category': 'sound'}
+            )
+        """
+        import os
+        import hashlib
+
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"File not found: {file_path}")
+
+        file_size = os.path.getsize(file_path)
+        file_name = os.path.basename(file_path)
+
+        # Generate unique upload ID
+        upload_id = hashlib.md5(f"{file_path}{file_size}".encode()).hexdigest()
+
+        # Detect MIME type based on file extension
+        import mimetypes
+        mime_type, _ = mimetypes.guess_type(file_path)
+        if not mime_type:
+            mime_type = 'application/octet-stream'
+
+        # Prepare resumable.js parameters (single chunk for simplicity)
+        upload_params = {
+            'resumableIdentifier': upload_id,
+            'resumableFilename': file_name,
+            'resumableTotalSize': file_size,
+            'resumableChunkNumber': 1,
+            'resumableTotalChunks': 1,
+            'resumableChunkSize': file_size,
+            'resumableCurrentChunkSize': file_size,
+            'file_mime_type': mime_type,
+        }
+
+        # Add any additional parameters
+        if params:
+            upload_params.update(params)
+
+        # Prepare multipart upload
+        with open(file_path, 'rb') as f:
+            files = {
+                'file': (file_name, f, 'application/octet-stream')
+            }
+
+            # For multipart, we need to omit Content-Type header (let requests set it)
+            headers = {
+                'Authorization': f'Bearer {self.access_token}'
+            }
+
+            response = self.session.post(
+                f"{self.base_url}/{path.lstrip('/')}",
+                files=files,
+                data=upload_params,
+                headers=headers
+            )
+
+        response.raise_for_status()
+        return response.json()
+
     def logout(self) -> None:
         """Logout and invalidate tokens"""
         if self.access_token:

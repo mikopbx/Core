@@ -20,6 +20,7 @@ class TestIncomingRoutes:
     """Comprehensive CRUD tests for Incoming Routes"""
 
     created_ids = []
+    created_provider_ids = []  # Track providers to cleanup at the end
 
     def test_01_get_default_template(self, api_client):
         """Test GET /incoming-routes:getDefault - Get default route template"""
@@ -113,15 +114,10 @@ class TestIncomingRoutes:
 
         route_id = response['data']['id']
         self.created_ids.append(route_id)
+        self.created_provider_ids.append(provider_id)  # Track for cleanup at the end
 
         print(f"✓ Created provider incoming route: {route_id}")
         print(f"  Provider: {provider_id}")
-
-        # Cleanup provider
-        try:
-            api_client.delete(f'sip-providers/{provider_id}')
-        except:
-            pass
 
     def test_05_get_routes_list(self, api_client):
         """Test GET /incoming-routes - Get list with pagination"""
@@ -287,7 +283,7 @@ class TestIncomingRoutes:
                 raise
 
     def test_13_delete_routes(self, api_client):
-        """Test DELETE /incoming-routes/{id} - Delete routes"""
+        """Test DELETE /incoming-routes/{id} - Delete routes and cleanup providers"""
         deleted_count = 0
         failed_count = 0
 
@@ -309,6 +305,15 @@ class TestIncomingRoutes:
 
         print(f"✓ Deleted {deleted_count} routes, {failed_count} failed")
         self.created_ids.clear()
+
+        # Cleanup test providers
+        for provider_id in self.created_provider_ids[:]:
+            try:
+                api_client.delete(f'sip-providers/{provider_id}')
+                print(f"✓ Cleaned up test provider: {provider_id}")
+            except:
+                pass  # Ignore cleanup errors
+        self.created_provider_ids.clear()
 
 
 class TestIncomingRoutesEdgeCases:

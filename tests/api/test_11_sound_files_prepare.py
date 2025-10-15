@@ -17,6 +17,8 @@ class TestSoundFiles:
     """Comprehensive CRUD tests for Sound Files"""
 
     created_ids = []
+    uploaded_file_path = None
+    converted_file_path = None
 
     def test_01_get_default_template(self, api_client):
         """Test GET /sound-files:getDefault - Get default sound file template"""
@@ -159,7 +161,147 @@ class TestSoundFiles:
 
         print(f"✓ Patched sound file description")
 
-    def test_09_delete_sound_files(self, api_client):
+    def test_09_upload_real_audio_file(self, api_client):
+        """Test POST /files:upload - Upload real WAV file via Files API"""
+        import os
+        import time
+        from pathlib import Path
+
+        # Path to sample WAV file from AdminCabinet tests
+        sample_file = Path(__file__).parent.parent / 'AdminCabinet' / 'assets' / 'sample.wav'
+
+        if not sample_file.exists():
+            pytest.skip(f"Sample WAV file not found: {sample_file}")
+
+        print(f"  Uploading: {sample_file.name}")
+        print(f"  Size: {sample_file.stat().st_size / 1024:.2f} KB")
+
+        # Upload via Files API with category 'sound'
+        response = api_client.upload_file(
+            'files:upload',
+            str(sample_file),
+            params={'category': 'sound'}
+        )
+
+        assert_api_success(response, "Failed to upload audio file")
+
+        # Check response structure
+        data = response.get('data', {})
+        upload_id = data.get('upload_id', '')
+
+        # Wait for file merge to complete (single chunk should be immediate, but wait anyway)
+        max_wait = 15  # Wait up to 15 seconds
+        merged_file_path = None
+
+        print(f"  Waiting for file merge (upload_id: {upload_id})...")
+        for i in range(max_wait):
+            time.sleep(1)
+            status_response = api_client.get('files:uploadStatus', params={'id': upload_id})
+
+            if status_response.get('result'):
+                status_data = status_response.get('data', {})
+                d_status = status_data.get('d_status', '')
+
+                if d_status == 'UPLOAD_COMPLETE':
+                    merged_file_path = status_data.get('upload_file_path', status_data.get('filename', ''))
+                    print(f"  ✓ File merge completed ({i+1}s)")
+                    break
+                elif d_status == 'UPLOAD_ERROR':
+                    pytest.fail(f"Upload failed with error: {status_data.get('error', 'Unknown error')}")
+
+        if not merged_file_path:
+            # Fallback to original response
+            merged_file_path = data.get('upload_file_path', data.get('filename', ''))
+
+        if not merged_file_path:
+            pytest.fail(f"Failed to get merged file path after {max_wait}s. Last status: {status_response}")
+
+        # Store upload info for next test
+        self.__class__.uploaded_file_path = merged_file_path
+
+        print(f"✓ Uploaded audio file")
+        print(f"  Merged file path: {merged_file_path}")
+
+    def test_10_convert_uploaded_audio_file(self, api_client):
+        """Test POST /sound-files:convertAudioFile - Convert uploaded file to system format"""
+        if not hasattr(self.__class__, 'uploaded_file_path') or not self.uploaded_file_path:
+            pytest.skip("No uploaded file from previous test")
+
+        print(f"  Converting audio file...")
+        print(f"  Source: {self.uploaded_file_path}")
+
+        # Convert audio file (like web interface does)
+        convert_data = {
+            'temp_filename': self.uploaded_file_path,
+            'category': 'custom'
+        }
+
+        response = api_client.post('sound-files:convertAudioFile', convert_data)
+        assert_api_success(response, "Failed to convert audio file")
+
+        # Get converted file info
+        data = response.get('data', {})
+        print(f"  Convert response data: {data}")
+
+        # ConvertAudioFile returns array with MP3 path as first element
+        if isinstance(data, list) and len(data) > 0:
+            converted_path = data[0]
+            self.__class__.converted_file_path = converted_path
+            print(f"✓ Audio file converted to MP3")
+            print(f"  Converted path: {converted_path}")
+
+            # Now create a sound file record manually
+            sound_data = {
+                'name': 'API Test Sample Audio',
+                'description': 'Sample audio uploaded and converted via API test',
+                'category': 'custom',
+                'path': converted_path
+            }
+
+            sound_response = api_client.post('sound-files', sound_data)
+            if sound_response.get('result'):
+                sound_id = sound_response['data']['id']
+                self.created_ids.append(sound_id)
+                print(f"  ✓ Sound file record created")
+                print(f"  Sound File ID: {sound_id}")
+        elif 'sound_file_id' in data:
+            # Alternative: if API already created the record
+            sound_id = data['sound_file_id']
+            self.created_ids.append(sound_id)
+            print(f"✓ Audio file converted and record created")
+            print(f"  Sound File ID: {sound_id}")
+
+    def test_11_verify_converted_file_in_list(self, api_client):
+        """Test GET /sound-files - Verify converted file appears in list"""
+        if not self.created_ids:
+            pytest.skip("No sound file created from conversion")
+
+        sound_id = self.created_ids[-1]  # Get last created ID
+
+        # Get the sound file record
+        response = api_client.get(f'sound-files/{sound_id}')
+        assert_api_success(response, f"Failed to get sound file {sound_id}")
+
+        data = response['data']
+
+        print(f"✓ Sound file accessible in system")
+        print(f"  ID: {data['id']}")
+        print(f"  Name: {data.get('name', 'N/A')}")
+        print(f"  Path: {data.get('path', 'N/A')}")
+        print(f"  Category: {data.get('category', 'N/A')}")
+        print(f"  Duration: {data.get('duration', 'N/A')}")
+
+        # Test playback endpoint
+        if data.get('path'):
+            try:
+                playback_response = api_client.get('sound-files:playback', params={'view': data['path']})
+                if playback_response.get('result'):
+                    print(f"  ✓ File is playable via web interface")
+                    print(f"  Playback URL: /pbxcore/api/v3/sound-files:playback?view={data['path']}")
+            except Exception as e:
+                print(f"  ⚠ Playback test skipped: {str(e)[:50]}")
+
+    def test_12_delete_sound_files(self, api_client):
         """Test DELETE /sound-files/{id} - Delete sound files"""
         for sound_id in self.created_ids[:]:
             response = api_client.delete(f'sound-files/{sound_id}')

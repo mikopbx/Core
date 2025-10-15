@@ -345,6 +345,8 @@ def test_employee_delete_cascade(api_client, employee_fixtures):
     template = list(employee_fixtures.values())[0].copy()
     template['number'] = test_number
     template['username'] = 'Delete Test User'
+    template['email'] = 'delete.test@example.com'
+    template['mobile'] = '+79777777777'  # Unique mobile number to avoid conflicts
 
     create_data = convert_employee_fixture_to_api_format(template)
 

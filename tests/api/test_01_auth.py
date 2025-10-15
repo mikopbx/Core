@@ -103,6 +103,9 @@ class TestAuth:
         """Test POST /auth:refresh - Refresh access token"""
         # The MikoPBXClient should have refresh token in cookies from previous login
         try:
+            # Wait 1 second to ensure new timestamp in JWT
+            time.sleep(1)
+            
             response = api_client.post('auth:refresh', {})
             assert_api_success(response, "Failed to refresh token")
 

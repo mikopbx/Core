@@ -411,7 +411,7 @@ class TestIAXProvidersCustomMethods:
             # API returns dict with 'iax' and 'sip' keys
             assert isinstance(data, dict), "Statuses should be a dict"
             assert 'iax' in data, "Should have 'iax' key"
-            assert isinstance(data['iax'], list), "IAX statuses should be a list"
+            assert isinstance(data['iax'], dict), "IAX statuses should be a dict with provider IDs as keys"
             print(f"✓ Retrieved IAX provider statuses: {len(data['iax'])} IAX providers")
         else:
             # It's okay if this endpoint is not fully implemented or no providers active

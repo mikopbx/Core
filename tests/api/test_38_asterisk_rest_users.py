@@ -38,7 +38,7 @@ class TestAsteriskRestUsers:
         assert isinstance(data, dict), "Default template should be a dict"
 
         # Verify essential fields exist
-        assert 'username' in data or 'secret' in data or 'description' in data
+        assert 'username' in data or 'password' in data or 'description' in data
 
         print(f"✓ Retrieved default ARI user template")
 
@@ -46,7 +46,7 @@ class TestAsteriskRestUsers:
         """Test POST /asterisk-rest-users - Create basic ARI user"""
         user_data = {
             'username': 'test_ari_user',
-            'secret': 'TestSecret123!@#',
+            'password': 'TestSecret123!@#',
             'description': 'Test ARI User',
             'disabled': False
         }
@@ -66,7 +66,7 @@ class TestAsteriskRestUsers:
         """Test POST /asterisk-rest-users - Create user with minimal fields"""
         user_data = {
             'username': 'minimal_ari',
-            'secret': 'MinimalPass456'
+            'password': 'MinimalPass456'
         }
 
         response = api_client.post('asterisk-rest-users', user_data)
@@ -155,7 +155,7 @@ class TestAsteriskRestUsers:
         update_data = {
             'id': user_id,
             'username': current.get('username', 'test_ari_user') + '_updated',
-            'secret': 'UpdatedSecret789!@#',
+            'password': 'UpdatedSecret789!@#',
             'description': current.get('description', 'User') + ' (Updated)',
             'disabled': False
         }
@@ -229,7 +229,7 @@ class TestAsteriskRestUsersEdgeCases:
     def test_01_validate_required_fields(self, api_client):
         """Test validation - missing required username field"""
         invalid_data = {
-            'secret': 'TestSecret123',
+            'password': 'TestSecret123',
             'description': 'Invalid User',
             # Missing required 'username' field
         }
@@ -258,7 +258,7 @@ class TestAsteriskRestUsersEdgeCases:
         # Create first user
         user_data = {
             'username': 'test_unique_ari',
-            'secret': 'TestSecret123',
+            'password': 'TestSecret123',
             'description': 'First User'
         }
 
@@ -298,7 +298,7 @@ class TestAsteriskRestUsersEdgeCases:
         """Test validation - weak password handling"""
         weak_data = {
             'username': 'test_weak_pass_ari',
-            'secret': '123',  # Weak password
+            'password': '123',  # Weak password
             'description': 'Weak Password Test'
         }
 
@@ -339,7 +339,7 @@ class TestAsteriskRestUsersEdgeCases:
         """Test validation - invalid username characters"""
         invalid_data = {
             'username': 'test user@#$',  # Invalid characters
-            'secret': 'TestSecret123',
+            'password': 'TestSecret123',
             'description': 'Invalid Username Format'
         }
 

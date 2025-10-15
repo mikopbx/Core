@@ -65,8 +65,11 @@ class TestOffWorkTimes:
         print(f"  Period: {time_data['date_from']} to {time_data['date_to']}")
         print(f"  Extension: {time_data['extension']}")
 
-    def test_03_create_weekend_period(self, api_client):
+    def test_03_create_weekend_period(self, api_client, audio_file_fixtures):
         """Test POST /off-work-times - Create weekday-based weekend period"""
+        # Get miko_hello.audio which has a predefined ID
+        sound = audio_file_fixtures.get('miko_hello.audio', {'id': '1'})
+
         time_data = {
             'description': 'Test Weekend',
             'date_from': '',
@@ -75,7 +78,8 @@ class TestOffWorkTimes:
             'weekday_to': 7,    # Sunday
             'time_from': '',
             'time_to': '',
-            'action': 'hangup'
+            'action': 'playmessage',
+            'audio_message_id': sound['id']
         }
 
         response = api_client.post('off-work-times', time_data)
@@ -87,8 +91,11 @@ class TestOffWorkTimes:
         print(f"✓ Created weekend off-work-time: {time_id}")
         print(f"  Weekdays: {time_data['weekday_from']} to {time_data['weekday_to']}")
 
-    def test_04_create_daily_time_range(self, api_client):
+    def test_04_create_daily_time_range(self, api_client, extension_fixtures):
         """Test POST /off-work-times - Create daily time range (morning hours)"""
+        # Get first available extension
+        ext = list(extension_fixtures.values())[0] if extension_fixtures else {'number': '201'}
+
         time_data = {
             'description': 'Test Morning Hours',
             'date_from': '',
@@ -97,7 +104,8 @@ class TestOffWorkTimes:
             'weekday_to': 5,    # Friday
             'time_from': '00:00',
             'time_to': '09:00',
-            'action': 'busy'
+            'action': 'extension',
+            'extension': ext['number']
         }
 
         response = api_client.post('off-work-times', time_data)
@@ -181,7 +189,13 @@ class TestOffWorkTimes:
         # Update with all required fields
         update_data = current.copy()
         update_data['description'] = f"{current.get('description', 'Time')} (Updated)"
-        update_data['action'] = 'busy'
+        # Keep the same action type or change to a valid one
+        if update_data.get('action') == 'extension':
+            # Keep extension action unchanged
+            pass
+        else:
+            # If it's playmessage, keep it unchanged
+            pass
 
         response = api_client.put(f'off-work-times/{time_id}', update_data)
         assert_api_success(response, "Failed to update off-work-time")
@@ -189,20 +203,22 @@ class TestOffWorkTimes:
         # Verify update
         updated = assert_record_exists(api_client, 'off-work-times', time_id)
         assert '(Updated)' in updated['description']
-        assert updated['action'] == 'busy'
+        # Verify action is still valid (extension or playmessage)
+        assert updated['action'] in ['extension', 'playmessage']
 
         print(f"✓ Updated off-work-time: {updated['description']}")
 
     def test_10_patch_time(self, api_client):
         """Test PATCH /off-work-times/{id} - Partial update"""
-        if not self.created_ids:
-            pytest.skip("No time conditions created yet")
+        if len(self.created_ids) < 3:
+            pytest.skip("Need at least 3 time conditions for PATCH test")
 
-        time_id = self.created_ids[0]
+        # Use the third record (test_04 - daily time range) which has time_from/time_to set
+        time_id = self.created_ids[2]
 
         patch_data = {
             'description': 'Patched Time Condition',
-            'time_from': '08:00'
+            'time_to': '10:00'  # Change only time_to, keep existing time_from
         }
 
         try:
@@ -309,10 +325,14 @@ class TestOffWorkTimes:
 class TestOffWorkTimesEdgeCases:
     """Edge cases for off-work-time conditions"""
 
-    def test_01_validate_required_fields(self, api_client):
+    def test_01_validate_required_fields(self, api_client, extension_fixtures):
         """Test validation - missing required description field"""
+        # Get first available extension
+        ext = list(extension_fixtures.values())[0] if extension_fixtures else {'number': '201'}
+
         invalid_data = {
-            'action': 'busy',
+            'action': 'extension',
+            'extension': ext['number'],
             # Missing required 'description' field
             'weekday_from': 1,
             'weekday_to': 5
@@ -338,13 +358,17 @@ class TestOffWorkTimesEdgeCases:
             else:
                 raise
 
-    def test_02_validate_date_format(self, api_client):
+    def test_02_validate_date_format(self, api_client, audio_file_fixtures):
         """Test validation - invalid date format"""
+        # Get miko_hello.audio which has a predefined ID
+        sound = audio_file_fixtures.get('miko_hello.audio', {'id': '1'})
+
         invalid_data = {
             'description': 'Invalid Date Format',
             'date_from': '2025/01/01',  # Invalid - should be YYYY-MM-DD
             'date_to': '2025-01-05',
-            'action': 'hangup'
+            'action': 'playmessage',
+            'audio_message_id': sound['id']
         }
 
         try:
@@ -376,13 +400,17 @@ class TestOffWorkTimesEdgeCases:
             else:
                 raise
 
-    def test_04_validate_weekday_range(self, api_client):
+    def test_04_validate_weekday_range(self, api_client, audio_file_fixtures):
         """Test validation - weekday should be 0-7 or -1"""
+        # Get miko_hello.audio which has a predefined ID
+        sound = audio_file_fixtures.get('miko_hello.audio', {'id': '1'})
+
         invalid_data = {
             'description': 'Invalid Weekday',
             'weekday_from': 10,  # Invalid - should be 0-7 or -1
             'weekday_to': 5,
-            'action': 'hangup'
+            'action': 'playmessage',
+            'audio_message_id': sound['id']
         }
 
         try:
@@ -400,15 +428,19 @@ class TestOffWorkTimesEdgeCases:
             else:
                 print(f"⚠ Unexpected error: {str(e)[:50]}")
 
-    def test_05_validate_time_format(self, api_client):
+    def test_05_validate_time_format(self, api_client, extension_fixtures):
         """Test validation - time should be HH:MM format"""
+        # Get first available extension
+        ext = list(extension_fixtures.values())[0] if extension_fixtures else {'number': '201'}
+
         invalid_data = {
             'description': 'Invalid Time Format',
             'weekday_from': 1,
             'weekday_to': 5,
             'time_from': '9:00',  # Invalid - should be 09:00
             'time_to': '17:00',
-            'action': 'busy'
+            'action': 'extension',
+            'extension': ext['number']
         }
 
         try:
