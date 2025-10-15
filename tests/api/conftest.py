@@ -56,12 +56,14 @@ class MikoPBXClient:
         import urllib3
         urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-        # Retry strategy for transient failures
+        # Retry strategy for transient failures and connection errors
+        # Increased retries and backoff for server restarts
         retry_strategy = Retry(
-            total=3,
-            backoff_factor=1,
+            total=10,  # Increased from 3 to 10
+            backoff_factor=2,  # Increased from 1 to 2 (2, 4, 8, 16, 32 seconds...)
             status_forcelist=[429, 500, 502, 503, 504],
-            allowed_methods=["GET", "POST", "PUT", "PATCH", "DELETE"]
+            allowed_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
+            raise_on_status=False  # Don't raise on status errors, let us handle them
         )
 
         adapter = HTTPAdapter(max_retries=retry_strategy)
@@ -123,62 +125,141 @@ class MikoPBXClient:
         }
 
     def get(self, path: str, params: Optional[Dict] = None) -> Dict[str, Any]:
-        """GET request"""
-        response = self.session.get(
-            f"{self.base_url}/{path.lstrip('/')}",
-            params=params,
-            headers=self._get_headers()
-        )
-        response.raise_for_status()
-        return response.json()
+        """GET request with connection retry"""
+        import time
+        max_attempts = 5
+        base_delay = 3
+        
+        for attempt in range(max_attempts):
+            try:
+                response = self.session.get(
+                    f"{self.base_url}/{path.lstrip('/')}",
+                    params=params,
+                    headers=self._get_headers(),
+                    timeout=30
+                )
+                response.raise_for_status()
+                return response.json()
+            except (requests.exceptions.ConnectionError, 
+                    requests.exceptions.Timeout) as e:
+                if attempt < max_attempts - 1:
+                    delay = base_delay * (2 ** attempt)
+                    print(f"\n⚠️  Connection failed (attempt {attempt + 1}/{max_attempts}), "
+                          f"retrying in {delay}s... ({type(e).__name__})")
+                    time.sleep(delay)
+                else:
+                    raise
 
     def post(self, path: str, data: Optional[Dict] = None) -> Dict[str, Any]:
-        """POST request"""
-        response = self.session.post(
-            f"{self.base_url}/{path.lstrip('/')}",
-            json=data,
-            headers=self._get_headers()
-        )
-        try:
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.HTTPError as e:
-            # Try to extract error message from JSON response
+        """POST request with connection retry"""
+        import time
+        max_attempts = 5
+        base_delay = 3
+        
+        for attempt in range(max_attempts):
             try:
-                error_data = response.json()
-                error_msg = f"{e}. API Messages: {error_data.get('messages', {})}"
-                raise requests.exceptions.HTTPError(error_msg, response=response)
-            except (ValueError, KeyError):
-                raise e
+                response = self.session.post(
+                    f"{self.base_url}/{path.lstrip('/')}",
+                    json=data,
+                    headers=self._get_headers(),
+                    timeout=30
+                )
+                response.raise_for_status()
+                return response.json()
+            except (requests.exceptions.ConnectionError, 
+                    requests.exceptions.Timeout) as e:
+                if attempt < max_attempts - 1:
+                    delay = base_delay * (2 ** attempt)
+                    print(f"\n⚠️  Connection failed (attempt {attempt + 1}/{max_attempts}), "
+                          f"retrying in {delay}s... ({type(e).__name__})")
+                    time.sleep(delay)
+                else:
+                    raise
+            except requests.exceptions.HTTPError as e:
+                # Try to extract error message from JSON response
+                try:
+                    error_data = response.json()
+                    error_msg = f"{e}. API Messages: {error_data.get('messages', {})}"
+                    raise requests.exceptions.HTTPError(error_msg, response=response)
+                except (ValueError, KeyError):
+                    raise e
 
     def put(self, path: str, data: Dict) -> Dict[str, Any]:
-        """PUT request (full update)"""
-        response = self.session.put(
-            f"{self.base_url}/{path.lstrip('/')}",
-            json=data,
-            headers=self._get_headers()
-        )
-        response.raise_for_status()
-        return response.json()
+        """PUT request (full update) with connection retry"""
+        import time
+        max_attempts = 5
+        base_delay = 3
+        
+        for attempt in range(max_attempts):
+            try:
+                response = self.session.put(
+                    f"{self.base_url}/{path.lstrip('/')}",
+                    json=data,
+                    headers=self._get_headers(),
+                    timeout=30
+                )
+                response.raise_for_status()
+                return response.json()
+            except (requests.exceptions.ConnectionError, 
+                    requests.exceptions.Timeout) as e:
+                if attempt < max_attempts - 1:
+                    delay = base_delay * (2 ** attempt)
+                    print(f"\n⚠️  Connection failed (attempt {attempt + 1}/{max_attempts}), "
+                          f"retrying in {delay}s... ({type(e).__name__})")
+                    time.sleep(delay)
+                else:
+                    raise
 
     def patch(self, path: str, data: Dict) -> Dict[str, Any]:
-        """PATCH request (partial update)"""
-        response = self.session.patch(
-            f"{self.base_url}/{path.lstrip('/')}",
-            json=data,
-            headers=self._get_headers()
-        )
-        response.raise_for_status()
-        return response.json()
+        """PATCH request (partial update) with connection retry"""
+        import time
+        max_attempts = 5
+        base_delay = 3
+        
+        for attempt in range(max_attempts):
+            try:
+                response = self.session.patch(
+                    f"{self.base_url}/{path.lstrip('/')}",
+                    json=data,
+                    headers=self._get_headers(),
+                    timeout=30
+                )
+                response.raise_for_status()
+                return response.json()
+            except (requests.exceptions.ConnectionError, 
+                    requests.exceptions.Timeout) as e:
+                if attempt < max_attempts - 1:
+                    delay = base_delay * (2 ** attempt)
+                    print(f"\n⚠️  Connection failed (attempt {attempt + 1}/{max_attempts}), "
+                          f"retrying in {delay}s... ({type(e).__name__})")
+                    time.sleep(delay)
+                else:
+                    raise
 
     def delete(self, path: str) -> Dict[str, Any]:
-        """DELETE request"""
-        response = self.session.delete(
-            f"{self.base_url}/{path.lstrip('/')}",
-            headers=self._get_headers()
-        )
-        response.raise_for_status()
-        return response.json()
+        """DELETE request with connection retry"""
+        import time
+        max_attempts = 5
+        base_delay = 3
+        
+        for attempt in range(max_attempts):
+            try:
+                response = self.session.delete(
+                    f"{self.base_url}/{path.lstrip('/')}",
+                    headers=self._get_headers(),
+                    timeout=30
+                )
+                response.raise_for_status()
+                return response.json()
+            except (requests.exceptions.ConnectionError, 
+                    requests.exceptions.Timeout) as e:
+                if attempt < max_attempts - 1:
+                    delay = base_delay * (2 ** attempt)
+                    print(f"\n⚠️  Connection failed (attempt {attempt + 1}/{max_attempts}), "
+                          f"retrying in {delay}s... ({type(e).__name__})")
+                    time.sleep(delay)
+                else:
+                    raise
 
     def upload_file(self, path: str, file_path: str, params: Optional[Dict] = None) -> Dict[str, Any]:
         """
