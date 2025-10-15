@@ -93,51 +93,27 @@ const GeneralSettingsPasskeys = {
      * Render the passkeys table
      */
     renderTable() {
-        let html = `
-            <table class="ui very basic table" id="passkeys-table">
-                <tbody>
-        `;
+        const $table = $('#passkeys-table tbody');
+        const $emptyRow = $('#passkeys-empty-row');
 
         if (this.passkeys.length === 0) {
-            // Show placeholder when no passkeys
-            html += `
-                <tr id="passkeys-empty-row">
-                    <td colspan="2">
-                        <div class="ui placeholder segment">
-                            <div class="ui icon header">
-                                <i class="key icon"></i>
-                                ${globalTranslate.pk_NoPasskeys}
-                            </div>
-                            <div class="inline">
-                                <div class="ui text">
-                                    ${globalTranslate.pk_EmptyDescription}
-                                </div>
-                            </div>
-                            <div style="margin-top: 1em;">
-                                <a href="https://docs.mikopbx.com" target="_blank"
-                                   class="ui basic tiny button prevent-word-wrap">
-                                    <i class="question circle outline icon"></i>
-                                    ${globalTranslate.pk_ReadDocs}
-                                </a>
-                            </div>
-                            <div style="margin-top: 1em; text-align: center;">
-                                <button type="button" class="ui blue button prevent-word-wrap" id="add-passkey-button">
-                                    <i class="add circle icon"></i>
-                                    ${globalTranslate.pk_AddPasskey}
-                                </button>
-                            </div>
-                        </div>
-                    </td>
-                </tr>
-            `;
+            // Show empty placeholder
+            $table.find('tr:not(#passkeys-empty-row)').remove();
+            $emptyRow.show();
         } else {
-            // Show existing passkeys
+            // Hide empty placeholder
+            $emptyRow.hide();
+
+            // Remove existing passkey rows (keep empty row)
+            $table.find('tr:not(#passkeys-empty-row)').remove();
+
+            // Add passkey rows
             this.passkeys.forEach((passkey) => {
                 const lastUsed = passkey.last_used_at
                     ? this.formatDate(passkey.last_used_at)
                     : globalTranslate.pk_NeverUsed || 'Never used';
 
-                html += `
+                const html = `
                     <tr data-id="${passkey.id}">
                         <td class="passkey-cell">
                             <div style="margin-bottom: 0.3em;">
@@ -156,10 +132,11 @@ const GeneralSettingsPasskeys = {
                         </td>
                     </tr>
                 `;
+                $table.append(html);
             });
 
             // Add button row
-            html += `
+            const addButtonRow = `
                 <tr id="add-passkey-row">
                     <td colspan="2">
                         <button class="ui mini basic button" id="add-passkey-button">
@@ -169,17 +146,11 @@ const GeneralSettingsPasskeys = {
                     </td>
                 </tr>
             `;
+            $table.append(addButtonRow);
+
+            // Initialize tooltips
+            $table.find('[data-content]').popup();
         }
-
-        html += `
-                </tbody>
-            </table>
-        `;
-
-        this.$container.html(html);
-
-        // Initialize tooltips
-        this.$container.find('[data-content]').popup();
     },
 
     /**
