@@ -696,6 +696,19 @@ const extension = {
      * Uses specialized classes with complete automation (no onChange callbacks needed)
      */
     initializeDropdownsWithCleanData(data) {
+        // Destroy existing forwarding dropdown instances before re-initialization
+        // This ensures proper re-creation when form data is reloaded (e.g., after save)
+        const forwardingFields = ['fwd_forwarding', 'fwd_forwardingonbusy', 'fwd_forwardingonunavailable'];
+        forwardingFields.forEach(fieldName => {
+            if (ExtensionSelector.instances.has(fieldName)) {
+                ExtensionSelector.destroy(fieldName);
+                const $dropdown = $(`#${fieldName}-dropdown`);
+                if ($dropdown.length) {
+                    $dropdown.remove();
+                }
+            }
+        });
+        
         // Extension dropdowns with current extension exclusion - V5.0 specialized class
         ExtensionSelector.init('fwd_forwarding', {
             type: 'routing',
@@ -750,10 +763,14 @@ const extension = {
         
         forwardingFields.forEach(fieldName => {
             const currentValue = $(`#${fieldName}`).val();
-            const currentText = $(`#${fieldName}-dropdown`).find('.text').text();
+            const $dropdown = $(`#${fieldName}-dropdown`);
+            const currentText = $dropdown.find('.text').not('.default').html() || '';
             
-            // Remove old dropdown
-            $(`#${fieldName}-dropdown`).remove();
+            // Destroy existing instance first
+            ExtensionSelector.destroy(fieldName);
+            
+            // Remove old dropdown DOM element
+            $dropdown.remove();
             
             // Create new data object with current value for reinitializing
             const refreshData = {};
