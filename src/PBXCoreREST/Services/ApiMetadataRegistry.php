@@ -1122,7 +1122,7 @@ class ApiMetadataRegistry extends Injectable
         foreach ($parameters as $param) {
             $properties[$param['name']] = [
                 'type' => $param['type'],
-                'description' => $param['description']
+                'description' => $this->translateText($param['description'])
             ];
 
             if (!empty($param['enum'])) {
