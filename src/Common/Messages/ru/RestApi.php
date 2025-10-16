@@ -96,6 +96,22 @@ return [
     'rest_obr_ChangePriority' => 'Изменить приоритет маршрутов',
     'rest_obr_ChangePriorityDesc' => 'Обновить порядок приоритетов для нескольких исходящих маршрутов одновременно',
 
+    // Schema field descriptions for Outbound Routes
+    'rest_schema_obr_id' => 'Уникальный идентификатор исходящего маршрута',
+    'rest_schema_obr_rulename' => 'Название правила исходящего маршрута',
+    'rest_schema_obr_providerid' => 'ID провайдера для исходящих вызовов',
+    'rest_schema_obr_priority' => 'Приоритет применения правила (чем меньше, тем выше приоритет)',
+    'rest_schema_obr_numberbeginswith' => 'Префикс номера для применения правила',
+    'rest_schema_obr_restnumbers' => 'Количество цифр после префикса (-1 = любое количество, 0 = только префикс)',
+    'rest_schema_obr_trimfrombegin' => 'Количество цифр для удаления с начала номера',
+    'rest_schema_obr_prepend' => 'Префикс для добавления к номеру перед отправкой',
+    'rest_schema_obr_note' => 'Примечание к правилу маршрутизации',
+    'rest_schema_obr_providerid_represent' => 'HTML представление провайдера с иконкой',
+    'rest_schema_obr_provider_type' => 'Тип провайдера (SIP или IAX2)',
+    'rest_schema_obr_provider_disabled' => 'Флаг отключения провайдера',
+    'rest_schema_obr_ruleDescription' => 'HTML описание правила маршрутизации',
+    'rest_schema_obr_represent' => 'Текстовое представление маршрута',
+
     // ============================================================================
     // OffWorkTimes REST API
     // ============================================================================
@@ -289,6 +305,24 @@ return [
     'rest_ir_CopyDesc' => 'Создать копию существующего входящего маршрута с новым приоритетом',
     'rest_ir_ChangePriority' => 'Изменить приоритет маршрутов',
     'rest_ir_ChangePriorityDesc' => 'Обновить порядок приоритетов для нескольких входящих маршрутов одновременно',
+
+    // Schema field descriptions for Incoming Routes
+    'rest_schema_ir_id' => 'Уникальный идентификатор входящего маршрута',
+    'rest_schema_ir_rulename' => 'Название правила входящего маршрута',
+    'rest_schema_ir_number' => 'DID номер для входящего вызова',
+    'rest_schema_ir_providerid' => 'ID провайдера для фильтрации вызовов',
+    'rest_schema_ir_priority' => 'Приоритет применения правила (чем меньше, тем выше приоритет)',
+    'rest_schema_ir_timeout' => 'Время ожидания ответа в секундах',
+    'rest_schema_ir_extension' => 'Добавочный номер для переадресации',
+    'rest_schema_ir_audio_message_id' => 'ID аудио файла для воспроизведения',
+    'rest_schema_ir_note' => 'Примечание к правилу маршрутизации',
+    'rest_schema_ir_providerid_represent' => 'HTML представление провайдера с иконкой',
+    'rest_schema_ir_provider_type' => 'Тип провайдера (SIP или IAX2)',
+    'rest_schema_ir_provider_disabled' => 'Флаг отключения провайдера',
+    'rest_schema_ir_extension_represent' => 'HTML представление добавочного номера с иконкой',
+    'rest_schema_ir_audio_message_id_represent' => 'HTML представление аудио файла с иконкой',
+    'rest_schema_ir_rule_represent' => 'HTML описание правила маршрутизации',
+    'rest_schema_ir_search_index' => 'Индекс для полнотекстового поиска',
 
     // ============================================================================
     // CDR (Call Detail Records) REST API
@@ -870,6 +904,15 @@ return [
     'rest_param_stg_label' => 'Метка тома для отформатированного устройства (максимум 16 символов)',
     'rest_param_stg_task_id' => 'Идентификатор задачи форматирования для проверки статуса',
 
+    // Storage schema field descriptions
+    'rest_schema_stg_disk' => 'Путь к устройству хранения',
+    'rest_schema_stg_save_period' => 'Период хранения записей разговоров в днях',
+    'rest_schema_stg_device' => 'Путь к устройству',
+    'rest_schema_stg_mount_point' => 'Точка монтирования устройства',
+    'rest_schema_stg_filesystem' => 'Тип файловой системы',
+    'rest_schema_stg_label' => 'Метка тома',
+    'rest_schema_stg_task_id' => 'Идентификатор задачи форматирования',
+
     // TimeSettings specific parameters
     'rest_param_ts_timezone' => 'Часовой пояс в формате IANA (например Europe/Moscow, Asia/Tokyo)',
     'rest_param_ts_ntp_server' => 'Адрес NTP сервера для синхронизации времени',
@@ -956,6 +999,18 @@ return [
     'rest_param_emp_import_data' => 'Данные для импорта (массив сотрудников)',
     'rest_param_emp_batch_data' => 'Массив данных сотрудников для массового создания',
     'rest_param_emp_batch_ids' => 'Массив ID сотрудников для массового удаления',
+    'rest_param_emp_sip_secret' => 'Пароль SIP учетной записи',
+    'rest_param_emp_sip_dtmfmode' => 'Режим передачи DTMF тонов (auto, auto_info, inband, rfc4733, info)',
+    'rest_param_emp_sip_transport' => 'Транспортный протокол SIP (udp, tcp, tls, udp,tcp, udp,tcp,tls)',
+    'rest_param_emp_sip_manualattributes' => 'Дополнительные параметры SIP (разделенные переводами строк)',
+    'rest_param_emp_sip_enableRecording' => 'Включить запись разговоров',
+    'rest_param_emp_sip_networkfilterid' => 'ID сетевого фильтра для доступа',
+    'rest_param_emp_fwd_ringlength' => 'Время ожидания ответа в секундах перед переадресацией',
+    'rest_param_emp_fwd_forwarding' => 'Добавочный для безусловной переадресации',
+    'rest_param_emp_fwd_forwardingonbusy' => 'Добавочный для переадресации при занятости',
+    'rest_param_emp_fwd_forwardingonunavailable' => 'Добавочный для переадресации при недоступности',
+    'rest_param_emp_mobile_number' => 'Мобильный номер для внешней переадресации',
+    'rest_param_emp_mobile_dialstring' => 'Строка набора для мобильного номера',
 
     // Extensions specific parameters
     'rest_param_ext_number' => 'Номер добавочного (2-8 цифр)',
@@ -964,6 +1019,29 @@ return [
     'rest_param_ext_callerid' => 'Имя абонента (CallerID)',
     'rest_param_ext_userid' => 'ID связанного пользователя',
     'rest_param_ext_numbers' => 'Массив номеров добавочных',
+    'rest_param_ext_show_in_phonebook' => 'Показывать в телефонной книге',
+    'rest_param_ext_public_access' => 'Доступ для публичных вызовов',
+    'rest_param_ext_is_general_user_number' => 'Является основным номером пользователя',
+    'rest_param_ext_limit' => 'Максимальное количество записей на странице',
+    'rest_param_ext_offset' => 'Смещение для пагинации',
+    'rest_param_ext_search' => 'Поисковая строка',
+    'rest_param_ext_order' => 'Поле для сортировки',
+    'rest_param_ext_orderWay' => 'Направление сортировки (ASC или DESC)',
+
+    // Extensions schema field descriptions
+    'rest_schema_ext_id' => 'Уникальный идентификатор добавочного (номер)',
+    'rest_schema_ext_number' => 'Номер добавочного',
+    'rest_schema_ext_type' => 'Тип добавочного (SIP, IAX, QUEUE, IVR, CONFERENCE, EXTERNAL)',
+    'rest_schema_ext_callerid' => 'Имя абонента отображаемое при звонках',
+    'rest_schema_ext_userid' => 'ID связанного пользователя из таблицы Users',
+    'rest_schema_ext_show_in_phonebook' => 'Отображать добавочный в телефонной книге',
+    'rest_schema_ext_public_access' => 'Разрешить публичный доступ к добавочному',
+    'rest_schema_ext_is_general_user_number' => 'Является основным добавочным номером сотрудника',
+    'rest_schema_ext_limit' => 'Лимит записей на странице',
+    'rest_schema_ext_offset' => 'Смещение для постраничной навигации',
+    'rest_schema_ext_search' => 'Строка поиска по номеру или имени',
+    'rest_schema_ext_order' => 'Поле для сортировки результатов',
+    'rest_schema_ext_orderWay' => 'Направление сортировки',
 
     // Passkeys schema field descriptions
     'rest_schema_pk_id' => 'Уникальный идентификатор passkey',
@@ -1041,6 +1119,30 @@ return [
     'rest_schema_cq_member_extension' => 'Номер добавочного участника',
     'rest_schema_cq_member_represent' => 'HTML представление участника',
 
+    // ============================================================================
+    // IVR Menu REST API - Response Schemas (Field Descriptions)
+    // ============================================================================
+    'rest_schema_ivr_id' => 'Уникальный идентификатор IVR меню',
+    'rest_schema_ivr_name' => 'Название IVR меню',
+    'rest_schema_ivr_extension' => 'Номер внутреннего добавочного IVR меню',
+    'rest_schema_ivr_description' => 'Описание IVR меню',
+    'rest_schema_ivr_timeout' => 'Время ожидания ввода цифры в секундах',
+    'rest_schema_ivr_timeout_extension' => 'Добавочный для переадресации по таймауту',
+    'rest_schema_ivr_number_of_repeat' => 'Количество повторов воспроизведения меню',
+    'rest_schema_ivr_allow_enter_any_internal_extension' => 'Разрешить ввод любого внутреннего добавочного',
+    'rest_schema_ivr_audio_message_id' => 'ID звукового файла для воспроизведения меню',
+    'rest_schema_ivr_actions' => 'Действия IVR меню (нажатия цифр)',
+    'rest_schema_ivr_timeout_ext_repr' => 'HTML представление добавочного для таймаута',
+    'rest_schema_ivr_timeout_ext_repr_alt' => 'HTML представление добавочного для таймаута (альтернативное)',
+    'rest_schema_ivr_audio_repr' => 'HTML представление звукового файла',
+    'rest_schema_ivr_represent' => 'HTML представление для отображения в выпадающих списках',
+    'rest_schema_ivr_search_index' => 'Поисковый индекс для фильтрации',
+    'rest_schema_ivr_action_id' => 'Уникальный идентификатор действия',
+    'rest_schema_ivr_action_digits' => 'Цифры для активации действия (0-9, #, *)',
+    'rest_schema_ivr_action_extension' => 'Добавочный для переадресации',
+    'rest_schema_ivr_action_ext_repr' => 'HTML представление добавочного',
+    'rest_schema_ivr_action_repr' => 'HTML представление действия',
+
     // Schema: Employees (Сотрудники)
     'rest_schema_emp_id' => 'Уникальный идентификатор сотрудника',
     'rest_schema_emp_username' => 'Имя пользователя сотрудника',
@@ -1076,11 +1178,14 @@ return [
 
     // Schema: Firewall Rules
     'rest_schema_fw_id' => 'Уникальный идентификатор правила файервола',
+    'rest_schema_fw_network' => 'IP адрес сети в формате IPv4 (например 192.168.1.0)',
+    'rest_schema_fw_subnet' => 'Маска подсети в CIDR нотации (0-32)',
     'rest_schema_fw_permit' => 'Разрешенные IP адреса и подсети (CIDR нотация)',
     'rest_schema_fw_deny' => 'Запрещенные IP адреса и подсети (CIDR нотация)',
     'rest_schema_fw_description' => 'Описание правила файервола',
     'rest_schema_fw_newer_block_ip' => 'Флаг доверенной подсети (адреса не будут блокироваться Fail2Ban)',
     'rest_schema_fw_local_network' => 'Флаг локальной подсети',
+    'rest_schema_fw_current_rules' => 'Объект с правилами доступа для сервисов (ключи: SIP, WEB, SSH, AMI, CTI, ICMP; значения: true/false)',
     'rest_schema_fw_rules' => 'Правила доступа для категорий трафика (SIP, WEB, SSH, AMI, CTI, ICMP)',
     'rest_schema_fw_represent' => 'HTML представление правила файервола',
     'rest_schema_fw_search_index' => 'Поисковый индекс для фильтрации',
@@ -1234,8 +1339,14 @@ return [
     'rest_param_gs_codecs' => 'Массив конфигураций кодеков с приоритетом и статусом',
 
     // Firewall specific parameters
+    'rest_param_fw_network' => 'IP адрес сети в формате IPv4 (например 192.168.1.0)',
+    'rest_param_fw_subnet' => 'Маска подсети в CIDR нотации (0-32)',
     'rest_param_fw_permit' => 'IP адрес или подсеть в формате CIDR (например 192.168.1.0/24)',
+    'rest_param_fw_deny' => 'Запрещенные IP адреса и подсети (CIDR нотация)',
     'rest_param_fw_description' => 'Описание правила файервола',
+    'rest_param_fw_newer_block_ip' => 'Флаг доверенной подсети (адреса не будут блокироваться Fail2Ban)',
+    'rest_param_fw_local_network' => 'Флаг локальной подсети',
+    'rest_param_fw_current_rules' => 'Объект с правилами доступа для сервисов (ключи: SIP, WEB, SSH, AMI, CTI, ICMP; значения: true/false)',
     'rest_param_fw_rules' => 'Объект с правилами доступа для различных сервисов (SIP, WEB, SSH и т.д.)',
     'rest_param_fw_ip' => 'IP адрес для разблокировки',
     
@@ -1248,6 +1359,52 @@ return [
     'rest_schema_banned_ip_timeofban' => 'UNIX timestamp момента блокировки IP адреса',
     'rest_schema_banned_ip_timeunban' => 'UNIX timestamp момента когда IP будет разблокирован',
     'rest_schema_banned_ip_version' => 'Маркер версии API',
+
+    // TimeSettings schema field descriptions
+    'rest_schema_ts_timezone' => 'Часовой пояс в формате IANA (например Europe/Moscow, Asia/Tokyo)',
+    'rest_schema_ts_ntp_server' => 'Адрес NTP сервера для синхронизации времени',
+    'rest_schema_ts_manual_time' => 'Режим ручной установки времени (true - вручную, false - через NTP)',
+    'rest_schema_ts_manual_datetime' => 'Дата и время для ручной установки (формат ISO 8601)',
+    'rest_schema_ts_timezone_represent' => 'Представление часового пояса с указанием смещения UTC',
+    'rest_schema_ts_current_datetime' => 'Текущие дата и время системы',
+    'rest_schema_ts_tz_identifier' => 'Идентификатор часового пояса в формате IANA',
+    'rest_schema_ts_tz_label' => 'Отображаемое название часового пояса с UTC смещением',
+    'rest_schema_ts_tz_offset' => 'Смещение часового пояса от UTC в секундах',
+
+    // MailSettings schema field descriptions
+    'rest_schema_ms_smtp_host' => 'Адрес SMTP сервера (например smtp.gmail.com)',
+    'rest_schema_ms_smtp_port' => 'Порт SMTP сервера (обычно 587 для TLS, 465 для SSL, 25 для незащищенного)',
+    'rest_schema_ms_auth_type' => 'Метод аутентификации SMTP (none, plain, login, oauth2)',
+    'rest_schema_ms_username' => 'Имя пользователя SMTP или email адрес',
+    'rest_schema_ms_password' => 'Пароль SMTP (для методов plain или login)',
+    'rest_schema_ms_use_tls' => 'Тип шифрования (none - без шифрования, tls - STARTTLS, ssl - SSL/TLS)',
+    'rest_schema_ms_cert_check' => 'Проверять SSL сертификат сервера',
+    'rest_schema_ms_from_username' => 'Отображаемое имя отправителя в письмах',
+    'rest_schema_ms_from_address' => 'Email адрес отправителя',
+    'rest_schema_ms_enable_notifications' => 'Включить отправку email уведомлений из системы',
+    'rest_schema_ms_send_missed_call_notifications' => 'Отправлять уведомления о пропущенных звонках',
+    'rest_schema_ms_send_voicemail_notifications' => 'Отправлять уведомления о новых голосовых сообщениях',
+    'rest_schema_ms_send_login_notifications' => 'Отправлять уведомления о входе в систему',
+    'rest_schema_ms_send_system_notifications' => 'Отправлять системные уведомления',
+    'rest_schema_ms_oauth2_client_id' => 'Идентификатор клиента OAuth2 (Client ID)',
+    'rest_schema_ms_oauth2_client_secret' => 'Секретный ключ клиента OAuth2 (Client Secret)',
+    'rest_schema_ms_oauth2_refresh_token' => 'Токен обновления OAuth2 (Refresh Token)',
+    'rest_schema_ms_oauth2_provider' => 'Провайдер OAuth2 (google, microsoft, yandex)',
+    'rest_schema_ms_oauth2_redirect_uri' => 'URI перенаправления после OAuth2 авторизации',
+    'rest_schema_ms_oauth2_url' => 'URL для авторизации OAuth2',
+    'rest_schema_ms_oauth2_state' => 'Токен состояния для защиты от CSRF атак',
+    'rest_schema_ms_system_notifications_email' => 'Email адрес для системных уведомлений',
+    'rest_schema_ms_missed_calls_email' => 'Email адрес для уведомлений о пропущенных звонках',
+    'rest_schema_ms_voicemail_email' => 'Email адрес для уведомлений о голосовых сообщениях',
+    'rest_schema_ms_test_email_to' => 'Email адрес получателя тестового письма',
+    'rest_schema_ms_test_email_subject' => 'Тема тестового письма',
+    'rest_schema_ms_test_email_body' => 'Текст тестового письма',
+    'rest_schema_ms_connection_status' => 'Статус подключения к почтовому серверу',
+    'rest_schema_ms_last_test_date' => 'Дата и время последней проверки подключения',
+    'rest_schema_ms_error_message' => 'Сообщение об ошибке при подключении',
+    'rest_schema_ms_test_success' => 'Результат тестирования подключения',
+    'rest_schema_ms_test_message' => 'Сообщение о результате тестирования',
+    'rest_schema_ms_test_details' => 'Детали результата тестирования',
 
     // OAuth2 callback parameters
     'rest_param_oauth_code' => 'Код авторизации OAuth2 от провайдера',
@@ -1311,6 +1468,10 @@ return [
     'rest_param_ms_from_username' => 'Отображаемое имя отправителя в письмах',
     'rest_param_ms_from_address' => 'Email адрес отправителя',
     'rest_param_ms_enable_notifications' => 'Включить отправку email уведомлений из системы',
+    'rest_param_ms_send_missed_call_notifications' => 'Отправлять уведомления о пропущенных вызовах',
+    'rest_param_ms_send_voicemail_notifications' => 'Отправлять уведомления о голосовых сообщениях',
+    'rest_param_ms_send_login_notifications' => 'Отправлять уведомления о входах в систему',
+    'rest_param_ms_send_system_notifications' => 'Отправлять системные уведомления',
     'rest_param_ms_test_email_to' => 'Email адрес получателя тестового письма',
     'rest_param_ms_test_email_subject' => 'Тема тестового письма',
     'rest_param_ms_test_email_body' => 'Текст тестового письма',
@@ -1561,4 +1722,139 @@ return [
     'rest_system_RestoreDefaultDesc' => 'Сброс всех настроек системы к заводским значениям',
     'rest_system_ChangeLanguage' => 'Изменить язык системы',
     'rest_system_ChangeLanguageDesc' => 'Изменение языка интерфейса администратора системы',
+
+    // System specific parameters
+    'rest_param_system_audio_filename' => 'Полный путь к аудиофайлу для конвертации',
+    'rest_param_system_language' => 'Код языка интерфейса (en, ru, de, es, fr, pt, uk)',
+
+    // System schema field descriptions
+    'rest_schema_system_audio_filename' => 'Путь к аудиофайлу',
+    'rest_schema_system_language' => 'Текущий язык системы',
+    'rest_schema_system_datetime' => 'Текущие дата и время системы',
+    'rest_schema_system_status' => 'Статус выполнения операции',
+
+      // REST API - Operation summaries
+      'rest_pwd_Generate' => 'Сгенерировать пароль',
+      'rest_pwd_GenerateDesc' => 'Генерирует случайный безопасный пароль с настраиваемыми параметрами',
+      'rest_pwd_Validate' => 'Проверить надежность пароля',
+      'rest_pwd_ValidateDesc' => 'Проверяет надежность пароля и возвращает рекомендации по улучшению',
+      'rest_pwd_CheckDictionary' => 'Проверить пароль в словаре',
+      'rest_pwd_CheckDictionaryDesc' => 'Проверяет, присутствует ли пароль в словаре распространенных паролей',
+      'rest_pwd_BatchValidate' => 'Пакетная проверка паролей',
+      'rest_pwd_BatchValidateDesc' => 'Проверяет надежность нескольких паролей за один запрос',
+      'rest_pwd_BatchCheckDictionary' => 'Пакетная проверка словаря',
+      'rest_pwd_BatchCheckDictionaryDesc' => 'Проверяет несколько паролей на присутствие в словаре за один запрос',
+ 
+           // REST API - Operation summaries
+           'rest_pk_GetList' => 'Получить список passkeys',
+           'rest_pk_GetListDesc' => 'Возвращает список всех зарегистрированных passkeys для текущего пользователя',
+           'rest_pk_GetRecord' => 'Получить passkey',
+           'rest_pk_GetRecordDesc' => 'Возвращает детальную информацию о конкретном passkey по ID',
+           'rest_pk_Create' => 'Создать passkey',
+           'rest_pk_CreateDesc' => 'Начинает процесс регистрации нового passkey (псевдоним для registrationStart)',
+           'rest_pk_Patch' => 'Обновить passkey',
+           'rest_pk_PatchDesc' => 'Обновляет метаданные passkey (название)',
+           'rest_pk_Delete' => 'Удалить passkey',
+           'rest_pk_DeleteDesc' => 'Удаляет зарегистрированный passkey',
+           'rest_pk_CheckAvailability' => 'Проверить доступность passkeys',
+           'rest_pk_CheckAvailabilityDesc' => 'Проверяет, зарегистрированы ли passkeys для указанного пользователя (публичный endpoint)',
+           'rest_pk_RegistrationStart' => 'Начать регистрацию passkey',
+           'rest_pk_RegistrationStartDesc' => 'Начинает процесс WebAuthn регистрации для авторизованного пользователя',
+           'rest_pk_RegistrationFinish' => 'Завершить регистрацию passkey',
+           'rest_pk_RegistrationFinishDesc' => 'Завершает процесс WebAuthn регистрации и сохраняет passkey',
+           'rest_pk_AuthenticationStart' => 'Начать аутентификацию passkey',
+           'rest_pk_AuthenticationStartDesc' => 'Начинает процесс WebAuthn аутентификации (публичный endpoint)',
+           'rest_pk_AuthenticationFinish' => 'Завершить аутентификацию passkey',
+           'rest_pk_AuthenticationFinishDesc' => 'Завершает процесс WebAuthn аутентификации и возвращает токены доступа',
+      
+           // REST API - Request parameters
+           'rest_param_pk_id' => 'ID passkey',
+           'rest_param_pk_user_id' => 'ID пользователя',
+           'rest_param_pk_name' => 'Название passkey (например: iPhone 15, YubiKey)',
+           'rest_param_pk_credential' => 'WebAuthn credential данные',
+           'rest_param_pk_credential_id' => 'Уникальный идентификатор credential',
+           'rest_param_pk_public_key' => 'Публичный ключ (Base64)',
+           'rest_param_pk_counter' => 'Счётчик использований (для защиты от replay-атак)',
+           'rest_param_pk_aaguid' => 'AAGUID аутентификатора',
+           'rest_param_pk_transports' => 'Поддерживаемые транспорты (usb, nfc, ble, internal)',
+           'rest_param_pk_login' => 'Логин пользователя',
+      
+           // REST API - Response schema fields
+           'rest_schema_pk_id' => 'Уникальный ID passkey',
+           'rest_schema_pk_user_id' => 'ID пользователя-владельца',
+           'rest_schema_pk_name' => 'Название passkey',
+           'rest_schema_pk_credential_id' => 'Идентификатор WebAuthn credential',
+           'rest_schema_pk_counter' => 'Счётчик использований',
+           'rest_schema_pk_aaguid' => 'AAGUID аутентификатора',
+           'rest_schema_pk_transports' => 'Массив поддерживаемых транспортов',
+           'rest_schema_pk_created_at' => 'Дата и время создания',
+           'rest_schema_pk_last_used_at' => 'Дата и время последнего использования',
+           'rest_schema_pk_user_agent' => 'User-Agent браузера при регистрации',
+      
+               // REST API - Operation summaries
+          'rest_openapi_GetSpec' => 'Получить OpenAPI спецификацию',
+          'rest_openapi_GetSpecDesc' => 'Возвращает полную OpenAPI 3.1 спецификацию REST API MikoPBX в формате JSON или YAML',
+          'rest_openapi_GetAcl' => 'Получить ACL правила API',
+          'rest_openapi_GetAclDesc' => 'Возвращает правила доступа (ACL) для всех endpoints API, извлеченные из метаданных',
+          'rest_openapi_GetSchemas' => 'Получить схемы валидации',
+          'rest_openapi_GetSchemasDesc' => 'Возвращает схемы валидации для всех endpoints API',
+          'rest_openapi_ClearCache' => 'Очистить кэш OpenAPI',
+          'rest_openapi_ClearCacheDesc' => 'Очищает кэш метаданных OpenAPI, форсирует регенерацию спецификации при следующем запросе',
+      
+          // REST API - Request parameters
+              // REST API - Operation summaries
+              'rest_iax_GetRegistry' => 'Получить статус регистрации IAX провайдеров',
+              'rest_iax_GetRegistryDesc' => 'Возвращает информацию о статусе регистрации и подключении всех настроенных IAX провайдеров в реальном времени',
+          
+              // REST API - Response messages
+              'rest_response_200_iax_registry' => 'Статус регистрации IAX провайдеров успешно получен',
+
+              'rest_sysinfo_GetInfo' => 'Получить информацию о системе',
+    'rest_sysinfo_GetInfoDesc' => 'Возвращает полную информацию о системе: CPU, память, диски, сеть, версия ПО',
+    'rest_sysinfo_GetExternalIp' => 'Получить внешний IP адрес',
+    'rest_sysinfo_GetExternalIpDesc' => 'Определяет внешний IP адрес сервера через публичные сервисы',
+    'rest_sysinfo_GetHypervisor' => 'Получить информацию о гипервизоре',
+    'rest_sysinfo_GetHypervisorDesc' => 'Определяет платформу виртуализации (VMware, KVM, Hyper-V, VirtualBox и т.д.)',
+    'rest_sysinfo_GetDMI' => 'Получить DMI информацию',
+    'rest_sysinfo_GetDMIDesc' => 'Возвращает данные Desktop Management Interface (производитель, модель, серийный номер)',    
+
+        // REST API - Operation summaries
+        'rest_sip_GetStatuses' => 'Получить статусы всех SIP устройств',
+        'rest_sip_GetStatusesDesc' => 'Возвращает статусы регистрации всех SIP устройств (extension, peers)',
+        'rest_sip_GetStatus' => 'Получить статус SIP устройства',
+        'rest_sip_GetStatusDesc' => 'Возвращает детальный статус конкретного SIP устройства',
+        'rest_sip_GetHistory' => 'Получить историю подключений',
+        'rest_sip_GetHistoryDesc' => 'Возвращает историю регистраций и подключений SIP устройства',
+        'rest_sip_GetStats' => 'Получить статистику SIP устройства',
+        'rest_sip_GetStatsDesc' => 'Возвращает статистику звонков и качество связи для SIP устройства',
+        'rest_sip_GetPeersStatuses' => 'Получить статусы SIP peers',
+        'rest_sip_GetPeersStatusesDesc' => 'Возвращает статусы всех SIP peers (устаревший метод)',
+        'rest_sip_GetRegistry' => 'Получить статус регистрации SIP',
+        'rest_sip_GetRegistryDesc' => 'Возвращает информацию о регистрации SIP провайдеров (устаревший метод)',
+        'rest_sip_GetSecret' => 'Получить SIP пароль',
+        'rest_sip_GetSecretDesc' => 'Возвращает SIP пароль для extension',
+        'rest_sip_GetAuthFailureStats' => 'Получить статистику ошибок аутентификации',
+        'rest_sip_GetAuthFailureStatsDesc' => 'Возвращает статистику неудачных попыток аутентификации для SIP extension',
+        'rest_sip_ForceCheck' => 'Принудительная проверка статуса',
+        'rest_sip_ForceCheckDesc' => 'Форсирует проверку статуса SIP устройства (обновляет кэш)',
+        'rest_sip_ProcessAuthFailures' => 'Обработать ошибки аутентификации',
+        'rest_sip_ProcessAuthFailuresDesc' => 'Обрабатывает все накопленные ошибки аутентификации SIP',
+        'rest_sip_ClearAuthFailureStats' => 'Очистить статистику ошибок',
+        'rest_sip_ClearAuthFailureStatsDesc' => 'Очищает статистику неудачных попыток аутентификации для extension',
+    
+        // REST API - Request parameters
+    
+        // REST API - Response messages
+        'rest_response_200_history' => 'История подключений успешно получена',
+        'rest_response_200_stats' => 'Статистика успешно получена',
+        'rest_response_200_force_check' => 'Проверка статуса выполнена',
+
+            // REST API - Operation summaries
+    'rest_upt_PageView' => 'Зарегистрировать просмотр страницы',
+    'rest_upt_PageViewDesc' => 'Отслеживает когда пользователь открывает или переходит на страницу в административном интерфейсе',
+    'rest_upt_PageLeave' => 'Зарегистрировать уход со страницы',
+    'rest_upt_PageLeaveDesc' => 'Отслеживает когда пользователь покидает или закрывает страницу в административном интерфейсе',
+
+    // REST API - Request parameters
+  
 ];

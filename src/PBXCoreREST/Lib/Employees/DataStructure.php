@@ -302,190 +302,227 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
 
     /**
+     * ✨ SINGLE SOURCE OF TRUTH - all fields defined once
+     *
+     * Centralizes ALL field definitions with their constraints, validation rules,
+     * and sanitization. Eliminates duplication between request/response schemas.
+     *
+     * @return array<string, mixed>
+     */
+    private static function getAllFieldDefinitions(): array
+    {
+        return [
+            // Writable fields - accepted in POST/PUT/PATCH requests
+            'user_username' => [
+                'type' => 'string',
+                'description' => 'rest_schema_emp_username',
+                'minLength' => 1,
+                'maxLength' => 100,
+                'sanitize' => 'text',
+                'required' => true,
+                'example' => 'john.doe'
+            ],
+            'user_email' => [
+                'type' => 'string',
+                'description' => 'rest_schema_emp_email',
+                'format' => 'email',
+                'maxLength' => 255,
+                'sanitize' => 'string',
+                'example' => 'john.doe@company.com'
+            ],
+            'user_avatar' => [
+                'type' => 'string',
+                'description' => 'rest_schema_emp_avatar',
+                'format' => 'uri',
+                'sanitize' => 'string',
+                'example' => '/admin-cabinet/assets/img/avatars/user1.jpg'
+            ],
+            'number' => [
+                'type' => 'string',
+                'description' => 'rest_schema_emp_number',
+                'pattern' => '^[0-9]{2,8}$',
+                'minLength' => 2,
+                'maxLength' => 8,
+                'sanitize' => 'string',
+                'required' => true,
+                'example' => '200'
+            ],
+            'sip_secret' => [
+                'type' => 'string',
+                'description' => 'rest_schema_emp_sip_secret',
+                'minLength' => 5,
+                'maxLength' => 100,
+                'sanitize' => 'string',
+                'required' => true,
+                'example' => 'StrongP@ssw0rd123'
+            ],
+            'sip_dtmfmode' => [
+                'type' => 'string',
+                'description' => 'rest_schema_emp_sip_dtmfmode',
+                'enum' => ['auto', 'auto_info', 'inband', 'rfc4733', 'info'],
+                'sanitize' => 'string',
+                'default' => 'auto',
+                'example' => 'rfc4733'
+            ],
+            'sip_transport' => [
+                'type' => 'string',
+                'description' => 'rest_schema_emp_sip_transport',
+                'enum' => ['udp', 'tcp', 'tls', 'udp,tcp', 'udp,tcp,tls'],
+                'sanitize' => 'string',
+                'default' => 'udp',
+                'example' => 'udp,tcp'
+            ],
+            'sip_manualattributes' => [
+                'type' => 'string',
+                'description' => 'rest_schema_emp_sip_manualattributes',
+                'maxLength' => 1024,
+                'sanitize' => 'string',
+                'default' => '',
+                'example' => 'deny=0.0.0.0/0.0.0.0\npermit=192.168.1.0/255.255.255.0'
+            ],
+            'sip_enableRecording' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_emp_sip_enableRecording',
+                'sanitize' => 'bool',
+                'default' => true,
+                'example' => true
+            ],
+            'sip_networkfilterid' => [
+                'type' => 'string',
+                'description' => 'rest_schema_emp_sip_networkfilterid',
+                'pattern' => '^([0-9]+|none)$',
+                'sanitize' => 'string',
+                'default' => 'none',
+                'example' => '1'
+            ],
+            'fwd_ringlength' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_emp_fwd_ringlength',
+                'minimum' => 3,
+                'maximum' => 180,
+                'sanitize' => 'int',
+                'default' => 45,
+                'example' => 30
+            ],
+            'fwd_forwarding' => [
+                'type' => 'string',
+                'description' => 'rest_schema_emp_fwd_forwarding',
+                'maxLength' => 64,
+                'sanitize' => 'string',
+                'default' => '',
+                'example' => '201'
+            ],
+            'fwd_forwardingonbusy' => [
+                'type' => 'string',
+                'description' => 'rest_schema_emp_fwd_forwardingonbusy',
+                'maxLength' => 64,
+                'sanitize' => 'string',
+                'default' => '',
+                'example' => '202'
+            ],
+            'fwd_forwardingonunavailable' => [
+                'type' => 'string',
+                'description' => 'rest_schema_emp_fwd_forwardingonunavailable',
+                'maxLength' => 64,
+                'sanitize' => 'string',
+                'default' => '',
+                'example' => '203'
+            ],
+            'mobile_number' => [
+                'type' => 'string',
+                'description' => 'rest_schema_emp_mobile_number',
+                'pattern' => '^\+?[1-9]\d{1,14}$',
+                'maxLength' => 50,
+                'sanitize' => 'string',
+                'default' => '',
+                'example' => '79991234567'
+            ],
+            'mobile_dialstring' => [
+                'type' => 'string',
+                'description' => 'rest_schema_emp_mobile_dialstring',
+                'maxLength' => 255,
+                'sanitize' => 'string',
+                'default' => '',
+                'example' => '79991234567'
+            ],
+
+            // Read-only fields - only in responses, never accepted in requests
+            'id' => [
+                'type' => 'string',
+                'description' => 'rest_schema_emp_id',
+                'readOnly' => true,
+                'example' => '1'
+            ],
+            'extensions_length' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_emp_extensions_length',
+                'minimum' => 2,
+                'maximum' => 8,
+                'readOnly' => true,
+                'example' => 3
+            ],
+            'sip_networkfilterid_represent' => [
+                'type' => 'string',
+                'description' => 'rest_schema_emp_sip_networkfilterid_represent',
+                'readOnly' => true
+            ],
+            'fwd_forwarding_represent' => [
+                'type' => 'string',
+                'description' => 'rest_schema_emp_fwd_forwarding_represent',
+                'readOnly' => true
+            ],
+            'fwd_forwardingonbusy_represent' => [
+                'type' => 'string',
+                'description' => 'rest_schema_emp_fwd_forwardingonbusy_represent',
+                'readOnly' => true
+            ],
+            'fwd_forwardingonunavailable_represent' => [
+                'type' => 'string',
+                'description' => 'rest_schema_emp_fwd_forwardingonunavailable_represent',
+                'readOnly' => true
+            ],
+            'represent' => [
+                'type' => 'string',
+                'description' => 'rest_schema_emp_represent',
+                'readOnly' => true,
+                'example' => '<i class="user outline icon"></i> john.doe <200>'
+            ],
+            'search_index' => [
+                'type' => 'string',
+                'description' => 'rest_schema_emp_search_index',
+                'readOnly' => true,
+                'example' => 'john.doe 200 john.doe@company.com'
+            ]
+        ];
+    }
+
+    /**
      * Get parameter definitions (Single Source of Truth)
      *
      * Defines all field schemas, validation rules, defaults, and sanitization rules in one place.
      * This replaces legacy ParameterSanitizationExtractor pattern.
      *
+     * ✨ Uses getAllFieldDefinitions() to eliminate duplication.
+     *
      * @return array<string, array<string, mixed>> Parameter definitions
      */
     public static function getParameterDefinitions(): array
     {
+        $allFields = self::getAllFieldDefinitions();
+
+        // Filter out read-only fields for request schema
+        $writableFields = array_filter($allFields, fn($f) => empty($f['readOnly']));
+
+        // Transform description keys for request parameters: rest_schema_* → rest_param_*
+        $requestFields = [];
+        foreach ($writableFields as $field => $definition) {
+            $requestFields[$field] = $definition;
+            $requestFields[$field]['description'] = str_replace('rest_schema_', 'rest_param_', $definition['description']);
+        }
+
         return [
-            'request' => [
-                'user_username' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_emp_username',
-                    'minLength' => 1,
-                    'maxLength' => 100,
-                    'sanitize' => 'text',
-                    'required' => true,
-                    'example' => 'john.doe'
-                ],
-                'user_email' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_emp_email',
-                    'format' => 'email',
-                    'maxLength' => 255,
-                    'sanitize' => 'string',
-                    'example' => 'john.doe@company.com'
-                ],
-                'user_avatar' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_emp_avatar',
-                    'format' => 'uri',
-                    'sanitize' => 'string',
-                    'example' => '/admin-cabinet/assets/img/avatars/user1.jpg'
-                ],
-                'number' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_emp_number',
-                    'pattern' => '^[0-9]{2,8}$',
-                    'minLength' => 2,
-                    'maxLength' => 8,
-                    'sanitize' => 'string',
-                    'required' => true,
-                    'example' => '200'
-                ],
-                'sip_secret' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_emp_sip_secret',
-                    'minLength' => 5,
-                    'maxLength' => 100,
-                    'sanitize' => 'string',
-                    'required' => true,
-                    'example' => 'StrongP@ssw0rd123'
-                ],
-                'sip_dtmfmode' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_emp_sip_dtmfmode',
-                    'enum' => ['auto', 'auto_info', 'inband', 'rfc4733', 'info'],
-                    'sanitize' => 'string',
-                    'default' => 'auto',
-                    'example' => 'rfc4733'
-                ],
-                'sip_transport' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_emp_sip_transport',
-                    'enum' => ['udp', 'tcp', 'tls', 'udp,tcp', 'udp,tcp,tls'],
-                    'sanitize' => 'string',
-                    'default' => 'udp',
-                    'example' => 'udp,tcp'
-                ],
-                'sip_manualattributes' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_emp_sip_manualattributes',
-                    'maxLength' => 1024,
-                    'sanitize' => 'string',
-                    'default' => '',
-                    'example' => 'deny=0.0.0.0/0.0.0.0\npermit=192.168.1.0/255.255.255.0'
-                ],
-                'sip_enableRecording' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_param_emp_sip_enableRecording',
-                    'sanitize' => 'bool',
-                    'default' => true,
-                    'example' => true
-                ],
-                'sip_networkfilterid' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_emp_sip_networkfilterid',
-                    'pattern' => '^([0-9]+|none)$',
-                    'sanitize' => 'string',
-                    'default' => 'none',
-                    'example' => '1'
-                ],
-                'fwd_ringlength' => [
-                    'type' => 'integer',
-                    'description' => 'rest_param_emp_fwd_ringlength',
-                    'minimum' => 3,
-                    'maximum' => 180,
-                    'sanitize' => 'int',
-                    'default' => 45,
-                    'example' => 30
-                ],
-                'fwd_forwarding' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_emp_fwd_forwarding',
-                    'maxLength' => 64,
-                    'sanitize' => 'string',
-                    'default' => '',
-                    'example' => '201'
-                ],
-                'fwd_forwardingonbusy' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_emp_fwd_forwardingonbusy',
-                    'maxLength' => 64,
-                    'sanitize' => 'string',
-                    'default' => '',
-                    'example' => '202'
-                ],
-                'fwd_forwardingonunavailable' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_emp_fwd_forwardingonunavailable',
-                    'maxLength' => 64,
-                    'sanitize' => 'string',
-                    'default' => '',
-                    'example' => '203'
-                ],
-                'mobile_number' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_emp_mobile_number',
-                    'pattern' => '^\+?[1-9]\d{1,14}$',
-                    'maxLength' => 50,
-                    'sanitize' => 'string',
-                    'default' => '',
-                    'example' => '79991234567'
-                ],
-                'mobile_dialstring' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_emp_mobile_dialstring',
-                    'maxLength' => 255,
-                    'sanitize' => 'string',
-                    'default' => '',
-                    'example' => '79991234567'
-                ]
-            ],
-            'response' => [
-                'id' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_emp_id',
-                    'example' => '1'
-                ],
-                'extensions_length' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_emp_extensions_length',
-                    'minimum' => 2,
-                    'maximum' => 8,
-                    'example' => 3
-                ],
-                'sip_networkfilterid_represent' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_emp_sip_networkfilterid_represent'
-                ],
-                'fwd_forwarding_represent' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_emp_fwd_forwarding_represent'
-                ],
-                'fwd_forwardingonbusy_represent' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_emp_fwd_forwardingonbusy_represent'
-                ],
-                'fwd_forwardingonunavailable_represent' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_emp_fwd_forwardingonunavailable_represent'
-                ],
-                'represent' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_emp_represent',
-                    'example' => '<i class="user outline icon"></i> john.doe <200>'
-                ],
-                'search_index' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_emp_search_index',
-                    'example' => 'john.doe 200 john.doe@company.com'
-                ]
-            ]
+            'request' => $requestFields,
+            'response' => $allFields  // ALL fields including read-only
         ];
     }
 

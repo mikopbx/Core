@@ -278,6 +278,236 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
 
     /**
+     * Get all field definitions with complete metadata
+     *
+     * Single Source of Truth for ALL field definitions.
+     * Each field includes type, validation, sanitization, and examples.
+     *
+     * @return array<string, array<string, mixed>> Complete field definitions
+     */
+    private static function getAllFieldDefinitions(): array
+    {
+        return [
+            'id' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cq_id',
+                'pattern' => '^QUEUE-[A-Z0-9]{8,32}$',
+                'readOnly' => true,
+                'example' => 'QUEUE-CF423A55'
+            ],
+            'strategy' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cq_strategy',
+                'enum' => ['ringall', 'leastrecent', 'fewestcalls', 'random', 'rrmemory', 'linear'],
+                'sanitize' => 'string',
+                'default' => 'ringall',
+                'example' => 'ringall'
+            ],
+            'name' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cq_name',
+                'maxLength' => 100,
+                'sanitize' => 'text',
+                'required' => true,
+                'example' => 'Sales Queue'
+            ],
+            'extension' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cq_extension',
+                'pattern' => '^[0-9]{2,8}$',
+                'sanitize' => 'string',
+                'required' => true,
+                'example' => '2200100'
+            ],
+            'description' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cq_description',
+                'maxLength' => 500,
+                'sanitize' => 'text',
+                'example' => 'Queue for sales department calls'
+            ],
+            'seconds_to_ring_each_member' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_cq_seconds_to_ring_each_member',
+                'minimum' => 1,
+                'maximum' => 300,
+                'sanitize' => 'int',
+                'default' => 15,
+                'example' => 20
+            ],
+            'seconds_for_wrapup' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_cq_seconds_for_wrapup',
+                'minimum' => 0,
+                'maximum' => 300,
+                'sanitize' => 'int',
+                'default' => 15,
+                'example' => 10
+            ],
+            'recive_calls_while_on_a_call' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_cq_recive_calls_while_on_a_call',
+                'sanitize' => 'bool',
+                'default' => false,
+                'example' => false
+            ],
+            'caller_hear' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cq_caller_hear',
+                'enum' => ['ringing', 'moh'],
+                'sanitize' => 'string',
+                'default' => 'ringing',
+                'example' => 'musiconhold'
+            ],
+            'announce_position' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_cq_announce_position',
+                'sanitize' => 'bool',
+                'default' => false,
+                'example' => true
+            ],
+            'announce_hold_time' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_cq_announce_hold_time',
+                'sanitize' => 'bool',
+                'default' => false,
+                'example' => false
+            ],
+            'moh_sound_id' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cq_moh_sound_id',
+                'sanitize' => 'string',
+                'example' => '43'
+            ],
+            'periodic_announce_sound_id' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cq_periodic_announce_sound_id',
+                'sanitize' => 'string',
+                'example' => '45'
+            ],
+            'periodic_announce_frequency' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_cq_periodic_announce_frequency',
+                'minimum' => 0,
+                'maximum' => 600,
+                'sanitize' => 'int',
+                'example' => 60
+            ],
+            'timeout_to_redirect_to_extension' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_cq_timeout_to_redirect_to_extension',
+                'minimum' => 0,
+                'maximum' => 3600,
+                'sanitize' => 'int',
+                'default' => 0,
+                'example' => 300
+            ],
+            'timeout_extension' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cq_timeout_extension',
+                'pattern' => '^[0-9]{2,8}$',
+                'sanitize' => 'string',
+                'example' => '201'
+            ],
+            'redirect_to_extension_if_empty' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cq_redirect_to_extension_if_empty',
+                'pattern' => '^[0-9]{2,8}$',
+                'sanitize' => 'string',
+                'example' => '202'
+            ],
+            'redirect_to_extension_if_unanswered' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cq_redirect_to_extension_if_unanswered',
+                'pattern' => '^[0-9]{2,8}$',
+                'sanitize' => 'string',
+                'example' => '203'
+            ],
+            'number_unanswered_calls_to_redirect' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_cq_number_unanswered_calls_to_redirect',
+                'minimum' => 1,
+                'maximum' => 100,
+                'sanitize' => 'int',
+                'default' => 3,
+                'example' => 3
+            ],
+            'redirect_to_extension_if_repeat_exceeded' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cq_redirect_to_extension_if_repeat_exceeded',
+                'pattern' => '^[0-9]{2,8}$',
+                'sanitize' => 'string',
+                'example' => '204'
+            ],
+            'number_repeat_unanswered_to_redirect' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_cq_number_repeat_unanswered_to_redirect',
+                'minimum' => 1,
+                'maximum' => 100,
+                'sanitize' => 'int',
+                'default' => 3,
+                'example' => 3
+            ],
+            'callerid_prefix' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cq_callerid_prefix',
+                'maxLength' => 50,
+                'sanitize' => 'text',
+                'example' => 'Q:'
+            ],
+            'members' => [
+                'type' => 'array',
+                'description' => 'rest_schema_cq_members',
+                'sanitize' => 'array',
+                'example' => '[{"extension":"201","priority":1},{"extension":"202","priority":2}]'
+            ],
+            // Response-only fields
+            'represent' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cq_represent',
+                'readOnly' => true,
+                'example' => '<i class="users icon"></i> Support Queue <2200777>'
+            ],
+            'search_index' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cq_search_index',
+                'readOnly' => true,
+                'example' => 'support queue 2200777 queue for technical support'
+            ],
+            'timeout_extension_represent' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cq_timeout_extension_represent',
+                'readOnly' => true
+            ],
+            'redirect_to_extension_if_empty_represent' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cq_redirect_to_extension_if_empty_represent',
+                'readOnly' => true
+            ],
+            'redirect_to_extension_if_unanswered_represent' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cq_redirect_to_extension_if_unanswered_represent',
+                'readOnly' => true
+            ],
+            'redirect_to_extension_if_repeat_exceeded_represent' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cq_redirect_to_extension_if_repeat_exceeded_represent',
+                'readOnly' => true
+            ],
+            'periodic_announce_sound_id_represent' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cq_periodic_announce_sound_id_represent',
+                'readOnly' => true
+            ],
+            'moh_sound_id_represent' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cq_moh_sound_id_represent',
+                'readOnly' => true
+            ],
+        ];
+    }
+
+    /**
      * Get all field definitions (request parameters + response-only fields + related schemas)
      *
      * Single Source of Truth for ALL definitions in call queues API.
@@ -297,222 +527,45 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function getParameterDefinitions(): array
     {
+        $allFields = self::getAllFieldDefinitions();
+
+        // Separate writable fields (for requests) and response-only fields
+        $writableFields = [];
+        $responseOnlyFields = [];
+
+        foreach ($allFields as $fieldName => $fieldDef) {
+            if (!empty($fieldDef['readOnly'])) {
+                $responseOnlyFields[$fieldName] = $fieldDef;
+            } else {
+                // For request section, use rest_param_* descriptions
+                $requestField = $fieldDef;
+                $requestField['description'] = str_replace('rest_schema_', 'rest_param_', $fieldDef['description']);
+                $writableFields[$fieldName] = $requestField;
+            }
+        }
+
         return [
             // ========== REQUEST PARAMETERS ==========
             // Used in API requests (POST, PUT, PATCH)
             // Referenced by ApiParameterRef in Controller
-            'request' => [
-            'strategy' => [
-                'type' => 'string',
-                'description' => 'rest_param_cq_strategy',
-                'enum' => ['ringall', 'leastrecent', 'fewestcalls', 'random', 'rrmemory', 'linear'],
-                'default' => 'ringall',
-                'example' => 'ringall'
-            ],
-            'name' => [
-                'type' => 'string',
-                'description' => 'rest_param_cq_name',
-                'maxLength' => 100,
-                'example' => 'Sales Queue'
-            ],
-            'extension' => [
-                'type' => 'string',
-                'description' => 'rest_param_cq_extension',
-                'pattern' => '^[0-9]{2,8}$',
-                'example' => '2200100'
-            ],
-            'description' => [
-                'type' => 'string',
-                'description' => 'rest_param_cq_description',
-                'maxLength' => 500,
-                'example' => 'Queue for sales department calls'
-            ],
-            'seconds_to_ring_each_member' => [
-                'type' => 'integer',
-                'description' => 'rest_param_cq_seconds_to_ring',
-                'minimum' => 1,
-                'maximum' => 300,
-                'default' => 15,
-                'example' => 20
-            ],
-            'seconds_for_wrapup' => [
-                'type' => 'integer',
-                'description' => 'rest_param_cq_seconds_for_wrapup',
-                'minimum' => 0,
-                'maximum' => 300,
-                'default' => 15,
-                'example' => 10
-            ],
-            'recive_calls_while_on_a_call' => [
-                'type' => 'boolean',
-                'description' => 'rest_param_cq_recive_calls_while_on_call',
-                'default' => false,
-                'example' => false
-            ],
-            'caller_hear' => [
-                'type' => 'string',
-                'description' => 'rest_param_cq_caller_hear',
-                'enum' => ['ringing', 'moh'],
-                'default' => 'ringing',
-                'example' => 'musiconhold'
-            ],
-            'announce_position' => [
-                'type' => 'boolean',
-                'description' => 'rest_param_cq_announce_position',
-                'default' => false,
-                'example' => true
-            ],
-            'announce_hold_time' => [
-                'type' => 'boolean',
-                'description' => 'rest_param_cq_announce_hold_time',
-                'default' => false,
-                'example' => false
-            ],
-            'moh_sound_id' => [
-                'type' => 'string',
-                'description' => 'rest_param_cq_moh_sound_id',
-                'example' => '43'
-            ],
-            'periodic_announce_sound_id' => [
-                'type' => 'string',
-                'description' => 'rest_param_cq_periodic_announce_sound_id',
-                'example' => '45'
-            ],
-            'periodic_announce_frequency' => [
-                'type' => 'integer',
-                'description' => 'rest_param_cq_periodic_announce_frequency',
-                'minimum' => 0,
-                'maximum' => 600,
-                'example' => 60
-            ],
-            'timeout_to_redirect_to_extension' => [
-                'type' => 'integer',
-                'description' => 'rest_param_cq_timeout_redirect',
-                'minimum' => 0,
-                'maximum' => 3600,
-                'default' => 0,
-                'example' => 300
-            ],
-            'timeout_extension' => [
-                'type' => 'string',
-                'description' => 'rest_param_cq_timeout_extension',
-                'pattern' => '^[0-9]{2,8}$',
-                'example' => '201'
-            ],
-            'redirect_to_extension_if_empty' => [
-                'type' => 'string',
-                'description' => 'rest_param_cq_redirect_if_empty',
-                'pattern' => '^[0-9]{2,8}$',
-                'example' => '202'
-            ],
-            'redirect_to_extension_if_unanswered' => [
-                'type' => 'string',
-                'description' => 'rest_param_cq_redirect_if_unanswered',
-                'pattern' => '^[0-9]{2,8}$',
-                'example' => '203'
-            ],
-            'number_unanswered_calls_to_redirect' => [
-                'type' => 'integer',
-                'description' => 'rest_param_cq_number_unanswered_to_redirect',
-                'minimum' => 1,
-                'maximum' => 100,
-                'default' => 3,
-                'example' => 3
-            ],
-            'redirect_to_extension_if_repeat_exceeded' => [
-                'type' => 'string',
-                'description' => 'rest_param_cq_redirect_if_repeat_exceeded',
-                'pattern' => '^[0-9]{2,8}$',
-                'example' => '204'
-            ],
-            'number_repeat_unanswered_to_redirect' => [
-                'type' => 'integer',
-                'description' => 'rest_param_cq_number_repeat_to_redirect',
-                'minimum' => 1,
-                'maximum' => 100,
-                'default' => 3,
-                'example' => 3
-            ],
-            'callerid_prefix' => [
-                'type' => 'string',
-                'description' => 'rest_param_cq_callerid_prefix',
-                'maxLength' => 50,
-                'example' => 'Q:'
-            ],
-                'members' => [
-                    'type' => 'array',
-                    'description' => 'rest_param_cq_members',
-                    'example' => '[{"extension":"201","priority":1},{"extension":"202","priority":2}]'
-                ],
-            ],
+            'request' => $writableFields,
 
             // ========== RESPONSE-ONLY FIELDS ==========
             // Only in API responses, not in requests
             // Used by getListItemSchema() and getDetailSchema()
-            'response' => [
-                // ID field (used in both list and detail schemas)
-                'id' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cq_id',
-                    'pattern' => '^QUEUE-[A-Z0-9]{8,32}$',
-                    'example' => 'QUEUE-CF423A55'
-                ],
-
-                // Represent field (for list schema)
-                'represent' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cq_represent',
-                    'example' => '<i class="users icon"></i> Support Queue <2200777>'
-                ],
-
-                // Members array (used in both schemas, but structured differently)
-                'members_list' => [
-                    'type' => 'array',
-                    'description' => 'rest_schema_cq_members',
-                    'items' => [
-                        '$ref' => '#/components/schemas/CallQueueMember'
-                    ]
-                ],
-
-                // Search index (for list schema)
-                'search_index' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cq_search_index',
-                    'example' => 'support queue 2200777 queue for technical support'
-                ],
-
-                // Extension representation fields (for detail schema)
-                'timeout_extension_represent' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cq_timeout_extension_represent'
-                ],
-
-                'redirect_to_extension_if_empty_represent' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cq_redirect_to_extension_if_empty_represent'
-                ],
-
-                'redirect_to_extension_if_unanswered_represent' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cq_redirect_to_extension_if_unanswered_represent'
-                ],
-
-                'redirect_to_extension_if_repeat_exceeded_represent' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cq_redirect_to_extension_if_repeat_exceeded_represent'
-                ],
-
-                // Sound file representation fields (for detail schema)
-                'periodic_announce_sound_id_represent' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cq_periodic_announce_sound_id_represent'
-                ],
-
-                'moh_sound_id_represent' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cq_moh_sound_id_represent'
-                ],
-            ],
+            'response' => array_merge(
+                $responseOnlyFields,
+                [
+                    // Members array (special structure for OpenAPI schema)
+                    'members_list' => [
+                        'type' => 'array',
+                        'description' => 'rest_schema_cq_members',
+                        'items' => [
+                            '$ref' => '#/components/schemas/CallQueueMember'
+                        ]
+                    ],
+                ]
+            ),
 
             // ========== RELATED SCHEMAS ==========
             // Nested object schemas referenced by $ref in OpenAPI

@@ -267,6 +267,125 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
 
     /**
+     * Get all field definitions with complete metadata
+     *
+     * Single Source of Truth for ALL field definitions.
+     * Each field includes type, validation, sanitization, and examples.
+     *
+     * @return array<string, array<string, mixed>> Complete field definitions
+     */
+    private static function getAllFieldDefinitions(): array
+    {
+        return [
+            'id' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ivr_id',
+                'pattern' => '^IVR-MENU-[A-Z0-9]+$',
+                'readOnly' => true,
+                'example' => 'IVR-MENU-12345'
+            ],
+            'name' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ivr_name',
+                'maxLength' => 255,
+                'sanitize' => 'text',
+                'required' => true,
+                'example' => 'Main Menu'
+            ],
+            'extension' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ivr_extension',
+                'pattern' => '^[0-9]{2,8}$',
+                'sanitize' => 'string',
+                'required' => true,
+                'example' => '2000'
+            ],
+            'description' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ivr_description',
+                'maxLength' => 500,
+                'sanitize' => 'text',
+                'example' => 'Company main menu'
+            ],
+            'timeout' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_ivr_timeout',
+                'minimum' => 1,
+                'maximum' => 60,
+                'sanitize' => 'int',
+                'default' => 7,
+                'example' => 7
+            ],
+            'timeout_extension' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ivr_timeout_extension',
+                'pattern' => '^[0-9]{2,8}$',
+                'sanitize' => 'string',
+                'example' => '201'
+            ],
+            'number_of_repeat' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_ivr_number_of_repeat',
+                'minimum' => 0,
+                'maximum' => 10,
+                'sanitize' => 'int',
+                'default' => 3,
+                'example' => 3
+            ],
+            'allow_enter_any_internal_extension' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_ivr_allow_enter_any_internal_extension',
+                'sanitize' => 'bool',
+                'default' => false,
+                'example' => true
+            ],
+            'audio_message_id' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ivr_audio_message_id',
+                'sanitize' => 'string',
+                'example' => '12'
+            ],
+            'actions' => [
+                'type' => 'array',
+                'description' => 'rest_schema_ivr_actions',
+                'sanitize' => 'array',
+                'example' => '[{"digits":"1","extension":"201"},{"digits":"2","extension":"202"}]'
+            ],
+            // Response-only fields
+            'timeout_extension_represent' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ivr_timeout_ext_repr',
+                'readOnly' => true,
+                'example' => '<i class="phone icon"></i> Operator <100>'
+            ],
+            'timeoutExtensionRepresent' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ivr_timeout_ext_repr_alt',
+                'readOnly' => true,
+                'example' => '<i class="phone icon"></i> Operator <100>'
+            ],
+            'audio_message_id_represent' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ivr_audio_repr',
+                'readOnly' => true,
+                'example' => '<i class="file audio icon"></i> welcome.wav'
+            ],
+            'represent' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ivr_represent',
+                'readOnly' => true,
+                'example' => '<i class="sitemap icon"></i> Main Menu <2000>'
+            ],
+            'search_index' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ivr_search_index',
+                'readOnly' => true,
+                'example' => 'Main Menu 2000 Operator Sales'
+            ]
+        ];
+    }
+
+    /**
      * Get all field definitions (request parameters + response-only fields + related schemas)
      *
      * Single Source of Truth for ALL definitions in IVR Menu API.
@@ -287,104 +406,33 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function getParameterDefinitions(): array
     {
+        $allFields = self::getAllFieldDefinitions();
+
+        // Separate writable fields (for requests) and response-only fields
+        $writableFields = [];
+        $responseOnlyFields = [];
+
+        foreach ($allFields as $fieldName => $fieldDef) {
+            if (!empty($fieldDef['readOnly'])) {
+                $responseOnlyFields[$fieldName] = $fieldDef;
+            } else {
+                // For request section, use rest_param_* descriptions
+                $requestField = $fieldDef;
+                $requestField['description'] = str_replace('rest_schema_', 'rest_param_', $fieldDef['description']);
+                $writableFields[$fieldName] = $requestField;
+            }
+        }
+
         return [
             // ========== REQUEST PARAMETERS ==========
             // Used in API requests (POST, PUT, PATCH) AND responses (GET)
             // Referenced by ApiParameterRef in Controller
-            'request' => [
-                'name' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_ivr_name',
-                    'maxLength' => 255,
-                    'example' => 'Main Menu'
-                ],
-                'extension' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_ivr_extension',
-                    'pattern' => '^[0-9]{2,8}$',
-                    'example' => '2000'
-                ],
-                'description' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_ivr_description',
-                    'maxLength' => 500,
-                    'example' => 'Company main menu'
-                ],
-                'timeout' => [
-                    'type' => 'integer',
-                    'description' => 'rest_param_ivr_timeout',
-                    'minimum' => 1,
-                    'maximum' => 60,
-                    'default' => 7,
-                    'example' => 7
-                ],
-                'timeout_extension' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_ivr_timeout_extension',
-                    'pattern' => '^[0-9]{2,8}$',
-                    'example' => '201'
-                ],
-                'number_of_repeat' => [
-                    'type' => 'integer',
-                    'description' => 'rest_param_ivr_number_of_repeat',
-                    'minimum' => 0,
-                    'maximum' => 10,
-                    'default' => 3,
-                    'example' => 3
-                ],
-                'allow_enter_any_internal_extension' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_param_ivr_allow_enter_any_internal_extension',
-                    'default' => false,
-                    'example' => true
-                ],
-                'audio_message_id' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_ivr_audio_message_id',
-                    'example' => '12'
-                ],
-                'actions' => [
-                    'type' => 'array',
-                    'description' => 'rest_param_ivr_actions',
-                    'example' => '[{"digits":"1","extension":"201"},{"digits":"2","extension":"202"}]'
-                ],
-            ],
+            'request' => $writableFields,
 
             // ========== RESPONSE-ONLY FIELDS ==========
             // Only in API responses, not in requests
             // Used by getListItemSchema() and getDetailSchema()
-            'response' => [
-                'id' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ivr_id',
-                    'example' => 'IVR-MENU-12345'
-                ],
-                'timeout_extension_represent' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ivr_timeout_ext_repr',
-                    'example' => '<i class="phone icon"></i> Operator <100>'
-                ],
-                'timeoutExtensionRepresent' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ivr_timeout_ext_repr_alt',
-                    'example' => '<i class="phone icon"></i> Operator <100>'
-                ],
-                'audio_message_id_represent' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ivr_audio_repr',
-                    'example' => '<i class="file audio icon"></i> welcome.wav'
-                ],
-                'represent' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ivr_represent',
-                    'example' => '<i class="sitemap icon"></i> Main Menu <2000>'
-                ],
-                'search_index' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ivr_search_index',
-                    'example' => 'Main Menu 2000 Operator Sales'
-                ]
-            ],
+            'response' => $responseOnlyFields,
 
             // ========== RELATED SCHEMAS ==========
             // Nested object schemas referenced by $ref in OpenAPI

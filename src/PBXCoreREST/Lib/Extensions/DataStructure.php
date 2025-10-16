@@ -180,7 +180,131 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
 
     /**
+     * ✨ SINGLE SOURCE OF TRUTH - all fields defined once
+     *
+     * Centralizes ALL field definitions with their constraints, validation rules,
+     * and sanitization. Eliminates duplication between request/response schemas.
+     *
+     * @return array<string, mixed>
+     */
+    private static function getAllFieldDefinitions(): array
+    {
+        return [
+            // Writable fields - accepted in POST/PUT/PATCH requests
+            'number' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ext_number',
+                'pattern' => '^[0-9]{2,8}$',
+                'minLength' => 2,
+                'maxLength' => 8,
+                'sanitize' => 'string',
+                'required' => true,
+                'example' => '201'
+            ],
+            'type' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ext_type',
+                'enum' => ['SIP', 'IAX', 'QUEUE', 'IVR', 'CONFERENCE', 'EXTERNAL'],
+                'default' => 'SIP',
+                'sanitize' => 'string',
+                'required' => true,
+                'example' => 'SIP'
+            ],
+            'callerid' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ext_callerid',
+                'maxLength' => 100,
+                'sanitize' => 'string',
+                'example' => 'John Doe'
+            ],
+            'userid' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ext_userid',
+                'pattern' => '^[0-9]*$',
+                'sanitize' => 'string',
+                'example' => '12'
+            ],
+            'show_in_phonebook' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_ext_show_in_phonebook',
+                'default' => true,
+                'sanitize' => 'bool',
+                'example' => true
+            ],
+            'public_access' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_ext_public_access',
+                'default' => false,
+                'sanitize' => 'bool',
+                'example' => false
+            ],
+            'is_general_user_number' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_ext_is_general_user_number',
+                'default' => true,
+                'sanitize' => 'bool',
+                'example' => true
+            ],
+            // Query parameters for getList
+            'limit' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_ext_limit',
+                'minimum' => 1,
+                'maximum' => 100,
+                'default' => 20,
+                'sanitize' => 'int',
+                'example' => 20
+            ],
+            'offset' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_ext_offset',
+                'minimum' => 0,
+                'default' => 0,
+                'sanitize' => 'int',
+                'example' => 0
+            ],
+            'search' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ext_search',
+                'maxLength' => 255,
+                'sanitize' => 'string',
+                'example' => '200'
+            ],
+            'order' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ext_order',
+                'enum' => ['number', 'type', 'callerid'],
+                'default' => 'number',
+                'sanitize' => 'string',
+                'example' => 'number'
+            ],
+            'orderWay' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ext_orderWay',
+                'enum' => ['ASC', 'DESC'],
+                'default' => 'ASC',
+                'sanitize' => 'string',
+                'example' => 'ASC'
+            ],
+
+            // Read-only fields - only in responses, never accepted in requests
+            'id' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ext_id',
+                'pattern' => '^[0-9]{2,8}$',
+                'readOnly' => true,
+                'example' => '201'
+            ]
+        ];
+    }
+
+    /**
      * Get parameter definitions (Single Source of Truth)
+     *
+     * Defines all field schemas, validation rules, defaults, and sanitization rules in one place.
+     * This replaces legacy ParameterSanitizationExtractor pattern.
+     *
+     * ✨ Uses getAllFieldDefinitions() to eliminate duplication.
      *
      * WHY: Centralizes all extension parameter definitions in one place.
      * Includes both CRUD fields and query filtering parameters.
@@ -189,113 +313,21 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function getParameterDefinitions(): array
     {
+        $allFields = self::getAllFieldDefinitions();
+
+        // Filter out read-only fields for request schema
+        $writableFields = array_filter($allFields, fn($f) => empty($f['readOnly']));
+
+        // Transform description keys for request parameters: rest_schema_* → rest_param_*
+        $requestFields = [];
+        foreach ($writableFields as $field => $definition) {
+            $requestFields[$field] = $definition;
+            $requestFields[$field]['description'] = str_replace('rest_schema_', 'rest_param_', $definition['description']);
+        }
+
         return [
-            'request' => [
-                'number' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_ext_number',
-                    'pattern' => '^[0-9]{2,8}$',
-                    'minLength' => 2,
-                    'maxLength' => 8,
-                    'sanitize' => 'string',
-                    'required' => true,
-                    'example' => '201'
-                ],
-                'type' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_ext_type',
-                    'enum' => ['SIP', 'IAX', 'QUEUE', 'IVR', 'CONFERENCE', 'EXTERNAL'],
-                    'default' => 'SIP',
-                    'sanitize' => 'string',
-                    'required' => true,
-                    'example' => 'SIP'
-                ],
-                'callerid' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_ext_callerid',
-                    'maxLength' => 100,
-                    'sanitize' => 'string',
-                    'example' => 'John Doe'
-                ],
-                'userid' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_ext_userid',
-                    'pattern' => '^[0-9]*$',
-                    'sanitize' => 'string',
-                    'example' => '12'
-                ],
-                'show_in_phonebook' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_param_ext_show_in_phonebook',
-                    'default' => true,
-                    'sanitize' => 'bool',
-                    'example' => true
-                ],
-                'public_access' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_param_ext_public_access',
-                    'default' => false,
-                    'sanitize' => 'bool',
-                    'example' => false
-                ],
-                'is_general_user_number' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_param_ext_is_general_user_number',
-                    'default' => true,
-                    'sanitize' => 'bool',
-                    'example' => true
-                ],
-                // Query parameters for getList
-                'limit' => [
-                    'type' => 'integer',
-                    'description' => 'rest_param_limit',
-                    'minimum' => 1,
-                    'maximum' => 100,
-                    'default' => 20,
-                    'sanitize' => 'int',
-                    'example' => 20
-                ],
-                'offset' => [
-                    'type' => 'integer',
-                    'description' => 'rest_param_offset',
-                    'minimum' => 0,
-                    'default' => 0,
-                    'sanitize' => 'int',
-                    'example' => 0
-                ],
-                'search' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_search',
-                    'maxLength' => 255,
-                    'sanitize' => 'string',
-                    'example' => '200'
-                ],
-                'order' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_order',
-                    'enum' => ['number', 'type', 'callerid'],
-                    'default' => 'number',
-                    'sanitize' => 'string',
-                    'example' => 'number'
-                ],
-                'orderWay' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_orderWay',
-                    'enum' => ['ASC', 'DESC'],
-                    'default' => 'ASC',
-                    'sanitize' => 'string',
-                    'example' => 'ASC'
-                ]
-            ],
-            'response' => [
-                // Computed identifier (alias for number)
-                'id' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ext_id',
-                    'pattern' => '^[0-9]{2,8}$',
-                    'example' => '201'
-                ]
-            ]
+            'request' => $requestFields,
+            'response' => $allFields  // ALL fields including read-only
         ];
     }
 

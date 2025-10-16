@@ -231,140 +231,187 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
 
     /**
-     * Get parameter definitions for firewall rules (Single Source of Truth)
+     * Single Source of Truth for ALL field definitions
      *
-     * Defines all field properties in one central location:
+     * Centralizes all field metadata in one location:
      * - Data types and validation constraints
      * - Sanitization rules for security
      * - Default values for new records
-     * - OpenAPI documentation
+     * - Read-only vs writable fields
+     * - OpenAPI documentation and examples
+     *
+     * This method eliminates duplication between request/response schemas.
+     *
+     * @return array<string, array<string, mixed>> Complete field definitions
+     */
+    private static function getAllFieldDefinitions(): array
+    {
+        return [
+            // ========== WRITABLE FIELDS ==========
+            'network' => [
+                'type' => 'string',
+                'description' => 'rest_schema_fw_network',
+                'pattern' => '^(\d{1,3}\.){3}\d{1,3}$', // IPv4 format
+                'sanitize' => 'string',
+                'required' => true, // Required for CREATE
+                'example' => '192.168.1.0'
+            ],
+            'subnet' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_fw_subnet',
+                'minimum' => 0,
+                'maximum' => 32, // CIDR notation for IPv4
+                'sanitize' => 'int',
+                'required' => true, // Required for CREATE
+                'example' => 24
+            ],
+            'permit' => [
+                'type' => 'string',
+                'description' => 'rest_schema_fw_permit',
+                'maxLength' => 100,
+                'sanitize' => 'string',
+                'readOnly' => true, // Calculated from network/subnet
+                'example' => '192.168.1.0/24'
+            ],
+            'deny' => [
+                'type' => 'string',
+                'description' => 'rest_schema_fw_deny',
+                'maxLength' => 100,
+                'sanitize' => 'string',
+                'default' => '0.0.0.0/0',
+                'example' => '0.0.0.0/0'
+            ],
+            'description' => [
+                'type' => 'string',
+                'description' => 'rest_schema_fw_description',
+                'maxLength' => 255,
+                'sanitize' => 'text',
+                'default' => '',
+                'example' => 'Local network'
+            ],
+            'newer_block_ip' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_fw_newer_block_ip',
+                'sanitize' => 'bool',
+                'default' => false,
+                'example' => false
+            ],
+            'local_network' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_fw_local_network',
+                'sanitize' => 'bool',
+                'default' => false,
+                'example' => false
+            ],
+            'currentRules' => [
+                'type' => 'object',
+                'description' => 'rest_schema_fw_current_rules',
+                'additionalProperties' => [
+                    'type' => 'boolean'
+                ],
+                'sanitize' => 'array', // Special handling in SaveRecordAction
+                'default' => [
+                    'SIP' => true,
+                    'WEB' => true,
+                    'SSH' => false,
+                    'AMI' => false,
+                    'CTI' => false,
+                    'ICMP' => true,
+                ],
+                'example' => [
+                    'SIP' => true,
+                    'WEB' => true,
+                    'SSH' => false,
+                    'AMI' => false,
+                    'CTI' => false,
+                    'ICMP' => true
+                ]
+            ],
+            // ========== RESPONSE-ONLY FIELDS ==========
+            'id' => [
+                'type' => 'string',
+                'description' => 'rest_schema_fw_id',
+                'pattern' => '^[0-9]+$',
+                'readOnly' => true,
+                'example' => '1'
+            ],
+            'represent' => [
+                'type' => 'string',
+                'description' => 'rest_schema_fw_represent',
+                'readOnly' => true,
+                'example' => '<i class="shield alternate icon"></i> Local network'
+            ],
+            'search_index' => [
+                'type' => 'string',
+                'description' => 'rest_schema_fw_search_index',
+                'readOnly' => true,
+                'example' => 'local network 192.168.1.0/24'
+            ],
+            'active_rules' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_fw_active_rules',
+                'minimum' => 0,
+                'readOnly' => true,
+                'example' => 3
+            ],
+            'rules' => [
+                'type' => 'object',
+                'description' => 'rest_schema_fw_rules',
+                'additionalProperties' => [
+                    'type' => 'string',
+                    'enum' => ['allow', 'block']
+                ],
+                'readOnly' => true,
+                'example' => [
+                    'SIP' => 'allow',
+                    'WEB' => 'allow',
+                    'SSH' => 'block',
+                    'AMI' => 'block',
+                    'CTI' => 'block',
+                    'ICMP' => 'allow'
+                ]
+            ]
+        ];
+    }
+
+    /**
+     * Get parameter definitions for firewall rules
+     *
+     * Uses getAllFieldDefinitions() as Single Source of Truth.
+     * Separates writable fields (request) from response-only fields.
+     *
+     * Structure:
+     * - 'request': Writable fields (excluded readOnly fields)
+     * - 'response': All fields including response-only
      *
      * @return array<string, array<string, array<string, mixed>>> Parameter definitions
      */
     public static function getParameterDefinitions(): array
     {
+        $allFields = self::getAllFieldDefinitions();
+
+        // Separate writable fields (for requests) and all fields (for response)
+        $writableFields = [];
+
+        foreach ($allFields as $fieldName => $fieldDef) {
+            if (empty($fieldDef['readOnly'])) {
+                // For request section, use rest_param_* descriptions
+                $requestField = $fieldDef;
+                $requestField['description'] = str_replace('rest_schema_', 'rest_param_', $fieldDef['description']);
+                $writableFields[$fieldName] = $requestField;
+            }
+        }
+
         return [
-            'request' => [
-                'network' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_fw_network',
-                    'pattern' => '^(\d{1,3}\.){3}\d{1,3}$', // IPv4 format
-                    'sanitize' => 'string',
-                    'required' => true, // Required for CREATE
-                    'example' => '192.168.1.0'
-                ],
-                'subnet' => [
-                    'type' => 'integer',
-                    'description' => 'rest_param_fw_subnet',
-                    'minimum' => 0,
-                    'maximum' => 32, // CIDR notation for IPv4
-                    'sanitize' => 'int',
-                    'required' => true, // Required for CREATE
-                    'example' => 24
-                ],
-                'permit' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_fw_permit',
-                    'maxLength' => 100,
-                    'sanitize' => 'string',
-                    'readOnly' => true, // Calculated from network/subnet
-                    'example' => '192.168.1.0/24'
-                ],
-                'deny' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_fw_deny',
-                    'maxLength' => 100,
-                    'sanitize' => 'string',
-                    'default' => '0.0.0.0/0',
-                    'example' => '0.0.0.0/0'
-                ],
-                'description' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_fw_description',
-                    'maxLength' => 255,
-                    'sanitize' => 'text',
-                    'default' => '',
-                    'example' => 'Local network'
-                ],
-                'newer_block_ip' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_param_fw_newer_block_ip',
-                    'sanitize' => 'bool',
-                    'default' => false,
-                    'example' => false
-                ],
-                'local_network' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_param_fw_local_network',
-                    'sanitize' => 'bool',
-                    'default' => false,
-                    'example' => false
-                ],
-                'currentRules' => [
-                    'type' => 'object',
-                    'description' => 'rest_param_fw_current_rules',
-                    'additionalProperties' => [
-                        'type' => 'boolean'
-                    ],
-                    'sanitize' => 'array', // Special handling in SaveRecordAction
-                    'default' => [
-                        'SIP' => true,
-                        'WEB' => true,
-                        'SSH' => false,
-                        'AMI' => false,
-                        'CTI' => false,
-                        'ICMP' => true,
-                    ],
-                    'example' => [
-                        'SIP' => true,
-                        'WEB' => true,
-                        'SSH' => false,
-                        'AMI' => false,
-                        'CTI' => false,
-                        'ICMP' => true
-                    ]
-                ]
-            ],
-            'response' => [
-                'id' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_fw_id',
-                    'pattern' => '^[0-9]+$',
-                    'example' => '1'
-                ],
-                'represent' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_fw_represent',
-                    'example' => '<i class="shield alternate icon"></i> Local network'
-                ],
-                'search_index' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_fw_search_index',
-                    'example' => 'local network 192.168.1.0/24'
-                ],
-                'active_rules' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_fw_active_rules',
-                    'minimum' => 0,
-                    'example' => 3
-                ],
-                'rules' => [
-                    'type' => 'object',
-                    'description' => 'rest_schema_fw_rules',
-                    'additionalProperties' => [
-                        'type' => 'string',
-                        'enum' => ['allow', 'block']
-                    ],
-                    'example' => [
-                        'SIP' => 'allow',
-                        'WEB' => 'allow',
-                        'SSH' => 'block',
-                        'AMI' => 'block',
-                        'CTI' => 'block',
-                        'ICMP' => 'allow'
-                    ]
-                ]
-            ]
+            // ========== REQUEST PARAMETERS ==========
+            // Used in API requests (POST, PUT, PATCH)
+            // Referenced by ApiParameterRef in Controller
+            'request' => $writableFields,
+
+            // ========== RESPONSE FIELDS ==========
+            // All fields including response-only
+            // Used by getListItemSchema() and getDetailSchema()
+            'response' => $allFields
         ];
     }
 

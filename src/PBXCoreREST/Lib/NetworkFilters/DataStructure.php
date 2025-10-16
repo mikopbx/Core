@@ -36,13 +36,30 @@ use MikoPBX\PBXCoreREST\Lib\Firewall\DataStructure as FirewallDataStructure;
  */
 class DataStructure extends FirewallDataStructure
 {
-    // Inherits all methods from Firewall\DataStructure:
-    // - createFromModel()
-    // - createForList()
-    // - getListItemSchema()
-    // - getDetailSchema()
-    // - getSanitizationRules()
-    // - formatBySchema()
-    // - generateAutoSearchIndex()
+    // ========== INHERITED METHODS FROM FIREWALL ==========
+    // This class inherits ALL methods from Firewall\DataStructure, including:
+    //
+    // Data Creation:
+    // - createFromModel()         - Create full data structure from model
+    // - createForList()           - Create simplified list view structure
+    // - createDefault()           - Create default structure for new records
+    //
+    // OpenAPI Schema (Single Source of Truth):
+    // - getAllFieldDefinitions()   - PRIVATE: Complete field definitions
+    // - getParameterDefinitions()  - PUBLIC: Request/response parameters
+    // - getListItemSchema()        - Schema for list items
+    // - getDetailSchema()          - Schema for detail records
+    //
+    // Validation & Sanitization:
+    // - getSanitizationRules()     - Auto-generated from definitions
+    // - formatBySchema()           - Apply type conversions
+    //
+    // Search:
+    // - generateAutoSearchIndex()  - Generate search index
+    //
+    // WHY NO OVERRIDE:
+    // NetworkFilters and Firewall share the same database model (NetworkFilters)
+    // and the same field structure. The only difference is the API endpoint name.
+    // All field definitions from getAllFieldDefinitions() are inherited correctly.
 
 }

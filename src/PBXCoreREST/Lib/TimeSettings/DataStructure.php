@@ -149,6 +149,62 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
 
     /**
+     * Get all field definitions with complete metadata
+     *
+     * Single Source of Truth for ALL field definitions.
+     * Each field includes type, validation, sanitization, and examples.
+     *
+     * @return array<string, array<string, mixed>> Complete field definitions
+     */
+    private static function getAllFieldDefinitions(): array
+    {
+        return [
+            PbxSettings::PBX_TIMEZONE => [
+                'type' => 'string',
+                'description' => 'rest_schema_ts_timezone',
+                'maxLength' => 100,
+                'sanitize' => 'string',
+                'example' => 'Europe/Moscow'
+            ],
+            PbxSettings::NTP_SERVER => [
+                'type' => 'string',
+                'description' => 'rest_schema_ts_ntp_server',
+                'maxLength' => 500,
+                'sanitize' => 'text',
+                'example' => "0.pool.ntp.org\n1.pool.ntp.org"
+            ],
+            PbxSettings::PBX_MANUAL_TIME_SETTINGS => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_ts_manual_time',
+                'sanitize' => 'bool',
+                'default' => (bool)self::getDefaultValue(PbxSettings::PBX_MANUAL_TIME_SETTINGS),
+                'example' => false
+            ],
+            'ManualDateTime' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ts_manual_datetime',
+                'format' => 'date-time',
+                'sanitize' => 'string',
+                'example' => '2025-01-20 15:30:00'
+            ],
+            // Response-only fields
+            'PBXTimezone_represent' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ts_timezone_represent',
+                'readOnly' => true,
+                'example' => 'Europe/Moscow (UTC+03:00)'
+            ],
+            'CurrentDateTime' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ts_current_datetime',
+                'format' => 'date-time',
+                'readOnly' => true,
+                'example' => '2025-01-20 15:30:00'
+            ]
+        ];
+    }
+
+    /**
      * Get parameter definitions (Single Source of Truth)
      *
      * WHY: Centralizes time settings parameter definitions.
@@ -158,72 +214,33 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function getParameterDefinitions(): array
     {
+        $allFields = self::getAllFieldDefinitions();
+
+        // Separate writable fields (for requests) and all fields (for response)
+        $writableFields = array_filter($allFields, fn($f) => empty($f['readOnly']));
+
+        // Transform description keys for request section: rest_schema_* → rest_param_*
+        $requestFields = [];
+        foreach ($writableFields as $fieldName => $fieldDef) {
+            $requestField = $fieldDef;
+            $requestField['description'] = str_replace('rest_schema_', 'rest_param_', $fieldDef['description']);
+            $requestFields[$fieldName] = $requestField;
+        }
+
+        // For response section, use API field names instead of PbxSettings constants
+        $responseFields = [
+            // Map PbxSettings constants to API field names
+            'PBXTimezone' => $allFields[PbxSettings::PBX_TIMEZONE],
+            'PBXTimezone_represent' => $allFields['PBXTimezone_represent'],
+            'NTPServer' => $allFields[PbxSettings::NTP_SERVER],
+            'PBXManualTimeSettings' => $allFields[PbxSettings::PBX_MANUAL_TIME_SETTINGS],
+            'ManualDateTime' => $allFields['ManualDateTime'],
+            'CurrentDateTime' => $allFields['CurrentDateTime']
+        ];
+
         return [
-            'request' => [
-                PbxSettings::PBX_TIMEZONE => [
-                    'type' => 'string',
-                    'description' => 'rest_param_ts_timezone',
-                    'maxLength' => 100,
-                    'sanitize' => 'string',
-                    'example' => 'Europe/Moscow'
-                ],
-                PbxSettings::NTP_SERVER => [
-                    'type' => 'string',
-                    'description' => 'rest_param_ts_ntp_server',
-                    'maxLength' => 500,
-                    'sanitize' => 'text',
-                    'example' => "0.pool.ntp.org\n1.pool.ntp.org"
-                ],
-                PbxSettings::PBX_MANUAL_TIME_SETTINGS => [
-                    'type' => 'boolean',
-                    'description' => 'rest_param_ts_manual_time',
-                    'sanitize' => 'bool',
-                    'default' => (bool)self::getDefaultValue(PbxSettings::PBX_MANUAL_TIME_SETTINGS),
-                    'example' => false
-                ],
-                'ManualDateTime' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_ts_manual_datetime',
-                    'format' => 'date-time',
-                    'sanitize' => 'string',
-                    'example' => '2025-01-20 15:30:00'
-                ]
-            ],
-            'response' => [
-                // API field names (different from PbxSettings constants)
-                'PBXTimezone' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ts_timezone',
-                    'example' => 'Europe/Moscow'
-                ],
-                'PBXTimezone_represent' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ts_timezone_represent',
-                    'example' => 'Europe/Moscow (UTC+03:00)'
-                ],
-                'NTPServer' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ts_ntp_server',
-                    'example' => "0.pool.ntp.org\n1.pool.ntp.org"
-                ],
-                'PBXManualTimeSettings' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_schema_ts_manual_time',
-                    'example' => false
-                ],
-                'ManualDateTime' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ts_manual_datetime',
-                    'format' => 'date-time',
-                    'example' => ''
-                ],
-                'CurrentDateTime' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ts_current_datetime',
-                    'format' => 'date-time',
-                    'example' => '2025-01-20 15:30:00'
-                ]
-            ],
+            'request' => $requestFields,
+            'response' => $responseFields,
             'related' => [
                 'TimezoneInfo' => [
                     'type' => 'object',
