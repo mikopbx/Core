@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Lib\MailSettings;
 
-use MikoPBX\Core\System\MailOAuth2Service;
+use MikoPBX\Core\System\Mail\MailOAuth2Service;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 
 /**

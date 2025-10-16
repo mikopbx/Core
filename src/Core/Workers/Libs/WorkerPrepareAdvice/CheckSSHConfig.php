@@ -21,6 +21,8 @@ namespace MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice;
 
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Notifications;
+use MikoPBX\Core\System\Mail\Builders\SshPasswordChangedNotificationBuilder;
+use MikoPBX\Core\System\Mail\EmailNotificationService;
 use Phalcon\Di\Injectable;
 
 /**
@@ -53,9 +55,46 @@ class CheckSSHConfig extends Injectable
             $messages['error'][] =  ['messageTpl'=>'adv_SSHPasswordMismatchFilesHash'];
         }
         if(isset($messages['error'])){
-            Notifications::sendAdminNotification(['messageTpl' => 'adv_SSHPasswordWasChangedSubject'], ['messageTpl' => 'adv_SSHPasswordWasChangedBody'], true);
+            // Use new template system for beautiful SSH security notifications
+            $adminEmail = PbxSettings::getValueByKey(PbxSettings::SYSTEM_NOTIFICATIONS_EMAIL);
+
+            if (!empty($adminEmail)) {
+                $builder = new SshPasswordChangedNotificationBuilder();
+                $builder->setRecipient($adminEmail)
+                        ->setChangedBy('external')
+                        ->setChangeTime(date('Y-m-d H:i:s'))
+                        ->setSecurityUrl(self::buildAdminUrl('/admin-cabinet/general-settings/modify/#ssh'));
+
+                $emailService = new EmailNotificationService();
+                $emailService->sendNotification($builder);
+            } else {
+                // Fallback to legacy if no admin email configured
+                Notifications::sendAdminNotification(['messageTpl' => 'adv_SSHPasswordWasChangedSubject'], ['messageTpl' => 'adv_SSHPasswordWasChangedBody'], true);
+            }
         }
         return $messages;
+    }
+
+    /**
+     * Build admin panel URL using network settings
+     *
+     * @param string $path Path to append to base URL
+     * @return string Full URL to admin panel
+     */
+    private static function buildAdminUrl(string $path = ''): string
+    {
+        // Get HTTPS port from settings
+        $httpsPort = PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PORT) ?: '443';
+
+        // Try to get external IP first, then local IP
+        $host = PbxSettings::getValueByKey(PbxSettings::EXTERNAL_SIP_IP_ADDR);
+        if (empty($host)) {
+            $host = gethostname() ?: 'localhost';
+        }
+
+        // Build URL
+        $portSuffix = ($httpsPort === '443') ? '' : ':' . $httpsPort;
+        return 'https://' . $host . $portSuffix . $path;
     }
 
 }

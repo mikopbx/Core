@@ -23,6 +23,8 @@ namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
 
 use MikoPBX\Core\System\{BeanstalkClient, MikoPBXConfig, Notifications, SystemMessages, Util};
+use MikoPBX\Core\System\Mail\Builders\MissedCallNotificationBuilder;
+use MikoPBX\Core\System\Mail\EmailNotificationService;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\PbxSettings;
 
@@ -111,10 +113,37 @@ class WorkerNotifyByEmail extends WorkerBase
                 $emails[$call['email']]['body'] .= "$email <br><hr><br>";
             }
         }
+        // Use new template system for beautiful missed call notifications
+        $emailService = new EmailNotificationService();
+
         foreach ($emails as $to => $email) {
-            $subject = $email['subject'];
-            $body = "{$email['body']}<br>{$email['footer']}";
-            $notifier->sendMail($to, $subject, $body);
+            // Extract first call data for this recipient (for basic info)
+            $firstCall = null;
+            foreach ($data as $call) {
+                if ($call['email'] === $to) {
+                    $firstCall = $call;
+                    break;
+                }
+            }
+
+            if ($firstCall) {
+                // Use new builder for modern HTML email
+                $builder = new MissedCallNotificationBuilder();
+                $builder->setRecipient($to)
+                        ->setCallerId($firstCall['from_number'])
+                        ->setCallerName($firstCall['from_name'])
+                        ->setExtension($firstCall['to_number'])
+                        ->setExtensionName($firstCall['to_name'])
+                        ->setCallTime($firstCall['start'])
+                        ->setDuration($firstCall['duration']);
+
+                $emailService->sendNotification($builder, $notifier);
+            } else {
+                // Fallback to legacy method if no call data
+                $subject = $email['subject'];
+                $body = "{$email['body']}<br>{$email['footer']}";
+                $notifier->sendMail($to, $subject, $body);
+            }
         }
         sleep(1);
     }

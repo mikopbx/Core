@@ -19,17 +19,17 @@
 
 namespace MikoPBX\PBXCoreREST\Controllers\MailSettings;
 
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\MailSettingsManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\MailSettings\DataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
-    ApiParameter,
+    ApiParameterRef,
     ApiResponse,
     ApiDataSchema,
     SecurityType,
-    ParameterLocation,
     HttpMapping,
     ResourceSecurity
 };
@@ -107,15 +107,31 @@ class RestController extends BaseRestController
         description: 'rest_ms_UpdateDesc',
         operationId: 'updateMailSettings'
     )]
-    #[ApiParameter('MailSMTPHost', 'string', 'rest_param_ms_smtp_host', ParameterLocation::QUERY, required: true, maxLength: 255, example: 'smtp.gmail.com')]
-    #[ApiParameter('MailSMTPPort', 'integer', 'rest_param_ms_smtp_port', ParameterLocation::QUERY, required: true, minimum: 1, maximum: 65535, example: 587)]
-    #[ApiParameter('MailSMTPAuthType', 'string', 'rest_param_ms_auth_type', ParameterLocation::QUERY, required: false, enum: ['none', 'plain', 'login', 'oauth2'], default: 'none', example: 'oauth2')]
-    #[ApiParameter('MailSMTPUsername', 'string', 'rest_param_ms_username', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'admin@company.com')]
-    #[ApiParameter('MailSMTPPassword', 'string', 'rest_param_ms_password', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'password123')]
-    #[ApiParameter('MailSMTPUseTLS', 'boolean', 'rest_param_ms_use_tls', ParameterLocation::QUERY, required: false, default: true, example: true)]
-    #[ApiParameter('MailFromUsername', 'string', 'rest_param_ms_from_username', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'PBX System')]
-    #[ApiParameter('MailFromAddress', 'string', 'rest_param_ms_from_address', ParameterLocation::QUERY, required: true, maxLength: 255, example: 'admin@company.com')]
-    #[ApiParameter('MailEnableNotifications', 'boolean', 'rest_param_ms_enable_notifications', ParameterLocation::QUERY, required: false, default: true, example: true)]
+    // ✨ Lightweight references to DataStructure::getParameterDefinitions()['request']
+    // All constraints (enum, pattern, maxLength, min/max, defaults) inherited from definitions
+    #[ApiParameterRef(PbxSettings::MAIL_SMTP_HOST, required: true)]
+    #[ApiParameterRef(PbxSettings::MAIL_SMTP_PORT, required: true)]
+    #[ApiParameterRef(PbxSettings::MAIL_SMTP_AUTH_TYPE)]
+    #[ApiParameterRef(PbxSettings::MAIL_SMTP_USERNAME)]
+    #[ApiParameterRef(PbxSettings::MAIL_SMTP_PASSWORD)]
+    #[ApiParameterRef(PbxSettings::MAIL_SMTP_USE_TLS)]
+    #[ApiParameterRef(PbxSettings::MAIL_SMTP_CERT_CHECK)]
+    #[ApiParameterRef(PbxSettings::MAIL_SMTP_FROM_USERNAME)]
+    #[ApiParameterRef(PbxSettings::MAIL_SMTP_SENDER_ADDRESS, required: true)]
+    #[ApiParameterRef(PbxSettings::MAIL_ENABLE_NOTIFICATIONS)]
+    #[ApiParameterRef(PbxSettings::MAIL_OAUTH2_PROVIDER)]
+    #[ApiParameterRef(PbxSettings::MAIL_OAUTH2_CLIENT_ID)]
+    #[ApiParameterRef(PbxSettings::MAIL_OAUTH2_CLIENT_SECRET)]
+    #[ApiParameterRef(PbxSettings::MAIL_OAUTH2_REFRESH_TOKEN)]
+    #[ApiParameterRef(PbxSettings::SYSTEM_NOTIFICATIONS_EMAIL)]
+    #[ApiParameterRef(PbxSettings::SYSTEM_EMAIL_FOR_MISSED)]
+    #[ApiParameterRef(PbxSettings::VOICEMAIL_NOTIFICATIONS_EMAIL)]
+    #[ApiParameterRef(PbxSettings::MAIL_TPL_MISSED_CALL_SUBJECT)]
+    #[ApiParameterRef(PbxSettings::MAIL_TPL_MISSED_CALL_BODY)]
+    #[ApiParameterRef(PbxSettings::MAIL_TPL_MISSED_CALL_FOOTER)]
+    #[ApiParameterRef(PbxSettings::MAIL_TPL_VOICEMAIL_SUBJECT)]
+    #[ApiParameterRef(PbxSettings::MAIL_TPL_VOICEMAIL_BODY)]
+    #[ApiParameterRef(PbxSettings::MAIL_TPL_VOICEMAIL_FOOTER)]
     #[ApiResponse(200, 'rest_response_200_updated')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -139,10 +155,30 @@ class RestController extends BaseRestController
         description: 'rest_ms_PatchDesc',
         operationId: 'patchMailSettings'
     )]
-    #[ApiParameter('MailSMTPHost', 'string', 'rest_param_ms_smtp_host', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'smtp.outlook.com')]
-    #[ApiParameter('MailSMTPPort', 'integer', 'rest_param_ms_smtp_port', ParameterLocation::QUERY, required: false, minimum: 1, maximum: 65535, example: 587)]
-    #[ApiParameter('MailSMTPAuthType', 'string', 'rest_param_ms_auth_type', ParameterLocation::QUERY, required: false, enum: ['none', 'plain', 'login', 'oauth2'], example: 'oauth2')]
-    #[ApiParameter('MailEnableNotifications', 'boolean', 'rest_param_ms_enable_notifications', ParameterLocation::QUERY, required: false, example: false)]
+    // ✨ Lightweight references (all optional in PATCH)
+    #[ApiParameterRef(PbxSettings::MAIL_SMTP_HOST)]
+    #[ApiParameterRef(PbxSettings::MAIL_SMTP_PORT)]
+    #[ApiParameterRef(PbxSettings::MAIL_SMTP_AUTH_TYPE)]
+    #[ApiParameterRef(PbxSettings::MAIL_SMTP_USERNAME)]
+    #[ApiParameterRef(PbxSettings::MAIL_SMTP_PASSWORD)]
+    #[ApiParameterRef(PbxSettings::MAIL_SMTP_USE_TLS)]
+    #[ApiParameterRef(PbxSettings::MAIL_SMTP_CERT_CHECK)]
+    #[ApiParameterRef(PbxSettings::MAIL_SMTP_FROM_USERNAME)]
+    #[ApiParameterRef(PbxSettings::MAIL_SMTP_SENDER_ADDRESS)]
+    #[ApiParameterRef(PbxSettings::MAIL_ENABLE_NOTIFICATIONS)]
+    #[ApiParameterRef(PbxSettings::MAIL_OAUTH2_PROVIDER)]
+    #[ApiParameterRef(PbxSettings::MAIL_OAUTH2_CLIENT_ID)]
+    #[ApiParameterRef(PbxSettings::MAIL_OAUTH2_CLIENT_SECRET)]
+    #[ApiParameterRef(PbxSettings::MAIL_OAUTH2_REFRESH_TOKEN)]
+    #[ApiParameterRef(PbxSettings::SYSTEM_NOTIFICATIONS_EMAIL)]
+    #[ApiParameterRef(PbxSettings::SYSTEM_EMAIL_FOR_MISSED)]
+    #[ApiParameterRef(PbxSettings::VOICEMAIL_NOTIFICATIONS_EMAIL)]
+    #[ApiParameterRef(PbxSettings::MAIL_TPL_MISSED_CALL_SUBJECT)]
+    #[ApiParameterRef(PbxSettings::MAIL_TPL_MISSED_CALL_BODY)]
+    #[ApiParameterRef(PbxSettings::MAIL_TPL_MISSED_CALL_FOOTER)]
+    #[ApiParameterRef(PbxSettings::MAIL_TPL_VOICEMAIL_SUBJECT)]
+    #[ApiParameterRef(PbxSettings::MAIL_TPL_VOICEMAIL_BODY)]
+    #[ApiParameterRef(PbxSettings::MAIL_TPL_VOICEMAIL_FOOTER)]
     #[ApiResponse(200, 'rest_response_200_patched')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -180,10 +216,10 @@ class RestController extends BaseRestController
         description: 'rest_ms_TestConnectionDesc',
         operationId: 'testMailConnection'
     )]
-    #[ApiParameter('MailSMTPHost', 'string', 'rest_param_ms_smtp_host', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'smtp.gmail.com')]
-    #[ApiParameter('MailSMTPPort', 'integer', 'rest_param_ms_smtp_port', ParameterLocation::QUERY, required: false, minimum: 1, maximum: 65535, example: 587)]
-    #[ApiParameter('MailSMTPUsername', 'string', 'rest_param_ms_username', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'test@company.com')]
-    #[ApiParameter('MailSMTPPassword', 'string', 'rest_param_ms_password', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'testpassword')]
+    #[ApiParameterRef(PbxSettings::MAIL_SMTP_HOST)]
+    #[ApiParameterRef(PbxSettings::MAIL_SMTP_PORT)]
+    #[ApiParameterRef(PbxSettings::MAIL_SMTP_USERNAME)]
+    #[ApiParameterRef(PbxSettings::MAIL_SMTP_PASSWORD)]
     #[ApiResponse(200, 'rest_response_200_test')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -203,9 +239,9 @@ class RestController extends BaseRestController
         description: 'rest_ms_SendTestEmailDesc',
         operationId: 'sendTestEmail'
     )]
-    #[ApiParameter('to', 'string', 'rest_param_ms_test_email_to', ParameterLocation::QUERY, required: true, maxLength: 255, example: 'admin@company.com')]
-    #[ApiParameter('subject', 'string', 'rest_param_ms_test_email_subject', ParameterLocation::QUERY, required: false, maxLength: 255, default: 'MikoPBX Test Email', example: 'Test Email from PBX')]
-    #[ApiParameter('body', 'string', 'rest_param_ms_test_email_body', ParameterLocation::QUERY, required: false, maxLength: 5000, default: 'This is a test email from MikoPBX system.', example: 'Test message to verify mail configuration.')]
+    #[ApiParameterRef('to', required: true)]
+    #[ApiParameterRef('subject')]
+    #[ApiParameterRef('body')]
     #[ApiResponse(200, 'rest_response_200_test')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -225,8 +261,8 @@ class RestController extends BaseRestController
         description: 'rest_ms_GetOAuth2UrlDesc',
         operationId: 'getOAuth2AuthUrl'
     )]
-    #[ApiParameter('provider', 'string', 'rest_param_ms_oauth2_provider', ParameterLocation::QUERY, required: true, enum: ['google', 'microsoft', 'yahoo'], example: 'google')]
-    #[ApiParameter('redirect_uri', 'string', 'rest_param_ms_oauth2_redirect_uri', ParameterLocation::QUERY, required: false, maxLength: 500, example: 'https://pbx.company.com/pbxcore/api/v3/mail-settings/oauth2-callback')]
+    #[ApiParameterRef('provider', required: true)]
+    #[ApiParameterRef('redirect_uri')]
     #[ApiResponse(200, 'rest_response_200_generated')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -246,7 +282,7 @@ class RestController extends BaseRestController
         description: 'rest_ms_RefreshTokenDesc',
         operationId: 'refreshOAuth2Token'
     )]
-    #[ApiParameter('provider', 'string', 'rest_param_ms_oauth2_provider', ParameterLocation::QUERY, required: false, enum: ['google', 'microsoft', 'yahoo'], example: 'google')]
+    #[ApiParameterRef('provider')]
     #[ApiResponse(200, 'rest_response_200_refreshed')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]

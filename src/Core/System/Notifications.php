@@ -23,6 +23,7 @@ namespace MikoPBX\Core\System;
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
+use MikoPBX\Core\System\Mail\MailOAuth2Service;
 use Phalcon\Di\Di;
 use PHPMailer\PHPMailer\PHPMailer;
 use Throwable;

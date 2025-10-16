@@ -23,6 +23,8 @@ namespace MikoPBX\PBXCoreREST\Lib\MailSettings;
 
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Notifications;
+use MikoPBX\Core\System\Mail\Builders\SmtpTestNotificationBuilder;
+use MikoPBX\Core\System\Mail\EmailNotificationService;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\System\SystemMessages;
@@ -70,30 +72,35 @@ class SendTestEmailAction
                 return $res;
             }
 
-            // Set default subject and body
-            $subject = $data['subject'] ?? $translation->_('ms_TestEmailSubject');
-
-            // Create enhanced test email body with system information
-            if (empty($data['body'])) {
-                $body = self::generateEnhancedTestEmail($translation);
-            } else {
-                $body = $data['body'];
-            }
-
             SystemMessages::sysLogMsg('SendTestEmailAction', "Sending test email to: $to", LOG_INFO);
 
-            // For test emails, we bypass the enableNotifications check
-            // by using a special instance with notifications always enabled
-            $testNotifications = new Notifications();
+            // Use new template system for beautiful test emails
+            $builder = new SmtpTestNotificationBuilder();
+            $builder->setRecipient($to)
+                    ->setSmtpServer($diagnostics['smtp_host'])
+                    ->setSmtpPort((int)$diagnostics['smtp_port'])
+                    ->setEncryptionType(PbxSettings::getValueByKey(PbxSettings::MAIL_SMTP_USE_TLS))
+                    ->setAuthType($diagnostics['auth_type'])
+                    ->setSenderAddress(PbxSettings::getValueByKey(PbxSettings::MAIL_SMTP_SENDER_ADDRESS));
 
-            // Use reflection to temporarily enable notifications for test
+            // Add OAuth2 provider if applicable
+            if ($diagnostics['auth_type'] === 'oauth2') {
+                $oauth2Provider = PbxSettings::getValueByKey(PbxSettings::MAIL_OAUTH2_PROVIDER);
+                $builder->setOAuth2Provider($oauth2Provider);
+            }
+
+            // For test emails, we bypass the enableNotifications check
+            $testNotifications = new Notifications();
             $reflection = new \ReflectionClass($testNotifications);
             $property = $reflection->getProperty('enableNotifications');
             $property->setAccessible(true);
             $property->setValue($testNotifications, true);
 
-            $phpMailerError = null;
-            $result = $testNotifications->sendMail($to, $subject, $body, '', $phpMailerError);
+            // Send via new service (which uses legacy Notifications internally)
+            $emailService = new EmailNotificationService();
+            $result = $emailService->sendNotification($builder, $testNotifications);
+
+            $phpMailerError = null; // Error handling is done inside sendNotification
 
             if ($result) {
                 $res->success = true;
@@ -211,7 +218,8 @@ class SendTestEmailAction
         $smtpPort = PbxSettings::getValueByKey(PbxSettings::MAIL_SMTP_PORT);
         $authType = PbxSettings::getValueByKey(PbxSettings::MAIL_SMTP_AUTH_TYPE);
         $senderAddress = PbxSettings::getValueByKey(PbxSettings::MAIL_SMTP_SENDER_ADDRESS);
-        $useTLS = PbxSettings::getValueByKey(PbxSettings::MAIL_SMTP_USE_TLS) === '1' ? 'Yes' : 'No';
+        $encryptionType = PbxSettings::getValueByKey(PbxSettings::MAIL_SMTP_USE_TLS);
+        $useTLS = $encryptionType !== 'none' ? ucfirst($encryptionType) : 'No';
 
         // Get OAuth2 provider if applicable
         $oauth2Provider = '';

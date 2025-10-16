@@ -20,7 +20,7 @@
 namespace MikoPBX\PBXCoreREST\Controllers\MailSettings;
 
 use MikoPBX\Core\System\Directories;
-use MikoPBX\Core\System\MailOAuth2Service;
+use MikoPBX\Core\System\Mail\MailOAuth2Service;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,

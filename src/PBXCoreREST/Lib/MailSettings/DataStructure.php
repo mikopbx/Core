@@ -73,11 +73,8 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         // Validate each email field
         foreach ($emailFields as $field => $fieldName) {
             if (!isset($data[$field]) || empty($data[$field])) {
-                // Email fields are optional unless marked as required
-                if (isset($definitions['request'][$field]['required']) &&
-                    $definitions['request'][$field]['required'] === true) {
-                    $errors[] = "{$fieldName} is required";
-                }
+                // Email fields are optional by default
+                // The 'required' flag is controlled at the controller level (PUT vs PATCH)
                 continue;
             }
 
@@ -237,7 +234,6 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                     'description' => 'rest_param_ms_smtp_host',
                     'maxLength' => 255,
                     'sanitize' => 'string',
-                    'required' => true,
                     'example' => 'smtp.gmail.com'
                 ],
                 PbxSettings::MAIL_SMTP_PORT => [
@@ -247,7 +243,6 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                     'maximum' => 65535,
                     'default' => (int)self::getDefaultValue(PbxSettings::MAIL_SMTP_PORT),
                     'sanitize' => 'int',
-                    'required' => true,
                     'example' => (int)self::getDefaultValue(PbxSettings::MAIL_SMTP_PORT)
                 ],
                 PbxSettings::MAIL_SMTP_AUTH_TYPE => [
@@ -276,9 +271,10 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 PbxSettings::MAIL_SMTP_USE_TLS => [
                     'type' => 'string',
                     'description' => 'rest_param_ms_use_tls',
-                    'default' => (bool)self::getDefaultValue(PbxSettings::MAIL_SMTP_USE_TLS),
+                    'enum' => ['none', 'tls', 'ssl'],
+                    'default' => self::getDefaultValue(PbxSettings::MAIL_SMTP_USE_TLS),
                     'sanitize' => 'string',
-                    'example' => (bool)self::getDefaultValue(PbxSettings::MAIL_SMTP_USE_TLS)
+                    'example' => self::getDefaultValue(PbxSettings::MAIL_SMTP_USE_TLS)
                 ],
                 PbxSettings::MAIL_SMTP_CERT_CHECK => [
                     'type' => 'boolean',
@@ -301,7 +297,6 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                     'format' => 'email',
                     'maxLength' => 255,
                     'sanitize' => 'email',
-                    'required' => true,
                     'example' => 'admin@company.com'
                 ],
                 PbxSettings::MAIL_ENABLE_NOTIFICATIONS => [
@@ -414,6 +409,46 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                     'default' => self::getDefaultValue(PbxSettings::MAIL_TPL_VOICEMAIL_FOOTER),
                     'example' => self::getDefaultValue(PbxSettings::MAIL_TPL_VOICEMAIL_FOOTER)
                 ],
+                
+                // Custom method parameters (not stored in PbxSettings)
+                'to' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_ms_test_email_to',
+                    'format' => 'email',
+                    'maxLength' => 255,
+                    'sanitize' => 'email',
+                    'example' => 'admin@company.com'
+                ],
+                'subject' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_ms_test_email_subject',
+                    'maxLength' => 255,
+                    'sanitize' => 'string',
+                    'default' => 'MikoPBX Test Email',
+                    'example' => 'Test Email from PBX'
+                ],
+                'body' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_ms_test_email_body',
+                    'maxLength' => 5000,
+                    'sanitize' => 'string',
+                    'default' => 'This is a test email from MikoPBX system.',
+                    'example' => 'Test message to verify mail configuration.'
+                ],
+                'provider' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_ms_oauth2_provider',
+                    'enum' => ['google', 'microsoft', 'yandex'],
+                    'sanitize' => 'string',
+                    'example' => 'google'
+                ],
+                'redirect_uri' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_ms_oauth2_redirect_uri',
+                    'maxLength' => 500,
+                    'sanitize' => 'string',
+                    'example' => 'https://pbx.company.com/pbxcore/api/v3/mail-settings/oauth2-callback'
+                ],
             ],
             'response' => [
                 // All mail settings fields (with rest_schema_* keys)
@@ -452,10 +487,11 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                     'example' => 'password123'
                 ],
                 PbxSettings::MAIL_SMTP_USE_TLS => [
-                    'type' => 'boolean',
+                    'type' => 'string',
                     'description' => 'rest_schema_ms_use_tls',
-                    'default' => (bool)self::getDefaultValue(PbxSettings::MAIL_SMTP_USE_TLS),
-                    'example' => (bool)self::getDefaultValue(PbxSettings::MAIL_SMTP_USE_TLS)
+                    'enum' => ['none', 'tls', 'ssl'],
+                    'default' => self::getDefaultValue(PbxSettings::MAIL_SMTP_USE_TLS),
+                    'example' => self::getDefaultValue(PbxSettings::MAIL_SMTP_USE_TLS)
                 ],
                 PbxSettings::MAIL_SMTP_CERT_CHECK => [
                     'type' => 'boolean',
@@ -479,8 +515,8 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 PbxSettings::MAIL_ENABLE_NOTIFICATIONS => [
                     'type' => 'boolean',
                     'description' => 'rest_schema_ms_enable_notifications',
-                    'default' => (bool)self::getDefaultValue(PbxSettings::MAIL_SMTP_USE_TLS),
-                    'example' => (bool)self::getDefaultValue(PbxSettings::MAIL_SMTP_USE_TLS)
+                    'default' => (bool)self::getDefaultValue(PbxSettings::MAIL_ENABLE_NOTIFICATIONS),
+                    'example' => (bool)self::getDefaultValue(PbxSettings::MAIL_ENABLE_NOTIFICATIONS)
                 ],
                 PbxSettings::MAIL_OAUTH2_CLIENT_ID => [
                     'type' => 'string',
