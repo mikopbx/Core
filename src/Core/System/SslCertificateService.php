@@ -50,8 +50,8 @@ class SslCertificateService
     public const string ASTERISK_CERT_FILE = self::ASTERISK_KEYS_DIR . '/asterisk.crt';
     public const string ASTERISK_KEY_FILE = self::ASTERISK_KEYS_DIR . '/asterisk.key';
     
-    private const string NGINX_CERT_FILE = '/etc/ssl/certs/nginx.crt';
-    private const string NGINX_KEY_FILE = '/etc/ssl/private/nginx.key';
+    public const string NGINX_CERT_FILE = '/etc/ssl/certs/nginx.crt';
+    public const string NGINX_KEY_FILE = '/etc/ssl/private/nginx.key';
     
     /**
      * Generate a self-signed SSL certificate.

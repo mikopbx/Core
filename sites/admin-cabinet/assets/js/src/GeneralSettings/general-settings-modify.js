@@ -873,17 +873,22 @@ const generalSettingsModify = {
                 $container.find('.save-cert-btn').on('click', function(e) {
                     e.preventDefault();
                     const newValue = $container.find('#WEBHTTPSPublicKey_edit').val();
-                    
+
                     // Update the original hidden field
                     $certPubKeyField.val(newValue);
-                    
+
+                    // Clear certificate info to force re-parsing
+                    // WHY: User is changing certificate, info needs to be updated
+                    $certPubKeyField.data('cert-info', {});
+
                     // Trigger form validation
                     if (typeof Form !== 'undefined' && Form.checkValues) {
                         Form.checkValues();
                     }
-                    
-                    // Re-initialize only the certificate field display with new value
-                    generalSettingsModify.initializeCertificateField();
+
+                    // Re-initialize both certificate fields
+                    // WHY: When user changes public cert, private key field state may need update
+                    generalSettingsModify.initializeTruncatedFields();
                 });
                 
                 // Handle cancel button
@@ -896,17 +901,22 @@ const generalSettingsModify = {
                 // Handle delete button
                 $container.find('.delete-cert-btn').on('click', function(e) {
                     e.preventDefault();
-                    
+
                     // Clear the certificate
                     $certPubKeyField.val('');
-                    
+
+                    // Clear certificate info data attribute
+                    // WHY: When certificate is deleted, private key state should also update
+                    $certPubKeyField.data('cert-info', {});
+
                     // Trigger form validation
                     if (typeof Form !== 'undefined' && Form.checkValues) {
                         Form.checkValues();
                     }
-                    
-                    // Re-initialize only the certificate field to show empty field
-                    generalSettingsModify.initializeCertificateField();
+
+                    // Re-initialize both certificate fields to show empty state
+                    // WHY: Deleting public cert should also reset private key display
+                    generalSettingsModify.initializeTruncatedFields();
                 });
                 
                 // Initialize tooltips
@@ -1006,16 +1016,41 @@ const generalSettingsModify = {
         const $certPrivKeyField = $('#WEBHTTPSPrivateKey');
         if ($certPrivKeyField.length) {
             const $container = $certPrivKeyField.parent();
-            
+
             // Remove any existing display elements
-            $container.find('.private-key-set, #WEBHTTPSPrivateKey_new').remove();
-            
-            // Check if private key exists (password masking logic)
-            // The field will contain '********' if a private key is set
+            $container.find('.private-key-set, .private-key-system-managed, #WEBHTTPSPrivateKey_new').remove();
+
+            // Get certificate info to check for private key existence
+            const $certPubKeyField = $('#WEBHTTPSPublicKey');
+            const certInfo = $certPubKeyField.data('cert-info') || {};
+
+            // Check if private key exists
+            // WHY: has_private_key can be true even if field is empty (self-signed certs in files)
             const currentValue = $certPrivKeyField.val();
-            const hasValue = currentValue === generalSettingsModify.hiddenPassword;
-            
-            if (hasValue) {
+            const hasValueInDb = currentValue === generalSettingsModify.hiddenPassword;
+            const hasValueInFiles = certInfo.has_private_key || false;
+            const isSelfSigned = certInfo.is_self_signed || false;
+
+            // Check if public certificate was modified locally (not saved yet)
+            // WHY: If cert was changed locally, cert-info is outdated - allow private key input
+            const publicKeyValue = $certPubKeyField.val() || '';
+            const publicKeyModified = publicKeyValue && !certInfo.subject; // No parsed info = modified locally
+
+            if (publicKeyModified) {
+                // Public certificate was modified locally - show private key input field
+                // WHY: User is changing certificate, needs to provide matching private key
+                $certPrivKeyField.show();
+                $certPrivKeyField.attr('placeholder', globalTranslate.gs_PastePrivateKey);
+                $certPrivKeyField.attr('rows', '10');
+
+                // Ensure change events trigger form validation
+                $certPrivKeyField.off('input.priv change.priv keyup.priv').on('input.priv change.priv keyup.priv', function() {
+                    if (typeof Form !== 'undefined' && Form.checkValues) {
+                        Form.checkValues();
+                    }
+                });
+            } else if (hasValueInDb) {
+                // User-provided certificate with private key in database
                 // Hide original field and show status message
                 $certPrivKeyField.hide();
                 
@@ -1056,6 +1091,21 @@ const generalSettingsModify = {
                         }
                     });
                 });
+            } else if (isSelfSigned && hasValueInFiles) {
+                // Self-signed certificate with system-managed private key
+                // WHY: Private key exists in files but not in database (auto-generated)
+                $certPrivKeyField.hide();
+
+                const displayHtml = `
+                    <div class="ui info message private-key-system-managed">
+                        <p>
+                            <i class="lock icon"></i>
+                            ${globalTranslate.gs_SystemManagedPrivateKey || 'System-managed private key (auto-generated with certificate)'}
+                        </p>
+                    </div>
+                `;
+
+                $container.append(displayHtml);
             } else {
                 // Show the original field for input with proper placeholder
                 $certPrivKeyField.show();

@@ -248,7 +248,18 @@ class GetSettingsAction extends AbstractGetRecordAction
                 // Return certificate with parsed info
                 $result[$key] = $value;
                 if (!empty($value)) {
-                    $result[$key . '_info'] = SslCertificateService::parseCertificateInfo($value);
+                    $certInfo = SslCertificateService::parseCertificateInfo($value);
+
+                    // Check if private key exists (either in database or as file)
+                    // WHY: For self-signed certificates, private key is only stored in files
+                    // WHY: User needs to know if a complete certificate pair exists
+                    $hasPrivateKeyInDb = !empty($settings[PbxSettings::WEB_HTTPS_PRIVATE_KEY] ?? '');
+                    $hasPrivateKeyFile = file_exists(SslCertificateService::NGINX_KEY_FILE) ||
+                                        file_exists(SslCertificateService::ASTERISK_KEY_FILE);
+
+                    $certInfo['has_private_key'] = $hasPrivateKeyInDb || $hasPrivateKeyFile;
+
+                    $result[$key . '_info'] = $certInfo;
                 }
             } elseif ($key === PbxSettings::WEB_HTTPS_PRIVATE_KEY) {
                 // Use password masking for private key
