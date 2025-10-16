@@ -182,8 +182,9 @@ class FillDataTimeSettingsTest extends MikoPBXTestsBase
         }
 
         // Manual mode - check the time difference
+        // Format is now 'Y-m-d H:i:s' (e.g., '2025-10-15 14:30:00')
         $manualDateTime = $params['ManualDateTime'];
-        $targetTime = strtotime(str_replace(['/', ','], ['-', ''], $manualDateTime));
+        $targetTime = strtotime($manualDateTime);
         $currentTime = time();
         $differenceMinutes = abs($targetTime - $currentTime) / 60;
 
@@ -310,12 +311,13 @@ class FillDataTimeSettingsTest extends MikoPBXTestsBase
         // Changes time by +5 minutes - should NOT require re-login
         // JWT access tokens remain valid (exp + 600 > current_time)
         // Redis refresh tokens unaffected (TTL is time-independent)
+        // Format MUST match time-settings-worker.js:117 -> 'YYYY-MM-DD HH:mm:ss'
         $params[] = [
             [
                 PbxSettings::PBX_TIMEZONE => 'Europe/Riga',
                 'PBXTimezone' => 'Europe/Riga', // Ensure we have the same value for verification
                 PbxSettings::PBX_MANUAL_TIME_SETTINGS => true,
-                'ManualDateTime' => date('d/m/Y, h:i:s A', strtotime('+5 minutes')),
+                'ManualDateTime' => date('Y-m-d H:i:s', strtotime('+5 minutes')),
                 PbxSettings::NTP_SERVER => '',
             ],
         ];
