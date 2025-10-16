@@ -176,13 +176,18 @@ public static function main(array $data): PBXApiResult
 
 ### JWT Bearer Tokens (15 min lifetime)
 ```bash
-# Login
-TOKEN=$(curl -s -X POST 'https://localhost:8445/pbxcore/api/v3/auth:login' \
-  -d "login=admin&password=123456789MikoPBX%231" | \
+# Login with cookies (required for Bearer token to work)
+COOKIE_JAR="/tmp/mikopbx_cookies.txt"
+
+TOKEN=$(curl -s -c "$COOKIE_JAR" -X POST 'https://localhost:8445/pbxcore/api/v3/auth:login' \
+  -H 'Content-Type: application/x-www-form-urlencoded; charset=UTF-8' \
+  --data-raw 'login=admin&password=123456789MikoPBX%231&rememberMe=false' \
+  --insecure | \
   python3 -c "import sys, json; print(json.load(sys.stdin)['data']['accessToken'])")
 
-# Use token
+# Use token with cookies
 curl -H "Authorization: Bearer $TOKEN" \
+  -b "$COOKIE_JAR" \
   https://localhost:8445/pbxcore/api/v3/extensions
 ```
 
