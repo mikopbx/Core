@@ -32,7 +32,7 @@ use MikoPBX\Core\System\{Directories, Processes, Storage, SystemMessages, Util};
 class WorkerRemoveOldRecords extends WorkerBase
 {
     private const int MIN_SPACE_MB = 500;
-    public const int MIN_SPACE_MB_ALERT = 200;
+    public const int MIN_SPACE_MB_ALERT = 500;
 
     /**
      * Starts the worker and checks disk space. Sends notifications in case of problems.

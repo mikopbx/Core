@@ -19,7 +19,10 @@
 
 namespace MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice;
 
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Storage;
+use MikoPBX\Core\System\Mail\Builders\DiskSpaceNotificationBuilder;
+use MikoPBX\Core\System\Mail\EmailNotificationService;
 use MikoPBX\Core\Workers\WorkerRemoveOldRecords;
 use Phalcon\Di\Injectable;
 
@@ -43,6 +46,10 @@ class CheckStorage extends Injectable
         $st = new Storage();
         $storageDiskMounted = false;
         $disks = $st->getAllHdd();
+        $criticalDisks = [];
+        $maxUsagePercentage = 0;
+        $minFreeSpace = 0;
+
         foreach ($disks as $disk) {
             if (array_key_exists('mounted', $disk)
                 && strpos($disk['mounted'], '/storage/usbdisk') !== false) {
@@ -54,13 +61,67 @@ class CheckStorage extends Injectable
                             'free'=> $disk['free_space']
                         ]
                     ];
+
+                    // Calculate usage percentage for email notification
+                    $totalSpace = ($disk['size_bytes'] ?? 0);
+                    $usedSpace = $totalSpace - ($disk['free_space'] * 1024 * 1024);
+                    $usagePercentage = $totalSpace > 0 ? (int)(($usedSpace / $totalSpace) * 100) : 0;
+
+                    $criticalDisks[] = [
+                        'name' => $disk['mounted'] ?? 'Unknown',
+                        'usage' => $usagePercentage
+                    ];
+
+                    $maxUsagePercentage = max($maxUsagePercentage, $usagePercentage);
+                    $minFreeSpace = $disk['free_space'];
                 }
             }
         }
+
         if ($storageDiskMounted === false) {
             $messages['error'][] = ['messageTpl'=>'adv_StorageDiskUnMounted'];
         }
+
+        // Send beautiful disk space notification email if we have critical disks
+        if (!empty($criticalDisks)) {
+            $adminEmail = PbxSettings::getValueByKey(PbxSettings::SYSTEM_NOTIFICATIONS_EMAIL);
+
+            if (!empty($adminEmail)) {
+                $builder = new DiskSpaceNotificationBuilder();
+                $builder->setRecipient($adminEmail)
+                        ->setDiskUsage($maxUsagePercentage)
+                        ->setFreeSpace($minFreeSpace . ' MB')
+                        ->setPartitions($criticalDisks)
+                        ->setAdminUrl(self::buildAdminUrl('/admin-cabinet/system-diagnostic/index/'));
+
+                $emailService = new EmailNotificationService();
+                $emailService->sendNotification($builder);
+            }
+        }
+
         return $messages;
+    }
+
+    /**
+     * Build admin panel URL using network settings
+     *
+     * @param string $path Path to append to base URL
+     * @return string Full URL to admin panel
+     */
+    private static function buildAdminUrl(string $path = ''): string
+    {
+        // Get HTTPS port from settings
+        $httpsPort = PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PORT) ?: '443';
+
+        // Try to get external IP first, then local IP
+        $host = PbxSettings::getValueByKey(PbxSettings::EXTERNAL_SIP_IP_ADDR);
+        if (empty($host)) {
+            $host = gethostname() ?: 'localhost';
+        }
+
+        // Build URL
+        $portSuffix = ($httpsPort === '443') ? '' : ':' . $httpsPort;
+        return 'https://' . $host . $portSuffix . $path;
     }
 
 }

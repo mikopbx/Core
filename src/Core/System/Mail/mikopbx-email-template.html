@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="x-apple-disable-message-reformatting">
+    <title>{{EMAIL_SUBJECT}}</title>
+    
+    <!--[if mso]>
+    <noscript>
+        <xml>
+            <o:OfficeDocumentSettings>
+                <o:AllowPNG/>
+                <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+        </xml>
+    </noscript>
+    <![endif]-->
+    
+    <style type="text/css">
+        /* Reset styles for email clients */
+        body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+        table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+        img { -ms-interpolation-mode: bicubic; }
+        
+        /* Remove default styling from links */
+        a[x-apple-data-detectors] {
+            font-family: inherit !important;
+            font-size: inherit !important;
+            font-weight: inherit !important;
+            line-height: inherit !important;
+            color: inherit !important;
+            text-decoration: none !important;
+        }
+        
+        /* Mobile styles */
+        @media screen and (max-width: 600px) {
+            .mobile-hide { display: none !important; }
+            .mobile-center { text-align: center !important; }
+            .container { width: 100% !important; max-width: 100% !important; }
+            .content-padding { padding: 20px !important; }
+            .button-container { width: 100% !important; }
+            .button { width: 100% !important; max-width: 300px !important; }
+        }
+    </style>
+</head>
+
+<body style="margin: 0; padding: 0; word-spacing: normal; background-color: #f4f5f7;">
+    <div role="article" aria-roledescription="email" lang="{{LANGUAGE_CODE}}" style="text-size-adjust: 100%; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%;">
+        
+        <!-- Hidden Preheader Text -->
+        <div style="display: none; font-size: 1px; color: #f4f5f7; line-height: 1px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden;">
+            {{PREHEADER_TEXT}}
+        </div>
+        
+        <!-- Main Container -->
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: auto; background-color: #f4f5f7;">
+            <tr>
+                <td align="center" style="padding: 40px 20px;">
+                    
+                    <!-- Email Content Container -->
+                    <table class="container" role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="margin: auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        
+                        <!-- Header with Icon/Alert Type -->
+                        <tr>
+                            <td style="background: linear-gradient(135deg, {{HEADER_COLOR_START}} 0%, {{HEADER_COLOR_END}} 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+                                
+                                <!-- Notification Icon -->
+                                <div style="display: inline-block; width: 60px; height: 60px; background-color: rgba(255,255,255,0.2); border-radius: 50%; line-height: 60px; margin-bottom: 15px;">
+                                    <span style="font-size: 30px; color: #ffffff;">{{NOTIFICATION_ICON}}</span>
+                                </div>
+                                
+                                <!-- Email Title -->
+                                <h1 style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 24px; font-weight: 600; color: #ffffff; line-height: 1.4;">
+                                    {{EMAIL_TITLE}}
+                                </h1>
+                            </td>
+                        </tr>
+                        
+                        <!-- Server Identification Bar -->
+                        <tr>
+                            <td style="background-color: #f8f9fa; padding: 12px 30px; border-bottom: 1px solid #e1e4e8;">
+                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                    <tr>
+                                        <td style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 12px; color: #6c757d;">
+                                            <strong style="color: #495057;">{{SERVER_LABEL}}:</strong> {{SERVER_NAME}}
+                                        </td>
+                                        <td align="right" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 12px; color: #6c757d;">
+                                            {{TIMESTAMP}}
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                        
+                        <!-- Main Content Area -->
+                        <tr>
+                            <td class="content-padding" style="padding: 40px 30px;">
+                                
+                                <!-- Main Message -->
+                                <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333; margin-bottom: 25px;">
+                                    {{MAIN_MESSAGE}}
+                                </div>
+                                
+                                <!-- Dynamic Content Block (for different notification types) -->
+                                {{DYNAMIC_CONTENT}}
+                                
+                                <!-- Information Box (if needed) -->
+                                {{#IF_INFO_BOX}}
+                                <div style="background-color: #f8f9fa; border-left: 4px solid {{INFO_BOX_COLOR}}; padding: 20px; margin: 25px 0; border-radius: 4px;">
+                                    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: #495057; line-height: 1.6;">
+                                        {{INFO_BOX_CONTENT}}
+                                    </div>
+                                </div>
+                                {{/IF_INFO_BOX}}
+                                
+                                <!-- Data Table (for credentials, test parameters, etc.) -->
+                                {{#IF_DATA_TABLE}}
+                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 25px 0;">
+                                    <tr>
+                                        <td style="background-color: #f8f9fa; padding: 20px; border-radius: 6px;">
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                {{DATA_TABLE_ROWS}}
+                                                <!-- Example row structure:
+                                                <tr>
+                                                    <td style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: #6c757d; padding: 8px 0;">
+                                                        Parameter:
+                                                    </td>
+                                                    <td style="font-family: 'SF Mono', Monaco, 'Courier New', monospace; font-size: 14px; color: #212529; padding: 8px 0; padding-left: 20px; word-break: break-all;">
+                                                        <strong>Value</strong>
+                                                    </td>
+                                                </tr>
+                                                -->
+                                            </table>
+                                        </td>
+                                    </tr>
+                                </table>
+                                {{/IF_DATA_TABLE}}
+                                
+                                <!-- Call to Action Button -->
+                                {{#IF_CTA_BUTTON}}
+                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin: 30px auto;">
+                                    <tr>
+                                        <td class="button-container" align="center">
+                                            <a href="{{CTA_URL}}" target="_blank" class="button" style="display: inline-block; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 600; color: #ffffff; background-color: {{CTA_COLOR}}; text-decoration: none; padding: 14px 30px; border-radius: 6px; border: 2px solid {{CTA_COLOR}}; transition: all 0.3s;">
+                                                {{CTA_TEXT}}
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </table>
+                                {{/IF_CTA_BUTTON}}
+                                
+                                <!-- Additional Help Text -->
+                                {{#IF_HELP_TEXT}}
+                                <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: #6c757d; line-height: 1.6; margin-top: 25px; padding-top: 25px; border-top: 1px solid #e1e4e8;">
+                                    {{HELP_TEXT}}
+                                </div>
+                                {{/IF_HELP_TEXT}}
+                                
+                            </td>
+                        </tr>
+                        
+                        <!-- Footer -->
+                        <tr>
+                            <td style="background-color: #f8f9fa; padding: 25px 30px; text-align: center; border-radius: 0 0 8px 8px; border-top: 1px solid #e1e4e8;">
+                                
+                                <!-- Footer Message -->
+                                <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 12px; color: #6c757d; line-height: 1.6; margin-bottom: 10px;">
+                                    {{FOOTER_MESSAGE}}
+                                </div>
+                                
+                                <!-- Unsubscribe Link (if needed) -->
+                                {{#IF_UNSUBSCRIBE}}
+                                <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 11px; color: #adb5bd; margin-top: 15px;">
+                                    <a href="{{UNSUBSCRIBE_URL}}" style="color: #adb5bd; text-decoration: underline;">{{UNSUBSCRIBE_TEXT}}</a>
+                                </div>
+                                {{/IF_UNSUBSCRIBE}}
+                                
+                                <!-- Powered by (optional) -->
+                                {{#IF_POWERED_BY}}
+                                <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 11px; color: #adb5bd; margin-top: 15px;">
+                                    {{POWERED_BY_TEXT}}
+                                </div>
+                                {{/IF_POWERED_BY}}
+                                
+                            </td>
+                        </tr>
+                        
+                    </table>
+                    <!-- End Email Content Container -->
+                    
+                </td>
+            </tr>
+        </table>
+        <!-- End Main Container -->
+        
+    </div>
+</body>
+</html>
