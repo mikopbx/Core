@@ -150,10 +150,21 @@ const TokenManager = {
         // Update Stoplight Elements localStorage with new token
         // WHY: Elements reads from localStorage.TryIt_securitySchemeValues for "Try It" functionality
         // This keeps the token fresh after silent refresh (every 13 minutes)
+        //
+        // SECURITY NOTE: We store the token in localStorage ONLY for OpenAPI testing convenience.
+        // This is an exception to our security model where tokens are normally kept in memory only.
         try {
+            // Update Stoplight Elements storage format
             localStorage.setItem('TryIt_securitySchemeValues', JSON.stringify({
                 'bearerAuth': token
             }));
+
+            // Update our own storage with expiration timestamp
+            const tokenData = {
+                'bearerAuth': token,
+                'expiresAt': Date.now() + (expiresIn * 1000)
+            };
+            localStorage.setItem('MikoPBX_OpenAPI_Token', JSON.stringify(tokenData));
         } catch (e) {
             console.log('Failed to update localStorage for Stoplight Elements:', e);
         }
@@ -419,6 +430,14 @@ const TokenManager = {
         if (this.refreshTimer) {
             clearTimeout(this.refreshTimer);
             this.refreshTimer = null;
+        }
+
+        // Clear OpenAPI/Stoplight Elements tokens from localStorage
+        try {
+            localStorage.removeItem('TryIt_securitySchemeValues');
+            localStorage.removeItem('MikoPBX_OpenAPI_Token');
+        } catch (e) {
+            console.log('Failed to clear OpenAPI tokens from localStorage:', e);
         }
 
         // CRITICAL: Redirect to /session/end which clears httpOnly cookie server-side

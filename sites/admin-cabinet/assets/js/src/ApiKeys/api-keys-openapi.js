@@ -82,17 +82,55 @@ const ApiKeysOpenAPI = {
         $('#content-frame').removeClass('grey').addClass('basic');
 
         try {
-            // PRE-FILL AUTHENTICATION TOKEN
+            // PRE-FILL AUTHENTICATION TOKEN FOR SWAGGER/STOPLIGHT ELEMENTS
             // WHY: Stoplight Elements reads security values from localStorage.TryIt_securitySchemeValues
             // This allows "Try It" functionality to work without manual token input
             // See: https://github.com/stoplightio/elements/issues/1400
+            //
+            // SECURITY NOTE: We store the token in localStorage ONLY for OpenAPI testing convenience.
+            // This is an exception to our security model where tokens are normally kept in memory only.
+            // The token expires after 15 minutes anyway, and this is only for authenticated admin users.
             if (typeof TokenManager !== 'undefined' && TokenManager.accessToken) {
                 // OpenAPI spec defines security scheme as 'bearerAuth'
-                // Store token in format: { 'bearerAuth': 'token_value' }
+                // Store token with expiration timestamp for convenience
+                const tokenData = {
+                    'bearerAuth': TokenManager.accessToken,
+                    'expiresAt': Date.now() + (15 * 60 * 1000) // 15 minutes from now
+                };
+
                 localStorage.setItem('TryIt_securitySchemeValues', JSON.stringify({
                     'bearerAuth': TokenManager.accessToken
                 }));
-                console.log('Pre-filled Bearer token for Try It functionality');
+
+                // Store full token data separately for our own expiration check
+                localStorage.setItem('MikoPBX_OpenAPI_Token', JSON.stringify(tokenData));
+
+                console.log('Pre-filled Bearer token for Try It functionality (expires in 15 min)');
+            } else {
+                // Check if we have a stored token that hasn't expired
+                const storedData = localStorage.getItem('MikoPBX_OpenAPI_Token');
+                if (storedData) {
+                    try {
+                        const tokenData = JSON.parse(storedData);
+
+                        // Check if token is still valid
+                        if (tokenData.expiresAt && Date.now() < tokenData.expiresAt) {
+                            // Token is still valid - restore it for Stoplight Elements
+                            localStorage.setItem('TryIt_securitySchemeValues', JSON.stringify({
+                                'bearerAuth': tokenData.bearerAuth
+                            }));
+                            console.log('Restored previously stored Bearer token for Try It functionality');
+                        } else {
+                            // Token expired - clear it
+                            localStorage.removeItem('MikoPBX_OpenAPI_Token');
+                            localStorage.removeItem('TryIt_securitySchemeValues');
+                            console.log('Stored token expired - cleared');
+                        }
+                    } catch (e) {
+                        console.error('Failed to parse stored token:', e);
+                        localStorage.removeItem('MikoPBX_OpenAPI_Token');
+                    }
+                }
             }
 
             // Fetch OpenAPI specification with authentication
