@@ -147,6 +147,17 @@ const TokenManager = {
         console.log('Setting access token, expires in:', expiresIn, 'seconds');
         this.accessToken = token;
 
+        // Update Stoplight Elements localStorage with new token
+        // WHY: Elements reads from localStorage.TryIt_securitySchemeValues for "Try It" functionality
+        // This keeps the token fresh after silent refresh (every 13 minutes)
+        try {
+            localStorage.setItem('TryIt_securitySchemeValues', JSON.stringify({
+                'bearerAuth': token
+            }));
+        } catch (e) {
+            console.log('Failed to update localStorage for Stoplight Elements:', e);
+        }
+
         // Clear existing timer
         if (this.refreshTimer) {
             clearTimeout(this.refreshTimer);

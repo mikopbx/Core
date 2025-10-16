@@ -82,6 +82,19 @@ const ApiKeysOpenAPI = {
         $('#content-frame').removeClass('grey').addClass('basic');
 
         try {
+            // PRE-FILL AUTHENTICATION TOKEN
+            // WHY: Stoplight Elements reads security values from localStorage.TryIt_securitySchemeValues
+            // This allows "Try It" functionality to work without manual token input
+            // See: https://github.com/stoplightio/elements/issues/1400
+            if (typeof TokenManager !== 'undefined' && TokenManager.accessToken) {
+                // OpenAPI spec defines security scheme as 'bearerAuth'
+                // Store token in format: { 'bearerAuth': 'token_value' }
+                localStorage.setItem('TryIt_securitySchemeValues', JSON.stringify({
+                    'bearerAuth': TokenManager.accessToken
+                }));
+                console.log('Pre-filled Bearer token for Try It functionality');
+            }
+
             // Fetch OpenAPI specification with authentication
             // We need to use $.ajax instead of fetch to get JWT token automatically
             const response = await $.ajax({
