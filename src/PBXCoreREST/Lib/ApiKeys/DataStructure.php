@@ -261,6 +261,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                     'description' => 'rest_param_ak_description',
                     'minLength' => 1,
                     'maxLength' => 255,
+                    'sanitize' => 'text',
                     'required' => true,
                     'example' => 'CRM Integration Key'
                 ],
@@ -269,6 +270,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                     'description' => 'rest_param_ak_key',
                     'minLength' => 32,
                     'maxLength' => 255,
+                    'sanitize' => 'string',
                     'required' => true, // Required for CREATE (auto-generated if not provided)
                     'writeOnly' => true, // Never returned in responses
                     'example' => 'miko_ak_1234567890abcdef1234567890abcdef'
@@ -277,18 +279,21 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                     'type' => 'string',
                     'description' => 'rest_param_ak_networkfilterid',
                     'pattern' => '^([0-9]+|none)$',
+                    'sanitize' => 'string',
                     'default' => 'none',
                     'example' => '5'
                 ],
                 'full_permissions' => [
                     'type' => 'boolean',
                     'description' => 'rest_param_ak_full_permissions',
+                    'sanitize' => 'bool',
                     'default' => false,
                     'example' => false
                 ],
                 'allowed_paths' => [
                     'type' => 'array',
                     'description' => 'rest_param_ak_allowed_paths',
+                    'sanitize' => 'array',
                     'items' => [
                         'type' => 'string',
                         'pattern' => '^/api/v[0-9]+/[a-z0-9-]+(/[a-z0-9-]+)*$',

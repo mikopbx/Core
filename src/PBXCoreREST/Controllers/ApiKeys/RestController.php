@@ -26,6 +26,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
     ApiParameter,
+    ApiParameterRef,
     ApiResponse,
     ApiDataSchema,
     SecurityType,
@@ -183,11 +184,10 @@ class RestController extends BaseRestController
         description: 'rest_ak_CreateDesc',
         operationId: 'createApiKey'
     )]
-    #[ApiParameter('description', 'string', 'rest_param_ak_description', ParameterLocation::QUERY, required: true, maxLength: 255, example: 'CRM Integration Key')]
-    #[ApiParameter('enabled', 'boolean', 'rest_param_ak_enabled', ParameterLocation::QUERY, required: false, default: true, example: true)]
-    #[ApiParameter('full_permissions', 'boolean', 'rest_param_ak_full_permissions', ParameterLocation::QUERY, required: false, default: false, example: false)]
-    #[ApiParameter('allowed_paths', 'array', 'rest_param_ak_allowed_paths', ParameterLocation::QUERY, required: false, example: '["/api/v3/employees","/api/v3/extensions"]')]
-    #[ApiParameter('network_filter_id', 'string', 'rest_param_ak_network_filter_id', ParameterLocation::QUERY, required: false, example: '5')]
+    #[ApiParameterRef('description', required: true)]
+    #[ApiParameterRef('full_permissions')]
+    #[ApiParameterRef('allowed_paths')]
+    #[ApiParameterRef('networkfilterid')]
     #[ApiResponse(201, 'rest_response_201_created')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -212,10 +212,10 @@ class RestController extends BaseRestController
         description: 'rest_ak_UpdateDesc',
         operationId: 'updateApiKey'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[0-9]+$', example: '12')]
-    #[ApiParameter('description', 'string', 'rest_param_ak_description', ParameterLocation::QUERY, required: true, maxLength: 255, example: 'Updated CRM Key')]
-    #[ApiParameter('enabled', 'boolean', 'rest_param_ak_enabled', ParameterLocation::QUERY, required: false, default: true, example: true)]
-    #[ApiParameter('full_permissions', 'boolean', 'rest_param_ak_full_permissions', ParameterLocation::QUERY, required: false, default: false, example: true)]
+    #[ApiParameterRef('description', required: true)]
+    #[ApiParameterRef('full_permissions')]
+    #[ApiParameterRef('allowed_paths')]
+    #[ApiParameterRef('networkfilterid')]
     #[ApiResponse(200, 'rest_response_200_updated')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -241,10 +241,10 @@ class RestController extends BaseRestController
         description: 'rest_ak_PatchDesc',
         operationId: 'patchApiKey'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[0-9]+$', example: '12')]
-    #[ApiParameter('description', 'string', 'rest_param_ak_description', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'Patched Description')]
-    #[ApiParameter('enabled', 'boolean', 'rest_param_ak_enabled', ParameterLocation::QUERY, required: false, example: false)]
-    #[ApiParameter('allowed_paths', 'array', 'rest_param_ak_allowed_paths', ParameterLocation::QUERY, required: false, example: '["/api/v3/employees"]')]
+    #[ApiParameterRef('description')]
+    #[ApiParameterRef('full_permissions')]
+    #[ApiParameterRef('allowed_paths')]
+    #[ApiParameterRef('networkfilterid')]
     #[ApiResponse(200, 'rest_response_200_patched')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
