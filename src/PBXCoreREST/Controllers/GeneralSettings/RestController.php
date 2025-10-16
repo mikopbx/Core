@@ -19,6 +19,7 @@
 
 namespace MikoPBX\PBXCoreREST\Controllers\GeneralSettings;
 
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\GeneralSettingsManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\GeneralSettings\DataStructure;
@@ -26,6 +27,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
     ApiParameter,
+    ApiParameterRef,
     ApiResponse,
     ApiDataSchema,
     SecurityType,
@@ -115,7 +117,7 @@ class RestController extends BaseRestController
         description: 'rest_gs_GetSettingDesc',
         operationId: 'getGeneralSetting'
     )]
-    #[ApiParameter('key', 'string', 'rest_param_gs_key', ParameterLocation::PATH, required: true, maxLength: 100, example: 'PBXName')]
+    #[ApiParameter('key', 'string', 'rest_param_gs_key', ParameterLocation::PATH, required: true, maxLength: 100, example: PbxSettings::PBX_NAME)]
     #[ApiResponse(200, 'rest_response_200_get')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -129,6 +131,9 @@ class RestController extends BaseRestController
     /**
      * Update general settings (full replacement)
      *
+     * WHY: Uses ApiParameterRef to reference DataStructure definitions (Single Source of Truth).
+     * All field constraints (type, validation, defaults) inherited from DataStructure::getParameterDefinitions().
+     *
      * @route PUT /pbxcore/api/v3/general-settings
      */
     #[ApiDataSchema(
@@ -140,12 +145,24 @@ class RestController extends BaseRestController
         description: 'rest_gs_UpdateDesc',
         operationId: 'updateGeneralSettings'
     )]
-    #[ApiParameter('PBXName', 'string', 'rest_param_gs_pbxname', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'Company PBX')]
-    #[ApiParameter('PBXDescription', 'string', 'rest_param_gs_pbxdescription', ParameterLocation::QUERY, required: false, maxLength: 500, example: 'Main office telephone system')]
-    #[ApiParameter('PBXLanguage', 'string', 'rest_param_gs_pbxlanguage', ParameterLocation::QUERY, required: false, enum: ['en', 'ru', 'de', 'es', 'fr', 'it', 'pt', 'uk'], example: 'en')]
-    #[ApiParameter('PBXRecordCalls', 'string', 'rest_param_gs_pbxrecordcalls', ParameterLocation::QUERY, required: false, enum: ['all', 'internal', 'external', 'none'], example: 'all')]
-    #[ApiParameter('WebPort', 'integer', 'rest_param_gs_webport', ParameterLocation::QUERY, required: false, minimum: 1, maximum: 65535, example: 8080)]
-    #[ApiParameter('SIPPort', 'integer', 'rest_param_gs_sipport', ParameterLocation::QUERY, required: false, minimum: 1, maximum: 65535, example: 5060)]
+    #[ApiParameterRef(PbxSettings::PBX_NAME)]
+    #[ApiParameterRef(PbxSettings::PBX_DESCRIPTION)]
+    #[ApiParameterRef(PbxSettings::PBX_LANGUAGE)]
+    #[ApiParameterRef(PbxSettings::PBX_INTERNAL_EXTENSION_LENGTH)]
+    #[ApiParameterRef(PbxSettings::PBX_RECORD_CALLS)]
+    #[ApiParameterRef(PbxSettings::PBX_RECORD_CALLS_INNER)]
+    #[ApiParameterRef(PbxSettings::WEB_PORT)]
+    #[ApiParameterRef(PbxSettings::WEB_HTTPS_PORT)]
+    #[ApiParameterRef(PbxSettings::WEB_ADMIN_LOGIN)]
+    #[ApiParameterRef(PbxSettings::WEB_ADMIN_PASSWORD)]
+    #[ApiParameterRef(PbxSettings::SIP_PORT)]
+    #[ApiParameterRef(PbxSettings::TLS_PORT)]
+    #[ApiParameterRef(PbxSettings::RTP_PORT_FROM)]
+    #[ApiParameterRef(PbxSettings::RTP_PORT_TO)]
+    #[ApiParameterRef(PbxSettings::SSH_PORT)]
+    #[ApiParameterRef(PbxSettings::SSH_PASSWORD)]
+    #[ApiParameterRef(PbxSettings::AMI_ENABLED)]
+    #[ApiParameterRef(PbxSettings::AMI_PORT)]
     #[ApiResponse(200, 'rest_response_200_updated')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -160,6 +177,9 @@ class RestController extends BaseRestController
     /**
      * Partially update general settings
      *
+     * WHY: Uses ApiParameterRef to reference DataStructure definitions (Single Source of Truth).
+     * PATCH allows updating only specific fields without affecting others.
+     *
      * @route PATCH /pbxcore/api/v3/general-settings
      */
     #[ApiDataSchema(
@@ -171,8 +191,13 @@ class RestController extends BaseRestController
         description: 'rest_gs_PatchDesc',
         operationId: 'patchGeneralSettings'
     )]
-    #[ApiParameter('PBXName', 'string', 'rest_param_gs_pbxname', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'Updated PBX Name')]
-    #[ApiParameter('PBXLanguage', 'string', 'rest_param_gs_pbxlanguage', ParameterLocation::QUERY, required: false, enum: ['en', 'ru', 'de', 'es', 'fr', 'it', 'pt', 'uk'], example: 'ru')]
+    #[ApiParameterRef(PbxSettings::PBX_NAME)]
+    #[ApiParameterRef(PbxSettings::PBX_DESCRIPTION)]
+    #[ApiParameterRef(PbxSettings::PBX_LANGUAGE)]
+    #[ApiParameterRef(PbxSettings::PBX_INTERNAL_EXTENSION_LENGTH)]
+    #[ApiParameterRef(PbxSettings::WEB_PORT)]
+    #[ApiParameterRef(PbxSettings::WEB_HTTPS_PORT)]
+    #[ApiParameterRef(PbxSettings::SIP_PORT)]
     #[ApiResponse(200, 'rest_response_200_patched')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]

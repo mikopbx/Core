@@ -131,13 +131,14 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      * WHY: Single Source of Truth for allowed settings.
      * Settings not in this list are managed by other controllers or are system-only.
      *
-     * @return array<string> Array of PbxSettings constants that are allowed
+     * @return array<int, string> Array of PbxSettings constants that are allowed
      */
     public static function getAllowedSettings(): array
     {
         // Extract all keys from response properties
         $definitions = self::getParameterDefinitions();
-        $allowedSettings = array_keys($definitions['response']['settings']['properties'] ?? []);
+        /** @var array<int, string> $allowedSettings */
+        $allowedSettings = array_values(array_keys($definitions['response']['settings']['properties'] ?? []));
 
         // Add hidden/internal settings that are still needed by the form but not in schema
         $additionalSettings = [
@@ -226,15 +227,489 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
 
     /**
-     * Get parameter definitions (Single Source of Truth)
+     * Get unified field definitions for all settings (Single Source of Truth)
      *
-     * WHY: Centralizes general settings parameter definitions.
-     * GeneralSettings is a singleton resource containing all PBX settings.
+     * WHY: Eliminates duplication between request and response sections.
+     * Each field is defined ONCE with all its properties (type, validation, sanitization, defaults).
+     *
+     * Fields marked with 'readOnly' => true are excluded from request section automatically.
+     *
+     * @return array<string, array<string, mixed>> Unified field definitions
+     */
+    private static function getAllFieldDefinitions(): array
+    {
+        return [
+            // ========== GENERAL SETTINGS ==========
+            PbxSettings::PBX_NAME => [
+                'type' => 'string',
+                'description' => 'rest_schema_gs_pbx_name',
+                'maxLength' => 255,
+                'sanitize' => 'text',
+                'example' => 'Company PBX'
+            ],
+            PbxSettings::PBX_DESCRIPTION => [
+                'type' => 'string',
+                'description' => 'rest_schema_gs_pbx_description',
+                'maxLength' => 500,
+                'sanitize' => 'text',
+                'example' => 'Main office telephone system'
+            ],
+            PbxSettings::PBX_LANGUAGE => [
+                'type' => 'string',
+                'description' => 'rest_schema_gs_pbx_language',
+                'enum' => ['en-en', 'ru-ru', 'de-de', 'da-dk', 'es-es', 'es-es', 'gr-gr', 'fr-ca', 'it-it', 'ja-jp', 'nl-nl', 'pl-pl', 'pt-br', 'sv-sv', 'cs-cs', 'tr-tr'],
+                'sanitize' => 'string',
+                'default' => self::getDefaultValue(PbxSettings::PBX_LANGUAGE),
+                'example' => self::getDefaultValue(PbxSettings::PBX_LANGUAGE)
+            ],
+            PbxSettings::PBX_INTERNAL_EXTENSION_LENGTH => [
+                'type' => 'integer',
+                'description' => 'rest_schema_gs_internal_extension_length',
+                'minimum' => 2,
+                'maximum' => 11,
+                'sanitize' => 'int',
+                'default' => (int)self::getDefaultValue(PbxSettings::PBX_INTERNAL_EXTENSION_LENGTH),
+                'example' => (int)self::getDefaultValue(PbxSettings::PBX_INTERNAL_EXTENSION_LENGTH)
+            ],
+            PbxSettings::PBX_ALLOW_GUEST_CALLS => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_gs_allow_guest_calls',
+                'sanitize' => 'bool',
+                'default' => (bool)self::getDefaultValue(PbxSettings::PBX_ALLOW_GUEST_CALLS),
+                'example' => (bool)self::getDefaultValue(PbxSettings::PBX_ALLOW_GUEST_CALLS)
+            ],
+            PbxSettings::RESTART_EVERY_NIGHT => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_gs_restart_every_night',
+                'sanitize' => 'bool',
+                'default' => (bool)self::getDefaultValue(PbxSettings::RESTART_EVERY_NIGHT),
+                'example' => (bool)self::getDefaultValue(PbxSettings::RESTART_EVERY_NIGHT)
+            ],
+            PbxSettings::SEND_METRICS => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_gs_send_metrics',
+                'sanitize' => 'bool',
+                'default' => (bool)self::getDefaultValue(PbxSettings::SEND_METRICS),
+                'example' => (bool)self::getDefaultValue(PbxSettings::SEND_METRICS)
+            ],
+
+            // ========== WEB SETTINGS ==========
+            PbxSettings::WEB_PORT => [
+                'type' => 'integer',
+                'description' => 'rest_schema_gs_web_port',
+                'minimum' => 1,
+                'maximum' => 65535,
+                'sanitize' => 'int',
+                'default' => (int)self::getDefaultValue(PbxSettings::WEB_PORT),
+                'example' => (int)self::getDefaultValue(PbxSettings::WEB_PORT)
+            ],
+            PbxSettings::WEB_HTTPS_PORT => [
+                'type' => 'integer',
+                'description' => 'rest_schema_gs_web_https_port',
+                'minimum' => 1,
+                'maximum' => 65535,
+                'sanitize' => 'int',
+                'default' => (int)self::getDefaultValue(PbxSettings::WEB_HTTPS_PORT),
+                'example' => (int)self::getDefaultValue(PbxSettings::WEB_HTTPS_PORT)
+            ],
+            PbxSettings::REDIRECT_TO_HTTPS => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_gs_redirect_to_https',
+                'sanitize' => 'bool',
+                'default' => (bool)self::getDefaultValue(PbxSettings::REDIRECT_TO_HTTPS),
+                'example' => (bool)self::getDefaultValue(PbxSettings::REDIRECT_TO_HTTPS)
+            ],
+            PbxSettings::WEB_ADMIN_LOGIN => [
+                'type' => 'string',
+                'description' => 'rest_schema_gs_web_admin_login',
+                'maxLength' => 50,
+                'sanitize' => 'string',
+                'example' => 'admin'
+            ],
+            PbxSettings::WEB_ADMIN_PASSWORD => [
+                'type' => 'string',
+                'format' => 'password',
+                'description' => 'rest_schema_gs_web_admin_password',
+                'sanitize' => 'string',
+                'example' => '********'
+            ],
+            PbxSettings::WEB_HTTPS_PUBLIC_KEY => [
+                'type' => 'string',
+                'description' => 'rest_schema_gs_web_https_public_key',
+                'sanitize' => 'string',
+                'example' => '-----BEGIN CERTIFICATE-----...'
+            ],
+            PbxSettings::WEB_HTTPS_PRIVATE_KEY => [
+                'type' => 'string',
+                'format' => 'password',
+                'description' => 'rest_schema_gs_web_https_private_key',
+                'sanitize' => 'string',
+                'example' => '********'
+            ],
+
+            // ========== SSH SETTINGS ==========
+            PbxSettings::SSH_PORT => [
+                'type' => 'integer',
+                'description' => 'rest_schema_gs_ssh_port',
+                'minimum' => 1,
+                'maximum' => 65535,
+                'sanitize' => 'int',
+                'default' => (int)self::getDefaultValue(PbxSettings::SSH_PORT),
+                'example' => (int)self::getDefaultValue(PbxSettings::SSH_PORT)
+            ],
+            PbxSettings::SSH_LOGIN => [
+                'type' => 'string',
+                'description' => 'rest_schema_gs_ssh_login',
+                'maxLength' => 50,
+                'sanitize' => 'string',
+                'default' => self::getDefaultValue(PbxSettings::SSH_LOGIN),
+                'example' => self::getDefaultValue(PbxSettings::SSH_LOGIN)
+            ],
+            PbxSettings::SSH_PASSWORD => [
+                'type' => 'string',
+                'format' => 'password',
+                'description' => 'rest_schema_gs_ssh_password',
+                'sanitize' => 'string',
+                'example' => '********'
+            ],
+            PbxSettings::SSH_DISABLE_SSH_PASSWORD => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_gs_ssh_disable_password',
+                'sanitize' => 'bool',
+                'default' => (bool)self::getDefaultValue(PbxSettings::SSH_DISABLE_SSH_PASSWORD),
+                'example' => (bool)self::getDefaultValue(PbxSettings::SSH_DISABLE_SSH_PASSWORD)
+            ],
+            PbxSettings::SSH_AUTHORIZED_KEYS => [
+                'type' => 'string',
+                'description' => 'rest_schema_gs_ssh_authorized_keys',
+                'sanitize' => 'string',
+                'example' => 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQAB...'
+            ],
+
+            // ========== SSH READ-ONLY (Auto-generated) ==========
+            PbxSettings::SSH_ID_RSA_PUB => [
+                'type' => 'string',
+                'description' => 'rest_schema_gs_ssh_id_rsa_pub',
+                'readOnly' => true,
+                'example' => 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQAB...'
+            ],
+            PbxSettings::SSH_RSA_KEY => [
+                'type' => 'string',
+                'description' => 'rest_schema_gs_ssh_rsa_key',
+                'readOnly' => true,
+                'example' => 'ssh-rsa-cert-v01@openssh.com...'
+            ],
+            PbxSettings::SSH_DSS_KEY => [
+                'type' => 'string',
+                'description' => 'rest_schema_gs_ssh_dss_key',
+                'readOnly' => true,
+                'example' => 'ssh-dss AAAAB3NzaC1kc3...'
+            ],
+            PbxSettings::SSH_ECDSA_KEY => [
+                'type' => 'string',
+                'description' => 'rest_schema_gs_ssh_ecdsa_key',
+                'readOnly' => true,
+                'example' => 'ecdsa-sha2-nistp256...'
+            ],
+            PbxSettings::SSH_ED25519_KEY => [
+                'type' => 'string',
+                'description' => 'rest_schema_gs_ssh_ed25519_key',
+                'readOnly' => true,
+                'example' => 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5...'
+            ],
+
+            // ========== SIP SETTINGS ==========
+            PbxSettings::SIP_PORT => [
+                'type' => 'integer',
+                'description' => 'rest_schema_gs_sip_port',
+                'minimum' => 1,
+                'maximum' => 65535,
+                'sanitize' => 'int',
+                'default' => (int)self::getDefaultValue(PbxSettings::SIP_PORT),
+                'example' => (int)self::getDefaultValue(PbxSettings::SIP_PORT)
+            ],
+            PbxSettings::TLS_PORT => [
+                'type' => 'integer',
+                'description' => 'rest_schema_gs_tls_port',
+                'minimum' => 1,
+                'maximum' => 65535,
+                'sanitize' => 'int',
+                'default' => (int)self::getDefaultValue(PbxSettings::TLS_PORT),
+                'example' => (int)self::getDefaultValue(PbxSettings::TLS_PORT)
+            ],
+            PbxSettings::RTP_PORT_FROM => [
+                'type' => 'integer',
+                'description' => 'rest_schema_gs_rtp_port_from',
+                'minimum' => 1024,
+                'maximum' => 65535,
+                'sanitize' => 'int',
+                'default' => (int)self::getDefaultValue(PbxSettings::RTP_PORT_FROM),
+                'example' => (int)self::getDefaultValue(PbxSettings::RTP_PORT_FROM)
+            ],
+            PbxSettings::RTP_PORT_TO => [
+                'type' => 'integer',
+                'description' => 'rest_schema_gs_rtp_port_to',
+                'minimum' => 1024,
+                'maximum' => 65535,
+                'sanitize' => 'int',
+                'default' => (int)self::getDefaultValue(PbxSettings::RTP_PORT_TO),
+                'example' => (int)self::getDefaultValue(PbxSettings::RTP_PORT_TO)
+            ],
+            PbxSettings::RTP_STUN_SERVER => [
+                'type' => 'string',
+                'description' => 'rest_schema_gs_rtp_stun_server',
+                'maxLength' => 255,
+                'sanitize' => 'string',
+                'example' => 'stun.l.google.com:19302'
+            ],
+            PbxSettings::SIP_AUTH_PREFIX => [
+                'type' => 'string',
+                'description' => 'rest_schema_gs_sip_auth_prefix',
+                'maxLength' => 50,
+                'sanitize' => 'string',
+                'default' => (string)self::getDefaultValue(PbxSettings::SIP_AUTH_PREFIX),
+                'example' => (string)self::getDefaultValue(PbxSettings::SIP_AUTH_PREFIX),
+            ],
+            PbxSettings::USE_WEB_RTC => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_gs_use_webrtc',
+                'sanitize' => 'bool',
+                'default' => (bool)self::getDefaultValue(PbxSettings::USE_WEB_RTC),
+                'example' => (bool)self::getDefaultValue(PbxSettings::USE_WEB_RTC)
+            ],
+            PbxSettings::SIP_DEFAULT_EXPIRY => [
+                'type' => 'integer',
+                'description' => 'rest_schema_gs_sip_default_expiry',
+                'minimum' => 60,
+                'maximum' => 7200,
+                'sanitize' => 'int',
+                'default' => (int)self::getDefaultValue(PbxSettings::SIP_DEFAULT_EXPIRY),
+                'example' => (int)self::getDefaultValue(PbxSettings::SIP_DEFAULT_EXPIRY)
+            ],
+            PbxSettings::SIP_MIN_EXPIRY => [
+                'type' => 'integer',
+                'description' => 'rest_schema_gs_sip_min_expiry',
+                'minimum' => 60,
+                'maximum' => 7200,
+                'sanitize' => 'int',
+                'default' => (int)self::getDefaultValue(PbxSettings::SIP_MIN_EXPIRY),
+                'example' => (int)self::getDefaultValue(PbxSettings::SIP_MIN_EXPIRY)
+            ],
+            PbxSettings::SIP_MAX_EXPIRY => [
+                'type' => 'integer',
+                'description' => 'rest_schema_gs_sip_max_expiry',
+                'minimum' => 60,
+                'maximum' => 86400,
+                'sanitize' => 'int',
+                'default' => (int)self::getDefaultValue(PbxSettings::SIP_MAX_EXPIRY),
+                'example' => (int)self::getDefaultValue(PbxSettings::SIP_MAX_EXPIRY)
+            ],
+
+            // ========== RECORDING SETTINGS ==========
+            PbxSettings::PBX_RECORD_CALLS => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_gs_record_calls',
+                'sanitize' => 'bool',
+                'default' => (bool)self::getDefaultValue(PbxSettings::PBX_RECORD_CALLS),
+                'example' => (bool)self::getDefaultValue(PbxSettings::PBX_RECORD_CALLS)
+            ],
+            PbxSettings::PBX_RECORD_CALLS_INNER => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_gs_record_calls_inner',
+                'sanitize' => 'bool',
+                'default' => (bool)self::getDefaultValue(PbxSettings::PBX_RECORD_CALLS_INNER),
+                'example' => (bool)self::getDefaultValue(PbxSettings::PBX_RECORD_CALLS_INNER)
+            ],
+            PbxSettings::PBX_SPLIT_AUDIO_THREAD => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_gs_split_audio_thread',
+                'sanitize' => 'bool',
+                'default' => (bool)self::getDefaultValue(PbxSettings::PBX_SPLIT_AUDIO_THREAD),
+                'example' => (bool)self::getDefaultValue(PbxSettings::PBX_SPLIT_AUDIO_THREAD)
+            ],
+            PbxSettings::PBX_RECORD_ANNOUNCEMENT_IN => [
+                'type' => 'string',
+                'description' => 'rest_schema_gs_record_announcement_in',
+                'sanitize' => 'string',
+                'example' => '1'
+            ],
+            PbxSettings::PBX_RECORD_ANNOUNCEMENT_OUT => [
+                'type' => 'string',
+                'description' => 'rest_schema_gs_record_announcement_out',
+                'sanitize' => 'string',
+                'example' => '2'
+            ],
+
+            // ========== AMI/AJAM/ARI SETTINGS ==========
+            PbxSettings::AMI_ENABLED => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_gs_ami_enabled',
+                'sanitize' => 'bool',
+                'default' => (bool)self::getDefaultValue(PbxSettings::AMI_ENABLED),
+                'example' => (bool)self::getDefaultValue(PbxSettings::AMI_ENABLED)
+            ],
+            PbxSettings::AMI_PORT => [
+                'type' => 'integer',
+                'description' => 'rest_schema_gs_ami_port',
+                'minimum' => 1,
+                'maximum' => 65535,
+                'sanitize' => 'int',
+                'default' => (int)self::getDefaultValue(PbxSettings::AMI_PORT),
+                'example' => (int)self::getDefaultValue(PbxSettings::AMI_PORT)
+            ],
+            PbxSettings::AJAM_ENABLED => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_gs_ajam_enabled',
+                'sanitize' => 'bool',
+                'default' => (bool)self::getDefaultValue(PbxSettings::AJAM_ENABLED),
+                'example' => (bool)self::getDefaultValue(PbxSettings::AJAM_ENABLED)
+            ],
+            PbxSettings::AJAM_PORT => [
+                'type' => 'integer',
+                'description' => 'rest_schema_gs_ajam_port',
+                'minimum' => 1,
+                'maximum' => 65535,
+                'sanitize' => 'int',
+                'default' => (int)self::getDefaultValue(PbxSettings::AJAM_PORT),
+                'example' => (int)self::getDefaultValue(PbxSettings::AJAM_PORT)
+            ],
+            PbxSettings::AJAM_PORT_TLS => [
+                'type' => 'integer',
+                'description' => 'rest_schema_gs_ajam_port_tls',
+                'minimum' => 1,
+                'maximum' => 65535,
+                'sanitize' => 'int',
+                'default' => (int)self::getDefaultValue(PbxSettings::AJAM_PORT_TLS),
+                'example' => (int)self::getDefaultValue(PbxSettings::AJAM_PORT_TLS)
+            ],
+            PbxSettings::ARI_ENABLED => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_gs_ari_enabled',
+                'sanitize' => 'bool',
+                'default' => (bool)self::getDefaultValue(PbxSettings::ARI_ENABLED),
+                'example' => (bool)self::getDefaultValue(PbxSettings::ARI_ENABLED)
+            ],
+            PbxSettings::ARI_ALLOWED_ORIGINS => [
+                'type' => 'string',
+                'description' => 'rest_schema_gs_ari_allowed_origins',
+                'sanitize' => 'string',
+                'example' => 'http://localhost:3000,https://example.com'
+            ],
+
+            // ========== IAX SETTINGS ==========
+            PbxSettings::IAX_PORT => [
+                'type' => 'integer',
+                'description' => 'rest_schema_gs_iax_port',
+                'minimum' => 1,
+                'maximum' => 65535,
+                'sanitize' => 'int',
+                'default' => (int)self::getDefaultValue(PbxSettings::IAX_PORT),
+                'example' => (int)self::getDefaultValue(PbxSettings::IAX_PORT)
+            ],
+
+            // ========== FEATURES SETTINGS ==========
+            PbxSettings::PBX_CALL_PARKING_EXT => [
+                'type' => 'string',
+                'description' => 'rest_schema_gs_call_parking_ext',
+                'pattern' => '^[0-9*#]+$',
+                'sanitize' => 'string',
+                'default' => self::getDefaultValue(PbxSettings::PBX_CALL_PARKING_EXT),
+                'example' => self::getDefaultValue(PbxSettings::PBX_CALL_PARKING_EXT)
+            ],
+            PbxSettings::PBX_CALL_PARKING_START_SLOT => [
+                'type' => 'integer',
+                'description' => 'rest_schema_gs_call_parking_start_slot',
+                'minimum' => 1,
+                'maximum' => 9999,
+                'sanitize' => 'int',
+                'default' => (int)self::getDefaultValue(PbxSettings::PBX_CALL_PARKING_START_SLOT),
+                'example' => (int)self::getDefaultValue(PbxSettings::PBX_CALL_PARKING_START_SLOT)
+            ],
+            PbxSettings::PBX_CALL_PARKING_END_SLOT => [
+                'type' => 'integer',
+                'description' => 'rest_schema_gs_call_parking_end_slot',
+                'minimum' => 1,
+                'maximum' => 9999,
+                'sanitize' => 'int',
+                'default' => (int)self::getDefaultValue(PbxSettings::PBX_CALL_PARKING_END_SLOT),
+                'example' => (int)self::getDefaultValue(PbxSettings::PBX_CALL_PARKING_END_SLOT)
+            ],
+            PbxSettings::PBX_FEATURE_ATTENDED_TRANSFER => [
+                'type' => 'string',
+                'description' => 'rest_schema_gs_attended_transfer',
+                'maxLength' => 10,
+                'sanitize' => 'string',
+                'default' => self::getDefaultValue(PbxSettings::PBX_FEATURE_ATTENDED_TRANSFER),
+                'example' => self::getDefaultValue(PbxSettings::PBX_FEATURE_ATTENDED_TRANSFER)
+            ],
+            PbxSettings::PBX_FEATURE_BLIND_TRANSFER => [
+                'type' => 'string',
+                'description' => 'rest_schema_gs_blind_transfer',
+                'maxLength' => 10,
+                'sanitize' => 'string',
+                'default' => self::getDefaultValue(PbxSettings::PBX_FEATURE_BLIND_TRANSFER),
+                'example' => self::getDefaultValue(PbxSettings::PBX_FEATURE_BLIND_TRANSFER)
+            ],
+            PbxSettings::PBX_FEATURE_PICKUP_EXTEN => [
+                'type' => 'string',
+                'description' => 'rest_schema_gs_pickup_exten',
+                'maxLength' => 10,
+                'sanitize' => 'string',
+                'default' => self::getDefaultValue(PbxSettings::PBX_FEATURE_PICKUP_EXTEN),
+                'example' => self::getDefaultValue(PbxSettings::PBX_FEATURE_PICKUP_EXTEN)
+            ],
+            PbxSettings::PBX_FEATURE_ATXFER_NO_ANSWER_TIMEOUT => [
+                'type' => 'string',
+                'description' => 'rest_schema_gs_atxfer_no_answer_timeout',
+                'sanitize' => 'string',
+                'default' => self::getDefaultValue(PbxSettings::PBX_FEATURE_ATXFER_NO_ANSWER_TIMEOUT),
+                'example' => self::getDefaultValue(PbxSettings::PBX_FEATURE_ATXFER_NO_ANSWER_TIMEOUT)
+            ],
+            PbxSettings::PBX_FEATURE_DIGIT_TIMEOUT => [
+                'type' => 'integer',
+                'description' => 'rest_schema_gs_digit_timeout',
+                'minimum' => 1,
+                'maximum' => 60,
+                'sanitize' => 'int',
+                'default' => (int)self::getDefaultValue(PbxSettings::PBX_FEATURE_DIGIT_TIMEOUT),
+                'example' => (int)self::getDefaultValue(PbxSettings::PBX_FEATURE_DIGIT_TIMEOUT)
+            ],
+            PbxSettings::PBX_FEATURE_TRANSFER_DIGIT_TIMEOUT => [
+                'type' => 'integer',
+                'description' => 'rest_schema_gs_transfer_digit_timeout',
+                'minimum' => 1,
+                'maximum' => 60,
+                'sanitize' => 'int',
+                'default' => (int)self::getDefaultValue(PbxSettings::PBX_FEATURE_TRANSFER_DIGIT_TIMEOUT),
+                'example' => (int)self::getDefaultValue(PbxSettings::PBX_FEATURE_TRANSFER_DIGIT_TIMEOUT)
+            ],
+            PbxSettings::PBX_FEATURE_ATXFER_ABORT => [
+                'type' => 'string',
+                'description' => 'rest_schema_gs_atxfer_abort',
+                'sanitize' => 'string',
+                'default' => self::getDefaultValue(PbxSettings::PBX_FEATURE_ATXFER_ABORT),
+                'example' => self::getDefaultValue(PbxSettings::PBX_FEATURE_ATXFER_ABORT)
+            ],
+        ];
+    }
+
+    /**
+     * Get parameter definitions using unified field definitions (Single Source of Truth)
+     *
+     * WHY: Eliminates duplication by using getAllFieldDefinitions() as Single Source of Truth.
+     * Read-only fields are automatically excluded from request section.
      *
      * @return array<string, array<string, mixed>> Parameter definitions
      */
     public static function getParameterDefinitions(): array
     {
+        $allFields = self::getAllFieldDefinitions();
+
+        // ✨ Filter out read-only fields for request section
+        $writableFields = array_filter($allFields, function($field) {
+            return empty($field['readOnly']);
+        });
+
         return [
             'request' => [
                 // Key-value pairs structure for settings
@@ -242,6 +717,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                     'type' => 'object',
                     'description' => 'rest_param_gs_settings',
                     'sanitize' => 'array',
+                    'properties' => $writableFields,  // ✨ Only writable fields
                     'example' => [PbxSettings::PBX_NAME => 'Company PBX']
                 ],
                 // Codecs array
@@ -256,407 +732,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'settings' => [
                     'type' => 'object',
                     'description' => 'rest_schema_gs_settings',
-                    'properties' => [
-                        // General settings
-                        PbxSettings::PBX_NAME => [
-                            'type' => 'string',
-                            'description' => 'rest_schema_gs_pbx_name',
-                            'maxLength' => 255,
-                            'example' => 'Company PBX'
-                        ],
-                        PbxSettings::PBX_DESCRIPTION => [
-                            'type' => 'string',
-                            'description' => 'rest_schema_gs_pbx_description',
-                            'maxLength' => 500,
-                            'example' => 'Main office telephone system'
-                        ],
-
-                        PbxSettings::PBX_LANGUAGE => [
-                            'type' => 'string',
-                            'description' => 'rest_schema_gs_pbx_language',
-                            'enum' => ['en-en', 'ru-ru', 'de-de', 'da-dk', 'es-es', 'es-es', 'gr-gr', 'fr-ca', 'it-it', 'ja-jp', 'nl-nl', 'pl-pl', 'pt-br', 'sv-sv', 'cs-cs', 'tr-tr'],
-                            'default' => self::getDefaultValue(PbxSettings::PBX_LANGUAGE),
-                            'example' => self::getDefaultValue(PbxSettings::PBX_LANGUAGE)
-                        ],
-                        PbxSettings::PBX_INTERNAL_EXTENSION_LENGTH => [
-                            'type' => 'integer',
-                            'description' => 'rest_schema_gs_internal_extension_length',
-                            'minimum' => 2,
-                            'maximum' => 11,
-                            'default' => (int)self::getDefaultValue(PbxSettings::PBX_INTERNAL_EXTENSION_LENGTH),
-                            'example' => (int)self::getDefaultValue(PbxSettings::PBX_INTERNAL_EXTENSION_LENGTH)
-                        ],
-                        PbxSettings::PBX_ALLOW_GUEST_CALLS => [
-                            'type' => 'boolean',
-                            'description' => 'rest_schema_gs_allow_guest_calls',
-                            'default' => (bool)self::getDefaultValue(PbxSettings::PBX_ALLOW_GUEST_CALLS),
-                            'example' => (bool)self::getDefaultValue(PbxSettings::PBX_ALLOW_GUEST_CALLS)
-                        ],
-                        PbxSettings::RESTART_EVERY_NIGHT => [
-                            'type' => 'boolean',
-                            'description' => 'rest_schema_gs_restart_every_night',
-                            'default' => (bool)self::getDefaultValue(PbxSettings::RESTART_EVERY_NIGHT),
-                            'example' => (bool)self::getDefaultValue(PbxSettings::RESTART_EVERY_NIGHT)
-                        ],
-                        PbxSettings::SEND_METRICS => [
-                            'type' => 'boolean',
-                            'description' => 'rest_schema_gs_send_metrics',
-                            'default' => (bool)self::getDefaultValue(PbxSettings::SEND_METRICS),
-                            'example' => (bool)self::getDefaultValue(PbxSettings::SEND_METRICS)
-                        ],
-
-                        // Web settings
-                        PbxSettings::WEB_PORT => [
-                            'type' => 'integer',
-                            'description' => 'rest_schema_gs_web_port',
-                            'minimum' => 1,
-                            'maximum' => 65535,
-                            'default' => (int)self::getDefaultValue(PbxSettings::WEB_PORT),
-                            'example' => (int)self::getDefaultValue(PbxSettings::WEB_PORT)
-                        ],
-                        PbxSettings::WEB_HTTPS_PORT => [
-                            'type' => 'integer',
-                            'description' => 'rest_schema_gs_web_https_port',
-                            'minimum' => 1,
-                            'maximum' => 65535,
-                            'default' => (int)self::getDefaultValue(PbxSettings::WEB_HTTPS_PORT),
-                            'example' => (int)self::getDefaultValue(PbxSettings::WEB_HTTPS_PORT)
-                        ],
-                        PbxSettings::REDIRECT_TO_HTTPS => [
-                            'type' => 'boolean',
-                            'description' => 'rest_schema_gs_redirect_to_https',
-                            'default' => (bool)self::getDefaultValue(PbxSettings::REDIRECT_TO_HTTPS),
-                            'example' => (bool)self::getDefaultValue(PbxSettings::REDIRECT_TO_HTTPS)
-                        ],
-                        PbxSettings::WEB_ADMIN_LOGIN => [
-                            'type' => 'string',
-                            'description' => 'rest_schema_gs_web_admin_login',
-                            'maxLength' => 50,
-                            'example' => 'admin'
-                        ],
-                        PbxSettings::WEB_ADMIN_PASSWORD => [
-                            'type' => 'string',
-                            'format' => 'password',
-                            'description' => 'rest_schema_gs_web_admin_password',
-                            'example' => '********'
-                        ],
-                        PbxSettings::WEB_HTTPS_PUBLIC_KEY => [
-                            'type' => 'string',
-                            'description' => 'rest_schema_gs_web_https_public_key',
-                            'example' => '-----BEGIN CERTIFICATE-----...'
-                        ],
-                        PbxSettings::WEB_HTTPS_PRIVATE_KEY => [
-                            'type' => 'string',
-                            'format' => 'password',
-                            'description' => 'rest_schema_gs_web_https_private_key',
-                            'example' => '********'
-                        ],
-
-                        // SSH settings
-                        PbxSettings::SSH_PORT => [
-                            'type' => 'integer',
-                            'description' => 'rest_schema_gs_ssh_port',
-                            'minimum' => 1,
-                            'maximum' => 65535,
-                            'default' => (int)self::getDefaultValue(PbxSettings::SSH_PORT),
-                            'example' => (int)self::getDefaultValue(PbxSettings::SSH_PORT)
-                        ],
-                        PbxSettings::SSH_LOGIN => [
-                            'type' => 'string',
-                            'description' => 'rest_schema_gs_ssh_login',
-                            'maxLength' => 50,
-                            'default' => self::getDefaultValue(PbxSettings::SSH_LOGIN),
-                            'example' => self::getDefaultValue(PbxSettings::SSH_LOGIN)
-                        ],
-                        PbxSettings::SSH_PASSWORD => [
-                            'type' => 'string',
-                            'format' => 'password',
-                            'description' => 'rest_schema_gs_ssh_password',
-                            'example' => '********'
-                        ],
-                        PbxSettings::SSH_DISABLE_SSH_PASSWORD => [
-                            'type' => 'boolean',
-                            'description' => 'rest_schema_gs_ssh_disable_password',
-                            'default' => (bool)self::getDefaultValue(PbxSettings::SSH_DISABLE_SSH_PASSWORD),
-                            'example' => (bool)self::getDefaultValue(PbxSettings::SSH_DISABLE_SSH_PASSWORD)
-                        ],
-                        PbxSettings::SSH_AUTHORIZED_KEYS => [
-                            'type' => 'string',
-                            'description' => 'rest_schema_gs_ssh_authorized_keys',
-                            'example' => 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQAB...'
-                        ],
-                        PbxSettings::SSH_ID_RSA_PUB => [
-                            'type' => 'string',
-                            'description' => 'rest_schema_gs_ssh_id_rsa_pub',
-                            'readOnly' => true, // Auto-generated SSH public key
-                            'example' => 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQAB...'
-                        ],
-                        PbxSettings::SSH_RSA_KEY => [
-                            'type' => 'string',
-                            'description' => 'rest_schema_gs_ssh_rsa_key',
-                            'readOnly' => true, // Auto-generated SSH host key
-                            'example' => 'ssh-rsa-cert-v01@openssh.com...'
-                        ],
-                        PbxSettings::SSH_DSS_KEY => [
-                            'type' => 'string',
-                            'description' => 'rest_schema_gs_ssh_dss_key',
-                            'readOnly' => true, // Auto-generated SSH host key
-                            'example' => 'ssh-dss AAAAB3NzaC1kc3...'
-                        ],
-                        PbxSettings::SSH_ECDSA_KEY => [
-                            'type' => 'string',
-                            'description' => 'rest_schema_gs_ssh_ecdsa_key',
-                            'readOnly' => true, // Auto-generated SSH host key
-                            'example' => 'ecdsa-sha2-nistp256...'
-                        ],
-                        PbxSettings::SSH_ED25519_KEY => [
-                            'type' => 'string',
-                            'description' => 'rest_schema_gs_ssh_ed25519_key',
-                            'readOnly' => true, // Auto-generated SSH host key
-                            'example' => 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5...'
-                        ],
-
-                        // SIP settings
-                        PbxSettings::SIP_PORT => [
-                            'type' => 'integer',
-                            'description' => 'rest_schema_gs_sip_port',
-                            'minimum' => 1,
-                            'maximum' => 65535,
-                            'default' => (int)self::getDefaultValue(PbxSettings::SIP_PORT),
-                            'example' => (int)self::getDefaultValue(PbxSettings::SIP_PORT)
-                        ],
-                        PbxSettings::TLS_PORT => [
-                            'type' => 'integer',
-                            'description' => 'rest_schema_gs_tls_port',
-                            'minimum' => 1,
-                            'maximum' => 65535,
-                            'default' => (int)self::getDefaultValue(PbxSettings::TLS_PORT),
-                            'example' => (int)self::getDefaultValue(PbxSettings::TLS_PORT)
-                        ],
-                        PbxSettings::RTP_PORT_FROM => [
-                            'type' => 'integer',
-                            'description' => 'rest_schema_gs_rtp_port_from',
-                            'minimum' => 1024,
-                            'maximum' => 65535,
-                            'default' => (int)self::getDefaultValue(PbxSettings::RTP_PORT_FROM),
-                            'example' => (int)self::getDefaultValue(PbxSettings::RTP_PORT_FROM)
-                        ],
-                        PbxSettings::RTP_PORT_TO => [
-                            'type' => 'integer',
-                            'description' => 'rest_schema_gs_rtp_port_to',
-                            'minimum' => 1024,
-                            'maximum' => 65535,
-                            'default' => (int)self::getDefaultValue(PbxSettings::RTP_PORT_TO),
-                            'example' => (int)self::getDefaultValue(PbxSettings::RTP_PORT_TO)
-                        ],
-                        PbxSettings::RTP_STUN_SERVER => [
-                            'type' => 'string',
-                            'description' => 'rest_schema_gs_rtp_stun_server',
-                            'maxLength' => 255,
-                            'example' => 'stun.l.google.com:19302'
-                        ],
-                        PbxSettings::SIP_AUTH_PREFIX => [
-                            'type' => 'string',
-                            'description' => 'rest_schema_gs_sip_auth_prefix',
-                            'maxLength' => 50,
-                            'default' => (string)self::getDefaultValue(PbxSettings::SIP_AUTH_PREFIX),
-                            'example' => (string)self::getDefaultValue(PbxSettings::SIP_AUTH_PREFIX),
-                        ],
-                        PbxSettings::USE_WEB_RTC => [
-                            'type' => 'boolean',
-                            'description' => 'rest_schema_gs_use_webrtc',
-                            'default' => (bool)self::getDefaultValue(PbxSettings::USE_WEB_RTC),
-                            'example' => (bool)self::getDefaultValue(PbxSettings::USE_WEB_RTC)
-                        ],
-                        PbxSettings::SIP_DEFAULT_EXPIRY => [
-                            'type' => 'integer',
-                            'description' => 'rest_schema_gs_sip_default_expiry',
-                            'minimum' => 60,
-                            'maximum' => 7200,
-                            'default' => (int)self::getDefaultValue(PbxSettings::SIP_DEFAULT_EXPIRY),
-                            'example' => (int)self::getDefaultValue(PbxSettings::SIP_DEFAULT_EXPIRY)
-                        ],
-                        PbxSettings::SIP_MIN_EXPIRY => [
-                            'type' => 'integer',
-                            'description' => 'rest_schema_gs_sip_min_expiry',
-                            'minimum' => 60,
-                            'maximum' => 7200,
-                            'default' => (int)self::getDefaultValue(PbxSettings::SIP_MIN_EXPIRY),
-                            'example' => (int)self::getDefaultValue(PbxSettings::SIP_MIN_EXPIRY)
-                        ],
-                        PbxSettings::SIP_MAX_EXPIRY => [
-                            'type' => 'integer',
-                            'description' => 'rest_schema_gs_sip_max_expiry',
-                            'minimum' => 60,
-                            'maximum' => 86400,
-                            'default' => (int)self::getDefaultValue(PbxSettings::SIP_MAX_EXPIRY),
-                            'example' => (int)self::getDefaultValue(PbxSettings::SIP_MAX_EXPIRY)
-                        ],
-
-                        // Recording settings
-                        PbxSettings::PBX_RECORD_CALLS => [
-                            'type' => 'boolean',
-                            'description' => 'rest_schema_gs_record_calls',
-                            'enum' => ['all', 'internal', 'external', 'none'],
-                            'default' => (bool)self::getDefaultValue(PbxSettings::PBX_RECORD_CALLS),
-                            'example' => (bool)self::getDefaultValue(PbxSettings::PBX_RECORD_CALLS)
-                        ],
-                        PbxSettings::PBX_RECORD_CALLS_INNER => [
-                            'type' => 'boolean',
-                            'description' => 'rest_schema_gs_record_calls_inner',
-                            'default' => (bool)self::getDefaultValue(PbxSettings::PBX_RECORD_CALLS_INNER),
-                            'example' => (bool)self::getDefaultValue(PbxSettings::PBX_RECORD_CALLS_INNER)
-                        ],
-                        PbxSettings::PBX_SPLIT_AUDIO_THREAD => [
-                            'type' => 'boolean',
-                            'description' => 'rest_schema_gs_split_audio_thread',
-                            'default' => (bool)self::getDefaultValue(PbxSettings::PBX_SPLIT_AUDIO_THREAD),
-                            'example' => (bool)self::getDefaultValue(PbxSettings::PBX_SPLIT_AUDIO_THREAD)
-                        ],
-                        PbxSettings::PBX_RECORD_ANNOUNCEMENT_IN => [
-                            'type' => 'string',
-                            'description' => 'rest_schema_gs_record_announcement_in',
-                            'example' => '1'
-                        ],
-                        PbxSettings::PBX_RECORD_ANNOUNCEMENT_OUT => [
-                            'type' => 'string',
-                            'description' => 'rest_schema_gs_record_announcement_out',
-                            'example' => '2'
-                        ],
-
-                        // AMI/AJAM/ARI settings
-                        PbxSettings::AMI_ENABLED => [
-                            'type' => 'boolean',
-                            'description' => 'rest_schema_gs_ami_enabled',
-                            'default' => (bool)self::getDefaultValue(PbxSettings::AMI_ENABLED),
-                            'example' => (bool)self::getDefaultValue(PbxSettings::AMI_ENABLED)
-                        ],
-                        PbxSettings::AMI_PORT => [
-                            'type' => 'integer',
-                            'description' => 'rest_schema_gs_ami_port',
-                            'minimum' => 1,
-                            'maximum' => 65535,
-                            'default' => (int)self::getDefaultValue(PbxSettings::AMI_PORT),
-                            'example' => (int)self::getDefaultValue(PbxSettings::AMI_PORT)
-                        ],
-                        PbxSettings::AJAM_ENABLED => [
-                            'type' => 'boolean',
-                            'description' => 'rest_schema_gs_ajam_enabled',
-                            'default' => (bool)self::getDefaultValue(PbxSettings::AJAM_ENABLED),
-                            'example' => (bool)self::getDefaultValue(PbxSettings::AJAM_ENABLED)
-                        ],
-                        PbxSettings::AJAM_PORT => [
-                            'type' => 'integer',
-                            'description' => 'rest_schema_gs_ajam_port',
-                            'minimum' => 1,
-                            'maximum' => 65535,
-                            'default' => (int)self::getDefaultValue(PbxSettings::AJAM_PORT),
-                            'example' => (int)self::getDefaultValue(PbxSettings::AJAM_PORT)
-                        ],
-                        PbxSettings::AJAM_PORT_TLS => [
-                            'type' => 'integer',
-                            'description' => 'rest_schema_gs_ajam_port_tls',
-                            'minimum' => 1,
-                            'maximum' => 65535,
-                            'default' => (int)self::getDefaultValue(PbxSettings::AJAM_PORT_TLS),
-                            'example' => (int)self::getDefaultValue(PbxSettings::AJAM_PORT_TLS)
-                        ],
-                        PbxSettings::ARI_ENABLED => [
-                            'type' => 'boolean',
-                            'description' => 'rest_schema_gs_ari_enabled',
-                            'default' => (bool)self::getDefaultValue(PbxSettings::ARI_ENABLED),
-                            'example' => (bool)self::getDefaultValue(PbxSettings::ARI_ENABLED)
-                        ],
-                        PbxSettings::ARI_ALLOWED_ORIGINS => [
-                            'type' => 'string',
-                            'description' => 'rest_schema_gs_ari_allowed_origins',
-                            'example' => 'http://localhost:3000,https://example.com'
-                        ],
-
-                        // IAX settings
-                        PbxSettings::IAX_PORT => [
-                            'type' => 'integer',
-                            'description' => 'rest_schema_gs_iax_port',
-                            'minimum' => 1,
-                            'maximum' => 65535,
-                            'default' => (int)self::getDefaultValue(PbxSettings::IAX_PORT),
-                            'example' => (int)self::getDefaultValue(PbxSettings::IAX_PORT)
-                        ],
-
-                        // Features settings
-                        PbxSettings::PBX_CALL_PARKING_EXT => [
-                            'type' => 'string',
-                            'description' => 'rest_schema_gs_call_parking_ext',
-                            'pattern' => '^[0-9*#]+$',
-                            'default' => self::getDefaultValue(PbxSettings::PBX_CALL_PARKING_EXT),
-                            'example' => self::getDefaultValue(PbxSettings::PBX_CALL_PARKING_EXT)
-                        ],
-                        PbxSettings::PBX_CALL_PARKING_START_SLOT => [
-                            'type' => 'integer',
-                            'description' => 'rest_schema_gs_call_parking_start_slot',
-                            'minimum' => 1,
-                            'maximum' => 9999,
-                            'default' => (int)self::getDefaultValue(PbxSettings::PBX_CALL_PARKING_START_SLOT),
-                            'example' => (int)self::getDefaultValue(PbxSettings::PBX_CALL_PARKING_START_SLOT)
-                        ],
-                        PbxSettings::PBX_CALL_PARKING_END_SLOT => [
-                            'type' => 'integer',
-                            'description' => 'rest_schema_gs_call_parking_end_slot',
-                            'minimum' => 1,
-                            'maximum' => 9999,
-                            'default' => (int)self::getDefaultValue(PbxSettings::PBX_CALL_PARKING_END_SLOT),
-                            'example' => (int)self::getDefaultValue(PbxSettings::PBX_CALL_PARKING_END_SLOT)
-                        ],
-                        PbxSettings::PBX_FEATURE_ATTENDED_TRANSFER => [
-                            'type' => 'string',
-                            'description' => 'rest_schema_gs_attended_transfer',
-                            'maxLength' => 10,
-                            'default' => self::getDefaultValue(PbxSettings::PBX_FEATURE_ATTENDED_TRANSFER),
-                            'example' => self::getDefaultValue(PbxSettings::PBX_FEATURE_ATTENDED_TRANSFER)
-                        ],
-                        PbxSettings::PBX_FEATURE_BLIND_TRANSFER => [
-                            'type' => 'string',
-                            'description' => 'rest_schema_gs_blind_transfer',
-                            'maxLength' => 10,
-                            'default' => self::getDefaultValue(PbxSettings::PBX_FEATURE_BLIND_TRANSFER),
-                            'example' => self::getDefaultValue(PbxSettings::PBX_FEATURE_BLIND_TRANSFER)
-                        ],
-                        PbxSettings::PBX_FEATURE_PICKUP_EXTEN => [
-                            'type' => 'string',
-                            'description' => 'rest_schema_gs_pickup_exten',
-                            'maxLength' => 10,
-                            'default' => self::getDefaultValue(PbxSettings::PBX_FEATURE_PICKUP_EXTEN),
-                            'example' => self::getDefaultValue(PbxSettings::PBX_FEATURE_PICKUP_EXTEN)
-                        ],
-                        PbxSettings::PBX_FEATURE_ATXFER_NO_ANSWER_TIMEOUT => [
-                            'type' => 'string',
-                            'description' => 'rest_schema_gs_atxfer_no_answer_timeout',
-                            'default' => self::getDefaultValue(PbxSettings::PBX_FEATURE_ATXFER_NO_ANSWER_TIMEOUT),
-                            'example' => self::getDefaultValue(PbxSettings::PBX_FEATURE_ATXFER_NO_ANSWER_TIMEOUT)
-                        ],
-                        PbxSettings::PBX_FEATURE_DIGIT_TIMEOUT => [
-                            'type' => 'integer',
-                            'description' => 'rest_schema_gs_digit_timeout',
-                            'minimum' => 1,
-                            'maximum' => 60,
-                            'default' => (int)self::getDefaultValue(PbxSettings::PBX_FEATURE_DIGIT_TIMEOUT),
-                            'example' => (int)self::getDefaultValue(PbxSettings::PBX_FEATURE_DIGIT_TIMEOUT)
-                        ],
-                        PbxSettings::PBX_FEATURE_TRANSFER_DIGIT_TIMEOUT => [
-                            'type' => 'integer',
-                            'description' => 'rest_schema_gs_transfer_digit_timeout',
-                            'minimum' => 1,
-                            'maximum' => 60,
-                            'default' => (int)self::getDefaultValue(PbxSettings::PBX_FEATURE_TRANSFER_DIGIT_TIMEOUT),
-                            'example' => (int)self::getDefaultValue(PbxSettings::PBX_FEATURE_TRANSFER_DIGIT_TIMEOUT)
-                        ],
-                        PbxSettings::PBX_FEATURE_ATXFER_ABORT => [
-                            'type' => 'string',
-                            'description' => 'rest_schema_gs_atxfer_abort',
-                            'default' => self::getDefaultValue(PbxSettings::PBX_FEATURE_ATXFER_ABORT),
-                            'example' => self::getDefaultValue(PbxSettings::PBX_FEATURE_ATXFER_ABORT)
-                        ],
-                    ]
+                    'properties' => $allFields  // ✨ All fields (including readOnly)
                 ],
                 'codecs' => [
                     'type' => 'array',
