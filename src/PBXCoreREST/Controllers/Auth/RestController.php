@@ -27,11 +27,10 @@ use MikoPBX\PBXCoreREST\Lib\Auth\JWTHelper;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
-    ApiParameter,
+    ApiParameterRef,
     ApiResponse,
     ApiDataSchema,
     SecurityType,
-    ParameterLocation,
     HttpMapping,
     ResourceSecurity
 };
@@ -119,12 +118,14 @@ class RestController extends BaseRestController
         // Parent already set the response content, we just need to add cookies
         $responseContent = $this->response->getContent();
 
-        SystemMessages::sysLogMsg(__CLASS__, "Auth cookie handling - Response content length: " . (is_string($responseContent) ? strlen($responseContent) : 0), LOG_DEBUG);
-
-        if (!is_string($responseContent) || empty($responseContent)) {
+        // PHPStan: According to Phalcon\Http\Response::getContent() PHPDoc, content is always string
+        // But runtime type check is safer for robustness
+        if (!is_string($responseContent) || $responseContent === '') {
             SystemMessages::sysLogMsg(__CLASS__, "Auth cookie handling - No response content", LOG_DEBUG);
             return;
         }
+
+        SystemMessages::sysLogMsg(__CLASS__, "Auth cookie handling - Response content length: " . strlen($responseContent), LOG_DEBUG);
 
         $responseData = json_decode($responseContent, true);
         if (!is_array($responseData)) {
@@ -293,45 +294,10 @@ class RestController extends BaseRestController
         description: 'rest_auth_LoginDesc',
         operationId: 'authLogin'
     )]
-    #[ApiParameter(
-        name: 'login',
-        type: 'string',
-        description: 'rest_param_auth_login',
-        in: ParameterLocation::QUERY,
-        required: false,
-        minLength: 1,
-        maxLength: 255,
-        example: 'admin'
-    )]
-    #[ApiParameter(
-        name: 'password',
-        type: 'string',
-        description: 'rest_param_auth_password',
-        in: ParameterLocation::QUERY,
-        required: false,
-        minLength: 1,
-        maxLength: 255,
-        example: 'MySecurePassword123!'
-    )]
-    #[ApiParameter(
-        name: 'sessionToken',
-        type: 'string',
-        description: 'rest_param_auth_sessionToken',
-        in: ParameterLocation::QUERY,
-        required: false,
-        minLength: 64,
-        maxLength: 64,
-        example: 'a1b2c3d4e5f6...'
-    )]
-    #[ApiParameter(
-        name: 'rememberMe',
-        type: 'boolean',
-        description: 'rest_param_auth_rememberMe',
-        in: ParameterLocation::QUERY,
-        required: false,
-        default: false,
-        example: false
-    )]
+    #[ApiParameterRef('login')]
+    #[ApiParameterRef('password')]
+    #[ApiParameterRef('sessionToken')]
+    #[ApiParameterRef('rememberMe')]
     #[ApiResponse(200, 'rest_response_200_auth_login')]
     #[ApiResponse(401, 'rest_response_401_invalid_credentials', 'PBXApiResult')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
@@ -428,14 +394,7 @@ class RestController extends BaseRestController
         description: 'Internal endpoint for JWT token validation by Nginx/Lua. Only accessible from localhost.',
         operationId: 'authValidateToken'
     )]
-    #[ApiParameter(
-        name: 'token',
-        type: 'string',
-        description: 'JWT token to validate',
-        in: ParameterLocation::QUERY,
-        required: true,
-        minLength: 1
-    )]
+    #[ApiParameterRef('token', required: true)]
     #[ApiResponse(200, 'Token is valid')]
     #[ApiResponse(403, 'Token is invalid or endpoint accessed from non-localhost')]
     public function validateToken(): void

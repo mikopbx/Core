@@ -25,6 +25,18 @@ return [
     'rest_param_auth_password' => 'Пароль пользователя',
     'rest_param_auth_sessionToken' => 'One-time токен сессии от passkey authentication (64 hex символа)',
     'rest_param_auth_rememberMe' => 'Запомнить меня (продлить срок действия refresh token)',
+    'rest_param_auth_refreshToken' => 'Refresh token из httpOnly cookie для обновления access token',
+    'rest_param_auth_clientIp' => 'IP-адрес клиента для отслеживания устройств',
+    'rest_param_auth_userAgent' => 'User-Agent браузера/приложения для отслеживания устройств',
+
+    /**
+     * Response schema descriptions
+     */
+    'rest_schema_auth_accessToken' => 'JWT токен доступа для авторизации запросов (срок действия 15 минут)',
+    'rest_schema_auth_tokenType' => 'Тип токена для заголовка Authorization (всегда "Bearer")',
+    'rest_schema_auth_expiresIn' => 'Время до истечения access token в секундах',
+    'rest_schema_auth_login' => 'Логин авторизованного пользователя',
+    'rest_schema_auth_message' => 'Сообщение о результате операции',
 
     /**
      * Responses

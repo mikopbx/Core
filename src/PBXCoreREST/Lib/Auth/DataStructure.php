@@ -207,6 +207,13 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                     'maxLength' => 500,
                     'sanitize' => 'string',
                     'example' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+                ],
+                'token' => [
+                    'type' => 'string',
+                    'description' => 'JWT token to validate',
+                    'minLength' => 1,
+                    'sanitize' => 'string',
+                    'example' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
                 ]
             ],
             'response' => [
