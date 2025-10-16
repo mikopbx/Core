@@ -139,88 +139,157 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
 
     /**
+     * Get all field definitions with complete metadata
+     *
+     * Single Source of Truth for ALL field definitions.
+     * Each field includes type, validation, sanitization, and examples.
+     *
+     * @return array<string, array<string, mixed>> Complete field definitions
+     */
+    private static function getAllFieldDefinitions(): array
+    {
+        return [
+            // Request parameters (writable fields)
+            'id' => [
+                'type' => 'string',
+                'description' => 'rest_schema_file_path',
+                'maxLength' => 500,
+                'sanitize' => 'string',
+                'example' => 'etc/asterisk/asterisk.conf'
+            ],
+            'filename' => [
+                'type' => 'string',
+                'description' => 'rest_schema_file_filename',
+                'maxLength' => 255,
+                'sanitize' => 'string',
+                'example' => 'firmware.img'
+            ],
+            'url' => [
+                'type' => 'string',
+                'description' => 'rest_schema_file_url',
+                'maxLength' => 1000,
+                'sanitize' => 'string',
+                'example' => 'https://example.com/firmware.img'
+            ],
+            'md5' => [
+                'type' => 'string',
+                'description' => 'rest_schema_file_firmware_md5',
+                'maxLength' => 32,
+                'sanitize' => 'string',
+                'example' => 'abc123def456'
+            ],
+            'resumableIdentifier' => [
+                'type' => 'string',
+                'description' => 'rest_schema_file_resumable_id',
+                'maxLength' => 255,
+                'sanitize' => 'string',
+                'example' => '12345'
+            ],
+            'resumableChunkNumber' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_file_chunk_number',
+                'minimum' => 1,
+                'sanitize' => 'int',
+                'example' => 1
+            ],
+            'resumableTotalChunks' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_file_total_chunks',
+                'minimum' => 1,
+                'sanitize' => 'int',
+                'example' => 10
+            ],
+            'resumableFilename' => [
+                'type' => 'string',
+                'description' => 'rest_schema_file_resumable_name',
+                'maxLength' => 255,
+                'sanitize' => 'string',
+                'example' => 'firmware.img'
+            ],
+            // Response-only fields (readOnly)
+            'd_status' => [
+                'type' => 'string',
+                'description' => 'rest_schema_file_status',
+                'enum' => [
+                    FilesConstants::STATUS_NOT_FOUND,
+                    FilesConstants::UPLOAD_IN_PROGRESS,
+                    FilesConstants::UPLOAD_COMPLETE,
+                    FilesConstants::UPLOAD_FAILED
+                ],
+                'readOnly' => true,
+                'example' => FilesConstants::UPLOAD_COMPLETE
+            ],
+            'd_status_progress' => [
+                'type' => 'string',
+                'description' => 'rest_schema_file_progress',
+                'pattern' => '^[0-9]{1,3}$',
+                'readOnly' => true,
+                'example' => '100'
+            ],
+            'size' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_file_size',
+                'minimum' => 0,
+                'readOnly' => true,
+                'example' => 1048576
+            ],
+            'channelId' => [
+                'type' => 'string',
+                'description' => 'rest_schema_file_channel_id',
+                'readOnly' => true,
+                'example' => 'file-upload-12345'
+            ],
+            'eventBusEnabled' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_file_event_bus',
+                'readOnly' => true,
+                'example' => true
+            ]
+        ];
+    }
+
+    /**
      * Get parameter definitions (Single Source of Truth)
      *
      * WHY: Centralizes file operation parameter definitions.
      * Files is a filesystem-based resource without database models.
      *
+     * Uses getAllFieldDefinitions() to eliminate duplication between request and response.
+     *
      * @return array<string, array<string, mixed>> Parameter definitions
      */
     public static function getParameterDefinitions(): array
     {
+        $allFields = self::getAllFieldDefinitions();
+
+        // Filter writable fields (exclude readOnly) for request
+        $writableFields = array_filter($allFields, fn($f) => empty($f['readOnly']));
+
+        // Add request-specific metadata
+        $requestFields = [];
+        foreach ($writableFields as $field => $definition) {
+            $requestFields[$field] = $definition;
+            // Transform description key: rest_schema_* → rest_param_*
+            $requestFields[$field]['description'] = str_replace('rest_schema_', 'rest_param_', $requestFields[$field]['description']);
+            // Add 'in' location for request parameters
+            $requestFields[$field]['in'] = ($field === 'id') ? 'path' : 'query';
+            // Mark id as required
+            if ($field === 'id') {
+                $requestFields[$field]['required'] = true;
+            }
+        }
+
         return [
-            'request' => [
-                'id' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_file_path',
-                    'maxLength' => 500,
-                    'sanitize' => 'string',
-                    'required' => true,
-                    'example' => 'etc/asterisk/asterisk.conf'
-                ],
-                'filename' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_file_filename',
-                    'maxLength' => 255,
-                    'sanitize' => 'string',
-                    'example' => 'firmware.img'
-                ],
-                'url' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_file_url',
-                    'maxLength' => 1000,
-                    'sanitize' => 'string',
-                    'example' => 'https://example.com/firmware.img'
-                ],
-                'resumeUpload' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_file_resume_upload',
-                    'maxLength' => 100,
-                    'sanitize' => 'string',
-                    'example' => 'file-upload-12345'
-                ]
-            ],
+            'request' => $requestFields,
             'response' => [
-                // File operation status fields
-                'd_status' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_file_status',
-                    'enum' => [
-                        FilesConstants::STATUS_NOT_FOUND,
-                        FilesConstants::UPLOAD_IN_PROGRESS,
-                        FilesConstants::UPLOAD_COMPLETE,
-                        FilesConstants::UPLOAD_FAILED
-                    ],
-                    'example' => FilesConstants::UPLOAD_COMPLETE
-                ],
-                'd_status_progress' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_file_progress',
-                    'pattern' => '^[0-9]{1,3}$',
-                    'example' => '100'
-                ],
-                'filename' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_file_filename',
-                    'maxLength' => 255,
-                    'example' => 'firmware.img'
-                ],
-                'size' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_file_size',
-                    'minimum' => 0,
-                    'example' => 1048576
-                ],
-                'channelId' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_file_channel_id',
-                    'example' => 'file-upload-12345'
-                ],
-                'eventBusEnabled' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_schema_file_event_bus',
-                    'example' => true
-                ]
+                // Note: response fields include both writable and readOnly fields
+                // but we only expose specific fields in actual responses
+                'd_status' => $allFields['d_status'],
+                'd_status_progress' => $allFields['d_status_progress'],
+                'filename' => $allFields['filename'],
+                'size' => $allFields['size'],
+                'channelId' => $allFields['channelId'],
+                'eventBusEnabled' => $allFields['eventBusEnabled']
             ]
         ];
     }

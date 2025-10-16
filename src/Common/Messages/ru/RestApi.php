@@ -972,6 +972,24 @@ return [
     'rest_param_auth_password' => 'Пароль пользователя',
     'rest_param_auth_sessionToken' => 'Токен сессии WebAuthn (passkey) для аутентификации без пароля',
     'rest_param_auth_rememberMe' => 'Запомнить устройство (расширенный срок действия refresh token)',
+    'rest_param_auth_refreshToken' => 'Токен обновления для получения нового токена доступа',
+    'rest_param_auth_clientIp' => 'IP адрес клиента',
+    'rest_param_auth_userAgent' => 'User-Agent браузера клиента',
+    'rest_param_auth_token' => 'JWT токен для валидации',
+
+    // Authentication schema field descriptions
+    'rest_schema_auth_login_param' => 'Логин пользователя для аутентификации',
+    'rest_schema_auth_password' => 'Пароль пользователя',
+    'rest_schema_auth_sessionToken' => 'Токен сессии WebAuthn (passkey) для аутентификации без пароля',
+    'rest_schema_auth_rememberMe' => 'Запомнить устройство (расширенный срок действия refresh token)',
+    'rest_schema_auth_refreshToken' => 'Токен обновления для получения нового токена доступа',
+    'rest_schema_auth_clientIp' => 'IP адрес клиента',
+    'rest_schema_auth_userAgent' => 'User-Agent браузера клиента',
+    'rest_schema_auth_token' => 'JWT токен для валидации',
+    'rest_schema_auth_accessToken' => 'JWT токен доступа',
+    'rest_schema_auth_tokenType' => 'Тип токена (Bearer)',
+    'rest_schema_auth_expiresIn' => 'Время жизни токена доступа в секундах',
+    'rest_schema_auth_message' => 'Сообщение о результате операции',
 
     // System Advice specific parameters
     'rest_param_advice_category' => 'Категория уведомления (безопасность, конфигурация, производительность)',
@@ -1054,6 +1072,20 @@ return [
     'rest_schema_pk_created_at' => 'Дата и время регистрации passkey',
     'rest_schema_pk_last_used_at' => 'Дата и время последнего использования passkey',
     'rest_schema_pk_user_agent' => 'User-Agent браузера при регистрации passkey',
+    'rest_schema_pk_credential' => 'WebAuthn credential объект',
+    'rest_schema_pk_public_key' => 'Публичный ключ WebAuthn credential (Base64)',
+    'rest_schema_pk_login' => 'Логин пользователя для проверки passkeys',
+
+    // Passwords schema field descriptions
+    'rest_schema_pwd_length' => 'Длина генерируемого пароля (от 8 до 128 символов)',
+    'rest_schema_pwd_includeSpecial' => 'Включить специальные символы в пароль',
+    'rest_schema_pwd_includeNumbers' => 'Включить цифры в пароль',
+    'rest_schema_pwd_includeUppercase' => 'Включить заглавные буквы в пароль',
+    'rest_schema_pwd_includeLowercase' => 'Включить строчные буквы в пароль',
+    'rest_schema_pwd_password' => 'Пароль для проверки надёжности',
+    'rest_schema_pwd_field' => 'Контекст использования пароля (WebAdminPassword, SSHPassword, AMIPassword, SIPPassword)',
+    'rest_schema_pwd_passwords' => 'Массив паролей с контекстами для пакетной проверки',
+    'rest_schema_pwd_passwordsList' => 'Массив паролей для проверки по словарю',
 
     // CDR schema field descriptions
     'rest_schema_cdr_detail' => 'Детальная информация о CDR записи',
@@ -1214,8 +1246,12 @@ return [
     // AsteriskManagers schema fields
     'rest_schema_am_id' => 'Уникальный идентификатор AMI пользователя',
     'rest_schema_am_username' => 'Имя пользователя AMI',
+    'rest_schema_am_secret' => 'Пароль для аутентификации AMI',
     'rest_schema_am_description' => 'Описание пользователя AMI',
     'rest_schema_am_networkfilterid' => 'ID сетевого фильтра',
+    'rest_schema_am_permissions' => 'Объект с правами доступа (read/write для каждой категории)',
+    'rest_schema_am_read' => 'Разрешения на чтение (формируется из permissions)',
+    'rest_schema_am_write' => 'Разрешения на запись (формируется из permissions)',
     'rest_schema_am_networkfilter_represent' => 'HTML представление сетевого фильтра',
     'rest_schema_am_is_system' => 'Признак системной учетной записи (нельзя удалить)',
     'rest_schema_am_read_permissions_summary' => 'Краткое описание разрешений на чтение',
@@ -1252,8 +1288,21 @@ return [
     // Dialplan Applications specific parameters
     'rest_param_da_name' => 'Название dialplan приложения',
     'rest_param_da_extension' => 'Добавочный номер для вызова приложения (2-8 символов)',
-    'rest_param_da_type' => 'Тип приложения (echo, playback, none)',
+    'rest_param_da_type' => 'Тип приложения (php, plaintext, python3, lua, ael, none)',
     'rest_param_da_description' => 'Описание dialplan приложения',
+    'rest_param_da_hint' => 'BLF hint для отображения статуса линии на телефоне',
+    'rest_param_da_applicationlogic' => 'Код или логика приложения (в зависимости от типа: PHP, Python, Lua и т.д.)',
+
+    // Dialplan Applications schema fields
+    'rest_schema_da_id' => 'Уникальный идентификатор dialplan приложения',
+    'rest_schema_da_name' => 'Название dialplan приложения',
+    'rest_schema_da_extension' => 'Добавочный номер для вызова приложения',
+    'rest_schema_da_type' => 'Тип приложения',
+    'rest_schema_da_description' => 'Описание dialplan приложения',
+    'rest_schema_da_hint' => 'BLF hint для отображения статуса',
+    'rest_schema_da_applicationlogic' => 'Код приложения',
+    'rest_schema_da_represent' => 'HTML представление для UI компонентов',
+    'rest_schema_da_search_index' => 'Индекс для полнотекстового поиска',
 
     // Conference Rooms specific parameters
     'rest_param_cr_name' => 'Название конференц-комнаты',
@@ -1324,10 +1373,26 @@ return [
 
     // ApiKeys specific parameters
     'rest_param_ak_description' => 'Описание назначения API ключа',
-    'rest_param_ak_enabled' => 'Включить или отключить API ключ',
+    'rest_param_ak_key' => 'Значение API ключа (минимум 32 символа)',
+    'rest_param_ak_networkfilterid' => 'ID сетевого фильтра для ограничения доступа по IP',
     'rest_param_ak_full_permissions' => 'Полные права доступа ко всем endpoints',
     'rest_param_ak_allowed_paths' => 'Список разрешенных API paths',
-    'rest_param_ak_network_filter_id' => 'ID сетевого фильтра для ограничения доступа по IP',
+
+    // ApiKeys schema fields
+    'rest_schema_ak_id' => 'Уникальный идентификатор API ключа',
+    'rest_schema_ak_description' => 'Описание назначения API ключа',
+    'rest_schema_ak_key' => 'Значение API ключа (только для записи)',
+    'rest_schema_ak_networkfilterid' => 'ID сетевого фильтра',
+    'rest_schema_ak_full_permissions' => 'Признак полных прав доступа',
+    'rest_schema_ak_allowed_paths' => 'Список разрешенных API paths',
+    'rest_schema_ak_created_at' => 'Дата и время создания ключа',
+    'rest_schema_ak_last_used_at' => 'Дата и время последнего использования ключа',
+    'rest_schema_ak_key_display' => 'Отображаемая часть ключа (первые и последние символы)',
+    'rest_schema_ak_has_key' => 'Признак наличия установленного ключа',
+    'rest_schema_ak_allowed_paths_count' => 'Количество разрешенных API paths',
+    'rest_schema_ak_has_network_filter' => 'Признак наличия сетевого фильтра',
+    'rest_schema_ak_networkfilter_represent' => 'HTML представление сетевого фильтра',
+    'rest_schema_ak_represent' => 'HTML представление API ключа для интерфейса',
 
     // GeneralSettings specific parameters
     'rest_param_gs_key' => 'Ключ настройки (имя параметра)',
@@ -1455,8 +1520,17 @@ return [
     // CustomFiles specific parameters
     'rest_param_cf_filepath' => 'Путь к файлу в системе (например /etc/asterisk/custom.conf)',
     'rest_param_cf_content' => 'Содержимое файла в base64 кодировке',
-    'rest_param_cf_mode' => 'Режим применения файла: override (замена), append (добавление), script (исполняемый скрипт)',
+    'rest_param_cf_mode' => 'Режим применения файла: override (замена), append (добавление), script (исполняемый скрипт), none (не применять)',
     'rest_param_cf_description' => 'Описание назначения пользовательского файла',
+    'rest_param_cf_changed' => 'Флаг изменения файла (0 - не изменен, 1 - изменен)',
+
+    // CustomFiles schema fields
+    'rest_schema_cf_id' => 'Уникальный идентификатор файла',
+    'rest_schema_cf_filepath' => 'Путь к файлу в системе',
+    'rest_schema_cf_content' => 'Содержимое файла в base64 кодировке',
+    'rest_schema_cf_mode' => 'Режим применения файла',
+    'rest_schema_cf_description' => 'Описание назначения файла',
+    'rest_schema_cf_changed' => 'Флаг изменения файла',
 
     // MailSettings specific parameters
     'rest_param_ms_smtp_host' => 'Адрес SMTP сервера (например smtp.gmail.com)',
@@ -1634,7 +1708,10 @@ return [
     // ============================================================================
     // Users Parameters
     // ============================================================================
-    'rest_param_users_email' => 'Email адрес для проверки доступности',
+    'rest_param_users_email' => 'Email адрес пользователя',
+    'rest_param_users_username' => 'Имя пользователя для аутентификации',
+    'rest_param_users_language' => 'Предпочитаемый язык интерфейса',
+    'rest_param_users_avatar' => 'URL или путь к изображению аватара пользователя',
 
     // ============================================================================
     // Users Schema Fields
@@ -1857,4 +1934,43 @@ return [
 
     // REST API - Request parameters
   
+
+    // Files - additional parameters (getAllFieldDefinitions pattern)
+    'rest_param_file_filename' => 'Имя файла',
+    'rest_param_file_url' => 'URL для загрузки файла',
+
+    // SoundFiles - additional parameters (getAllFieldDefinitions pattern)
+    'rest_param_sf_description' => 'Описание звукового файла',
+    'rest_param_sf_view_path' => 'Путь к файлу для просмотра/скачивания',
+    'rest_param_sf_download_flag' => 'Флаг для скачивания файла (1 - скачать, 0 - просмотр)',
+    'rest_param_sf_filename' => 'Имя файла для скачивания',
+
+    // Files schema fields (getAllFieldDefinitions pattern)
+    'rest_schema_file_path' => 'Путь к файлу в системе',
+    'rest_schema_file_filename' => 'Имя файла',
+    'rest_schema_file_url' => 'URL для загрузки файла',
+    'rest_schema_file_firmware_md5' => 'MD5 хеш прошивки для проверки целостности',
+    'rest_schema_file_resumable_id' => 'Идентификатор загрузки (Resumable.js)',
+    'rest_schema_file_chunk_number' => 'Номер текущего чанка',
+    'rest_schema_file_total_chunks' => 'Общее количество чанков',
+    'rest_schema_file_resumable_name' => 'Имя загружаемого файла',
+    'rest_schema_file_status' => 'Статус операции с файлом (NOT_FOUND, UPLOAD_IN_PROGRESS, UPLOAD_COMPLETE, UPLOAD_FAILED)',
+    'rest_schema_file_progress' => 'Прогресс загрузки файла в процентах (0-100)',
+    'rest_schema_file_size' => 'Размер файла в байтах',
+    'rest_schema_file_channel_id' => 'ID канала для отслеживания загрузки через EventBus',
+    'rest_schema_file_event_bus' => 'Признак доступности EventBus для отслеживания прогресса',
+
+    // SoundFiles schema fields (getAllFieldDefinitions pattern)
+    'rest_schema_sf_id' => 'Уникальный ID звукового файла',
+    'rest_schema_sf_name' => 'Название звукового файла',
+    'rest_schema_sf_description' => 'Описание звукового файла',
+    'rest_schema_sf_path' => 'Путь к звуковому файлу в файловой системе',
+    'rest_schema_sf_category' => 'Категория звукового файла',
+    'rest_schema_sf_view_path' => 'Путь к файлу для просмотра/скачивания',
+    'rest_schema_sf_download_flag' => 'Флаг для скачивания файла',
+    'rest_schema_sf_filename' => 'Имя файла для скачивания',
+    'rest_schema_sf_file_path' => 'Полный путь к аудио файлу',
+    'rest_schema_sf_file_size' => 'Размер файла в байтах',
+    'rest_schema_sf_duration' => 'Длительность аудио файла в формате MM:SS',
+
 ];

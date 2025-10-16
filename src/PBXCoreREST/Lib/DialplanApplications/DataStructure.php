@@ -131,9 +131,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     /**
      * Get OpenAPI schema for dialplan application list item
      *
-     * Uses getParameterDefinitions() as Single Source of Truth (NO duplication!).
-     * Inherits request parameters + response-only fields.
-     *
+     * Uses getAllFieldDefinitions() as Single Source of Truth (NO duplication!).
      * This schema matches the structure returned by createForList() method.
      * Used for GET /api/v3/dialplan-applications endpoint (list of applications).
      *
@@ -141,34 +139,16 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function getListItemSchema(): array
     {
-        $definitions = self::getParameterDefinitions();
-        $requestParams = $definitions['request'];
-        $responseFields = $definitions['response'];
-
+        $allFields = self::getAllFieldDefinitions();
         $properties = [];
 
-        // ✨ Inherit request parameters used in list view
-        $listFields = ['extension', 'name', 'description', 'type', 'hint'];
+        // ✨ Include fields used in list view
+        $listFields = ['id', 'extension', 'name', 'description', 'type', 'hint', 'represent', 'search_index'];
         foreach ($listFields as $field) {
-            if (isset($requestParams[$field])) {
-                $properties[$field] = $requestParams[$field];
-                // Transform description key: rest_param_* → rest_schema_*
-                $properties[$field]['description'] = str_replace('rest_param_', 'rest_schema_', $properties[$field]['description']);
-
-                // Override examples for list display (optional, can be different from create)
-                if ($field === 'extension') {
-                    $properties[$field]['example'] = '999';
-                } elseif ($field === 'name') {
-                    $properties[$field]['example'] = 'Echo Test';
-                }
-            }
-        }
-
-        // ✨ Inherit response-only fields for list (NO duplication!)
-        $listResponseFields = ['id', 'represent', 'search_index'];
-        foreach ($listResponseFields as $field) {
-            if (isset($responseFields[$field])) {
-                $properties[$field] = $responseFields[$field];
+            if (isset($allFields[$field])) {
+                $properties[$field] = $allFields[$field];
+                // Remove sanitization and validation-only properties
+                unset($properties[$field]['sanitize'], $properties[$field]['required'], $properties[$field]['readOnly']);
             }
         }
 
@@ -182,9 +162,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     /**
      * Get OpenAPI schema for detailed dialplan application record
      *
-     * Uses getParameterDefinitions() as Single Source of Truth (NO duplication!).
-     * Inherits ALL request parameters + response-only fields.
-     *
+     * Uses getAllFieldDefinitions() as Single Source of Truth (NO duplication!).
      * This schema matches the structure returned by createFromModel() method.
      * Used for GET /api/v3/dialplan-applications/{id}, POST, PUT, PATCH endpoints.
      *
@@ -192,25 +170,23 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function getDetailSchema(): array
     {
-        $definitions = self::getParameterDefinitions();
-        $requestParams = $definitions['request'];
-        $responseFields = $definitions['response'];
-
+        $allFields = self::getAllFieldDefinitions();
         $properties = [];
 
-        // ✨ Inherit ALL request parameters for detail view (NO duplication!)
-        foreach ($requestParams as $field => $definition) {
-            $properties[$field] = $definition;
-            // Transform description key: rest_param_* → rest_schema_*
-            $properties[$field]['description'] = str_replace('rest_param_', 'rest_schema_', $properties[$field]['description']);
-        }
-
-        // ✨ Inherit response-only fields for detail (NO duplication!)
-        $detailResponseFields = ['id'];
-        foreach ($detailResponseFields as $field) {
-            if (isset($responseFields[$field])) {
-                $properties[$field] = $responseFields[$field];
+        // ✨ Include ALL fields for detail view (NO duplication!)
+        foreach ($allFields as $field => $definition) {
+            // Skip writeOnly fields if any exist
+            if (isset($definition['writeOnly']) && $definition['writeOnly']) {
+                continue;
             }
+            // Exclude search_index and represent from detail view
+            if ($field === 'search_index' || $field === 'represent') {
+                continue;
+            }
+
+            $properties[$field] = $definition;
+            // Remove sanitization and validation-only properties
+            unset($properties[$field]['sanitize'], $properties[$field]['required'], $properties[$field]['readOnly']);
         }
 
         return [
@@ -221,14 +197,84 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
 
     /**
-     * Get related schemas for OpenAPI components
+     * Get all field definitions with complete metadata
      *
-     * Dialplan applications don't use nested schemas, so this returns empty array.
+     * Single Source of Truth for ALL field definitions.
+     * Each field includes type, validation, sanitization, and examples.
      *
-     * @return array<string, array<string, mixed>> Related schemas (empty for this resource)
+     * @return array<string, array<string, mixed>> Complete field definitions
      */
+    private static function getAllFieldDefinitions(): array
+    {
+        return [
+            'id' => [
+                'type' => 'string',
+                'description' => 'rest_schema_da_id',
+                'pattern' => '^DIALPLAN-[A-Z0-9]{8,32}$',
+                'readOnly' => true,
+                'example' => 'DIALPLAN-ABCD1234'
+            ],
+            'name' => [
+                'type' => 'string',
+                'description' => 'rest_schema_da_name',
+                'maxLength' => 50,
+                'sanitize' => 'text',
+                'required' => true,
+                'example' => 'Echo Test'
+            ],
+            'extension' => [
+                'type' => 'string',
+                'description' => 'rest_schema_da_extension',
+                'pattern' => '^[0-9#+\\*|X]{1,64}$',
+                'sanitize' => 'string',
+                'required' => true,
+                'example' => '999'
+            ],
+            'description' => [
+                'type' => 'string',
+                'description' => 'rest_schema_da_description',
+                'maxLength' => 2000,
+                'sanitize' => 'text',
+                'example' => 'Test echo application'
+            ],
+            'type' => [
+                'type' => 'string',
+                'description' => 'rest_schema_da_type',
+                'enum' => ['php', 'plaintext', 'python3', 'lua', 'ael', 'none'],
+                'sanitize' => 'string',
+                'default' => 'php',
+                'example' => 'php'
+            ],
+            'hint' => [
+                'type' => 'string',
+                'description' => 'rest_schema_da_hint',
+                'maxLength' => 255,
+                'sanitize' => 'text',
+                'example' => 'BLF hint for line status'
+            ],
+            'applicationlogic' => [
+                'type' => 'string',
+                'description' => 'rest_schema_da_applicationlogic',
+                'sanitize' => 'string',
+                'example' => '<?php\n// PHP code here'
+            ],
+            'represent' => [
+                'type' => 'string',
+                'description' => 'rest_schema_da_represent',
+                'readOnly' => true,
+                'example' => '<i class="code icon"></i> Echo Test <999>'
+            ],
+            'search_index' => [
+                'type' => 'string',
+                'description' => 'rest_schema_da_search_index',
+                'readOnly' => true,
+                'example' => 'echo test 999 test echo application'
+            ],
+        ];
+    }
+
     /**
-     * Get all field definitions (request parameters + response-only fields)
+     * Get parameter definitions (request parameters + response-only fields)
      *
      * Single Source of Truth for ALL definitions in dialplan applications API.
      *
@@ -245,75 +291,27 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function getParameterDefinitions(): array
     {
+        $allFields = self::getAllFieldDefinitions();
+
+        // Separate writable fields (for requests) and response-only fields
+        $writableFields = [];
+        $responseOnlyFields = [];
+
+        foreach ($allFields as $fieldName => $fieldDef) {
+            if (!empty($fieldDef['readOnly'])) {
+                $responseOnlyFields[$fieldName] = $fieldDef;
+            } else {
+                // For request section, use rest_param_* descriptions
+                $requestField = $fieldDef;
+                $requestField['description'] = str_replace('rest_schema_', 'rest_param_', $fieldDef['description']);
+                $writableFields[$fieldName] = $requestField;
+            }
+        }
+
         return [
-            // ========== REQUEST PARAMETERS ==========
-            // Used in API requests (POST, PUT, PATCH)
-            // Referenced by ApiParameterRef in Controller
-            'request' => [
-                'name' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_da_name',
-                    'maxLength' => 50,
-                    'example' => 'Echo Test'
-                ],
-                'extension' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_da_extension',
-                    'pattern' => '^[0-9#+\\*|X]{1,64}$',
-                    'example' => '999'
-                ],
-                'description' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_da_description',
-                    'maxLength' => 2000,
-                    'example' => 'Test echo application'
-                ],
-                'type' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_da_type',
-                    'enum' => ['php', 'plaintext', 'python3', 'lua', 'ael', 'none'],
-                    'default' => 'php',
-                    'example' => 'php'
-                ],
-                'hint' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_da_hint',
-                    'maxLength' => 255,
-                    'example' => 'BLF hint for line status'
-                ],
-                'applicationlogic' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_da_applicationlogic',
-                    'example' => '<?php\n// PHP code here'
-                ]
-            ],
-
-            // ========== RESPONSE-ONLY FIELDS ==========
-            // Only in API responses, not in requests
-            // Used by getListItemSchema() and getDetailSchema()
-            'response' => [
-                // ID field (used in both list and detail schemas)
-                'id' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_da_id',
-                    'pattern' => '^DIALPLAN-[A-Z0-9]{8,32}$',
-                    'example' => 'DIALPLAN-ABCD1234'
-                ],
-
-                // Represent field (for list schema)
-                'represent' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_da_represent',
-                    'example' => '<i class="code icon"></i> Echo Test <999>'
-                ],
-
-                // Search index (for list schema)
-                'search_index' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_da_search_index',
-                    'example' => 'echo test 999 test echo application'
-                ]
-            ]
+            'request' => $writableFields,
+            'response' => $responseOnlyFields,
+            'related' => []
         ];
     }
 

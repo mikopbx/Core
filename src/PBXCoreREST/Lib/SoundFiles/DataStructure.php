@@ -170,70 +170,153 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
 
     /**
+     * Get all field definitions with complete metadata
+     *
+     * Single Source of Truth for ALL field definitions.
+     * Each field includes type, validation, sanitization, and examples.
+     *
+     * @return array<string, array<string, mixed>> Complete field definitions
+     */
+    private static function getAllFieldDefinitions(): array
+    {
+        return [
+            // Core fields (writable)
+            'name' => [
+                'type' => 'string',
+                'description' => 'rest_schema_sf_name',
+                'minLength' => 1,
+                'maxLength' => 200,
+                'sanitize' => 'text',
+                'required' => true,
+                'example' => 'Welcome Message'
+            ],
+            'description' => [
+                'type' => 'string',
+                'description' => 'rest_schema_sf_description',
+                'maxLength' => 500,
+                'sanitize' => 'text',
+                'default' => '',
+                'example' => 'Welcome message for IVR'
+            ],
+            'path' => [
+                'type' => 'string',
+                'description' => 'rest_schema_sf_path',
+                'maxLength' => 500,
+                'sanitize' => 'string',
+                'example' => '/tmp/upload/audio.wav'
+            ],
+            'category' => [
+                'type' => 'string',
+                'description' => 'rest_schema_sf_category',
+                'enum' => ['custom', 'moh', 'system'],
+                'sanitize' => 'string',
+                'default' => 'custom',
+                'example' => 'custom'
+            ],
+            // Special operation fields (writable for specific endpoints)
+            'view' => [
+                'type' => 'string',
+                'description' => 'rest_schema_sf_view_path',
+                'maxLength' => 500,
+                'sanitize' => 'string',
+                'example' => '/storage/usbdisk1/mikopbx/media/custom/file.mp3'
+            ],
+            'download' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_sf_download_flag',
+                'minimum' => 0,
+                'maximum' => 1,
+                'sanitize' => 'int',
+                'example' => 1
+            ],
+            'filename' => [
+                'type' => 'string',
+                'description' => 'rest_schema_sf_filename',
+                'maxLength' => 255,
+                'sanitize' => 'string',
+                'example' => 'audio.mp3'
+            ],
+            'filePath' => [
+                'type' => 'string',
+                'description' => 'rest_schema_sf_file_path',
+                'maxLength' => 500,
+                'sanitize' => 'string',
+                'example' => '/tmp/audio.mp3'
+            ],
+            // Response-only fields (readOnly)
+            'id' => [
+                'type' => 'string',
+                'description' => 'rest_schema_sf_id',
+                'pattern' => '^[0-9]+$',
+                'readOnly' => true,
+                'example' => '1'
+            ],
+            'fileSize' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_sf_file_size',
+                'minimum' => 0,
+                'readOnly' => true,
+                'example' => 524288
+            ],
+            'duration' => [
+                'type' => 'string',
+                'description' => 'rest_schema_sf_duration',
+                'pattern' => '^[0-9]{2}:[0-9]{2}$',
+                'readOnly' => true,
+                'example' => '01:45'
+            ]
+        ];
+    }
+
+    /**
      * Get parameter definitions for OpenAPI and validation
      *
      * Single Source of Truth for all field definitions.
      * Used for sanitization, validation, defaults, and OpenAPI schema generation.
      *
+     * Uses getAllFieldDefinitions() to eliminate duplication between request and response.
+     *
      * @return array<string, mixed> Parameter definitions
      */
     public static function getParameterDefinitions(): array
     {
+        $allFields = self::getAllFieldDefinitions();
+
+        // Filter writable fields (exclude readOnly) for request
+        $writableFields = array_filter($allFields, fn($f) => empty($f['readOnly']));
+
+        // Add request-specific metadata
+        $requestFields = [];
+        foreach ($writableFields as $field => $definition) {
+            $requestFields[$field] = $definition;
+            // Transform description key: rest_schema_* → rest_param_*
+            $requestFields[$field]['description'] = str_replace('rest_schema_', 'rest_param_', $requestFields[$field]['description']);
+            // Add 'in' location for request parameters (id is special case from REST controller)
+            $requestFields[$field]['in'] = 'query';
+        }
+
+        // Add id as a special request parameter for path
+        $requestFields['id'] = [
+            'type' => 'string',
+            'description' => 'rest_param_id',
+            'in' => 'path',
+            'pattern' => '^[a-zA-Z0-9_-]+$',
+            'sanitize' => 'string',
+            'required' => true,
+            'example' => 'custom_welcome'
+        ];
+
         return [
-            'request' => [
-                'name' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_sf_name',
-                    'minLength' => 1,
-                    'maxLength' => 255,
-                    'sanitize' => 'text',
-                    'required' => true,
-                    'example' => 'welcome.wav'
-                ],
-                'description' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_sf_description',
-                    'maxLength' => 500,
-                    'sanitize' => 'text',
-                    'default' => '',
-                    'example' => 'Welcome message for IVR'
-                ],
-                'path' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_sf_path',
-                    'maxLength' => 500,
-                    'sanitize' => 'string',
-                    'example' => '/storage/usbdisk1/mikopbx/media/custom/welcome.wav'
-                ],
-                'category' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_sf_category',
-                    'enum' => [SoundFiles::CATEGORY_CUSTOM, SoundFiles::CATEGORY_MOH],
-                    'sanitize' => 'string',
-                    'default' => SoundFiles::CATEGORY_CUSTOM,
-                    'example' => SoundFiles::CATEGORY_CUSTOM
-                ]
-            ],
+            'request' => $requestFields,
             'response' => [
-                // Auto-generated ID field (readOnly, not accepted in requests)
-                'id' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_sf_id',
-                    'pattern' => '^[0-9]+$',
-                    'example' => '1'
-                ],
-                'fileSize' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_sf_file_size',
-                    'minimum' => 0,
-                    'example' => 524288
-                ],
-                'duration' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_sf_duration',
-                    'pattern' => '^[0-9]{2}:[0-9]{2}$',
-                    'example' => '01:45'
-                ]
+                // Response includes both writable and readOnly fields
+                'id' => $allFields['id'],
+                'name' => $allFields['name'],
+                'description' => $allFields['description'],
+                'path' => $allFields['path'],
+                'category' => $allFields['category'],
+                'fileSize' => $allFields['fileSize'],
+                'duration' => $allFields['duration']
             ]
         ];
     }

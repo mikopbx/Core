@@ -143,6 +143,117 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
 
     /**
+     * Get all field definitions with complete metadata
+     *
+     * Single Source of Truth for ALL field definitions.
+     * Each field includes type, validation, sanitization, and examples.
+     *
+     * @return array<string, array<string, mixed>> Complete field definitions
+     */
+    private static function getAllFieldDefinitions(): array
+    {
+        return [
+            // Passkey identification
+            'id' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_pk_id',
+                'minimum' => 1,
+                'readOnly' => true,
+                'example' => 1
+            ],
+            'user_id' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_pk_user_id',
+                'minimum' => 1,
+                'sanitize' => 'int',
+                'example' => 1
+            ],
+            // Passkey metadata
+            'name' => [
+                'type' => 'string',
+                'description' => 'rest_schema_pk_name',
+                'maxLength' => 100,
+                'sanitize' => 'string',
+                'example' => 'My YubiKey 5'
+            ],
+            // WebAuthn credential data
+            'credential' => [
+                'type' => 'object',
+                'description' => 'rest_schema_pk_credential',
+                'sanitize' => 'array',
+                'example' => ['id' => '...', 'rawId' => '...', 'response' => []]
+            ],
+            'credential_id' => [
+                'type' => 'string',
+                'description' => 'rest_schema_pk_credential_id',
+                'maxLength' => 500,
+                'sanitize' => 'string',
+                'example' => 'Base64EncodedCredentialId...'
+            ],
+            'public_key' => [
+                'type' => 'string',
+                'description' => 'rest_schema_pk_public_key',
+                'maxLength' => 1000,
+                'sanitize' => 'string',
+                'readOnly' => true,
+                'example' => 'Base64EncodedPublicKey...'
+            ],
+            'counter' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_pk_counter',
+                'minimum' => 0,
+                'default' => 0,
+                'sanitize' => 'int',
+                'example' => 15
+            ],
+            'aaguid' => [
+                'type' => 'string',
+                'description' => 'rest_schema_pk_aaguid',
+                'maxLength' => 100,
+                'sanitize' => 'string',
+                'example' => '00000000-0000-0000-0000-000000000000'
+            ],
+            'transports' => [
+                'type' => 'array',
+                'items' => ['type' => 'string'],
+                'description' => 'rest_schema_pk_transports',
+                'sanitize' => 'array',
+                'example' => ['usb', 'nfc']
+            ],
+            'created_at' => [
+                'type' => 'string',
+                'format' => 'date-time',
+                'description' => 'rest_schema_pk_created_at',
+                'readOnly' => true,
+                'example' => '2025-01-15 10:30:00'
+            ],
+            'last_used_at' => [
+                'type' => 'string',
+                'format' => 'date-time',
+                'nullable' => true,
+                'description' => 'rest_schema_pk_last_used_at',
+                'readOnly' => true,
+                'example' => '2025-01-16 14:25:30'
+            ],
+            'user_agent' => [
+                'type' => 'string',
+                'description' => 'rest_schema_pk_user_agent',
+                'readOnly' => true,
+                'example' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)...'
+            ],
+            // Authentication parameters
+            'login' => [
+                'type' => 'string',
+                'description' => 'rest_schema_pk_login',
+                'maxLength' => 100,
+                'sanitize' => 'string',
+                'required' => true,
+                'example' => 'admin'
+            ],
+        ];
+    }
+
+    /**
      * Get parameter definitions (Single Source of Truth)
      *
      * WHY: Centralizes passkey parameter definitions.
@@ -152,159 +263,22 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function getParameterDefinitions(): array
     {
+        $allFields = self::getAllFieldDefinitions();
+
+        // Filter writable fields (exclude readOnly)
+        $writableFields = array_filter($allFields, fn($f) => empty($f['readOnly']));
+
+        // Transform description keys: rest_schema_* → rest_param_*
+        $requestFields = [];
+        foreach ($writableFields as $field => $definition) {
+            $requestField = $definition;
+            $requestField['description'] = str_replace('rest_schema_', 'rest_param_', $definition['description']);
+            $requestFields[$field] = $requestField;
+        }
+
         return [
-            'request' => [
-                // Passkey identification
-                'id' => [
-                    'type' => 'integer',
-                    'description' => 'rest_param_pk_id',
-                    'minimum' => 1,
-                    'sanitize' => 'int',
-                    'example' => 1
-                ],
-                'user_id' => [
-                    'type' => 'integer',
-                    'description' => 'rest_param_pk_user_id',
-                    'minimum' => 1,
-                    'sanitize' => 'int',
-                    'example' => 1
-                ],
-                // Passkey metadata
-                'name' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_pk_name',
-                    'maxLength' => 100,
-                    'sanitize' => 'string',
-                    'example' => 'My YubiKey 5'
-                ],
-                // WebAuthn credential data
-                'credential' => [
-                    'type' => 'object',
-                    'description' => 'rest_param_pk_credential',
-                    'sanitize' => 'array',
-                    'example' => ['id' => '...', 'rawId' => '...', 'response' => []]
-                ],
-                'credential_id' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_pk_credential_id',
-                    'maxLength' => 500,
-                    'sanitize' => 'string',
-                    'example' => 'Base64EncodedCredentialId...'
-                ],
-                'public_key' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_pk_public_key',
-                    'maxLength' => 1000,
-                    'sanitize' => 'string',
-                    'example' => 'Base64EncodedPublicKey...'
-                ],
-                'counter' => [
-                    'type' => 'integer',
-                    'description' => 'rest_param_pk_counter',
-                    'minimum' => 0,
-                    'default' => 0,
-                    'sanitize' => 'int',
-                    'example' => 0
-                ],
-                'aaguid' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_pk_aaguid',
-                    'maxLength' => 100,
-                    'sanitize' => 'string',
-                    'example' => '00000000-0000-0000-0000-000000000000'
-                ],
-                'transports' => [
-                    'type' => 'array',
-                    'description' => 'rest_param_pk_transports',
-                    'sanitize' => 'array',
-                    'example' => ['usb', 'nfc']
-                ],
-                // Authentication parameters
-                'login' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_pk_login',
-                    'maxLength' => 100,
-                    'sanitize' => 'string',
-                    'required' => true,
-                    'example' => 'admin'
-                ],
-                // Query parameters for list filtering
-                'limit' => [
-                    'type' => 'integer',
-                    'description' => 'rest_param_limit',
-                    'minimum' => 1,
-                    'maximum' => 100,
-                    'default' => 20,
-                    'sanitize' => 'int',
-                    'example' => 20
-                ],
-                'offset' => [
-                    'type' => 'integer',
-                    'description' => 'rest_param_offset',
-                    'minimum' => 0,
-                    'default' => 0,
-                    'sanitize' => 'int',
-                    'example' => 0
-                ]
-            ],
-            'response' => [
-                // Auto-generated ID field (readOnly, not accepted in requests)
-                'id' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_pk_id',
-                    'readOnly' => true,
-                    'example' => 1
-                ],
-                'user_id' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_pk_user_id',
-                    'example' => 1
-                ],
-                'name' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_pk_name',
-                    'example' => 'My YubiKey 5'
-                ],
-                'credential_id' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_pk_credential_id',
-                    'example' => 'Base64EncodedCredentialId...'
-                ],
-                'counter' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_pk_counter',
-                    'example' => 15
-                ],
-                'aaguid' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_pk_aaguid',
-                    'example' => '00000000-0000-0000-0000-000000000000'
-                ],
-                'transports' => [
-                    'type' => 'array',
-                    'items' => ['type' => 'string'],
-                    'description' => 'rest_schema_pk_transports',
-                    'example' => ['usb', 'nfc']
-                ],
-                'created_at' => [
-                    'type' => 'string',
-                    'format' => 'date-time',
-                    'description' => 'rest_schema_pk_created_at',
-                    'example' => '2025-01-15 10:30:00'
-                ],
-                'last_used_at' => [
-                    'type' => 'string',
-                    'format' => 'date-time',
-                    'nullable' => true,
-                    'description' => 'rest_schema_pk_last_used_at',
-                    'example' => '2025-01-16 14:25:30'
-                ],
-                'user_agent' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_pk_user_agent',
-                    'example' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)...'
-                ]
-            ]
+            'request' => $requestFields,
+            'response' => $allFields
         ];
     }
 

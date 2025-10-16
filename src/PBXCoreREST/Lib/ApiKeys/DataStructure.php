@@ -234,6 +234,128 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
 
     /**
+     * Get all field definitions with complete metadata
+     *
+     * Single Source of Truth for ALL field definitions.
+     * Each field includes type, validation, sanitization, and examples.
+     *
+     * @return array<string, array<string, mixed>> Complete field definitions
+     */
+    private static function getAllFieldDefinitions(): array
+    {
+        return [
+            // ========== WRITABLE FIELDS ==========
+            'description' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ak_description',
+                'minLength' => 1,
+                'maxLength' => 255,
+                'sanitize' => 'text',
+                'required' => true,
+                'example' => 'CRM Integration Key'
+            ],
+            'key' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ak_key',
+                'minLength' => 32,
+                'maxLength' => 255,
+                'sanitize' => 'string',
+                'required' => true, // Required for CREATE (auto-generated if not provided)
+                'writeOnly' => true, // Never returned in responses
+                'example' => 'miko_ak_1234567890abcdef1234567890abcdef'
+            ],
+            'networkfilterid' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ak_networkfilterid',
+                'pattern' => '^([0-9]+|none)$',
+                'sanitize' => 'string',
+                'default' => 'none',
+                'example' => '5'
+            ],
+            'full_permissions' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_ak_full_permissions',
+                'sanitize' => 'bool',
+                'default' => false,
+                'example' => false
+            ],
+            'allowed_paths' => [
+                'type' => 'array',
+                'description' => 'rest_schema_ak_allowed_paths',
+                'sanitize' => 'array',
+                'items' => [
+                    'type' => 'string',
+                    'pattern' => '^/api/v[0-9]+/[a-z0-9-]+(/[a-z0-9-]+)*$',
+                    'example' => '/api/v3/employees'
+                ],
+                'default' => [],
+                'example' => ['/api/v3/employees', '/api/v3/extensions']
+            ],
+
+            // ========== READ-ONLY FIELDS ==========
+            'id' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ak_id',
+                'pattern' => '^[0-9]+$',
+                'readOnly' => true,
+                'example' => '12'
+            ],
+            'created_at' => [
+                'type' => 'string',
+                'format' => 'date-time',
+                'description' => 'rest_schema_ak_created_at',
+                'readOnly' => true,
+                'example' => '2025-01-15 10:30:00'
+            ],
+            'last_used_at' => [
+                'type' => 'string',
+                'format' => 'date-time',
+                'nullable' => true,
+                'description' => 'rest_schema_ak_last_used_at',
+                'readOnly' => true,
+                'example' => '2025-01-20 14:25:30'
+            ],
+            'key_display' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ak_key_display',
+                'readOnly' => true,
+                'example' => 'abcd1...xyz89'
+            ],
+            'has_key' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_ak_has_key',
+                'readOnly' => true,
+                'example' => true
+            ],
+            'allowed_paths_count' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_ak_allowed_paths_count',
+                'minimum' => 0,
+                'readOnly' => true,
+                'example' => 2
+            ],
+            'has_network_filter' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_ak_has_network_filter',
+                'readOnly' => true,
+                'example' => true
+            ],
+            'networkfilter_represent' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ak_networkfilter_represent',
+                'readOnly' => true,
+                'example' => '<i class="filter icon"></i> Office Network'
+            ],
+            'represent' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ak_represent',
+                'readOnly' => true,
+                'example' => '<i class="key icon"></i> CRM Integration Key'
+            ]
+        ];
+    }
+
+    /**
      * Get all field definitions (request parameters + response-only fields)
      *
      * Single Source of Truth for ALL definitions in API keys API.
@@ -251,121 +373,33 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function getParameterDefinitions(): array
     {
+        $allFields = self::getAllFieldDefinitions();
+
+        // Separate writable fields (for requests) and response-only fields
+        $writableFields = [];
+        $responseOnlyFields = [];
+
+        foreach ($allFields as $fieldName => $fieldDef) {
+            if (!empty($fieldDef['readOnly'])) {
+                $responseOnlyFields[$fieldName] = $fieldDef;
+            } else {
+                // For request section, use rest_param_* descriptions
+                $requestField = $fieldDef;
+                $requestField['description'] = str_replace('rest_schema_', 'rest_param_', $fieldDef['description']);
+                $writableFields[$fieldName] = $requestField;
+            }
+        }
+
         return [
             // ========== REQUEST PARAMETERS ==========
             // Used in API requests (POST, PUT, PATCH)
             // Referenced by ApiParameterRef in Controller
-            'request' => [
-                'description' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_ak_description',
-                    'minLength' => 1,
-                    'maxLength' => 255,
-                    'sanitize' => 'text',
-                    'required' => true,
-                    'example' => 'CRM Integration Key'
-                ],
-                'key' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_ak_key',
-                    'minLength' => 32,
-                    'maxLength' => 255,
-                    'sanitize' => 'string',
-                    'required' => true, // Required for CREATE (auto-generated if not provided)
-                    'writeOnly' => true, // Never returned in responses
-                    'example' => 'miko_ak_1234567890abcdef1234567890abcdef'
-                ],
-                'networkfilterid' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_ak_networkfilterid',
-                    'pattern' => '^([0-9]+|none)$',
-                    'sanitize' => 'string',
-                    'default' => 'none',
-                    'example' => '5'
-                ],
-                'full_permissions' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_param_ak_full_permissions',
-                    'sanitize' => 'bool',
-                    'default' => false,
-                    'example' => false
-                ],
-                'allowed_paths' => [
-                    'type' => 'array',
-                    'description' => 'rest_param_ak_allowed_paths',
-                    'sanitize' => 'array',
-                    'items' => [
-                        'type' => 'string',
-                        'pattern' => '^/api/v[0-9]+/[a-z0-9-]+(/[a-z0-9-]+)*$',
-                        'example' => '/api/v3/employees'
-                    ],
-                    'default' => [],
-                    'example' => ['/api/v3/employees', '/api/v3/extensions']
-                ]
-            ],
+            'request' => $writableFields,
 
             // ========== RESPONSE-ONLY FIELDS ==========
             // Only in API responses, not in requests
             // Used by getListItemSchema() and getDetailSchema()
-            'response' => [
-                // ID field (used in both list and detail schemas)
-                'id' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ak_id',
-                    'pattern' => '^[0-9]+$',
-                    'example' => '12'
-                ],
-
-                // Timestamps
-                'created_at' => [
-                    'type' => 'string',
-                    'format' => 'date-time',
-                    'description' => 'rest_schema_ak_created_at',
-                    'example' => '2025-01-15 10:30:00'
-                ],
-                'last_used_at' => [
-                    'type' => 'string',
-                    'format' => 'date-time',
-                    'nullable' => true,
-                    'description' => 'rest_schema_ak_last_used_at',
-                    'example' => '2025-01-20 14:25:30'
-                ],
-
-                // Computed fields
-                'key_display' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ak_key_display',
-                    'example' => 'abcd1...xyz89'
-                ],
-                'has_key' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_schema_ak_has_key',
-                    'example' => true
-                ],
-                'allowed_paths_count' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_ak_allowed_paths_count',
-                    'minimum' => 0,
-                    'example' => 2
-                ],
-                'has_network_filter' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_schema_ak_has_network_filter',
-                    'example' => true
-                ],
-
-                // Representation fields
-                'networkfilter_represent' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ak_networkfilter_represent',
-                    'example' => '<i class="filter icon"></i> Office Network'
-                ],
-                'represent' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ak_represent',
-                    'example' => '<i class="key icon"></i> CRM Integration Key'
-                ]
-            ]
+            'response' => $responseOnlyFields
         ];
     }
 

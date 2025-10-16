@@ -143,6 +143,108 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
 
     /**
+     * Get all field definitions with complete metadata
+     *
+     * Single Source of Truth for ALL field definitions.
+     * Each field includes type, validation, sanitization, and examples.
+     *
+     * @return array<string, array<string, mixed>> Complete field definitions
+     */
+    private static function getAllFieldDefinitions(): array
+    {
+        return [
+            // Request parameters (writable)
+            'login' => [
+                'type' => 'string',
+                'description' => 'rest_schema_auth_login_param',
+                'minLength' => 1,
+                'maxLength' => 255,
+                'sanitize' => 'string',
+                'example' => 'admin'
+            ],
+            'password' => [
+                'type' => 'string',
+                'description' => 'rest_schema_auth_password',
+                'minLength' => 1,
+                'maxLength' => 255,
+                'sanitize' => 'string',
+                'example' => 'MySecurePassword123!'
+            ],
+            'sessionToken' => [
+                'type' => 'string',
+                'description' => 'rest_schema_auth_sessionToken',
+                'minLength' => 64,
+                'maxLength' => 64,
+                'pattern' => '^[a-fA-F0-9]{64}$',
+                'sanitize' => 'string',
+                'example' => 'a1b2c3d4e5f6789012345678901234567890123456789012345678901234'
+            ],
+            'rememberMe' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_auth_rememberMe',
+                'default' => false,
+                'sanitize' => 'bool',
+                'example' => false
+            ],
+            'refreshToken' => [
+                'type' => 'string',
+                'description' => 'rest_schema_auth_refreshToken',
+                'minLength' => 64,
+                'maxLength' => 500,
+                'sanitize' => 'string',
+                'example' => 'encrypted_refresh_token_value'
+            ],
+            'clientIp' => [
+                'type' => 'string',
+                'description' => 'rest_schema_auth_clientIp',
+                'maxLength' => 45,
+                'sanitize' => 'string',
+                'example' => '192.168.1.100'
+            ],
+            'userAgent' => [
+                'type' => 'string',
+                'description' => 'rest_schema_auth_userAgent',
+                'maxLength' => 500,
+                'sanitize' => 'string',
+                'example' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+            ],
+            'token' => [
+                'type' => 'string',
+                'description' => 'rest_schema_auth_token',
+                'minLength' => 1,
+                'sanitize' => 'string',
+                'example' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+            ],
+            // Response-only fields (readOnly)
+            'accessToken' => [
+                'type' => 'string',
+                'description' => 'rest_schema_auth_accessToken',
+                'readOnly' => true,
+                'example' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJhZG1pbiIsImlhdCI6MTYxNjIzOTAyMiwiZXhwIjoxNjE2MjM5OTIyfQ.4X8z...'
+            ],
+            'tokenType' => [
+                'type' => 'string',
+                'description' => 'rest_schema_auth_tokenType',
+                'enum' => ['Bearer'],
+                'readOnly' => true,
+                'example' => 'Bearer'
+            ],
+            'expiresIn' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_auth_expiresIn',
+                'readOnly' => true,
+                'example' => 900
+            ],
+            'message' => [
+                'type' => 'string',
+                'description' => 'rest_schema_auth_message',
+                'readOnly' => true,
+                'example' => 'Successfully logged out'
+            ]
+        ];
+    }
+
+    /**
      * Get parameter definitions (Single Source of Truth)
      *
      * WHY: Centralizes all authentication parameter definitions and response schemas.
@@ -152,98 +254,34 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function getParameterDefinitions(): array
     {
+        $allFields = self::getAllFieldDefinitions();
+
+        // Separate writable fields (for requests) and response-only fields
+        $writableFields = [];
+        $responseOnlyFields = [];
+
+        foreach ($allFields as $fieldName => $fieldDef) {
+            if (!empty($fieldDef['readOnly'])) {
+                $responseOnlyFields[$fieldName] = $fieldDef;
+            } else {
+                // For request section, use rest_param_* descriptions
+                $requestField = $fieldDef;
+                $requestField['description'] = str_replace('rest_schema_', 'rest_param_', $fieldDef['description']);
+                $writableFields[$fieldName] = $requestField;
+            }
+        }
+
         return [
-            'request' => [
-                'login' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_auth_login',
-                    'minLength' => 1,
-                    'maxLength' => 255,
-                    'sanitize' => 'string',
-                    'example' => 'admin'
-                ],
-                'password' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_auth_password',
-                    'minLength' => 1,
-                    'maxLength' => 255,
-                    'sanitize' => 'string',
-                    'example' => 'MySecurePassword123!'
-                ],
-                'sessionToken' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_auth_sessionToken',
-                    'minLength' => 64,
-                    'maxLength' => 64,
-                    'pattern' => '^[a-fA-F0-9]{64}$',
-                    'sanitize' => 'string',
-                    'example' => 'a1b2c3d4e5f6789012345678901234567890123456789012345678901234'
-                ],
-                'rememberMe' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_param_auth_rememberMe',
-                    'default' => false,
-                    'sanitize' => 'bool',
-                    'example' => false
-                ],
-                'refreshToken' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_auth_refreshToken',
-                    'minLength' => 64,
-                    'maxLength' => 500,
-                    'sanitize' => 'string',
-                    'example' => 'encrypted_refresh_token_value'
-                ],
-                'clientIp' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_auth_clientIp',
-                    'maxLength' => 45,
-                    'sanitize' => 'string',
-                    'example' => '192.168.1.100'
-                ],
-                'userAgent' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_auth_userAgent',
-                    'maxLength' => 500,
-                    'sanitize' => 'string',
-                    'example' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
-                ],
-                'token' => [
-                    'type' => 'string',
-                    'description' => 'JWT token to validate',
-                    'minLength' => 1,
-                    'sanitize' => 'string',
-                    'example' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
-                ]
-            ],
-            'response' => [
-                'accessToken' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_auth_accessToken',
-                    'example' => 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJhZG1pbiIsImlhdCI6MTYxNjIzOTAyMiwiZXhwIjoxNjE2MjM5OTIyfQ.4X8z...'
-                ],
-                'tokenType' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_auth_tokenType',
-                    'enum' => ['Bearer'],
-                    'example' => 'Bearer'
-                ],
-                'expiresIn' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_auth_expiresIn',
-                    'example' => 900
-                ],
-                'login' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_auth_login',
-                    'example' => 'admin'
-                ],
-                'message' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_auth_message',
-                    'example' => 'Successfully logged out'
-                ]
-            ],
+            // ========== REQUEST PARAMETERS ==========
+            // Used in API requests (POST /auth:login, POST /auth:refresh, POST /auth:logout)
+            // Referenced by ApiParameterRef in Controller
+            'request' => $writableFields,
+
+            // ========== RESPONSE-ONLY FIELDS ==========
+            // Only in API responses, not in requests
+            // Used by getDetailSchema() and related schemas
+            'response' => $responseOnlyFields,
+
             // ========== RELATED SCHEMAS ==========
             // Response schemas for login/refresh/logout endpoints
             'related' => [

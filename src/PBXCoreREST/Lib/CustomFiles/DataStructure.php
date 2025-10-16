@@ -78,7 +78,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     /**
      * Get OpenAPI schema for custom file list item
      *
-     * ✨ Inherits field definitions from getParameterDefinitions() - Single Source of Truth.
+     * ✨ Inherits field definitions from getAllFieldDefinitions() - Single Source of Truth.
      * This schema matches the structure returned by createForList() method.
      * Used for GET /api/v3/custom-files endpoint (list of custom files).
      *
@@ -86,29 +86,16 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function getListItemSchema(): array
     {
-        $definitions = self::getParameterDefinitions();
-        $requestParams = $definitions['request'];
-        $responseFields = $definitions['response'];
-
+        $allFields = self::getAllFieldDefinitions();
         $properties = [];
 
-        // ✨ Inherit request parameters used in list view (NO duplication!)
-        $listFields = ['filepath', 'mode', 'description', 'changed'];
+        // ✨ Include fields used in list view
+        $listFields = ['id', 'filepath', 'mode', 'description', 'changed'];
         foreach ($listFields as $field) {
-            if (isset($requestParams[$field])) {
-                $properties[$field] = $requestParams[$field];
-                // Transform description key: rest_param_* → rest_schema_*
-                $properties[$field]['description'] = str_replace('rest_param_', 'rest_schema_', $properties[$field]['description']);
+            if (isset($allFields[$field])) {
+                $properties[$field] = $allFields[$field];
                 // Remove sanitization and validation-only properties
-                unset($properties[$field]['sanitize'], $properties[$field]['minLength'], $properties[$field]['required']);
-            }
-        }
-
-        // ✨ Inherit response-only fields for list (NO duplication!)
-        $listResponseFields = ['id'];
-        foreach ($listResponseFields as $field) {
-            if (isset($responseFields[$field])) {
-                $properties[$field] = $responseFields[$field];
+                unset($properties[$field]['sanitize'], $properties[$field]['minLength'], $properties[$field]['required'], $properties[$field]['readOnly']);
             }
         }
 
@@ -122,7 +109,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     /**
      * Get OpenAPI schema for detailed custom file record
      *
-     * ✨ Inherits field definitions from getParameterDefinitions() - Single Source of Truth.
+     * ✨ Inherits field definitions from getAllFieldDefinitions() - Single Source of Truth.
      * This schema matches the structure returned by createFromModel() method.
      * Used for GET /api/v3/custom-files/{id}, POST, PUT, PATCH endpoints.
      *
@@ -130,38 +117,86 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function getDetailSchema(): array
     {
-        $definitions = self::getParameterDefinitions();
-        $requestParams = $definitions['request'];
-        $responseFields = $definitions['response'];
-
+        $allFields = self::getAllFieldDefinitions();
         $properties = [];
 
-        // ✨ Inherit ALL request parameters for detail view (NO duplication!)
-        foreach ($requestParams as $field => $definition) {
+        // ✨ Include ALL fields for detail view (NO duplication!)
+        foreach ($allFields as $field => $definition) {
             // Skip writeOnly fields if any exist
             if (isset($definition['writeOnly']) && $definition['writeOnly']) {
                 continue;
             }
 
             $properties[$field] = $definition;
-            // Transform description key: rest_param_* → rest_schema_*
-            $properties[$field]['description'] = str_replace('rest_param_', 'rest_schema_', $properties[$field]['description']);
             // Remove sanitization and validation-only properties
-            unset($properties[$field]['sanitize'], $properties[$field]['minLength'], $properties[$field]['required']);
-        }
-
-        // ✨ Inherit response-only fields for detail (NO duplication!)
-        $detailResponseFields = ['id'];
-        foreach ($detailResponseFields as $field) {
-            if (isset($responseFields[$field])) {
-                $properties[$field] = $responseFields[$field];
-            }
+            unset($properties[$field]['sanitize'], $properties[$field]['minLength'], $properties[$field]['required'], $properties[$field]['readOnly']);
         }
 
         return [
             'type' => 'object',
             'required' => ['id', 'filepath', 'mode', 'content'],
             'properties' => $properties
+        ];
+    }
+
+    /**
+     * Get all field definitions with complete metadata
+     *
+     * Single Source of Truth for ALL field definitions.
+     * Each field includes type, validation, sanitization, and examples.
+     *
+     * @return array<string, array<string, mixed>> Complete field definitions
+     */
+    private static function getAllFieldDefinitions(): array
+    {
+        return [
+            'id' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cf_id',
+                'pattern' => '^[0-9]+$',
+                'readOnly' => true,
+                'example' => '15'
+            ],
+            'filepath' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cf_filepath',
+                'minLength' => 1,
+                'maxLength' => 500,
+                'sanitize' => 'string',
+                'required' => true,
+                'example' => '/etc/asterisk/custom.conf'
+            ],
+            'content' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cf_content',
+                'sanitize' => 'string',
+                'required' => true,
+                'example' => 'W2dlbmVyYWxdCmRlYnVnPXllcw=='
+            ],
+            'mode' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cf_mode',
+                'enum' => ['override', 'append', 'script', 'none'],
+                'sanitize' => 'string',
+                'default' => 'none',
+                'example' => 'append'
+            ],
+            'description' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cf_description',
+                'maxLength' => 500,
+                'sanitize' => 'text',
+                'default' => '',
+                'example' => 'Custom Asterisk configuration'
+            ],
+            'changed' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cf_changed',
+                'enum' => ['0', '1'],
+                'sanitize' => 'string',
+                'default' => '0',
+                'example' => '0'
+            ],
         ];
     }
 
@@ -175,58 +210,27 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function getParameterDefinitions(): array
     {
+        $allFields = self::getAllFieldDefinitions();
+
+        // Separate writable fields (for requests) and response-only fields
+        $writableFields = [];
+        $responseOnlyFields = [];
+
+        foreach ($allFields as $fieldName => $fieldDef) {
+            if (!empty($fieldDef['readOnly'])) {
+                $responseOnlyFields[$fieldName] = $fieldDef;
+            } else {
+                // For request section, use rest_param_* descriptions
+                $requestField = $fieldDef;
+                $requestField['description'] = str_replace('rest_schema_', 'rest_param_', $fieldDef['description']);
+                $writableFields[$fieldName] = $requestField;
+            }
+        }
+
         return [
-            'request' => [
-                'filepath' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_cf_filepath',
-                    'minLength' => 1,
-                    'maxLength' => 500,
-                    'sanitize' => 'string',
-                    'required' => true,
-                    'example' => '/etc/asterisk/custom.conf'
-                ],
-                'content' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_cf_content',
-                    'sanitize' => 'string',
-                    'required' => true,
-                    'example' => 'W2dlbmVyYWxdCmRlYnVnPXllcw=='
-                ],
-                'mode' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_cf_mode',
-                    'enum' => ['override', 'append', 'script', 'none'],
-                    'sanitize' => 'string',
-                    'default' => 'none',
-                    'example' => 'append'
-                ],
-                'description' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_cf_description',
-                    'maxLength' => 500,
-                    'sanitize' => 'text',
-                    'default' => '',
-                    'example' => 'Custom Asterisk configuration'
-                ],
-                'changed' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_cf_changed',
-                    'enum' => ['0', '1'],
-                    'sanitize' => 'string',
-                    'default' => '0',
-                    'example' => '0'
-                ]
-            ],
-            'response' => [
-                // Auto-generated ID field (readOnly, not accepted in requests)
-                'id' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cf_id',
-                    'pattern' => '^[0-9]+$',
-                    'example' => '15'
-                ]
-            ]
+            'request' => $writableFields,
+            'response' => $responseOnlyFields,
+            'related' => []
         ];
     }
 

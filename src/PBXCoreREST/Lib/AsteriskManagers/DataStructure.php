@@ -355,17 +355,14 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
 
     /**
-     * Get parameter definitions for Asterisk managers (Single Source of Truth)
+     * Get all field definitions with complete metadata
      *
-     * Defines all field properties in one central location:
-     * - Data types and validation constraints
-     * - Sanitization rules for security
-     * - Default values for new records
-     * - OpenAPI documentation
+     * Single Source of Truth for ALL field definitions.
+     * Each field includes type, validation, sanitization, and examples.
      *
-     * @return array<string, array<string, array<string, mixed>>> Parameter definitions
+     * @return array<string, array<string, mixed>> Complete field definitions
      */
-    public static function getParameterDefinitions(): array
+    private static function getAllFieldDefinitions(): array
     {
         $availablePermissions = self::getAvailablePermissions();
 
@@ -389,118 +386,165 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         }
 
         return [
-            'request' => [
-                'username' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_am_username',
-                    'minLength' => 1,
-                    'maxLength' => 50,
-                    'sanitize' => 'text',
-                    'required' => true,
-                    'example' => 'admin'
-                ],
-                'secret' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_am_secret',
-                    'maxLength' => 255,
-                    'sanitize' => 'string',
-                    'required' => true, // Required for CREATE, but auto-generated if empty
-                    'example' => 'securePassword123'
-                ],
-                'description' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_am_description',
-                    'maxLength' => 255,
-                    'sanitize' => 'text',
-                    'default' => '',
-                    'example' => 'Administrator account'
-                ],
-                'networkfilterid' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_am_networkfilterid',
-                    'pattern' => '^([0-9]+|none)$',
-                    'sanitize' => 'string',
-                    'default' => 'none',
-                    'example' => '5'
-                ],
-                'permissions' => [
-                    'type' => 'object',
-                    'description' => 'rest_param_am_permissions',
-                    'properties' => $permissionFields,
-                    'sanitize' => 'array', // Special handling in SaveRecordAction
-                    'default' => array_fill_keys(array_keys($permissionFields), false),
-                    'example' => [
-                        'call_read' => true,
-                        'call_write' => false,
-                        'cdr_read' => true,
-                        'cdr_write' => false,
-                        'originate_read' => false,
-                        'originate_write' => false,
-                        'reporting_read' => true,
-                        'reporting_write' => false,
-                        'agent_read' => true,
-                        'agent_write' => true,
-                        'config_read' => false,
-                        'config_write' => false,
-                        'dialplan_read' => false,
-                        'dialplan_write' => false,
-                        'dtmf_read' => false,
-                        'dtmf_write' => false,
-                        'log_read' => false,
-                        'log_write' => false,
-                        'system_read' => false,
-                        'system_write' => false,
-                        'user_read' => true,
-                        'user_write' => false,
-                        'verbose_read' => false,
-                        'verbose_write' => false,
-                        'command_read' => false,
-                        'command_write' => false
-                    ]
-                ],
-                'read' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_am_read',
-                    'sanitize' => 'string',
-                    'readOnly' => true, // Calculated from permissions
-                    'example' => 'call,cdr,agent'
-                ],
-                'write' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_am_write',
-                    'sanitize' => 'string',
-                    'readOnly' => true, // Calculated from permissions
-                    'example' => 'all'
+            // ========== WRITABLE FIELDS ==========
+            'username' => [
+                'type' => 'string',
+                'description' => 'rest_schema_am_username',
+                'minLength' => 1,
+                'maxLength' => 50,
+                'sanitize' => 'text',
+                'required' => true,
+                'example' => 'admin'
+            ],
+            'secret' => [
+                'type' => 'string',
+                'description' => 'rest_schema_am_secret',
+                'maxLength' => 255,
+                'sanitize' => 'string',
+                'required' => true, // Required for CREATE, but auto-generated if empty
+                'example' => 'securePassword123'
+            ],
+            'description' => [
+                'type' => 'string',
+                'description' => 'rest_schema_am_description',
+                'maxLength' => 255,
+                'sanitize' => 'text',
+                'default' => '',
+                'example' => 'Administrator account'
+            ],
+            'networkfilterid' => [
+                'type' => 'string',
+                'description' => 'rest_schema_am_networkfilterid',
+                'pattern' => '^([0-9]+|none)$',
+                'sanitize' => 'string',
+                'default' => 'none',
+                'example' => '5'
+            ],
+            'permissions' => [
+                'type' => 'object',
+                'description' => 'rest_schema_am_permissions',
+                'properties' => $permissionFields,
+                'sanitize' => 'array', // Special handling in SaveRecordAction
+                'default' => array_fill_keys(array_keys($permissionFields), false),
+                'example' => [
+                    'call_read' => true,
+                    'call_write' => false,
+                    'cdr_read' => true,
+                    'cdr_write' => false,
+                    'originate_read' => false,
+                    'originate_write' => false,
+                    'reporting_read' => true,
+                    'reporting_write' => false,
+                    'agent_read' => true,
+                    'agent_write' => true,
+                    'config_read' => false,
+                    'config_write' => false,
+                    'dialplan_read' => false,
+                    'dialplan_write' => false,
+                    'dtmf_read' => false,
+                    'dtmf_write' => false,
+                    'log_read' => false,
+                    'log_write' => false,
+                    'system_read' => false,
+                    'system_write' => false,
+                    'user_read' => true,
+                    'user_write' => false,
+                    'verbose_read' => false,
+                    'verbose_write' => false,
+                    'command_read' => false,
+                    'command_write' => false
                 ]
             ],
-            'response' => [
-                'id' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_am_id',
-                    'pattern' => '^[0-9]+$',
-                    'example' => '53'
-                ],
-                'networkfilter_represent' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_am_networkfilter_represent',
-                    'example' => '<i class="filter icon"></i> Office Network'
-                ],
-                'isSystem' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_schema_am_is_system',
-                    'example' => false
-                ],
-                'readPermissionsSummary' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_am_read_permissions_summary',
-                    'example' => 'call, cdr, agent'
-                ],
-                'writePermissionsSummary' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_am_write_permissions_summary',
-                    'example' => 'all'
-                ]
+            'read' => [
+                'type' => 'string',
+                'description' => 'rest_schema_am_read',
+                'sanitize' => 'string',
+                'readOnly' => true, // Calculated from permissions
+                'example' => 'call,cdr,agent'
+            ],
+            'write' => [
+                'type' => 'string',
+                'description' => 'rest_schema_am_write',
+                'sanitize' => 'string',
+                'readOnly' => true, // Calculated from permissions
+                'example' => 'all'
+            ],
+
+            // ========== READ-ONLY FIELDS ==========
+            'id' => [
+                'type' => 'string',
+                'description' => 'rest_schema_am_id',
+                'pattern' => '^[0-9]+$',
+                'readOnly' => true,
+                'example' => '53'
+            ],
+            'networkfilter_represent' => [
+                'type' => 'string',
+                'description' => 'rest_schema_am_networkfilter_represent',
+                'readOnly' => true,
+                'example' => '<i class="filter icon"></i> Office Network'
+            ],
+            'isSystem' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_am_is_system',
+                'readOnly' => true,
+                'example' => false
+            ],
+            'readPermissionsSummary' => [
+                'type' => 'string',
+                'description' => 'rest_schema_am_read_permissions_summary',
+                'readOnly' => true,
+                'example' => 'call, cdr, agent'
+            ],
+            'writePermissionsSummary' => [
+                'type' => 'string',
+                'description' => 'rest_schema_am_write_permissions_summary',
+                'readOnly' => true,
+                'example' => 'all'
             ]
+        ];
+    }
+
+    /**
+     * Get parameter definitions for Asterisk managers (Single Source of Truth)
+     *
+     * Defines all field properties in one central location:
+     * - Data types and validation constraints
+     * - Sanitization rules for security
+     * - Default values for new records
+     * - OpenAPI documentation
+     *
+     * @return array<string, array<string, array<string, mixed>>> Parameter definitions
+     */
+    public static function getParameterDefinitions(): array
+    {
+        $allFields = self::getAllFieldDefinitions();
+
+        // Separate writable fields (for requests) and response-only fields
+        $writableFields = [];
+        $responseOnlyFields = [];
+
+        foreach ($allFields as $fieldName => $fieldDef) {
+            if (!empty($fieldDef['readOnly'])) {
+                $responseOnlyFields[$fieldName] = $fieldDef;
+            } else {
+                // For request section, use rest_param_* descriptions
+                $requestField = $fieldDef;
+                $requestField['description'] = str_replace('rest_schema_', 'rest_param_', $fieldDef['description']);
+                $writableFields[$fieldName] = $requestField;
+            }
+        }
+
+        return [
+            // ========== REQUEST PARAMETERS ==========
+            // Used in API requests (POST, PUT, PATCH)
+            // Referenced by ApiParameterRef in Controller
+            'request' => $writableFields,
+
+            // ========== RESPONSE-ONLY FIELDS ==========
+            // Only in API responses, not in requests
+            // Used by getListItemSchema() and getDetailSchema()
+            'response' => $responseOnlyFields
         ];
     }
 

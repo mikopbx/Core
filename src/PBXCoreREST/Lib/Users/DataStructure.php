@@ -37,7 +37,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     /**
      * Create data structure from model instance
      *
-     * @param object $model The Users model instance
+     * @param \MikoPBX\Common\Models\Users $model The Users model instance
      * @return array<string, mixed> The structured data array
      */
     public static function createFromModel($model): array
@@ -55,7 +55,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     /**
      * Create simplified data structure for list view
      *
-     * @param object $model The Users model instance
+     * @param \MikoPBX\Common\Models\Users $model The Users model instance
      * @return array<string, mixed> Simplified data structure
      */
     public static function createForList($model): array
@@ -185,6 +185,62 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
 
     /**
+     * Get all field definitions with complete metadata
+     *
+     * Single Source of Truth for ALL field definitions.
+     * Each field includes type, validation, sanitization, and examples.
+     *
+     * @return array<string, array<string, mixed>> Complete field definitions
+     */
+    private static function getAllFieldDefinitions(): array
+    {
+        return [
+            // User credentials (writable)
+            'email' => [
+                'type' => 'string',
+                'description' => 'rest_schema_users_email',
+                'format' => 'email',
+                'maxLength' => 255,
+                'sanitize' => 'string',
+                'required' => true,
+                'example' => 'admin@example.com'
+            ],
+            'username' => [
+                'type' => 'string',
+                'description' => 'rest_schema_users_username',
+                'minLength' => 3,
+                'maxLength' => 50,
+                'sanitize' => 'string',
+                'required' => true,
+                'example' => 'admin'
+            ],
+            // User preferences (writable)
+            'language' => [
+                'type' => 'string',
+                'description' => 'rest_schema_users_language',
+                'enum' => ['en', 'ru', 'de', 'es', 'fr', 'pt', 'uk', 'it', 'cs', 'tr', 'ja', 'vi', 'zh_Hans', 'pl', 'sv', 'nl', 'ka', 'ar', 'az', 'fa', 'ro'],
+                'default' => 'en',
+                'sanitize' => 'string',
+                'example' => 'en'
+            ],
+            'avatar' => [
+                'type' => 'string',
+                'description' => 'rest_schema_users_avatar',
+                'maxLength' => 500,
+                'sanitize' => 'string',
+                'example' => '/assets/img/avatars/admin.png'
+            ],
+            // Response-only fields (readOnly)
+            'id' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_users_id',
+                'readOnly' => true,
+                'example' => 1
+            ]
+        ];
+    }
+
+    /**
      * Get parameter definitions (Single Source of Truth)
      *
      * WHY: Centralizes user management parameter definitions.
@@ -194,53 +250,33 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function getParameterDefinitions(): array
     {
+        $allFields = self::getAllFieldDefinitions();
+
+        // Separate writable fields (for requests) and response-only fields
+        $writableFields = [];
+        $responseOnlyFields = [];
+
+        foreach ($allFields as $fieldName => $fieldDef) {
+            if (!empty($fieldDef['readOnly'])) {
+                $responseOnlyFields[$fieldName] = $fieldDef;
+            } else {
+                // For request section, use rest_param_* descriptions
+                $requestField = $fieldDef;
+                $requestField['description'] = str_replace('rest_schema_', 'rest_param_', $fieldDef['description']);
+                $writableFields[$fieldName] = $requestField;
+            }
+        }
+
         return [
-            'request' => [
-                // User credentials
-                'email' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_users_email',
-                    'format' => 'email',
-                    'maxLength' => 255,
-                    'sanitize' => 'string',
-                    'required' => true,
-                    'example' => 'admin@example.com'
-                ],
-                'username' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_users_username',
-                    'minLength' => 3,
-                    'maxLength' => 50,
-                    'sanitize' => 'string',
-                    'required' => true,
-                    'example' => 'admin'
-                ],
-                // User preferences
-                'language' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_users_language',
-                    'enum' => ['en', 'ru', 'de', 'es', 'fr', 'pt', 'uk', 'it', 'cs', 'tr', 'ja', 'vi', 'zh_Hans', 'pl', 'sv', 'nl', 'ka', 'ar', 'az', 'fa', 'ro'],
-                    'default' => 'en',
-                    'sanitize' => 'string',
-                    'example' => 'en'
-                ],
-                'avatar' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_users_avatar',
-                    'maxLength' => 500,
-                    'sanitize' => 'string',
-                    'example' => '/assets/img/avatars/admin.png'
-                ]
-            ],
-            'response' => [
-                // Auto-generated ID field (readOnly, not accepted in requests)
-                'id' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_users_id',
-                    'readOnly' => true,
-                    'example' => 1
-                ]
-            ]
+            // ========== REQUEST PARAMETERS ==========
+            // Used in API requests (POST, PUT, PATCH)
+            // Referenced by ApiParameterRef in Controller
+            'request' => $writableFields,
+
+            // ========== RESPONSE-ONLY FIELDS ==========
+            // Only in API responses, not in requests
+            // Used by getListItemSchema() and getDetailSchema()
+            'response' => $responseOnlyFields
         ];
     }
 
