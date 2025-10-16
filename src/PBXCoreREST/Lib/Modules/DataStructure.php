@@ -215,6 +215,150 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
 
     /**
+     * Get all field definitions with complete metadata
+     *
+     * Single Source of Truth for ALL field definitions.
+     * Each field includes type, validation, sanitization, and examples.
+     *
+     * @return array<string, array<string, mixed>> Complete field definitions
+     */
+    private static function getAllFieldDefinitions(): array
+    {
+        return [
+            // Module identification
+            'id' => [
+                'type' => 'string',
+                'description' => 'rest_schema_module_id',
+                'maxLength' => 100,
+                'sanitize' => 'string',
+                'example' => 'ModuleTemplate'
+            ],
+            'uniqid' => [
+                'type' => 'string',
+                'description' => 'rest_schema_module_uniqid',
+                'maxLength' => 100,
+                'sanitize' => 'string',
+                'example' => 'ModuleTemplate'
+            ],
+            // Module metadata
+            'name' => [
+                'type' => 'string',
+                'description' => 'rest_schema_module_name',
+                'maxLength' => 255,
+                'sanitize' => 'string',
+                'example' => 'Module Template'
+            ],
+            'version' => [
+                'type' => 'string',
+                'description' => 'rest_schema_module_version',
+                'maxLength' => 50,
+                'sanitize' => 'string',
+                'example' => '1.0.0'
+            ],
+            'developer' => [
+                'type' => 'string',
+                'description' => 'rest_schema_module_developer',
+                'maxLength' => 255,
+                'sanitize' => 'string',
+                'example' => 'MIKO LLC'
+            ],
+            'description' => [
+                'type' => 'string',
+                'description' => 'rest_schema_module_description',
+                'maxLength' => 1000,
+                'sanitize' => 'string',
+                'example' => 'Template module for developers'
+            ],
+            'disabled' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_module_disabled',
+                'default' => false,
+                'sanitize' => 'bool',
+                'example' => false
+            ],
+            // Installation parameters
+            'release_id' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_module_release_id',
+                'minimum' => 0,
+                'sanitize' => 'int',
+                'example' => 12345
+            ],
+            'filePath' => [
+                'type' => 'string',
+                'description' => 'rest_schema_module_file_path',
+                'maxLength' => 500,
+                'sanitize' => 'string',
+                'example' => '/tmp/ModuleTemplate.zip'
+            ],
+            // Query parameters for list filtering
+            'search' => [
+                'type' => 'string',
+                'description' => 'rest_schema_module_search',
+                'maxLength' => 255,
+                'sanitize' => 'string',
+                'example' => 'Template'
+            ],
+            'limit' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_module_limit',
+                'minimum' => 1,
+                'maximum' => 100,
+                'default' => 20,
+                'sanitize' => 'int',
+                'example' => 20
+            ],
+            'offset' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_module_offset',
+                'minimum' => 0,
+                'default' => 0,
+                'sanitize' => 'int',
+                'example' => 0
+            ],
+            'order' => [
+                'type' => 'string',
+                'description' => 'rest_schema_module_order',
+                'enum' => ['name', 'version', 'developer', 'disabled'],
+                'default' => 'name',
+                'sanitize' => 'string',
+                'example' => 'name'
+            ],
+            // Response-only fields
+            'path' => [
+                'type' => 'string',
+                'description' => 'rest_schema_module_path',
+                'readOnly' => true,
+                'example' => '/usr/www/src/Modules/ModuleTemplate'
+            ],
+            'min_pbx_version' => [
+                'type' => 'string',
+                'description' => 'rest_schema_module_min_pbx_version',
+                'readOnly' => true,
+                'example' => '2024.1.0'
+            ],
+            'max_pbx_version' => [
+                'type' => 'string',
+                'description' => 'rest_schema_module_max_pbx_version',
+                'readOnly' => true,
+                'example' => '2025.12.31'
+            ],
+            'installed' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_module_installed',
+                'readOnly' => true,
+                'example' => true
+            ],
+            'commercial' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_module_commercial',
+                'readOnly' => true,
+                'example' => false
+            ]
+        ];
+    }
+
+    /**
      * Get parameter definitions (Single Source of Truth)
      *
      * WHY: Centralizes module parameter definitions.
@@ -224,168 +368,33 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function getParameterDefinitions(): array
     {
+        $allFields = self::getAllFieldDefinitions();
+
+        // Separate writable fields (for requests) and response-only fields
+        $writableFields = [];
+        $responseOnlyFields = [];
+
+        foreach ($allFields as $fieldName => $fieldDef) {
+            if (!empty($fieldDef['readOnly'])) {
+                $responseOnlyFields[$fieldName] = $fieldDef;
+            } else {
+                // For request section, use rest_param_* descriptions
+                $requestField = $fieldDef;
+                $requestField['description'] = str_replace('rest_schema_', 'rest_param_', $fieldDef['description']);
+                $writableFields[$fieldName] = $requestField;
+            }
+        }
+
         return [
-            'request' => [
-                // Module identification
-                'id' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_module_id',
-                    'maxLength' => 100,
-                    'sanitize' => 'string',
-                    'example' => 'ModuleTemplate'
-                ],
-                'uniqid' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_module_uniqid',
-                    'maxLength' => 100,
-                    'sanitize' => 'string',
-                    'example' => 'ModuleTemplate'
-                ],
-                // Module metadata
-                'name' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_module_name',
-                    'maxLength' => 255,
-                    'sanitize' => 'string',
-                    'example' => 'Module Template'
-                ],
-                'version' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_module_version',
-                    'maxLength' => 50,
-                    'sanitize' => 'string',
-                    'example' => '1.0.0'
-                ],
-                'developer' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_module_developer',
-                    'maxLength' => 255,
-                    'sanitize' => 'string',
-                    'example' => 'MIKO LLC'
-                ],
-                'description' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_module_description',
-                    'maxLength' => 1000,
-                    'sanitize' => 'string',
-                    'example' => 'Template module for developers'
-                ],
-                'disabled' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_param_module_disabled',
-                    'default' => false,
-                    'sanitize' => 'bool',
-                    'example' => false
-                ],
-                // Installation parameters
-                'release_id' => [
-                    'type' => 'integer',
-                    'description' => 'rest_param_module_release_id',
-                    'minimum' => 0,
-                    'sanitize' => 'int',
-                    'example' => 12345
-                ],
-                'filePath' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_module_file_path',
-                    'maxLength' => 500,
-                    'sanitize' => 'string',
-                    'example' => '/tmp/ModuleTemplate.zip'
-                ],
-                // Query parameters for list filtering
-                'search' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_search',
-                    'maxLength' => 255,
-                    'sanitize' => 'string',
-                    'example' => 'Template'
-                ],
-                'limit' => [
-                    'type' => 'integer',
-                    'description' => 'rest_param_limit',
-                    'minimum' => 1,
-                    'maximum' => 100,
-                    'default' => 20,
-                    'sanitize' => 'int',
-                    'example' => 20
-                ],
-                'offset' => [
-                    'type' => 'integer',
-                    'description' => 'rest_param_offset',
-                    'minimum' => 0,
-                    'default' => 0,
-                    'sanitize' => 'int',
-                    'example' => 0
-                ],
-                'order' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_order',
-                    'enum' => ['name', 'version', 'developer', 'disabled'],
-                    'default' => 'name',
-                    'sanitize' => 'string',
-                    'example' => 'name'
-                ]
-            ],
-            'response' => [
-                // Common module fields
-                'id' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_module_id',
-                    'example' => 'ModuleTemplate'
-                ],
-                'name' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_module_name',
-                    'example' => 'Module Template'
-                ],
-                'version' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_module_version',
-                    'example' => '1.0.0'
-                ],
-                'developer' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_module_developer',
-                    'example' => 'MIKO LLC'
-                ],
-                'description' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_module_description',
-                    'example' => 'Template module for developers'
-                ],
-                'disabled' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_schema_module_disabled',
-                    'example' => false
-                ],
-                // Detail-specific fields
-                'path' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_module_path',
-                    'example' => '/usr/www/src/Modules/ModuleTemplate'
-                ],
-                'min_pbx_version' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_module_min_pbx_version',
-                    'example' => '2024.1.0'
-                ],
-                'max_pbx_version' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_module_max_pbx_version',
-                    'example' => '2025.12.31'
-                ],
-                // List-specific fields
-                'installed' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_schema_module_installed',
-                    'example' => true
-                ],
-                'commercial' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_schema_module_commercial',
-                    'example' => false
-                ]
-            ]
+            // ========== REQUEST PARAMETERS ==========
+            // Used in API requests (POST, PUT, PATCH)
+            // Referenced by ApiParameterRef in Controller
+            'request' => $writableFields,
+
+            // ========== RESPONSE-ONLY FIELDS ==========
+            // Only in API responses, not in requests
+            // Used by getOpenApiSchema() method
+            'response' => $responseOnlyFields,
         ];
     }
 

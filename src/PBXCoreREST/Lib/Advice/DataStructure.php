@@ -122,6 +122,52 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
 
     /**
+     * Get all field definitions with complete metadata
+     *
+     * Single Source of Truth for ALL field definitions.
+     * Each field includes type, validation, sanitization, and examples.
+     *
+     * @return array<string, array<string, mixed>> Complete field definitions
+     */
+    private static function getAllFieldDefinitions(): array
+    {
+        return [
+            // Query parameters for filtering (Advice is read-only)
+            'category' => [
+                'type' => 'string',
+                'description' => 'rest_schema_advice_category_filter',
+                'enum' => ['security', 'configuration', 'performance', 'maintenance', 'updates'],
+                'sanitize' => 'string',
+                'example' => 'security'
+            ],
+            'severity' => [
+                'type' => 'string',
+                'description' => 'rest_schema_advice_severity_filter',
+                'enum' => ['critical', 'warning', 'info'],
+                'sanitize' => 'string',
+                'example' => 'warning'
+            ],
+            'force' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_advice_force',
+                'sanitize' => 'bool',
+                'default' => false,
+                'example' => true
+            ],
+            // Response-only fields
+            'advice' => [
+                'type' => 'object',
+                'description' => 'rest_schema_advice_advice',
+                'readOnly' => true,
+                'additionalProperties' => [
+                    'type' => 'array',
+                    'items' => ['$ref' => '#/components/schemas/AdviceItem']
+                ]
+            ]
+        ];
+    }
+
+    /**
      * Get parameter definitions (Single Source of Truth)
      *
      * WHY: Centralizes advice parameter definitions and nested schemas.
@@ -131,42 +177,33 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function getParameterDefinitions(): array
     {
+        $allFields = self::getAllFieldDefinitions();
+
+        // Separate writable fields (for requests) and response-only fields
+        $writableFields = [];
+        $responseOnlyFields = [];
+
+        foreach ($allFields as $fieldName => $fieldDef) {
+            if (!empty($fieldDef['readOnly'])) {
+                $responseOnlyFields[$fieldName] = $fieldDef;
+            } else {
+                // For request section, use rest_param_* descriptions
+                $requestField = $fieldDef;
+                $requestField['description'] = str_replace('rest_schema_', 'rest_param_', $fieldDef['description']);
+                $writableFields[$fieldName] = $requestField;
+            }
+        }
+
         return [
-            'request' => [
-                // Query parameters for filtering (Advice is read-only)
-                'category' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_advice_category_filter',
-                    'enum' => ['security', 'configuration', 'performance', 'maintenance', 'updates'],
-                    'sanitize' => 'string',
-                    'example' => 'security'
-                ],
-                'severity' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_advice_severity_filter',
-                    'enum' => ['critical', 'warning', 'info'],
-                    'sanitize' => 'string',
-                    'example' => 'warning'
-                ],
-                'force' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_param_advice_force',
-                    'sanitize' => 'bool',
-                    'default' => false,
-                    'example' => true
-                ]
-            ],
-            'response' => [
-                // Response-only fields
-                'advice' => [
-                    'type' => 'object',
-                    'description' => 'rest_schema_advice_advice',
-                    'additionalProperties' => [
-                        'type' => 'array',
-                        'items' => ['$ref' => '#/components/schemas/AdviceItem']
-                    ]
-                ]
-            ],
+            // ========== REQUEST PARAMETERS ==========
+            // Used in API requests (GET query parameters for filtering)
+            // Referenced by ApiParameterRef in Controller
+            'request' => $writableFields,
+
+            // ========== RESPONSE-ONLY FIELDS ==========
+            // Only in API responses, not in requests
+            'response' => $responseOnlyFields,
+
             // ========== RELATED SCHEMAS ==========
             // Nested object schemas referenced by $ref in OpenAPI
             'related' => [

@@ -32,7 +32,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      * Create response data structure from URL
      *
      * @param string $url Documentation URL
-     * @return array Response data
+     * @return array<string, mixed> Response data
      */
     public static function create(string $url): array
     {
@@ -44,7 +44,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      *
      * ✨ Inherits field definitions from getParameterDefinitions() - Single Source of Truth.
      *
-     * @return array OpenAPI schema
+     * @return array<string, mixed> OpenAPI schema
      */
     public static function getDetailSchema(): array
     {
@@ -68,9 +68,9 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     /**
      * Format data according to schema
      *
-     * @param array $data Data to format
+     * @param array<string, mixed> $data Data to format
      * @param string $schemaType Schema type ('detail' or 'list')
-     * @return array Formatted data
+     * @return array<string, mixed> Formatted data
      */
     protected static function formatBySchema(array $data, string $schemaType = 'detail'): array
     {
@@ -93,11 +93,69 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     /**
      * Get OpenAPI schema for list items (not used for this endpoint)
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public static function getListItemSchema(): array
     {
         return self::getDetailSchema();
+    }
+
+    /**
+     * Get all field definitions with complete metadata
+     *
+     * Single Source of Truth for ALL field definitions.
+     * Each field includes type, validation, sanitization, and examples.
+     *
+     * @return array<string, array<string, mixed>> Complete field definitions
+     */
+    private static function getAllFieldDefinitions(): array
+    {
+        return [
+            // Request parameters
+            'controller' => [
+                'type' => 'string',
+                'description' => 'rest_schema_wl_controller',
+                'in' => 'query',
+                'maxLength' => 255,
+                'sanitize' => 'string',
+                'required' => true,
+                'example' => 'Extensions'
+            ],
+            'action' => [
+                'type' => 'string',
+                'description' => 'rest_schema_wl_action',
+                'in' => 'query',
+                'maxLength' => 255,
+                'sanitize' => 'string',
+                'default' => 'index',
+                'example' => 'index'
+            ],
+            'language' => [
+                'type' => 'string',
+                'description' => 'rest_schema_wl_language',
+                'in' => 'query',
+                'enum' => ['en', 'ru'],
+                'sanitize' => 'string',
+                'default' => 'en',
+                'example' => 'en'
+            ],
+            'moduleId' => [
+                'type' => 'string',
+                'description' => 'rest_schema_wl_module_id',
+                'in' => 'query',
+                'maxLength' => 255,
+                'sanitize' => 'string',
+                'example' => 'ModuleUsersUI'
+            ],
+            // Response-only fields
+            'url' => [
+                'type' => 'string',
+                'description' => 'rest_schema_wl_url',
+                'format' => 'uri',
+                'readOnly' => true,
+                'example' => 'https://docs.mikopbx.com/mikopbx/v/english/manual/telephony/extensions'
+            ]
+        ];
     }
 
     /**
@@ -110,26 +168,32 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function getParameterDefinitions(): array
     {
+        $allFields = self::getAllFieldDefinitions();
+
+        // Separate writable fields (for requests) and response-only fields
+        $writableFields = [];
+        $responseOnlyFields = [];
+
+        foreach ($allFields as $fieldName => $fieldDef) {
+            if (!empty($fieldDef['readOnly'])) {
+                $responseOnlyFields[$fieldName] = $fieldDef;
+            } else {
+                // For request section, use rest_param_* descriptions
+                $requestField = $fieldDef;
+                $requestField['description'] = str_replace('rest_schema_', 'rest_param_', $fieldDef['description']);
+                $writableFields[$fieldName] = $requestField;
+            }
+        }
+
         return [
-            'request' => [
-                // Page identifier for documentation lookup
-                'page' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_wl_page',
-                    'maxLength' => 255,
-                    'sanitize' => 'string',
-                    'required' => true,
-                    'example' => 'extensions-index'
-                ]
-            ],
-            'response' => [
-                'url' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_wl_url',
-                    'format' => 'uri',
-                    'example' => 'https://docs.mikopbx.com/mikopbx/v/english/manual/telephony/extensions'
-                ]
-            ]
+            // ========== REQUEST PARAMETERS ==========
+            // Used in API requests (GET query parameters)
+            // Referenced by ApiParameterRef in Controller
+            'request' => $writableFields,
+
+            // ========== RESPONSE-ONLY FIELDS ==========
+            // Only in API responses, not in requests
+            'response' => $responseOnlyFields,
         ];
     }
 

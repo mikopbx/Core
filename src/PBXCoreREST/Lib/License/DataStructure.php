@@ -88,6 +88,135 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
 
     /**
+     * Get all field definitions with complete metadata
+     *
+     * Single Source of Truth for ALL field definitions.
+     * Each field includes type, validation, sanitization, and examples.
+     *
+     * License combines:
+     * - Request parameters (licKey, coupon, productId, featureId) - for write operations
+     * - Response fields (licenseKey, companyName, etc.) - read-only license information
+     * - Related schemas (LicenseProduct, LicenseFeature, LicensePingResponse) - nested objects
+     *
+     * @return array<string, array<string, mixed>> Complete field definitions
+     */
+    private static function getAllFieldDefinitions(): array
+    {
+        return [
+            // ========== REQUEST PARAMETERS ==========
+            'licKey' => [
+                'type' => 'string',
+                'description' => 'rest_schema_lic_licKey',
+                'pattern' => '^MIKO-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}$',
+                'sanitize' => 'string',
+                'example' => 'MIKO-GW9DC-EE22D-WB83S-C88PG'
+            ],
+            'coupon' => [
+                'type' => 'string',
+                'description' => 'rest_schema_lic_coupon',
+                'pattern' => '^MIKOUPD-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}$',
+                'sanitize' => 'string',
+                'example' => 'MIKOUPD-GK0DC-QE11D-WN87S-C88PF'
+            ],
+            'productId' => [
+                'type' => 'string',
+                'description' => 'rest_schema_lic_productId_param',
+                'sanitize' => 'string',
+                'example' => 'ModuleSmartIVR'
+            ],
+            'featureId' => [
+                'type' => 'string',
+                'description' => 'rest_schema_lic_featureId_param',
+                'sanitize' => 'string',
+                'example' => 'AdvancedCallRouting'
+            ],
+
+            // ========== RESPONSE-ONLY FIELDS ==========
+            'licenseKey' => [
+                'type' => 'string',
+                'description' => 'rest_schema_lic_licenseKey',
+                'pattern' => '^MIKO-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}$',
+                'nullable' => true,
+                'readOnly' => true,
+                'example' => 'MIKO-GW9DC-EE22D-WB83S-C88PG'
+            ],
+            'companyName' => [
+                'type' => 'string',
+                'description' => 'rest_schema_lic_companyName',
+                'maxLength' => 255,
+                'readOnly' => true,
+                'example' => 'Acme Corporation'
+            ],
+            'email' => [
+                'type' => 'string',
+                'description' => 'rest_schema_lic_email',
+                'format' => 'email',
+                'maxLength' => 255,
+                'readOnly' => true,
+                'example' => 'admin@example.com'
+            ],
+            'licenseType' => [
+                'type' => 'string',
+                'description' => 'rest_schema_lic_licenseType',
+                'enum' => ['trial', 'commercial', 'free'],
+                'readOnly' => true,
+                'example' => 'commercial'
+            ],
+            'expirationDate' => [
+                'type' => 'string',
+                'description' => 'rest_schema_lic_expirationDate',
+                'format' => 'date',
+                'nullable' => true,
+                'readOnly' => true,
+                'example' => '2025-12-31'
+            ],
+            'products' => [
+                'type' => 'array',
+                'description' => 'rest_schema_lic_products',
+                'readOnly' => true,
+                'items' => [
+                    '$ref' => '#/components/schemas/LicenseProduct'
+                ]
+            ],
+            'features' => [
+                'type' => 'array',
+                'description' => 'rest_schema_lic_features',
+                'readOnly' => true,
+                'items' => [
+                    '$ref' => '#/components/schemas/LicenseFeature'
+                ]
+            ],
+            'maxUsers' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_lic_maxUsers',
+                'minimum' => 0,
+                'nullable' => true,
+                'readOnly' => true,
+                'example' => 50
+            ],
+            'currentUsers' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_lic_currentUsers',
+                'minimum' => 0,
+                'readOnly' => true,
+                'example' => 25
+            ],
+            'isValid' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_lic_isValid',
+                'readOnly' => true,
+                'example' => true
+            ],
+            'serverResponse' => [
+                'type' => 'string',
+                'description' => 'rest_schema_lic_serverResponse',
+                'readOnly' => true,
+                'example' => 'License is active and valid'
+            ],
+        ];
+    }
+
+    /**
      * Get all field definitions (request parameters + response-only fields + related schemas)
      *
      * Single Source of Truth for ALL definitions in License API.
@@ -107,110 +236,33 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function getParameterDefinitions(): array
     {
+        $allFields = self::getAllFieldDefinitions();
+
+        // Separate writable fields (for requests) and response-only fields
+        $writableFields = [];
+        $responseOnlyFields = [];
+
+        foreach ($allFields as $fieldName => $fieldDef) {
+            if (!empty($fieldDef['readOnly'])) {
+                $responseOnlyFields[$fieldName] = $fieldDef;
+            } else {
+                // For request section, use rest_param_* descriptions
+                $requestField = $fieldDef;
+                $requestField['description'] = str_replace('rest_schema_', 'rest_param_', $fieldDef['description']);
+                $writableFields[$fieldName] = $requestField;
+            }
+        }
+
         return [
             // ========== REQUEST PARAMETERS ==========
             // Used in API requests (POST)
             // Referenced by ApiParameterRef in Controller
-            'request' => [
-                'licKey' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_lic_licKey',
-                    'pattern' => '^MIKO-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}$',
-                    'example' => 'MIKO-GW9DC-EE22D-WB83S-C88PG'
-                ],
-                'coupon' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_lic_coupon',
-                    'pattern' => '^MIKOUPD-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}$',
-                    'example' => 'MIKOUPD-GK0DC-QE11D-WN87S-C88PF'
-                ],
-                'productId' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_lic_productId',
-                    'example' => 'ModuleSmartIVR'
-                ],
-                'featureId' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_lic_featureId',
-                    'example' => 'AdvancedCallRouting'
-                ],
-            ],
+            'request' => $writableFields,
 
             // ========== RESPONSE-ONLY FIELDS ==========
             // Only in API responses, not in requests
             // Used by getDetailSchema()
-            'response' => [
-                'licenseKey' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_lic_licenseKey',
-                    'pattern' => '^MIKO-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}$',
-                    'nullable' => true,
-                    'example' => 'MIKO-GW9DC-EE22D-WB83S-C88PG'
-                ],
-                'companyName' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_lic_companyName',
-                    'maxLength' => 255,
-                    'example' => 'Acme Corporation'
-                ],
-                'email' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_lic_email',
-                    'format' => 'email',
-                    'maxLength' => 255,
-                    'example' => 'admin@example.com'
-                ],
-                'licenseType' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_lic_licenseType',
-                    'enum' => ['trial', 'commercial', 'free'],
-                    'example' => 'commercial'
-                ],
-                'expirationDate' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_lic_expirationDate',
-                    'format' => 'date',
-                    'nullable' => true,
-                    'example' => '2025-12-31'
-                ],
-                'products' => [
-                    'type' => 'array',
-                    'description' => 'rest_schema_lic_products',
-                    'items' => [
-                        '$ref' => '#/components/schemas/LicenseProduct'
-                    ]
-                ],
-                'features' => [
-                    'type' => 'array',
-                    'description' => 'rest_schema_lic_features',
-                    'items' => [
-                        '$ref' => '#/components/schemas/LicenseFeature'
-                    ]
-                ],
-                'maxUsers' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_lic_maxUsers',
-                    'minimum' => 0,
-                    'nullable' => true,
-                    'example' => 50
-                ],
-                'currentUsers' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_lic_currentUsers',
-                    'minimum' => 0,
-                    'example' => 25
-                ],
-                'isValid' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_schema_lic_isValid',
-                    'example' => true
-                ],
-                'serverResponse' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_lic_serverResponse',
-                    'example' => 'License is active and valid'
-                ]
-            ],
+            'response' => $responseOnlyFields,
 
             // ========== RELATED SCHEMAS ==========
             // Nested object schemas referenced by $ref in OpenAPI

@@ -149,6 +149,199 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
 
     /**
+     * Get all field definitions with complete metadata
+     *
+     * Single Source of Truth for ALL field definitions.
+     * Each field includes type, validation, sanitization, and examples.
+     *
+     * @return array<string, array<string, mixed>> Complete field definitions
+     */
+    private static function getAllFieldDefinitions(): array
+    {
+        return [
+            // Extension/peer identification
+            'extension' => [
+                'type' => 'string',
+                'description' => 'rest_schema_sip_extension',
+                'pattern' => '^[0-9]{2,10}$',
+                'sanitize' => 'string',
+                'example' => '201'
+            ],
+            'id' => [
+                'type' => 'string',
+                'description' => 'rest_schema_sip_id',
+                'pattern' => '^SIP-[A-Z0-9]{8,32}$',
+                'sanitize' => 'string',
+                'example' => 'SIP-201'
+            ],
+            // Query parameters for history filtering
+            'dateFrom' => [
+                'type' => 'string',
+                'description' => 'rest_schema_sip_date_from',
+                'format' => 'date-time',
+                'sanitize' => 'string',
+                'example' => '2025-01-01T00:00:00'
+            ],
+            'dateTo' => [
+                'type' => 'string',
+                'description' => 'rest_schema_sip_date_to',
+                'format' => 'date-time',
+                'sanitize' => 'string',
+                'example' => '2025-01-31T23:59:59'
+            ],
+            'event' => [
+                'type' => 'string',
+                'description' => 'rest_schema_sip_event',
+                'enum' => ['REGISTER', 'UNREGISTER', 'CALL', 'HANGUP'],
+                'sanitize' => 'string',
+                'example' => 'REGISTER'
+            ],
+            // Pagination parameters
+            'limit' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_sip_limit',
+                'minimum' => 1,
+                'maximum' => 1000,
+                'default' => 50,
+                'sanitize' => 'int',
+                'example' => 50
+            ],
+            'offset' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_sip_offset',
+                'minimum' => 0,
+                'default' => 0,
+                'sanitize' => 'int',
+                'example' => 0
+            ],
+            // Response-only peer status fields
+            'state' => [
+                'type' => 'string',
+                'description' => 'rest_schema_sip_peer_state',
+                'enum' => ['OK', 'UNREACHABLE', 'LAGGED', 'UNKNOWN', 'OFF', 'REGISTERED'],
+                'readOnly' => true,
+                'example' => 'OK'
+            ],
+            'useragent' => [
+                'type' => 'string',
+                'description' => 'rest_schema_sip_peer_useragent',
+                'readOnly' => true,
+                'example' => 'Grandstream GXP2170 1.0.5.26'
+            ],
+            'ipaddress' => [
+                'type' => 'string',
+                'description' => 'rest_schema_sip_peer_ipaddress',
+                'pattern' => '^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$',
+                'readOnly' => true,
+                'example' => '192.168.1.100'
+            ],
+            'port' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_sip_peer_port',
+                'minimum' => 1,
+                'maximum' => 65535,
+                'readOnly' => true,
+                'example' => 5060
+            ],
+            'codec' => [
+                'type' => 'string',
+                'description' => 'rest_schema_sip_peer_codec',
+                'readOnly' => true,
+                'example' => 'alaw,ulaw,g729'
+            ],
+            // Registry fields
+            'username' => [
+                'type' => 'string',
+                'description' => 'rest_schema_sip_registry_username',
+                'maxLength' => 100,
+                'readOnly' => true,
+                'example' => 'mysipuser'
+            ],
+            'host' => [
+                'type' => 'string',
+                'description' => 'rest_schema_sip_registry_host',
+                'maxLength' => 255,
+                'readOnly' => true,
+                'example' => 'sip.provider.com'
+            ],
+            // Statistics fields
+            'totalCalls' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_sip_stats_total_calls',
+                'minimum' => 0,
+                'readOnly' => true,
+                'example' => 150
+            ],
+            'successfulCalls' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_sip_stats_successful_calls',
+                'minimum' => 0,
+                'readOnly' => true,
+                'example' => 145
+            ],
+            'failedCalls' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_sip_stats_failed_calls',
+                'minimum' => 0,
+                'readOnly' => true,
+                'example' => 5
+            ],
+            'totalDuration' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_sip_stats_total_duration',
+                'minimum' => 0,
+                'readOnly' => true,
+                'example' => 7200
+            ],
+            'averageDuration' => [
+                'type' => 'number',
+                'description' => 'rest_schema_sip_stats_average_duration',
+                'minimum' => 0,
+                'readOnly' => true,
+                'example' => 48.5
+            ],
+            // Secret field
+            'secret' => [
+                'type' => 'string',
+                'description' => 'rest_schema_sip_secret_value',
+                'readOnly' => true,
+                'example' => 'a1b2c3d4e5f6'
+            ],
+            // History fields
+            'timestamp' => [
+                'type' => 'string',
+                'description' => 'rest_schema_sip_history_timestamp',
+                'format' => 'date-time',
+                'readOnly' => true,
+                'example' => '2025-01-15 10:30:45'
+            ],
+            // Auth failure fields
+            'failureCount' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_sip_auth_failure_count',
+                'minimum' => 0,
+                'readOnly' => true,
+                'example' => 3
+            ],
+            'lastFailureTime' => [
+                'type' => 'string',
+                'description' => 'rest_schema_sip_auth_last_failure_time',
+                'format' => 'date-time',
+                'readOnly' => true,
+                'example' => '2025-01-15 10:30:45'
+            ],
+            'blockedUntil' => [
+                'type' => 'string',
+                'description' => 'rest_schema_sip_auth_blocked_until',
+                'format' => 'date-time',
+                'nullable' => true,
+                'readOnly' => true,
+                'example' => '2025-01-15 11:30:45'
+            ],
+        ];
+    }
+
+    /**
      * Get parameter definitions (Single Source of Truth)
      *
      * WHY: Centralizes SIP monitoring parameter definitions.
@@ -158,111 +351,26 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function getParameterDefinitions(): array
     {
+        $allFields = self::getAllFieldDefinitions();
+
+        // Separate writable fields (for requests) and response-only fields
+        $writableFields = [];
+        $responseOnlyFields = [];
+
+        foreach ($allFields as $fieldName => $fieldDef) {
+            if (!empty($fieldDef['readOnly'])) {
+                $responseOnlyFields[$fieldName] = $fieldDef;
+            } else {
+                // For request section, use rest_param_* descriptions
+                $requestField = $fieldDef;
+                $requestField['description'] = str_replace('rest_schema_', 'rest_param_', $fieldDef['description']);
+                $writableFields[$fieldName] = $requestField;
+            }
+        }
+
         return [
-            'request' => [
-                // Extension/peer identification
-                'extension' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_sip_extension',
-                    'pattern' => '^[0-9]{2,10}$',
-                    'sanitize' => 'string',
-                    'example' => '201'
-                ],
-                'id' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_sip_id',
-                    'pattern' => '^SIP-[A-Z0-9]{8,32}$',
-                    'sanitize' => 'string',
-                    'example' => 'SIP-201'
-                ],
-                // Query parameters for history filtering
-                'dateFrom' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_sip_date_from',
-                    'format' => 'date-time',
-                    'sanitize' => 'string',
-                    'example' => '2025-01-01T00:00:00'
-                ],
-                'dateTo' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_sip_date_to',
-                    'format' => 'date-time',
-                    'sanitize' => 'string',
-                    'example' => '2025-01-31T23:59:59'
-                ],
-                'event' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_sip_event',
-                    'enum' => ['REGISTER', 'UNREGISTER', 'CALL', 'HANGUP'],
-                    'sanitize' => 'string',
-                    'example' => 'REGISTER'
-                ],
-                // Pagination parameters
-                'limit' => [
-                    'type' => 'integer',
-                    'description' => 'rest_param_limit',
-                    'minimum' => 1,
-                    'maximum' => 1000,
-                    'default' => 50,
-                    'sanitize' => 'int',
-                    'example' => 50
-                ],
-                'offset' => [
-                    'type' => 'integer',
-                    'description' => 'rest_param_offset',
-                    'minimum' => 0,
-                    'default' => 0,
-                    'sanitize' => 'int',
-                    'example' => 0
-                ]
-            ],
-            'response' => [
-                // Peer status fields
-                'state' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_sip_peer_state',
-                    'enum' => ['OK', 'UNREACHABLE', 'LAGGED', 'UNKNOWN', 'OFF', 'REGISTERED']
-                ],
-                'useragent' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_sip_peer_useragent'
-                ],
-                'ipaddress' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_sip_peer_ipaddress'
-                ],
-                'port' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_sip_peer_port'
-                ],
-                // Registry fields
-                'username' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_sip_registry_username'
-                ],
-                'host' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_sip_registry_host'
-                ],
-                // Statistics fields
-                'totalCalls' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_sip_stats_total_calls'
-                ],
-                'successfulCalls' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_sip_stats_successful_calls'
-                ],
-                'failedCalls' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_sip_stats_failed_calls'
-                ],
-                // Secret field
-                'secret' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_sip_secret_value'
-                ]
-            ],
+            'request' => $writableFields,
+            'response' => $responseOnlyFields,
             // ========== RELATED SCHEMAS ==========
             // Custom monitoring schemas for SIP endpoints
             'related' => [

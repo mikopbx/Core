@@ -88,6 +88,61 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
 
     /**
+     * Get all field definitions with complete metadata
+     *
+     * Single Source of Truth for ALL field definitions.
+     * Each field includes type, validation, and examples.
+     *
+     * @return array<string, array<string, mixed>> Complete field definitions
+     */
+    private static function getAllFieldDefinitions(): array
+    {
+        return [
+            'id' => [
+                'type' => 'string',
+                'description' => 'rest_schema_iax_id',
+                'pattern' => '^IAX-[A-Z0-9]{8,32}$',
+                'readOnly' => true,
+                'example' => 'IAX-1234ABCD'
+            ],
+            'state' => [
+                'type' => 'string',
+                'description' => 'rest_schema_iax_state',
+                'enum' => ['OFF', 'Registered', 'Unregistered', 'Error register.', 'LAGGED', 'OK'],
+                'readOnly' => true,
+                'example' => 'Registered'
+            ],
+            'username' => [
+                'type' => 'string',
+                'description' => 'rest_schema_iax_username',
+                'maxLength' => 100,
+                'readOnly' => true,
+                'example' => 'myiaxuser'
+            ],
+            'host' => [
+                'type' => 'string',
+                'description' => 'rest_schema_iax_host',
+                'maxLength' => 255,
+                'readOnly' => true,
+                'example' => 'iax.provider.com'
+            ],
+            'noregister' => [
+                'type' => 'string',
+                'description' => 'rest_schema_iax_noregister',
+                'enum' => ['0', '1'],
+                'readOnly' => true,
+                'example' => '0'
+            ],
+            'time-response' => [
+                'type' => 'string',
+                'description' => 'rest_schema_iax_time_response',
+                'readOnly' => true,
+                'example' => '15MS'
+            ]
+        ];
+    }
+
+    /**
      * Get parameter definitions (Single Source of Truth)
      *
      * WHY: Centralizes IAX parameter definitions.
@@ -97,47 +152,20 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function getParameterDefinitions(): array
     {
+        $allFields = self::getAllFieldDefinitions();
+
+        // All fields are read-only for IAX monitoring
+        $responseOnlyFields = [];
+
+        foreach ($allFields as $fieldName => $fieldDef) {
+            $responseOnlyFields[$fieldName] = $fieldDef;
+        }
+
         return [
             'request' => [
                 // No request parameters - IAX is read-only monitoring
             ],
-            'response' => [
-                'id' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_iax_id',
-                    'pattern' => '^IAX-[A-Z0-9]{8,32}$',
-                    'example' => 'IAX-1234ABCD'
-                ],
-                'state' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_iax_state',
-                    'enum' => ['OFF', 'Registered', 'Unregistered', 'Error register.', 'LAGGED', 'OK'],
-                    'example' => 'Registered'
-                ],
-                'username' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_iax_username',
-                    'maxLength' => 100,
-                    'example' => 'myiaxuser'
-                ],
-                'host' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_iax_host',
-                    'maxLength' => 255,
-                    'example' => 'iax.provider.com'
-                ],
-                'noregister' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_iax_noregister',
-                    'enum' => ['0', '1'],
-                    'example' => '0'
-                ],
-                'time-response' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_iax_time_response',
-                    'example' => '15MS'
-                ]
-            ]
+            'response' => $responseOnlyFields
         ];
     }
 

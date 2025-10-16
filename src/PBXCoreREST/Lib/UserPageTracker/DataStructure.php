@@ -127,6 +127,53 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
 
     /**
+     * Get all field definitions with complete metadata
+     *
+     * Single Source of Truth for ALL field definitions.
+     * Each field includes type, validation, sanitization, and examples.
+     *
+     * @return array<string, array<string, mixed>> Complete field definitions
+     */
+    private static function getAllFieldDefinitions(): array
+    {
+        return [
+            // Page tracking parameters
+            'sessionId' => [
+                'type' => 'string',
+                'description' => 'rest_schema_upt_session_id',
+                'maxLength' => 100,
+                'sanitize' => 'string',
+                'required' => true,
+                'example' => 'sess_abc123def456'
+            ],
+            'pageName' => [
+                'type' => 'string',
+                'description' => 'rest_schema_upt_page_name',
+                'maxLength' => 255,
+                'sanitize' => 'string',
+                'required' => true,
+                'example' => 'extensions-index'
+            ],
+            'expire' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_upt_expire',
+                'minimum' => 60,
+                'maximum' => 86400,
+                'default' => 300,
+                'sanitize' => 'int',
+                'example' => 300
+            ],
+            // Response-only fields
+            'timestamp' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_upt_timestamp',
+                'readOnly' => true,
+                'example' => 1704984123
+            ]
+        ];
+    }
+
+    /**
      * Get parameter definitions (Single Source of Truth)
      *
      * WHY: Centralizes user page tracking parameter definitions.
@@ -136,61 +183,32 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function getParameterDefinitions(): array
     {
+        $allFields = self::getAllFieldDefinitions();
+
+        // Separate writable fields (for requests) and response-only fields
+        $writableFields = [];
+        $responseOnlyFields = [];
+
+        foreach ($allFields as $fieldName => $fieldDef) {
+            if (!empty($fieldDef['readOnly'])) {
+                $responseOnlyFields[$fieldName] = $fieldDef;
+            } else {
+                // For request section, use rest_param_* descriptions
+                $requestField = $fieldDef;
+                $requestField['description'] = str_replace('rest_schema_', 'rest_param_', $fieldDef['description']);
+                $writableFields[$fieldName] = $requestField;
+            }
+        }
+
         return [
-            'request' => [
-                // Page tracking parameters
-                'sessionId' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_upt_session_id',
-                    'maxLength' => 100,
-                    'sanitize' => 'string',
-                    'required' => true,
-                    'example' => 'sess_abc123def456'
-                ],
-                'pageName' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_upt_page_name',
-                    'maxLength' => 255,
-                    'sanitize' => 'string',
-                    'required' => true,
-                    'example' => 'extensions-index'
-                ],
-                'expire' => [
-                    'type' => 'integer',
-                    'description' => 'rest_param_upt_expire',
-                    'minimum' => 60,
-                    'maximum' => 86400,
-                    'default' => 300,
-                    'sanitize' => 'int',
-                    'example' => 300
-                ]
-            ],
-            'response' => [
-                'sessionId' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_upt_session_id',
-                    'example' => 'sess_abc123def456'
-                ],
-                'pageName' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_upt_page_name',
-                    'maxLength' => 255,
-                    'example' => 'extensions-index'
-                ],
-                'expire' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_upt_expire',
-                    'minimum' => 60,
-                    'maximum' => 86400,
-                    'default' => 300,
-                    'example' => 300
-                ],
-                'timestamp' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_upt_timestamp',
-                    'example' => 1704984123
-                ]
-            ]
+            // ========== REQUEST PARAMETERS ==========
+            // Used in API requests (POST for tracking)
+            // Referenced by ApiParameterRef in Controller
+            'request' => $writableFields,
+
+            // ========== RESPONSE-ONLY FIELDS ==========
+            // Only in API responses, not in requests
+            'response' => $responseOnlyFields,
         ];
     }
 

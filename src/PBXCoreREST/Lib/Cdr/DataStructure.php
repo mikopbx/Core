@@ -153,208 +153,280 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      *
      * @return array<string, array<string, mixed>> Related schemas
      */
+    public static function getRelatedSchemas(): array
+    {
+        return [];
+    }
+
+    /**
+     * Get all field definitions with complete metadata
+     *
+     * Single Source of Truth for ALL field definitions.
+     * Each field includes type, validation, sanitization, and examples.
+     *
+     * CDR combines two types of fields:
+     * - Query/filter parameters (limit, offset, dateFrom, dateTo, view, download, filename)
+     * - CDR record fields (id, start, endtime, answer, etc.) - ALL read-only
+     *
+     * @return array<string, array<string, mixed>> Complete field definitions
+     */
+    private static function getAllFieldDefinitions(): array
+    {
+        return [
+            // ========== QUERY/FILTER PARAMETERS ==========
+            // These are NOT CDR record fields, but query parameters for filtering
+            'limit' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_cdr_limit',
+                'minimum' => 1,
+                'maximum' => 1000,
+                'default' => 50,
+                'sanitize' => 'int',
+                'example' => 50
+            ],
+            'offset' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_cdr_offset',
+                'minimum' => 0,
+                'default' => 0,
+                'sanitize' => 'int',
+                'example' => 0
+            ],
+            'dateFrom' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cdr_dateFrom',
+                'format' => 'date-time',
+                'sanitize' => 'string',
+                'example' => '2025-01-01T00:00:00'
+            ],
+            'dateTo' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cdr_dateTo',
+                'format' => 'date-time',
+                'sanitize' => 'string',
+                'example' => '2025-01-31T23:59:59'
+            ],
+            // Playback parameters (custom :getRecordFile method)
+            'view' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cdr_view',
+                'maxLength' => 500,
+                'sanitize' => 'string',
+                'example' => '/storage/usbdisk1/mikopbx/voicemailbackup/monitor/2025/01/15/call-123.mp3'
+            ],
+            'download' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_cdr_download',
+                'default' => false,
+                'sanitize' => 'bool',
+                'example' => false
+            ],
+            'filename' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cdr_filename',
+                'maxLength' => 255,
+                'sanitize' => 'string',
+                'example' => 'call-recording.mp3'
+            ],
+
+            // ========== CDR RECORD FIELDS (ALL READ-ONLY) ==========
+            'id' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_cdr_id',
+                'readOnly' => true,
+                'example' => 12345
+            ],
+            'start' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cdr_start',
+                'format' => 'date-time',
+                'readOnly' => true,
+                'example' => '2025-01-15 10:30:45'
+            ],
+            'endtime' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cdr_endtime',
+                'format' => 'date-time',
+                'readOnly' => true,
+                'example' => '2025-01-15 10:35:20'
+            ],
+            'answer' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cdr_answer',
+                'format' => 'date-time',
+                'readOnly' => true,
+                'example' => '2025-01-15 10:30:50'
+            ],
+            'src_chan' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cdr_src_chan',
+                'readOnly' => true,
+                'example' => 'SIP/101-00000001'
+            ],
+            'src_num' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cdr_src_num',
+                'readOnly' => true,
+                'example' => '101'
+            ],
+            'dst_chan' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cdr_dst_chan',
+                'readOnly' => true,
+                'example' => 'SIP/102-00000002'
+            ],
+            'dst_num' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cdr_dst_num',
+                'readOnly' => true,
+                'example' => '102'
+            ],
+            'UNIQUEID' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cdr_uniqueid',
+                'readOnly' => true,
+                'example' => '1705315845.1'
+            ],
+            'linkedid' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cdr_linkedid',
+                'readOnly' => true,
+                'example' => '1705315845.1'
+            ],
+            'did' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cdr_did',
+                'readOnly' => true,
+                'example' => '74951234567'
+            ],
+            'disposition' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cdr_disposition',
+                'enum' => ['ANSWERED', 'NO ANSWER', 'BUSY', 'FAILED'],
+                'readOnly' => true,
+                'example' => 'ANSWERED'
+            ],
+            'recordingfile' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cdr_recordingfile',
+                'readOnly' => true,
+                'example' => '/storage/usbdisk1/mikopbx/voicemailarchive/monitor/2025/01/15/101-102-20250115-103045-1705315845.1.mp3'
+            ],
+            'from_account' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cdr_from_account',
+                'readOnly' => true,
+                'example' => ''
+            ],
+            'to_account' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cdr_to_account',
+                'readOnly' => true,
+                'example' => ''
+            ],
+            'dialstatus' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cdr_dialstatus',
+                'readOnly' => true,
+                'example' => 'ANSWER'
+            ],
+            'appname' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cdr_appname',
+                'readOnly' => true,
+                'example' => ''
+            ],
+            'transfer' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cdr_transfer',
+                'readOnly' => true,
+                'example' => '0'
+            ],
+            'is_app' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cdr_is_app',
+                'readOnly' => true,
+                'example' => '0'
+            ],
+            'duration' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_cdr_duration',
+                'minimum' => 0,
+                'readOnly' => true,
+                'example' => 275
+            ],
+            'billsec' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_cdr_billsec',
+                'minimum' => 0,
+                'readOnly' => true,
+                'example' => 270
+            ],
+            'work_completed' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cdr_work_completed',
+                'readOnly' => true,
+                'example' => '1'
+            ],
+            'src_call_id' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cdr_src_call_id',
+                'readOnly' => true,
+                'example' => ''
+            ],
+            'dst_call_id' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cdr_dst_call_id',
+                'readOnly' => true,
+                'example' => ''
+            ],
+            'verbose_call_id' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cdr_verbose_call_id',
+                'readOnly' => true,
+                'example' => ''
+            ],
+        ];
+    }
+
     /**
      * Get parameter definitions (Single Source of Truth)
      *
      * WHY: Centralizes CDR query parameter definitions.
-     * CDR is a read-only resource, so only query filtering parameters are defined.
+     * CDR is a read-only resource, so only query filtering parameters are writable.
+     * All CDR record fields are read-only.
      *
      * @return array<string, array<string, mixed>> Parameter definitions
      */
     public static function getParameterDefinitions(): array
     {
+        $allFields = self::getAllFieldDefinitions();
+
+        // Separate writable query parameters and read-only CDR record fields
+        $writableFields = [];
+        $responseOnlyFields = [];
+
+        foreach ($allFields as $fieldName => $fieldDef) {
+            if (!empty($fieldDef['readOnly'])) {
+                $responseOnlyFields[$fieldName] = $fieldDef;
+            } else {
+                // For request section, use rest_param_* descriptions
+                $requestField = $fieldDef;
+                $requestField['description'] = str_replace('rest_schema_', 'rest_param_', $fieldDef['description']);
+                $writableFields[$fieldName] = $requestField;
+            }
+        }
+
         return [
-            'request' => [
-                // Query parameters for filtering (CDR is read-only)
-                // These are NOT CDR record fields, but query/filter parameters
-                'limit' => [
-                    'type' => 'integer',
-                    'description' => 'rest_param_limit',
-                    'minimum' => 1,
-                    'maximum' => 1000,
-                    'default' => 50,
-                    'sanitize' => 'int',
-                    'example' => 50
-                ],
-                'offset' => [
-                    'type' => 'integer',
-                    'description' => 'rest_param_offset',
-                    'minimum' => 0,
-                    'default' => 0,
-                    'sanitize' => 'int',
-                    'example' => 0
-                ],
-                'dateFrom' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_cdr_dateFrom',
-                    'format' => 'date-time',
-                    'sanitize' => 'string',
-                    'example' => '2025-01-01T00:00:00'
-                ],
-                'dateTo' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_cdr_dateTo',
-                    'format' => 'date-time',
-                    'sanitize' => 'string',
-                    'example' => '2025-01-31T23:59:59'
-                ],
-                // Playback parameters (custom :getRecordFile method)
-                'view' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_cdr_view',
-                    'maxLength' => 500,
-                    'sanitize' => 'string',
-                    'example' => '/storage/usbdisk1/mikopbx/voicemailbackup/monitor/2025/01/15/call-123.mp3'
-                ],
-                'download' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_param_cdr_download',
-                    'default' => false,
-                    'sanitize' => 'bool',
-                    'example' => false
-                ],
-                'filename' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_cdr_filename',
-                    'maxLength' => 255,
-                    'sanitize' => 'string',
-                    'example' => 'call-recording.mp3'
-                ]
-            ],
-            'response' => [
-                // CDR record fields (read-only, returned in responses)
-                'id' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_cdr_id',
-                    'example' => 12345
-                ],
-                'start' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cdr_start',
-                    'format' => 'date-time',
-                    'example' => '2025-01-15 10:30:45'
-                ],
-                'endtime' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cdr_endtime',
-                    'format' => 'date-time',
-                    'example' => '2025-01-15 10:35:20'
-                ],
-                'answer' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cdr_answer',
-                    'format' => 'date-time',
-                    'example' => '2025-01-15 10:30:50'
-                ],
-                'src_chan' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cdr_src_chan',
-                    'example' => 'SIP/101-00000001'
-                ],
-                'src_num' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cdr_src_num',
-                    'example' => '101'
-                ],
-                'dst_chan' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cdr_dst_chan',
-                    'example' => 'SIP/102-00000002'
-                ],
-                'dst_num' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cdr_dst_num',
-                    'example' => '102'
-                ],
-                'UNIQUEID' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cdr_uniqueid',
-                    'example' => '1705315845.1'
-                ],
-                'linkedid' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cdr_linkedid',
-                    'example' => '1705315845.1'
-                ],
-                'did' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cdr_did',
-                    'example' => '74951234567'
-                ],
-                'disposition' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cdr_disposition',
-                    'enum' => ['ANSWERED', 'NO ANSWER', 'BUSY', 'FAILED'],
-                    'example' => 'ANSWERED'
-                ],
-                'recordingfile' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cdr_recordingfile',
-                    'example' => '/storage/usbdisk1/mikopbx/voicemailarchive/monitor/2025/01/15/101-102-20250115-103045-1705315845.1.mp3'
-                ],
-                'from_account' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cdr_from_account',
-                    'example' => ''
-                ],
-                'to_account' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cdr_to_account',
-                    'example' => ''
-                ],
-                'dialstatus' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cdr_dialstatus',
-                    'example' => 'ANSWER'
-                ],
-                'appname' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cdr_appname',
-                    'example' => ''
-                ],
-                'transfer' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cdr_transfer',
-                    'example' => '0'
-                ],
-                'is_app' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cdr_is_app',
-                    'example' => '0'
-                ],
-                'duration' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_cdr_duration',
-                    'minimum' => 0,
-                    'example' => 275
-                ],
-                'billsec' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_cdr_billsec',
-                    'minimum' => 0,
-                    'example' => 270
-                ],
-                'work_completed' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cdr_work_completed',
-                    'example' => '1'
-                ],
-                'src_call_id' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cdr_src_call_id',
-                    'example' => ''
-                ],
-                'dst_call_id' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cdr_dst_call_id',
-                    'example' => ''
-                ],
-                'verbose_call_id' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cdr_verbose_call_id',
-                    'example' => ''
-                ]
-            ]
+            // ========== REQUEST PARAMETERS ==========
+            // Query/filter parameters (NOT CDR record fields)
+            // Referenced by ApiParameterRef in Controller
+            'request' => $writableFields,
+
+            // ========== RESPONSE-ONLY FIELDS ==========
+            // CDR record fields (all read-only, returned in responses)
+            // Used by getDetailSchema()
+            'response' => $responseOnlyFields,
         ];
     }
 

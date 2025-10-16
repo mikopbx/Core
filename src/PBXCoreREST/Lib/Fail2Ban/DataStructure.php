@@ -129,6 +129,65 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
 
     /**
+     * Get all field definitions (Single Source of Truth)
+     *
+     * WHY: Centralizes ALL field definitions for Fail2Ban resource in one place.
+     * Each field is defined exactly once with all its constraints and metadata.
+     * This eliminates duplication between request/response schemas.
+     *
+     * @return array<string, array<string, mixed>> All field definitions
+     */
+    private static function getAllFieldDefinitions(): array
+    {
+        return [
+            // ========== WRITABLE FIELDS ==========
+            'maxretry' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_f2b_maxretry',
+                'minimum' => 1,
+                'maximum' => 100,
+                'default' => 5,
+                'sanitize' => 'int',
+                'required' => true,
+                'example' => 5
+            ],
+            'bantime' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_f2b_bantime',
+                'minimum' => 60,
+                'default' => 86400,
+                'sanitize' => 'int',
+                'required' => true,
+                'example' => 86400
+            ],
+            'findtime' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_f2b_findtime',
+                'minimum' => 60,
+                'default' => 1800,
+                'sanitize' => 'int',
+                'required' => true,
+                'example' => 1800
+            ],
+            'whitelist' => [
+                'type' => 'string',
+                'description' => 'rest_schema_f2b_whitelist',
+                'maxLength' => 500,
+                'sanitize' => 'string',
+                'example' => '192.168.1.0/24,10.0.0.0/8'
+            ],
+            'PBXFirewallMaxReqSec' => [
+                'type' => 'string',
+                'description' => 'rest_schema_f2b_maxreqsec',
+                'maxLength' => 10,
+                'default' => '100',
+                'sanitize' => 'string',
+                'example' => '100'
+            ]
+        ];
+    }
+
+    /**
      * Get parameter definitions (Single Source of Truth)
      *
      * WHY: Centralizes Fail2Ban parameter definitions.
@@ -138,52 +197,33 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function getParameterDefinitions(): array
     {
+        $allFields = self::getAllFieldDefinitions();
+
+        // Separate writable fields (for requests) and response-only fields
+        $writableFields = [];
+        $responseOnlyFields = [];
+
+        foreach ($allFields as $fieldName => $fieldDef) {
+            if (!empty($fieldDef['readOnly'])) {
+                $responseOnlyFields[$fieldName] = $fieldDef;
+            } else {
+                // For request section, use rest_param_* descriptions
+                $requestField = $fieldDef;
+                $requestField['description'] = str_replace('rest_schema_', 'rest_param_', $fieldDef['description']);
+                $writableFields[$fieldName] = $requestField;
+            }
+        }
+
         return [
-            'request' => [
-                'maxretry' => [
-                    'type' => 'integer',
-                    'description' => 'rest_param_f2b_maxretry',
-                    'minimum' => 1,
-                    'maximum' => 100,
-                    'default' => 5,
-                    'sanitize' => 'int',
-                    'required' => true,
-                    'example' => 5
-                ],
-                'bantime' => [
-                    'type' => 'integer',
-                    'description' => 'rest_param_f2b_bantime',
-                    'minimum' => 60,
-                    'default' => 86400,
-                    'sanitize' => 'int',
-                    'required' => true,
-                    'example' => 86400
-                ],
-                'findtime' => [
-                    'type' => 'integer',
-                    'description' => 'rest_param_f2b_findtime',
-                    'minimum' => 60,
-                    'default' => 1800,
-                    'sanitize' => 'int',
-                    'required' => true,
-                    'example' => 1800
-                ],
-                'whitelist' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_f2b_whitelist',
-                    'maxLength' => 500,
-                    'sanitize' => 'string',
-                    'example' => '192.168.1.0/24,10.0.0.0/8'
-                ],
-                'PBXFirewallMaxReqSec' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_f2b_maxreqsec',
-                    'maxLength' => 10,
-                    'default' => '100',
-                    'sanitize' => 'string',
-                    'example' => '100'
-                ]
-            ]
+            // ========== REQUEST PARAMETERS ==========
+            // Used in API requests (POST, PUT, PATCH)
+            // Referenced by ApiParameterRef in Controller
+            'request' => $writableFields,
+
+            // ========== RESPONSE-ONLY FIELDS ==========
+            // Only in API responses, not in requests
+            // Used by getListItemSchema() and getDetailSchema()
+            'response' => $responseOnlyFields
         ];
     }
 

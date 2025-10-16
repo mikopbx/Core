@@ -64,15 +64,15 @@ return [
     // Passwords REST API
     // ============================================================================
     'rest_pwd_Generate' => 'Сгенерировать пароль',
-    'rest_pwd_GenerateDesc' => 'Сгенерировать криптографически безопасный пароль с настраиваемыми параметрами',
-    'rest_pwd_Validate' => 'Проверить надёжность пароля',
-    'rest_pwd_ValidateDesc' => 'Проверить надёжность пароля с детальным анализом и рекомендациями по улучшению',
-    'rest_pwd_CheckDictionary' => 'Проверить пароль по словарю',
-    'rest_pwd_CheckDictionaryDesc' => 'Быстрая проверка пароля на наличие в словаре распространённых паролей',
-    'rest_pwd_BatchValidate' => 'Проверить несколько паролей',
-    'rest_pwd_BatchValidateDesc' => 'Проверить надёжность нескольких паролей с разными контекстами использования',
-    'rest_pwd_BatchCheckDictionary' => 'Проверить несколько паролей по словарю',
-    'rest_pwd_BatchCheckDictionaryDesc' => 'Проверить несколько паролей на наличие в словаре распространённых паролей',
+    'rest_pwd_GenerateDesc' => 'Генерирует случайный безопасный пароль с настраиваемыми параметрами',
+    'rest_pwd_Validate' => 'Проверить надежность пароля',
+    'rest_pwd_ValidateDesc' => 'Проверяет надежность пароля и возвращает рекомендации по улучшению',
+    'rest_pwd_CheckDictionary' => 'Проверить пароль в словаре',
+    'rest_pwd_CheckDictionaryDesc' => 'Проверяет, присутствует ли пароль в словаре распространенных паролей',
+    'rest_pwd_BatchValidate' => 'Пакетная проверка паролей',
+    'rest_pwd_BatchValidateDesc' => 'Проверяет надежность нескольких паролей за один запрос',
+    'rest_pwd_BatchCheckDictionary' => 'Пакетная проверка словаря',
+    'rest_pwd_BatchCheckDictionaryDesc' => 'Проверяет несколько паролей на присутствие в словаре за один запрос',
 
     // ============================================================================
     // OutboundRoutes REST API
@@ -161,7 +161,13 @@ return [
     'rest_net_GetNatSettingsDesc' => 'Получить настройки NAT и STUN для корректной работы VoIP через NAT',
 
     // Network REST API - Request Parameters
-    'rest_param_net_interfaces' => 'Массив сетевых интерфейсов для сохранения',
+    // Network specific parameters
+    'rest_param_net_interfaces' => 'Массив конфигураций сетевых интерфейсов',
+    'rest_param_net_gateway' => 'IP адрес шлюза по умолчанию',
+    'rest_param_net_primarydns' => 'Первичный DNS сервер',
+    'rest_param_net_secondarydns' => 'Вторичный DNS сервер',
+    'rest_param_net_hostname' => 'Имя хоста системы',
+    'rest_param_net_domain' => 'Доменное имя системы',
     'rest_param_net_static_routes' => 'Массив статических маршрутов',
 
     // Network REST API - Response Schemas (Field Descriptions)
@@ -233,14 +239,14 @@ return [
     // ============================================================================
     // OpenAPI Documentation REST API
     // ============================================================================
-    'rest_openapi_GetSpec' => 'Получить спецификацию OpenAPI',
-    'rest_openapi_GetSpecDesc' => 'Получить полную спецификацию OpenAPI 3.1 для REST API MikoPBX в формате JSON или YAML',
-    'rest_openapi_GetAcl' => 'Получить правила ACL',
-    'rest_openapi_GetAclDesc' => 'Извлечь правила контроля доступа из метаданных API для интеграции с системой ACL MikoPBX',
+    'rest_openapi_GetSpec' => 'Получить OpenAPI спецификацию',
+    'rest_openapi_GetSpecDesc' => 'Возвращает полную OpenAPI 3.1 спецификацию REST API MikoPBX в формате JSON или YAML',
+    'rest_openapi_GetAcl' => 'Получить ACL правила API',
+    'rest_openapi_GetAclDesc' => 'Возвращает правила доступа (ACL) для всех endpoints API, извлеченные из метаданных',
     'rest_openapi_GetSchemas' => 'Получить схемы валидации',
-    'rest_openapi_GetSchemasDesc' => 'Извлечь схемы валидации из атрибутов API для проверки запросов и ответов (JSON Schema)',
-    'rest_openapi_ClearCache' => 'Очистить кеш метаданных API',
-    'rest_openapi_ClearCacheDesc' => 'Очистить кешированные метаданные API для принудительного повторного сканирования контроллеров и регенерации спецификации OpenAPI',
+    'rest_openapi_GetSchemasDesc' => 'Возвращает схемы валидации для всех endpoints API',
+    'rest_openapi_ClearCache' => 'Очистить кэш OpenAPI',
+    'rest_openapi_ClearCacheDesc' => 'Очищает кэш метаданных OpenAPI, форсирует регенерацию спецификации при следующем запросе',
 
     // ============================================================================
     // Passkeys REST API
@@ -832,15 +838,6 @@ return [
     'rest_ms_GetDefault' => 'Получить значения по умолчанию',
     'rest_ms_GetDefaultDesc' => 'Получить значения по умолчанию для настройки почтового сервера',
 
-    // ============================================================================
-    // GeneralSettings REST API
-    // ============================================================================
-    'rest_gs_GetRecord' => 'Получить общие настройки',
-    'rest_gs_GetRecordDesc' => 'Получить текущие общие настройки системы',
-    'rest_gs_Update' => 'Обновить общие настройки',
-    'rest_gs_UpdateDesc' => 'Обновить общие настройки системы',
-    'rest_gs_Patch' => 'Частично обновить общие настройки',
-    'rest_gs_PatchDesc' => 'Обновить только указанные параметры общих настроек',
 
     // ============================================================================
     // TimeSettings REST API
@@ -1367,13 +1364,7 @@ return [
     'rest_schema_lic_ping_message' => 'Сообщение от лицензионного сервера',
     'rest_schema_lic_ping_responseTime' => 'Время ответа сервера в миллисекундах',
 
-    // Network specific parameters
-    'rest_param_net_interfaces' => 'Массив конфигураций сетевых интерфейсов',
-    'rest_param_net_gateway' => 'IP адрес шлюза по умолчанию',
-    'rest_param_net_primarydns' => 'Первичный DNS сервер',
-    'rest_param_net_secondarydns' => 'Вторичный DNS сервер',
-    'rest_param_net_hostname' => 'Имя хоста системы',
-    'rest_param_net_domain' => 'Доменное имя системы',
+
 
     // NetworkFilters specific parameters
     'rest_param_nf_category' => 'Категория фильтрации (SIP, IAX, AMI, API)',
@@ -1898,129 +1889,17 @@ return [
     'rest_schema_system_datetime' => 'Текущие дата и время системы',
     'rest_schema_system_status' => 'Статус выполнения операции',
 
-      // REST API - Operation summaries
-      'rest_pwd_Generate' => 'Сгенерировать пароль',
-      'rest_pwd_GenerateDesc' => 'Генерирует случайный безопасный пароль с настраиваемыми параметрами',
-      'rest_pwd_Validate' => 'Проверить надежность пароля',
-      'rest_pwd_ValidateDesc' => 'Проверяет надежность пароля и возвращает рекомендации по улучшению',
-      'rest_pwd_CheckDictionary' => 'Проверить пароль в словаре',
-      'rest_pwd_CheckDictionaryDesc' => 'Проверяет, присутствует ли пароль в словаре распространенных паролей',
-      'rest_pwd_BatchValidate' => 'Пакетная проверка паролей',
-      'rest_pwd_BatchValidateDesc' => 'Проверяет надежность нескольких паролей за один запрос',
-      'rest_pwd_BatchCheckDictionary' => 'Пакетная проверка словаря',
-      'rest_pwd_BatchCheckDictionaryDesc' => 'Проверяет несколько паролей на присутствие в словаре за один запрос',
- 
-           // REST API - Operation summaries
-           'rest_pk_GetList' => 'Получить список passkeys',
-           'rest_pk_GetListDesc' => 'Возвращает список всех зарегистрированных passkeys для текущего пользователя',
-           'rest_pk_GetRecord' => 'Получить passkey',
-           'rest_pk_GetRecordDesc' => 'Возвращает детальную информацию о конкретном passkey по ID',
-           'rest_pk_Create' => 'Создать passkey',
-           'rest_pk_CreateDesc' => 'Начинает процесс регистрации нового passkey (псевдоним для registrationStart)',
-           'rest_pk_Patch' => 'Обновить passkey',
-           'rest_pk_PatchDesc' => 'Обновляет метаданные passkey (название)',
-           'rest_pk_Delete' => 'Удалить passkey',
-           'rest_pk_DeleteDesc' => 'Удаляет зарегистрированный passkey',
-           'rest_pk_CheckAvailability' => 'Проверить доступность passkeys',
-           'rest_pk_CheckAvailabilityDesc' => 'Проверяет, зарегистрированы ли passkeys для указанного пользователя (публичный endpoint)',
-           'rest_pk_RegistrationStart' => 'Начать регистрацию passkey',
-           'rest_pk_RegistrationStartDesc' => 'Начинает процесс WebAuthn регистрации для авторизованного пользователя',
-           'rest_pk_RegistrationFinish' => 'Завершить регистрацию passkey',
-           'rest_pk_RegistrationFinishDesc' => 'Завершает процесс WebAuthn регистрации и сохраняет passkey',
-           'rest_pk_AuthenticationStart' => 'Начать аутентификацию passkey',
-           'rest_pk_AuthenticationStartDesc' => 'Начинает процесс WebAuthn аутентификации (публичный endpoint)',
-           'rest_pk_AuthenticationFinish' => 'Завершить аутентификацию passkey',
-           'rest_pk_AuthenticationFinishDesc' => 'Завершает процесс WebAuthn аутентификации и возвращает токены доступа',
+
       
            // REST API - Request parameters
            'rest_param_pk_id' => 'ID passkey',
            'rest_param_pk_user_id' => 'ID пользователя',
-           'rest_param_pk_name' => 'Название passkey (например: iPhone 15, YubiKey)',
-           'rest_param_pk_credential' => 'WebAuthn credential данные',
            'rest_param_pk_credential_id' => 'Уникальный идентификатор credential',
            'rest_param_pk_public_key' => 'Публичный ключ (Base64)',
            'rest_param_pk_counter' => 'Счётчик использований (для защиты от replay-атак)',
            'rest_param_pk_aaguid' => 'AAGUID аутентификатора',
            'rest_param_pk_transports' => 'Поддерживаемые транспорты (usb, nfc, ble, internal)',
-           'rest_param_pk_login' => 'Логин пользователя',
-      
-           // REST API - Response schema fields
-           'rest_schema_pk_id' => 'Уникальный ID passkey',
-           'rest_schema_pk_user_id' => 'ID пользователя-владельца',
-           'rest_schema_pk_name' => 'Название passkey',
-           'rest_schema_pk_credential_id' => 'Идентификатор WebAuthn credential',
-           'rest_schema_pk_counter' => 'Счётчик использований',
-           'rest_schema_pk_aaguid' => 'AAGUID аутентификатора',
-           'rest_schema_pk_transports' => 'Массив поддерживаемых транспортов',
-           'rest_schema_pk_created_at' => 'Дата и время создания',
-           'rest_schema_pk_last_used_at' => 'Дата и время последнего использования',
-           'rest_schema_pk_user_agent' => 'User-Agent браузера при регистрации',
-      
-               // REST API - Operation summaries
-          'rest_openapi_GetSpec' => 'Получить OpenAPI спецификацию',
-          'rest_openapi_GetSpecDesc' => 'Возвращает полную OpenAPI 3.1 спецификацию REST API MikoPBX в формате JSON или YAML',
-          'rest_openapi_GetAcl' => 'Получить ACL правила API',
-          'rest_openapi_GetAclDesc' => 'Возвращает правила доступа (ACL) для всех endpoints API, извлеченные из метаданных',
-          'rest_openapi_GetSchemas' => 'Получить схемы валидации',
-          'rest_openapi_GetSchemasDesc' => 'Возвращает схемы валидации для всех endpoints API',
-          'rest_openapi_ClearCache' => 'Очистить кэш OpenAPI',
-          'rest_openapi_ClearCacheDesc' => 'Очищает кэш метаданных OpenAPI, форсирует регенерацию спецификации при следующем запросе',
-      
-          // REST API - Request parameters
-              // REST API - Operation summaries
-              'rest_iax_GetRegistry' => 'Получить статус регистрации IAX провайдеров',
-              'rest_iax_GetRegistryDesc' => 'Возвращает информацию о статусе регистрации и подключении всех настроенных IAX провайдеров в реальном времени',
-          
-              // REST API - Response messages
-              'rest_response_200_iax_registry' => 'Статус регистрации IAX провайдеров успешно получен',
 
-              'rest_sysinfo_GetInfo' => 'Получить информацию о системе',
-    'rest_sysinfo_GetInfoDesc' => 'Возвращает полную информацию о системе: CPU, память, диски, сеть, версия ПО',
-    'rest_sysinfo_GetExternalIp' => 'Получить внешний IP адрес',
-    'rest_sysinfo_GetExternalIpDesc' => 'Определяет внешний IP адрес сервера через публичные сервисы',
-    'rest_sysinfo_GetHypervisor' => 'Получить информацию о гипервизоре',
-    'rest_sysinfo_GetHypervisorDesc' => 'Определяет платформу виртуализации (VMware, KVM, Hyper-V, VirtualBox и т.д.)',
-    'rest_sysinfo_GetDMI' => 'Получить DMI информацию',
-    'rest_sysinfo_GetDMIDesc' => 'Возвращает данные Desktop Management Interface (производитель, модель, серийный номер)',    
-
-        // REST API - Operation summaries
-        'rest_sip_GetStatuses' => 'Получить статусы всех SIP устройств',
-        'rest_sip_GetStatusesDesc' => 'Возвращает статусы регистрации всех SIP устройств (extension, peers)',
-        'rest_sip_GetStatus' => 'Получить статус SIP устройства',
-        'rest_sip_GetStatusDesc' => 'Возвращает детальный статус конкретного SIP устройства',
-        'rest_sip_GetHistory' => 'Получить историю подключений',
-        'rest_sip_GetHistoryDesc' => 'Возвращает историю регистраций и подключений SIP устройства',
-        'rest_sip_GetStats' => 'Получить статистику SIP устройства',
-        'rest_sip_GetStatsDesc' => 'Возвращает статистику звонков и качество связи для SIP устройства',
-        'rest_sip_GetPeersStatuses' => 'Получить статусы SIP peers',
-        'rest_sip_GetPeersStatusesDesc' => 'Возвращает статусы всех SIP peers (устаревший метод)',
-        'rest_sip_GetRegistry' => 'Получить статус регистрации SIP',
-        'rest_sip_GetRegistryDesc' => 'Возвращает информацию о регистрации SIP провайдеров (устаревший метод)',
-        'rest_sip_GetSecret' => 'Получить SIP пароль',
-        'rest_sip_GetSecretDesc' => 'Возвращает SIP пароль для extension',
-        'rest_sip_GetAuthFailureStats' => 'Получить статистику ошибок аутентификации',
-        'rest_sip_GetAuthFailureStatsDesc' => 'Возвращает статистику неудачных попыток аутентификации для SIP extension',
-        'rest_sip_ForceCheck' => 'Принудительная проверка статуса',
-        'rest_sip_ForceCheckDesc' => 'Форсирует проверку статуса SIP устройства (обновляет кэш)',
-        'rest_sip_ProcessAuthFailures' => 'Обработать ошибки аутентификации',
-        'rest_sip_ProcessAuthFailuresDesc' => 'Обрабатывает все накопленные ошибки аутентификации SIP',
-        'rest_sip_ClearAuthFailureStats' => 'Очистить статистику ошибок',
-        'rest_sip_ClearAuthFailureStatsDesc' => 'Очищает статистику неудачных попыток аутентификации для extension',
-    
-        // REST API - Request parameters
-    
-        // REST API - Response messages
-        'rest_response_200_history' => 'История подключений успешно получена',
-        'rest_response_200_stats' => 'Статистика успешно получена',
-        'rest_response_200_force_check' => 'Проверка статуса выполнена',
-
-            // REST API - Operation summaries
-    'rest_upt_PageView' => 'Зарегистрировать просмотр страницы',
-    'rest_upt_PageViewDesc' => 'Отслеживает когда пользователь открывает или переходит на страницу в административном интерфейсе',
-    'rest_upt_PageLeave' => 'Зарегистрировать уход со страницы',
-    'rest_upt_PageLeaveDesc' => 'Отслеживает когда пользователь покидает или закрывает страницу в административном интерфейсе',
-
-    // REST API - Request parameters
   
 
     // Files - additional parameters (getAllFieldDefinitions pattern)

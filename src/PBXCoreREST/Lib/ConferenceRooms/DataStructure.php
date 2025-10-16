@@ -186,6 +186,63 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      * @return array<string, array<string, mixed>> Related schemas (empty for this resource)
      */
     /**
+     * Get all field definitions with complete metadata
+     *
+     * Single Source of Truth for ALL field definitions.
+     * Each field includes type, validation, sanitization, and examples.
+     *
+     * @return array<string, array<string, mixed>> Complete field definitions
+     */
+    private static function getAllFieldDefinitions(): array
+    {
+        return [
+            'id' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cr_id',
+                'pattern' => '^CONFERENCE-[A-Z0-9]{8,32}$',
+                'readOnly' => true,
+                'example' => 'CONFERENCE-ABCD1234'
+            ],
+            'name' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cr_name',
+                'maxLength' => 100,
+                'sanitize' => 'text',
+                'required' => true,
+                'example' => 'Sales Conference'
+            ],
+            'extension' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cr_extension',
+                'pattern' => '^[0-9]{2,8}$',
+                'sanitize' => 'string',
+                'required' => true,
+                'example' => '3000'
+            ],
+            'pinCode' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cr_pincode',
+                'maxLength' => 20,
+                'sanitize' => 'string',
+                'example' => '1234'
+            ],
+            'description' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cr_description',
+                'maxLength' => 500,
+                'sanitize' => 'text',
+                'example' => 'Weekly sales team conference'
+            ],
+            'represent' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cr_represent',
+                'readOnly' => true,
+                'example' => '<i class="users icon"></i> Sales Conference <3000>'
+            ],
+        ];
+    }
+
+    /**
      * Get all field definitions (request parameters + response-only fields)
      *
      * Single Source of Truth for ALL definitions in conference rooms API.
@@ -203,56 +260,33 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function getParameterDefinitions(): array
     {
+        $allFields = self::getAllFieldDefinitions();
+
+        // Separate writable fields (for requests) and response-only fields
+        $writableFields = [];
+        $responseOnlyFields = [];
+
+        foreach ($allFields as $fieldName => $fieldDef) {
+            if (!empty($fieldDef['readOnly'])) {
+                $responseOnlyFields[$fieldName] = $fieldDef;
+            } else {
+                // For request section, use rest_param_* descriptions
+                $requestField = $fieldDef;
+                $requestField['description'] = str_replace('rest_schema_', 'rest_param_', $fieldDef['description']);
+                $writableFields[$fieldName] = $requestField;
+            }
+        }
+
         return [
             // ========== REQUEST PARAMETERS ==========
             // Used in API requests (POST, PUT, PATCH)
             // Referenced by ApiParameterRef in Controller
-            'request' => [
-                'name' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_cr_name',
-                    'maxLength' => 100,
-                    'example' => 'Sales Conference'
-                ],
-                'extension' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_cr_extension',
-                    'pattern' => '^[0-9]{2,8}$',
-                    'example' => '3000'
-                ],
-                'pinCode' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_cr_pincode',
-                    'maxLength' => 20,
-                    'example' => '1234'
-                ],
-                'description' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_cr_description',
-                    'maxLength' => 500,
-                    'example' => 'Weekly sales team conference'
-                ],
-            ],
+            'request' => $writableFields,
 
             // ========== RESPONSE-ONLY FIELDS ==========
             // Only in API responses, not in requests
             // Used by getListItemSchema() and getDetailSchema()
-            'response' => [
-                // ID field (used in both list and detail schemas)
-                'id' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cr_id',
-                    'pattern' => '^CONFERENCE-[A-Z0-9]{8,32}$',
-                    'example' => 'CONFERENCE-ABCD1234'
-                ],
-
-                // Represent field (for list schema)
-                'represent' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_cr_represent',
-                    'example' => '<i class="users icon"></i> Sales Conference <3000>'
-                ],
-            ]
+            'response' => $responseOnlyFields
         ];
     }
 
