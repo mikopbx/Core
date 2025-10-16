@@ -19,16 +19,17 @@
 
 namespace MikoPBX\PBXCoreREST\Controllers\Storage;
 
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\PBXCoreREST\Attributes\ApiDataSchema;
 use MikoPBX\PBXCoreREST\Attributes\ApiOperation;
-use MikoPBX\PBXCoreREST\Attributes\ApiParameter;
-use MikoPBX\PBXCoreREST\Attributes\ParameterLocation;
+use MikoPBX\PBXCoreREST\Attributes\ApiParameterRef;
 use MikoPBX\PBXCoreREST\Attributes\ApiResource;
 use MikoPBX\PBXCoreREST\Attributes\ApiResponse;
 use MikoPBX\PBXCoreREST\Attributes\HttpMapping;
 use MikoPBX\PBXCoreREST\Attributes\ResourceSecurity;
 use MikoPBX\PBXCoreREST\Attributes\SecurityType;
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
+use MikoPBX\PBXCoreREST\Lib\Storage\DataStructure;
 use MikoPBX\PBXCoreREST\Lib\StorageManagementProcessor;
 
 /**
@@ -108,22 +109,8 @@ class RestController extends BaseRestController
         description: 'rest_stg_UpdateDesc',
         operationId: 'updateStorageConfig'
     )]
-    #[ApiParameter(
-        name: 'disk',
-        type: 'string',
-        description: 'rest_param_stg_disk',
-        required: true,
-        example: '/dev/sdb1'
-    )]
-    #[ApiParameter(
-        name: 'PBXRecordSavePeriod',
-        type: 'integer',
-        description: 'rest_param_stg_save_period',
-        required: false,
-        minimum: 1,
-        maximum: 3650,
-        example: 180
-    )]
+    #[ApiParameterRef('disk', required: true)]
+    #[ApiParameterRef(PbxSettings::PBX_RECORD_SAVE_PERIOD)]
     #[ApiResponse(
         statusCode: 200,
         description: 'Storage configuration updated successfully',
@@ -147,22 +134,8 @@ class RestController extends BaseRestController
         description: 'rest_stg_PatchDesc',
         operationId: 'patchStorageConfig'
     )]
-    #[ApiParameter(
-        name: 'disk',
-        type: 'string',
-        description: 'rest_param_stg_disk',
-        required: false,
-        example: '/dev/sdb1'
-    )]
-    #[ApiParameter(
-        name: 'PBXRecordSavePeriod',
-        type: 'integer',
-        description: 'rest_param_stg_save_period',
-        required: false,
-        minimum: 1,
-        maximum: 3650,
-        example: 180
-    )]
+    #[ApiParameterRef('disk')]
+    #[ApiParameterRef(PbxSettings::PBX_RECORD_SAVE_PERIOD)]
     #[ApiResponse(
         statusCode: 200,
         description: 'Storage configuration partially updated',
@@ -237,20 +210,8 @@ class RestController extends BaseRestController
         description: 'rest_stg_MountDesc',
         operationId: 'mountStorageDevice'
     )]
-    #[ApiParameter(
-        name: 'device',
-        type: 'string',
-        description: 'rest_param_stg_device',
-        required: true,
-        example: '/dev/sdb1'
-    )]
-    #[ApiParameter(
-        name: 'mountPoint',
-        type: 'string',
-        description: 'rest_param_stg_mount_point',
-        required: false,
-        example: '/storage/usbdisk1'
-    )]
+    #[ApiParameterRef('device', required: true)]
+    #[ApiParameterRef('mountPoint')]
     #[ApiResponse(
         statusCode: 200,
         description: 'Device mounted successfully'
@@ -273,13 +234,7 @@ class RestController extends BaseRestController
         description: 'rest_stg_UmountDesc',
         operationId: 'unmountStorageDevice'
     )]
-    #[ApiParameter(
-        name: 'device',
-        type: 'string',
-        description: 'rest_param_stg_device',
-        required: true,
-        example: '/dev/sdb1'
-    )]
+    #[ApiParameterRef('device', required: true)]
     #[ApiResponse(
         statusCode: 200,
         description: 'Device unmounted successfully'
@@ -302,29 +257,9 @@ class RestController extends BaseRestController
         description: 'rest_stg_MkfsDesc',
         operationId: 'formatStorageDevice'
     )]
-    #[ApiParameter(
-        name: 'device',
-        type: 'string',
-        description: 'rest_param_stg_device',
-        required: true,
-        example: '/dev/sdb1'
-    )]
-    #[ApiParameter(
-        name: 'fileSystem',
-        type: 'string',
-        description: 'rest_param_stg_filesystem',
-        required: false,
-        enum: ['ext4', 'ext3'],
-        default: 'ext4'
-    )]
-    #[ApiParameter(
-        name: 'label',
-        type: 'string',
-        description: 'rest_param_stg_label',
-        required: false,
-        maxLength: 16,
-        example: 'MikoPBX-Storage'
-    )]
+    #[ApiParameterRef('device', required: true)]
+    #[ApiParameterRef('fileSystem')]
+    #[ApiParameterRef('label')]
     #[ApiResponse(
         statusCode: 202,
         description: 'Formatting started'
@@ -347,13 +282,7 @@ class RestController extends BaseRestController
         description: 'rest_stg_StatusMkfsDesc',
         operationId: 'getFormatStatus'
     )]
-    #[ApiParameter(
-        name: 'taskId',
-        type: 'string',
-        description: 'rest_param_stg_task_id',
-        required: true,
-        example: 'mkfs-task-123'
-    )]
+    #[ApiParameterRef('taskId', required: true)]
     #[ApiResponse(
         statusCode: 200,
         description: 'Formatting status'

@@ -28,8 +28,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
     ResourceSecurity,
     SecurityType,
     ApiOperation,
-    ApiParameter,
-    ParameterLocation,
+    ApiParameterRef,
     ApiResponse,
     ApiDataSchema
 };
@@ -68,41 +67,10 @@ class RestController extends BaseRestController
         description: 'Returns the documentation URL for a specific page based on controller and action context',
         operationId: 'getWikiLink'
     )]
-    #[ApiParameter(
-        name: 'controller',
-        type: 'string',
-        description: 'Controller name in CamelCase format',
-        in: ParameterLocation::QUERY,
-        required: true,
-        example: 'Extensions'
-    )]
-    #[ApiParameter(
-        name: 'action',
-        type: 'string',
-        description: 'Action name (optional, defaults to "index")',
-        in: ParameterLocation::QUERY,
-        required: false,
-        default: 'index',
-        example: 'index'
-    )]
-    #[ApiParameter(
-        name: 'language',
-        type: 'string',
-        description: 'Language code (optional, defaults to "en")',
-        in: ParameterLocation::QUERY,
-        required: false,
-        enum: ['en', 'ru'],
-        default: 'en',
-        example: 'en'
-    )]
-    #[ApiParameter(
-        name: 'moduleId',
-        type: 'string',
-        description: 'Module unique ID for module-specific documentation (optional)',
-        in: ParameterLocation::QUERY,
-        required: false,
-        example: 'ModuleUsersUI'
-    )]
+    #[ApiParameterRef('controller', required: true)]
+    #[ApiParameterRef('action')]
+    #[ApiParameterRef('language')]
+    #[ApiParameterRef('moduleId')]
     #[ApiDataSchema(
         schemaClass: \MikoPBX\PBXCoreREST\Lib\WikiLinks\DataStructure::class,
         type: 'detail'

@@ -25,11 +25,9 @@ use MikoPBX\PBXCoreREST\Lib\Iax\DataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
-    ApiParameter,
     ApiResponse,
     ApiDataSchema,
     SecurityType,
-    ParameterLocation,
     HttpMapping,
     ResourceSecurity
 };

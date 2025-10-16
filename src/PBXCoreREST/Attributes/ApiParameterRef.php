@@ -55,9 +55,15 @@ use Attribute;
  * }
  *
  * // In RestController.php:
- * #[ApiParameterRef('strategy')]  // Uses all defaults from DataStructure
+ * #[ApiParameterRef('strategy')]  // Uses all defaults from controller's DataStructure
  * #[ApiParameterRef('name', required: true)]  // Override required flag
  * #[ApiParameterRef('strategy', example: 'leastrecent')]  // Override example
+ *
+ * // Reference parameters from CommonDataStructure:
+ * use MikoPBX\PBXCoreREST\Lib\Common\CommonDataStructure;
+ * #[ApiParameterRef('limit', dataStructure: CommonDataStructure::class)]
+ * #[ApiParameterRef('offset', dataStructure: CommonDataStructure::class)]
+ * #[ApiParameterRef('order', dataStructure: CommonDataStructure::class, enum: ['name', 'extension'])]
  * public function create(): void {}
  * ```
  *
@@ -68,6 +74,7 @@ class ApiParameterRef
 {
     /**
      * @param string $parameterName Name of parameter from DataStructure::getParameterDefinitions()
+     * @param string|null $dataStructure Fully qualified class name of DataStructure to reference (null = controller's DataStructure)
      * @param ParameterLocation|null $in Override parameter location (query/path/header)
      * @param bool|null $required Override required flag
      * @param mixed|null $default Override default value
@@ -81,6 +88,7 @@ class ApiParameterRef
      */
     public function __construct(
         public readonly string $parameterName,
+        public readonly ?string $dataStructure = null,
         public readonly ?ParameterLocation $in = null,
         public readonly ?bool $required = null,
         public readonly mixed $default = null,

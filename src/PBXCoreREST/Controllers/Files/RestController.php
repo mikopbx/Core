@@ -26,11 +26,10 @@ use MikoPBX\PBXCoreREST\Lib\Files\DataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
-    ApiParameter,
+    ApiParameterRef,
     ApiResponse,
     ApiDataSchema,
     SecurityType,
-    ParameterLocation,
     HttpMapping,
     ResourceSecurity
 };
@@ -121,15 +120,7 @@ class RestController extends BaseRestController
         description: 'rest_file_GetRecordDesc',
         operationId: 'getFileContent'
     )]
-    #[ApiParameter(
-        name: 'id',
-        type: 'string',
-        description: 'rest_param_file_path',
-        in: ParameterLocation::PATH,
-        required: true,
-        maxLength: 500,
-        example: 'etc/asterisk/asterisk.conf'
-    )]
+    #[ApiParameterRef('id', example: 'etc/asterisk/asterisk.conf')]
     #[ApiResponse(200, 'rest_response_200_file_content')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -153,15 +144,7 @@ class RestController extends BaseRestController
         description: 'rest_file_UpdateDesc',
         operationId: 'uploadFileContent'
     )]
-    #[ApiParameter(
-        name: 'id',
-        type: 'string',
-        description: 'rest_param_file_path',
-        in: ParameterLocation::PATH,
-        required: true,
-        maxLength: 500,
-        example: 'tmp/config.txt'
-    )]
+    #[ApiParameterRef('id', example: 'tmp/config.txt')]
     #[ApiResponse(200, 'rest_response_200_uploaded')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -184,15 +167,7 @@ class RestController extends BaseRestController
         description: 'rest_file_DeleteDesc',
         operationId: 'deleteFile'
     )]
-    #[ApiParameter(
-        name: 'id',
-        type: 'string',
-        description: 'rest_param_file_path',
-        in: ParameterLocation::PATH,
-        required: true,
-        maxLength: 500,
-        example: 'storage/usbdisk1/mikopbx/tmp/audio.wav'
-    )]
+    #[ApiParameterRef('id', example: 'storage/usbdisk1/mikopbx/tmp/audio.wav')]
     #[ApiResponse(204, 'rest_response_204_deleted')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -216,42 +191,10 @@ class RestController extends BaseRestController
         description: 'rest_file_UploadDesc',
         operationId: 'uploadFileChunked'
     )]
-    #[ApiParameter(
-        name: 'resumableIdentifier',
-        type: 'string',
-        description: 'rest_param_file_resumable_id',
-        in: ParameterLocation::QUERY,
-        required: true,
-        maxLength: 255,
-        example: '12345'
-    )]
-    #[ApiParameter(
-        name: 'resumableChunkNumber',
-        type: 'integer',
-        description: 'rest_param_file_chunk_number',
-        in: ParameterLocation::QUERY,
-        required: true,
-        minimum: 1,
-        example: 1
-    )]
-    #[ApiParameter(
-        name: 'resumableTotalChunks',
-        type: 'integer',
-        description: 'rest_param_file_total_chunks',
-        in: ParameterLocation::QUERY,
-        required: true,
-        minimum: 1,
-        example: 10
-    )]
-    #[ApiParameter(
-        name: 'resumableFilename',
-        type: 'string',
-        description: 'rest_param_file_resumable_name',
-        in: ParameterLocation::QUERY,
-        required: true,
-        maxLength: 255,
-        example: 'firmware.img'
-    )]
+    #[ApiParameterRef('resumableIdentifier', required: true)]
+    #[ApiParameterRef('resumableChunkNumber', required: true)]
+    #[ApiParameterRef('resumableTotalChunks', required: true)]
+    #[ApiParameterRef('resumableFilename', required: true)]
     #[ApiResponse(200, 'rest_response_200_chunk_uploaded')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -278,15 +221,7 @@ class RestController extends BaseRestController
         description: 'rest_file_UploadStatusDesc',
         operationId: 'getUploadStatus'
     )]
-    #[ApiParameter(
-        name: 'id',
-        type: 'string',
-        description: 'rest_param_file_resumable_id',
-        in: ParameterLocation::QUERY,
-        required: true,
-        maxLength: 255,
-        example: '12345'
-    )]
+    #[ApiParameterRef('resumableIdentifier', required: true)]
     #[ApiResponse(200, 'rest_response_200_upload_status')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
@@ -309,24 +244,8 @@ class RestController extends BaseRestController
         description: 'rest_file_DownloadFirmwareDesc',
         operationId: 'downloadFirmware'
     )]
-    #[ApiParameter(
-        name: 'url',
-        type: 'string',
-        description: 'rest_param_file_firmware_url',
-        in: ParameterLocation::QUERY,
-        required: true,
-        maxLength: 1000,
-        example: 'https://example.com/firmware.img'
-    )]
-    #[ApiParameter(
-        name: 'md5',
-        type: 'string',
-        description: 'rest_param_file_firmware_md5',
-        in: ParameterLocation::QUERY,
-        required: false,
-        maxLength: 32,
-        example: 'abc123def456'
-    )]
+    #[ApiParameterRef('url', required: true)]
+    #[ApiParameterRef('md5')]
     #[ApiResponse(200, 'rest_response_200_firmware_downloading')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -353,15 +272,7 @@ class RestController extends BaseRestController
         description: 'rest_file_FirmwareStatusDesc',
         operationId: 'getFirmwareDownloadStatus'
     )]
-    #[ApiParameter(
-        name: 'filename',
-        type: 'string',
-        description: 'rest_param_file_firmware_name',
-        in: ParameterLocation::QUERY,
-        required: true,
-        maxLength: 255,
-        example: 'firmware.img'
-    )]
+    #[ApiParameterRef('filename', required: true)]
     #[ApiResponse(200, 'rest_response_200_firmware_status')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]

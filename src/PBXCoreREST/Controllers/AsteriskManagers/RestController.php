@@ -22,15 +22,16 @@ namespace MikoPBX\PBXCoreREST\Controllers\AsteriskManagers;
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\AsteriskManagersManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\AsteriskManagers\DataStructure;
+use MikoPBX\PBXCoreREST\Lib\Common\CommonDataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
-    ApiParameter,
+    
     ApiParameterRef,
     ApiResponse,
     ApiDataSchema,
     SecurityType,
-    ParameterLocation,
+    
     HttpMapping,
     ResourceSecurity
 };
@@ -92,51 +93,11 @@ class RestController extends BaseRestController
         description: 'rest_am_GetListDesc',
         operationId: 'getAsteriskManagersList'
     )]
-    #[ApiParameter(
-        name: 'limit',
-        type: 'integer',
-        description: 'rest_param_limit',
-        in: ParameterLocation::QUERY,
-        minimum: 1,
-        maximum: 100,
-        default: 20,
-        example: 20
-    )]
-    #[ApiParameter(
-        name: 'offset',
-        type: 'integer',
-        description: 'rest_param_offset',
-        in: ParameterLocation::QUERY,
-        minimum: 0,
-        default: 0,
-        example: 0
-    )]
-    #[ApiParameter(
-        name: 'search',
-        type: 'string',
-        description: 'rest_param_search',
-        in: ParameterLocation::QUERY,
-        maxLength: 255,
-        example: 'admin'
-    )]
-    #[ApiParameter(
-        name: 'order',
-        type: 'string',
-        description: 'rest_param_order',
-        in: ParameterLocation::QUERY,
-        enum: ['username', 'description'],
-        default: 'username',
-        example: 'username'
-    )]
-    #[ApiParameter(
-        name: 'orderWay',
-        type: 'string',
-        description: 'rest_param_orderWay',
-        in: ParameterLocation::QUERY,
-        enum: ['ASC', 'DESC'],
-        default: 'ASC',
-        example: 'ASC'
-    )]
+    #[ApiParameterRef('limit', dataStructure: CommonDataStructure::class)]
+    #[ApiParameterRef('offset', dataStructure: CommonDataStructure::class)]
+    #[ApiParameterRef('search', dataStructure: CommonDataStructure::class, example: 'admin')]
+    #[ApiParameterRef('order', dataStructure: CommonDataStructure::class, enum: ['username', 'description'])]
+    #[ApiParameterRef('orderWay', dataStructure: CommonDataStructure::class)]
     #[ApiResponse(200, 'rest_response_200_list')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -159,7 +120,7 @@ class RestController extends BaseRestController
         description: 'rest_am_GetRecordDesc',
         operationId: 'getAsteriskManager'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[0-9]+$', example: '53')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]+$', example: '53')]
     #[ApiResponse(200, 'rest_response_200_get')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -212,7 +173,7 @@ class RestController extends BaseRestController
         description: 'rest_am_UpdateDesc',
         operationId: 'updateAsteriskManager'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[0-9]+$', example: '53')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]+$', example: '53')]
     #[ApiParameterRef('username', required: true)]
     #[ApiParameterRef('secret', required: true)]
     #[ApiParameterRef('description')]
@@ -243,7 +204,7 @@ class RestController extends BaseRestController
         description: 'rest_am_PatchDesc',
         operationId: 'patchAsteriskManager'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[0-9]+$', example: '53')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]+$', example: '53')]
     #[ApiParameterRef('username')]
     #[ApiParameterRef('secret')]
     #[ApiParameterRef('description')]
@@ -269,7 +230,7 @@ class RestController extends BaseRestController
         description: 'rest_am_DeleteDesc',
         operationId: 'deleteAsteriskManager'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[0-9]+$', example: '53')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]+$', example: '53')]
     #[ApiResponse(200, 'rest_response_200_deleted')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -317,7 +278,7 @@ class RestController extends BaseRestController
         description: 'rest_am_CopyDesc',
         operationId: 'copyAsteriskManager'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[0-9]+$', example: '53')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]+$', example: '53')]
     #[ApiResponse(200, 'rest_response_200_copied')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]

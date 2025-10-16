@@ -22,10 +22,11 @@ namespace MikoPBX\PBXCoreREST\Controllers\CustomFiles;
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\CustomFilesManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\CustomFiles\DataStructure;
+use MikoPBX\PBXCoreREST\Lib\Common\CommonDataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
-    ApiParameter,
+    
     ApiResponse,
     ApiDataSchema,
     SecurityType,
@@ -92,51 +93,11 @@ class RestController extends BaseRestController
         description: 'rest_cf_GetListDesc',
         operationId: 'getCustomFilesList'
     )]
-    #[ApiParameter(
-        name: 'limit',
-        type: 'integer',
-        description: 'rest_param_limit',
-        in: ParameterLocation::QUERY,
-        minimum: 1,
-        maximum: 100,
-        default: 20,
-        example: 20
-    )]
-    #[ApiParameter(
-        name: 'offset',
-        type: 'integer',
-        description: 'rest_param_offset',
-        in: ParameterLocation::QUERY,
-        minimum: 0,
-        default: 0,
-        example: 0
-    )]
-    #[ApiParameter(
-        name: 'search',
-        type: 'string',
-        description: 'rest_param_search',
-        in: ParameterLocation::QUERY,
-        maxLength: 255,
-        example: '/etc'
-    )]
-    #[ApiParameter(
-        name: 'order',
-        type: 'string',
-        description: 'rest_param_order',
-        in: ParameterLocation::QUERY,
-        enum: ['filepath', 'mode'],
-        default: 'filepath',
-        example: 'filepath'
-    )]
-    #[ApiParameter(
-        name: 'orderWay',
-        type: 'string',
-        description: 'rest_param_orderWay',
-        in: ParameterLocation::QUERY,
-        enum: ['ASC', 'DESC'],
-        default: 'ASC',
-        example: 'ASC'
-    )]
+    #[ApiParameterRef('limit', dataStructure: CommonDataStructure::class)]
+    #[ApiParameterRef('offset', dataStructure: CommonDataStructure::class)]
+    #[ApiParameterRef('search', dataStructure: CommonDataStructure::class, example: '/etc')]
+    #[ApiParameterRef('order', dataStructure: CommonDataStructure::class, enum: ['filepath', 'mode'])]
+    #[ApiParameterRef('orderWay', dataStructure: CommonDataStructure::class)]
     #[ApiResponse(200, 'rest_response_200_list')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -159,7 +120,7 @@ class RestController extends BaseRestController
         description: 'rest_cf_GetRecordDesc',
         operationId: 'getCustomFileById'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[0-9]+$', example: '15')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]+$', example: '15')]
     #[ApiResponse(200, 'rest_response_200_get')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -211,7 +172,7 @@ class RestController extends BaseRestController
         description: 'rest_cf_UpdateDesc',
         operationId: 'updateCustomFile'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[0-9]+$', example: '15')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]+$', example: '15')]
     #[ApiParameter('filepath', 'string', 'rest_param_cf_filepath', ParameterLocation::QUERY, required: true, maxLength: 500, example: '/etc/asterisk/custom.conf')]
     #[ApiParameter('content', 'string', 'rest_param_cf_content', ParameterLocation::QUERY, required: true, example: 'new_base64_encoded_content')]
     #[ApiParameter('mode', 'string', 'rest_param_cf_mode', ParameterLocation::QUERY, required: true, enum: ['override', 'append', 'script'], example: 'override')]
@@ -241,7 +202,7 @@ class RestController extends BaseRestController
         description: 'rest_cf_PatchDesc',
         operationId: 'patchCustomFile'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[0-9]+$', example: '15')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]+$', example: '15')]
     #[ApiParameter('filepath', 'string', 'rest_param_cf_filepath', ParameterLocation::QUERY, required: false, maxLength: 500, example: '/etc/custom.conf')]
     #[ApiParameter('content', 'string', 'rest_param_cf_content', ParameterLocation::QUERY, required: false, example: 'patched_base64_content')]
     #[ApiParameter('mode', 'string', 'rest_param_cf_mode', ParameterLocation::QUERY, required: false, enum: ['override', 'append', 'script'], example: 'script')]
@@ -266,7 +227,7 @@ class RestController extends BaseRestController
         description: 'rest_cf_DeleteDesc',
         operationId: 'deleteCustomFile'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[0-9]+$', example: '15')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]+$', example: '15')]
     #[ApiResponse(200, 'rest_response_200_deleted')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]

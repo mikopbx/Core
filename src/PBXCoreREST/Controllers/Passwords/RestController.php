@@ -21,13 +21,13 @@ namespace MikoPBX\PBXCoreREST\Controllers\Passwords;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\PasswordsManagementProcessor;
+use MikoPBX\PBXCoreREST\Lib\Passwords\DataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
-    ApiParameter,
+    ApiParameterRef,
     ApiResponse,
     SecurityType,
-    ParameterLocation,
     HttpMapping,
     ResourceSecurity
 };
@@ -87,53 +87,11 @@ class RestController extends BaseRestController
         description: 'rest_pwd_GenerateDesc',
         operationId: 'generatePassword'
     )]
-    #[ApiParameter(
-        name: 'length',
-        type: 'integer',
-        description: 'rest_param_pwd_length',
-        in: ParameterLocation::QUERY,
-        required: false,
-        minimum: 8,
-        maximum: 128,
-        default: 16,
-        example: 16
-    )]
-    #[ApiParameter(
-        name: 'includeSpecial',
-        type: 'boolean',
-        description: 'rest_param_pwd_includeSpecial',
-        in: ParameterLocation::QUERY,
-        required: false,
-        default: true,
-        example: true
-    )]
-    #[ApiParameter(
-        name: 'includeNumbers',
-        type: 'boolean',
-        description: 'rest_param_pwd_includeNumbers',
-        in: ParameterLocation::QUERY,
-        required: false,
-        default: true,
-        example: true
-    )]
-    #[ApiParameter(
-        name: 'includeUppercase',
-        type: 'boolean',
-        description: 'rest_param_pwd_includeUppercase',
-        in: ParameterLocation::QUERY,
-        required: false,
-        default: true,
-        example: true
-    )]
-    #[ApiParameter(
-        name: 'includeLowercase',
-        type: 'boolean',
-        description: 'rest_param_pwd_includeLowercase',
-        in: ParameterLocation::QUERY,
-        required: false,
-        default: true,
-        example: true
-    )]
+    #[ApiParameterRef('length', required: false)]
+    #[ApiParameterRef('includeSpecial', required: false)]
+    #[ApiParameterRef('includeNumbers', required: false)]
+    #[ApiParameterRef('includeUppercase', required: false)]
+    #[ApiParameterRef('includeLowercase', required: false)]
     #[ApiResponse(200, 'rest_response_200_get')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -153,25 +111,8 @@ class RestController extends BaseRestController
         description: 'rest_pwd_ValidateDesc',
         operationId: 'validatePassword'
     )]
-    #[ApiParameter(
-        name: 'password',
-        type: 'string',
-        description: 'rest_param_pwd_password',
-        in: ParameterLocation::QUERY,
-        required: true,
-        minLength: 1,
-        maxLength: 255,
-        example: 'MyStr0ng@Pass2024'
-    )]
-    #[ApiParameter(
-        name: 'field',
-        type: 'string',
-        description: 'rest_param_pwd_field',
-        in: ParameterLocation::QUERY,
-        required: false,
-        enum: ['WebAdminPassword', 'SSHPassword', 'AMIPassword', 'SIPPassword'],
-        example: 'WebAdminPassword'
-    )]
+    #[ApiParameterRef('password', required: true)]
+    #[ApiParameterRef('field', required: false)]
     #[ApiResponse(200, 'rest_response_200_validated')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -191,16 +132,7 @@ class RestController extends BaseRestController
         description: 'rest_pwd_CheckDictionaryDesc',
         operationId: 'checkPasswordDictionary'
     )]
-    #[ApiParameter(
-        name: 'password',
-        type: 'string',
-        description: 'rest_param_pwd_password',
-        in: ParameterLocation::QUERY,
-        required: true,
-        minLength: 1,
-        maxLength: 255,
-        example: 'password123'
-    )]
+    #[ApiParameterRef('password', required: true)]
     #[ApiResponse(200, 'rest_response_200_validated')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -220,14 +152,7 @@ class RestController extends BaseRestController
         description: 'rest_pwd_BatchValidateDesc',
         operationId: 'batchValidatePasswords'
     )]
-    #[ApiParameter(
-        name: 'passwords',
-        type: 'array',
-        description: 'rest_param_pwd_passwords',
-        in: ParameterLocation::QUERY,
-        required: true,
-        example: '[{"password":"Admin123!","field":"WebAdminPassword"},{"password":"SSH@Pass2024","field":"SSHPassword"}]'
-    )]
+    #[ApiParameterRef('passwords', required: true)]
     #[ApiResponse(200, 'rest_response_200_validated')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -247,14 +172,7 @@ class RestController extends BaseRestController
         description: 'rest_pwd_BatchCheckDictionaryDesc',
         operationId: 'batchCheckPasswordDictionary'
     )]
-    #[ApiParameter(
-        name: 'passwords',
-        type: 'array',
-        description: 'rest_param_pwd_passwordsList',
-        in: ParameterLocation::QUERY,
-        required: true,
-        example: '["password1","admin123","MyStr0ng@Pass"]'
-    )]
+    #[ApiParameterRef('passwordsList', required: true)]
     #[ApiResponse(200, 'rest_response_200_validated')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]

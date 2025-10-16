@@ -22,10 +22,11 @@ namespace MikoPBX\PBXCoreREST\Controllers\Modules;
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\ModulesManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\Modules\DataStructure;
+use MikoPBX\PBXCoreREST\Lib\Common\CommonDataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
-    ApiParameter,
+    
     ApiResponse,
     ApiDataSchema,
     SecurityType,
@@ -91,51 +92,11 @@ class RestController extends BaseRestController
         description: 'rest_mod_GetListDesc',
         operationId: 'getModulesList'
     )]
-    #[ApiParameter(
-        name: 'limit',
-        type: 'integer',
-        description: 'rest_param_limit',
-        in: ParameterLocation::QUERY,
-        minimum: 1,
-        maximum: 100,
-        default: 20,
-        example: 20
-    )]
-    #[ApiParameter(
-        name: 'offset',
-        type: 'integer',
-        description: 'rest_param_offset',
-        in: ParameterLocation::QUERY,
-        minimum: 0,
-        default: 0,
-        example: 0
-    )]
-    #[ApiParameter(
-        name: 'search',
-        type: 'string',
-        description: 'rest_param_search',
-        in: ParameterLocation::QUERY,
-        maxLength: 255,
-        example: 'template'
-    )]
-    #[ApiParameter(
-        name: 'order',
-        type: 'string',
-        description: 'rest_param_order',
-        in: ParameterLocation::QUERY,
-        enum: ['name', 'version', 'developer'],
-        default: 'name',
-        example: 'name'
-    )]
-    #[ApiParameter(
-        name: 'orderWay',
-        type: 'string',
-        description: 'rest_param_orderWay',
-        in: ParameterLocation::QUERY,
-        enum: ['ASC', 'DESC'],
-        default: 'ASC',
-        example: 'ASC'
-    )]
+    #[ApiParameterRef('limit', dataStructure: CommonDataStructure::class)]
+    #[ApiParameterRef('offset', dataStructure: CommonDataStructure::class)]
+    #[ApiParameterRef('search', dataStructure: CommonDataStructure::class, example: 'template')]
+    #[ApiParameterRef('order', dataStructure: CommonDataStructure::class, enum: ['name', 'version', 'developer'])]
+    #[ApiParameterRef('orderWay', dataStructure: CommonDataStructure::class)]
     #[ApiResponse(200, 'rest_response_200_list')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -158,7 +119,7 @@ class RestController extends BaseRestController
         description: 'rest_mod_GetRecordDesc',
         operationId: 'getModuleById'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_module_id', ParameterLocation::PATH, required: true, pattern: '^[A-Za-z][A-Za-z0-9]*$', example: 'ModuleTemplate')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[A-Za-z][A-Za-z0-9]*$', example: 'ModuleTemplate')]
     #[ApiResponse(200, 'rest_response_200_get')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]

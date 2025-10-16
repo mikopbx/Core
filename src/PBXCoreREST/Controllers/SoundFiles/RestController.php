@@ -25,14 +25,14 @@ use MikoPBX\PBXCoreREST\Lib\SoundFiles\DataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
-    ApiParameter,
+    ApiParameterRef,
     ApiResponse,
     ApiDataSchema,
     SecurityType,
-    ParameterLocation,
     HttpMapping,
     ResourceSecurity
 };
+use MikoPBX\PBXCoreREST\Lib\Common\CommonDataStructure;
 
 /**
  * RESTful controller for sound files management (v3 API)
@@ -92,9 +92,9 @@ class RestController extends BaseRestController
         description: 'rest_sf_GetListDesc',
         operationId: 'getSoundFilesList'
     )]
-    #[ApiParameter('category', 'string', 'rest_param_sf_category', ParameterLocation::QUERY, required: false, enum: ['custom', 'moh', 'system'], example: 'custom')]
-    #[ApiParameter('offset', 'integer', 'rest_param_offset', ParameterLocation::QUERY, required: false, minimum: 0, example: 0)]
-    #[ApiParameter('limit', 'integer', 'rest_param_limit', ParameterLocation::QUERY, required: false, minimum: 1, maximum: 100, default: 20, example: 20)]
+    #[ApiParameterRef('category')]
+    #[ApiParameterRef('offset', dataStructure: CommonDataStructure::class)]
+    #[ApiParameterRef('limit', dataStructure: CommonDataStructure::class)]
     #[ApiResponse(200, 'rest_response_200_list')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -117,7 +117,7 @@ class RestController extends BaseRestController
         description: 'rest_sf_GetRecordDesc',
         operationId: 'getSoundFileById'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, example: 'custom_welcome')]
+    #[ApiParameterRef('id', example: 'custom_welcome')]
     #[ApiResponse(200, 'rest_response_200_get')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -141,9 +141,9 @@ class RestController extends BaseRestController
         description: 'rest_sf_CreateDesc',
         operationId: 'createSoundFile'
     )]
-    #[ApiParameter('name', 'string', 'rest_param_sf_name', ParameterLocation::QUERY, required: true, maxLength: 200, example: 'Welcome Message')]
-    #[ApiParameter('category', 'string', 'rest_param_sf_category', ParameterLocation::QUERY, required: false, enum: ['custom', 'moh'], default: 'custom', example: 'custom')]
-    #[ApiParameter('path', 'string', 'rest_param_sf_path', ParameterLocation::QUERY, required: false, maxLength: 500, example: '/tmp/upload/audio.wav')]
+    #[ApiParameterRef('name', required: true)]
+    #[ApiParameterRef('category')]
+    #[ApiParameterRef('path')]
     #[ApiResponse(201, 'rest_response_201_created')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -167,9 +167,9 @@ class RestController extends BaseRestController
         description: 'rest_sf_UpdateDesc',
         operationId: 'updateSoundFile'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, example: 'custom_welcome')]
-    #[ApiParameter('name', 'string', 'rest_param_sf_name', ParameterLocation::QUERY, required: true, maxLength: 200, example: 'Updated Welcome')]
-    #[ApiParameter('category', 'string', 'rest_param_sf_category', ParameterLocation::QUERY, required: false, enum: ['custom', 'moh'], example: 'custom')]
+    #[ApiParameterRef('id', example: 'custom_welcome')]
+    #[ApiParameterRef('name', required: true)]
+    #[ApiParameterRef('category')]
     #[ApiResponse(200, 'rest_response_200_updated')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -194,8 +194,8 @@ class RestController extends BaseRestController
         description: 'rest_sf_PatchDesc',
         operationId: 'patchSoundFile'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, example: 'custom_welcome')]
-    #[ApiParameter('name', 'string', 'rest_param_sf_name', ParameterLocation::QUERY, required: false, maxLength: 200, example: 'New Name')]
+    #[ApiParameterRef('id', example: 'custom_welcome')]
+    #[ApiParameterRef('name')]
     #[ApiResponse(200, 'rest_response_200_patched')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -216,7 +216,7 @@ class RestController extends BaseRestController
         description: 'rest_sf_DeleteDesc',
         operationId: 'deleteSoundFile'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, example: 'custom_welcome')]
+    #[ApiParameterRef('id', example: 'custom_welcome')]
     #[ApiResponse(200, 'rest_response_200_deleted')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -258,7 +258,7 @@ class RestController extends BaseRestController
         description: 'rest_sf_GetForSelectDesc',
         operationId: 'getSoundFilesForSelect'
     )]
-    #[ApiParameter('category', 'string', 'rest_param_sf_category', ParameterLocation::QUERY, required: false, enum: ['custom', 'moh', 'system'], example: 'moh')]
+    #[ApiParameterRef('category', example: 'moh')]
     #[ApiResponse(200, 'rest_response_200_list')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -277,9 +277,9 @@ class RestController extends BaseRestController
         description: 'rest_sf_PlaybackDesc',
         operationId: 'playSoundFile'
     )]
-    #[ApiParameter('view', 'string', 'rest_param_file_path', ParameterLocation::QUERY, required: true, example: '/storage/usbdisk1/mikopbx/media/custom/file.mp3')]
-    #[ApiParameter('download', 'integer', 'rest_param_download_flag', ParameterLocation::QUERY, required: false, example: 1)]
-    #[ApiParameter('filename', 'string', 'rest_param_download_name', ParameterLocation::QUERY, required: false, example: 'audio.mp3')]
+    #[ApiParameterRef('view', required: true)]
+    #[ApiParameterRef('download')]
+    #[ApiParameterRef('filename')]
     #[ApiResponse(200, 'rest_response_200_audio_stream')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -300,9 +300,6 @@ class RestController extends BaseRestController
         description: 'rest_sf_UploadFileDesc',
         operationId: 'uploadSoundFile'
     )]
-    #[ApiParameter('file', 'file', 'rest_param_sf_file', ParameterLocation::QUERY, required: true, example: 'audio.wav')]
-    #[ApiParameter('resumableChunkNumber', 'integer', 'rest_param_sf_chunk_number', ParameterLocation::QUERY, required: false, example: 1)]
-    #[ApiParameter('resumableTotalChunks', 'integer', 'rest_param_sf_total_chunks', ParameterLocation::QUERY, required: false, example: 5)]
     #[ApiResponse(200, 'rest_response_200_uploaded')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -322,8 +319,8 @@ class RestController extends BaseRestController
         description: 'rest_sf_ConvertAudioFileDesc',
         operationId: 'convertAudioFile'
     )]
-    #[ApiParameter('filePath', 'string', 'rest_param_sf_file_path', ParameterLocation::QUERY, required: true, maxLength: 500, example: '/tmp/audio.mp3')]
-    #[ApiParameter('category', 'string', 'rest_param_sf_category', ParameterLocation::QUERY, required: false, enum: ['custom', 'moh'], default: 'custom', example: 'moh')]
+    #[ApiParameterRef('filePath', required: true)]
+    #[ApiParameterRef('category', example: 'moh')]
     #[ApiResponse(200, 'rest_response_200_converted')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]

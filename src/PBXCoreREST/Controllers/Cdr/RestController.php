@@ -22,10 +22,11 @@ namespace MikoPBX\PBXCoreREST\Controllers\Cdr;
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\CdrManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\Cdr\DataStructure;
+use MikoPBX\PBXCoreREST\Lib\Common\CommonDataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
-    ApiParameter,
+    
     ApiResponse,
     ApiDataSchema,
     SecurityType,
@@ -89,25 +90,8 @@ class RestController extends BaseRestController
         description: 'rest_cdr_GetListDesc',
         operationId: 'getCdrList'
     )]
-    #[ApiParameter(
-        name: 'limit',
-        type: 'integer',
-        description: 'rest_param_limit',
-        in: ParameterLocation::QUERY,
-        minimum: 1,
-        maximum: 1000,
-        default: 50,
-        example: 50
-    )]
-    #[ApiParameter(
-        name: 'offset',
-        type: 'integer',
-        description: 'rest_param_offset',
-        in: ParameterLocation::QUERY,
-        minimum: 0,
-        default: 0,
-        example: 0
-    )]
+    #[ApiParameterRef('limit', dataStructure: CommonDataStructure::class)]
+    #[ApiParameterRef('offset', dataStructure: CommonDataStructure::class)]
     #[ApiParameter(
         name: 'dateFrom',
         type: 'string',
@@ -168,7 +152,7 @@ class RestController extends BaseRestController
         description: 'rest_cdr_GetRecordDesc',
         operationId: 'getCdrById'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[0-9]+$', example: '12345')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]+$', example: '12345')]
     #[ApiResponse(200, 'rest_response_200_get')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]

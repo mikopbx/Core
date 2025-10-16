@@ -22,10 +22,12 @@ namespace MikoPBX\PBXCoreREST\Controllers\Firewall;
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\FirewallManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\Firewall\DataStructure;
+use MikoPBX\PBXCoreREST\Lib\Common\CommonDataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
     ApiParameter,
+    ApiParameterRef,
     ApiResponse,
     ApiDataSchema,
     SecurityType,
@@ -136,36 +138,9 @@ class RestController extends BaseRestController
         description: 'rest_fw_GetListDesc',
         operationId: 'getFirewallRulesList'
     )]
-    #[ApiParameter(
-        name: 'limit',
-        type: 'integer',
-        description: 'rest_param_limit',
-        in: ParameterLocation::QUERY,
-        required: false,
-        minimum: 1,
-        maximum: 1000,
-        default: 20,
-        example: 20
-    )]
-    #[ApiParameter(
-        name: 'offset',
-        type: 'integer',
-        description: 'rest_param_offset',
-        in: ParameterLocation::QUERY,
-        required: false,
-        minimum: 0,
-        default: 0,
-        example: 0
-    )]
-    #[ApiParameter(
-        name: 'search',
-        type: 'string',
-        description: 'rest_param_search',
-        in: ParameterLocation::QUERY,
-        required: false,
-        maxLength: 255,
-        example: '192.168'
-    )]
+    #[ApiParameterRef('limit', dataStructure: CommonDataStructure::class)]
+    #[ApiParameterRef('offset', dataStructure: CommonDataStructure::class)]
+    #[ApiParameterRef('search', dataStructure: CommonDataStructure::class, example: '192.168')]
     #[ApiParameter(
         name: 'order',
         type: 'string',
@@ -175,16 +150,7 @@ class RestController extends BaseRestController
         default: 'permit',
         example: 'permit'
     )]
-    #[ApiParameter(
-        name: 'orderWay',
-        type: 'string',
-        description: 'rest_param_orderWay',
-        in: ParameterLocation::QUERY,
-        required: false,
-        enum: ['ASC', 'DESC'],
-        default: 'ASC',
-        example: 'ASC'
-    )]
+    #[ApiParameterRef('orderWay', dataStructure: CommonDataStructure::class)]
     #[ApiResponse(200, 'rest_response_200_list')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]

@@ -22,10 +22,11 @@ namespace MikoPBX\PBXCoreREST\Controllers\IncomingRoutes;
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\IncomingRoutesManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\IncomingRoutes\DataStructure;
+use MikoPBX\PBXCoreREST\Lib\Common\CommonDataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
-    ApiParameter,
+    
     ApiResponse,
     ApiDataSchema,
     SecurityType,
@@ -91,51 +92,11 @@ class RestController extends BaseRestController
         description: 'rest_ir_GetListDesc',
         operationId: 'getIncomingRoutesList'
     )]
-    #[ApiParameter(
-        name: 'limit',
-        type: 'integer',
-        description: 'rest_param_limit',
-        in: ParameterLocation::QUERY,
-        minimum: 1,
-        maximum: 100,
-        default: 20,
-        example: 20
-    )]
-    #[ApiParameter(
-        name: 'offset',
-        type: 'integer',
-        description: 'rest_param_offset',
-        in: ParameterLocation::QUERY,
-        minimum: 0,
-        default: 0,
-        example: 0
-    )]
-    #[ApiParameter(
-        name: 'search',
-        type: 'string',
-        description: 'rest_param_search',
-        in: ParameterLocation::QUERY,
-        maxLength: 255,
-        example: '74952345678'
-    )]
-    #[ApiParameter(
-        name: 'order',
-        type: 'string',
-        description: 'rest_param_order',
-        in: ParameterLocation::QUERY,
-        enum: ['priority', 'number', 'extension', 'rulename'],
-        default: 'priority',
-        example: 'priority'
-    )]
-    #[ApiParameter(
-        name: 'orderWay',
-        type: 'string',
-        description: 'rest_param_orderWay',
-        in: ParameterLocation::QUERY,
-        enum: ['ASC', 'DESC'],
-        default: 'ASC',
-        example: 'ASC'
-    )]
+    #[ApiParameterRef('limit', dataStructure: CommonDataStructure::class)]
+    #[ApiParameterRef('offset', dataStructure: CommonDataStructure::class)]
+    #[ApiParameterRef('search', dataStructure: CommonDataStructure::class, example: '74952345678')]
+    #[ApiParameterRef('order', dataStructure: CommonDataStructure::class, enum: ['priority', 'number', 'extension', 'rulename'])]
+    #[ApiParameterRef('orderWay', dataStructure: CommonDataStructure::class)]
     #[ApiParameter(
         name: 'providerid',
         type: 'string',
@@ -165,7 +126,7 @@ class RestController extends BaseRestController
         description: 'rest_ir_GetRecordDesc',
         operationId: 'getIncomingRouteById'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[0-9]+$', example: '42')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]+$', example: '42')]
     #[ApiResponse(200, 'rest_response_200_get')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -222,7 +183,7 @@ class RestController extends BaseRestController
         description: 'rest_ir_UpdateDesc',
         operationId: 'updateIncomingRoute'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[0-9]+$', example: '42')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]+$', example: '42')]
     #[ApiParameter('rulename', 'string', 'rest_param_ir_rulename', ParameterLocation::QUERY, required: false, maxLength: 100, example: 'Updated Office Line')]
     #[ApiParameter('number', 'string', 'rest_param_ir_number', ParameterLocation::QUERY, required: false, pattern: '^[0-9*#+]*$', maxLength: 50, example: '74959876543')]
     #[ApiParameter('providerid', 'string', 'rest_param_ir_providerid', ParameterLocation::QUERY, required: false, example: 'SIP-PROVIDER-987654')]
@@ -254,7 +215,7 @@ class RestController extends BaseRestController
         description: 'rest_ir_PatchDesc',
         operationId: 'patchIncomingRoute'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[0-9]+$', example: '42')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]+$', example: '42')]
     #[ApiParameter('rulename', 'string', 'rest_param_ir_rulename', ParameterLocation::QUERY, required: false, maxLength: 100, example: 'Updated Office Line')]
     #[ApiParameter('number', 'string', 'rest_param_ir_number', ParameterLocation::QUERY, required: false, pattern: '^[0-9*#+]*$', maxLength: 50, example: '74959876543')]
     #[ApiParameter('priority', 'integer', 'rest_param_ir_priority', ParameterLocation::QUERY, required: false, minimum: 0, maximum: 9999, example: 5)]
@@ -280,7 +241,7 @@ class RestController extends BaseRestController
         description: 'rest_ir_DeleteDesc',
         operationId: 'deleteIncomingRoute'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[0-9]+$', example: '42')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]+$', example: '42')]
     #[ApiResponse(200, 'rest_response_200_deleted')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -350,7 +311,7 @@ class RestController extends BaseRestController
         description: 'rest_ir_CopyDesc',
         operationId: 'copyIncomingRoute'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[0-9]+$', example: '42')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]+$', example: '42')]
     #[ApiResponse(201, 'rest_response_201_copied')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]

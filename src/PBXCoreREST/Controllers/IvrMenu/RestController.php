@@ -22,15 +22,16 @@ namespace MikoPBX\PBXCoreREST\Controllers\IvrMenu;
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\IvrMenuManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\IvrMenu\DataStructure;
+use MikoPBX\PBXCoreREST\Lib\Common\CommonDataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
-    ApiParameter,
+    
     ApiParameterRef,
     ApiResponse,
     ApiDataSchema,
     SecurityType,
-    ParameterLocation,
+    
     HttpMapping,
     ResourceSecurity
 };
@@ -93,51 +94,11 @@ class RestController extends BaseRestController
         description: 'rest_ivr_GetListDesc',
         operationId: 'getIvrMenuList'
     )]
-    #[ApiParameter(
-        name: 'limit',
-        type: 'integer',
-        description: 'rest_param_limit',
-        in: ParameterLocation::QUERY,
-        minimum: 1,
-        maximum: 100,
-        default: 20,
-        example: 20
-    )]
-    #[ApiParameter(
-        name: 'offset',
-        type: 'integer',
-        description: 'rest_param_offset',
-        in: ParameterLocation::QUERY,
-        minimum: 0,
-        default: 0,
-        example: 0
-    )]
-    #[ApiParameter(
-        name: 'search',
-        type: 'string',
-        description: 'rest_param_search',
-        in: ParameterLocation::QUERY,
-        maxLength: 255,
-        example: 'main menu'
-    )]
-    #[ApiParameter(
-        name: 'order',
-        type: 'string',
-        description: 'rest_param_order',
-        in: ParameterLocation::QUERY,
-        enum: ['name', 'extension', 'timeout'],
-        default: 'name',
-        example: 'name'
-    )]
-    #[ApiParameter(
-        name: 'orderWay',
-        type: 'string',
-        description: 'rest_param_orderWay',
-        in: ParameterLocation::QUERY,
-        enum: ['ASC', 'DESC'],
-        default: 'ASC',
-        example: 'ASC'
-    )]
+    #[ApiParameterRef('limit', dataStructure: CommonDataStructure::class)]
+    #[ApiParameterRef('offset', dataStructure: CommonDataStructure::class)]
+    #[ApiParameterRef('search', dataStructure: CommonDataStructure::class, example: 'main menu')]
+    #[ApiParameterRef('order', dataStructure: CommonDataStructure::class, enum: ['name', 'extension', 'timeout'])]
+    #[ApiParameterRef('orderWay', dataStructure: CommonDataStructure::class)]
     #[ApiResponse(200, 'rest_response_200_list')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -160,7 +121,7 @@ class RestController extends BaseRestController
         description: 'rest_ivr_GetRecordDesc',
         operationId: 'getIvrMenuById'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^IVR-[A-Z0-9]+$', example: 'IVR-A1B2C3D4')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^IVR-[A-Z0-9]+$', example: 'IVR-A1B2C3D4')]
     #[ApiResponse(200, 'rest_response_200_get')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -218,7 +179,7 @@ class RestController extends BaseRestController
         description: 'rest_ivr_UpdateDesc',
         operationId: 'updateIvrMenu'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^IVR-[A-Z0-9]+$', example: 'IVR-A1B2C3D4')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^IVR-[A-Z0-9]+$', example: 'IVR-A1B2C3D4')]
     // ✨ Lightweight references to DataStructure::getParameterDefinitions()['request']
     #[ApiParameterRef('name', required: true)]
     #[ApiParameterRef('extension', required: true)]
@@ -254,7 +215,7 @@ class RestController extends BaseRestController
         description: 'rest_ivr_PatchDesc',
         operationId: 'patchIvrMenu'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^IVR-[A-Z0-9]+$', example: 'IVR-A1B2C3D4')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^IVR-[A-Z0-9]+$', example: 'IVR-A1B2C3D4')]
     // ✨ Lightweight references to DataStructure::getParameterDefinitions()['request']
     #[ApiParameterRef('name')]
     #[ApiParameterRef('description')]
@@ -280,7 +241,7 @@ class RestController extends BaseRestController
         description: 'rest_ivr_DeleteDesc',
         operationId: 'deleteIvrMenu'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^IVR-[A-Z0-9]+$', example: 'IVR-A1B2C3D4')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^IVR-[A-Z0-9]+$', example: 'IVR-A1B2C3D4')]
     #[ApiResponse(200, 'rest_response_200_deleted')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -328,7 +289,7 @@ class RestController extends BaseRestController
         description: 'rest_ivr_CopyDesc',
         operationId: 'copyIvrMenu'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^IVR-[A-Z0-9]+$', example: 'IVR-A1B2C3D4')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^IVR-[A-Z0-9]+$', example: 'IVR-A1B2C3D4')]
     #[ApiResponse(200, 'rest_response_200_copied')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]

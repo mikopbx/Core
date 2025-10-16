@@ -20,14 +20,14 @@
 namespace MikoPBX\PBXCoreREST\Controllers\System;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
+use MikoPBX\PBXCoreREST\Lib\System\DataStructure;
 use MikoPBX\PBXCoreREST\Lib\SystemManagementProcessor;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
-    ApiParameter,
+    ApiParameterRef,
     ApiResponse,
     SecurityType,
-    ParameterLocation,
     HttpMapping,
     ResourceSecurity
 };
@@ -231,7 +231,7 @@ class RestController extends BaseRestController
         description: 'rest_system_ConvertAudioFileDesc',
         operationId: 'convertAudioFile'
     )]
-    #[ApiParameter('filename', 'string', 'rest_param_system_audio_filename', ParameterLocation::QUERY, required: true, maxLength: 500, example: '/tmp/audio.mp3')]
+    #[ApiParameterRef('filename', required: true)]
     #[ApiResponse(200, 'rest_response_200_converted')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -251,7 +251,7 @@ class RestController extends BaseRestController
         description: 'rest_system_UpgradeDesc',
         operationId: 'upgradeSystem'
     )]
-    #[ApiParameter('filename', 'string', 'rest_param_system_upgrade_filename', ParameterLocation::QUERY, required: true, maxLength: 500, example: '/tmp/mikopbx.img')]
+    #[ApiParameterRef('filename', required: true)]
     #[ApiResponse(200, 'rest_response_200_upgrading')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -291,7 +291,7 @@ class RestController extends BaseRestController
         description: 'rest_system_ChangeLanguageDesc',
         operationId: 'changeLanguage'
     )]
-    #[ApiParameter('language', 'string', 'rest_param_system_language', ParameterLocation::QUERY, required: true, enum: ['en', 'ru', 'de', 'es', 'fr', 'pt', 'uk'], example: 'ru')]
+    #[ApiParameterRef('language', required: true)]
     #[ApiResponse(200, 'rest_response_200_updated')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     public function changeLanguage(): void

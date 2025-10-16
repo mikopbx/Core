@@ -24,17 +24,6 @@ namespace MikoPBX\PBXCoreREST\Attributes;
 use Attribute;
 
 /**
- * Parameter location types for OpenAPI specification
- */
-enum ParameterLocation: string
-{
-    case PATH = 'path';
-    case QUERY = 'query';
-    case HEADER = 'header';
-    case COOKIE = 'cookie';
-}
-
-/**
  * Defines an API parameter with metadata for OpenAPI generation and validation
  *
  * This attribute is used to define parameters for API operations, providing

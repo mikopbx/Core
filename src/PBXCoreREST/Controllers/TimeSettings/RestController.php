@@ -19,16 +19,17 @@
 
 namespace MikoPBX\PBXCoreREST\Controllers\TimeSettings;
 
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\PBXCoreREST\Attributes\ApiDataSchema;
 use MikoPBX\PBXCoreREST\Attributes\ApiOperation;
-use MikoPBX\PBXCoreREST\Attributes\ApiParameter;
+use MikoPBX\PBXCoreREST\Attributes\ApiParameterRef;
 use MikoPBX\PBXCoreREST\Attributes\ApiResource;
 use MikoPBX\PBXCoreREST\Attributes\ApiResponse;
 use MikoPBX\PBXCoreREST\Attributes\HttpMapping;
-use MikoPBX\PBXCoreREST\Attributes\ParameterLocation;
 use MikoPBX\PBXCoreREST\Attributes\ResourceSecurity;
 use MikoPBX\PBXCoreREST\Attributes\SecurityType;
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
+use MikoPBX\PBXCoreREST\Lib\TimeSettings\DataStructure;
 use MikoPBX\PBXCoreREST\Lib\TimeSettingsManagementProcessor;
 
 /**
@@ -109,40 +110,10 @@ class RestController extends BaseRestController
         description: 'rest_ts_UpdateDesc',
         operationId: 'updateTimeSettings'
     )]
-    #[ApiParameter(
-        name: 'PBXTimezone',
-        type: 'string',
-        in: ParameterLocation::QUERY,
-        description: 'rest_param_ts_timezone',
-        required: true,
-        example: 'Europe/Moscow'
-    )]
-    #[ApiParameter(
-        name: 'NTPServer',
-        type: 'string',
-        in: ParameterLocation::QUERY,
-        description: 'rest_param_ts_ntp_server',
-        required: false,
-        example: 'pool.ntp.org'
-    )]
-    #[ApiParameter(
-        name: 'PBXManualTimeSettings',
-        type: 'string',
-        in: ParameterLocation::QUERY,
-        description: 'rest_param_ts_manual_mode',
-        required: false,
-        enum: ['true', 'false'],
-        default: 'false'
-    )]
-    #[ApiParameter(
-        name: 'ManualDateTime',
-        type: 'string',
-        in: ParameterLocation::QUERY,
-        description: 'rest_param_ts_manual_datetime',
-        required: false,
-        format: 'date-time',
-        example: '2025-10-08T10:30:00'
-    )]
+    #[ApiParameterRef(PbxSettings::PBX_TIMEZONE, required: true)]
+    #[ApiParameterRef(PbxSettings::NTP_SERVER)]
+    #[ApiParameterRef(PbxSettings::PBX_MANUAL_TIME_SETTINGS)]
+    #[ApiParameterRef('ManualDateTime')]
     #[ApiResponse(
         statusCode: 200,
         description: 'Time settings updated successfully',
@@ -166,39 +137,10 @@ class RestController extends BaseRestController
         description: 'rest_ts_PatchDesc',
         operationId: 'patchTimeSettings'
     )]
-    #[ApiParameter(
-        name: 'PBXTimezone',
-        type: 'string',
-        in: ParameterLocation::QUERY,
-        description: 'rest_param_ts_timezone',
-        required: false,
-        example: 'Europe/Moscow'
-    )]
-    #[ApiParameter(
-        name: 'NTPServer',
-        type: 'string',
-        in: ParameterLocation::QUERY,
-        description: 'rest_param_ts_ntp_server',
-        required: false,
-        example: 'pool.ntp.org'
-    )]
-    #[ApiParameter(
-        name: 'PBXManualTimeSettings',
-        type: 'string',
-        in: ParameterLocation::QUERY,
-        description: 'rest_param_ts_manual_mode',
-        required: false,
-        enum: ['true', 'false']
-    )]
-    #[ApiParameter(
-        name: 'ManualDateTime',
-        type: 'string',
-        in: ParameterLocation::QUERY,
-        description: 'rest_param_ts_manual_datetime',
-        required: false,
-        format: 'date-time',
-        example: '2025-10-08T10:30:00'
-    )]
+    #[ApiParameterRef(PbxSettings::PBX_TIMEZONE)]
+    #[ApiParameterRef(PbxSettings::NTP_SERVER)]
+    #[ApiParameterRef(PbxSettings::PBX_MANUAL_TIME_SETTINGS)]
+    #[ApiParameterRef('ManualDateTime')]
     #[ApiResponse(
         statusCode: 200,
         description: 'Time settings partially updated',

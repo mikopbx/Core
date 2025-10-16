@@ -22,10 +22,11 @@ namespace MikoPBX\PBXCoreREST\Controllers\Users;
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\UsersManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\Users\DataStructure;
+use MikoPBX\PBXCoreREST\Lib\Common\CommonDataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
-    ApiParameter,
+    
     ApiResponse,
     ApiDataSchema,
     SecurityType,
@@ -120,27 +121,8 @@ class RestController extends BaseRestController
         description: 'rest_users_GetListDesc',
         operationId: 'listUsers'
     )]
-    #[ApiParameter(
-        name: 'limit',
-        type: 'integer',
-        description: 'rest_param_limit',
-        in: ParameterLocation::QUERY,
-        required: false,
-        minimum: 1,
-        maximum: 1000,
-        default: 100,
-        example: 20
-    )]
-    #[ApiParameter(
-        name: 'offset',
-        type: 'integer',
-        description: 'rest_param_offset',
-        in: ParameterLocation::QUERY,
-        required: false,
-        minimum: 0,
-        default: 0,
-        example: 0
-    )]
+    #[ApiParameterRef('limit', dataStructure: CommonDataStructure::class)]
+    #[ApiParameterRef('offset', dataStructure: CommonDataStructure::class)]
     #[ApiResponse(200, 'rest_response_200_list', 'UserList')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]

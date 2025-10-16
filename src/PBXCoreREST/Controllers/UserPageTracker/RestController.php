@@ -25,11 +25,10 @@ use MikoPBX\PBXCoreREST\Lib\UserPageTracker\DataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
-    ApiParameter,
+    ApiParameterRef,
     ApiResponse,
     ApiDataSchema,
     SecurityType,
-    ParameterLocation,
     HttpMapping,
     ResourceSecurity
 };
@@ -98,26 +97,8 @@ class RestController extends BaseRestController
         description: 'rest_upt_PageViewDesc',
         operationId: 'trackPageView'
     )]
-    #[ApiParameter(
-        name: 'pageName',
-        type: 'string',
-        description: 'rest_param_upt_pageName',
-        in: ParameterLocation::QUERY,
-        required: true,
-        maxLength: 255,
-        example: 'extensions-index'
-    )]
-    #[ApiParameter(
-        name: 'expire',
-        type: 'integer',
-        description: 'rest_param_upt_expire',
-        in: ParameterLocation::QUERY,
-        required: false,
-        minimum: 60,
-        maximum: 86400,
-        default: 300,
-        example: 300
-    )]
+    #[ApiParameterRef('pageName', required: true)]
+    #[ApiParameterRef('expire', required: false)]
     #[ApiResponse(200, 'rest_response_200_page_tracked')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -144,15 +125,7 @@ class RestController extends BaseRestController
         description: 'rest_upt_PageLeaveDesc',
         operationId: 'trackPageLeave'
     )]
-    #[ApiParameter(
-        name: 'pageName',
-        type: 'string',
-        description: 'rest_param_upt_pageName',
-        in: ParameterLocation::QUERY,
-        required: true,
-        maxLength: 255,
-        example: 'extensions-index'
-    )]
+    #[ApiParameterRef('pageName', required: true)]
     #[ApiResponse(200, 'rest_response_200_page_untracked')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]

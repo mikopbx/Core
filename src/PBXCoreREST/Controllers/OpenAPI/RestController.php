@@ -21,13 +21,13 @@ namespace MikoPBX\PBXCoreREST\Controllers\OpenAPI;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\OpenAPIManagementProcessor;
+use MikoPBX\PBXCoreREST\Lib\OpenAPI\DataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
-    ApiParameter,
+    ApiParameterRef,
     ApiResponse,
     SecurityType,
-    ParameterLocation,
     HttpMapping,
     ResourceSecurity
 };
@@ -87,16 +87,7 @@ class RestController extends BaseRestController
         description: 'rest_openapi_GetSpecDesc',
         operationId: 'getOpenAPISpecification'
     )]
-    #[ApiParameter(
-        name: 'format',
-        type: 'string',
-        description: 'rest_param_openapi_format',
-        in: ParameterLocation::QUERY,
-        required: false,
-        enum: ['json', 'yaml'],
-        default: 'json',
-        example: 'json'
-    )]
+    #[ApiParameterRef('format', required: false)]
     #[ApiResponse(200, 'rest_response_200_get')]
     #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
     public function getList(): void
@@ -114,16 +105,7 @@ class RestController extends BaseRestController
         description: 'rest_openapi_GetSpecDesc',
         operationId: 'getOpenAPISpecificationExplicit'
     )]
-    #[ApiParameter(
-        name: 'format',
-        type: 'string',
-        description: 'rest_param_openapi_format',
-        in: ParameterLocation::QUERY,
-        required: false,
-        enum: ['json', 'yaml'],
-        default: 'json',
-        example: 'yaml'
-    )]
+    #[ApiParameterRef('format', required: false)]
     #[ApiResponse(200, 'rest_response_200_get')]
     #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
     public function getSpecification(): void

@@ -22,14 +22,14 @@ namespace MikoPBX\PBXCoreREST\Controllers\Sip;
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\SIPStackProcessor;
 use MikoPBX\PBXCoreREST\Lib\Sip\DataStructure;
+use MikoPBX\PBXCoreREST\Lib\Common\CommonDataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
-    ApiParameter,
+    ApiParameterRef,
     ApiResponse,
     ApiDataSchema,
     SecurityType,
-    ParameterLocation,
     HttpMapping,
     ResourceSecurity
 };
@@ -110,7 +110,7 @@ class RestController extends BaseRestController
         description: 'rest_sip_GetStatusDesc',
         operationId: 'getSipStatus'
     )]
-    #[ApiParameter('extension', 'string', 'rest_param_sip_extension', ParameterLocation::PATH, required: true, example: '201')]
+    #[ApiParameterRef('extension', required: true)]
     #[ApiResponse(200, 'rest_response_200_get')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -135,8 +135,8 @@ class RestController extends BaseRestController
         description: 'rest_sip_GetHistoryDesc',
         operationId: 'getSipHistory'
     )]
-    #[ApiParameter('extension', 'string', 'rest_param_sip_extension', ParameterLocation::PATH, required: true, example: '201')]
-    #[ApiParameter('limit', 'integer', 'rest_param_limit', ParameterLocation::QUERY, required: false, minimum: 1, maximum: 100, default: 20, example: 20)]
+    #[ApiParameterRef('extension', required: true)]
+    #[ApiParameterRef('limit', dataStructure: CommonDataStructure::class, required: false)]
     #[ApiResponse(200, 'rest_response_200_history')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -160,7 +160,7 @@ class RestController extends BaseRestController
         description: 'rest_sip_GetStatsDesc',
         operationId: 'getSipStats'
     )]
-    #[ApiParameter('extension', 'string', 'rest_param_sip_extension', ParameterLocation::PATH, required: true, example: '201')]
+    #[ApiParameterRef('extension', required: true)]
     #[ApiResponse(200, 'rest_response_200_stats')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -230,7 +230,7 @@ class RestController extends BaseRestController
         description: 'rest_sip_GetSecretDesc',
         operationId: 'getSipSecret'
     )]
-    #[ApiParameter('extension', 'string', 'rest_param_sip_extension', ParameterLocation::PATH, required: true, example: '201')]
+    #[ApiParameterRef('extension', required: true)]
     #[ApiResponse(200, 'rest_response_200_get')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -254,7 +254,7 @@ class RestController extends BaseRestController
         description: 'rest_sip_GetAuthFailureStatsDesc',
         operationId: 'getSipAuthFailureStats'
     )]
-    #[ApiParameter('extension', 'string', 'rest_param_sip_extension', ParameterLocation::PATH, required: true, example: '201')]
+    #[ApiParameterRef('extension', required: true)]
     #[ApiResponse(200, 'rest_response_200_stats')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -273,7 +273,7 @@ class RestController extends BaseRestController
         description: 'rest_sip_ForceCheckDesc',
         operationId: 'forceSipCheck'
     )]
-    #[ApiParameter('extension', 'string', 'rest_param_sip_extension', ParameterLocation::PATH, required: true, example: '201')]
+    #[ApiParameterRef('extension', required: true)]
     #[ApiResponse(200, 'rest_response_200_force_check')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -311,7 +311,7 @@ class RestController extends BaseRestController
         description: 'rest_sip_ClearAuthFailureStatsDesc',
         operationId: 'clearSipAuthFailureStats'
     )]
-    #[ApiParameter('extension', 'string', 'rest_param_sip_extension', ParameterLocation::PATH, required: true, example: '201')]
+    #[ApiParameterRef('extension', required: true)]
     #[ApiResponse(200, 'rest_response_200_deleted')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]

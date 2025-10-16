@@ -22,10 +22,11 @@ namespace MikoPBX\PBXCoreREST\Controllers\IaxProviders;
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\ProvidersManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\Providers\DataStructure;
+use MikoPBX\PBXCoreREST\Lib\Common\CommonDataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
-    ApiParameter,
+    
     ApiResponse,
     ApiDataSchema,
     SecurityType,
@@ -97,51 +98,11 @@ class RestController extends BaseRestController
         description: 'rest_iaxp_GetListDesc',
         operationId: 'getIaxProvidersList'
     )]
-    #[ApiParameter(
-        name: 'limit',
-        type: 'integer',
-        description: 'rest_param_limit',
-        in: ParameterLocation::QUERY,
-        minimum: 1,
-        maximum: 100,
-        default: 20,
-        example: 20
-    )]
-    #[ApiParameter(
-        name: 'offset',
-        type: 'integer',
-        description: 'rest_param_offset',
-        in: ParameterLocation::QUERY,
-        minimum: 0,
-        default: 0,
-        example: 0
-    )]
-    #[ApiParameter(
-        name: 'search',
-        type: 'string',
-        description: 'rest_param_search',
-        in: ParameterLocation::QUERY,
-        maxLength: 255,
-        example: 'main'
-    )]
-    #[ApiParameter(
-        name: 'order',
-        type: 'string',
-        description: 'rest_param_order',
-        in: ParameterLocation::QUERY,
-        enum: ['description', 'host', 'disabled'],
-        default: 'description',
-        example: 'description'
-    )]
-    #[ApiParameter(
-        name: 'orderWay',
-        type: 'string',
-        description: 'rest_param_orderWay',
-        in: ParameterLocation::QUERY,
-        enum: ['ASC', 'DESC'],
-        default: 'ASC',
-        example: 'ASC'
-    )]
+    #[ApiParameterRef('limit', dataStructure: CommonDataStructure::class)]
+    #[ApiParameterRef('offset', dataStructure: CommonDataStructure::class)]
+    #[ApiParameterRef('search', dataStructure: CommonDataStructure::class, example: 'main')]
+    #[ApiParameterRef('order', dataStructure: CommonDataStructure::class, enum: ['description', 'host', 'disabled'])]
+    #[ApiParameterRef('orderWay', dataStructure: CommonDataStructure::class)]
     #[ApiResponse(200, 'rest_response_200_list')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -164,7 +125,7 @@ class RestController extends BaseRestController
         description: 'rest_iaxp_GetRecordDesc',
         operationId: 'getIaxProviderById'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[A-Za-z0-9_-]+$', example: 'IAX-PROV-123')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[A-Za-z0-9_-]+$', example: 'IAX-PROV-123')]
     #[ApiResponse(200, 'rest_response_200_get')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -217,7 +178,7 @@ class RestController extends BaseRestController
         description: 'rest_iaxp_UpdateDesc',
         operationId: 'updateIaxProvider'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[A-Za-z0-9_-]+$', example: 'IAX-PROV-123')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[A-Za-z0-9_-]+$', example: 'IAX-PROV-123')]
     #[ApiParameter('description', 'string', 'rest_param_prov_description', ParameterLocation::QUERY, required: true, maxLength: 255, example: 'Updated IAX Provider')]
     #[ApiParameter('host', 'string', 'rest_param_prov_host', ParameterLocation::QUERY, required: true, maxLength: 255, example: 'new.iax.provider.com')]
     #[ApiParameter('username', 'string', 'rest_param_prov_username', ParameterLocation::QUERY, required: false, maxLength: 100, example: 'newuser')]
@@ -248,7 +209,7 @@ class RestController extends BaseRestController
         description: 'rest_iaxp_PatchDesc',
         operationId: 'patchIaxProvider'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[A-Za-z0-9_-]+$', example: 'IAX-PROV-123')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[A-Za-z0-9_-]+$', example: 'IAX-PROV-123')]
     #[ApiParameter('description', 'string', 'rest_param_prov_description', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'Patched description')]
     #[ApiParameter('host', 'string', 'rest_param_prov_host', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'patched.provider.com')]
     #[ApiParameter('username', 'string', 'rest_param_prov_username', ParameterLocation::QUERY, required: false, maxLength: 100, example: 'patcheduser')]
@@ -274,7 +235,7 @@ class RestController extends BaseRestController
         description: 'rest_iaxp_DeleteDesc',
         operationId: 'deleteIaxProvider'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[A-Za-z0-9_-]+$', example: 'IAX-PROV-123')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[A-Za-z0-9_-]+$', example: 'IAX-PROV-123')]
     #[ApiResponse(200, 'rest_response_200_deleted')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -336,7 +297,7 @@ class RestController extends BaseRestController
         description: 'rest_iaxp_GetStatusDesc',
         operationId: 'getIaxProviderStatus'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[A-Za-z0-9_-]+$', example: 'IAX-PROV-123')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[A-Za-z0-9_-]+$', example: 'IAX-PROV-123')]
     #[ApiResponse(200, 'rest_response_200_status')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -412,7 +373,7 @@ class RestController extends BaseRestController
         description: 'rest_iaxp_CopyDesc',
         operationId: 'copyIaxProvider'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[A-Za-z0-9_-]+$', example: 'IAX-PROV-123')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[A-Za-z0-9_-]+$', example: 'IAX-PROV-123')]
     #[ApiParameter('description', 'string', 'rest_param_prov_description', ParameterLocation::QUERY, required: true, maxLength: 255, example: 'Copy of Main Provider')]
     #[ApiResponse(201, 'rest_response_201_copied')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
@@ -434,7 +395,7 @@ class RestController extends BaseRestController
         description: 'rest_iaxp_ForceCheckDesc',
         operationId: 'forceCheckIaxProvider'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[A-Za-z0-9_-]+$', example: 'IAX-PROV-123')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[A-Za-z0-9_-]+$', example: 'IAX-PROV-123')]
     #[ApiResponse(200, 'rest_response_200_force_check')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -454,7 +415,7 @@ class RestController extends BaseRestController
         description: 'rest_iaxp_UpdateStatusDesc',
         operationId: 'updateIaxProviderStatus'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[A-Za-z0-9_-]+$', example: 'IAX-PROV-123')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[A-Za-z0-9_-]+$', example: 'IAX-PROV-123')]
     #[ApiParameter('disabled', 'boolean', 'rest_param_prov_disabled', ParameterLocation::QUERY, required: true, example: false)]
     #[ApiResponse(200, 'rest_response_200_status_updated')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]

@@ -26,7 +26,6 @@ return [
     // Table columns
     'ari_Username' => 'Имя пользователя',
     'ari_Password' => 'Пароль',
-    'ari_Description' => 'Описание',
     'ari_Applications' => 'Приложения',
     'ari_Status' => 'Статус',
     'ari_Enabled' => 'Включен',

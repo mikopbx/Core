@@ -25,11 +25,10 @@ use MikoPBX\PBXCoreREST\Lib\Fail2Ban\DataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
-    ApiParameter,
+    ApiParameterRef,
     ApiResponse,
     ApiDataSchema,
     SecurityType,
-    ParameterLocation,
     HttpMapping,
     ResourceSecurity
 };
@@ -137,56 +136,11 @@ class RestController extends BaseRestController
         description: 'rest_f2b_UpdateDesc',
         operationId: 'updateFail2BanSettings'
     )]
-    #[ApiParameter(
-        name: 'maxretry',
-        type: 'integer',
-        description: 'rest_param_f2b_maxretry',
-        in: ParameterLocation::QUERY,
-        required: false,
-        minimum: 1,
-        maximum: 100,
-        default: 5,
-        example: 5
-    )]
-    #[ApiParameter(
-        name: 'bantime',
-        type: 'integer',
-        description: 'rest_param_f2b_bantime',
-        in: ParameterLocation::QUERY,
-        required: false,
-        minimum: 60,
-        default: 86400,
-        example: 86400
-    )]
-    #[ApiParameter(
-        name: 'findtime',
-        type: 'integer',
-        description: 'rest_param_f2b_findtime',
-        in: ParameterLocation::QUERY,
-        required: false,
-        minimum: 60,
-        default: 1800,
-        example: 1800
-    )]
-    #[ApiParameter(
-        name: 'whitelist',
-        type: 'string',
-        description: 'rest_param_f2b_whitelist',
-        in: ParameterLocation::QUERY,
-        required: false,
-        maxLength: 500,
-        example: '192.168.1.0/24,10.0.0.0/8'
-    )]
-    #[ApiParameter(
-        name: 'PBXFirewallMaxReqSec',
-        type: 'string',
-        description: 'rest_param_f2b_maxreqsec',
-        in: ParameterLocation::QUERY,
-        required: false,
-        maxLength: 10,
-        default: '100',
-        example: '100'
-    )]
+    #[ApiParameterRef('maxretry')]
+    #[ApiParameterRef('bantime')]
+    #[ApiParameterRef('findtime')]
+    #[ApiParameterRef('whitelist')]
+    #[ApiParameterRef('PBXFirewallMaxReqSec')]
     #[ApiResponse(200, 'rest_response_200_updated')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -214,52 +168,11 @@ class RestController extends BaseRestController
         description: 'rest_f2b_PatchDesc',
         operationId: 'patchFail2BanSettings'
     )]
-    #[ApiParameter(
-        name: 'maxretry',
-        type: 'integer',
-        description: 'rest_param_f2b_maxretry',
-        in: ParameterLocation::QUERY,
-        required: false,
-        minimum: 1,
-        maximum: 100,
-        example: 10
-    )]
-    #[ApiParameter(
-        name: 'bantime',
-        type: 'integer',
-        description: 'rest_param_f2b_bantime',
-        in: ParameterLocation::QUERY,
-        required: false,
-        minimum: 60,
-        example: 86400
-    )]
-    #[ApiParameter(
-        name: 'findtime',
-        type: 'integer',
-        description: 'rest_param_f2b_findtime',
-        in: ParameterLocation::QUERY,
-        required: false,
-        minimum: 60,
-        example: 1800
-    )]
-    #[ApiParameter(
-        name: 'whitelist',
-        type: 'string',
-        description: 'rest_param_f2b_whitelist',
-        in: ParameterLocation::QUERY,
-        required: false,
-        maxLength: 500,
-        example: '192.168.1.0/24'
-    )]
-    #[ApiParameter(
-        name: 'PBXFirewallMaxReqSec',
-        type: 'string',
-        description: 'rest_param_f2b_maxreqsec',
-        in: ParameterLocation::QUERY,
-        required: false,
-        maxLength: 10,
-        example: '100'
-    )]
+    #[ApiParameterRef('maxretry')]
+    #[ApiParameterRef('bantime')]
+    #[ApiParameterRef('findtime')]
+    #[ApiParameterRef('whitelist')]
+    #[ApiParameterRef('PBXFirewallMaxReqSec')]
     #[ApiResponse(200, 'rest_response_200_patched')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]

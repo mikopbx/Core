@@ -22,15 +22,14 @@ namespace MikoPBX\PBXCoreREST\Controllers\CallQueues;
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\CallQueuesManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\CallQueues\DataStructure;
+use MikoPBX\PBXCoreREST\Lib\Common\CommonDataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
-    ApiParameter,
     ApiParameterRef,
     ApiResponse,
     ApiDataSchema,
     SecurityType,
-    ParameterLocation,
     HttpMapping,
     ResourceSecurity
 };
@@ -93,51 +92,12 @@ class RestController extends BaseRestController
         description: 'rest_cq_GetListDesc',
         operationId: 'getCallQueuesList'
     )]
-    #[ApiParameter(
-        name: 'limit',
-        type: 'integer',
-        description: 'rest_param_limit',
-        in: ParameterLocation::QUERY,
-        minimum: 1,
-        maximum: 100,
-        default: 20,
-        example: 20
-    )]
-    #[ApiParameter(
-        name: 'offset',
-        type: 'integer',
-        description: 'rest_param_offset',
-        in: ParameterLocation::QUERY,
-        minimum: 0,
-        default: 0,
-        example: 0
-    )]
-    #[ApiParameter(
-        name: 'search',
-        type: 'string',
-        description: 'rest_param_search',
-        in: ParameterLocation::QUERY,
-        maxLength: 255,
-        example: 'sales'
-    )]
-    #[ApiParameter(
-        name: 'order',
-        type: 'string',
-        description: 'rest_param_order',
-        in: ParameterLocation::QUERY,
-        enum: ['name', 'extension', 'strategy'],
-        default: 'name',
-        example: 'name'
-    )]
-    #[ApiParameter(
-        name: 'orderWay',
-        type: 'string',
-        description: 'rest_param_orderWay',
-        in: ParameterLocation::QUERY,
-        enum: ['ASC', 'DESC'],
-        default: 'ASC',
-        example: 'ASC'
-    )]
+    // ✨ Common pagination parameters from CommonDataStructure
+    #[ApiParameterRef('limit', dataStructure: CommonDataStructure::class)]
+    #[ApiParameterRef('offset', dataStructure: CommonDataStructure::class)]
+    #[ApiParameterRef('search', dataStructure: CommonDataStructure::class, example: 'sales')]
+    #[ApiParameterRef('order', dataStructure: CommonDataStructure::class, enum: ['name', 'extension', 'strategy'])]
+    #[ApiParameterRef('orderWay', dataStructure: CommonDataStructure::class)]
     // ✨ Filter parameter using reference (inherits enum from definitions)
     #[ApiParameterRef('strategy')]
     #[ApiResponse(200, 'rest_response_200_list')]
@@ -162,7 +122,7 @@ class RestController extends BaseRestController
         description: 'rest_cq_GetRecordDesc',
         operationId: 'getCallQueueById'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^QUEUE-[A-Z0-9]+$', example: 'QUEUE-2EDC283C')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^QUEUE-[A-Z0-9]+$', example: 'QUEUE-2EDC283C')]
     #[ApiResponse(200, 'rest_response_200_get')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -234,7 +194,7 @@ class RestController extends BaseRestController
         description: 'rest_cq_UpdateDesc',
         operationId: 'updateCallQueue'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^QUEUE-[A-Z0-9]+$', example: 'QUEUE-2EDC283C')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^QUEUE-[A-Z0-9]+$', example: 'QUEUE-2EDC283C')]
     // ✨ Lightweight references with optional overrides
     #[ApiParameterRef('name', required: true, example: 'Updated Sales Queue')]
     #[ApiParameterRef('extension', required: true)]
@@ -264,7 +224,7 @@ class RestController extends BaseRestController
         description: 'rest_cq_PatchDesc',
         operationId: 'patchCallQueue'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^QUEUE-[A-Z0-9]+$', example: 'QUEUE-2EDC283C')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^QUEUE-[A-Z0-9]+$', example: 'QUEUE-2EDC283C')]
     // ✨ Lightweight references (all optional in PATCH)
     #[ApiParameterRef('name', example: 'Updated Sales Queue')]
     #[ApiParameterRef('description', example: 'Updated description')]
@@ -290,7 +250,7 @@ class RestController extends BaseRestController
         description: 'rest_cq_DeleteDesc',
         operationId: 'deleteCallQueue'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^QUEUE-[A-Z0-9]+$', example: 'QUEUE-2EDC283C')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^QUEUE-[A-Z0-9]+$', example: 'QUEUE-2EDC283C')]
     #[ApiResponse(200, 'rest_response_200_deleted')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -338,7 +298,7 @@ class RestController extends BaseRestController
         description: 'rest_cq_CopyDesc',
         operationId: 'copyCallQueue'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^QUEUE-[A-Z0-9]+$', example: 'QUEUE-2EDC283C')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^QUEUE-[A-Z0-9]+$', example: 'QUEUE-2EDC283C')]
     #[ApiResponse(200, 'rest_response_200_copied')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]

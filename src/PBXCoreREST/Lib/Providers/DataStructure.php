@@ -40,9 +40,9 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
 {
     /**
      * Create complete data array from Provider model
-     * 
+     *
      * @param Providers $provider Provider model
-     * @return array Complete provider data structure
+     * @return array<string, mixed> Complete provider data structure
      */
     public static function createFromModel($provider): array
     {
@@ -61,7 +61,8 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         $data['note'] = $provider->note ?? '';
         
         // Get type-specific configuration
-        $configType = ucfirst(strtolower($provider->type));
+        $providerType = $provider->type ?? '';
+        $configType = ucfirst(strtolower($providerType));
         $config = $provider->$configType;
         
         if ($config) {
@@ -85,9 +86,9 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     
     /**
      * Create simplified data array for list view
-     * 
+     *
      * @param Providers $provider Provider model
-     * @return array Simplified provider data for list display
+     * @return array<string, mixed> Simplified provider data for list display
      */
     public static function createForList($provider): array
     {
@@ -107,7 +108,8 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         $data['represent'] = '';
         
         // Get type-specific minimal data
-        $configType = ucfirst(strtolower($provider->type));
+        $providerType = $provider->type ?? '';
+        $configType = ucfirst(strtolower($providerType));
         $config = $provider->$configType;
         
         if ($config) {
@@ -137,13 +139,14 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     
     /**
      * Create data structure for dropdown/select options
-     * 
+     *
      * @param Providers $provider Provider model
-     * @return array Select option data
+     * @return array<string, mixed> Select option data
      */
     public static function createForSelect($provider): array
     {
-        $configType = ucfirst(strtolower($provider->type));
+        $providerType = $provider->type ?? '';
+        $configType = ucfirst(strtolower($providerType));
         $config = $provider->$configType;
         
         return [

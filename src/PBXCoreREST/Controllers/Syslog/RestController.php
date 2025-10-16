@@ -21,13 +21,13 @@ namespace MikoPBX\PBXCoreREST\Controllers\Syslog;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\SysLogsManagementProcessor;
+use MikoPBX\PBXCoreREST\Lib\SysLogs\DataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
-    ApiParameter,
+    ApiParameterRef,
     ApiResponse,
     SecurityType,
-    ParameterLocation,
     HttpMapping,
     ResourceSecurity
 };
@@ -99,13 +99,13 @@ class RestController extends BaseRestController
         description: 'rest_syslog_GetLogFromFileDesc',
         operationId: 'getLogContent'
     )]
-    #[ApiParameter('filename', 'string', 'rest_param_syslog_filename', ParameterLocation::QUERY, required: true, example: 'asterisk/messages')]
-    #[ApiParameter('filter', 'string', 'rest_param_syslog_filter', ParameterLocation::QUERY, required: false, maxLength: 200, example: 'ERROR')]
-    #[ApiParameter('logLevel', 'string', 'rest_param_syslog_log_level', ParameterLocation::QUERY, required: false, example: 'ERROR')]
-    #[ApiParameter('lines', 'integer', 'rest_param_syslog_lines', ParameterLocation::QUERY, required: false, minimum: 1, maximum: 10000, default: 500, example: 500)]
-    #[ApiParameter('offset', 'integer', 'rest_param_syslog_offset', ParameterLocation::QUERY, required: false, minimum: 0, default: 0, example: 0)]
-    #[ApiParameter('dateFrom', 'string', 'rest_param_syslog_date_from', ParameterLocation::QUERY, required: false, example: '2025-10-09 08:00:00')]
-    #[ApiParameter('dateTo', 'string', 'rest_param_syslog_date_to', ParameterLocation::QUERY, required: false, example: '2025-10-09 09:00:00')]
+    #[ApiParameterRef('filename', required: true)]
+    #[ApiParameterRef('filter')]
+    #[ApiParameterRef('logLevel')]
+    #[ApiParameterRef('lines')]
+    #[ApiParameterRef('offset')]
+    #[ApiParameterRef('dateFrom')]
+    #[ApiParameterRef('dateTo')]
     #[ApiResponse(200, 'rest_response_200_log_content')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -126,7 +126,7 @@ class RestController extends BaseRestController
         description: 'rest_syslog_GetLogTimeRangeDesc',
         operationId: 'getLogTimeRange'
     )]
-    #[ApiParameter('filename', 'string', 'rest_param_syslog_filename', ParameterLocation::QUERY, required: true, example: 'asterisk/messages')]
+    #[ApiParameterRef('filename', required: true)]
     #[ApiResponse(200, 'rest_response_200_log_time_range')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -201,8 +201,8 @@ class RestController extends BaseRestController
         description: 'rest_syslog_DownloadLogFileDesc',
         operationId: 'downloadLogFile'
     )]
-    #[ApiParameter('filename', 'string', 'rest_param_syslog_filename', ParameterLocation::QUERY, required: true, example: 'asterisk/messages')]
-    #[ApiParameter('archive', 'boolean', 'rest_param_syslog_archive', ParameterLocation::QUERY, required: false, default: false, example: false)]
+    #[ApiParameterRef('filename', required: true)]
+    #[ApiParameterRef('archive')]
     #[ApiResponse(200, 'rest_response_200_file_download')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -223,7 +223,7 @@ class RestController extends BaseRestController
         description: 'rest_syslog_DownloadArchiveDesc',
         operationId: 'downloadLogsArchive'
     )]
-    #[ApiParameter('filename', 'string', 'rest_param_syslog_archive_filename', ParameterLocation::QUERY, required: true, example: '/tmp/logs.zip')]
+    #[ApiParameterRef('filename', required: true, example: '/tmp/logs.zip')]
     #[ApiResponse(200, 'rest_response_200_file_download')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -244,7 +244,7 @@ class RestController extends BaseRestController
         description: 'rest_syslog_EraseFileDesc',
         operationId: 'eraseLogFile'
     )]
-    #[ApiParameter('filename', 'string', 'rest_param_syslog_filename', ParameterLocation::QUERY, required: true, example: 'asterisk/messages')]
+    #[ApiParameterRef('filename', required: true)]
     #[ApiResponse(200, 'rest_response_200_deleted')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]

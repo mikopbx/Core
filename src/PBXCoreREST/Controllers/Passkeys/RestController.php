@@ -27,13 +27,12 @@ use MikoPBX\PBXCoreREST\Lib\Passkeys\DataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
-    ApiParameter,
+    ApiParameterRef,
     ApiResponse,
     ApiDataSchema,
     HttpMapping,
     ResourceSecurity,
-    SecurityType,
-    ParameterLocation
+    SecurityType
 };
 
 /**
@@ -115,7 +114,7 @@ class RestController extends BaseRestController
         description: 'rest_pk_GetRecordDesc',
         operationId: 'getPasskeyById'
     )]
-    #[ApiParameter('id', 'integer', 'rest_param_id', ParameterLocation::PATH, required: true, example: 1)]
+    #[ApiParameterRef('id', required: true)]
     #[ApiResponse(200, 'rest_response_200_get')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -139,7 +138,7 @@ class RestController extends BaseRestController
         description: 'rest_pk_CreateDesc',
         operationId: 'createPasskey'
     )]
-    #[ApiParameter('name', 'string', 'rest_param_pk_name', ParameterLocation::QUERY, required: false, maxLength: 100, example: 'My YubiKey')]
+    #[ApiParameterRef('name', required: false)]
     #[ApiResponse(201, 'rest_response_201_created')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -163,8 +162,8 @@ class RestController extends BaseRestController
         description: 'rest_pk_PatchDesc',
         operationId: 'patchPasskey'
     )]
-    #[ApiParameter('id', 'integer', 'rest_param_id', ParameterLocation::PATH, required: true, example: 1)]
-    #[ApiParameter('name', 'string', 'rest_param_pk_name', ParameterLocation::QUERY, required: false, maxLength: 100, example: 'Updated YubiKey Name')]
+    #[ApiParameterRef('id', required: true)]
+    #[ApiParameterRef('name', required: false)]
     #[ApiResponse(200, 'rest_response_200_patched')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -185,7 +184,7 @@ class RestController extends BaseRestController
         description: 'rest_pk_DeleteDesc',
         operationId: 'deletePasskey'
     )]
-    #[ApiParameter('id', 'integer', 'rest_param_id', ParameterLocation::PATH, required: true, example: 1)]
+    #[ApiParameterRef('id', required: true)]
     #[ApiResponse(200, 'rest_response_200_deleted')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -205,7 +204,7 @@ class RestController extends BaseRestController
         description: 'rest_pk_CheckAvailabilityDesc',
         operationId: 'checkPasskeyAvailability'
     )]
-    #[ApiParameter('login', 'string', 'rest_param_pk_login', ParameterLocation::QUERY, required: true, maxLength: 100, example: 'admin')]
+    #[ApiParameterRef('login', required: true)]
     #[ApiResponse(200, 'rest_response_200_get')]
     public function checkAvailability(): void
     {
@@ -222,7 +221,7 @@ class RestController extends BaseRestController
         description: 'rest_pk_RegistrationStartDesc',
         operationId: 'startPasskeyRegistration'
     )]
-    #[ApiParameter('name', 'string', 'rest_param_pk_name', ParameterLocation::QUERY, required: false, maxLength: 100, example: 'My Security Key')]
+    #[ApiParameterRef('name', required: false)]
     #[ApiResponse(200, 'rest_response_200_get')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -245,7 +244,7 @@ class RestController extends BaseRestController
         description: 'rest_pk_RegistrationFinishDesc',
         operationId: 'finishPasskeyRegistration'
     )]
-    #[ApiParameter('credential', 'object', 'rest_param_pk_credential', ParameterLocation::QUERY, required: true, example: '{"id":"...","rawId":"...","response":{...}}')]
+    #[ApiParameterRef('credential', required: true)]
     #[ApiResponse(201, 'rest_response_201_created')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -265,7 +264,7 @@ class RestController extends BaseRestController
         description: 'rest_pk_AuthenticationStartDesc',
         operationId: 'startPasskeyAuthentication'
     )]
-    #[ApiParameter('login', 'string', 'rest_param_pk_login', ParameterLocation::QUERY, required: true, maxLength: 100, example: 'admin')]
+    #[ApiParameterRef('login', required: true)]
     #[ApiResponse(200, 'rest_response_200_get')]
     #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
     public function authenticationStart(): void
@@ -283,7 +282,7 @@ class RestController extends BaseRestController
         description: 'rest_pk_AuthenticationFinishDesc',
         operationId: 'finishPasskeyAuthentication'
     )]
-    #[ApiParameter('credential', 'object', 'rest_param_pk_credential', ParameterLocation::QUERY, required: true, example: '{"id":"...","rawId":"...","response":{...}}')]
+    #[ApiParameterRef('credential', required: true)]
     #[ApiResponse(200, 'rest_response_200_auth_login')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_invalid_credentials', 'PBXApiResult')]
