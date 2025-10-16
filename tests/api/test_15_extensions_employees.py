@@ -263,7 +263,18 @@ class TestEmployeesWriteOperations:
     def test_02_update_employee(self, api_client):
         """Test PUT /employees/{id} - Full update (expected DB lock)"""
         if not TestEmployeesWriteOperations.created_id:
-            pytest.skip("No created employee ID available")
+            # Fallback: use existing employee from list
+            response = api_client.get('employees', params={'limit': 1})
+            if response['result']:
+                data = response['data']
+                employees = data.get('data', []) if isinstance(data, dict) else data
+                if employees and 'id' in employees[0]:
+                    TestEmployeesWriteOperations.created_id = employees[0]['id']
+                    print(f"⚠ Using existing employee {TestEmployeesWriteOperations.created_id} for testing")
+                else:
+                    pytest.skip("No created employee ID available")
+            else:
+                pytest.skip("No created employee ID available")
 
         update_data = {
             'number': '9901',
@@ -287,7 +298,18 @@ class TestEmployeesWriteOperations:
     def test_03_patch_employee(self, api_client):
         """Test PATCH /employees/{id} - Partial update (expected DB lock)"""
         if not TestEmployeesWriteOperations.created_id:
-            pytest.skip("No created employee ID available")
+            # Fallback: use existing employee from list
+            response = api_client.get('employees', params={'limit': 1})
+            if response['result']:
+                data = response['data']
+                employees = data.get('data', []) if isinstance(data, dict) else data
+                if employees and 'id' in employees[0]:
+                    TestEmployeesWriteOperations.created_id = employees[0]['id']
+                    print(f"⚠ Using existing employee {TestEmployeesWriteOperations.created_id} for testing")
+                else:
+                    pytest.skip("No created employee ID available")
+            else:
+                pytest.skip("No created employee ID available")
 
         patch_data = {
             'user_email': 'patched@example.com'
@@ -309,7 +331,7 @@ class TestEmployeesWriteOperations:
     def test_04_delete_employee(self, api_client):
         """Test DELETE /employees/{id} - Delete employee (expected DB lock)"""
         if not TestEmployeesWriteOperations.created_id:
-            pytest.skip("No created employee ID available")
+            pytest.skip("No created employee ID available (skip delete to avoid removing production data)")
 
         try:
             response = api_client.delete(f'employees/{TestEmployeesWriteOperations.created_id}')

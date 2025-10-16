@@ -35,3 +35,4 @@ tests/api/*.log
 tests/api/**/*.log
 tests/api/*.tmp
 tests/api/**/*.tmp
+.hypothesis/*
