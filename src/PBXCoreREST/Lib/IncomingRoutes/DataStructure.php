@@ -39,9 +39,9 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     use SearchIndexTrait;
     /**
      * Create complete data array from IncomingRoutingTable model
-     * 
+     *
      * @param \MikoPBX\Common\Models\IncomingRoutingTable $model
-     * @return array
+     * @return array<string, mixed>
      */
     public static function createFromModel($model): array
     {
@@ -87,9 +87,9 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     
     /**
      * Create simplified data array for list view
-     * 
+     *
      * @param \MikoPBX\Common\Models\IncomingRoutingTable $model
-     * @return array
+     * @return array<string, mixed>
      */
     public static function createForList($model): array
     {
@@ -134,9 +134,9 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
 
     /**
      * Create data structure for dropdown/select options
-     * 
+     *
      * @param \MikoPBX\Common\Models\IncomingRoutingTable $model
-     * @return array
+     * @return array<string, mixed>
      */
     public static function createForSelect($model): array
     {
@@ -151,14 +151,17 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     
     /**
      * Generate HTML description for the incoming route rule
-     * 
+     *
      * @param \MikoPBX\Common\Models\IncomingRoutingTable $model
-     * @param array $data Pre-processed data array
+     * @param array<string, mixed> $data Pre-processed data array
      * @return string HTML description of the rule
      */
     private static function generateRuleDescription($model, array $data): string
     {
         $di = \Phalcon\Di\Di::getDefault();
+        if ($di === null) {
+            return '';
+        }
         $translation = $di->get(TranslationProvider::SERVICE_NAME);
         
         // Get extension representation with icon
@@ -212,33 +215,40 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     
     /**
      * Extract provider data from model
-     * 
+     *
      * @param \MikoPBX\Common\Models\Providers|null $provider
      * @param string|null $providerValue Database value for provider field
-     * @return array Provider data array
+     * @return array<string, mixed> Provider data array
      */
     private static function getProviderData($provider, $providerValue = null): array
     {
         // Check if this should be treated as "Any Provider"
         if ($provider === null || $providerValue === null || $providerValue === 'none') {
             $di = \Phalcon\Di\Di::getDefault();
+            if ($di === null) {
+                return [
+                    'providerid_represent' => '<i class="globe icon"></i> Any Provider',
+                    'provider_type' => '',
+                    'provider_disabled' => false,
+                ];
+            }
             $translation = $di->get(TranslationProvider::SERVICE_NAME);
             $anyProviderText = $translation->_('ir_AnyProvider_v2') ?: 'Any Provider';
-            
+
             return [
                 'providerid_represent' => '<i class="globe icon"></i> ' . $anyProviderText,
                 'provider_type' => '',
                 'provider_disabled' => false,
             ];
         }
-        
+
         $isDisabled = false;
-        $modelType = ucfirst($provider->type);
-        
+        $modelType = ucfirst((string)$provider->type);
+
         if (isset($provider->$modelType) && isset($provider->$modelType->disabled)) {
             $isDisabled = $provider->$modelType->disabled === '1';
         }
-        
+
         return [
             'providerid_represent' => $provider->getRepresent(),
             'provider_type' => $provider->type,
@@ -250,7 +260,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      * Extract extension data from model
      *
      * @param \MikoPBX\Common\Models\Extensions|null $extension
-     * @return array Extension data array
+     * @return array<string, mixed> Extension data array
      */
     private static function getExtensionData($extension): array
     {

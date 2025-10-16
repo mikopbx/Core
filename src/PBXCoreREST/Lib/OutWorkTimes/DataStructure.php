@@ -376,7 +376,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'bind' => ['conditionId' => $conditionId]
         ]);
 
-        if ($associations !== false) {
+        if ($associations !== false && is_iterable($associations)) {
             foreach ($associations as $association) {
                 $routeIds[] = (int)$association->routId;
             }
