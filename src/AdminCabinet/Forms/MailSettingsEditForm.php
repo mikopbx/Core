@@ -114,20 +114,6 @@ class MailSettingsEditForm extends BaseForm
                     );
                     break;
 
-                case PbxSettings::MAIL_TPL_MISSED_CALL_BODY:
-                case PbxSettings::MAIL_TPL_MISSED_CALL_FOOTER:
-                case PbxSettings::MAIL_TPL_VOICEMAIL_BODY:
-                case PbxSettings::MAIL_TPL_VOICEMAIL_FOOTER:
-                    $this->add(
-                        new TextArea(
-                            $key,
-                            [
-                                'value' => $value,
-                            ]
-                        )
-                    );
-                    break;
-
                 case PbxSettings::MAIL_SMTP_PASSWORD:
                     $this->add(
                         new Password(

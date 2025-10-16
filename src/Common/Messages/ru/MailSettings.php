@@ -97,22 +97,6 @@ return [
     'ms_SystemEmailForMissed' => 'Единый Email для уведомлений о пропущенных вызовах',
     'ms_VoicemailCommonEmail' => 'Единый Email для сообщений голосовой почты',
 
-    // Templates
-    'ms_NotificationTemplatesMissed' => 'Шаблон - пропущенные вызовы',
-    'ms_NotificationTemplatesVoicemail' => 'Шаблон - голосовая почта',
-
-    // Missed Calls
-    'ms_MissedCalls' => 'Пропущенные вызовы',
-    'ms_MissedCallSubject' => 'Пропущенный вызов - тема письма',
-    'ms_MissedCallBody' => 'Пропущенный вызов - текст письма',
-    'ms_MissedCallFooter' => 'Пропущенный вызов - подвал',
-
-    // Voicemail
-    'ms_Voicemail' => 'Голосовая почта',
-    'ms_VoicemailSubject' => 'Голосовая почта - тема письма',
-    'ms_VoicemailBody' => 'Голосовая почта - текст письма',
-    'ms_VoicemailFooter' => 'Голосовая почта - подвал',
-
     // Testing
     'ms_TestMailSettings' => 'Тестирование настроек почты',
     'ms_TestConnection' => 'Проверить подключение',
@@ -272,19 +256,6 @@ return [
     'ms_SystemEmailForMissedTooltip_monitor_regularly' => 'Обеспечьте регулярную проверку этого почтового ящика',
     'ms_SystemEmailForMissedTooltip_note' => 'Если поле оставлено пустым, уведомления о пропущенных внешних звонках не будут отправляться сотрудникам без личного email',
 
-    // Available macros for missed call templates
-    'ms_MissedCallMacros_header' => 'Доступные макросы для шаблонов',
-    'ms_MissedCallMacros_description' => 'Используйте эти макросы в шаблонах писем для автоматической подстановки данных:',
-    'ms_MissedCallMacro_NOTIFICATION_CALLERID' => 'Номер звонившего абонента',
-    'ms_MissedCallMacro_NOTIFICATION_TO' => 'Номер, на который звонили',
-    'ms_MissedCallMacro_NOTIFICATION_NAME_TO' => 'Имя сотрудника, которому звонили',
-    'ms_MissedCallMacro_NOTIFICATION_NAME_FROM' => 'Имя звонившего (если определено)',
-    'ms_MissedCallMacro_NOTIFICATION_DURATION' => 'Длительность ожидания ответа',
-    'ms_MissedCallMacro_NOTIFICATION_DATE' => 'Дата и время звонка',
-    'ms_MissedCallMacro_NOTIFICATION_MISSEDCAUSE' => 'Причина пропуска (всегда NOANSWER)',
-    'ms_MissedCallMacros_usage_example' => 'Пример использования:',
-    'ms_MissedCallMacros_example_text' => 'Пропущен звонок от NOTIFICATION_CALLERID на номер NOTIFICATION_TO (NOTIFICATION_NAME_TO) в NOTIFICATION_DATE',
-
     // Tooltip translations for VoicemailNotificationsEmail
     'ms_VoicemailNotificationsEmailTooltip_header' => 'Email для голосовой почты',
     'ms_VoicemailNotificationsEmailTooltip_desc' => 'Единый адрес электронной почты для централизованной отправки всех голосовых сообщений.',
@@ -303,17 +274,6 @@ return [
     'ms_VoicemailNotificationsEmailTooltip_duration' => 'Длительность сообщения отображается в тексте письма',
     'ms_VoicemailNotificationsEmailTooltip_note' => 'Рекомендуется настроить личные email сотрудников для персонализированной доставки голосовых сообщений',
 
-    // Available macros for voicemail templates
-    'ms_VoicemailMacros_header' => 'Доступные макросы для шаблонов голосовой почты',
-    'ms_VoicemailMacros_description' => 'Используйте эти макросы в шаблонах писем с голосовыми сообщениями:',
-    'ms_VoicemailMacro_VM_NAME' => 'Имя владельца голосового ящика',
-    'ms_VoicemailMacro_VM_DUR' => 'Длительность голосового сообщения в секундах',
-    'ms_VoicemailMacro_VM_MSGNUM' => 'Порядковый номер сообщения',
-    'ms_VoicemailMacro_VM_MAILBOX' => 'Номер голосового ящика',
-    'ms_VoicemailMacro_VM_CALLERID' => 'Номер звонившего абонента',
-    'ms_VoicemailMacro_VM_DATE' => 'Дата и время записи сообщения',
-    'ms_VoicemailMacros_usage_example' => 'Пример использования:',
-    'ms_VoicemailMacros_example_text' => 'Новое голосовое сообщение от VM_CALLERID для VM_NAME (ящик VM_MAILBOX), получено VM_DATE, длительность: VM_DUR секунд',
 
     // MailSMTPUseTLS Tooltip
     'ms_MailSMTPUseTLSTooltip_header' => 'Использование TLS шифрования',

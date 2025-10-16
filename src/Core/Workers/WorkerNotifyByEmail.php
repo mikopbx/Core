@@ -92,80 +92,48 @@ class WorkerNotifyByEmail extends WorkerBase
         }
 
         // LEGACY: Otherwise handle as missed call notifications
+        // Group calls by recipient and send using new Builder system
 
-        $template_body = PbxSettings::getValueByKey(PbxSettings::MAIL_TPL_MISSED_CALL_BODY);
-        $template_subject = PbxSettings::getValueByKey(PbxSettings::MAIL_TPL_MISSED_CALL_SUBJECT);
+        $emailService = new EmailNotificationService();
+        $processedCalls = []; // Track sent notifications to prevent duplicates
 
-        // Set default subject if not provided
-        if (empty($template_subject)) {
-            $template_subject = Util::translate("You have missing call") . ' <-- NOTIFICATION_CALLERID';
-        }
-        $template_Footer = PbxSettings::getValueByKey(PbxSettings::MAIL_TPL_MISSED_CALL_FOOTER);
-        $emails = [];
-
-        $tmpArray = [];
         foreach ($data as $call) {
+            // Generate unique key to prevent duplicate notifications
             $keyHash = $call['email'] . $call['start'] . $call['from_number'] . $call['to_number'];
-            // Skip duplicate emails
-            if (in_array($keyHash, $tmpArray, true)) {
+
+            if (in_array($keyHash, $processedCalls, true)) {
                 continue;
             }
+
+            // Resolve caller and extension names
             if (isset($phonesCid[$call['to_number']])) {
                 $call['to_name'] = $phonesCid[$call['to_number']];
             } else {
                 $call['to_name'] = Extensions::getCidByPhoneNumber($call['to_number']);
                 $phonesCid[$call['to_number']] = $call['to_name'];
             }
+
             if (isset($phonesCid[$call['from_number']])) {
                 $call['from_name'] = $phonesCid[$call['from_number']];
             } else {
                 $call['from_name'] = Extensions::getCidByPhoneNumber($call['from_number']);
                 $phonesCid[$call['from_number']] = $call['from_name'];
             }
-            $tmpArray[] = $keyHash;
-            if (!isset($emails[$call['email']])) {
-                $emails[$call['email']] = [
-                    'subject' => $this->replaceParams($template_subject, $call),
-                    'body' => '',
-                    'footer' => $this->replaceParams($template_Footer, $call),
-                ];
-            }
-            if (!empty($template_body)) {
-                $email = $this->replaceParams($template_body, $call);
-                $emails[$call['email']]['body'] .= "$email <br><hr><br>";
-            }
+
+            // Send notification using Builder
+            $builder = new MissedCallNotificationBuilder();
+            $builder->setRecipient($call['email'])
+                    ->setCallerId($call['from_number'])
+                    ->setCallerName($call['from_name'])
+                    ->setExtension($call['to_number'])
+                    ->setExtensionName($call['to_name'])
+                    ->setCallTime($call['start']);
+
+            $emailService->sendNotification($builder, $notifier);
+
+            $processedCalls[] = $keyHash;
         }
-        // Use new template system for beautiful missed call notifications
-        $emailService = new EmailNotificationService();
 
-        foreach ($emails as $to => $email) {
-            // Extract first call data for this recipient (for basic info)
-            $firstCall = null;
-            foreach ($data as $call) {
-                if ($call['email'] === $to) {
-                    $firstCall = $call;
-                    break;
-                }
-            }
-
-            if ($firstCall) {
-                // Use new builder for modern HTML email
-                $builder = new MissedCallNotificationBuilder();
-                $builder->setRecipient($to)
-                        ->setCallerId($firstCall['from_number'])
-                        ->setCallerName($firstCall['from_name'])
-                        ->setExtension($firstCall['to_number'])
-                        ->setExtensionName($firstCall['to_name'])
-                        ->setCallTime($firstCall['start']);
-
-                $emailService->sendNotification($builder, $notifier);
-            } else {
-                // Fallback to legacy method if no call data
-                $subject = $email['subject'];
-                $body = "{$email['body']}<br>{$email['footer']}";
-                $notifier->sendMail($to, $subject, $body);
-            }
-        }
         sleep(1);
     }
 
@@ -316,40 +284,6 @@ class WorkerNotifyByEmail extends WorkerBase
         }
 
         sleep(1);
-    }
-
-    /**
-     * Replaces the placeholders in the source string with the provided parameters.
-     *
-     * @param string $src The source string.
-     * @param array<string, mixed> $params The parameters to replace.
-     * @return string The modified string.
-     */
-    private function replaceParams(string $src, array $params): string
-    {
-        return str_replace(
-            [
-                "\n",
-                "NOTIFICATION_MISSEDCAUSE",
-                "NOTIFICATION_CALLERID",
-                "NOTIFICATION_TO",
-                "NOTIFICATION_NAME_TO",
-                "NOTIFICATION_NAME_FROM",
-                "NOTIFICATION_DURATION",
-                "NOTIFICATION_DATE"
-            ],
-            [
-                "<br>",
-                'NOANSWER',
-                $params['from_number'],
-                $params['to_number'],
-                $params['to_name'],
-                $params['from_name'],
-                $params['duration'],
-                explode('.', $params['start'])[0]
-            ],
-            $src
-        );
     }
 }
 

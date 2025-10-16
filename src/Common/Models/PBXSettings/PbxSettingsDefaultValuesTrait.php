@@ -80,12 +80,6 @@ trait PbxSettingsDefaultValuesTrait
             PbxSettings::MAIL_SMTP_FROM_USERNAME => 'PBX',
             PbxSettings::MAIL_SMTP_SENDER_ADDRESS => '',
             PbxSettings::MAIL_ENABLE_NOTIFICATIONS => '0',
-            PbxSettings::MAIL_TPL_MISSED_CALL_SUBJECT => 'You have missing call from <MailSMTPSenderAddress>',
-            PbxSettings::MAIL_TPL_MISSED_CALL_BODY => 'You have missed calls (NOTIFICATION_MISSEDCAUSE) from <NOTIFICATION_CALLERID> at <NOTIFICATION_DATE>',
-            PbxSettings::MAIL_TPL_MISSED_CALL_FOOTER => '',
-            PbxSettings::MAIL_TPL_VOICEMAIL_SUBJECT => 'VoiceMail from PBX',
-            PbxSettings::MAIL_TPL_VOICEMAIL_BODY => 'See attach',
-            PbxSettings::MAIL_TPL_VOICEMAIL_FOOTER => '',
             PbxSettings::MAIL_SMTP_AUTH_TYPE => 'password', // Default to password for existing installations
             PbxSettings::MAIL_OAUTH2_PROVIDER => '',
             PbxSettings::MAIL_OAUTH2_CLIENT_ID => '',

@@ -167,18 +167,6 @@ trait PbxSettingsConstantsTrait
     public const string MAIL_SMTP_SENDER_ADDRESS = 'MailSMTPSenderAddress';
     /** @FieldType('boolean') */
     public const string MAIL_ENABLE_NOTIFICATIONS = 'MailEnableNotifications';
-    /** @FieldType('string') */
-    public const string MAIL_TPL_MISSED_CALL_SUBJECT = 'MailTplMissedCallSubject';
-    /** @FieldType('string') */
-    public const string MAIL_TPL_MISSED_CALL_BODY = 'MailTplMissedCallBody';
-    /** @FieldType('string') */
-    public const string MAIL_TPL_MISSED_CALL_FOOTER = 'MailTplMissedCallFooter';
-    /** @FieldType('string') */
-    public const string MAIL_TPL_VOICEMAIL_SUBJECT = 'MailTplVoicemailSubject';
-    /** @FieldType('string') */
-    public const string MAIL_TPL_VOICEMAIL_BODY = 'MailTplVoicemailBody';
-    /** @FieldType('string') */
-    public const string MAIL_TPL_VOICEMAIL_FOOTER = 'MailTplVoicemailFooter';
 
     // OAuth2 authentication settings
     /** @FieldType('string') */

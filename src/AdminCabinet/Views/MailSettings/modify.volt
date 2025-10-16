@@ -180,41 +180,6 @@
                 {{ form.render('SystemEmailForMissed') }}
             </div>
 
-            {# Macros info segment #}
-            <div class="ui segment">
-                <h4 class="ui header">
-                    <i class="code icon"></i>
-                    <div class="content">{{ t._('ms_MissedCallMacros_header') }}</div>
-                </h4>
-                <p>{{ t._('ms_MissedCallMacros_description') }}</p>
-                <div class="ui list">
-                    <div class="item"><code>NOTIFICATION_CALLERID</code> - {{ t._('ms_MissedCallMacro_NOTIFICATION_CALLERID') }}</div>
-                    <div class="item"><code>NOTIFICATION_TO</code> - {{ t._('ms_MissedCallMacro_NOTIFICATION_TO') }}</div>
-                    <div class="item"><code>NOTIFICATION_NAME_TO</code> - {{ t._('ms_MissedCallMacro_NOTIFICATION_NAME_TO') }}</div>
-                    <div class="item"><code>NOTIFICATION_NAME_FROM</code> - {{ t._('ms_MissedCallMacro_NOTIFICATION_NAME_FROM') }}</div>
-                    <div class="item"><code>NOTIFICATION_DURATION</code> - {{ t._('ms_MissedCallMacro_NOTIFICATION_DURATION') }}</div>
-                    <div class="item"><code>NOTIFICATION_DATE</code> - {{ t._('ms_MissedCallMacro_NOTIFICATION_DATE') }}</div>
-                    <div class="item"><code>NOTIFICATION_MISSEDCAUSE</code> - {{ t._('ms_MissedCallMacro_NOTIFICATION_MISSEDCAUSE') }}</div>
-                </div>
-                <div class="ui divider"></div>
-                <p><strong>{{ t._('ms_MissedCallMacros_usage_example') }}</strong></p>
-                <div class="ui message">
-                    <code>{{ t._('ms_MissedCallMacros_example_text') }}</code>
-                </div>
-            </div>
-
-            <div class="field">
-                <label for="MailTplMissedCallSubject">{{ t._('ms_MissedCallSubject') }}</label>
-                {{ form.render('MailTplMissedCallSubject') }}
-            </div>
-            <div class="field">
-                <label for="MailTplMissedCallBody">{{ t._('ms_MissedCallBody') }}</label>
-                {{ form.render('MailTplMissedCallBody') }}
-            </div>
-            <div class="field">
-                <label for="MailTplMissedCallBody">{{ t._('ms_MissedCallFooter') }}</label>
-                {{ form.render('MailTplMissedCallFooter') }}
-            </div>
             {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('MissedTabFields')]) }}
         </div>
 
@@ -225,43 +190,6 @@
                     <i class="small info circle icon field-info-icon" data-field="VoicemailNotificationsEmail"></i>
                 </label>
                 {{ form.render('VoicemailNotificationsEmail') }}
-            </div>
-
-            {# Macros info segment for voicemail #}
-            <div class="ui segment">
-                <h4 class="ui header">
-                    <i class="code icon"></i>
-                    <div class="content">{{ t._('ms_VoicemailMacros_header') }}</div>
-                </h4>
-                <p>{{ t._('ms_VoicemailMacros_description') }}</p>
-                <div class="ui list">
-                    <div class="item"><code>VM_NAME</code> - {{ t._('ms_VoicemailMacro_VM_NAME') }}</div>
-                    <div class="item"><code>VM_DUR</code> - {{ t._('ms_VoicemailMacro_VM_DUR') }}</div>
-                    <div class="item"><code>VM_MSGNUM</code> - {{ t._('ms_VoicemailMacro_VM_MSGNUM') }}</div>
-                    <div class="item"><code>VM_MAILBOX</code> - {{ t._('ms_VoicemailMacro_VM_MAILBOX') }}</div>
-                    <div class="item"><code>VM_CALLERID</code> - {{ t._('ms_VoicemailMacro_VM_CALLERID') }}</div>
-                    <div class="item"><code>VM_DATE</code> - {{ t._('ms_VoicemailMacro_VM_DATE') }}</div>
-                </div>
-                <div class="ui divider"></div>
-                <p><strong>{{ t._('ms_VoicemailMacros_usage_example') }}</strong></p>
-                <div class="ui message">
-                    <code>{{ t._('ms_VoicemailMacros_example_text') }}</code>
-                </div>
-            </div>
-
-            <div class="field">
-                <label for="MailTplVoicemailSubject">{{ t._('ms_VoicemailSubject') }}</label>
-                {{ form.render('MailTplVoicemailSubject') }}
-            </div>
-
-            <div class="field">
-                <label for="MailTplVoicemailBody">{{ t._('ms_VoicemailBody') }}</label>
-                {{ form.render('MailTplVoicemailBody') }}
-            </div>
-
-            <div class="field">
-                <label for="MailTplVoicemailFooter">{{ t._('ms_VoicemailFooter') }}</label>
-                {{ form.render('MailTplVoicemailFooter') }}
             </div>
 
             {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('VoicemailTabFields')]) }}

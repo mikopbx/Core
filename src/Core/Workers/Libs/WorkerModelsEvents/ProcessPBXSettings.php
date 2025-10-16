@@ -282,9 +282,6 @@ class ProcessPBXSettings extends Injectable
         // VoiceMailParameters
         $tables[] = [
             'keys' => [
-                PbxSettings::MAIL_TPL_VOICEMAIL_SUBJECT,
-                PbxSettings::MAIL_TPL_VOICEMAIL_BODY,
-                PbxSettings::MAIL_TPL_VOICEMAIL_FOOTER,
                 PbxSettings::MAIL_SMTP_SENDER_ADDRESS,
                 PbxSettings::MAIL_SMTP_USERNAME,
                 PbxSettings::PBX_TIMEZONE,
