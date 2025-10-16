@@ -26,6 +26,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
     ApiParameter,
+    ApiParameterRef,
     ApiResponse,
     ApiDataSchema,
     SecurityType,
@@ -182,14 +183,11 @@ class RestController extends BaseRestController
         description: 'rest_am_CreateDesc',
         operationId: 'createAsteriskManager'
     )]
-    #[ApiParameter('username', 'string', 'rest_param_am_username', ParameterLocation::QUERY, required: true, maxLength: 50, example: 'admin')]
-    #[ApiParameter('secret', 'string', 'rest_param_am_secret', ParameterLocation::QUERY, required: true, maxLength: 255, example: 'securePassword123')]
-    #[ApiParameter('description', 'string', 'rest_param_am_description', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'Administrator account')]
-    #[ApiParameter('call', 'string', 'rest_param_am_call', ParameterLocation::QUERY, required: false, enum: ['all', 'no'], default: 'all', example: 'all')]
-    #[ApiParameter('cdr', 'string', 'rest_param_am_cdr', ParameterLocation::QUERY, required: false, enum: ['all', 'no'], default: 'all', example: 'all')]
-    #[ApiParameter('agent', 'string', 'rest_param_am_agent', ParameterLocation::QUERY, required: false, enum: ['all', 'no'], default: 'all', example: 'all')]
-    #[ApiParameter('call_timeout', 'integer', 'rest_param_am_call_timeout', ParameterLocation::QUERY, required: false, minimum: 1, maximum: 300, default: 5, example: 10)]
-    #[ApiParameter('disabled', 'boolean', 'rest_param_am_disabled', ParameterLocation::QUERY, required: false, default: false, example: false)]
+    #[ApiParameterRef('username', required: true)]
+    #[ApiParameterRef('secret', required: true)]
+    #[ApiParameterRef('description')]
+    #[ApiParameterRef('networkfilterid')]
+    #[ApiParameterRef('permissions')]
     #[ApiResponse(201, 'rest_response_201_created')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -215,13 +213,11 @@ class RestController extends BaseRestController
         operationId: 'updateAsteriskManager'
     )]
     #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[0-9]+$', example: '53')]
-    #[ApiParameter('username', 'string', 'rest_param_am_username', ParameterLocation::QUERY, required: true, maxLength: 50, example: 'admin2')]
-    #[ApiParameter('secret', 'string', 'rest_param_am_secret', ParameterLocation::QUERY, required: true, maxLength: 255, example: 'newSecurePassword123')]
-    #[ApiParameter('description', 'string', 'rest_param_am_description', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'Updated administrator account')]
-    #[ApiParameter('call', 'string', 'rest_param_am_call', ParameterLocation::QUERY, required: false, enum: ['all', 'no'], default: 'all', example: 'all')]
-    #[ApiParameter('cdr', 'string', 'rest_param_am_cdr', ParameterLocation::QUERY, required: false, enum: ['all', 'no'], default: 'all', example: 'all')]
-    #[ApiParameter('agent', 'string', 'rest_param_am_agent', ParameterLocation::QUERY, required: false, enum: ['all', 'no'], default: 'all', example: 'all')]
-    #[ApiParameter('disabled', 'boolean', 'rest_param_am_disabled', ParameterLocation::QUERY, required: false, default: false, example: false)]
+    #[ApiParameterRef('username', required: true)]
+    #[ApiParameterRef('secret', required: true)]
+    #[ApiParameterRef('description')]
+    #[ApiParameterRef('networkfilterid')]
+    #[ApiParameterRef('permissions')]
     #[ApiResponse(200, 'rest_response_200_updated')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -248,10 +244,11 @@ class RestController extends BaseRestController
         operationId: 'patchAsteriskManager'
     )]
     #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[0-9]+$', example: '53')]
-    #[ApiParameter('username', 'string', 'rest_param_am_username', ParameterLocation::QUERY, required: false, maxLength: 50, example: 'admin_updated')]
-    #[ApiParameter('secret', 'string', 'rest_param_am_secret', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'updatedPassword123')]
-    #[ApiParameter('description', 'string', 'rest_param_am_description', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'Updated description')]
-    #[ApiParameter('disabled', 'boolean', 'rest_param_am_disabled', ParameterLocation::QUERY, required: false, example: true)]
+    #[ApiParameterRef('username')]
+    #[ApiParameterRef('secret')]
+    #[ApiParameterRef('description')]
+    #[ApiParameterRef('networkfilterid')]
+    #[ApiParameterRef('permissions')]
     #[ApiResponse(200, 'rest_response_200_patched')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
