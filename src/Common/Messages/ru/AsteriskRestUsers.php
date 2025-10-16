@@ -114,4 +114,35 @@ return [
     // Other tooltips
     'ari_SystemUserReadOnly' => 'Системный пользователь доступен только для чтения',
     'ari_ErrorLoadingUser' => 'Ошибка при загрузке данных пользователя',
+
+    // REST API parameter descriptions (request fields)
+    'rest_param_aru_username' => 'Имя пользователя для доступа к ARI',
+    'rest_param_aru_password' => 'Пароль для аутентификации в ARI',
+    'rest_param_aru_applications' => 'Список Stasis приложений, к которым имеет доступ пользователь (пустой массив = все приложения)',
+    'rest_param_aru_description' => 'Описание пользователя ARI',
+    'rest_param_aru_weak_password' => 'Индикатор надежности пароля (0 - неизвестно, 1 - надежный, 2 - слабый)',
+    'rest_param_aru_object' => 'Объект пользователя Asterisk REST Interface (ARI)',
+
+    // REST API schema descriptions (response fields)
+    'rest_schema_aru_id' => 'Уникальный идентификатор пользователя ARI',
+    'rest_schema_aru_applications_summary' => 'Краткое описание доступных приложений',
+    'rest_schema_aru_applications_count' => 'Количество приложений, к которым имеет доступ пользователь',
+    'rest_schema_aru_object' => 'Объект пользователя Asterisk REST Interface (ARI)',
+    'rest_schema_aru_represent' => 'Строковое представление пользователя ARI для отображения в выпадающих списках',
+
+    // REST API operation descriptions
+    'rest_aru_GetList' => 'Получить список пользователей ARI',
+    'rest_aru_GetListDesc' => 'Возвращает список всех пользователей Asterisk REST Interface с поддержкой пагинации и фильтрации',
+    'rest_aru_GetRecord' => 'Получить пользователя ARI',
+    'rest_aru_GetRecordDesc' => 'Возвращает детальную информацию о конкретном пользователе ARI по его идентификатору',
+    'rest_aru_Create' => 'Создать пользователя ARI',
+    'rest_aru_CreateDesc' => 'Создает нового пользователя для доступа к Asterisk REST Interface с указанными параметрами',
+    'rest_aru_Update' => 'Обновить пользователя ARI',
+    'rest_aru_UpdateDesc' => 'Полностью заменяет данные существующего пользователя ARI (все поля обязательны)',
+    'rest_aru_Patch' => 'Частично обновить пользователя ARI',
+    'rest_aru_PatchDesc' => 'Обновляет только указанные поля существующего пользователя ARI',
+    'rest_aru_Delete' => 'Удалить пользователя ARI',
+    'rest_aru_DeleteDesc' => 'Удаляет пользователя ARI из системы по его идентификатору',
+    'rest_aru_GetDefault' => 'Получить шаблон нового пользователя ARI',
+    'rest_aru_GetDefaultDesc' => 'Возвращает объект с настройками по умолчанию для создания нового пользователя ARI',
 ];

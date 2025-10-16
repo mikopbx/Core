@@ -26,6 +26,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
     ApiParameter,
+    ApiParameterRef,
     ApiResponse,
     ApiDataSchema,
     SecurityType,
@@ -183,10 +184,11 @@ class RestController extends BaseRestController
         description: 'rest_aru_CreateDesc',
         operationId: 'createAriUser'
     )]
-    #[ApiParameter('username', 'string', 'rest_param_aru_username', ParameterLocation::QUERY, required: true, maxLength: 50, example: 'api_user')]
-    #[ApiParameter('secret', 'string', 'rest_param_aru_secret', ParameterLocation::QUERY, required: true, maxLength: 255, example: 'SecurePass123')]
-    #[ApiParameter('description', 'string', 'rest_param_aru_description', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'API user for call control')]
-    #[ApiParameter('disabled', 'boolean', 'rest_param_aru_disabled', ParameterLocation::QUERY, required: false, default: false, example: false)]
+    #[ApiParameterRef('username', required: true)]
+    #[ApiParameterRef('password', required: true)]
+    #[ApiParameterRef('applications')]
+    #[ApiParameterRef('description')]
+    #[ApiParameterRef('weakPassword')]
     #[ApiResponse(201, 'rest_response_201_created')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -212,10 +214,11 @@ class RestController extends BaseRestController
         operationId: 'updateAriUser'
     )]
     #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[0-9]+$', example: '5')]
-    #[ApiParameter('username', 'string', 'rest_param_aru_username', ParameterLocation::QUERY, required: true, maxLength: 50, example: 'api_user_updated')]
-    #[ApiParameter('secret', 'string', 'rest_param_aru_secret', ParameterLocation::QUERY, required: true, maxLength: 255, example: 'NewSecurePass456')]
-    #[ApiParameter('description', 'string', 'rest_param_aru_description', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'Updated API user')]
-    #[ApiParameter('disabled', 'boolean', 'rest_param_aru_disabled', ParameterLocation::QUERY, required: false, default: false, example: false)]
+    #[ApiParameterRef('username', required: true)]
+    #[ApiParameterRef('password', required: true)]
+    #[ApiParameterRef('applications')]
+    #[ApiParameterRef('description')]
+    #[ApiParameterRef('weakPassword')]
     #[ApiResponse(200, 'rest_response_200_updated')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -242,10 +245,11 @@ class RestController extends BaseRestController
         operationId: 'patchAriUser'
     )]
     #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[0-9]+$', example: '5')]
-    #[ApiParameter('username', 'string', 'rest_param_aru_username', ParameterLocation::QUERY, required: false, maxLength: 50, example: 'patched_user')]
-    #[ApiParameter('secret', 'string', 'rest_param_aru_secret', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'PatchedPass789')]
-    #[ApiParameter('description', 'string', 'rest_param_aru_description', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'Patched description')]
-    #[ApiParameter('disabled', 'boolean', 'rest_param_aru_disabled', ParameterLocation::QUERY, required: false, example: true)]
+    #[ApiParameterRef('username')]
+    #[ApiParameterRef('password')]
+    #[ApiParameterRef('applications')]
+    #[ApiParameterRef('description')]
+    #[ApiParameterRef('weakPassword')]
     #[ApiResponse(200, 'rest_response_200_patched')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]

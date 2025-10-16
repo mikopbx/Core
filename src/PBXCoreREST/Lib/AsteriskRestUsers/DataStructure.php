@@ -214,83 +214,125 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
 
     /**
+     * ✨ SINGLE SOURCE OF TRUTH - all fields defined once
+     *
+     * Centralizes ALL field definitions with their constraints, validation rules,
+     * and sanitization. Eliminates duplication between request/response schemas.
+     *
+     * @return array<string, mixed>
+     */
+    private static function getAllFieldDefinitions(): array
+    {
+        return [
+            // Writable fields - accepted in POST/PUT/PATCH requests
+            'username' => [
+                'type' => 'string',
+                'description' => 'rest_param_aru_username',
+                'minLength' => 1,
+                'maxLength' => 50,
+                'sanitize' => 'text',
+                'required' => true,
+                'example' => 'api_user'
+            ],
+            'password' => [
+                'type' => 'string',
+                'description' => 'rest_param_aru_password',
+                'minLength' => 8,
+                'maxLength' => 255,
+                'sanitize' => 'string',
+                'required' => true,
+                'example' => 'SecurePass123'
+            ],
+            'applications' => [
+                'type' => 'array',
+                'description' => 'rest_param_aru_applications',
+                'items' => [
+                    'type' => 'string',
+                    'maxLength' => 100
+                ],
+                'sanitize' => 'array',
+                'default' => [],
+                'example' => ['app1', 'app2']
+            ],
+            'description' => [
+                'type' => 'string',
+                'description' => 'rest_param_aru_description',
+                'maxLength' => 255,
+                'sanitize' => 'text',
+                'default' => '',
+                'example' => 'API user for call control'
+            ],
+            'weakPassword' => [
+                'type' => 'string',
+                'description' => 'rest_param_aru_weak_password',
+                'enum' => ['0', '1', '2'], // 2 - Weak password, 1 - OK, 0 - Unknown password status
+                'sanitize' => 'enum',
+                'default' => '0',
+                'example' => '2' // Weak password
+            ],
+
+            // Read-only fields - only in responses, never accepted in requests
+            'id' => [
+                'type' => 'string',
+                'description' => 'rest_schema_aru_id',
+                'pattern' => '^[0-9]+$',
+                'readOnly' => true,
+                'example' => '5'
+            ],
+            'applicationsSummary' => [
+                'type' => 'string',
+                'description' => 'rest_schema_aru_applications_summary',
+                'readOnly' => true,
+                'example' => 'app1, app2'
+            ],
+            'applicationsCount' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_aru_applications_count',
+                'minimum' => 0,
+                'readOnly' => true,
+                'example' => 2
+            ]
+        ];
+    }
+
+    /**
      * Get parameter definitions (Single Source of Truth)
      *
      * Defines all field schemas, validation rules, defaults, and sanitization rules in one place.
      * This replaces legacy ParameterSanitizationExtractor pattern.
      *
+     * ✨ Uses getAllFieldDefinitions() to eliminate duplication.
+     *
      * @return array<string, array<string, mixed>> Parameter definitions
      */
     public static function getParameterDefinitions(): array
     {
+        $allFields = self::getAllFieldDefinitions();
+
+        // Filter out read-only fields for request schema
+        $writableFields = array_filter($allFields, fn($f) => empty($f['readOnly']));
+
         return [
             'request' => [
-                'username' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_aru_username',
-                    'minLength' => 1,
-                    'maxLength' => 50,
-                    'sanitize' => 'text',
-                    'required' => true,
-                    'example' => 'api_user'
-                ],
-                'password' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_aru_password',
-                    'minLength' => 8,
-                    'maxLength' => 255,
-                    'sanitize' => 'string',
-                    'required' => true,
-                    'example' => 'SecurePass123'
-                ],
-                'applications' => [
-                    'type' => 'array',
-                    'description' => 'rest_param_aru_applications',
-                    'items' => [
-                        'type' => 'string',
-                        'maxLength' => 100
-                    ],
-                    'sanitize' => 'array',
-                    'default' => [],
-                    'example' => ['app1', 'app2']
-                ],
-                'description' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_aru_description',
-                    'maxLength' => 255,
-                    'sanitize' => 'text',
-                    'default' => '',
-                    'example' => 'API user for call control'
-                ],
-                'weakPassword' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_aru_weak_password',
-                    'enum' => ['0', '1', '2'], // 2 - Weak password, 1 - OK, 0 - Unknown password status
-                    'sanitize' => 'enum',
-                    'default' => '0',
-                    'example' => '2' // Weak password
+                'asteriskRestUser' => [
+                    'type' => 'object',
+                    'description' => 'rest_param_aru_object',
+                    'properties' => $writableFields
                 ]
             ],
             'response' => [
-                // Auto-generated ID field (readOnly, not accepted in requests)
-                'id' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_aru_id',
-                    'pattern' => '^[0-9]+$',
-                    'example' => '5'
+                'asteriskRestUser' => [
+                    'type' => 'object',
+                    'description' => 'rest_schema_aru_object',
+                    'properties' => $allFields  // ALL fields including read-only
                 ],
-                'applicationsSummary' => [
+                'represent' => [
                     'type' => 'string',
-                    'description' => 'rest_schema_aru_applications_summary',
-                    'example' => 'app1, app2'
-                ],
-                'applicationsCount' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_aru_applications_count',
-                    'minimum' => 0,
-                    'example' => 2
+                    'description' => 'rest_schema_aru_represent',
+                    'example' => 'api_user - API user for call control'
                 ]
-            ]
+            ],
+            'related' => []
         ];
     }
 
