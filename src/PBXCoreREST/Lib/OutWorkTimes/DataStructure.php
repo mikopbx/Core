@@ -46,6 +46,7 @@ use MikoPBX\PBXCoreREST\Lib\Common\SearchIndexTrait;
 class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvider
 {
     use SearchIndexTrait;
+
     /**
      * Create full data structure from model
      *
@@ -81,22 +82,25 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             // Only return IDs of associated incoming routes
             'incomingRouteIds' => self::getIncomingRouteIds((int)$model->id)
         ];
-        
+
         // Add action field (explicit in OutWorkTimes, unlike IncomingRoutes where it's computed)
         $data['action'] = $model->action ?? 'extension';
-        
+
         // Add extension field with representation using unified approach
         $data = self::addExtensionField($data, 'extension', $model->extension);
-        
+
         // Add sound file field using standard naming convention: field_name_represent
         $data = self::addSoundFileField($data, 'audio_message_id', $model->audio_message_id);
-        
+
         // Add search_index for frontend search functionality using trait
         $data['search_index'] = self::generateAutoSearchIndex($data);
-        
+
+        // Apply OpenAPI schema formatting to convert types automatically
+        $data = self::formatBySchema($data, 'detail');
+
         return $data;
     }
-    
+
     /**
      * Create lightweight data structure for list display
      *
@@ -110,10 +114,10 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     {
         // Get calendar periods for display
         $calendarPeriods = self::getCalendarPeriodsForDisplay($model);
-        
+
         // Get action information
         $actionInfo = self::getActionInfo($model);
-        
+
         $data = [
             'id' => $model->id,
             'name' => $model->description ?? '',
@@ -127,7 +131,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'audio_message_id' => $actionInfo['audio_message'] ?? '',
             'extension' => $actionInfo['extension'] ?? '',
             'priority' => (int)($model->priority ?? 0),
-            
+
             // Fields for original table structure (formatted for display)
             'date_from' => self::formatDateForDisplay($model->date_from ?? ''),
             'date_to' => self::formatDateForDisplay($model->date_to ?? ''),
@@ -136,13 +140,16 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'time_from' => $model->time_from ?? '',
             'time_to' => $model->time_to ?? '',
         ];
-        
+
         // Add search_index for frontend search functionality using trait
         $data['search_index'] = self::generateAutoSearchIndex($data);
-        
+
+        // Apply OpenAPI list schema formatting to ensure proper types
+        $data = self::formatBySchema($data, 'list');
+
         return $data;
     }
-    
+
     /**
      * Create template for new record
      *
@@ -167,16 +174,16 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'allowedExtensions' => [],
             'incomingRouteIds' => []
         ];
-        
+
         // Add extension field with empty representation
         $data = self::addExtensionField($data, 'extension', null);
-        
+
         // Add sound file field with empty representation
         $data = self::addSoundFileField($data, 'audio_message_id', null);
-        
+
         return $data;
     }
-    
+
     /**
      * Get calendar periods for display matching original structure
      *
@@ -186,7 +193,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     private static function getCalendarPeriodsForDisplay(OutWorkTimes $model): array
     {
         $periods = [];
-        
+
         // Date period
         if (!empty($model->date_from)) {
             $dateRange = self::formatDateForDisplay($model->date_from);
@@ -199,7 +206,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'type' => 'date'
             ];
         }
-        
+
         // Weekday period
         if (!empty($model->weekday_from)) {
             $weekdayRange = self::getWeekdayName((int)$model->weekday_from);
@@ -212,7 +219,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'type' => 'weekday'
             ];
         }
-        
+
         // Time period
         if (!empty($model->time_from)) {
             $timeRange = $model->time_from;
@@ -225,7 +232,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'type' => 'time'
             ];
         }
-        
+
         // CalDAV/iCal calendar
         if (!empty($model->calType) && in_array($model->calType, ['caldav', 'ical'])) {
             $periods[] = [
@@ -234,10 +241,10 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'type' => 'calendar'
             ];
         }
-        
+
         return $periods;
     }
-    
+
     /**
      * Get action information for display
      *
@@ -250,12 +257,12 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         $display = '';
         $audioMessage = null;
         $extension = null;
-        
+
         if ($action === 'playmessage' && !empty($model->audio_message_id)) {
             $sound = SoundFiles::findFirstById($model->audio_message_id);
             if ($sound) {
                 $audioMessage = $sound->name;
-                
+
                 // Get translation service and use the same key as in template
                 $di = \Phalcon\Di\Di::getDefault();
                 if ($di !== null) {
@@ -264,7 +271,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 } else {
                     $actionText = 'Play message: ' . $audioMessage;
                 }
-                
+
                 // Create HTML with sound icon and translated text (don't escape HTML as translation contains safe HTML)
                 $display = '<i class="file audio outline icon"></i>' . $actionText;
             }
@@ -272,7 +279,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             $ext = Extensions::findFirstByNumber($model->extension);
             if ($ext) {
                 $extension = $ext->number;
-                
+
                 // Get translation service and use the same key as in template
                 $di = \Phalcon\Di\Di::getDefault();
                 if ($di !== null) {
@@ -281,12 +288,12 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 } else {
                     $actionText = 'Transfer to extension: ' . $extension;
                 }
-                
+
                 // Create HTML with phone icon and translated text (don't escape HTML as translation contains safe HTML)
                 $display = '<i class="phone icon"></i>' . $actionText;
             }
         }
-        
+
         return [
             'action' => $action,
             'display' => $display,
@@ -294,10 +301,10 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'extension' => $extension
         ];
     }
-    
+
     /**
      * Get weekday name using translations
-     * 
+     *
      * @param int $weekday
      * @return string
      */
@@ -306,7 +313,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         if ($weekday < 1 || $weekday > 7) {
             return '';
         }
-        
+
         // Map weekday numbers to translation keys (using same logic as original form)
         $weekdayKeys = [
             1 => 'Mon',
@@ -328,10 +335,10 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         // Fallback if DI not available
         return $weekdayKeys[$weekday];
     }
-    
+
     /**
      * Get short description (first part before newline or period)
-     * 
+     *
      * @param string $description
      * @return string
      */
@@ -340,20 +347,20 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         if (empty($description)) {
             return '';
         }
-        
+
         // Take first line or first sentence
         $lines = explode("\n", $description);
         $firstLine = trim($lines[0]);
-        
+
         // If line is too long, take first 50 characters
         if (strlen($firstLine) > 50) {
             return substr($firstLine, 0, 47) . '...';
         }
-        
+
         return $firstLine;
     }
-    
-    
+
+
     /**
      * Get IDs of incoming routes associated with time condition
      *
@@ -363,7 +370,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     private static function getIncomingRouteIds(int $conditionId): array
     {
         $routeIds = [];
-        
+
         $associations = OutWorkTimesRouts::find([
             'conditions' => 'timeConditionId = :conditionId:',
             'bind' => ['conditionId' => $conditionId]
@@ -374,10 +381,10 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 $routeIds[] = (int)$association->routId;
             }
         }
-        
+
         return $routeIds;
     }
-    
+
     /**
      * Get allowed extensions for time condition
      *
@@ -391,7 +398,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         // For now, returning empty array as placeholder
         return [];
     }
-    
+
     /**
      * Format date for display, handling both unix timestamps and Y-m-d format
      *
@@ -430,87 +437,50 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      * This schema matches the structure returned by createForList() method.
      * Used for GET /api/v3/off-work-times endpoint (list of time conditions).
      *
+     * Inherits ALL fields from getParameterDefinitions() (NO duplication!):
+     * - Request parameters from 'request' section
+     * - Response-only fields from 'response' section
+     *
      * @return array<string, mixed> OpenAPI schema definition
      */
     public static function getListItemSchema(): array
     {
+        $definitions = self::getParameterDefinitions();
+        $requestParams = $definitions['request'];
+        $responseFields = $definitions['response'];
+
+        $properties = [];
+
+        // ✨ Inherit request parameters used in list view
+        $listFields = ['name', 'description', 'calType', 'priority', 'date_from', 'date_to', 'time_from', 'time_to'];
+        foreach ($listFields as $field) {
+            if (isset($requestParams[$field])) {
+                $properties[$field] = $requestParams[$field];
+                // Transform description key: rest_param_* → rest_schema_*
+                $properties[$field]['description'] = str_replace('rest_param_', 'rest_schema_', $properties[$field]['description']);
+            }
+        }
+
+        // ✨ Inherit response-only fields for list (NO duplication!)
+        $listResponseFields = ['id', 'shot_description', 'calendarPeriods', 'allowRestriction', 'action', 'actionDisplay', 'audio_message_id', 'extension', 'search_index'];
+        foreach ($listResponseFields as $field) {
+            if (isset($responseFields[$field])) {
+                $properties[$field] = $responseFields[$field];
+            }
+        }
+
         return [
             'type' => 'object',
             'required' => ['id', 'name', 'priority'],
-            'properties' => [
-                'id' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_id',
-                    'example' => '15'
-                ],
-                'name' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_name',
-                    'maxLength' => 255,
-                    'example' => 'Weekend Schedule'
-                ],
-                'description' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_description',
-                    'maxLength' => 500,
-                    'example' => 'Routing for weekend calls'
-                ],
-                'shot_description' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_shot_description',
-                    'maxLength' => 50,
-                    'example' => 'Routing for weekend calls'
-                ],
-                'calType' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_calType',
-                    'enum' => ['timeframe', 'caldav', 'ical'],
-                    'example' => 'timeframe'
-                ],
-                'calendarPeriods' => [
-                    'type' => 'array',
-                    'description' => 'rest_schema_owt_calendarPeriods',
-                    'items' => [
-                        'type' => 'object',
-                        'properties' => [
-                            'icon' => ['type' => 'string'],
-                            'text' => ['type' => 'string'],
-                            'type' => ['type' => 'string', 'enum' => ['date', 'weekday', 'time', 'calendar']]
-                        ]
-                    ]
-                ],
-                'allowRestriction' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_schema_owt_allowRestriction',
-                    'example' => false
-                ],
-                'action' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_action',
-                    'enum' => ['extension', 'playmessage'],
-                    'example' => 'extension'
-                ],
-                'actionDisplay' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_actionDisplay',
-                    'example' => '<i class="phone icon"></i>Transfer to 201'
-                ],
-                'priority' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_owt_priority',
-                    'minimum' => 0,
-                    'example' => 1
-                ],
-                'search_index' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_search_index'
-                ]
-            ]
+            'properties' => $properties
         ];
     }
 
     /**
      * Get OpenAPI schema for detailed time condition record
+     *
+     * Uses getParameterDefinitions() as Single Source of Truth (NO duplication!).
+     * Inherits ALL request parameters + response-only fields.
      *
      * This schema matches the structure returned by createFromModel() method.
      * Used for GET /api/v3/off-work-times/{id}, POST, PUT, PATCH endpoints.
@@ -519,424 +489,317 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function getDetailSchema(): array
     {
+        $definitions = self::getParameterDefinitions();
+        $requestParams = $definitions['request'];
+        $responseFields = $definitions['response'];
+
+        $properties = [];
+
+        // ✨ Inherit ALL request parameters for detail view (NO duplication!)
+        foreach ($requestParams as $field => $definition) {
+            $properties[$field] = $definition;
+            // Transform description key: rest_param_* → rest_schema_*
+            $properties[$field]['description'] = str_replace('rest_param_', 'rest_schema_', $properties[$field]['description']);
+        }
+
+        // ✨ Inherit response-only fields for detail (NO duplication!)
+        $detailResponseFields = [
+            'id',
+            'extension_represent',
+            'audio_message_id_represent',
+            'search_index'
+        ];
+
+        foreach ($detailResponseFields as $field) {
+            if (isset($responseFields[$field])) {
+                $properties[$field] = $responseFields[$field];
+            }
+        }
+
         return [
             'type' => 'object',
             'required' => ['id', 'name'],
-            'properties' => [
-                'id' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_id',
-                    'example' => '15'
-                ],
-                'name' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_name',
-                    'maxLength' => 255,
-                    'example' => 'Weekend Schedule'
-                ],
-                'description' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_description',
-                    'maxLength' => 500,
-                    'example' => 'Routing for weekend calls'
-                ],
-                'calType' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_calType',
-                    'enum' => ['timeframe', 'caldav', 'ical'],
-                    'default' => 'timeframe',
-                    'example' => 'timeframe'
-                ],
-                'date_from' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_date_from',
-                    'format' => 'date',
-                    'example' => '2025-01-01'
-                ],
-                'date_to' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_date_to',
-                    'format' => 'date',
-                    'example' => '2025-12-31'
-                ],
-                'weekday_from' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_weekday_from',
-                    'enum' => ['-1', '1', '2', '3', '4', '5', '6', '7'],
-                    'example' => '1'
-                ],
-                'weekday_to' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_weekday_to',
-                    'enum' => ['-1', '1', '2', '3', '4', '5', '6', '7'],
-                    'example' => '5'
-                ],
-                'time_from' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_time_from',
-                    'pattern' => '^([01][0-9]|2[0-3]):[0-5][0-9]$',
-                    'example' => '09:00'
-                ],
-                'time_to' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_time_to',
-                    'pattern' => '^([01][0-9]|2[0-3]):[0-5][0-9]$',
-                    'example' => '18:00'
-                ],
-                'calUrl' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_calUrl',
-                    'format' => 'uri',
-                    'example' => 'https://calendar.example.com/cal.ics'
-                ],
-                'calUser' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_calUser',
-                    'maxLength' => 100,
-                    'example' => 'admin'
-                ],
-                'calSecret' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_calSecret',
-                    'maxLength' => 100,
-                    'example' => 'XXXXXX'
-                ],
-                'priority' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_owt_priority',
-                    'minimum' => 0,
-                    'default' => 0,
-                    'example' => 1
-                ],
-                'allowRestriction' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_schema_owt_allowRestriction',
-                    'default' => false,
-                    'example' => false
-                ],
-                'allowedExtensions' => [
-                    'type' => 'array',
-                    'description' => 'rest_schema_owt_allowedExtensions',
-                    'items' => ['type' => 'string'],
-                    'example' => ['201', '202']
-                ],
-                'incomingRouteIds' => [
-                    'type' => 'array',
-                    'description' => 'rest_schema_owt_incomingRouteIds',
-                    'items' => ['type' => 'integer'],
-                    'example' => [1, 2, 3]
-                ],
-                'action' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_action',
-                    'enum' => ['extension', 'playmessage'],
-                    'default' => 'extension',
-                    'example' => 'extension'
-                ],
-                'extension' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_extension',
-                    'pattern' => '^[0-9]*$',
-                    'example' => '201'
-                ],
-                'extension_represent' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_extension_represent',
-                    'example' => '<i class="user icon"></i> John Doe <201>'
-                ],
-                'audio_message_id' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_audio_message_id',
-                    'example' => '45'
-                ],
-                'audio_message_id_represent' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_audio_message_id_represent',
-                    'example' => '<i class="sound icon"></i> Closed Message'
-                ],
-                'search_index' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_search_index'
-                ]
-            ]
+            'properties' => $properties
         ];
     }
 
     /**
-     * Get parameter definitions for OpenAPI and validation
+     * Get related schemas for OpenAPI components
      *
-     * Single Source of Truth for all field definitions.
-     * Used for sanitization, validation, defaults, and OpenAPI schema generation.
+     * Returns schemas for nested objects used in time condition responses.
+     * Inherits from getParameterDefinitions()['related'] section.
      *
-     * @return array<string, mixed> Parameter definitions
+     * @return array<string, array<string, mixed>> Related schemas
+     */
+    public static function getRelatedSchemas(): array
+    {
+        $definitions = self::getParameterDefinitions();
+        return $definitions['related'] ?? [];
+    }
+
+    /**
+     * Get all field definitions with complete metadata
+     *
+     * ✨ SINGLE SOURCE OF TRUTH - Each field defined once
+     *
+     * Each field includes type, validation, sanitization, and examples.
+     *
+     * @return array<string, array<string, mixed>> Complete field definitions
+     */
+    private static function getAllFieldDefinitions(): array
+    {
+        return [
+            // ========== WRITABLE FIELDS ==========
+            'description' => [
+                'type' => 'string',
+                'description' => 'rest_schema_owt_description',
+                'maxLength' => 500,
+                'sanitize' => 'text',
+                'required' => true,
+                'example' => 'Weekend Schedule'
+            ],
+            'calType' => [
+                'type' => 'string',
+                'description' => 'rest_schema_owt_calType',
+                'enum' => ['timeframe', 'caldav', 'ical'],
+                'sanitize' => 'string',
+                'default' => 'timeframe',
+                'example' => 'timeframe'
+            ],
+            'date_from' => [
+                'type' => 'string',
+                'description' => 'rest_schema_owt_date_from',
+                'format' => 'date',
+                'sanitize' => 'string',
+                'example' => '2025-01-01'
+            ],
+            'date_to' => [
+                'type' => 'string',
+                'description' => 'rest_schema_owt_date_to',
+                'format' => 'date',
+                'sanitize' => 'string',
+                'example' => '2025-12-31'
+            ],
+            'weekday_from' => [
+                'type' => 'string',
+                'description' => 'rest_schema_owt_weekday_from',
+                'enum' => ['-1', '1', '2', '3', '4', '5', '6', '7'],
+                'sanitize' => 'string',
+                'default' => '-1',
+                'example' => '1'
+            ],
+            'weekday_to' => [
+                'type' => 'string',
+                'description' => 'rest_schema_owt_weekday_to',
+                'enum' => ['-1', '1', '2', '3', '4', '5', '6', '7'],
+                'sanitize' => 'string',
+                'default' => '-1',
+                'example' => '5'
+            ],
+            'time_from' => [
+                'type' => 'string',
+                'description' => 'rest_schema_owt_time_from',
+                'pattern' => '^([01][0-9]|2[0-3]):[0-5][0-9]$',
+                'sanitize' => 'string',
+                'default' => '00:00',
+                'example' => '09:00'
+            ],
+            'time_to' => [
+                'type' => 'string',
+                'description' => 'rest_schema_owt_time_to',
+                'pattern' => '^([01][0-9]|2[0-3]):[0-5][0-9]$',
+                'sanitize' => 'string',
+                'default' => '23:59',
+                'example' => '18:00'
+            ],
+            'calUrl' => [
+                'type' => 'string',
+                'description' => 'rest_schema_owt_calUrl',
+                'format' => 'uri',
+                'maxLength' => 512,
+                'sanitize' => 'string',
+                'example' => 'https://calendar.example.com/cal.ics'
+            ],
+            'calUser' => [
+                'type' => 'string',
+                'description' => 'rest_schema_owt_calUser',
+                'maxLength' => 255,
+                'sanitize' => 'text',
+                'example' => 'admin'
+            ],
+            'calSecret' => [
+                'type' => 'string',
+                'description' => 'rest_schema_owt_calSecret',
+                'maxLength' => 255,
+                'sanitize' => 'string',
+                'writeOnly' => true,
+                'example' => 'password123'
+            ],
+            'action' => [
+                'type' => 'string',
+                'description' => 'rest_schema_owt_action',
+                'enum' => ['extension', 'playmessage'],
+                'sanitize' => 'string',
+                'default' => 'extension',
+                'example' => 'extension'
+            ],
+            'extension' => [
+                'type' => 'string',
+                'description' => 'rest_schema_owt_extension',
+                'pattern' => '^[0-9]{2,8}$',
+                'sanitize' => 'string',
+                'example' => '201'
+            ],
+            'audio_message_id' => [
+                'type' => 'string',
+                'description' => 'rest_schema_owt_audio_message_id',
+                'sanitize' => 'string',
+                'example' => '45'
+            ],
+            'priority' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_owt_priority',
+                'minimum' => 0,
+                'sanitize' => 'int',
+                'default' => 0,
+                'example' => 1
+            ],
+            'allowRestriction' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_owt_allowRestriction',
+                'sanitize' => 'bool',
+                'default' => false,
+                'example' => false
+            ],
+            'allowedExtensions' => [
+                'type' => 'array',
+                'description' => 'rest_schema_owt_allowedExtensions',
+                'items' => ['type' => 'string'],
+                'sanitize' => 'array',
+                'default' => [],
+                'example' => ['201', '202']
+            ],
+            'incomingRouteIds' => [
+                'type' => 'array',
+                'description' => 'rest_schema_owt_incomingRouteIds',
+                'items' => ['type' => 'integer'],
+                'sanitize' => 'array',
+                'default' => [],
+                'example' => [1, 2, 3]
+            ],
+            'name' => [
+                'type' => 'string',
+                'description' => 'rest_schema_owt_name',
+                'maxLength' => 255,
+                'sanitize' => 'text',
+                'example' => 'Weekend Schedule'
+            ],
+
+            // ========== RESPONSE-ONLY FIELDS ==========
+            'id' => [
+                'type' => 'string',
+                'description' => 'rest_schema_owt_id',
+                'readOnly' => true,
+                'example' => '15'
+            ],
+            'extension_represent' => [
+                'type' => 'string',
+                'description' => 'rest_schema_owt_extension_represent',
+                'readOnly' => true,
+                'example' => '<i class="user icon"></i> John Doe <201>'
+            ],
+            'audio_message_id_represent' => [
+                'type' => 'string',
+                'description' => 'rest_schema_owt_audio_message_id_represent',
+                'readOnly' => true,
+                'example' => '<i class="sound icon"></i> Closed Message'
+            ],
+            'search_index' => [
+                'type' => 'string',
+                'description' => 'rest_schema_owt_search_index',
+                'readOnly' => true
+            ],
+            'shot_description' => [
+                'type' => 'string',
+                'description' => 'rest_schema_owt_shot_description',
+                'maxLength' => 50,
+                'readOnly' => true,
+                'example' => 'Routing for weekend calls'
+            ],
+            'calendarPeriods' => [
+                'type' => 'array',
+                'description' => 'rest_schema_owt_calendarPeriods',
+                'readOnly' => true,
+                'items' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'icon' => ['type' => 'string'],
+                        'text' => ['type' => 'string'],
+                        'type' => ['type' => 'string', 'enum' => ['date', 'weekday', 'time', 'calendar']]
+                    ]
+                ]
+            ],
+            'actionDisplay' => [
+                'type' => 'string',
+                'description' => 'rest_schema_owt_actionDisplay',
+                'readOnly' => true,
+                'example' => '<i class="phone icon"></i>Transfer to 201'
+            ],
+        ];
+    }
+
+    /**
+     * Get all field definitions (request parameters + response-only fields + related schemas)
+     *
+     * ✨ SINGLE SOURCE OF TRUTH for ALL definitions in off-work-times API
+     *
+     * Structure:
+     * - 'request': Request parameters (used in API requests, referenced by ApiParameterRef)
+     * - 'response': Response-only fields (only in API responses, not in requests)
+     * - 'related': Related schemas for nested objects (referenced by $ref in OpenAPI)
+     *
+     * This eliminates duplication between:
+     * - Controller attributes (via ApiParameterRef)
+     * - getListItemSchema() (inherits from here)
+     * - getDetailSchema() (inherits from here)
+     * - getRelatedSchemas() (inherits from here)
+     *
+     * @return array<string, array<string, array<string, mixed>>> Field definitions
      */
     public static function getParameterDefinitions(): array
     {
+        $allFields = self::getAllFieldDefinitions();
+
+        // Separate writable fields (for requests) and response-only fields
+        $writableFields = [];
+        $responseOnlyFields = [];
+
+        foreach ($allFields as $fieldName => $fieldDef) {
+            if (!empty($fieldDef['readOnly'])) {
+                $responseOnlyFields[$fieldName] = $fieldDef;
+            } else {
+                // For request section, use rest_param_* descriptions
+                $requestField = $fieldDef;
+                $requestField['description'] = str_replace('rest_schema_', 'rest_param_', $fieldDef['description']);
+                $writableFields[$fieldName] = $requestField;
+            }
+        }
+
         return [
-            'request' => [
-                'id' => [
-                    'type' => 'integer',
-                    'description' => 'rest_param_owt_id',
-                    'sanitize' => 'int',
-                    'example' => 15
-                ],
-                'description' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_owt_description',
-                    'maxLength' => 500,
-                    'sanitize' => 'text',
-                    'required' => true,
-                    'example' => 'Weekend Schedule'
-                ],
-                'calType' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_owt_calType',
-                    'enum' => ['timeframe', 'caldav', 'ical'],
-                    'sanitize' => 'string',
-                    'default' => 'timeframe',
-                    'example' => 'timeframe'
-                ],
-                'date_from' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_owt_date_from',
-                    'format' => 'date',
-                    'sanitize' => 'string',
-                    'example' => '2025-01-01'
-                ],
-                'date_to' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_owt_date_to',
-                    'format' => 'date',
-                    'sanitize' => 'string',
-                    'example' => '2025-12-31'
-                ],
-                'weekday_from' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_owt_weekday_from',
-                    'enum' => ['-1', '1', '2', '3', '4', '5', '6', '7'],
-                    'sanitize' => 'string',
-                    'default' => '-1',
-                    'example' => '1'
-                ],
-                'weekday_to' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_owt_weekday_to',
-                    'enum' => ['-1', '1', '2', '3', '4', '5', '6', '7'],
-                    'sanitize' => 'string',
-                    'default' => '-1',
-                    'example' => '5'
-                ],
-                'time_from' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_owt_time_from',
-                    'pattern' => '^([01][0-9]|2[0-3]):[0-5][0-9]$',
-                    'sanitize' => 'string',
-                    'default' => '00:00',
-                    'example' => '09:00'
-                ],
-                'time_to' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_owt_time_to',
-                    'pattern' => '^([01][0-9]|2[0-3]):[0-5][0-9]$',
-                    'sanitize' => 'string',
-                    'default' => '23:59',
-                    'example' => '18:00'
-                ],
-                'calUrl' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_owt_calUrl',
-                    'format' => 'uri',
-                    'maxLength' => 512,
-                    'sanitize' => 'string',
-                    'example' => 'https://calendar.example.com/cal.ics'
-                ],
-                'calUser' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_owt_calUser',
-                    'maxLength' => 255,
-                    'sanitize' => 'text',
-                    'example' => 'admin'
-                ],
-                'calSecret' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_owt_calSecret',
-                    'maxLength' => 255,
-                    'sanitize' => 'string',
-                    'writeOnly' => true,
-                    'example' => 'password123'
-                ],
-                'action' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_owt_action',
-                    'enum' => ['extension', 'playmessage'],
-                    'sanitize' => 'string',
-                    'default' => 'extension',
-                    'example' => 'extension'
-                ],
-                'extension' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_owt_extension',
-                    'pattern' => '^[0-9]{2,8}$',
-                    'sanitize' => 'string',
-                    'example' => '201'
-                ],
-                'audio_message_id' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_owt_audio_message_id',
-                    'sanitize' => 'string',
-                    'example' => '45'
-                ],
-                'priority' => [
-                    'type' => 'integer',
-                    'description' => 'rest_param_owt_priority',
-                    'minimum' => 0,
-                    'sanitize' => 'int',
-                    'default' => 0,
-                    'example' => 1
-                ],
-                'allowRestriction' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_param_owt_allowRestriction',
-                    'sanitize' => 'bool',
-                    'default' => false,
-                    'example' => false
-                ],
-                'allowedExtensions' => [
-                    'type' => 'array',
-                    'description' => 'rest_param_owt_allowedExtensions',
-                    'items' => ['type' => 'string'],
-                    'sanitize' => 'array',
-                    'default' => [],
-                    'example' => ['201', '202']
-                ],
-                'incomingRouteIds' => [
-                    'type' => 'array',
-                    'description' => 'rest_param_owt_incomingRouteIds',
-                    'items' => ['type' => 'integer'],
-                    'sanitize' => 'array',
-                    'default' => [],
-                    'example' => [1, 2, 3]
-                ]
-            ],
-            'response' => [
-                'id' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_id',
-                    'example' => '15'
-                ],
-                'name' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_name',
-                    'example' => 'Weekend Schedule'
-                ],
-                'description' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_description',
-                    'example' => 'Routing for weekend calls'
-                ],
-                'calType' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_calType',
-                    'enum' => ['timeframe', 'caldav', 'ical'],
-                    'example' => 'timeframe'
-                ],
-                'date_from' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_date_from',
-                    'example' => '2025-01-01'
-                ],
-                'date_to' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_date_to',
-                    'example' => '2025-12-31'
-                ],
-                'weekday_from' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_weekday_from',
-                    'example' => '1'
-                ],
-                'weekday_to' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_weekday_to',
-                    'example' => '5'
-                ],
-                'time_from' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_time_from',
-                    'example' => '09:00'
-                ],
-                'time_to' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_time_to',
-                    'example' => '18:00'
-                ],
-                'calUrl' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_calUrl',
-                    'example' => 'https://calendar.example.com/cal.ics'
-                ],
-                'calUser' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_calUser',
-                    'example' => 'admin'
-                ],
-                'calSecret' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_calSecret',
-                    'example' => 'XXXXXX'
-                ],
-                'action' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_action',
-                    'example' => 'extension'
-                ],
-                'extension' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_extension',
-                    'example' => '201'
-                ],
-                'extension_represent' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_extension_represent',
-                    'example' => '<i class="user icon"></i> John Doe <201>'
-                ],
-                'audio_message_id' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_audio_message_id',
-                    'example' => '45'
-                ],
-                'audio_message_id_represent' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_audio_message_id_represent',
-                    'example' => '<i class="sound icon"></i> Closed Message'
-                ],
-                'priority' => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_owt_priority',
-                    'example' => 1
-                ],
-                'allowRestriction' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_schema_owt_allowRestriction',
-                    'example' => false
-                ],
-                'allowedExtensions' => [
-                    'type' => 'array',
-                    'description' => 'rest_schema_owt_allowedExtensions',
-                    'items' => ['type' => 'string'],
-                    'example' => ['201', '202']
-                ],
-                'incomingRouteIds' => [
-                    'type' => 'array',
-                    'description' => 'rest_schema_owt_incomingRouteIds',
-                    'items' => ['type' => 'integer'],
-                    'example' => [1, 2, 3]
-                ],
-                'search_index' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_owt_search_index'
-                ]
-            ]
+            // ========== REQUEST PARAMETERS ==========
+            // Used in API requests (POST, PUT, PATCH)
+            // Referenced by ApiParameterRef in Controller
+            'request' => $writableFields,
+
+            // ========== RESPONSE-ONLY FIELDS ==========
+            // Only in API responses, not in requests
+            // Used by getListItemSchema() and getDetailSchema()
+            'response' => $responseOnlyFields,
+
+            // ========== RELATED SCHEMAS ==========
+            // Nested object schemas referenced by $ref in OpenAPI
+            // Used by getRelatedSchemas() method
+            'related' => []
         ];
     }
 

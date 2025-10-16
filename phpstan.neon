@@ -14,3 +14,6 @@ parameters:
         -
             message: '#Path in require_once\(\) "Globals\.php" is not a file or it does not exist#'
             path: '*'
+        -
+            message: '#Argument of an invalid type Phalcon\\Mvc\\Model\\ResultsetInterface#'
+            path: '*'

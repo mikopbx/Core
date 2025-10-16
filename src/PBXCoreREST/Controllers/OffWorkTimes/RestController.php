@@ -22,10 +22,12 @@ namespace MikoPBX\PBXCoreREST\Controllers\OffWorkTimes;
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\OutWorkTimesManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\OutWorkTimes\DataStructure;
+use MikoPBX\PBXCoreREST\Lib\Common\CommonDataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
     ApiParameter,
+    ApiParameterRef,
     ApiResponse,
     ApiDataSchema,
     SecurityType,
@@ -92,51 +94,11 @@ class RestController extends BaseRestController
         description: 'rest_owt_GetListDesc',
         operationId: 'getOffWorkTimesList'
     )]
-    #[ApiParameter(
-        name: 'limit',
-        type: 'integer',
-        description: 'rest_param_limit',
-        in: ParameterLocation::QUERY,
-        minimum: 1,
-        maximum: 100,
-        default: 20,
-        example: 20
-    )]
-    #[ApiParameter(
-        name: 'offset',
-        type: 'integer',
-        description: 'rest_param_offset',
-        in: ParameterLocation::QUERY,
-        minimum: 0,
-        default: 0,
-        example: 0
-    )]
-    #[ApiParameter(
-        name: 'search',
-        type: 'string',
-        description: 'rest_param_search',
-        in: ParameterLocation::QUERY,
-        maxLength: 255,
-        example: 'holiday'
-    )]
-    #[ApiParameter(
-        name: 'order',
-        type: 'string',
-        description: 'rest_param_order',
-        in: ParameterLocation::QUERY,
-        enum: ['priority', 'description', 'date_from', 'date_to'],
-        default: 'priority',
-        example: 'priority'
-    )]
-    #[ApiParameter(
-        name: 'orderWay',
-        type: 'string',
-        description: 'rest_param_orderWay',
-        in: ParameterLocation::QUERY,
-        enum: ['ASC', 'DESC'],
-        default: 'ASC',
-        example: 'ASC'
-    )]
+    #[ApiParameterRef('limit', dataStructure: CommonDataStructure::class)]
+    #[ApiParameterRef('offset', dataStructure: CommonDataStructure::class)]
+    #[ApiParameterRef('search', dataStructure: CommonDataStructure::class, example: 'holiday')]
+    #[ApiParameterRef('order', dataStructure: CommonDataStructure::class, enum: ['priority', 'description', 'date_from', 'date_to'])]
+    #[ApiParameterRef('orderWay', dataStructure: CommonDataStructure::class)]
     #[ApiResponse(200, 'rest_response_200_list')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -159,7 +121,7 @@ class RestController extends BaseRestController
         description: 'rest_owt_GetRecordDesc',
         operationId: 'getOffWorkTimeById'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[A-Z0-9-]+$', example: 'OUT-WORK-TIME-1A2B3C')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]+$', example: '15')]
     #[ApiResponse(200, 'rest_response_200_get')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -183,18 +145,24 @@ class RestController extends BaseRestController
         description: 'rest_owt_CreateDesc',
         operationId: 'createOffWorkTime'
     )]
-    #[ApiParameter('description', 'string', 'rest_param_owt_description', ParameterLocation::QUERY, required: true, maxLength: 255, example: 'Weekend Schedule')]
-    #[ApiParameter('date_from', 'string', 'rest_param_owt_date_from', ParameterLocation::QUERY, required: false, pattern: '^\d{4}-\d{2}-\d{2}$', example: '2024-01-01')]
-    #[ApiParameter('date_to', 'string', 'rest_param_owt_date_to', ParameterLocation::QUERY, required: false, pattern: '^\d{4}-\d{2}-\d{2}$', example: '2024-12-31')]
-    #[ApiParameter('weekday_from', 'integer', 'rest_param_owt_weekday_from', ParameterLocation::QUERY, required: false, minimum: 0, maximum: 7, example: 1)]
-    #[ApiParameter('weekday_to', 'integer', 'rest_param_owt_weekday_to', ParameterLocation::QUERY, required: false, minimum: 0, maximum: 7, example: 5)]
-    #[ApiParameter('time_from', 'string', 'rest_param_owt_time_from', ParameterLocation::QUERY, required: false, pattern: '^\d{2}:\d{2}$', example: '09:00')]
-    #[ApiParameter('time_to', 'string', 'rest_param_owt_time_to', ParameterLocation::QUERY, required: false, pattern: '^\d{2}:\d{2}$', example: '18:00')]
-    #[ApiParameter('action', 'string', 'rest_param_owt_action', ParameterLocation::QUERY, required: true, enum: ['extension', 'busy', 'hangup'], example: 'extension')]
-    #[ApiParameter('extension', 'string', 'rest_param_owt_extension', ParameterLocation::QUERY, required: false, pattern: '^[0-9]{2,8}$', example: '201')]
-    #[ApiParameter('audio_message_id', 'string', 'rest_param_owt_audio_message_id', ParameterLocation::QUERY, required: false, example: '43')]
-    #[ApiParameter('calType', 'string', 'rest_param_owt_calType', ParameterLocation::QUERY, required: false, enum: ['none', 'iCalendar'], default: 'none', example: 'none')]
-    #[ApiParameter('calUrl', 'string', 'rest_param_owt_calUrl', ParameterLocation::QUERY, required: false, maxLength: 500, example: 'https://calendar.google.com/calendar/ical/example/basic.ics')]
+    #[ApiParameterRef('description', required: true)]
+    #[ApiParameterRef('calType')]
+    #[ApiParameterRef('date_from')]
+    #[ApiParameterRef('date_to')]
+    #[ApiParameterRef('weekday_from')]
+    #[ApiParameterRef('weekday_to')]
+    #[ApiParameterRef('time_from')]
+    #[ApiParameterRef('time_to')]
+    #[ApiParameterRef('calUrl')]
+    #[ApiParameterRef('calUser')]
+    #[ApiParameterRef('calSecret')]
+    #[ApiParameterRef('action')]
+    #[ApiParameterRef('extension')]
+    #[ApiParameterRef('audio_message_id')]
+    #[ApiParameterRef('priority')]
+    #[ApiParameterRef('allowRestriction')]
+    #[ApiParameterRef('allowedExtensions')]
+    #[ApiParameterRef('incomingRouteIds')]
     #[ApiResponse(201, 'rest_response_201_created')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -219,9 +187,25 @@ class RestController extends BaseRestController
         description: 'rest_owt_UpdateDesc',
         operationId: 'updateOffWorkTime'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[A-Z0-9-]+$', example: 'OUT-WORK-TIME-1A2B3C')]
-    #[ApiParameter('description', 'string', 'rest_param_owt_description', ParameterLocation::QUERY, required: true, maxLength: 255, example: 'Updated Weekend Schedule')]
-    #[ApiParameter('action', 'string', 'rest_param_owt_action', ParameterLocation::QUERY, required: true, enum: ['extension', 'busy', 'hangup'], example: 'extension')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]+$', example: '15')]
+    #[ApiParameterRef('description', required: true)]
+    #[ApiParameterRef('calType')]
+    #[ApiParameterRef('date_from')]
+    #[ApiParameterRef('date_to')]
+    #[ApiParameterRef('weekday_from')]
+    #[ApiParameterRef('weekday_to')]
+    #[ApiParameterRef('time_from')]
+    #[ApiParameterRef('time_to')]
+    #[ApiParameterRef('calUrl')]
+    #[ApiParameterRef('calUser')]
+    #[ApiParameterRef('calSecret')]
+    #[ApiParameterRef('action')]
+    #[ApiParameterRef('extension')]
+    #[ApiParameterRef('audio_message_id')]
+    #[ApiParameterRef('priority')]
+    #[ApiParameterRef('allowRestriction')]
+    #[ApiParameterRef('allowedExtensions')]
+    #[ApiParameterRef('incomingRouteIds')]
     #[ApiResponse(200, 'rest_response_200_updated')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -247,10 +231,25 @@ class RestController extends BaseRestController
         description: 'rest_owt_PatchDesc',
         operationId: 'patchOffWorkTime'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[A-Z0-9-]+$', example: 'OUT-WORK-TIME-1A2B3C')]
-    #[ApiParameter('description', 'string', 'rest_param_owt_description', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'Updated Description')]
-    #[ApiParameter('time_from', 'string', 'rest_param_owt_time_from', ParameterLocation::QUERY, required: false, pattern: '^\d{2}:\d{2}$', example: '10:00')]
-    #[ApiParameter('time_to', 'string', 'rest_param_owt_time_to', ParameterLocation::QUERY, required: false, pattern: '^\d{2}:\d{2}$', example: '17:00')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]+$', example: '15')]
+    #[ApiParameterRef('description')]
+    #[ApiParameterRef('calType')]
+    #[ApiParameterRef('date_from')]
+    #[ApiParameterRef('date_to')]
+    #[ApiParameterRef('weekday_from')]
+    #[ApiParameterRef('weekday_to')]
+    #[ApiParameterRef('time_from')]
+    #[ApiParameterRef('time_to')]
+    #[ApiParameterRef('calUrl')]
+    #[ApiParameterRef('calUser')]
+    #[ApiParameterRef('calSecret')]
+    #[ApiParameterRef('action')]
+    #[ApiParameterRef('extension')]
+    #[ApiParameterRef('audio_message_id')]
+    #[ApiParameterRef('priority')]
+    #[ApiParameterRef('allowRestriction')]
+    #[ApiParameterRef('allowedExtensions')]
+    #[ApiParameterRef('incomingRouteIds')]
     #[ApiResponse(200, 'rest_response_200_patched')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -271,7 +270,7 @@ class RestController extends BaseRestController
         description: 'rest_owt_DeleteDesc',
         operationId: 'deleteOffWorkTime'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[A-Z0-9-]+$', example: 'OUT-WORK-TIME-1A2B3C')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]+$', example: '15')]
     #[ApiResponse(200, 'rest_response_200_deleted')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -319,7 +318,7 @@ class RestController extends BaseRestController
         description: 'rest_owt_CopyDesc',
         operationId: 'copyOffWorkTime'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[A-Z0-9-]+$', example: 'OUT-WORK-TIME-1A2B3C')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]+$', example: '15')]
     #[ApiResponse(200, 'rest_response_200_copied')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -345,7 +344,7 @@ class RestController extends BaseRestController
         description: 'rest_param_owt_priorities',
         in: ParameterLocation::QUERY,
         required: true,
-        example: '[{"id":"OUT-WORK-TIME-1A2B3C","priority":1},{"id":"OUT-WORK-TIME-4D5E6F","priority":2}]'
+        example: '[{"id":"15","priority":1},{"id":"16","priority":2}]'
     )]
     #[ApiResponse(200, 'rest_response_200_updated')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
