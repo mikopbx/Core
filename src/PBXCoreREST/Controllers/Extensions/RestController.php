@@ -97,14 +97,7 @@ class RestController extends BaseRestController
     #[ApiParameterRef('search', dataStructure: CommonDataStructure::class, example: '200')]
     #[ApiParameterRef('order', dataStructure: CommonDataStructure::class, enum: ['number', 'type', 'callerid'])]
     #[ApiParameterRef('orderWay', dataStructure: CommonDataStructure::class)]
-    #[ApiParameter(
-        name: 'type',
-        type: 'string',
-        description: 'rest_param_ext_type_filter',
-        in: ParameterLocation::QUERY,
-        enum: ['SIP', 'IAX', 'QUEUE', 'IVR', 'CONFERENCE', 'EXTERNAL'],
-        example: 'SIP'
-    )]
+    #[ApiParameterRef('type')]
     #[ApiResponse(200, 'rest_response_200_list')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -151,10 +144,10 @@ class RestController extends BaseRestController
         description: 'rest_ext_CreateDesc',
         operationId: 'createExtension'
     )]
-    #[ApiParameter('number', 'string', 'rest_param_ext_number', ParameterLocation::QUERY, required: true, pattern: '^[0-9]{2,8}$', example: '201')]
-    #[ApiParameter('type', 'string', 'rest_param_ext_type', ParameterLocation::QUERY, required: true, enum: ['SIP', 'IAX', 'QUEUE', 'IVR', 'CONFERENCE', 'EXTERNAL'], example: 'SIP')]
-    #[ApiParameter('callerid', 'string', 'rest_param_ext_callerid', ParameterLocation::QUERY, required: false, maxLength: 100, example: 'John Doe')]
-    #[ApiParameter('userid', 'string', 'rest_param_ext_userid', ParameterLocation::QUERY, required: false, example: '12')]
+    #[ApiParameterRef('number', required: true)]
+    #[ApiParameterRef('type', required: true)]
+    #[ApiParameterRef('callerid')]
+    #[ApiParameterRef('userid')]
     #[ApiResponse(201, 'rest_response_201_created')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -180,8 +173,8 @@ class RestController extends BaseRestController
         operationId: 'updateExtension'
     )]
     #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]{2,8}$', example: '201')]
-    #[ApiParameter('type', 'string', 'rest_param_ext_type', ParameterLocation::QUERY, required: true, enum: ['SIP', 'IAX', 'QUEUE', 'IVR', 'CONFERENCE', 'EXTERNAL'], example: 'SIP')]
-    #[ApiParameter('callerid', 'string', 'rest_param_ext_callerid', ParameterLocation::QUERY, required: false, maxLength: 100, example: 'Jane Doe')]
+    #[ApiParameterRef('type', required: true)]
+    #[ApiParameterRef('callerid')]
     #[ApiResponse(200, 'rest_response_200_updated')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -208,8 +201,8 @@ class RestController extends BaseRestController
         operationId: 'patchExtension'
     )]
     #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]{2,8}$', example: '201')]
-    #[ApiParameter('callerid', 'string', 'rest_param_ext_callerid', ParameterLocation::QUERY, required: false, maxLength: 100, example: 'Updated Name')]
-    #[ApiParameter('type', 'string', 'rest_param_ext_type', ParameterLocation::QUERY, required: false, enum: ['SIP', 'IAX', 'QUEUE', 'IVR', 'CONFERENCE', 'EXTERNAL'], example: 'SIP')]
+    #[ApiParameterRef('callerid')]
+    #[ApiParameterRef('type')]
     #[ApiResponse(200, 'rest_response_200_patched')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -274,14 +267,7 @@ class RestController extends BaseRestController
         description: 'rest_ext_GetForSelectDesc',
         operationId: 'getExtensionsForSelect'
     )]
-    #[ApiParameter(
-        name: 'type',
-        type: 'string',
-        description: 'rest_param_ext_type_filter',
-        in: ParameterLocation::QUERY,
-        enum: ['SIP', 'IAX', 'QUEUE', 'IVR', 'CONFERENCE', 'EXTERNAL'],
-        example: 'SIP'
-    )]
+    #[ApiParameterRef('type')]
     #[ApiResponse(200, 'rest_response_200_list')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -300,7 +286,7 @@ class RestController extends BaseRestController
         description: 'rest_ext_AvailableDesc',
         operationId: 'checkExtensionAvailable'
     )]
-    #[ApiParameter('number', 'string', 'rest_param_ext_number', ParameterLocation::QUERY, required: true, pattern: '^[0-9]{2,8}$', example: '201')]
+    #[ApiParameterRef('number', required: true)]
     #[ApiResponse(200, 'rest_response_200_available')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -320,7 +306,7 @@ class RestController extends BaseRestController
         description: 'rest_ext_GetPhonesRepresentDesc',
         operationId: 'getPhonesRepresent'
     )]
-    #[ApiParameter('numbers', 'array', 'rest_param_ext_numbers', ParameterLocation::QUERY, required: true, example: '["201","202","203"]')]
+    #[ApiParameterRef('numbers', required: true)]
     #[ApiResponse(200, 'rest_response_200_get')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]

@@ -411,7 +411,21 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             // ========== RESPONSE FIELDS ==========
             // All fields including response-only
             // Used by getListItemSchema() and getDetailSchema()
-            'response' => $allFields
+            'response' => $allFields,
+
+            // ========== RELATED SCHEMAS ==========
+            // Custom method parameters and nested schemas
+            'related' => [
+                // Custom method: unbanIp
+                'ip' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_fw_ip',
+                    'required' => true,
+                    'maxLength' => 45,
+                    'sanitize' => 'string',
+                    'example' => '192.168.1.100'
+                ]
+            ]
         ];
     }
 

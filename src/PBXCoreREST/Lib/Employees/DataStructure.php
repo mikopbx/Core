@@ -367,7 +367,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'sip_transport' => [
                 'type' => 'string',
                 'description' => 'rest_schema_emp_sip_transport',
-                'enum' => ['udp', 'tcp', 'tls', 'udp,tcp', 'udp,tcp,tls'],
+                'enum' => ['udp', 'tcp', 'tls', 'udp,tcp'],
                 'sanitize' => 'string',
                 'default' => 'udp',
                 'example' => 'udp,tcp'
@@ -378,7 +378,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'maxLength' => 1024,
                 'sanitize' => 'string',
                 'default' => '',
-                'example' => 'deny=0.0.0.0/0.0.0.0\npermit=192.168.1.0/255.255.255.0'
+                'example' => '[endpoint]\ndevice_state_busy_at=2\n[aor]\nmax_contacts=3'
             ],
             'sip_enableRecording' => [
                 'type' => 'boolean',
@@ -522,7 +522,51 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
 
         return [
             'request' => $requestFields,
-            'response' => $allFields  // ALL fields including read-only
+            'response' => $allFields,  // ALL fields including read-only
+            'related' => [
+                // Custom method: exportToFile
+                'format' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_emp_export_format',
+                    'enum' => ['csv', 'excel'],
+                    'required' => true,
+                    'sanitize' => 'string',
+                    'example' => 'csv'
+                ],
+                'fields' => [
+                    'type' => 'array',
+                    'description' => 'rest_param_emp_export_fields',
+                    'items' => ['type' => 'string'],
+                    'sanitize' => 'array',
+                    'example' => ['number', 'user_username', 'user_email']
+                ],
+                // Custom method: validateImportData, importFromData, batchCreate
+                'data' => [
+                    'type' => 'array',
+                    'description' => 'rest_param_emp_batch_data',
+                    'items' => ['type' => 'object'],
+                    'required' => true,
+                    'sanitize' => 'array',
+                    'example' => [['number' => '101', 'user_username' => 'John'], ['number' => '102', 'user_username' => 'Jane']]
+                ],
+                // Custom method: batchDelete
+                'ids' => [
+                    'type' => 'array',
+                    'description' => 'rest_param_emp_batch_ids',
+                    'items' => ['type' => 'string'],
+                    'required' => true,
+                    'sanitize' => 'array',
+                    'example' => ['1', '2', '3']
+                ],
+                // Custom method: importFromFile
+                'file' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_emp_import_file',
+                    'required' => true,
+                    'sanitize' => 'string',
+                    'example' => 'base64_encoded_file_content'
+                ]
+            ]
         ];
     }
 

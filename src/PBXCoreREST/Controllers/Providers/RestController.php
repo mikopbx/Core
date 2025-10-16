@@ -21,16 +21,16 @@ namespace MikoPBX\PBXCoreREST\Controllers\Providers;
 
 use MikoPBX\PBXCoreREST\Attributes\ApiDataSchema;
 use MikoPBX\PBXCoreREST\Attributes\ApiOperation;
-use MikoPBX\PBXCoreREST\Attributes\ApiParameter;
+use MikoPBX\PBXCoreREST\Attributes\ApiParameterRef;
 use MikoPBX\PBXCoreREST\Attributes\ApiResource;
 use MikoPBX\PBXCoreREST\Attributes\ApiResponse;
 use MikoPBX\PBXCoreREST\Attributes\HttpMapping;
-use MikoPBX\PBXCoreREST\Attributes\ParameterLocation;
 use MikoPBX\PBXCoreREST\Attributes\ResourceSecurity;
 use MikoPBX\PBXCoreREST\Attributes\SecurityType;
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\ProvidersManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\Providers\DataStructure;
+use MikoPBX\PBXCoreREST\Lib\Common\CommonDataStructure;
 
 /**
  * READ-ONLY RESTful controller for providers listing (v3 API)
@@ -78,10 +78,10 @@ class RestController extends BaseRestController
         description: 'rest_pvd_GetListDesc',
         operationId: 'listProviders'
     )]
-    #[ApiParameter('limit', 'integer', 'rest_param_pagination_limit', ParameterLocation::QUERY, required: false, minimum: 1, maximum: 100, default: 20)]
-    #[ApiParameter('offset', 'integer', 'rest_param_pagination_offset', ParameterLocation::QUERY, required: false, minimum: 0, default: 0)]
-    #[ApiParameter('type', 'string', 'rest_param_pvd_type', ParameterLocation::QUERY, required: false, enum: ['SIP', 'IAX'])]
-    #[ApiParameter('registered', 'boolean', 'rest_param_pvd_registered', ParameterLocation::QUERY, required: false)]
+    #[ApiParameterRef('limit', dataStructure: CommonDataStructure::class)]
+    #[ApiParameterRef('offset', dataStructure: CommonDataStructure::class)]
+    #[ApiParameterRef('type')]
+    #[ApiParameterRef('registered')]
     #[ApiResponse(
         statusCode: 200,
         description: 'Successful response with provider list',
@@ -134,7 +134,7 @@ class RestController extends BaseRestController
         description: 'rest_pvd_GetRecordDesc',
         operationId: 'getProvider'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_pvd_id', ParameterLocation::PATH, required: true, pattern: '^[A-Z0-9-]+$', example: 'PROV-SIP-123')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[A-Z0-9-]+$', example: 'SIP-TRUNK-A2DDBADA')]
     #[ApiResponse(
         statusCode: 200,
         description: 'Successful response with provider details',
@@ -162,7 +162,7 @@ class RestController extends BaseRestController
         description: 'rest_pvd_GetForSelectDesc',
         operationId: 'getProvidersForSelect'
     )]
-    #[ApiParameter('type', 'string', 'rest_param_pvd_type', ParameterLocation::QUERY, required: false, enum: ['SIP', 'IAX'])]
+    #[ApiParameterRef('type')]
     #[ApiResponse(
         statusCode: 200,
         description: 'Successful response with provider options',
@@ -177,7 +177,7 @@ class RestController extends BaseRestController
                     'items' => [
                         'type' => 'object',
                         'properties' => [
-                            'id' => ['type' => 'string', 'example' => 'PROV-SIP-123'],
+                            'id' => ['type' => 'string', 'example' => 'SIP-TRUNK-A2DDBADA'],
                             'name' => ['type' => 'string', 'example' => 'Main SIP Trunk'],
                             'type' => ['type' => 'string', 'enum' => ['SIP', 'IAX']]
                         ]
@@ -205,7 +205,7 @@ class RestController extends BaseRestController
         description: 'rest_pvd_GetStatusesDesc',
         operationId: 'getProviderStatuses'
     )]
-    #[ApiParameter('type', 'string', 'rest_param_pvd_type', ParameterLocation::QUERY, required: false, enum: ['SIP', 'IAX'])]
+    #[ApiParameterRef('type')]
     #[ApiResponse(
         statusCode: 200,
         description: 'Successful response with all provider statuses',
@@ -245,7 +245,7 @@ class RestController extends BaseRestController
         description: 'rest_pvd_GetStatusDesc',
         operationId: 'getProviderStatus'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_pvd_id', ParameterLocation::PATH, required: true, pattern: '^[A-Z0-9-]+$', example: 'PROV-SIP-123')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[A-Z0-9-]+$', example: 'SIP-TRUNK-A2DDBADA')]
     #[ApiResponse(
         statusCode: 200,
         description: 'Successful response with provider status',
@@ -269,10 +269,10 @@ class RestController extends BaseRestController
         description: 'rest_pvd_GetHistoryDesc',
         operationId: 'getProviderHistory'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_pvd_id', ParameterLocation::PATH, required: true, pattern: '^[A-Z0-9-]+$', example: 'PROV-SIP-123')]
-    #[ApiParameter('from', 'string', 'rest_param_pvd_from', ParameterLocation::QUERY, required: false, format: 'date-time', example: '2025-10-01T00:00:00Z')]
-    #[ApiParameter('to', 'string', 'rest_param_pvd_to', ParameterLocation::QUERY, required: false, format: 'date-time', example: '2025-10-08T23:59:59Z')]
-    #[ApiParameter('limit', 'integer', 'rest_param_pagination_limit', ParameterLocation::QUERY, required: false, minimum: 1, maximum: 1000, default: 100)]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[A-Z0-9-]+$', example: 'SIP-TRUNK-A2DDBADA')]
+    #[ApiParameterRef('from')]
+    #[ApiParameterRef('to')]
+    #[ApiParameterRef('limit', dataStructure: CommonDataStructure::class)]
     #[ApiResponse(
         statusCode: 200,
         description: 'Successful response with provider history',
@@ -316,9 +316,9 @@ class RestController extends BaseRestController
         description: 'rest_pvd_GetStatsDesc',
         operationId: 'getProviderStats'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_pvd_id', ParameterLocation::PATH, required: true, pattern: '^[A-Z0-9-]+$', example: 'PROV-SIP-123')]
-    #[ApiParameter('from', 'string', 'rest_param_pvd_from', ParameterLocation::QUERY, required: false, format: 'date-time', example: '2025-10-01T00:00:00Z')]
-    #[ApiParameter('to', 'string', 'rest_param_pvd_to', ParameterLocation::QUERY, required: false, format: 'date-time', example: '2025-10-08T23:59:59Z')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[A-Z0-9-]+$', example: 'SIP-TRUNK-A2DDBADA')]
+    #[ApiParameterRef('from')]
+    #[ApiParameterRef('to')]
     #[ApiResponse(
         statusCode: 200,
         description: 'Successful response with provider statistics',
@@ -364,8 +364,8 @@ class RestController extends BaseRestController
         description: 'rest_pvd_UpdateStatusDesc',
         operationId: 'updateProviderStatus'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_pvd_id', ParameterLocation::PATH, required: true, pattern: '^[A-Z0-9-]+$', example: 'PROV-SIP-123')]
-    #[ApiParameter('action', 'string', 'rest_param_pvd_action', ParameterLocation::QUERY, required: true, enum: ['register', 'unregister', 'refresh'], example: 'register')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[A-Z0-9-]+$', example: 'SIP-TRUNK-A2DDBADA')]
+    #[ApiParameterRef('action', required: true)]
     #[ApiResponse(
         statusCode: 200,
         description: 'Status update initiated successfully',

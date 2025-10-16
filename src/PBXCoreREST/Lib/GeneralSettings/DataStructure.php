@@ -760,6 +760,15 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             ],
             // ========== RELATED SCHEMAS ==========
             'related' => [
+                // Custom method: getRecord (get specific setting by key)
+                'key' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_gs_key',
+                    'required' => true,
+                    'maxLength' => 100,
+                    'sanitize' => 'string',
+                    'example' => PbxSettings::PBX_NAME
+                ],
                 'Codec' => [
                     'type' => 'object',
                     'required' => ['name', 'type', 'priority', 'disabled'],

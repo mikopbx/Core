@@ -26,12 +26,10 @@ use MikoPBX\PBXCoreREST\Lib\GeneralSettings\DataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
-    ApiParameter,
     ApiParameterRef,
     ApiResponse,
     ApiDataSchema,
     SecurityType,
-    ParameterLocation,
     HttpMapping,
     ResourceSecurity
 };
@@ -117,7 +115,7 @@ class RestController extends BaseRestController
         description: 'rest_gs_GetSettingDesc',
         operationId: 'getGeneralSetting'
     )]
-    #[ApiParameter('key', 'string', 'rest_param_gs_key', ParameterLocation::PATH, required: true, maxLength: 100, example: PbxSettings::PBX_NAME)]
+    #[ApiParameterRef('key', required: true)]
     #[ApiResponse(200, 'rest_response_200_get')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -242,7 +240,7 @@ class RestController extends BaseRestController
         description: 'rest_gs_UpdateCodecsDesc',
         operationId: 'updateCodecsConfiguration'
     )]
-    #[ApiParameter('codecs', 'array', 'rest_param_gs_codecs', ParameterLocation::QUERY, required: true, example: '[{"name":"alaw","priority":0,"disabled":false}]')]
+    #[ApiParameterRef('codecs', required: true)]
     #[ApiResponse(200, 'rest_response_200_codecs_updated')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]

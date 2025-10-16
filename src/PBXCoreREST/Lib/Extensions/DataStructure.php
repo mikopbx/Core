@@ -327,7 +327,30 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
 
         return [
             'request' => $requestFields,
-            'response' => $allFields  // ALL fields including read-only
+            'response' => $allFields,  // ALL fields including read-only
+            'related' => [
+                // Note: 'type' field exists in request section for create/update,
+                // but getList uses it as optional filter with different description
+
+                // Custom method: getAvailableForForwarding, checkNumber
+                'number' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_ext_number',
+                    'pattern' => '^[0-9]{2,8}$',
+                    'sanitize' => 'string',
+                    'required' => true,
+                    'example' => '201'
+                ],
+                // Custom method: deleteNumbers (batch delete)
+                'numbers' => [
+                    'type' => 'array',
+                    'description' => 'rest_param_ext_numbers',
+                    'items' => ['type' => 'string'],
+                    'sanitize' => 'array',
+                    'required' => true,
+                    'example' => ['201', '202', '203']
+                ]
+            ]
         ];
     }
 

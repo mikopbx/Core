@@ -517,6 +517,35 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                             'example' => 'random_state_string'
                         ]
                     ]
+                ],
+                // OAuth2 callback parameters (oauth2CallbackAction)
+                'code' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_oauth_code',
+                    'maxLength' => 500,
+                    'sanitize' => 'string',
+                    'example' => '4/0AY0e-g7xKq...'
+                ],
+                'state' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_oauth_state',
+                    'maxLength' => 255,
+                    'sanitize' => 'string',
+                    'example' => 'abc123def456'
+                ],
+                'error' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_oauth_error',
+                    'maxLength' => 100,
+                    'sanitize' => 'string',
+                    'example' => 'access_denied'
+                ],
+                'error_description' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_oauth_error_desc',
+                    'maxLength' => 500,
+                    'sanitize' => 'string',
+                    'example' => 'User denied access'
                 ]
             ]
         ];

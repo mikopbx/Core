@@ -26,12 +26,10 @@ use MikoPBX\PBXCoreREST\Lib\Common\CommonDataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
-    ApiParameter,
     ApiParameterRef,
     ApiResponse,
     ApiDataSchema,
     SecurityType,
-    ParameterLocation,
     HttpMapping,
     ResourceSecurity
 };
@@ -141,15 +139,7 @@ class RestController extends BaseRestController
     #[ApiParameterRef('limit', dataStructure: CommonDataStructure::class)]
     #[ApiParameterRef('offset', dataStructure: CommonDataStructure::class)]
     #[ApiParameterRef('search', dataStructure: CommonDataStructure::class, example: '192.168')]
-    #[ApiParameter(
-        name: 'order',
-        type: 'string',
-        description: 'rest_param_order',
-        in: ParameterLocation::QUERY,
-        required: false,
-        default: 'permit',
-        example: 'permit'
-    )]
+    #[ApiParameterRef('order', dataStructure: CommonDataStructure::class, enum: ['permit'], example: 'permit')]
     #[ApiParameterRef('orderWay', dataStructure: CommonDataStructure::class)]
     #[ApiResponse(200, 'rest_response_200_list')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -173,15 +163,7 @@ class RestController extends BaseRestController
         description: 'rest_fw_GetRecordDesc',
         operationId: 'getFirewallRuleById'
     )]
-    #[ApiParameter(
-        name: 'id',
-        type: 'string',
-        description: 'rest_param_id',
-        in: ParameterLocation::PATH,
-        required: true,
-        pattern: '^[0-9]+$',
-        example: '1'
-    )]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]+$', example: '1')]
     #[ApiResponse(200, 'rest_response_200_get')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
@@ -205,41 +187,10 @@ class RestController extends BaseRestController
         description: 'rest_fw_CreateDesc',
         operationId: 'createFirewallRule'
     )]
-    #[ApiParameter(
-        name: 'network',
-        type: 'string',
-        description: 'rest_param_fw_network',
-        in: ParameterLocation::QUERY,
-        required: true,
-        maxLength: 15,
-        example: '192.168.1.0'
-    )]
-    #[ApiParameter(
-        name: 'subnet',
-        type: 'string',
-        description: 'rest_param_fw_subnet',
-        in: ParameterLocation::QUERY,
-        required: true,
-        pattern: '^[0-9]{1,2}$',
-        example: '24'
-    )]
-    #[ApiParameter(
-        name: 'description',
-        type: 'string',
-        description: 'rest_param_fw_description',
-        in: ParameterLocation::QUERY,
-        required: false,
-        maxLength: 255,
-        example: 'Local network'
-    )]
-    #[ApiParameter(
-        name: 'rules',
-        type: 'object',
-        description: 'rest_param_fw_rules',
-        in: ParameterLocation::QUERY,
-        required: false,
-        example: '{"SIP":"allow","WEB":"allow"}'
-    )]
+    #[ApiParameterRef('network', required: true)]
+    #[ApiParameterRef('subnet', required: true)]
+    #[ApiParameterRef('description')]
+    #[ApiParameterRef('rules')]
     #[ApiResponse(201, 'rest_response_201_created')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -265,50 +216,11 @@ class RestController extends BaseRestController
         description: 'rest_fw_UpdateDesc',
         operationId: 'updateFirewallRule'
     )]
-    #[ApiParameter(
-        name: 'id',
-        type: 'string',
-        description: 'rest_param_id',
-        in: ParameterLocation::PATH,
-        required: true,
-        pattern: '^[0-9]+$',
-        example: '1'
-    )]
-    #[ApiParameter(
-        name: 'network',
-        type: 'string',
-        description: 'rest_param_fw_network',
-        in: ParameterLocation::QUERY,
-        required: true,
-        maxLength: 15,
-        example: '192.168.1.0'
-    )]
-    #[ApiParameter(
-        name: 'subnet',
-        type: 'string',
-        description: 'rest_param_fw_subnet',
-        in: ParameterLocation::QUERY,
-        required: true,
-        pattern: '^[0-9]{1,2}$',
-        example: '24'
-    )]
-    #[ApiParameter(
-        name: 'description',
-        type: 'string',
-        description: 'rest_param_fw_description',
-        in: ParameterLocation::QUERY,
-        required: false,
-        maxLength: 255,
-        example: 'Updated network'
-    )]
-    #[ApiParameter(
-        name: 'rules',
-        type: 'object',
-        description: 'rest_param_fw_rules',
-        in: ParameterLocation::QUERY,
-        required: false,
-        example: '{"SIP":"block","WEB":"allow"}'
-    )]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]+$', example: '1')]
+    #[ApiParameterRef('network', required: true)]
+    #[ApiParameterRef('subnet', required: true)]
+    #[ApiParameterRef('description')]
+    #[ApiParameterRef('rules')]
     #[ApiResponse(200, 'rest_response_200_updated')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -335,50 +247,11 @@ class RestController extends BaseRestController
         description: 'rest_fw_PatchDesc',
         operationId: 'patchFirewallRule'
     )]
-    #[ApiParameter(
-        name: 'id',
-        type: 'string',
-        description: 'rest_param_id',
-        in: ParameterLocation::PATH,
-        required: true,
-        pattern: '^[0-9]+$',
-        example: '1'
-    )]
-    #[ApiParameter(
-        name: 'network',
-        type: 'string',
-        description: 'rest_param_fw_network',
-        in: ParameterLocation::QUERY,
-        required: false,
-        maxLength: 15,
-        example: '192.168.1.0'
-    )]
-    #[ApiParameter(
-        name: 'subnet',
-        type: 'string',
-        description: 'rest_param_fw_subnet',
-        in: ParameterLocation::QUERY,
-        required: false,
-        pattern: '^[0-9]{1,2}$',
-        example: '24'
-    )]
-    #[ApiParameter(
-        name: 'description',
-        type: 'string',
-        description: 'rest_param_fw_description',
-        in: ParameterLocation::QUERY,
-        required: false,
-        maxLength: 255,
-        example: 'Modified description'
-    )]
-    #[ApiParameter(
-        name: 'rules',
-        type: 'object',
-        description: 'rest_param_fw_rules',
-        in: ParameterLocation::QUERY,
-        required: false,
-        example: '{"SIP":"allow"}'
-    )]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]+$', example: '1')]
+    #[ApiParameterRef('network')]
+    #[ApiParameterRef('subnet')]
+    #[ApiParameterRef('description')]
+    #[ApiParameterRef('rules')]
     #[ApiResponse(200, 'rest_response_200_patched')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -400,15 +273,7 @@ class RestController extends BaseRestController
         description: 'rest_fw_DeleteDesc',
         operationId: 'deleteFirewallRule'
     )]
-    #[ApiParameter(
-        name: 'id',
-        type: 'string',
-        description: 'rest_param_id',
-        in: ParameterLocation::PATH,
-        required: true,
-        pattern: '^[0-9]+$',
-        example: '1'
-    )]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]+$', example: '1')]
     #[ApiResponse(204, 'rest_response_204_deleted')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
@@ -560,15 +425,7 @@ class RestController extends BaseRestController
         description: 'rest_fw_UnbanIpDesc',
         operationId: 'unbanIpAddress'
     )]
-    #[ApiParameter(
-        name: 'ip',
-        type: 'string',
-        description: 'rest_param_fw_ip',
-        in: ParameterLocation::QUERY,
-        required: true,
-        maxLength: 45,
-        example: '192.168.1.100'
-    )]
+    #[ApiParameterRef('ip', required: true)]
     #[ApiResponse(200, 'rest_response_200_unbanned')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]

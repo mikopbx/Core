@@ -26,11 +26,10 @@ use MikoPBX\PBXCoreREST\Lib\Common\CommonDataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
-    
+    ApiParameterRef,
     ApiResponse,
     ApiDataSchema,
     SecurityType,
-    ParameterLocation,
     HttpMapping,
     ResourceSecurity
 };
@@ -97,13 +96,7 @@ class RestController extends BaseRestController
     #[ApiParameterRef('search', dataStructure: CommonDataStructure::class, example: '74952345678')]
     #[ApiParameterRef('order', dataStructure: CommonDataStructure::class, enum: ['priority', 'number', 'extension', 'rulename'])]
     #[ApiParameterRef('orderWay', dataStructure: CommonDataStructure::class)]
-    #[ApiParameter(
-        name: 'providerid',
-        type: 'string',
-        description: 'rest_param_ir_providerid_filter',
-        in: ParameterLocation::QUERY,
-        example: 'SIP-PROVIDER-123456'
-    )]
+    #[ApiParameterRef('providerid')]
     #[ApiResponse(200, 'rest_response_200_list')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -151,14 +144,14 @@ class RestController extends BaseRestController
         operationId: 'createIncomingRoute'
     )]
     // Request body parameters for create operation
-    #[ApiParameter('rulename', 'string', 'rest_param_ir_rulename', ParameterLocation::QUERY, required: false, maxLength: 100, example: 'Office Main Line')]
-    #[ApiParameter('number', 'string', 'rest_param_ir_number', ParameterLocation::QUERY, required: false, pattern: '^[0-9*#+]*$', maxLength: 50, example: '74952345678')]
-    #[ApiParameter('providerid', 'string', 'rest_param_ir_providerid', ParameterLocation::QUERY, required: false, example: 'SIP-PROVIDER-123456')]
-    #[ApiParameter('priority', 'integer', 'rest_param_ir_priority', ParameterLocation::QUERY, required: false, minimum: 0, maximum: 9999, default: 0, example: 1)]
-    #[ApiParameter('timeout', 'integer', 'rest_param_ir_timeout', ParameterLocation::QUERY, required: false, minimum: 0, maximum: 600, default: 0, example: 15)]
-    #[ApiParameter('extension', 'string', 'rest_param_ir_extension', ParameterLocation::QUERY, required: true, pattern: '^[0-9]{2,8}$', example: '201')]
-    #[ApiParameter('audio_message_id', 'string', 'rest_param_ir_audio_message_id', ParameterLocation::QUERY, required: false, example: '43')]
-    #[ApiParameter('note', 'string', 'rest_param_ir_note', ParameterLocation::QUERY, required: false, maxLength: 500, example: 'Main office number routing')]
+    #[ApiParameterRef('rulename')]
+    #[ApiParameterRef('number')]
+    #[ApiParameterRef('providerid')]
+    #[ApiParameterRef('priority')]
+    #[ApiParameterRef('timeout')]
+    #[ApiParameterRef('extension', required: true)]
+    #[ApiParameterRef('audio_message_id')]
+    #[ApiParameterRef('note')]
     #[ApiResponse(201, 'rest_response_201_created')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -184,12 +177,12 @@ class RestController extends BaseRestController
         operationId: 'updateIncomingRoute'
     )]
     #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]+$', example: '42')]
-    #[ApiParameter('rulename', 'string', 'rest_param_ir_rulename', ParameterLocation::QUERY, required: false, maxLength: 100, example: 'Updated Office Line')]
-    #[ApiParameter('number', 'string', 'rest_param_ir_number', ParameterLocation::QUERY, required: false, pattern: '^[0-9*#+]*$', maxLength: 50, example: '74959876543')]
-    #[ApiParameter('providerid', 'string', 'rest_param_ir_providerid', ParameterLocation::QUERY, required: false, example: 'SIP-PROVIDER-987654')]
-    #[ApiParameter('priority', 'integer', 'rest_param_ir_priority', ParameterLocation::QUERY, required: false, minimum: 0, maximum: 9999, example: 2)]
-    #[ApiParameter('timeout', 'integer', 'rest_param_ir_timeout', ParameterLocation::QUERY, required: false, minimum: 0, maximum: 600, example: 20)]
-    #[ApiParameter('extension', 'string', 'rest_param_ir_extension', ParameterLocation::QUERY, required: true, pattern: '^[0-9]{2,8}$', example: '202')]
+    #[ApiParameterRef('rulename')]
+    #[ApiParameterRef('number')]
+    #[ApiParameterRef('providerid')]
+    #[ApiParameterRef('priority')]
+    #[ApiParameterRef('timeout')]
+    #[ApiParameterRef('extension', required: true)]
     #[ApiResponse(200, 'rest_response_200_updated')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -216,11 +209,11 @@ class RestController extends BaseRestController
         operationId: 'patchIncomingRoute'
     )]
     #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]+$', example: '42')]
-    #[ApiParameter('rulename', 'string', 'rest_param_ir_rulename', ParameterLocation::QUERY, required: false, maxLength: 100, example: 'Updated Office Line')]
-    #[ApiParameter('number', 'string', 'rest_param_ir_number', ParameterLocation::QUERY, required: false, pattern: '^[0-9*#+]*$', maxLength: 50, example: '74959876543')]
-    #[ApiParameter('priority', 'integer', 'rest_param_ir_priority', ParameterLocation::QUERY, required: false, minimum: 0, maximum: 9999, example: 5)]
-    #[ApiParameter('timeout', 'integer', 'rest_param_ir_timeout', ParameterLocation::QUERY, required: false, minimum: 0, maximum: 600, example: 25)]
-    #[ApiParameter('extension', 'string', 'rest_param_ir_extension', ParameterLocation::QUERY, required: false, pattern: '^[0-9]{2,8}$', example: '203')]
+    #[ApiParameterRef('rulename')]
+    #[ApiParameterRef('number')]
+    #[ApiParameterRef('priority')]
+    #[ApiParameterRef('timeout')]
+    #[ApiParameterRef('extension')]
     #[ApiResponse(200, 'rest_response_200_patched')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -331,14 +324,7 @@ class RestController extends BaseRestController
         description: 'rest_ir_ChangePriorityDesc',
         operationId: 'changeIncomingRoutePriority'
     )]
-    #[ApiParameter(
-        name: 'priorities',
-        type: 'array',
-        description: 'rest_param_ir_priorities',
-        in: ParameterLocation::QUERY,
-        required: true,
-        example: '[{"id":"1","priority":0},{"id":"42","priority":1},{"id":"15","priority":2}]'
-    )]
+    #[ApiParameterRef('priorities', required: true)]
     #[ApiResponse(200, 'rest_response_200_updated')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]

@@ -112,7 +112,7 @@ class RestController extends BaseRestController
         description: 'rest_emp_GetRecordDesc',
         operationId: 'getEmployeeById'
     )]
-    #[ApiParameter('id', 'integer', 'rest_param_id', ParameterLocation::PATH, required: true, example: 1)]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, example: '1')]
     #[ApiResponse(200, 'rest_response_200_get')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -136,11 +136,11 @@ class RestController extends BaseRestController
         description: 'rest_emp_CreateDesc',
         operationId: 'createEmployee'
     )]
-    #[ApiParameter('number', 'string', 'rest_param_emp_number', ParameterLocation::QUERY, required: true, pattern: '[0-9]{2,8}', example: '101')]
-    #[ApiParameter('user_username', 'string', 'rest_param_emp_username', ParameterLocation::QUERY, required: true, maxLength: 255, example: 'John Doe')]
-    #[ApiParameter('user_email', 'string', 'rest_param_emp_email', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'john@example.com')]
-    #[ApiParameter('mobile_number', 'string', 'rest_param_emp_mobile', ParameterLocation::QUERY, required: false, maxLength: 20, example: '+79001234567')]
-    #[ApiParameter('user_avatar', 'string', 'rest_param_emp_avatar', ParameterLocation::QUERY, required: false, maxLength: 255, example: '/path/to/avatar.png')]
+    #[ApiParameterRef('number', required: true)]
+    #[ApiParameterRef('user_username', required: true)]
+    #[ApiParameterRef('user_email')]
+    #[ApiParameterRef('mobile_number')]
+    #[ApiParameterRef('user_avatar')]
     #[ApiResponse(201, 'rest_response_201_created')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -165,12 +165,12 @@ class RestController extends BaseRestController
         description: 'rest_emp_UpdateDesc',
         operationId: 'updateEmployee'
     )]
-    #[ApiParameter('id', 'integer', 'rest_param_id', ParameterLocation::PATH, required: true, example: 1)]
-    #[ApiParameter('number', 'string', 'rest_param_emp_number', ParameterLocation::QUERY, required: true, pattern: '[0-9]{2,8}', example: '101')]
-    #[ApiParameter('user_username', 'string', 'rest_param_emp_username', ParameterLocation::QUERY, required: true, maxLength: 255, example: 'John Smith')]
-    #[ApiParameter('user_email', 'string', 'rest_param_emp_email', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'john.smith@example.com')]
-    #[ApiParameter('mobile_number', 'string', 'rest_param_emp_mobile', ParameterLocation::QUERY, required: false, maxLength: 20, example: '+79001234567')]
-    #[ApiParameter('user_avatar', 'string', 'rest_param_emp_avatar', ParameterLocation::QUERY, required: false, maxLength: 255, example: '/path/to/avatar.png')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, example: '1')]
+    #[ApiParameterRef('number', required: true)]
+    #[ApiParameterRef('user_username', required: true)]
+    #[ApiParameterRef('user_email')]
+    #[ApiParameterRef('mobile_number')]
+    #[ApiParameterRef('user_avatar')]
     #[ApiResponse(200, 'rest_response_200_updated')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -196,12 +196,12 @@ class RestController extends BaseRestController
         description: 'rest_emp_PatchDesc',
         operationId: 'patchEmployee'
     )]
-    #[ApiParameter('id', 'integer', 'rest_param_id', ParameterLocation::PATH, required: true, example: 1)]
-    #[ApiParameter('number', 'string', 'rest_param_emp_number', ParameterLocation::QUERY, required: false, pattern: '[0-9]{2,8}', example: '102')]
-    #[ApiParameter('user_username', 'string', 'rest_param_emp_username', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'Updated Name')]
-    #[ApiParameter('user_email', 'string', 'rest_param_emp_email', ParameterLocation::QUERY, required: false, maxLength: 255, example: 'newemail@example.com')]
-    #[ApiParameter('mobile_number', 'string', 'rest_param_emp_mobile', ParameterLocation::QUERY, required: false, maxLength: 20, example: '+79009999999')]
-    #[ApiParameter('user_avatar', 'string', 'rest_param_emp_avatar', ParameterLocation::QUERY, required: false, maxLength: 255, example: '/new/avatar.png')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, example: '1')]
+    #[ApiParameterRef('number')]
+    #[ApiParameterRef('user_username')]
+    #[ApiParameterRef('user_email')]
+    #[ApiParameterRef('mobile_number')]
+    #[ApiParameterRef('user_avatar')]
     #[ApiResponse(200, 'rest_response_200_patched')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -222,7 +222,7 @@ class RestController extends BaseRestController
         description: 'rest_emp_DeleteDesc',
         operationId: 'deleteEmployee'
     )]
-    #[ApiParameter('id', 'integer', 'rest_param_id', ParameterLocation::PATH, required: true, example: 1)]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, example: '1')]
     #[ApiResponse(200, 'rest_response_200_deleted')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -266,8 +266,8 @@ class RestController extends BaseRestController
         description: 'rest_emp_ExportDesc',
         operationId: 'exportEmployees'
     )]
-    #[ApiParameter('format', 'string', 'rest_param_emp_export_format', ParameterLocation::QUERY, required: true, enum: ['csv', 'excel'], example: 'csv')]
-    #[ApiParameter('fields', 'array', 'rest_param_emp_export_fields', ParameterLocation::QUERY, required: false, example: '["number","user_username","user_email"]')]
+    #[ApiParameterRef('format', required: true)]
+    #[ApiParameterRef('fields')]
     #[ApiResponse(200, 'rest_response_200_exported')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -304,7 +304,7 @@ class RestController extends BaseRestController
         description: 'rest_emp_ImportDesc',
         operationId: 'importEmployees'
     )]
-    #[ApiParameter('file', 'string', 'rest_param_emp_import_file', ParameterLocation::QUERY, required: true, example: 'base64_encoded_file_content')]
+    #[ApiParameterRef('file', required: true)]
     #[ApiResponse(200, 'rest_response_200_import_preview')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -324,7 +324,7 @@ class RestController extends BaseRestController
         description: 'rest_emp_ConfirmImportDesc',
         operationId: 'confirmImportEmployees'
     )]
-    #[ApiParameter('data', 'array', 'rest_param_emp_import_data', ParameterLocation::QUERY, required: true, example: '[{"number":"101","user_username":"John"}]')]
+    #[ApiParameterRef('data', required: true)]
     #[ApiResponse(200, 'rest_response_200_imported')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -344,7 +344,7 @@ class RestController extends BaseRestController
         description: 'rest_emp_BatchCreateDesc',
         operationId: 'batchCreateEmployees'
     )]
-    #[ApiParameter('data', 'array', 'rest_param_emp_batch_data', ParameterLocation::QUERY, required: true, example: '[{"number":"101","user_username":"John"},{"number":"102","user_username":"Jane"}]')]
+    #[ApiParameterRef('data', required: true)]
     #[ApiResponse(200, 'rest_response_200_batch_created')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -364,7 +364,7 @@ class RestController extends BaseRestController
         description: 'rest_emp_BatchDeleteDesc',
         operationId: 'batchDeleteEmployees'
     )]
-    #[ApiParameter('ids', 'array', 'rest_param_emp_batch_ids', ParameterLocation::QUERY, required: true, example: '["1","2","3"]')]
+    #[ApiParameterRef('ids', required: true)]
     #[ApiResponse(200, 'rest_response_200_batch_deleted')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]

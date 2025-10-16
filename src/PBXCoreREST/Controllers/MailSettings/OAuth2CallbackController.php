@@ -22,13 +22,13 @@ namespace MikoPBX\PBXCoreREST\Controllers\MailSettings;
 use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Mail\MailOAuth2Service;
 use MikoPBX\Core\System\SystemMessages;
+use MikoPBX\PBXCoreREST\Lib\MailSettings\DataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
-    ApiParameter,
+    ApiParameterRef,
     ApiResponse,
     SecurityType,
-    ParameterLocation,
     HttpMapping,
     ResourceSecurity
 };
@@ -90,42 +90,10 @@ class OAuth2CallbackController extends BaseController
         description: 'rest_mail_OAuth2CallbackDesc',
         operationId: 'processOAuth2Callback'
     )]
-    #[ApiParameter(
-        name: 'code',
-        type: 'string',
-        description: 'rest_param_oauth_code',
-        in: ParameterLocation::QUERY,
-        required: false,
-        maxLength: 500,
-        example: '4/0AY0e-g7xKq...'
-    )]
-    #[ApiParameter(
-        name: 'state',
-        type: 'string',
-        description: 'rest_param_oauth_state',
-        in: ParameterLocation::QUERY,
-        required: false,
-        maxLength: 255,
-        example: 'abc123def456'
-    )]
-    #[ApiParameter(
-        name: 'error',
-        type: 'string',
-        description: 'rest_param_oauth_error',
-        in: ParameterLocation::QUERY,
-        required: false,
-        maxLength: 100,
-        example: 'access_denied'
-    )]
-    #[ApiParameter(
-        name: 'error_description',
-        type: 'string',
-        description: 'rest_param_oauth_error_desc',
-        in: ParameterLocation::QUERY,
-        required: false,
-        maxLength: 500,
-        example: 'User denied access'
-    )]
+    #[ApiParameterRef('code', dataStructure: DataStructure::class)]
+    #[ApiParameterRef('state', dataStructure: DataStructure::class)]
+    #[ApiParameterRef('error', dataStructure: DataStructure::class)]
+    #[ApiParameterRef('error_description', dataStructure: DataStructure::class)]
     #[ApiResponse(200, 'rest_response_200_oauth_html', 'text/html')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'text/html')]
     #[ApiResponse(500, 'rest_response_500_error', 'text/html')]
