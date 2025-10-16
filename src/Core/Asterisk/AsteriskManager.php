@@ -571,7 +571,17 @@ class AsteriskManager
                     if (! count($parameters)) {
                         $type = strtolower(substr($buffer, 0, $pos));
                     }
-                    $parameters[substr($buffer, 0, $pos)] = substr($buffer, $pos + 2);
+                    $key      = substr($buffer, 0, $pos);
+                    $newValue = substr($buffer, $pos + 2);
+                    if($key === 'ChanVariable'){
+                        [$val_key, $val_value] = explode('=', $newValue);
+                        if(!isset($parameters[$key])) {
+                            $parameters[$key] = [];
+                        }
+                        $parameters[$key][$val_key] = $val_value;
+                    }else{
+                        $parameters[$key] = $newValue;
+                    }
                 }
                 $buffer = $this->getStringDataFromSocket();
             }
