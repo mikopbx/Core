@@ -22,10 +22,12 @@ namespace MikoPBX\Core\Workers;
 
 require_once 'Globals.php';
 
-use MikoPBX\Core\System\{BeanstalkClient, MikoPBXConfig, Notifications, SystemMessages, Util};
+use MikoPBX\Core\System\{BeanstalkClient, Notifications, SystemMessages, Util};
 use MikoPBX\Core\System\Mail\Builders\MissedCallNotificationBuilder;
 use MikoPBX\Core\System\Mail\Builders\LoginNotificationBuilder;
+use MikoPBX\Core\System\Mail\Builders\VoicemailNotificationBuilder;
 use MikoPBX\Core\System\Mail\EmailNotificationService;
+use MikoPBX\Core\System\Mail\NotificationQueueHelper;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\PbxSettings;
 
@@ -39,7 +41,7 @@ class WorkerNotifyByEmail extends WorkerBase
     /**
      * Entry point for the worker.
      *
-     * @param array $argv The command-line arguments passed to the worker.
+     * @param array<int, string> $argv The command-line arguments passed to the worker.
      * @return void
      */
     public function start(array $argv): void
@@ -61,9 +63,10 @@ class WorkerNotifyByEmail extends WorkerBase
     /**
      * The main worker method for sending email notifications.
      *
-     * Handles two types of notifications:
-     * - Login notifications: type='login', contains username, IP, user agent
-     * - Missed call notifications: contains from_number, to_number, start time
+     * Handles three types of notification formats:
+     * 1. Typed notifications (new format): notification_type + builder_data
+     * 2. Login notifications (legacy): type='login', contains username, IP, user agent
+     * 3. Missed call notifications (legacy): contains from_number, to_number, start time
      *
      * @param mixed $message The message received from Beanstalkd.
      * @return void
@@ -76,13 +79,19 @@ class WorkerNotifyByEmail extends WorkerBase
         /** @var BeanstalkClient $message */
         $data = json_decode($message->getBody(), true);
 
-        // Check if this is a login notification
+        // NEW: Check if this is a typed notification (builder-based)
+        if (isset($data['notification_type'])) {
+            $this->handleTypedNotification($data, $notifier);
+            return;
+        }
+
+        // LEGACY: Check if this is a login notification
         if (isset($data[0]['type']) && $data[0]['type'] === 'login') {
             $this->handleLoginNotifications($data, $notifier);
             return;
         }
 
-        // Otherwise handle as missed call notifications
+        // LEGACY: Otherwise handle as missed call notifications
 
         $template_body = PbxSettings::getValueByKey(PbxSettings::MAIL_TPL_MISSED_CALL_BODY);
         $template_subject = PbxSettings::getValueByKey(PbxSettings::MAIL_TPL_MISSED_CALL_SUBJECT);
@@ -147,8 +156,7 @@ class WorkerNotifyByEmail extends WorkerBase
                         ->setCallerName($firstCall['from_name'])
                         ->setExtension($firstCall['to_number'])
                         ->setExtensionName($firstCall['to_name'])
-                        ->setCallTime($firstCall['start'])
-                        ->setDuration($firstCall['duration']);
+                        ->setCallTime($firstCall['start']);
 
                 $emailService->sendNotification($builder, $notifier);
             } else {
@@ -159,6 +167,77 @@ class WorkerNotifyByEmail extends WorkerBase
             }
         }
         sleep(1);
+    }
+
+    /**
+     * Handle typed notification (builder-based format)
+     *
+     * Processes notifications sent via NotificationQueueHelper.
+     * Reconstructs builder from queue data and sends email.
+     * Handles attachments for voicemail notifications.
+     *
+     * @param array<string, mixed> $data Queue data with notification_type and builder_data
+     * @param Notifications $notifier Notification service instance
+     * @return void
+     */
+    private function handleTypedNotification(array $data, Notifications $notifier): void
+    {
+        try {
+            // Reconstruct builder from queue data
+            $builder = NotificationQueueHelper::rebuildFromQueueData($data);
+
+            // Check if builder has attachment (voicemail)
+            $attachmentFile = '';
+            if ($builder instanceof VoicemailNotificationBuilder) {
+                $attachmentFile = $builder->getRecordingFile();
+            }
+
+            // Send notification with optional attachment
+            $emailService = new EmailNotificationService();
+            $result = $emailService->sendNotification($builder, $notifier, $attachmentFile);
+
+            // Clean up temporary recording file if exists
+            if (!empty($attachmentFile) && file_exists($attachmentFile)) {
+                unlink($attachmentFile);
+                SystemMessages::sysLogMsg(
+                    __METHOD__,
+                    sprintf('Cleaned up temporary recording file: %s', $attachmentFile),
+                    LOG_DEBUG
+                );
+            }
+
+            if ($result) {
+                SystemMessages::sysLogMsg(
+                    __METHOD__,
+                    sprintf(
+                        'Successfully sent %s notification to: %s',
+                        $data['notification_type'],
+                        $builder->getRecipient()
+                    ),
+                    LOG_INFO
+                );
+            } else {
+                SystemMessages::sysLogMsg(
+                    __METHOD__,
+                    sprintf(
+                        'Failed to send %s notification to: %s',
+                        $data['notification_type'],
+                        $builder->getRecipient()
+                    ),
+                    LOG_WARNING
+                );
+            }
+        } catch (\Throwable $e) {
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                sprintf(
+                    'Exception handling typed notification %s: %s',
+                    $data['notification_type'] ?? 'unknown',
+                    $e->getMessage()
+                ),
+                LOG_ERR
+            );
+        }
     }
 
     /**
@@ -243,7 +322,7 @@ class WorkerNotifyByEmail extends WorkerBase
      * Replaces the placeholders in the source string with the provided parameters.
      *
      * @param string $src The source string.
-     * @param array $params The parameters to replace.
+     * @param array<string, mixed> $params The parameters to replace.
      * @return string The modified string.
      */
     private function replaceParams(string $src, array $params): string

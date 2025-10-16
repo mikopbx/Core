@@ -70,7 +70,7 @@ abstract class AbstractNotificationBuilder
     protected string $footerMessage = '';
 
     /** Dependency injection container */
-    protected ?Di $di = null;
+    protected ?\Phalcon\Di\DiInterface $di = null;
 
     /**
      * Constructor
@@ -342,5 +342,62 @@ abstract class AbstractNotificationBuilder
         if (empty($this->subject) && empty($this->mainMessage)) {
             throw new \RuntimeException('Either subject or main message must be set');
         }
+    }
+
+    /**
+     * Serialize builder to array for queue storage
+     *
+     * Converts builder state to array for Beanstalk queue.
+     * Concrete builders can override to include additional fields.
+     *
+     * @return array<string, mixed> Serialized builder data
+     */
+    public function toArray(): array
+    {
+        return [
+            'recipient' => $this->recipient,
+            'serverName' => $this->serverName,
+            'subject' => $this->subject,
+            'preheaderText' => $this->preheaderText,
+            'mainMessage' => $this->mainMessage,
+            'dynamicContent' => $this->dynamicContent,
+            'footerMessage' => $this->footerMessage,
+        ];
+    }
+
+    /**
+     * Deserialize builder from array
+     *
+     * Restores builder state from queue data.
+     * Concrete builders can override to restore additional fields.
+     *
+     * @param array<string, mixed> $data Serialized builder data
+     * @return static For method chaining
+     */
+    public function fromArray(array $data): static
+    {
+        if (isset($data['recipient'])) {
+            $this->recipient = $data['recipient'];
+        }
+        if (isset($data['serverName'])) {
+            $this->serverName = $data['serverName'];
+        }
+        if (isset($data['subject'])) {
+            $this->subject = $data['subject'];
+        }
+        if (isset($data['preheaderText'])) {
+            $this->preheaderText = $data['preheaderText'];
+        }
+        if (isset($data['mainMessage'])) {
+            $this->mainMessage = $data['mainMessage'];
+        }
+        if (isset($data['dynamicContent'])) {
+            $this->dynamicContent = $data['dynamicContent'];
+        }
+        if (isset($data['footerMessage'])) {
+            $this->footerMessage = $data['footerMessage'];
+        }
+
+        return $this;
     }
 }

@@ -448,86 +448,92 @@ return [
     'ms_DiagnosticAuthorized' => 'Авторизовано',
     'ms_DiagnosticProbableCause' => 'Вероятная причина:',
     'ms_DiagnosticTechnicalDetails' => 'Технические подробности',
-    
-    // Email notification templates - Common
+
+    // MS - Email Notification System
+    // Common
     'ms_EmailNotification_Server' => 'Сервер',
-    
-    // SMTP Test Notification
-    'ms_EmailNotification_SMTPTest_Subject' => 'Тест конфигурации SMTP',
-    'ms_EmailNotification_SMTPTest_Preheader' => 'Ваши настройки SMTP работают корректно',
-    'ms_EmailNotification_SMTPTest_Message' => 'Поздравляем! Конфигурация вашей электронной почты SMTP работает корректно. Это тестовое письмо подтверждает, что настройки электронной почты выполнены правильно.',
+    'ms_EmailNotification_Footer_AutomatedNotification' => 'Это автоматическое уведомление. Пожалуйста, не отвечайте на это письмо.',
+    'ms_EmailNotification_Footer_PoweredBy' => 'Работает на',
+
+    // Voicemail Notifications
+    'ms_EmailNotification_Voicemail_Subject' => 'Новое голосовое сообщение',
+    'ms_EmailNotification_Voicemail_Preheader' => 'Вы получили новое голосовое сообщение',
+    'ms_EmailNotification_Voicemail_Message' => 'На ваш почтовый ящик поступило новое голосовое сообщение.',
+    'ms_EmailNotification_Voicemail_From' => 'От',
+    'ms_EmailNotification_Voicemail_Number' => 'Номер',
+    'ms_EmailNotification_Voicemail_Mailbox' => 'Почтовый ящик',
+    'ms_EmailNotification_Voicemail_Duration' => 'Длительность',
+    'ms_EmailNotification_Voicemail_Date' => 'Дата и время',
+    'ms_EmailNotification_Voicemail_MessageNumber' => 'Номер сообщения',
+    'ms_EmailNotification_Voicemail_AttachmentInfo' => 'Аудиозапись сообщения прикреплена к этому письму.',
+    'ms_EmailNotification_Voicemail_HelpText' => 'Вы можете прослушать запись, открыв прикрепленный файл или позвонив на номер вашего почтового ящика.',
+
+    // Login Notifications
+    'ms_EmailNotification_Login_Subject' => 'Вход в панель администратора MikoPBX',
+    'ms_EmailNotification_Login_Preheader' => 'Обнаружен новый вход в систему',
+    'ms_EmailNotification_Login_Message' => 'Зафиксирован вход в административную панель вашей АТС.',
+    'ms_EmailNotification_Login_Username' => 'Пользователь',
+    'ms_EmailNotification_Login_IPAddress' => 'IP адрес',
+    'ms_EmailNotification_Login_Browser' => 'Браузер',
+    'ms_EmailNotification_Login_Time' => 'Время входа',
+    'ms_EmailNotification_Login_SecurityNotice' => 'Если это были не вы',
+    'ms_EmailNotification_Login_SecurityAction' => 'Если вы не выполняли вход в систему, немедленно измените пароль и проверьте настройки безопасности.',
+    'ms_EmailNotification_Login_GoToAdminPanel' => 'Перейти в панель управления',
+    'ms_EmailNotification_Login_HelpText' => 'Это уведомление отправляется каждый раз при входе в административную панель для обеспечения безопасности системы.',
+
+    // Missed Call Notifications
+    'ms_EmailNotification_MissedCall_Subject' => 'Пропущенный вызов',
+    'ms_EmailNotification_MissedCall_Preheader' => 'У вас пропущенный вызов',
+    'ms_EmailNotification_MissedCall_From' => 'От кого',
+    'ms_EmailNotification_MissedCall_ToExtension' => 'Кому',
+    'ms_EmailNotification_MissedCall_Time' => 'Время вызова',
+    'ms_EmailNotification_MissedCall_Footer' => 'Пожалуйста, свяжитесь с абонентом при первой возможности.',
+    'ms_EmailNotification_MissedCall_ManagePreferences' => 'Управление настройками уведомлений',
+
+    // Disk Space Notifications
+    'ms_EmailNotification_DiskSpace_Subject' => 'Предупреждение: Заканчивается место на диске',
+    'ms_EmailNotification_DiskSpace_Preheader' => 'Дисковое пространство критически мало',
+    'ms_EmailNotification_DiskSpace_Message' => 'На вашей телефонной станции заканчивается свободное место на диске хранения данных.',
+    'ms_EmailNotification_DiskSpace_CurrentUsage' => 'Текущее использование',
+    'ms_EmailNotification_DiskSpace_AvailableSpace' => 'Доступно',
+    'ms_EmailNotification_DiskSpace_Threshold' => 'Критический порог',
+    'ms_EmailNotification_DiskSpace_GoToAdminPanel' => 'Перейти к управлению хранилищем',
+    'ms_EmailNotification_DiskSpace_HelpText' => 'Рекомендуется освободить место или увеличить размер диска для предотвращения проблем с записью звонков и работой системы.',
+
+    // SSH Password Changed Notifications
+    'ms_EmailNotification_SSHPassword_Subject' => 'Внимание: Изменен SSH пароль',
+    'ms_EmailNotification_SSHPassword_Preheader' => 'SSH пароль был изменен',
+    'ms_EmailNotification_SSHPassword_ChangedBy' => 'Изменено',
+    'ms_EmailNotification_SSHPassword_IPAddress' => 'IP адрес',
+    'ms_EmailNotification_SSHPassword_Time' => 'Время изменения',
+    'ms_EmailNotification_SSHPassword_SecurityNotice' => 'Предупреждение безопасности',
+    'ms_EmailNotification_SSHPassword_SecurityAction' => 'SSH пароль был изменен вне веб-интерфейса MikoPBX. Если это были не вы, немедленно проверьте настройки безопасности.',
+    'ms_EmailNotification_SSHPassword_ReviewSecuritySettings' => 'Проверить настройки безопасности',
+    'ms_EmailNotification_SSHPassword_Footer' => 'Это критическое уведомление безопасности. Игнорирование этого сообщения может привести к компрометации системы.',
+
+    // System Problems Notifications
+    'ms_EmailNotification_SystemProblems_Subject' => 'Обнаружены проблемы в работе MikoPBX',
+    'ms_EmailNotification_SystemProblems_Preheader' => 'Требуется внимание администратора',
+    'ms_EmailNotification_SystemProblems_DetectedProblems' => 'Обнаруженные проблемы',
+    'ms_EmailNotification_SystemProblems_ActionRequired' => 'Требуются действия',
+    'ms_EmailNotification_SystemProblems_PleaseResolve' => 'Пожалуйста, устраните выявленные проблемы как можно скорее для обеспечения стабильной работы телефонной станции.',
+    'ms_EmailNotification_SystemProblems_GoToAdminPanel' => 'Перейти в панель управления',
+    'ms_EmailNotification_SystemProblems_HelpText' => 'Если вам нужна помощь в устранении проблем, обратитесь в техническую поддержку или посетите нашу базу знаний.',
+
+    // SMTP Test Notifications
+    'ms_EmailNotification_SMTPTest_Subject' => 'Тест настроек SMTP',
+    'ms_EmailNotification_SMTPTest_Preheader' => 'Проверка конфигурации почтового сервера',
+    'ms_EmailNotification_SMTPTest_Message' => 'Это тестовое письмо для проверки настроек вашего почтового сервера.',
+    'ms_EmailNotification_SMTPTest_Successful' => 'Поздравляем! Настройки SMTP работают корректно.',
     'ms_EmailNotification_SMTPTest_SMTPServer' => 'SMTP сервер',
     'ms_EmailNotification_SMTPTest_Port' => 'Порт',
     'ms_EmailNotification_SMTPTest_Encryption' => 'Шифрование',
     'ms_EmailNotification_SMTPTest_Authentication' => 'Аутентификация',
     'ms_EmailNotification_SMTPTest_FromAddress' => 'Адрес отправителя',
-    'ms_EmailNotification_SMTPTest_OAuth2Provider' => 'Провайдер OAuth2',
-    'ms_EmailNotification_SMTPTest_SMTPConnection' => 'SMTP подключение',
-    'ms_EmailNotification_SMTPTest_Successful' => 'Успешно',
-    'ms_EmailNotification_SMTPTest_Passed' => 'Пройдено',
-    'ms_EmailNotification_SMTPTest_EmailDelivery' => 'Доставка писем',
-    'ms_EmailNotification_SMTPTest_Working' => 'Работает',
+    'ms_EmailNotification_SMTPTest_OAuth2Provider' => 'OAuth2 провайдер',
     'ms_EmailNotification_SMTPTest_Configured' => 'Настроено',
-    'ms_EmailNotification_SMTPTest_HelpText' => 'Теперь вы можете использовать эти настройки для всех системных уведомлений.',
-    
-    // Missed Call Notification
-    'ms_EmailNotification_MissedCall_Subject' => 'Пропущенный звонок от',
-    'ms_EmailNotification_MissedCall_Preheader' => 'У вас пропущенный звонок от',
-    'ms_EmailNotification_MissedCall_Message' => 'Вы пропустили звонок от %caller%.',
-    'ms_EmailNotification_MissedCall_From' => 'От',
-    'ms_EmailNotification_MissedCall_ToExtension' => 'На внутренний номер',
-    'ms_EmailNotification_MissedCall_Time' => 'Время',
-    'ms_EmailNotification_MissedCall_Duration' => 'Длительность',
-    'ms_EmailNotification_MissedCall_Missed' => 'Пропущен',
-    'ms_EmailNotification_MissedCall_Footer' => 'Вы получили это уведомление, потому что оповещения о пропущенных звонках включены для вашего внутреннего номера.',
-    'ms_EmailNotification_MissedCall_ManagePreferences' => 'Управление настройками уведомлений',
-    
-    // System Problems Notification
-    'ms_EmailNotification_SystemProblems_Subject' => 'Обнаружены системные проблемы',
-    'ms_EmailNotification_SystemProblems_Preheader' => 'Ваш сервер требует внимания',
-    'ms_EmailNotification_SystemProblems_Message' => 'В вашей системе MikoPBX обнаружено проблем: %count%, которые требуют вашего внимания.',
-    'ms_EmailNotification_SystemProblems_DetectedProblems' => 'Обнаруженные проблемы',
-    'ms_EmailNotification_SystemProblems_ActionRequired' => 'Требуется действие',
-    'ms_EmailNotification_SystemProblems_PleaseResolve' => 'Пожалуйста, проверьте и устраните эти проблемы как можно скорее для обеспечения оптимальной работы системы.',
-    'ms_EmailNotification_SystemProblems_GoToAdminPanel' => 'Перейти в панель администратора',
-    'ms_EmailNotification_SystemProblems_HelpText' => 'Это уведомление содержит важную информацию о состоянии системы. Для получения помощи обратитесь к системному администратору или в службу поддержки MikoPBX.',
-    
-    // SSH Password Changed Notification
-    'ms_EmailNotification_SSHPassword_Subject' => 'Предупреждение безопасности: Пароль SSH изменен',
-    'ms_EmailNotification_SSHPassword_Preheader' => 'Пароль SSH для вашего сервера был изменен',
-    'ms_EmailNotification_SSHPassword_Message' => 'Пароль SSH для вашего сервера MikoPBX был успешно изменен. Если вы не инициировали это изменение, немедленно примите меры.',
-    'ms_EmailNotification_SSHPassword_ChangedBy' => 'Изменено',
-    'ms_EmailNotification_SSHPassword_IPAddress' => 'IP адрес',
-    'ms_EmailNotification_SSHPassword_Time' => 'Время',
-    'ms_EmailNotification_SSHPassword_ReviewSecuritySettings' => 'Проверить настройки безопасности',
-    'ms_EmailNotification_SSHPassword_SecurityNotice' => 'Уведомление о безопасности',
-    'ms_EmailNotification_SSHPassword_SecurityAction' => 'Если вы не авторизовали это изменение, немедленно свяжитесь с системным администратором и рассмотрите возможность смены всех паролей.',
-    'ms_EmailNotification_SSHPassword_Footer' => 'Это уведомление безопасности не может быть отключено для вашей защиты.',
-    
-    // Disk Space Warning Notification
-    'ms_EmailNotification_DiskSpace_Subject' => 'Предупреждение: Заканчивается место на диске сервера',
-    'ms_EmailNotification_DiskSpace_Preheader' => 'На вашем сервере заканчивается место на диске',
-    'ms_EmailNotification_DiskSpace_Message' => 'На вашем сервере критически мало места на диске. Необходимы срочные действия для предотвращения прерывания обслуживания.',
-    'ms_EmailNotification_DiskSpace_CurrentUsage' => 'Текущее использование',
-    'ms_EmailNotification_DiskSpace_AvailableSpace' => 'Доступное место',
-    'ms_EmailNotification_DiskSpace_Threshold' => 'Порог',
-    'ms_EmailNotification_DiskSpace_GoToAdminPanel' => 'Перейти в панель администратора',
-    'ms_EmailNotification_DiskSpace_HelpText' => 'Пожалуйста, освободите место на диске, удалив старые записи, логи или ненужные файлы. Если требуется помощь, обратитесь к системному администратору.',
+    'ms_EmailNotification_SMTPTest_Working' => 'Работает',
+    'ms_EmailNotification_SMTPTest_Passed' => 'Пройдено',
+    'ms_EmailNotification_SMTPTest_HelpText' => 'Если вы получили это письмо, значит ваша почтовая конфигурация настроена правильно и готова к отправке уведомлений.',
 
-    // Login Notification
-    'ms_EmailNotification_Login_Subject' => 'Вход в панель администратора',
-    'ms_EmailNotification_Login_Preheader' => 'Обнаружен новый вход в систему',
-    'ms_EmailNotification_Login_Message' => 'Выполнен вход в панель администратора вашей системы MikoPBX.',
-    'ms_EmailNotification_Login_Username' => 'Пользователь',
-    'ms_EmailNotification_Login_IPAddress' => 'IP адрес',
-    'ms_EmailNotification_Login_Time' => 'Время',
-    'ms_EmailNotification_Login_Browser' => 'Браузер',
-    'ms_EmailNotification_Login_SecurityNotice' => 'Уведомление о безопасности',
-    'ms_EmailNotification_Login_SecurityAction' => 'Если этот вход не был авторизован вами, немедленно смените пароль и проверьте настройки безопасности системы.',
-    'ms_EmailNotification_Login_GoToAdminPanel' => 'Перейти в панель администратора',
-    'ms_EmailNotification_Login_HelpText' => 'Это уведомление отправляется при каждом входе в панель администратора. Вы можете отключить эти уведомления в настройках системы.',
-
-    // Email footer
-    'ms_EmailNotification_Footer_AutomatedNotification' => 'Это автоматическое уведомление от вашей системы MikoPBX.',
-    'ms_EmailNotification_Footer_PoweredBy' => 'Работает на',
 ];

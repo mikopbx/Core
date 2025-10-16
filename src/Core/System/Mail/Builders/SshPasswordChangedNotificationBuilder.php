@@ -140,4 +140,45 @@ class SshPasswordChangedNotificationBuilder extends AbstractNotificationBuilder
                           TranslationProvider::translate('ms_EmailNotification_SSHPassword_SecurityAction'),
         ];
     }
+
+    /**
+     * Serialize builder to array
+     *
+     * @return array<string, mixed> Serialized data
+     */
+    public function toArray(): array
+    {
+        return array_merge(parent::toArray(), [
+            'changedBy' => $this->changedBy,
+            'ipAddress' => $this->ipAddress,
+            'changeTime' => $this->changeTime,
+            'securityUrl' => $this->securityUrl,
+        ]);
+    }
+
+    /**
+     * Deserialize builder from array
+     *
+     * @param array<string, mixed> $data Serialized data
+     * @return static
+     */
+    public function fromArray(array $data): static
+    {
+        parent::fromArray($data);
+
+        if (isset($data['changedBy'])) {
+            $this->changedBy = $data['changedBy'];
+        }
+        if (isset($data['ipAddress'])) {
+            $this->ipAddress = $data['ipAddress'];
+        }
+        if (isset($data['changeTime'])) {
+            $this->changeTime = $data['changeTime'];
+        }
+        if (isset($data['securityUrl'])) {
+            $this->securityUrl = $data['securityUrl'];
+        }
+
+        return $this;
+    }
 }

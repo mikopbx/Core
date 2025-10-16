@@ -49,6 +49,7 @@ class EmailNotificationService
      *
      * @param AbstractNotificationBuilder $builder Configured notification builder
      * @param Notifications|null $legacyNotifier Optional legacy notifier instance (for DI)
+     * @param string $attachmentFile Optional file to attach (for voicemail recordings)
      * @return bool True if email sent successfully
      *
      * @example
@@ -62,7 +63,8 @@ class EmailNotificationService
      */
     public function sendNotification(
         AbstractNotificationBuilder $builder,
-        ?Notifications $legacyNotifier = null
+        ?Notifications $legacyNotifier = null,
+        string $attachmentFile = ''
     ): bool {
         // Build HTML email first (this populates subject/mainMessage via buildVariables())
         try {
@@ -97,9 +99,9 @@ class EmailNotificationService
         // Use provided notifier or create new one
         $notifier = $legacyNotifier ?? new Notifications();
 
-        // Send email via legacy system
+        // Send email via legacy system with optional attachment
         // This maintains backward compatibility and reuses existing SMTP configuration
-        return $notifier->sendMail($recipient, $subject, $html);
+        return $notifier->sendMail($recipient, $subject, $html, $attachmentFile);
     }
 
     /**

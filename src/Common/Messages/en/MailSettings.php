@@ -406,85 +406,90 @@ return [
     'ms_DiagnosticProbableCause' => '',
     'ms_DiagnosticTechnicalDetails' => '',
 
-    // Email notification templates - Common
+    // MS - Email Notification System
+    // Common
     'ms_EmailNotification_Server' => 'Server',
-    
-    // SMTP Test Notification
-    'ms_EmailNotification_SMTPTest_Subject' => 'SMTP Configuration Test',
-    'ms_EmailNotification_SMTPTest_Preheader' => 'Your SMTP settings are working correctly',
-    'ms_EmailNotification_SMTPTest_Message' => 'Congratulations! Your SMTP email configuration is working correctly. This test email confirms that your email settings are properly configured.',
+    'ms_EmailNotification_Footer_AutomatedNotification' => 'This is an automated notification. Please do not reply to this email.',
+    'ms_EmailNotification_Footer_PoweredBy' => 'Powered by',
+
+    // Voicemail Notifications
+    'ms_EmailNotification_Voicemail_Subject' => 'New Voicemail Message',
+    'ms_EmailNotification_Voicemail_Preheader' => 'You have received a new voicemail message',
+    'ms_EmailNotification_Voicemail_Message' => 'A new voicemail message has been left in your mailbox.',
+    'ms_EmailNotification_Voicemail_From' => 'From',
+    'ms_EmailNotification_Voicemail_Number' => 'Number',
+    'ms_EmailNotification_Voicemail_Mailbox' => 'Mailbox',
+    'ms_EmailNotification_Voicemail_Duration' => 'Duration',
+    'ms_EmailNotification_Voicemail_Date' => 'Date and Time',
+    'ms_EmailNotification_Voicemail_MessageNumber' => 'Message Number',
+    'ms_EmailNotification_Voicemail_AttachmentInfo' => 'The audio recording is attached to this email.',
+    'ms_EmailNotification_Voicemail_HelpText' => 'You can listen to the recording by opening the attached file or by calling your voicemail box.',
+
+    // Login Notifications
+    'ms_EmailNotification_Login_Subject' => 'Login to MikoPBX Admin Panel',
+    'ms_EmailNotification_Login_Preheader' => 'New login detected',
+    'ms_EmailNotification_Login_Message' => 'A login to your PBX administrative panel has been detected.',
+    'ms_EmailNotification_Login_Username' => 'Username',
+    'ms_EmailNotification_Login_IPAddress' => 'IP Address',
+    'ms_EmailNotification_Login_Browser' => 'Browser',
+    'ms_EmailNotification_Login_Time' => 'Login Time',
+    'ms_EmailNotification_Login_SecurityNotice' => 'If this wasn\'t you',
+    'ms_EmailNotification_Login_SecurityAction' => 'If you did not perform this login, immediately change your password and review your security settings.',
+    'ms_EmailNotification_Login_GoToAdminPanel' => 'Go to Admin Panel',
+    'ms_EmailNotification_Login_HelpText' => 'This notification is sent each time someone logs into the administrative panel to ensure system security.',
+
+    // Missed Call Notifications
+    'ms_EmailNotification_MissedCall_Subject' => 'Missed Call',
+    'ms_EmailNotification_MissedCall_Preheader' => 'You have a missed call',
+    'ms_EmailNotification_MissedCall_From' => 'From',
+    'ms_EmailNotification_MissedCall_ToExtension' => 'To',
+    'ms_EmailNotification_MissedCall_Time' => 'Call Time',
+    'ms_EmailNotification_MissedCall_Footer' => 'Please contact the caller at your earliest convenience.',
+    'ms_EmailNotification_MissedCall_ManagePreferences' => 'Manage Notification Preferences',
+
+    // Disk Space Notifications
+    'ms_EmailNotification_DiskSpace_Subject' => 'Warning: Low Disk Space',
+    'ms_EmailNotification_DiskSpace_Preheader' => 'Disk space critically low',
+    'ms_EmailNotification_DiskSpace_Message' => 'Your phone system is running low on storage disk space.',
+    'ms_EmailNotification_DiskSpace_CurrentUsage' => 'Current Usage',
+    'ms_EmailNotification_DiskSpace_AvailableSpace' => 'Available',
+    'ms_EmailNotification_DiskSpace_Threshold' => 'Critical Threshold',
+    'ms_EmailNotification_DiskSpace_GoToAdminPanel' => 'Go to Storage Management',
+    'ms_EmailNotification_DiskSpace_HelpText' => 'We recommend freeing up space or increasing disk size to prevent issues with call recordings and system operation.',
+
+    // SSH Password Changed Notifications
+    'ms_EmailNotification_SSHPassword_Subject' => 'Warning: SSH Password Changed',
+    'ms_EmailNotification_SSHPassword_Preheader' => 'SSH password has been modified',
+    'ms_EmailNotification_SSHPassword_ChangedBy' => 'Changed By',
+    'ms_EmailNotification_SSHPassword_IPAddress' => 'IP Address',
+    'ms_EmailNotification_SSHPassword_Time' => 'Change Time',
+    'ms_EmailNotification_SSHPassword_SecurityNotice' => 'Security Warning',
+    'ms_EmailNotification_SSHPassword_SecurityAction' => 'The SSH password was changed outside the MikoPBX web interface. If this wasn\'t you, immediately review your security settings.',
+    'ms_EmailNotification_SSHPassword_ReviewSecuritySettings' => 'Review Security Settings',
+    'ms_EmailNotification_SSHPassword_Footer' => 'This is a critical security notification. Ignoring this message may lead to system compromise.',
+
+    // System Problems Notifications
+    'ms_EmailNotification_SystemProblems_Subject' => 'MikoPBX System Problems Detected',
+    'ms_EmailNotification_SystemProblems_Preheader' => 'Administrator attention required',
+    'ms_EmailNotification_SystemProblems_DetectedProblems' => 'Detected Problems',
+    'ms_EmailNotification_SystemProblems_ActionRequired' => 'Action Required',
+    'ms_EmailNotification_SystemProblems_PleaseResolve' => 'Please resolve the identified issues as soon as possible to ensure stable phone system operation.',
+    'ms_EmailNotification_SystemProblems_GoToAdminPanel' => 'Go to Admin Panel',
+    'ms_EmailNotification_SystemProblems_HelpText' => 'If you need help resolving these issues, contact technical support or visit our knowledge base.',
+
+    // SMTP Test Notifications
+    'ms_EmailNotification_SMTPTest_Subject' => 'SMTP Settings Test',
+    'ms_EmailNotification_SMTPTest_Preheader' => 'Mail server configuration check',
+    'ms_EmailNotification_SMTPTest_Message' => 'This is a test email to verify your mail server settings.',
+    'ms_EmailNotification_SMTPTest_Successful' => 'Congratulations! Your SMTP settings are working correctly.',
     'ms_EmailNotification_SMTPTest_SMTPServer' => 'SMTP Server',
     'ms_EmailNotification_SMTPTest_Port' => 'Port',
     'ms_EmailNotification_SMTPTest_Encryption' => 'Encryption',
     'ms_EmailNotification_SMTPTest_Authentication' => 'Authentication',
     'ms_EmailNotification_SMTPTest_FromAddress' => 'From Address',
     'ms_EmailNotification_SMTPTest_OAuth2Provider' => 'OAuth2 Provider',
-    'ms_EmailNotification_SMTPTest_SMTPConnection' => 'SMTP Connection',
-    'ms_EmailNotification_SMTPTest_Successful' => 'Successful',
-    'ms_EmailNotification_SMTPTest_Passed' => 'Passed',
-    'ms_EmailNotification_SMTPTest_EmailDelivery' => 'Email Delivery',
-    'ms_EmailNotification_SMTPTest_Working' => 'Working',
     'ms_EmailNotification_SMTPTest_Configured' => 'Configured',
-    'ms_EmailNotification_SMTPTest_HelpText' => 'You can now use these settings for all system notifications.',
-    
-    // Missed Call Notification
-    'ms_EmailNotification_MissedCall_Subject' => 'Missed call from',
-    'ms_EmailNotification_MissedCall_Preheader' => 'You have a missed call from',
-    'ms_EmailNotification_MissedCall_Message' => 'You missed a call from %caller%.',
-    'ms_EmailNotification_MissedCall_From' => 'From',
-    'ms_EmailNotification_MissedCall_ToExtension' => 'To Extension',
-    'ms_EmailNotification_MissedCall_Time' => 'Time',
-    'ms_EmailNotification_MissedCall_Duration' => 'Duration',
-    'ms_EmailNotification_MissedCall_Missed' => 'Missed',
-    'ms_EmailNotification_MissedCall_Footer' => 'You received this notification because missed call alerts are enabled for your extension.',
-    'ms_EmailNotification_MissedCall_ManagePreferences' => 'Manage notification preferences',
-    
-    // System Problems Notification
-    'ms_EmailNotification_SystemProblems_Subject' => 'System Problems Detected',
-    'ms_EmailNotification_SystemProblems_Preheader' => 'Your server requires attention',
-    'ms_EmailNotification_SystemProblems_Message' => 'There are %count% problems detected on your MikoPBX system that require your attention.',
-    'ms_EmailNotification_SystemProblems_DetectedProblems' => 'Detected Problems',
-    'ms_EmailNotification_SystemProblems_ActionRequired' => 'Action Required',
-    'ms_EmailNotification_SystemProblems_PleaseResolve' => 'Please review and resolve these issues as soon as possible to ensure optimal system performance.',
-    'ms_EmailNotification_SystemProblems_GoToAdminPanel' => 'Go to Admin Panel',
-    'ms_EmailNotification_SystemProblems_HelpText' => 'This notification contains important system health information. For assistance, contact your system administrator or MikoPBX support.',
-    
-    // SSH Password Changed Notification
-    'ms_EmailNotification_SSHPassword_Subject' => 'Security Alert: SSH Password Changed',
-    'ms_EmailNotification_SSHPassword_Preheader' => 'The SSH password for your server has been changed',
-    'ms_EmailNotification_SSHPassword_Message' => 'The SSH password for your MikoPBX server has been successfully changed. If you did not initiate this change, please take immediate action.',
-    'ms_EmailNotification_SSHPassword_ChangedBy' => 'Changed by',
-    'ms_EmailNotification_SSHPassword_IPAddress' => 'IP Address',
-    'ms_EmailNotification_SSHPassword_Time' => 'Time',
-    'ms_EmailNotification_SSHPassword_ReviewSecuritySettings' => 'Review Security Settings',
-    'ms_EmailNotification_SSHPassword_SecurityNotice' => 'Security Notice',
-    'ms_EmailNotification_SSHPassword_SecurityAction' => 'If you did not authorize this change, please contact your system administrator immediately and consider changing all passwords.',
-    'ms_EmailNotification_SSHPassword_Footer' => 'This security notification cannot be disabled for your protection.',
-    
-    // Disk Space Warning Notification
-    'ms_EmailNotification_DiskSpace_Subject' => 'Warning: Low disk space on server',
-    'ms_EmailNotification_DiskSpace_Preheader' => 'Your server is running low on disk space',
-    'ms_EmailNotification_DiskSpace_Message' => 'Your server is running critically low on disk space. Immediate action is required to prevent service interruption.',
-    'ms_EmailNotification_DiskSpace_CurrentUsage' => 'Current Usage',
-    'ms_EmailNotification_DiskSpace_AvailableSpace' => 'Available Space',
-    'ms_EmailNotification_DiskSpace_Threshold' => 'Threshold',
-    'ms_EmailNotification_DiskSpace_GoToAdminPanel' => 'Go to Admin Panel',
-    'ms_EmailNotification_DiskSpace_HelpText' => 'Please free up disk space by removing old recordings, logs, or unnecessary files. If you need assistance, contact your system administrator.',
-
-    // Login Notification
-    'ms_EmailNotification_Login_Subject' => 'Admin Panel Login',
-    'ms_EmailNotification_Login_Preheader' => 'New login detected to your system',
-    'ms_EmailNotification_Login_Message' => 'A login to your MikoPBX admin panel has been detected.',
-    'ms_EmailNotification_Login_Username' => 'Username',
-    'ms_EmailNotification_Login_IPAddress' => 'IP Address',
-    'ms_EmailNotification_Login_Time' => 'Time',
-    'ms_EmailNotification_Login_Browser' => 'Browser',
-    'ms_EmailNotification_Login_SecurityNotice' => 'Security Notice',
-    'ms_EmailNotification_Login_SecurityAction' => 'If this login was not authorized by you, please change your password immediately and review your system security settings.',
-    'ms_EmailNotification_Login_GoToAdminPanel' => 'Go to Admin Panel',
-    'ms_EmailNotification_Login_HelpText' => 'This notification is sent every time someone logs into the admin panel. You can disable these notifications in system settings.',
-
-    // Email footer
-    'ms_EmailNotification_Footer_AutomatedNotification' => 'This is an automated notification from your MikoPBX system.',
-    'ms_EmailNotification_Footer_PoweredBy' => 'Powered by',
+    'ms_EmailNotification_SMTPTest_Working' => 'Working',
+    'ms_EmailNotification_SMTPTest_Passed' => 'Passed',
+    'ms_EmailNotification_SMTPTest_HelpText' => 'If you received this email, your mail configuration is set up correctly and ready to send notifications.',
 ];

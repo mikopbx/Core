@@ -22,7 +22,7 @@ namespace MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Notifications;
 use MikoPBX\Core\System\Mail\Builders\SshPasswordChangedNotificationBuilder;
-use MikoPBX\Core\System\Mail\EmailNotificationService;
+use MikoPBX\Core\System\Mail\NotificationQueueHelper;
 use Phalcon\Di\Injectable;
 
 /**
@@ -37,7 +37,7 @@ class CheckSSHConfig extends Injectable
     /**
      * Checks the password in case it was changed by an unauthorized means.
      *
-     * @return array An array containing warning messages.
+     * @return array<string, array<int, array<string, mixed>>> An array containing warning messages.
      *
      */
     public function process(): array
@@ -55,7 +55,7 @@ class CheckSSHConfig extends Injectable
             $messages['error'][] =  ['messageTpl'=>'adv_SSHPasswordMismatchFilesHash'];
         }
         if(isset($messages['error'])){
-            // Use new template system for beautiful SSH security notifications
+            // Queue notification for async sending via WorkerNotifyByEmail
             $adminEmail = PbxSettings::getValueByKey(PbxSettings::SYSTEM_NOTIFICATIONS_EMAIL);
 
             if (!empty($adminEmail)) {
@@ -65,8 +65,12 @@ class CheckSSHConfig extends Injectable
                         ->setChangeTime(date('Y-m-d H:i:s'))
                         ->setSecurityUrl(self::buildAdminUrl('/admin-cabinet/general-settings/modify/#ssh'));
 
-                $emailService = new EmailNotificationService();
-                $emailService->sendNotification($builder);
+                // Queue with critical priority (security alert is critical)
+                NotificationQueueHelper::queueOrSend(
+                    $builder,
+                    async: true,
+                    priority: NotificationQueueHelper::PRIORITY_CRITICAL
+                );
             } else {
                 // Fallback to legacy if no admin email configured
                 Notifications::sendAdminNotification(['messageTpl' => 'adv_SSHPasswordWasChangedSubject'], ['messageTpl' => 'adv_SSHPasswordWasChangedBody'], true);

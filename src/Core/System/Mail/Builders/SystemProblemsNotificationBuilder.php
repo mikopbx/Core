@@ -158,4 +158,37 @@ class SystemProblemsNotificationBuilder extends AbstractNotificationBuilder
             'HELP_TEXT' => TranslationProvider::translate('ms_EmailNotification_SystemProblems_HelpText'),
         ];
     }
+
+    /**
+     * Serialize builder to array
+     *
+     * @return array<string, mixed> Serialized data
+     */
+    public function toArray(): array
+    {
+        return array_merge(parent::toArray(), [
+            'problems' => $this->problems,
+            'adminUrl' => $this->adminUrl,
+        ]);
+    }
+
+    /**
+     * Deserialize builder from array
+     *
+     * @param array<string, mixed> $data Serialized data
+     * @return static
+     */
+    public function fromArray(array $data): static
+    {
+        parent::fromArray($data);
+
+        if (isset($data['problems'])) {
+            $this->problems = $data['problems'];
+        }
+        if (isset($data['adminUrl'])) {
+            $this->adminUrl = $data['adminUrl'];
+        }
+
+        return $this;
+    }
 }

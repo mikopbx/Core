@@ -146,4 +146,45 @@ class DiskSpaceNotificationBuilder extends AbstractNotificationBuilder
             'HELP_TEXT' => TranslationProvider::translate('ms_EmailNotification_DiskSpace_HelpText'),
         ];
     }
+
+    /**
+     * Serialize builder to array
+     *
+     * @return array<string, mixed> Serialized data
+     */
+    public function toArray(): array
+    {
+        return array_merge(parent::toArray(), [
+            'diskUsage' => $this->diskUsage,
+            'freeSpace' => $this->freeSpace,
+            'partitions' => $this->partitions,
+            'adminUrl' => $this->adminUrl,
+        ]);
+    }
+
+    /**
+     * Deserialize builder from array
+     *
+     * @param array<string, mixed> $data Serialized data
+     * @return static
+     */
+    public function fromArray(array $data): static
+    {
+        parent::fromArray($data);
+
+        if (isset($data['diskUsage'])) {
+            $this->diskUsage = (int)$data['diskUsage'];
+        }
+        if (isset($data['freeSpace'])) {
+            $this->freeSpace = $data['freeSpace'];
+        }
+        if (isset($data['partitions'])) {
+            $this->partitions = $data['partitions'];
+        }
+        if (isset($data['adminUrl'])) {
+            $this->adminUrl = $data['adminUrl'];
+        }
+
+        return $this;
+    }
 }

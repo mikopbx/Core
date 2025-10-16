@@ -22,7 +22,7 @@ namespace MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\Mail\Builders\DiskSpaceNotificationBuilder;
-use MikoPBX\Core\System\Mail\EmailNotificationService;
+use MikoPBX\Core\System\Mail\NotificationQueueHelper;
 use MikoPBX\Core\Workers\WorkerRemoveOldRecords;
 use Phalcon\Di\Injectable;
 
@@ -37,7 +37,7 @@ class CheckStorage extends Injectable
     /**
      * Check storage status.
      *
-     * @return array An array containing warning or error messages.
+     * @return array<string, array<int, array<string, mixed>>> An array containing warning or error messages.
      *
      */
     public function process(): array
@@ -82,7 +82,7 @@ class CheckStorage extends Injectable
             $messages['error'][] = ['messageTpl'=>'adv_StorageDiskUnMounted'];
         }
 
-        // Send beautiful disk space notification email if we have critical disks
+        // Queue disk space notification for async sending if we have critical disks
         if (!empty($criticalDisks)) {
             $adminEmail = PbxSettings::getValueByKey(PbxSettings::SYSTEM_NOTIFICATIONS_EMAIL);
 
@@ -94,8 +94,12 @@ class CheckStorage extends Injectable
                         ->setPartitions($criticalDisks)
                         ->setAdminUrl(self::buildAdminUrl('/admin-cabinet/system-diagnostic/index/'));
 
-                $emailService = new EmailNotificationService();
-                $emailService->sendNotification($builder);
+                // Queue with high priority (disk space is important but not critical like security)
+                NotificationQueueHelper::queueOrSend(
+                    $builder,
+                    async: true,
+                    priority: NotificationQueueHelper::PRIORITY_HIGH
+                );
             }
         }
 

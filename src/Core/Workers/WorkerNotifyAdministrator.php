@@ -26,7 +26,7 @@ use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Common\Providers\PBXCoreRESTClientProvider;
 use MikoPBX\Core\System\Notifications;
 use MikoPBX\Core\System\Mail\Builders\SystemProblemsNotificationBuilder;
-use MikoPBX\Core\System\Mail\EmailNotificationService;
+use MikoPBX\Core\System\Mail\NotificationQueueHelper;
 use Phalcon\Di\Di;
 use Throwable;
 
@@ -40,7 +40,7 @@ class WorkerNotifyAdministrator extends WorkerBase
     /**
      * Starts the errors notifier worker.
      *
-     * @param array $argv The command-line arguments passed to the worker.
+     * @param array<int, string> $argv The command-line arguments passed to the worker.
      * @return void
      */
     public function start(array $argv): void
@@ -60,7 +60,7 @@ class WorkerNotifyAdministrator extends WorkerBase
                 ]);
                 $errorMessages = $restResponse->data['advice']['error'] ?? [];
                 if ($restResponse->success and $errorMessages !== []) {
-                    // Use new template system for beautiful admin notifications
+                    // Queue notification for async sending via WorkerNotifyByEmail
                     $adminEmail = PbxSettings::getValueByKey(PbxSettings::SYSTEM_NOTIFICATIONS_EMAIL);
 
                     if (!empty($adminEmail)) {
@@ -69,8 +69,12 @@ class WorkerNotifyAdministrator extends WorkerBase
                                 ->setProblems($errorMessages)
                                 ->setAdminUrl(self::buildAdminUrl('/admin-cabinet/'));
 
-                        $emailService = new EmailNotificationService();
-                        $emailService->sendNotification($builder);
+                        // Queue with critical priority (system problems are critical)
+                        NotificationQueueHelper::queueOrSend(
+                            $builder,
+                            async: true,
+                            priority: NotificationQueueHelper::PRIORITY_CRITICAL
+                        );
                     } else {
                         // Fallback to legacy if no admin email configured
                         Notifications::sendAdminNotification(['messageTpl' => 'adv_ThereIsSomeTroublesWithMikoPBX'], $errorMessages);
