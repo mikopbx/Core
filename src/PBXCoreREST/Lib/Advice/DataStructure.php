@@ -147,6 +147,13 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                     'enum' => ['critical', 'warning', 'info'],
                     'sanitize' => 'string',
                     'example' => 'warning'
+                ],
+                'force' => [
+                    'type' => 'boolean',
+                    'description' => 'rest_param_advice_force',
+                    'sanitize' => 'bool',
+                    'default' => false,
+                    'example' => true
                 ]
             ],
             'response' => [

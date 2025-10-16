@@ -25,11 +25,10 @@ use MikoPBX\PBXCoreREST\Lib\Advice\DataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
-    ApiParameter,
+    ApiParameterRef,
     ApiResponse,
     ApiDataSchema,
     SecurityType,
-    ParameterLocation,
     HttpMapping,
     ResourceSecurity
 };
@@ -88,22 +87,8 @@ class RestController extends BaseRestController
         description: 'rest_advice_GetListDesc',
         operationId: 'getAdviceList'
     )]
-    #[ApiParameter(
-        name: 'category',
-        type: 'string',
-        description: 'rest_param_advice_category',
-        in: ParameterLocation::QUERY,
-        enum: ['security', 'configuration', 'performance', 'maintenance', 'updates'],
-        example: 'security'
-    )]
-    #[ApiParameter(
-        name: 'severity',
-        type: 'string',
-        description: 'rest_param_advice_severity',
-        in: ParameterLocation::QUERY,
-        enum: ['critical', 'warning', 'info'],
-        example: 'warning'
-    )]
+    #[ApiParameterRef('category')]
+    #[ApiParameterRef('severity')]
     #[ApiResponse(200, 'rest_response_200_list')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -127,14 +112,7 @@ class RestController extends BaseRestController
         description: 'rest_advice_RefreshDesc',
         operationId: 'refreshAdvice'
     )]
-    #[ApiParameter(
-        name: 'force',
-        type: 'boolean',
-        description: 'rest_param_advice_force',
-        in: ParameterLocation::QUERY,
-        default: false,
-        example: true
-    )]
+    #[ApiParameterRef('force')]
     #[ApiResponse(200, 'rest_response_200_refreshed')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
