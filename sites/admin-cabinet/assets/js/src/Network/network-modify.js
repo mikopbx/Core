@@ -140,8 +140,9 @@ const networks = {
      * @param {object} ports - Port configuration object from API
      */
     updateNATHelpText(ports) {
+        // WHY: Port keys match PbxSettings constants (SIPPort, TLS_PORT, RTPPortFrom, RTPPortTo)
         // Only update if we have port values from server
-        if (!ports.SIP_PORT || !ports.TLS_PORT || !ports.RTP_PORT_FROM || !ports.RTP_PORT_TO) {
+        if (!ports.SIPPort || !ports.TLS_PORT || !ports.RTPPortFrom || !ports.RTPPortTo) {
             return;
         }
 
@@ -149,7 +150,7 @@ const networks = {
         const $sipPortValues = $('#nat-help-sip-ports .port-values');
         if ($sipPortValues.length > 0) {
             const sipText = i18n('nw_NATInfo3', {
-                'SIP_PORT': ports.SIP_PORT,
+                'SIP_PORT': ports.SIPPort,
                 'TLS_PORT': ports.TLS_PORT
             });
             $sipPortValues.html(sipText);
@@ -159,8 +160,8 @@ const networks = {
         const $rtpPortValues = $('#nat-help-rtp-ports .port-values');
         if ($rtpPortValues.length > 0) {
             const rtpText = i18n('nw_NATInfo4', {
-                'RTP_PORT_FROM': ports.RTP_PORT_FROM,
-                'RTP_PORT_TO': ports.RTP_PORT_TO
+                'RTP_PORT_FROM': ports.RTPPortFrom,
+                'RTP_PORT_TO': ports.RTPPortTo
             });
             $rtpPortValues.html(rtpText);
         }
@@ -171,8 +172,9 @@ const networks = {
      * @param {object} ports - Port configuration object from API
      */
     updatePortLabels(ports) {
+        // WHY: Port keys match PbxSettings constants (SIPPort, TLS_PORT)
         // Only update if we have port values from server
-        if (!ports.SIP_PORT || !ports.TLS_PORT) {
+        if (!ports.SIPPort || !ports.TLS_PORT) {
             return;
         }
 
@@ -180,7 +182,7 @@ const networks = {
         const $sipLabel = $('#external-sip-port-label');
         if ($sipLabel.length > 0) {
             const sipLabelText = i18n('nw_PublicSIPPort', {
-                'SIP_PORT': ports.SIP_PORT
+                'SIP_PORT': ports.SIPPort
             });
             $sipLabel.text(sipLabelText);
         }
@@ -390,20 +392,8 @@ const networks = {
             result.data.internet_interface = String($checkedRadio.val());
         }
 
-        // Map form field names to API field names for ports
-        const portFieldMapping = {
-            'externalSIPPort': 'EXTERNAL_SIP_PORT',
-            'externalTLSPort': 'EXTERNAL_TLS_PORT'
-        };
-
-        // Apply port field mapping
-        Object.keys(portFieldMapping).forEach(formField => {
-            const apiField = portFieldMapping[formField];
-            if (result.data[formField] !== undefined) {
-                result.data[apiField] = result.data[formField];
-                delete result.data[formField];
-            }
-        });
+        // WHY: No port field mapping needed - form field names match API constants
+        // (externalSIPPort = PbxSettings::EXTERNAL_SIP_PORT)
 
         return result;
     },
@@ -999,20 +989,11 @@ const networks = {
 
         // Set port settings
         if (data.ports) {
-            // Map API field names to form field names
-            const portFieldMapping = {
-                'EXTERNAL_SIP_PORT': 'externalSIPPort',
-                'EXTERNAL_TLS_PORT': 'externalTLSPort',
-                'SIP_PORT': 'SIP_PORT',
-                'TLS_PORT': 'TLS_PORT',
-                'RTP_PORT_FROM': 'RTP_PORT_FROM',
-                'RTP_PORT_TO': 'RTP_PORT_TO'
-            };
-
+            // WHY: No mapping needed - API returns keys matching form field names
+            // (e.g., 'externalSIPPort' from PbxSettings::EXTERNAL_SIP_PORT constant)
             Object.keys(data.ports).forEach(key => {
-                const formFieldName = portFieldMapping[key] || key;
                 const value = data.ports[key];
-                networks.$formObj.form('set value', formFieldName, value);
+                networks.$formObj.form('set value', key, value);
             });
 
             // Update the NAT help text and labels with actual port values

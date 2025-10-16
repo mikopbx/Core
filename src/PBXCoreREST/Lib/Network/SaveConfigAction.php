@@ -460,14 +460,14 @@ class SaveConfigAction
                     if (empty($value)) {
                         $value = PbxSettings::getValueByKey(PbxSettings::SIP_PORT);
                     }
-                    PbxSettings::setValueByKey($key, trim($value), $messages);
+                    PbxSettings::setValueByKey(PbxSettings::EXTERNAL_SIP_PORT, trim($value), $messages);
                     break;
 
                 case PbxSettings::EXTERNAL_TLS_PORT:
                     if (empty($value)) {
                         $value = PbxSettings::getValueByKey(PbxSettings::TLS_PORT);
                     }
-                    PbxSettings::setValueByKey($key, trim($value), $messages);
+                    PbxSettings::setValueByKey(PbxSettings::EXTERNAL_TLS_PORT, trim($value), $messages);
                     break;
 
                 default:

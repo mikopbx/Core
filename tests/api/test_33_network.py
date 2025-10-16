@@ -16,7 +16,19 @@ class TestNetworkConfig:
 
         # Verify configuration structure
         assert 'interfaces' in response['data'], "Configuration should include interfaces"
+        assert 'ports' in response['data'], "Configuration should include ports"
+
+        # Verify port keys use camelCase (matching PbxSettings constants)
+        ports = response['data']['ports']
+        assert 'externalSIPPort' in ports, "Ports should include externalSIPPort (camelCase)"
+        assert 'externalTLSPort' in ports, "Ports should include externalTLSPort (camelCase)"
+        assert 'SIPPort' in ports, "Ports should include SIPPort"
+        assert 'TLS_PORT' in ports, "Ports should include TLS_PORT"
+        assert 'RTPPortFrom' in ports, "Ports should include RTPPortFrom"
+        assert 'RTPPortTo' in ports, "Ports should include RTPPortTo"
+
         print(f"✓ Retrieved network configuration with {len(response['data'].get('interfaces', []))} interfaces")
+        print(f"  Port keys: {', '.join(ports.keys())}")
 
     def test_02_get_nat_settings(self, api_client):
         """GET NAT settings"""
@@ -28,6 +40,53 @@ class TestNetworkConfig:
         print(f"✓ Retrieved NAT settings")
         if 'externalip' in data and data['externalip']:
             print(f"  External IP: {data['externalip']}")
+
+    def test_03_save_external_ports(self, api_client):
+        """Save external SIP/TLS ports using correct field names"""
+        # Get current config
+        response = api_client.get('network:getConfig')
+        assert_api_success(response, "Failed to get current config")
+
+        original_config = response['data']
+        original_ports = original_config['ports']
+        original_nat = original_config.get('nat', {})
+        original_sip = original_ports.get('externalSIPPort', '5060')
+        original_tls = original_ports.get('externalTLSPort', '5061')
+
+        # Save config with modified ports using camelCase keys
+        save_data = {
+            'staticRoutes': original_config.get('staticRoutes', []),
+            'externalSIPPort': '5063',  # WHY: camelCase matches PbxSettings::EXTERNAL_SIP_PORT
+            'externalTLSPort': '5062',
+            'usenat': True,
+            'exthostname': 'mikopbxtest.localhost',  # WHY: Required when NAT enabled
+            'autoUpdateExternalIp': False
+        }
+
+        response = api_client.post('network:saveConfig', save_data)
+        assert_api_success(response, "Failed to save ports configuration")
+
+        # Verify ports were saved
+        verify = api_client.get('network:getConfig')
+        saved_ports = verify['data']['ports']
+
+        assert saved_ports['externalSIPPort'] == '5063', "externalSIPPort should be saved"
+        assert saved_ports['externalTLSPort'] == '5062', "externalTLSPort should be saved"
+
+        print(f"✓ Saved external ports: SIP={saved_ports['externalSIPPort']}, TLS={saved_ports['externalTLSPort']}")
+
+        # Restore original values
+        restore_data = {
+            'staticRoutes': verify['data'].get('staticRoutes', []),
+            'externalSIPPort': original_sip,
+            'externalTLSPort': original_tls,
+            'usenat': original_nat.get('usenat', False),
+            'exthostname': original_nat.get('exthostname', ''),
+            'extipaddr': original_nat.get('extipaddr', ''),
+            'autoUpdateExternalIp': original_nat.get('AUTO_UPDATE_EXTERNAL_IP', False)
+        }
+        api_client.post('network:saveConfig', restore_data)
+        print(f"  Restored original ports: SIP={original_sip}, TLS={original_tls}")
 
 
 class TestStaticRoutes:

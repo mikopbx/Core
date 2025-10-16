@@ -144,6 +144,76 @@ return [
     'rest_net_GetNatSettings' => 'Получить настройки NAT',
     'rest_net_GetNatSettingsDesc' => 'Получить настройки NAT и STUN для корректной работы VoIP через NAT',
 
+    // Network REST API - Request Parameters
+    'rest_param_net_interfaces' => 'Массив сетевых интерфейсов для сохранения',
+    'rest_param_net_static_routes' => 'Массив статических маршрутов',
+
+    // Network REST API - Response Schemas (Field Descriptions)
+    'rest_schema_net_id' => 'Уникальный идентификатор интерфейса',
+    'rest_schema_net_interface' => 'Имя физического интерфейса',
+    'rest_schema_net_name' => 'Пользовательское название интерфейса',
+    'rest_schema_net_vlanid' => 'ID VLAN (0-4095, 0=без VLAN)',
+    'rest_schema_net_ipaddr' => 'IP адрес интерфейса',
+    'rest_schema_net_subnet' => 'Маска подсети',
+    'rest_schema_net_gateway' => 'Шлюз по умолчанию',
+    'rest_schema_net_hostname' => 'Имя хоста системы',
+    'rest_schema_net_domain' => 'Доменное имя',
+    'rest_schema_net_primarydns' => 'Первичный DNS сервер',
+    'rest_schema_net_secondarydns' => 'Вторичный DNS сервер',
+    'rest_schema_net_dhcp' => 'Использовать DHCP (0=нет, 1=да)',
+    'rest_schema_net_internet' => 'Интернет-интерфейс (0=нет, 1=да)',
+    'rest_schema_net_disabled' => 'Интерфейс отключен (0=нет, 1=да)',
+    'rest_schema_net_topology' => 'Топология сети (public/private)',
+    'rest_schema_net_extipaddr' => 'Внешний IP адрес для NAT',
+    'rest_schema_net_exthostname' => 'Внешний hostname для NAT',
+    'rest_schema_net_is_deletable' => 'Можно ли удалить интерфейс',
+    'rest_schema_net_is_internet' => 'Является ли интернет-интерфейсом',
+    'rest_schema_net_is_dhcp' => 'Использует ли DHCP',
+
+    // Network REST API - Complex Object Schemas
+    'rest_schema_net_interface_list_item' => 'Элемент списка сетевых интерфейсов',
+    'rest_schema_net_interface_detail' => 'Детальная информация о сетевом интерфейсе',
+    'rest_schema_net_config' => 'Полная конфигурация сети',
+    'rest_schema_net_config_interfaces' => 'Массив сетевых интерфейсов',
+    'rest_schema_net_config_template' => 'Шаблон для создания нового интерфейса',
+    'rest_schema_net_config_internet_interface_id' => 'ID интернет-интерфейса',
+    'rest_schema_net_config_deletable_interfaces' => 'Список удаляемых интерфейсов',
+    'rest_schema_net_config_nat' => 'Настройки NAT',
+    'rest_schema_net_config_ports' => 'Настройки портов',
+    'rest_schema_net_config_settings' => 'Дополнительные настройки сети',
+    'rest_schema_net_config_is_docker' => 'Работает ли в Docker контейнере',
+    'rest_schema_net_config_static_routes' => 'Статические маршруты',
+
+    // Network REST API - NAT Settings
+    'rest_schema_net_nat_usenat' => 'Использовать NAT',
+    'rest_schema_net_nat_extipaddr' => 'Внешний IP адрес',
+    'rest_schema_net_nat_exthostname' => 'Внешний hostname',
+    'rest_schema_net_nat_auto_update' => 'Автоматически обновлять внешний IP',
+
+    // Network REST API - Port Settings
+    'rest_schema_net_ports_sip' => 'Внутренний SIP порт',
+    'rest_schema_net_ports_external_sip' => 'Внешний SIP порт',
+    'rest_schema_net_ports_tls' => 'Внутренний TLS порт',
+    'rest_schema_net_ports_external_tls' => 'Внешний TLS порт',
+    'rest_schema_net_ports_rtp_from' => 'Начало диапазона RTP портов',
+    'rest_schema_net_ports_rtp_to' => 'Конец диапазона RTP портов',
+
+    // Network REST API - Additional Settings
+    'rest_schema_net_settings_hostname' => 'Имя хоста',
+    'rest_schema_net_settings_domain' => 'Доменное имя',
+    'rest_schema_net_settings_gateway' => 'Шлюз по умолчанию',
+    'rest_schema_net_settings_primarydns' => 'Первичный DNS',
+    'rest_schema_net_settings_secondarydns' => 'Вторичный DNS',
+
+    // Network REST API - Static Routes
+    'rest_schema_net_route_id' => 'ID маршрута',
+    'rest_schema_net_route_network' => 'Сеть назначения',
+    'rest_schema_net_route_subnet' => 'Маска подсети (CIDR)',
+    'rest_schema_net_route_gateway' => 'Шлюз для маршрута',
+    'rest_schema_net_route_interface' => 'Интерфейс для маршрута',
+    'rest_schema_net_route_description' => 'Описание маршрута',
+    'rest_schema_net_route_priority' => 'Приоритет маршрута',
+
     // ============================================================================
     // OpenAPI Documentation REST API
     // ============================================================================

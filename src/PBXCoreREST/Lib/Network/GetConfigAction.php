@@ -170,13 +170,15 @@ class GetConfigAction
             ];
 
             // Get port settings
+            // WHY: Use constant values as keys (e.g., 'externalSIPPort' not 'EXTERNAL_SIP_PORT')
+            // This matches SaveConfigAction expectations and eliminates JS mapping
             $portSettings = [
-                'SIP_PORT' => PbxSettings::getValueByKey(PbxSettings::SIP_PORT),
-                'EXTERNAL_SIP_PORT' => PbxSettings::getValueByKey(PbxSettings::EXTERNAL_SIP_PORT),
-                'TLS_PORT' => PbxSettings::getValueByKey(PbxSettings::TLS_PORT),
-                'EXTERNAL_TLS_PORT' => PbxSettings::getValueByKey(PbxSettings::EXTERNAL_TLS_PORT),
-                'RTP_PORT_FROM' => PbxSettings::getValueByKey(PbxSettings::RTP_PORT_FROM),
-                'RTP_PORT_TO' => PbxSettings::getValueByKey(PbxSettings::RTP_PORT_TO),
+                PbxSettings::SIP_PORT => PbxSettings::getValueByKey(PbxSettings::SIP_PORT),
+                PbxSettings::EXTERNAL_SIP_PORT => PbxSettings::getValueByKey(PbxSettings::EXTERNAL_SIP_PORT),
+                PbxSettings::TLS_PORT => PbxSettings::getValueByKey(PbxSettings::TLS_PORT),
+                PbxSettings::EXTERNAL_TLS_PORT => PbxSettings::getValueByKey(PbxSettings::EXTERNAL_TLS_PORT),
+                PbxSettings::RTP_PORT_FROM => PbxSettings::getValueByKey(PbxSettings::RTP_PORT_FROM),
+                PbxSettings::RTP_PORT_TO => PbxSettings::getValueByKey(PbxSettings::RTP_PORT_TO),
             ];
 
             // Get additional settings

@@ -26,6 +26,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
     ApiParameter,
+    ApiParameterRef,
     ApiResponse,
     ApiDataSchema,
     SecurityType,
@@ -169,6 +170,8 @@ class RestController extends BaseRestController
     /**
      * Save complete network configuration
      *
+     * ✨ Uses ApiParameterRef to reference DataStructure definitions - Single Source of Truth
+     *
      * @route POST /pbxcore/api/v3/network:saveConfig
      */
     #[ApiOperation(
@@ -176,59 +179,15 @@ class RestController extends BaseRestController
         description: 'rest_net_SaveConfigDesc',
         operationId: 'saveNetworkConfiguration'
     )]
-    #[ApiParameter(
-        name: 'interfaces',
-        type: 'array',
-        description: 'rest_param_net_interfaces',
-        in: ParameterLocation::QUERY,
-        required: true,
-        example: '[{"id":"1","dhcp":true,"interface":"eth0"},{"id":"2","dhcp":false,"interface":"eth1","ipaddr":"192.168.1.1","subnet":"255.255.255.0"}]'
-    )]
-    #[ApiParameter(
-        name: 'gateway',
-        type: 'string',
-        description: 'rest_param_net_gateway',
-        in: ParameterLocation::QUERY,
-        required: false,
-        pattern: '^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$',
-        example: '192.168.1.1'
-    )]
-    #[ApiParameter(
-        name: 'primarydns',
-        type: 'string',
-        description: 'rest_param_net_primarydns',
-        in: ParameterLocation::QUERY,
-        required: false,
-        pattern: '^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$',
-        example: '8.8.8.8'
-    )]
-    #[ApiParameter(
-        name: 'secondarydns',
-        type: 'string',
-        description: 'rest_param_net_secondarydns',
-        in: ParameterLocation::QUERY,
-        required: false,
-        pattern: '^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$',
-        example: '8.8.4.4'
-    )]
-    #[ApiParameter(
-        name: 'hostname',
-        type: 'string',
-        description: 'rest_param_net_hostname',
-        in: ParameterLocation::QUERY,
-        required: false,
-        maxLength: 255,
-        example: 'mikopbx-server'
-    )]
-    #[ApiParameter(
-        name: 'domain',
-        type: 'string',
-        description: 'rest_param_net_domain',
-        in: ParameterLocation::QUERY,
-        required: false,
-        maxLength: 255,
-        example: 'example.com'
-    )]
+    #[ApiParameterRef('interfaces', required: true)]
+    #[ApiParameterRef('staticRoutes')]
+    #[ApiParameterRef('gateway')]
+    #[ApiParameterRef('primarydns')]
+    #[ApiParameterRef('secondarydns')]
+    #[ApiParameterRef('hostname')]
+    #[ApiParameterRef('domain')]
+    #[ApiParameterRef('extipaddr')]
+    #[ApiParameterRef('exthostname')]
     #[ApiResponse(200, 'rest_response_200_updated')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
