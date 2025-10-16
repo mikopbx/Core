@@ -129,6 +129,7 @@ trait PbxSettingsDefaultValuesTrait
             PbxSettings::SYSTEM_NOTIFICATIONS_EMAIL => '',
             PbxSettings::SYSTEM_EMAIL_FOR_MISSED => '',
             PbxSettings::SEND_METRICS => '1',
+            PbxSettings::SEND_LOGIN_NOTIFICATIONS => '0', // Disabled by default for privacy
             PbxSettings::CLOUD_INSTANCE_ID => '',
             PbxSettings::DISABLE_ALL_MODULES => '0',
             PbxSettings::PBX_LICENSE => '',

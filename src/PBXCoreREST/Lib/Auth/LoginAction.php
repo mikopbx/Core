@@ -28,6 +28,10 @@ use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\AdminCabinet\Controllers\SessionController;
+use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\System\BeanstalkClient;
+use MikoPBX\Core\System\SystemMessages;
+use MikoPBX\Core\Workers\WorkerNotifyByEmail;
 use Phalcon\Di\Di;
 use Phalcon\Encryption\Security\Random;
 
@@ -208,6 +212,9 @@ class LoginAction
 
         $res->success = true;
 
+        // Send login notification email if enabled
+        self::sendLoginNotification($userId, $clientIp, $userAgent);
+
         return $res;
     }
 
@@ -265,5 +272,61 @@ class LoginAction
         $count = (int)$adapter->zScore($key, $clientIp);
 
         return max(self::MAX_ATTEMPTS - $count, 0);
+    }
+
+    /**
+     * Queue login notification for background processing
+     *
+     * Adds notification job to Beanstalk queue with deduplication.
+     * This ensures login process is not blocked by email sending.
+     *
+     * @param string $userId Username that logged in
+     * @param string $clientIp Client IP address
+     * @param string $userAgent Browser user agent
+     * @return void
+     */
+    private static function sendLoginNotification(string $userId, string $clientIp, string $userAgent): void
+    {
+        try {
+            // Check if login notifications are enabled
+            if (PbxSettings::getValueByKey(PbxSettings::SEND_LOGIN_NOTIFICATIONS) !== '1') {
+                SystemMessages::sysLogMsg(__METHOD__, 'Login notifications disabled in settings', LOG_DEBUG);
+                return;
+            }
+
+            // Get system email for notifications
+            $systemEmail = PbxSettings::getValueByKey(PbxSettings::SYSTEM_NOTIFICATIONS_EMAIL);
+            if (empty($systemEmail)) {
+                SystemMessages::sysLogMsg(__METHOD__, 'No system email configured for login notifications', LOG_WARNING);
+                return;
+            }
+
+            // Queue notification job for WorkerNotifyByEmail
+            // Use special type 'login' to distinguish from missed calls
+            $notificationData = [
+                [
+                    'type' => 'login',  // Special type for login notifications
+                    'email' => $systemEmail,
+                    'username' => $userId,
+                    'ip_address' => $clientIp,
+                    'user_agent' => $userAgent,
+                    'login_time' => date('Y-m-d H:i:s T'),
+                    'timestamp' => time(),
+                ]
+            ];
+
+            // Send to Beanstalk queue (WorkerNotifyByEmail will handle deduplication)
+            $client = new BeanstalkClient(WorkerNotifyByEmail::class);
+            if ($client->isConnected()) {
+                $client->publish(json_encode($notificationData));
+                SystemMessages::sysLogMsg(__METHOD__, "Login notification queued for: {$systemEmail}", LOG_INFO);
+            } else {
+                SystemMessages::sysLogMsg(__METHOD__, "Failed to connect to Beanstalk for login notification", LOG_WARNING);
+            }
+
+        } catch (\Throwable $e) {
+            // Don't fail login if notification queueing fails
+            SystemMessages::sysLogMsg(__METHOD__, "Exception queueing login notification: " . $e->getMessage(), LOG_WARNING);
+        }
     }
 }

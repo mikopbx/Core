@@ -514,6 +514,19 @@ return [
     'ms_EmailNotification_DiskSpace_GoToAdminPanel' => 'Перейти в панель администратора',
     'ms_EmailNotification_DiskSpace_HelpText' => 'Пожалуйста, освободите место на диске, удалив старые записи, логи или ненужные файлы. Если требуется помощь, обратитесь к системному администратору.',
 
+    // Login Notification
+    'ms_EmailNotification_Login_Subject' => 'Вход в панель администратора',
+    'ms_EmailNotification_Login_Preheader' => 'Обнаружен новый вход в систему',
+    'ms_EmailNotification_Login_Message' => 'Выполнен вход в панель администратора вашей системы MikoPBX.',
+    'ms_EmailNotification_Login_Username' => 'Пользователь',
+    'ms_EmailNotification_Login_IPAddress' => 'IP адрес',
+    'ms_EmailNotification_Login_Time' => 'Время',
+    'ms_EmailNotification_Login_Browser' => 'Браузер',
+    'ms_EmailNotification_Login_SecurityNotice' => 'Уведомление о безопасности',
+    'ms_EmailNotification_Login_SecurityAction' => 'Если этот вход не был авторизован вами, немедленно смените пароль и проверьте настройки безопасности системы.',
+    'ms_EmailNotification_Login_GoToAdminPanel' => 'Перейти в панель администратора',
+    'ms_EmailNotification_Login_HelpText' => 'Это уведомление отправляется при каждом входе в панель администратора. Вы можете отключить эти уведомления в настройках системы.',
+
     // Email footer
     'ms_EmailNotification_Footer_AutomatedNotification' => 'Это автоматическое уведомление от вашей системы MikoPBX.',
     'ms_EmailNotification_Footer_PoweredBy' => 'Работает на',

@@ -54,6 +54,9 @@ enum NotificationType: string
     /** System and modules updates available */
     case SYSTEM_UPDATES = 'system_updates';
 
+    /** Admin panel login notification */
+    case LOGIN_NOTIFICATION = 'login_notification';
+
     /**
      * Get gradient color scheme for email header
      *
@@ -97,6 +100,10 @@ enum NotificationType: string
                 'start' => '#6c5ce7',  // Purple - updates
                 'end' => '#a29bfe'
             ],
+            self::LOGIN_NOTIFICATION => [
+                'start' => '#0984e3',  // Blue - security/authentication
+                'end' => '#74b9ff'
+            ],
         };
     }
 
@@ -119,6 +126,7 @@ enum NotificationType: string
             self::SIP_CREDENTIALS => '✅',
             self::SMTP_TEST => '🧪',
             self::SYSTEM_UPDATES => '🔄',
+            self::LOGIN_NOTIFICATION => '🔑',
         };
     }
 
@@ -141,6 +149,7 @@ enum NotificationType: string
             self::SIP_CREDENTIALS => 'Your SIP Credentials',
             self::SMTP_TEST => 'SMTP Test Successful',
             self::SYSTEM_UPDATES => 'Updates Available',
+            self::LOGIN_NOTIFICATION => 'Admin Panel Login',
         };
     }
 

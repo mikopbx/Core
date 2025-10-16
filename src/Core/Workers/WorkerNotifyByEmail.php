@@ -24,6 +24,7 @@ require_once 'Globals.php';
 
 use MikoPBX\Core\System\{BeanstalkClient, MikoPBXConfig, Notifications, SystemMessages, Util};
 use MikoPBX\Core\System\Mail\Builders\MissedCallNotificationBuilder;
+use MikoPBX\Core\System\Mail\Builders\LoginNotificationBuilder;
 use MikoPBX\Core\System\Mail\EmailNotificationService;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\PbxSettings;
@@ -60,6 +61,10 @@ class WorkerNotifyByEmail extends WorkerBase
     /**
      * The main worker method for sending email notifications.
      *
+     * Handles two types of notifications:
+     * - Login notifications: type='login', contains username, IP, user agent
+     * - Missed call notifications: contains from_number, to_number, start time
+     *
      * @param mixed $message The message received from Beanstalkd.
      * @return void
      */
@@ -70,6 +75,14 @@ class WorkerNotifyByEmail extends WorkerBase
 
         /** @var BeanstalkClient $message */
         $data = json_decode($message->getBody(), true);
+
+        // Check if this is a login notification
+        if (isset($data[0]['type']) && $data[0]['type'] === 'login') {
+            $this->handleLoginNotifications($data, $notifier);
+            return;
+        }
+
+        // Otherwise handle as missed call notifications
 
         $template_body = PbxSettings::getValueByKey(PbxSettings::MAIL_TPL_MISSED_CALL_BODY);
         $template_subject = PbxSettings::getValueByKey(PbxSettings::MAIL_TPL_MISSED_CALL_SUBJECT);
@@ -145,6 +158,84 @@ class WorkerNotifyByEmail extends WorkerBase
                 $notifier->sendMail($to, $subject, $body);
             }
         }
+        sleep(1);
+    }
+
+    /**
+     * Handle login notifications with deduplication
+     *
+     * Processes login notification jobs from queue. Implements deduplication
+     * to prevent sending multiple emails for rapid repeated logins.
+     *
+     * @param array<int, array<string, mixed>> $notifications Array of login notification data
+     * @param Notifications $notifier Notification service instance
+     * @return void
+     */
+    private function handleLoginNotifications(array $notifications, Notifications $notifier): void
+    {
+        $emailService = new EmailNotificationService();
+
+        // Deduplicate by email + username + IP within 5-minute window
+        $deduplicationKey = [];
+        $now = time();
+
+        foreach ($notifications as $notification) {
+            $email = $notification['email'] ?? '';
+            $username = $notification['username'] ?? '';
+            $ipAddress = $notification['ip_address'] ?? '';
+            $timestamp = $notification['timestamp'] ?? $now;
+
+            // Create deduplication key: email + username + IP + 5-minute window
+            $window = floor($timestamp / 300) * 300; // 5-minute intervals
+            $keyHash = md5($email . $username . $ipAddress . $window);
+
+            // Skip if already sent in this window
+            if (in_array($keyHash, $deduplicationKey, true)) {
+                SystemMessages::sysLogMsg(__METHOD__, "Skipping duplicate login notification for {$username} from {$ipAddress}", LOG_DEBUG);
+                continue;
+            }
+
+            $deduplicationKey[] = $keyHash;
+
+            if (empty($email)) {
+                SystemMessages::sysLogMsg(__METHOD__, "Skipping login notification - no email provided", LOG_WARNING);
+                continue;
+            }
+
+            // Get admin panel URL
+            $webPort = PbxSettings::getValueByKey(PbxSettings::WEB_PORT);
+            $webHttpsPort = PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PORT);
+            $externalIp = PbxSettings::getValueByKey(PbxSettings::EXTERNAL_SIP_IP_ADDR);
+
+            if (!empty($webHttpsPort) && $webHttpsPort !== '443') {
+                $adminUrl = "https://{$externalIp}:{$webHttpsPort}/admin-cabinet/";
+            } elseif (!empty($webHttpsPort)) {
+                $adminUrl = "https://{$externalIp}/admin-cabinet/";
+            } elseif (!empty($webPort) && $webPort !== '80') {
+                $adminUrl = "http://{$externalIp}:{$webPort}/admin-cabinet/";
+            } else {
+                $adminUrl = "http://{$externalIp}/admin-cabinet/";
+            }
+
+            // Build notification
+            $builder = new LoginNotificationBuilder();
+            $builder->setRecipient($email)
+                    ->setUsername($username)
+                    ->setIpAddress($ipAddress)
+                    ->setUserAgent($notification['user_agent'] ?? 'Unknown')
+                    ->setLoginTime($notification['login_time'] ?? date('Y-m-d H:i:s T'))
+                    ->setAdminUrl($adminUrl);
+
+            // Send email
+            $result = $emailService->sendNotification($builder, $notifier);
+
+            if ($result) {
+                SystemMessages::sysLogMsg(__METHOD__, "Login notification sent successfully to: {$email}", LOG_INFO);
+            } else {
+                SystemMessages::sysLogMsg(__METHOD__, "Failed to send login notification to: {$email}", LOG_WARNING);
+            }
+        }
+
         sleep(1);
     }
 

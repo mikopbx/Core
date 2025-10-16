@@ -471,6 +471,19 @@ return [
     'ms_EmailNotification_DiskSpace_GoToAdminPanel' => 'Go to Admin Panel',
     'ms_EmailNotification_DiskSpace_HelpText' => 'Please free up disk space by removing old recordings, logs, or unnecessary files. If you need assistance, contact your system administrator.',
 
+    // Login Notification
+    'ms_EmailNotification_Login_Subject' => 'Admin Panel Login',
+    'ms_EmailNotification_Login_Preheader' => 'New login detected to your system',
+    'ms_EmailNotification_Login_Message' => 'A login to your MikoPBX admin panel has been detected.',
+    'ms_EmailNotification_Login_Username' => 'Username',
+    'ms_EmailNotification_Login_IPAddress' => 'IP Address',
+    'ms_EmailNotification_Login_Time' => 'Time',
+    'ms_EmailNotification_Login_Browser' => 'Browser',
+    'ms_EmailNotification_Login_SecurityNotice' => 'Security Notice',
+    'ms_EmailNotification_Login_SecurityAction' => 'If this login was not authorized by you, please change your password immediately and review your system security settings.',
+    'ms_EmailNotification_Login_GoToAdminPanel' => 'Go to Admin Panel',
+    'ms_EmailNotification_Login_HelpText' => 'This notification is sent every time someone logs into the admin panel. You can disable these notifications in system settings.',
+
     // Email footer
     'ms_EmailNotification_Footer_AutomatedNotification' => 'This is an automated notification from your MikoPBX system.',
     'ms_EmailNotification_Footer_PoweredBy' => 'Powered by',

@@ -270,6 +270,8 @@ trait PbxSettingsConstantsTrait
     public const string SEND_METRICS = 'SendMetrics';
     /** @FieldType('boolean') */
     public const string DISABLE_ALL_MODULES = 'DisableAllModules'; // Disable all modules if it set to '1'
+    /** @FieldType('boolean') */
+    public const string SEND_LOGIN_NOTIFICATIONS = 'SendLoginNotifications'; // Send email notification on admin panel login
     /** @FieldType('string') */
     public const string NTP_SERVER = 'NTPServer';
     /** @FieldType('string') */
