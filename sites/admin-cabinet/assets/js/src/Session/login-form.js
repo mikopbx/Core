@@ -265,7 +265,9 @@ const loginForm = {
             if (!startResponse.result || !startResponse.data) {
                 loginForm.$submitButton.removeClass('loading disabled');
                 loginForm.$passkeyButton.removeClass('loading disabled');
-                loginForm.showError(startResponse.messages || [globalTranslate.pk_LoginError]);
+                // Extract error message from response
+                const errorMessage = startResponse.messages?.error?.[0] || globalTranslate.pk_LoginError;
+                loginForm.showError([errorMessage]);
                 return;
             }
 
@@ -289,7 +291,9 @@ const loginForm = {
                 // Start session via SessionController
                 await loginForm.createSessionFromPasskey(finishResponse.data);
             } else {
-                loginForm.showError(finishResponse.messages || [globalTranslate.pk_LoginError]);
+                // Extract error messages from response
+                const errorMessage = finishResponse.messages?.error?.[0] || globalTranslate.pk_LoginError;
+                loginForm.showError([errorMessage]);
             }
         } catch (error) {
             loginForm.$submitButton.removeClass('loading disabled');
@@ -302,8 +306,15 @@ const loginForm = {
                 return;
             }
 
-            // Real error - show message
-            loginForm.showError([`${globalTranslate.pk_LoginError}: ${error.message}`]);
+            // Extract error message from API response or use default
+            let errorMessage = globalTranslate.pk_LoginError;
+            if (error.responseJSON?.messages?.error?.[0]) {
+                errorMessage = error.responseJSON.messages.error[0];
+            } else if (error.message) {
+                errorMessage = `${globalTranslate.pk_LoginError}: ${error.message}`;
+            }
+
+            loginForm.showError([errorMessage]);
         }
     },
 
@@ -332,11 +343,15 @@ const loginForm = {
                 // Test refresh token cookie before redirect
                 loginForm.testRefreshAndRedirect();
             } else {
-                loginForm.showError(response.messages || [globalTranslate.pk_LoginError]);
+                // Extract error message from response
+                const errorMessage = response.messages?.error?.[0] || globalTranslate.pk_LoginError;
+                loginForm.showError([errorMessage]);
             }
         } catch (error) {
             console.error('Passkey login error:', error);
-            loginForm.showError([globalTranslate.pk_LoginError]);
+            // Extract error message from API response or use default
+            const errorMessage = error.responseJSON?.messages?.error?.[0] || globalTranslate.pk_LoginError;
+            loginForm.showError([errorMessage]);
         }
     },
 
