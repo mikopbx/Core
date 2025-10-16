@@ -4,8 +4,6 @@
         <div class="ui vertical fluid tabular menu" id="mail-settings-menu">
             <a class="item active" data-tab="general">{{ t._('ms_GeneralSettings') }}</a>
             <a class="item" data-tab="smtp">{{ t._('ms_SMTPSettings') }}</a>
-            <a class="item" data-tab="missed">{{ t._('ms_NotificationTemplatesMissed') }}</a>
-            <a class="item" data-tab="voicemail">{{ t._('ms_NotificationTemplatesVoicemail') }}</a>
             {{ partial("PbxExtensionModules/hookVoltBlock",
                 ['arrayOfPartials':hookVoltBlock('TabularMenu')])
             }}
@@ -26,13 +24,81 @@
                 </div>
             </div>
 
-            {# System notifications email #}
+            {# Notification type toggles - shown only when MailEnableNotifications is enabled #}
+            <div id="notification-types-section">
+                <div class="field">
+                    <div class="ui segment">
+                        <div class="ui toggle checkbox">
+                            {{ form.render('SendMissedCallNotifications') }}
+                            <label for="SendMissedCallNotifications">{{ t._('ms_SendMissedCallNotifications') }}
+                                <i class="small info circle icon field-info-icon" data-field="SendMissedCallNotifications"></i>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field max-width-400">
+                    <label>{{ t._('ms_SystemEmailForMissed') }}
+                        <i class="small info circle icon field-info-icon" data-field="SystemEmailForMissed"></i>
+                    </label>
+                    {{ form.render('SystemEmailForMissed') }}
+                </div>
+
+                <div class="field">
+                    <div class="ui segment">
+                        <div class="ui toggle checkbox">
+                            {{ form.render('SendVoicemailNotifications') }}
+                            <label for="SendVoicemailNotifications">{{ t._('ms_SendVoicemailNotifications') }}
+                                <i class="small info circle icon field-info-icon" data-field="SendVoicemailNotifications"></i>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field max-width-400">
+                    <label>{{ t._('ms_VoicemailCommonEmail') }}
+                        <i class="small info circle icon field-info-icon" data-field="VoicemailNotificationsEmail"></i>
+                    </label>
+                    {{ form.render('VoicemailNotificationsEmail') }}
+                </div>
+
+                <div class="field">
+                    <div class="ui segment">
+                        <div class="ui toggle checkbox">
+                            {{ form.render('SendLoginNotifications') }}
+                            <label for="SendLoginNotifications">{{ t._('ms_SendLoginNotifications') }}
+                                <i class="small info circle icon field-info-icon" data-field="SendLoginNotifications"></i>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="ui segment">
+                        <div class="ui toggle checkbox">
+                            {{ form.render('SendSystemNotifications') }}
+                            <label for="SendSystemNotifications">{{ t._('ms_SendSystemNotifications') }}
+                                <i class="small info circle icon field-info-icon" data-field="SendSystemNotifications"></i>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {# Email addresses section - always visible #}
+
             <div class="field max-width-400">
                 <label>{{ t._('ms_MailSysadminEmail') }}
                     <i class="small info circle icon field-info-icon" data-field="SystemNotificationsEmail"></i>
                 </label>
                 {{ form.render('SystemNotificationsEmail') }}
             </div>
+
+            {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('GeneralTabFields')]) }}
+        </div>
+
+        {# SMTP settings tab #}
+        <div class="ui tab segment" data-tab="smtp">
 
             {# Sender settings section #}
             <div class="two fields">
@@ -45,12 +111,6 @@
                     {{ form.render('MailSMTPFromUsername') }}
                 </div>
             </div>
-
-            {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('GeneralTabFields')]) }}
-        </div>
-
-        {# SMTP settings tab #}
-        <div class="ui tab segment" data-tab="smtp">
 
             {# Authentication section - moved to top #}
             <div class="smtp-auth-section">
@@ -154,6 +214,7 @@
                 </div>
             </div>
 
+
             <div class="ui segment">
                 <h4 class="ui header">{{ t._('ms_TestMailSettings') }}</h4>
                 <div class="field">
@@ -169,30 +230,6 @@
             </div>
 
             {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('SMTPTabFields')]) }}
-        </div>
-
-        {# Missed calls template tab #}
-        <div class="ui tab segment" data-tab="missed">
-            <div class="field max-width-400">
-                <label>{{ t._('ms_SystemEmailForMissed') }}
-                    <i class="small info circle icon field-info-icon" data-field="SystemEmailForMissed"></i>
-                </label>
-                {{ form.render('SystemEmailForMissed') }}
-            </div>
-
-            {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('MissedTabFields')]) }}
-        </div>
-
-        {# Voicemail template tab #}
-        <div class="ui tab segment" data-tab="voicemail">
-            <div class="field max-width-400">
-                <label for="VoicemailNotificationsEmail">{{ t._('ms_VoicemailCommonEmail') }}
-                    <i class="small info circle icon field-info-icon" data-field="VoicemailNotificationsEmail"></i>
-                </label>
-                {{ form.render('VoicemailNotificationsEmail') }}
-            </div>
-
-            {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('VoicemailTabFields')]) }}
         </div>
 
         {{ partial("PbxExtensionModules/hookVoltBlock",

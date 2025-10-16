@@ -1115,6 +1115,13 @@ return [
     'rest_schema_cdr_src_call_id' => 'Call-ID источника',
     'rest_schema_cdr_dst_call_id' => 'Call-ID назначения',
     'rest_schema_cdr_verbose_call_id' => 'Подробный Call-ID',
+    'rest_schema_cdr_limit' => 'Максимальное количество CDR записей для выборки',
+    'rest_schema_cdr_offset' => 'Смещение для пагинации CDR записей',
+    'rest_schema_cdr_dateFrom' => 'Дата начала периода выборки CDR записей',
+    'rest_schema_cdr_dateTo' => 'Дата окончания периода выборки CDR записей',
+    'rest_schema_cdr_view' => 'Путь к файлу записи разговора для просмотра',
+    'rest_schema_cdr_download' => 'Скачать файл вместо потокового воспроизведения',
+    'rest_schema_cdr_filename' => 'Имя файла для скачивания',
 
     // CallQueues schema field descriptions
     'rest_schema_cq_id' => 'Уникальный идентификатор очереди',
@@ -1308,6 +1315,15 @@ return [
     'rest_param_cr_name' => 'Название конференц-комнаты',
     'rest_param_cr_extension' => 'Добавочный номер для входа в конференцию (2-8 цифр)',
     'rest_param_cr_pincode' => 'PIN-код для доступа к конференции',
+    'rest_param_cr_description' => 'Описание конференц-комнаты',
+
+    // Conference Rooms schema fields
+    'rest_schema_cr_id' => 'Уникальный идентификатор конференц-комнаты',
+    'rest_schema_cr_name' => 'Название конференц-комнаты',
+    'rest_schema_cr_extension' => 'Добавочный номер для входа в конференцию',
+    'rest_schema_cr_pincode' => 'PIN-код для доступа к конференции',
+    'rest_schema_cr_description' => 'Описание конференц-комнаты',
+    'rest_schema_cr_represent' => 'HTML представление конференц-комнаты для UI',
 
     // Passkeys specific parameters
     'rest_param_pk_login' => 'Имя пользователя для проверки наличия passkeys',
@@ -1322,6 +1338,34 @@ return [
     'rest_param_lic_coupon' => 'Промо-код или купон для активации функций',
     'rest_param_lic_productId' => 'Идентификатор продукта (модуля)',
     'rest_param_lic_featureId' => 'Идентификатор функции для захвата',
+
+    // License schema field descriptions
+    'rest_schema_lic_licKey' => 'Лицензионный ключ в формате MIKO-XXXXX-XXXXX-XXXXX-XXXXX',
+    'rest_schema_lic_coupon' => 'Промо-код в формате MIKOUPD-XXXXX-XXXXX-XXXXX-XXXXX',
+    'rest_schema_lic_productId_param' => 'Идентификатор продукта (модуля)',
+    'rest_schema_lic_featureId_param' => 'Идентификатор функции для захвата',
+    'rest_schema_lic_licenseKey' => 'Активный лицензионный ключ системы',
+    'rest_schema_lic_companyName' => 'Название компании-владельца лицензии',
+    'rest_schema_lic_email' => 'Email адрес контактного лица компании',
+    'rest_schema_lic_licenseType' => 'Тип лицензии (trial, commercial, free)',
+    'rest_schema_lic_expirationDate' => 'Дата истечения лицензии',
+    'rest_schema_lic_products' => 'Список лицензированных продуктов (модулей)',
+    'rest_schema_lic_features' => 'Список доступных функций',
+    'rest_schema_lic_maxUsers' => 'Максимальное количество пользователей по лицензии',
+    'rest_schema_lic_currentUsers' => 'Текущее количество активных пользователей',
+    'rest_schema_lic_isValid' => 'Флаг действительности лицензии',
+    'rest_schema_lic_serverResponse' => 'Ответ лицензионного сервера',
+    'rest_schema_lic_productId' => 'Уникальный идентификатор продукта',
+    'rest_schema_lic_productName' => 'Название продукта',
+    'rest_schema_lic_productVersion' => 'Версия продукта',
+    'rest_schema_lic_productIsActive' => 'Активен ли продукт',
+    'rest_schema_lic_featureId' => 'Уникальный идентификатор функции',
+    'rest_schema_lic_featureName' => 'Название функции',
+    'rest_schema_lic_featureIsEnabled' => 'Включена ли функция',
+    'rest_schema_lic_featureExpirationDate' => 'Дата истечения функции',
+    'rest_schema_lic_ping_success' => 'Успешность ping лицензионного сервера',
+    'rest_schema_lic_ping_message' => 'Сообщение от лицензионного сервера',
+    'rest_schema_lic_ping_responseTime' => 'Время ответа сервера в миллисекундах',
 
     // Network specific parameters
     'rest_param_net_interfaces' => 'Массив конфигураций сетевых интерфейсов',
@@ -1509,6 +1553,17 @@ return [
     'rest_param_syslog_date_from' => 'Начало временного диапазона для фильтрации (формат: YYYY-MM-DD HH:MM:SS или unix timestamp)',
     'rest_param_syslog_date_to' => 'Конец временного диапазона для фильтрации (формат: YYYY-MM-DD HH:MM:SS или unix timestamp)',
     'rest_param_syslog_archive_filename' => 'Путь к файлу архива логов',
+    'rest_param_syslog_archive' => 'Использовать архивные логи',
+
+    // SysLogs schema field descriptions
+    'rest_schema_syslog_filename' => 'Путь к лог файлу относительно директории логов',
+    'rest_schema_syslog_filter' => 'Текст для фильтрации строк лога',
+    'rest_schema_syslog_log_level' => 'Уровень логирования для фильтрации',
+    'rest_schema_syslog_lines' => 'Количество последних строк лога для вывода',
+    'rest_schema_syslog_offset' => 'Смещение для пагинации строк лога',
+    'rest_schema_syslog_date_from' => 'Начало временного диапазона для фильтрации',
+    'rest_schema_syslog_date_to' => 'Конец временного диапазона для фильтрации',
+    'rest_schema_syslog_archive' => 'Использовать архивные логи',
 
     // Fail2Ban specific parameters
     'rest_param_f2b_maxretry' => 'Максимальное количество неудачных попыток до блокировки',
@@ -1554,6 +1609,31 @@ return [
 
     // SIP specific parameters
     'rest_param_sip_extension' => 'Добавочный номер или ID SIP устройства',
+    'rest_param_sip_id' => 'Уникальный идентификатор SIP устройства',
+    'rest_param_sip_date_from' => 'Начальная дата для фильтрации истории (ISO 8601)',
+    'rest_param_sip_date_to' => 'Конечная дата для фильтрации истории (ISO 8601)',
+    'rest_param_sip_event' => 'Тип события для фильтрации (REGISTER, UNREGISTER, CALL, HANGUP)',
+    'rest_param_sip_limit' => 'Максимальное количество записей в ответе',
+    'rest_param_sip_offset' => 'Смещение для пагинации результатов',
+
+    // SIP schema fields
+    'rest_schema_sip_peer_state' => 'Состояние SIP устройства (OK, UNREACHABLE, LAGGED, UNKNOWN, OFF, REGISTERED)',
+    'rest_schema_sip_peer_useragent' => 'User-Agent SIP устройства',
+    'rest_schema_sip_peer_ipaddress' => 'IP адрес SIP устройства',
+    'rest_schema_sip_peer_port' => 'Порт SIP устройства',
+    'rest_schema_sip_peer_codec' => 'Поддерживаемые кодеки SIP устройства',
+    'rest_schema_sip_registry_username' => 'Имя пользователя для регистрации',
+    'rest_schema_sip_registry_host' => 'Адрес хоста SIP провайдера',
+    'rest_schema_sip_secret_value' => 'Секретный ключ SIP устройства',
+    'rest_schema_sip_stats_total_calls' => 'Общее количество звонков',
+    'rest_schema_sip_stats_successful_calls' => 'Количество успешных звонков',
+    'rest_schema_sip_stats_failed_calls' => 'Количество неудачных звонков',
+    'rest_schema_sip_stats_total_duration' => 'Общая продолжительность звонков (секунды)',
+    'rest_schema_sip_stats_average_duration' => 'Средняя продолжительность звонка (секунды)',
+    'rest_schema_sip_history_timestamp' => 'Временная метка события',
+    'rest_schema_sip_auth_failure_count' => 'Количество неудачных попыток аутентификации',
+    'rest_schema_sip_auth_last_failure_time' => 'Время последней неудачной попытки аутентификации',
+    'rest_schema_sip_auth_blocked_until' => 'Время до которого устройство заблокировано',
 
     // Providers common parameters (IAX/SIP)
     'rest_param_prov_description' => 'Описание провайдера',
@@ -1561,6 +1641,14 @@ return [
     'rest_param_prov_username' => 'Имя пользователя для регистрации',
     'rest_param_prov_secret' => 'Пароль для регистрации на провайдере',
     'rest_param_prov_disabled' => 'Отключить провайдера (true/false)',
+
+    // IAX schema fields
+    'rest_schema_iax_id' => 'Уникальный идентификатор IAX провайдера',
+    'rest_schema_iax_state' => 'Состояние регистрации IAX провайдера (OFF, Registered, Unregistered, Error register., LAGGED, OK)',
+    'rest_schema_iax_username' => 'Имя пользователя для регистрации на IAX провайдере',
+    'rest_schema_iax_host' => 'Адрес хоста IAX провайдера',
+    'rest_schema_iax_noregister' => 'Флаг отсутствия регистрации (0 - регистрируется, 1 - не регистрируется)',
+    'rest_schema_iax_time_response' => 'Время ответа IAX провайдера',
 
     // ============================================================================
     // Common Responses (using neutral forms to avoid gender agreement issues)

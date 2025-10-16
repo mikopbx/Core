@@ -90,9 +90,12 @@ return [
     'ms_SMTPSenderAddress' => 'Адрес отправителя',
     'ms_SMTPFromUsername' => 'Имя отправителя',
 
-
     // Notifications
     'ms_MailEnableNotifications' => 'Использовать оповещения',
+    'ms_SendMissedCallNotifications' => 'Отправлять уведомления о пропущенных вызовах',
+    'ms_SendVoicemailNotifications' => 'Отправлять уведомления о голосовых сообщениях',
+    'ms_SendLoginNotifications' => 'Отправлять уведомления о входах в систему',
+    'ms_SendSystemNotifications' => 'Отправлять системные уведомления',
     'ms_MailSysadminEmail' => 'Email системного администратора',
     'ms_SystemEmailForMissed' => 'Единый Email для уведомлений о пропущенных вызовах',
     'ms_VoicemailCommonEmail' => 'Единый Email для сообщений голосовой почты',

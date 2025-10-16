@@ -120,6 +120,12 @@ class WorkerNotifyByEmail extends WorkerBase
                 $phonesCid[$call['from_number']] = $call['from_name'];
             }
 
+            // Check if missed call notifications are enabled
+            if (!PbxSettings::getValueByKey(PbxSettings::SEND_MISSED_CALL_NOTIFICATIONS)) {
+                $processedCalls[] = $keyHash;
+                continue; // Skip sending if disabled
+            }
+
             // Send notification using Builder
             $builder = new MissedCallNotificationBuilder();
             $builder->setRecipient($call['email'])
@@ -153,6 +159,21 @@ class WorkerNotifyByEmail extends WorkerBase
         try {
             // Reconstruct builder from queue data
             $builder = NotificationQueueHelper::rebuildFromQueueData($data);
+
+            // Check if specific notification type is enabled
+            if ($builder instanceof MissedCallNotificationBuilder) {
+                if (!PbxSettings::getValueByKey(PbxSettings::SEND_MISSED_CALL_NOTIFICATIONS)) {
+                    return; // Skip if missed call notifications disabled
+                }
+            } elseif ($builder instanceof VoicemailNotificationBuilder) {
+                if (!PbxSettings::getValueByKey(PbxSettings::SEND_VOICEMAIL_NOTIFICATIONS)) {
+                    return; // Skip if voicemail notifications disabled
+                }
+            } elseif ($builder instanceof LoginNotificationBuilder) {
+                if (!PbxSettings::getValueByKey(PbxSettings::SEND_LOGIN_NOTIFICATIONS)) {
+                    return; // Skip if login notifications disabled
+                }
+            }
 
             // Check if builder has attachment (voicemail)
             $attachmentFile = '';

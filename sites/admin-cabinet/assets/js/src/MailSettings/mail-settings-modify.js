@@ -360,7 +360,14 @@ const mailSettings = {
                     beforePopulate: (data) => {
                         // REST API returns booleans for checkbox fields
                         // Convert boolean values to strings for Semantic UI checkboxes
-                        const booleanFields = ['MailSMTPCertCheck', 'MailEnableNotifications'];
+                        const booleanFields = [
+                            'MailSMTPCertCheck',
+                            'MailEnableNotifications',
+                            'SendMissedCallNotifications',
+                            'SendVoicemailNotifications',
+                            'SendLoginNotifications',
+                            'SendSystemNotifications'
+                        ];
                         booleanFields.forEach(key => {
                             if (data[key] !== undefined) {
                                 // Convert boolean to string "1" or "0"
@@ -421,6 +428,28 @@ const mailSettings = {
                             }
                         }
 
+                        // Handle notification type toggles
+                        const notificationToggles = [
+                            'SendMissedCallNotifications',
+                            'SendVoicemailNotifications',
+                            'SendLoginNotifications',
+                            'SendSystemNotifications'
+                        ];
+                        notificationToggles.forEach(fieldName => {
+                            if (data[fieldName] !== undefined) {
+                                const isChecked = data[fieldName] === true || data[fieldName] === 1 || data[fieldName] === '1';
+                                if (isChecked) {
+                                    $(`#${fieldName}`).closest('.checkbox').checkbox('set checked');
+                                } else {
+                                    $(`#${fieldName}`).closest('.checkbox').checkbox('set unchecked');
+                                }
+                            }
+                        });
+
+                        // Initialize email fields visibility based on toggle states
+                        // Must be called after checkboxes are set
+                        mailSettings.initializeEmailFieldsVisibility();
+
                         // Update MailSMTPUsername placeholder with MailSMTPSenderAddress value
                         mailSettings.updateUsernamePlaceholder(data.MailSMTPSenderAddress);
 
@@ -475,11 +504,111 @@ const mailSettings = {
      * Initialize notification enable/disable handlers
      */
     initializeNotificationHandlers() {
-        // Handle notifications enable/disable checkbox
+        // Handle master notifications enable/disable checkbox
         $('#MailEnableNotifications').closest('.checkbox').checkbox({
             onChange: () => {
+                mailSettings.toggleNotificationTypesSection();
                 mailSettings.updateValidationRules();
                 Form.dataChanged();
+            }
+        });
+
+        // Handle individual notification type toggles
+        // Each toggle shows/hides its corresponding email field
+        $('#SendMissedCallNotifications').closest('.checkbox').checkbox({
+            onChange: () => {
+                mailSettings.toggleEmailField('SendMissedCallNotifications', 'SystemEmailForMissed');
+                Form.dataChanged();
+            }
+        });
+
+        $('#SendVoicemailNotifications').closest('.checkbox').checkbox({
+            onChange: () => {
+                mailSettings.toggleEmailField('SendVoicemailNotifications', 'VoicemailNotificationsEmail');
+                Form.dataChanged();
+            }
+        });
+
+        // SendLoginNotifications and SendSystemNotifications don't control email field visibility
+        $('#SendLoginNotifications').closest('.checkbox').checkbox({
+            onChange: () => {
+                Form.dataChanged();
+            }
+        });
+
+        $('#SendSystemNotifications').closest('.checkbox').checkbox({
+            onChange: () => {
+                Form.dataChanged();
+            }
+        });
+    },
+
+    /**
+     * Toggle notification types section visibility based on MailEnableNotifications state
+     */
+    toggleNotificationTypesSection() {
+        const isEnabled = $('#MailEnableNotifications').is(':checked');
+        const $section = $('#notification-types-section');
+
+        if (isEnabled) {
+            $section.slideDown(300);
+            // Also update individual email fields visibility after section is shown
+            setTimeout(() => {
+                mailSettings.initializeEmailFieldsVisibility();
+            }, 350);
+        } else {
+            $section.slideUp(300);
+        }
+    },
+
+    /**
+     * Toggle email field visibility based on checkbox state
+     * @param {string} toggleId - ID of the toggle checkbox
+     * @param {string} emailFieldId - ID of the email field to show/hide
+     */
+    toggleEmailField(toggleId, emailFieldId) {
+        const isChecked = $(`#${toggleId}`).is(':checked');
+        const $emailField = $(`#${emailFieldId}`).closest('.field');
+
+        if (isChecked) {
+            $emailField.slideDown(200);
+        } else {
+            $emailField.slideUp(200);
+        }
+    },
+
+    /**
+     * Initialize email fields visibility based on current toggle states
+     */
+    initializeEmailFieldsVisibility() {
+        // First, check master toggle and show/hide the entire notification types section
+        const isNotificationsEnabled = $('#MailEnableNotifications').is(':checked');
+        const $section = $('#notification-types-section');
+
+        if (isNotificationsEnabled) {
+            $section.show();
+        } else {
+            $section.hide();
+            return; // No need to check individual fields if section is hidden
+        }
+
+        // Map of toggle IDs to their corresponding email field IDs
+        // Note: SystemNotificationsEmail is always visible and not controlled by a toggle
+        const toggleEmailMap = {
+            'SendMissedCallNotifications': 'SystemEmailForMissed',
+            'SendVoicemailNotifications': 'VoicemailNotificationsEmail'
+        };
+
+        // Set initial visibility for each email field
+        Object.keys(toggleEmailMap).forEach(toggleId => {
+            const emailFieldId = toggleEmailMap[toggleId];
+            const isChecked = $(`#${toggleId}`).is(':checked');
+            const $emailField = $(`#${emailFieldId}`).closest('.field');
+
+            if (isChecked) {
+                $emailField.show();
+            } else {
+                $emailField.hide();
             }
         });
     },

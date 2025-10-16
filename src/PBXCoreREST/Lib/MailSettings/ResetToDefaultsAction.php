@@ -72,14 +72,6 @@ class ResetToDefaultsAction
                 PbxSettings::MAIL_OAUTH2_ACCESS_TOKEN,
                 PbxSettings::MAIL_OAUTH2_TOKEN_EXPIRES,
 
-                // Email templates
-                PbxSettings::MAIL_TPL_MISSED_CALL_SUBJECT,
-                PbxSettings::MAIL_TPL_MISSED_CALL_BODY,
-                PbxSettings::MAIL_TPL_MISSED_CALL_FOOTER,
-                PbxSettings::MAIL_TPL_VOICEMAIL_SUBJECT,
-                PbxSettings::MAIL_TPL_VOICEMAIL_BODY,
-                PbxSettings::MAIL_TPL_VOICEMAIL_FOOTER,
-
                 // Notification emails
                 PbxSettings::SYSTEM_NOTIFICATIONS_EMAIL,
                 PbxSettings::SYSTEM_EMAIL_FOR_MISSED,

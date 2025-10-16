@@ -170,9 +170,9 @@ trait PbxSettingsConstantsTrait
 
     // OAuth2 authentication settings
     /** @FieldType('string') */
-    public const string MAIL_SMTP_AUTH_TYPE = 'MailSMTPAuthType'; // password|oauth2|app_password
+    public const string MAIL_SMTP_AUTH_TYPE = 'MailSMTPAuthType'; // password|oauth2
     /** @FieldType('string') */
-    public const string MAIL_OAUTH2_PROVIDER = 'MailOAuth2Provider'; // google|microsoft|yandex|custom
+    public const string MAIL_OAUTH2_PROVIDER = 'MailOAuth2Provider'; // google|microsoft|yandex
     /** @FieldType('string') */
     public const string MAIL_OAUTH2_CLIENT_ID = 'MailOAuth2ClientId';
     /** @FieldType('string') */
@@ -258,8 +258,17 @@ trait PbxSettingsConstantsTrait
     public const string SEND_METRICS = 'SendMetrics';
     /** @FieldType('boolean') */
     public const string DISABLE_ALL_MODULES = 'DisableAllModules'; // Disable all modules if it set to '1'
+
+    // Email notification toggles
     /** @FieldType('boolean') */
     public const string SEND_LOGIN_NOTIFICATIONS = 'SendLoginNotifications'; // Send email notification on admin panel login
+    /** @FieldType('boolean') */
+    public const string SEND_MISSED_CALL_NOTIFICATIONS = 'SendMissedCallNotifications'; // Send email notification for missed calls
+    /** @FieldType('boolean') */
+    public const string SEND_VOICEMAIL_NOTIFICATIONS = 'SendVoicemailNotifications'; // Send email notification for new voicemail messages
+    /** @FieldType('boolean') */
+    public const string SEND_SYSTEM_NOTIFICATIONS = 'SendSystemNotifications'; // Send system email notifications (errors, warnings, etc.)
+
     /** @FieldType('string') */
     public const string NTP_SERVER = 'NTPServer';
     /** @FieldType('string') */

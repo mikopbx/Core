@@ -55,7 +55,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      * Centralizes email validation logic instead of duplicating in actions.
      *
      * @param array<string, mixed> $data Data to validate
-     * @return array Validation result with 'valid' boolean and 'messages' array
+     * @return array{valid: bool, messages: array<string>} Validation result with 'valid' boolean and 'messages' array
      */
     public static function validateEmailFields(array $data): array
     {
@@ -217,6 +217,243 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
 
     /**
+     * Get all field definitions with complete metadata
+     *
+     * Single Source of Truth for ALL field definitions.
+     * Each field includes type, validation, sanitization, and examples.
+     *
+     * @return array<string, array<string, mixed>> Complete field definitions
+     */
+    private static function getAllFieldDefinitions(): array
+    {
+        return [
+            // SMTP basic settings
+            PbxSettings::MAIL_SMTP_HOST => [
+                'type' => 'string',
+                'description' => 'rest_schema_ms_smtp_host',
+                'maxLength' => 255,
+                'sanitize' => 'string',
+                'example' => 'smtp.gmail.com'
+            ],
+            PbxSettings::MAIL_SMTP_PORT => [
+                'type' => 'integer',
+                'description' => 'rest_schema_ms_smtp_port',
+                'minimum' => 1,
+                'maximum' => 65535,
+                'default' => (int)self::getDefaultValue(PbxSettings::MAIL_SMTP_PORT),
+                'sanitize' => 'int',
+                'example' => (int)self::getDefaultValue(PbxSettings::MAIL_SMTP_PORT)
+            ],
+            PbxSettings::MAIL_SMTP_AUTH_TYPE => [
+                'type' => 'string',
+                'description' => 'rest_schema_ms_auth_type',
+                'enum' => ['none', 'plain', 'login', 'oauth2'],
+                'default' => self::getDefaultValue(PbxSettings::MAIL_SMTP_AUTH_TYPE),
+                'sanitize' => 'string',
+                'example' => self::getDefaultValue(PbxSettings::MAIL_SMTP_AUTH_TYPE)
+            ],
+            PbxSettings::MAIL_SMTP_USERNAME => [
+                'type' => 'string',
+                'description' => 'rest_schema_ms_username',
+                'maxLength' => 255,
+                'sanitize' => 'string',
+                'example' => 'admin@company.com'
+            ],
+            PbxSettings::MAIL_SMTP_PASSWORD => [
+                'type' => 'string',
+                'description' => 'rest_schema_ms_password',
+                'maxLength' => 255,
+                'format' => 'password',
+                'sanitize' => 'string',
+                'example' => 'password123'
+            ],
+            PbxSettings::MAIL_SMTP_USE_TLS => [
+                'type' => 'string',
+                'description' => 'rest_schema_ms_use_tls',
+                'enum' => ['none', 'tls', 'ssl'],
+                'default' => self::getDefaultValue(PbxSettings::MAIL_SMTP_USE_TLS),
+                'sanitize' => 'string',
+                'example' => self::getDefaultValue(PbxSettings::MAIL_SMTP_USE_TLS)
+            ],
+            PbxSettings::MAIL_SMTP_CERT_CHECK => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_ms_cert_check',
+                'default' => (bool)self::getDefaultValue(PbxSettings::MAIL_SMTP_CERT_CHECK),
+                'sanitize' => 'bool',
+                'example' => (bool)self::getDefaultValue(PbxSettings::MAIL_SMTP_CERT_CHECK)
+            ],
+            // From settings
+            PbxSettings::MAIL_SMTP_FROM_USERNAME => [
+                'type' => 'string',
+                'description' => 'rest_schema_ms_from_username',
+                'maxLength' => 255,
+                'sanitize' => 'string',
+                'example' => 'PBX System'
+            ],
+            PbxSettings::MAIL_SMTP_SENDER_ADDRESS => [
+                'type' => 'string',
+                'description' => 'rest_schema_ms_from_address',
+                'format' => 'email',
+                'maxLength' => 255,
+                'sanitize' => 'email',
+                'example' => 'admin@company.com'
+            ],
+            PbxSettings::MAIL_ENABLE_NOTIFICATIONS => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_ms_enable_notifications',
+                'default' => (bool)self::getDefaultValue(PbxSettings::MAIL_ENABLE_NOTIFICATIONS),
+                'sanitize' => 'bool',
+                'example' => (bool)self::getDefaultValue(PbxSettings::MAIL_ENABLE_NOTIFICATIONS)
+            ],
+            // Notification type toggles
+            PbxSettings::SEND_MISSED_CALL_NOTIFICATIONS => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_ms_send_missed_call_notifications',
+                'default' => (bool)self::getDefaultValue(PbxSettings::SEND_MISSED_CALL_NOTIFICATIONS),
+                'sanitize' => 'bool',
+                'example' => (bool)self::getDefaultValue(PbxSettings::SEND_MISSED_CALL_NOTIFICATIONS)
+            ],
+            PbxSettings::SEND_VOICEMAIL_NOTIFICATIONS => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_ms_send_voicemail_notifications',
+                'default' => (bool)self::getDefaultValue(PbxSettings::SEND_VOICEMAIL_NOTIFICATIONS),
+                'sanitize' => 'bool',
+                'example' => (bool)self::getDefaultValue(PbxSettings::SEND_VOICEMAIL_NOTIFICATIONS)
+            ],
+            PbxSettings::SEND_LOGIN_NOTIFICATIONS => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_ms_send_login_notifications',
+                'default' => (bool)self::getDefaultValue(PbxSettings::SEND_LOGIN_NOTIFICATIONS),
+                'sanitize' => 'bool',
+                'example' => (bool)self::getDefaultValue(PbxSettings::SEND_LOGIN_NOTIFICATIONS)
+            ],
+            PbxSettings::SEND_SYSTEM_NOTIFICATIONS => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_ms_send_system_notifications',
+                'default' => (bool)self::getDefaultValue(PbxSettings::SEND_SYSTEM_NOTIFICATIONS),
+                'sanitize' => 'bool',
+                'example' => (bool)self::getDefaultValue(PbxSettings::SEND_SYSTEM_NOTIFICATIONS)
+            ],
+            // OAuth2 settings
+            PbxSettings::MAIL_OAUTH2_CLIENT_ID => [
+                'type' => 'string',
+                'description' => 'rest_schema_ms_oauth2_client_id',
+                'maxLength' => 500,
+                'sanitize' => 'string',
+                'example' => '123456789-abcdefg.apps.googleusercontent.com'
+            ],
+            PbxSettings::MAIL_OAUTH2_CLIENT_SECRET => [
+                'type' => 'string',
+                'description' => 'rest_schema_ms_oauth2_client_secret',
+                'maxLength' => 500,
+                'format' => 'password',
+                'sanitize' => 'string',
+                'example' => 'GOCSPX-AbCdEfGhIjKlMnOpQrStUvWxYz'
+            ],
+            PbxSettings::MAIL_OAUTH2_REFRESH_TOKEN => [
+                'type' => 'string',
+                'description' => 'rest_schema_ms_oauth2_refresh_token',
+                'maxLength' => 1000,
+                'format' => 'password',
+                'sanitize' => 'string',
+                'example' => '1//0gABC...'
+            ],
+            PbxSettings::MAIL_OAUTH2_PROVIDER => [
+                'type' => 'string',
+                'description' => 'rest_schema_ms_oauth2_provider',
+                'enum' => ['google', 'microsoft', 'yandex'],
+                'sanitize' => 'string',
+                'example' => 'google'
+            ],
+            // Email notification recipients
+            PbxSettings::SYSTEM_NOTIFICATIONS_EMAIL => [
+                'type' => 'string',
+                'description' => 'rest_schema_ms_system_notifications_email',
+                'format' => 'email',
+                'maxLength' => 255,
+                'sanitize' => 'email',
+                'example' => 'admin@company.com'
+            ],
+            PbxSettings::SYSTEM_EMAIL_FOR_MISSED => [
+                'type' => 'string',
+                'description' => 'rest_schema_ms_missed_calls_email',
+                'format' => 'email',
+                'maxLength' => 255,
+                'sanitize' => 'email',
+                'example' => 'manager@company.com'
+            ],
+            PbxSettings::VOICEMAIL_NOTIFICATIONS_EMAIL => [
+                'type' => 'string',
+                'description' => 'rest_schema_ms_voicemail_email',
+                'format' => 'email',
+                'maxLength' => 255,
+                'sanitize' => 'email',
+                'example' => 'voicemail@company.com'
+            ],
+            // Custom method parameters (not stored in PbxSettings)
+            'to' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ms_test_email_to',
+                'format' => 'email',
+                'maxLength' => 255,
+                'sanitize' => 'email',
+                'example' => 'admin@company.com'
+            ],
+            'subject' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ms_test_email_subject',
+                'maxLength' => 255,
+                'sanitize' => 'string',
+                'default' => 'MikoPBX Test Email',
+                'example' => 'Test Email from PBX'
+            ],
+            'body' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ms_test_email_body',
+                'maxLength' => 5000,
+                'sanitize' => 'string',
+                'default' => 'This is a test email from MikoPBX system.',
+                'example' => 'Test message to verify mail configuration.'
+            ],
+            'provider' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ms_oauth2_provider',
+                'enum' => ['google', 'microsoft', 'yandex'],
+                'sanitize' => 'string',
+                'example' => 'google'
+            ],
+            'redirect_uri' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ms_oauth2_redirect_uri',
+                'maxLength' => 500,
+                'sanitize' => 'string',
+                'example' => 'https://pbx.company.com/pbxcore/api/v3/mail-settings/oauth2-callback'
+            ],
+            // Response-only fields (read-only)
+            'connectionStatus' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ms_connection_status',
+                'enum' => ['not_tested', 'success', 'failed'],
+                'readOnly' => true,
+                'example' => 'success'
+            ],
+            'lastTestDate' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ms_last_test_date',
+                'format' => 'date-time',
+                'readOnly' => true,
+                'example' => '2025-01-20 10:30:00'
+            ],
+            'errorMessage' => [
+                'type' => 'string',
+                'description' => 'rest_schema_ms_error_message',
+                'readOnly' => true,
+                'example' => ''
+            ]
+        ];
+    }
+
+    /**
      * Get parameter definitions (Single Source of Truth)
      *
      * WHY: Centralizes mail settings parameter definitions.
@@ -226,367 +463,22 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function getParameterDefinitions(): array
     {
+        $allFields = self::getAllFieldDefinitions();
+
+        // Separate writable fields (for requests) and all fields (for response)
+        $writableFields = array_filter($allFields, fn($f) => empty($f['readOnly']));
+
+        // Transform description keys for request section: rest_schema_* → rest_param_*
+        $requestFields = [];
+        foreach ($writableFields as $fieldName => $fieldDef) {
+            $requestField = $fieldDef;
+            $requestField['description'] = str_replace('rest_schema_', 'rest_param_', $fieldDef['description']);
+            $requestFields[$fieldName] = $requestField;
+        }
+
         return [
-            'request' => [
-                // SMTP basic settings
-                PbxSettings::MAIL_SMTP_HOST => [
-                    'type' => 'string',
-                    'description' => 'rest_param_ms_smtp_host',
-                    'maxLength' => 255,
-                    'sanitize' => 'string',
-                    'example' => 'smtp.gmail.com'
-                ],
-                PbxSettings::MAIL_SMTP_PORT => [
-                    'type' => 'integer',
-                    'description' => 'rest_param_ms_smtp_port',
-                    'minimum' => 1,
-                    'maximum' => 65535,
-                    'default' => (int)self::getDefaultValue(PbxSettings::MAIL_SMTP_PORT),
-                    'sanitize' => 'int',
-                    'example' => (int)self::getDefaultValue(PbxSettings::MAIL_SMTP_PORT)
-                ],
-                PbxSettings::MAIL_SMTP_AUTH_TYPE => [
-                    'type' => 'string',
-                    'description' => 'rest_param_ms_auth_type',
-                    'enum' => ['none', 'plain', 'login', 'oauth2'],
-                    'default' => self::getDefaultValue(PbxSettings::MAIL_SMTP_AUTH_TYPE),
-                    'sanitize' => 'string',
-                    'example' => self::getDefaultValue(PbxSettings::MAIL_SMTP_AUTH_TYPE)
-                ],
-                PbxSettings::MAIL_SMTP_USERNAME => [
-                    'type' => 'string',
-                    'description' => 'rest_param_ms_username',
-                    'maxLength' => 255,
-                    'sanitize' => 'string',
-                    'example' => 'admin@company.com'
-                ],
-                PbxSettings::MAIL_SMTP_PASSWORD => [
-                    'type' => 'string',
-                    'description' => 'rest_param_ms_password',
-                    'maxLength' => 255,
-                    'sanitize' => 'string',
-                    'example' => 'password123'
-                ],
-                /** Encryption type: 'none', 'tls', 'ssl' (backward compatible with '0'/'1' boolean values) */
-                PbxSettings::MAIL_SMTP_USE_TLS => [
-                    'type' => 'string',
-                    'description' => 'rest_param_ms_use_tls',
-                    'enum' => ['none', 'tls', 'ssl'],
-                    'default' => self::getDefaultValue(PbxSettings::MAIL_SMTP_USE_TLS),
-                    'sanitize' => 'string',
-                    'example' => self::getDefaultValue(PbxSettings::MAIL_SMTP_USE_TLS)
-                ],
-                PbxSettings::MAIL_SMTP_CERT_CHECK => [
-                    'type' => 'boolean',
-                    'description' => 'rest_param_ms_cert_check',
-                    'default' => (bool)self::getDefaultValue(PbxSettings::MAIL_SMTP_CERT_CHECK),
-                    'sanitize' => 'bool',
-                    'example' => (bool)self::getDefaultValue(PbxSettings::MAIL_SMTP_CERT_CHECK)
-                ],
-                // From settings
-                PbxSettings::MAIL_SMTP_FROM_USERNAME => [
-                    'type' => 'string',
-                    'description' => 'rest_param_ms_from_username',
-                    'maxLength' => 255,
-                    'sanitize' => 'string',
-                    'example' => 'PBX System'
-                ],
-                PbxSettings::MAIL_SMTP_SENDER_ADDRESS => [
-                    'type' => 'string',
-                    'description' => 'rest_param_ms_from_address',
-                    'format' => 'email',
-                    'maxLength' => 255,
-                    'sanitize' => 'email',
-                    'example' => 'admin@company.com'
-                ],
-                PbxSettings::MAIL_ENABLE_NOTIFICATIONS => [
-                    'type' => 'boolean',
-                    'description' => 'rest_param_ms_enable_notifications',
-                    'default' => (bool)self::getDefaultValue(PbxSettings::MAIL_ENABLE_NOTIFICATIONS),
-                    'sanitize' => 'bool',
-                    'example' => (bool)self::getDefaultValue(PbxSettings::MAIL_ENABLE_NOTIFICATIONS)
-                ],
-                // OAuth2 settings
-                PbxSettings::MAIL_OAUTH2_CLIENT_ID => [
-                    'type' => 'string',
-                    'description' => 'rest_param_ms_oauth2_client_id',
-                    'maxLength' => 500,
-                    'sanitize' => 'string',
-                    'example' => '123456789-abcdefg.apps.googleusercontent.com'
-                ],
-                PbxSettings::MAIL_OAUTH2_CLIENT_SECRET => [
-                    'type' => 'string',
-                    'description' => 'rest_param_ms_oauth2_client_secret',
-                    'maxLength' => 500,
-                    'sanitize' => 'string',
-                    'example' => 'GOCSPX-AbCdEfGhIjKlMnOpQrStUvWxYz'
-                ],
-                PbxSettings::MAIL_OAUTH2_REFRESH_TOKEN => [
-                    'type' => 'string',
-                    'description' => 'rest_param_ms_oauth2_refresh_token',
-                    'maxLength' => 1000,
-                    'sanitize' => 'string',
-                    'example' => '1//0gABC...'
-                ],
-                PbxSettings::MAIL_OAUTH2_PROVIDER => [
-                    'type' => 'string',
-                    'description' => 'rest_param_ms_oauth2_provider',
-                    'enum' => ['google', 'microsoft', 'yandex'],
-                    'sanitize' => 'string',
-                    'example' => 'google'
-                ],
-
-                // Email notification recipients
-                PbxSettings::SYSTEM_NOTIFICATIONS_EMAIL => [
-                    'type' => 'string',
-                    'description' => 'rest_param_ms_system_notifications_email',
-                    'format' => 'email',
-                    'maxLength' => 255,
-                    'sanitize' => 'email',
-                    'example' => self::getDefaultValue(PbxSettings::SYSTEM_NOTIFICATIONS_EMAIL)
-                ],
-                PbxSettings::SYSTEM_EMAIL_FOR_MISSED => [
-                    'type' => 'string',
-                    'description' => 'rest_param_ms_missed_calls_email',
-                    'format' => 'email',
-                    'maxLength' => 255,
-                    'sanitize' => 'email',
-                    'example' => self::getDefaultValue(PbxSettings::SYSTEM_EMAIL_FOR_MISSED)
-                ],
-                PbxSettings::VOICEMAIL_NOTIFICATIONS_EMAIL => [
-                    'type' => 'string',
-                    'description' => 'rest_param_ms_voicemail_email',
-                    'format' => 'email',
-                    'maxLength' => 255,
-                    'sanitize' => 'email',
-                    'example' => self::getDefaultValue(PbxSettings::VOICEMAIL_NOTIFICATIONS_EMAIL)
-                ],
-                PbxSettings::MAIL_TPL_MISSED_CALL_SUBJECT=>[
-                    'type' => 'string',
-                    'description' => 'rest_param_ms_missed_call_subject',
-                    'maxLength' => 255,
-                    'sanitize' => 'string',
-                    'default' => self::getDefaultValue(PbxSettings::MAIL_TPL_MISSED_CALL_SUBJECT),
-                    'example' => self::getDefaultValue(PbxSettings::MAIL_TPL_MISSED_CALL_SUBJECT)
-                ],
-                PbxSettings::MAIL_TPL_MISSED_CALL_BODY=>[
-                    'type' => 'string',
-                    'description' => 'rest_param_ms_missed_call_body',
-                    'maxLength' => 255,
-                    'sanitize' => 'string',
-                    'default' => self::getDefaultValue(PbxSettings::MAIL_TPL_MISSED_CALL_BODY),
-                    'example' => self::getDefaultValue(PbxSettings::MAIL_TPL_MISSED_CALL_BODY)
-                ],
-                PbxSettings::MAIL_TPL_MISSED_CALL_FOOTER=>[
-                    'type' => 'string',
-                    'description' => 'rest_param_ms_missed_call_footer',
-                    'maxLength' => 255,
-                    'sanitize' => 'string',
-                    'default' => self::getDefaultValue(PbxSettings::MAIL_TPL_MISSED_CALL_FOOTER),
-                    'example' => self::getDefaultValue(PbxSettings::MAIL_TPL_MISSED_CALL_FOOTER)
-                ],
-                PbxSettings::MAIL_TPL_VOICEMAIL_SUBJECT=>[
-                    'type' => 'string',
-                    'description' => 'rest_param_ms_voicemail_subject',
-                    'maxLength' => 255,
-                    'sanitize' => 'string',
-                    'default' => self::getDefaultValue(PbxSettings::MAIL_TPL_VOICEMAIL_SUBJECT),
-                    'example' => self::getDefaultValue(PbxSettings::MAIL_TPL_VOICEMAIL_SUBJECT)
-                ],
-                PbxSettings::MAIL_TPL_VOICEMAIL_BODY=>[
-                    'type' => 'string',
-                    'description' => 'rest_param_ms_voicemail_body',
-                    'maxLength' => 255,
-                    'sanitize' => 'string',
-                    'default' => self::getDefaultValue(PbxSettings::MAIL_TPL_VOICEMAIL_BODY),
-                    'example' => self::getDefaultValue(PbxSettings::MAIL_TPL_VOICEMAIL_BODY)
-                ],
-                PbxSettings::MAIL_TPL_VOICEMAIL_FOOTER=>[
-                    'type' => 'string',
-                    'description' => 'rest_param_ms_voicemail_footer',
-                    'maxLength' => 255,
-                    'sanitize' => 'string',
-                    'default' => self::getDefaultValue(PbxSettings::MAIL_TPL_VOICEMAIL_FOOTER),
-                    'example' => self::getDefaultValue(PbxSettings::MAIL_TPL_VOICEMAIL_FOOTER)
-                ],
-                
-                // Custom method parameters (not stored in PbxSettings)
-                'to' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_ms_test_email_to',
-                    'format' => 'email',
-                    'maxLength' => 255,
-                    'sanitize' => 'email',
-                    'example' => 'admin@company.com'
-                ],
-                'subject' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_ms_test_email_subject',
-                    'maxLength' => 255,
-                    'sanitize' => 'string',
-                    'default' => 'MikoPBX Test Email',
-                    'example' => 'Test Email from PBX'
-                ],
-                'body' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_ms_test_email_body',
-                    'maxLength' => 5000,
-                    'sanitize' => 'string',
-                    'default' => 'This is a test email from MikoPBX system.',
-                    'example' => 'Test message to verify mail configuration.'
-                ],
-                'provider' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_ms_oauth2_provider',
-                    'enum' => ['google', 'microsoft', 'yandex'],
-                    'sanitize' => 'string',
-                    'example' => 'google'
-                ],
-                'redirect_uri' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_ms_oauth2_redirect_uri',
-                    'maxLength' => 500,
-                    'sanitize' => 'string',
-                    'example' => 'https://pbx.company.com/pbxcore/api/v3/mail-settings/oauth2-callback'
-                ],
-            ],
-            'response' => [
-                // All mail settings fields (with rest_schema_* keys)
-                PbxSettings::MAIL_SMTP_HOST => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ms_smtp_host',
-                    'maxLength' => 255,
-                    'example' => 'smtp.gmail.com'
-                ],
-                PbxSettings::MAIL_SMTP_PORT => [
-                    'type' => 'integer',
-                    'description' => 'rest_schema_ms_smtp_port',
-                    'minimum' => 1,
-                    'maximum' => 65535,
-                    'default' => (int)self::getDefaultValue(PbxSettings::MAIL_SMTP_PORT),
-                    'example' => (int)self::getDefaultValue(PbxSettings::MAIL_SMTP_PORT)
-                ],
-                PbxSettings::MAIL_SMTP_AUTH_TYPE => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ms_auth_type',
-                    'enum' => ['password', 'oauth2'],
-                    'default' => self::getDefaultValue(PbxSettings::MAIL_SMTP_AUTH_TYPE),
-                    'example' => self::getDefaultValue(PbxSettings::MAIL_SMTP_AUTH_TYPE)
-                ],
-                PbxSettings::MAIL_SMTP_USERNAME => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ms_username',
-                    'maxLength' => 255,
-                    'example' => 'admin@company.com'
-                ],
-                PbxSettings::MAIL_SMTP_PASSWORD => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ms_password',
-                    'maxLength' => 255,
-                    'format' => 'password',
-                    'example' => 'password123'
-                ],
-                PbxSettings::MAIL_SMTP_USE_TLS => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ms_use_tls',
-                    'enum' => ['none', 'tls', 'ssl'],
-                    'default' => self::getDefaultValue(PbxSettings::MAIL_SMTP_USE_TLS),
-                    'example' => self::getDefaultValue(PbxSettings::MAIL_SMTP_USE_TLS)
-                ],
-                PbxSettings::MAIL_SMTP_CERT_CHECK => [
-                    'type' => 'boolean',
-                    'description' => 'rest_schema_ms_cert_check',
-                    'default' => (bool)self::getDefaultValue(PbxSettings::MAIL_SMTP_CERT_CHECK),
-                    'example' => (bool)self::getDefaultValue(PbxSettings::MAIL_SMTP_CERT_CHECK)
-                ],
-                PbxSettings::MAIL_SMTP_FROM_USERNAME => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ms_from_username',
-                    'maxLength' => 255,
-                    'example' => 'PBX System'
-                ],
-                PbxSettings::MAIL_SMTP_SENDER_ADDRESS => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ms_from_address',
-                    'format' => 'email',
-                    'maxLength' => 255,
-                    'example' => 'admin@company.com'
-                ],
-                PbxSettings::MAIL_ENABLE_NOTIFICATIONS => [
-                    'type' => 'boolean',
-                    'description' => 'rest_schema_ms_enable_notifications',
-                    'default' => (bool)self::getDefaultValue(PbxSettings::MAIL_ENABLE_NOTIFICATIONS),
-                    'example' => (bool)self::getDefaultValue(PbxSettings::MAIL_ENABLE_NOTIFICATIONS)
-                ],
-                PbxSettings::MAIL_OAUTH2_CLIENT_ID => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ms_oauth2_client_id',
-                    'maxLength' => 500,
-                    'example' => '123456789-abcdefg.apps.googleusercontent.com'
-                ],
-                PbxSettings::MAIL_OAUTH2_CLIENT_SECRET => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ms_oauth2_client_secret',
-                    'maxLength' => 500,
-                    'format' => 'password',
-                    'example' => 'GOCSPX-AbCdEfGhIjKlMnOpQrStUvWxYz'
-                ],
-                PbxSettings::MAIL_OAUTH2_REFRESH_TOKEN => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ms_oauth2_refresh_token',
-                    'maxLength' => 1000,
-                    'format' => 'password',
-                    'example' => '1//0gABC...'
-                ],
-                PbxSettings::MAIL_OAUTH2_PROVIDER => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ms_oauth2_provider',
-                    'enum' => ['google', 'microsoft', 'yandex'],
-                    'example' => 'google'
-                ],
-
-                // Email notification recipients
-                PbxSettings::SYSTEM_NOTIFICATIONS_EMAIL => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ms_system_notifications_email',
-                    'format' => 'email',
-                    'maxLength' => 255,
-                    'example' => 'admin@company.com'
-                ],
-                PbxSettings::SYSTEM_EMAIL_FOR_MISSED => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ms_missed_calls_email',
-                    'format' => 'email',
-                    'maxLength' => 255,
-                    'example' => 'manager@company.com'
-                ],
-                PbxSettings::VOICEMAIL_NOTIFICATIONS_EMAIL => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ms_voicemail_email',
-                    'format' => 'email',
-                    'maxLength' => 255,
-                    'example' => 'voicemail@company.com'
-                ],
-
-                // Status fields (read-only)
-                'connectionStatus' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ms_connection_status',
-                    'enum' => ['not_tested', 'success', 'failed'],
-                    'example' => 'success'
-                ],
-                'lastTestDate' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ms_last_test_date',
-                    'format' => 'date-time',
-                    'example' => '2025-01-20 10:30:00'
-                ],
-                'errorMessage' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_ms_error_message',
-                    'example' => ''
-                ]
-            ],
+            'request' => $requestFields,
+            'response' => $allFields,
             // ========== RELATED SCHEMAS ==========
             // Nested object schemas for test results and OAuth2 URLs
             'related' => [

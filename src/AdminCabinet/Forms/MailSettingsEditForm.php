@@ -47,6 +47,10 @@ class MailSettingsEditForm extends BaseForm
             switch ($key) {
                 case PbxSettings::MAIL_ENABLE_NOTIFICATIONS:
                 case PbxSettings::MAIL_SMTP_CERT_CHECK:
+                case PbxSettings::SEND_MISSED_CALL_NOTIFICATIONS:
+                case PbxSettings::SEND_VOICEMAIL_NOTIFICATIONS:
+                case PbxSettings::SEND_LOGIN_NOTIFICATIONS:
+                case PbxSettings::SEND_SYSTEM_NOTIFICATIONS:
                     $this->addCheckBox($key, intval($value) === 1);
                     break;
 
