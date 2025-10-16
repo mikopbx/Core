@@ -26,11 +26,10 @@ use MikoPBX\PBXCoreREST\Lib\Common\CommonDataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
-    
+    ApiParameterRef,
     ApiResponse,
     ApiDataSchema,
     SecurityType,
-    ParameterLocation,
     HttpMapping,
     ResourceSecurity
 };
@@ -148,14 +147,7 @@ class RestController extends BaseRestController
         description: 'rest_users_GetRecordDesc',
         operationId: 'getUser'
     )]
-    #[ApiParameter(
-        name: 'id',
-        type: 'integer',
-        description: 'rest_param_id',
-        in: ParameterLocation::PATH,
-        required: true,
-        example: 1
-    )]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class)]
     #[ApiResponse(200, 'rest_response_200_detail', 'User')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -208,14 +200,7 @@ class RestController extends BaseRestController
         description: 'rest_users_UpdateDesc',
         operationId: 'updateUser'
     )]
-    #[ApiParameter(
-        name: 'id',
-        type: 'integer',
-        description: 'rest_param_id',
-        in: ParameterLocation::PATH,
-        required: true,
-        example: 1
-    )]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class)]
     #[ApiResponse(200, 'rest_response_200_updated', 'User')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -243,14 +228,7 @@ class RestController extends BaseRestController
         description: 'rest_users_PatchDesc',
         operationId: 'patchUser'
     )]
-    #[ApiParameter(
-        name: 'id',
-        type: 'integer',
-        description: 'rest_param_id',
-        in: ParameterLocation::PATH,
-        required: true,
-        example: 1
-    )]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class)]
     #[ApiResponse(200, 'rest_response_200_updated', 'User')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -274,14 +252,7 @@ class RestController extends BaseRestController
         description: 'rest_users_DeleteDesc',
         operationId: 'deleteUser'
     )]
-    #[ApiParameter(
-        name: 'id',
-        type: 'integer',
-        description: 'rest_param_id',
-        in: ParameterLocation::PATH,
-        required: true,
-        example: 1
-    )]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class)]
     #[ApiResponse(204, 'rest_response_204_deleted')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -305,15 +276,7 @@ class RestController extends BaseRestController
         description: 'rest_users_AvailableDesc',
         operationId: 'checkEmailAvailability'
     )]
-    #[ApiParameter(
-        name: 'email',
-        type: 'string',
-        description: 'rest_param_users_email',
-        in: ParameterLocation::QUERY,
-        required: true,
-        format: 'email',
-        example: 'test@example.com'
-    )]
+    #[ApiParameterRef('email', required: true)]
     #[ApiResponse(200, 'rest_response_200_availability_checked', 'UserAvailability')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]

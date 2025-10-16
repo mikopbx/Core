@@ -425,7 +425,22 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
 
         return [
             'request' => $writableFields,
-            'response' => $allFields
+            'response' => $allFields,
+            'related' => [
+                'priorities' => [
+                    'type' => 'array',
+                    'description' => 'rest_param_obr_priorities',
+                    'items' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'id' => ['type' => 'string'],
+                            'priority' => ['type' => 'integer']
+                        ]
+                    ],
+                    'sanitize' => 'array',
+                    'example' => [['id' => '1', 'priority' => 0], ['id' => '42', 'priority' => 1]]
+                ]
+            ]
         ];
     }
 

@@ -302,6 +302,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      * This replaces legacy ParameterSanitizationExtractor pattern.
      *
      * ✨ Uses getAllFieldDefinitions() to eliminate duplication.
+     * ✨ Follows CallQueues/IvrMenu pattern - fields returned directly, not wrapped
      *
      * @return array<string, array<string, mixed>> Parameter definitions
      */
@@ -309,29 +310,43 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     {
         $allFields = self::getAllFieldDefinitions();
 
-        // Filter out read-only fields for request schema
-        $writableFields = array_filter($allFields, fn($f) => empty($f['readOnly']));
+        // Separate writable fields (for requests) and response-only fields
+        $writableFields = [];
+        $responseOnlyFields = [];
+
+        foreach ($allFields as $fieldName => $fieldDef) {
+            if (!empty($fieldDef['readOnly'])) {
+                $responseOnlyFields[$fieldName] = $fieldDef;
+            } else {
+                // For request section, use rest_param_* descriptions
+                $requestField = $fieldDef;
+                $requestField['description'] = str_replace('rest_schema_', 'rest_param_', $fieldDef['description']);
+                $writableFields[$fieldName] = $requestField;
+            }
+        }
 
         return [
-            'request' => [
-                'asteriskRestUser' => [
-                    'type' => 'object',
-                    'description' => 'rest_param_aru_object',
-                    'properties' => $writableFields
+            // ========== REQUEST PARAMETERS ==========
+            // Used in API requests (POST, PUT, PATCH)
+            // Referenced by ApiParameterRef in Controller
+            'request' => $writableFields,
+
+            // ========== RESPONSE-ONLY FIELDS ==========
+            // Only in API responses, not in requests
+            // Used by getListItemSchema() and getDetailSchema()
+            'response' => array_merge(
+                $responseOnlyFields,
+                [
+                    'represent' => [
+                        'type' => 'string',
+                        'description' => 'rest_schema_aru_represent',
+                        'example' => 'api_user - API user for call control'
+                    ]
                 ]
-            ],
-            'response' => [
-                'asteriskRestUser' => [
-                    'type' => 'object',
-                    'description' => 'rest_schema_aru_object',
-                    'properties' => $allFields  // ALL fields including read-only
-                ],
-                'represent' => [
-                    'type' => 'string',
-                    'description' => 'rest_schema_aru_represent',
-                    'example' => 'api_user - API user for call control'
-                ]
-            ],
+            ),
+
+            // ========== RELATED SCHEMAS ==========
+            // No nested schemas for AsteriskRestUsers
             'related' => []
         ];
     }

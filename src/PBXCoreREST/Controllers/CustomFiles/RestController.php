@@ -26,11 +26,10 @@ use MikoPBX\PBXCoreREST\Lib\Common\CommonDataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
-    
+    ApiParameterRef,
     ApiResponse,
     ApiDataSchema,
     SecurityType,
-    ParameterLocation,
     HttpMapping,
     ResourceSecurity
 };
@@ -144,10 +143,10 @@ class RestController extends BaseRestController
         description: 'rest_cf_CreateDesc',
         operationId: 'createCustomFile'
     )]
-    #[ApiParameter('filepath', 'string', 'rest_param_cf_filepath', ParameterLocation::QUERY, required: true, maxLength: 500, example: '/etc/asterisk/custom.conf')]
-    #[ApiParameter('content', 'string', 'rest_param_cf_content', ParameterLocation::QUERY, required: true, example: 'base64_encoded_content')]
-    #[ApiParameter('mode', 'string', 'rest_param_cf_mode', ParameterLocation::QUERY, required: true, enum: ['override', 'append', 'script'], example: 'append')]
-    #[ApiParameter('description', 'string', 'rest_param_cf_description', ParameterLocation::QUERY, required: false, maxLength: 500, example: 'Custom Asterisk configuration')]
+    #[ApiParameterRef('filepath', required: true)]
+    #[ApiParameterRef('content', required: true)]
+    #[ApiParameterRef('mode', required: true)]
+    #[ApiParameterRef('description')]
     #[ApiResponse(201, 'rest_response_201_created')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -173,10 +172,10 @@ class RestController extends BaseRestController
         operationId: 'updateCustomFile'
     )]
     #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]+$', example: '15')]
-    #[ApiParameter('filepath', 'string', 'rest_param_cf_filepath', ParameterLocation::QUERY, required: true, maxLength: 500, example: '/etc/asterisk/custom.conf')]
-    #[ApiParameter('content', 'string', 'rest_param_cf_content', ParameterLocation::QUERY, required: true, example: 'new_base64_encoded_content')]
-    #[ApiParameter('mode', 'string', 'rest_param_cf_mode', ParameterLocation::QUERY, required: true, enum: ['override', 'append', 'script'], example: 'override')]
-    #[ApiParameter('description', 'string', 'rest_param_cf_description', ParameterLocation::QUERY, required: false, maxLength: 500, example: 'Updated description')]
+    #[ApiParameterRef('filepath', required: true)]
+    #[ApiParameterRef('content', required: true)]
+    #[ApiParameterRef('mode', required: true)]
+    #[ApiParameterRef('description')]
     #[ApiResponse(200, 'rest_response_200_updated')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -203,10 +202,10 @@ class RestController extends BaseRestController
         operationId: 'patchCustomFile'
     )]
     #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]+$', example: '15')]
-    #[ApiParameter('filepath', 'string', 'rest_param_cf_filepath', ParameterLocation::QUERY, required: false, maxLength: 500, example: '/etc/custom.conf')]
-    #[ApiParameter('content', 'string', 'rest_param_cf_content', ParameterLocation::QUERY, required: false, example: 'patched_base64_content')]
-    #[ApiParameter('mode', 'string', 'rest_param_cf_mode', ParameterLocation::QUERY, required: false, enum: ['override', 'append', 'script'], example: 'script')]
-    #[ApiParameter('description', 'string', 'rest_param_cf_description', ParameterLocation::QUERY, required: false, maxLength: 500, example: 'Patched description')]
+    #[ApiParameterRef('filepath')]
+    #[ApiParameterRef('content')]
+    #[ApiParameterRef('mode')]
+    #[ApiParameterRef('description')]
     #[ApiResponse(200, 'rest_response_200_patched')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]

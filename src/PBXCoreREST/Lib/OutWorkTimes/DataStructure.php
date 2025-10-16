@@ -799,7 +799,22 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             // ========== RELATED SCHEMAS ==========
             // Nested object schemas referenced by $ref in OpenAPI
             // Used by getRelatedSchemas() method
-            'related' => []
+            'related' => [
+                // Custom method: changePriorities
+                'priorities' => [
+                    'type' => 'array',
+                    'description' => 'rest_param_owt_priorities',
+                    'items' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'id' => ['type' => 'string'],
+                            'priority' => ['type' => 'integer']
+                        ]
+                    ],
+                    'sanitize' => 'array',
+                    'example' => '[{"id":"15","priority":1},{"id":"16","priority":2}]'
+                ]
+            ]
         ];
     }
 

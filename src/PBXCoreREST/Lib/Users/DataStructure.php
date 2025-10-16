@@ -276,7 +276,11 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             // ========== RESPONSE-ONLY FIELDS ==========
             // Only in API responses, not in requests
             // Used by getListItemSchema() and getDetailSchema()
-            'response' => $responseOnlyFields
+            'response' => $responseOnlyFields,
+
+            // ========== RELATED SCHEMAS ==========
+            // Used for custom methods and complex operations
+            'related' => []
         ];
     }
 

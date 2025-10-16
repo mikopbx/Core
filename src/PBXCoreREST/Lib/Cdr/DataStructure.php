@@ -427,6 +427,65 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             // CDR record fields (all read-only, returned in responses)
             // Used by getDetailSchema()
             'response' => $responseOnlyFields,
+
+            // ========== RELATED SCHEMAS ==========
+            // Custom method parameters
+            'related' => [
+                // Filter parameters for getList
+                'dateFrom' => [
+                    'type' => 'string',
+                    'format' => 'date-time',
+                    'description' => 'rest_param_cdr_dateFrom',
+                    'sanitize' => 'string',
+                    'example' => '2025-01-01T00:00:00'
+                ],
+                'dateTo' => [
+                    'type' => 'string',
+                    'format' => 'date-time',
+                    'description' => 'rest_param_cdr_dateTo',
+                    'sanitize' => 'string',
+                    'example' => '2025-01-31T23:59:59'
+                ],
+                'src_num' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_cdr_src_num',
+                    'sanitize' => 'string',
+                    'example' => '201'
+                ],
+                'dst_num' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_cdr_dst_num',
+                    'sanitize' => 'string',
+                    'example' => '202'
+                ],
+                'disposition' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_cdr_disposition',
+                    'enum' => ['ANSWERED', 'NO ANSWER', 'BUSY', 'FAILED'],
+                    'sanitize' => 'string',
+                    'example' => 'ANSWERED'
+                ],
+                // Playback method parameters
+                'view' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_cdr_view',
+                    'sanitize' => 'string',
+                    'example' => '/storage/usbdisk1/mikopbx/voicemailbackup/monitor/2025/01/15/call-123.mp3'
+                ],
+                'download' => [
+                    'type' => 'boolean',
+                    'description' => 'rest_param_cdr_download',
+                    'default' => false,
+                    'sanitize' => 'bool',
+                    'example' => false
+                ],
+                'filename' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_cdr_filename',
+                    'sanitize' => 'string',
+                    'example' => 'call-recording.mp3'
+                ]
+            ]
         ];
     }
 

@@ -22,15 +22,14 @@ namespace MikoPBX\PBXCoreREST\Controllers\Network;
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\NetworkManagementProcessor;
 use MikoPBX\PBXCoreREST\Lib\Network\DataStructure;
+use MikoPBX\PBXCoreREST\Lib\Common\CommonDataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
-    ApiParameter,
     ApiParameterRef,
     ApiResponse,
     ApiDataSchema,
     SecurityType,
-    ParameterLocation,
     HttpMapping,
     ResourceSecurity
 };
@@ -113,7 +112,7 @@ class RestController extends BaseRestController
         description: 'rest_net_GetRecordDesc',
         operationId: 'getNetworkInterfaceById'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[0-9]+$', example: '1')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class)]
     #[ApiResponse(200, 'rest_response_200_get')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -133,7 +132,7 @@ class RestController extends BaseRestController
         description: 'rest_net_DeleteDesc',
         operationId: 'deleteNetworkInterface'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_id', ParameterLocation::PATH, required: true, pattern: '^[0-9]+$', example: '2')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class)]
     #[ApiResponse(200, 'rest_response_200_deleted')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]

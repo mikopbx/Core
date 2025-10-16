@@ -395,6 +395,79 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             // Only in API responses, not in requests
             // Used by getOpenApiSchema() method
             'response' => $responseOnlyFields,
+
+            // ========== CUSTOM METHOD PARAMETERS ==========
+            // Parameters specific to custom module operations
+            'related' => [
+                'releaseId' => [
+                    'type' => 'integer',
+                    'description' => 'rest_param_module_release_id',
+                    'minimum' => 0,
+                    'default' => 0,
+                    'sanitize' => 'int',
+                    'example' => 123
+                ],
+                'asyncChannelId' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_async_channel_id',
+                    'maxLength' => 100,
+                    'sanitize' => 'string',
+                    'example' => 'install-123'
+                ],
+                'fileId' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_module_file_id',
+                    'maxLength' => 100,
+                    'sanitize' => 'string',
+                    'example' => 'upload-123'
+                ],
+                'reason' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_module_disable_reason',
+                    'maxLength' => 100,
+                    'sanitize' => 'string',
+                    'example' => 'manual'
+                ],
+                'reasonText' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_module_disable_reason_text',
+                    'maxLength' => 500,
+                    'sanitize' => 'string',
+                    'example' => 'Disabled by admin'
+                ],
+                'keepSettings' => [
+                    'type' => 'boolean',
+                    'description' => 'rest_param_module_keep_settings',
+                    'default' => false,
+                    'sanitize' => 'bool',
+                    'example' => false
+                ],
+                'modulesForUpdate' => [
+                    'type' => 'array',
+                    'description' => 'rest_param_modules_for_update',
+                    'items' => [
+                        'type' => 'string'
+                    ],
+                    'sanitize' => 'array',
+                    'example' => ['ModuleTemplate', 'ModuleUsersUI']
+                ],
+                'url' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_module_download_url',
+                    'format' => 'uri',
+                    'maxLength' => 500,
+                    'sanitize' => 'string',
+                    'example' => 'https://releases.mikopbx.com/modules/ModuleTemplate-1.0.0.zip'
+                ],
+                'md5' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_module_download_md5',
+                    'pattern' => '^[a-f0-9]{32}$',
+                    'maxLength' => 32,
+                    'sanitize' => 'string',
+                    'example' => 'd41d8cd98f00b204e9800998ecf8427e'
+                ]
+            ]
         ];
     }
 

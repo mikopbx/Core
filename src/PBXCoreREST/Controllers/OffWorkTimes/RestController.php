@@ -26,12 +26,10 @@ use MikoPBX\PBXCoreREST\Lib\Common\CommonDataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
-    ApiParameter,
     ApiParameterRef,
     ApiResponse,
     ApiDataSchema,
     SecurityType,
-    ParameterLocation,
     HttpMapping,
     ResourceSecurity
 };
@@ -338,14 +336,7 @@ class RestController extends BaseRestController
         description: 'rest_owt_ChangePrioritiesDesc',
         operationId: 'changeOffWorkTimePriorities'
     )]
-    #[ApiParameter(
-        name: 'priorities',
-        type: 'array',
-        description: 'rest_param_owt_priorities',
-        in: ParameterLocation::QUERY,
-        required: true,
-        example: '[{"id":"15","priority":1},{"id":"16","priority":2}]'
-    )]
+    #[ApiParameterRef('priorities', required: true)]
     #[ApiResponse(200, 'rest_response_200_updated')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]

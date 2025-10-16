@@ -26,11 +26,10 @@ use MikoPBX\PBXCoreREST\Lib\Common\CommonDataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
-    
+    ApiParameterRef,
     ApiResponse,
     ApiDataSchema,
     SecurityType,
-    ParameterLocation,
     HttpMapping,
     ResourceSecurity
 };
@@ -92,44 +91,11 @@ class RestController extends BaseRestController
     )]
     #[ApiParameterRef('limit', dataStructure: CommonDataStructure::class)]
     #[ApiParameterRef('offset', dataStructure: CommonDataStructure::class)]
-    #[ApiParameter(
-        name: 'dateFrom',
-        type: 'string',
-        description: 'rest_param_cdr_dateFrom',
-        in: ParameterLocation::QUERY,
-        format: 'date-time',
-        example: '2025-01-01T00:00:00'
-    )]
-    #[ApiParameter(
-        name: 'dateTo',
-        type: 'string',
-        description: 'rest_param_cdr_dateTo',
-        in: ParameterLocation::QUERY,
-        format: 'date-time',
-        example: '2025-01-31T23:59:59'
-    )]
-    #[ApiParameter(
-        name: 'src_num',
-        type: 'string',
-        description: 'rest_param_cdr_src_num',
-        in: ParameterLocation::QUERY,
-        example: '201'
-    )]
-    #[ApiParameter(
-        name: 'dst_num',
-        type: 'string',
-        description: 'rest_param_cdr_dst_num',
-        in: ParameterLocation::QUERY,
-        example: '202'
-    )]
-    #[ApiParameter(
-        name: 'disposition',
-        type: 'string',
-        description: 'rest_param_cdr_disposition',
-        in: ParameterLocation::QUERY,
-        enum: ['ANSWERED', 'NO ANSWER', 'BUSY', 'FAILED'],
-        example: 'ANSWERED'
-    )]
+    #[ApiParameterRef('dateFrom')]
+    #[ApiParameterRef('dateTo')]
+    #[ApiParameterRef('src_num')]
+    #[ApiParameterRef('dst_num')]
+    #[ApiParameterRef('disposition')]
     #[ApiResponse(200, 'rest_response_200_list')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -209,29 +175,9 @@ class RestController extends BaseRestController
         description: 'rest_cdr_PlaybackDesc',
         operationId: 'playbackRecording'
     )]
-    #[ApiParameter(
-        name: 'view',
-        type: 'string',
-        description: 'rest_param_cdr_view',
-        in: ParameterLocation::QUERY,
-        required: true,
-        example: '/storage/usbdisk1/mikopbx/voicemailbackup/monitor/2025/01/15/call-123.mp3'
-    )]
-    #[ApiParameter(
-        name: 'download',
-        type: 'boolean',
-        description: 'rest_param_cdr_download',
-        in: ParameterLocation::QUERY,
-        default: false,
-        example: false
-    )]
-    #[ApiParameter(
-        name: 'filename',
-        type: 'string',
-        description: 'rest_param_cdr_filename',
-        in: ParameterLocation::QUERY,
-        example: 'call-recording.mp3'
-    )]
+    #[ApiParameterRef('view', required: true)]
+    #[ApiParameterRef('download')]
+    #[ApiParameterRef('filename')]
     #[ApiResponse(200, 'rest_response_200_stream')]
     #[ApiResponse(206, 'rest_response_206_partial_content')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]

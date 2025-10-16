@@ -62,4 +62,32 @@ class DataStructure extends FirewallDataStructure
     // and the same field structure. The only difference is the API endpoint name.
     // All field definitions from getAllFieldDefinitions() are inherited correctly.
 
+    /**
+     * Get parameter definitions (extends parent with NetworkFilters-specific parameters)
+     *
+     * @return array<string, array<string, mixed>> Parameter definitions
+     */
+    public static function getParameterDefinitions(): array
+    {
+        $definitions = parent::getParameterDefinitions();
+
+        // Add NetworkFilters-specific parameters for getForSelect custom method
+        $definitions['related']['category'] = [
+            'type' => 'string',
+            'description' => 'rest_param_nf_category',
+            'enum' => ['SIP', 'IAX', 'AMI', 'API'],
+            'sanitize' => 'string',
+            'example' => 'SIP'
+        ];
+
+        $definitions['related']['includeLocalhost'] = [
+            'type' => 'boolean',
+            'description' => 'rest_param_nf_includeLocalhost',
+            'default' => false,
+            'sanitize' => 'bool',
+            'example' => true
+        ];
+
+        return $definitions;
+    }
 }

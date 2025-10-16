@@ -26,12 +26,10 @@ use MikoPBX\PBXCoreREST\Lib\Common\CommonDataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
-    ApiParameter,
     ApiParameterRef,
     ApiResponse,
     ApiDataSchema,
     SecurityType,
-    ParameterLocation,
     HttpMapping,
     ResourceSecurity
 };
@@ -168,10 +166,10 @@ class RestController extends BaseRestController
         description: 'rest_da_CreateDesc',
         operationId: 'createDialplanApplication'
     )]
-    #[ApiParameter('name', 'string', 'rest_param_da_name', ParameterLocation::QUERY, required: true, maxLength: 100, example: 'Echo Test')]
-    #[ApiParameter('extension', 'string', 'rest_param_da_extension', ParameterLocation::QUERY, required: true, pattern: '^[0-9*#]{2,8}$', example: '999')]
-    #[ApiParameter('type', 'string', 'rest_param_da_type', ParameterLocation::QUERY, required: true, enum: ['echo', 'playback', 'none'], example: 'echo')]
-    #[ApiParameter('description', 'string', 'rest_param_da_description', ParameterLocation::QUERY, required: false, maxLength: 500, example: 'Echo test application')]
+    #[ApiParameterRef('name', required: true)]
+    #[ApiParameterRef('extension', required: true)]
+    #[ApiParameterRef('type', required: true)]
+    #[ApiParameterRef('description')]
     #[ApiResponse(201, 'rest_response_201_created')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -197,10 +195,10 @@ class RestController extends BaseRestController
         operationId: 'updateDialplanApplication'
     )]
     #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^(DIALPLAN-[A-Z0-9]+|DIALPLAN-APPLICATION-[a-z0-9]+|APPLICATION-MAPPING-[0-9a-z]+)$', example: 'DIALPLAN-ABCD1234')]
-    #[ApiParameter('name', 'string', 'rest_param_da_name', ParameterLocation::QUERY, required: true, maxLength: 100, example: 'Updated Echo')]
-    #[ApiParameter('extension', 'string', 'rest_param_da_extension', ParameterLocation::QUERY, required: true, pattern: '^[0-9*#]{2,8}$', example: '999')]
-    #[ApiParameter('type', 'string', 'rest_param_da_type', ParameterLocation::QUERY, required: true, enum: ['echo', 'playback', 'none'], example: 'echo')]
-    #[ApiParameter('description', 'string', 'rest_param_da_description', ParameterLocation::QUERY, required: false, maxLength: 500, example: 'Updated description')]
+    #[ApiParameterRef('name', required: true)]
+    #[ApiParameterRef('extension', required: true)]
+    #[ApiParameterRef('type', required: true)]
+    #[ApiParameterRef('description')]
     #[ApiResponse(200, 'rest_response_200_updated')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -227,10 +225,10 @@ class RestController extends BaseRestController
         operationId: 'patchDialplanApplication'
     )]
     #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^(DIALPLAN-[A-Z0-9]+|DIALPLAN-APPLICATION-[a-z0-9]+|APPLICATION-MAPPING-[0-9a-z]+)$', example: 'DIALPLAN-ABCD1234')]
-    #[ApiParameter('name', 'string', 'rest_param_da_name', ParameterLocation::QUERY, required: false, maxLength: 100, example: 'Patched name')]
-    #[ApiParameter('extension', 'string', 'rest_param_da_extension', ParameterLocation::QUERY, required: false, pattern: '^[0-9*#]{2,8}$', example: '998')]
-    #[ApiParameter('type', 'string', 'rest_param_da_type', ParameterLocation::QUERY, required: false, enum: ['echo', 'playback', 'none'], example: 'playback')]
-    #[ApiParameter('description', 'string', 'rest_param_da_description', ParameterLocation::QUERY, required: false, maxLength: 500, example: 'Patched description')]
+    #[ApiParameterRef('name')]
+    #[ApiParameterRef('extension')]
+    #[ApiParameterRef('type')]
+    #[ApiParameterRef('description')]
     #[ApiResponse(200, 'rest_response_200_patched')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -300,7 +298,7 @@ class RestController extends BaseRestController
         operationId: 'copyDialplanApplication'
     )]
     #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^(DIALPLAN-[A-Z0-9]+|DIALPLAN-APPLICATION-[a-z0-9]+|APPLICATION-MAPPING-[0-9a-z]+)$', example: 'DIALPLAN-ABCD1234')]
-    #[ApiParameter('extension', 'string', 'rest_param_da_extension', ParameterLocation::QUERY, required: true, pattern: '^[0-9*#]{2,8}$', example: '998')]
+    #[ApiParameterRef('extension', required: true)]
     #[ApiResponse(201, 'rest_response_201_copied')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]

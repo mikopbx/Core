@@ -26,7 +26,8 @@ use MikoPBX\PBXCoreREST\Lib\Common\CommonDataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
-    
+    ApiParameter,
+    ApiParameterRef,
     ApiResponse,
     ApiDataSchema,
     SecurityType,
@@ -167,9 +168,10 @@ class RestController extends BaseRestController
         description: 'rest_cr_CreateDesc',
         operationId: 'createConferenceRoom'
     )]
-    #[ApiParameter('name', 'string', 'rest_param_cr_name', ParameterLocation::QUERY, required: true, maxLength: 100, example: 'Sales Conference')]
-    #[ApiParameter('extension', 'string', 'rest_param_cr_extension', ParameterLocation::QUERY, required: true, pattern: '^[0-9]{2,8}$', example: '3000')]
-    #[ApiParameter('pinCode', 'string', 'rest_param_cr_pincode', ParameterLocation::QUERY, required: false, maxLength: 20, example: '1234')]
+    #[ApiParameterRef('name', required: true)]
+    #[ApiParameterRef('extension', required: true)]
+    #[ApiParameterRef('pinCode')]
+    #[ApiParameterRef('description')]
     #[ApiResponse(201, 'rest_response_201_created')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -195,9 +197,10 @@ class RestController extends BaseRestController
         operationId: 'updateConferenceRoom'
     )]
     #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^CONFERENCE-[A-Z0-9]{8,}$', example: 'CONFERENCE-ABCD1234')]
-    #[ApiParameter('name', 'string', 'rest_param_cr_name', ParameterLocation::QUERY, required: true, maxLength: 100, example: 'Updated Conference')]
-    #[ApiParameter('extension', 'string', 'rest_param_cr_extension', ParameterLocation::QUERY, required: true, pattern: '^[0-9]{2,8}$', example: '3000')]
-    #[ApiParameter('pinCode', 'string', 'rest_param_cr_pincode', ParameterLocation::QUERY, required: false, maxLength: 20, example: '5678')]
+    #[ApiParameterRef('name', required: true)]
+    #[ApiParameterRef('extension', required: true)]
+    #[ApiParameterRef('pinCode')]
+    #[ApiParameterRef('description')]
     #[ApiResponse(200, 'rest_response_200_updated')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -224,9 +227,10 @@ class RestController extends BaseRestController
         operationId: 'patchConferenceRoom'
     )]
     #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^CONFERENCE-[A-Z0-9]{8,}$', example: 'CONFERENCE-ABCD1234')]
-    #[ApiParameter('name', 'string', 'rest_param_cr_name', ParameterLocation::QUERY, required: false, maxLength: 100, example: 'Patched name')]
-    #[ApiParameter('extension', 'string', 'rest_param_cr_extension', ParameterLocation::QUERY, required: false, pattern: '^[0-9]{2,8}$', example: '3001')]
-    #[ApiParameter('pinCode', 'string', 'rest_param_cr_pincode', ParameterLocation::QUERY, required: false, maxLength: 20, example: '9999')]
+    #[ApiParameterRef('name')]
+    #[ApiParameterRef('extension')]
+    #[ApiParameterRef('pinCode')]
+    #[ApiParameterRef('description')]
     #[ApiResponse(200, 'rest_response_200_patched')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]

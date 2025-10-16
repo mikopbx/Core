@@ -26,11 +26,10 @@ use MikoPBX\PBXCoreREST\Lib\Common\CommonDataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
-    
+    ApiParameterRef,
     ApiResponse,
     ApiDataSchema,
     SecurityType,
-    ParameterLocation,
     HttpMapping,
     ResourceSecurity
 };
@@ -142,24 +141,8 @@ class RestController extends BaseRestController
         description: 'rest_nf_GetForSelectDesc',
         operationId: 'getNetworkFiltersForSelect'
     )]
-    #[ApiParameter(
-        name: 'category',
-        type: 'string',
-        description: 'rest_param_nf_category',
-        in: ParameterLocation::QUERY,
-        required: false,
-        enum: ['SIP', 'IAX', 'AMI', 'API'],
-        example: 'SIP'
-    )]
-    #[ApiParameter(
-        name: 'includeLocalhost',
-        type: 'boolean',
-        description: 'rest_param_nf_includeLocalhost',
-        in: ParameterLocation::QUERY,
-        required: false,
-        default: false,
-        example: true
-    )]
+    #[ApiParameterRef('category')]
+    #[ApiParameterRef('includeLocalhost')]
     #[ApiResponse(200, 'rest_response_200_list')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]

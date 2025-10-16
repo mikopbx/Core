@@ -26,11 +26,10 @@ use MikoPBX\PBXCoreREST\Lib\Common\CommonDataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
-    
+    ApiParameterRef,
     ApiResponse,
     ApiDataSchema,
     SecurityType,
-    ParameterLocation,
     HttpMapping,
     ResourceSecurity
 };
@@ -143,13 +142,13 @@ class RestController extends BaseRestController
         description: 'rest_obr_CreateDesc',
         operationId: 'createOutboundRoute'
     )]
-    #[ApiParameter('rulename', 'string', 'rest_param_obr_rulename', ParameterLocation::QUERY, required: true, maxLength: 100, example: 'International Calls')]
-    #[ApiParameter('providerid', 'string', 'rest_param_obr_providerid', ParameterLocation::QUERY, required: true, example: 'SIP-PROVIDER-123456')]
-    #[ApiParameter('numberbeginswith', 'string', 'rest_param_obr_numberbeginswith', ParameterLocation::QUERY, required: true, pattern: '^[0-9*#+X]+$', maxLength: 20, example: '00')]
-    #[ApiParameter('restnumbers', 'integer', 'rest_param_obr_restnumbers', ParameterLocation::QUERY, required: false, minimum: 0, maximum: 50, default: 0, example: 9)]
-    #[ApiParameter('trimfrombegin', 'integer', 'rest_param_obr_trimfrombegin', ParameterLocation::QUERY, required: false, minimum: 0, maximum: 50, default: 0, example: 2)]
-    #[ApiParameter('prepend', 'string', 'rest_param_obr_prepend', ParameterLocation::QUERY, required: false, pattern: '^[0-9*#+]*$', maxLength: 20, example: '8')]
-    #[ApiParameter('note', 'string', 'rest_param_obr_note', ParameterLocation::QUERY, required: false, maxLength: 500, example: 'Route for international calls via Provider A')]
+    #[ApiParameterRef('rulename', required: true)]
+    #[ApiParameterRef('providerid', required: true)]
+    #[ApiParameterRef('numberbeginswith', required: true)]
+    #[ApiParameterRef('restnumbers')]
+    #[ApiParameterRef('trimfrombegin')]
+    #[ApiParameterRef('prepend')]
+    #[ApiParameterRef('note')]
     #[ApiResponse(201, 'rest_response_201_created')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -175,9 +174,9 @@ class RestController extends BaseRestController
         operationId: 'updateOutboundRoute'
     )]
     #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]+$', example: '42')]
-    #[ApiParameter('rulename', 'string', 'rest_param_obr_rulename', ParameterLocation::QUERY, required: true, maxLength: 100, example: 'Updated International Route')]
-    #[ApiParameter('providerid', 'string', 'rest_param_obr_providerid', ParameterLocation::QUERY, required: true, example: 'SIP-PROVIDER-987654')]
-    #[ApiParameter('numberbeginswith', 'string', 'rest_param_obr_numberbeginswith', ParameterLocation::QUERY, required: true, pattern: '^[0-9*#+X]+$', maxLength: 20, example: '8')]
+    #[ApiParameterRef('rulename', required: true)]
+    #[ApiParameterRef('providerid', required: true)]
+    #[ApiParameterRef('numberbeginswith', required: true)]
     #[ApiResponse(200, 'rest_response_200_updated')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -204,9 +203,9 @@ class RestController extends BaseRestController
         operationId: 'patchOutboundRoute'
     )]
     #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]+$', example: '42')]
-    #[ApiParameter('rulename', 'string', 'rest_param_obr_rulename', ParameterLocation::QUERY, required: false, maxLength: 100, example: 'Updated Name')]
-    #[ApiParameter('restnumbers', 'integer', 'rest_param_obr_restnumbers', ParameterLocation::QUERY, required: false, minimum: 0, maximum: 50, example: 10)]
-    #[ApiParameter('trimfrombegin', 'integer', 'rest_param_obr_trimfrombegin', ParameterLocation::QUERY, required: false, minimum: 0, maximum: 50, example: 3)]
+    #[ApiParameterRef('rulename')]
+    #[ApiParameterRef('restnumbers')]
+    #[ApiParameterRef('trimfrombegin')]
     #[ApiResponse(200, 'rest_response_200_patched')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -295,14 +294,7 @@ class RestController extends BaseRestController
         description: 'rest_obr_ChangePriorityDesc',
         operationId: 'changeOutboundRoutePriority'
     )]
-    #[ApiParameter(
-        name: 'priorities',
-        type: 'array',
-        description: 'rest_param_obr_priorities',
-        in: ParameterLocation::QUERY,
-        required: true,
-        example: '[{"id":"1","priority":0},{"id":"42","priority":1},{"id":"15","priority":2}]'
-    )]
+    #[ApiParameterRef('priorities', required: true)]
     #[ApiResponse(200, 'rest_response_200_updated')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]

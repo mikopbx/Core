@@ -26,11 +26,10 @@ use MikoPBX\PBXCoreREST\Lib\Common\CommonDataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
-    
+    ApiParameterRef,
     ApiResponse,
     ApiDataSchema,
     SecurityType,
-    ParameterLocation,
     HttpMapping,
     ResourceSecurity
 };
@@ -166,7 +165,7 @@ class RestController extends BaseRestController
         description: 'rest_mod_UpdateDesc',
         operationId: 'updateModule'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_module_id', ParameterLocation::PATH, required: true, example: 'ModuleTemplate')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[A-Za-z][A-Za-z0-9]*$', example: 'ModuleTemplate')]
     #[ApiResponse(200, 'rest_response_200_updated')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -191,7 +190,7 @@ class RestController extends BaseRestController
         description: 'rest_mod_PatchDesc',
         operationId: 'patchModule'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_module_id', ParameterLocation::PATH, required: true, example: 'ModuleTemplate')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[A-Za-z][A-Za-z0-9]*$', example: 'ModuleTemplate')]
     #[ApiResponse(200, 'rest_response_200_patched')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -212,7 +211,7 @@ class RestController extends BaseRestController
         description: 'rest_mod_DeleteDesc',
         operationId: 'deleteModule'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_module_id', ParameterLocation::PATH, required: true, example: 'ModuleTemplate')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[A-Za-z][A-Za-z0-9]*$', example: 'ModuleTemplate')]
     #[ApiResponse(200, 'rest_response_200_deleted')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -286,7 +285,7 @@ class RestController extends BaseRestController
         description: 'rest_mod_GetModuleInfoDesc',
         operationId: 'getModuleInfo'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_module_id', ParameterLocation::PATH, required: true, example: 'ModuleTemplate')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[A-Za-z][A-Za-z0-9]*$', example: 'ModuleTemplate')]
     #[ApiResponse(200, 'rest_response_200_get')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -312,8 +311,8 @@ class RestController extends BaseRestController
         description: 'rest_mod_GetModuleLinkDesc',
         operationId: 'getModuleLink'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_module_release_id', ParameterLocation::PATH, required: true, example: '123')]
-    #[ApiParameter('releaseId', 'integer', 'rest_param_module_release_id', ParameterLocation::QUERY, required: true, example: 123)]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]+$', example: '123')]
+    #[ApiParameterRef('releaseId', required: true)]
     #[ApiResponse(200, 'rest_response_200_get')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -342,9 +341,9 @@ class RestController extends BaseRestController
         description: 'rest_mod_InstallFromRepoDesc',
         operationId: 'installFromRepo'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_module_id', ParameterLocation::PATH, required: true, example: 'ModuleTemplate')]
-    #[ApiParameter('releaseId', 'integer', 'rest_param_module_release_id', ParameterLocation::QUERY, required: false, default: 0, example: 0)]
-    #[ApiParameter('asyncChannelId', 'string', 'rest_param_async_channel_id', ParameterLocation::QUERY, required: false, example: 'install-123')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[A-Za-z][A-Za-z0-9]*$', example: 'ModuleTemplate')]
+    #[ApiParameterRef('releaseId')]
+    #[ApiParameterRef('asyncChannelId')]
     #[ApiResponse(200, 'rest_response_200_async_started')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -376,9 +375,9 @@ class RestController extends BaseRestController
         description: 'rest_mod_InstallFromPackageDesc',
         operationId: 'installFromPackage'
     )]
-    #[ApiParameter('filePath', 'string', 'rest_param_module_file_path', ParameterLocation::QUERY, required: true, example: '/tmp/module.zip')]
-    #[ApiParameter('fileId', 'string', 'rest_param_module_file_id', ParameterLocation::QUERY, required: true, example: 'upload-123')]
-    #[ApiParameter('asyncChannelId', 'string', 'rest_param_async_channel_id', ParameterLocation::QUERY, required: false, example: 'install-123')]
+    #[ApiParameterRef('filePath', required: true)]
+    #[ApiParameterRef('fileId', required: true)]
+    #[ApiParameterRef('asyncChannelId')]
     #[ApiResponse(200, 'rest_response_200_async_started')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -403,8 +402,8 @@ class RestController extends BaseRestController
         description: 'rest_mod_EnableDesc',
         operationId: 'enable'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_module_id', ParameterLocation::PATH, required: true, example: 'ModuleTemplate')]
-    #[ApiParameter('asyncChannelId', 'string', 'rest_param_async_channel_id', ParameterLocation::QUERY, required: false, example: 'enable-123')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[A-Za-z][A-Za-z0-9]*$', example: 'ModuleTemplate')]
+    #[ApiParameterRef('asyncChannelId')]
     #[ApiResponse(200, 'rest_response_200_enabled')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -425,10 +424,10 @@ class RestController extends BaseRestController
         description: 'rest_mod_DisableDesc',
         operationId: 'disable'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_module_id', ParameterLocation::PATH, required: true, example: 'ModuleTemplate')]
-    #[ApiParameter('reason', 'string', 'rest_param_module_disable_reason', ParameterLocation::QUERY, required: false, example: 'manual')]
-    #[ApiParameter('reasonText', 'string', 'rest_param_module_disable_reason_text', ParameterLocation::QUERY, required: false, example: 'Disabled by admin')]
-    #[ApiParameter('asyncChannelId', 'string', 'rest_param_async_channel_id', ParameterLocation::QUERY, required: false, example: 'disable-123')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[A-Za-z][A-Za-z0-9]*$', example: 'ModuleTemplate')]
+    #[ApiParameterRef('reason')]
+    #[ApiParameterRef('reasonText')]
+    #[ApiParameterRef('asyncChannelId')]
     #[ApiResponse(200, 'rest_response_200_disabled')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -449,9 +448,9 @@ class RestController extends BaseRestController
         description: 'rest_mod_UninstallDesc',
         operationId: 'uninstall'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_module_id', ParameterLocation::PATH, required: true, example: 'ModuleTemplate')]
-    #[ApiParameter('keepSettings', 'boolean', 'rest_param_module_keep_settings', ParameterLocation::QUERY, required: false, default: false, example: false)]
-    #[ApiParameter('asyncChannelId', 'string', 'rest_param_async_channel_id', ParameterLocation::QUERY, required: false, example: 'uninstall-123')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[A-Za-z][A-Za-z0-9]*$', example: 'ModuleTemplate')]
+    #[ApiParameterRef('keepSettings')]
+    #[ApiParameterRef('asyncChannelId')]
     #[ApiResponse(200, 'rest_response_200_uninstalled')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -472,8 +471,8 @@ class RestController extends BaseRestController
         description: 'rest_mod_UpdateAllDesc',
         operationId: 'updateAllModules'
     )]
-    #[ApiParameter('modulesForUpdate', 'array', 'rest_param_modules_for_update', ParameterLocation::QUERY, required: true, example: '["ModuleTemplate","ModuleUsersUI"]')]
-    #[ApiParameter('asyncChannelId', 'string', 'rest_param_async_channel_id', ParameterLocation::QUERY, required: false, example: 'update-123')]
+    #[ApiParameterRef('modulesForUpdate', required: true)]
+    #[ApiParameterRef('asyncChannelId')]
     #[ApiResponse(200, 'rest_response_200_async_started')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -525,9 +524,9 @@ class RestController extends BaseRestController
         description: 'rest_mod_StartDownloadDesc',
         operationId: 'startDownload'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_module_id', ParameterLocation::PATH, required: true, example: 'ModuleTemplate')]
-    #[ApiParameter('url', 'string', 'rest_param_module_download_url', ParameterLocation::QUERY, required: true, example: 'https://releases.mikopbx.com/modules/ModuleTemplate-1.0.0.zip')]
-    #[ApiParameter('md5', 'string', 'rest_param_module_download_md5', ParameterLocation::QUERY, required: true, example: 'd41d8cd98f00b204e9800998ecf8427e')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[A-Za-z][A-Za-z0-9]*$', example: 'ModuleTemplate')]
+    #[ApiParameterRef('url', required: true)]
+    #[ApiParameterRef('md5', required: true)]
     #[ApiResponse(200, 'rest_response_200_async_started')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -547,7 +546,7 @@ class RestController extends BaseRestController
         description: 'rest_mod_DownloadStatusDesc',
         operationId: 'getDownloadStatus'
     )]
-    #[ApiParameter('id', 'string', 'rest_param_module_id', ParameterLocation::PATH, required: true, example: 'ModuleTemplate')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[A-Za-z][A-Za-z0-9]*$', example: 'ModuleTemplate')]
     #[ApiResponse(200, 'rest_response_200_get')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -571,7 +570,7 @@ class RestController extends BaseRestController
         description: 'rest_mod_GetMetadataFromPackageDesc',
         operationId: 'getMetadataFromPackage'
     )]
-    #[ApiParameter('filePath', 'string', 'rest_param_module_file_path', ParameterLocation::QUERY, required: true, example: '/tmp/module.zip')]
+    #[ApiParameterRef('filePath', required: true)]
     #[ApiResponse(200, 'rest_response_200_get')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -591,7 +590,7 @@ class RestController extends BaseRestController
         description: 'rest_mod_InstallationStatusDesc',
         operationId: 'getInstallationStatus'
     )]
-    #[ApiParameter('filePath', 'string', 'rest_param_module_file_path', ParameterLocation::QUERY, required: true, example: '/tmp/module.zip')]
+    #[ApiParameterRef('filePath', required: true)]
     #[ApiResponse(200, 'rest_response_200_get')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]

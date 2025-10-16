@@ -109,14 +109,14 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'description' => 'rest_schema_lic_licKey',
                 'pattern' => '^MIKO-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}$',
                 'sanitize' => 'string',
-                'example' => 'MIKO-GW9DC-EE22D-WB83S-C88PG'
+                'example' => 'MIKO-XXXXX-XXXXX-XXXXX-XXXXX'
             ],
             'coupon' => [
                 'type' => 'string',
                 'description' => 'rest_schema_lic_coupon',
                 'pattern' => '^MIKOUPD-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}$',
                 'sanitize' => 'string',
-                'example' => 'MIKOUPD-GK0DC-QE11D-WN87S-C88PF'
+                'example' => 'MIKOUPD-XXXXX-XXXXX-XXXXX-XXXXX'
             ],
             'productId' => [
                 'type' => 'string',
@@ -138,7 +138,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'pattern' => '^MIKO-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}$',
                 'nullable' => true,
                 'readOnly' => true,
-                'example' => 'MIKO-GW9DC-EE22D-WB83S-C88PG'
+                'example' => 'MIKO-XXXXX-XXXXX-XXXXX-XXXXX'
             ],
             'companyName' => [
                 'type' => 'string',
