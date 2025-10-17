@@ -46,8 +46,8 @@ use MikoPBX\PBXCoreREST\Attributes\{
  * @see https://spec.openapis.org/oas/v3.1.0 - OpenAPI 3.1 Specification
  */
 #[ApiResource(
-    path: '/pbxcore/api/v3/off-work-times',
-    tags: ['Off Work Times'],
+    path: '/pbxcore/api/v3/off-work-times',    
+    tags: ['OffWorkTimes'],
     description: 'Time-based routing conditions for handling calls outside business hours. ' .
                 'Features include time range definitions (daily, weekly, date-specific), ' .
                 'holiday scheduling, action routing (forward to extension, play audio), ' .

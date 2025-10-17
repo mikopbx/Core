@@ -452,7 +452,12 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         $properties = [];
 
         // ✨ Inherit request parameters used in list view
-        $listFields = ['name', 'description', 'calType', 'priority', 'date_from', 'date_to', 'time_from', 'time_to'];
+        $listFields = [
+            'name', 'description', 'calType', 'priority',
+            'date_from', 'date_to', 'time_from', 'time_to',
+            'weekday_from', 'weekday_to',  // Formatted weekday names for display
+            'action', 'extension', 'audio_message_id', 'allowRestriction'
+        ];
         foreach ($listFields as $field) {
             if (isset($requestParams[$field])) {
                 $properties[$field] = $requestParams[$field];
@@ -462,7 +467,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         }
 
         // ✨ Inherit response-only fields for list (NO duplication!)
-        $listResponseFields = ['id', 'shot_description', 'calendarPeriods', 'allowRestriction', 'action', 'actionDisplay', 'audio_message_id', 'extension', 'search_index'];
+        $listResponseFields = ['id', 'shot_description', 'calendarPeriods', 'actionDisplay', 'search_index'];
         foreach ($listResponseFields as $field) {
             if (isset($responseFields[$field])) {
                 $properties[$field] = $responseFields[$field];
@@ -555,13 +560,12 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'description' => 'rest_schema_owt_description',
                 'maxLength' => 500,
                 'sanitize' => 'text',
-                'required' => true,
                 'example' => 'Weekend Schedule'
             ],
             'calType' => [
                 'type' => 'string',
                 'description' => 'rest_schema_owt_calType',
-                'enum' => ['timeframe', 'caldav', 'ical'],
+                'enum' => ['', 'timeframe', 'caldav'],  // Empty string is alias for 'timeframe' (stored in DB as empty)
                 'sanitize' => 'string',
                 'default' => 'timeframe',
                 'example' => 'timeframe'

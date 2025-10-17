@@ -119,20 +119,10 @@ class SaveRecordAction extends AbstractSaveRecordAction
         // ============================================================
         // PHASE 2: REQUIRED FIELDS VALIDATION
         // WHY: Fail fast - don't waste resources on invalid data
+        // Note: description is optional, will be auto-generated if empty
         // ============================================================
 
-        $validationRules = [
-            'description' => [
-                ['type' => 'required', 'message' => 'Description is required'],
-                ['type' => 'minLength', 'value' => 1, 'message' => 'Description must not be empty']
-            ]
-        ];
-
-        $validationErrors = self::validateRequiredFields($sanitizedData, $validationRules);
-        if (!empty($validationErrors)) {
-            $res->messages['error'] = $validationErrors;
-            return $res;
-        }
+        // No required fields for time conditions (description is optional)
 
         // ============================================================
         // PHASE 3: DETERMINE OPERATION TYPE

@@ -425,6 +425,8 @@ const outOfWorkTimeRecord = {
                 // Set calType dropdown
                 if (data.calType) {
                     outOfWorkTimeRecord.$calTypeDropdown.dropdown('set selected', data.calType);
+                    // Manually set hidden field value since onChange doesn't fire on programmatic set
+                    outOfWorkTimeRecord.$calTypeField.val(data.calType);
                 }
                 
                 // Set weekday dropdowns
@@ -1058,11 +1060,9 @@ const outOfWorkTimeRecord = {
             result.data.allowRestriction = result.data.allowRestriction === 'on' || result.data.allowRestriction === true;
         }
         
-        // Handle calType conversion (matches old controller: ($data[$name] === 'timeframe') ? '' : $data[$name])
-        // For saving we convert 'timeframe' to empty string
-        if (result.data.calType === 'timeframe') {
-            result.data.calType = '';
-        }
+        // Note: calType can be 'timeframe', 'caldav', 'ical', or empty string
+        // Backend accepts all these values (empty string is treated as 'timeframe' in DB)
+        // No conversion needed - send value as-is
         
         // Handle weekday values (matches old controller: ($data[$name] < 1) ? null : $data[$name])
         if (result.data.weekday_from === '-1' || result.data.weekday_from < 1) {
