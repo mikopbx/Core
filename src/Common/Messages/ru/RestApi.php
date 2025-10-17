@@ -5,6 +5,11 @@
  */
 
 return [
+
+    'rest_MikoPBXRestAPIHeader'=>'MikoPBX REST API',
+    'rest_MikoPBXRestAPIDescription'=>'Полноценный REST API для управления и настройки MikoPBX',
+    'rest_MikoPBXSupportName'=>'Поддержка MikoPBX',
+
     // ============================================================================
     // Resource Names (for placeholder replacement in response messages)
     // ============================================================================
@@ -882,6 +887,7 @@ return [
     'rest_param_order' => 'Поле для сортировки результатов',
     'rest_param_orderWay' => 'Направление сортировки',
     'rest_param_id' => 'Уникальный идентификатор ресурса',
+    'rest_param_id_description' => 'Уникальный идентификатор ресурса (обычно числовой ID или строковый код)',
     'rest_param_strategy' => 'Фильтр по стратегии распределения вызовов',
 
     // Providers specific parameters
@@ -1253,6 +1259,7 @@ return [
     'rest_schema_am_secret' => 'Пароль для аутентификации AMI',
     'rest_schema_am_description' => 'Описание пользователя AMI',
     'rest_schema_am_networkfilterid' => 'ID сетевого фильтра',
+    'rest_schema_am_eventfilter' => 'Фильтр событий AMI (каждый паттерн с новой строки, например: !Event: Newexten)',
     'rest_schema_am_permissions' => 'Объект с правами доступа (read/write для каждой категории)',
     'rest_schema_am_read' => 'Разрешения на чтение (формируется из permissions)',
     'rest_schema_am_write' => 'Разрешения на запись (формируется из permissions)',
@@ -1260,6 +1267,7 @@ return [
     'rest_schema_am_is_system' => 'Признак системной учетной записи (нельзя удалить)',
     'rest_schema_am_read_permissions_summary' => 'Краткое описание разрешений на чтение',
     'rest_schema_am_write_permissions_summary' => 'Краткое описание разрешений на запись',
+    'rest_schema_am_represent' => 'Текстовое представление для dropdown-ов (username - description)',
 
     // AsteriskManagers permission fields
     'rest_schema_am_perm_call_read' => 'Разрешение на получение событий вызовов (Call events)',
@@ -1408,7 +1416,7 @@ return [
 
     // ApiKeys specific parameters
     'rest_param_ak_description' => 'Описание назначения API ключа',
-    'rest_param_ak_key' => 'Значение API ключа (минимум 32 символа)',
+    'rest_param_ak_key' => 'Значение API ключа (опционально, автогенерируется если не указан, минимум 32 символа). Никогда не возвращается в ответах - хранится как bcrypt хеш',
     'rest_param_ak_networkfilterid' => 'ID сетевого фильтра для ограничения доступа по IP',
     'rest_param_ak_full_permissions' => 'Полные права доступа ко всем endpoints',
     'rest_param_ak_allowed_paths' => 'Список разрешенных API paths',
@@ -1516,6 +1524,9 @@ return [
     'rest_param_upt_pageName' => 'Имя страницы для отслеживания (например extensions-index)',
     'rest_param_upt_expire' => 'Время истечения в секундах (как долго отслеживать просмотр)',
 
+    // User Page Tracker schema fields
+    'rest_schema_upt_timestamp' => 'Unix timestamp последнего просмотра страницы',
+
     // Files specific parameters
     'rest_param_file_path' => 'Путь к файлу в системе',
     'rest_param_file_resumable_id' => 'Идентификатор загрузки (Resumable.js)',
@@ -1608,6 +1619,7 @@ return [
     'rest_param_sip_offset' => 'Смещение для пагинации результатов',
 
     // SIP schema fields
+    'rest_schema_sip_peer_id' => 'Идентификатор SIP устройства',
     'rest_schema_sip_peer_state' => 'Состояние SIP устройства (OK, UNREACHABLE, LAGGED, UNKNOWN, OFF, REGISTERED)',
     'rest_schema_sip_peer_useragent' => 'User-Agent SIP устройства',
     'rest_schema_sip_peer_ipaddress' => 'IP адрес SIP устройства',
@@ -1615,13 +1627,21 @@ return [
     'rest_schema_sip_peer_codec' => 'Поддерживаемые кодеки SIP устройства',
     'rest_schema_sip_registry_username' => 'Имя пользователя для регистрации',
     'rest_schema_sip_registry_host' => 'Адрес хоста SIP провайдера',
+    'rest_schema_sip_auth_extension' => 'Внутренний номер для аутентификации',
+    'rest_schema_sip_secret' => 'Объект с данными секретного ключа SIP устройства',
+    'rest_schema_sip_secret_extension' => 'Внутренний номер для секретного ключа',
     'rest_schema_sip_secret_value' => 'Секретный ключ SIP устройства',
+    'rest_schema_sip_stats' => 'Статистика звонков SIP устройства',
     'rest_schema_sip_stats_total_calls' => 'Общее количество звонков',
     'rest_schema_sip_stats_successful_calls' => 'Количество успешных звонков',
     'rest_schema_sip_stats_failed_calls' => 'Количество неудачных звонков',
     'rest_schema_sip_stats_total_duration' => 'Общая продолжительность звонков (секунды)',
     'rest_schema_sip_stats_average_duration' => 'Средняя продолжительность звонка (секунды)',
+    'rest_schema_sip_history_item' => 'Элемент истории подключений SIP устройства',
     'rest_schema_sip_history_timestamp' => 'Временная метка события',
+    'rest_schema_sip_history_event' => 'Тип события (REGISTER, UNREGISTER, CALL, HANGUP)',
+    'rest_schema_sip_history_ipaddress' => 'IP адрес устройства при событии',
+    'rest_schema_sip_history_useragent' => 'User-Agent устройства при событии',
     'rest_schema_sip_auth_failure_count' => 'Количество неудачных попыток аутентификации',
     'rest_schema_sip_auth_last_failure_time' => 'Время последней неудачной попытки аутентификации',
     'rest_schema_sip_auth_blocked_until' => 'Время до которого устройство заблокировано',
@@ -1940,4 +1960,74 @@ return [
     'rest_schema_sf_file_size' => 'Размер файла в байтах',
     'rest_schema_sf_duration' => 'Длительность аудио файла в формате MM:SS',
 
+   // WikiLinks schema fields
+    'rest_schema_wl_url' => 'URL ссылки на документацию',
+
+    // ============================================================================
+    // API Tag Groups - Stoplight Elements Navigation
+    // ============================================================================
+
+    // Tag group names
+    'rest_tag_group_CorePBXFunctions' => 'Основные функции АТС',
+    'rest_tag_group_RoutingScheduling' => 'Маршрутизация и расписание',
+    'rest_tag_group_ConnectivityCommunication' => 'Подключения и связь',
+    'rest_tag_group_SecurityAccess' => 'Безопасность и доступ',
+    'rest_tag_group_SystemConfiguration' => 'Система и конфигурация',
+    'rest_tag_group_DiagnosticsMonitoring' => 'Диагностика и мониторинг',
+    'rest_tag_group_ResourcesMedia' => 'Ресурсы и медиа',
+    'rest_tag_group_Platform' => 'Платформа',
+
+    // Individual endpoint tags
+    'rest_tag_Extensions' => 'Внутренние номера',
+    'rest_tag_CallQueues' => 'Очереди звонков',
+    'rest_tag_IVRMenu' => 'IVR меню',
+    'rest_tag_ConferenceRooms' => 'Конференц-комнаты',
+    'rest_tag_DialplanApplications' => 'Приложения диалплана',
+    'rest_tag_IncomingRoutes' => 'Входящая маршрутизация',
+    'rest_tag_OutboundRoutes' => 'Исходящая маршрутизация',
+    'rest_tag_OffWorkTimes' => 'Нерабочее время',
+    'rest_tag_SIP' => 'SIP',
+    'rest_tag_IAX' => 'IAX',
+    'rest_tag_SIPProviders' => 'SIP провайдеры',
+    'rest_tag_IAXProviders' => 'IAX провайдеры',
+    'rest_tag_Providers' => 'Провайдеры',
+    'rest_tag_CallRecords' => 'Журнал звонков (CDR)',
+    'rest_tag_Authentication' => 'Аутентификация',
+    'rest_tag_APIKeys' => 'API ключи',
+    'rest_tag_AsteriskManagers' => 'AMI пользователи',
+    'rest_tag_AsteriskRESTUsers' => 'ARI пользователи',
+    'rest_tag_Passkeys' => 'Ключи доступа (Passkeys)',
+    'rest_tag_Passwords' => 'Пароли',
+    'rest_tag_Fail2Ban' => 'Защита от взлома (Fail2Ban)',
+    'rest_tag_Firewall' => 'Сетевой фильтр (Firewall)',
+    'rest_tag_Users' => 'Пользователи',
+    'rest_tag_EmployeesManagement' => 'Сотрудники',
+    'rest_tag_System' => 'Системные операции',
+    'rest_tag_Storage' => 'Хранилище',
+    'rest_tag_NetworkManagement' => 'Сетевые интерфейсы и маршрутизация',
+    'rest_tag_NetworkFilters'=>'Сетевые фильтры',
+    'rest_tag_TimeSettings' => 'Настройки времени',
+    'rest_tag_GeneralSettings' => 'Общие настройки',
+    'rest_tag_MailSettings' => 'Настройки почты',
+    'rest_tag_Sysinfo' => 'Информация о системе',
+    'rest_tag_Syslog' => 'Системные логи',
+    'rest_tag_SystemAdvice' => 'Советы и рекомендаци',
+    'rest_tag_SoundFiles' => 'Звуковые файлы',
+    'rest_tag_FilesManagement' => 'Операции с файлами',
+    'rest_tag_SystemFilesManagement' => 'Кастомизация системных файлов',
+    'rest_tag_Modules' => 'Дополнительные модули',
+    'rest_tag_UserPageTracking' => 'Отслеживание активности пользователей',
+    'rest_tag_Licensing' => 'Лицензирование',
+    'rest_tag_Media' => 'Медиа',
+    'rest_tag_OpenAPIDocumentation' => 'Документация OpenAPI',
+    'rest_tag_Documentation'=>'Ссылки на wiki документацию',
+    'rest_tag_Users' => 'Пользователи',
+
+    'rest_MikoPBXRestAPIHeader'=>'MikoPBX REST API',
+    'rest_MikoPBXRestAPIDescription'=>'Полноценный REST API для управления и настройки MikoPBX',
+    'rest_MikoPBXSupportName'=>'Поддержка MikoPBX',
+
+
+    // User Page Tracker schema fields
+    'rest_schema_upt_timestamp' => 'Unix timestamp последнего просмотра страницы',
 ];
