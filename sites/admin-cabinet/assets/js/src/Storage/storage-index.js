@@ -68,6 +68,7 @@ const storageIndex = {
                 max: 5,
                 step: 1,
                 smooth: true,
+                showLabelTicks: 'always',
                 interpretLabel: function (value) {
                     let labels = [
                         globalTranslate.st_Store1MonthOfRecords,
