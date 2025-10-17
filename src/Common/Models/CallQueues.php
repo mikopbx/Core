@@ -89,9 +89,9 @@ class CallQueues extends ModelsBase
     public ?string $recive_calls_while_on_a_call = '';
 
     /**
-     * What the caller hears when in the queue. Possible values: 'ringing', 'musiconhold'.
+     * What the caller hears when in the queue. Possible values: 'ringing', 'moh'.
      *
-     * @Column(type="string", nullable=true){'ringing'|'musiconhold'}
+     * @Column(type="string", nullable=true){'ringing'|'moh'}
      */
     public ?string $caller_hear = 'ringing';
 

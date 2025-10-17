@@ -70,6 +70,11 @@ class SaveRecordAction extends AbstractSaveRecordAction
         $sanitizationRules = DataStructure::getSanitizationRules();
         $textFields = ['name', 'description', 'callerid_prefix'];
 
+        // ✨ Get ID from request body for validation (set by BaseRestController)
+        // This is the ORIGINAL ID that user sent in POST/PUT/PATCH body, before it was
+        // overwritten with URL path ID. Used to detect conflicting IDs.
+        $idFromRequestBody = $data['_idFromRequestBody'] ?? null;
+
         // Preserve ID fields that may not be in sanitization rules
         $recordId = $data['id'] ?? null;
         $recordExtension = $data['extension'] ?? null;
@@ -161,6 +166,19 @@ class SaveRecordAction extends AbstractSaveRecordAction
             $queue->uniqid = !empty($sanitizedData['id'])
                 ? $sanitizedData['id']  // Use provided ID (migrations/imports)
                 : CallQueues::generateUniqueID(Extensions::PREFIX_QUEUE);
+        } else {
+            // ✨ UPDATE/PATCH: Validate that 'id' in request body (if provided) matches URL path
+            // WHY: Prevent accidental ID changes and data corruption
+            // REST API best practice: ID should only be in URL path, not in request body
+            if ($idFromRequestBody !== null && $idFromRequestBody !== $queue->uniqid) {
+                $res->messages['error'][] = "Cannot change ID of existing record. ID in request body ('{$idFromRequestBody}') doesn't match existing ID ('{$queue->uniqid}')";
+                $res->httpCode = 400; // Bad Request
+                return $res;
+            }
+
+            // Remove 'id' from sanitizedData to prevent accidental updates
+            // ID should come from URL path, not request body
+            unset($sanitizedData['id']);
         }
 
         // For PATCH/UPDATE: preserve existing extension if not provided

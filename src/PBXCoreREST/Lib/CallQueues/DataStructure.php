@@ -357,7 +357,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'enum' => ['ringing', 'moh'],
                 'sanitize' => 'string',
                 'default' => 'ringing',
-                'example' => 'musiconhold'
+                'example' => 'moh'
             ],
             'announce_position' => [
                 'type' => 'boolean',
