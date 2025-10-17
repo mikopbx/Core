@@ -49,8 +49,8 @@ class ApiKeyEditForm extends BaseForm
             'class' => 'form-textarea-autoresize'
         ]));
 
-        // API Key field
-        $this->add(new Hidden('api_key'));
+        // API Key field (server-side auto-generated if not provided)
+        $this->add(new Hidden('key'));
 
         // Network filter - using DynamicDropdownBuilder (built by JavaScript)
         $this->add(new Hidden('networkfilterid'));

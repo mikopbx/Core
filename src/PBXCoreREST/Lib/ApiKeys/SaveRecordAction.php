@@ -80,6 +80,10 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 $sanitizedData['id'] = $recordId;
             }
 
+            // Remove read-only fields that may come from web interface
+            // WHY: Prevent confusion - these are computed server-side
+            unset($sanitizedData['key_display'], $sanitizedData['has_key']);
+
             // Special handling for networkfilterid: convert 'none' to null
             if (isset($sanitizedData['networkfilterid']) &&
                 ($sanitizedData['networkfilterid'] === 'none' || $sanitizedData['networkfilterid'] === '')) {

@@ -409,8 +409,8 @@ const apiKeysModify = {
      */
     handleCopyKey(e) {
         e.preventDefault();
-        const actualApiKey = $('#api_key').val();
-        
+        const actualApiKey = $('#key').val();
+
         // Only copy if we have the actual full API key (for new or regenerated keys)
         if (actualApiKey && actualApiKey.trim() !== '') {
             navigator.clipboard.writeText(actualApiKey).then(() => {
@@ -465,15 +465,15 @@ const apiKeysModify = {
      * Update API key fields with new key
      */
     updateApiKeyFields(key) {
-        $('#api_key').val(key);
+        $('#key').val(key);
         $('#api-key-display').val(key);
         apiKeysModify.generatedApiKey = key;
-        
+
         // Update key display representation
         const keyDisplay = apiKeysModify.generateKeyDisplay(key);
         $('#key_display').val(keyDisplay);
         $('.api-key-suffix').text(`(${keyDisplay})`).show();
-        
+
         Form.dataChanged();
     },
 
@@ -507,14 +507,12 @@ const apiKeysModify = {
      * Handle API key inclusion in form data
      */
     handleApiKeyInFormData(data) {
-        // Ensure API key is included for new records
-        if (!data.id && data.api_key) {
-            data.key = data.api_key;
-        }
-        
+        // Ensure key field is present for new records (may be auto-generated on server)
+        // No need to copy from api_key - we use 'key' field directly from form
+
         // For existing records with regenerated key
-        if (data.id && data.api_key && apiKeysModify.generatedApiKey) {
-            data.key = data.api_key;
+        if (data.id && data.key && apiKeysModify.generatedApiKey) {
+            // Key is already in correct field, nothing to do
         }
     },
 

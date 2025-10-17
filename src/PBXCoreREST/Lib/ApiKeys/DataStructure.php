@@ -48,6 +48,10 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         // Start with base structure (raw data, no HTML escaping)
         $data = self::createBaseStructure($apiKey);
 
+        // Remove fields not applicable to API keys
+        // WHY: API keys don't have uniqid (numeric ID is sufficient) or extension (not phone numbers)
+        unset($data['uniqid'], $data['extension']);
+
         // Add API key specific fields
         $data['created_at'] = $apiKey->created_at ?? '';
         $data['last_used_at'] = $apiKey->last_used_at ?? '';
@@ -56,9 +60,10 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         $data['full_permissions'] = ($apiKey->full_permissions ?? '1') === '1';
 
         // Decode allowed_paths JSON field
+        // WHY: Ensure it's always a list (indexed array), not object, for JSON encoding
         if (!empty($apiKey->allowed_paths)) {
             $decoded = json_decode($apiKey->allowed_paths, true);
-            $data['allowed_paths'] = is_array($decoded) ? $decoded : [];
+            $data['allowed_paths'] = is_array($decoded) ? array_values($decoded) : [];
         } else {
             $data['allowed_paths'] = [];
         }
@@ -76,6 +81,12 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         // The schema defines which fields should be boolean, integer, or string
         $data = self::formatBySchema($data, 'detail');
 
+        // CRITICAL: Ensure empty array fields stay as arrays in JSON (not objects)
+        // PHP's json_encode converts empty [] to {} by default
+        if (empty($data['allowed_paths'])) {
+            $data['allowed_paths'] = [];
+        }
+
         return $data;
     }
     
@@ -89,6 +100,10 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     {
         // Use unified base method for list creation
         $data = parent::createForList($apiKey);
+
+        // Remove fields not applicable to API keys
+        // WHY: API keys don't have uniqid (numeric ID is sufficient) or extension (not phone numbers)
+        unset($data['uniqid'], $data['extension']);
 
         // Decode allowed_paths to count them
         $allowedPaths = [];
@@ -260,8 +275,8 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'minLength' => 32,
                 'maxLength' => 255,
                 'sanitize' => 'string',
-                'required' => true, // Required for CREATE (auto-generated if not provided)
-                'writeOnly' => true, // Never returned in responses
+                'required' => false, // Optional - auto-generated if not provided
+                'writeOnly' => true, // Never returned in responses (stored as bcrypt hash)
                 'example' => 'miko_ak_1234567890abcdef1234567890abcdef'
             ],
             'networkfilterid' => [
@@ -270,7 +285,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'pattern' => '^([0-9]+|none)$',
                 'sanitize' => 'string',
                 'default' => 'none',
-                'example' => '5'
+                'example' => 'none'
             ],
             'full_permissions' => [
                 'type' => 'boolean',
@@ -319,7 +334,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'type' => 'string',
                 'description' => 'rest_schema_ak_key_display',
                 'readOnly' => true,
-                'example' => 'abcd1...xyz89'
+                'example' => 'miko_...cdef'
             ],
             'has_key' => [
                 'type' => 'boolean',

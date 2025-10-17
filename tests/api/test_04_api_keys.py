@@ -89,7 +89,6 @@ class TestApiKeys:
         key_data = {
             'key': generated_key,
             'description': 'Test API Key',
-            'enabled': True,
             'full_permissions': False
         }
 
@@ -100,9 +99,18 @@ class TestApiKeys:
         key_id = response['data']['id']
         self.created_ids.append(key_id)
 
+        # Verify response includes computed fields
+        assert 'key_display' in response['data'], "Response should include key_display"
+        assert 'has_key' in response['data'], "Response should include has_key"
+        assert response['data']['has_key'] is True, "has_key should be True for new key"
+
+        # Verify key is NOT returned in response (security)
+        assert 'key' not in response['data'], "Key should not be returned in response (security)"
+
         print(f"✓ Created API key: {key_id}")
         print(f"  Description: {key_data['description']}")
-        print(f"  Key: {generated_key[:20]}...")
+        print(f"  Key display: {response['data'].get('key_display', 'N/A')}")
+        print(f"  Full key (input): {generated_key[:20]}...")
         print(f"  Note: Key not returned in response for security (stored as bcrypt hash)")
 
     def test_05_create_api_key_with_paths(self, api_client):
@@ -118,7 +126,6 @@ class TestApiKeys:
         key_data = {
             'key': generated_key,
             'description': 'Restricted API Key',
-            'enabled': True,
             'full_permissions': False,
             'allowed_paths': ['/api/v3/extensions', '/api/v3/employees']
         }
@@ -129,6 +136,11 @@ class TestApiKeys:
 
             key_id = response['data']['id']
             self.created_ids.append(key_id)
+
+            # Verify allowed_paths in response
+            assert 'allowed_paths' in response['data'], "Response should include allowed_paths"
+            assert isinstance(response['data']['allowed_paths'], list), "allowed_paths should be array"
+            assert len(response['data']['allowed_paths']) == 2, "Should have 2 allowed paths"
 
             print(f"✓ Created restricted API key: {key_id}")
             print(f"  Allowed paths: {key_data['allowed_paths']}")
@@ -155,7 +167,6 @@ class TestApiKeys:
         key_data = {
             'key': generated_key,
             'description': 'Admin API Key',
-            'enabled': True,
             'full_permissions': True
         }
 
@@ -164,6 +175,11 @@ class TestApiKeys:
 
         key_id = response['data']['id']
         self.created_ids.append(key_id)
+
+        # Verify full_permissions in response
+        assert response['data'].get('full_permissions') is True, "full_permissions should be True"
+        # When full_permissions=true, allowed_paths should be empty
+        assert response['data'].get('allowed_paths', []) == [], "allowed_paths should be empty for full permissions"
 
         print(f"✓ Created full-permission API key: {key_id}")
         print(f"  Key: {generated_key[:20]}...")
@@ -302,16 +318,19 @@ class TestApiKeysEdgeCases:
     def test_01_validate_required_fields(self, api_client):
         """Test validation - missing required description field"""
         invalid_data = {
-            'enabled': True,
             'full_permissions': False
             # Missing required 'description' field
+            # Missing optional 'key' field (should be auto-generated)
         }
 
         try:
             response = api_client.post('api-keys', invalid_data)
 
             if not response['result']:
-                print(f"✓ Validation rejected incomplete data")
+                print(f"✓ Validation rejected incomplete data (missing description)")
+                # Should see error about description being required
+                if response.get('messages', {}).get('error'):
+                    print(f"  Error messages: {response['messages']['error']}")
             else:
                 # Cleanup if accepted
                 if 'id' in response['data']:
@@ -319,10 +338,10 @@ class TestApiKeysEdgeCases:
                         api_client.delete(f"api-keys/{response['data']['id']}")
                     except:
                         pass
-                print(f"⚠ Missing description was accepted (may have default)")
+                print(f"⚠ Missing description was accepted (should be required)")
         except Exception as e:
             if '422' in str(e) or '400' in str(e):
-                print(f"✓ Validation works (HTTP error)")
+                print(f"✓ Validation rejected incomplete data (HTTP error)")
             else:
                 raise
 

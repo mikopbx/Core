@@ -26,12 +26,13 @@ use MikoPBX\PBXCoreREST\Lib\Common\CommonDataStructure;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
-    
+
     ApiParameterRef,
     ApiResponse,
     ApiDataSchema,
     SecurityType,
-    
+    ParameterLocation,
+
     HttpMapping,
     ResourceSecurity
 };
@@ -48,7 +49,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
  * @see https://spec.openapis.org/oas/v3.1.0 - OpenAPI 3.1 Specification
  */
 #[ApiResource(
-    path: '/pbxcore/api/v3/api-keys',
+    path: '/pbxcore/api/v3/api-keys',    
     tags: ['API Keys'],
     description: 'Comprehensive API keys management for secure REST API access. ' .
                 'Features include JWT token generation, permission management, endpoint restrictions, ' .
@@ -56,7 +57,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
                 'access to the PBX REST API with fine-grained access control.',
     processor: ApiKeysManagementProcessor::class
 )]
-#[ResourceSecurity('api_keys', requirements: [SecurityType::LOCALHOST])]
+#[ResourceSecurity('api_keys', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
 #[HttpMapping(
     mapping: [
         'GET' => ['getList', 'getRecord', 'getDefault', 'getAvailableControllers'],
@@ -121,7 +122,7 @@ class RestController extends BaseRestController
         description: 'rest_ak_GetRecordDesc',
         operationId: 'getApiKeyById'
     )]
-    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]+$', example: '12')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, in: ParameterLocation::PATH, pattern: '^[0-9]+$', example: '12')]
     #[ApiResponse(200, 'rest_response_200_get')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -146,6 +147,7 @@ class RestController extends BaseRestController
         operationId: 'createApiKey'
     )]
     #[ApiParameterRef('description', required: true)]
+    #[ApiParameterRef('key', required: false)]
     #[ApiParameterRef('full_permissions')]
     #[ApiParameterRef('allowed_paths')]
     #[ApiParameterRef('networkfilterid')]
@@ -173,7 +175,9 @@ class RestController extends BaseRestController
         description: 'rest_ak_UpdateDesc',
         operationId: 'updateApiKey'
     )]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, in: ParameterLocation::PATH, pattern: '^[0-9]+$', example: '12')]
     #[ApiParameterRef('description', required: true)]
+    #[ApiParameterRef('key', required: false)]
     #[ApiParameterRef('full_permissions')]
     #[ApiParameterRef('allowed_paths')]
     #[ApiParameterRef('networkfilterid')]
@@ -202,7 +206,9 @@ class RestController extends BaseRestController
         description: 'rest_ak_PatchDesc',
         operationId: 'patchApiKey'
     )]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, in: ParameterLocation::PATH, pattern: '^[0-9]+$', example: '12')]
     #[ApiParameterRef('description')]
+    #[ApiParameterRef('key')]
     #[ApiParameterRef('full_permissions')]
     #[ApiParameterRef('allowed_paths')]
     #[ApiParameterRef('networkfilterid')]
@@ -226,7 +232,7 @@ class RestController extends BaseRestController
         description: 'rest_ak_DeleteDesc',
         operationId: 'deleteApiKey'
     )]
-    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]+$', example: '12')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, in: ParameterLocation::PATH, pattern: '^[0-9]+$', example: '12')]
     #[ApiResponse(200, 'rest_response_200_deleted')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
