@@ -109,10 +109,9 @@ const networks = {
         StaticRoutesManager.initialize();
 
         // Hide form elements connected with non docker installations
-        // TEMPORARY: Commented out for local Docker testing
-        // if (networks.$formObj.form('get value','is-docker')==="1") {
-        //     networks.$notShowOnDockerDivs.hide();
-        // }
+        if (networks.$formObj.form('get value','is-docker')==="1") {
+            networks.$notShowOnDockerDivs.hide();
+        }
     },
 
     /**
@@ -441,11 +440,10 @@ const networks = {
                 networks.toggleDisabledFieldClass();
 
                 // Hide form elements connected with non docker installations
-                // TEMPORARY: Commented out for local Docker testing
-                // if (response.data.isDocker) {
-                //     networks.$formObj.form('set value', 'is-docker', '1');
-                //     networks.$notShowOnDockerDivs.hide();
-                // }
+                if (response.data.isDocker) {
+                    networks.$formObj.form('set value', 'is-docker', '1');
+                    networks.$notShowOnDockerDivs.hide();
+                }
             } else {
                 UserMessage.showMultiString(response.messages);
             }
