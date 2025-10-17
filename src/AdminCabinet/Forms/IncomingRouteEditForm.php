@@ -80,7 +80,6 @@ class IncomingRouteEditForm extends BaseForm
      */
     private function addTextFields(): void
     {
-        $this->add(new Text('rulename'));
         $this->add(new Text('number'));
     }
     

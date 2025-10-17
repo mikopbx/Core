@@ -65,7 +65,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
         // ============================================================
 
         $sanitizationRules = DataStructure::getSanitizationRules();
-        $textFields = ['rulename', 'note'];
+        $textFields = ['note'];
 
         // Preserve ID field (not in sanitization rules, uses auto-increment)
         $recordId = $data['id'] ?? null;
@@ -111,20 +111,11 @@ class SaveRecordAction extends AbstractSaveRecordAction
         // WHY: Fail fast - don't waste resources on incomplete data
         // ============================================================
 
-        $validationRules = [
-            'rulename' => [
-                ['type' => 'required', 'message' => 'Route name is required']
-            ]
-        ];
-
-        // Note: ID, number, extension are NOT required
-        // IncomingRoutes allow empty number/extension for "catch-all" routes
-
-        $validationErrors = self::validateRequiredFields($sanitizedData, $validationRules);
-        if (!empty($validationErrors)) {
-            $res->messages['error'] = $validationErrors;
-            return $res;
-        }
+        // Note: No required fields for incoming routes
+        // - rulename is optional (auto-generated from rule_represent)
+        // - number is optional (empty = "any number")
+        // - extension is optional (empty = default action)
+        // This allows maximum flexibility for routing rules
 
         // ============================================================
         // PHASE 3: DETERMINE OPERATION TYPE
@@ -207,10 +198,10 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 // For CREATE: All fields from $sanitizedData (with defaults)
                 // For PATCH: Only provided fields (no defaults)
 
-                // Required field (always set)
-                $route->rulename = $sanitizedData['rulename'];
-
                 // Optional fields (use isset to support PATCH)
+                if (isset($sanitizedData['rulename'])) {
+                    $route->rulename = $sanitizedData['rulename'];
+                }
                 if (isset($sanitizedData['number'])) {
                     $route->number = $sanitizedData['number'] ?: '';  // Empty string allowed
                 }

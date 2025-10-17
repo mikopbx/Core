@@ -342,7 +342,6 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'minLength' => 1,
                 'maxLength' => 100,
                 'sanitize' => 'text',
-                'required' => true,
                 'example' => 'Main Office Route'
             ],
             'number' => [
