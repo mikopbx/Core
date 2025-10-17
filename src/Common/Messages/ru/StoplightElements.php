@@ -159,6 +159,13 @@ return [
     'sl_Overview' => 'Обзор',
 
     /**
+     * Security descriptions
+     */
+    'sl_SecurityColon' => 'Безопасность:',
+    'sl_ExampleColon' => 'Пример:',
+    'sl_RolesColon' => 'Роли:',
+
+    /**
      * Schema and model properties
      */
     'sl_Required' => 'обязательный',

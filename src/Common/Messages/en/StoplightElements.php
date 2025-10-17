@@ -153,6 +153,13 @@ return [
     'sl_Overview' => 'Overview',
 
     /**
+     * Security descriptions
+     */
+    'sl_SecurityColon' => 'Security:',
+    'sl_ExampleColon' => 'Example:',
+    'sl_RolesColon' => 'Roles:',
+
+    /**
      * Schema and model properties
      */
     'sl_Required' => 'required',
