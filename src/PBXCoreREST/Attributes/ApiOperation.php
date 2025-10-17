@@ -48,6 +48,7 @@ class ApiOperation
      * @param array<string, mixed> $extensions Custom OpenAPI extensions
      * @param array<string> $acl ACL permissions required for this operation
      * @param bool $requiresId Whether this operation requires a resource ID
+     * @param bool $internal Whether this operation is for internal use only (excluded from OpenAPI)
      */
     public function __construct(
         public readonly string $summary,
@@ -61,7 +62,8 @@ class ApiOperation
         public readonly array $requestBody = [],
         public readonly array $extensions = [],
         public readonly array $acl = [],
-        public readonly bool $requiresId = false
+        public readonly bool $requiresId = false,
+        public readonly bool $internal = false
     ) {
     }
 

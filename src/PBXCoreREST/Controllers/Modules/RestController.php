@@ -47,7 +47,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
  * @see https://spec.openapis.org/oas/v3.1.0 - OpenAPI 3.1 Specification
  */
 #[ApiResource(
-    path: '/pbxcore/api/v3/modules',
+    path: '/pbxcore/api/v3/modules',    
     tags: ['Modules'],
     description: 'Comprehensive extension modules management for PBX functionality extension. ' .
                 'Features include module installation from repository or package, updates, ' .

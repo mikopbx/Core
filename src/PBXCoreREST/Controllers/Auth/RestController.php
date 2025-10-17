@@ -64,7 +64,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
  * @see https://cheatsheetseries.owasp.org/cheatsheets/JSON_Web_Token_for_Java_Cheat_Sheet.html
  */
 #[ApiResource(
-    path: '/pbxcore/api/v3/auth',
+    path: '/pbxcore/api/v3/auth',    
     tags: ['Authentication'],
     description: 'JWT-based authentication system with refresh tokens for REST API clients and SPA applications. ' .
                 'Supports password authentication and passkey (WebAuthn) authentication. ' .
@@ -392,7 +392,8 @@ class RestController extends BaseRestController
     #[ApiOperation(
         summary: 'Validate JWT token (internal)',
         description: 'Internal endpoint for JWT token validation by Nginx/Lua. Only accessible from localhost.',
-        operationId: 'authValidateToken'
+        operationId: 'authValidateToken',
+        internal: true
     )]
     #[ApiParameterRef('token', required: true)]
     #[ApiResponse(200, 'Token is valid')]

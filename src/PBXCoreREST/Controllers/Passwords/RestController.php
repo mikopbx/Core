@@ -44,7 +44,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
  * @see https://spec.openapis.org/oas/v3.1.0 - OpenAPI 3.1 Specification
  */
 #[ApiResource(
-    path: '/pbxcore/api/v3/passwords',
+    path: '/pbxcore/api/v3/passwords',    
     tags: ['Passwords'],
     description: 'Password management utilities for validation and generation. ' .
                 'Features include password strength validation, secure password generation, ' .

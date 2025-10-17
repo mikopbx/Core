@@ -59,7 +59,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
  * @package MikoPBX\PBXCoreREST\Controllers\Fail2Ban
  */
 #[ApiResource(
-    path: '/pbxcore/api/v3/fail2ban',
+    path: '/pbxcore/api/v3/fail2ban',    
     tags: ['Fail2Ban'],
     description: 'Comprehensive Fail2Ban intrusion prevention management. Provides singleton REST operations for configuring ban policies, timeouts, and IP whitelists. Automatically blocks malicious IP addresses after detecting repeated failed authentication attempts.',
     processor: Fail2BanManagementProcessor::class

@@ -37,7 +37,7 @@ class ApiResource
 {
     /**
      * @param string $path Base API path for this resource (e.g., '/pbxcore/api/v3/api-keys')
-     * @param array<string> $tags OpenAPI tags for grouping operations
+     * @param array<string> $tags OpenAPI tags for grouping operations (e.g., ['Call Queues']). Will be auto-translated.
      * @param string $description Human-readable description of the resource
      * @param array<string> $security Default security requirements for all operations
      * @param string|null $processor Processor class name (if different from convention)

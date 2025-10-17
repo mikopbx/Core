@@ -22,8 +22,6 @@ namespace MikoPBX\PBXCoreREST\Lib\SysLogs;
 use MikoPBX\Core\System\Directories;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\Common\BaseActionHelper;
-use MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor;
-use MikoPBX\PBXCoreREST\Controllers\Syslog\RestController;
 use Phalcon\Di\Injectable;
 
 /**
@@ -36,8 +34,7 @@ class GetLogTimeRangeAction extends Injectable
     /**
      * Gets the available time range for a log file
      *
-     * Uses unified sanitization approach with ParameterSanitizationExtractor
-     * for consistent parameter handling.
+     * Uses Single Source of Truth pattern - sanitization rules from DataStructure.
      *
      * @param array<string, mixed> $data An array containing the following parameters:
      *                    - filename (string): The name of the log file.
@@ -49,14 +46,11 @@ class GetLogTimeRangeAction extends Injectable
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
 
-        // Get sanitization rules automatically from controller attributes
-        // Single Source of Truth - rules extracted from #[ApiParameter] attributes
-        $sanitizationRules = ParameterSanitizationExtractor::extractFromController(
-            RestController::class,
-            'getLogTimeRange'
-        );
+        // WHY: Get sanitization rules from DataStructure (Single Source of Truth)
+        // DataStructure defines all field constraints, not controller attributes
+        $sanitizationRules = DataStructure::getSanitizationRules();
 
-        // Sanitize input data using unified approach
+        // WHY: Sanitize input data for security - never trust user input
         $sanitizedData = BaseActionHelper::sanitizeData($data, $sanitizationRules);
 
         // Extract validated parameters
@@ -64,9 +58,17 @@ class GetLogTimeRangeAction extends Injectable
 
         $fullPath = Directories::getDir(Directories::CORE_LOGS_DIR) . '/' . $filename;
 
+        // WHY: Check file_exists first, then is_file to prevent directory access
+        // file_exists returns true for directories, which causes fopen/fgets errors
         if (!file_exists($fullPath)) {
             $res->success = false;
             $res->messages[] = 'Log file not found: ' . $filename;
+            return $res;
+        }
+
+        if (!is_file($fullPath)) {
+            $res->success = false;
+            $res->messages[] = 'Path is not a file: ' . $filename;
             return $res;
         }
 

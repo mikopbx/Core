@@ -46,8 +46,10 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function createFromModel($model): array
     {
-        // Start with base structure
-        $data = self::createBaseStructure($model);
+        // WHY: Extensions model doesn't have uniqid/extension fields like other entities,
+        // so we build data directly instead of using createBaseStructure()
+
+        $data = [];
 
         // Add all extension fields from model
         $data['id'] = $model->number;
@@ -73,8 +75,10 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      */
     public static function createForList($model): array
     {
-        // Use unified base method for list creation
-        $data = parent::createForList($model);
+        // WHY: Extensions model doesn't have uniqid/extension fields like other entities,
+        // so we build data directly instead of using parent::createForList()
+
+        $data = [];
 
         // Add extension specific fields for list display
         $data['id'] = $model->number;
@@ -302,7 +306,6 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      * Get parameter definitions (Single Source of Truth)
      *
      * Defines all field schemas, validation rules, defaults, and sanitization rules in one place.
-     * This replaces legacy ParameterSanitizationExtractor pattern.
      *
      * ✨ Uses getAllFieldDefinitions() to eliminate duplication.
      *

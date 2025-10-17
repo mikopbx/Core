@@ -199,9 +199,10 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'timeout_extension_represent' => $responseFields['timeout_extension_represent'],
                 'timeoutExtensionRepresent' => $responseFields['timeoutExtensionRepresent'],
                 'represent' => $responseFields['represent'],
+                // Use simplified actions schema for list view
                 'actions' => [
                     'type' => 'array',
-                    'description' => $requestFields['actions']['description'],
+                    'description' => $responseFields['actions']['description'],
                     'items' => [
                         '$ref' => '#/components/schemas/IvrMenuActionSimple'
                     ]
@@ -240,13 +241,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'timeout_extension_represent' => $responseFields['timeout_extension_represent'],
                 'audio_message_id' => $requestFields['audio_message_id'],
                 'audio_message_id_represent' => $responseFields['audio_message_id_represent'],
-                'actions' => [
-                    'type' => 'array',
-                    'description' => $requestFields['actions']['description'],
-                    'items' => [
-                        '$ref' => '#/components/schemas/IvrMenuAction'
-                    ]
-                ],
+                'actions' => $responseFields['actions'],
                 'search_index' => $responseFields['search_index']
             ]
         ];
@@ -345,12 +340,6 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'sanitize' => 'string',
                 'example' => '12'
             ],
-            'actions' => [
-                'type' => 'array',
-                'description' => 'rest_schema_ivr_actions',
-                'sanitize' => 'array',
-                'example' => '[{"digits":"1","extension":"201"},{"digits":"2","extension":"202"}]'
-            ],
             // Response-only fields
             'timeout_extension_represent' => [
                 'type' => 'string',
@@ -432,7 +421,19 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             // ========== RESPONSE-ONLY FIELDS ==========
             // Only in API responses, not in requests
             // Used by getListItemSchema() and getDetailSchema()
-            'response' => $responseOnlyFields,
+            'response' => array_merge(
+                $responseOnlyFields,
+                [
+                    // Actions array (special structure for OpenAPI schema)
+                    'actions' => [
+                        'type' => 'array',
+                        'description' => 'rest_schema_ivr_actions',
+                        'items' => [
+                            '$ref' => '#/components/schemas/IvrMenuAction'
+                        ]
+                    ],
+                ]
+            ),
 
             // ========== RELATED SCHEMAS ==========
             // Nested object schemas referenced by $ref in OpenAPI

@@ -46,8 +46,8 @@ use MikoPBX\PBXCoreREST\Attributes\{
  * @see https://spec.openapis.org/oas/v3.1.0 - OpenAPI 3.1 Specification
  */
 #[ApiResource(
-    path: '/pbxcore/api/v3/custom-files',
-    tags: ['Custom Files'],
+    path: '/pbxcore/api/v3/custom-files',    
+    tags: ['System Files Management'],
     description: 'Comprehensive custom files management for system configuration customization. ' .
                 'Allows managing custom configuration files that are automatically restored after system updates. ' .
                 'Supports multiple modes: override (replace file), append (add content), script (executable). ' .

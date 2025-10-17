@@ -95,7 +95,7 @@ class SysLogsManagementProcessor extends Injectable
         }
 
         // Execute action using match expression (PHP 8)
-        // All actions now use unified parameter validation with ParameterSanitizationExtractor
+        // All actions use DataStructure::getSanitizationRules() for parameter validation (Single Source of Truth)
         $res = match ($action) {
             SyslogAction::GET_LOGS_LIST => GetLogsListAction::main(),
             SyslogAction::GET_LOG_FROM_FILE => GetLogFromFileAction::main($data),

@@ -47,8 +47,8 @@ use MikoPBX\PBXCoreREST\Lib\Common\CommonDataStructure;
  * @see https://spec.openapis.org/oas/v3.1.0 - OpenAPI 3.1 Specification
  */
 #[ApiResource(
-    path: '/pbxcore/api/v3/sound-files',
-    tags: ['Sound Files', 'Media'],
+    path: '/pbxcore/api/v3/sound-files',    
+    tags: ['Sound files'],
     description: 'Sound file management for IVR menus, MOH, announcements and system prompts. ' .
                 'Supports upload, conversion, playback and CRUD operations for audio files. ' .
                 'Handles multiple audio formats with automatic conversion to system-compatible formats.',

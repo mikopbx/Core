@@ -268,7 +268,14 @@ abstract class BaseRestController extends BaseController
         // Sanitize all input data
         $requestData = self::sanitizeData($this->request->getData(), $this->filter);
 
-        // Add ID to request data if provided in URL
+        // ✨ Preserve original 'id' from request body for validation
+        // WHY: Actions need to validate that user didn't send conflicting IDs
+        // (ID in body vs ID in URL path) to prevent data corruption
+        if (isset($requestData['id'])) {
+            $requestData['_idFromRequestBody'] = $requestData['id'];
+        }
+
+        // Add ID to request data if provided in URL (overwrites body id)
         if (!empty($id)) {
             $requestData['id'] = $id;
         }
@@ -350,7 +357,12 @@ abstract class BaseRestController extends BaseController
         // Sanitize all input data
         $requestData = self::sanitizeData($this->request->getData(), $this->filter);
 
-        // Add ID if provided for resource-specific custom methods
+        // ✨ Preserve original 'id' from request body for validation
+        if (isset($requestData['id'])) {
+            $requestData['_idFromRequestBody'] = $requestData['id'];
+        }
+
+        // Add ID if provided for resource-specific custom methods (overwrites body id)
         if (!empty($id)) {
             $requestData['id'] = $id;
         }

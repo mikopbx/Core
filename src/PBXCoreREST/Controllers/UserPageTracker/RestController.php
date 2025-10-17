@@ -58,8 +58,8 @@ use MikoPBX\PBXCoreREST\Attributes\{
  * @package MikoPBX\PBXCoreREST\Controllers\UserPageTracker
  */
 #[ApiResource(
-    path: '/pbxcore/api/v3/user-page-tracker',
-    tags: ['User Page Tracker'],
+    path: '/pbxcore/api/v3/user-page-tracker',    
+    tags: ['User Page Tracking'],
     description: 'User page activity tracking for admin interface. Records page views and departures to track which administrators are currently viewing which pages. Used for session management, activity monitoring, and preventing concurrent editing conflicts.',
     processor: UserPageTrackerProcessor::class
 )]

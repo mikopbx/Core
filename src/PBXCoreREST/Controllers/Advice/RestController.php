@@ -45,7 +45,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
  * @see https://spec.openapis.org/oas/v3.1.0 - OpenAPI 3.1 Specification
  */
 #[ApiResource(
-    path: '/pbxcore/api/v3/advice',
+    path: '/pbxcore/api/v3/advice',    
     tags: ['System Advice'],
     description: 'System advice and notification management for PBX health monitoring. ' .
                 'Provides automated analysis of system configuration, security recommendations, ' .
@@ -87,8 +87,6 @@ class RestController extends BaseRestController
         description: 'rest_advice_GetListDesc',
         operationId: 'getAdviceList'
     )]
-    #[ApiParameterRef('category')]
-    #[ApiParameterRef('severity')]
     #[ApiResponse(200, 'rest_response_200_list')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -112,7 +110,6 @@ class RestController extends BaseRestController
         description: 'rest_advice_RefreshDesc',
         operationId: 'refreshAdvice'
     )]
-    #[ApiParameterRef('force')]
     #[ApiResponse(200, 'rest_response_200_refreshed')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]

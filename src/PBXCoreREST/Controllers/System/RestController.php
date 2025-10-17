@@ -45,8 +45,8 @@ use MikoPBX\PBXCoreREST\Attributes\{
  * @see https://spec.openapis.org/oas/v3.1.0 - OpenAPI 3.1 Specification
  */
 #[ApiResource(
-    path: '/pbxcore/api/v3/system',
-    tags: ['System Management', 'Power'],
+    path: '/pbxcore/api/v3/system',    
+    tags: ['System'],
     description: 'System-wide management singleton resource. ' .
                 'Provides power management (reboot, shutdown), health monitoring (ping, checkAuth), ' .
                 'datetime operations, language settings, audio conversion, system upgrades and factory reset.',

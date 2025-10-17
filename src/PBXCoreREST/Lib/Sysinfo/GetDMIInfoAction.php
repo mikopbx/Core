@@ -41,6 +41,10 @@ class GetDMIInfoAction extends Injectable
         $res            = new PBXApiResult();
         $res->processor = __METHOD__;
 
+        // WHY: Always return 200 OK, even when DMI not available
+        // Containers and some VMs don't expose DMI - this is a valid state, not an error
+        $res->httpCode = 200;
+
         $dmesg = Util::which('dmesg');
         $grep = Util::which('grep');
         $awk = Util::which('awk');

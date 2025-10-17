@@ -46,7 +46,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
  * @see https://spec.openapis.org/oas/v3.1.0 - OpenAPI 3.1 Specification
  */
 #[ApiResource(
-    path: '/pbxcore/api/v3/sip-providers',
+    path: '/pbxcore/api/v3/sip-providers',    
     tags: ['SIP Providers'],
     description: 'Comprehensive SIP provider management for Session Initiation Protocol (SIP) trunking. ' .
                 'SIP is the industry-standard VoIP protocol for voice and video communications. ' .

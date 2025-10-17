@@ -39,10 +39,10 @@ use MikoPBX\PBXCoreREST\Attributes\{
  * Provides endpoints to generate documentation links based on controller/action context.
  */
 #[ApiResource(
-    path: '/pbxcore/api/v3/wiki-links',
-    tags: ['Documentation'],
+    path: '/pbxcore/api/v3/wiki-links',    tags: ['Documentation'],
     processor: WikiLinksManagementProcessor::class
 )]
+#[ResourceSecurity('wiki-links', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
 #[HttpMapping(
     mapping: ['GET' => ['getLink']],
     customMethods: ['getLink']

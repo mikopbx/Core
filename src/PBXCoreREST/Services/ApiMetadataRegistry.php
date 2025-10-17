@@ -209,6 +209,13 @@ class ApiMetadataRegistry extends Injectable
             $operationAttributes = $method->getAttributes(ApiOperation::class);
             foreach ($operationAttributes as $attribute) {
                 $operation = $attribute->newInstance();
+
+                // WHY: Skip internal-only operations from OpenAPI spec
+                // Internal operations are used by Nginx/Lua and should not be exposed in public API docs
+                if ($operation->internal) {
+                    continue;
+                }
+
                 $methodMetadata['operations'][] = [
                     'summary' => $operation->summary,
                     'description' => $operation->description,
@@ -348,11 +355,11 @@ class ApiMetadataRegistry extends Injectable
         $openapi = [
             'openapi' => '3.1.0',
             'info' => [
-                'title' => 'MikoPBX REST API',
-                'description' => 'Comprehensive REST API for MikoPBX management and configuration',
+                'title' =>  $this->translateText('rest_MikoPBXRestAPIHeader'),
+                'description' =>  $this->translateText('rest_MikoPBXRestAPIDescription'),
                 'version' => '3.0.0',
                 'contact' => [
-                    'name' => 'MikoPBX Support',
+                    'name' => $this->translateText('rest_MikoPBXSupportName'),
                     'url' => 'https://www.mikopbx.com',
                     'email' => 'support@mikopbx.com'
                 ],
@@ -672,25 +679,77 @@ class ApiMetadataRegistry extends Injectable
     }
 
     /**
-     * Generate tags from metadata
+     * Generate tags from metadata with automatic translation
+     *
+     * Converts English tag names to translated versions:
+     * 'Call Queues' → 'rest_tag_CallQueues' → 'Очереди вызовов'
      *
      * @param array<string, mixed> $metadata
-     * @return array<int, array<string, mixed>> Tags
+     * @return array<int, array<string, mixed>> Translated tags
      */
     private function generateTags(array $metadata): array
     {
         $tags = [];
+        $tagNames = [];
+
         foreach ($metadata['resources'] ?? [] as $resource) {
-            foreach ($resource['resource']['tags'] ?? [] as $tag) {
-                if (!in_array($tag, array_column($tags, 'name'))) {
+            foreach ($resource['resource']['tags'] ?? [] as $englishTagName) {
+                if (!in_array($englishTagName, $tagNames)) {
+                    $tagNames[] = $englishTagName;
+
+                    // Convert to translation key: 'Call Queues' → 'rest_tag_CallQueues'
+                    $translationKey = $this->generateTagKey($englishTagName);
+
+                    // Translate: 'rest_tag_CallQueues' → 'Очереди вызовов'
+                    $translatedName = TranslationProvider::translate($translationKey);
+
                     $tags[] = [
-                        'name' => $tag,
-                        'description' => "Operations for {$tag}"
+                        'name' => $translatedName,
+                        'description' => "Operations for {$translatedName}"
                     ];
                 }
             }
         }
+
         return $tags;
+    }
+
+    /**
+     * Generate translation key for tag name
+     *
+     * Converts English tag name to translation key:
+     * 'Call Queues' → 'rest_tag_CallQueues'
+     * 'API Keys' → 'rest_tag_APIKeys'
+     *
+     * @param string $englishName English tag name
+     * @return string Translation key
+     */
+    private function generateTagKey(string $englishName): string
+    {
+        // Remove special characters and convert to PascalCase
+        $cleaned = preg_replace('/[^a-zA-Z0-9\s]/', '', $englishName);
+        $pascalCase = str_replace(' ', '', ucwords($cleaned ?? ''));
+
+        return 'rest_tag_' . $pascalCase;
+    }
+
+    /**
+     * Translate array of tag names
+     *
+     * Converts English tag names to translated versions:
+     * ['Call Queues'] → ['Очереди вызовов']
+     *
+     * @param array<string> $englishTags Array of English tag names
+     * @return array<string> Array of translated tag names
+     */
+    private function translateTagsArray(array $englishTags): array
+    {
+        $translatedTags = [];
+        foreach ($englishTags as $englishTag) {
+            $translationKey = $this->generateTagKey($englishTag);
+            $translatedTags[] = TranslationProvider::translate($translationKey);
+        }
+        return $translatedTags;
     }
 
     /**
@@ -718,7 +777,15 @@ class ApiMetadataRegistry extends Injectable
 
         // Generate resource-level paths (with {id})
         $resourcePath = $basePath . '/{id}';
-        $paths[$resourcePath] = [];
+
+        // ✨ FIX: Extract id parameter definition from resource-level operations
+        // Path parameters should be defined at path level, not inside each operation
+        // This matches the pattern from document (1).yaml: parameters defined once for the path
+        $idParameterSchema = $this->extractIdParameterFromOperations($resource['operations'] ?? []);
+
+        $paths[$resourcePath] = [
+            'parameters' => [$idParameterSchema]
+        ];
 
         // Extract resource name from tags for placeholder replacement
         // Translate the tag to get the localized resource name
@@ -762,7 +829,7 @@ class ApiMetadataRegistry extends Injectable
                         'summary' => $this->translateText($operationData['summary'] ?? ''),
                         'description' => $this->translateText($operationData['description'] ?? ''),
                         'operationId' => $operationData['operationId'] ?? $operationName,
-                        'tags' => $resource['resource']['tags'] ?? [],
+                        'tags' => $this->translateTagsArray($resource['resource']['tags'] ?? []),
                         'parameters' => $this->generateParametersForOperation($parameters, $requiresId),
                         'responses' => $this->generateResponsesForOperation($responses, $resourceName, $operation['dataSchema'] ?? null),
                         'security' => $this->generateSecurityForOperation($combinedSecurity)
@@ -800,21 +867,117 @@ class ApiMetadataRegistry extends Injectable
                 $methodSecurity = $operation['security'] ?? [];
                 $combinedSecurity = array_merge($resource['security'] ?? [], $methodSecurity);
 
+                // WHY: Determine actual HTTP method from mapping instead of hardcoding 'get'
+                // Custom methods can be GET, POST, PUT, PATCH, or DELETE
+                $httpMethod = 'get'; // default
+                foreach ($httpMapping['mapping'] ?? [] as $method => $operations) {
+                    $ops = is_string($operations) ? [$operations] : $operations;
+                    if (in_array($customMethod, $ops)) {
+                        $httpMethod = strtolower($method);
+                        break;
+                    }
+                }
+
+                // ✨ FIX: Add path-level parameters for resource-level custom methods
+                // Resource-level custom methods like /resource/{id}:copy need id parameter
+                $pathLevelParams = [];
+                if ($isResourceLevel) {
+                    $pathLevelParams = [$this->extractIdParameterFromOperations($resource['operations'] ?? [])];
+                }
+
                 $paths[$customPath] = [
-                    'get' => [
+                    'parameters' => $pathLevelParams,
+                    $httpMethod => [
                         'summary' => $this->translateText($operationData['summary'] ?? ''),
                         'description' => $this->translateText($operationData['description'] ?? ''),
                         'operationId' => $operationData['operationId'] ?? $customMethod,
-                        'tags' => $resource['resource']['tags'] ?? [],
+                        'tags' => $this->translateTagsArray($resource['resource']['tags'] ?? []),
                         'parameters' => $this->generateParametersForOperation($parameters, $isResourceLevel),
                         'responses' => $this->generateResponsesForOperation($responses, $resourceName, $operation['dataSchema'] ?? null),
                         'security' => $this->generateSecurityForOperation($combinedSecurity)
                     ]
                 ];
+
+                // WHY: Add request body for POST/PUT/PATCH custom methods
+                // Body parameters are those with 'in' => 'query' (non-pagination params)
+                if (in_array($httpMethod, ['post', 'put', 'patch'])) {
+                    $bodyParameters = array_filter($parameters, function($param) {
+                        return ($param['in'] ?? '') === 'query' && !in_array($param['name'], ['limit', 'offset', 'search', 'order', 'orderWay']);
+                    });
+
+                    if (!empty($bodyParameters)) {
+                        $paths[$customPath][$httpMethod]['requestBody'] = $this->generateRequestBody($bodyParameters);
+                    }
+                }
             }
         }
 
         return $paths;
+    }
+
+    /**
+     * Extract id parameter schema from resource-level operations
+     *
+     * Searches through operations to find an 'id' parameter with 'in' => 'path'
+     * and extracts its schema (pattern, example, description).
+     * If not found, returns default numeric id schema.
+     *
+     * @param array<string, mixed> $operations Operations metadata
+     * @return array<string, mixed> OpenAPI parameter definition
+     */
+    private function extractIdParameterFromOperations(array $operations): array
+    {
+        // Default id parameter schema (numeric)
+        $defaultSchema = [
+            'name' => 'id',
+            'in' => 'path',
+            'required' => true,
+            'description' => $this->translateText('rest_param_id_description'),
+            'schema' => [
+                'type' => 'string',
+                'pattern' => '^[0-9]+$',
+                'example' => '12'
+            ]
+        ];
+
+        // Search for id parameter in resource-level operations (getRecord, update, patch, delete)
+        $resourceLevelOps = ['getRecord', 'update', 'patch', 'delete', 'copy'];
+
+        foreach ($operations as $operationName => $operation) {
+            if (!in_array($operationName, $resourceLevelOps)) {
+                continue;
+            }
+
+            $parameters = $operation['parameters'] ?? [];
+            foreach ($parameters as $param) {
+                if ($param['name'] === 'id') {
+                    // Found id parameter - extract custom schema from it
+                    // Even if 'in' is 'query', we'll use pattern/example for path parameter
+                    $schema = [
+                        'type' => $param['type'] ?? 'string'
+                    ];
+
+                    // Add optional schema properties only if they exist
+                    if (!empty($param['pattern'])) {
+                        $schema['pattern'] = $param['pattern'];
+                    }
+                    if (isset($param['example'])) {
+                        $schema['example'] = $param['example'];
+                    }
+
+                    return [
+                        'name' => 'id',
+                        'in' => 'path',
+                        'required' => true,
+                        'description' => $this->translateText($param['description'] ?? 'rest_param_id_description'),
+                        'schema' => $schema
+                    ];
+                }
+            }
+        }
+
+        // No custom id parameter found - use default
+        return $defaultSchema;
     }
 
     /**
@@ -852,13 +1015,24 @@ class ApiMetadataRegistry extends Injectable
 
     /**
      * Generate parameters for OpenAPI operation
+     *
+     * ✨ FIX: Always exclude 'id' parameters from operation-level
+     * Path parameters are now defined at path level (see generatePathsFromResource)
+     * Only query, header, and cookie parameters should be at operation level
+     *
+     * @param array<int, mixed> $parameters Array of parameter definitions
+     * @param bool $includeId Legacy parameter, now ignored (id always excluded from operations)
+     * @return array<int, mixed> OpenAPI parameters for operation
      */
     private function generateParametersForOperation(array $parameters, bool $includeId = false): array
     {
         $openApiParams = [];
 
         foreach ($parameters as $param) {
-            if ($param['name'] === 'id' && !$includeId) {
+            // ✨ FIX: Always skip ALL 'id' parameters regardless of 'in' value
+            // Path parameters are defined at path level, not operation level
+            // This prevents duplicate 'id' in both path and query parameters
+            if ($param['name'] === 'id') {
                 continue;
             }
 
@@ -1245,12 +1419,14 @@ class ApiMetadataRegistry extends Injectable
      */
     private function resolveParameterRef(ApiParameterRef $paramRef, ?array $dataSchema): ?array
     {
-        // Need dataSchema to get schemaClass
-        if ($dataSchema === null || !isset($dataSchema['schemaClass'])) {
+        // ✨ FIX: Prioritize dataStructure from ApiParameterRef over ApiDataSchema
+        // ApiParameterRef can specify its own dataStructure (e.g., CommonDataStructure for 'id')
+        // If not specified, fall back to controller's DataStructure from ApiDataSchema
+        $schemaClass = $paramRef->dataStructure ?? ($dataSchema['schemaClass'] ?? null);
+
+        if ($schemaClass === null) {
             return null;
         }
-
-        $schemaClass = $dataSchema['schemaClass'];
 
         // Verify class exists and has getParameterDefinitions method
         if (!class_exists($schemaClass) || !method_exists($schemaClass, 'getParameterDefinitions')) {

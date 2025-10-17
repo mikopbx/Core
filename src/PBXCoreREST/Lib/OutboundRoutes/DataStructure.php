@@ -46,7 +46,11 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     {
         // Start with base structure
         $data = self::createBaseStructure($model);
-        
+
+        // Remove fields not applicable to outbound routes
+        // WHY: Outbound routes are not extensions, don't need uniqid/extension
+        unset($data['uniqid'], $data['extension']);
+
         // Add outbound route specific fields (defaults defined in OpenAPI schema)
         $data['rulename'] = $model->rulename ?? '';
         $data['providerid'] = $model->providerid ?? '';  // Unified field name
@@ -82,7 +86,11 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     public static function createForList($model): array
     {
         $data = self::createBaseStructure($model);
-        
+
+        // Remove fields not applicable to outbound routes
+        // WHY: Outbound routes are not extensions, don't need uniqid/extension
+        unset($data['uniqid'], $data['extension']);
+
         // Add essential fields for list display (defaults defined in OpenAPI schema)
         $data['rulename'] = $model->rulename ?? '';
         $data['priority'] = (int)($model->priority ?? 0);

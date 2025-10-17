@@ -47,7 +47,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
  * @see https://spec.openapis.org/oas/v3.1.0 - OpenAPI 3.1 Specification
  */
 #[ApiResource(
-    path: '/pbxcore/api/v3/network-filters',
+    path: '/pbxcore/api/v3/network-filters',   
     tags: ['Network Filters'],
     description: 'Read-only access to network filters (firewall rules) for UI dropdown lists. ' .
                 'Supports category-based filtering (SIP, IAX, AMI, API) and includes special localhost option. ' .

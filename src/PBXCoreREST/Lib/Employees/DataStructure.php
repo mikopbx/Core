@@ -500,7 +500,6 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      * Get parameter definitions (Single Source of Truth)
      *
      * Defines all field schemas, validation rules, defaults, and sanitization rules in one place.
-     * This replaces legacy ParameterSanitizationExtractor pattern.
      *
      * ✨ Uses getAllFieldDefinitions() to eliminate duplication.
      *

@@ -46,8 +46,8 @@ use MikoPBX\PBXCoreREST\Attributes\{
  * @see https://spec.openapis.org/oas/v3.1.0 - OpenAPI 3.1 Specification
  */
 #[ApiResource(
-    path: '/pbxcore/api/v3/network',
-    tags: ['Network'],
+    path: '/pbxcore/api/v3/network',    
+    tags: ['Network management'],
     description: 'Network configuration management for MikoPBX system. ' .
                 'Features include network interface management (Ethernet, VLAN), ' .
                 'IP address configuration (DHCP, Static), gateway settings, DNS configuration, ' .

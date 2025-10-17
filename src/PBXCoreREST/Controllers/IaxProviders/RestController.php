@@ -46,7 +46,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
  * @see https://spec.openapis.org/oas/v3.1.0 - OpenAPI 3.1 Specification
  */
 #[ApiResource(
-    path: '/pbxcore/api/v3/iax-providers',
+    path: '/pbxcore/api/v3/iax-providers',    
     tags: ['IAX Providers'],
     description: 'Comprehensive IAX provider management for Internet Asterisk eXchange (IAX) protocol trunking. ' .
                 'IAX is a VoIP protocol designed for efficient trunk connections between Asterisk servers. ' .

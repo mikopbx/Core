@@ -218,6 +218,15 @@ abstract class AbstractGetRecordAction
                 }
                 
                 $res->data = $dataStructureClass::createFromModel($model);
+
+                // Validate response schema
+                \MikoPBX\PBXCoreREST\Lib\ResponseSchemaValidator::validate(
+                    $res->data,
+                    $dataStructureClass,
+                    'detail',
+                    static::class . '::main (new record)'
+                );
+
                 $res->success = true;
                 
             } else {
@@ -237,6 +246,14 @@ abstract class AbstractGetRecordAction
                     } else {
                         $res->data = $dataStructureClass::createFromModel($record);
                     }
+
+                    // Validate response schema
+                    \MikoPBX\PBXCoreREST\Lib\ResponseSchemaValidator::validate(
+                        $res->data,
+                        $dataStructureClass,
+                        'detail',
+                        static::class . '::main (existing record)'
+                    );
 
                     $res->success = true;
                 } else {

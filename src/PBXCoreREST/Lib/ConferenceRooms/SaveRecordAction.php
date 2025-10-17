@@ -104,8 +104,26 @@ class SaveRecordAction extends AbstractSaveRecordAction
             ]
         ];
 
+        // ============ PHASE 3: DETERMINE OPERATION ============
+        // WHY: Different logic for new vs existing records
+        // Determine if this is CREATE or UPDATE by checking if record exists in DB
+        $room = null;
+        $isNewRecord = true;
+
+        // Get record ID from sanitized data
+        $recordId = $sanitizedData['id'] ?? null;
+
+        if (!empty($recordId)) {
+            // Try to find existing conference room by provided ID
+            $room = ConferenceRooms::findFirstByUniqid($recordId);
+            if ($room) {
+                // Record exists - this is UPDATE operation
+                $isNewRecord = false;
+            }
+            // If not found - this is CREATE with predefined ID (migration/import scenario)
+        }
+
         // Extension required only for CREATE operation
-        $isNewRecord = empty($sanitizedData['id']);
         if ($isNewRecord) {
             $validationRules['extension'] = [
                 ['type' => 'required', 'message' => 'Extension number is required'],
@@ -121,29 +139,11 @@ class SaveRecordAction extends AbstractSaveRecordAction
             return $res;
         }
 
-        // ============ PHASE 3: DETERMINE OPERATION ============
-        // WHY: Different logic for new vs existing records
-        $room = null;
-
-        if (!$isNewRecord) {
-            // Try to find existing conference room by provided ID
-            $room = ConferenceRooms::findFirstByUniqid($sanitizedData['id']);
-            if ($room) {
-                // Record exists - this is UPDATE operation
-                $isNewRecord = false;
-            } else {
-                // Provided ID but record not found
-                $res->messages['error'][] = 'Conference room not found';
-                $res->httpCode = 404;
-                return $res;
-            }
-        }
-
         if ($isNewRecord) {
             // CREATE operation - create new conference room
             $room = new ConferenceRooms();
             // Use provided ID if available (for migrations/imports), otherwise generate new one
-            $room->uniqid = !empty($sanitizedData['id']) ? $sanitizedData['id'] :
+            $room->uniqid = !empty($recordId) ? $recordId :
                             ConferenceRooms::generateUniqueID(Extensions::PREFIX_CONFERENCE);
         }
 

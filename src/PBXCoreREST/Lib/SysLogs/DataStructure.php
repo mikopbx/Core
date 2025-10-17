@@ -90,6 +90,8 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'type' => 'string',
                 'description' => 'rest_schema_syslog_filename',
                 'in' => 'query',
+                'required' => true,
+                'minLength' => 1,
                 'maxLength' => 500,
                 'sanitize' => 'string',
                 'example' => 'asterisk/messages'

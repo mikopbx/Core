@@ -75,12 +75,27 @@ class FilesManagementProcessor extends Injectable
                 break;
 
             // v3 RESTful actions
+            case 'getRecord':
+                // RESTful GET /files/{path} - get file content by path (ID is the file path)
+                $filename = $postData['id'] ?? '';
+                $needOriginal = isset($postData['needOriginal']) && $postData['needOriginal'] === 'true';
+                $res = GetFileContentAction::main($filename, $needOriginal);
+                break;
+            case 'delete':
+                // RESTful DELETE /files/{path} - delete file by path
+                $filename = $postData['id'] ?? '';
+                $res = RemoveAudioFileAction::main($filename);
+                break;
+            case 'update':
+                // RESTful PUT /files/{path} - simple content upload
+                $res = self::uploadFileContent($postData);
+                break;
             case 'removeFile':
-                // RESTful DELETE /files/{path} - same as removeAudioFile but more generic
+                // Legacy - RESTful DELETE /files/{path} - same as removeAudioFile but more generic
                 $res = RemoveAudioFileAction::main($postData['filename']);
                 break;
             case 'uploadFileContent':
-                // RESTful PUT /files/{path} - simple content upload
+                // Legacy - RESTful PUT /files/{path} - simple content upload
                 $res = self::uploadFileContent($postData);
                 break;
             case 'uploadStatus':
@@ -109,14 +124,15 @@ class FilesManagementProcessor extends Injectable
     /**
      * Handle simple file content upload (PUT method)
      *
-     * @param array $data Request data with filename and content
+     * @param array $data Request data with filename/id and content
      * @return PBXApiResult
      */
     private static function uploadFileContent(array $data): PBXApiResult
     {
         $res = new PBXApiResult();
 
-        $filename = $data['filename'] ?? '';
+        // Support both 'id' (v3 RESTful) and 'filename' (legacy)
+        $filename = $data['id'] ?? $data['filename'] ?? '';
         $content = $data['content'] ?? '';
 
         if (empty($filename)) {

@@ -47,8 +47,8 @@ use MikoPBX\PBXCoreREST\Attributes\{
  * @see https://spec.openapis.org/oas/v3.1.0 - OpenAPI 3.1 Specification
  */
 #[ApiResource(
-    path: '/pbxcore/api/v3/sip',
-    tags: ['SIP', 'Monitoring'],
+    path: '/pbxcore/api/v3/sip',    
+    tags: ['SIP'],
     description: 'SIP device status monitoring and statistics. ' .
                 'Provides real-time status information for SIP endpoints, peers, and registry. ' .
                 'Read-only monitoring interface - device configuration is managed via Extensions API.',

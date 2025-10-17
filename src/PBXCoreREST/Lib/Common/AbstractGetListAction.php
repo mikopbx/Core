@@ -80,14 +80,44 @@ abstract class AbstractGetListAction
 
             // Transform record through DataStructure
             if ($useFullData) {
-                $resultData[] = $dataStructureClass::createFromModel($record);
+                $itemData = $dataStructureClass::createFromModel($record);
+
+                // Validate detail schema
+                \MikoPBX\PBXCoreREST\Lib\ResponseSchemaValidator::validate(
+                    $itemData,
+                    $dataStructureClass,
+                    'detail',
+                    static::class . '::formatRecords (full data)'
+                );
+
+                $resultData[] = $itemData;
             } else {
                 // Use createForList for better performance if available
                 if (method_exists($dataStructureClass, 'createForList')) {
-                    $resultData[] = $dataStructureClass::createForList($record);
+                    $itemData = $dataStructureClass::createForList($record);
+
+                    // Validate list schema
+                    \MikoPBX\PBXCoreREST\Lib\ResponseSchemaValidator::validate(
+                        $itemData,
+                        $dataStructureClass,
+                        'list',
+                        static::class . '::formatRecords (list)'
+                    );
+
+                    $resultData[] = $itemData;
                 } else {
                     // Fallback to createFromModel if createForList not available
-                    $resultData[] = $dataStructureClass::createFromModel($record);
+                    $itemData = $dataStructureClass::createFromModel($record);
+
+                    // Validate detail schema (fallback)
+                    \MikoPBX\PBXCoreREST\Lib\ResponseSchemaValidator::validate(
+                        $itemData,
+                        $dataStructureClass,
+                        'detail',
+                        static::class . '::formatRecords (fallback)'
+                    );
+
+                    $resultData[] = $itemData;
                 }
             }
         }
@@ -124,8 +154,9 @@ abstract class AbstractGetListAction
         $searchConditions = [];
         $bindParams = [];
         
+        // WHY brackets: Prevents SQL keyword conflicts (e.g., "note" parsed as "NOT e")
         foreach ($searchableFields as $field) {
-            $searchConditions[] = "{$field} LIKE :search_term:";
+            $searchConditions[] = "[{$field}] LIKE :search_term:";
         }
 
         $bindParams['search_term'] = '%' . $searchTerm . '%';

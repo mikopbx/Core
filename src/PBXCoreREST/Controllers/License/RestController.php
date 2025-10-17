@@ -45,8 +45,8 @@ use MikoPBX\PBXCoreREST\Attributes\{
  * @see https://spec.openapis.org/oas/v3.1.0 - OpenAPI 3.1 Specification
  */
 #[ApiResource(
-    path: '/pbxcore/api/v3/license',
-    tags: ['License'],
+    path: '/pbxcore/api/v3/license',    
+    tags: ['Licensing'],
     description: 'License management for MikoPBX system. ' .
                 'Features include license activation, validation, key management, ' .
                 'feature capture for products, metrics reporting, and license server connectivity checks.',

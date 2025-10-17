@@ -43,8 +43,8 @@ use MikoPBX\PBXCoreREST\Attributes\{
  * @see https://spec.openapis.org/oas/v3.1.0 - OpenAPI 3.1 Specification
  */
 #[ApiResource(
-    path: '/pbxcore/api/v3/sysinfo',
-    tags: ['System Information', 'Diagnostics'],
+    path: '/pbxcore/api/v3/sysinfo',    
+    tags: ['Sysinfo'],
     description: 'System information and diagnostics singleton resource. ' .
                 'Provides comprehensive details about hardware, network configuration, virtualization platform, and DMI data. ' .
                 'Read-only interface for system monitoring and troubleshooting.',

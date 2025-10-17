@@ -46,7 +46,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
  * @see https://spec.openapis.org/oas/v3.1.0 - OpenAPI 3.1 Specification
  */
 #[ApiResource(
-    path: '/pbxcore/api/v3/outbound-routes',
+    path: '/pbxcore/api/v3/outbound-routes',    
     tags: ['Outbound Routes'],
     description: 'Outbound call routing management for directing calls to external providers. ' .
                 'Features include number pattern matching (prefix-based), provider selection, ' .

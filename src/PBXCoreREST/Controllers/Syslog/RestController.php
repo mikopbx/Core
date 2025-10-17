@@ -26,6 +26,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
     ApiParameterRef,
+    ApiDataSchema,
     ApiResponse,
     SecurityType,
     HttpMapping,
@@ -45,8 +46,8 @@ use MikoPBX\PBXCoreREST\Attributes\{
  * @see https://spec.openapis.org/oas/v3.1.0 - OpenAPI 3.1 Specification
  */
 #[ApiResource(
-    path: '/pbxcore/api/v3/syslog',
-    tags: ['System Logs', 'Diagnostics'],
+    path: '/pbxcore/api/v3/syslog',    
+    tags: ['Syslog'],
     description: 'System logs management and diagnostics tools. ' .
                 'Provides access to system logs, log filtering, network packet capture, and archive generation. ' .
                 'Essential for troubleshooting and system monitoring.',
@@ -99,6 +100,7 @@ class RestController extends BaseRestController
         description: 'rest_syslog_GetLogFromFileDesc',
         operationId: 'getLogContent'
     )]
+    #[ApiDataSchema(schemaClass: DataStructure::class, type: 'custom')]
     #[ApiParameterRef('filename', required: true)]
     #[ApiParameterRef('filter')]
     #[ApiParameterRef('logLevel')]
@@ -126,6 +128,7 @@ class RestController extends BaseRestController
         description: 'rest_syslog_GetLogTimeRangeDesc',
         operationId: 'getLogTimeRange'
     )]
+    #[ApiDataSchema(schemaClass: DataStructure::class, type: 'custom')]
     #[ApiParameterRef('filename', required: true)]
     #[ApiResponse(200, 'rest_response_200_log_time_range')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
@@ -201,6 +204,7 @@ class RestController extends BaseRestController
         description: 'rest_syslog_DownloadLogFileDesc',
         operationId: 'downloadLogFile'
     )]
+    #[ApiDataSchema(schemaClass: DataStructure::class, type: 'custom')]
     #[ApiParameterRef('filename', required: true)]
     #[ApiParameterRef('archive')]
     #[ApiResponse(200, 'rest_response_200_file_download')]
@@ -223,6 +227,7 @@ class RestController extends BaseRestController
         description: 'rest_syslog_DownloadArchiveDesc',
         operationId: 'downloadLogsArchive'
     )]
+    #[ApiDataSchema(schemaClass: DataStructure::class, type: 'custom')]
     #[ApiParameterRef('filename', required: true, example: '/tmp/logs.zip')]
     #[ApiResponse(200, 'rest_response_200_file_download')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
@@ -244,6 +249,7 @@ class RestController extends BaseRestController
         description: 'rest_syslog_EraseFileDesc',
         operationId: 'eraseLogFile'
     )]
+    #[ApiDataSchema(schemaClass: DataStructure::class, type: 'custom')]
     #[ApiParameterRef('filename', required: true)]
     #[ApiResponse(200, 'rest_response_200_deleted')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]

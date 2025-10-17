@@ -46,6 +46,11 @@ class GetHypervisorInfoAction extends Injectable
         $result = shell_exec("$dmesg | $grep 'Hypervisor detected' | $awk -F 'Hypervisor detected: ' '{ print $2}'");
         $result = trim($result??'');
         $res->data =['Hypervisor'=>$result];
+
+        // WHY: Always return 200 OK, even when no hypervisor detected
+        // Bare metal systems (no virtualization) are a valid state, not an error
+        $res->httpCode = 200;
+
         if ($result){
             $res->success = true;
         }

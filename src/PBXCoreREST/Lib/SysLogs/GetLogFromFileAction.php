@@ -24,9 +24,6 @@ use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Lib\Common\BaseActionHelper;
-use MikoPBX\PBXCoreREST\Lib\Common\ParameterSanitizationExtractor;
-use MikoPBX\PBXCoreREST\Lib\Common\ParameterDefaultsExtractor;
-use MikoPBX\PBXCoreREST\Controllers\Syslog\RestController;
 use Phalcon\Di\Injectable;
 
 /**
@@ -38,9 +35,6 @@ class GetLogFromFileAction extends Injectable
 {
     /**
      * Gets partially filtered log file strings.
-     *
-     * Uses unified sanitization approach with ParameterSanitizationExtractor
-     * and ParameterDefaultsExtractor for consistent parameter handling.
      *
      * @param array<string, mixed> $data An array containing the following parameters:
      *                    - filename (string): The name of the log file.
@@ -58,23 +52,12 @@ class GetLogFromFileAction extends Injectable
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
 
-        // Get sanitization rules automatically from controller attributes
-        // Single Source of Truth - rules extracted from #[ApiParameter] attributes
-        $sanitizationRules = ParameterSanitizationExtractor::extractFromController(
-            RestController::class,
-            'getLogFromFile'
-        );
+        // WHY: Get sanitization rules from DataStructure (Single Source of Truth)
+        // DataStructure defines all field constraints, not controller attributes
+        $sanitizationRules = DataStructure::getSanitizationRules();
 
-        // Sanitize input data using unified approach
+        // WHY: Sanitize input data for security - never trust user input
         $sanitizedData = BaseActionHelper::sanitizeData($data, $sanitizationRules);
-
-        // Apply defaults from controller attributes automatically
-        // Single Source of Truth - defaults extracted from #[ApiParameter] attributes
-        $sanitizedData = ParameterDefaultsExtractor::applyDefaults(
-            RestController::class,
-            'getLogFromFile',
-            $sanitizedData
-        );
 
         // Extract validated parameters
         $filename = (string)($sanitizedData['filename'] ?? '');
@@ -84,10 +67,28 @@ class GetLogFromFileAction extends Injectable
         $offset = (int)($sanitizedData['offset'] ?? 0);
         $dateFrom = (string)($sanitizedData['dateFrom'] ?? '');
         $dateTo = (string)($sanitizedData['dateTo'] ?? '');
+
+        // Validate filename is not empty before constructing path
+        // WHY: Prevent directory path instead of file path (security + correct behavior)
+        if (empty($filename)) {
+            $res->success = false;
+            $res->messages['error'][] = 'Filename parameter is required and cannot be empty';
+            $res->httpCode = 400;
+            return $res;
+        }
+
         $filename = Directories::getDir(Directories::CORE_LOGS_DIR) . '/' . $filename;
+
+        // Validate the result is a file, not a directory
+        // WHY: Prevents commands like "tail /path/to/directory/" which produce empty output
         if (!file_exists($filename)) {
             $res->success = false;
-            $res->messages[] = 'No access to the file ' . $filename;
+            $res->messages['error'][] = 'Log file not found: ' . basename($filename);
+            $res->httpCode = 404;
+        } elseif (is_dir($filename)) {
+            $res->success = false;
+            $res->messages['error'][] = 'Path points to directory, not a file: ' . basename($filename);
+            $res->httpCode = 400;
         } else {
             $res->success = true;
             $head = Util::which('head');

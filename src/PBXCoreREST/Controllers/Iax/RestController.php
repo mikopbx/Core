@@ -44,7 +44,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
  * @see https://spec.openapis.org/oas/v3.1.0 - OpenAPI 3.1 Specification
  */
 #[ApiResource(
-    path: '/pbxcore/api/v3/iax',
+    path: '/pbxcore/api/v3/iax',    
     tags: ['IAX'],
     description: 'IAX (Inter-Asterisk eXchange) protocol management for VoIP trunk provider connections. ' .
                 'Provides real-time monitoring of IAX provider registration status, peer connectivity states, ' .

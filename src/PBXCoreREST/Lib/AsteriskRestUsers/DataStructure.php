@@ -49,6 +49,10 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         // Start with base structure (raw data, no HTML escaping)
         $data = self::createBaseStructure($model);
 
+        // Remove fields not applicable to ARI users
+        // WHY: ARI users don't have uniqid (numeric ID is sufficient) or extension (not phone numbers)
+        unset($data['uniqid'], $data['extension']);
+
         // Add ARI user specific fields
         $data['username'] = $model->username ?? '';
         $data['password'] = $model->password ?? '';
@@ -75,6 +79,10 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     {
         // Use unified base method for list creation
         $data = parent::createForList($model);
+
+        // Remove fields not applicable to ARI users
+        // WHY: ARI users don't have uniqid (numeric ID is sufficient) or extension (not phone numbers)
+        unset($data['uniqid'], $data['extension']);
 
         // Add ARI user specific fields for list display
         $data['username'] = $model->username ?? '';
@@ -299,7 +307,6 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      * Get parameter definitions (Single Source of Truth)
      *
      * Defines all field schemas, validation rules, defaults, and sanitization rules in one place.
-     * This replaces legacy ParameterSanitizationExtractor pattern.
      *
      * ✨ Uses getAllFieldDefinitions() to eliminate duplication.
      * ✨ Follows CallQueues/IvrMenu pattern - fields returned directly, not wrapped

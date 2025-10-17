@@ -90,7 +90,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
  * @package MikoPBX\PBXCoreREST\Controllers\Firewall
  */
 #[ApiResource(
-    path: '/pbxcore/api/v3/firewall',
+    path: '/pbxcore/api/v3/firewall',    
     tags: ['Firewall'],
     description: 'Comprehensive firewall rule management. Provides full CRUD operations for network access control rules, plus custom methods for managing banned IPs, enabling/disabling firewall, and retrieving default configurations.',
     processor: FirewallManagementProcessor::class

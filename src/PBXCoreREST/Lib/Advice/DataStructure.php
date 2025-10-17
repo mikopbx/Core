@@ -132,28 +132,6 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     private static function getAllFieldDefinitions(): array
     {
         return [
-            // Query parameters for filtering (Advice is read-only)
-            'category' => [
-                'type' => 'string',
-                'description' => 'rest_schema_advice_category_filter',
-                'enum' => ['security', 'configuration', 'performance', 'maintenance', 'updates'],
-                'sanitize' => 'string',
-                'example' => 'security'
-            ],
-            'severity' => [
-                'type' => 'string',
-                'description' => 'rest_schema_advice_severity_filter',
-                'enum' => ['critical', 'warning', 'info'],
-                'sanitize' => 'string',
-                'example' => 'warning'
-            ],
-            'force' => [
-                'type' => 'boolean',
-                'description' => 'rest_schema_advice_force',
-                'sanitize' => 'bool',
-                'default' => false,
-                'example' => true
-            ],
             // Response-only fields
             'advice' => [
                 'type' => 'object',

@@ -46,7 +46,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
  * @see https://spec.openapis.org/oas/v3.1.0 - OpenAPI 3.1 Specification
  */
 #[ApiResource(
-    path: '/pbxcore/api/v3/mail-settings',
+    path: '/pbxcore/api/v3/mail-settings',    
     tags: ['Mail Settings'],
     description: 'Mail server configuration management for system notifications and alerts. ' .
                 'Supports SMTP authentication including OAuth2 for Gmail, Outlook, and other providers. ' .

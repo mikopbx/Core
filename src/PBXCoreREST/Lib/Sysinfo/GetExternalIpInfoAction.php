@@ -40,6 +40,10 @@ class GetExternalIpInfoAction extends Injectable
         $res            = new PBXApiResult();
         $res->processor = __METHOD__;
 
+        // WHY: Always return 200 OK, even when external IP not detected
+        // Systems without internet access or behind NAT are valid states, not errors
+        $res->httpCode = 200;
+
         $bashPath = Util::which('bash');
         $timeoutPath = Util::which('timeout');
         $resultRequest = trim(shell_exec($timeoutPath.' 3 '.$bashPath.' -c "source /etc/profile && _myip"')??'');

@@ -31,6 +31,16 @@ class RestController extends BaseRestController
     #[ApiParameterRef('extension', required: true)]
     #[ApiParameterRef('strategy')]
     public function create(): void {}
+
+    // ✨ Internal-only operations (excluded from OpenAPI)
+    // Use internal=true for operations called only by Nginx/Lua or internal services
+    #[ApiOperation(
+        summary: 'Validate JWT token (internal)',
+        description: 'Internal endpoint for JWT token validation by Nginx/Lua. Only accessible from localhost.',
+        operationId: 'authValidateToken',
+        internal: true  // ⚠️ This operation will NOT appear in OpenAPI specification
+    )]
+    public function validateToken(): void {}
 }
 ```
 
@@ -278,8 +288,7 @@ docker exec <container> vendor/bin/phpstan analyse \
 - Preserve existing values for missing fields
 
 ### ❌ NEVER
-- Use ParameterSanitizationExtractor (legacy)
-- Define sanitization rules inline in actions
+- Define sanitization rules inline in actions (always use DataStructure)
 - Apply defaults on UPDATE/PATCH operations
 - Skip WHY comments in SaveRecordAction phases
 

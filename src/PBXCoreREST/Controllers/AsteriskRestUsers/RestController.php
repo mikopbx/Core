@@ -48,7 +48,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
  * @see https://spec.openapis.org/oas/v3.1.0 - OpenAPI 3.1 Specification
  */
 #[ApiResource(
-    path: '/pbxcore/api/v3/asterisk-rest-users',
+    path: '/pbxcore/api/v3/asterisk-rest-users',    
     tags: ['Asterisk REST Users'],
     description: 'Comprehensive Asterisk REST Interface (ARI) user management for real-time call control. ' .
                 'ARI provides WebSocket-based APIs for building custom telephony applications with full ' .

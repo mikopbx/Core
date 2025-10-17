@@ -136,8 +136,8 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'in' => 'query',
                 'enum' => ['en', 'ru'],
                 'sanitize' => 'string',
-                'default' => 'en',
-                'example' => 'en'
+                'default' => 'ru',
+                'example' => 'ru'
             ],
             'moduleId' => [
                 'type' => 'string',

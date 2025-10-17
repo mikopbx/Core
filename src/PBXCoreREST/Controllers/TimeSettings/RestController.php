@@ -20,7 +20,6 @@
 namespace MikoPBX\PBXCoreREST\Controllers\TimeSettings;
 
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\PBXCoreREST\Attributes\ApiDataSchema;
 use MikoPBX\PBXCoreREST\Attributes\ApiOperation;
 use MikoPBX\PBXCoreREST\Attributes\ApiParameterRef;
 use MikoPBX\PBXCoreREST\Attributes\ApiResource;
@@ -29,7 +28,6 @@ use MikoPBX\PBXCoreREST\Attributes\HttpMapping;
 use MikoPBX\PBXCoreREST\Attributes\ResourceSecurity;
 use MikoPBX\PBXCoreREST\Attributes\SecurityType;
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
-use MikoPBX\PBXCoreREST\Lib\TimeSettings\DataStructure;
 use MikoPBX\PBXCoreREST\Lib\TimeSettingsManagementProcessor;
 
 /**
@@ -39,7 +37,7 @@ use MikoPBX\PBXCoreREST\Lib\TimeSettingsManagementProcessor;
  * This controller implements standard REST operations without resource IDs.
  */
 #[ApiResource(
-    path: '/pbxcore/api/v3/time-settings',
+    path: '/pbxcore/api/v3/time-settings',    
     tags: ['Time Settings'],
     description: 'Comprehensive time and timezone management for MikoPBX. This singleton resource provides access to system time configuration including timezone selection, NTP server settings, and manual time adjustment. Essential for ensuring accurate call timestamps, scheduled tasks execution, and system log correlation. Supports automatic time synchronization via NTP or manual time setting for isolated networks.',
     processor: TimeSettingsManagementProcessor::class
