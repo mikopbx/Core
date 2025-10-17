@@ -357,7 +357,8 @@ def test_call_queue_crud_cycle(api_client):
         print(f"{'-'*70}")
 
         update_data = create_data.copy()
-        update_data['id'] = queue_id
+        # ✅ FIXED: Do NOT send 'id' in request body - it's in URL path
+        # update_data['id'] = queue_id  # ❌ REMOVED - id should only be in URL
         update_data['name'] = 'Updated CRUD Queue'
         update_data['strategy'] = 'leastrecent'
         update_data['seconds_to_ring_each_member'] = 30
@@ -366,7 +367,7 @@ def test_call_queue_crud_cycle(api_client):
         print(f"  Name: {update_data['name']}")
         print(f"  Strategy: {update_data['strategy']}")
 
-        # PUT update
+        # PUT update (id is in URL path, not in request body)
         response = api_client.put(f'call-queues/{queue_id}', update_data)
         assert_api_success(response, "Failed to update queue")
 
@@ -460,6 +461,144 @@ def test_call_queue_crud_cycle(api_client):
                 api_client.delete(f'call-queues/{queue_id}')
             except Exception as e:
                 print(f"⚠️  Cleanup failed (might be OK): {e}")
+
+
+def test_call_queue_copy(api_client):
+    """
+    Test copying an existing call queue
+
+    Steps:
+    1. CREATE - Create source queue
+    2. COPY - Copy the queue using :copy endpoint
+    3. VERIFY - Ensure copy exists with different ID
+    4. CLEANUP - Delete both queues
+    """
+
+    print(f"\n{'='*70}")
+    print(f"Test: Call Queue Copy Operation")
+    print(f"{'='*70}")
+
+    source_id = None
+    copy_id = None
+
+    try:
+        # ====================================================================
+        # STEP 1: CREATE Source Queue
+        # ====================================================================
+        print(f"\n{'-'*70}")
+        print(f"STEP 1: CREATE Source Queue")
+        print(f"{'-'*70}")
+
+        source_data = {
+            'name': 'Source Copy Test Queue',
+            'extension': '7777',
+            'strategy': 'ringall',
+            'description': 'Original queue for copy test',
+            'seconds_to_ring_each_member': 25,
+            'announce_position': True
+        }
+
+        print(f"Creating source queue:")
+        print(f"  Name: {source_data['name']}")
+        print(f"  Extension: {source_data['extension']}")
+
+        response = api_client.post('call-queues', source_data)
+        assert_api_success(response, "Failed to create source queue")
+
+        source_id = response.get('data', {}).get('id')
+        assert source_id, "No ID returned after creation"
+
+        print(f"✅ Source queue created with ID: {source_id}")
+
+        # ====================================================================
+        # STEP 2: COPY Queue
+        # ====================================================================
+        print(f"\n{'-'*70}")
+        print(f"STEP 2: COPY Queue using :copy endpoint")
+        print(f"{'-'*70}")
+
+        # Call custom copy method (Google API Design pattern)
+        print(f"Calling GET /call-queues/{source_id}:copy...")
+
+        response = api_client.get(f'call-queues/{source_id}:copy')
+        assert_api_success(response, "Failed to copy queue")
+
+        copy_id = response.get('data', {}).get('id')
+        assert copy_id, "No ID returned after copy"
+        assert copy_id != source_id, "Copy should have different ID"
+
+        print(f"✅ Queue copied successfully!")
+        print(f"  Source ID: {source_id}")
+        print(f"  Copy ID: {copy_id}")
+
+        # ====================================================================
+        # STEP 3: VERIFY Copy
+        # ====================================================================
+        print(f"\n{'-'*70}")
+        print(f"STEP 3: VERIFY Copy")
+        print(f"{'-'*70}")
+
+        # Retrieve the copy
+        copy_record = assert_record_exists(api_client, 'call-queues', copy_id)
+
+        print(f"Copy queue details:")
+        print(f"  ID: {copy_record.get('id')}")
+        print(f"  Name: {copy_record.get('name')}")
+        print(f"  Extension: {copy_record.get('extension')}")
+        print(f"  Strategy: {copy_record.get('strategy')}")
+
+        # Verify name contains "Copy of"
+        assert 'Copy of' in copy_record.get('name', ''), \
+            "Copy name should contain 'Copy of'"
+
+        # Verify strategy was copied
+        assert copy_record.get('strategy') == source_data['strategy'], \
+            "Strategy should match source"
+
+        # Verify extension is different
+        assert copy_record.get('extension') != source_data['extension'], \
+            "Copy should have different extension"
+
+        print(f"✅ Copy verified!")
+        print(f"  ✓ Name contains 'Copy of'")
+        print(f"  ✓ Strategy matches source: {copy_record.get('strategy')}")
+        print(f"  ✓ Extension is different: {copy_record.get('extension')}")
+
+        # ====================================================================
+        # SUMMARY
+        # ====================================================================
+        print(f"\n{'='*70}")
+        print(f"COPY OPERATION COMPLETE")
+        print(f"{'='*70}")
+        print(f"✅ Source queue created: {source_id}")
+        print(f"✅ Queue copied via :copy endpoint: {copy_id}")
+        print(f"✅ Copy verified with different ID and extension")
+
+    finally:
+        # ====================================================================
+        # CLEANUP
+        # ====================================================================
+        print(f"\n{'-'*70}")
+        print(f"CLEANUP: Deleting test queues")
+        print(f"{'-'*70}")
+
+        # Delete source queue
+        if source_id:
+            try:
+                print(f"Deleting source queue {source_id}...")
+                api_client.delete(f'call-queues/{source_id}')
+                print(f"✅ Source queue deleted")
+            except Exception as e:
+                print(f"⚠️  Failed to delete source: {e}")
+
+        # Delete copy queue
+        if copy_id:
+            try:
+                print(f"Deleting copy queue {copy_id}...")
+                api_client.delete(f'call-queues/{copy_id}')
+                print(f"✅ Copy queue deleted")
+            except Exception as e:
+                print(f"⚠️  Failed to delete copy: {e}")
 
 
 if __name__ == '__main__':

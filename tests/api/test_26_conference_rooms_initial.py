@@ -442,5 +442,126 @@ def test_conference_room_crud_cycle(api_client, conference_room_fixtures):
                 print(f"⚠️  Cleanup failed (might be OK): {e}")
 
 
+def test_create_conference_with_predefined_id(api_client):
+    """
+    Test creating conference room with predefined ID (migration/import scenario)
+
+    Steps:
+    1. Generate unique ID with proper prefix
+    2. Create conference with this ID via POST
+    3. Verify creation succeeded
+    4. Verify returned ID matches provided ID
+    5. Verify can retrieve by this ID
+    6. Cleanup - delete created record
+    """
+
+    print(f"\n{'='*70}")
+    print(f"Test: Create Conference Room with Predefined ID")
+    print(f"{'='*70}")
+
+    # Generate predefined ID with proper prefix
+    import time
+    predefined_id = f"CONFERENCE-TEST-{int(time.time())}"
+
+    print(f"\nPredefined ID: {predefined_id}")
+
+    conf_id = None
+
+    try:
+        # ====================================================================
+        # STEP 1: CREATE with predefined ID
+        # ====================================================================
+        print(f"\n{'-'*70}")
+        print(f"STEP 1: CREATE with Predefined ID")
+        print(f"{'-'*70}")
+
+        create_data = {
+            'id': predefined_id,
+            'name': 'Test Conference with ID',
+            'extension': '9001',
+            'pinCode': '1111',
+            'description': 'Testing predefined ID creation'
+        }
+
+        print(f"Creating conference:")
+        print(f"  ID: {create_data['id']}")
+        print(f"  Name: {create_data['name']}")
+        print(f"  Extension: {create_data['extension']}")
+
+        # Create
+        response = api_client.post('conference-rooms', create_data)
+
+        print(f"\n📥 Response received:")
+        print(f"  Result: {response.get('result')}")
+        print(f"  HTTP Code: {response.get('httpCode')}")
+        print(f"  Messages: {response.get('messages', {})}")
+
+        # Verify success
+        assert_api_success(response, "Failed to create conference with predefined ID")
+
+        # ====================================================================
+        # STEP 2: VERIFY ID matches
+        # ====================================================================
+        print(f"\n{'-'*70}")
+        print(f"STEP 2: VERIFY Returned ID")
+        print(f"{'-'*70}")
+
+        conf_id = response.get('data', {}).get('id')
+        assert conf_id, "No ID returned after creation"
+
+        print(f"Expected ID: {predefined_id}")
+        print(f"Returned ID: {conf_id}")
+
+        assert conf_id == predefined_id, \
+            f"Returned ID '{conf_id}' doesn't match predefined ID '{predefined_id}'"
+
+        print(f"✅ ID matches predefined value")
+
+        # ====================================================================
+        # STEP 3: VERIFY can retrieve
+        # ====================================================================
+        print(f"\n{'-'*70}")
+        print(f"STEP 3: RETRIEVE by Predefined ID")
+        print(f"{'-'*70}")
+
+        conf_record = assert_record_exists(api_client, 'conference-rooms', predefined_id)
+
+        print(f"Retrieved conference:")
+        print(f"  ID: {conf_record.get('id')}")
+        print(f"  Name: {conf_record.get('name')}")
+        print(f"  Extension: {conf_record.get('extension')}")
+
+        # Verify data matches
+        assert conf_record.get('id') == predefined_id, "ID mismatch"
+        assert conf_record.get('name') == create_data['name'], "Name mismatch"
+        assert conf_record.get('extension') == create_data['extension'], "Extension mismatch"
+
+        print(f"✅ All fields verified")
+
+        # ====================================================================
+        # SUMMARY
+        # ====================================================================
+        print(f"\n{'='*70}")
+        print(f"PREDEFINED ID TEST COMPLETE")
+        print(f"{'='*70}")
+        print(f"✅ CREATE - Conference created with predefined ID")
+        print(f"✅ VERIFY - ID matches provided value")
+        print(f"✅ RETRIEVE - Can fetch by predefined ID")
+        print(f"\nPredefined ID scenario works correctly!")
+
+    finally:
+        # Cleanup: delete test conference
+        if conf_id:
+            try:
+                print(f"\n🧹 Cleanup: Deleting test conference {conf_id}")
+                response = api_client.delete(f'conference-rooms/{conf_id}')
+                if response.get('result'):
+                    print(f"✅ Cleanup successful")
+                else:
+                    print(f"⚠️  Cleanup failed: {response.get('messages', {})}")
+            except Exception as e:
+                print(f"⚠️  Cleanup failed: {e}")
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v', '-s'])

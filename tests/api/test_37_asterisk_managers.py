@@ -66,12 +66,17 @@ class TestAsteriskManagers:
         manager_id = response['data']['id']
         self.created_ids.append(manager_id)
 
+        # Verify that uniqid and extension fields are NOT in response
+        assert 'uniqid' not in response['data'], "Field 'uniqid' should not be present in CREATE response"
+        assert 'extension' not in response['data'], "Field 'extension' should not be present in CREATE response"
+
         # Wait for Asterisk config regeneration
         time.sleep(2.5)
 
         print(f"✓ Created asterisk manager: {manager_id}")
         print(f"  Username: {manager_data['username']}")
         print(f"  Description: {manager_data['description']}")
+        print(f"  ✓ Response schema validated (no uniqid/extension fields)")
 
     def test_03_create_manager_full_permissions(self, api_client):
         """Test POST /asterisk-managers - Create manager with full permissions"""
@@ -108,6 +113,13 @@ class TestAsteriskManagers:
         if len(self.created_ids) > 0:
             assert len(data) >= len(self.created_ids), f"Expected at least {len(self.created_ids)} managers"
 
+        # Verify list items don't have uniqid/extension fields
+        if len(data) > 0:
+            first_item = data[0]
+            assert 'uniqid' not in first_item, "Field 'uniqid' should not be present in LIST response"
+            assert 'extension' not in first_item, "Field 'extension' should not be present in LIST response"
+            print(f"  ✓ List schema validated (no uniqid/extension fields)")
+
         print(f"✓ Found {len(data)} asterisk managers")
 
     def test_05_get_managers_with_search(self, api_client):
@@ -139,17 +151,23 @@ class TestAsteriskManagers:
         assert 'username' in record
         assert 'description' in record or 'call' in record
 
+        # Verify that uniqid and extension fields are NOT present
+        # WHY: AMI users are not phone numbers and don't need uniqid (numeric ID is sufficient)
+        assert 'uniqid' not in record, "Field 'uniqid' should not be present in AMI response"
+        assert 'extension' not in record, "Field 'extension' should not be present in AMI response"
+
         print(f"✓ Retrieved asterisk manager: ID={manager_id}")
         if 'username' in record:
             print(f"  Username: {record['username']}")
         if 'description' in record:
             print(f"  Description: {record['description']}")
+        print(f"  ✓ Schema validation: 'uniqid' and 'extension' fields correctly excluded")
 
     def test_07_update_manager(self, api_client):
         """Test PUT /asterisk-managers/{id} - Full update
 
-        KNOWN ISSUE: Backend bug - UpdateRecordAction calls non-existent SaveRecordAction::processData()
-        This test documents the bug and handles it gracefully.
+        Tests complete replacement of existing manager with new data.
+        All fields should be provided for PUT operations.
         """
         import time
         if not self.created_ids:
@@ -204,8 +222,8 @@ class TestAsteriskManagers:
     def test_08_patch_manager(self, api_client):
         """Test PATCH /asterisk-managers/{id} - Partial update
 
-        KNOWN ISSUE: Backend bug - PatchRecordAction calls non-existent SaveRecordAction::processData()
-        This test documents the bug and handles it gracefully.
+        Tests partial updates where only some fields are provided.
+        Unlike PUT, PATCH should not require all fields.
         """
         import time
         if not self.created_ids:
@@ -213,9 +231,13 @@ class TestAsteriskManagers:
 
         manager_id = self.created_ids[0]
 
+        # PATCH with only description and permissions - username NOT required
         patch_data = {
             'description': 'Patched Manager Description',
-            'disabled': True
+            'permissions': {
+                'system_read': True,
+                'system_write': True
+            }
         }
 
         try:
@@ -227,24 +249,24 @@ class TestAsteriskManagers:
 
             # Verify patch
             updated = assert_record_exists(api_client, 'asterisk-managers', manager_id)
-            assert updated.get('description') == 'Patched Manager Description'
+            assert updated.get('description') == 'Patched Manager Description', \
+                f"Expected description='Patched Manager Description', got '{updated.get('description')}'"
 
-            # Handle both boolean and string representations
-            disabled_value = updated.get('disabled')
-            is_disabled = disabled_value in [True, 'true', '1', 1]
-            assert is_disabled, f"Expected disabled=True, got {disabled_value}"
+            # Verify permissions were updated
+            permissions = updated.get('permissions', {})
+            assert permissions.get('system_read') is True, "Expected system_read=True"
+            assert permissions.get('system_write') is True, "Expected system_write=True"
 
-            print(f"✓ Patched asterisk manager")
+            print(f"✓ Patched asterisk manager (description and permissions)")
         except requests.exceptions.HTTPError as e:
             if e.response.status_code == 422:
                 # Get error message details
                 try:
                     error_data = e.response.json()
                     error_message = str(error_data.get('messages', {}))
-                    if 'processData()' in error_message:
-                        print(f"⚠ Backend bug: PatchRecordAction calls non-existent SaveRecordAction::processData()")
-                        print(f"  Issue location: PatchRecordAction.php:59")
-                        print(f"  Workaround: DELETE and recreate with new data instead of PATCH")
+                    if 'Username is required' in error_message:
+                        print(f"⚠ Backend bug: PATCH incorrectly requires username field")
+                        print(f"  PATCH should allow partial updates without required fields")
                     else:
                         print(f"⚠ Unexpected 422 error: {error_message[:200]}")
                 except:
@@ -256,31 +278,249 @@ class TestAsteriskManagers:
             raise
 
     def test_09_copy_manager(self, api_client):
-        """Test GET /asterisk-managers/{id}:copy - Copy manager"""
+        """Test GET /asterisk-managers/{id}:copy - Copy manager
+
+        Tests the custom :copy endpoint which should:
+        1. Create a copy of existing manager
+        2. Return new ID different from source
+        3. Copy all settings (permissions, description)
+        4. Modify username to avoid conflicts (e.g., add "Copy of")
+        """
+        import time
         if not self.created_ids:
             pytest.skip("No managers created yet")
 
-        manager_id = self.created_ids[0]
+        source_id = self.created_ids[0]
+
+        print(f"\n{'='*70}")
+        print(f"Test: Copy Asterisk Manager via :copy endpoint")
+        print(f"{'='*70}")
+        print(f"Source manager ID: {source_id}")
 
         try:
-            response = api_client.get(f'asterisk-managers/{manager_id}:copy')
+            # Get source manager details
+            source = assert_record_exists(api_client, 'asterisk-managers', source_id)
+            print(f"\nSource manager:")
+            print(f"  Username: {source.get('username', 'N/A')}")
+            print(f"  Description: {source.get('description', 'N/A')}")
 
-            if response['result']:
-                assert 'id' in response['data']
-                copied_id = response['data']['id']
+            # Call copy endpoint (returns template, NOT saved record)
+            print(f"\nCalling GET /asterisk-managers/{source_id}:copy...")
+            response = api_client.get(f'asterisk-managers/{source_id}:copy')
 
-                if copied_id and str(copied_id) != str(manager_id):
-                    self.created_ids.append(copied_id)
-                    print(f"✓ Copied asterisk manager: {copied_id} (from {manager_id})")
-                else:
-                    print(f"⚠ Copy returned empty or same ID")
-            else:
-                print(f"⚠ Copy returned: {response.get('messages', {})}")
+            assert_api_success(response, "Failed to get copy template")
+
+            # Verify copy template structure
+            copy_data = response['data']
+            assert 'id' in copy_data, "Copy template should contain 'id' field"
+
+            # ✅ IMPORTANT: Copy endpoint returns TEMPLATE with empty id
+            # User must POST the template to create actual record
+            print(f"\n✅ Copy template received successfully!")
+            print(f"  Source ID: {source_id}")
+            print(f"  Template ID: {copy_data.get('id', '(empty - to be generated)')}")
+
+            print(f"\nCopy template details:")
+            print(f"  ID: {copy_data.get('id', '(empty)')}")
+            print(f"  Username: {copy_data.get('username', '(empty - must be set)')}")
+            print(f"  Description: {copy_data.get('description', 'N/A')}")
+            print(f"  Secret: {copy_data.get('secret', 'N/A')[:20]}... (auto-generated)")
+
+            # Verify description was modified to indicate it's a copy
+            copy_description = copy_data.get('description', '')
+            source_description = source.get('description', '')
+            if source_description:
+                assert 'Copy of' in copy_description or 'copy' in copy_description.lower(), \
+                    f"Copy description should indicate it's a copy, got: {copy_description}"
+
+            # Verify username and id are cleared (must be set before POST)
+            assert copy_data.get('id') == '', \
+                "Template id should be empty (will be generated on POST)"
+            assert copy_data.get('username') == '', \
+                "Template username should be empty (must be set before POST)"
+
+            # Verify permissions were copied (if present in source)
+            if 'call' in source:
+                print(f"\nVerifying permissions were copied to template:")
+                print(f"  Source call: {source.get('call', 'N/A')}")
+                print(f"  Copy call: {copy_data.get('call', 'N/A')}")
+
+            # Set username for the new manager (required field)
+            copy_data['username'] = f"copied_ami_{int(time.time())}"
+            print(f"\nSet username: {copy_data['username']}")
+
+            # Save the copy template to create actual record
+            print(f"\nSaving copy template as new manager...")
+            create_response = api_client.post('asterisk-managers', copy_data)
+            assert_api_success(create_response, "Failed to save copy template")
+
+            saved_id = create_response['data']['id']
+            saved_username = create_response['data']['username']
+            print(f"✅ Copy saved successfully:")
+            print(f"  ID: {saved_id}")
+            print(f"  Username: {saved_username}")
+
+            # Verify ID was generated and is different from source
+            assert saved_id, "Saved copy should have an ID"
+            assert str(saved_id) != str(source_id), \
+                f"Copy ID ({saved_id}) should differ from source ID ({source_id})"
+
+            # Wait for Asterisk config regeneration
+            print(f"\nWaiting for Asterisk config regeneration...")
+            time.sleep(2.5)
+
+            # Verify saved copy exists in database
+            saved_copy = assert_record_exists(api_client, 'asterisk-managers', saved_id)
+            print(f"✅ Copy verified in database:")
+            print(f"  Username: {saved_copy.get('username', 'N/A')}")
+            print(f"  Description: {saved_copy.get('description', 'N/A')}")
+
+            # Verify permissions were preserved
+            if 'call' in source:
+                assert saved_copy.get('call') == source.get('call'), \
+                    "Permissions should be preserved in copy"
+                print(f"✅ Permissions preserved correctly")
+
+            # Add to created_ids for cleanup
+            self.created_ids.append(saved_id)
+
+            print(f"\n{'='*70}")
+            print(f"COPY OPERATION COMPLETE")
+            print(f"{'='*70}")
+            print(f"✅ Source manager: {source_id}")
+            print(f"✅ Copy template returned by :copy")
+            print(f"✅ Template saved as new manager: {saved_id}")
+            print(f"✅ Username modified to avoid conflict")
+
         except Exception as e:
             if '404' in str(e) or '501' in str(e):
-                print(f"⚠ Copy not implemented (expected)")
+                print(f"⚠ Copy endpoint not implemented yet (404/501)")
+                pytest.skip("Copy endpoint not implemented")
             else:
+                print(f"❌ Copy operation failed: {str(e)}")
                 raise
+
+    def test_09a_create_manager_with_eventfilter(self, api_client):
+        """Test POST /asterisk-managers - Create manager with custom event filters"""
+        import time
+
+        # Create manager with custom event filters
+        manager_data = {
+            'username': 'test_ami_eventfilter',
+            'secret': 'EventFilterSecret123!@#',
+            'description': 'Test AMI User with Event Filters',
+            'eventfilter': '!Event: Newexten\n!Event: VarSet\nEvent: QueueMemberStatus\nEvent: AgentCalled',
+            'permissions': {
+                'call_read': True,
+                'call_write': False,
+                'agent_read': True,
+                'agent_write': True
+            }
+        }
+
+        response = api_client.post('asterisk-managers', manager_data)
+        assert_api_success(response, "Failed to create manager with eventfilter")
+
+        assert 'id' in response['data']
+        manager_id = response['data']['id']
+        self.created_ids.append(manager_id)
+
+        # Verify eventfilter is in response
+        assert 'eventfilter' in response['data'], "eventfilter should be present in response"
+        returned_filter = response['data']['eventfilter']
+        assert returned_filter == manager_data['eventfilter'], \
+            f"Expected eventfilter '{manager_data['eventfilter']}', got '{returned_filter}'"
+
+        # Wait for Asterisk config regeneration
+        time.sleep(2.5)
+
+        # Retrieve and verify the manager
+        retrieved = assert_record_exists(api_client, 'asterisk-managers', manager_id)
+        assert 'eventfilter' in retrieved, "eventfilter should be in retrieved record"
+        assert retrieved['eventfilter'] == manager_data['eventfilter'], \
+            "Retrieved eventfilter should match created value"
+
+        print(f"✓ Created manager with custom event filters: {manager_id}")
+        print(f"  Username: {manager_data['username']}")
+        print(f"  Event filters: {len(manager_data['eventfilter'].split(chr(10)))} lines")
+        print(f"  ✓ Event filter validation passed")
+
+    def test_09b_update_eventfilter(self, api_client):
+        """Test PATCH /asterisk-managers/{id} - Update event filter only"""
+        import time
+
+        # Find manager with eventfilter from previous test
+        manager_id = None
+        for mid in self.created_ids:
+            try:
+                record = assert_record_exists(api_client, 'asterisk-managers', mid)
+                if record.get('username') == 'test_ami_eventfilter':
+                    manager_id = mid
+                    break
+            except:
+                continue
+
+        if not manager_id:
+            pytest.skip("Manager with eventfilter not found")
+
+        # Update only eventfilter
+        new_filter = '!Event: Newexten\nEvent: Hangup\nEvent: DeviceStateChange'
+        patch_data = {
+            'eventfilter': new_filter
+        }
+
+        response = api_client.patch(f'asterisk-managers/{manager_id}', patch_data)
+        assert_api_success(response, "Failed to patch eventfilter")
+
+        # Wait for Asterisk config regeneration
+        time.sleep(2.5)
+
+        # Verify update
+        updated = assert_record_exists(api_client, 'asterisk-managers', manager_id)
+        assert updated.get('eventfilter') == new_filter, \
+            f"Expected eventfilter '{new_filter}', got '{updated.get('eventfilter')}'"
+
+        print(f"✓ Updated event filter for manager: {manager_id}")
+        print(f"  New filter lines: {len(new_filter.split(chr(10)))}")
+        print(f"  ✓ Event filter PATCH validation passed")
+
+    def test_09c_clear_eventfilter(self, api_client):
+        """Test PATCH /asterisk-managers/{id} - Clear event filter (use defaults)"""
+        import time
+
+        # Find manager with eventfilter
+        manager_id = None
+        for mid in self.created_ids:
+            try:
+                record = assert_record_exists(api_client, 'asterisk-managers', mid)
+                if record.get('username') == 'test_ami_eventfilter':
+                    manager_id = mid
+                    break
+            except:
+                continue
+
+        if not manager_id:
+            pytest.skip("Manager with eventfilter not found")
+
+        # Clear eventfilter (empty string means use defaults)
+        patch_data = {
+            'eventfilter': ''
+        }
+
+        response = api_client.patch(f'asterisk-managers/{manager_id}', patch_data)
+        assert_api_success(response, "Failed to clear eventfilter")
+
+        # Wait for Asterisk config regeneration
+        time.sleep(2.5)
+
+        # Verify cleared
+        updated = assert_record_exists(api_client, 'asterisk-managers', manager_id)
+        assert updated.get('eventfilter') == '', \
+            f"Expected empty eventfilter, got '{updated.get('eventfilter')}'"
+
+        print(f"✓ Cleared event filter for manager: {manager_id}")
+        print(f"  Filter is now empty (will use default system filters)")
+        print(f"  ✓ Event filter clearing validated")
 
     def test_10_delete_managers(self, api_client):
         """Test DELETE /asterisk-managers/{id} - Delete managers"""
@@ -444,6 +684,71 @@ class TestAsteriskManagersEdgeCases:
                 print(f"✓ Invalid permission values rejected via HTTP error")
             else:
                 print(f"⚠ Unexpected error: {str(e)[:50]}")
+
+    def test_20_system_managers_readonly(self, api_client):
+        """Test that system managers (admin, mikopbxuser, phpagi) cannot be modified or deleted"""
+        import time
+
+        print(f"\n{'='*70}")
+        print(f"Test: System Managers Protection")
+        print(f"{'='*70}")
+
+        # Get list of all managers to find system ones
+        response = api_client.get('asterisk-managers')
+        assert_api_success(response, "Failed to get managers list")
+
+        managers = response['data']
+        system_managers = ['admin', 'mikopbxuser', 'phpagi']
+
+        for manager in managers:
+            if manager.get('username') in system_managers:
+                manager_id = manager['id']
+                username = manager['username']
+
+                print(f"\nTesting system manager: {username} (ID: {manager_id})")
+
+                # Verify isSystem flag is set
+                assert manager.get('isSystem') is True, f"isSystem flag should be True for {username}"
+                print(f"  ✓ isSystem flag is set correctly")
+
+                # Test 1: Try to modify system manager (should fail with 403)
+                try:
+                    patch_data = {'description': 'Attempt to modify system manager'}
+                    response = api_client.patch(f'asterisk-managers/{manager_id}', patch_data)
+
+                    # If we get here, modification was allowed (shouldn't happen)
+                    pytest.fail(f"System manager '{username}' was modified (should be forbidden)")
+
+                except requests.exceptions.HTTPError as e:
+                    if e.response.status_code == 403:
+                        error_data = e.response.json()
+                        error_msg = str(error_data.get('messages', {}))
+                        assert 'Cannot modify system manager' in error_msg, \
+                            f"Expected 'Cannot modify system manager' error, got: {error_msg}"
+                        print(f"  ✓ PATCH blocked with 403 Forbidden")
+                    else:
+                        pytest.fail(f"Expected 403 for system manager modification, got {e.response.status_code}")
+
+                # Test 2: Try to delete system manager (should fail with 403)
+                try:
+                    response = api_client.delete(f'asterisk-managers/{manager_id}')
+
+                    # If we get here, deletion was allowed (shouldn't happen)
+                    pytest.fail(f"System manager '{username}' was deleted (should be forbidden)")
+
+                except requests.exceptions.HTTPError as e:
+                    if e.response.status_code == 403:
+                        error_data = e.response.json()
+                        error_msg = str(error_data.get('messages', {}))
+                        assert 'Cannot delete system manager' in error_msg, \
+                            f"Expected 'Cannot delete system manager' error, got: {error_msg}"
+                        print(f"  ✓ DELETE blocked with 403 Forbidden")
+                    else:
+                        pytest.fail(f"Expected 403 for system manager deletion, got {e.response.status_code}")
+
+                print(f"  ✓ System manager '{username}' is protected")
+
+        print(f"\n✓ All system managers are properly protected from modification/deletion")
 
 
 if __name__ == '__main__':

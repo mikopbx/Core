@@ -439,6 +439,66 @@ class TestSyslog:
 class TestSyslogEdgeCases:
     """Edge cases for Syslog API"""
 
+    def test_00_get_log_from_file_empty_filename(self, api_client):
+        """Test POST /syslog:getLogFromFile with empty filename - regression test
+
+        Bug: Empty filename parameter resulted in trying to tail a directory
+        instead of a file, producing empty output with success=true.
+
+        Expected: 400 Bad Request with error message about missing filename.
+        """
+        print("\n=== Testing empty filename parameter ===")
+
+        # Test Case 1: Empty string filename
+        data = {
+            'filename': '',
+            'lines': 10
+        }
+
+        try:
+            response = api_client.post('syslog:getLogFromFile', data)
+
+            if not response.get('result'):
+                messages = response.get('messages', {})
+                print(f"✓ Empty filename rejected correctly")
+                print(f"  Error message: {messages}")
+            else:
+                # Check if content is empty - might indicate bug
+                content = response.get('data', {}).get('content', '')
+                if not content:
+                    print(f"❌ Empty filename accepted but returned empty content (BUG)")
+                else:
+                    print(f"❌ Empty filename should be rejected with 400 error")
+                pytest.fail("Empty filename should return error")
+
+        except Exception as e:
+            if '400' in str(e) or '422' in str(e):
+                print(f"✓ Empty filename rejected via HTTP error: {str(e)[:100]}")
+            else:
+                print(f"❌ Unexpected error: {str(e)[:100]}")
+                raise
+
+        # Test Case 2: Missing filename parameter
+        data_no_filename = {
+            'lines': 10
+        }
+
+        try:
+            response = api_client.post('syslog:getLogFromFile', data_no_filename)
+
+            if not response.get('result'):
+                print(f"✓ Missing filename rejected correctly")
+            else:
+                print(f"❌ Missing filename should be rejected")
+                pytest.fail("Missing filename should return error")
+
+        except Exception as e:
+            if '400' in str(e) or '422' in str(e):
+                print(f"✓ Missing filename rejected via HTTP error")
+            else:
+                print(f"❌ Unexpected error: {str(e)[:100]}")
+                raise
+
     def test_01_get_logs_invalid_limit(self, api_client):
         """Test GET /syslog with invalid limit values"""
         invalid_limits = [

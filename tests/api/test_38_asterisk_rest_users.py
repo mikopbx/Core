@@ -58,9 +58,14 @@ class TestAsteriskRestUsers:
         user_id = response['data']['id']
         self.created_ids.append(user_id)
 
+        # Verify that uniqid and extension fields are NOT in response
+        assert 'uniqid' not in response['data'], "Field 'uniqid' should not be present in CREATE response"
+        assert 'extension' not in response['data'], "Field 'extension' should not be present in CREATE response"
+
         print(f"✓ Created ARI user: {user_id}")
         print(f"  Username: {user_data['username']}")
         print(f"  Description: {user_data['description']}")
+        print(f"  ✓ Response schema validated (no uniqid/extension fields)")
 
     def test_03_create_ari_user_minimal(self, api_client):
         """Test POST /asterisk-rest-users - Create user with minimal fields"""
@@ -95,6 +100,13 @@ class TestAsteriskRestUsers:
         else:
             users_list = []
             print(f"⚠ Unexpected data type: {type(data)}")
+
+        # Verify list items don't have uniqid/extension fields
+        if len(users_list) > 0:
+            first_item = users_list[0]
+            assert 'uniqid' not in first_item, "Field 'uniqid' should not be present in LIST response"
+            assert 'extension' not in first_item, "Field 'extension' should not be present in LIST response"
+            print(f"  ✓ List schema validated (no uniqid/extension fields)")
 
         if len(self.created_ids) > 0:
             assert len(users_list) >= len(self.created_ids), \
@@ -137,11 +149,17 @@ class TestAsteriskRestUsers:
         assert 'username' in record
         assert 'description' in record or 'disabled' in record
 
+        # Verify that uniqid and extension fields are NOT present
+        # WHY: ARI users are not phone numbers and don't need uniqid (numeric ID is sufficient)
+        assert 'uniqid' not in record, "Field 'uniqid' should not be present in ARI response"
+        assert 'extension' not in record, "Field 'extension' should not be present in ARI response"
+
         print(f"✓ Retrieved ARI user: ID={user_id}")
         if 'username' in record:
             print(f"  Username: {record['username']}")
         if 'description' in record:
             print(f"  Description: {record['description']}")
+        print(f"  ✓ Schema validation: 'uniqid' and 'extension' fields correctly excluded")
 
     def test_07_update_user(self, api_client):
         """Test PUT /asterisk-rest-users/{id} - Full update"""
