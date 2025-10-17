@@ -107,17 +107,15 @@ const asteriskManagersIndex = {
         managers.forEach(manager => {
             const readPerms = manager.readPermissionsSummary || '';
             const writePerms = manager.writePermissionsSummary || '';
-            const systemIcon = manager.isSystem ? '<i class="yellow lock icon"></i> ' : '';
-            
+
             // Format description like in Firewall
             const description = manager.description || '';
             const descriptionText = description ? ` - ${description}` : '';
-            
+
             tableHtml += `
                 <tr class="manager-row" data-id="${manager.id}">
                     <td>
-                        ${systemIcon}
-                        <i class="blue asterisk icon"></i> 
+                        <i class="blue asterisk icon"></i>
                         <strong>${window.SecurityUtils.escapeHtml(manager.username)}</strong>${window.SecurityUtils.escapeHtml(descriptionText)}
                     </td>
             `;
@@ -161,25 +159,26 @@ const asteriskManagersIndex = {
                 <td class="right aligned collapsing">
                     <div class="ui tiny basic icon buttons action-buttons">
             `;
-            
+
             if (manager.isSystem) {
+                // System managers cannot be edited - show lock icon with tooltip
                 tableHtml += `
-                    <a href="${globalRootUrl}asterisk-managers/modify/${manager.id}" 
-                       class="ui button view popuped" data-content="${globalTranslate.bt_View}">
-                        <i class="icon eye blue"></i>
-                    </a>
+                    <div class="ui button disabled popuped"
+                         data-content="${globalTranslate.am_SystemManagerCannotBeEdited || 'System manager cannot be edited'}">
+                        <i class="icon lock yellow"></i>
+                    </div>
                 `;
             } else {
                 tableHtml += `
-                    <a href="${globalRootUrl}asterisk-managers/modify/${manager.id}" 
+                    <a href="${globalRootUrl}asterisk-managers/modify/${manager.id}"
                        class="ui button edit popuped" data-content="${globalTranslate.bt_ToolTipEdit}">
                         <i class="icon edit blue"></i>
                     </a>
-                    <a href="#" data-value="${manager.id}" 
+                    <a href="#" data-value="${manager.id}"
                        class="ui button copy popuped" data-content="${globalTranslate.bt_ToolTipCopy}">
                         <i class="icon copy outline blue"></i>
                     </a>
-                    <a href="#" data-value="${manager.id}" 
+                    <a href="#" data-value="${manager.id}"
                        class="ui button delete two-steps-delete popuped" data-content="${globalTranslate.bt_ToolTipDelete}">
                         <i class="icon trash red"></i>
                     </a>

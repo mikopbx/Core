@@ -24,51 +24,28 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 
 /**
  * UpdateRecordAction
- * Updates an existing AMI user (full replacement).
+ * Updates an existing AMI user (full replacement - PUT method).
+ *
+ * This is a lightweight wrapper around SaveRecordAction which handles
+ * all validation, sanitization, and business logic.
  *
  * @package MikoPBX\PBXCoreREST\Lib\AsteriskManagers
  */
 class UpdateRecordAction
 {
     /**
-     * Update an existing AMI user.
+     * Perform full update (PUT) of an existing AMI user.
      *
-     * @param array $data AMI user data with id
-     * @return PBXApiResult
+     * Delegates to SaveRecordAction which detects existing record by ID
+     * and performs UPDATE operation.
+     *
+     * @param array<string, mixed> $data Complete AMI user data with id
+     * @return PBXApiResult Result with success status and data
      */
     public static function main(array $data): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
-
-        try {
-            // Validate ID
-            if (empty($data['id'])) {
-                $res->messages['error'][] = 'ID is required for update';
-                return $res;
-            }
-
-            // Find existing model
-            $model = AsteriskManagerUsers::findFirstById($data['id']);
-            if (!$model) {
-                $res->messages['error'][] = "AMI user not found (ID: {$data['id']})";
-                return $res;
-            }
-
-            // Process and save the data
-            $result = SaveRecordAction::processData($model, $data);
-            
-            if ($result['success']) {
-                $res->data = ['id' => $result['id']];
-                $res->success = true;
-            } else {
-                $res->messages = $result['messages'];
-            }
-            
-        } catch (\Exception $e) {
-            $res->messages['error'][] = $e->getMessage();
-        }
-
-        return $res;
+        // SaveRecordAction handles CREATE/UPDATE/PATCH automatically based on presence of ID
+        // For UPDATE (PUT), all fields should be provided (complete replacement)
+        return SaveRecordAction::main($data);
     }
 }

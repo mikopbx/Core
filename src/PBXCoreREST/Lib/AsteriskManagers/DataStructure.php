@@ -35,6 +35,10 @@ use MikoPBX\PBXCoreREST\Lib\Common\OpenApiSchemaProvider;
 class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvider
 {
     /**
+     * System managers that cannot be modified or deleted.
+     */
+    public const SYSTEM_MANAGERS = ['mikopbxuser', 'phpagi', 'admin'];
+    /**
      * Create complete data array from AsteriskManagerUsers model.
      *
      * Following "Store Clean, Escape at Edge" principle:
@@ -49,6 +53,10 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         // Start with base structure (raw data, no HTML escaping)
         $data = self::createBaseStructure($model);
 
+        // Remove fields not applicable to AMI users
+        // WHY: AMI users don't have uniqid (numeric ID is sufficient) or extension (not phone numbers)
+        unset($data['uniqid'], $data['extension']);
+
         // Build permission strings from model
         $permissions = self::extractPermissionsFromModel($model);
 
@@ -58,6 +66,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         $data['read'] = $permissions['read'];
         $data['write'] = $permissions['write'];
         $data['networkfilterid'] = !empty($model->networkfilterid) ? (string)$model->networkfilterid : 'none';
+        $data['eventfilter'] = $model->eventfilter ?? '';
 
         // Get network filter representation using unified helper
         $data['networkfilter_represent'] = self::getNetworkFilterRepresentation($model->networkfilterid);
@@ -87,12 +96,19 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         // Use unified base method for list creation
         $data = parent::createForList($model);
 
+        // Remove fields not applicable to AMI users
+        // WHY: AMI users don't have uniqid (numeric ID is sufficient) or extension (not phone numbers)
+        unset($data['uniqid'], $data['extension']);
+
         // Build permission strings from model
         $permissions = self::extractPermissionsFromModel($model);
 
         // Add Asterisk manager specific fields for list display
         $data['username'] = $model->username ?? '';
         $data['networkfilterid'] = !empty($model->networkfilterid) ? (string)$model->networkfilterid : 'none';
+
+        // Add represent field for dropdowns (username - description)
+        $data['represent'] = $model->username . (!empty($model->description) ? ' - ' . $model->description : '');
 
         // Add permission summary
         $data['readPermissionsSummary'] = self::getPermissionsSummary($permissions['read']);
@@ -171,10 +187,9 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      * @param string|null $username
      * @return bool
      */
-    private static function isSystemManager(?string $username): bool
+    public static function isSystemManager(?string $username): bool
     {
-        $systemManagers = ['mikopbxuser', 'phpagi', 'admin'];
-        return in_array($username, $systemManagers, true);
+        return in_array($username, self::SYSTEM_MANAGERS, true);
     }
     
     /**
@@ -295,7 +310,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         }
 
         // ✨ Inherit response-only fields for list (NO duplication!)
-        $listResponseFields = ['id', 'readPermissionsSummary', 'writePermissionsSummary', 'isSystem'];
+        $listResponseFields = ['id', 'readPermissionsSummary', 'writePermissionsSummary', 'isSystem', 'represent'];
         foreach ($listResponseFields as $field) {
             if (isset($responseFields[$field])) {
                 $properties[$field] = $responseFields[$field];
@@ -340,7 +355,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         }
 
         // ✨ Inherit response-only fields for detail (NO duplication!)
-        $detailResponseFields = ['id', 'networkfilter_represent', 'isSystem'];
+        $detailResponseFields = ['id', 'read', 'write', 'permissions', 'networkfilter_represent', 'isSystem'];
         foreach ($detailResponseFields as $field) {
             if (isset($responseFields[$field])) {
                 $properties[$field] = $responseFields[$field];
@@ -418,14 +433,22 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'pattern' => '^([0-9]+|none)$',
                 'sanitize' => 'string',
                 'default' => 'none',
-                'example' => '5'
+                'example' => 'none'
+            ],
+            'eventfilter' => [
+                'type' => 'string',
+                'description' => 'rest_schema_am_eventfilter',
+                'maxLength' => 2000,
+                'sanitize' => 'text',
+                'default' => '',
+                'example' => "!Event: Newexten\n!UserEvent: CdrConnector\nEvent: QueueMemberStatus"
             ],
             'permissions' => [
                 'type' => 'object',
                 'description' => 'rest_schema_am_permissions',
                 'properties' => $permissionFields,
                 'sanitize' => 'array', // Special handling in SaveRecordAction
-                'default' => array_fill_keys(array_keys($permissionFields), false),
+                'readOnly' => true, // Computed from read/write strings
                 'example' => [
                     'call_read' => true,
                     'call_write' => false,
@@ -501,6 +524,12 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'description' => 'rest_schema_am_write_permissions_summary',
                 'readOnly' => true,
                 'example' => 'all'
+            ],
+            'represent' => [
+                'type' => 'string',
+                'description' => 'rest_schema_am_represent',
+                'readOnly' => true,
+                'example' => 'admin - Administrator account'
             ]
         ];
     }

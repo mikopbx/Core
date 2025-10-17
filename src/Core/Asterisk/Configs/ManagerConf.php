@@ -164,10 +164,24 @@ class ManagerConf extends AsteriskConfigClass
                     $conf .= "write=$write\n";
                 }
 
-                // Exclude specific events from the user
+                // System event filters (always present)
                 $conf .= "eventfilter=!UserEvent: CdrConnector\n";
                 $conf .= "eventfilter=!UserEvent: Ping_\n";
-                $conf .= "eventfilter=!Event: Newexten\n";
+
+                // Add custom event filters from database
+                if (!empty($user['eventfilter'])) {
+                    // Split by newlines and add each filter as separate eventfilter line
+                    $filters = preg_split('/\r\n|\r|\n/', trim($user['eventfilter']));
+                    foreach ($filters as $filter) {
+                        $filter = trim($filter);
+                        if (!empty($filter)) {
+                            $conf .= "eventfilter=$filter\n";
+                        }
+                    }
+                } else {
+                    // Default event filter if none specified
+                    $conf .= "eventfilter=!Event: Newexten\n";
+                }
                 $conf .= "\n";
             }
             $conf .= "\n";

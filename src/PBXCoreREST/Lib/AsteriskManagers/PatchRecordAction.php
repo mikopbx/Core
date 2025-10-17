@@ -24,51 +24,29 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 
 /**
  * PatchRecordAction
- * Partially updates an existing AMI user.
+ * Partially updates an existing AMI user (PATCH method).
+ *
+ * This is a lightweight wrapper around SaveRecordAction which handles
+ * all validation, sanitization, and business logic.
  *
  * @package MikoPBX\PBXCoreREST\Lib\AsteriskManagers
  */
 class PatchRecordAction
 {
     /**
-     * Partially update an existing AMI user.
+     * Perform partial update (PATCH) of an existing AMI user.
      *
-     * @param array $data Partial AMI user data with id
-     * @return PBXApiResult
+     * Delegates to SaveRecordAction which detects existing record by ID
+     * and performs PATCH operation (only updates provided fields).
+     *
+     * @param array<string, mixed> $data Partial AMI user data with id
+     * @return PBXApiResult Result with success status and data
      */
     public static function main(array $data): PBXApiResult
     {
-        $res = new PBXApiResult();
-        $res->processor = __METHOD__;
-
-        try {
-            // Validate ID
-            if (empty($data['id'])) {
-                $res->messages['error'][] = 'ID is required for patch';
-                return $res;
-            }
-
-            // Find existing model
-            $model = AsteriskManagerUsers::findFirstById($data['id']);
-            if (!$model) {
-                $res->messages['error'][] = "AMI user not found (ID: {$data['id']})";
-                return $res;
-            }
-
-            // Process only provided fields (partial update)
-            $result = SaveRecordAction::processData($model, $data, true);
-            
-            if ($result['success']) {
-                $res->data = ['id' => $result['id']];
-                $res->success = true;
-            } else {
-                $res->messages = $result['messages'];
-            }
-            
-        } catch (\Exception $e) {
-            $res->messages['error'][] = $e->getMessage();
-        }
-
-        return $res;
+        // SaveRecordAction handles CREATE/UPDATE/PATCH automatically based on:
+        // - Presence of ID: determines if new or existing record
+        // - isset() checks: allows partial updates (PATCH support)
+        return SaveRecordAction::main($data);
     }
 }

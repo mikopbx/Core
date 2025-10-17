@@ -34,8 +34,8 @@ use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
  *
  * Processing Pipeline (7 Phases):
  * 1. SANITIZE: Clean user input (XSS, SQL injection prevention)
- * 2. VALIDATE REQUIRED: Check required fields (username, secret)
- * 3. DETERMINE OPERATION: Detect CREATE vs UPDATE/PATCH
+ * 2. DETERMINE OPERATION: Detect CREATE vs UPDATE/PATCH (needed for validation logic)
+ * 3. VALIDATE REQUIRED: Check required fields for CREATE only (username)
  * 4. APPLY DEFAULTS: Add missing values (CREATE only!) - password, permissions, networkfilterid
  * 5. VALIDATE SCHEMA: Check constraints (maxLength, pattern)
  * 6. SAVE: Transaction with permissions processing
@@ -94,26 +94,8 @@ class SaveRecordAction extends AbstractSaveRecordAction
         }
 
         // ============================================================
-        // PHASE 2: REQUIRED FIELDS VALIDATION
-        // WHY: Fail fast - don't waste resources on invalid data
-        // ============================================================
-
-        $validationRules = [
-            'username' => [
-                ['type' => 'required', 'message' => 'Username is required'],
-                ['type' => 'minLength', 'value' => 1, 'message' => 'Username must not be empty']
-            ]
-        ];
-
-        $validationErrors = self::validateRequiredFields($sanitizedData, $validationRules);
-        if (!empty($validationErrors)) {
-            $res->messages['error'] = $validationErrors;
-            return $res;
-        }
-
-        // ============================================================
-        // PHASE 3: DETERMINE OPERATION TYPE
-        // WHY: Different logic for new vs existing records
+        // PHASE 2: DETERMINE OPERATION TYPE FIRST
+        // WHY: Need to know if CREATE/UPDATE/PATCH before validation
         // ============================================================
 
         $manager = null;
@@ -126,6 +108,13 @@ class SaveRecordAction extends AbstractSaveRecordAction
             if ($manager) {
                 // Record exists - UPDATE or PATCH operation
                 $isNewRecord = false;
+
+                // SECURITY: Prevent modification of system managers
+                if (in_array($manager->username, DataStructure::SYSTEM_MANAGERS, true)) {
+                    $res->messages['error'][] = "Cannot modify system manager '{$manager->username}'";
+                    $res->httpCode = 403; // Forbidden
+                    return $res;
+                }
             } else {
                 $res->messages['error'][] = "Manager with ID {$sanitizedData['id']} not found";
                 $res->httpCode = 404;
@@ -133,17 +122,50 @@ class SaveRecordAction extends AbstractSaveRecordAction
             }
         }
 
+        // ============================================================
+        // PHASE 3: REQUIRED FIELDS VALIDATION
+        // WHY: Fail fast - don't waste resources on invalid data
+        // NOTE: For PATCH (existing record), required fields are optional
+        // ============================================================
+
+        // Only validate required fields for CREATE operations
         if ($isNewRecord) {
-            // CREATE: Initialize new manager
+            $validationRules = [
+                'username' => [
+                    ['type' => 'required', 'message' => 'Username is required'],
+                    ['type' => 'minLength', 'value' => 1, 'message' => 'Username must not be empty']
+                ]
+            ];
+
+            $validationErrors = self::validateRequiredFields($sanitizedData, $validationRules);
+            if (!empty($validationErrors)) {
+                $res->messages['error'] = $validationErrors;
+                return $res;
+            }
+        }
+
+        // Initialize new manager if needed
+        if ($isNewRecord) {
             $manager = new AsteriskManagerUsers();
             $manager->uniqid = strtoupper('AMI-' . md5(time() . $sanitizedData['username']));
         }
 
-        // Check for duplicate username
-        if (!self::checkUsernameUniqueness($sanitizedData['username'], $manager->id ?? null)) {
-            $res->messages['error'][] = "Manager with username '{$sanitizedData['username']}' already exists";
-            $res->httpCode = 409; // Conflict
-            return $res;
+        // Check for duplicate username (only if username is being changed)
+        // WHY: Skip check if username hasn't changed for existing record
+        if (isset($sanitizedData['username'])) {
+            // Determine if username is actually changing
+            $usernameChanged = $isNewRecord || ($manager->username !== $sanitizedData['username']);
+
+            if ($usernameChanged) {
+                // Use current manager ID (0 for new records) in uniqueness check
+                $currentManagerId = $isNewRecord ? 0 : (int)$manager->id;
+
+                if (!self::checkUsernameUniqueness($sanitizedData['username'], $currentManagerId)) {
+                    $res->messages['error'][] = "Manager with username '{$sanitizedData['username']}' already exists";
+                    $res->httpCode = 409; // Conflict
+                    return $res;
+                }
+            }
         }
 
         // ============================================================
@@ -212,6 +234,13 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 // Process network filter
                 if (isset($sanitizedData['networkfilterid']) || $isNewRecord) {
                     self::processNetworkFilter($manager, $sanitizedData);
+                }
+
+                // Update eventfilter (PATCH support with isset())
+                if (isset($sanitizedData['eventfilter'])) {
+                    $manager->eventfilter = $sanitizedData['eventfilter'];
+                } elseif ($isNewRecord) {
+                    $manager->eventfilter = '';
                 }
 
                 // Save manager

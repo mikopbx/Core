@@ -33,11 +33,6 @@ use MikoPBX\PBXCoreREST\Lib\Common\AbstractDeleteAction;
 class DeleteRecordAction extends AbstractDeleteAction
 {
     /**
-     * System managers that cannot be deleted.
-     */
-    private const SYSTEM_MANAGERS = ['mikopbxuser', 'phpagi', 'admin'];
-    
-    /**
      * Delete Asterisk manager by ID.
      *
      * @param string $id Manager ID
@@ -62,9 +57,10 @@ class DeleteRecordAction extends AbstractDeleteAction
                 return $res;
             }
 
-            // Check if it's a system manager
-            if (in_array($manager->username, self::SYSTEM_MANAGERS, true)) {
+            // SECURITY: Prevent deletion of system managers
+            if (in_array($manager->username, DataStructure::SYSTEM_MANAGERS, true)) {
                 $res->messages['error'][] = "Cannot delete system manager '{$manager->username}'";
+                $res->httpCode = 403; // Forbidden
                 return $res;
             }
 

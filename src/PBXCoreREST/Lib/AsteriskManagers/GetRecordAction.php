@@ -40,6 +40,18 @@ class GetRecordAction extends AbstractGetRecordAction
      */
     public static function main(?string $id): PBXApiResult
     {
+        // Block access to system managers (cannot be edited via API)
+        if (!empty($id)) {
+            $manager = AsteriskManagerUsers::findFirstById($id);
+            if ($manager && DataStructure::isSystemManager($manager->username)) {
+                $res = self::createApiResult(__METHOD__);
+                $res->success = false;
+                $res->messages['error'][] = "System manager '{$manager->username}' cannot be accessed via API";
+                $res->httpCode = 403; // Forbidden
+                return $res;
+            }
+        }
+
         // Use standard get record pattern with callbacks for AMI-specific logic
         return self::executeStandardGetRecord(
             id: $id,

@@ -48,7 +48,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
  * @see https://spec.openapis.org/oas/v3.1.0 - OpenAPI 3.1 Specification
  */
 #[ApiResource(
-    path: '/pbxcore/api/v3/asterisk-managers',
+    path: '/pbxcore/api/v3/asterisk-managers',    
     tags: ['Asterisk Managers'],
     description: 'Asterisk Manager Interface (AMI) user management for PBX administration. ' .
                 'AMI users provide programmatic access to Asterisk for monitoring, control, and integration. ' .

@@ -135,9 +135,16 @@ class AsteriskManagerEditForm extends BaseForm
      */
     private function addSpecialFields($entity): void
     {
-        // Add text area for Description with auto-resize and 2000 chars limit
+        // Add text area for Event Filter with auto-resize, 2000 chars limit and placeholder
+        $this->addTextArea('eventfilter', '', 65, [
+            'maxlength' => 2000,
+            'placeholder' => $this->translation->_('am_EventFilterPlaceholder')
+        ]);
+
+        // Add text area for Description with auto-resize, 2000 chars limit and placeholder
         $this->addTextArea('description', '', 65, [
-            'maxlength' => 2000
+            'maxlength' => 2000,
+            'placeholder' => $this->translation->_('am_DescriptionPlaceholder')
         ]);
     }
 }

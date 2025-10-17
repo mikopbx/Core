@@ -71,6 +71,12 @@
     {{ form.render('networkfilterid') }}
 </div>
 <div class="field">
+    <label>{{ t._('am_EventFilter') }}
+        <i class="small info circle icon field-info-icon" data-field="eventfilter"></i>
+    </label>
+    {{ form.render('eventfilter') }}
+</div>
+<div class="field">
     <label>{{ t._('am_Description') }}</label>
     {{ form.render('description') }}
 </div>

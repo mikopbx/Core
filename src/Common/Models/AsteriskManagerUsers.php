@@ -155,6 +155,14 @@ class AsteriskManagerUsers extends ModelsBase
     public ?string $networkfilterid = '';
 
     /**
+     * Event filter patterns (one pattern per line).
+     * Format: !Event: EventName or Event: EventName
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $eventfilter = '';
+
+    /**
      * AMI users description
      *
      * @Column(type="string", nullable=true)
