@@ -78,58 +78,85 @@ class StorageRetentionPeriodTest extends MikoPBXTestsBase
         $expectedValue = $testData['value'];
         $label = $testData['label'];
         $description = $testData['description'];
-        
+
         self::annotate("Testing slider position {$position}: {$label} - {$description}");
-        
+
         // Use JavaScript to set the slider value directly
         self::$driver->executeScript(
             "$('#PBXRecordSavePeriodSlider').slider('set value', {$position});"
         );
-        
+
         // Wait for slider animation and onChange event
         $this->waitForAjax();
         sleep(1);
-        
+
         // Verify the hidden input value
         $hiddenInput = self::$driver->findElement(WebDriverBy::name('PBXRecordSavePeriod'));
         $actualValue = $hiddenInput->getAttribute('value');
-        
+
         self::assertEquals(
             $expectedValue,
             $actualValue,
             "Slider position {$position} should set value to '{$expectedValue}', but got '{$actualValue}'"
         );
-        
-        // Submit form to save
-        $this->submitForm('storage-form');
-        
+
+        // Submit form to save (no scroll after submit since form persists)
+        $this->submitFormWithoutReload('storage-form');
+
         // Navigate back to verify saved value
         $this->navigateToStoragePage();
-        
+
         // Verify saved value
         $hiddenInput = self::$driver->findElement(WebDriverBy::name('PBXRecordSavePeriod'));
         $savedValue = $hiddenInput->getAttribute('value');
-        
+
         self::assertEquals(
             $expectedValue,
             $savedValue,
             "Saved value should be '{$expectedValue}', but got '{$savedValue}'"
         );
-        
+
         // Verify slider visual position using JavaScript
         $sliderValue = self::$driver->executeScript(
             "return $('#PBXRecordSavePeriodSlider').slider('get value');"
         );
-        
+
         self::assertEquals(
             $position,
             $sliderValue,
             "Slider visual position should be {$position}, but got {$sliderValue}"
         );
-        
+
         self::annotate("Slider position {$position} test completed successfully");
     }
 
+
+    /**
+     * Submit form without waiting for reload or button re-enable
+     * Used for forms that persist after submission without page reload
+     *
+     * @param string $formId Form identifier
+     */
+    protected function submitFormWithoutReload(string $formId): void
+    {
+        self::annotate("Submitting form {$formId} (no reload expected)");
+
+        $xpath = sprintf('//form[@id="%s"]//ancestor::div[@id="submitbutton"]', $formId);
+        $button = self::$driver->findElement(WebDriverBy::xpath($xpath));
+
+        // Ensure button is visible and enabled before clicking
+        $this->waitForCondition(
+            WebDriverExpectedCondition::elementToBeClickable(WebDriverBy::xpath($xpath)),
+            10
+        );
+
+        $button->click();
+
+        // Wait only for AJAX to complete, don't wait for button state
+        $this->waitForAjax();
+
+        self::annotate("Form submitted, AJAX completed");
+    }
 
     /**
      * Wait for element to be present
