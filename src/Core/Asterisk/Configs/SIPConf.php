@@ -1362,13 +1362,18 @@ class SIPConf extends AsteriskConfigClass
             'aors'                 => $peer['extension'],
             'auth'                 => $peer['extension'],
             'outbound_auth'        => $peer['extension'],
-            'acl'                  => "acl_{$peer['extension']}",
             'timers'               => 'no',
             'rtp_timeout'          => '120',
             'rtp_timeout_hold'     => '600',
-            'rtp_keepalive'        => '30', 
+            'rtp_keepalive'        => '30',
             'message_context'      => 'messages',
         ];
+
+        // WHY: Add ACL only if network filter exists (permit/deny rules)
+        // This prevents referencing non-existent ACL objects which breaks endpoint loading
+        if (!empty($peer['permit']) || !empty($peer['deny'])) {
+            $options['acl'] = "acl_{$peer['extension']}";
+        }
 
         // Set transport and media encryption options if applicable
         if (!empty($peer['transport'])) {
