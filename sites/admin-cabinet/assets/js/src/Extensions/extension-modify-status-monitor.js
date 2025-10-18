@@ -421,6 +421,20 @@ const ExtensionModifyStatusMonitor = {
             const deviceIP = (ip && ip !== 'Unknown') ? ip : '';
             const deviceId = `device-${deviceIndex}`;
 
+            // Get country information from the most recent session
+            const country = sessions[0]?.country || '';
+            const countryName = sessions[0]?.countryName || '';
+
+            // Build country flag HTML
+            let countryFlagHtml = '';
+            if (country && country !== 'LOCAL') {
+                // International IP - show country flag
+                countryFlagHtml = `<span class="country-flag" data-content="${countryName}" data-position="top center" style="margin-left: 4px;"><i class="flag ${country.toLowerCase()}"></i></span>`;
+            } else if (country === 'LOCAL') {
+                // Local network - show network icon instead of flag
+                countryFlagHtml = `<span class="country-flag" data-content="${countryName}" data-position="top center" style="margin-left: 4px; color: #999;"><i class="ethernet icon"></i></span>`;
+            }
+
             // Create timeline HTML for this device
             const timelineHtml = this.createDeviceTimeline(sessions, deviceId);
 
@@ -432,7 +446,8 @@ const ExtensionModifyStatusMonitor = {
                             <i class="mobile alternate icon"></i>
                             <div class="content">
                                 ${deviceName}
-                                ${deviceIP ? `<span style="color: grey; font-size:0.7em;">${deviceIP}</>` : ''}
+                                ${deviceIP ? `<span style="color: grey; font-size:0.7em;">${deviceIP}</span>` : ''}
+                                ${countryFlagHtml}
                             </div>
                         </div>
                         ${timelineHtml}
@@ -829,6 +844,16 @@ const ExtensionModifyStatusMonitor = {
         // Initialize Fomantic UI tooltips for timeline segments
         this.$deviceHistoryList?.find('.device-timeline [title]').popup({
             variation: 'mini',
+            position: 'top center',
+            delay: {
+                show: 300,
+                hide: 100
+            }
+        });
+
+        // Initialize popups for country flags in history
+        this.$deviceHistoryList?.find('.country-flag').popup({
+            hoverable: true,
             position: 'top center',
             delay: {
                 show: 300,
