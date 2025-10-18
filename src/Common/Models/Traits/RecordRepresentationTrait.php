@@ -297,9 +297,9 @@ trait RecordRepresentationTrait
                 break;
             case Providers::class:
                 if ($this->type === "IAX") {
-                    $name = $this->Iax->getRepresent();
+                    $name = $this->Iax?->getRepresent() ?? 'IAX Provider (not configured)';
                 } else {
-                    $name = $this->Sip->getRepresent();
+                    $name = $this->Sip?->getRepresent() ?? 'SIP Provider (not configured)';
                 }
                 break;
             case PbxSettings::class:
