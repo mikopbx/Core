@@ -89,9 +89,6 @@ def test_create_single_dialplan_app(api_client, dialplan_app_fixtures):
 
         print(f"\n✅ All fields verified!")
 
-        # Return ID for potential cleanup
-        return app_id
-
     except Exception as e:
         print(f"\n❌ Error: {str(e)}")
 
@@ -261,9 +258,6 @@ def test_create_dialplan_apps_batch(api_client, dialplan_app_fixtures):
     assert total_successful > 0, "No applications were created or existed"
 
     print(f"\n✅ Batch create completed!")
-
-    # Return created IDs for potential cleanup
-    return [app['id'] for app in created_apps]
 
 
 def test_dialplan_app_crud_cycle(api_client):
@@ -511,6 +505,168 @@ def test_dialplan_app_crud_cycle(api_client):
                     api_client.delete(f'dialplan-applications/{cleanup_id}')
                 except Exception as e:
                     print(f"⚠️  Cleanup failed (might be OK): {e}")
+
+
+def test_update_nonexistent_dialplan_app_returns_404(api_client):
+    """
+    Test PUT/PATCH on non-existent dialplan application returns 404 (not 201)
+
+    Validates REST API semantics:
+    - PUT /dialplan-applications/NONEXISTENT-ID → 404 Not Found
+    - PATCH /dialplan-applications/NONEXISTENT-ID → 404 Not Found
+    - POST /dialplan-applications {id: "CUSTOM-ID"} → 201 Created (migrations)
+
+    WHY: PUT/PATCH should only update existing resources
+    POST is for creating new resources (with optional custom ID for migrations)
+    """
+
+    print(f"\n{'='*70}")
+    print(f"Test: PUT/PATCH on Nonexistent Dialplan Application Returns 404")
+    print(f"{'='*70}")
+
+    nonexistent_id = "DIALPLAN-NONEXISTENT999"
+
+    # ====================================================================
+    # TEST 1: PUT should return 404 (not create)
+    # ====================================================================
+    print(f"\n{'-'*70}")
+    print(f"TEST 1: PUT on nonexistent ID should return 404")
+    print(f"{'-'*70}")
+
+    update_data = {
+        'name': 'Should Not Be Created',
+        'extension': '9999',
+        'type': 'plaintext',
+        'applicationlogic': 'NoOp(Test)',
+        'description': 'This should fail with 404'
+    }
+
+    print(f"Attempting PUT to /dialplan-applications/{nonexistent_id}")
+    print(f"  Name: {update_data['name']}")
+    print(f"  Extension: {update_data['extension']}")
+
+    response = api_client.put(f'dialplan-applications/{nonexistent_id}', update_data, allow_404=True)
+
+    print(f"\n📥 Response received:")
+    print(f"  HTTP Code: {response.get('httpCode', 'Not set')}")
+    print(f"  Result: {response.get('result')}")
+    print(f"  Messages: {response.get('messages', {})}")
+
+    # Should return 404, not success
+    assert response.get('httpCode') == 404, \
+        f"PUT on nonexistent resource should return 404, got: {response.get('httpCode')}"
+
+    assert not response.get('result'), \
+        "PUT on nonexistent resource should fail"
+
+    error_messages = response.get('messages', {}).get('error', [])
+    assert any('not found' in str(msg).lower() for msg in error_messages), \
+        f"Expected 'not found' error message, got: {error_messages}"
+
+    print(f"✅ Correctly returned 404 for PUT")
+
+    # ====================================================================
+    # TEST 2: PATCH should return 404 (not create)
+    # ====================================================================
+    print(f"\n{'-'*70}")
+    print(f"TEST 2: PATCH on nonexistent ID should return 404")
+    print(f"{'-'*70}")
+
+    patch_data = {
+        'name': 'Should Also Not Be Created'
+    }
+
+    print(f"Attempting PATCH to /dialplan-applications/{nonexistent_id}")
+    print(f"  Name: {patch_data['name']}")
+
+    response = api_client.patch(f'dialplan-applications/{nonexistent_id}', patch_data, allow_404=True)
+
+    print(f"\n📥 Response received:")
+    print(f"  HTTP Code: {response.get('httpCode', 'Not set')}")
+    print(f"  Result: {response.get('result')}")
+    print(f"  Messages: {response.get('messages', {})}")
+
+    # Should return 404, not success
+    assert response.get('httpCode') == 404, \
+        f"PATCH on nonexistent resource should return 404, got: {response.get('httpCode')}"
+
+    assert not response.get('result'), \
+        "PATCH on nonexistent resource should fail"
+
+    error_messages = response.get('messages', {}).get('error', [])
+    assert any('not found' in str(msg).lower() for msg in error_messages), \
+        f"Expected 'not found' error message, got: {error_messages}"
+
+    print(f"✅ Correctly returned 404 for PATCH")
+
+    # ====================================================================
+    # TEST 3: POST with custom ID should create (for migrations)
+    # ====================================================================
+    print(f"\n{'-'*70}")
+    print(f"TEST 3: POST with custom ID should create (migrations)")
+    print(f"{'-'*70}")
+
+    custom_id = "DIALPLAN-CUSTOM67890"
+
+    create_data = {
+        'id': custom_id,
+        'name': 'Custom ID Application',
+        'extension': '7777',
+        'type': 'plaintext',
+        'applicationlogic': 'NoOp(Custom ID test)',
+        'description': 'Created with custom ID for migration'
+    }
+
+    print(f"Attempting POST with custom ID: {custom_id}")
+    print(f"  Name: {create_data['name']}")
+    print(f"  Extension: {create_data['extension']}")
+
+    created_id = None
+
+    try:
+        response = api_client.post('dialplan-applications', create_data)
+
+        print(f"\n📥 Response received:")
+        print(f"  Result: {response.get('result')}")
+        print(f"  Messages: {response.get('messages', {})}")
+
+        # Should succeed
+        assert_api_success(response, "POST with custom ID should succeed")
+
+        created_id = response.get('data', {}).get('id')
+        assert created_id == custom_id, \
+            f"Created ID should match custom ID. Expected: {custom_id}, Got: {created_id}"
+
+        print(f"✅ POST with custom ID succeeded")
+        print(f"  Created ID: {created_id}")
+
+        # Verify record exists
+        app_record = assert_record_exists(api_client, 'dialplan-applications', created_id)
+
+        assert app_record.get('name') == create_data['name'], "Name mismatch"
+        assert app_record.get('extension') == create_data['extension'], "Extension mismatch"
+
+        print(f"✅ Record verified")
+
+    finally:
+        # Cleanup - delete test application
+        if created_id:
+            try:
+                print(f"\n🧹 Cleanup: Deleting test application {created_id}")
+                api_client.delete(f'dialplan-applications/{created_id}')
+                print(f"✅ Cleanup successful")
+            except Exception as e:
+                print(f"⚠️  Cleanup warning: {e}")
+
+    # ====================================================================
+    # SUMMARY
+    # ====================================================================
+    print(f"\n{'='*70}")
+    print(f"404 VALIDATION COMPLETE")
+    print(f"{'='*70}")
+    print(f"✅ PUT on nonexistent → 404 (correct)")
+    print(f"✅ PATCH on nonexistent → 404 (correct)")
+    print(f"✅ POST with custom ID → 201 Created (migrations supported)")
 
 
 if __name__ == '__main__':

@@ -4,7 +4,6 @@ import pytest
 from conftest import assert_api_success
 
 class TestIaxProviders:
-    sample_id = None
     def test_01_get_default_template(self, api_client):
         response = api_client.get('iax-providers:getDefault')
         assert_api_success(response, "Failed to get default template")
@@ -14,14 +13,10 @@ class TestIaxProviders:
         assert_api_success(response, "Failed to get list")
         data = response['data']
         print(f"✓ Retrieved {len(data)} IAX providers")
-        if len(data) > 0 and 'id' in data[0]:
-            TestIaxProviders.sample_id = data[0]['id']
-    def test_03_get_by_id(self, api_client):
-        if not TestIaxProviders.sample_id:
-            pytest.skip("No sample ID")
-        response = api_client.get(f'iax-providers/{TestIaxProviders.sample_id}')
+    def test_03_get_by_id(self, api_client, sample_iax_provider):
+        response = api_client.get(f'iax-providers/{sample_iax_provider}')
         assert_api_success(response, "Failed to get record")
-        print(f"✓ Retrieved IAX provider: {TestIaxProviders.sample_id}")
+        print(f"✓ Retrieved IAX provider: {sample_iax_provider}")
 
 if __name__ == '__main__':
     pytest.main([__file__, '-v', '-s'])

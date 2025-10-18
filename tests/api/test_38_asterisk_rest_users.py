@@ -377,6 +377,80 @@ class TestAsteriskRestUsersEdgeCases:
             else:
                 print(f"⚠ Unexpected error: {str(e)[:50]}")
 
+    def test_06_update_nonexistent_user_returns_404(self, api_client):
+        """Test PUT/PATCH on non-existent ARI user returns 404
+
+        REST API compliance test:
+        - PUT /asterisk-rest-users/FAKE_ID should return 404, not create new record
+        - PATCH /asterisk-rest-users/FAKE_ID should return 404, not create new record
+        - POST /asterisk-rest-users with custom ID is allowed (migrations)
+
+        WHY: Proper REST semantics prevent accidental resource creation via typos
+        """
+        nonexistent_id = 999998  # Very unlikely to exist
+
+        # Test PUT on non-existent resource
+        update_data = {
+            'id': nonexistent_id,
+            'username': 'nonexistent_ari',
+            'password': 'TestSecret123',
+            'description': 'Should fail with 404'
+        }
+
+        try:
+            response = api_client.put(f'asterisk-rest-users/{nonexistent_id}', update_data)
+
+            # Should NOT succeed
+            if response['result']:
+                created_id = response['data'].get('id')
+                print(f"✗ FAIL: PUT created new record (ID: {created_id}) instead of returning 404")
+
+                # Cleanup the wrongly created record
+                try:
+                    api_client.delete(f'asterisk-rest-users/{created_id}')
+                except:
+                    pass
+
+                pytest.fail("PUT on non-existent resource should return 404, not create record")
+            else:
+                # Check for 404 status
+                error_msg = response.get('messages', {}).get('error', [''])[0]
+                print(f"✓ PUT correctly failed with error: {error_msg}")
+
+        except Exception as e:
+            error_str = str(e)
+            if '404' in error_str:
+                print(f"✓ PUT correctly returned 404 Not Found")
+            else:
+                print(f"✗ FAIL: Expected 404, got: {error_str[:100]}")
+                raise
+
+        # Test PATCH on non-existent resource
+        patch_data = {
+            'description': 'Should also fail with 404'
+        }
+
+        try:
+            response = api_client.patch(f'asterisk-rest-users/{nonexistent_id}', patch_data)
+
+            # Should NOT succeed
+            if response['result']:
+                print(f"✗ FAIL: PATCH succeeded on non-existent resource")
+                pytest.fail("PATCH on non-existent resource should return 404")
+            else:
+                error_msg = response.get('messages', {}).get('error', [''])[0]
+                print(f"✓ PATCH correctly failed with error: {error_msg}")
+
+        except Exception as e:
+            error_str = str(e)
+            if '404' in error_str:
+                print(f"✓ PATCH correctly returned 404 Not Found")
+            else:
+                print(f"✗ FAIL: Expected 404, got: {error_str[:100]}")
+                raise
+
+        print(f"✓ REST API compliance: Both PUT and PATCH return 404 for non-existent resource")
+
 
 if __name__ == '__main__':
     pytest.main([__file__, '-v', '-s'])

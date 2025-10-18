@@ -15,8 +15,21 @@ Tests the /pbxcore/api/v3/cdr endpoint for:
 CDR (Call Detail Records) provides comprehensive call history analysis and reporting.
 This is a READ-ONLY resource for completed call records and real-time monitoring.
 
-NOTE: This test suite assumes there are some CDR records in the system.
-If no records exist, some tests may return empty lists (which is valid).
+IMPORTANT NOTES:
+==============
+1. CDR records are READ-ONLY - they cannot be created or modified via API
+2. CDR records are created ONLY by actual phone calls in the system
+3. After system reset (ENABLE_SYSTEM_RESET=1), CDR database will be EMPTY
+4. Most tests will pass with empty CDR list (testing API structure/response)
+5. test_11_get_cdr_by_id will be SKIPPED if no CDR records exist
+
+HOW TO TEST WITH CDR DATA:
+=========================
+Option 1: Use system with existing call history (ENABLE_SYSTEM_RESET=0)
+Option 2: Make a test call before running tests
+Option 3: Accept that test_11 will be skipped on fresh systems
+
+This is EXPECTED BEHAVIOR and not a test failure.
 """
 
 import pytest
@@ -26,6 +39,9 @@ from conftest import assert_api_success
 class TestCDR:
     """Comprehensive CDR tests"""
 
+    # WHY: Class variable to share CDR ID between tests
+    # CDR records cannot be created via API - they're generated only by actual calls
+    # We extract an existing CDR ID from the list to test the GET by ID endpoint
     sample_cdr_id = None
 
     def test_01_get_cdr_list_default(self, api_client):
@@ -38,7 +54,8 @@ class TestCDR:
 
         print(f"✓ Retrieved {len(data)} CDR records")
 
-        # If CDR exists, verify structure and store ID
+        # WHY: CDR records are read-only - created only by actual phone calls
+        # Store ID for test_11 to test GET by ID endpoint
         if len(data) > 0:
             first_record = data[0]
             # Common CDR fields
@@ -53,6 +70,7 @@ class TestCDR:
                 print(f"  Sample CDR ID: {TestCDR.sample_cdr_id}")
         else:
             print(f"  ⚠ No CDR records found (empty system)")
+            print(f"  → test_11_get_cdr_by_id will be skipped")
 
     def test_02_get_cdr_list_with_limit(self, api_client):
         """Test GET /cdr - Pagination with limit"""
@@ -225,9 +243,26 @@ class TestCDR:
                 raise
 
     def test_11_get_cdr_by_id(self, api_client):
-        """Test GET /cdr/{id} - Get specific CDR record"""
+        """Test GET /cdr/{id} - Get specific CDR record
+
+        WHY: This test depends on CDR records existing in the system.
+        CDR records are read-only and created only by actual phone calls.
+
+        Prerequisites:
+        - At least one CDR record must exist (created by actual calls)
+        - test_01_get_cdr_list_default must have extracted a valid CDR ID
+
+        Skip conditions:
+        - Fresh system after reset (no call history)
+        - System with no completed calls
+        """
         if not TestCDR.sample_cdr_id:
-            pytest.skip("No CDR ID available from list test")
+            pytest.skip(
+                "No CDR records available for testing. "
+                "CDR records are created only by actual phone calls. "
+                "To test this endpoint: 1) Make a test call, 2) Re-run this test, "
+                "or 3) Use a system with existing call history."
+            )
 
         try:
             response = api_client.get(f'cdr/{TestCDR.sample_cdr_id}')

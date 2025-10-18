@@ -22,7 +22,10 @@ class TestPasswords:
         Note: This endpoint may use GET or POST method depending on implementation
         """
         # Try GET method first (confirmed working in production)
+        # WHY: passwords:generate can use either GET or POST method
+        # We try GET first as it's confirmed working, then fallback to POST
         password = None
+        get_success = False
         try:
             response = api_client.get('passwords:generate', params={'length': 16})
             if response.get('result') is True:
@@ -37,37 +40,38 @@ class TestPasswords:
                 if password and len(password) >= 8:
                     print(f"✓ Generated secure password via GET: {len(password)} characters")
                     print(f"  Sample: {password[:3]}...{password[-3:]}")
-                    return  # Success with GET
+                    get_success = True
         except Exception:
             pass  # Try POST if GET fails
 
-        # Try POST method as fallback
-        try:
-            response = api_client.post('passwords:generate', {'length': 16})
-            assert_api_success(response, "Failed to generate password")
+        # Try POST method as fallback only if GET failed
+        if not get_success:
+            try:
+                response = api_client.post('passwords:generate', {'length': 16})
+                assert_api_success(response, "Failed to generate password")
 
-            data = response.get('data', {})
+                data = response.get('data', {})
 
-            # Should return generated password
-            if isinstance(data, dict):
-                assert 'password' in data, "Missing 'password' field in response"
-                password = data['password']
+                # Should return generated password
+                if isinstance(data, dict):
+                    assert 'password' in data, "Missing 'password' field in response"
+                    password = data['password']
 
-                assert len(password) >= 8, "Generated password too short"
-                print(f"✓ Generated secure password via POST: {len(password)} characters")
-                print(f"  Sample: {password[:3]}...{password[-3:]}")
+                    assert len(password) >= 8, "Generated password too short"
+                    print(f"✓ Generated secure password via POST: {len(password)} characters")
+                    print(f"  Sample: {password[:3]}...{password[-3:]}")
 
-            elif isinstance(data, str):
-                # Password might be returned as plain string
-                assert len(data) >= 8, "Generated password too short"
-                print(f"✓ Generated secure password via POST: {len(data)} characters")
+                elif isinstance(data, str):
+                    # Password might be returned as plain string
+                    assert len(data) >= 8, "Generated password too short"
+                    print(f"✓ Generated secure password via POST: {len(data)} characters")
 
-        except Exception as e:
-            if '405' in str(e) or '501' in str(e) or '404' in str(e):
-                print(f"⚠ Password generation not implemented (tried both GET and POST)")
-                pytest.skip("Password generation not implemented")
-            else:
-                raise
+            except Exception as e:
+                if '405' in str(e) or '501' in str(e) or '404' in str(e):
+                    print(f"⚠ Password generation not implemented (tried both GET and POST)")
+                    pytest.skip("Password generation not implemented")
+                else:
+                    raise
 
     def test_02_generate_password_with_length(self, api_client):
         """Test POST /passwords:generate with custom length"""

@@ -223,6 +223,111 @@ class TestEmployeesEdgeCases:
         else:
             print(f"✓ Invalid order field rejected")
 
+    def test_06_update_nonexistent_employee_returns_404(self, api_client):
+        """
+        Test updating non-existent employee returns 404
+
+        Steps:
+        1. Attempt PUT on non-existent ID
+        2. Verify 404 response
+        3. Attempt PATCH on non-existent ID
+        4. Verify 404 response
+        """
+
+        print(f"\n{'='*70}")
+        print(f"Test: Update Non-Existent Employee")
+        print(f"{'='*70}")
+
+        fake_id = '999999'
+
+        # ====================================================================
+        # TEST 1: PUT with non-existent ID
+        # ====================================================================
+        print(f"\n{'-'*70}")
+        print(f"TEST 1: PUT with non-existent ID")
+        print(f"{'-'*70}")
+        print(f"Attempting to update: {fake_id}")
+
+        update_data = {
+            'id': fake_id,
+            'number': '9999',
+            'user_username': 'Should Not Work',
+            'user_email': 'shouldnotwork@example.com',
+            'sip_secret': 'test1234'
+        }
+
+        try:
+            response = api_client.put(f'employees/{fake_id}', update_data, allow_404=True)
+
+            print(f"\n📥 Response received:")
+            print(f"  Result: {response.get('result')}")
+            print(f"  HTTP Code: {response.get('httpCode')}")
+            print(f"  Messages: {response.get('messages', {})}")
+
+            # Verify 404 response
+            assert response.get('result') is False, "Expected result to be False"
+            assert response.get('httpCode') == 404, f"Expected 404, got {response.get('httpCode')}"
+
+            error_messages = response.get('messages', {}).get('error', [])
+            assert 'Employee not found' in error_messages or \
+                   any('not found' in msg.lower() for msg in error_messages), \
+                   f"Expected 'not found' error, got: {error_messages}"
+
+            print(f"✅ PUT correctly returned 404 for non-existent ID")
+
+        except AssertionError:
+            raise
+        except Exception as e:
+            print(f"❌ Unexpected error: {str(e)}")
+            raise
+
+        # ====================================================================
+        # TEST 2: PATCH with non-existent ID
+        # ====================================================================
+        print(f"\n{'-'*70}")
+        print(f"TEST 2: PATCH with non-existent ID")
+        print(f"{'-'*70}")
+        print(f"Attempting to patch: {fake_id}")
+
+        patch_data = {
+            'user_email': 'shouldalsonotwork@example.com'
+        }
+
+        try:
+            response = api_client.patch(f'employees/{fake_id}', patch_data, allow_404=True)
+
+            print(f"\n📥 Response received:")
+            print(f"  Result: {response.get('result')}")
+            print(f"  HTTP Code: {response.get('httpCode')}")
+            print(f"  Messages: {response.get('messages', {})}")
+
+            # Verify 404 response
+            assert response.get('result') is False, "Expected result to be False"
+            assert response.get('httpCode') == 404, f"Expected 404, got {response.get('httpCode')}"
+
+            error_messages = response.get('messages', {}).get('error', [])
+            assert 'Employee not found' in error_messages or \
+                   any('not found' in msg.lower() for msg in error_messages), \
+                   f"Expected 'not found' error, got: {error_messages}"
+
+            print(f"✅ PATCH correctly returned 404 for non-existent ID")
+
+        except AssertionError:
+            raise
+        except Exception as e:
+            print(f"❌ Unexpected error: {str(e)}")
+            raise
+
+        # ====================================================================
+        # SUMMARY
+        # ====================================================================
+        print(f"\n{'='*70}")
+        print(f"404 VALIDATION COMPLETE")
+        print(f"{'='*70}")
+        print(f"✅ PUT  - Correctly returns 404 for non-existent ID")
+        print(f"✅ PATCH - Correctly returns 404 for non-existent ID")
+        print(f"\nAPI properly validates record existence before updates!")
+
 
 class TestEmployeesWriteOperations:
     """Write operations tests (expected to fail due to DB lock)"""

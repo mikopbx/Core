@@ -55,8 +55,9 @@ class TestOpenAPI:
             else:
                 schema = response
 
-            # Store for later tests
-            self.openapi_schema = schema if schema else {}
+            # WHY: Store in class variable (not instance) so it persists across test methods
+            # Pytest creates a new instance for each test, but class variables are shared
+            TestOpenAPI.openapi_schema = schema if schema else {}
 
             # Validate OpenAPI structure
             if schema and isinstance(schema, dict):
@@ -84,10 +85,11 @@ class TestOpenAPI:
 
     def test_02_validate_openapi_info(self, api_client):
         """Test OpenAPI info section completeness"""
-        if not self.openapi_schema:
+        # WHY: Use class variable to access schema loaded in test_01
+        if not TestOpenAPI.openapi_schema:
             pytest.skip("No OpenAPI schema loaded")
 
-        info = self.openapi_schema.get('info', {})
+        info = TestOpenAPI.openapi_schema.get('info', {})
 
         # Required fields per OpenAPI 3.1 spec
         assert 'title' in info, "Missing required 'title' in info"
@@ -104,10 +106,11 @@ class TestOpenAPI:
 
     def test_03_validate_openapi_paths(self, api_client):
         """Test OpenAPI paths section"""
-        if not self.openapi_schema:
+        # WHY: Use class variable to access schema loaded in test_01
+        if not TestOpenAPI.openapi_schema:
             pytest.skip("No OpenAPI schema loaded")
 
-        paths = self.openapi_schema.get('paths', {})
+        paths = TestOpenAPI.openapi_schema.get('paths', {})
         assert len(paths) > 0, "No paths defined in OpenAPI schema"
 
         # Count operations
@@ -132,10 +135,11 @@ class TestOpenAPI:
 
     def test_04_validate_openapi_components(self, api_client):
         """Test OpenAPI components section (schemas, security)"""
-        if not self.openapi_schema:
+        # WHY: Use class variable to access schema loaded in test_01
+        if not TestOpenAPI.openapi_schema:
             pytest.skip("No OpenAPI schema loaded")
 
-        components = self.openapi_schema.get('components', {})
+        components = TestOpenAPI.openapi_schema.get('components', {})
 
         if components:
             schemas = components.get('schemas', {})
@@ -155,14 +159,15 @@ class TestOpenAPI:
 
     def test_05_validate_openapi_security(self, api_client):
         """Test OpenAPI security definitions"""
-        if not self.openapi_schema:
+        # WHY: Use class variable to access schema loaded in test_01
+        if not TestOpenAPI.openapi_schema:
             pytest.skip("No OpenAPI schema loaded")
 
         # Check if security is defined at root level
-        root_security = self.openapi_schema.get('security', [])
+        root_security = TestOpenAPI.openapi_schema.get('security', [])
 
         # Check components security schemes
-        components = self.openapi_schema.get('components', {})
+        components = TestOpenAPI.openapi_schema.get('components', {})
         security_schemes = components.get('securitySchemes', {})
 
         if root_security or security_schemes:

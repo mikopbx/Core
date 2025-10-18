@@ -201,6 +201,82 @@ class TestCustomFilesEdgeCases:
         else:
             print(f"✓ Invalid orderWay rejected")
 
+    def test_07_update_nonexistent_custom_file_returns_404(self, api_client):
+        """Test PUT /custom-files/{id} - Update non-existent file should return 404"""
+        nonexistent_id = '999999'
+        content = "# Test content\n"
+        encoded_content = base64.b64encode(content.encode()).decode()
+
+        update_data = {
+            'filepath': '/tmp/nonexistent_test.conf',
+            'content': encoded_content,
+            'mode': 'override',
+            'description': 'This should fail with 404'
+        }
+
+        try:
+            response = api_client.put(f'custom-files/{nonexistent_id}', update_data)
+
+            # Should fail
+            assert response['result'] is False, "PUT on non-existent custom file should fail"
+
+            # Check for error messages
+            assert 'messages' in response, "Response should contain messages"
+            errors = response['messages'].get('error', [])
+            assert len(errors) > 0, "Should have error messages"
+
+            # Verify the error mentions the file not being found
+            error_text = ' '.join(str(e) for e in errors).lower()
+            assert 'not found' in error_text or '404' in error_text, \
+                f"Error should mention 'not found', got: {errors}"
+
+            print(f"✓ PUT on non-existent custom file correctly returned 404")
+            print(f"  Error: {errors[0]}")
+
+        except Exception as e:
+            error_str = str(e)
+            # Expecting 404 HTTP error
+            if '404' in error_str:
+                print(f"✓ PUT on non-existent custom file correctly returned HTTP 404")
+            else:
+                raise AssertionError(f"Expected 404 error, got: {error_str}")
+
+    def test_08_patch_nonexistent_custom_file_returns_404(self, api_client):
+        """Test PATCH /custom-files/{id} - Patch non-existent file should return 404"""
+        nonexistent_id = '999999'
+
+        patch_data = {
+            'mode': 'append',
+            'description': 'This should fail with 404'
+        }
+
+        try:
+            response = api_client.patch(f'custom-files/{nonexistent_id}', patch_data)
+
+            # Should fail
+            assert response['result'] is False, "PATCH on non-existent custom file should fail"
+
+            # Check for error messages
+            assert 'messages' in response, "Response should contain messages"
+            errors = response['messages'].get('error', [])
+            assert len(errors) > 0, "Should have error messages"
+
+            # Verify the error mentions the file not being found
+            error_text = ' '.join(str(e) for e in errors).lower()
+            assert 'not found' in error_text or '404' in error_text, \
+                f"Error should mention 'not found', got: {errors}"
+
+            print(f"✓ PATCH on non-existent custom file correctly returned 404")
+            print(f"  Error: {errors[0]}")
+
+        except Exception as e:
+            error_str = str(e)
+            # Expecting 404 HTTP error
+            if '404' in error_str:
+                print(f"✓ PATCH on non-existent custom file correctly returned HTTP 404")
+            else:
+                raise AssertionError(f"Expected 404 error, got: {error_str}")
+
 
 class TestCustomFilesWriteOperations:
     """Write operations tests (expected to fail due to DB lock)"""

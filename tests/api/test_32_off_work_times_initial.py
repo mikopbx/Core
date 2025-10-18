@@ -458,6 +458,52 @@ class TestOffWorkTimesEdgeCases:
             else:
                 print(f"⚠ Unexpected error: {str(e)[:50]}")
 
+    def test_06_update_nonexistent_time_returns_404(self, api_client, extension_fixtures):
+        """Test PUT/PATCH /off-work-times/{id} with non-existent ID returns 404"""
+        fake_id = '99999'
+        # Get first available extension
+        ext = list(extension_fixtures.values())[0] if extension_fixtures else {'number': '201'}
+
+        update_data = {
+            'id': fake_id,
+            'description': 'Updated Time Condition',
+            'weekday_from': 1,
+            'weekday_to': 5,
+            'time_from': '09:00',
+            'time_to': '17:00',
+            'action': 'extension',
+            'extension': ext['number']
+        }
+
+        # Test PUT (full update)
+        try:
+            response = api_client.put(f'off-work-times/{fake_id}', update_data)
+            assert response['result'] is False, "PUT should fail for non-existent time condition"
+            assert response.get('httpCode') == 404, f"Expected 404, got {response.get('httpCode')}"
+            print(f"✓ PUT on non-existent time condition correctly returned 404")
+        except Exception as e:
+            if '404' in str(e):
+                print(f"✓ PUT on non-existent time condition correctly returned 404 (via exception)")
+            else:
+                raise AssertionError(f"Expected 404 error, got: {str(e)[:100]}")
+
+        # Test PATCH (partial update)
+        patch_data = {
+            'id': fake_id,
+            'description': 'Patched Description'
+        }
+
+        try:
+            response = api_client.patch(f'off-work-times/{fake_id}', patch_data)
+            assert response['result'] is False, "PATCH should fail for non-existent time condition"
+            assert response.get('httpCode') == 404, f"Expected 404, got {response.get('httpCode')}"
+            print(f"✓ PATCH on non-existent time condition correctly returned 404")
+        except Exception as e:
+            if '404' in str(e):
+                print(f"✓ PATCH on non-existent time condition correctly returned 404 (via exception)")
+            else:
+                raise AssertionError(f"Expected 404 error, got: {str(e)[:100]}")
+
 
 if __name__ == '__main__':
     pytest.main([__file__, '-v', '-s'])

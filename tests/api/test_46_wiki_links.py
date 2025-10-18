@@ -52,8 +52,11 @@ class TestWikiLinks:
                     print(f"⚠ Error: {str(e)[:50]}")
 
         if not found_link:
+            # WHY: Wiki links feature requires database entries mapping pages to documentation URLs
+            # Other tests pass because they test the API structure and validation
+            # This specific test checks if wiki links are actually configured in the database
             print(f"⚠ Wiki links not found for tested pages (feature may not be configured)")
-            pytest.skip("Wiki links not configured")
+            pytest.skip("Wiki links database not populated - feature works but no data for these pages")
 
     def test_02_get_links_by_controller(self, api_client):
         """Test GET /wiki-links:getLink with different controllers"""

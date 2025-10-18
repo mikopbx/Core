@@ -4,7 +4,6 @@ import pytest
 from conftest import assert_api_success
 
 class TestConferenceRooms:
-    sample_id = None
     def test_01_get_default_template(self, api_client):
         response = api_client.get('conference-rooms:getDefault')
         assert_api_success(response, "Failed to get default template")
@@ -14,14 +13,10 @@ class TestConferenceRooms:
         assert_api_success(response, "Failed to get list")
         data = response['data']
         print(f"✓ Retrieved {len(data)} conference rooms")
-        if len(data) > 0 and 'id' in data[0]:
-            TestConferenceRooms.sample_id = data[0]['id']
-    def test_03_get_by_id(self, api_client):
-        if not TestConferenceRooms.sample_id:
-            pytest.skip("No sample ID")
-        response = api_client.get(f'conference-rooms/{TestConferenceRooms.sample_id}')
+    def test_03_get_by_id(self, api_client, sample_conference_room):
+        response = api_client.get(f'conference-rooms/{sample_conference_room}')
         assert_api_success(response, "Failed to get record")
-        print(f"✓ Retrieved conference room: {TestConferenceRooms.sample_id}")
+        print(f"✓ Retrieved conference room: {sample_conference_room}")
 
 def test_update_nonexistent_conference_room(api_client):
     """
@@ -56,7 +51,7 @@ def test_update_nonexistent_conference_room(api_client):
     }
 
     try:
-        response = api_client.put(f'conference-rooms/{fake_id}', update_data)
+        response = api_client.put(f'conference-rooms/{fake_id}', update_data, allow_404=True)
 
         print(f"\n📥 Response received:")
         print(f"  Result: {response.get('result')}")
@@ -93,7 +88,7 @@ def test_update_nonexistent_conference_room(api_client):
     }
 
     try:
-        response = api_client.patch(f'conference-rooms/{fake_id}', patch_data)
+        response = api_client.patch(f'conference-rooms/{fake_id}', patch_data, allow_404=True)
 
         print(f"\n📥 Response received:")
         print(f"  Result: {response.get('result')}")

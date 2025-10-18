@@ -413,6 +413,99 @@ class TestFirewallEdgeCases:
             else:
                 print(f"⚠ Unexpected error: {str(e)[:50]}")
 
+    def test_06_update_nonexistent_firewall_returns_404(self, api_client):
+        """Test PUT /firewall/{id} with non-existent ID returns 404
+
+        Validates REST API compliance:
+        - PUT on non-existent resource → 404 Not Found
+        - PATCH on non-existent resource → 404 Not Found
+        - POST with custom ID → 201 Created (allowed for migrations)
+        """
+        nonexistent_id = '999999'
+
+        # Test PUT - should return 404
+        update_data = {
+            'id': nonexistent_id,
+            'network': '192.168.200.0',
+            'subnet': '24',
+            'description': 'Should Fail'
+        }
+
+        try:
+            response = api_client.put(f'firewall/{nonexistent_id}', update_data)
+
+            # Should not succeed
+            if response['result']:
+                # Cleanup if somehow created
+                try:
+                    api_client.delete(f'firewall/{nonexistent_id}')
+                except:
+                    pass
+                raise AssertionError(f"PUT on non-existent resource should return 404, got success")
+            else:
+                print(f"✓ PUT on non-existent firewall returned error")
+        except Exception as e:
+            error_str = str(e)
+            if '404' in error_str:
+                print(f"✓ PUT on non-existent firewall correctly returned 404")
+            elif '422' in error_str or '400' in error_str:
+                raise AssertionError(f"Expected 404 for non-existent resource, got validation error: {error_str[:100]}")
+            else:
+                raise
+
+        # Test PATCH - should also return 404
+        patch_data = {
+            'description': 'Should Also Fail'
+        }
+
+        try:
+            response = api_client.patch(f'firewall/{nonexistent_id}', patch_data)
+
+            if response['result']:
+                # Cleanup
+                try:
+                    api_client.delete(f'firewall/{nonexistent_id}')
+                except:
+                    pass
+                raise AssertionError(f"PATCH on non-existent resource should return 404, got success")
+            else:
+                print(f"✓ PATCH on non-existent firewall returned error")
+        except Exception as e:
+            error_str = str(e)
+            if '404' in error_str:
+                print(f"✓ PATCH on non-existent firewall correctly returned 404")
+            elif '422' in error_str or '400' in error_str:
+                raise AssertionError(f"Expected 404 for non-existent resource, got validation error: {error_str[:100]}")
+            else:
+                raise
+
+        # Verify POST with custom ID is still allowed (migrations/imports)
+        custom_id = '888888'
+        post_data = {
+            'id': custom_id,
+            'network': '192.168.201.0',
+            'subnet': '24',
+            'description': 'Custom ID Test'
+        }
+
+        try:
+            response = api_client.post('firewall', post_data)
+
+            if response['result'] and 'id' in response['data']:
+                created_id = str(response['data']['id'])
+                print(f"✓ POST with custom ID allowed: {created_id}")
+
+                # Cleanup
+                try:
+                    api_client.delete(f'firewall/{created_id}')
+                    print(f"✓ Cleaned up test record: {created_id}")
+                except:
+                    pass
+            else:
+                print(f"⚠ POST with custom ID failed (may not be implemented)")
+        except Exception as e:
+            print(f"⚠ POST with custom ID error: {str(e)[:80]}")
+
 
 if __name__ == '__main__':
     pytest.main([__file__, '-v', '-s'])

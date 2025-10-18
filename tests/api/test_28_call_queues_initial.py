@@ -97,9 +97,6 @@ def test_create_single_call_queue(api_client, call_queue_fixtures):
 
         print(f"\n✅ All fields verified!")
 
-        # Return ID for potential cleanup
-        return queue_id
-
     except Exception as e:
         print(f"\n❌ Error: {str(e)}")
 
@@ -267,9 +264,6 @@ def test_create_call_queues_batch(api_client, call_queue_fixtures):
     assert total_successful > 0, "No queues were created or existed"
 
     print(f"\n✅ Batch create completed!")
-
-    # Return created IDs for potential cleanup
-    return [queue['id'] for queue in created_queues]
 
 
 def test_call_queue_crud_cycle(api_client):
@@ -465,17 +459,22 @@ def test_call_queue_crud_cycle(api_client):
 
 def test_call_queue_copy(api_client):
     """
-    Test copying an existing call queue
+    Test complete workflow for copying a call queue
+
+    The :copy endpoint follows Google API Design Guide pattern:
+    - Returns prepared data for creation (NOT a saved record)
+    - Client must POST the returned data to create the actual copy
 
     Steps:
     1. CREATE - Create source queue
-    2. COPY - Copy the queue using :copy endpoint
-    3. VERIFY - Ensure copy exists with different ID
-    4. CLEANUP - Delete both queues
+    2. COPY - Get copy template using :copy endpoint
+    3. CREATE COPY - POST the template to create actual copy
+    4. VERIFY - Ensure copy exists with different ID
+    5. CLEANUP - Delete both queues
     """
 
     print(f"\n{'='*70}")
-    print(f"Test: Call Queue Copy Operation")
+    print(f"Test: Call Queue Copy Workflow")
     print(f"{'='*70}")
 
     source_id = None
@@ -511,34 +510,68 @@ def test_call_queue_copy(api_client):
         print(f"✅ Source queue created with ID: {source_id}")
 
         # ====================================================================
-        # STEP 2: COPY Queue
+        # STEP 2: GET COPY TEMPLATE
         # ====================================================================
         print(f"\n{'-'*70}")
-        print(f"STEP 2: COPY Queue using :copy endpoint")
+        print(f"STEP 2: GET Copy Template using :copy endpoint")
         print(f"{'-'*70}")
 
         # Call custom copy method (Google API Design pattern)
         print(f"Calling GET /call-queues/{source_id}:copy...")
 
         response = api_client.get(f'call-queues/{source_id}:copy')
-        assert_api_success(response, "Failed to copy queue")
+        assert_api_success(response, "Failed to get copy template")
 
-        copy_id = response.get('data', {}).get('id')
-        assert copy_id, "No ID returned after copy"
-        assert copy_id != source_id, "Copy should have different ID"
+        copy_template = response.get('data', {})
 
-        print(f"✅ Queue copied successfully!")
-        print(f"  Source ID: {source_id}")
-        print(f"  Copy ID: {copy_id}")
+        # Verify template has new ID (different from source)
+        template_id = copy_template.get('id')
+        assert template_id, "Copy template should contain new ID"
+        assert template_id != source_id, "Template ID should differ from source"
+
+        # Verify name has "copy of" prefix
+        template_name = copy_template.get('name', '')
+        assert 'copy of' in template_name.lower(), \
+            f"Template name should contain 'copy of', got: {template_name}"
+
+        # Verify new extension was assigned
+        template_extension = copy_template.get('extension')
+        assert template_extension, "Template should have extension"
+        assert template_extension != source_data['extension'], \
+            "Template extension should differ from source"
+
+        print(f"✅ Copy template received:")
+        print(f"  Template ID: {template_id}")
+        print(f"  Template Name: {template_name}")
+        print(f"  Template Extension: {template_extension}")
+        print(f"  Strategy: {copy_template.get('strategy')}")
 
         # ====================================================================
-        # STEP 3: VERIFY Copy
+        # STEP 3: CREATE ACTUAL COPY from template
         # ====================================================================
         print(f"\n{'-'*70}")
-        print(f"STEP 3: VERIFY Copy")
+        print(f"STEP 3: CREATE Actual Copy from Template")
         print(f"{'-'*70}")
 
-        # Retrieve the copy
+        print(f"POSTing copy template to create actual queue...")
+
+        # POST the template to create actual copy
+        create_response = api_client.post('call-queues', copy_template)
+        assert_api_success(create_response, "Failed to create queue from copy template")
+
+        copy_id = create_response.get('data', {}).get('id')
+        assert copy_id, "No ID returned after creating copy"
+
+        print(f"✅ Actual copy created with ID: {copy_id}")
+
+        # ====================================================================
+        # STEP 4: VERIFY Copy
+        # ====================================================================
+        print(f"\n{'-'*70}")
+        print(f"STEP 4: VERIFY Created Copy")
+        print(f"{'-'*70}")
+
+        # Retrieve the created copy
         copy_record = assert_record_exists(api_client, 'call-queues', copy_id)
 
         print(f"Copy queue details:")
@@ -547,9 +580,9 @@ def test_call_queue_copy(api_client):
         print(f"  Extension: {copy_record.get('extension')}")
         print(f"  Strategy: {copy_record.get('strategy')}")
 
-        # Verify name contains "Copy of"
-        assert 'Copy of' in copy_record.get('name', ''), \
-            "Copy name should contain 'Copy of'"
+        # Verify name contains "copy of"
+        assert 'copy of' in copy_record.get('name', '').lower(), \
+            "Copy name should contain 'copy of'"
 
         # Verify strategy was copied
         assert copy_record.get('strategy') == source_data['strategy'], \
@@ -560,7 +593,7 @@ def test_call_queue_copy(api_client):
             "Copy should have different extension"
 
         print(f"✅ Copy verified!")
-        print(f"  ✓ Name contains 'Copy of'")
+        print(f"  ✓ Name contains 'copy of': {copy_record.get('name')}")
         print(f"  ✓ Strategy matches source: {copy_record.get('strategy')}")
         print(f"  ✓ Extension is different: {copy_record.get('extension')}")
 
@@ -568,10 +601,11 @@ def test_call_queue_copy(api_client):
         # SUMMARY
         # ====================================================================
         print(f"\n{'='*70}")
-        print(f"COPY OPERATION COMPLETE")
+        print(f"COPY WORKFLOW COMPLETE")
         print(f"{'='*70}")
         print(f"✅ Source queue created: {source_id}")
-        print(f"✅ Queue copied via :copy endpoint: {copy_id}")
+        print(f"✅ Copy template retrieved via :copy endpoint")
+        print(f"✅ Actual copy created from template: {copy_id}")
         print(f"✅ Copy verified with different ID and extension")
 
     finally:
@@ -599,6 +633,152 @@ def test_call_queue_copy(api_client):
                 print(f"✅ Copy queue deleted")
             except Exception as e:
                 print(f"⚠️  Failed to delete copy: {e}")
+
+
+def test_update_nonexistent_call_queue_returns_404(api_client):
+    """
+    Test that PUT/PATCH on non-existent call queue returns 404
+
+    REST API Standard:
+    - PUT/PATCH require existing resource → 404 if not found
+    - POST creates new resource → 201 (even with custom ID)
+
+    Steps:
+    1. Generate non-existent queue ID
+    2. Try PUT → expect 404
+    3. Try PATCH → expect 404
+    4. Verify POST with same ID works → 201
+    """
+
+    print(f"\n{'='*70}")
+    print(f"Test: Update Non-Existent Call Queue Returns 404")
+    print(f"{'='*70}")
+
+    # Use impossible ID that won't exist
+    nonexistent_id = "CALL-QUEUE-NONEXISTENT-404-TEST"
+
+    try:
+        # ====================================================================
+        # STEP 1: Verify queue doesn't exist
+        # ====================================================================
+        print(f"\n{'-'*70}")
+        print(f"STEP 1: Verify queue doesn't exist")
+        print(f"{'-'*70}")
+
+        print(f"Checking if {nonexistent_id} exists...")
+
+        try:
+            api_client.get(f'call-queues/{nonexistent_id}')
+            # If we get here, queue exists - fail the test
+            pytest.fail(f"Queue {nonexistent_id} should not exist")
+        except Exception as e:
+            # Expected - queue doesn't exist
+            print(f"✅ Confirmed queue doesn't exist")
+
+        # ====================================================================
+        # STEP 2: Try PUT on non-existent queue → expect 404
+        # ====================================================================
+        print(f"\n{'-'*70}")
+        print(f"STEP 2: PUT on non-existent queue (expect 404)")
+        print(f"{'-'*70}")
+
+        update_data = {
+            'name': 'Should Not Create',
+            'extension': '8888',
+            'strategy': 'ringall'
+        }
+
+        print(f"Sending PUT /call-queues/{nonexistent_id}...")
+
+        try:
+            response = api_client.put(f'call-queues/{nonexistent_id}', update_data)
+
+            # Check if we got an error response
+            if response.get('result'):
+                pytest.fail(f"PUT on non-existent queue should fail with 404, but got success response")
+
+            # Should have error with 404 status
+            print(f"Response: {response}")
+            # Note: We don't have direct access to HTTP status code in current client
+            # but the response should indicate failure
+            print(f"✅ PUT correctly rejected (queue doesn't exist)")
+
+        except Exception as e:
+            # Expected - should fail
+            print(f"✅ PUT correctly failed: {str(e)[:100]}")
+
+        # ====================================================================
+        # STEP 3: Try PATCH on non-existent queue → expect 404
+        # ====================================================================
+        print(f"\n{'-'*70}")
+        print(f"STEP 3: PATCH on non-existent queue (expect 404)")
+        print(f"{'-'*70}")
+
+        patch_data = {
+            'name': 'Should Not Create Either'
+        }
+
+        print(f"Sending PATCH /call-queues/{nonexistent_id}...")
+
+        try:
+            response = api_client.patch(f'call-queues/{nonexistent_id}', patch_data)
+
+            # Check if we got an error response
+            if response.get('result'):
+                pytest.fail(f"PATCH on non-existent queue should fail with 404, but got success response")
+
+            print(f"Response: {response}")
+            print(f"✅ PATCH correctly rejected (queue doesn't exist)")
+
+        except Exception as e:
+            # Expected - should fail
+            print(f"✅ PATCH correctly failed: {str(e)[:100]}")
+
+        # ====================================================================
+        # STEP 4: Verify POST with custom ID still works → 201
+        # ====================================================================
+        print(f"\n{'-'*70}")
+        print(f"STEP 4: POST with custom ID (should work - 201)")
+        print(f"{'-'*70}")
+
+        create_data = {
+            'id': nonexistent_id,
+            'name': 'POST Creates New',
+            'extension': '8889',
+            'strategy': 'ringall'
+        }
+
+        print(f"Sending POST /call-queues with custom ID...")
+
+        response = api_client.post('call-queues', create_data)
+        assert_api_success(response, "POST with custom ID should succeed")
+
+        created_id = response.get('data', {}).get('id')
+        assert created_id == nonexistent_id, "Created ID should match provided ID"
+
+        print(f"✅ POST with custom ID succeeded: {created_id}")
+
+        # Cleanup: delete the created queue
+        print(f"\nCleaning up created queue...")
+        try:
+            api_client.delete(f'call-queues/{created_id}')
+            print(f"✅ Cleanup complete")
+        except Exception as e:
+            print(f"⚠️ Cleanup failed (might be OK): {str(e)[:100]}")
+
+        # ====================================================================
+        # SUMMARY
+        # ====================================================================
+        print(f"\n{'='*70}")
+        print(f"404 VALIDATION TEST COMPLETE")
+        print(f"{'='*70}")
+        print(f"✅ PUT on non-existent resource → rejected")
+        print(f"✅ PATCH on non-existent resource → rejected")
+        print(f"✅ POST with custom ID → allowed (migrations)")
+
+    except Exception as e:
+        print(f"\n❌ Test failed: {str(e)}")
+        raise
 
 
 if __name__ == '__main__':

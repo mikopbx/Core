@@ -3,6 +3,7 @@
 # Core testing framework
 pytest>=7.4.0
 pytest-order>=1.1.0  # For test execution ordering
+pytest-dependency>=0.5.1  # For test dependencies
 pytest-xdist>=3.3.0  # For parallel test execution
 
 # HTTP client with retry logic

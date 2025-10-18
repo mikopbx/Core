@@ -407,7 +407,83 @@ class TestApiKeysEdgeCases:
             else:
                 print(f"⚠ Unexpected error: {str(e)[:50]}")
 
-    def test_05_update_with_conflicting_permissions(self, api_client):
+    def test_05_update_nonexistent_api_key_returns_404(self, api_client):
+        """
+        Test PUT/PATCH on non-existent API key returns 404
+
+        Validates REST API compliance:
+        - PUT /api-keys/NONEXISTENT-ID → 404 Not Found ✓
+        - PATCH /api-keys/NONEXISTENT-ID → 404 Not Found ✓
+        - POST /api-keys {id: CUSTOM-ID} → 201 Created (allowed for migrations) ✓
+        """
+        nonexistent_id = '999999'
+
+        update_data = {
+            'description': 'Should Not Create',
+            'full_permissions': False
+        }
+
+        # Test PUT on non-existent resource
+        print(f"\n→ Testing PUT /api-keys/{nonexistent_id} (should return 404)")
+        response = api_client.put(f'api-keys/{nonexistent_id}', update_data, allow_404=True)
+
+        # Should not succeed
+        assert response['result'] is False, "PUT on non-existent resource should fail"
+        assert 'httpCode' in response, "Response should include httpCode"
+        assert response['httpCode'] == 404, f"Expected 404, got {response.get('httpCode')}"
+
+        # Check error message
+        errors = response.get('messages', {}).get('error', [])
+        assert len(errors) > 0, "Should have error message"
+        assert any('not found' in str(err).lower() for err in errors), \
+            f"Error should mention 'not found', got: {errors}"
+
+        print(f"✓ PUT correctly returned 404 Not Found")
+        print(f"  Error message: {errors[0]}")
+
+        # Test PATCH on non-existent resource
+        print(f"\n→ Testing PATCH /api-keys/{nonexistent_id} (should return 404)")
+        patch_data = {'description': 'Should Not Create'}
+
+        response = api_client.patch(f'api-keys/{nonexistent_id}', patch_data, allow_404=True)
+
+        # Should not succeed
+        assert response['result'] is False, "PATCH on non-existent resource should fail"
+        assert 'httpCode' in response, "Response should include httpCode"
+        assert response['httpCode'] == 404, f"Expected 404, got {response.get('httpCode')}"
+
+        # Check error message
+        errors = response.get('messages', {}).get('error', [])
+        assert len(errors) > 0, "Should have error message"
+
+        print(f"✓ PATCH correctly returned 404 Not Found")
+        print(f"  Error message: {errors[0]}")
+
+        # Verify POST with custom ID still works (for migrations)
+        print(f"\n→ Testing POST /api-keys with custom ID (should succeed for migrations)")
+        custom_id = '888888'
+        post_data = {
+            'id': custom_id,
+            'description': 'Migration Test Key',
+            'full_permissions': False
+        }
+
+        try:
+            response = api_client.post('api-keys', post_data)
+            if response['result']:
+                print(f"✓ POST with custom ID succeeded (migration support)")
+                # Cleanup
+                try:
+                    api_client.delete(f'api-keys/{custom_id}')
+                    print(f"✓ Cleaned up test record")
+                except:
+                    pass
+            else:
+                print(f"⚠ POST with custom ID failed (may not support custom IDs)")
+        except Exception as e:
+            print(f"⚠ POST with custom ID threw exception: {str(e)[:80]}")
+
+    def test_06_update_with_conflicting_permissions(self, api_client):
         """Test validation - full_permissions=true with allowed_paths"""
         # Create a key first
         key_data = {

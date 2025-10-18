@@ -4,7 +4,6 @@ import pytest
 from conftest import assert_api_success
 
 class TestIncomingRoutes:
-    sample_id = None
     def test_01_get_default_template(self, api_client):
         response = api_client.get('incoming-routes:getDefault')
         assert_api_success(response, "Failed to get default template")
@@ -14,14 +13,10 @@ class TestIncomingRoutes:
         assert_api_success(response, "Failed to get list")
         data = response['data']
         print(f"✓ Retrieved {len(data)} incoming routes")
-        if len(data) > 0 and 'id' in data[0]:
-            TestIncomingRoutes.sample_id = data[0]['id']
-    def test_03_get_by_id(self, api_client):
-        if not TestIncomingRoutes.sample_id:
-            pytest.skip("No sample ID")
-        response = api_client.get(f'incoming-routes/{TestIncomingRoutes.sample_id}')
+    def test_03_get_by_id(self, api_client, sample_incoming_route):
+        response = api_client.get(f'incoming-routes/{sample_incoming_route}')
         assert_api_success(response, "Failed to get record")
-        print(f"✓ Retrieved incoming route: {TestIncomingRoutes.sample_id}")
+        print(f"✓ Retrieved incoming route: {sample_incoming_route}")
 
 if __name__ == '__main__':
     pytest.main([__file__, '-v', '-s'])

@@ -86,9 +86,6 @@ def test_create_single_conference_room(api_client, conference_room_fixtures):
 
         print(f"\n✅ All fields verified!")
 
-        # Return ID for potential cleanup
-        return conf_id
-
     except Exception as e:
         print(f"\n❌ Error: {str(e)}")
 
@@ -255,9 +252,6 @@ def test_create_conferences_batch(api_client, conference_room_fixtures):
     assert total_successful > 0, "No conferences were created or existed"
 
     print(f"\n✅ Batch create completed!")
-
-    # Return created IDs for potential cleanup
-    return [conf['id'] for conf in created_conferences]
 
 
 def test_conference_room_crud_cycle(api_client, conference_room_fixtures):

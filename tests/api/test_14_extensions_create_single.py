@@ -98,9 +98,6 @@ def test_create_single_employee(api_client, employee_fixtures):
 
         print(f"\n✅ All fields verified!")
 
-        # Return ID for potential cleanup
-        return employee_id
-
     except Exception as e:
         print(f"\n❌ Error: {str(e)}")
 

@@ -97,11 +97,13 @@ class TestSchemaViolationDetection:
         NOTE: This test will pass only if there are NO schema violations.
         If it fails, check system logs for details about the violation.
         """
-        # Enable strict mode
+        # WHY: system:setSchemaValidationStrictMode endpoint is not yet implemented
+        # This is a future feature for runtime schema validation control
+        # The test is designed to work once the endpoint becomes available
         try:
             api_client.post('system:setSchemaValidationStrictMode', {'enabled': True})
         except:
-            pytest.skip("Schema validation endpoint not available")
+            pytest.skip("Schema validation endpoint not available - feature not yet implemented")
 
         # Make a request that should have valid schema
         try:

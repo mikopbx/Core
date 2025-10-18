@@ -390,7 +390,7 @@ class TestIvrMenuEdgeCases:
                 raise
 
     def test_02_update_nonexistent_record(self, api_client):
-        """Test PUT /ivr-menu/{id} with non-existent ID"""
+        """Test PUT /ivr-menu/{id} with non-existent ID - Should return 404"""
         fake_id = 'IVR-FFFFFFFF'
 
         update_data = {
@@ -399,23 +399,44 @@ class TestIvrMenuEdgeCases:
             'timeout': 7
         }
 
-        response = api_client.put(f'ivr-menu/{fake_id}', update_data)
-        # API returns success for idempotent operations (REST best practice)
-        # The operation succeeds but doesn't actually update anything
-        assert response['result'] is True
-        print(f"✓ PUT on non-existent record returns success (idempotent)")
+        response = api_client.put(f'ivr-menu/{fake_id}', update_data, allow_404=True)
+        # PUT on non-existent resource should return 404
+        assert response['result'] is False, "PUT on non-existent IVR menu should fail"
+        assert response.get('httpCode', 200) == 404, f"Expected HTTP 404, got {response.get('httpCode')}"
+        assert len(response.get('messages', {}).get('error', [])) > 0, "Should have error message"
+        print(f"✓ PUT on non-existent IVR menu returns 404 (REST compliant)")
 
-    def test_03_delete_nonexistent_record(self, api_client):
+    def test_03_patch_nonexistent_record(self, api_client):
+        """Test PATCH /ivr-menu/{id} with non-existent ID - Should return 404"""
+        fake_id = 'IVR-FFFFFFFF'
+
+        patch_data = {
+            'description': 'Should Fail'
+        }
+
+        response = api_client.patch(f'ivr-menu/{fake_id}', patch_data, allow_404=True)
+        # PATCH on non-existent resource should return 404
+        assert response['result'] is False, "PATCH on non-existent IVR menu should fail"
+        assert response.get('httpCode', 200) == 404, f"Expected HTTP 404, got {response.get('httpCode')}"
+        assert len(response.get('messages', {}).get('error', [])) > 0, "Should have error message"
+        print(f"✓ PATCH on non-existent IVR menu returns 404 (REST compliant)")
+
+    def test_04_delete_nonexistent_record(self, api_client):
         """Test DELETE /ivr-menu/{id} with non-existent ID"""
         fake_id = 'IVR-FFFFFFFF'
 
-        response = api_client.delete(f'ivr-menu/{fake_id}')
-        # API returns success for idempotent DELETE operations (REST best practice)
-        # Deleting something that doesn't exist achieves the same end state
-        assert response['result'] is True
-        print(f"✓ DELETE on non-existent record returns success (idempotent)")
+        try:
+            response = api_client.delete(f'ivr-menu/{fake_id}')
+            # Some APIs return 404, which is correct REST behavior
+            assert response['result'] is False
+            print(f"✓ DELETE on non-existent record returns error (REST compliant)")
+        except Exception as e:
+            if '404' in str(e):
+                print(f"✓ DELETE on non-existent record returns 404 (REST compliant)")
+            else:
+                raise
 
-    def test_04_duplicate_extension(self, api_client):
+    def test_05_duplicate_extension(self, api_client):
         """Test creating IVR menu with duplicate extension"""
         # Use a unique extension that's unlikely to exist
         import time

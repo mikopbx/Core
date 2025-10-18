@@ -78,7 +78,10 @@ class TestNetworkFilters:
             items = data if isinstance(data, list) else []
 
         if len(items) == 0:
-            pytest.skip("No network filters available in system")
+            # WHY: Network filters are typically created by users, not pre-configured
+            # This test requires at least one filter to exist to test the GET by ID functionality
+            # The test is designed to be graceful when system is empty (e.g., after reset)
+            pytest.skip("No network filters available in system - create at least one filter to test this endpoint")
 
         # Use first available filter
         filter_id = items[0]['id']

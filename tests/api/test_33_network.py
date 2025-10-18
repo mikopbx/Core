@@ -17,6 +17,17 @@ class TestNetworkConfig:
         # Verify configuration structure
         assert 'interfaces' in response['data'], "Configuration should include interfaces"
         assert 'ports' in response['data'], "Configuration should include ports"
+        assert 'settings' not in response['data'], "Configuration should NOT include deprecated 'settings' block"
+
+        # Verify global settings are in internet interface
+        internet_interface = None
+        for iface in response['data']['interfaces']:
+            if iface.get('internet'):
+                internet_interface = iface
+                break
+
+        assert internet_interface is not None, "Should have an internet interface"
+        print(f"  Internet interface: {internet_interface.get('interface')} (ID: {internet_interface.get('id')})")
 
         # Verify port keys use camelCase (matching PbxSettings constants)
         ports = response['data']['ports']
@@ -53,11 +64,15 @@ class TestNetworkConfig:
         original_sip = original_ports.get('externalSIPPort', '5060')
         original_tls = original_ports.get('externalTLSPort', '5061')
 
+        # Find internet interface ID
+        internet_interface_id = original_config.get('internetInterfaceId', 1)
+
         # Save config with modified ports using camelCase keys
         save_data = {
             'staticRoutes': original_config.get('staticRoutes', []),
             'externalSIPPort': '5063',  # WHY: camelCase matches PbxSettings::EXTERNAL_SIP_PORT
             'externalTLSPort': '5062',
+            'internet_interface': internet_interface_id,  # WHY: Preserve internet interface selection
             'usenat': True,
             'exthostname': 'mikopbxtest.localhost',  # WHY: Required when NAT enabled
             'autoUpdateExternalIp': False
@@ -80,6 +95,7 @@ class TestNetworkConfig:
             'staticRoutes': verify['data'].get('staticRoutes', []),
             'externalSIPPort': original_sip,
             'externalTLSPort': original_tls,
+            'internet_interface': internet_interface_id,
             'usenat': original_nat.get('usenat', False),
             'exthostname': original_nat.get('exthostname', ''),
             'extipaddr': original_nat.get('extipaddr', ''),
@@ -87,6 +103,78 @@ class TestNetworkConfig:
         }
         api_client.post('network:saveConfig', restore_data)
         print(f"  Restored original ports: SIP={original_sip}, TLS={original_tls}")
+
+    def test_04_save_global_settings_in_internet_interface(self, api_client):
+        """Save hostname/domain in internet interface (not in deprecated 'settings' block)"""
+        # Get current config
+        response = api_client.get('network:getConfig')
+        assert_api_success(response, "Failed to get current config")
+
+        original_config = response['data']
+
+        # Find internet interface
+        internet_interface = None
+        for iface in original_config['interfaces']:
+            if iface.get('internet'):
+                internet_interface = iface
+                break
+
+        assert internet_interface is not None, "Should have an internet interface"
+
+        interface_id = internet_interface['id']
+        original_hostname = internet_interface.get('hostname', '')
+        original_domain = internet_interface.get('domain', '')
+        original_gateway = internet_interface.get('gateway', '')
+        original_primarydns = internet_interface.get('primarydns', '')
+
+        # Save config with modified hostname/domain using interface-specific keys
+        save_data = {
+            'staticRoutes': original_config.get('staticRoutes', []),
+            f'hostname_{interface_id}': 'mikopbx-test',
+            f'domain_{interface_id}': 'test.local',
+            f'gateway_{interface_id}': original_gateway,
+            f'primarydns_{interface_id}': original_primarydns,
+            'internet_interface': interface_id,  # WHY: Mark which interface is the internet interface
+            'usenat': original_config.get('nat', {}).get('usenat', False),
+            'exthostname': original_config.get('nat', {}).get('exthostname', ''),
+            'extipaddr': original_config.get('nat', {}).get('extipaddr', ''),
+        }
+
+        response = api_client.post('network:saveConfig', save_data)
+        assert_api_success(response, "Failed to save hostname/domain configuration")
+
+        # Verify hostname/domain were saved in internet interface
+        verify = api_client.get('network:getConfig')
+
+        # Find internet interface in response
+        internet_iface = None
+        for iface in verify['data']['interfaces']:
+            if iface.get('internet'):
+                internet_iface = iface
+                break
+
+        assert internet_iface is not None, "Should have internet interface"
+        assert internet_iface.get('hostname') == 'mikopbx-test', "Hostname should be saved in internet interface"
+        assert internet_iface.get('domain') == 'test.local', "Domain should be saved in internet interface"
+
+        print(f"✓ Saved global settings in internet interface:")
+        print(f"  hostname: {internet_iface.get('hostname')}")
+        print(f"  domain: {internet_iface.get('domain')}")
+
+        # Restore original values
+        restore_data = {
+            'staticRoutes': verify['data'].get('staticRoutes', []),
+            f'hostname_{interface_id}': original_hostname,
+            f'domain_{interface_id}': original_domain,
+            f'gateway_{interface_id}': original_gateway,
+            f'primarydns_{interface_id}': original_primarydns,
+            'internet_interface': interface_id,
+            'usenat': original_config.get('nat', {}).get('usenat', False),
+            'exthostname': original_config.get('nat', {}).get('exthostname', ''),
+            'extipaddr': original_config.get('nat', {}).get('extipaddr', ''),
+        }
+        api_client.post('network:saveConfig', restore_data)
+        print(f"  Restored original values: hostname={original_hostname}, domain={original_domain}")
 
 
 class TestStaticRoutes:
@@ -115,10 +203,15 @@ class TestStaticRoutes:
         # Get current config
         response = api_client.get('network:getConfig')
         assert_api_success(response, "Failed to get current config")
-        
+
         config = response['data']
         existing_routes = config.get('staticRoutes', [])
-        
+
+        # WHY: Clean up any existing test route from previous failed runs
+        # to ensure test isolation
+        cleaned_routes = [r for r in existing_routes
+                         if not (r.get('network') == '10.10.10.0' and r.get('subnet') == '24')]
+
         # Add new route
         new_route = {
             'id': 'new_test_route',
@@ -129,8 +222,8 @@ class TestStaticRoutes:
             'description': 'Test static route created by pytest',
             'priority': 100
         }
-        
-        updated_routes = existing_routes + [new_route]
+
+        updated_routes = cleaned_routes + [new_route]
         
         # Save configuration with new route
         save_data = {
@@ -339,7 +432,11 @@ class TestStaticRoutesEdgeCases:
         response = api_client.get('network:getConfig')
         config = response['data']
         existing_routes = config.get('staticRoutes', [])
-        
+
+        # WHY: Clean up any existing test route from previous failed runs
+        cleaned_routes = [r for r in existing_routes
+                         if not (r.get('network') == '172.16.0.0' and r.get('subnet') == '16')]
+
         test_route = {
             'id': 'new_empty_interface',
             'network': '172.16.0.0',
@@ -349,22 +446,23 @@ class TestStaticRoutesEdgeCases:
             'description': 'Route with auto interface',
             'priority': 999
         }
-        
+
         save_data = {
-            'staticRoutes': existing_routes + [test_route]
+            'staticRoutes': cleaned_routes + [test_route]
         }
 
-        response = api_client.post('network:saveConfig', save_data)
-        if response.get('result', False):
-            print(f"✓ Created route with empty interface (auto-select)")
-            
-            # Cleanup
+        try:
+            response = api_client.post('network:saveConfig', save_data)
+            if response.get('result', False):
+                print(f"✓ Created route with empty interface (auto-select)")
+            else:
+                print(f"⚠ Could not create route with empty interface")
+        finally:
+            # WHY: Always cleanup, even if test fails
             verify = api_client.get('network:getConfig')
-            cleanup_routes = [r for r in verify['data']['staticRoutes'] 
-                            if not (r['network'] == '172.16.0.0' and r['subnet'] == '16')]
+            cleanup_routes = [r for r in verify['data']['staticRoutes']
+                            if not (r.get('network') == '172.16.0.0' and r.get('subnet') == '16')]
             api_client.post('network:saveConfig', {'staticRoutes': cleanup_routes})
-        else:
-            print(f"⚠ Could not create route with empty interface")
 
     def test_02_minimum_priority(self, api_client):
         """Priority can be 0"""
@@ -372,7 +470,11 @@ class TestStaticRoutesEdgeCases:
         response = api_client.get('network:getConfig')
         config = response['data']
         existing_routes = config.get('staticRoutes', [])
-        
+
+        # WHY: Clean up any existing test route from previous failed runs
+        cleaned_routes = [r for r in existing_routes
+                         if not (r.get('network') == '172.17.0.0' and r.get('subnet') == '16')]
+
         test_route = {
             'id': 'new_min_priority',
             'network': '172.17.0.0',
@@ -382,31 +484,33 @@ class TestStaticRoutesEdgeCases:
             'description': 'Route with priority 0',
             'priority': 0
         }
-        
+
         save_data = {
-            'staticRoutes': existing_routes + [test_route]
+            'staticRoutes': cleaned_routes + [test_route]
         }
 
-        response = api_client.post('network:saveConfig', save_data)
-        if response.get('result', False):
-            # Verify priority
+        try:
+            response = api_client.post('network:saveConfig', save_data)
+            if response.get('result', False):
+                # Verify priority
+                verify = api_client.get('network:getConfig')
+                created = None
+                for r in verify['data']['staticRoutes']:
+                    if r['network'] == '172.17.0.0' and r['subnet'] == '16':
+                        created = r
+                        break
+
+                if created:
+                    assert created['priority'] == 0, "Priority should be 0"
+                    print(f"✓ Created route with minimum priority (0)")
+            else:
+                print(f"⚠ Could not create route with priority=0")
+        finally:
+            # WHY: Always cleanup, even if test fails
             verify = api_client.get('network:getConfig')
-            created = None
-            for r in verify['data']['staticRoutes']:
-                if r['network'] == '172.17.0.0' and r['subnet'] == '16':
-                    created = r
-                    break
-            
-            if created:
-                assert created['priority'] == 0, "Priority should be 0"
-                print(f"✓ Created route with minimum priority (0)")
-                
-                # Cleanup
-                cleanup_routes = [r for r in verify['data']['staticRoutes'] 
-                                if not (r['network'] == '172.17.0.0' and r['subnet'] == '16')]
-                api_client.post('network:saveConfig', {'staticRoutes': cleanup_routes})
-        else:
-            print(f"⚠ Could not create route with priority=0")
+            cleanup_routes = [r for r in verify['data']['staticRoutes']
+                            if not (r.get('network') == '172.17.0.0' and r.get('subnet') == '16')]
+            api_client.post('network:saveConfig', {'staticRoutes': cleanup_routes})
 
     def test_03_maximum_subnet_mask(self, api_client):
         """Subnet mask /32 (single host)"""
@@ -414,7 +518,11 @@ class TestStaticRoutesEdgeCases:
         response = api_client.get('network:getConfig')
         config = response['data']
         existing_routes = config.get('staticRoutes', [])
-        
+
+        # WHY: Clean up any existing test route from previous failed runs
+        cleaned_routes = [r for r in existing_routes
+                         if not (r.get('network') == '8.8.8.8' and r.get('subnet') == '32')]
+
         test_route = {
             'id': 'new_host_route',
             'network': '8.8.8.8',
@@ -424,22 +532,23 @@ class TestStaticRoutesEdgeCases:
             'description': 'Host route /32',
             'priority': 999
         }
-        
+
         save_data = {
-            'staticRoutes': existing_routes + [test_route]
+            'staticRoutes': cleaned_routes + [test_route]
         }
 
-        response = api_client.post('network:saveConfig', save_data)
-        if response.get('result', False):
-            print(f"✓ Created /32 host route")
-            
-            # Cleanup
+        try:
+            response = api_client.post('network:saveConfig', save_data)
+            if response.get('result', False):
+                print(f"✓ Created /32 host route")
+            else:
+                print(f"⚠ Could not create /32 route")
+        finally:
+            # WHY: Always cleanup, even if test fails
             verify = api_client.get('network:getConfig')
-            cleanup_routes = [r for r in verify['data']['staticRoutes'] 
-                            if not (r['network'] == '8.8.8.8' and r['subnet'] == '32')]
+            cleanup_routes = [r for r in verify['data']['staticRoutes']
+                            if not (r.get('network') == '8.8.8.8' and r.get('subnet') == '32')]
             api_client.post('network:saveConfig', {'staticRoutes': cleanup_routes})
-        else:
-            print(f"⚠ Could not create /32 route")
 
     def test_04_default_route(self, api_client):
         """Default route 0.0.0.0/0"""
@@ -447,7 +556,11 @@ class TestStaticRoutesEdgeCases:
         response = api_client.get('network:getConfig')
         config = response['data']
         existing_routes = config.get('staticRoutes', [])
-        
+
+        # WHY: Clean up any existing test default route from previous failed runs
+        cleaned_routes = [r for r in existing_routes
+                         if not (r.get('network') == '0.0.0.0' and r.get('subnet') == '0')]
+
         test_route = {
             'id': 'new_default_route',
             'network': '0.0.0.0',
@@ -457,22 +570,23 @@ class TestStaticRoutesEdgeCases:
             'description': 'Test default route',
             'priority': 999
         }
-        
+
         save_data = {
-            'staticRoutes': existing_routes + [test_route]
+            'staticRoutes': cleaned_routes + [test_route]
         }
 
-        response = api_client.post('network:saveConfig', save_data)
-        if response.get('result', False):
-            print(f"✓ Created default route 0.0.0.0/0")
-            
-            # Cleanup immediately (default route is critical)
+        try:
+            response = api_client.post('network:saveConfig', save_data)
+            if response.get('result', False):
+                print(f"✓ Created default route 0.0.0.0/0")
+            else:
+                print(f"⚠ Could not create default route (may be restricted)")
+        finally:
+            # WHY: Always cleanup immediately (default route is critical)
             verify = api_client.get('network:getConfig')
-            cleanup_routes = [r for r in verify['data']['staticRoutes'] 
-                            if not (r['network'] == '0.0.0.0' and r['subnet'] == '0')]
+            cleanup_routes = [r for r in verify['data']['staticRoutes']
+                            if not (r.get('network') == '0.0.0.0' and r.get('subnet') == '0')]
             api_client.post('network:saveConfig', {'staticRoutes': cleanup_routes})
-        else:
-            print(f"⚠ Could not create default route (may be restricted)")
 
 
 if __name__ == '__main__':

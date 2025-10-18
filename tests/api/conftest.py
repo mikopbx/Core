@@ -184,12 +184,18 @@ class MikoPBXClient:
                 except (ValueError, KeyError):
                     raise e
 
-    def put(self, path: str, data: Dict) -> Dict[str, Any]:
-        """PUT request (full update) with connection retry"""
+    def put(self, path: str, data: Dict, allow_404: bool = False) -> Dict[str, Any]:
+        """PUT request (full update) with connection retry
+
+        Args:
+            path: API endpoint path
+            data: Request data
+            allow_404: If True, don't raise exception on 404/422 response (for testing non-existent resources)
+        """
         import time
         max_attempts = 5
         base_delay = 3
-        
+
         for attempt in range(max_attempts):
             try:
                 response = self.session.put(
@@ -198,9 +204,11 @@ class MikoPBXClient:
                     headers=self._get_headers(),
                     timeout=30
                 )
-                response.raise_for_status()
+                # Allow 404/422 for testing non-existent resources
+                if not (allow_404 and response.status_code in [404, 422]):
+                    response.raise_for_status()
                 return response.json()
-            except (requests.exceptions.ConnectionError, 
+            except (requests.exceptions.ConnectionError,
                     requests.exceptions.Timeout) as e:
                 if attempt < max_attempts - 1:
                     delay = base_delay * (2 ** attempt)
@@ -210,12 +218,18 @@ class MikoPBXClient:
                 else:
                     raise
 
-    def patch(self, path: str, data: Dict) -> Dict[str, Any]:
-        """PATCH request (partial update) with connection retry"""
+    def patch(self, path: str, data: Dict, allow_404: bool = False) -> Dict[str, Any]:
+        """PATCH request (partial update) with connection retry
+
+        Args:
+            path: API endpoint path
+            data: Request data
+            allow_404: If True, don't raise exception on 404/422 response (for testing non-existent resources)
+        """
         import time
         max_attempts = 5
         base_delay = 3
-        
+
         for attempt in range(max_attempts):
             try:
                 response = self.session.patch(
@@ -224,9 +238,11 @@ class MikoPBXClient:
                     headers=self._get_headers(),
                     timeout=30
                 )
-                response.raise_for_status()
+                # Allow 404/422 for testing non-existent resources
+                if not (allow_404 and response.status_code in [404, 422]):
+                    response.raise_for_status()
                 return response.json()
-            except (requests.exceptions.ConnectionError, 
+            except (requests.exceptions.ConnectionError,
                     requests.exceptions.Timeout) as e:
                 if attempt < max_attempts - 1:
                     delay = base_delay * (2 ** attempt)
@@ -883,3 +899,347 @@ def pytest_runtest_makereport(item, call):
                             except Exception as e:
                                 print(f"✗ Failed to re-authenticate: {e}")
                         break
+
+
+# ============================================================================
+# Sample Data Fixtures for test_03_get_by_id Tests
+# ============================================================================
+
+@pytest.fixture(scope='function')
+def sample_sip_provider(api_client, provider_sip_fixtures):
+    """
+    Create a sample SIP provider for testing GET by ID operations
+
+    This fixture creates a SIP provider at the class level and cleans it up
+    after all tests in the class complete. Used by test_03_get_by_id tests.
+
+    Yields:
+        str: The ID of the created SIP provider
+
+    Usage:
+        def test_03_get_by_id(self, api_client, sample_sip_provider):
+            response = api_client.get(f'sip-providers/{sample_sip_provider}')
+            assert_api_success(response)
+    """
+    # Get first SIP provider from fixtures
+    fixture_key = list(provider_sip_fixtures.keys())[0]
+    provider_data = provider_sip_fixtures[fixture_key].copy()
+
+    # Convert fixture format: password -> secret
+    if 'password' in provider_data and 'secret' not in provider_data:
+        provider_data['secret'] = provider_data.pop('password')
+
+    # Create the provider
+    response = api_client.post('sip-providers', provider_data)
+    assert response['result'] is True, f"Failed to create sample SIP provider: {response.get('messages')}"
+
+    provider_id = response['data']['id']
+    print(f"\n✓ Created sample SIP provider: {provider_id}")
+
+    yield provider_id
+
+    # Cleanup
+    try:
+        api_client.delete(f'sip-providers/{provider_id}')
+        print(f"✓ Cleaned up sample SIP provider: {provider_id}")
+    except Exception as e:
+        print(f"⚠️  Failed to cleanup SIP provider {provider_id}: {e}")
+
+
+@pytest.fixture(scope='function')
+def sample_iax_provider(api_client, provider_iax_fixtures):
+    """
+    Create a sample IAX provider for testing GET by ID operations
+
+    Yields:
+        str: The ID of the created IAX provider
+    """
+    # Get first IAX provider from fixtures
+    fixture_key = list(provider_iax_fixtures.keys())[0]
+    provider_data = provider_iax_fixtures[fixture_key].copy()
+
+    # Convert fixture format: password -> secret
+    if 'password' in provider_data and 'secret' not in provider_data:
+        provider_data['secret'] = provider_data.pop('password')
+
+    # Create the provider
+    response = api_client.post('iax-providers', provider_data)
+    assert response['result'] is True, f"Failed to create sample IAX provider: {response.get('messages')}"
+
+    provider_id = response['data']['id']
+    print(f"\n✓ Created sample IAX provider: {provider_id}")
+
+    yield provider_id
+
+    # Cleanup
+    try:
+        api_client.delete(f'iax-providers/{provider_id}')
+        print(f"✓ Cleaned up sample IAX provider: {provider_id}")
+    except Exception as e:
+        print(f"⚠️  Failed to cleanup IAX provider {provider_id}: {e}")
+
+
+@pytest.fixture(scope='function')
+def sample_incoming_route(api_client, incoming_route_fixtures):
+    """
+    Create a sample incoming route for testing GET by ID operations
+
+    Yields:
+        str: The ID of the created incoming route
+    """
+    # Get first incoming route from fixtures
+    fixture_key = list(incoming_route_fixtures.keys())[0]
+    route_data = incoming_route_fixtures[fixture_key].copy()
+
+    # Create the route
+    response = api_client.post('incoming-routes', route_data)
+    assert response['result'] is True, f"Failed to create sample incoming route: {response.get('messages')}"
+
+    route_id = response['data']['id']
+    print(f"\n✓ Created sample incoming route: {route_id}")
+
+    yield route_id
+
+    # Cleanup
+    try:
+        api_client.delete(f'incoming-routes/{route_id}')
+        print(f"✓ Cleaned up sample incoming route: {route_id}")
+    except Exception as e:
+        print(f"⚠️  Failed to cleanup incoming route {route_id}: {e}")
+
+
+@pytest.fixture(scope='function')
+def sample_outbound_route(api_client, outgoing_route_fixtures, sample_sip_provider):
+    """
+    Create a sample outbound route for testing GET by ID operations
+
+    Outbound routes require a provider, so we use the sample_sip_provider fixture.
+
+    WHY: Using fixture dependency instead of creating provider inline prevents
+         race conditions and ensures proper cleanup order (route before provider).
+
+    Args:
+        sample_sip_provider: Fixture that creates a SIP provider (dependency)
+
+    Yields:
+        str: The ID of the created outbound route
+    """
+    # Use the provider created by sample_sip_provider fixture
+    provider_id = sample_sip_provider
+
+    # Get first outbound route from fixtures
+    fixture_key = list(outgoing_route_fixtures.keys())[0]
+    route_data = outgoing_route_fixtures[fixture_key].copy()
+
+    # Update provider ID to the one from fixture
+    route_data['providerid'] = provider_id
+
+    # Create the route
+    response = api_client.post('outbound-routes', route_data)
+    assert response['result'] is True, f"Failed to create sample outbound route: {response.get('messages')}"
+
+    route_id = response['data']['id']
+    print(f"\n✓ Created sample outbound route: {route_id} (using provider {provider_id})")
+
+    yield route_id
+
+    # Cleanup (provider will be cleaned up by sample_sip_provider fixture)
+    try:
+        api_client.delete(f'outbound-routes/{route_id}')
+        print(f"✓ Cleaned up sample outbound route: {route_id}")
+    except Exception as e:
+        print(f"⚠️  Failed to cleanup outbound route {route_id}: {e}")
+
+
+@pytest.fixture(scope='function')
+def sample_conference_room(api_client, conference_room_fixtures):
+    """
+    Create a sample conference room for testing GET by ID operations
+
+    Yields:
+        str: The ID of the created conference room
+    """
+    # Get first conference room from fixtures
+    fixture_key = list(conference_room_fixtures.keys())[0]
+    room_data = conference_room_fixtures[fixture_key].copy()
+
+    # Create the conference room
+    response = api_client.post('conference-rooms', room_data)
+    assert response['result'] is True, f"Failed to create sample conference room: {response.get('messages')}"
+
+    room_id = response['data']['id']
+    print(f"\n✓ Created sample conference room: {room_id}")
+
+    yield room_id
+
+    # Cleanup
+    try:
+        api_client.delete(f'conference-rooms/{room_id}')
+        print(f"✓ Cleaned up sample conference room: {room_id}")
+    except Exception as e:
+        print(f"⚠️  Failed to cleanup conference room {room_id}: {e}")
+
+
+@pytest.fixture(scope='function')
+def sample_call_queue(api_client, call_queue_fixtures):
+    """
+    Create a sample call queue for testing GET by ID operations
+
+    Yields:
+        str: The ID of the created call queue
+    """
+    # Get first call queue from fixtures
+    fixture_key = list(call_queue_fixtures.keys())[0]
+    queue_data = call_queue_fixtures[fixture_key].copy()
+
+    # Convert fixture format to API format if needed
+    queue_data = convert_call_queue_fixture_to_api_format(queue_data)
+
+    # Create the call queue
+    response = api_client.post('call-queues', queue_data)
+    assert response['result'] is True, f"Failed to create sample call queue: {response.get('messages')}"
+
+    queue_id = response['data']['id']
+    print(f"\n✓ Created sample call queue: {queue_id}")
+
+    yield queue_id
+
+    # Cleanup
+    try:
+        api_client.delete(f'call-queues/{queue_id}')
+        print(f"✓ Cleaned up sample call queue: {queue_id}")
+    except Exception as e:
+        print(f"⚠️  Failed to cleanup call queue {queue_id}: {e}")
+
+
+@pytest.fixture(scope='function')
+def sample_ivr_menu(api_client, ivr_menu_fixtures):
+    """
+    Create a sample IVR menu for testing GET by ID operations
+
+    Yields:
+        str: The ID of the created IVR menu
+    """
+    # Get first IVR menu from fixtures
+    fixture_key = list(ivr_menu_fixtures.keys())[0]
+    ivr_data = ivr_menu_fixtures[fixture_key].copy()
+
+    # Add required extension field if missing (IVR menus need an extension number)
+    if 'extension' not in ivr_data:
+        ivr_data['extension'] = '4000'  # Use extension 4000 for test IVR menu
+
+    # Create the IVR menu
+    response = api_client.post('ivr-menu', ivr_data)
+    assert response['result'] is True, f"Failed to create sample IVR menu: {response.get('messages')}"
+
+    ivr_id = response['data']['id']
+    print(f"\n✓ Created sample IVR menu: {ivr_id}")
+
+    yield ivr_id
+
+    # Cleanup
+    try:
+        api_client.delete(f'ivr-menu/{ivr_id}')
+        print(f"✓ Cleaned up sample IVR menu: {ivr_id}")
+    except Exception as e:
+        print(f"⚠️  Failed to cleanup IVR menu {ivr_id}: {e}")
+
+
+@pytest.fixture(scope='function')
+def test_sound_file(tmp_path):
+    """
+    Generate a test WAV file for upload testing
+
+    Creates a minimal valid WAV file (1 second of silence, 8kHz mono)
+    suitable for testing sound file upload functionality.
+
+    Yields:
+        Path: Absolute path to the generated WAV file
+
+    Usage:
+        def test_upload_sound(api_client, test_sound_file):
+            response = api_client.upload_file(
+                'sound-files:uploadFile',
+                str(test_sound_file)
+            )
+    """
+    import wave
+    import struct
+
+    # Create test WAV file path
+    file_path = tmp_path / "test_predefined_id.wav"
+
+    # WAV file parameters
+    sample_rate = 8000  # 8kHz (standard for telephony)
+    duration = 1  # 1 second
+    num_channels = 1  # Mono
+    sample_width = 2  # 16-bit
+    num_frames = sample_rate * duration
+
+    # Create WAV file
+    with wave.open(str(file_path), 'wb') as wav_file:
+        wav_file.setnchannels(num_channels)
+        wav_file.setsampwidth(sample_width)
+        wav_file.setframerate(sample_rate)
+
+        # Generate 1 second of silence (all zeros)
+        for _ in range(num_frames):
+            # Write 16-bit signed integer (little-endian)
+            wav_file.writeframes(struct.pack('<h', 0))
+
+    print(f"\n✓ Generated test WAV file: {file_path} ({file_path.stat().st_size} bytes)")
+
+    yield file_path
+
+    # Cleanup is automatic via tmp_path (pytest temp directory)
+
+
+@pytest.fixture(scope='function')
+def test_uploaded_file(api_client):
+    """
+    Create and upload a test file for Files API testing
+
+    WHY: Provides isolated test file for GET/DELETE operations.
+         Each test gets a fresh file to avoid shared state issues.
+
+    Yields:
+        str: The path to the uploaded file on the server (WITHOUT leading slash)
+             Use as: api_client.get(f'files/{test_uploaded_file}')
+
+    Usage:
+        def test_get_file(api_client, test_uploaded_file):
+            response = api_client.get(f'files/{test_uploaded_file}')
+    """
+    # Use temp path that should be writable on server
+    # WHY: Remove leading slash to avoid double slashes in URL (files//tmp)
+    file_path = 'tmp/mikopbx_test_file.txt'
+    file_content = "Test file content for MikoPBX Files API\nLine 2\nLine 3"
+
+    # Upload file content via PUT
+    upload_data = {
+        'filename': f'/{file_path}',  # API expects full path with leading slash
+        'content': file_content
+    }
+
+    try:
+        response = api_client.put(f'files/{file_path}', upload_data)
+        assert response['result'] is True, f"Failed to upload test file: {response.get('messages')}"
+        print(f"\n✓ Created test file for API testing: /{file_path}")
+
+        yield file_path
+
+    except Exception as e:
+        # WHY: If upload fails (not implemented, path validation), skip dependent tests
+        if '422' in str(e) or '501' in str(e) or '404' in str(e):
+            print(f"\n⚠ File upload not available, skipping dependent tests")
+            pytest.skip(f"File upload not available: {e}")
+        raise
+
+    finally:
+        # Cleanup: try to delete the file
+        try:
+            api_client.delete(f'files/{file_path}')
+            print(f"✓ Cleaned up test file: /{file_path}")
+        except Exception as cleanup_error:
+            # Cleanup failures are non-critical
+            print(f"⚠️ Failed to cleanup test file /{file_path}: {cleanup_error}")

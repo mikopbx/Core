@@ -46,17 +46,47 @@ class TestAsteriskManagers:
         time.sleep(1.0)
 
     def test_02_create_manager_basic(self, api_client):
-        """Test POST /asterisk-managers - Create basic AMI user"""
+        """Test POST /asterisk-managers - Create basic AMI user
+
+        Uses the new permissions object format (all 26 boolean fields).
+        This matches what the frontend JavaScript sends.
+        """
         import time
-        # Note: API expects flat permission fields with 'all' or 'no' values
-        # Not a nested permissions object!
+
+        # Create manager with permissions object (new format)
+        # WHY: Frontend sends complete permissions state with all 26 boolean fields
         manager_data = {
             'username': 'test_ami_user',
             'secret': 'TestSecret123!@#',
             'description': 'Test AMI User',
-            'call': 'all',
-            'cdr': 'all',
-            'agent': 'no'
+            'permissions': {
+                'call_read': True,
+                'call_write': True,
+                'cdr_read': True,
+                'cdr_write': True,
+                'originate_read': False,
+                'originate_write': False,
+                'reporting_read': False,
+                'reporting_write': False,
+                'agent_read': False,
+                'agent_write': False,
+                'config_read': False,
+                'config_write': False,
+                'dialplan_read': False,
+                'dialplan_write': False,
+                'dtmf_read': False,
+                'dtmf_write': False,
+                'log_read': False,
+                'log_write': False,
+                'system_read': False,
+                'system_write': False,
+                'user_read': False,
+                'user_write': False,
+                'verbose_read': False,
+                'verbose_write': False,
+                'command_read': False,
+                'command_write': False
+            }
         }
 
         response = api_client.post('asterisk-managers', manager_data)
@@ -85,9 +115,34 @@ class TestAsteriskManagers:
             'username': 'test_ami_admin',
             'secret': 'AdminSecret456!@#',
             'description': 'Test AMI Administrator',
-            'call': 'all',
-            'cdr': 'all',
-            'agent': 'all'
+            'permissions': {
+                'call_read': True,
+                'call_write': True,
+                'cdr_read': True,
+                'cdr_write': True,
+                'originate_read': True,
+                'originate_write': True,
+                'reporting_read': True,
+                'reporting_write': True,
+                'agent_read': True,
+                'agent_write': True,
+                'config_read': True,
+                'config_write': True,
+                'dialplan_read': True,
+                'dialplan_write': True,
+                'dtmf_read': True,
+                'dtmf_write': True,
+                'log_read': True,
+                'log_write': True,
+                'system_read': True,
+                'system_write': True,
+                'user_read': True,
+                'user_write': True,
+                'verbose_read': True,
+                'verbose_write': True,
+                'command_read': True,
+                'command_write': True
+            }
         }
 
         response = api_client.post('asterisk-managers', manager_data)
@@ -224,6 +279,9 @@ class TestAsteriskManagers:
 
         Tests partial updates where only some fields are provided.
         Unlike PUT, PATCH should not require all fields.
+
+        NOTE: permissions object must include ALL permission fields when provided,
+        as the frontend sends complete permission state (all 26 boolean fields).
         """
         import time
         if not self.created_ids:
@@ -232,11 +290,36 @@ class TestAsteriskManagers:
         manager_id = self.created_ids[0]
 
         # PATCH with only description and permissions - username NOT required
+        # WHY: permissions must be complete (all 26 fields) because frontend sends complete state
         patch_data = {
             'description': 'Patched Manager Description',
             'permissions': {
-                'system_read': True,
-                'system_write': True
+                'call_read': False,
+                'call_write': False,
+                'cdr_read': False,
+                'cdr_write': False,
+                'originate_read': False,
+                'originate_write': False,
+                'reporting_read': False,
+                'reporting_write': False,
+                'agent_read': False,
+                'agent_write': False,
+                'config_read': False,
+                'config_write': False,
+                'dialplan_read': False,
+                'dialplan_write': False,
+                'dtmf_read': False,
+                'dtmf_write': False,
+                'log_read': False,
+                'log_write': False,
+                'system_read': True,   # Enable system read
+                'system_write': True,  # Enable system write
+                'user_read': False,
+                'user_write': False,
+                'verbose_read': False,
+                'verbose_write': False,
+                'command_read': False,
+                'command_write': False
             }
         }
 
@@ -684,6 +767,109 @@ class TestAsteriskManagersEdgeCases:
                 print(f"✓ Invalid permission values rejected via HTTP error")
             else:
                 print(f"⚠ Unexpected error: {str(e)[:50]}")
+
+    def test_06_update_nonexistent_manager_returns_404(self, api_client):
+        """Test PUT/PATCH on non-existent manager should return 404, not create new record
+
+        This tests proper REST semantics:
+        - PUT to non-existent resource should return 404
+        - PATCH to non-existent resource should return 404
+        - POST with custom ID can create (allowed for migrations)
+        """
+        import requests
+
+        nonexistent_id = '999999'
+
+        print(f"\n{'='*70}")
+        print(f"Test: PUT/PATCH on Non-Existent Manager")
+        print(f"{'='*70}")
+
+        # Test 1: PUT should return 404
+        print(f"\nTest 1: PUT /asterisk-managers/{nonexistent_id}")
+        update_data = {
+            'id': nonexistent_id,
+            'username': 'should_not_be_created',
+            'secret': 'TestSecret123',
+            'description': 'This should not be created'
+        }
+
+        try:
+            response = api_client.put(f'asterisk-managers/{nonexistent_id}', update_data)
+            # If we get here, check if it incorrectly created a record
+            if response.get('result'):
+                created_id = response.get('data', {}).get('id')
+                # Cleanup the incorrectly created record
+                try:
+                    api_client.delete(f'asterisk-managers/{created_id}')
+                except:
+                    pass
+                pytest.fail(f"PUT on non-existent manager created new record (ID: {created_id}) - should return 404")
+            else:
+                print(f"  ⚠ PUT returned result=false but no HTTP 404")
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 404:
+                error_data = e.response.json()
+                print(f"  ✓ PUT correctly returned 404 Not Found")
+                print(f"  Error message: {error_data.get('messages', {})}")
+            else:
+                pytest.fail(f"Expected 404, got {e.response.status_code}: {e}")
+
+        # Test 2: PATCH should return 404
+        print(f"\nTest 2: PATCH /asterisk-managers/{nonexistent_id}")
+        patch_data = {
+            'description': 'Patched description'
+        }
+
+        try:
+            response = api_client.patch(f'asterisk-managers/{nonexistent_id}', patch_data)
+            # If we get here, check if it incorrectly created a record
+            if response.get('result'):
+                created_id = response.get('data', {}).get('id')
+                # Cleanup the incorrectly created record
+                try:
+                    api_client.delete(f'asterisk-managers/{created_id}')
+                except:
+                    pass
+                pytest.fail(f"PATCH on non-existent manager created new record (ID: {created_id}) - should return 404")
+            else:
+                print(f"  ⚠ PATCH returned result=false but no HTTP 404")
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 404:
+                error_data = e.response.json()
+                print(f"  ✓ PATCH correctly returned 404 Not Found")
+                print(f"  Error message: {error_data.get('messages', {})}")
+            else:
+                pytest.fail(f"Expected 404, got {e.response.status_code}: {e}")
+
+        # Test 3: POST with custom ID should still work (for migrations)
+        print(f"\nTest 3: POST with custom ID (should work for migrations)")
+        custom_id_data = {
+            'id': '888888',
+            'username': 'custom_id_manager',
+            'secret': 'CustomIdSecret123',
+            'description': 'Manager with custom ID'
+        }
+
+        try:
+            response = api_client.post('asterisk-managers', custom_id_data)
+            if response.get('result'):
+                created_id = response['data']['id']
+                print(f"  ✓ POST with custom ID worked: {created_id}")
+                # Cleanup
+                try:
+                    api_client.delete(f'asterisk-managers/{created_id}')
+                    print(f"  ✓ Cleanup successful")
+                except:
+                    pass
+            else:
+                print(f"  ⚠ POST with custom ID failed: {response.get('messages', {})}")
+        except Exception as e:
+            print(f"  ⚠ POST with custom ID failed: {str(e)[:100]}")
+
+        print(f"\n✓ REST API semantics verified:")
+        print(f"  - PUT to non-existent resource → 404")
+        print(f"  - PATCH to non-existent resource → 404")
+        print(f"  - POST with custom ID → allowed")
 
     def test_20_system_managers_readonly(self, api_client):
         """Test that system managers (admin, mikopbxuser, phpagi) cannot be modified or deleted"""

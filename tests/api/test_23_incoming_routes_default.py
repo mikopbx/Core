@@ -47,10 +47,84 @@ class TestIncomingRoutes:
         assert isinstance(data, dict), "Default route should be a dict"
 
         # Default route should have ID=1 and be the catch-all route
+        # It should have extension='busy' (system extension)
         if 'id' in data:
             print(f"✓ Retrieved default catch-all route: ID={data['id']}")
+            print(f"  Extension: {data.get('extension', 'N/A')}")
+            # Verify default route uses system extension
+            if data.get('extension') == 'busy':
+                print(f"✓ Default route correctly uses system extension 'busy'")
         else:
             print(f"✓ Default route exists")
+
+    def test_03_create_route_with_system_extension_busy(self, api_client):
+        """Test POST /incoming-routes - Create route with system extension 'busy'"""
+        route_data = {
+            'rulename': 'Test Route to Busy',
+            'number': '123456789',
+            'extension': 'busy',  # System extension
+            'timeout': 10,
+            'priority': 5
+        }
+
+        response = api_client.post('incoming-routes', route_data)
+        assert_api_success(response, "Failed to create route with system extension 'busy'")
+
+        assert 'id' in response['data']
+        route_id = response['data']['id']
+
+        print(f"✓ Created incoming route with system extension 'busy': ID={route_id}")
+
+        # Verify the route was created correctly
+        verify_response = api_client.get(f'incoming-routes/{route_id}')
+        assert_api_success(verify_response)
+        assert verify_response['data']['extension'] == 'busy'
+
+        print(f"✓ Verified route extension: {verify_response['data']['extension']}")
+
+        # Cleanup
+        api_client.delete(f'incoming-routes/{route_id}')
+        print(f"✓ Cleaned up test route: {route_id}")
+
+    def test_04_create_route_with_system_extension_hangup(self, api_client):
+        """Test POST /incoming-routes - Create route with system extension 'hangup'"""
+        route_data = {
+            'rulename': 'Test Route to Hangup',
+            'number': '987654321',
+            'extension': 'hangup',  # System extension
+            'timeout': 0,
+            'priority': 6
+        }
+
+        response = api_client.post('incoming-routes', route_data)
+        assert_api_success(response, "Failed to create route with system extension 'hangup'")
+
+        route_id = response['data']['id']
+        print(f"✓ Created incoming route with system extension 'hangup': ID={route_id}")
+
+        # Cleanup
+        api_client.delete(f'incoming-routes/{route_id}')
+        print(f"✓ Cleaned up test route: {route_id}")
+
+    def test_05_create_route_with_system_extension_voicemail(self, api_client):
+        """Test POST /incoming-routes - Create route with system extension 'voicemail'"""
+        route_data = {
+            'rulename': 'Test Route to Voicemail',
+            'number': '555123456',
+            'extension': 'voicemail',  # System extension
+            'timeout': 30,
+            'priority': 7
+        }
+
+        response = api_client.post('incoming-routes', route_data)
+        assert_api_success(response, "Failed to create route with system extension 'voicemail'")
+
+        route_id = response['data']['id']
+        print(f"✓ Created incoming route with system extension 'voicemail': ID={route_id}")
+
+        # Cleanup
+        api_client.delete(f'incoming-routes/{route_id}')
+        print(f"✓ Cleaned up test route: {route_id}")
 
     def test_03_create_basic_route(self, api_client, extension_fixtures):
         """Test POST /incoming-routes - Create basic route without provider"""

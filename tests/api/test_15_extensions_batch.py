@@ -197,9 +197,6 @@ def test_create_employees_batch(api_client, employee_fixtures):
     total_successful = len(created_employees) + len(skipped_employees)
     assert total_successful > 0, "No employees were created or existed"
 
-    # Return created IDs for potential cleanup
-    return [emp['id'] for emp in created_employees]
-
 
 def test_verify_all_employees_accessible(api_client, employee_fixtures):
     """

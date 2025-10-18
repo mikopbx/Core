@@ -63,8 +63,13 @@ class TestPredefinedIDCreation:
                 'description': 'Testing predefined ID'
             },
             'verify_fields': ['name'],
-            'skip': True,  # Sound files require file upload
-            'skip_reason': 'Requires file upload'
+            'skip': True,
+            'skip_reason': (
+                'Sound files require file upload via sound-files:uploadFile endpoint. '
+                'The API does not support creating sound files with predefined IDs '
+                'through the standard POST endpoint after file upload. '
+                'File IDs are auto-generated during upload process.'
+            )
         },
         {
             'endpoint': 'ivr-menu',
