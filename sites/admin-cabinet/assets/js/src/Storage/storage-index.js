@@ -68,17 +68,17 @@ const storageIndex = {
                 max: 5,
                 step: 1,
                 smooth: true,
-                showLabelTicks: 'always',
+                autoAdjustLabels: false,
                 interpretLabel: function (value) {
-                    let labels = [
-                        globalTranslate.st_Store1MonthOfRecords,
-                        globalTranslate.st_Store3MonthsOfRecords,
-                        globalTranslate.st_Store6MonthsOfRecords,
-                        globalTranslate.st_Store1YearOfRecords,
-                        globalTranslate.st_Store3YearsOfRecords,
-                        globalTranslate.st_StoreAllPossibleRecords,
-                    ];
-                    return labels[value];
+                    const labels = {
+                        0: globalTranslate.st_Store1MonthOfRecords,
+                        1: globalTranslate.st_Store3MonthsOfRecords,
+                        2: globalTranslate.st_Store6MonthsOfRecords,
+                        3: globalTranslate.st_Store1YearOfRecords,
+                        4: globalTranslate.st_Store3YearsOfRecords,
+                        5: globalTranslate.st_StoreAllPossibleRecords,
+                    };
+                    return labels[value] || '';
                 },
                 onChange: storageIndex.cbAfterSelectSavePeriodSlider,
             });
