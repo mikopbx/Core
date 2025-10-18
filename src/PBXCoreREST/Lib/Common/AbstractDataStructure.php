@@ -47,6 +47,48 @@ use MikoPBX\Common\Providers\TranslationProvider;
  */
 abstract class AbstractDataStructure
 {
+    // ==========================================
+    // EXTENSION FIELD PATTERNS (Reusable)
+    // ==========================================
+    // Use these constants for consistent extension validation across all resources
+
+    /**
+     * Numeric-only extension patterns
+     */
+
+    // 2-8 digits (for internal extensions like IVR, Conference, etc.)
+    public const PATTERN_EXTENSION_NUMERIC_SHORT = '^[0-9]{2,8}$';
+
+    // 1-20 digits (for phone numbers in forwarding, routing)
+    public const PATTERN_EXTENSION_NUMERIC_LONG = '^[0-9]{1,20}$';
+
+    // Numeric or empty (optional extension fields)
+    public const PATTERN_EXTENSION_NUMERIC_OR_EMPTY = '^[0-9]*$';
+
+    /**
+     * Extension patterns WITH system extensions (hangup, busy, did2user, voicemail)
+     * Use for routing/forwarding fields that can accept system destinations
+     */
+
+    // 2-8 digits OR system extensions
+    public const PATTERN_EXTENSION_WITH_SYSTEM_SHORT = '^([0-9]{2,8}|hangup|busy|did2user|voicemail)$';
+
+    // 1-20 digits OR system extensions
+    public const PATTERN_EXTENSION_WITH_SYSTEM_LONG = '^([0-9]{1,20}|hangup|busy|did2user|voicemail)$';
+
+    // Numeric (any length) OR system extensions OR empty
+    public const PATTERN_EXTENSION_WITH_SYSTEM_OR_EMPTY = '^([0-9]*|hangup|busy|did2user|voicemail)$';
+
+    /**
+     * Special patterns
+     */
+
+    // Dialplan patterns with wildcards (for DialplanApplications)
+    public const PATTERN_EXTENSION_DIALPLAN = '^[0-9#+\\*|X]{1,64}$';
+
+    // Only system extensions (no numbers)
+    public const PATTERN_SYSTEM_EXTENSIONS_ONLY = '^(hangup|busy|did2user|voicemail)$';
+
     /**
      * Escape text fields for HTML output using unified processor
      * 
@@ -812,6 +854,9 @@ abstract class AbstractDataStructure
             } elseif ($type === 'boolean') {
                 $sanitizationParts[] = 'boolean';
             } elseif ($type === 'array') {
+                $sanitizationParts[] = 'array';
+            } elseif ($type === 'object') {
+                // WHY: Objects (like permissions) need special handling - preserve as array
                 $sanitizationParts[] = 'array';
             }
 

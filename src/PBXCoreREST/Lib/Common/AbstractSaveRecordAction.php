@@ -381,7 +381,57 @@ abstract class AbstractSaveRecordAction
                 $data[$field] = $defaultValue;
             }
         }
-        
+
         return $data;
+    }
+
+    /**
+     * Validate record existence for PUT/PATCH operations
+     *
+     * RESTful semantics:
+     * - PUT/PATCH on non-existent resource MUST return 404
+     * - POST with custom ID MAY create new record (for migrations/imports)
+     *
+     * Usage in PHASE 3 (Determine Operation):
+     * ```php
+     * $recordId = $sanitizedData['id'] ?? null;
+     * $httpMethod = $data['httpMethod'] ?? 'POST';
+     * $model = null;
+     * $isNewRecord = true;
+     *
+     * if (!empty($recordId)) {
+     *     $model = YourModel::findFirstByUniqid($recordId);
+     *     if ($model) {
+     *         $isNewRecord = false;
+     *     } else {
+     *         // Check if PUT/PATCH should fail with 404
+     *         $error = self::validateRecordExistence($httpMethod, 'Resource name');
+     *         if ($error) {
+     *             $res->messages['error'][] = $error['message'];
+     *             $res->httpCode = $error['code'];
+     *             return $res;
+     *         }
+     *         // POST with custom ID - allowed for migrations
+     *     }
+     * }
+     * ```
+     *
+     * @param string $httpMethod HTTP method (POST/PUT/PATCH)
+     * @param string $resourceName Human-readable resource name for error message
+     * @return array|null Error array ['message' => string, 'code' => int] or null if valid
+     */
+    protected static function validateRecordExistence(string $httpMethod, string $resourceName): ?array
+    {
+        // PUT/PATCH MUST fail with 404 (strict REST semantics)
+        // POST MAY create with predefined ID (for migrations/imports)
+        if (in_array($httpMethod, ['PUT', 'PATCH'], true)) {
+            return [
+                'message' => "$resourceName not found",
+                'code' => 404
+            ];
+        }
+
+        // POST with custom ID is allowed
+        return null;
     }
 }
