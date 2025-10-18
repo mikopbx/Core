@@ -1642,6 +1642,8 @@ return [
     'rest_schema_sip_history_event' => 'Тип события (REGISTER, UNREGISTER, CALL, HANGUP)',
     'rest_schema_sip_history_ipaddress' => 'IP адрес устройства при событии',
     'rest_schema_sip_history_useragent' => 'User-Agent устройства при событии',
+    'rest_schema_sip_history_country' => 'ISO код страны устройства',
+    'rest_schema_sip_history_country_name' => 'Название страны устройства',
     'rest_schema_sip_auth_failure_count' => 'Количество неудачных попыток аутентификации',
     'rest_schema_sip_auth_last_failure_time' => 'Время последней неудачной попытки аутентификации',
     'rest_schema_sip_auth_blocked_until' => 'Время до которого устройство заблокировано',

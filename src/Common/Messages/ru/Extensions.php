@@ -25,6 +25,7 @@ return [
     // EX
     'ex_AddNewExtension' => 'Добавить нового сотрудника',
     'ex_CreateNewExtension' => 'Создание нового сотрудника',
+    'ex_ErrorLoadingData' => 'Ошибка при загрузке данных',
     'ex_ModifyEmployee' => 'Изменение сотрудника',
     'ex_AdditionalParameters' => 'Дополнительные параметры',
     'ex_BusyLevel' => 'Максимальное количество параллельных вызовов',

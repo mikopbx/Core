@@ -35,6 +35,8 @@ return [
     'f2b_WhiteList' => 'Список адресов и подсетей, которые никогда не блокируются (через пробел)',
 
     // FW
+    'fw_ErrorLoadingData' => 'Ошибка при загрузке данных',
+    'fw_ErrorLoadingRecord' => 'Ошибка при загрузке записи',
     'fw_AccessAllowedForSubnet' => 'Доступ будет разрешен для подсети',
     'fw_AccessBlockedForSubnet' => 'Доступ будет заблокирован для подсети',
     'fw_AddNewRule' => 'Добавить новую подсеть',
