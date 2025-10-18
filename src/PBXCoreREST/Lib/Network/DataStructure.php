@@ -272,7 +272,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     {
         return [
             'type' => 'object',
-            'required' => ['interfaces', 'nat', 'ports', 'settings'],
+            'required' => ['interfaces', 'nat', 'ports'],
             'description' => 'rest_schema_net_config',
             'properties' => [
                 'interfaces' => [
@@ -377,37 +377,6 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                             'maximum' => 65535,
                             'example' => (string)self::getDefaultValue(PbxSettings::RTP_PORT_TO),
                             'default' => (string)self::getDefaultValue(PbxSettings::RTP_PORT_TO)
-                        ],
-                    ]
-                ],
-                'settings' => [
-                    'type' => 'object',
-                    'description' => 'rest_schema_net_config_settings',
-                    'properties' => [
-                        'hostname' => [
-                            'type' => 'string',
-                            'description' => 'rest_schema_net_settings_hostname',
-                            'example' => 'mikopbx-server'
-                        ],
-                        'domain' => [
-                            'type' => 'string',
-                            'description' => 'rest_schema_net_settings_domain',
-                            'example' => 'example.com'
-                        ],
-                        'gateway' => [
-                            'type' => 'string',
-                            'description' => 'rest_schema_net_settings_gateway',
-                            'example' => '192.168.1.254'
-                        ],
-                        'primarydns' => [
-                            'type' => 'string',
-                            'description' => 'rest_schema_net_settings_primarydns',
-                            'example' => '8.8.8.8'
-                        ],
-                        'secondarydns' => [
-                            'type' => 'string',
-                            'description' => 'rest_schema_net_settings_secondarydns',
-                            'example' => '8.8.4.4'
                         ],
                     ]
                 ],

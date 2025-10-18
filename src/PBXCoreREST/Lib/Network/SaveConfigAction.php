@@ -423,13 +423,15 @@ class SaveConfigAction
                     break;
 
                 case 'hostname':
-                    // Hostname is not used in new UI, always empty
-                    $eth->$name = '';
-                    break;
-
                 case 'domain':
-                    // Domain field is not used in new UI, always empty
-                    $eth->$name = '';
+                    // WHY: Global hostname/domain now stored in internet interface only
+                    // These are system-wide settings that define how the system identifies itself
+                    if ($itIsInternetInterface) {
+                        $fieldKey = $name . '_' . $eth->id;
+                        $eth->$name = array_key_exists($fieldKey, $data) ? $data[$fieldKey] : '';
+                    } else {
+                        $eth->$name = '';
+                    }
                     break;
 
                 default:

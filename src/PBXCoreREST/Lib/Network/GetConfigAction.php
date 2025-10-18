@@ -181,15 +181,6 @@ class GetConfigAction
                 PbxSettings::RTP_PORT_TO => PbxSettings::getValueByKey(PbxSettings::RTP_PORT_TO),
             ];
 
-            // Get additional settings
-            $additionalSettings = [
-                'hostname' => $internetInterface ? $internetInterface->hostname : '',
-                'domain' => $internetInterface ? $internetInterface->domain : '',
-                'gateway' => $internetInterface ? $internetInterface->gateway : '',
-                'primarydns' => $internetInterface ? $internetInterface->primarydns : '',
-                'secondarydns' => $internetInterface ? $internetInterface->secondarydns : '',
-            ];
-
             // Load static routes (ordered by priority)
             $staticRoutes = NetworkStaticRoutes::find([
                 'order' => 'priority ASC'
@@ -215,7 +206,6 @@ class GetConfigAction
                 'deletableInterfaces' => $deletableInterfaces,
                 'nat' => $natSettings,
                 'ports' => $portSettings,
-                'settings' => $additionalSettings,
                 'isDocker' => Util::isDocker(),
                 'staticRoutes' => $routesData,
                 'availableInterfaces' => $availableInterfaces,
