@@ -671,6 +671,10 @@ return [
     'mo_InvalidSecondaryDnsIpAddress' => 'Некорректный IP адрес вторичного DNS сервера',
     'mo_InvalidHostname' => 'Некорректное имя хоста',
     'mo_InvalidExternalHostname' => 'Некорректное внешнее имя хоста',
+    'mo_ThisNetworkRouteAlreadyExists' => 'Маршрут для указанной сети уже существует',
+    'mo_InvalidNetworkAddress' => 'Некорректный адрес сети',
+    'mo_InvalidGatewayAddress' => 'Некорректный адрес шлюза',
+    'mo_InvalidSubnetMask' => 'Некорректная маска подсети (допустимые значения: 0-32)',
 
     // MS - Moved to MailSettings.php
 

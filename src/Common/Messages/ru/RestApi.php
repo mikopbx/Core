@@ -207,7 +207,6 @@ return [
     'rest_schema_net_config_deletable_interfaces' => 'Список удаляемых интерфейсов',
     'rest_schema_net_config_nat' => 'Настройки NAT',
     'rest_schema_net_config_ports' => 'Настройки портов',
-    'rest_schema_net_config_settings' => 'Дополнительные настройки сети',
     'rest_schema_net_config_is_docker' => 'Работает ли в Docker контейнере',
     'rest_schema_net_config_static_routes' => 'Статические маршруты',
 
@@ -224,13 +223,6 @@ return [
     'rest_schema_net_ports_external_tls' => 'Внешний TLS порт',
     'rest_schema_net_ports_rtp_from' => 'Начало диапазона RTP портов',
     'rest_schema_net_ports_rtp_to' => 'Конец диапазона RTP портов',
-
-    // Network REST API - Additional Settings
-    'rest_schema_net_settings_hostname' => 'Имя хоста',
-    'rest_schema_net_settings_domain' => 'Доменное имя',
-    'rest_schema_net_settings_gateway' => 'Шлюз по умолчанию',
-    'rest_schema_net_settings_primarydns' => 'Первичный DNS',
-    'rest_schema_net_settings_secondarydns' => 'Вторичный DNS',
 
     // Network REST API - Static Routes
     'rest_schema_net_route_id' => 'ID маршрута',

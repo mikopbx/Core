@@ -829,6 +829,20 @@ const networks = {
                     <div class="ui horizontal divider">${globalTranslate.nw_InternetSettings || 'Internet Settings'}</div>
 
                     <div class="field">
+                        <label>${globalTranslate.nw_Hostname || 'Hostname'}</label>
+                        <div class="field max-width-400">
+                            <input type="text" name="hostname_${id}" value="${iface.hostname || ''}" placeholder="mikopbx" />
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label>${globalTranslate.nw_Domain || 'Domain'}</label>
+                        <div class="field max-width-400">
+                            <input type="text" name="domain_${id}" value="${iface.domain || ''}" placeholder="example.com" />
+                        </div>
+                    </div>
+
+                    <div class="field">
                         <label>${globalTranslate.nw_Gateway}</label>
                         <div class="field max-width-400 ${dnsGatewayDisabledClass}">
                             <input type="text" class="ipaddress" name="gateway_${id}" value="${iface.gateway || ''}" ${dnsGatewayReadonly} />

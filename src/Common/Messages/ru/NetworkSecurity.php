@@ -113,6 +113,7 @@ return [
     'nw_CurrentIPFromDHCP' => 'Текущий IP адрес полученный по DHCP',
     'nw_DNSAddresses' => 'Адреса DNS серверов',
     'nw_DeleteCurrentInterface' => 'Удалить этот интерфейс',
+    'nw_Domain' => 'Доменное имя',
     'nw_Gateway' => 'Шлюз',
     'nw_GatewayAddress' => 'Адрес шлюза (Gateway)',
     'nw_Hostname' => 'Локальное имя хоста',
