@@ -100,6 +100,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
 
         $manager = null;
         $isNewRecord = true;
+        $httpMethod = $data['httpMethod'] ?? 'POST';
 
         if (!empty($sanitizedData['id'])) {
             // Try to find existing record by numeric ID
@@ -116,9 +117,15 @@ class SaveRecordAction extends AbstractSaveRecordAction
                     return $res;
                 }
             } else {
-                $res->messages['error'][] = "Manager with ID {$sanitizedData['id']} not found";
-                $res->httpCode = 404;
-                return $res;
+                // Record not found - check if PUT/PATCH should fail with 404
+                // WHY: PUT/PATCH expect existing resource, only POST can create with custom ID
+                $error = self::validateRecordExistence($httpMethod, 'asterisk-managers');
+                if ($error) {
+                    $res->messages['error'][] = $error['message'];
+                    $res->httpCode = $error['code'];
+                    return $res;
+                }
+                // POST with custom ID allowed for migrations/imports
             }
         }
 
@@ -302,8 +309,11 @@ class SaveRecordAction extends AbstractSaveRecordAction
      * - false/true => 'write'
      * - false/false => ''
      *
+     * NOTE: Frontend always sends complete permissions object (all 26 boolean fields).
+     * This is NOT a sparse PATCH - it's a full replacement of permissions state.
+     *
      * @param AsteriskManagerUsers $manager Manager model
-     * @param array<string, mixed> $permissions Permissions data from request
+     * @param array<string, mixed> $permissions Permissions data from request (complete state)
      */
     private static function processPermissions(AsteriskManagerUsers $manager, array $permissions): void
     {
@@ -314,6 +324,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
 
         if (!empty($permissions)) {
             // Process boolean permission fields
+            // WHY: Frontend sends ALL 26 fields, so we process them all
             foreach ($availablePermissions as $perm) {
                 // Handle both boolean and string values from JavaScript
                 $readKey = $perm . '_read';
@@ -349,7 +360,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 }
             }
         } else {
-            // Clear all permissions if not provided
+            // Clear all permissions if empty array provided
             foreach ($availablePermissions as $perm) {
                 $manager->$perm = '';
             }

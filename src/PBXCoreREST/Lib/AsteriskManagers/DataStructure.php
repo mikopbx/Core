@@ -448,7 +448,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'description' => 'rest_schema_am_permissions',
                 'properties' => $permissionFields,
                 'sanitize' => 'array', // Special handling in SaveRecordAction
-                'readOnly' => true, // Computed from read/write strings
+                // NOT readOnly - frontend sends this in POST/PUT/PATCH requests
                 'example' => [
                     'call_read' => true,
                     'call_write' => false,
