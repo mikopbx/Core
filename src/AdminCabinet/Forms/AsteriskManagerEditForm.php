@@ -138,7 +138,7 @@ class AsteriskManagerEditForm extends BaseForm
         // Add text area for Event Filter with auto-resize, 2000 chars limit and placeholder
         $this->addTextArea('eventfilter', '', 65, [
             'maxlength' => 2000,
-            'placeholder' => $this->translation->_('am_EventFilterPlaceholder')
+            'placeholder' => "Event: QueueMemberStatus\n!Event: VarSet"
         ]);
 
         // Add text area for Description with auto-resize, 2000 chars limit and placeholder
