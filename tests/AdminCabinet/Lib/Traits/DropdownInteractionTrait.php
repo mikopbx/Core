@@ -210,6 +210,11 @@ JS;
                     )
                 );
 
+                // Wait for AJAX to populate menu items (for API-based dropdowns)
+                // This is crucial for dropdowns that load data dynamically
+                $this->waitForAjax();
+                usleep(300000); // Additional 300ms for DOM rendering after AJAX
+
                 // Use search if available
                 if ($isSearchable) {
                     // Re-find dropdown to get fresh reference after opening
@@ -220,6 +225,7 @@ JS;
 
                     // Wait for menu to stabilize after filtering
                     // The menu rebuilds on each keystroke, so we need to wait longer
+                    $this->waitForAjax();
                     usleep(800000); // 800ms wait for menu to rebuild
                 }
 
@@ -523,6 +529,13 @@ JS;
      */
     protected function selectDropdownItem(string $fieldName, string $value): bool
     {
+        // Check if value is already selected - skip if it is
+        $currentValue = $this->getDropdownValue($fieldName);
+        if ($currentValue === $value) {
+            $this->annotate("Value '{$value}' already selected in dropdown '{$fieldName}', skipping selection", 'info');
+            return true;
+        }
+
         // Try JavaScript API first (fastest and most reliable)
         if ($this->selectDropdownValue($fieldName, $value)) {
             return true;
