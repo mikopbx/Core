@@ -202,7 +202,13 @@ class FillDataTimeSettingsTest extends MikoPBXTestsBase
     protected function verifySessionStillValid(): void
     {
         try {
-            // Check that we can still access a protected page
+            // Check current URL first - if already on login page, session is invalid
+            $currentUrl = self::$driver->getCurrentURL();
+            if (strpos($currentUrl, '/session/index') !== false) {
+                throw new \Exception("Already on login page - session expired");
+            }
+
+            // Try to access a protected page
             $url = $GLOBALS['SERVER_PBX'] . '/admin-cabinet/';
             self::$driver->get($url);
 
@@ -210,17 +216,27 @@ class FillDataTimeSettingsTest extends MikoPBXTestsBase
             sleep(2);
             $this->waitForAjax();
 
+            // Check if redirected to login page
+            $currentUrl = self::$driver->getCurrentURL();
+            if (strpos($currentUrl, '/session/index') !== false) {
+                throw new \Exception("Redirected to login page - session expired");
+            }
+
+            // Check for login form presence (indicates session is invalid)
+            try {
+                $loginForm = self::$driver->findElement(\Facebook\WebDriver\WebDriverBy::id('login-form'));
+                if ($loginForm->isDisplayed()) {
+                    throw new \Exception("Login form is visible - session expired");
+                }
+            } catch (\Facebook\WebDriver\Exception\NoSuchElementException $e) {
+                // Login form not found - this is good, means we're authenticated
+            }
+
             // Check for session indicator (top menu should be visible)
             $topMenu = self::$driver->findElement(\Facebook\WebDriver\WebDriverBy::id('top-menu-search'));
 
             if (!$topMenu->isDisplayed()) {
                 throw new \Exception("Top menu not visible - session appears invalid");
-            }
-
-            // Additional check - verify we're not on login page
-            $currentUrl = self::$driver->getCurrentURL();
-            if (strpos($currentUrl, '/session/index') !== false) {
-                throw new \Exception("Redirected to login page - session expired");
             }
 
             self::annotate("Session verification successful - user is authenticated");
@@ -250,13 +266,45 @@ class FillDataTimeSettingsTest extends MikoPBXTestsBase
     {
         self::annotate("Re-logging in after session invalidation");
 
-        // Get login credentials
-        $loginData = $this->loginDataProvider();
+        try {
+            // Check if we're already on the login page
+            $currentUrl = self::$driver->getCurrentURL();
+            if (strpos($currentUrl, '/session/index') === false) {
+                // If not on login page, navigate to it
+                $loginUrl = $GLOBALS['SERVER_PBX'] . '/admin-cabinet/session/index/';
+                self::$driver->get($loginUrl);
+                sleep(2);
+            }
 
-        // Perform login (this will handle cookie restoration or fresh login)
-        $this->loginOnMikoPBX($loginData[0][0]);
+            // Wait for login form to be visible
+            self::$driver->wait(10, 500)->until(
+                \Facebook\WebDriver\WebDriverExpectedCondition::visibilityOfElementLocated(
+                    \Facebook\WebDriver\WebDriverBy::id('login-form')
+                )
+            );
 
-        self::annotate("Re-login successful", 'success');
+            // Get login credentials
+            $loginData = $this->loginDataProvider();
+
+            // Perform login (this will handle cookie restoration or fresh login)
+            $this->loginOnMikoPBX($loginData[0][0]);
+
+            // Wait for login to complete and dashboard to load
+            sleep(3);
+            $this->waitForAjax();
+
+            // Verify we're logged in by checking for top menu
+            self::$driver->wait(10, 500)->until(
+                \Facebook\WebDriver\WebDriverExpectedCondition::visibilityOfElementLocated(
+                    \Facebook\WebDriver\WebDriverBy::id('top-menu-search')
+                )
+            );
+
+            self::annotate("Re-login successful", 'success');
+        } catch (\Exception $e) {
+            self::annotate("Re-login failed: " . $e->getMessage(), 'error');
+            throw new \Exception("Failed to re-login after time change: " . $e->getMessage());
+        }
     }
 
     /**
