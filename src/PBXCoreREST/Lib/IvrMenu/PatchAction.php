@@ -56,6 +56,7 @@ class PatchAction
             $ivrMenu = IvrMenu::findFirstByUniqid($data['id']);
             if (!$ivrMenu) {
                 $res->messages['error'][] = 'IVR menu not found: ' . $data['id'];
+                $res->httpCode = 404;
                 return $res;
             }
             

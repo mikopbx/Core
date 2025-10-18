@@ -118,24 +118,32 @@ class SaveRecordAction extends AbstractSaveRecordAction
         // ============================================================
         // PHASE 3: DETERMINE OPERATION TYPE
         // WHY: Different logic for new vs existing records
+        // REST API compliance: PUT/PATCH on non-existent resource must return 404
         // ============================================================
 
+        $recordId = $sanitizedData['id'] ?? null;
+        $httpMethod = $data['httpMethod'] ?? 'POST';
         $record = null;
-        if (!empty($sanitizedData['id'])) {
+
+        if (!empty($recordId)) {
             // Try to find existing record by numeric ID
-            $record = AsteriskRestUsers::findFirstById($sanitizedData['id']);
+            $record = AsteriskRestUsers::findFirstById($recordId);
 
             if ($record) {
                 // Record exists - UPDATE operation
                 $isCreateOperation = false;
             } else {
-                $res->messages['error'][] = "ARI user with ID {$sanitizedData['id']} not found";
-                $res->httpCode = 404;
-                return $res;
+                // Check if PUT/PATCH should fail with 404
+                $error = self::validateRecordExistence($httpMethod, 'ARI user');
+                if ($error) {
+                    $res->messages['error'][] = $error['message'];
+                    $res->httpCode = $error['code'];
+                    return $res;
+                }
+                // POST with custom ID allowed for migrations
+                $record = new AsteriskRestUsers();
             }
-        }
-
-        if ($isCreateOperation) {
+        } else {
             // CREATE: Initialize new ARI user
             $record = new AsteriskRestUsers();
         }

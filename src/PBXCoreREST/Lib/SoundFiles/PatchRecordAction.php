@@ -52,6 +52,7 @@ class PatchRecordAction
         $record = SoundFiles::findFirstById($data['id']);
         if (!$record) {
             $res->messages['error'][] = 'api_SoundFileNotFound';
+            $res->httpCode = 404;
             return $res;
         }
 

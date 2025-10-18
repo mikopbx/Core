@@ -41,7 +41,7 @@ class UpdateRecordAction
 {
     /**
      * Update conference room (full replacement)
-     * 
+     *
      * @param array $data Conference room data with ID
      * @return PBXApiResult
      */

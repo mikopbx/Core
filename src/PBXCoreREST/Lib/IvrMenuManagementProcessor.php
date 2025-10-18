@@ -58,6 +58,13 @@ class IvrMenuManagementProcessor extends Injectable
 
         $action = $request['action'];
         $data = $request['data'];
+
+        // Pass HTTP method to actions for PUT/PATCH validation
+        // WHY: PUT/PATCH on non-existent resource should return 404, not create new record
+        if (isset($request['httpMethod'])) {
+            $data['httpMethod'] = $request['httpMethod'];
+        }
+
         // For debugging purposes, use proper system logging instead of error_log:
         // SystemMessages::sysLogMsg(__CLASS__, "Processing action: {$action}", LOG_DEBUG);
 

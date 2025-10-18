@@ -110,8 +110,9 @@ class SaveRecordAction extends AbstractSaveRecordAction
         $room = null;
         $isNewRecord = true;
 
-        // Get record ID from sanitized data
+        // Get record ID and HTTP method from data
         $recordId = $sanitizedData['id'] ?? null;
+        $httpMethod = $data['httpMethod'] ?? 'POST'; // Default to POST for backward compatibility
 
         if (!empty($recordId)) {
             // Try to find existing conference room by provided ID
@@ -119,8 +120,16 @@ class SaveRecordAction extends AbstractSaveRecordAction
             if ($room) {
                 // Record exists - this is UPDATE operation
                 $isNewRecord = false;
+            } else {
+                // Record not found - check if PUT/PATCH should fail with 404
+                $error = self::validateRecordExistence($httpMethod, 'Conference room');
+                if ($error) {
+                    $res->messages['error'][] = $error['message'];
+                    $res->httpCode = $error['code'];
+                    return $res;
+                }
+                // If POST with ID - allow CREATE with predefined ID (migration/import scenario)
             }
-            // If not found - this is CREATE with predefined ID (migration/import scenario)
         }
 
         // Extension required only for CREATE operation

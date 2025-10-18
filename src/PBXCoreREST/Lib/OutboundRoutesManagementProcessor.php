@@ -23,6 +23,7 @@ use MikoPBX\PBXCoreREST\Lib\OutboundRoutes\{
     GetRecordAction,
     GetListAction,
     SaveRecordAction,
+    PatchAction,
     DeleteRecordAction,
     ChangePriorityAction,
     GetDefaultAction,
@@ -73,7 +74,13 @@ class OutboundRoutesManagementProcessor extends Injectable
 
         $actionString = $request['action'];
         $data = $request['data'];
-        
+
+        // Pass HTTP method to actions for PUT/PATCH validation
+        // WHY: PUT/PATCH on non-existent resource should return 404, not create new record
+        if (isset($request['httpMethod'])) {
+            $data['httpMethod'] = $request['httpMethod'];
+        }
+
         // Try to match action with enum
         $action = OutboundRouteAction::tryFrom($actionString);
         
@@ -88,7 +95,7 @@ class OutboundRoutesManagementProcessor extends Injectable
             OutboundRouteAction::GET_LIST => GetListAction::main($data),
             OutboundRouteAction::CREATE => SaveRecordAction::main($data),
             OutboundRouteAction::UPDATE => SaveRecordAction::main($data),
-            OutboundRouteAction::PATCH => SaveRecordAction::main($data),
+            OutboundRouteAction::PATCH => PatchAction::main($data),
             OutboundRouteAction::DELETE => DeleteRecordAction::main($data['id'] ?? ''),
             OutboundRouteAction::CHANGE_PRIORITY => ChangePriorityAction::main($data),
             OutboundRouteAction::GET_DEFAULT => GetDefaultAction::main(),

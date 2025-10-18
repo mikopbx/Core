@@ -57,6 +57,7 @@ class PatchRecordAction extends AbstractSaveRecordAction
 
             if (!$queue) {
                 $res->messages['error'][] = "Call queue not found: {$data['id']}";
+                $res->httpCode = 404;
                 return $res;
             }
 

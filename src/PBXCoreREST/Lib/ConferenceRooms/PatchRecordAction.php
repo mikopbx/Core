@@ -59,9 +59,10 @@ class PatchRecordAction
         
         // Find existing conference room
         $conference = ConferenceRooms::findFirstByUniqid($id);
-        
+
         if (!$conference) {
             $res->messages['error'][] = 'Conference room not found';
+            $res->httpCode = 404;
             return $res;
         }
         

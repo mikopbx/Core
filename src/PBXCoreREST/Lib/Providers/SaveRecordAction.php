@@ -115,41 +115,14 @@ class SaveRecordAction extends AbstractSaveRecordAction
         }
 
         // ============================================================
-        // PHASE 2: REQUIRED FIELDS VALIDATION
-        // Check required fields before database operations
-        // WHY: Fail fast - don't waste resources on incomplete data
+        // PHASE 2.5: EARLY EXISTENCE CHECK (for PATCH/PUT)
+        // WHY: Check if resource exists BEFORE validating required fields
+        // This prevents misleading "field required" errors for non-existent resources
         // ============================================================
 
-        $validationRules = [
-            'type' => [
-                ['type' => 'required', 'message' => 'Provider type is required'],
-                ['type' => 'enum', 'values' => ['SIP', 'IAX'], 'message' => 'Provider type must be SIP or IAX']
-            ],
-            'description' => [
-                ['type' => 'required', 'message' => 'Provider description is required']
-            ],
-            'registration_type' => [
-                ['type' => 'required', 'message' => 'Registration type is required'],
-                ['type' => 'enum', 'values' => ['none', 'outbound', 'inbound'],
-                 'message' => 'Registration type must be: none, outbound, or inbound']
-            ]
-        ];
-
-        $validationErrors = self::validateRequiredFields($sanitizedData, $validationRules);
-        if (!empty($validationErrors)) {
-            $res->messages['error'] = $validationErrors;
-            return $res;
-        }
-
-        // ============================================================
-        // PHASE 3: DETERMINE OPERATION TYPE
-        // Detect CREATE vs UPDATE/PATCH and prepare model
-        // WHY: Different logic for new vs existing records
-        // ============================================================
-
+        $httpMethod = $data['httpMethod'] ?? 'POST';
         $provider = null;
         $isNewRecord = true;
-        $httpMethod = strtoupper($data['httpMethod']);
 
         if (!empty($sanitizedData['id'])) {
             // Try to find existing record by uniqid
@@ -158,24 +131,63 @@ class SaveRecordAction extends AbstractSaveRecordAction
             if ($provider) {
                 // Record exists - UPDATE or PATCH operation
                 $isNewRecord = false;
-
-                // Type cannot be changed on existing provider
-                if ($provider->type !== $sanitizedData['type']) {
-                    $res->messages['error'][] = 'Cannot change provider type after creation';
-                    return $res;
-                }
             } else {
                 // ID provided but record not found
-                // For POST (create) - allow predefined ID
-                // For PUT/PATCH (update) - require existing record
-                if ($httpMethod !== 'POST') {
-                    $res->messages['error'][] = 'Provider not found';
-                    $res->httpCode = 404;
+                // Check if PUT/PATCH should fail with 404 BEFORE validating required fields
+                $error = self::validateRecordExistence($httpMethod, 'Provider');
+                if ($error) {
+                    $res->messages['error'][] = $error['message'];
+                    $res->httpCode = $error['code'];
                     return $res;
                 }
-                // For POST: continue with new record creation using predefined ID
+                // POST with custom ID allowed for migrations
             }
         }
+
+        // ============================================================
+        // PHASE 2: REQUIRED FIELDS VALIDATION
+        // Check required fields before database operations
+        // WHY: Fail fast - don't waste resources on incomplete data
+        // Note: For PATCH, required fields are optional (partial update)
+        // ============================================================
+
+        $isPatch = ($httpMethod === 'PATCH');
+
+        $validationRules = [
+            'type' => [
+                ['type' => 'required', 'message' => 'Provider type is required'],
+                ['type' => 'enum', 'values' => ['SIP', 'IAX'], 'message' => 'Provider type must be SIP or IAX']
+            ]
+        ];
+
+        // For PATCH, description and registration_type are optional (partial update)
+        if (!$isPatch) {
+            $validationRules['description'] = [
+                ['type' => 'required', 'message' => 'Provider description is required']
+            ];
+            $validationRules['registration_type'] = [
+                ['type' => 'required', 'message' => 'Registration type is required'],
+                ['type' => 'enum', 'values' => ['none', 'outbound', 'inbound'],
+                 'message' => 'Registration type must be: none, outbound, or inbound']
+            ];
+        }
+
+        $validationErrors = self::validateRequiredFields($sanitizedData, $validationRules);
+        if (!empty($validationErrors)) {
+            $res->messages['error'] = $validationErrors;
+            return $res;
+        }
+
+        // Type cannot be changed on existing provider
+        if (!$isNewRecord && isset($sanitizedData['type']) && $provider->type !== $sanitizedData['type']) {
+            $res->messages['error'][] = 'Cannot change provider type after creation';
+            return $res;
+        }
+
+        // ============================================================
+        // PHASE 3: FINALIZE OPERATION TYPE
+        // Initialize model if needed
+        // ============================================================
 
         if ($isNewRecord) {
             // CREATE: Initialize new provider

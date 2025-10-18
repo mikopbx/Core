@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Lib\Extensions;
 
 use MikoPBX\Common\Providers\RedisClientProvider;
+use MikoPBX\Core\System\Configs\GeoIP2Conf;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Di;
 use Throwable;
@@ -94,7 +95,17 @@ class GetHistoryAction extends AbstractExtensionStatusAction
                     $record['date'] = date('Y-m-d H:i:s', $record['timestamp']);
                     $record['type'] = self::getEventTypeForHistory($record['status'], $record['previousStatus']);
                     $record['details'] = self::generateHistoryDetails($record);
-                    
+
+                    // Add country information if IP address is available
+                    if (!empty($record['ip_address'])) {
+                        $countryInfo = GeoIP2Conf::getCountryByIp($record['ip_address']);
+                        $record['country'] = $countryInfo['isoCode'];
+                        $record['countryName'] = $countryInfo['name'];
+                    } else {
+                        $record['country'] = '';
+                        $record['countryName'] = '';
+                    }
+
                     $history[] = $record;
                 }
             }

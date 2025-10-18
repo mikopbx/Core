@@ -107,17 +107,32 @@ class SaveRecordAction extends AbstractSaveRecordAction
         // Note: For PATCH operations with existing ID, network fields are not required
         // ============================================================
 
-        // Determine if this is a PATCH on existing record
+        // Extract HTTP method and ID early to handle validation properly
+        $httpMethod = $data['httpMethod'] ?? 'POST';
+        // Reuse $recordId from PHASE 1 - already extracted and preserved
+        // $recordId is defined in PHASE 1: line 79
+
+        // Determine if this is a PATCH/PUT on existing record
         $isExistingRecordPatch = false;
-        if (!empty($sanitizedData['id'])) {
-            $existingFilter = NetworkFilters::findFirstById($sanitizedData['id']);
+        if (!empty($recordId)) {
+            $existingFilter = NetworkFilters::findFirstById($recordId);
             if ($existingFilter) {
                 $isExistingRecordPatch = true;
+            } else {
+                // Record doesn't exist with this ID
+                // Check if PUT/PATCH should fail with 404 immediately
+                $error = self::validateRecordExistence($httpMethod, 'Firewall rule');
+                if ($error) {
+                    $res->messages['error'][] = $error['message'];
+                    $res->httpCode = $error['code'];
+                    return $res;
+                }
+                // If we got here, it's POST with custom ID - allow it to continue
             }
         }
 
         // For CREATE operations: require network+subnet (form always sends these fields)
-        // For UPDATE/PATCH: network data is optional
+        // For UPDATE/PATCH on existing record: network data is optional
         if (!$isExistingRecordPatch) {
             if (!isset($sanitizedData['network']) || !isset($sanitizedData['subnet'])) {
                 $res->messages['error'][] = 'Network and subnet fields are required';
@@ -128,19 +143,21 @@ class SaveRecordAction extends AbstractSaveRecordAction
         // ============================================================
         // PHASE 3: DETERMINE OPERATION TYPE
         // Detect CREATE vs UPDATE/PATCH and prepare model
+        // WHY: Need to distinguish CREATE from UPDATE/PATCH for defaults
         // ============================================================
 
         $networkFilter = null;
         $isNewRecord = true;
 
-        if (!empty($sanitizedData['id'])) {
-            // Try to find existing record by numeric ID
-            $networkFilter = NetworkFilters::findFirstById($sanitizedData['id']);
+        // Try to find existing record (already checked in PHASE 2, but need model reference)
+        if (!empty($recordId)) {
+            $networkFilter = NetworkFilters::findFirstById($recordId);
 
             if ($networkFilter) {
                 // Record exists - UPDATE or PATCH operation
                 $isNewRecord = false;
             }
+            // If not found but we got here, it's POST with custom ID (already validated in PHASE 2)
         }
 
         if ($isNewRecord) {
@@ -149,9 +166,9 @@ class SaveRecordAction extends AbstractSaveRecordAction
 
             // ✅ Support predefined ID (migrations/imports)
             // For auto-increment fields, we need to explicitly set the ID
-            if (!empty($sanitizedData['id'])) {
+            if (!empty($recordId)) {
                 // Use writeAttribute to bypass auto-increment
-                $networkFilter->writeAttribute('id', (int)$sanitizedData['id']);
+                $networkFilter->writeAttribute('id', (int)$recordId);
             }
         }
 

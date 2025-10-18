@@ -116,18 +116,27 @@ class SaveRecordAction extends AbstractSaveRecordAction
         // WHY: Different logic for new vs existing records
         // ============================================================
 
+        $recordId = $sanitizedData['id'] ?? null;
+        $httpMethod = $data['httpMethod'] ?? 'POST';
         $record = null;
-        if (!empty($sanitizedData['id'])) {
+
+        if (!empty($recordId)) {
             // Try to find existing record by numeric ID
-            $record = CustomFiles::findFirstById($sanitizedData['id']);
+            $record = CustomFiles::findFirstById($recordId);
 
             if ($record) {
                 // Record exists - UPDATE operation
                 $isCreateOperation = false;
             } else {
-                $res->messages['error'][] = "Custom file with ID {$sanitizedData['id']} not found";
-                $res->httpCode = 404;
-                return $res;
+                // Check if PUT/PATCH should fail with 404
+                $error = self::validateRecordExistence($httpMethod, 'custom file');
+                if ($error) {
+                    $res->messages['error'][] = $error['message'];
+                    $res->httpCode = $error['code'];
+                    return $res;
+                }
+                // POST with custom ID allowed for migrations
+                $isCreateOperation = true;
             }
         } else {
             // No ID provided - CREATE operation

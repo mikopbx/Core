@@ -120,13 +120,13 @@
                  }
              }
              
-             // Get or create model
-             // Determine if this is CREATE or UPDATE by checking if record exists in DB
-             $app = null;
-             $isNewRecord = true;
-
+             // ============ PHASE 3: DETERMINE OPERATION ============
+             // WHY: Decide between CREATE (new record) vs UPDATE (existing record)
              // Support both 'id' (REST v3) and 'uniqid' (legacy) fields
              $recordId = $sanitizedData['id'] ?? $sanitizedData['uniqid'] ?? null;
+             $httpMethod = $data['httpMethod'] ?? 'POST';
+             $app = null;
+             $isNewRecord = true;
 
              if (!empty($recordId)) {
                  // Try to find existing dialplan application by provided ID
@@ -138,6 +138,17 @@
                  if ($app) {
                      // Record exists - this is UPDATE operation
                      $isNewRecord = false;
+                 } else {
+                     // Record NOT found - check if PUT/PATCH should fail with 404
+                     // WHY: PUT/PATCH on non-existent resource should return 404 per REST semantics
+                     // POST with custom ID is allowed for migrations/imports
+                     $error = self::validateRecordExistence($httpMethod, 'dialplan application');
+                     if ($error) {
+                         $res->messages['error'][] = $error['message'];
+                         $res->httpCode = $error['code'];
+                         return $res;
+                     }
+                     // POST with custom ID allowed - will create new record below
                  }
              }
 

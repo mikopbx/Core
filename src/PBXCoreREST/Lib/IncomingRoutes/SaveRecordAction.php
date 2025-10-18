@@ -125,6 +125,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
 
         $route = null;
         $isNewRecord = true;
+        $httpMethod = $data['httpMethod'] ?? 'POST';
 
         if (!empty($sanitizedData['id'])) {
             // Try to find existing record by auto-increment ID
@@ -134,10 +135,14 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 // Record exists - UPDATE or PATCH operation
                 $isNewRecord = false;
             } else {
-                // ID provided but record not found
-                $res->messages['error'][] = 'Incoming route not found';
-                $res->httpCode = 404;
-                return $res;
+                // ID provided but record not found - check if PUT/PATCH should fail
+                $error = self::validateRecordExistence($httpMethod, 'Incoming route');
+                if ($error) {
+                    $res->messages['error'][] = $error['message'];
+                    $res->httpCode = $error['code'];
+                    return $res;
+                }
+                // POST with custom ID allowed for migrations
             }
         }
 

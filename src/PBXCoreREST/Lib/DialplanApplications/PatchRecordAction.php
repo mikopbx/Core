@@ -59,6 +59,7 @@ class PatchRecordAction extends AbstractSaveRecordAction
 
             if (!$app) {
                 $res->messages['error'][] = "Dialplan application not found: {$data['id']}";
+                $res->httpCode = 404;
                 return $res;
             }
 

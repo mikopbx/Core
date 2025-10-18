@@ -146,6 +146,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
 
         $queue = null;
         $isNewRecord = true;
+        $httpMethod = $data['httpMethod'] ?? 'POST';
 
         if (!empty($sanitizedData['id'])) {
             // Try to find existing record
@@ -157,6 +158,17 @@ class SaveRecordAction extends AbstractSaveRecordAction
             if ($queue) {
                 // Record exists - UPDATE or PATCH operation
                 $isNewRecord = false;
+            } else {
+                // Record NOT found with provided ID
+                // Check if PUT/PATCH should fail with 404
+                // WHY: PUT/PATCH require existing resource, only POST can create
+                $error = self::validateRecordExistence($httpMethod, 'Call queue');
+                if ($error) {
+                    $res->messages['error'][] = $error['message'];
+                    $res->httpCode = $error['code'];
+                    return $res;
+                }
+                // POST with custom ID allowed for migrations/imports
             }
         }
 

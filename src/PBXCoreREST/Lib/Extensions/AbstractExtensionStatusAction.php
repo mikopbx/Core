@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Lib\Extensions;
 
 use MikoPBX\Common\Models\Extensions;
+use MikoPBX\Core\System\Configs\GeoIP2Conf;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\SystemMessages;
 use Phalcon\Di\Injectable;
@@ -331,13 +332,25 @@ abstract class AbstractExtensionStatusAction extends Injectable
             if (!empty($contactData['user_agent']) && !in_array($contactData['user_agent'], $userAgents)) {
                 $userAgents[] = $contactData['user_agent'];
             }
-            
+
+            // Get country information for device IP
+            $ipAddress = $contactData['ip_address'] ?? '';
+            $country = '';
+            $countryName = '';
+            if (!empty($ipAddress)) {
+                $countryInfo = GeoIP2Conf::getCountryByIp($ipAddress);
+                $country = $countryInfo['isoCode'];
+                $countryName = $countryInfo['name'];
+            }
+
             // Store device info (simplified)
             $devices[] = [
-                'ip' => $contactData['ip_address'] ?? '',
+                'ip' => $ipAddress,
                 'port' => $contactData['port'] ?? 5060,
                 'user_agent' => $contactData['user_agent'] ?? '',
-                'rtt' => $contactData['rtt']
+                'rtt' => $contactData['rtt'],
+                'country' => $country,
+                'countryName' => $countryName
             ];
         }
         

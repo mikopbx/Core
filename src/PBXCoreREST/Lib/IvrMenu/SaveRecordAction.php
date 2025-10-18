@@ -130,25 +130,37 @@ class SaveRecordAction extends AbstractSaveRecordAction
 
         $ivrMenu = null;
         $isNewRecord = true;
+        $recordId = $sanitizedData['id'] ?? null;
+        $httpMethod = $data['httpMethod'] ?? 'POST';
 
-        if (!empty($sanitizedData['id'])) {
+        if (!empty($recordId)) {
             // Try to find existing record
             $ivrMenu = IvrMenu::findFirst([
                 'conditions' => 'uniqid = :uniqid:',
-                'bind' => ['uniqid' => $sanitizedData['id']]
+                'bind' => ['uniqid' => $recordId]
             ]);
 
             if ($ivrMenu) {
                 // Record exists - UPDATE or PATCH operation
                 $isNewRecord = false;
+            } else {
+                // Check if PUT/PATCH should fail with 404
+                // WHY: PUT/PATCH on non-existent resource should return 404, not create new record
+                $error = self::validateRecordExistence($httpMethod, 'IVR menu');
+                if ($error) {
+                    $res->messages['error'][] = $error['message'];
+                    $res->httpCode = $error['code'];
+                    return $res;
+                }
+                // POST with custom ID allowed for migrations/imports
             }
         }
 
         if ($isNewRecord) {
             // CREATE: Initialize new IVR menu
             $ivrMenu = new IvrMenu();
-            $ivrMenu->uniqid = !empty($sanitizedData['id'])
-                ? $sanitizedData['id']  // Use provided ID (migrations/imports)
+            $ivrMenu->uniqid = !empty($recordId)
+                ? $recordId  // Use provided ID (migrations/imports)
                 : IvrMenu::generateUniqueID(Extensions::PREFIX_IVR);
         }
 

@@ -132,20 +132,28 @@ class SaveRecordAction extends AbstractSaveRecordAction
         // WHY: Different logic for new vs existing records
         // ============================================================
 
+        $recordId = $sanitizedData['id'] ?? null;
+        $httpMethod = $data['httpMethod'] ?? 'POST';
+
         $apiKey = null;
         $isNewRecord = true;
 
-        if (!empty($sanitizedData['id'])) {
+        if (!empty($recordId)) {
             // Try to find existing record by numeric ID
-            $apiKey = ApiKeys::findFirstById($sanitizedData['id']);
+            $apiKey = ApiKeys::findFirstById($recordId);
 
             if ($apiKey) {
                 // Record exists - UPDATE or PATCH operation
                 $isNewRecord = false;
             } else {
-                $res->messages['error'][] = "API key with ID {$sanitizedData['id']} not found";
-                $res->httpCode = 404;
-                return $res;
+                // Check if PUT/PATCH should fail with 404
+                $error = self::validateRecordExistence($httpMethod, 'API Key');
+                if ($error) {
+                    $res->messages['error'][] = $error['message'];
+                    $res->httpCode = $error['code'];
+                    return $res;
+                }
+                // POST with custom ID allowed for migrations
             }
         }
 

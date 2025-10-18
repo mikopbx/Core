@@ -82,7 +82,13 @@ class CallQueuesManagementProcessor extends Injectable
 
         $actionString = $request['action'];
         $data = $request['data'];
-        
+
+        // Pass HTTP method to actions for PUT/PATCH validation
+        // WHY: PUT/PATCH on non-existent resource should return 404, not create new record
+        if (isset($request['httpMethod'])) {
+            $data['httpMethod'] = $request['httpMethod'];
+        }
+
         // Type-safe action matching with enum
         $action = CallQueueAction::tryFrom($actionString);
         

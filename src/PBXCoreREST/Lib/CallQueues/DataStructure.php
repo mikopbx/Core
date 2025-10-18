@@ -405,22 +405,22 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'timeout_extension' => [
                 'type' => 'string',
                 'description' => 'rest_schema_cq_timeout_extension',
-                'pattern' => '^[0-9]{2,8}$',
-                'sanitize' => 'string',
+                'pattern' => self::PATTERN_EXTENSION_WITH_SYSTEM_SHORT,  // Allow system extensions (hangup, busy, did2user, voicemail)
+                'sanitize' => 'routing',  // Changed from 'string' to handle system extensions
                 'example' => '201'
             ],
             'redirect_to_extension_if_empty' => [
                 'type' => 'string',
                 'description' => 'rest_schema_cq_redirect_to_extension_if_empty',
-                'pattern' => '^[0-9]{2,8}$',
-                'sanitize' => 'string',
+                'pattern' => self::PATTERN_EXTENSION_WITH_SYSTEM_SHORT,  // Allow system extensions (hangup, busy, did2user, voicemail)
+                'sanitize' => 'routing',  // Changed from 'string' to handle system extensions
                 'example' => '202'
             ],
             'redirect_to_extension_if_unanswered' => [
                 'type' => 'string',
                 'description' => 'rest_schema_cq_redirect_to_extension_if_unanswered',
-                'pattern' => '^[0-9]{2,8}$',
-                'sanitize' => 'string',
+                'pattern' => self::PATTERN_EXTENSION_WITH_SYSTEM_SHORT,  // Allow system extensions (hangup, busy, did2user, voicemail)
+                'sanitize' => 'routing',  // Changed from 'string' to handle system extensions
                 'example' => '203'
             ],
             'number_unanswered_calls_to_redirect' => [
@@ -435,8 +435,8 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'redirect_to_extension_if_repeat_exceeded' => [
                 'type' => 'string',
                 'description' => 'rest_schema_cq_redirect_to_extension_if_repeat_exceeded',
-                'pattern' => '^[0-9]{2,8}$',
-                'sanitize' => 'string',
+                'pattern' => self::PATTERN_EXTENSION_WITH_SYSTEM_SHORT,  // Allow system extensions (hangup, busy, did2user, voicemail)
+                'sanitize' => 'routing',  // Changed from 'string' to handle system extensions
                 'example' => '204'
             ],
             'number_repeat_unanswered_to_redirect' => [

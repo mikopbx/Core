@@ -508,6 +508,16 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                             'description' => 'rest_schema_sip_history_useragent',
                             'example' => 'Grandstream GXP2170'
                         ],
+                        'country' => [
+                            'type' => 'string',
+                            'description' => 'rest_schema_sip_history_country',
+                            'example' => 'US'
+                        ],
+                        'countryName' => [
+                            'type' => 'string',
+                            'description' => 'rest_schema_sip_history_country_name',
+                            'example' => 'United States'
+                        ],
                     ]
                 ],
                 'SipStats' => [

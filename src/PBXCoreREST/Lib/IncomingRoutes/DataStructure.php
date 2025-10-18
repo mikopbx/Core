@@ -379,7 +379,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'extension' => [
                 'type' => 'string',
                 'description' => 'rest_schema_ir_extension',
-                'pattern' => '^[0-9]*$',
+                'pattern' => self::PATTERN_EXTENSION_WITH_SYSTEM_OR_EMPTY,  // Allow system extensions (hangup, busy, did2user, voicemail)
                 'maxLength' => 20,
                 'sanitize' => 'routing',
                 'example' => '201'

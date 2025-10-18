@@ -398,33 +398,40 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'fwd_ringlength' => [
                 'type' => 'integer',
                 'description' => 'rest_schema_emp_fwd_ringlength',
-                'minimum' => 3,
                 'maximum' => 180,
                 'sanitize' => 'int',
                 'default' => 45,
-                'example' => 30
+                'example' => 30,
+                // WHY NO minimum constraint here:
+                // Conditional validation in SaveRecordAction.validateEmployeeData():
+                // - When fwd_forwarding is EMPTY: fwd_ringlength can be 0 (not used)
+                // - When fwd_forwarding is SET: must be 3-180
+                // Cannot express conditional logic in OpenAPI schema, so validated in business layer
             ],
             'fwd_forwarding' => [
                 'type' => 'string',
                 'description' => 'rest_schema_emp_fwd_forwarding',
+                'pattern' => self::PATTERN_EXTENSION_WITH_SYSTEM_LONG,  // Allow system extensions (hangup, busy, did2user, voicemail)
                 'maxLength' => 64,
-                'sanitize' => 'string',
+                'sanitize' => 'routing',  // Changed from 'string' to handle system extensions
                 'default' => '',
                 'example' => '201'
             ],
             'fwd_forwardingonbusy' => [
                 'type' => 'string',
                 'description' => 'rest_schema_emp_fwd_forwardingonbusy',
+                'pattern' => self::PATTERN_EXTENSION_WITH_SYSTEM_LONG,  // Allow system extensions (hangup, busy, did2user, voicemail)
                 'maxLength' => 64,
-                'sanitize' => 'string',
+                'sanitize' => 'routing',  // Changed from 'string' to handle system extensions
                 'default' => '',
                 'example' => '202'
             ],
             'fwd_forwardingonunavailable' => [
                 'type' => 'string',
                 'description' => 'rest_schema_emp_fwd_forwardingonunavailable',
+                'pattern' => self::PATTERN_EXTENSION_WITH_SYSTEM_LONG,  // Allow system extensions (hangup, busy, did2user, voicemail)
                 'maxLength' => 64,
-                'sanitize' => 'string',
+                'sanitize' => 'routing',  // Changed from 'string' to handle system extensions
                 'default' => '',
                 'example' => '203'
             ],

@@ -131,6 +131,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
 
         $condition = null;
         $isNewRecord = true;
+        $httpMethod = $data['httpMethod'] ?? 'POST';
 
         if (!empty($sanitizedData['id'])) {
             // Try to find existing record by numeric ID
@@ -140,9 +141,15 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 // Record exists - UPDATE or PATCH operation
                 $isNewRecord = false;
             } else {
-                $res->messages['error'][] = "Time condition with ID {$sanitizedData['id']} not found";
-                $res->httpCode = 404;
-                return $res;
+                // Check if PUT/PATCH should fail with 404
+                // WHY: REST semantics - PUT/PATCH require existing resource
+                $error = self::validateRecordExistence($httpMethod, 'Time condition');
+                if ($error) {
+                    $res->messages['error'][] = $error['message'];
+                    $res->httpCode = $error['code'];
+                    return $res;
+                }
+                // POST with custom ID allowed for migrations
             }
         }
 

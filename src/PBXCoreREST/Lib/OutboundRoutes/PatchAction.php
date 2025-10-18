@@ -67,6 +67,7 @@ class PatchAction
             $model = OutgoingRoutingTable::findFirstById($data['id']);
             if (!$model) {
                 $res->messages['error'][] = 'Outbound route not found';
+                $res->httpCode = 404;
                 return $res;
             }
             

@@ -109,18 +109,27 @@ class SaveRecordAction extends AbstractSaveRecordAction
 
         $soundFile = null;
         $isNewRecord = true;
+        $recordId = $sanitizedData['id'] ?? null;
+        $httpMethod = $data['httpMethod'] ?? 'POST';
 
-        if (!empty($sanitizedData['id'])) {
+        if (!empty($recordId)) {
             // Try to find existing record by numeric ID
-            $soundFile = SoundFiles::findFirstById($sanitizedData['id']);
+            $soundFile = SoundFiles::findFirstById($recordId);
 
             if ($soundFile) {
                 // Record exists - UPDATE or PATCH operation
                 $isNewRecord = false;
             } else {
-                $res->messages['error'][] = "Sound file with ID {$sanitizedData['id']} not found";
-                $res->httpCode = 404;
-                return $res;
+                // Check if PUT/PATCH should fail with 404
+                // WHY: PUT/PATCH on non-existent resource must return 404 (REST standard)
+                // POST with custom ID is allowed for migrations/imports
+                $error = self::validateRecordExistence($httpMethod, 'Sound file');
+                if ($error) {
+                    $res->messages['error'][] = $error['message'];
+                    $res->httpCode = $error['code'];
+                    return $res;
+                }
+                // POST with custom ID allowed - continue with creation
             }
         }
 

@@ -54,10 +54,11 @@ class PatchRecordAction
         
         // First, get the existing record
         $existingRecord = GetRecordAction::main($data['id']);
-        
+
         if (!$existingRecord->success) {
             $res = new PBXApiResult();
             $res->messages['error'][] = "Employee not found for patch operation (ID: {$data['id']})";
+            $res->httpCode = 404;
             return $res;
         }
         

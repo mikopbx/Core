@@ -74,16 +74,22 @@ class ConferenceRoomsManagementProcessor extends Injectable
 
         $actionString = $request['action'];
         $data = $request['data'];
-        
+
+        // Pass HTTP method to actions for PUT/PATCH validation
+        // WHY: PUT/PATCH on non-existent resource should return 404, not create new record
+        if (isset($request['httpMethod'])) {
+            $data['httpMethod'] = $request['httpMethod'];
+        }
+
         // Type-safe action matching with enum
         $action = ConferenceRoomAction::tryFrom($actionString);
-        
+
         if ($action === null) {
             $res->messages['error'][] = "Unknown action - $actionString in " . __CLASS__;
             $res->function = $actionString;
             return $res;
         }
-        
+
         // Execute action using match expression (PHP 8)
         $res = match ($action) {
             // Standard CRUD operations

@@ -138,18 +138,27 @@ class SaveRecordAction extends AbstractSaveRecordAction
         // WHY: Different logic for new vs existing records
         // ============================================================
 
+        // Get record ID and HTTP method from data
+        $recordId = $sanitizedData['id'] ?? null;
+        $httpMethod = $data['httpMethod'] ?? 'POST'; // Default to POST for backward compatibility
+
         $userEntity = null;
-        if (!empty($sanitizedData['id'])) {
+        if (!empty($recordId)) {
             // Try to find existing user by ID
-            $userEntity = Users::findFirstById($sanitizedData['id']);
+            $userEntity = Users::findFirstById($recordId);
 
             if ($userEntity) {
                 // Record exists - UPDATE operation
                 $isCreateOperation = false;
             } else {
-                $res->messages['error'][] = "Employee with ID {$sanitizedData['id']} not found";
-                $res->httpCode = 404;
-                return $res;
+                // Record not found - check if PUT/PATCH should fail with 404
+                $error = self::validateRecordExistence($httpMethod, 'Employee');
+                if ($error) {
+                    $res->messages['error'][] = $error['message'];
+                    $res->httpCode = $error['code'];
+                    return $res;
+                }
+                // POST with custom ID allowed for migrations/imports
             }
         }
 

@@ -650,8 +650,8 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'extension' => [
                 'type' => 'string',
                 'description' => 'rest_schema_owt_extension',
-                'pattern' => '^[0-9]{2,8}$',
-                'sanitize' => 'string',
+                'pattern' => self::PATTERN_EXTENSION_WITH_SYSTEM_SHORT,  // Allow system extensions (hangup, busy, did2user, voicemail)
+                'sanitize' => 'routing',  // Changed from 'string' to handle system extensions
                 'example' => '201'
             ],
             'audio_message_id' => [

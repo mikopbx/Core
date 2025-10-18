@@ -85,59 +85,32 @@ class SaveRecordAction extends AbstractSaveRecordAction
         }
 
         // ============================================================
-        // PHASE 2: REQUIRED FIELDS VALIDATION
-        // Check required fields before database operations
-        // WHY: Fail fast - don't waste resources on incomplete data
-        // ============================================================
-
-        $validationRules = [
-            'rulename' => [
-                ['type' => 'required', 'message' => 'Route name is required']
-            ],
-            'providerid' => [
-                ['type' => 'required', 'message' => 'Provider is required']
-            ]
-        ];
-
-        // Note: Unlike IncomingRoutes, providerid is ALWAYS required for OutboundRoutes
-        // WHY: Outbound routes must know which provider to use for dialing
-
-        $validationErrors = self::validateRequiredFields($sanitizedData, $validationRules);
-        if (!empty($validationErrors)) {
-            $res->messages['error'] = $validationErrors;
-            return $res;
-        }
-
-        // Validate provider exists in database
-        // WHY: Prevent saving routes with non-existent providers
-        $provider = Providers::findFirstByUniqid($sanitizedData['providerid']);
-        if (!$provider) {
-            $res->messages['error'][] = 'Provider not found';
-            $res->httpCode = 404;
-            return $res;
-        }
-
-        // ============================================================
-        // PHASE 3: DETERMINE OPERATION TYPE
+        // PHASE 2: DETERMINE OPERATION TYPE (moved before validation)
         // Detect CREATE vs UPDATE/PATCH and prepare model
-        // WHY: Different logic for new vs existing records
+        // WHY: Different validation rules for new vs existing records
         // ============================================================
 
         $route = null;
         $isNewRecord = true;
+        $recordId = $sanitizedData['id'] ?? null;
+        $httpMethod = $data['httpMethod'] ?? 'POST';
 
-        if (!empty($sanitizedData['id'])) {
+        if (!empty($recordId)) {
             // Try to find existing record by auto-increment ID
-            $route = OutgoingRoutingTable::findFirstById($sanitizedData['id']);
+            $route = OutgoingRoutingTable::findFirstById($recordId);
 
             if ($route) {
                 // Record exists - UPDATE or PATCH operation
                 $isNewRecord = false;
             } else {
-                // ID provided but record not found
-                $res->messages['error'][] = 'Outbound route not found';
-                $res->httpCode = 404;
-                return $res;
+                // Check if PUT/PATCH should fail with 404
+                $error = self::validateRecordExistence($httpMethod, 'Outbound route');
+                if ($error) {
+                    $res->messages['error'][] = $error['message'];
+                    $res->httpCode = $error['code'];
+                    return $res;
+                }
+                // POST with custom ID allowed for migrations
             }
         }
 
@@ -145,6 +118,45 @@ class SaveRecordAction extends AbstractSaveRecordAction
             // CREATE: Initialize new outbound route
             $route = new OutgoingRoutingTable();
             // Note: OutgoingRoutingTable uses auto-increment ID, not uniqid
+        }
+
+        // ============================================================
+        // PHASE 3: REQUIRED FIELDS VALIDATION
+        // Check required fields before database operations
+        // WHY: Fail fast - don't waste resources on incomplete data
+        // ============================================================
+
+        // Required fields only for CREATE
+        // For PATCH (partial update), required fields can be omitted
+        if ($isNewRecord || $httpMethod === 'PUT') {
+            $validationRules = [
+                'rulename' => [
+                    ['type' => 'required', 'message' => 'Route name is required']
+                ],
+                'providerid' => [
+                    ['type' => 'required', 'message' => 'Provider is required']
+                ]
+            ];
+
+            // Note: Unlike IncomingRoutes, providerid is ALWAYS required for OutboundRoutes
+            // WHY: Outbound routes must know which provider to use for dialing
+
+            $validationErrors = self::validateRequiredFields($sanitizedData, $validationRules);
+            if (!empty($validationErrors)) {
+                $res->messages['error'] = $validationErrors;
+                return $res;
+            }
+        }
+
+        // Validate provider exists in database if provided
+        // WHY: Prevent saving routes with non-existent providers
+        if (isset($sanitizedData['providerid'])) {
+            $provider = Providers::findFirstByUniqid($sanitizedData['providerid']);
+            if (!$provider) {
+                $res->messages['error'][] = 'Provider not found';
+                $res->httpCode = 404;
+                return $res;
+            }
         }
 
         // ============================================================

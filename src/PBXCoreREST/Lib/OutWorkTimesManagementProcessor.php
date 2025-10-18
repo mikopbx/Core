@@ -72,7 +72,13 @@ class OutWorkTimesManagementProcessor extends Injectable
 
         $actionString = $request['action'];
         $data = $request['data'];
-        
+
+        // Pass HTTP method to actions for PUT/PATCH validation
+        // WHY: PUT/PATCH on non-existent resource should return 404, not create new record
+        if (isset($request['httpMethod'])) {
+            $data['httpMethod'] = $request['httpMethod'];
+        }
+
         // Try to match action with enum
         $action = OutWorkTimeAction::tryFrom($actionString);
         

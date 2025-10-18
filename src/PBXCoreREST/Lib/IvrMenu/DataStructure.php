@@ -314,8 +314,8 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'timeout_extension' => [
                 'type' => 'string',
                 'description' => 'rest_schema_ivr_timeout_extension',
-                'pattern' => '^[0-9]{2,8}$',
-                'sanitize' => 'string',
+                'pattern' => self::PATTERN_EXTENSION_WITH_SYSTEM_SHORT,  // Allow system extensions (hangup, busy, did2user, voicemail)
+                'sanitize' => 'routing',  // Changed from 'string' to handle system extensions
                 'example' => '201'
             ],
             'number_of_repeat' => [
@@ -457,6 +457,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                         'extension' => [
                             'type' => 'string',
                             'description' => 'rest_schema_ivr_action_extension',
+                            'pattern' => self::PATTERN_EXTENSION_WITH_SYSTEM_SHORT,  // Allow system extensions (hangup, busy, did2user, voicemail)
                             'example' => '201'
                         ],
                         'extension_represent' => [
