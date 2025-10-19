@@ -72,7 +72,8 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
         $this->changeInputField('exthostname', $params['exthostname']);
         $this->changeInputField('externalSIPPort', $params['externalSIPPort']);
         $this->changeInputField('externalTLSPort', $params['externalTLSPort']);
-        $this->changeInputField('hostname', $params['hostname']);
+        $this->changeInputField('hostname_1', $params['hostname_1']);
+        $this->changeInputField('domain_1', $params['domain_1']);
 
         // Submit the network form.
         $this->submitForm('network-form');
@@ -100,7 +101,8 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
         $this->assertInputFieldValueEqual('exthostname', $params['exthostname']);
         $this->assertInputFieldValueEqual('externalSIPPort', $params['externalSIPPort']);
         $this->assertInputFieldValueEqual('externalTLSPort', $params['externalTLSPort']);
-        $this->assertInputFieldValueEqual('hostname', $params['hostname']);
+        $this->assertInputFieldValueEqual('hostname_1', $params['hostname_1']);
+        $this->assertInputFieldValueEqual('domain_1', $params['domain_1']);
     }
 
     /**
@@ -125,7 +127,8 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
                 'exthostname' => 'testMikoPBX.miko.ru',
                 'externalSIPPort' => 5062,
                 'externalTLSPort' => 5063,
-                'hostname'=>'testMikoPBX.local'
+                'hostname_1'=>'testMikoPBX',
+                'domain_1'=>'local'
             ]
         ];
         return $params;
