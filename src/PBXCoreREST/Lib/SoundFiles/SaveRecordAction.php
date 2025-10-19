@@ -136,6 +136,12 @@ class SaveRecordAction extends AbstractSaveRecordAction
         if ($isNewRecord) {
             // CREATE: Initialize new sound file
             $soundFile = new SoundFiles();
+
+            // ✅ Support predefined ID (migrations/imports/tests)
+            // Set ID before applying defaults, similar to Providers pattern
+            if (!empty($recordId)) {
+                $soundFile->id = (int)$recordId;
+            }
         }
 
         // ============================================================

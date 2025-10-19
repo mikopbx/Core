@@ -211,7 +211,9 @@ class SaveRecordAction extends AbstractSaveRecordAction
                     $route->number = $sanitizedData['number'] ?: '';  // Empty string allowed
                 }
 
-                if (isset($sanitizedData['provider'])) {
+                // WHY: Use array_key_exists instead of isset because provider can be null
+                // isset($sanitizedData['provider']) returns false when value is null!
+                if (array_key_exists('provider', $sanitizedData)) {
                     $route->provider = $sanitizedData['provider'];  // null allowed for "Any Provider"
                 }
 

@@ -101,6 +101,10 @@
             <directory>Tests/OutgoingCallRules</directory>
         </testsuite>
 
+        <testsuite name="MOHFiles">
+            <directory>Tests/MOHFiles</directory>
+        </testsuite>
+
         <testsuite name="Out Of Work Periods">
             <directory>Tests/OutOfWorkPeriods</directory>
         </testsuite>
@@ -116,10 +120,6 @@
 
         <testsuite name="IVR Menu">
             <directory>Tests/IVRMenus</directory>
-        </testsuite>
-
-        <testsuite name="MOHFiles">
-            <directory>Tests/MOHFiles</directory>
         </testsuite>
 
         <testsuite name="AMI Users">

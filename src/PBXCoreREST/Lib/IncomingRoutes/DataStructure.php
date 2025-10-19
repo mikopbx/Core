@@ -54,7 +54,8 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         $data['rulename'] = $model->rulename ?? '';
         $data['number'] = $model->number ?? '';
         // Map database field 'provider' to API field 'providerid' for consistency
-        $data['providerid'] = $model->provider ?? 'none';
+        // WHY: Use empty() instead of ?? because database stores empty string '', not NULL
+        $data['providerid'] = (!empty($model->provider)) ? $model->provider : 'none';
         $data['priority'] = (int)$model->priority;
         $data['timeout'] = (int)$model->timeout;
         $data['extension'] = $model->extension ?? '';
@@ -109,7 +110,8 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         // Add provider data - map provider to providerid for consistency
         $providerData = self::getProviderData($model->Providers, $model->provider);
         // Map database field 'provider' to API field 'providerid' for consistency
-        $data['providerid'] = $model->provider ?? 'none';  // Provider ID
+        // WHY: Use empty() instead of ?? because database stores empty string '', not NULL
+        $data['providerid'] = (!empty($model->provider)) ? $model->provider : 'none';  // Provider ID
         $data['providerid_represent'] = $providerData['providerid_represent'];
         $data['provider_disabled'] = $providerData['provider_disabled'];
         

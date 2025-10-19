@@ -742,19 +742,24 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
 
     /**
      * Wait for system restart after delete operation
+     *
+     * WHY: After delete all settings, system reboots and user session is invalidated
+     * System is considered "back online" when either:
+     * - Login form is visible (user logged out - expected after reset)
+     * - Top menu is visible (user still logged in - rare case)
      */
     private function waitForSystemRestart(): void
     {
         self::annotate("Waiting for system restart");
-        
+
         $maxRestartTime = 180; // 3 minutes max for restart
         $checkInterval = 10; // Check every 10 seconds
         $startTime = time();
-        
-        // First, expect the system to become unavailable
+
+        // WHY: Give delete operation time to initiate system reboot
         self::annotate("Waiting for system to go down for restart...");
-        sleep(10); // Give some time for restart to initiate
-        
+        sleep(10);
+
         $systemWentDown = false;
         while ((time() - $startTime) < 60) { // Wait up to 1 minute for shutdown
             try {
@@ -768,54 +773,65 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
                 break;
             }
         }
-        
+
         if (!$systemWentDown) {
             self::annotate("WARNING: System did not appear to go down, but continuing...");
         }
-        
-        // Now wait for system to come back up
+
+        // WHY: Now wait for system to come back online and be accessible
         self::annotate("Waiting for system to come back online...");
         $systemBackUp = false;
         $remainingTime = $maxRestartTime - (time() - $startTime);
-        
+
         while ($remainingTime > 0) {
             try {
-                // Try to access the login page
+                // Try to access the admin cabinet URL
                 self::$driver->get($this->testsConfig['url']);
-                
-                // Check if we can find an element that indicates the page loaded
+
+                // Wait for page body to load
                 $wait = new WebDriverWait(self::$driver, 5);
                 $wait->until(
                     WebDriverExpectedCondition::presenceOfElementLocated(
                         WebDriverBy::tagName('body')
                     )
                 );
-                
-                // Check if we're on login page or already logged in
+
+                // WHY: After delete all, user is logged out, so login form should be visible
+                // Check if login form is present AND visible (not just in DOM)
                 $loginElements = self::$driver->findElements(WebDriverBy::id('login-form'));
-                $topMenuElements = self::$driver->findElements(WebDriverBy::id('top-menu-search'));
-                
-                if (count($loginElements) > 0 || count($topMenuElements) > 0) {
+                if (count($loginElements) > 0 && $loginElements[0]->isDisplayed()) {
                     $systemBackUp = true;
-                    self::annotate("System is back online");
+                    self::annotate("System is back online - login form is visible");
                     break;
                 }
+
+                // WHY: In rare cases session might persist, check if top menu is visible
+                $topMenuElements = self::$driver->findElements(WebDriverBy::id('top-menu-search'));
+                if (count($topMenuElements) > 0 && $topMenuElements[0]->isDisplayed()) {
+                    $systemBackUp = true;
+                    self::annotate("System is back online - user still logged in");
+                    break;
+                }
+
+                // WHY: Page loaded but neither element is visible - system still initializing
+                self::annotate("Page loaded but UI not ready, waiting... (remaining: {$remainingTime}s)");
+
             } catch (\Exception $e) {
-                // System still down, wait and retry
+                // System still down or page not loading, wait and retry
                 self::annotate("System still down, waiting... (remaining: {$remainingTime}s)");
             }
-            
+
             sleep($checkInterval);
             $remainingTime = $maxRestartTime - (time() - $startTime);
         }
-        
+
         if (!$systemBackUp) {
             $this->fail("System did not come back online within $maxRestartTime seconds");
         }
-        
-        // Give the system a bit more time to fully initialize
+
+        // WHY: Give system additional time to fully initialize all services
         sleep(10);
-        
+
         self::annotate("System restart completed successfully");
     }
 

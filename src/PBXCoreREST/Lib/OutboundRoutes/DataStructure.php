@@ -369,7 +369,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'note' => [
                 'type' => 'string',
                 'description' => 'rest_schema_obr_note',
-                'maxLength' => 500,
+                'maxLength' => 1024,
                 'sanitize' => 'text',
                 'example' => 'Route for international calls'
             ],
