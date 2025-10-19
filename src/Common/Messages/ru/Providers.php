@@ -446,6 +446,7 @@ return [
     'pr_ValidationAdditionalHostInvalid' => 'Некорректный IP адрес или доменное имя',
     'pr_ValidationProviderHostInvalidCharacters' => 'Адрес может содержать только латинские буквы, цифры, точки, дефисы и подчеркивания',
     'pr_ValidationProviderHostIsEmpty' => 'Введите имя сервера или IP адрес провайдера',
+    'pr_ValidationProviderLogin' => 'Введите логин для авторизации у провайдера',
     'pr_ValidationProviderLoginInvalidCharacters' => 'Логин может содержать только латинские буквы, цифры и символы: _ - .',
     'pr_ValidationProviderLoginIsEmpty' => 'Введите логин для авторизации у провайдера',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'Логин должен быть длиннее одного символа',

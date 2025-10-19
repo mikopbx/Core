@@ -297,9 +297,9 @@ class SaveRecordAction extends AbstractSaveRecordAction
      * Validate business rules based on registration type
      *
      * Different registration types have different requirements:
-     * - outbound: requires host, username, password
-     * - inbound: requires username, password (unless receive_without_auth)
-     * - none: requires host, username, password
+     * - outbound: requires host, username, password (registration to remote server)
+     * - inbound: requires username, password optional if receive_calls_without_auth enabled
+     * - none: requires host only (direct calls without registration, username/password optional)
      *
      * @param array $data Sanitized data
      * @param bool $isNewRecord True if creating new provider
@@ -311,23 +311,25 @@ class SaveRecordAction extends AbstractSaveRecordAction
         $errors = [];
         $regType = $data['registration_type'] ?? '';
 
-        // Host validation - required for outbound and none
-        if (in_array($regType, ['outbound', 'none'])) {
+        // ============================================================
+        // OUTBOUND REGISTRATION: Requires host, username, password
+        // WHY: We register to remote server with credentials
+        // ============================================================
+        if ($regType === 'outbound') {
+            // Host is required
             if (empty($data['host']) || trim($data['host']) === '') {
                 $errors[] = TranslationProvider::translate('pr_ValidationProviderHostIsEmpty');
             }
-        }
 
-        // Username and password validation based on registration type
-        if ($regType === 'outbound' || $regType === 'none') {
+            // Username is required
             if (empty($data['username']) || trim($data['username']) === '') {
                 $errors[] = TranslationProvider::translate('pr_ValidationProviderLogin');
             }
 
-            // For UPDATE: password is optional if it's masked
+            // Password is required (except when updating with masked value)
             $passwordRequired = true;
             if (!$isNewRecord && isset($data['secret']) && $data['secret'] === 'XXXXXXXX') {
-                $passwordRequired = false;
+                $passwordRequired = false; // Keep existing password
             }
 
             if ($passwordRequired && (empty($data['secret']) || trim($data['secret']) === '')) {
@@ -335,19 +337,51 @@ class SaveRecordAction extends AbstractSaveRecordAction
             }
         }
 
-        // Inbound registration validation
+        // ============================================================
+        // INBOUND REGISTRATION: Requires username, password optional
+        // WHY: Remote server registers to us with credentials
+        // ============================================================
         if ($regType === 'inbound') {
+            // Username is required
             if (empty($data['username']) || trim($data['username']) === '') {
                 $errors[] = TranslationProvider::translate('pr_ValidationProviderLogin');
             }
 
-            // Password optional if receive_calls_without_auth enabled
+            // Password validation logic:
+            // 1. If receive_calls_without_auth=true, password is OPTIONAL
+            // 2. If receive_calls_without_auth=false, password is REQUIRED
+            // 3. For UPDATE: masked password (XXXXXXXX) means keep existing
             $receiveWithoutAuth = $data['receive_calls_without_auth'] ?? false;
-            $passwordProvided = !empty($data['secret']) && trim($data['secret']) !== '' && $data['secret'] !== 'XXXXXXXX';
 
-            if (!$receiveWithoutAuth && !$passwordProvided && $isNewRecord) {
-                $errors[] = TranslationProvider::translate('pr_ValidationProviderPasswordEmpty');
+            // Check if password is provided (not empty and not masked)
+            $passwordProvided = !empty($data['secret']) &&
+                               trim($data['secret']) !== '' &&
+                               $data['secret'] !== 'XXXXXXXX';
+
+            // Require password only if auth is required and no password provided
+            if (!$receiveWithoutAuth && !$passwordProvided) {
+                // For UPDATE: masked password is acceptable (keeps existing password)
+                if (!$isNewRecord && isset($data['secret']) && $data['secret'] === 'XXXXXXXX') {
+                    // Keep existing password - OK
+                } else {
+                    // Password required but not provided
+                    $errors[] = TranslationProvider::translate('pr_ValidationProviderPasswordEmpty');
+                }
             }
+        }
+
+        // ============================================================
+        // NO REGISTRATION: Requires host only
+        // WHY: Direct calls to IP/hostname, no authentication needed
+        // Username/password are OPTIONAL for this mode
+        // ============================================================
+        if ($regType === 'none') {
+            // Host is required (where to send calls)
+            if (empty($data['host']) || trim($data['host']) === '') {
+                $errors[] = TranslationProvider::translate('pr_ValidationProviderHostIsEmpty');
+            }
+            // Username and password are OPTIONAL for 'none' registration type
+            // No validation required
         }
 
         return $errors;
