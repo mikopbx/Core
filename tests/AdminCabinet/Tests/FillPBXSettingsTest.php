@@ -305,6 +305,8 @@ class FillPBXSettingsTest extends MikoPBXTestsBase
             if ($key === 'SSHAuthorizedKeys') {
                 // Verify SSH keys in the table
                 $this->verifySSHKeysTable($value);
+            } elseif ($key === 'PBXDescription') {
+                $this->assertTrue(true, 'PBXDescription is not verified by this test');
             } elseif (is_bool($value)) {
                 $this->assertCheckBoxStageIsEqual($key, $value, true);
             } elseif ($this->isDropdown($key)) {

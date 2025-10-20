@@ -707,10 +707,10 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
     private function waitForDeleteProcessToComplete(): void
     {
         self::annotate("Waiting for delete process to complete");
-        
+
         $maxWaitTime = 120; // 2 minutes max for delete process
         $startTime = time();
-        
+
         // Wait for modal to close (indicates process completed)
         try {
             $wait = new WebDriverWait(self::$driver, $maxWaitTime);
@@ -732,12 +732,95 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
             } catch (\Exception $ex) {
                 // No error found
             }
-            
+
             $this->fail("Delete process did not complete within $maxWaitTime seconds");
         }
-        
+
         // Additional wait for any final operations
         sleep(5);
+    }
+
+    /**
+     * Monitor authentication status after delete operation starts
+     *
+     * WHY: After delete operation starts, JWT session may be invalidated
+     * This method waits 2 minutes then checks if user is still authenticated
+     */
+    private function monitorAuthenticationStatusDuringDelete(): void
+    {
+        self::annotate("Starting authentication status monitoring during delete");
+
+        $waitBeforeCheck = 120; // 2 minutes as requested
+        $checkInterval = 5; // Check every 5 seconds
+        $maxChecks = 24; // 2 minutes of checking (24 * 5 seconds)
+
+        self::annotate("Waiting $waitBeforeCheck seconds before starting authentication checks...");
+        sleep($waitBeforeCheck);
+
+        self::annotate("Starting to refresh page and check authentication status");
+
+        $checkCount = 0;
+        $authStatusDetermined = false;
+
+        while ($checkCount < $maxChecks && !$authStatusDetermined) {
+            $checkCount++;
+            self::annotate("Authentication check #{$checkCount}");
+
+            try {
+                // Refresh current page
+                self::$driver->navigate()->refresh();
+
+                // Wait for page body to load
+                $wait = new WebDriverWait(self::$driver, 10);
+                $wait->until(
+                    WebDriverExpectedCondition::presenceOfElementLocated(
+                        WebDriverBy::tagName('body')
+                    )
+                );
+
+                // Give page time to render
+                sleep(2);
+
+                // Check if we're on login page (JWT token invalidated)
+                $loginFormElements = self::$driver->findElements(WebDriverBy::id('login-form'));
+                if (count($loginFormElements) > 0 && $loginFormElements[0]->isDisplayed()) {
+                    self::annotate("✓ Authentication status determined: JWT TOKEN INVALIDATED - Login form is visible");
+                    $authStatusDetermined = true;
+                    break;
+                }
+
+                // Check if we're on general settings page (JWT token still valid)
+                $deleteAllTabElements = self::$driver->findElements(WebDriverBy::xpath("//a[@data-tab='deleteAll']"));
+                if (count($deleteAllTabElements) > 0 && $deleteAllTabElements[0]->isDisplayed()) {
+                    self::annotate("✓ Authentication status determined: JWT TOKEN STILL VALID - General Settings page is accessible");
+                    $authStatusDetermined = true;
+                    break;
+                }
+
+                // Check if top menu is visible (another indicator of valid session)
+                $topMenuElements = self::$driver->findElements(WebDriverBy::id('top-menu-search'));
+                if (count($topMenuElements) > 0 && $topMenuElements[0]->isDisplayed()) {
+                    self::annotate("✓ Authentication status determined: JWT TOKEN STILL VALID - Top menu is visible");
+                    $authStatusDetermined = true;
+                    break;
+                }
+
+                // Page loaded but neither element visible - system might be processing
+                self::annotate("Page refreshed but UI not ready, waiting... (check {$checkCount}/{$maxChecks})");
+
+            } catch (\Exception $e) {
+                // Error during page load - system might be down or restarting
+                self::annotate("Error during authentication check: " . $e->getMessage());
+            }
+
+            sleep($checkInterval);
+        }
+
+        if (!$authStatusDetermined) {
+            self::annotate("WARNING: Could not determine authentication status after {$checkCount} checks");
+        }
+
+        self::annotate("Authentication monitoring completed, proceeding with delete validation");
     }
 
     /**

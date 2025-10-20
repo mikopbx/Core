@@ -64,8 +64,13 @@ class FillDataTimeSettingsTest extends MikoPBXTestsBase
             $this->changeTextAreaValue(PbxSettings::NTP_SERVER, $params['NTPServer']);
         }
 
-        // Save the settings
-        $this->submitForm('time-settings-form');
+        $this->executeWithRetry(function () {
+            $xpath = sprintf('//form[@id="time-settings-form"]//ancestor::div[@id="submitbutton"]');
+            $button = $this->waitForElement($xpath);
+            $this->scrollIntoView($button);
+            $button->click();
+            $this->waitForAjax();
+        });
 
         // Wait for 15 seconds until Nginx is restarted
         sleep(15);
@@ -80,9 +85,6 @@ class FillDataTimeSettingsTest extends MikoPBXTestsBase
         // Redis refresh tokens are time-independent (TTL is a counter, not absolute time)
         // However, Nginx restart may invalidate sessions regardless of leeway
         // Try to verify session first, re-login if needed
-
-        sleep(2);
-        $this->waitForAjax();
 
         try {
             // Try to verify that session is still valid

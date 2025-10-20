@@ -37,4 +37,9 @@ class ViktorMitinTest extends CreateExtensionsTest
     {
         return EmployeeDataFactory::getEmployeeData('viktor.mitin');
     }
+
+    public function testCreateExtension(): void
+    {
+        parent::testCreateExtension();
+    }
 }

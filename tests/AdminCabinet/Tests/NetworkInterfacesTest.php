@@ -54,6 +54,16 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
         // Click on the network modification page in the admin cabinet.
         $this->clickSidebarMenuItemByHref("/admin-cabinet/network/modify/");
 
+        $this->waitForAjax();
+
+        $this->changeCheckBoxState('usenat', $params['usenat']);
+        $this->changeInputField('extipaddr', $params['extipaddr']);
+        $this->changeInputField('exthostname', $params['exthostname']);
+        $this->changeInputField('externalSIPPort', $params['externalSIPPort']);
+        $this->changeInputField('externalTLSPort', $params['externalTLSPort']);
+        $this->changeInputField('hostname_1', $params['hostname_1']);
+        $this->changeInputField('domain_1', $params['domain_1']);
+
         // Change to the appropriate tab on the current page.
         $this->changeTabOnCurrentPage('0');
 
@@ -66,20 +76,25 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
         $this->changeInputField('vlanid_0', $params['vlanid_0']);
         
 
-        
-        $this->changeCheckBoxState('usenat', $params['usenat']);
-        $this->changeInputField('extipaddr', $params['extipaddr']);
-        $this->changeInputField('exthostname', $params['exthostname']);
-        $this->changeInputField('externalSIPPort', $params['externalSIPPort']);
-        $this->changeInputField('externalTLSPort', $params['externalTLSPort']);
-        $this->changeInputField('hostname_1', $params['hostname_1']);
-        $this->changeInputField('domain_1', $params['domain_1']);
 
         // Submit the network form.
         $this->submitForm('network-form');
 
         // Click on the network modification page again.
         $this->clickSidebarMenuItemByHref("/admin-cabinet/network/modify/");
+
+        $this->waitForAjax();
+
+        // Click on the eth0 tab.
+        $this->changeTabOnCurrentPage('1');
+        $this->assertCheckBoxStageIsEqual('usenat', $params['usenat']);
+        $this->assertInputFieldValueEqual('extipaddr', $params['extipaddr']);
+        $this->assertInputFieldValueEqual('exthostname', $params['exthostname']);
+        $this->assertInputFieldValueEqual('externalSIPPort', $params['externalSIPPort']);
+        $this->assertInputFieldValueEqual('externalTLSPort', $params['externalTLSPort']);
+        $this->assertInputFieldValueEqual('hostname_1', $params['hostname_1']);
+        $this->assertInputFieldValueEqual('domain_1', $params['domain_1']);
+        
 
         // Click on the newly created VLAN tab.
         $xpath = "//div[@id='eth-interfaces-menu']/a[contains(text(),'{$params['name_0']}')]";
@@ -95,14 +110,7 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
         $this->assertMenuItemSelected('subnet_' . $index, $params['subnet_0']);
         $this->assertInputFieldValueEqual('vlanid_' . $index, $params['vlanid_0']);
         
-        
-        $this->assertCheckBoxStageIsEqual('usenat', $params['usenat']);
-        $this->assertInputFieldValueEqual('extipaddr', $params['extipaddr']);
-        $this->assertInputFieldValueEqual('exthostname', $params['exthostname']);
-        $this->assertInputFieldValueEqual('externalSIPPort', $params['externalSIPPort']);
-        $this->assertInputFieldValueEqual('externalTLSPort', $params['externalTLSPort']);
-        $this->assertInputFieldValueEqual('hostname_1', $params['hostname_1']);
-        $this->assertInputFieldValueEqual('domain_1', $params['domain_1']);
+    
     }
 
     /**
@@ -116,6 +124,7 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
         $params['eth0'] = [
             [
                 'name_0' => 'vlan22',
+                'name_1' => 'eth0',
                 'interface_0' => '1',
                 'interface_0_check' => 'eth0',
                 'dhcp_0' => false,

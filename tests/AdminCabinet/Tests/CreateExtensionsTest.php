@@ -101,6 +101,21 @@ abstract class CreateExtensionsTest extends MikoPBXTestsBase
         $this->selectDropdownItem('sip_networkfilterid', $params['sip_networkfilterid']);
         $this->selectDropdownItem('sip_transport', $params['sip_transport']);
         $this->changeTextAreaValue('sip_manualattributes', $params['sip_manualattributes']);
+
+
+        $this->changeTabOnCurrentPage('routing');
+        if (isset($params['fwd_ringlength'])) {
+            $this->changeInputField('fwd_ringlength', $params['fwd_ringlength']);
+        }
+        if (isset($params['fwd_forwardingonbusy'])) {
+            $this->changeInputField('fwd_forwardingonbusy', $params['fwd_forwardingonbusy']);
+        }
+        if (isset($params['fwd_forwarding'])) {
+            $this->changeInputField('fwd_forwarding', $params['fwd_forwarding']);
+        }
+        if (isset($params['fwd_forwardingonunavailable'])) {
+            $this->changeInputField('fwd_forwardingonunavailable', $params['fwd_forwardingonunavailable']);
+        }
     }
 
     /**
@@ -140,11 +155,28 @@ abstract class CreateExtensionsTest extends MikoPBXTestsBase
         $this->assertInputFieldValueEqual('user_email', $params['email']);
 
         $this->changeTabOnCurrentPage('routing');
-        $this->assertInputFieldValueEqual('fwd_ringlength', '45');
-        $this->assertMenuItemSelected('fwd_forwardingonbusy', $params['mobile']);
-        $this->assertMenuItemSelected('fwd_forwarding', $params['mobile']);
-        $this->assertMenuItemSelected('fwd_forwardingonunavailable', $params['mobile']);
 
+        if (isset($params['fwd_ringlength'])) {
+            $this->assertInputFieldValueEqual('fwd_ringlength', $params['fwd_ringlength']);
+        } else {
+            $this->assertInputFieldValueEqual('fwd_ringlength', '45');
+        }
+        if (isset($params['fwd_forwardingonbusy'])) {
+            $this->assertMenuItemSelected('fwd_forwardingonbusy', $params['fwd_forwardingonbusy']);
+        } else {
+            $this->assertMenuItemSelected('fwd_forwardingonbusy', $params['mobile']);
+        }
+        if (isset($params['fwd_forwarding'])) {
+            $this->assertMenuItemSelected('fwd_forwarding', $params['fwd_forwarding']);
+        } else {
+            $this->assertMenuItemSelected('fwd_forwarding', $params['mobile']);
+        }
+        if (isset($params['fwd_forwardingonunavailable'])) {
+            $this->assertMenuItemSelected('fwd_forwardingonunavailable', $params['fwd_forwardingonunavailable']);
+        } else {
+            $this->assertMenuItemSelected('fwd_forwardingonunavailable', $params['mobile']);
+        }       
+       
         $this->changeTabOnCurrentPage('general');
         // Extension passwords are not masked
         $this->assertInputFieldValueEqual('sip_secret', $params['secret']);
@@ -154,6 +186,8 @@ abstract class CreateExtensionsTest extends MikoPBXTestsBase
         $this->assertMenuItemSelected('sip_networkfilterid', $params['sip_networkfilterid']);
         $this->assertMenuItemSelected('sip_transport', $params['sip_transport']);
         $this->assertTextAreaValueIsEqual('sip_manualattributes', $params['sip_manualattributes']);
+
+
     }
 
     /**

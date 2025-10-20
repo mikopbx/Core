@@ -37,4 +37,9 @@ class SmithJamesTest extends CreateExtensionsTest
     {
         return EmployeeDataFactory::getEmployeeData('smith.james');
     }
+
+    public function testCreateExtension(): void
+    {
+        parent::testCreateExtension();
+    }
 }

@@ -37,4 +37,9 @@ class SvetlanaVlasovaTest extends CreateExtensionsTest
     {
         return EmployeeDataFactory::getEmployeeData('svetlana.vlasova');
     }
+
+    public function testCreateExtension(): void
+    {
+        parent::testCreateExtension();
+    }
 }
