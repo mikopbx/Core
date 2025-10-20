@@ -1,3 +1,8 @@
+---
+name: mikopbx-endpoint-validator
+description: Validate REST API endpoints for OpenAPI schema compliance and parameter consistency
+---
+
 # mikopbx-endpoint-validator
 
 Validate MikoPBX REST API endpoints for OpenAPI schema compliance, parameter consistency, and documentation accuracy.

@@ -1,3 +1,8 @@
+---
+name: mikopbx-log-analyzer
+description: Analyze Docker container logs to diagnose issues and monitor system health
+---
+
 # mikopbx-log-analyzer
 
 Efficiently analyze logs inside MikoPBX Docker container to diagnose issues, monitor processes, and track system behavior.

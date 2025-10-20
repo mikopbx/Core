@@ -1,3 +1,8 @@
+---
+name: mikopbx-commit-message
+description: Generate concise, professional Git commit messages without fluff or attribution
+---
+
 # mikopbx-commit-message
 
 Generate concise, professional commit messages that describe WHAT changed and WHY, without fluff or unnecessary details.

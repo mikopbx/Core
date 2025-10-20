@@ -1,3 +1,8 @@
+---
+name: mikopbx-api-test-generator
+description: Generate comprehensive Python pytest tests for REST API endpoints with schema validation
+---
+
 # mikopbx-api-test-generator
 
 Generate comprehensive Python pytest tests for MikoPBX REST API endpoints with full parameter coverage and schema validation.

@@ -1,3 +1,8 @@
+---
+name: mikopbx-docker-restart-tester
+description: Restart Docker container and run tests after code changes with service health monitoring
+---
+
 # mikopbx-docker-restart-tester
 
 Automatically restart MikoPBX Docker container after code changes and run comprehensive tests with schema validation enabled.

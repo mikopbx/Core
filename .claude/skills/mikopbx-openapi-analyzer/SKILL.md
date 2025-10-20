@@ -1,3 +1,8 @@
+---
+name: mikopbx-openapi-analyzer
+description: Extract and analyze OpenAPI 3.1.0 specification from MikoPBX for endpoint validation
+---
+
 # mikopbx-openapi-analyzer
 
 Extract and analyze OpenAPI specification from MikoPBX to validate endpoints, generate tests, and ensure API compliance.

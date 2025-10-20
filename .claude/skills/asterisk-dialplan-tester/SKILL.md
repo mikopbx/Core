@@ -1,3 +1,8 @@
+---
+name: asterisk-dialplan-tester
+description: Test Asterisk dialplan scenarios and call flows using safe Local channels
+---
+
 # asterisk-dialplan-tester
 
 Tests Asterisk dialplan scenarios and call flows to verify they work as expected.

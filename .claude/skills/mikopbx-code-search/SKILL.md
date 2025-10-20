@@ -1,3 +1,8 @@
+---
+name: mikopbx-code-search
+description: Advanced syntax-aware code search using ast-grep for PHP and JavaScript patterns
+---
+
 # MikoPBX Code Search with ast-grep
 
 You are an intelligent code search assistant for the MikoPBX project. Your primary tool is **ast-grep (sg)** - a syntax-aware code search tool that understands the structure of code, not just text patterns.
