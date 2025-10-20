@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, Form, UserMessage, ApiKeysAPI, DynamicDropdownBuilder, FormElements, SemanticLocalization, ApiKeysTooltipManager */
+/* global globalRootUrl, globalTranslate, Form, UserMessage, ApiKeysAPI, DynamicDropdownBuilder, FormElements, SemanticLocalization, ApiKeysTooltipManager, ACLHelper, PermissionsSelector */
 
 /**
  * API key edit form management module
@@ -127,37 +127,88 @@ const apiKeysModify = {
     initializeUIComponents() {
         // Initialize checkboxes
         $('.ui.checkbox').checkbox();
-        
+
         // Initialize dropdowns (network filter will be built by DynamicDropdownBuilder)
         $('.ui.dropdown').dropdown();
-        
-        // Initialize full permissions toggle
+
+        // Initialize full permissions toggle with PermissionsSelector integration
         $('#full-permissions-toggle').checkbox({
-            onChecked: () => {
-                $('#selective-permissions-section').slideUp();
-                $('#full-permissions-warning').slideDown();
-                // Only call dataChanged if form is fully initialized
-                if (apiKeysModify.formInitialized) {
-                    Form.dataChanged();
-                }
-            },
-            onUnchecked: () => {
-                $('#selective-permissions-section').slideDown();
-                $('#full-permissions-warning').slideUp();
-                // Only call dataChanged if form is fully initialized
-                if (apiKeysModify.formInitialized) {
-                    Form.dataChanged();
-                }
-            }
+            onChange: apiKeysModify.togglePermissionsSelector
         });
-        
+
+        // Initialize PermissionsSelector visibility
+        apiKeysModify.togglePermissionsSelector();
+
         // Store event handlers for cleanup
         apiKeysModify.handlers.copyKey = apiKeysModify.handleCopyKey.bind(apiKeysModify);
         apiKeysModify.handlers.regenerateKey = apiKeysModify.handleRegenerateKey.bind(apiKeysModify);
-        
+
         // Attach event handlers
         $('.copy-api-key').off('click').on('click', apiKeysModify.handlers.copyKey);
         $('.regenerate-api-key').off('click').on('click', apiKeysModify.handlers.regenerateKey);
+
+        // Apply ACL permissions to UI elements
+        apiKeysModify.applyACLPermissions();
+    },
+
+    /**
+     * Toggle PermissionsSelector visibility based on full_permissions checkbox state
+     */
+    togglePermissionsSelector() {
+        const isFullPermissions = $('#full-permissions-toggle').checkbox('is checked');
+
+        if (isFullPermissions) {
+            $('#permissions-container').hide();
+            $('#full-permissions-warning').slideDown();
+        } else {
+            $('#permissions-container').show();
+            $('#full-permissions-warning').slideUp();
+
+            // Initialize PermissionsSelector on first show
+            if (typeof PermissionsSelector !== 'undefined' && !PermissionsSelector.isReady()) {
+                PermissionsSelector.initialize('#permissions-container');
+            }
+        }
+
+        // Trigger dataChanged if form is fully initialized
+        if (apiKeysModify.formInitialized) {
+            Form.dataChanged();
+        }
+    },
+
+    /**
+     * Apply ACL permissions to UI elements
+     * Shows/hides buttons and form elements based on user permissions
+     */
+    applyACLPermissions() {
+        // Check if ACL Helper is available
+        if (typeof ACLHelper === 'undefined') {
+            console.warn('ACLHelper is not available, skipping ACL checks');
+            return;
+        }
+
+        // Apply permissions using ACLHelper
+        ACLHelper.applyPermissions({
+            save: {
+                show: '#submitbutton, #dropdownSubmit',
+                enable: '#save-api-key-form'
+            },
+            delete: {
+                show: '.delete-button'
+            }
+        });
+
+        // Additional checks for specific actions
+        if (!ACLHelper.canSave()) {
+            // Disable form if user cannot save
+            $('#save-api-key-form input, #save-api-key-form select, #save-api-key-form textarea')
+                .prop('readonly', true)
+                .addClass('disabled');
+
+            // Show info message
+            const infoMessage = globalTranslate.ak_NoPermissionToModify || 'You do not have permission to modify API keys';
+            UserMessage.showInformation(infoMessage);
+        }
     },
 
     /**
@@ -493,13 +544,21 @@ const apiKeysModify = {
 
         // Handle API key for new/existing records
         apiKeysModify.handleApiKeyInFormData(result.data);
-        
-        // Collect and set permissions
-        result.data.allowed_paths = apiKeysModify.collectSelectedPermissions(result.data);
-        
+
+        // Collect permissions (object format: {path: permission})
+        const permissions = apiKeysModify.collectSelectedPermissions(result.data);
+
+        // Convert permissions object to JSON string for API
+        if (!$('#full-permissions-toggle').checkbox('is checked')) {
+            result.data.allowed_paths = JSON.stringify(permissions);
+        } else {
+            // For full permissions, send empty object as JSON
+            result.data.allowed_paths = JSON.stringify({});
+        }
+
         // Clean up temporary form fields
         apiKeysModify.cleanupFormData(result.data);
-        
+
         return result;
     },
 
@@ -518,34 +577,24 @@ const apiKeysModify = {
 
     /**
      * Collect selected permissions based on form state
+     * Returns object in new format: {path: permission}
      */
     collectSelectedPermissions(data) {
         // Note: with convertCheckboxesToBool=true, full_permissions will be boolean
         const isFullPermissions = data.full_permissions === true;
-        
-        if (isFullPermissions) {
-            return [];
-        }
-        
-        return apiKeysModify.getSelectedPermissionPaths();
-    },
 
-    /**
-     * Get selected permission paths from checkboxes
-     */
-    getSelectedPermissionPaths() {
-        const selectedPaths = [];
-        
-        $('#api-permissions-table tbody .permission-checkbox').each(function() {
-            if ($(this).checkbox('is checked')) {
-                const path = $(this).find('input').data('path');
-                if (path) {
-                    selectedPaths.push(path);
-                }
-            }
-        });
-        
-        return selectedPaths;
+        if (isFullPermissions) {
+            // Empty object for full permissions
+            return {};
+        }
+
+        // Get permissions from PermissionsSelector (new format)
+        if (typeof PermissionsSelector !== 'undefined' && PermissionsSelector.isReady()) {
+            return PermissionsSelector.getSelectedPermissions();
+        }
+
+        // Fallback: empty object if PermissionsSelector not ready
+        return {};
     },
 
     /**
@@ -602,26 +651,27 @@ const apiKeysModify = {
         });
         
         // Set permissions
-        const isFullPermissions = data.full_permissions === '1' || data.full_permissions === true || 
-                                (data.allowed_paths && Array.isArray(data.allowed_paths) && data.allowed_paths.length === 0);
-        
+        const isFullPermissions = data.full_permissions === '1' || data.full_permissions === true ||
+                                (data.allowed_paths && typeof data.allowed_paths === 'object' && Object.keys(data.allowed_paths).length === 0);
+
         if (isFullPermissions) {
             $('#full-permissions-toggle').checkbox('set checked');
-            $('#selective-permissions-section').hide();
+            $('#permissions-container').hide();
             $('#full-permissions-warning').show();
         } else {
             $('#full-permissions-toggle').checkbox('set unchecked');
-            $('#selective-permissions-section').show();
+            $('#permissions-container').show();
             $('#full-permissions-warning').hide();
-            
-            // Set specific permissions if available
-            if (data.allowed_paths && Array.isArray(data.allowed_paths) && data.allowed_paths.length > 0) {
+
+            // Set specific permissions if available (new format: object with path => permission)
+            if (data.allowed_paths && typeof data.allowed_paths === 'object' && Object.keys(data.allowed_paths).length > 0) {
+                // Wait for PermissionsSelector to be ready, then set permissions
                 setTimeout(() => {
-                    Form.executeSilently(() => {
-                        data.allowed_paths.forEach(path => {
-                            $(`#api-permissions-table input[data-path="${path}"]`).parent('.permission-checkbox').checkbox('set checked');
+                    if (typeof PermissionsSelector !== 'undefined' && PermissionsSelector.isReady()) {
+                        Form.executeSilently(() => {
+                            PermissionsSelector.setPermissions(data.allowed_paths);
                         });
-                    });
+                    }
                 }, 500);
             }
         }

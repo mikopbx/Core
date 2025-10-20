@@ -17,7 +17,7 @@
  */
 
 /* global globalRootUrl, globalTranslate, ExtensionsAPI, EmployeesAPI, Form,
- InputMaskPatterns, avatar, ExtensionModifyStatusMonitor, ClipboardJS, PasswordWidget, UserMessage */
+ InputMaskPatterns, avatar, ExtensionModifyStatusMonitor, ClipboardJS, PasswordWidget, UserMessage, ACLHelper */
 
 
 /**
@@ -231,8 +231,51 @@ const extension = {
             extensionTooltipManager.initialize();
         }
 
+        // Apply ACL permissions to UI elements
+        extension.applyACLPermissions();
+
         // Load extension data via REST API
         extension.loadExtensionData();
+    },
+
+    /**
+     * Apply ACL permissions to UI elements
+     * Shows/hides buttons and form elements based on user permissions
+     */
+    applyACLPermissions() {
+        // Check if ACL Helper is available
+        if (typeof ACLHelper === 'undefined') {
+            console.warn('ACLHelper is not available, skipping ACL checks');
+            return;
+        }
+
+        // Apply permissions using ACLHelper
+        ACLHelper.applyPermissions({
+            save: {
+                show: '#submitbutton, #dropdownSubmit',
+                enable: '#extensions-form'
+            },
+            delete: {
+                show: '.delete-button, .two-steps-delete'
+            }
+        });
+
+        // Additional checks for specific actions
+        if (!ACLHelper.canSave()) {
+            // Disable form if user cannot save
+            $('#extensions-form input, #extensions-form select, #extensions-form textarea')
+                .prop('readonly', true)
+                .addClass('disabled');
+
+            // Disable password widget
+            if (extension.passwordWidget) {
+                extension.passwordWidget.disable();
+            }
+
+            // Show info message
+            const infoMessage = globalTranslate.ex_NoPermissionToModify || 'You do not have permission to modify extensions';
+            UserMessage.showInformation(infoMessage);
+        }
     },
     /**
      * Callback after paste mobile number from clipboard

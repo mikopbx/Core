@@ -22,6 +22,7 @@ namespace MikoPBX\PBXCoreREST\Lib;
 use MikoPBX\PBXCoreREST\Lib\OpenAPI\GetSpecificationAction;
 use MikoPBX\PBXCoreREST\Lib\OpenAPI\GetAclRulesAction;
 use MikoPBX\PBXCoreREST\Lib\OpenAPI\GetValidationSchemasAction;
+use MikoPBX\PBXCoreREST\Lib\OpenAPI\GetSimplifiedPermissionsAction;
 use MikoPBX\PBXCoreREST\Lib\OpenAPI\ClearCacheAction;
 use Phalcon\Di\Injectable;
 
@@ -30,14 +31,11 @@ use Phalcon\Di\Injectable;
  */
 enum OpenAPIAction: string
 {
-    // Singleton standard methods - only GET for specification
-    case GET = 'get';
-    case GET_LIST = 'getList';
-
     // Custom methods - main functionality
     case GET_SPECIFICATION = 'getSpecification';
     case GET_ACL_RULES = 'getAclRules';
     case GET_VALIDATION_SCHEMAS = 'getValidationSchemas';
+    case GET_SIMPLIFIED_PERMISSIONS = 'getSimplifiedPermissions';
     case CLEAR_CACHE = 'clearCache';
 }
 
@@ -48,11 +46,11 @@ enum OpenAPIAction: string
  * There's only one OpenAPI configuration in the system
  *
  * RESTful API mapping:
- * - GET /openapi                          -> get (retrieve OpenAPI specification)
- * - GET /openapi:getSpecification        -> getSpecification (alias for get)
- * - GET /openapi:getAclRules             -> getAclRules (get ACL rules)
- * - GET /openapi:getValidationSchemas    -> getValidationSchemas (get validation schemas)
- * - POST /openapi:clearCache             -> clearCache (clear metadata cache)
+ * - GET /openapi:getSpecification           -> getSpecification (retrieve OpenAPI specification)
+ * - GET /openapi:getAclRules                -> getAclRules (get ACL rules)
+ * - GET /openapi:getValidationSchemas       -> getValidationSchemas (get validation schemas)
+ * - GET /openapi:getSimplifiedPermissions   -> getSimplifiedPermissions (get simplified permissions structure)
+ * - POST /openapi:clearCache                -> clearCache (clear metadata cache)
  *
  * @package MikoPBX\PBXCoreREST\Lib
  */
@@ -83,11 +81,10 @@ class OpenAPIManagementProcessor extends Injectable
 
         // Execute action using match expression (PHP 8)
         $res = match ($action) {
-            OpenAPIAction::GET,
-            OpenAPIAction::GET_LIST,
             OpenAPIAction::GET_SPECIFICATION => GetSpecificationAction::main($data),
             OpenAPIAction::GET_ACL_RULES => GetAclRulesAction::main(),
             OpenAPIAction::GET_VALIDATION_SCHEMAS => GetValidationSchemasAction::main(),
+            OpenAPIAction::GET_SIMPLIFIED_PERMISSIONS => GetSimplifiedPermissionsAction::main(),
             OpenAPIAction::CLEAR_CACHE => ClearCacheAction::main(),
         };
 

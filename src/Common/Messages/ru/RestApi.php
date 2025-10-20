@@ -242,6 +242,8 @@ return [
     'rest_openapi_GetAclDesc' => 'Возвращает правила доступа (ACL) для всех endpoints API, извлеченные из метаданных',
     'rest_openapi_GetSchemas' => 'Получить схемы валидации',
     'rest_openapi_GetSchemasDesc' => 'Возвращает схемы валидации для всех endpoints API',
+    'rest_openapi_GetSimplifiedPermissions' => 'Получить упрощенную структуру прав доступа',
+    'rest_openapi_GetSimplifiedPermissionsDesc' => 'Возвращает список всех REST API endpoints, сгруппированных по ресурсам с указанием доступных действий (read/write) для настройки прав доступа API ключей',
     'rest_openapi_ClearCache' => 'Очистить кэш OpenAPI',
     'rest_openapi_ClearCacheDesc' => 'Очищает кэш метаданных OpenAPI, форсирует регенерацию спецификации при следующем запросе',
 
@@ -1411,7 +1413,7 @@ return [
     'rest_param_ak_key' => 'Значение API ключа (опционально, автогенерируется если не указан, минимум 32 символа). Никогда не возвращается в ответах - хранится как bcrypt хеш',
     'rest_param_ak_networkfilterid' => 'ID сетевого фильтра для ограничения доступа по IP',
     'rest_param_ak_full_permissions' => 'Полные права доступа ко всем endpoints',
-    'rest_param_ak_allowed_paths' => 'Список разрешенных API paths',
+    'rest_param_ak_allowed_paths_permissions' => 'Объект с правами доступа к API endpoints. Ключи - пути API (например, "/api/v3/extensions"), значения - уровень доступа ("read" или "write")',
 
     // ApiKeys schema fields
     'rest_schema_ak_id' => 'Уникальный идентификатор API ключа',
@@ -1419,7 +1421,7 @@ return [
     'rest_schema_ak_key' => 'Значение API ключа (только для записи)',
     'rest_schema_ak_networkfilterid' => 'ID сетевого фильтра',
     'rest_schema_ak_full_permissions' => 'Признак полных прав доступа',
-    'rest_schema_ak_allowed_paths' => 'Список разрешенных API paths',
+    'rest_schema_ak_allowed_paths_permissions' => 'Объект с правами доступа к API endpoints. Ключи - пути API, значения - "read" (чтение) или "write" (чтение и запись)',
     'rest_schema_ak_created_at' => 'Дата и время создания ключа',
     'rest_schema_ak_last_used_at' => 'Дата и время последнего использования ключа',
     'rest_schema_ak_key_display' => 'Отображаемая часть ключа (первые и последние символы)',

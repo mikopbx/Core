@@ -25,6 +25,7 @@ use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Core\System\SystemMessages;
 use Phalcon\Di\DiInterface;
 use Phalcon\Encryption\Security\Random;
+use stdClass;
 
 /**
  * Class TokenValidationService
@@ -197,7 +198,10 @@ class TokenValidationService
     
     /**
      * Check if request path is allowed for this Bearer token
-     * 
+     *
+     * Uses new ApiKeyPermissionChecker for granular permissions checking
+     * with ActionType hierarchy (read/write) support
+     *
      * @param array $keyData
      * @param \MikoPBX\PBXCoreREST\Http\Request $request
      * @return bool
@@ -205,31 +209,37 @@ class TokenValidationService
     private function checkPathPermissions(array $keyData, $request): bool
     {
         $requestPath = $request->getURI();
-        
+
         // Check excluded endpoints first (always denied)
         if ($this->isExcludedEndpoint($requestPath)) {
+            SystemMessages::sysLogMsg(__CLASS__, "Access denied: excluded endpoint {$requestPath}", LOG_WARNING);
             return false;
         }
-        
-        // No path restrictions = allow all (except excluded)
-        if (empty($keyData['allowed_paths'])) {
-            return true;
+
+        // Create object from array data for ApiKeyPermissionChecker
+        // Using stdClass for compatibility with object type hint
+        $apiKeyObject = new stdClass();
+        $apiKeyObject->id = $keyData['id'] ?? null;
+        $apiKeyObject->full_permissions = $keyData['full_permissions'] ?? '0';
+        $apiKeyObject->allowed_paths = $keyData['allowed_paths'] ?? '';
+
+        // Use new ApiKeyPermissionChecker for granular permission checking
+        $checker = new ApiKeyPermissionChecker();
+        $httpMethod = $request->getMethod();
+
+        $hasPermission = $checker->checkPermission($apiKeyObject, $requestPath, $httpMethod);
+
+        if (!$hasPermission) {
+            SystemMessages::sysLogMsg(
+                __CLASS__,
+                "Access denied: insufficient permissions. Path: {$requestPath}, Method: {$httpMethod}, " .
+                "Full permissions: {$apiKeyObject->full_permissions}, Allowed paths: " .
+                ($apiKeyObject->allowed_paths ?: 'empty'),
+                LOG_WARNING
+            );
         }
-        
-        // Parse allowed paths
-        $allowedPaths = json_decode($keyData['allowed_paths'], true);
-        if (!is_array($allowedPaths) || empty($allowedPaths)) {
-            return true; // Invalid config = allow all
-        }
-        
-        // Simple suffix matching
-        foreach ($allowedPaths as $allowedSuffix) {
-            if (strpos($requestPath, $allowedSuffix) === 0) {
-                return true;
-            }
-        }
-        
-        return false; // No suffix matched
+
+        return $hasPermission;
     }
     
     /**

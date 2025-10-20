@@ -90,13 +90,28 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 $sanitizedData['networkfilterid'] = null;
             }
 
-            // Special handling for allowed_paths array
+            // Special handling for allowed_paths (object with permissions)
+            // New format: {"/api/v3/extensions": "write", "/api/v3/cdr": "read"}
             if (isset($data['allowed_paths'])) {
                 if (is_array($data['allowed_paths'])) {
-                    // Sanitize each path
-                    $sanitizedData['allowed_paths'] = array_map(function($path) {
-                        return filter_var($path, FILTER_SANITIZE_URL);
-                    }, $data['allowed_paths']);
+                    // Check if it's associative array (new format with permissions)
+                    $isAssoc = array_keys($data['allowed_paths']) !== range(0, count($data['allowed_paths']) - 1);
+
+                    if ($isAssoc) {
+                        // New format: path => permission mapping
+                        $sanitizedPaths = [];
+                        foreach ($data['allowed_paths'] as $path => $permission) {
+                            $sanitizedPath = filter_var($path, FILTER_SANITIZE_URL);
+                            $sanitizedPermission = filter_var($permission, FILTER_SANITIZE_SPECIAL_CHARS);
+                            $sanitizedPaths[$sanitizedPath] = $sanitizedPermission;
+                        }
+                        $sanitizedData['allowed_paths'] = $sanitizedPaths;
+                    } else {
+                        // Old format: array of paths (backward compatibility)
+                        $sanitizedData['allowed_paths'] = array_map(function($path) {
+                            return filter_var($path, FILTER_SANITIZE_URL);
+                        }, $data['allowed_paths']);
+                    }
                 } elseif (is_string($data['allowed_paths'])) {
                     // Try to decode JSON string
                     $decoded = json_decode($data['allowed_paths'], true);
@@ -292,42 +307,74 @@ class SaveRecordAction extends AbstractSaveRecordAction
     /**
      * Validate allowed paths format (Security Critical!)
      *
+     * Supports two formats:
+     * 1. NEW: Object with permissions - {"/api/v3/extensions": "write", "/api/v3/cdr": "read"}
+     * 2. OLD: Array of paths - ["/api/v3/extensions", "/api/v3/cdr"] (backward compatibility)
+     *
      * Validates:
      * - Path format: must start with /api/v{number}/
      * - Path components: only lowercase letters, numbers, hyphens
      * - No dangerous characters (../, //, etc.)
+     * - Permission values: must be 'read' or 'write' (new format only)
      *
      * WHY: Prevents unauthorized API access through path manipulation
      *
-     * @param array<string> $paths Paths to validate
+     * @param array<string|array<string, string>> $paths Paths to validate (array or path => permission)
      * @return array<string> List of validation errors (empty if valid)
      */
     private static function validateAllowedPaths(array $paths): array
     {
         $errors = [];
 
-        foreach ($paths as $index => $path) {
-            // Check path format using regex
+        // Check if it's associative array (new format with permissions)
+        $isAssoc = array_keys($paths) !== range(0, count($paths) - 1);
+
+        foreach ($paths as $index => $value) {
+            if ($isAssoc) {
+                // NEW FORMAT: $index is path, $value is permission
+                // Ensure types are strings
+                if (!is_string($index) || !is_string($value)) {
+                    $errors[] = "Invalid path or permission type (must be strings)";
+                    continue;
+                }
+
+                $path = $index;
+                $permission = $value;
+
+                // Validate permission value
+                if (!in_array($permission, ['read', 'write'], true)) {
+                    $errors[] = "Invalid permission at path '$path': '$permission'. Must be 'read' or 'write'";
+                }
+            } else {
+                // OLD FORMAT: $value is path (backward compatibility)
+                if (!is_string($value)) {
+                    $errors[] = "Invalid path type (must be string)";
+                    continue;
+                }
+                $path = $value;
+            }
+
+            // Validate path format
             if (!preg_match('#^/api/v[0-9]+/[a-z0-9-]+(/[a-z0-9-]+)*$#', $path)) {
-                $errors[] = "Invalid path format at index $index: '$path'. Must match pattern /api/v{number}/{resource}[/{resource}]";
+                $errors[] = "Invalid path format '$path'. Must match pattern /api/v{number}/{resource}[/{resource}]";
                 continue;
             }
 
             // Check for dangerous path components
             if (strpos($path, '../') !== false || strpos($path, '//') !== false) {
-                $errors[] = "Dangerous path component at index $index: '$path' contains ../ or //";
+                $errors[] = "Dangerous path component in '$path' contains ../ or //";
                 continue;
             }
 
             // Check minimum length
             if (strlen($path) < 10) {
-                $errors[] = "Path too short at index $index: '$path' (minimum 10 characters)";
+                $errors[] = "Path too short '$path' (minimum 10 characters)";
                 continue;
             }
 
             // Check maximum length
             if (strlen($path) > 255) {
-                $errors[] = "Path too long at index $index: '$path' (maximum 255 characters)";
+                $errors[] = "Path too long '$path' (maximum 255 characters)";
             }
         }
 

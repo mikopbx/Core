@@ -10,6 +10,10 @@
         <div class="article">
             <div id="debug-info"></div>
 
+            <!-- ACL Initialization for JavaScript -->
+            {{ partial("partials/acl-init") }}
+            <!-- / ACL Initialization -->
+
             <div class="ui container" id="main-content-container">
                 <!--ADVICE-->
                 <div class="ui flowing popup bottom left transition hidden" id="advice"></div>

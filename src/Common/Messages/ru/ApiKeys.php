@@ -154,4 +154,19 @@ return [
     'ak_RetryLoad' => 'Повторить',
     'ak_AuthenticationRequired' => 'Требуется аутентификация',
     'ak_PleaseLoginFirst' => 'Пожалуйста, войдите в систему для доступа к API',
+
+    // ACL permissions messages
+    'ak_NoPermissionToModify' => 'У вас нет прав на изменение API ключей',
+    'ak_NoPermissionToDelete' => 'У вас нет прав на удаление API ключей',
+    'ak_NoPermissionToCreate' => 'У вас нет прав на создание API ключей',
+
+    // Permissions selector
+    'ak_Permissions' => 'Права доступа к API endpoints',
+    'ak_PermissionsHelp' => 'Выберите уровень доступа для каждого REST API endpoint. "Чтение" позволяет получать данные (GET), "Чтение и запись" позволяет создавать, изменять и удалять данные (POST, PUT, DELETE).',
+    'ak_SelectPermission' => 'Выберите права',
+    'ak_NoAccess' => 'Нет доступа',
+    'ak_PermissionRead' => 'Чтение (GET)',
+    'ak_PermissionWrite' => 'Чтение и запись (GET, POST, PUT, DELETE)',
+    'ak_ErrorLoadingEndpoints' => 'Не удалось загрузить список доступных API endpoints',
+    'ak_NoEndpointsAvailable' => 'Нет доступных API endpoints',
 ];

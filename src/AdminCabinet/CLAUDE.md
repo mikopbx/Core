@@ -495,6 +495,202 @@ public function onAfterExecuteRoute($dispatcher): void
 }
 ```
 
+## Access Control (ACL) in JavaScript
+
+MikoPBX provides a client-side ACL Helper for checking user permissions in JavaScript code. This is essential for forms that load data via REST API where PHP doesn't render the page.
+
+### How It Works
+
+1. **PHP generates ACL data** - `partials/acl-init.volt` checks permissions using `isAllowed()` and generates JavaScript object
+2. **JavaScript reads ACL data** - `ACLHelper` module provides convenient API for permission checks
+3. **UI adapts dynamically** - Buttons and form elements are shown/hidden based on permissions
+
+### ACL Helper API
+
+The `ACLHelper` global object provides these methods:
+
+```javascript
+// Basic permission check
+if (ACLHelper.isAllowed('save')) {
+    $('#save-button').show();
+}
+
+// Shorthand methods
+if (ACLHelper.canSave()) { }
+if (ACLHelper.canDelete()) { }
+if (ACLHelper.canModify()) { }
+
+// Show/hide elements by permission
+ACLHelper.toggleByPermission('#save-button', 'save');
+ACLHelper.toggleByPermission('#delete-button', 'delete');
+
+// Enable/disable elements
+ACLHelper.toggleEnableByPermission('#submit-form', 'save');
+
+// Batch apply permissions
+ACLHelper.applyPermissions({
+    save: {
+        show: '#save-button',
+        enable: '#form-submit'
+    },
+    delete: {
+        show: '#delete-button'
+    }
+});
+
+// Get all permissions
+const permissions = ACLHelper.getPermissions();
+
+// Conditional execution
+ACLHelper.ifAllowed('save', () => {
+    console.log('User can save');
+}, () => {
+    console.log('User cannot save');
+});
+
+// Debug ACL state
+ACLHelper.debug();
+```
+
+### Using ACL Helper in Forms
+
+Add ACL checks in your form's `initialize()` method:
+
+```javascript
+const myForm = {
+    initialize() {
+        // ... other initialization ...
+
+        // Apply ACL permissions
+        myForm.applyACLPermissions();
+    },
+
+    applyACLPermissions() {
+        // Check if ACL Helper is available
+        if (typeof ACLHelper === 'undefined') {
+            console.warn('ACLHelper not available');
+            return;
+        }
+
+        // Apply permissions
+        ACLHelper.applyPermissions({
+            save: {
+                show: '#submitbutton, #dropdownSubmit',
+                enable: '#my-form'
+            },
+            delete: {
+                show: '.delete-button'
+            }
+        });
+
+        // Additional logic if user cannot save
+        if (!ACLHelper.canSave()) {
+            // Disable all inputs
+            $('#my-form input, #my-form select, #my-form textarea')
+                .prop('readonly', true)
+                .addClass('disabled');
+
+            // Show info message
+            UserMessage.showInformation(globalTranslate.my_NoPermissionToModify);
+        }
+    }
+};
+```
+
+### Available Permissions
+
+The ACL system checks these standard actions:
+- `index` - View list pages
+- `modify` - Edit existing records
+- `save` - Save changes
+- `delete` - Delete records
+- `copy` - Copy records
+- `download` - Download files
+- `restore` - Restore backups
+- `edit` - Edit (alias for modify)
+- `modifyiax` - Modify IAX providers
+- `modifysip` - Modify SIP providers
+
+### ACL Data Structure
+
+The ACL data is available in `window.CurrentPageACL`:
+
+```javascript
+{
+    controller: 'MikoPBX\\AdminCabinet\\Controllers\\ExtensionsController',
+    controllerName: 'extensions',
+    actionName: 'modify',
+    permissions: {
+        'index': true,
+        'modify': true,
+        'save': true,
+        'delete': false,
+        // ... other permissions
+    },
+    initialized: true
+}
+```
+
+### Volt Templates (Server-side ACL)
+
+For server-rendered content, use `isAllowed()` in Volt templates:
+
+```volt
+{% if isAllowed('save') %}
+    <button id="save-button">Save</button>
+{% endif %}
+
+{% if isAllowed('delete') %}
+    <button id="delete-button">Delete</button>
+{% endif %}
+```
+
+### Integration with ModuleUsersUI (Future)
+
+When ModuleUsersUI is implemented:
+- `SecurityPlugin::isAllowedAction()` will extract role from JWT token
+- ACL Helper will continue to work without changes
+- Permissions will be based on user's role from JWT claims
+- No JavaScript code changes required
+
+### Example: Extension Form
+
+```javascript
+/* global ACLHelper */
+
+const extension = {
+    initialize() {
+        // ... setup code ...
+
+        // Apply ACL permissions
+        extension.applyACLPermissions();
+
+        // Load data
+        extension.loadExtensionData();
+    },
+
+    applyACLPermissions() {
+        if (typeof ACLHelper === 'undefined') return;
+
+        ACLHelper.applyPermissions({
+            save: {
+                show: '#submitbutton, #dropdownSubmit',
+                enable: '#extensions-form'
+            },
+            delete: {
+                show: '.delete-button'
+            }
+        });
+
+        if (!ACLHelper.canSave()) {
+            $('#extensions-form input, #extensions-form select, #extensions-form textarea')
+                .prop('readonly', true);
+            UserMessage.showInformation(globalTranslate.ex_NoPermissionToModify);
+        }
+    }
+};
+```
+
 ## Security Considerations
 
 1. **CSRF Protection** - Automatically handled by SecurityPlugin
@@ -502,6 +698,7 @@ public function onAfterExecuteRoute($dispatcher): void
 3. **Authentication** - Handled by SessionController and SecurityPlugin
 4. **XSS Prevention** - Volt auto-escapes output by default
 5. **SQL Injection** - Use Phalcon's ORM and query builder
+6. **ACL Enforcement** - Use ACLHelper for client-side permission checks
 
 ## Performance Optimization
 

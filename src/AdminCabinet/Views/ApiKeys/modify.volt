@@ -61,34 +61,33 @@
 
 <!-- Permissions Section -->
 
-    <!-- Toggle for full permissions mode -->
-    <div class="field" style="margin-bottom: 1.5em;">
-        <div class="ui toggle checkbox" id="full-permissions-toggle">
-            <input type="checkbox" name="full_permissions" checked>
-            <label>{{ t._('ak_FullPermissions') }}</label>
+<!-- Toggle for full permissions mode -->
+<div class="field" style="margin-bottom: 1.5em;">
+    <div class="ui toggle checkbox" id="full-permissions-toggle">
+        <input type="checkbox" name="full_permissions" checked>
+        <label>{{ t._('ak_FullPermissions') }}</label>
+    </div>
+</div>
+
+<!-- Full permissions warning (shown when full permissions enabled) -->
+<div id="full-permissions-warning" class="ui icon message">
+    <i class="warning icon"></i>
+    <div class="content">
+        <div class="header">{{ t._('ak_FullPermissionsWarningTitle') }}</div>
+        <p>{{ t._('ak_FullPermissionsWarningText') }}</p>
+    </div>
+</div>
+
+<!-- Selective permissions section (hidden by default) -->
+<div id="permissions-container" style="display: none;">
+    <div class="field">
+        <label>{{ t._('ak_Permissions') }}</label>
+        <div class="ui info message">
+            <p>{{ t._('ak_PermissionsHelp') }}</p>
         </div>
     </div>
-    
-    <!-- Full permissions warning (shown when full permissions enabled) -->
-    <div id="full-permissions-warning" class="ui icon message">
-        <i class="warning icon"></i>
-        <div class="content">
-            <div class="header">{{ t._('ak_FullPermissionsWarningTitle') }}</div>
-            <p>{{ t._('ak_FullPermissionsWarningText') }}</p>
-        </div>
-    </div>
-    
-    <!-- Selective permissions section (hidden by default) -->
-    <div id="selective-permissions-section" style="display: none;">
-        <!-- Permissions DataTable -->
-        <table class="ui selectable compact unstackable table" id="api-permissions-table" >
-            <thead>
-            </thead>
-            <tbody>
-                <!-- Controllers will be loaded dynamically via JavaScript -->
-            </tbody>
-        </table>
-    </div>
+    <!-- PermissionsSelector UI will be rendered here by JavaScript -->
+</div>
 
 {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('MainFields')]) }}
 

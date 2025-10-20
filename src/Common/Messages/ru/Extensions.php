@@ -409,4 +409,9 @@ return [
     'ex_SecurityActions' => 'Действия',
     'ex_SecurityUnban' => 'Разблокировать',
     'ex_SecurityNoFailures' => 'Попыток неверной авторизации не обнаружено',
+
+    // ACL permissions messages
+    'ex_NoPermissionToModify' => 'У вас нет прав на изменение сотрудников',
+    'ex_NoPermissionToDelete' => 'У вас нет прав на удаление сотрудников',
+    'ex_NoPermissionToCreate' => 'У вас нет прав на создание сотрудников',
 ];

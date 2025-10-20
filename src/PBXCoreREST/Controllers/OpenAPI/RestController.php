@@ -55,13 +55,13 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ResourceSecurity('openapi', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
 #[HttpMapping(
     mapping: [
-        'GET' => ['getList', 'getSpecification', 'getAclRules', 'getValidationSchemas'],
+        'GET' => ['getSpecification', 'getAclRules', 'getValidationSchemas', 'getSimplifiedPermissions'],
         'POST' => ['clearCache'],
         'DELETE' => ['clearCache']
     ],
     resourceLevelMethods: [],
-    collectionLevelMethods: ['getList', 'clearCache'],
-    customMethods: ['getSpecification', 'getAclRules', 'getValidationSchemas', 'clearCache']
+    collectionLevelMethods: ['clearCache'],
+    customMethods: ['getSpecification', 'getAclRules', 'getValidationSchemas', 'getSimplifiedPermissions', 'clearCache']
 )]
 class RestController extends BaseRestController
 {
@@ -79,24 +79,6 @@ class RestController extends BaseRestController
 
     /**
      * Get OpenAPI specification
-     *
-     * @route GET /pbxcore/api/v3/openapi
-     */
-    #[ApiOperation(
-        summary: 'rest_openapi_GetSpec',
-        description: 'rest_openapi_GetSpecDesc',
-        operationId: 'getOpenAPISpecification'
-    )]
-    #[ApiParameterRef('format', required: false)]
-    #[ApiResponse(200, 'rest_response_200_get')]
-    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
-    public function getList(): void
-    {
-        // Implementation handled by BaseRestController
-    }
-
-    /**
-     * Get OpenAPI specification (alias for getList)
      *
      * @route GET /pbxcore/api/v3/openapi:getSpecification
      */
@@ -147,6 +129,29 @@ class RestController extends BaseRestController
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
     #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
     public function getValidationSchemas(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Get simplified permissions structure for UI
+     *
+     * Returns a simplified, grouped view of REST API endpoints suitable for
+     * UI permission selector in API Keys management. Groups endpoints by resource
+     * path and action type (read/write).
+     *
+     * @route GET /pbxcore/api/v3/openapi:getSimplifiedPermissions
+     */
+    #[ApiOperation(
+        summary: 'rest_openapi_GetSimplifiedPerms',
+        description: 'rest_openapi_GetSimplifiedPermsDesc',
+        operationId: 'getSimplifiedPermissions'
+    )]
+    #[ApiResponse(200, 'rest_response_200_get')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
+    public function getSimplifiedPermissions(): void
     {
         // Implementation handled by BaseRestController
     }

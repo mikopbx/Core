@@ -60,10 +60,12 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         $data['full_permissions'] = ($apiKey->full_permissions ?? '1') === '1';
 
         // Decode allowed_paths JSON field
-        // WHY: Ensure it's always a list (indexed array), not object, for JSON encoding
+        // WHY: Ensure it's always an object (associative array) with path => permission mapping
+        // Format: {"/api/v3/extensions": "write", "/api/v3/cdr": "read"}
         if (!empty($apiKey->allowed_paths)) {
             $decoded = json_decode($apiKey->allowed_paths, true);
-            $data['allowed_paths'] = is_array($decoded) ? array_values($decoded) : [];
+            // Preserve associative array structure (path => permission)
+            $data['allowed_paths'] = is_array($decoded) ? $decoded : [];
         } else {
             $data['allowed_paths'] = [];
         }
@@ -106,10 +108,12 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         unset($data['uniqid'], $data['extension']);
 
         // Decode allowed_paths to count them
+        // Format: {"/api/v3/extensions": "write", "/api/v3/cdr": "read"}
         $allowedPaths = [];
         if (!empty($apiKey->allowed_paths)) {
             $decoded = json_decode($apiKey->allowed_paths, true);
             if (is_array($decoded)) {
+                // Preserve associative array (path => permission) for counting
                 $allowedPaths = $decoded;
             }
         }
@@ -295,16 +299,19 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'example' => false
             ],
             'allowed_paths' => [
-                'type' => 'array',
-                'description' => 'rest_schema_ak_allowed_paths',
+                'type' => 'object',
+                'description' => 'rest_schema_ak_allowed_paths_permissions',
                 'sanitize' => 'array',
-                'items' => [
+                'additionalProperties' => [
                     'type' => 'string',
-                    'pattern' => '^/api/v[0-9]+/[a-z0-9-]+(/[a-z0-9-]+)*$',
-                    'example' => '/api/v3/employees'
+                    'enum' => ['read', 'write']
                 ],
                 'default' => [],
-                'example' => ['/api/v3/employees', '/api/v3/extensions']
+                'example' => [
+                    '/api/v3/extensions' => 'write',
+                    '/api/v3/cdr' => 'read',
+                    '/api/v3/call-queues' => 'write'
+                ]
             ],
 
             // ========== READ-ONLY FIELDS ==========
