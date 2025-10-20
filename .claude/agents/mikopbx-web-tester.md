@@ -1,7 +1,7 @@
 ---
 name: mikopbx-web-tester
 description: Use this agent when you need to test MikoPBX web interface functionality, verify UI elements work correctly, validate user workflows, or check that recent code changes haven't broken existing features. This includes testing form submissions, button clicks, navigation flows, and any interactive elements in the MikoPBX admin panel. <example>\nContext: After implementing a new feature or fixing a bug in the MikoPBX web interface.\nuser: "Test that the extension creation form works correctly"\nassistant: "I'll use the mikopbx-web-tester agent to verify the extension creation functionality"\n<commentary>\nSince we need to test web interface functionality, use the Task tool to launch the mikopbx-web-tester agent.\n</commentary>\n</example>\n<example>\nContext: Need to verify that a UI component displays data correctly.\nuser: "Check if the call history table shows records properly"\nassistant: "Let me launch the mikopbx-web-tester agent to verify the call history table"\n<commentary>\nTesting UI components requires the mikopbx-web-tester agent to interact with the web interface.\n</commentary>\n</example>
-model: sonnet
+model: Haiku
 color: orange
 ---
 

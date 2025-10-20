@@ -19,6 +19,9 @@ $message = $translation->_('gs_PasswordTooShort');
 
 // With parameters (use %param% format in ru/*.php)
 $message = $translation->_('gs_PasswordTooShort', ['min' => 8]);
+
+// In REST API and System Classes
+$message = TranslationProvider::translate('ex_ImportStatusNoChanges'));
 ```
 
 ### In Injectable Classes
