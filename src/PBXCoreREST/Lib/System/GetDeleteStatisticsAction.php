@@ -70,19 +70,22 @@ class GetDeleteStatisticsAction
             // Count all users
             $stats['users'] = Users::count();
 
-            // Count all extensions (excluding system extensions)
-            $systemExtensions = [
+            // Count all extensions (excluding system extensions, parking slots, and special dialplan apps)
+            // System dialplan applications that should not be counted
+            $systemDialplanApps = [
                 '000063',   // Reads back the extension
                 '000064',   // 0000MILLI
                 '10003246', // Echo test
-                'hangup',   // System Extension
-                'busy',     // System Extension
-                'did2user', // System Extension
-                'voicemail',// System Extension
             ];
             $stats['extensions'] = Extensions::count([
-                'conditions' => 'number NOT IN ({numbers:array})',
-                'bind' => ['numbers' => $systemExtensions]
+                'conditions' => 'type NOT IN ({excludedTypes:array}) AND number NOT IN ({excludedNumbers:array})',
+                'bind' => [
+                    'excludedTypes' => [
+                        Extensions::TYPE_SYSTEM,
+                        Extensions::TYPE_PARKING
+                    ],
+                    'excludedNumbers' => $systemDialplanApps
+                ]
             ]);
             
             // Count providers
@@ -199,37 +202,38 @@ class GetDeleteStatisticsAction
     private static function getDirectoryStats(string $path, string $pattern = '*'): array
     {
         $stats = ['count' => 0, 'size' => 0];
-        
+
         if (!file_exists($path) || !is_dir($path)) {
             return $stats;
         }
-        
+
         try {
             $find = Util::which('find');
             $wc = Util::which('wc');
             $du = Util::which('du');
-            
-            // Count files
+
+            // Count files (exclude hidden/system files that start with .)
             if ($pattern === '*') {
-                $countCmd = "{$find} {$path} -type f 2>/dev/null | {$wc} -l";
+                // Exclude files starting with . (like .DS_Store, .gitkeep)
+                $countCmd = "{$find} {$path} -type f ! -name '.*' 2>/dev/null | {$wc} -l";
             } else {
-                $countCmd = "{$find} {$path} -name '{$pattern}' -type f 2>/dev/null | {$wc} -l";
+                $countCmd = "{$find} {$path} -name '{$pattern}' -type f ! -name '.*' 2>/dev/null | {$wc} -l";
             }
-            
+
             $result = [];
             Processes::mwExec($countCmd, $result);
             $stats['count'] = (int)trim(implode('', $result));
-            
+
             // Get total size in bytes
             $sizeCmd = "{$du} -sb {$path} 2>/dev/null | cut -f1";
             $result = [];
             Processes::mwExec($sizeCmd, $result);
             $stats['size'] = (int)trim(implode('', $result));
-            
+
         } catch (\Exception $e) {
             // Ignore errors
         }
-        
+
         return $stats;
     }
 }

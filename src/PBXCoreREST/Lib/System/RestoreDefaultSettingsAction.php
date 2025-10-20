@@ -418,6 +418,7 @@ class RestoreDefaultSettingsAction extends Injectable
 
     /**
      * Perform cleaning operations on other extensions.
+     * Deletes all extensions except system ones, parking slots, and special dialplan applications.
      *
      * @param PBXApiResult $res The result object to store any error messages.
      *
@@ -425,21 +426,26 @@ class RestoreDefaultSettingsAction extends Injectable
      */
     public static function cleaningOtherExtensions(PBXApiResult &$res): void
     {
+        // System dialplan applications that should not be deleted
+        $systemDialplanApps = [
+            '000063',   // Reads back the extension
+            '000064',   // 0000MILLI
+            '10003246', // Echo test
+        ];
+
         // Define the parameters for querying the extensions to delete
-        $parameters     = [
-            'conditions' => 'not number IN ({ids:array})',
-            'bind'       => [
-                'ids' => [
-                    '000063',   // Reads back the extension
-                    '000064',   // 0000MILLI
-                    '10003246', // Echo test
-                    'hangup',   // System Extension
-                    'busy',     // System Extension
-                    'did2user', // System Extension
-                    'voicemail',// System Extension
+        // Use type-based filtering for SYSTEM and PARKING, plus specific dialplan app numbers
+        $parameters = [
+            'conditions' => 'type NOT IN ({excludedTypes:array}) AND number NOT IN ({excludedNumbers:array})',
+            'bind' => [
+                'excludedTypes' => [
+                    Extensions::TYPE_SYSTEM,
+                    Extensions::TYPE_PARKING
                 ],
+                'excludedNumbers' => $systemDialplanApps
             ],
         ];
+
         $stopDeleting   = false;
         $countRecords   = Extensions::count($parameters);
         $deleteAttempts = 0;
@@ -460,7 +466,7 @@ class RestoreDefaultSettingsAction extends Injectable
     }
 
     /**
-     * Clean up custom sound files.
+     * Clean up custom and MOH sound files.
      *
      * @param PBXApiResult $res The result object to store any error messages.
      *
@@ -470,16 +476,30 @@ class RestoreDefaultSettingsAction extends Injectable
     {
         $rm     = Util::which('rm');
         $storagePath = Directories::getDir(Directories::CORE_MEDIA_MOUNT_POINT_DIR);
-        $parameters = [
-            'conditions' => 'category = :custom:',
-            'bind'       => [
-                'custom' => SoundFiles::CATEGORY_CUSTOM,
-            ],
+
+        // Delete both custom and MOH files
+        $categories = [
+            SoundFiles::CATEGORY_CUSTOM,
+            SoundFiles::CATEGORY_MOH
         ];
-        $records    = SoundFiles::find($parameters);
-        foreach ($records as $record) {
-            if (stripos($record->path, $storagePath) !== false) {
-                Processes::mwExec("$rm -rf $record->path");
+
+        foreach ($categories as $category) {
+            $parameters = [
+                'conditions' => 'category = :category:',
+                'bind'       => [
+                    'category' => $category,
+                ],
+            ];
+            $records = SoundFiles::find($parameters);
+
+            foreach ($records as $record) {
+                // Delete file from disk if it exists and is within storage path
+                if (stripos($record->path, $storagePath) !== false && file_exists($record->path)) {
+                    Processes::mwExec("$rm -rf " . escapeshellarg($record->path));
+                }
+
+                // ALWAYS delete the database record, even if file doesn't exist or is outside storage
+                // This fixes the issue where test files in /tmp/ leave orphaned DB records
                 if (! $record->delete()) {
                     $res->messages[] = $record->getMessages();
                     $res->success    = false;
