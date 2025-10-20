@@ -116,11 +116,12 @@ class GetDeleteStatisticsAction
                 'bind' => ['category' => SoundFiles::CATEGORY_CUSTOM]
             ]);
 
-            // Count MOH (Music On Hold) files
-            $stats['mohFiles'] = SoundFiles::count([
+            // Count MOH (Music On Hold) files (excluding 2 non-deletable system files)
+            $mohCount = SoundFiles::count([
                 'conditions' => 'category = :category:',
                 'bind' => ['category' => SoundFiles::CATEGORY_MOH]
             ]);
+            $stats['mohFiles'] = max(0, $mohCount - 2);
 
             // Count Incoming Routes
             $stats['incomingRoutes'] = IncomingRoutingTable::count([

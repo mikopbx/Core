@@ -72,8 +72,8 @@ class FillDataTimeSettingsTest extends MikoPBXTestsBase
             $this->waitForAjax();
         });
 
-        // Wait for 15 seconds until Nginx is restarted
-        sleep(15);
+        // Wait for 25 seconds until Nginx is restarted
+        sleep(25);
 
         // Wait for the system to be ready after services restart
         if (!$this->waitForSystemReady()) {
@@ -268,44 +268,54 @@ class FillDataTimeSettingsTest extends MikoPBXTestsBase
     {
         self::annotate("Re-logging in after session invalidation");
 
-        try {
-            // Check if we're already on the login page
-            $currentUrl = self::$driver->getCurrentURL();
-            if (strpos($currentUrl, '/session/index') === false) {
-                // If not on login page, navigate to it
+        $maxAttempts = 3;
+        $loginData = $this->loginDataProvider();
+        
+        for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+            try {
+                self::annotate("Login attempt {$attempt} of {$maxAttempts}");
+                
+                // Reload page to get fresh state
                 $loginUrl = $GLOBALS['SERVER_PBX'] . '/admin-cabinet/session/index/';
                 self::$driver->get($loginUrl);
                 sleep(2);
+
+                // Wait for login form to be visible
+                self::$driver->wait(10, 500)->until(
+                    \Facebook\WebDriver\WebDriverExpectedCondition::visibilityOfElementLocated(
+                        \Facebook\WebDriver\WebDriverBy::id('login-form')
+                    )
+                );
+
+                // Perform login
+                $this->loginOnMikoPBX($loginData[0][0]);
+
+                // Wait for login to complete and dashboard to load
+                sleep(3);
+                $this->waitForAjax();
+
+                // Verify we're logged in by checking for top menu
+                self::$driver->wait(10, 500)->until(
+                    \Facebook\WebDriver\WebDriverExpectedCondition::visibilityOfElementLocated(
+                        \Facebook\WebDriver\WebDriverBy::id('top-menu-search')
+                    )
+                );
+
+                self::annotate("Re-login successful on attempt {$attempt}", 'success');
+                return; // Success, exit the method
+                
+            } catch (\Exception $e) {
+                self::annotate("Login attempt {$attempt} failed: " . $e->getMessage(), 'warning');
+                
+                // If this was the last attempt, throw the exception
+                if ($attempt === $maxAttempts) {
+                    self::annotate("All {$maxAttempts} login attempts failed", 'error');
+                    throw new \Exception("Failed to re-login after {$maxAttempts} attempts: " . $e->getMessage());
+                }
+                
+                // Wait before next attempt
+                sleep(2);
             }
-
-            // Wait for login form to be visible
-            self::$driver->wait(10, 500)->until(
-                \Facebook\WebDriver\WebDriverExpectedCondition::visibilityOfElementLocated(
-                    \Facebook\WebDriver\WebDriverBy::id('login-form')
-                )
-            );
-
-            // Get login credentials
-            $loginData = $this->loginDataProvider();
-
-            // Perform login (this will handle cookie restoration or fresh login)
-            $this->loginOnMikoPBX($loginData[0][0]);
-
-            // Wait for login to complete and dashboard to load
-            sleep(3);
-            $this->waitForAjax();
-
-            // Verify we're logged in by checking for top menu
-            self::$driver->wait(10, 500)->until(
-                \Facebook\WebDriver\WebDriverExpectedCondition::visibilityOfElementLocated(
-                    \Facebook\WebDriver\WebDriverBy::id('top-menu-search')
-                )
-            );
-
-            self::annotate("Re-login successful", 'success');
-        } catch (\Exception $e) {
-            self::annotate("Re-login failed: " . $e->getMessage(), 'error');
-            throw new \Exception("Failed to re-login after time change: " . $e->getMessage());
         }
     }
 

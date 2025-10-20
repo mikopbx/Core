@@ -282,7 +282,7 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
         $this->openAccordionOnThePage();
         $this->selectDropdownItem('sip_networkfilterid', $this->employeeData['sip_networkfilterid']);
 
-        $this->changeTextAreaValue('sip_manualattributes', $this->employeeData['manualattributes']);
+        $this->changeTextAreaValue('sip_manualattributes', $this->employeeData['sip_manualattributes']);
 
         //$filePath           =  __DIR__."/../assets/{$params['number']}.png";
         $filePath = 'C:\Users\hello\Documents\images\person.jpg';
@@ -318,6 +318,6 @@ class ChangeExtensionsSettingsTest extends MikoPBXTestsBase
         $this->assertMenuItemSelected('sip_networkfilterid', $this->employeeData['sip_networkfilterid']);
 
 
-        $this->assertTextAreaValueIsEqual('sip_manualattributes', $this->employeeData['manualattributes']);
+        $this->assertTextAreaValueIsEqual('sip_manualattributes', $this->employeeData['sip_manualattributes']);
     }
 }

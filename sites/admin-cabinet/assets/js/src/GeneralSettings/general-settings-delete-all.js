@@ -76,7 +76,7 @@ const generalSettingsDeleteAll = {
                     generalSettingsDeleteAll.showDeletingProgress();
                     
                     // When user confirms deletion - pass async channel ID
-                    SystemAPI.restoreDefault(generalSettingsDeleteAll.cbAfterRestoreDefaultSettings);
+                    SystemAPI.restoreDefault({asyncChannelId: generalSettingsDeleteAll.asyncChannelId}, generalSettingsDeleteAll.cbAfterRestoreDefaultSettings);
                     
                     // Return false to prevent automatic modal closing
                     return false;
@@ -418,10 +418,13 @@ const generalSettingsDeleteAll = {
     showDeletingProgress() {
         const $content = generalSettingsDeleteAll.$deleteAllModal.find('.content');
         const $actions = generalSettingsDeleteAll.$deleteAllModal.find('.actions');
-        
-        // Hide action buttons
+
+        // Hide action buttons initially
         $actions.hide();
-        
+
+        // Set initial stage
+        generalSettingsDeleteAll.$deleteAllModal.attr('data-stage', 'starting');
+
         // Show loading state
         $content.html(`
             <div class="ui segment">
@@ -442,7 +445,11 @@ const generalSettingsDeleteAll = {
         const stage = response.stage;
         const stageDetails = response.stageDetails;
         const $content = generalSettingsDeleteAll.$deleteAllModal.find('.content');
-        
+        const $actions = generalSettingsDeleteAll.$deleteAllModal.find('.actions');
+
+        // Update data-stage attribute for testing
+        generalSettingsDeleteAll.$deleteAllModal.attr('data-stage', stage);
+
         // Update progress display
         let progressHtml = `
             <div class="ui segment">
@@ -454,34 +461,57 @@ const generalSettingsDeleteAll = {
                 </div>
             </div>
         `;
-        
+
         $content.html(progressHtml);
         $('.ui.progress').progress();
-        
-        // Handle final stage
+
+        // Handle final stage - completion
         if (stage === 'DeleteAll_Stage_Final' && stageDetails.progress === 100) {
             if (stageDetails.result === true) {
-                // Close modal
-                generalSettingsDeleteAll.$deleteAllModal.modal('hide');
-                
-                // Show success message
-                UserMessage.showInformation(globalTranslate.gs_AllSettingsDeleted);
-                
-                // Don't redirect - system will restart
+                // Process completed successfully
+                // Do NOT close modal automatically - let user close it
+                // Update content to show completion message
+                progressHtml = `
+                    <div class="ui segment">
+                        <div class="ui success message">
+                            <i class="check circle icon"></i>
+                            ${globalTranslate.gs_DeleteAllStageCompleted}
+                        </div>
+                    </div>
+                `;
+                $content.html(progressHtml);
             } else if (stageDetails.result === false) {
                 // Show error and restore modal
                 UserMessage.showMultiString(stageDetails.messages || ['Unknown error']);
-                const $actions = generalSettingsDeleteAll.$deleteAllModal.find('.actions');
                 $actions.show();
                 generalSettingsDeleteAll.loadDeleteStatistics();
             }
             // If no result property, just update progress
         }
-        
+
         // Handle restart stage
         if (stage === 'DeleteAll_Stage_Restart' && stageDetails.restart === true) {
-            // Just show info message, EventBus will handle the disconnection UI
-            UserMessage.showInformation(globalTranslate.gs_SystemWillRestart);
+            // Show restart message in modal content (not as popup)
+            progressHtml = `
+                <div class="ui segment">
+                    <div class="ui success message">
+                        <i class="check circle icon"></i>
+                        ${globalTranslate.gs_DeleteAllStageCompleted}
+                    </div>
+                    <div class="ui info message">
+                        <i class="info circle icon"></i>
+                        ${globalTranslate.gs_DeleteAllStageRestarting}
+                    </div>
+                </div>
+            `;
+            $content.html(progressHtml);
+
+            // Show Close button only after process completion
+            $actions.html('<button class="ui positive button">' + globalTranslate.sl_Close + '</button>');
+            $actions.show();
+
+            // Make modal closable now
+            generalSettingsDeleteAll.$deleteAllModal.modal('setting', 'closable', true);
         }
     },
     

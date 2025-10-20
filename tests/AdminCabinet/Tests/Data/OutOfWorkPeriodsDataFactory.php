@@ -52,9 +52,9 @@ class OutOfWorkPeriodsDataFactory
             'audio_message_id' => '1',
             'allowRestriction' => true,
             'inbound-rules-table' => [
-                '13' => false,
                 '14' => false,
                 '15' => false,
+                '16' => false,
             ]
         ],
         'morning' => [
@@ -70,9 +70,9 @@ class OutOfWorkPeriodsDataFactory
             'audio_message_id' => '1',
             'allowRestriction' => true,
             'inbound-rules-table' => [
-                '13' => true,
-                '14' => false,
+                '14' => true,
                 '15' => true,
+                '16' => false,
             ]
         ],
         'evening' => [
@@ -88,9 +88,9 @@ class OutOfWorkPeriodsDataFactory
             'audio_message_id' => '1',
             'allowRestriction' => true,
             'inbound-rules-table' => [
-                '13' => false,
-                '14' => true,
-                '15' => false,
+                '14' => false,
+                '15' => true,
+                '16' => false,
             ]
         ]
     ];

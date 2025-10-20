@@ -115,8 +115,8 @@ Object.assign(SystemAPI, {
      * Restore default system settings
      * @param {function} callback - Callback function
      */
-    restoreDefault(callback) {
-        return this.callCustomMethod('restoreDefault', {}, callback, 'POST');
+    restoreDefault(requestData, callback) {
+        return  this.callCustomMethod('restoreDefault', requestData, callback, 'POST');
     },
 
     /**

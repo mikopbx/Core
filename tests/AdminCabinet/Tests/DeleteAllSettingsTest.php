@@ -702,41 +702,99 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
     }
 
     /**
-     * Wait for delete process to complete with WebSocket progress tracking
+     * Wait for delete process to complete using data-stage attribute tracking
+     *
+     * WHY: Modal now stays open after completion, so we track progress via data-stage
+     * Stage progression:
+     * 1. starting -> initial state
+     * 2. DeleteAll_Stage_Prepare -> preparation
+     * 3. DeleteAll_Stage_CleanTables -> database cleanup
+     * 4. DeleteAll_Stage_CleanFiles -> file cleanup
+     * 5. DeleteAll_Stage_CleanLogs -> log cleanup
+     * 6. DeleteAll_Stage_CleanModules -> module removal
+     * 7. DeleteAll_Stage_ResetSettings -> settings reset
+     * 8. DeleteAll_Stage_Final -> completion
+     * 9. DeleteAll_Stage_Restart -> restart initiated
      */
     private function waitForDeleteProcessToComplete(): void
     {
-        self::annotate("Waiting for delete process to complete");
+        self::annotate("Waiting for delete process to complete using data-stage tracking");
 
         $maxWaitTime = 120; // 2 minutes max for delete process
         $startTime = time();
+        $modalSelector = WebDriverBy::id('delete-all-modal');
 
-        // Wait for modal to close (indicates process completed)
+        // Track all stages we've seen
+        $seenStages = [];
+        $lastStage = '';
+
+        // WHY: Modal no longer closes automatically, so we wait for final stage
         try {
             $wait = new WebDriverWait(self::$driver, $maxWaitTime);
-            $wait->until(
-                WebDriverExpectedCondition::invisibilityOfElementLocated(
-                    WebDriverBy::id('delete-all-modal')
-                )
-            );
-            self::annotate("Delete modal closed, process completed");
-        } catch (TimeoutException $e) {
-            // Modal didn't close, check if error occurred
-            try {
-                $errorXpath = "//div[@class='ui error message' or contains(@class, 'negative')]";
-                $errorElements = self::$driver->findElements(WebDriverBy::xpath($errorXpath));
-                if (count($errorElements) > 0) {
-                    $errorText = $errorElements[0]->getText();
-                    $this->fail("Delete process failed with error: $errorText");
-                }
-            } catch (\Exception $ex) {
-                // No error found
-            }
 
-            $this->fail("Delete process did not complete within $maxWaitTime seconds");
+            // Wait until we reach the restart stage
+            $wait->until(function() use ($modalSelector, &$seenStages, &$lastStage) {
+                try {
+                    $modal = self::$driver->findElement($modalSelector);
+                    $currentStage = $modal->getAttribute('data-stage');
+
+                    // Track new stages
+                    if ($currentStage !== $lastStage && !empty($currentStage)) {
+                        $seenStages[] = $currentStage;
+                        self::annotate("Delete process stage: $currentStage");
+                        $lastStage = $currentStage;
+                    }
+
+                    // Check if we reached the restart stage (final stage)
+                    if ($currentStage === 'DeleteAll_Stage_Restart') {
+                        self::annotate("Delete process completed - restart stage reached");
+                        return true;
+                    }
+
+                    // Check for error state
+                    $errorElements = self::$driver->findElements(
+                        WebDriverBy::xpath("//div[@id='delete-all-modal']//div[@class='ui error message' or contains(@class, 'negative message')]")
+                    );
+                    if (count($errorElements) > 0) {
+                        $errorText = $errorElements[0]->getText();
+                        throw new \Exception("Delete process failed with error: $errorText");
+                    }
+
+                    return false;
+                } catch (\Exception $e) {
+                    // Modal might have disappeared unexpectedly
+                    if (strpos($e->getMessage(), 'no such element') !== false) {
+                        throw new \Exception("Modal disappeared unexpectedly during delete process");
+                    }
+                    throw $e;
+                }
+            });
+
+            // Verify Close button is now visible
+            $closeButtonXpath = "//div[@id='delete-all-modal']//div[@class='actions']//button[contains(@class, 'positive')]";
+            $closeButtons = self::$driver->findElements(WebDriverBy::xpath($closeButtonXpath));
+            $this->assertGreaterThan(0, count($closeButtons), "Close button should be visible after completion");
+            $this->assertTrue($closeButtons[0]->isDisplayed(), "Close button should be displayed");
+
+            self::annotate("Delete process completed successfully. Stages seen: " . implode(' -> ', $seenStages));
+
+            // Click Close button to dismiss modal before system restart
+            $closeButtons[0]->click();
+
+            // Wait for modal to close after clicking Close button
+            $wait = new WebDriverWait(self::$driver, 10);
+            $wait->until(
+                WebDriverExpectedCondition::invisibilityOfElementLocated($modalSelector)
+            );
+            self::annotate("Delete modal closed by user action");
+
+        } catch (TimeoutException $e) {
+            $elapsed = time() - $startTime;
+            $stagesInfo = !empty($seenStages) ? "Stages seen: " . implode(' -> ', $seenStages) : "No stages detected";
+            $this->fail("Delete process did not complete within $maxWaitTime seconds (elapsed: {$elapsed}s). $stagesInfo. Last stage: $lastStage");
         }
 
-        // Additional wait for any final operations
+        // Additional wait for any final operations before restart
         sleep(5);
     }
 

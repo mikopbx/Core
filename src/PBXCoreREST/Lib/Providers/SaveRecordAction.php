@@ -728,7 +728,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
 
         } catch (\Exception $e) {
             $res->messages['error'][] = $e->getMessage();
-            SystemMessages::sysLogMsg(__CLASS__, "Failed to update provider status: " . $e->getMessage(), LOG_ERROR);
+            SystemMessages::sysLogMsg(__CLASS__, "Failed to update provider status: " . $e->getMessage(), LOG_ERR);
         }
 
         return $res;
