@@ -9,7 +9,7 @@
 
 {% if not apiKeyId %}
 <!-- Hidden field for storing generated API key -->
-{{ form.render('api_key') }}
+{{ form.render('key') }}
 <div class="field max-width-800">
     <label>{{ t._('ak_ApiKey') }}
         <i class="small info circle icon field-info-icon" data-field="api_key_usage"></i>
@@ -34,7 +34,7 @@
 {% else %}
 <!-- For existing keys, show key representation in header -->
 <!-- Hidden field for storing regenerated API key -->
-<input type="hidden" id="api_key" name="api_key">
+{{ form.render('key') }}
 <div class="field max-width-800">
     <label>{{ t._('ak_ApiKey') }} <span class="api-key-suffix" style="display: none;"></span>
         <i class="small info circle icon field-info-icon" data-field="api_key_usage"></i>
