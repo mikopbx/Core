@@ -36,9 +36,9 @@ const topMenuSearch = {
     initialize() {
         topMenuSearch.$input.dropdown({
             apiSettings: {
-                url: `${globalRootUrl}top-menu-search/getForSelect`,
+                url: '/pbxcore/api/v3/search:getSearchItems?query={query}',
                 cache: false,
-                // throttle: 400,
+                throttle: 400, // Add throttle to reduce server load
                 onResponse(response) {
                     return topMenuSearch.formatDropdownResults(response);
                 },
@@ -47,11 +47,12 @@ const topMenuSearch = {
                 window.location.href = value;
             },
             ignoreCase: true,
-            showOnFocus: true,
+            showOnFocus: true, // Show main menu sections on focus (when query is empty)
             fullTextSearch: true,
-            filterRemoteData: true,
+            filterRemoteData: true, // Server-side filtering
             saveRemoteData: false,
             allowCategorySelection: true,
+            minCharacters: 0, // Show menu sections immediately, start searching from first character
             // Whether search selection will force currently selected choice when element is blurred.
             forceSelection: false,
             hideDividers: 'empty',
@@ -63,7 +64,7 @@ const topMenuSearch = {
             templates: {
                 menu: topMenuSearch.customDropdownMenu,
             },
-        }); 
+        });
     },
     /**
      * Formats the dropdown menu as HTML view.
@@ -101,9 +102,10 @@ const topMenuSearch = {
             success: false,
             results: [],
         };
-        if (response) {
+        // API returns data in 'data' field, not 'results'
+        if (response && response.data) {
             formattedResponse.success = true;
-            $.each(response.results, (index, item) => {
+            $.each(response.data, (index, item) => {
                 formattedResponse.results.push({
                     name: item.name,
                     value: item.value,
@@ -121,7 +123,7 @@ const topMenuSearch = {
      * Clears the cache when data changes.
      */
     cbOnDataChanged() {
-        sessionStorage.removeItem(`${globalRootUrl}top-menu-search/getForSelect`);
+        // No cache to clear for REST API endpoint
     },
 };
 
