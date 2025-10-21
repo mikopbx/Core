@@ -324,7 +324,8 @@ trait RecordRepresentationTrait
             case Users::class:
                 $name = '<i class="user outline icon"></i> ' . $this->username;
                 foreach ($this->Extensions ?? [] as $extension) {
-                    if ($extension->type === Extensions::TYPE_SIP) {
+                    // Include both SIP (internal) and EXTERNAL (mobile) extensions in search representation
+                    if ($extension->type === Extensions::TYPE_SIP || $extension->type === Extensions::TYPE_EXTERNAL) {
                         $name .= ' <' . $extension->number . '>';
                     }
                 }

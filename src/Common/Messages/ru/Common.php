@@ -271,6 +271,8 @@ return [
     'adv_SSHPasswordWasChangedSubject' => 'Внимание! Пароль SSH был изменен!',
     'adv_SSHPasswordWasCompromisedSubject' => 'Внимание! Пароль SSH был изменен без входа в интерфейс MikoPBX!',
     'adv_SipPasswordWeak' => 'Простой пароль SIP у <a href=\'%url%\'>%record%</a>',
+    'adv_SecurityLogCriticalGrowth' => 'Критический рост лога безопасности Asterisk: %growth% МБ за %interval% минут. Возможна атака на систему! <a href=\'%logFile%\'>Проверить лог</a>',
+    'adv_SecurityLogSuspiciousGrowth' => 'Подозрительный рост лога безопасности Asterisk: %growth% МБ за %interval% минут. Рекомендуется проверить настройки безопасности.',
     'adv_SshPasswordWeak' => 'Простой пароль учетной записи SSH <a href=\'%url%\'>изменить</a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'На диске для хранения заканчивается свободное место (%free% Mb)</a>',
     'adv_StorageDiskUnMounted' => 'Не подключен диск для хранения настроек и данных!',
@@ -855,4 +857,8 @@ return [
     'sf_SoundCategory' => 'Звуковые файлы',
     'sf_ImageCategory' => 'Изображения',
     'mo_UserCanHaveOnlyOneGeneralExtensionPerType' => 'Пользователь может иметь только один основной номер типа %type%. Существует: %existing%',
+
+    // Units of measurement
+    'ms_MB' => 'МБ',
+    'ms_Minutes' => 'минут',
 ];

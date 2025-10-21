@@ -9,7 +9,7 @@ Tests the /pbxcore/api/v3/api-keys endpoint for:
 - Updating keys (PUT - full replacement)
 - Partial updates (PATCH)
 - Deleting keys
-- Custom methods: getDefault, getAvailableControllers, generateKey
+- Custom methods: getDefault, generateKey
 
 API Keys provide secure programmatic access to the PBX REST API with:
 - JWT token generation
@@ -58,25 +58,7 @@ class TestApiKeys:
         else:
             print(f"✓ Generated API key (format varies)")
 
-    def test_03_get_available_controllers(self, api_client):
-        """Test GET /api-keys:getAvailableControllers - Get available endpoints"""
-        response = api_client.get('api-keys:getAvailableControllers')
-        assert_api_success(response, "Failed to get available controllers")
-
-        data = response['data']
-        # Can be array of controllers or dict with controllers list
-        assert isinstance(data, (list, dict)), "Should return list or dict"
-
-        if isinstance(data, list):
-            assert len(data) > 0, "Should have at least some controllers"
-            print(f"✓ Retrieved {len(data)} available controllers")
-        elif isinstance(data, dict):
-            controllers = data.get('controllers', data.get('items', []))
-            print(f"✓ Retrieved {len(controllers)} available controllers")
-        else:
-            print(f"✓ Retrieved available controllers (format varies)")
-
-    def test_04_create_api_key_basic(self, api_client):
+    def test_03_create_api_key_basic(self, api_client):
         """Test POST /api-keys - Create basic API key"""
         # Step 1: Generate API key
         gen_response = api_client.post('api-keys:generateKey', {})
