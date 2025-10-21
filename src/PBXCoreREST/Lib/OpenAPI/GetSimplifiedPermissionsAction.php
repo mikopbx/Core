@@ -88,11 +88,16 @@ class GetSimplifiedPermissionsAction
             $resourceData = $resource['resource'] ?? [];
             $httpMapping = $resource['httpMapping'] ?? [];
 
-            // Extract resource path
+            // Extract resource path and remove /pbxcore prefix for permissions
             $path = $resourceData['path'] ?? '';
             if (empty($path)) {
                 continue;
             }
+
+            // Remove /pbxcore prefix for permission validation
+            // Path in metadata: /pbxcore/api/v3/extensions
+            // Path for permissions: /api/v3/extensions
+            $path = preg_replace('#^/pbxcore#', '', $path);
 
             // Extract label from first tag (e.g., "Extensions", "Call Queues")
             $tags = $resourceData['tags'] ?? [];
