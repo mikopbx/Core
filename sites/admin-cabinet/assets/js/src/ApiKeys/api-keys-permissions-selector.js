@@ -16,12 +16,12 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global $, globalTranslate, UserMessage, OpenApiAPI */
+/* global $, globalTranslate, UserMessage, OpenApiAPI, Form */
 
 /**
  * PermissionsSelector - UI component for selecting API endpoint permissions
  *
- * This component provides an interactive UI for selecting read/write permissions
+ * This component provides an interactive table for selecting read/write permissions
  * for each REST API endpoint when creating or editing API keys.
  *
  * @module PermissionsSelector
@@ -29,7 +29,7 @@
 const PermissionsSelector = {
 
     /**
-     * jQuery container element where the permissions UI will be rendered
+     * jQuery container element where the permissions table will be rendered
      * @type {jQuery|null}
      */
     $container: null,
@@ -48,14 +48,30 @@ const PermissionsSelector = {
     actionDescriptions: {},
 
     /**
+     * Flag to prevent infinite loops in synchronization
+     * @type {boolean}
+     */
+    syncInProgress: false,
+
+    /**
+     * Callback for manual permission changes (set by parent component)
+     * @type {Function|null}
+     */
+    onManualChangeCallback: null,
+
+    /**
      * Initialize the permissions selector component
      *
      * @param {string} containerSelector - CSS selector for the container element
+     * @param {Function} onManualChange - Callback when user manually changes permission
      * @example
-     * PermissionsSelector.initialize('#permissions-container');
+     * PermissionsSelector.initialize('#permissions-container', () => {
+     *   $('#full-permissions-toggle').checkbox('uncheck');
+     * });
      */
-    initialize(containerSelector) {
+    initialize(containerSelector, onManualChange) {
         PermissionsSelector.$container = $(containerSelector);
+        PermissionsSelector.onManualChangeCallback = onManualChange || null;
 
         if (PermissionsSelector.$container.length === 0) {
             console.error('PermissionsSelector: Container not found:', containerSelector);
@@ -112,8 +128,8 @@ const PermissionsSelector = {
     },
 
     /**
-     * Render the permissions selection UI
-     * Creates a list of endpoints with dropdown selectors for permissions
+     * Render the permissions selection UI as a table
+     * Creates a table of endpoints with dropdown selectors for permissions
      */
     renderUI() {
         if (Object.keys(PermissionsSelector.availableEndpoints).length === 0) {
@@ -126,14 +142,35 @@ const PermissionsSelector = {
             return;
         }
 
-        let html = '<div class="ui middle aligned divided list">';
+        let html = `
+            <table class="ui celled striped table">
+                <thead>
+                    <tr>
+                        <th>${globalTranslate.ak_PermissionTableHeaderName}</th>
+                        <th>${globalTranslate.ak_PermissionTableHeaderURI}</th>
+                        <th class="center aligned" style="width: 250px;">${globalTranslate.ak_PermissionTableHeaderAccess}</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
 
         $.each(PermissionsSelector.availableEndpoints, function(path, info) {
             const resourceId = PermissionsSelector.sanitizePathForId(path);
+            const label = info.label || path;
+            const description = info.description || '';
 
             html += `
-                <div class="item" data-path="${path}">
-                    <div class="right floated content">
+                <tr data-path="${path}">
+                    <td>
+                        <div class="content">
+                            <div class="header">${label}</div>
+                            ${description ? `<div class="description"><small>${description}</small></div>` : ''}
+                        </div>
+                    </td>
+                    <td>
+                        <code>${path}</code>
+                    </td>
+                    <td class="center aligned">
                         <div class="ui compact selection dropdown" id="permission-dropdown-${resourceId}">
                             <input type="hidden"
                                    name="permission[${path}]"
@@ -155,18 +192,15 @@ const PermissionsSelector = {
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="content">
-                        <div class="header">${info.label || path}</div>
-                        <div class="description">
-                            <small class="ui grey text">${path}</small>
-                        </div>
-                    </div>
-                </div>
+                    </td>
+                </tr>
             `;
         });
 
-        html += '</div>';
+        html += `
+                </tbody>
+            </table>
+        `;
 
         PermissionsSelector.$container.html(html);
 
@@ -178,14 +212,42 @@ const PermissionsSelector = {
 
     /**
      * Handle permission dropdown change event
+     * Notifies parent component about manual changes
      *
      * @param {string} value - Selected permission value (read/write/empty)
      * @param {string} text - Selected option text
      * @param {jQuery} $choice - jQuery object of the selected item
      */
     onPermissionChange(value, text, $choice) {
-        // Can be used for validation or real-time feedback
-        // Currently just allows the change
+        // Prevent triggering callback during programmatic sync
+        if (PermissionsSelector.syncInProgress) {
+            return;
+        }
+
+        // Notify parent component about manual change
+        if (PermissionsSelector.onManualChangeCallback) {
+            PermissionsSelector.onManualChangeCallback();
+        }
+
+        // Mark form as changed
+        if (typeof Form !== 'undefined') {
+            Form.dataChanged();
+        }
+    },
+
+    /**
+     * Set all permissions to a specific value (for full_permissions toggle)
+     *
+     * @param {string} permission - Permission value to set ('read', 'write', or '')
+     */
+    setAllPermissions(permission) {
+        PermissionsSelector.syncInProgress = true;
+
+        PermissionsSelector.$container
+            .find('.ui.dropdown')
+            .dropdown('set selected', permission);
+
+        PermissionsSelector.syncInProgress = false;
     },
 
     /**
@@ -247,6 +309,8 @@ const PermissionsSelector = {
             return;
         }
 
+        PermissionsSelector.syncInProgress = true;
+
         $.each(permissions, function(path, action) {
             const $input = PermissionsSelector.$container
                 .find(`input[name="permission[${path}]"]`);
@@ -256,15 +320,15 @@ const PermissionsSelector = {
                 $dropdown.dropdown('set selected', action);
             }
         });
+
+        PermissionsSelector.syncInProgress = false;
     },
 
     /**
-     * Clear all selected permissions
+     * Clear all selected permissions (set all to noAccess)
      */
     clearPermissions() {
-        PermissionsSelector.$container
-            .find('.ui.dropdown')
-            .dropdown('clear');
+        PermissionsSelector.setAllPermissions('');
     },
 
     /**

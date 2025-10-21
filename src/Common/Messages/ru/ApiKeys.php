@@ -169,4 +169,9 @@ return [
     'ak_PermissionWrite' => 'Чтение и запись (GET, POST, PUT, DELETE)',
     'ak_ErrorLoadingEndpoints' => 'Не удалось загрузить список доступных API endpoints',
     'ak_NoEndpointsAvailable' => 'Нет доступных API endpoints',
+
+    // Permissions table headers
+    'ak_PermissionTableHeaderName' => 'Название ресурса',
+    'ak_PermissionTableHeaderURI' => 'URI эндпоинта',
+    'ak_PermissionTableHeaderAccess' => 'Уровень доступа',
 ];

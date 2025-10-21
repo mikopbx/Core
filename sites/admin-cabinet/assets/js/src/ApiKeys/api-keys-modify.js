@@ -152,27 +152,58 @@ const apiKeysModify = {
     },
 
     /**
-     * Toggle PermissionsSelector visibility based on full_permissions checkbox state
+     * Toggle PermissionsSelector synchronization with full_permissions checkbox
+     * Table is always visible, but permissions sync with toggle state
      */
     togglePermissionsSelector() {
         const isFullPermissions = $('#full-permissions-toggle').checkbox('is checked');
 
+        // Always show permissions container (table is always visible)
+        $('#permissions-container').show();
+
+        // Show/hide warning based on full_permissions state
         if (isFullPermissions) {
-            $('#permissions-container').hide();
             $('#full-permissions-warning').slideDown();
         } else {
-            $('#permissions-container').show();
             $('#full-permissions-warning').slideUp();
+        }
 
-            // Initialize PermissionsSelector on first show
-            if (typeof PermissionsSelector !== 'undefined' && !PermissionsSelector.isReady()) {
-                PermissionsSelector.initialize('#permissions-container');
+        // Initialize PermissionsSelector on first show
+        if (typeof PermissionsSelector !== 'undefined' && !PermissionsSelector.isReady()) {
+            PermissionsSelector.initialize('#permissions-container', apiKeysModify.onManualPermissionChange);
+        }
+
+        // Sync permissions table with toggle state
+        if (typeof PermissionsSelector !== 'undefined' && PermissionsSelector.isReady()) {
+            if (isFullPermissions) {
+                // Set all dropdowns to "write"
+                PermissionsSelector.setAllPermissions('write');
+            } else {
+                // Set all dropdowns to "" (noAccess) only if we're toggling OFF
+                // Don't clear when loading existing custom permissions
+                if (apiKeysModify.formInitialized) {
+                    PermissionsSelector.setAllPermissions('');
+                }
             }
         }
 
         // Trigger dataChanged if form is fully initialized
         if (apiKeysModify.formInitialized) {
             Form.dataChanged();
+        }
+    },
+
+    /**
+     * Handle manual permission changes in the table
+     * Automatically disables full_permissions toggle when user edits individual permissions
+     */
+    onManualPermissionChange() {
+        const isFullPermissions = $('#full-permissions-toggle').checkbox('is checked');
+
+        // If full_permissions is enabled, disable it when user manually changes permissions
+        if (isFullPermissions) {
+            $('#full-permissions-toggle').checkbox('uncheck');
+            $('#full-permissions-warning').slideUp();
         }
     },
 

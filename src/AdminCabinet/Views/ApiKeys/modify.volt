@@ -78,15 +78,9 @@
     </div>
 </div>
 
-<!-- Selective permissions section (hidden by default) -->
+<!-- Permissions table (always visible, synchronized with toggle) -->
 <div id="permissions-container" style="display: none;">
-    <div class="field">
-        <label>{{ t._('ak_Permissions') }}</label>
-        <div class="ui info message">
-            <p>{{ t._('ak_PermissionsHelp') }}</p>
-        </div>
-    </div>
-    <!-- PermissionsSelector UI will be rendered here by JavaScript -->
+    <!-- PermissionsSelector table will be rendered here by JavaScript -->
 </div>
 
 {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('MainFields')]) }}
