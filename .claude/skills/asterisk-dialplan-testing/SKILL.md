@@ -1,6 +1,7 @@
 ---
 name: asterisk-dialplan-testing
 description: Test Asterisk dialplan scenarios and call flows using safe Local channels (project). Use when testing call routing logic, debugging dialplan issues, or verifying IVR menu flows.
+allowed-tools: Bash, Read, Grep, Glob
 ---
 
 # asterisk-dialplan-testing

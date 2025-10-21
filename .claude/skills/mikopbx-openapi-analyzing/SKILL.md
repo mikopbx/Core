@@ -1,6 +1,7 @@
 ---
 name: mikopbx-openapi-analyzing
 description: Extract and analyze OpenAPI 3.1.0 specification from MikoPBX for endpoint validation. Use when validating API compliance, generating tests, checking endpoint schemas, or integrating with mikopbx-endpoint-validator and mikopbx-api-test-generator skills.
+allowed-tools: Bash, Read, Grep, Glob
 ---
 
 # MikoPBX OpenAPI Analyzing

@@ -1,6 +1,7 @@
 ---
 name: mikopbx-translation-managing
 description: Manage multilingual translations across 29 languages with Russian-first workflow. Use when adding new translations, translating to all languages, checking consistency, or removing obsolete keys.
+allowed-tools: Bash, Read, Grep, Glob
 ---
 
 # MikoPBX Translation Managing

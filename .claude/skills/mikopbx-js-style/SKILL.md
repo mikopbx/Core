@@ -1,6 +1,7 @@
 ---
 name: mikopbx-js-style
 description: Validate and guide JavaScript code formatting according to ES6+ and MikoPBX project standards. Use when writing or reviewing JavaScript code, checking code style compliance, or when the user mentions JS style, code formatting, or best practices.
+allowed-tools: Read, Grep, Glob
 ---
 
 # MikoPBX JavaScript Style Guide

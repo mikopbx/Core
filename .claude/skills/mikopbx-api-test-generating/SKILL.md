@@ -1,6 +1,7 @@
 ---
 name: mikopbx-api-test-generating
 description: Generate comprehensive Python pytest tests for REST API endpoints with schema validation. Use when creating tests for new endpoints, adding coverage for CRUD operations, or validating API compliance with OpenAPI schemas.
+allowed-tools: Bash, Read, Grep, Glob
 ---
 
 # MikoPBX API Test Generating

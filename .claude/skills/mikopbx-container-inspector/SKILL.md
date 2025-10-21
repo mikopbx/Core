@@ -1,6 +1,7 @@
 ---
 name: mikopbx-container-inspector
 description: Inspecting MikoPBX Docker containers (mikopbx_php83/mikopbx_php74) to retrieve connection parameters (IP, ports), restart containers, and manage workers. Use when debugging containers, running tests, or troubleshooting connectivity issues.
+allowed-tools: Bash, Read, Grep, Glob
 ---
 
 # mikopbx-container-inspector

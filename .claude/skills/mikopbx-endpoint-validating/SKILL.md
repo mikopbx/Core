@@ -1,6 +1,7 @@
 ---
 name: mikopbx-endpoint-validating
 description: Validate REST API endpoints for OpenAPI schema compliance and parameter consistency. Use when implementing endpoints, reviewing code, or before merging API changes.
+allowed-tools: Bash, Read, Grep, Glob
 ---
 
 # MikoPBX Endpoint Validating

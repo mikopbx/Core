@@ -1,6 +1,7 @@
 ---
 name: Maintaining PHP code standards
 description: Ensures all PHP code adheres to PSR standards and MikoPBX-specific patterns. Use when writing new PHP code, refactoring existing code, or reviewing code quality. Validates compliance with PSR-1, PSR-4, PSR-12, and modern PHP 8.3 features. (project)
+allowed-tools: Read, Grep, Glob
 ---
 
 # PHP Code Standards Skill

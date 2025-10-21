@@ -1,6 +1,7 @@
 ---
 name: mikopbx-code-searching
 description: Advanced syntax-aware code search using ast-grep for PHP and JavaScript patterns. Use when finding classes, methods, or code structures, refactoring code, or understanding codebase architecture.
+allowed-tools: Bash, Read, Grep, Glob
 ---
 
 # MikoPBX Code Searching with ast-grep

@@ -1,6 +1,7 @@
 ---
 name: mikopbx-commit-message-generating
 description: Generate concise, professional Git commit messages without fluff or attribution. Use when user requests commit creation, after completing features, or before git commit execution.
+allowed-tools: Bash, Read, Grep, Glob
 ---
 
 # MikoPBX Commit Message Generating

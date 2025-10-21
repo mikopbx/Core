@@ -14,8 +14,8 @@ MikoPBX is an open-source PBX (Private Branch Exchange) system for small busines
 
 ## Code Style Guides
 
-📖 **[PHP Style Guide](PHP-STYLE-GUIDE.md)** - Comprehensive PHP coding standards with real examples
-📖 **[JavaScript Style Guide](sites/admin-cabinet/assets/js/JS-STYLE-GUIDE.md)** - Frontend JavaScript patterns and best practices
+📖 **PHP Style Standards** - Use the `mikopbx-php-style` skill for comprehensive PHP coding standards (PSR-1, PSR-4, PSR-12) with real examples
+📖 **JavaScript Style Standards** - Use the `mikopbx-js-style` skill for comprehensive JavaScript coding standards (ES6+, Fomantic-UI, jQuery patterns)
 
 ### Directory Structure
 
@@ -164,6 +164,40 @@ require_once 'Globals.php'; // !!!IMPORTANT!!! NO NEED ANY PATH
 - **[Models Documentation](src/Common/Models/CLAUDE.md)** - Database models guide
 - **[Providers Documentation](src/Common/Providers/CLAUDE.md)** - DI providers guide
 - **[Test Suite](tests/AdminCabinet/CLAUDE.md)** - Browser automation tests
+
+## Available Development Skills
+
+MikoPBX includes specialized skills in `.claude/skills/` that activate automatically based on your request:
+
+### Database & API Testing
+- **mikopbx-sqlite-inspector** / **mikopbx-sqlite-inspecting** - Verify database after API operations
+- **mikopbx-openapi-analyzing** - Analyze OpenAPI spec (259 endpoints)
+- **mikopbx-api-test-generating** - Generate pytest tests for API endpoints
+- **mikopbx-endpoint-validating** - Validate API compliance with OpenAPI
+
+### Container & Infrastructure
+- **mikopbx-container-inspector** - Manage Docker containers (mikopbx_php83/php74)
+- **mikopbx-log-analyzing** - Analyze container logs for debugging
+- **asterisk-config-validating** - Validate Asterisk configuration and logs
+
+### Code Quality & Style
+- **mikopbx-php-style** - PHP standards (PSR-1/4/12, PHP 8.3 features)
+- **mikopbx-js-style** - JavaScript standards (ES6+, Fomantic UI, jQuery)
+- **mikopbx-code-searching** - Syntax-aware code search using ast-grep
+- **mikopbx-babel-compiling** - Transpile ES6+ JavaScript to ES5
+
+### Development Tools
+- **mikopbx-translation-managing** - Manage translations across 29 languages
+- **mikopbx-commit-message-generating** - Generate git commit messages
+- **asterisk-dialplan-testing** - Test Asterisk dialplan scenarios
+
+**Usage**: Simply describe what you need in natural language. Claude will automatically select and use the appropriate skill(s).
+
+Examples:
+- "Check if extension 201 was created in database" → activates mikopbx-sqlite-inspecting
+- "Generate tests for Extensions API" → activates mikopbx-api-test-generating
+- "Find all REST API Actions" → activates mikopbx-code-searching
+- "Transpile extension-modify.js" → activates mikopbx-babel-compiling
 
 ### Security & Guidelines
 - **[XSS Protection](docs/xss-protection-guidelines.md)** - Cross-site scripting prevention

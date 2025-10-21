@@ -1,6 +1,7 @@
 ---
 name: asterisk-config-validating
 description: Validate Asterisk configuration files and analyze logs for correctness and best practices. Use when debugging Asterisk startup issues, verifying configuration changes, or checking for errors after worker regeneration.
+allowed-tools: Bash, Read, Grep, Glob
 ---
 
 # asterisk-config-validating

@@ -769,8 +769,8 @@ SoundFilesSelector.initialize(
 
 ## JavaScript Code Style
 
-For detailed JavaScript coding standards and real-world examples from the project, see:
-📖 **[JavaScript Style Guide](JS-STYLE-GUIDE.md)**
+For detailed JavaScript coding standards and real-world examples from the project, use:
+📖 **mikopbx-js-style** skill - Comprehensive JavaScript style guide with ES6+, Fomantic-UI patterns, and validation
 
 Key principles:
 - Modular object-oriented structure with `initialize()` pattern

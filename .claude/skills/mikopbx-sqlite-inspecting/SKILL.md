@@ -1,6 +1,7 @@
 ---
 name: mikopbx-sqlite-inspecting
 description: Verify data consistency in MikoPBX SQLite databases after REST API operations. Use when validating API results, debugging data issues, checking foreign key relationships, or inspecting CDR records for testing.
+allowed-tools: Bash, Read, Grep, Glob
 ---
 
 # MikoPBX SQLite Database Inspecting

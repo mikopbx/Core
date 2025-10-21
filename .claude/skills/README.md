@@ -1,67 +1,152 @@
 # MikoPBX Development Skills
 
-A collection of specialized skills for Claude Code to streamline MikoPBX development, testing, and maintenance workflows.
+This directory contains specialized skills that extend Claude's capabilities for MikoPBX development. Skills activate automatically when you describe what you need in natural language.
 
-## Overview
+## How Skills Work
 
-These skills provide automated assistance for common development tasks in the MikoPBX PBX system:
-
-- **Code Analysis**: Syntax-aware search and pattern matching
-- **Testing**: Automated test generation and execution
-- **Configuration**: Asterisk dialplan and config validation
-- **Translation**: Multi-language localization management
-- **Build Tools**: JavaScript transpilation and compilation
-
-## Available Skills
-
-### Development & Code Analysis
-- **mikopbx-code-search** - Syntax-aware code search using ast-grep
-- **mikopbx-babel-compile** - ES6+ to ES5 JavaScript transpilation
-
-### Testing & Validation
-- **mikopbx-api-test-generator** - Generate pytest tests for REST API endpoints
-- **mikopbx-docker-restart-tester** - Container restart with automated testing
-- **mikopbx-endpoint-validator** - OpenAPI schema compliance validation
-- **asterisk-config-validator** - Asterisk configuration validation
-- **asterisk-dialplan-tester** - Dialplan scenario testing
-
-### Analysis & Debugging
-- **mikopbx-log-analyzer** - Docker container log analysis
-- **mikopbx-openapi-analyzer** - OpenAPI specification extraction
-- **mikopbx-sqlite-inspector** - SQLite database verification and validation
-
-### Utilities
-- **mikopbx-translation-manager** - Multi-language translation management
-- **mikopbx-commit-message** - Professional Git commit message generation
-
-## Usage
-
-Skills are automatically invoked by Claude Code based on the task context. Each skill directory contains a `SKILL.md` file with:
-- YAML frontmatter (name, description)
-- Detailed instructions and examples
-- Best practices and workflows
-
-## Structure
+**You don't need to explicitly invoke skills.** Just describe what you want:
 
 ```
-.claude/skills/
-├── skill-name/
-│   └── SKILL.md          # Skill definition with frontmatter
-├── another-skill/
-│   └── SKILL.md
-└── README.md             # This file
+✅ "Check if extension 201 was created in database"
+✅ "Generate pytest tests for Extensions API"
+✅ "Find all DataStructure classes"
+✅ "Transpile extension-modify.js"
+```
+
+Claude automatically selects and uses the appropriate skill(s) based on your request.
+
+## Available Skills (15)
+
+### 🗄️ Database & API Testing
+
+| Skill | Purpose |
+|-------|---------|
+| **mikopbx-sqlite-inspector** | Low-level database verification with schema reference |
+| **mikopbx-sqlite-inspecting** | Quick database checks after API operations |
+| **mikopbx-openapi-analyzing** | Extract and analyze OpenAPI 3.1.0 spec (259 endpoints) |
+| **mikopbx-api-test-generating** | Generate comprehensive pytest tests for endpoints |
+| **mikopbx-endpoint-validating** | Validate API compliance with OpenAPI and 7-phase pattern |
+
+### 🐳 Container & Infrastructure
+
+| Skill | Purpose |
+|-------|---------|
+| **mikopbx-container-inspector** | Get container IPs, ports, restart containers/workers |
+| **mikopbx-log-analyzing** | Analyze logs for debugging (system, PHP, Asterisk, nginx) |
+| **asterisk-config-validating** | Validate Asterisk configs and analyze logs |
+
+### ✨ Code Quality & Style
+
+| Skill | Purpose |
+|-------|---------|
+| **mikopbx-php-style** | PHP coding standards (PSR-1/4/12, PHP 8.3) |
+| **mikopbx-js-style** | JavaScript standards (ES6+, Fomantic UI, jQuery) |
+| **mikopbx-code-searching** | Syntax-aware search using ast-grep (not plain text grep) |
+| **mikopbx-babel-compiling** | Transpile ES6+ JavaScript to ES5 via Docker |
+
+### 🛠️ Development Tools
+
+| Skill | Purpose |
+|-------|---------|
+| **mikopbx-translation-managing** | Manage translations across 29 languages (Russian-first) |
+| **mikopbx-commit-message-generating** | Generate professional git commit messages |
+| **asterisk-dialplan-testing** | Test dialplan scenarios and call flows |
+
+## Common Usage Patterns
+
+### API Development
+```
+"Create new API endpoint for queues"
+→ Uses: mikopbx-php-style, mikopbx-api-test-generating, mikopbx-endpoint-validating
+```
+
+### Debugging Issues
+```
+"Extension 201 not working, help debug"
+→ Uses: mikopbx-sqlite-inspecting, mikopbx-log-analyzing, asterisk-config-validating
+```
+
+### Frontend Development
+```
+"Add new settings page to admin interface"
+→ Uses: mikopbx-js-style, mikopbx-babel-compiling, mikopbx-translation-managing
+```
+
+### Code Search & Refactoring
+```
+"Find all Worker classes in the codebase"
+→ Uses: mikopbx-code-searching (with ast-grep)
+```
+
+## Skill Structure
+
+Each skill directory contains:
+- **SKILL.md** - Main skill instructions with YAML frontmatter
+- **reference/** - Additional reference documentation
+- **examples/** - Real-world usage examples
+- **templates/** - Code/report templates
+- **scripts/** - Helper scripts (if needed)
+
+## Best Practices
+
+### ✅ Do:
+- Use natural language to describe what you need
+- Let Claude choose the right skill automatically
+- Combine multiple needs in one request (Claude uses multiple skills)
+
+### ❌ Don't:
+- Try to manually invoke skills (they activate automatically)
+- Memorize skill names (not required)
+- Repeat skill documentation in your requests
+
+## Adding New Skills
+
+1. Create directory: `.claude/skills/your-skill-name/`
+2. Add `SKILL.md` with YAML frontmatter:
+   ```yaml
+   ---
+   name: Your Skill Name
+   description: What it does and when to use it (max 1024 chars)
+   ---
+
+   # Your Skill Name
+
+   ## Instructions
+   Clear step-by-step guidance for Claude...
+   ```
+3. Keep `SKILL.md` under 500 lines (use separate reference files for more)
+4. Test with team members to verify activation
+
+## Troubleshooting
+
+**Skill doesn't activate?**
+- Check YAML frontmatter syntax
+- Ensure description is specific (includes trigger words)
+- Verify file path: `.claude/skills/skill-name/SKILL.md`
+
+**Need help with a specific skill?**
+Each skill's SKILL.md contains complete documentation, examples, and troubleshooting guides.
+
+## Team Sharing
+
+These skills are project-level (committed to git). After `git pull`, all team members have access automatically.
+
+```bash
+git pull  # Skills automatically available
 ```
 
 ## Documentation
 
-For detailed information about each skill, see the individual `SKILL.md` files in each skill directory.
-
-For more about Claude Code Skills:
-- [Official Documentation](https://docs.claude.com/en/docs/claude-code/skills)
-- [Skill Best Practices](https://docs.claude.com/en/docs/agents-and-tools/agent-skills/best-practices)
+- **Main project guide**: `/Users/nb/PhpstormProjects/mikopbx/Core/CLAUDE.md`
+- **Individual skill docs**: `.claude/skills/<skill-name>/SKILL.md`
+- **Official docs**: https://docs.claude.com/en/docs/agents-and-tools/agent-skills
 
 ## Version
 
-Last updated: 2025-10-20
+Last updated: 2025-01-21
 
-Reorganized to follow Claude Code Skills best practices with YAML frontmatter and proper directory structure.
+Updated with complete skill inventory and usage guidelines following Claude Code Skills best practices.
+
+---
+
+**Questions?** Each SKILL.md contains detailed documentation, usage examples, and troubleshooting guides.

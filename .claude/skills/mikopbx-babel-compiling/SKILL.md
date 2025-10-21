@@ -1,6 +1,7 @@
 ---
 name: mikopbx-babel-compiling
 description: Transpile ES6+ JavaScript to ES5 for browser compatibility using Docker-based Babel compiler. Use when transpiling JavaScript files after making changes to ES6+ source code.
+allowed-tools: Bash, Read, Grep, Glob
 ---
 
 # MikoPBX Babel Transpiler Automation

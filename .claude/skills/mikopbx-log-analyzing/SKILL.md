@@ -1,6 +1,7 @@
 ---
 name: mikopbx-log-analyzing
 description: Analyze Docker container logs to diagnose issues and monitor system health. Use when debugging errors, tracking worker processes, investigating API issues, or monitoring system behavior after tests.
+allowed-tools: Bash, Read, Grep, Glob
 ---
 
 # MikoPBX Log Analyzing
