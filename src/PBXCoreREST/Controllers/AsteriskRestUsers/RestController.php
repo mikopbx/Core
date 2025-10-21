@@ -50,10 +50,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ApiResource(
     path: '/pbxcore/api/v3/asterisk-rest-users',    
     tags: ['Asterisk REST Users'],
-    description: 'Comprehensive Asterisk REST Interface (ARI) user management for real-time call control. ' .
-                'ARI provides WebSocket-based APIs for building custom telephony applications with full ' .
-                'call control capabilities. Features include user authentication, application binding, ' .
-                'and permission management for ARI applications.',
+    description: 'rest_AsteriskRestUsers_ApiDescription',
     processor: AsteriskRestUsersManagementProcessor::class
 )]
 #[ResourceSecurity('asterisk_rest_users', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]

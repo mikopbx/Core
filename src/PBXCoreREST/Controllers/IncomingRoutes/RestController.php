@@ -48,9 +48,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ApiResource(
     path: '/pbxcore/api/v3/incoming-routes',
     tags: ['Incoming Routes'],
-    description: 'Comprehensive incoming route management for call routing and DID number handling. ' .
-                'Features include provider-based routing, number pattern matching, priority management, ' .
-                'timeout configuration, extension forwarding, and audio message playback.',
+    description: 'rest_IncomingRoutes_ApiDescription',
     processor: IncomingRoutesManagementProcessor::class
 )]
 #[ResourceSecurity('incoming_routes', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]

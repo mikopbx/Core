@@ -50,9 +50,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ApiResource(
     path: '/pbxcore/api/v3/asterisk-managers',    
     tags: ['Asterisk Managers'],
-    description: 'Asterisk Manager Interface (AMI) user management for PBX administration. ' .
-                'AMI users provide programmatic access to Asterisk for monitoring, control, and integration. ' .
-                'Features include permission management, secure authentication, and administrative access controls.',
+    description: 'rest_AsteriskManagers_ApiDescription',
     processor: AsteriskManagersManagementProcessor::class
 )]
 #[ResourceSecurity('asterisk_managers', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]

@@ -49,9 +49,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ApiResource(
     path: '/pbxcore/api/v3/modules',    
     tags: ['Modules'],
-    description: 'Comprehensive extension modules management for PBX functionality extension. ' .
-                'Features include module installation from repository or package, updates, ' .
-                'enable/disable operations, metadata retrieval, and automatic dependency handling.',
+    description: 'rest_Modules_ApiDescription',
     processor: ModulesManagementProcessor::class
 )]
 #[ResourceSecurity('modules', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]

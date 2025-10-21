@@ -39,7 +39,7 @@ use MikoPBX\PBXCoreREST\Lib\StorageManagementProcessor;
 #[ApiResource(
     path: '/pbxcore/api/v3/storage',    
     tags: ['Storage'],
-    description: 'Comprehensive storage and disk management for MikoPBX. This singleton resource provides access to storage configuration including disk selection, mount points, usage statistics, and file system operations. Manages call recording retention periods, monitors disk space utilization, and provides tools for formatting and mounting storage devices. Essential for system administrators managing storage capacity and data retention policies.',
+    description: 'rest_Storage_ApiDescription',
     processor: StorageManagementProcessor::class
 )]
 #[ResourceSecurity('storage', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]

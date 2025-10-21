@@ -46,9 +46,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ApiResource(
     path: '/pbxcore/api/v3/iax',    
     tags: ['IAX'],
-    description: 'IAX (Inter-Asterisk eXchange) protocol management for VoIP trunk provider connections. ' .
-                'Provides real-time monitoring of IAX provider registration status, peer connectivity states, ' .
-                'and response times for IAX-based SIP trunks.',
+    description: 'rest_Iax_ApiDescription',
     processor: IaxManagementProcessor::class
 )]
 #[ResourceSecurity('iax', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]

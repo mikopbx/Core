@@ -48,9 +48,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ApiResource(
     path: '/pbxcore/api/v3/syslog',    
     tags: ['Syslog'],
-    description: 'System logs management and diagnostics tools. ' .
-                'Provides access to system logs, log filtering, network packet capture, and archive generation. ' .
-                'Essential for troubleshooting and system monitoring.',
+    description: 'rest_Syslog_ApiDescription',
     processor: SysLogsManagementProcessor::class
 )]
 #[ResourceSecurity('syslog', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]

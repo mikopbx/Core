@@ -46,10 +46,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ApiResource(
     path: '/pbxcore/api/v3/openapi',
     tags: ['OpenAPI Documentation'],
-    description: 'OpenAPI specification and documentation management for MikoPBX REST API. ' .
-                'Provides access to API documentation, ACL rules, validation schemas, and metadata. ' .
-                'Singleton resource pattern - only one specification exists. ' .
-                'All endpoints require authentication for security.',
+    description: 'rest_OpenAPI_ApiDescription',
     processor: OpenAPIManagementProcessor::class
 )]
 #[ResourceSecurity('openapi', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]

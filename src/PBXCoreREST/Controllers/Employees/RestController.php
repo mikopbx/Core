@@ -46,9 +46,9 @@ use MikoPBX\PBXCoreREST\Attributes\{
  * @see https://spec.openapis.org/oas/v3.1.0 - OpenAPI 3.1 Specification
  */
 #[ApiResource(
-    path: '/pbxcore/api/v3/employees',    
+    path: '/pbxcore/api/v3/employees',
     tags: ['Employees Management'],
-    description: 'Comprehensive employee management for PBX users. Employees represent staff members with extension numbers, user accounts, and SIP credentials.',
+    description: 'rest_Employees_ApiDescription',
     processor: EmployeesManagementProcessor::class
 )]
 #[ResourceSecurity('employees', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]

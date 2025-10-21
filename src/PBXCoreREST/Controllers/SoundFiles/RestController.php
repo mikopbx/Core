@@ -49,9 +49,7 @@ use MikoPBX\PBXCoreREST\Lib\Common\CommonDataStructure;
 #[ApiResource(
     path: '/pbxcore/api/v3/sound-files',    
     tags: ['Sound files'],
-    description: 'Sound file management for IVR menus, MOH, announcements and system prompts. ' .
-                'Supports upload, conversion, playback and CRUD operations for audio files. ' .
-                'Handles multiple audio formats with automatic conversion to system-compatible formats.',
+    description: 'rest_SoundFiles_ApiDescription',
     processor: SoundFilesManagementProcessor::class
 )]
 #[ResourceSecurity('sound_files', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]

@@ -48,9 +48,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ApiResource(
     path: '/pbxcore/api/v3/sip-providers',    
     tags: ['SIP Providers'],
-    description: 'Comprehensive SIP provider management for Session Initiation Protocol (SIP) trunking. ' .
-                'SIP is the industry-standard VoIP protocol for voice and video communications. ' .
-                'Features include provider registration, status monitoring, connection testing, and statistics tracking.',
+    description: 'rest_SipProviders_ApiDescription',
     processor: ProvidersManagementProcessor::class
 )]
 #[ResourceSecurity('sip_providers', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]

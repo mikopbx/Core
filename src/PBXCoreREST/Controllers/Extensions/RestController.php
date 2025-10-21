@@ -48,10 +48,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ApiResource(
     path: '/pbxcore/api/v3/extensions',
     tags: ['Extensions'],
-    description: 'Comprehensive extensions management for all PBX extension numbers. ' .
-                'Extensions are created through various entities (Employees, IVR menus, Queues, etc.). ' .
-                'This API provides unified access to list, search, and manage all extension numbers ' .
-                'with type information and availability checking.',
+    description: 'rest_Extensions_ApiDescription',
     processor: ExtensionsManagementProcessor::class
 )]
 #[ResourceSecurity('extensions', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]

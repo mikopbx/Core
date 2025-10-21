@@ -79,7 +79,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ApiResource(
     path: '/pbxcore/api/v3/files',    
     tags: ['FilesManagement'],
-    description: 'Comprehensive file management operations. Provides REST operations for reading, uploading, and deleting files, plus custom methods for chunked uploads and firmware downloads. Supports both simple PUT uploads and resumable chunked uploads via Resumable.js protocol.',
+    description: 'rest_Files_ApiDescription',
     processor: FilesManagementProcessor::class
 )]
 #[ResourceSecurity(

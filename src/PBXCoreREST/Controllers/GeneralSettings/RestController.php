@@ -48,10 +48,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ApiResource(
     path: '/pbxcore/api/v3/general-settings',    
     tags: ['General Settings'],
-    description: 'Comprehensive system-wide configuration management. ' .
-                'Provides access to PBX general settings including system name, language, timezone, ' .
-                'web/SSH access configuration, SIP settings, recording options, and codec management. ' .
-                'Implements singleton resource pattern.',
+    description: 'rest_GeneralSettings_ApiDescription',
     processor: GeneralSettingsManagementProcessor::class
 )]
 #[ResourceSecurity('general_settings', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]

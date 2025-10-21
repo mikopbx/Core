@@ -48,9 +48,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ApiResource(
     path: '/pbxcore/api/v3/mail-settings',    
     tags: ['Mail Settings'],
-    description: 'Mail server configuration management for system notifications and alerts. ' .
-                'Supports SMTP authentication including OAuth2 for Gmail, Outlook, and other providers. ' .
-                'Includes connection testing and automated token refresh capabilities.',
+    description: 'rest_MailSettings_ApiDescription',
     processor: MailSettingsManagementProcessor::class
 )]
 #[ResourceSecurity('mail_settings', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]

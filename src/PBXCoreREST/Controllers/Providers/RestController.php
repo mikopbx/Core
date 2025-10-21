@@ -43,7 +43,7 @@ use MikoPBX\PBXCoreREST\Lib\Common\CommonDataStructure;
 #[ApiResource(
     path: '/pbxcore/api/v3/providers',    
     tags: ['Providers'],
-    description: 'Comprehensive VoIP provider management for listing and monitoring both SIP and IAX providers. This read-only endpoint provides unified access to all provider types. For create/update/delete operations, use type-specific endpoints: /api/v3/sip-providers or /api/v3/iax-providers. Providers are identified by unique identifiers (PROV-XXX format) and can be filtered by type, status, or registration state. Supports real-time status monitoring, historical data retrieval, and statistics tracking.',
+    description: 'rest_Providers_ApiDescription',
     processor: ProvidersManagementProcessor::class
 )]
 #[ResourceSecurity('providers', requirements: [SecurityType::BEARER_TOKEN])]

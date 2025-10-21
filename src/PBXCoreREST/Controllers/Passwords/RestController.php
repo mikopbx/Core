@@ -46,9 +46,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ApiResource(
     path: '/pbxcore/api/v3/passwords',    
     tags: ['Passwords'],
-    description: 'Password management utilities for validation and generation. ' .
-                'Features include password strength validation, secure password generation, ' .
-                'dictionary attack checking, and batch operations for multiple passwords.',
+    description: 'rest_Passwords_ApiDescription',
     processor: PasswordsManagementProcessor::class
 )]
 #[ResourceSecurity('passwords', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]

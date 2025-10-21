@@ -49,9 +49,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ApiResource(
     path: '/pbxcore/api/v3/sip',    
     tags: ['SIP'],
-    description: 'SIP device status monitoring and statistics. ' .
-                'Provides real-time status information for SIP endpoints, peers, and registry. ' .
-                'Read-only monitoring interface - device configuration is managed via Extensions API.',
+    description: 'rest_Sip_ApiDescription',
     processor: SIPStackProcessor::class
 )]
 #[ResourceSecurity('sip', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]

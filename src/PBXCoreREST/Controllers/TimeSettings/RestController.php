@@ -39,7 +39,7 @@ use MikoPBX\PBXCoreREST\Lib\TimeSettingsManagementProcessor;
 #[ApiResource(
     path: '/pbxcore/api/v3/time-settings',    
     tags: ['Time Settings'],
-    description: 'Comprehensive time and timezone management for MikoPBX. This singleton resource provides access to system time configuration including timezone selection, NTP server settings, and manual time adjustment. Essential for ensuring accurate call timestamps, scheduled tasks execution, and system log correlation. Supports automatic time synchronization via NTP or manual time setting for isolated networks.',
+    description: 'rest_TimeSettings_ApiDescription',
     processor: TimeSettingsManagementProcessor::class
 )]
 #[ResourceSecurity('time-settings', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]

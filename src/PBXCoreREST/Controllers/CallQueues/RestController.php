@@ -48,10 +48,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ApiResource(
     path: '/pbxcore/api/v3/call-queues',
     tags: ['Call Queues'],
-    description: 'Comprehensive call queue management for advanced call distribution. ' .
-                'Features include multiple distribution strategies (ring-all, round-robin, linear, random, least-recent), ' .
-                'member management with priority/penalty settings, announcement configuration, timeout handling, ' .
-                'and automatic call routing.',
+    description: 'rest_CallQueues_ApiDescription',
     processor: CallQueuesManagementProcessor::class
 )]
 #[ResourceSecurity('call_queues', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]

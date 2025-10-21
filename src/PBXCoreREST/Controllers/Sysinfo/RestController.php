@@ -45,9 +45,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ApiResource(
     path: '/pbxcore/api/v3/sysinfo',    
     tags: ['Sysinfo'],
-    description: 'System information and diagnostics singleton resource. ' .
-                'Provides comprehensive details about hardware, network configuration, virtualization platform, and DMI data. ' .
-                'Read-only interface for system monitoring and troubleshooting.',
+    description: 'rest_Sysinfo_ApiDescription',
     processor: SysinfoManagementProcessor::class
 )]
 #[ResourceSecurity('sysinfo', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]

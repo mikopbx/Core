@@ -48,10 +48,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ApiResource(
     path: '/pbxcore/api/v3/cdr',    
     tags: ['Call Records'],
-    description: 'Comprehensive Call Detail Records (CDR) management for call history analysis and reporting. ' .
-                'Provides read-only access to completed call records, real-time monitoring of active calls and channels, ' .
-                'and streaming playback of call recordings with HTTP range support. ' .
-                'Features advanced filtering by date, caller/callee, duration, and call status.',
+    description: 'rest_Cdr_ApiDescription',
     processor: CdrManagementProcessor::class
 )]
 #[ResourceSecurity('cdr', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]

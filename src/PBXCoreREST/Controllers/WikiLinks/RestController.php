@@ -39,7 +39,9 @@ use MikoPBX\PBXCoreREST\Attributes\{
  * Provides endpoints to generate documentation links based on controller/action context.
  */
 #[ApiResource(
-    path: '/pbxcore/api/v3/wiki-links',    tags: ['Documentation'],
+    path: '/pbxcore/api/v3/wiki-links',
+    tags: ['WikiLinks'],
+    description: 'rest_description_WikiLinks',
     processor: WikiLinksManagementProcessor::class
 )]
 #[ResourceSecurity('wiki-links', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
@@ -58,13 +60,14 @@ class RestController extends BaseRestController
     /**
      * Get wiki documentation link for a specific page (PUBLIC - no auth required)
      *
-     * Returns the appropriate documentation URL based on controller, action, and language.
+     * Returns the appropriate documentation URL based on controller, action, module ID, and language.
+     * Dynamically generates documentation links for admin interface help icons and contextual help.
      * Automatically handles link replacement mapping from wiki.mikopbx.com to docs.mikopbx.com.
      */
     #[ResourceSecurity('wiki_links_get_link', requirements: [SecurityType::PUBLIC])]
     #[ApiOperation(
-        summary: 'Get documentation link',
-        description: 'Returns the documentation URL for a specific page based on controller and action context',
+        summary: 'rest_operation_wl_getLink_summary',
+        description: 'rest_operation_wl_getLink_description',
         operationId: 'getWikiLink'
     )]
     #[ApiParameterRef('controller', required: true)]

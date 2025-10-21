@@ -48,9 +48,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ApiResource(
     path: '/pbxcore/api/v3/iax-providers',    
     tags: ['IAX Providers'],
-    description: 'Comprehensive IAX provider management for Internet Asterisk eXchange (IAX) protocol trunking. ' .
-                'IAX is a VoIP protocol designed for efficient trunk connections between Asterisk servers. ' .
-                'Features include provider registration, status monitoring, connection testing, and statistics tracking.',
+    description: 'rest_IaxProviders_ApiDescription',
     processor: ProvidersManagementProcessor::class
 )]
 #[ResourceSecurity('iax_providers', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]

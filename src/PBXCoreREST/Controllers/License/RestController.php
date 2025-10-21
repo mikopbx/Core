@@ -47,9 +47,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ApiResource(
     path: '/pbxcore/api/v3/license',    
     tags: ['Licensing'],
-    description: 'License management for MikoPBX system. ' .
-                'Features include license activation, validation, key management, ' .
-                'feature capture for products, metrics reporting, and license server connectivity checks.',
+    description: 'rest_License_ApiDescription',
     processor: LicenseManagementProcessor::class
 )]
 #[ResourceSecurity('license', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]

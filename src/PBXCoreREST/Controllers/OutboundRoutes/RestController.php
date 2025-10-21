@@ -48,9 +48,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ApiResource(
     path: '/pbxcore/api/v3/outbound-routes',    
     tags: ['Outbound Routes'],
-    description: 'Outbound call routing management for directing calls to external providers. ' .
-                'Features include number pattern matching (prefix-based), provider selection, ' .
-                'priority-based route selection, digit manipulation, and trunk failover support.',
+    description: 'rest_OutboundRoutes_ApiDescription',
     processor: OutboundRoutesManagementProcessor::class
 )]
 #[ResourceSecurity('outbound_routes', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]

@@ -47,10 +47,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ApiResource(
     path: '/pbxcore/api/v3/advice',    
     tags: ['System Advice'],
-    description: 'System advice and notification management for PBX health monitoring. ' .
-                'Provides automated analysis of system configuration, security recommendations, ' .
-                'performance warnings, and best practice suggestions. This is a read-only resource ' .
-                'with custom methods for retrieving and refreshing system advice.',
+    description: 'rest_Advice_ApiDescription',
     processor: AdviceProcessor::class
 )]
 #[ResourceSecurity('advice', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]

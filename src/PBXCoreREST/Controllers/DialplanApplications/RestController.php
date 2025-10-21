@@ -78,7 +78,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ApiResource(
     path: '/pbxcore/api/v3/dialplan-applications',
     tags: ['Dialplan Applications'],
-    description: 'Dialplan application management for custom call handling logic and features.',
+    description: 'rest_DialplanApplications_ApiDescription',
     processor: DialplanApplicationsManagementProcessor::class
 )]
 #[ResourceSecurity('dialplan_applications', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]

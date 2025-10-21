@@ -48,10 +48,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ApiResource(
     path: '/pbxcore/api/v3/custom-files',    
     tags: ['System Files Management'],
-    description: 'Comprehensive custom files management for system configuration customization. ' .
-                'Allows managing custom configuration files that are automatically restored after system updates. ' .
-                'Supports multiple modes: override (replace file), append (add content), script (executable). ' .
-                'Content is stored as base64-encoded strings for binary safety.',
+    description: 'rest_CustomFiles_ApiDescription',
     processor: CustomFilesManagementProcessor::class
 )]
 #[ResourceSecurity('custom_files', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]

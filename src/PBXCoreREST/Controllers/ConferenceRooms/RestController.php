@@ -80,7 +80,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ApiResource(
     path: '/pbxcore/api/v3/conference-rooms',
     tags: ['Conference Rooms'],
-    description: 'Conference room management for multi-party audio conferencing.',
+    description: 'rest_ConferenceRooms_ApiDescription',
     processor: ConferenceRoomsManagementProcessor::class
 )]
 #[ResourceSecurity('conference_rooms', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]

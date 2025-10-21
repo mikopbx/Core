@@ -49,9 +49,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ApiResource(
     path: '/pbxcore/api/v3/network-filters',   
     tags: ['Network Filters'],
-    description: 'Read-only access to network filters (firewall rules) for UI dropdown lists. ' .
-                'Supports category-based filtering (SIP, IAX, AMI, API) and includes special localhost option. ' .
-                'For creating/updating filters, use the Firewall API.',
+    description: 'rest_NetworkFilters_ApiDescription',
     processor: NetworkFiltersManagementProcessor::class
 )]
 #[ResourceSecurity('network_filters', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]

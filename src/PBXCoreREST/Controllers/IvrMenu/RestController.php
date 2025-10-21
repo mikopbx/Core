@@ -50,10 +50,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ApiResource(
     path: '/pbxcore/api/v3/ivr-menu',
     tags: ['IVR Menu'],
-    description: 'Comprehensive IVR menu management for automated call routing and self-service. ' .
-                'Features include customizable menu options, timeout handling, audio file assignments, ' .
-                'digit-based navigation, and flexible routing rules for creating sophisticated ' .
-                'automated attendant systems.',
+    description: 'rest_IvrMenu_ApiDescription',
     processor: IvrMenuManagementProcessor::class
 )]
 #[ResourceSecurity('ivr_menu', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]

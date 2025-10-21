@@ -48,10 +48,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ApiResource(
     path: '/pbxcore/api/v3/network',    
     tags: ['Network management'],
-    description: 'Network configuration management for MikoPBX system. ' .
-                'Features include network interface management (Ethernet, VLAN), ' .
-                'IP address configuration (DHCP, Static), gateway settings, DNS configuration, ' .
-                'and NAT/STUN settings for VoIP connectivity.',
+    description: 'rest_Network_ApiDescription',
     processor: NetworkManagementProcessor::class
 )]
 #[ResourceSecurity('network', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]

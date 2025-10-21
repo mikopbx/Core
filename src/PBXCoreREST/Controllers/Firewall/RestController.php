@@ -92,7 +92,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ApiResource(
     path: '/pbxcore/api/v3/firewall',    
     tags: ['Firewall'],
-    description: 'Comprehensive firewall rule management. Provides full CRUD operations for network access control rules, plus custom methods for managing banned IPs, enabling/disabling firewall, and retrieving default configurations.',
+    description: 'rest_Firewall_ApiDescription',
     processor: FirewallManagementProcessor::class
 )]
 #[ResourceSecurity(

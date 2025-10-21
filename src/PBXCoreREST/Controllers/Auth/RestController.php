@@ -66,10 +66,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ApiResource(
     path: '/pbxcore/api/v3/auth',    
     tags: ['Authentication'],
-    description: 'JWT-based authentication system with refresh tokens for REST API clients and SPA applications. ' .
-                'Supports password authentication and passkey (WebAuthn) authentication. ' .
-                'Returns short-lived access tokens (JWT, 15 minutes) and long-lived refresh tokens (httpOnly cookie, 30 days). ' .
-                'Implements automatic token rotation and device tracking for enhanced security.',
+    description: 'rest_Auth_ApiDescription',
     processor: AuthManagementProcessor::class
 )]
 #[HttpMapping(

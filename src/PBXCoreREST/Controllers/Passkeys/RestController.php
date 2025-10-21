@@ -51,9 +51,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ApiResource(
     path: '/pbxcore/api/v3/passkeys',    
     tags: ['Passkeys'],
-    description: 'WebAuthn passkey management and authentication for passwordless login. ' .
-                'Supports FIDO2/WebAuthn standards for secure biometric and hardware key authentication. ' .
-                'Provides registration flow for authenticated users and authentication flow for public access.',
+    description: 'rest_Passkeys_ApiDescription',
     processor: PasskeysManagementProcessor::class
 )]
 #[ResourceSecurity('passkeys', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]

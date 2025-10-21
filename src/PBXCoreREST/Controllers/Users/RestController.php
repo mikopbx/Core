@@ -78,7 +78,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ApiResource(
     path: '/pbxcore/api/v3/users',    
     tags: ['Users'],
-    description: 'User account management for admin interface access. Supports full CRUD operations plus custom methods for email availability checking. Users can authenticate to the admin interface and have personalized settings like language and avatar.',
+    description: 'rest_Users_ApiDescription',
     processor: UsersManagementProcessor::class
 )]
 #[ResourceSecurity('users', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]

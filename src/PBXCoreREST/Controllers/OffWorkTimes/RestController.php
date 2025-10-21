@@ -48,10 +48,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ApiResource(
     path: '/pbxcore/api/v3/off-work-times',    
     tags: ['OffWorkTimes'],
-    description: 'Time-based routing conditions for handling calls outside business hours. ' .
-                'Features include time range definitions (daily, weekly, date-specific), ' .
-                'holiday scheduling, action routing (forward to extension, play audio), ' .
-                'and priority-based rule evaluation.',
+    description: 'rest_OffWorkTimes_ApiDescription',
     processor: OutWorkTimesManagementProcessor::class
 )]
 #[ResourceSecurity('off_work_times', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
