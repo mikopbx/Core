@@ -69,15 +69,6 @@
     </div>
 </div>
 
-<!-- Full permissions warning (shown when full permissions enabled) -->
-<div id="full-permissions-warning" class="ui icon message">
-    <i class="warning icon"></i>
-    <div class="content">
-        <div class="header">{{ t._('ak_FullPermissionsWarningTitle') }}</div>
-        <p>{{ t._('ak_FullPermissionsWarningText') }}</p>
-    </div>
-</div>
-
 <!-- Permissions table (always visible, synchronized with toggle) -->
 <div id="permissions-container" style="display: none;">
     <!-- PermissionsSelector table will be rendered here by JavaScript -->

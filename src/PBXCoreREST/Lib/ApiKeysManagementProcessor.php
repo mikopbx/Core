@@ -24,8 +24,7 @@ use MikoPBX\PBXCoreREST\Lib\ApiKeys\{
     GetListAction,
     SaveRecordAction,
     DeleteRecordAction,
-    GenerateKeyAction,
-    GetAvailableControllersAction
+    GenerateKeyAction
 };
 use Phalcon\Di\Injectable;
 
@@ -42,10 +41,9 @@ enum ApiKeyAction: string
     case UPDATE = 'update';
     case PATCH = 'patch';
     case DELETE = 'delete';
-    
+
     // Custom methods
     case GENERATE_KEY = 'generateKey';
-    case GET_AVAILABLE_CONTROLLERS = 'getAvailableControllers';
 }
 
 /**
@@ -64,7 +62,6 @@ enum ApiKeyAction: string
  * 
  * Custom methods:
  * - POST /api-keys:generateKey -> generateKey
- * - GET /api-keys:getAvailableControllers -> getAvailableControllers
  */
 class ApiKeysManagementProcessor extends Injectable
 {
@@ -106,10 +103,9 @@ class ApiKeysManagementProcessor extends Injectable
             ApiKeyAction::UPDATE => SaveRecordAction::main($data), // Full update
             ApiKeyAction::PATCH => SaveRecordAction::main($data), // Partial update (same as update for now)
             ApiKeyAction::DELETE => DeleteRecordAction::main($data['id'] ?? ''),
-            
+
             // Custom methods
             ApiKeyAction::GENERATE_KEY => GenerateKeyAction::main($data),
-            ApiKeyAction::GET_AVAILABLE_CONTROLLERS => GetAvailableControllersAction::main($data),
         };
 
         $res->function = $actionString;

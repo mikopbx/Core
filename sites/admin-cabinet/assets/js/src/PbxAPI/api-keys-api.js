@@ -29,8 +29,7 @@ const ApiKeysAPI = new PbxApiClient({
     endpoint: '/pbxcore/api/v3/api-keys',
     customMethods: {
         getDefault: ':getDefault',
-        generateKey: ':generateKey',
-        getAvailableControllers: ':getAvailableControllers'
+        generateKey: ':generateKey'
     }
 });
 
@@ -95,20 +94,5 @@ Object.assign(ApiKeysAPI, {
      */
     deleteRecord(id, callback) {
         return this.callDelete(callback, id);
-    },
-
-    /**
-     * Get list of available controllers/endpoints for permissions
-     * Uses v3 RESTful API: GET /api-keys:getAvailableControllers
-     * @param {function} callback - Callback function
-     */
-    getAvailableControllers(callback) {
-        return this.callCustomMethod('getAvailableControllers', {}, (response) => {
-            if (response.result) {
-                callback(response);
-            } else {
-                callback({result: false, data: []});
-            }
-        });
     }
 });

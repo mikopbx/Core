@@ -51,24 +51,21 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ApiResource(
     path: '/pbxcore/api/v3/api-keys',    
     tags: ['API Keys'],
-    description: 'Comprehensive API keys management for secure REST API access. ' .
-                'Features include JWT token generation, permission management, endpoint restrictions, ' .
-                'network filtering, and key lifecycle management. API keys provide secure programmatic ' .
-                'access to the PBX REST API with fine-grained access control.',
+    description: 'rest_ApiKeys_ApiDescription',
     processor: ApiKeysManagementProcessor::class
 )]
 #[ResourceSecurity('api_keys', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
 #[HttpMapping(
     mapping: [
-        'GET' => ['getList', 'getRecord', 'getDefault', 'getAvailableControllers'],
+        'GET' => ['getList', 'getRecord', 'getDefault'],
         'POST' => ['create', 'generateKey'],
         'PUT' => ['update'],
         'PATCH' => ['patch'],
         'DELETE' => ['delete']
     ],
     resourceLevelMethods: ['getRecord', 'update', 'patch', 'delete'],
-    collectionLevelMethods: ['getList', 'create', 'generateKey', 'getAvailableControllers'],
-    customMethods: ['getDefault', 'getAvailableControllers', 'generateKey'],
+    collectionLevelMethods: ['getList', 'create', 'generateKey'],
+    customMethods: ['getDefault', 'generateKey'],
     idPattern: '[0-9]+'
 )]
 class RestController extends BaseRestController
@@ -266,23 +263,6 @@ class RestController extends BaseRestController
         // Implementation handled by BaseRestController
     }
 
-    /**
-     * Get list of available API controllers and endpoints
-     *
-     * @route GET /pbxcore/api/v3/api-keys:getAvailableControllers
-     */
-    #[ApiOperation(
-        summary: 'rest_ak_GetAvailableControllers',
-        description: 'rest_ak_GetAvailableControllersDesc',
-        operationId: 'getAvailableControllers'
-    )]
-    #[ApiResponse(200, 'rest_response_200_list')]
-    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
-    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
-    public function getAvailableControllers(): void
-    {
-        // Implementation handled by BaseRestController
-    }
 
     /**
      * Generate new random API key

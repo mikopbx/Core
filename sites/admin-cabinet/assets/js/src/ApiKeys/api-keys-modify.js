@@ -72,12 +72,11 @@ const apiKeysModify = {
         // - Form validation
         // - AJAX response handling
         Form.initialize();
-        
+
         // Initialize other components
         apiKeysModify.initializeUIComponents();
-        apiKeysModify.initializePermissionsTable();
         apiKeysModify.initializeTooltips();
-        
+
         // Initialize form elements (textareas auto-resize)
         FormElements.initialize('#save-api-key-form');
         
@@ -93,13 +92,10 @@ const apiKeysModify = {
         
         ApiKeysAPI.getRecord(recordId, (response) => {
             const { result, data, messages } = response || {};
-            
+
             if (result && data) {
                 apiKeysModify.populateForm(data);
-                
-                // Load permissions only after form is populated
-                apiKeysModify.loadAvailableControllers();
-                
+
                 // Generate API key for new records
                 if (!recordId) {
                     apiKeysModify.generateApiKey();
@@ -162,13 +158,6 @@ const apiKeysModify = {
         // Always show permissions container (table is always visible)
         $('#permissions-container').show();
 
-        // Show/hide warning based on full_permissions state
-        if (isFullPermissions) {
-            $('#full-permissions-warning').slideDown();
-        } else {
-            $('#full-permissions-warning').slideUp();
-        }
-
         // Initialize PermissionsSelector on first show
         if (typeof PermissionsSelector !== 'undefined' && !PermissionsSelector.isReady()) {
             PermissionsSelector.initialize('#permissions-container', apiKeysModify.onManualPermissionChange);
@@ -204,7 +193,6 @@ const apiKeysModify = {
         // If full_permissions is enabled, disable it when user manually changes permissions
         if (isFullPermissions) {
             $('#full-permissions-toggle').checkbox('uncheck');
-            $('#full-permissions-warning').slideUp();
         }
     },
 
@@ -244,247 +232,11 @@ const apiKeysModify = {
     },
 
     /**
-     * Initialize permissions DataTable
-     */
-    initializePermissionsTable() {
-        // Will be initialized after loading controllers
-    },
-
-    /**
      * Initialize tooltips for form fields using ApiKeysTooltipManager
      */
     initializeTooltips() {
         // Delegate tooltip initialization to ApiKeysTooltipManager
         ApiKeysTooltipManager.initialize();
-    },
-
-    /**
-     * Load available controllers from REST API
-     */
-    loadAvailableControllers() {
-        ApiKeysAPI.getAvailableControllers((response) => {
-            const { result, data, messages } = response || {};
-            
-            if (result && data) {
-                const uniqueControllers = apiKeysModify.getUniqueControllers(data);
-                
-                if (!apiKeysModify.permissionsTable) {
-                    apiKeysModify.createPermissionsTable(uniqueControllers);
-                }
-            } else {
-                UserMessage.showError(messages?.error || 'Failed to load available controllers');
-            }
-        });
-    },
-
-    /**
-     * Get unique controllers by path
-     */
-    getUniqueControllers(controllers) {
-        const uniqueControllers = [];
-        const seen = new Set();
-        
-        controllers.forEach(controller => {
-            const { path } = controller;
-            if (!seen.has(path)) {
-                seen.add(path);
-                uniqueControllers.push(controller);
-            }
-        });
-        
-        return uniqueControllers;
-    },
-
-    /**
-     * Create permissions DataTable
-     */
-    createPermissionsTable(controllers) {
-        const tableData = apiKeysModify.prepareTableData(controllers);
-        
-        apiKeysModify.permissionsTable = $('#api-permissions-table').DataTable({
-            data: tableData,
-            paging: false,
-            searching: true,
-            info: false,
-            ordering: false,
-            autoWidth: true,
-            scrollX: false,
-            language: SemanticLocalization.dataTableLocalisation,
-            columns: apiKeysModify.getTableColumns(),
-            drawCallback() {
-                $('#api-permissions-table .checkbox').checkbox();
-            },
-            initComplete() {
-                apiKeysModify.initializeTableCheckboxes(this.api());
-            },
-        });
-    },
-
-    /**
-     * Prepare data for DataTable
-     */
-    prepareTableData(controllers) {
-        return controllers.map(controller => [
-            controller.name,
-            controller.description,
-            controller.path,
-        ]);
-    },
-
-    /**
-     * Get DataTable column definitions
-     */
-    getTableColumns() {
-        return [
-            apiKeysModify.getCheckboxColumn(),
-            apiKeysModify.getDescriptionColumn(),
-            apiKeysModify.getPathColumn(),
-        ];
-    },
-
-    /**
-     * Get checkbox column definition
-     */
-    getCheckboxColumn() {
-        return {
-            width: '50px',
-            orderable: false,
-            searchable: false,
-            title: apiKeysModify.getMasterCheckboxHtml(),
-            render(data) {
-                return apiKeysModify.getPermissionCheckboxHtml(data);
-            },
-        };
-    },
-
-    /**
-     * Get description column definition
-     */
-    getDescriptionColumn() {
-        return {
-            orderable: false,
-            title: 'Description',
-            render(data) {
-                return `<strong>${data}</strong>`;
-            },
-        };
-    },
-
-    /**
-     * Get path column definition
-     */
-    getPathColumn() {
-        return {
-            orderable: false,
-            title: 'API Path',
-            render(data) {
-                return `<span class="text-muted">${data}</span>`;
-            },
-        };
-    },
-
-    /**
-     * Get master checkbox HTML
-     */
-    getMasterCheckboxHtml() {
-        return '<div class="ui fitted checkbox" id="select-all-permissions"><input type="checkbox"><label></label></div>';
-    },
-
-    /**
-     * Get permission checkbox HTML
-     */
-    getPermissionCheckboxHtml(data) {
-        return `<div class="ui fitted checkbox permission-checkbox">
-                    <input type="checkbox" 
-                           name="permission_${data}" 
-                           data-path="">
-                    <label></label>
-                </div>`;
-    },
-
-    /**
-     * Initialize table checkboxes after DataTable creation
-     */
-    initializeTableCheckboxes(api) {
-        // Set data-path attributes
-        $('#api-permissions-table tbody tr').each(function() {
-            const rowData = api.row(this).data();
-            if (rowData) {
-                $(this).find('input[type="checkbox"]').attr('data-path', rowData[2]);
-            }
-        });
-        
-        // Style table wrapper
-        $('#api-permissions-table_wrapper').css('width', '100%');
-        $('#api-permissions-table').css('width', '100%');
-        
-        // Initialize master and child checkboxes
-        apiKeysModify.initializeMasterCheckbox();
-        apiKeysModify.initializeChildCheckboxes();
-    },
-
-    /**
-     * Initialize master checkbox behavior
-     */
-    initializeMasterCheckbox() {
-        $('#select-all-permissions').checkbox({
-            onChecked() {
-                $('#api-permissions-table tbody .permission-checkbox').checkbox('check');
-                // Only call dataChanged if form is fully initialized
-                if (apiKeysModify.formInitialized) {
-                    Form.dataChanged();
-                }
-            },
-            onUnchecked() {
-                $('#api-permissions-table tbody .permission-checkbox').checkbox('uncheck');
-                // Only call dataChanged if form is fully initialized
-                if (apiKeysModify.formInitialized) {
-                    Form.dataChanged();
-                }
-            },
-        });
-    },
-
-    /**
-     * Initialize child checkbox behavior
-     */
-    initializeChildCheckboxes() {
-        $('#api-permissions-table tbody .permission-checkbox').checkbox({
-            fireOnInit: true,
-            onChange() {
-                apiKeysModify.updateMasterCheckboxState();
-                // Only call dataChanged if form is fully initialized
-                if (apiKeysModify.formInitialized) {
-                    Form.dataChanged();
-                }
-            },
-        });
-    },
-
-    /**
-     * Update master checkbox state based on child checkboxes
-     */
-    updateMasterCheckboxState() {
-        const $allCheckboxes = $('#api-permissions-table tbody .permission-checkbox');
-        const $masterCheckbox = $('#select-all-permissions');
-        let allChecked = true;
-        let allUnchecked = true;
-        
-        $allCheckboxes.each(function() {
-            if ($(this).checkbox('is checked')) {
-                allUnchecked = false;
-            } else {
-                allChecked = false;
-            }
-        });
-        
-        if (allChecked) {
-            $masterCheckbox.checkbox('set checked');
-        } else if (allUnchecked) {
-            $masterCheckbox.checkbox('set unchecked');
-        } else {
-            $masterCheckbox.checkbox('set indeterminate');
-        }
     },
 
     /**
