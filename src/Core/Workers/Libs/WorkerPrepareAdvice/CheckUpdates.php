@@ -47,7 +47,8 @@ class CheckUpdates extends Injectable
         $messages = [];
 
         try {
-            // Use REST API client for internal HTTP request to system:checkForUpdates
+            // Use fast REST API endpoint for quick availability check
+            // This is more efficient for periodic background checks
             $di = Di::getDefault();
             if ($di === null) {
                 SystemMessages::sysLogMsg(
@@ -59,7 +60,7 @@ class CheckUpdates extends Injectable
             }
 
             $restResponse = $di->get(PBXCoreRESTClientProvider::SERVICE_NAME, [
-                '/pbxcore/api/v3/system:checkForUpdates',
+                '/pbxcore/api/v3/system:checkIfNewReleaseAvailable',
                 PBXCoreRESTClientProvider::HTTP_METHOD_GET
             ]);
 
@@ -75,20 +76,15 @@ class CheckUpdates extends Injectable
                 return [];
             }
 
-            // Check if updates are available
-            if (!empty($restResponse->data['hasUpdates']) && !empty($restResponse->data['firmware'])) {
-                // Get the latest version from firmware array
-                $latestFirmware = $restResponse->data['firmware'][0] ?? null;
-
-                if ($latestFirmware && !empty($latestFirmware['version'])) {
-                    $messages['info'][] = [
-                        'messageTpl' => 'adv_AvailableNewVersionPBX',
-                        'messageParams' => [
-                            'url' => $this->url->get('update/index/'),
-                            'ver' => $latestFirmware['version'],
-                        ]
-                    ];
-                }
+            // Check if new version is available
+            if (!empty($restResponse->data['newVersionAvailable']) && !empty($restResponse->data['latestVersion'])) {
+                $messages['info'][] = [
+                    'messageTpl' => 'adv_AvailableNewVersionPBX',
+                    'messageParams' => [
+                        'url' => $this->url->get('update/index/'),
+                        'ver' => $restResponse->data['latestVersion'],
+                    ]
+                ];
             }
         } catch (\Throwable $e) {
             SystemMessages::sysLogMsg(

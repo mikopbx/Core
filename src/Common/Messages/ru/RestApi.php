@@ -1945,8 +1945,10 @@ return [
     'rest_system_RestoreDefaultDesc' => 'Сброс всех настроек системы к заводским значениям',
     'rest_system_ChangeLanguage' => 'Изменить язык системы',
     'rest_system_ChangeLanguageDesc' => 'Изменение языка интерфейса администратора системы',
-    'rest_system_CheckForUpdates' => 'Проверить наличие обновлений',
-    'rest_system_CheckForUpdatesDesc' => 'Проверка доступности новых версий прошивки MikoPBX на сервере обновлений',
+    'rest_system_CheckIfNewReleaseAvailable' => 'Быстрая проверка наличия новой версии',
+    'rest_system_CheckIfNewReleaseAvailableDesc' => 'Легковесная быстрая проверка доступности новой версии прошивки. Возвращает только статус и номер версии без детальной информации. Используйте для виджетов дашборда, мониторинга и частых проверок.',
+    'rest_system_CheckForUpdates' => 'Получить детальную информацию об обновлении',
+    'rest_system_CheckForUpdatesDesc' => 'Получение полной информации о релизе прошивки включая версию, описание, ссылки для скачивания, размеры файлов и MD5 контрольные суммы. Используйте для отображения информации об обновлениях пользователям.',
 
     // System specific parameters
     'rest_param_system_audio_filename' => 'Полный путь к аудиофайлу для конвертации',
@@ -1969,7 +1971,8 @@ return [
     'rest_schema_firmware_size' => 'Размер файла прошивки',
 
     // API responses for checkForUpdates
-    'rest_response_200_check_updates' => 'Проверка обновлений выполнена успешно',
+    'rest_response_200_release_check' => 'Быстрая проверка новой версии выполнена успешно',
+    'rest_response_200_firmware_details' => 'Детальная информация о прошивке получена успешно',
 
 
 

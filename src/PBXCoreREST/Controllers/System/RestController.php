@@ -53,14 +53,14 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ResourceSecurity('system', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
 #[HttpMapping(
     mapping: [
-        'GET' => ['ping', 'checkAuth', 'getDeleteStatistics', 'datetime', 'getAvailableLanguages', 'checkForUpdates'],
+        'GET' => ['ping', 'checkAuth', 'getDeleteStatistics', 'datetime', 'getAvailableLanguages', 'checkForUpdates', 'checkIfNewReleaseAvailable'],
         'PUT' => ['datetime'],
         'POST' => ['reboot', 'shutdown', 'updateMailSettings', 'convertAudioFile', 'upgrade', 'restoreDefault', 'changeLanguage'],
         'PATCH' => ['changeLanguage']
     ],
     resourceLevelMethods: [],
     collectionLevelMethods: [],
-    customMethods: ['ping', 'checkAuth', 'getDeleteStatistics', 'datetime', 'getAvailableLanguages', 'checkForUpdates', 'reboot', 'shutdown', 'updateMailSettings', 'convertAudioFile', 'upgrade', 'restoreDefault', 'changeLanguage'],
+    customMethods: ['ping', 'checkAuth', 'getDeleteStatistics', 'datetime', 'getAvailableLanguages', 'checkForUpdates', 'checkIfNewReleaseAvailable', 'reboot', 'shutdown', 'updateMailSettings', 'convertAudioFile', 'upgrade', 'restoreDefault', 'changeLanguage'],
     idPattern: ''
 )]
 class RestController extends BaseRestController
@@ -298,7 +298,32 @@ class RestController extends BaseRestController
     }
 
     /**
-     * Check for available PBX firmware updates
+     * Quick check if new firmware release is available
+     *
+     * Fast lightweight check that returns only availability status and version number.
+     * Use this for dashboard widgets, monitoring, and frequent checks.
+     *
+     * @route GET /pbxcore/api/v3/system:checkIfNewReleaseAvailable
+     */
+    #[ApiOperation(
+        summary: 'rest_system_CheckIfNewReleaseAvailable',
+        description: 'rest_system_CheckIfNewReleaseAvailableDesc',
+        operationId: 'checkIfNewReleaseAvailable'
+    )]
+    #[ApiResponse(200, 'rest_response_200_release_check')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_internal', 'PBXApiResult')]
+    public function checkIfNewReleaseAvailable(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Get detailed firmware update information
+     *
+     * Retrieves complete release details including version, description, download links,
+     * file sizes, and MD5 checksums. Use this when displaying update information to users.
      *
      * @route GET /pbxcore/api/v3/system:checkForUpdates
      */
@@ -307,7 +332,7 @@ class RestController extends BaseRestController
         description: 'rest_system_CheckForUpdatesDesc',
         operationId: 'checkForUpdates'
     )]
-    #[ApiResponse(200, 'rest_response_200_check_updates')]
+    #[ApiResponse(200, 'rest_response_200_firmware_details')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
     #[ApiResponse(500, 'rest_response_500_internal', 'PBXApiResult')]

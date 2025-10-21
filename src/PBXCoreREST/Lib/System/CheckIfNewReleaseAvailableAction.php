@@ -30,31 +30,26 @@ use MikoPBX\PBXCoreREST\Http\Response;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 
 /**
- * Get detailed firmware update information
+ * Quick check if new firmware release is available
  *
- * This action retrieves complete release details including:
- * - Version and description
- * - Download links (IMG, ISO, RAW, TAR, VHD)
- * - File sizes and MD5 checksums
- * - Localized release notes
+ * Fast lightweight check used by:
+ * - WorkerPrepareAdvice (advice notifications)
+ * - Dashboard widgets
+ * - Monitoring systems
  *
- * Used by:
- * - Web interface update page (/admin-cabinet/update/index/)
- * - External systems requiring full release metadata
- *
- * For quick availability check use CheckIfNewReleaseAvailableAction instead.
+ * For detailed release information use GetFirmwareDetailsAction instead.
  *
  * @package MikoPBX\PBXCoreREST\Lib\System
  */
-class CheckForUpdatesAction
+class CheckIfNewReleaseAvailableAction
 {
-    private const UPDATE_CHECK_URL = 'https://releases.mikopbx.com/releases/v1/mikopbx/checkNewFirmware';
-    private const REQUEST_TIMEOUT = 10;
+    private const UPDATE_CHECK_URL = 'https://releases.mikopbx.com/releases/v1/mikopbx/ifNewReleaseAvailable';
+    private const REQUEST_TIMEOUT = 5;
 
     /**
-     * Get detailed firmware update information
+     * Quick check if new firmware version is available
      *
-     * @return PBXApiResult Result with complete firmware details
+     * @return PBXApiResult Result with update availability status
      */
     public static function main(): PBXApiResult
     {
@@ -62,14 +57,12 @@ class CheckForUpdatesAction
         $res->processor = __METHOD__;
 
         try {
-            // Get current PBX version and language
+            // Get current PBX version
             $pbxVersion = PbxSettings::getValueByKey(PbxSettings::PBX_VERSION);
-            $language = PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_LANGUAGE);
 
             // Prepare request data
             $requestData = [
                 'PBXVER' => $pbxVersion,
-                'LANGUAGE' => $language ?: 'en',
             ];
 
             // Make API call to releases server
@@ -80,13 +73,13 @@ class CheckForUpdatesAction
                 [
                     'json' => $requestData,
                     'timeout' => self::REQUEST_TIMEOUT,
-                    'connect_timeout' => 5,
+                    'connect_timeout' => 3,
                 ]
             );
 
             // Check response status
             if ($response->getStatusCode() !== Response::OK) {
-                $res->messages['error'][] = 'Failed to get firmware details: HTTP ' . $response->getStatusCode();
+                $res->messages['error'][] = 'Failed to check for updates: HTTP ' . $response->getStatusCode();
                 $res->httpCode = Response::INTERNAL_SERVER_ERROR;
                 return $res;
             }
@@ -106,25 +99,18 @@ class CheckForUpdatesAction
                 return $res;
             }
 
-            // Handle both SUCCESS and FAILURE responses
-            // SUCCESS: firmware details available
-            // FAILURE: no updates available (normal case, not an error)
-            if (!isset($updateData['result'])) {
-                $res->messages['error'][] = 'Invalid response format from update server';
+            // Validate response structure
+            if (!isset($updateData['result']) || $updateData['result'] !== 'SUCCESS') {
+                $res->messages['error'][] = 'Update check failed: ' . ($updateData['message'] ?? 'Unknown error');
                 $res->httpCode = Response::INTERNAL_SERVER_ERROR;
                 return $res;
             }
 
-            $hasUpdates = $updateData['result'] === 'SUCCESS'
-                && isset($updateData['firmware'])
-                && !empty($updateData['firmware'])
-                && !empty($updateData['firmware'][0]);
-
             // Build response data
             $res->data = [
                 'currentVersion' => $pbxVersion,
-                'hasUpdates' => $hasUpdates,
-                'firmware' => $hasUpdates ? $updateData['firmware'] : [],
+                'newVersionAvailable' => $updateData['newVersionAvailable'] ?? false,
+                'latestVersion' => $updateData['version'] ?? null,
                 'lastCheck' => date('Y-m-d H:i:s'),
             ];
 

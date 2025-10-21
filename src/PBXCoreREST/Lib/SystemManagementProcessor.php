@@ -23,6 +23,7 @@ namespace MikoPBX\PBXCoreREST\Lib;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\PBXCoreREST\Lib\System\ChangeLanguageAction;
 use MikoPBX\PBXCoreREST\Lib\System\CheckForUpdatesAction;
+use MikoPBX\PBXCoreREST\Lib\System\CheckIfNewReleaseAvailableAction;
 use MikoPBX\PBXCoreREST\Lib\System\DateTimeAction;
 use MikoPBX\PBXCoreREST\Lib\System\GetAvailableLanguagesAction;
 use MikoPBX\PBXCoreREST\Lib\System\GetDeleteStatisticsAction;
@@ -50,6 +51,7 @@ enum SystemAction: string
     case GET_AVAILABLE_LANGUAGES = 'getAvailableLanguages';
     case CHANGE_LANGUAGE = 'changeLanguage';
     case CHECK_FOR_UPDATES = 'checkForUpdates';
+    case CHECK_IF_NEW_RELEASE_AVAILABLE = 'checkIfNewReleaseAvailable';
 }
 
 /**
@@ -96,6 +98,7 @@ class SystemManagementProcessor extends Injectable
             SystemAction::GET_AVAILABLE_LANGUAGES => GetAvailableLanguagesAction::main($data),
             SystemAction::CHANGE_LANGUAGE => ChangeLanguageAction::main($data),
             SystemAction::CHECK_FOR_UPDATES => CheckForUpdatesAction::main(),
+            SystemAction::CHECK_IF_NEW_RELEASE_AVAILABLE => CheckIfNewReleaseAvailableAction::main(),
         };
 
         $res->function = $actionString;

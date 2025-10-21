@@ -45,7 +45,8 @@ const SystemAPI = new PbxApiClient({
         upgrade: ':upgrade',
         restoreDefault: ':restoreDefault',
         getDeleteStatistics: ':getDeleteStatistics',
-        checkForUpdates: ':checkForUpdates'
+        checkForUpdates: ':checkForUpdates',
+        checkIfNewReleaseAvailable: ':checkIfNewReleaseAvailable'
     }
 });
 
@@ -129,9 +130,22 @@ Object.assign(SystemAPI, {
     },
 
     /**
-     * Check for available firmware updates
+     * Quick check if new firmware release is available
+     * Fast lightweight check that returns only availability status and version number.
+     * Use this for dashboard widgets, monitoring, and frequent checks.
      * @param {function} callback - Callback function
-     * @returns {Promise} Promise that resolves with update information
+     * @returns {Promise} Promise that resolves with availability info
+     */
+    checkIfNewReleaseAvailable(callback) {
+        return this.callCustomMethod('checkIfNewReleaseAvailable', {}, callback, 'GET');
+    },
+
+    /**
+     * Get detailed firmware update information
+     * Retrieves complete release details including version, description, download links,
+     * file sizes, and MD5 checksums. Use this when displaying update information to users.
+     * @param {function} callback - Callback function
+     * @returns {Promise} Promise that resolves with detailed firmware info
      */
     checkForUpdates(callback) {
         return this.callCustomMethod('checkForUpdates', {}, callback, 'GET');
