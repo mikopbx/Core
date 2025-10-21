@@ -463,6 +463,21 @@ return [
     'ms_EmailNotification_DiskSpace_GoToAdminPanel' => 'Перейти к управлению хранилищем',
     'ms_EmailNotification_DiskSpace_HelpText' => 'Рекомендуется освободить место или увеличить размер диска для предотвращения проблем с записью звонков и работой системы.',
 
+    // Security Log Growth Notifications
+    'ms_EmailNotification_SecurityLog_Subject' => 'Предупреждение безопасности: Подозрительная активность в логе безопасности',
+    'ms_EmailNotification_SecurityLog_Preheader' => 'Обнаружен быстрый рост лога безопасности Asterisk',
+    'ms_EmailNotification_SecurityLog_Message' => 'Обнаружен подозрительно быстрый рост лога безопасности Asterisk, что может указывать на попытки атаки на вашу телефонную станцию.',
+    'ms_EmailNotification_SecurityLog_Critical' => 'КРИТИЧЕСКИЙ УРОВЕНЬ',
+    'ms_EmailNotification_SecurityLog_Warning' => 'Предупреждение',
+    'ms_EmailNotification_SecurityLog_GrowthRate' => 'Скорость роста',
+    'ms_EmailNotification_SecurityLog_During' => 'за',
+    'ms_EmailNotification_SecurityLog_PossibleCauses' => 'Возможные причины',
+    'ms_EmailNotification_SecurityLog_Cause_BruteForce' => 'Атака методом перебора паролей (brute force)',
+    'ms_EmailNotification_SecurityLog_Cause_Scanning' => 'Сканирование портов и служб',
+    'ms_EmailNotification_SecurityLog_Cause_Misconfiguration' => 'Неправильная настройка безопасности или сетевого экрана',
+    'ms_EmailNotification_SecurityLog_CheckFirewall' => 'Проверить настройки безопасности',
+    'ms_EmailNotification_SecurityLog_HelpText' => 'Рекомендуется немедленно проверить лог безопасности Asterisk, настройки сетевого экрана и Fail2Ban. При необходимости ограничьте доступ к станции только из доверенных IP-адресов.',
+
     // SSH Password Changed Notifications
     'ms_EmailNotification_SSHPassword_Subject' => 'Внимание: Изменен SSH пароль',
     'ms_EmailNotification_SSHPassword_Preheader' => 'SSH пароль был изменен',

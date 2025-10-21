@@ -39,6 +39,9 @@ enum NotificationType: string
     /** Disk space warning notification */
     case DISK_SPACE_WARNING = 'disk_space_warning';
 
+    /** Security log growth alert */
+    case SECURITY_ALERT = 'security_alert';
+
     /** Missed call notification */
     case MISSED_CALL = 'missed_call';
 
@@ -79,6 +82,10 @@ enum NotificationType: string
             self::DISK_SPACE_WARNING => [
                 'start' => '#ff6b6b',  // Red - critical warning
                 'end' => '#ee5a24'
+            ],
+            self::SECURITY_ALERT => [
+                'start' => '#dc3545',  // Red - security critical
+                'end' => '#c82333'
             ],
             self::MISSED_CALL => [
                 'start' => '#4834d4',  // Blue - informational
@@ -121,6 +128,7 @@ enum NotificationType: string
             self::SYSTEM_PROBLEMS => '⚠️',
             self::SSH_PASSWORD_CHANGED => '🔐',
             self::DISK_SPACE_WARNING => '⚠️',
+            self::SECURITY_ALERT => '🚨',
             self::MISSED_CALL => '📞',
             self::VOICEMAIL => '🎙️',
             self::SIP_CREDENTIALS => '✅',
@@ -144,6 +152,7 @@ enum NotificationType: string
             self::SYSTEM_PROBLEMS => 'System Problems Detected',
             self::SSH_PASSWORD_CHANGED => 'SSH Password Changed',
             self::DISK_SPACE_WARNING => 'Disk Space Warning',
+            self::SECURITY_ALERT => 'Security Alert',
             self::MISSED_CALL => 'Missed Call',
             self::VOICEMAIL => 'New Voicemail',
             self::SIP_CREDENTIALS => 'Your SIP Credentials',
@@ -165,7 +174,8 @@ enum NotificationType: string
         return match($this) {
             self::SYSTEM_PROBLEMS,
             self::SSH_PASSWORD_CHANGED,
-            self::DISK_SPACE_WARNING => true,
+            self::DISK_SPACE_WARNING,
+            self::SECURITY_ALERT => true,
             default => false,
         };
     }
