@@ -44,7 +44,8 @@ const SystemAPI = new PbxApiClient({
         // Utilities
         upgrade: ':upgrade',
         restoreDefault: ':restoreDefault',
-        getDeleteStatistics: ':getDeleteStatistics'
+        getDeleteStatistics: ':getDeleteStatistics',
+        checkForUpdates: ':checkForUpdates'
     }
 });
 
@@ -125,6 +126,15 @@ Object.assign(SystemAPI, {
      */
     getDeleteStatistics(callback) {
         return this.callCustomMethod('getDeleteStatistics', {}, callback, 'GET');
+    },
+
+    /**
+     * Check for available firmware updates
+     * @param {function} callback - Callback function
+     * @returns {Promise} Promise that resolves with update information
+     */
+    checkForUpdates(callback) {
+        return this.callCustomMethod('checkForUpdates', {}, callback, 'GET');
     }
 
 });

@@ -47,22 +47,20 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ApiResource(
     path: '/pbxcore/api/v3/system',    
     tags: ['System'],
-    description: 'System-wide management singleton resource. ' .
-                'Provides power management (reboot, shutdown), health monitoring (ping, checkAuth), ' .
-                'datetime operations, language settings, audio conversion, system upgrades and factory reset.',
+    description: 'rest_System_ApiDescription',
     processor: SystemManagementProcessor::class
 )]
 #[ResourceSecurity('system', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
 #[HttpMapping(
     mapping: [
-        'GET' => ['ping', 'checkAuth', 'getDeleteStatistics', 'datetime', 'getAvailableLanguages'],
+        'GET' => ['ping', 'checkAuth', 'getDeleteStatistics', 'datetime', 'getAvailableLanguages', 'checkForUpdates'],
         'PUT' => ['datetime'],
         'POST' => ['reboot', 'shutdown', 'updateMailSettings', 'convertAudioFile', 'upgrade', 'restoreDefault', 'changeLanguage'],
         'PATCH' => ['changeLanguage']
     ],
     resourceLevelMethods: [],
     collectionLevelMethods: [],
-    customMethods: ['ping', 'checkAuth', 'getDeleteStatistics', 'datetime', 'getAvailableLanguages', 'reboot', 'shutdown', 'updateMailSettings', 'convertAudioFile', 'upgrade', 'restoreDefault', 'changeLanguage'],
+    customMethods: ['ping', 'checkAuth', 'getDeleteStatistics', 'datetime', 'getAvailableLanguages', 'checkForUpdates', 'reboot', 'shutdown', 'updateMailSettings', 'convertAudioFile', 'upgrade', 'restoreDefault', 'changeLanguage'],
     idPattern: ''
 )]
 class RestController extends BaseRestController
@@ -295,6 +293,25 @@ class RestController extends BaseRestController
     #[ApiResponse(200, 'rest_response_200_updated')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     public function changeLanguage(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Check for available PBX firmware updates
+     *
+     * @route GET /pbxcore/api/v3/system:checkForUpdates
+     */
+    #[ApiOperation(
+        summary: 'rest_system_CheckForUpdates',
+        description: 'rest_system_CheckForUpdatesDesc',
+        operationId: 'checkForUpdates'
+    )]
+    #[ApiResponse(200, 'rest_response_200_check_updates')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_internal', 'PBXApiResult')]
+    public function checkForUpdates(): void
     {
         // Implementation handled by BaseRestController
     }

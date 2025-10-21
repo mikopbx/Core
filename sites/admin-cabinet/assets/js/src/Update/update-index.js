@@ -17,7 +17,7 @@
  */
 
 /* global PbxApi, globalPBXVersion, globalTranslate,
-globalWebAdminLanguage, showdown, UserMessage, upgradeStatusLoopWorker, Config, FilesAPI */
+globalWebAdminLanguage, showdown, UserMessage, upgradeStatusLoopWorker, SystemAPI, FilesAPI */
 
 /**
  * Object for managing PBX firmware updates.
@@ -151,59 +151,51 @@ const updatePBX = {
             updatePBX.$formObj.form('validate form');
         });
 
-        // Prepare the request data
-        const requestData = {
-            PBXVER: globalPBXVersion,
-            LANGUAGE: globalWebAdminLanguage,
-        };
+        // Use unified SystemAPI to check for firmware updates
+        SystemAPI.checkForUpdates((response) => {
+            // Check if request was successful
+            if (!response || !response.success || !response.data) {
+                return;
+            }
 
-        // Send an API request to check for new firmware
-        $.api({
-            url: `${Config.updateUrl}checkNewFirmware`,
-            on: 'now',
-            method: 'POST',
-            data: requestData,
-            successTest(response) {
-                // Test whether a JSON response is valid
-                return response !== undefined
-                    && Object.keys(response).length > 0
-                    && response.result === 'SUCCESS';
-            },
-            onSuccess(response) {
-                // Iterate through firmware objects and add version information
-                const currentVerison = updatePBX.currentVersion.replace('-dev', '');
-                response.firmware.forEach((obj) => {
-                    const version = obj.version.replace('-dev', '');
-                    if (versionCompare(version, currentVerison) > 0) {
-                        updatePBX.addNewVersionInformation(obj);
-                    }
-                });
+            // Check if updates are available
+            if (!response.data.hasUpdates || !response.data.firmware) {
+                return;
+            }
 
-                // Handle redo button click
-                $('a.redo').on('click', (e) => {
-                    e.preventDefault();
-                    if (updatePBX.$submitButton.hasClass('loading') || updatePBX.upgradeInProgress) return;
-                    updatePBX.$upgradeModalForm
-                        .modal({
-                            closable: false,
-                            onDeny: () => true,
-                            onApprove: () => {
-                                // Prepare parameters for firmware download
-                                const params = {};
-                                const $aLink = $(e.target).closest('a');
-                                params.updateLink = $aLink.attr('href');
-                                params.md5 = $aLink.attr('data-md5');
-                                params.version = $aLink.attr('data-version');
-                                params.size = $aLink.attr('data-size');
-                                $aLink.find('i').addClass('loading');
-                                updatePBX.upgradeInProgress = true;
-                                FilesAPI.downloadFirmware(params, updatePBX.cbAfterStartDownloadFirmware);
-                                return true;
-                            },
-                        })
-                        .modal('show');
-                });
-            },
+            // Iterate through firmware objects and add version information
+            const currentVerison = updatePBX.currentVersion.replace('-dev', '');
+            response.data.firmware.forEach((obj) => {
+                const version = obj.version.replace('-dev', '');
+                if (versionCompare(version, currentVerison) > 0) {
+                    updatePBX.addNewVersionInformation(obj);
+                }
+            });
+
+            // Handle redo button click
+            $('a.redo').on('click', (e) => {
+                e.preventDefault();
+                if (updatePBX.$submitButton.hasClass('loading') || updatePBX.upgradeInProgress) return;
+                updatePBX.$upgradeModalForm
+                    .modal({
+                        closable: false,
+                        onDeny: () => true,
+                        onApprove: () => {
+                            // Prepare parameters for firmware download
+                            const params = {};
+                            const $aLink = $(e.target).closest('a');
+                            params.updateLink = $aLink.attr('href');
+                            params.md5 = $aLink.attr('data-md5');
+                            params.version = $aLink.attr('data-version');
+                            params.size = $aLink.attr('data-size');
+                            $aLink.find('i').addClass('loading');
+                            updatePBX.upgradeInProgress = true;
+                            FilesAPI.downloadFirmware(params, updatePBX.cbAfterStartDownloadFirmware);
+                            return true;
+                        },
+                    })
+                    .modal('show');
+            });
         });
     },
 

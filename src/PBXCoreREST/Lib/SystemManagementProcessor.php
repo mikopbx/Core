@@ -22,6 +22,7 @@ namespace MikoPBX\PBXCoreREST\Lib;
 
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\PBXCoreREST\Lib\System\ChangeLanguageAction;
+use MikoPBX\PBXCoreREST\Lib\System\CheckForUpdatesAction;
 use MikoPBX\PBXCoreREST\Lib\System\DateTimeAction;
 use MikoPBX\PBXCoreREST\Lib\System\GetAvailableLanguagesAction;
 use MikoPBX\PBXCoreREST\Lib\System\GetDeleteStatisticsAction;
@@ -48,6 +49,7 @@ enum SystemAction: string
     case GET_DELETE_STATISTICS = 'getDeleteStatistics';
     case GET_AVAILABLE_LANGUAGES = 'getAvailableLanguages';
     case CHANGE_LANGUAGE = 'changeLanguage';
+    case CHECK_FOR_UPDATES = 'checkForUpdates';
 }
 
 /**
@@ -93,6 +95,7 @@ class SystemManagementProcessor extends Injectable
             SystemAction::GET_DELETE_STATISTICS => GetDeleteStatisticsAction::main(),
             SystemAction::GET_AVAILABLE_LANGUAGES => GetAvailableLanguagesAction::main($data),
             SystemAction::CHANGE_LANGUAGE => ChangeLanguageAction::main($data),
+            SystemAction::CHECK_FOR_UPDATES => CheckForUpdatesAction::main(),
         };
 
         $res->function = $actionString;

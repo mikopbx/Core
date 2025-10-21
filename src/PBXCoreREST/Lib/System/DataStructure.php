@@ -113,6 +113,31 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'readOnly' => true,
                 'example' => 'ok'
             ],
+            'currentVersion' => [
+                'type' => 'string',
+                'description' => 'rest_schema_system_current_version',
+                'readOnly' => true,
+                'example' => '2024.2.100'
+            ],
+            'hasUpdates' => [
+                'type' => 'boolean',
+                'description' => 'rest_schema_system_has_updates',
+                'readOnly' => true,
+                'example' => true
+            ],
+            'lastCheck' => [
+                'type' => 'string',
+                'description' => 'rest_schema_system_last_check',
+                'format' => 'date-time',
+                'readOnly' => true,
+                'example' => '2025-10-21 14:30:00'
+            ],
+            'firmware' => [
+                'type' => 'array',
+                'description' => 'rest_schema_system_firmware_list',
+                'items' => ['$ref' => '#/components/schemas/FirmwareRelease'],
+                'readOnly' => true
+            ],
         ];
     }
 
@@ -150,7 +175,40 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         return [
             'request' => $writableFields,
             'response' => $responseFields,
-            'related' => []
+            'related' => [
+                'FirmwareRelease' => [
+                    'type' => 'object',
+                    'description' => 'rest_schema_firmware_release',
+                    'properties' => [
+                        'version' => [
+                            'type' => 'string',
+                            'description' => 'rest_schema_firmware_version',
+                            'example' => '2024.2.150'
+                        ],
+                        'description' => [
+                            'type' => 'string',
+                            'description' => 'rest_schema_firmware_description',
+                            'example' => 'New features and bug fixes'
+                        ],
+                        'href' => [
+                            'type' => 'string',
+                            'description' => 'rest_schema_firmware_download_url',
+                            'format' => 'uri',
+                            'example' => 'https://releases.mikopbx.com/releases/v1/mikopbx/2024.2.150/mikopbx-2024.2.150.img'
+                        ],
+                        'md5' => [
+                            'type' => 'string',
+                            'description' => 'rest_schema_firmware_md5',
+                            'example' => 'a1b2c3d4e5f6g7h8i9j0'
+                        ],
+                        'size' => [
+                            'type' => 'string',
+                            'description' => 'rest_schema_firmware_size',
+                            'example' => '450MB'
+                        ],
+                    ]
+                ]
+            ]
         ];
     }
 
