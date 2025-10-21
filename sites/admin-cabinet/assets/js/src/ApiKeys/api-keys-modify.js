@@ -27,6 +27,7 @@ const apiKeysModify = {
     generatedApiKey: '',
     handlers: {},  // Store event handlers for cleanup
     formInitialized: false,  // Flag to prevent dataChanged during initialization
+    suppressToggleClear: false,  // Flag to prevent clearing permissions during data load
 
     /**
      * Validation rules
@@ -179,9 +180,9 @@ const apiKeysModify = {
                 // Set all dropdowns to "write"
                 PermissionsSelector.setAllPermissions('write');
             } else {
-                // Set all dropdowns to "" (noAccess) only if we're toggling OFF
-                // Don't clear when loading existing custom permissions
-                if (apiKeysModify.formInitialized) {
+                // Set all dropdowns to "" (noAccess) when user disables full_permissions
+                // Exception: during data load (suppressToggleClear=true) don't clear
+                if (!apiKeysModify.suppressToggleClear) {
                     PermissionsSelector.setAllPermissions('');
                 }
             }
@@ -687,12 +688,11 @@ const apiKeysModify = {
 
         if (isFullPermissions) {
             $('#full-permissions-toggle').checkbox('set checked');
-            $('#permissions-container').hide();
-            $('#full-permissions-warning').show();
         } else {
+            // Prevent clearing permissions during data load
+            apiKeysModify.suppressToggleClear = true;
             $('#full-permissions-toggle').checkbox('set unchecked');
-            $('#permissions-container').show();
-            $('#full-permissions-warning').hide();
+            apiKeysModify.suppressToggleClear = false;
 
             // Set specific permissions if available (new format: object with path => permission)
             if (data.allowed_paths && typeof data.allowed_paths === 'object' && Object.keys(data.allowed_paths).length > 0) {
