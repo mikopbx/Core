@@ -236,7 +236,7 @@ return [
     'stopped' => 'Desativado',
     'this cannot be undone!' => 'a operação é irreversível!',
     'topMenu_SearchPlaceholder' => 'Digite o seu termo de pesquisa',
-    'topMenu_SidebarButton' => 'Cardápio',
+    'topMenu_SidebarButton' => 'Menu',
     'topMenu_Support' => 'Apoio, suporte',
     'user' => 'do utilizador',
     'version' => 'versão',
