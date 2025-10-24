@@ -196,14 +196,19 @@ class ApiMetadataRegistry extends Injectable
         $methods = $reflection->getMethods(ReflectionMethod::IS_PUBLIC);
 
         foreach ($methods as $method) {
+            $methodName = $method->getName();
+
             $methodMetadata = [
-                'name' => $method->getName(),
+                'name' => $methodName,
                 'operations' => [],
                 'parameters' => [],
                 'responses' => [],
                 'security' => [],
                 'acl' => []
             ];
+
+            // WHY: Track if method is internal to prevent ResourceSecurity from generating operation
+            $isInternalMethod = false;
 
             // Scan for ApiOperation attributes
             $operationAttributes = $method->getAttributes(ApiOperation::class);
@@ -213,6 +218,7 @@ class ApiMetadataRegistry extends Injectable
                 // WHY: Skip internal-only operations from OpenAPI spec
                 // Internal operations are used by Nginx/Lua and should not be exposed in public API docs
                 if ($operation->internal) {
+                    $isInternalMethod = true;  // Mark method as internal
                     continue;
                 }
 
@@ -291,12 +297,18 @@ class ApiMetadataRegistry extends Injectable
 
             // Scan for ApiParameterRef attributes (lightweight references to DataStructure definitions)
             $parameterRefAttributes = $method->getAttributes(ApiParameterRef::class);
+
             foreach ($parameterRefAttributes as $attribute) {
                 /** @var ApiParameterRef $paramRef */
                 $paramRef = $attribute->newInstance();
 
                 // Resolve parameter definition from DataStructure
-                $resolvedParam = $this->resolveParameterRef($paramRef, $methodMetadata['dataSchema'] ?? null);
+                // Pass controller class for convention-based DataStructure discovery
+                $resolvedParam = $this->resolveParameterRef(
+                    $paramRef,
+                    $methodMetadata['dataSchema'] ?? null,
+                    $reflection->getName()
+                );
 
                 if ($resolvedParam !== null) {
                     $methodMetadata['parameters'][] = $resolvedParam;
@@ -310,8 +322,9 @@ class ApiMetadataRegistry extends Injectable
                 $resourceSecurity = $attribute->newInstance();
                 $methodMetadata['security'][] = $resourceSecurity->getAclRules();
 
-                // Generate operation info from ResourceSecurity
-                if (empty($methodMetadata['operations'])) {
+                // WHY: Generate operation info from ResourceSecurity ONLY if not internal
+                // Internal methods should not appear in OpenAPI even if they have ResourceSecurity
+                if (empty($methodMetadata['operations']) && !$isInternalMethod) {
                     $actionName = $resourceSecurity->action ? $resourceSecurity->action->value : 'operation';
                     $methodName = $method->getName();
 
@@ -328,11 +341,10 @@ class ApiMetadataRegistry extends Injectable
                 }
             }
 
-            // Only add method metadata if it has API attributes
-            if (!empty($methodMetadata['operations']) ||
-                !empty($methodMetadata['parameters']) ||
-                !empty($methodMetadata['responses']) ||
-                !empty($methodMetadata['security'])) {
+            // WHY: Only add method metadata if it has operations (non-internal)
+            // Parameters and responses alone are not enough - we need at least one operation
+            // This prevents internal-only methods from appearing in OpenAPI spec
+            if (!empty($methodMetadata['operations'])) {
                 $metadata['operations'][$method->getName()] = $methodMetadata;
             }
         }
@@ -453,12 +465,17 @@ class ApiMetadataRegistry extends Injectable
                 ];
 
                 foreach ($operation['parameters'] ?? [] as $parameter) {
+                    // ✨ FIX: Skip parameters without required fields
+                    if (!isset($parameter['name']) || !isset($parameter['type'])) {
+                        continue;
+                    }
+
                     $schemas[$operationKey]['parameters'][$parameter['name']] = [
                         'type' => $parameter['type'],
-                        'required' => $parameter['required'],
+                        'required' => $parameter['required'] ?? false,
                         'validation' => $parameter['validationRules'] ?? [],
-                        'default' => $parameter['default'],
-                        'enum' => $parameter['enum']
+                        'default' => $parameter['default'] ?? null,
+                        'enum' => $parameter['enum'] ?? null
                     ];
                 }
             }
@@ -763,6 +780,7 @@ class ApiMetadataRegistry extends Injectable
         $paths = [];
         $basePath = $resource['resource']['path'] ?? '';
         $httpMapping = $resource['httpMapping'] ?? [];
+        $resourceName = $resource['resource']['name'] ?? '';
 
         if (empty($basePath) || empty($httpMapping)) {
             return [];
@@ -778,7 +796,7 @@ class ApiMetadataRegistry extends Injectable
         // Generate resource-level paths (with {id})
         $resourcePath = $basePath . '/{id}';
 
-        // ✨ FIX: Extract id parameter definition from resource-level operations
+        // Extract id parameter definition from resource-level operations
         // Path parameters should be defined at path level, not inside each operation
         // This matches the pattern from document (1).yaml: parameters defined once for the path
         $idParameterSchema = $this->extractIdParameterFromOperations($resource['operations'] ?? []);
@@ -853,6 +871,13 @@ class ApiMetadataRegistry extends Injectable
         foreach ($httpMapping['custom'] ?? [] as $customMethod) {
             if (isset($resource['operations'][$customMethod])) {
                 $operation = $resource['operations'][$customMethod];
+
+                // WHY: Skip if no operations (internal-only methods filtered out)
+                // Internal methods have empty operations array due to continue on line 216
+                if (empty($operation['operations'])) {
+                    continue;
+                }
+
                 $operationData = $operation['operations'][0] ?? [];
                 $parameters = $operation['parameters'] ?? [];
                 $responses = $operation['responses'] ?? [];
@@ -885,6 +910,10 @@ class ApiMetadataRegistry extends Injectable
                     $pathLevelParams = [$this->extractIdParameterFromOperations($resource['operations'] ?? [])];
                 }
 
+                // ✨ FIX: Generate OpenAPI parameters BEFORE building operation
+                // WHY: We need the transformed parameters for requestBody generation
+                $openApiParameters = $this->generateParametersForOperation($parameters, $isResourceLevel);
+
                 $paths[$customPath] = [
                     'parameters' => $pathLevelParams,
                     $httpMethod => [
@@ -892,7 +921,7 @@ class ApiMetadataRegistry extends Injectable
                         'description' => $this->translateText($operationData['description'] ?? ''),
                         'operationId' => $operationData['operationId'] ?? $customMethod,
                         'tags' => $this->translateTagsArray($resource['resource']['tags'] ?? []),
-                        'parameters' => $this->generateParametersForOperation($parameters, $isResourceLevel),
+                        'parameters' => $openApiParameters,
                         'responses' => $this->generateResponsesForOperation($responses, $resourceName, $operation['dataSchema'] ?? null),
                         'security' => $this->generateSecurityForOperation($combinedSecurity)
                     ]
@@ -901,7 +930,7 @@ class ApiMetadataRegistry extends Injectable
                 // WHY: Add request body for POST/PUT/PATCH custom methods
                 // Body parameters are those with 'in' => 'query' (non-pagination params)
                 if (in_array($httpMethod, ['post', 'put', 'patch'])) {
-                    $bodyParameters = array_filter($parameters, function($param) {
+                    $bodyParameters = array_filter($openApiParameters, function($param) {
                         return ($param['in'] ?? '') === 'query' && !in_array($param['name'], ['limit', 'offset', 'search', 'order', 'orderWay']);
                     });
 
@@ -1032,14 +1061,21 @@ class ApiMetadataRegistry extends Injectable
             // ✨ FIX: Always skip ALL 'id' parameters regardless of 'in' value
             // Path parameters are defined at path level, not operation level
             // This prevents duplicate 'id' in both path and query parameters
-            if ($param['name'] === 'id') {
+            if (($param['name'] ?? '') === 'id') {
+                continue;
+            }
+
+            // ✨ FIX: Skip parameters without required fields
+            // WHY: Some parameters may be malformed or incomplete in metadata
+            if (!isset($param['type']) || !isset($param['in']) || !isset($param['name'])) {
+                error_log("WARNING: Skipping parameter with missing required fields: " . json_encode($param));
                 continue;
             }
 
             $openApiParam = [
                 'name' => $param['name'],
                 'in' => $param['in'],
-                'description' => $this->translateText($param['description']),
+                'description' => $this->translateText($param['description'] ?? ''),
                 'required' => $param['required'] ?? false,
                 'schema' => [
                     'type' => $param['type']
@@ -1294,16 +1330,22 @@ class ApiMetadataRegistry extends Injectable
         $required = [];
 
         foreach ($parameters as $param) {
+            // ✨ FIX: Parameters are in OpenAPI format with schema['type']
+            // WHY: generateRequestBody receives output from generateParametersForOperation
+            $type = $param['schema']['type'] ?? $param['type'] ?? 'string';
+            $enum = $param['schema']['enum'] ?? $param['enum'] ?? null;
+            $example = $param['example'] ?? null;
+
             $properties[$param['name']] = [
-                'type' => $param['type'],
-                'description' => $this->translateText($param['description'])
+                'type' => $type,
+                'description' => $this->translateText($param['description'] ?? '')
             ];
 
-            if (!empty($param['enum'])) {
-                $properties[$param['name']]['enum'] = $param['enum'];
+            if (!empty($enum)) {
+                $properties[$param['name']]['enum'] = $enum;
             }
-            if ($param['example'] !== null) {
-                $properties[$param['name']]['example'] = $param['example'];
+            if ($example !== null) {
+                $properties[$param['name']]['example'] = $example;
             }
 
             if ($param['required'] ?? false) {
@@ -1417,12 +1459,20 @@ class ApiMetadataRegistry extends Injectable
      * @param array<string, mixed>|null $dataSchema DataSchema metadata from ApiDataSchema attribute
      * @return array<string, mixed>|null Resolved parameter definition, or null if not found
      */
-    private function resolveParameterRef(ApiParameterRef $paramRef, ?array $dataSchema): ?array
+    private function resolveParameterRef(ApiParameterRef $paramRef, ?array $dataSchema, ?string $controllerClass = null): ?array
     {
-        // ✨ FIX: Prioritize dataStructure from ApiParameterRef over ApiDataSchema
-        // ApiParameterRef can specify its own dataStructure (e.g., CommonDataStructure for 'id')
-        // If not specified, fall back to controller's DataStructure from ApiDataSchema
+        // ✨ PRIORITY ORDER for determining DataStructure class:
+        // 1. ApiParameterRef::dataStructure (explicit override, e.g., CommonDataStructure for 'id')
+        // 2. ApiDataSchema::schemaClass (controller-level DataStructure)
+        // 3. Convention-based: derive from controller namespace
+        //    Controllers\{Resource}\RestController -> Lib\{Resource}\DataStructure
+
         $schemaClass = $paramRef->dataStructure ?? ($dataSchema['schemaClass'] ?? null);
+
+        // ✨ FIX: If no explicit dataStructure, try convention-based discovery
+        if ($schemaClass === null && $controllerClass !== null) {
+            $schemaClass = $this->deriveDataStructureFromController($controllerClass);
+        }
 
         if ($schemaClass === null) {
             return null;
@@ -1436,23 +1486,38 @@ class ApiMetadataRegistry extends Injectable
         // Get parameter definitions from DataStructure
         $definitions = $schemaClass::getParameterDefinitions();
         $requestParams = $definitions['request'] ?? [];
+        $relatedParams = $definitions['related'] ?? [];
 
         // Find parameter definition by name
-        if (!isset($requestParams[$paramRef->parameterName])) {
+        // Check BOTH request AND related sections
+        // WHY: Custom method parameters (export format, import strategy, etc.) are in 'related'
+        // Standard CRUD parameters (number, user_username, etc.) are in 'request'
+        if (isset($requestParams[$paramRef->parameterName])) {
+            $baseDefinition = $requestParams[$paramRef->parameterName];
+        } elseif (isset($relatedParams[$paramRef->parameterName])) {
+            $baseDefinition = $relatedParams[$paramRef->parameterName];
+        } else {
             return null;
         }
-
-        $baseDefinition = $requestParams[$paramRef->parameterName];
 
         // Merge with overrides from ApiParameterRef
         $overrides = $paramRef->getOverrides();
 
         // Build full parameter definition
+        // WHY: Priority order for 'in' location: override > baseDefinition > default 'query'
+        // This ensures DataStructure can specify 'in' => 'query' and it will be respected
+        $inLocation = 'query'; // default
+        if (isset($overrides['in'])) {
+            $inLocation = $overrides['in']->value;
+        } elseif (isset($baseDefinition['in'])) {
+            $inLocation = $baseDefinition['in'];
+        }
+
         $resolved = [
             'name' => $paramRef->parameterName,
             'type' => $baseDefinition['type'] ?? 'string',
             'description' => $overrides['description'] ?? $baseDefinition['description'] ?? '',
-            'in' => isset($overrides['in']) ? $overrides['in']->value : 'query',
+            'in' => $inLocation,
             'required' => $overrides['required'] ?? false,
             'default' => $overrides['default'] ?? $baseDefinition['default'] ?? null,
             'example' => $overrides['example'] ?? $baseDefinition['example'] ?? null,
@@ -1468,6 +1533,41 @@ class ApiMetadataRegistry extends Injectable
         ];
 
         return $resolved;
+    }
+
+    /**
+     * Derive DataStructure class from controller class name using convention
+     *
+     * Convention: Controllers\{Resource}\RestController -> Lib\{Resource}\DataStructure
+     *
+     * Examples:
+     * - MikoPBX\PBXCoreREST\Controllers\Cdr\RestController
+     *   -> MikoPBX\PBXCoreREST\Lib\Cdr\DataStructure
+     * - MikoPBX\PBXCoreREST\Controllers\CallQueues\RestController
+     *   -> MikoPBX\PBXCoreREST\Lib\CallQueues\DataStructure
+     *
+     * @param string $controllerClass Fully qualified controller class name
+     * @return string|null DataStructure class name if derivable, null otherwise
+     */
+    private function deriveDataStructureFromController(string $controllerClass): ?string
+    {
+        // Pattern: MikoPBX\PBXCoreREST\Controllers\{Resource}\RestController
+        if (!preg_match('/^(.+)\\\\Controllers\\\\(.+)\\\\RestController$/', $controllerClass, $matches)) {
+            return null;
+        }
+
+        $baseNamespace = $matches[1]; // MikoPBX\PBXCoreREST
+        $resource = $matches[2];      // Cdr, CallQueues, etc.
+
+        // Derive: MikoPBX\PBXCoreREST\Lib\{Resource}\DataStructure
+        $dataStructureClass = $baseNamespace . '\\Lib\\' . $resource . '\\DataStructure';
+
+        // Verify class exists
+        if (!class_exists($dataStructureClass)) {
+            return null;
+        }
+
+        return $dataStructureClass;
     }
 
     /**

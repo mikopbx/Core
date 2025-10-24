@@ -309,11 +309,6 @@ class PbxApiClient {
             data: cleanData,
             on: 'now',
             beforeSend(settings) {
-                // Add CSRF token if available
-                if (typeof globalCsrfTokenKey !== 'undefined' && typeof globalCsrfToken !== 'undefined') {
-                    cleanData[globalCsrfTokenKey] = globalCsrfToken;
-                }
-                
                 // Check if we need to send as JSON (for complex structures)
                 if (PbxApiClient.hasComplexData(cleanData)) {
                     settings.contentType = 'application/json';
@@ -342,13 +337,6 @@ class PbxApiClient {
      * @param {function} callback - Callback function
      */
     deleteRecord(recordId, callback) {
-        const data = {};
-        
-        // Add CSRF token if available
-        if (typeof globalCsrfTokenKey !== 'undefined' && typeof globalCsrfToken !== 'undefined') {
-            data[globalCsrfTokenKey] = globalCsrfToken;
-        }
-        
         const apiSettings = this.getBaseApiSettings(
             (response) => callback(response, true),
             callback
@@ -357,7 +345,6 @@ class PbxApiClient {
         $.api({
             url: `${this.apiUrl}/${recordId}`,
             method: 'DELETE',
-            data: data,
             ...apiSettings
         });
     }
@@ -414,11 +401,6 @@ class PbxApiClient {
         } else {
             // Collection-level method: /api/v3/resource:method
             url = `${this.apiUrl}${methodPath}`;
-        }
-
-        // Add CSRF token for POST requests
-        if (httpMethod === 'POST' && typeof globalCsrfTokenKey !== 'undefined' && typeof globalCsrfToken !== 'undefined') {
-            data[globalCsrfTokenKey] = globalCsrfToken;
         }
 
         // Use JSON for complex data, form encoding for simple data
@@ -605,12 +587,6 @@ class PbxApiClient {
      * @param {string} id - Resource ID to delete
      */
     callDelete(callback, id) {
-        const data = {};
-
-        if (typeof globalCsrfTokenKey !== 'undefined' && typeof globalCsrfToken !== 'undefined') {
-            data[globalCsrfTokenKey] = globalCsrfToken;
-        }
-
         const apiSettings = this.getBaseApiSettings(
             (response) => callback(response, true),
             callback
@@ -619,7 +595,6 @@ class PbxApiClient {
         $.api({
             url: `${this.apiUrl}/${id}`,
             method: 'DELETE',
-            data: data,
             ...apiSettings
         });
     }
