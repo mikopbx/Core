@@ -11,6 +11,7 @@ return [
     'sl_DocumentLoadErrorDesc' => 'The API description document could not be fetched. This could indicate connectivity problems, or issues with the server hosting the spec.',
     'sl_ParseError' => 'Failed to parse OpenAPI file',
     'sl_ParseErrorDesc' => 'Please make sure your OpenAPI file is valid and try again',
+    'sl_RequiredParametersNotProvided' => 'You didn\'t provide all of the required parameters!',
 
     /**
      * HttpOperation Request Component

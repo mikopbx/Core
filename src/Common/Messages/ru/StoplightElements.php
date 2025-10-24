@@ -11,6 +11,7 @@ return [
     'sl_DocumentLoadErrorDesc' => 'Не удалось получить документ описания API. Это может указывать на проблемы с подключением или проблемы с сервером, на котором размещена спецификация.',
     'sl_ParseError' => 'Не удалось разобрать файл OpenAPI',
     'sl_ParseErrorDesc' => 'Пожалуйста, убедитесь, что ваш файл OpenAPI корректен и попробуйте снова',
+    'sl_RequiredParametersNotProvided' => 'Вы не предоставили все обязательные параметры!',
 
     /**
      * HttpOperation Request Component
