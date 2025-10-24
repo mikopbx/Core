@@ -25,7 +25,7 @@ require_once 'Globals.php';
 use MikoPBX\Common\Models\LongPollSubscribe;
 use MikoPBX\Core\System\BeanstalkClient;
 use MikoPBX\Core\Workers\WorkerBase;
-use MikoPBX\PBXCoreREST\Lib\CdrDB\GetActiveChannelsAction;
+use MikoPBX\PBXCoreREST\Lib\PbxStatus\GetActiveChannelsAction;
 use MikoPBX\PBXCoreREST\Lib\Sip\GetRegistryAction as GetSipRegistryAction;
 use MikoPBX\PBXCoreREST\Lib\Iax\GetRegistryAction as GetIaxRegistryAction;
 
