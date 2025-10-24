@@ -17,7 +17,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-namespace MikoPBX\PBXCoreREST\Lib\Cdr;
+namespace MikoPBX\PBXCoreREST\Lib\PbxStatus;
 
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use MikoPBX\Core\System\Util;
@@ -27,7 +27,7 @@ use Phalcon\Di\Injectable;
 /**
  * Get active channels. These are the unfinished calls (endtime IS NULL).
  *
- * @package MikoPBX\PBXCoreREST\Lib\Cdr
+ * @package MikoPBX\PBXCoreREST\Lib\PbxStatus
  */
 class GetActiveChannelsAction extends Injectable
 {

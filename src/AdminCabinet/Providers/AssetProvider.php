@@ -525,8 +525,10 @@ class AssetProvider implements ServiceProviderInterface
     private function makeRestartAssets(string $action): void
     {
         if ($action === 'manage') {
+            $this->semanticCollectionCSS->addCss('css/vendor/semantic/modal.min.css', true);
+            $this->semanticCollectionJS->addJs('js/vendor/semantic/modal.min.js', true);
             $this->footerCollectionJS
-                ->addJs('js/pbx/PbxAPI/cdr-api.js', true)
+                ->addJs('js/pbx/PbxAPI/pbx-status-api.js', true)
                 ->addJs('js/pbx/Restart/restart-manage.js', true)
                 ->addJs('js/pbx/Restart/current-calls-worker.js', true);
         }
@@ -1039,12 +1041,17 @@ class AssetProvider implements ServiceProviderInterface
             $this->semanticCollectionJS->addJs('js/vendor/semantic/progress.min.js', true);
 
             $this->semanticCollectionCSS
+                ->addCss('css/vendor/semantic/search.min.css', true)
+                ->addCss('css/vendor/semantic/modal.min.css', true)
                 ->addCss('css/vendor/range/range.min.css', true)
                 ->addCss('css/vendor/datatable/scroller.dataTables.min.css', true)
                 ->addCss('css/vendor/datepicker/daterangepicker.css', true)
-                ->addCss('css/vendor/datatable/dataTables.semanticui.min.css', true);
+                ->addCss('css/vendor/datatable/dataTables.semanticui.min.css', true)
+                ->addCss('css/CallDetailRecords/cdr-player.css', true);
 
             $this->semanticCollectionJS
+                ->addJs('js/vendor/semantic/search.min.js', true)
+                ->addJs('js/vendor/semantic/modal.min.js', true)
                 ->addJs('js/vendor/datatable/dataTables.semanticui.js', true)
                 ->addJs('js/vendor/datatable/dataTables.scroller.min.js', true)
                 ->addJs('js/vendor/datatable/scroller.semanticui.js', true)
@@ -1053,6 +1060,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJS('js/vendor/datepicker/daterangepicker.js', true);
 
             $this->footerCollectionJS
+                ->addJs('js/pbx/PbxAPI/cdr-api.js', true)
                 ->addJs(
                     'js/pbx/CallDetailRecords/call-detail-records-player.js',
                     true

@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global CdrAPI, globalTranslate, ExtensionsAPI */
+/* global PbxStatusAPI, globalTranslate, ExtensionsAPI */
 
 /**
  * Object responsible for handling current calls information.
@@ -62,7 +62,7 @@ const currentCallsWorker = {
      * The main worker function that fetches current calls information.
      */
     worker() {
-        CdrAPI.getActiveChannels(currentCallsWorker.cbGetActiveChannels);
+        PbxStatusAPI.getActiveChannels(currentCallsWorker.cbGetActiveChannels);
         currentCallsWorker.timeoutHandle
             = window.setTimeout(currentCallsWorker.worker, currentCallsWorker.timeOut);
     },
@@ -75,6 +75,19 @@ const currentCallsWorker = {
         currentCallsWorker.$currentCallsInfo.empty();
         if (response === false || typeof response !== 'object') return;
         const respObject = response;
+
+        // If no active calls, show info message
+        if (!respObject || respObject.length === 0) {
+            const infoMessage = `<div class="ui icon info message">
+                <i class="info circle icon"></i>
+                <div class="content">
+                    <p>${globalTranslate.rs_NoActiveCallsMessage}</p>
+                </div>
+            </div>`;
+            currentCallsWorker.$currentCallsInfo.html(infoMessage);
+            return;
+        }
+
         let resultUl = `<h2 class="ui header">${globalTranslate.rs_CurrentCalls}</h2>`;
         resultUl += '<table class="ui very compact unstackable table">';
         resultUl += '<thead>';
