@@ -530,31 +530,105 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'request' => $requestFields,
             'response' => $allFields,  // ALL fields including read-only
             'related' => [
-                // Custom method: exportToFile
+                // Custom method: export, exportTemplate
+                // Export/template format: defines which fields to include in CSV
                 'format' => [
                     'type' => 'string',
                     'description' => 'rest_param_emp_export_format',
-                    'enum' => ['csv', 'excel'],
+                    'enum' => ['minimal', 'standard', 'full'],
                     'required' => true,
                     'sanitize' => 'string',
-                    'example' => 'csv'
+                    'default' => 'standard',
+                    'example' => 'standard'
                 ],
-                'fields' => [
-                    'type' => 'array',
-                    'description' => 'rest_param_emp_export_fields',
-                    'items' => ['type' => 'string'],
+
+                // Custom method: export
+                // Filter options for export (number range)
+                'filter' => [
+                    'type' => 'object',
+                    'description' => 'rest_param_emp_export_filter',
+                    'properties' => [
+                        'number_from' => [
+                            'type' => 'string',
+                            'description' => 'rest_param_emp_export_number_from',
+                            'pattern' => '^[0-9]+$',
+                            'example' => '100'
+                        ],
+                        'number_to' => [
+                            'type' => 'string',
+                            'description' => 'rest_param_emp_export_number_to',
+                            'pattern' => '^[0-9]+$',
+                            'example' => '999'
+                        ]
+                    ],
                     'sanitize' => 'array',
-                    'example' => ['number', 'user_username', 'user_email']
+                    'example' => ['number_from' => '100', 'number_to' => '999']
                 ],
-                // Custom method: validateImportData, importFromData, batchCreate
-                'data' => [
+
+                // Custom method: import
+                // Upload ID from file upload
+                'upload_id' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_emp_upload_id',
+                    'required' => true,
+                    'sanitize' => 'string',
+                    'example' => 'upload_abc123'
+                ],
+
+                // Custom method: import
+                // Import action: preview or execute
+                'action' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_emp_import_action',
+                    'enum' => ['preview', 'import'],
+                    'required' => true,
+                    'sanitize' => 'string',
+                    'example' => 'preview'
+                ],
+
+                // Custom method: import, confirmImport
+                // Import strategy for handling duplicates
+                'strategy' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_emp_import_strategy',
+                    'enum' => ['skip_duplicates', 'update_existing', 'fail_on_duplicate'],
+                    'sanitize' => 'string',
+                    'default' => 'skip_duplicates',
+                    'example' => 'skip_duplicates'
+                ],
+
+                // Custom method: batchCreate
+                // Array of employee records to create (max 20)
+                'employees' => [
                     'type' => 'array',
-                    'description' => 'rest_param_emp_batch_data',
+                    'description' => 'rest_param_emp_batch_employees',
                     'items' => ['type' => 'object'],
                     'required' => true,
                     'sanitize' => 'array',
-                    'example' => [['number' => '101', 'user_username' => 'John'], ['number' => '102', 'user_username' => 'Jane']]
+                    'example' => [['number' => '101', 'user_username' => 'John Doe'], ['number' => '102', 'user_username' => 'Jane Smith']]
                 ],
+
+                // Custom method: batchCreate
+                // Batch operation mode: validate only or create
+                'mode' => [
+                    'type' => 'string',
+                    'description' => 'rest_param_emp_batch_mode',
+                    'enum' => ['validate', 'create'],
+                    'sanitize' => 'string',
+                    'default' => 'create',
+                    'example' => 'create'
+                ],
+
+                // Custom method: batchCreate
+                // Continue processing on errors or stop at first error
+                'skip_errors' => [
+                    'type' => 'boolean',
+                    'description' => 'rest_param_emp_batch_skip_errors',
+                    'sanitize' => 'bool',
+                    'default' => false,
+                    'example' => false
+                ],
+
                 // Custom method: batchDelete
                 'ids' => [
                     'type' => 'array',
@@ -563,14 +637,6 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                     'required' => true,
                     'sanitize' => 'array',
                     'example' => ['1', '2', '3']
-                ],
-                // Custom method: importFromFile
-                'file' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_emp_import_file',
-                    'required' => true,
-                    'sanitize' => 'string',
-                    'example' => 'base64_encoded_file_content'
                 ]
             ]
         ];

@@ -139,8 +139,19 @@ class RestController extends BaseRestController
     #[ApiParameterRef('number', required: true)]
     #[ApiParameterRef('user_username', required: true)]
     #[ApiParameterRef('user_email')]
-    #[ApiParameterRef('mobile_number')]
     #[ApiParameterRef('user_avatar')]
+    #[ApiParameterRef('sip_secret', required: true)]
+    #[ApiParameterRef('sip_dtmfmode')]
+    #[ApiParameterRef('sip_transport')]
+    #[ApiParameterRef('sip_manualattributes')]
+    #[ApiParameterRef('sip_enableRecording')]
+    #[ApiParameterRef('sip_networkfilterid')]
+    #[ApiParameterRef('fwd_ringlength')]
+    #[ApiParameterRef('fwd_forwarding')]
+    #[ApiParameterRef('fwd_forwardingonbusy')]
+    #[ApiParameterRef('fwd_forwardingonunavailable')]
+    #[ApiParameterRef('mobile_number')]
+    #[ApiParameterRef('mobile_dialstring')]
     #[ApiResponse(201, 'rest_response_201_created')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -169,8 +180,19 @@ class RestController extends BaseRestController
     #[ApiParameterRef('number', required: true)]
     #[ApiParameterRef('user_username', required: true)]
     #[ApiParameterRef('user_email')]
-    #[ApiParameterRef('mobile_number')]
     #[ApiParameterRef('user_avatar')]
+    #[ApiParameterRef('sip_secret', required: true)]
+    #[ApiParameterRef('sip_dtmfmode')]
+    #[ApiParameterRef('sip_transport')]
+    #[ApiParameterRef('sip_manualattributes')]
+    #[ApiParameterRef('sip_enableRecording')]
+    #[ApiParameterRef('sip_networkfilterid')]
+    #[ApiParameterRef('fwd_ringlength')]
+    #[ApiParameterRef('fwd_forwarding')]
+    #[ApiParameterRef('fwd_forwardingonbusy')]
+    #[ApiParameterRef('fwd_forwardingonunavailable')]
+    #[ApiParameterRef('mobile_number')]
+    #[ApiParameterRef('mobile_dialstring')]
     #[ApiResponse(200, 'rest_response_200_updated')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -200,8 +222,19 @@ class RestController extends BaseRestController
     #[ApiParameterRef('number')]
     #[ApiParameterRef('user_username')]
     #[ApiParameterRef('user_email')]
-    #[ApiParameterRef('mobile_number')]
     #[ApiParameterRef('user_avatar')]
+    #[ApiParameterRef('sip_secret')]
+    #[ApiParameterRef('sip_dtmfmode')]
+    #[ApiParameterRef('sip_transport')]
+    #[ApiParameterRef('sip_manualattributes')]
+    #[ApiParameterRef('sip_enableRecording')]
+    #[ApiParameterRef('sip_networkfilterid')]
+    #[ApiParameterRef('fwd_ringlength')]
+    #[ApiParameterRef('fwd_forwarding')]
+    #[ApiParameterRef('fwd_forwardingonbusy')]
+    #[ApiParameterRef('fwd_forwardingonunavailable')]
+    #[ApiParameterRef('mobile_number')]
+    #[ApiParameterRef('mobile_dialstring')]
     #[ApiResponse(200, 'rest_response_200_patched')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -257,7 +290,12 @@ class RestController extends BaseRestController
     }
 
     /**
-     * Export employees data
+     * Export employees data to CSV file
+     *
+     * Exports employee data in one of three formats:
+     * - minimal: 7 essential fields (number, username, email, mobile, password, ring length, forwarding)
+     * - standard: 13 fields (minimal + DTMF, transport, recording, forwarding options)
+     * - full: 15 fields (standard + avatar, manual attributes)
      *
      * @route POST /pbxcore/api/v3/employees:export
      */
@@ -267,7 +305,7 @@ class RestController extends BaseRestController
         operationId: 'exportEmployees'
     )]
     #[ApiParameterRef('format', required: true)]
-    #[ApiParameterRef('fields')]
+    #[ApiParameterRef('filter')]
     #[ApiResponse(200, 'rest_response_200_exported')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -277,7 +315,13 @@ class RestController extends BaseRestController
     }
 
     /**
-     * Get export template
+     * Get CSV import template with sample data
+     *
+     * Returns a CSV file template with sample employee records.
+     * Format parameter determines which fields are included:
+     * - minimal: 7 essential fields
+     * - standard: 13 fields (default)
+     * - full: 15 fields including avatar and manual attributes
      *
      * @route POST /pbxcore/api/v3/employees:exportTemplate
      */
@@ -286,6 +330,7 @@ class RestController extends BaseRestController
         description: 'rest_emp_ExportTemplateDesc',
         operationId: 'exportEmployeesTemplate'
     )]
+    #[ApiParameterRef('format', required: true)]
     #[ApiResponse(200, 'rest_response_200_exported')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
@@ -295,7 +340,16 @@ class RestController extends BaseRestController
     }
 
     /**
-     * Import employees from file
+     * Import employees from CSV file
+     *
+     * Two-phase import process:
+     * 1. Preview: validate CSV and show preview of records to be imported
+     * 2. Import: execute the import after user confirmation
+     *
+     * Strategy options:
+     * - skip_duplicates: skip existing employees (default)
+     * - update_existing: update existing employees with new data
+     * - fail_on_duplicate: fail import if duplicate found
      *
      * @route POST /pbxcore/api/v3/employees:import
      */
@@ -304,7 +358,9 @@ class RestController extends BaseRestController
         description: 'rest_emp_ImportDesc',
         operationId: 'importEmployees'
     )]
-    #[ApiParameterRef('file', required: true)]
+    #[ApiParameterRef('upload_id', required: true)]
+    #[ApiParameterRef('action', required: true)]
+    #[ApiParameterRef('strategy', required: true)]
     #[ApiResponse(200, 'rest_response_200_import_preview')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -315,7 +371,10 @@ class RestController extends BaseRestController
     }
 
     /**
-     * Confirm import of employees
+     * Confirm and execute import after preview
+     *
+     * Executes the actual import operation using the upload_id from the preview phase.
+     * This is the second step of the two-phase import process.
      *
      * @route POST /pbxcore/api/v3/employees:confirmImport
      */
@@ -324,7 +383,8 @@ class RestController extends BaseRestController
         description: 'rest_emp_ConfirmImportDesc',
         operationId: 'confirmImportEmployees'
     )]
-    #[ApiParameterRef('data', required: true)]
+    #[ApiParameterRef('upload_id', required: true)]
+    #[ApiParameterRef('strategy', required: true)]
     #[ApiResponse(200, 'rest_response_200_imported')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
@@ -335,7 +395,16 @@ class RestController extends BaseRestController
     }
 
     /**
-     * Batch create multiple employees
+     * Batch create multiple employees (max 20 per request)
+     *
+     * Creates multiple employee records in a single request.
+     * Supports two modes:
+     * - validate: only validate data without creating
+     * - create: validate and create employees (default)
+     *
+     * Skip_errors option controls error handling:
+     * - false: stop at first error (default)
+     * - true: continue processing all records
      *
      * @route POST /pbxcore/api/v3/employees:batchCreate
      */
@@ -344,7 +413,9 @@ class RestController extends BaseRestController
         description: 'rest_emp_BatchCreateDesc',
         operationId: 'batchCreateEmployees'
     )]
-    #[ApiParameterRef('data', required: true)]
+    #[ApiParameterRef('employees', required: true)]
+    #[ApiParameterRef('mode')]
+    #[ApiParameterRef('skip_errors')]
     #[ApiResponse(200, 'rest_response_200_batch_created')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
