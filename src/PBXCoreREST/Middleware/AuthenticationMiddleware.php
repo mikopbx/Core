@@ -27,29 +27,51 @@ use MikoPBX\PBXCoreREST\Http\Request;
 use MikoPBX\PBXCoreREST\Http\Response;
 use MikoPBX\PBXCoreREST\Lib\Auth\JWTHelper;
 use MikoPBX\PBXCoreREST\Services\TokenValidationService;
-use MikoPBX\PBXCoreREST\Services\SecurityResolver;
 use MikoPBX\PBXCoreREST\Providers\RequestProvider;
 use MikoPBX\PBXCoreREST\Providers\ResponseProvider;
 use MikoPBX\PBXCoreREST\Traits\ResponseTrait;
 use Phalcon\Mvc\Micro;
 use Phalcon\Mvc\Micro\MiddlewareInterface;
-use ReflectionClass;
-use ReflectionMethod;
 
 /**
- * Class AuthenticationMiddleware
+ * Authentication Middleware for MikoPBX REST API
  *
+ * Handles three access channels:
+ * 1. PUBLIC endpoints - no authentication required
+ * 2. LOCALHOST - direct access from 127.0.0.1
+ * 3. BEARER TOKEN - JWT or API Key authentication
+ *
+ * @package MikoPBX\PBXCoreREST\Middleware
  */
 class AuthenticationMiddleware implements MiddlewareInterface
 {
     use ResponseTrait;
 
     /**
-     * Call me
+     * Public endpoints that don't require authentication
+     * Format: path => [allowed HTTP methods]
+     *
+     * @var array<string, array<string>>
+     */
+    private const PUBLIC_ENDPOINTS = [
+        '/pbxcore/api/v3/mail-settings/oauth2-callback' => ['GET'],
+        '/pbxcore/api/v3/passkeys:checkAvailability' => ['GET'],
+        '/pbxcore/api/v3/passkeys:authenticationStart' => ['GET'],
+        '/pbxcore/api/v3/passkeys:authenticationFinish' => ['POST'],
+        '/pbxcore/api/v3/auth:login' => ['POST'],
+        '/pbxcore/api/v3/auth:refresh' => ['POST'],
+        '/pbxcore/api/v3/user-page-tracker:pageView' => ['POST'],
+        '/pbxcore/api/v3/user-page-tracker:pageLeave' => ['POST'],
+        '/pbxcore/api/v3/system:changeLanguage' => ['POST', 'PATCH'],
+        '/pbxcore/api/v3/system:getAvailableLanguages' => ['GET'],
+        '/pbxcore/api/v3/system:ping' => ['GET'],
+    ];
+
+    /**
+     * Main middleware entry point
      *
      * @param Micro $application
-     *
-     * @return bool
+     * @return bool True to continue, false to halt
      */
     public function call(Micro $application): bool
     {
@@ -58,107 +80,112 @@ class AuthenticationMiddleware implements MiddlewareInterface
         /** @var Response $response */
         $response = $application->getService(ResponseProvider::SERVICE_NAME);
 
-        // Check if this is a public endpoint or no-auth API FIRST (before Bearer token validation)
-        // This allows public endpoints to work even with invalid/expired tokens
-        $isPublicEndpoint = $this->isPublicEndpoint($application);
-        $isNoAuthApi = $request->thisIsModuleNoAuthRequest($application);
-
-        // Public endpoints and no-auth APIs can be accessed without any authentication
-        if ($isPublicEndpoint || $isNoAuthApi) {
-            // Still validate Bearer token if present (for optional authentication)
-            if ($request->hasBearerToken()) {
-                $token = $request->getBearerToken();
-                if ($token !== null) {
-                    // Try JWT authentication
-                    $jwtPayload = JWTHelper::validate($token);
-                    if ($jwtPayload !== null) {
-                        $request->setJwtPayload($jwtPayload);
-                    } else {
-                        // Try API Key authentication
-                        $tokenValidator = new TokenValidationService($application->getDI());
-                        $validationResult = $tokenValidator->validate($request);
-                        if ($validationResult->isValid()) {
-                            $tokenInfo = $validationResult->getTokenInfo();
-                            if ($tokenInfo !== null) {
-                                $request->setTokenInfo($tokenInfo);
-                            }
-                        }
-                        // Note: We don't fail here - public endpoints work without valid token
-                    }
-                }
-            }
-            return true; // Allow access to public endpoints regardless of token validity
-        }
-
-        // Check Bearer token authentication for non-public endpoints
-        if ($request->hasBearerToken()) {
-            $token = $request->getBearerToken();
-
-            // Validate token is not null
-            if ($token === null) {
-                $loggerAuth = $application->getService(LoggerAuthProvider::SERVICE_NAME);
-                $loggerAuth->warning("Bearer token is null");
-                $this->halt($application, $response::UNAUTHORIZED, 'Invalid Bearer token');
-                return false;
-            }
-
-            // Try JWT authentication first (short-lived access tokens from /auth:login)
-            $jwtPayload = JWTHelper::validate($token);
-            if ($jwtPayload !== null) {
-                // JWT is valid - store payload in request for access in controllers
-                $request->setJwtPayload($jwtPayload);
-                return true;
-            }
-
-            // JWT invalid/expired, try API Key authentication (long-lived Bearer tokens)
-            $tokenValidator = new TokenValidationService($application->getDI());
-            $validationResult = $tokenValidator->validate($request);
-
-            if ($validationResult->isValid()) {
-                // Store token info in request for logging and context
-                $tokenInfo = $validationResult->getTokenInfo();
-                if ($tokenInfo !== null) {
-                    $request->setTokenInfo($tokenInfo);
-                }
-                // API Key authenticated successfully
-                return true;
-            }
-
-            // Both JWT and API Key validation failed
-            $loggerAuth = $application->getService(LoggerAuthProvider::SERVICE_NAME);
-            $loggerAuth->warning("Bearer token auth failed - From: {$request->getClientAddress(true)} Token: ***{$validationResult->getTokenSuffix()} Error: {$validationResult->getError()}");
-
-            $this->halt(
-                $application,
-                $response::UNAUTHORIZED,
-                'Invalid or expired Bearer token'
-            );
-            return false;
-        }
-
-        // No Bearer token provided - check if localhost
-        if ($request->isLocalHostRequest()) {
-            // Localhost has full access without any authentication
+        // Check if this is a public endpoint or no-auth API FIRST
+        if ($this->isPublicEndpoint($application) || $request->thisIsModuleNoAuthRequest($application)) {
+            $this->tryOptionalAuthentication($request);
             return true;
         }
 
-        // Not localhost and no valid authentication
-        $loggerAuth = $application->getService(LoggerAuthProvider::SERVICE_NAME);
-        $loggerAuth->warning("From: {$request->getClientAddress(true)} UserAgent:{$request->getUserAgent()} Cause: No valid authentication");
-        $this->halt(
-            $application,
-            $response::UNAUTHORIZED,
-            'The user isn\'t authenticated.'
-        );
-        return false;
+        // Check Bearer token authentication
+        if ($request->hasBearerToken()) {
+            return $this->authenticateWithBearerToken($request, $application);
+        }
+
+        // Check localhost access
+        if ($request->isLocalHostRequest()) {
+            return true;
+        }
+
+        // No valid authentication found
+        return $this->denyAccess($application, $request, 'No valid authentication');
     }
 
     /**
-     * Check if this is a public endpoint (no authentication required)
-     * Uses hardcoded list since getActiveHandler() is not available during middleware
+     * Try to authenticate with optional Bearer token on public endpoints
+     * Allows public access even if token is invalid
+     *
+     * @param Request $request
+     */
+    private function tryOptionalAuthentication(Request $request): void
+    {
+        if (!$request->hasBearerToken()) {
+            return;
+        }
+
+        $token = $request->getBearerToken();
+        if ($token === null) {
+            return;
+        }
+
+        // Try JWT first
+        $jwtPayload = JWTHelper::validate($token);
+        if ($jwtPayload !== null) {
+            $request->setJwtPayload($jwtPayload);
+            return;
+        }
+
+        // Try API Key
+        $tokenValidator = new TokenValidationService($this->getDI());
+        $validationResult = $tokenValidator->validate($request);
+        if ($validationResult->isValid()) {
+            $tokenInfo = $validationResult->getTokenInfo();
+            if ($tokenInfo !== null) {
+                $request->setTokenInfo($tokenInfo);
+            }
+        }
+        // Note: We don't fail here - public endpoints work without valid token
+    }
+
+    /**
+     * Authenticate request using Bearer token (JWT or API Key)
+     *
+     * @param Request $request
+     * @param Micro $application
+     * @return bool True if authenticated, false otherwise
+     */
+    private function authenticateWithBearerToken(Request $request, Micro $application): bool
+    {
+        $token = $request->getBearerToken();
+
+        // Validate token is not null
+        if ($token === null) {
+            $this->logAuthFailure($application, 'Bearer token is null');
+            return $this->denyAccess($application, $request, 'Invalid Bearer token');
+        }
+
+        // Try JWT authentication first (short-lived access tokens)
+        $jwtPayload = JWTHelper::validate($token);
+        if ($jwtPayload !== null) {
+            $request->setJwtPayload($jwtPayload);
+            return true;
+        }
+
+        // JWT invalid/expired, try API Key authentication (long-lived tokens)
+        $tokenValidator = new TokenValidationService($application->getDI());
+        $validationResult = $tokenValidator->validate($request);
+
+        if ($validationResult->isValid()) {
+            $tokenInfo = $validationResult->getTokenInfo();
+            if ($tokenInfo !== null) {
+                $request->setTokenInfo($tokenInfo);
+            }
+            return true;
+        }
+
+        // Both JWT and API Key validation failed
+        $this->logAuthFailure(
+            $application,
+            "From: {$request->getClientAddress(true)} Token: ***{$validationResult->getTokenSuffix()} Error: {$validationResult->getError()}"
+        );
+
+        return $this->denyAccess($application, $request, 'Invalid or expired Bearer token');
+    }
+
+    /**
+     * Check if current request is to a public endpoint
      *
      * @param Micro $application
-     * @return bool
+     * @return bool True if public endpoint
      */
     private function isPublicEndpoint(Micro $application): bool
     {
@@ -167,30 +194,61 @@ class AuthenticationMiddleware implements MiddlewareInterface
         $uri = $request->getURI();
         $method = $request->getMethod();
 
-        // List of public endpoints that don't require authentication
-        $publicEndpoints = [
-            '/pbxcore/api/v3/mail-settings/oauth2-callback' => ['GET'],  // OAuth2 callback
-            '/pbxcore/api/v3/passkeys:checkAvailability' => ['GET'],  // Passkey availability check
-            '/pbxcore/api/v3/passkeys:authenticationStart' => ['GET'],  // WebAuthn login start
-            '/pbxcore/api/v3/passkeys:authenticationFinish' => ['POST'],  // WebAuthn login finish
-            '/pbxcore/api/v3/auth:login' => ['POST'],  // JWT authentication login
-            '/pbxcore/api/v3/auth:refresh' => ['POST'],  // JWT token refresh
-            '/pbxcore/api/v3/user-page-tracker:pageView' => ['POST'],  // Page analytics (optional session tracking)
-            '/pbxcore/api/v3/user-page-tracker:pageLeave' => ['POST'],  // Page analytics (optional session tracking)
-            '/pbxcore/api/v3/system:changeLanguage' => ['POST', 'PATCH'],  // Language change on login page
-            '/pbxcore/api/v3/system:getAvailableLanguages' => ['GET'],  // Get available languages on login page
-            '/pbxcore/api/v3/system:ping' => ['GET'],  // Health check endpoint
-        ];
-
-        foreach ($publicEndpoints as $endpoint => $allowedMethods) {
-            if (strpos($uri, $endpoint) === 0) {
-                if (in_array($method, $allowedMethods, true)) {
-                    return true;
-                }
+        foreach (self::PUBLIC_ENDPOINTS as $endpoint => $allowedMethods) {
+            if (strpos($uri, $endpoint) === 0 && in_array($method, $allowedMethods, true)) {
+                return true;
             }
         }
 
         return false;
     }
 
+    /**
+     * Deny access with appropriate error message
+     *
+     * @param Micro $application
+     * @param Request $request
+     * @param string $reason
+     * @return bool Always returns false
+     */
+    private function denyAccess(Micro $application, Request $request, string $reason): bool
+    {
+        /** @var Response $response */
+        $response = $application->getService(ResponseProvider::SERVICE_NAME);
+
+        $this->logAuthFailure(
+            $application,
+            "From: {$request->getClientAddress(true)} UserAgent: {$request->getUserAgent()} Cause: {$reason}"
+        );
+
+        $this->halt($application, $response::UNAUTHORIZED, 'The user isn\'t authenticated.');
+        return false;
+    }
+
+    /**
+     * Log authentication failure
+     *
+     * @param Micro $application
+     * @param string $message
+     */
+    private function logAuthFailure(Micro $application, string $message): void
+    {
+        $loggerAuth = $application->getService(LoggerAuthProvider::SERVICE_NAME);
+        $loggerAuth->warning($message);
+    }
+
+    /**
+     * Get DI container (compatibility method)
+     *
+     * @return \Phalcon\Di\DiInterface
+     * @throws \RuntimeException if DI container is not initialized
+     */
+    private function getDI(): \Phalcon\Di\DiInterface
+    {
+        $di = \Phalcon\Di\Di::getDefault();
+        if ($di === null) {
+            throw new \RuntimeException('DI container is not initialized');
+        }
+        return $di;
+    }
 }

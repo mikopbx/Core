@@ -1,8 +1,7 @@
 <?php
-
 /*
  * MikoPBX - free phone system for small business
- * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,45 +21,47 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Middleware;
 
-use MikoPBX\PBXCoreREST\Http\Response;
 use MikoPBX\PBXCoreREST\Traits\ResponseTrait;
-use Phalcon\Di\Injectable;
-use Phalcon\Mvc\Micro;
 use Phalcon\Mvc\Micro\MiddlewareInterface;
 
 /**
- * Class NotFoundMiddleware
+ * Base class for all REST API middleware
  *
- * @property Micro    $application
- * @property Response $response
+ * Provides common functionality:
+ * - ResponseTrait for halt() method
+ * - DI container access
+ * - Consistent interface implementation
+ *
+ * Usage:
+ * ```php
+ * class MyMiddleware extends BaseMiddleware
+ * {
+ *     public function call(Micro $application): bool
+ *     {
+ *         // Your middleware logic
+ *         return true;
+ *     }
+ * }
+ * ```
+ *
+ * @package MikoPBX\PBXCoreREST\Middleware
  */
-class NotFoundMiddleware extends Injectable implements MiddlewareInterface
+abstract class BaseMiddleware implements MiddlewareInterface
 {
     use ResponseTrait;
 
     /**
-     * Checks if the resource was found
-     */
-    public function beforeNotFound(): bool
-    {
-        $this->halt(
-            $this->application,
-            $this->response::NOT_FOUND,
-            $this->response->getHttpCodeDescription($this->response::NOT_FOUND)
-        );
-
-        return false;
-    }
-
-    /**
-     * Call me
+     * Get DI container
      *
-     * @param Micro $application
-     *
-     * @return bool
+     * @return \Phalcon\Di\DiInterface
+     * @throws \RuntimeException if DI container is not initialized
      */
-    public function call(Micro $application): bool
+    protected function getDI(): \Phalcon\Di\DiInterface
     {
-        return true;
+        $di = \Phalcon\Di\Di::getDefault();
+        if ($di === null) {
+            throw new \RuntimeException('DI container is not initialized');
+        }
+        return $di;
     }
 }

@@ -27,20 +27,32 @@ use MikoPBX\PBXCoreREST\Http\Request;
 use Phalcon\Http\Response;
 
 /**
- * Unified security middleware for MikoPBX REST API
+ * Unified security middleware for MikoPBX REST API (Future Implementation)
  *
- * NOTE: This middleware is implemented but NOT YET INTEGRATED into the middleware chain.
- * Currently, public endpoint checking is handled by AuthenticationMiddleware using
- * ResourceSecurity attributes. This class will be activated when fine-grained
- * authorization based on scopes and permissions is needed.
+ * ⚠️ STATUS: NOT INTEGRATED - This is a prepared implementation for future use
  *
- * Handles all three access channels:
- * 1. PUBLIC - No authentication required (SecurityType::PUBLIC)
- * 2. LOCALHOST - Direct access from 127.0.0.1
- * 3. BEARER_TOKEN - Bearer token with scope-based permissions
+ * CURRENT STATE (as of 2025):
+ * - Class is fully implemented but NOT registered in RouterProvider middleware chain
+ * - Does NOT implement MiddlewareInterface (intentional - not a middleware yet)
+ * - Authentication is handled by AuthenticationMiddleware with hardcoded PUBLIC_ENDPOINTS
+ * - Permission checking is handled by ApiKeyPermissionChecker service
+ *
+ * INTENDED FUTURE USE:
+ * When fine-grained authorization based on scopes and ResourceSecurity attributes is needed:
+ * 1. Replace hardcoded AuthenticationMiddleware::PUBLIC_ENDPOINTS with SecurityType::PUBLIC attributes
+ * 2. Implement MiddlewareInterface and register in RouterProvider
+ * 3. Add scope-based permission checking per-endpoint
+ * 4. Generate detailed access logs for security auditing
+ *
+ * CAPABILITIES:
+ * - Handles three access channels: PUBLIC, LOCALHOST, BEARER_TOKEN
+ * - Scope-based permission validation (resource:action format)
+ * - Wildcard pattern matching (*:*, resource:*, *:action)
+ * - Detailed security check results with access logs
  *
  * @package MikoPBX\PBXCoreREST\Middleware
- * @see AuthenticationMiddleware Uses ResourceSecurity for public endpoint detection
+ * @see AuthenticationMiddleware Current authentication implementation
+ * @see ApiKeyPermissionChecker Current permission checking implementation
  */
 class UnifiedSecurityMiddleware
 {

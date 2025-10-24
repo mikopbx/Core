@@ -27,7 +27,6 @@ use MikoPBX\PBXCoreREST\Controllers\Modules\ModulesControllerBase;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\RestAPIConfigInterface;
 use MikoPBX\PBXCoreREST\Middleware\AuthenticationMiddleware;
-use MikoPBX\PBXCoreREST\Middleware\NotFoundMiddleware;
 use MikoPBX\PBXCoreREST\Middleware\ResponseMiddleware;
 use Phalcon\Di\DiInterface;
 use Phalcon\Di\ServiceProviderInterface;
@@ -512,11 +511,19 @@ class RouterProvider implements ServiceProviderInterface
 
     /**
      * Attaches the middleware to the application
+     *
+     * Middleware execution order:
+     * 1. BEFORE REQUEST:
+     *    - AuthenticationMiddleware: Validates JWT/API Key tokens, checks public endpoints
+     * 2. AFTER REQUEST:
+     *    - ResponseMiddleware: Ensures response is sent
+     *
+     * Note: 404 errors are handled in BaseRestController::handleCRUDRequest()
+     * and handleCustomRequest() when processor method doesn't exist.
      */
     private function attachMiddleware(Micro $application, Manager $eventsManager): void
     {
         $middleware = [
-            NotFoundMiddleware::class => 'before',
             AuthenticationMiddleware::class => 'before',
             ResponseMiddleware::class => 'after',
         ];
