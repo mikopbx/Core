@@ -1,0 +1,79 @@
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2023 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
+/**
+ * Enhanced CDR Player with tooltip
+ */
+
+#search-cdr-input .prompt{
+    border-radius: 5px;
+}
+
+
+/* Slider tooltip */
+.cdr-slider-tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-8px);
+    background: rgba(0, 0, 0, 0.85);
+    color: #fff;
+    padding: 5px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 1000;
+    font-family: monospace;
+    font-weight: 500;
+}
+
+/* Tooltip arrow */
+.cdr-slider-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: rgba(0, 0, 0, 0.85);
+}
+
+/* Show tooltip on hover or drag */
+.ui.range.cdr-player:hover .cdr-slider-tooltip,
+.ui.range.cdr-player.dragging .cdr-slider-tooltip {
+    opacity: 1;
+}
+
+/* Enhance slider for better interaction */
+.ui.range.cdr-player {
+    position: relative;
+}
+
+.ui.range.cdr-player .thumb {
+    position: relative;
+    cursor: pointer;
+}
+
+/* Disabled state */
+.ui.range.cdr-player.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}

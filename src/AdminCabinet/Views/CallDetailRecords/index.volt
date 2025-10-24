@@ -6,10 +6,22 @@
             </div>
         </div>
         <div class="ui eleven wide column">
-            <div class="ui icon fluid input">
-                <input type="search" id="globalsearch" placeholder="{{ t._('Enter search') }}"
-                       aria-controls="cdr-table" autocomplete="off">
-                <i class="icon search"></i>
+            <div class="ui search right action left icon fluid input" id="search-cdr-input">
+                <i class="search link icon" id="search-icon"></i>
+                <input type="search" id="globalsearch" name="globalsearch" placeholder="{{ t._('cdr_EnterSearchPhrase') }}"
+                       aria-controls="cdr-table" class="prompt" autocomplete="off">
+                <div class="results"></div>
+                <div class="ui basic floating search dropdown button" id="page-length-select">
+                    <div class="text">{{ t._('cdr_CalculateAutomatically') }}</div>
+                    <i class="dropdown icon"></i>
+                    <div class="menu">
+                        <div class="item" data-value="auto">{{ t._('cdr_CalculateAutomatically') }}</div>
+                        <div class="item" data-value="25">{{ t._('cdr_ShowOnlyRows', {'rows':25}) }}</div>
+                        <div class="item" data-value="50">{{ t._('cdr_ShowOnlyRows', {'rows':50}) }}</div>
+                        <div class="item" data-value="100">{{ t._('cdr_ShowOnlyRows', {'rows':100}) }}</div>
+                        <div class="item" data-value="500">{{ t._('cdr_ShowOnlyRows', {'rows':500}) }}</div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -34,11 +46,14 @@
         <th class="">{{ t._('cdr_ColumnFrom') }}</th>
         <th class="">{{ t._('cdr_ColumnTo') }}</th>
         <th class="one wide">{{ t._('cdr_ColumnDuration') }}</th>
+        {% if isAllowed('delete') %}
+        <th class="one wide"></th>
+        {% endif %}
     </tr>
     </thead>
     <tbody>
     <tr>
-        <td colspan="5" class="dataTables_empty">{{ t._('dt_TableIsEmpty') }}</td>
+        <td colspan="6" class="dataTables_empty">{{ t._('dt_TableIsEmpty') }}</td>
     </tr>
     </tbody>
 </table>

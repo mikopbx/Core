@@ -19,7 +19,8 @@ return [
     'rest_AsteriskRestUsers_ApiDescription' => 'Комплексное управление пользователями Asterisk REST Interface (ARI) для управления звонками в реальном времени. ARI предоставляет WebSocket-based APIs для создания пользовательских телефонных приложений с полным контролем звонков. Включает аутентификацию пользователей, привязку приложений и управление разрешениями для ARI приложений.',
     'rest_Auth_ApiDescription' => 'Система аутентификации на основе JWT с refresh токенами для REST API клиентов и SPA приложений. Поддерживает аутентификацию по паролю и passkey (WebAuthn). Возвращает краткосрочные access токены (JWT, 15 минут) и долгосрочные refresh токены (httpOnly cookie, 30 дней). Реализует автоматическую ротацию токенов и отслеживание устройств для повышения безопасности.',
     'rest_CallQueues_ApiDescription' => 'Комплексное управление очередями вызовов для расширенного распределения звонков. Включает несколько стратегий распределения (ring-all, round-robin, linear, random, least-recent), управление участниками с приоритетами/штрафами, конфигурацию объявлений, обработку таймаутов и автоматическую маршрутизацию звонков.',
-    'rest_Cdr_ApiDescription' => 'Комплексное управление детализацией звонков (CDR) для анализа истории вызовов и отчетности. Предоставляет доступ только для чтения к завершенным записям звонков, мониторинг активных вызовов и каналов в реальном времени, и потоковое воспроизведение записей разговоров с поддержкой HTTP range. Расширенная фильтрация по дате, звонящему/получателю, длительности и статусу звонка.',
+    'rest_Cdr_ApiDescription' => 'Комплексное управление детализацией звонков (CDR) для анализа истории вызовов и отчетности. Предоставляет доступ только для чтения к завершенным записям звонков и потоковое воспроизведение записей разговоров с поддержкой HTTP range. Расширенная фильтрация по дате, звонящему/получателю, длительности и статусу звонка. Для мониторинга активных вызовов и каналов используйте PBX Status API.',
+    'rest_PbxStatus_ApiDescription' => 'Мониторинг состояния АТС в реальном времени для отслеживания активных вызовов и каналов. Предоставляет доступ только для чтения к текущим вызовам в реальном времени, активным каналам Asterisk и состоянию системы. Используется для мониторинга и операторских панелей для отображения активности в реальном времени.',
     'rest_ConferenceRooms_ApiDescription' => 'Управление конференц-залами для многосторонних аудио конференций.',
     'rest_CustomFiles_ApiDescription' => 'Комплексное управление пользовательскими файлами для кастомизации конфигурации системы. Позволяет управлять пользовательскими конфигурационными файлами, которые автоматически восстанавливаются после обновлений системы. Поддерживает несколько режимов: override (замена файла), append (добавление содержимого), script (исполняемый). Содержимое хранится в виде base64-кодированных строк для безопасности.',
     'rest_DialplanApplications_ApiDescription' => 'Управление приложениями диалплана для пользовательской логики обработки звонков и функций.',
@@ -383,12 +384,43 @@ return [
     'rest_cdr_GetListDesc' => 'Получить постраничный список всех записей детализации вызовов с фильтрацией по дате, номерам и статусу',
     'rest_cdr_GetRecord' => 'Получить CDR запись по ID',
     'rest_cdr_GetRecordDesc' => 'Получить детальную информацию о конкретной записи вызова',
-    'rest_cdr_GetActiveCalls' => 'Получить активные вызовы',
-    'rest_cdr_GetActiveCallsDesc' => 'Получить список всех текущих активных вызовов в реальном времени',
-    'rest_cdr_GetActiveChannels' => 'Получить активные каналы',
-    'rest_cdr_GetActiveChannelsDesc' => 'Получить список всех активных каналов Asterisk',
     'rest_cdr_Playback' => 'Воспроизвести запись разговора',
     'rest_cdr_PlaybackDesc' => 'Воспроизвести или скачать запись разговора с поддержкой HTTP Range для потокового воспроизведения',
+    'rest_cdr_Delete' => 'Удалить CDR запись(и)',
+    'rest_cdr_DeleteDesc' => 'Удалить запись детализации вызова. Поддерживает два режима: удаление одной записи по числовому ID (например, 718517) или удаление всех связанных записей по linkedid (например, mikopbx-1760784793.4627). С параметром deleteRecording=true удаляются также файлы записи разговора всех форматов (.mp3, .wav, .ogg)',
+    'rest_cdr_GetMetadata' => 'Получить метаданные CDR',
+    'rest_cdr_GetMetadataDesc' => 'Получить метаданные о CDR записях (диапазон дат из последних записей) без загрузки полных данных. Используется для инициализации UI с осмысленным диапазоном дат.',
+    'rest_cdr_Download' => 'Скачать запись разговора',
+    'rest_cdr_DownloadDesc' => 'Скачать запись разговора как файл с заданным именем (Content-Disposition: attachment)',
+
+    // CDR schema fields
+    'rest_schema_cdr_deleteRecording' => 'Удалить файл записи разговора вместе с записью БД (по умолчанию false)',
+    'rest_schema_cdr_deleteLinked' => 'Удалить все записи с одинаковым linkedid (весь звонок с переводами, по умолчанию false)',
+
+    // ============================================================================
+    // PBX Status REST API (Real-time Monitoring)
+    // ============================================================================
+    'rest_pbx_status_GetActiveCalls' => 'Получить активные вызовы',
+    'rest_pbx_status_GetActiveCallsDesc' => 'Получить список всех текущих активных вызовов в реальном времени',
+    'rest_pbx_status_GetActiveChannels' => 'Получить активные каналы',
+    'rest_pbx_status_GetActiveChannelsDesc' => 'Получить список всех активных каналов Asterisk (незавершенные вызовы с endtime IS NULL)',
+
+    // PBX Status schema fields - Active Calls
+    'rest_schema_pbx_status_active_calls' => 'Информация об активном вызове',
+    'rest_schema_pbx_status_call_start' => 'Время начала вызова',
+    'rest_schema_pbx_status_call_answer' => 'Время ответа на вызов',
+    'rest_schema_pbx_status_call_endtime' => 'Время завершения вызова (пустое для активных)',
+    'rest_schema_pbx_status_src_num' => 'Номер звонящего',
+    'rest_schema_pbx_status_dst_num' => 'Номер получателя',
+    'rest_schema_pbx_status_did' => 'Номер DID (прямой входящий)',
+    'rest_schema_pbx_status_linkedid' => 'Идентификатор связанного звонка',
+
+    // PBX Status schema fields - Active Channels
+    'rest_schema_pbx_status_active_channels' => 'Информация об активном канале',
+    'rest_schema_pbx_status_channel_start' => 'Время начала канала',
+    'rest_schema_pbx_status_channel_answer' => 'Время ответа канала',
+    'rest_schema_pbx_status_src_chan' => 'Исходный канал Asterisk',
+    'rest_schema_pbx_status_dst_chan' => 'Целевой канал Asterisk',
 
     // ============================================================================
     // Authentication REST API
@@ -579,6 +611,18 @@ return [
     // ============================================================================
     'rest_search_GetSearchItems' => 'Глобальный поиск',
     'rest_search_GetSearchItemsDesc' => 'Получить список элементов, соответствующих поисковому запросу. Ищет по номерам, названиям и поисковым индексам среди всех сущностей системы (пользователи, провайдеры, очереди, IVR и т.д.) и статических страниц. Поддерживает частичное совпадение и поиск без учета регистра. Результаты возвращаются по мере ввода запроса для оптимальной производительности.',
+
+    // Search REST API - Request Parameters
+    'rest_param_search_query' => 'Поисковый запрос для фильтрации результатов (поиск по имени, номеру или индексу)',
+
+    // Search REST API - Response Schema
+    'rest_schema_search_results' => 'Массив результатов глобального поиска',
+    'rest_schema_search_item' => 'Элемент результата поиска с информацией о найденной сущности',
+    'rest_schema_search_result_name' => 'Отображаемое имя элемента (может содержать HTML)',
+    'rest_schema_search_result_value' => 'URL/ссылка на элемент',
+    'rest_schema_search_result_type' => 'Категория/тип элемента (USERS, PROVIDERS, QUEUES и т.д.)',
+    'rest_schema_search_result_type_localized' => 'Локализованное название категории',
+    'rest_schema_search_result_sorter' => 'Текст для сортировки (без HTML тегов)',
 
     // ============================================================================
     // User Page Tracker REST API
@@ -1006,14 +1050,22 @@ return [
     'rest_param_ivr_actions' => 'Массив действий для нажатых клавиш',
 
     // CDR specific parameters
+    'rest_param_cdr_id' => 'Числовой ID записи (например, 718517) или linkedid для удаления всей беседы (например, mikopbx-1760784793.4627)',
+    'rest_param_cdr_limit' => 'Максимальное количество CDR записей для выборки (по умолчанию 50, максимум 1000)',
+    'rest_param_cdr_offset' => 'Смещение для пагинации CDR записей (по умолчанию 0)',
     'rest_param_cdr_dateFrom' => 'Дата начала периода выборки CDR записей',
     'rest_param_cdr_dateTo' => 'Дата окончания периода выборки CDR записей',
-    'rest_param_cdr_src_num' => 'Номер звонящего (source number)',
-    'rest_param_cdr_dst_num' => 'Номер вызываемого (destination number)',
-    'rest_param_cdr_disposition' => 'Статус завершения вызова',
-    'rest_param_cdr_view' => 'Путь к файлу записи разговора',
+    'rest_param_cdr_search' => 'Умный поиск по CDR и Extensions. Поддерживает префиксы для точного поиска: src:номер (источник), dst:номер (назначение), did:номер (входящий DID). Без префикса ищет по всем полям включая имена сотрудников и мобильные номера',
+    'rest_param_cdr_src_num' => 'Фильтр: номер звонящего (source number)',
+    'rest_param_cdr_dst_num' => 'Фильтр: номер вызываемого (destination number)',
+    'rest_param_cdr_did' => 'Фильтр: входящий DID номер',
+    'rest_param_cdr_disposition' => 'Фильтр: статус завершения вызова',
+    'rest_param_cdr_linkedid' => 'Фильтр: точный поиск по linkedid (для получения всех записей одного звонка)',
+    'rest_param_cdr_token' => 'Временный токен доступа для воспроизведения записи разговора (предпочтительнее, чем view)',
+    'rest_param_cdr_view' => 'Путь к файлу записи разговора (устарело, используйте token)',
     'rest_param_cdr_download' => 'Скачать файл вместо потокового воспроизведения',
     'rest_param_cdr_filename' => 'Имя файла для скачивания',
+    'rest_param_cdr_deleteRecording' => 'Удалить файл записи разговора вместе с записью БД. Удаляет все форматы файла (.mp3, .wav, .ogg). По умолчанию: false',
 
     // Authentication specific parameters
     'rest_param_auth_login' => 'Логин пользователя для аутентификации',
@@ -1059,11 +1111,16 @@ return [
     'rest_param_emp_email' => 'Email адрес сотрудника',
     'rest_param_emp_mobile' => 'Мобильный номер телефона сотрудника',
     'rest_param_emp_avatar' => 'Путь к аватару сотрудника',
-    'rest_param_emp_export_format' => 'Формат экспорта (csv или excel)',
-    'rest_param_emp_export_fields' => 'Список полей для экспорта',
-    'rest_param_emp_import_file' => 'Файл импорта в base64 кодировке',
-    'rest_param_emp_import_data' => 'Данные для импорта (массив сотрудников)',
-    'rest_param_emp_batch_data' => 'Массив данных сотрудников для массового создания',
+    'rest_param_emp_export_format' => 'Формат экспорта: minimal (7 полей), standard (13 полей), full (15 полей)',
+    'rest_param_emp_export_filter' => 'Фильтр для экспорта (диапазон номеров)',
+    'rest_param_emp_export_number_from' => 'Начальный номер диапазона для экспорта',
+    'rest_param_emp_export_number_to' => 'Конечный номер диапазона для экспорта',
+    'rest_param_emp_upload_id' => 'ID загруженного файла из системы временных файлов',
+    'rest_param_emp_import_action' => 'Действие импорта: preview (предпросмотр) или import (выполнить)',
+    'rest_param_emp_import_strategy' => 'Стратегия обработки дубликатов: skip_duplicates (пропустить), update_existing (обновить), fail_on_duplicate (ошибка)',
+    'rest_param_emp_batch_employees' => 'Массив данных сотрудников для массового создания (максимум 20 записей)',
+    'rest_param_emp_batch_mode' => 'Режим работы: validate (только проверка) или create (создать)',
+    'rest_param_emp_batch_skip_errors' => 'Продолжать обработку при ошибках (true) или остановиться на первой ошибке (false)',
     'rest_param_emp_batch_ids' => 'Массив ID сотрудников для массового удаления',
     'rest_param_emp_sip_secret' => 'Пароль SIP учетной записи',
     'rest_param_emp_sip_dtmfmode' => 'Режим передачи DTMF тонов (auto, auto_info, inband, rfc4733, info)',
@@ -1138,7 +1195,7 @@ return [
     // CDR schema field descriptions
     'rest_schema_cdr_detail' => 'Детальная информация о CDR записи',
     'rest_schema_cdr_list' => 'Список CDR записей',
-    'rest_schema_cdr_id' => 'Уникальный идентификатор записи',
+    'rest_schema_cdr_id' => 'Уникальный идентификатор CDR записи',
     'rest_schema_cdr_start' => 'Время начала вызова',
     'rest_schema_cdr_endtime' => 'Время окончания вызова',
     'rest_schema_cdr_answer' => 'Время ответа на вызов',
@@ -1167,9 +1224,19 @@ return [
     'rest_schema_cdr_offset' => 'Смещение для пагинации CDR записей',
     'rest_schema_cdr_dateFrom' => 'Дата начала периода выборки CDR записей',
     'rest_schema_cdr_dateTo' => 'Дата окончания периода выборки CDR записей',
+    'rest_schema_cdr_search' => 'Умный поиск по всем полям CDR и Extensions с поддержкой префиксов (src:, dst:, did:)',
+    'rest_schema_cdr_src_num_filter' => 'Фильтр по номеру звонящего',
+    'rest_schema_cdr_dst_num_filter' => 'Фильтр по номеру вызываемого',
+    'rest_schema_cdr_did_filter' => 'Фильтр по входящему DID номеру',
+    'rest_schema_cdr_disposition_filter' => 'Фильтр по статусу завершения вызова',
+    'rest_schema_cdr_linkedid_filter' => 'Фильтр по связанному идентификатору вызова',
     'rest_schema_cdr_view' => 'Путь к файлу записи разговора для просмотра',
     'rest_schema_cdr_download' => 'Скачать файл вместо потокового воспроизведения',
     'rest_schema_cdr_filename' => 'Имя файла для скачивания',
+    'rest_schema_cdr_token' => 'Временный токен доступа для воспроизведения записи разговора',
+    'rest_schema_cdr_recording_url' => 'URL для воспроизведения записи разговора с временным токеном доступа',
+    'rest_schema_cdr_playback_url' => 'URL для потокового воспроизведения записи разговора (inline) с временным токеном доступа',
+    'rest_schema_cdr_download_url' => 'URL для скачивания файла записи разговора (attachment) с временным токеном доступа',
 
     // CallQueues schema field descriptions
     'rest_schema_cq_id' => 'Уникальный идентификатор очереди',
@@ -1746,6 +1813,7 @@ return [
     'rest_response_200_status' => 'Статус получен успешно',
     'rest_response_200_history' => 'История получена успешно',
     'rest_response_200_stats' => 'Статистика получена успешно',
+    'rest_response_200_metadata' => 'Метаданные получены успешно',
     'rest_response_200_force_check' => 'Принудительная проверка выполнена',
     'rest_response_200_status_updated' => 'Статус обновлен успешно',
     'rest_response_201_copied' => 'Копия создана успешно',

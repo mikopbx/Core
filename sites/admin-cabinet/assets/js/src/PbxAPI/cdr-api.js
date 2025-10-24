@@ -21,14 +21,15 @@
 /**
  * CdrAPI - REST API v3 client for call detail records management
  *
- * Provides methods for working with call records and active channels.
+ * Provides methods for working with historical call records.
+ * For real-time monitoring (active calls/channels), use PbxStatusAPI instead.
  *
  * @class CdrAPI
  */
 const CdrAPI = new PbxApiClient({
     endpoint: '/pbxcore/api/v3/cdr',
     customMethods: {
-        getActiveChannels: ':getActiveChannels'
+        getMetadata: ':getMetadata'
     }
 });
 
@@ -37,16 +38,54 @@ const CdrAPI = new PbxApiClient({
  */
 Object.assign(CdrAPI, {
     /**
-     * Get active channels (calls in progress)
+     * Get CDR metadata (date range, record count)
+     * @param {Object} params - Request parameters (e.g., {limit: 100})
      * @param {function} callback - Callback function
      */
-    getActiveChannels(callback) {
-        return this.callCustomMethod('getActiveChannels', (response) => {
+    getMetadata(params, callback) {
+        return this.callCustomMethod('getMetadata', params, (response) => {
             if (response && response.result === true && response.data) {
                 callback(response.data);
             } else {
                 callback(false);
             }
+        });
+    },
+
+    /**
+     * Delete CDR record
+     * WHY: 'delete' is a reserved keyword in JavaScript, so we use 'deleteRecord' as method name
+     * @param {string} id - Record ID to delete (numeric ID or linkedid like "mikopbx-xxx")
+     *                      - linkedid (mikopbx-*): Deletes entire conversation (all linked records)
+     *                      - numeric ID: Deletes single record only
+     * @param {Object} params - Optional parameters {deleteRecording: boolean}
+     * @param {function} callback - Callback function
+     */
+    deleteRecord(id, params, callback) {
+        // If params is a function, it means no params were passed
+        if (typeof params === 'function') {
+            callback = params;
+            params = {};
+        }
+
+        const apiSettings = this.getBaseApiSettings(
+            (response) => callback(response, true),
+            callback
+        );
+
+        $.api({
+            url: `${this.apiUrl}/${id}`,
+            method: 'DELETE',
+            data: params,  // deleteRecording and deleteLinked will be sent as query params
+            beforeXHR(xhr) {
+                // Add Bearer token for API authentication
+                // WHY: REST API v3 uses JWT Bearer tokens, not CSRF tokens
+                if (typeof TokenManager !== 'undefined' && TokenManager.accessToken) {
+                    xhr.setRequestHeader('Authorization', `Bearer ${TokenManager.accessToken}`);
+                }
+                return xhr;
+            },
+            ...apiSettings
         });
     }
 });

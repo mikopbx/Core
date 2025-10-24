@@ -54,13 +54,22 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ResourceSecurity('cdr', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
 #[HttpMapping(
     mapping: [
-        'GET' => ['getList', 'getRecord', 'getActiveCalls', 'getActiveChannels', 'playback'],
+        'GET' => ['getList', 'getRecord', 'getMetadata', 'getActiveCalls', 'getActiveChannels', 'playback', 'download'],
+        'DELETE' => ['delete'],
         'HEAD' => ['playback']
     ],
-    resourceLevelMethods: ['getRecord'],
-    collectionLevelMethods: ['getList'],
-    customMethods: ['getActiveCalls', 'getActiveChannels', 'playback'],
-    idPattern: '[0-9]+'
+    resourceLevelMethods: ['getRecord', 'delete', 'playback', 'download'],
+    collectionLevelMethods: ['getList', 'getMetadata', 'getActiveCalls', 'getActiveChannels'],
+    customMethods: ['getMetadata', 'getActiveCalls', 'getActiveChannels', 'playback', 'download'],
+    // WHY: idPattern accepts both numeric ID and linkedid for routing flexibility
+    // Array of prefixes: each prefix + [^/:]+
+    // '' generates [^/:]+  (matches numeric ID like "718517")
+    // 'mikopbx-' generates mikopbx-[^/:]+  (matches linkedid like "mikopbx-1760784793.4627")
+    //
+    // IMPORTANT: Individual methods further restrict ID format via ApiParameterRef pattern:
+    // - getRecord, playback, download: numeric only (pattern: '^[0-9]+$')
+    // - delete: numeric OR linkedid (pattern: '^([0-9]+|mikopbx-.+)$')
+    idPattern: ['', 'mikopbx-']
 )]
 class RestController extends BaseRestController
 {
@@ -125,63 +134,110 @@ class RestController extends BaseRestController
         // Implementation handled by BaseRestController
     }
 
-
     /**
-     * Get list of currently active calls
+     * Get CDR metadata (date range from recent records)
      *
-     * @route GET /pbxcore/api/v3/cdr:getActiveCalls
+     * Returns lightweight metadata about CDR records without fetching full data.
+     * Used for initializing UI with meaningful date range.
+     *
+     * @route GET /pbxcore/api/v3/cdr:getMetadata
      */
     #[ApiOperation(
-        summary: 'rest_cdr_GetActiveCalls',
-        description: 'rest_cdr_GetActiveCallsDesc',
-        operationId: 'getActiveCalls'
+        summary: 'rest_cdr_GetMetadata',
+        description: 'rest_cdr_GetMetadataDesc',
+        operationId: 'getCdrMetadata'
     )]
-    #[ApiResponse(200, 'rest_response_200_list')]
+    #[ApiParameterRef('limit', required: false)]
+    #[ApiResponse(200, 'rest_response_200_metadata')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
-    public function getActiveCalls(): void
+    public function getMetadata(): void
     {
         // Implementation handled by BaseRestController
     }
 
     /**
-     * Get list of currently active channels
+     * Delete CDR record(s) by numeric ID or linkedid
      *
-     * @route GET /pbxcore/api/v3/cdr:getActiveChannels
+     * Supports two deletion modes based on ID format:
+     * - Numeric ID (e.g., "718517"): Deletes single record only
+     * - LinkedID (e.g., "mikopbx-1760784793.4627"): Deletes ALL records with this linkedid (entire conversation)
+     *
+     * Examples:
+     * - DELETE /cdr/718517 → deletes single record with ID 718517
+     * - DELETE /cdr/mikopbx-1760784793.4627 → deletes entire conversation (all linked records)
+     * - DELETE /cdr/mikopbx-1760784793.4627?deleteRecording=true → deletes conversation + all recording files
+     *
+     * @route DELETE /pbxcore/api/v3/cdr/{id}
      */
     #[ApiOperation(
-        summary: 'rest_cdr_GetActiveChannels',
-        description: 'rest_cdr_GetActiveChannelsDesc',
-        operationId: 'getActiveChannels'
+        summary: 'rest_cdr_Delete',
+        description: 'rest_cdr_DeleteDesc',
+        operationId: 'deleteCdr'
     )]
-    #[ApiResponse(200, 'rest_response_200_list')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^([0-9]+|mikopbx-.+)$', example: '12345')]
+    #[ApiParameterRef('deleteRecording')]
+    #[ApiResponse(200, 'rest_response_200_deleted')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
-    public function getActiveChannels(): void
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
+    public function delete(string $id): void
     {
         // Implementation handled by BaseRestController
     }
 
+
     /**
-     * Stream or download call recording
+     * Stream call recording (inline playback in browser)
      *
-     * @route GET /pbxcore/api/v3/cdr:playback
+     * Requires 'token' parameter for secure access. The token is included in 'playback_url' field
+     * returned by GET /cdr or GET /cdr/{id} endpoints.
+     *
+     * @route GET /pbxcore/api/v3/cdr/{id}:playback
      */
     #[ApiOperation(
         summary: 'rest_cdr_Playback',
         description: 'rest_cdr_PlaybackDesc',
         operationId: 'playbackRecording'
     )]
-    #[ApiParameterRef('view', required: true)]
-    #[ApiParameterRef('download')]
-    #[ApiParameterRef('filename')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]+$', example: '12345')]
+    #[ApiParameterRef('token', required: true)]
+    #[ApiParameterRef('view')]
     #[ApiResponse(200, 'rest_response_200_stream')]
     #[ApiResponse(206, 'rest_response_206_partial_content')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
     #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
     #[ApiResponse(416, 'rest_response_416_range_not_satisfiable', 'PBXApiResult')]
-    public function playback(): void
+    public function playback(string $id): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Download call recording as file
+     *
+     * Requires 'token' parameter for secure access. The token is included in 'download_url' field
+     * returned by GET /cdr or GET /cdr/{id} endpoints.
+     *
+     * @route GET /pbxcore/api/v3/cdr/{id}:download
+     */
+    #[ApiOperation(
+        summary: 'rest_cdr_Download',
+        description: 'rest_cdr_DownloadDesc',
+        operationId: 'downloadRecording'
+    )]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]+$', example: '12345')]
+    #[ApiParameterRef('token', required: true)]
+    #[ApiParameterRef('view')]
+    #[ApiParameterRef('filename')]
+    #[ApiResponse(200, 'rest_response_200_stream')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
+    public function download(string $id): void
     {
         // Implementation handled by BaseRestController
     }

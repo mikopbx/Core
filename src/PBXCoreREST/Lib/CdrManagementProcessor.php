@@ -21,9 +21,10 @@ namespace MikoPBX\PBXCoreREST\Lib;
 
 use MikoPBX\PBXCoreREST\Lib\Cdr\GetListAction;
 use MikoPBX\PBXCoreREST\Lib\Cdr\GetRecordAction;
-use MikoPBX\PBXCoreREST\Lib\Cdr\GetActiveCallsAction;
-use MikoPBX\PBXCoreREST\Lib\Cdr\GetActiveChannelsAction;
+use MikoPBX\PBXCoreREST\Lib\Cdr\GetMetadataAction;
 use MikoPBX\PBXCoreREST\Lib\Cdr\PlaybackAction;
+use MikoPBX\PBXCoreREST\Lib\Cdr\DownloadRecordAction;
+use MikoPBX\PBXCoreREST\Lib\Cdr\DeleteRecordAction;
 use Phalcon\Di\Injectable;
 
 /**
@@ -34,11 +35,12 @@ enum CdrAction: string
     // Standard CRUD operations
     case GET_LIST = 'getList';
     case GET_RECORD = 'getRecord';
+    case DELETE = 'delete';
 
     // CDR specific operations
-    case GET_ACTIVE_CALLS = 'getActiveCalls';
-    case GET_ACTIVE_CHANNELS = 'getActiveChannels';
+    case GET_METADATA = 'getMetadata';
     case PLAYBACK = 'playback';
+    case DOWNLOAD = 'download';
 }
 
 /**
@@ -49,9 +51,12 @@ enum CdrAction: string
  * RESTful API mapping:
  * - GET /cdr                     -> getList
  * - GET /cdr/{id}                -> getRecord
- * - GET /cdr:getActiveCalls      -> getActiveCalls
- * - GET /cdr:getActiveChannels   -> getActiveChannels
- * - GET /cdr:playback            -> playback
+ * - DELETE /cdr/{id}             -> delete
+ * - GET /cdr:getMetadata         -> getMetadata
+ * - GET /cdr/{id}:playback       -> playback
+ * - GET /cdr/{id}:download       -> download
+ *
+ * Active calls/channels moved to /pbx-status API
  *
  * @package MikoPBX\PBXCoreREST\Lib
  */
@@ -72,6 +77,13 @@ class CdrManagementProcessor extends Injectable
         $actionString = $request['action'];
         $data = $request['data'];
 
+        // IMPORTANT: DataTables sends POST requests which are mapped to 'create' action
+        // by BaseRestController, but we need to handle them as 'getList'
+        // Detection: presence of 'draw' parameter indicates DataTables request
+        if ($actionString === 'create' && isset($data['draw'])) {
+            $actionString = 'getList';
+        }
+
         // Type-safe action matching with enum
         $action = CdrAction::tryFrom($actionString);
 
@@ -86,11 +98,12 @@ class CdrManagementProcessor extends Injectable
             // Standard CRUD operations
             CdrAction::GET_LIST => GetListAction::main($data),
             CdrAction::GET_RECORD => GetRecordAction::main($data['id'] ?? null),
+            CdrAction::DELETE => DeleteRecordAction::main($data['id'] ?? null, $data),
 
             // CDR specific operations
-            CdrAction::GET_ACTIVE_CALLS => GetActiveCallsAction::main(),
-            CdrAction::GET_ACTIVE_CHANNELS => GetActiveChannelsAction::main(),
+            CdrAction::GET_METADATA => GetMetadataAction::main($data),
             CdrAction::PLAYBACK => PlaybackAction::main($data),
+            CdrAction::DOWNLOAD => DownloadRecordAction::main($data),
         };
 
         $res->function = $actionString;

@@ -87,11 +87,96 @@ class CDRPlayer {
             spanDuration: this.$spanDuration,
         });
 
+        // Add tooltip to slider
+        this.initializeTooltip();
+
         // Mark as initialized
         $row.addClass('initialized');
 
         // Load metadata on initialization
         this.loadMetadata();
+    }
+
+    /**
+     * Initialize tooltip for slider
+     */
+    initializeTooltip() {
+        // Add tooltip element to slider
+        const $tooltip = $('<div class="cdr-slider-tooltip">00:00</div>');
+        this.$slider.append($tooltip);
+        this.$tooltip = $tooltip;
+
+        // Update tooltip on mouse move over slider
+        this.$slider.on('mousemove', (e) => {
+            this.updateTooltipPosition(e);
+        });
+
+        // Show tooltip on mouse enter
+        this.$slider.on('mouseenter', () => {
+            this.$tooltip.css('opacity', '1');
+        });
+
+        // Hide tooltip on mouse leave (unless dragging)
+        this.$slider.on('mouseleave', () => {
+            if (!this.$slider.hasClass('dragging')) {
+                this.$tooltip.css('opacity', '0');
+            }
+        });
+
+        // Track dragging state
+        this.$slider.on('mousedown', () => {
+            this.$slider.addClass('dragging');
+            this.$tooltip.css('opacity', '1');
+        });
+
+        $(document).on('mouseup', () => {
+            if (this.$slider.hasClass('dragging')) {
+                this.$slider.removeClass('dragging');
+                this.$tooltip.css('opacity', '0');
+            }
+        });
+    }
+
+    /**
+     * Update tooltip position and content
+     * @param {Event} e - Mouse event
+     */
+    updateTooltipPosition(e) {
+        const sliderOffset = this.$slider.offset();
+        const sliderWidth = this.$slider.width();
+        const mouseX = e.pageX - sliderOffset.left;
+        const percent = Math.max(0, Math.min(100, (mouseX / sliderWidth) * 100));
+
+        // Calculate time at this position
+        const duration = this.html5Audio.duration;
+        if (Number.isFinite(duration)) {
+            const timeSeconds = (duration * percent) / 100;
+            const formattedTime = this.formatTime(timeSeconds);
+            this.$tooltip.text(formattedTime);
+        }
+
+        // Position tooltip at mouse position
+        this.$tooltip.css('left', `${percent}%`);
+    }
+
+    /**
+     * Format time in seconds to MM:SS or HH:MM:SS
+     * @param {number} seconds - Time in seconds
+     * @returns {string} Formatted time string
+     */
+    formatTime(seconds) {
+        const date = new Date(null);
+        date.setSeconds(parseInt(seconds, 10));
+        const dateStr = date.toISOString();
+        const hours = parseInt(dateStr.substr(11, 2), 10);
+
+        if (hours === 0) {
+            return dateStr.substr(14, 5);
+        } else if (hours < 10) {
+            return dateStr.substr(12, 7);
+        } else {
+            return dateStr.substr(11, 8);
+        }
     }
 
     /**
@@ -174,16 +259,10 @@ class CDRPlayer {
             return;
         }
 
-        // Build full URL
-        let fullUrl;
-        if (sourceSrc.startsWith('http')) {
-            fullUrl = sourceSrc;
-        } else if (sourceSrc.startsWith('/pbxcore/')) {
-            const baseUrl = window.location.origin;
-            fullUrl = `${baseUrl}${sourceSrc}`;
-        } else {
-            fullUrl = `${globalRootUrl}${sourceSrc.replace(/^\//, '')}`;
-        }
+        // Build full URL (REST API paths always start with /pbxcore/)
+        const fullUrl = sourceSrc.startsWith('http')
+            ? sourceSrc
+            : `${window.location.origin}${sourceSrc}`;
 
         // Prepare headers with Bearer token
         const headers = {
@@ -201,6 +280,8 @@ class CDRPlayer {
         })
         .then(response => {
             if (!response.ok) {
+                // File not found (422) or other error - disable player controls
+                this.disablePlayer();
                 return;
             }
 
@@ -209,6 +290,13 @@ class CDRPlayer {
             if (durationSeconds) {
                 const duration = parseFloat(durationSeconds);
                 if (duration > 0) {
+                    // Set duration on audio element for tooltip functionality
+                    Object.defineProperty(this.html5Audio, 'duration', {
+                        value: duration,
+                        writable: false,
+                        configurable: true
+                    });
+
                     const date = new Date(null);
                     date.setSeconds(parseInt(duration, 10));
                     const dateStr = date.toISOString();
@@ -226,7 +314,8 @@ class CDRPlayer {
             }
         })
         .catch(() => {
-            // Silently fail - metadata is not critical
+            // Network error or other failure - disable player controls
+            this.disablePlayer();
         });
     }
 
@@ -271,16 +360,10 @@ class CDRPlayer {
      * @param {string} apiUrl - The API URL requiring authentication
      */
     loadAuthenticatedSource(apiUrl) {
-        // Build full URL
-        let fullUrl;
-        if (apiUrl.startsWith('http')) {
-            fullUrl = apiUrl;
-        } else if (apiUrl.startsWith('/pbxcore/')) {
-            const baseUrl = window.location.origin;
-            fullUrl = `${baseUrl}${apiUrl}`;
-        } else {
-            fullUrl = `${globalRootUrl}${apiUrl.replace(/^\//, '')}`;
-        }
+        // Build full URL (REST API paths always start with /pbxcore/)
+        const fullUrl = apiUrl.startsWith('http')
+            ? apiUrl
+            : `${window.location.origin}${apiUrl}`;
 
         // Prepare headers with Bearer token
         const headers = {
@@ -353,8 +436,10 @@ class CDRPlayer {
     downloadFile(downloadUrl) {
         // Check if it's an API URL that requires authentication
         if (downloadUrl.includes('/pbxcore/api/')) {
-            // Build full URL
-            const fullUrl = downloadUrl.startsWith('http') ? downloadUrl : `${globalRootUrl}${downloadUrl.replace(/^\//, '')}`;
+            // Build full URL (REST API paths always start with /pbxcore/)
+            const fullUrl = downloadUrl.startsWith('http')
+                ? downloadUrl
+                : `${window.location.origin}${downloadUrl}`;
 
             // Prepare headers with Bearer token
             const headers = {
@@ -417,5 +502,27 @@ class CDRPlayer {
      */
     cbOnSrcMediaError() {
         $(this).closest('tr').addClass('disabled');
+    }
+
+    /**
+     * Disable player controls when file is not available
+     * Hides play and download buttons, disables only player cells (not entire row)
+     */
+    disablePlayer() {
+        // Hide play button
+        this.$pButton.hide();
+
+        // Hide download button
+        this.$dButton.hide();
+
+        // Show placeholder in duration span
+        this.$spanDuration.text('--:--/--:--').addClass('disabled');
+
+        // Disable slider and its parent cell
+        this.$slider.addClass('disabled');
+        this.$slider.closest('td').addClass('disabled');
+
+        // Disable duration cell
+        this.$spanDuration.closest('td').addClass('disabled');
     }
 }

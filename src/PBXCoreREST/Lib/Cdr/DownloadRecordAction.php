@@ -24,18 +24,18 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Injectable;
 
 /**
- * CDR audio file playback action
+ * CDR audio file download action
  *
- * Validates CDR recording file paths and prepares them for streaming.
+ * Forces download of CDR recording files with proper Content-Disposition header.
  * This action validates that the requested file is actually a CDR recording
- * and returns file information for streaming by the controller.
+ * and returns file information for download by the controller.
  *
  * @package MikoPBX\PBXCoreREST\Lib\Cdr
  */
-class PlaybackAction extends Injectable
+class DownloadRecordAction extends Injectable
 {
     /**
-     * Validate CDR recording file path and prepare for streaming
+     * Validate CDR recording file path and prepare for download
      *
      * This method supports two access modes:
      * 1. Token-based access (recommended): Uses 'id' and 'token' parameters for secure access
@@ -45,6 +45,7 @@ class PlaybackAction extends Injectable
      *                    - 'id' (int): CDR record ID (used with token)
      *                    - 'token' (string): Temporary access token from Redis
      *                    - 'view' (string): Direct file path (legacy, for backward compatibility)
+     *                    - 'filename' (string): Custom filename for download
      * @return PBXApiResult
      */
     public static function main(array $data): PBXApiResult
@@ -53,6 +54,8 @@ class PlaybackAction extends Injectable
         $res->processor = __METHOD__;
 
         $filename = '';
+        $cdrId = null;
+        $record = null;
 
         // ============ MODE 1: Token-based access (RECOMMENDED) ============
         // WHY: Secure access without exposing file paths
@@ -91,7 +94,7 @@ class PlaybackAction extends Injectable
             // Validate that this is actually a CDR recording path
             if (!self::isCallRecording($filename)) {
                 // Still allow the request but mark as deprecated
-                $res->messages['warning'][] = 'Direct file path access is deprecated. Use token-based access via /pbxcore/api/v3/cdr/{id}:playback?token=xxx';
+                $res->messages['warning'][] = 'Direct file path access is deprecated. Use token-based access via /pbxcore/api/v3/cdr/{id}:download?token=xxx';
             }
         } else {
             $res->messages['error'][] = 'Either token or view parameter must be provided';
@@ -110,15 +113,34 @@ class PlaybackAction extends Injectable
         $fileInfo = pathinfo($filename);
         $mimeType = self::getAudioMimeType($fileInfo['extension'] ?? '');
 
+        // Generate download filename if not provided
+        $downloadName = $data['filename'] ?? null;
+        if (empty($downloadName)) {
+            // Generate meaningful filename from CDR record data
+            if ($record !== null) {
+                // Use CDR data to create a descriptive filename
+                $src = preg_replace('/[^\w\-]/', '', $record->src_num ?? 'unknown');
+                $dst = preg_replace('/[^\w\-]/', '', $record->dst_num ?? 'unknown');
+                $date = date('Y-m-d_H-i-s', strtotime($record->start ?? 'now'));
+                $downloadName = "call_{$src}_to_{$dst}_{$date}.{$fileInfo['extension']}";
+            } elseif ($cdrId !== null) {
+                // Use CDR ID if available
+                $downloadName = "recording_{$cdrId}.{$fileInfo['extension']}";
+            } else {
+                // Fallback to original filename
+                $downloadName = $fileInfo['basename'];
+            }
+        }
+
         // Get audio duration for metadata
         $duration = self::getAudioDuration($filename);
 
-        // Prepare file data for streaming (unified with SoundFiles approach)
+        // Prepare file data for download (unified with SoundFiles approach)
         $res->data = [
             'fpassthru' => [
                 'filename' => $filename,
                 'content_type' => $mimeType,
-                'download_name' => null,  // null = inline playback
+                'download_name' => $downloadName,
                 'need_delete' => false,
                 'additional_headers' => []
             ]
@@ -232,7 +254,7 @@ class PlaybackAction extends Injectable
         }
 
         // Extend token TTL on each access (allow multiple plays within 1 hour)
-        // WHY: User might want to replay recording multiple times
+        // WHY: User might want to download recording multiple times
         $redis->expire($key, 3600);
 
         return (int)$cdrId;

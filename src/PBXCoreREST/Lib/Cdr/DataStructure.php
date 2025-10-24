@@ -75,6 +75,25 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'verbose_call_id' => $model->verbose_call_id ?? '',
         ];
 
+        // Add recording URLs if file exists
+        // WHY: Provides secure token-based access without exposing file paths
+        // Two URLs: playback (for inline streaming) and download (for file download)
+        if (!empty($model->recordingfile) && file_exists($model->recordingfile)) {
+            $token = self::generatePlaybackToken($model->id);
+
+            if (!empty($token)) {
+                // Relative URLs - CRM knows the host and port
+                $data['playback_url'] = "/pbxcore/api/v3/cdr/{$model->id}:playback?token={$token}";
+                $data['download_url'] = "/pbxcore/api/v3/cdr/{$model->id}:download?token={$token}";
+            } else {
+                $data['playback_url'] = null;
+                $data['download_url'] = null;
+            }
+        } else {
+            $data['playback_url'] = null;
+            $data['download_url'] = null;
+        }
+
         // Apply OpenAPI schema formatting to convert types automatically
         // This replaces manual type conversion
         // The schema defines which fields should be integer or string
@@ -159,77 +178,180 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
 
     /**
-     * Get all field definitions with complete metadata
+     * Get query/filter parameter definitions (writable fields)
      *
-     * Single Source of Truth for ALL field definitions.
-     * Each field includes type, validation, sanitization, and examples.
+     * Single Source of Truth for query parameters and filters.
+     * These parameters are used in API requests but are NOT part of CDR record structure.
      *
-     * CDR combines two types of fields:
-     * - Query/filter parameters (limit, offset, dateFrom, dateTo, view, download, filename)
-     * - CDR record fields (id, start, endtime, answer, etc.) - ALL read-only
+     * WHY: Separate from CDR record fields to avoid confusion and naming conflicts.
+     * Filter fields like 'src_num' are different from CDR record fields 'src_num'.
      *
-     * @return array<string, array<string, mixed>> Complete field definitions
+     * @return array<string, array<string, mixed>> Query parameter definitions
      */
-    private static function getAllFieldDefinitions(): array
+    private static function getQueryParameterDefinitions(): array
     {
         return [
-            // ========== QUERY/FILTER PARAMETERS ==========
-            // These are NOT CDR record fields, but query parameters for filtering
+            // ========== PATH PARAMETERS ==========
+            'id' => [
+                'type' => 'string',
+                'description' => 'rest_param_cdr_id',
+                'in' => 'path',
+                'required' => true,
+                'pattern' => '^([0-9]+|mikopbx-.+)$',
+                'example' => '12345',
+                'sanitize' => 'string'
+            ],
+
+            // ========== PAGINATION ==========
             'limit' => [
                 'type' => 'integer',
-                'description' => 'rest_schema_cdr_limit',
+                'description' => 'rest_param_cdr_limit',
                 'minimum' => 1,
                 'maximum' => 1000,
                 'default' => 50,
                 'sanitize' => 'int',
+                'in' => 'query',
                 'example' => 50
             ],
             'offset' => [
                 'type' => 'integer',
-                'description' => 'rest_schema_cdr_offset',
+                'description' => 'rest_param_cdr_offset',
                 'minimum' => 0,
                 'default' => 0,
                 'sanitize' => 'int',
+                'in' => 'query',
                 'example' => 0
             ],
+
+            // ========== DATE FILTERS ==========
             'dateFrom' => [
                 'type' => 'string',
-                'description' => 'rest_schema_cdr_dateFrom',
+                'description' => 'rest_param_cdr_dateFrom',
                 'format' => 'date-time',
                 'sanitize' => 'string',
+                'in' => 'query',
                 'example' => '2025-01-01T00:00:00'
             ],
             'dateTo' => [
                 'type' => 'string',
-                'description' => 'rest_schema_cdr_dateTo',
+                'description' => 'rest_param_cdr_dateTo',
                 'format' => 'date-time',
                 'sanitize' => 'string',
+                'in' => 'query',
                 'example' => '2025-01-31T23:59:59'
             ],
-            // Playback parameters (custom :getRecordFile method)
+
+            // ========== SEARCH FILTERS ==========
+            'search' => [
+                'type' => 'string',
+                'description' => 'rest_param_cdr_search',
+                'sanitize' => 'string',
+                'maxLength' => 255,
+                'in' => 'query',
+                'example' => '79643442732'
+            ],
+            'src_num' => [
+                'type' => 'string',
+                'description' => 'rest_param_cdr_src_num',
+                'sanitize' => 'string',
+                'maxLength' => 64,
+                'in' => 'query',
+                'example' => '201'
+            ],
+            'dst_num' => [
+                'type' => 'string',
+                'description' => 'rest_param_cdr_dst_num',
+                'sanitize' => 'string',
+                'maxLength' => 64,
+                'in' => 'query',
+                'example' => '202'
+            ],
+            'did' => [
+                'type' => 'string',
+                'description' => 'rest_param_cdr_did',
+                'sanitize' => 'string',
+                'maxLength' => 64,
+                'in' => 'query',
+                'example' => '74951234567'
+            ],
+            'disposition' => [
+                'type' => 'string',
+                'description' => 'rest_param_cdr_disposition',
+                'enum' => ['ANSWERED', 'NO ANSWER', 'NOANSWER', 'BUSY', 'FAILED'],
+                'sanitize' => 'string',
+                'in' => 'query',
+                'example' => 'ANSWERED'
+            ],
+            'linkedid' => [
+                'type' => 'string',
+                'description' => 'rest_param_cdr_linkedid',
+                'sanitize' => 'string',
+                'in' => 'query',
+                'example' => '1705315845.1'
+            ],
+
+            // ========== PLAYBACK PARAMETERS ==========
+            'token' => [
+                'type' => 'string',
+                'description' => 'rest_param_cdr_token',
+                'minLength' => 32,
+                'maxLength' => 64,
+                'sanitize' => 'string',
+                'in' => 'query',
+                'example' => 'abc123def456789012345678901234567890abcd'
+            ],
             'view' => [
                 'type' => 'string',
-                'description' => 'rest_schema_cdr_view',
+                'description' => 'rest_param_cdr_view',
                 'maxLength' => 500,
                 'sanitize' => 'string',
+                'in' => 'query',
                 'example' => '/storage/usbdisk1/mikopbx/voicemailbackup/monitor/2025/01/15/call-123.mp3'
             ],
             'download' => [
                 'type' => 'boolean',
-                'description' => 'rest_schema_cdr_download',
+                'description' => 'rest_param_cdr_download',
                 'default' => false,
                 'sanitize' => 'bool',
+                'in' => 'query',
                 'example' => false
             ],
             'filename' => [
                 'type' => 'string',
-                'description' => 'rest_schema_cdr_filename',
+                'description' => 'rest_param_cdr_filename',
                 'maxLength' => 255,
                 'sanitize' => 'string',
+                'in' => 'query',
                 'example' => 'call-recording.mp3'
             ],
 
-            // ========== CDR RECORD FIELDS (ALL READ-ONLY) ==========
+            // ========== DELETE PARAMETERS ==========
+            'deleteRecording' => [
+                'type' => 'boolean',
+                'description' => 'rest_param_cdr_deleteRecording',
+                'default' => false,
+                'sanitize' => 'bool',
+                'in' => 'query',
+                'example' => false
+            ],
+        ];
+    }
+
+    /**
+     * Get CDR record field definitions (read-only response fields)
+     *
+     * Single Source of Truth for CDR record structure.
+     * These fields represent actual CDR database columns.
+     * ALL fields are read-only since CDR records are created by Asterisk, not via API.
+     *
+     * WHY: Separate from query parameters for clarity.
+     * CDR record field 'src_num' is different from filter parameter 'src_num'.
+     *
+     * @return array<string, array<string, mixed>> CDR record field definitions
+     */
+    private static function getCdrRecordFieldDefinitions(): array
+    {
+        return [
             'id' => [
                 'type' => 'integer',
                 'description' => 'rest_schema_cdr_id',
@@ -302,7 +424,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'disposition' => [
                 'type' => 'string',
                 'description' => 'rest_schema_cdr_disposition',
-                'enum' => ['ANSWERED', 'NO ANSWER', 'BUSY', 'FAILED'],
+                'enum' => ['ANSWERED', 'NO ANSWER', 'NOANSWER', 'BUSY', 'FAILED'],
                 'readOnly' => true,
                 'example' => 'ANSWERED'
             ],
@@ -386,109 +508,82 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'readOnly' => true,
                 'example' => ''
             ],
+            'playback_url' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cdr_playback_url',
+                'format' => 'uri',
+                'nullable' => true,
+                'readOnly' => true,
+                'example' => '/pbxcore/api/v3/cdr/12345:playback?token=abc123def456'
+            ],
+            'download_url' => [
+                'type' => 'string',
+                'description' => 'rest_schema_cdr_download_url',
+                'format' => 'uri',
+                'nullable' => true,
+                'readOnly' => true,
+                'example' => '/pbxcore/api/v3/cdr/12345:download?token=abc123def456'
+            ],
         ];
     }
 
     /**
      * Get parameter definitions (Single Source of Truth)
      *
-     * WHY: Centralizes CDR query parameter definitions.
-     * CDR is a read-only resource, so only query filtering parameters are writable.
-     * All CDR record fields are read-only.
+     * WHY: Centralizes CDR parameter definitions.
+     * Separates query/filter parameters (writable) from CDR record fields (read-only).
+     *
+     * Structure:
+     * - 'request' => Query parameters used for filtering and operations
+     * - 'response' => CDR record fields returned in API responses (all read-only)
      *
      * @return array<string, array<string, mixed>> Parameter definitions
      */
     public static function getParameterDefinitions(): array
     {
-        $allFields = self::getAllFieldDefinitions();
-
-        // Separate writable query parameters and read-only CDR record fields
-        $writableFields = [];
-        $responseOnlyFields = [];
-
-        foreach ($allFields as $fieldName => $fieldDef) {
-            if (!empty($fieldDef['readOnly'])) {
-                $responseOnlyFields[$fieldName] = $fieldDef;
-            } else {
-                // For request section, use rest_param_* descriptions
-                $requestField = $fieldDef;
-                $requestField['description'] = str_replace('rest_schema_', 'rest_param_', $fieldDef['description']);
-                $writableFields[$fieldName] = $requestField;
-            }
-        }
-
         return [
             // ========== REQUEST PARAMETERS ==========
-            // Query/filter parameters (NOT CDR record fields)
+            // Query/filter parameters for API operations
             // Referenced by ApiParameterRef in Controller
-            'request' => $writableFields,
+            // All parameters have 'in' => 'query' and 'sanitize' rules
+            'request' => self::getQueryParameterDefinitions(),
 
             // ========== RESPONSE-ONLY FIELDS ==========
-            // CDR record fields (all read-only, returned in responses)
-            // Used by getDetailSchema()
-            'response' => $responseOnlyFields,
-
-            // ========== RELATED SCHEMAS ==========
-            // Custom method parameters
-            'related' => [
-                // Filter parameters for getList
-                'dateFrom' => [
-                    'type' => 'string',
-                    'format' => 'date-time',
-                    'description' => 'rest_param_cdr_dateFrom',
-                    'sanitize' => 'string',
-                    'example' => '2025-01-01T00:00:00'
-                ],
-                'dateTo' => [
-                    'type' => 'string',
-                    'format' => 'date-time',
-                    'description' => 'rest_param_cdr_dateTo',
-                    'sanitize' => 'string',
-                    'example' => '2025-01-31T23:59:59'
-                ],
-                'src_num' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_cdr_src_num',
-                    'sanitize' => 'string',
-                    'example' => '201'
-                ],
-                'dst_num' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_cdr_dst_num',
-                    'sanitize' => 'string',
-                    'example' => '202'
-                ],
-                'disposition' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_cdr_disposition',
-                    'enum' => ['ANSWERED', 'NO ANSWER', 'BUSY', 'FAILED'],
-                    'sanitize' => 'string',
-                    'example' => 'ANSWERED'
-                ],
-                // Playback method parameters
-                'view' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_cdr_view',
-                    'sanitize' => 'string',
-                    'example' => '/storage/usbdisk1/mikopbx/voicemailbackup/monitor/2025/01/15/call-123.mp3'
-                ],
-                'download' => [
-                    'type' => 'boolean',
-                    'description' => 'rest_param_cdr_download',
-                    'default' => false,
-                    'sanitize' => 'bool',
-                    'example' => false
-                ],
-                'filename' => [
-                    'type' => 'string',
-                    'description' => 'rest_param_cdr_filename',
-                    'sanitize' => 'string',
-                    'example' => 'call-recording.mp3'
-                ]
-            ]
+            // CDR record fields (all read-only, created by Asterisk)
+            // Used by getDetailSchema() and getListItemSchema()
+            // All fields have 'readOnly' => true
+            'response' => self::getCdrRecordFieldDefinitions(),
         ];
     }
 
     // getSanitizationRules() inherited from AbstractDataStructure
     // Auto-generated from getParameterDefinitions() - Single Source of Truth
+
+    /**
+     * Generate temporary token for recording playback
+     *
+     * WHY: Security - prevents direct file access
+     * Tokens expire after 1 hour
+     *
+     * @param int $cdrId CDR record ID
+     * @return string Temporary token
+     */
+    private static function generatePlaybackToken(int $cdrId): string
+    {
+        $di = \Phalcon\Di\Di::getDefault();
+        if ($di === null) {
+            return '';
+        }
+
+        $redis = $di->get('redis');
+
+        // Generate random token (32 characters)
+        $token = bin2hex(random_bytes(16));
+
+        // Store in Redis with 1 hour TTL
+        $key = "cdr_playback_token:{$token}";
+        $redis->setex($key, 3600, $cdrId);
+
+        return $token;
+    }
 }
