@@ -72,6 +72,14 @@ class PBXApiResult
     public ?int $httpCode = null;
 
     /**
+     * Pagination metadata for list endpoints
+     * Contains: total, limit, offset, hasMore, lastId
+     *
+     * @var array|null
+     */
+    public ?array $pagination = null;
+
+    /**
      * Reload path for frontend navigation after successful operation
      *
      * @var string
@@ -110,6 +118,11 @@ class PBXApiResult
         // Include HTTP status code if set (for v4 API)
         if ($this->httpCode !== null) {
             $result['httpCode'] = $this->httpCode;
+        }
+
+        // Include pagination metadata if set (for list endpoints)
+        if ($this->pagination !== null) {
+            $result['pagination'] = $this->pagination;
         }
 
         // Include reload path if set

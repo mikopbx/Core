@@ -60,19 +60,26 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         $data['full_permissions'] = ($apiKey->full_permissions ?? '1') === '1';
 
         // Decode allowed_paths JSON field
-        // WHY: Ensure it's always an object (associative array) with path => permission mapping
+        // WHY: Must be stdClass (object) for OpenAPI schema validation
+        // Schema defines allowed_paths as 'type: object', not array
         // Format: {"/api/v3/extensions": "write", "/api/v3/cdr": "read"}
         if (!empty($apiKey->allowed_paths)) {
-            $decoded = json_decode($apiKey->allowed_paths, true);
-            // Preserve associative array structure (path => permission)
-            $data['allowed_paths'] = is_array($decoded) ? $decoded : [];
+            // CRITICAL: Always convert to stdClass for schema validation
+            // WHY: JSON Schema validator treats PHP arrays as 'array' type, not 'object'
+            // Even associative arrays are treated as array type by validator
+            $decoded = json_decode($apiKey->allowed_paths, false);  // false = stdClass
+            $data['allowed_paths'] = is_object($decoded) ? $decoded : new \stdClass();
         } else {
-            $data['allowed_paths'] = [];
+            // CRITICAL: Use stdClass for empty object to ensure JSON serializes as {} not []
+            $data['allowed_paths'] = new \stdClass();
         }
 
         // Add computed fields
         $data['has_key'] = !empty($apiKey->key_hash);
-        $data['allowed_paths_count'] = count($data['allowed_paths']);
+        // Convert stdClass to array for counting
+        $data['allowed_paths_count'] = is_object($data['allowed_paths'])
+            ? count((array)$data['allowed_paths'])
+            : 0;
 
         // Add network filter representation using unified helper
         $data['networkfilter_represent'] = self::getNetworkFilterRepresentation($apiKey->networkfilterid);
@@ -82,12 +89,6 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         // This replaces manual formatBooleanFields(), convertIntegerFields(), etc.
         // The schema defines which fields should be boolean, integer, or string
         $data = self::formatBySchema($data, 'detail');
-
-        // CRITICAL: Ensure empty array fields stay as arrays in JSON (not objects)
-        // PHP's json_encode converts empty [] to {} by default
-        if (empty($data['allowed_paths'])) {
-            $data['allowed_paths'] = [];
-        }
 
         return $data;
     }
@@ -306,7 +307,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                     'type' => 'string',
                     'enum' => ['read', 'write']
                 ],
-                'default' => [],
+                'default' => (object)[],
                 'example' => [
                     '/api/v3/extensions' => 'write',
                     '/api/v3/cdr' => 'read',

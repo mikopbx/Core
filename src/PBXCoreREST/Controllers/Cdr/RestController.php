@@ -54,13 +54,13 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ResourceSecurity('cdr', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
 #[HttpMapping(
     mapping: [
-        'GET' => ['getList', 'getRecord', 'getMetadata', 'getActiveCalls', 'getActiveChannels', 'playback', 'download'],
+        'GET' => ['getList', 'getRecord', 'getMetadata', 'playback', 'download'],
         'DELETE' => ['delete'],
         'HEAD' => ['playback']
     ],
     resourceLevelMethods: ['getRecord', 'delete', 'playback', 'download'],
-    collectionLevelMethods: ['getList', 'getMetadata', 'getActiveCalls', 'getActiveChannels'],
-    customMethods: ['getMetadata', 'getActiveCalls', 'getActiveChannels', 'playback', 'download'],
+    collectionLevelMethods: ['getList', 'getMetadata'],
+    customMethods: ['getMetadata', 'playback', 'download'],
     // WHY: idPattern accepts both numeric ID and linkedid for routing flexibility
     // Array of prefixes: each prefix + [^/:]+
     // '' generates [^/:]+  (matches numeric ID like "718517")

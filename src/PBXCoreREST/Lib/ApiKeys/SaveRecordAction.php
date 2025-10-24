@@ -257,9 +257,12 @@ class SaveRecordAction extends AbstractSaveRecordAction
 
                 // Update allowed_paths (PATCH support with isset())
                 if (isset($sanitizedData['allowed_paths'])) {
-                    if (is_array($sanitizedData['allowed_paths'])) {
+                    // WHY: After formatBySchema, allowed_paths can be stdClass object or array
+                    // Both need to be json_encoded before storing in string DB field
+                    if (is_array($sanitizedData['allowed_paths']) || is_object($sanitizedData['allowed_paths'])) {
                         $apiKey->allowed_paths = json_encode($sanitizedData['allowed_paths']);
                     } else {
+                        // Plain string (should not happen but keep for backward compatibility)
                         $apiKey->allowed_paths = $sanitizedData['allowed_paths'];
                     }
                 } elseif ($isNewRecord) {

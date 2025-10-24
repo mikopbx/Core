@@ -259,6 +259,9 @@ class ResponseSchemaValidator
             // Check if it's an object (associative array) or array (list)
             return array_keys($value) === range(0, count($value) - 1) ? 'array' : 'object';
         }
+        if (is_object($value)) {
+            return 'object';
+        }
         if (is_null($value)) {
             return 'null';
         }

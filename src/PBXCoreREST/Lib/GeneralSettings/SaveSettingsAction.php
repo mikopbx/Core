@@ -69,7 +69,19 @@ class SaveSettingsAction extends AbstractSaveRecordAction
             // Extract settings from nested structure if present
             // API can send either flat structure or nested with 'settings' key
             $settingsData = $data['settings'] ?? $data;
-            // Password validation first - fail fast if passwords are weak
+
+            // ============ PHASE 1: SCHEMA VALIDATION ============
+            // WHY: Validate against OpenAPI schema constraints BEFORE any processing
+            // This catches invalid port numbers (< 1 or > 65535) early
+            $schemaErrors = self::validateSettingsSchema($settingsData);
+            if (!empty($schemaErrors)) {
+                $res->messages['error'] = $schemaErrors;
+                $res->httpCode = 422; // Unprocessable Entity
+                return $res;
+            }
+
+            // ============ PHASE 2: PASSWORD VALIDATION ============
+            // WHY: Fail fast if passwords are weak (after schema validation)
             $passwordCheckFail = self::validatePasswords($settingsData);
             if (!empty($passwordCheckFail)) {
                 foreach ($passwordCheckFail as $settingsKey => $validationResult) {
@@ -84,7 +96,8 @@ class SaveSettingsAction extends AbstractSaveRecordAction
                 }
                 return $res;
             }
-            
+
+            // ============ PHASE 3: SAVE IN TRANSACTION ============
             // Execute save operation in transaction
             $result = self::executeInTransaction(function() use ($settingsData) {
                 
@@ -141,8 +154,85 @@ class SaveSettingsAction extends AbstractSaveRecordAction
     }
     
     /**
+     * Validate settings data against OpenAPI schema definitions
+     *
+     * WHY: Validates each setting field against its DataStructure definition
+     * (type, minimum, maximum, enum, maxLength, etc.) BEFORE processing.
+     * This provides early validation and user-friendly error messages.
+     *
+     * @param array $settingsData Settings key-value pairs to validate
+     * @return array Array of validation error messages (empty if valid)
+     */
+    private static function validateSettingsSchema(array $settingsData): array
+    {
+        $definitions = DataStructure::getParameterDefinitions();
+        $settingsProperties = $definitions['request']['settings']['properties'] ?? [];
+
+        if (empty($settingsProperties)) {
+            return [];
+        }
+
+        $errors = [];
+
+        foreach ($settingsData as $fieldName => $value) {
+            // Skip fields not defined in schema (they'll be ignored anyway)
+            if (!isset($settingsProperties[$fieldName])) {
+                continue;
+            }
+
+            $fieldDef = $settingsProperties[$fieldName];
+            $type = $fieldDef['type'] ?? 'string';
+
+            // Validate enum constraint
+            if (isset($fieldDef['enum']) && is_array($fieldDef['enum'])) {
+                if (!in_array($value, $fieldDef['enum'], true)) {
+                    $allowedValues = implode(', ', $fieldDef['enum']);
+                    $errors[] = "Field '{$fieldName}' must be one of: {$allowedValues}";
+                    continue;
+                }
+            }
+
+            // Validate range constraints for integers/numbers (ports, timeouts, etc.)
+            if ($type === 'integer' || $type === 'number') {
+                $numericValue = is_numeric($value) ? (int)$value : null;
+
+                if ($numericValue !== null) {
+                    // Check minimum
+                    if (isset($fieldDef['minimum']) && $numericValue < $fieldDef['minimum']) {
+                        $errors[] = "Field '{$fieldName}' must be at least {$fieldDef['minimum']} (got {$numericValue})";
+                        continue;
+                    }
+
+                    // Check maximum
+                    if (isset($fieldDef['maximum']) && $numericValue > $fieldDef['maximum']) {
+                        $errors[] = "Field '{$fieldName}' must be at most {$fieldDef['maximum']} (got {$numericValue})";
+                        continue;
+                    }
+                }
+            }
+
+            // Validate string length (maxLength)
+            if ($type === 'string' && isset($fieldDef['maxLength'])) {
+                $length = is_string($value) ? mb_strlen($value, 'UTF-8') : 0;
+                if ($length > $fieldDef['maxLength']) {
+                    $errors[] = "Field '{$fieldName}' must be at most {$fieldDef['maxLength']} characters (got {$length})";
+                }
+            }
+
+            // Validate pattern (regex)
+            if ($type === 'string' && isset($fieldDef['pattern']) && is_string($value)) {
+                if (!preg_match('/' . $fieldDef['pattern'] . '/', $value)) {
+                    $errors[] = "Field '{$fieldName}' does not match required pattern";
+                }
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
      * Flatten error messages array that may contain nested arrays
-     * 
+     *
      * @param array $errors Error messages that may be strings or arrays
      * @return string Flattened error message string
      */

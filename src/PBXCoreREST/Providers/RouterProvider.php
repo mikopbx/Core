@@ -532,6 +532,22 @@ class RouterProvider implements ServiceProviderInterface
             $eventsManager->attach('micro', new $class());
             $application->{$function}(new $class());
         }
+
+        // Register notFound handler (required by Phalcon Micro)
+        // Returns 404 with standard error structure
+        $application->notFound(function () use ($application) {
+            $response = $application->getDI()->getShared('response');
+            $response->setStatusCode(404, 'Not Found');
+            $response->setJsonContent([
+                'success' => false,
+                'messages' => [
+                    'error' => ['Endpoint not found: ' . ($_SERVER['REQUEST_URI'] ?? 'unknown')]
+                ],
+                'data' => null
+            ]);
+            $response->send();
+            return false;
+        });
     }
 
     /**

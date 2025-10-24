@@ -56,7 +56,7 @@ class GetRecordAction extends AbstractGetRecordAction
             [                                   // Default values for new records
                 'description' => '',
                 'full_permissions' => '1',
-                'allowed_paths' => '[]',
+                'allowed_paths' => '{}',
                 'networkfilterid' => 'none',
             ],
             'API key not found',                // Not found message

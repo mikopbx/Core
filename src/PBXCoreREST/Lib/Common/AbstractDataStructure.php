@@ -547,7 +547,7 @@ abstract class AbstractDataStructure
             'integer' => is_numeric($value) ? (int)$value : $value,
             'number' => is_numeric($value) ? (float)$value : $value,
             'array' => is_array($value) ? $value : [],
-            'object' => is_array($value) ? $value : [],
+            'object' => is_object($value) ? $value : (object)[],
             default => is_array($value) ? $value : (string)$value
         };
     }

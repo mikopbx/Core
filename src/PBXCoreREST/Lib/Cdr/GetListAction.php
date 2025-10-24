@@ -57,11 +57,20 @@ class GetListAction
             // WHY: Single format, easier maintenance, reusable for CRM and WebUI
             $result = self::handleRestRequest($data);
 
-            // Pack everything into data object (no dynamic properties)
-            $res->data = $result;
+            // WHY: Return data as list + separate pagination metadata
+            // This matches REST API expectations where response['data'] is array
+            // and pagination info is in response['pagination']
+            $res->data = $result['data'];
+            $res->pagination = $result['pagination'];
             $res->success = true;
 
+        } catch (\InvalidArgumentException $e) {
+            // WHY: Validation errors (date range, negative offset) return 422
+            $res->success = false;
+            $res->messages['error'][] = $e->getMessage();
+            $res->httpCode = 422;
         } catch (\Exception $e) {
+            // WHY: Unexpected errors return 500 Internal Server Error
             $res->success = false;
             $res->messages['error'][] = $e->getMessage();
             $res->httpCode = 500;
@@ -90,8 +99,19 @@ class GetListAction
     private static function handleRestRequest(array $data): array
     {
         // Pagination parameters
-        $limit = min(intval($data['limit'] ?? 50), 1000);
-        $offset = intval($data['offset'] ?? 0);
+        // WHY: Clamp limit to 1-1000 range to prevent excessive queries
+        $limit = min(max(1, intval($data['limit'] ?? 50)), 1000);
+
+        // WHY: Reject negative offset with validation error
+        // Security: Negative offsets can cause unintended database behavior
+        $requestedOffset = intval($data['offset'] ?? 0);
+        if ($requestedOffset < 0) {
+            throw new \InvalidArgumentException(
+                "Invalid offset value: {$requestedOffset}. Offset must be non-negative."
+            );
+        }
+        $offset = $requestedOffset;
+
         $idFrom = isset($data['idFrom']) ? intval($data['idFrom']) : null;
 
         // Filtering parameters
@@ -120,14 +140,25 @@ class GetListAction
         // WHY: Prevent DoS attacks via unlimited date ranges (e.g., dateFrom=2000-01-01&dateTo=2030-12-31)
         $maxDaysRange = 365; // Maximum 1 year range
         if ($dateFrom !== null && $dateTo !== null) {
-            $dateFromObj = new \DateTime($dateFrom);
-            $dateToObj = new \DateTime($dateTo);
-            $daysDiff = $dateFromObj->diff($dateToObj)->days;
+            try {
+                $dateFromObj = new \DateTime($dateFrom);
+                $dateToObj = new \DateTime($dateTo);
+                $daysDiff = $dateFromObj->diff($dateToObj)->days;
 
-            if ($daysDiff > $maxDaysRange) {
+                if ($daysDiff > $maxDaysRange) {
+                    // WHY: Throw InvalidArgumentException to return 422 validation error
+                    throw new \InvalidArgumentException(
+                        "Date range exceeds maximum allowed ({$maxDaysRange} days). " .
+                        "Please narrow your search criteria."
+                    );
+                }
+            } catch (\Exception $e) {
+                if ($e instanceof \InvalidArgumentException) {
+                    throw $e; // Re-throw validation errors
+                }
+                // Invalid date format - throw as validation error
                 throw new \InvalidArgumentException(
-                    "Date range exceeds maximum allowed ({$maxDaysRange} days). " .
-                    "Please narrow your search criteria."
+                    "Invalid date format. Expected: YYYY-MM-DD or YYYY-MM-DD HH:MM:SS"
                 );
             }
         }

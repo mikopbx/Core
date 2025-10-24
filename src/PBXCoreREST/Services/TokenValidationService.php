@@ -24,7 +24,6 @@ use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use MikoPBX\Core\System\SystemMessages;
 use Phalcon\Di\DiInterface;
-use Phalcon\Encryption\Security\Random;
 use stdClass;
 
 /**
@@ -49,11 +48,10 @@ class TokenValidationService
      */
     private const array EXCLUDED_ENDPOINTS = [
         '/pbxcore/api/user-page-tracker',
-        '/pbxcore/api/users',
         '/pbxcore/api/nchan',
     ];
-    
-    private \Phalcon\Cache\CacheInterface $cache;
+
+    private \Phalcon\Cache\Adapter\AdapterInterface $cache;
 
     public function __construct(DiInterface $di)
     {
