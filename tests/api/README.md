@@ -21,9 +21,17 @@ export MIKOPBX_PASSWORD="123456789MikoPBX#1"
 
 ### 3. Run Tests
 
+⚠️ **IMPORTANT:** Some tests modify network settings (firewall, routes, DNS) and may break connectivity.
+
 ```bash
-# Run all tests
+# Run SAFE tests only (recommended)
+./run-safe-tests.sh
+
+# Run all tests including dangerous ones
 pytest -v
+
+# Run dangerous network tests only (⚠️ may break connectivity)
+./run-dangerous-tests.sh
 
 # Run specific test suite
 pytest -v setup/
@@ -34,6 +42,8 @@ pytest --cov=. --cov-report=html
 # Run in parallel
 pytest -n auto
 ```
+
+See [DANGEROUS_NETWORK_TESTS.md](DANGEROUS_NETWORK_TESTS.md) for details about network tests.
 
 ## Project Structure
 

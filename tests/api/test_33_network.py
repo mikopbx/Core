@@ -104,8 +104,12 @@ class TestNetworkConfig:
         api_client.post('network:saveConfig', restore_data)
         print(f"  Restored original ports: SIP={original_sip}, TLS={original_tls}")
 
+    @pytest.mark.dangerous_network
     def test_04_save_global_settings_in_internet_interface(self, api_client):
-        """Save hostname/domain in internet interface (not in deprecated 'settings' block)"""
+        """Save hostname/domain in internet interface (not in deprecated 'settings' block)
+
+        WARNING: This test modifies hostname, domain, gateway, DNS settings
+        """
         # Get current config
         response = api_client.get('network:getConfig')
         assert_api_success(response, "Failed to get current config")
@@ -177,8 +181,12 @@ class TestNetworkConfig:
         print(f"  Restored original values: hostname={original_hostname}, domain={original_domain}")
 
 
+@pytest.mark.dangerous_network
 class TestStaticRoutes:
-    """Tests for static network routes via network configuration"""
+    """Tests for static network routes via network configuration
+
+    WARNING: These tests create/modify/delete static routes which may affect network routing
+    """
     original_config = None
     test_route_id = None
 
@@ -332,8 +340,12 @@ class TestStaticRoutes:
         print(f"✓ Deleted static route {TestStaticRoutes.test_route_id}")
 
 
+@pytest.mark.dangerous_network
 class TestStaticRoutesValidation:
-    """Validation tests for static routes"""
+    """Validation tests for static routes
+
+    WARNING: These tests create routes with invalid data (should be rejected by validation)
+    """
 
     def test_01_validate_invalid_network_address(self, api_client):
         """Invalid network address should be rejected"""
@@ -423,8 +435,12 @@ class TestStaticRoutesValidation:
                 raise
 
 
+@pytest.mark.dangerous_network
 class TestStaticRoutesEdgeCases:
-    """Edge cases for static routes"""
+    """Edge cases for static routes
+
+    WARNING: These tests create edge case routes (default route, /32 hosts, priority 0)
+    """
 
     def test_01_empty_interface_field(self, api_client):
         """Interface field can be empty (kernel auto-selects)"""

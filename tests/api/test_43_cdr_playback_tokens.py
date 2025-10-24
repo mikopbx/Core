@@ -45,18 +45,20 @@ class TestCDRPlaybackTokens:
         response = api_client.get('cdr', params={'limit': 100, 'offset': 0})
         assert_api_success(response, "Failed to get CDR list")
 
-        data = response['data']
+        data = response.get('data', [])
         assert isinstance(data, list), "Response data should be a list"
 
         # Find first CDR with recording file
-        for record in data:
-            if record.get('recordingfile') and record.get('recording_url'):
-                TestCDRPlaybackTokens.sample_cdr_id = str(record['id'])
-                TestCDRPlaybackTokens.sample_recording_url = record['recording_url']
+        # API returns grouped data: {linkedid, records: [{id, recordingfile, playback_url}]}
+        for group in data:
+            for record in group.get('records', []):
+                if record.get('recordingfile') and record.get('playback_url'):
+                    TestCDRPlaybackTokens.sample_cdr_id = str(record['id'])
+                    TestCDRPlaybackTokens.sample_recording_url = record['playback_url']
 
-                print(f"✓ Found CDR with recording: {TestCDRPlaybackTokens.sample_cdr_id}")
-                print(f"  Recording URL: {TestCDRPlaybackTokens.sample_recording_url}")
-                return
+                    print(f"✓ Found CDR with recording: {TestCDRPlaybackTokens.sample_cdr_id}")
+                    print(f"  Recording URL: {TestCDRPlaybackTokens.sample_recording_url}")
+                    return
 
         pytest.skip(
             "No CDR records with recordings found. "
@@ -98,32 +100,28 @@ class TestCDRPlaybackTokens:
         WHY: Token-based access is the recommended secure method.
         The token provides temporary access without exposing file paths.
         """
-        if not TestCDRPlaybackTokens.sample_token:
+        if not TestCDRPlaybackTokens.sample_token or not TestCDRPlaybackTokens.sample_cdr_id:
             pytest.skip("No token available from test_02")
 
         try:
-            response = api_client.get('cdr:playback', params={
+            # Playback endpoint returns audio file (binary), not JSON - use get_raw
+            response = api_client.get_raw(f'cdr/{TestCDRPlaybackTokens.sample_cdr_id}:playback', params={
                 'token': TestCDRPlaybackTokens.sample_token
             })
 
-            assert_api_success(response, "Failed to playback with token")
+            # Check HTTP status (200 OK for successful playback)
+            assert response.status_code == 200, f"Expected HTTP 200, got {response.status_code}"
 
-            # Check if response contains file data
-            data = response.get('data', {})
-            assert data, "Response should contain file data"
+            # Check Content-Type header
+            content_type = response.headers.get('Content-Type', '')
+            assert 'audio/' in content_type, f"Expected audio/* MIME type, got {content_type}"
+
+            # Check that we got binary content
+            assert len(response.content) > 0, "Expected audio file content"
 
             print(f"✓ Token-based playback successful")
-
-            # Check for file streaming metadata
-            if 'fpassthru' in data:
-                fpassthru = data['fpassthru']
-                print(f"  Filename: {fpassthru.get('filename', 'N/A')}")
-                print(f"  Content-Type: {fpassthru.get('content_type', 'N/A')}")
-
-                # Validate file exists
-                assert fpassthru.get('filename'), "Filename should be provided"
-                assert fpassthru.get('content_type'), "Content-Type should be provided"
-                assert 'audio/' in fpassthru.get('content_type', ''), "Should be audio MIME type"
+            print(f"  Content-Type: {content_type}")
+            print(f"  File size: {len(response.content)} bytes")
 
         except Exception as e:
             if '403' in str(e):
@@ -194,32 +192,43 @@ class TestCDRPlaybackTokens:
         if not TestCDRPlaybackTokens.sample_cdr_id:
             pytest.skip("No CDR ID available")
 
-        # Get CDR record to extract recordingfile path
-        response = api_client.get(f'cdr/{TestCDRPlaybackTokens.sample_cdr_id}')
-        assert_api_success(response, "Failed to get CDR record")
+        # Get CDR list to find recording file (since GetRecordAction is not implemented)
+        list_response = api_client.get('cdr', params={'limit': 100})
+        assert_api_success(list_response, "Failed to get CDR list")
 
-        data = response['data']
-        recording_file = data.get('recordingfile')
+        # Find our CDR record in grouped data
+        recording_file = None
+        for group in list_response.get('data', []):
+            for record in group.get('records', []):
+                if str(record.get('id')) == str(TestCDRPlaybackTokens.sample_cdr_id):
+                    recording_file = record.get('recordingfile')
+                    break
+            if recording_file:
+                break
 
         if not recording_file:
             pytest.skip("No recording file in CDR record")
 
         try:
-            response = api_client.get('cdr:playback', params={
+            # Playback returns audio file (binary), not JSON - use get_raw
+            response = api_client.get_raw(f'cdr/{TestCDRPlaybackTokens.sample_cdr_id}:playback', params={
                 'view': recording_file
             })
 
-            assert_api_success(response, "Failed to playback with direct path")
+            # Check HTTP status
+            assert response.status_code == 200, f"Expected HTTP 200, got {response.status_code}"
 
-            # Check for deprecation warning
-            messages = response.get('messages', {})
-            warnings = messages.get('warning', [])
+            # Check Content-Type
+            content_type = response.headers.get('Content-Type', '')
+            assert 'audio/' in content_type, f"Expected audio/* MIME type, got {content_type}"
+
+            # Check that we got binary content
+            assert len(response.content) > 0, "Expected audio file content"
 
             print(f"✓ Legacy direct path access works")
-            if warnings:
-                print(f"  ⚠ Deprecation warning present: {warnings[0][:50]}")
-            else:
-                print(f"  Note: No deprecation warning (may be added later)")
+            print(f"  Content-Type: {content_type}")
+            print(f"  File size: {len(response.content)} bytes")
+            print(f"  Note: Deprecation warnings for direct path access are documented in API")
 
         except Exception as e:
             if '404' in str(e):
@@ -256,19 +265,27 @@ class TestCDRPlaybackTokens:
         WHY: Token TTL is extended on each access to allow multiple plays.
         Users should be able to replay recordings within 1-hour window.
         """
-        if not TestCDRPlaybackTokens.sample_token:
-            pytest.skip("No token available from test_02")
+        if not TestCDRPlaybackTokens.sample_token or not TestCDRPlaybackTokens.sample_cdr_id:
+            pytest.skip("No token or CDR ID available from previous tests")
 
         # First access (already done in test_03)
         # Second access - should still work
         try:
-            response = api_client.get('cdr:playback', params={
+            # Playback returns audio file (binary), not JSON - use get_raw
+            response = api_client.get_raw(f'cdr/{TestCDRPlaybackTokens.sample_cdr_id}:playback', params={
                 'token': TestCDRPlaybackTokens.sample_token
             })
 
-            assert_api_success(response, "Failed to reuse token")
+            # Check HTTP status
+            assert response.status_code == 200, f"Expected HTTP 200, got {response.status_code}"
+
+            # Check Content-Type
+            content_type = response.headers.get('Content-Type', '')
+            assert 'audio/' in content_type, f"Expected audio/* MIME type, got {content_type}"
+
             print(f"✓ Token is reusable (TTL extended)")
             print(f"  Token can be used multiple times within 1-hour window")
+            print(f"  Content-Type: {content_type}")
 
         except Exception as e:
             if '403' in str(e):
@@ -284,7 +301,7 @@ class TestCDRPlaybackTokens:
         response = api_client.get('cdr', params={'limit': 50})
         assert_api_success(response, "Failed to get CDR list")
 
-        data = response['data']
+        data = response.get('data', [])
         records_with_files = 0
         records_with_urls = 0
 

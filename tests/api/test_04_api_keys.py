@@ -109,7 +109,11 @@ class TestApiKeys:
             'key': generated_key,
             'description': 'Restricted API Key',
             'full_permissions': False,
-            'allowed_paths': ['/api/v3/extensions', '/api/v3/employees']
+            # OpenAPI schema defines allowed_paths as object {path: permission}, not array
+            'allowed_paths': {
+                '/api/v3/extensions': 'write',
+                '/api/v3/employees': 'read'
+            }
         }
 
         try:
@@ -119,9 +123,9 @@ class TestApiKeys:
             key_id = response['data']['id']
             self.created_ids.append(key_id)
 
-            # Verify allowed_paths in response
+            # Verify allowed_paths in response (should be object, not array)
             assert 'allowed_paths' in response['data'], "Response should include allowed_paths"
-            assert isinstance(response['data']['allowed_paths'], list), "allowed_paths should be array"
+            assert isinstance(response['data']['allowed_paths'], dict), "allowed_paths should be object (dict)"
             assert len(response['data']['allowed_paths']) == 2, "Should have 2 allowed paths"
 
             print(f"✓ Created restricted API key: {key_id}")

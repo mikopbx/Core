@@ -125,12 +125,17 @@ class MikoPBXClient:
             'Content-Type': 'application/json'
         }
 
-    def get(self, path: str, params: Optional[Dict] = None) -> Dict[str, Any]:
-        """GET request with connection retry"""
+    def get_raw(self, path: str, params: Optional[Dict] = None) -> requests.Response:
+        """
+        GET request returning raw Response object (for testing status codes, headers, etc.)
+
+        Returns:
+            requests.Response object with status_code, headers, text, json() methods
+        """
         import time
         max_attempts = 5
         base_delay = 3
-        
+
         for attempt in range(max_attempts):
             try:
                 response = self.session.get(
@@ -139,9 +144,9 @@ class MikoPBXClient:
                     headers=self._get_headers(),
                     timeout=30
                 )
-                response.raise_for_status()
-                return response.json()
-            except (requests.exceptions.ConnectionError, 
+                # Don't raise for status - let caller check status_code
+                return response
+            except (requests.exceptions.ConnectionError,
                     requests.exceptions.Timeout) as e:
                 if attempt < max_attempts - 1:
                     delay = base_delay * (2 ** attempt)
@@ -150,6 +155,12 @@ class MikoPBXClient:
                     time.sleep(delay)
                 else:
                     raise
+
+    def get(self, path: str, params: Optional[Dict] = None) -> Dict[str, Any]:
+        """GET request with connection retry, returns parsed JSON"""
+        response = self.get_raw(path, params)
+        response.raise_for_status()
+        return response.json()
 
     def post(self, path: str, data: Optional[Dict] = None) -> Dict[str, Any]:
         """POST request with connection retry"""
@@ -1244,3 +1255,30 @@ def test_uploaded_file(api_client):
         except Exception as cleanup_error:
             # Cleanup failures are non-critical
             print(f"⚠️ Failed to cleanup test file /{file_path}: {cleanup_error}")
+
+
+# ============================================================================
+# CDR Database Seeding
+# ============================================================================
+
+# ============================================================================
+# CDR Database Seeding - MOVED TO test_00a_cdr_seed.py
+# ============================================================================
+#
+# CDR seeding is now implemented as a regular test (test_00a_cdr_seed.py)
+# that runs EARLY before all CDR tests. This ensures:
+# 1. Database lock is released before other tests run
+# 2. Clear test execution order via file naming (test_00a runs after test_00 but before test_01)
+# 3. Explicit dependency chain (instead of autouse fixture)
+# 4. Better debugging and error reporting
+#
+# Test execution order:
+#   1. test_00_setup_clean_system.py (optional factory reset)
+#   2. test_00a_cdr_seed.py (CDR data population)
+#   3. test_01_auth.py and other regular tests
+#   4. test_43_cdr*.py (CDR-specific tests using seeded data)
+#
+# The cdr_test_ids fixture is now provided by test_00a_cdr_seed.py
+#
+# See: test_00a_cdr_seed.py for CDR seeding implementation
+# ============================================================================

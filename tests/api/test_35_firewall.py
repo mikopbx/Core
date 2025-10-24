@@ -249,8 +249,12 @@ class TestFirewall:
             else:
                 print(f"⚠ Unexpected error: {str(e)[:50]}")
 
+    @pytest.mark.dangerous_network
     def test_11_enable_firewall(self, api_client):
-        """Test POST /firewall:enable - Enable firewall"""
+        """Test POST /firewall:enable - Enable firewall
+
+        WARNING: This test enables firewall which may block network access to the container
+        """
         import time
         time.sleep(1.0)  # Wait longer for database locks to clear
         try:
@@ -266,8 +270,12 @@ class TestFirewall:
             else:
                 raise
 
+    @pytest.mark.dangerous_network
     def test_12_disable_firewall(self, api_client):
-        """Test POST /firewall:disable - Disable firewall"""
+        """Test POST /firewall:disable - Disable firewall
+
+        WARNING: This test disables firewall (should restore connectivity)
+        """
         try:
             response = api_client.post('firewall:disable', {})
 

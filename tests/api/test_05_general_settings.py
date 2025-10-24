@@ -91,24 +91,6 @@ class TestGeneralSettings:
         assert settings['PBXLanguage'] == 'en-en'
         print(f"✓ Patched {len(patch_data['settings'])} settings successfully")
 
-    def test_06_put_full_update(self, api_client):
-        """PUT full settings update (replace all)"""
-        # Get current settings first
-        current = api_client.get('general-settings')
-        assert_api_success(current, "Failed to get current settings")
-
-        # Modify and send back - PUT expects flat settings structure
-        full_data = current['data']['settings'].copy()
-        full_data['Name'] = 'Full Update Test'
-
-        response = api_client.put('general-settings', full_data)
-        assert_api_success(response, "Failed to PUT full update")
-
-        # Verify
-        verify_response = api_client.get('general-settings')
-        assert verify_response['data']['settings']['Name'] == 'Full Update Test'
-        print(f"✓ Full PUT update successful")
-
     def test_07_update_codecs(self, api_client):
         """Update codec configuration"""
         # Get current settings

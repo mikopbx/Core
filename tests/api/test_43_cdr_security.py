@@ -32,7 +32,7 @@ class TestCDRSQLInjectionProtection:
         Expected: Safe fallback to default sort, no data loss
         Verification: Response succeeds and pagination intact
         """
-        response = api_client.get(
+        response = api_client.get_raw(
             '/cdr',
             params={
                 'sort': 'id; DROP TABLE cdr_general; --',
@@ -48,12 +48,15 @@ class TestCDRSQLInjectionProtection:
 
         # Critical: Table must still exist (pagination works)
         assert 'data' in data, "Response missing data field"
-        assert 'pagination' in data.get('data', {}), \
+        assert 'pagination' in data, \
             "CRITICAL: Table compromised - pagination missing"
 
         # Verify no error messages about SQL syntax
-        messages = data.get('messages', {})
-        error_msgs = str(messages.get('error', []))
+        messages = data.get('messages', [])
+        if isinstance(messages, dict):
+            error_msgs = str(messages.get('error', []))
+        else:
+            error_msgs = str(messages)
         assert 'syntax' not in error_msgs.lower(), \
             "SQL syntax error suggests injection not properly handled"
 
@@ -65,7 +68,7 @@ class TestCDRSQLInjectionProtection:
         Expected: Safe fallback, no data leakage
         Verification: No sensitive fields in response
         """
-        response = api_client.get(
+        response = api_client.get_raw(
             '/cdr',
             params={
                 'sort': 'id UNION SELECT password FROM m_Users --',
@@ -80,10 +83,16 @@ class TestCDRSQLInjectionProtection:
         response_text = str(data).lower()
 
         # Critical: No sensitive data leakage
-        sensitive_fields = ['password', 'secret', 'token', 'hash']
+        # WHY: 'password', 'secret', 'token' should never appear in CDR data
+        # EXCEPT: 'playback_url', 'download_url' contain legitimate tokens (not sensitive)
+        sensitive_fields = ['password', 'sip_secret']
         for field in sensitive_fields:
-            assert field not in response_text or 'sip_secret' in response_text, \
+            assert field not in response_text, \
                 f"CRITICAL: Sensitive field '{field}' found in response!"
+
+        # WHY: 'hash' appears in 'meta.hash' (response integrity checksum) which is legitimate
+        # Only 'password_hash', 'md5_secret' etc would be security issues
+        # No need to check for hash - it's always in meta.hash which is expected
 
     def test_sort_field_sql_injection_stacked_queries(self, api_client):
         """
@@ -92,7 +101,7 @@ class TestCDRSQLInjectionProtection:
         Attack: GET /cdr?sort=id; UPDATE m_Users SET login='hacked' WHERE id=1; --
         Expected: Query ignored, safe fallback to default sort
         """
-        response = api_client.get(
+        response = api_client.get_raw(
             '/cdr',
             params={
                 'sort': "id; UPDATE m_Users SET login='hacked' WHERE id=1; --",
@@ -105,7 +114,7 @@ class TestCDRSQLInjectionProtection:
             f"Expected 200 with safe fallback, got {response.status_code}"
 
         data = response.json()
-        assert data.get('data', {}).get('data') is not None, \
+        assert data.get('data') is not None, \
             "Expected data array in response"
 
     def test_sort_field_invalid_fallback_to_default(self, api_client):
@@ -115,7 +124,7 @@ class TestCDRSQLInjectionProtection:
         Test: Non-existent field should fallback to 'id'
         Expected: Success with default sort (id)
         """
-        response = api_client.get(
+        response = api_client.get_raw(
             '/cdr',
             params={
                 'sort': 'nonexistent_malicious_field_12345',
@@ -145,7 +154,7 @@ class TestCDRSQLInjectionProtection:
         ]
 
         for field in valid_fields:
-            response = api_client.get(
+            response = api_client.get_raw(
                 '/cdr',
                 params={
                     'sort': field,
@@ -179,7 +188,7 @@ class TestCDRDateRangeLimits:
         Expected: Error or auto-correction to safe range
         Note: Current implementation may auto-correct instead of reject
         """
-        response = api_client.get(
+        response = api_client.get_raw(
             '/cdr',
             params={
                 'dateFrom': '2000-01-01',
@@ -193,7 +202,7 @@ class TestCDRDateRangeLimits:
         if response.status_code == 200:
             data = response.json()
             # If succeeded, verify it didn't process excessive data
-            pagination = data.get('data', {}).get('pagination', {})
+            pagination = data.get('pagination', {})
             total = pagination.get('total', 0)
 
             # If total is reasonable, auto-correction worked
@@ -215,7 +224,7 @@ class TestCDRDateRangeLimits:
         date_to = datetime.now()
         date_from = date_to - timedelta(days=365)
 
-        response = api_client.get(
+        response = api_client.get_raw(
             '/cdr',
             params={
                 'dateFrom': date_from.strftime('%Y-%m-%d'),
@@ -241,7 +250,7 @@ class TestCDRDateRangeLimits:
         date_to = datetime.now()
         date_from = date_to - timedelta(days=366)
 
-        response = api_client.get(
+        response = api_client.get_raw(
             '/cdr',
             params={
                 'dateFrom': date_from.strftime('%Y-%m-%d'),
@@ -254,7 +263,7 @@ class TestCDRDateRangeLimits:
         if response.status_code == 200:
             # If auto-corrected, verify reasonable data volume
             data = response.json()
-            pagination = data.get('data', {}).get('pagination', {})
+            pagination = data.get('pagination', {})
             # Should not return full 366 days of data
             assert pagination is not None, \
                 "Expected pagination data"
@@ -271,7 +280,7 @@ class TestCDRDateRangeLimits:
         Expected: Success with recent data only
         Prevents: Full table scans on massive datasets
         """
-        response = api_client.get(
+        response = api_client.get_raw(
             '/cdr',
             params={'limit': 10}
         )
@@ -280,7 +289,7 @@ class TestCDRDateRangeLimits:
             f"Expected 200, got {response.status_code}"
 
         data = response.json()
-        cdr_data = data.get('data', {}).get('data', [])
+        cdr_data = data.get('data', [])
 
         # Verify returned records are recent (within auto-applied range)
         if cdr_data:
@@ -313,7 +322,7 @@ class TestCDRParameterValidation:
         Attack: GET /cdr?limit=999999 (try to fetch entire table)
         Expected: Capped at 1000 records (max limit)
         """
-        response = api_client.get(
+        response = api_client.get_raw(
             '/cdr',
             params={'limit': 999999}
         )
@@ -322,14 +331,14 @@ class TestCDRParameterValidation:
             f"Expected 200, got {response.status_code}"
 
         data = response.json()
-        cdr_data = data.get('data', {}).get('data', [])
+        cdr_data = data.get('data', [])
 
         # Should cap at 1000
         assert len(cdr_data) <= 1000, \
             f"Returned {len(cdr_data)} records, should cap at 1000"
 
         # Verify pagination shows correct limit
-        pagination = data.get('data', {}).get('pagination', {})
+        pagination = data.get('pagination', {})
         assert pagination.get('limit', 0) <= 1000, \
             "Pagination limit should be capped at 1000"
 
@@ -340,7 +349,7 @@ class TestCDRParameterValidation:
         Test: limit=-100
         Expected: Error or safe default (not negative records)
         """
-        response = api_client.get(
+        response = api_client.get_raw(
             '/cdr',
             params={'limit': -100}
         )
@@ -348,7 +357,7 @@ class TestCDRParameterValidation:
         # Either reject or use safe default
         if response.status_code == 200:
             data = response.json()
-            cdr_data = data.get('data', {}).get('data', [])
+            cdr_data = data.get('data', [])
             # Should use safe default, not negative value
             assert len(cdr_data) >= 0, \
                 "Negative limit should not return negative records"
@@ -363,7 +372,7 @@ class TestCDRParameterValidation:
         Test: offset=-50
         Expected: Error or default to 0
         """
-        response = api_client.get(
+        response = api_client.get_raw(
             '/cdr',
             params={
                 'limit': 10,
@@ -374,7 +383,7 @@ class TestCDRParameterValidation:
         # Either reject or use safe default (0)
         if response.status_code == 200:
             data = response.json()
-            pagination = data.get('data', {}).get('pagination', {})
+            pagination = data.get('pagination', {})
             offset = pagination.get('offset', 0)
             # Should default to 0, not negative
             assert offset >= 0, \
@@ -390,7 +399,7 @@ class TestCDRParameterValidation:
         Attack: GET /cdr?search=' OR '1'='1
         Expected: Treated as literal string search, not SQL injection
         """
-        response = api_client.get(
+        response = api_client.get_raw(
             '/cdr',
             params={
                 'search': "' OR '1'='1",
@@ -413,7 +422,7 @@ class TestCDRParameterValidation:
         Test: search=%
         Expected: Escaped as literal character, not wildcard
         """
-        response = api_client.get(
+        response = api_client.get_raw(
             '/cdr',
             params={
                 'search': '%',
@@ -435,7 +444,7 @@ class TestCDRParameterValidation:
         Attack: GET /cdr?order=DESC; DROP TABLE cdr_general
         Expected: Safe fallback to valid order (ASC/DESC)
         """
-        response = api_client.get(
+        response = api_client.get_raw(
             '/cdr',
             params={
                 'sort': 'id',
@@ -450,7 +459,7 @@ class TestCDRParameterValidation:
         data = response.json()
         # Table must still exist
         assert 'data' in data, "Response should contain data"
-        assert 'pagination' in data.get('data', {}), \
+        assert 'pagination' in data, \
             "Table should still exist (pagination present)"
 
     def test_order_parameter_valid_directions(self, api_client):
@@ -463,7 +472,7 @@ class TestCDRParameterValidation:
         valid_orders = ['ASC', 'DESC', 'asc', 'desc']
 
         for order in valid_orders:
-            response = api_client.get(
+            response = api_client.get_raw(
                 '/cdr',
                 params={
                     'sort': 'id',
@@ -496,13 +505,13 @@ class TestCDRPerformanceAndDoS:
         Test: Request without limit gets reasonable default
         Expected: Not entire table, reasonable pagination
         """
-        response = api_client.get('/cdr')
+        response = api_client.get_raw('/cdr')
 
         assert response.status_code == 200, \
             f"Expected 200, got {response.status_code}"
 
         data = response.json()
-        pagination = data.get('data', {}).get('pagination', {})
+        pagination = data.get('pagination', {})
 
         # Should have pagination
         assert 'total' in pagination, "Pagination should include total"
@@ -521,7 +530,7 @@ class TestCDRPerformanceAndDoS:
         Test: Grouped results (by linkedid) should paginate correctly
         Expected: Results grouped, pagination by groups not records
         """
-        response = api_client.get(
+        response = api_client.get_raw(
             '/cdr',
             params={'limit': 10}
         )
@@ -530,7 +539,7 @@ class TestCDRPerformanceAndDoS:
             f"Expected 200, got {response.status_code}"
 
         data = response.json()
-        cdr_data = data.get('data', {}).get('data', [])
+        cdr_data = data.get('data', [])
 
         # Each group should have linkedid
         for group in cdr_data[:5]:  # Check first 5 groups

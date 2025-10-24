@@ -85,29 +85,63 @@ class TestSoundFiles:
 
     def test_05_create_sound_file_without_path(self, api_client):
         """Test POST /sound-files - Create sound file record (metadata only)"""
+        import time
+
         sound_data = {
             'name': 'Test Audio File',
             'description': 'Created by API test',
             'category': 'custom'
         }
 
-        response = api_client.post('sound-files', sound_data)
-        assert_api_success(response, "Failed to create sound file")
+        # Retry on database lock (SQLite may be locked by other operations)
+        max_attempts = 3
+        last_error = None
 
-        assert 'id' in response['data']
-        sound_id = response['data']['id']
-        self.created_ids.append(sound_id)
+        for attempt in range(max_attempts):
+            try:
+                response = api_client.post('sound-files', sound_data)
+                assert_api_success(response, "Failed to create sound file")
 
-        print(f"✓ Created sound file: {sound_id}")
-        print(f"  Name: {sound_data['name']}")
+                assert 'id' in response['data']
+                sound_id = response['data']['id']
+                self.created_ids.append(sound_id)
+
+                print(f"✓ Created sound file: {sound_id}")
+                print(f"  Name: {sound_data['name']}")
+                return  # Success, exit
+            except Exception as e:
+                last_error = e
+                if 'database is locked' in str(e).lower() and attempt < max_attempts - 1:
+                    print(f"  Database locked, retrying (attempt {attempt + 1}/{max_attempts})...")
+                    time.sleep(2)  # Wait 2 seconds before retry
+                else:
+                    raise
+
+        # If we got here, all retries failed
+        if last_error:
+            raise last_error
 
     def test_06_get_sound_file_by_id(self, api_client):
         """Test GET /sound-files/{id} - Get specific sound file"""
+        import time
+
         if not self.created_ids:
             pytest.skip("No sound files created yet")
 
         sound_id = self.created_ids[0]
-        record = assert_record_exists(api_client, 'sound-files', sound_id)
+
+        # Wait for async API processing to complete (Redis queue + worker)
+        max_attempts = 5
+        for attempt in range(max_attempts):
+            try:
+                record = assert_record_exists(api_client, 'sound-files', sound_id)
+                break
+            except Exception as e:
+                if attempt < max_attempts - 1:
+                    print(f"  Waiting for record to be available (attempt {attempt + 1}/{max_attempts})...")
+                    time.sleep(1)
+                else:
+                    raise
 
         # Verify structure
         assert record['id'] == sound_id
@@ -121,11 +155,25 @@ class TestSoundFiles:
 
     def test_07_update_sound_file(self, api_client):
         """Test PUT /sound-files/{id} - Full update"""
+        import time
+
         if not self.created_ids:
             pytest.skip("No sound files created yet")
 
         sound_id = self.created_ids[0]
-        current = assert_record_exists(api_client, 'sound-files', sound_id)
+
+        # Wait for async API processing to complete (Redis queue + worker)
+        max_attempts = 5
+        for attempt in range(max_attempts):
+            try:
+                current = assert_record_exists(api_client, 'sound-files', sound_id)
+                break
+            except Exception as e:
+                if attempt < max_attempts - 1:
+                    print(f"  Waiting for record to be available (attempt {attempt + 1}/{max_attempts})...")
+                    time.sleep(1)
+                else:
+                    raise
 
         # Update fields
         update_data = current.copy()
@@ -250,7 +298,9 @@ class TestSoundFiles:
             print(f"✓ Audio file converted to MP3")
             print(f"  Converted path: {converted_path}")
 
-            # Now create a sound file record manually
+            # Now create a sound file record manually with retry on database lock
+            import time
+
             sound_data = {
                 'name': 'API Test Sample Audio',
                 'description': 'Sample audio uploaded and converted via API test',
@@ -258,12 +308,23 @@ class TestSoundFiles:
                 'path': converted_path
             }
 
-            sound_response = api_client.post('sound-files', sound_data)
-            if sound_response.get('result'):
-                sound_id = sound_response['data']['id']
-                self.created_ids.append(sound_id)
-                print(f"  ✓ Sound file record created")
-                print(f"  Sound File ID: {sound_id}")
+            # Retry on database lock
+            max_attempts = 3
+            for attempt in range(max_attempts):
+                try:
+                    sound_response = api_client.post('sound-files', sound_data)
+                    if sound_response.get('result'):
+                        sound_id = sound_response['data']['id']
+                        self.created_ids.append(sound_id)
+                        print(f"  ✓ Sound file record created")
+                        print(f"  Sound File ID: {sound_id}")
+                    break
+                except Exception as e:
+                    if 'database is locked' in str(e).lower() and attempt < max_attempts - 1:
+                        print(f"  Database locked, retrying (attempt {attempt + 1}/{max_attempts})...")
+                        time.sleep(2)
+                    else:
+                        raise
         elif 'sound_file_id' in data:
             # Alternative: if API already created the record
             sound_id = data['sound_file_id']
