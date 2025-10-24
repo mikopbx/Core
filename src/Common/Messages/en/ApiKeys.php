@@ -125,4 +125,47 @@ return [
     'ak_UsageStatistics' => 'Usage statistics',
     'ak_ValidateNameEmpty' => 'Please specify API key name',
     'ak_YourApiKey' => 'Your API key',
+
+    // Tooltips for API key usage
+    'ak_ApiKeyUsageTooltip_header' => 'Using API Keys',
+    'ak_ApiKeyUsageTooltip_desc' => 'API keys are used to authenticate requests to the REST API',
+    'ak_ApiKeyUsageTooltip_auth_header' => 'Authentication',
+    'ak_ApiKeyUsageTooltip_auth_format' => 'Add the Authorization header to your requests:',
+    'ak_ApiKeyUsageTooltip_example_header' => 'Usage Examples',
+    'ak_ApiKeyUsageTooltip_curl_example' => 'curl -H "Authorization: Bearer YOUR_API_KEY" "http://pbx.example.com/pbxcore/api/v3/employees"',
+    'ak_ApiKeyUsageTooltip_js_example' => 'fetch("http://pbx.example.com/pbxcore/api/v3/employees", { headers: { "Authorization": "Bearer YOUR_API_KEY" } })',
+    'ak_ApiKeyUsageTooltip_php_example' => '$ch = curl_init("http://pbx.example.com/pbxcore/api/v3/employees"); curl_setopt($ch, CURLOPT_HTTPHEADER, ["Authorization: Bearer YOUR_API_KEY"]);',
+    'ak_ApiKeyUsageTooltip_warning_header' => 'Security Warning',
+    'ak_ApiKeyUsageTooltip_warning' => 'Never share your API key or store it in version control. Treat it like a password.',
+    'ak_ApiKeyUsageTooltip_note' => 'For security purposes, only the first and last 5 characters of the key are displayed.',
+
+    // OpenAPI/Swagger UI
+    'ak_ApiDocumentation' => 'API Documentation',
+    'ak_LoadingApiDocumentation' => 'Loading API documentation...',
+    'ak_OpenAPIDocumentation' => 'OpenAPI Documentation',
+    'ak_SwaggerLoadError' => 'API documentation loading error',
+    'ak_SwaggerLoadErrorDesc' => 'Failed to load API specification. Please check your connection and try again.',
+    'ak_RetryLoad' => 'Retry',
+    'ak_AuthenticationRequired' => 'Authentication required',
+    'ak_PleaseLoginFirst' => 'Please log in to access the API',
+
+    // ACL permissions messages
+    'ak_NoPermissionToModify' => 'You do not have permission to modify API keys',
+    'ak_NoPermissionToDelete' => 'You do not have permission to delete API keys',
+    'ak_NoPermissionToCreate' => 'You do not have permission to create API keys',
+
+    // Permissions selector
+    'ak_Permissions' => 'Access permissions for API endpoints',
+    'ak_PermissionsHelp' => 'Select the access level for each REST API endpoint. "Read" allows data retrieval (GET), "Read and Write" allows creating, modifying, and deleting data (POST, PUT, DELETE).',
+    'ak_SelectPermission' => 'Select permissions',
+    'ak_NoAccess' => 'No access',
+    'ak_PermissionRead' => 'Read',
+    'ak_PermissionWrite' => 'Read and Write',
+    'ak_ErrorLoadingEndpoints' => 'Failed to load the list of available API endpoints',
+    'ak_NoEndpointsAvailable' => 'No API endpoints available',
+
+    // Permissions table headers
+    'ak_PermissionTableHeaderName' => 'Resource name',
+    'ak_PermissionTableHeaderURI' => 'Endpoint URI',
+    'ak_PermissionTableHeaderAccess' => 'Access level',
 ];

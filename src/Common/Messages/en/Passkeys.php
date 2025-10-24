@@ -13,6 +13,7 @@ return [
     'pk_PasskeyNotFound' => 'Passkey not found',
     'pk_LoginMismatch' => 'Login mismatch',
     'pk_SessionBuildFailed' => 'Failed to build session parameters',
+    'pk_UserHandleRequired' => 'User handle is required for login-free authentication',
 
     // Registration errors
     'pk_SessionIdRequired' => 'Session ID is required',
@@ -70,4 +71,28 @@ return [
         'pk_LoginProcessing' => 'Signing in with Passkey...',
         'pk_LoginError' => 'Error signing in with Passkey',
         'pk_LoginNoPasskeys' => 'No registered Passkeys for this user',
+
+        // Tooltip
+        'pk_PasskeysTooltip_header' => 'Passkeys (biometric authentication)',
+        'pk_PasskeysTooltip_desc' => 'Passkeys is a modern passwordless authentication standard based on WebAuthn technology. It allows you to sign in using biometrics or hardware security keys.',
+        'pk_PasskeysTooltip_what_is' => 'What are Passkeys?',
+        'pk_PasskeysTooltip_what_is_desc' => 'Passkeys are cryptographic keys stored on your device. They replace traditional passwords with more secure technology.',
+        'pk_PasskeysTooltip_supported_methods' => 'Supported authentication methods',
+        'pk_PasskeysTooltip_method_biometric' => '📱 Biometrics: Face ID, Touch ID, Windows Hello',
+        'pk_PasskeysTooltip_method_hardware' => '🔑 Hardware keys: YubiKey, Titan Key',
+        'pk_PasskeysTooltip_method_platform' => '💻 Built-in methods: Device PIN',
+        'pk_PasskeysTooltip_advantages' => 'Advantages of using',
+        'pk_PasskeysTooltip_advantage_security' => 'Protection against phishing and data interception',
+        'pk_PasskeysTooltip_advantage_speed' => 'Fast authentication (1-2 seconds)',
+        'pk_PasskeysTooltip_advantage_no_passwords' => 'No need to remember passwords',
+        'pk_PasskeysTooltip_advantage_unique' => 'Unique keys for each website',
+        'pk_PasskeysTooltip_how_to_use' => 'How to use',
+        'pk_PasskeysTooltip_use_step_1' => 'Click "Add Passkey" in the table below',
+        'pk_PasskeysTooltip_use_step_2' => 'Follow your browser\'s instructions to register',
+        'pk_PasskeysTooltip_use_step_3' => 'Next time, use Passkey instead of password',
+        'pk_PasskeysTooltip_compatibility' => 'Compatibility',
+        'pk_PasskeysTooltip_compatibility_desc' => 'Works in modern Chrome, Safari, Edge, Firefox browsers (2023 versions and newer). WebAuthn support is required on the device.',
+        'pk_PasskeysTooltip_security' => 'Security',
+        'pk_PasskeysTooltip_security_desc' => 'Private keys never leave your device. The server stores only the public key, which is useless to attackers.',
+        'pk_PasskeysTooltip_note' => '💡 We recommend registering multiple Passkeys on different devices for backup access.',
 ];
