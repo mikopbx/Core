@@ -38,6 +38,8 @@ class TokenValidationService
 {
     private const string CACHE_KEY_PREFIX = 'bearer_tokens:';
     private const int CACHE_TTL = 300; // 5 minutes
+    private const int INVALID_TOKEN_CACHE_TTL = 60; // 1 minute for invalid tokens (DoS protection)
+    private const string INVALID_TOKEN_MARKER = 'INVALID';
     private const string LAST_USED_BUFFER_KEY = 'bearer_tokens:last_used:';
     private const int LAST_USED_SYNC_INTERVAL = 60; // Sync to DB every minute
     
@@ -51,18 +53,16 @@ class TokenValidationService
         '/pbxcore/api/nchan',
     ];
     
-    private DiInterface $di;
-    private $cache;
-    
+    private \Phalcon\Cache\CacheInterface $cache;
+
     public function __construct(DiInterface $di)
     {
-        $this->di = $di;
         $this->cache = $di->getShared(ManagedCacheProvider::SERVICE_NAME);
     }
     
     /**
      * Validate Bearer token from request
-     * 
+     *
      * @param \MikoPBX\PBXCoreREST\Http\Request $request
      * @return TokenValidationResult
      */
@@ -73,52 +73,63 @@ class TokenValidationService
             return new TokenValidationResult(false, null, 'No Bearer token provided');
         }
 
-        // Get token suffix for logging
-        $tokenSuffix = substr($providedToken, -4);
-
         // Try to get from cache first
         $cacheKey = self::CACHE_KEY_PREFIX . md5($providedToken);
         $cachedData = $this->cache->get($cacheKey);
 
+        // Check if this is a cached invalid token (DoS protection)
+        if ($cachedData === self::INVALID_TOKEN_MARKER) {
+            $tokenSuffix = substr($providedToken, -4);
+            return new TokenValidationResult(false, $tokenSuffix, 'Invalid Bearer token');
+        }
+
+        // Check if valid token is cached
         if ($cachedData !== null) {
-            return $this->validatePermissions($cachedData, $request, $tokenSuffix);
+            return $this->validatePermissions($cachedData, $request, $providedToken);
         }
 
         // Not in cache, check database
         $apiKey = $this->findTokenByHash($providedToken);
 
         if ($apiKey === null) {
+            // Cache the invalid token to prevent DoS attacks
+            $this->cache->set($cacheKey, self::INVALID_TOKEN_MARKER, self::INVALID_TOKEN_CACHE_TTL);
+
+            $tokenSuffix = substr($providedToken, -4);
             return new TokenValidationResult(false, $tokenSuffix, 'Invalid Bearer token');
         }
 
         // Cache the valid token
         $keyData = $apiKey->toArray();
         $this->cache->set($cacheKey, $keyData, self::CACHE_TTL);
-        
-        return $this->validatePermissions($keyData, $request, $tokenSuffix);
+
+        return $this->validatePermissions($keyData, $request, $providedToken);
     }
     
     /**
      * Validate permissions for authenticated Bearer token
-     * 
-     * @param array $keyData
+     *
+     * @param array<string, mixed> $keyData
      * @param \MikoPBX\PBXCoreREST\Http\Request $request
-     * @param string $tokenSuffix
+     * @param string $providedToken Full token string for suffix extraction
      * @return TokenValidationResult
      */
-    private function validatePermissions(array $keyData, $request, string $tokenSuffix): TokenValidationResult
+    private function validatePermissions(array $keyData, $request, string $providedToken): TokenValidationResult
     {
         $requestPath = $request->getURI();
 
+        // Extract token suffix for logging (computed once here)
+        $tokenSuffix = substr($providedToken, -4);
+
         // Update last used time in buffer
         $this->updateLastUsedBuffer($keyData['id']);
-        
+
         // Check network filter first (more critical)
         if (!$this->checkNetworkFilter($keyData, $request)) {
             SystemMessages::sysLogMsg(__CLASS__, "Bearer token network filter check failed", LOG_WARNING);
             return new TokenValidationResult(false, $tokenSuffix, 'Access denied: IP address not allowed');
         }
-        
+
         // Check path permissions
         if (!$this->checkPathPermissions($keyData, $request)) {
             SystemMessages::sysLogMsg(__CLASS__, "Bearer token path permissions check failed. Allowed paths: " . ($keyData['allowed_paths'] ?? 'null'), LOG_WARNING);
@@ -193,7 +204,7 @@ class TokenValidationService
      * Uses new ApiKeyPermissionChecker for granular permissions checking
      * with ActionType hierarchy (read/write) support
      *
-     * @param array $keyData
+     * @param array<string, mixed> $keyData
      * @param \MikoPBX\PBXCoreREST\Http\Request $request
      * @return bool
      */
@@ -252,8 +263,8 @@ class TokenValidationService
     
     /**
      * Check network filter restrictions
-     * 
-     * @param array $keyData
+     *
+     * @param array<string, mixed> $keyData
      * @param \MikoPBX\PBXCoreREST\Http\Request $request
      * @return bool
      */
@@ -306,41 +317,101 @@ class TokenValidationService
     }
     
     /**
-     * Check if IP is in network range
-     * 
-     * @param string $ip
-     * @param string $network
+     * Check if IP is in network range (supports both IPv4 and IPv6)
+     *
+     * @param string $ip IP address to check
+     * @param string $network Network in CIDR notation (e.g., 192.168.1.0/24 or 2001:db8::/32) or single IP
      * @return bool
      */
     private function ipInNetwork(string $ip, string $network): bool
     {
         if (strpos($network, '/') === false) {
-            // Single IP
+            // Single IP - direct comparison works for both IPv4 and IPv6
             return $ip === $network;
         }
-        
+
         list($subnet, $mask) = explode('/', $network);
-        $subnet = ip2long($subnet);
-        $ip = ip2long($ip);
-        $mask = -1 << (32 - $mask);
-        $subnet &= $mask;
-        
-        return ($ip & $mask) == $subnet;
+
+        // Detect IPv6
+        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) &&
+            filter_var($subnet, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+            return $this->ipv6InNetwork($ip, $subnet, (int)$mask);
+        }
+
+        // IPv4 handling (original logic)
+        $subnetLong = ip2long($subnet);
+        $ipLong = ip2long($ip);
+
+        // Validate that both IPs were successfully converted
+        if ($subnetLong === false || $ipLong === false) {
+            return false;
+        }
+
+        $maskLong = -1 << (32 - (int)$mask);
+        $subnetLong &= $maskLong;
+
+        return ($ipLong & $maskLong) == $subnetLong;
+    }
+
+    /**
+     * Check if IPv6 address is in network range
+     *
+     * @param string $ip IPv6 address
+     * @param string $subnet IPv6 subnet
+     * @param int $mask Prefix length (0-128)
+     * @return bool
+     */
+    private function ipv6InNetwork(string $ip, string $subnet, int $mask): bool
+    {
+        // Convert IPv6 addresses to binary representation
+        $binIp = inet_pton($ip);
+        $binSubnet = inet_pton($subnet);
+
+        if ($binIp === false || $binSubnet === false) {
+            return false;
+        }
+
+        // Calculate full bytes and remaining bits
+        $fullBytes = (int)floor($mask / 8);
+        $remainingBits = $mask % 8;
+
+        // Compare full bytes
+        if ($fullBytes > 0 && substr($binIp, 0, $fullBytes) !== substr($binSubnet, 0, $fullBytes)) {
+            return false;
+        }
+
+        // Compare remaining bits if any
+        if ($remainingBits > 0 && $fullBytes < 16) {
+            $ipByte = ord($binIp[$fullBytes]);
+            $subnetByte = ord($binSubnet[$fullBytes]);
+            $bitmask = 0xFF << (8 - $remainingBits);
+
+            if (($ipByte & $bitmask) !== ($subnetByte & $bitmask)) {
+                return false;
+            }
+        }
+
+        return true;
     }
     
     /**
-     * Clear cache for a specific Bearer token or all tokens
-     * 
-     * @param int|null $keyId
+     * Clear cache for all Bearer tokens
+     *
+     * Note: We clear all tokens because we don't track token->hash mapping.
+     * This is called when API keys are created, updated, or deleted.
+     *
      * @return void
      */
-    public static function clearCache(?int $keyId = null): void
+    public static function clearCache(): void
     {
         $di = \Phalcon\Di\Di::getDefault();
+        if ($di === null) {
+            return;
+        }
+
         $cache = $di->getShared(ManagedCacheProvider::SERVICE_NAME);
-        
-        // Clear all cached tokens (since we don't know the hash)
-        // In production, might want to track token->hash mapping
+
+        // Clear all cached tokens (both valid and invalid)
         $keys = $cache->getKeys(self::CACHE_KEY_PREFIX . '*');
         foreach ($keys as $key) {
             $cache->delete($key);
@@ -356,8 +427,17 @@ class TokenValidationResult
     private bool $valid;
     private ?string $tokenSuffix;
     private ?string $error;
+    /**
+     * @var array<string, mixed>|null
+     */
     private ?array $tokenInfo;
-    
+
+    /**
+     * @param bool $valid
+     * @param string|null $tokenSuffix
+     * @param string|null $error
+     * @param array<string, mixed>|null $tokenInfo
+     */
     public function __construct(bool $valid, ?string $tokenSuffix = null, ?string $error = null, ?array $tokenInfo = null)
     {
         $this->valid = $valid;
@@ -365,24 +445,27 @@ class TokenValidationResult
         $this->error = $error;
         $this->tokenInfo = $tokenInfo;
     }
-    
-    public function isValid(): bool 
-    { 
-        return $this->valid; 
+
+    public function isValid(): bool
+    {
+        return $this->valid;
     }
-    
-    public function getTokenSuffix(): ?string 
-    { 
-        return $this->tokenSuffix; 
+
+    public function getTokenSuffix(): ?string
+    {
+        return $this->tokenSuffix;
     }
-    
-    public function getError(): ?string 
-    { 
-        return $this->error; 
+
+    public function getError(): ?string
+    {
+        return $this->error;
     }
-    
-    public function getTokenInfo(): ?array 
-    { 
-        return $this->tokenInfo; 
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function getTokenInfo(): ?array
+    {
+        return $this->tokenInfo;
     }
 }

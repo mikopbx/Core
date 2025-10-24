@@ -25,7 +25,6 @@ use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
-    ApiParameter,
     ApiParameterRef,
     ApiResponse,
     ApiDataSchema,
@@ -49,6 +48,14 @@ use ReflectionException;
  */
 class ApiMetadataRegistry extends Injectable
 {
+    /**
+     * Pagination parameters excluded from request body
+     * WHY: These are query parameters for filtering/pagination, not resource properties
+     *
+     * @var array<int, string>
+     */
+    private const PAGINATION_PARAMS = ['limit', 'offset', 'search', 'order', 'orderWay'];
+
     /**
      * Cached metadata to avoid repeated reflection operations
      *
@@ -231,30 +238,6 @@ class ApiMetadataRegistry extends Injectable
                     'extensions' => $operation->extensions,
                     'acl' => $operation->acl,
                     'requiresId' => $operation->requiresId
-                ];
-            }
-
-            // Scan for ApiParameter attributes
-            $parameterAttributes = $method->getAttributes(ApiParameter::class);
-            foreach ($parameterAttributes as $attribute) {
-                $parameter = $attribute->newInstance();
-                $methodMetadata['parameters'][] = [
-                    'name' => $parameter->name,
-                    'type' => $parameter->type,
-                    'description' => $parameter->description,
-                    'in' => $parameter->in->value,
-                    'required' => $parameter->required,
-                    'default' => $parameter->default,
-                    'example' => $parameter->example,
-                    'enum' => $parameter->enum,
-                    'format' => $parameter->format,
-                    'minimum' => $parameter->minimum,
-                    'maximum' => $parameter->maximum,
-                    'minLength' => $parameter->minLength,
-                    'maxLength' => $parameter->maxLength,
-                    'pattern' => $parameter->pattern,
-                    'deprecated' => $parameter->deprecated,
-                    'validationRules' => $parameter->getValidationRules()
                 ];
             }
 
@@ -614,57 +597,87 @@ class ApiMetadataRegistry extends Injectable
         // Get network addresses from database
         $addresses = $this->getNetworkAddresses();
 
-        // Process local network addresses first
-        if (!empty($addresses['local'])) {
-            foreach ($addresses['local'] as $address) {
-                // Add HTTPS server
-                $httpsUrl = $httpsPort === '443'
-                    ? "https://{$address}/"
-                    : "https://{$address}:{$httpsPort}/";
-                $servers[] = [
-                    'url' => $httpsUrl,
-                    'description' => 'HTTPS (Local network)'
-                ];
-
-                // Add HTTP server only if redirect is disabled
-                if ($redirectToHttps !== '1' && !empty($httpPort)) {
-                    $httpUrl = $httpPort === '80'
-                        ? "http://{$address}/"
-                        : "http://{$address}:{$httpPort}/";
-                    $servers[] = [
-                        'url' => $httpUrl,
-                        'description' => 'HTTP (Local network)'
-                    ];
-                }
-            }
+        // WHY: Process local and external addresses using unified method to eliminate code duplication
+        // Each address generates HTTPS server + optional HTTP server (if redirect is disabled)
+        foreach ($addresses['local'] as $address) {
+            $servers = array_merge(
+                $servers,
+                $this->generateServerEntry($address, 'Local network', $httpsPort, $httpPort, $redirectToHttps)
+            );
         }
 
-        // Process external network addresses
-        if (!empty($addresses['external'])) {
-            foreach ($addresses['external'] as $address) {
-                // Add HTTPS server
-                $httpsUrl = $httpsPort === '443'
-                    ? "https://{$address}/"
-                    : "https://{$address}:{$httpsPort}/";
-                $servers[] = [
-                    'url' => $httpsUrl,
-                    'description' => 'HTTPS (External network)'
-                ];
-
-                // Add HTTP server only if redirect is disabled
-                if ($redirectToHttps !== '1' && !empty($httpPort)) {
-                    $httpUrl = $httpPort === '80'
-                        ? "http://{$address}/"
-                        : "http://{$address}:{$httpPort}/";
-                    $servers[] = [
-                        'url' => $httpUrl,
-                        'description' => 'HTTP (External network)'
-                    ];
-                }
-            }
+        foreach ($addresses['external'] as $address) {
+            $servers = array_merge(
+                $servers,
+                $this->generateServerEntry($address, 'External network', $httpsPort, $httpPort, $redirectToHttps)
+            );
         }
 
         return $servers;
+    }
+
+    /**
+     * Generate server entries for a single address
+     *
+     * WHY: Eliminate code duplication between local and external address processing
+     * Creates HTTPS server + optional HTTP server based on redirect settings
+     *
+     * @param string $address IP address or hostname
+     * @param string $type Network type description (e.g., "Local network", "External network")
+     * @param string $httpsPort HTTPS port number
+     * @param string $httpPort HTTP port number
+     * @param string $redirectToHttps Whether HTTP redirects to HTTPS ('1' or '0')
+     * @return array<int, array<string, string>> Server entries for this address
+     */
+    private function generateServerEntry(
+        string $address,
+        string $type,
+        string $httpsPort,
+        string $httpPort,
+        string $redirectToHttps
+    ): array {
+        $servers = [];
+
+        // Add HTTPS server
+        $servers[] = [
+            'url' => $this->buildServerUrl('https', $address, $httpsPort),
+            'description' => "HTTPS ({$type})"
+        ];
+
+        // WHY: Only add HTTP server if redirect to HTTPS is disabled
+        // When redirect is enabled, HTTP requests are automatically redirected to HTTPS
+        if ($redirectToHttps !== '1' && !empty($httpPort)) {
+            $servers[] = [
+                'url' => $this->buildServerUrl('http', $address, $httpPort),
+                'description' => "HTTP ({$type})"
+            ];
+        }
+
+        return $servers;
+    }
+
+    /**
+     * Build server URL with optional port
+     *
+     * WHY: Centralize URL building logic to avoid repetition
+     * Default ports (80 for HTTP, 443 for HTTPS) are omitted from URL
+     *
+     * @param string $protocol 'http' or 'https'
+     * @param string $address IP address or hostname
+     * @param string $port Port number
+     * @return string Complete server URL
+     */
+    private function buildServerUrl(string $protocol, string $address, string $port): string
+    {
+        $defaultPorts = ['https' => '443', 'http' => '80'];
+        $needsPort = $port !== ($defaultPorts[$protocol] ?? '');
+
+        return sprintf(
+            '%s://%s%s/',
+            $protocol,
+            $address,
+            $needsPort ? ":{$port}" : ''
+        );
     }
 
     /**
@@ -780,7 +793,6 @@ class ApiMetadataRegistry extends Injectable
         $paths = [];
         $basePath = $resource['resource']['path'] ?? '';
         $httpMapping = $resource['httpMapping'] ?? [];
-        $resourceName = $resource['resource']['name'] ?? '';
 
         if (empty($basePath) || empty($httpMapping)) {
             return [];
@@ -805,12 +817,12 @@ class ApiMetadataRegistry extends Injectable
             'parameters' => [$idParameterSchema]
         ];
 
-        // Extract resource name from tags for placeholder replacement
-        // Translate the tag to get the localized resource name
-        $tags = $resource['resource']['tags'] ?? [];
-        $resourceTag = !empty($tags) ? $tags[0] : '';
-        // Translate tag directly as it may contain spaces (e.g., "Call Queues")
-        $resourceName = !empty($resourceTag) ? TranslationProvider::translate($resourceTag) : '';
+        // WHY: Translate tags once per resource instead of per operation for performance
+        // Reduces translateTagsArray() calls from O(N operations) to O(1)
+        $translatedTags = $this->translateTagsArray($resource['resource']['tags'] ?? []);
+
+        // Extract resource name from first tag for placeholder replacement in responses
+        $resourceName = !empty($translatedTags) ? $translatedTags[0] : '';
 
         // Get list of custom methods to exclude from standard processing
         $customMethods = $httpMapping['custom'] ?? [];
@@ -847,7 +859,7 @@ class ApiMetadataRegistry extends Injectable
                         'summary' => $this->translateText($operationData['summary'] ?? ''),
                         'description' => $this->translateText($operationData['description'] ?? ''),
                         'operationId' => $operationData['operationId'] ?? $operationName,
-                        'tags' => $this->translateTagsArray($resource['resource']['tags'] ?? []),
+                        'tags' => $translatedTags, // WHY: Reuse cached translated tags
                         'parameters' => $this->generateParametersForOperation($parameters, $requiresId),
                         'responses' => $this->generateResponsesForOperation($responses, $resourceName, $operation['dataSchema'] ?? null),
                         'security' => $this->generateSecurityForOperation($combinedSecurity)
@@ -856,7 +868,7 @@ class ApiMetadataRegistry extends Injectable
                     // Add request body for POST/PUT/PATCH
                     if (in_array($method, ['post', 'put', 'patch'])) {
                         $bodyParameters = array_filter($parameters, function($param) {
-                            return ($param['in'] ?? '') === 'query' && !in_array($param['name'], ['limit', 'offset', 'search', 'order', 'orderWay']);
+                            return ($param['in'] ?? '') === 'query' && !in_array($param['name'], self::PAGINATION_PARAMS);
                         });
 
                         if (!empty($bodyParameters)) {
@@ -920,7 +932,7 @@ class ApiMetadataRegistry extends Injectable
                         'summary' => $this->translateText($operationData['summary'] ?? ''),
                         'description' => $this->translateText($operationData['description'] ?? ''),
                         'operationId' => $operationData['operationId'] ?? $customMethod,
-                        'tags' => $this->translateTagsArray($resource['resource']['tags'] ?? []),
+                        'tags' => $translatedTags, // WHY: Reuse cached translated tags
                         'parameters' => $openApiParameters,
                         'responses' => $this->generateResponsesForOperation($responses, $resourceName, $operation['dataSchema'] ?? null),
                         'security' => $this->generateSecurityForOperation($combinedSecurity)
@@ -931,7 +943,7 @@ class ApiMetadataRegistry extends Injectable
                 // Body parameters are those with 'in' => 'query' (non-pagination params)
                 if (in_array($httpMethod, ['post', 'put', 'patch'])) {
                     $bodyParameters = array_filter($openApiParameters, function($param) {
-                        return ($param['in'] ?? '') === 'query' && !in_array($param['name'], ['limit', 'offset', 'search', 'order', 'orderWay']);
+                        return ($param['in'] ?? '') === 'query' && !in_array($param['name'], self::PAGINATION_PARAMS);
                     });
 
                     if (!empty($bodyParameters)) {
@@ -947,16 +959,16 @@ class ApiMetadataRegistry extends Injectable
     /**
      * Extract id parameter schema from resource-level operations
      *
-     * Searches through operations to find an 'id' parameter with 'in' => 'path'
-     * and extracts its schema (pattern, example, description).
-     * If not found, returns default numeric id schema.
+     * WHY: Search for custom id parameter definition in any operation's parameters
+     * If found, use its schema (pattern, example, description) for path-level parameter
+     * Otherwise, return default numeric id schema
      *
      * @param array<string, mixed> $operations Operations metadata
      * @return array<string, mixed> OpenAPI parameter definition
      */
     private function extractIdParameterFromOperations(array $operations): array
     {
-        // Default id parameter schema (numeric)
+        // WHY: Default id parameter uses numeric pattern (most common case)
         $defaultSchema = [
             'name' => 'id',
             'in' => 'path',
@@ -969,43 +981,34 @@ class ApiMetadataRegistry extends Injectable
             ]
         ];
 
-        // Search for id parameter in resource-level operations (getRecord, update, patch, delete)
-        $resourceLevelOps = ['getRecord', 'update', 'patch', 'delete', 'copy'];
+        // WHY: Search for custom id parameter in any operation (not just resource-level)
+        // This allows any operation to define custom id schema (e.g., UUID, prefix patterns)
+        foreach ($operations as $operation) {
+            $idParams = array_filter(
+                $operation['parameters'] ?? [],
+                fn($param) => ($param['name'] ?? '') === 'id'
+            );
 
-        foreach ($operations as $operationName => $operation) {
-            if (!in_array($operationName, $resourceLevelOps)) {
-                continue;
-            }
+            if (!empty($idParams)) {
+                $param = reset($idParams);
 
-            $parameters = $operation['parameters'] ?? [];
-            foreach ($parameters as $param) {
-                if ($param['name'] === 'id') {
-                    // Found id parameter - extract custom schema from it
-                    // Even if 'in' is 'query', we'll use pattern/example for path parameter
-                    $schema = [
-                        'type' => $param['type'] ?? 'string'
-                    ];
+                // WHY: Build schema with only non-null values for cleaner OpenAPI output
+                $schema = array_filter([
+                    'type' => $param['type'] ?? 'string',
+                    'pattern' => $param['pattern'] ?? null,
+                    'example' => $param['example'] ?? null
+                ], fn($value) => $value !== null);
 
-                    // Add optional schema properties only if they exist
-                    if (!empty($param['pattern'])) {
-                        $schema['pattern'] = $param['pattern'];
-                    }
-                    if (isset($param['example'])) {
-                        $schema['example'] = $param['example'];
-                    }
-
-                    return [
-                        'name' => 'id',
-                        'in' => 'path',
-                        'required' => true,
-                        'description' => $this->translateText($param['description'] ?? 'rest_param_id_description'),
-                        'schema' => $schema
-                    ];
-                }
+                return [
+                    'name' => 'id',
+                    'in' => 'path',
+                    'required' => true,
+                    'description' => $this->translateText($param['description'] ?? 'rest_param_id_description'),
+                    'schema' => $schema
+                ];
             }
         }
 
-        // No custom id parameter found - use default
         return $defaultSchema;
     }
 
@@ -1072,31 +1075,26 @@ class ApiMetadataRegistry extends Injectable
                 continue;
             }
 
+            // WHY: Build schema using centralized method to avoid duplication
+            $schema = $this->buildParameterSchema($param);
+
+            // WHY: Extract example from schema (buildParameterSchema includes it)
+            $example = $schema['example'] ?? null;
+            unset($schema['example']); // Example goes at param level, not schema level
+
             $openApiParam = [
                 'name' => $param['name'],
                 'in' => $param['in'],
-                'description' => $this->translateText($param['description'] ?? ''),
+                'description' => $schema['description'],
                 'required' => $param['required'] ?? false,
-                'schema' => [
-                    'type' => $param['type']
-                ]
+                'schema' => $schema
             ];
 
-            // Add constraints
-            if (!empty($param['enum'])) {
-                $openApiParam['schema']['enum'] = $param['enum'];
-            }
-            if ($param['minimum'] !== null) {
-                $openApiParam['schema']['minimum'] = $param['minimum'];
-            }
-            if ($param['maximum'] !== null) {
-                $openApiParam['schema']['maximum'] = $param['maximum'];
-            }
-            if (!empty($param['pattern'])) {
-                $openApiParam['schema']['pattern'] = $param['pattern'];
-            }
-            if ($param['example'] !== null) {
-                $openApiParam['example'] = $param['example'];
+            // Remove description from schema (it's at param level)
+            unset($openApiParam['schema']['description']);
+
+            if ($example !== null) {
+                $openApiParam['example'] = $example;
             }
 
             $openApiParams[] = $openApiParam;
@@ -1280,30 +1278,26 @@ class ApiMetadataRegistry extends Injectable
 
     /**
      * Generate security for OpenAPI operation
+     *
+     * WHY: Check security rules in priority order - last rule (method-level) takes precedence
+     * This allows methods to override class-level security requirements
+     *
+     * @param array<int, array<string, mixed>> $security Security rules from class and method attributes
+     * @return array<int, array<string, array<int, string>>> OpenAPI security requirements
      */
     private function generateSecurityForOperation(array $security): array
     {
-        // If the last security rule (method-level) is PUBLIC, it overrides all previous rules (class-level)
-        // This allows methods to override class-level security requirements
+        // WHY: Method-level security (last rule) overrides class-level (earlier rules)
+        // Check last rule first for 'public' access - if found, endpoint doesn't require auth
         if (!empty($security)) {
             $lastRule = end($security);
             $lastRequirements = $lastRule['requirements'] ?? [];
             if (in_array('public', $lastRequirements)) {
-                // Public endpoints don't require authentication
-                return [];
+                return []; // Public endpoints don't require authentication
             }
         }
 
-        // First pass: check if any security rule allows public access
-        foreach ($security as $securityRule) {
-            $requirements = $securityRule['requirements'] ?? [];
-            if (in_array('public', $requirements)) {
-                // Public endpoints don't require authentication
-                return [];
-            }
-        }
-
-        // Second pass: build security requirements
+        // WHY: Build OpenAPI security requirements from non-public rules
         // Only bearerAuth is exposed in public REST API documentation
         // Session and localhost are internal authentication mechanisms not documented in OpenAPI
         $openApiSecurity = [];
@@ -1323,6 +1317,12 @@ class ApiMetadataRegistry extends Injectable
 
     /**
      * Generate request body for OpenAPI operation
+     *
+     * WHY: Convert operation parameters to OpenAPI request body schema
+     * Used for POST/PUT/PATCH operations to document request payload
+     *
+     * @param array<int, mixed> $parameters Array of parameter definitions from generateParametersForOperation
+     * @return array<string, mixed> OpenAPI request body specification
      */
     private function generateRequestBody(array $parameters): array
     {
@@ -1330,23 +1330,7 @@ class ApiMetadataRegistry extends Injectable
         $required = [];
 
         foreach ($parameters as $param) {
-            // ✨ FIX: Parameters are in OpenAPI format with schema['type']
-            // WHY: generateRequestBody receives output from generateParametersForOperation
-            $type = $param['schema']['type'] ?? $param['type'] ?? 'string';
-            $enum = $param['schema']['enum'] ?? $param['enum'] ?? null;
-            $example = $param['example'] ?? null;
-
-            $properties[$param['name']] = [
-                'type' => $type,
-                'description' => $this->translateText($param['description'] ?? '')
-            ];
-
-            if (!empty($enum)) {
-                $properties[$param['name']]['enum'] = $enum;
-            }
-            if ($example !== null) {
-                $properties[$param['name']]['example'] = $example;
-            }
+            $properties[$param['name']] = $this->buildParameterSchema($param);
 
             if ($param['required'] ?? false) {
                 $required[] = $param['name'];
@@ -1365,6 +1349,41 @@ class ApiMetadataRegistry extends Injectable
                 ]
             ]
         ];
+    }
+
+    /**
+     * Build OpenAPI schema object from parameter definition
+     *
+     * WHY: Centralize schema building logic to eliminate duplication
+     * Handles both raw parameter format and OpenAPI-transformed format
+     *
+     * @param array<string, mixed> $param Parameter definition
+     * @return array<string, mixed> OpenAPI schema with type, enum, example, etc.
+     */
+    private function buildParameterSchema(array $param): array
+    {
+        // WHY: Support both raw format (type) and OpenAPI format (schema['type'])
+        // generateRequestBody receives OpenAPI-transformed params from generateParametersForOperation
+        $schema = [
+            'type' => $param['schema']['type'] ?? $param['type'] ?? 'string',
+            'description' => $this->translateText($param['description'] ?? '')
+        ];
+
+        // WHY: Add optional constraints only if present for cleaner output
+        $constraints = ['enum', 'pattern', 'minimum', 'maximum', 'minLength', 'maxLength', 'format'];
+        foreach ($constraints as $constraint) {
+            $value = $param['schema'][$constraint] ?? $param[$constraint] ?? null;
+            if ($value !== null && $value !== '') {
+                $schema[$constraint] = $value;
+            }
+        }
+
+        // WHY: Example is at top level in OpenAPI, not inside schema
+        if (isset($param['example']) && $param['example'] !== null) {
+            $schema['example'] = $param['example'];
+        }
+
+        return $schema;
     }
 
     /**

@@ -36,6 +36,11 @@ use MikoPBX\PBXCoreREST\Attributes\ActionType;
 class ApiKeyPermissionChecker
 {
     /**
+     * Cache for logging availability check
+     * Null = not yet checked, true = available, false = not available
+     */
+    private ?bool $loggingAvailable = null;
+    /**
      * Check if API Key has permission to access the requested resource
      *
      * Permission checking logic:
@@ -73,7 +78,6 @@ class ApiKeyPermissionChecker
     ): bool {
         // STEP 1: Check full permissions flag
         // WHY: If API Key has full permissions, no need to check details
-        // @phpstan-ignore-next-line - Allow accessing properties from ApiKeys or test mock objects
         if ($apiKey->full_permissions === '1') {
             $this->logDebug($apiKey, $requestPath, $httpMethod, true, 'full_permissions=1');
             return true;
@@ -81,7 +85,6 @@ class ApiKeyPermissionChecker
 
         // STEP 2: Parse allowed_paths JSON
         // WHY: Extract path → action mapping from JSON field
-        // @phpstan-ignore-next-line - Allow accessing properties from ApiKeys or test mock objects
         $permissions = $this->parseAllowedPaths($apiKey->allowed_paths);
         if (empty($permissions)) {
             $this->logDebug($apiKey, $requestPath, $httpMethod, false, 'empty permissions');
@@ -90,9 +93,7 @@ class ApiKeyPermissionChecker
 
         // STEP 3: Normalize request path
         // WHY: Ensure consistent path format for comparison
-        // Remove /pbxcore prefix if present (full path vs API path)
         $normalizedPath = $this->normalizePath($requestPath);
-        $normalizedPath = preg_replace('#^/pbxcore#', '', $normalizedPath);
 
         // STEP 4: Convert to base resource path
         // WHY: Permissions are checked at resource level, not individual records
@@ -163,6 +164,7 @@ class ApiKeyPermissionChecker
      *
      * Normalization rules:
      * - Remove query parameters: /api/v3/ext?page=1 → /api/v3/ext
+     * - Remove /pbxcore prefix: /pbxcore/api/v3/ext → /api/v3/ext
      * - Remove trailing slash: /api/v3/ext/ → /api/v3/ext
      * - Keep leading slash
      *
@@ -173,6 +175,9 @@ class ApiKeyPermissionChecker
     {
         // Remove query parameters
         $path = explode('?', $path)[0];
+
+        // Remove /pbxcore prefix if present (full path vs API path)
+        $path = preg_replace('#^/pbxcore#', '', $path);
 
         // Remove trailing slash
         $path = rtrim($path, '/');
@@ -241,35 +246,52 @@ class ApiKeyPermissionChecker
      * Check if a path segment looks like a resource ID rather than a resource name
      *
      * Resource IDs typically:
-     * - Contain digits
-     * - Have uppercase prefixes (SIP-, IAX-, CONFERENCE-)
-     * - Are UUIDs or similar
+     * - Pure numeric: 123, 456
+     * - Prefixed IDs: SIP-201, IAX-100, EXTENSION-123
+     * - UUIDs: 550e8400-e29b-41d4-a716-446655440000
+     * - Mixed starting with digit: 123abc
      *
      * Resource names are:
-     * - Lowercase kebab-case (extensions, call-queues)
-     * - No digits
+     * - Lowercase kebab-case: extensions, call-queues, incoming-routes
+     * - CamelCase or PascalCase without numbers: IvrMenu, SIPProviders
+     * - Short codes: api, v3, pbx
      *
      * @param string $segment Path segment to check
      * @return bool True if looks like ID
      */
     private function looksLikeId(string $segment): bool
     {
-        // If segment is all digits, it's definitely an ID
+        // Pure numeric ID (123, 456)
         if (ctype_digit($segment)) {
             return true;
         }
 
-        // If segment contains uppercase letters (like SIP-201), likely an ID
-        if (preg_match('/[A-Z]/', $segment)) {
+        // UUID pattern (8-4-4-4-12)
+        if (preg_match('/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i', $segment)) {
             return true;
         }
 
-        // If segment contains digits mixed with other chars (like extension-123), likely an ID
-        if (preg_match('/\d/', $segment)) {
+        // MikoPBX prefixed ID pattern: UPPERCASE-digits
+        // Examples: SIP-201, IAX-100, EXTENSION-123, CONFERENCE-ROOM-1
+        // Must have at least one uppercase letter, a hyphen, and end with digits
+        if (preg_match('/^[A-Z]+-.*\d+$/', $segment)) {
             return true;
         }
 
-        // Otherwise it's probably a resource name
+        // Mixed alphanumeric starting with digit (unlikely resource name)
+        // Examples: 123abc, 456def
+        if (preg_match('/^\d+[a-zA-Z]/', $segment)) {
+            return true;
+        }
+
+        // Lowercase with embedded numbers (user-123, extension-456)
+        // Resource names don't typically have numbers
+        if (preg_match('/^[a-z]+-\d+/', $segment)) {
+            return true;
+        }
+
+        // Otherwise it's a resource name
+        // Examples: extensions, call-queues, api, v3, SIPProviders, IvrMenu
         return false;
     }
 
@@ -294,6 +316,39 @@ class ApiKeyPermissionChecker
     }
 
     /**
+     * Check if logging is available (cached for performance)
+     *
+     * Checks if SystemMessages class exists and DI container is initialized.
+     * Result is cached to avoid repeated checks during multiple permission checks.
+     *
+     * @return bool True if logging is available
+     */
+    private function isLoggingAvailable(): bool
+    {
+        // Return cached result if already checked
+        if ($this->loggingAvailable !== null) {
+            return $this->loggingAvailable;
+        }
+
+        // Check if SystemMessages class exists
+        if (!class_exists(\MikoPBX\Core\System\SystemMessages::class)) {
+            $this->loggingAvailable = false;
+            return false;
+        }
+
+        // Check if DI container is available
+        try {
+            $di = \Phalcon\Di\Di::getDefault();
+            $this->loggingAvailable = ($di !== null);
+            return $this->loggingAvailable;
+        } catch (\Throwable $e) {
+            // DI not available in test environment
+            $this->loggingAvailable = false;
+            return false;
+        }
+    }
+
+    /**
      * Log permission check for debugging
      *
      * Logs to system log if SystemMessages class is available
@@ -312,20 +367,8 @@ class ApiKeyPermissionChecker
         bool $allowed,
         string $reason
     ): void {
-        // Only log if SystemMessages is available and DI is initialized
-        // In unit tests, DI may not be initialized
-        if (!class_exists(\MikoPBX\Core\System\SystemMessages::class)) {
-            return;
-        }
-
-        // Check if DI container is available
-        try {
-            $di = \Phalcon\Di\Di::getDefault();
-            if ($di === null) {
-                return;
-            }
-        } catch (\Throwable $e) {
-            // DI not available in test environment
+        // Early return if logging is not available
+        if (!$this->isLoggingAvailable()) {
             return;
         }
 

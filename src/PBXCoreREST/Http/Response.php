@@ -36,39 +36,35 @@ use function sha1;
  */
 class Response extends PhResponse
 {
+    // HTTP Success codes
     public const int OK = 200;
     public const int CREATED = 201;
     public const int ACCEPTED = 202;
-    public const int NO_CONTENT = 204;
-    public const int MOVED_PERMANENTLY = 301;
-    public const int FOUND = 302;
-    public const int TEMPORARY_REDIRECT = 307;
-    public const int PERMANENTLY_REDIRECT = 308;
+
+    // HTTP Client Error codes
     public const int BAD_REQUEST = 400;
     public const int UNAUTHORIZED = 401;
     public const int FORBIDDEN = 403;
     public const int NOT_FOUND = 404;
     public const int CONFLICT = 409;
+
+    // HTTP Server Error codes
     public const int INTERNAL_SERVER_ERROR = 500;
-    public const int NOT_IMPLEMENTED = 501;
-    public const int BAD_GATEWAY = 502;
+    /**
+     * HTTP status code descriptions for getHttpCodeDescription() method.
+     * Only includes codes that are actively used in the codebase.
+     * @var array<int, string>
+     */
     private array $codes = [
         200 => 'OK',
         201 => 'Created',
         202 => 'Accepted',
-        204 => 'No Content',
-        301 => 'Moved Permanently',
-        302 => 'Found',
-        307 => 'Temporary Redirect',
-        308 => 'Permanent Redirect',
         400 => 'Bad Request',
         401 => 'Unauthorized',
         403 => 'Forbidden',
         404 => 'Not Found',
         409 => 'Conflict',
         500 => 'Internal Server Error',
-        501 => 'Not Implemented',
-        502 => 'Bad Gateway',
     ];
 
     /**
@@ -93,14 +89,14 @@ class Response extends PhResponse
      */
     public function send(): ResponseInterface
     {
-        $content   = $this->getContent() ?? '';
+        $content   = $this->getContent() ?: '';
         $timestamp = date('c');
         $hash      = sha1($timestamp . $content);
         $eTag      = sha1($content);
 
-        $content = json_decode($content, true);
-        if (json_last_error() !== JSON_ERROR_NONE || !is_array($content)) {
-            $content = [];
+        $decodedContent = json_decode($content, true);
+        if (json_last_error() !== JSON_ERROR_NONE || !is_array($decodedContent)) {
+            $decodedContent = [];
         }
         $jsonapi = [
             'jsonapi' => [
@@ -117,13 +113,31 @@ class Response extends PhResponse
         /**
          * Join the array again
          */
-        $data = array_merge($jsonapi, $content, $meta);
+        $data = array_merge($jsonapi, $decodedContent, $meta);
         $this
             ->setHeader('E-Tag', $eTag)
             ->setJsonContent($data);
 
 
         return parent::send();
+    }
+
+    /**
+     * Build error payload structure.
+     *
+     * @param array<int, string> $errorMessages Array of error messages
+     * @return array<string, mixed> Error payload structure
+     */
+    private function buildErrorPayload(array $errorMessages): array
+    {
+        return [
+            'result' => false,
+            'data' => [],
+            'messages' => ['error' => $errorMessages],
+            'function' => '',
+            'processor' => '',
+            'pid' => getmypid()
+        ];
     }
 
     /**
@@ -135,15 +149,7 @@ class Response extends PhResponse
      */
     public function setPayloadError(string $detail = '', int $httpCode = 400): Response
     {
-        // Unified format compatible with VBX API Result structure
-        $this->setJsonContent([
-            'result' => false,
-            'data' => [],
-            'messages' => ['error' => [$detail]],
-            'function' => '',
-            'processor' => '',
-            'pid' => getmypid()
-        ]);
+        $this->setJsonContent($this->buildErrorPayload([$detail]));
         $this->setStatusCode($httpCode);
 
         return $this;
@@ -153,24 +159,18 @@ class Response extends PhResponse
      * Traverse the errors collection and set the errors in the payload.
      *
      * @param Messages $errors
+     * @param int $httpCode HTTP status code (default 400 Bad Request)
      * @return Response
      */
-    public function setPayloadErrors(Messages $errors): Response
+    public function setPayloadErrors(Messages $errors, int $httpCode = 400): Response
     {
         $errorMessages = [];
         foreach ($errors as $error) {
             $errorMessages[] = $error->getMessage();
         }
 
-        // Unified format compatible with VBX API Result structure
-        $this->setJsonContent([
-            'result' => false,
-            'data' => [],
-            'messages' => ['error' => $errorMessages],
-            'function' => '',
-            'processor' => '',
-            'pid' => getmypid()
-        ]);
+        $this->setJsonContent($this->buildErrorPayload($errorMessages));
+        $this->setStatusCode($httpCode);
 
         return $this;
     }
@@ -178,7 +178,7 @@ class Response extends PhResponse
     /**
      * Set the payload code as Success.
      *
-     * @param array|string|null $content Response content
+     * @param array<string, mixed>|string|null $content Response content
      * @param int $httpCode HTTP status code (default 200 OK)
      * @return Response
      */

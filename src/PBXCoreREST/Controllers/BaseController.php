@@ -326,7 +326,7 @@ class BaseController extends Controller
         $requestMessage['httpMethod'] = $this->request->getMethod();
 
         // Pass authentication context for WebAuthn and other security features
-        if ($this->request->isBearerTokenRequest()) {
+        if ($this->request->hasBearerToken()) {
             // Get origin for WebAuthn and other security features
             $origin = $this->request->getScheme() . '://' . $this->request->getHttpHost();
 

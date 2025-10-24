@@ -58,38 +58,4 @@ enum SecurityType: string
             self::PUBLIC => 'Public access - no authentication required for anyone'
         };
     }
-
-    /**
-     * Check if this security type requires authentication
-     */
-    public function requiresAuthentication(): bool
-    {
-        return match($this) {
-            self::LOCALHOST, self::PUBLIC => false,
-            self::BEARER_TOKEN => true
-        };
-    }
-
-    /**
-     * Check if this security type supports resource:action permissions
-     */
-    public function supportsResourcePermissions(): bool
-    {
-        return match($this) {
-            self::BEARER_TOKEN => true,
-            self::LOCALHOST, self::PUBLIC => false
-        };
-    }
-
-    /**
-     * Get the priority order for security type checking (higher = checked first)
-     */
-    public function getPriority(): int
-    {
-        return match($this) {
-            self::PUBLIC => 1,       // Check public first
-            self::LOCALHOST => 2,    // Then localhost (internal)
-            self::BEARER_TOKEN => 3  // Then Bearer token
-        };
-    }
 }

@@ -42,7 +42,7 @@ class ApiOperation
      * @param array<string> $tags Tags for this specific operation (overrides resource tags)
      * @param array<string> $security Security requirements for this operation
      * @param bool $deprecated Whether this operation is deprecated
-     * @param array<ApiParameter> $parameters Parameters for this operation
+     * @param array<string, mixed> $parameters Parameters for this operation (raw array format)
      * @param array<ApiResponse> $responses Possible responses
      * @param array<string, mixed> $requestBody Request body schema
      * @param array<string, mixed> $extensions Custom OpenAPI extensions
@@ -96,7 +96,7 @@ class ApiOperation
         }
 
         if (!empty($this->parameters)) {
-            $result['parameters'] = array_map(fn($param) => $param->toOpenApi(), $this->parameters);
+            $result['parameters'] = $this->parameters;
         }
 
         if (!empty($this->responses)) {

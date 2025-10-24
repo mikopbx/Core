@@ -96,20 +96,4 @@ enum ActionType: string
             self::READ => [self::READ]
         };
     }
-
-    /**
-     * Compare action types for hierarchy sorting
-     * Returns negative if $this < $other, positive if $this > $other, 0 if equal
-     */
-    public function compare(ActionType $other): int
-    {
-        $hierarchy = [
-            'read' => 1,
-            'write' => 2,
-            'sensitive' => 3,
-            'admin' => 4
-        ];
-
-        return $hierarchy[$this->value] <=> $hierarchy[$other->value];
-    }
 }

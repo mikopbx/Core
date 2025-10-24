@@ -37,8 +37,17 @@ use MikoPBX\PBXCoreREST\Attributes\{
 /**
  * RESTful controller for extensions management (v3 API)
  *
- * Comprehensive extensions management following Google API Design Guide patterns.
- * Implements full CRUD operations plus custom methods with automatic OpenAPI generation.
+ * ⚠️ IMPORTANT: Extensions are READ-ONLY via this API
+ *
+ * Extensions are managed through other entities:
+ * - CREATE: Use /pbxcore/api/v3/employees (creates User + Extension + Sip)
+ * - UPDATE: Use /pbxcore/api/v3/employees/{id} (updates associated extensions)
+ * - DELETE: Use /pbxcore/api/v3/employees/{id} (cascades to extensions)
+ *
+ * This API provides:
+ * - READ operations: getList, getRecord
+ * - Utility methods: available (check if number is free), getForSelect (dropdown data)
+ * - Representation methods: getPhonesRepresent, getPhoneRepresent (HTML representation)
  *
  * @package MikoPBX\PBXCoreREST\Controllers\Extensions
  *
@@ -54,15 +63,12 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ResourceSecurity('extensions', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
 #[HttpMapping(
     mapping: [
-        'GET' => ['getList', 'getRecord', 'getDefault', 'getForSelect'],
-        'POST' => ['create', 'available', 'getPhonesRepresent', 'getPhoneRepresent'],
-        'PUT' => ['update'],
-        'PATCH' => ['patch'],
-        'DELETE' => ['delete']
+        'GET' => ['getList', 'getRecord', 'getForSelect'],
+        'POST' => ['available', 'getPhonesRepresent', 'getPhoneRepresent']
     ],
-    resourceLevelMethods: ['getRecord', 'update', 'patch', 'delete', 'getPhoneRepresent'],
-    collectionLevelMethods: ['getList', 'create', 'available', 'getPhonesRepresent'],
-    customMethods: ['getDefault', 'getForSelect', 'available', 'getPhonesRepresent', 'getPhoneRepresent'],
+    resourceLevelMethods: ['getRecord', 'getPhoneRepresent'],
+    collectionLevelMethods: ['getList', 'available', 'getPhonesRepresent'],
+    customMethods: ['getForSelect', 'available', 'getPhonesRepresent', 'getPhoneRepresent'],
     idPattern: '[0-9]{2,8}'
 )]
 class RestController extends BaseRestController
@@ -117,139 +123,12 @@ class RestController extends BaseRestController
         description: 'rest_ext_GetRecordDesc',
         operationId: 'getExtensionByNumber'
     )]
-    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]{2,8}$', example: '201')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]{2,8}$', example: '201', description: 'rest_ext_id')]
     #[ApiResponse(200, 'rest_response_200_get')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
     #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
     public function getRecord(string $id): void
-    {
-        // Implementation handled by BaseRestController
-    }
-
-    /**
-     * Create a new extension
-     *
-     * @route POST /pbxcore/api/v3/extensions
-     */
-    #[ApiDataSchema(
-        schemaClass: DataStructure::class,
-        type: 'detail'
-    )]
-    #[ApiOperation(
-        summary: 'rest_ext_Create',
-        description: 'rest_ext_CreateDesc',
-        operationId: 'createExtension'
-    )]
-    #[ApiParameterRef('number', required: true)]
-    #[ApiParameterRef('type', required: true)]
-    #[ApiParameterRef('callerid')]
-    #[ApiParameterRef('userid')]
-    #[ApiResponse(201, 'rest_response_201_created')]
-    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
-    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
-    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
-    #[ApiResponse(409, 'rest_response_409_conflict', 'PBXApiResult')]
-    public function create(): void
-    {
-        // Implementation handled by BaseRestController
-    }
-
-    /**
-     * Update an existing extension (full replacement)
-     *
-     * @route PUT /pbxcore/api/v3/extensions/{id}
-     */
-    #[ApiDataSchema(
-        schemaClass: DataStructure::class,
-        type: 'detail'
-    )]
-    #[ApiOperation(
-        summary: 'rest_ext_Update',
-        description: 'rest_ext_UpdateDesc',
-        operationId: 'updateExtension'
-    )]
-    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]{2,8}$', example: '201')]
-    #[ApiParameterRef('type', required: true)]
-    #[ApiParameterRef('callerid')]
-    #[ApiResponse(200, 'rest_response_200_updated')]
-    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
-    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
-    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
-    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
-    #[ApiResponse(409, 'rest_response_409_conflict', 'PBXApiResult')]
-    public function update(string $id): void
-    {
-        // Implementation handled by BaseRestController
-    }
-
-    /**
-     * Partially update an existing extension
-     *
-     * @route PATCH /pbxcore/api/v3/extensions/{id}
-     */
-    #[ApiDataSchema(
-        schemaClass: DataStructure::class,
-        type: 'detail'
-    )]
-    #[ApiOperation(
-        summary: 'rest_ext_Patch',
-        description: 'rest_ext_PatchDesc',
-        operationId: 'patchExtension'
-    )]
-    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]{2,8}$', example: '201')]
-    #[ApiParameterRef('callerid')]
-    #[ApiParameterRef('type')]
-    #[ApiResponse(200, 'rest_response_200_patched')]
-    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
-    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
-    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
-    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
-    public function patch(string $id): void
-    {
-        // Implementation handled by BaseRestController
-    }
-
-    /**
-     * Delete an extension
-     *
-     * @route DELETE /pbxcore/api/v3/extensions/{id}
-     */
-    #[ApiOperation(
-        summary: 'rest_ext_Delete',
-        description: 'rest_ext_DeleteDesc',
-        operationId: 'deleteExtension'
-    )]
-    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]{2,8}$', example: '201')]
-    #[ApiResponse(200, 'rest_response_200_deleted')]
-    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
-    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
-    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
-    #[ApiResponse(409, 'rest_response_409_conflict', 'PBXApiResult')]
-    public function delete(string $id): void
-    {
-        // Implementation handled by BaseRestController
-    }
-
-
-    /**
-     * Get default template for new extension
-     *
-     * @route GET /pbxcore/api/v3/extensions:getDefault
-     */
-    #[ApiDataSchema(
-        schemaClass: DataStructure::class,
-        type: 'detail'
-    )]
-    #[ApiOperation(
-        summary: 'rest_ext_GetDefault',
-        description: 'rest_ext_GetDefaultDesc',
-        operationId: 'getExtensionDefault'
-    )]
-    #[ApiResponse(200, 'rest_response_200_default')]
-    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
-    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
-    public function getDefault(): void
     {
         // Implementation handled by BaseRestController
     }
@@ -322,7 +201,7 @@ class RestController extends BaseRestController
         description: 'rest_ext_GetPhoneRepresentDesc',
         operationId: 'getPhoneRepresent'
     )]
-    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]{2,8}$', example: '201')]
+    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]{2,8}$', example: '201', description: 'rest_ext_id')]
     #[ApiResponse(200, 'rest_response_200_get')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]

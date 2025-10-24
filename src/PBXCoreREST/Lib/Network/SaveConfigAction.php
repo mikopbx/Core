@@ -269,6 +269,18 @@ class SaveConfigAction
         $messages = [];
         $isDocker = Util::isDocker();
 
+        // WHY: In Docker mode, auto-detect internet interface if not provided
+        // Docker has single managed interface, so we use the first/only interface as internet interface
+        if ($isDocker && !isset($data['internet_interface'])) {
+            $internetInterface = LanInterfaces::findFirst(['conditions' => 'internet = 1']);
+            if ($internetInterface) {
+                $data['internet_interface'] = (string)$internetInterface->id;
+            } elseif ($networkInterfaces->count() > 0) {
+                // Fallback: use first interface if no internet interface marked
+                $data['internet_interface'] = (string)$networkInterfaces[0]->id;
+            }
+        }
+
         // Collect interfaces to delete from form
         $interfacesToDelete = [];
         foreach ($data as $key => $value) {

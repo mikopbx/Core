@@ -38,7 +38,7 @@ class Request extends PhRequest
 {
     /**
      * Bearer token information stored after successful validation (API Keys)
-     * @var array|null
+     * @var array<string, mixed>|null
      */
     private ?array $tokenInfo = null;
 
@@ -63,7 +63,7 @@ class Request extends PhRequest
      */
     public function getAsyncRequestChannelId(): string
     {
-        return $this->getHeader('X-Async-Response-Channel-Id') ?? '';
+        return $this->getHeader('X-Async-Response-Channel-Id') ?: '';
     }
 
     /**
@@ -96,12 +96,14 @@ class Request extends PhRequest
     }
     /**
      * Check if the request is coming from localhost.
+     * Supports both IPv4 (127.0.0.1) and IPv6 (::1) localhost addresses.
      *
      * @return bool
      */
     public function isLocalHostRequest(): bool
     {
-        return ($_SERVER['REMOTE_ADDR'] === '127.0.0.1');
+        $clientAddress = $this->getClientAddress();
+        return in_array($clientAddress, ['127.0.0.1', '::1'], true);
     }
 
     /**
@@ -110,7 +112,7 @@ class Request extends PhRequest
      */
     public function getRequestTimeout(): int
     {
-        return intval($this->getHeader('X-Processor-Timeout')) ?? 10;
+        return intval($this->getHeader('X-Processor-Timeout')) ?: 10;
     }
 
     /**
@@ -119,7 +121,7 @@ class Request extends PhRequest
      */
     public function getRequestPriority(): int
     {
-        return intval($this->getHeader('X-Processor-Priority')) ?? 10;
+        return intval($this->getHeader('X-Processor-Priority')) ?: 10;
     }
 
     /**
@@ -128,7 +130,7 @@ class Request extends PhRequest
      *
      * Query parameters take precedence over body data to allow parameter override
      *
-     * @return array The parsed request data with query parameters merged
+     * @return array<string, mixed> The parsed request data with query parameters merged
      */
     public function getData(): array
     {
@@ -160,14 +162,13 @@ class Request extends PhRequest
                     $bodyData = $this->getPatch();
                     break;
                 case 'DELETE':
-                    // DELETE can have body data
-                    $postData = $this->getPost();
-                    if (!empty($postData)) {
-                        $bodyData = $postData;
-                    } else {
-                        // Fallback to parsing raw body
-                        parse_str($this->getRawBody(), $data);
+                    // DELETE can have body data (though rarely used per HTTP spec)
+                    $rawBody = $this->getRawBody();
+                    if (!empty($rawBody)) {
+                        parse_str($rawBody, $data);
                         $bodyData = $data ?: [];
+                    } else {
+                        $bodyData = [];
                     }
                     break;
                 case 'GET':
@@ -206,7 +207,7 @@ class Request extends PhRequest
     
     /**
      * Get Bearer token from Authorization header
-     * 
+     *
      * @return string|null
      */
     public function getBearerToken(): ?string
@@ -217,21 +218,11 @@ class Request extends PhRequest
         }
         return null;
     }
-    
-    /**
-     * Check if this is a Bearer token authenticated request
-     * 
-     * @return bool
-     */
-    public function isBearerTokenRequest(): bool
-    {
-        return $this->hasBearerToken();
-    }
-    
+
     /**
      * Store Bearer token info for logging/context
-     * 
-     * @param array $info
+     *
+     * @param array<string, mixed> $info
      * @return void
      */
     public function setTokenInfo(array $info): void
@@ -242,7 +233,7 @@ class Request extends PhRequest
     /**
      * Get Bearer token info
      *
-     * @return array|null
+     * @return array<string, mixed>|null
      */
     public function getTokenInfo(): ?array
     {
@@ -282,10 +273,10 @@ class Request extends PhRequest
      *
      * Role is extracted from JWT token payload (set by AuthenticationMiddleware during token validation)
      *
-     * @param $api
+     * @param Micro $api
      * @return bool
      */
-    public function isAllowedAction($api): bool
+    public function isAllowedAction(Micro $api): bool
     {
         $pattern = $api->router->getMatches()[0] ?? '';
         $partsOfPattern = explode('/', $pattern);

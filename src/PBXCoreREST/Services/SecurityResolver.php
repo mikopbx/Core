@@ -51,6 +51,13 @@ class SecurityResolver
      */
     private array $methodNameOverrides;
 
+    /**
+     * Cache for security context to avoid repeated reflection calls
+     *
+     * @var array<string, array{resourceSecurity: ResourceSecurity, actionType: ActionType}|null>
+     */
+    private array $securityContextCache = [];
+
     public function __construct()
     {
         $this->httpMethodMapping = [
@@ -107,6 +114,28 @@ class SecurityResolver
             'fetch' => ActionType::READ,
             'load' => ActionType::READ,
         ];
+    }
+
+    /**
+     * Get security context (ResourceSecurity + ActionType) for a method
+     * Uses caching to avoid repeated reflection calls
+     *
+     * @return array{resourceSecurity: ResourceSecurity, actionType: ActionType}|null
+     */
+    private function getSecurityContext(ReflectionMethod $method): ?array
+    {
+        $key = $method->getDeclaringClass()->getName() . '::' . $method->getName();
+
+        if (!isset($this->securityContextCache[$key])) {
+            $resourceSecurity = $this->getResourceSecurity($method);
+
+            $this->securityContextCache[$key] = $resourceSecurity ? [
+                'resourceSecurity' => $resourceSecurity,
+                'actionType' => $this->resolveActionType($method)
+            ] : null;
+        }
+
+        return $this->securityContextCache[$key];
     }
 
     /**
@@ -217,13 +246,10 @@ class SecurityResolver
      */
     public function getMethodPermissions(ReflectionMethod $method): array
     {
-        $resourceSecurity = $this->getResourceSecurity($method);
-        if (!$resourceSecurity) {
-            return [];
-        }
-
-        $actionType = $this->resolveActionType($method);
-        return $resourceSecurity->getAllPermissions($actionType);
+        $context = $this->getSecurityContext($method);
+        return $context
+            ? $context['resourceSecurity']->getAllPermissions($context['actionType'])
+            : [];
     }
 
     /**
@@ -231,45 +257,43 @@ class SecurityResolver
      */
     public function getMethodPermission(ReflectionMethod $method): ?string
     {
-        $resourceSecurity = $this->getResourceSecurity($method);
-        if (!$resourceSecurity) {
-            return null;
-        }
-
-        $actionType = $this->resolveActionType($method);
-        return $resourceSecurity->getPermission($actionType);
+        $context = $this->getSecurityContext($method);
+        return $context
+            ? $context['resourceSecurity']->getPermission($context['actionType'])
+            : null;
     }
 
     /**
-     * Check if method allows specific permission
+     * Iterate over public instance methods of a controller class
+     *
+     * @param class-string $controllerClass
+     * @param callable(ReflectionMethod): void $callback
      */
-    public function methodAllowsPermission(ReflectionMethod $method, string $permission): bool
+    private function iterateControllerMethods(string $controllerClass, callable $callback): void
     {
-        $resourceSecurity = $this->getResourceSecurity($method);
-        if (!$resourceSecurity) {
-            return false;
-        }
+        $reflection = new ReflectionClass($controllerClass);
 
-        $actionType = $this->resolveActionType($method);
-        return $resourceSecurity->allowsPermission($permission, $actionType);
+        foreach ($reflection->getMethods() as $method) {
+            if ($method->isPublic() && !$method->isStatic() && !$method->isConstructor()) {
+                $callback($method);
+            }
+        }
     }
 
     /**
      * Analyze controller class and extract all unique permissions
      *
+     * @param class-string $controllerClass
      * @return array<string>
      */
     public function extractControllerPermissions(string $controllerClass): array
     {
         $permissions = [];
-        $reflection = new ReflectionClass($controllerClass);
 
-        foreach ($reflection->getMethods() as $method) {
-            if ($method->isPublic() && !$method->isStatic() && !$method->isConstructor()) {
-                $methodPermissions = $this->getMethodPermissions($method);
-                $permissions = array_merge($permissions, $methodPermissions);
-            }
-        }
+        $this->iterateControllerMethods($controllerClass, function (ReflectionMethod $method) use (&$permissions) {
+            $methodPermissions = $this->getMethodPermissions($method);
+            $permissions = array_merge($permissions, $methodPermissions);
+        });
 
         return array_unique($permissions);
     }
@@ -277,6 +301,7 @@ class SecurityResolver
     /**
      * Get security analysis for a controller
      *
+     * @param class-string $controllerClass
      * @return array<string, mixed>
      */
     public function analyzeControllerSecurity(string $controllerClass): array
@@ -289,36 +314,30 @@ class SecurityResolver
             'actions' => []
         ];
 
-        $reflection = new ReflectionClass($controllerClass);
+        $this->iterateControllerMethods($controllerClass, function (ReflectionMethod $method) use (&$analysis) {
+            $context = $this->getSecurityContext($method);
+            $permission = $context ? $context['resourceSecurity']->getPermission($context['actionType']) : null;
 
-        foreach ($reflection->getMethods() as $method) {
-            if ($method->isPublic() && !$method->isStatic() && !$method->isConstructor()) {
-                $actionType = $this->resolveActionType($method);
-                $resourceSecurity = $this->getResourceSecurity($method);
-                $permission = $this->getMethodPermission($method);
+            $methodAnalysis = [
+                'name' => $method->getName(),
+                'action_type' => $context ? $context['actionType']->value : ActionType::READ->value,
+                'resource' => $context['resourceSecurity']->resource ?? null,
+                'permission' => $permission,
+                'http_method' => $this->getHttpMethodForMethod($method),
+                'explicit_security' => $context && $context['resourceSecurity']->action !== null
+            ];
 
-                $methodAnalysis = [
-                    'name' => $method->getName(),
-                    'action_type' => $actionType->value,
-                    'resource' => $resourceSecurity?->resource,
-                    'permission' => $permission,
-                    'http_method' => $this->getHttpMethodForMethod($method),
-                    'explicit_security' => $resourceSecurity?->action !== null
-                ];
+            $analysis['methods'][] = $methodAnalysis;
 
-                $analysis['methods'][] = $methodAnalysis;
-
-                if ($permission) {
-                    $analysis['permissions'][] = $permission;
-                }
-
-                if ($resourceSecurity) {
-                    $analysis['resources'][] = $resourceSecurity->resource;
-                }
-
-                $analysis['actions'][] = $actionType->value;
+            if ($permission) {
+                $analysis['permissions'][] = $permission;
             }
-        }
+
+            if ($context) {
+                $analysis['resources'][] = $context['resourceSecurity']->resource;
+                $analysis['actions'][] = $context['actionType']->value;
+            }
+        });
 
         // Remove duplicates and sort
         $analysis['permissions'] = array_unique($analysis['permissions']);

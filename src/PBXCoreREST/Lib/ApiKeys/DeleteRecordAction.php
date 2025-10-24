@@ -53,8 +53,8 @@ class DeleteRecordAction extends AbstractDeleteAction
             'API key',                          // Entity type for logging
             'API key not found',                // Not found message
             function($apiKey) {                 // Additional cleanup callback
-                // Clear validation cache for this key before deletion
-                TokenValidationService::clearCache((int)$apiKey->id);
+                // Clear validation cache for all tokens before deletion
+                TokenValidationService::clearCache();
             }
         );
     }

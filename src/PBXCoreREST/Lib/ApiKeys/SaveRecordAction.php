@@ -276,8 +276,8 @@ class SaveRecordAction extends AbstractSaveRecordAction
                     throw new \Exception('Failed to save API key: ' . implode(', ', $apiKey->getMessages()));
                 }
 
-                // Clear validation cache for this key
-                TokenValidationService::clearCache((int)$apiKey->id);
+                // Clear validation cache for all tokens (updated permissions/restrictions)
+                TokenValidationService::clearCache();
 
                 return $apiKey;
             });
