@@ -103,12 +103,15 @@ const networks = {
         // Delete button handler will be bound after tabs are created dynamically
         networks.$ipaddressInput.inputmask({alias: 'ip', 'placeholder': '_'});
 
+        // Apply IP mask for external IP address field
+        networks.$extipaddr.inputmask({alias: 'ip', 'placeholder': '_'});
+
         networks.initializeForm();
 
         // Initialize static routes manager
         StaticRoutesManager.initialize();
 
-        // Hide form elements connected with non docker installations
+        // Hide static routes section in Docker (managed via do-not-show-if-docker class)
         if (networks.$formObj.form('get value','is-docker')==="1") {
             networks.$notShowOnDockerDivs.hide();
         }
@@ -119,19 +122,21 @@ const networks = {
      * @param {boolean|Object} response - The response received from the server. If false, indicates an error occurred.
      */
     cbAfterGetExternalIp(response) {
-        if (response === false) {
-            networks.$getMyIpButton.removeClass('loading disabled');
-        } else {
-            const currentExtIpAddr = networks.$formObj.form('get value', 'extipaddr');
-            const portMatch = currentExtIpAddr.match(/:(\d+)$/);
-            const port = portMatch ? ':' + portMatch[1] : '';
-            const newExtIpAddr = response.ip + port;
-            networks.$formObj.form('set value', 'extipaddr', newExtIpAddr);
-            // Clear external hostname when getting external IP
-            networks.$formObj.form('set value', 'exthostname', '');
-            networks.$extipaddr.trigger('change');
-            networks.$getMyIpButton.removeClass('loading disabled');
+        networks.$getMyIpButton.removeClass('loading disabled');
+
+        if (response === false || !response.result || !response.data || !response.data.ip) {
+            UserMessage.showError(globalTranslate.nw_ErrorGettingExternalIp || 'Failed to get external IP address');
+            return;
         }
+
+        const currentExtIpAddr = networks.$formObj.form('get value', 'extipaddr');
+        const portMatch = currentExtIpAddr.match(/:(\d+)$/);
+        const port = portMatch ? ':' + portMatch[1] : '';
+        const newExtIpAddr = response.data.ip + port;
+        networks.$formObj.form('set value', 'extipaddr', newExtIpAddr);
+        // Clear external hostname when getting external IP
+        networks.$formObj.form('set value', 'exthostname', '');
+        networks.$extipaddr.trigger('change');
     },
 
     /**
@@ -448,6 +453,43 @@ const networks = {
                 UserMessage.showMultiString(response.messages);
             }
         });
+    },
+
+    /**
+     * Show Docker network info as read-only
+     */
+    showDockerNetworkInfo(data) {
+        // WHY: In Docker, network is managed by container - show info as read-only
+        if (!data.interfaces || data.interfaces.length === 0) return;
+
+        const iface = data.interfaces[0]; // Docker typically has one interface
+
+        // Populate Docker network info
+        $('#docker-interface-name').text(iface.name || iface.interface);
+        $('#docker-current-ip').text(iface.currentIpaddr || iface.ipaddr || '—');
+
+        // Format subnet mask (CIDR to dotted notation)
+        const subnetCidr = iface.currentSubnet || iface.subnet || 24;
+        const subnetMask = networks.cidrToNetmask(subnetCidr);
+        $('#docker-current-subnet').text(`${subnetCidr} - ${subnetMask}`);
+
+        $('#docker-current-gateway').text(iface.currentGateway || iface.gateway || '—');
+
+        // Show Docker info section (non-Docker section hidden by CSS class)
+        $('.docker-network-info').show();
+    },
+
+    /**
+     * Convert CIDR notation to dotted decimal netmask
+     */
+    cidrToNetmask(cidr) {
+        const mask = ~(2 ** (32 - cidr) - 1);
+        return [
+            (mask >>> 24) & 255,
+            (mask >>> 16) & 255,
+            (mask >>> 8) & 255,
+            mask & 255
+        ].join('.');
     },
 
     /**
@@ -974,8 +1016,14 @@ const networks = {
      * Populate form with configuration data
      */
     populateForm(data) {
-        // Create interface tabs and forms dynamically
-        networks.createInterfaceTabs(data);
+        // WHY: Docker and non-Docker have different network management UIs
+        if (data.isDocker) {
+            // Show read-only network info for Docker
+            networks.showDockerNetworkInfo(data);
+        } else {
+            // Create editable interface tabs for non-Docker
+            networks.createInterfaceTabs(data);
+        }
 
         // Set NAT settings
         if (data.nat) {

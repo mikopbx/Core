@@ -698,13 +698,16 @@ class AssetProvider implements ServiceProviderInterface
     private function makeNetworkAssets(string $action): void
     {
         if ($action === 'modify') {
+            $this->headerCollectionCSS
+                ->addCss('css/vendor/semantic/list.min.css', true);
+
             $this->footerCollectionJS
                 ->addJs('js/vendor/jquery.tablednd.js', true)
-                //->addJs('js/vendor/inputmask/inputmask.js', true)
                 ->addJs('js/vendor/inputmask/jquery.inputmask.min.js', true)
                 ->addJs('js/vendor/inputmask/bindings/inputmask.binding.js', true)
                 ->addJs('js/vendor/inputmask/init.js', true)
                 ->addJs('js/pbx/PbxAPI/network-api.js', true)
+                ->addJs('js/pbx/PbxAPI/sysinfo-api.js', true)
                 ->addJs('js/pbx/Network/network-modify.js', true);
         }
     }

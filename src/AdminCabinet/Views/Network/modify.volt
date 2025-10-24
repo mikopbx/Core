@@ -2,9 +2,7 @@
 
 <input type="hidden" name="is-docker" value="{{ isDocker }}">
 
-<div class="do-not-show-if-docker">
-    {{ partial("Network/partials/interfaces") }}
-</div>
+{{ partial("Network/partials/interfaces") }}
 
 {{ partial("Network/partials/nat") }}
 
