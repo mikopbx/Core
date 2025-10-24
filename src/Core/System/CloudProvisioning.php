@@ -48,9 +48,6 @@ class CloudProvisioning
     public static function start(): array
     {
         if (self::checkItNeedToStartProvisioning() === false) {
-            $message = "   |- Provisioning was already completed.";
-            SystemMessages::echoToTeletype($message);
-            SystemMessages::teletypeEchoResult($message, SystemMessages::RESULT_SKIPPED);
             return ['success' => true, 'cloudId' => 'Previously configured', 'alreadyDone' => true];
         }
 

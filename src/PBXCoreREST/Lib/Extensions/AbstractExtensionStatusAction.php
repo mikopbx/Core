@@ -105,14 +105,7 @@ abstract class AbstractExtensionStatusAction extends Injectable
             // Get PJSIP endpoints data
             $endpoints = self::getPjsipEndpoints();
             $contacts = self::getPjsipContacts();
-            
-            // Debug logging
-            SystemMessages::sysLogMsg(
-                static::class,
-                "getPjsipContacts returned: " . json_encode($contacts),
-                LOG_DEBUG
-            );
-            
+
             $statuses = [];
             
             foreach ($extensions as $ext) {

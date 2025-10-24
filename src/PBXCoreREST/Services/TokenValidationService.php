@@ -72,32 +72,25 @@ class TokenValidationService
         if (empty($providedToken)) {
             return new TokenValidationResult(false, null, 'No Bearer token provided');
         }
-        
+
         // Get token suffix for logging
         $tokenSuffix = substr($providedToken, -4);
-        
-        // Debug log
-        SystemMessages::sysLogMsg(__CLASS__, "Testing Bearer token ending with {$tokenSuffix}", LOG_DEBUG);
-        
+
         // Try to get from cache first
         $cacheKey = self::CACHE_KEY_PREFIX . md5($providedToken);
         $cachedData = $this->cache->get($cacheKey);
-        
+
         if ($cachedData !== null) {
-            SystemMessages::sysLogMsg(__CLASS__, "Found Bearer token in cache", LOG_DEBUG);
             return $this->validatePermissions($cachedData, $request, $tokenSuffix);
         }
-        
+
         // Not in cache, check database
         $apiKey = $this->findTokenByHash($providedToken);
-        
+
         if ($apiKey === null) {
-            SystemMessages::sysLogMsg(__CLASS__, "Bearer token not found in database", LOG_DEBUG);
             return new TokenValidationResult(false, $tokenSuffix, 'Invalid Bearer token');
         }
-        
-        SystemMessages::sysLogMsg(__CLASS__, "Bearer token found in database, caching...", LOG_DEBUG);
-        
+
         // Cache the valid token
         $keyData = $apiKey->toArray();
         $this->cache->set($cacheKey, $keyData, self::CACHE_TTL);
@@ -116,8 +109,7 @@ class TokenValidationService
     private function validatePermissions(array $keyData, $request, string $tokenSuffix): TokenValidationResult
     {
         $requestPath = $request->getURI();
-        SystemMessages::sysLogMsg(__CLASS__, "Validating Bearer token permissions for path: {$requestPath}", LOG_DEBUG);
-        
+
         // Update last used time in buffer
         $this->updateLastUsedBuffer($keyData['id']);
         
@@ -132,8 +124,7 @@ class TokenValidationService
             SystemMessages::sysLogMsg(__CLASS__, "Bearer token path permissions check failed. Allowed paths: " . ($keyData['allowed_paths'] ?? 'null'), LOG_WARNING);
             return new TokenValidationResult(false, $tokenSuffix, 'Access denied: insufficient permissions for this endpoint');
         }
-        
-        SystemMessages::sysLogMsg(__CLASS__, "Bearer token validation - all checks passed successfully", LOG_DEBUG);
+
         return new TokenValidationResult(true, $tokenSuffix, null, $keyData);
     }
     
