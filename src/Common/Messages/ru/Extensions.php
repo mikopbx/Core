@@ -94,6 +94,7 @@ return [
     'ex_ForwardingNumberNotExists' => 'Номер переадресации "%number%" не существует в системе',
     'ex_ValidateForwardingToBeDifferent' => 'Нельзя настроить переадресацию на собственный номер',
     'ex_ValidateForwardingToBeFilled' => 'В настройках маршрутизации не заполнен номер переадресации по таймауту',
+    'ex_ValidateRingingBeforeForwardOutOfRange' => 'В настройках маршрутизации неверно указано время до переадресации. Выберите значение между {ruleValue}.',
     'ex_ValidateMobileIsNotCorrect' => 'Проверьте правильность ввода мобильного номера',
     'ex_ValidateMobileNumberIsDouble' => 'Мобильный номер уже используется другим сотрудником',
     'ex_ValidateNumberIsDouble' => 'Внутренний номер уже занят',
@@ -147,7 +148,6 @@ return [
     'ex_Created' => 'создано',
     'ex_Updated' => 'обновлено',
     'ex_Skipped' => 'пропущено',
-    'ex_Errors' => 'ошибок',
 
     // Import error message templates - cleaner format
     'ex_ImportErrorEmployee' => 'Строка %line%: %name% (номер %number%)',
@@ -393,7 +393,6 @@ return [
     'ex_CancelImport' => 'Прервать загрузку',
     'ex_ImportCancelled' => 'Импорт отменен',
     'ex_ShowingAllRecords' => 'Отображаем все',
-    'ex_Records' => 'записи',
     'ex_UseScrollToNavigate' => 'Используйте прокрутку для навигации.',
 
     'ex_Now' => 'Сейчас',

@@ -148,6 +148,7 @@ return [
     'nw_SelectNetworkMask' => 'Выберите маску сети',
     'nw_UpdateExternalIPAutomaticallyOnReboot' => 'Обновлять внешний IP адрес при каждой перезагрузке',
     'nw_UseDHCP' => 'Использовать DHCP для получения настроек сети',
+    'nw_ErrorGettingExternalIp' => 'Не удалось получить внешний IP адрес. Проверьте подключение к интернету.',
     'nw_ValidateDHCPOnVlansDontSupport' => 'DHCP у VLAN подсетей не поддерживается',
     'nw_ValidateExtIppaddrNotRight' => 'Ошибка заполнения внешнего IP адреса маршрутизатора',
     'nw_ValidateExtIppaddrOrHostIsEmpty' => 'Необходимо заполнить или внешний IP маршрутизатора, или его DNS имя',
