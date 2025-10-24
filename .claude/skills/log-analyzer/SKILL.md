@@ -16,6 +16,26 @@ Efficiently analyze logs inside MikoPBX Docker container to diagnose issues, mon
 - Correlates logs across multiple files
 - Tracks worker processes and their status
 - Provides actionable insights from log analysis
+- **Works with both host-mounted logs and docker exec for flexibility**
+
+## Host Log Access (Faster)
+
+For local development, logs are mounted on the host at:
+```
+/Users/nb/PhpstormProjects/mikopbx/dev_docker/tmp/projects/main/storage/usbdisk1/mikopbx/log/
+```
+
+**Advantages of host access:**
+- ✅ Faster (no docker exec overhead)
+- ✅ Can use Read tool directly
+- ✅ Can use Grep tool with full power
+- ✅ Better for large log files
+
+**When to use host path:**
+- Analyzing large log files
+- Complex grep patterns
+- Multiple log file analysis
+- Performance-critical operations
 
 ## When to Use This Skill
 
@@ -30,12 +50,30 @@ Use this skill when:
 
 ## Quick Start
 
-### Step 1: Identify Container
+### Step 1: Choose Access Method
 
+**Option A: Host Path (Recommended for analysis)**
 ```bash
-# Find MikoPBX container
+# Direct access to logs (faster)
+HOST_LOG_PATH="/Users/nb/PhpstormProjects/mikopbx/dev_docker/tmp/projects/main/storage/usbdisk1/mikopbx/log"
+
+# Use Grep tool
+# Pattern: errors in system log
+# Path: $HOST_LOG_PATH/system/messages
+
+# Or use Read tool for specific log files
+```
+
+**Option B: Docker Exec (Needed for process checks)**
+```bash
+# Find MikoPBX container (needed for worker checks)
 CONTAINER_ID=$(docker ps | grep mikopbx | awk '{print $1}' | head -1)
 ```
+
+**Quick Decision Guide:**
+- **Log file analysis** → Use host path with Grep/Read tools
+- **Process/worker checks** → Use docker exec with Bash
+- **Real-time monitoring** → Use docker exec with tail -f
 
 ### Step 2: Determine Log Context
 
@@ -79,6 +117,15 @@ docker exec $CONTAINER_ID tail -f /storage/usbdisk1/mikopbx/log/system/messages
 
 **When to use:** First step in diagnosing any issue
 
+**Method A: Host Path (Recommended)**
+```bash
+# Use Grep tool
+# Pattern: error
+# Path: /Users/nb/PhpstormProjects/mikopbx/dev_docker/tmp/projects/main/storage/usbdisk1/mikopbx/log/system/messages
+# Options: -i (case insensitive), -C 2 (2 lines context)
+```
+
+**Method B: Docker Exec**
 ```bash
 # Get last 500 lines, filter errors
 docker exec $CONTAINER_ID tail -500 /storage/usbdisk1/mikopbx/log/system/messages | grep -i error
@@ -102,6 +149,23 @@ docker exec $CONTAINER_ID tail -500 /storage/usbdisk1/mikopbx/log/system/message
 
 **When to use:** API request fails or returns unexpected result
 
+**Method A: Host Path (Recommended)**
+```bash
+# Use Grep tool for WorkerApiCommands activity
+# Pattern: WorkerApiCommands
+# Path: /Users/nb/PhpstormProjects/mikopbx/dev_docker/tmp/projects/main/storage/usbdisk1/mikopbx/log/system/messages
+
+# Use Read tool for PHP errors (recent)
+# Path: /Users/nb/PhpstormProjects/mikopbx/dev_docker/tmp/projects/main/storage/usbdisk1/mikopbx/log/php/error.log
+# Offset: calculate from file size
+# Limit: 50
+
+# Use Grep for nginx access
+# Pattern: POST /pbxcore/api
+# Path: /Users/nb/PhpstormProjects/mikopbx/dev_docker/tmp/projects/main/storage/usbdisk1/mikopbx/log/nginx/access.log
+```
+
+**Method B: Docker Exec**
 ```bash
 # Check WorkerApiCommands activity
 docker exec $CONTAINER_ID tail -200 /storage/usbdisk1/mikopbx/log/system/messages | grep WorkerApiCommands
@@ -219,7 +283,29 @@ docker exec $CONTAINER_ID tail -f /storage/usbdisk1/mikopbx/log/system/messages 
 
 ## Critical Log Files
 
-### Must-Check Logs
+### Host Paths (Fast Access)
+
+```bash
+# Log base directory on host
+HOST_LOG_BASE="/Users/nb/PhpstormProjects/mikopbx/dev_docker/tmp/projects/main/storage/usbdisk1/mikopbx/log"
+
+# PRIMARY: Main system log
+${HOST_LOG_BASE}/system/messages
+
+# PHP errors
+${HOST_LOG_BASE}/php/error.log
+
+# Asterisk errors
+${HOST_LOG_BASE}/asterisk/error
+
+# Web server errors
+${HOST_LOG_BASE}/nginx/error.log
+
+# Fail2ban logs
+${HOST_LOG_BASE}/fail2ban/fail2ban.log
+```
+
+### Container Paths (For docker exec)
 
 ```bash
 # PRIMARY: Main system log
@@ -237,6 +323,25 @@ docker exec $CONTAINER_ID tail -f /storage/usbdisk1/mikopbx/log/system/messages 
 
 ### Quick Access Commands
 
+**Using Host Path (Faster)**
+```bash
+# Check recent errors in system log
+# Use Grep tool:
+#   Pattern: error
+#   Path: /Users/nb/PhpstormProjects/mikopbx/dev_docker/tmp/projects/main/storage/usbdisk1/mikopbx/log/system/messages
+#   Options: -i -C 2
+
+# Read PHP error log
+# Use Read tool:
+#   Path: /Users/nb/PhpstormProjects/mikopbx/dev_docker/tmp/projects/main/storage/usbdisk1/mikopbx/log/php/error.log
+
+# Search for specific pattern
+# Use Grep tool:
+#   Pattern: WorkerApiCommands
+#   Path: /Users/nb/PhpstormProjects/mikopbx/dev_docker/tmp/projects/main/storage/usbdisk1/mikopbx/log/system/messages
+```
+
+**Using Docker Exec (For processes)**
 ```bash
 # Find container
 docker ps | grep mikopbx
@@ -250,7 +355,7 @@ docker exec <id> tail -500 /storage/usbdisk1/mikopbx/log/system/messages | grep 
 # Check PHP errors
 docker exec <id> tail -50 /storage/usbdisk1/mikopbx/log/php/error.log
 
-# Check workers
+# Check workers (MUST use docker exec)
 docker exec <id> ps aux | grep Worker
 ```
 

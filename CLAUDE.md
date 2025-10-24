@@ -165,6 +165,39 @@ Use the **`translations`** skill to manage multilingual translations:
 - **[Providers Documentation](src/Common/Providers/CLAUDE.md)** - DI providers guide
 - **[Test Suite](tests/AdminCabinet/CLAUDE.md)** - Browser automation tests
 
+## Specialized Agents
+
+MikoPBX includes specialized autonomous agents in `.claude/agents/` for complex multi-step tasks:
+
+### Testing & Quality Assurance
+- **`test-fix-loop-agent`** - Automated testing with error remediation loop. Runs Python pytest tests, monitors logs for exceptions, fixes detected issues, and repeats until all tests pass. Use when you need continuous integration with self-healing capabilities. [Documentation](tests/api/README_TEST_FIX_LOOP.md)
+
+### Code Optimization & Refactoring
+- **`js-optimizer-mikopbx`** - Optimize JavaScript code for MikoPBX (Fomantic UI, ES6 airbnb style, transpilation)
+- **`php-refactoring-specialist`** - Refactor PHP code to modern PHP 8.3 standards
+- **`security-audit-analyzer`** - Comprehensive security analysis of web applications
+
+### Translation Management
+- **`pbx-translation-expert`** - Manage multilingual translations with Russian-first workflow
+
+### API Testing
+- **`rest-api-docker-tester`** - Test REST API endpoints inside Docker containers with CURL
+
+### Web Testing
+- **`mikopbx-web-tester`** - Test MikoPBX web interface functionality with Playwright
+- **`playwright-test-generator`** - Generate automated browser tests
+- **`playwright-test-healer`** - Debug and fix failing Playwright tests
+- **`playwright-test-planner`** - Create comprehensive test plans
+
+**Usage**: Agents are launched automatically by Claude when your request matches their capabilities, or you can explicitly request them:
+
+**Examples:**
+- "Run API tests in fix loop until all pass" → launches `test-fix-loop-agent`
+- "Optimize extension-modify.js" → launches `js-optimizer-mikopbx`
+- "Refactor UserController.php to PHP 8.3" → launches `php-refactoring-specialist`
+- "Test the extension creation form" → launches `mikopbx-web-tester`
+- "Audit authentication module for security" → launches `security-audit-analyzer`
+
 ## Available Development Skills
 
 MikoPBX includes specialized skills in `.claude/skills/` that activate automatically based on your request.
@@ -191,6 +224,7 @@ MikoPBX includes specialized skills in `.claude/skills/` that activate automatic
 
 ### Development Tools
 - **`translations`** - Manage translations across 29 languages / Управление переводами
+- **`restapi-translations`** - Manage REST API translation keys (rest_*) / Управление ключей переводов REST API
 - **`commit-messages`** - Generate git commit messages / Генерация сообщений коммитов
 
 **Usage**: Simply describe what you need in natural language (English or Russian). Claude will automatically select and use the appropriate skill(s).
@@ -202,6 +236,8 @@ MikoPBX includes specialized skills in `.claude/skills/` that activate automatic
 - "Transpile extension-modify.js" / "транспилируй extension-modify.js"
 - "Get authentication token" / "получи токен для API"
 - "Restart mikopbx_php83 container" / "перезапусти контейнер mikopbx_php83"
+- "Check REST API translations" / "проверь переводы REST API"
+- "Sync RestApi.php translations" / "синхронизируй переводы RestApi.php"
 
 ### Security & Guidelines
 - **[XSS Protection](docs/xss-protection-guidelines.md)** - Cross-site scripting prevention

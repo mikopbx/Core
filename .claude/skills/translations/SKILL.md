@@ -46,6 +46,29 @@ All other languages are translated via:
 - https://weblate.mikopbx.com (automatic sync)
 - AI assistance (this skill)
 
+## Critical Process Rules
+
+### File-by-File Processing
+**ONE FILE AT A TIME**: Never attempt to translate multiple files simultaneously. Complete one file fully (all languages) before moving to the next file.
+
+### Sequential Language Processing
+**PROCESS LANGUAGES SEQUENTIALLY**: Complete one language fully (analysis → translation → merge → validation → reset) before starting the next language.
+
+### Validation After Each Step
+**ALWAYS VERIFY KEY COUNT**: After processing each language, verify the key count matches Russian source EXACTLY. Stop if mismatch occurs.
+
+### Preserve Existing Work
+**NEVER OVERWRITE EXISTING TRANSLATIONS**: Only translate missing keys. Preserve all existing correct translations.
+
+### Context Isolation
+**RESET CONTEXT BETWEEN LANGUAGES**: Clear working variables and context after each language to prevent contamination or carry-over.
+
+### Error Handling
+- **Key count mismatch**: STOP, report issue, do not proceed
+- **PHP syntax error**: STOP, fix error before continuing
+- **Placeholder mismatch**: STOP, correct translation
+- **Duplicate keys in source**: Report and await instructions
+
 ## Core Translation Rules
 
 ### 1. Placeholder Format
@@ -95,6 +118,209 @@ All languages MUST have:
 
 **Example:** If Russian has 157 keys in `ApiKeys.php`, ALL 28 other languages must have exactly 157 keys in `ApiKeys.php`.
 
+## Working with Large Files (Batch Processing)
+
+### When to Use Batch Mode
+
+Files are automatically processed in batch mode when they have:
+- **> 300 translation keys** (missing in target language)
+- **Average value length > 100 characters** (complex technical descriptions)
+- **Files like:** RestApi.php (1962 keys), Common.php (700+ keys), GeneralSettings.php (500+ keys)
+
+### Batch Processing Strategy
+
+**Automatic Detection:**
+```bash
+# Check if file needs batching
+php .claude/skills/translations/helpers/translation-batch-manager.php analyze src/Common/Messages/ru/Common.php en
+```
+
+**Key Thresholds:**
+- Files < 150 keys → **Direct mode** (process all at once)
+- Files 150-300 keys → **Optional batching** (based on complexity)
+- Files > 300 keys → **Batch mode required** (100 keys per batch)
+
+### Batch Processing Workflow
+
+When translating large files, follow this **sequential batch workflow**:
+
+**1. Analysis Phase:**
+```bash
+# Analyze target file to determine batching strategy
+php translation-batch-manager.php analyze src/Common/Messages/ru/RestApi.php en
+```
+
+Output tells you:
+- Total missing keys
+- Whether batching is needed
+- Number of batches required
+- Average value length
+
+**2. Split Phase:**
+```bash
+# Create batches (saved to .claude/temp/batches/)
+php translation-batch-manager.php split src/Common/Messages/ru/RestApi.php en 100
+```
+
+Creates JSON files:
+- `.claude/temp/batches/en_RestApi/batch_1.json` (keys 1-100)
+- `.claude/temp/batches/en_RestApi/batch_2.json` (keys 101-200)
+- ... etc
+
+**3. Translation Phase (Repeat for each batch):**
+
+For each batch file:
+1. Read batch JSON file
+2. Extract `keys` object (Russian key-value pairs)
+3. Translate ONLY those keys using AI
+4. Preserve technical terms (SIP, PBX, CDR, etc.)
+5. Keep `%placeholder%` format identical
+6. Escape quotes properly
+
+**4. Merge Phase (After each batch translation):**
+```bash
+# Merge translated batch into target file
+php translation-batch-manager.php merge src/Common/Messages/en/RestApi.php batch_1_translated.json
+```
+
+This command:
+- Merges new translations with existing ones
+- Maintains key order from Russian source
+- Creates backup (.backup file)
+- Validates PHP syntax
+
+**5. Validation Phase (After each merge):**
+```bash
+# Validate merged result
+php translation-batch-manager.php validate src/Common/Messages/en/RestApi.php src/Common/Messages/ru/RestApi.php
+```
+
+Checks:
+- PHP syntax is valid
+- Key count matches Russian source
+- No missing keys
+- No extra keys
+- Placeholders match exactly
+
+**6. Context Reset:**
+After completing each batch:
+- Clear working variables
+- Log progress
+- DO NOT carry over data to next batch
+
+### Batch Translation Example
+
+**Input batch JSON:**
+```json
+{
+  "batch_num": 1,
+  "total_batches": 20,
+  "keys": {
+    "rest_ApiKeys_ApiDescription": "Comprehensive API key management...",
+    "rest_Extensions_CreateEndpoint": "Create a new PBX extension...",
+    ...
+  }
+}
+```
+
+**Translate keys → Save as `batch_1_translated.json`:**
+```json
+{
+  "batch_num": 1,
+  "total_batches": 20,
+  "keys": {
+    "rest_ApiKeys_ApiDescription": "Comprehensive API key management...",
+    "rest_Extensions_CreateEndpoint": "Create a new PBX extension...",
+    ...
+  }
+}
+```
+
+**Merge into target file:**
+```bash
+php translation-batch-manager.php merge src/Common/Messages/en/RestApi.php batch_1_translated.json
+```
+
+### Progress Tracking with TodoWrite
+
+When processing large files, create detailed task lists:
+
+```
+[1/28] English (en) - RestApi.php
+  [1/20] ✓ Batch 1 (keys 1-100) - Translated & merged
+  [2/20] ⏳ Batch 2 (keys 101-200) - In progress
+  [3/20] ⏸ Batch 3 (keys 201-300) - Pending
+  ...
+  [20/20] ⏸ Batch 20 (keys 1901-1962) - Pending
+
+[2/28] German (de) - RestApi.php
+  [1/20] ⏸ Batch 1 (keys 1-100) - Pending
+  ...
+```
+
+### Critical Batch Mode Rules
+
+1. **One Batch at a Time:** Complete translation → merge → validate before next batch
+2. **Incremental Progress:** Each batch is independently saved and validated
+3. **Context Isolation:** Reset AI context between batches to prevent contamination
+4. **Validation After Each Batch:** Never skip validation between batches
+5. **Resume Capability:** If error occurs, can resume from last successful batch
+
+### Error Handling in Batch Mode
+
+**PHP Syntax Error in Merged File:**
+- STOP immediately
+- Restore from .backup file
+- Fix translation in batch JSON
+- Re-run merge command
+
+**Key Count Mismatch After Merge:**
+- STOP immediately
+- Check batch JSON for duplicate keys
+- Validate batch JSON format
+- Re-run merge with corrected batch
+
+**Placeholder Format Error:**
+- Fix translation in batch JSON
+- Re-run merge command
+- Validate placeholders match
+
+### Helper Script Reference
+
+**Commands:**
+```bash
+# Analyze file
+php translation-batch-manager.php analyze <ru_file> <target_lang>
+
+# Split into batches
+php translation-batch-manager.php split <ru_file> <target_lang> [batch_size]
+
+# Merge batch
+php translation-batch-manager.php merge <target_file> <batch_json>
+
+# Validate result
+php translation-batch-manager.php validate <target_file> <ru_file>
+
+# Check status
+php translation-batch-manager.php status <ru_file> <target_lang>
+```
+
+**All commands output JSON** for easy parsing by agents.
+
+### Temporary Files Location
+
+Batch files are stored in `.claude/temp/batches/` (gitignored):
+```
+.claude/temp/batches/
+├── en_RestApi/
+│   ├── batch_1.json
+│   ├── batch_2.json
+│   └── ...
+├── de_Common/
+│   ├── batch_1.json
+│   └── ...
+```
+
 ## Common Tasks
 
 ### Task 1: Add New Translations (Russian Only)
@@ -125,24 +351,66 @@ return [
 - Remind about cache clearing
 - Ready for translation to other languages
 
-### Task 2: Translate to All Languages
+### Task 2: Translate to All Languages (Incremental Process)
+
+**IMPORTANT:** This workflow supports **incremental translation** - it translates ONLY missing keys and preserves existing translations.
 
 **Quick workflow:**
 
-1. Read Russian source file
-2. For each of 28 languages:
-   - Use AI translation (see [ai-prompts.md](reference/ai-prompts.md))
-   - Batch translate (max 50 keys at once)
-   - Apply localization rules
-   - Add/update keys in language file
-3. Validate consistency across all languages
-4. Report results
+1. **Initial Setup:**
+   - Read Russian source file (e.g., `ru/ApiKeys.php`)
+   - Count total keys in source
+   - Check for duplicate keys in source
+   - Scan `/src/Common/Messages/` to detect all language folders
+
+2. **For EACH of 28 languages (process sequentially):**
+
+   a) **Pre-Translation Analysis:**
+      - Read existing target language file (if exists)
+      - Compare with Russian source to identify:
+        - Missing keys (in Russian but not in target)
+        - Obsolete keys (in target but not in Russian)
+      - Report findings
+
+   b) **Incremental Translation:**
+      - Translate ONLY the missing keys from Russian
+      - **Preserve all existing translations** (do not retranslate)
+      - Use AI translation with proper context
+      - Batch process (max 50 keys per batch)
+      - Apply localization rules (phone numbers, addresses, etc.)
+      - Keep technical terms unchanged
+      - Preserve `%placeholder%` format exactly
+
+   c) **Merge & Update:**
+      - Merge new translations with existing ones
+      - Remove obsolete keys not in Russian source
+      - Maintain key order from Russian file
+      - Use proper PHP array syntax and indentation
+
+   d) **Validation:**
+      - Count keys in updated file
+      - Verify count matches Russian source EXACTLY
+      - Check all placeholders are preserved
+      - Validate PHP syntax with `php -l`
+      - Report validation results
+
+   e) **Context Reset:**
+      - Clear working variables before next language
+      - Log completion status
+      - DO NOT carry over data to next language
+
+3. **Final Report:**
+   - Summary of all languages processed
+   - Total keys added/removed per language
+   - Any errors or warnings
+   - Confirmation all files have identical key counts
 
 **Translation with AI:**
-- Keep technical terms unchanged
+- Keep technical terms unchanged (SIP, IAX, PBX, CDR, etc.)
 - Preserve `%placeholder%` format
 - Adapt examples to local context (phone numbers, etc.)
 - Use appropriate quotes for language
+- Maintain informal but professional tone
 
 ### Task 3: Check Translation Consistency
 
@@ -351,6 +619,40 @@ Always provide clear, structured output:
 5. **Consistent Naming** - Always use proper prefix
 6. **Context-Aware** - Ask about feature purpose for better translations
 7. **Test Early** - Test after small batches, not after everything
+8. **Progress Tracking** - Report progress clearly for each language (see example below)
+
+### Progress Tracking Example
+
+When processing a file, report progress like this:
+
+```
+🎯 Processing: ApiKeys.php
+📊 Source (ru): 47 keys found, 0 duplicates
+🌐 Target languages: en, de, es, fr, it, nl, pt, th (8 languages)
+
+[1/8] 🇬🇧 English (en)
+  ✓ Pre-analysis: 5 missing keys, 2 obsolete keys
+  ✓ Translation: 5 keys translated
+  ✓ Merge: Updated with new keys, removed obsolete
+  ✓ Validation: 47 keys (matches source)
+  ✓ Context reset: Done
+
+[2/8] 🇩🇪 German (de)
+  ✓ Pre-analysis: 3 missing keys, 1 obsolete key
+  ✓ Translation: 3 keys translated
+  ✓ Merge: Updated with new keys, removed obsolete
+  ✓ Validation: 47 keys (matches source)
+  ✓ Context reset: Done
+
+... continue for each language ...
+
+✅ Final Summary:
+  - Languages processed: 8/8
+  - Total keys added: 28
+  - Total keys removed: 10
+  - All languages validated: YES
+  - Cache cleared: Reminder sent
+```
 
 ## Additional Resources
 

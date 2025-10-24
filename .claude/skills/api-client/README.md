@@ -38,50 +38,50 @@ Universal REST API client for MikoPBX with automatic authentication and containe
 ### CDR (Call Detail Records)
 ```bash
 # Get recent calls
-./scripts/api-request.sh GET "cdr?limit=10"
+./.claude/skills/api-client/scripts/api-request.sh GET "cdr?limit=10"
 
 # Search by date range
-./scripts/api-request.sh GET "cdr?dateFrom=2025-10-17&dateTo=2025-10-18%2023:59:59"
+./.claude/skills/api-client/scripts/api-request.sh GET "cdr?dateFrom=2025-10-17&dateTo=2025-10-18%2023:59:59"
 
 # Search by phone number
-./scripts/api-request.sh GET "cdr?search=79643442732&limit=5"
+./.claude/skills/api-client/scripts/api-request.sh GET "cdr?search=79643442732&limit=5"
 
 # Search by name
-./scripts/api-request.sh GET "cdr?search=Ivan&limit=3"
+./.claude/skills/api-client/scripts/api-request.sh GET "cdr?search=Ivan&limit=3"
 ```
 
 ### Providers
 ```bash
 # List providers
-./scripts/api-request.sh GET providers
+./.claude/skills/api-client/scripts/api-request.sh GET providers
 
 # Create SIP provider
-./scripts/api-request.sh POST providers \
+./.claude/skills/api-client/scripts/api-request.sh POST providers \
   --json '{"type":"sip","description":"Test","host":"sip.example.com"}'
 
 # Update provider
-./scripts/api-request.sh PATCH "providers/1" --data "disabled=0"
+./.claude/skills/api-client/scripts/api-request.sh PATCH "providers/1" --data "disabled=0"
 
 # Delete provider
-./scripts/api-request.sh DELETE "providers/1"
+./.claude/skills/api-client/scripts/api-request.sh DELETE "providers/1"
 ```
 
 ### System
 ```bash
 # System info
-./scripts/api-request.sh GET "system/info"
+./.claude/skills/api-client/scripts/api-request.sh GET "system/info"
 
 # Check for updates
-./scripts/api-request.sh GET "system:check-for-updates"
+./.claude/skills/api-client/scripts/api-request.sh GET "system:check-for-updates"
 
 # Global search
-./scripts/api-request.sh GET "search?query=admin"
+./.claude/skills/api-client/scripts/api-request.sh GET "search?query=admin"
 ```
 
 ## Options
 
 ```bash
-./scripts/api-request.sh <METHOD> <ENDPOINT> [OPTIONS]
+./.claude/skills/api-client/scripts/api-request.sh <METHOD> <ENDPOINT> [OPTIONS]
 
 Options:
   --data "key=value"    Form data for POST/PATCH
@@ -125,23 +125,23 @@ Works with:
 ## Quick Examples
 
 ```bash
-# From skill directory
-cd .claude/skills/api-client
+# From project root directory
+cd /Users/nb/PhpstormProjects/mikopbx/Core
 
 # List extensions
-./scripts/api-request.sh GET extensions
+./.claude/skills/api-client/scripts/api-request.sh GET extensions
 
 # Create and verify
-./scripts/api-request.sh POST extensions --data "number=777&username=test"
-./scripts/api-request.sh GET "extensions/777"
+./.claude/skills/api-client/scripts/api-request.sh POST extensions --data "number=777&username=test"
+./.claude/skills/api-client/scripts/api-request.sh GET "extensions/777"
 
 # Update and verify
-./scripts/api-request.sh PATCH "extensions/777" --data "mobile=1111111111"
-./scripts/api-request.sh GET "extensions/777" | grep mobile
+./.claude/skills/api-client/scripts/api-request.sh PATCH "extensions/777" --data "mobile=1111111111"
+./.claude/skills/api-client/scripts/api-request.sh GET "extensions/777" | grep mobile
 
 # Delete and verify (should fail with 404)
-./scripts/api-request.sh DELETE "extensions/777"
-./scripts/api-request.sh GET "extensions/777" || echo "Deleted successfully"
+./.claude/skills/api-client/scripts/api-request.sh DELETE "extensions/777"
+./.claude/skills/api-client/scripts/api-request.sh GET "extensions/777" || echo "Deleted successfully"
 ```
 
 ## Troubleshooting
@@ -160,13 +160,13 @@ export MIKOPBX_PASSWORD="123456789MikoPBX#1"
 
 **Want more output?**
 ```bash
-./scripts/api-request.sh GET extensions --lines 200
-./scripts/api-request.sh GET extensions --lines 0  # No limit
+./.claude/skills/api-client/scripts/api-request.sh GET extensions --lines 200
+./.claude/skills/api-client/scripts/api-request.sh GET extensions --lines 0  # No limit
 ```
 
 **Debug mode:**
 ```bash
-./scripts/api-request.sh GET extensions --debug
+./.claude/skills/api-client/scripts/api-request.sh GET extensions --debug
 ```
 
 ## See Also

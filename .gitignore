@@ -36,3 +36,6 @@ tests/api/**/*.log
 tests/api/*.tmp
 tests/api/**/*.tmp
 .hypothesis/*
+
+# Translation batch processing temporary files
+.claude/temp/

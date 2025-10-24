@@ -36,61 +36,61 @@ Use this skill when you need to:
 ### Example 1: Simple GET Request
 ```bash
 # Get list of extensions
-./api-request.sh GET extensions
+./.claude/skills/api-client/scripts/api-request.sh GET extensions
 
 # Get extensions with search
-./api-request.sh GET "extensions?search=201&limit=5"
+./.claude/skills/api-client/scripts/api-request.sh GET "extensions?search=201&limit=5"
 ```
 
 ### Example 2: GET with Date Range (CDR)
 ```bash
 # Get call records for specific date range
-./api-request.sh GET "cdr?dateFrom=2025-10-17&dateTo=2025-10-18%2023:59:59&limit=10"
+./.claude/skills/api-client/scripts/api-request.sh GET "cdr?dateFrom=2025-10-17&dateTo=2025-10-18%2023:59:59&limit=10"
 
 # Search CDR by phone number
-./api-request.sh GET "cdr?search=79643442732&limit=5"
+./.claude/skills/api-client/scripts/api-request.sh GET "cdr?search=79643442732&limit=5"
 
 # Search CDR by name
-./api-request.sh GET "cdr?search=Ivan&dateFrom=2025-10-17&dateTo=2025-10-18%2023:59:59&limit=3"
+./.claude/skills/api-client/scripts/api-request.sh GET "cdr?search=Ivan&dateFrom=2025-10-17&dateTo=2025-10-18%2023:59:59&limit=3"
 ```
 
 ### Example 3: POST Request (Create)
 ```bash
 # Create new extension
-./api-request.sh POST extensions \
+./.claude/skills/api-client/scripts/api-request.sh POST extensions \
   --data "number=202&username=test_user&mobile=1234567890"
 
 # Create with JSON payload
-./api-request.sh POST extensions \
+./.claude/skills/api-client/scripts/api-request.sh POST extensions \
   --json '{"number":"203","username":"john","mobile":"9876543210"}'
 ```
 
 ### Example 4: PATCH Request (Update)
 ```bash
 # Update extension
-./api-request.sh PATCH "extensions/202" \
+./.claude/skills/api-client/scripts/api-request.sh PATCH "extensions/202" \
   --data "mobile=5555555555&username=updated_user"
 ```
 
 ### Example 5: DELETE Request
 ```bash
 # Delete extension
-./api-request.sh DELETE "extensions/202"
+./.claude/skills/api-client/scripts/api-request.sh DELETE "extensions/202"
 
 # Delete CDR record
-./api-request.sh DELETE "cdr/12345"
+./.claude/skills/api-client/scripts/api-request.sh DELETE "cdr/12345"
 ```
 
 ### Example 6: Custom Container and Line Limit
 ```bash
 # Use specific container
-./api-request.sh GET extensions --container mikopbx_php74
+./.claude/skills/api-client/scripts/api-request.sh GET extensions --container mikopbx_php74
 
 # Limit output to 50 lines
-./api-request.sh GET "cdr?limit=100" --lines 50
+./.claude/skills/api-client/scripts/api-request.sh GET "cdr?limit=100" --lines 50
 
 # Full output (no limit)
-./api-request.sh GET extensions --lines 0
+./.claude/skills/api-client/scripts/api-request.sh GET extensions --lines 0
 ```
 
 ## How It Works
@@ -140,8 +140,16 @@ Use this skill when you need to:
 
 ## Script Usage
 
+**IMPORTANT**: Always use absolute path to the script from project root:
+
 ```bash
-./scripts/api-request.sh <METHOD> <ENDPOINT> [OPTIONS]
+/Users/nb/PhpstormProjects/mikopbx/Core/.claude/skills/api-client/scripts/api-request.sh <METHOD> <ENDPOINT> [OPTIONS]
+```
+
+Or when working in project directory, use:
+
+```bash
+./.claude/skills/api-client/scripts/api-request.sh <METHOD> <ENDPOINT> [OPTIONS]
 ```
 
 ### Required Arguments
@@ -161,31 +169,31 @@ Use this skill when you need to:
 
 ```bash
 # GET request
-./scripts/api-request.sh GET extensions
+./.claude/skills/api-client/scripts/api-request.sh GET extensions
 
 # GET with query parameters
-./scripts/api-request.sh GET "extensions?search=201"
+./.claude/skills/api-client/scripts/api-request.sh GET "extensions?search=201"
 
 # POST with form data
-./scripts/api-request.sh POST extensions --data "number=204&username=test"
+./.claude/skills/api-client/scripts/api-request.sh POST extensions --data "number=204&username=test"
 
 # POST with JSON
-./scripts/api-request.sh POST extensions --json '{"number":"205","username":"jane"}'
+./.claude/skills/api-client/scripts/api-request.sh POST extensions --json '{"number":"205","username":"jane"}'
 
 # PATCH request
-./scripts/api-request.sh PATCH "extensions/204" --data "mobile=1111111111"
+./.claude/skills/api-client/scripts/api-request.sh PATCH "extensions/204" --data "mobile=1111111111"
 
 # DELETE request
-./scripts/api-request.sh DELETE "extensions/204"
+./.claude/skills/api-client/scripts/api-request.sh DELETE "extensions/204"
 
 # Custom container
-./scripts/api-request.sh GET extensions --container mikopbx_php74
+./.claude/skills/api-client/scripts/api-request.sh GET extensions --container mikopbx_php74
 
 # More output lines
-./scripts/api-request.sh GET "cdr?limit=100" --lines 200
+./.claude/skills/api-client/scripts/api-request.sh GET "cdr?limit=100" --lines 200
 
 # Debug mode
-./scripts/api-request.sh GET extensions --debug
+./.claude/skills/api-client/scripts/api-request.sh GET extensions --debug
 ```
 
 ## Endpoint Examples by Category
@@ -193,103 +201,103 @@ Use this skill when you need to:
 ### Extensions API
 ```bash
 # List all extensions
-./scripts/api-request.sh GET extensions
+./.claude/skills/api-client/scripts/api-request.sh GET extensions
 
 # Get specific extension
-./scripts/api-request.sh GET "extensions/201"
+./.claude/skills/api-client/scripts/api-request.sh GET "extensions/201"
 
 # Search extensions
-./scripts/api-request.sh GET "extensions?search=admin&limit=5"
+./.claude/skills/api-client/scripts/api-request.sh GET "extensions?search=admin&limit=5"
 
 # Create extension
-./scripts/api-request.sh POST extensions \
+./.claude/skills/api-client/scripts/api-request.sh POST extensions \
   --data "number=206&username=newuser&mobile=1234567890"
 
 # Update extension
-./scripts/api-request.sh PATCH "extensions/206" --data "mobile=9999999999"
+./.claude/skills/api-client/scripts/api-request.sh PATCH "extensions/206" --data "mobile=9999999999"
 
 # Delete extension
-./scripts/api-request.sh DELETE "extensions/206"
+./.claude/skills/api-client/scripts/api-request.sh DELETE "extensions/206"
 ```
 
 ### CDR (Call Detail Records) API
 ```bash
 # Get recent CDR
-./scripts/api-request.sh GET "cdr?limit=10"
+./.claude/skills/api-client/scripts/api-request.sh GET "cdr?limit=10"
 
 # CDR by date range
-./scripts/api-request.sh GET "cdr?dateFrom=2025-10-17&dateTo=2025-10-18%2023:59:59"
+./.claude/skills/api-client/scripts/api-request.sh GET "cdr?dateFrom=2025-10-17&dateTo=2025-10-18%2023:59:59"
 
 # Search by phone number
-./scripts/api-request.sh GET "cdr?search=79643442732&limit=5"
+./.claude/skills/api-client/scripts/api-request.sh GET "cdr?search=79643442732&limit=5"
 
 # Search by caller name
-./scripts/api-request.sh GET "cdr?search=Ivan&limit=3"
+./.claude/skills/api-client/scripts/api-request.sh GET "cdr?search=Ivan&limit=3"
 
 # Get CDR metadata
-./scripts/api-request.sh GET "cdr/metadata"
+./.claude/skills/api-client/scripts/api-request.sh GET "cdr/metadata"
 
-# Get playback token
-./scripts/api-request.sh POST "cdr:playback" --data "id=12345"
+# Get playback URL (requires token or view parameter)
+./.claude/skills/api-client/scripts/api-request.sh GET "cdr/12345:playback?view=inline"
 
 # Delete CDR record
-./scripts/api-request.sh DELETE "cdr/12345"
+./.claude/skills/api-client/scripts/api-request.sh DELETE "cdr/12345"
 ```
 
 ### Providers API
 ```bash
 # List providers
-./scripts/api-request.sh GET providers
+./.claude/skills/api-client/scripts/api-request.sh GET providers
 
 # Get provider by ID
-./scripts/api-request.sh GET "providers/1"
+./.claude/skills/api-client/scripts/api-request.sh GET "providers/1"
 
 # Create SIP provider
-./scripts/api-request.sh POST providers \
+./.claude/skills/api-client/scripts/api-request.sh POST providers \
   --json '{"type":"sip","description":"Test Provider","host":"sip.example.com"}'
 
 # Update provider
-./scripts/api-request.sh PATCH "providers/1" --data "disabled=0"
+./.claude/skills/api-client/scripts/api-request.sh PATCH "providers/1" --data "disabled=0"
 
 # Delete provider
-./scripts/api-request.sh DELETE "providers/1"
+./.claude/skills/api-client/scripts/api-request.sh DELETE "providers/1"
 ```
 
 ### Incoming Routes API
 ```bash
 # List incoming routes
-./scripts/api-request.sh GET incoming-routes
+./.claude/skills/api-client/scripts/api-request.sh GET incoming-routes
 
 # Create route
-./scripts/api-request.sh POST incoming-routes \
+./.claude/skills/api-client/scripts/api-request.sh POST incoming-routes \
   --data "provider=1&number=201&priority=1"
 
 # Update route
-./scripts/api-request.sh PATCH "incoming-routes/1" --data "priority=5"
+./.claude/skills/api-client/scripts/api-request.sh PATCH "incoming-routes/1" --data "priority=5"
 
 # Delete route
-./scripts/api-request.sh DELETE "incoming-routes/1"
+./.claude/skills/api-client/scripts/api-request.sh DELETE "incoming-routes/1"
 ```
 
 ### System API
 ```bash
 # System info
-./scripts/api-request.sh GET "system/info"
+./.claude/skills/api-client/scripts/api-request.sh GET "system/info"
 
 # Check for updates
-./scripts/api-request.sh GET "system:check-for-updates"
+./.claude/skills/api-client/scripts/api-request.sh GET "system:check-for-updates"
 
 # Get system status
-./scripts/api-request.sh GET "system/status"
+./.claude/skills/api-client/scripts/api-request.sh GET "system/status"
 ```
 
 ### Search API
 ```bash
 # Global search
-./scripts/api-request.sh GET "search?query=admin&limit=20"
+./.claude/skills/api-client/scripts/api-request.sh GET "search?query=admin&limit=20"
 
 # Search by category
-./scripts/api-request.sh GET "search?query=201&category=extensions"
+./.claude/skills/api-client/scripts/api-request.sh GET "search?query=201&category=extensions"
 ```
 
 ## Environment Variables
@@ -337,32 +345,32 @@ Error responses:
 ### 1. Testing After Code Changes
 ```bash
 # After modifying Extensions API
-./scripts/api-request.sh GET extensions
-./scripts/api-request.sh POST extensions --data "number=999&username=test"
-./scripts/api-request.sh DELETE "extensions/999"
+./.claude/skills/api-client/scripts/api-request.sh GET extensions
+./.claude/skills/api-client/scripts/api-request.sh POST extensions --data "number=999&username=test"
+./.claude/skills/api-client/scripts/api-request.sh DELETE "extensions/999"
 ```
 
 ### 2. Debugging Search Functionality
 ```bash
 # Test search with various parameters
-./scripts/api-request.sh GET "extensions?search=admin"
-./scripts/api-request.sh GET "extensions?search=201&limit=1"
-./scripts/api-request.sh GET "cdr?search=Ivan&dateFrom=2025-10-17"
+./.claude/skills/api-client/scripts/api-request.sh GET "extensions?search=admin"
+./.claude/skills/api-client/scripts/api-request.sh GET "extensions?search=201&limit=1"
+./.claude/skills/api-client/scripts/api-request.sh GET "cdr?search=Ivan&dateFrom=2025-10-17"
 ```
 
 ### 3. CDR Verification
 ```bash
 # Check if CDR records exist
-./scripts/api-request.sh GET "cdr?limit=5" --lines 100
+./.claude/skills/api-client/scripts/api-request.sh GET "cdr?limit=5" --lines 100
 
 # Verify specific call
-./scripts/api-request.sh GET "cdr?search=79643442732"
+./.claude/skills/api-client/scripts/api-request.sh GET "cdr?search=79643442732"
 ```
 
 ### 4. Data Validation
 ```bash
 # Create extension and verify in database
-./scripts/api-request.sh POST extensions --data "number=777&username=validation_test"
+./.claude/skills/api-client/scripts/api-request.sh POST extensions --data "number=777&username=validation_test"
 
 # Then check with sqlite-inspector skill
 # docker exec <container> sqlite3 /cf/conf/mikopbx.db "SELECT * FROM Extensions WHERE number='777'"
@@ -436,18 +444,18 @@ curl: (7) Failed to connect to 127.0.0.1 port 8081
 ```bash
 # Create multiple extensions
 for i in {301..305}; do
-  ./scripts/api-request.sh POST extensions \
+  ./.claude/skills/api-client/scripts/api-request.sh POST extensions \
     --data "number=$i&username=user_$i&mobile=555000$i"
 done
 
 # Verify all created
-./scripts/api-request.sh GET "extensions?search=user_" --lines 200
+./.claude/skills/api-client/scripts/api-request.sh GET "extensions?search=user_" --lines 200
 ```
 
 ### JSON Response Processing
 ```bash
 # Extract specific field from response
-RESPONSE=$(./scripts/api-request.sh GET extensions --lines 0)
+RESPONSE=$(./.claude/skills/api-client/scripts/api-request.sh GET extensions --lines 0)
 TOTAL=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin)['data']['totalCount'])")
 echo "Total extensions: $TOTAL"
 ```
@@ -455,7 +463,7 @@ echo "Total extensions: $TOTAL"
 ### Debug Full Request/Response
 ```bash
 # Enable debug mode
-./scripts/api-request.sh GET extensions --debug
+./.claude/skills/api-client/scripts/api-request.sh GET extensions --debug
 
 # Shows:
 # - Container ID
