@@ -436,16 +436,16 @@ const callDetailRecords = {
 
                 callDetailRecords.hasCDRRecords = true;
                 callDetailRecords.initializeDateRangeSelector(earliestDate, latestDate);
+
+                // Initialize DataTable only if we have records
+                // WHY: DataTable needs date range to be set first
+                callDetailRecords.initializeDataTableAndHandlers();
             } else {
                 // No records in database at all or API error
                 callDetailRecords.hasCDRRecords = false;
                 callDetailRecords.showEmptyDatabasePlaceholder();
-                callDetailRecords.initializeDateRangeSelector();
+                // Don't initialize DataTable at all - just show placeholder
             }
-
-            // Initialize DataTable only after metadata is received
-            // WHY: DataTable needs date range to be set first
-            callDetailRecords.initializeDataTableAndHandlers();
         });
     },
 
@@ -478,9 +478,13 @@ const callDetailRecords = {
      * Shows the empty database placeholder and hides the table
      */
     showEmptyDatabasePlaceholder() {
-        callDetailRecords.$cdrTable.closest('.dataTables_wrapper').hide();
-        $('.dataTables_paginate').hide();
+        // Hide the table itself (DataTable won't be initialized)
+        callDetailRecords.$cdrTable.hide();
+
+        // Hide search and date controls
         $('#date-range-selector').closest('.ui.row').hide();
+
+        // Show placeholder
         callDetailRecords.$emptyDatabasePlaceholder.show();
     },
 
