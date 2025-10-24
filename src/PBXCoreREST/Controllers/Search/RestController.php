@@ -27,6 +27,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
     ApiOperation,
     ApiResponse,
     ApiDataSchema,
+    ApiParameterRef,
     SecurityType,
     HttpMapping,
     ResourceSecurity
@@ -56,7 +57,7 @@ use MikoPBX\PBXCoreREST\Attributes\{
         'GET' => ['getSearchItems']
     ],
     resourceLevelMethods: [],
-    collectionLevelMethods: ['getSearchItems'],
+    collectionLevelMethods: [],
     customMethods: ['getSearchItems'],
     idPattern: ''
 )]
@@ -71,6 +72,9 @@ class RestController extends BaseRestController
     /**
      * Get searchable items for global search
      *
+     * WHY: Provides unified search across all entities (users, providers, queues, etc.)
+     * and static pages for admin interface. Supports partial matching and case-insensitive search.
+     *
      * @route GET /pbxcore/api/v3/search:getSearchItems
      */
     #[ApiDataSchema(
@@ -82,9 +86,11 @@ class RestController extends BaseRestController
         description: 'rest_search_GetSearchItemsDesc',
         operationId: 'getSearchItems'
     )]
+    #[ApiParameterRef('query')]
     #[ApiResponse(200, 'rest_response_200_list')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
     public function getSearchItems(): void
     {
         // Implementation handled by BaseRestController

@@ -19,7 +19,8 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Search;
 
-use MikoPBX\PBXCoreREST\Lib\AbstractDataStructure;
+use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
+use MikoPBX\PBXCoreREST\Lib\Common\OpenApiSchemaProvider;
 
 /**
  * Data structure definitions for global search API.
@@ -29,20 +30,65 @@ use MikoPBX\PBXCoreREST\Lib\AbstractDataStructure;
  *
  * @package MikoPBX\PBXCoreREST\Lib\Search
  */
-class DataStructure extends AbstractDataStructure
+class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvider
 {
     /**
+     * Get unified field definitions for search results (Single Source of Truth)
+     *
+     * WHY: Eliminates duplication and provides single definition for response schema.
+     * Each field is defined ONCE with all its properties.
+     *
+     * @return array<string, array<string, mixed>> Unified field definitions
+     */
+    private static function getAllFieldDefinitions(): array
+    {
+        return [
+            'name' => [
+                'type' => 'string',
+                'description' => 'rest_schema_search_result_name',
+                'example' => '<i class="user icon"></i> John Doe'
+            ],
+            'value' => [
+                'type' => 'string',
+                'description' => 'rest_schema_search_result_value',
+                'example' => '/admin-cabinet/extensions/modify/201'
+            ],
+            'type' => [
+                'type' => 'string',
+                'description' => 'rest_schema_search_result_type',
+                'example' => 'USERS'
+            ],
+            'typeLocalized' => [
+                'type' => 'string',
+                'description' => 'rest_schema_search_result_type_localized',
+                'example' => 'Users'
+            ],
+            'sorter' => [
+                'type' => 'string',
+                'description' => 'rest_schema_search_result_sorter',
+                'example' => 'John Doe'
+            ]
+        ];
+    }
+
+    /**
      * Get parameter definitions for global search
+     *
+     * WHY: Centralized definition of all request/response parameters.
+     * Uses getAllFieldDefinitions() to avoid duplication.
      *
      * @return array{request: array<string, array>, response: array<string, array>}
      */
     public static function getParameterDefinitions(): array
     {
+        $allFields = self::getAllFieldDefinitions();
+
         return [
             'request' => [
                 'query' => [
                     'type' => 'string',
-                    'description' => 'Search query to filter results (searches by name, number, or searchIndex)',
+                    'description' => 'rest_param_search_query',
+                    'in' => 'query',
                     'example' => '201',
                     'sanitize' => 'text',
                     'required' => false
@@ -50,40 +96,73 @@ class DataStructure extends AbstractDataStructure
             ],
             'response' => [
                 'name' => [
-                    'type' => 'string',
-                    'description' => 'Display name of the search result item (may contain HTML)',
-                    'example' => '<i class="user icon"></i> John Doe'
-                ],
-                'value' => [
-                    'type' => 'string',
-                    'description' => 'URL/link to the item',
-                    'example' => '/admin-cabinet/extensions/modify/201'
-                ],
-                'type' => [
-                    'type' => 'string',
-                    'description' => 'Item category/type in uppercase with underscores',
-                    'example' => 'USERS'
-                ],
-                'typeLocalized' => [
-                    'type' => 'string',
-                    'description' => 'Localized/translated category name',
-                    'example' => 'Users'
-                ],
-                'sorter' => [
-                    'type' => 'string',
-                    'description' => 'Plain text for sorting (HTML tags stripped)',
-                    'example' => 'John Doe'
+                    'type' => 'array',
+                    'description' => 'rest_schema_search_results',
+                    'items' => [
+                        'type' => 'object',
+                        'properties' => $allFields
+                    ]
                 ]
             ]
         ];
     }
 
     /**
-     * Get sanitization rules (not applicable for this endpoint)
+     * Get sanitization rules for request parameters
+     *
+     * WHY: Security - sanitize user input to prevent XSS and injection attacks.
      *
      * @return array<string, string>
      */
     public static function getSanitizationRules(): array
+    {
+        return [
+            'query' => 'string|sanitize:text|empty_to_null'
+        ];
+    }
+
+    /**
+     * Get OpenAPI schema for list item representation
+     *
+     * WHY: Search results are always returned as list (array of search items).
+     * Each item contains name, value, type, typeLocalized, and sorter fields.
+     *
+     * @return array<string, mixed> OpenAPI schema definition
+     */
+    public static function getListItemSchema(): array
+    {
+        $allFields = self::getAllFieldDefinitions();
+
+        return [
+            'type' => 'object',
+            'description' => 'rest_schema_search_item',
+            'properties' => $allFields,
+            'required' => ['name', 'value', 'type']
+        ];
+    }
+
+    /**
+     * Get OpenAPI schema for detailed record representation
+     *
+     * WHY: Search endpoint returns list only (no detail view for individual items).
+     * Return same schema as list item for consistency.
+     *
+     * @return array<string, mixed> OpenAPI schema definition
+     */
+    public static function getDetailSchema(): array
+    {
+        return self::getListItemSchema();
+    }
+
+    /**
+     * Get related schemas that should be registered in OpenAPI components
+     *
+     * WHY: Search results don't have nested schemas - all fields are simple types.
+     * Return empty array as there are no related schemas to register.
+     *
+     * @return array<string, array<string, mixed>> Map of schema name to schema definition
+     */
+    public static function getRelatedSchemas(): array
     {
         return [];
     }
