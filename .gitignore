@@ -39,3 +39,15 @@ tests/api/**/*.tmp
 
 # Translation batch processing temporary files
 .claude/temp/
+.claude/*_translated.php
+.claude/batch_*.json
+.claude/batch_*.php
+.claude/analyze_*.php
+.claude/auto_translate_*.php
+.claude/compare_*.php
+.claude/merge_*.php
+.claude/temp_*.php
+.claude/translate_*.php
+.claude/missing_*.json
+.claude/translation_analysis_report.json
+.claude/*.tar.gz
