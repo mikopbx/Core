@@ -32,7 +32,7 @@ cd /Users/nb/PhpstormProjects/mikopbx/Core/tests/api
 3. **Default credentials**
    - Username: `admin`
    - Password: `123456789MikoPBX#1`
-   - API URL: `http://127.0.0.1:8081/pbxcore/api/v3`
+   - API URL: `http://mikopbx_php83.localhost:8081/pbxcore/api/v3`
 
 ## Test Structure
 

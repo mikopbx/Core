@@ -21,7 +21,7 @@ from urllib3.util.retry import Retry
 
 
 # Configuration
-API_BASE_URL = os.getenv('MIKOPBX_API_URL', 'http://127.0.0.1:8081/pbxcore/api/v3')
+API_BASE_URL = os.getenv('MIKOPBX_API_URL', 'http://mikopbx_php83.localhost:8081/pbxcore/api/v3')
 API_LOGIN = os.getenv('MIKOPBX_LOGIN', 'admin')
 API_PASSWORD = os.getenv('MIKOPBX_PASSWORD', '123456789MikoPBX#1')
 FIXTURES_DIR = Path(__file__).parent / 'fixtures'
@@ -38,12 +38,13 @@ class MikoPBXClient:
     - Session cookie handling (refreshToken)
     """
 
-    def __init__(self, base_url: str, login: str, password: str):
+    def __init__(self, base_url: str, login: str = None, password: str = None, auth_token: str = None):
         self.base_url = base_url.rstrip('/')
         self.login = login
         self.password = password
-        self.access_token: Optional[str] = None
+        self.access_token: Optional[str] = auth_token  # Can be set directly for API keys
         self.session = self._create_session()
+        self.verify_ssl = False  # Store for compatibility
 
     def _create_session(self) -> requests.Session:
         """Create session with retry logic"""
