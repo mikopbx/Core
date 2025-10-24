@@ -184,32 +184,21 @@ public static function main(array $data): PBXApiResult
 
 ## Authentication Architecture
 
-### JWT Bearer Tokens (15 min lifetime)
-```bash
-# Login with cookies (required for Bearer token to work)
-COOKIE_JAR="/tmp/mikopbx_cookies.txt"
+### JWT Bearer Tokens & API Keys
+Use the **`auth-token-manager`** skill to obtain JWT Bearer tokens automatically:
+- Handles login with username/password
+- Returns ready-to-use access token
+- Manages cookies and token lifecycle
 
-TOKEN=$(curl -s -c "$COOKIE_JAR" -X POST 'https://localhost:8445/pbxcore/api/v3/auth:login' \
-  -H 'Content-Type: application/x-www-form-urlencoded; charset=UTF-8' \
-  --data-raw 'login=admin&password=123456789MikoPBX%231&rememberMe=false' \
-  --insecure | \
-  python3 -c "import sys, json; print(json.load(sys.stdin)['data']['accessToken'])")
-
-# Use token with cookies
-curl -H "Authorization: Bearer $TOKEN" \
-  -b "$COOKIE_JAR" \
-  https://localhost:8445/pbxcore/api/v3/extensions
-```
+Use the **`api-client`** skill to execute API requests with automatic authentication:
+- Auto-authentication with JWT tokens
+- Supports all HTTP methods (GET, POST, PATCH, DELETE)
+- Executes requests inside Docker containers
 
 **Dual-token system:**
 - **Access Token:** JWT, 15 min, stateless, Bearer header
 - **Refresh Token:** 30 days, Redis storage, httpOnly cookie, auto-rotation
-
-### API Keys (no expiration)
-```bash
-curl -H "Authorization: Bearer miko_ak_1234567890abcdef..." \
-  http://127.0.0.1:8081/pbxcore/api/v3/extensions
-```
+- **API Keys:** No expiration, format: `miko_ak_1234567890abcdef...`
 
 ## Creating New Endpoints
 
@@ -246,24 +235,39 @@ Custom methods (Google API Design):
 500 Internal Server Error   # Unexpected error
 ```
 
-## Testing
+## Testing & Validation
 
-```bash
-# Login and extract token
-TOKEN=$(curl -s -X POST http://127.0.0.1:8081/pbxcore/api/v3/auth:login \
-  -d "login=admin&password=123456789MikoPBX%231" | \
-  python3 -c "import sys, json; print(json.load(sys.stdin)['data']['accessToken'])")
+### API Testing
+Use the **`api-client`** skill to test endpoints:
+- Execute requests with auto-authentication
+- Test CRUD operations (GET, POST, PATCH, DELETE)
+- Debug API responses with specific parameters
 
-# Test validation (should return 422)
-curl -s -X POST "http://127.0.0.1:8081/pbxcore/api/v3/call-queues" \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Test","timeout":500}' | python3 -m json.tool
+Use the **`api-test-generator`** skill to generate comprehensive tests:
+- Generate Python pytest tests for endpoints
+- Add coverage for CRUD operations
+- Validate API compliance with OpenAPI schemas
 
-# PHPStan check
-docker exec <container> vendor/bin/phpstan analyse \
-  "src/PBXCoreREST/Lib/YourResource/*.php"
-```
+### Endpoint Validation
+Use the **`endpoint-validator`** skill to validate endpoints:
+- Check OpenAPI schema compliance
+- Verify parameter consistency
+- Validate DataStructure definitions
+
+### Database Verification
+Use the **`sqlite-inspector`** skill to verify data:
+- Check data consistency after API operations
+- Validate foreign key relationships
+- Inspect CDR records for testing
+
+### OpenAPI Analysis
+Use the **`openapi-analyzer`** skill to analyze API specification:
+- Extract endpoint schemas
+- Check endpoint documentation
+- Integrate with validation and test generation
+
+### Code Quality
+Use the **`php-style`** skill to check PHP code standards (PSR-1/4/12, PHP 8.3)
 
 ## Key Patterns & Rules
 

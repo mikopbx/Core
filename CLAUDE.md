@@ -14,8 +14,8 @@ MikoPBX is an open-source PBX (Private Branch Exchange) system for small busines
 
 ## Code Style Guides
 
-📖 **PHP Style Standards** - Use the `mikopbx-php-style` skill for comprehensive PHP coding standards (PSR-1, PSR-4, PSR-12) with real examples
-📖 **JavaScript Style Standards** - Use the `mikopbx-js-style` skill for comprehensive JavaScript coding standards (ES6+, Fomantic-UI, jQuery patterns)
+📖 **PHP Style Standards** - Use the `php-style` skill for comprehensive PHP coding standards (PSR-1, PSR-4, PSR-12) with real examples
+📖 **JavaScript Style Standards** - Use the `js-style` skill for comprehensive JavaScript coding standards (ES6+, Fomantic-UI, jQuery patterns)
 
 ### Directory Structure
 
@@ -47,24 +47,19 @@ resources/           # Static resources (DB, sounds, rootfs)
 
 ## Docker Environment
 
-### Container Access
-Access the main PHP container for debugging:
-```bash
-# Interactive shell
-docker exec -it <containerId> /bin/sh
+### Container Management
+Use the **`container-inspector`** skill to manage containers and get connection parameters:
+- Get container IP addresses and ports
+- Restart containers after code changes
+- Restart specific workers
+- View container status and health checks
 
-# View system logs
-docker exec <containerId> tail -f /storage/usbdisk1/mikopbx/log/system/messages
-
-# Monitor specific processes
-docker exec <containerId> ps -ah | grep WorkerApiCommands
-
-# Search logs for specific patterns
-docker exec <containerId> tail -500 /storage/usbdisk1/mikopbx/log/system/messages | grep -E "soft|orphan|WorkerApiCommands"
-
-# PHPStan analysis
-docker exec <containerId> /offload/rootfs/usr/www/vendor/bin/phpstan analyse "/offload/rootfs/usr/www/src/Core/System/DockerNetworkFilterService.php"
-```
+### Log Analysis
+Use the **`log-analyzer`** skill to diagnose issues:
+- Analyze system logs for errors
+- Track worker processes
+- Monitor API request flow
+- Debug database and worker issues
 
 ### Important Paths
 - **Database**: `/cf/conf/mikopbx.db`
@@ -147,12 +142,17 @@ Tests are automatically synchronized between host and container:
 require_once 'Globals.php'; // !!!IMPORTANT!!! NO NEED ANY PATH 
 ```
 
-### Translation Guidelines
-- Add translations only to Russian
-- System auto-translates to other languages via weblate.mikopbx.com
+### Translation Management
+Use the **`translations`** skill to manage multilingual translations:
+- Add new translation keys (Russian-first workflow)
+- Translate to all 29 languages
+- Check consistency across languages
+- Remove obsolete translation keys
 
 ### Frontend Development
 - Include new JS/CSS through AssetProvider
+- Use **`babel-compiler`** skill to transpile ES6+ JavaScript to ES5
+- Use **`js-style`** skill to validate JavaScript code style
 
 ## Quick Links to Development Guides
 
@@ -167,41 +167,44 @@ require_once 'Globals.php'; // !!!IMPORTANT!!! NO NEED ANY PATH
 
 ## Available Development Skills
 
-MikoPBX includes specialized skills in `.claude/skills/` that activate automatically based on your request:
+MikoPBX includes specialized skills in `.claude/skills/` that activate automatically based on your request.
 
 ### Database & API Testing
-- **mikopbx-sqlite-inspector** / **mikopbx-sqlite-inspecting** - Verify database after API operations
-- **mikopbx-openapi-analyzing** - Analyze OpenAPI spec (259 endpoints)
-- **mikopbx-api-test-generating** - Generate pytest tests for API endpoints
-- **mikopbx-endpoint-validating** - Validate API compliance with OpenAPI
+- **`sqlite-inspector`** - Verify database after API operations / Проверка базы данных после операций API
+- **`openapi-analyzer`** - Analyze OpenAPI spec (259 endpoints) / Анализ OpenAPI спецификации
+- **`api-test-generator`** - Generate pytest tests for API endpoints / Генерация pytest тестов
+- **`endpoint-validator`** - Validate API compliance with OpenAPI / Валидация соответствия API
+- **`api-client`** - Execute REST API requests with auto-auth / Выполнение REST API запросов
+- **`auth-token-manager`** - Obtain JWT Bearer tokens / Получение JWT токенов
 
 ### Container & Infrastructure
-- **mikopbx-container-inspector** - Manage Docker containers (mikopbx_php83/php74)
-- **mikopbx-log-analyzing** - Analyze container logs for debugging
-- **asterisk-config-validating** - Validate Asterisk configuration and logs
+- **`container-inspector`** - Manage Docker containers (mikopbx_php83/php74) / Управление контейнерами
+- **`log-analyzer`** - Analyze container logs for debugging / Анализ логов контейнера
+- **`asterisk-validator`** - Validate Asterisk configuration and logs / Валидация конфигурации Asterisk
+- **`asterisk-tester`** - Test Asterisk dialplan scenarios / Тестирование Asterisk dialplan
 
 ### Code Quality & Style
-- **mikopbx-php-style** - PHP standards (PSR-1/4/12, PHP 8.3 features)
-- **mikopbx-js-style** - JavaScript standards (ES6+, Fomantic UI, jQuery)
-- **mikopbx-code-searching** - Syntax-aware code search using ast-grep
-- **mikopbx-babel-compiling** - Transpile ES6+ JavaScript to ES5
+- **`php-style`** - PHP standards (PSR-1/4/12, PHP 8.3 features) / PHP стандарты
+- **`js-style`** - JavaScript standards (ES6+, Fomantic UI, jQuery) / JavaScript стандарты
+- **`code-search`** - Syntax-aware code search using ast-grep / Синтаксический поиск кода
+- **`babel-compiler`** - Transpile ES6+ JavaScript to ES5 / Транспиляция JavaScript
 
 ### Development Tools
-- **mikopbx-translation-managing** - Manage translations across 29 languages
-- **mikopbx-commit-message-generating** - Generate git commit messages
-- **asterisk-dialplan-testing** - Test Asterisk dialplan scenarios
+- **`translations`** - Manage translations across 29 languages / Управление переводами
+- **`commit-messages`** - Generate git commit messages / Генерация сообщений коммитов
 
-**Usage**: Simply describe what you need in natural language. Claude will automatically select and use the appropriate skill(s).
+**Usage**: Simply describe what you need in natural language (English or Russian). Claude will automatically select and use the appropriate skill(s).
 
-Examples:
-- "Check if extension 201 was created in database" → activates mikopbx-sqlite-inspecting
-- "Generate tests for Extensions API" → activates mikopbx-api-test-generating
-- "Find all REST API Actions" → activates mikopbx-code-searching
-- "Transpile extension-modify.js" → activates mikopbx-babel-compiling
+**Examples:**
+- "Check if extension 201 was created in database" / "проверь в базе создался ли extension 201"
+- "Generate tests for Extensions API" / "создай тесты для Extensions API"
+- "Find all REST API Actions" / "найди все REST API Actions"
+- "Transpile extension-modify.js" / "транспилируй extension-modify.js"
+- "Get authentication token" / "получи токен для API"
+- "Restart mikopbx_php83 container" / "перезапусти контейнер mikopbx_php83"
 
 ### Security & Guidelines
 - **[XSS Protection](docs/xss-protection-guidelines.md)** - Cross-site scripting prevention
-- **[CSRF Protection](docs/csrf-protection-guidelines.md)** - CSRF attack prevention
 - **[DataTable Guidelines](docs/datatable-semantic-ui-guidelines.md)** - DataTable implementation
 - **[Tooltip Guidelines](docs/TOOLTIP_GUIDELINES.md)** - UI tooltip standards
 
