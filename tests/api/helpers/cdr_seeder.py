@@ -54,7 +54,7 @@ class CDRSeeder:
         self.sql_file = self.fixture_dir / "cdr_seed_data.sql"
         self.json_file = self.fixture_dir / "cdr_test_data.json"
         self.cdr_db_path = Path("/storage/usbdisk1/mikopbx/astlogs/asterisk/cdr.db")
-        self.monitor_base = Path("/tmp/test_monitor")
+        self.monitor_base = Path("/storage/usbdisk1/mikopbx/astspool/monitor")
 
     def seed(self) -> bool:
         """

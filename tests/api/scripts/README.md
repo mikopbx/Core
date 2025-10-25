@@ -38,7 +38,7 @@ ssh root@192.168.1.100 '/usr/www/tests/api/scripts/seed_cdr_database.sh seed'
 
 - `CDR_DB_PATH` - Path to CDR database (default: `/storage/usbdisk1/mikopbx/astlogs/asterisk/cdr.db`)
 - `FIXTURES_DIR` - Path to fixtures (default: `/usr/www/tests/api/fixtures`)
-- `MONITOR_BASE` - Path to recordings (default: `/tmp/test_monitor`)
+- `MONITOR_BASE` - Path to recordings (default: `/storage/usbdisk1/mikopbx/astspool/monitor`)
 - `ENABLE_CDR_SEED` - Enable/disable seeding (default: `1`)
 - `ENABLE_CDR_CLEANUP` - Enable/disable cleanup (default: `1`)
 

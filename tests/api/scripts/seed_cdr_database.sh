@@ -14,7 +14,7 @@
 ## Environment Variables:
 ##   CDR_DB_PATH       - Path to CDR database (default: /storage/usbdisk1/mikopbx/astlogs/asterisk/cdr.db)
 ##   FIXTURES_DIR      - Path to fixtures directory (default: /usr/www/tests/api/fixtures)
-##   MONITOR_BASE      - Path to recordings base (default: /tmp/test_monitor)
+##   MONITOR_BASE      - Path to recordings base (default: /storage/usbdisk1/mikopbx/astspool/monitor)
 ##   ENABLE_CDR_SEED   - Enable/disable seeding (default: 1)
 ##   ENABLE_CDR_CLEANUP - Enable/disable cleanup (default: 1)
 ##
@@ -24,7 +24,7 @@ set -e  # Exit on error
 # Configuration
 CDR_DB_PATH="${CDR_DB_PATH:-/storage/usbdisk1/mikopbx/astlogs/asterisk/cdr.db}"
 FIXTURES_DIR="${FIXTURES_DIR:-/usr/www/tests/api/fixtures}"
-MONITOR_BASE="${MONITOR_BASE:-/tmp/test_monitor}"
+MONITOR_BASE="${MONITOR_BASE:-/storage/usbdisk1/mikopbx/astspool/monitor}"
 ENABLE_CDR_SEED="${ENABLE_CDR_SEED:-1}"
 ENABLE_CDR_CLEANUP="${ENABLE_CDR_CLEANUP:-1}"
 
