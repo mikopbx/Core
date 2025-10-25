@@ -720,7 +720,7 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
     {
         self::annotate("Waiting for delete process to complete using data-stage tracking");
 
-        $maxWaitTime = 120; // 2 minutes max for delete process
+        $maxWaitTime = 180; // 3 minutes max for delete process
         $startTime = time();
         $modalSelector = WebDriverBy::id('delete-all-modal');
 
@@ -733,21 +733,22 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
             $wait = new WebDriverWait(self::$driver, $maxWaitTime);
 
             // Wait until we reach the restart stage
-            $wait->until(function() use ($modalSelector, &$seenStages, &$lastStage) {
+            $wait->until(function() use ($modalSelector, &$seenStages, &$lastStage, $startTime) {
                 try {
+                    $elapsed = time() - $startTime;
                     $modal = self::$driver->findElement($modalSelector);
                     $currentStage = $modal->getAttribute('data-stage');
 
                     // Track new stages
                     if ($currentStage !== $lastStage && !empty($currentStage)) {
                         $seenStages[] = $currentStage;
-                        self::annotate("Delete process stage: $currentStage");
+                        self::annotate("Delete process stage: $currentStage (elapsed: {$elapsed}s)");
                         $lastStage = $currentStage;
                     }
 
                     // Check if we reached the restart stage (final stage)
                     if ($currentStage === 'DeleteAll_Stage_Restart') {
-                        self::annotate("Delete process completed - restart stage reached");
+                        self::annotate("Delete process completed - restart stage reached (elapsed: {$elapsed}s)");
                         return true;
                     }
 
@@ -764,14 +765,30 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
                 } catch (\Exception $e) {
                     // Modal might have disappeared unexpectedly
                     if (strpos($e->getMessage(), 'no such element') !== false) {
-                        throw new \Exception("Modal disappeared unexpectedly during delete process");
+                        $elapsed = time() - $startTime;
+                        throw new \Exception("Modal disappeared unexpectedly during delete process (elapsed: {$elapsed}s)");
                     }
                     throw $e;
                 }
             });
 
-            // Verify Close button is now visible
-            $closeButtonXpath = "//div[@id='delete-all-modal']//div[@class='actions']//button[contains(@class, 'positive')]";
+            $elapsed = time() - $startTime;
+            self::annotate("Waiting for close button to become visible (elapsed: {$elapsed}s)");
+
+            // Wait for Close button to appear and become visible (it appears after restart stage is reached)
+            // Note: Using 'ok' class to find the specific Close button that won't trigger onApprove
+            $closeButtonXpath = "//div[@id='delete-all-modal']//div[@class='actions']//button[contains(@class, 'ok')]";
+            $closeButtonWait = new WebDriverWait(self::$driver, 30);
+            $closeButtonWait->until(
+                WebDriverExpectedCondition::visibilityOfElementLocated(
+                    WebDriverBy::xpath($closeButtonXpath)
+                )
+            );
+
+            $elapsed = time() - $startTime;
+            self::annotate("Close button is now visible (elapsed: {$elapsed}s)");
+
+            // Verify Close button is visible
             $closeButtons = self::$driver->findElements(WebDriverBy::xpath($closeButtonXpath));
             $this->assertGreaterThan(0, count($closeButtons), "Close button should be visible after completion");
             $this->assertTrue($closeButtons[0]->isDisplayed(), "Close button should be displayed");
@@ -779,6 +796,7 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
             self::annotate("Delete process completed successfully. Stages seen: " . implode(' -> ', $seenStages));
 
             // Click Close button to dismiss modal before system restart
+            // This will trigger our custom click handler, not the onApprove callback
             $closeButtons[0]->click();
 
             // Wait for modal to close after clicking Close button

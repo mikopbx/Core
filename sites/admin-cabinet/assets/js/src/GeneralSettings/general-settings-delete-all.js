@@ -507,7 +507,17 @@ const generalSettingsDeleteAll = {
             $content.html(progressHtml);
 
             // Show Close button only after process completion
-            $actions.html('<button class="ui positive button">' + globalTranslate.sl_Close + '</button>');
+            // Use 'ok' class instead of 'positive' to avoid triggering onApprove callback
+            const closeButton = $('<button class="ui ok positive button">' + globalTranslate.sl_Close + '</button>');
+
+            // Add click handler to simply close the modal
+            closeButton.on('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                generalSettingsDeleteAll.$deleteAllModal.modal('hide');
+            });
+
+            $actions.empty().append(closeButton);
             $actions.show();
 
             // Make modal closable now
