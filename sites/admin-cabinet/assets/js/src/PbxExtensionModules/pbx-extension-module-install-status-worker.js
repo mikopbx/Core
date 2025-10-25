@@ -88,7 +88,7 @@ const installStatusLoopWorker = {
         } else if (stage === 'Stage_III_GetDownloadLink'){
             installStatusLoopWorker.updateProgressBar(moduleUniqueId, globalTranslate.ext_CheckLicenseInProgress, 3);
         } else if (stage === 'Stage_IV_DownloadModule'){
-            installStatusLoopWorker.cbAfterReceiveNewDownloadStatus(moduleUniqueId, stageDetails);
+            installStatusLoopWorker.cbAfterReceiveNewDownloadStatus(moduleUniqueId, stageDetails, $row);
         } else if (stage === 'Stage_I_UploadModule'){
             installStatusLoopWorker.cbAfterReceiveNewUploadStatus(moduleUniqueId, stageDetails);
         } else if (stage === 'Stage_V_InstallModule'){
@@ -134,8 +134,9 @@ const installStatusLoopWorker = {
      *
      * @param {string} moduleUniqueId - The unique identifier of the module being downloaded.
      * @param {Object} stageDetails - Detailed information about the download progress.
+     * @param {jQuery} $row - The jQuery object representing the row in the UI associated with the module.
      */
-    cbAfterReceiveNewDownloadStatus(moduleUniqueId, stageDetails) {
+    cbAfterReceiveNewDownloadStatus(moduleUniqueId, stageDetails, $row) {
         // Check module download status
         if (stageDetails.data.d_status === 'DOWNLOAD_IN_PROGRESS') {
             const downloadProgress = Math.max(Math.round(parseInt(stageDetails.data.d_status_progress, 10)/2)-1, 3);
