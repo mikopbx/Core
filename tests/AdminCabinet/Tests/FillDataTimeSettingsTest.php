@@ -270,49 +270,31 @@ class FillDataTimeSettingsTest extends MikoPBXTestsBase
 
         $maxAttempts = 3;
         $loginData = $this->loginDataProvider();
-        
+
         for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
             try {
                 self::annotate("Login attempt {$attempt} of {$maxAttempts}");
-                
-                // Reload page to get fresh state
+
+                // Reload page to get fresh state - navigate to login page
                 $loginUrl = $GLOBALS['SERVER_PBX'] . '/admin-cabinet/session/index/';
                 self::$driver->get($loginUrl);
                 sleep(2);
 
-                // Wait for login form to be visible
-                self::$driver->wait(10, 500)->until(
-                    \Facebook\WebDriver\WebDriverExpectedCondition::visibilityOfElementLocated(
-                        \Facebook\WebDriver\WebDriverBy::id('login-form')
-                    )
-                );
-
-                // Perform login
+                // Use standard login method from LoginTrait
                 $this->loginOnMikoPBX($loginData[0][0]);
-
-                // Wait for login to complete and dashboard to load
-                sleep(3);
-                $this->waitForAjax();
-
-                // Verify we're logged in by checking for top menu
-                self::$driver->wait(10, 500)->until(
-                    \Facebook\WebDriver\WebDriverExpectedCondition::visibilityOfElementLocated(
-                        \Facebook\WebDriver\WebDriverBy::id('top-menu-search')
-                    )
-                );
 
                 self::annotate("Re-login successful on attempt {$attempt}", 'success');
                 return; // Success, exit the method
-                
+
             } catch (\Exception $e) {
                 self::annotate("Login attempt {$attempt} failed: " . $e->getMessage(), 'warning');
-                
+
                 // If this was the last attempt, throw the exception
                 if ($attempt === $maxAttempts) {
                     self::annotate("All {$maxAttempts} login attempts failed", 'error');
                     throw new \Exception("Failed to re-login after {$maxAttempts} attempts: " . $e->getMessage());
                 }
-                
+
                 // Wait before next attempt
                 sleep(2);
             }
