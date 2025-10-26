@@ -59,12 +59,14 @@ class GetAdviceListAction extends Injectable
                     $result[$key] = [];
                 }
                 foreach ($messages as $message) {
-                    if (isset($message['messageTpl'])) {
+                    if (is_array($message) && isset($message['messageTpl'])) {
+                        // Add structured messages (for UI display)
+                        $result[$key] = array_merge($result[$key], [$message]);
+                    } elseif (is_string($message)) {
+                        // Preserve string markers (e.g., 'WebAdminPassword', 'SSHPassword')
+                        // These are used by frontend for navigation logic, not for display
                         $result[$key] = array_merge($result[$key], [$message]);
                     }
-                }
-                if ($key === 'needUpdate') {
-                    $result[$key] = array_merge($result[$key], $messages);
                 }
             }
         }

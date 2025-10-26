@@ -103,17 +103,15 @@ class TestSysinfo:
         hypervisor = response['data']['Hypervisor']
 
         if response.get('success'):
-            # Hypervisor detected
+            # Hypervisor detected - verify it's valid
             print(f"✓ Hypervisor detected: {hypervisor}")
             assert hypervisor, "Hypervisor field should not be empty when success=true"
 
             # Validate hypervisor is one of known types
             known_hypervisors = ['KVM', 'VMware', 'VirtualBox', 'Hyper-V', 'Xen', 'QEMU', 'bhyve']
             found_known = any(known in hypervisor for known in known_hypervisors)
-            if found_known:
-                print(f"  ✓ Recognized hypervisor type")
-            else:
-                print(f"  ⚠ Unknown hypervisor type: {hypervisor}")
+            assert found_known, f"Unknown hypervisor type: {hypervisor}. Expected one of: {', '.join(known_hypervisors)}"
+            print(f"  ✓ Recognized hypervisor type")
         else:
             # Bare metal system
             print(f"✓ Running on bare metal (no hypervisor detected)")

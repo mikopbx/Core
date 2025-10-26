@@ -527,10 +527,10 @@ class TestSystemUpdateChecks:
 
     def test_10_version_format_validation(self, api_client):
         """
-        Test that version numbers follow semantic versioning
+        Test that version numbers follow MikoPBX versioning format
 
-        Expected format: YYYY.MAJOR.MINOR or YYYY.MAJOR.MINOR.PATCH
-        Examples: 2025.1.10, 2024.12.5.1
+        Expected format: YYYY.MAJOR.MINOR or YYYY.MAJOR.MINOR-dev
+        Examples: 2024.2.287, 2024.2.287-dev
         """
         print("\n=== Testing Version Format ===")
 
@@ -544,8 +544,9 @@ class TestSystemUpdateChecks:
 
             # Validate current version format
             import re
-            # Pattern: YYYY.N or YYYY.N.N or YYYY.N.N.N
-            version_pattern = r'^\d{4}\.\d+(\.\d+)?(\.\d+)?$'
+            # Pattern: YYYY.N.N or YYYY.N.N-dev only
+            # Examples: 2024.2.287, 2024.2.287-dev
+            version_pattern = r'^\d{4}\.\d+\.\d+(-dev)?$'
 
             assert re.match(version_pattern, current_version), \
                 f"Invalid version format: {current_version}"

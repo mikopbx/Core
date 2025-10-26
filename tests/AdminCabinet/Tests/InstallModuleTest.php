@@ -16,8 +16,6 @@ abstract class InstallModuleTest extends MikoPBXTestsBase
     protected const int STATE_CHANGE_TIMEOUT = 45;
     protected const int STATE_CHECK_INTERVAL = 5;
     protected const int MODAL_WAIT_TIME = 2;
-    protected const int MAX_INSTALL_ATTEMPTS = 3;
-    protected const int INSTALL_RETRY_DELAY = 10;
 
     protected function setUp(): void
     {
@@ -97,102 +95,28 @@ abstract class InstallModuleTest extends MikoPBXTestsBase
     }
 
     /**
-     * Installs a module with retry logic.
+     * Installs a module.
      *
      * This method clicks the install button and waits for the modal to be visible.
      * It then clicks the approve button and waits for the AJAX request to complete.
-     * If installation doesn't start (Curl 0 error or progress bar doesn't appear),
-     * it will retry up to MAX_INSTALL_ATTEMPTS times.
      */
     protected function installModule(array $params): void
     {
-        $installStarted = false;
-        $attempt = 0;
+        $xpath = $this->getInstallButtonXPath($params['moduleId']);
+        $installButton = self::$driver->findElement(WebDriverBy::xpath($xpath));
+        $installButton->click();
+        $this->waitForAjax();
 
-        while ($attempt < self::MAX_INSTALL_ATTEMPTS && !$installStarted) {
-            if ($attempt > 0) {
-                self::annotate("Retrying module installation, attempt " . ($attempt + 1));
-                sleep(self::INSTALL_RETRY_DELAY);
+        sleep(self::MODAL_WAIT_TIME);
 
-                // Remove any error messages from previous attempt
-                $this->removeErrorMessages();
-            }
-
-            $xpath = $this->getInstallButtonXPath($params['moduleId']);
-            $installButton = self::$driver->findElement(WebDriverBy::xpath($xpath));
-            $installButton->click();
-            $this->waitForAjax();
-
-            sleep(self::MODAL_WAIT_TIME);
-
-            $wait = new WebDriverWait(self::$driver, 10);
-            $approveButton = $wait->until(
-                WebDriverExpectedCondition::elementToBeClickable(
-                    WebDriverBy::xpath($this->getModalApproveButtonXPath())
-                )
-            );
-            $approveButton->click();
-            $this->waitForAjax();
-
-            // Wait a bit and check if installation actually started
-            sleep(5);
-            $installStarted = $this->checkInstallationStarted();
-
-            $attempt++;
-        }
-
-        if (!$installStarted) {
-            self::annotate("Installation did not start after {$attempt} attempts", 'warning');
-        } else {
-            self::annotate("Installation started successfully" . ($attempt > 1 ? " after {$attempt} attempts" : ""));
-        }
-    }
-
-    /**
-     * Checks if module installation has actually started.
-     *
-     * This method checks for the presence of progress bar or installation status indicators.
-     *
-     * @return bool True if installation started, false otherwise
-     */
-    protected function checkInstallationStarted(): bool
-    {
-        try {
-            // Check if progress bar is visible
-            $progressBar = self::$driver->findElement(WebDriverBy::id('upload-progress-bar-block'));
-            if ($progressBar->isDisplayed()) {
-                return true;
-            }
-        } catch (\Exception) {
-            // Progress bar not found or not visible
-        }
-
-        try {
-            // Check if there's a spinner/loading indicator on the button
-            $loadingIcon = self::$driver->findElement(
-                WebDriverBy::xpath('//a[contains(@class, "download") or contains(@class, "update")]//i[contains(@class, "loading")]')
-            );
-            if ($loadingIcon->isDisplayed()) {
-                return true;
-            }
-        } catch (\Exception) {
-            // Loading icon not found
-        }
-
-        return false;
-    }
-
-    /**
-     * Removes error messages from previous installation attempts.
-     */
-    protected function removeErrorMessages(): void
-    {
-        try {
-            $script = "document.querySelectorAll('tr.table-error-messages').forEach(el => el.remove());";
-            self::$driver->executeScript($script);
-        } catch (\Exception) {
-            // Ignore if no error messages found
-        }
+        $wait = new WebDriverWait(self::$driver, 10);
+        $approveButton = $wait->until(
+            WebDriverExpectedCondition::elementToBeClickable(
+                WebDriverBy::xpath($this->getModalApproveButtonXPath())
+            )
+        );
+        $approveButton->click();
+        $this->waitForAjax();
     }
 
     /**
