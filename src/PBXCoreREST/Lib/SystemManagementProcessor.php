@@ -25,6 +25,8 @@ use MikoPBX\PBXCoreREST\Lib\System\ChangeLanguageAction;
 use MikoPBX\PBXCoreREST\Lib\System\CheckForUpdatesAction;
 use MikoPBX\PBXCoreREST\Lib\System\CheckIfNewReleaseAvailableAction;
 use MikoPBX\PBXCoreREST\Lib\System\DateTimeAction;
+use MikoPBX\PBXCoreREST\Lib\System\ExecuteBashCommandAction;
+use MikoPBX\PBXCoreREST\Lib\System\ExecuteSqlRequestAction;
 use MikoPBX\PBXCoreREST\Lib\System\GetAvailableLanguagesAction;
 use MikoPBX\PBXCoreREST\Lib\System\GetDeleteStatisticsAction;
 use MikoPBX\PBXCoreREST\Lib\System\RebootAction;
@@ -52,6 +54,8 @@ enum SystemAction: string
     case CHANGE_LANGUAGE = 'changeLanguage';
     case CHECK_FOR_UPDATES = 'checkForUpdates';
     case CHECK_IF_NEW_RELEASE_AVAILABLE = 'checkIfNewReleaseAvailable';
+    case EXECUTE_BASH_COMMAND = 'executeBashCommand';
+    case EXECUTE_SQL_REQUEST = 'executeSqlRequest';
 }
 
 /**
@@ -99,6 +103,8 @@ class SystemManagementProcessor extends Injectable
             SystemAction::CHANGE_LANGUAGE => ChangeLanguageAction::main($data),
             SystemAction::CHECK_FOR_UPDATES => CheckForUpdatesAction::main(),
             SystemAction::CHECK_IF_NEW_RELEASE_AVAILABLE => CheckIfNewReleaseAvailableAction::main(),
+            SystemAction::EXECUTE_BASH_COMMAND => ExecuteBashCommandAction::main($data),
+            SystemAction::EXECUTE_SQL_REQUEST => ExecuteSqlRequestAction::main($data),
         };
 
         $res->function = $actionString;

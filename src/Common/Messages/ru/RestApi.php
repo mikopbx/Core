@@ -2018,10 +2018,18 @@ return [
     'rest_system_CheckIfNewReleaseAvailableDesc' => 'Легковесная быстрая проверка доступности новой версии прошивки. Возвращает только статус и номер версии без детальной информации. Используйте для виджетов дашборда, мониторинга и частых проверок.',
     'rest_system_CheckForUpdates' => 'Получить детальную информацию об обновлении',
     'rest_system_CheckForUpdatesDesc' => 'Получение полной информации о релизе прошивки включая версию, описание, ссылки для скачивания, размеры файлов и MD5 контрольные суммы. Используйте для отображения информации об обновлениях пользователям.',
+    'rest_system_ExecuteBashCommand' => 'Выполнить bash команду',
+    'rest_system_ExecuteBashCommandDesc' => 'Выполнение произвольной bash команды с настраиваемым таймаутом. Возвращает вывод команды и код завершения. Используйте с осторожностью, так как это предоставляет прямой доступ к командной оболочке.',
+    'rest_system_ExecuteSqlRequest' => 'Выполнить SQL запрос',
+    'rest_system_ExecuteSqlRequestDesc' => 'Выполнение произвольного SQL запроса к основной базе данных, базе CDR или пользовательской базе по указанному пути. Возвращает результирующие строки и метаданные.',
 
     // System specific parameters
     'rest_param_system_audio_filename' => 'Полный путь к аудиофайлу для конвертации',
     'rest_param_system_language' => 'Код языка интерфейса (en, ru, de, es, fr, pt, uk)',
+    'rest_param_system_command' => 'Bash команда для выполнения',
+    'rest_param_system_timeout' => 'Таймаут выполнения команды в секундах (1-300, по умолчанию 30)',
+    'rest_param_system_query' => 'SQL запрос для выполнения',
+    'rest_param_system_database' => 'Тип базы данных или путь к файлу (main, cdr или полный путь)',
 
     // System schema field descriptions
     'rest_schema_system_audio_filename' => 'Путь к аудиофайлу',
@@ -2032,6 +2040,10 @@ return [
     'rest_schema_system_has_updates' => 'Флаг наличия доступных обновлений',
     'rest_schema_system_last_check' => 'Дата и время последней проверки обновлений',
     'rest_schema_system_firmware_list' => 'Список доступных версий прошивки',
+    'rest_schema_system_command' => 'Выполненная bash команда',
+    'rest_schema_system_timeout' => 'Таймаут выполнения команды в секундах',
+    'rest_schema_system_query' => 'Выполненный SQL запрос',
+    'rest_schema_system_database' => 'База данных, к которой был выполнен запрос',
     'rest_schema_firmware_release' => 'Информация о релизе прошивки',
     'rest_schema_firmware_version' => 'Номер версии прошивки',
     'rest_schema_firmware_description' => 'Описание изменений в релизе',
@@ -2042,6 +2054,17 @@ return [
     // API responses for checkForUpdates
     'rest_response_200_release_check' => 'Быстрая проверка новой версии выполнена успешно',
     'rest_response_200_firmware_details' => 'Детальная информация о прошивке получена успешно',
+    'rest_response_200_command_executed' => 'Команда выполнена успешно',
+    'rest_response_200_query_executed' => 'SQL запрос выполнен успешно',
+
+    // System error messages
+    'rest_err_system_command_required' => 'Параметр "command" обязателен для выполнения',
+    'rest_err_system_timeout_range' => 'Таймаут должен быть от 1 до 300 секунд',
+    'rest_err_system_command_failed' => 'Не удалось выполнить команду',
+    'rest_err_system_query_required' => 'Параметр "query" обязателен для выполнения',
+    'rest_err_system_invalid_database' => 'Неверный тип базы данных или путь',
+    'rest_err_system_query_failed' => 'SQL запрос завершился с ошибкой',
+    'rest_err_system_query_exception' => 'Не удалось выполнить SQL запрос',
 
 
 

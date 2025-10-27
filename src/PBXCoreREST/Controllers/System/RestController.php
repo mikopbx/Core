@@ -55,12 +55,12 @@ use MikoPBX\PBXCoreREST\Attributes\{
     mapping: [
         'GET' => ['ping', 'checkAuth', 'getDeleteStatistics', 'datetime', 'getAvailableLanguages', 'checkForUpdates', 'checkIfNewReleaseAvailable'],
         'PUT' => ['datetime'],
-        'POST' => ['reboot', 'shutdown', 'updateMailSettings', 'convertAudioFile', 'upgrade', 'restoreDefault', 'changeLanguage'],
+        'POST' => ['reboot', 'shutdown', 'updateMailSettings', 'convertAudioFile', 'upgrade', 'restoreDefault', 'changeLanguage', 'executeBashCommand', 'executeSqlRequest'],
         'PATCH' => ['changeLanguage']
     ],
     resourceLevelMethods: [],
     collectionLevelMethods: [],
-    customMethods: ['ping', 'checkAuth', 'getDeleteStatistics', 'datetime', 'getAvailableLanguages', 'checkForUpdates', 'checkIfNewReleaseAvailable', 'reboot', 'shutdown', 'updateMailSettings', 'convertAudioFile', 'upgrade', 'restoreDefault', 'changeLanguage'],
+    customMethods: ['ping', 'checkAuth', 'getDeleteStatistics', 'datetime', 'getAvailableLanguages', 'checkForUpdates', 'checkIfNewReleaseAvailable', 'reboot', 'shutdown', 'updateMailSettings', 'convertAudioFile', 'upgrade', 'restoreDefault', 'changeLanguage', 'executeBashCommand', 'executeSqlRequest'],
     idPattern: ''
 )]
 class RestController extends BaseRestController
@@ -337,6 +337,56 @@ class RestController extends BaseRestController
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
     #[ApiResponse(500, 'rest_response_500_internal', 'PBXApiResult')]
     public function checkForUpdates(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Execute arbitrary bash command
+     *
+     * Executes a bash command with configurable timeout and returns output and exit code.
+     * Use with caution as this provides direct shell access.
+     *
+     * @route POST /pbxcore/api/v3/system:executeBashCommand
+     */
+    #[ApiOperation(
+        summary: 'rest_system_ExecuteBashCommand',
+        description: 'rest_system_ExecuteBashCommandDesc',
+        operationId: 'executeBashCommand'
+    )]
+    #[ApiParameterRef('command', required: true)]
+    #[ApiParameterRef('timeout', required: false)]
+    #[ApiResponse(200, 'rest_response_200_command_executed')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_internal', 'PBXApiResult')]
+    public function executeBashCommand(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Execute SQL query against specified database
+     *
+     * Executes an arbitrary SQL query against the main database, CDR database,
+     * or a custom database path. Returns result rows and metadata.
+     *
+     * @route POST /pbxcore/api/v3/system:executeSqlRequest
+     */
+    #[ApiOperation(
+        summary: 'rest_system_ExecuteSqlRequest',
+        description: 'rest_system_ExecuteSqlRequestDesc',
+        operationId: 'executeSqlRequest'
+    )]
+    #[ApiParameterRef('query', required: true)]
+    #[ApiParameterRef('database', required: false)]
+    #[ApiResponse(200, 'rest_response_200_query_executed')]
+    #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_internal', 'PBXApiResult')]
+    public function executeSqlRequest(): void
     {
         // Implementation handled by BaseRestController
     }

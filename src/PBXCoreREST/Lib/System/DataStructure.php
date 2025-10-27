@@ -138,6 +138,37 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'items' => ['$ref' => '#/components/schemas/FirmwareRelease'],
                 'readOnly' => true
             ],
+            'command' => [
+                'type' => 'string',
+                'description' => 'rest_schema_system_command',
+                'maxLength' => 10000,
+                'sanitize' => 'text',
+                'example' => 'ls -la /tmp'
+            ],
+            'timeout' => [
+                'type' => 'integer',
+                'description' => 'rest_schema_system_timeout',
+                'minimum' => 1,
+                'maximum' => 300,
+                'sanitize' => 'int',
+                'default' => 30,
+                'example' => 30
+            ],
+            'query' => [
+                'type' => 'string',
+                'description' => 'rest_schema_system_query',
+                'maxLength' => 10000,
+                'sanitize' => 'text',
+                'example' => 'SELECT * FROM Extensions LIMIT 10'
+            ],
+            'database' => [
+                'type' => 'string',
+                'description' => 'rest_schema_system_database',
+                'enum' => ['main', 'cdr'],
+                'sanitize' => 'string',
+                'default' => 'main',
+                'example' => 'main'
+            ],
         ];
     }
 
