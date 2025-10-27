@@ -50,7 +50,15 @@ class CDRSeederRemote:
         self.execution_mode = os.getenv('MIKOPBX_EXECUTION_MODE', self._detect_mode())
 
         # Script path on station
-        self.script_path = '/usr/www/tests/api/scripts/seed_cdr_database.sh'
+        # Path priorities:
+        # 1. Docker containers: /usr/www/tests/api/scripts/seed_cdr_database.sh (synced from host)
+        # 2. Remote/VM hosts: /storage/usbdisk1/mikopbx/python-tests/scripts/seed_cdr_database.sh
+        if self.execution_mode == 'ssh':
+            # Remote execution via SSH - use persistent storage path
+            self.script_path = '/storage/usbdisk1/mikopbx/python-tests/scripts/seed_cdr_database.sh'
+        else:
+            # Docker/local execution - use synced test directory
+            self.script_path = '/usr/www/tests/api/scripts/seed_cdr_database.sh'
 
     def _detect_mode(self) -> str:
         """Auto-detect execution mode"""

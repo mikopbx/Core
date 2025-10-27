@@ -23,7 +23,26 @@ set -e  # Exit on error
 
 # Configuration
 CDR_DB_PATH="${CDR_DB_PATH:-/storage/usbdisk1/mikopbx/astlogs/asterisk/cdr.db}"
-FIXTURES_DIR="${FIXTURES_DIR:-/usr/www/tests/api/fixtures}"
+
+# Auto-detect fixtures directory
+# Priority:
+# 1. FIXTURES_DIR env variable (if set)
+# 2. /usr/www/tests/api/fixtures (Docker containers with synced tests)
+# 3. /storage/usbdisk1/mikopbx/python-tests/fixtures (Remote/VM persistent storage)
+if [ -n "$FIXTURES_DIR" ]; then
+    # User explicitly set FIXTURES_DIR
+    :
+elif [ -d "/usr/www/tests/api/fixtures" ]; then
+    # Docker container with synced tests
+    FIXTURES_DIR="/usr/www/tests/api/fixtures"
+elif [ -d "/storage/usbdisk1/mikopbx/python-tests/fixtures" ]; then
+    # Remote/VM persistent storage
+    FIXTURES_DIR="/storage/usbdisk1/mikopbx/python-tests/fixtures"
+else
+    # Fallback to default
+    FIXTURES_DIR="/usr/www/tests/api/fixtures"
+fi
+
 MONITOR_BASE="${MONITOR_BASE:-/storage/usbdisk1/mikopbx/astspool/monitor}"
 ENABLE_CDR_SEED="${ENABLE_CDR_SEED:-1}"
 ENABLE_CDR_CLEANUP="${ENABLE_CDR_CLEANUP:-1}"
