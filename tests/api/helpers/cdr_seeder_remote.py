@@ -161,34 +161,46 @@ class CDRSeederRemote:
         CompletedProcessLike = namedtuple('CompletedProcessLike', ['returncode', 'stdout', 'stderr'])
 
         try:
-            # First, authenticate to get JWT token
-            auth_url = f'{self.api_base_url}/auth/login'
-            auth_response = requests.post(
-                auth_url,
-                json={'login': self.api_login, 'password': self.api_password},
-                timeout=10,
-                verify=False
-            )
+            # Try to authenticate with configured password first, then try alternative passwords
+            passwords_to_try = [self.api_password]
+            # Add alternative passwords if not already in list
+            if 'admin' not in passwords_to_try:
+                passwords_to_try.append('admin')
+            if '123456789MikoPBX#1' not in passwords_to_try:
+                passwords_to_try.append('123456789MikoPBX#1')
 
-            if auth_response.status_code != 200:
+            access_token = None
+            auth_url = f'{self.api_base_url}/auth:login'
+            last_error = None
+
+            for password in passwords_to_try:
+                auth_response = requests.post(
+                    auth_url,
+                    data={'login': self.api_login, 'password': password, 'rememberMe': 'true'},
+                    headers={'Content-Type': 'application/x-www-form-urlencoded'},
+                    timeout=10,
+                    verify=False
+                )
+
+                if auth_response.status_code == 200:
+                    auth_data = auth_response.json()
+                    if auth_data.get('result'):
+                        access_token = auth_data['data']['accessToken']
+                        break
+                    else:
+                        last_error = auth_data.get('messages', ['Unknown error'])
+                else:
+                    last_error = auth_response.text
+
+            if not access_token:
                 return CompletedProcessLike(
                     returncode=1,
                     stdout='',
-                    stderr=f'Authentication failed: {auth_response.text}'
+                    stderr=f'Authentication failed with all passwords: {last_error}'
                 )
-
-            auth_data = auth_response.json()
-            if not auth_data.get('result'):
-                return CompletedProcessLike(
-                    returncode=1,
-                    stdout='',
-                    stderr=f'Authentication failed: {auth_data.get("messages", ["Unknown error"])}'
-                )
-
-            access_token = auth_data['data']['accessToken']
 
             # Execute bash command via REST API
-            exec_url = f'{self.api_base_url}/system/executeBashCommand'
+            exec_url = f'{self.api_base_url}/system:executeBashCommand'
             exec_response = requests.post(
                 exec_url,
                 json={'command': command},
@@ -206,14 +218,16 @@ class CDRSeederRemote:
 
             result_data = exec_response.json()
 
-            # Extract stdout/stderr from API response
-            # API response format: {"result": true, "data": {"stdout": "...", "stderr": "...", "exitCode": 0}}
+            # Extract output from API response
+            # API response format: {"result": true, "data": {"output": "...", "exitCode": 0}}
+            # Note: API returns combined stdout/stderr in 'output' field
             if result_data.get('result') and 'data' in result_data:
                 data = result_data['data']
+                output = data.get('output', '')
                 return CompletedProcessLike(
                     returncode=data.get('exitCode', 0),
-                    stdout=data.get('stdout', ''),
-                    stderr=data.get('stderr', '')
+                    stdout=output,  # API combines stdout/stderr into output
+                    stderr=''  # API doesn't separate stderr
                 )
             else:
                 return CompletedProcessLike(

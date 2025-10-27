@@ -367,9 +367,12 @@ class TestApiKeyPermissions:
         )
 
         # Test POST on write-enabled endpoint
+        # Use timestamp-based extension to avoid conflicts
+        import time
+        unique_extension = f"80{int(time.time()) % 100:02d}"
         queue_data = {
             'name': 'Permission Test Queue',
-            'extension': '8001'
+            'extension': unique_extension
         }
 
         response = write_client.post('call-queues', queue_data)
