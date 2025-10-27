@@ -60,9 +60,14 @@ class TestAdvice:
         for severity, items in advice.items():
             if isinstance(items, list) and len(items) > 0:
                 first_item = items[0]
-                assert 'messageTpl' in first_item, \
-                    "Advice item should contain messageTpl"
-                print(f"  Sample {severity} item: {first_item}")
+                # Items can be either structured messages (dict with messageTpl) or plain string markers
+                if isinstance(first_item, dict):
+                    assert 'messageTpl' in first_item, \
+                        "Structured advice item should contain messageTpl"
+                    print(f"  Sample {severity} structured item: {first_item}")
+                elif isinstance(first_item, str):
+                    # Plain string markers for navigation logic
+                    print(f"  Sample {severity} marker: {first_item}")
 
     def test_02_advice_structure_validation(self, api_client):
         """Test GET /advice:getList - Validate response structure"""
@@ -76,14 +81,18 @@ class TestAdvice:
         for severity, items in advice.items():
             if isinstance(items, list) and len(items) > 0:
                 for item in items:
-                    # messageTpl is required
-                    assert 'messageTpl' in item, \
-                        f"Advice item in {severity} should have messageTpl"
+                    if isinstance(item, dict):
+                        # Structured messages should have messageTpl
+                        assert 'messageTpl' in item, \
+                            f"Structured advice item in {severity} should have messageTpl"
 
-                    # messageParams is optional
-                    if 'messageParams' in item:
-                        assert isinstance(item['messageParams'], dict), \
-                            "messageParams should be a dict"
+                        # messageParams is optional
+                        if 'messageParams' in item:
+                            assert isinstance(item['messageParams'], dict), \
+                                "messageParams should be a dict"
+                    elif isinstance(item, str):
+                        # Plain string markers are valid (used for navigation logic)
+                        assert len(item) > 0, f"String marker in {severity} should not be empty"
 
         print(f"✓ All advice items have valid structure")
 

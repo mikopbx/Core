@@ -102,10 +102,10 @@ class TestSysinfo:
 
         hypervisor = response['data']['Hypervisor']
 
-        if response.get('success'):
+        if response.get('result'):
             # Hypervisor detected - verify it's valid
             print(f"✓ Hypervisor detected: {hypervisor}")
-            assert hypervisor, "Hypervisor field should not be empty when success=true"
+            assert hypervisor, "Hypervisor field should not be empty when result=true"
 
             # Validate hypervisor is one of known types
             known_hypervisors = ['KVM', 'VMware', 'VirtualBox', 'Hyper-V', 'Xen', 'QEMU', 'bhyve']
@@ -115,7 +115,7 @@ class TestSysinfo:
         else:
             # Bare metal system
             print(f"✓ Running on bare metal (no hypervisor detected)")
-            assert hypervisor == '', "Hypervisor field should be empty when success=false"
+            assert hypervisor == '', "Hypervisor field should be empty when result=false"
 
     def test_04_get_dmi_info(self, api_client):
         """Test GET /sysinfo:getDMIInfo - DMI/SMBIOS hardware information

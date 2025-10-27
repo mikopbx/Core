@@ -18,7 +18,13 @@ WHY: CDR records are only created by actual phone calls through Asterisk.
 To test CDR API endpoints without making real calls, we pre-populate the database
 with realistic anonymized test data.
 
-What this does:
+SMART SEEDING BEHAVIOR:
+- Checks for existing CDR data via API before seeding
+- If CDR data exists (production server), SKIPS seeding to avoid conflicts
+- If no CDR data exists (test environment), performs seeding
+- This allows running tests safely on both test and production servers
+
+What this does (when no data exists):
 1. Loads 30 anonymized CDR records from fixtures/cdr_seed_data.sql
 2. Inserts into SQLite CDR database (/storage/usbdisk1/mikopbx/astlogs/asterisk/cdr.db)
 3. Creates minimal MP3 files for 15 records with recordings
@@ -59,10 +65,16 @@ class TestCDRSeeding:
         This test populates the CDR database with 30 test records.
         Other CDR tests depend on this data being available.
 
+        Smart behavior:
+        - Checks if test CDR data (IDs 1-30) already exists in database
+        - If test data exists, skips seeding to avoid duplication
+        - If no test data exists, performs seeding
+        - Uses direct database check (non-invasive, works on any server)
+
         Execution:
         - Runs once at the start of test session
-        - Creates 30 CDR records with IDs 1-30
-        - Creates 15 MP3 recording files
+        - Creates 30 CDR records with IDs 1-30 (if needed)
+        - Creates 15 MP3 recording files (if needed)
         - Stores CDR IDs in class variable for other tests
         """
         from helpers.cdr_seeder_remote import CDRSeederRemote
@@ -72,12 +84,39 @@ class TestCDRSeeding:
             pytest.skip("CDR seeding disabled (ENABLE_CDR_SEED=0)")
 
         print("\n" + "=" * 60)
-        print("CDR Database Seeding Started")
+        print("CDR Database Seeding Check")
         print("=" * 60)
 
+        # First, check if test CDR data already exists
+        # Test data uses IDs 1-30, so we check if data exists in that range
+        print("Checking for existing test CDR data (IDs 1-30)...")
         seeder = CDRSeederRemote()
 
-        # Execute seeding
+        try:
+            # Use the helper method to check for test data
+            existing_test_ids = seeder.get_test_cdr_ids()
+
+            if len(existing_test_ids) > 0:
+                print(f"✓ Found existing test CDR data ({len(existing_test_ids)} records)")
+                print("✓ Test data IDs:", existing_test_ids[:5], "..." if len(existing_test_ids) > 5 else "")
+                print("✓ Skipping seeding - test data already present")
+                print("=" * 60)
+
+                # Store existing IDs
+                TestCDRSeeding.seeded_cdr_ids = existing_test_ids
+                pytest.skip("Test CDR data already exists - skipping seeding")
+            else:
+                print("✓ No test CDR data found (IDs 1-30 range is empty)")
+
+        except Exception as e:
+            print(f"⚠ Could not check for existing test CDR data: {e}")
+            print("⚠ Proceeding with seeding...")
+
+        # No existing data found - proceed with seeding
+        print("\nNo test CDR data found - starting seeding...")
+        print("=" * 60)
+
+        # Execute seeding (seeder already initialized above)
         success = seeder.seed()
 
         if not success:
