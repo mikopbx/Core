@@ -98,22 +98,34 @@ class RestoreDefaultSettingsAction extends Injectable
 
         // Change incoming rule to default action
         IncomingRoutingTable::resetDefaultRoute();
-        self::preCleaning($res);
-        
+
         // Stage: Clean database tables
         self::publishEvent(SystemMaintenanceEvents::DELETE_ALL_STAGE_CLEAN_TABLES, [
             'messageKey' => 'gs_DeleteAllStageCleaningTables',
             'progress' => 10
         ]);
+
+        // STEP 1: Pre-cleaning - clear all foreign key references to sound files
+        // This prevents RESTRICT violations when deleting SoundFiles later
+        self::preCleaning($res);
+
+        // STEP 2: Clean main tables (CallQueues, IvrMenu, OutWorkTimes, IncomingRoutingTable, etc.)
         self::cleaningMainTables($res);
+
+        // STEP 3: Clean other extensions (deletes Extensions with circular dependencies)
         self::cleaningOtherExtensions($res);
-        
+
         // Stage: Clean files
         self::publishEvent(SystemMaintenanceEvents::DELETE_ALL_STAGE_CLEAN_FILES, [
             'messageKey' => 'gs_DeleteAllStageCleaningFiles',
             'progress' => 30
         ]);
+
+        // STEP 4: Clean sound files LAST - after all references are deleted
+        // SoundFiles has RESTRICT relations to CallQueues, OutWorkTimes, IvrMenu, IncomingRoutingTable
+        // All these tables are already cleaned in previous steps, so deletion should succeed
         self::cleaningSoundFiles($res);
+
         self::cleaningBackups();
         self::cleaningFail2Ban();
         
@@ -337,6 +349,7 @@ class RestoreDefaultSettingsAction extends Injectable
 
     /**
      * Perform pre-cleaning operations on specific columns of certain models.
+     * This clears foreign key references to prevent RESTRICT violations during deletion.
      *
      * @param PBXApiResult $res The result object to store any error messages.
      *
@@ -348,10 +361,19 @@ class RestoreDefaultSettingsAction extends Injectable
             CallQueues::class => [
                 'redirect_to_extension_if_empty',
                 'redirect_to_extension_if_unanswered',
-                'redirect_to_extension_if_repeat_exceeded'
+                'redirect_to_extension_if_repeat_exceeded',
+                'periodic_announce_sound_id',  // Clear sound file references
+                'moh_sound_id'                  // Clear sound file references
             ],
             IvrMenu::class => [
-                'timeout_extension'
+                'timeout_extension',
+                'audio_message_id'              // Clear sound file references
+            ],
+            OutWorkTimes::class => [
+                'audio_message_id'              // Clear sound file references
+            ],
+            IncomingRoutingTable::class => [
+                'audio_message_id'              // Clear sound file references (including default route id=1)
             ]
         ];
         foreach ($preCleaning as $class => $columns) {
@@ -467,6 +489,7 @@ class RestoreDefaultSettingsAction extends Injectable
 
     /**
      * Clean up custom and MOH sound files.
+     * This method should be called LAST, after all tables that reference SoundFiles are deleted.
      *
      * @param PBXApiResult $res The result object to store any error messages.
      *
@@ -493,16 +516,32 @@ class RestoreDefaultSettingsAction extends Injectable
             $records = SoundFiles::find($parameters);
 
             foreach ($records as $record) {
-                // Delete file from disk if it exists and is within storage path
-                if (stripos($record->path, $storagePath) !== false && file_exists($record->path)) {
-                    Processes::mwExec("$rm -rf " . escapeshellarg($record->path));
-                }
+                try {
+                    // Delete file from disk if it exists and is within storage path
+                    if (stripos($record->path, $storagePath) !== false && file_exists($record->path)) {
+                        Processes::mwExec("$rm -rf " . escapeshellarg($record->path));
+                    }
 
-                // ALWAYS delete the database record, even if file doesn't exist or is outside storage
-                // This fixes the issue where test files in /tmp/ leave orphaned DB records
-                if (! $record->delete()) {
-                    $res->messages[] = $record->getMessages();
-                    $res->success    = false;
+                    // ALWAYS delete the database record, even if file doesn't exist or is outside storage
+                    // This fixes the issue where test files in /tmp/ leave orphaned DB records
+                    if (! $record->delete()) {
+                        $errorMessages = $record->getMessages();
+                        SystemMessages::sysLogMsg(
+                            __METHOD__,
+                            "Failed to delete SoundFile '{$record->name}' (id={$record->id}): " . implode(', ', $errorMessages),
+                            LOG_WARNING
+                        );
+                        // Store error but don't stop the process
+                        $res->messages['warning'][] = "Failed to delete sound file: {$record->name}";
+                    }
+                } catch (\Exception $e) {
+                    // Catch any database locking or constraint errors
+                    SystemMessages::sysLogMsg(
+                        __METHOD__,
+                        "Exception deleting SoundFile '{$record->name}' (id={$record->id}): " . $e->getMessage(),
+                        LOG_WARNING
+                    );
+                    $res->messages['warning'][] = "Exception deleting sound file: {$record->name} - " . $e->getMessage();
                 }
             }
         }
