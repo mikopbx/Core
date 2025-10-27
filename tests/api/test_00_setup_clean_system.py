@@ -43,17 +43,9 @@ class TestSystemReset:
 
         if enabled != '1':
             pytest.skip(
-                "\n\n"
-                "=" * 70 + "\n"
-                "⚠️  SYSTEM RESET DISABLED\n"
-                "=" * 70 + "\n"
-                "This test will DELETE ALL system data and reset to factory defaults.\n"
-                "\n"
-                "To enable, set environment variable:\n"
-                "  export ENABLE_SYSTEM_RESET=1\n"
-                "\n"
-                "Current value: ENABLE_SYSTEM_RESET=" + enabled + "\n"
-                "=" * 70
+                "SYSTEM RESET DISABLED - "
+                "This test will DELETE ALL system data and reset to factory defaults. "
+                "To enable, set: ENABLE_SYSTEM_RESET=1 (current: " + enabled + ")"
             )
 
         print("\n" + "✓" * 70)

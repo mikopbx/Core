@@ -65,6 +65,22 @@ class CDRSeederRemote:
         if self.ssh_host:
             return 'ssh'
 
+        # Check if MIKOPBX_API_URL points to remote host (not localhost/127.0.0.1)
+        api_url = os.getenv('MIKOPBX_API_URL', '')
+        if api_url:
+            # Extract hostname from URL
+            import re
+            hostname_match = re.search(r'://([^:/]+)', api_url)
+            if hostname_match:
+                hostname = hostname_match.group(1)
+                # If hostname is not localhost/127.0.0.1, assume remote via SSH
+                if hostname not in ['localhost', '127.0.0.1', '::1'] and not hostname.endswith('.localhost'):
+                    # Remote host detected - use SSH mode
+                    # Extract hostname as ssh_host if not explicitly set
+                    if not self.ssh_host:
+                        self.ssh_host = hostname
+                    return 'ssh'
+
         # Check if docker/orbstack is available and container exists
         try:
             result = subprocess.run(
