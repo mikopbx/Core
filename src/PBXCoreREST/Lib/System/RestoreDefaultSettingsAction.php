@@ -79,12 +79,25 @@ class RestoreDefaultSettingsAction extends Injectable
             $res->messages[] = 'Error on DI initialize';
             return $res;
         }
-        
+
+        // Enable WAL mode for SQLite to prevent database locking during mass deletions
+        // WAL (Write-Ahead Logging) allows concurrent readers while writer is active
+        // This is CRITICAL for avoiding "database is locked" errors during cleanup
+        try {
+            $db = $di->get('db');
+            $db->execute('PRAGMA journal_mode=WAL');
+            $db->execute('PRAGMA busy_timeout=30000');  // 30 seconds timeout for lock acquisition
+            SystemMessages::sysLogMsg(__METHOD__, 'SQLite WAL mode enabled for cleanup operation', LOG_INFO);
+        } catch (\Exception $e) {
+            SystemMessages::sysLogMsg(__METHOD__, 'Failed to enable WAL mode: ' . $e->getMessage(), LOG_WARNING);
+            // Continue anyway - not critical
+        }
+
         // Initialize event publisher if channel ID provided
         if (!empty($asyncChannelId)) {
             self::$eventPublisher = new SystemMaintenanceEvents($asyncChannelId);
         }
-        
+
         $rm     = Util::which('rm');
         
         // Stage: Prepare
@@ -424,11 +437,35 @@ class RestoreDefaultSettingsAction extends Injectable
         // Iterate over each model and perform deletion based on conditions
         foreach ($clearThisModels as $modelParams) {
             foreach ($modelParams as $key => $value) {
-                $records = call_user_func([$key, 'find'], $value);
-                if (!$records->delete()) {
-                    // If deletion fails, add error messages to the result object
-                    $res->messages[] = $records->getMessages();
-                    $res->success    = false;
+                // Log which model we're deleting for debugging
+                $condition = empty($value) ? 'all records' : $value;
+                SystemMessages::sysLogMsg(__METHOD__, "Deleting from {$key} ({$condition})", LOG_INFO);
+
+                try {
+                    $records = call_user_func([$key, 'find'], $value);
+                    $count = count($records);
+
+                    if ($count > 0) {
+                        SystemMessages::sysLogMsg(__METHOD__, "Found {$count} records in {$key}, starting deletion...", LOG_INFO);
+
+                        if (!$records->delete()) {
+                            // If deletion fails, add error messages to the result object
+                            $errorMsg = "Failed to delete from {$key}: " . implode(', ', $records->getMessages());
+                            SystemMessages::sysLogMsg(__METHOD__, $errorMsg, LOG_ERR);
+                            $res->messages[] = $errorMsg;
+                            $res->success = false;
+                        } else {
+                            SystemMessages::sysLogMsg(__METHOD__, "Successfully deleted {$count} records from {$key}", LOG_INFO);
+                        }
+                    } else {
+                        SystemMessages::sysLogMsg(__METHOD__, "No records found in {$key}, skipping", LOG_INFO);
+                    }
+                } catch (\Exception $e) {
+                    // Catch database locking or other exceptions
+                    $errorMsg = "Exception deleting from {$key}: " . $e->getMessage();
+                    SystemMessages::sysLogMsg(__METHOD__, $errorMsg, LOG_ERR);
+                    $res->messages[] = $errorMsg;
+                    $res->success = false;
                 }
             }
         }
