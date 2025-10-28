@@ -206,14 +206,17 @@ class IAXConf extends AsteriskConfigClass
             }
             
             // Generate provider configuration
+            $prov_config .= "; Provider: {$provider['description']}" . PHP_EOL;
             $prov_config .= "[{$provider['uniqid']}];" . PHP_EOL;
+            $prov_config .= "setvar=contextID={$provider['uniqid']}-incoming" . PHP_EOL;
+
+            // Apply manual attributes override (includes disallow=all before codecs)
+            $prov_config .= Util::overrideConfigurationArray($options, $manual_attributes, ' ');
+
+            // Add codec allows after disallow=all
             foreach ($provider['codecs'] as $codec) {
                 $prov_config .= "allow=$codec" . PHP_EOL;
             }
-            $prov_config .= "setvar=contextID={$provider['uniqid']}-incoming" . PHP_EOL;
-            
-            // Apply manual attributes override
-            $prov_config .= Util::overrideConfigurationArray($options, $manual_attributes, ' ');
             $prov_config .= PHP_EOL;
         }
 
@@ -233,15 +236,16 @@ class IAXConf extends AsteriskConfigClass
         foreach ($arrIaxProviders as $peer) {
             /** @var Iax $peer */
             $arr_data = $peer->toArray();
-            
+
             // Add related network filter data if exists
             if (!empty($peer->networkfilterid) && $peer->NetworkFilters) {
                 $arr_data['networkfilter'] = $peer->NetworkFilters->toArray();
             }
-            
+
+            // IAX2 only supports audio codecs
             $arr_data['codecs'] = [];
             $filter             = [
-                'conditions' => 'disabled="0"',
+                'conditions' => 'disabled="0" AND type="audio"',
                 'order'      => 'type, priority',
             ];
             $codecs  = Codecs::find($filter);
