@@ -36,6 +36,25 @@ import pytest
 from conftest import assert_api_success
 
 
+def extract_cdr_data(response):
+    """
+    Extract CDR data and pagination from response handling new format.
+
+    API returns: {data: {records: [...], pagination: {...}}}
+    """
+    data_wrapper = response.get('data', {})
+
+    if isinstance(data_wrapper, dict):
+        if 'records' in data_wrapper and 'pagination' in data_wrapper:
+            return data_wrapper['records'], data_wrapper['pagination']
+
+    # Fallback for legacy format
+    if isinstance(data_wrapper, list):
+        return data_wrapper, response.get('pagination', {})
+
+    return [], {}
+
+
 class TestCDR:
     """Comprehensive CDR tests"""
 
@@ -48,13 +67,19 @@ class TestCDR:
         response = api_client.get('cdr', params={'limit': 50, 'offset': 0})
         assert_api_success(response, "Failed to get CDR list")
 
-        data = response.get('data', [])
-        assert isinstance(data, list), "Response data should be a list"
+        # API returns new format: {data: {records: [...], pagination: {...}}}
+        data_wrapper = response.get('data', {})
+        assert isinstance(data_wrapper, dict), "Response data should be an object (new format)"
+        assert 'records' in data_wrapper, "Response should include data.records"
+        assert 'pagination' in data_wrapper, "Response should include data.pagination"
 
+        data = data_wrapper['records']
+        pagination = data_wrapper['pagination']
+
+        assert isinstance(data, list), "CDR records should be a list"
         print(f"✓ Retrieved {len(data)} CDR groups (linkedid-based)")
 
         # WHY: Verify pagination metadata is present
-        pagination = response.get('pagination', {})
         assert 'total' in pagination, "Response should include pagination.total"
         assert 'limit' in pagination, "Response should include pagination.limit"
         assert 'offset' in pagination, "Response should include pagination.offset"
@@ -85,7 +110,7 @@ class TestCDR:
         response = api_client.get('cdr', params={'limit': 10, 'offset': 0})
         assert_api_success(response, "Failed to get CDR list with limit")
 
-        data = response.get('data', [])
+        data, pagination = extract_cdr_data(response)
         assert isinstance(data, list), "Response data should be a list"
         assert len(data) <= 10, f"Expected max 10 records, got {len(data)}"
 
@@ -99,12 +124,12 @@ class TestCDR:
         # Get first page
         response1 = api_client.get('cdr', params={'limit': 5, 'offset': 0})
         assert_api_success(response1, "Failed to get first page")
-        data1 = response1.get('data', [])
+        data1, pagination1 = extract_cdr_data(response1)
 
         # Get second page
         response2 = api_client.get('cdr', params={'limit': 5, 'offset': 5})
         assert_api_success(response2, "Failed to get second page")
-        data2 = response2.get('data', [])
+        data2, pagination2 = extract_cdr_data(response2)
 
         print(f"✓ Offset parameter works (page1: {len(data1)}, page2: {len(data2)} groups)")
 
@@ -123,7 +148,7 @@ class TestCDR:
             response = api_client.get('cdr', params={'disposition': 'ANSWERED', 'limit': 20})
             assert_api_success(response, "Failed to filter by disposition")
 
-            data = response.get('data', [])
+            data, pagination = extract_cdr_data(response)
             assert isinstance(data, list), "Response data should be a list"
 
             print(f"✓ Disposition filter works ({len(data)} ANSWERED call groups)")
@@ -147,7 +172,7 @@ class TestCDR:
             response = api_client.get('cdr', params={'disposition': 'NO ANSWER', 'limit': 20})
             assert_api_success(response, "Failed to filter by NO ANSWER")
 
-            data = response.get('data', [])
+            data, pagination = extract_cdr_data(response)
             assert isinstance(data, list), "Response data should be a list"
 
             print(f"✓ Retrieved {len(data)} NO ANSWER calls")
@@ -163,7 +188,7 @@ class TestCDR:
             response = api_client.get('cdr', params={'disposition': 'BUSY', 'limit': 20})
             assert_api_success(response, "Failed to filter by BUSY")
 
-            data = response.get('data', [])
+            data, pagination = extract_cdr_data(response)
             assert isinstance(data, list), "Response data should be a list"
 
             print(f"✓ Retrieved {len(data)} BUSY calls")
@@ -183,7 +208,7 @@ class TestCDR:
             })
             assert_api_success(response, "Failed to filter by date range")
 
-            data = response.get('data', [])
+            data, pagination = extract_cdr_data(response)
             assert isinstance(data, list), "Response data should be a list"
 
             print(f"✓ Date range filter works ({len(data)} records in 2025)")
@@ -203,7 +228,7 @@ class TestCDR:
             response = api_client.get('cdr', params={'src_num': '201', 'limit': 20})
             assert_api_success(response, "Failed to filter by src_num")
 
-            data = response.get('data', [])
+            data, pagination = extract_cdr_data(response)
             assert isinstance(data, list), "Response data should be a list"
 
             print(f"✓ Source number filter works ({len(data)} call groups from 201)")
@@ -228,7 +253,7 @@ class TestCDR:
             response = api_client.get('cdr', params={'dst_num': '202', 'limit': 20})
             assert_api_success(response, "Failed to filter by dst_num")
 
-            data = response.get('data', [])
+            data, pagination = extract_cdr_data(response)
             assert isinstance(data, list), "Response data should be a list"
 
             print(f"✓ Destination number filter works ({len(data)} calls to 202)")
@@ -249,7 +274,7 @@ class TestCDR:
             })
             assert_api_success(response, "Failed with combined filters")
 
-            data = response.get('data', [])
+            data, pagination = extract_cdr_data(response)
             assert isinstance(data, list), "Response data should be a list"
 
             print(f"✓ Combined filters work ({len(data)} answered calls in 2025)")
@@ -273,7 +298,7 @@ class TestCDR:
             response = api_client.get('pbx-status:getActiveCalls')
             assert_api_success(response, "Failed to get active calls")
 
-            data = response.get('data', [])
+            data, pagination = extract_cdr_data(response)
             assert isinstance(data, list), "Response data should be a list"
 
             print(f"✓ Retrieved {len(data)} active calls")
@@ -302,7 +327,7 @@ class TestCDR:
             response = api_client.get('pbx-status:getActiveChannels')
             assert_api_success(response, "Failed to get active channels")
 
-            data = response.get('data', [])
+            data, pagination = extract_cdr_data(response)
             assert isinstance(data, list), "Response data should be a list"
 
             print(f"✓ Retrieved {len(data)} active channels")

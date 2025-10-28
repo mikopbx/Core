@@ -35,6 +35,21 @@ import pytest
 from conftest import assert_api_success
 
 
+def extract_cdr_data(response):
+    """Extract CDR data and pagination from response handling new format."""
+    data_wrapper = response.get('data', {})
+
+    if isinstance(data_wrapper, dict):
+        if 'records' in data_wrapper and 'pagination' in data_wrapper:
+            return data_wrapper['records'], data_wrapper['pagination']
+
+    # Fallback for legacy format
+    if isinstance(data_wrapper, list):
+        return data_wrapper, response.get('pagination', {})
+
+    return [], {}
+
+
 class TestCDRDelete:
     """Comprehensive CDR deletion tests"""
 
@@ -52,8 +67,8 @@ class TestCDRDelete:
         # Get grouped CDR list (REST API v3 format)
         response = api_client.get('cdr', params={'limit': 100})
 
-        if response.get('success') and response.get('data', {}).get('data'):
-            groups = response['data']['data']  # Grouped records
+        if response.get('success'):
+            groups, pagination = extract_cdr_data(response)  # Grouped records
 
             # Find a linkedid with multiple records
             for group in groups:
@@ -205,8 +220,9 @@ class TestCDRDelete:
         # Count records with this linkedid before deletion
         list_response = api_client.get('cdr', params={'limit': 1000})
         linked_count_before = 0
-        if list_response.get('success') and list_response.get('data', {}).get('data'):
-            for group in list_response['data']['data']:
+        if list_response.get('success'):
+            groups, pagination = extract_cdr_data(list_response)
+            for group in groups:
                 if group.get('linkedid') == linkedid:
                     linked_count_before = len(group.get('records', []))
                     break

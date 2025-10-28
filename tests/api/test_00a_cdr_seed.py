@@ -51,6 +51,21 @@ import pytest
 import os
 
 
+def extract_cdr_data(response):
+    """Extract CDR data and pagination from response handling new format."""
+    data_wrapper = response.get('data', {})
+
+    if isinstance(data_wrapper, dict):
+        if 'records' in data_wrapper and 'pagination' in data_wrapper:
+            return data_wrapper['records'], data_wrapper['pagination']
+
+    # Fallback for legacy format
+    if isinstance(data_wrapper, list):
+        return data_wrapper, response.get('pagination', {})
+
+    return [], {}
+
+
 class TestCDRSeeding:
     """CDR database seeding - runs once before all CDR tests"""
 
@@ -158,13 +173,21 @@ class TestCDRSeeding:
 
         assert response.get('result') is True, "CDR API endpoint failed"
         assert 'data' in response, "CDR response missing data field"
-        assert isinstance(response['data'], list), "CDR data should be a list"
 
-        # CDR might be empty if date filter doesn't match seeded data
-        # This is not a failure - just means data is outside date range
+        # Extract data using new format helper
+        data, pagination = extract_cdr_data(response)
+        assert isinstance(data, list), "CDR data should be a list"
+
+        # Verify we actually got seeded data back
+        assert len(data) > 0, f"Expected seeded CDR data, but got empty list. Seeded IDs: {TestCDRSeeding.seeded_cdr_ids}"
+
         print(f"\n✓ CDR API is working")
         print(f"✓ CDR endpoint returned successfully")
-        print(f"✓ Retrieved {len(response['data'])} CDR records (may be 0 if outside date range)")
+        print(f"✓ Retrieved {len(data)} CDR record groups")
+
+        # Check pagination is present
+        if pagination:
+            print(f"✓ Pagination present: total={pagination.get('total')}, limit={pagination.get('limit')}")
 
         # Verify at least we can call the endpoint without database lock
         print(f"✓ No database lock detected - seeding completed successfully")

@@ -699,7 +699,7 @@ class TestCDRURLGeneration:
             print(f"  ✓ All records with files have both playback_url and download_url")
 
     def test_02_records_without_files_have_null_urls(self, api_client):
-        """Test that CDR records without files have null URLs
+        """Test that CDR records without files have null or empty URLs
 
         WHY: Don't generate URLs for non-existent files.
         """
@@ -723,17 +723,23 @@ class TestCDRURLGeneration:
                 if not record.get('recordingfile'):
                     records_without_files += 1
 
-                    # URLs should be null or missing
-                    if record.get('playback_url') is None and record.get('download_url') is None:
+                    # URLs should be null, empty string, or missing
+                    playback_url = record.get('playback_url')
+                    download_url = record.get('download_url')
+
+                    # Check for null, empty string, or missing
+                    if (playback_url is None or playback_url == '') and \
+                       (download_url is None or download_url == ''):
                         records_with_null_urls += 1
 
         print(f"✓ Checked null URLs for records without files")
         print(f"  Records without recordingfile: {records_without_files}")
-        print(f"  Records with null URLs: {records_with_null_urls}")
+        print(f"  Records with null/empty URLs: {records_with_null_urls}")
 
         if records_without_files > 0:
             assert records_with_null_urls == records_without_files, \
-                f"All {records_without_files} records without files should have null URLs"
+                f"All {records_without_files} records without files should have null/empty URLs, " \
+                f"but only {records_with_null_urls} do"
             print(f"  ✓ All records without files have null URLs")
 
     def test_03_urls_contain_different_endpoints(self, api_client):

@@ -28,6 +28,21 @@ import re
 from conftest import assert_api_success
 
 
+def extract_cdr_data(response):
+    """Extract CDR data and pagination from response handling new format."""
+    data_wrapper = response.get('data', {})
+
+    if isinstance(data_wrapper, dict):
+        if 'records' in data_wrapper and 'pagination' in data_wrapper:
+            return data_wrapper['records'], data_wrapper['pagination']
+
+    # Fallback for legacy format
+    if isinstance(data_wrapper, list):
+        return data_wrapper, response.get('pagination', {})
+
+    return [], {}
+
+
 class TestCDRPlaybackTokens:
     """Token-based playback tests for Phase 3"""
 
@@ -45,16 +60,18 @@ class TestCDRPlaybackTokens:
         response = api_client.get('cdr', params={'limit': 100, 'offset': 0})
         assert_api_success(response, "Failed to get CDR list")
 
-        data = response.get('data', [])
+        data, pagination = extract_cdr_data(response)
         assert isinstance(data, list), "Response data should be a list"
 
         # Find first CDR with recording file
         # API returns grouped data: {linkedid, records: [{id, recordingfile, playback_url}]}
         for group in data:
             for record in group.get('records', []):
-                if record.get('recordingfile') and record.get('playback_url'):
+                playback_url = record.get('playback_url', '')
+                # Check for both valid URL and non-empty string
+                if record.get('recordingfile') and playback_url and playback_url != '':
                     TestCDRPlaybackTokens.sample_cdr_id = str(record['id'])
-                    TestCDRPlaybackTokens.sample_recording_url = record['playback_url']
+                    TestCDRPlaybackTokens.sample_recording_url = playback_url
 
                     print(f"✓ Found CDR with recording: {TestCDRPlaybackTokens.sample_cdr_id}")
                     print(f"  Recording URL: {TestCDRPlaybackTokens.sample_recording_url}")
@@ -197,8 +214,9 @@ class TestCDRPlaybackTokens:
         assert_api_success(list_response, "Failed to get CDR list")
 
         # Find our CDR record in grouped data
+        data, pagination = extract_cdr_data(list_response)
         recording_file = None
-        for group in list_response.get('data', []):
+        for group in data:
             for record in group.get('records', []):
                 if str(record.get('id')) == str(TestCDRPlaybackTokens.sample_cdr_id):
                     recording_file = record.get('recordingfile')
@@ -296,31 +314,36 @@ class TestCDRPlaybackTokens:
     def test_09_recording_url_consistency(self, api_client):
         """Test that recording_url is consistently provided for records with files
 
-        WHY: All CDR records with recordingfile should have recording_url.
+        WHY: All CDR records with recordingfile should have playback_url and download_url.
         """
         response = api_client.get('cdr', params={'limit': 50})
         assert_api_success(response, "Failed to get CDR list")
 
-        data = response.get('data', [])
+        data, pagination = extract_cdr_data(response)
         records_with_files = 0
         records_with_urls = 0
 
-        for record in data:
-            if record.get('recordingfile'):
-                records_with_files += 1
-                if record.get('recording_url'):
-                    records_with_urls += 1
+        # Handle grouped format: data = [{linkedid, records: [...]}, ...]
+        for group in data:
+            for record in group.get('records', []):
+                if record.get('recordingfile'):
+                    records_with_files += 1
+                    playback_url = record.get('playback_url', '')
+                    download_url = record.get('download_url', '')
+                    # Check for valid non-empty URLs
+                    if playback_url and playback_url != '' and download_url and download_url != '':
+                        records_with_urls += 1
 
-        print(f"✓ CDR records checked for recording_url consistency")
+        print(f"✓ CDR records checked for recording URL consistency")
         print(f"  Records with recordingfile: {records_with_files}")
-        print(f"  Records with recording_url: {records_with_urls}")
+        print(f"  Records with valid URLs: {records_with_urls}")
 
         if records_with_files > 0:
             # All records with files should have URLs
             assert records_with_urls == records_with_files, \
-                f"All {records_with_files} records with files should have recording_url, " \
+                f"All {records_with_files} records with files should have playback_url/download_url, " \
                 f"but only {records_with_urls} do"
-            print(f"  ✓ All records with files have recording_url")
+            print(f"  ✓ All records with files have valid URLs")
 
 
 class TestCDRPlaybackTokensSecurity:
