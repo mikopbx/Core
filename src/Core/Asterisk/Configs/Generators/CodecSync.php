@@ -90,6 +90,29 @@ class CodecSync
     ];
 
     /**
+     * Codecs to ignore during synchronization.
+     * These codecs are rarely used in real-world scenarios and clutter the interface.
+     */
+    private const array IGNORED_CODECS = [
+        // PCM formats (internal Asterisk use only, not for SIP)
+        'slin', 'slin12', 'slin16', 'slin24', 'slin32', 'slin44', 'slin48', 'slin96', 'slin192',
+
+        // Skype codecs (not used in standard IP telephony)
+        'silk', 'silk8', 'silk12', 'silk16', 'silk24',
+
+        // Obsolete or rarely used audio codecs
+        'speex16', 'speex32',  // Keep only base speex for compatibility
+        'lpc10',               // Very old, poor quality
+        'adpcm',               // Obsolete
+        'codec2',              // Open source but exotic, rare device support
+        'siren7', 'siren14',   // Polycom proprietary, rare
+        'g723',                // Obsolete, replaced by g729
+
+        // Obsolete video codecs
+        'h261', 'h263', 'h263p', 'mpeg4',
+    ];
+
+    /**
      * Human-readable descriptions for codecs.
      * Maps technical names to display names.
      */
@@ -145,9 +168,9 @@ class CodecSync
      *
      * This method:
      * 1. Queries Asterisk for available codecs
-     * 2. Adds new codecs to database (disabled by default)
-     * 3. Marks unavailable codecs as disabled
-     * 4. Preserves user priority settings
+     * 2. Adds new codecs to database (enabled by default)
+     * 3. Deletes unsupported codecs from database
+     * 4. Preserves user enabled/disabled settings for existing codecs
      *
      * @return array Statistics about sync operation
      */
@@ -155,8 +178,7 @@ class CodecSync
     {
         $stats = [
             'added' => 0,
-            'disabled' => 0,
-            'enabled' => 0,
+            'deleted' => 0,
             'skipped' => 0,
             'errors' => [],
         ];
@@ -187,6 +209,12 @@ class CodecSync
             $codecName = strtolower($codecInfo['name']);
 
             if (!isset($existingCodecs[$codecName])) {
+                // Skip ignored codecs - don't add them to database
+                if (in_array($codecName, self::IGNORED_CODECS, true)) {
+                    $stats['skipped']++;
+                    continue;
+                }
+
                 // New codec - add to database
                 if (self::addCodecToDatabase($codecInfo)) {
                     $stats['added']++;
@@ -201,46 +229,35 @@ class CodecSync
             }
         }
 
-        // Update existing codecs: enable if available, disable if not
+        // Delete unwanted codecs from database
         foreach ($existingCodecs as $codecName => $codec) {
             $isAvailable = in_array($codecName, $availableCodecNames, true);
+            $isIgnored = in_array($codecName, self::IGNORED_CODECS, true);
 
-            if ($isAvailable && $codec->disabled === '1') {
-                // Codec became available - enable it
-                $codec->disabled = '0';
-                if ($codec->save()) {
-                    $stats['enabled']++;
+            // Delete if: not supported by Asterisk OR in ignored list
+            if (!$isAvailable || $isIgnored) {
+                $reason = !$isAvailable ? 'unsupported' : 'ignored';
+                if ($codec->delete()) {
+                    $stats['deleted']++;
                     SystemMessages::sysLogMsg(
                         __CLASS__,
-                        "Enabled available codec: {$codec->name}",
+                        "Deleted $reason codec: {$codec->name}",
                         LOG_INFO
                     );
                 } else {
-                    $stats['errors'][] = "Failed to enable codec: {$codec->name}";
-                }
-            } elseif (!$isAvailable && $codec->disabled === '0') {
-                // Codec not available in Asterisk - disable it
-                $codec->disabled = '1';
-                if ($codec->save()) {
-                    $stats['disabled']++;
-                    SystemMessages::sysLogMsg(
-                        __CLASS__,
-                        "Disabled unavailable codec: {$codec->name}",
-                        LOG_INFO
-                    );
-                } else {
-                    $stats['errors'][] = "Failed to disable codec: {$codec->name}";
+                    $stats['errors'][] = "Failed to delete codec: {$codec->name}";
                 }
             }
+            // If codec is available and not ignored, preserve user's enabled/disabled setting
         }
 
         SystemMessages::sysLogMsg(
             __CLASS__,
             sprintf(
-                'Codec sync completed: %d added, %d enabled, %d disabled, %d errors',
+                'Codec sync completed: %d added, %d deleted, %d skipped, %d errors',
                 $stats['added'],
-                $stats['enabled'],
-                $stats['disabled'],
+                $stats['deleted'],
+                $stats['skipped'],
                 count($stats['errors'])
             ),
             LOG_INFO
@@ -328,23 +345,22 @@ class CodecSync
     }
 
     /**
-     * Get list of enabled and supported codecs.
+     * Get list of enabled codecs for configuration.
      *
-     * Returns only codecs that are:
-     * 1. Enabled in database (disabled='0')
-     * 2. Available in current Asterisk build
+     * Returns codecs that are enabled by user (disabled='0').
+     *
+     * Note: During sync, the following codecs are automatically deleted:
+     * - Unsupported by current Asterisk build
+     * - Listed in IGNORED_CODECS (PCM, Skype, obsolete formats)
+     *
+     * So all codecs in database are guaranteed to be:
+     * - Supported by Asterisk
+     * - Practical for real-world use
      *
      * @return array Array of codec names
      */
     public static function getEnabledSupportedCodecs(): array
     {
-        // Get available codecs from Asterisk
-        $availableCodecs = self::getAsteriskCodecs();
-        $availableNames = array_map(
-            fn($c) => strtolower($c['name']),
-            $availableCodecs
-        );
-
         // Get enabled codecs from database
         $enabledCodecs = Codecs::find([
             'conditions' => 'disabled = "0"',
@@ -353,11 +369,7 @@ class CodecSync
 
         $result = [];
         foreach ($enabledCodecs as $codec) {
-            $codecName = strtolower($codec->name);
-            // Only include if available in Asterisk
-            if (in_array($codecName, $availableNames, true)) {
-                $result[] = $codec->name;
-            }
+            $result[] = $codec->name;
         }
 
         return $result;
