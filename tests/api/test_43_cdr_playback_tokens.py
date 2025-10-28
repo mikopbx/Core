@@ -87,7 +87,7 @@ class TestCDRPlaybackTokens:
         """Validate recording_url format includes token parameter
 
         WHY: recording_url should contain a temporary token for secure access.
-        Format: https://pbx.example.com/pbxcore/api/v3/cdr/{id}:playback?token=xxx
+        Format: https://pbx.example.com/pbxcore/api/v3/cdr:playback?token=xxx
         """
         if not TestCDRPlaybackTokens.sample_recording_url:
             pytest.skip("No recording URL available from test_01")
@@ -95,7 +95,7 @@ class TestCDRPlaybackTokens:
         url = TestCDRPlaybackTokens.sample_recording_url
 
         # Validate URL format
-        assert 'pbxcore/api/v3/cdr/' in url, "URL should contain CDR endpoint"
+        assert 'pbxcore/api/v3/cdr' in url, "URL should contain CDR endpoint"
         assert ':playback' in url, "URL should contain :playback custom method"
         assert 'token=' in url, "URL should contain token parameter"
 

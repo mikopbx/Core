@@ -450,30 +450,35 @@ class TestCDRDownloadEndpoint:
             pytest.skip("No token available")
 
         try:
-            response = api_client.get('cdr:download', params={
+            # Use get_raw() because download endpoint returns binary file, not JSON
+            response = api_client.get_raw('cdr:download', params={
                 'token': TestCDRDownloadEndpoint.sample_token
             })
 
-            assert_api_success(response, "Failed to download with token")
+            assert response.status_code == 200, f"Download failed with status {response.status_code}"
 
-            data = response.get('data', {})
-            assert data, "Response should contain file data"
+            # Check Content-Disposition header
+            content_disposition = response.headers.get('Content-Disposition', '')
+            assert 'attachment' in content_disposition, \
+                "Content-Disposition should be 'attachment' for downloads"
 
             print(f"✓ Token-based download successful")
+            print(f"  Status: {response.status_code}")
+            print(f"  Content-Type: {response.headers.get('Content-Type', 'unknown')}")
+            print(f"  Content-Disposition: {content_disposition}")
 
-            # Check for file streaming metadata
-            if 'fpassthru' in data:
-                fpassthru = data['fpassthru']
-                filename = fpassthru.get('filename', '')
-                download_name = fpassthru.get('download_name', '')
-                content_type = fpassthru.get('content_type', '')
+            # Check file content
+            content = response.content
+            assert len(content) > 0, "Downloaded file should not be empty"
+            print(f"  File size: {len(content)} bytes")
 
-                print(f"  Filename: {filename}")
-                print(f"  Download name: {download_name}")
-                print(f"  Content-Type: {content_type}")
-
-                # Validate download_name has meaningful format
-                if download_name:
+            # Validate download filename has meaningful format
+            if 'filename=' in content_disposition:
+                # Extract filename from Content-Disposition header
+                import re
+                filename_match = re.search(r'filename[^;=\n]*=(([\'"]).*?\2|[^;\n]*)', content_disposition)
+                if filename_match:
+                    download_name = filename_match.group(1).strip('\'"')
                     # Should be like: call_101_to_102_2025-10-22_14-30-45.mp3
                     assert 'call_' in download_name, "Download name should start with 'call_'"
                     assert '_to_' in download_name, "Download name should contain '_to_'"
