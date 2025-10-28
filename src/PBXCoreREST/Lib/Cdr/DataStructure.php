@@ -78,6 +78,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         // Add recording URLs if file exists
         // WHY: Provides secure token-based access without exposing file paths
         // Two URLs: playback (for inline streaming) and download (for file download)
+        // IMPORTANT: If file doesn't exist, clear recordingfile, playback_url, and download_url
         if (!empty($model->recordingfile) && file_exists($model->recordingfile)) {
             $token = self::generatePlaybackToken($model->id);
 
@@ -87,12 +88,17 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 $data['playback_url'] = "/pbxcore/api/v3/cdr:playback?token={$token}";
                 $data['download_url'] = "/pbxcore/api/v3/cdr:download?token={$token}";
             } else {
-                $data['playback_url'] = null;
-                $data['download_url'] = null;
+                // Token generation failed (Redis unavailable?)
+                // Keep recordingfile but clear URLs
+                $data['playback_url'] = '';
+                $data['download_url'] = '';
             }
         } else {
-            $data['playback_url'] = null;
-            $data['download_url'] = null;
+            // File doesn't exist or recordingfile is empty
+            // WHY: Consistency - if no file, all 3 fields should be empty
+            $data['recordingfile'] = '';
+            $data['playback_url'] = '';
+            $data['download_url'] = '';
         }
 
         // Apply OpenAPI schema formatting to convert types automatically

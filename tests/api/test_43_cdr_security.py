@@ -15,6 +15,21 @@ import pytest
 from datetime import datetime, timedelta
 
 
+def extract_cdr_data(response):
+    """Extract CDR data and pagination from response handling new format."""
+    data_wrapper = response.get('data', {})
+
+    if isinstance(data_wrapper, dict):
+        if 'records' in data_wrapper and 'pagination' in data_wrapper:
+            return data_wrapper['records'], data_wrapper['pagination']
+
+    # Fallback for legacy format
+    if isinstance(data_wrapper, list):
+        return data_wrapper, response.get('pagination', {})
+
+    return [], {}
+
+
 @pytest.mark.security
 class TestCDRSQLInjectionProtection:
     """
@@ -48,7 +63,8 @@ class TestCDRSQLInjectionProtection:
 
         # Critical: Table must still exist (pagination works)
         assert 'data' in data, "Response missing data field"
-        assert 'pagination' in data, \
+        data_wrapper = data['data']
+        assert 'pagination' in data_wrapper, \
             "CRITICAL: Table compromised - pagination missing"
 
         # Verify no error messages about SQL syntax
@@ -289,7 +305,7 @@ class TestCDRDateRangeLimits:
             f"Expected 200, got {response.status_code}"
 
         data = response.json()
-        cdr_data = data.get('data', [])
+        cdr_data, pagination = extract_cdr_data(data)
 
         # Verify returned records are recent (within auto-applied range)
         if cdr_data:
@@ -331,7 +347,7 @@ class TestCDRParameterValidation:
             f"Expected 200, got {response.status_code}"
 
         data = response.json()
-        cdr_data = data.get('data', [])
+        cdr_data, pagination = extract_cdr_data(data)
 
         # Should cap at 1000
         assert len(cdr_data) <= 1000, \
@@ -357,7 +373,7 @@ class TestCDRParameterValidation:
         # Either reject or use safe default
         if response.status_code == 200:
             data = response.json()
-            cdr_data = data.get('data', [])
+            cdr_data, pagination = extract_cdr_data(data)
             # Should use safe default, not negative value
             assert len(cdr_data) >= 0, \
                 "Negative limit should not return negative records"
@@ -459,7 +475,8 @@ class TestCDRParameterValidation:
         data = response.json()
         # Table must still exist
         assert 'data' in data, "Response should contain data"
-        assert 'pagination' in data, \
+        data_wrapper = data['data']
+        assert 'pagination' in data_wrapper, \
             "Table should still exist (pagination present)"
 
     def test_order_parameter_valid_directions(self, api_client):
@@ -511,9 +528,14 @@ class TestCDRPerformanceAndDoS:
             f"Expected 200, got {response.status_code}"
 
         data = response.json()
-        pagination = data.get('pagination', {})
 
-        # Should have pagination
+        # API should always include pagination metadata
+        data_wrapper = data['data']
+        assert 'pagination' in data_wrapper, "Response should include pagination"
+        pagination = data_wrapper.get('pagination', {})
+        assert isinstance(pagination, dict), "Pagination should be a dictionary"
+
+        # Should have pagination metadata
         assert 'total' in pagination, "Pagination should include total"
         assert 'limit' in pagination, "Pagination should include limit"
         assert 'hasMore' in pagination, "Pagination should include hasMore"
@@ -539,7 +561,7 @@ class TestCDRPerformanceAndDoS:
             f"Expected 200, got {response.status_code}"
 
         data = response.json()
-        cdr_data = data.get('data', [])
+        cdr_data, pagination = extract_cdr_data(data)
 
         # Each group should have linkedid
         for group in cdr_data[:5]:  # Check first 5 groups
