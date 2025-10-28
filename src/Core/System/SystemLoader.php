@@ -408,14 +408,14 @@ class SystemLoader extends Injectable
 
             // Always reload SIP configuration after codec sync
             // This ensures codec list is applied to config even if no changes occurred
-            $this->echoStartMsg(' - Reloading SIP configuration with codecs...');
+            $this->echoStartMsg(' - Reloading SIP configuration with codecs' . PHP_EOL);
             SIPConf::reload();
-            $this->echoResultMsg();
+           
 
             $this->echoStartMsg(' - Reloading SIP settings in AstDB...');
             $sip = new SIPConf();
             $sip->updateAsteriskDatabase();
-            $this->echoResultMsg();
+            $this->echoResultMsg(SystemMessages::RESULT_DONE);
         }
         // Configure and restart cron tasks
         $this->echoStartMsg(' - Configuring Cron tasks...');
