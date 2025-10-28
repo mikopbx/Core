@@ -65,6 +65,8 @@ class AuthenticationMiddleware implements MiddlewareInterface
         '/pbxcore/api/v3/system:changeLanguage' => ['POST', 'PATCH'],
         '/pbxcore/api/v3/system:getAvailableLanguages' => ['GET'],
         '/pbxcore/api/v3/system:ping' => ['GET'],
+        '/pbxcore/api/v3/cdr:playback' => ['GET', 'HEAD'], // Token-based security
+        '/pbxcore/api/v3/cdr:download' => ['GET'],          // Token-based security
     ];
 
     /**

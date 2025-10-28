@@ -57,11 +57,12 @@ class GetListAction
             // WHY: Single format, easier maintenance, reusable for CRM and WebUI
             $result = self::handleRestRequest($data);
 
-            // WHY: Return data as list + separate pagination metadata
-            // This matches REST API expectations where response['data'] is array
-            // and pagination info is in response['pagination']
-            $res->data = $result['data'];
-            $res->pagination = $result['pagination'];
+            // WHY: Follow REST API protocol - all data inside 'data' block
+            // Structure: {data: {records: [...], pagination: {...}}}
+            $res->data = [
+                'records' => $result['data'],
+                'pagination' => $result['pagination']
+            ];
             $res->success = true;
 
         } catch (\InvalidArgumentException $e) {
@@ -194,9 +195,12 @@ class GetListAction
             $sortOrder = 'DESC';
         }
 
-        // Always group by linkedid for unified display
-        // WHY: Complex calls with transfers must be displayed as one entity
-        $grouped = true;
+        // Grouping parameter
+        // WHY: Support both grouped (linkedid aggregation) and ungrouped (individual records) modes
+        // grouped=true: Complex calls with transfers displayed as one entity
+        // grouped=false: Individual CDR records for CRM integration
+        // Default: true (for web UI compatibility)
+        $grouped = !isset($data['grouped']) || filter_var($data['grouped'], FILTER_VALIDATE_BOOLEAN);
 
         // Field selection (for future use)
         $fields = $data['fields'] ?? null;
@@ -377,11 +381,14 @@ class GetListAction
 
             // Get paginated list of unique linkedids
             // WHY: Only fetch linkedids for current page (memory efficient)
+            // WHY GROUP BY: For grouped mode, use MAX() aggregation to get correct sort value per linkedid
+            // Example: If sorting by 'id DESC', we want linkedid with MAX(id), not just any record's id
             $linkedIdsSql = "
-                SELECT DISTINCT linkedid
+                SELECT linkedid, MAX({$sortField}) as sort_value
                 FROM cdr_general
                 WHERE {$whereRaw}
-                ORDER BY {$sortField} {$sortOrder}
+                GROUP BY linkedid
+                ORDER BY sort_value {$sortOrder}
                 LIMIT {$limit} OFFSET {$offset}
             ";
 

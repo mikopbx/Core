@@ -179,16 +179,21 @@ const callDetailRecords = {
                     // REST API pagination parameters
                     params.limit = d.length;
                     params.offset = d.start;
-                    params.sort = 'id';
+                    params.sort = 'start';  // Sort by call start time for chronological order
                     params.order = 'DESC';
+
+                    // WHY: WebUI always needs grouped records (by linkedid) for proper display
+                    // Backend defaults to grouped=true, but explicit is better than implicit
+                    params.grouped = true;
 
                     return params;
                 },
                 dataSrc: function(json) {
-                    // API returns PBXApiResult with nested structure:
-                    // {result: true, data: {data: [...], pagination: {...}}}
+                    // API returns PBXApiResult structure:
+                    // {result: true, data: {records: [...], pagination: {...}}}
                     if (json.result && json.data) {
-                        const restData = json.data.data || [];
+                        // Extract records and pagination from nested data object
+                        const restData = json.data.records || [];
                         const pagination = json.data.pagination || {};
 
                         // Set DataTables pagination properties

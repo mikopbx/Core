@@ -70,10 +70,13 @@ class DeleteRecordAction
         // - linkedid (mikopbx-*): Delete ALL records with this linkedid (entire conversation)
         // - numeric ID: Delete single record only
         $isLinkedId = str_starts_with($id, 'mikopbx-');
-        $isNumericId = is_numeric($id);
+
+        // WHY: Reject decimal numbers (12.34) - only accept integers
+        // Security: is_numeric() accepts floats, but CDR IDs must be integers
+        $isNumericId = is_numeric($id) && (string)(int)$id === $id;
 
         if (!$isLinkedId && !$isNumericId) {
-            $res->messages['error'][] = 'Invalid ID format. Expected: numeric ID or linkedid (mikopbx-*)';
+            $res->messages['error'][] = 'Invalid ID format. Expected: integer ID or linkedid (mikopbx-*)';
             $res->httpCode = 400;
             return $res;
         }

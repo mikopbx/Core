@@ -34,21 +34,21 @@ def extract_cdr_data(response):
     """
     Extract CDR data from response handling nested structure.
 
-    API may return:
-    - Nested: {data: {data: [...], pagination: {...}}}
-    - Flat: {data: [...]}
+    API returns:
+    - New format: {data: {records: [...], pagination: {...}}}
+    - Legacy fallback: {data: [...]}
     """
     data_wrapper = response.get('data', {})
 
     if isinstance(data_wrapper, dict):
-        if 'data' in data_wrapper:
-            # Nested structure
+        if 'records' in data_wrapper:
+            # New REST protocol format: {data: {records: [...], pagination: {...}}}
+            return data_wrapper['records'], data_wrapper.get('pagination')
+        elif 'data' in data_wrapper:
+            # Legacy nested structure (should not be used anymore)
             return data_wrapper['data'], data_wrapper.get('pagination')
-        elif 'records' in data_wrapper:
-            # Grouped structure might have records at top level
-            return [data_wrapper], None
 
-    # Flat structure or list
+    # Legacy flat structure: {data: [...]}
     if isinstance(data_wrapper, list):
         return data_wrapper, None
 
@@ -71,34 +71,27 @@ class TestCDRRestAPIFormat:
 
         assert_api_success(response, "Failed to get CDR list in REST format")
 
-        # REST API format has nested structure
+        # REST API format follows protocol: {data: {records: [...], pagination: {...}}}
         data_wrapper = response.get('data', {})
 
-        # Check if data has nested structure (new format) or flat (old format)
-        if isinstance(data_wrapper, dict) and 'data' in data_wrapper:
-            # New nested format: {data: {data: [...], pagination: {...}}}
-            actual_data = data_wrapper['data']
-            pagination = data_wrapper.get('pagination')
-            print(f"✓ REST API format validated (nested structure)")
-        else:
-            # Old flat format: {data: [...]}
-            actual_data = data_wrapper if isinstance(data_wrapper, list) else []
-            pagination = None
-            print(f"✓ REST API format validated (flat structure)")
+        assert isinstance(data_wrapper, dict), "data should be an object (REST protocol compliance)"
+        assert 'records' in data_wrapper, "data should contain 'records' array (REST protocol compliance)"
+        assert 'pagination' in data_wrapper, "data should contain 'pagination' object (REST protocol compliance)"
 
-        assert isinstance(actual_data, list), "data should be a list"
+        actual_data = data_wrapper['records']
+        pagination = data_wrapper['pagination']
+
+        assert isinstance(actual_data, list), "records should be a list"
+        assert isinstance(pagination, dict), "pagination should be an object"
+
+        print(f"✓ REST API format validated (protocol compliant)")
         print(f"  Records returned: {len(actual_data)}")
 
         # Check pagination structure
-        if 'pagination' in response:
-            pagination = response['pagination']
-            expected_pagination_fields = ['total', 'limit', 'offset', 'hasMore']
-
-            for field in expected_pagination_fields:
-                if field in pagination:
-                    print(f"  ✓ Pagination has '{field}': {pagination[field]}")
-        else:
-            print(f"  ⚠ No pagination object (may not be implemented yet)")
+        expected_pagination_fields = ['total', 'limit', 'offset', 'hasMore']
+        for field in expected_pagination_fields:
+            if field in pagination:
+                print(f"  ✓ Pagination has '{field}': {pagination[field]}")
 
     def test_02_rest_api_with_grouped_false(self, api_client):
         """Test ungrouped response (each CDR record separate)
@@ -417,20 +410,25 @@ class TestCDRDownloadEndpoint:
         )
 
     def test_02_validate_download_url_format(self, api_client):
-        """Validate download_url format includes token
+        """Validate download_url format includes token (token-only, no ID)
 
-        WHY: download_url should be separate from playback_url.
-        Format: /pbxcore/api/v3/cdr/{id}:download?token=xxx
+        WHY: Token already contains CDR ID, so URL simplified to token-only.
+        Format: /pbxcore/api/v3/cdr:download?token=xxx (no {id} in path)
         """
         if not TestCDRDownloadEndpoint.sample_download_url:
             pytest.skip("No download URL available")
 
         url = TestCDRDownloadEndpoint.sample_download_url
 
-        # Validate URL format
-        assert 'pbxcore/api/v3/cdr/' in url, "URL should contain CDR endpoint"
-        assert ':download' in url, "URL should contain :download custom method"
+        # Validate URL format (token-only, no CDR ID in path)
+        assert 'pbxcore/api/v3/cdr:download' in url, "URL should be collection-level endpoint"
         assert 'token=' in url, "URL should contain token parameter"
+
+        # URL should NOT contain CDR ID in path (simplified to token-only)
+        # Old format: /cdr/{id}:download?token=xxx
+        # New format: /cdr:download?token=xxx
+        assert not re.search(r'/cdr/[0-9]+:download', url), \
+            "URL should NOT contain CDR ID in path (token-only format)"
 
         # Extract token
         match = re.search(r'token=([a-f0-9]+)', url)
@@ -440,7 +438,7 @@ class TestCDRDownloadEndpoint:
         assert len(token) == 32, f"Token should be 32 characters (hex), got {len(token)}"
 
         TestCDRDownloadEndpoint.sample_token = token
-        print(f"✓ Download URL format valid")
+        print(f"✓ Download URL format valid (token-only)")
         print(f"  Token: {token[:8]}...{token[-8:]}")
 
     def test_03_download_with_token(self, api_client):
@@ -739,9 +737,9 @@ class TestCDRURLGeneration:
             print(f"  ✓ All records without files have null URLs")
 
     def test_03_urls_contain_different_endpoints(self, api_client):
-        """Test that playback_url and download_url point to different endpoints
+        """Test that playback_url and download_url point to different endpoints (token-only)
 
-        WHY: Phase 3 - two separate endpoints for different purposes.
+        WHY: Two separate endpoints for different purposes, token-only format (no CDR ID in URL).
         """
         response = api_client.get('cdr', params={'limit': 100})
         assert_api_success(response, "Failed to get CDR list")
@@ -763,18 +761,29 @@ class TestCDRURLGeneration:
                 download_url = record.get('download_url')
 
                 if playback_url and download_url:
-                    # Both should contain same CDR ID
                     cdr_id = str(record['id'])
-                    assert cdr_id in playback_url, f"Playback URL should contain CDR ID {cdr_id}"
-                    assert cdr_id in download_url, f"Download URL should contain CDR ID {cdr_id}"
 
-                    # But different custom methods
+                    # URLs should be token-only (no CDR ID in path)
+                    # Old format: /cdr/{id}:playback?token=xxx
+                    # New format: /cdr:playback?token=xxx
                     assert ':playback' in playback_url, "Playback URL should have :playback"
                     assert ':download' in download_url, "Download URL should have :download"
 
-                    print(f"✓ Record {cdr_id} has correctly formatted URLs")
-                    print(f"  Playback: ...{playback_url[-40:]}")
-                    print(f"  Download: ...{download_url[-40:]}")
+                    # URLs should NOT contain CDR ID in path (token-only)
+                    assert not re.search(r'/cdr/[0-9]+:', playback_url), \
+                        "Playback URL should NOT contain CDR ID in path (token-only format)"
+                    assert not re.search(r'/cdr/[0-9]+:', download_url), \
+                        "Download URL should NOT contain CDR ID in path (token-only format)"
+
+                    # Both should use collection-level endpoints
+                    assert 'cdr:playback?token=' in playback_url, \
+                        "Playback URL should be collection-level with token"
+                    assert 'cdr:download?token=' in download_url, \
+                        "Download URL should be collection-level with token"
+
+                    print(f"✓ Record {cdr_id} has correctly formatted token-only URLs")
+                    print(f"  Playback: ...{playback_url[-50:]}")
+                    print(f"  Download: ...{download_url[-50:]}")
 
                     # Found at least one, that's enough
                     return

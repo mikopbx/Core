@@ -83,8 +83,9 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
 
             if (!empty($token)) {
                 // Relative URLs - CRM knows the host and port
-                $data['playback_url'] = "/pbxcore/api/v3/cdr/{$model->id}:playback?token={$token}";
-                $data['download_url'] = "/pbxcore/api/v3/cdr/{$model->id}:download?token={$token}";
+                // WHY: Token already contains CDR ID in Redis, no need to expose ID in URL
+                $data['playback_url'] = "/pbxcore/api/v3/cdr:playback?token={$token}";
+                $data['download_url'] = "/pbxcore/api/v3/cdr:download?token={$token}";
             } else {
                 $data['playback_url'] = null;
                 $data['download_url'] = null;

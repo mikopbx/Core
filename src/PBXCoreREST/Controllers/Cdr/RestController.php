@@ -46,20 +46,19 @@ use MikoPBX\PBXCoreREST\Attributes\{
  * @see https://spec.openapis.org/oas/v3.1.0 - OpenAPI 3.1 Specification
  */
 #[ApiResource(
-    path: '/pbxcore/api/v3/cdr',    
+    path: '/pbxcore/api/v3/cdr',
     tags: ['Call Records'],
     description: 'rest_Cdr_ApiDescription',
     processor: CdrManagementProcessor::class
 )]
-#[ResourceSecurity('cdr', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
 #[HttpMapping(
     mapping: [
         'GET' => ['getList', 'getRecord', 'getMetadata', 'playback', 'download'],
         'DELETE' => ['delete'],
         'HEAD' => ['playback']
     ],
-    resourceLevelMethods: ['getRecord', 'delete', 'playback', 'download'],
-    collectionLevelMethods: ['getList', 'getMetadata'],
+    resourceLevelMethods: ['getRecord', 'delete'],
+    collectionLevelMethods: ['getList', 'getMetadata', 'playback', 'download'],
     customMethods: ['getMetadata', 'playback', 'download'],
     // WHY: idPattern accepts both numeric ID and linkedid for routing flexibility
     // Array of prefixes: each prefix + [^/:]+
@@ -69,6 +68,10 @@ use MikoPBX\PBXCoreREST\Attributes\{
     // IMPORTANT: Individual methods further restrict ID format via ApiParameterRef pattern:
     // - getRecord, playback, download: numeric only (pattern: '^[0-9]+$')
     // - delete: numeric OR linkedid (pattern: '^([0-9]+|mikopbx-.+)$')
+    //
+    // SECURITY NOTE: ResourceSecurity removed from class level because this resource has mixed security:
+    // - getList/getRecord/delete: require Bearer token (added at method level)
+    // - playback/download: public with token-based access (SecurityType::PUBLIC)
     idPattern: ['', 'mikopbx-']
 )]
 class RestController extends BaseRestController
@@ -85,6 +88,7 @@ class RestController extends BaseRestController
      *
      * @route GET /pbxcore/api/v3/cdr
      */
+    #[ResourceSecurity('cdr', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
     #[ApiDataSchema(
         schemaClass: DataStructure::class,
         type: 'list',
@@ -115,6 +119,7 @@ class RestController extends BaseRestController
      *
      * @route GET /pbxcore/api/v3/cdr/{id}
      */
+    #[ResourceSecurity('cdr', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
     #[ApiDataSchema(
         schemaClass: DataStructure::class,
         type: 'detail'
@@ -142,6 +147,7 @@ class RestController extends BaseRestController
      *
      * @route GET /pbxcore/api/v3/cdr:getMetadata
      */
+    #[ResourceSecurity('cdr', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
     #[ApiOperation(
         summary: 'rest_cdr_GetMetadata',
         description: 'rest_cdr_GetMetadataDesc',
@@ -170,6 +176,7 @@ class RestController extends BaseRestController
      *
      * @route DELETE /pbxcore/api/v3/cdr/{id}
      */
+    #[ResourceSecurity('cdr', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
     #[ApiOperation(
         summary: 'rest_cdr_Delete',
         description: 'rest_cdr_DeleteDesc',
@@ -195,14 +202,18 @@ class RestController extends BaseRestController
      * Requires 'token' parameter for secure access. The token is included in 'playback_url' field
      * returned by GET /cdr or GET /cdr/{id} endpoints.
      *
-     * @route GET /pbxcore/api/v3/cdr/{id}:playback
+     * WHY: Token already contains CDR ID - no need to pass ID separately
+     * WHY PUBLIC: Browser <audio>/<video> tags can't send Authorization headers,
+     *             so we use token-based security instead of Bearer token
+     *
+     * @route GET /pbxcore/api/v3/cdr:playback?token=xxx
      */
+    #[ResourceSecurity('cdr', requirements: [SecurityType::PUBLIC])]
     #[ApiOperation(
         summary: 'rest_cdr_Playback',
         description: 'rest_cdr_PlaybackDesc',
         operationId: 'playbackRecording'
     )]
-    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]+$', example: '12345')]
     #[ApiParameterRef('token', required: true)]
     #[ApiParameterRef('view')]
     #[ApiResponse(200, 'rest_response_200_stream')]
@@ -211,7 +222,7 @@ class RestController extends BaseRestController
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
     #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
     #[ApiResponse(416, 'rest_response_416_range_not_satisfiable', 'PBXApiResult')]
-    public function playback(string $id): void
+    public function playback(): void
     {
         // Implementation handled by BaseRestController
     }
@@ -222,14 +233,18 @@ class RestController extends BaseRestController
      * Requires 'token' parameter for secure access. The token is included in 'download_url' field
      * returned by GET /cdr or GET /cdr/{id} endpoints.
      *
-     * @route GET /pbxcore/api/v3/cdr/{id}:download
+     * WHY: Token already contains CDR ID - no need to pass ID separately
+     * WHY PUBLIC: Users need direct download links without Bearer authentication,
+     *             token provides sufficient security
+     *
+     * @route GET /pbxcore/api/v3/cdr:download?token=xxx
      */
+    #[ResourceSecurity('cdr', requirements: [SecurityType::PUBLIC])]
     #[ApiOperation(
         summary: 'rest_cdr_Download',
         description: 'rest_cdr_DownloadDesc',
         operationId: 'downloadRecording'
     )]
-    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]+$', example: '12345')]
     #[ApiParameterRef('token', required: true)]
     #[ApiParameterRef('view')]
     #[ApiParameterRef('filename')]
@@ -237,7 +252,7 @@ class RestController extends BaseRestController
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
     #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
-    public function download(string $id): void
+    public function download(): void
     {
         // Implementation handled by BaseRestController
     }
