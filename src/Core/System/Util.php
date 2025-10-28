@@ -68,8 +68,14 @@ class Util
                 continue;
             }
             if (is_array($value)) {
-                array_unshift($value, ' ');
-                $result_config .= trim(implode("\n$key = ", $value)) . "\n";
+                // For codec-related keys (allow/disallow), use comma-separated format
+                // For other array values, use multiple lines
+                if (in_array($key, ['allow', 'disallow'], true)) {
+                    $result_config .= "$key = " . implode(',', $value) . "\n";
+                } else {
+                    array_unshift($value, ' ');
+                    $result_config .= trim(implode("\n$key = ", $value)) . "\n";
+                }
             } else {
                 $result_config .= "$key = $value\n";
             }

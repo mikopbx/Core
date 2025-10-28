@@ -677,79 +677,44 @@ class RestoreDefaultSettingsAction extends Injectable
             }
         }
 
-        // Define default audio codecs with priorities
-        $defaultAudioCodecs = [
-            'alaw' => ['priority' => 1, 'disabled' => '0', 'description' => 'G.711 A-law'],
-            'ulaw' => ['priority' => 2, 'disabled' => '0', 'description' => 'G.711 μ-law'],
-            'opus' => ['priority' => 3, 'disabled' => '0', 'description' => 'Opus'],
-            'g722' => ['priority' => 4, 'disabled' => '0', 'description' => 'G.722'],
-            'g729' => ['priority' => 5, 'disabled' => '0', 'description' => 'G.729'],
-            'ilbc' => ['priority' => 6, 'disabled' => '0', 'description' => 'iLBC'],
-            'g726' => ['priority' => 7, 'disabled' => '0', 'description' => 'G.726'],
-            'gsm' => ['priority' => 8, 'disabled' => '0', 'description' => 'GSM'],
-            'adpcm' => ['priority' => 9, 'disabled' => '0', 'description' => 'ADPCM'],
-            'lpc10' => ['priority' => 10, 'disabled' => '0', 'description' => 'LPC-10'],
-            'speex' => ['priority' => 11, 'disabled' => '0', 'description' => 'Speex'],
-            'slin' => ['priority' => 12, 'disabled' => '0', 'description' => 'Signed Linear PCM'],
+        // Initialize default codec set
+        // CodecSync will later update this list based on actual Asterisk capabilities
+        // This ensures codecs exist before Asterisk starts
+        $defaultCodecs = [
+            // Audio codecs (most common, will be refined by CodecSync)
+            'alaw' => ['type' => 'audio', 'priority' => 1, 'description' => 'G.711 A-law'],
+            'ulaw' => ['type' => 'audio', 'priority' => 2, 'description' => 'G.711 μ-law'],
+            'opus' => ['type' => 'audio', 'priority' => 3, 'description' => 'Opus'],
+            'g722' => ['type' => 'audio', 'priority' => 4, 'description' => 'G.722'],
+            // Video codecs (most common, will be refined by CodecSync)
+            'h264' => ['type' => 'video', 'priority' => 1, 'description' => 'H.264'],
+            'h263' => ['type' => 'video', 'priority' => 2, 'description' => 'H.263'],
         ];
 
-        // Define default video codecs with priorities
-        // Note: JPEG, H.261, VP8, VP9 use uppercase names for consistency with migration UpdateConfigsUpToVer202302161
-        $defaultVideoCodecs = [
-            'h264' => ['priority' => 1, 'disabled' => '0', 'description' => 'H.264'],
-            'h263' => ['priority' => 2, 'disabled' => '0', 'description' => 'H.263'],
-            'h263p' => ['priority' => 3, 'disabled' => '0', 'description' => 'H.263+'],
-            'VP8' => ['priority' => 4, 'disabled' => '0', 'description' => 'vp8'],
-            'VP9' => ['priority' => 5, 'disabled' => '0', 'description' => 'vp9'],
-            'JPEG' => ['priority' => 6, 'disabled' => '0', 'description' => 'jpeg'],
-            'H.261' => ['priority' => 7, 'disabled' => '0', 'description' => 'h261'],
-        ];
-
-        // Update audio codecs
-        foreach ($defaultAudioCodecs as $codecName => $codecData) {
+        foreach ($defaultCodecs as $codecName => $codecData) {
             $codec = Codecs::findFirst("name = '$codecName'");
             if ($codec === null) {
-                // Create codec if it doesn't exist
                 $codec = new Codecs();
                 $codec->name = $codecName;
-                $codec->type = 'audio';
-            }
-            $codec->priority = (string)$codecData['priority'];
-            $codec->disabled = $codecData['disabled'];
-            $codec->description = $codecData['description'];
-            
-            if (!$codec->save()) {
-                SystemMessages::sysLogMsg(
-                    __CLASS__,
-                    'Failed to reset audio codec ' . $codecName . ': ' . implode(', ', $codec->getMessages()),
-                    LOG_WARNING
-                );
+                $codec->type = $codecData['type'];
+                $codec->priority = (string)$codecData['priority'];
+                $codec->disabled = '0'; // Enable by default
+                $codec->description = $codecData['description'];
+
+                if (!$codec->save()) {
+                    SystemMessages::sysLogMsg(
+                        __CLASS__,
+                        'Failed to create codec ' . $codecName . ': ' . implode(', ', $codec->getMessages()),
+                        LOG_WARNING
+                    );
+                }
             }
         }
 
-        // Update video codecs
-        foreach ($defaultVideoCodecs as $codecName => $codecData) {
-            $codec = Codecs::findFirst("name = '$codecName'");
-            if ($codec === null) {
-                // Create codec if it doesn't exist
-                $codec = new Codecs();
-                $codec->name = $codecName;
-                $codec->type = 'video';
-            }
-            $codec->priority = (string)$codecData['priority'];
-            $codec->disabled = $codecData['disabled'];
-            $codec->description = $codecData['description'];
-            
-            if (!$codec->save()) {
-                SystemMessages::sysLogMsg(
-                    __CLASS__,
-                    'Failed to reset video codec ' . $codecName . ': ' . implode(', ', $codec->getMessages()),
-                    LOG_WARNING
-                );
-            }
-        }
-
-        // Log the codec reset
-        SystemMessages::sysLogMsg(__CLASS__, 'Codecs have been reset to default values', LOG_INFO);
+        SystemMessages::sysLogMsg(
+            __CLASS__,
+            'Default codecs initialized. Full codec sync will occur when Asterisk starts.',
+            LOG_INFO
+        );
     }
 }

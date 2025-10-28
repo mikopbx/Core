@@ -21,6 +21,7 @@
 namespace MikoPBX\Core\System;
 
 use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
+use MikoPBX\Core\Asterisk\Configs\Generators\CodecSync;
 use MikoPBX\Core\Asterisk\Configs\SIPConf;
 use MikoPBX\Core\System\Configs\ACPIDConf;
 use MikoPBX\Core\System\Configs\BeanstalkConf;
@@ -398,6 +399,19 @@ class SystemLoader extends Injectable
         $asteriskResult = PbxConf::waitFullyBooted();
         $this->echoResultMsg($asteriskResult ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
         if ($asteriskResult) {
+            // Synchronize codec database with Asterisk's available codecs
+            // This runs once at boot after Asterisk is fully started
+            $this->echoStartMsg(' - Synchronizing codec database...');
+            $codecStats = CodecSync::syncCodecsWithAsterisk();
+            $totalChanges = $codecStats['added'] + $codecStats['enabled'] + $codecStats['disabled'];
+            $this->echoResultMsg($totalChanges > 0 ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_SKIPPED);
+
+            // Always reload SIP configuration after codec sync
+            // This ensures codec list is applied to config even if no changes occurred
+            $this->echoStartMsg(' - Reloading SIP configuration with codecs...');
+            SIPConf::reload();
+            $this->echoResultMsg();
+
             $this->echoStartMsg(' - Reloading SIP settings in AstDB...');
             $sip = new SIPConf();
             $sip->updateAsteriskDatabase();

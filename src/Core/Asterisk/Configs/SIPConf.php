@@ -416,23 +416,14 @@ class SIPConf extends AsteriskConfigClass
     /**
      * Get codecs.
      *
-     * Retrieves and returns the codecs data as an array.
+     * Retrieves enabled and supported codecs from database.
+     * Uses CodecSync to ensure only Asterisk-available codecs are returned.
      *
      * @return array The codecs data.
      */
     private function getCodecs(): array
     {
-        $arr_codecs = [];
-        $filter     = [
-            'conditions' => 'disabled="0"',
-            'order'      => 'type, priority',
-        ];
-        $codecs     = Codecs::find($filter);
-        foreach ($codecs as $codec_data) {
-            $arr_codecs[] = $codec_data->name;
-        }
-
-        return $arr_codecs;
+        return Generators\CodecSync::getEnabledSupportedCodecs();
     }
 
     /**
@@ -735,7 +726,7 @@ class SIPConf extends AsteriskConfigClass
 
         // Get unified certificates for TLS/WSS transports
         $certs = SslCertificateService::prepareAsteriskCertificates('asterisk-pjsip');
-        
+
         // Only add TLS transport if certificates are available
         if (!empty($certs['certPath']) && !empty($certs['keyPath'])) {
             $conf .= "[transport-tls]\n" .
@@ -746,14 +737,16 @@ class SIPConf extends AsteriskConfigClass
                 "priv_key_file={$certs['keyPath']}\n" .
                 // "ca_list_file=/etc/ssl/certs/ca-certificates.crt\n".
                 // "verify_server=yes\n".
-                "method=sslv23\n" .
+                "method=tlsv1_2\n" .
                 "$tlsNatConf\n\n";
-                
+
             // Only add WSS transport if certificates are available (for WebRTC)
+            // WSS uses the same port as AJAM over HTTPS (Asterisk HTTP server)
+            $wssPort = PbxSettings::getValueByKey(PbxSettings::AJAM_PORT_TLS);
             $conf .= "[transport-wss]\n" .
                 "$typeTransport\n" .
                 "protocol = wss\n" .
-                "bind=0.0.0.0:$sipPort\n" .
+                "bind=0.0.0.0:$wssPort\n" .
                 "cert_file={$certs['certPath']}\n" .
                 "priv_key_file={$certs['keyPath']}\n" .
                 "$natConf\n\n";
@@ -850,8 +843,9 @@ class SIPConf extends AsteriskConfigClass
 
         $options['type'] = 'auth';
 
-        // Add configuration section header
-        $conf            .= "[REG-AUTH-{$provider['uniqid']}]\n";
+        // Add configuration section header with provider description
+        $description = !empty($provider['description']) ? "; {$provider['description']}" : '';
+        $conf            .= "[REG-AUTH-{$provider['uniqid']}]$description\n";
 
         // Generate and add configuration options
         $conf            .= Util::overrideConfigurationArray($options, $manual_attributes, 'registration-auth');
@@ -929,8 +923,9 @@ class SIPConf extends AsteriskConfigClass
             AsteriskConfigInterface::OVERRIDE_PROVIDER_PJSIP_OPTIONS
         );
 
-        // Add configuration section header
-        $conf    .= "[REG-{$provider['uniqid']}] \n";
+        // Add configuration section header with provider description
+        $description = !empty($provider['description']) ? "; {$provider['description']}" : '';
+        $conf    .= "[REG-{$provider['uniqid']}]$description\n";
 
         // Generate and add configuration options
         $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'registration');
@@ -966,8 +961,9 @@ class SIPConf extends AsteriskConfigClass
         );
         $options['type'] = 'auth';
 
-        // Add configuration section header
-        $conf            .= "[{$provider['uniqid']}-AUTH]\n";
+        // Add configuration section header with provider description
+        $description = !empty($provider['description']) ? "; {$provider['description']}" : '';
+        $conf            .= "[{$provider['uniqid']}-AUTH]$description\n";
 
         // Generate and add configuration options
         $conf            .= Util::overrideConfigurationArray($options, $manual_attributes, 'endpoint-auth');
@@ -1021,8 +1017,9 @@ class SIPConf extends AsteriskConfigClass
             AsteriskConfigInterface::OVERRIDE_PROVIDER_PJSIP_OPTIONS
         );
 
-        // Add configuration section header
-        $conf    .= "[{$provider['uniqid']}]\n";
+        // Add configuration section header with provider description
+        $description = !empty($provider['description']) ? "; {$provider['description']}" : '';
+        $conf    .= "[{$provider['uniqid']}]$description\n";
 
         // Generate and add configuration options
         $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'aor');
@@ -1064,8 +1061,9 @@ class SIPConf extends AsteriskConfigClass
             AsteriskConfigInterface::OVERRIDE_PROVIDER_PJSIP_OPTIONS
         );
 
-        // Add configuration section header
-        $conf    .= "[{$provider['uniqid']}]\n";
+        // Add configuration section header with provider description
+        $description = !empty($provider['description']) ? "; {$provider['description']}" : '';
+        $conf    .= "[{$provider['uniqid']}]$description\n";
 
         // Generate and add configuration options
         $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'identify');
@@ -1151,8 +1149,9 @@ class SIPConf extends AsteriskConfigClass
         // Override PJSIP options from modules
         $options = $this->overridePJSIPOptionsFromModules($provider['uniqid'], $options, AsteriskConfigInterface::OVERRIDE_PROVIDER_PJSIP_OPTIONS);
 
-        // Add configuration section header
-        $conf    .= "[{$provider['uniqid']}]" . PHP_EOL;
+        // Add configuration section header with provider description
+        $description = !empty($provider['description']) ? "; {$provider['description']}" : '';
+        $conf    .= "[{$provider['uniqid']}]$description" . PHP_EOL;
         $conf    .= 'set_var=providerID=' . $provider['uniqid'] . PHP_EOL;
 
         // Generate and add configuration options
@@ -1256,7 +1255,10 @@ class SIPConf extends AsteriskConfigClass
             $options,
             AsteriskConfigInterface::OVERRIDE_PJSIP_OPTIONS
         );
-        $conf    .= "[{$peer['extension']}] \n";
+
+        // Add configuration section header with callerid name
+        $calleridComment = !empty($peer['calleridname']) ? "; {$peer['calleridname']}" : '';
+        $conf    .= "[{$peer['extension']}]$calleridComment\n";
         $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'auth');
 
         return $conf;
@@ -1296,13 +1298,14 @@ class SIPConf extends AsteriskConfigClass
             AsteriskConfigInterface::OVERRIDE_PJSIP_OPTIONS
         );
 
-        // Generate the aor section
-        $conf    .= "[{$peer['extension']}]\n";
+        // Generate the aor section with callerid name
+        $calleridComment = !empty($peer['calleridname']) ? "; {$peer['calleridname']}" : '';
+        $conf    .= "[{$peer['extension']}]$calleridComment\n";
         $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'aor');
 
         // Generate the WebRTC aor section if enabled
         if (PbxSettings::getValueByKey(PbxSettings::USE_WEB_RTC) === '1') {
-            $conf    .= "[{$peer['extension']}-WS]\n";
+            $conf    .= "[{$peer['extension']}-WS]$calleridComment\n";
             $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'aor');
         }
 
@@ -1393,8 +1396,9 @@ class SIPConf extends AsteriskConfigClass
             AsteriskConfigInterface::OVERRIDE_PJSIP_OPTIONS
         );
 
-        // Generate the endpoint section header and options
-        $conf    .= "[{$peer['extension']}] \n";
+        // Generate the endpoint section header and options with callerid name
+        $calleridComment = !empty($calleridname) ? "; $calleridname" : '';
+        $conf    .= "[{$peer['extension']}]$calleridComment\n";
         $conf    .= Util::overrideConfigurationArray($options, $manual_attributes, 'endpoint');
         $conf    .= $this->hookModulesMethod(AsteriskConfigInterface::GENERATE_PEER_PJ_ADDITIONAL_OPTIONS, [$peer]);
 
@@ -1403,7 +1407,7 @@ class SIPConf extends AsteriskConfigClass
         if (PbxSettings::getValueByKey(PbxSettings::USE_WEB_RTC) === '1') {
             unset($options['media_encryption']);
 
-            $conf .= "[{$peer['extension']}-WS] \n";
+            $conf .= "[{$peer['extension']}-WS]$calleridComment\n";
             $options['webrtc'] = 'yes';
             $options['transport'] = 'transport-wss';
             $options['aors'] = $peer['extension'] . '-WS';
@@ -1429,6 +1433,7 @@ class SIPConf extends AsteriskConfigClass
 
     /**
      * Refreshes the SIP configurations and reloads the PJSIP module.
+     * Synchronizes codec database with Asterisk before regenerating config.
      */
     public static function reload(): void
     {
@@ -1436,6 +1441,11 @@ class SIPConf extends AsteriskConfigClass
         if ($di === null) {
             return;
         }
+
+        // Codec synchronization is handled in SystemLoader during boot
+        // (runs once after Asterisk fully starts)
+        // No need to sync on every SIP reload
+
         $sip = new self();
         $needRestart = $sip->needAsteriskRestart();
         $sip->generateConfig();
