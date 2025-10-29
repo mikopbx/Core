@@ -243,7 +243,7 @@ class RestoreDefaultSettingsAction extends Injectable
             Processes::mwExec("$rm -rf $callRecordsPath/*");
         }
 
-        // Recreate parking slots
+        // Synchronize parking slots (smart sync - no mass delete/recreate)
         self::createParkingSlots();
         
         // Stage: Finalizing
@@ -601,40 +601,97 @@ class RestoreDefaultSettingsAction extends Injectable
     }
 
     /**
-     * Create parking extensions.
+     * Synchronize parking extensions with current settings.
+     * Uses smart sync approach: only creates missing slots and deletes extra ones.
+     * WHY: Delete-recreate pattern is inefficient and causes database locks.
      *
      * @return void
      */
     public static function createParkingSlots(): void
     {
-        // Delete all parking slots
-        $currentSlots = Extensions::findByType(Extensions::TYPE_PARKING);
-        foreach ($currentSlots as $currentSlot) {
-            // Try to delete, but don't fail the whole operation if it doesn't work
-            // as parking slots will be recreated anyway
-            $currentSlot->delete();
-        }
-
+        // STEP 1: Calculate required parking slot numbers from settings
         $startSlot = intval(PbxSettings::getValueByKey(PbxSettings::PBX_CALL_PARKING_START_SLOT));
         $endSlot = intval(PbxSettings::getValueByKey(PbxSettings::PBX_CALL_PARKING_END_SLOT));
         $reservedSlot = intval(PbxSettings::getValueByKey(PbxSettings::PBX_CALL_PARKING_EXT));
 
-        // Create an array of new numbers
-        $numbers = range($startSlot, $endSlot);
-        $numbers[] = $reservedSlot;
-        foreach ($numbers as $number) {
-            $record = new Extensions();
-            $record->type = Extensions::TYPE_PARKING;
-            $record->number = (string)$number;
-            $record->show_in_phonebook = '0';
-            if (!$record->create()) {
-                SystemMessages::sysLogMsg(
-                    __CLASS__,
-                    'Can not create extenison ' . $record->number . ' from \MikoPBX\Common\Models\Extensions ' . implode($record->getMessages()),
-                    LOG_ERR
-                );
+        // Build array of required slot numbers
+        $requiredNumbers = range($startSlot, $endSlot);
+        $requiredNumbers[] = $reservedSlot;
+        $requiredNumbers = array_unique($requiredNumbers); // Remove duplicates if any
+        $requiredNumbersMap = array_flip($requiredNumbers); // For fast lookup
+
+        SystemMessages::sysLogMsg(
+            __CLASS__,
+            'Synchronizing parking slots: required range ' . $startSlot . '-' . $endSlot . ' + reserved ' . $reservedSlot,
+            LOG_INFO
+        );
+
+        // STEP 2: Get existing parking slots from database
+        $existingSlots = Extensions::findByType(Extensions::TYPE_PARKING);
+        $existingSlotsMap = [];
+        foreach ($existingSlots as $slot) {
+            $existingSlotsMap[$slot->number] = $slot;
+        }
+
+        // STEP 3: Delete extra slots (exist in DB but not required)
+        $deletedCount = 0;
+        foreach ($existingSlotsMap as $number => $slot) {
+            if (!isset($requiredNumbersMap[$number])) {
+                // This slot should not exist - delete it
+                if ($slot->delete()) {
+                    $deletedCount++;
+                    SystemMessages::sysLogMsg(
+                        __CLASS__,
+                        "Deleted extra parking slot: {$number}",
+                        LOG_DEBUG
+                    );
+                } else {
+                    // Log error but continue
+                    $messages = implode(', ', $slot->getMessages());
+                    SystemMessages::sysLogMsg(
+                        __CLASS__,
+                        "Failed to delete extra parking slot {$number}: {$messages}",
+                        LOG_WARNING
+                    );
+                }
             }
         }
+
+        // STEP 4: Create missing slots (required but not exist in DB)
+        $createdCount = 0;
+        foreach ($requiredNumbers as $number) {
+            if (!isset($existingSlotsMap[$number])) {
+                // This slot is missing - create it
+                $record = new Extensions();
+                $record->type = Extensions::TYPE_PARKING;
+                $record->number = (string)$number;
+                $record->show_in_phonebook = '0';
+
+                if ($record->create()) {
+                    $createdCount++;
+                    SystemMessages::sysLogMsg(
+                        __CLASS__,
+                        "Created missing parking slot: {$number}",
+                        LOG_DEBUG
+                    );
+                } else {
+                    // Log error but continue
+                    $messages = implode(', ', $record->getMessages());
+                    SystemMessages::sysLogMsg(
+                        __CLASS__,
+                        "Failed to create parking slot {$number}: {$messages}",
+                        LOG_ERR
+                    );
+                }
+            }
+        }
+
+        SystemMessages::sysLogMsg(
+            __CLASS__,
+            "Parking slots synchronized: {$createdCount} created, {$deletedCount} deleted, " .
+            (count($requiredNumbers) - $createdCount) . ' already existed',
+            LOG_INFO
+        );
     }
     
     /**
