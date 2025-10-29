@@ -60,8 +60,8 @@ use MikoPBX\PBXCoreREST\Attributes\{
         'PATCH' => ['patch'],
         'DELETE' => ['delete']
     ],
-    resourceLevelMethods: ['getRecord', 'update', 'patch', 'delete', 'getStatus', 'forceCheck', 'updateStatus', 'copy'],
-    collectionLevelMethods: ['getList', 'create', 'getStatuses', 'getHistory', 'getStats'],
+    resourceLevelMethods: ['getRecord', 'update', 'patch', 'delete', 'getStatus', 'forceCheck', 'updateStatus', 'copy', 'getHistory', 'getStats'],
+    collectionLevelMethods: ['getList', 'create', 'getStatuses'],
     customMethods: ['getDefault', 'getStatuses', 'getStatus', 'getHistory', 'getStats', 'copy', 'forceCheck', 'updateStatus'],
     idPattern: ['IAX-', 'IAX-PROVIDER-', 'IAX-TRUNK-']  // Modern: IAX-TRUNK-xxx, Legacy: IAX-PROVIDER-xxx, IAX-xxx 
 )]
