@@ -114,11 +114,13 @@ class TestCDRSeeding:
             if len(existing_test_ids) > 0:
                 print(f"✓ Found existing test CDR data ({len(existing_test_ids)} records)")
                 print("✓ Test data IDs:", existing_test_ids[:5], "..." if len(existing_test_ids) > 5 else "")
+
+                # Store existing IDs BEFORE skipping (critical for test_02)
+                # WHY: pytest.skip() may not preserve class variable state in some execution modes
+                TestCDRSeeding.seeded_cdr_ids = existing_test_ids
+
                 print("✓ Skipping seeding - test data already present")
                 print("=" * 60)
-
-                # Store existing IDs
-                TestCDRSeeding.seeded_cdr_ids = existing_test_ids
                 pytest.skip("Test CDR data already exists - skipping seeding")
             else:
                 print("✓ No test CDR data found (IDs 1-30 range is empty)")
@@ -161,8 +163,18 @@ class TestCDRSeeding:
         - Seeded data is retrievable
         - Database is not locked
         """
+        # WHY: In CI/CD test_01 might be skipped but seeded_cdr_ids might not be set
+        # Fallback: check database directly if class variable is empty
         if not TestCDRSeeding.seeded_cdr_ids:
-            pytest.skip("No CDR data was seeded")
+            from helpers.cdr_seeder_remote import CDRSeederRemote
+            print("\nℹ️  Class variable empty, checking database directly...")
+            seeder = CDRSeederRemote()
+            TestCDRSeeding.seeded_cdr_ids = seeder.get_test_cdr_ids()
+
+            if not TestCDRSeeding.seeded_cdr_ids:
+                pytest.skip("No CDR data was seeded")
+
+            print(f"✓ Found {len(TestCDRSeeding.seeded_cdr_ids)} CDR records in database")
 
         # Try to get CDR list with recent date filter
         response = api_client.get('cdr', params={
