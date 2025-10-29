@@ -116,6 +116,7 @@ return [
     'pr_CallerIdSourceTooltip_rpid' => 'Remote-Party-ID',
     'pr_CallerIdSourceTooltip_rpid_desc' => 'Извлекать номер из заголовка Remote-Party-ID (используется некоторыми провайдерами)',
     'pr_Cancel' => 'Отмена',
+    'pr_CheckingStatus' => 'Проверка статуса...',
     'pr_CheckNow' => 'Проверить сейчас',
     'pr_CheckRequested' => 'Запрос на проверку отправлен',
     'pr_CheckingProviderStatuses' => 'Проверка статусов провайдеров...',
