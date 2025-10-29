@@ -103,14 +103,17 @@ abstract class AbstractProviderStatusAction extends Injectable
                             // Extract provider ID from ObjectName (format: SIP-TRUNK-XXXXX/sip:...)
                             $aorParts = explode('/', $contact['ObjectName']);
                             $providerId = $aorParts[0];
-                            
-                            // Store RTT in milliseconds if available
+
+                            // Store contact info - RTT may be 'nan' for NonQual status
+                            $rtt = null;
                             if (isset($contact['RoundtripUsec']) && is_numeric($contact['RoundtripUsec'])) {
-                                $contactsMap[$providerId] = [
-                                    'rtt' => (int)round($contact['RoundtripUsec'] / 1000), // Convert microseconds to milliseconds, ensure int
-                                    'status' => $contact['Status'] ?? 'Unknown'
-                                ];
+                                $rtt = (int)round($contact['RoundtripUsec'] / 1000); // Convert microseconds to milliseconds
                             }
+
+                            $contactsMap[$providerId] = [
+                                'rtt' => $rtt,
+                                'status' => $contact['Status'] ?? 'Unknown'
+                            ];
                         }
                     }
                 }
@@ -150,57 +153,78 @@ abstract class AbstractProviderStatusAction extends Injectable
                     'username' => $provider->username,
                     'host' => $provider->host,
                     'disabled' => $provider->disabled === '1',
-                    'description' => $provider->description ?? ''
+                    'description' => $provider->description ?? '',
+                    'registration_type' => $provider->registration_type ?? 'outbound'
                 ];
-                
+
                 // Check if disabled
                 if ($providerData['disabled']) {
                     $statuses[$provider->uniqid] = self::buildStatusData($providerData, 'OFF', null, []);
                     continue;
                 }
-                
-                // Get registration status
-                $regKey = $provider->username . '@' . $provider->host;
-                $registration = $registryMap[$regKey] ?? null;
-                
-                // Get peer endpoint status
-                $peer = $peerMap[$provider->uniqid] ?? null;
-                
+
                 // Initialize state, RTT and additional details
                 $rtt = null;
                 $state = 'UNKNOWN';
                 $additionalDetails = [];
-                
-                if ($registration) {
-                    $state = self::normalizeSipState($registration['state'] ?? 'UNKNOWN');
-                    
-                    // Add registration details
-                    if (isset($registration['refresh'])) {
-                        $additionalDetails['refreshInterval'] = $registration['refresh'];
-                    }
-                    if ($state === 'rejected' && isset($registration['reason'])) {
-                        $additionalDetails['rejectionReason'] = $registration['reason'];
-                    }
-                }
-                
-                // Get RTT from contacts map if available
-                if (isset($contactsMap[$provider->uniqid])) {
-                    $rtt = $contactsMap[$provider->uniqid]['rtt'];
-                    $additionalDetails['contactStatus'] = $contactsMap[$provider->uniqid]['status'] ?? '';
-                }
-                
-                // For non-registering providers, use peer state
-                if (!$registration && $peer) {
-                    $state = self::normalizeSipState($peer['state'] ?? 'UNKNOWN');
-                }
-                
-                // Add registration IP if available
-                if ($state === 'registered' && $registration) {
-                    if (isset($registration['address'])) {
-                        $additionalDetails['registrationDetails'] = "Registered from {$registration['address']}";
+
+                // Determine registration status based on registration type
+                $registrationType = $providerData['registration_type'];
+
+                // For INBOUND registration - check if provider has registered to us via AOR contacts
+                if ($registrationType === 'inbound') {
+                    // Check if provider has an active contact (inbound registration)
+                    if (isset($contactsMap[$provider->uniqid])) {
+                        $state = 'REGISTERED';  // Provider successfully registered to us
+                        $rtt = $contactsMap[$provider->uniqid]['rtt'];
+                        $additionalDetails['contactStatus'] = $contactsMap[$provider->uniqid]['status'] ?? '';
+                        $additionalDetails['registrationDetails'] = "Provider registered to this PBX";
+                    } else {
+                        // No contact means provider hasn't registered yet
+                        $state = 'UNREGISTERED';
+                        $additionalDetails['registrationDetails'] = "Waiting for provider to register";
                     }
                 }
-                
+                // For OUTBOUND registration - check our registration status with provider's server
+                elseif ($registrationType === 'outbound') {
+                    $regKey = $provider->username . '@' . $provider->host;
+                    $registration = $registryMap[$regKey] ?? null;
+
+                    if ($registration) {
+                        $state = self::normalizeSipState($registration['state'] ?? 'UNKNOWN');
+
+                        // Add registration details
+                        if (isset($registration['refresh'])) {
+                            $additionalDetails['refreshInterval'] = $registration['refresh'];
+                        }
+                        if ($state === 'rejected' && isset($registration['reason'])) {
+                            $additionalDetails['rejectionReason'] = $registration['reason'];
+                        }
+                        if ($state === 'registered' && isset($registration['address'])) {
+                            $additionalDetails['registrationDetails'] = "Registered to {$registration['address']}";
+                        }
+                    }
+
+                    // Get RTT from contacts map if available
+                    if (isset($contactsMap[$provider->uniqid])) {
+                        $rtt = $contactsMap[$provider->uniqid]['rtt'];
+                        $additionalDetails['contactStatus'] = $contactsMap[$provider->uniqid]['status'] ?? '';
+                    }
+                }
+                // For NONE (no registration) - use peer state
+                else {
+                    $peer = $peerMap[$provider->uniqid] ?? null;
+                    if ($peer) {
+                        $state = self::normalizeSipState($peer['state'] ?? 'UNKNOWN');
+                    }
+
+                    // Get RTT from contacts if available
+                    if (isset($contactsMap[$provider->uniqid])) {
+                        $rtt = $contactsMap[$provider->uniqid]['rtt'];
+                        $additionalDetails['contactStatus'] = $contactsMap[$provider->uniqid]['status'] ?? '';
+                    }
+                }
+
                 $statuses[$provider->uniqid] = self::buildStatusData($providerData, $state, $rtt, $additionalDetails);
             }
             
@@ -282,13 +306,17 @@ abstract class AbstractProviderStatusAction extends Injectable
                     if (preg_match('/([a-f0-9]{10})\s+(\w+)\s+([\d\.]+|nan)\s*$/', $line, $matches)) {
                         $status = $matches[2];
                         $rttValue = $matches[3];
-                        
+
+                        // Store contact even if RTT is 'nan' (NonQual) - contact existence matters for inbound registration
+                        $rtt = null;
                         if ($rttValue !== 'nan' && is_numeric($rttValue)) {
-                            $contactsMap[$providerId] = [
-                                'rtt' => (int)round((float)$rttValue), // Already in milliseconds, convert to int
-                                'status' => $status
-                            ];
+                            $rtt = (int)round((float)$rttValue); // Already in milliseconds
                         }
+
+                        $contactsMap[$providerId] = [
+                            'rtt' => $rtt,
+                            'status' => $status
+                        ];
                     }
                 }
             }
@@ -674,13 +702,16 @@ abstract class AbstractProviderStatusAction extends Injectable
     protected static function getStateDisplayProperties(string $state, ?int $rtt): array
     {
         $color = self::getStateColor($state, $rtt);
-        
+
+        // Normalize state to lowercase for consistent mapping
+        $normalizedState = strtolower($state);
+
         $stateMap = [
             'registered' => [
                 'text' => 'pr_ProviderStateRegistered',
                 'description' => 'pr_ProviderStateRegisteredDesc'
             ],
-            'OK' => [
+            'ok' => [
                 'text' => 'pr_ProviderStateOk',
                 'description' => 'pr_ProviderStateOkDesc'
             ],
@@ -700,43 +731,46 @@ abstract class AbstractProviderStatusAction extends Injectable
                 'text' => 'pr_ProviderStateRejected',
                 'description' => 'pr_ProviderStateRejectedDesc'
             ],
-            'OFF' => [
+            'off' => [
                 'text' => 'pr_ProviderStateOff',
                 'description' => 'pr_ProviderStateOffDesc'
             ],
-            'UNMONITORED' => [
+            'unmonitored' => [
                 'text' => 'pr_ProviderStateUnmonitored',
                 'description' => 'pr_ProviderStateUnmonitoredDesc'
             ],
-            'UNKNOWN' => [
+            'unknown' => [
                 'text' => 'pr_ProviderStateUnknown',
                 'description' => 'pr_ProviderStateUnknownDesc'
             ]
         ];
-        
-        $props = $stateMap[$state] ?? $stateMap['UNKNOWN'];
+
+        $props = $stateMap[$normalizedState] ?? $stateMap['unknown'];
         $props['color'] = $color;
-        
+
         return $props;
     }
     
     protected static function getStateColor(string $state, ?int $rtt): string
     {
-        if (in_array($state, ['unregistered', 'rejected', 'OFF'])) {
+        // Normalize state to lowercase for consistent comparison
+        $state = strtolower($state);
+
+        if (in_array($state, ['unregistered', 'rejected', 'off'])) {
             return 'grey';
         }
-        
-        if ($state === 'registered' || $state === 'OK') {
+
+        if ($state === 'registered' || $state === 'ok') {
             if ($rtt !== null && $rtt > 100) {
                 return 'yellow';
             }
             return 'green';
         }
-        
+
         if (in_array($state, ['unreachable', 'lagged', 'reconnecting'])) {
             return 'yellow';
         }
-        
+
         // UNKNOWN and any other undefined states should be grey (neutral)
         return 'grey';
     }
@@ -763,12 +797,12 @@ abstract class AbstractProviderStatusAction extends Injectable
 
     protected static function isSuccessState(string $state): bool
     {
-        return in_array($state, ['registered', 'OK', 'reachable'], true);
+        return in_array(strtolower($state), ['registered', 'ok', 'reachable'], true);
     }
-    
+
     protected static function isFailureState(string $state): bool
     {
-        return in_array($state, ['rejected', 'unreachable', 'lagged', 'unregistered', 'UNKNOWN'], true);
+        return in_array(strtolower($state), ['rejected', 'unreachable', 'lagged', 'unregistered', 'unknown'], true);
     }
 
     // History and tracking methods
