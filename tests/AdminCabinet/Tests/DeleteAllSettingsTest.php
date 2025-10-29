@@ -948,28 +948,55 @@ class DeleteAllSettingsTest extends MikoPBXTestsBase
                 self::$driver->get($this->testsConfig['url']);
 
                 // Wait for page body to load
-                $wait = new WebDriverWait(self::$driver, 5);
+                $wait = new WebDriverWait(self::$driver, 10);
                 $wait->until(
                     WebDriverExpectedCondition::presenceOfElementLocated(
                         WebDriverBy::tagName('body')
                     )
                 );
 
+                // WHY: Give JavaScript time to initialize and render UI elements
+                sleep(3);
+
                 // WHY: After delete all, user is logged out, so login form should be visible
                 // Check if login form is present AND visible (not just in DOM)
                 $loginElements = self::$driver->findElements(WebDriverBy::id('login-form'));
-                if (count($loginElements) > 0 && $loginElements[0]->isDisplayed()) {
-                    $systemBackUp = true;
-                    self::annotate("System is back online - login form is visible");
-                    break;
+                if (count($loginElements) > 0) {
+                    try {
+                        // Wait for login form to be fully visible with animations completed
+                        $formWait = new WebDriverWait(self::$driver, 5);
+                        $formWait->until(
+                            WebDriverExpectedCondition::visibilityOfElementLocated(
+                                WebDriverBy::id('login-form')
+                            )
+                        );
+                        $systemBackUp = true;
+                        self::annotate("System is back online - login form is visible");
+                        break;
+                    } catch (\Exception $e) {
+                        // Login form exists but not visible yet, continue waiting
+                        self::annotate("Login form found but not visible yet, continuing...");
+                    }
                 }
 
                 // WHY: In rare cases session might persist, check if top menu is visible
                 $topMenuElements = self::$driver->findElements(WebDriverBy::id('top-menu-search'));
-                if (count($topMenuElements) > 0 && $topMenuElements[0]->isDisplayed()) {
-                    $systemBackUp = true;
-                    self::annotate("System is back online - user still logged in");
-                    break;
+                if (count($topMenuElements) > 0) {
+                    try {
+                        // Wait for top menu to be fully visible
+                        $menuWait = new WebDriverWait(self::$driver, 5);
+                        $menuWait->until(
+                            WebDriverExpectedCondition::visibilityOfElementLocated(
+                                WebDriverBy::id('top-menu-search')
+                            )
+                        );
+                        $systemBackUp = true;
+                        self::annotate("System is back online - user still logged in");
+                        break;
+                    } catch (\Exception $e) {
+                        // Top menu exists but not visible yet, continue waiting
+                        self::annotate("Top menu found but not visible yet, continuing...");
+                    }
                 }
 
                 // WHY: Page loaded but neither element is visible - system still initializing
