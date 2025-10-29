@@ -414,8 +414,9 @@ class SaveRecordAction extends AbstractSaveRecordAction
             }
         }
 
-        // Validate time format (HH:MM)
-        $timePattern = '/^([01]?[0-9]|2[0-3]):([0-5]?[0-9])$/';
+        // Validate time format (H:MM or HH:MM)
+        // Allow both single digit (9:00) and double digit (09:00) format
+        $timePattern = '/^([0-9]|[01][0-9]|2[0-3]):([0-5][0-9])$/';
         if (!empty($data['time_from']) && !preg_match($timePattern, $data['time_from'])) {
             $errors[] = $t ? $t->_('tf_ValidateCheckTimeInterval') : 'Invalid time format for time_from';
         }

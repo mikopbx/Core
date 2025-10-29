@@ -603,7 +603,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'time_from' => [
                 'type' => 'string',
                 'description' => 'rest_schema_owt_time_from',
-                'pattern' => '^([01][0-9]|2[0-3]):[0-5][0-9]$',
+                'pattern' => '^([0-9]|[01][0-9]|2[0-3]):[0-5][0-9]$',  // Allow both H:MM and HH:MM formats
                 'sanitize' => 'string',
                 'default' => '00:00',
                 'example' => '09:00'
@@ -611,7 +611,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'time_to' => [
                 'type' => 'string',
                 'description' => 'rest_schema_owt_time_to',
-                'pattern' => '^([01][0-9]|2[0-3]):[0-5][0-9]$',
+                'pattern' => '^([0-9]|[01][0-9]|2[0-3]):[0-5][0-9]$',  // Allow both H:MM and HH:MM formats
                 'sanitize' => 'string',
                 'default' => '23:59',
                 'example' => '18:00'
