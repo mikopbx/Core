@@ -104,7 +104,9 @@ const providers = {
                     render(data, type, row) {
                         if (type === 'display') {
                             // Use SecurityUtils.sanitizeForDisplay with less strict mode for provider icons
-                            const safeRepresentation = window.SecurityUtils.sanitizeForDisplay(data || '', false);
+                            const tmpRepresentation = window.SecurityUtils.sanitizeForDisplay(data || '', false);
+                            // Limit the displayed length to 80 characters
+                            const safeRepresentation= tmpRepresentation.length > 80 ? tmpRepresentation.slice(0, 77) + '...' : tmpRepresentation;
                             
                             return `<span>${safeRepresentation}</span><br><span class="features failure"></span>`;
                         }
