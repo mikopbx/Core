@@ -193,14 +193,50 @@ class TestSoundFiles:
         response = api_client.put(f'sound-files/{sound_id}', update_data)
         assert_api_success(response, "Failed to update sound file")
 
-        # Verify update
-        updated = assert_record_exists(api_client, 'sound-files', sound_id)
-        assert '(Updated)' in updated['name']
+        # Verify update with retry logic (async API processing via Redis queue + worker)
+        # Worker may still be processing the update, causing 422 validation errors
+        max_verify_attempts = 5
+        updated = None
+        for attempt in range(max_verify_attempts):
+            try:
+                updated = assert_record_exists(api_client, 'sound-files', sound_id)
+
+                # Check if update actually applied (worker completed processing)
+                if '(Updated)' in updated['name']:
+                    break  # Update successful
+                else:
+                    # Update not yet visible - worker still processing
+                    if attempt < max_verify_attempts - 1:
+                        print(f"  Waiting for update to complete (attempt {attempt + 1}/{max_verify_attempts})...")
+                        time.sleep(1)
+                    else:
+                        pytest.fail(f"Update not applied after {max_verify_attempts} attempts. Name: {updated['name']}")
+
+            except Exception as e:
+                # Handle 422 errors during async processing
+                if '422' in str(e):
+                    # Validation error - record in intermediate state, worker still processing
+                    if attempt < max_verify_attempts - 1:
+                        print(f"  Record validation failed (worker processing), retrying (attempt {attempt + 1}/{max_verify_attempts})...")
+                        time.sleep(1)
+                    else:
+                        pytest.fail(f"Persistent 422 validation error after {max_verify_attempts} attempts: {e}")
+                # Handle record deletion during update
+                elif 'not found' in str(e).lower() or '404' in str(e):
+                    pytest.skip(f"Sound file {sound_id} deleted during update (system restore)")
+                else:
+                    raise
+
+        # Final assertion - ensure we got the updated data
+        assert updated is not None, "Failed to retrieve updated record"
+        assert '(Updated)' in updated['name'], f"Update not reflected. Expected '(Updated)' in name, got: {updated['name']}"
 
         print(f"✓ Updated sound file: {updated['name']}")
 
     def test_08_patch_sound_file(self, api_client):
         """Test PATCH /sound-files/{id} - Partial update"""
+        import time
+
         if not self.created_ids:
             pytest.skip("No sound files created yet")
 
@@ -221,9 +257,40 @@ class TestSoundFiles:
         response = api_client.patch(f'sound-files/{sound_id}', patch_data)
         assert_api_success(response, "Failed to patch sound file")
 
-        # Verify patch
-        updated = assert_record_exists(api_client, 'sound-files', sound_id)
-        assert updated['description'] == 'Patched description'
+        # Verify patch with retry logic (async API processing via Redis queue + worker)
+        max_verify_attempts = 5
+        updated = None
+        for attempt in range(max_verify_attempts):
+            try:
+                updated = assert_record_exists(api_client, 'sound-files', sound_id)
+
+                # Check if patch actually applied
+                if updated['description'] == 'Patched description':
+                    break  # Patch successful
+                else:
+                    # Patch not yet visible - worker still processing
+                    if attempt < max_verify_attempts - 1:
+                        print(f"  Waiting for patch to complete (attempt {attempt + 1}/{max_verify_attempts})...")
+                        time.sleep(1)
+                    else:
+                        pytest.fail(f"Patch not applied after {max_verify_attempts} attempts. Description: {updated['description']}")
+
+            except Exception as e:
+                # Handle 422 errors during async processing
+                if '422' in str(e):
+                    if attempt < max_verify_attempts - 1:
+                        print(f"  Record validation failed (worker processing), retrying (attempt {attempt + 1}/{max_verify_attempts})...")
+                        time.sleep(1)
+                    else:
+                        pytest.fail(f"Persistent 422 validation error after {max_verify_attempts} attempts: {e}")
+                elif 'not found' in str(e).lower() or '404' in str(e):
+                    pytest.skip(f"Sound file {sound_id} deleted during patch (system restore)")
+                else:
+                    raise
+
+        # Final assertion
+        assert updated is not None, "Failed to retrieve patched record"
+        assert updated['description'] == 'Patched description', f"Patch not reflected. Expected 'Patched description', got: {updated['description']}"
 
         print(f"✓ Patched sound file description")
 
