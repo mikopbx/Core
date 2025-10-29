@@ -179,6 +179,23 @@ class TestCDRSeeding:
         assert isinstance(data, list), "CDR data should be a list"
 
         # Verify we actually got seeded data back
+        if len(data) == 0:
+            # Debug output to understand why data is empty
+            print("\n" + "=" * 60)
+            print("DEBUG: CDR API returned empty data")
+            print("=" * 60)
+            print(f"Response result: {response.get('result')}")
+            print(f"Response keys: {list(response.keys())}")
+            print(f"Data wrapper type: {type(response.get('data'))}")
+            if isinstance(response.get('data'), dict):
+                print(f"Data wrapper keys: {list(response.get('data').keys())}")
+                print(f"Records in data: {response.get('data').get('records', 'N/A')}")
+                print(f"Pagination in data: {response.get('data').get('pagination', 'N/A')}")
+            else:
+                print(f"Data content: {response.get('data')}")
+            print(f"Seeded IDs: {TestCDRSeeding.seeded_cdr_ids}")
+            print("=" * 60)
+
         assert len(data) > 0, f"Expected seeded CDR data, but got empty list. Seeded IDs: {TestCDRSeeding.seeded_cdr_ids}"
 
         print(f"\n✓ CDR API is working")

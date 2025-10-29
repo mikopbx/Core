@@ -6,6 +6,12 @@
 -- Clear existing test data
 DELETE FROM cdr_general WHERE id BETWEEN 1 AND 1000;
 
+-- Reset SQLite autoincrement counter for cdr_general table
+-- WHY: Without this, SQLite continues counting from the highest previous ID
+-- Example: If ID 50 existed before, next INSERT gets ID 51 even if we specify ID 1
+DELETE FROM sqlite_sequence WHERE name='cdr_general';
+INSERT INTO sqlite_sequence (name, seq) VALUES ('cdr_general', 0);
+
 BEGIN TRANSACTION;
 
 -- Record 1: ANSWERED | 79300250234 -> 262 | 150s
