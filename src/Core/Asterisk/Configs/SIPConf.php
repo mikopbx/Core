@@ -968,7 +968,7 @@ class SIPConf extends AsteriskConfigClass
             'client_uri'               => "sip:{$provider['username']}@{$provider['host']}:{$provider['port']}",
         ];
 
-        if (!empty($provider['transport'])) {
+        if (!empty($provider['transport']) && $provider['transport'] !== Sip::TRANSPORT_AUTO) {
             $options['transport'] = "transport-{$provider['transport']}";
         }
         if (!empty($provider['outbound_proxy'])) {
@@ -1189,7 +1189,7 @@ class SIPConf extends AsteriskConfigClass
             'rtp_timeout_hold' => '300',
         ];
 
-        if (!empty($provider['transport'])) {
+        if (!empty($provider['transport']) && $provider['transport'] !== Sip::TRANSPORT_AUTO) {
             $options['transport'] = "transport-{$provider['transport']}";
             if ($provider['transport'] === Sip::TRANSPORT_TLS) {
                 $options['media_encryption'] = 'sdes';
@@ -1278,7 +1278,7 @@ class SIPConf extends AsteriskConfigClass
 
                 // Add visual separator for extension group
                 $calleridname = !empty($peer['calleridname']) ? " - {$peer['calleridname']}" : '';
-                $conf .= "; --- {$peer['extension']}{$calleridname} ---\n";
+                $conf .= "; --- PEER: {$peer['extension']}{$calleridname} ---\n";
 
                 $conf              .= $this->generatePeerAuth($peer, $manual_attributes);
                 $conf              .= $this->generatePeerAor($peer, $manual_attributes);
@@ -1510,7 +1510,7 @@ class SIPConf extends AsteriskConfigClass
             'message_context'      => 'messages',
         ], $uniqueParams);
 
-        if (!empty($peer['transport'])) {
+        if (!empty($peer['transport']) && $peer['transport'] !== Sip::TRANSPORT_AUTO) {
             $fullOptions['transport'] = "transport-{$peer['transport']}";
             if ($peer['transport'] === Sip::TRANSPORT_TLS) {
                 $fullOptions['media_encryption'] = 'sdes';

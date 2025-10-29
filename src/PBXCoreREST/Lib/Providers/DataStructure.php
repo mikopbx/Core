@@ -130,7 +130,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
 
             // Type-specific fields
             if ($provider->type === 'SIP') {
-                $data['transport'] = $config->transport ?? 'UDP';
+                $data['transport'] = $config->transport ?? Sip::TRANSPORT_AUTO;
                 $data['port'] = (int)($config->port ?? 5060);
             } else {
                 // IAX provider
@@ -195,14 +195,14 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'secret' => $secret,
             'host' => $sip->host ?? '',
             'port' => (int)($sip->port ?? 5060),
-            'transport' => $sip->transport ?? 'UDP',
+            'transport' => $sip->transport ?? Sip::TRANSPORT_AUTO,
             'qualify' => $sip->qualify === '1',
             'qualifyfreq' => (int)($sip->qualifyfreq ?? 60),
             'registration_type' => $sip->registration_type ?? 'none',
             'description' => $sip->description ?? '',
             'networkfilterid' => (!empty($sip->networkfilterid) ? $sip->networkfilterid : 'none'),
             'networkfilter_represent' => $networkfilterRepresent,
-            'manualattributes' => $sip->manualattributes ?? '',
+            'manualattributes' => $sip->getManualAttributes(),
             'dtmfmode' => $sip->dtmfmode ?? 'auto',
             'fromuser' => $sip->fromuser ?? '',
             'fromdomain' => $sip->fromdomain ?? '',
@@ -249,7 +249,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'port' => (int)($iax->port ?? 4569),
             'registration_type' => $iax->registration_type ?? 'none',
             'description' => $iax->description ?? '',
-            'manualattributes' => $iax->manualattributes ?? '',
+            'manualattributes' => $iax->getManualAttributes(),
             'networkfilterid' => (!empty($iax->networkfilterid) ? $iax->networkfilterid : 'none'),
             'networkfilter_represent' => $networkfilterRepresent,
             'receive_calls_without_auth' => $iax->receive_calls_without_auth === '1'
@@ -536,9 +536,9 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'transport' => [
                 'type' => 'string',
                 'description' => 'rest_schema_provider_transport',
-                'enum' => ['udp', 'tcp', 'tls'],
+                'enum' => ['udp,tcp', 'udp', 'tcp', 'tls'],
                 'sanitize' => 'string',
-                'default' => 'udp',
+                'default' => 'udp,tcp',
                 'example' => 'udp'
             ],
             'qualify' => [

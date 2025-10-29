@@ -438,9 +438,9 @@ class SaveRecordAction extends AbstractSaveRecordAction
         }
 
         if (isset($data['transport'])) {
-            $sip->transport = $data['transport'];
+            $sip->transport = strtolower($data['transport']);
         } elseif ($isNewRecord) {
-            $sip->transport = 'UDP';
+            $sip->transport = Sip::TRANSPORT_AUTO;
         }
 
         if (isset($data['qualify'])) {
@@ -470,7 +470,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
         }
 
         if (isset($data['manualattributes'])) {
-            $sip->manualattributes = $data['manualattributes'];
+            $sip->setManualAttributes($data['manualattributes']);
         }
 
         if (isset($data['dtmfmode'])) {
@@ -607,7 +607,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
         }
 
         if (isset($data['manualattributes'])) {
-            $iax->manualattributes = $data['manualattributes'];
+            $iax->setManualAttributes($data['manualattributes']);
         }
 
         if (isset($data['networkfilterid'])) {

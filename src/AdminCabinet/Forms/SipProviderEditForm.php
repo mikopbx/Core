@@ -103,11 +103,12 @@ class SipProviderEditForm extends BaseForm
         $this->addSemanticUIDropdown(
             'transport',
             [
+                Sip::TRANSPORT_AUTO => Sip::TRANSPORT_AUTO,
                 Sip::TRANSPORT_UDP => Sip::TRANSPORT_UDP,
                 Sip::TRANSPORT_TCP => Sip::TRANSPORT_TCP,
                 Sip::TRANSPORT_TLS => Sip::TRANSPORT_TLS,
             ],
-            $entity->transport ?? Sip::TRANSPORT_UDP,
+            $entity->transport ?? Sip::TRANSPORT_AUTO,
             [
                 'clearable' => false,
                 'forceSelection' => true
