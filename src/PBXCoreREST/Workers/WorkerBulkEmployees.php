@@ -376,7 +376,7 @@ class WorkerBulkEmployees extends WorkerBase
             'sip_transport' => $sip?->transport ?? '',
             'sip_enableRecording' => $sip?->enableRecording ?? '0',
             'sip_networkfilterid' => $sip?->networkfilterid ?? '',
-            'sip_manualattributes' => $sip?->manualattributes ?? '',
+            'sip_manualattributes' => $sip?->getManualAttributes() ?? '',
             'fwd_forwarding' => $forwarding?->forwarding ?? '',
             'fwd_forwardingonbusy' => $forwarding?->forwardingonbusy ?? '',
             'fwd_forwardingonunavailable' => $forwarding?->forwardingonunavailable ?? '',
