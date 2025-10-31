@@ -87,9 +87,6 @@ class ProviderIAX extends ProviderBase {
             // Mark form as changed
             Form.dataChanged();
         });
-
-        // Initialize field help tooltips
-        this.initializeFieldTooltips();
     }
     
     /**
@@ -374,24 +371,27 @@ class ProviderIAX extends ProviderBase {
         Form.validateRules = this.getValidateRules();
         Form.cbBeforeSendForm = this.cbBeforeSendForm.bind(this);
         Form.cbAfterSendForm = this.cbAfterSendForm.bind(this);
-        
+
         // Configure REST API settings for v3
         Form.apiSettings = {
             enabled: true,
             apiObject: IaxProvidersAPI, // Use IAX-specific API client v3
             saveMethod: 'saveRecord'
         };
-        
+
         // Set redirect URLs for save modes
         Form.afterSubmitIndexUrl = `${globalRootUrl}providers/index/`;
         Form.afterSubmitModifyUrl = `${globalRootUrl}providers/modifyiax/`;
-        
+
         // Enable automatic checkbox to boolean conversion
         Form.convertCheckboxesToBool = true;
-        
+
         // Initialize the form - this was missing!
         Form.initialize();
-        
+
+        // Initialize field help tooltips after PasswordWidget has created all buttons
+        this.initializeFieldTooltips();
+
         // Mark form as fully initialized
         this.formInitialized = true;
     }
@@ -465,7 +465,6 @@ class ProviderIAX extends ProviderBase {
                     showStrengthBar: true,
                     validation: PasswordWidget.VALIDATION.SOFT
                 },
-                readonlyUsername: true,
                 autoGeneratePassword: true
             },
             none: {
@@ -506,12 +505,13 @@ class ProviderIAX extends ProviderBase {
         Object.entries(config.labels).forEach(([key, text]) => {
             labels[key]?.text(text);
         });
-        
-        // Handle username field for inbound
-        if (config.readonlyUsername) {
-            fields.username.val(providerId).attr('readonly', '');
-        } else {
-            fields.username.removeAttr('readonly');
+
+        // Handle username field - ensure it's always editable
+        fields.username.removeAttr('readonly');
+
+        // Pre-fill username with provider ID for new inbound providers
+        if (regType === 'inbound' && this.isNewProvider && (!fields.username.val() || fields.username.val().trim() === '')) {
+            fields.username.val(providerId);
         }
         
         // Auto-generate password for inbound if empty

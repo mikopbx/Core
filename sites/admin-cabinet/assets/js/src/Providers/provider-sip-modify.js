@@ -157,9 +157,6 @@ class ProviderSIP extends ProviderBase {
         // Initialize SIP-specific components
         this.initializeSipEventHandlers();
         this.updateHostsTableView();
-
-        // Initialize field help tooltips
-        ProviderSipTooltipManager.initialize();
     }
     
     /**
@@ -353,24 +350,27 @@ class ProviderSIP extends ProviderBase {
         Form.validateRules = this.getValidateRules();
         Form.cbBeforeSendForm = this.cbBeforeSendForm.bind(this);
         Form.cbAfterSendForm = this.cbAfterSendForm.bind(this);
-        
+
         // Configure REST API settings for v3
         Form.apiSettings = {
             enabled: true,
             apiObject: SipProvidersAPI, // Use SIP-specific API client v3
             saveMethod: 'saveRecord'
         };
-        
+
         // Navigation URLs
         Form.afterSubmitIndexUrl = `${globalRootUrl}providers/index/`;
         Form.afterSubmitModifyUrl = `${globalRootUrl}providers/modifysip/`;
-        
+
         // Enable automatic checkbox to boolean conversion
         Form.convertCheckboxesToBool = true;
-        
+
         // Initialize the form - this was missing!
         Form.initialize();
-        
+
+        // Initialize field help tooltips after PasswordWidget has created all buttons
+        ProviderSipTooltipManager.initialize();
+
         // Mark form as fully initialized
         this.formInitialized = true;
     }
@@ -777,7 +777,6 @@ class ProviderSIP extends ProviderBase {
                     showStrengthBar: true,
                     validation: PasswordWidget.VALIDATION.SOFT
                 },
-                readonlyUsername: true,
                 autoGeneratePassword: true,
                 clearValidationFor: ['host', 'port']
             },
@@ -803,18 +802,14 @@ class ProviderSIP extends ProviderBase {
         // Apply visibility
         config.visible.forEach(key => elements[key]?.show());
         config.hidden.forEach(key => elements[key]?.hide());
-        
-        // Handle username field
-        if (config.readonlyUsername) {
-            // For inbound registration, username should match provider ID
-            // Backend always returns ID (temporary for new providers like SIP-NEW-XXXXXXXX)
-            fields.username.val(providerId).attr('readonly', '');
-        } else {
-            // Reset username if it matches provider ID when not inbound
-            if (fields.username.val() === providerId && regType !== 'inbound') {
-                fields.username.val('');
-            }
-            fields.username.removeAttr('readonly');
+
+        // Handle username field - ensure it's always editable
+        fields.username.removeAttr('readonly');
+
+        // Pre-fill username with provider ID for new inbound providers
+        // providerId already contains ID from getDefault (loaded in loadFormData)
+        if (regType === 'inbound' && this.isNewProvider && (!fields.username.val() || fields.username.val().trim() === '')) {
+            fields.username.val(providerId);
         }
         
         // Auto-generate password for inbound if empty

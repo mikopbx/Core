@@ -176,12 +176,12 @@ class ProviderBase {
         // Store provider data for later use
         this.providerData = data;
 
-        // Update isNewProvider based on actual data from server
-        if (!data.id || data.id === '') {
-            this.isNewProvider = true;
-        } else {
-            this.isNewProvider = false;
+        // Update isNewProvider flag from API response if provided
+        // If _isNew flag is present in data (set by getDefault or copy), use it
+        if (data._isNew !== undefined) {
+            this.isNewProvider = data._isNew;
         }
+        // Otherwise keep the value set in loadFormData()
 
         // Use unified silent population approach (CallQueues pattern)
         Form.populateFormSilently(data, {
@@ -306,9 +306,6 @@ class ProviderBase {
         this.$secret.on('focus', () => {
             this.$secret.attr('autocomplete', 'new-password');
         });
-
-        // Initialize password widget
-        this.initializePasswordWidget();
     }
 
 
@@ -322,7 +319,7 @@ class ProviderBase {
             // Hide legacy HTML buttons - PasswordWidget will manage its own buttons
             $('.clipboard').hide();
             $('#show-hide-password').hide();
-            
+
             // Default configuration for providers - will be updated based on registration type
             const widget = PasswordWidget.init(this.$secret, {
                 validation: PasswordWidget.VALIDATION.SOFT,
@@ -336,12 +333,18 @@ class ProviderBase {
                 minScore: 60,
                 generateLength: 32 // Provider passwords should be 32 chars for better security
             });
-            
+
             // Store widget instance for later use
             this.passwordWidget = widget;
-            
+
+            // Reinitialize popups for newly created PasswordWidget buttons
+            this.$secret.closest('.ui.input').find('button[data-content]').popup({
+                on: 'hover',
+                position: 'top center',
+                variation: 'tiny'
+            });
+
             // Update visibility elements now that widget is initialized
-            // This will apply the correct configuration based on registration type
             if (typeof this.updateVisibilityElements === 'function') {
                 this.updateVisibilityElements();
             }
@@ -451,6 +454,9 @@ class ProviderBase {
         if (data.description) {
             this.updatePageHeader(data.description);
         }
+
+        // Initialize password widget after form data is loaded
+        this.initializePasswordWidget();
 
         // Most fields are now handled by Form.populateFormSilently()
         // This method is for special cases or provider-specific fields
