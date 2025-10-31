@@ -54,6 +54,7 @@ use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadMOHAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadManagerAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadAriAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadModuleStateAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadModulesConfAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadNetworkAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPJSIPAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadQueuesAction;
@@ -169,6 +170,7 @@ class ProcessOtherModels extends Injectable
                 Codecs::class,
             ],
             'actions' => [
+                ReloadModulesConfAction::class,  // Reload codec translator modules when enabled/disabled
                 ReloadIAXAction::class,
                 ReloadPJSIPAction::class,
             ],
