@@ -567,7 +567,6 @@ class AssetProvider implements ServiceProviderInterface
             $this->semanticCollectionCSS
                 ->addCss('css/vendor/semantic/statistic.min.css', true);
             $this->footerCollectionJS
-                 ->addJs('js/vendor/clipboard/clipboard.js', true)
                  ->addJs('js/pbx/PbxAPI/network-filters-api.js', true)
                  ->addJs('js/pbx/Providers/provider-base-modify.js', true)
                  ->addJs('js/pbx/Providers/provider-tooltip-manager.js', true)
@@ -581,7 +580,6 @@ class AssetProvider implements ServiceProviderInterface
             $this->semanticCollectionCSS
                 ->addCss('css/vendor/semantic/statistic.min.css', true);
             $this->footerCollectionJS
-                ->addJs('js/vendor/clipboard/clipboard.js', true)
                 ->addJs('js/pbx/PbxAPI/network-filters-api.js', true)
                 ->addJs('js/pbx/Providers/provider-base-modify.js', true)
                 ->addJs('js/pbx/Providers/provider-tooltip-manager.js', true)
