@@ -434,7 +434,7 @@ const providerModifyStatusWorker = {
             $checkBtn.addClass('loading');
             
             // Use the appropriate API client based on provider type
-            const apiClient = this.providerType === 'SIP' ? SipProvidersAPI : IaxProvidersAPI;
+            const apiClient = this.providerType === 'sip' ? SipProvidersAPI : IaxProvidersAPI;
             
             // Call forceCheck using v3 API
             apiClient.forceCheck(this.providerId, (response) => {
@@ -472,7 +472,7 @@ const providerModifyStatusWorker = {
      */
     loadTimelineData() {
         // Use the appropriate API client based on provider type
-        const apiClient = this.providerType === 'SIP' ? SipProvidersAPI : IaxProvidersAPI;
+        const apiClient = this.providerType === 'sip' ? SipProvidersAPI : IaxProvidersAPI;
         
         // Call getHistory using v3 API
         apiClient.getHistory(this.providerId, (response) => {
@@ -779,8 +779,8 @@ const providerModifyStatusWorker = {
         };
         
         // Use the appropriate API client based on provider type
-        const apiClient = this.providerType === 'SIP' ? SipProvidersAPI : IaxProvidersAPI;
-        
+        const apiClient = this.providerType === 'sip' ? SipProvidersAPI : IaxProvidersAPI;
+
         // Fetch history data using v3 API
         apiClient.getHistory(this.providerId, (response) => {
             $btn.removeClass('loading');
