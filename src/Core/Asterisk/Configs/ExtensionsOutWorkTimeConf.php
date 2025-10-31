@@ -102,7 +102,7 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
         $configs = '';
         $dbData = Sip::find("type = 'friend' AND ( disabled <> '1')");
         foreach ($dbData as $sipPeer) {
-            $context_id = SIPConf::getContextId($sipPeer->host, $sipPeer->port);
+            $context_id = SIPConf::getIncomingContextId($sipPeer->host, $sipPeer->port);
             $configs .= "CONTEXT_ID_$sipPeer->uniqid=$context_id" . PHP_EOL;
         }
         return $configs;
@@ -217,7 +217,7 @@ class ExtensionsOutWorkTimeConf extends AsteriskConfigClass
                 } elseif ($provByType->registration_type === Sip::REG_TYPE_INBOUND) {
                     $context_id = "$provider->uniqid-incoming";
                 } else {
-                    $context_id = SIPConf::getContextId($provByType->host, $provByType->port);
+                    $context_id = SIPConf::getIncomingContextId($provByType->host, $provByType->port);
                 }
             } else {
                 $context_id = 'none-incoming';

@@ -296,10 +296,12 @@ abstract class AbstractProviderStatusAction extends Injectable
         // Parse output
         $lines = explode("\n", $output);
         foreach ($lines as $line) {
-            // Look for SIP-TRUNK contacts
+            // Look for SIP provider contacts (both SIP-TRUNK-xxx and SIP-xxx formats)
             // Format: Contact:  SIP-TRUNK-A0441C96/sip:202@192.168.117.5:5060  28334ac1c0 Avail        12.978
-            if (strpos($line, 'SIP-TRUNK-') !== false && strpos($line, 'Contact:') !== false) {
-                if (preg_match('/SIP-TRUNK-[A-Z0-9]+/', $line, $providerMatch)) {
+            //         Contact:  SIP-1683372722/sip:...  264d4e5870 Unavail         nan
+            if (strpos($line, 'SIP-') !== false && strpos($line, 'Contact:') !== false) {
+                // Match both formats: SIP-TRUNK-xxx (outbound) and SIP-xxxxxxxxxx (inbound)
+                if (preg_match('/SIP-(?:TRUNK-)?[A-Z0-9]+/', $line, $providerMatch)) {
                     $providerId = $providerMatch[0];
                     
                     // Extract status and RTT

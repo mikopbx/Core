@@ -457,26 +457,11 @@ const networks = {
 
     /**
      * Show Docker network info as read-only
+     * DEPRECATED: Docker now uses same interface tabs as regular installation
      */
     showDockerNetworkInfo(data) {
-        // WHY: In Docker, network is managed by container - show info as read-only
-        if (!data.interfaces || data.interfaces.length === 0) return;
-
-        const iface = data.interfaces[0]; // Docker typically has one interface
-
-        // Populate Docker network info
-        $('#docker-interface-name').text(iface.name || iface.interface);
-        $('#docker-current-ip').text(iface.currentIpaddr || iface.ipaddr || '—');
-
-        // Format subnet mask (CIDR to dotted notation)
-        const subnetCidr = iface.currentSubnet || iface.subnet || 24;
-        const subnetMask = networks.cidrToNetmask(subnetCidr);
-        $('#docker-current-subnet').text(`${subnetCidr} - ${subnetMask}`);
-
-        $('#docker-current-gateway').text(iface.currentGateway || iface.gateway || '—');
-
-        // Show Docker info section (non-Docker section hidden by CSS class)
-        $('.docker-network-info').show();
+        // This function is no longer used - Docker uses createInterfaceTabs instead
+        console.warn('showDockerNetworkInfo is deprecated');
     },
 
     /**
@@ -494,8 +479,10 @@ const networks = {
 
     /**
      * Create interface tabs and forms dynamically from REST API data
+     * @param {Object} data - Interface data from API
+     * @param {boolean} isDocker - Whether running in Docker environment
      */
-    createInterfaceTabs(data) {
+    createInterfaceTabs(data, isDocker = false) {
         const $menu = $('#eth-interfaces-menu');
         const $content = $('#eth-interfaces-content');
 
@@ -518,18 +505,19 @@ const networks = {
 
             // Create tab content
             // Only VLAN interfaces can be deleted (vlanid > 0)
-            const canDelete = parseInt(iface.vlanid, 10) > 0;
+            // In Docker, disable delete for all interfaces
+            const canDelete = !isDocker && parseInt(iface.vlanid, 10) > 0;
             const deleteButton = canDelete ? `
                 <a class="ui icon left labeled button delete-interface" data-value="${tabId}">
                     <i class="icon trash"></i>${globalTranslate.nw_DeleteCurrentInterface}
                 </a>
             ` : '';
 
-            $content.append(networks.createInterfaceForm(iface, isActive, deleteButton));
+            $content.append(networks.createInterfaceForm(iface, isActive, deleteButton, isDocker));
         });
 
-        // Create template tab for new VLAN
-        if (data.template) {
+        // Create template tab for new VLAN (not for Docker)
+        if (data.template && !isDocker) {
             const template = data.template;
             template.id = 0;
 
@@ -804,20 +792,42 @@ const networks = {
 
     /**
      * Create form for existing interface
+     * @param {Object} iface - Interface data
+     * @param {boolean} isActive - Whether this tab is active
+     * @param {string} deleteButton - HTML for delete button
+     * @param {boolean} isDocker - Whether running in Docker environment
      */
-    createInterfaceForm(iface, isActive, deleteButton) {
+    createInterfaceForm(iface, isActive, deleteButton, isDocker = false) {
         const id = iface.id;
         const isInternetInterface = iface.internet || false;
 
         // DNS/Gateway fields visibility and read-only state
         const dnsGatewayVisible = isInternetInterface ? '' : 'style="display:none;"';
-        const dnsGatewayReadonly = iface.dhcp ? 'readonly' : '';
-        const dnsGatewayDisabledClass = iface.dhcp ? 'disabled' : '';
+
+        // In Docker: Gateway is always readonly, DNS fields are editable
+        // In regular mode: All fields readonly if DHCP enabled
+        const gatewayReadonly = isDocker || iface.dhcp ? 'readonly' : '';
+        const gatewayDisabledClass = isDocker || iface.dhcp ? 'disabled' : '';
+        const dnsReadonly = isDocker ? '' : (iface.dhcp ? 'readonly' : '');
+        const dnsDisabledClass = isDocker ? '' : (iface.dhcp ? 'disabled' : '');
+
+        // In Docker: IP, subnet, VLAN are readonly
+        const dockerReadonly = isDocker ? 'readonly' : '';
+        const dockerDisabledClass = isDocker ? 'disabled' : '';
+
+        // In Docker: DHCP checkbox is disabled and always checked
+        const dhcpDisabled = isDocker || iface.vlanid > 0;
+        const dhcpChecked = isDocker || (iface.vlanid > 0 ? false : iface.dhcp);
 
         return `
             <div class="ui bottom attached tab segment ${isActive ? 'active' : ''}" data-tab="${id}">
                 <input type="hidden" name="interface_${id}" value="${iface.interface}" />
 
+                ${isDocker ? `
+                <input type="hidden" name="name_${id}" value="${iface.name || ''}" />
+                <input type="hidden" name="internet_interface" value="${id}" />
+                <input type="hidden" name="dhcp_${id}" value="on" />
+                ` : `
                 <div class="field">
                     <label>${globalTranslate.nw_InterfaceName}</label>
                     <div class="field max-width-400">
@@ -833,15 +843,18 @@ const networks = {
                         </div>
                     </div>
                 </div>
+                `}
 
+                ${isDocker ? '' : `
                 <div class="field">
                     <div class="ui segment">
-                        <div class="ui toggle checkbox dhcp-checkbox${iface.vlanid > 0 ? ' disabled' : ''}" id="dhcp-${id}-checkbox">
-                            <input type="checkbox" name="dhcp_${id}" ${iface.vlanid > 0 ? '' : (iface.dhcp ? 'checked' : '')} ${iface.vlanid > 0 ? 'disabled' : ''} />
+                        <div class="ui toggle checkbox dhcp-checkbox${dhcpDisabled ? ' disabled' : ''}" id="dhcp-${id}-checkbox">
+                            <input type="checkbox" name="dhcp_${id}" ${dhcpChecked ? 'checked' : ''} ${dhcpDisabled ? 'disabled' : ''} />
                             <label>${globalTranslate.nw_UseDHCP}</label>
                         </div>
                     </div>
                 </div>
+                `}
 
                 <input type="hidden" name="notdhcp_${id}" id="not-dhcp-${id}"/>
 
@@ -849,7 +862,7 @@ const networks = {
                     <div class="field">
                         <label>${globalTranslate.nw_IPAddress}</label>
                         <div class="field max-width-400">
-                            <input type="text" class="ipaddress" name="ipaddr_${id}" value="${iface.ipaddr || ''}" />
+                            <input type="text" class="ipaddress" name="ipaddr_${id}" value="${iface.ipaddr || ''}" ${dockerReadonly} />
                         </div>
                     </div>
                     <div class="field">
@@ -860,12 +873,14 @@ const networks = {
                     </div>
                 </div>
 
+                ${isDocker ? '' : `
                 <div class="field">
                     <label>${globalTranslate.nw_VlanID}</label>
                     <div class="field max-width-100">
                         <input type="number" name="vlanid_${id}" value="${iface.vlanid || '0'}" />
                     </div>
                 </div>
+                `}
 
                 <div class="dns-gateway-group-${id}" ${dnsGatewayVisible}>
                     <div class="ui horizontal divider">${globalTranslate.nw_InternetSettings || 'Internet Settings'}</div>
@@ -886,22 +901,22 @@ const networks = {
 
                     <div class="field">
                         <label>${globalTranslate.nw_Gateway}</label>
-                        <div class="field max-width-400 ${dnsGatewayDisabledClass}">
-                            <input type="text" class="ipaddress" name="gateway_${id}" value="${iface.gateway || ''}" ${dnsGatewayReadonly} />
+                        <div class="field max-width-400">
+                            <input type="text" class="ipaddress" name="gateway_${id}" value="${iface.gateway || ''}" ${gatewayReadonly} />
                         </div>
                     </div>
 
                     <div class="field">
                         <label>${globalTranslate.nw_PrimaryDNS}</label>
-                        <div class="field max-width-400 ${dnsGatewayDisabledClass}">
-                            <input type="text" class="ipaddress" name="primarydns_${id}" value="${iface.primarydns || ''}" ${dnsGatewayReadonly} />
+                        <div class="field max-width-400 ${dnsDisabledClass}">
+                            <input type="text" class="ipaddress" name="primarydns_${id}" value="${iface.primarydns || ''}" ${dnsReadonly} />
                         </div>
                     </div>
 
                     <div class="field">
                         <label>${globalTranslate.nw_SecondaryDNS}</label>
-                        <div class="field max-width-400 ${dnsGatewayDisabledClass}">
-                            <input type="text" class="ipaddress" name="secondarydns_${id}" value="${iface.secondarydns || ''}" ${dnsGatewayReadonly} />
+                        <div class="field max-width-400 ${dnsDisabledClass}">
+                            <input type="text" class="ipaddress" name="secondarydns_${id}" value="${iface.secondarydns || ''}" ${dnsReadonly} />
                         </div>
                     </div>
                 </div>
@@ -1016,14 +1031,9 @@ const networks = {
      * Populate form with configuration data
      */
     populateForm(data) {
-        // WHY: Docker and non-Docker have different network management UIs
-        if (data.isDocker) {
-            // Show read-only network info for Docker
-            networks.showDockerNetworkInfo(data);
-        } else {
-            // Create editable interface tabs for non-Docker
-            networks.createInterfaceTabs(data);
-        }
+        // WHY: Both Docker and non-Docker now use interface tabs
+        // Docker has restrictions: DHCP locked, IP/subnet/VLAN readonly, DNS editable
+        networks.createInterfaceTabs(data, data.isDocker || false);
 
         // Set NAT settings
         if (data.nat) {
