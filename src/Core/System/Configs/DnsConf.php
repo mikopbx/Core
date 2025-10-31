@@ -20,7 +20,7 @@
 
 namespace MikoPBX\Core\System\Configs;
 
-use MikoPBX\Core\System\Directories;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Network;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\System;
@@ -112,12 +112,29 @@ class DnsConf extends SystemConfigClass
 
         // If no DNS servers were found, use default ones and add them to named_dns
         if (empty($dns)) {
-            $resolveConf .= "nameserver 77.88.8.8  # Yandex DNS\n";
-            $resolveConf .= "nameserver 1.1.1.1    # Cloudflare\n";
-            $resolveConf .= "nameserver 8.8.8.8    # Google DNS\n";
-            $named_dns[] = "77.88.8.8";
-            $named_dns[] = "1.1.1.1";
-            $named_dns[] = "8.8.8.8";
+            // Check system language to prioritize DNS servers
+            // For Russian users - Yandex DNS first (faster response in Russia)
+            // For other users - Cloudflare and Google first
+            $language = PbxSettings::getValueByKey(PbxSettings::PBX_LANGUAGE);
+            $isRussian = (strpos($language, 'ru') === 0);
+
+            if ($isRussian) {
+                // Russian locale: Yandex first
+                $resolveConf .= "nameserver 77.88.8.8  # Yandex DNS\n";
+                $resolveConf .= "nameserver 1.1.1.1    # Cloudflare\n";
+                $resolveConf .= "nameserver 8.8.8.8    # Google DNS\n";
+                $named_dns[] = "77.88.8.8";
+                $named_dns[] = "1.1.1.1";
+                $named_dns[] = "8.8.8.8";
+            } else {
+                // Other locales: Cloudflare and Google first
+                $resolveConf .= "nameserver 1.1.1.1    # Cloudflare\n";
+                $resolveConf .= "nameserver 8.8.8.8    # Google DNS\n";
+                $resolveConf .= "nameserver 77.88.8.8  # Yandex DNS\n";
+                $named_dns[] = "1.1.1.1";
+                $named_dns[] = "8.8.8.8";
+                $named_dns[] = "77.88.8.8";
+            }
         }
 
         file_put_contents('/etc/resolv.conf', $resolveConf);
