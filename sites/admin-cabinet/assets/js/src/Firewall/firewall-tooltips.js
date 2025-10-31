@@ -40,7 +40,14 @@ const firewallTooltips = {
         // Service name header
         const serviceDescription = globalTranslate[`fw_${service.toLowerCase()}Description`] || service;
         content += `<div class="header"><b>${serviceDescription}</b></div>`;
-        
+
+        // Detailed hint (if available)
+        const serviceHintKey = `fw_${service.toLowerCase()}DescriptionHint`;
+        if (globalTranslate[serviceHintKey]) {
+            content += `<div class="ui divider"></div>`;
+            content += `<div class="ui info message">${globalTranslate[serviceHintKey]}</div>`;
+        }
+
         // Port information
         if (portInfo && portInfo.length > 0) {
             content += `<div class="ui divider"></div>`;
