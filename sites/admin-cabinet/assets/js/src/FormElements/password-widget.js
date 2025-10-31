@@ -381,24 +381,23 @@ const PasswordWidget = {
         
         // Initialize clipboard functionality for copy button
         if (instance.elements.$clipboardBtn && typeof ClipboardJS !== 'undefined') {
-            // Initialize ClipboardJS for the button
             if (!instance.clipboard) {
                 instance.clipboard = new ClipboardJS(instance.elements.$clipboardBtn[0]);
-                
-                // Initialize popup for clipboard button
-                instance.elements.$clipboardBtn.popup({
-                    on: 'manual',
-                });
-                
-                // Handle successful copy
+
+                // Handle successful copy - show temporary success message
                 instance.clipboard.on('success', (e) => {
+                    const originalContent = instance.elements.$clipboardBtn.attr('data-content');
+                    instance.elements.$clipboardBtn.attr('data-content', globalTranslate.bt_ToolTipPasswordCopied || 'Скопировано!');
+
                     instance.elements.$clipboardBtn.popup('show');
+
                     setTimeout(() => {
                         instance.elements.$clipboardBtn.popup('hide');
+                        instance.elements.$clipboardBtn.attr('data-content', originalContent);
                     }, 1500);
+
                     e.clearSelection();
                 });
-                
             }
         }
         
