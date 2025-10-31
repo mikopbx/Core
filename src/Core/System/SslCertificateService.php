@@ -45,8 +45,10 @@ class SslCertificateService
     
     /**
      * Standard paths for certificates
+     * Note: SSL certificates are stored in /etc/asterisk/ssl/ to avoid conflicts
+     * with IAX2 RSA keys which are stored in /etc/asterisk/keys/ and used by res_crypto
      */
-    public const string ASTERISK_KEYS_DIR = '/etc/asterisk/keys';
+    public const string ASTERISK_KEYS_DIR = '/etc/asterisk/ssl';
     public const string ASTERISK_CERT_FILE = self::ASTERISK_KEYS_DIR . '/asterisk.crt';
     public const string ASTERISK_KEY_FILE = self::ASTERISK_KEYS_DIR . '/asterisk.key';
     
