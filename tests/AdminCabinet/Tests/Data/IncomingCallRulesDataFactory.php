@@ -59,7 +59,7 @@ class IncomingCallRulesDataFactory
 6. The client dials digit 2 from phone. The call goes to technical support department (Call queue with extension 2002).
 7. The client gathers nothing or incorrectly dials number. The repeated voice notification is lost. The client enters number again. 
 8. The maximum number of attempts of input of number is equal to 5. Attempts come to the end. The call goes to number by default.',
-            'provider' => 'SIP-1683372744',
+            'provider' => 'SIP-TRUNK-1683372744',
             'providerName' => 'Provider for CTI tests',
             'number' => '',
             'extension' => '202',

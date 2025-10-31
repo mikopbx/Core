@@ -8,7 +8,7 @@
     "sip_enableRecording": true,
     "sip_dtmfmode": "auto",
     "sip_networkfilterid": "none",
-    "sip_transport": "'udp",
+    "sip_transport": "udp",
     "sip_manualattributes": "",
     "fwd_ringlength": "45",
     "fwd_forwardingonbusy": "89261111111",
@@ -25,7 +25,7 @@
     "sip_enableRecording": true,
     "sip_dtmfmode": "auto",
     "sip_networkfilterid": "none",
-    "sip_transport": "'udp",
+    "sip_transport": "udp",
     "sip_manualattributes": "",
     "fwd_ringlength": "45",
     "fwd_forwardingonbusy": "89161111111",
@@ -41,7 +41,7 @@
     "sip_enableRecording": true,
     "sip_dtmfmode": "auto",
     "sip_networkfilterid": "none",
-    "sip_transport": "'udp",
+    "sip_transport": "udp",
     "sip_manualattributes": "",
     "fwd_ringlength": "45",
     "fwd_forwardingonbusy": "89251111111",
@@ -58,7 +58,7 @@
     "sip_dtmfmode": "auto_info",
     "sip_networkfilterid": "none",
     "sip_transport": "udp",
-    "sip_manualattributes": "'[endpoint"
+    "sip_manualattributes": ""
   },
   "nikolay.beketov": {
     "number": 229,
@@ -81,7 +81,7 @@
     "sip_enableRecording": false,
     "sip_dtmfmode": "info",
     "sip_networkfilterid": "4",
-    "sip_transport": "tcp",
+    "sip_transport": "udp,tcp",
     "sip_manualattributes": ""
   },
   "natalia.beketova": {
@@ -263,7 +263,7 @@
     "sip_dtmfmode": "auto_info",
     "sip_networkfilterid": "none",
     "sip_transport": "tls",
-    "sip_manualattributes": "'[endpoint"
+    "sip_manualattributes": "[endpoint]\nallow_reload=yes\ndirect_media=no\ntrust_id_inbound=yes\n[aor]\nmax_contacts=3\nremove_existing=yes\n[auth]\nauth_type=userpass"
   },
   "maxim.tsvetkov": {
     "number": 240,
@@ -275,7 +275,7 @@
     "sip_dtmfmode": "auto_info",
     "sip_networkfilterid": "none",
     "sip_transport": "tls",
-    "sip_manualattributes": "'[endpoint"
+    "sip_manualattributes": "[endpoint]\ndevice_state_busy_at=2\nmax_audio_streams=1\nrtp_symmetric=yes\nforce_rport=yes\nrewrite_contact=yes\nrtp_timeout=180\nrtp_timeout_hold=900\nrtp_keepalive=60\n[aor]\nmax_contacts=3\nremove_existing=yes\nremove_unavailable=yes\nqualify_frequency=30\nqualify_timeout=3\n[auth]\nauth_type=userpass"
   },
   "viktor.chentcov": {
     "number": 251,
@@ -287,7 +287,7 @@
     "sip_dtmfmode": "auto_info",
     "sip_networkfilterid": "none",
     "sip_transport": "tls",
-    "sip_manualattributes": "'[endpoint"
+    "sip_manualattributes": "[endpoint]\nmax_audio_streams=2\ndirect_media=yes\n[aor]\nqualify_frequency=60\n[auth]\nauth_type=userpass"
   },
   "evgenia.chulkova": {
     "number": 234,
@@ -299,7 +299,7 @@
     "sip_dtmfmode": "auto_info",
     "sip_networkfilterid": "none",
     "sip_transport": "tls",
-    "sip_manualattributes": "'[endpoint"
+    "sip_manualattributes": ""
   },
   "nikita.telegrafov": {
     "number": 246,
@@ -321,10 +321,11 @@
     "secret": "cEFTTFI1S3JMNU8wZDdwWHJJZnc5ZCtz",
     "sip_dtmfmode": "inband",
     "sip_networkfilterid": "4",
+    "sip_transport": "tcp",
     "fwd_ringlength": "30",
     "fwd_forwardingonbusy": "203",
     "fwd_forwarding": "89251111111",
     "fwd_forwardingonunavailable": "201",
-    "manualattributes": "'[endpoint"
+    "sip_manualattributes": ""
   }
 }

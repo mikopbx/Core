@@ -32,7 +32,7 @@ class IAXProviderDataFactory
     private static array $iaxProviderData = [
         'voxlink.iax' => [
             'type' => 'iax',
-            'uniqid' => 'IAX-1683372799',
+            'uniqid' => 'IAX-TRUNK-1683372799',
             'description' => 'VoxlinkIAX',
             'host' => 'vox.link.ru',
             'username' => 'line1',
@@ -44,7 +44,7 @@ class IAXProviderDataFactory
         ],
         'provider.iax.delete' => [
             'type' => 'iax',
-            'uniqid' => 'IAX-1683372823',
+            'uniqid' => 'IAX-TRUNK-1683372823',
             'description' => 'Provider IAX for delete',
             'host' => 'iax.delete.ru',
             'username' => 'providerName',
@@ -56,7 +56,7 @@ class IAXProviderDataFactory
         ],
         'provider.iax.inbound' => [
             'type' => 'iax',
-            'uniqid' => 'IAX-1683372850',
+            'uniqid' => 'IAX-TRUNK-1683372850',
             'description' => 'Inbound IAX Provider',
             'host' => 'test-INBOUND.miko.ru',
             'username' => 'IAX-TRUNK-93BE1B99',
@@ -67,7 +67,7 @@ class IAXProviderDataFactory
         ],
         'provider.iax.noregistration' => [
             'type' => 'iax',
-            'uniqid' => 'IAX-1683372875',
+            'uniqid' => 'IAX-TRUNK-1683372875',
             'description' => 'No Registration IAX Provider',
             'host' => 'no-registration.miko.ru',
             'username' => 'IAX-TRUNK-93BE1B99',

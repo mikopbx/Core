@@ -3,7 +3,7 @@
     "name": "Echo Test Application",
     "extension": "2300108",
     "type": "self::TYPE_PLAINTEXT",
-    "applicationlogic": "NoOp(Echo test started)\nAnswer()\nEcho()\nHangup()",
+    "applicationlogic": "1,NoOp(Echo test started)\nn,Answer()\nn,Echo()\nn,Hangup()",
     "uniqid": "APP-ECHO-001",
     "description": "Simple echo test for audio verification"
   },
@@ -11,7 +11,7 @@
     "name": "Time Announcement",
     "extension": "2300109",
     "type": "self::TYPE_PLAINTEXT",
-    "applicationlogic": "'Answer()\nWait(1)\nSayUnixTime(",
+    "applicationlogic": "1,Answer()\nn,Wait(1)\nn,SayUnixTime(,EST5EDT,IMp)\nn,Playback(vm-goodbye)\nn,Hangup()",
     "uniqid": "APP-TIME-001",
     "description": "Announces current time to caller"
   },
@@ -27,7 +27,7 @@
     "name": "Callback Service",
     "extension": "2300111",
     "type": "self::TYPE_PLAINTEXT",
-    "applicationlogic": "'Answer()\nRead(CALLBACK_NUMBER",
+    "applicationlogic": "1,Answer()\nn,Read(CALLBACK_NUMBER,please-enter-your-callback-number,10,,,3,10)\nn,NoOp(Callback requested to ${CALLBACK_NUMBER})\nn,Playback(thank-you)\nn,Hangup()",
     "uniqid": "APP-CALLBACK-001",
     "description": "Allows callers to request a callback"
   },
@@ -35,7 +35,7 @@
     "name": "Voicemail Check",
     "extension": "2300112",
     "type": "self::TYPE_PLAINTEXT",
-    "applicationlogic": "Answer()\nVoiceMailMain(${CALLERID(num)}@default)\nHangup()",
+    "applicationlogic": "1,Answer()\nn,VoiceMailMain(${CALLERID(num)}@default)\nn,Hangup()",
     "uniqid": "APP-VM-001",
     "description": "Direct voicemail access for users"
   },
@@ -43,7 +43,7 @@
     "name": "Conference Information",
     "extension": "2300113",
     "type": "self::TYPE_PLAINTEXT",
-    "applicationlogic": "Answer()\nPlayback(conference-info)\nPlayback(for-sales-press-1)\nPlayback(for-support-press-2)\nWaitExten(5)\nHangup()",
+    "applicationlogic": "1,Answer()\nn,Playback(conference-info)\nn,Playback(for-sales-press-1)\nn,Playback(for-support-press-2)\nn,WaitExten(5)\nn,Hangup()",
     "uniqid": "APP-CONFINFO-001",
     "description": "Provides conference room information"
   },
@@ -51,7 +51,7 @@
     "name": "Company Directory",
     "extension": "2300114",
     "type": "self::TYPE_PLAINTEXT",
-    "applicationlogic": "'Answer()\nDirectory(default",
+    "applicationlogic": "1,Answer()\nn,Directory(default,default,f)\nn,Hangup()",
     "uniqid": "APP-DIR-001",
     "description": "Company directory by name"
   },
@@ -59,7 +59,7 @@
     "name": "Music On Hold Test",
     "extension": "2300115",
     "type": "self::TYPE_PLAINTEXT",
-    "applicationlogic": "'Answer()\nMusicOnHold(default",
+    "applicationlogic": "1,Answer()\nn,MusicOnHold(default,30)\nn,Hangup()",
     "uniqid": "APP-MOH-001",
     "description": "Tests music on hold for 30 seconds"
   },
@@ -67,7 +67,7 @@
     "name": "Call Recording Test",
     "extension": "2300116",
     "type": "self::TYPE_PLAINTEXT",
-    "applicationlogic": "Answer()\nPlayback(this-call-may-be-monitored-or-recorded)\nMixMonitor(test-${UNIQUEID}.wav)\nEcho()\nStopMixMonitor()\nHangup()",
+    "applicationlogic": "1,Answer()\nn,Playback(this-call-may-be-monitored-or-recorded)\nn,MixMonitor(test-${UNIQUEID}.wav)\nn,Echo()\nn,StopMixMonitor()\nn,Hangup()",
     "uniqid": "APP-REC-001",
     "description": "Tests call recording functionality"
   },
@@ -75,7 +75,7 @@
     "name": "Emergency Announcement",
     "extension": "2300117",
     "type": "self::TYPE_PLAINTEXT",
-    "applicationlogic": "'Answer()\nPlayback(emergency-announcement)\nPlayback(please-standby)\nWait(5)\nGoto(main-ivr",
+    "applicationlogic": "1,Answer()\nn,Playback(emergency-announcement)\nn,Playback(please-standby)\nn,Wait(5)\nn,Goto(main-ivr,s,1)",
     "uniqid": "APP-EMRG-001",
     "description": "Emergency announcement system"
   }

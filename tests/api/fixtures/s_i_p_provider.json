@@ -73,17 +73,17 @@
     "disablefromuser": true,
     "fromuser": "",
     "fromdomain": "miko.ru",
-    "manualattributes": "'[endpoint",
+    "manualattributes": "[endpoint]\nmedia_encryption=sdes\nrtp_symmetric=yes\ndirect_media=no\n[aor]\nqualify_frequency=60\n[auth]\nauth_type=userpass",
     "did_source": "custom",
     "did_custom_header": "X-DID-Number",
     "did_parser_start": "[",
     "did_parser_end": "",
-    "did_parser_regex": "'[0-9",
+    "did_parser_regex": "[0-9]+",
     "cid_source": "custom",
     "cid_custom_header": "X-Caller-ID",
     "cid_parser_start": "<",
     "cid_parser_end": ">",
-    "cid_parser_regex": "'[+",
+    "cid_parser_regex": "\\+?[0-9]+",
     "cid_did_debug": true
   }
 }

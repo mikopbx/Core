@@ -32,7 +32,7 @@ class SIPProviderDataFactory
     private static array $sipProviderData = [
         'pctel' => [
             'type' => 'sip',
-            'uniqid' => 'SIP-1683372701',
+            'uniqid' => 'SIP-TRUNK-1683372701',
             'registration_type' => 'outbound',
             'description' => 'PCTEL',
             'host' => 'pctel.ru',
@@ -62,7 +62,7 @@ class SIPProviderDataFactory
         ],
         'mango.office' => [
             'type' => 'sip',
-            'uniqid' => 'SIP-1683372722',
+            'uniqid' => 'SIP-TRUNK-1683372722',
             'registration_type' => 'inbound',
             'description' => 'Mango office',
             'host' => 'mango.office.ru',
@@ -93,7 +93,7 @@ class SIPProviderDataFactory
         ],
         'cti.provider' => [
             'type' => 'sip',
-            'uniqid' => 'SIP-1683372744',
+            'uniqid' => 'SIP-TRUNK-1683372744',
             'registration_type' => 'outbound',
             'description' => 'Provider for CTI tests',
             'host' => '127.0.0.1',
@@ -126,7 +126,7 @@ class SIPProviderDataFactory
         ],
         'provider.delete' => [
             'type' => 'sip',
-            'uniqid' => 'SIP-1683372748',
+            'uniqid' => 'SIP-TRUNK-1683372748',
             'registration_type' => 'none',
             'description' => 'Provider for delete',
             'host' => 'provider1.office.ru',

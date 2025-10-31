@@ -44,7 +44,7 @@ class DialplanApplicationsDataFactory
 Answer()
 Echo()
 Hangup()',
-            'uniqid' => 'APP-ECHO-001',
+            'uniqid' => 'DIALPLAN-31BA63A7',
             'description' => 'Simple echo test for audio verification',
         ],
         'time.announcement' => [
@@ -56,7 +56,7 @@ Wait(1)
 SayUnixTime(,EST5EDT,IMp)
 Playback(vm-goodbye)
 Hangup()',
-            'uniqid' => 'APP-TIME-001',
+            'uniqid' => 'DIALPLAN-31BA63A8',
             'description' => 'Announces current time to caller',
         ],
         'weather.service' => [
@@ -73,7 +73,7 @@ $agi->stream_file("welcome");
 $agi->say_digits("123");
 $agi->hangup();
 ?>',
-            'uniqid' => 'APP-WEATHER-001',
+            'uniqid' => 'DIALPLAN-31BA63A9',
             'description' => 'Weather information service using PHP AGI',
         ],
         'callback.service' => [
@@ -85,7 +85,7 @@ Read(CALLBACK_NUMBER,please-enter-your-callback-number,10,,,3,10)
 NoOp(Callback requested to ${CALLBACK_NUMBER})
 Playback(thank-you)
 Hangup()',
-            'uniqid' => 'APP-CALLBACK-001',
+            'uniqid' => 'DIALPLAN-31BA63AA',
             'description' => 'Allows callers to request a callback',
         ],
         'voicemail.check' => [
@@ -95,7 +95,7 @@ Hangup()',
             'applicationlogic' => 'Answer()
 VoiceMailMain(${CALLERID(num)}@default)
 Hangup()',
-            'uniqid' => 'APP-VM-001',
+            'uniqid' => 'DIALPLAN-31BA63AB',
             'description' => 'Direct voicemail access for users',
         ],
         'conference.info' => [
@@ -108,7 +108,7 @@ Playback(for-sales-press-1)
 Playback(for-support-press-2)
 WaitExten(5)
 Hangup()',
-            'uniqid' => 'APP-CONFINFO-001',
+            'uniqid' => 'DIALPLAN-31BA63AC',
             'description' => 'Provides conference room information',
         ],
         'directory.service' => [
@@ -118,7 +118,7 @@ Hangup()',
             'applicationlogic' => 'Answer()
 Directory(default,default,f)
 Hangup()',
-            'uniqid' => 'APP-DIR-001',
+            'uniqid' => 'DIALPLAN-31BA63AD',
             'description' => 'Company directory by name',
         ],
         'music.on.hold.test' => [
@@ -128,7 +128,7 @@ Hangup()',
             'applicationlogic' => 'Answer()
 MusicOnHold(default,30)
 Hangup()',
-            'uniqid' => 'APP-MOH-001',
+            'uniqid' => 'DIALPLAN-31BA63AE',
             'description' => 'Tests music on hold for 30 seconds',
         ],
         'call.recording.test' => [
@@ -141,7 +141,7 @@ MixMonitor(test-${UNIQUEID}.wav)
 Echo()
 StopMixMonitor()
 Hangup()',
-            'uniqid' => 'APP-REC-001',
+            'uniqid' => 'DIALPLAN-31BA63AF',
             'description' => 'Tests call recording functionality',
         ],
         'emergency.announcement' => [
@@ -153,7 +153,7 @@ Playback(emergency-announcement)
 Playback(please-standby)
 Wait(5)
 Goto(main-ivr,s,1)',
-            'uniqid' => 'APP-EMRG-001',
+            'uniqid' => 'DIALPLAN-31BA63B0',
             'description' => 'Emergency announcement system',
         ],
         'custom.php.logic' => [
@@ -178,7 +178,7 @@ if ($caller["data"] == "201") {
 
 $agi->hangup();
 ?>',
-            'uniqid' => 'APP-CUSTOM-001',
+            'uniqid' => 'DIALPLAN-31BA63B1',
             'description' => 'Custom PHP AGI with caller ID logic',
         ],
     ];

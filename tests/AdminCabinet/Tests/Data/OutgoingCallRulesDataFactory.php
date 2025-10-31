@@ -33,7 +33,7 @@ class OutgoingCallRulesDataFactory
             'restnumbers' => '10',
             'trimfrombegin' => '1',
             'prepend' => '8',
-            'providerid' => 'SIP-1683372701',
+            'providerid' => 'SIP-TRUNK-1683372701',
             'providerName' => '',
             'type' => 'Local',
             'description' => 'Rule for handling local landline calls'
@@ -45,7 +45,7 @@ class OutgoingCallRulesDataFactory
             'restnumbers' => '10',
             'trimfrombegin' => '2',
             'prepend' => '777',
-            'providerid' => 'SIP-1683372701',
+            'providerid' => 'SIP-TRUNK-1683372701',
             'providerName' => '',
             'type' => 'International',
             'description' => 'Rule for handling international calls'
@@ -57,7 +57,7 @@ class OutgoingCallRulesDataFactory
             'restnumbers' => '10',
             'trimfrombegin' => '0',
             'prepend' => '7',
-            'providerid' => 'SIP-1683372744',
+            'providerid' => 'SIP-TRUNK-1683372744',
             'providerName' => 'Provider for CTI tests',
             'type' => 'Test',
             'description' => 'Basic CTI test rule'
@@ -76,7 +76,7 @@ class OutgoingCallRulesDataFactory
             'restnumbers' => '10',
             'trimfrombegin' => '0',
             'prepend' => '',
-            'providerid' => 'SIP-1683372744',
+            'providerid' => 'SIP-TRUNK-1683372744',
             'providerName' => 'Provider for CTI tests',
             'type' => 'Test',
             'description' => 'Complex CTI test rule with IVR logic'
