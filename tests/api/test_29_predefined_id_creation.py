@@ -99,7 +99,6 @@ class TestPredefinedIDCreation:
                 'disabled': '0',
                 'registration_type': 'outbound',
                 'noregister': '0',
-                'receive_calls_without_auth': '0'
             },
             'verify_fields': ['description', 'host', 'username']
         },

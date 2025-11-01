@@ -88,18 +88,7 @@
         
         <!-- Группа: Настройки безопасности -->
         <h4 class="ui dividing header ">{{ t._('pr_SecuritySettings') }}</h4>
-        
-        <div id='elReceiveCalls' class="field">
-            <div class="ui toggle checkbox">
-                {{ form.render('receive_calls_without_auth') }}
-                <label>
-                    {{ t._('pr_ReceiveCallsWithoutAuth') }}
-                    <i class="small info circle icon field-info-icon" 
-                       data-field="receive_calls_without_auth"></i>
-                </label>
-            </div>
-        </div>
-        
+
         <div id="elNetworkFilter" class="field">
             <label>
                 {{ t._('pr_NetworkFilter') }}

@@ -789,6 +789,9 @@ const Form = {
             if (typeof options.afterPopulate === 'function') {
                 options.afterPopulate(data);
             }
+
+            // Trigger global event for modules to handle form population
+            $(document).trigger('FormPopulated', [data]);
             
             // Reset dirty state after population
             if (wasEnabledDirrity) {

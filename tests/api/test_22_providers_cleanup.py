@@ -191,7 +191,6 @@ class TestIAXProviders:
             'username': fixture['username'],
             'secret': fixture['password'],  # API expects 'secret' not 'password'
             'registration_type': 'outbound',
-            'receive_calls_without_auth': fixture.get('receive_calls_without_auth', False),
             'manualattributes': fixture.get('manualattributes', '')
         }
 
@@ -218,7 +217,6 @@ class TestIAXProviders:
             'username': fixture['username'],
             'secret': fixture['password'],  # API expects 'secret' not 'password'
             'registration_type': 'inbound',
-            'receive_calls_without_auth': fixture.get('receive_calls_without_auth', True),
             'manualattributes': fixture.get('manualattributes', '')
         }
 
@@ -240,7 +238,6 @@ class TestIAXProviders:
             'username': fixture['username'],
             'secret': fixture['password'],  # API expects 'secret' not 'password'
             'registration_type': 'none',
-            'receive_calls_without_auth': fixture.get('receive_calls_without_auth', True),
             'manualattributes': fixture.get('manualattributes', '')
         }
 
@@ -295,7 +292,6 @@ class TestIAXProviders:
         # Update fields
         update_data = current.copy()
         update_data['description'] = f"{current['description']} (Updated)"
-        update_data['receive_calls_without_auth'] = True
 
         response = api_client.put(f'iax-providers/{provider_id}', update_data)
         assert_api_success(response, "Failed to update IAX provider")
@@ -365,7 +361,6 @@ class TestIAXProvidersCustomMethods:
             'username': 'testuser',
             'secret': 'testSecret123',
             'registration_type': 'outbound',
-            'receive_calls_without_auth': False,
             'manualattributes': ''
         }
 
@@ -394,7 +389,6 @@ class TestIAXProvidersCustomMethods:
 
         # Verify essential fields are present
         assert 'registration_type' in data
-        assert 'receive_calls_without_auth' in data
         assert 'disabled' in data
 
         print(f"✓ Retrieved default IAX provider template")

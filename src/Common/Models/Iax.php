@@ -118,13 +118,6 @@ class Iax extends ModelsBase
     public ?string $registration_type = 'outbound';
 
     /**
-     * Allow receiving calls without authentication (0 or 1)
-     *
-     * @Column(type="string", length=1, nullable=true, default="0")
-     */
-    public ?string $receive_calls_without_auth = '0';
-
-    /**
      * Network filter ID for IP-based restrictions
      *
      * @Column(type="integer", nullable=true)

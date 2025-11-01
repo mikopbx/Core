@@ -64,29 +64,6 @@ class ProviderIAX extends ProviderBase {
         // IAX-specific event handlers
         this.initializeRealtimeValidation();
         this.initializeRegistrationTypeHandlers();
-
-        // Re-validate form when receive_calls_without_auth changes
-        $('#receive_calls_without_auth.checkbox').checkbox('setting', 'onChange', () => {
-            const regType = $('#registration_type').val();
-
-            // Clear any existing error on secret field
-            this.$formObj.form('remove prompt', 'secret');
-            this.$secret.closest('.field').removeClass('error');
-
-            // For inbound registration, validate based on checkbox state
-            if (regType === 'inbound') {
-                const isChecked = $('#receive_calls_without_auth').checkbox('is checked');
-                if (!isChecked && this.$secret.val() === '') {
-                    // If unchecked and password is empty, show error
-                    setTimeout(() => {
-                        this.$formObj.form('validate field', 'secret');
-                    }, 100);
-                }
-            }
-
-            // Mark form as changed
-            Form.dataChanged();
-        });
     }
     
     /**
@@ -268,7 +245,6 @@ class ProviderIAX extends ProviderBase {
             };
         } else if (regType === 'inbound') {
             // INBOUND: Provider connects to us
-            const receiveCallsChecked = $('#receive_calls_without_auth').checkbox('is checked');
             
             rules.username = {
                 identifier: 'username',
@@ -284,24 +260,21 @@ class ProviderIAX extends ProviderBase {
                     },
                 ],
             };
-            
-            // Password validation only if receive_calls_without_auth is NOT checked
-            if (!receiveCallsChecked) {
-                rules.secret = {
-                    identifier: 'secret',
-                    rules: [
-                        {
-                            type: 'empty',
-                            prompt: globalTranslate.pr_ValidationProviderPasswordEmpty,
-                        },
-                        {
-                            type: 'minLength[5]',
-                            prompt: globalTranslate.pr_ValidationProviderPasswordTooShort,
-                        }
-                    ],
-                };
-            }
-            
+
+            rules.secret = {
+                identifier: 'secret',
+                rules: [
+                    {
+                        type: 'empty',
+                        prompt: globalTranslate.pr_ValidationProviderPasswordEmpty,
+                    },
+                    {
+                        type: 'minLength[5]',
+                        prompt: globalTranslate.pr_ValidationProviderPasswordTooShort,
+                    }
+                ],
+            };
+
             // Host is optional for inbound
             // Port is not shown for inbound
         } else if (regType === 'none') {
@@ -409,7 +382,6 @@ class ProviderIAX extends ProviderBase {
             port: $('#elPort'),
             username: $('#elUsername'),
             secret: $('#elSecret'),
-            receiveCalls: $('#elReceiveCalls'),
             networkFilter: $('#elNetworkFilter')
         };
         
@@ -431,7 +403,7 @@ class ProviderIAX extends ProviderBase {
         const configs = {
             outbound: {
                 visible: ['host', 'port', 'username', 'secret'],
-                hidden: ['receiveCalls', 'networkFilter'],
+                hidden: ['networkFilter'],
                 required: ['host', 'port', 'username', 'secret'],
                 labels: {
                     host: globalTranslate.pr_ProviderHostOrIPAddress,
@@ -449,7 +421,7 @@ class ProviderIAX extends ProviderBase {
                 defaultPort: '4569'
             },
             inbound: {
-                visible: ['host', 'username', 'secret', 'receiveCalls', 'networkFilter'],
+                visible: ['host', 'username', 'secret', 'networkFilter'],
                 hidden: ['port'],
                 required: ['username', 'secret'],
                 optional: ['host', 'port'],
@@ -468,7 +440,7 @@ class ProviderIAX extends ProviderBase {
                 autoGeneratePassword: true
             },
             none: {
-                visible: ['host', 'port', 'username', 'secret', 'receiveCalls', 'networkFilter'],
+                visible: ['host', 'port', 'username', 'secret', 'networkFilter'],
                 hidden: [],
                 required: ['host', 'port', 'username'],
                 optional: ['secret'],

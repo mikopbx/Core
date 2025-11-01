@@ -11,9 +11,8 @@ Related: Validation of manualattributes integration with Asterisk configuration
 """
 
 import pytest
-import subprocess
 import time
-from conftest import assert_api_success
+from conftest import assert_api_success, read_file_from_container, execute_asterisk_command
 
 
 class TestSIPProvidersManualAttributesPJSIPConf:
@@ -107,25 +106,16 @@ auth_type=userpass"""
         "TestSIPProvidersManualAttributesPJSIPConf::test_02_create_extension_with_manualattributes"
     ])
     def test_03_trigger_config_regeneration(self):
-        """Trigger Asterisk configuration regeneration"""
+        """Wait for Asterisk configuration regeneration via REST API"""
         print("\n" + "="*70)
-        print("Triggering Asterisk Configuration Regeneration")
+        print("Waiting for Asterisk Configuration Regeneration")
         print("="*70)
 
-        # Restart container to regenerate all configurations
-        print("Restarting mikopbx_php83 container...")
-        result = subprocess.run(
-            ['docker', 'restart', 'mikopbx_php83'],
-            capture_output=True,
-            text=True
-        )
-
-        if result.returncode != 0:
-            pytest.fail(f"Failed to restart container: {result.stderr}")
-
-        print("✓ Container restart initiated")
-        print("Waiting 15 seconds for configuration regeneration...")
-        time.sleep(15)
+        # After REST API operations, configs are regenerated automatically via workers
+        # We just need to wait for the background processes to complete
+        print("REST API changes trigger automatic config regeneration...")
+        print("Waiting 10 seconds for configuration to be applied...")
+        time.sleep(10)
         print("✓ Configuration should be regenerated")
 
     @pytest.mark.dependency(depends=["TestSIPProvidersManualAttributesPJSIPConf::test_03_trigger_config_regeneration"])
@@ -137,17 +127,12 @@ auth_type=userpass"""
 
         provider_id = TestSIPProvidersManualAttributesPJSIPConf.created_provider_id
 
-        # Read pjsip.conf from container
-        result = subprocess.run(
-            ['docker', 'exec', 'mikopbx_php83', 'cat', '/etc/asterisk/pjsip.conf'],
-            capture_output=True,
-            text=True
-        )
+        # Read pjsip.conf from container via REST API
+        try:
+            config = read_file_from_container(api_client, '/etc/asterisk/pjsip.conf')
+        except RuntimeError as e:
+            pytest.fail(f"Failed to read pjsip.conf: {e}")
 
-        if result.returncode != 0:
-            pytest.fail(f"Failed to read pjsip.conf: {result.stderr}")
-
-        config = result.stdout
         print(f"\nSearching for provider {provider_id} sections...")
 
         # Find provider sections in config
@@ -245,7 +230,7 @@ auth_type=userpass"""
         print(f"\n✓ Critical manualattributes parameters verified in pjsip.conf")
 
     @pytest.mark.dependency(depends=["TestSIPProvidersManualAttributesPJSIPConf::test_03_trigger_config_regeneration"])
-    def test_05_verify_extension_manualattributes_in_pjsip_conf(self):
+    def test_05_verify_extension_manualattributes_in_pjsip_conf(self, api_client):
         """Verify extension manualattributes appear in pjsip.conf"""
         print("\n" + "="*70)
         print("Validating Extension ManualAttributes in pjsip.conf")
@@ -253,17 +238,12 @@ auth_type=userpass"""
 
         extension_number = "999"
 
-        # Read pjsip.conf from container
-        result = subprocess.run(
-            ['docker', 'exec', 'mikopbx_php83', 'cat', '/etc/asterisk/pjsip.conf'],
-            capture_output=True,
-            text=True
-        )
+        # Read pjsip.conf from container via REST API
+        try:
+            config = read_file_from_container(api_client, '/etc/asterisk/pjsip.conf')
+        except RuntimeError as e:
+            pytest.fail(f"Failed to read pjsip.conf: {e}")
 
-        if result.returncode != 0:
-            pytest.fail(f"Failed to read pjsip.conf: {result.stderr}")
-
-        config = result.stdout
         print(f"\nSearching for extension {extension_number} sections...")
 
         # Find extension sections (extensions use number as identifier)
@@ -333,7 +313,7 @@ auth_type=userpass"""
         print(f"\n✓ Extension manualattributes verified in pjsip.conf")
 
     @pytest.mark.dependency(depends=["TestSIPProvidersManualAttributesPJSIPConf::test_04_verify_provider_manualattributes_in_pjsip_conf"])
-    def test_06_verify_asterisk_loaded_config(self):
+    def test_06_verify_asterisk_loaded_config(self, api_client):
         """Verify Asterisk successfully loaded configuration with manualattributes"""
         print("\n" + "="*70)
         print("Validating Asterisk Configuration Loading")
@@ -342,17 +322,11 @@ auth_type=userpass"""
         provider_id = TestSIPProvidersManualAttributesPJSIPConf.created_provider_id
         extension_number = "999"
 
-        # Check PJSIP endpoints
-        result = subprocess.run(
-            ['docker', 'exec', 'mikopbx_php83', 'asterisk', '-rx', 'pjsip show endpoints'],
-            capture_output=True,
-            text=True
-        )
-
-        if result.returncode != 0:
-            pytest.fail(f"Failed to query PJSIP endpoints: {result.stderr}")
-
-        output = result.stdout
+        # Check PJSIP endpoints via Asterisk CLI
+        try:
+            output = execute_asterisk_command(api_client, 'pjsip show endpoints')
+        except RuntimeError as e:
+            pytest.fail(f"Failed to query PJSIP endpoints: {e}")
 
         # Verify provider endpoint is loaded
         if provider_id in output:
@@ -367,14 +341,9 @@ auth_type=userpass"""
             pytest.fail(f"Extension {extension_number} endpoint not loaded in Asterisk")
 
         # Check for configuration errors in Asterisk log
-        result = subprocess.run(
-            ['docker', 'exec', 'mikopbx_php83', 'tail', '-n', '200', '/var/log/asterisk/messages'],
-            capture_output=True,
-            text=True
-        )
-
-        if result.returncode == 0:
-            log = result.stdout
+        try:
+            # Read last 200 lines of Asterisk log
+            log = execute_asterisk_command(api_client, 'tail -n 200 /var/log/asterisk/messages')
 
             # Check for errors related to our test objects
             error_keywords = ['ERROR', 'WARNING[general]', 'CRITICAL']
@@ -392,6 +361,9 @@ auth_type=userpass"""
                 pytest.fail("Found errors in Asterisk log related to manualattributes")
             else:
                 print("✓ No errors in Asterisk log related to manualattributes")
+        except RuntimeError:
+            # Log reading is optional, don't fail test if it's not available
+            print("⚠ Could not read Asterisk log (optional check)")
 
     @pytest.mark.dependency(depends=[
         "TestSIPProvidersManualAttributesPJSIPConf::test_04_verify_provider_manualattributes_in_pjsip_conf",

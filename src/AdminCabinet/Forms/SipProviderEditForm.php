@@ -146,9 +146,6 @@ class SipProviderEditForm extends BaseForm
         // Disablefromuser
         $this->addCheckBox('disablefromuser', intval($entity->disablefromuser) === 1, '1');
 
-        // Receive_calls_without_auth
-        $this->addCheckBox('receive_calls_without_auth', intval($entity->receive_calls_without_auth) === 1, '1');
-
         // Network Filter - using DynamicDropdownBuilder (built by JavaScript)
         $this->add(new Hidden('networkfilterid'));
 

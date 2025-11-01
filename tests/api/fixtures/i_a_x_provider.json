@@ -8,7 +8,6 @@
     "password": "voxvoxSecret",
     "registration_type": "outbound",
     "noregister": false,
-    "receive_calls_without_auth": false,
     "manualattributes": ""
   },
   "provider.iax.delete": {
@@ -19,7 +18,6 @@
     "username": "providerName",
     "password": "providerPassword",
     "registration_type": "outbound",
-    "receive_calls_without_auth": false,
     "manualattributes": "",
     "possibleToDelete": true
   },
@@ -31,7 +29,6 @@
     "username": "IAX-TRUNK-93BE1B99",
     "password": "inboundSecret123",
     "registration_type": "inbound",
-    "receive_calls_without_auth": true,
     "manualattributes": "language=ru"
   },
   "provider.iax.noregistration": {
@@ -42,7 +39,6 @@
     "username": "IAX-TRUNK-93BE1B99",
     "password": "noRegSecret456",
     "registration_type": "none",
-    "receive_calls_without_auth": true,
     "manualattributes": "language=en"
   }
 }

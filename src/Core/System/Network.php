@@ -144,14 +144,28 @@ class Network extends Injectable
 
                 $key = array_search($if_data['interface_orign'], $src_array_eth, true);
                 if ($key !== false) {
-                    // Interface found
-                    // Remove the array element if it's not a VLAN
+                    // Base interface found
                     if ($if_data['vlanid'] === '0') {
+                        // Regular interface (not VLAN)
                         unset($array_eth[$key]);
                         $this->enableLanInterface($if_data['interface_orign']);
+                    } else {
+                        // VLAN interface - check if VLAN interface itself exists
+                        $vlan_key = array_search($if_data['interface'], $src_array_eth, true);
+                        if ($vlan_key !== false) {
+                            // VLAN interface exists physically (e.g., Docker host mode)
+                            unset($array_eth[$vlan_key]);
+                        } else {
+                            // VLAN interface does not exist (e.g., Docker bridge mode)
+                            // Delete VLAN from database as it cannot be used
+                            $this->deleteLanInterfaceByVlanId($if_data['interface_orign'], $if_data['vlanid']);
+                            SystemMessages::sysLogMsg(__METHOD__, "VLAN interface {$if_data['interface']} deleted - not supported in current environment");
+                            // Mark as disabled in the returned array to skip further processing
+                            $if_data['disabled'] = 1;
+                        }
                     }
                 } else {
-                    // Interface does not exist
+                    // Base interface does not exist
                     $this->disableLanInterface($if_data['interface_orign']);
                     // Disable the interface
                     $if_data['disabled'] = 1;
@@ -242,6 +256,54 @@ class Network extends Injectable
             $if_data->internet = 0;
             $if_data->disabled = 1;
             $if_data->update();
+        }
+    }
+
+    /**
+     * Disables a VLAN interface by interface name and VLAN ID.
+     *
+     * @param string $name The name of the base interface.
+     * @param string|int $vlanId The VLAN ID.
+     * @return void
+     */
+    public function disableLanInterfaceByVlanId(string $name, string|int $vlanId): void
+    {
+        $parameters = [
+            'conditions' => 'interface = :ifName: AND vlanid = :vlanId:',
+            'bind' => [
+                'ifName' => $name,
+                'vlanId' => (string)$vlanId,
+            ],
+        ];
+
+        $if_data = LanInterfaces::findFirst($parameters);
+        if ($if_data !== null) {
+            $if_data->internet = 0;
+            $if_data->disabled = 1;
+            $if_data->update();
+        }
+    }
+
+    /**
+     * Deletes a VLAN interface by interface name and VLAN ID.
+     *
+     * @param string $name The name of the base interface.
+     * @param string|int $vlanId The VLAN ID.
+     * @return void
+     */
+    public function deleteLanInterfaceByVlanId(string $name, string|int $vlanId): void
+    {
+        $parameters = [
+            'conditions' => 'interface = :ifName: AND vlanid = :vlanId:',
+            'bind' => [
+                'ifName' => $name,
+                'vlanId' => (string)$vlanId,
+            ],
+        ];
+
+        $if_data = LanInterfaces::findFirst($parameters);
+        if ($if_data !== null) {
+            $if_data->delete();
         }
     }
 

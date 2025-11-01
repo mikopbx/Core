@@ -91,31 +91,16 @@ class ProviderTooltipManager {
                         definition: globalTranslate.pr_NetworkFilterTooltip_none_desc
                     }
                 ]
-            },
-
-            receive_calls_without_auth: {
-                header: globalTranslate.pr_ReceiveCallsWithoutAuthTooltip_header,
-                description: globalTranslate.pr_ReceiveCallsWithoutAuthTooltip_desc,
-                warning: {
-                    header: globalTranslate.pr_ReceiveCallsWithoutAuthTooltip_warning_header,
-                    text: globalTranslate.pr_ReceiveCallsWithoutAuthTooltip_warning
-                },
-                list: [
-                    {
-                        term: globalTranslate.pr_ReceiveCallsWithoutAuthTooltip_application,
-                        definition: globalTranslate.pr_ReceiveCallsWithoutAuthTooltip_application_desc
-                    }
-                ]
             }
         };
     }
 
     /**
-     * Abstract method - Get provider-specific tooltip configurations
-     * 
-     * Subclasses must implement this method to provide their specific tooltip configurations.
-     * The returned configurations will be merged with common configurations.
-     * 
+     * Get provider-specific tooltip configurations
+     *
+     * This method should be implemented by subclasses to provide tooltips
+     * that are specific to their provider type.
+     *
      * @abstract
      * @static
      * @returns {Object} Provider-specific tooltip configurations

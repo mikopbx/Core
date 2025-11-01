@@ -27,6 +27,7 @@ use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\IncomingContexts;
 use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 
 /**
@@ -135,14 +136,10 @@ class IAXConf extends AsteriskConfigClass
                 'transfer' => 'mediaonly',
                 'disallow' => 'all',
                 'username' => $provider['username'],
+                'secret' => $provider['secret'],
                 'trunk' => 'yes'
             ];
-            
-            // Add secret only if authentication is required
-            if ($provider['receive_calls_without_auth'] !== '1') {
-                $options['secret'] = $provider['secret'];
-            }
-            
+
             // Configure based on registration type
             switch ($registrationType) {
                 case Iax::REGISTRATION_TYPE_INBOUND:
@@ -174,7 +171,7 @@ class IAXConf extends AsteriskConfigClass
                 default:
                     // For outbound registration, keep dynamic host
                     $options['host'] = 'dynamic';
-                    
+
                     // Formulate the registration string
                     $user   = $provider['username'];
                     $secret = (trim($provider['secret']) === '') ? '' : ":{$provider['secret']}";
@@ -184,7 +181,20 @@ class IAXConf extends AsteriskConfigClass
                     } else {
                         $port = '';
                     }
-                    $reg_strings .= "register => $user$secret@$host$port " . PHP_EOL;
+
+                    // Check DNS resolution before adding registration string
+                    if (filter_var($host, FILTER_VALIDATE_IP)) {
+                        $resolveOk = true; // IP address, no DNS check needed
+                    } else {
+                        $resolveOk = Processes::mwExec("timeout 1 getent hosts '$host'") === 0;
+                        if (!$resolveOk) {
+                            SystemMessages::sysLogMsg('IAX2', "WARNING: DNS $host not resolved, registration skipped for provider {$provider['description']} ({$provider['uniqid']})");
+                        }
+                    }
+
+                    if ($resolveOk) {
+                        $reg_strings .= "register => $user$secret@$host$port " . PHP_EOL;
+                    }
                     break;
             }
             

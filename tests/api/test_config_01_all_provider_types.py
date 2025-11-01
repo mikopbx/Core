@@ -209,7 +209,6 @@ class TestAllProviderTypes:
             'username': 'iax_outbound',
             'secret': 'IAXSecret123',
             'noregister': False,
-            'receive_calls_without_auth': False
         }
 
         response = api_client.post('iax-providers', provider_data)
@@ -230,7 +229,6 @@ class TestAllProviderTypes:
             'username': 'iax_inbound',
             'secret': 'IAXSecret456',
             'noregister': True,
-            'receive_calls_without_auth': True
         }
 
         response = api_client.post('iax-providers', provider_data)
@@ -251,7 +249,6 @@ class TestAllProviderTypes:
             'username': 'iax_peer',
             'secret': 'IAXSecret789',
             'noregister': True,
-            'receive_calls_without_auth': True
         }
 
         response = api_client.post('iax-providers', provider_data)

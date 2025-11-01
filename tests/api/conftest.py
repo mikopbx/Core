@@ -882,6 +882,71 @@ def assert_record_deleted(api_client: MikoPBXClient, resource: str, record_id: s
             f"Expected 404 or 422 for deleted record, got {e.response.status_code}"
 
 
+def read_file_from_container(api_client: MikoPBXClient, file_path: str) -> str:
+    """
+    Read file content from MikoPBX container using REST API
+
+    Args:
+        api_client: Authenticated API client
+        file_path: Absolute path to file (e.g., '/etc/asterisk/pjsip.conf')
+
+    Returns:
+        File content as string
+
+    Raises:
+        RuntimeError: If file cannot be read
+
+    Usage:
+        config = read_file_from_container(api_client, '/etc/asterisk/pjsip.conf')
+    """
+    # Use files API endpoint - path should be encoded in URL
+    # Remove leading slash for API call
+    path_param = file_path.lstrip('/')
+
+    try:
+        response = api_client.get(f'files/{path_param}')
+        if not response.get('result'):
+            raise RuntimeError(f"Failed to read file {file_path}: {response.get('messages')}")
+
+        # Extract content from response
+        content = response.get('data', {}).get('content', '')
+        return content
+    except Exception as e:
+        raise RuntimeError(f"Error reading file {file_path}: {e}")
+
+
+def execute_asterisk_command(api_client: MikoPBXClient, command: str) -> str:
+    """
+    Execute Asterisk CLI command using REST API
+
+    Args:
+        api_client: Authenticated API client
+        command: Asterisk CLI command (e.g., 'pjsip show endpoints')
+
+    Returns:
+        Command output as string
+
+    Raises:
+        RuntimeError: If command fails
+
+    Usage:
+        output = execute_asterisk_command(api_client, 'pjsip show endpoints')
+    """
+    # Use system:executeBashCommand endpoint
+    bash_command = f'asterisk -rx "{command}"'
+
+    try:
+        response = api_client.post('system:executeBashCommand', {'command': bash_command})
+        if not response.get('result'):
+            raise RuntimeError(f"Failed to execute command '{command}': {response.get('messages')}")
+
+        # Extract output from response
+        output = response.get('data', {}).get('output', '')
+        return output
+    except Exception as e:
+        raise RuntimeError(f"Error executing command '{command}': {e}")
+
+
 # ============================================================================
 # Pytest Hooks
 # ============================================================================

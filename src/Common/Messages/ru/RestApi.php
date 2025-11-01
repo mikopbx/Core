@@ -2340,7 +2340,6 @@ return [
     'rest_schema_provider_port' => 'Порт подключения к провайдеру',
     'rest_schema_provider_qualify' => 'Периодически проверять доступность провайдера',
     'rest_schema_provider_qualifyfreq' => 'Частота проверки доступности (секунды)',
-    'rest_schema_provider_receive_without_auth' => 'Принимать входящие без аутентификации',
     'rest_schema_provider_registration_type' => 'Тип регистрации (none, peer, outbound)',
     'rest_schema_provider_represent' => 'HTML представление провайдера для выпадающих списков',
     'rest_schema_provider_search_index' => 'Индекс для полнотекстового поиска',

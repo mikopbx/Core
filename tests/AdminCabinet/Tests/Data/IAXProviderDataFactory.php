@@ -39,7 +39,6 @@ class IAXProviderDataFactory
             'password' => 'voxvoxSecret',
             'registration_type' => 'outbound', // Исходящая регистрация
             'noregister' => false,
-            'receive_calls_without_auth' => false,
             'manualattributes' => '',
         ],
         'provider.iax.delete' => [
@@ -50,7 +49,6 @@ class IAXProviderDataFactory
             'username' => 'providerName',
             'password' => 'providerPassword',
             'registration_type' => 'outbound',
-            'receive_calls_without_auth' => false,
             'manualattributes' => '',
             'possibleToDelete' => true
         ],
@@ -62,7 +60,6 @@ class IAXProviderDataFactory
             'username' => 'IAX-TRUNK-93BE1B99',
             'password' => 'inboundSecret123',
             'registration_type' => 'inbound', // Входящая регистрация
-            'receive_calls_without_auth' => true,
             'manualattributes' => 'language=ru',
         ],
         'provider.iax.noregistration' => [
@@ -73,7 +70,6 @@ class IAXProviderDataFactory
             'username' => 'IAX-TRUNK-93BE1B99',
             'password' => 'noRegSecret456',
             'registration_type' => 'none', // Без регистрации (IP аутентификация)
-            'receive_calls_without_auth' => true,
             'manualattributes' => 'language=en',
         ]
     ];

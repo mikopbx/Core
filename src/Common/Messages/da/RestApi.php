@@ -221,7 +221,6 @@ return [
     'rest_schema_gs_ssh_password' => 'Adgangskode til SSH-adgang',
     'rest_cf_Update' => 'Opdater brugerfil',
     'rest_ivr_GetListDesc' => 'Få en liste side for side over alle IVR-menuer med filtrerings-, søge- og sorteringsmuligheder',
-    'rest_schema_provider_receive_without_auth' => 'Accepter indgående opkald uden godkendelse',
     'rest_pvd_UpdateStatusDesc' => 'Tving udbyderregistrering/afregistrering eller statusopdatering uden at genstarte Asterisk',
     'rest_schema_ivr_timeout_ext_repr_alt' => 'HTML-repræsentation af timeout-tilføjelsen (alternativ)',
     'rest_sip_ProcessAuthFailuresDesc' => 'Proces akkumulerede SIP-enhedsgodkendelsesfejl',

@@ -1907,7 +1907,6 @@ return [
     'rest_schema_provider_port' => 'Provider connection port',
     'rest_schema_provider_qualify' => 'Periodically check provider availability',
     'rest_schema_provider_qualifyfreq' => 'Availability check frequency (seconds)',
-    'rest_schema_provider_receive_without_auth' => 'Accept incoming without authentication',
     'rest_schema_provider_registration_type' => 'Registration type (none, peer, outbound)',
     'rest_schema_provider_represent' => 'HTML provider representation for dropdown lists',
     'rest_schema_provider_search_index' => 'Full-text search index',

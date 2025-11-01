@@ -208,7 +208,6 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'fromdomain' => $sip->fromdomain ?? '',
             'outbound_proxy' => $sip->outbound_proxy ?? '',
             'disablefromuser' => $sip->disablefromuser === '1',
-            'receive_calls_without_auth' => $sip->receive_calls_without_auth === '1',
             // CallerID and DID source fields
             'cid_source' => $sip->cid_source ?? Sip::CALLERID_SOURCE_DEFAULT,
             'cid_custom_header' => $sip->cid_custom_header ?? '',
@@ -251,8 +250,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'description' => $iax->description ?? '',
             'manualattributes' => $iax->getManualAttributes(),
             'networkfilterid' => (!empty($iax->networkfilterid) ? $iax->networkfilterid : 'none'),
-            'networkfilter_represent' => $networkfilterRepresent,
-            'receive_calls_without_auth' => $iax->receive_calls_without_auth === '1'
+            'networkfilter_represent' => $networkfilterRepresent
         ];
     }
     
@@ -523,13 +521,6 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'sanitize' => 'string',
                 'default' => 'none',
                 'example' => '1'
-            ],
-            'receive_calls_without_auth' => [
-                'type' => 'boolean',
-                'description' => 'rest_schema_provider_receive_without_auth',
-                'sanitize' => 'bool',
-                'default' => false,
-                'example' => true
             ],
 
             // ========== SIP-SPECIFIC FIELDS ==========

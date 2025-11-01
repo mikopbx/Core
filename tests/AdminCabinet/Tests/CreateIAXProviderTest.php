@@ -92,9 +92,6 @@ abstract class CreateIAXProviderTest extends MikoPBXTestsBase
     {
         $this->openAccordionOnThePage();
 
-        // Set receive_calls_without_auth if provided
-        if (isset($params['receive_calls_without_auth'])) {
-            $this->changeCheckBoxState('receive_calls_without_auth', $params['receive_calls_without_auth']);
         }
         
         $this->changeTextAreaValue('manualattributes', $params['manualattributes']);
@@ -149,9 +146,6 @@ abstract class CreateIAXProviderTest extends MikoPBXTestsBase
     {
         $this->openAccordionOnThePage();
 
-        // Verify receive_calls_without_auth if provided
-        if (isset($params['receive_calls_without_auth'])) {
-            $this->assertCheckBoxStageIsEqual('receive_calls_without_auth', $params['receive_calls_without_auth']);
         }
         
         $this->assertTextAreaValueIsEqual('manualattributes', $params['manualattributes']);

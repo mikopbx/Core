@@ -1218,8 +1218,8 @@ class SIPConf extends AsteriskConfigClass
                 $conf .= $this->generateProviderRegistration($provider, $manual_attributes);
             }
 
-            // Generate provider authentication configuration if registration type is not none and auth is required
-            if ($provider['registration_type'] !== Sip::REG_TYPE_NONE && $provider['receive_calls_without_auth'] !== '1') {
+            // Generate provider authentication configuration if registration type is not none
+            if ($provider['registration_type'] !== Sip::REG_TYPE_NONE) {
                 $conf .= $this->generateProviderAuth($provider, $manual_attributes);
             }
 
@@ -1489,11 +1489,11 @@ class SIPConf extends AsteriskConfigClass
         );
 
         // AOR name matches provider uniqid (without suffix for simplicity and consistency)
-        // For INBOUND providers with auth, AOR must match username for registration to work
+        // For INBOUND providers, AOR must match username for registration to work
         // For OUTBOUND/NONE, using uniqid is fine as they don't register on our server
-        $aorName = ($provider['registration_type'] === Sip::REG_TYPE_INBOUND && $provider['receive_calls_without_auth'] !== '1')
-            ? $provider['username']  // INBOUND with auth: must match username for REGISTER
-            : $provider['uniqid'];   // OUTBOUND/NONE or INBOUND without auth: use uniqid
+        $aorName = ($provider['registration_type'] === Sip::REG_TYPE_INBOUND)
+            ? $provider['username']  // INBOUND: must match username for REGISTER
+            : $provider['uniqid'];   // OUTBOUND/NONE: use uniqid
 
         // Add configuration section header (no description - already in visual separator)
         if ($needsCustomization) {
@@ -1657,7 +1657,7 @@ class SIPConf extends AsteriskConfigClass
         ];
 
         // Determine AOR name (same logic as in generateProviderAor)
-        $aorName = ($provider['registration_type'] === Sip::REG_TYPE_INBOUND && $provider['receive_calls_without_auth'] !== '1')
+        $aorName = ($provider['registration_type'] === Sip::REG_TYPE_INBOUND)
             ? $provider['username']
             : $provider['uniqid'];
 
@@ -1674,9 +1674,9 @@ class SIPConf extends AsteriskConfigClass
         if (!empty($provider['outbound_proxy'])) {
             $uniqueParams['outbound_proxy'] = "sip:{$provider['outbound_proxy']}\;lr";
         }
-        if ($provider['registration_type'] === Sip::REG_TYPE_OUTBOUND && $provider['receive_calls_without_auth'] !== '1') {
+        if ($provider['registration_type'] === Sip::REG_TYPE_OUTBOUND) {
             $uniqueParams['outbound_auth'] = "{$provider['uniqid']}-AUTH";
-        } elseif ($provider['registration_type'] === Sip::REG_TYPE_INBOUND && $provider['receive_calls_without_auth'] !== '1') {
+        } elseif ($provider['registration_type'] === Sip::REG_TYPE_INBOUND) {
             $uniqueParams['auth'] = "{$provider['uniqid']}-AUTH";
         }
 
@@ -1717,7 +1717,18 @@ class SIPConf extends AsteriskConfigClass
             );
 
             // Add module overrides (only parameters that differ from base)
-            $moduleOverrides = array_diff_assoc($overriddenOptions, $fullOptions);
+            $moduleOverrides = [];
+            foreach ($overriddenOptions as $key => $value) {
+                $normalizedValue = is_array($value) ? implode(',', $value) : $value;
+                $normalizedOriginal = isset($fullOptions[$key]) && is_array($fullOptions[$key]) 
+                    ? implode(',', $fullOptions[$key]) 
+                    : ($fullOptions[$key] ?? null);
+                
+                if ($normalizedValue !== $normalizedOriginal) {
+                    $moduleOverrides[$key] = $value;
+                }
+            }
+            
             $moduleOverrideLines = '';
             foreach ($moduleOverrides as $key => $value) {
                 if (!isset($uniqueParams[$key]) && $key !== 'type') {
@@ -2093,7 +2104,19 @@ class SIPConf extends AsteriskConfigClass
         }
 
         // Add module overrides (only parameters that differ from full options or not in template)
-        $moduleOverrides = array_diff_assoc($overriddenOptions, $fullOptions);
+        // Normalize array values before comparison to avoid "Array to string conversion" error
+        $moduleOverrides = [];
+        foreach ($overriddenOptions as $key => $value) {
+            $normalizedValue = is_array($value) ? implode(',', $value) : $value;
+            $normalizedOriginal = isset($fullOptions[$key]) && is_array($fullOptions[$key])
+                ? implode(',', $fullOptions[$key])
+                : ($fullOptions[$key] ?? null);
+
+            if ($normalizedValue !== $normalizedOriginal) {
+                $moduleOverrides[$key] = $value;
+            }
+        }
+
         foreach ($moduleOverrides as $key => $value) {
             if (!in_array($key, array_keys($uniqueParams))) {
                 if (is_array($value)) {

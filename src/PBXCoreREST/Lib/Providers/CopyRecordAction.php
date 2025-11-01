@@ -154,9 +154,8 @@ class CopyRecordAction
                 $newSip->manualattributes = $sourceSip->manualattributes;
                 $newSip->disablefromuser = $sourceSip->disablefromuser;
                 $newSip->noregister = $sourceSip->noregister;
-                $newSip->receive_calls_without_auth = $sourceSip->receive_calls_without_auth;
                 $newSip->enableRecording = $sourceSip->enableRecording;
-                
+
                 // CallerID and DID source fields
                 $newSip->cid_source = $sourceSip->cid_source;
                 $newSip->cid_custom_header = $sourceSip->cid_custom_header;
@@ -190,7 +189,6 @@ class CopyRecordAction
                 $newIax->noregister = $sourceIax->noregister;
                 $newIax->manualattributes = $sourceIax->manualattributes;
                 $newIax->registration_type = $sourceIax->registration_type;
-                $newIax->receive_calls_without_auth = $sourceIax->receive_calls_without_auth;
                 $newIax->networkfilterid = $sourceIax->networkfilterid;
 
                 // Attach to provider model for DataStructure

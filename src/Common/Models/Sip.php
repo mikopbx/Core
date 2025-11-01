@@ -214,13 +214,6 @@ class Sip extends ModelsBase
     public ?string $noregister = '0';
 
     /**
-     * Flag indicating whether to receive incoming calls without authentication (0 = disabled, 1 = enabled)
-     *
-     * @Column(type="string", length=1, nullable=true, default="0")
-     */
-    public ?string $receive_calls_without_auth = '0';
-
-    /**
      * Description of the SIP account
      *
      * @Column(type="string", nullable=true)

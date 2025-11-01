@@ -83,9 +83,6 @@ class IaxProviderEditForm extends BaseForm
             ]
         );
 
-        // Receive calls without auth
-        $this->addCheckBox('receive_calls_without_auth', intval($entity->receive_calls_without_auth) === 1);
-
         // Qualify
         $this->addCheckBox(
             'qualify',

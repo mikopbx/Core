@@ -298,7 +298,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
      *
      * Different registration types have different requirements:
      * - outbound: requires host, username, password (registration to remote server)
-     * - inbound: requires username, password optional if receive_calls_without_auth enabled
+     * - inbound: requires username, password (remote server registers to us)
      * - none: requires host only (direct calls without registration, username/password optional)
      *
      * @param array $data Sanitized data
@@ -338,7 +338,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
         }
 
         // ============================================================
-        // INBOUND REGISTRATION: Requires username, password optional
+        // INBOUND REGISTRATION: Requires username, password
         // WHY: Remote server registers to us with credentials
         // ============================================================
         if ($regType === 'inbound') {
@@ -347,26 +347,14 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 $errors[] = TranslationProvider::translate('pr_ValidationProviderLogin');
             }
 
-            // Password validation logic:
-            // 1. If receive_calls_without_auth=true, password is OPTIONAL
-            // 2. If receive_calls_without_auth=false, password is REQUIRED
-            // 3. For UPDATE: masked password (XXXXXXXX) means keep existing
-            $receiveWithoutAuth = $data['receive_calls_without_auth'] ?? false;
+            // Password is required (except when updating with masked value)
+            $passwordRequired = true;
+            if (!$isNewRecord && isset($data['secret']) && $data['secret'] === 'XXXXXXXX') {
+                $passwordRequired = false; // Keep existing password
+            }
 
-            // Check if password is provided (not empty and not masked)
-            $passwordProvided = !empty($data['secret']) &&
-                               trim($data['secret']) !== '' &&
-                               $data['secret'] !== 'XXXXXXXX';
-
-            // Require password only if auth is required and no password provided
-            if (!$receiveWithoutAuth && !$passwordProvided) {
-                // For UPDATE: masked password is acceptable (keeps existing password)
-                if (!$isNewRecord && isset($data['secret']) && $data['secret'] === 'XXXXXXXX') {
-                    // Keep existing password - OK
-                } else {
-                    // Password required but not provided
-                    $errors[] = TranslationProvider::translate('pr_ValidationProviderPasswordEmpty');
-                }
+            if ($passwordRequired && (empty($data['secret']) || trim($data['secret']) === '')) {
+                $errors[] = TranslationProvider::translate('pr_ValidationProviderPasswordEmpty');
             }
         }
 
@@ -402,7 +390,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
         $sip->uniqid = $provider->uniqid;
 
         // Boolean fields for conversion
-        $booleanFields = ['disabled', 'qualify', 'disablefromuser', 'receive_calls_without_auth', 'cid_did_debug'];
+        $booleanFields = ['disabled', 'qualify', 'disablefromuser', 'cid_did_debug'];
         $data = self::convertBooleanFields($data, $booleanFields);
 
         // Update fields using isset() for PATCH support
@@ -497,12 +485,6 @@ class SaveRecordAction extends AbstractSaveRecordAction
             $sip->disablefromuser = '0';
         }
 
-        if (isset($data['receive_calls_without_auth'])) {
-            $sip->receive_calls_without_auth = $data['receive_calls_without_auth'];
-        } elseif ($isNewRecord) {
-            $sip->receive_calls_without_auth = '0';
-        }
-
         // CallerID and DID fields
         if (isset($data['cid_source'])) $sip->cid_source = $data['cid_source'];
         elseif ($isNewRecord) $sip->cid_source = Sip::CALLERID_SOURCE_DEFAULT;
@@ -561,7 +543,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
         $iax->uniqid = $provider->uniqid;
 
         // Boolean fields for conversion
-        $booleanFields = ['disabled', 'receive_calls_without_auth'];
+        $booleanFields = ['disabled'];
         $data = self::convertBooleanFields($data, $booleanFields);
 
         // Update fields using isset() for PATCH support
@@ -612,12 +594,6 @@ class SaveRecordAction extends AbstractSaveRecordAction
 
         if (isset($data['networkfilterid'])) {
             $iax->networkfilterid = $data['networkfilterid'] ?: '';
-        }
-
-        if (isset($data['receive_calls_without_auth'])) {
-            $iax->receive_calls_without_auth = $data['receive_calls_without_auth'];
-        } elseif ($isNewRecord) {
-            $iax->receive_calls_without_auth = '0';
         }
 
         // Fixed fields for providers

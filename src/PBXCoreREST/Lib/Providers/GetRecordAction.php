@@ -137,7 +137,6 @@ class GetRecordAction extends AbstractGetRecordAction
             $config->outbound_proxy = '';
             $config->disablefromuser = '0';
             $config->noregister = '0';
-            $config->receive_calls_without_auth = '0';
 
             // CallerID and DID source defaults
             $config->cid_source = Sip::CALLERID_SOURCE_DEFAULT;
@@ -173,7 +172,6 @@ class GetRecordAction extends AbstractGetRecordAction
             $config->networkfilter_represent = AbstractDataStructure::getNetworkFilterRepresentation('none');
             $config->manualattributes = '';
             $config->noregister = '0';
-            $config->receive_calls_without_auth = '0';
 
             // Attach IAX config to provider
             $newProvider->Iax = $config;
