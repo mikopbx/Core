@@ -287,7 +287,9 @@ class AssetProvider implements ServiceProviderInterface
                     : true;
 
                 if ($showModuleStatusToggle) {
-                    $this->footerCollectionJS->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-status.js', true);
+                    $this->footerCollectionJS
+                                ->addJs('js/pbx/PbxAPI/modules-api.js', true)
+                                ->addJs('js/pbx/PbxExtensionModules/pbx-extension-module-status.js', true);
                 }
             }
         }
