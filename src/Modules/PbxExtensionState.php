@@ -161,6 +161,13 @@ class PbxExtensionState extends Injectable
             $module->disabled = '0';
             $module->save();
         }
+
+        // Call the onAfterModuleEnable method if available in the configClass
+        if ($this->configClass !== null
+            && method_exists($this->configClass, SystemConfigInterface::ON_AFTER_MODULE_ENABLE)) {
+            call_user_func([$this->configClass, SystemConfigInterface::ON_AFTER_MODULE_ENABLE]);
+        }
+
         if ($this->configClass !== null
             && method_exists($this->configClass, 'getMessages')) {
             $this->messages = array_merge($this->messages, $this->configClass->getMessages());
@@ -274,6 +281,12 @@ class PbxExtensionState extends Injectable
             $module->disableReason = $reason;
             $module->disableReasonText = $reasonText;
             $module->save();
+        }
+
+        // Call the onAfterModuleDisable method if available in the configClass
+        if ($this->configClass !== null
+            && method_exists($this->configClass, SystemConfigInterface::ON_AFTER_MODULE_DISABLE)) {
+            call_user_func([$this->configClass, SystemConfigInterface::ON_AFTER_MODULE_DISABLE]);
         }
 
         // Merge any additional messages from the configClass
