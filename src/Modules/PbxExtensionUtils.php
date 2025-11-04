@@ -23,6 +23,7 @@ use MikoPBX\Common\Library\Text;
 use MikoPBX\Common\Models\ModelsBase;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
@@ -123,9 +124,8 @@ class PbxExtensionUtils
         if ($di === null) {
             return "/tmp/$moduleUniqueID";
         }
-        $config = $di->getShared('config');
-        $modulesDir = $config->path('core.modulesDir');
-
+        
+        $modulesDir = Directories::getDir(Directories::CORE_MODULES_DIR);
         return "$modulesDir/$moduleUniqueID";
     }
 
@@ -143,10 +143,9 @@ class PbxExtensionUtils
         if ($di === null) {
             return;
         }
-        $config = $di->getShared('config');
-
+     
         // Create symlinks to AGI-BIN
-        $agiBinDir = $config->path('asterisk.astagidir');
+        $agiBinDir = Directories::getDir(Directories::AST_AGI_BIN_DIR);
         $moduleAgiBinDir = "$moduleDir/agi-bin";
         $files = glob("$moduleAgiBinDir/*.{php}", GLOB_BRACE);
         foreach ($files as $file) {
@@ -325,5 +324,135 @@ class PbxExtensionUtils
                 SystemMessages::sysLogMsg(__CLASS__, "The module $moduleUniqueId was disabled because an exception occurred in it", LOG_ERR);
             }
         }
+    }
+
+    /**
+     * Determines if a module is a Language Pack module.
+     *
+     * Checks module.json for "module_type": "languagepack".
+     *
+     * @param string $moduleUniqueID The UniqueID of the module.
+     * @return bool True if module is a Language Pack, false otherwise.
+     */
+    public static function isLanguagePackModule(string $moduleUniqueID): bool
+    {
+        $moduleDir = self::getModuleDir($moduleUniqueID);
+        $moduleJson = "$moduleDir/module.json";
+
+        if (file_exists($moduleJson)) {
+            $jsonString = file_get_contents($moduleJson);
+            $moduleDescription = json_decode($jsonString, true);
+
+            if (isset($moduleDescription['module_type'])) {
+                return $moduleDescription['module_type'] === 'languagepack';
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Gets the language code for a Language Pack module.
+     *
+     * Checks module.json for "language_code" or extracts from sounds directory structure.
+     *
+     * @param string $moduleUniqueID The UniqueID of the module.
+     * @return string|null Language code (e.g., 'de-de', 'ja-ja', 'fr-fr') or null if not found.
+     */
+    public static function getLanguagePackCode(string $moduleUniqueID): ?string
+    {
+        $moduleDir = self::getModuleDir($moduleUniqueID);
+        $moduleJson = "$moduleDir/module.json";
+
+        // Check module.json first
+        if (file_exists($moduleJson)) {
+            $jsonString = file_get_contents($moduleJson);
+            $moduleDescription = json_decode($jsonString, true);
+
+            if (isset($moduleDescription['language_code'])) {
+                return $moduleDescription['language_code'];
+            }
+        }
+
+        // Fallback: detect from sounds directory structure
+        $moduleSoundsDir = "$moduleDir/sounds";
+        if (is_dir($moduleSoundsDir)) {
+            $langDirs = glob("$moduleSoundsDir/*", GLOB_ONLYDIR);
+            if (!empty($langDirs) && count($langDirs) === 1) {
+                // Language Pack should have exactly ONE language directory
+                return basename($langDirs[0]);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Checks for Language Pack conflicts.
+     *
+     * Only one Language Pack per language is allowed.
+     *
+     * @param string $moduleUniqueID The UniqueID of the module to check.
+     * @param string $languageCode The language code to check for conflicts.
+     * @return string|null UniqueID of conflicting module or null if no conflict.
+     */
+    public static function checkLanguagePackConflict(string $moduleUniqueID, string $languageCode): ?string
+    {
+        $parameters = [
+            'conditions' => 'disabled=0 AND uniqid != :uniqid:',
+            'bind' => [
+                'uniqid' => $moduleUniqueID,
+            ],
+        ];
+
+        $modules = PbxExtensionModules::find($parameters)->toArray();
+
+        foreach ($modules as $module) {
+            $otherModuleId = $module['uniqid'];
+
+            // Check if it's a Language Pack
+            if (self::isLanguagePackModule($otherModuleId)) {
+                $otherLanguageCode = self::getLanguagePackCode($otherModuleId);
+
+                // Found conflict - same language code
+                if ($otherLanguageCode === $languageCode) {
+                    return $otherModuleId;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Gets all enabled Language Pack modules with their language codes.
+     *
+     * Returns associative array where key is language code and value is module UniqueID.
+     *
+     * @return array Associative array [languageCode => moduleUniqueID]
+     */
+    public static function getAllLanguagePackModules(): array
+    {
+        $parameters = [
+            'conditions' => 'disabled=0',
+        ];
+
+        $modules = PbxExtensionModules::find($parameters)->toArray();
+        $languagePacks = [];
+
+        foreach ($modules as $module) {
+            $moduleId = $module['uniqid'];
+
+            // Check if it's a Language Pack
+            if (self::isLanguagePackModule($moduleId)) {
+                $languageCode = self::getLanguagePackCode($moduleId);
+
+                if ($languageCode !== null) {
+                    $languagePacks[$languageCode] = $moduleId;
+                }
+            }
+        }
+
+        return $languagePacks;
     }
 }
