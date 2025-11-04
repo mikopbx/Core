@@ -50,6 +50,7 @@ class AsteriskConf extends AsteriskConfigClass
         $astrundir = '/var/asterisk/run';
         $astmoddir = Directories::getDir(Directories::AST_MOD_DIR);
         $astvarlibdir = Directories::getDir(Directories::AST_VAR_LIB_DIR);
+        $astsoundsdir = Directories::getDir(Directories::AST_SOUNDS_DIR);
         $astdbdir = Directories::getDir(Directories::AST_DB_DIR);
         $astlogdir = Directories::getDir(Directories::AST_LOG_DIR);
         $astspooldir = Directories::getDir(Directories::AST_SPOOL_DIR);
@@ -64,6 +65,7 @@ class AsteriskConf extends AsteriskConfigClass
             "astrundir => {$astrundir}\n" .
             "astmoddir => {$astmoddir}\n" .
             "astvarlibdir => {$astvarlibdir}\n" .
+            "astsoundsdir => {$astsoundsdir}\n" .
             "astdbdir => {$astdbdir}\n" .
             "astlogdir => {$astlogdir}\n" .
             "astspooldir => {$astspooldir}\n" .

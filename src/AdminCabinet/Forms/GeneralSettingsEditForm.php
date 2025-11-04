@@ -22,6 +22,7 @@ namespace MikoPBX\AdminCabinet\Forms;
 
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\TranslationProvider;
+use MikoPBX\Core\System\Configs\SoundFilesConf;
 use Phalcon\Forms\Element\Hidden;
 use Phalcon\Forms\Element\Numeric;
 use Phalcon\Forms\Element\Password;
@@ -110,24 +111,7 @@ class GeneralSettingsEditForm extends BaseForm
                     // Use SemanticUIDropdown for V5.0 pattern compliance
                     $this->addSemanticUIDropdown(
                         $key,
-                        [
-                            'en-en' => $this->translation->_('ex_English'),
-                            'en-gb' => $this->translation->_('ex_EnglishUK'),
-                            'ru-ru' => $this->translation->_('ex_Russian'),
-                            'de-de' => $this->translation->_('ex_Deutsch'),
-                            'da-dk' => $this->translation->_('ex_Danish'),
-                            'es-es' => $this->translation->_('ex_Spanish'),
-                            'gr-gr' => $this->translation->_('ex_Greek'),
-                            'fr-ca' => $this->translation->_('ex_French'),
-                            'it-it' => $this->translation->_('ex_Italian'),
-                            'ja-jp' => $this->translation->_('ex_Japanese'),
-                            'nl-nl' => $this->translation->_('ex_Dutch'),
-                            'pl-pl' => $this->translation->_('ex_Polish'),
-                            'pt-br' => $this->translation->_('ex_Portuguese'),
-                            'sv-sv' => $this->translation->_('ex_Swedish'),
-                            'cs-cs' => $this->translation->_('ex_Czech'),
-                            'tr-tr' => $this->translation->_('ex_Turkish'),
-                        ],
+                        SoundFilesConf::getSupportedLanguages(),
                         $value,
                         [
                             'clearable' => false,

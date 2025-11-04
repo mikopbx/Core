@@ -20,6 +20,7 @@
 
 namespace MikoPBX\Core\System\Configs;
 
+use MikoPBX\Common\Providers\LanguageProvider;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
@@ -484,53 +485,61 @@ class SoundFilesConf extends SystemConfigClass
     }
 
     /**
+     * Mapping between Asterisk sound language codes (xx-xx) and Web admin language codes (xx)
+     *
+     * @var array<string, string>
+     */
+    private const array ASTERISK_TO_WEB_LANG_MAP = [
+        'en-en' => 'en',
+        'en-gb' => 'en',  // Use English translation for British English
+        'ru-ru' => 'ru',
+        'de-de' => 'de',
+        'da-dk' => 'da',
+        'es-es' => 'es',
+        'gr-gr' => 'el',  // Greek: gr -> el (ISO 639-1)
+        'fr-ca' => 'fr',
+        'it-it' => 'it',
+        'ja-jp' => 'ja',
+        'nl-nl' => 'nl',
+        'pl-pl' => 'pl',
+        'pt-br' => 'pt_BR',
+        'sv-sv' => 'sv',
+        'cs-cs' => 'cs',
+        'tr-tr' => 'tr',
+    ];
+
+    /**
      * Get all supported languages
      *
      * Returns base system languages plus languages from enabled Language Pack modules.
+     * Uses LanguageProvider::AVAILABLE_LANGUAGES as the single source of truth for language names.
      *
      * @return array Associative array of language codes to display names
      */
     public static function getSupportedLanguages(): array
     {
-        // Base system languages (hardcoded in UI dropdowns)
-        $baseLanguages = [
-            'en-en' => TranslationProvider::translate('ex_English'),
-            'en-gb' => TranslationProvider::translate('ex_EnglishUK'),
-            'ru-ru' => TranslationProvider::translate('ex_Russian'),
-            'de-de' => TranslationProvider::translate('ex_Deutsch'),
-            'da-dk' => TranslationProvider::translate('ex_Danish'),
-            'es-es' => TranslationProvider::translate('ex_Spanish'),
-            'gr-gr' => TranslationProvider::translate('ex_Greek'),
-            'fr-ca' => TranslationProvider::translate('ex_French'),
-            'it-it' => TranslationProvider::translate('ex_Italian'),
-            'ja-jp' => TranslationProvider::translate('ex_Japanese'),
-            'nl-nl' => TranslationProvider::translate('ex_Dutch'),
-            'pl-pl' => TranslationProvider::translate('ex_Polish'),
-            'pt-br' => TranslationProvider::translate('ex_Portuguese'),
-            'sv-sv' => TranslationProvider::translate('ex_Swedish'),
-            'cs-cs' => TranslationProvider::translate('ex_Czech'),
-            'tr-tr' => TranslationProvider::translate('ex_Turkish'),
-        ];
+        $languages = [];
 
-        // Add languages from enabled Language Pack modules
-        $languagePacks = PbxExtensionUtils::getAllLanguagePackModules();
-        foreach ($languagePacks as $languageCode => $moduleId) {
-            // Only add if not already in base languages
-            if (!isset($baseLanguages[$languageCode])) {
-                // Try to translate language name, fallback to language code
-                $translationKey = 'ex_' . ucfirst(str_replace('-', '', $languageCode));
-                $translatedName = TranslationProvider::translate($translationKey);
+        // Get available Asterisk sound languages
+        $availableLanguages = self::getAvailableLanguages();
 
-                // If translation not found, use language code as display name
-                if ($translatedName === $translationKey) {
-                    $translatedName = strtoupper($languageCode);
-                }
+        foreach ($availableLanguages as $asteriskCode) {
+            // Map Asterisk code to web admin code
+            $webCode = self::ASTERISK_TO_WEB_LANG_MAP[$asteriskCode] ?? null;
 
-                $baseLanguages[$languageCode] = $translatedName;
+            if ($webCode !== null && isset(LanguageProvider::AVAILABLE_LANGUAGES[$webCode])) {
+                // Use native name from LanguageProvider
+                $languages[$asteriskCode] = LanguageProvider::AVAILABLE_LANGUAGES[$webCode]['name'];
+            } else {
+                // Fallback: use uppercase language code if no mapping found
+                $languages[$asteriskCode] = strtoupper($asteriskCode);
             }
         }
 
-        return $baseLanguages;
+        // Sort by display name
+        asort($languages, SORT_NATURAL | SORT_FLAG_CASE);
+
+        return $languages;
     }
 
     /**

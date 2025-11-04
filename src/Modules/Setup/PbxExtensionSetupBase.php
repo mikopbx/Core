@@ -22,21 +22,22 @@ namespace MikoPBX\Modules\Setup;
 
 use Directory;
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
-use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
-use MikoPBX\Common\Providers\PBXConfModulesProvider;
-use MikoPBX\Core\System\Processes;
-use MikoPBX\Core\System\SystemMessages;
-use MikoPBX\Core\System\Upgrade\UpdateDatabase;
-use MikoPBX\Modules\PbxExtensionUtils;
 use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
 use MikoPBX\Common\Providers\ConfigProvider;
 use MikoPBX\Common\Providers\MainDatabaseProvider;
 use MikoPBX\Common\Providers\MarketPlaceProvider;
+use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
+use MikoPBX\Core\System\Configs\SoundFilesConf;
 use MikoPBX\Core\System\Directories;
+use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\SystemMessages;
+use MikoPBX\Core\System\Upgrade\UpdateDatabase;
 use MikoPBX\Core\System\Util;
+use MikoPBX\Modules\PbxExtensionUtils;
 use Phalcon\Di\Injectable;
-use Throwable;
 
+use Throwable;
 use function MikoPBX\Common\Config\appPath;
 
 /**
@@ -295,6 +296,39 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
         // Create links for agi-bin scripts
         PbxExtensionUtils::createAgiBinSymlinks($this->moduleUniqueID);
 
+        // Check for Language Pack conflicts before installing sound files
+        if (PbxExtensionUtils::isLanguagePackModule($this->moduleUniqueID)) {
+            $languageCode = PbxExtensionUtils::getLanguagePackCode($this->moduleUniqueID);
+
+            if ($languageCode !== null) {
+                $conflictingModule = PbxExtensionUtils::checkLanguagePackConflict($this->moduleUniqueID, $languageCode);
+
+                if ($conflictingModule !== null) {
+                    SystemMessages::sysLogMsg(
+                        __METHOD__,
+                        "Cannot install Language Pack {$this->moduleUniqueID} ($languageCode): " .
+                        "Language Pack $conflictingModule is already installed for this language. " .
+                        "Only one Language Pack per language is allowed.",
+                        LOG_ERR
+                    );
+                    // Don't install sound files, but continue with other installation steps
+                    // The module can still be installed, but sounds won't be available
+                } else {
+                    // No conflict - install sound files
+                    SoundFilesConf::installModuleSounds($this->moduleUniqueID);
+                }
+            } else {
+                SystemMessages::sysLogMsg(
+                    __METHOD__,
+                    "Cannot determine language code for Language Pack {$this->moduleUniqueID}",
+                    LOG_WARNING
+                );
+            }
+        } else {
+            // Feature module - no conflict check needed
+            SoundFilesConf::installModuleSounds($this->moduleUniqueID);
+        }
+
         // Restore database settings
         $modulesDir          = $this->config->path('core.modulesDir');
         $backupPath = "$modulesDir/Backup/$this->moduleUniqueID";
@@ -460,6 +494,9 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
         if (file_exists($moduleJSCacheDir)) {
             unlink($moduleJSCacheDir);
         }
+
+        // Remove module sound files
+        SoundFilesConf::removeModuleSounds($this->moduleUniqueID);
 
         // Volt
         $this->cleanupVoltCache();

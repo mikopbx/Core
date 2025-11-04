@@ -257,7 +257,6 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             PbxSettings::PBX_LANGUAGE => [
                 'type' => 'string',
                 'description' => 'rest_schema_gs_pbx_language',
-                'enum' => ['en-en', 'ru-ru', 'de-de', 'da-dk', 'es-es', 'es-es', 'gr-gr', 'fr-ca', 'it-it', 'ja-jp', 'nl-nl', 'pl-pl', 'pt-br', 'sv-sv', 'cs-cs', 'tr-tr'],
                 'sanitize' => 'string',
                 'default' => self::getDefaultValue(PbxSettings::PBX_LANGUAGE),
                 'example' => self::getDefaultValue(PbxSettings::PBX_LANGUAGE)
