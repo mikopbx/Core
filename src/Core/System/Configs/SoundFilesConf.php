@@ -44,12 +44,7 @@ class SoundFilesConf extends SystemConfigClass
     private const string SOURCE_SOUNDS_DIR = '/offload/asterisk/sounds';
 
     /**
-     * Default languages to copy on first initialization
-     */
-    private const array DEFAULT_LANGUAGES = ['en-en', 'ru-ru'];
-
-    /**
-     * Start the service - initialize writable sounds directory with base languages
+     * Start the service - initialize writable sounds directory with all available languages
      *
      * @return bool True if successful, false otherwise.
      */
@@ -61,15 +56,33 @@ class SoundFilesConf extends SystemConfigClass
         // Check if sounds directory is already initialized
         if ($this->isSoundsDirectoryInitialized($targetSoundsDir)) {
             SystemMessages::sysLogMsg(__METHOD__, 'Sound files already initialized: ' . $targetSoundsDir, LOG_DEBUG);
+
+            // Reinstall module sounds (in case container was restarted)
+            $this->reinstallEnabledModuleSounds();
+
             return true;
         }
 
         // Create target directory if it doesn't exist
         Util::mwMkdir($targetSoundsDir);
 
-        // Copy base language directories
+        // Get all languages from source directory
+        $sourceLanguages = $this->getSourceLanguages();
+
+        if (empty($sourceLanguages)) {
+            SystemMessages::sysLogMsg(__METHOD__, 'No languages found in source directory', LOG_WARNING);
+            return false;
+        }
+
+        SystemMessages::sysLogMsg(
+            __METHOD__,
+            'Found ' . count($sourceLanguages) . ' languages in source directory: ' . implode(', ', $sourceLanguages),
+            LOG_INFO
+        );
+
+        // Copy all language directories
         $success = true;
-        foreach (self::DEFAULT_LANGUAGES as $lang) {
+        foreach ($sourceLanguages as $lang) {
             if (!$this->copyLanguageDirectory($lang, $targetSoundsDir)) {
                 $success = false;
             }
@@ -77,6 +90,9 @@ class SoundFilesConf extends SystemConfigClass
 
         if ($success) {
             SystemMessages::sysLogMsg(__METHOD__, 'Sound files initialized successfully to: ' . $targetSoundsDir, LOG_INFO);
+
+            // Reinstall module sounds after base languages initialization
+            $this->reinstallEnabledModuleSounds();
         } else {
             SystemMessages::sysLogMsg(__METHOD__, 'Some sound files failed to initialize', LOG_WARNING);
         }
@@ -92,15 +108,61 @@ class SoundFilesConf extends SystemConfigClass
      */
     private function isSoundsDirectoryInitialized(string $targetDir): bool
     {
-        // Check if at least one default language exists
-        foreach (self::DEFAULT_LANGUAGES as $lang) {
-            $langDir = "$targetDir/$lang";
-            if (is_dir($langDir) && count(scandir($langDir)) > 2) {
-                return true;
+        if (!is_dir($targetDir)) {
+            return false;
+        }
+
+        // Check if directory has any language subdirectories
+        $dirs = glob("$targetDir/*", GLOB_ONLYDIR);
+
+        if (empty($dirs)) {
+            return false;
+        }
+
+        // Check if at least one directory is a valid language directory with files
+        foreach ($dirs as $dir) {
+            $lang = basename($dir);
+            // Only check directories that match language-country format (xx-xx)
+            if (preg_match('/^[a-z]{2}-[a-z]{2}$/i', $lang)) {
+                $files = scandir($dir);
+                if (count($files) > 2) { // More than just . and ..
+                    return true;
+                }
             }
         }
 
         return false;
+    }
+
+    /**
+     * Get all available languages from source directory
+     *
+     * Scans the source sounds directory for language subdirectories matching
+     * the language-country format (xx-xx). This allows automatic discovery
+     * of all packaged languages without hardcoding the list.
+     *
+     * @return array List of language codes found in source directory
+     */
+    private function getSourceLanguages(): array
+    {
+        if (!is_dir(self::SOURCE_SOUNDS_DIR)) {
+            SystemMessages::sysLogMsg(__METHOD__, 'Source sounds directory not found: ' . self::SOURCE_SOUNDS_DIR, LOG_WARNING);
+            return [];
+        }
+
+        $languages = [];
+        $dirs = glob(self::SOURCE_SOUNDS_DIR . '/*', GLOB_ONLYDIR);
+
+        foreach ($dirs as $dir) {
+            $lang = basename($dir);
+            // Only include directories that match language-country format (xx-xx)
+            if (preg_match('/^[a-z]{2}-[a-z]{2}$/i', $lang)) {
+                $languages[] = $lang;
+            }
+        }
+
+        sort($languages);
+        return $languages;
     }
 
     /**
@@ -139,6 +201,65 @@ class SoundFilesConf extends SystemConfigClass
 
         SystemMessages::sysLogMsg(__METHOD__, "Failed to copy language '$language'. Exit code: $exitCode", LOG_WARNING);
         return false;
+    }
+
+    /**
+     * Reinstall sound files for all enabled modules
+     *
+     * This method is called during system startup to restore module sound files
+     * after container restart when /mountpoint is cleared.
+     *
+     * @return void
+     */
+    private function reinstallEnabledModuleSounds(): void
+    {
+        // Query all enabled modules from database
+        $di = \Phalcon\Di\Di::getDefault();
+        if ($di === null) {
+            SystemMessages::sysLogMsg(__METHOD__, 'DI container not available, skipping module sounds reinstallation', LOG_WARNING);
+            return;
+        }
+
+        $parameters = [
+            'conditions' => 'disabled=0',
+        ];
+
+        try {
+            $modules = \MikoPBX\Common\Models\PbxExtensionModules::find($parameters)->toArray();
+        } catch (\Throwable $e) {
+            SystemMessages::sysLogMsg(__METHOD__, "Failed to query enabled modules: " . $e->getMessage(), LOG_WARNING);
+            return;
+        }
+
+        if (empty($modules)) {
+            SystemMessages::sysLogMsg(__METHOD__, 'No enabled modules found, skipping sounds reinstallation', LOG_DEBUG);
+            return;
+        }
+
+        SystemMessages::sysLogMsg(__METHOD__, 'Reinstalling sound files for ' . count($modules) . ' enabled modules', LOG_INFO);
+
+        foreach ($modules as $module) {
+            $moduleUniqueID = $module['uniqid'];
+
+            // Check if module has Sounds directory
+            $moduleDir = PbxExtensionUtils::getModuleDir($moduleUniqueID);
+            $moduleSoundsDir = "$moduleDir/Sounds";
+
+            if (!is_dir($moduleSoundsDir)) {
+                continue; // Module doesn't have sounds
+            }
+
+            // Reinstall sound files
+            try {
+                self::installModuleSounds($moduleUniqueID);
+            } catch (\Throwable $e) {
+                SystemMessages::sysLogMsg(
+                    __METHOD__,
+                    "Failed to reinstall sounds for module $moduleUniqueID: " . $e->getMessage(),
+                    LOG_WARNING
+                );
+            }
+        }
     }
 
     /**
