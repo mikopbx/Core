@@ -53,6 +53,7 @@ class LanguageProvider implements ServiceProviderInterface
      */
     public const array AVAILABLE_LANGUAGES = [
         'en' => ['name' => 'English', 'flag' => 'united kingdom', 'translationKey' => 'ex_English'],
+        'en_GB' => ['name' => 'English (UK)', 'flag' => 'united kingdom', 'translationKey' => 'ex_EnglishUK'],
         'ru' => ['name' => 'Русский', 'flag' => 'russia', 'translationKey' => 'ex_Russian'],
         'de' => ['name' => 'Deutsch', 'flag' => 'germany', 'translationKey' => 'ex_Deutsch'],
         'es' => ['name' => 'Español', 'flag' => 'spain', 'translationKey' => 'ex_Spanish'],
