@@ -174,6 +174,12 @@ class PbxExtensionUtils
         $moduleViewDir = "$moduleDir/App/Views";
         $viewCacheDir = appPath('src/AdminCabinet/Views/Modules');
         $moduleViewCacheDir = "$viewCacheDir/$moduleUniqueID";
+
+        // Ensure parent directory exists before creating symlink
+        if (!is_dir($viewCacheDir)) {
+            mkdir($viewCacheDir, 0755, true);
+        }
+
         if (file_exists($moduleViewCacheDir)) {
             unlink($moduleViewCacheDir);
         }
