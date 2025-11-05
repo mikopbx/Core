@@ -287,18 +287,29 @@ class MikoPBXClient:
                 else:
                     raise
 
-    def delete(self, path: str) -> Dict[str, Any]:
-        """DELETE request with connection retry"""
+    def delete(self, path: str, data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """DELETE request with connection retry
+
+        Args:
+            path: API endpoint path
+            data: Optional data to send with DELETE request (e.g., deleteRecording flag)
+        """
         import time
         max_attempts = 5
         base_delay = 3
-        
+
         for attempt in range(max_attempts):
             try:
+                kwargs = {
+                    'headers': self._get_headers(),
+                    'timeout': 30
+                }
+                if data:
+                    kwargs['json'] = data
+
                 response = self.session.delete(
                     f"{self.base_url}/{path.lstrip('/')}",
-                    headers=self._get_headers(),
-                    timeout=30
+                    **kwargs
                 )
                 response.raise_for_status()
                 return response.json()
