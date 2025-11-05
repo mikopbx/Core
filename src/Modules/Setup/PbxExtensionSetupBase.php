@@ -22,21 +22,22 @@ namespace MikoPBX\Modules\Setup;
 
 use Directory;
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
-use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
-use MikoPBX\Common\Providers\PBXConfModulesProvider;
-use MikoPBX\Core\System\Processes;
-use MikoPBX\Core\System\SystemMessages;
-use MikoPBX\Core\System\Upgrade\UpdateDatabase;
-use MikoPBX\Modules\PbxExtensionUtils;
 use MikoPBX\Common\Models\{PbxExtensionModules, PbxSettings};
 use MikoPBX\Common\Providers\ConfigProvider;
 use MikoPBX\Common\Providers\MainDatabaseProvider;
 use MikoPBX\Common\Providers\MarketPlaceProvider;
+use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
+use MikoPBX\Common\Providers\PBXConfModulesProvider;
+use MikoPBX\Core\System\Configs\SoundFilesConf;
 use MikoPBX\Core\System\Directories;
+use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\SystemMessages;
+use MikoPBX\Core\System\Upgrade\UpdateDatabase;
 use MikoPBX\Core\System\Util;
+use MikoPBX\Modules\PbxExtensionUtils;
 use Phalcon\Di\Injectable;
-use Throwable;
 
+use Throwable;
 use function MikoPBX\Common\Config\appPath;
 
 /**
@@ -295,6 +296,12 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
         // Create links for agi-bin scripts
         PbxExtensionUtils::createAgiBinSymlinks($this->moduleUniqueID);
 
+        // NOTE: Sound files are NOT installed during module installation
+        // Sound files are managed through module enable/disable hooks:
+        // - onAfterModuleEnable(): Install sound files when module is enabled
+        // - onAfterModuleDisable(): Remove sound files when module is disabled
+        // This ensures that disabled modules don't affect the system
+
         // Restore database settings
         $modulesDir          = $this->config->path('core.modulesDir');
         $backupPath = "$modulesDir/Backup/$this->moduleUniqueID";
@@ -460,6 +467,11 @@ abstract class PbxExtensionSetupBase extends Injectable implements PbxExtensionS
         if (file_exists($moduleJSCacheDir)) {
             unlink($moduleJSCacheDir);
         }
+
+        // NOTE: Sound files are NOT removed during module uninstallation
+        // Sound files should be removed when module is disabled via onAfterModuleDisable() hook
+        // If module was disabled before uninstall, sounds are already removed
+        // If module was enabled, it should be disabled first (which removes sounds)
 
         // Volt
         $this->cleanupVoltCache();

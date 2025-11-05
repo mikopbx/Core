@@ -30,6 +30,7 @@ use MikoPBX\Core\System\Configs\DnsConf;
 use MikoPBX\Core\System\Configs\Fail2BanConf;
 use MikoPBX\Core\System\Configs\GeoIP2Conf;
 use MikoPBX\Core\System\Configs\IptablesConf;
+use MikoPBX\Core\System\Configs\SoundFilesConf;
 use MikoPBX\Core\System\Configs\MonitConf;
 use MikoPBX\Core\System\Configs\NTPConf;
 use MikoPBX\Core\System\Configs\NatsConf;
@@ -355,6 +356,11 @@ class SystemLoader extends Injectable
         } else {
             $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
         }
+
+        // Initialize sound files directory with base languages
+        $this->echoStartMsg(' - Initializing sound files...');
+        $soundFilesConf = new SoundFilesConf();
+        $this->echoResultMsg($soundFilesConf->start() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
 
         // Apply user-created custom files (after Redis is started)
         $this->echoStartMsg(' - Applying user-created custom files...');

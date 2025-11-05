@@ -387,12 +387,26 @@ ModuleName/
 ├── Messages/             # Translations (en.php, ru.php, etc.)
 ├── Models/               # Database models
 ├── Setup/                # Setup class
+├── agi-bin/              # AGI scripts
 ├── bin/                  # Executable scripts
 ├── db/                   # Database files
 ├── public/               # Web assets (CSS, JS, images)
 │   ├── css/
 │   ├── js/
 │   └── img/
+├── sounds/               # Sound files (OPTIONAL, see Sound Files section)
+│   ├── en/              # English sound files
+│   │   ├── hello.wav
+│   │   ├── goodbye.wav
+│   │   └── digits/      # Subdirectories supported
+│   │       ├── 0.wav
+│   │       └── 1.wav
+│   ├── ru/              # Russian sound files
+│   │   ├── hello.wav
+│   │   └── goodbye.wav
+│   └── de/              # German sound files (add new languages!)
+│       ├── hello.wav
+│       └── goodbye.wav
 ├── module.json           # Module metadata
 └── ModuleNameConf.php    # Main module class
 ```
@@ -650,6 +664,448 @@ class GroupMembers extends ModelsBase
         );
     }
 }
+```
+
+## Sound Files Integration
+
+### Overview
+
+MikoPBX supports two types of modules for sound file management:
+
+1. **Language Pack Modules**: Add complete language support (thousands of system sounds)
+2. **Feature Modules**: Add custom sounds for specific functionality
+
+Both types are automatically installed and become globally accessible through standard `Playback()` dialplan commands.
+
+### Module Types
+
+#### 1. Language Pack Modules
+
+**Purpose**: Add complete language support for Asterisk (e.g., German, Japanese, French)
+
+**Characteristics**:
+- Sound files installed **WITHOUT prefix** (replace/extend system sounds)
+- Contains ONLY ONE language per module
+- Full language pack (digits, letters, phonetic, phrases, etc.)
+- Only ONE Language Pack per language allowed (conflict prevention)
+
+**Example modules**: `ModuleLanguagePackGerman`, `ModuleLanguagePackJapanese`, `ModuleLanguagePackFrench`
+
+#### 2. Feature Modules
+
+**Purpose**: Add custom sounds for module-specific functionality
+
+**Characteristics**:
+- Sound files installed **WITH prefix** (`modulename-sound.wav`)
+- Can support multiple languages
+- Module-specific sounds (greetings, prompts, notifications)
+- No installation conflicts
+
+**Example modules**: `ModuleCallRecording`, `ModuleIVR`, `ModuleVoicemail`
+
+### How It Works
+
+1. **System Initialization**: On first boot, MikoPBX copies base language sounds from `/offload/asterisk/sounds/` (read-only) to `/mountpoint/mikopbx/media/sounds/` (writable)
+2. **Module Type Detection**: System checks `module.json` for `module_type` field
+3. **Conflict Check**: For Language Pack modules, checks if another Language Pack for the same language is already installed
+4. **File Installation**:
+   - Language Pack: Files copied WITHOUT prefix (direct replacement)
+   - Feature module: Files copied WITH prefix (`modulename-`)
+5. **Global Access**: All sounds become available through Asterisk's standard sound resolution mechanism
+6. **Automatic Updates**: Module updates automatically refresh sound files
+
+### File Structure
+
+#### Language Pack Module Structure
+
+```
+ModuleLanguagePackGerman/
+├── module.json
+│   {
+│     "module_type": "languagepack",
+│     "language_code": "de-de"
+│   }
+└── sounds/
+    └── de-de/                   # MUST match language_code
+        ├── hello.wav            # → hello.wav (NO prefix!)
+        ├── goodbye.wav          # → goodbye.wav
+        ├── vm-intro.wav         # → vm-intro.wav
+        ├── digits/
+        │   ├── 0.wav           # → 0.wav
+        │   ├── 1.wav           # → 1.wav
+        │   └── ...
+        ├── letters/
+        │   ├── a.wav
+        │   └── ...
+        └── phonetic/
+            ├── alpha_1.wav
+            └── ...
+```
+
+#### Feature Module Structure
+
+```
+ModuleCallRecording/
+├── module.json
+│   {
+│     "module_type": "feature"    # Optional (default)
+│   }
+└── sounds/
+    ├── en-en/
+    │   ├── recording-started.wav    # → modulecallrecording-recording-started.wav
+    │   ├── recording-stopped.wav    # → modulecallrecording-recording-stopped.wav
+    │   └── recording-paused.wav     # → modulecallrecording-recording-paused.wav
+    ├── ru-ru/
+    │   ├── recording-started.wav
+    │   ├── recording-stopped.wav
+    │   └── recording-paused.wav
+    └── de-de/
+        ├── recording-started.wav
+        └── recording-stopped.wav
+```
+
+### Supported Audio Formats
+
+- **Recommended**: WAV (PCM, 8000Hz, 16-bit, mono)
+- **Supported**: ulaw, alaw, gsm, g722, sln
+
+### File Naming Convention
+
+#### Language Pack Modules (NO prefix)
+
+```
+Original:     sounds/de-de/hello.wav
+Installed as: /mountpoint/mikopbx/media/sounds/de-de/hello.wav
+
+Original:     sounds/de-de/digits/0.wav
+Installed as: /mountpoint/mikopbx/media/sounds/de-de/digits/0.wav
+```
+
+#### Feature Modules (WITH prefix)
+
+```
+Original:     sounds/en-en/greeting.wav
+Installed as: /mountpoint/mikopbx/media/sounds/en-en/modulecallrecording-greeting.wav
+
+Original:     sounds/en-en/digits/0.wav
+Installed as: /mountpoint/mikopbx/media/sounds/en-en/modulecallrecording-0.wav
+```
+
+### Usage in Dialplan
+
+#### Language Pack Module Usage
+
+Language Pack modules provide system sounds WITHOUT prefix:
+
+```php
+// ModuleLanguagePackGerman
+public function extensionGenContexts(): string
+{
+    return "[german-demo]\n" .
+           "exten => *88,1,Answer()\n" .
+           "\tsame => n,Set(CHANNEL(language)=de-de)\n" .  // Use German language
+           "\tsame => n,Playback(hello)\n" .                // System sound from Language Pack
+           "\tsame => n,Playback(digits/5)\n" .             // German "5"
+           "\tsame => n,Playback(goodbye)\n" .              // System sound
+           "\tsame => n,Hangup()\n\n";
+}
+```
+
+#### Feature Module Usage
+
+Feature modules provide custom sounds WITH prefix:
+
+```php
+// ModuleCallRecording
+public function extensionGenInternal(): string
+{
+    return "exten => *99,1,Answer()\n" .
+           "\tsame => n,Playback(modulecallrecording-recording-started)\n" .  // Custom sound
+           "\tsame => n,MixMonitor(/tmp/recording.wav)\n" .
+           "\tsame => n,Hangup()\n\n";
+}
+```
+
+#### Combined Usage (Language Pack + Feature Module)
+
+```php
+public function extensionGenContexts(): string
+{
+    return "[combined-demo]\n" .
+           "exten => s,1,Answer()\n" .
+           "\tsame => n,Set(CHANNEL(language)=de-de)\n" .          // Use German from Language Pack
+           "\tsame => n,Playback(hello)\n" .                       // System sound (German)
+           "\tsame => n,Playback(modulecallrecording-started)\n" . // Feature module sound
+           "\tsame => n,Playback(goodbye)\n" .                     // System sound (German)
+           "\tsame => n,Hangup()\n\n";
+}
+```
+
+#### Using Subdirectories (digits, letters, etc.)
+
+```php
+public function extensionGenInternal(): string
+{
+    return "exten => _*88X,1,Answer()\n" .
+           "\tsame => n,Set(DIGIT=\${EXTEN:3})\n" .
+           "\tsame => n,Playback(modulename-digits/\${DIGIT})\n" .  // modulename-0.wav from digits/
+           "\tsame => n,Hangup()\n\n";
+}
+```
+
+### Creating Language Pack Module
+
+#### Step 1: module.json Configuration
+
+```json
+{
+  "module_id": "ModuleLanguagePackJapanese",
+  "name": "Japanese Language Pack",
+  "module_type": "languagepack",
+  "language_code": "ja-ja",
+  "version": "1.0.0",
+  "min_pbx_version": "2024.1.0",
+  "description": {
+    "en": "Complete Japanese language pack for MikoPBX",
+    "ru": "Полный языковой пакет для японского языка"
+  }
+}
+```
+
+**Required fields for Language Pack**:
+- `module_type`: Must be `"languagepack"`
+- `language_code`: Language-country code (e.g., `"ja-ja"`, `"de-de"`, `"fr-fr"`, `"en-en"`)
+
+**Supported language codes**:
+Use `SoundFilesConf::getSupportedLanguages()` to get the full list or `isValidLanguageCode()` for validation.
+
+Asterisk uses `xx-xx` format (language-country):
+- `en-en` - English (US)
+- `en-gb` - English (UK)
+- `ru-ru` - Russian
+- `de-de` - German
+- `ja-jp` - Japanese
+- `fr-ca` - French (Canada)
+- And 10+ more supported languages...
+
+#### Step 2: Sound Files Structure
+
+```
+ModuleLanguagePackJapanese/
+├── module.json
+└── sounds/
+    └── ja-ja/                # MUST match language_code in module.json
+        ├── hello.wav         # → hello.wav (replaces system sound)
+        ├── goodbye.wav       # → goodbye.wav
+        ├── vm-intro.wav      # → vm-intro.wav
+        ├── digits/
+        │   ├── 0.wav        # → digits/0.wav
+        │   ├── 1.wav
+        │   └── ...
+        ├── letters/
+        │   ├── a.wav
+        │   └── ...
+        └── phonetic/
+            └── ...
+```
+
+#### Step 3: Installation
+
+When installed:
+1. System checks for existing Japanese Language Pack
+2. If found, installation fails with error message
+3. If not found, all files copied **without prefix** to `/mountpoint/mikopbx/media/sounds/ja-ja/`
+4. Japanese becomes available system-wide
+
+### Real-World Use Case: Multilingual IVR
+
+```php
+public function extensionGenContexts(): string
+{
+    return "[module-ivr-multilang]\n" .
+           "exten => s,1,NoOp(Multilingual IVR)\n" .
+           "\tsame => n,Answer()\n" .
+           "\tsame => n,Wait(1)\n" .
+           "\tsame => n,Set(CHANNEL(language)=\${CALLERID(language)})\n" .  // Auto-detect language
+           "\tsame => n(menu),Background(modulename-ivr-menu)\n" .  // Play menu in caller's language
+           "\tsame => n,WaitExten(5)\n" .
+           "\n" .
+           "exten => 1,1,Playback(modulename-option1-selected)\n" .
+           "\tsame => n,Goto(sales,s,1)\n" .
+           "\n" .
+           "exten => 2,1,Playback(modulename-option2-selected)\n" .
+           "\tsame => n,Goto(support,s,1)\n" .
+           "\n" .
+           "exten => i,1,Playback(modulename-invalid-option)\n" .  // Invalid option
+           "\tsame => n,Goto(s,menu)\n" .
+           "\n" .
+           "exten => t,1,Playback(modulename-timeout)\n" .  // Timeout
+           "\tsame => n,Hangup()\n\n";
+}
+```
+
+### Best Practices
+
+#### For Language Pack Modules
+
+1. **Single Language Only**: Each Language Pack must contain ONLY ONE language
+2. **Complete Language Coverage**: Provide comprehensive sound set (digits, letters, phonetic, phrases)
+3. **Use Standard Filenames**: Match Asterisk's default sound file naming (hello.wav, goodbye.wav, etc.)
+4. **Set language_code**: Always specify `language_code` in module.json
+5. **Test Thoroughly**: Verify all system sounds work correctly in target language
+6. **Document Coverage**: List which sounds are included vs. missing
+7. **One Per Language**: Remember - only one Language Pack per language can be installed
+
+#### For Feature Modules
+
+1. **Always Provide English**: English (`en-en/`) is the fallback language
+2. **Descriptive Names**: Use clear filenames (e.g., `recording-started.wav` not `sound1.wav`)
+3. **Multilingual Support**: Provide sounds in multiple languages if module is widely used
+4. **Prefix Awareness**: Remember files will be prefixed with module name
+5. **Test in Context**: Verify sounds work with intended dialplan logic
+6. **Keep Sounds Focused**: Only include sounds specific to module functionality
+
+#### General Best Practices (Both Types)
+
+1. **Audio Quality**: Use 8000Hz, 16-bit, mono WAV files for best compatibility
+2. **File Size**: Keep files small (under 1MB each) for faster loading
+3. **Subdirectory Structure**: Use standard Asterisk subdirectories:
+   - `digits/` - Number pronunciation
+   - `letters/` - Letter pronunciation
+   - `phonetic/` - Phonetic alphabet
+4. **Version Control**: Update sounds when updating module version if needed
+5. **Testing**: Test with `Set(CHANNEL(language)=xx)` before deploying
+
+### Automatic Management
+
+Sound files are automatically:
+- ✅ **Installed** when module is installed (`installFiles()`)
+- ✅ **Updated** when module is upgraded
+- ✅ **Removed** when module is uninstalled (`unInstallFiles()`)
+
+No additional code needed in your module!
+
+### Technical Details
+
+**System Configuration**:
+- Base sounds: `/offload/asterisk/sounds/` (read-only, system sounds)
+- Module sounds: `/mountpoint/mikopbx/media/sounds/` (writable, includes all module sounds)
+- Asterisk config: `astsoundsdir => /mountpoint/mikopbx/media/sounds` in `asterisk.conf`
+
+**Module Type Detection**:
+1. Check `module.json` for `"module_type": "languagepack"`
+2. If not set or not `"languagepack"` → Feature module (default)
+
+**File Resolution Order**:
+1. Asterisk looks in `/mountpoint/mikopbx/media/sounds/{language}/filename`
+2. If not found, falls back to `/mountpoint/mikopbx/media/sounds/en-en/filename`
+3. Feature module files use prefix: `modulename-filename.wav`
+4. Language Pack files use original name: `filename.wav`
+
+**Storage Location Example**:
+```
+/mountpoint/mikopbx/media/sounds/
+├── en-en/                           # English (base + modules)
+│   ├── hello.wav                    # System sound
+│   ├── goodbye.wav                  # System sound
+│   ├── modulecallrecording-started.wav    # Feature module
+│   └── digits/
+│       ├── 0.wav                    # System sound
+│       └── modulecallrecording-0.wav      # Feature module
+├── ru-ru/                           # Russian (base + modules)
+│   ├── hello.wav
+│   └── modulecallrecording-started.wav
+└── ja-ja/                           # Japanese (from Language Pack)
+    ├── hello.wav                    # Language Pack (NO prefix)
+    ├── goodbye.wav                  # Language Pack (NO prefix)
+    └── digits/
+        ├── 0.wav                    # Language Pack
+        └── modulecallrecording-0.wav      # Feature module can add too
+```
+
+**Conflict Prevention**:
+- Language Pack modules: One per language (enforced)
+- Feature modules: No conflicts (prefix ensures uniqueness)
+
+### Troubleshooting
+
+#### Language Pack Issues
+
+**Language Pack installation fails**:
+```bash
+# Check for existing Language Pack for the same language
+ls /mountpoint/mikopbx/media/sounds/ja-ja/
+
+# Check system logs for conflict messages
+grep "Language Pack" /var/log/mikopbx/system.log
+```
+
+**Language sounds not playing**:
+```bash
+# Verify language directory exists
+ls /mountpoint/mikopbx/media/sounds/ja-ja/
+
+# Check sound files (NO prefix expected)
+ls /mountpoint/mikopbx/media/sounds/ja-ja/hello.wav
+
+# Verify language is set in dialplan
+asterisk -rx "dialplan show german-demo"
+
+# Test playback
+asterisk -rx "console dial *88@german-demo"
+```
+
+**Wrong Language Pack installed**:
+```bash
+# Uninstall the incorrect Language Pack from admin UI
+# Then install the correct one
+```
+
+#### Feature Module Issues
+
+**Feature module sounds not playing**:
+```bash
+# Check files exist WITH prefix
+ls /mountpoint/mikopbx/media/sounds/en-en/modulecallrecording-*
+
+# Verify format
+file /mountpoint/mikopbx/media/sounds/en-en/modulecallrecording-started.wav
+
+# Check Asterisk can read files
+asterisk -rx "core show file formats"
+
+# Test playback with correct prefix
+asterisk -rx "console dial 100@test"
+# Then: Playback(modulecallrecording-started)
+```
+
+**Sound files not removed after uninstall**:
+```bash
+# Feature modules: Check for orphaned prefixed files
+find /mountpoint/mikopbx/media/sounds -name "modulecallrecording-*"
+
+# Language Packs: Check if language directory still exists
+ls /mountpoint/mikopbx/media/sounds/ja-ja/
+```
+
+#### General Issues
+
+**Language fallback not working**:
+```bash
+# Verify English fallback exists
+ls /mountpoint/mikopbx/media/sounds/en-en/
+
+# Check CHANNEL(language) setting
+asterisk -rx "dialplan show your-context"
+```
+
+**Module type not detected correctly**:
+```bash
+# Check module.json
+cat /var/www/mikopbx/ModuleLanguagePackGerman/module.json | grep module_type
+
+# Verify in logs
+grep "Language Pack\|Feature" /var/log/mikopbx/system.log
 ```
 
 ## Testing Modules

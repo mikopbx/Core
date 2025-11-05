@@ -45,6 +45,7 @@ class Directories extends Injectable
     public const string AST_MEDIA_DIR = 'asterisk.mediadir';
     public const string AST_MONITOR_DIR = 'asterisk.monitordir';
     public const string AST_CUSTOM_SOUND_DIR = 'asterisk.customSoundDir';
+    public const string AST_SOUNDS_DIR = 'asterisk.astsoundsdir';
     public const string AST_LUA_DIALPLAN_DIR = 'asterisk.luaDialplanDir';
     public const string WWW_UPLOAD_DIR = 'www.uploadDir';
     public const string WWW_DOWNLOAD_CACHE_DIR = 'www.downloadCacheDir';
@@ -73,6 +74,7 @@ class Directories extends Injectable
         self::AST_MONITOR_DIR => '/mountpoint/mikopbx/astspool/monitor',
         self::AST_MOH_DIR => '/mountpoint/mikopbx/media/moh',
         self::AST_CUSTOM_SOUND_DIR => '/mountpoint/mikopbx/media/custom',
+        self::AST_SOUNDS_DIR => '/mountpoint/mikopbx/media/sounds',
         self::AST_LUA_DIALPLAN_DIR => '/etc/asterisk/extensions-lua',
         self::WWW_UPLOAD_DIR => '/mountpoint/mikopbx/tmp/www_cache/upload_cache',
         self::WWW_DOWNLOAD_CACHE_DIR => '/mountpoint/mikopbx/tmp/www_cache/files_cache',

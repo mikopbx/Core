@@ -202,6 +202,8 @@ Use the **`api-client`** skill to execute API requests with automatic authentica
 
 ## Creating New Endpoints
 
+### Core Endpoints
+
 1. **Controller:** `src/PBXCoreREST/Controllers/YourResource/RestController.php`
 2. **Processor:** `src/PBXCoreREST/Lib/YourResourceManagementProcessor.php` (enum + match)
 3. **Actions:** `src/PBXCoreREST/Lib/YourResource/*Action.php`
@@ -220,6 +222,38 @@ Custom methods (Google API Design):
 - Resource: `GET /resource/{id}:method`
 
 **Important:** When using array-based `idPattern` (e.g., `['SIP-', 'IAX-', 'SIP-TRUNK-']`), the router automatically generates patterns that exclude colons and slashes (`[^/:]+`) to ensure proper parsing of `/{id}:method` routes.
+
+### Module Endpoints (Pattern 4)
+
+**⚠️ CRITICAL: Prevent endpoint conflicts**
+
+When creating module endpoints, **ALWAYS** include module namespace in path:
+
+```php
+// ✅ CORRECT - includes module namespace
+#[ApiResource(path: '/pbxcore/api/v3/modules/your-module-name/resource')]
+
+// ❌ WRONG - conflicts with Core!
+#[ApiResource(path: '/pbxcore/api/v3/resource')]
+```
+
+**Why this matters:**
+1. **Core conflicts:** Module path `/pbxcore/api/v3/tasks` conflicts with Core `/pbxcore/api/v3/tasks`
+2. **Module conflicts:** Two modules can't use `/pbxcore/api/v3/tasks`
+3. **Future-proof:** Core may add new endpoints in future updates
+
+**Recommended patterns:**
+- `/pbxcore/api/v3/modules/{module-kebab-case}/{resource}` ✅
+- `/pbxcore/api/v3/module-{module-name}/{resource}` ⚠️ (alternative)
+
+**Examples:**
+```php
+// ModuleTaskManager
+#[ApiResource(path: '/pbxcore/api/v3/modules/task-manager/tasks')]
+
+// ModuleCRM
+#[ApiResource(path: '/pbxcore/api/v3/modules/crm/contacts')]
+```
 
 ## HTTP Status Codes
 

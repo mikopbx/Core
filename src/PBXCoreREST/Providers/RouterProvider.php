@@ -24,7 +24,9 @@ namespace MikoPBX\PBXCoreREST\Providers;
 
 use MikoPBX\PBXCoreREST\Controllers\Modules\ModulesControllerBase;
 
+use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Modules\Config\RestAPIConfigInterface;
 use MikoPBX\PBXCoreREST\Middleware\AuthenticationMiddleware;
 use MikoPBX\PBXCoreREST\Middleware\ResponseMiddleware;
@@ -111,14 +113,17 @@ class RouterProvider implements ServiceProviderInterface
             // Special case routes (must be BEFORE universal routes for priority)
             ...self::SPECIAL_ROUTES,
 
-            // Universal auto-discovered RESTful routes
+            // Universal auto-discovered RESTful routes (Core)
             ...$this->discoverUniversalRoutes(),
+
+            // Module Pattern 4 auto-discovered routes
+            ...$this->discoverModuleControllers(),
 
             // Legacy routes
             ...self::LEGACY_ROUTES,
         ];
 
-        // Add module routes if available
+        // Add module routes if available (Pattern 2: Custom Controllers)
         $moduleRoutes = PBXConfModulesProvider::hookModulesMethod(
             RestAPIConfigInterface::GET_PBXCORE_REST_ADDITIONAL_ROUTES
         );
@@ -170,6 +175,85 @@ class RouterProvider implements ServiceProviderInterface
 
             // Generate UNIVERSAL routes for this controller
             $routes = [...$routes, ...$this->generateUniversalRoutes($controllerClass, $resourcePath)];
+        }
+
+        return $routes;
+    }
+
+    /**
+     * Discover REST controllers from modules (Pattern 4)
+     *
+     * Scans enabled modules in CORE_MODULES_DIR for API/Controllers with #[ApiResource] attribute
+     * This enables Pattern 4 (Modern v3) for third-party modules
+     *
+     * @return array Array of routes for discovered module controllers
+     */
+    private function discoverModuleControllers(): array
+    {
+        $routes = [];
+
+        // Get path to installed modules (/storage/usbdisk1/mikopbx/custom_modules/)
+        $modulesPath = Directories::getDir(Directories::CORE_MODULES_DIR);
+
+        // Check if modules directory exists
+        if (!is_dir($modulesPath)) {
+            return $routes;
+        }
+
+        // Get only enabled modules from database
+        $enabledModules = PbxExtensionModules::find([
+            'conditions' => 'disabled = :disabled:',
+            'bind' => ['disabled' => '0']
+        ]);
+
+        // Scan each enabled module
+        foreach ($enabledModules as $module) {
+            $moduleName = $module->uniqid;
+            $moduleDir = "{$modulesPath}/{$moduleName}";
+            $apiControllersPath = "{$moduleDir}/API/Controllers";
+
+            // Skip if module doesn't have API/Controllers directory
+            if (!is_dir($apiControllersPath)) {
+                continue;
+            }
+
+            // Recursively scan API/Controllers directory for PHP files
+            $iterator = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($apiControllersPath, \RecursiveDirectoryIterator::SKIP_DOTS)
+            );
+
+            /** @var \SplFileInfo $file */
+            foreach ($iterator as $file) {
+                if (!($file instanceof \SplFileInfo) || $file->getExtension() !== 'php') {
+                    continue;
+                }
+
+                // Extract class name from file path
+                // Example: Tasks/RestController.php -> Tasks\RestController
+                $relativePath = str_replace($apiControllersPath . '/', '', $file->getPathname());
+                $relativePath = str_replace('.php', '', $relativePath);
+                $className = str_replace('/', '\\', $relativePath);
+
+                // Build full controller class name
+                // Example: Modules\ModuleExampleModern\API\Controllers\Tasks\RestController
+                $controllerClass = "Modules\\{$moduleName}\\API\\Controllers\\{$className}";
+
+                // Check if class exists
+                if (!class_exists($controllerClass)) {
+                    continue;
+                }
+
+                // Get resource path from ApiResource attribute
+                $resourcePath = $this->getResourcePathFromAttribute($controllerClass);
+
+                // Skip if no ApiResource attribute found
+                if ($resourcePath === null) {
+                    continue;
+                }
+
+                // Generate UNIVERSAL routes for this module controller
+                $routes = [...$routes, ...$this->generateUniversalRoutes($controllerClass, $resourcePath)];
+            }
         }
 
         return $routes;
