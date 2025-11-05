@@ -89,12 +89,6 @@ class RestController extends BaseRestController
     protected string $processorClass = Fail2BanManagementProcessor::class;
 
     /**
-     * Indicates this is a singleton resource
-     * @var bool
-     */
-    protected bool $isSingleton = true;
-
-    /**
      * Get Fail2Ban settings (singleton resource)
      *
      * Retrieves the current Fail2Ban configuration including ban policies,

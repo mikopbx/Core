@@ -69,13 +69,6 @@ class RestController extends BaseRestController
     protected string $processorClass = PasswordsManagementProcessor::class;
 
     /**
-     * Indicates this is a singleton resource
-     * @var bool
-     */
-    protected bool $isSingleton = true;
-
-
-    /**
      * Generate secure password
      *
      * @route GET /pbxcore/api/v3/passwords:generate

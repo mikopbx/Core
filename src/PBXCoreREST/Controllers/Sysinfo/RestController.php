@@ -67,12 +67,6 @@ class RestController extends BaseRestController
     protected string $processorClass = SysinfoManagementProcessor::class;
 
     /**
-     * Indicates this is a singleton resource
-     * @var bool
-     */
-    protected bool $isSingleton = true;
-
-    /**
      * Get complete system information
      *
      * @route GET /pbxcore/api/v3/sysinfo:getInfo

@@ -68,12 +68,6 @@ class RestController extends BaseRestController
     protected string $processorClass = IaxManagementProcessor::class;
 
     /**
-     * Indicates this is a singleton resource (no CRUD operations)
-     * @var bool
-     */
-    protected bool $isSingleton = true;
-
-    /**
      * Get IAX providers registry status
      *
      * Returns real-time registration status and connectivity information

@@ -51,3 +51,4 @@ tests/api/**/*.tmp
 .claude/missing_*.json
 .claude/translation_analysis_report.json
 .claude/*.tar.gz
+run-test-from-host.sh

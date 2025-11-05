@@ -118,26 +118,20 @@ class RestController extends BaseRestController
         // PHPStan: According to Phalcon\Http\Response::getContent() PHPDoc, content is always string
         // But runtime type check is safer for robustness
         if (!is_string($responseContent) || $responseContent === '') {
-            SystemMessages::sysLogMsg(__CLASS__, "Auth cookie handling - No response content", LOG_DEBUG);
             return;
         }
 
-        SystemMessages::sysLogMsg(__CLASS__, "Auth cookie handling - Response content length: " . strlen($responseContent), LOG_DEBUG);
-
         $responseData = json_decode($responseContent, true);
         if (!is_array($responseData)) {
-            SystemMessages::sysLogMsg(__CLASS__, "Auth cookie handling - Invalid JSON response", LOG_WARNING);
             return;
         }
 
         // Handle cookie operations based on action
         if (!isset($responseData['data']['_cookieData']) || !is_array($responseData['data']['_cookieData'])) {
-            SystemMessages::sysLogMsg(__CLASS__, "Auth cookie handling - No _cookieData in response", LOG_DEBUG);
             return;
         }
 
         $cookieData = $responseData['data']['_cookieData'];
-        SystemMessages::sysLogMsg(__CLASS__, "Auth cookie handling - Found _cookieData: " . json_encode($cookieData), LOG_DEBUG);
 
         // Determine if connection is secure (HTTPS)
         // For HTTP (localhost, LAN): secure=false allows cookies to work
@@ -179,9 +173,7 @@ class RestController extends BaseRestController
 
         // CRITICAL: Send cookies to browser
         // Without this call, cookies won't be included in HTTP response headers
-        SystemMessages::sysLogMsg(__CLASS__, "Auth cookie handling - Calling cookies->send()", LOG_DEBUG);
         $this->cookies->send();
-        SystemMessages::sysLogMsg(__CLASS__, "Auth cookie handling - Cookies sent", LOG_DEBUG);
 
         // Remove _cookieData from response (internal use only)
         unset($responseData['data']['_cookieData']);

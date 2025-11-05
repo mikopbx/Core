@@ -63,12 +63,6 @@ class RestController extends BaseRestController
      */
     protected string $processorClass = StorageManagementProcessor::class;
 
-    /**
-     * Indicates this is a singleton resource
-     * @var bool
-     */
-    protected bool $isSingleton = true;
-
     // ============================================================================
     // Standard CRUD Operations (Singleton)
     // ============================================================================
@@ -291,16 +285,4 @@ class RestController extends BaseRestController
         // Implemented by processor
     }
 
-    /**
-     * Define allowed custom methods for each HTTP method
-     *
-     * @return array<string, array<string>>
-     */
-    protected function getAllowedCustomMethods(): array
-    {
-        return [
-            'GET' => ['usage', 'list'],
-            'POST' => ['mount', 'umount', 'mkfs', 'statusMkfs']
-        ];
-    }
 }
