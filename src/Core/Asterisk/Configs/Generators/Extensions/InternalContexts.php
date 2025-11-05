@@ -170,6 +170,8 @@ class InternalContexts extends AsteriskConfigClass
         // Set forwarding status and handle forwarding if set.
         $conf .= 'same => n,Set(fw=${DB(${dstatus}/${EXTEN})})' . "\n\t";
         $conf .= 'same => n,ExecIf($["${fw}x" != "x"]?Set(__pt1c_UNIQUEID=${UNDEFINED})' . "\n\t";
+        // Store the forwarding source extension for modules to use (e.g., for CallerID selection)
+        $conf .= 'same => n,ExecIf($["${fw}x" != "x"]?Set(__FW_SOURCE_PEER=${EXTEN}))' . "\n\t";
         $conf .= 'same => n,ExecIf($["${fw}x" != "x"]?Wait(1))' . "\n\t";
         $conf .= 'same => n,ExecIf($["${fw}x" != "x"]?Goto(internal,${fw},1))' . "\n\t";
 
