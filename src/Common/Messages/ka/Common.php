@@ -695,7 +695,6 @@ return [
     'st_Store6MonthsOfRecords' => '6 თვე',
     'st_StoreAllPossibleRecords' => '∞',
     'st_TabStorageInfo' => 'საცავის ინფორმაცია',
-    'st_TabStorageSettings' => 'შენახვის პარამეტრები',
     'st_Used' => 'დაკავებულია',
     // THIS
     'this_is' => 'Ეს არის ',

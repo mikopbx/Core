@@ -695,7 +695,6 @@ Du kan få en ny nøgle automatisk ved at udfylde registreringsformularen.<br>',
     'st_Store6MonthsOfRecords' => '6 måneder',
     'st_StoreAllPossibleRecords' => '∞',
     'st_TabStorageInfo' => 'Lageroplysninger',
-    'st_TabStorageSettings' => 'Lagerindstillinger',
     'st_Used' => 'brugt',
     // THIS
     'this_is' => 'Dette er ',

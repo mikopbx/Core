@@ -695,7 +695,6 @@ return [
     'st_Store6MonthsOfRecords' => '6 місяців',
     'st_StoreAllPossibleRecords' => '∞',
     'st_TabStorageInfo' => 'Інформація про сховище',
-    'st_TabStorageSettings' => 'Налаштування зберігання',
     'st_Used' => 'зайнято',
     // THIS
     'this_is' => 'This is ',
