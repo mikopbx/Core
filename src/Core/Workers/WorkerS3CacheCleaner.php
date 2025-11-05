@@ -1,0 +1,351 @@
+<?php
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
+namespace MikoPBX\Core\Workers;
+
+use MikoPBX\Core\System\{Directories, SystemMessages};
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use Throwable;
+
+require_once 'Globals.php';
+
+/**
+ * WorkerS3CacheCleaner - Cache cleanup worker for S3-downloaded recordings
+ *
+ * Implements LRU (Least Recently Used) cache eviction strategy to maintain
+ * cache directory within configured size limits. Runs periodically to remove
+ * oldest accessed files when cache exceeds threshold.
+ *
+ * Design Pattern: LRU Cache Eviction
+ * - Sorts files by last access time (atime)
+ * - Removes least recently used files first
+ * - Maintains cache at 80% of max size for headroom
+ *
+ * Purpose:
+ * When recordings are moved to S3, they are downloaded to cache on demand.
+ * This worker prevents cache from growing indefinitely by removing old files.
+ *
+ * Execution:
+ * - Runs every hour (3600 seconds)
+ * - Monitored by WorkerSafeScriptsCore
+ * - Graceful shutdown supported
+ *
+ * @package MikoPBX\Core\Workers
+ */
+class WorkerS3CacheCleaner extends WorkerBase
+{
+    /**
+     * Maximum cache size in megabytes (5GB)
+     * When cache exceeds this size, cleanup is triggered
+     */
+    private const MAX_CACHE_SIZE_MB = 5000;
+
+    /**
+     * Target cache size after cleanup (80% of max)
+     * Provides headroom before next cleanup needed
+     */
+    private const TARGET_CACHE_PERCENTAGE = 0.8;
+
+    /**
+     * Cleanup interval in seconds (1 hour)
+     */
+    private const CLEANUP_INTERVAL_SECONDS = 3600;
+
+    /**
+     * Cache directory path
+     * Initialized from Directories class in constructor
+     */
+    private string $cacheDir;
+
+    /**
+     * Initialize worker
+     * Sets up cache directory path from system configuration
+     */
+    public function __construct()
+    {
+        parent::__construct();
+
+        // Get cache directory from Directories configuration
+        $this->cacheDir = Directories::getDir(Directories::CORE_RECORDINGS_CACHE_DIR);
+    }
+
+    /**
+     * Main worker loop
+     *
+     * Runs continuously until shutdown signal received.
+     * Performs cache cleanup every hour.
+     *
+     * @param array $argv Command line arguments (unused)
+     * @return void
+     */
+    public function start(array $argv): void
+    {
+        SystemMessages::sysLogMsg(__CLASS__, 'S3 Cache Cleaner started', LOG_INFO);
+
+        while ($this->needRestart === false) {
+            try {
+                $this->cleanCache();
+            } catch (Throwable $e) {
+                SystemMessages::sysLogMsg(
+                    __CLASS__,
+                    'Cache cleanup error: ' . $e->getMessage(),
+                    LOG_ERR
+                );
+            }
+
+            // Wait 1 hour before next cleanup
+            // Check needRestart flag every second for graceful shutdown
+            for ($i = 0; $i < self::CLEANUP_INTERVAL_SECONDS && $this->needRestart === false; $i++) {
+                sleep(1);
+            }
+        }
+
+        SystemMessages::sysLogMsg(__CLASS__, 'S3 Cache Cleaner stopped', LOG_INFO);
+    }
+
+    /**
+     * Perform cache cleanup using LRU strategy
+     *
+     * Algorithm:
+     * 1. Scan cache directory for all files
+     * 2. Calculate total cache size
+     * 3. If exceeds MAX_CACHE_SIZE_MB:
+     *    a. Sort files by last access time (oldest first)
+     *    b. Delete files until cache size reaches TARGET (80% of max)
+     *
+     * Uses atime (last access time) for LRU:
+     * - StorageAdapter touches files on access (updates atime)
+     * - Frequently accessed files have recent atime
+     * - Rarely accessed files have old atime → deleted first
+     *
+     * @return void
+     */
+    private function cleanCache(): void
+    {
+        // Check cache directory exists
+        if (!is_dir($this->cacheDir)) {
+            SystemMessages::sysLogMsg(
+                __CLASS__,
+                "Cache directory does not exist: {$this->cacheDir}",
+                LOG_WARNING
+            );
+            return;
+        }
+
+        // Collect all cache files with metadata
+        $files = $this->collectCacheFiles();
+
+        if (empty($files)) {
+            SystemMessages::sysLogMsg(__CLASS__, 'Cache is empty', LOG_DEBUG);
+            return;
+        }
+
+        // Calculate total cache size
+        $totalSize = array_sum(array_column($files, 'size'));
+        $totalSizeMB = $totalSize / (1024 * 1024);
+
+        SystemMessages::sysLogMsg(
+            __CLASS__,
+            sprintf(
+                'Cache size: %.2f MB (%d files), limit: %d MB',
+                $totalSizeMB,
+                count($files),
+                self::MAX_CACHE_SIZE_MB
+            ),
+            LOG_INFO
+        );
+
+        // Check if cleanup needed
+        if ($totalSizeMB <= self::MAX_CACHE_SIZE_MB) {
+            SystemMessages::sysLogMsg(__CLASS__, 'Cache size within limit, no cleanup needed', LOG_DEBUG);
+            return;
+        }
+
+        // Sort by access time (LRU - Least Recently Used first)
+        usort($files, fn($a, $b) => $a['atime'] <=> $b['atime']);
+
+        // Calculate target size (80% of max)
+        $targetSize = self::MAX_CACHE_SIZE_MB * self::TARGET_CACHE_PERCENTAGE * 1024 * 1024;
+        $currentSize = $totalSize;
+        $deletedCount = 0;
+        $deletedSize = 0;
+
+        // Delete oldest files until target reached
+        foreach ($files as $file) {
+            if ($currentSize <= $targetSize) {
+                break; // Target reached
+            }
+
+            if (unlink($file['path'])) {
+                $currentSize -= $file['size'];
+                $deletedSize += $file['size'];
+                $deletedCount++;
+
+                SystemMessages::sysLogMsg(
+                    __CLASS__,
+                    "Deleted from cache: {$file['path']}",
+                    LOG_DEBUG
+                );
+            } else {
+                SystemMessages::sysLogMsg(
+                    __CLASS__,
+                    "Failed to delete: {$file['path']}",
+                    LOG_WARNING
+                );
+            }
+        }
+
+        // Log cleanup summary
+        $deletedSizeMB = $deletedSize / (1024 * 1024);
+        $finalSizeMB = $currentSize / (1024 * 1024);
+
+        SystemMessages::sysLogMsg(
+            __CLASS__,
+            sprintf(
+                'Cache cleanup completed: deleted %d files (%.2f MB), final size: %.2f MB',
+                $deletedCount,
+                $deletedSizeMB,
+                $finalSizeMB
+            ),
+            LOG_INFO
+        );
+
+        // Clean up empty subdirectories
+        $this->cleanEmptyDirectories();
+    }
+
+    /**
+     * Collect all cache files with metadata
+     *
+     * Recursively scans cache directory and returns array of files with:
+     * - path: Full file path
+     * - size: File size in bytes
+     * - atime: Last access timestamp (for LRU sorting)
+     *
+     * @return array<int, array{path: string, size: int, atime: int}> Array of file metadata
+     */
+    private function collectCacheFiles(): array
+    {
+        $files = [];
+
+        try {
+            $iterator = new RecursiveIteratorIterator(
+                new RecursiveDirectoryIterator(
+                    $this->cacheDir,
+                    RecursiveDirectoryIterator::SKIP_DOTS
+                )
+            );
+
+            foreach ($iterator as $file) {
+                if ($file->isFile()) {
+                    $files[] = [
+                        'path' => $file->getPathname(),
+                        'size' => $file->getSize(),
+                        'atime' => $file->getATime(), // Last access time for LRU
+                    ];
+                }
+            }
+        } catch (Throwable $e) {
+            SystemMessages::sysLogMsg(
+                __CLASS__,
+                'Error scanning cache directory: ' . $e->getMessage(),
+                LOG_ERR
+            );
+        }
+
+        return $files;
+    }
+
+    /**
+     * Clean up empty subdirectories in cache
+     *
+     * After deleting files, some subdirectories may become empty.
+     * This method removes empty directories to keep cache structure clean.
+     *
+     * Directory structure: cache/XX/hash_filename.wav
+     * Where XX is 2-char hash prefix for sharding
+     *
+     * @return void
+     */
+    private function cleanEmptyDirectories(): void
+    {
+        try {
+            // Get all subdirectories (2-char hash prefixes)
+            $subdirs = glob($this->cacheDir . '/*', GLOB_ONLYDIR);
+
+            if ($subdirs === false) {
+                return;
+            }
+
+            foreach ($subdirs as $dir) {
+                // Check if directory is empty
+                $files = scandir($dir);
+
+                // Directory contains only . and .. entries
+                if ($files !== false && count($files) === 2) {
+                    if (rmdir($dir)) {
+                        SystemMessages::sysLogMsg(
+                            __CLASS__,
+                            "Removed empty directory: $dir",
+                            LOG_DEBUG
+                        );
+                    }
+                }
+            }
+        } catch (Throwable $e) {
+            SystemMessages::sysLogMsg(
+                __CLASS__,
+                'Error cleaning empty directories: ' . $e->getMessage(),
+                LOG_WARNING
+            );
+        }
+    }
+
+    /**
+     * Get cache statistics
+     *
+     * Returns current cache state for monitoring and debugging.
+     * This method can be called via CLI or REST API for cache inspection.
+     *
+     * @return array{total_files: int, total_size_mb: float, oldest_file_age_days: float} Cache statistics
+     */
+    public function getCacheStats(): array
+    {
+        $files = $this->collectCacheFiles();
+
+        if (empty($files)) {
+            return [
+                'total_files' => 0,
+                'total_size_mb' => 0.0,
+                'oldest_file_age_days' => 0.0,
+            ];
+        }
+
+        $totalSize = array_sum(array_column($files, 'size'));
+        $oldestAtime = min(array_column($files, 'atime'));
+        $oldestAgeDays = (time() - $oldestAtime) / 86400;
+
+        return [
+            'total_files' => count($files),
+            'total_size_mb' => round($totalSize / (1024 * 1024), 2),
+            'oldest_file_age_days' => round($oldestAgeDays, 2),
+        ];
+    }
+}

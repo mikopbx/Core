@@ -97,7 +97,8 @@ trait PbxSettingsDefaultValuesTrait
             PbxSettings::PBX_SPLIT_AUDIO_THREAD => '0',
             PbxSettings::PBX_RECORD_ANNOUNCEMENT_IN => '',
             PbxSettings::PBX_RECORD_ANNOUNCEMENT_OUT => '',
-            PbxSettings::PBX_RECORD_SAVE_PERIOD => '',
+            PbxSettings::PBX_RECORD_SAVE_PERIOD => '90',      // 90 days total retention
+            PbxSettings::PBX_RECORD_S3_LOCAL_DAYS => '7',     // 7 days local when S3 enabled
             PbxSettings::PBX_CALL_PARKING_EXT => '800',
             PbxSettings::PBX_CALL_PARKING_FEATURE => '*2',
             PbxSettings::PBX_CALL_PARKING_DURATION => '50',

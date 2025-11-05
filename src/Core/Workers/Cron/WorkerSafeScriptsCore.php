@@ -42,6 +42,8 @@ use MikoPBX\Core\Workers\WorkerExtensionStatusMonitor;
 use MikoPBX\Core\Workers\WorkerAuthFailureMonitor;
 use MikoPBX\Core\Workers\WorkerRedisBase;
 use MikoPBX\Core\Workers\WorkerRemoveOldRecords;
+use MikoPBX\Core\Workers\WorkerS3Upload;
+use MikoPBX\Core\Workers\WorkerS3CacheCleaner;
 use MikoPBX\Modules\Config\SystemConfigInterface;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use RuntimeException;
@@ -266,6 +268,8 @@ class WorkerSafeScriptsCore extends WorkerBase
                     WorkerBeanstalkdTidyUp::class,
                     WorkerLogRotate::class,
                     WorkerRemoveOldRecords::class,
+                    WorkerS3Upload::class,
+                    WorkerS3CacheCleaner::class,
                     WorkerNotifyAdministrator::class,
                 ],
         ];

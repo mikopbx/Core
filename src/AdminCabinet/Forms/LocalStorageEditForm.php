@@ -21,51 +21,24 @@
 namespace MikoPBX\AdminCabinet\Forms;
 
 use MikoPBX\Common\Models\PbxSettings;
-use Phalcon\Forms\Element\Check;
 use Phalcon\Forms\Element\Hidden;
-use Phalcon\Forms\Element\Password;
-use Phalcon\Forms\Element\Text;
 
 /**
- * Class StorageEditForm
+ * LocalStorageEditForm
+ *
+ * Form for local storage settings (general retention period).
+ * Sends data to: PATCH /pbxcore/api/v3/storage
  *
  * @package MikoPBX\AdminCabinet\Forms
- * @property \MikoPBX\Common\Providers\TranslationProvider translation
  */
-class StorageEditForm extends BaseForm
+class LocalStorageEditForm extends BaseForm
 {
     public function initialize($entity = null, $options = null): void
     {
         parent::initialize($entity, $options);
 
-        // Recording retention settings
-        // The actual values will be loaded via REST API in JavaScript
+        // General recording retention period
+        // The actual value will be loaded via REST API in JavaScript
         $this->add(new Hidden(PbxSettings::PBX_RECORD_SAVE_PERIOD));
-        $this->add(new Hidden(PbxSettings::PBX_RECORD_S3_LOCAL_DAYS));
-
-        // S3 Storage settings group
-        // Enable S3 storage checkbox
-        $this->add(new Check('s3_enabled', ['value' => 1]));
-
-        // S3 Endpoint URL
-        $this->add(new Text('s3_endpoint', [
-            'placeholder' => 'https://s3.amazonaws.com',
-        ]));
-
-        // S3 Region
-        $this->add(new Text('s3_region', [
-            'placeholder' => 'us-east-1',
-        ]));
-
-        // S3 Bucket name
-        $this->add(new Text('s3_bucket', [
-            'placeholder' => 'mikopbx-recordings',
-        ]));
-
-        // S3 Access key
-        $this->add(new Text('s3_access_key'));
-
-        // S3 Secret key (password field for security)
-        $this->add(new Password('s3_secret_key'));
     }
 }

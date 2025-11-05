@@ -58,7 +58,8 @@
     "logsDir": "/mountpoint/mikopbx/log",
     "mediaMountPoint": "/mountpoint",
     "fail2banDbDir": "/mountpoint/mikopbx/fail2ban",
-    "geoip2DbDir": "/mountpoint/mikopbx/geoip2"
+    "geoip2DbDir": "/mountpoint/mikopbx/geoip2",
+    "recordingsCacheDir": "/mountpoint/mikopbx/tmp/recordings_cache"
   },
   "www": {
     "uploadDir": "/mountpoint/mikopbx/tmp/www_cache/upload_cache",
