@@ -18,12 +18,35 @@ import pytest
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+from dotenv import load_dotenv
 
+# Load environment variables from .env file
+dotenv_path = Path(__file__).parent / '.env'
+if dotenv_path.exists():
+    load_dotenv(dotenv_path)
 
-# Configuration
-API_BASE_URL = os.getenv('MIKOPBX_API_URL', 'http://mikopbx_php83.localhost:8081/pbxcore/api/v3')
-API_LOGIN = os.getenv('MIKOPBX_LOGIN', 'admin')
-API_PASSWORD = os.getenv('MIKOPBX_PASSWORD', '123456789MikoPBX#1')
+# Configuration - require explicit environment variables
+API_BASE_URL = os.getenv('MIKOPBX_API_URL')
+API_LOGIN = os.getenv('MIKOPBX_API_USERNAME')
+API_PASSWORD = os.getenv('MIKOPBX_API_PASSWORD')
+
+# Validate required environment variables
+missing_vars = []
+if not API_BASE_URL:
+    missing_vars.append('MIKOPBX_API_URL')
+if not API_LOGIN:
+    missing_vars.append('MIKOPBX_API_USERNAME')
+if not API_PASSWORD:
+    missing_vars.append('MIKOPBX_API_PASSWORD')
+
+if missing_vars:
+    raise ValueError(
+        f"Missing required environment variables: {', '.join(missing_vars)}\n"
+        "Create tests/api/.env file with:\n"
+        "MIKOPBX_API_URL=http://localhost:8189/pbxcore/api/v3\n"
+        "MIKOPBX_API_USERNAME=admin\n"
+        "MIKOPBX_API_PASSWORD=123456789MikoPBX#1"
+    )
 FIXTURES_DIR = Path(__file__).parent / 'fixtures'
 
 
@@ -264,18 +287,29 @@ class MikoPBXClient:
                 else:
                     raise
 
-    def delete(self, path: str) -> Dict[str, Any]:
-        """DELETE request with connection retry"""
+    def delete(self, path: str, data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """DELETE request with connection retry
+
+        Args:
+            path: API endpoint path
+            data: Optional data to send with DELETE request (e.g., deleteRecording flag)
+        """
         import time
         max_attempts = 5
         base_delay = 3
-        
+
         for attempt in range(max_attempts):
             try:
+                kwargs = {
+                    'headers': self._get_headers(),
+                    'timeout': 30
+                }
+                if data:
+                    kwargs['json'] = data
+
                 response = self.session.delete(
                     f"{self.base_url}/{path.lstrip('/')}",
-                    headers=self._get_headers(),
-                    timeout=30
+                    **kwargs
                 )
                 response.raise_for_status()
                 return response.json()

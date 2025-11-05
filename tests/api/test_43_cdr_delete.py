@@ -67,7 +67,7 @@ class TestCDRDelete:
         # Get grouped CDR list (REST API v3 format)
         response = api_client.get('cdr', params={'limit': 100})
 
-        if response.get('success'):
+        if response.get('result'):
             groups, pagination = extract_cdr_data(response)  # Grouped records
 
             # Find a linkedid with multiple records
@@ -132,7 +132,7 @@ class TestCDRDelete:
             try:
                 response = api_client.delete(f'cdr/{invalid_id}')
                 # If we get here, check response
-                assert response.get('success') is False, f"Should fail for invalid ID: {invalid_id}"
+                assert response.get('result') is False, f"Should fail for invalid ID: {invalid_id}"
             except requests.exceptions.HTTPError as e:
                 # WHY: Should return 400 or 404 for invalid ID format
                 assert e.response.status_code in [400, 404], \
@@ -149,7 +149,7 @@ class TestCDRDelete:
 
         # Get record info before deletion
         get_response = api_client.get(f'cdr/{cdr_id}')
-        if not get_response.get('success'):
+        if not get_response.get('result'):
             pytest.skip(f"CDR {cdr_id} not accessible")
 
         # Delete the record (without recording file)
@@ -170,7 +170,7 @@ class TestCDRDelete:
 
         # Verify record is gone
         verify_response = api_client.get(f'cdr/{cdr_id}')
-        assert verify_response.get('success') is False, "Deleted record should not be accessible"
+        assert verify_response.get('result') is False, "Deleted record should not be accessible"
         assert verify_response.get('httpCode') == 404, "Should return 404 for deleted record"
 
         print(f"  → Verified record is deleted")
@@ -184,7 +184,7 @@ class TestCDRDelete:
 
         # Get record info before deletion
         get_response = api_client.get(f'cdr/{cdr_id}')
-        if not get_response.get('success'):
+        if not get_response.get('result'):
             pytest.skip(f"CDR {cdr_id} not accessible")
 
         recording_file = get_response['data'].get('recordingfile')
@@ -206,7 +206,7 @@ class TestCDRDelete:
 
         # Verify record is gone
         verify_response = api_client.get(f'cdr/{cdr_id}')
-        assert verify_response.get('success') is False
+        assert verify_response.get('result') is False
         assert verify_response.get('httpCode') == 404
 
     def test_05_delete_by_linkedid(self, api_client):
@@ -220,7 +220,7 @@ class TestCDRDelete:
         # Count records with this linkedid before deletion
         list_response = api_client.get('cdr', params={'limit': 1000})
         linked_count_before = 0
-        if list_response.get('success'):
+        if list_response.get('result'):
             groups, pagination = extract_cdr_data(list_response)
             for group in groups:
                 if group.get('linkedid') == linkedid:
@@ -255,7 +255,7 @@ class TestCDRDelete:
 
         # Verify all records with this linkedid are gone
         list_after = api_client.get('cdr', params={'limit': 1000})
-        if list_after.get('success') and list_after.get('data', {}).get('data'):
+        if list_after.get('result') and list_after.get('data', {}).get('data'):
             remaining_groups = [g for g in list_after['data']['data']
                                if g.get('linkedid') == linkedid]
             assert len(remaining_groups) == 0, \

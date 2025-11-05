@@ -141,44 +141,9 @@ Object.assign(FilesAPI, {
 });
 
 /**
- * Legacy compatibility methods - these map to the new REST API methods
- * These maintain backward compatibility while using the new standardized methods
+ * High-level API methods
+ * These methods provide convenient wrappers around the core v3 REST API
  */
-
-/**
- * Legacy: Upload file with params (maps to uploadChunked)
- * @param {object} params - Upload parameters
- * @param {function} callback - Callback function
- */
-FilesAPI.uploadFileFromParams = function(params, callback) {
-    // Convert object to FormData for chunked upload
-    const formData = new FormData();
-    Object.keys(params).forEach(key => {
-        if (key === 'files' && Array.isArray(params[key])) {
-            // Handle file arrays from legacy API
-            params[key].forEach((file, index) => {
-                if (file.file_path && file.file_name) {
-                    // This would need to be handled differently in real scenario
-                    // as we can't recreate File objects from paths
-                    formData.append(`file_${index}`, file.file_name);
-                }
-            });
-        } else {
-            formData.append(key, params[key]);
-        }
-    });
-
-    return this.uploadChunked(formData, callback);
-};
-
-/**
- * Legacy: Get upload status (maps to getUploadStatus)
- * @param {string} uploadId - Upload identifier
- * @param {function} callback - Callback function
- */
-FilesAPI.statusUploadFile = function(uploadId, callback) {
-    return this.getUploadStatus(uploadId, callback);
-};
 
 /**
  * Configure Resumable.js to use the new v3 API
@@ -291,9 +256,13 @@ FilesAPI.uploadFile = function(file, callback, allowedFileTypes = ['*']) {
 };
 
 /**
- * Get status of uploaded file
- * @param {string} fileId - File ID
- * @param {function} callback - Callback function
+ * Get status of uploaded file (chunked upload)
+ *
+ * Uses v3 RESTful API: GET /files:uploadStatus?id={fileId}
+ *
+ * @param {string} fileId - Upload identifier from Resumable.js
+ * @param {function} callback - Callback function receiving upload status data or false
+ * @returns {Object} jQuery API call object
  */
 FilesAPI.getStatusUploadFile = function(fileId, callback) {
     return this.callCustomMethod('uploadStatus', { id: fileId }, (response) => {
@@ -302,14 +271,18 @@ FilesAPI.getStatusUploadFile = function(fileId, callback) {
         } else {
             callback(false);
         }
-    }, 'POST');
+    }, 'GET');
 };
 
 /**
  * Remove audio file
- * @param {string} filePath - File path
- * @param {string|null} fileId - File ID (optional)
+ *
+ * Uses v3 RESTful API: DELETE /files/{path}
+ *
+ * @param {string} filePath - File path to delete
+ * @param {string|null} fileId - File ID (optional, for backward compatibility)
  * @param {function|null} callback - Callback function (optional)
+ * @returns {Object} jQuery API call object
  */
 FilesAPI.removeAudioFile = function(filePath, fileId = null, callback = null) {
     return this.deleteFile(filePath, (response) => {
@@ -321,43 +294,6 @@ FilesAPI.removeAudioFile = function(filePath, fileId = null, callback = null) {
             }
         }
     });
-};
-
-/**
- * Download new firmware
- * @param {object} params - Download parameters
- * @param {function} callback - Callback function
- */
-FilesAPI.downloadNewFirmware = function(params, callback) {
-    const requestData = {
-        md5: params.md5,
-        size: params.size,
-        version: params.version,
-        url: params.updateLink
-    };
-
-    return this.callCustomMethod('downloadFirmware', requestData, (response) => {
-        if (response && response.result === true && response.data) {
-            callback(response.data);
-        } else {
-            callback(response);
-        }
-    }, 'POST');
-};
-
-/**
- * Get firmware download status
- * @param {string} filename - Firmware filename
- * @param {function} callback - Callback function
- */
-FilesAPI.firmwareDownloadStatus = function(filename, callback) {
-    return this.callCustomMethod('firmwareStatus', { filename }, (response) => {
-        if (response && response.result === true && response.data) {
-            callback(response.data);
-        } else {
-            callback(false);
-        }
-    }, 'POST');
 };
 
 /**

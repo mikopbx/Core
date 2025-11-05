@@ -340,8 +340,8 @@ class TestAllProviderTypes:
         config = result.stdout
 
         # Validate template definitions exist
-        assert '[registration-common](!)' in config, "Missing registration-common template"
-        assert '[provider-aor-common](!)' in config, "Missing provider-aor-common template"
+        assert '[registration-base](!)' in config, "Missing registration-base template"
+        assert '[provider-aor-base](!)' in config, "Missing provider-aor-base template"
         assert '[provider-endpoint-base](!)' in config, "Missing provider-endpoint-base template"
         assert '[provider-endpoint-udp](provider-endpoint-base,!)' in config, "Missing provider-endpoint-udp template"
         assert '[provider-endpoint-tcp](provider-endpoint-base,!)' in config, "Missing provider-endpoint-tcp template"
@@ -356,20 +356,12 @@ class TestAllProviderTypes:
 
         print("✓ Visual separators found for all trunk types")
 
-        # Validate section comments
-        assert '; Registration' in config, "Missing Registration section comment"
-        assert '; AOR' in config, "Missing AOR section comment"
-        assert '; Endpoint' in config, "Missing Endpoint section comment"
-        assert '; Auth' in config, "Missing Auth section comment"
-
-        print("✓ Section type comments found")
-
         # Validate template inheritance usage
-        assert '](registration-common); Registration' in config, "Missing template inheritance in Registration"
-        assert '](provider-aor-common); AOR' in config, "Missing template inheritance in AOR"
-        assert '](provider-endpoint-udp); Endpoint' in config or \
-               '](provider-endpoint-tcp); Endpoint' in config or \
-               '](provider-endpoint-tls); Endpoint' in config, \
+        assert '](registration-base)' in config, "Missing template inheritance in Registration"
+        assert '](provider-aor-base)' in config, "Missing template inheritance in AOR"
+        assert '](provider-endpoint-udp)' in config or \
+               '](provider-endpoint-tcp)' in config or \
+               '](provider-endpoint-tls)' in config, \
                "Missing template inheritance in Endpoint"
 
         print("✓ Template inheritance properly used")

@@ -1555,20 +1555,16 @@ return [
     'rest_security_bearer' => 'Bearer authentication token (JWT) required',
     'rest_security_public' => 'Public endpoint without authentication requirement',
     'rest_security_bearerAuth_description' => 'Authentication using Bearer token (JWT). API keys can be created in the web interface under Settings → API Keys.',
-    'rest_users_GetList' => 'Get user list',
-    'rest_users_GetListDesc' => 'Returns a list of all system users with pagination and filtering support',
-    'rest_users_GetRecord' => 'Get user',
-    'rest_users_GetRecordDesc' => 'Returns detailed information about a specific user by ID',
-    'rest_users_Create' => 'Create user',
-    'rest_users_CreateDesc' => 'Creates a new user account with specified data',
-    'rest_users_Update' => 'Update user',
-    'rest_users_UpdateDesc' => 'Completely replaces existing user data',
-    'rest_users_Patch' => 'Partially update user',
-    'rest_users_PatchDesc' => 'Updates only specified fields of existing user',
-    'rest_users_Delete' => 'Delete user',
-    'rest_users_DeleteDesc' => 'Permanently deletes user from the system',
+
+    // ============================================================================
+    // Users Methods
+    // ============================================================================
     'rest_users_Available' => 'Check email availability',
     'rest_users_AvailableDesc' => 'Checks if the specified email address is available for use',
+
+    // ============================================================================
+    // Users Parameters
+    // ============================================================================
     'rest_param_users_email' => 'User email address',
     'rest_param_users_username' => 'Username for authentication',
     'rest_param_users_language' => 'Preferred interface language',

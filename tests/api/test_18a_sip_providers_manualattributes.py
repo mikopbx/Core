@@ -12,7 +12,6 @@ Related bug fix: manualattributes was stored as plain text instead of base64
 
 import base64
 import pytest
-import sqlite3
 from conftest import assert_api_success
 
 
@@ -67,17 +66,18 @@ class TestSIPProvidersManualAttributes:
         response = api_client.get(f"sip-providers/{provider_id}")
         uniqid = response['data']['id']
 
-        # Connect to database and check raw value
-        conn = sqlite3.connect('/cf/conf/mikopbx.db')
-        cursor = conn.cursor()
+        # Query database using system:executeSqlRequest API
+        sql_data = {
+            'query': f"SELECT manualattributes FROM m_Sip WHERE uniqid = '{uniqid}'",
+            'database': 'main'
+        }
+        sql_response = api_client.post('system:executeSqlRequest', sql_data)
+        assert_api_success(sql_response, "Failed to query database")
 
-        cursor.execute("SELECT manualattributes FROM m_Sip WHERE uniqid = ?", (uniqid,))
-        row = cursor.fetchone()
-        conn.close()
+        rows = sql_response['data']['rows']
+        assert len(rows) > 0, f"Provider {uniqid} not found in database"
 
-        assert row is not None, f"Provider {uniqid} not found in database"
-
-        db_value = row[0]
+        db_value = rows[0]['manualattributes']
 
         # Verify it's valid base64
         try:
@@ -117,15 +117,18 @@ class TestSIPProvidersManualAttributes:
         response = api_client.get(f"sip-providers/{provider_id}")
         uniqid = response['data']['id']
 
-        # Check database
-        conn = sqlite3.connect('/cf/conf/mikopbx.db')
-        cursor = conn.cursor()
+        # Query database using system:executeSqlRequest API
+        sql_data = {
+            'query': f"SELECT manualattributes FROM m_Sip WHERE uniqid = '{uniqid}'",
+            'database': 'main'
+        }
+        sql_response = api_client.post('system:executeSqlRequest', sql_data)
+        assert_api_success(sql_response, "Failed to query database")
 
-        cursor.execute("SELECT manualattributes FROM m_Sip WHERE uniqid = ?", (uniqid,))
-        row = cursor.fetchone()
-        conn.close()
+        rows = sql_response['data']['rows']
+        assert len(rows) > 0, f"Provider {uniqid} not found in database"
 
-        db_value = row[0]
+        db_value = rows[0]['manualattributes']
 
         # Verify it's valid base64
         try:
