@@ -20,7 +20,8 @@
 
 namespace MikoPBX\AdminCabinet\Controllers;
 
-use MikoPBX\AdminCabinet\Forms\StorageEditForm;
+use MikoPBX\AdminCabinet\Forms\LocalStorageEditForm;
+use MikoPBX\AdminCabinet\Forms\S3StorageEditForm;
 
 /**
  * StorageController
@@ -34,11 +35,14 @@ class StorageController extends BaseController
      * Builds the index page for Storage management.
      *
      * Data loading is handled via REST API from JavaScript.
-     * This method only sets up the form structure for the view.
+     * This method sets up two separate forms:
+     * - Local storage form for general retention settings (PATCH /pbxcore/api/v3/storage)
+     * - S3 storage form for cloud storage settings (PATCH /pbxcore/api/v3/s3-storage)
      */
     public function indexAction(): void
     {
-        $this->view->form = new StorageEditForm();
+        $this->view->localStorageForm = new LocalStorageEditForm();
+        $this->view->s3StorageForm = new S3StorageEditForm();
         $this->view->submitMode = null;
     }
 }

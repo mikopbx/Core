@@ -143,3 +143,86 @@ StorageAPI.getStorageList = function(callback) {
         }
     });
 };
+
+/**
+ * Test S3 connection with provided credentials
+ *
+ * @param {object} data - S3 connection settings to test
+ * @param {string} data.s3_endpoint - S3 endpoint URL
+ * @param {string} data.s3_region - S3 region
+ * @param {string} data.s3_bucket - S3 bucket name
+ * @param {string} data.s3_access_key - S3 access key
+ * @param {string} data.s3_secret_key - S3 secret key
+ * @param {function} callback - Callback function to handle the response
+ * @example
+ * StorageAPI.testS3Connection({
+ *     s3_endpoint: 'https://s3.amazonaws.com',
+ *     s3_region: 'us-east-1',
+ *     s3_bucket: 'my-bucket',
+ *     s3_access_key: 'AKIAIOSFODNN7EXAMPLE',
+ *     s3_secret_key: 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
+ * }, (response) => {
+ *     if (response.result) {
+ *         console.log('Connection test:', response.data.message);
+ *     }
+ * });
+ */
+/**
+ * S3StorageAPI - REST API v3 client for S3 Storage management (Singleton resource)
+ *
+ * Provides interface for S3-compatible cloud storage operations.
+ * S3 Storage is a singleton resource - there's only one S3 configuration in the system.
+ *
+ * @class S3StorageAPI
+ */
+const S3StorageAPI = new PbxApiClient({
+    endpoint: '/pbxcore/api/v3/s3-storage',
+    singleton: true,
+    customMethods: {
+        testConnection: ':testConnection'
+    }
+});
+
+/**
+ * Get S3 Storage settings (Singleton GET)
+ *
+ * @param {function} callback - Callback function to handle the response
+ */
+S3StorageAPI.get = function(callback) {
+    return this.callGet({}, callback);
+};
+
+/**
+ * Update S3 Storage settings (Singleton PUT)
+ *
+ * @param {object} data - S3 settings data to update
+ * @param {function} callback - Callback function to handle the response
+ */
+S3StorageAPI.update = function(data, callback) {
+    return this.callPut(data, callback);
+};
+
+/**
+ * Partially update S3 Storage settings (Singleton PATCH)
+ *
+ * @param {object} data - S3 settings data to patch
+ * @param {function} callback - Callback function to handle the response
+ */
+S3StorageAPI.patch = function(data, callback) {
+    return this.callPatch(data, callback);
+};
+
+/**
+ * Test S3 connection with provided credentials (Custom method)
+ *
+ * @param {object} data - S3 connection settings to test
+ * @param {function} callback - Callback function to handle the response
+ */
+S3StorageAPI.testConnection = function(data, callback) {
+    return this.callCustomMethod('testConnection', data, callback);
+};
+
+// Backward compatibility - keep old method name
+StorageAPI.testS3Connection = function(data, callback) {
+    S3StorageAPI.testConnection(data, callback);
+};

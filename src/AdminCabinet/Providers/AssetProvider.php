@@ -432,7 +432,8 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/vendor/semantic/progress.min.js', true)
                 ->addJs('js/vendor/jquery.address.min.js', true)
                 ->addJs('js/pbx/PbxAPI/storage-api.js', true)
-                ->addJs('js/pbx/Storage/storage-index.js', true);
+                ->addJs('js/pbx/Storage/storage-index.js', true)
+                ->addJs('js/pbx/Storage/s3-storage-index.js', true);
         }
     }
 

@@ -27,21 +27,18 @@ use Phalcon\Forms\Element\Password;
 use Phalcon\Forms\Element\Text;
 
 /**
- * Class StorageEditForm
+ * S3StorageEditForm
+ *
+ * Form for S3 cloud storage settings.
+ * Sends data to: PATCH /pbxcore/api/v3/s3-storage
  *
  * @package MikoPBX\AdminCabinet\Forms
- * @property \MikoPBX\Common\Providers\TranslationProvider translation
  */
-class StorageEditForm extends BaseForm
+class S3StorageEditForm extends BaseForm
 {
     public function initialize($entity = null, $options = null): void
     {
         parent::initialize($entity, $options);
-
-        // Recording retention settings
-        // The actual values will be loaded via REST API in JavaScript
-        $this->add(new Hidden(PbxSettings::PBX_RECORD_SAVE_PERIOD));
-        $this->add(new Hidden(PbxSettings::PBX_RECORD_S3_LOCAL_DAYS));
 
         // S3 Storage settings group
         // Enable S3 storage checkbox
@@ -67,5 +64,9 @@ class StorageEditForm extends BaseForm
 
         // S3 Secret key (password field for security)
         $this->add(new Password('s3_secret_key'));
+
+        // Local retention period (how long to keep files locally before uploading to S3)
+        // The actual value will be loaded via REST API in JavaScript
+        $this->add(new Hidden(PbxSettings::PBX_RECORD_S3_LOCAL_DAYS));
     }
 }
