@@ -1,0 +1,31 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.11.6, pytest-8.4.2, pluggy-1.6.0 -- /usr/local/bin/python3.11
+cachedir: .pytest_cache
+metadata: {'Python': '3.11.6', 'Platform': 'macOS-26.0.1-arm64-arm-64bit', 'Packages': {'pytest': '8.4.2', 'pluggy': '1.6.0'}, 'Plugins': {'schemathesis': '4.3.0', 'html': '4.1.1', 'xdist': '3.8.0', 'json-report': '1.5.0', 'timeout': '2.4.0', 'metadata': '3.1.1', 'hypothesis': '6.140.3', 'order': '1.3.0', 'dependency': '0.6.0', 'anyio': '4.7.0', 'subtests': '0.14.2', 'cov': '7.0.0'}}
+hypothesis profile 'default'
+rootdir: /Users/nb/PhpstormProjects/mikopbx/project-s3-records-storage/tests/api
+configfile: pytest.ini
+plugins: schemathesis-4.3.0, html-4.1.1, xdist-3.8.0, json-report-1.5.0, timeout-2.4.0, metadata-3.1.1, hypothesis-6.140.3, order-1.3.0, dependency-0.6.0, anyio-4.7.0, subtests-0.14.2, cov-7.0.0
+collecting ... collected 19 items
+
+tests/api/test_22_storage_s3_settings.py::TestStorageS3Settings::test_01_get_s3_settings PASSED [  5%]
+tests/api/test_22_storage_s3_settings.py::TestStorageS3Settings::test_02_get_retention_settings PASSED [ 10%]
+tests/api/test_22_storage_s3_settings.py::TestStorageS3Settings::test_03_save_s3_minimal_config PASSED [ 15%]
+tests/api/test_22_storage_s3_settings.py::TestStorageS3Settings::test_04_save_s3_full_config PASSED [ 21%]
+tests/api/test_22_storage_s3_settings.py::TestStorageS3Settings::test_05_save_s3_minio_config PASSED [ 26%]
+tests/api/test_22_storage_s3_settings.py::TestStorageS3Settings::test_06_update_retention_periods PASSED [ 31%]
+tests/api/test_22_storage_s3_settings.py::TestStorageS3Settings::test_07_update_local_retention_period PASSED [ 36%]
+tests/api/test_22_storage_s3_settings.py::TestStorageS3Settings::test_08_update_both_retention_periods PASSED [ 42%]
+tests/api/test_22_storage_s3_settings.py::TestStorageS3Settings::test_09_update_s3_endpoint PASSED [ 47%]
+tests/api/test_22_storage_s3_settings.py::TestStorageS3Settings::test_10_update_s3_credentials PASSED [ 52%]
+tests/api/test_22_storage_s3_settings.py::TestStorageS3Settings::test_11_toggle_s3_enabled PASSED [ 57%]
+tests/api/test_22_storage_s3_settings.py::TestStorageS3Settings::test_12_verify_settings_persistence PASSED [ 63%]
+tests/api/test_22_storage_s3_settings.py::TestStorageS3SettingsValidation::test_01_validate_retention_constraint PASSED [ 68%]
+tests/api/test_22_storage_s3_settings.py::TestStorageS3SettingsValidation::test_02_validate_retention_ranges PASSED [ 73%]
+tests/api/test_22_storage_s3_settings.py::TestStorageS3SettingsValidation::test_03_validate_s3_bucket_name PASSED [ 78%]
+tests/api/test_22_storage_s3_settings.py::TestStorageS3SettingsValidation::test_04_validate_required_fields_when_enabled PASSED [ 84%]
+tests/api/test_22_storage_s3_settings.py::TestStorageS3SettingsValidation::test_05_empty_patch_handling PASSED [ 89%]
+tests/api/test_22_storage_s3_settings.py::TestStorageS3SettingsValidation::test_06_partial_update_preservation PASSED [ 94%]
+tests/api/test_22_storage_s3_settings.py::TestStorageS3SettingsCleanup::test_99_restore_original_settings PASSED [100%]
+
+============================== 19 passed in 1.43s ==============================

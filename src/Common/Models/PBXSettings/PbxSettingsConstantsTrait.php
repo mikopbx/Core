@@ -232,6 +232,14 @@ trait PbxSettingsConstantsTrait
     public const string PBX_RECORD_CALLS_INNER = 'PBXRecordCallsInner';
     /** @FieldType('integer') */
     public const string PBX_RECORD_SAVE_PERIOD = 'PBXRecordSavePeriod';
+    /**
+     * Local retention period when S3 storage enabled (in days)
+     * After this period, recordings are uploaded to S3 and deleted locally
+     * Must be less than PBX_RECORD_SAVE_PERIOD
+     *
+     * @FieldType('integer')
+     */
+    public const string PBX_RECORD_S3_LOCAL_DAYS = 'PBXRecordS3LocalDays';
     /** @FieldType('boolean') */
     public const string PBX_SPLIT_AUDIO_THREAD = 'PBXSplitAudioThread';
     /** @FieldType('string') */

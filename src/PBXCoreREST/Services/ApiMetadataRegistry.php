@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Services;
 
 use MikoPBX\Common\Providers\TranslationProvider;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,
@@ -805,17 +806,24 @@ class ApiMetadataRegistry extends Injectable
         $collectionPath = $basePath;
         $paths[$collectionPath] = [];
 
-        // Generate resource-level paths (with {id})
-        $resourcePath = $basePath . '/{id}';
+        // Generate resource-level paths (with {id}) ONLY if resource has resource-level operations
+        // WHY: Singleton resources (storage, s3-storage, system, etc.) have empty resourceLevel array
+        // and should NOT have /{id} endpoint in OpenAPI spec
+        $hasResourceLevelOps = !empty($httpMapping['resourceLevel'] ?? []);
+        $resourcePath = null;
 
-        // Extract id parameter definition from resource-level operations
-        // Path parameters should be defined at path level, not inside each operation
-        // This matches the pattern from document (1).yaml: parameters defined once for the path
-        $idParameterSchema = $this->extractIdParameterFromOperations($resource['operations'] ?? []);
+        if ($hasResourceLevelOps) {
+            $resourcePath = $basePath . '/{id}';
 
-        $paths[$resourcePath] = [
-            'parameters' => [$idParameterSchema]
-        ];
+            // Extract id parameter definition from resource-level operations
+            // Path parameters should be defined at path level, not inside each operation
+            // This matches the pattern from document (1).yaml: parameters defined once for the path
+            $idParameterSchema = $this->extractIdParameterFromOperations($resource['operations'] ?? []);
+
+            $paths[$resourcePath] = [
+                'parameters' => [$idParameterSchema]
+            ];
+        }
 
         // WHY: Translate tags once per resource instead of per operation for performance
         // Reduces translateTagsArray() calls from O(N operations) to O(1)
@@ -848,6 +856,13 @@ class ApiMetadataRegistry extends Injectable
                     // Determine if this operation requires ID
                     $requiresId = in_array($operationName, $httpMapping['resourceLevel'] ?? []) ||
                                   $this->operationRequiresId($operationName);
+
+                    // WHY: Skip if operation requires ID but resourcePath not created (misconfiguration)
+                    // This prevents using null resourcePath when singleton has resource-level operation
+                    if ($requiresId && $resourcePath === null) {
+                        SystemMessages::sysLogMsg(__METHOD__, "WARNING: Operation '$operationName' requires ID but resource has no resourceLevel operations in HttpMapping for path '$basePath'", LOG_WARNING);
+                        continue;
+                    }
 
                     $targetPath = $requiresId ? $resourcePath : $collectionPath;
 
@@ -1071,7 +1086,7 @@ class ApiMetadataRegistry extends Injectable
             // ✨ FIX: Skip parameters without required fields
             // WHY: Some parameters may be malformed or incomplete in metadata
             if (!isset($param['type']) || !isset($param['in']) || !isset($param['name'])) {
-                error_log("WARNING: Skipping parameter with missing required fields: " . json_encode($param));
+                SystemMessages::sysLogMsg(__METHOD__, "WARNING: Skipping parameter with missing required fields: " . json_encode($param), LOG_WARNING);
                 continue;
             }
 

@@ -1,9 +1,15 @@
-    
-    <div class="ui top attached tabular menu" id="storage-menu">
+<div class="ui top attached tabular menu" id="storage-menu">
         <a class="item active" data-tab="storage-info">{{ t._('st_TabStorageInfo') }}</a>
-        <a class="item" data-tab="storage-settings">{{ t._('st_TabStorageSettings') }}</a>
+        <a class="item" data-tab="storage-local">
+            <i class="hdd outline icon"></i>
+            {{ t._('st_TabStorageLocal') }}
+        </a>
+        <a class="item" data-tab="storage-cloud">
+            <i class="cloud upload icon"></i>
+            {{ t._('st_TabStorageCloud') }}
+        </a>
     </div>
-    
+
     <!-- Storage Information Tab -->
     <div class="ui bottom attached tab segment active" data-tab="storage-info">
         <div class="field">
@@ -128,21 +134,100 @@
             </div>
         </div>
     </div>
-    
-    <!-- Storage Settings Tab -->
-    <div class="ui bottom attached tab segment" data-tab="storage-settings">
-        {{ form(['action' : 'storage/save', 'method': 'post', 'role': 'form', 'class': 'ui form large', 'id':'storage-form']) }}
-        <div class="field">
-            <label>{{ t._('st_PBXRecordSavePeriodLabel') }}</label>
-            <div class="ui segment" id="pbx-records-term-slider">
-                <div class="ui bottom aligned ticked labeled slider" id="PBXRecordSavePeriodSlider"></div>
-                {{ form.render('PBXRecordSavePeriod') }}
+
+    <!-- Local Storage Settings Tab -->
+    <div class="ui bottom attached tab segment" data-tab="storage-local">
+        {{ form(['action' : 'storage/save', 'method': 'post', 'role': 'form', 'class': 'ui form large', 'id':'local-storage-form']) }}
+            <!-- Total Recording Retention Period Slider -->
+            <div class="field">
+                <label>{{ t._('st_RecordingRetentionPeriod') }}
+                    <i class="small info circle icon field-info-icon" data-field="record_retention_period"></i>
+                </label>
+                <div class="ui segment" id="pbx-records-term-slider">
+                    <div class="ui bottom aligned ticked labeled slider" id="PBXRecordSavePeriodSlider"></div>
+                    {{ localStorageForm.render('PBXRecordSavePeriod') }}
+                </div>
             </div>
-        </div>
-        
-        {{ partial("partials/submitbutton", ['indexurl': '', 'submitMode': submitMode]) }}
-         <div class="ui clearing hidden divider"></div>
+
+            {{ partial("partials/submitbutton", ['indexurl': '', 'submitMode': submitMode]) }}
+            <div class="ui clearing hidden divider"></div>
         {{ close('form') }}
     </div>
 
-   
+    <!-- Cloud Storage Settings Tab -->
+    <div class="ui bottom attached tab segment" data-tab="storage-cloud">
+        {{ form(['action' : 'storage/save', 'method': 'post', 'role': 'form', 'class': 'ui form large', 'id':'s3-storage-form']) }}
+            <div class="field">
+                <div class="ui toggle checkbox" id="s3-enabled-checkbox">
+                    {{ s3StorageForm.render('s3_enabled') }}
+                    <label>{{ t._('st_S3AutoUploadLabel') }}
+                        <i class="small info circle icon field-info-icon" data-field="s3_enabled"></i>
+                    </label>
+                </div>
+            </div>
+
+            <!-- S3 Configuration Fields (visible when S3 enabled) -->
+            <div id="s3-settings-group" style="display: none;">
+
+                <div class="two fields">
+                    <div class="field">
+                        <label>{{ t._('st_S3Endpoint') }}
+                            <i class="small info circle icon field-info-icon" data-field="s3_endpoint"></i>
+                        </label>
+                        {{ s3StorageForm.render('s3_endpoint') }}
+                    </div>
+                    <div class="field">
+                        <label>{{ t._('st_S3Region') }}
+                            <i class="small info circle icon field-info-icon" data-field="s3_region"></i>
+                        </label>
+                        {{ s3StorageForm.render('s3_region') }}
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>{{ t._('st_S3Bucket') }}
+                        <i class="small info circle icon field-info-icon" data-field="s3_bucket"></i>
+                    </label>
+                    {{ s3StorageForm.render('s3_bucket') }}
+                </div>
+
+                <div class="two fields">
+                    <div class="field">
+                        <label>{{ t._('st_S3AccessKey') }}
+                            <i class="small info circle icon field-info-icon" data-field="s3_access_key"></i>
+                        </label>
+                        {{ s3StorageForm.render('s3_access_key') }}
+                    </div>
+                    <div class="field">
+                        <label>{{ t._('st_S3SecretKey') }}
+                            <i class="small info circle icon field-info-icon" data-field="s3_secret_key"></i>
+                        </label>
+                        {{ s3StorageForm.render('s3_secret_key') }}
+                    </div>
+                </div>
+
+                <div class="field">
+                    <button type="button" id="test-s3-connection" class="ui blue button">
+                        <i class="plug icon"></i>
+                        {{ t._('st_TestS3Connection') }}
+                    </button>
+                </div>
+
+                <div class="ui divider"></div>
+
+                <!-- Local Retention Slider (only when S3 enabled) -->
+                <div class="field">
+                    <label>{{ t._('st_LocalRetentionPeriod') }}
+                        <i class="small info circle icon field-info-icon" data-field="local_retention_period"></i>
+                    </label>
+                    <div class="ui segment" id="pbx-s3-local-days-slider">
+                        <div class="ui bottom aligned ticked labeled slider" id="PBXRecordS3LocalDaysSlider"></div>
+                        {{ s3StorageForm.render('PBXRecordS3LocalDays') }}
+                    </div>
+                </div>
+            </div>
+
+            {{ partial("partials/submitbutton", ['indexurl': '', 'submitMode': submitMode]) }}
+            <div class="ui clearing hidden divider"></div>
+        {{ close('form') }}
+    </div>
