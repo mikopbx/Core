@@ -69,12 +69,6 @@ class RestController extends BaseRestController
     protected string $processorClass = OpenAPIManagementProcessor::class;
 
     /**
-     * Indicates this is a singleton resource
-     * @var bool
-     */
-    protected bool $isSingleton = true;
-
-    /**
      * Get OpenAPI specification
      *
      * @route GET /pbxcore/api/v3/openapi:getSpecification

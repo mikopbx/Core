@@ -73,13 +73,6 @@ class RestController extends BaseRestController
     protected string $processorClass = GeneralSettingsManagementProcessor::class;
 
     /**
-     * Indicates this is a singleton resource
-     * @var bool
-     */
-    protected bool $isSingleton = true;
-
-
-    /**
      * Get all general settings
      *
      * @route GET /pbxcore/api/v3/general-settings

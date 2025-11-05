@@ -72,12 +72,6 @@ class RestController extends BaseRestController
     protected string $processorClass = SystemManagementProcessor::class;
 
     /**
-     * Indicates this is a singleton resource
-     * @var bool
-     */
-    protected bool $isSingleton = true;
-
-    /**
      * Ping backend to check if it's alive (PUBLIC - health check endpoint)
      *
      * @route GET /pbxcore/api/v3/system:ping

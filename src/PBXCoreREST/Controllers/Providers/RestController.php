@@ -388,20 +388,6 @@ class RestController extends BaseRestController
     }
 
     /**
-     * Define allowed custom methods for each HTTP method
-     * Only read operations are allowed
-     *
-     * @return array<string, array<string>>
-     */
-    protected function getAllowedCustomMethods(): array
-    {
-        return [
-            'GET' => ['getForSelect', 'getStatuses', 'getStatus', 'getHistory', 'getStats'],
-            'POST' => ['updateStatus']
-        ];
-    }
-
-    /**
      * Override action mapping to allow only read operations
      * Write operations return error
      *

@@ -70,13 +70,6 @@ class RestController extends BaseRestController
     protected string $processorClass = LicenseManagementProcessor::class;
 
     /**
-     * Indicates this is a singleton resource
-     * @var bool
-     */
-    protected bool $isSingleton = true;
-
-
-    /**
      * Get current license information
      *
      * @route GET /pbxcore/api/v3/license:getLicenseInfo
