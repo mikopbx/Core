@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl, globalTranslate, Form, StorageAPI, UserMessage, s3StorageIndex, $ */
+/* global globalRootUrl, globalTranslate, Form, StorageAPI, UserMessage, $ */
 
 /**
  * Storage management module
@@ -27,7 +27,14 @@ const storageIndex = {
      * Sends data to: PATCH /pbxcore/api/v3/storage
      * @type {jQuery}
      */
-    $formObj: $('#local-storage-form'),
+    $localStorageForm: $('#local-storage-form'),
+
+    /**
+     * jQuery object for the S3 storage form (Tab 3).
+     * Sends data to: PATCH /pbxcore/api/v3/s3-storage
+     * @type {jQuery}
+     */
+    $s3StorageForm: $('#s3-storage-form'),
 
     /**
      * jQuery object for the records retention period slider.
@@ -35,6 +42,29 @@ const storageIndex = {
      */
     $recordsSavePeriodSlider: $('#PBXRecordSavePeriodSlider'),
 
+    /**
+     * jQuery object for the S3 local retention period slider.
+     * @type {jQuery}
+     */
+    $s3LocalDaysSlider: $('#PBXRecordS3LocalDaysSlider'),
+
+    /**
+     * jQuery object for S3 enabled checkbox.
+     * @type {jQuery}
+     */
+    $s3EnabledCheckbox: $('#s3-enabled-checkbox'),
+
+    /**
+     * jQuery object for S3 settings group container.
+     * @type {jQuery}
+     */
+    $s3SettingsGroup: $('#s3-settings-group'),
+
+    /**
+     * jQuery object for test S3 connection button.
+     * @type {jQuery}
+     */
+    $testS3Button: $('#test-s3-connection'),
 
     /**
      * Possible period values for the records retention.
@@ -42,13 +72,65 @@ const storageIndex = {
      */
     saveRecordsPeriod: ['30', '90', '180', '360', '1080', ''],
 
-
+    /**
+     * Possible period values for S3 local retention (in days).
+     * Values: 1, 3, 7, 14, 30, 60, 90 days
+     */
+    s3LocalDaysPeriod: ['1', '3', '7', '14', '30', '60', '90'],
 
     /**
-     * Validation rules for the local storage form.
+     * Get maximum allowed local retention index based on total retention period
+     * @param {string} totalPeriod - Total retention period in days ('' for infinity)
+     * @returns {number} Maximum index for s3LocalDaysPeriod array
+     */
+    getMaxLocalRetentionIndex(totalPeriod) {
+        // If total period is infinity, allow all local options
+        if (totalPeriod === '' || totalPeriod === null || totalPeriod === undefined) {
+            return storageIndex.s3LocalDaysPeriod.length - 1;
+        }
+
+        const totalDays = parseInt(totalPeriod);
+        let maxIndex = storageIndex.s3LocalDaysPeriod.length - 1;
+
+        // Find the highest local retention that is less than total
+        for (let i = storageIndex.s3LocalDaysPeriod.length - 1; i >= 0; i--) {
+            const localDays = parseInt(storageIndex.s3LocalDaysPeriod[i]);
+            if (localDays < totalDays) {
+                maxIndex = i;
+                break;
+            }
+        }
+
+        return maxIndex;
+    },
+
+    /**
+     * Validation rules for the form fields before submission.
      * @type {object}
      */
-    validateRules: {},
+    validateRules: {
+        s3_endpoint: {
+            identifier: 's3_endpoint',
+            optional: true,
+            rules: [
+                {
+                    type: 'url',
+                    prompt: globalTranslate.st_S3EndpointInvalid
+                }
+            ],
+        },
+        s3_bucket: {
+            identifier: 's3_bucket',
+            optional: true,
+            rules: [
+                {
+                    type: 'regExp',
+                    value: /^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/,
+                    prompt: globalTranslate.st_S3BucketInvalid
+                }
+            ],
+        },
+    },
     
     /**
      * Initialize module with event bindings and component initializations.
@@ -88,6 +170,37 @@ const storageIndex = {
                 onChange: storageIndex.cbAfterSelectSavePeriodSlider,
             });
 
+        // Initialize S3 local retention period slider
+        storageIndex.$s3LocalDaysSlider
+            .slider({
+                min: 0,
+                max: 6,
+                step: 1,
+                smooth: true,
+                autoAdjustLabels: false,
+                interpretLabel: function (value) {
+                    const labels = {
+                        0: '1 ' + globalTranslate.st_Day,
+                        1: '3 ' + globalTranslate.st_Days,
+                        2: '7 ' + globalTranslate.st_Days,
+                        3: '14 ' + globalTranslate.st_Days,
+                        4: '30 ' + globalTranslate.st_Days,
+                        5: '60 ' + globalTranslate.st_Days,
+                        6: '90 ' + globalTranslate.st_Days,
+                    };
+                    return labels[value] || '';
+                },
+                onChange: storageIndex.cbAfterSelectS3LocalDaysSlider,
+            });
+
+        // Initialize S3 enabled checkbox with toggle behavior
+        storageIndex.$s3EnabledCheckbox.checkbox({
+            onChange: storageIndex.cbAfterToggleS3Enabled,
+        });
+
+        // Initialize test S3 connection button
+        storageIndex.$testS3Button.on('click', storageIndex.testS3Connection);
+
         // Initialize tooltips
         storageIndex.initializeTooltips();
 
@@ -112,15 +225,77 @@ const storageIndex = {
         // Set the form value for 'PBXRecordSavePeriod' to the selected save period.
         storageIndex.$formObj.form('set value', 'PBXRecordSavePeriod', savePeriod);
 
-        // Update S3 local retention slider maximum (if S3 module loaded)
-        if (typeof s3StorageIndex !== 'undefined' && s3StorageIndex.updateSliderLimits) {
-            s3StorageIndex.updateSliderLimits(savePeriod);
+        // Update S3 local retention slider maximum
+        storageIndex.updateS3LocalSliderLimits(savePeriod);
+
+        // Trigger change event to acknowledge the modification
+        Form.dataChanged();
+    },
+
+    /**
+     * Handle event after the S3 local retention slider is changed.
+     * @param {number} value - The selected value from the slider.
+     */
+    cbAfterSelectS3LocalDaysSlider(value) {
+        // Get the local days period corresponding to the slider value.
+        const localDays = storageIndex.s3LocalDaysPeriod[value];
+
+        // Set the form value for 'PBXRecordS3LocalDays'
+        storageIndex.$formObj.form('set value', 'PBXRecordS3LocalDays', localDays);
+
+        // Trigger change event to acknowledge the modification
+        Form.dataChanged();
+    },
+
+    /**
+     * Handle event after S3 enabled checkbox is toggled.
+     */
+    cbAfterToggleS3Enabled() {
+        const isEnabled = storageIndex.$s3EnabledCheckbox.checkbox('is checked');
+
+        // Show/hide S3 settings group
+        if (isEnabled) {
+            storageIndex.$s3SettingsGroup.slideDown();
+        } else {
+            storageIndex.$s3SettingsGroup.slideUp();
         }
 
         // Trigger change event to acknowledge the modification
         Form.dataChanged();
     },
 
+    /**
+     * Test S3 connection with current settings.
+     */
+    testS3Connection() {
+        // Show loading state
+        storageIndex.$testS3Button.addClass('loading disabled');
+
+        // Prepare test data from current form values
+        const formData = storageIndex.$formObj.form('get values');
+        const testData = {
+            s3_enabled: formData.s3_enabled || 0,
+            s3_endpoint: formData.s3_endpoint,
+            s3_region: formData.s3_region,
+            s3_bucket: formData.s3_bucket,
+            s3_access_key: formData.s3_access_key,
+            s3_secret_key: formData.s3_secret_key,
+        };
+
+        // Call API to test connection
+        StorageAPI.testS3Connection(testData, (response) => {
+            // Remove loading state
+            storageIndex.$testS3Button.removeClass('loading disabled');
+
+            if (response && response.result === true) {
+                const message = response.data?.message || globalTranslate.st_S3TestSuccess;
+                UserMessage.showInformation(message, globalTranslate.st_S3TestSuccess);
+            } else {
+                const errorMessage = response?.data?.message || globalTranslate.st_S3TestFailed;
+                UserMessage.showError(errorMessage, globalTranslate.st_S3TestFailed);
+            }
+        });
+    },
 
     /**
      * Load Storage settings from API
@@ -130,9 +305,16 @@ const storageIndex = {
             if (response.result && response.data) {
                 const data = response.data;
 
-                // Set form values for local storage only
+                // Set form values including S3 settings
                 storageIndex.$formObj.form('set values', {
-                    PBXRecordSavePeriod: data.PBXRecordSavePeriod || ''
+                    PBXRecordSavePeriod: data.PBXRecordSavePeriod,
+                    PBXRecordS3LocalDays: data.PBXRecordS3LocalDays || '7',
+                    s3_enabled: data.s3_enabled || 0,
+                    s3_endpoint: data.s3_endpoint || '',
+                    s3_region: data.s3_region || 'us-east-1',
+                    s3_bucket: data.s3_bucket || '',
+                    s3_access_key: data.s3_access_key || '',
+                    s3_secret_key: data.s3_secret_key || '',
                 });
 
                 // Update total retention period slider
@@ -143,9 +325,24 @@ const storageIndex = {
                     false
                 );
 
-                // Notify S3 module about total retention change (if loaded)
-                if (typeof s3StorageIndex !== 'undefined' && s3StorageIndex.updateSliderLimits) {
-                    s3StorageIndex.updateSliderLimits(recordSavePeriod);
+                // Update S3 local slider limits based on total retention
+                storageIndex.updateS3LocalSliderLimits(recordSavePeriod);
+
+                // Update S3 local retention slider
+                const s3LocalDays = data.PBXRecordS3LocalDays || '7';
+                storageIndex.$s3LocalDaysSlider.slider(
+                    'set value',
+                    storageIndex.s3LocalDaysPeriod.indexOf(s3LocalDays),
+                    false
+                );
+
+                // Set S3 enabled checkbox state
+                if (parseInt(data.s3_enabled) === 1) {
+                    storageIndex.$s3EnabledCheckbox.checkbox('check');
+                    storageIndex.$s3SettingsGroup.show();
+                } else {
+                    storageIndex.$s3EnabledCheckbox.checkbox('uncheck');
+                    storageIndex.$s3SettingsGroup.hide();
                 }
             }
         });
@@ -432,6 +629,26 @@ const storageIndex = {
                 });
             }
         });
+    },
+
+    /**
+     * Update S3 local retention slider limits based on total retention period
+     * @param {string} totalPeriod - Total retention period in days ('' for infinity)
+     */
+    updateS3LocalSliderLimits(totalPeriod) {
+        const maxIndex = storageIndex.getMaxLocalRetentionIndex(totalPeriod);
+
+        // Get current value
+        const currentIndex = storageIndex.$s3LocalDaysSlider.slider('get value');
+
+        // Update slider max
+        storageIndex.$s3LocalDaysSlider.slider('setting', 'max', maxIndex);
+
+        // If current value exceeds new max, reset to max
+        if (currentIndex > maxIndex) {
+            storageIndex.$s3LocalDaysSlider.slider('set value', maxIndex);
+            storageIndex.$formObj.form('set value', 'PBXRecordS3LocalDays', storageIndex.s3LocalDaysPeriod[maxIndex]);
+        }
     },
 
     /**

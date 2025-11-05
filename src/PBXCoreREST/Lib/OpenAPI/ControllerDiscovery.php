@@ -21,6 +21,9 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Lib\OpenAPI;
 
+use MikoPBX\Common\Models\PbxExtensionModules;
+use MikoPBX\Core\System\Directories;
+
 /**
  * Utility class for discovering REST API controllers
  *
@@ -44,6 +47,9 @@ class ControllerDiscovery
      * Scans the Controllers directory and finds all RestController.php files,
      * then converts them to fully qualified class names.
      *
+     * WHY: Include both Core and Module controllers for complete OpenAPI spec
+     * Module controllers discovered via discoverModuleControllers()
+     *
      * Results are cached for performance - subsequent calls return cached list.
      *
      * @param bool $forceRefresh Force re-scan even if cache exists
@@ -56,6 +62,30 @@ class ControllerDiscovery
             return self::$cachedControllers;
         }
 
+        // Discover Core controllers
+        $controllers = self::discoverCoreControllers();
+
+        // Discover Module controllers
+        $moduleControllers = self::discoverModuleControllers();
+        $controllers = array_merge($controllers, $moduleControllers);
+
+        sort($controllers); // Sort for consistent ordering
+
+        // Cache the result
+        self::$cachedControllers = $controllers;
+
+        return $controllers;
+    }
+
+    /**
+     * Discover Core REST API controllers
+     *
+     * Scans the PBXCoreREST/Controllers directory for Core controllers
+     *
+     * @return array<string> List of Core controller class names
+     */
+    private static function discoverCoreControllers(): array
+    {
         $controllers = [];
         $controllersPath = dirname(__DIR__, 2) . '/Controllers';
 
@@ -63,7 +93,6 @@ class ControllerDiscovery
         $directories = glob($controllersPath . '/*', GLOB_ONLYDIR);
 
         if ($directories === false) {
-            self::$cachedControllers = [];
             return [];
         }
 
@@ -81,10 +110,87 @@ class ControllerDiscovery
             }
         }
 
-        sort($controllers); // Sort for consistent ordering
+        return $controllers;
+    }
 
-        // Cache the result
-        self::$cachedControllers = $controllers;
+    /**
+     * Discover Module REST API controllers (Pattern 4)
+     *
+     * WHY: Scans enabled modules for API/Controllers with RestController.php
+     * Only includes controllers with ApiResource attribute
+     *
+     * @return array<string> List of Module controller class names
+     */
+    private static function discoverModuleControllers(): array
+    {
+        $controllers = [];
+
+        // Get path to installed modules (/storage/usbdisk1/mikopbx/custom_modules/)
+        $modulesPath = Directories::getDir(Directories::CORE_MODULES_DIR);
+
+        // Check if modules directory exists
+        if (!is_dir($modulesPath)) {
+            return $controllers;
+        }
+
+        // Get only enabled modules from database
+        $enabledModules = PbxExtensionModules::find([
+            'conditions' => 'disabled = :disabled:',
+            'bind' => ['disabled' => '0']
+        ]);
+
+        // Scan each enabled module
+        foreach ($enabledModules as $module) {
+            $moduleName = $module->uniqid;
+            $moduleDir = "{$modulesPath}/{$moduleName}";
+            $apiControllersPath = "{$moduleDir}/API/Controllers";
+
+            // Skip if module doesn't have API/Controllers directory
+            if (!is_dir($apiControllersPath)) {
+                continue;
+            }
+
+            // Recursively scan API/Controllers directory for PHP files
+            $iterator = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($apiControllersPath, \RecursiveDirectoryIterator::SKIP_DOTS)
+            );
+
+            /** @var \SplFileInfo $file */
+            foreach ($iterator as $file) {
+                if (!($file instanceof \SplFileInfo) || $file->getExtension() !== 'php') {
+                    continue;
+                }
+
+                // Extract class name from file path
+                // Example: Tasks/RestController.php -> Tasks\RestController
+                $relativePath = str_replace($apiControllersPath . '/', '', $file->getPathname());
+                $relativePath = str_replace('.php', '', $relativePath);
+                $className = str_replace('/', '\\', $relativePath);
+
+                // Build full controller class name
+                // Example: Modules\ModuleExampleModern\API\Controllers\Tasks\RestController
+                $controllerClass = "Modules\\{$moduleName}\\API\\Controllers\\{$className}";
+
+                // Check if class exists and has ApiResource attribute
+                if (!class_exists($controllerClass)) {
+                    continue;
+                }
+
+                // WHY: Only include controllers with #[ApiResource] attribute
+                // This matches the pattern used in RouterProvider::discoverModuleControllers()
+                try {
+                    $reflection = new \ReflectionClass($controllerClass);
+                    $attributes = $reflection->getAttributes(\MikoPBX\PBXCoreREST\Attributes\ApiResource::class);
+
+                    if (!empty($attributes)) {
+                        $controllers[] = $controllerClass;
+                    }
+                } catch (\ReflectionException $e) {
+                    // Skip classes that can't be reflected
+                    continue;
+                }
+            }
+        }
 
         return $controllers;
     }

@@ -72,30 +72,17 @@ class MessagesProvider implements ServiceProviderInterface
                     }
                 }
 
-                // Load English translations for extensions (modules keep old structure)
-                $extensionsTranslates = [[]];
-                $results              = glob($coreConfig->modulesDir . '/*/{Messages}/en.php', GLOB_BRACE);
-                foreach ($results as $path) {
-                    $langArr =  self::includeLanguageFile($path);
-                    if (!empty($langArr)) {
-                        $extensionsTranslates[] = $langArr;
-                    }
+                // Load English translations for extensions (supports both old and new structure)
+                $extensionsTranslates = self::loadModuleTranslations($coreConfig->modulesDir, 'en');
+                if (!empty($extensionsTranslates)) {
+                    $translates = array_merge($translates, $extensionsTranslates);
                 }
-                if ($extensionsTranslates !== [[]]) {
-                    $translates = array_merge($translates, ...$extensionsTranslates);
-                }
+
+                // Load translations for the selected language from modules
                 if ($language !== 'en') {
-                    $additionalTranslates = [[]];
-                    $results              = glob(
-                        $coreConfig->modulesDir . "/*/{Messages}/$language.php",
-                        GLOB_BRACE
-                    );
-                    foreach ($results as $path) {
-                        $langArr = self::includeLanguageFile($path);
-                        if (!empty($langArr)) {
-                            $additionalTranslates[] = $langArr;
-                            $translates = array_merge($translates, ...$additionalTranslates);
-                        }
+                    $additionalTranslates = self::loadModuleTranslations($coreConfig->modulesDir, $language);
+                    if (!empty($additionalTranslates)) {
+                        $translates = array_merge($translates, $additionalTranslates);
                     }
                 }
 
@@ -163,6 +150,55 @@ class MessagesProvider implements ServiceProviderInterface
             }
         }
         
+        return $translations;
+    }
+
+    /**
+     * Loads translations from all modules for a given language.
+     * Supports both old (single file) and new (directory with multiple files) structures.
+     *
+     * Old structure (backward compatibility):
+     *   ModuleName/Messages/en.php
+     *   ModuleName/Messages/ru.php
+     *
+     * New structure (Language Pack modules):
+     *   ModuleName/Messages/en/Common.php
+     *   ModuleName/Messages/en/Extensions.php
+     *   ModuleName/Messages/ja/Common.php
+     *
+     * @param string $modulesDir The modules directory path.
+     * @param string $language The language code (e.g., 'en', 'ru', 'ja').
+     * @return array The merged translations from all modules.
+     */
+    private static function loadModuleTranslations(string $modulesDir, string $language): array
+    {
+        $translations = [];
+
+        // Get all module directories
+        $moduleDirs = glob($modulesDir . '/*', GLOB_ONLYDIR);
+
+        foreach ($moduleDirs as $moduleDir) {
+            $moduleTranslations = [];
+
+            // Check for NEW structure first (directory with multiple files)
+            $newStructurePath = "$moduleDir/Messages/$language";
+            if (is_dir($newStructurePath)) {
+                // Load all PHP files from the language directory
+                $moduleTranslations = self::loadLanguageDirectory($newStructurePath);
+            } else {
+                // Fallback to OLD structure (single file for backward compatibility)
+                $oldStructurePath = "$moduleDir/Messages/$language.php";
+                if (file_exists($oldStructurePath)) {
+                    $moduleTranslations = self::includeLanguageFile($oldStructurePath);
+                }
+            }
+
+            // Merge module translations into the main array
+            if (!empty($moduleTranslations)) {
+                $translations = array_merge($translations, $moduleTranslations);
+            }
+        }
+
         return $translations;
     }
 
