@@ -51,6 +51,7 @@ class Directories extends Injectable
     public const string APP_ASSETS_CACHE_DIR = 'adminApplication.assetsCacheDir';
     public const string APP_VOLT_CACHE_DIR = 'adminApplication.voltCacheDir';
     public const string APP_VIEW_CACHE_DIR = 'adminApplication.viewCacheDir';
+    public const string CORE_RECORDINGS_CACHE_DIR = 'core.recordingsCacheDir';
 
     public const array DEFAULT_DIRS = [
         self::CORE_CF_DIR => '/cf',
@@ -79,6 +80,7 @@ class Directories extends Injectable
         self::APP_ASSETS_CACHE_DIR => '/var/tmp/www_cache',
         self::APP_VOLT_CACHE_DIR => '/var/tmp/www_cache/volt',
         self::APP_VIEW_CACHE_DIR => '/var/tmp/www_cache/view',
+        self::CORE_RECORDINGS_CACHE_DIR => '/mountpoint/mikopbx/tmp/recordings_cache',
     ];
 
     protected static array $dirCache = [];

@@ -19,6 +19,7 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Cdr;
 
+use MikoPBX\Core\System\Storage\StorageAdapter;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Injectable;
@@ -102,10 +103,33 @@ class DownloadRecordAction extends Injectable
             return $res;
         }
 
-        // Check if file exists and is readable
-        if (!file_exists($filename) || !is_readable($filename)) {
-            $res->messages['error'][] = 'Recording file not found or not readable';
-            $res->httpCode = 404;
+        // ============ FILE LOCATION RESOLUTION ============
+        // WHY: StorageAdapter provides transparent access to recordings
+        // whether they are stored locally or in S3 cloud storage.
+        // It automatically downloads from S3 to cache if needed.
+        try {
+            $storageAdapter = new StorageAdapter();
+            $actualFilePath = $storageAdapter->getFile($filename);
+
+            if ($actualFilePath === null) {
+                $res->messages['error'][] = 'Recording file not found';
+                $res->httpCode = 404;
+                return $res;
+            }
+
+            // Update filename to actual location (may be cache path if file in S3)
+            $filename = $actualFilePath;
+
+        } catch (\Exception $e) {
+            $res->messages['error'][] = 'Error accessing recording file: ' . $e->getMessage();
+            $res->httpCode = 500;
+            return $res;
+        }
+
+        // Check if file is readable (file exists check already done by StorageAdapter)
+        if (!is_readable($filename)) {
+            $res->messages['error'][] = 'Recording file not readable';
+            $res->httpCode = 403;
             return $res;
         }
 
