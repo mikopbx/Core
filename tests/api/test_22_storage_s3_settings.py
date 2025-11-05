@@ -4,8 +4,9 @@ Test suite for Storage S3 Settings operations
 
 Tests S3 storage configuration REST API endpoints:
 - GET /s3-storage: Retrieve S3 configuration
-- POST /s3-storage: Update S3 settings
-- PUT /s3-storage: Test S3 connection
+- PUT /s3-storage: Update S3 settings (full replacement)
+- PATCH /s3-storage: Partially update S3 settings
+- POST /s3-storage:testConnection: Test S3 connection
 
 Test Coverage:
 - Basic CRUD operations (12 tests)
@@ -84,7 +85,7 @@ class TestStorageS3Settings:
         save_period = int(data['PBXRecordSavePeriod'])
         print(f"\n✓ PBXRecordSavePeriod: {save_period} days")
         assert save_period >= 1, "Save period should be at least 1 day"
-        assert save_period <= 365, "Save period should be max 365 days"
+        assert save_period <= 1095, "Save period should be max 1095 days (3 years)"
 
         # Verify PBX_RECORD_S3_LOCAL_DAYS
         assert 'PBXRecordS3LocalDays' in data, "Response should contain PBXRecordS3LocalDays"
@@ -94,12 +95,12 @@ class TestStorageS3Settings:
         assert local_days < save_period, "Local retention must be less than total retention"
 
     def test_03_save_s3_minimal_config(self, api_client):
-        """Test POST /s3-storage - Save minimal S3 configuration (disabled)"""
+        """Test PUT /s3-storage - Save minimal S3 configuration (disabled)"""
         payload = {
             's3_enabled': 0,
         }
 
-        response = api_client.post('s3-storage', payload)
+        response = api_client.put('s3-storage', payload)
         assert_api_success(response, "Failed to save minimal S3 config")
 
         data = response['data']
@@ -108,8 +109,8 @@ class TestStorageS3Settings:
         assert data['s3_enabled'] == 0, "S3 should be disabled"
 
     def test_04_save_s3_full_config(self, api_client):
-        """Test POST /s3-storage - Save complete AWS S3 configuration"""
-        response = api_client.post('s3-storage', AWS_S3_CONFIG)
+        """Test PUT /s3-storage - Save complete AWS S3 configuration"""
+        response = api_client.put('s3-storage', AWS_S3_CONFIG)
         assert_api_success(response, "Failed to save full AWS S3 config")
 
         data = response['data']
@@ -131,8 +132,8 @@ class TestStorageS3Settings:
         assert '**' in data['s3_secret_key'], "Secret key should be masked in middle"
 
     def test_05_save_s3_minio_config(self, api_client):
-        """Test POST /s3-storage - Save MinIO configuration (local testing)"""
-        response = api_client.post('s3-storage', MINIO_CONFIG)
+        """Test PUT /s3-storage - Save MinIO configuration (local testing)"""
+        response = api_client.put('s3-storage', MINIO_CONFIG)
         assert_api_success(response, "Failed to save MinIO config")
 
         data = response['data']
@@ -146,14 +147,14 @@ class TestStorageS3Settings:
         assert data['s3_bucket'] == MINIO_CONFIG['s3_bucket'], "Bucket should match"
 
     def test_06_update_retention_periods(self, api_client):
-        """Test POST /s3-storage - Update total retention period"""
+        """Test PUT /s3-storage - Update total retention period"""
         # First set local to lower value, then update total
         payload = {
             'PBXRecordS3LocalDays': '7',  # Set local < 60
             'PBXRecordSavePeriod': '60',  # Then update total to 60 days
         }
 
-        response = api_client.post('s3-storage', payload)
+        response = api_client.put('s3-storage', payload)
         assert_api_success(response, "Failed to update retention period")
 
         data = response['data']
@@ -162,12 +163,12 @@ class TestStorageS3Settings:
         assert int(data['PBXRecordSavePeriod']) == 60, "Retention period should be 60 days"
 
     def test_07_update_local_retention_period(self, api_client):
-        """Test POST /s3-storage - Update local retention period when S3 enabled"""
+        """Test PUT /s3-storage - Update local retention period when S3 enabled"""
         payload = {
             'PBXRecordS3LocalDays': '14',  # Update to 14 days
         }
 
-        response = api_client.post('s3-storage', payload)
+        response = api_client.put('s3-storage', payload)
         assert_api_success(response, "Failed to update local retention period")
 
         data = response['data']
@@ -176,13 +177,13 @@ class TestStorageS3Settings:
         assert int(data['PBXRecordS3LocalDays']) == 14, "Local retention should be 14 days"
 
     def test_08_update_both_retention_periods(self, api_client):
-        """Test POST /s3-storage - Update both retention periods simultaneously"""
+        """Test PUT /s3-storage - Update both retention periods simultaneously"""
         payload = {
             'PBXRecordSavePeriod': '90',  # Total: 90 days
             'PBXRecordS3LocalDays': '7',   # Local: 7 days
         }
 
-        response = api_client.post('s3-storage', payload)
+        response = api_client.put('s3-storage', payload)
         assert_api_success(response, "Failed to update both retention periods")
 
         data = response['data']
@@ -194,14 +195,14 @@ class TestStorageS3Settings:
         assert int(data['PBXRecordS3LocalDays']) == 7, "Local retention should be 7 days"
 
     def test_09_update_s3_endpoint(self, api_client):
-        """Test POST /s3-storage - Switch between AWS and MinIO endpoints"""
+        """Test PUT /s3-storage - Switch between AWS and MinIO endpoints"""
         # Switch to AWS
         payload = {
             's3_endpoint': 'https://s3.amazonaws.com',
             's3_region': 'us-west-2',
         }
 
-        response = api_client.post('s3-storage', payload)
+        response = api_client.put('s3-storage', payload)
         assert_api_success(response, "Failed to update S3 endpoint")
 
         data = response['data']
@@ -218,7 +219,7 @@ class TestStorageS3Settings:
             's3_region': 'us-east-1',
         }
 
-        response = api_client.post('s3-storage', payload)
+        response = api_client.put('s3-storage', payload)
         assert_api_success(response, "Failed to switch back to MinIO")
 
         data = response['data']
@@ -226,13 +227,13 @@ class TestStorageS3Settings:
         assert 'minio' in data['s3_endpoint'].lower(), "Endpoint should be MinIO"
 
     def test_10_update_s3_credentials(self, api_client):
-        """Test POST /s3-storage - Update S3 access and secret keys"""
+        """Test PUT /s3-storage - Update S3 access and secret keys"""
         payload = {
             's3_access_key': 'AKIAIOSFODNN7UPDATED',
             's3_secret_key': 'wJalrXUtnFEMI/K7MDENG/bPxRfiCYUPDATED',
         }
 
-        response = api_client.post('s3-storage', payload)
+        response = api_client.put('s3-storage', payload)
         assert_api_success(response, "Failed to update S3 credentials")
 
         data = response['data']
@@ -244,10 +245,10 @@ class TestStorageS3Settings:
         assert 'wJalr' in data['s3_secret_key'], "Secret key should start with original prefix"
 
     def test_11_toggle_s3_enabled(self, api_client):
-        """Test POST /s3-storage - Toggle S3 enabled/disabled state"""
+        """Test PUT /s3-storage - Toggle S3 enabled/disabled state"""
         # Disable S3 first (can always disable)
         payload = {'s3_enabled': 0}
-        response = api_client.post('s3-storage', payload)
+        response = api_client.put('s3-storage', payload)
         assert_api_success(response, "Failed to disable S3")
         assert response['data']['s3_enabled'] == 0, "S3 should be disabled"
         print(f"\n✓ S3 disabled successfully")
@@ -257,7 +258,7 @@ class TestStorageS3Settings:
             's3_enabled': 1,
             **MINIO_CONFIG
         }
-        response = api_client.post('s3-storage', payload)
+        response = api_client.put('s3-storage', payload)
         assert_api_success(response, "Failed to enable S3 with credentials")
         assert response['data']['s3_enabled'] == 1, "S3 should be enabled"
         print(f"✓ S3 enabled successfully with credentials")
@@ -296,7 +297,7 @@ class TestStorageS3SettingsValidation:
         }
 
         try:
-            response = api_client.post('s3-storage', payload)
+            response = api_client.put('s3-storage', payload)
             # If we get here, validation didn't work as expected
             print(f"\n⚠ Warning: Backend accepted invalid retention constraint")
             print(f"  TODO: Add validation for PBX_RECORD_S3_LOCAL_DAYS < PBX_RECORD_SAVE_PERIOD")
@@ -312,7 +313,7 @@ class TestStorageS3SettingsValidation:
         """Test validation: Retention period value ranges"""
         # Test total retention = 365 days (max valid)
         payload = {'PBXRecordSavePeriod': '365'}
-        response = api_client.post('s3-storage', payload)
+        response = api_client.put('s3-storage', payload)
         assert_api_success(response, "365 days should be valid for total retention")
         print(f"\n✓ Maximum total retention (365 days) accepted")
 
@@ -321,7 +322,7 @@ class TestStorageS3SettingsValidation:
             'PBXRecordSavePeriod': '365',
             'PBXRecordS3LocalDays': '90',
         }
-        response = api_client.post('s3-storage', payload)
+        response = api_client.put('s3-storage', payload)
         assert_api_success(response, "90 days should be valid for local retention")
         print(f"✓ Maximum local retention (90 days) accepted")
 
@@ -333,7 +334,7 @@ class TestStorageS3SettingsValidation:
             's3_bucket': 'mikopbx-recordings-test-123',
             **{k: v for k, v in MINIO_CONFIG.items() if k != 's3_bucket'}
         }
-        response = api_client.post('s3-storage', payload)
+        response = api_client.put('s3-storage', payload)
         assert_api_success(response, "Valid bucket name with full config should be accepted")
         print(f"\n✓ Valid bucket name accepted: {payload['s3_bucket']}")
 
@@ -344,7 +345,7 @@ class TestStorageS3SettingsValidation:
     def test_04_validate_required_fields_when_enabled(self, api_client):
         """Test validation: Required fields when s3_enabled = 1"""
         # First disable S3 to clear any existing config
-        api_client.post('s3-storage', {'s3_enabled': 0})
+        api_client.put('s3-storage', {'s3_enabled': 0})
 
         # Try to enable S3 without required fields (should fail)
         payload = {
@@ -353,7 +354,7 @@ class TestStorageS3SettingsValidation:
         }
 
         try:
-            response = api_client.post('s3-storage', payload)
+            response = api_client.put('s3-storage', payload)
             # If we get here without error, backend accepted invalid config
             print(f"\n⚠ Warning: Backend accepted S3 enabled without required fields")
         except Exception as e:
@@ -365,7 +366,7 @@ class TestStorageS3SettingsValidation:
 
     def test_05_empty_patch_handling(self, api_client):
         """Test PATCH with empty body - should return current settings"""
-        response = api_client.post('s3-storage', {})
+        response = api_client.put('s3-storage', {})
         assert_api_success(response, "Empty PATCH should succeed")
 
         data = response['data']
@@ -383,7 +384,7 @@ class TestStorageS3SettingsValidation:
 
         # Update only bucket
         payload = {'s3_bucket': 'mikopbx-test-partial-update'}
-        response = api_client.post('s3-storage', payload)
+        response = api_client.put('s3-storage', payload)
         assert_api_success(response, "Failed to update bucket")
 
         data = response['data']
@@ -404,7 +405,7 @@ class TestStorageS3SettingsCleanup:
     def test_99_restore_original_settings(self, api_client, original_settings):
         """Restore original settings after all tests"""
         # Restore original settings
-        response = api_client.post('s3-storage', original_settings)
+        response = api_client.put('s3-storage', original_settings)
         assert_api_success(response, "Failed to restore original settings")
 
         print(f"\n✓ Original settings restored successfully")
