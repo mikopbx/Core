@@ -252,6 +252,14 @@ class MikoPBXClient:
                     time.sleep(delay)
                 else:
                     raise
+            except requests.exceptions.HTTPError as e:
+                # Try to extract error message from JSON response
+                try:
+                    error_data = response.json()
+                    error_msg = f"{e}. API Messages: {error_data.get('messages', {})}"
+                    raise requests.exceptions.HTTPError(error_msg, response=response)
+                except (ValueError, KeyError):
+                    raise e
 
     def patch(self, path: str, data: Dict, allow_404: bool = False) -> Dict[str, Any]:
         """PATCH request (partial update) with connection retry
@@ -286,6 +294,14 @@ class MikoPBXClient:
                     time.sleep(delay)
                 else:
                     raise
+            except requests.exceptions.HTTPError as e:
+                # Try to extract error message from JSON response
+                try:
+                    error_data = response.json()
+                    error_msg = f"{e}. API Messages: {error_data.get('messages', {})}"
+                    raise requests.exceptions.HTTPError(error_msg, response=response)
+                except (ValueError, KeyError):
+                    raise e
 
     def delete(self, path: str, data: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """DELETE request with connection retry

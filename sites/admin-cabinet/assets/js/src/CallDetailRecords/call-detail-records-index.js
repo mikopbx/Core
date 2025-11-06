@@ -508,16 +508,16 @@ const callDetailRecords = {
             // Format start date
             const formattedDate = moment(group.start).format('DD-MM-YYYY HH:mm:ss');
 
-            // Extract recording records - filter only records with actual recording files
+            // Extract all recording records (including those without files)
+            // WHY: Show details for all records - disabled player is shown when no file exists
             const recordings = (group.records || [])
-                .filter(r => r.recordingfile && r.recordingfile.length > 0)
                 .map(r => ({
                     id: r.id,
                     src_num: r.src_num,
                     dst_num: r.dst_num,
-                    recordingfile: r.recordingfile,
-                    playback_url: r.playback_url,   // Token-based URL for playback
-                    download_url: r.download_url    // Token-based URL for download
+                    recordingfile: r.recordingfile || '',
+                    playback_url: r.playback_url || '',   // Token-based URL for playback
+                    download_url: r.download_url || ''    // Token-based URL for download
                 }));
 
             // Determine CSS class

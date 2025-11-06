@@ -854,8 +854,19 @@ class ApiMetadataRegistry extends Injectable
                     $method = strtolower($httpMethod);
 
                     // Determine if this operation requires ID
-                    $requiresId = in_array($operationName, $httpMapping['resourceLevel'] ?? []) ||
-                                  $this->operationRequiresId($operationName);
+                    // WHY: Explicitly check collectionLevel first - singletons define getRecord/update/patch there
+                    // FIX: Respect HttpMapping configuration instead of relying only on operation name patterns
+                    $isCollectionLevel = in_array($operationName, $httpMapping['collectionLevel'] ?? []);
+                    $isResourceLevel = in_array($operationName, $httpMapping['resourceLevel'] ?? []);
+
+                    if ($isCollectionLevel && $isResourceLevel) {
+                        // WHY: Misconfiguration - operation cannot be both collection and resource level
+                        SystemMessages::sysLogMsg(__METHOD__, "WARNING: Operation '$operationName' is in both collectionLevel and resourceLevel for path '$basePath'", LOG_WARNING);
+                        continue;
+                    }
+
+                    $requiresId = $isResourceLevel ||
+                                  (!$isCollectionLevel && $this->operationRequiresId($operationName));
 
                     // WHY: Skip if operation requires ID but resourcePath not created (misconfiguration)
                     // This prevents using null resourcePath when singleton has resource-level operation
