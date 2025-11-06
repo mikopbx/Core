@@ -19,6 +19,7 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Cdr;
 
+use MikoPBX\Common\Models\RecordingStorage;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
 use MikoPBX\PBXCoreREST\Lib\Common\OpenApiSchemaProvider;
 
@@ -75,11 +76,28 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'verbose_call_id' => $model->verbose_call_id ?? '',
         ];
 
-        // Add recording URLs if file exists
+        // Add recording URLs if file exists (local or S3)
         // WHY: Provides secure token-based access without exposing file paths
         // Two URLs: playback (for inline streaming) and download (for file download)
-        // IMPORTANT: If file doesn't exist, clear recordingfile, playback_url, and download_url
-        if (!empty($model->recordingfile) && file_exists($model->recordingfile)) {
+        // IMPORTANT: Check RecordingStorage first for S3 files, then file_exists for backward compatibility
+        $fileAvailable = false;
+
+        if (!empty($model->recordingfile)) {
+            // STEP 1: Check RecordingStorage mapping table
+            // WHY: Files migrated to S3 won't pass file_exists() but are still accessible
+            $storageRecord = RecordingStorage::findByPath($model->recordingfile);
+
+            if ($storageRecord !== null) {
+                // File is tracked - available either locally or in S3
+                $fileAvailable = true;
+            } elseif (file_exists($model->recordingfile)) {
+                // STEP 2: Backward compatibility - check local file for older records
+                // WHY: Records created before S3 migration won't have RecordingStorage entry
+                $fileAvailable = true;
+            }
+        }
+
+        if ($fileAvailable) {
             $token = self::generatePlaybackToken($model->id);
 
             if (!empty($token)) {
@@ -94,7 +112,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 $data['download_url'] = '';
             }
         } else {
-            // File doesn't exist or recordingfile is empty
+            // File doesn't exist anywhere (local, S3, or not tracked)
             // WHY: Consistency - if no file, all 3 fields should be empty
             $data['recordingfile'] = '';
             $data['playback_url'] = '';

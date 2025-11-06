@@ -52,10 +52,10 @@ require_once 'Globals.php';
 class WorkerS3CacheCleaner extends WorkerBase
 {
     /**
-     * Maximum cache size in megabytes (5GB)
+     * Maximum cache size in megabytes (500MB)
      * When cache exceeds this size, cleanup is triggered
      */
-    private const MAX_CACHE_SIZE_MB = 5000;
+    private const MAX_CACHE_SIZE_MB = 500;
 
     /**
      * Target cache size after cleanup (80% of max)
@@ -73,6 +73,19 @@ class WorkerS3CacheCleaner extends WorkerBase
      * Initialized from Directories class in constructor
      */
     private string $cacheDir;
+
+    /**
+     * Get check interval for WorkerSafeScriptsCore monitoring
+     *
+     * Returns interval in seconds for supervisor to check this worker.
+     * Cache cleaner runs every hour, so checking every 30 seconds is sufficient.
+     *
+     * @return int Check interval in seconds
+     */
+    public static function getCheckInterval(): int
+    {
+        return 30; // Check worker status every 30 seconds
+    }
 
     /**
      * Initialize worker
@@ -349,3 +362,6 @@ class WorkerS3CacheCleaner extends WorkerBase
         ];
     }
 }
+
+// Start worker if executed directly
+WorkerS3CacheCleaner::startWorker($argv ?? []);

@@ -852,6 +852,7 @@ return [
     'st_S3SecretKeyHelp' => 'Секретный ключ будет зашифрован перед сохранением',
     'st_S3StorageSettings' => 'Облачное хранилище S3',
     'st_S3StorageSubtitle' => 'Автоматическая загрузка записей в облачное хранилище',
+    'st_S3TestConnectionHeader' => 'Тестирование подключения к S3 бакету',
     'st_S3TestFailed' => 'Ошибка соединения с S3',
     'st_S3TestSuccess' => 'Соединение с S3 успешно',
     'st_StorageLoadError' => 'Не удалось загрузить информацию о хранилище',

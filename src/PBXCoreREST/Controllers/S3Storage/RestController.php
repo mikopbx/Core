@@ -50,13 +50,13 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ResourceSecurity('storage_s3', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
 #[HttpMapping(
     mapping: [
-        'GET' => ['getRecord'],
+        'GET' => ['getRecord', 'testConnection'],
         'PUT' => ['update'],
         'PATCH' => ['patch'],
         'POST' => ['testConnection']
     ],
     resourceLevelMethods: [],
-    collectionLevelMethods: ['getRecord', 'update', 'patch'],
+    collectionLevelMethods: ['getRecord', 'update', 'patch', 'testConnection'],
     customMethods: ['testConnection'],
     idPattern: null
 )]
@@ -158,6 +158,7 @@ class RestController extends BaseRestController
     /**
      * Test S3 connection and credentials
      *
+     * @route GET /pbxcore/api/v3/s3-storage:testConnection
      * @route POST /pbxcore/api/v3/s3-storage:testConnection
      */
     #[ApiOperation(
@@ -165,6 +166,11 @@ class RestController extends BaseRestController
         description: 'rest_s3_TestConnectionDesc',
         operationId: 'testS3Connection'
     )]
+    #[ApiParameterRef('s3_endpoint', required: true)]
+    #[ApiParameterRef('s3_region')]
+    #[ApiParameterRef('s3_bucket', required: true)]
+    #[ApiParameterRef('s3_access_key', required: true)]
+    #[ApiParameterRef('s3_secret_key', required: true)]
     #[ApiResponse(200, 'rest_response_200_test')]
     #[ApiResponse(400, 'rest_response_400_bad_request', 'PBXApiResult')]
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]

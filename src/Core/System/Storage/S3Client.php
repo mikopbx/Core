@@ -22,6 +22,7 @@ namespace MikoPBX\Core\System\Storage;
 use Aws\S3\S3Client as AwsS3Client;
 use Aws\Exception\AwsException;
 use MikoPBX\Common\Models\StorageSettings;
+use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\System\SystemMessages;
 
 /**
@@ -106,7 +107,7 @@ class S3Client
                 'Bucket' => $this->bucket,
                 'Key' => $s3Key,
                 'SourceFile' => $localPath,
-                'StorageClass' => 'STANDARD_IA', // Infrequent Access - cheaper for archives
+                'StorageClass' => 'STANDARD', // STANDARD for MinIO compatibility (STANDARD_IA not supported)
             ]);
 
             SystemMessages::sysLogMsg(__CLASS__, "Uploaded to S3: $s3Key", LOG_INFO);
@@ -214,13 +215,13 @@ class S3Client
 
             return [
                 'success' => true,
-                'message' => 'S3 connection successful. Bucket accessible.',
+                'message' => TranslationProvider::translate('st_S3TestSuccess'),
             ];
 
         } catch (AwsException $e) {
             return [
                 'success' => false,
-                'message' => 'S3 connection failed: ' . $e->getMessage(),
+                'message' => TranslationProvider::translate('st_S3TestFailed') . ': ' . $e->getMessage(),
             ];
         }
     }

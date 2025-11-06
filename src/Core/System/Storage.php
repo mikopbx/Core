@@ -1485,6 +1485,7 @@ class Storage extends Injectable
                 'modules' => ['size' => 0, 'percentage' => 0, 'paths' => []],
                 'backups' => ['size' => 0, 'percentage' => 0, 'paths' => []],
                 'system_caches' => ['size' => 0, 'percentage' => 0, 'paths' => []],
+                's3_cache' => ['size' => 0, 'percentage' => 0, 'paths' => []],
                 'other' => ['size' => 0, 'percentage' => 0, 'paths' => []],
             ]
         ];
@@ -1555,7 +1556,7 @@ class Storage extends Injectable
         
         // Calculate "other" category (everything else)
         $categorizedSize = 0;
-        foreach (['call_recordings', 'cdr_database', 'system_logs', 'modules', 'backups', 'system_caches'] as $category) {
+        foreach (['call_recordings', 'cdr_database', 'system_logs', 'modules', 'backups', 'system_caches', 's3_cache'] as $category) {
             $categorizedSize += $result['categories'][$category]['size'];
         }
         $result['categories']['other']['size'] = round($result['used_space'] - $categorizedSize, 1);
@@ -1639,7 +1640,12 @@ class Storage extends Injectable
             Directories::getDir(Directories::APP_VOLT_CACHE_DIR),
             Directories::getDir(Directories::APP_VIEW_CACHE_DIR),
         ];
-        
+
+        // S3 recordings cache (кеш записей из S3)
+        $s3CachePaths = [
+            Directories::getDir(Directories::CORE_RECORDINGS_CACHE_DIR),
+        ];
+
         return [
             'call_recordings' => $recordingPaths,
             'cdr_database' => $cdrFiles,
@@ -1647,6 +1653,7 @@ class Storage extends Injectable
             'modules' => $modulesPaths,
             'backups' => $backupPaths,
             'system_caches' => $cachePaths,
+            's3_cache' => $s3CachePaths,
         ];
     }
     

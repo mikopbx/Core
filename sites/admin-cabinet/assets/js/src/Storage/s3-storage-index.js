@@ -236,10 +236,10 @@ const s3StorageIndex = {
 
             if (response && response.result === true) {
                 const message = response.data?.message || globalTranslate.st_S3TestSuccess;
-                UserMessage.showInformation(message, globalTranslate.st_S3TestSuccess);
+                UserMessage.showInformation(message, globalTranslate.st_S3TestConnectionHeader);
             } else {
                 const errorMessage = response?.data?.message || globalTranslate.st_S3TestFailed;
-                UserMessage.showError(errorMessage, globalTranslate.st_S3TestFailed);
+                UserMessage.showError(errorMessage, globalTranslate.st_S3TestConnectionHeader);
             }
         });
     },

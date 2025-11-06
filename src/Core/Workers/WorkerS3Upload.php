@@ -407,7 +407,7 @@ class WorkerS3Upload extends WorkerBase
             );
 
             foreach ($iterator as $file) {
-                if ($file->isFile() && str_ends_with($file->getFilename(), '.wav')) {
+                if ($file->isFile() && (str_ends_with($file->getFilename(), '.wav') || str_ends_with($file->getFilename(), '.mp3'))) {
                     $files[] = [
                         'path' => $file->getPathname(),
                         'mtime' => $file->getMTime(),
@@ -454,7 +454,7 @@ class WorkerS3Upload extends WorkerBase
             );
 
             foreach ($iterator as $file) {
-                if ($file->isFile() && str_ends_with($file->getFilename(), '.wav')) {
+                if ($file->isFile() && (str_ends_with($file->getFilename(), '.wav') || str_ends_with($file->getFilename(), '.mp3'))) {
                     $mtime = $file->getMTime();
 
                     // Only include files older than expiration time
