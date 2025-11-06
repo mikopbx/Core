@@ -15,6 +15,7 @@
 ##   CDR_DB_PATH       - Path to CDR database (default: /storage/usbdisk1/mikopbx/astlogs/asterisk/cdr.db)
 ##   FIXTURES_DIR      - Path to fixtures directory (default: /usr/www/tests/api/fixtures)
 ##   MONITOR_BASE      - Path to recordings base (default: /storage/usbdisk1/mikopbx/astspool/monitor)
+##   RECORDING_FORMAT  - Recording file format: 'mp3' or 'webm' (default: mp3)
 ##   ENABLE_CDR_SEED   - Enable/disable seeding (default: 1)
 ##   ENABLE_CDR_CLEANUP - Enable/disable cleanup (default: 1)
 ##
@@ -105,6 +106,40 @@ create_minimal_mp3() {
     dd if=/dev/zero bs=1 count=403 >> "$output_file" 2>/dev/null
 }
 
+# Create minimal WebM file (valid WebM/Matroska format)
+create_minimal_webm() {
+    local output_file="$1"
+    local output_dir=$(dirname "$output_file")
+
+    # Create directory if it doesn't exist
+    mkdir -p "$output_dir"
+
+    # Create minimal valid WebM: EBML header + Segment + minimal audio track
+    # This creates a valid WebM container that can be recognized by browsers/players
+    printf '\x1a\x45\xdf\xa3\x9f\x42\x86\x81\x01\x42\xf7\x81\x01\x42\xf2\x81\x04\x42\xf3\x81\x08\x42\x82\x84\x77\x65\x62\x6d\x42\x87\x81\x02\x42\x85\x81\x02' > "$output_file"
+    # Add Segment element with minimal data
+    printf '\x18\x53\x80\x67\x01\xff\xff\xff\xff\xff\xff\xff' >> "$output_file"
+    dd if=/dev/zero bs=1 count=300 >> "$output_file" 2>/dev/null
+}
+
+# Create recording file based on format (MP3 or WebM)
+create_recording_file() {
+    local base_path="$1"
+    local format="${RECORDING_FORMAT:-mp3}"  # Default to MP3 for backward compatibility
+
+    # Remove extension from base_path if present
+    local base_without_ext="${base_path%.*}"
+
+    case "$format" in
+        webm)
+            create_minimal_webm "${base_without_ext}.webm"
+            ;;
+        mp3|*)
+            create_minimal_mp3 "${base_without_ext}.mp3"
+            ;;
+    esac
+}
+
 # Seed database with test data
 seed_database() {
     if [ "$ENABLE_CDR_SEED" != "1" ]; then
@@ -129,22 +164,23 @@ seed_database() {
         return 1
     fi
 
-    # Create MP3 recording files
-    log_info "Creating MP3 recording files..."
-    local mp3_count=0
+    # Create recording files (MP3 or WebM based on RECORDING_FORMAT env var)
+    local format="${RECORDING_FORMAT:-mp3}"
+    log_info "Creating recording files (format: ${format^^})..."
+    local file_count=0
 
-    # Parse JSON and create MP3 files for records with recordingfile
+    # Parse JSON and create recording files for records with recordingfile
     # Using grep to extract recordingfile values (simple approach without jq dependency)
     while IFS= read -r recording_path; do
         if [ -n "$recording_path" ] && [ "$recording_path" != '""' ] && [ "$recording_path" != "null" ]; then
             # Remove quotes
             recording_path=$(echo "$recording_path" | tr -d '"')
-            create_minimal_mp3 "$recording_path"
-            mp3_count=$((mp3_count + 1))
+            create_recording_file "$recording_path"
+            file_count=$((file_count + 1))
         fi
     done < <(grep -o '"recordingfile": *"[^"]*"' "$JSON_FILE" | cut -d'"' -f4)
 
-    log_info "Created $mp3_count recording files"
+    log_info "Created $file_count recording files (${format^^} format)"
 
     # Verify seeding
     local count=$(sqlite3 "$CDR_DB_PATH" "SELECT COUNT(*) FROM cdr_general WHERE id BETWEEN 1 AND 1000;" 2>/dev/null)
@@ -220,8 +256,8 @@ case "${1:-}" in
         echo "Usage: $0 {seed|cleanup|verify|ids}"
         echo ""
         echo "Commands:"
-        echo "  seed    - Load test CDR data into database and create MP3 files"
-        echo "  cleanup - Remove test CDR data and MP3 files"
+        echo "  seed    - Load test CDR data into database and create recording files"
+        echo "  cleanup - Remove test CDR data and recording files"
         echo "  verify  - Check if test data exists (returns count)"
         echo "  ids     - Get list of test CDR IDs"
         echo ""
@@ -229,6 +265,7 @@ case "${1:-}" in
         echo "  CDR_DB_PATH       - Path to CDR database"
         echo "  FIXTURES_DIR      - Path to fixtures directory"
         echo "  MONITOR_BASE      - Path to recordings base"
+        echo "  RECORDING_FORMAT  - Recording format: 'mp3' or 'webm' (default: mp3)"
         echo "  ENABLE_CDR_SEED   - Enable/disable seeding (1/0)"
         echo "  ENABLE_CDR_CLEANUP - Enable/disable cleanup (1/0)"
         exit 1

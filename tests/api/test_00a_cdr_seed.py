@@ -102,56 +102,90 @@ class TestCDRSeeding:
         print("CDR Database Seeding Check")
         print("=" * 60)
 
-        # First, check if test CDR data already exists
-        # Test data uses IDs 1-30, so we check if data exists in that range
-        print("Checking for existing test CDR data (IDs 1-30)...")
+        # Check if test CDR data already exists (both database AND files)
+        # Test data uses IDs 1-30, and we expect 15 MP3 recording files
+        print("Checking for existing test CDR data...")
         seeder = CDRSeederRemote()
 
+        need_seeding = False
+        skip_reason = None
+
         try:
-            # Use the helper method to check for test data
+            # Step 1: Check database for CDR records
+            print("  1. Checking database for test CDR records (IDs 1-30)...")
             existing_test_ids = seeder.get_test_cdr_ids()
 
             if len(existing_test_ids) > 0:
-                print(f"✓ Found existing test CDR data ({len(existing_test_ids)} records)")
-                print("✓ Test data IDs:", existing_test_ids[:5], "..." if len(existing_test_ids) > 5 else "")
+                print(f"     ✓ Found {len(existing_test_ids)} CDR records in database")
+                print(f"     ✓ CDR IDs: {existing_test_ids[:5]}{'...' if len(existing_test_ids) > 5 else ''}")
 
-                # Store existing IDs BEFORE skipping (critical for test_02)
-                # WHY: pytest.skip() may not preserve class variable state in some execution modes
-                TestCDRSeeding.seeded_cdr_ids = existing_test_ids
+                # Step 2: Check for recording files (MP3 or WebM)
+                print("  2. Checking for recording files (MP3/WebM)...")
+                files_all_exist, files_found_count, format_found = seeder.verify_recording_files_exist()
 
-                print("✓ Skipping seeding - test data already present")
-                print("=" * 60)
-                pytest.skip("Test CDR data already exists - skipping seeding")
+                if files_all_exist:
+                    print(f"     ✓ Found all {files_found_count} expected recording files")
+                    print(f"     ✓ Format detected: {format_found.upper()}")
+                    print("     ✓ Test data is complete - skipping seeding")
+
+                    # Store existing IDs BEFORE skipping (critical for test_02)
+                    TestCDRSeeding.seeded_cdr_ids = existing_test_ids
+
+                    print("=" * 60)
+                    pytest.skip(f"Test CDR data already exists (DB + {format_found.upper()} files) - skipping seeding")
+                else:
+                    # Database has records but recording files are missing/incomplete
+                    print(f"     ⚠ Only found {files_found_count}/15 recording files (incomplete)")
+                    if format_found != 'none':
+                        print(f"     ⚠ Format detected: {format_found.upper()}")
+                    print("     ⚠ Database has stale records without corresponding files")
+                    print("     → Forcing re-seeding to restore complete test data")
+                    need_seeding = True
             else:
-                print("✓ No test CDR data found (IDs 1-30 range is empty)")
+                print("     ✓ No test CDR data found (IDs 1-30 range is empty)")
+                need_seeding = True
 
         except Exception as e:
-            print(f"⚠ Could not check for existing test CDR data: {e}")
-            print("⚠ Proceeding with seeding...")
+            print(f"  ⚠ Could not check for existing test CDR data: {e}")
+            print("  ⚠ Proceeding with seeding...")
+            need_seeding = True
 
-        # No existing data found - proceed with seeding
-        print("\nNo test CDR data found - starting seeding...")
-        print("=" * 60)
+        # Proceed with seeding if needed
+        if need_seeding:
+            print("\nStarting CDR seeding...")
+            print("=" * 60)
 
-        # Execute seeding (seeder already initialized above)
-        success = seeder.seed()
+            # Execute seeding (seeder already initialized above)
+            success = seeder.seed()
 
-        if not success:
-            pytest.fail("❌ CDR seeding failed - CDR tests will not have test data")
+            if not success:
+                pytest.fail("❌ CDR seeding failed - CDR tests will not have test data")
 
-        # Get list of seeded IDs
-        seeded_ids = seeder.get_test_cdr_ids()
+            # Get list of seeded IDs
+            seeded_ids = seeder.get_test_cdr_ids()
 
-        # Store in class variable for access by other tests
-        TestCDRSeeding.seeded_cdr_ids = seeded_ids
+            # Store in class variable for access by other tests
+            TestCDRSeeding.seeded_cdr_ids = seeded_ids
 
-        # Verify seeding
-        assert len(seeded_ids) > 0, "No CDR records were seeded"
+            # Verify seeding
+            assert len(seeded_ids) > 0, "No CDR records were seeded"
 
-        print(f"\n✓ CDR seeding completed successfully")
-        print(f"✓ Seeded {len(seeded_ids)} CDR records")
-        print(f"✓ CDR IDs: {min(seeded_ids)} - {max(seeded_ids)}")
-        print("=" * 60)
+            # Verify recording files were created (soft check - warning only)
+            files_all_exist, files_found_count, format_found = seeder.verify_recording_files_exist()
+
+            print(f"\n✓ CDR seeding completed successfully")
+            print(f"✓ Seeded {len(seeded_ids)} CDR records")
+            print(f"✓ CDR IDs: {min(seeded_ids)} - {max(seeded_ids)}")
+
+            if files_all_exist:
+                print(f"✓ Created {files_found_count} recording files ({format_found.upper()})")
+            else:
+                print(f"⚠ Only {files_found_count}/15 recording files created")
+                if format_found != 'none':
+                    print(f"⚠ Format: {format_found.upper()}")
+                print(f"⚠ Some CDR tests requiring recordings may be skipped")
+
+            print("=" * 60)
 
     @pytest.mark.order(2)
     def test_02_verify_cdr_data_available(self, api_client):
