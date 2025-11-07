@@ -833,12 +833,11 @@ class WorkerApiCommands extends WorkerRedisBase
     private function finalizeJob(string $jobId, array $request, PBXApiResult $res, PerformanceMetrics $metrics): void
     {
         $metrics->startStage('response_preparation');
-        
-        // Finalize metrics and add to response
+
+        // Finalize metrics (removed from response)
         $metrics->finalize();
         $result = $res->getResult();
-        $result['_performance'] = $metrics->getMetrics();
-        
+
         // Always send a response
         $this->sendResponse($jobId, $request, $result);
         

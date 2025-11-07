@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Http;
 
+use MikoPBX\Common\Models\PbxSettings;
 use Phalcon\Http\Response as PhResponse;
 use Phalcon\Http\ResponseInterface;
 use Phalcon\Messages\Messages;
@@ -98,22 +99,20 @@ class Response extends PhResponse
         if (json_last_error() !== JSON_ERROR_NONE || !is_array($decodedContent)) {
             $decodedContent = [];
         }
-        $jsonapi = [
-            'jsonapi' => [
-                'version' => '1.0',
-            ],
-        ];
+
+        $stationName = PbxSettings::getValueByKey(PbxSettings::PBX_NAME);
         $meta    = [
             'meta' => [
                 'timestamp' => $timestamp,
                 'hash'      => $hash,
+                'station'   => $stationName ?? '',
             ],
         ];
 
         /**
          * Join the array again
          */
-        $data = array_merge($jsonapi, $decodedContent, $meta);
+        $data = array_merge($decodedContent, $meta);
         $this
             ->setHeader('E-Tag', $eTag)
             ->setJsonContent($data);
