@@ -150,7 +150,7 @@ Object.assign(ExtensionsAPI, {
 
         return {
             apiSettings: {
-                url: ExtensionsAPI.endpoints.getForSelect,
+                url: ExtensionsAPI.endpoints.getForSelect + '?type={type}',
                 urlData: {
                     type: type
                 },

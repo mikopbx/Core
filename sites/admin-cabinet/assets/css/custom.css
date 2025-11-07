@@ -607,3 +607,14 @@ a.ui.button.pbx-extensions-settings {
     max-width: 100%;
 }
 
+/* Visual styling for disabled/inactive dropdown items (still selectable) */
+.ui.dropdown .menu > .item.inactive {
+    opacity: 0.6;
+    color: #999 !important;
+}
+
+.ui.dropdown .menu > .item.inactive:hover {
+    opacity: 0.8;
+    background-color: rgba(0,0,0,.05) !important;
+}
+
