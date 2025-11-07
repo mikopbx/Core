@@ -20,7 +20,6 @@
 namespace MikoPBX\AdminCabinet\Controllers;
 
 use MikoPBX\AdminCabinet\Forms\CustomFilesEditForm;
-use MikoPBX\Common\Models\CustomFiles;
 
 /**
  * Custom Files Controller
@@ -52,17 +51,5 @@ class CustomFilesController extends BaseController
 
         $this->view->form = $form;
         $this->view->id = $id;
-    }
-
-    /**
-     * Get allowed directories for MODE_CUSTOM files
-     * Returns JSON array of allowed directory paths
-     *
-     * @return void
-     */
-    public function getAllowedDirectoriesAction(): void
-    {
-        $this->view->success = true;
-        $this->view->data = CustomFiles::ALLOWED_DIRECTORIES;
     }
 }
