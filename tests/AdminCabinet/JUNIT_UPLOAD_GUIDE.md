@@ -89,7 +89,7 @@ BROWSERSTACK_TAGS="regression,smoke" \
 
 ```bash
 # Generate JUnit report in /tmp (writable location)
-docker exec mikopbx-php83 /offload/rootfs/usr/www/vendor/bin/phpunit \
+docker exec mikopbx_php83 /offload/rootfs/usr/www/vendor/bin/phpunit \
   --configuration /offload/rootfs/usr/www/tests/AdminCabinet/phpunit.xml \
   --testsuite Extensions \
   --log-junit /tmp/junit.xml
@@ -99,7 +99,7 @@ docker exec mikopbx-php83 /offload/rootfs/usr/www/vendor/bin/phpunit \
 
 ```bash
 # Copy report from container to host
-docker cp mikopbx-php83:/tmp/junit.xml tests/AdminCabinet/reports/junit.xml
+docker cp mikopbx_php83:/tmp/junit.xml tests/AdminCabinet/reports/junit.xml
 
 # Verify report
 ls -lh tests/AdminCabinet/reports/junit.xml
@@ -136,7 +136,7 @@ All scripts support the following environment variables:
 | `BROWSERSTACK_TAGS` | Comma-separated tags | `phpunit,selenium,admin-cabinet,automated` |
 | `BUILD_NUMBER` | Build identifier (CI/CD) | `local-<timestamp>` |
 | `CI_JOB_URL` | CI job URL | (optional) |
-| `CONTAINER_NAME` | Docker container name | `mikopbx-php83` |
+| `CONTAINER_NAME` | Docker container name | `mikopbx_php83` |
 
 ## JUnit XML Report Format
 
@@ -227,7 +227,7 @@ https://automate.browserstack.com/dashboard
 **Solution**:
 ```bash
 # Check if report exists in container
-docker exec mikopbx-php83 ls -lh /tmp/junit.xml
+docker exec mikopbx_php83 ls -lh /tmp/junit.xml
 
 # Check on host
 ls -lh tests/AdminCabinet/reports/junit.xml
@@ -296,12 +296,12 @@ jobs:
 
       - name: Run Tests
         run: |
-          docker exec mikopbx-php83 /offload/rootfs/usr/www/vendor/bin/phpunit \
+          docker exec mikopbx_php83 /offload/rootfs/usr/www/vendor/bin/phpunit \
             --configuration /offload/rootfs/usr/www/tests/AdminCabinet/phpunit.xml \
             --log-junit /tmp/junit.xml
 
       - name: Copy Report
-        run: docker cp mikopbx-php83:/tmp/junit.xml tests/AdminCabinet/reports/junit.xml
+        run: docker cp mikopbx_php83:/tmp/junit.xml tests/AdminCabinet/reports/junit.xml
 
       - name: Upload to BrowserStack
         env:
@@ -329,10 +329,10 @@ test:
   script:
     - ./tests/AdminCabinet/start-browserstack-local.sh &
     - sleep 5
-    - docker exec mikopbx-php83 /offload/rootfs/usr/www/vendor/bin/phpunit
+    - docker exec mikopbx_php83 /offload/rootfs/usr/www/vendor/bin/phpunit
         --configuration /offload/rootfs/usr/www/tests/AdminCabinet/phpunit.xml
         --log-junit /tmp/junit.xml
-    - docker cp mikopbx-php83:/tmp/junit.xml tests/AdminCabinet/reports/junit.xml
+    - docker cp mikopbx_php83:/tmp/junit.xml tests/AdminCabinet/reports/junit.xml
     - export BUILD_NUMBER=$CI_PIPELINE_ID
     - export CI_JOB_URL=$CI_JOB_URL
     - ./tests/AdminCabinet/Scripts/upload-junit-to-browserstack.sh

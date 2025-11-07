@@ -61,11 +61,11 @@ Use the wrapper script to run pytest tests:
 You can also run tests inside the container from your host machine:
 
 ```bash
-# Run tests inside mikopbx-php83 container
-docker exec mikopbx-php83 /storage/usbdisk1/mikopbx/python-tests/run-pytest.sh test_08_license.py -v
+# Run tests inside mikopbx_php83 container
+docker exec mikopbx_php83 /storage/usbdisk1/mikopbx/python-tests/run-pytest.sh test_08_license.py -v
 
 # Interactive shell inside container
-docker exec -it mikopbx-php83 /bin/sh
+docker exec -it mikopbx_php83 /bin/sh
 # Then inside: /storage/usbdisk1/mikopbx/python-tests/run-pytest.sh test_08_license.py -v
 ```
 
@@ -220,11 +220,11 @@ You can use this setup in CI/CD pipelines:
 # Example GitHub Actions
 - name: Setup test environment
   run: |
-    docker exec mikopbx-php83 /storage/usbdisk1/mikopbx/python-tests/setup-test-environment.sh
+    docker exec mikopbx_php83 /storage/usbdisk1/mikopbx/python-tests/setup-test-environment.sh
 
 - name: Run tests
   run: |
-    docker exec mikopbx-php83 /storage/usbdisk1/mikopbx/python-tests/run-pytest.sh -v --junit-xml=results.xml
+    docker exec mikopbx_php83 /storage/usbdisk1/mikopbx/python-tests/run-pytest.sh -v --junit-xml=results.xml
 ```
 
 ## Comparison: Host vs Inside MikoPBX
@@ -304,10 +304,10 @@ Use the provided wrapper script:
 ```bash
 # From host machine
 cd tests/api
-./run-reboot-test.sh mikopbx-php83 test_47_system.py::test_system_reboot
+./run-reboot-test.sh mikopbx_php83 test_47_system.py::test_system_reboot
 
 # With custom API URL
-./run-reboot-test.sh mikopbx-php83 test_reboot.py http://192.168.107.2:8081/pbxcore/api/v3
+./run-reboot-test.sh mikopbx_php83 test_reboot.py http://192.168.107.2:8081/pbxcore/api/v3
 ```
 
 The script automatically:

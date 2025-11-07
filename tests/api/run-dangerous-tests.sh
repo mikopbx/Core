@@ -25,7 +25,7 @@ if [[ "$1" != "--force" ]]; then
     echo "  - Modify DNS, hostname, gateway settings"
     echo ""
     echo "After running, you may need to:"
-    echo "  1. Restart container: docker restart mikopbx-php83"
+    echo "  1. Restart container: docker restart mikopbx_php83"
     echo "  2. Restart network adapter on host"
     echo ""
     echo "Tests to run: 14 dangerous_network tests"
@@ -62,9 +62,9 @@ else
     echo "⚠️  Container may be unreachable!"
     echo ""
     echo "Try to recover:"
-    echo "  docker restart mikopbx-php83"
+    echo "  docker restart mikopbx_php83"
     echo "  # OR disable firewall manually:"
-    echo "  docker exec mikopbx-php83 /usr/sbin/iptables -F"
+    echo "  docker exec mikopbx_php83 /usr/sbin/iptables -F"
 fi
 
 exit $exit_code

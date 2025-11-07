@@ -66,7 +66,7 @@ function main(array $argv): int
         printMessage("Usage: {$argv[0]} /path/to/junit.xml", COLOR_YELLOW);
         printMessage("", COLOR_RESET);
         printMessage("Example:", COLOR_RESET);
-        printMessage("  docker exec mikopbx-php83 php {$argv[0]} /tmp/junit.xml", COLOR_RESET);
+        printMessage("  docker exec mikopbx_php83 php {$argv[0]} /tmp/junit.xml", COLOR_RESET);
         return 1;
     }
 

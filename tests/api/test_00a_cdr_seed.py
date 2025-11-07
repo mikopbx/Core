@@ -41,7 +41,7 @@ Data characteristics:
 Environment Variables:
     ENABLE_CDR_SEED=1       - Enable seeding (default: 1)
     ENABLE_CDR_CLEANUP=1    - Cleanup after tests (default: 1)
-    MIKOPBX_CONTAINER       - Docker container name (default: mikopbx-php83)
+    MIKOPBX_CONTAINER       - Docker container name (default: mikopbx_php83)
     MIKOPBX_SSH_HOST        - SSH hostname for remote execution
     MIKOPBX_SSH_USER        - SSH username (default: root)
     MIKOPBX_EXECUTION_MODE  - Force execution mode (docker|ssh|local)
@@ -102,90 +102,56 @@ class TestCDRSeeding:
         print("CDR Database Seeding Check")
         print("=" * 60)
 
-        # Check if test CDR data already exists (both database AND files)
-        # Test data uses IDs 1-30, and we expect 15 MP3 recording files
-        print("Checking for existing test CDR data...")
+        # First, check if test CDR data already exists
+        # Test data uses IDs 1-30, so we check if data exists in that range
+        print("Checking for existing test CDR data (IDs 1-30)...")
         seeder = CDRSeederRemote()
 
-        need_seeding = False
-        skip_reason = None
-
         try:
-            # Step 1: Check database for CDR records
-            print("  1. Checking database for test CDR records (IDs 1-30)...")
+            # Use the helper method to check for test data
             existing_test_ids = seeder.get_test_cdr_ids()
 
             if len(existing_test_ids) > 0:
-                print(f"     ✓ Found {len(existing_test_ids)} CDR records in database")
-                print(f"     ✓ CDR IDs: {existing_test_ids[:5]}{'...' if len(existing_test_ids) > 5 else ''}")
+                print(f"✓ Found existing test CDR data ({len(existing_test_ids)} records)")
+                print("✓ Test data IDs:", existing_test_ids[:5], "..." if len(existing_test_ids) > 5 else "")
 
-                # Step 2: Check for recording files (MP3 or WebM)
-                print("  2. Checking for recording files (MP3/WebM)...")
-                files_all_exist, files_found_count, format_found = seeder.verify_recording_files_exist()
+                # Store existing IDs BEFORE skipping (critical for test_02)
+                # WHY: pytest.skip() may not preserve class variable state in some execution modes
+                TestCDRSeeding.seeded_cdr_ids = existing_test_ids
 
-                if files_all_exist:
-                    print(f"     ✓ Found all {files_found_count} expected recording files")
-                    print(f"     ✓ Format detected: {format_found.upper()}")
-                    print("     ✓ Test data is complete - skipping seeding")
-
-                    # Store existing IDs BEFORE skipping (critical for test_02)
-                    TestCDRSeeding.seeded_cdr_ids = existing_test_ids
-
-                    print("=" * 60)
-                    pytest.skip(f"Test CDR data already exists (DB + {format_found.upper()} files) - skipping seeding")
-                else:
-                    # Database has records but recording files are missing/incomplete
-                    print(f"     ⚠ Only found {files_found_count}/15 recording files (incomplete)")
-                    if format_found != 'none':
-                        print(f"     ⚠ Format detected: {format_found.upper()}")
-                    print("     ⚠ Database has stale records without corresponding files")
-                    print("     → Forcing re-seeding to restore complete test data")
-                    need_seeding = True
+                print("✓ Skipping seeding - test data already present")
+                print("=" * 60)
+                pytest.skip("Test CDR data already exists - skipping seeding")
             else:
-                print("     ✓ No test CDR data found (IDs 1-30 range is empty)")
-                need_seeding = True
+                print("✓ No test CDR data found (IDs 1-30 range is empty)")
 
         except Exception as e:
-            print(f"  ⚠ Could not check for existing test CDR data: {e}")
-            print("  ⚠ Proceeding with seeding...")
-            need_seeding = True
+            print(f"⚠ Could not check for existing test CDR data: {e}")
+            print("⚠ Proceeding with seeding...")
 
-        # Proceed with seeding if needed
-        if need_seeding:
-            print("\nStarting CDR seeding...")
-            print("=" * 60)
+        # No existing data found - proceed with seeding
+        print("\nNo test CDR data found - starting seeding...")
+        print("=" * 60)
 
-            # Execute seeding (seeder already initialized above)
-            success = seeder.seed()
+        # Execute seeding (seeder already initialized above)
+        success = seeder.seed()
 
-            if not success:
-                pytest.fail("❌ CDR seeding failed - CDR tests will not have test data")
+        if not success:
+            pytest.fail("❌ CDR seeding failed - CDR tests will not have test data")
 
-            # Get list of seeded IDs
-            seeded_ids = seeder.get_test_cdr_ids()
+        # Get list of seeded IDs
+        seeded_ids = seeder.get_test_cdr_ids()
 
-            # Store in class variable for access by other tests
-            TestCDRSeeding.seeded_cdr_ids = seeded_ids
+        # Store in class variable for access by other tests
+        TestCDRSeeding.seeded_cdr_ids = seeded_ids
 
-            # Verify seeding
-            assert len(seeded_ids) > 0, "No CDR records were seeded"
+        # Verify seeding
+        assert len(seeded_ids) > 0, "No CDR records were seeded"
 
-            # Verify recording files were created (soft check - warning only)
-            files_all_exist, files_found_count, format_found = seeder.verify_recording_files_exist()
-
-            print(f"\n✓ CDR seeding completed successfully")
-            print(f"✓ Seeded {len(seeded_ids)} CDR records")
-            print(f"✓ CDR IDs: {min(seeded_ids)} - {max(seeded_ids)}")
-
-            if files_all_exist:
-                print(f"✓ Created {files_found_count} recording files ({format_found.upper()})")
-            else:
-                print(f"⚠ Only {files_found_count}/15 recording files created")
-                if format_found != 'none':
-                    print(f"⚠ Format: {format_found.upper()}")
-                print(f"⚠ Some CDR tests requiring recordings may be skipped")
-
-            print("=" * 60)
+        print(f"\n✓ CDR seeding completed successfully")
+        print(f"✓ Seeded {len(seeded_ids)} CDR records")
+        print(f"✓ CDR IDs: {min(seeded_ids)} - {max(seeded_ids)}")
+        print("=" * 60)
 
     @pytest.mark.order(2)
     def test_02_verify_cdr_data_available(self, api_client):

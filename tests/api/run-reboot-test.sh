@@ -11,8 +11,8 @@
 #   ./run-reboot-test.sh <container_name> <test_file> [api_url]
 #
 # Examples:
-#   ./run-reboot-test.sh mikopbx-php83 test_47_system.py::test_system_reboot
-#   ./run-reboot-test.sh mikopbx-php83 examples/test_reboot_example.py::test_simple_reboot http://192.168.107.2:8081/pbxcore/api/v3
+#   ./run-reboot-test.sh mikopbx_php83 test_47_system.py::test_system_reboot
+#   ./run-reboot-test.sh mikopbx_php83 examples/test_reboot_example.py::test_simple_reboot http://192.168.107.2:8081/pbxcore/api/v3
 
 set -e
 
@@ -24,7 +24,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Arguments
-CONTAINER="${1:-mikopbx-php83}"
+CONTAINER="${1:-mikopbx_php83}"
 TEST_FILE="${2}"
 API_URL="${3:-http://127.0.0.1:8081/pbxcore/api/v3}"
 
@@ -112,8 +112,8 @@ main() {
         echo "Usage: $0 <container_name> <test_file> [api_url]"
         echo ""
         echo "Examples:"
-        echo "  $0 mikopbx-php83 test_47_system.py::test_system_reboot"
-        echo "  $0 mikopbx-php83 examples/test_reboot_example.py::test_simple_reboot"
+        echo "  $0 mikopbx_php83 test_47_system.py::test_system_reboot"
+        echo "  $0 mikopbx_php83 examples/test_reboot_example.py::test_simple_reboot"
         exit 1
     fi
 
