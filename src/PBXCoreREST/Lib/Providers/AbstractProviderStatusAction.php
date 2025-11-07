@@ -299,30 +299,29 @@ abstract class AbstractProviderStatusAction extends Injectable
         // Parse output
         $lines = explode("\n", $output);
         foreach ($lines as $line) {
-            // Look for SIP provider contacts (both SIP-TRUNK-xxx and SIP-xxx formats)
+            // Look for any SIP provider contacts
             // Format: Contact:  SIP-TRUNK-A0441C96/sip:202@192.168.117.5:5060  28334ac1c0 Avail        12.978
             //         Contact:  SIP-1683372722/sip:...  264d4e5870 Unavail         nan
-            if (strpos($line, 'SIP-') !== false && strpos($line, 'Contact:') !== false) {
-                // Match both formats: SIP-TRUNK-xxx (outbound) and SIP-xxxxxxxxxx (inbound)
-                if (preg_match('/SIP-(?:TRUNK-)?[A-Z0-9]+/', $line, $providerMatch)) {
-                    $providerId = $providerMatch[0];
-                    
-                    // Extract status and RTT
-                    if (preg_match('/([a-f0-9]{10})\s+(\w+)\s+([\d\.]+|nan)\s*$/', $line, $matches)) {
-                        $status = $matches[2];
-                        $rttValue = $matches[3];
+            //         Contact:  testProvider/sip:testProvider@...  ce510c580e Avail         1.654
+            if (strpos($line, 'Contact:') !== false && preg_match('/Contact:\s+(\S+)\/sip:/', $line, $aorMatch)) {
+                // Extract AOR name (before the slash) - can be SIP-TRUNK-xxx, SIP-xxx, or username
+                $providerId = $aorMatch[1];
 
-                        // Store contact even if RTT is 'nan' (NonQual) - contact existence matters for inbound registration
-                        $rtt = null;
-                        if ($rttValue !== 'nan' && is_numeric($rttValue)) {
-                            $rtt = (int)round((float)$rttValue); // Already in milliseconds
-                        }
+                // Extract status and RTT
+                if (preg_match('/([a-f0-9]{10})\s+(\w+)\s+([\d\.]+|nan)\s*$/', $line, $matches)) {
+                    $status = $matches[2];
+                    $rttValue = $matches[3];
 
-                        $contactsMap[$providerId] = [
-                            'rtt' => $rtt,
-                            'status' => $status
-                        ];
+                    // Store contact even if RTT is 'nan' (NonQual) - contact existence matters for inbound registration
+                    $rtt = null;
+                    if ($rttValue !== 'nan' && is_numeric($rttValue)) {
+                        $rtt = (int)round((float)$rttValue); // Already in milliseconds
                     }
+
+                    $contactsMap[$providerId] = [
+                        'rtt' => $rtt,
+                        'status' => $status
+                    ];
                 }
             }
         }
