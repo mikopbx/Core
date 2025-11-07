@@ -310,7 +310,7 @@ class SoundFilesConf extends SystemConfigClass
             }
 
             // Copy sound files (with or without prefix based on module type)
-            $soundFiles = glob("$langDir/*.{wav,ulaw,alaw,gsm,g722,sln}", GLOB_BRACE);
+            $soundFiles = glob("$langDir/*.{wav,ulaw,alaw,gsm,g722,sln,mp3}", GLOB_BRACE);
             foreach ($soundFiles as $soundFile) {
                 $fileName = basename($soundFile);
 
@@ -339,7 +339,7 @@ class SoundFilesConf extends SystemConfigClass
                     Util::mwMkdir($targetSubDir);
                 }
 
-                $subSoundFiles = glob("$subDir/*.{wav,ulaw,alaw,gsm,g722,sln}", GLOB_BRACE);
+                $subSoundFiles = glob("$subDir/*.{wav,ulaw,alaw,gsm,g722,sln,mp3}", GLOB_BRACE);
                 foreach ($subSoundFiles as $soundFile) {
                     $fileName = basename($soundFile);
 
