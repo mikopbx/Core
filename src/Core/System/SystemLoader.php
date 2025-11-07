@@ -409,7 +409,7 @@ class SystemLoader extends Injectable
             // This runs once at boot after Asterisk is fully started
             $this->echoStartMsg(' - Synchronizing codec database...');
             $codecStats = CodecSync::syncCodecsWithAsterisk();
-            $totalChanges = $codecStats['added'] + $codecStats['enabled'] + $codecStats['disabled'];
+            $totalChanges = $codecStats['added'] + $codecStats['deleted'];
             $this->echoResultMsg($totalChanges > 0 ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_SKIPPED);
 
             // Always reload SIP configuration after codec sync

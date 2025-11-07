@@ -167,10 +167,13 @@ class CodecSync
      * Synchronize database codecs with Asterisk's available codecs.
      *
      * This method:
-     * 1. Queries Asterisk for available codecs
-     * 2. Adds new codecs to database (enabled by default)
-     * 3. Deletes unsupported codecs from database
-     * 4. Preserves user enabled/disabled settings for existing codecs
+     * 1. Temporarily loads ALL codec modules for transcoding validation
+     * 2. Queries Asterisk for available codecs
+     * 3. Validates transcoding support (can codec be converted to PCM)
+     * 4. Adds new codecs to database (enabled by default, if transcoding supported)
+     * 5. Deletes unsupported codecs from database
+     * 6. Preserves user enabled/disabled settings for existing codecs
+     * 7. Ensures GSM codec is always enabled (system sounds use GSM format)
      *
      * @return array Statistics about sync operation
      */
@@ -180,8 +183,17 @@ class CodecSync
             'added' => 0,
             'deleted' => 0,
             'skipped' => 0,
+            'no_transcoding' => 0,
             'errors' => [],
         ];
+
+        // STEP 1: Temporarily load all codec modules for validation
+        $loadedModules = self::temporarilyLoadAllCodecModules();
+        SystemMessages::sysLogMsg(
+            __CLASS__,
+            sprintf('Temporarily loaded %d codec modules for validation', count($loadedModules)),
+            LOG_INFO
+        );
 
         // Get available codecs from Asterisk
         $availableCodecs = self::getAsteriskCodecs();
@@ -204,7 +216,7 @@ class CodecSync
             $availableCodecs
         );
 
-        // Add new codecs found in Asterisk but not in database
+        // STEP 2: Add new codecs found in Asterisk but not in database
         foreach ($availableCodecs as $codecInfo) {
             $codecName = strtolower($codecInfo['name']);
 
@@ -215,7 +227,18 @@ class CodecSync
                     continue;
                 }
 
-                // New codec - add to database
+                // Check transcoding support for audio codecs
+                if ($codecInfo['type'] === 'audio' && !self::canTranscode($codecInfo['name'])) {
+                    $stats['no_transcoding']++;
+                    SystemMessages::sysLogMsg(
+                        __CLASS__,
+                        "Skipped codec without transcoding support: {$codecInfo['name']}",
+                        LOG_INFO
+                    );
+                    continue;
+                }
+
+                // New codec - add to database (enabled by default if transcoding supported)
                 if (self::addCodecToDatabase($codecInfo)) {
                     $stats['added']++;
                     SystemMessages::sysLogMsg(
@@ -229,14 +252,21 @@ class CodecSync
             }
         }
 
-        // Delete unwanted codecs from database
+        // STEP 3: Delete unwanted codecs from database
         foreach ($existingCodecs as $codecName => $codec) {
             $isAvailable = in_array($codecName, $availableCodecNames, true);
             $isIgnored = in_array($codecName, self::IGNORED_CODECS, true);
 
-            // Delete if: not supported by Asterisk OR in ignored list
-            if (!$isAvailable || $isIgnored) {
-                $reason = !$isAvailable ? 'unsupported' : 'ignored';
+            // Check transcoding support for audio codecs
+            $canTranscode = true;
+            if ($codec->type === 'audio' && $isAvailable && !$isIgnored) {
+                $canTranscode = self::canTranscode($codec->name);
+            }
+
+            // Delete if: not supported by Asterisk OR in ignored list OR cannot transcode (audio only)
+            if (!$isAvailable || $isIgnored || !$canTranscode) {
+                $reason = !$isAvailable ? 'unsupported' :
+                         ($isIgnored ? 'ignored' : 'no_transcoding');
                 if ($codec->delete()) {
                     $stats['deleted']++;
                     SystemMessages::sysLogMsg(
@@ -248,16 +278,20 @@ class CodecSync
                     $stats['errors'][] = "Failed to delete codec: {$codec->name}";
                 }
             }
-            // If codec is available and not ignored, preserve user's enabled/disabled setting
+            // If codec is available, not ignored, and can transcode, preserve user's enabled/disabled setting
         }
+
+        // STEP 4: Ensure GSM codec is always enabled (system sounds use GSM format)
+        self::ensureGsmCodecEnabled();
 
         SystemMessages::sysLogMsg(
             __CLASS__,
             sprintf(
-                'Codec sync completed: %d added, %d deleted, %d skipped, %d errors',
+                'Codec sync completed: %d added, %d deleted, %d skipped, %d no_transcoding, %d errors',
                 $stats['added'],
                 $stats['deleted'],
                 $stats['skipped'],
+                $stats['no_transcoding'],
                 count($stats['errors'])
             ),
             LOG_INFO
@@ -373,5 +407,179 @@ class CodecSync
         }
 
         return $result;
+    }
+
+    /**
+     * Temporarily load all codec modules for transcoding validation.
+     *
+     * Attempts to load ALL potential codec modules to enable accurate
+     * transcoding path detection during sync process.
+     *
+     * This includes modules that may not be currently loaded but are
+     * available in the Asterisk installation.
+     *
+     * These modules will be unloaded after validation when Asterisk
+     * restarts with the generated modules.conf configuration.
+     *
+     * @return array List of successfully loaded module names
+     */
+    private static function temporarilyLoadAllCodecModules(): array
+    {
+        $asterisk = Util::which('asterisk');
+        if (empty($asterisk)) {
+            return [];
+        }
+
+        // List of all known codec modules to attempt loading
+        // This ensures we try to load even modules not currently loaded
+        $codecModulesToTry = [
+            // Core G.711 codecs
+            'codec_alaw.so',
+            'codec_ulaw.so',
+
+            // Modern wideband codecs
+            'codec_g722.so',
+            'codec_opus.so',
+
+            // Legacy/compatible codecs
+            'codec_g726.so',
+            'codec_gsm.so',
+            'codec_ilbc.so',
+            'codec_g729.so',
+
+            // Experimental/extended codecs
+            'codec_silk.so',
+            'codec_adpcm.so',
+            'codec_speex.so',
+            'codec_lpc10.so',
+            'codec_g719.so',
+            'codec_codec2.so',
+            'codec_g723.so',
+        ];
+
+        $loadedModules = [];
+        foreach ($codecModulesToTry as $module) {
+            // First check if module is already loaded
+            $checkOutput = [];
+            Processes::mwExec("$asterisk -rx 'module show like " . basename($module, '.so') . "'", $checkOutput);
+
+            $checkResult = implode(' ', $checkOutput);
+            if (str_contains($checkResult, $module) && str_contains($checkResult, 'Running')) {
+                // Module already loaded
+                $loadedModules[] = $module;
+                continue;
+            }
+
+            // Try to load module if not loaded
+            $loadOutput = [];
+            Processes::mwExec("$asterisk -rx 'module load $module'", $loadOutput);
+
+            $loadResult = implode(' ', $loadOutput);
+            // Check if module loaded successfully
+            if (str_contains($loadResult, 'Loaded')) {
+                $loadedModules[] = $module;
+            }
+            // Silently ignore modules that fail to load (not available on this platform)
+        }
+
+        return $loadedModules;
+    }
+
+    /**
+     * Check if codec can be transcoded to PCM (required for recording).
+     *
+     * Tests if Asterisk can convert this codec to signed linear PCM (slin),
+     * which is necessary for:
+     * - Call recording (WAV files)
+     * - Voicemail recording
+     * - Conference bridges (MixMonitor)
+     *
+     * Codecs without transcoding paths (like Opus in builds without codec_opus.so)
+     * can only be used for passthrough - direct RTP forwarding without any processing.
+     *
+     * This method assumes all codec modules have been temporarily loaded via
+     * temporarilyLoadAllCodecModules() for accurate validation.
+     *
+     * @param string $codecName Codec name to check (e.g., 'opus', 'alaw')
+     * @return bool True if codec can transcode to PCM, false otherwise
+     */
+    private static function canTranscode(string $codecName): bool
+    {
+        $asterisk = Util::which('asterisk');
+        if (empty($asterisk)) {
+            return false;
+        }
+
+        $output = [];
+        Processes::mwExec("$asterisk -rx 'core show translation paths $codecName'", $output);
+
+        // Check if codec can transcode to any slin format (required for WAV recording)
+        // Format examples:
+        // - Native transcode (direct):  "To slin:8000 : "  (empty = supported)
+        // - Multi-step transcode:       "To slin:8000 : (codec@rate)->(slin@8000)"  (path shown = supported)
+        // - No transcoding:             "To slin:8000 : No Translation Path"  (not supported)
+        foreach ($output as $line) {
+            // Look for lines targeting slin
+            if (preg_match('/To slin:\d+\s+:\s*(.*)$/', $line, $matches)) {
+                $path = trim($matches[1]);
+
+                // If path is empty OR contains actual translation path, transcoding is supported
+                // Only reject if explicitly states "No Translation Path"
+                if ($path === '' || !str_contains($path, 'No Translation Path')) {
+                    return true; // Codec can transcode to PCM
+                }
+            }
+        }
+
+        // No translation paths to slin found - codec cannot be used for recording
+        return false;
+    }
+
+    /**
+     * Ensure GSM codec is always enabled in database.
+     *
+     * GSM codec must be enabled because all system sound files are recorded
+     * in GSM format by default. Disabling GSM would prevent playback of:
+     * - IVR prompts
+     * - System announcements
+     * - Default voicemail greetings
+     *
+     * This method is called after sync to guarantee GSM remains enabled
+     * even if validation logic tried to disable it.
+     */
+    private static function ensureGsmCodecEnabled(): void
+    {
+        $gsmCodec = Codecs::findFirst([
+            'conditions' => 'LOWER(name) = :name:',
+            'bind' => ['name' => 'gsm'],
+        ]);
+
+        if ($gsmCodec === null) {
+            // GSM not in database - this shouldn't happen, but handle gracefully
+            SystemMessages::sysLogMsg(
+                __CLASS__,
+                'GSM codec not found in database during ensureGsmCodecEnabled()',
+                LOG_WARNING
+            );
+            return;
+        }
+
+        // Enable GSM if it was disabled
+        if ($gsmCodec->disabled === '1') {
+            $gsmCodec->disabled = '0';
+            if ($gsmCodec->save()) {
+                SystemMessages::sysLogMsg(
+                    __CLASS__,
+                    'GSM codec automatically enabled (required for system sounds)',
+                    LOG_INFO
+                );
+            } else {
+                SystemMessages::sysLogMsg(
+                    __CLASS__,
+                    'Failed to enable GSM codec: ' . implode(', ', $gsmCodec->getMessages()),
+                    LOG_ERR
+                );
+            }
+        }
     }
 }
