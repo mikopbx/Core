@@ -80,7 +80,7 @@ MIKOPBX_EXECUTION_MODE=api  # Использовать только REST API
 MIKOPBX_API_URL=http://localhost:8189/pbxcore/api/v3
 MIKOPBX_API_USERNAME=admin
 MIKOPBX_API_PASSWORD=123456789MikoPBX#1
-MIKOPBX_CONTAINER=mikopbx_php83
+MIKOPBX_CONTAINER=mikopbx-php83
 ```
 
 ### Полная конфигурация
@@ -96,7 +96,7 @@ MIKOPBX_CONTAINER=mikopbx_php83
 MIKOPBX_API_URL=http://localhost:8189/pbxcore/api/v3
 MIKOPBX_API_USERNAME=admin
 MIKOPBX_API_PASSWORD=123456789MikoPBX#1
-MIKOPBX_CONTAINER=mikopbx_php83
+MIKOPBX_CONTAINER=mikopbx-php83
 ```
 
 **Поведение:**
@@ -164,7 +164,7 @@ MIKOPBX_API_PASSWORD=SecureCloudPassword123!
 | Переменная | Описание | По умолчанию |
 |-----------|----------|--------------|
 | `MIKOPBX_EXECUTION_MODE` | docker\|api\|ssh\|local | auto-detect |
-| `MIKOPBX_CONTAINER` | Имя Docker контейнера | `mikopbx_php83` |
+| `MIKOPBX_CONTAINER` | Имя Docker контейнера | `mikopbx-php83` |
 | `MIKOPBX_SSH_HOST` | SSH хост | - |
 | `MIKOPBX_SSH_USER` | SSH пользователь | `root` |
 | `MIKOPBX_SSH_PORT` | SSH порт | `22` |

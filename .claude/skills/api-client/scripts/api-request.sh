@@ -157,10 +157,10 @@ if [[ -z "$CONTAINER_NAME" ]]; then
     # Auto-detect running MikoPBX container
     debug "No container specified, auto-detecting..."
 
-    # Prefer mikopbx_php83 (develop)
-    if docker ps --format "{{.Names}}" | grep -q "^mikopbx_php83$"; then
-        CONTAINER_NAME="mikopbx_php83"
-        debug "Found mikopbx_php83 (develop)"
+    # Prefer mikopbx-php83 (develop)
+    if docker ps --format "{{.Names}}" | grep -q "^mikopbx-php83$"; then
+        CONTAINER_NAME="mikopbx-php83"
+        debug "Found mikopbx-php83 (develop)"
     elif docker ps --format "{{.Names}}" | grep -q "^mikopbx_php74$"; then
         CONTAINER_NAME="mikopbx_php74"
         debug "Found mikopbx_php74 (old release)"

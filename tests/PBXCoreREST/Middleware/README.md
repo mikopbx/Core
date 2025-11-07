@@ -48,9 +48,9 @@ pytest tests/api/test_01_auth.py::TestAuthFlow::test_03_localhost_access
 
 ```bash
 # Should work without authentication
-curl https://mikopbx_php83.localhost:8445/pbxcore/api/v3/system:ping
+curl https://mikopbx-php83.localhost:8445/pbxcore/api/v3/system:ping
 
-curl -X POST https://mikopbx_php83.localhost:8445/pbxcore/api/v3/auth:login \
+curl -X POST https://mikopbx-php83.localhost:8445/pbxcore/api/v3/auth:login \
   -d "username=admin&password=123456789MikoPBX#1"
 ```
 
@@ -58,11 +58,11 @@ curl -X POST https://mikopbx_php83.localhost:8445/pbxcore/api/v3/auth:login \
 
 ```bash
 # Should return 401 without token
-curl https://mikopbx_php83.localhost:8445/pbxcore/api/v3/extensions
+curl https://mikopbx-php83.localhost:8445/pbxcore/api/v3/extensions
 
 # Should work with token
 TOKEN="eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
-curl https://mikopbx_php83.localhost:8445/pbxcore/api/v3/extensions \
+curl https://mikopbx-php83.localhost:8445/pbxcore/api/v3/extensions \
   -H "Authorization: Bearer $TOKEN"
 ```
 
@@ -70,7 +70,7 @@ curl https://mikopbx_php83.localhost:8445/pbxcore/api/v3/extensions \
 
 ```bash
 # From within Docker container (localhost)
-docker exec mikopbx_php83 curl http://127.0.0.1/pbxcore/api/v3/extensions
+docker exec mikopbx-php83 curl http://127.0.0.1/pbxcore/api/v3/extensions
 ```
 
 ## Code Coverage

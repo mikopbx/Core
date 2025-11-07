@@ -13,7 +13,7 @@ Universal skill for executing REST API requests to MikoPBX with automatic authen
 ## Key Features
 
 - ✅ **Automatic Authentication** - Gets JWT tokens automatically using auth-token-manager skill
-- ✅ **Container Auto-detection** - Finds and uses running mikopbx_php83/mikopbx_php74 containers
+- ✅ **Container Auto-detection** - Finds and uses running mikopbx-php83/mikopbx_php74 containers
 - ✅ **All HTTP Methods** - Supports GET, POST, PATCH, DELETE, PUT
 - ✅ **Smart Response Formatting** - JSON pretty-print with configurable line limits
 - ✅ **Parameter Handling** - Query strings, form data, JSON payloads
@@ -104,7 +104,7 @@ Use this skill when you need to:
               ▼
 ┌─────────────────────────────────────────────────────────────┐
 │ 2. Container Detection                                      │
-│    - Find running mikopbx_php83 or mikopbx_php74           │
+│    - Find running mikopbx-php83 or mikopbx_php74           │
 │    - Get container ID                                       │
 └─────────────┬───────────────────────────────────────────────┘
               │
@@ -310,7 +310,7 @@ MIKOPBX_LOGIN="admin"                    # Default username
 MIKOPBX_PASSWORD="123456789MikoPBX#1"   # Default password
 
 # Container selection
-MIKOPBX_CONTAINER="mikopbx_php83"       # Default container name
+MIKOPBX_CONTAINER="mikopbx-php83"       # Default container name
 ```
 
 ## Response Format
@@ -384,7 +384,7 @@ Error responses:
 
 ### Works with container-inspector
 - Uses container-inspector logic to find containers
-- Supports both mikopbx_php83 and mikopbx_php74
+- Supports both mikopbx-php83 and mikopbx_php74
 
 ### Works with sqlite-inspector
 - API client modifies data via REST API

@@ -7,10 +7,10 @@
 #
 # Usage:
 #   TOKEN=$(bash get-auth-token.sh)
-#   curl -H "Authorization: Bearer $TOKEN" http://mikopbx_php83.localhost:8081/pbxcore/api/v3/extensions
+#   curl -H "Authorization: Bearer $TOKEN" http://mikopbx-php83.localhost:8081/pbxcore/api/v3/extensions
 #
 # Environment Variables:
-#   MIKOPBX_API_URL  - API base URL (default: http://mikopbx_php83.localhost:8081/pbxcore/api/v3)
+#   MIKOPBX_API_URL  - API base URL (default: http://mikopbx-php83.localhost:8081/pbxcore/api/v3)
 #   MIKOPBX_LOGIN    - Username (default: admin)
 #   MIKOPBX_PASSWORD - Password (default: 123456789MikoPBX#1)
 #
@@ -28,7 +28,7 @@ set -euo pipefail
 # ============================================================================
 
 # API endpoint (support both HTTP and HTTPS)
-API_URL="${MIKOPBX_API_URL:-http://mikopbx_php83.localhost:8081/pbxcore/api/v3}"
+API_URL="${MIKOPBX_API_URL:-http://mikopbx-php83.localhost:8081/pbxcore/api/v3}"
 
 # Credentials
 LOGIN="${MIKOPBX_LOGIN:-admin}"

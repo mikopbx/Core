@@ -88,7 +88,7 @@ export TASK_ID=0  # Select browser environment (0-3)
 
 ### With environment variables set
 ```bash
-docker exec -t mikopbx_php83 /bin/sh -c "
+docker exec -t mikopbx-php83 /bin/sh -c "
   cd /offload/rootfs/usr/www && 
   php vendor/bin/phpunit tests/AdminCabinet/Tests/CustomFileChangeTest.php
 "
@@ -96,7 +96,7 @@ docker exec -t mikopbx_php83 /bin/sh -c "
 
 ### With inline environment variables
 ```bash
-docker exec -t mikopbx_php83 /bin/sh -c "
+docker exec -t mikopbx-php83 /bin/sh -c "
   cd /offload/rootfs/usr/www && 
   BROWSERSTACK_DAEMON_STARTED=true \
   BROWSERSTACK_LOCAL_IDENTIFIER=local_test \
@@ -115,7 +115,7 @@ Use `TASK_ID` to select different browsers:
 
 Example:
 ```bash
-TASK_ID=2 docker exec -t mikopbx_php83 ...
+TASK_ID=2 docker exec -t mikopbx-php83 ...
 ```
 
 ## Troubleshooting
@@ -137,7 +137,7 @@ curl https://www.browserstack.com/local/v1/list \
   -u "USERNAME:ACCESS_KEY"
 
 # From container
-docker exec mikopbx_php83 curl http://host.docker.internal:45454/check
+docker exec mikopbx-php83 curl http://host.docker.internal:45454/check
 ```
 
 ### Common Issues

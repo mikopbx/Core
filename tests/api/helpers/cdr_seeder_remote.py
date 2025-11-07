@@ -44,7 +44,7 @@ class CDRSeederRemote:
         MIKOPBX_API_URL       - MikoPBX API URL (used to detect remote execution via API)
         MIKOPBX_LOGIN         - API login (default: admin)
         MIKOPBX_PASSWORD      - API password (default: admin)
-        MIKOPBX_CONTAINER     - Docker container name (default: mikopbx_php83)
+        MIKOPBX_CONTAINER     - Docker container name (default: mikopbx-php83)
         MIKOPBX_SSH_HOST      - SSH hostname for remote execution (forces SSH mode)
         MIKOPBX_SSH_USER      - SSH username (default: root)
         MIKOPBX_EXECUTION_MODE - Force execution mode: docker|api|ssh|local
@@ -54,7 +54,7 @@ class CDRSeederRemote:
 
     def __init__(self):
         # Execution mode detection
-        self.container_name = os.getenv('MIKOPBX_CONTAINER', 'mikopbx_php83')
+        self.container_name = os.getenv('MIKOPBX_CONTAINER', 'mikopbx-php83')
         self.ssh_host = os.getenv('MIKOPBX_SSH_HOST')
         self.ssh_user = os.getenv('MIKOPBX_SSH_USER', 'root')
         self.execution_mode = os.getenv('MIKOPBX_EXECUTION_MODE', self._detect_mode())
