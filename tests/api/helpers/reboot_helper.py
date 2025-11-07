@@ -3,13 +3,22 @@ Helper module for tests that require system reboot.
 
 This module provides utilities to handle system reboots gracefully in pytest tests.
 It uses a state file on persistent storage to track test progress across reboots.
+
+All configuration is loaded from .env file via TestConfig.
 """
 
 import json
 import os
+import sys
 import time
 import requests
 from typing import Optional, Dict, Any
+from pathlib import Path
+
+# Add parent directory to path for config import
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from config import TestConfig
 
 
 class RebootTestHelper:
@@ -37,16 +46,19 @@ class RebootTestHelper:
                 helper.cleanup()
     """
 
-    STATE_DIR = "/storage/usbdisk1/mikopbx/python-tests/reboot-states"
-
-    def __init__(self, test_name: str):
+    def __init__(self, test_name: str, config: Optional[TestConfig] = None):
         """
         Initialize reboot helper for a specific test.
 
         Args:
             test_name: Unique name for this test (e.g., test function name)
+            config: Optional TestConfig instance (creates new if not provided)
         """
         self.test_name = test_name
+        self.config = config or TestConfig()
+
+        # State directory in persistent storage
+        self.STATE_DIR = os.path.join(self.config.storage_path, 'python-tests', 'reboot-states')
         self.state_file = os.path.join(self.STATE_DIR, f"{test_name}.json")
 
         # Ensure state directory exists
@@ -148,19 +160,18 @@ class RebootTestHelper:
 
         return False
 
-    @staticmethod
-    def get_pending_reboot_tests() -> list:
+    def get_pending_reboot_tests(self) -> list:
         """
         Get list of tests waiting for reboot to complete.
 
         Returns:
             List of test names with pending state files
         """
-        if not os.path.exists(RebootTestHelper.STATE_DIR):
+        if not os.path.exists(self.STATE_DIR):
             return []
 
         pending = []
-        for filename in os.listdir(RebootTestHelper.STATE_DIR):
+        for filename in os.listdir(self.STATE_DIR):
             if filename.endswith('.json'):
                 test_name = filename[:-5]  # Remove .json extension
                 pending.append(test_name)
@@ -179,7 +190,6 @@ class RebootTestRunner:
 
     Example (from host):
         runner = RebootTestRunner(
-            container="mikopbx_php83",
             test_file="test_47_system.py::test_system_reboot"
         )
         runner.run()
@@ -187,21 +197,20 @@ class RebootTestRunner:
 
     def __init__(
         self,
-        container: str,
         test_file: str,
-        api_url: str = "http://127.0.0.1:8081/pbxcore/api/v3"
+        config: Optional[TestConfig] = None
     ):
         """
         Initialize reboot test runner.
 
         Args:
-            container: Docker container name (e.g., "mikopbx_php83")
             test_file: Path to test file or specific test
-            api_url: MikoPBX API URL for health checks
+            config: Optional TestConfig instance (creates new if not provided)
         """
-        self.container = container
+        self.config = config or TestConfig()
         self.test_file = test_file
-        self.api_url = api_url
+        self.container = self.config.container_name
+        self.api_url = self.config.api_url
 
     def run(self) -> bool:
         """

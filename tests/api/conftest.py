@@ -18,35 +18,18 @@ import pytest
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
-from dotenv import load_dotenv
 
-# Load environment variables from .env file
-dotenv_path = Path(__file__).parent / '.env'
-if dotenv_path.exists():
-    load_dotenv(dotenv_path)
+# Import centralized configuration
+from config import get_config
 
-# Configuration - require explicit environment variables
-API_BASE_URL = os.getenv('MIKOPBX_API_URL')
-API_LOGIN = os.getenv('MIKOPBX_API_USERNAME')
-API_PASSWORD = os.getenv('MIKOPBX_API_PASSWORD')
+# Load configuration (validates .env existence and required vars)
+config = get_config()
 
-# Validate required environment variables
-missing_vars = []
-if not API_BASE_URL:
-    missing_vars.append('MIKOPBX_API_URL')
-if not API_LOGIN:
-    missing_vars.append('MIKOPBX_API_USERNAME')
-if not API_PASSWORD:
-    missing_vars.append('MIKOPBX_API_PASSWORD')
+# Backward compatibility: expose as module-level variables
+API_BASE_URL = config.api_url
+API_LOGIN = config.api_username
+API_PASSWORD = config.api_password
 
-if missing_vars:
-    raise ValueError(
-        f"Missing required environment variables: {', '.join(missing_vars)}\n"
-        "Create tests/api/.env file with:\n"
-        "MIKOPBX_API_URL=http://localhost:8189/pbxcore/api/v3\n"
-        "MIKOPBX_API_USERNAME=admin\n"
-        "MIKOPBX_API_PASSWORD=123456789MikoPBX#1"
-    )
 FIXTURES_DIR = Path(__file__).parent / 'fixtures'
 
 
