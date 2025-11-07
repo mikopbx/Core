@@ -21,6 +21,20 @@
  */
 class CDRPlayer {
 
+    // Static property to track currently playing instance
+    static currentlyPlaying = null;
+
+    /**
+     * Stop all other players except the given one
+     * @param {CDRPlayer} exceptPlayer - The player that should continue playing
+     */
+    static stopOthers(exceptPlayer) {
+        if (CDRPlayer.currentlyPlaying && CDRPlayer.currentlyPlaying !== exceptPlayer) {
+            CDRPlayer.currentlyPlaying.stopPlayback();
+        }
+        CDRPlayer.currentlyPlaying = exceptPlayer;
+    }
+
     /**
      * Creates an instance of CDRPlayer.
      * @param {string} id - The ID of the player.
@@ -29,6 +43,16 @@ class CDRPlayer {
         this.id = id;
         this.html5Audio = document.getElementById(`audio-player-${id}`);
         const $row = $(`#${id}`);
+
+        // Track current audio format (webm, mp3, wav)
+        this.currentFormat = null;
+
+        // Web Audio API for mono mixing
+        // WHY: Automatically mix stereo recordings (left=external, right=internal) to mono
+        // This makes both speakers audible in single channel for easier listening
+        this.audioContext = null;
+        this.sourceNode = null;
+        this.gainNode = null;
 
         // Check if already initialized to prevent double processing
         if ($row.hasClass('initialized')) {
@@ -59,12 +83,28 @@ class CDRPlayer {
             this.play();
         });
 
-        // Download button event listener
+        // Initialize download format dropdown
+        const $downloadDropdown = $row.find('.download-format-dropdown');
+        if ($downloadDropdown.length > 0) {
+            $downloadDropdown.dropdown({
+                action: 'hide',
+                onChange: (value, text, $choice) => {
+                    const format = $choice.data('format');
+                    const downloadUrl = $downloadDropdown.data('download-url');
+                    if (downloadUrl && format) {
+                        this.downloadFile(downloadUrl, format);
+                    }
+                }
+            });
+        }
+
+        // Legacy: Download button event listener (for old UI without dropdown)
         this.$dButton.on('click', (e) => {
             e.preventDefault();
             const downloadUrl = $(e.target).attr('data-value');
             if (downloadUrl) {
-                this.downloadFile(downloadUrl);
+                // Download in WebM format by default
+                this.downloadFile(downloadUrl, 'webm');
             }
         });
 
@@ -73,6 +113,13 @@ class CDRPlayer {
 
         // timeupdate event listener
         this.html5Audio.addEventListener('timeupdate', this.cbTimeUpdate, false);
+
+        // ended event listener - clear currently playing reference
+        this.html5Audio.addEventListener('ended', () => {
+            if (CDRPlayer.currentlyPlaying === this) {
+                CDRPlayer.currentlyPlaying = null;
+            }
+        }, false);
 
         // no src handler
         this.html5Audio.addEventListener('error', this.cbOnSrcMediaError, false);
@@ -176,6 +223,59 @@ class CDRPlayer {
             return dateStr.substr(12, 7);
         } else {
             return dateStr.substr(11, 8);
+        }
+    }
+
+    /**
+     * Detect audio format from Content-Type header
+     * @param {string} contentType - Content-Type header value
+     * @returns {string} Format identifier: 'webm', 'mp3', 'wav', or 'unknown'
+     */
+    detectAudioFormat(contentType) {
+        if (!contentType) return 'unknown';
+
+        const lowerType = contentType.toLowerCase();
+        if (lowerType.includes('audio/webm')) return 'webm';
+        if (lowerType.includes('audio/mpeg') || lowerType.includes('audio/mp3')) return 'mp3';
+        if (lowerType.includes('audio/wav') || lowerType.includes('audio/x-wav')) return 'wav';
+
+        return 'unknown';
+    }
+
+    /**
+     * Update format badge display
+     * @param {string} format - Audio format (webm, mp3, wav)
+     */
+    updateFormatBadge(format) {
+        const $row = $(`#${this.id}`);
+        let $badge = $row.find('.audio-format-badge');
+
+        // Create badge if doesn't exist
+        if ($badge.length === 0) {
+            $badge = $('<span class="ui mini label audio-format-badge"></span>');
+            this.$spanDuration.before($badge);
+        }
+
+        // Update badge content and style
+        const formatUpper = format.toUpperCase();
+        $badge.text(formatUpper);
+
+        // Remove previous format classes
+        $badge.removeClass('green orange blue grey');
+
+        // Apply color based on format
+        switch (format) {
+            case 'webm':
+                $badge.addClass('green'); // Modern format
+                break;
+            case 'mp3':
+                $badge.addClass('orange'); // Legacy compressed
+                break;
+            case 'wav':
+                $badge.addClass('blue'); // Uncompressed
+                break;
+            default:
+                $badge.addClass('grey'); // Unknown
         }
     }
 
@@ -320,6 +420,51 @@ class CDRPlayer {
     }
 
     /**
+     * Stop playback (called from static stopOthers method)
+     */
+    stopPlayback() {
+        if (!this.html5Audio.paused) {
+            this.html5Audio.pause();
+            this.$pButton.removeClass('pause').addClass('play');
+        }
+
+        // Clean up audio nodes to prevent memory leaks
+        this.cleanupAudioNodes();
+    }
+
+    /**
+     * Clean up Web Audio API nodes
+     */
+    cleanupAudioNodes() {
+        if (this.scriptProcessor) {
+            try {
+                // Disconnect all nodes
+                this.scriptProcessor.disconnect();
+                this.scriptProcessor.onaudioprocess = null;
+                this.scriptProcessor = null;
+            } catch (e) {
+                // Ignore cleanup errors
+            }
+        }
+
+        if (this.sourceNode) {
+            try {
+                this.sourceNode.disconnect();
+            } catch (e) {
+                // Ignore cleanup errors
+            }
+        }
+
+        if (this.gainNode) {
+            try {
+                this.gainNode.disconnect();
+            } catch (e) {
+                // Ignore cleanup errors
+            }
+        }
+    }
+
+    /**
      * Plays or pauses the audio file.
      */
     play() {
@@ -327,11 +472,19 @@ class CDRPlayer {
         if (this.html5Audio.src && this.html5Audio.src.startsWith('blob:')) {
             // Blob already loaded, just toggle play/pause
             if (this.html5Audio.paused) {
+                // Stop all other players before playing this one
+                CDRPlayer.stopOthers(this);
                 this.html5Audio.play();
                 this.$pButton.removeClass('play').addClass('pause');
             } else {
+                // Pausing - clear currently playing reference
                 this.html5Audio.pause();
                 this.$pButton.removeClass('pause').addClass('play');
+                if (CDRPlayer.currentlyPlaying === this) {
+                    CDRPlayer.currentlyPlaying = null;
+                }
+                // Clean up audio nodes when pausing
+                this.cleanupAudioNodes();
             }
             return;
         }
@@ -339,19 +492,122 @@ class CDRPlayer {
         // Need to load source first
         let sourceSrc = this.html5Audio.getAttribute('data-src') || '';
 
-        // If source is an API endpoint, load with authentication
+        // If source is an API endpoint with token, load it directly
+        // WHY: Token-based URLs already contain all necessary information
         if (sourceSrc && sourceSrc.includes('/pbxcore/api/')) {
+            // Stop all other players before loading new source
+            CDRPlayer.stopOthers(this);
             this.loadAuthenticatedSource(sourceSrc);
             return;
         }
 
         // Fallback for non-API sources or already loaded
         if (this.html5Audio.paused && this.html5Audio.duration) {
+            CDRPlayer.stopOthers(this);
             this.html5Audio.play();
             this.$pButton.removeClass('play').addClass('pause');
         } else if (!this.html5Audio.paused) {
             this.html5Audio.pause();
             this.$pButton.removeClass('pause').addClass('play');
+            if (CDRPlayer.currentlyPlaying === this) {
+                CDRPlayer.currentlyPlaying = null;
+            }
+        }
+    }
+
+    /**
+     * Initialize Web Audio API for mono mixing
+     * WHY: Stereo call recordings have external channel (left) and internal channel (right)
+     * Mixing to mono makes both speakers audible in single channel for easier listening
+     *
+     * APPROACH: Use simple gain-based downmixing
+     * Most reliable method that works with all audio formats including WebM/Opus
+     */
+    setupMonoMixer() {
+        try {
+            // Create audio context if not exists
+            if (!this.audioContext) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                this.audioContext = new AudioContext();
+            }
+
+            // Create source node from audio element (can only be created once!)
+            if (!this.sourceNode) {
+                this.sourceNode = this.audioContext.createMediaElementSource(this.html5Audio);
+            }
+
+            // Disconnect previous connections if they exist
+            if (this.gainNode) {
+                try {
+                    this.sourceNode.disconnect();
+                    this.gainNode.disconnect();
+                } catch (e) {
+                    // Ignore disconnect errors
+                }
+            }
+
+            // Create a ScriptProcessorNode with 2 input channels and 2 output channels
+            // Buffer size of 4096 for good balance between latency and performance
+            const bufferSize = 4096;
+            const scriptProcessor = this.audioContext.createScriptProcessor(bufferSize, 2, 2);
+
+            // Store reference for cleanup
+            this.scriptProcessor = scriptProcessor;
+
+            // Process audio to force mono output
+            scriptProcessor.onaudioprocess = (audioProcessingEvent) => {
+                const inputBuffer = audioProcessingEvent.inputBuffer;
+                const outputBuffer = audioProcessingEvent.outputBuffer;
+
+                // Get number of channels in the buffer
+                const inputChannelCount = inputBuffer.numberOfChannels;
+                const outputChannelCount = outputBuffer.numberOfChannels;
+
+                // Handle different channel configurations
+                if (inputChannelCount === 1) {
+                    // Input is already mono - copy to both output channels
+                    const inputMono = inputBuffer.getChannelData(0);
+                    const outputL = outputBuffer.getChannelData(0);
+                    const outputR = outputChannelCount > 1 ? outputBuffer.getChannelData(1) : null;
+
+                    for (let i = 0; i < inputMono.length; i++) {
+                        outputL[i] = inputMono[i];
+                        if (outputR) {
+                            outputR[i] = inputMono[i];
+                        }
+                    }
+                } else if (inputChannelCount >= 2) {
+                    // Input is stereo or multi-channel - mix to mono
+                    const inputL = inputBuffer.getChannelData(0);
+                    const inputR = inputBuffer.getChannelData(1);
+                    const outputL = outputBuffer.getChannelData(0);
+                    const outputR = outputChannelCount > 1 ? outputBuffer.getChannelData(1) : null;
+
+                    // Mix L+R to mono and copy to both output channels
+                    for (let i = 0; i < inputL.length; i++) {
+                        // Average L and R channels for true mono
+                        const monoSample = (inputL[i] + inputR[i]) * 0.5;
+
+                        // Write the same mono signal to both output channels
+                        outputL[i] = monoSample;
+                        if (outputR) {
+                            outputR[i] = monoSample;
+                        }
+                    }
+                }
+            };
+
+            // Create gain node for volume control
+            this.gainNode = this.audioContext.createGain();
+
+            // Connect the audio graph:
+            // source → scriptProcessor → gain → destination
+            this.sourceNode.connect(scriptProcessor);
+            scriptProcessor.connect(this.gainNode);
+            this.gainNode.connect(this.audioContext.destination);
+
+        } catch (error) {
+            // Fallback: audio will play as stereo through normal HTML5 audio
         }
     }
 
@@ -379,6 +635,15 @@ class CDRPlayer {
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                // Detect format from Content-Type header
+                const contentType = response.headers.get('Content-Type');
+                this.currentFormat = this.detectAudioFormat(contentType);
+
+                // Update format badge
+                if (this.currentFormat && this.currentFormat !== 'unknown') {
+                    this.updateFormatBadge(this.currentFormat);
                 }
 
                 // Extract duration from header if available
@@ -417,11 +682,20 @@ class CDRPlayer {
                 this.html5Audio.src = blobUrl;
                 this.html5Audio.load();
 
+                // Setup mono mixer on first playback only
+                // WHY: Web Audio API requires user interaction before creating AudioContext
+                // MediaElementSource can only be created once per audio element
+                // After first setup, same source node works for all subsequent files
+                if (!this.sourceNode) {
+                    this.setupMonoMixer();
+                }
+
                 // Auto-play after loading
                 this.html5Audio.oncanplaythrough = () => {
                     this.html5Audio.play();
                     this.$pButton.removeClass('play').addClass('pause');
                     this.html5Audio.oncanplaythrough = null;
+
                 };
             })
             .catch(error => {
@@ -430,16 +704,24 @@ class CDRPlayer {
     }
 
     /**
-     * Download file with authentication
+     * Download file with authentication and optional format conversion
      * @param {string} downloadUrl - Download URL requiring Bearer token
+     * @param {string} format - Desired audio format (original, mp3, wav, webm, ogg)
      */
-    downloadFile(downloadUrl) {
+    downloadFile(downloadUrl, format = 'webm') {
         // Check if it's an API URL that requires authentication
         if (downloadUrl.includes('/pbxcore/api/')) {
+            // Add format parameter to URL if not 'original'
+            let urlWithFormat = downloadUrl;
+            if (format !== 'original') {
+                const separator = downloadUrl.includes('?') ? '&' : '?';
+                urlWithFormat = `${downloadUrl}${separator}format=${encodeURIComponent(format)}`;
+            }
+
             // Build full URL (REST API paths always start with /pbxcore/)
-            const fullUrl = downloadUrl.startsWith('http')
-                ? downloadUrl
-                : `${window.location.origin}${downloadUrl}`;
+            const fullUrl = urlWithFormat.startsWith('http')
+                ? urlWithFormat
+                : `${window.location.origin}${urlWithFormat}`;
 
             // Prepare headers with Bearer token
             const headers = {
@@ -459,7 +741,7 @@ class CDRPlayer {
 
                     // Get filename from Content-Disposition header or URL
                     const disposition = response.headers.get('Content-Disposition');
-                    let filename = 'call-record.mp3';
+                    let filename = `call-record.${format || 'mp3'}`;
                     if (disposition && disposition.includes('filename=')) {
                         const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(disposition);
                         if (matches != null && matches[1]) {
