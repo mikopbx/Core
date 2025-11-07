@@ -541,17 +541,20 @@ Valid values:
 ## Schema Inspection Commands
 
 ```bash
+# Auto-detect container based on current worktree
+CONTAINER_ID=$(./.claude/scripts/get-container-name.sh)
+
 # Show table structure
-docker exec <container_id> sqlite3 /cf/conf/mikopbx.db ".schema m_Extensions"
+docker exec $CONTAINER_ID sqlite3 /cf/conf/mikopbx.db ".schema m_Extensions"
 
 # List all tables
-docker exec <container_id> sqlite3 /cf/conf/mikopbx.db ".tables"
+docker exec $CONTAINER_ID sqlite3 /cf/conf/mikopbx.db ".tables"
 
 # Show all indexes
-docker exec <container_id> sqlite3 /cf/conf/mikopbx.db ".indexes"
+docker exec $CONTAINER_ID sqlite3 /cf/conf/mikopbx.db ".indexes"
 
 # Get table info
-docker exec <container_id> sqlite3 /cf/conf/mikopbx.db "PRAGMA table_info(m_Extensions)"
+docker exec $CONTAINER_ID sqlite3 /cf/conf/mikopbx.db "PRAGMA table_info(m_Extensions)"
 ```
 
 ---

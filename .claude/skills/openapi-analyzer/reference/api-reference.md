@@ -433,7 +433,7 @@ try:
     analyzer = MikoPBXOpenAPIAnalyzer('/invalid/path.json')
 except FileNotFoundError:
     print("OpenAPI spec not found. Fetch it first:")
-    print("docker exec <id> curl http://mikopbx_php83.localhost:8081/pbxcore/api/v3/openapi:getSpecification > /tmp/mikopbx_openapi.json")
+    print("docker exec <id> curl http://mikopbx-php83.localhost:8081/pbxcore/api/v3/openapi:getSpecification > /tmp/mikopbx_openapi.json")
 ```
 
 ### Invalid JSON

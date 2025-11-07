@@ -75,29 +75,35 @@ MikoPBX uses **dual-token authentication**:
 
 ## Environment Variables
 
-The skill uses these environment variables (with defaults):
+The skill uses these environment variables (with auto-detection):
 
 ```bash
-MIKOPBX_API_URL="http://mikopbx_php83.localhost:8081/pbxcore/api/v3"  # API base URL
-MIKOPBX_LOGIN="admin"                                    # Username
-MIKOPBX_PASSWORD="123456789MikoPBX#1"                   # Password
+# Auto-detected based on current worktree and container
+MIKOPBX_API_URL="<auto-detected>"  # API base URL (default: auto-detected from container)
+MIKOPBX_LOGIN="admin"              # Username
+MIKOPBX_PASSWORD="123456789MikoPBX#1"  # Password
 ```
 
-For HTTPS with self-signed certificates:
+**Auto-detection behavior**:
+- Inside container: uses `http://127.0.0.1:8081/pbxcore/api/v3`
+- On host: detects container based on current git worktree and uses container IP
+
+For manual override:
 ```bash
-MIKOPBX_API_URL="https://localhost:8445/pbxcore/api/v3"
+MIKOPBX_API_URL="http://192.168.X.X:8081/pbxcore/api/v3"  # HTTP (development)
+MIKOPBX_API_URL="https://192.168.X.X:8445/pbxcore/api/v3"  # HTTPS (production)
 ```
 
 ## Usage Examples
 
 ### Example 1: Get Token for API Testing
 ```bash
-# Get fresh token
+# Get fresh token (auto-detects API URL based on worktree)
 TOKEN=$(bash .claude/skills/auth-token-manager/get-auth-token.sh)
 
 # Use token in API requests
 curl -H "Authorization: Bearer $TOKEN" \
-     http://mikopbx_php83.localhost:8081/pbxcore/api/v3/extensions
+     http://192.168.X.X:8081/pbxcore/api/v3/extensions
 ```
 
 ### Example 2: Custom Credentials
@@ -110,8 +116,8 @@ TOKEN=$(bash .claude/skills/auth-token-manager/get-auth-token.sh)
 
 ### Example 3: HTTPS with Self-Signed Certificate
 ```bash
-# For local development with self-signed cert
-export MIKOPBX_API_URL="https://192.168.117.2:8445/pbxcore/api/v3"
+# For local development with self-signed cert (auto-detect container)
+export MIKOPBX_API_URL=$(./.claude/scripts/get-container-api-url.sh)
 TOKEN=$(bash .claude/skills/auth-token-manager/get-auth-token.sh)
 ```
 

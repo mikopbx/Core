@@ -8,24 +8,26 @@ Quick reference guide for obtaining JWT Bearer tokens for MikoPBX REST API v3.
 # Get token using default credentials
 TOKEN=$(bash .claude/skills/mikopbx-auth-token/get-auth-token.sh)
 
-# Use token in API request
+# Use token in API request (URL is auto-detected)
 curl -H "Authorization: Bearer $TOKEN" \
-     http://mikopbx_php83.localhost:8081/pbxcore/api/v3/extensions
+     http://192.168.X.X:8081/pbxcore/api/v3/extensions
 ```
 
 ## Environment Variables
 
 ```bash
-# Default configuration (no setup needed)
-MIKOPBX_API_URL="http://mikopbx_php83.localhost:8081/pbxcore/api/v3"
-MIKOPBX_LOGIN="admin"
-MIKOPBX_PASSWORD="123456789MikoPBX#1"
+# Auto-detected configuration (no setup needed)
+# API URL is auto-detected based on current git worktree
+MIKOPBX_LOGIN="admin"                    # Default username
+MIKOPBX_PASSWORD="123456789MikoPBX#1"    # Default password
 
 # Override for custom setup
-export MIKOPBX_API_URL="https://192.168.117.2:8445/pbxcore/api/v3"
-export MIKOPBX_LOGIN="custom_admin"
-export MIKOPBX_PASSWORD="custom_password"
+export MIKOPBX_API_URL="http://192.168.X.X:8081/pbxcore/api/v3"  # Manual URL
+export MIKOPBX_LOGIN="custom_admin"       # Custom username
+export MIKOPBX_PASSWORD="custom_password" # Custom password
 ```
+
+**Auto-detection**: Script automatically detects container based on your current git worktree and uses appropriate container IP.
 
 ## Usage Examples
 
@@ -40,7 +42,7 @@ echo "Token obtained: ${TOKEN:0:50}..."
 TOKEN=$(bash .claude/skills/mikopbx-auth-token/get-auth-token.sh)
 
 curl -s -H "Authorization: Bearer $TOKEN" \
-     http://mikopbx_php83.localhost:8081/pbxcore/api/v3/extensions | \
+     http://192.168.X.X:8081/pbxcore/api/v3/extensions | \
      python3 -m json.tool
 ```
 
@@ -56,7 +58,7 @@ curl -s -X POST \
        "number": "201",
        "sip_secret": "SecurePass123"
      }' \
-     http://mikopbx_php83.localhost:8081/pbxcore/api/v3/employees | \
+     http://192.168.X.X:8081/pbxcore/api/v3/employees | \
      python3 -m json.tool
 ```
 
@@ -88,13 +90,13 @@ TOKEN=$(bash .claude/skills/mikopbx-auth-token/get-auth-token.sh) || {
 
 # Multiple API calls with same token
 curl -H "Authorization: Bearer $TOKEN" \
-     http://mikopbx_php83.localhost:8081/pbxcore/api/v3/extensions
+     http://192.168.X.X:8081/pbxcore/api/v3/extensions
 
 curl -H "Authorization: Bearer $TOKEN" \
-     http://mikopbx_php83.localhost:8081/pbxcore/api/v3/sip-providers
+     http://192.168.X.X:8081/pbxcore/api/v3/sip-providers
 
 curl -H "Authorization: Bearer $TOKEN" \
-     http://mikopbx_php83.localhost:8081/pbxcore/api/v3/incoming-routes
+     http://192.168.X.X:8081/pbxcore/api/v3/incoming-routes
 ```
 
 ## Exit Codes
