@@ -75,7 +75,7 @@
 </div>
 
 {{ partial("PbxExtensionModules/hookVoltBlock",['arrayOfPartials':hookVoltBlock('MainFields')]) }}
-
+<div class="ui hidden divider"></div>
 {{ partial("partials/submitbutton",['indexurl':'api-keys/index']) }}
 
 {{ close('form') }}
