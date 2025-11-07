@@ -19,7 +19,7 @@
 
 namespace MikoPBX\Core\System\Upgrade\Releases;
 
-use MikoPBX\Common\Models\{Extensions, IncomingRoutingTable, Users};
+use MikoPBX\Common\Models\{Extensions, IncomingRoutingTable, PbxSettings, Users};
 use MikoPBX\Core\System\{SystemMessages, Upgrade\UpgradeSystemConfigInterface};
 use Phalcon\Di\Injectable;
 
@@ -62,6 +62,9 @@ class UpdateConfigsUpToVer20241212 extends Injectable implements UpgradeSystemCo
 
         // Step 3: Remove legacy root user (id=1) if exists
         $this->removeLegacyRootUser();
+
+        // Step 4: Enable PBXSplitAudioThread by default
+        $this->enableSplitAudioThreadByDefault();
     }
     
     /**
@@ -223,6 +226,33 @@ class UpdateConfigsUpToVer20241212 extends Injectable implements UpgradeSystemCo
                 LOG_ERR
             );
             echo "Warning: Could not remove legacy root user (id=1): {$messages}\n";
+        }
+    }
+
+    /**
+     * Enable PBXSplitAudioThread by default for stereo recording mode.
+     *
+     * This setting controls whether call recordings are saved in stereo mode (each participant
+     * in separate audio channels) or mono mode (both participants mixed in one channel).
+     * Stereo mode is now the default for better call analysis capabilities.
+     *
+     * @return void
+     */
+    private function enableSplitAudioThreadByDefault(): void
+    {
+        $currentValue = PbxSettings::getValueByKey(PbxSettings::PBX_SPLIT_AUDIO_THREAD);
+
+        // Only set if not already configured
+        if ($currentValue === null || $currentValue === '') {
+            PbxSettings::setValue(PbxSettings::PBX_SPLIT_AUDIO_THREAD, '1');
+
+            echo "Enabled PBXSplitAudioThread (stereo recording mode) by default\n";
+
+            SystemMessages::sysLogMsg(
+                __METHOD__,
+                'Enabled PBXSplitAudioThread for stereo recording mode',
+                LOG_INFO
+            );
         }
     }
 }
