@@ -303,9 +303,9 @@ class TestAllProviderTypes:
         print("="*70)
 
         # Restart container to apply all settings
-        print("Restarting mikopbx_php83 container...")
+        print("Restarting mikopbx-php83 container...")
         result = subprocess.run(
-            ['docker', 'restart', 'mikopbx_php83'],
+            ['docker', 'restart', 'mikopbx-php83'],
             capture_output=True,
             text=True
         )
@@ -329,7 +329,7 @@ class TestAllProviderTypes:
 
         # Read pjsip.conf from container
         result = subprocess.run(
-            ['docker', 'exec', 'mikopbx_php83', 'cat', '/etc/asterisk/pjsip.conf'],
+            ['docker', 'exec', 'mikopbx-php83', 'cat', '/etc/asterisk/pjsip.conf'],
             capture_output=True,
             text=True
         )
@@ -398,7 +398,7 @@ class TestAllProviderTypes:
 
         # Check PJSIP endpoints
         result = subprocess.run(
-            ['docker', 'exec', 'mikopbx_php83', 'asterisk', '-rx', 'pjsip show endpoints'],
+            ['docker', 'exec', 'mikopbx-php83', 'asterisk', '-rx', 'pjsip show endpoints'],
             capture_output=True,
             text=True
         )
@@ -414,7 +414,7 @@ class TestAllProviderTypes:
 
         # Check for errors in Asterisk log
         result = subprocess.run(
-            ['docker', 'exec', 'mikopbx_php83', 'tail', '-n', '100', '/var/log/asterisk/messages'],
+            ['docker', 'exec', 'mikopbx-php83', 'tail', '-n', '100', '/var/log/asterisk/messages'],
             capture_output=True,
             text=True
         )

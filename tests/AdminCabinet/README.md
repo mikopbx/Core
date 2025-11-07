@@ -30,7 +30,7 @@ export BROWSERSTACK_LOCAL_IDENTIFIER=local_test
 
 ### Single test file
 ```bash
-docker exec -t mikopbx_php83 /bin/sh -c "
+docker exec -t mikopbx-php83 /bin/sh -c "
   cd /offload/rootfs/usr/www && 
   BROWSERSTACK_DAEMON_STARTED=true BROWSERSTACK_LOCAL_IDENTIFIER=local_test \
   php -dxdebug.start_with_request=yes vendor/bin/phpunit \
@@ -41,7 +41,7 @@ docker exec -t mikopbx_php83 /bin/sh -c "
 
 ### All tests
 ```bash
-docker exec -t mikopbx_php83 /bin/sh -c "
+docker exec -t mikopbx-php83 /bin/sh -c "
   cd /offload/rootfs/usr/www && 
   BROWSERSTACK_DAEMON_STARTED=true BROWSERSTACK_LOCAL_IDENTIFIER=local_test \
   php -dxdebug.start_with_request=yes vendor/bin/phpunit \
@@ -55,7 +55,7 @@ docker exec -t mikopbx_php83 /bin/sh -c "
 Your `.vscode/settings.json` should include:
 ```json
 {
-    "phpunit.command": "docker exec -t mikopbx_php83 /bin/sh -c",
+    "phpunit.command": "docker exec -t mikopbx-php83 /bin/sh -c",
     "phpunit.phpunit": "/offload/rootfs/usr/www/vendor/bin/phpunit",
     "phpunit.php": "php -dxdebug.start_with_request=yes",
     "phpunit.args": [
@@ -81,7 +81,7 @@ Your `.vscode/settings.json` should include:
 ### Debug Mode
 - View BrowserStack session: https://automate.browserstack.com
 - Enable verbose logging: `--verbose 3` in BrowserStackLocal command
-- Check container logs: `docker logs mikopbx_php83`
+- Check container logs: `docker logs mikopbx-php83`
 
 ## Common Issues
 

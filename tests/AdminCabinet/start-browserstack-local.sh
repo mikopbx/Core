@@ -60,7 +60,7 @@ if pgrep -f "BrowserStackLocal" > /dev/null; then
     echo "  export BROWSERSTACK_LOCAL_IDENTIFIER=$LOCAL_IDENTIFIER"
     echo ""
     echo "Or in one line:"
-    echo "  BROWSERSTACK_DAEMON_STARTED=true BROWSERSTACK_LOCAL_IDENTIFIER=$LOCAL_IDENTIFIER docker exec -t mikopbx_php83 ..."
+    echo "  BROWSERSTACK_DAEMON_STARTED=true BROWSERSTACK_LOCAL_IDENTIFIER=$LOCAL_IDENTIFIER docker exec -t mikopbx-php83 ..."
 else
     echo -e "${RED}Failed to start BrowserStack Local${NC}"
     exit 1
