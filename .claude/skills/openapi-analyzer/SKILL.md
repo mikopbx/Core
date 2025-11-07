@@ -49,8 +49,8 @@ This is a **helper skill** used by other skills and in specific scenarios:
 
 The OpenAPI spec is available at two endpoints:
 
-- **Internal (no auth)**: `http://mikopbx-php83.localhost:8081/pbxcore/api/v3/openapi:getSpecification`
-- **External (auth required)**: `https://mikopbx-php83.localhost:8445/pbxcore/api/v3/openapi:getSpecification`
+- **Internal (no auth)**: `http://mikopbx_php83.localhost:8081/pbxcore/api/v3/openapi:getSpecification`
+- **External (auth required)**: `https://mikopbx_php83.localhost:8445/pbxcore/api/v3/openapi:getSpecification`
 
 **Fetch from inside container** (recommended):
 ```bash
@@ -58,7 +58,7 @@ The OpenAPI spec is available at two endpoints:
 CONTAINER_ID=$(docker ps -q -f name=mikopbx)
 
 # Fetch spec
-docker exec $CONTAINER_ID curl -s http://mikopbx-php83.localhost:8081/pbxcore/api/v3/openapi:getSpecification > /tmp/mikopbx_openapi.json
+docker exec $CONTAINER_ID curl -s http://mikopbx_php83.localhost:8081/pbxcore/api/v3/openapi:getSpecification > /tmp/mikopbx_openapi.json
 
 # Verify
 wc -l /tmp/mikopbx_openapi.json  # ~116K lines
@@ -68,7 +68,7 @@ ls -lh /tmp/mikopbx_openapi.json # ~9MB
 **Fetch from outside container** (requires Bearer token):
 ```bash
 curl -H "Authorization: Bearer $TOKEN" \
-  https://mikopbx-php83.localhost:8445/pbxcore/api/v3/openapi:getSpecification \
+  https://mikopbx_php83.localhost:8445/pbxcore/api/v3/openapi:getSpecification \
   -k > /tmp/mikopbx_openapi.json
 ```
 
@@ -321,7 +321,7 @@ python3 scripts/openapi_analyzer.py schema Extension | jq -r '.required[]'
 
 ```bash
 # 1. Fetch OpenAPI spec
-docker exec $CONTAINER_ID curl -s http://mikopbx-php83.localhost:8081/pbxcore/api/v3/openapi:getSpecification > /tmp/openapi.json
+docker exec $CONTAINER_ID curl -s http://mikopbx_php83.localhost:8081/pbxcore/api/v3/openapi:getSpecification > /tmp/openapi.json
 
 # 2. Get endpoint from OpenAPI
 python3 scripts/openapi_analyzer.py get "/pbxcore/api/v3/extensions" POST > /tmp/endpoint.json
@@ -361,7 +361,7 @@ CACHE_TTL=3600  # 1 hour
 # Check cache age
 if [ ! -f "$SPEC_FILE" ] || [ $(($(date +%s) - $(stat -f %m "$SPEC_FILE"))) -gt $CACHE_TTL ]; then
     echo "Fetching fresh spec..."
-    docker exec $CONTAINER_ID curl -s http://mikopbx-php83.localhost:8081/pbxcore/api/v3/openapi:getSpecification > "$SPEC_FILE"
+    docker exec $CONTAINER_ID curl -s http://mikopbx_php83.localhost:8081/pbxcore/api/v3/openapi:getSpecification > "$SPEC_FILE"
 else
     echo "Using cached spec"
 fi
@@ -472,7 +472,7 @@ Always provide **structured reports**:
 docker ps | grep mikopbx
 
 # Try internal URL
-docker exec $CONTAINER_ID curl -s http://mikopbx-php83.localhost:8081/pbxcore/api/v3/openapi:getSpecification
+docker exec $CONTAINER_ID curl -s http://mikopbx_php83.localhost:8081/pbxcore/api/v3/openapi:getSpecification
 
 # Check curl works in container
 docker exec $CONTAINER_ID curl --version

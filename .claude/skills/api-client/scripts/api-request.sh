@@ -47,13 +47,11 @@ DEFAULT_LINES=80
 API_BASE_PATH="/pbxcore/api/v3"
 INTERNAL_URL="http://127.0.0.1:8081"
 
-# Script directory (for locating auth-token-manager and container detection)
+# Script directory (for locating auth-token-manager)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SKILL_DIR="$(dirname "$SCRIPT_DIR")"
 SKILLS_DIR="$(dirname "$SKILL_DIR")"
-CLAUDE_DIR="$(dirname "$SKILLS_DIR")"
 AUTH_TOKEN_SCRIPT="$SKILLS_DIR/auth-token-manager/get-auth-token.sh"
-CONTAINER_DETECT_SCRIPT="$CLAUDE_DIR/scripts/get-container-name.sh"
 
 # ============================================================================
 # Parse Arguments
@@ -156,46 +154,29 @@ info() {
 debug "Starting container detection..."
 
 if [[ -z "$CONTAINER_NAME" ]]; then
-    # Auto-detect running MikoPBX container based on current worktree
-    debug "No container specified, auto-detecting based on worktree..."
+    # Auto-detect running MikoPBX container
+    debug "No container specified, auto-detecting..."
 
-    if [[ -x "$CONTAINER_DETECT_SCRIPT" ]]; then
-        # Use smart detection script
-        CONTAINER_NAME=$("$CONTAINER_DETECT_SCRIPT" 2>&1) || {
-            error "Failed to auto-detect container"
+    # Prefer mikopbx_php83 (develop)
+    if docker ps --format "{{.Names}}" | grep -q "^mikopbx_php83$"; then
+        CONTAINER_NAME="mikopbx_php83"
+        debug "Found mikopbx_php83 (develop)"
+    elif docker ps --format "{{.Names}}" | grep -q "^mikopbx_php74$"; then
+        CONTAINER_NAME="mikopbx_php74"
+        debug "Found mikopbx_php74 (old release)"
+    else
+        # Try any mikopbx container
+        CONTAINER_NAME=$(docker ps --filter "name=mikopbx" --format "{{.Names}}" | head -1)
+        if [[ -z "$CONTAINER_NAME" ]]; then
+            error "No running MikoPBX containers found"
             echo "" >&2
             echo "Available containers:" >&2
             docker ps -a --filter "name=mikopbx" --format "  {{.Names}}  ({{.Status}})" >&2
             echo "" >&2
-            echo "Specify container explicitly with --container or check get-container-name.sh" >&2
+            echo "Start a container or specify one with --container" >&2
             exit 2
-        }
-        debug "Auto-detected container: $CONTAINER_NAME"
-    else
-        # Fallback to old behavior
-        debug "Container detection script not found, using fallback..."
-
-        # Prefer mikopbx_php83 (main develop)
-        if docker ps --format "{{.Names}}" | grep -q "^mikopbx_php83$"; then
-            CONTAINER_NAME="mikopbx_php83"
-            debug "Found mikopbx_php83 (develop)"
-        elif docker ps --format "{{.Names}}" | grep -q "^mikopbx_php74$"; then
-            CONTAINER_NAME="mikopbx_php74"
-            debug "Found mikopbx_php74 (old release)"
-        else
-            # Try any mikopbx container
-            CONTAINER_NAME=$(docker ps --filter "name=mikopbx" --format "{{.Names}}" | head -1)
-            if [[ -z "$CONTAINER_NAME" ]]; then
-                error "No running MikoPBX containers found"
-                echo "" >&2
-                echo "Available containers:" >&2
-                docker ps -a --filter "name=mikopbx" --format "  {{.Names}}  ({{.Status}})" >&2
-                echo "" >&2
-                echo "Start a container or specify one with --container" >&2
-                exit 2
-            fi
-            debug "Found container: $CONTAINER_NAME"
         fi
+        debug "Found container: $CONTAINER_NAME"
     fi
 fi
 

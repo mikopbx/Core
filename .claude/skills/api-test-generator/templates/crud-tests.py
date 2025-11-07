@@ -7,7 +7,7 @@ Use these patterns as building blocks for comprehensive API tests.
 import pytest
 import requests
 
-BASE_URL = "https://mikopbx-php83.localhost:8445"
+BASE_URL = "https://mikopbx_php83.localhost:8445"
 
 
 # ============================================================================

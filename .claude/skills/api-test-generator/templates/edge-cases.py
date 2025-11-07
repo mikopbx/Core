@@ -7,7 +7,7 @@ and unusual input that might break the API.
 import pytest
 import requests
 
-BASE_URL = "https://mikopbx-php83.localhost:8445"
+BASE_URL = "https://mikopbx_php83.localhost:8445"
 
 
 # ============================================================================
