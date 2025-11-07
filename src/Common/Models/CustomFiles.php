@@ -37,15 +37,32 @@ class CustomFiles extends ModelsBase
     public const string MODE_CUSTOM = 'custom';  // User-created custom file
 
     /**
-     * List of directories where custom MODE_CUSTOM files are allowed to be created/modified/deleted.
+     * List of directories where custom files are allowed to be created/modified/deleted.
      * This is a security measure to prevent modification of critical system files.
-     *
-     * Subdirectories within these paths are automatically created if they don't exist.
-     * System files (MODE_NONE, MODE_APPEND, MODE_OVERRIDE, MODE_SCRIPT) are not restricted.
      */
     public const array ALLOWED_DIRECTORIES = [
-        '/etc/custom-configs/',
+        '/usr/bin/',
+        '/usr/sbin/',
+        '/bin/',
+        '/sbin/',
+        '/etc/asterisk/',
+        '/etc/dahdi/',
+        '/etc/fail2ban/',
+        '/etc/keepalived/',
+        '/etc/monit.d/',
+        '/etc/nats/',
+        '/etc/nginx/',
+        '/etc/php.d/',
+        '/etc/ppp/',
+        '/etc/rc/',
+        '/etc/rsyslog.d/',
+        '/etc/wireguard/',
+        '/var/lib/asterisk/',
+        '/var/spool/asterisk/',
+        '/var/spool/cron/crontabs/',
+        '/storage/usbdisk1/',
         '/tmp/',
+        '/var/www/',
     ];
 
     /**
@@ -146,22 +163,11 @@ class CustomFiles extends ModelsBase
     /**
      * Check if the filepath is within allowed directories
      *
-     * Security restrictions apply only to MODE_CUSTOM files (user-created).
-     * System-created files (MODE_NONE, MODE_APPEND, MODE_OVERRIDE, MODE_SCRIPT)
-     * are not subject to directory restrictions.
-     *
      * @param string $filepath The file path to check
-     * @param string|null $mode File mode (MODE_CUSTOM, MODE_NONE, etc.). If null, assumes MODE_CUSTOM.
-     * @return bool True if the file is in an allowed directory or if it's a system file
+     * @return bool True if the file is in an allowed directory
      */
-    public static function isPathAllowed(string $filepath, ?string $mode = null): bool
+    public static function isPathAllowed(string $filepath): bool
     {
-        // System-created files (non-CUSTOM mode) are always allowed
-        if ($mode !== null && $mode !== self::MODE_CUSTOM) {
-            return true;
-        }
-
-        // For MODE_CUSTOM files (or when mode is not specified), enforce directory restrictions
         // Normalize the path to prevent directory traversal attacks
         $normalizedPath = self::normalizePath($filepath);
         if ($normalizedPath === false) {

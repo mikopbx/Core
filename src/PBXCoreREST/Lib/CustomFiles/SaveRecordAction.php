@@ -91,15 +91,17 @@ class SaveRecordAction extends AbstractSaveRecordAction
         }
 
         // ============================================================
-        // PHASE 2: BASIC REQUIRED FIELDS VALIDATION
+        // PHASE 2: REQUIRED FIELDS VALIDATION
         // WHY: Fail fast - don't waste resources on invalid data
-        // NOTE: Content validation happens in Phase 2.5 after loading record
         // ============================================================
 
         $validationRules = [
             'filepath' => [
                 ['type' => 'required', 'message' => 'File path is required'],
                 ['type' => 'minLength', 'value' => 1, 'message' => 'File path must not be empty']
+            ],
+            'content' => [
+                ['type' => 'required', 'message' => 'Content is required']
             ]
         ];
 
@@ -147,33 +149,6 @@ class SaveRecordAction extends AbstractSaveRecordAction
         }
 
         // ============================================================
-        // PHASE 2.5: CONTENT VALIDATION (After loading record)
-        // WHY: For PATCH/PUT we need to know current mode to validate content
-        // ============================================================
-
-        // Determine effective mode (from request or existing record)
-        $effectiveMode = $sanitizedData['mode'] ?? ($record ? $record->mode : null);
-
-        // Content is required only for modes that use it (not for MODE_NONE)
-        // For MODE_NONE, content is intentionally cleared
-        if ($effectiveMode !== CustomFiles::MODE_NONE) {
-            // For CREATE, content is always required (except MODE_NONE)
-            // For UPDATE/PATCH, content is required only if provided or mode changed to non-NONE
-            if ($isCreateOperation || isset($sanitizedData['content'])) {
-                $contentValidation = [
-                    'content' => [
-                        ['type' => 'required', 'message' => 'Content is required']
-                    ]
-                ];
-                $validationErrors = self::validateRequiredFields($sanitizedData, $contentValidation);
-                if (!empty($validationErrors)) {
-                    $res->messages['error'] = $validationErrors;
-                    return $res;
-                }
-            }
-        }
-
-        // ============================================================
         // PHASE 4: APPLY DEFAULTS (CREATE ONLY!)
         // WHY CREATE: New records need complete dataset with all fields
         // WHY NOT UPDATE: Would overwrite existing values with defaults!
@@ -197,7 +172,7 @@ class SaveRecordAction extends AbstractSaveRecordAction
         }
 
         // Business rules validation (filepath uniqueness, path security)
-        $businessErrors = self::validateBusinessRules($sanitizedData, $record, $isCreateOperation);
+        $businessErrors = self::validateBusinessRules($sanitizedData, $record->id ?? null);
         if (!empty($businessErrors)) {
             $res->messages['error'] = array_merge($res->messages['error'] ?? [], $businessErrors);
             $res->httpCode = 422;
@@ -266,9 +241,8 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 // Force immediate application of custom file to filesystem
                 if ($record->mode === CustomFiles::MODE_CUSTOM) {
                     // Directly apply the file using the action class
-                    // IMPORTANT: execute() expects array of records, each record is array with fileId
                     $applyAction = new \MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ApplyCustomFilesAction();
-                    $applyAction->execute([['fileId' => $record->id]]);
+                    $applyAction->execute(['fileId' => $record->id]);
                 }
 
                 return $record;
@@ -302,26 +276,17 @@ class SaveRecordAction extends AbstractSaveRecordAction
     /**
      * Validate business rules for custom file
      *
-     * Directory restrictions apply only to MODE_CUSTOM files (user-created).
-     * System files (MODE_NONE, MODE_APPEND, MODE_OVERRIDE, MODE_SCRIPT) can be in any directory.
-     *
      * @param array $sanitizedData Sanitized input data
-     * @param CustomFiles $record Current record instance (new or existing)
-     * @param bool $isCreateOperation True for CREATE, false for UPDATE
+     * @param int|null $currentRecordId Current record ID (for updates)
      * @return array Array of validation error messages
      */
-    private static function validateBusinessRules(array $sanitizedData, CustomFiles $record, bool $isCreateOperation): array
+    private static function validateBusinessRules(array $sanitizedData, ?int $currentRecordId): array
     {
         $validationErrors = [];
 
-        // Security check: ensure file is in allowed directory (only for MODE_CUSTOM files)
+        // Security check: ensure file is in allowed directory
         if (!empty($sanitizedData['filepath'])) {
-            // Determine the mode to check against
-            // For CREATE: always MODE_CUSTOM (new files are always created with this mode)
-            // For UPDATE: use current record's mode
-            $modeToCheck = $isCreateOperation ? CustomFiles::MODE_CUSTOM : $record->mode;
-
-            if (!CustomFiles::isPathAllowed($sanitizedData['filepath'], $modeToCheck)) {
+            if (!CustomFiles::isPathAllowed($sanitizedData['filepath'])) {
                 $validationErrors[] = CustomFiles::getSecurityErrorMessage($sanitizedData['filepath']);
             }
         }
@@ -331,9 +296,9 @@ class SaveRecordAction extends AbstractSaveRecordAction
             $conditions = 'filepath = :filepath:';
             $bind = ['filepath' => $sanitizedData['filepath']];
 
-            if (!$isCreateOperation && $record->id !== null) {
+            if ($currentRecordId !== null) {
                 $conditions .= ' AND id != :id:';
-                $bind['id'] = $record->id;
+                $bind['id'] = $currentRecordId;
             }
 
             $existing = CustomFiles::findFirst([

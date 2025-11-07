@@ -54,15 +54,15 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ResourceSecurity('custom_files', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
 #[HttpMapping(
     mapping: [
-        'GET' => ['getList', 'getRecord', 'getDefault', 'checkFile'],
+        'GET' => ['getList', 'getRecord', 'getDefault'],
         'POST' => ['create'],
         'PUT' => ['update'],
         'PATCH' => ['patch'],
         'DELETE' => ['delete']
     ],
-    resourceLevelMethods: ['getRecord', 'update', 'patch', 'delete', 'checkFile'],
+    resourceLevelMethods: ['getRecord', 'update', 'patch', 'delete'],
     collectionLevelMethods: ['getList', 'create'],
-    customMethods: ['getDefault', 'checkFile'],
+    customMethods: ['getDefault'],
     idPattern: '[0-9]+'
 )]
 class RestController extends BaseRestController
@@ -253,31 +253,6 @@ class RestController extends BaseRestController
     #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
     public function getDefault(): void
-    {
-        // Implementation handled by BaseRestController
-    }
-
-
-    /**
-     * Check if custom file exists on filesystem
-     *
-     * @route GET /pbxcore/api/v3/custom-files/{id}:checkFile
-     */
-    #[ApiDataSchema(
-        schemaClass: DataStructure::class,
-        type: 'detail'
-    )]
-    #[ApiOperation(
-        summary: 'rest_cf_CheckFile',
-        description: 'rest_cf_CheckFileDesc',
-        operationId: 'checkCustomFile'
-    )]
-    #[ApiParameterRef('id', dataStructure: CommonDataStructure::class, pattern: '^[0-9]+$', example: '15')]
-    #[ApiResponse(200, 'rest_response_200_get')]
-    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
-    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
-    #[ApiResponse(404, 'rest_response_404_not_found', 'PBXApiResult')]
-    public function checkFile(string $id): void
     {
         // Implementation handled by BaseRestController
     }
