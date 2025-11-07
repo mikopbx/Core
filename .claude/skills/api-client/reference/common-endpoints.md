@@ -382,11 +382,10 @@ Complete reference of commonly used MikoPBX REST API v3 endpoints with examples.
 ```bash
 # Note: File uploads require multipart/form-data
 # Use standard curl for file uploads
-API_URL=$(./.claude/scripts/get-container-api-url.sh)
 curl -H "Authorization: Bearer $TOKEN" \
      -F "file=@recording.mp3" \
      -F "name=Custom Greeting" \
-     "$API_URL/sound-files"
+     "http://127.0.0.1:8081/pbxcore/api/v3/sound-files"
 ```
 
 ### Delete Sound File

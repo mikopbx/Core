@@ -49,7 +49,6 @@ return [
     'gs_PBXFeatureDigitTimeout' => 'Maximale timeout tussen cijfers bij invoeren toestelnummer (in milliseconden)',
     'gs_PBXFeaturePickupExten' => 'Combinatie voor ophalen inkomende oproepen',
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Tijd voor terugkeer oproep bij geen antwoord na begeleid doorverbinden',
-    'gs_PBXSplitAudioThread' => 'Opnames in stereo modus opslaan',
     'gs_PBXAllowGuestCalls' => 'Inkomende oproepen van alle servers toestaan',
     'gs_SIPPort' => 'SIP poort voor telefoonregistratie op dit station',
     'gs_TLS_PORT' => 'SIP TLS poort (versleutelde oproepen)',
@@ -578,16 +577,5 @@ return [
     'gs_SendMetricsTooltip_warning' => 'Uitschakelen deze functie kan foutoplossing proces vertragen en ondersteuningskwaliteit verminderen',
     'gs_SendMetricsTooltip_note' => 'Aanbevolen: ingeschakeld laten voor productie systemen. Data alleen verzonden bij internet verbinding',
     
-    // PBXSplitAudioThread tooltips
-    'gs_SplitAudioThreadTooltip_header' => 'Gespreksopname modus',
-    'gs_SplitAudioThreadTooltip_desc' => 'Bepaalt plaatsing gesprekspartners audio streams in uiteindelijk MP3 opnamebestand',
-    'gs_SplitAudioThreadTooltip_mono' => 'Mono modus (uitgeschakeld)',
-    'gs_SplitAudioThreadTooltip_mono_desc' => 'Beide gesprekspartners opgenomen in één kanaal (mono). Stemmen gemengd in enkele audio stream',
-    'gs_SplitAudioThreadTooltip_stereo' => 'Stereo modus (ingeschakeld)',
-    'gs_SplitAudioThreadTooltip_stereo_desc' => 'Elke gesprekspartner opgenomen in apart kanaal: linkerkanaal - één deelnemer, rechterkanaal - andere deelnemer. Na MP3 conversie ontstaat één stereo bestand',
-    'gs_SplitAudioThreadTooltip_benefits' => 'Voordelen stereo modus:',
-    'gs_SplitAudioThreadTooltip_benefit_analysis' => 'Mogelijk elke gesprekspartner apart analyseren',
     'gs_SPlitAudioThreadTooltip_benefit_quality' => 'Verbeterde kwaliteit bij transcriptie en spraakherkenning',
-    'gs_SplitAudioThreadTooltip_benefit_processing' => 'Gemak voor spraakanalytiek systemen, kwaliteitsbeoordeling en operator training',
-    'gs_SplitAudioThreadTooltip_note' => 'Opmerking: Systeem converteert automatisch WAV opnames naar MP3 formaat voor ruimtebesparing. Bij stereo modus bevat uiteindelijk MP3 bestand twee kanalen'
 ];

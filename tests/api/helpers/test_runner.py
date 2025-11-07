@@ -30,12 +30,12 @@ from pathlib import Path
 class TestRunner:
     """Helper class for running tests and analyzing logs"""
 
-    def __init__(self, container_name: str = 'mikopbx-php83'):
+    def __init__(self, container_name: str = 'mikopbx_php83'):
         """
         Initialize test runner
 
         Args:
-            container_name: Docker container name (default: mikopbx-php83)
+            container_name: Docker container name (default: mikopbx_php83)
         """
         self.container_name = container_name
         self.container_id = self._get_container_id()
@@ -464,7 +464,7 @@ def main():
     parser.add_argument('--check-workers', action='store_true', help='Only check worker status')
     parser.add_argument('--restart', action='store_true', help='Restart container')
     parser.add_argument('--lines', type=int, default=500, help='Number of log lines to check')
-    parser.add_argument('--container', default='mikopbx-php83', help='Container name')
+    parser.add_argument('--container', default='mikopbx_php83', help='Container name')
 
     args = parser.parse_args()
 

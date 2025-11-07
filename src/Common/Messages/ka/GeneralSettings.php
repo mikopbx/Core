@@ -49,7 +49,6 @@ return [
     'gs_PBXFeatureDigitTimeout' => 'ციფრებს შორის მაქსიმალური ტაიმაუტი დანამატის ნომრის შეყვანისას (მილისწამებში)',
     'gs_PBXFeaturePickupExten' => 'შემომავალი ზარების გადახვაცვის კომბინაცია',
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'ზარის დაბრუნების დრო, თუ კონსულტაციური გადაცემის შემდეგ პასუხი არ არის',
-    'gs_PBXSplitAudioThread' => 'სტერეო რეჟიმში ჩანაწერების შენახვა',
     'gs_PBXAllowGuestCalls' => 'ნებისმიერი სერვერიდან შემომავალი ზარების ნებართვა',
     'gs_SIPPort' => 'SIP პორტი ტელეფონების რეგისტრაციისთვის ამ სადგურზე',
     'gs_TLS_PORT' => 'SIP TLS პორტი (დაშიფრული ზარები)',
@@ -578,16 +577,4 @@ return [
     'gs_SendMetricsTooltip_warning' => 'ამ ფუნქციის გამორთვამ შეიძლება შეანელოს შეცდომების გამოსწორების პროცესი და შეამციროს მხარდაჭერის ხარისხი',
     'gs_SendMetricsTooltip_note' => 'რეკომენდებულია: დატოვეთ ჩართული production სისტემებისთვის. მონაცემები გადაიცემა მხოლოდ ინტერნეტ-კავშირის არსებობისას',
     
-    // PBXSplitAudioThread tooltips
-    'gs_SplitAudioThreadTooltip_header' => 'საუბრების ჩანაწერის რეჟიმი',
-    'gs_SplitAudioThreadTooltip_desc' => 'განსაზღვრავს მოსაუბრეთა აუდიო-ნაკადების განთავსების გზას საბოლოო MP3 ფაილის ჩანაწერში',
-    'gs_SplitAudioThreadTooltip_mono' => 'მონო რეჟიმი (გამორთული)',
-    'gs_SplitAudioThreadTooltip_mono_desc' => 'ორივე მოსაუბრე იწერება ერთ არხში (მონო). ხმები ერევა ერთიან აუდიო-ნაკადში',
-    'gs_SplitAudioThreadTooltip_stereo' => 'სტერეო რეჟიმი (ჩართული)',
-    'gs_SplitAudioThreadTooltip_stereo_desc' => 'ყველა მოსაუბრე იწერება ცალკე არხში: მარცხენა არხი — ერთი აბონენტი, მარჯვენა არხი — მეორე აბონენტი. MP3-ში კონვერტაციის შემდეგ მიიღება ერთი სტერეო ფაილი',
-    'gs_SplitAudioThreadTooltip_benefits' => 'სტერეო რეჟიმის უპირატესობები:',
-    'gs_SplitAudioThreadTooltip_benefit_analysis' => 'ყველა მოსაუბრის მეტყველების ცალკე ანალიზის შესაძლებლობა',
-    'gs_SplitAudioThreadTooltip_benefit_quality' => 'გაუმჯობესებული ხარისხი ტრანსკრიბაციისა და მეტყველების ამოცნობისას',
-    'gs_SplitAudioThreadTooltip_benefit_processing' => 'მოხერხებულობა მეტყველების ანალიტიკის სისტემებისთვის, მომსახურების ხარისხის შეფასებისა და ოპერატორთა სწავლებისთვის',
-    'gs_SplitAudioThreadTooltip_note' => 'შენიშვნა: სისტემა ავტომატურად კონვერტაციას WAV ჩანაწერებს MP3 ფორმატში ადგილის ეკონომიისთვის. სტერეო რეჟიმისას საბოლოო MP3 ფაილი შეიცავს ორ არხს'
 ];

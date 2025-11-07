@@ -498,11 +498,6 @@ return [
     'cf_ShowAll' => 'Все записи',
     'cf_CannotDeleteSystemFile' => 'Системные файлы не могут быть удалены',
 
-    // Custom Files Tooltips
-    'cf_filepath_tooltip_header' => 'Разрешенные директории',
-    'cf_filepath_tooltip_desc' => 'Для пользовательских файлов (MODE_CUSTOM) вы можете создавать файлы только в следующих директориях:',
-    'cf_filepath_tooltip_autocreate' => 'Поддиректории создаются автоматически, если указаны в пути к файлу. Например: /etc/custom-configs/myapp/config.ini',
-
     // DBG
     'dbg_Header' => 'Отладочная информация',
     'dbg_NoDebugInformation' => 'Нет информации',

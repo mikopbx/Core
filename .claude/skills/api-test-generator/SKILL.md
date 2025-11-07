@@ -327,7 +327,7 @@ pytest tests/api/ -m smoke -v
 
 - **Authentication**: All tests need Bearer token from `/auth/login`
 - **HTTPS**: Use `verify=False` for self-signed certificates
-- **Base URL**: Default is `https://mikopbx-php83.localhost:8445`
+- **Base URL**: Default is `https://mikopbx_php83.localhost:8445`
 - **Schema validation**: Only active when `SCHEMA_VALIDATION_STRICT=1` in container
 - **Container restart**: Changes to PHP code require container restart
 - **Test isolation**: Each test should be independent and idempotent
@@ -422,5 +422,5 @@ docker exec mikopbx_container env | grep SCHEMA_VALIDATION_STRICT
 docker exec mikopbx_container tail -f /storage/usbdisk1/mikopbx/log/php/error.log
 
 # Test API manually
-curl -k https://mikopbx-php83.localhost:8445/pbxcore/api/v3/system/ping
+curl -k https://mikopbx_php83.localhost:8445/pbxcore/api/v3/system/ping
 ```

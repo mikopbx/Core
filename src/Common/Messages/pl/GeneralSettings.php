@@ -49,7 +49,6 @@ return [
     'gs_PBXFeatureDigitTimeout' => 'Maksymalny timeout między cyframi przy wpisywaniu numeru wewnętrznego (w milisekundach)',
     'gs_PBXFeaturePickupExten' => 'Kombinacja do przejęcia połączeń przychodzących',
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Czas powrotu połączenia, jeśli nie ma odpowiedzi po transferze konsultacyjnym',
-    'gs_PBXSplitAudioThread' => 'Zapisywać nagrania w trybie stereo',
     'gs_PBXAllowGuestCalls' => 'Zezwolić na połączenia przychodzące z dowolnych serwerów',
     'gs_SIPPort' => 'Port SIP do rejestracji telefonów na tej centrali',
     'gs_TLS_PORT' => 'Port SIP TLS (zaszyfrowane połączenia)',
@@ -578,16 +577,4 @@ return [
     'gs_SendMetricsTooltip_warning' => 'Wyłączenie tej funkcji może spowolnić proces naprawiania błędów i obniżyć jakość wsparcia',
     'gs_SendMetricsTooltip_note' => 'Zalecane: pozostaw włączone dla systemów produkcyjnych. Dane przesyłane tylko przy dostępie do internetu',
     
-    // PBXSplitAudioThread tooltips
-    'gs_SplitAudioThreadTooltip_header' => 'Tryb nagrywania rozmów',
-    'gs_SplitAudioThreadTooltip_desc' => 'Określa sposób umieszczania strumieni audio rozmówców w końcowym pliku MP3 nagrania',
-    'gs_SplitAudioThreadTooltip_mono' => 'Tryb mono (wyłączony)',
-    'gs_SplitAudioThreadTooltip_mono_desc' => 'Obaj rozmówcy nagrywani w jednym kanale (mono). Głosy mieszane w pojedynczy strumień audio',
-    'gs_SplitAudioThreadTooltip_stereo' => 'Tryb stereo (włączony)',
-    'gs_SplitAudioThreadTooltip_stereo_desc' => 'Każdy rozmówca nagrywany w oddzielnym kanale: lewy kanał - jeden rozmówca, prawy kanał - drugi rozmówca. Po konwersji do MP3 powstaje jeden plik stereo',
-    'gs_SplitAudioThreadTooltip_benefits' => 'Zalety trybu stereo:',
-    'gs_SplitAudioThreadTooltip_benefit_analysis' => 'Możliwość analizy mowy każdego rozmówcy oddzielnie',
-    'gs_SplitAudioThreadTooltip_benefit_quality' => 'Ulepszona jakość przy transkrypcji i rozpoznawaniu mowy',
-    'gs_SplitAudioThreadTooltip_benefit_processing' => 'Wygoda dla systemów analizy mowy, oceny jakości obsługi i szkolenia operatorów',
-    'gs_SplitAudioThreadTooltip_note' => 'Uwaga: System automatycznie konwertuje nagrania WAV do formatu MP3 dla oszczędności miejsca. W trybie stereo końcowy plik MP3 zawiera dwa kanały'
 ];

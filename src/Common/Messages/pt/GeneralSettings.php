@@ -49,7 +49,6 @@ return [
     'gs_PBXFeatureDigitTimeout' => 'Timeout máximo entre dígitos ao inserir número de extensão (em milissegundos)',
     'gs_PBXFeaturePickupExten' => 'Combinação para captura de chamadas recebidas',
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Tempo de retorno de chamada se não houver resposta após transferência consultiva',
-    'gs_PBXSplitAudioThread' => 'Salvar gravações em modo estéreo',
     'gs_PBXAllowGuestCalls' => 'Permitir chamadas recebidas de qualquer servidor',
     'gs_SIPPort' => 'Porta SIP para registo de telefones nesta central',
     'gs_TLS_PORT' => 'Porta SIP TLS (chamadas criptografadas)',
@@ -578,16 +577,4 @@ return [
     'gs_SendMetricsTooltip_warning' => 'Desativar esta função pode atrasar processo de correção de erros e diminuir qualidade do suporte',
     'gs_SendMetricsTooltip_note' => 'Recomendado: deixar ativado para sistemas de produção. Dados transmitidos apenas com conexão à internet',
     
-    // PBXSplitAudioThread tooltips
-    'gs_SplitAudioThreadTooltip_header' => 'Modo de gravação de chamadas',
-    'gs_SplitAudioThreadTooltip_desc' => 'Define forma de colocar streams de áudio dos interlocutores no ficheiro MP3 final da gravação',
-    'gs_SplitAudioThreadTooltip_mono' => 'Modo mono (desativado)',
-    'gs_SplitAudioThreadTooltip_mono_desc' => 'Ambos interlocutores gravados num canal (mono). Vozes misturadas num único stream de áudio',
-    'gs_SplitAudioThreadTooltip_stereo' => 'Modo estéreo (ativado)',
-    'gs_SplitAudioThreadTooltip_stereo_desc' => 'Cada interlocutor gravado em canal separado: canal esquerdo - um participante, canal direito - outro participante. Após conversão para MP3 obtém-se um ficheiro estéreo',
-    'gs_SplitAudioThreadTooltip_benefits' => 'Vantagens do modo estéreo:',
-    'gs_SplitAudioThreadTooltip_benefit_analysis' => 'Possibilidade de analisar fala de cada interlocutor separadamente',
-    'gs_SplitAudioThreadTooltip_benefit_quality' => 'Qualidade melhorada na transcrição e reconhecimento de fala',
-    'gs_SplitAudioThreadTooltip_benefit_processing' => 'Conveniência para sistemas de análise de fala, avaliação de qualidade de atendimento e formação de operadores',
-    'gs_SplitAudioThreadTooltip_note' => 'Nota: Sistema converte automaticamente gravações WAV para formato MP3 para economia de espaço. No modo estéreo o ficheiro MP3 final contém dois canais'
 ];

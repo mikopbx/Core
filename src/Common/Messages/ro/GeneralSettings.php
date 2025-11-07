@@ -49,7 +49,6 @@ return [
     'gs_PBXFeatureDigitTimeout' => 'Timeout maxim între cifre la introducerea numărului intern (în milisecunde)',
     'gs_PBXFeaturePickupExten' => 'Combinația pentru preluarea apelurilor',
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Timpul de returnare a apelului dacă nu există răspuns după transferul consultativ',
-    'gs_PBXSplitAudioThread' => 'Salvează înregistrările în modul stereo',
     'gs_PBXAllowGuestCalls' => 'Permite apeluri de la orice servere',
     'gs_SIPPort' => 'Portul SIP pentru înregistrarea telefoanelor pe această centrală',
     'gs_TLS_PORT' => 'Portul SIP TLS (apeluri criptate)',
@@ -256,5 +255,4 @@ return [
     'gs_AMIEnabledTooltip_header' => 'AMI (Asterisk Manager Interface)',
     'gs_AJAMEnabledTooltip_header' => 'AJAM (Asynchronous Javascript Asterisk Manager)',
     'gs_SendMetricsTooltip_header' => 'Trimiterea metricilor și rapoartelor de erori',
-    'gs_SplitAudioThreadTooltip_header' => 'Modul de înregistrare a convorbirilor',
 ];

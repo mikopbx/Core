@@ -57,4 +57,3 @@ tests/api/**/*.tmp
 .claude/translation_analysis_report.json
 .claude/*.tar.gz
 run-test-from-host.sh
-

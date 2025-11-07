@@ -660,6 +660,7 @@ return [
     'st_Store6MonthsOfRecords' => '6 เดือน',
     'st_StoreAllPossibleRecords' => '∞',
     'st_TabStorageInfo' => 'ข้อมูลพื้นที่จัดเก็บ',
+    'st_TabStorageSettings' => 'การตั้งค่าพื้นที่จัดเก็บ',
     'st_Used' => 'ใช้แล้ว',
     'stopped' => 'พิการ',
     'this cannot be undone!' => 'การดำเนินการนี้ไม่สามารถย้อนกลับได้!',

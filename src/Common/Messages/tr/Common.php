@@ -695,6 +695,7 @@ Kayıt formunu doldurarak otomatik olarak yeni bir anahtar alabilirsiniz.<br>',
     'st_Store6MonthsOfRecords' => '6 ay',
     'st_StoreAllPossibleRecords' => '∞',
     'st_TabStorageInfo' => 'Depolama bilgileri',
+    'st_TabStorageSettings' => 'Depolama ayarları',
     'st_Used' => 'kullanılmış',
     // THIS
     'this_is' => 'Bu ',

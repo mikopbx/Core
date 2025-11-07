@@ -206,8 +206,8 @@ MikoPBX automatically rotates logs to prevent disk space issues:
 ### From Docker Container
 
 ```bash
-# Auto-detect container based on current worktree
-CONTAINER_ID=$(./.claude/scripts/get-container-name.sh)
+# Find container ID
+CONTAINER_ID=$(docker ps | grep mikopbx | awk '{print $1}' | head -1)
 
 # Access logs
 docker exec $CONTAINER_ID tail -100 /storage/usbdisk1/mikopbx/log/system/messages

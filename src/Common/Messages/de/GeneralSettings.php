@@ -49,7 +49,6 @@ return [
     'gs_PBXFeatureDigitTimeout' => 'Maximale Zeitüberschreitung zwischen Ziffern bei der Eingabe einer Durchwahl (in Millisekunden)',
     'gs_PBXFeaturePickupExten' => 'Kombination zum Abfangen eingehender Anrufe',
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Rückkehrzeit des Anrufs bei keiner Antwort nach begleiteter Weiterleitung',
-    'gs_PBXSplitAudioThread' => 'Aufzeichnungen im Stereo-Modus speichern',
     'gs_PBXAllowGuestCalls' => 'Eingehende Anrufe von allen Servern erlauben',
     'gs_SIPPort' => 'SIP-Port für die Registrierung von Telefonen an dieser Station',
     'gs_TLS_PORT' => 'SIP TLS-Port (verschlüsselte Anrufe)',
@@ -580,16 +579,4 @@ return [
     'gs_SendMetricsTooltip_warning' => 'Deaktivierung dieser Funktion kann Fehlerbehebungsprozess verlangsamen und Support-Qualität verringern',
     'gs_SendMetricsTooltip_note' => 'Empfohlen: für Produktionssysteme aktiviert lassen. Daten werden nur bei verfügbarer Internetverbindung übertragen',
 
-    // PBXSplitAudioThread tooltips
-    'gs_SplitAudioThreadTooltip_header' => 'Anrufaufzeichnungsmodus',
-    'gs_SplitAudioThreadTooltip_desc' => 'Bestimmt, wie Gesprächspartner-Audio-Streams in endgültiger MP3-Aufzeichnungsdatei platziert werden',
-    'gs_SplitAudioThreadTooltip_mono' => 'Mono-Modus (deaktiviert)',
-    'gs_SplitAudioThreadTooltip_mono_desc' => 'Beide Gesprächspartner in einem Kanal aufgezeichnet (Mono). Stimmen in einen Audio-Stream gemischt',
-    'gs_SplitAudioThreadTooltip_stereo' => 'Stereo-Modus (aktiviert)',
-    'gs_SplitAudioThreadTooltip_stereo_desc' => 'Jeder Gesprächspartner in separatem Kanal aufgezeichnet: linker Kanal - ein Teilnehmer, rechter Kanal - anderer Teilnehmer. Nach MP3-Konvertierung entsteht eine Stereo-Datei',
-    'gs_SplitAudioThreadTooltip_benefits' => 'Stereo-Modus-Vorteile:',
-    'gs_SplitAudioThreadTooltip_benefit_analysis' => 'Möglichkeit, Sprache jedes Gesprächspartners separat zu analysieren',
-    'gs_SplitAudioThreadTooltip_benefit_quality' => 'Verbesserte Qualität bei Transkription und Spracherkennung',
-    'gs_SplitAudioThreadTooltip_benefit_processing' => 'Bequemlichkeit für Sprachanalysesysteme, Servicequalitätsbewertung und Operatorschulung',
-    'gs_SplitAudioThreadTooltip_note' => 'Hinweis: System konvertiert WAV-Aufzeichnungen automatisch zu MP3-Format zur Platzeinsparung. Im Stereo-Modus enthält endgültige MP3-Datei zwei Kanäle'
 ];

@@ -49,7 +49,6 @@ return [
     'gs_PBXFeatureDigitTimeout' => 'Nömrə daxil edərkən rəqəmlər arasında maksimum gözləmə müddəti (millisaniyələrdə)',
     'gs_PBXFeaturePickupExten' => 'Daxil olan zəngləri ələ keçirmək üçün kombinasiya',
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Məsləhətli transferdən sonra cavab verilməzsə zəngin geri qayıtma müddəti',
-    'gs_PBXSplitAudioThread' => 'Yazıları stereo rejimdə saxla',
     'gs_PBXAllowGuestCalls' => 'İstənilən serverdən daxil olan zənglərə icazə ver',
     'gs_SIPPort' => 'Bu stansiyada telefonların qeydiyyatı üçün SIP portu',
     'gs_TLS_PORT' => 'SIP TLS portu (şifrələnmiş zənglər)',
@@ -580,16 +579,4 @@ return [
     'gs_SendMetricsTooltip_warning' => 'Bu funksiyanı deaktiv etmək xəta düzəldilməsi prosesini ləngidə və dəstək keyfiyyətini azalda bilər',
     'gs_SendMetricsTooltip_note' => 'Tövsiyə: production sistemlər üçün aktiv saxlamaq. Məlumatlar yalnız internet əlaqəsi zamanı ötürülür',
     
-    // PBXSplitAudioThread tooltips
-    'gs_SplitAudioThreadTooltip_header' => 'Zəng yazısı rejimi',
-    'gs_SplitAudioThreadTooltip_desc' => 'Danışanların audio axınlarının son MP3 yazısı faylında yerləşdirilməsi üsulunu müəyyən edir',
-    'gs_SplitAudioThreadTooltip_mono' => 'Mono rejim (deaktiv)',
-    'gs_SplitAudioThreadTooltip_mono_desc' => 'Hər iki danışan bir kanalda yazılır (mono). Səslər vahid audio axında qarışdırılır',
-    'gs_SplitAudioThreadTooltip_stereo' => 'Stereo rejim (aktiv)',
-    'gs_SplitAudioThreadTooltip_stereo_desc' => 'Hər danışan ayrı kanalda yazılır: sol kanal - bir iştirakçı, sağ kanal - digər iştirakçı. MP3-ə çevrildikdən sonra bir stereo fayl alınır',
-    'gs_SplitAudioThreadTooltip_benefits' => 'Stereo rejimin üstünlükləri:',
-    'gs_SplitAudioThreadTooltip_benefit_analysis' => 'Hər danışanın nitqini ayrıca təhlil etmək imkanı',
-    'gs_SplitAudioThreadTooltip_benefit_quality' => 'Transkripsiya və nitq tanımasında keyfiyyətin yaxşılaşması',
-    'gs_SplitAudioThreadTooltip_benefit_processing' => 'Nitq təhlil sistemləri, xidmət keyfiyyəti qiymətləndirilməsi və operatorların öyrədilməsi üçün rahatlıq',
-    'gs_SplitAudioThreadTooltip_note' => 'Qeyd: Sistem yer qənaət etmək üçün WAV yazılarını avtomatik MP3 formatına çevirir. Stereo rejimində son MP3 fayl iki kanal ehtiva edir'
 ];

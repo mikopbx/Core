@@ -37,25 +37,20 @@ class ApplyCustomFilesAction extends Injectable implements ReloadActionInterface
     /**
      * Execute the action to apply custom files
      *
-     * Automatically creates subdirectories within allowed directories if they don't exist.
-     * Only applies files with MODE_CUSTOM mode.
-     *
-     * @param array $parameters Array with 'fileId' or 'recordId' parameter
+     * @param array $parameters Array with 'fileId' parameter
      * @return void
      */
     public function execute(array $parameters = []): void
     {
         foreach ($parameters as $record) {
 
-            // Check if specific file ID is provided (support both 'fileId' and 'recordId' for backwards compatibility)
-            $fileId = $record['fileId'] ?? $record['recordId'] ?? null;
-
-            if ($fileId !== null) {
-                $file = CustomFiles::findFirstById($fileId);
+            // Check if specific file ID is provided
+            if (isset($record['recordId'])) {
+                $file = CustomFiles::findFirstById($record['recordId']);
                 if (!$file) {
                     SystemMessages::sysLogMsg(
                         __CLASS__,
-                        "Custom file with ID {$fileId} not found",
+                        "Custom file with ID {$record['recordId']} not found",
                         LOG_WARNING
                     );
                     continue;
@@ -74,10 +69,6 @@ class ApplyCustomFilesAction extends Injectable implements ReloadActionInterface
     /**
      * Apply a single custom file to the filesystem
      *
-     * Automatically creates all parent directories if they don't exist.
-     * For example, if filepath is '/etc/custom-configs/subdir/file.txt',
-     * it will create '/etc/custom-configs/subdir/' if needed.
-     *
      * @param CustomFiles $file The custom file to apply
      * @return void
      */
@@ -89,7 +80,8 @@ class ApplyCustomFilesAction extends Injectable implements ReloadActionInterface
             return;
         }
 
-        // Ensure directory exists - automatically creates subdirectories
+
+        // Ensure directory exists
         $dir = dirname($filepath);
         if (!is_dir($dir)) {
             Util::mwMkdir($dir, true);

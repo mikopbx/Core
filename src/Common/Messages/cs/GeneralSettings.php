@@ -49,7 +49,6 @@ return [
     'gs_PBXFeatureDigitTimeout' => 'Maximální timeout mezi číslicemi při zadávání čísla (v milisekundách)',
     'gs_PBXFeaturePickupExten' => 'Kombinace pro zachycení příchozích hovorů',
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Doba návratu hovoru, pokud není odpověď po konzultačním přenosu',
-    'gs_PBXSplitAudioThread' => 'Ukládat nahrávky v stereo režimu',
     'gs_PBXAllowGuestCalls' => 'Povolit příchozí hovory z jakýchkoliv serverů',
     'gs_SIPPort' => 'SIP port pro registraci telefonů na této stanici',
     'gs_TLS_PORT' => 'SIP TLS port (šifrované hovory)',
@@ -580,16 +579,4 @@ return [
     'gs_SendMetricsTooltip_warning' => 'Vypnutí této funkce může zpomalit proces opravy chyb a snížit kvalitu podpory',
     'gs_SendMetricsTooltip_note' => 'Doporučeno: ponechat povoleno pro produkční systémy. Data se přenášejí pouze při připojení k internetu',
     
-    // PBXSplitAudioThread tooltips
-    'gs_SplitAudioThreadTooltip_header' => 'Režim nahrávání hovorů',
-    'gs_SplitAudioThreadTooltip_desc' => 'Určuje způsob umístění audio toků účastníků v konečném MP3 souboru nahrávky',
-    'gs_SplitAudioThreadTooltip_mono' => 'Mono režim (vypnuto)',
-    'gs_SplitAudioThreadTooltip_mono_desc' => 'Oba účastníci jsou nahráváni do jednoho kanálu (mono). Hlasy se mísí do jediného audio toku',
-    'gs_SplitAudioThreadTooltip_stereo' => 'Stereo režim (zapnuto)',
-    'gs_SplitAudioThreadTooltip_stereo_desc' => 'Každý účastník je nahráván do odděleného kanálu: levý kanál - jeden účastník, pravý kanál - druhý účastník. Po konverzi do MP3 vznikne jeden stereo soubor',
-    'gs_SplitAudioThreadTooltip_benefits' => 'Výhody stereo režimu:',
-    'gs_SplitAudioThreadTooltip_benefit_analysis' => 'Možnost analyzovat řeč každého účastníka odděleně',
-    'gs_SplitAudioThreadTooltip_benefit_quality' => 'Zlepšená kvalita při transkripci a rozpoznávání řeči',
-    'gs_SplitAudioThreadTooltip_benefit_processing' => 'Pohodlí pro systémy analýzy řeči, hodnocení kvality služeb a školení operátorů',
-    'gs_SplitAudioThreadTooltip_note' => 'Poznámka: Systém automaticky konvertuje WAV nahrávky do MP3 formátu pro úsporu místa. Ve stereo režimu konečný MP3 soubor obsahuje dva kanály'
 ];

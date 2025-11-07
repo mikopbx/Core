@@ -37,9 +37,6 @@ class RemoveCustomFilesAction extends Injectable implements ReloadActionInterfac
     /**
      * Execute the action to remove custom files
      *
-     * Directory restrictions apply only to MODE_CUSTOM files.
-     * System files can be removed from any directory.
-     *
      * @param array $parameters Array with 'filepath' and optional 'mode' parameters
      * @return void
      */
@@ -62,24 +59,20 @@ class RemoveCustomFilesAction extends Injectable implements ReloadActionInterfac
                 return;
             }
 
-            $this->removeCustomFile($record['filepath'], $record['mode'] ?? CustomFiles::MODE_CUSTOM);
+            $this->removeCustomFile($record['filepath']);
         }
     }
 
     /**
      * Remove a custom file from the filesystem
      *
-     * Directory restrictions apply only to MODE_CUSTOM files.
-     * System files can be removed from any directory.
-     *
      * @param string $filepath The file path to remove
-     * @param string $mode File mode (MODE_CUSTOM, MODE_NONE, etc.)
      * @return void
      */
-    private function removeCustomFile(string $filepath, string $mode = CustomFiles::MODE_CUSTOM): void
+    private function removeCustomFile(string $filepath): void
     {
-        // Security check: ensure file is in allowed directory (only for MODE_CUSTOM files)
-        if (!CustomFiles::isPathAllowed($filepath, $mode)) {
+        // Security check: ensure file is in allowed directory
+        if (!CustomFiles::isPathAllowed($filepath)) {
             SystemMessages::sysLogMsg(
                 __CLASS__,
                 CustomFiles::getSecurityErrorMessage($filepath),

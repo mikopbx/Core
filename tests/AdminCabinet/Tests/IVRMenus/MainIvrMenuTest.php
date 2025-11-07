@@ -25,7 +25,7 @@ use MikoPBX\Tests\AdminCabinet\Tests\Data\IVRMenuDataFactory;
 
 /**
  * Test class for creating Main IVR menu
- * docker exec -it mikopbx-php83 /bin/sh -c "/offload/rootfs/usr/www/vendor/bin/phpunit --configuration /offload/rootfs/usr/www/tests/AdminCabinet/debug-unit.xml /offload/rootfs/usr/www/tests/AdminCabinet/Tests/IVRMenus/MainIvrMenuTest.php"
+ * docker exec -it mikopbx_php83 /bin/sh -c "/offload/rootfs/usr/www/vendor/bin/phpunit --configuration /offload/rootfs/usr/www/tests/AdminCabinet/debug-unit.xml /offload/rootfs/usr/www/tests/AdminCabinet/Tests/IVRMenus/MainIvrMenuTest.php"
  */
 class MainIvrMenuTest extends CreateIVRMenuTest
 {

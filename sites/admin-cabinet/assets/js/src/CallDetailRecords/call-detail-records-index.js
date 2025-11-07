@@ -508,16 +508,16 @@ const callDetailRecords = {
             // Format start date
             const formattedDate = moment(group.start).format('DD-MM-YYYY HH:mm:ss');
 
-            // Extract all recording records (including those without files)
-            // WHY: Show details for all records - disabled player is shown when no file exists
+            // Extract recording records - filter only records with actual recording files
             const recordings = (group.records || [])
+                .filter(r => r.recordingfile && r.recordingfile.length > 0)
                 .map(r => ({
                     id: r.id,
                     src_num: r.src_num,
                     dst_num: r.dst_num,
-                    recordingfile: r.recordingfile || '',
-                    playback_url: r.playback_url || '',   // Token-based URL for playback
-                    download_url: r.download_url || ''    // Token-based URL for download
+                    recordingfile: r.recordingfile,
+                    playback_url: r.playback_url,   // Token-based URL for playback
+                    download_url: r.download_url    // Token-based URL for download
                 }));
 
             // Determine CSS class
@@ -607,7 +607,15 @@ const callDetailRecords = {
     </td>
     <td class="one wide"><span class="cdr-duration"></span></td>
     <td class="one wide">
-    	<i class="ui icon download" data-value="${downloadUrl}"></i>
+    	<div class="ui compact icon top left pointing dropdown download-format-dropdown" data-download-url="${downloadUrl}">
+    		<i class="download icon"></i>
+    		<div class="menu">
+    			<div class="item" data-format="webm">WebM (Opus)</div>
+    			<div class="item" data-format="mp3">MP3</div>
+    			<div class="item" data-format="wav">WAV</div>
+    			<div class="item" data-format="ogg">OGG (Opus)</div>
+    		</div>
+    	</div>
     </td>
     <td class="right aligned"><span class="need-update">${record.src_num}</span></td>
     <td class="one wide center aligned"><i class="icon exchange"></i></td>

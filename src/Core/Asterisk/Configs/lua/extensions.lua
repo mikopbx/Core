@@ -853,7 +853,7 @@ function event_dial_answer()
             end
             app["MixMonitor"](mixFileName .. ".wav,"..mixOptions);
             app["NoOp"]('Start MixMonitor on channel '.. get_variable("CHANNEL"));
-            data['recordingfile']  	= mixFileName .. ".mp3";
+            data['recordingfile']  	= mixFileName .. ".webm";
             app["UserEvent"]("StartRecording,recordingfile:"..data['recordingfile']..',recchan:'..data['agi_channel']);
         end
     end
@@ -1152,7 +1152,7 @@ function event_transfer_dial_answer()
             end
             app["MixMonitor"](mixFileName .. ".wav,"..mixOptions);
             app["NoOp"]('Start MixMonitor on channel '.. data['agi_channel']);
-            data['recordingfile']  	= mixFileName .. ".mp3";
+            data['recordingfile']  	= mixFileName .. ".webm";
             app["UserEvent"]("StartRecording,recordingfile:"..data['recordingfile']..',recchan:'..data['agi_channel']);
         end
     end
@@ -1509,7 +1509,7 @@ function event_dial_app()
         end
         app["MixMonitor"](mixFileName .. ".wav,"..mixOptions);
         app["NoOp"]('Start MixMonitor on channel '.. get_variable("CHANNEL"));
-        data['recordingfile']  	= mixFileName .. ".mp3";
+        data['recordingfile']  	= mixFileName .. ".webm";
         app["UserEvent"]("StartRecording,recordingfile:"..data['recordingfile']..',recchan:'..CHANNEL);
     end
 

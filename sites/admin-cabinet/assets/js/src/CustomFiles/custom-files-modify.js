@@ -16,7 +16,7 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* global globalRootUrl,globalTranslate, ace, Form, FilesAPI, customFilesAPI, PbxApiClient, TooltipBuilder */
+/* global globalRootUrl,globalTranslate, ace, Form, FilesAPI, customFilesAPI, PbxApiClient */
 
 
 /**
@@ -86,17 +86,6 @@ const customFile = {
      */
     $filepathField: $('#filepath-field'),
 
-    /**
-     * jQuery object for the tooltip icon in filepath field.
-     * @type {jQuery}
-     */
-    $filepathTooltipIcon: $('#filepath-field .field-info-icon'),
-
-    /**
-     * Cached allowed directories from server
-     * @type {Array|null}
-     */
-    allowedDirectories: null,
 
     /**
      * Ace editor instances
@@ -215,66 +204,6 @@ const customFile = {
             // Show mode selector for system files
             customFile.$modeDropDown.parent().parent().show();
         }
-
-        // Update tooltip visibility based on mode
-        customFile.updateTooltipVisibility();
-    },
-
-    /**
-     * Update tooltip icon visibility based on current mode
-     * Tooltip is only shown for MODE_CUSTOM files
-     */
-    updateTooltipVisibility() {
-        const mode = customFile.getCurrentMode();
-        const isCustomMode = mode === 'custom';
-
-        if (isCustomMode) {
-            customFile.$filepathTooltipIcon.show();
-        } else {
-            customFile.$filepathTooltipIcon.hide();
-        }
-    },
-
-    /**
-     * Initialize tooltips for form fields
-     * Loads allowed directories from server and sets up tooltip content
-     */
-    initializeTooltips() {
-        // Initialize jQuery object after DOM is ready
-        customFile.$filepathTooltipIcon = $('#filepath-field .field-info-icon');
-
-        // Fetch allowed directories from server
-        $.ajax({
-            url: `${globalRootUrl}custom-files/getAllowedDirectories`,
-            type: 'GET',
-            dataType: 'json',
-            success(response) {
-                if (response.success && response.data) {
-                    customFile.allowedDirectories = response.data;
-
-                    // Build tooltip configuration
-                    const tooltipConfigs = {
-                        filepath: TooltipBuilder.buildContent({
-                            header: globalTranslate.cf_filepath_tooltip_header || 'Allowed directories',
-                            description: globalTranslate.cf_filepath_tooltip_desc || 'For MODE_CUSTOM files, you can only create files in the following directories:',
-                            list: customFile.allowedDirectories.map(dir => `<code>${dir}</code>`),
-                            note: globalTranslate.cf_filepath_tooltip_autocreate || 'Subdirectories are created automatically if specified in the file path. For example: /etc/custom-configs/myapp/config.ini'
-                        })
-                    };
-
-                    // Initialize tooltips using TooltipBuilder
-                    TooltipBuilder.initialize(tooltipConfigs);
-
-                    // Update visibility based on current mode
-                    customFile.updateTooltipVisibility();
-                } else {
-                    console.error('Failed to load allowed directories');
-                }
-            },
-            error(xhr, status, error) {
-                console.error('Error loading allowed directories:', error);
-            }
-        });
     },
 
     /**
@@ -288,7 +217,6 @@ const customFile = {
         customFile.$filepathField = $('#filepath-field');
         customFile.$modeDropDown = $('#mode-dropdown');
         customFile.$modeCustomInput = $('#mode-custom-value');
-        customFile.$filepathTooltipIcon = $('#filepath-field .field-info-icon');
 
         // Enable tab navigation with history support
         customFile.$tabMenu.tab({
@@ -299,9 +227,6 @@ const customFile = {
 
         // Initialize Ace editor
         customFile.initializeAce();
-
-        // Initialize tooltips
-        customFile.initializeTooltips();
 
         // Initialize or reinitialize dropdown
         if (customFile.$modeDropDown.length > 0) {
@@ -317,7 +242,7 @@ const customFile = {
 
         if (!fileId || fileId === '') {
             // Load default values for new custom file
-            customFilesAPI.getDefault((response) => {
+            customFilesAPI.getRecord('new', (response) => {
                 if (response.result && response.data) {
                     // Store mode separately to handle it correctly
                     const mode = response.data.mode || 'none';
@@ -337,9 +262,6 @@ const customFile = {
 
                         // Set mode to 'custom' using hidden input
                         customFile.setMode('custom');
-
-                        // Show tooltip icon for MODE_CUSTOM
-                        customFile.updateTooltipVisibility();
 
                         // Show only editor tab for custom mode
                         customFile.$tabMenu.tab('change tab', 'editor');
@@ -404,9 +326,6 @@ const customFile = {
                         // Set mode to 'custom' using hidden input
                         customFile.setMode('custom');
 
-                        // Show tooltip icon for MODE_CUSTOM (even for read-only files)
-                        customFile.updateTooltipVisibility();
-
                         // Show only editor tab for custom mode
                         customFile.$tabMenu.tab('change tab', 'editor');
                         customFile.$editorTab.show();
@@ -447,10 +366,6 @@ const customFile = {
                 customFile.$tabMenu.tab('change tab','original');
                 break;
             case 'override':
-                customFile.$tabMenu.tab('change tab','editor');
-                // Load original file content into editor if it's empty
-                customFile.loadOriginalContentForOverride();
-                break;
             case 'custom':  // Custom mode behaves like override
                 customFile.$tabMenu.tab('change tab','editor');
                 break;
@@ -464,9 +379,6 @@ const customFile = {
                 customFile.$tabMenu.tab('change tab','original');
         }
         customFile.hideShowCode();
-
-        // Update tooltip visibility when mode changes
-        customFile.updateTooltipVisibility();
     },
 
     /**
@@ -614,47 +526,6 @@ const customFile = {
             aceViewer.session.setScrollTop(scrollTop);
         }
         $('.tab[data-tab="result"]').removeClass('loading');
-    },
-
-    /**
-     * Load original file content into editor when switching to override mode.
-     * Only loads if editor is empty to avoid overwriting user's work.
-     * Reuses already loaded content from viewerOriginal if available.
-     */
-    loadOriginalContentForOverride() {
-        // Only load if editor is empty
-        const currentContent = customFile.editor.getValue();
-        if (!currentContent || currentContent.trim() === '') {
-            // First, try to get content from viewerOriginal if it's already loaded
-            const originalContent = customFile.viewerOriginal.getValue();
-
-            if (originalContent && originalContent.trim() !== '') {
-                // Reuse already loaded content from viewer
-                customFile.editor.setValue(originalContent);
-                customFile.editor.clearSelection();
-                customFile.editor.navigateFileStart();
-            } else {
-                // Content not yet loaded - fetch from server
-                const filePath = customFile.$formObj.form('get value', 'filepath');
-                if (filePath) {
-                    // Show loading indicator
-                    customFile.$editorTab.addClass('loading');
-
-                    // Load original file content from server
-                    FilesAPI.getFileContent(filePath, (response) => {
-                        if (response.data.content !== undefined) {
-                            // Set original content in editor
-                            customFile.editor.setValue(response.data.content);
-                            customFile.editor.clearSelection();
-                            // Move cursor to start
-                            customFile.editor.navigateFileStart();
-                        }
-                        // Remove loading indicator
-                        customFile.$editorTab.removeClass('loading');
-                    }, true);
-                }
-            }
-        }
     },
 
     /**

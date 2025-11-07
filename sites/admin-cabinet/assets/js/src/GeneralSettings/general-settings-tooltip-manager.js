@@ -54,7 +54,6 @@ class GeneralSettingsTooltipManager {
             'PBXLanguage': this.getPBXLanguageTooltip(),
             'PBXInternalExtensionLength': this.getPBXInternalExtensionLengthTooltip(),
             'PBXManualTimeSettings': this.getManualTimeSettingsTooltip(),
-            'PBXSplitAudioThread': this.getSplitAudioThreadTooltip(),
             'PBXRecordCalls': this.getRecordCallsTooltip(),
             'PBXRecordCallsInner': this.getRecordCallsInnerTooltip(),
             'UseWebRTC': this.getUseWebRTCTooltip(),
@@ -318,42 +317,6 @@ class GeneralSettingsTooltipManager {
                 }
             ],
             note: globalTranslate.gs_ManualTimeSettingsTooltip_note
-        };
-    }
-
-    /**
-     * Get PBXSplitAudioThread tooltip configuration
-     * 
-     * @private
-     * @static
-     * @returns {Object} Tooltip configuration for PBXSplitAudioThread field
-     */
-    static getSplitAudioThreadTooltip() {
-        return {
-            header: globalTranslate.gs_SplitAudioThreadTooltip_header,
-            description: globalTranslate.gs_SplitAudioThreadTooltip_desc,
-            list: [
-                {
-                    term: globalTranslate.gs_SplitAudioThreadTooltip_mono,
-                    definition: globalTranslate.gs_SplitAudioThreadTooltip_mono_desc
-                },
-                {
-                    term: globalTranslate.gs_SplitAudioThreadTooltip_stereo,
-                    definition: globalTranslate.gs_SplitAudioThreadTooltip_stereo_desc
-                }
-            ],
-            list2: [
-                {
-                    term: globalTranslate.gs_SplitAudioThreadTooltip_benefits,
-                    definition: null
-                }
-            ],
-            list3: [
-                globalTranslate.gs_SplitAudioThreadTooltip_benefit_analysis,
-                globalTranslate.gs_SplitAudioThreadTooltip_benefit_quality,
-                globalTranslate.gs_SplitAudioThreadTooltip_benefit_processing
-            ],
-            note: globalTranslate.gs_SplitAudioThreadTooltip_note
         };
     }
 

@@ -179,7 +179,7 @@ class RebootTestRunner:
 
     Example (from host):
         runner = RebootTestRunner(
-            container="mikopbx-php83",
+            container="mikopbx_php83",
             test_file="test_47_system.py::test_system_reboot"
         )
         runner.run()
@@ -195,7 +195,7 @@ class RebootTestRunner:
         Initialize reboot test runner.
 
         Args:
-            container: Docker container name (e.g., "mikopbx-php83")
+            container: Docker container name (e.g., "mikopbx_php83")
             test_file: Path to test file or specific test
             api_url: MikoPBX API URL for health checks
         """

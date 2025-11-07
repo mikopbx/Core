@@ -153,7 +153,6 @@ class GeneralSettingsEditForm extends BaseForm
                 case PbxSettings::RESTART_EVERY_NIGHT:
                 case PbxSettings::SEND_METRICS:
                 case PbxSettings::REDIRECT_TO_HTTPS:
-                case PbxSettings::PBX_SPLIT_AUDIO_THREAD:
                 case PbxSettings::PBX_ALLOW_GUEST_CALLS:
                 case PbxSettings::DISABLE_ALL_MODULES:
                 case PbxSettings::SSH_DISABLE_SSH_PASSWORD:

@@ -695,6 +695,7 @@ Puteți obține automat o cheie nouă completând formularul de înregistrare.<b
     'st_Store6MonthsOfRecords' => '6 luni',
     'st_StoreAllPossibleRecords' => '∞',
     'st_TabStorageInfo' => 'Informații de depozitare',
+    'st_TabStorageSettings' => 'Setări de depozitare',
     'st_Used' => 'folosit',
     // THIS
     'this_is' => 'Acesta este ',

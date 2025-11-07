@@ -695,6 +695,7 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'st_Store6MonthsOfRecords' => '6 meses',
     'st_StoreAllPossibleRecords' => '∞',
     'st_TabStorageInfo' => 'Informações de armazenamento',
+    'st_TabStorageSettings' => 'Configurações de armazenamento',
     'st_Used' => 'usado',
     // THIS
     'this_is' => 'Isto é ',

@@ -49,7 +49,6 @@ return [
     'gs_PBXFeatureDigitTimeout' => 'Délai d\'expiration maximal entre les chiffres lors de la saisie d\'un numéro interne (en millisecondes)',
     'gs_PBXFeaturePickupExten' => 'Combinaison pour l\'interception d\'appels entrants',
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Délai de retour d\'appel si aucune réponse après un transfert avec consultation',
-    'gs_PBXSplitAudioThread' => 'Sauvegarder les enregistrements en mode stéréo',
     'gs_PBXAllowGuestCalls' => 'Autoriser les appels entrants de n\'importe quel serveur',
     'gs_SIPPort' => 'Port SIP pour l\'enregistrement des téléphones sur cette station',
     'gs_TLS_PORT' => 'Port SIP TLS (appels chiffrés)',
@@ -580,16 +579,4 @@ return [
     'gs_SendMetricsTooltip_warning' => 'La désactivation de cette fonctionnalité peut ralentir le processus de correction d\'erreurs et réduire la qualité du support',
     'gs_SendMetricsTooltip_note' => 'Recommandation : laissez activé pour les systèmes de production. Les données ne sont transmises qu\'avec une connexion Internet',
     
-    // PBXSplitAudioThread tooltips
-    'gs_SplitAudioThreadTooltip_header' => 'Mode d\'enregistrement de conversations',
-    'gs_SplitAudioThreadTooltip_desc' => 'Détermine la façon de placer les flux audio des interlocuteurs dans le fichier MP3 d\'enregistrement final',
-    'gs_SplitAudioThreadTooltip_mono' => 'Mode mono (désactivé)',
-    'gs_SplitAudioThreadTooltip_mono_desc' => 'Les deux interlocuteurs sont enregistrés dans un canal (mono). Les voix sont mélangées en un seul flux audio',
-    'gs_SplitAudioThreadTooltip_stereo' => 'Mode stéréo (activé)',
-    'gs_SplitAudioThreadTooltip_stereo_desc' => 'Chaque interlocuteur est enregistré dans un canal séparé : canal gauche - un abonné, canal droit - autre abonné. Après conversion en MP3, on obtient un fichier stéréo',
-    'gs_SplitAudioThreadTooltip_benefits' => 'Avantages du mode stéréo :',
-    'gs_SplitAudioThreadTooltip_benefit_analysis' => 'Possibilité d\'analyser la parole de chaque interlocuteur séparément',
-    'gs_SplitAudioThreadTooltip_benefit_quality' => 'Qualité améliorée lors de la transcription et reconnaissance vocale',
-    'gs_SplitAudioThreadTooltip_benefit_processing' => 'Commodité pour systèmes d\'analyse vocale, évaluation qualité service et formation opérateurs',
-    'gs_SplitAudioThreadTooltip_note' => 'Note : Le système convertit automatiquement les enregistrements WAV en format MP3 pour économiser l\'espace. En mode stéréo, le fichier MP3 final contient deux canaux'
 ];

@@ -49,7 +49,6 @@ return [
     'gs_PBXFeatureDigitTimeout' => 'Maksimi aikakatkaisu numeroiden välillä sisäistä numeroa valitessa (millisekunneissa)',
     'gs_PBXFeaturePickupExten' => 'Saapuvien puhelujen noutamisen yhdistelmä',
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Puhelun palautusaika, jos ei vastausta konsultatiivisen siirron jälkeen',
-    'gs_PBXSplitAudioThread' => 'Tallenna äänitteet stereotilassa',
     'gs_PBXAllowGuestCalls' => 'Salli saapuvat puhelut mistä tahansa palvelimesta',
     'gs_SIPPort' => 'SIP-portti puhelinten rekisteröintiin tähän asemaan',
     'gs_TLS_PORT' => 'SIP TLS -portti (salatut puhelut)',
@@ -580,16 +579,4 @@ return [
     'gs_SendMetricsTooltip_warning' => 'Tämän toiminnon poistaminen käytöstä voi hidastaa virheiden korjausprosessia ja heikentää tuen laatua',
     'gs_SendMetricsTooltip_note' => 'Suositus: jätä käyttöön tuotantojärjestelmille. Tietoja siirretään vain internet-yhteyden ollessa saatavilla',
     
-    // PBXSplitAudioThread tooltips
-    'gs_SplitAudioThreadTooltip_header' => 'Puhelutallennustila',
-    'gs_SplitAudioThreadTooltip_desc' => 'Määrittää tavan sijoittaa keskustelijoiden äänivirrat lopulliseen MP3-tallennustiedostoon',
-    'gs_SplitAudioThreadTooltip_mono' => 'Monotila (pois käytöstä)',
-    'gs_SplitAudioThreadTooltip_mono_desc' => 'Molemmat keskustelijat tallennetaan yhteen kanavaan (mono). Äänet sekoittuvat yhteen äänivirtaan',
-    'gs_SplitAudioThreadTooltip_stereo' => 'Stereotila (käytössä)',
-    'gs_SplitAudioThreadTooltip_stereo_desc' => 'Jokainen keskustelija tallennetaan eri kanavaan: vasen kanava - yksi tilaaja, oikea kanava - toinen tilaaja. MP3-muunnoksen jälkeen saadaan yksi stereotiedosto',
-    'gs_SplitAudioThreadTooltip_benefits' => 'Stereotilan edut:',
-    'gs_SplitAudioThreadTooltip_benefit_analysis' => 'Mahdollisuus analysoida jokaisen keskustelijan puhetta erikseen',
-    'gs_SplitAudioThreadTooltip_benefit_quality' => 'Parantunut laatu litteroinnissa ja puheentunnistuksessa',
-    'gs_SplitAudioThreadTooltip_benefit_processing' => 'Mukavuus puheanalyysijärjestelmille, palvelunlaadun arvioinnille ja operaattoreiden koulutukselle',
-    'gs_SplitAudioThreadTooltip_note' => 'Huomautus: Järjestelmä muuntaa WAV-tallenteet automaattisesti MP3-muotoon tilan säästämiseksi. Stereotilassa lopullinen MP3-tiedosto sisältää kaksi kanavaa'
 ];

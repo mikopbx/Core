@@ -303,9 +303,9 @@ class TestAllProviderTypes:
         print("="*70)
 
         # Restart container to apply all settings
-        print("Restarting mikopbx-php83 container...")
+        print("Restarting mikopbx_php83 container...")
         result = subprocess.run(
-            ['docker', 'restart', 'mikopbx-php83'],
+            ['docker', 'restart', 'mikopbx_php83'],
             capture_output=True,
             text=True
         )
@@ -329,7 +329,7 @@ class TestAllProviderTypes:
 
         # Read pjsip.conf from container
         result = subprocess.run(
-            ['docker', 'exec', 'mikopbx-php83', 'cat', '/etc/asterisk/pjsip.conf'],
+            ['docker', 'exec', 'mikopbx_php83', 'cat', '/etc/asterisk/pjsip.conf'],
             capture_output=True,
             text=True
         )
@@ -349,24 +349,12 @@ class TestAllProviderTypes:
 
         print("✓ All provider templates found in pjsip.conf")
 
-        # Validate visual separators (check which types exist)
-        has_outbound = 'OUTBOUND TRUNK:' in config
-        has_inbound = 'INBOUND TRUNK:' in config
-        has_peer = 'PEER TRUNK:' in config
+        # Validate visual separators
+        assert 'OUTBOUND TRUNK:' in config, "Missing OUTBOUND TRUNK separator"
+        assert 'INBOUND TRUNK:' in config, "Missing INBOUND TRUNK separator"
+        assert 'PEER TRUNK:' in config, "Missing PEER TRUNK separator"
 
-        # At least OUTBOUND or PEER should exist
-        assert has_outbound or has_peer, "No provider separators found in pjsip.conf"
-
-        # Report which types were found
-        if has_outbound:
-            print("✓ OUTBOUND TRUNK separator found")
-        if has_inbound:
-            print("✓ INBOUND TRUNK separator found")
-        if has_peer:
-            print("✓ PEER TRUNK separator found")
-
-        if not has_inbound:
-            print("ℹ️  INBOUND TRUNK separator not found (may be optional)")
+        print("✓ Visual separators found for all trunk types")
 
         # Validate template inheritance usage
         assert '](registration-base)' in config, "Missing template inheritance in Registration"
@@ -398,7 +386,7 @@ class TestAllProviderTypes:
 
         # Check PJSIP endpoints
         result = subprocess.run(
-            ['docker', 'exec', 'mikopbx-php83', 'asterisk', '-rx', 'pjsip show endpoints'],
+            ['docker', 'exec', 'mikopbx_php83', 'asterisk', '-rx', 'pjsip show endpoints'],
             capture_output=True,
             text=True
         )
@@ -414,7 +402,7 @@ class TestAllProviderTypes:
 
         # Check for errors in Asterisk log
         result = subprocess.run(
-            ['docker', 'exec', 'mikopbx-php83', 'tail', '-n', '100', '/var/log/asterisk/messages'],
+            ['docker', 'exec', 'mikopbx_php83', 'tail', '-n', '100', '/var/log/asterisk/messages'],
             capture_output=True,
             text=True
         )

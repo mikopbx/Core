@@ -44,7 +44,7 @@ class CDRSeederRemote:
         MIKOPBX_API_URL       - MikoPBX API URL (used to detect remote execution via API)
         MIKOPBX_LOGIN         - API login (default: admin)
         MIKOPBX_PASSWORD      - API password (default: admin)
-        MIKOPBX_CONTAINER     - Docker container name (default: mikopbx-php83)
+        MIKOPBX_CONTAINER     - Docker container name (default: mikopbx_php83)
         MIKOPBX_SSH_HOST      - SSH hostname for remote execution (forces SSH mode)
         MIKOPBX_SSH_USER      - SSH username (default: root)
         MIKOPBX_EXECUTION_MODE - Force execution mode: docker|api|ssh|local
@@ -54,7 +54,7 @@ class CDRSeederRemote:
 
     def __init__(self):
         # Execution mode detection
-        self.container_name = os.getenv('MIKOPBX_CONTAINER', 'mikopbx-php83')
+        self.container_name = os.getenv('MIKOPBX_CONTAINER', 'mikopbx_php83')
         self.ssh_host = os.getenv('MIKOPBX_SSH_HOST')
         self.ssh_user = os.getenv('MIKOPBX_SSH_USER', 'root')
         self.execution_mode = os.getenv('MIKOPBX_EXECUTION_MODE', self._detect_mode())
@@ -66,14 +66,15 @@ class CDRSeederRemote:
 
         # Script path on station
         # Path priorities:
-        # 1. Docker/VM/bare metal: /offload/rootfs/usr/www/tests/api/scripts/seed_cdr_database.sh (universal MikoPBX path)
-        # 2. Remote hosts via SSH/API: /storage/usbdisk1/mikopbx/python-tests/scripts/seed_cdr_database.sh (persistent storage)
+        # 1. Docker containers: /usr/www/tests/api/scripts/seed_cdr_database.sh (synced from host)
+        # 2. Remote/VM hosts: /storage/usbdisk1/mikopbx/python-tests/scripts/seed_cdr_database.sh
+        # 3. REST API execution: /storage/usbdisk1/mikopbx/python-tests/scripts/seed_cdr_database.sh
         if self.execution_mode in ['ssh', 'api']:
             # Remote execution via SSH or REST API - use persistent storage path
             self.script_path = '/storage/usbdisk1/mikopbx/python-tests/scripts/seed_cdr_database.sh'
         else:
-            # Docker/VM/local execution - use universal MikoPBX test directory path
-            self.script_path = '/offload/rootfs/usr/www/tests/api/scripts/seed_cdr_database.sh'
+            # Docker/local execution - use synced test directory
+            self.script_path = '/usr/www/tests/api/scripts/seed_cdr_database.sh'
 
     def _detect_mode(self) -> str:
         """Auto-detect execution mode"""
@@ -367,69 +368,6 @@ export FIXTURES_DIR=/storage/usbdisk1/mikopbx/python-tests/fixtures
             return []
         except Exception:
             return []
-
-    def verify_recording_files_exist(self) -> tuple[bool, int, str]:
-        """
-        Verify that recording files exist on disk (MP3 or WebM format)
-
-        Checks for test recording files in /storage/usbdisk1/mikopbx/astspool/monitor/
-        Expected files: test_recording_*.mp3 OR test_recording_*.webm (15 files for CDR IDs with recordings)
-
-        Supports both legacy MP3 and new WebM formats for forward compatibility.
-
-        Returns:
-            tuple: (all_exist: bool, found_count: int, format_found: str)
-                - all_exist: True if all 15 expected recording files exist
-                - found_count: Number of recording files found
-                - format_found: 'mp3', 'webm', 'mixed', or 'none'
-        """
-        try:
-            # Check for both MP3 and WebM files
-            # Test recordings use pattern: mikopbx-*.{mp3,webm}
-            # Files are stored in subdirectories by date: YYYY/MM/DD/HH/
-            command = '''
-mp3_count=$(find /storage/usbdisk1/mikopbx/astspool/monitor -type f -name "mikopbx-*.mp3" 2>/dev/null | wc -l)
-webm_count=$(find /storage/usbdisk1/mikopbx/astspool/monitor -type f -name "mikopbx-*.webm" 2>/dev/null | wc -l)
-total=$((mp3_count + webm_count))
-echo "$total|$mp3_count|$webm_count"
-'''.strip()
-
-            result = self._execute_command(command, timeout=10)
-
-            if result.returncode == 0:
-                output = result.stdout.strip()
-                total_count, mp3_count, webm_count = map(int, output.split('|'))
-
-                # We expect at least 15 recording files (CDR records with recordings)
-                # Note: This counts ALL recording files, not just test data
-                # This is acceptable since we're checking if recording functionality works
-                expected_count = 15
-
-                # Determine format
-                if mp3_count > 0 and webm_count > 0:
-                    format_found = 'mixed'
-                elif mp3_count > 0:
-                    format_found = 'mp3'
-                elif webm_count > 0:
-                    format_found = 'webm'
-                else:
-                    format_found = 'none'
-
-                return (total_count >= expected_count, total_count, format_found)
-            return (False, 0, 'none')
-        except Exception:
-            return (False, 0, 'none')
-
-    # Backward compatibility alias
-    def verify_mp3_files_exist(self) -> tuple[bool, int]:
-        """
-        Legacy method for backward compatibility
-
-        Returns:
-            tuple: (all_exist: bool, found_count: int)
-        """
-        all_exist, found_count, _ = self.verify_recording_files_exist()
-        return (all_exist, found_count)
 
 
 # For backward compatibility with existing code

@@ -77,3 +77,15 @@
     opacity: 0.5;
     pointer-events: none;
 }
+
+/* Download format dropdown - compact style */
+.download-format-dropdown.ui.dropdown .menu > .item {
+    min-height: 1.8rem !important;
+    padding: 0.5rem 0.8rem !important;
+    font-size: 0.92857143rem;
+    line-height: 1.2;
+}
+
+.download-format-dropdown.ui.dropdown .menu {
+    min-width: 140px;
+}

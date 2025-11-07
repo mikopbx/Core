@@ -103,10 +103,14 @@ class S3Client
         }
 
         try {
+            // Determine Content-Type based on file extension
+            $contentType = $this->getContentType($localPath);
+
             $this->client->putObject([
                 'Bucket' => $this->bucket,
                 'Key' => $s3Key,
                 'SourceFile' => $localPath,
+                'ContentType' => $contentType,
                 'StorageClass' => 'STANDARD', // STANDARD for MinIO compatibility (STANDARD_IA not supported)
             ]);
 
@@ -249,5 +253,24 @@ class S3Client
         } catch (AwsException $e) {
             return null;
         }
+    }
+
+    /**
+     * Determine Content-Type based on file extension
+     *
+     * @param string $filePath File path
+     * @return string MIME type
+     */
+    private function getContentType(string $filePath): string
+    {
+        $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
+
+        return match ($extension) {
+            'webm' => 'audio/webm',
+            'mp3' => 'audio/mpeg',
+            'wav' => 'audio/wav',
+            'ogg' => 'audio/ogg',
+            default => 'application/octet-stream',
+        };
     }
 }

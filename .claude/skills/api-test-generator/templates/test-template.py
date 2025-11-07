@@ -16,7 +16,7 @@ import requests
 from typing import Dict, Any
 
 # Base configuration
-BASE_URL = "https://mikopbx-php83.localhost:8445"
+BASE_URL = "https://mikopbx_php83.localhost:8445"
 API_PATH = "/pbxcore/api/v3/{resource-path}"
 
 

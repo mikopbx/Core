@@ -130,9 +130,7 @@ python3 -m pytest -v test_15_extensions_crud.py
 ### Test Environment Variables
 ```bash
 # MikoPBX connection
-# API URL is auto-detected from current worktree via .claude/scripts/get-container-api-url.sh
-# For manual override:
-export MIKOPBX_API_URL=http://192.168.X.X:8081/pbxcore/api/v3
+export MIKOPBX_API_URL=http://mikopbx_php83.localhost:8081/pbxcore/api/v3
 export MIKOPBX_LOGIN=admin
 export MIKOPBX_PASSWORD=123456789MikoPBX#1
 
@@ -143,17 +141,10 @@ export ENABLE_SYSTEM_RESET=0
 export ENABLE_CDR_SEED=1
 ```
 
-**Note**: Tests automatically detect the correct container based on current git worktree. No manual URL configuration needed in most cases.
-
 ## Log Analysis Commands
 
 ### Find Container
 ```bash
-# Auto-detect container for current worktree
-CONTAINER=$(./.claude/scripts/get-container-name.sh)
-CONTAINER_ID=$(docker ps --filter "name=${CONTAINER}" --format "{{.ID}}")
-
-# Alternative: manual detection (first mikopbx container)
 CONTAINER_ID=$(docker ps | grep mikopbx | awk '{print $1}' | head -1)
 ```
 

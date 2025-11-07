@@ -191,8 +191,6 @@ return [
     'gs_PBXInternalExtensionLengthDescription' => 'Số chữ số cho số máy lẻ nội bộ trong hệ thống.',
     'gs_PBXRecordCalls' => 'Ghi âm cuộc gọi',
     'gs_PBXRecordCallsDescription' => 'Bật ghi âm tự động tất cả cuộc gọi đến và đi.',
-    'gs_PBXSplitAudioThread' => 'Luồng âm thanh riêng biệt',
-    'gs_PBXSplitAudioThreadDescription' => 'Sử dụng các luồng riêng biệt để xử lý âm thanh để có hiệu suất tốt hơn trên hệ thống đa lõi.',
     'gs_PBXFirewallEnabled' => 'Bật tường lửa PBX',
     'gs_PBXFirewallEnabledDescription' => 'Bật tường lửa tích hợp để bảo vệ hệ thống PBX khỏi truy cập trái phép.',
     'gs_PBXFail2BanEnabled' => 'Bật Fail2Ban',

@@ -26,7 +26,7 @@ echo ""
 
 # Step 1: Fetch OpenAPI spec
 echo "📥 Fetching OpenAPI specification..."
-docker exec $CONTAINER_ID curl -s http://mikopbx-php83.localhost:8081/pbxcore/api/v3/openapi:getSpecification > /tmp/openapi.json
+docker exec $CONTAINER_ID curl -s http://mikopbx_php83.localhost:8081/pbxcore/api/v3/openapi:getSpecification > /tmp/openapi.json
 echo "✅ Spec downloaded ($(du -h /tmp/openapi.json | cut -f1))"
 echo ""
 
@@ -306,7 +306,7 @@ if __name__ == '__main__':
     with open('tests/api/test_extensions_openapi.py', 'w') as f:
         f.write('import requests\n')
         f.write('import pytest\n\n')
-        f.write('BASE_URL = "https://mikopbx-php83.localhost:8445"\n\n')
+        f.write('BASE_URL = "https://mikopbx_php83.localhost:8445"\n\n')
         f.write(test_code)
 
     print("✅ Test generated: tests/api/test_extensions_openapi.py")
@@ -318,7 +318,7 @@ if __name__ == '__main__':
 import requests
 import pytest
 
-BASE_URL = "https://mikopbx-php83.localhost:8445"
+BASE_URL = "https://mikopbx_php83.localhost:8445"
 
 def test_create_extension_from_openapi(headers):
     """
@@ -604,7 +604,7 @@ CACHE_TTL=3600  # 1 hour
 fetch_openapi_spec() {
     echo "Fetching fresh OpenAPI spec..." >&2
     CONTAINER_ID=$(docker ps -q -f name=mikopbx)
-    docker exec $CONTAINER_ID curl -s http://mikopbx-php83.localhost:8081/pbxcore/api/v3/openapi:getSpecification > "$SPEC_FILE"
+    docker exec $CONTAINER_ID curl -s http://mikopbx_php83.localhost:8081/pbxcore/api/v3/openapi:getSpecification > "$SPEC_FILE"
 }
 
 # Check cache

@@ -242,6 +242,14 @@ trait PbxSettingsConstantsTrait
     public const string PBX_RECORD_S3_LOCAL_DAYS = 'PBXRecordS3LocalDays';
     /** @FieldType('boolean') */
     public const string PBX_SPLIT_AUDIO_THREAD = 'PBXSplitAudioThread';
+    /**
+     * Delete source WAV files after conversion to WebM/Opus format
+     * Default: true (delete to save disk space)
+     * Set to false to keep original WAV files for archival purposes
+     *
+     * @FieldType('boolean')
+     */
+    public const string PBX_RECORD_DELETE_SOURCE_AFTER_CONVERT = 'PBXRecordDeleteSourceAfterConvert';
     /** @FieldType('string') */
     public const string PBX_RECORD_ANNOUNCEMENT_IN = 'PBXRecordAnnouncementIn';
     /** @FieldType('string') */

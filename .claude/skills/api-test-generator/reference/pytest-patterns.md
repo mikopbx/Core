@@ -65,7 +65,7 @@ Use for expensive operations that can be shared across all tests:
 @pytest.fixture(scope="session")
 def api_base_url():
     """Base URL for API - session scoped"""
-    return "https://mikopbx-php83.localhost:8445"
+    return "https://mikopbx_php83.localhost:8445"
 
 @pytest.fixture(scope="session")
 def admin_credentials():
@@ -520,7 +520,7 @@ def test_create_extension_with_invalid_number(headers):
 # conftest.py
 @pytest.fixture(scope="session")
 def api_base_url():
-    return "https://mikopbx-php83.localhost:8445"
+    return "https://mikopbx_php83.localhost:8445"
 
 @pytest.fixture
 def headers(auth_token):

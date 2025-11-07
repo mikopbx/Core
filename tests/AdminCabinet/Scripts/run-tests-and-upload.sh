@@ -34,7 +34,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-CONTAINER_NAME="${CONTAINER_NAME:-mikopbx-php83}"
+CONTAINER_NAME="${CONTAINER_NAME:-mikopbx_php83}"
 TESTSUITE="${1:-}"
 PHPUNIT_CONFIG="/offload/rootfs/usr/www/tests/AdminCabinet/phpunit.xml"
 JUNIT_REPORT="/offload/rootfs/usr/www/tests/AdminCabinet/reports/junit.xml"
@@ -164,7 +164,7 @@ Options:
                     If not specified, all test suites will be run.
 
 Environment Variables:
-  CONTAINER_NAME              Docker container name (default: mikopbx-php83)
+  CONTAINER_NAME              Docker container name (default: mikopbx_php83)
   BROWSERSTACK_USERNAME       BrowserStack username (required for upload)
   BROWSERSTACK_ACCESS_KEY     BrowserStack access key (required for upload)
   BROWSERSTACK_PROJECT_NAME   Project name (default: MikoPBX AdminCabinet Tests)

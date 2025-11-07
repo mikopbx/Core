@@ -695,6 +695,7 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'st_Store6MonthsOfRecords' => '6 ay',
     'st_StoreAllPossibleRecords' => '∞',
     'st_TabStorageInfo' => 'Yaddaş məlumatları',
+    'st_TabStorageSettings' => 'Saxlama parametrləri',
     'st_Used' => 'məşğul',
     // THIS
     'this_is' => 'Budur ',

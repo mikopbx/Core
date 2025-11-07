@@ -660,6 +660,7 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'st_Store6MonthsOfRecords' => '6 månader',
     'st_StoreAllPossibleRecords' => '∞',
     'st_TabStorageInfo' => 'Lagringsinformation',
+    'st_TabStorageSettings' => 'Lagringsinställningar',
     'st_Used' => 'använt',
     'stopped' => 'Inaktiverad',
     'this cannot be undone!' => 'operationen är oåterkallelig!',

@@ -695,6 +695,7 @@ Nowy klucz możesz otrzymać automatycznie wypełniając formularz rejestracyjny
     'st_Store6MonthsOfRecords' => '6 miesięcy',
     'st_StoreAllPossibleRecords' => '∞',
     'st_TabStorageInfo' => 'Informacje o pamięci',
+    'st_TabStorageSettings' => 'Ustawienia pamięci',
     'st_Used' => 'używane',
     // THIS
     'this_is' => 'To jest ',
