@@ -24,6 +24,7 @@ namespace MikoPBX\PBXCoreREST\Lib\Providers;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\Iax;
 use MikoPBX\Common\Providers\RedisClientProvider;
+use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
@@ -109,6 +110,21 @@ class GetHistoryAction extends Injectable
                         $eventData['datetime'] = date('Y-m-d H:i:s', $eventData['timestamp']);
                         $eventData['timeAgo'] = self::getTimeAgo($eventData['timestamp']);
                     }
+
+                    // Translate event name (replace original value)
+                    if (isset($eventData['event'])) {
+                        $eventData['event'] = TranslationProvider::translate($eventData['event']);
+                    }
+
+                    // Translate details if it's a state change message (replace original value)
+                    // Keep state/previousState in English for programmatic use
+                    if (isset($eventData['details']) && isset($eventData['state']) && isset($eventData['previousState'])) {
+                        $eventData['details'] = TranslationProvider::translate('pr_StateChangedFromTo', [
+                            'previousState' => self::translateState($eventData['previousState']),
+                            'newState' => self::translateState($eventData['state'])
+                        ]);
+                    }
+
                     $history[] = $eventData;
                 }
             }
@@ -246,7 +262,7 @@ class GetHistoryAction extends Injectable
     private static function getTimeAgo(int $timestamp): string
     {
         $diff = time() - $timestamp;
-        
+
         if ($diff < 60) {
             return $diff . ' seconds ago';
         } elseif ($diff < 3600) {
@@ -259,5 +275,34 @@ class GetHistoryAction extends Injectable
             $days = floor($diff / 86400);
             return $days . ' day' . ($days > 1 ? 's' : '') . ' ago';
         }
+    }
+
+    /**
+     * Translate state identifier to localized text
+     *
+     * @param string $state State identifier (e.g., "REGISTERED", "UNREGISTERED")
+     * @return string Translated state text
+     */
+    private static function translateState(string $state): string
+    {
+        // Normalize state to lowercase for mapping
+        $normalizedState = strtolower($state);
+
+        // Map states to translation keys (same as in AbstractProviderStatusAction)
+        $stateMap = [
+            'registered' => 'pr_ProviderStateRegistered',
+            'unregistered' => 'pr_ProviderStateUnregistered',
+            'unreachable' => 'pr_ProviderStateUnreachable',
+            'rejected' => 'pr_ProviderStateRejected',
+            'off' => 'pr_ProviderStateOff',
+            'lagged' => 'pr_ProviderStateLagged',
+            'ok' => 'pr_ProviderStateOk',
+            'unknown' => 'pr_ProviderStateUnknown',
+            'unmonitored' => 'pr_ProviderStateUnmonitored'
+        ];
+
+        $translationKey = $stateMap[$normalizedState] ?? 'pr_ProviderStateUnknown';
+
+        return TranslationProvider::translate($translationKey);
     }
 }

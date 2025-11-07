@@ -111,9 +111,13 @@ abstract class AbstractProviderStatusAction extends Injectable
                                 $rtt = (int)round($contact['RoundtripUsec'] / 1000); // Convert microseconds to milliseconds
                             }
 
+                            // Extract contact URI (e.g., sip:testProvider@192.168.107.0:50213)
+                            $contactUri = isset($aorParts[1]) ? $aorParts[1] : null;
+
                             $contactsMap[$providerId] = [
                                 'rtt' => $rtt,
-                                'status' => $contact['Status'] ?? 'Unknown'
+                                'status' => $contact['Status'] ?? 'Unknown',
+                                'uri' => $contactUri
                             ];
                         }
                     }
@@ -182,11 +186,21 @@ abstract class AbstractProviderStatusAction extends Injectable
                         $state = 'REGISTERED';  // Provider successfully registered to us
                         $rtt = $contactsMap[$contactKey]['rtt'];
                         $additionalDetails['contactStatus'] = $contactsMap[$contactKey]['status'] ?? '';
-                        $additionalDetails['registrationDetails'] = "Provider registered to this PBX";
+
+                        // Extract client's registration address from contact URI
+                        // Format: sip:testProvider@192.168.107.0:50213
+                        $contactUri = $contactsMap[$contactKey]['uri'] ?? '';
+                        if ($contactUri && preg_match('/sip:[^@]+@([^:]+):?(\d+)?/', $contactUri, $uriMatch)) {
+                            $clientIp = $uriMatch[1];
+                            $clientPort = $uriMatch[2] ?? '5060'; // Default SIP port if not specified
+                            $additionalDetails['registrationDetails'] = TranslationProvider::translate('pr_RegisteredFrom') . " {$clientIp}:{$clientPort}";
+                        } else {
+                            $additionalDetails['registrationDetails'] = TranslationProvider::translate('pr_ProviderRegistered');
+                        }
                     } else {
                         // No contact means provider hasn't registered yet
                         $state = 'UNREGISTERED';
-                        $additionalDetails['registrationDetails'] = "Waiting for provider to register";
+                        $additionalDetails['registrationDetails'] = TranslationProvider::translate('pr_WaitingForRegistration');
                     }
                 }
                 // For OUTBOUND registration - check our registration status with provider's server
@@ -205,7 +219,7 @@ abstract class AbstractProviderStatusAction extends Injectable
                             $additionalDetails['rejectionReason'] = $registration['reason'];
                         }
                         if ($state === 'registered' && isset($registration['address'])) {
-                            $additionalDetails['registrationDetails'] = "Registered to {$registration['address']}";
+                            $additionalDetails['registrationDetails'] = TranslationProvider::translate('pr_RegisteredTo') . " {$registration['address']}";
                         }
                     }
 
@@ -303,10 +317,11 @@ abstract class AbstractProviderStatusAction extends Injectable
             // Look for any SIP provider contacts
             // Format: Contact:  SIP-TRUNK-A0441C96/sip:202@192.168.117.5:5060  28334ac1c0 Avail        12.978
             //         Contact:  SIP-1683372722/sip:...  264d4e5870 Unavail         nan
-            //         Contact:  testProvider/sip:testProvider@...  ce510c580e Avail         1.654
-            if (strpos($line, 'Contact:') !== false && preg_match('/Contact:\s+(\S+)\/sip:/', $line, $aorMatch)) {
+            //         Contact:  testProvider/sip:testProvider@192.168.107.0:50213  ce510c580e Avail         1.654
+            if (strpos($line, 'Contact:') !== false && preg_match('/Contact:\s+(\S+)\/(sip:[^\s]+)/', $line, $aorMatch)) {
                 // Extract AOR name (before the slash) - can be SIP-TRUNK-xxx, SIP-xxx, or username
                 $providerId = $aorMatch[1];
+                $contactUri = $aorMatch[2]; // Extract full sip: URI
 
                 // Extract status and RTT
                 if (preg_match('/([a-f0-9]{10})\s+(\w+)\s+([\d\.]+|nan)\s*$/', $line, $matches)) {
@@ -321,7 +336,8 @@ abstract class AbstractProviderStatusAction extends Injectable
 
                     $contactsMap[$providerId] = [
                         'rtt' => $rtt,
-                        'status' => $status
+                        'status' => $status,
+                        'uri' => $contactUri
                     ];
                 }
             }
@@ -783,7 +799,34 @@ abstract class AbstractProviderStatusAction extends Injectable
         // UNKNOWN and any other undefined states should be grey (neutral)
         return 'grey';
     }
-    
+
+    /**
+     * Get translated state text
+     *
+     * @param string $state State identifier (e.g., "REGISTERED", "UNREGISTERED")
+     * @return string Translated state text
+     */
+    protected static function getTranslatedState(string $state): string
+    {
+        $normalizedState = strtolower($state);
+
+        $stateMap = [
+            'registered' => 'pr_ProviderStateRegistered',
+            'unregistered' => 'pr_ProviderStateUnregistered',
+            'unreachable' => 'pr_ProviderStateUnreachable',
+            'rejected' => 'pr_ProviderStateRejected',
+            'off' => 'pr_ProviderStateOff',
+            'lagged' => 'pr_ProviderStateLagged',
+            'ok' => 'pr_ProviderStateOk',
+            'unknown' => 'pr_ProviderStateUnknown',
+            'unmonitored' => 'pr_ProviderStateUnmonitored'
+        ];
+
+        $translationKey = $stateMap[$normalizedState] ?? 'pr_ProviderStateUnknown';
+
+        return TranslationProvider::translate($translationKey);
+    }
+
     protected static function formatDuration(int $seconds): string
     {
         if ($seconds < 60) {
@@ -982,7 +1025,21 @@ abstract class AbstractProviderStatusAction extends Injectable
         $recentEvents = $redis->lrange($historyKey, 0, 9);
         if ($recentEvents) {
             $statusData['recentEvents'] = array_map(function($event) {
-                return json_decode($event, true);
+                $eventData = json_decode($event, true);
+                if ($eventData) {
+                    // Translate event name
+                    if (isset($eventData['event'])) {
+                        $eventData['event'] = TranslationProvider::translate($eventData['event']);
+                    }
+                    // Translate details (keep state/previousState in English)
+                    if (isset($eventData['details']) && isset($eventData['state']) && isset($eventData['previousState'])) {
+                        $eventData['details'] = TranslationProvider::translate('pr_StateChangedFromTo', [
+                            'previousState' => self::getTranslatedState($eventData['previousState']),
+                            'newState' => self::getTranslatedState($eventData['state'])
+                        ]);
+                    }
+                }
+                return $eventData;
             }, $recentEvents);
         }
         

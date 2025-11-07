@@ -138,7 +138,6 @@ abstract class AbstractGetForSelectAction
         return [
             'value' => $value,
             'text' => $text,
-            'name' => $text,
             'id' => $value,
             'icon' => '',
             'disabled' => false
@@ -157,7 +156,6 @@ abstract class AbstractGetForSelectAction
         return [
             'value' => $value,
             'text' => $text,
-            'name' => $text,
             'id' => $value,
             'icon' => '',
             'disabled' => false
@@ -197,7 +195,6 @@ abstract class AbstractGetForSelectAction
         $option = [
             'value' => $value,
             'text' => $displayText,
-            'name' => $displayText,
             'id' => $model->id ?? $value
         ];
 

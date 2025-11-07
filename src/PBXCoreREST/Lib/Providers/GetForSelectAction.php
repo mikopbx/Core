@@ -96,20 +96,12 @@ class GetForSelectAction extends AbstractGetForSelectAction
                 $isDisabled = $provider->Iax->disabled === '1';
             }
 
+            // getRepresent() already adds "(выключен)" text for disabled providers
             $represent = $provider->getRepresent();
-
-            // Add status indicator to representation if disabled
-            if ($isDisabled) {
-                $di = \Phalcon\Di\Di::getDefault();
-                $translation = $di->get(TranslationProvider::SERVICE_NAME);
-                $disabledText = $translation->_('pr_Disabled') ?: 'Disabled';
-                $represent .= ' <span class="ui red text">(' . $disabledText . ')</span>';
-            }
 
             return [
                 'value' => $provider->uniqid,
                 'text' => $represent,
-                'name' => $represent,
                 'id' => $provider->uniqid,
                 'type' => $provider->type,
                 'disabled' => $isDisabled
