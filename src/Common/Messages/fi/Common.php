@@ -695,7 +695,6 @@ Voit saada uuden avaimen automaattisesti täyttämällä rekisteröintilomakkeen
     'st_Store6MonthsOfRecords' => '6 kuukautta',
     'st_StoreAllPossibleRecords' => '∞',
     'st_TabStorageInfo' => 'Tallennustilan tiedot',
-    'st_TabStorageSettings' => 'Tallennusasetukset',
     'st_Used' => 'käytössä',
     // THIS
     'this_is' => 'Tämä on ',

@@ -698,7 +698,6 @@ Nový klíč můžete získat automaticky vyplněním registračního formulář
     'st_Store6MonthsOfRecords' => '6 měsíců',
     'st_StoreAllPossibleRecords' => '∞',
     'st_TabStorageInfo' => 'Informace o úložišti',
-    'st_TabStorageSettings' => 'Nastavení úložiště',
     'st_Used' => 'použito',
     // THIS
     'this_is' => 'Tohle je ',

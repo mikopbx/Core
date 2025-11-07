@@ -695,7 +695,6 @@ Puoi ottenere una nuova chiave automaticamente compilando il modulo di registraz
     'st_Store6MonthsOfRecords' => '6 mesi',
     'st_StoreAllPossibleRecords' => '∞',
     'st_TabStorageInfo' => 'Informazioni archiviazione',
-    'st_TabStorageSettings' => 'Impostazioni archiviazione',
     'st_Used' => 'utilizzato',
     // THIS
     'this_is' => 'Questo è ',

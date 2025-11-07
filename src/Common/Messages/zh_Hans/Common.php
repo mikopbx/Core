@@ -695,7 +695,6 @@ return [
     'st_Store6MonthsOfRecords' => '6个月',
     'st_StoreAllPossibleRecords' => '∞',
     'st_TabStorageInfo' => '存储信息',
-    'st_TabStorageSettings' => '存储设置',
     'st_Used' => '已使用',
     // THIS
     'this_is' => '这是 ',
