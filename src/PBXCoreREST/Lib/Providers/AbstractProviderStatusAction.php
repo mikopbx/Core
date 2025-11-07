@@ -24,6 +24,7 @@ namespace MikoPBX\PBXCoreREST\Lib\Providers;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Common\Models\Iax;
 use MikoPBX\Common\Providers\RedisClientProvider;
+use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 use Phalcon\Di\Di;
@@ -712,47 +713,51 @@ abstract class AbstractProviderStatusAction extends Injectable
 
         $stateMap = [
             'registered' => [
-                'text' => 'pr_ProviderStateRegistered',
-                'description' => 'pr_ProviderStateRegisteredDesc'
+                'textKey' => 'pr_ProviderStateRegistered',
+                'descriptionKey' => 'pr_ProviderStateRegisteredDesc'
             ],
             'ok' => [
-                'text' => 'pr_ProviderStateOk',
-                'description' => 'pr_ProviderStateOkDesc'
+                'textKey' => 'pr_ProviderStateOk',
+                'descriptionKey' => 'pr_ProviderStateOkDesc'
             ],
             'unregistered' => [
-                'text' => 'pr_ProviderStateUnregistered',
-                'description' => 'pr_ProviderStateUnregisteredDesc'
+                'textKey' => 'pr_ProviderStateUnregistered',
+                'descriptionKey' => 'pr_ProviderStateUnregisteredDesc'
             ],
             'unreachable' => [
-                'text' => 'pr_ProviderStateUnreachable',
-                'description' => 'pr_ProviderStateUnreachableDesc'
+                'textKey' => 'pr_ProviderStateUnreachable',
+                'descriptionKey' => 'pr_ProviderStateUnreachableDesc'
             ],
             'lagged' => [
-                'text' => 'pr_ProviderStateLagged',
-                'description' => 'pr_ProviderStateLaggedDesc'
+                'textKey' => 'pr_ProviderStateLagged',
+                'descriptionKey' => 'pr_ProviderStateLaggedDesc'
             ],
             'rejected' => [
-                'text' => 'pr_ProviderStateRejected',
-                'description' => 'pr_ProviderStateRejectedDesc'
+                'textKey' => 'pr_ProviderStateRejected',
+                'descriptionKey' => 'pr_ProviderStateRejectedDesc'
             ],
             'off' => [
-                'text' => 'pr_ProviderStateOff',
-                'description' => 'pr_ProviderStateOffDesc'
+                'textKey' => 'pr_ProviderStateOff',
+                'descriptionKey' => 'pr_ProviderStateOffDesc'
             ],
             'unmonitored' => [
-                'text' => 'pr_ProviderStateUnmonitored',
-                'description' => 'pr_ProviderStateUnmonitoredDesc'
+                'textKey' => 'pr_ProviderStateUnmonitored',
+                'descriptionKey' => 'pr_ProviderStateUnmonitoredDesc'
             ],
             'unknown' => [
-                'text' => 'pr_ProviderStateUnknown',
-                'description' => 'pr_ProviderStateUnknownDesc'
+                'textKey' => 'pr_ProviderStateUnknown',
+                'descriptionKey' => 'pr_ProviderStateUnknownDesc'
             ]
         ];
 
-        $props = $stateMap[$normalizedState] ?? $stateMap['unknown'];
-        $props['color'] = $color;
+        $stateConfig = $stateMap[$normalizedState] ?? $stateMap['unknown'];
 
-        return $props;
+        // Return translated texts instead of keys
+        return [
+            'text' => TranslationProvider::translate($stateConfig['textKey']),
+            'description' => TranslationProvider::translate($stateConfig['descriptionKey']),
+            'color' => $color
+        ];
     }
     
     protected static function getStateColor(string $state, ?int $rtt): string
