@@ -1656,10 +1656,14 @@ class SIPConf extends AsteriskConfigClass
             'tone_zone'       => $toneZone,
         ];
 
-        // Determine AOR name (same logic as in generateProviderAor)
-        $aorName = ($provider['registration_type'] === Sip::REG_TYPE_INBOUND)
-            ? $provider['username']
-            : $provider['uniqid'];
+        // Determine AOR name and endpoint name (for inbound use username, for others use uniqid)
+        if ($provider['registration_type'] === Sip::REG_TYPE_INBOUND) {
+            $aorName = $provider['username'];
+            $endpointName = $provider['username'];
+        } else {
+            $aorName = $provider['uniqid'];
+            $endpointName = $provider['uniqid'];
+        }
 
         // Unique parameters not in template
         $uniqueParams = [
@@ -1678,6 +1682,9 @@ class SIPConf extends AsteriskConfigClass
             $uniqueParams['outbound_auth'] = "{$provider['uniqid']}-AUTH";
         } elseif ($provider['registration_type'] === Sip::REG_TYPE_INBOUND) {
             $uniqueParams['auth'] = "{$provider['uniqid']}-AUTH";
+            // For inbound providers, allow identification by username without requiring IP match
+            // This enables authentication via username/password from any IP address
+            $uniqueParams['identify_by'] = 'username,auth_username';
         }
 
         // Determine transport template
@@ -1696,7 +1703,7 @@ class SIPConf extends AsteriskConfigClass
         // Add configuration section header (no description - already in visual separator)
         if ($needsCustomization) {
             // Use template with explicit overrides
-            $conf .= "[{$provider['uniqid']}]($transportTemplate)\n";
+            $conf .= "[$endpointName]($transportTemplate)\n";
             $conf .= "set_var = providerID={$provider['uniqid']}\n";
 
             // Add unique parameters
@@ -1756,7 +1763,7 @@ class SIPConf extends AsteriskConfigClass
             }
         } else {
             // Use pure template inheritance with unique parameters only
-            $conf .= "[{$provider['uniqid']}]($transportTemplate)\n";
+            $conf .= "[$endpointName]($transportTemplate)\n";
             $conf .= "set_var = providerID={$provider['uniqid']}\n";
             foreach ($uniqueParams as $key => $value) {
                 if ($value !== null) {

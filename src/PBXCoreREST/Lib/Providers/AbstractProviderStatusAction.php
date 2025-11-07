@@ -173,11 +173,14 @@ abstract class AbstractProviderStatusAction extends Injectable
 
                 // For INBOUND registration - check if provider has registered to us via AOR contacts
                 if ($registrationType === 'inbound') {
+                    // For inbound providers, contact key is username (not uniqid)
+                    $contactKey = $provider->username ?: $provider->uniqid;
+
                     // Check if provider has an active contact (inbound registration)
-                    if (isset($contactsMap[$provider->uniqid])) {
+                    if (isset($contactsMap[$contactKey])) {
                         $state = 'REGISTERED';  // Provider successfully registered to us
-                        $rtt = $contactsMap[$provider->uniqid]['rtt'];
-                        $additionalDetails['contactStatus'] = $contactsMap[$provider->uniqid]['status'] ?? '';
+                        $rtt = $contactsMap[$contactKey]['rtt'];
+                        $additionalDetails['contactStatus'] = $contactsMap[$contactKey]['status'] ?? '';
                         $additionalDetails['registrationDetails'] = "Provider registered to this PBX";
                     } else {
                         // No contact means provider hasn't registered yet
