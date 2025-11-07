@@ -7,12 +7,17 @@
 #
 # Usage:
 #   TOKEN=$(bash get-auth-token.sh)
-#   curl -H "Authorization: Bearer $TOKEN" http://mikopbx_php83.localhost:8081/pbxcore/api/v3/extensions
+#   curl -H "Authorization: Bearer $TOKEN" http://192.168.X.X:8081/pbxcore/api/v3/extensions
 #
 # Environment Variables:
-#   MIKOPBX_API_URL  - API base URL (default: http://mikopbx_php83.localhost:8081/pbxcore/api/v3)
+#   MIKOPBX_API_URL  - API base URL (default: auto-detected based on worktree)
 #   MIKOPBX_LOGIN    - Username (default: admin)
 #   MIKOPBX_PASSWORD - Password (default: 123456789MikoPBX#1)
+#
+# Auto-detection:
+#   - Inside container: uses localhost (http://127.0.0.1:8081/pbxcore/api/v3)
+#   - On host: detects container based on current worktree and uses container IP
+#   Note: Nginx port is the same inside and outside container (8081)
 #
 # Exit Codes:
 #   0 - Success (token printed to stdout)
@@ -27,8 +32,25 @@ set -euo pipefail
 # Configuration
 # ============================================================================
 
+# Detect if we're running inside container or on host
+if [ -f "/.dockerenv" ] || grep -q 'docker\|lxc' /proc/1/cgroup 2>/dev/null; then
+    # Inside container - use localhost
+    DEFAULT_API_URL="http://127.0.0.1:8081/pbxcore/api/v3"
+else
+    # On host - try to auto-detect from worktree
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    CLAUDE_DIR="$(dirname "$(dirname "$(dirname "$SCRIPT_DIR")")")"
+    API_URL_SCRIPT="$CLAUDE_DIR/scripts/get-container-api-url.sh"
+
+    if [[ -x "$API_URL_SCRIPT" ]]; then
+        DEFAULT_API_URL=$("$API_URL_SCRIPT" 2>/dev/null) || DEFAULT_API_URL="http://127.0.0.1:8081/pbxcore/api/v3"
+    else
+        DEFAULT_API_URL="http://127.0.0.1:8081/pbxcore/api/v3"
+    fi
+fi
+
 # API endpoint (support both HTTP and HTTPS)
-API_URL="${MIKOPBX_API_URL:-http://mikopbx_php83.localhost:8081/pbxcore/api/v3}"
+API_URL="${MIKOPBX_API_URL:-$DEFAULT_API_URL}"
 
 # Credentials
 LOGIN="${MIKOPBX_LOGIN:-admin}"

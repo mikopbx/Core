@@ -676,6 +676,8 @@ return [
     'rest_cf_DeleteDesc' => 'Delete custom file by identifier',
     'rest_cf_GetDefault' => 'Get default values',
     'rest_cf_GetDefaultDesc' => 'Get default values for creating new custom file',
+    'rest_cf_CheckFile' => 'Check file on disk',
+    'rest_cf_CheckFileDesc' => 'Check if file exists in filesystem and retrieve its attributes (size, permissions, content)',
     'rest_da_GetList' => 'Get dialplan applications list',
     'rest_da_GetListDesc' => 'Get paginated list of all dialplan applications with filtering and sorting',
     'rest_da_GetRecord' => 'Get dialplan application by ID',

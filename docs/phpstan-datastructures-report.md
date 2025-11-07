@@ -264,17 +264,17 @@ if ($result !== false && is_iterable($result)) {
 
 ```bash
 # Check single DataStructure
-docker exec mikopbx_php83 vendor/bin/phpstan analyse \
+docker exec mikopbx-php83 vendor/bin/phpstan analyse \
   "src/PBXCoreREST/Lib/CallQueues/DataStructure.php" --level=8
 
 # Check key DataStructures (quick validation)
 for NAME in CallQueues Employees Extensions IncomingRoutes License; do
-  docker exec mikopbx_php83 vendor/bin/phpstan analyse \
+  docker exec mikopbx-php83 vendor/bin/phpstan analyse \
     "src/PBXCoreREST/Lib/$NAME/DataStructure.php" --level=8
 done
 
 # Full project scan (slow, ~5+ minutes)
-docker exec mikopbx_php83 vendor/bin/phpstan analyse \
+docker exec mikopbx-php83 vendor/bin/phpstan analyse \
   "src/PBXCoreREST/" --level=8
 ```
 

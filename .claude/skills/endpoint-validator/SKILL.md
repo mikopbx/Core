@@ -236,14 +236,14 @@ CONTAINER_ID=$(docker ps --filter "ancestor=mikopbx/mikopbx" --format "{{.ID}}" 
 TOKEN="your-bearer-token"
 
 # Test POST (should apply defaults)
-curl -X POST "https://mikopbx_php83.localhost:8445/pbxcore/api/v3/extensions" \
+curl -X POST "https://mikopbx-php83.localhost:8445/pbxcore/api/v3/extensions" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"number": "201", "type": "SIP"}' \
   -k -v
 
 # Test PATCH (should NOT apply defaults)
-curl -X PATCH "https://mikopbx_php83.localhost:8445/pbxcore/api/v3/extensions/{id}" \
+curl -X PATCH "https://mikopbx-php83.localhost:8445/pbxcore/api/v3/extensions/{id}" \
   -H "Authorization: Bearer $TOKEN" \
   -d '{"number": "202"}' \
   -k -v
@@ -454,7 +454,7 @@ grep -A 2 "httpMethod.*POST" src/PBXCoreREST/Lib/Extensions/SaveRecordAction.php
 # Look for: if ($httpMethod === 'POST' && isset($def['default']))
 
 # 5. Run PATCH test
-curl -X PATCH "https://mikopbx_php83.localhost:8445/pbxcore/api/v3/extensions/123" \
+curl -X PATCH "https://mikopbx-php83.localhost:8445/pbxcore/api/v3/extensions/123" \
   -H "Authorization: Bearer $TOKEN" \
   -d '{"number": "202"}' -k | jq '.data.status'
 # Verify status didn't change to default value

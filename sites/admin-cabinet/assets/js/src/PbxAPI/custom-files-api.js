@@ -114,6 +114,22 @@ customFilesAPI.save = function(data, callback) {
 };
 
 /**
+ * Get default values for a new custom file
+ *
+ * @param {Function} callback - Callback function to handle the response
+ *
+ * @example
+ * customFilesAPI.getDefault((response) => {
+ *     if (response.result) {
+ *         console.log('Default values:', response.data);
+ *     }
+ * });
+ */
+customFilesAPI.getDefault = function(callback) {
+    return this.callCustomMethod('getDefault', {}, callback);
+};
+
+/**
  * Get a single custom file record by ID
  *
  * @param {string} id - The ID of the custom file to retrieve

@@ -14,7 +14,7 @@ pip3 install -r requirements.txt
 ### 2. Configure Environment
 
 ```bash
-export MIKOPBX_API_URL="http://mikopbx_php83.localhost:8081/pbxcore/api/v3"
+export MIKOPBX_API_URL="http://mikopbx-php83.localhost:8081/pbxcore/api/v3"
 export MIKOPBX_LOGIN="admin"
 export MIKOPBX_PASSWORD="123456789MikoPBX#1"
 ```
@@ -420,7 +420,7 @@ jobs:
 # Test authentication manually
 python3 -c "
 from conftest import MikoPBXClient
-client = MikoPBXClient('http://mikopbx_php83.localhost:8081/pbxcore/api/v3', 'admin', '123456789MikoPBX#1')
+client = MikoPBXClient('http://mikopbx-php83.localhost:8081/pbxcore/api/v3', 'admin', '123456789MikoPBX#1')
 client.authenticate()
 print('Access Token:', client.access_token[:30] + '...')
 "
@@ -445,21 +445,21 @@ with open('fixtures/employee.json') as f:
 
 ```bash
 # Check API is accessible
-curl http://mikopbx_php83.localhost:8081/pbxcore/api/health
+curl http://mikopbx-php83.localhost:8081/pbxcore/api/health
 
 # Check with authentication
-TOKEN=$(curl -s -X POST http://mikopbx_php83.localhost:8081/pbxcore/api/v3/auth:login \
+TOKEN=$(curl -s -X POST http://mikopbx-php83.localhost:8081/pbxcore/api/v3/auth:login \
   -d "login=admin&password=123456789MikoPBX%231" | \
   python3 -c "import sys, json; print(json.load(sys.stdin)['data']['accessToken'])")
 
 curl -H "Authorization: Bearer $TOKEN" \
-  http://mikopbx_php83.localhost:8081/pbxcore/api/v3/extensions | python3 -m json.tool
+  http://mikopbx-php83.localhost:8081/pbxcore/api/v3/extensions | python3 -m json.tool
 ```
 
 ## Resources
 
 - [MikoPBX REST API Documentation](https://docs.mikopbx.com/api)
-- [OpenAPI Specification](http://mikopbx_php83.localhost:8081/pbxcore/api/v3/openapi:getSpecification)
+- [OpenAPI Specification](http://mikopbx-php83.localhost:8081/pbxcore/api/v3/openapi:getSpecification)
 - [Pytest Documentation](https://docs.pytest.org/)
 - [Schemathesis Documentation](https://schemathesis.readthedocs.io/)
 - [Requests Library](https://requests.readthedocs.io/)

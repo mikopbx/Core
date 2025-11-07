@@ -11,6 +11,7 @@ Real-world examples of analyzing MikoPBX logs for common issues.
 #### Step 1: Check WorkerApiCommands logs
 
 ```bash
+CONTAINER_ID=$(./.claude/scripts/get-container-name.sh)
 docker exec $CONTAINER_ID tail -200 /storage/usbdisk1/mikopbx/log/system/messages | grep WorkerApiCommands
 ```
 

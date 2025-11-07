@@ -28,7 +28,7 @@ Bash script for seeding CDR test data. Designed to be invoked remotely from Pyth
 
 ```bash
 # Via docker exec
-docker exec mikopbx_php83 /usr/www/tests/api/scripts/seed_cdr_database.sh seed
+docker exec mikopbx-php83 /usr/www/tests/api/scripts/seed_cdr_database.sh seed
 
 # Via SSH
 ssh root@192.168.1.100 '/usr/www/tests/api/scripts/seed_cdr_database.sh seed'

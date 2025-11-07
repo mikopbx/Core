@@ -26,15 +26,8 @@ Usage:
 """
 
 import os
-import sys
 import subprocess
 from typing import List, Optional
-from pathlib import Path
-
-# Add parent directory to path for config import
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from config import TestConfig
 
 
 class CDRSeederRemote:
@@ -47,32 +40,73 @@ class CDRSeederRemote:
     - SSH: Uses SSH to run script on remote machine (fallback method)
     - Local: Executes script directly
 
-    All configuration is loaded from .env file via TestConfig.
+    Environment Variables:
+        MIKOPBX_API_URL       - MikoPBX API URL (used to detect remote execution via API)
+        MIKOPBX_LOGIN         - API login (default: admin)
+        MIKOPBX_PASSWORD      - API password (default: admin)
+        MIKOPBX_CONTAINER     - Docker container name (default: mikopbx-php83)
+        MIKOPBX_SSH_HOST      - SSH hostname for remote execution (forces SSH mode)
+        MIKOPBX_SSH_USER      - SSH username (default: root)
+        MIKOPBX_EXECUTION_MODE - Force execution mode: docker|api|ssh|local
+        ENABLE_CDR_SEED       - Enable/disable seeding (default: 1)
+        ENABLE_CDR_CLEANUP    - Enable/disable cleanup (default: 1)
     """
 
-    def __init__(self, config: Optional[TestConfig] = None):
-        """
-        Initialize CDR seeder
-
-        Args:
-            config: Optional TestConfig instance (creates new if not provided)
-        """
-        # Load configuration
-        self.config = config or TestConfig()
-
-        # Set properties from config
-        self.execution_mode = self.config.execution_mode
-        self.container_name = self.config.container_name
-        self.ssh_host = self.config.ssh_host
-        self.ssh_user = self.config.ssh_user
+    def __init__(self):
+        # Execution mode detection
+        self.container_name = os.getenv('MIKOPBX_CONTAINER', 'mikopbx-php83')
+        self.ssh_host = os.getenv('MIKOPBX_SSH_HOST')
+        self.ssh_user = os.getenv('MIKOPBX_SSH_USER', 'root')
+        self.execution_mode = os.getenv('MIKOPBX_EXECUTION_MODE', self._detect_mode())
 
         # API configuration for REST API execution
-        self.api_base_url = self.config.api_url
-        self.api_login = self.config.api_username
-        self.api_password = self.config.api_password
+        self.api_base_url = os.getenv('MIKOPBX_API_URL', '')
+        self.api_login = os.getenv('MIKOPBX_LOGIN', 'admin')
+        self.api_password = os.getenv('MIKOPBX_PASSWORD', 'admin')
 
-        # Script path on station - use config helper method
-        self.script_path = self.config.get_script_path('seed_cdr_database.sh')
+        # Script path on station
+        # Path priorities:
+        # 1. Docker/VM/bare metal: /offload/rootfs/usr/www/tests/api/scripts/seed_cdr_database.sh (universal MikoPBX path)
+        # 2. Remote hosts via SSH/API: /storage/usbdisk1/mikopbx/python-tests/scripts/seed_cdr_database.sh (persistent storage)
+        if self.execution_mode in ['ssh', 'api']:
+            # Remote execution via SSH or REST API - use persistent storage path
+            self.script_path = '/storage/usbdisk1/mikopbx/python-tests/scripts/seed_cdr_database.sh'
+        else:
+            # Docker/VM/local execution - use universal MikoPBX test directory path
+            self.script_path = '/offload/rootfs/usr/www/tests/api/scripts/seed_cdr_database.sh'
+
+    def _detect_mode(self) -> str:
+        """Auto-detect execution mode"""
+        if self.ssh_host:
+            return 'ssh'
+
+        # Check if MIKOPBX_API_URL points to remote host (not localhost/127.0.0.1)
+        api_url = os.getenv('MIKOPBX_API_URL', '')
+        if api_url:
+            # Extract hostname from URL
+            import re
+            hostname_match = re.search(r'://([^:/]+)', api_url)
+            if hostname_match:
+                hostname = hostname_match.group(1)
+                # If hostname is not localhost/127.0.0.1, use REST API mode (not SSH)
+                if hostname not in ['localhost', '127.0.0.1', '::1'] and not hostname.endswith('.localhost'):
+                    # Remote host detected - use REST API mode instead of SSH
+                    return 'api'
+
+        # Check if docker/orbstack is available and container exists
+        try:
+            result = subprocess.run(
+                ['docker', 'ps', '-q', '-f', f'name={self.container_name}'],
+                capture_output=True,
+                timeout=5,
+                env=dict(os.environ)  # Use current environment (OrbStack sets DOCKER_HOST)
+            )
+            if result.returncode == 0 and result.stdout.strip():
+                return 'docker'
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            pass
+
+        return 'local'
 
     def _execute_command(self, command: str, timeout: int = 60) -> subprocess.CompletedProcess:
         """Execute command on MikoPBX station"""
@@ -221,7 +255,7 @@ class CDRSeederRemote:
         Returns:
             True if seeding successful, False otherwise
         """
-        if not self.config.enable_cdr_seed:
+        if os.getenv('ENABLE_CDR_SEED', '1') != '1':
             print("CDR seeding disabled (ENABLE_CDR_SEED=0)")
             return False
 
@@ -267,7 +301,7 @@ export FIXTURES_DIR=/storage/usbdisk1/mikopbx/python-tests/fixtures
 
     def cleanup(self):
         """Clean up test CDR data and recording files"""
-        if not self.config.enable_cdr_cleanup:
+        if os.getenv('ENABLE_CDR_CLEANUP', '1') != '1':
             print("CDR cleanup disabled (ENABLE_CDR_CLEANUP=0)")
             return
 
@@ -338,7 +372,7 @@ export FIXTURES_DIR=/storage/usbdisk1/mikopbx/python-tests/fixtures
         """
         Verify that recording files exist on disk (MP3 or WebM format)
 
-        Checks for test recording files in monitor path from config.
+        Checks for test recording files in /storage/usbdisk1/mikopbx/astspool/monitor/
         Expected files: test_recording_*.mp3 OR test_recording_*.webm (15 files for CDR IDs with recordings)
 
         Supports both legacy MP3 and new WebM formats for forward compatibility.
@@ -350,13 +384,12 @@ export FIXTURES_DIR=/storage/usbdisk1/mikopbx/python-tests/fixtures
                 - format_found: 'mp3', 'webm', 'mixed', or 'none'
         """
         try:
-            monitor_path = self.config.monitor_path
             # Check for both MP3 and WebM files
             # Test recordings use pattern: mikopbx-*.{mp3,webm}
             # Files are stored in subdirectories by date: YYYY/MM/DD/HH/
-            command = f'''
-mp3_count=$(find {monitor_path} -type f -name "mikopbx-*.mp3" 2>/dev/null | wc -l)
-webm_count=$(find {monitor_path} -type f -name "mikopbx-*.webm" 2>/dev/null | wc -l)
+            command = '''
+mp3_count=$(find /storage/usbdisk1/mikopbx/astspool/monitor -type f -name "mikopbx-*.mp3" 2>/dev/null | wc -l)
+webm_count=$(find /storage/usbdisk1/mikopbx/astspool/monitor -type f -name "mikopbx-*.webm" 2>/dev/null | wc -l)
 total=$((mp3_count + webm_count))
 echo "$total|$mp3_count|$webm_count"
 '''.strip()

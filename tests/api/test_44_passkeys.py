@@ -166,7 +166,7 @@ class TestPasskeys:
         import urllib.parse
 
         # Use proper origin parameter
-        origin = urllib.parse.quote('https://mikopbx_php83.localhost:8081', safe='')
+        origin = urllib.parse.quote('https://mikopbx-php83.localhost:8081', safe='')
 
         try:
             response = api_client.get(f'passkeys:authenticationStart?origin={origin}')

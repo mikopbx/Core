@@ -4,7 +4,11 @@
 {{ form.render('mode-custom-value') }}
 
 <div class="field max-width-800" id="filepath-field">
-    <label>{{ t._('cf_ColumnPath') }}</label>
+    <label>{{ t._('cf_ColumnPath') }}
+        <i class="small info circle icon field-info-icon"
+           data-field="filepath"
+           style="display:none;"></i>
+    </label>
     {{ form.render('filepath') }}
 </div>
 

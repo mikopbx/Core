@@ -176,7 +176,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'mode' => [
                 'type' => 'string',
                 'description' => 'rest_schema_cf_mode',
-                'enum' => ['override', 'append', 'script', 'none'],
+                'enum' => ['override', 'append', 'script', 'none', 'custom'],
                 'sanitize' => 'string',
                 'default' => 'none',
                 'example' => 'append'

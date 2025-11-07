@@ -26,6 +26,7 @@ use MikoPBX\PBXCoreREST\Lib\CustomFiles\GetDefaultAction;
 use MikoPBX\PBXCoreREST\Lib\CustomFiles\CreateRecordAction;
 use MikoPBX\PBXCoreREST\Lib\CustomFiles\UpdateRecordAction;
 use MikoPBX\PBXCoreREST\Lib\CustomFiles\PatchRecordAction;
+use MikoPBX\PBXCoreREST\Lib\CustomFiles\CheckFileAction;
 use Phalcon\Di\Injectable;
 
 /**
@@ -41,6 +42,9 @@ enum CustomFileAction: string
     case UPDATE = 'update';
     case PATCH = 'patch';
     case DELETE = 'delete';
+
+    // Custom operations
+    case CHECK_FILE = 'checkFile';
 }
 
 /**
@@ -57,7 +61,8 @@ enum CustomFileAction: string
  * - DELETE /custom-files/{id} -> delete
  *
  * Custom methods:
- * - GET /custom-files:getDefault -> getDefault
+ * - GET /custom-files:getDefault        -> getDefault
+ * - GET /custom-files/{id}:checkFile    -> checkFile
  *
  * @package MikoPBX\PBXCoreREST\Lib
  */
@@ -102,7 +107,10 @@ class CustomFilesManagementProcessor extends Injectable
             CustomFileAction::CREATE => CreateRecordAction::main($data),
             CustomFileAction::UPDATE => UpdateRecordAction::main($data),
             CustomFileAction::PATCH => PatchRecordAction::main($data),
-            CustomFileAction::DELETE => DeleteRecordAction::main($data['id'] ?? '')
+            CustomFileAction::DELETE => DeleteRecordAction::main($data['id'] ?? ''),
+
+            // Custom operations
+            CustomFileAction::CHECK_FILE => CheckFileAction::main($data['id'] ?? '')
         };
 
         $res->function = $actionString;

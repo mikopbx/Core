@@ -26,7 +26,7 @@ Universal REST API client for MikoPBX with automatic authentication and containe
 ## Features
 
 ✅ Automatic JWT authentication
-✅ Container auto-detection (mikopbx_php83/mikopbx_php74)
+✅ Container auto-detection (mikopbx-php83/mikopbx-php74)
 ✅ All HTTP methods (GET, POST, PATCH, DELETE, PUT)
 ✅ JSON pretty-printing
 ✅ Form data and JSON payload support
@@ -96,7 +96,7 @@ Options:
 ```bash
 MIKOPBX_LOGIN="admin"                   # Username
 MIKOPBX_PASSWORD="123456789MikoPBX#1"  # Password
-MIKOPBX_CONTAINER="mikopbx_php83"       # Container name
+MIKOPBX_CONTAINER="mikopbx-php83"       # Container name
 ```
 
 ## Documentation
@@ -108,7 +108,7 @@ MIKOPBX_CONTAINER="mikopbx_php83"       # Container name
 
 ## How It Works
 
-1. Detects running MikoPBX container (mikopbx_php83 or mikopbx_php74)
+1. Detects running MikoPBX container (mikopbx-php83 or mikopbx-php74)
 2. Gets JWT token using auth-token-manager skill
 3. Executes curl request inside container (http://127.0.0.1:8081)
 4. Formats JSON response with python3
@@ -149,7 +149,7 @@ cd /Users/nb/PhpstormProjects/mikopbx/Core
 **Container not found?**
 ```bash
 docker ps --filter "name=mikopbx"
-docker start mikopbx_php83
+docker start mikopbx-php83
 ```
 
 **Authentication failed?**
