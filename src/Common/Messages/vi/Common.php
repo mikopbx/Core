@@ -695,6 +695,7 @@ Bạn có thể tự động nhận khóa mới bằng cách điền vào biểu
     'st_Store6MonthsOfRecords' => '6 tháng',
     'st_StoreAllPossibleRecords' => '∞',
     'st_TabStorageInfo' => 'Thông tin lưu trữ',
+    'st_TabStorageSettings' => 'Cài đặt lưu trữ',
     'st_Used' => 'đã sử dụng',
     // THIS
     'this_is' => 'Đây là ',

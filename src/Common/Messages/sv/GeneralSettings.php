@@ -191,8 +191,6 @@ return [
     'gs_PBXInternalExtensionLengthDescription' => 'Antal siffror för interna anknytningsnummer i systemet.',
     'gs_PBXRecordCalls' => 'Spela in samtal',
     'gs_PBXRecordCallsDescription' => 'Aktiverar automatisk inspelning av alla in- och utgående samtal.',
-    'gs_PBXSplitAudioThread' => 'Separata ljudtrådar',
-    'gs_PBXSplitAudioThreadDescription' => 'Använder separata trådar för ljudbehandling för bättre prestanda på flerkärniga system.',
     'gs_PBXFirewallEnabled' => 'PBX brandvägg aktiverad',
     'gs_PBXFirewallEnabledDescription' => 'Aktiverar inbyggd brandvägg för att skydda PBX-systemet från obehörig åtkomst.',
     'gs_PBXFail2BanEnabled' => 'Fail2Ban aktiverad',

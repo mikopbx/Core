@@ -695,6 +695,7 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'st_Store6MonthsOfRecords' => '6 mois',
     'st_StoreAllPossibleRecords' => '∞',
     'st_TabStorageInfo' => 'Informations sur le stockage',
+    'st_TabStorageSettings' => 'Paramètres de stockage',
     'st_Used' => 'utilisé',
     // THIS
     'this_is' => 'C\'est ',

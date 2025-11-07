@@ -191,8 +191,6 @@ return [
     'gs_PBXInternalExtensionLengthDescription' => 'Кількість цифр для внутрішніх номерів у системі.',
     'gs_PBXRecordCalls' => 'Записувати дзвінки',
     'gs_PBXRecordCallsDescription' => 'Вмикає автоматичний запис всіх вхідних та вихідних дзвінків.',
-    'gs_PBXSplitAudioThread' => 'Окремі аудіо потоки',
-    'gs_PBXSplitAudioThreadDescription' => 'Використовує окремі потоки для обробки аудіо для кращої продуктивності на багатоядерних системах.',
     'gs_PBXFirewallEnabled' => 'PBX брандмауер увімкнено',
     'gs_PBXFirewallEnabledDescription' => 'Вмикає вбудований брандмауер для захисту PBX системи від несанкціонованого доступу.',
     'gs_PBXFail2BanEnabled' => 'Fail2Ban увімкнено',

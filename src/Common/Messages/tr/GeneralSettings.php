@@ -191,8 +191,6 @@ return [
     'gs_PBXInternalExtensionLengthDescription' => 'Sistemdeki dahili numaralar için hane sayısı.',
     'gs_PBXRecordCalls' => 'Aramaları kaydet',
     'gs_PBXRecordCallsDescription' => 'Tüm gelen ve giden aramaların otomatik kaydını etkinleştirir.',
-    'gs_PBXSplitAudioThread' => 'Ayrı ses iş parçacıkları',
-    'gs_PBXSplitAudioThreadDescription' => 'Çok çekirdekli sistemlerde daha iyi performans için ses işleme için ayrı iş parçacıkları kullanır.',
     'gs_PBXFirewallEnabled' => 'PBX güvenlik duvarı etkinleştirildi',
     'gs_PBXFirewallEnabledDescription' => 'PBX sistemini yetkisiz erişimden korumak için yerleşik güvenlik duvarını etkinleştirir.',
     'gs_PBXFail2BanEnabled' => 'Fail2Ban etkinleştirildi',

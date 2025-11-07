@@ -695,6 +695,7 @@ A regisztrációs űrlap kitöltésével automatikusan új kulcsot kaphat.<br>',
     'st_Store6MonthsOfRecords' => '6 hónap',
     'st_StoreAllPossibleRecords' => '∞',
     'st_TabStorageInfo' => 'Tárolási információk',
+    'st_TabStorageSettings' => 'Tárolási beállítások',
     'st_Used' => 'használt',
     // THIS
     'this_is' => 'Ez ',

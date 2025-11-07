@@ -49,7 +49,6 @@ return [
     'gs_PBXFeatureDigitTimeout' => 'Maksimal timeout mellem cifre ved indtastning af lokalnummer (i millisekunder)',
     'gs_PBXFeaturePickupExten' => 'Kombination for afhentning af indgående opkald',
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Tid for returnering af opkald, hvis der ikke svares efter konsultativ viderestilling',
-    'gs_PBXSplitAudioThread' => 'Gem optagelser i stereo tilstand',
     'gs_PBXAllowGuestCalls' => 'Tillad indgående opkald fra enhver server',
     'gs_SIPPort' => 'SIP port til registrering af telefoner på denne station',
     'gs_TLS_PORT' => 'SIP TLS port (krypterede opkald)',
@@ -580,16 +579,4 @@ return [
     'gs_SendMetricsTooltip_warning' => 'Deaktivering af denne funktion kan forsinke fejlrettelsesprocessen og reducere supportkvalitet',
     'gs_SendMetricsTooltip_note' => 'Anbefaling: lad det være aktiveret for production systemer. Data transmitteres kun ved internetforbindelse',
     
-    // PBXSplitAudioThread tooltips
-    'gs_SplitAudioThreadTooltip_header' => 'Samtaleoptag tilstand',
-    'gs_SplitAudioThreadTooltip_desc' => 'Bestemmer måden at placere audiostrømme af samtaleparts i den endelige MP3 optagelsesfil',
-    'gs_SplitAudioThreadTooltip_mono' => 'Mono tilstand (deaktiveret)',
-    'gs_SplitAudioThreadTooltip_mono_desc' => 'Begge samtaleparts optages i en kanal (mono). Stemmer blandes i en enkelt audiostrøm',
-    'gs_SplitAudioThreadTooltip_stereo' => 'Stereo tilstand (aktiveret)',
-    'gs_SplitAudioThreadTooltip_stereo_desc' => 'Hver samtalepart optages i separat kanal: venstre kanal - en abonnent, højre kanal - anden abonnent. Efter konvertering til MP3 fås en stereo fil',
-    'gs_SplitAudioThreadTooltip_benefits' => 'Fordele ved stereo tilstand:',
-    'gs_SplitAudioThreadTooltip_benefit_analysis' => 'Mulighed for at analysere tale for hver samtalepart separat',
-    'gs_SplitAudioThreadTooltip_benefit_quality' => 'Forbedret kvalitet ved transkription og talegenkendelse',
-    'gs_SplitAudioThreadTooltip_benefit_processing' => 'Bekvemmelighed for taleanalysesystemer, servicekvalitetsvurdering og operatørtræning',
-    'gs_SplitAudioThreadTooltip_note' => 'Bemærk: Systemet konverterer automatisk WAV optag til MP3 format for pladsbesparelse. Ved stereo tilstand indeholder den endelige MP3 fil to kanaler'
 ];

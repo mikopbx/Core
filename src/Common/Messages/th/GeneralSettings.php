@@ -191,8 +191,6 @@ return [
     'gs_PBXInternalExtensionLengthDescription' => 'จำนวนหลักสำหรับหมายเลขส่วนขยายภายในในระบบ',
     'gs_PBXRecordCalls' => 'บันทึกการโทร',
     'gs_PBXRecordCallsDescription' => 'เปิดใช้งานการบันทึกอัตโนมัติของการโทรเข้าและออกทั้งหมด',
-    'gs_PBXSplitAudioThread' => 'เธรดเสียงแยก',
-    'gs_PBXSplitAudioThreadDescription' => 'ใช้เธรดแยกสำหรับการประมวลผลเสียงเพื่อประสิทธิภาพที่ดีขึ้นในระบบหลายคอร์',
     'gs_PBXFirewallEnabled' => 'เปิดใช้งาน PBX firewall',
     'gs_PBXFirewallEnabledDescription' => 'เปิดใช้งาน firewall ในตัวเพื่อปกป้องระบบ PBX จากการเข้าถึงที่ไม่ได้รับอนุญาต',
     'gs_PBXFail2BanEnabled' => 'เปิดใช้งาน Fail2Ban',

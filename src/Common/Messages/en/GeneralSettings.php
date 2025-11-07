@@ -51,7 +51,6 @@ return [
     'gs_PBXFeatureDigitTimeout' => 'Maximum timeout between digits when entering an extension number (in milliseconds)',
     'gs_PBXFeaturePickupExten' => 'Combination for intercepting incoming calls',
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Call return time if no answer after attended transfer',
-    'gs_PBXSplitAudioThread' => 'Save recordings in stereo mode',
     'gs_PBXAllowGuestCalls' => 'Allow incoming calls from any servers',
     'gs_SIPPort' => 'SIP port for registering phones on this station',
     'gs_TLS_PORT' => 'SIP TLS port (encrypted calls)',
@@ -634,16 +633,4 @@ return [
     'gs_SendMetricsTooltip_warning' => 'Disabling this function may slow bug fixing process and reduce support quality',
     'gs_SendMetricsTooltip_note' => 'Recommended: leave enabled for production systems. Data transmitted only when internet connection available',
 
-    // PBXSplitAudioThread tooltips
-    'gs_SplitAudioThreadTooltip_header' => 'Call recording mode',
-    'gs_SplitAudioThreadTooltip_desc' => 'Determines how to place caller audio streams in final MP3 recording file',
-    'gs_SplitAudioThreadTooltip_mono' => 'Mono mode (disabled)',
-    'gs_SplitAudioThreadTooltip_mono_desc' => 'Both callers recorded in one channel (mono). Voices mixed into single audio stream',
-    'gs_SplitAudioThreadTooltip_stereo' => 'Stereo mode (enabled)',
-    'gs_SplitAudioThreadTooltip_stereo_desc' => 'Each caller recorded in separate channel: left channel - one party, right channel - other party. After MP3 conversion, results in one stereo file',
-    'gs_SplitAudioThreadTooltip_benefits' => 'Stereo mode benefits:',
-    'gs_SplitAudioThreadTooltip_benefit_analysis' => 'Ability to analyze each caller\'s speech separately',
-    'gs_SplitAudioThreadTooltip_benefit_quality' => 'Improved quality for transcription and speech recognition',
-    'gs_SplitAudioThreadTooltip_benefit_processing' => 'Convenience for speech analytics systems, service quality assessment and operator training',
-    'gs_SplitAudioThreadTooltip_note' => 'Note: System automatically converts WAV recordings to MP3 format to save space. In stereo mode, resulting MP3 file contains two channels'
 ];

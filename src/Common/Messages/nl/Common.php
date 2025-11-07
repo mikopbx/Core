@@ -695,6 +695,7 @@ U kunt automatisch een nieuwe sleutel krijgen door het registratieformulier in t
     'st_Store6MonthsOfRecords' => '6 maanden',
     'st_StoreAllPossibleRecords' => '∞',
     'st_TabStorageInfo' => 'Opslaggegevens',
+    'st_TabStorageSettings' => 'Opslaginstellingen',
     'st_Used' => 'gebruikt',
     // THIS
     'this_is' => 'Dit is ',

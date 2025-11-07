@@ -51,7 +51,6 @@ return [
     'gs_PBXFeatureDigitTimeout' => 'Максимальный таймаут между цифрами при вводе добавочного номера (в миллисекундах)',
     'gs_PBXFeaturePickupExten' => 'Комбинация для перехвата входящих вызовов',
     'gs_PBXFeatureAtxferNoAnswerTimeout' => 'Время возврата вызова, если нет ответа после консультативного перевода',
-    'gs_PBXSplitAudioThread' => 'Сохранять записи в стерео режиме',
     'gs_PBXAllowGuestCalls' => 'Разрешить входящие звонки с любых серверов',
     'gs_SIPPort' => 'Порт SIP для регистрации телефонов на этой станции',
     'gs_TLS_PORT' => 'Порт SIP TLS (шифрованные звонки)',
@@ -640,17 +639,4 @@ return [
     'gs_SendMetricsTooltip_privacy_desc' => 'НЕ передаются: пароли, записи разговоров, персональные данные, содержимое баз данных',
     'gs_SendMetricsTooltip_warning' => 'Отключение этой функции может замедлить процесс исправления ошибок и снизить качество поддержки',
     'gs_SendMetricsTooltip_note' => 'Рекомендуется: оставить включенным для production систем. Данные передаются только при наличии интернет-соединения',
-    
-    // PBXSplitAudioThread tooltips
-    'gs_SplitAudioThreadTooltip_header' => 'Режим записи разговоров',
-    'gs_SplitAudioThreadTooltip_desc' => 'Определяет способ размещения аудиопотоков собеседников в итоговом MP3 файле записи',
-    'gs_SplitAudioThreadTooltip_mono' => 'Моно режим (выключено)',
-    'gs_SplitAudioThreadTooltip_mono_desc' => 'Оба собеседника записываются в один канал (моно). Голоса смешиваются в единый аудиопоток',
-    'gs_SplitAudioThreadTooltip_stereo' => 'Стерео режим (включено)',
-    'gs_SplitAudioThreadTooltip_stereo_desc' => 'Каждый собеседник записывается в отдельный канал: левый канал - один абонент, правый канал - другой абонент. После конвертации в MP3 получается один стерео файл',
-    'gs_SplitAudioThreadTooltip_benefits' => 'Преимущества стерео режима:',
-    'gs_SplitAudioThreadTooltip_benefit_analysis' => 'Возможность анализировать речь каждого собеседника отдельно',
-    'gs_SplitAudioThreadTooltip_benefit_quality' => 'Улучшенное качество при транскрибировании и распознавании речи',
-    'gs_SplitAudioThreadTooltip_benefit_processing' => 'Удобство для систем речевой аналитики, оценки качества обслуживания и обучения операторов',
-    'gs_SplitAudioThreadTooltip_note' => 'Примечание: Система автоматически конвертирует WAV записи в MP3 формат для экономии места. При стерео режиме итоговый MP3 файл содержит два канала'
 ];

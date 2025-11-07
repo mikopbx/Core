@@ -725,5 +725,6 @@ Novi ključ možete dobiti automatski ispunjavanjem obrasca za registraciju.<br>
     'st_Store6MonthsOfRecords' => '6 mjeseci',
     'st_StoreAllPossibleRecords' => '∞',
     'st_TabStorageInfo' => 'Informacije o skladištenju',
+    'st_TabStorageSettings' => 'Postavke skladištenja',
     'st_Used' => 'zauzeto',
 ];

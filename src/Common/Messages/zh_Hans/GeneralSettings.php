@@ -191,8 +191,6 @@ return [
     'gs_PBXInternalExtensionLengthDescription' => '系统中内部分机号的位数。',
     'gs_PBXRecordCalls' => '录制通话',
     'gs_PBXRecordCallsDescription' => '启用所有入站和出站呼叫的自动录音。',
-    'gs_PBXSplitAudioThread' => '独立音频线程',
-    'gs_PBXSplitAudioThreadDescription' => '在多核系统上使用独立线程进行音频处理以获得更好的性能。',
     'gs_PBXFirewallEnabled' => 'PBX防火墙已启用',
     'gs_PBXFirewallEnabledDescription' => '启用内置防火墙以保护PBX系统免受未经授权的访问。',
     'gs_PBXFail2BanEnabled' => 'Fail2Ban已启用',
