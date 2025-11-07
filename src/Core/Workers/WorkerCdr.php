@@ -275,16 +275,45 @@ class WorkerCdr extends WorkerBase
             // If the call channel with ID doesn't exist anymore, it's safe to remove temporary files
             $p_info = pathinfo($row['recordingfile']);
 
-            // Launch a background process to convert the recording to mp3
-            $wav2mp3Path = Util::which('wav2mp3.sh');
-            $lostWav2mp3Path = Util::which('convert-lost-wav2mp3.sh');
+            // Launch a background process to convert the recording to WebM/Opus format
+            $wav2webmPath = Util::which('wav2webm.sh');
+            $lostWav2webmPath = Util::which('convert-lost-recordings.sh');
             $nice = Util::which('nice');
-            Processes::mwExecBg("$nice -n -19 $wav2mp3Path '{$p_info['dirname']}/{$p_info['filename']}'");
 
-            // Get the directory with current month's recordings
+            // Build metadata environment variables for wav2webm.sh
+            $deleteSourceFiles = PbxSettings::getValueByKey(PbxSettings::PBX_RECORD_DELETE_SOURCE_AFTER_CONVERT);
+
+            $metadata = [
+                'CALL_LINKEDID' => $row['linkedid'] ?? '',
+                'CALL_SRC_NUM' => $row['src_num'] ?? '',
+                'CALL_DST_NUM' => $row['dst_num'] ?? '',
+                'CALL_START' => $row['start'] ?? '',
+                'CALL_ANSWER' => $row['answer'] ?? '',
+                'CALL_DURATION' => $row['duration'] ?? '',
+                'CALL_BILLSEC' => $billsec,
+                'CALL_DISPOSITION' => $row['disposition'] ?? '',
+                'CALL_UNIQUEID' => $row['UNIQUEID'] ?? '',
+                'DELETE_SOURCE_FILES' => $deleteSourceFiles,  // From PbxSettings
+            ];
+
+            // Build environment string for shell execution
+            $envVars = '';
+            foreach ($metadata as $key => $value) {
+                if ($value !== '') {
+                    $escapedValue = escapeshellarg($value);
+                    $envVars .= "$key=$escapedValue ";
+                }
+            }
+
+            // Execute conversion with metadata
+            Processes::mwExecBg("$nice -n -19 $envVars$wav2webmPath '{$p_info['dirname']}/{$p_info['filename']}'");
+
+            // Get the directory with current month's recordings and convert lost files
             $dir = dirname($p_info['dirname'], 2);
-            Processes::mwExecBg("$nice -n -19 $lostWav2mp3Path '$dir'");
-            // After a successful conversion, the original recording files will be deleted
+            Processes::mwExecBg("$nice -n -19 $lostWav2webmPath '$dir'");
+
+            // Update recordingfile path to point to WebM file
+            $row['recordingfile'] = str_replace(['.wav', '.WAV'], '.webm', $row['recordingfile']);
         }else{
             $row['recordingfile'] = '';
         }

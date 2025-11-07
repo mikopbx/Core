@@ -654,7 +654,7 @@ function Event_meetme_dial(AGI $agi, string $action): array
         'dst_chan'      => 'MeetMe:' . $mikoidconf,
         'start'         => $time_start,
         'answer'        => $time_start,
-        'recordingfile' => "$recordingfile.mp3",
+        'recordingfile' => "$recordingfile.webm",
         'did'           => $agi->get_variable('FROM_DID', true),
         'transfer'      => '0',
         'UNIQUEID'      => $id,
@@ -694,7 +694,7 @@ function Event_hangup_chan_meetme(AGI $agi, string $action): array
     $data['UNIQUEID']    = $agi->get_variable('pt1c_q_UNIQUEID', true);
 
     $recordingfile         = $agi->get_variable('MEETME_RECORDINGFILE', true);
-    $data['recordingfile'] = "{$recordingfile}.mp3";
+    $data['recordingfile'] = "{$recordingfile}.webm";
 
     return $data;
 }

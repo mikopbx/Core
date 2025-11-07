@@ -255,6 +255,56 @@ class StorageAdapter
     }
 
     /**
+     * Get file with format fallback support
+     *
+     * Attempts to find recording file with different audio format extensions.
+     * This is useful during migration from MP3/WAV to WebM when files may
+     * exist in different formats.
+     *
+     * Priority order: webm → mp3 → wav
+     *
+     * Example:
+     * Input:  /monitor/2024/11/01/10/out-201-102.mp3
+     * Tries:  1. out-201-102.webm (new format)
+     *         2. out-201-102.mp3 (specified format)
+     *         3. out-201-102.wav (legacy format)
+     *
+     * @param string $recordingfile Original recording path with extension
+     * @return string|null Local path to file, or null if not found in any format
+     */
+    public function getFileWithFallback(string $recordingfile): ?string
+    {
+        // Remove existing extension to get base path
+        $basePathNoExt = preg_replace('/\.(webm|mp3|wav)$/i', '', $recordingfile);
+
+        // Try extensions in priority order (newest → oldest)
+        $extensions = ['webm', 'mp3', 'wav'];
+
+        foreach ($extensions as $ext) {
+            $filePath = "{$basePathNoExt}.{$ext}";
+            $actualPath = $this->getFile($filePath);
+
+            if ($actualPath !== null) {
+                SystemMessages::sysLogMsg(
+                    __CLASS__,
+                    "Format fallback: requested $recordingfile, found $filePath",
+                    LOG_DEBUG
+                );
+                return $actualPath;
+            }
+        }
+
+        // None of the formats found
+        SystemMessages::sysLogMsg(
+            __CLASS__,
+            "Format fallback failed: no file found for base path $basePathNoExt",
+            LOG_WARNING
+        );
+
+        return null;
+    }
+
+    /**
      * Get cache TTL setting
      *
      * @return int Cache TTL in seconds

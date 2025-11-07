@@ -94,7 +94,8 @@ trait PbxSettingsDefaultValuesTrait
             PbxSettings::PBX_INTERNAL_EXTENSION_LENGTH => '3',
             PbxSettings::PBX_RECORD_CALLS => '1',
             PbxSettings::PBX_RECORD_CALLS_INNER => '1',
-            PbxSettings::PBX_SPLIT_AUDIO_THREAD => '0',
+            PbxSettings::PBX_SPLIT_AUDIO_THREAD => '1',
+            PbxSettings::PBX_RECORD_DELETE_SOURCE_AFTER_CONVERT => '1',  // Delete WAV after WebM conversion
             PbxSettings::PBX_RECORD_ANNOUNCEMENT_IN => '',
             PbxSettings::PBX_RECORD_ANNOUNCEMENT_OUT => '',
             PbxSettings::PBX_RECORD_SAVE_PERIOD => '90',      // 90 days total retention

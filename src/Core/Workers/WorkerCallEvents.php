@@ -150,9 +150,9 @@ class WorkerCallEvents extends WorkerBase
      */
     public function MixMonitor(string $channel, string $file_name = '', string $sub_dir = '', string $full_name = '', string $actionID = ''): string
     {
-        $resFile = $this->mixMonitorChannels[$channel] ?? '';
-        if ($resFile !== '') {
-            return $resFile;
+        $channelInfo = $this->mixMonitorChannels[$channel] ?? null;
+        if ($channelInfo !== null) {
+            return $channelInfo['result_file'] ?? '';
         }
         $resFile = '';
         $file_name = str_replace('/', '_', $file_name);
@@ -163,9 +163,18 @@ class WorkerCallEvents extends WorkerBase
                 return '';
             }
             $srcFile = "$f.wav";
-            $resFile = "$f.mp3";
+            $resFile = "$f.webm";
             $this->am->MixMonitor($channel, $srcFile, $options, '', $actionID);
-            $this->mixMonitorChannels[$channel] = $resFile;
+
+            // Store full channel information for later conversion
+            $this->mixMonitorChannels[$channel] = [
+                'result_file' => $resFile,
+                'base_path' => $f,
+                'linked_id' => $this->getActiveChanId($channel),
+                'file_name' => $file_name,
+                'timestamp' => time(),
+            ];
+
             $this->am->UserEvent('StartRecording', ['recordingfile' => $resFile, 'recchan' => $channel]);
         }
         return $resFile;
@@ -213,15 +222,21 @@ class WorkerCallEvents extends WorkerBase
      */
     public function StopMixMonitor(string $channel, string $actionID = ''): void
     {
+        $channelInfo = null;
         if (isset($this->mixMonitorChannels[$channel])) {
+            $channelInfo = $this->mixMonitorChannels[$channel];
             unset($this->mixMonitorChannels[$channel]);
         } else {
             return;
         }
+
         if ($this->record_calls) {
             $this->am->StopMixMonitor($channel, $actionID);
+            // Audio conversion is now handled by WorkerCdr after CDR completion
+            // This ensures all call metadata is available for Opus tags
         }
     }
+
 
     /**
      * Starts the process, sets up initial options and worker subscribers.
