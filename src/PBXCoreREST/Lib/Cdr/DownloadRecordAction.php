@@ -39,14 +39,21 @@ class DownloadRecordAction extends Injectable
      * Validate CDR recording file path and prepare for download
      *
      * This method supports two access modes:
-     * 1. Token-based access (recommended): Uses 'id' and 'token' parameters for secure access
+     * 1. Token-based access (recommended): Uses 'token' parameter for secure access
      * 2. Direct path access (legacy): Uses 'view' parameter with file path
      *
+     * Both modes support optional format conversion via 'format' parameter.
+     *
      * @param array<string, mixed> $data Request data containing:
-     *                    - 'id' (int): CDR record ID (used with token)
-     *                    - 'token' (string): Temporary access token from Redis
+     *                    - 'token' (string): Temporary access token from Redis (recommended)
      *                    - 'view' (string): Direct file path (legacy, for backward compatibility)
+     *                    - 'format' (string): Target audio format (original, mp3, wav, webm, ogg)
      *                    - 'filename' (string): Custom filename for download
+     *
+     * Examples:
+     *   - /cdr:download?token=xxx&format=mp3
+     *   - /cdr:download?view=/path/to/file.webm&format=ogg
+     *
      * @return PBXApiResult
      */
     public static function main(array $data): PBXApiResult
@@ -133,6 +140,33 @@ class DownloadRecordAction extends Injectable
             return $res;
         }
 
+        // ============ FORMAT CONVERSION (OPTIONAL) ============
+        // WHY: Users may need different formats for compatibility:
+        // - MP3 for legacy systems (older phones, car systems)
+        // - WAV for uncompressed quality (archival, analysis)
+        // - WebM for modern web playback (smaller size, better compression)
+        $requestedFormat = strtolower($data['format'] ?? 'original');
+        $currentExtension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+        $needDelete = false;
+
+        // Skip conversion if 'original' or format matches current file
+        if ($requestedFormat !== 'original' && $requestedFormat !== $currentExtension) {
+            $convertedFile = self::convertAudioFormat($filename, $currentExtension, $requestedFormat);
+
+            if ($convertedFile !== null) {
+                // Use converted file
+                $filename = $convertedFile;
+                $needDelete = true;  // Delete temporary file after sending
+            } else {
+                // Fallback to original format if conversion fails
+                $res->messages['warning'][] = sprintf(
+                    'Audio conversion from %s to %s failed, returning original format',
+                    strtoupper($currentExtension),
+                    strtoupper($requestedFormat)
+                );
+            }
+        }
+
         // Get file information
         $fileInfo = pathinfo($filename);
         $mimeType = self::getAudioMimeType($fileInfo['extension'] ?? '');
@@ -165,7 +199,7 @@ class DownloadRecordAction extends Injectable
                 'filename' => $filename,
                 'content_type' => $mimeType,
                 'download_name' => $downloadName,
-                'need_delete' => false,
+                'need_delete' => $needDelete,  // Delete temporary MP3 files
                 'additional_headers' => []
             ]
         ];
@@ -214,6 +248,7 @@ class DownloadRecordAction extends Injectable
         return match (strtolower($extension)) {
             'mp3' => 'audio/mpeg',
             'wav' => 'audio/wav',
+            'webm' => 'audio/webm',
             'ogg' => 'audio/ogg',
             'flac' => 'audio/flac',
             'm4a' => 'audio/mp4',
@@ -223,32 +258,259 @@ class DownloadRecordAction extends Injectable
     }
 
     /**
-     * Get audio file duration in seconds using soxi
+     * Get audio file duration in seconds
+     *
+     * Uses two-tier detection:
+     * 1. Try soxi first (fast for WAV files)
+     * 2. Fallback to ffprobe (universal, works with WebM/OGG/MP3)
      *
      * @param string $filePath Path to audio file
      * @return float Duration in seconds (0 if unable to determine)
      */
     private static function getAudioDuration(string $filePath): float
     {
-        // Check if soxi is available (part of sox package)
+        // TIER 1: Try soxi first (fast for WAV)
+        // WHY: soxi is optimized for WAV files and faster than ffprobe
         $soxi = Util::which('soxi');
-        if (empty($soxi)) {
-            return 0.0;
+        if (!empty($soxi)) {
+            $cmd = "{$soxi} -D " . escapeshellarg($filePath) . " 2>/dev/null";
+            $output = [];
+            $returnCode = 0;
+
+            exec($cmd, $output, $returnCode);
+
+            if ($returnCode === 0 && !empty($output[0])) {
+                $duration = (float)trim($output[0]);
+                if ($duration > 0) {
+                    return $duration;
+                }
+            }
         }
 
-        // Use soxi -D to get duration in seconds
-        $cmd = "{$soxi} -D " . escapeshellarg($filePath) . " 2>/dev/null";
-        $output = [];
-        $returnCode = 0;
+        // TIER 2: Fallback to ffprobe (universal support)
+        // WHY: Works with WebM, OGG, MP3, and other formats that soxi can't handle
+        $ffprobe = Util::which('ffprobe');
+        if (!empty($ffprobe)) {
+            $cmd = "{$ffprobe} -v quiet -print_format json -show_format " . escapeshellarg($filePath) . " 2>/dev/null";
+            $output = [];
+            $returnCode = 0;
 
-        exec($cmd, $output, $returnCode);
+            exec($cmd, $output, $returnCode);
 
-        if ($returnCode === 0 && !empty($output[0])) {
-            $duration = (float)trim($output[0]);
-            return $duration > 0 ? $duration : 0.0;
+            if ($returnCode === 0 && !empty($output)) {
+                $json = implode('', $output);
+                $data = json_decode($json, true);
+
+                if (isset($data['format']['duration'])) {
+                    $duration = (float)$data['format']['duration'];
+                    if ($duration > 0) {
+                        return $duration;
+                    }
+                }
+            }
         }
 
         return 0.0;
+    }
+
+    /**
+     * Convert audio file between different formats (WebM, MP3, WAV, OGG)
+     *
+     * WHY: Users need different formats for different use cases:
+     * - MP3: Legacy compatibility (phones, car systems)
+     * - WAV: Uncompressed quality (archival, analysis)
+     * - WebM: Modern web (Opus codec in WebM container)
+     * - OGG: Open format (Opus codec in Ogg container, desktop apps, Linux)
+     *
+     * CONVERSION MATRIX:
+     * - WebM/OGG → MP3: libmp3lame encoder
+     * - WebM/OGG → WAV: pcm_s16le codec (16-bit PCM)
+     * - MP3/WAV → WebM: libopus encoder (Opus in WebM container)
+     * - MP3/WAV → OGG: libopus encoder (Opus in Ogg container)
+     * - WebM ↔ OGG: Re-encode (both use Opus, but different containers)
+     *
+     * @param string $sourceFile Path to source audio file
+     * @param string $sourceFormat Source format extension (webm, mp3, wav, ogg)
+     * @param string $targetFormat Target format extension (webm, mp3, wav, ogg)
+     * @return string|null Path to converted file, or null on failure
+     */
+    private static function convertAudioFormat(string $sourceFile, string $sourceFormat, string $targetFormat): ?string
+    {
+        // Check if ffmpeg is available
+        $ffmpeg = Util::which('ffmpeg');
+        if (empty($ffmpeg)) {
+            \MikoPBX\Core\System\SystemMessages::sysLogMsg(
+                __METHOD__,
+                'ffmpeg not found, cannot convert audio',
+                LOG_WARNING
+            );
+            return null;
+        }
+
+        // Get cache directory (same as S3 cache)
+        // WHY: Reuse existing cache management and cleanup
+        $cacheDir = \MikoPBX\Core\System\Directories::getDir(
+            \MikoPBX\Core\System\Directories::CORE_RECORDINGS_CACHE_DIR
+        );
+
+        // Create unique temporary filename
+        $basename = basename($sourceFile, '.' . $sourceFormat);
+        $tempFile = $cacheDir . '/' . $basename . '_' . uniqid($targetFormat . '_', true) . '.' . $targetFormat;
+
+        // Build FFmpeg command based on target format
+        // OPTIMIZATION: Use lossless remux for WebM ↔ OGG (both use Opus)
+        // WHY: Avoids re-encoding, preserves original quality
+        $isLosslessRemux = self::canUseLosslessRemux($sourceFormat, $targetFormat);
+
+        if ($isLosslessRemux) {
+            // Lossless remux: copy audio stream without re-encoding
+            $cmd = sprintf(
+                '%s -i %s -codec:a copy %s 2>&1',
+                $ffmpeg,
+                escapeshellarg($sourceFile),
+                escapeshellarg($tempFile)
+            );
+        } else {
+            // Standard conversion with re-encoding
+            $codecParams = self::getCodecParameters($targetFormat);
+
+            if ($codecParams === null) {
+                \MikoPBX\Core\System\SystemMessages::sysLogMsg(
+                    __METHOD__,
+                    "Unsupported target format: {$targetFormat}",
+                    LOG_WARNING
+                );
+                return null;
+            }
+
+            $cmd = sprintf(
+                '%s -i %s -vn %s %s 2>&1',
+                $ffmpeg,
+                escapeshellarg($sourceFile),
+                $codecParams,
+                escapeshellarg($tempFile)
+            );
+        }
+
+        // Execute conversion
+        $output = [];
+        $returnCode = 0;
+        exec($cmd, $output, $returnCode);
+
+        // Check if conversion succeeded
+        if ($returnCode !== 0 || !file_exists($tempFile)) {
+            \MikoPBX\Core\System\SystemMessages::sysLogMsg(
+                __METHOD__,
+                sprintf(
+                    'FFmpeg conversion from %s to %s failed: %s',
+                    strtoupper($sourceFormat),
+                    strtoupper($targetFormat),
+                    implode("\n", $output)
+                ),
+                LOG_ERR
+            );
+            return null;
+        }
+
+        // Validate output file
+        $ffprobe = Util::which('ffprobe');
+        if (!empty($ffprobe)) {
+            $validateCmd = sprintf(
+                '%s -v error -show_format %s 2>&1',
+                $ffprobe,
+                escapeshellarg($tempFile)
+            );
+
+            $validateOutput = [];
+            $validateCode = 0;
+            exec($validateCmd, $validateOutput, $validateCode);
+
+            if ($validateCode !== 0) {
+                \MikoPBX\Core\System\SystemMessages::sysLogMsg(
+                    __METHOD__,
+                    sprintf(
+                        '%s validation failed, file may be corrupted',
+                        strtoupper($targetFormat)
+                    ),
+                    LOG_WARNING
+                );
+                @unlink($tempFile);
+                return null;
+            }
+        }
+
+        // Log successful conversion
+        $sourceSize = filesize($sourceFile);
+        $targetSize = filesize($tempFile);
+        \MikoPBX\Core\System\SystemMessages::sysLogMsg(
+            __METHOD__,
+            sprintf(
+                'Converted %s to %s: %s (%d bytes) -> %s (%d bytes)',
+                strtoupper($sourceFormat),
+                strtoupper($targetFormat),
+                basename($sourceFile),
+                $sourceSize,
+                basename($tempFile),
+                $targetSize
+            ),
+            LOG_INFO
+        );
+
+        return $tempFile;
+    }
+
+    /**
+     * Check if lossless remux is possible between two formats
+     *
+     * WHY: Lossless remux (stream copy) preserves quality and is much faster
+     * Possible when source and target use the same codec but different containers
+     *
+     * @param string $sourceFormat Source format extension
+     * @param string $targetFormat Target format extension
+     * @return bool True if lossless remux is possible
+     */
+    private static function canUseLosslessRemux(string $sourceFormat, string $targetFormat): bool
+    {
+        $source = strtolower($sourceFormat);
+        $target = strtolower($targetFormat);
+
+        // WebM ↔ OGG: Both use Opus codec, can remux without re-encoding
+        // WHY: Only container differs, audio stream is identical
+        if (($source === 'webm' && $target === 'ogg') || ($source === 'ogg' && $target === 'webm')) {
+            return true;
+        }
+
+        // Future optimization: Add more lossless remux pairs here
+        // Example: MP3 in different containers, etc.
+
+        return false;
+    }
+
+    /**
+     * Get FFmpeg codec parameters for target format
+     *
+     * @param string $format Target format (mp3, wav, webm, ogg)
+     * @return string|null FFmpeg codec parameters, or null if format not supported
+     */
+    private static function getCodecParameters(string $format): ?string
+    {
+        return match (strtolower($format)) {
+            // MP3: VBR quality 2 (~190kbps, good quality)
+            'mp3' => '-codec:a libmp3lame -qscale:a 2',
+
+            // WAV: 16-bit PCM, uncompressed
+            'wav' => '-codec:a pcm_s16le',
+
+            // WebM: Opus codec, 128kbps (good balance)
+            // WHY: Opus is better than Vorbis for speech, modern format
+            'webm' => '-codec:a libopus -b:a 128k',
+
+            // OGG: Opus codec, 128kbps (same quality as WebM but in Ogg container)
+            // WHY: Opus is superior to Vorbis for speech, better compression
+            'ogg' => '-codec:a libopus -b:a 128k',
+
+            default => null
+        };
     }
 
     /**

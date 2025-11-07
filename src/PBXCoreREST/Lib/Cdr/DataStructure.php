@@ -349,6 +349,16 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'in' => 'query',
                 'example' => 'call-recording.mp3'
             ],
+            'format' => [
+                'type' => 'string',
+                'description' => 'rest_param_cdr_format',
+                'enum' => ['mp3', 'wav', 'webm', 'ogg'],
+                'default' => 'original',
+                'sanitize' => 'string',
+                'in' => 'query',
+                'example' => 'mp3',
+                'nullable' => true
+            ],
 
             // ========== DELETE PARAMETERS ==========
             'deleteRecording' => [
