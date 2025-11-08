@@ -140,18 +140,14 @@ class IVRConf extends AsteriskConfigClass
     {
         $result = 7;
         if (file_exists($filename)) {
-            $soxi = Util::which('soxi');
-            $awk  = Util::which('awk');
-            $grep = Util::which('grep');
-            Processes::mwExec(
-                "$soxi $filename 2>/dev/null | $grep Duration | $awk  '{ print $3}'",
-                $out
-            );
-            $time_str = implode($out);
-            preg_match_all('/^\d{2}:\d{2}:\d{2}.?\d{0,2}$/', $time_str, $matches, PREG_SET_ORDER, 0);
-            if (count($matches) > 0) {
-                $data   = date_parse($time_str);
-                $result += $data['minute'] * 60 + $data['second'];
+            $ffprobe = Util::which('ffprobe');
+            if (!empty($ffprobe)) {
+                $cmd = "$ffprobe -v quiet -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 '$filename' 2>/dev/null";
+                Processes::mwExec($cmd, $out);
+                $duration = (float)trim(implode('', $out));
+                if ($duration > 0) {
+                    $result = (int)ceil($duration);
+                }
             }
         }
 
