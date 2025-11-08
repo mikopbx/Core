@@ -118,16 +118,18 @@ class OutgoingContext extends AsteriskConfigClass
 
         /** @var OutgoingRoutingTable $rout */
         foreach ($routs as $rout) {
-            // Get the technology associated with the provider
-            $technology = $this->getTechByID($rout['providerid']);
+            // Create a copy of the routing data
+            $rout_data = $rout;
+
+            // Get the technology associated with the provider and populate endpoint_name if needed
+            $technology = $this->getTechByID($rout['providerid'], $rout_data);
 
             // Skip if technology is empty
             if (empty($technology)) {
                 continue;
             }
 
-            // Create a copy of the routing data and add technology information
-            $rout_data                       = $rout;
+            // Add technology information
             $rout_data['technology']         = $technology;
 
             // Generate the unique ID for the dialplan
@@ -153,17 +155,33 @@ class OutgoingContext extends AsteriskConfigClass
      * @param string $uniqueID The unique ID of the provider.
      * @return string The technology associated with the unique ID.
      */
-    public function getTechByID(string $uniqueID): string
+    public function getTechByID(string $uniqueID, array &$rout_data = []): string
     {
         $technology = '';
         $provider   = Providers::findFirstByUniqid($uniqueID);
         if ($provider !== null) {
             if ($provider->type === 'SIP') {
                 $account    = Sip::findFirst('disabled="0" AND uniqid = "' . $uniqueID . '"');
-                $technology = ($account === null) ? '' : SIPConf::getTechnology();
+                if ($account !== null) {
+                    $technology = SIPConf::getTechnology();
+                    // For inbound providers, we need to use username as endpoint name
+                    // Only set endpoint_name if username is not empty
+                    if ($account->registration_type === Sip::REG_TYPE_INBOUND && !empty($account->username)) {
+                        $rout_data['endpoint_name'] = $account->username;
+                    }
+                }
             } elseif ($provider->type === 'IAX') {
                 $account    = Iax::findFirst('disabled="0" AND uniqid = "' . $uniqueID . '"');
-                $technology = ($account === null) ? '' : 'IAX2';
+                if ($account !== null) {
+                    $technology = 'IAX2';
+                    // For inbound IAX providers, we need to use username as endpoint name
+                    // Only set endpoint_name if username is not empty
+                    if ($account->registration_type === Iax::REGISTRATION_TYPE_INBOUND && !empty($account->username)) {
+                        $rout_data['endpoint_name'] = $account->username;
+                    }
+                } else {
+                    $technology = '';
+                }
             }
         }
 
@@ -324,9 +342,13 @@ class OutgoingContext extends AsteriskConfigClass
     private function getDialCommand(array $rout): string
     {
         if ($rout['technology'] === IAXConf::TYPE_IAX2) {
-            $command = $rout['technology'] . '/' . $rout['providerid'] . '/${number}';
+            // For inbound IAX providers, use endpoint_name (username) instead of providerid
+            $endpointId = $rout['endpoint_name'] ?? $rout['providerid'];
+            $command = $rout['technology'] . '/' . $endpointId . '/${number}';
         } else {
-            $command = $rout['technology'] . '/${number}@' . $rout['providerid'];
+            // For inbound SIP providers, use endpoint_name (username) instead of providerid
+            $endpointId = $rout['endpoint_name'] ?? $rout['providerid'];
+            $command = $rout['technology'] . '/${number}@' . $endpointId;
         }
         return $command;
     }

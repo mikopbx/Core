@@ -459,6 +459,10 @@ return [
     'pr_ValidationProviderLoginInvalidCharacters' => 'Login can only contain Latin letters, numbers and symbols: _ - .',
     'pr_ValidationProviderLoginIsEmpty' => 'Enter the username for authorization at the provider',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'Login must be longer than one character',
+
+    // MO - Models validation
+    'mo_IaxUsernameInvalidCharacters' => 'IAX username for inbound registration can only contain Latin letters, numbers and symbols: _ - .',
+    'mo_SipUsernameInvalidCharacters' => 'SIP username for inbound registration can only contain Latin letters, numbers and symbols: _ - .',
     'pr_ValidationProviderNameIsEmpty' => 'Enter the provider name',
     'pr_ValidationProviderPasswordEmpty' => 'Enter password for authorization',
     'pr_ValidationProviderPasswordTooShort' => 'Password must contain at least 8 characters',

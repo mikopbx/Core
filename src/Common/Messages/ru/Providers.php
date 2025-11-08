@@ -449,6 +449,10 @@ return [
     'pr_ValidationProviderLoginInvalidCharacters' => 'Логин может содержать только латинские буквы, цифры и символы: _ - .',
     'pr_ValidationProviderLoginIsEmpty' => 'Введите логин для авторизации у провайдера',
     'pr_ValidationProviderLoginNotSingleSimbol' => 'Логин должен быть длиннее одного символа',
+
+    // MO - Models validation
+    'mo_IaxUsernameInvalidCharacters' => 'Имя пользователя IAX для входящей регистрации может содержать только латинские буквы, цифры и символы: _ - .',
+    'mo_SipUsernameInvalidCharacters' => 'Имя пользователя SIP для входящей регистрации может содержать только латинские буквы, цифры и символы: _ - .',
     'pr_ValidationProviderNameIsEmpty' => 'Введите название провайдера',
     'pr_ValidationProviderPasswordEmpty' => 'Введите пароль для авторизации',
     'pr_ValidationProviderPasswordTooShort' => 'Пароль должен содержать минимум 8 символов',

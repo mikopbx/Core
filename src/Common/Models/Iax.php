@@ -23,6 +23,7 @@ namespace MikoPBX\Common\Models;
 use MikoPBX\Core\System\PasswordService;
 use Phalcon\Filter\Validation;
 use Phalcon\Filter\Validation\Validator\Uniqueness as UniquenessValidator;
+use Phalcon\Filter\Validation\Validator\Regex as RegexValidator;
 use Phalcon\Mvc\Model\Relation;
 
 /**
@@ -213,6 +214,19 @@ class Iax extends ModelsBase
                 ]
             )
         );
+
+        // For inbound providers, validate username contains only allowed characters
+        if ($this->registration_type === self::REGISTRATION_TYPE_INBOUND && !empty($this->username)) {
+            $validation->add(
+                'username',
+                new RegexValidator(
+                    [
+                        'pattern' => '/^[a-zA-Z0-9._-]+$/',
+                        'message' => $this->t('mo_IaxUsernameInvalidCharacters'),
+                    ]
+                )
+            );
+        }
 
         return $this->validate($validation);
     }

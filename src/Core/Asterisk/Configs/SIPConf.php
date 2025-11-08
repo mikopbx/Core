@@ -260,11 +260,17 @@ class SIPConf extends AsteriskConfigClass
         foreach ($this->data_providers as $provider) {
             $contextsData = $this->contexts_data[$provider['context_id']];
             if (count($contextsData) === 1) {
-                $conf .= IncomingContexts::generate($provider['uniqid'], $provider['username']);
+                // For inbound providers, use username as provider ID to match endpoint name
+                // Fallback to uniqid if username is empty
+                $providerId = ($provider['registration_type'] === Sip::REG_TYPE_INBOUND && !empty($provider['username']))
+                    ? $provider['username']
+                    : $provider['uniqid'];
+                $conf .= IncomingContexts::generate($providerId, $provider['username'], $provider['uniqid']);
                 
                 // Generate CallerID/DID processing context if configured
                 if ($this->needsCallerIdDidProcessing($provider) && !in_array($provider['uniqid'], $processedProviders, true)) {
-                    $processor = new CallerIdDidProcessor($provider['uniqid'], $provider);
+                    // Use the same providerId as for main incoming context
+                    $processor = new CallerIdDidProcessor($providerId, $provider);
                     $conf .= $processor->generateIncomingProcessingContext();
                     $processedProviders[] = $provider['uniqid'];
                 }
@@ -1620,10 +1626,12 @@ class SIPConf extends AsteriskConfigClass
             $contactUser = $fromuser;
         }
         $language   = PbxSettings::getValueByKey(PbxSettings::PBX_LANGUAGE);
-        if (
-            $provider['registration_type'] === Sip::REG_TYPE_INBOUND
-            || count($this->contexts_data[$provider['context_id']]) === 1
-        ) {
+        if ($provider['registration_type'] === Sip::REG_TYPE_INBOUND) {
+            // For inbound providers, use username to match the endpoint/AOR name
+            // Fallback to uniqid if username is empty
+            $context_id = !empty($provider['username']) ? $provider['username'] : $provider['uniqid'];
+            $context = "$context_id-incoming";
+        } elseif (count($this->contexts_data[$provider['context_id']]) === 1) {
             $context_id = $provider['uniqid'];
             $context = "$context_id-incoming";
         } else {

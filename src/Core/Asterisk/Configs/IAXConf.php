@@ -54,7 +54,12 @@ class IAXConf extends AsteriskConfigClass
         $conf      = '';
         $providers = $this->getProviders();
         foreach ($providers as $provider) {
-            $conf .= IncomingContexts::generate($provider['uniqid']);
+            // For inbound IAX providers, use username as provider ID to match peer name
+            // Fallback to uniqid if username is empty
+            $providerId = ($provider['registration_type'] === Iax::REGISTRATION_TYPE_INBOUND && !empty($provider['username']))
+                ? $provider['username']
+                : $provider['uniqid'];
+            $conf .= IncomingContexts::generate($providerId, $provider['username'], $provider['uniqid']);
         }
 
         return $conf;
@@ -127,10 +132,16 @@ class IAXConf extends AsteriskConfigClass
             }
             
             // Base options for all types
+            // For inbound providers, use username for context to match peer name
+            // Fallback to uniqid if username is empty
+            $contextId = ($registrationType === Iax::REGISTRATION_TYPE_INBOUND && !empty($provider['username']))
+                ? $provider['username']
+                : $provider['uniqid'];
+
             $options = [
                 'type' => 'friend',
                 'auth' => 'plaintext',
-                'context' => "{$provider['uniqid']}-incoming",
+                'context' => "{$contextId}-incoming",
                 'language' => $lang,
                 'qualify' => 2000,
                 'transfer' => 'mediaonly',
@@ -147,15 +158,14 @@ class IAXConf extends AsteriskConfigClass
                     [$host, ] = explode(':', $provider['host'] . ':');
                     $options['host'] = $host;
                     // Port is not used for inbound connections
-                    
+
                     // In Docker environment, add fail2ban ACL reference
                     if (Util::isDocker()) {
                         // IAX doesn't support multiple ACLs like PJSIP, so we need to use permit/deny
                         // The fail2ban_iax_dynamic_acl.conf will be included in the general section
                     }
-                    
-                    // Override username to use uniqid for incoming auth
-                    $options['username'] = $provider['uniqid'];
+
+                    // For inbound providers, keep username as-is to match peer name and context
                     break;
                     
                 case Iax::REGISTRATION_TYPE_NONE:
@@ -216,9 +226,15 @@ class IAXConf extends AsteriskConfigClass
             }
             
             // Generate provider configuration
+            // For inbound providers, use username as peer name to match the registration
+            // Fallback to uniqid if username is empty
+            $peerName = ($registrationType === Iax::REGISTRATION_TYPE_INBOUND && !empty($provider['username']))
+                ? $provider['username']
+                : $provider['uniqid'];
+
             $prov_config .= "; Provider: {$provider['description']}" . PHP_EOL;
-            $prov_config .= "[{$provider['uniqid']}];" . PHP_EOL;
-            $prov_config .= "setvar=contextID={$provider['uniqid']}-incoming" . PHP_EOL;
+            $prov_config .= "[{$peerName}];" . PHP_EOL;
+            $prov_config .= "setvar=contextID={$contextId}-incoming" . PHP_EOL;
 
             // Apply manual attributes override (includes disallow=all before codecs)
             $prov_config .= Util::overrideConfigurationArray($options, $manual_attributes, ' ');

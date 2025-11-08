@@ -150,8 +150,8 @@ class ProviderIAX extends ProviderBase {
         $('#username').on('input', function() {
             const $this = $(this);
             const value = $this.val();
-            // Allow only alphanumeric, dash and underscore
-            const cleanValue = value.replace(/[^a-zA-Z0-9_-]/g, '');
+            // Allow only alphanumeric, dash, underscore and dot
+            const cleanValue = value.replace(/[^a-zA-Z0-9._-]/g, '');
             if (value !== cleanValue) {
                 $this.val(cleanValue);
                 // Show warning about invalid characters
@@ -221,7 +221,7 @@ class ProviderIAX extends ProviderBase {
                     },
                     {
                         type: 'regExp',
-                        value: '/^[a-zA-Z0-9_-]+$/',
+                        value: '/^[a-zA-Z0-9._-]+$/',
                         prompt: globalTranslate.pr_ValidationProviderLoginInvalidCharacters,
                     },
                 ],
@@ -255,7 +255,7 @@ class ProviderIAX extends ProviderBase {
                     },
                     {
                         type: 'regExp',
-                        value: '/^[a-zA-Z0-9_-]+$/',
+                        value: '/^[a-zA-Z0-9._-]+$/',
                         prompt: globalTranslate.pr_ValidationProviderLoginInvalidCharacters,
                     },
                 ],
