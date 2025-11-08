@@ -34,8 +34,10 @@ class VmToolsConf extends SystemConfigClass
 {
     public const string PROC_NAME = 'vm-tools';
     public const string VMWARE = 'vmware';
+    public const string KVM = 'kvm';
+    public const string QEMU = 'qemu';
 
-    private $confObject = null;
+    private ?object $confObject = null;
 
     /**
      * Start the service monitored by Monit through a configuration object.
@@ -50,12 +52,12 @@ class VmToolsConf extends SystemConfigClass
     public function start(): bool
     {
         $result = true;
-        if(System::isBooting()) {
+        if (System::isBooting()) {
             $this->configure();
             if ($this->confObject) {
                 $this->confObject->start();
             }
-        }else{
+        } else {
             $result = $this->reStart();
         }
         return $result;
@@ -95,10 +97,12 @@ class VmToolsConf extends SystemConfigClass
         }
         $result = true;
         $vars = [
-            self::VMWARE => VMWareToolsConf::class
+            self::VMWARE => VMWareToolsConf::class,
+            self::KVM => QEMUGuestAgentConf::class,
+            self::QEMU => QEMUGuestAgentConf::class,
         ];
-        $vendor = $this->getCpuVendor();
-        $className = $vars[$vendor] ?? '';
+        $hypervisor = $this->getHypervisor();
+        $className = $vars[$hypervisor] ?? '';
         if (class_exists($className)) {
             $this->confObject = new $className();
             $result = $this->confObject->configure();
@@ -125,11 +129,11 @@ class VmToolsConf extends SystemConfigClass
             $this->saveFileContent($confPath, '');
             return true;
         }
-        
-        if(!$this->confObject){
+
+        if (!$this->confObject) {
             $this->configure();
         }
-        if(!$this->confObject){
+        if (!$this->confObject) {
             return false;
         }
         $confPath = $this->getMainMonitConfFile();
@@ -139,16 +143,85 @@ class VmToolsConf extends SystemConfigClass
     }
 
     /**
-     * Get the CPU vendor.
+     * Detect the hypervisor type using a cascade of detection methods.
      *
-     * @return string
+     * This method implements a robust, multi-stage detection strategy:
+     * 1. systemd-detect-virt (most reliable, standard tool)
+     * 2. lscpu "Hypervisor vendor" field
+     * 3. virtio device presence check (/dev/vd*)
+     * 4. Fallback to CPU vendor detection (legacy method)
+     *
+     * @return string Hypervisor type: 'vmware', 'kvm', 'qemu', or empty string if none detected.
+     */
+    private function getHypervisor(): string
+    {
+        // Priority 1: systemd-detect-virt (most accurate)
+        $detectVirtPath = Util::which('systemd-detect-virt');
+        if (!empty($detectVirtPath)) {
+            $result = shell_exec("$detectVirtPath 2>/dev/null");
+            $hypervisor = strtolower(trim($result ?? ''));
+
+            // Map common detection results
+            if (in_array($hypervisor, ['kvm', 'qemu'])) {
+                return self::KVM;
+            }
+            if ($hypervisor === 'vmware') {
+                return self::VMWARE;
+            }
+            if ($hypervisor === 'none' || empty($hypervisor)) {
+                // Physical machine, no hypervisor
+                return '';
+            }
+        }
+
+        // Priority 2: lscpu Hypervisor vendor
+        $lsCpuPath = Util::which('lscpu');
+        $grepPath = Util::which('grep');
+        $awk = Util::which('awk');
+        if (!empty($lsCpuPath) && !empty($grepPath) && !empty($awk)) {
+            $result = shell_exec("$lsCpuPath | $grepPath 'Hypervisor vendor' | $awk '{print \$3}' 2>/dev/null");
+            $hypervisor = strtolower(trim($result ?? ''));
+
+            if ($hypervisor === 'kvm') {
+                return self::KVM;
+            }
+            if ($hypervisor === 'vmware') {
+                return self::VMWARE;
+            }
+        }
+
+        // Priority 3: Check for virtio devices (typical for KVM)
+        $virtioDevices = glob('/dev/vd*');
+        if (is_array($virtioDevices) && !empty($virtioDevices)) {
+            // Virtio devices present, likely KVM
+            return self::KVM;
+        }
+
+        // Priority 4: Fallback to CPU vendor (legacy method for VMware)
+        $cpuVendor = $this->getCpuVendor();
+        if ($cpuVendor === 'vmware') {
+            return self::VMWARE;
+        }
+
+        // No hypervisor detected (physical machine or unsupported hypervisor)
+        return '';
+    }
+
+    /**
+     * Get the CPU vendor (legacy detection method).
+     *
+     * This method is kept for backward compatibility and as a fallback
+     * for the getHypervisor() method. It reads the CPU vendor string
+     * which may contain 'VMware' for VMware virtual machines.
+     *
+     * @return string CPU vendor string in lowercase (e.g., 'vmware', 'genuineintel', 'authenticamd').
      */
     private function getCpuVendor(): string
     {
         $lsCpuPath = Util::which('lscpu');
         $grepPath = Util::which('grep');
         $awk = Util::which('awk');
-        $result = shell_exec("$lsCpuPath | $grepPath vendor | $awk -F ' ' '{ print $3}'");
-        return strtolower(trim($result??''));
+        $result = shell_exec("$lsCpuPath | $grepPath vendor | $awk -F ' ' '{ print \$3}'");
+        return strtolower(trim($result ?? ''));
     }
 }
