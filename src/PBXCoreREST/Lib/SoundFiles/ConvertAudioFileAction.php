@@ -151,9 +151,11 @@ class ConvertAudioFileAction extends Injectable
         Processes::mwExec($cmd, $out);
         $result_str = implode('', $out);
 
-        // Convert wav file to mp3 format
-        $lamePath = Util::which('lame');
-        Processes::mwExec("$lamePath -b 16 --silent '$n_filename' '$n_filename_mp3'", $out);
+        // Convert wav file to mp3 format using ffmpeg
+        $cmd_mp3 = "$ffmpegPath -i " . escapeshellarg($n_filename) .
+                   " -codec:a libmp3lame -b:a 16k -y " .
+                   escapeshellarg($n_filename_mp3);
+        Processes::mwExec($cmd_mp3, $out);
         $result_mp3 = implode('', $out);
 
         // Remove temporary file

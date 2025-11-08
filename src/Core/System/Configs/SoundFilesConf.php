@@ -326,6 +326,12 @@ class SoundFilesConf extends SystemConfigClass
                     $success = false;
                 } else {
                     SystemMessages::sysLogMsg(__METHOD__, "Installed sound: $destFileName (language: $lang, type: $moduleType)", LOG_DEBUG);
+
+                    // Convert to additional formats using ffmpeg
+                    if (!self::convertSoundFileFormats($destFile)) {
+                        SystemMessages::sysLogMsg(__METHOD__, "Failed to convert formats for: $destFileName", LOG_WARNING);
+                        $success = false;
+                    }
                 }
             }
 
@@ -355,6 +361,12 @@ class SoundFilesConf extends SystemConfigClass
                         $success = false;
                     } else {
                         SystemMessages::sysLogMsg(__METHOD__, "Installed sound: $subDirName/$destFileName (language: $lang, type: $moduleType)", LOG_DEBUG);
+
+                        // Convert to additional formats using ffmpeg
+                        if (!self::convertSoundFileFormats($destFile)) {
+                            SystemMessages::sysLogMsg(__METHOD__, "Failed to convert formats for: $subDirName/$destFileName", LOG_WARNING);
+                            $success = false;
+                        }
                     }
                 }
             }
@@ -368,11 +380,95 @@ class SoundFilesConf extends SystemConfigClass
     }
 
     /**
+     * Convert sound file to multiple formats using ffmpeg
+     *
+     * Creates the following formats from source file:
+     * - ulaw (G.711 μ-law)
+     * - alaw (G.711 A-law)
+     * - gsm (GSM 06.10)
+     * - g722 (G.722 wideband)
+     * - sln (signed linear PCM)
+     *
+     * @param string $sourceFile Source sound file path (usually .wav or .mp3)
+     * @return bool True if all conversions successful
+     */
+    private static function convertSoundFileFormats(string $sourceFile): bool
+    {
+        $ffmpegPath = Util::which('ffmpeg');
+        if (empty($ffmpegPath)) {
+            SystemMessages::sysLogMsg(__METHOD__, "ffmpeg not found, skipping format conversion", LOG_WARNING);
+            return false;
+        }
+
+        // Get base path without extension
+        $pathInfo = pathinfo($sourceFile);
+        $basePath = $pathInfo['dirname'] . '/' . $pathInfo['filename'];
+        $sourceExtension = $pathInfo['extension'] ?? '';
+
+        // Skip conversion if source file is already in one of target formats
+        if (in_array(strtolower($sourceExtension), ['ulaw', 'alaw', 'gsm', 'g722', 'sln'], true)) {
+            SystemMessages::sysLogMsg(__METHOD__, "Source file is already in target format, skipping: $sourceFile", LOG_DEBUG);
+            return true;
+        }
+
+        $formats = [
+            'ulaw' => '-ar 8000 -ac 1 -f mulaw -acodec pcm_mulaw',
+            'alaw' => '-ar 8000 -ac 1 -f alaw -acodec pcm_alaw',
+            'gsm'  => '-ar 8000 -ac 1 -f gsm -acodec gsm',
+            'g722' => '-ar 16000 -ac 1 -acodec g722',
+            'sln'  => '-ar 8000 -ac 1 -f s16le -acodec pcm_s16le',
+        ];
+
+        $success = true;
+        $source = escapeshellarg($sourceFile);
+
+        foreach ($formats as $ext => $ffmpegOptions) {
+            $destFile = "$basePath.$ext";
+            $dest = escapeshellarg($destFile);
+
+            // Skip if target file already exists
+            if (file_exists($destFile)) {
+                SystemMessages::sysLogMsg(__METHOD__, "Target format already exists: $destFile", LOG_DEBUG);
+                continue;
+            }
+
+            // Build ffmpeg command
+            $command = "$ffmpegPath -i $source $ffmpegOptions -y $dest 2>&1";
+            $exitCode = Processes::mwExec($command, $output);
+
+            if ($exitCode === 0) {
+                SystemMessages::sysLogMsg(__METHOD__, "Converted to $ext format: $destFile", LOG_DEBUG);
+            } else {
+                // Check if codec is not supported (not a critical error)
+                $outputText = implode("\n", $output);
+                if (strpos($outputText, "Unknown encoder") !== false) {
+                    SystemMessages::sysLogMsg(
+                        __METHOD__,
+                        "Skipping $ext format: codec not supported in this ffmpeg build",
+                        LOG_DEBUG
+                    );
+                } else {
+                    SystemMessages::sysLogMsg(
+                        __METHOD__,
+                        "Failed to convert to $ext format. Exit code: $exitCode. Output: $outputText",
+                        LOG_WARNING
+                    );
+                    $success = false;
+                }
+            }
+        }
+
+        return $success;
+    }
+
+    /**
      * Remove module sound files from system sounds directory
      *
      * Handles both module types:
      * 1. Language Pack: Removes entire language directory
      * 2. Feature module: Removes only prefixed files (modulename-*)
+     *
+     * For Feature modules, removes all format variants (wav, ulaw, alaw, gsm, g722, sln, mp3)
      *
      * @param string $moduleUniqueID Module unique identifier
      * @return bool True if successful
@@ -416,23 +512,37 @@ class SoundFilesConf extends SystemConfigClass
             return false;
 
         } else {
-            // Feature module: Remove only prefixed files
+            // Feature module: Remove only prefixed files (all format variants)
             $prefix = strtolower($moduleUniqueID) . '-';
             $findPath = Util::which('find');
             $soundsDir = escapeshellarg($systemSoundsDir);
-            $pattern = escapeshellarg($prefix . '*');
 
-            // Find all sound files with module prefix
-            $command = "$findPath $soundsDir -type f -name $pattern -delete";
-            $exitCode = Processes::mwExec($command, $output);
+            // Remove all format variants (wav, ulaw, alaw, gsm, g722, sln, mp3)
+            $extensions = ['wav', 'ulaw', 'alaw', 'gsm', 'g722', 'sln', 'mp3'];
+            $allSuccess = true;
 
-            if ($exitCode === 0) {
-                SystemMessages::sysLogMsg(__METHOD__, "Feature module $moduleUniqueID sound files removed successfully", LOG_INFO);
-                return true;
+            foreach ($extensions as $ext) {
+                $pattern = escapeshellarg($prefix . "*.$ext");
+                $command = "$findPath $soundsDir -type f -name $pattern -delete";
+                $exitCode = Processes::mwExec($command, $output);
+
+                if ($exitCode !== 0) {
+                    SystemMessages::sysLogMsg(
+                        __METHOD__,
+                        "Failed to remove $ext files for module $moduleUniqueID. Exit code: $exitCode",
+                        LOG_WARNING
+                    );
+                    $allSuccess = false;
+                }
             }
 
-            SystemMessages::sysLogMsg(__METHOD__, "Failed to remove Feature module $moduleUniqueID sound files. Exit code: $exitCode", LOG_WARNING);
-            return false;
+            if ($allSuccess) {
+                SystemMessages::sysLogMsg(__METHOD__, "Feature module $moduleUniqueID sound files (all formats) removed successfully", LOG_INFO);
+            } else {
+                SystemMessages::sysLogMsg(__METHOD__, "Some sound files for module $moduleUniqueID failed to be removed", LOG_WARNING);
+            }
+
+            return $allSuccess;
         }
     }
 
