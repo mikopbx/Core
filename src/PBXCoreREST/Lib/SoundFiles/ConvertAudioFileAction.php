@@ -126,21 +126,29 @@ class ConvertAudioFileAction extends Injectable
 
         // Convert file to wav format
         $tmp_filename = escapeshellcmd($tmp_filename);
-        $soxPath = Util::which('sox');
-        $soxIPath = Util::which('soxi');
-        $busyBoxPath = Util::which('busybox');
+        $ffmpegPath = Util::which('ffmpeg');
+        $ffprobePath = Util::which('ffprobe');
 
-        // Pre-conversion to wav step 1 - check if MPEG
-        if (Processes::mwExec("$soxIPath $tmp_filename | $busyBoxPath grep MPEG") === 0) {
-            Processes::mwExec("$soxPath $tmp_filename $tmp_filename.wav", $out);
+        // Pre-conversion to wav step 1 - check if MPEG (mp3/mp2/mp1)
+        $output = [];
+        $cmd = "$ffprobePath -v error -select_streams a:0 -show_entries stream=codec_name -of default=noprint_wrappers=1:nokey=1 " . escapeshellarg($tmp_filename);
+        Processes::mwExec($cmd, $output);
+        $codec = trim($output[0] ?? '');
+
+        if (in_array($codec, ['mp3', 'mp2', 'mp1'], true)) {
+            // Convert MPEG to WAV
+            Processes::mwExec("$ffmpegPath -i " . escapeshellarg($tmp_filename) . " -y " . escapeshellarg("$tmp_filename.wav"), $out);
             unlink($tmp_filename);
             $tmp_filename = "$tmp_filename.wav";
         }
 
         $n_filename = escapeshellcmd($n_filename);
 
-        // Pre-conversion to wav step 2 - normalize audio
-        Processes::mwExec("$soxPath -v 0.99 -G '$tmp_filename' -c 1 -r 8000 -b 16 '$n_filename'", $out);
+        // Pre-conversion to wav step 2 - normalize audio using loudnorm
+        $cmd = "$ffmpegPath -i " . escapeshellarg($tmp_filename) .
+               " -af 'loudnorm=I=-16:TP=-1.5:LRA=11' -ac 1 -ar 8000 -acodec pcm_s16le -y " .
+               escapeshellarg($n_filename);
+        Processes::mwExec($cmd, $out);
         $result_str = implode('', $out);
 
         // Convert wav file to mp3 format

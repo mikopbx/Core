@@ -93,7 +93,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
     
     /**
-     * Get audio file duration using sox
+     * Get audio file duration using ffprobe (with fallback to soxi)
      * @param string $path Path to audio file
      * @return string Duration in MM:SS format
      */
@@ -102,18 +102,36 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         if (!file_exists($path)) {
             return '00:00';
         }
-        
-        // Use sox to get duration
-        $output = [];
-        $result = Processes::mwExec("soxi -D '$path' 2>/dev/null", $output);
-        
-        if ($result === 0 && !empty($output[0])) {
-            $seconds = round((float)trim($output[0]));
-            $minutes = floor($seconds / 60);
-            $seconds = $seconds % 60;
-            return sprintf('%02d:%02d', $minutes, $seconds);
+
+        // Try ffprobe first (universal, works with all formats)
+        $ffprobe = Util::which('ffprobe');
+        if (!empty($ffprobe)) {
+            $output = [];
+            $cmd = "$ffprobe -v quiet -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 '$path' 2>/dev/null";
+            $result = Processes::mwExec($cmd, $output);
+
+            if ($result === 0 && !empty($output[0])) {
+                $seconds = round((float)trim($output[0]));
+                $minutes = floor($seconds / 60);
+                $seconds = $seconds % 60;
+                return sprintf('%02d:%02d', $minutes, $seconds);
+            }
         }
-        
+
+        // Fallback to sox if available (faster for WAV)
+        $soxi = Util::which('soxi');
+        if (!empty($soxi)) {
+            $output = [];
+            $result = Processes::mwExec("$soxi -D '$path' 2>/dev/null", $output);
+
+            if ($result === 0 && !empty($output[0])) {
+                $seconds = round((float)trim($output[0]));
+                $minutes = floor($seconds / 60);
+                $seconds = $seconds % 60;
+                return sprintf('%02d:%02d', $minutes, $seconds);
+            }
+        }
+
         return '00:00';
     }
 

@@ -105,23 +105,20 @@ log_message "info" "Starting conversion: $BASENAME"
 if [ -f "$SRC_IN" ] && [ -f "$SRC_OUT" ]; then
     log_message "info" "Merging split audio files (stereo mode)"
 
-    # Use sox to merge external (left) and internal (right) channels
-    if command -v sox > /dev/null 2>&1; then
-        /usr/bin/sox -M "$SRC_OUT" "$SRC_IN" "$TEMP_MERGED"
-        MERGE_RESULT=$?
+    # Use ffmpeg to merge external (left) and internal (right) channels
+    ffmpeg -i "$SRC_OUT" -i "$SRC_IN" \
+        -filter_complex "[0:a][1:a]amerge=inputs=2[a]" \
+        -map "[a]" "$TEMP_MERGED" -y > /dev/null 2>&1
+    MERGE_RESULT=$?
 
-        if [ $MERGE_RESULT -eq 0 ]; then
-            # Use merged file as source
-            SRC_FILE="$TEMP_MERGED"
-            log_message "info" "Stereo merge successful"
-        else
-            log_message "error" "Failed to merge stereo files with sox"
-            rm -f "$TEMP_MERGED"
-            exit 4
-        fi
+    if [ $MERGE_RESULT -eq 0 ]; then
+        # Use merged file as source
+        SRC_FILE="$TEMP_MERGED"
+        log_message "info" "Stereo merge successful"
     else
-        log_message "warn" "sox not available, using external channel only"
-        SRC_FILE="$SRC_OUT"
+        log_message "error" "Failed to merge stereo files with ffmpeg"
+        rm -f "$TEMP_MERGED"
+        exit 4
     fi
 elif [ ! -f "$SRC_FILE" ]; then
     log_message "error" "Source file not found: $SRC_FILE"
