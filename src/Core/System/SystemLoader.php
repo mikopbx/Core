@@ -356,9 +356,6 @@ class SystemLoader extends Injectable
             $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
         }
 
-        // Sound files initialization moved to WorkerSoundFilesInit (background worker)
-        // This prevents startup delays and handles async module sound conversion
-
         // Apply user-created custom files (after Redis is started)
         $this->echoStartMsg(' - Applying user-created custom files...');
         if (!$this->isRecoveryMode) {
