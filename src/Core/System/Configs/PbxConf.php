@@ -24,7 +24,7 @@ use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\CdrDb;
-use MikoPBX\Core\Asterisk\Configs\{AclConf,
+use MikoPBX\Core\Asterisk\Configs\{
     AriConf,
     AsteriskConf,
     AsteriskConfigClass,
@@ -32,7 +32,6 @@ use MikoPBX\Core\Asterisk\Configs\{AclConf,
     ConferenceConf,
     ExtensionsConf,
     FeaturesConf,
-    HttpConf,
     IAXConf,
     IndicationConf,
     ManagerConf,
@@ -109,11 +108,13 @@ class PbxConf extends SystemConfigClass
         $configClassObj->hookModulesMethod(AsteriskConfigInterface::GENERATE_CONFIG);
 
         ExtensionsConf::reload();
-        
+
         if (System::isBooting()) {
             $message = '   |- reload dialplan...';
+            $startTime = microtime(true);
             SystemMessages::echoWithSyslog($message);
-            SystemMessages::echoResult($message);
+            $elapsedTime = round(microtime(true) - $startTime, 2);
+            SystemMessages::echoResultMsgWithTime($message, SystemMessages::RESULT_DONE, $elapsedTime);
         }else{
             $this->stop();
         }

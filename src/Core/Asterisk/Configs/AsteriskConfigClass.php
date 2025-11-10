@@ -48,6 +48,13 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
     private string $stageMessage = '';
 
     /**
+     * Time when the current stage started (microtime)
+     *
+     * @var float
+     */
+    private float $stageStartTime = 0.0;
+
+    /**
      * Easy way to get or set the PbxSettings values
      *
      * @var MikoPBXConfig
@@ -188,6 +195,7 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
         if ($this->booting === true && !empty($this->description)) {
             $this->stageMessage = "   |- $this->description...";
             SystemMessages::echoWithSyslog($this->stageMessage);  // Output the message and log it in syslog
+            $this->stageStartTime = microtime(true);
         }
     }
 
@@ -214,9 +222,15 @@ class AsteriskConfigClass extends Injectable implements AsteriskConfigInterface
     protected function echoDone(): void
     {
         if ($this->booting === true && !empty($this->description)) {
-            // Output the completion message
-            SystemMessages::echoResult($this->stageMessage);
+            // Calculate elapsed time
+            $elapsedTime = 0.0;
+            if ($this->stageStartTime > 0) {
+                $elapsedTime = round(microtime(true) - $this->stageStartTime, 2);
+            }
+            // Output the completion message with timing
+            SystemMessages::echoResultMsgWithTime($this->stageMessage, SystemMessages::RESULT_DONE, $elapsedTime);
             $this->stageMessage = '';
+            $this->stageStartTime = 0.0;
         }
     }
 
