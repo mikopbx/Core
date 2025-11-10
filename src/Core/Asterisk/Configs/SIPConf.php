@@ -1799,12 +1799,10 @@ class SIPConf extends AsteriskConfigClass
      */
     public static function getIncomingContextId(string $name, string $port): string
     {
-        if (filter_var($name, FILTER_VALIDATE_IP)) {
-            $nameNew = $name;
-        } else {
-            $nameNew = gethostbyname($name);
-        }
-        return preg_replace("/[^a-z\d]/iu", '', $nameNew . $port) . '-incoming';
+        // Use hostname directly without DNS resolution to avoid blocking during config generation
+        // DNS resolution can take several seconds per unreachable host, causing slow startup
+        // The context ID only needs to be unique and stable, not IP-based
+        return preg_replace("/[^a-z\d]/iu", '', $name . $port) . '-incoming';
     }
 
 
