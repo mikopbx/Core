@@ -242,7 +242,8 @@ class CertificateValidator
         $privateKeyDetails = openssl_pkey_get_details($keyResource);
 
         // Compare public keys
-        if ($publicKeyDetails['key'] !== $privateKeyDetails['key']) {
+        if ($publicKeyDetails === false || $privateKeyDetails === false ||
+            $publicKeyDetails['key'] !== $privateKeyDetails['key']) {
             $result['valid'] = false;
             $result['errors'][] = ['key' => 'cert_CertificateAndPrivateKeyDoNotMatch', 'params' => []];
         }
@@ -271,7 +272,8 @@ class CertificateValidator
         }
 
         $certInfo = openssl_x509_parse($certResource);
-        openssl_x509_free($certResource);
+        // Resource will be automatically freed by PHP garbage collector (PHP 8+)
+        // openssl_x509_free() is deprecated in PHP 8.4
 
         return $certInfo !== false ? $certInfo : null;
     }
