@@ -20,6 +20,7 @@
 namespace MikoPBX\PBXCoreREST\Lib\SoundFiles;
 
 use MikoPBX\Common\Models\SoundFiles;
+use MikoPBX\Core\System\Configs\SoundFilesConf;
 use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
@@ -93,7 +94,10 @@ class ConvertAudioFileAction extends Injectable
     }
 
     /**
-     * Convert the audio file to MP3 format using Asterisk tools
+     * Convert the audio file to all Asterisk formats (ulaw, alaw, gsm, g722, sln) plus WAV and MP3
+     *
+     * Uses SoundFilesConf::convertAudioFile() for consistent conversion logic
+     * with normalization and caching support.
      *
      * @param string $filename The path of the audio file to be converted
      * @return PBXApiResult An object containing the result of the API call
@@ -110,71 +114,77 @@ class ConvertAudioFileAction extends Injectable
             return $res;
         }
 
-        $out = [];
-        $tmp_filename = '/tmp/' . time() . "_" . basename($filename);
+        // Get base path and name for output files
+        $pathInfo = pathinfo($filename);
+        $outputDir = $pathInfo['dirname'];
+        $baseName = Util::trimExtensionForFile($filename);
+        $baseName = basename($baseName);
 
-        if (false === copy($filename, $tmp_filename)) {
+        // Convert to all Asterisk formats + WAV + MP3 (same as modules do)
+        $targetFormats = ['wav', 'mp3', 'ulaw', 'alaw', 'gsm', 'g722', 'sln'];
+
+        // Use unified converter with normalization
+        $result = SoundFilesConf::convertAudioFile(
+            $filename,
+            $targetFormats,
+            [
+                'normalize' => true,
+                'use_cache' => false,
+                'force' => true,
+                'output_dir' => $outputDir,
+                'base_name' => $baseName,
+                'sample_rate' => 8000,
+                'bitrate' => '16k',
+            ]
+        );
+
+        // Handle conversion result
+        if (!$result['success']) {
             $res->success = false;
-            $res->messages['error'][] = "Unable to create temporary file '$tmp_filename'.";
+            $res->messages['error'][] = $result['error'] ?? 'Audio conversion failed';
+
+            // Add format-specific errors if available
+            foreach ($result['formats'] as $format => $formatResult) {
+                if ($formatResult['status'] === 'failed' && isset($formatResult['error'])) {
+                    $res->messages['error'][] = "Failed to convert to $format: {$formatResult['error']}";
+                }
+            }
+
             return $res;
         }
 
-        // Change extension to wav and mp3
-        $trimmedFileName = Util::trimExtensionForFile($filename);
-        $n_filename = $trimmedFileName . ".wav";
-        $n_filename_mp3 = $trimmedFileName . ".mp3";
-
-        // Convert file to wav format
-        $tmp_filename = escapeshellcmd($tmp_filename);
-        $ffmpegPath = Util::which('ffmpeg');
-        $ffprobePath = Util::which('ffprobe');
-
-        // Pre-conversion to wav step 1 - check if MPEG (mp3/mp2/mp1)
-        $output = [];
-        $cmd = "$ffprobePath -v error -select_streams a:0 -show_entries stream=codec_name -of default=noprint_wrappers=1:nokey=1 " . escapeshellarg($tmp_filename);
-        Processes::mwExec($cmd, $output);
-        $codec = trim($output[0] ?? '');
-
-        if (in_array($codec, ['mp3', 'mp2', 'mp1'], true)) {
-            // Convert MPEG to WAV
-            Processes::mwExec("$ffmpegPath -i " . escapeshellarg($tmp_filename) . " -y " . escapeshellarg("$tmp_filename.wav"), $out);
-            unlink($tmp_filename);
-            $tmp_filename = "$tmp_filename.wav";
-        }
-
-        $n_filename = escapeshellcmd($n_filename);
-
-        // Pre-conversion to wav step 2 - normalize audio using loudnorm
-        $cmd = "$ffmpegPath -i " . escapeshellarg($tmp_filename) .
-               " -af 'loudnorm=I=-16:TP=-1.5:LRA=11' -ac 1 -ar 8000 -acodec pcm_s16le -y " .
-               escapeshellarg($n_filename);
-        Processes::mwExec($cmd, $out);
-        $result_str = implode('', $out);
-
-        // Convert wav file to mp3 format using ffmpeg
-        $cmd_mp3 = "$ffmpegPath -i " . escapeshellarg($n_filename) .
-                   " -codec:a libmp3lame -b:a 16k -y " .
-                   escapeshellarg($n_filename_mp3);
-        Processes::mwExec($cmd_mp3, $out);
-        $result_mp3 = implode('', $out);
-
-        // Remove temporary file
-        unlink($tmp_filename);
-
-        if ($result_str !== '' && $result_mp3 !== '') {
-            // Conversion failed
+        // Get converted MP3 file path (for backward compatibility, return MP3)
+        $mp3Path = $result['formats']['mp3']['path'] ?? null;
+        if ($mp3Path === null || !file_exists($mp3Path)) {
             $res->success = false;
-            $res->messages['error'][] = $result_str;
+            $res->messages['error'][] = 'MP3 conversion failed';
             return $res;
         }
 
-        // Remove original file if it's different from converted files
-        if ($filename !== $n_filename && $filename !== $n_filename_mp3 && file_exists($filename)) {
+        // Collect all converted file paths
+        $convertedPaths = [];
+        foreach ($result['formats'] as $format => $formatResult) {
+            if ($formatResult['status'] === 'converted' && isset($formatResult['path'])) {
+                $convertedPaths[$format] = $formatResult['path'];
+            }
+        }
+
+        // Remove original file if it's different from all converted files
+        $isOriginalConverted = false;
+        foreach ($convertedPaths as $convertedPath) {
+            if ($filename === $convertedPath) {
+                $isOriginalConverted = true;
+                break;
+            }
+        }
+
+        if (!$isOriginalConverted && is_file($filename)) {
             unlink($filename);
         }
 
+        // Return MP3 path for backward compatibility (API clients expect this)
         $res->success = true;
-        $res->data = [$n_filename_mp3];
+        $res->data = [$mp3Path];
 
         return $res;
     }

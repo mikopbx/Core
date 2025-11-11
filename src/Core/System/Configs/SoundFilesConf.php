@@ -418,6 +418,290 @@ class SoundFilesConf extends SystemConfigClass
     }
 
     /**
+     * Convert audio file to specified formats with optional normalization
+     *
+     * This is the unified method for audio conversion used by both REST API and Worker.
+     * Supports multiple target formats, audio normalization, and smart caching.
+     *
+     * @param string $sourceFile Source audio file path
+     * @param array $targetFormats Target formats to generate: ['wav', 'mp3', 'ulaw', 'alaw', 'gsm', 'g722', 'sln']
+     * @param array $options Conversion options:
+     *   - 'normalize' (bool): Apply loudnorm filter for consistent volume (default: false)
+     *   - 'force' (bool): Skip cache, force reconversion (default: false)
+     *   - 'use_cache' (bool): Use .sound-meta caching (default: true)
+     *   - 'output_dir' (string): Output directory (default: source file directory)
+     *   - 'base_name' (string): Output filename without extension (default: source filename)
+     *   - 'sample_rate' (int): Override sample rate for WAV (default: 8000)
+     *   - 'bitrate' (string): MP3 bitrate (default: '16k')
+     * @return array Results with conversion status per format:
+     *   [
+     *     'success' => bool,
+     *     'formats' => [
+     *       'wav' => ['path' => '/path/to/file.wav', 'status' => 'converted|skipped|failed', 'error' => '...'],
+     *       'mp3' => ['path' => '/path/to/file.mp3', 'status' => 'converted|skipped|failed', 'error' => '...'],
+     *     ],
+     *     'stats' => ['converted' => 2, 'skipped' => 1, 'failed' => 0]
+     *   ]
+     */
+    public static function convertAudioFile(string $sourceFile, array $targetFormats, array $options = []): array
+    {
+        // Initialize result structure
+        $result = [
+            'success' => true,
+            'formats' => [],
+            'stats' => ['converted' => 0, 'skipped' => 0, 'failed' => 0],
+        ];
+
+        // Parse options with defaults
+        $normalize = $options['normalize'] ?? false;
+        $forceReconvert = $options['force'] ?? false;
+        $useCache = $options['use_cache'] ?? true;
+        $sampleRate = $options['sample_rate'] ?? 8000;
+        $mp3Bitrate = $options['bitrate'] ?? '16k';
+
+        // Get output directory and base name
+        $pathInfo = pathinfo($sourceFile);
+        $outputDir = $options['output_dir'] ?? $pathInfo['dirname'];
+        $baseName = $options['base_name'] ?? $pathInfo['filename'];
+        $sourceExtension = strtolower($pathInfo['extension'] ?? '');
+
+        // Get tool paths
+        $ffmpegPath = Util::which('ffmpeg');
+        $ffprobePath = Util::which('ffprobe');
+
+        if (empty($ffmpegPath)) {
+            $result['success'] = false;
+            $result['error'] = 'ffmpeg not found';
+            return $result;
+        }
+
+        // Check if source file exists
+        if (!file_exists($sourceFile)) {
+            $result['success'] = false;
+            $result['error'] = "Source file not found: $sourceFile";
+            return $result;
+        }
+
+        // Validate source file with ffprobe
+        if (!empty($ffprobePath)) {
+            $sourceEscaped = escapeshellarg($sourceFile);
+            $probeCommand = "$ffprobePath -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 $sourceEscaped 2>&1";
+            exec($probeCommand, $probeOutput, $probeExitCode);
+
+            if ($probeExitCode !== 0 || empty($probeOutput)) {
+                $result['success'] = false;
+                $result['error'] = "Source file is corrupted or unreadable";
+                SystemMessages::sysLogMsg(__METHOD__, "Corrupted source file: $sourceFile", LOG_WARNING);
+                return $result;
+            }
+        }
+
+        // Detect source codec for special handling (MPEG formats)
+        $sourceCodec = '';
+        if (!empty($ffprobePath)) {
+            $sourceEscaped = escapeshellarg($sourceFile);
+            $codecCommand = "$ffprobePath -v error -select_streams a:0 -show_entries stream=codec_name -of default=noprint_wrappers=1:nokey=1 $sourceEscaped 2>&1";
+            exec($codecCommand, $codecOutput, $codecExitCode);
+            if ($codecExitCode === 0 && !empty($codecOutput)) {
+                $sourceCodec = trim($codecOutput[0] ?? '');
+            }
+        }
+
+        // Check metadata for smart caching
+        $metadataFile = "$outputDir/.$baseName.sound-meta";
+        $sourceHash = md5_file($sourceFile);
+        $needsConversion = $forceReconvert || !$useCache;
+
+        if ($useCache && !$forceReconvert && file_exists($metadataFile)) {
+            $metadata = @json_decode(file_get_contents($metadataFile), true);
+            if ($metadata && isset($metadata['source_hash']) && $metadata['source_hash'] === $sourceHash) {
+                // Check if all target formats exist
+                $allFormatsExist = true;
+                foreach ($targetFormats as $format) {
+                    $targetFile = "$outputDir/$baseName.$format";
+                    if (!file_exists($targetFile)) {
+                        $allFormatsExist = false;
+                        break;
+                    }
+                }
+
+                if ($allFormatsExist) {
+                    // All formats exist and hash matches - return cached results
+                    foreach ($targetFormats as $format) {
+                        $result['formats'][$format] = [
+                            'path' => "$outputDir/$baseName.$format",
+                            'status' => 'skipped',
+                        ];
+                        $result['stats']['skipped']++;
+                    }
+                    return $result;
+                }
+            }
+            $needsConversion = true;
+        }
+
+        // Define format conversion parameters
+        $formatSpecs = [
+            'wav' => [
+                'options' => "-ar $sampleRate -ac 1 -acodec pcm_s16le -f wav",
+                'container' => 'wav',
+            ],
+            'mp3' => [
+                'options' => "-codec:a libmp3lame -b:a $mp3Bitrate",
+                'container' => 'mp3',
+            ],
+            'ulaw' => [
+                'options' => '-ar 8000 -ac 1 -acodec pcm_mulaw -f wav',
+                'container' => 'wav',
+            ],
+            'alaw' => [
+                'options' => '-ar 8000 -ac 1 -acodec pcm_alaw -f wav',
+                'container' => 'wav',
+            ],
+            'gsm' => [
+                'options' => '-ar 8000 -ac 1 -acodec libgsm -f gsm',
+                'container' => 'gsm',
+            ],
+            'g722' => [
+                'options' => '-ar 16000 -ac 1 -acodec adpcm_g722 -f wav',
+                'container' => 'wav',
+            ],
+            'sln' => [
+                'options' => '-ar 8000 -ac 1 -acodec pcm_s16le -f wav',
+                'container' => 'wav',
+            ],
+        ];
+
+        // Prepare source file for conversion
+        $conversionSource = $sourceFile;
+        $tempFiles = [];
+
+        // Handle MPEG formats: convert to WAV first
+        if (in_array($sourceCodec, ['mp3', 'mp2', 'mp1'], true) && in_array('wav', $targetFormats)) {
+            $tempWavFile = "$outputDir/$baseName.tmp.wav";
+            $tempFiles[] = $tempWavFile;
+
+            $sourceEscaped = escapeshellarg($sourceFile);
+            $tempEscaped = escapeshellarg($tempWavFile);
+            $convertCmd = "$ffmpegPath -i $sourceEscaped -y $tempEscaped 2>&1";
+            $exitCode = Processes::mwExec($convertCmd);
+
+            if ($exitCode === 0) {
+                $conversionSource = $tempWavFile;
+            } else {
+                SystemMessages::sysLogMsg(__METHOD__, "Failed to convert MPEG to WAV: $sourceFile", LOG_WARNING);
+            }
+        }
+
+        // Apply normalization if requested
+        $normalizedSource = $conversionSource;
+        if ($normalize) {
+            $tempNormalizedFile = "$outputDir/$baseName.normalized.wav";
+            $tempFiles[] = $tempNormalizedFile;
+
+            $sourceEscaped = escapeshellarg($conversionSource);
+            $normalizedEscaped = escapeshellarg($tempNormalizedFile);
+            $normalizeCmd = "$ffmpegPath -i $sourceEscaped -af 'loudnorm=I=-16:TP=-1.5:LRA=11' -ac 1 -ar $sampleRate -acodec pcm_s16le -y $normalizedEscaped 2>&1";
+            $exitCode = Processes::mwExec($normalizeCmd);
+
+            if ($exitCode === 0) {
+                $normalizedSource = $tempNormalizedFile;
+            } else {
+                SystemMessages::sysLogMsg(__METHOD__, "Failed to normalize audio: $conversionSource", LOG_WARNING);
+            }
+        }
+
+        // Convert to all target formats
+        $source = escapeshellarg($normalizedSource);
+        foreach ($targetFormats as $format) {
+            // Skip unsupported formats
+            if (!isset($formatSpecs[$format])) {
+                $result['formats'][$format] = [
+                    'status' => 'failed',
+                    'error' => "Unsupported format: $format",
+                ];
+                $result['stats']['failed']++;
+                $result['success'] = false;
+                continue;
+            }
+
+            $spec = $formatSpecs[$format];
+            $targetFile = "$outputDir/$baseName.$format";
+            $dest = escapeshellarg($targetFile);
+
+            // Skip if target file already exists (unless force reconvert)
+            if (!$forceReconvert && file_exists($targetFile)) {
+                $result['formats'][$format] = [
+                    'path' => $targetFile,
+                    'status' => 'skipped',
+                ];
+                $result['stats']['skipped']++;
+                continue;
+            }
+
+            // Build and execute ffmpeg command
+            $command = "$ffmpegPath -i $source {$spec['options']} -y $dest 2>&1";
+            $exitCode = Processes::mwExec($command, $output);
+
+            if ($exitCode === 0) {
+                $result['formats'][$format] = [
+                    'path' => $targetFile,
+                    'status' => 'converted',
+                ];
+                $result['stats']['converted']++;
+            } else {
+                $outputText = implode("\n", $output);
+                $result['formats'][$format] = [
+                    'status' => 'failed',
+                    'error' => "Exit code: $exitCode. Output: $outputText",
+                ];
+                $result['stats']['failed']++;
+                $result['success'] = false;
+
+                // Check if codec is not supported (not critical for some formats)
+                if (strpos($outputText, "Unknown encoder") === false) {
+                    SystemMessages::sysLogMsg(
+                        __METHOD__,
+                        "Failed to convert to $format format. Exit code: $exitCode",
+                        LOG_WARNING
+                    );
+                }
+            }
+        }
+
+        // Clean up temporary files
+        foreach ($tempFiles as $tempFile) {
+            if (file_exists($tempFile)) {
+                @unlink($tempFile);
+            }
+        }
+
+        // Save metadata file if conversion was successful and cache is enabled
+        if ($result['success'] && $useCache) {
+            $metadata = [
+                'source_file' => basename($sourceFile),
+                'source_format' => $sourceExtension,
+                'source_hash' => $sourceHash,
+                'target_formats' => $targetFormats,
+                'options' => [
+                    'normalize' => $normalize,
+                    'sample_rate' => $sampleRate,
+                    'mp3_bitrate' => $mp3Bitrate,
+                ],
+                'conversion_date' => date('Y-m-d H:i:s'),
+                'ffmpeg_version' => trim(shell_exec("$ffmpegPath -version 2>&1 | head -1")),
+            ];
+
+            $metadataJson = json_encode($metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+            if (file_put_contents($metadataFile, $metadataJson) === false) {
+                SystemMessages::sysLogMsg(__METHOD__, "Failed to save metadata file: $metadataFile", LOG_WARNING);
+            }
+        }
+
+        return $result;
+    }
+
+    /**
      * Convert all sound files in directory recursively
      *
      * This method performs synchronous conversion of all sound files
@@ -538,152 +822,39 @@ class SoundFilesConf extends SystemConfigClass
             $stats = ['converted' => 0, 'skipped' => 0];
         }
 
-        $ffmpegPath = Util::which('ffmpeg');
-        if (empty($ffmpegPath)) {
-            return false;
-        }
-
-        // Check if source file exists
-        if (!file_exists($sourceFile)) {
-            return false;
-        }
-
-        // Get base path without extension
-        $pathInfo = pathinfo($sourceFile);
-        $basePath = $pathInfo['dirname'] . '/' . $pathInfo['filename'];
-        $sourceExtension = strtolower($pathInfo['extension'] ?? '');
-
         // Skip conversion if source is not a convertible format
+        $pathInfo = pathinfo($sourceFile);
+        $sourceExtension = strtolower($pathInfo['extension'] ?? '');
         $convertibleFormats = ['wav', 'mp3', 'ulaw', 'alaw', 'gsm', 'g722', 'sln'];
         if (!in_array($sourceExtension, $convertibleFormats, true)) {
             return 'skipped';
         }
 
-        // Validate source file with ffprobe to detect corrupted files
-        $ffprobePath = Util::which('ffprobe');
-        if (!empty($ffprobePath)) {
-            $sourceEscaped = escapeshellarg($sourceFile);
-            $probeCommand = "$ffprobePath -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 $sourceEscaped 2>&1";
-            exec($probeCommand, $probeOutput, $probeExitCode);
+        // Define target formats (all Asterisk formats except source format)
+        $targetFormats = ['ulaw', 'alaw', 'gsm', 'g722', 'sln'];
 
-            if ($probeExitCode !== 0 || empty($probeOutput)) {
-                // File is corrupted or unreadable
-                SystemMessages::sysLogMsg(
-                    __METHOD__,
-                    "Skipping corrupted source file: $sourceFile",
-                    LOG_WARNING
-                );
-                return 'skipped';
-            }
+        // Call unified converter
+        $result = self::convertAudioFile($sourceFile, $targetFormats, [
+            'force' => $forceReconvert,
+            'use_cache' => true,
+            'normalize' => false,
+        ]);
+
+        // Update statistics from result
+        $stats['converted'] += $result['stats']['converted'];
+        $stats['skipped'] += $result['stats']['skipped'];
+
+        // Return legacy format for backward compatibility
+        if (!$result['success']) {
+            return false;
         }
 
-        // Define all target formats
-        $formats = [
-            'ulaw' => '-ar 8000 -ac 1 -acodec pcm_mulaw -f wav',
-            'alaw' => '-ar 8000 -ac 1 -acodec pcm_alaw -f wav',
-            'gsm'  => '-ar 8000 -ac 1 -acodec libgsm -f gsm',
-            'g722' => '-ar 16000 -ac 1 -acodec adpcm_g722 -f wav',
-            'sln'  => '-ar 8000 -ac 1 -acodec pcm_s16le -f wav',
-        ];
-
-        // Check metadata for smart caching
-        $metadataFile = $pathInfo['dirname'] . '/.' . $pathInfo['filename'] . '.sound-meta';
-        $sourceHash = md5_file($sourceFile);
-        $needsConversion = $forceReconvert;
-
-        if (!$forceReconvert && file_exists($metadataFile)) {
-            $metadata = @json_decode(file_get_contents($metadataFile), true);
-            if ($metadata && isset($metadata['source_hash']) && $metadata['source_hash'] === $sourceHash) {
-                // Check if all target formats exist
-                $allFormatsExist = true;
-                foreach ($formats as $ext => $ffmpegOptions) {
-                    if ($ext !== $sourceExtension && !file_exists("$basePath.$ext")) {
-                        $allFormatsExist = false;
-                        break;
-                    }
-                }
-
-                if ($allFormatsExist) {
-                    // All formats exist and hash matches - skip conversion
-                    $stats['skipped'] += count($formats) - 1; // All target formats except source
-                    return 'skipped';
-                }
-                $needsConversion = true;
-            } else {
-                $needsConversion = true;
-            }
-        } else {
-            $needsConversion = true;
-        }
-
-        if (!$needsConversion) {
+        // If all were skipped, return 'skipped'
+        if ($result['stats']['converted'] === 0 && $result['stats']['skipped'] > 0) {
             return 'skipped';
         }
 
-        $success = true;
-        $convertedCount = 0;
-        $skippedCount = 0;
-        $source = escapeshellarg($sourceFile);
-
-        foreach ($formats as $ext => $ffmpegOptions) {
-            // Skip if converting to same format as source
-            if ($ext === $sourceExtension) {
-                continue;
-            }
-
-            $destFile = "$basePath.$ext";
-            $dest = escapeshellarg($destFile);
-
-            // Skip if target file already exists
-            if (file_exists($destFile)) {
-                $skippedCount++;
-                continue;
-            }
-
-            // Build ffmpeg command
-            $command = "$ffmpegPath -i $source $ffmpegOptions -y $dest 2>&1";
-            $exitCode = Processes::mwExec($command, $output);
-
-            if ($exitCode === 0) {
-                $convertedCount++;
-            } else {
-                // Check if codec is not supported (not a critical error)
-                $outputText = implode("\n", $output);
-                if (strpos($outputText, "Unknown encoder") === false) {
-                    SystemMessages::sysLogMsg(
-                        __METHOD__,
-                        "Failed to convert to $ext format. Exit code: $exitCode. Output: $outputText",
-                        LOG_WARNING
-                    );
-                    $success = false;
-                }
-            }
-        }
-
-        // Update statistics
-        $stats['converted'] += $convertedCount;
-        $stats['skipped'] += $skippedCount;
-
-        // Save metadata file if conversion was successful
-        if ($success) {
-            $metadata = [
-                'source_file' => basename($sourceFile),
-                'source_format' => $sourceExtension,
-                'source_hash' => $sourceHash,
-                'converted_formats' => array_keys(array_filter($formats, function($ext) use ($sourceExtension) {
-                    return $ext !== $sourceExtension;
-                }, ARRAY_FILTER_USE_KEY)),
-                'conversion_date' => date('Y-m-d H:i:s'),
-                'ffmpeg_version' => trim(shell_exec("$ffmpegPath -version 2>&1 | head -1")),
-            ];
-
-            $metadataJson = json_encode($metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-            if (file_put_contents($metadataFile, $metadataJson) === false) {
-                SystemMessages::sysLogMsg(__METHOD__, "Failed to save metadata file: $metadataFile", LOG_WARNING);
-            }
-        }
-
-        return $success;
+        return true;
     }
 
     /**
@@ -876,7 +1047,7 @@ class SoundFilesConf extends SystemConfigClass
             // Map Asterisk code to web admin code
             $webCode = self::ASTERISK_TO_WEB_LANG_MAP[$asteriskCode] ?? null;
 
-            if ($webCode !== null && isset(LanguageProvider::AVAILABLE_LANGUAGES[$webCode])) {
+            if ($webCode !== null && array_key_exists($webCode, LanguageProvider::AVAILABLE_LANGUAGES)) {
                 // Use native name from LanguageProvider
                 $languages[$asteriskCode] = LanguageProvider::AVAILABLE_LANGUAGES[$webCode]['name'];
             } else {
