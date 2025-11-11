@@ -633,4 +633,19 @@ return [
     'gs_SendMetricsTooltip_warning' => 'Disabling this function may slow bug fixing process and reduce support quality',
     'gs_SendMetricsTooltip_note' => 'Recommended: leave enabled for production systems. Data transmitted only when internet connection available',
 
+    // Certificate validation messages
+    'cert_CertificateIsEmpty' => 'Certificate is empty',
+    'cert_InvalidCertificateFormat' => 'Invalid certificate format: %error%',
+    'cert_FailedToParseCertificate' => 'Failed to parse certificate',
+    'cert_CertificateExpired' => 'Certificate expired on %date%',
+    'cert_CertificateExpiresSoon' => 'Certificate expires in %days% days',
+    'cert_CertificateNotYetValid' => 'Certificate is not yet valid until %date%',
+    'cert_PrivateKeyIsEmpty' => 'Private key is empty',
+    'cert_InvalidPrivateKeyFormat' => 'Invalid private key format: %error%',
+    'cert_FailedToGetPrivateKeyDetails' => 'Failed to get private key details',
+    'cert_FailedToLoadCertificateForPairValidation' => 'Failed to load certificate for pair validation',
+    'cert_FailedToLoadPrivateKeyForPairValidation' => 'Failed to load private key for pair validation',
+    'cert_FailedToExtractPublicKeyFromCertificate' => 'Failed to extract public key from certificate',
+    'cert_CertificateAndPrivateKeyDoNotMatch' => 'Certificate and private key do not match',
+
 ];

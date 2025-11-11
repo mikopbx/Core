@@ -639,4 +639,19 @@ return [
     'gs_SendMetricsTooltip_privacy_desc' => 'НЕ передаются: пароли, записи разговоров, персональные данные, содержимое баз данных',
     'gs_SendMetricsTooltip_warning' => 'Отключение этой функции может замедлить процесс исправления ошибок и снизить качество поддержки',
     'gs_SendMetricsTooltip_note' => 'Рекомендуется: оставить включенным для production систем. Данные передаются только при наличии интернет-соединения',
+
+    // Certificate validation messages
+    'cert_CertificateIsEmpty' => 'Сертификат пустой',
+    'cert_InvalidCertificateFormat' => 'Неверный формат сертификата: %error%',
+    'cert_FailedToParseCertificate' => 'Не удалось разобрать сертификат',
+    'cert_CertificateExpired' => 'Сертификат истёк %date%',
+    'cert_CertificateExpiresSoon' => 'Сертификат истекает через %days% дней',
+    'cert_CertificateNotYetValid' => 'Сертификат еще не действителен до %date%',
+    'cert_PrivateKeyIsEmpty' => 'Приватный ключ пустой',
+    'cert_InvalidPrivateKeyFormat' => 'Неверный формат приватного ключа: %error%',
+    'cert_FailedToGetPrivateKeyDetails' => 'Не удалось получить детали приватного ключа',
+    'cert_FailedToLoadCertificateForPairValidation' => 'Не удалось загрузить сертификат для проверки пары',
+    'cert_FailedToLoadPrivateKeyForPairValidation' => 'Не удалось загрузить приватный ключ для проверки пары',
+    'cert_FailedToExtractPublicKeyFromCertificate' => 'Не удалось извлечь публичный ключ из сертификата',
+    'cert_CertificateAndPrivateKeyDoNotMatch' => 'Сертификат и приватный ключ не соответствуют друг другу',
 ];
