@@ -48,7 +48,7 @@ class Network extends Injectable
     {
         $grep = Util::which('grep');
         $awk = Util::which('awk');
-        if (Util::isDocker()) {
+        if (System::isDocker()) {
             $ifconfig = Util::which('ifconfig');
             $command = "$ifconfig | $grep -o -E '^[a-zA-Z0-9]+' | $grep -v 'lo'";
         } else {
@@ -70,7 +70,7 @@ class Network extends Injectable
     public function configureLanInDocker(): void
     {
         // Check if the environment is Docker
-        if (!Util::isDocker()) {
+        if (!System::isDocker()) {
             return;
         }
 
@@ -503,7 +503,7 @@ class Network extends Injectable
         /**
          * If running inside a Docker container, exit the script.
          */
-        if (Util::isDocker()) {
+        if (System::isDocker()) {
             return;
         }
 
@@ -627,7 +627,7 @@ class Network extends Injectable
      */
     public function lanConfigure(): int
     {
-        if (Util::isDocker()) {
+        if (System::isDocker()) {
             return 0;
         }
 
@@ -800,7 +800,7 @@ class Network extends Injectable
         }
         
         $hostnamePath = Util::which('hostname');
-        if (Util::isDocker()) {
+        if (System::isDocker()) {
             $realHostName = shell_exec($hostnamePath);
             $hosts_conf .= "127.0.0.1 $realHostName\n";
         }

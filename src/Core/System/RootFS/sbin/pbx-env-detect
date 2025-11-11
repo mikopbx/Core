@@ -20,9 +20,10 @@
 # Environment detection script for MikoPBX
 # Usage: pbx-env-detect [option]
 # Options:
-#   -t, --type        Return environment type (docker, vmware, vbox, kvm, xen, baremetal)
+#   -t, --type        Return environment type (docker, vmware, vbox, kvm, qemu, xen, baremetal)
 #   -s, --serial      Return available serial ports
 #   -c, --console     Return console device
+#   -r, --arch        Return CPU architecture (x86_64, aarch64, armv7l, etc)
 #   -a, --all         Return all environment information
 
 # Cache file for environment detection
@@ -42,12 +43,15 @@ if [ $# -gt 0 ]; then
         -c|--console)
             OPTION="console"
             ;;
+        -r|--arch)
+            OPTION="arch"
+            ;;
         -a|--all)
             OPTION="all"
             ;;
         *)
             echo "Unknown option: $1" >&2
-            echo "Usage: $0 [-t|--type] [-s|--serial] [-c|--console] [-a|--all]" >&2
+            echo "Usage: $0 [-t|--type] [-s|--serial] [-c|--console] [-r|--arch] [-a|--all]" >&2
             exit 1
             ;;
     esac
@@ -66,6 +70,8 @@ detect_environment() {
     # Method 1: Check DMI/SMBIOS information
     if [ -r "/sys/devices/virtual/dmi/id/sys_vendor" ]; then
         SYS_VENDOR=$(cat /sys/devices/virtual/dmi/id/sys_vendor 2>/dev/null | tr '[:upper:]' '[:lower:]')
+        SYS_PRODUCT=$(cat /sys/devices/virtual/dmi/id/product_name 2>/dev/null | tr '[:upper:]' '[:lower:]')
+
         case "$SYS_VENDOR" in
             *vmware*)
                 echo "vmware"
@@ -75,12 +81,29 @@ detect_environment() {
                 echo "vbox"
                 return
                 ;;
-            *qemu*|*kvm*)
-                echo "kvm"
+            *qemu*)
+                # Distinguish between QEMU and KVM
+                if grep -q "kvm" /proc/cpuinfo 2>/dev/null || [ -e "/dev/kvm" ]; then
+                    echo "kvm"
+                else
+                    echo "qemu"
+                fi
                 return
                 ;;
             *xen*)
                 echo "xen"
+                return
+                ;;
+        esac
+
+        # Check product name for QEMU
+        case "$SYS_PRODUCT" in
+            *qemu*)
+                if grep -q "kvm" /proc/cpuinfo 2>/dev/null || [ -e "/dev/kvm" ]; then
+                    echo "kvm"
+                else
+                    echo "qemu"
+                fi
                 return
                 ;;
         esac
@@ -100,6 +123,18 @@ detect_environment() {
     # Method 3: Check CPU flags for virtualization
     if [ -r "/proc/cpuinfo" ]; then
         if grep -q "hypervisor" /proc/cpuinfo 2>/dev/null; then
+            # Try to determine if it's QEMU by checking model name
+            MODEL_NAME=$(grep "model name" /proc/cpuinfo 2>/dev/null | head -n1 | tr '[:upper:]' '[:lower:]')
+            case "$MODEL_NAME" in
+                *qemu*)
+                    if grep -q "kvm" /proc/cpuinfo 2>/dev/null || [ -e "/dev/kvm" ]; then
+                        echo "kvm"
+                    else
+                        echo "qemu"
+                    fi
+                    return
+                    ;;
+            esac
             # We're virtualized, but couldn't determine the type
             echo "virtual"
             return
@@ -126,6 +161,58 @@ detect_environment() {
     
     # If we get here, assume bare metal
     echo "baremetal"
+}
+
+# Function to detect CPU architecture
+detect_architecture() {
+    # Method 1: Use uname -m (most reliable)
+    if command -v uname >/dev/null 2>&1; then
+        ARCH=$(uname -m 2>/dev/null)
+        if [ -n "$ARCH" ]; then
+            echo "$ARCH"
+            return
+        fi
+    fi
+
+    # Method 2: Check /proc/cpuinfo
+    if [ -r "/proc/cpuinfo" ]; then
+        # For ARM systems, check CPU architecture field
+        CPU_ARCH=$(grep "CPU architecture" /proc/cpuinfo 2>/dev/null | head -n1 | awk '{print $3}')
+        if [ -n "$CPU_ARCH" ]; then
+            case "$CPU_ARCH" in
+                8)
+                    echo "aarch64"
+                    return
+                    ;;
+                7)
+                    echo "armv7l"
+                    return
+                    ;;
+                6)
+                    echo "armv6l"
+                    return
+                    ;;
+            esac
+        fi
+
+        # For x86 systems, check flags
+        if grep -q "lm" /proc/cpuinfo 2>/dev/null; then
+            echo "x86_64"
+            return
+        elif grep -q "flags" /proc/cpuinfo 2>/dev/null; then
+            echo "i686"
+            return
+        fi
+    fi
+
+    # Method 3: Check for architecture-specific files
+    if [ -d "/lib64" ] || [ -d "/usr/lib64" ]; then
+        echo "x86_64"
+        return
+    fi
+
+    # Fallback
+    echo "unknown"
 }
 
 # Function to detect available serial ports
@@ -182,19 +269,21 @@ get_env_info() {
             return
         fi
     fi
-    
+
     # Generate fresh environment info
     ENV_TYPE=$(detect_environment)
     SERIAL_PORTS=$(detect_serial_ports)
     CONSOLE=$(detect_console)
-    
+    ARCH=$(detect_architecture)
+
     # Save to cache
     cat > "$ENV_CACHE" << EOF
 ENV_TYPE=$ENV_TYPE
 SERIAL_PORTS=$SERIAL_PORTS
 CONSOLE=$CONSOLE
+ARCH=$ARCH
 EOF
-    
+
     cat "$ENV_CACHE"
 }
 
@@ -208,6 +297,9 @@ case "$OPTION" in
         ;;
     console)
         get_env_info | grep "^CONSOLE=" | cut -d'=' -f2
+        ;;
+    arch)
+        get_env_info | grep "^ARCH=" | cut -d'=' -f2
         ;;
     all)
         get_env_info

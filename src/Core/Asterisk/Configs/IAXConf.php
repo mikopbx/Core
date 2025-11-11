@@ -27,6 +27,7 @@ use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\Asterisk\Configs\Generators\Extensions\IncomingContexts;
 use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
 
@@ -97,7 +98,7 @@ class IAXConf extends AsteriskConfigClass
         $conf .= "forcejitterbuffer=no" . PHP_EOL;
         
         // In Docker environment, include dynamic fail2ban ACL and network filters
-        if (Util::isDocker()) {
+        if (System::isDocker()) {
             $asteriskEtcDir = Directories::getDir(Directories::AST_ETC_DIR);
             $conf .= PHP_EOL . "; Fail2ban dynamic ACL for Docker" . PHP_EOL;
             $conf .= "#tryinclude $asteriskEtcDir/fail2ban_iax_deny.conf" . PHP_EOL;
@@ -160,7 +161,7 @@ class IAXConf extends AsteriskConfigClass
                     // Port is not used for inbound connections
 
                     // In Docker environment, add fail2ban ACL reference
-                    if (Util::isDocker()) {
+                    if (System::isDocker()) {
                         // IAX doesn't support multiple ACLs like PJSIP, so we need to use permit/deny
                         // The fail2ban_iax_dynamic_acl.conf will be included in the general section
                     }

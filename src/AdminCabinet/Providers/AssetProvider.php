@@ -28,7 +28,7 @@ use MikoPBX\Common\Providers\MessagesProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\System\Configs\SentryConf;
 use MikoPBX\Core\System\Network;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\System;
 use MikoPBX\Modules\Config\WebUIConfigInterface;
 use Phalcon\Assets\Collection;
 use Phalcon\Di\DiInterface;
@@ -846,7 +846,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addCss('css/Firewall/firewall.css', true);
             
             // Add Docker-specific styles if running in Docker environment
-            if (Util::isDocker()) {
+            if (System::isDocker()) {
                 $this->headerCollectionCSS
                     ->addCss('css/Firewall/docker-styles.css', true);
             }
@@ -857,7 +857,7 @@ class AssetProvider implements ServiceProviderInterface
                 ->addJs('js/pbx/Firewall/firewall-index.js', true);
         } elseif ($action === 'modify') {
             // Add Docker-specific styles if running in Docker environment
-            if (Util::isDocker()) {
+            if (System::isDocker()) {
                 $this->headerCollectionCSS
                     ->addCss('css/Firewall/docker-styles.css', true);
             }

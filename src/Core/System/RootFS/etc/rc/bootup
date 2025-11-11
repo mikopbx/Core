@@ -19,7 +19,7 @@
  */
 
 namespace MikoPBX\Core\RootFS\etc\rc;
-use MikoPBX\Core\System\{Processes, Util, SystemLoader};
+use MikoPBX\Core\System\{Processes, Util, SystemLoader, System};
 
 require_once('Globals.php');
 
@@ -39,7 +39,7 @@ $result = $mikoPBX->startSystem();
 // Run /etc/rc/bootup_pbx in background if system start is successful
 if((true === $result)
     && ! Util::isRecoveryMode()
-    && ! Util::isDocker()
+    && ! System::isDocker()
 ) {
     Processes::mwExecBg('/etc/rc/bootup_pbx');
 }

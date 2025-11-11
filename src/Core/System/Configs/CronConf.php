@@ -145,7 +145,7 @@ class CronConf extends SystemConfigClass
             $mast_have[] = '0 1 * * * ' . $asterisk . ' -rx"core restart now" > /dev/null 2> /dev/null' . PHP_EOL;
         }
 
-        if (!Util::isDocker()){
+        if (!System::isDocker()){
             // Update NTP time every 5 minutes
             $mast_have[] = '*/5 * * * * ' . $ntpd . ' -q > /dev/null 2> /dev/null' . PHP_EOL;
         }

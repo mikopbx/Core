@@ -127,11 +127,11 @@ class System extends Injectable
      */
     public static function reboot(): void
     {
-        if (Util::isDocker()) {
+        if (self::isDocker()) {
             // For Docker: Create flag file that docker-entrypoint monitors
             touch('/tmp/rebooting');
             SystemMessages::sysLogMsg(__METHOD__, 'Docker container restart initiated', LOG_INFO);
-            
+
             // Give some time for logs to be written
             sleep(1);
         } else {
@@ -157,11 +157,11 @@ class System extends Injectable
      */
     public static function shutdown(): void
     {
-        if (Util::isDocker()) {
+        if (self::isDocker()) {
             // For Docker: Create shutdown flag that docker-entrypoint monitors
             touch('/tmp/shutdown');
             SystemMessages::sysLogMsg(__METHOD__, 'Docker container shutdown initiated', LOG_INFO);
-            
+
             // Give some time for logs to be written
             sleep(1);
         } else {
@@ -288,5 +288,67 @@ class System extends Injectable
         } else {
             unlink(self::BOOTING_FILE_PATH);
         }
+    }
+
+    /**
+     * Check if the system is running in Docker container
+     *
+     * @return bool True if running in Docker, false otherwise
+     */
+    public static function isDocker(): bool
+    {
+        return file_exists('/.dockerenv');
+    }
+
+    /**
+     * Check if the system is running on ARM64 architecture
+     *
+     * @return bool True if running on ARM64/aarch64, false otherwise
+     */
+    public static function isARM64(): bool
+    {
+        $pbxEnvDetect = '/sbin/pbx-env-detect';
+
+        if (file_exists($pbxEnvDetect) && is_executable($pbxEnvDetect)) {
+            $archOutput = [];
+            Processes::mwExec("$pbxEnvDetect --arch 2>/dev/null", $archOutput);
+            $arch = trim(implode('', $archOutput));
+
+            return $arch === 'aarch64';
+        }
+
+        // Fallback: check uname
+        $uname = Util::which('uname');
+        $unameOutput = [];
+        Processes::mwExec("$uname -m", $unameOutput);
+        $arch = trim(implode('', $unameOutput));
+
+        return in_array($arch, ['aarch64', 'arm64'], true);
+    }
+
+    /**
+     * Check if the system is running on AMD64/x86_64 architecture
+     *
+     * @return bool True if running on AMD64/x86_64, false otherwise
+     */
+    public static function isAMD64(): bool
+    {
+        $pbxEnvDetect = '/sbin/pbx-env-detect';
+
+        if (file_exists($pbxEnvDetect) && is_executable($pbxEnvDetect)) {
+            $archOutput = [];
+            Processes::mwExec("$pbxEnvDetect --arch 2>/dev/null", $archOutput);
+            $arch = trim(implode('', $archOutput));
+
+            return $arch === 'x86_64';
+        }
+
+        // Fallback: check uname
+        $uname = Util::which('uname');
+        $unameOutput = [];
+        Processes::mwExec("$uname -m", $unameOutput);
+        $arch = trim(implode('', $unameOutput));
+
+        return in_array($arch, ['x86_64', 'amd64'], true);
     }
 }

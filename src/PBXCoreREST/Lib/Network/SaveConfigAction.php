@@ -22,7 +22,7 @@ namespace MikoPBX\PBXCoreREST\Lib\Network;
 use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Models\NetworkStaticRoutes;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\System;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Di;
 
@@ -267,7 +267,7 @@ class SaveConfigAction
     {
         $networkInterfaces = LanInterfaces::find();
         $messages = [];
-        $isDocker = Util::isDocker();
+        $isDocker = System::isDocker();
 
         // WHY: In Docker mode, auto-detect internet interface if not provided
         // Docker has single managed interface, so we use the first/only interface as internet interface

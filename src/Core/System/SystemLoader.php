@@ -97,7 +97,7 @@ class SystemLoader extends Injectable
      */
     public function __construct()
     {
-        $this->isDocker = Util::isDocker();
+        $this->isDocker = System::isDocker();
         $this->isRecoveryMode = Util::isRecoveryMode();
         
         // Read system boot start time from file, fallback to current time if not available
@@ -166,7 +166,7 @@ class SystemLoader extends Injectable
         $redisStatus = $redisConf->start();
         $this->echoResultMsg($redisStatus ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
 
-        if (!$this->isDocker) {
+        if (!$this->isDocker && System::isAMD64()) {
             // Wait start the ACPID daemon
             $this->echoStartMsg(' - Waiting for acpid daemon...');
             $ACPIDConf = new ACPIDConf();

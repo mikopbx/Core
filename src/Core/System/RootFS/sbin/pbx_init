@@ -42,7 +42,6 @@ while : ; do
 
     if [ -f /tmp/ejectcd ]; then
         # System installation, disable the menu.
-        echo "System installation, disable the menu.";
         sleep 20;
     fi
 

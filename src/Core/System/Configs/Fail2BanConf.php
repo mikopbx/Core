@@ -329,7 +329,7 @@ class Fail2BanConf extends SystemConfigClass
 
         // Define jails and their corresponding actions
         $jails = [];
-        if (Util::isDocker()) {
+        if (System::isDocker()) {
             $jails = [
                 'dropbear'    => 'miko-iptables-multiport-all[name=SSH, port="' . implode(',', $sshPort) . '"]',
                 'mikopbx-www' => 'miko-nginx-docker[name=HTTP, port="' . implode(',', $httpPorts) . '"]',
@@ -467,7 +467,7 @@ class Fail2BanConf extends SystemConfigClass
         // Define the path to the configuration file
         $path = self::ACTION_PATH;
 
-        if (Util::isDocker()) {
+        if (System::isDocker()) {
             // For Docker, create an action that blocks IPs via Asterisk ACL
             $conf = "[Definition]" . PHP_EOL .
                 "actionstart = /bin/true" . PHP_EOL .
@@ -760,7 +760,7 @@ class Fail2BanConf extends SystemConfigClass
     public static function fail2banAction(string $action, string $ip): void
     {
         // Skip in non-Docker environments - they use regular iptables
-        if (!Util::isDocker()) {
+        if (!System::isDocker()) {
             return;
         }
 

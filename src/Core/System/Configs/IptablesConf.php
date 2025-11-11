@@ -21,9 +21,10 @@ namespace MikoPBX\Core\System\Configs;
 
 use MikoPBX\Common\Models\{FirewallRules, NetworkFilters, PbxSettings, Sip};
 use MikoPBX\Core\Asterisk\Configs\SIPConf;
+use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
-use MikoPBX\Core\System\Processes;
 use Phalcon\Di\Injectable;
 
 /**
@@ -100,7 +101,7 @@ class IptablesConf extends Injectable
     public function applyConfig(): void
     {
         // Skip iptables configuration in Docker containers - networking is handled by Docker
-        if (Util::isDocker()) {
+        if (System::isDocker()) {
             return;
         }
         
@@ -153,7 +154,7 @@ class IptablesConf extends Injectable
     private function dropAllRules(): void
     {
         // Skip in Docker containers
-        if (Util::isDocker()) {
+        if (System::isDocker()) {
             return;
         }
         $iptablesPath = Util::which('iptables');

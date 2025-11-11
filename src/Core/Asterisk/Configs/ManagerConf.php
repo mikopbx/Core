@@ -25,6 +25,7 @@ use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 
 /**
@@ -111,7 +112,7 @@ class ManagerConf extends AsteriskConfigClass
                 $conf .= 'secret=' . $user['secret'] . "\n";
 
                 // In Docker, we need to apply deny rules directly, not through ACL
-                if (Util::isDocker()) {
+                if (System::isDocker()) {
                     // Include fail2ban deny rules
                     $asteriskEtcDir = Directories::getDir(Directories::AST_ETC_DIR);
                     $conf .= "#tryinclude $asteriskEtcDir/fail2ban_manager_deny.conf\n";

@@ -961,7 +961,7 @@ class Storage extends Injectable
         $startTime = time();
         
         // For Docker environments, reduce timeout
-        $maxWaitTime = Util::isDocker() ? 3 : 10;
+        $maxWaitTime = System::isDocker() ? 3 : 10;
 
         // Loop for up to maxWaitTime seconds or until a non-empty UUID is found.
         while (true) {
@@ -1354,7 +1354,7 @@ class Storage extends Injectable
     {
         $res_disks = [];
 
-        if (Util::isDocker()) {
+        if (System::isDocker()) {
             // Get disk information for /storage directory
             $out = [];
             $grepPath = Util::which('grep');

@@ -20,7 +20,7 @@
 
 namespace MikoPBX\AdminCabinet\Controllers;
 
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\System;
 
 class UpdateController extends BaseController
 {
@@ -32,7 +32,7 @@ class UpdateController extends BaseController
     {
         $this->view->setVars(
             [
-                'isDocker' => Util::isDocker(),
+                'isDocker' => System::isDocker(),
                 'submitMode' => null,
             ]
         );

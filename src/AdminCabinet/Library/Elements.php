@@ -51,7 +51,7 @@ use MikoPBX\AdminCabinet\Providers\SecurityPluginProvider;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\System;
 use MikoPBX\Modules\Config\WebUIConfigInterface;
 use Phalcon\Di\Injectable;
 use MikoPBX\Common\Library\Text;
@@ -512,7 +512,7 @@ class Elements extends Injectable
     {
         // Check if the application is running in a Docker environment and if the controller is in the hidden list.
         // If so, return false as the element should not be shown.
-        if (Util::isDocker() and in_array($controller, $this->_hiddenInDocker)) {
+        if (System::isDocker() and in_array($controller, $this->_hiddenInDocker)) {
             return false;
         }
 

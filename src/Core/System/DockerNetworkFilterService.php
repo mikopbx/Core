@@ -235,7 +235,7 @@ class DockerNetworkFilterService extends Injectable
      */
     public static function generateAsteriskNetworkFiltersDenyAcl(): void
     {
-        if (!Util::isDocker()) {
+        if (!System::isDocker()) {
             return;
         }
         
@@ -352,7 +352,7 @@ class DockerNetworkFilterService extends Injectable
      */
     public static function updateAllConfigurations(): void
     {
-        if (!Util::isDocker()) {
+        if (!System::isDocker()) {
             return;
         }
         
@@ -386,7 +386,7 @@ class DockerNetworkFilterService extends Injectable
      */
     private static function syncNetworkFiltersDenyToRedis(): void
     {
-        if (!Util::isDocker()) {
+        if (!System::isDocker()) {
             return;
         }
         
@@ -433,7 +433,7 @@ class DockerNetworkFilterService extends Injectable
      */
     private static function syncNetworkFiltersPermitToRedis(): void
     {
-        if (!Util::isDocker()) {
+        if (!System::isDocker()) {
             return;
         }
         
@@ -475,7 +475,7 @@ class DockerNetworkFilterService extends Injectable
      */
     public static function addBlockedIp(string $ip, string $category, int $ttl = 86400): bool
     {
-        if (!Util::isDocker()) {
+        if (!System::isDocker()) {
             return false;
         }
         
@@ -512,7 +512,7 @@ class DockerNetworkFilterService extends Injectable
      */
     public static function removeBlockedIp(string $ip, string $category): bool
     {
-        if (!Util::isDocker()) {
+        if (!System::isDocker()) {
             return false;
         }
         
@@ -542,7 +542,7 @@ class DockerNetworkFilterService extends Injectable
      */
     public static function getBlockedIps(string $category): array
     {
-        if (!Util::isDocker()) {
+        if (!System::isDocker()) {
             return [];
         }
         
@@ -581,7 +581,7 @@ class DockerNetworkFilterService extends Injectable
      */
     private static function getWhitelistFromRedis(): array
     {
-        if (!Util::isDocker()) {
+        if (!System::isDocker()) {
             return [];
         }
         
@@ -606,7 +606,7 @@ class DockerNetworkFilterService extends Injectable
      */
     private static function syncWhitelistToRedis(): void
     {
-        if (!Util::isDocker()) {
+        if (!System::isDocker()) {
             return;
         }
         
@@ -657,7 +657,7 @@ class DockerNetworkFilterService extends Injectable
      */
     public static function isIpWhitelisted(string $ip): bool
     {
-        if (!Util::isDocker()) {
+        if (!System::isDocker()) {
             // Fallback to database check for non-Docker
             $whitelist = self::getNetworkFiltersWhitelist();
             
@@ -754,7 +754,7 @@ class DockerNetworkFilterService extends Injectable
      */
     private static function getDockerNetworkWhitelist(): array
     {
-        if (!Util::isDocker()) {
+        if (!System::isDocker()) {
             return [];
         }
         
@@ -818,7 +818,7 @@ class DockerNetworkFilterService extends Injectable
      */
     public static function blockIPForRateLimit(string $ip, int $duration = 300): bool
     {
-        if (!Util::isDocker() && PbxSettings::getValueByKey(PbxSettings::PBX_FIREWALL_ENABLED) !== '1') {
+        if (!System::isDocker() && PbxSettings::getValueByKey(PbxSettings::PBX_FIREWALL_ENABLED) !== '1') {
             return false;
         }
         
@@ -854,7 +854,7 @@ class DockerNetworkFilterService extends Injectable
      */
     public static function unblockIPFromRateLimit(string $ip): bool
     {
-        if (!Util::isDocker() && PbxSettings::getValueByKey(PbxSettings::PBX_FIREWALL_ENABLED) !== '1') {
+        if (!System::isDocker() && PbxSettings::getValueByKey(PbxSettings::PBX_FIREWALL_ENABLED) !== '1') {
             return false;
         }
         

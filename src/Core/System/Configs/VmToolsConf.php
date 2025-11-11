@@ -19,8 +19,8 @@
 
 namespace MikoPBX\Core\System\Configs;
 
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\System;
-use MikoPBX\Core\System\Util;
 
 /**
  * Class VmToolsConf
@@ -91,7 +91,7 @@ class VmToolsConf extends SystemConfigClass
      */
     private function configure(): bool
     {
-        if (Util::isDocker()) {
+        if (System::isDocker()) {
             return true;
         }
         $result = true;
@@ -122,7 +122,7 @@ class VmToolsConf extends SystemConfigClass
     public function generateMonitConf(): bool
     {
         // Skip VM tools service in Docker containers
-        if (Util::isDocker()) {
+        if (System::isDocker()) {
             $confPath = $this->getMainMonitConfFile();
             // Write empty config to ensure old configs are removed
             $this->saveFileContent($confPath, '');
@@ -142,85 +142,36 @@ class VmToolsConf extends SystemConfigClass
     }
 
     /**
-     * Detect the hypervisor type using a cascade of detection methods.
+     * Detect the hypervisor type using pbx-env-detect script.
      *
-     * This method implements a robust, multi-stage detection strategy:
-     * 1. systemd-detect-virt (most reliable, standard tool)
-     * 2. lscpu "Hypervisor vendor" field
-     * 3. virtio device presence check (/dev/vd*)
-     * 4. Fallback to CPU vendor detection (legacy method)
+     * This method uses the centralized pbx-env-detect script which implements
+     * a robust multi-stage detection strategy including DMI, CPU flags, and
+     * hypervisor-specific checks.
      *
      * @return string Hypervisor type: 'vmware', 'kvm', 'qemu', or empty string if none detected.
      */
     private function getHypervisor(): string
     {
-        // Priority 1: systemd-detect-virt (most accurate)
-        $detectVirtPath = Util::which('systemd-detect-virt');
-        if (!empty($detectVirtPath)) {
-            $result = shell_exec("$detectVirtPath 2>/dev/null");
-            $hypervisor = strtolower(trim($result ?? ''));
+        // Use pbx-env-detect for reliable detection
+        $pbxEnvDetect = '/sbin/pbx-env-detect';
 
-            // Map common detection results
-            if (in_array($hypervisor, ['kvm', 'qemu'])) {
-                return self::KVM;
-            }
-            if ($hypervisor === 'vmware') {
-                return self::VMWARE;
-            }
-            if ($hypervisor === 'none' || empty($hypervisor)) {
-                // Physical machine, no hypervisor
-                return '';
-            }
+        if (file_exists($pbxEnvDetect) && is_executable($pbxEnvDetect)) {
+            $envOutput = [];
+            Processes::mwExec("$pbxEnvDetect --type 2>/dev/null", $envOutput);
+            $envType = strtolower(trim(implode('', $envOutput)));
+
+            // Map environment types to hypervisor constants
+            return match ($envType) {
+                'vmware' => self::VMWARE,
+                'kvm' => self::KVM,
+                'qemu' => self::QEMU,
+                'vbox', 'xen', 'docker' => '',  // Not supported by VmTools
+                'baremetal' => '',  // Physical machine
+                default => '',  // Unknown or virtual (generic)
+            };
         }
 
-        // Priority 2: lscpu Hypervisor vendor
-        $lsCpuPath = Util::which('lscpu');
-        $grepPath = Util::which('grep');
-        $awk = Util::which('awk');
-        if (!empty($lsCpuPath) && !empty($grepPath) && !empty($awk)) {
-            $result = shell_exec("$lsCpuPath | $grepPath 'Hypervisor vendor' | $awk '{print \$3}' 2>/dev/null");
-            $hypervisor = strtolower(trim($result ?? ''));
-
-            if ($hypervisor === 'kvm') {
-                return self::KVM;
-            }
-            if ($hypervisor === 'vmware') {
-                return self::VMWARE;
-            }
-        }
-
-        // Priority 3: Check for virtio devices (typical for KVM)
-        $virtioDevices = glob('/dev/vd*');
-        if (is_array($virtioDevices) && !empty($virtioDevices)) {
-            // Virtio devices present, likely KVM
-            return self::KVM;
-        }
-
-        // Priority 4: Fallback to CPU vendor (legacy method for VMware)
-        $cpuVendor = $this->getCpuVendor();
-        if ($cpuVendor === 'vmware') {
-            return self::VMWARE;
-        }
-
-        // No hypervisor detected (physical machine or unsupported hypervisor)
+        // No hypervisor detected
         return '';
-    }
-
-    /**
-     * Get the CPU vendor (legacy detection method).
-     *
-     * This method is kept for backward compatibility and as a fallback
-     * for the getHypervisor() method. It reads the CPU vendor string
-     * which may contain 'VMware' for VMware virtual machines.
-     *
-     * @return string CPU vendor string in lowercase (e.g., 'vmware', 'genuineintel', 'authenticamd').
-     */
-    private function getCpuVendor(): string
-    {
-        $lsCpuPath = Util::which('lscpu');
-        $grepPath = Util::which('grep');
-        $awk = Util::which('awk');
-        $result = shell_exec("$lsCpuPath | $grepPath vendor | $awk -F ' ' '{ print \$3}'");
-        return strtolower(trim($result ?? ''));
     }
 }
