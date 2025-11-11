@@ -124,10 +124,15 @@ class InstallFromPackageAction extends ModuleInstallationBase
             $this->unifiedModulesEvents->pushMessageToBrowser( self::STAGE_I_UPLOAD_MODULE, $resUploadStatus->getResult());
             if (!$resUploadStatus->success) {
                 return [$resUploadStatus->messages, false];
-            } elseif ($resUploadStatus->data[FilesConstants::D_STATUS] === FilesConstants::UPLOAD_IN_PROGRESS) {
+            }
+
+            // Get upload status with fallback to UPLOAD_IN_PROGRESS if not set
+            $uploadStatus = $resUploadStatus->data[FilesConstants::D_STATUS] ?? FilesConstants::UPLOAD_IN_PROGRESS;
+
+            if ($uploadStatus === FilesConstants::UPLOAD_IN_PROGRESS) {
                 sleep(1); // Adjust sleep time as needed
                 $maximumUploadTime--;
-            } elseif ($resUploadStatus->data[FilesConstants::D_STATUS] === FilesConstants::UPLOAD_COMPLETE) {
+            } elseif ($uploadStatus === FilesConstants::UPLOAD_COMPLETE) {
                 return [$resUploadStatus->messages, true];
             }
         }
