@@ -310,6 +310,6 @@ class UpdateConfigsUpToVer20250114 extends Injectable implements UpgradeSystemCo
      */
     private function enableSplitAudioThreadByDefault(): void
     {
-        PbxSettings::setValue(PbxSettings::PBX_SPLIT_AUDIO_THREAD, '1');
+        PbxSettings::setValueByKey(PbxSettings::PBX_SPLIT_AUDIO_THREAD, '1');
     }
 }
