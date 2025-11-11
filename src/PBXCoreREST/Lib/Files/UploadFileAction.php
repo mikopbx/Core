@@ -20,8 +20,8 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Files;
 
+use GuzzleHttp\Psr7\HttpFactory;
 use GuzzleHttp\Psr7\UploadedFile;
-use Http\Factory\Guzzle\StreamFactory;
 use MikoPBX\Common\Providers\EventBusProvider;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
@@ -218,7 +218,7 @@ class UploadFileAction extends Injectable
         if (! file_exists($file_data['file_path'])) {
             return false;
         }
-        $factory          = new StreamFactory();
+        $factory          = new HttpFactory();
         $stream           = $factory->createStreamFromFile($file_data['file_path'], 'r');
         $file             = new UploadedFile(
             $stream,
