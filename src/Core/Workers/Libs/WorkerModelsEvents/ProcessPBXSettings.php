@@ -34,6 +34,7 @@ use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadModulesConfAction
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadNTPAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadNatsAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadNginxAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPBXCoreAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPHPFPMAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPJSIPAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadParkingAction;
@@ -409,6 +410,20 @@ class ProcessPBXSettings extends Injectable
                 UpdatePasskeysLoginAction::class,
             ],
         ];
+
+
+        //  Reload PBX core when SSL certificates or hostname changes
+        $tables[] = [
+            'keys' => [
+                PbxSettings::WEB_HTTPS_PUBLIC_KEY,
+                PbxSettings::WEB_HTTPS_PRIVATE_KEY,
+                PbxSettings::EXTERNAL_SIP_HOST_NAME, 
+            ],
+            'actions' => [
+                ReloadPBXCoreAction::class,
+            ],
+        ];
+
 
         return $tables;
     }
