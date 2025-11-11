@@ -899,13 +899,39 @@ class SoundFilesConf extends SystemConfigClass
             $command = "$rmPath -rf $langDirEscaped";
             $exitCode = Processes::mwExec($command);
 
-            if ($exitCode === 0) {
-                SystemMessages::sysLogMsg(__METHOD__, "Language Pack $moduleUniqueID ($languageCode) removed successfully", LOG_INFO);
-                return true;
+            if ($exitCode !== 0) {
+                SystemMessages::sysLogMsg(__METHOD__, "Failed to remove Language Pack $moduleUniqueID. Exit code: $exitCode", LOG_WARNING);
+                return false;
             }
 
-            SystemMessages::sysLogMsg(__METHOD__, "Failed to remove Language Pack $moduleUniqueID. Exit code: $exitCode", LOG_WARNING);
-            return false;
+            SystemMessages::sysLogMsg(__METHOD__, "Language Pack $moduleUniqueID ($languageCode) directory removed successfully", LOG_INFO);
+
+            // Try to restore original system sounds from /offload if they exist
+            $sourceLanguageDir = self::SOURCE_SOUNDS_DIR . "/$languageCode";
+
+            if (is_dir($sourceLanguageDir)) {
+                SystemMessages::sysLogMsg(__METHOD__, "Restoring original system sounds from $sourceLanguageDir", LOG_INFO);
+
+                $cpPath = Util::which('cp');
+                $sourceDirEscaped = escapeshellarg($sourceLanguageDir);
+                $targetDirEscaped = escapeshellarg($systemSoundsDir);
+                $command = "$cpPath -r $sourceDirEscaped $targetDirEscaped";
+                $exitCode = Processes::mwExec($command);
+
+                if ($exitCode === 0) {
+                    SystemMessages::sysLogMsg(__METHOD__, "Original system sounds for $languageCode restored successfully", LOG_INFO);
+
+                    // Trigger sound file conversion for restored files
+                    // Note: WorkerSoundFilesInit will handle conversion automatically on next run
+                    SystemMessages::sysLogMsg(__METHOD__, "Sound file conversion will be handled by WorkerSoundFilesInit", LOG_DEBUG);
+                } else {
+                    SystemMessages::sysLogMsg(__METHOD__, "Failed to restore original sounds. Exit code: $exitCode", LOG_WARNING);
+                }
+            } else {
+                SystemMessages::sysLogMsg(__METHOD__, "No original system sounds found in $sourceLanguageDir (this is normal for new languages)", LOG_DEBUG);
+            }
+
+            return true;
 
         } else {
             // Feature module: Remove only prefixed files (all format variants)
