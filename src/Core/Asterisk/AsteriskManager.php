@@ -611,7 +611,7 @@ class AsteriskManager
      * @example examples/sip_show_peer.php Get information about a sip peer
      *
      */
-    public function connect(string $server = null, string $username = null, string $secret = null, string $events = 'on'): bool
+    public function connect(?string $server = null, ?string $username = null, ?string $secret = null, string $events = 'on'): bool
     {
         $this->listenEvents = $events;
         // use config if not specified
@@ -774,7 +774,7 @@ class AsteriskManager
      * @link    http://www.voip-info.org/wiki-Asterisk+Manager+API+Action+Command
      * @link    http://www.voip-info.org/wiki-Asterisk+CLI
      */
-    public function Command(string $command, string $actionid = null): array
+    public function Command(string $command, ?string $actionid = null): array
     {
         $parameters = ['Command' => $command];
         if ($actionid) {
@@ -1615,7 +1615,7 @@ class AsteriskManager
      *
      * @return string | array
      */
-    public function GetVar(string $channel, string $variable, string $actionId = null, bool $retArray = true): array|string
+    public function GetVar(string $channel, string $variable, ?string $actionId = null, bool $retArray = true): array|string
     {
         $parameters = ['Channel' => $channel, 'Variable' => $variable];
         if ($actionId) {

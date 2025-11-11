@@ -29,7 +29,7 @@ use Phalcon\Support\HelperFactory;
  */
 class Text
 {
-    public static function camelize(string $text, string $delimiters = null, bool $lowerFirst = false): string
+    public static function camelize(string $text, ?string $delimiters = null, bool $lowerFirst = false): string
     {
         $helper = new HelperFactory();
         if ($delimiters === '\\') {

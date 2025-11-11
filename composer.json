@@ -3,7 +3,7 @@
     "description": "Free PBX system for SMB based on Asterisk",
     "homepage": "https://www.mikopbx.com",
     "require": {
-        "php": "^8.3",
+        "php": "^8.4",
         "ext-curl": "*",
         "ext-iconv": "*",
         "ext-json": "*",
@@ -11,7 +11,7 @@
         "ext-openssl": "*",
         "ext-pcntl": "*",
         "ext-pdo": "*",
-        "ext-phalcon": "^5.8.0",
+        "ext-phalcon": "^5.9.3",
         "ext-posix": "*",
         "ext-redis": "*",
         "ext-simplexml": "*",
@@ -29,7 +29,7 @@
         "league/oauth2-google": "^4.0",
         "pda/pheanstalk": "^4.0",
         "php-mime-mail-parser/php-mime-mail-parser": "^7.0",
-        "php-school/cli-menu": "^4.0",
+        "php-school/cli-menu": "^4.4",
         "php-school/terminal": "^0.2.1",
         "phplucidframe/console-table": "^1.2",
         "phpmailer/phpmailer": "^6.1",
@@ -74,10 +74,10 @@
     "license": "GPL-3.0-or-later",
     "support": {
         "email": "help@mikopbx.com",
-        "wiki": "https://wiki.mikopbx.com",
+        "wiki": "https://docs.mikopbx.com",
         "issues": "https://github.com/mikopbx/Core/issues",
         "source": "https://github.com/mikopbx/Core",
-        "forum": "https://qa.askozia.ru",
+        "forum": "https://forum.mikopbx.com",
         "chat": "https://t.me/mikopbx_dev"
     },
     "authors": [
@@ -101,7 +101,7 @@
     "config": {
         "sort-packages": true,
         "platform": {
-            "php": "8.3"
+            "php": "8.4"
         },
         "allow-plugins": {
             "php-http/discovery": true

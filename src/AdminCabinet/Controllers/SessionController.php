@@ -91,7 +91,7 @@ class SessionController extends BaseController
             time() - 3600,  // Expire in the past
             '/',
             $isSecure,      // secure (match protocol)
-            null,           // domain
+            '',             // domain (current domain, empty string for PHP 8.4 compatibility)
             true,           // httpOnly
             ['samesite' => 'Strict']
         );

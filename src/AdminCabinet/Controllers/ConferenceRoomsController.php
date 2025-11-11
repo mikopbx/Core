@@ -36,7 +36,7 @@ class ConferenceRoomsController extends BaseController
      *
      * @param string|null $uniqid The unique identifier of the conference room.
      */
-    public function modifyAction(string $uniqid = null): void
+    public function modifyAction(?string $uniqid = null): void
     {   
         // Create form based on API data structure
         $this->view->form = new ConferenceRoomEditForm();
