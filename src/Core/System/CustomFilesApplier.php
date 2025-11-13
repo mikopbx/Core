@@ -62,7 +62,7 @@ class CustomFilesApplier extends Injectable
      * @param CustomFiles $file The custom file to apply
      * @return bool True if successful, false otherwise
      */
-    private static function applyCustomFile(CustomFiles $file): bool
+    public static function applyCustomFile(CustomFiles $file): bool
     {
         $filepath = $file->filepath;
 

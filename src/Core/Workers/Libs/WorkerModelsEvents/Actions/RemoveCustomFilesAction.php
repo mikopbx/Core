@@ -55,7 +55,7 @@ class RemoveCustomFilesAction extends Injectable implements ReloadActionInterfac
             }
 
             // Only process MODE_CUSTOM files
-            if (isset($record['mode']) && $record['mode'] !== 'custom') {
+            if (isset($record['mode']) && $record['mode'] !== CustomFiles::MODE_CUSTOM) {
                 return;
             }
 
@@ -71,16 +71,6 @@ class RemoveCustomFilesAction extends Injectable implements ReloadActionInterfac
      */
     private function removeCustomFile(string $filepath): void
     {
-        // Security check: ensure file is in allowed directory
-        if (!CustomFiles::isPathAllowed($filepath)) {
-            SystemMessages::sysLogMsg(
-                __CLASS__,
-                CustomFiles::getSecurityErrorMessage($filepath),
-                LOG_ERR
-            );
-            return;
-        }
-
         try {
             // Check if the custom file exists
             if (file_exists($filepath)) {
