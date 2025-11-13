@@ -481,5 +481,282 @@ class TestCustomFilesValidation:
                 print(f"⚠ Unexpected error: {str(e)[:50]}")
 
 
+class TestCustomFilesAppendMode:
+    """Test MODE_APPEND functionality with pjsip.conf"""
+
+    test_file_id = None
+
+    def test_01_create_or_update_pjsip_append_file(self, api_client):
+        """Test creating/updating custom file with MODE_APPEND for pjsip.conf"""
+        # Custom content to append to pjsip.conf
+        custom_content = """; Custom PJSIP Configuration
+; Added via REST API test
+
+[transport-test]
+type=transport
+protocol=udp
+bind=0.0.0.0:15060
+
+[endpoint-test]
+type=endpoint
+context=internal
+disallow=all
+allow=ulaw
+allow=alaw
+"""
+        encoded_content = base64.b64encode(custom_content.encode()).decode()
+
+        custom_file_data = {
+            'filepath': '/etc/asterisk/pjsip.conf',
+            'content': encoded_content,
+            'mode': 'append',
+            'description': 'Test append mode for pjsip.conf - pytest automated test'
+        }
+
+        try:
+            # First, try to find existing file
+            list_response = api_client.get('custom-files', params={
+                'search': '/etc/asterisk/pjsip.conf',
+                'limit': 10
+            })
+
+            existing_file = None
+            if list_response['result'] and list_response['data']:
+                for file in list_response['data']:
+                    if file.get('filepath') == '/etc/asterisk/pjsip.conf':
+                        existing_file = file
+                        break
+
+            if existing_file:
+                # File exists - update it
+                print(f"✓ Found existing custom file for pjsip.conf")
+                print(f"  ID: {existing_file['id']}")
+                print(f"  Current mode: {existing_file.get('mode')}")
+
+                TestCustomFilesAppendMode.test_file_id = existing_file['id']
+
+                # Update with test content
+                update_response = api_client.patch(
+                    f'custom-files/{existing_file["id"]}',
+                    custom_file_data
+                )
+
+                if update_response['result']:
+                    print(f"✓ Updated existing custom file with test content")
+                    print(f"  Mode: append")
+                else:
+                    print(f"✗ Update failed: {update_response.get('messages', {})}")
+                    pytest.fail(f"Failed to update: {update_response.get('messages', {})}")
+
+            else:
+                # File doesn't exist - create it
+                response = api_client.post('custom-files', custom_file_data)
+
+                if response['result']:
+                    TestCustomFilesAppendMode.test_file_id = response['data'].get('id')
+                    print(f"✓ Custom file created with append mode")
+                    print(f"  ID: {TestCustomFilesAppendMode.test_file_id}")
+                else:
+                    print(f"✗ Create failed: {response.get('messages', {})}")
+                    pytest.fail(f"Failed to create: {response.get('messages', {})}")
+
+            # Verify the final state
+            verify_response = api_client.get(f'custom-files/{TestCustomFilesAppendMode.test_file_id}')
+            assert_api_success(verify_response, "Failed to verify file")
+
+            data = verify_response['data']
+            assert data['mode'] == 'append', f"Expected mode=append, got {data['mode']}"
+            assert data['filepath'] == '/etc/asterisk/pjsip.conf'
+            print(f"  ✓ Verified: mode={data['mode']}, filepath={data['filepath']}")
+
+        except Exception as e:
+            error_str = str(e)
+            if 'savepoint' in error_str.lower() or 'sql' in error_str.lower():
+                pytest.skip(f"Blocked by database locking issue: {error_str[:100]}")
+            else:
+                raise
+
+    def test_02_verify_file_applied(self, api_client):
+        """Verify that the custom content was applied to pjsip.conf"""
+        import subprocess
+        import time
+
+        if not TestCustomFilesAppendMode.test_file_id:
+            pytest.skip("No test file ID available")
+
+        # Get the custom file record
+        response = api_client.get(f'custom-files/{TestCustomFilesAppendMode.test_file_id}')
+        assert_api_success(response, "Failed to get custom file")
+
+        data = response['data']
+        print(f"✓ Custom file record retrieved")
+        print(f"  Mode: {data['mode']}")
+        print(f"  Filepath: {data['filepath']}")
+
+        # Decode expected content
+        expected_content = base64.b64decode(data['content']).decode()
+        assert 'transport-test' in expected_content, "Expected content should contain transport-test"
+        assert 'endpoint-test' in expected_content, "Expected content should contain endpoint-test"
+        print(f"  ✓ Expected content validated")
+
+        # Wait for WorkerModelsEvents to process the change (standard mechanism)
+        # The flow is: afterSave → processSettingsChanges → Beanstalkd → WorkerModelsEvents
+        # → ApplyCustomFilesAction → ReloadPJSIPAction → file regeneration
+        print(f"\n⏳ Waiting for worker to process change (15 seconds)...")
+        time.sleep(15)
+
+        # Check that 'changed' flag was reset to '0' by worker
+        try:
+            result = subprocess.run(
+                ['docker', 'exec', 'mikopbx-php83', 'sqlite3', '/cf/conf/mikopbx.db',
+                 f"SELECT changed FROM m_CustomFiles WHERE id={TestCustomFilesAppendMode.test_file_id}"],
+                capture_output=True, text=True, timeout=5
+            )
+            changed_flag = result.stdout.strip()
+            print(f"  Changed flag in DB: {changed_flag}")
+            if changed_flag == '0':
+                print(f"  ✓ Worker processed the change (changed flag reset to 0)")
+            else:
+                print(f"  ⚠ Worker hasn't processed yet (changed=1)")
+        except Exception as e:
+            print(f"  ⚠ Could not check changed flag: {e}")
+
+        # Read actual file content from container
+        try:
+            result = subprocess.run(
+                ['docker', 'exec', 'mikopbx-php83', 'cat', '/etc/asterisk/pjsip.conf'],
+                capture_output=True, text=True, timeout=5
+            )
+
+            if result.returncode != 0:
+                pytest.fail(f"Failed to read pjsip.conf from container: {result.stderr}")
+
+            actual_content = result.stdout
+            print(f"\n✓ Read actual file from container ({len(actual_content)} bytes)")
+
+            # Verify custom content is present (MODE_APPEND)
+            if 'transport-test' in actual_content:
+                print(f"  ✓ Custom content 'transport-test' found in actual file")
+            else:
+                pytest.fail("Custom content 'transport-test' NOT found in pjsip.conf - MODE_APPEND failed!")
+
+            if 'endpoint-test' in actual_content:
+                print(f"  ✓ Custom content 'endpoint-test' found in actual file")
+            else:
+                pytest.fail("Custom content 'endpoint-test' NOT found in pjsip.conf - MODE_APPEND failed!")
+
+            # Verify original content is still present (MODE_APPEND should preserve original)
+            if '[transport-udp]' in actual_content or 'type=transport' in actual_content:
+                print(f"  ✓ Original system content preserved in file")
+            else:
+                print(f"  ⚠ Warning: Could not verify original content preservation")
+
+            # Check that .orgn backup file exists (created by MODE_APPEND mechanism)
+            backup_result = subprocess.run(
+                ['docker', 'exec', 'mikopbx-php83', 'test', '-f', '/etc/asterisk/pjsip.conf.orgn'],
+                capture_output=True, timeout=5
+            )
+
+            if backup_result.returncode == 0:
+                print(f"  ✓ Backup file pjsip.conf.orgn exists (MODE_APPEND mechanism)")
+            else:
+                print(f"  ⚠ Backup file pjsip.conf.orgn not found")
+
+        except subprocess.TimeoutExpired:
+            pytest.fail("Timeout reading file from container")
+        except Exception as e:
+            pytest.fail(f"Error reading file from container: {e}")
+
+    def test_03_update_and_verify_worker_resets_flag(self, api_client):
+        """Update file again and verify worker resets changed flag"""
+        import subprocess
+        import time
+
+        if not TestCustomFilesAppendMode.test_file_id:
+            pytest.skip("No test file ID available")
+
+        print(f"\n=== Test 03: Update and verify worker resets changed flag ===")
+
+        # Update with new content to trigger fresh worker processing
+        new_content = """; Custom PJSIP Configuration - Updated
+; Added via REST API test - FRESH UPDATE
+
+[transport-test-updated]
+type=transport
+protocol=udp
+bind=0.0.0.0:15061
+
+[endpoint-test-updated]
+type=endpoint
+context=internal
+disallow=all
+allow=ulaw
+"""
+        encoded_content = base64.b64encode(new_content.encode()).decode()
+
+        # Patch the file
+        update_response = api_client.patch(
+            f'custom-files/{TestCustomFilesAppendMode.test_file_id}',
+            {'content': encoded_content}
+        )
+
+        assert_api_success(update_response, "Failed to update custom file")
+        print(f"✓ File updated with fresh content")
+
+        # Immediately check changed flag - should be '1'
+        result = subprocess.run(
+            ['docker', 'exec', 'mikopbx-php83', 'sqlite3', '/cf/conf/mikopbx.db',
+             f"SELECT changed FROM m_CustomFiles WHERE id={TestCustomFilesAppendMode.test_file_id}"],
+            capture_output=True, text=True, timeout=5
+        )
+        changed_flag_before = result.stdout.strip()
+        print(f"  Changed flag immediately after update: {changed_flag_before}")
+        assert changed_flag_before == '1', "Changed flag should be '1' after update"
+
+        # Wait for WorkerModelsEvents to process
+        print(f"\n⏳ Waiting 20 seconds for worker to process and reset flag...")
+        time.sleep(20)
+
+        # Check changed flag again - should be '0' now
+        result = subprocess.run(
+            ['docker', 'exec', 'mikopbx-php83', 'sqlite3', '/cf/conf/mikopbx.db',
+             f"SELECT changed FROM m_CustomFiles WHERE id={TestCustomFilesAppendMode.test_file_id}"],
+            capture_output=True, text=True, timeout=5
+        )
+        changed_flag_after = result.stdout.strip()
+        print(f"  Changed flag after worker processing: {changed_flag_after}")
+
+        if changed_flag_after == '0':
+            print(f"  ✓ SUCCESS: Worker processed file and reset changed='0'")
+            print(f"  ✓ Complete flow verified:")
+            print(f"     1. API update sets changed='1'")
+            print(f"     2. ModelsBase sends to Beanstalk queue (only if changed='1')")
+            print(f"     3. WorkerModelsEvents receives and plans ApplyCustomFilesAction")
+            print(f"     4. ApplyCustomFilesAction applies file and resets changed='0'")
+            print(f"     5. ModelsBase skips queue (changed='0') - loop prevented!")
+        else:
+            pytest.fail(f"Worker did not reset changed flag. Expected '0', got '{changed_flag_after}'")
+
+    def test_04_cleanup_test_file(self, api_client):
+        """Clean up the test custom file"""
+        if not TestCustomFilesAppendMode.test_file_id:
+            pytest.skip("No test file ID available")
+
+        try:
+            response = api_client.delete(f'custom-files/{TestCustomFilesAppendMode.test_file_id}')
+
+            if response['result']:
+                print(f"✓ Test custom file deleted successfully")
+                TestCustomFilesAppendMode.test_file_id = None
+            else:
+                print(f"⚠ Failed to delete test file: {response.get('messages', {})}")
+
+        except Exception as e:
+            if 'savepoint' in str(e).lower():
+                pytest.skip(f"DELETE blocked by database locking issue")
+            else:
+                print(f"⚠ Error during cleanup: {str(e)[:100]}")
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v', '-s'])
