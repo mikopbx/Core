@@ -35,7 +35,7 @@
         "phpmailer/phpmailer": "^6.1",
         "psr/log": "^1.0.1",
         "repejota/nats": "0.8.4",
-        "sentry/sdk": "^3.3.0",
+        "sentry/sdk": "^4.0.0",
         "thenetworg/oauth2-azure": "^2.2"
     },
     "require-dev": {
