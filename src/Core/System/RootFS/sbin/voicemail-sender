@@ -4,6 +4,7 @@
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Core\Asterisk\Configs\VoiceMailConf;
 use MikoPBX\Core\System\BeanstalkClient;
+use MikoPBX\Core\System\Configs\SoundFilesConf;
 use MikoPBX\Core\System\Notifications;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
@@ -46,15 +47,30 @@ try {
     $recordingFile = VoiceMailConf::getCopyFilename($file, $linkedId, $d->getTimestamp(), true);
     $recordingFile = Util::trimExtensionForFile($recordingFile) . '.wav';
 
-    /** Convert tmp file to mp3 */
-    $converter  = Util::which('wav2mp3.sh');
-    $baseNameTmp= Util::trimExtensionForFile($file);
-    $mp3File   = "$baseNameTmp.mp3";
-    Processes::mwExec("$converter $baseNameTmp");
-    if(file_exists($mp3File)){
-        $recordingFile = $mp3File;
+    /** Convert tmp file to mp3 using SoundFilesConf::convertAudioFile */
+    $result = SoundFilesConf::convertAudioFile(
+        $file,
+        ['mp3'],
+        [
+            'normalize' => true,
+            'use_cache' => false,
+            'force' => true,
+            'bitrate' => '16k'
+        ]
+    );
+
+    // Check if conversion succeeded
+    if ($result['success'] && isset($result['formats']['mp3']['path'])) {
+        $mp3File = $result['formats']['mp3']['path'];
+        if (file_exists($mp3File)) {
+            $recordingFile = $mp3File;
+        }
     }
-    unlink($file);
+
+    // Clean up original file
+    if (file_exists($file)) {
+        unlink($file);
+    }
 
     /** create mail message */
     $addresses      = mailparse_rfc822_parse_addresses($parser->getHeader('to'));
@@ -119,10 +135,7 @@ try {
 }catch (Throwable $e){
     $recordingFile = '';
     SystemMessages::sysLogMsg('Voicemail-Sender', $e->getMessage(), LOG_ERR);
-    // Clean up on error
-    if(!empty($mp3File) && file_exists($mp3File)){
-        unlink($mp3File);
-    }
+    // Clean up on error - mp3File is cleaned automatically by convertAudioFile on error
 }
 
 $data = [

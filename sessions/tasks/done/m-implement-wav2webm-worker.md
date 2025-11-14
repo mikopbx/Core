@@ -1,8 +1,9 @@
 ---
 name: m-implement-wav2webm-worker
 branch: feature/m-implement-wav2webm-worker
-status: pending
+status: completed
 created: 2025-11-13
+completed: 2025-11-13
 ---
 
 # WAV to WebM Conversion Worker Implementation
@@ -11,15 +12,17 @@ created: 2025-11-13
 Implement a background worker that converts WAV audio files to WebM format using a JSON-based task system. The worker runs on a 1-minute interval, monitors a folder for JSON task files created by WorkerCDR, processes conversions using FFmpeg, and cleans up completed tasks.
 
 ## Success Criteria
-- [ ] Worker class created that extends WorkerBase with 1-minute start interval
-- [ ] Worker recursively scans Directories::AST_MONITOR_DIR for JSON task files
-- [ ] JSON task file format matches specification in description file (input WAV path, output WebM path, conversion parameters)
-- [ ] FFmpeg integration for WAV to WebM conversion with parameters from JSON
-- [ ] WorkerCDR integration - creates JSON task files in monitoring directory
-- [ ] Error handling and logging for failed conversions (keep JSON file on failure)
-- [ ] Cleanup of JSON task files on successful conversion
-- [ ] Worker registered with WorkerSafeScriptCore for monitoring/restart
-- [ ] Documentation for JSON task format and usage
+- [x] Worker class created that extends WorkerBase with 1-minute start interval
+- [x] Worker recursively scans Directories::AST_MONITOR_DIR for JSON task files
+- [x] JSON task file format matches specification in description file (input WAV path, output WebM path, conversion parameters)
+- [x] FFmpeg integration for WAV to WebM conversion with parameters from JSON
+- [x] WorkerCDR integration - creates JSON task files in monitoring directory
+- [x] Error handling and logging for failed conversions (keep JSON file on failure)
+- [x] Cleanup of JSON task files on successful conversion
+- [x] Worker registered with WorkerSafeScriptCore for monitoring/restart
+- [x] Documentation for JSON task format and usage
+- [x] Timeout protection implemented to prevent ffmpeg from hanging
+- [x] PHPStan level 8 compliance verified
 
 ## Context Manifest
 
@@ -526,5 +529,53 @@ private function processConversionTasks(): void
 <!-- Any specific notes or requirements from the developer -->
 
 ## Work Log
-<!-- Updated as work progresses -->
-- [YYYY-MM-DD] Started task, initial research
+
+### 2025-11-13
+
+#### Completed
+- Created WorkerWav2Webm class (src/Core/Workers/WorkerWav2Webm.php)
+  - Extends WorkerBase with 60-second check interval
+  - Implements JSON task file scanning using RecursiveDirectoryIterator
+  - File locking mechanism to prevent race conditions
+  - Retry logic with 3 max attempts and 5-minute retry delay
+  - Comprehensive error handling for all FFmpeg exit codes
+  - Direct PHP-based FFmpeg integration (no shell scripts)
+- Modified WorkerCdr.php to create JSON task files instead of direct conversion
+  - Added Directories import for AST_MONITOR_DIR
+  - Creates conversion-tasks directory if not exists
+  - Generates unique task filenames (linkedid + uniqid)
+  - Removed direct wav2webm.sh execution
+- Registered WorkerWav2Webm in WorkerSafeScriptsCore.php
+  - Added to CHECK_BY_PID_NOT_ALERT worker list
+  - Worker auto-detected and started by supervisor
+- Implemented complete FFmpeg integration in PHP
+  - Stereo merge for split audio files (_in.wav + _out.wav)
+  - Sample rate detection with ffprobe
+  - Dynamic Opus bitrate selection (48k for 8kHz, 64k for 16kHz+)
+  - EBU R128 loudness normalization
+  - Metadata tagging with call details
+  - Output validation with size and ffprobe checks
+  - 120-second timeout protection
+- Code quality verification
+  - PHPStan level 8 compliance confirmed
+  - Fixed critical warnings (file handle leak, JSON error handling)
+  - All PHP syntax checks passed
+
+#### Decisions
+- Chose JSON task-based architecture over direct shell script execution for system restart resilience
+- Implemented all conversion logic in PHP instead of shell scripts for better error handling and maintainability
+- Used CHECK_BY_PID_NOT_ALERT worker type (simple periodic task, no queue communication needed)
+- Set 60-second check interval (balances responsiveness vs system load)
+- Implemented retry with exponential backoff (3 attempts, 5-minute delay between retries)
+- Failed tasks renamed to .failed.json after max attempts for manual inspection
+
+#### Discovered
+- Task directory path is /storage/usbdisk1/mikopbx/astspool/monitor/conversion-tasks/ in Docker containers
+- Worker successfully starts and processes tasks without manual intervention
+- File locking prevents concurrent processing by multiple worker instances
+- JSON_THROW_ON_ERROR ensures proper error handling for malformed task files
+
+#### Next Steps
+- Monitor worker performance in production
+- Consider adding metrics collection for conversion success/failure rates
+- Evaluate if retry delay should be configurable

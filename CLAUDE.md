@@ -84,9 +84,11 @@ Tests are automatically synchronized between host and container:
    - Common services in `src/Common/Providers/`
    - Core services in `src/Core/Providers/`
 
-2. **Worker System**: Background job processing using Beanstalkd queue and Redis for IPC
+2. **Worker System**: Background job processing using multiple patterns
    - Base class: `src/Core/Workers/WorkerBase.php`
-   - Jobs are queued to specific tubes with priorities
+   - Queue-based workers: Beanstalkd (CDR, Events) and Redis (API) with priorities
+   - File-based workers: JSON task files for async operations (WAV to WebM conversion)
+   - Supervisor: `WorkerSafeScriptsCore` monitors and restarts all workers
 
 3. **Module System**: Extensible plugin architecture
    - Base class: `src/Modules/PbxExtensionBase.php`
