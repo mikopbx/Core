@@ -57,3 +57,9 @@ tests/api/**/*.tmp
 .claude/translation_analysis_report.json
 .claude/*.tar.gz
 run-test-from-host.sh
+# cc-sessions runtime files
+sessions/sessions-state.json
+sessions/package.json
+sessions/transcripts/
+sessions/.archived/
+tests/pycalltests/.hypothesis/

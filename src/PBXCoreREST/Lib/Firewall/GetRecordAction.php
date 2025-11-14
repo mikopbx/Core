@@ -21,7 +21,7 @@ namespace MikoPBX\PBXCoreREST\Lib\Firewall;
 
 use MikoPBX\Common\Models\FirewallRules;
 use MikoPBX\Common\Models\NetworkFilters;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\System;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 
 /**
@@ -91,7 +91,7 @@ class GetRecordAction
             
             // Add system information
             $data['availableRules'] = $defaultRules;  // All possible firewall rule templates
-            $data['isDocker'] = Util::isDocker();
+            $data['isDocker'] = System::isDocker();
             $data['dockerSupportedServices'] = ['WEB', 'AMI', 'SIP & RTP', 'IAX'];
 
             $res->data = $data;

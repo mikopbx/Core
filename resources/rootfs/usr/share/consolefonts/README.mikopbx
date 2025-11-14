@@ -1,0 +1,98 @@
+# MikoPBX Console Fonts
+
+This directory contains optimized console fonts for MikoPBX supporting 27 languages.
+
+## Font Selection (12 fonts, ~60KB total)
+
+Space savings: ~920KB (from 984KB to 60KB)
+
+### Universal Multilingual Fonts (Primary)
+
+1. **LatGrkCyr-8x16.psfu.gz** (3.8KB) - MAIN FONT
+   - Covers: Latin (Western/Eastern European), Greek, Cyrillic
+   - Box drawing characters included (for MC, etc.)
+   - Languages: en, de, es, fr, pt, it, da, nl, sv, fi, pl, cs, hr, ro, hu, ru, uk, el
+
+2. **LatGrkCyr-12x22.psfu.gz** (5.9KB)
+   - Same as above, larger size for high-resolution displays
+
+### Backup Universal Fonts
+
+3. **latarcyrheb-sun16.psfu.gz** (3.8KB)
+   - Latin + Arabic + Cyrillic + Hebrew
+   - Fallback for LatGrkCyr
+
+4. **eurlatgr.psfu.gz** (4.1KB)
+   - European Latin + Greek
+   - Alternative fallback
+
+### Cyrillic Support
+
+5. **UniCyr_8x16.psf.gz** (1.9KB)
+   - Unicode Cyrillic
+   - Languages: ru, uk
+
+6. **cp866-8x16.psf.gz** (1.4KB)
+   - CP866 (DOS Cyrillic)
+   - Legacy system support
+   - Box drawing characters included
+
+### Language-Specific Fonts
+
+7. **cp857.16.gz** (1.4KB)
+   - Turkish (CP857)
+   - Language: tr
+
+8. **lat5-16.psfu.gz** (2.0KB)
+   - Turkish (ISO-8859-9)
+   - Language: tr
+
+9. **LatKaCyrHeb-14.psfu.gz** (4.1KB)
+   - Latin + Ka (Georgian) + Cyrillic + Hebrew
+   - Language: ka (Georgian)
+
+10. **viscii10-8x16.psfu.gz** (1.9KB)
+    - Vietnamese VISCII encoding
+    - Language: vi
+
+11. **tcvn8x16.psf.gz** (1.4KB)
+    - Vietnamese TCVN encoding
+    - Language: vi
+
+### Default Fallback
+
+12. **default8x16.psfu.gz** (2.0KB)
+    - Basic fallback font
+
+## Language Coverage
+
+Supported MikoPBX interface languages (27):
+
+- **Latin scripts**: en, en_GB, de, es, fr, pt, pt_BR, it, da, nl, sv, fi, hr, ro, hu, az, pl, cs, tr
+- **Cyrillic scripts**: ru, uk
+- **Greek script**: el
+- **Georgian script**: ka
+- **Vietnamese scripts**: vi
+
+## Unsupported in Console Fonts
+
+The following languages require UTF-8 framebuffer fonts (not included):
+- **CJK**: ja (Japanese), zh_Hans (Chinese)
+- **Thai**: th
+
+These languages work in the web interface but may not display correctly in text console.
+
+## Usage
+
+Set font with:
+```bash
+setfont /usr/share/consolefonts/LatGrkCyr-8x16.psfu.gz
+```
+
+## Maintenance
+
+Font cleanup is handled by:
+- Build system: package/base/kbd/kbd.conf (postmake hook)
+- This directory: Maintained manually in Core repository
+
+Last updated: 2025-11-08

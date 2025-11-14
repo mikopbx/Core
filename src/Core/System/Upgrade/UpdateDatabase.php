@@ -47,6 +47,13 @@ class UpdateDatabase extends Injectable
 {
 
     public $isTheFirstMessage = true;
+
+    /**
+     * Time when the current operation started (microtime)
+     *
+     * @var float
+     */
+    private float $operationStartTime = 0.0;
     /**
      * Updates database structure according to models annotations
      */
@@ -300,7 +307,7 @@ class UpdateDatabase extends Injectable
             $msg = '   |- UpdateDatabase: Create new table: ' . $tableName;
             $msg = $this->publishMessage($msg);
             $result = $connectionService->createTable($tableName, '', $columnsNew);
-            SystemMessages::echoResult($msg);
+            $this->publishResult($msg);
         } else {
             // Table exists, we have to check/upgrade its structure
             $currentColumnsArr = $connectionService->describeColumns($tableName, '');
@@ -321,8 +328,8 @@ class UpdateDatabase extends Injectable
                 // Create temporary clone on current table with all columns and date
                 // Delete original table
                 $gluedColumns = implode(',', $currentStateColumnList);
-                $query        = "CREATE TEMPORARY TABLE {$tableName}_backup($gluedColumns); 
-INSERT INTO {$tableName}_backup SELECT $gluedColumns FROM $tableName; 
+                $query        = "CREATE TEMPORARY TABLE {$tableName}_backup($gluedColumns);
+INSERT INTO {$tableName}_backup SELECT $gluedColumns FROM $tableName;
 DROP TABLE  $tableName";
                 $result       = $result && $connectionService->execute($query);
 
@@ -338,7 +345,7 @@ DROP TABLE  $tableName";
 
                 // Drop temporary table
                 $result = $result && $connectionService->execute("DROP TABLE {$tableName}_backup;");
-                SystemMessages::echoResult($msg);
+                $this->publishResult($msg);
             }
         }
 
@@ -447,7 +454,7 @@ DROP TABLE  $tableName";
                 $msg = " - UpdateDatabase: Delete index: $indexName ";
                 $msg = $this->publishMessage($msg);
                 $result += $connectionService->dropIndex($tableName, '', $indexName);
-                SystemMessages::echoResult($msg);
+                $this->publishResult($msg);
             }
         }
 
@@ -460,13 +467,13 @@ DROP TABLE  $tableName";
                     $msg = $this->publishMessage($msg);
                     $result += $connectionService->dropIndex($tableName, '', $indexName);
                     $result += $connectionService->addIndex($tableName, '', $describedIndex);
-                    SystemMessages::echoResult($msg);
+                    $this->publishResult($msg);
                 }
             } else {
                 $msg = " - UpdateDatabase: Add new index: $indexName ";
                 $msg = $this->publishMessage($msg);
                 $result += $connectionService->addIndex($tableName, '', $describedIndex);
-                SystemMessages::echoResult($msg);
+                $this->publishResult($msg);
             }
         }
 
@@ -481,11 +488,27 @@ DROP TABLE  $tableName";
      */
     private function publishMessage(string $msg): string
     {
-        if ($this->isTheFirstMessage) {   
+        if ($this->isTheFirstMessage) {
             $msg = PHP_EOL.$msg;
             $this->isTheFirstMessage = false;
         }
         SystemMessages::echoStartMsg($msg);
+        $this->operationStartTime = microtime(true);
         return $msg;
+    }
+
+    /**
+     * Publish result message with timing information
+     * @param string $msg
+     * @param string $result
+     */
+    private function publishResult(string $msg, string $result = SystemMessages::RESULT_DONE): void
+    {
+        $elapsedTime = 0.0;
+        if ($this->operationStartTime > 0) {
+            $elapsedTime = round(microtime(true) - $this->operationStartTime, 2);
+        }
+        SystemMessages::echoResultMsgWithTime($msg, $result, $elapsedTime);
+        $this->operationStartTime = 0.0;
     }
 }

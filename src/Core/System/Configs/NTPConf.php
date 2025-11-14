@@ -61,7 +61,7 @@ class NTPConf extends SystemConfigClass
     public function generateMonitConf(): bool{
 
         // Skip NTP service in Docker containers - time is inherited from host
-        if (Util::isDocker()) {
+        if (System::isDocker()) {
             $confPath = $this->getMainMonitConfFile();
             // Write empty config to ensure old configs are removed
             $this->saveFileContent($confPath, '');
@@ -116,7 +116,7 @@ class NTPConf extends SystemConfigClass
     public function reStart(): bool
     {
         // Skip NTP service entirely in Docker containers
-        if (Util::isDocker()) {
+        if (System::isDocker()) {
             $this->generateMonitConf(); // This will write empty config
             return true;
         }
@@ -139,7 +139,7 @@ class NTPConf extends SystemConfigClass
     public function configure(): void
     {
         // Skip configuration in Docker containers
-        if (Util::isDocker()) {
+        if (System::isDocker()) {
             return;
         }
 

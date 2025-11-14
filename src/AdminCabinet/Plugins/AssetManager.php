@@ -58,7 +58,7 @@ class AssetManager extends Manager
      * @return string
      * @throws Exception
      */
-    public function outputCss(string $name = null): string
+    public function outputCss(?string $name = null): string
     {
         if ($name !== null) {
             foreach ($this->collection($name) as $resource) {
@@ -79,7 +79,7 @@ class AssetManager extends Manager
      * @return string
      * @throws Exception
      */
-    public function outputJs(string $name = null): string
+    public function outputJs(?string $name = null): string
     {
         if ($name !== null) {
             foreach ($this->collection($name) as $resource) {

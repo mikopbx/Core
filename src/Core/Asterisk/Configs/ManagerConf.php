@@ -25,6 +25,7 @@ use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 
 /**
@@ -105,19 +106,60 @@ class ManagerConf extends AsteriskConfigClass
                 $result[]           = $arr_data;
             }
 
+            // In Docker, read ACL deny rules once and apply to each user
+            $aclDenyRules = '';
+            if (System::isDocker()) {
+                $asteriskEtcDir = Directories::getDir(Directories::AST_ETC_DIR);
+                $fail2banDenyFile = $asteriskEtcDir . '/fail2ban_manager_deny.conf';
+                $networkFiltersDenyFile = $asteriskEtcDir . '/manager_network_filters_deny.conf';
+
+                // Collect unique deny rules from both files
+                $denyRules = [];
+
+                // Read fail2ban deny rules
+                if (file_exists($fail2banDenyFile)) {
+                    $fail2banContent = file_get_contents($fail2banDenyFile);
+                    // Extract only deny= lines (skip comments)
+                    $lines = explode("\n", $fail2banContent);
+                    foreach ($lines as $line) {
+                        $trimmedLine = trim($line);
+                        if (str_starts_with($trimmedLine, 'deny=')) {
+                            // Extract the IP/subnet part
+                            $subnet = substr($trimmedLine, 5); // Remove 'deny='
+                            $denyRules[$subnet] = true; // Use as key to avoid duplicates
+                        }
+                    }
+                }
+
+                // Read network filters deny rules
+                if (file_exists($networkFiltersDenyFile)) {
+                    $networkContent = file_get_contents($networkFiltersDenyFile);
+                    // Extract only deny= lines (skip comments)
+                    $lines = explode("\n", $networkContent);
+                    foreach ($lines as $line) {
+                        $trimmedLine = trim($line);
+                        if (str_starts_with($trimmedLine, 'deny=')) {
+                            // Extract the IP/subnet part
+                            $subnet = substr($trimmedLine, 5); // Remove 'deny='
+                            $denyRules[$subnet] = true; // Use as key to avoid duplicates
+                        }
+                    }
+                }
+
+                // Build unique deny rules string
+                foreach (array_keys($denyRules) as $subnet) {
+                    $aclDenyRules .= "deny=$subnet\n";
+                }
+            }
+
             // Generate configuration for each manager user
             foreach ($result as $user) {
                 $conf .= '[' . $user['username'] . "]\n";
                 $conf .= 'secret=' . $user['secret'] . "\n";
 
-                // In Docker, we need to apply deny rules directly, not through ACL
-                if (Util::isDocker()) {
-                    // Include fail2ban deny rules
-                    $asteriskEtcDir = Directories::getDir(Directories::AST_ETC_DIR);
-                    $conf .= "#tryinclude $asteriskEtcDir/fail2ban_manager_deny.conf\n";
-                    
-                    // Include network filters deny rules
-                    $conf .= "#tryinclude $asteriskEtcDir/manager_network_filters_deny.conf\n";
+                // Add ACL deny rules for each user (inline instead of include)
+                if (!empty($aclDenyRules)) {
+                    $conf .= $aclDenyRules;
                 }
 
                 if (trim($user['deny']) !== '') {

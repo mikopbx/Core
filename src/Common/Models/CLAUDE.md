@@ -197,7 +197,7 @@ const CATEGORY_AMI = 'AMI';     // 5038
 
 ```php
 $value = PbxSettings::getValueByKey('PBXVersion');
-PbxSettings::setValue('PBXVersion', '2024.1.0');
+PbxSettings::setValueByKey('PBXVersion', '2024.1.0');
 ```
 
 ### SoundFiles

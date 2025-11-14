@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace MikoPBX\PBXCoreREST\Lib\Extensions;
 
 use MikoPBX\Common\Models\Extensions;
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Configs\GeoIP2Conf;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Core\System\SystemMessages;
@@ -54,6 +55,16 @@ abstract class AbstractExtensionStatusAction extends Injectable
     protected const STATUS_UNAVAILABLE = 'Unavailable';
     protected const STATUS_UNKNOWN = 'Unknown';
     protected const STATUS_DISABLED = 'Disabled';
+
+    /**
+     * Get default SIP port from PbxSettings
+     *
+     * @return int SIP port from system settings
+     */
+    protected static function getDefaultSipPort(): int
+    {
+        return (int)PbxSettings::getValueByKey(PbxSettings::SIP_PORT);
+    }
     
     /**
      * Get all SIP extensions that need monitoring
@@ -228,13 +239,26 @@ abstract class AbstractExtensionStatusAction extends Injectable
                                 $rtt = round((float)$peerInfo['RoundtripUsec'] / 1000, 2);
                             }
 
-                            // Parse IP and port from ViaAddress
+                            // Parse IP and port from ViaAddress or URI (for WebRTC)
                             $ipAddress = '';
-                            $port = 5060;
-                            if (isset($peerInfo['ViaAddress'])) {
+                            $defaultPort = self::getDefaultSipPort();
+                            $port = $defaultPort;
+
+                            // For WebRTC devices, ViaAddress may contain invalid hostnames like "ktqrt5rdog79.invalid"
+                            // In this case, we need to extract the real IP from the URI field
+                            $isWebRTC = ($peerInfo['IsWebRTC'] ?? false) === true;
+
+                            if ($isWebRTC && !empty($peerInfo['URI'])) {
+                                // Parse URI: sip:user@192.168.107.1:46602;transport=ws;x-ast-orig-host=...
+                                if (preg_match('/sip:[^@]+@([^:;]+)(?::(\d+))?/', $peerInfo['URI'], $matches)) {
+                                    $ipAddress = $matches[1] ?? '';
+                                    $port = isset($matches[2]) ? (int)$matches[2] : $defaultPort;
+                                }
+                            } elseif (isset($peerInfo['ViaAddress'])) {
+                                // For non-WebRTC devices, use ViaAddress
                                 $parts = explode(':', $peerInfo['ViaAddress']);
                                 $ipAddress = $parts[0] ?? '';
-                                $port = isset($parts[1]) ? (int)$parts[1] : 5060;
+                                $port = isset($parts[1]) ? (int)$parts[1] : $defaultPort;
                             }
 
                             // Add contact to the array

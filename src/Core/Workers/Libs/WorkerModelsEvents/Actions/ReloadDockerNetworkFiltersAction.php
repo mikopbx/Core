@@ -20,7 +20,7 @@
 namespace MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions;
 
 use MikoPBX\Core\System\DockerNetworkFilterService;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\System;
 
 /**
  * ReloadDockerNetworkFiltersAction
@@ -38,7 +38,7 @@ class ReloadDockerNetworkFiltersAction implements ReloadActionInterface
     public function execute(array $parameters = []): void
     {
         // Only execute in Docker environments
-        if (!Util::isDocker()) {
+        if (!System::isDocker()) {
             return;
         }
         

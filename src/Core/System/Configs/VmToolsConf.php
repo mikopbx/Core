@@ -21,7 +21,6 @@ namespace MikoPBX\Core\System\Configs;
 
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\System;
-use MikoPBX\Core\System\Util;
 
 /**
  * Class VmToolsConf
@@ -34,8 +33,10 @@ class VmToolsConf extends SystemConfigClass
 {
     public const string PROC_NAME = 'vm-tools';
     public const string VMWARE = 'vmware';
+    public const string KVM = 'kvm';
+    public const string QEMU = 'qemu';
 
-    private $confObject = null;
+    private ?object $confObject = null;
 
     /**
      * Start the service monitored by Monit through a configuration object.
@@ -50,12 +51,12 @@ class VmToolsConf extends SystemConfigClass
     public function start(): bool
     {
         $result = true;
-        if(System::isBooting()) {
+        if (System::isBooting()) {
             $this->configure();
             if ($this->confObject) {
                 $this->confObject->start();
             }
-        }else{
+        } else {
             $result = $this->reStart();
         }
         return $result;
@@ -90,15 +91,17 @@ class VmToolsConf extends SystemConfigClass
      */
     private function configure(): bool
     {
-        if (Util::isDocker()) {
+        if (System::isDocker()) {
             return true;
         }
         $result = true;
         $vars = [
-            self::VMWARE => VMWareToolsConf::class
+            self::VMWARE => VMWareToolsConf::class,
+            self::KVM => QEMUGuestAgentConf::class,
+            self::QEMU => QEMUGuestAgentConf::class,
         ];
-        $vendor = $this->getCpuVendor();
-        $className = $vars[$vendor] ?? '';
+        $hypervisor = $this->getHypervisor();
+        $className = $vars[$hypervisor] ?? '';
         if (class_exists($className)) {
             $this->confObject = new $className();
             $result = $this->confObject->configure();
@@ -119,17 +122,17 @@ class VmToolsConf extends SystemConfigClass
     public function generateMonitConf(): bool
     {
         // Skip VM tools service in Docker containers
-        if (Util::isDocker()) {
+        if (System::isDocker()) {
             $confPath = $this->getMainMonitConfFile();
             // Write empty config to ensure old configs are removed
             $this->saveFileContent($confPath, '');
             return true;
         }
-        
-        if(!$this->confObject){
+
+        if (!$this->confObject) {
             $this->configure();
         }
-        if(!$this->confObject){
+        if (!$this->confObject) {
             return false;
         }
         $confPath = $this->getMainMonitConfFile();
@@ -139,16 +142,36 @@ class VmToolsConf extends SystemConfigClass
     }
 
     /**
-     * Get the CPU vendor.
+     * Detect the hypervisor type using pbx-env-detect script.
      *
-     * @return string
+     * This method uses the centralized pbx-env-detect script which implements
+     * a robust multi-stage detection strategy including DMI, CPU flags, and
+     * hypervisor-specific checks.
+     *
+     * @return string Hypervisor type: 'vmware', 'kvm', 'qemu', or empty string if none detected.
      */
-    private function getCpuVendor(): string
+    private function getHypervisor(): string
     {
-        $lsCpuPath = Util::which('lscpu');
-        $grepPath = Util::which('grep');
-        $awk = Util::which('awk');
-        $result = shell_exec("$lsCpuPath | $grepPath vendor | $awk -F ' ' '{ print $3}'");
-        return strtolower(trim($result??''));
+        // Use pbx-env-detect for reliable detection
+        $pbxEnvDetect = '/sbin/pbx-env-detect';
+
+        if (file_exists($pbxEnvDetect) && is_executable($pbxEnvDetect)) {
+            $envOutput = [];
+            Processes::mwExec("$pbxEnvDetect --type 2>/dev/null", $envOutput);
+            $envType = strtolower(trim(implode('', $envOutput)));
+
+            // Map environment types to hypervisor constants
+            return match ($envType) {
+                'vmware' => self::VMWARE,
+                'kvm' => self::KVM,
+                'qemu' => self::QEMU,
+                'vbox', 'xen', 'docker' => '',  // Not supported by VmTools
+                'baremetal' => '',  // Physical machine
+                default => '',  // Unknown or virtual (generic)
+            };
+        }
+
+        // No hypervisor detected
+        return '';
     }
 }

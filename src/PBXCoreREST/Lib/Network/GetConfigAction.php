@@ -23,9 +23,8 @@ use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Models\NetworkStaticRoutes;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Network as NetworkSystem;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\System;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
-use Phalcon\Di\Di;
 
 /**
  * Action for getting complete network configuration for form
@@ -206,7 +205,7 @@ class GetConfigAction
                 'deletableInterfaces' => $deletableInterfaces,
                 'nat' => $natSettings,
                 'ports' => $portSettings,
-                'isDocker' => Util::isDocker(),
+                'isDocker' => System::isDocker(),
                 'staticRoutes' => $routesData,
                 'availableInterfaces' => $availableInterfaces,
             ];

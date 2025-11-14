@@ -180,7 +180,7 @@ class WorkerLongPoolAPI extends WorkerBase
      * @param string|null $common_chan The optional common channel.
      * @return bool Whether the action is enabled or not.
      */
-    private function checkAction(string $channel, string $common_chan = null): bool
+    private function checkAction(string $channel, ?string $common_chan = null): bool
     {
         if (! $common_chan) {
             $actions = $GLOBALS['ACTIONS'];

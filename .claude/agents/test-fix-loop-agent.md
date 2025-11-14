@@ -130,7 +130,7 @@ python3 -m pytest -v test_15_extensions_crud.py
 ### Test Environment Variables
 ```bash
 # MikoPBX connection
-export MIKOPBX_API_URL=http://mikopbx_php83.localhost:8081/pbxcore/api/v3
+export MIKOPBX_API_URL=http://mikopbx-php83.localhost:8081/pbxcore/api/v3
 export MIKOPBX_LOGIN=admin
 export MIKOPBX_PASSWORD=123456789MikoPBX#1
 

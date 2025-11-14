@@ -321,21 +321,22 @@ const DynamicDropdownBuilder = {
                 results: response.data.map(item => {
                     const rawText = item.represent || item.name || item.text;
                     // Sanitize display text while preserving safe HTML (icons)
-                    const safeText = typeof SecurityUtils !== 'undefined' 
+                    const safeText = typeof SecurityUtils !== 'undefined'
                         ? SecurityUtils.sanitizeObjectRepresentations(rawText)
                         : rawText;
-                    
+
                     return {
                         value: item.value,
                         text: safeText,
-                        name: safeText
+                        name: safeText,
+                        disabled: item.disabled || false
                     };
                 })
             };
         }
-        return { 
-            success: false, 
-            results: [] 
+        return {
+            success: false,
+            results: []
         };
     },
     
@@ -348,16 +349,19 @@ const DynamicDropdownBuilder = {
     customDropdownMenu(response, fields) {
         const values = response[fields.values] || {};
         let html = '';
-        
+
         values.forEach(option => {
             const value = option[fields.value] || '';
             const text = option[fields.text] || option[fields.name] || '';
-            
-            html += `<div class="item" data-value="${DynamicDropdownBuilder.escapeHtml(value)}">`;
+            const isDisabled = option.disabled || false;
+
+            // Use 'inactive' class for visual styling without blocking selection
+            const visualClass = isDisabled ? ' inactive' : '';
+            html += `<div class="item${visualClass}" data-value="${DynamicDropdownBuilder.escapeHtml(value)}">`;
             html += text;
             html += '</div>';
         });
-        
+
         return html;
     },
     

@@ -22,8 +22,8 @@ namespace MikoPBX\PBXCoreREST\Workers;
 
 require_once 'Globals.php';
 
+use MikoPBX\Common\Providers\LanguageProvider;
 use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
-use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\Workers\WorkerBase;
 use MikoPBX\Core\System\Util;
@@ -134,12 +134,16 @@ class WorkerModuleInstaller extends WorkerBase
             if (class_exists($pbxExtensionSetupClass)
                 && method_exists($pbxExtensionSetupClass, 'installModule')) {
                 try {
+                    // Set language preference to use web admin language for CLI operations
+                    // This ensures error messages during installation are shown in the correct language
+                    $this->di->set(LanguageProvider::PREFERRED_LANG_WEB, true);
+
                     // Create setup instance
                     $setup = new $pbxExtensionSetupClass($moduleUniqueID);
-                    
+
                     // Update progress during setup (50% to 90% range)
                     file_put_contents($this->progress_file, '70');
-                    
+
                     // Run installation
                     $installResult = $setup->installModule();
                     

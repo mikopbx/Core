@@ -10,14 +10,14 @@ TOKEN=$(bash .claude/skills/mikopbx-auth-token/get-auth-token.sh)
 
 # Use token in API request
 curl -H "Authorization: Bearer $TOKEN" \
-     http://mikopbx_php83.localhost:8081/pbxcore/api/v3/extensions
+     http://mikopbx-php83.localhost:8081/pbxcore/api/v3/extensions
 ```
 
 ## Environment Variables
 
 ```bash
 # Default configuration (no setup needed)
-MIKOPBX_API_URL="http://mikopbx_php83.localhost:8081/pbxcore/api/v3"
+MIKOPBX_API_URL="http://mikopbx-php83.localhost:8081/pbxcore/api/v3"
 MIKOPBX_LOGIN="admin"
 MIKOPBX_PASSWORD="123456789MikoPBX#1"
 
@@ -40,7 +40,7 @@ echo "Token obtained: ${TOKEN:0:50}..."
 TOKEN=$(bash .claude/skills/mikopbx-auth-token/get-auth-token.sh)
 
 curl -s -H "Authorization: Bearer $TOKEN" \
-     http://mikopbx_php83.localhost:8081/pbxcore/api/v3/extensions | \
+     http://mikopbx-php83.localhost:8081/pbxcore/api/v3/extensions | \
      python3 -m json.tool
 ```
 
@@ -56,7 +56,7 @@ curl -s -X POST \
        "number": "201",
        "sip_secret": "SecurePass123"
      }' \
-     http://mikopbx_php83.localhost:8081/pbxcore/api/v3/employees | \
+     http://mikopbx-php83.localhost:8081/pbxcore/api/v3/employees | \
      python3 -m json.tool
 ```
 
@@ -88,13 +88,13 @@ TOKEN=$(bash .claude/skills/mikopbx-auth-token/get-auth-token.sh) || {
 
 # Multiple API calls with same token
 curl -H "Authorization: Bearer $TOKEN" \
-     http://mikopbx_php83.localhost:8081/pbxcore/api/v3/extensions
+     http://mikopbx-php83.localhost:8081/pbxcore/api/v3/extensions
 
 curl -H "Authorization: Bearer $TOKEN" \
-     http://mikopbx_php83.localhost:8081/pbxcore/api/v3/sip-providers
+     http://mikopbx-php83.localhost:8081/pbxcore/api/v3/sip-providers
 
 curl -H "Authorization: Bearer $TOKEN" \
-     http://mikopbx_php83.localhost:8081/pbxcore/api/v3/incoming-routes
+     http://mikopbx-php83.localhost:8081/pbxcore/api/v3/incoming-routes
 ```
 
 ## Exit Codes

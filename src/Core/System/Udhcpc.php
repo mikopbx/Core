@@ -40,7 +40,7 @@ class Udhcpc extends Network
          * Check if running inside a Docker container.
          * If true, skip the action and exit the script.
          */
-        if (Util::isDocker()) {
+        if (System::isDocker()) {
             SystemMessages::sysLogMsg(__METHOD__, "Skipped action $action... because of docker", LOG_DEBUG);
             return;
         } else {

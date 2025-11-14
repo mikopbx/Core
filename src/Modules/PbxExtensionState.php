@@ -24,11 +24,12 @@ use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxExtensionModules;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\ConfigProvider;
+use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
+use MikoPBX\Core\System\Configs\SoundFilesConf;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\Modules\Config\ConfigClass;
 use MikoPBX\Modules\Config\SystemConfigInterface;
-use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
 use Phalcon\Di\Injectable;
 use ReflectionClass;
 use Throwable;
@@ -162,6 +163,9 @@ class PbxExtensionState extends Injectable
             $module->save();
         }
 
+        // Install module sound files
+        SoundFilesConf::installModuleSounds($this->moduleUniqueID);
+
         // Call the onAfterModuleEnable method if available in the configClass
         if ($this->configClass !== null
             && method_exists($this->configClass, SystemConfigInterface::ON_AFTER_MODULE_ENABLE)) {
@@ -282,6 +286,9 @@ class PbxExtensionState extends Injectable
             $module->disableReasonText = $reasonText;
             $module->save();
         }
+
+        // Remove module sound files
+        SoundFilesConf::removeModuleSounds($this->moduleUniqueID);
 
         // Call the onAfterModuleDisable method if available in the configClass
         if ($this->configClass !== null

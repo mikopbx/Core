@@ -20,6 +20,7 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Sysinfo;
 
+use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Injectable;
@@ -32,7 +33,7 @@ use Phalcon\Di\Injectable;
 class GetDMIInfoAction extends Injectable
 {
     /**
-     * Returns DMI information
+     * Returns DMI information, environment type, and CPU architecture
      *
      * @return PBXApiResult An object containing the result of the API call.
      */
@@ -45,15 +46,41 @@ class GetDMIInfoAction extends Injectable
         // Containers and some VMs don't expose DMI - this is a valid state, not an error
         $res->httpCode = 200;
 
+        // Get DMI information from dmesg
         $dmesg = Util::which('dmesg');
         $grep = Util::which('grep');
         $awk = Util::which('awk');
-        $result = shell_exec("$dmesg | $grep DMI | $awk -F 'DMI: ' '{ print $2}'");
-        $result = trim($result ?? '');
-        $res->data = ['DMI' => $result];
-        if ($result) {
+        $dmiOutput = [];
+        Processes::mwExec("$dmesg | $grep DMI | $awk -F 'DMI: ' '{ print $2}'", $dmiOutput);
+        $dmiResult = trim(implode(PHP_EOL, $dmiOutput));
+
+        // Get environment type and architecture using pbx-env-detect
+        $pbxEnvDetect = '/sbin/pbx-env-detect';
+        $envType = '';
+        $cpuArch = '';
+
+        if (file_exists($pbxEnvDetect) && is_executable($pbxEnvDetect)) {
+            $envOutput = [];
+            Processes::mwExec("$pbxEnvDetect --type 2>/dev/null", $envOutput);
+            $envType = trim(implode('', $envOutput));
+
+            $archOutput = [];
+            Processes::mwExec("$pbxEnvDetect --arch 2>/dev/null", $archOutput);
+            $cpuArch = trim(implode('', $archOutput));
+        }
+
+        // Build response data
+        $res->data = [
+            'DMI' => $dmiResult,
+            'environment_type' => $envType,
+            'cpu_architecture' => $cpuArch,
+        ];
+
+        // Consider success if we have at least one piece of information
+        if ($dmiResult || $envType || $cpuArch) {
             $res->success = true;
         }
+
         return $res;
     }
 }

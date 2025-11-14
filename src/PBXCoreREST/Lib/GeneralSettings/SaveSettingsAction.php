@@ -25,6 +25,8 @@ use MikoPBX\AdminCabinet\Forms\GeneralSettingsEditForm;
 use MikoPBX\Common\Models\Codecs;
 use MikoPBX\Common\Models\Extensions;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Providers\TranslationProvider;
+use MikoPBX\Core\System\CertificateValidator;
 use MikoPBX\Core\System\PasswordService;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
 use MikoPBX\PBXCoreREST\Lib\GeneralSettings\DataStructure;
@@ -95,6 +97,22 @@ class SaveSettingsAction extends AbstractSaveRecordAction
                     }
                 }
                 return $res;
+            }
+
+            // ============ PHASE 2.5: CERTIFICATE VALIDATION ============
+            // WHY: Validate SSL certificates and keys before saving
+            $certificateValidation = self::validateCertificates($settingsData);
+            if (!$certificateValidation['valid']) {
+                $res->messages['error'] = $certificateValidation['errors'];
+                if (!empty($certificateValidation['warnings'])) {
+                    $res->messages['warning'] = $certificateValidation['warnings'];
+                }
+                $res->httpCode = 422; // Unprocessable Entity
+                return $res;
+            }
+            // Add warnings even if validation passed
+            if (!empty($certificateValidation['warnings'])) {
+                $res->messages['warning'] = $certificateValidation['warnings'];
             }
 
             // ============ PHASE 3: SAVE IN TRANSACTION ============
@@ -280,8 +298,80 @@ class SaveSettingsAction extends AbstractSaveRecordAction
     }
     
     /**
+     * Validate SSL certificates and private keys using OpenSSL
+     * If only one of the pair is provided, fetches the other from database
+     *
+     * @param array $data Settings data containing certificates
+     * @return array ['valid' => bool, 'errors' => string[], 'warnings' => string[]]
+     */
+    private static function validateCertificates(array $data): array
+    {
+        $result = [
+            'valid' => true,
+            'errors' => [],
+            'warnings' => []
+        ];
+
+        // Check if certificate or key fields are present
+        $hasPublicKey = isset($data[PbxSettings::WEB_HTTPS_PUBLIC_KEY])
+            && $data[PbxSettings::WEB_HTTPS_PUBLIC_KEY] !== GeneralSettingsEditForm::HIDDEN_PASSWORD
+            && $data[PbxSettings::WEB_HTTPS_PUBLIC_KEY] !== '';
+
+        $hasPrivateKey = isset($data[PbxSettings::WEB_HTTPS_PRIVATE_KEY])
+            && $data[PbxSettings::WEB_HTTPS_PRIVATE_KEY] !== GeneralSettingsEditForm::HIDDEN_PASSWORD
+            && $data[PbxSettings::WEB_HTTPS_PRIVATE_KEY] !== '';
+
+        // If neither field is provided, skip validation
+        if (!$hasPublicKey && !$hasPrivateKey) {
+            return $result;
+        }
+
+        // Get certificate and key values
+        $publicKey = null;
+        $privateKey = null;
+
+        // If public key is provided in request, use it
+        if ($hasPublicKey) {
+            $publicKey = $data[PbxSettings::WEB_HTTPS_PUBLIC_KEY];
+        } else {
+            // Otherwise, get from database
+            $publicKey = PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PUBLIC_KEY);
+        }
+
+        // If private key is provided in request, use it
+        if ($hasPrivateKey) {
+            $privateKey = $data[PbxSettings::WEB_HTTPS_PRIVATE_KEY];
+        } else {
+            // Otherwise, get from database
+            $privateKey = PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PRIVATE_KEY);
+        }
+
+        // Validate the certificate and key pair
+        if (!empty($publicKey)) {
+            $validation = CertificateValidator::validate($publicKey, !empty($privateKey) ? $privateKey : null);
+
+            if (!$validation['valid']) {
+                $result['valid'] = false;
+                // Translate error messages
+                foreach ($validation['errors'] as $error) {
+                    $result['errors'][] = TranslationProvider::translate($error['key'], $error['params']);
+                }
+            }
+
+            if (!empty($validation['warnings'])) {
+                // Translate warning messages
+                foreach ($validation['warnings'] as $warning) {
+                    $result['warnings'][] = TranslationProvider::translate($warning['key'], $warning['params']);
+                }
+            }
+        }
+
+        return $result;
+    }
+
+    /**
      * Validate passwords using unified PasswordService
-     * 
+     *
      * @param array $data Settings data containing passwords
      * @return array Array of password keys that failed validation with details
      */

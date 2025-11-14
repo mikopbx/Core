@@ -41,7 +41,7 @@ Data characteristics:
 Environment Variables:
     ENABLE_CDR_SEED=1       - Enable seeding (default: 1)
     ENABLE_CDR_CLEANUP=1    - Cleanup after tests (default: 1)
-    MIKOPBX_CONTAINER       - Docker container name (default: mikopbx_php83)
+    MIKOPBX_CONTAINER       - Docker container name (default: mikopbx-php83)
     MIKOPBX_SSH_HOST        - SSH hostname for remote execution
     MIKOPBX_SSH_USER        - SSH username (default: root)
     MIKOPBX_EXECUTION_MODE  - Force execution mode (docker|ssh|local)

@@ -285,8 +285,8 @@ const providerModifyStatusWorker = {
             statusContent += `<i class="${stateIcon} icon"></i> `;
         }
         
-        // Use translated text or fallback
-        const displayText = globalTranslate[stateText] || stateText || state || 'Unknown';
+        // State text is already translated by API, use it directly
+        const displayText = stateText || state || 'Unknown';
         statusContent += displayText;
         
         this.$status.html(statusContent);
@@ -734,10 +734,9 @@ const providerModifyStatusWorker = {
             $duration.text(this.formatDuration(statusInfo.stateDuration));
         }
         
-        // Update state label with actual state text
+        // Update state label with actual state text (already translated by API)
         if ($stateLabel.length) {
-            const stateText = globalTranslate[statusInfo.stateText] || 
-                            statusInfo.stateText ||
+            const stateText = statusInfo.stateText ||
                             statusInfo.state ||
                             globalTranslate.pr_CurrentState;
             $stateLabel.text(stateText);

@@ -44,6 +44,8 @@ use MikoPBX\Core\Workers\WorkerRedisBase;
 use MikoPBX\Core\Workers\WorkerRemoveOldRecords;
 use MikoPBX\Core\Workers\WorkerS3Upload;
 use MikoPBX\Core\Workers\WorkerS3CacheCleaner;
+use MikoPBX\Core\Workers\WorkerSoundFilesInit;
+use MikoPBX\Core\Workers\WorkerWav2Webm;
 use MikoPBX\Modules\Config\SystemConfigInterface;
 use MikoPBX\PBXCoreREST\Workers\WorkerApiCommands;
 use RuntimeException;
@@ -264,6 +266,7 @@ class WorkerSafeScriptsCore extends WorkerBase
                 ],
             self::CHECK_BY_PID_NOT_ALERT =>
                 [
+                    WorkerSoundFilesInit::class,
                     WorkerMarketplaceChecker::class,
                     WorkerBeanstalkdTidyUp::class,
                     WorkerLogRotate::class,
@@ -271,6 +274,7 @@ class WorkerSafeScriptsCore extends WorkerBase
                     WorkerS3Upload::class,
                     WorkerS3CacheCleaner::class,
                     WorkerNotifyAdministrator::class,
+                    WorkerWav2Webm::class,
                 ],
         ];
 

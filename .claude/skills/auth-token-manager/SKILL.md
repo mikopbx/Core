@@ -78,7 +78,7 @@ MikoPBX uses **dual-token authentication**:
 The skill uses these environment variables (with defaults):
 
 ```bash
-MIKOPBX_API_URL="http://mikopbx_php83.localhost:8081/pbxcore/api/v3"  # API base URL
+MIKOPBX_API_URL="http://mikopbx-php83.localhost:8081/pbxcore/api/v3"  # API base URL
 MIKOPBX_LOGIN="admin"                                    # Username
 MIKOPBX_PASSWORD="123456789MikoPBX#1"                   # Password
 ```
@@ -97,7 +97,7 @@ TOKEN=$(bash .claude/skills/auth-token-manager/get-auth-token.sh)
 
 # Use token in API requests
 curl -H "Authorization: Bearer $TOKEN" \
-     http://mikopbx_php83.localhost:8081/pbxcore/api/v3/extensions
+     http://mikopbx-php83.localhost:8081/pbxcore/api/v3/extensions
 ```
 
 ### Example 2: Custom Credentials

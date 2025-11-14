@@ -1051,9 +1051,11 @@ const generalSettingsModify = {
                 });
             } else if (hasValueInDb) {
                 // User-provided certificate with private key in database
-                // Hide original field and show status message
+                // Keep hiddenPassword value in original field and hide it
+                // This ensures the field won't be sent during form submission
+                $certPrivKeyField.val(generalSettingsModify.hiddenPassword);
                 $certPrivKeyField.hide();
-                
+
                 const displayHtml = `
                     <div class="ui info message private-key-set">
                         <p>
@@ -1062,9 +1064,9 @@ const generalSettingsModify = {
                             <a href="#" class="replace-key-link">${globalTranslate.gs_Replace}</a>
                         </p>
                     </div>
-                    <textarea id="WEBHTTPSPrivateKey_new" name="WEBHTTPSPrivateKey" 
+                    <textarea id="WEBHTTPSPrivateKey_new"
                               rows="10"
-                              style="display:none;" 
+                              style="display:none;"
                               placeholder="${globalTranslate.gs_PastePrivateKey}"></textarea>
                 `;
                 
@@ -1243,19 +1245,16 @@ const generalSettingsModify = {
     cbBeforeSendForm(settings) {
         const result = settings;
 
-        // Handle private key field
-        if (result.data.WEBHTTPSPrivateKey !== undefined) {
-            const privateKeyValue = result.data.WEBHTTPSPrivateKey;
-            // Only skip sending if the value equals hidden password (unchanged)
-            // Send empty string to clear the private key on server
-            if (privateKeyValue === generalSettingsModify.hiddenPassword) {
-                delete result.data.WEBHTTPSPrivateKey;
+        // Handle all password/key fields that use hiddenPassword indicator
+        // Remove any field with hiddenPassword value to prevent overwriting with empty values
+        Object.keys(result.data).forEach(key => {
+            if (result.data[key] === generalSettingsModify.hiddenPassword) {
+                delete result.data[key];
             }
-            // Empty string '' will be sent to clear the certificate
-        }
+        });
 
-        // For public key - send empty values to allow clearing
-        // Do not delete empty strings - they mean user wants to clear the certificate
+        // For fields with empty string '' - they will be sent to allow clearing values on server
+        // This is intentional behavior for certificate/key fields
 
         // Clean up unnecessary fields before sending
         const fieldsToRemove = [

@@ -21,6 +21,7 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Lib\OpenAPI;
 
+use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use MikoPBX\PBXCoreREST\Services\ApiMetadataRegistry;
 
@@ -103,8 +104,10 @@ class GetSimplifiedPermissionsAction
             $tags = $resourceData['tags'] ?? [];
             $label = !empty($tags) ? $tags[0] : '';
 
-            // Extract description
-            $description = $resourceData['description'] ?? '';
+            // Extract and translate description
+            // Description contains translation keys like 'rest_Advice_ApiDescription'
+            $descriptionKey = $resourceData['description'] ?? '';
+            $description = self::translateText($descriptionKey);
 
             // Initialize resource entry
             $resourceEntry = [
@@ -244,5 +247,31 @@ class GetSimplifiedPermissionsAction
     ): string {
         $displayPath = $isResourceLevel ? $path . '/{id}' : $path;
         return strtoupper($httpMethod) . ' ' . $displayPath;
+    }
+
+    /**
+     * Translate text if it's a translation key
+     *
+     * Checks if text looks like a translation key (no spaces, only alphanumeric and underscores)
+     * and translates it using TranslationProvider. Returns original text if not a translation key.
+     *
+     * @param string $text Text or translation key to translate
+     * @param array<string, mixed> $placeholders Optional placeholders for translation
+     * @return string Translated text or original text
+     */
+    private static function translateText(string $text, array $placeholders = []): string
+    {
+        if (empty($text)) {
+            return $text;
+        }
+
+        // Check if this looks like a translation key (no spaces, no special chars except underscore and digits)
+        // Translation keys typically follow pattern: rest_resource_Action or rest_Advice_ApiDescription
+        if (!str_contains($text, ' ') && preg_match('/^[a-z0-9_]+$/i', $text)) {
+            return TranslationProvider::translate($text, $placeholders);
+        }
+
+        // Return as-is if it doesn't look like a translation key
+        return $text;
     }
 }

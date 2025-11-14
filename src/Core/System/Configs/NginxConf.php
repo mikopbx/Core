@@ -294,7 +294,7 @@ class NginxConf extends SystemConfigClass
     public static function fail2banNginxAction(string $action, string $ip): void
     {
         // Skip in non-Docker environments - they use regular iptables
-        if (!Util::isDocker()) {
+        if (!System::isDocker()) {
             return;
         }
 
@@ -341,7 +341,7 @@ class NginxConf extends SystemConfigClass
         $redisVars .= "    set \$redis_db '$redisDb';\n";
         $redisVars .= "    \n";
         $redisVars .= "    # Security configuration\n";
-        $redisVars .= "    set \$is_docker '" . (Util::isDocker() ? '1' : '0') . "';\n";
+        $redisVars .= "    set \$is_docker '" . (System::isDocker() ? '1' : '0') . "';\n";
         $redisVars .= "    set \$security_mode 'balanced';\n";
         $redisVars .= "    set \$session_check_required '0';\n";
 

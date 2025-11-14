@@ -37,35 +37,6 @@ class CustomFiles extends ModelsBase
     public const string MODE_CUSTOM = 'custom';  // User-created custom file
 
     /**
-     * List of directories where custom files are allowed to be created/modified/deleted.
-     * This is a security measure to prevent modification of critical system files.
-     */
-    public const array ALLOWED_DIRECTORIES = [
-        '/usr/bin/',
-        '/usr/sbin/',
-        '/bin/',
-        '/sbin/',
-        '/etc/asterisk/',
-        '/etc/dahdi/',
-        '/etc/fail2ban/',
-        '/etc/keepalived/',
-        '/etc/monit.d/',
-        '/etc/nats/',
-        '/etc/nginx/',
-        '/etc/php.d/',
-        '/etc/ppp/',
-        '/etc/rc/',
-        '/etc/rsyslog.d/',
-        '/etc/wireguard/',
-        '/var/lib/asterisk/',
-        '/var/spool/asterisk/',
-        '/var/spool/cron/crontabs/',
-        '/storage/usbdisk1/',
-        '/tmp/',
-        '/var/www/',
-    ];
-
-    /**
      * @Primary
      * @Identity
      * @Column(type="integer", nullable=false)
@@ -158,85 +129,5 @@ class CustomFiles extends ModelsBase
     public function setContent(string $text): void
     {
         $this->content = base64_encode($text);
-    }
-
-    /**
-     * Check if the filepath is within allowed directories
-     *
-     * @param string $filepath The file path to check
-     * @return bool True if the file is in an allowed directory
-     */
-    public static function isPathAllowed(string $filepath): bool
-    {
-        // Normalize the path to prevent directory traversal attacks
-        $normalizedPath = self::normalizePath($filepath);
-        if ($normalizedPath === false) {
-            return false;
-        }
-
-        // Check each allowed directory
-        foreach (self::ALLOWED_DIRECTORIES as $allowedDir) {
-            // Normalize the allowed directory path
-            $normalizedAllowedDir = rtrim($allowedDir, '/');
-
-            // Check if the file is within this allowed directory
-            if (strpos($normalizedPath, $normalizedAllowedDir . '/') === 0 ||
-                $normalizedPath === $normalizedAllowedDir) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Normalize and validate a file path
-     *
-     * @param string $filepath The file path to normalize
-     * @return string|false Normalized path or false if invalid
-     */
-    private static function normalizePath(string $filepath): string|false
-    {
-        // Remove any null bytes
-        $filepath = str_replace("\0", '', $filepath);
-
-        // Check for directory traversal attempts
-        if (str_contains($filepath, '..')) {
-            return false;
-        }
-
-        // Ensure path is absolute
-        if (!str_starts_with($filepath, '/')) {
-            return false;
-        }
-
-        // Remove multiple slashes
-        $filepath = preg_replace('#/+#', '/', $filepath);
-
-        // Remove trailing slash if it's not the root directory
-        if (strlen($filepath) > 1 && str_ends_with($filepath, '/')) {
-            $filepath = rtrim($filepath, '/');
-        }
-
-        return $filepath;
-    }
-
-    /**
-     * Get a user-friendly error message for security violations
-     *
-     * @param string $filepath The file path that was rejected
-     * @return string Error message with list of allowed directories
-     */
-    public static function getSecurityErrorMessage(string $filepath): string
-    {
-        $allowedDirsList = array_map(
-            fn($dir) => "  • $dir",
-            self::ALLOWED_DIRECTORIES
-        );
-        $allowedDirs = implode("\n", $allowedDirsList);
-
-        return "Security error: File path '$filepath' is not in an allowed directory.\n\n" .
-               "Allowed directories:\n" .
-               "$allowedDirs";
     }
 }

@@ -239,70 +239,43 @@ class PlaybackAction extends Injectable
     }
 
     /**
-     * Get audio file duration in seconds
-     *
-     * Tries multiple methods in order:
-     * 1. soxi (faster for WAV files)
-     * 2. ffprobe (universal, supports WebM/OGG/MP3/etc)
+     * Get audio file duration in seconds using ffprobe
      *
      * @param string $filePath Path to audio file
      * @return float Duration in seconds (0 if unable to determine)
      */
     private static function getAudioDuration(string $filePath): float
     {
-        // ============ METHOD 1: Try soxi first (faster for WAV) ============
-        // WHY: soxi is part of sox package and very fast for WAV files
-        $soxi = Util::which('soxi');
-        if (!empty($soxi)) {
-            $cmd = "{$soxi} -D " . escapeshellarg($filePath) . " 2>/dev/null";
-            $output = [];
-            $returnCode = 0;
-
-            exec($cmd, $output, $returnCode);
-
-            if ($returnCode === 0 && !empty($output[0])) {
-                $duration = (float)trim($output[0]);
-                if ($duration > 0) {
-                    return $duration;
-                }
-            }
-        }
-
-        // ============ METHOD 2: Fallback to ffprobe (for WebM, OGG, etc.) ============
-        // WHY: ffprobe supports all modern audio formats including WebM/Opus
         $ffprobe = Util::which('ffprobe');
-        if (!empty($ffprobe)) {
-            $cmd = "{$ffprobe} -v quiet -show_entries format=duration " .
-                   "-of default=noprint_wrappers=1:nokey=1 " .
-                   escapeshellarg($filePath) . " 2>/dev/null";
-            $output = [];
-            $returnCode = 0;
-
-            exec($cmd, $output, $returnCode);
-
-            if ($returnCode === 0 && !empty($output[0])) {
-                $duration = (float)trim($output[0]);
-                if ($duration > 0) {
-                    return $duration;
-                }
-            }
-        }
-
-        // ============ FALLBACK: Unable to determine duration ============
-        // WHY: Log this as it may indicate missing tools or corrupt file
-        if (empty($soxi) && empty($ffprobe)) {
+        if (empty($ffprobe)) {
             \MikoPBX\Core\System\SystemMessages::sysLogMsg(
                 'PlaybackAction',
-                'Neither soxi nor ffprobe found. Unable to determine audio duration for: ' . $filePath,
+                'ffprobe not found. Unable to determine audio duration for: ' . $filePath,
                 LOG_WARNING
             );
-        } else {
-            \MikoPBX\Core\System\SystemMessages::sysLogMsg(
-                'PlaybackAction',
-                'Unable to determine audio duration using available tools for: ' . $filePath,
-                LOG_NOTICE
-            );
+            return 0.0;
         }
+
+        $cmd = "{$ffprobe} -v quiet -show_entries format=duration " .
+               "-of default=noprint_wrappers=1:nokey=1 " .
+               escapeshellarg($filePath) . " 2>/dev/null";
+        $output = [];
+        $returnCode = 0;
+
+        exec($cmd, $output, $returnCode);
+
+        if ($returnCode === 0 && !empty($output[0])) {
+            $duration = (float)trim($output[0]);
+            if ($duration > 0) {
+                return $duration;
+            }
+        }
+
+        \MikoPBX\Core\System\SystemMessages::sysLogMsg(
+            'PlaybackAction',
+            'Unable to determine audio duration for: ' . $filePath,
+            LOG_NOTICE
+        );
 
         return 0.0;
     }

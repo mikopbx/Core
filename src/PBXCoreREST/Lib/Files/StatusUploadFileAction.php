@@ -74,6 +74,7 @@ class StatusUploadFileAction extends Injectable
         } else {
             $res->success = true;
             $res->data[FilesConstants::D_STATUS_PROGRESS] = file_get_contents($progress_file);
+            $res->data[FilesConstants::D_STATUS] = FilesConstants::UPLOAD_IN_PROGRESS;
         }
 
         // Add EventBus channel info to response

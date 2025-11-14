@@ -140,21 +140,19 @@ class PlaybackAction
     }
 
     /**
-     * Get audio file duration in seconds using soxi
+     * Get audio file duration in seconds using ffprobe
      *
      * @param string $filePath Path to audio file
      * @return float Duration in seconds (0 if unable to determine)
      */
     private static function getAudioDuration(string $filePath): float
     {
-        // Check if soxi is available (part of sox package)
-        $soxi = Util::which('soxi');
-        if (empty($soxi)) {
+        $ffprobe = Util::which('ffprobe');
+        if (empty($ffprobe)) {
             return 0.0;
         }
 
-        // Use soxi -D to get duration in seconds
-        $cmd = "{$soxi} -D " . escapeshellarg($filePath) . " 2>/dev/null";
+        $cmd = "{$ffprobe} -v quiet -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 " . escapeshellarg($filePath) . " 2>/dev/null";
         $output = [];
         $returnCode = 0;
 

@@ -23,7 +23,7 @@ namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
 
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
-use MikoPBX\Common\Models\{CustomFiles, ModelsBase, PbxSettings};
+use MikoPBX\Common\Models\{CustomFiles, PbxSettings};
 use MikoPBX\Common\Providers\BeanstalkConnectionModelsProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Core\Asterisk\Configs\AsteriskConfigInterface;
@@ -640,13 +640,21 @@ class WorkerModelsEvents extends WorkerBase
         }
 
         if ($modelData['action'] === 'afterDelete' && isset($modelData['changedFields']['filepath'])){
-            SystemMessages::sysLogMsg(__METHOD__, "New changes $modifiedModel received:" . PHP_EOL . json_encode($modelData, JSON_PRETTY_PRINT), LOG_DEBUG);
             $this->planReloadAction(RemoveCustomFilesAction::class, $modelData['changedFields']);
             return;
         }
 
         $changedCustomFile = CustomFiles::findFirstById($modelData['recordId']);
-        if ($changedCustomFile === null || $changedCustomFile->changed !== '1') {
+        if ($changedCustomFile === null) {
+            return;
+        }
+
+        // If event came with changed='1' in changedFields, trust it even if DB shows changed='0'
+        // This handles race condition where ApplyCustomFilesAction resets changed='0' via SQL
+        // before this event is processed
+        $eventHasChangedField = in_array('changed', $modelData['changedFields'] ?? [], true);
+
+        if (!$eventHasChangedField && $changedCustomFile->changed !== '1') {
             return;
         }
 
@@ -659,9 +667,8 @@ class WorkerModelsEvents extends WorkerBase
             }
         }
 
-        // After actions are invoked, reset the changed status and save the file data
-        $changedCustomFile->writeAttribute("changed", '0');
-        $changedCustomFile->save();
+        // Note: changed='0' is now reset in ApplyCustomFilesAction AFTER successful file application
+        // This prevents race conditions when multiple sequential PATCHes happen quickly
     }
 
     /**

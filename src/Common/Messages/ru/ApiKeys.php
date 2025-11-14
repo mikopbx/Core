@@ -118,7 +118,7 @@ return [
 
     // Permissions selector
     'ak_Permissions' => 'Права доступа к API endpoints',
-    'ak_PermissionsHelp' => 'Выберите уровень доступа для каждого REST API endpoint. "Чтение" позволяет получать данные (GET), "Чтение и запись" позволяет создавать, изменять и удалять данные (POST, PUT, DELETE).',
+    'ak_PermissionsHelp' => 'Выберите уровень доступа для каждого REST API endpoint. <br>"Чтение" позволяет получать данные (GET), <br>"Чтение и запись" позволяет создавать, изменять и удалять данные (POST, PUT, DELETE).',
     'ak_SelectPermission' => 'Выберите права',
     'ak_NoAccess' => 'Нет доступа',
     'ak_PermissionRead' => 'Чтение',

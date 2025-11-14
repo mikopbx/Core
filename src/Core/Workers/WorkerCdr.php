@@ -22,7 +22,7 @@ namespace MikoPBX\Core\Workers;
 require_once 'Globals.php';
 
 use MikoPBX\Common\Models\{Extensions, ModelsBase, PbxSettings, Users};
-use MikoPBX\Core\System\{BeanstalkClient, Processes, Util};
+use MikoPBX\Core\System\{BeanstalkClient, Directories, Processes, Util};
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use Phalcon\Di\Di;
@@ -275,42 +275,36 @@ class WorkerCdr extends WorkerBase
             // If the call channel with ID doesn't exist anymore, it's safe to remove temporary files
             $p_info = pathinfo($row['recordingfile']);
 
-            // Launch a background process to convert the recording to WebM/Opus format
-            $wav2webmPath = Util::which('wav2webm.sh');
-            $lostWav2webmPath = Util::which('convert-lost-recordings.sh');
-            $nice = Util::which('nice');
+            // Create JSON task file for WorkerWav2Webm to process
+            $monitorDir = Directories::getDir(Directories::AST_MONITOR_DIR);
+            $tasksDir = $monitorDir . '/conversion-tasks';
 
-            // Build metadata environment variables for wav2webm.sh
-            $deleteSourceFiles = PbxSettings::getValueByKey(PbxSettings::PBX_RECORD_DELETE_SOURCE_AFTER_CONVERT);
-
-            $metadata = [
-                'CALL_LINKEDID' => $row['linkedid'] ?? '',
-                'CALL_SRC_NUM' => $row['src_num'] ?? '',
-                'CALL_DST_NUM' => $row['dst_num'] ?? '',
-                'CALL_START' => $row['start'] ?? '',
-                'CALL_ANSWER' => $row['answer'] ?? '',
-                'CALL_DURATION' => $row['duration'] ?? '',
-                'CALL_BILLSEC' => $billsec,
-                'CALL_DISPOSITION' => $row['disposition'] ?? '',
-                'CALL_UNIQUEID' => $row['UNIQUEID'] ?? '',
-                'DELETE_SOURCE_FILES' => $deleteSourceFiles,  // From PbxSettings
-            ];
-
-            // Build environment string for shell execution
-            $envVars = '';
-            foreach ($metadata as $key => $value) {
-                if ($value !== '') {
-                    $escapedValue = escapeshellarg($value);
-                    $envVars .= "$key=$escapedValue ";
-                }
+            // Ensure tasks directory exists
+            if (!is_dir($tasksDir)) {
+                Util::mwMkdir($tasksDir, true);
             }
 
-            // Execute conversion with metadata
-            Processes::mwExecBg("$nice -n -19 $envVars$wav2webmPath '{$p_info['dirname']}/{$p_info['filename']}'");
+            // Build task data with metadata
+            $deleteSourceFiles = PbxSettings::getValueByKey(PbxSettings::PBX_RECORD_DELETE_SOURCE_AFTER_CONVERT);
 
-            // Get the directory with current month's recordings and convert lost files
-            $dir = dirname($p_info['dirname'], 2);
-            Processes::mwExecBg("$nice -n -19 $lostWav2webmPath '$dir'");
+            $taskData = [
+                'linkedid' => $row['linkedid'] ?? '',
+                'src_num' => $row['src_num'] ?? '',
+                'dst_num' => $row['dst_num'] ?? '',
+                'start' => $row['start'] ?? '',
+                'duration' => $row['duration'] ?? '',
+                'billsec' => $billsec,
+                'disposition' => $row['disposition'] ?? '',
+                'uniqueid' => $row['UNIQUEID'] ?? '',
+                'input_path' => $p_info['dirname'] . '/' . $p_info['filename'],  // Without extension
+                'delete_source' => $deleteSourceFiles,
+                'created_at' => time(),
+                'attempts' => 0
+            ];
+
+            // Create unique task filename
+            $taskFile = $tasksDir . '/' . $row['linkedid'] . '_' . uniqid() . '.json';
+            file_put_contents($taskFile, json_encode($taskData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 
             // Update recordingfile path to point to WebM file
             $row['recordingfile'] = str_replace(['.wav', '.WAV'], '.webm', $row['recordingfile']);

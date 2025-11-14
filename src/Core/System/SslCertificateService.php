@@ -22,6 +22,7 @@ namespace MikoPBX\Core\System;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\CertificateValidator;
 
 /**
  * Class SslCertificateService
@@ -269,6 +270,7 @@ EOD;
     
     /**
      * Validate SSL certificate and private key pair.
+     * Uses CertificateValidator for actual validation and logs results.
      *
      * @param string $publicKey The public certificate content (PEM format)
      * @param string $privateKey The private key content (PEM format)
@@ -276,46 +278,39 @@ EOD;
      * @return bool True if the certificate and key are valid and match
      */
     public static function validateCertificatePair(
-        string $publicKey, 
-        string $privateKey, 
+        string $publicKey,
+        string $privateKey,
         string $logContext = 'SslCertificateService'
     ): bool {
         try {
-            // Parse certificate
-            $certResource = openssl_x509_read($publicKey);
-            if ($certResource === false) {
-                SystemMessages::sysLogMsg($logContext, 'Invalid SSL certificate format', LOG_WARNING);
+            // Use CertificateValidator for validation
+            $validation = CertificateValidator::validate($publicKey, $privateKey);
+
+            // Log errors if validation failed
+            if (!$validation['valid']) {
+                foreach ($validation['errors'] as $error) {
+                    $message = $error['key'];
+                    if (!empty($error['params'])) {
+                        $message .= ' (' . json_encode($error['params']) . ')';
+                    }
+                    SystemMessages::sysLogMsg($logContext, $message, LOG_WARNING);
+                }
                 return false;
             }
-            
-            // Parse private key
-            $keyResource = openssl_pkey_get_private($privateKey);
-            if ($keyResource === false) {
-                SystemMessages::sysLogMsg($logContext, 'Invalid SSL private key format', LOG_WARNING);
-                return false;
+
+            // Log warnings if any
+            if (!empty($validation['warnings'])) {
+                foreach ($validation['warnings'] as $warning) {
+                    $message = $warning['key'];
+                    if (!empty($warning['params'])) {
+                        $message .= ' (' . json_encode($warning['params']) . ')';
+                    }
+                    SystemMessages::sysLogMsg($logContext, $message, LOG_WARNING);
+                }
             }
-            
-            // Check if certificate and key match
-            $certDetails = openssl_x509_parse($certResource);
-            if ($certDetails === false) {
-                SystemMessages::sysLogMsg($logContext, 'Failed to parse certificate details', LOG_WARNING);
-                return false;
-            }
-            
-            // Check certificate expiration
-            if (!self::isCertificateValid($certDetails)) {
-                SystemMessages::sysLogMsg($logContext, 'SSL certificate has expired or not yet valid', LOG_WARNING);
-                return false;
-            }
-            
-            // Verify the certificate matches the private key
-            if (!self::verifyCertificateKeyMatch($certResource, $keyResource)) {
-                SystemMessages::sysLogMsg($logContext, 'SSL certificate and private key do not match', LOG_WARNING);
-                return false;
-            }
-            
+
             return true;
-            
+
         } catch (\Exception $e) {
             SystemMessages::sysLogMsg($logContext, 'Exception validating certificates: ' . $e->getMessage(), LOG_WARNING);
             return false;
@@ -519,8 +514,11 @@ EOD;
                 $publicKey = file_get_contents($fallbackCertPath);
                 $privateKey = file_get_contents($fallbackKeyPath);
 
-                // Validate fallback certificates (they might be expired)
-                if (!self::validateCertificatePair($publicKey, $privateKey, $service)) {
+                // Handle file_get_contents failures
+                if ($publicKey === false || $privateKey === false) {
+                    $publicKey = '';
+                    $privateKey = '';
+                } elseif (!self::validateCertificatePair($publicKey, $privateKey, $service)) {
                     // Fallback certificates are invalid, regenerate
                     $publicKey = '';
                     $privateKey = '';
@@ -617,56 +615,6 @@ EOD;
             SystemMessages::sysLogMsg(__METHOD__, 'Exception saving certificates: ' . $e->getMessage(), LOG_ERR);
             return false;
         }
-    }
-    
-    /**
-     * Check if certificate is still valid (not expired).
-     *
-     * @param array $certDetails Parsed certificate details
-     * @return bool True if certificate is valid
-     */
-    private static function isCertificateValid(array $certDetails): bool
-    {
-        $currentTime = time();
-        
-        // Check if certificate has started
-        if (isset($certDetails['validFrom_time_t']) && $certDetails['validFrom_time_t'] > $currentTime) {
-            return false; // Certificate not yet valid
-        }
-        
-        // Check if certificate has expired
-        if (isset($certDetails['validTo_time_t']) && $certDetails['validTo_time_t'] < $currentTime) {
-            return false; // Certificate expired
-        }
-        
-        return true;
-    }
-    
-    /**
-     * Verify that certificate and private key match.
-     *
-     * @param mixed $certResource OpenSSL certificate resource
-     * @param mixed $keyResource OpenSSL key resource
-     * @return bool True if certificate and key match
-     */
-    private static function verifyCertificateKeyMatch($certResource, $keyResource): bool
-    {
-        // Verify the certificate matches the private key by checking if we can create a test signature
-        $testData = 'test_signature_data_' . uniqid();
-        $signature = '';
-        
-        if (!openssl_sign($testData, $signature, $keyResource)) {
-            return false;
-        }
-        
-        $pubKeyFromCert = openssl_pkey_get_public($certResource);
-        if ($pubKeyFromCert === false) {
-            return false;
-        }
-        
-        $verifyResult = openssl_verify($testData, $signature, $pubKeyFromCert);
-        
-        return $verifyResult === 1;
     }
     
 }

@@ -21,7 +21,7 @@ namespace MikoPBX\PBXCoreREST\Lib\Firewall;
 
 use MikoPBX\Common\Models\FirewallRules;
 use MikoPBX\Common\Models\LanInterfaces;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\System;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 
 /**
@@ -76,7 +76,7 @@ class GetDefaultAction
                 'local_network' => false,
                 'currentRules' => $currentRules,  // Simple boolean map
                 'availableRules' => $defaultRules,  // Full template with metadata
-                'isDocker' => Util::isDocker(),
+                'isDocker' => System::isDocker(),
                 'dockerSupportedServices' => ['WEB', 'AMI', 'SIP & RTP', 'IAX']
             ];
             

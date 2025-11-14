@@ -19,6 +19,7 @@
 
 namespace MikoPBX\Core\System\Upgrade\Releases;
 
+use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\{CustomFiles, NetworkStaticRoutes};
 use MikoPBX\Core\System\{SystemMessages, Upgrade\UpgradeSystemConfigInterface};
 use Phalcon\Di\Injectable;
@@ -43,6 +44,9 @@ class UpdateConfigsUpToVer20250114 extends Injectable implements UpgradeSystemCo
     public function processUpdate(): void
     {
         $this->migrateStaticRoutesFromCustomFiles();
+
+        // Step 2: Enable PBXSplitAudioThread by default
+        $this->enableSplitAudioThreadByDefault();
     }
 
     /**
@@ -293,5 +297,19 @@ class UpdateConfigsUpToVer20250114 extends Injectable implements UpgradeSystemCo
             );
             echo "Warning: Could not delete /etc/static-routes from CustomFiles: {$messages}\n";
         }
+    }
+
+    /**
+     * Enable PBXSplitAudioThread by default for stereo recording mode.
+     *
+     * This setting controls whether call recordings are saved in stereo mode (each participant
+     * in separate audio channels) or mono mode (both participants mixed in one channel).
+     * Stereo mode is now the default for better call analysis capabilities.
+     *
+     * @return void
+     */
+    private function enableSplitAudioThreadByDefault(): void
+    {
+        PbxSettings::setValueByKey(PbxSettings::PBX_SPLIT_AUDIO_THREAD, '1');
     }
 }

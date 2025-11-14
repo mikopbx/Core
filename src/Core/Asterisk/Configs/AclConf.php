@@ -23,6 +23,7 @@ namespace MikoPBX\Core\Asterisk\Configs;
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\Sip;
 use MikoPBX\Core\System\DockerNetworkFilterService;
+use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
 
 /**
@@ -96,7 +97,7 @@ class AclConf extends AsteriskConfigClass
         $conf_acl = '';
         
         // Add fail2ban global ACL first (if in Docker)
-        if (Util::isDocker()) {
+        if (System::isDocker()) {
             $conf_acl .= "; Fail2ban Global ACL for Docker\n";
             $conf_acl .= "[acl_fail2ban]\n";
             $conf_acl .= "; This ACL is automatically updated by fail2ban\n";

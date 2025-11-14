@@ -406,8 +406,8 @@ const ProviderStatusMonitor = {
             username
         } = statusInfo;
         
-        // Use translated state text as main title
-        const stateTitle = stateText ? (globalTranslate[stateText] || stateText) : (globalTranslate[stateDescription] || stateDescription || state || '');
+        // State text is already translated by API, use it directly
+        const stateTitle = stateText || stateDescription || state || '';
         
         let tooltip = `<div class="provider-status-tooltip">`;
         tooltip += `<strong class="provider-status-tooltip__title">${stateTitle}</strong>`;
@@ -514,8 +514,8 @@ const ProviderStatusMonitor = {
             let durationText = '';
             
             if (stateDuration) {
-                // Use translated state text if available, otherwise use generic label
-                const stateLabel = stateText ? globalTranslate[stateText] || stateText : globalTranslate.pr_StatusDuration;
+                // State text is already translated by API, use it directly or fallback to generic label
+                const stateLabel = stateText || globalTranslate.pr_StatusDuration;
                 durationText += `${stateLabel}: ${this.formatDuration(stateDuration)}`;
             }
             

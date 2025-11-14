@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * MikoPBX - free phone system for small business
  * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
@@ -21,7 +23,6 @@
 namespace MikoPBX\Core\System\Configs;
 
 use MikoPBX\Common\Providers\LanguageProvider;
-use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
@@ -81,16 +82,17 @@ class SoundFilesConf extends SystemConfigClass
             LOG_INFO
         );
 
-        // Copy all language directories
+        // Copy all language directories (without sync conversion)
         $success = true;
         foreach ($sourceLanguages as $lang) {
-            if (!$this->copyLanguageDirectory($lang, $targetSoundsDir)) {
+            if (!$this->copyLanguageDirectoryOnly($lang, $targetSoundsDir)) {
                 $success = false;
             }
         }
 
         if ($success) {
             SystemMessages::sysLogMsg(__METHOD__, 'Sound files initialized successfully to: ' . $targetSoundsDir, LOG_INFO);
+
 
             // Reinstall module sounds after base languages initialization
             $this->reinstallEnabledModuleSounds();
@@ -167,13 +169,13 @@ class SoundFilesConf extends SystemConfigClass
     }
 
     /**
-     * Copy language directory from source to target
+     * Copy language directory from source to target (without conversion)
      *
      * @param string $language Language code (e.g., 'en-en', 'ru-ru')
      * @param string $targetSoundsDir Target sounds directory
      * @return bool True if successful
      */
-    private function copyLanguageDirectory(string $language, string $targetSoundsDir): bool
+    private function copyLanguageDirectoryOnly(string $language, string $targetSoundsDir): bool
     {
         $sourceLangDir = self::SOURCE_SOUNDS_DIR . '/' . $language;
         $targetLangDir = $targetSoundsDir . '/' . $language;
@@ -195,13 +197,14 @@ class SoundFilesConf extends SystemConfigClass
         $command = "$cpPath -r $sourceDir $targetDir";
         $exitCode = Processes::mwExec($command);
 
-        if ($exitCode === 0) {
-            SystemMessages::sysLogMsg(__METHOD__, "Language '$language' copied successfully", LOG_DEBUG);
-            return true;
+        if ($exitCode !== 0) {
+            SystemMessages::sysLogMsg(__METHOD__, "Failed to copy language '$language'. Exit code: $exitCode", LOG_WARNING);
+            return false;
         }
 
-        SystemMessages::sysLogMsg(__METHOD__, "Failed to copy language '$language'. Exit code: $exitCode", LOG_WARNING);
-        return false;
+        SystemMessages::sysLogMsg(__METHOD__, "Language '$language' copied successfully", LOG_DEBUG);
+
+        return true;
     }
 
     /**
@@ -218,6 +221,18 @@ class SoundFilesConf extends SystemConfigClass
         $di = \Phalcon\Di\Di::getDefault();
         if ($di === null) {
             SystemMessages::sysLogMsg(__METHOD__, 'DI container not available, skipping module sounds reinstallation', LOG_WARNING);
+            return;
+        }
+
+        // Check if database is available and accessible
+        try {
+            $dbService = $di->get('db');
+            if ($dbService === null) {
+                SystemMessages::sysLogMsg(__METHOD__, 'Database service not available, skipping module sounds reinstallation', LOG_WARNING);
+                return;
+            }
+        } catch (\Throwable $e) {
+            SystemMessages::sysLogMsg(__METHOD__, "Database service unavailable: " . $e->getMessage(), LOG_WARNING);
             return;
         }
 
@@ -242,17 +257,25 @@ class SoundFilesConf extends SystemConfigClass
         foreach ($modules as $module) {
             $moduleUniqueID = $module['uniqid'];
 
+            SystemMessages::sysLogMsg(__METHOD__, "Processing module: $moduleUniqueID", LOG_DEBUG);
+
             // Check if module has Sounds directory
             $moduleDir = PbxExtensionUtils::getModuleDir($moduleUniqueID);
+            SystemMessages::sysLogMsg(__METHOD__, "Module directory: $moduleDir", LOG_DEBUG);
+
             $moduleSoundsDir = "$moduleDir/Sounds";
 
             if (!is_dir($moduleSoundsDir)) {
+                SystemMessages::sysLogMsg(__METHOD__, "Module $moduleUniqueID has no Sounds directory, skipping", LOG_DEBUG);
                 continue; // Module doesn't have sounds
             }
 
-            // Reinstall sound files
+            SystemMessages::sysLogMsg(__METHOD__, "Module $moduleUniqueID has Sounds directory, installing...", LOG_DEBUG);
+
+            // Reinstall sound files without conversion (worker will convert everything)
             try {
                 self::installModuleSounds($moduleUniqueID);
+                SystemMessages::sysLogMsg(__METHOD__, "Module $moduleUniqueID sounds installation completed", LOG_DEBUG);
             } catch (\Throwable $e) {
                 SystemMessages::sysLogMsg(
                     __METHOD__,
@@ -261,6 +284,8 @@ class SoundFilesConf extends SystemConfigClass
                 );
             }
         }
+
+        SystemMessages::sysLogMsg(__METHOD__, 'Module sounds reinstallation completed', LOG_INFO);
     }
 
     /**
@@ -271,6 +296,8 @@ class SoundFilesConf extends SystemConfigClass
      * 2. Feature modules: Files copied WITH prefix (modulename-sound.wav)
      *
      * Structure: ModuleName/Sounds/{lang}/*.wav
+     *
+     * Note: Only copies files without format conversion. WorkerSoundFilesInit handles conversion.
      *
      * @param string $moduleUniqueID Module unique identifier
      * @return bool True if successful
@@ -300,6 +327,12 @@ class SoundFilesConf extends SystemConfigClass
         SystemMessages::sysLogMsg(__METHOD__, "Installing $moduleType module sounds: $moduleUniqueID", LOG_INFO);
 
         $success = true;
+        $stats = [
+            'total_files' => 0,
+            'copied_files' => 0,
+            'failed_files' => 0,
+        ];
+
         foreach ($langDirs as $langDir) {
             $lang = basename($langDir);
             $targetLangDir = "$systemSoundsDir/$lang";
@@ -310,8 +343,9 @@ class SoundFilesConf extends SystemConfigClass
             }
 
             // Copy sound files (with or without prefix based on module type)
-            $soundFiles = glob("$langDir/*.{wav,ulaw,alaw,gsm,g722,sln}", GLOB_BRACE);
+            $soundFiles = glob("$langDir/*.{wav,ulaw,alaw,gsm,g722,sln,mp3}", GLOB_BRACE);
             foreach ($soundFiles as $soundFile) {
+                $stats['total_files']++;
                 $fileName = basename($soundFile);
 
                 // Language Pack: no prefix, Feature module: with prefix
@@ -323,9 +357,10 @@ class SoundFilesConf extends SystemConfigClass
 
                 if (!copy($soundFile, $destFile)) {
                     SystemMessages::sysLogMsg(__METHOD__, "Failed to copy sound file: $soundFile", LOG_WARNING);
+                    $stats['failed_files']++;
                     $success = false;
                 } else {
-                    SystemMessages::sysLogMsg(__METHOD__, "Installed sound: $destFileName (language: $lang, type: $moduleType)", LOG_DEBUG);
+                    $stats['copied_files']++;
                 }
             }
 
@@ -339,8 +374,9 @@ class SoundFilesConf extends SystemConfigClass
                     Util::mwMkdir($targetSubDir);
                 }
 
-                $subSoundFiles = glob("$subDir/*.{wav,ulaw,alaw,gsm,g722,sln}", GLOB_BRACE);
+                $subSoundFiles = glob("$subDir/*.{wav,ulaw,alaw,gsm,g722,sln,mp3}", GLOB_BRACE);
                 foreach ($subSoundFiles as $soundFile) {
+                    $stats['total_files']++;
                     $fileName = basename($soundFile);
 
                     // Language Pack: no prefix, Feature module: with prefix
@@ -352,19 +388,473 @@ class SoundFilesConf extends SystemConfigClass
 
                     if (!copy($soundFile, $destFile)) {
                         SystemMessages::sysLogMsg(__METHOD__, "Failed to copy sound file: $soundFile", LOG_WARNING);
+                        $stats['failed_files']++;
                         $success = false;
                     } else {
-                        SystemMessages::sysLogMsg(__METHOD__, "Installed sound: $subDirName/$destFileName (language: $lang, type: $moduleType)", LOG_DEBUG);
+                        $stats['copied_files']++;
                     }
                 }
             }
         }
 
-        if ($success) {
-            SystemMessages::sysLogMsg(__METHOD__, "Module $moduleUniqueID ($moduleType) sound files installed successfully", LOG_INFO);
+        // Log installation summary
+        $summaryParts = [];
+        $summaryParts[] = "{$stats['copied_files']} files copied";
+        if ($stats['failed_files'] > 0) {
+            $summaryParts[] = "{$stats['failed_files']} failed";
         }
 
+        $summary = implode(', ', $summaryParts);
+        $logLevel = $success ? LOG_INFO : LOG_WARNING;
+        $status = $success ? 'completed' : 'completed with errors';
+
+        SystemMessages::sysLogMsg(
+            __METHOD__,
+            "Module $moduleUniqueID ($moduleType) installation $status: $summary",
+            $logLevel
+        );
+
         return $success;
+    }
+
+    /**
+     * Convert audio file to specified formats with optional normalization
+     *
+     * This is the unified method for audio conversion used by both REST API and Worker.
+     * Supports multiple target formats, audio normalization, and smart caching.
+     *
+     * @param string $sourceFile Source audio file path
+     * @param array $targetFormats Target formats to generate: ['wav', 'mp3', 'ulaw', 'alaw', 'gsm', 'g722', 'sln']
+     * @param array $options Conversion options:
+     *   - 'normalize' (bool): Apply loudnorm filter for consistent volume (default: false)
+     *   - 'force' (bool): Skip cache, force reconversion (default: false)
+     *   - 'use_cache' (bool): Use .sound-meta caching (default: true)
+     *   - 'output_dir' (string): Output directory (default: source file directory)
+     *   - 'base_name' (string): Output filename without extension (default: source filename)
+     *   - 'sample_rate' (int): Override sample rate for WAV (default: 8000)
+     *   - 'bitrate' (string): MP3 bitrate (default: '16k')
+     * @return array Results with conversion status per format:
+     *   [
+     *     'success' => bool,
+     *     'formats' => [
+     *       'wav' => ['path' => '/path/to/file.wav', 'status' => 'converted|skipped|failed', 'error' => '...'],
+     *       'mp3' => ['path' => '/path/to/file.mp3', 'status' => 'converted|skipped|failed', 'error' => '...'],
+     *     ],
+     *     'stats' => ['converted' => 2, 'skipped' => 1, 'failed' => 0]
+     *   ]
+     */
+    public static function convertAudioFile(string $sourceFile, array $targetFormats, array $options = []): array
+    {
+        // Initialize result structure
+        $result = [
+            'success' => true,
+            'formats' => [],
+            'stats' => ['converted' => 0, 'skipped' => 0, 'failed' => 0],
+        ];
+
+        // Parse options with defaults
+        $normalize = $options['normalize'] ?? false;
+        $forceReconvert = $options['force'] ?? false;
+        $useCache = $options['use_cache'] ?? true;
+        $sampleRate = $options['sample_rate'] ?? 8000;
+        $mp3Bitrate = $options['bitrate'] ?? '16k';
+
+        // Get output directory and base name
+        $pathInfo = pathinfo($sourceFile);
+        $outputDir = $options['output_dir'] ?? $pathInfo['dirname'];
+        $baseName = $options['base_name'] ?? $pathInfo['filename'];
+        $sourceExtension = strtolower($pathInfo['extension'] ?? '');
+
+        // Get tool paths
+        $ffmpegPath = Util::which('ffmpeg');
+        $ffprobePath = Util::which('ffprobe');
+
+        if (empty($ffmpegPath)) {
+            $result['success'] = false;
+            $result['error'] = 'ffmpeg not found';
+            return $result;
+        }
+
+        // Check if source file exists
+        if (!file_exists($sourceFile)) {
+            $result['success'] = false;
+            $result['error'] = "Source file not found: $sourceFile";
+            return $result;
+        }
+
+        // Validate source file with ffprobe
+        if (!empty($ffprobePath)) {
+            $sourceEscaped = escapeshellarg($sourceFile);
+            $probeCommand = "$ffprobePath -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 $sourceEscaped 2>&1";
+            exec($probeCommand, $probeOutput, $probeExitCode);
+
+            if ($probeExitCode !== 0 || empty($probeOutput)) {
+                $result['success'] = false;
+                $result['error'] = "Source file is corrupted or unreadable";
+                SystemMessages::sysLogMsg(__METHOD__, "Corrupted source file: $sourceFile", LOG_WARNING);
+                return $result;
+            }
+        }
+
+        // Detect source codec for special handling (MPEG formats)
+        $sourceCodec = '';
+        if (!empty($ffprobePath)) {
+            $sourceEscaped = escapeshellarg($sourceFile);
+            $codecCommand = "$ffprobePath -v error -select_streams a:0 -show_entries stream=codec_name -of default=noprint_wrappers=1:nokey=1 $sourceEscaped 2>&1";
+            exec($codecCommand, $codecOutput, $codecExitCode);
+            if ($codecExitCode === 0 && !empty($codecOutput)) {
+                $sourceCodec = trim($codecOutput[0] ?? '');
+            }
+        }
+
+        // Check metadata for smart caching
+        $metadataFile = "$outputDir/.$baseName.sound-meta";
+        $sourceHash = md5_file($sourceFile);
+        $needsConversion = $forceReconvert || !$useCache;
+
+        if ($useCache && !$forceReconvert && file_exists($metadataFile)) {
+            $metadata = @json_decode(file_get_contents($metadataFile), true);
+            if ($metadata && isset($metadata['source_hash']) && $metadata['source_hash'] === $sourceHash) {
+                // Check if all target formats exist
+                $allFormatsExist = true;
+                foreach ($targetFormats as $format) {
+                    $targetFile = "$outputDir/$baseName.$format";
+                    if (!file_exists($targetFile)) {
+                        $allFormatsExist = false;
+                        break;
+                    }
+                }
+
+                if ($allFormatsExist) {
+                    // All formats exist and hash matches - return cached results
+                    foreach ($targetFormats as $format) {
+                        $result['formats'][$format] = [
+                            'path' => "$outputDir/$baseName.$format",
+                            'status' => 'skipped',
+                        ];
+                        $result['stats']['skipped']++;
+                    }
+                    return $result;
+                }
+            }
+            $needsConversion = true;
+        }
+
+        // Define format conversion parameters
+        $formatSpecs = [
+            'wav' => [
+                'options' => "-ar $sampleRate -ac 1 -acodec pcm_s16le -f wav",
+                'container' => 'wav',
+            ],
+            'mp3' => [
+                'options' => "-codec:a libmp3lame -b:a $mp3Bitrate",
+                'container' => 'mp3',
+            ],
+            'ulaw' => [
+                'options' => '-ar 8000 -ac 1 -acodec pcm_mulaw -f wav',
+                'container' => 'wav',
+            ],
+            'alaw' => [
+                'options' => '-ar 8000 -ac 1 -acodec pcm_alaw -f wav',
+                'container' => 'wav',
+            ],
+            'gsm' => [
+                'options' => '-ar 8000 -ac 1 -acodec libgsm -f gsm',
+                'container' => 'gsm',
+            ],
+            'g722' => [
+                'options' => '-ar 16000 -ac 1 -acodec adpcm_g722 -f wav',
+                'container' => 'wav',
+            ],
+            'sln' => [
+                'options' => '-ar 8000 -ac 1 -acodec pcm_s16le -f wav',
+                'container' => 'wav',
+            ],
+        ];
+
+        // Prepare source file for conversion
+        $conversionSource = $sourceFile;
+        $tempFiles = [];
+
+        // Handle MPEG formats: convert to WAV first
+        if (in_array($sourceCodec, ['mp3', 'mp2', 'mp1'], true) && in_array('wav', $targetFormats)) {
+            $tempWavFile = "$outputDir/$baseName.tmp.wav";
+            $tempFiles[] = $tempWavFile;
+
+            $sourceEscaped = escapeshellarg($sourceFile);
+            $tempEscaped = escapeshellarg($tempWavFile);
+            $convertCmd = "$ffmpegPath -i $sourceEscaped -y $tempEscaped 2>&1";
+            $exitCode = Processes::mwExec($convertCmd);
+
+            if ($exitCode === 0) {
+                $conversionSource = $tempWavFile;
+            } else {
+                SystemMessages::sysLogMsg(__METHOD__, "Failed to convert MPEG to WAV: $sourceFile", LOG_WARNING);
+            }
+        }
+
+        // Apply normalization if requested
+        $normalizedSource = $conversionSource;
+        if ($normalize) {
+            $tempNormalizedFile = "$outputDir/$baseName.normalized.wav";
+            $tempFiles[] = $tempNormalizedFile;
+
+            $sourceEscaped = escapeshellarg($conversionSource);
+            $normalizedEscaped = escapeshellarg($tempNormalizedFile);
+            $normalizeCmd = "$ffmpegPath -i $sourceEscaped -af 'loudnorm=I=-16:TP=-1.5:LRA=11' -ac 1 -ar $sampleRate -acodec pcm_s16le -y $normalizedEscaped 2>&1";
+            $exitCode = Processes::mwExec($normalizeCmd);
+
+            if ($exitCode === 0) {
+                $normalizedSource = $tempNormalizedFile;
+            } else {
+                SystemMessages::sysLogMsg(__METHOD__, "Failed to normalize audio: $conversionSource", LOG_WARNING);
+            }
+        }
+
+        // Convert to all target formats
+        $source = escapeshellarg($normalizedSource);
+        foreach ($targetFormats as $format) {
+            // Skip unsupported formats
+            if (!isset($formatSpecs[$format])) {
+                $result['formats'][$format] = [
+                    'status' => 'failed',
+                    'error' => "Unsupported format: $format",
+                ];
+                $result['stats']['failed']++;
+                $result['success'] = false;
+                continue;
+            }
+
+            $spec = $formatSpecs[$format];
+            $targetFile = "$outputDir/$baseName.$format";
+            $dest = escapeshellarg($targetFile);
+
+            // Skip if target file already exists (unless force reconvert)
+            if (!$forceReconvert && file_exists($targetFile)) {
+                $result['formats'][$format] = [
+                    'path' => $targetFile,
+                    'status' => 'skipped',
+                ];
+                $result['stats']['skipped']++;
+                continue;
+            }
+
+            // Build and execute ffmpeg command
+            $command = "$ffmpegPath -i $source {$spec['options']} -y $dest 2>&1";
+            $exitCode = Processes::mwExec($command, $output);
+
+            if ($exitCode === 0) {
+                $result['formats'][$format] = [
+                    'path' => $targetFile,
+                    'status' => 'converted',
+                ];
+                $result['stats']['converted']++;
+            } else {
+                $outputText = implode("\n", $output);
+                $result['formats'][$format] = [
+                    'status' => 'failed',
+                    'error' => "Exit code: $exitCode. Output: $outputText",
+                ];
+                $result['stats']['failed']++;
+                $result['success'] = false;
+
+                // Check if codec is not supported (not critical for some formats)
+                if (strpos($outputText, "Unknown encoder") === false) {
+                    SystemMessages::sysLogMsg(
+                        __METHOD__,
+                        "Failed to convert to $format format. Exit code: $exitCode",
+                        LOG_WARNING
+                    );
+                }
+            }
+        }
+
+        // Clean up temporary files
+        foreach ($tempFiles as $tempFile) {
+            if (file_exists($tempFile)) {
+                @unlink($tempFile);
+            }
+        }
+
+        // Save metadata file if conversion was successful and cache is enabled
+        if ($result['success'] && $useCache) {
+            $metadata = [
+                'source_file' => basename($sourceFile),
+                'source_format' => $sourceExtension,
+                'source_hash' => $sourceHash,
+                'target_formats' => $targetFormats,
+                'options' => [
+                    'normalize' => $normalize,
+                    'sample_rate' => $sampleRate,
+                    'mp3_bitrate' => $mp3Bitrate,
+                ],
+                'conversion_date' => date('Y-m-d H:i:s'),
+                'ffmpeg_version' => trim(shell_exec("$ffmpegPath -version 2>&1 | head -1")),
+            ];
+
+            $metadataJson = json_encode($metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+            if (file_put_contents($metadataFile, $metadataJson) === false) {
+                SystemMessages::sysLogMsg(__METHOD__, "Failed to save metadata file: $metadataFile", LOG_WARNING);
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Convert all sound files in directory recursively
+     *
+     * This method performs synchronous conversion of all sound files
+     * to required formats (ulaw, alaw, gsm, g722, sln).
+     *
+     * @param string $soundsDir Base sounds directory path
+     * @return void
+     */
+    public static function convertAllSoundFiles(string $soundsDir): void
+    {
+        if (!is_dir($soundsDir)) {
+            SystemMessages::sysLogMsg(__METHOD__, "Sounds directory not found: $soundsDir", LOG_WARNING);
+            return;
+        }
+
+        $convertibleFormats = '{wav,mp3,gsm,ulaw,alaw,g722,sln}';
+        $stats = ['converted' => 0, 'skipped' => 0, 'failed' => 0];
+
+        // Process all language directories
+        $langDirs = glob("$soundsDir/*", GLOB_ONLYDIR);
+        if (empty($langDirs)) {
+            SystemMessages::sysLogMsg(__METHOD__, "No language directories found in: $soundsDir", LOG_DEBUG);
+            return;
+        }
+
+        foreach ($langDirs as $langDir) {
+            // Root directory
+            $soundFiles = glob("$langDir/*.$convertibleFormats", GLOB_BRACE);
+            foreach ($soundFiles as $file) {
+                $convStats = ['converted' => 0, 'skipped' => 0];
+                $result = self::convertSoundFileFormats($file, false, $convStats);
+                if ($result === false) {
+                    $stats['failed']++;
+                } elseif ($result === 'skipped') {
+                    $stats['skipped'] += $convStats['skipped'];
+                } else {
+                    $stats['converted'] += $convStats['converted'];
+                }
+            }
+
+            // Subdirectories
+            $subDirs = glob("$langDir/*", GLOB_ONLYDIR);
+            foreach ($subDirs as $subDir) {
+                $subSoundFiles = glob("$subDir/*.$convertibleFormats", GLOB_BRACE);
+                foreach ($subSoundFiles as $file) {
+                    $convStats = ['converted' => 0, 'skipped' => 0];
+                    $result = self::convertSoundFileFormats($file, false, $convStats);
+                    if ($result === false) {
+                        $stats['failed']++;
+                    } elseif ($result === 'skipped') {
+                        $stats['skipped'] += $convStats['skipped'];
+                    } else {
+                        $stats['converted'] += $convStats['converted'];
+                    }
+                }
+
+                // Nested subdirectories
+                $nestedDirs = glob("$subDir/*", GLOB_ONLYDIR);
+                foreach ($nestedDirs as $nestedDir) {
+                    $nestedSoundFiles = glob("$nestedDir/*.$convertibleFormats", GLOB_BRACE);
+                    foreach ($nestedSoundFiles as $file) {
+                        $convStats = ['converted' => 0, 'skipped' => 0];
+                        $result = self::convertSoundFileFormats($file, false, $convStats);
+                        if ($result === false) {
+                            $stats['failed']++;
+                        } elseif ($result === 'skipped') {
+                            $stats['skipped'] += $convStats['skipped'];
+                        } else {
+                            $stats['converted'] += $convStats['converted'];
+                        }
+                    }
+                }
+            }
+        }
+
+        // Log completion summary
+        $summary = [];
+        if ($stats['converted'] > 0) {
+            $summary[] = "{$stats['converted']} formats converted";
+        }
+        if ($stats['skipped'] > 0) {
+            $summary[] = "{$stats['skipped']} cached";
+        }
+        if ($stats['failed'] > 0) {
+            $summary[] = "{$stats['failed']} failed";
+        }
+
+        SystemMessages::sysLogMsg(
+            __METHOD__,
+            'Sound file conversion completed: ' . implode(', ', $summary),
+            LOG_INFO
+        );
+    }
+
+
+    /**
+     * Convert sound file to multiple formats using ffmpeg with smart caching
+     *
+     * Creates the following formats from source file:
+     * - ulaw (G.711 μ-law in WAV container)
+     * - alaw (G.711 A-law in WAV container)
+     * - gsm (GSM 06.10 in raw GSM container)
+     * - g722 (G.722 wideband in WAV container)
+     * - sln (signed linear PCM in WAV container)
+     *
+     * Uses metadata files to track source file hash and skip conversion if file unchanged.
+     * This allows efficient updates when sound files are replaced in new releases.
+     *
+     * @param string $sourceFile Source sound file path (wav, mp3, gsm, ulaw, alaw, g722, sln)
+     * @param bool $forceReconvert Force reconversion even if metadata matches (default: false)
+     * @param array|null $stats Output statistics: ['converted' => int, 'skipped' => int]
+     * @return bool|string True if converted, 'skipped' if cached, false if failed
+     */
+    private static function convertSoundFileFormats(string $sourceFile, bool $forceReconvert = false, ?array &$stats = null): bool|string
+    {
+        // Initialize statistics
+        if ($stats === null) {
+            $stats = ['converted' => 0, 'skipped' => 0];
+        }
+
+        // Skip conversion if source is not a convertible format
+        $pathInfo = pathinfo($sourceFile);
+        $sourceExtension = strtolower($pathInfo['extension'] ?? '');
+        $convertibleFormats = ['wav', 'mp3', 'ulaw', 'alaw', 'gsm', 'g722', 'sln'];
+        if (!in_array($sourceExtension, $convertibleFormats, true)) {
+            return 'skipped';
+        }
+
+        // Define target formats (all Asterisk formats except source format)
+        $targetFormats = ['ulaw', 'alaw', 'gsm', 'g722', 'sln'];
+
+        // Call unified converter
+        $result = self::convertAudioFile($sourceFile, $targetFormats, [
+            'force' => $forceReconvert,
+            'use_cache' => true,
+            'normalize' => false,
+        ]);
+
+        // Update statistics from result
+        $stats['converted'] += $result['stats']['converted'];
+        $stats['skipped'] += $result['stats']['skipped'];
+
+        // Return legacy format for backward compatibility
+        if (!$result['success']) {
+            return false;
+        }
+
+        // If all were skipped, return 'skipped'
+        if ($result['stats']['converted'] === 0 && $result['stats']['skipped'] > 0) {
+            return 'skipped';
+        }
+
+        return true;
     }
 
     /**
@@ -373,6 +863,8 @@ class SoundFilesConf extends SystemConfigClass
      * Handles both module types:
      * 1. Language Pack: Removes entire language directory
      * 2. Feature module: Removes only prefixed files (modulename-*)
+     *
+     * For Feature modules, removes all format variants (wav, ulaw, alaw, gsm, g722, sln, mp3)
      *
      * @param string $moduleUniqueID Module unique identifier
      * @return bool True if successful
@@ -407,32 +899,86 @@ class SoundFilesConf extends SystemConfigClass
             $command = "$rmPath -rf $langDirEscaped";
             $exitCode = Processes::mwExec($command);
 
-            if ($exitCode === 0) {
-                SystemMessages::sysLogMsg(__METHOD__, "Language Pack $moduleUniqueID ($languageCode) removed successfully", LOG_INFO);
-                return true;
+            if ($exitCode !== 0) {
+                SystemMessages::sysLogMsg(__METHOD__, "Failed to remove Language Pack $moduleUniqueID. Exit code: $exitCode", LOG_WARNING);
+                return false;
             }
 
-            SystemMessages::sysLogMsg(__METHOD__, "Failed to remove Language Pack $moduleUniqueID. Exit code: $exitCode", LOG_WARNING);
-            return false;
+            SystemMessages::sysLogMsg(__METHOD__, "Language Pack $moduleUniqueID ($languageCode) directory removed successfully", LOG_INFO);
+
+            // Try to restore original system sounds from /offload if they exist
+            $sourceLanguageDir = self::SOURCE_SOUNDS_DIR . "/$languageCode";
+
+            if (is_dir($sourceLanguageDir)) {
+                SystemMessages::sysLogMsg(__METHOD__, "Restoring original system sounds from $sourceLanguageDir", LOG_INFO);
+
+                $cpPath = Util::which('cp');
+                $sourceDirEscaped = escapeshellarg($sourceLanguageDir);
+                $targetDirEscaped = escapeshellarg($systemSoundsDir);
+                $command = "$cpPath -r $sourceDirEscaped $targetDirEscaped";
+                $exitCode = Processes::mwExec($command);
+
+                if ($exitCode === 0) {
+                    SystemMessages::sysLogMsg(__METHOD__, "Original system sounds for $languageCode restored successfully", LOG_INFO);
+
+                    // Trigger sound file conversion for restored files
+                    // Note: WorkerSoundFilesInit will handle conversion automatically on next run
+                    SystemMessages::sysLogMsg(__METHOD__, "Sound file conversion will be handled by WorkerSoundFilesInit", LOG_DEBUG);
+                } else {
+                    SystemMessages::sysLogMsg(__METHOD__, "Failed to restore original sounds. Exit code: $exitCode", LOG_WARNING);
+                }
+            } else {
+                SystemMessages::sysLogMsg(__METHOD__, "No original system sounds found in $sourceLanguageDir (this is normal for new languages)", LOG_DEBUG);
+            }
+
+            return true;
 
         } else {
-            // Feature module: Remove only prefixed files
+            // Feature module: Remove only prefixed files (all format variants)
             $prefix = strtolower($moduleUniqueID) . '-';
             $findPath = Util::which('find');
             $soundsDir = escapeshellarg($systemSoundsDir);
-            $pattern = escapeshellarg($prefix . '*');
 
-            // Find all sound files with module prefix
-            $command = "$findPath $soundsDir -type f -name $pattern -delete";
-            $exitCode = Processes::mwExec($command, $output);
+            // Remove all format variants (wav, ulaw, alaw, gsm, g722, sln, mp3)
+            $extensions = ['wav', 'ulaw', 'alaw', 'gsm', 'g722', 'sln', 'mp3'];
+            $allSuccess = true;
 
-            if ($exitCode === 0) {
-                SystemMessages::sysLogMsg(__METHOD__, "Feature module $moduleUniqueID sound files removed successfully", LOG_INFO);
-                return true;
+            foreach ($extensions as $ext) {
+                $pattern = escapeshellarg($prefix . "*.$ext");
+                $command = "$findPath $soundsDir -type f -name $pattern -delete";
+                $exitCode = Processes::mwExec($command, $output);
+
+                if ($exitCode !== 0) {
+                    SystemMessages::sysLogMsg(
+                        __METHOD__,
+                        "Failed to remove $ext files for module $moduleUniqueID. Exit code: $exitCode",
+                        LOG_WARNING
+                    );
+                    $allSuccess = false;
+                }
             }
 
-            SystemMessages::sysLogMsg(__METHOD__, "Failed to remove Feature module $moduleUniqueID sound files. Exit code: $exitCode", LOG_WARNING);
-            return false;
+            // Remove metadata files for module sounds
+            $metadataPattern = escapeshellarg('.' . $prefix . '*.sound-meta');
+            $command = "$findPath $soundsDir -type f -name $metadataPattern -delete";
+            $exitCode = Processes::mwExec($command);
+
+            if ($exitCode !== 0) {
+                SystemMessages::sysLogMsg(
+                    __METHOD__,
+                    "Failed to remove metadata files for module $moduleUniqueID. Exit code: $exitCode",
+                    LOG_WARNING
+                );
+                $allSuccess = false;
+            }
+
+            if ($allSuccess) {
+                SystemMessages::sysLogMsg(__METHOD__, "Feature module $moduleUniqueID sound files (all formats) removed successfully", LOG_INFO);
+            } else {
+                SystemMessages::sysLogMsg(__METHOD__, "Some sound files for module $moduleUniqueID failed to be removed", LOG_WARNING);
+            }
+
+            return $allSuccess;
         }
     }
 
@@ -527,7 +1073,7 @@ class SoundFilesConf extends SystemConfigClass
             // Map Asterisk code to web admin code
             $webCode = self::ASTERISK_TO_WEB_LANG_MAP[$asteriskCode] ?? null;
 
-            if ($webCode !== null && isset(LanguageProvider::AVAILABLE_LANGUAGES[$webCode])) {
+            if ($webCode !== null && array_key_exists($webCode, LanguageProvider::AVAILABLE_LANGUAGES)) {
                 // Use native name from LanguageProvider
                 $languages[$asteriskCode] = LanguageProvider::AVAILABLE_LANGUAGES[$webCode]['name'];
             } else {

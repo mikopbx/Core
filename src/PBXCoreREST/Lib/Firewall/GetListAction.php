@@ -23,7 +23,7 @@ use MikoPBX\Common\Models\FirewallRules;
 use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Core\System\Util;
+use MikoPBX\Core\System\System;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 
 /**
@@ -183,7 +183,7 @@ class GetListAction
                 'total' => $total,
                 'firewallEnabled' => PbxSettings::getValueByKey(PbxSettings::PBX_FIREWALL_ENABLED),
                 'fail2banEnabled' => PbxSettings::getValueByKey(PbxSettings::PBX_FAIL2BAN_ENABLED),
-                'isDocker' => Util::isDocker(),
+                'isDocker' => System::isDocker(),
                 'dockerSupportedServices' => ['WEB', 'AMI', 'SIP & RTP', 'IAX']
             ];
             

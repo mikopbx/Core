@@ -1,3 +1,6 @@
+
+@sessions/CLAUDE.sessions.md
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with MikoPBX repository.
@@ -81,9 +84,11 @@ Tests are automatically synchronized between host and container:
    - Common services in `src/Common/Providers/`
    - Core services in `src/Core/Providers/`
 
-2. **Worker System**: Background job processing using Beanstalkd queue and Redis for IPC
+2. **Worker System**: Background job processing using multiple patterns
    - Base class: `src/Core/Workers/WorkerBase.php`
-   - Jobs are queued to specific tubes with priorities
+   - Queue-based workers: Beanstalkd (CDR, Events) and Redis (API) with priorities
+   - File-based workers: JSON task files for async operations (WAV to WebM conversion)
+   - Supervisor: `WorkerSafeScriptsCore` monitors and restarts all workers
 
 3. **Module System**: Extensible plugin architecture
    - Base class: `src/Modules/PbxExtensionBase.php`
@@ -211,7 +216,7 @@ MikoPBX includes specialized skills in `.claude/skills/` that activate automatic
 - **`auth-token-manager`** - Obtain JWT Bearer tokens / Получение JWT токенов
 
 ### Container & Infrastructure
-- **`container-inspector`** - Manage Docker containers (mikopbx_php83/php74) / Управление контейнерами
+- **`container-inspector`** - Manage Docker containers (mikopbx-php83/php74) / Управление контейнерами
 - **`log-analyzer`** - Analyze container logs for debugging / Анализ логов контейнера
 - **`asterisk-validator`** - Validate Asterisk configuration and logs / Валидация конфигурации Asterisk
 - **`asterisk-tester`** - Test Asterisk dialplan scenarios / Тестирование Asterisk dialplan
@@ -235,7 +240,7 @@ MikoPBX includes specialized skills in `.claude/skills/` that activate automatic
 - "Find all REST API Actions" / "найди все REST API Actions"
 - "Transpile extension-modify.js" / "транспилируй extension-modify.js"
 - "Get authentication token" / "получи токен для API"
-- "Restart mikopbx_php83 container" / "перезапусти контейнер mikopbx_php83"
+- "Restart mikopbx-php83 container" / "перезапусти контейнер mikopbx-php83"
 - "Check REST API translations" / "проверь переводы REST API"
 - "Sync RestApi.php translations" / "синхронизируй переводы RestApi.php"
 

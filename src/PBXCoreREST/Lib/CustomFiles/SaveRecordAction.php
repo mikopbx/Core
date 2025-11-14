@@ -37,12 +37,11 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
  * 2. VALIDATE REQUIRED: Check required fields (filepath, content)
  * 3. DETERMINE OPERATION: Detect CREATE vs UPDATE
  * 4. APPLY DEFAULTS: Add missing values (CREATE only!) - mode=none, changed='0'
- * 5. VALIDATE SCHEMA: Check constraints (maxLength, enum) + business rules (filepath uniqueness, isPathAllowed)
+ * 5. VALIDATE SCHEMA: Check constraints (maxLength, enum) + business rules (filepath uniqueness)
  * 6. SAVE: Transaction with base64 handling + mode protection + ApplyCustomFilesAction
  * 7. BUILD RESPONSE: Format data using DataStructure
  *
  * Security Features:
- * - Path validation: CustomFiles::isPathAllowed() prevents directory traversal
  * - Base64 handling: setContent()/getContent() for proper encoding
  * - Mode protection: MODE_CUSTOM files cannot change mode
  * - Immediate application: ApplyCustomFilesAction for MODE_CUSTOM files
@@ -91,29 +90,8 @@ class SaveRecordAction extends AbstractSaveRecordAction
         }
 
         // ============================================================
-        // PHASE 2: REQUIRED FIELDS VALIDATION
-        // WHY: Fail fast - don't waste resources on invalid data
-        // ============================================================
-
-        $validationRules = [
-            'filepath' => [
-                ['type' => 'required', 'message' => 'File path is required'],
-                ['type' => 'minLength', 'value' => 1, 'message' => 'File path must not be empty']
-            ],
-            'content' => [
-                ['type' => 'required', 'message' => 'Content is required']
-            ]
-        ];
-
-        $validationErrors = self::validateRequiredFields($sanitizedData, $validationRules);
-        if (!empty($validationErrors)) {
-            $res->messages['error'] = $validationErrors;
-            return $res;
-        }
-
-        // ============================================================
-        // PHASE 3: DETERMINE OPERATION TYPE
-        // WHY: Different logic for new vs existing records
+        // PHASE 2: DETERMINE OPERATION TYPE FIRST
+        // WHY: Required fields differ for CREATE vs UPDATE/PATCH
         // ============================================================
 
         $recordId = $sanitizedData['id'] ?? null;
@@ -141,6 +119,42 @@ class SaveRecordAction extends AbstractSaveRecordAction
         } else {
             // No ID provided - CREATE operation
             $isCreateOperation = true;
+        }
+
+        // ============================================================
+        // PHASE 3: REQUIRED FIELDS VALIDATION
+        // WHY: Fail fast - don't waste resources on invalid data
+        // NOTE: Required fields differ for CREATE vs UPDATE/PATCH
+        // ============================================================
+
+        $validationRules = [];
+
+        if ($isCreateOperation) {
+            // CREATE: filepath is required, content is optional (empty allowed for MODE_NONE)
+            $validationRules = [
+                'filepath' => [
+                    ['type' => 'required', 'message' => 'File path is required'],
+                    ['type' => 'minLength', 'value' => 1, 'message' => 'File path must not be empty']
+                ]
+                // content is optional even for CREATE - empty content with mode=none is valid
+            ];
+        } else {
+            // UPDATE/PATCH: Only validate fields that are present
+            if (isset($sanitizedData['filepath']) && $sanitizedData['filepath'] !== null) {
+                $validationRules['filepath'] = [
+                    ['type' => 'minLength', 'value' => 1, 'message' => 'File path must not be empty']
+                ];
+            }
+            // For PATCH, content is optional:
+            // - Not present in request → keep existing content
+            // - Empty string → clear file content (valid for mode=none)
+            // - Non-empty string → update content
+        }
+
+        $validationErrors = self::validateRequiredFields($sanitizedData, $validationRules);
+        if (!empty($validationErrors)) {
+            $res->messages['error'] = $validationErrors;
+            return $res;
         }
 
         if ($isCreateOperation) {
@@ -236,17 +250,26 @@ class SaveRecordAction extends AbstractSaveRecordAction
                 // Save record
                 if (!$record->save()) {
                     throw new \Exception('Failed to save custom file: ' . implode(', ', $record->getMessages()));
-                }
-
-                // Force immediate application of custom file to filesystem
-                if ($record->mode === CustomFiles::MODE_CUSTOM) {
-                    // Directly apply the file using the action class
-                    $applyAction = new \MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ApplyCustomFilesAction();
-                    $applyAction->execute(['fileId' => $record->id]);
+                } else {
+                    SystemMessages::sysLogMsg(__METHOD__, "Custom file saved: " . json_encode($record?->toArray(), JSON_PRETTY_PRINT), LOG_DEBUG);
                 }
 
                 return $record;
             });
+
+            // ============================================================
+            // FILE APPLICATION: Standard async mechanism via WorkerModelsEvents
+            // WHY: Consistent with other models, allows for async processing
+            //
+            // Flow: ModelsBase::afterSave (fires after transaction commit)
+            //       → processSettingsChanges()
+            //       → Beanstalkd queue message
+            //       → WorkerModelsEvents receives and processes
+            //       → planReloadActionsForCustomFiles()
+            //       → ApplyCustomFilesAction (applies file to disk)
+            //
+            // Timing: File will be applied within 5-15 seconds after save
+            // ============================================================
 
             // ============================================================
             // PHASE 7: BUILD RESPONSE
@@ -283,13 +306,6 @@ class SaveRecordAction extends AbstractSaveRecordAction
     private static function validateBusinessRules(array $sanitizedData, ?int $currentRecordId): array
     {
         $validationErrors = [];
-
-        // Security check: ensure file is in allowed directory
-        if (!empty($sanitizedData['filepath'])) {
-            if (!CustomFiles::isPathAllowed($sanitizedData['filepath'])) {
-                $validationErrors[] = CustomFiles::getSecurityErrorMessage($sanitizedData['filepath']);
-            }
-        }
 
         // Check filepath uniqueness (excluding current record for updates)
         if (!empty($sanitizedData['filepath'])) {

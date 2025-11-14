@@ -151,7 +151,7 @@ class RestController extends BaseRestController
                 $tokenExpiry,                                // expire
                 '/',                                         // path
                 $isSecure,                                   // secure (true for HTTPS, false for HTTP)
-                null,                                        // domain (current domain)
+                '',                                          // domain (current domain, empty string for PHP 8.3 compatibility)
                 true,                                        // httpOnly (no JS access)
                 ['samesite' => 'Lax']                        // options (CSRF protection, allows top-level navigation)
             );  // Cookie will be encrypted by CryptProvider (token is already hashed)
@@ -165,7 +165,7 @@ class RestController extends BaseRestController
                 time() - 3600,                               // expire (in the past)
                 '/',                                         // path
                 $isSecure,                                   // secure (match protocol)
-                null,                                        // domain
+                '',                                          // domain (current domain, empty string for PHP 8.4 compatibility)
                 true,                                        // httpOnly
                 ['samesite' => 'Lax']                        // options
             );  // Clear cookie

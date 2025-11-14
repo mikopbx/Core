@@ -30,7 +30,6 @@ use MikoPBX\Core\System\Configs\DnsConf;
 use MikoPBX\Core\System\Configs\Fail2BanConf;
 use MikoPBX\Core\System\Configs\GeoIP2Conf;
 use MikoPBX\Core\System\Configs\IptablesConf;
-use MikoPBX\Core\System\Configs\SoundFilesConf;
 use MikoPBX\Core\System\Configs\MonitConf;
 use MikoPBX\Core\System\Configs\NTPConf;
 use MikoPBX\Core\System\Configs\NatsConf;
@@ -98,7 +97,7 @@ class SystemLoader extends Injectable
      */
     public function __construct()
     {
-        $this->isDocker = Util::isDocker();
+        $this->isDocker = System::isDocker();
         $this->isRecoveryMode = Util::isRecoveryMode();
         
         // Read system boot start time from file, fallback to current time if not available
@@ -167,7 +166,7 @@ class SystemLoader extends Injectable
         $redisStatus = $redisConf->start();
         $this->echoResultMsg($redisStatus ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
 
-        if (!$this->isDocker) {
+        if (!$this->isDocker && System::isAMD64()) {
             // Wait start the ACPID daemon
             $this->echoStartMsg(' - Waiting for acpid daemon...');
             $ACPIDConf = new ACPIDConf();
@@ -357,11 +356,6 @@ class SystemLoader extends Injectable
             $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
         }
 
-        // Initialize sound files directory with base languages
-        $this->echoStartMsg(' - Initializing sound files...');
-        $soundFilesConf = new SoundFilesConf();
-        $this->echoResultMsg($soundFilesConf->start() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
-
         // Apply user-created custom files (after Redis is started)
         $this->echoStartMsg(' - Applying user-created custom files...');
         if (!$this->isRecoveryMode) {
@@ -409,7 +403,7 @@ class SystemLoader extends Injectable
             // This runs once at boot after Asterisk is fully started
             $this->echoStartMsg(' - Synchronizing codec database...');
             $codecStats = CodecSync::syncCodecsWithAsterisk();
-            $totalChanges = $codecStats['added'] + $codecStats['enabled'] + $codecStats['disabled'];
+            $totalChanges = $codecStats['added'] + $codecStats['deleted'];
             $this->echoResultMsg($totalChanges > 0 ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_SKIPPED);
 
             // Always reload SIP configuration after codec sync

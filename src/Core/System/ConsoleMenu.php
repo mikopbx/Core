@@ -47,7 +47,7 @@ class ConsoleMenu
     public function __construct()
     {
         $this->isLiveCd = file_exists('/offload/livecd');
-        $this->isDocker = Util::isDocker();
+        $this->isDocker = System::isDocker();
     }
 
     /**
@@ -464,14 +464,14 @@ class ConsoleMenu
                 if (count($files) !== 0) {
                     return "   \033[01;31m" . Util::translate('The integrity of the system is broken') . "\033[39m";
                 }
-            } elseif (php_uname('m') === 'x86_64' && Util::isDocker()) {
+            } elseif (php_uname('m') === 'x86_64' && System::isDocker()) {
                 $files = Main::checkForCorruptedFiles();
                 $result = '    Is Docker';
                 if (count($files) !== 0) {
                     $result .= ": \033[01;31m" . Util::translate('The integrity of the system is broken') . "\033[39m";
                 }
                 return $result;
-            } elseif (Util::isDocker()) {
+            } elseif (System::isDocker()) {
                 // ARM and other platform...
                 return '    Is Docker';
             } else {

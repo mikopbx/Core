@@ -46,6 +46,11 @@ class MikoPBXClient:
 
     def __init__(self, base_url: str, login: str = None, password: str = None, auth_token: str = None):
         self.base_url = base_url.rstrip('/')
+        # Auth and file management endpoints are on the base API path, resource endpoints on /v3
+        # E.g., base_url = "http://localhost:8081/pbxcore/api/v3"
+        #   → auth_base_url = "http://localhost:8081/pbxcore/api" (no /v3)
+        #   → self.base_url = "http://localhost:8081/pbxcore/api/v3" (with /v3)
+        self.auth_base_url = self.base_url  # For now, auth is also on /v3
         self.login = login
         self.password = password
         self.access_token: Optional[str] = auth_token  # Can be set directly for API keys
@@ -88,7 +93,7 @@ class MikoPBXClient:
         - self.session.cookies: refreshToken cookie (30 days lifetime)
         """
         response = self.session.post(
-            f"{self.base_url}/auth:login",
+            f"{self.auth_base_url}/auth:login",
             data={
                 'login': self.login,
                 'password': self.password,
@@ -112,7 +117,7 @@ class MikoPBXClient:
 
         This should be called when access token is close to expiration (15 min)
         """
-        response = self.session.post(f"{self.base_url}/auth:refresh")
+        response = self.session.post(f"{self.auth_base_url}/auth:refresh")
         response.raise_for_status()
         data = response.json()
 
@@ -1353,6 +1358,52 @@ def test_uploaded_file(api_client):
         except Exception as cleanup_error:
             # Cleanup failures are non-critical
             print(f"⚠️ Failed to cleanup test file /{file_path}: {cleanup_error}")
+
+
+# ============================================================================
+# Extension Helper Functions
+# ============================================================================
+
+def get_extension_secret(extension_number: str, api_client: 'MikoPBXClient' = None) -> Optional[str]:
+    """
+    Retrieve SIP secret for an extension via REST API.
+
+    Args:
+        extension_number: Extension number (e.g., '201')
+        api_client: MikoPBXClient instance (optional, creates new if not provided)
+
+    Returns:
+        SIP secret (MD5 hash) or None if not found
+
+    Note:
+        This function uses the REST API 'sip/{number}:getSecret' endpoint
+        to retrieve the SIP authentication password for an extension.
+    """
+    try:
+        # Use provided client or create temporary one
+        if api_client is None:
+            api_client = MikoPBXClient(config.api_url, config.api_username, config.api_password)
+            api_client.authenticate()
+
+        # Get secret using dedicated endpoint
+        response = api_client.get(f'sip/{extension_number}:getSecret')
+
+        if not response.get('result'):
+            print(f"⚠️ Failed to get secret for extension {extension_number}: {response}")
+            return None
+
+        # Extract secret from response
+        secret = response.get('data', {}).get('secret')
+
+        if not secret:
+            print(f"⚠️ No SIP secret found in response for extension {extension_number}")
+            return None
+
+        return secret
+
+    except Exception as e:
+        print(f"⚠️ Failed to retrieve secret for extension {extension_number}: {e}")
+        return None
 
 
 # ============================================================================

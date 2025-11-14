@@ -36,6 +36,13 @@ class UpdateSystemConfig extends Injectable
     public $isTheFirstMessage = true;
 
     /**
+     * Time when the current operation started (microtime)
+     *
+     * @var float
+     */
+    private float $operationStartTime = 0.0;
+
+    /**
      * Updates settings after every new release
      */
     public function updateConfigs(): bool
@@ -64,7 +71,7 @@ class UpdateSystemConfig extends Injectable
                     $processor->processUpdate();
                     $message = '   |- UpdateConfigs: Upgrade system up to ' . $releaseNumber;
                     $message = $this->publishMessage($message);
-                    SystemMessages::echoResultMsg($message);
+                    $this->publishResult($message);
                 }
             }
 
@@ -130,11 +137,27 @@ class UpdateSystemConfig extends Injectable
      */
     private function publishMessage(string $msg): string
     {
-        if ($this->isTheFirstMessage) {   
+        if ($this->isTheFirstMessage) {
             $msg = PHP_EOL.$msg;
             $this->isTheFirstMessage = false;
         }
         SystemMessages::echoStartMsg($msg);
+        $this->operationStartTime = microtime(true);
         return $msg;
+    }
+
+    /**
+     * Publish result message with timing information
+     * @param string $msg
+     * @param string $result
+     */
+    private function publishResult(string $msg, string $result = SystemMessages::RESULT_DONE): void
+    {
+        $elapsedTime = 0.0;
+        if ($this->operationStartTime > 0) {
+            $elapsedTime = round(microtime(true) - $this->operationStartTime, 2);
+        }
+        SystemMessages::echoResultMsgWithTime($msg, $result, $elapsedTime);
+        $this->operationStartTime = 0.0;
     }
 }

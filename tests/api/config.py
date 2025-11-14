@@ -53,7 +53,7 @@ class TestConfig:
 
     Execution Mode:
         MIKOPBX_EXECUTION_MODE - Execution mode: docker|api|ssh|local (auto-detected if not set)
-        MIKOPBX_CONTAINER      - Docker container name (default: mikopbx_php83)
+        MIKOPBX_CONTAINER      - Docker container name (default: mikopbx-php83)
         MIKOPBX_SSH_HOST       - SSH hostname for remote execution
         MIKOPBX_SSH_USER       - SSH username (default: root)
         MIKOPBX_SSH_PORT       - SSH port (default: 22)
@@ -197,7 +197,7 @@ class TestConfig:
     @property
     def container_name(self) -> str:
         """Docker container name"""
-        return os.getenv('MIKOPBX_CONTAINER', 'mikopbx_php83')
+        return os.getenv('MIKOPBX_CONTAINER', 'mikopbx-php83')
 
     @property
     def ssh_host(self) -> Optional[str]:

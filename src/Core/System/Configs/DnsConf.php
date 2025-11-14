@@ -82,7 +82,7 @@ class DnsConf extends SystemConfigClass
         // In Docker environment, preserve Docker's embedded DNS server (127.0.0.11)
         // This is required for container name resolution within Docker networks
         $dockerDns = null;
-        if (Util::isDocker() && file_exists('/etc/resolv.conf')) {
+        if (System::isDocker() && file_exists('/etc/resolv.conf')) {
             $currentResolv = file_get_contents('/etc/resolv.conf');
             if (preg_match('/nameserver\s+(127\.0\.0\.11)/', $currentResolv, $matches)) {
                 $dockerDns = $matches[1];
@@ -205,7 +205,7 @@ class DnsConf extends SystemConfigClass
      */
     public function generateMonitConf(): bool
     {
-        if(Util::isDocker()){
+        if(System::isDocker()){
             return true;
         }
         $busyboxPath = Util::which('busybox');

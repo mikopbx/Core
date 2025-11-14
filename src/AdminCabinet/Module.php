@@ -32,7 +32,7 @@ class Module implements ModuleDefinitionInterface
      *
      * @param DiInterface|null $container
      */
-    public function registerAutoloaders(DiInterface $container = null)
+    public function registerAutoloaders(?DiInterface $container = null)
     {
     }
 

@@ -194,8 +194,8 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'description' => 'rest_schema_cf_changed',
                 'enum' => ['0', '1'],
                 'sanitize' => 'string',
-                'default' => '0',
-                'example' => '0'
+                'default' => '1',
+                'example' => '1'
             ],
         ];
     }

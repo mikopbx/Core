@@ -20,11 +20,11 @@
 namespace MikoPBX\Core\Asterisk\Configs;
 
 use MikoPBX\Common\Models\SoundFiles;
+use MikoPBX\Core\System\Configs\SoundFilesConf;
 use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
-use MikoPBX\PBXCoreREST\Lib\SoundFiles\ConvertAudioFileAction;
 
 /**
  * Class MusicOnHoldConf
@@ -95,15 +95,35 @@ class MusicOnHoldConf extends AsteriskConfigClass
         $cp    = Util::which('cp');
         foreach ($filesList as $srcFile) {
             $resultMp3 = "$path/" . basename($srcFile);
-            $resultWav = Util::trimExtensionForFile($resultMp3) . '.wav';
+            $baseName = Util::trimExtensionForFile(basename($resultMp3));
 
             // Copy the file to the specified path
             Processes::mwExec("$cp $srcFile $resultMp3");
 
-            // Convert the MP3 file to WAV format
-            ConvertAudioFileAction::convertAudioFile($resultMp3);
-            if ( ! file_exists($resultWav)) {
-                SystemMessages::sysLogMsg(static::class, "Failed to convert file $resultWav...");
+            // Convert the MP3 file to all Asterisk formats
+            $result = SoundFilesConf::convertAudioFile(
+                $resultMp3,
+                ['wav', 'ulaw', 'alaw', 'gsm', 'g722', 'sln'],
+                [
+                    'normalize' => false,
+                    'use_cache' => true,
+                    'force' => false,
+                    'output_dir' => $path,
+                    'base_name' => $baseName,
+                ]
+            );
+
+            if (!$result['success']) {
+                SystemMessages::sysLogMsg(
+                    static::class,
+                    "Failed to convert MOH file $resultMp3: " . ($result['error'] ?? 'Unknown error')
+                );
+            } else {
+                // Check if at least WAV was created
+                $resultWav = "$path/$baseName.wav";
+                if (!file_exists($resultWav)) {
+                    SystemMessages::sysLogMsg(static::class, "Failed to create WAV file $resultWav");
+                }
             }
 
             // Add the MP3 file to the database
@@ -118,7 +138,7 @@ class MusicOnHoldConf extends AsteriskConfigClass
      */
     protected function checkAddFileToDB(string $resultMp3): void
     {
-        /** @var SoundFiles $sf */
+        /** @var SoundFiles|null $sf */
         $sf = SoundFiles::findFirst("path='$resultMp3'");
         if ($sf === null) {
             $sf           = new SoundFiles();

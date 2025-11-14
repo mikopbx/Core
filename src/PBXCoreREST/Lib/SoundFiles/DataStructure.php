@@ -21,6 +21,7 @@ namespace MikoPBX\PBXCoreREST\Lib\SoundFiles;
 
 use MikoPBX\Common\Models\SoundFiles;
 use MikoPBX\Core\System\Processes;
+use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractDataStructure;
 use MikoPBX\PBXCoreREST\Lib\Common\OpenApiSchemaProvider;
 
@@ -93,7 +94,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
     }
     
     /**
-     * Get audio file duration using sox
+     * Get audio file duration using ffprobe
      * @param string $path Path to audio file
      * @return string Duration in MM:SS format
      */
@@ -102,18 +103,23 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
         if (!file_exists($path)) {
             return '00:00';
         }
-        
-        // Use sox to get duration
+
+        $ffprobe = Util::which('ffprobe');
+        if (empty($ffprobe)) {
+            return '00:00';
+        }
+
         $output = [];
-        $result = Processes::mwExec("soxi -D '$path' 2>/dev/null", $output);
-        
+        $cmd = "$ffprobe -v quiet -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 '$path' 2>/dev/null";
+        $result = Processes::mwExec($cmd, $output);
+
         if ($result === 0 && !empty($output[0])) {
             $seconds = round((float)trim($output[0]));
             $minutes = floor($seconds / 60);
             $seconds = $seconds % 60;
             return sprintf('%02d:%02d', $minutes, $seconds);
         }
-        
+
         return '00:00';
     }
 
