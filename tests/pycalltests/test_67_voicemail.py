@@ -51,20 +51,11 @@ async def mikopbx_ip():
 
 
 @pytest_asyncio.fixture
-async def api_client():
-    """Create authenticated API client"""
-    client = MikoPBXClient(config.api_url, config.api_username, config.api_password)
-    client.authenticate()
-    logger.info("✓ API client authenticated")
-    return client
-
-
-@pytest_asyncio.fixture
 async def gophone_manager(mikopbx_ip):
     """Create GoPhone manager for tests"""
     manager = GoPhoneManager(
         server_ip=mikopbx_ip,
-        gophone_path=str(Path(__file__).parent / "gophone")
+        gophone_path=str(Path(__file__).parent / "bin/darwin-arm64/gophone")
     )
 
     yield manager
@@ -109,10 +100,11 @@ async def test_01_leave_voicemail_message(api_client, gophone_manager):
         print(f"{'-'*70}")
 
         # Get extension 202 configuration
-        response = api_client.get('employees', params={'number': 202})
+        response = api_client.get('employees', params={'limit': 100})
 
         if response.get('result') and response.get('data'):
-            employees = response['data']
+            data = response['data']
+            employees = data.get('data', []) if isinstance(data, dict) else data
             ext_202 = next((e for e in employees if str(e.get('number')) == '202'), None)
 
             if ext_202:
@@ -201,7 +193,7 @@ async def test_01_leave_voicemail_message(api_client, gophone_manager):
         print(f"{'-'*70}")
 
         voicemail_file = find_voicemail_file(
-            container_name='mikopbx-php83',
+            container_name=config.container_name,
             extension='202'
         )
 
@@ -216,7 +208,7 @@ async def test_01_leave_voicemail_message(api_client, gophone_manager):
             print(f"    - GoPhone does not generate audio for voicemail recording")
 
             # Check if voicemail directory exists
-            cmd = ['docker', 'exec', 'mikopbx-php83', 'ls', '-la', '/storage/usbdisk1/mikopbx/voicemail/default/']
+            cmd = ['docker', 'exec', config.container_name, 'ls', '-la', '/storage/usbdisk1/mikopbx/voicemail/default/']
             proc = subprocess.run(cmd, capture_output=True, text=True)
             if proc.returncode == 0:
                 print(f"✓ Voicemail base directory exists")
@@ -302,7 +294,7 @@ async def test_02_voicemail_file_validation(api_client, gophone_manager):
         print(f"{'-'*70}")
 
         voicemail_file = find_voicemail_file(
-            container_name='mikopbx-php83',
+            container_name=config.container_name,
             extension='202'
         )
 
@@ -321,7 +313,7 @@ async def test_02_voicemail_file_validation(api_client, gophone_manager):
         print(f"{'-'*70}")
 
         validation_result = validate_audio_in_container(
-            container_name='mikopbx-php83',
+            container_name=config.container_name,
             file_path_in_container=voicemail_file,
             min_duration=1.0,  # Expect at least 1 second
             silence_threshold=0.01
@@ -388,11 +380,12 @@ async def test_03_voicemail_email_notification(api_client, gophone_manager):
         print(f"{'-'*70}")
 
         # Get extension 202 configuration
-        response = api_client.get('employees', params={'number': 202})
+        response = api_client.get('employees', params={'limit': 100})
 
         ext_202 = None
         if response.get('result') and response.get('data'):
-            employees = response['data']
+            data = response['data']
+            employees = data.get('data', []) if isinstance(data, dict) else data
             ext_202 = next((e for e in employees if str(e.get('number')) == '202'), None)
 
             if ext_202:
@@ -416,7 +409,7 @@ async def test_03_voicemail_email_notification(api_client, gophone_manager):
         print(f"{'-'*70}")
 
         # Verify script exists and is executable
-        cmd = ['docker', 'exec', 'mikopbx-php83', 'ls', '-la', '/sbin/voicemail-sender']
+        cmd = ['docker', 'exec', config.container_name, 'ls', '-la', '/sbin/voicemail-sender']
         proc = subprocess.run(cmd, capture_output=True, text=True)
 
         if proc.returncode == 0:
@@ -468,7 +461,7 @@ async def test_03_voicemail_email_notification(api_client, gophone_manager):
 
         # Check system logs for voicemail-sender invocation
         cmd = [
-            'docker', 'exec', 'mikopbx-php83',
+            'docker', 'exec', config.container_name,
             'grep', '-i', 'voicemail', '/storage/usbdisk1/mikopbx/log/system/messages'
         ]
 
@@ -483,11 +476,11 @@ async def test_03_voicemail_email_notification(api_client, gophone_manager):
             print(f"⚠ No voicemail activity found in logs")
 
         # Check if MP3 was created
-        voicemail_file = find_voicemail_file('mikopbx-php83', '202')
+        voicemail_file = find_voicemail_file(config.container_name, '202')
         if voicemail_file:
             # Check for corresponding mp3
             mp3_file = voicemail_file.replace('.wav', '.mp3')
-            cmd = ['docker', 'exec', 'mikopbx-php83', 'ls', '-la', mp3_file]
+            cmd = ['docker', 'exec', config.container_name, 'ls', '-la', mp3_file]
             proc = subprocess.run(cmd, capture_output=True, text=True)
 
             if proc.returncode == 0:

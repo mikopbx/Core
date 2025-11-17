@@ -21,9 +21,14 @@ spec.loader.exec_module(api_conftest)
 
 # Re-export fixtures from API conftest
 api_client = api_conftest.api_client
-pycalltest_server = api_conftest.pycalltest_server
-sip_endpoint_factory = api_conftest.sip_endpoint_factory
-sip_provider_factory = api_conftest.sip_provider_factory
+
+# Re-export MikoPBXClient class for direct import
+MikoPBXClient = api_conftest.MikoPBXClient
+
+# Re-export utility functions
+assert_api_success = api_conftest.assert_api_success
+get_extension_secret = api_conftest.get_extension_secret
+convert_employee_fixture_to_api_format = api_conftest.convert_employee_fixture_to_api_format
 
 
 # CDR baseline fixture - specific to pycalltests tests
@@ -93,8 +98,9 @@ def cdr_baseline(api_client):
 # Re-export all fixtures so they can be discovered by pytest
 __all__ = [
     'api_client',
-    'pycalltest_server',
-    'sip_endpoint_factory',
-    'sip_provider_factory',
-    'cdr_baseline'
+    'cdr_baseline',
+    'MikoPBXClient',
+    'assert_api_success',
+    'get_extension_secret',
+    'convert_employee_fixture_to_api_format'
 ]

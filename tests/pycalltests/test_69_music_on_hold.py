@@ -48,20 +48,11 @@ async def mikopbx_ip():
 
 
 @pytest_asyncio.fixture
-async def api_client():
-    """Create authenticated API client"""
-    client = MikoPBXClient(config.api_url, config.api_username, config.api_password)
-    client.authenticate()
-    logger.info("✓ API client authenticated")
-    return client
-
-
-@pytest_asyncio.fixture
 async def gophone_manager(mikopbx_ip):
     """Create GoPhone manager for tests"""
     manager = GoPhoneManager(
         server_ip=mikopbx_ip,
-        gophone_path=str(Path(__file__).parent / "gophone")
+        gophone_path=str(Path(__file__).parent / "bin/darwin-arm64/gophone")
     )
 
     yield manager
@@ -97,35 +88,19 @@ async def test_01_moh_via_dialplan_application(api_client, gophone_manager):
 
     try:
         # ================================================================
-        # STEP 1: Create MOH Test Extension
+        # STEP 1: Use Parking Extension for MOH Test
         # ================================================================
         print(f"\n{'-'*70}")
-        print(f"STEP 1: Create Extension 901 with MOH Dialplan")
+        print(f"STEP 1: Use Parking Extension 800 (plays MOH)")
         print(f"{'-'*70}")
 
-        # Create extension 901 with custom dialplan that plays MOH
-        extension_data = {
-            "number": "901",
-            "user_id": None,
-            "type": "EXTERNAL",
-            "disabled": False,
-            "show_in_phonebook": False
-        }
+        # Use parking extension 800 which automatically plays MOH when called
+        # This is a built-in feature and doesn't require creating custom extensions
+        moh_extension_number = "800"
+        print(f"✅ Will use parking extension {moh_extension_number} for MOH test")
+        print(f"   (Parking automatically plays MOH when called)")
 
-        response = api_client.post('extensions', extension_data)
-        assert response.get('result'), f"Failed to create extension 901: {response}"
-
-        moh_extension_id = response['data']['id']
-        print(f"✅ Created extension 901 (ID: {moh_extension_id})")
-
-        # Create custom dialplan for MOH
-        # Note: This requires custom dialplan context or we use existing feature
-        # For now, we'll test with existing MOH functionality
-
-        # Alternative: Use existing test extension that routes to MOH
-        # Or use *60 feature code if available for MOH test
-
-        await asyncio.sleep(2)
+        await asyncio.sleep(1)
 
         # ================================================================
         # STEP 2: Register Extension
@@ -147,7 +122,7 @@ async def test_01_moh_via_dialplan_application(api_client, gophone_manager):
         # STEP 3: Call MOH Extension
         # ================================================================
         print(f"\n{'-'*70}")
-        print(f"STEP 3: Extension 201 Calls 901 (MOH)")
+        print(f"STEP 3: Extension 201 Calls {moh_extension_number} (MOH via Parking)")
         print(f"{'-'*70}")
 
         config_201 = GoPhoneConfig(
@@ -158,15 +133,15 @@ async def test_01_moh_via_dialplan_application(api_client, gophone_manager):
         )
         caller = GoPhoneEndpoint(config_201, gophone_path=gophone_manager.gophone_path)
 
-        print(f"Extension 201 calling 901...")
-        success = await caller.dial("901")
+        print(f"Extension 201 calling {moh_extension_number}...")
+        success = await caller.dial(moh_extension_number)
 
         if not success:
-            print(f"⚠ Call to 901 failed - may need custom dialplan configuration")
-            print(f"  Skipping MOH validation (extension setup required)")
+            print(f"⚠ Call to {moh_extension_number} failed")
+            print(f"  Skipping MOH validation")
             return
 
-        print(f"✅ Call established: 201 → 901")
+        print(f"✅ Call established: 201 → {moh_extension_number}")
 
         # Wait for MOH to start
         await asyncio.sleep(3)
@@ -179,7 +154,7 @@ async def test_01_moh_via_dialplan_application(api_client, gophone_manager):
         print(f"{'-'*70}")
 
         # Get active channels
-        channels = get_active_channels('mikopbx-php83')
+        channels = get_active_channels()
         print(f"Active channels: {len(channels)}")
 
         # Find channel for extension 201
@@ -193,7 +168,7 @@ async def test_01_moh_via_dialplan_application(api_client, gophone_manager):
             print(f"✓ Found channel: {ext201_channel['channel']}")
 
             # Check if MOH is playing
-            moh_active = check_moh_playing(ext201_channel['channel'], 'mikopbx-php83')
+            moh_active = check_moh_playing(ext201_channel['channel'])
 
             if moh_active:
                 print(f"✅ MOH is playing on channel")
@@ -226,13 +201,8 @@ async def test_01_moh_via_dialplan_application(api_client, gophone_manager):
         raise
 
     finally:
-        # Cleanup: Delete test extension
-        if moh_extension_id:
-            try:
-                api_client.delete(f'extensions/{moh_extension_id}')
-                print(f"🗑 Deleted test extension 901")
-            except Exception as e:
-                logger.warning(f"Failed to cleanup extension: {e}")
+        # No cleanup needed - we used built-in parking extension
+        pass
 
 
 @pytest.mark.asyncio
@@ -276,13 +246,16 @@ async def test_02_moh_in_call_queue(api_client, gophone_manager):
             "timeout": "300",
             "seconds_to_ring_each_member": "15",
             "redirect_to_extension_if_empty": "",
-            "redirect_to_extension_if_unanswered": "",
+            "redirect_to_extension_if_unanswered": "201",
             "redirect_to_extension_if_repeat_exceeded": "",
-            "number_unanswered_calls_to_redirect": "0",
+            "number_unanswered_calls_to_redirect": "3",
             "periodic_announce_frequency": "0",
             "announce_position": False,
             "announce_hold_time": False,
-            "caller_hear_options": ["MUTE"]  # Enable MOH for callers
+            "caller_hear_options": ["MUTE"],  # Enable MOH for callers
+            "members": [
+                {"extension": "202"}  # Add 202 as queue member
+            ]
         }
 
         response = api_client.post('call-queues', queue_data)
@@ -290,17 +263,6 @@ async def test_02_moh_in_call_queue(api_client, gophone_manager):
 
         queue_id = response['data']['id']
         print(f"✅ Created queue 700 (ID: {queue_id})")
-
-        # Add extension 202 as queue member
-        member_data = {
-            "queue": queue_id,
-            "extension": "202",
-            "priority": "1"
-        }
-
-        response = api_client.post('call-queue-members', member_data)
-        assert response.get('result'), f"Failed to add queue member: {response}"
-
         print(f"✅ Added extension 202 as queue member")
 
         await asyncio.sleep(3)
@@ -362,7 +324,7 @@ async def test_02_moh_in_call_queue(api_client, gophone_manager):
         print(f"STEP 4: Verify MOH Playing in Queue")
         print(f"{'-'*70}")
 
-        channels = get_active_channels('mikopbx-php83')
+        channels = get_active_channels()
         print(f"Active channels: {len(channels)}")
 
         # Check if 201 is hearing MOH
@@ -478,7 +440,7 @@ async def test_03_moh_audio_validation(api_client, gophone_manager):
 
         # Check for MOH files in Asterisk
         cmd = [
-            'docker', 'exec', 'mikopbx-php83',
+            'docker', 'exec', config.container_name,
             'find', '/usr/share/asterisk/sounds',
             '-name', '*.wav',
             '-o', '-name', '*.mp3'

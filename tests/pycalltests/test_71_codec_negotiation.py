@@ -52,20 +52,11 @@ async def mikopbx_ip():
 
 
 @pytest_asyncio.fixture
-async def api_client():
-    """Create authenticated API client"""
-    client = MikoPBXClient(config.api_url, config.api_username, config.api_password)
-    client.authenticate()
-    logger.info("✓ API client authenticated")
-    return client
-
-
-@pytest_asyncio.fixture
 async def gophone_manager(mikopbx_ip):
     """Create GoPhone manager for tests"""
     manager = GoPhoneManager(
         server_ip=mikopbx_ip,
-        gophone_path=str(Path(__file__).parent / "gophone")
+        gophone_path=str(Path(__file__).parent / "bin/darwin-arm64/gophone")
     )
 
     yield manager
@@ -236,13 +227,13 @@ async def test_02_codec_negotiation_alaw(api_client, gophone_manager, original_c
         print(f"STEP 4: Verify A-law Codec in Use")
         print(f"{'-'*70}")
 
-        channels = get_active_channels('mikopbx-php83')
+        channels = get_active_channels()
         print(f"Active channels: {len(channels)}")
 
         codec_verified = False
         for ch in channels:
             if '201' in ch['channel'] or '202' in ch['channel']:
-                codec = get_channel_codec(ch['channel'], 'mikopbx-php83')
+                codec = get_channel_codec(ch['channel'])
                 print(f"✓ Channel {ch['channel']}: codec = {codec}")
 
                 if codec and 'alaw' in codec.lower():
@@ -339,11 +330,11 @@ async def test_03_codec_negotiation_ulaw(api_client, gophone_manager, original_c
         print(f"STEP 3: Verify μ-law Codec in Use")
         print(f"{'-'*70}")
 
-        channels = get_active_channels('mikopbx-php83')
+        channels = get_active_channels()
 
         for ch in channels:
             if '201' in ch['channel'] or '202' in ch['channel']:
-                codec = get_channel_codec(ch['channel'], 'mikopbx-php83')
+                codec = get_channel_codec(ch['channel'])
                 print(f"✓ Channel {ch['channel']}: codec = {codec}")
 
                 if codec and 'ulaw' in codec.lower():
@@ -463,12 +454,12 @@ async def test_04_codec_priority_selection(api_client, gophone_manager, original
         print(f"STEP 3: Verify Selected Codec")
         print(f"{'-'*70}")
 
-        channels = get_active_channels('mikopbx-php83')
+        channels = get_active_channels()
 
         selected_codec = None
         for ch in channels:
             if '201' in ch['channel']:
-                codec = get_channel_codec(ch['channel'], 'mikopbx-php83')
+                codec = get_channel_codec(ch['channel'])
                 selected_codec = codec
                 print(f"✓ Selected codec: {codec}")
                 break
@@ -582,10 +573,10 @@ async def test_05_g729_codec_negotiation(api_client, gophone_manager, original_c
         await asyncio.sleep(3)
 
         # Verify codec
-        channels = get_active_channels('mikopbx-php83')
+        channels = get_active_channels()
         for ch in channels:
             if '201' in ch['channel']:
-                codec = get_channel_codec(ch['channel'], 'mikopbx-php83')
+                codec = get_channel_codec(ch['channel'])
                 print(f"✓ Codec: {codec}")
 
                 if codec and 'g729' in codec.lower():

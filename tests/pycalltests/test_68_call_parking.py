@@ -50,20 +50,11 @@ async def mikopbx_ip():
 
 
 @pytest_asyncio.fixture
-async def api_client():
-    """Create authenticated API client"""
-    client = MikoPBXClient(config.api_url, config.api_username, config.api_password)
-    client.authenticate()
-    logger.info("✓ API client authenticated")
-    return client
-
-
-@pytest_asyncio.fixture
 async def gophone_manager(mikopbx_ip):
     """Create GoPhone manager for tests"""
     manager = GoPhoneManager(
         server_ip=mikopbx_ip,
-        gophone_path=str(Path(__file__).parent / "gophone")
+        gophone_path=str(Path(__file__).parent / "bin/darwin-arm64/gophone")
     )
 
     yield manager
@@ -202,7 +193,7 @@ async def test_01_basic_call_parking(api_client, gophone_manager):
         print(f"STEP 5: Verify Call in Parking Lot")
         print(f"{'-'*70}")
 
-        parked_calls = check_parking_lot('mikopbx-php83')
+        parked_calls = check_parking_lot()
 
         if parked_calls:
             print(f"✅ Found parked calls:")
@@ -220,7 +211,7 @@ async def test_01_basic_call_parking(api_client, gophone_manager):
             print(f"  Or additional dialplan configuration")
 
             # Check active channels for parking context
-            channels = get_active_channels('mikopbx-php83')
+            channels = get_active_channels()
             print(f"Active channels: {len(channels)}")
             for ch in channels:
                 if 'Park' in ch.get('context', '') or 'park' in ch.get('application', '').lower():
@@ -255,10 +246,10 @@ async def test_01_basic_call_parking(api_client, gophone_manager):
                 await asyncio.sleep(3)
 
                 # Verify 201 and 203 are bridged
-                channels = get_active_channels('mikopbx-php83')
+                channels = get_active_channels()
                 for ch in channels:
                     if '201' in ch['channel']:
-                        bridged = get_bridged_channel(ch['channel'], 'mikopbx-php83')
+                        bridged = get_bridged_channel(ch['channel'])
                         if bridged and '203' in bridged:
                             print(f"✅ Extension 201 connected to 203")
                             break
@@ -378,7 +369,7 @@ async def test_02_parking_timeout_callback(api_client, gophone_manager):
         # For abbreviated test, just verify parking lot status
         await asyncio.sleep(5)
 
-        parked_calls = check_parking_lot('mikopbx-php83')
+        parked_calls = check_parking_lot()
         if parked_calls:
             print(f"✓ Call parked successfully")
             for slot, info in parked_calls.items():
@@ -512,7 +503,7 @@ async def test_03_multiple_parked_calls(api_client, gophone_manager):
         print(f"STEP 4: Verify Parking Slots")
         print(f"{'-'*70}")
 
-        parked_calls = check_parking_lot('mikopbx-php83')
+        parked_calls = check_parking_lot()
 
         if len(parked_calls) > 1:
             print(f"✅ Multiple calls parked:")

@@ -272,7 +272,7 @@ def find_recording_file(
     container_name: str,
     src_extension: str,
     dst_extension: str,
-    recording_dir: str = '/storage/usbdisk1/mikopbx/monitor'
+    recording_dir: str = '/storage/usbdisk1/mikopbx/astspool/monitor'
 ) -> Optional[str]:
     """
     Find call recording file in container by source and destination extensions.

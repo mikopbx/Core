@@ -46,20 +46,11 @@ async def mikopbx_ip():
 
 
 @pytest_asyncio.fixture
-async def api_client():
-    """Create authenticated API client"""
-    client = MikoPBXClient(config.api_url, config.api_username, config.api_password)
-    client.authenticate()
-    logger.info("✓ API client authenticated")
-    return client
-
-
-@pytest_asyncio.fixture
 async def gophone_manager(mikopbx_ip):
     """Create GoPhone manager for tests"""
     manager = GoPhoneManager(
         server_ip=mikopbx_ip,
-        gophone_path=str(Path(__file__).parent / "gophone")
+        gophone_path=str(Path(__file__).parent / "bin/darwin-arm64/gophone")
     )
 
     yield manager
@@ -74,22 +65,11 @@ async def audio_file_id(api_client):
     Get or create audio file for IVR menu.
 
     Returns ID of an audio file that can be used for IVR greeting.
+    For now, returns empty string as audio_message_id is optional in IVR menu.
     """
-    # Get list of audio files
-    response = api_client.get('audio-files', params={'limit': 50})
-    assert_api_success(response, "Failed to get audio files")
-
-    audio_files = response.get('data', [])
-
-    if audio_files:
-        # Use first available audio file
-        audio_id = audio_files[0]['id']
-        logger.info(f"Using existing audio file ID: {audio_id}")
-        return audio_id
-
-    # No audio files found, return default ID (system should have some)
-    logger.warning("No audio files found, using default ID '1'")
-    return "1"
+    # Return empty string - audio_message_id is optional in IVR menu configuration
+    logger.info("Using empty audio_message_id (no greeting audio)")
+    return ""
 
 
 @pytest.mark.asyncio

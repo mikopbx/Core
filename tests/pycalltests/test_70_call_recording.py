@@ -48,20 +48,11 @@ async def mikopbx_ip():
 
 
 @pytest_asyncio.fixture
-async def api_client():
-    """Create authenticated API client"""
-    client = MikoPBXClient(config.api_url, config.api_username, config.api_password)
-    client.authenticate()
-    logger.info("✓ API client authenticated")
-    return client
-
-
-@pytest_asyncio.fixture
 async def gophone_manager(mikopbx_ip):
     """Create GoPhone manager for tests"""
     manager = GoPhoneManager(
         server_ip=mikopbx_ip,
-        gophone_path=str(Path(__file__).parent / "gophone")
+        gophone_path=str(Path(__file__).parent / "bin/darwin-arm64/gophone")
     )
 
     yield manager
@@ -104,10 +95,11 @@ async def test_01_automatic_call_recording(api_client, gophone_manager):
         print(f"{'-'*70}")
 
         # Get extension 201 configuration
-        response = api_client.get('employees', params={'number': 201})
+        response = api_client.get('employees', params={'limit': 100})
 
         if response.get('result') and response.get('data'):
-            employees = response['data']
+            data = response['data']
+            employees = data.get('data', []) if isinstance(data, dict) else data
             ext_201 = next((e for e in employees if str(e.get('number')) == '201'), None)
 
             if ext_201:
@@ -196,7 +188,7 @@ async def test_01_automatic_call_recording(api_client, gophone_manager):
         print(f"{'-'*70}")
 
         recording_file = find_recording_file(
-            container_name='mikopbx-php83',
+            container_name=config.container_name,
             src_extension='201',
             dst_extension='202'
         )
@@ -294,7 +286,7 @@ async def test_02_recording_file_validation(api_client, gophone_manager):
         print(f"{'-'*70}")
 
         recording_file = find_recording_file(
-            container_name='mikopbx-php83',
+            container_name=config.container_name,
             src_extension='201',
             dst_extension='202'
         )
@@ -310,7 +302,7 @@ async def test_02_recording_file_validation(api_client, gophone_manager):
         print(f"{'-'*70}")
 
         validation_result = validate_audio_in_container(
-            container_name='mikopbx-php83',
+            container_name=config.container_name,
             file_path_in_container=recording_file,
             min_duration=3.0,  # Expect at least 3 seconds
             silence_threshold=0.01
@@ -450,7 +442,7 @@ async def test_03_recording_during_blind_transfer(api_client, gophone_manager):
 
         # Look for recording of 201→202 call
         recording_file = find_recording_file(
-            container_name='mikopbx-php83',
+            container_name=config.container_name,
             src_extension='201',
             dst_extension='202'
         )
@@ -460,7 +452,7 @@ async def test_03_recording_during_blind_transfer(api_client, gophone_manager):
 
             # Validate recording
             validation = validate_audio_in_container(
-                container_name='mikopbx-php83',
+                container_name=config.container_name,
                 file_path_in_container=recording_file
             )
 

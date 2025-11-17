@@ -2,14 +2,20 @@
 
 import subprocess
 import logging
+import sys
+from pathlib import Path
 from typing import List, Dict, Optional
+
+# Add parent directory to path to import config
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "api"))
+from config import get_config
 
 logger = logging.getLogger(__name__)
 
 
 def exec_asterisk_cli(
     command: str,
-    container_name: str = 'mikopbx-php83',
+    container_name: Optional[str] = None,
     timeout: int = 10
 ) -> str:
     """
@@ -17,7 +23,7 @@ def exec_asterisk_cli(
 
     Args:
         command: Asterisk CLI command (without 'asterisk -rx')
-        container_name: Docker container name
+        container_name: Docker container name (uses config if not specified)
         timeout: Command timeout in seconds
 
     Returns:
@@ -29,6 +35,9 @@ def exec_asterisk_cli(
         Channel              Location             State   Application(Data)
         ...
     """
+    if container_name is None:
+        container_name = get_config().container_name
+
     cmd = [
         'docker', 'exec', container_name,
         'asterisk', '-rx', command
@@ -56,7 +65,7 @@ def exec_asterisk_cli(
         return ""
 
 
-def get_active_channels(container_name: str = 'mikopbx-php83') -> List[Dict]:
+def get_active_channels(container_name: Optional[str] = None) -> List[Dict]:
     """
     Get list of active Asterisk channels.
 
@@ -98,7 +107,7 @@ def get_active_channels(container_name: str = 'mikopbx-php83') -> List[Dict]:
     return channels
 
 
-def get_channel_count(container_name: str = 'mikopbx-php83') -> int:
+def get_channel_count(container_name: Optional[str] = None) -> int:
     """
     Get count of active channels.
 
@@ -127,7 +136,7 @@ def get_channel_count(container_name: str = 'mikopbx-php83') -> int:
     return 0
 
 
-def get_channel_codec(channel_id: str, container_name: str = 'mikopbx-php83') -> Optional[str]:
+def get_channel_codec(channel_id: str, container_name: Optional[str] = None) -> Optional[str]:
     """
     Get codec used in specific channel.
 
@@ -177,7 +186,7 @@ def get_channel_codec(channel_id: str, container_name: str = 'mikopbx-php83') ->
     return None
 
 
-def check_parking_lot(container_name: str = 'mikopbx-php83') -> Dict[str, Dict]:
+def check_parking_lot(container_name: Optional[str] = None) -> Dict[str, Dict]:
     """
     Get parking lot status with parked calls.
 
@@ -249,7 +258,7 @@ def check_parking_lot(container_name: str = 'mikopbx-php83') -> Dict[str, Dict]:
 
 def verify_extension_registered(
     extension: str,
-    container_name: str = 'mikopbx-php83'
+    container_name: Optional[str] = None
 ) -> bool:
     """
     Check if SIP extension is registered.
@@ -290,7 +299,7 @@ def verify_extension_registered(
 
 def get_call_duration(
     channel_id: str,
-    container_name: str = 'mikopbx-php83'
+    container_name: Optional[str] = None
 ) -> Optional[int]:
     """
     Get call duration for specific channel in seconds.
@@ -331,7 +340,7 @@ def get_call_duration(
 
 def check_moh_playing(
     channel_id: str,
-    container_name: str = 'mikopbx-php83'
+    container_name: Optional[str] = None
 ) -> bool:
     """
     Check if Music On Hold is playing on channel.
@@ -363,7 +372,7 @@ def check_moh_playing(
 
 def get_bridged_channel(
     channel_id: str,
-    container_name: str = 'mikopbx-php83'
+    container_name: Optional[str] = None
 ) -> Optional[str]:
     """
     Get the channel that is bridged (in call) with specified channel.
@@ -406,7 +415,7 @@ def get_bridged_channel(
     return None
 
 
-def restart_asterisk(container_name: str = 'mikopbx-php83') -> bool:
+def restart_asterisk(container_name: Optional[str] = None) -> bool:
     """
     Restart Asterisk service in container.
 
@@ -437,7 +446,7 @@ def restart_asterisk(container_name: str = 'mikopbx-php83') -> bool:
         return False
 
 
-def reload_asterisk_config(container_name: str = 'mikopbx-php83') -> bool:
+def reload_asterisk_config(container_name: Optional[str] = None) -> bool:
     """
     Reload Asterisk configuration without restart.
 
