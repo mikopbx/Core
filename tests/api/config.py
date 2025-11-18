@@ -200,6 +200,22 @@ class TestConfig:
         return os.getenv('MIKOPBX_CONTAINER', 'mikopbx-php83')
 
     @property
+    def sip_hostname(self) -> str:
+        """
+        SIP hostname for GoPhone tests
+
+        Returns hostname that can be used for SIP registration.
+        If not set, derives from container name with .dev-docker.orb.local suffix.
+        """
+        hostname = os.getenv('MIKOPBX_SIP_HOSTNAME')
+        if hostname:
+            return hostname
+
+        # Derive from container name by replacing underscores with hyphens
+        container = self.container_name.replace('_', '-')
+        return f"{container}.dev-docker.orb.local"
+
+    @property
     def ssh_host(self) -> Optional[str]:
         """SSH hostname for remote execution"""
         return os.getenv('MIKOPBX_SSH_HOST')

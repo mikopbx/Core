@@ -1,0 +1,24 @@
+PJSIP Version: 2.14.1
+Build Date: Mon Nov 17 15:15:20 UTC 2025
+Architecture: aarch64
+Python Version: 3.11
+
+Compiled Libraries:
+-rwxr-xr-x 1 root root  25M Nov 17 15:15 /output/_pjsua2.so
+-rwxr-xr-x 1 root root 103K Nov 17 15:15 /output/libg7221codec.so.2
+-rwxr-xr-x 1 root root  73K Nov 17 15:15 /output/libgsmcodec.so.2
+-rwxr-xr-x 1 root root  81K Nov 17 15:15 /output/libilbccodec.so.2
+-rwxr-xr-x 1 root root 312K Nov 17 15:15 /output/libpj.so.2
+-rwxr-xr-x 1 root root 222K Nov 17 15:15 /output/libpjlib-util.so.2
+-rwxr-xr-x 1 root root  76K Nov 17 15:15 /output/libpjmedia-audiodev.so.2
+-rwxr-xr-x 1 root root  84K Nov 17 15:15 /output/libpjmedia-codec.so.2
+-rwxr-xr-x 1 root root  68K Nov 17 15:15 /output/libpjmedia-videodev.so.2
+-rwxr-xr-x 1 root root 517K Nov 17 15:15 /output/libpjmedia.so.2
+-rwxr-xr-x 1 root root 227K Nov 17 15:15 /output/libpjnath.so.2
+-rwxr-xr-x 1 root root 154K Nov 17 15:15 /output/libpjsip-simple.so.2
+-rwxr-xr-x 1 root root 156K Nov 17 15:15 /output/libpjsip-ua.so.2
+-rwxr-xr-x 1 root root 383K Nov 17 15:15 /output/libpjsip.so.2
+-rwxr-xr-x 1 root root 375K Nov 17 15:15 /output/libpjsua.so.2
+-rwxr-xr-x 1 root root 546K Nov 17 15:15 /output/libpjsua2.so.2
+-rwxr-xr-x 1 root root  69K Nov 17 15:15 /output/libresample.so.2
+-rwxr-xr-x 1 root root 218K Nov 17 15:15 /output/libwebrtc.so.2
