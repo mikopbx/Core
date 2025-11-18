@@ -54,7 +54,6 @@ class ModulesControllerBase extends BaseController
         // Old style modules, we can remove it after 2025
         $payload =$this->request->getData();
         $payload['ip_srv'] = $_SERVER['SERVER_ADDR'];
-       
 
         $this->sendRequestToBackendWorker(PbxExtensionsProcessor::class, $actionName, $payload, $moduleName, $maxTimeout, $priority);
 
