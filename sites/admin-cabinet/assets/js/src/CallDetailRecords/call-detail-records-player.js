@@ -554,7 +554,8 @@ class CDRPlayer {
             // Store reference for cleanup
             this.scriptProcessor = scriptProcessor;
 
-            // Process audio to force mono output
+            // Process audio with 65/35 channel mixing for better transcription listening
+            // Left ear: 65% left + 35% right, Right ear: 35% left + 65% right
             scriptProcessor.onaudioprocess = (audioProcessingEvent) => {
                 const inputBuffer = audioProcessingEvent.inputBuffer;
                 const outputBuffer = audioProcessingEvent.outputBuffer;
@@ -577,21 +578,20 @@ class CDRPlayer {
                         }
                     }
                 } else if (inputChannelCount >= 2) {
-                    // Input is stereo or multi-channel - mix to mono
+                    // Input is stereo or multi-channel - apply 65/35 mixing
                     const inputL = inputBuffer.getChannelData(0);
                     const inputR = inputBuffer.getChannelData(1);
                     const outputL = outputBuffer.getChannelData(0);
                     const outputR = outputChannelCount > 1 ? outputBuffer.getChannelData(1) : null;
 
-                    // Mix L+R to mono and copy to both output channels
+                    // Apply 65/35 mixing for near-mono experience with subtle directional cues
                     for (let i = 0; i < inputL.length; i++) {
-                        // Average L and R channels for true mono
-                        const monoSample = (inputL[i] + inputR[i]) * 0.5;
+                        // Left ear receives 65% left + 35% right
+                        outputL[i] = (inputL[i] * 0.65) + (inputR[i] * 0.35);
 
-                        // Write the same mono signal to both output channels
-                        outputL[i] = monoSample;
+                        // Right ear receives 35% left + 65% right
                         if (outputR) {
-                            outputR[i] = monoSample;
+                            outputR[i] = (inputL[i] * 0.35) + (inputR[i] * 0.65);
                         }
                     }
                 }
