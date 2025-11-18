@@ -21,7 +21,7 @@ sys.path.insert(0, str(Path(__file__).parent / "helpers"))
 
 from config import get_config
 from conftest import MikoPBXClient
-from gophone_helper import GoPhoneConfig, GoPhoneEndpoint, GoPhoneManager, get_mikopbx_ip
+from pjsua_helper import PJSUAConfig, PJSUAEndpoint, PJSUAManager, get_mikopbx_ip
 from audio_validator import find_recording_file, validate_audio_in_container
 
 # Load configuration
@@ -48,9 +48,9 @@ async def mikopbx_ip():
 
 
 @pytest_asyncio.fixture
-async def gophone_manager(mikopbx_ip):
-    """Create GoPhone manager for tests"""
-    manager = GoPhoneManager(
+async def pjsua_manager(mikopbx_ip):
+    """Create PJSUA manager for tests"""
+    manager = PJSUAManager(
         server_ip=mikopbx_ip,
         gophone_path=str(Path(__file__).parent / "bin/darwin-arm64/gophone")
     )
@@ -62,7 +62,7 @@ async def gophone_manager(mikopbx_ip):
 
 
 @pytest.mark.asyncio
-async def test_01_automatic_call_recording(api_client, gophone_manager):
+async def test_01_automatic_call_recording(api_client, pjsua_manager):
     """
     Test: Automatic Call Recording
 
@@ -124,14 +124,14 @@ async def test_01_automatic_call_recording(api_client, gophone_manager):
         print(f"STEP 2: Register Extensions")
         print(f"{'-'*70}")
 
-        ext201 = await gophone_manager.create_endpoint(
+        ext201 = await pjsua_manager.create_endpoint(
             extension="201",
             password=TEST_EXTENSIONS["201"],
             auto_register=True
         )
         print(f"✅ Extension 201 registered")
 
-        ext202 = await gophone_manager.create_endpoint(
+        ext202 = await pjsua_manager.create_endpoint(
             extension="202",
             password=TEST_EXTENSIONS["202"],
             auto_register=True
@@ -148,13 +148,13 @@ async def test_01_automatic_call_recording(api_client, gophone_manager):
         print(f"{'-'*70}")
 
         # Create separate endpoint for dialing (201 makes call)
-        config_201_dial = GoPhoneConfig(
+        config_201_dial = PJSUAConfig(
             extension="201",
             password=TEST_EXTENSIONS["201"],
-            server_ip=gophone_manager.server_ip,
+            server_ip=pjsua_manager.server_ip,
             media="log"
         )
-        caller = GoPhoneEndpoint(config_201_dial, gophone_path=gophone_manager.gophone_path)
+        caller = PJSUAEndpoint(config_201_dial, gophone_path=pjsua_manager.gophone_path)
 
         print(f"Extension 201 calling 202...")
         success = await caller.dial("202")
@@ -206,7 +206,7 @@ async def test_01_automatic_call_recording(api_client, gophone_manager):
 
 
 @pytest.mark.asyncio
-async def test_02_recording_file_validation(api_client, gophone_manager):
+async def test_02_recording_file_validation(api_client, pjsua_manager):
     """
     Test: Recording File Validation
 
@@ -236,13 +236,13 @@ async def test_02_recording_file_validation(api_client, gophone_manager):
         print(f"STEP 1: Register Extensions")
         print(f"{'-'*70}")
 
-        ext201 = await gophone_manager.create_endpoint(
+        ext201 = await pjsua_manager.create_endpoint(
             extension="201",
             password=TEST_EXTENSIONS["201"],
             auto_register=True
         )
 
-        ext202 = await gophone_manager.create_endpoint(
+        ext202 = await pjsua_manager.create_endpoint(
             extension="202",
             password=TEST_EXTENSIONS["202"],
             auto_register=True
@@ -258,13 +258,13 @@ async def test_02_recording_file_validation(api_client, gophone_manager):
         print(f"STEP 2: Make Recorded Call")
         print(f"{'-'*70}")
 
-        config_201 = GoPhoneConfig(
+        config_201 = PJSUAConfig(
             extension="201",
             password=TEST_EXTENSIONS["201"],
-            server_ip=gophone_manager.server_ip,
+            server_ip=pjsua_manager.server_ip,
             media="log"
         )
-        caller = GoPhoneEndpoint(config_201, gophone_path=gophone_manager.gophone_path)
+        caller = PJSUAEndpoint(config_201, gophone_path=pjsua_manager.gophone_path)
 
         success = await caller.dial("202")
         assert success, "Failed to establish call"
@@ -334,7 +334,7 @@ async def test_02_recording_file_validation(api_client, gophone_manager):
 
 
 @pytest.mark.asyncio
-async def test_03_recording_during_blind_transfer(api_client, gophone_manager):
+async def test_03_recording_during_blind_transfer(api_client, pjsua_manager):
     """
     Test: Recording During Blind Transfer
 
@@ -363,19 +363,19 @@ async def test_03_recording_during_blind_transfer(api_client, gophone_manager):
         print(f"STEP 1: Register Extensions")
         print(f"{'-'*70}")
 
-        ext201 = await gophone_manager.create_endpoint(
+        ext201 = await pjsua_manager.create_endpoint(
             extension="201",
             password=TEST_EXTENSIONS["201"],
             auto_register=True
         )
 
-        ext202 = await gophone_manager.create_endpoint(
+        ext202 = await pjsua_manager.create_endpoint(
             extension="202",
             password=TEST_EXTENSIONS["202"],
             auto_register=True
         )
 
-        ext203 = await gophone_manager.create_endpoint(
+        ext203 = await pjsua_manager.create_endpoint(
             extension="203",
             password=TEST_EXTENSIONS["203"],
             auto_register=True
@@ -391,13 +391,13 @@ async def test_03_recording_during_blind_transfer(api_client, gophone_manager):
         print(f"STEP 2: Establish Call 201 → 202")
         print(f"{'-'*70}")
 
-        config_201 = GoPhoneConfig(
+        config_201 = PJSUAConfig(
             extension="201",
             password=TEST_EXTENSIONS["201"],
-            server_ip=gophone_manager.server_ip,
+            server_ip=pjsua_manager.server_ip,
             media="log"
         )
-        caller = GoPhoneEndpoint(config_201, gophone_path=gophone_manager.gophone_path)
+        caller = PJSUAEndpoint(config_201, gophone_path=pjsua_manager.gophone_path)
 
         success = await caller.dial("202")
         assert success, "Failed to establish call"

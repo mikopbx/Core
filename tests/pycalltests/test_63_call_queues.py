@@ -13,7 +13,7 @@ import pytest_asyncio
 import asyncio
 import logging
 from pathlib import Path
-from gophone_helper import GoPhoneManager, get_mikopbx_ip
+from pjsua_helper import PJSUAManager, get_mikopbx_ip
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -36,12 +36,11 @@ async def mikopbx_ip():
 
 
 @pytest_asyncio.fixture
-async def gophone_manager(mikopbx_ip):
-    """Create GoPhone manager for tests"""
-    manager = GoPhoneManager(
+async def pjsua_manager(mikopbx_ip):
+    """Create PJSUA manager for tests"""
+    manager = PJSUAManager(
         server_ip=mikopbx_ip,
-        gophone_path=str(Path(__file__).parent / "gophone")
-    )
+            )
 
     yield manager
 
@@ -50,7 +49,7 @@ async def gophone_manager(mikopbx_ip):
 
 
 @pytest.mark.asyncio
-async def test_01_queue_ringall_strategy(api_client, gophone_manager, cdr_baseline):
+async def test_01_queue_ringall_strategy(api_client, pjsua_manager, cdr_baseline):
     """
     Test Call Queue with Ringall Strategy
 
@@ -120,13 +119,13 @@ async def test_01_queue_ringall_strategy(api_client, gophone_manager, cdr_baseli
         print(f"STEP 2: Register Queue Members")
         print(f"{'-'*70}")
 
-        # Create and register endpoints using gophone_manager
-        member_201 = await gophone_manager.create_endpoint(
+        # Create and register endpoints using pjsua_manager
+        member_201 = await pjsua_manager.create_endpoint(
             extension="201",
             password=TEST_EXTENSIONS["201"],
             auto_register=True
         )
-        member_202 = await gophone_manager.create_endpoint(
+        member_202 = await pjsua_manager.create_endpoint(
             extension="202",
             password=TEST_EXTENSIONS["202"],
             auto_register=True
@@ -143,7 +142,7 @@ async def test_01_queue_ringall_strategy(api_client, gophone_manager, cdr_baseli
         print(f"{'-'*70}")
 
         # Create caller endpoint (not registered, will dial)
-        caller_203 = await gophone_manager.create_endpoint(
+        caller_203 = await pjsua_manager.create_endpoint(
             extension="203",
             password=TEST_EXTENSIONS["203"],
             auto_register=False
@@ -246,7 +245,7 @@ async def test_01_queue_ringall_strategy(api_client, gophone_manager, cdr_baseli
 
 
 @pytest.mark.asyncio
-async def test_02_queue_overflow(api_client, gophone_manager, cdr_baseline):
+async def test_02_queue_overflow(api_client, pjsua_manager, cdr_baseline):
     """
     Test Call Queue Overflow Handling
 
@@ -314,12 +313,12 @@ async def test_02_queue_overflow(api_client, gophone_manager, cdr_baseline):
         print(f"{'-'*70}")
 
         # Register queue member and overflow destination in answer mode
-        member_201 = await gophone_manager.create_endpoint(
+        member_201 = await pjsua_manager.create_endpoint(
             extension="201",
             password=TEST_EXTENSIONS["201"],
             auto_register=True
         )
-        overflow_202 = await gophone_manager.create_endpoint(
+        overflow_202 = await pjsua_manager.create_endpoint(
             extension="202",
             password=TEST_EXTENSIONS["202"],
             auto_register=True
@@ -336,7 +335,7 @@ async def test_02_queue_overflow(api_client, gophone_manager, cdr_baseline):
         print(f"{'-'*70}")
 
         # Create caller endpoint (not registered, will dial)
-        caller_203 = await gophone_manager.create_endpoint(
+        caller_203 = await pjsua_manager.create_endpoint(
             extension="203",
             password=TEST_EXTENSIONS["203"],
             auto_register=False

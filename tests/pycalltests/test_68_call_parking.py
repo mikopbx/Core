@@ -22,7 +22,7 @@ sys.path.insert(0, str(Path(__file__).parent / "helpers"))
 
 from config import get_config
 from conftest import MikoPBXClient
-from gophone_helper import GoPhoneConfig, GoPhoneEndpoint, GoPhoneManager, get_mikopbx_ip
+from pjsua_helper import PJSUAConfig, PJSUAEndpoint, PJSUAManager, get_mikopbx_ip
 from feature_codes_helper import get_feature_codes
 from asterisk_helper import check_parking_lot, get_active_channels, get_bridged_channel
 
@@ -50,12 +50,11 @@ async def mikopbx_ip():
 
 
 @pytest_asyncio.fixture
-async def gophone_manager(mikopbx_ip):
-    """Create GoPhone manager for tests"""
-    manager = GoPhoneManager(
+async def pjsua_manager(mikopbx_ip):
+    """Create PJSUA manager for tests"""
+    manager = PJSUAManager(
         server_ip=mikopbx_ip,
-        gophone_path=str(Path(__file__).parent / "bin/darwin-arm64/gophone")
-    )
+            )
 
     yield manager
 
@@ -64,7 +63,7 @@ async def gophone_manager(mikopbx_ip):
 
 
 @pytest.mark.asyncio
-async def test_01_basic_call_parking(api_client, gophone_manager):
+async def test_01_basic_call_parking(api_client, pjsua_manager):
     """
     Test: Basic Call Parking and Retrieval
 
@@ -112,19 +111,19 @@ async def test_01_basic_call_parking(api_client, gophone_manager):
         print(f"STEP 2: Register Extensions")
         print(f"{'-'*70}")
 
-        ext201 = await gophone_manager.create_endpoint(
+        ext201 = await pjsua_manager.create_endpoint(
             extension="201",
             password=TEST_EXTENSIONS["201"],
             auto_register=True
         )
 
-        ext202 = await gophone_manager.create_endpoint(
+        ext202 = await pjsua_manager.create_endpoint(
             extension="202",
             password=TEST_EXTENSIONS["202"],
             auto_register=True
         )
 
-        ext203 = await gophone_manager.create_endpoint(
+        ext203 = await pjsua_manager.create_endpoint(
             extension="203",
             password=TEST_EXTENSIONS["203"],
             auto_register=True
@@ -140,13 +139,13 @@ async def test_01_basic_call_parking(api_client, gophone_manager):
         print(f"STEP 3: Extension 201 Calls 202")
         print(f"{'-'*70}")
 
-        config_201 = GoPhoneConfig(
+        config_201 = PJSUAConfig(
             extension="201",
             password=TEST_EXTENSIONS["201"],
-            server_ip=gophone_manager.server_ip,
+            server_ip=pjsua_manager.server_ip,
             media="log"
         )
-        caller = GoPhoneEndpoint(config_201, gophone_path=gophone_manager.gophone_path)
+        caller = PJSUAEndpoint(config_201)
 
         success = await caller.dial("202")
         assert success, "Failed to establish call 201 → 202"
@@ -167,15 +166,15 @@ async def test_01_basic_call_parking(api_client, gophone_manager):
         print(f"  DTMF sequence: {blind_transfer}{parking_ext}")
 
         # Create separate endpoint for 202 to send DTMF
-        config_202 = GoPhoneConfig(
+        config_202 = PJSUAConfig(
             extension="202",
             password=TEST_EXTENSIONS["202"],
-            server_ip=gophone_manager.server_ip,
+            server_ip=pjsua_manager.server_ip,
             media="log"
         )
-        ext202_control = GoPhoneEndpoint(config_202, gophone_path=gophone_manager.gophone_path)
+        ext202_control = PJSUAEndpoint(config_202)
 
-        # Note: GoPhone DTMF sending during call
+        # Note: PJSUA DTMF sending during call
         # For blind transfer, 202 would send: **800 (or configured code + parking ext)
         # This typically requires the endpoint to be in a call already
 
@@ -207,7 +206,7 @@ async def test_01_basic_call_parking(api_client, gophone_manager):
             print(f"✓ Call parked in slot: {parking_slot}")
         else:
             print(f"⚠ No parked calls detected")
-            print(f"  Parking may require DTMF support in GoPhone")
+            print(f"  Parking may require DTMF support in PJSUA")
             print(f"  Or additional dialplan configuration")
 
             # Check active channels for parking context
@@ -230,13 +229,13 @@ async def test_01_basic_call_parking(api_client, gophone_manager):
             parking_slot = list(parked_calls.keys())[0]
             print(f"Extension 203 dialing parking slot {parking_slot}...")
 
-            config_203 = GoPhoneConfig(
+            config_203 = PJSUAConfig(
                 extension="203",
                 password=TEST_EXTENSIONS["203"],
-                server_ip=gophone_manager.server_ip,
+                server_ip=pjsua_manager.server_ip,
                 media="log"
             )
-            retriever = GoPhoneEndpoint(config_203, gophone_path=gophone_manager.gophone_path)
+            retriever = PJSUAEndpoint(config_203)
 
             success = await retriever.dial(parking_slot)
 
@@ -280,7 +279,7 @@ async def test_01_basic_call_parking(api_client, gophone_manager):
 
 
 @pytest.mark.asyncio
-async def test_02_parking_timeout_callback(api_client, gophone_manager):
+async def test_02_parking_timeout_callback(api_client, pjsua_manager):
     """
     Test: Parking Timeout and Callback
 
@@ -328,13 +327,13 @@ async def test_02_parking_timeout_callback(api_client, gophone_manager):
         print(f"STEP 2: Register Extensions")
         print(f"{'-'*70}")
 
-        ext201 = await gophone_manager.create_endpoint(
+        ext201 = await pjsua_manager.create_endpoint(
             extension="201",
             password=TEST_EXTENSIONS["201"],
             auto_register=True
         )
 
-        ext202 = await gophone_manager.create_endpoint(
+        ext202 = await pjsua_manager.create_endpoint(
             extension="202",
             password=TEST_EXTENSIONS["202"],
             auto_register=True
@@ -350,13 +349,13 @@ async def test_02_parking_timeout_callback(api_client, gophone_manager):
         print(f"STEP 3: Establish Call and Park")
         print(f"{'-'*70}")
 
-        config_201 = GoPhoneConfig(
+        config_201 = PJSUAConfig(
             extension="201",
             password=TEST_EXTENSIONS["201"],
-            server_ip=gophone_manager.server_ip,
+            server_ip=pjsua_manager.server_ip,
             media="log"
         )
-        caller = GoPhoneEndpoint(config_201, gophone_path=gophone_manager.gophone_path)
+        caller = PJSUAEndpoint(config_201)
 
         success = await caller.dial("202")
         assert success, "Failed to establish call"
@@ -397,7 +396,7 @@ async def test_02_parking_timeout_callback(api_client, gophone_manager):
 
 
 @pytest.mark.asyncio
-async def test_03_multiple_parked_calls(api_client, gophone_manager):
+async def test_03_multiple_parked_calls(api_client, pjsua_manager):
     """
     Test: Multiple Simultaneous Parked Calls
 
@@ -444,19 +443,19 @@ async def test_03_multiple_parked_calls(api_client, gophone_manager):
         print(f"STEP 2: Register Extensions")
         print(f"{'-'*70}")
 
-        ext201 = await gophone_manager.create_endpoint(
+        ext201 = await pjsua_manager.create_endpoint(
             extension="201",
             password=TEST_EXTENSIONS["201"],
             auto_register=True
         )
 
-        ext202 = await gophone_manager.create_endpoint(
+        ext202 = await pjsua_manager.create_endpoint(
             extension="202",
             password=TEST_EXTENSIONS["202"],
             auto_register=True
         )
 
-        ext203 = await gophone_manager.create_endpoint(
+        ext203 = await pjsua_manager.create_endpoint(
             extension="203",
             password=TEST_EXTENSIONS["203"],
             auto_register=True
@@ -473,13 +472,13 @@ async def test_03_multiple_parked_calls(api_client, gophone_manager):
         print(f"{'-'*70}")
 
         # Call 1: 201 → 202
-        config_201 = GoPhoneConfig(
+        config_201 = PJSUAConfig(
             extension="201",
             password=TEST_EXTENSIONS["201"],
-            server_ip=gophone_manager.server_ip,
+            server_ip=pjsua_manager.server_ip,
             media="log"
         )
-        caller1 = GoPhoneEndpoint(config_201, gophone_path=gophone_manager.gophone_path)
+        caller1 = PJSUAEndpoint(config_201)
 
         success1 = await caller1.dial("202")
         assert success1, "Failed to establish call 1"

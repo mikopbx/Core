@@ -24,7 +24,7 @@ sys.path.insert(0, str(Path(__file__).parent / "helpers"))
 
 from config import get_config
 from conftest import MikoPBXClient
-from gophone_helper import GoPhoneConfig, GoPhoneEndpoint, GoPhoneManager, get_mikopbx_ip
+from pjsua_helper import PJSUAConfig, PJSUAEndpoint, PJSUAManager, get_mikopbx_ip
 from audio_validator import find_voicemail_file, validate_audio_in_container
 
 # Load configuration
@@ -51,12 +51,11 @@ async def mikopbx_ip():
 
 
 @pytest_asyncio.fixture
-async def gophone_manager(mikopbx_ip):
-    """Create GoPhone manager for tests"""
-    manager = GoPhoneManager(
+async def pjsua_manager(mikopbx_ip):
+    """Create PJSUA manager for tests"""
+    manager = PJSUAManager(
         server_ip=mikopbx_ip,
-        gophone_path=str(Path(__file__).parent / "bin/darwin-arm64/gophone")
-    )
+            )
 
     yield manager
 
@@ -65,7 +64,7 @@ async def gophone_manager(mikopbx_ip):
 
 
 @pytest.mark.asyncio
-async def test_01_leave_voicemail_message(api_client, gophone_manager):
+async def test_01_leave_voicemail_message(api_client, pjsua_manager):
     """
     Test: Leave Voicemail Message
 
@@ -128,7 +127,7 @@ async def test_01_leave_voicemail_message(api_client, gophone_manager):
         print(f"STEP 2: Register Extension 201")
         print(f"{'-'*70}")
 
-        ext201 = await gophone_manager.create_endpoint(
+        ext201 = await pjsua_manager.create_endpoint(
             extension="201",
             password=TEST_EXTENSIONS["201"],
             auto_register=True
@@ -147,13 +146,13 @@ async def test_01_leave_voicemail_message(api_client, gophone_manager):
         print(f"STEP 3: Extension 201 Calls 202 (Voicemail)")
         print(f"{'-'*70}")
 
-        config_201 = GoPhoneConfig(
+        config_201 = PJSUAConfig(
             extension="201",
             password=TEST_EXTENSIONS["201"],
-            server_ip=gophone_manager.server_ip,
+            server_ip=pjsua_manager.server_ip,
             media="log"
         )
-        caller = GoPhoneEndpoint(config_201, gophone_path=gophone_manager.gophone_path)
+        caller = PJSUAEndpoint(config_201)
 
         print(f"Extension 201 calling 202 (unanswered)...")
         success = await caller.dial("202")
@@ -205,7 +204,7 @@ async def test_01_leave_voicemail_message(api_client, gophone_manager):
             print(f"  This may indicate:")
             print(f"    - Voicemail not configured for extension 202")
             print(f"    - Call did not reach voicemail (went to busy signal)")
-            print(f"    - GoPhone does not generate audio for voicemail recording")
+            print(f"    - PJSUA does not generate audio for voicemail recording")
 
             # Check if voicemail directory exists
             cmd = ['docker', 'exec', config.container_name, 'ls', '-la', '/storage/usbdisk1/mikopbx/voicemail/default/']
@@ -226,7 +225,7 @@ async def test_01_leave_voicemail_message(api_client, gophone_manager):
 
 
 @pytest.mark.asyncio
-async def test_02_voicemail_file_validation(api_client, gophone_manager):
+async def test_02_voicemail_file_validation(api_client, pjsua_manager):
     """
     Test: Voicemail File Validation
 
@@ -256,7 +255,7 @@ async def test_02_voicemail_file_validation(api_client, gophone_manager):
         print(f"STEP 1: Register Extension and Call Voicemail")
         print(f"{'-'*70}")
 
-        ext201 = await gophone_manager.create_endpoint(
+        ext201 = await pjsua_manager.create_endpoint(
             extension="201",
             password=TEST_EXTENSIONS["201"],
             auto_register=True
@@ -265,13 +264,13 @@ async def test_02_voicemail_file_validation(api_client, gophone_manager):
 
         await asyncio.sleep(2)
 
-        config_201 = GoPhoneConfig(
+        config_201 = PJSUAConfig(
             extension="201",
             password=TEST_EXTENSIONS["201"],
-            server_ip=gophone_manager.server_ip,
+            server_ip=pjsua_manager.server_ip,
             media="log"
         )
-        caller = GoPhoneEndpoint(config_201, gophone_path=gophone_manager.gophone_path)
+        caller = PJSUAEndpoint(config_201)
 
         print(f"Extension 201 calling 202 (voicemail)...")
         await caller.dial("202")
@@ -332,9 +331,9 @@ async def test_02_voicemail_file_validation(api_client, gophone_manager):
         assert validation_result['size_bytes'] > 0, "Voicemail file is empty"
         assert validation_result['duration'] >= 1.0, f"Voicemail too short: {validation_result['duration']}s"
 
-        # Note: Voicemail may contain only silence if GoPhone doesn't generate audio
+        # Note: Voicemail may contain only silence if PJSUA doesn't generate audio
         if not validation_result['has_audio']:
-            print(f"⚠ Voicemail contains only silence (GoPhone may not generate audio)")
+            print(f"⚠ Voicemail contains only silence (PJSUA may not generate audio)")
         else:
             print(f"✅ Voicemail contains audio content")
 
@@ -348,7 +347,7 @@ async def test_02_voicemail_file_validation(api_client, gophone_manager):
 
 
 @pytest.mark.asyncio
-async def test_03_voicemail_email_notification(api_client, gophone_manager):
+async def test_03_voicemail_email_notification(api_client, pjsua_manager):
     """
     Test: Voicemail Email Notification
 
@@ -425,7 +424,7 @@ async def test_03_voicemail_email_notification(api_client, gophone_manager):
         print(f"STEP 3: Leave Voicemail Message")
         print(f"{'-'*70}")
 
-        ext201 = await gophone_manager.create_endpoint(
+        ext201 = await pjsua_manager.create_endpoint(
             extension="201",
             password=TEST_EXTENSIONS["201"],
             auto_register=True
@@ -433,13 +432,13 @@ async def test_03_voicemail_email_notification(api_client, gophone_manager):
 
         await asyncio.sleep(2)
 
-        config_201 = GoPhoneConfig(
+        config_201 = PJSUAConfig(
             extension="201",
             password=TEST_EXTENSIONS["201"],
-            server_ip=gophone_manager.server_ip,
+            server_ip=pjsua_manager.server_ip,
             media="log"
         )
-        caller = GoPhoneEndpoint(config_201, gophone_path=gophone_manager.gophone_path)
+        caller = PJSUAEndpoint(config_201)
 
         print(f"Extension 201 calling 202 (voicemail)...")
         await caller.dial("202")

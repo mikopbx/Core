@@ -20,7 +20,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "api"))
 
 from config import get_config
 from conftest import MikoPBXClient, assert_api_success
-from gophone_helper import GoPhoneConfig, GoPhoneEndpoint, GoPhoneManager, get_mikopbx_ip
+from pjsua_helper import PJSUAConfig, PJSUAEndpoint, PJSUAManager, get_mikopbx_ip
 
 # Load configuration
 config = get_config()
@@ -46,12 +46,9 @@ async def mikopbx_ip():
 
 
 @pytest_asyncio.fixture
-async def gophone_manager(mikopbx_ip):
-    """Create GoPhone manager for tests"""
-    manager = GoPhoneManager(
-        server_ip=mikopbx_ip,
-        gophone_path=str(Path(__file__).parent / "bin/darwin-arm64/gophone")
-    )
+async def pjsua_manager(mikopbx_ip):
+    """Create PJSUA manager for tests"""
+    manager = PJSUAManager(server_ip=mikopbx_ip)
 
     yield manager
 
@@ -73,7 +70,7 @@ async def audio_file_id(api_client):
 
 
 @pytest.mark.asyncio
-async def test_01_single_level_ivr_navigation(api_client, gophone_manager, audio_file_id):
+async def test_01_single_level_ivr_navigation(api_client, pjsua_manager, audio_file_id):
     """
     Test: Single-Level IVR Menu with DTMF Navigation
 
@@ -163,21 +160,21 @@ async def test_01_single_level_ivr_navigation(api_client, gophone_manager, audio
         print(f"STEP 3: Register Target Extensions")
         print(f"{'-'*70}")
 
-        ext201 = await gophone_manager.create_endpoint(
+        ext201 = await pjsua_manager.create_endpoint(
             extension="201",
             password=TEST_EXTENSIONS["201"],
             auto_register=True
         )
         print(f"✅ Extension 201 registered")
 
-        ext202 = await gophone_manager.create_endpoint(
+        ext202 = await pjsua_manager.create_endpoint(
             extension="202",
             password=TEST_EXTENSIONS["202"],
             auto_register=True
         )
         print(f"✅ Extension 202 registered")
 
-        ext203 = await gophone_manager.create_endpoint(
+        ext203 = await pjsua_manager.create_endpoint(
             extension="203",
             password=TEST_EXTENSIONS["203"],
             auto_register=True
@@ -194,13 +191,13 @@ async def test_01_single_level_ivr_navigation(api_client, gophone_manager, audio
         print(f"{'-'*70}")
 
         # Create calling endpoint (not registered, will dial)
-        config_caller = GoPhoneConfig(
+        config_caller = PJSUAConfig(
             extension="204",
             password="test_password",
-            server_ip=gophone_manager.server_ip,
+            server_ip=pjsua_manager.server_ip,
             media="log"
         )
-        caller = GoPhoneEndpoint(config_caller, gophone_path=gophone_manager.gophone_path)
+        caller = PJSUAEndpoint(config_caller)
 
         # Call IVR and send DTMF "2" after 3 seconds
         print(f"Calling IVR 500 and sending DTMF '2' after 3s delay...")
@@ -225,7 +222,7 @@ async def test_01_single_level_ivr_navigation(api_client, gophone_manager, audio
         print(f"STEP 5: Test IVR Navigation - Press 1")
         print(f"{'-'*70}")
 
-        caller2 = GoPhoneEndpoint(config_caller, gophone_path=gophone_manager.gophone_path)
+        caller2 = PJSUAEndpoint(config_caller)
 
         print(f"Calling IVR 500 and sending DTMF '1' after 3s delay...")
         success = await caller2.dial("500", dtmf="1", dtmf_delay=3)
@@ -246,7 +243,7 @@ async def test_01_single_level_ivr_navigation(api_client, gophone_manager, audio
         print(f"STEP 6: Test IVR Navigation - Press 3")
         print(f"{'-'*70}")
 
-        caller3 = GoPhoneEndpoint(config_caller, gophone_path=gophone_manager.gophone_path)
+        caller3 = PJSUAEndpoint(config_caller)
 
         print(f"Calling IVR 500 and sending DTMF '3' after 3s delay...")
         success = await caller3.dial("500", dtmf="3", dtmf_delay=3)
@@ -278,7 +275,7 @@ async def test_01_single_level_ivr_navigation(api_client, gophone_manager, audio
 
 
 @pytest.mark.asyncio
-async def test_02_multi_level_ivr_navigation(api_client, gophone_manager, audio_file_id):
+async def test_02_multi_level_ivr_navigation(api_client, pjsua_manager, audio_file_id):
     """
     Test: Multi-Level (Nested) IVR Menu Navigation
 
@@ -395,13 +392,13 @@ async def test_02_multi_level_ivr_navigation(api_client, gophone_manager, audio_
         print(f"STEP 3: Register Target Extensions")
         print(f"{'-'*70}")
 
-        ext201 = await gophone_manager.create_endpoint(
+        ext201 = await pjsua_manager.create_endpoint(
             extension="201", password=TEST_EXTENSIONS["201"], auto_register=True
         )
-        ext202 = await gophone_manager.create_endpoint(
+        ext202 = await pjsua_manager.create_endpoint(
             extension="202", password=TEST_EXTENSIONS["202"], auto_register=True
         )
-        ext203 = await gophone_manager.create_endpoint(
+        ext203 = await pjsua_manager.create_endpoint(
             extension="203", password=TEST_EXTENSIONS["203"], auto_register=True
         )
 
@@ -415,13 +412,13 @@ async def test_02_multi_level_ivr_navigation(api_client, gophone_manager, audio_
         print(f"STEP 4: Test Nested Navigation - Main→Sales→Rep1")
         print(f"{'-'*70}")
 
-        config_caller = GoPhoneConfig(
+        config_caller = PJSUAConfig(
             extension="205",
             password="test_password",
-            server_ip=gophone_manager.server_ip,
+            server_ip=pjsua_manager.server_ip,
             media="log"
         )
-        caller = GoPhoneEndpoint(config_caller, gophone_path=gophone_manager.gophone_path)
+        caller = PJSUAEndpoint(config_caller)
 
         # Call Main IVR, send "1" to go to Sales IVR, then "1" to reach ext 203
         print(f"Calling Main IVR 510...")
@@ -462,7 +459,7 @@ async def test_02_multi_level_ivr_navigation(api_client, gophone_manager, audio_
 
 
 @pytest.mark.asyncio
-async def test_03_ivr_invalid_dtmf_handling(api_client, gophone_manager, audio_file_id):
+async def test_03_ivr_invalid_dtmf_handling(api_client, pjsua_manager, audio_file_id):
     """
     Test: IVR Invalid DTMF Input Handling
 
@@ -517,7 +514,7 @@ async def test_03_ivr_invalid_dtmf_handling(api_client, gophone_manager, audio_f
         await asyncio.sleep(3)
 
         # Register timeout destination
-        ext201 = await gophone_manager.create_endpoint(
+        ext201 = await pjsua_manager.create_endpoint(
             extension="201", password=TEST_EXTENSIONS["201"], auto_register=True
         )
         print(f"✅ Timeout destination (201) registered")
@@ -526,13 +523,13 @@ async def test_03_ivr_invalid_dtmf_handling(api_client, gophone_manager, audio_f
 
         # Test with invalid DTMF "9"
         print(f"\nTest 1: Sending invalid DTMF '9'")
-        config_caller = GoPhoneConfig(
+        config_caller = PJSUAConfig(
             extension="206",
             password="test_password",
-            server_ip=gophone_manager.server_ip,
+            server_ip=pjsua_manager.server_ip,
             media="log"
         )
-        caller = GoPhoneEndpoint(config_caller, gophone_path=gophone_manager.gophone_path)
+        caller = PJSUAEndpoint(config_caller)
 
         success = await caller.dial("530", dtmf="9", dtmf_delay=2)
         assert success, "Failed to dial IVR"

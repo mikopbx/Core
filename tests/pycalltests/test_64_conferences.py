@@ -13,7 +13,7 @@ import pytest_asyncio
 import asyncio
 import logging
 from pathlib import Path
-from gophone_helper import GoPhoneManager, get_mikopbx_ip
+from pjsua_helper import PJSUAManager, get_mikopbx_ip
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -36,11 +36,11 @@ async def mikopbx_ip():
 
 
 @pytest_asyncio.fixture
-async def gophone_manager(mikopbx_ip):
-    """Create GoPhone manager for tests"""
-    manager = GoPhoneManager(
+async def pjsua_manager(mikopbx_ip):
+    """Create PJSUA manager for tests"""
+    manager = PJSUAManager(
         server_ip=mikopbx_ip,
-        gophone_path=str(Path(__file__).parent / "gophone")
+        pjsua_path=str(Path(__file__).parent / "pjsua")
     )
 
     yield manager
@@ -50,7 +50,7 @@ async def gophone_manager(mikopbx_ip):
 
 
 @pytest.mark.asyncio
-async def test_01_conference_multiple_participants(api_client, gophone_manager, cdr_baseline):
+async def test_01_conference_multiple_participants(api_client, pjsua_manager, cdr_baseline):
     """
     Test Conference Room with Multiple Participants
 
@@ -111,17 +111,17 @@ async def test_01_conference_multiple_participants(api_client, gophone_manager, 
         print(f"{'-'*70}")
 
         # Create participants (not registered, will dial)
-        participant_201 = await gophone_manager.create_endpoint(
+        participant_201 = await pjsua_manager.create_endpoint(
             extension="201",
             password=TEST_EXTENSIONS["201"],
             auto_register=False
         )
-        participant_202 = await gophone_manager.create_endpoint(
+        participant_202 = await pjsua_manager.create_endpoint(
             extension="202",
             password=TEST_EXTENSIONS["202"],
             auto_register=False
         )
-        participant_203 = await gophone_manager.create_endpoint(
+        participant_203 = await pjsua_manager.create_endpoint(
             extension="203",
             password=TEST_EXTENSIONS["203"],
             auto_register=False
@@ -251,7 +251,7 @@ async def test_01_conference_multiple_participants(api_client, gophone_manager, 
 
 
 @pytest.mark.asyncio
-async def test_02_conference_with_pin(api_client, gophone_manager, cdr_baseline):
+async def test_02_conference_with_pin(api_client, pjsua_manager, cdr_baseline):
     """
     Test Conference Room with PIN Code
 
@@ -265,7 +265,7 @@ async def test_02_conference_with_pin(api_client, gophone_manager, cdr_baseline)
     7. Cleanup
 
     Note: This test demonstrates PIN-protected conferences.
-    DTMF PIN entry may require additional gophone DTMF support.
+    DTMF PIN entry may require additional pjsua DTMF support.
 
     Expected:
     - Conference created with PIN
@@ -311,7 +311,7 @@ async def test_02_conference_with_pin(api_client, gophone_manager, cdr_baseline)
         print(f"{'-'*70}")
 
         # Create participant (not registered, will dial)
-        participant_201 = await gophone_manager.create_endpoint(
+        participant_201 = await pjsua_manager.create_endpoint(
             extension="201",
             password=TEST_EXTENSIONS["201"],
             auto_register=False
@@ -336,7 +336,7 @@ async def test_02_conference_with_pin(api_client, gophone_manager, cdr_baseline)
         # Wait for connection
         await asyncio.sleep(3)
 
-        # TODO: Implement DTMF PIN entry when gophone supports it
+        # TODO: Implement DTMF PIN entry when pjsua supports it
         # For now, just test that conference is reachable
         print(f"✅ Conference extension reachable")
 
@@ -383,7 +383,7 @@ async def test_02_conference_with_pin(api_client, gophone_manager, cdr_baseline)
         print(f"✅ PIN-protected conference created")
         print(f"✅ Conference extension reachable")
         print(f"✅ PIN mechanism in place")
-        print(f"\nNote: Full PIN entry via DTMF requires gophone DTMF support")
+        print(f"\nNote: Full PIN entry via DTMF requires pjsua DTMF support")
 
     finally:
         # ================================================================

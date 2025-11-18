@@ -22,7 +22,7 @@ sys.path.insert(0, str(Path(__file__).parent / "helpers"))
 
 from config import get_config
 from conftest import MikoPBXClient
-from gophone_helper import GoPhoneConfig, GoPhoneEndpoint, GoPhoneManager, get_mikopbx_ip
+from pjsua_helper import PJSUAConfig, PJSUAEndpoint, PJSUAManager, get_mikopbx_ip
 from feature_codes_helper import get_enabled_codecs, enable_codec, disable_all_codecs_except
 from asterisk_helper import get_active_channels, get_channel_codec
 
@@ -39,7 +39,7 @@ TEST_EXTENSIONS = {
     "202": "e72b3aea6e4f2a8560adb33cb9bfa5dd",
 }
 
-# Codecs to test (conditional based on GoPhone support)
+# Codecs to test (conditional based on PJSUA support)
 TEST_CODECS = ['alaw', 'ulaw', 'g729', 'g722', 'opus']
 
 
@@ -52,11 +52,10 @@ async def mikopbx_ip():
 
 
 @pytest_asyncio.fixture
-async def gophone_manager(mikopbx_ip):
-    """Create GoPhone manager for tests"""
-    manager = GoPhoneManager(
-        server_ip=mikopbx_ip,
-        gophone_path=str(Path(__file__).parent / "bin/darwin-arm64/gophone")
+async def pjsua_manager(mikopbx_ip):
+    """Create PJSUA manager for tests"""
+    manager = PJSUAManager(
+        server_ip=mikopbx_ip
     )
 
     yield manager
@@ -142,7 +141,7 @@ async def test_01_verify_enabled_codecs(api_client):
 
 
 @pytest.mark.asyncio
-async def test_02_codec_negotiation_alaw(api_client, gophone_manager, original_codec_config):
+async def test_02_codec_negotiation_alaw(api_client, pjsua_manager, original_codec_config):
     """
     Test: Codec Negotiation - A-law
 
@@ -184,13 +183,13 @@ async def test_02_codec_negotiation_alaw(api_client, gophone_manager, original_c
         print(f"STEP 2: Register Extensions")
         print(f"{'-'*70}")
 
-        ext201 = await gophone_manager.create_endpoint(
+        ext201 = await pjsua_manager.create_endpoint(
             extension="201",
             password=TEST_EXTENSIONS["201"],
             auto_register=True
         )
 
-        ext202 = await gophone_manager.create_endpoint(
+        ext202 = await pjsua_manager.create_endpoint(
             extension="202",
             password=TEST_EXTENSIONS["202"],
             auto_register=True
@@ -206,13 +205,13 @@ async def test_02_codec_negotiation_alaw(api_client, gophone_manager, original_c
         print(f"STEP 3: Establish Call and Verify Codec")
         print(f"{'-'*70}")
 
-        config_201 = GoPhoneConfig(
+        config_201 = PJSUAConfig(
             extension="201",
             password=TEST_EXTENSIONS["201"],
-            server_ip=gophone_manager.server_ip,
+            server_ip=pjsua_manager.server_ip,
             media="log"
         )
-        caller = GoPhoneEndpoint(config_201, gophone_path=gophone_manager.gophone_path)
+        caller = PJSUAEndpoint(config_201)
 
         success = await caller.dial("202")
         assert success, "Failed to establish call"
@@ -245,7 +244,7 @@ async def test_02_codec_negotiation_alaw(api_client, gophone_manager, original_c
                     print(f"⚠ Could not determine codec")
 
         if not codec_verified:
-            print(f"⚠ A-law codec not verified (may depend on GoPhone codec support)")
+            print(f"⚠ A-law codec not verified (may depend on PJSUA codec support)")
 
         # Maintain call
         await asyncio.sleep(5)
@@ -263,7 +262,7 @@ async def test_02_codec_negotiation_alaw(api_client, gophone_manager, original_c
 
 
 @pytest.mark.asyncio
-async def test_03_codec_negotiation_ulaw(api_client, gophone_manager, original_codec_config):
+async def test_03_codec_negotiation_ulaw(api_client, pjsua_manager, original_codec_config):
     """
     Test: Codec Negotiation - μ-law
 
@@ -295,13 +294,13 @@ async def test_03_codec_negotiation_ulaw(api_client, gophone_manager, original_c
         print(f"STEP 2: Register Extensions and Make Call")
         print(f"{'-'*70}")
 
-        ext201 = await gophone_manager.create_endpoint(
+        ext201 = await pjsua_manager.create_endpoint(
             extension="201",
             password=TEST_EXTENSIONS["201"],
             auto_register=True
         )
 
-        ext202 = await gophone_manager.create_endpoint(
+        ext202 = await pjsua_manager.create_endpoint(
             extension="202",
             password=TEST_EXTENSIONS["202"],
             auto_register=True
@@ -309,13 +308,13 @@ async def test_03_codec_negotiation_ulaw(api_client, gophone_manager, original_c
 
         await asyncio.sleep(2)
 
-        config_201 = GoPhoneConfig(
+        config_201 = PJSUAConfig(
             extension="201",
             password=TEST_EXTENSIONS["201"],
-            server_ip=gophone_manager.server_ip,
+            server_ip=pjsua_manager.server_ip,
             media="log"
         )
-        caller = GoPhoneEndpoint(config_201, gophone_path=gophone_manager.gophone_path)
+        caller = PJSUAEndpoint(config_201)
 
         success = await caller.dial("202")
         assert success, "Failed to establish call"
@@ -356,7 +355,7 @@ async def test_03_codec_negotiation_ulaw(api_client, gophone_manager, original_c
 
 
 @pytest.mark.asyncio
-async def test_04_codec_priority_selection(api_client, gophone_manager, original_codec_config):
+async def test_04_codec_priority_selection(api_client, pjsua_manager, original_codec_config):
     """
     Test: Codec Priority Selection
 
@@ -368,7 +367,7 @@ async def test_04_codec_priority_selection(api_client, gophone_manager, original
     5. Make call and verify highest priority codec is selected
 
     Expected:
-    - Call uses opus if supported by GoPhone
+    - Call uses opus if supported by PJSUA
     - Otherwise falls back to alaw
     """
 
@@ -419,13 +418,13 @@ async def test_04_codec_priority_selection(api_client, gophone_manager, original
         print(f"STEP 2: Make Call and Verify Codec Selection")
         print(f"{'-'*70}")
 
-        ext201 = await gophone_manager.create_endpoint(
+        ext201 = await pjsua_manager.create_endpoint(
             extension="201",
             password=TEST_EXTENSIONS["201"],
             auto_register=True
         )
 
-        ext202 = await gophone_manager.create_endpoint(
+        ext202 = await pjsua_manager.create_endpoint(
             extension="202",
             password=TEST_EXTENSIONS["202"],
             auto_register=True
@@ -433,13 +432,13 @@ async def test_04_codec_priority_selection(api_client, gophone_manager, original
 
         await asyncio.sleep(2)
 
-        config_201 = GoPhoneConfig(
+        config_201 = PJSUAConfig(
             extension="201",
             password=TEST_EXTENSIONS["201"],
-            server_ip=gophone_manager.server_ip,
+            server_ip=pjsua_manager.server_ip,
             media="log"
         )
-        caller = GoPhoneEndpoint(config_201, gophone_path=gophone_manager.gophone_path)
+        caller = PJSUAEndpoint(config_201)
 
         success = await caller.dial("202")
         assert success, "Failed to establish call"
@@ -492,9 +491,9 @@ async def test_04_codec_priority_selection(api_client, gophone_manager, original
 @pytest.mark.asyncio
 @pytest.mark.skipif(
     "g729" not in TEST_CODECS,
-    reason="G.729 codec testing requires GoPhone support"
+    reason="G.729 codec testing requires PJSUA support"
 )
-async def test_05_g729_codec_negotiation(api_client, gophone_manager, original_codec_config):
+async def test_05_g729_codec_negotiation(api_client, pjsua_manager, original_codec_config):
     """
     Test: G.729 Codec Negotiation
 
@@ -540,13 +539,13 @@ async def test_05_g729_codec_negotiation(api_client, gophone_manager, original_c
         print(f"STEP 2: Make Call with G.729")
         print(f"{'-'*70}")
 
-        ext201 = await gophone_manager.create_endpoint(
+        ext201 = await pjsua_manager.create_endpoint(
             extension="201",
             password=TEST_EXTENSIONS["201"],
             auto_register=True
         )
 
-        ext202 = await gophone_manager.create_endpoint(
+        ext202 = await pjsua_manager.create_endpoint(
             extension="202",
             password=TEST_EXTENSIONS["202"],
             auto_register=True
@@ -554,19 +553,19 @@ async def test_05_g729_codec_negotiation(api_client, gophone_manager, original_c
 
         await asyncio.sleep(2)
 
-        config_201 = GoPhoneConfig(
+        config_201 = PJSUAConfig(
             extension="201",
             password=TEST_EXTENSIONS["201"],
-            server_ip=gophone_manager.server_ip,
+            server_ip=pjsua_manager.server_ip,
             media="log"
         )
-        caller = GoPhoneEndpoint(config_201, gophone_path=gophone_manager.gophone_path)
+        caller = PJSUAEndpoint(config_201)
 
         success = await caller.dial("202")
 
         if not success:
-            print(f"⚠ Call failed - GoPhone may not support G.729")
-            pytest.skip("GoPhone does not support G.729")
+            print(f"⚠ Call failed - PJSUA may not support G.729")
+            pytest.skip("PJSUA does not support G.729")
             return
 
         print(f"✅ Call established with G.729")
