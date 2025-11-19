@@ -127,6 +127,27 @@ const ApiKeysOpenAPI = {
                 throw new Error('Invalid OpenAPI specification received');
             }
 
+            // WHY: Add current browser URL as first server option
+            // This ensures "Try it" works without CORS/certificate issues
+            // Works with any address: IP, hostname, localhost
+            const currentUrl = window.location.origin;
+
+            // Ensure servers array exists
+            if (!response.servers) {
+                response.servers = [];
+            }
+
+            // Check if current URL already in servers list
+            const hasCurrentUrl = response.servers.some(server => server.url === currentUrl);
+
+            // Add current URL as first server if not present
+            if (!hasCurrentUrl) {
+                response.servers.unshift({
+                    url: currentUrl,
+                    description: 'Current server (auto-detected from browser URL)'
+                });
+            }
+
             // Hide loading immediately as Elements will show its own loader
             $('#elements-loading').hide();
             ApiKeysOpenAPI.$container.show();
