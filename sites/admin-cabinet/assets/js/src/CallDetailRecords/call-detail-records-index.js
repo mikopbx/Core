@@ -95,17 +95,33 @@ const callDetailRecords = {
      */
     initialize() {
         // Check for reset hash FIRST, before any other initialization
+        callDetailRecords.checkResetHash();
+
+        // Listen for hash changes (when user clicks menu link while already on page)
+        // WHY: Browser doesn't reload page on hash-only URL changes
+        window.addEventListener('hashchange', () => {
+            callDetailRecords.checkResetHash();
+        });
+
+        // Fetch metadata first, then initialize DataTable with proper date range
+        // WHY: Prevents double request on page load
+        callDetailRecords.fetchLatestCDRDate();
+    },
+
+    /**
+     * Check for #reset-cache hash and clear filters if present
+     * WHY: Centralize reset logic for both initial load and hashchange events
+     */
+    checkResetHash() {
         if (window.location.hash === '#reset-cache') {
             callDetailRecords.clearFiltersState();
             // Also clear page length preference
             localStorage.removeItem('cdrTablePageLength');
             // Remove hash from URL without page reload
             history.replaceState(null, null, window.location.pathname);
+            // Reload page to apply reset
+            window.location.reload();
         }
-
-        // Fetch metadata first, then initialize DataTable with proper date range
-        // WHY: Prevents double request on page load
-        callDetailRecords.fetchLatestCDRDate();
     },
 
     /**

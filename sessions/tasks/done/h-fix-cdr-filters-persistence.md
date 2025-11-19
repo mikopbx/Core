@@ -1,7 +1,7 @@
 ---
 name: h-fix-cdr-filters-persistence
 branch: fix/h-fix-cdr-filters-persistence
-status: in-progress
+status: completed
 created: 2025-11-18
 ---
 
@@ -713,3 +713,38 @@ The Extensions page (`extensions-index.js`) uses DataTables' built-in `stateSave
 - Removed all debug `console.log()` statements (kept only error logging)
 - Final transpilation with clean code
 - All success criteria met and verified by user testing
+
+### 2025-11-19 (Task Completion Session)
+
+#### Code Review Findings
+- **Critical Issue Discovered**: Race condition with `hashchange` event not being handled
+  - **Problem**: When clicking CDR menu link while already on the page, browser doesn't reload (hash-only URL change)
+  - **Impact**: `#reset-cache` hash ignored when user navigates from CDR page to CDR page via menu
+  - **Fix**: Added `hashchange` event listener in `initialize()` + created `checkResetHash()` method
+
+#### hashchange Event Listener Implementation
+- Created centralized `checkResetHash()` method to handle reset logic
+- Added `window.addEventListener('hashchange')` to detect hash changes during session
+- Moved hash detection logic from `initialize()` into reusable method
+- Now works both on initial page load AND when clicking menu link while on page
+
+#### Code Review - Other Findings (Not Addressed)
+- **Warning**: `setTimeout(100ms)` workaround is fragile but works reliably in testing
+- **Warning**: Inconsistent error logging prefix in one method (minor issue)
+- **Suggestions**: Add validation for restored values, date format validation (defense-in-depth, not critical for admin-only use)
+
+#### Final Implementation Details
+**Files Modified**:
+- `sites/admin-cabinet/assets/js/src/CallDetailRecords/call-detail-records-index.js`:
+  - Added `checkResetHash()` method (centralizes reset logic)
+  - Added `hashchange` event listener in `initialize()`
+  - Refactored hash detection to use new method
+  - Both initial load and runtime hash changes now trigger reset
+- `sites/admin-cabinet/assets/js/pbx/CallDetailRecords/call-detail-records-index.js` (transpiled)
+
+**Final Status**:
+- ✅ All 9 success criteria met and verified
+- ✅ hashchange bug fixed (critical issue discovered during completion protocol)
+- ✅ Code review completed with findings documented
+- ✅ User testing confirmed all functionality working correctly
+- ✅ Task complete and ready for merge

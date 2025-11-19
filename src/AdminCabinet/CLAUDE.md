@@ -746,6 +746,204 @@ SoundFilesSelector.initialize(
 );
 ```
 
+### 4. Filter Persistence with sessionStorage
+
+For pages with filters that should persist during browser session but clear on logout:
+
+**Pattern**: sessionStorage-based state management with hash-triggered reset
+
+**Example**: Call Detail Records page (`sites/admin-cabinet/assets/js/src/CallDetailRecords/call-detail-records-index.js`)
+
+```javascript
+const myModule = {
+    STORAGE_KEY: 'my_filters_state',
+    isInitialized: false,  // Prevents saving during initial load
+
+    initialize() {
+        // Check for reset hash FIRST, before any initialization
+        myModule.checkResetHash();
+
+        // Listen for hash changes (when user clicks menu link while on page)
+        window.addEventListener('hashchange', () => {
+            myModule.checkResetHash();
+        });
+
+        // Continue with normal initialization
+        myModule.initializeDataTable();
+    },
+
+    checkResetHash() {
+        if (window.location.hash === '#reset-cache') {
+            myModule.clearFiltersState();
+            // Also clear any localStorage preferences if needed
+            localStorage.removeItem('myTablePageLength');
+            // Remove hash from URL without page reload
+            history.replaceState(null, null, window.location.pathname);
+            // Reload page to apply reset
+            window.location.reload();
+        }
+    },
+
+    saveFiltersState() {
+        try {
+            if (typeof sessionStorage === 'undefined') {
+                return;
+            }
+
+            const state = {
+                searchText: myModule.$searchInput.val() || '',
+                currentPage: myModule.dataTable.page.info().page,
+                // ... other filter values
+            };
+
+            sessionStorage.setItem(myModule.STORAGE_KEY, JSON.stringify(state));
+        } catch (error) {
+            console.error('Failed to save filters:', error);
+        }
+    },
+
+    loadFiltersState() {
+        try {
+            if (typeof sessionStorage === 'undefined') {
+                return null;
+            }
+
+            const rawData = sessionStorage.getItem(myModule.STORAGE_KEY);
+            if (!rawData) {
+                return null;
+            }
+
+            const state = JSON.parse(rawData);
+            if (!state || typeof state !== 'object') {
+                myModule.clearFiltersState();
+                return null;
+            }
+
+            return state;
+        } catch (error) {
+            console.error('Failed to load filters:', error);
+            myModule.clearFiltersState();
+            return null;
+        }
+    },
+
+    clearFiltersState() {
+        try {
+            if (typeof sessionStorage !== 'undefined') {
+                sessionStorage.removeItem(myModule.STORAGE_KEY);
+            }
+        } catch (error) {
+            console.error('Failed to clear filters:', error);
+        }
+    },
+
+    initializeDataTable() {
+        myModule.$table.DataTable({
+            // ... DataTable config
+            initComplete() {
+                // Set flag FIRST to allow state saving during restoration
+                myModule.isInitialized = true;
+                // Restore filters AFTER DataTable has loaded initial data
+                myModule.restoreFiltersFromState();
+            }
+        });
+
+        // Save state on every draw event
+        myModule.dataTable.on('draw', () => {
+            // Skip saving during initial load
+            if (!myModule.isInitialized) {
+                return;
+            }
+            myModule.saveFiltersState();
+        });
+    },
+
+    restoreFiltersFromState() {
+        const savedState = myModule.loadFiltersState();
+        if (!savedState) {
+            return;
+        }
+
+        // Restore search text
+        if (savedState.searchText) {
+            myModule.$searchInput.val(savedState.searchText);
+            myModule.dataTable.search(savedState.searchText);
+        }
+
+        // Restore page number with setTimeout workaround
+        // WHY: DataTable needs time to complete initialization
+        if (savedState.currentPage) {
+            setTimeout(() => {
+                myModule.dataTable.page(savedState.currentPage).draw(false);
+            }, 100);
+        }
+    }
+};
+```
+
+**Menu Configuration**: Add `#reset-cache` param in `src/AdminCabinet/Library/Elements.php`:
+
+```php
+MyFeatureController::class => [
+    'caption' => 'mm_MyFeature',
+    'iconclass' => 'icon-name',
+    'action' => 'index',
+    'param' => '#reset-cache',  // Clears filters when clicking menu
+    'style' => '',
+],
+```
+
+**Key Principles**:
+- Use **sessionStorage** (not localStorage) - clears on logout/tab close
+- Check hash **before** any initialization
+- Add **hashchange** event listener for runtime hash changes
+- Use **isInitialized** flag to prevent race conditions
+- **initComplete** callback is the right place to restore state
+- Save state on **draw** event (fires on pagination, search, filter changes)
+- Include feature detection for sessionStorage
+- Use try-catch for all storage operations
+- Clear corrupted data automatically
+
+**Why sessionStorage over localStorage**:
+- Security: Different users shouldn't see each other's filters
+- Privacy: Each session starts with clean state
+- Automatic cleanup: Browser clears sessionStorage on logout
+
+### 5. Hash-based Page Actions
+
+Use URL hash for triggering page-specific actions without full reload:
+
+**Pattern**: `hashchange` event handling for single-page interactions
+
+```javascript
+// Check hash on page load
+if (window.location.hash === '#my-action') {
+    myModule.handleAction();
+    // Remove hash to prevent repeat triggers
+    history.replaceState(null, null, window.location.pathname);
+}
+
+// Listen for hash changes during session
+window.addEventListener('hashchange', () => {
+    if (window.location.hash === '#my-action') {
+        myModule.handleAction();
+        history.replaceState(null, null, window.location.pathname);
+    }
+});
+```
+
+**Common Use Cases**:
+- `#reset-cache` - Clear filters and reload page
+- `#reset-filters` - Reset form filters only
+- `#file=asterisk%2Fverbose` - Navigate to specific log file
+- `#tab=advanced` - Switch to specific tab
+
+**Why Use Hash**:
+- No server request - instant action
+- Works with menu links while staying on page
+- Browser back/forward compatible
+- Can be bookmarked
+
 ## Debugging
 
 1. **Enable Debug Mode** - Set in `config.php`
@@ -778,6 +976,6 @@ Key principles:
 - Consistent API communication through PbxApi
 - Centralized form handling with validation
 - Proper error handling and user feedback
-- SessionStorage for caching with error handling
+- SessionStorage for filter persistence (see Common Patterns #4)
 - Event delegation for dynamic elements
 - Loading states for all async operations
