@@ -110,7 +110,7 @@ class Elements extends Injectable
                         'caption' => 'mm_CallDetailRecords',
                         'iconclass' => 'list ul',
                         'action' => 'index',
-                        'param' => '',
+                        'param' => '#reset-cache',
                         'style' => '',
                     ],
                 ],
