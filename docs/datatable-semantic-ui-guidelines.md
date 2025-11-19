@@ -286,14 +286,126 @@ $(document).ready(() => {
 });
 ```
 
+## Timing событий инициализации DataTable
+
+### Порядок выполнения callbacks при загрузке
+
+**Критически важно понимать**: DataTables выполняет callbacks в следующем порядке:
+
+1. Создание таблицы: `$('#table').DataTable({ /* config */ })`
+2. AJAX запрос начинается
+3. Данные получены от сервера
+4. **`draw` event срабатывает** (данные отрисованы в таблице)
+5. **`initComplete` callback срабатывает** (инициализация завершена)
+
+### Проблема race condition при восстановлении состояния
+
+Если вы сохраняете состояние фильтров в `draw` event и пытаетесь восстановить их сразу после `.DataTable()`, возникает race condition:
+
+```javascript
+// ❌ НЕПРАВИЛЬНО - Race condition
+const dataTable = $('#table').DataTable({ /* config */ });
+restoreFiltersFromState(); // Слишком рано!
+
+dataTable.on('draw', () => {
+    saveFiltersState(); // Первый draw перезапишет сохраненное состояние!
+});
+```
+
+### Решение: Флаг isInitialized
+
+```javascript
+const myModule = {
+    isInitialized: false, // Флаг для предотвращения преждевременного сохранения
+
+    initialize() {
+        myModule.initializeDataTable();
+    },
+
+    initializeDataTable() {
+        myModule.$table.DataTable({
+            // ... конфигурация ...
+
+            // ✅ ПРАВИЛЬНО - Восстановление ПОСЛЕ первой загрузки
+            initComplete() {
+                // Восстанавливаем состояние фильтров
+                myModule.restoreFiltersFromState();
+
+                // Теперь разрешаем сохранение
+                myModule.isInitialized = true;
+            }
+        });
+
+        // Подписываемся на события после создания
+        myModule.dataTable = myModule.$table.DataTable();
+
+        // ✅ ПРАВИЛЬНО - Проверяем флаг перед сохранением
+        myModule.dataTable.on('draw', () => {
+            // Пропускаем первый draw (до initComplete)
+            if (!myModule.isInitialized) {
+                return;
+            }
+
+            // Теперь безопасно сохранять состояние
+            myModule.saveFiltersState();
+        });
+    },
+
+    restoreFiltersFromState() {
+        const state = loadFromSessionStorage();
+        if (!state) return;
+
+        // Восстановление поиска
+        if (state.searchText) {
+            myModule.$searchInput.val(state.searchText);
+            myModule.dataTable.search(state.searchText);
+        }
+
+        // Восстановление страницы (требует setTimeout!)
+        if (state.currentPage) {
+            setTimeout(() => {
+                myModule.dataTable.page(state.currentPage).draw(false);
+            }, 100);
+        }
+    }
+};
+```
+
+### Почему нужен setTimeout для восстановления страницы
+
+DataTable игнорирует вызов `.page()` непосредственно внутри `initComplete` из-за внутренних timing issues. Решение - отложить вызов на 100ms:
+
+```javascript
+// ❌ Не работает
+initComplete() {
+    dataTable.page(savedPage).draw(false); // Игнорируется!
+}
+
+// ✅ Работает
+initComplete() {
+    setTimeout(() => {
+        dataTable.page(savedPage).draw(false); // Применяется!
+    }, 100);
+}
+```
+
+### Пример из реального кода
+
+См. `/Users/nb/PhpstormProjects/mikopbx/Core/sites/admin-cabinet/assets/js/src/CallDetailRecords/call-detail-records-index.js`:
+- Строки 87-91: Определение флага `isInitialized`
+- Строки 397-402: Использование `initComplete` для восстановления
+- Строки 455-465: Проверка флага в `draw` event
+- Строки 526-553: Метод `restoreFiltersFromState` с `setTimeout`
+
 ## Заключение
 
 Следуя этим рекомендациям, вы получите:
 - ✅ Корректное поведение размеров таблицы
-- ✅ Адаптивность на мобильных устройствах  
+- ✅ Адаптивность на мобильных устройствах
 - ✅ Согласованный внешний вид с остальным интерфейсом
 - ✅ Отсутствие ненужных скроллов
 - ✅ Правильную работу с контейнерами
+- ✅ Корректную работу с сохранением и восстановлением состояния
 
 **Главное правило**: Минимальное вмешательство в работу Semantic UI и DataTables, использование только необходимых стилей и классов.
 

@@ -674,77 +674,65 @@ The Extensions page (`extensions-index.js`) uses DataTables' built-in `stateSave
 
 ## Work Log
 
-### 2025-11-19
+### 2025-11-19 - Implementation Complete
 
-#### Completed
-- Implemented sessionStorage-based filter persistence with three core methods:
-  - `saveFiltersState()` - saves date range, search text, current page, page length
-  - `loadFiltersState()` - loads saved state with validation and error handling
-  - `clearFiltersState()` - removes saved state
-- Added #reset-cache hash handling in `initialize()` method (clears filters + page length, removes hash)
-- Modified `fetchLatestCDRDate()` to use saved dates instead of metadata dates when available
-- Created `restoreFiltersFromState()` method to restore search text and page number after DataTable initialization
-- Hooked state saving into DataTable `draw` event (fires on pagination, search, date changes)
-- Added comprehensive console logging for debugging (all methods prefixed with `[CDR]`)
-- Fixed timing issue: Added `isInitialized` flag to prevent saving default state during initial load
-- Updated menu configuration in `src/AdminCabinet/Library/Elements.php` - added `#reset-cache` param to CallDetailRecordsController menu item
-- Transpiled ES6+ source to ES5 for browser compatibility
+#### Summary
+Implemented sessionStorage-based filter persistence for CDR page that survives F5 refresh but clears on logout. Filters include date range, search text, current page, and page length. Added `#reset-cache` hash support for intentional filter reset via menu.
 
-#### Technical Details
-- Uses sessionStorage (not localStorage) so filters persist during F5 refresh but clear on logout/tab close
-- State includes: `dateFrom`, `dateTo`, `searchText`, `currentPage`, `pageLength`
-- Initialization flow prevents race condition: checks `isInitialized` before saving in draw event
-- Date restoration prioritizes saved state over API metadata for seamless UX
-- Feature detection for sessionStorage with graceful fallback
+#### Core Implementation
+**State Management**:
+- `saveFiltersState()` - Save date range, search text, current page, page length to sessionStorage
+- `loadFiltersState()` - Load saved state with JSON parsing validation and error handling
+- `clearFiltersState()` - Remove saved state from sessionStorage
+- `restoreFiltersFromState()` - Restore search and page after DataTable initialization
+- `checkResetHash()` - Centralized #reset-cache detection and handling
+
+**Timing & Race Condition Fixes**:
+- Added `isInitialized` flag to prevent premature state saving during initial DataTable load
+- Used `initComplete` callback for filter restoration (fires after first draw)
+- Hooked state saving to `draw` event (fires on pagination, search, date changes)
+- Applied `setTimeout(100ms)` workaround for page number restoration (DataTable timing issue)
+
+**Hash-based Reset**:
+- Added `#reset-cache` parameter to CDR menu item in Elements.php
+- Implemented `hashchange` event listener for runtime hash detection
+- Hash clears both sessionStorage state and localStorage page length preference
+- Hash removed from URL after processing via `history.replaceState()`
+
+#### Technical Solution Details
+**sessionStorage vs localStorage**:
+- Chose sessionStorage for security (clears on logout, prevents cross-user filter leakage)
+- Page length preference remains in localStorage (user-specific UI preference)
+- Feature detection with graceful fallback for older browsers
+
+**DataTable Event Timing**:
+- **Problem**: Draw event fires BEFORE initComplete, causing race condition
+- **Solution**: `isInitialized` flag prevents saving during initial load
+- **Flow**: Draw (skip save) → initComplete (restore + set flag) → subsequent draws (save state)
+
+**Page Restoration Workaround**:
+- **Issue**: DataTable ignores `page()` calls immediately after initComplete
+- **Root Cause**: DataTable not fully ready when initComplete callback fires
+- **Fix**: 100ms setTimeout before calling `page().draw(false)`
+- **Result**: Reliable page restoration after F5 refresh
 
 #### Files Modified
-- `sites/admin-cabinet/assets/js/src/CallDetailRecords/call-detail-records-index.js` (source)
-- `sites/admin-cabinet/assets/js/pbx/CallDetailRecords/call-detail-records-index.js` (transpiled)
-- `src/AdminCabinet/Library/Elements.php` (menu configuration)
+- `sites/admin-cabinet/assets/js/src/CallDetailRecords/call-detail-records-index.js` - Added state management and restoration logic
+- `sites/admin-cabinet/assets/js/pbx/CallDetailRecords/call-detail-records-index.js` - Transpiled ES5 version
+- `src/AdminCabinet/Library/Elements.php` - Added `#reset-cache` param to CallDetailRecordsController menu item
 
-#### Final Solution - Page Restoration Fix
-- **Problem**: DataTable ignored `page()` calls during `initComplete` callback
-- **Discovery**: Manual tests showed `page().draw()` works fine after full initialization
-- **Root Cause**: DataTable hasn't fully completed initialization when `initComplete` fires
-- **Solution**: Added `setTimeout(100ms)` delay before calling `page().draw(false)`
-- **Result**: Page number now restores correctly after F5 refresh
+#### Testing & Verification
+- ✅ Calendar date range persists across F5 refresh
+- ✅ Search field content persists and restores
+- ✅ Current page selection persists with setTimeout workaround
+- ✅ Filters persist when switching pages via pagination
+- ✅ Filters persist when changing date range
+- ✅ Filters reset when URL contains `#reset-cache`
+- ✅ Filters clear after logout (sessionStorage auto-cleared by browser)
+- ✅ Menu link includes `#reset-cache` by default
+- ✅ hashchange event handles runtime hash changes (critical fix during code review)
 
-#### Cleanup
-- Removed all debug `console.log()` statements (kept only error logging)
-- Final transpilation with clean code
-- All success criteria met and verified by user testing
-
-### 2025-11-19 (Task Completion Session)
-
-#### Code Review Findings
-- **Critical Issue Discovered**: Race condition with `hashchange` event not being handled
-  - **Problem**: When clicking CDR menu link while already on the page, browser doesn't reload (hash-only URL change)
-  - **Impact**: `#reset-cache` hash ignored when user navigates from CDR page to CDR page via menu
-  - **Fix**: Added `hashchange` event listener in `initialize()` + created `checkResetHash()` method
-
-#### hashchange Event Listener Implementation
-- Created centralized `checkResetHash()` method to handle reset logic
-- Added `window.addEventListener('hashchange')` to detect hash changes during session
-- Moved hash detection logic from `initialize()` into reusable method
-- Now works both on initial page load AND when clicking menu link while on page
-
-#### Code Review - Other Findings (Not Addressed)
-- **Warning**: `setTimeout(100ms)` workaround is fragile but works reliably in testing
-- **Warning**: Inconsistent error logging prefix in one method (minor issue)
-- **Suggestions**: Add validation for restored values, date format validation (defense-in-depth, not critical for admin-only use)
-
-#### Final Implementation Details
-**Files Modified**:
-- `sites/admin-cabinet/assets/js/src/CallDetailRecords/call-detail-records-index.js`:
-  - Added `checkResetHash()` method (centralizes reset logic)
-  - Added `hashchange` event listener in `initialize()`
-  - Refactored hash detection to use new method
-  - Both initial load and runtime hash changes now trigger reset
-- `sites/admin-cabinet/assets/js/pbx/CallDetailRecords/call-detail-records-index.js` (transpiled)
-
-**Final Status**:
-- ✅ All 9 success criteria met and verified
-- ✅ hashchange bug fixed (critical issue discovered during completion protocol)
-- ✅ Code review completed with findings documented
-- ✅ User testing confirmed all functionality working correctly
-- ✅ Task complete and ready for merge
+#### Known Limitations
+- `setTimeout(100ms)` is a timing workaround (fragile but reliable in testing)
+- No input validation for restored date values (acceptable for admin-only interface)
+- Console warnings for sessionStorage feature detection remain in code

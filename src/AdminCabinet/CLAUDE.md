@@ -909,6 +909,14 @@ MyFeatureController::class => [
 - Privacy: Each session starts with clean state
 - Automatic cleanup: Browser clears sessionStorage on logout
 
+**Critical DataTable Timing Issue**:
+- DataTables fires **`draw` event BEFORE `initComplete`** callback
+- Without `isInitialized` flag, first draw will overwrite saved state with defaults
+- Solution: Skip saving in draw handler until `isInitialized = true` in `initComplete`
+- Page restoration requires `setTimeout(100ms)` workaround due to DataTable timing
+
+**Reference Implementation**: See `/Users/nb/PhpstormProjects/mikopbx/Core/sites/admin-cabinet/assets/js/src/CallDetailRecords/call-detail-records-index.js` (lines 74-203, 397-402, 455-465, 526-553) for complete working example with all edge cases handled.
+
 ### 5. Hash-based Page Actions
 
 Use URL hash for triggering page-specific actions without full reload:
