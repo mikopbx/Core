@@ -56,6 +56,7 @@ use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadAriAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadModuleStateAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadModulesConfAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadNetworkAction;
+use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadNginxAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPJSIPAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadQueuesAction;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadRecordingSettingsAction;
@@ -194,6 +195,8 @@ class ProcessOtherModels extends Injectable
                 ReloadNetworkAction::class,
                 ReloadIAXAction::class,
                 ReloadPJSIPAction::class,
+                ReloadNginxAction::class,
+                ReloadFirewallAction::class,
             ],
         ];
 

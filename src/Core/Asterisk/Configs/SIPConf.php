@@ -186,40 +186,76 @@ class SIPConf extends AsteriskConfigClass
     }
 
     /**
+     * Check if interface is configured in dual-stack mode (IPv4 + IPv6 simultaneously).
+     *
+     * Dual-stack is active when:
+     * - IPv4 is configured (ipaddr is not empty)
+     * - IPv6 is in Manual mode (ipv6_mode='2') with address configured
+     *
+     * @param array $if_data Interface data from database
+     * @return bool True if dual-stack mode is active, false otherwise
+     */
+    private function isDualStackInterface(array $if_data): bool
+    {
+        // Check IPv4 configuration
+        $hasIPv4 = !empty($if_data['ipaddr']);
+
+        // Check IPv6 Manual mode with address
+        $hasIPv6 = ($if_data['ipv6_mode'] ?? '0') === '2' && !empty($if_data['ipv6addr']);
+
+        return $hasIPv4 && $hasIPv6;
+    }
+
+    /**
      * Get topology data.
      *
-     * Retrieves the necessary topology data including the topology type, external IP address, external hostname, and subnets.
+     * Retrieves the necessary topology data including the topology type, external IP address, external hostname, subnets, and dual-stack mode.
      *
-     * @return array An array containing the topology data.
+     * @return array An array containing the topology data: [topology, extipaddr, exthostname, subnets, dual_stack_mode]
      */
     private function getTopologyData(): array
     {
         $network = new Network();
 
-        $topology    = LanInterfaces::TOPOLOGY_PUBLIC;
-        $extipaddr   = '';
-        $exthostname = '';
-        $networks    = $network->getEnabledLanInterfaces();
-        $subnets     = ['127.0.0.1/32'];
+        $topology       = LanInterfaces::TOPOLOGY_PUBLIC;
+        $extipaddr      = '';
+        $exthostname    = '';
+        $dualStackMode  = '0'; // Default: dual-stack disabled
+        $networks       = $network->getEnabledLanInterfaces();
+        $subnets        = ['127.0.0.1/32', '::1/128']; // IPv4 and IPv6 localhost
+
         foreach ($networks as $if_data) {
             $lan_config = $network->getInterface($if_data['interface']);
-            if (empty($lan_config['ipaddr']) || empty($lan_config['subnet'])) {
-                continue;
+
+            // Process IPv4 subnet
+            if (!empty($lan_config['ipaddr']) && !empty($lan_config['subnet'])) {
+                try {
+                    $sub = new SubnetCalculator($lan_config['ipaddr'], $lan_config['subnet']);
+                    $net = $sub->getNetworkPortion() . '/' . $lan_config['subnet'];
+                    if ($if_data['topology'] === LanInterfaces::TOPOLOGY_PRIVATE && in_array($net, $subnets, true) === false) {
+                        $subnets[] = $net;
+                    }
+                } catch (Throwable $e) {
+                    CriticalErrorsHandler::handleExceptionWithSyslog($e);
+                }
             }
-            try {
-                $sub = new SubnetCalculator($lan_config['ipaddr'], $lan_config['subnet']);
-            } catch (Throwable $e) {
-                CriticalErrorsHandler::handleExceptionWithSyslog($e);
-                continue;
+
+            // Process IPv6 subnet (if IPv6 mode is Manual)
+            $ipv6Mode = trim($if_data['ipv6_mode'] ?? '0');
+            if ($ipv6Mode === '2' && !empty($lan_config['ipv6addr']) && !empty($lan_config['ipv6_subnet'])) {
+                // IPv6 doesn't use SubnetCalculator - prefix length is stored directly
+                $ipv6Net = trim($lan_config['ipv6addr']) . '/' . trim($lan_config['ipv6_subnet']);
+                if ($if_data['topology'] === LanInterfaces::TOPOLOGY_PRIVATE && in_array($ipv6Net, $subnets, true) === false) {
+                    $subnets[] = $ipv6Net;
+                }
             }
-            $net = $sub->getNetworkPortion() . '/' . $lan_config['subnet'];
-            if ($if_data['topology'] === LanInterfaces::TOPOLOGY_PRIVATE && in_array($net, $subnets, true) === false) {
-                $subnets[] = $net;
-            }
+
             if (trim($if_data['internet']) === '1') {
-                $topology    = trim($if_data['topology']??'');
-                $extipaddr   = trim($if_data['extipaddr']??'');
-                $exthostname = trim($if_data['exthostname']??'');
+                $topology       = trim($if_data['topology']??'');
+                $extipaddr      = trim($if_data['extipaddr']??'');
+                $exthostname    = trim($if_data['exthostname']??'');
+                // Compute dual-stack mode dynamically (IPv4 + IPv6 Manual both configured)
+                $dualStackMode  = $this->isDualStackInterface($if_data) ? '1' : '0';
             }
         }
 
@@ -235,6 +271,7 @@ class SIPConf extends AsteriskConfigClass
             $extipaddr,
             $exthostname,
             $subnets,
+            $dualStackMode,
         ];
     }
 
@@ -782,19 +819,36 @@ class SIPConf extends AsteriskConfigClass
         $conf = '';
         $typeTransport = 'type = transport';
 
-        // UDP transport
+        // IPv4 UDP transport
         $conf .= "[transport-udp]\n" .
             "$typeTransport\n" .
             "protocol = udp\n" .
             "bind=0.0.0.0:{$transportParams['sipPort']}\n" .
             "{$transportParams['natConf']}\n\n";
 
-        // TCP transport
+        // IPv4 TCP transport
         $conf .= "[transport-tcp]\n" .
             "$typeTransport\n" .
             "protocol = tcp\n" .
             "bind=0.0.0.0:{$transportParams['sipPort']}\n" .
             "{$transportParams['natConf']}\n\n";
+
+        // Check if IPv6 is enabled on any interface
+        if ($this->hasIpv6Interfaces()) {
+            // IPv6 UDP transport
+            $conf .= "[transport-udp-ipv6]\n" .
+                "$typeTransport\n" .
+                "protocol = udp\n" .
+                "bind=[::]:{$transportParams['sipPort']}\n" .
+                "{$transportParams['natConf']}\n\n";
+
+            // IPv6 TCP transport
+            $conf .= "[transport-tcp-ipv6]\n" .
+                "$typeTransport\n" .
+                "protocol = tcp\n" .
+                "bind=[::]:{$transportParams['sipPort']}\n" .
+                "{$transportParams['natConf']}\n\n";
+        }
 
         // TLS and WSS transports if certificates are available
         if (!empty($transportParams['certs']['certPath']) && !empty($transportParams['certs']['keyPath'])) {
@@ -815,7 +869,7 @@ class SIPConf extends AsteriskConfigClass
         $typeTransport = 'type = transport';
         $conf = '';
 
-        // TLS transport
+        // IPv4 TLS transport
         $conf .= "[transport-tls]\n" .
             "$typeTransport\n" .
             "protocol = tls\n" .
@@ -825,7 +879,7 @@ class SIPConf extends AsteriskConfigClass
             "method=tlsv1_2\n" .
             "{$transportParams['tlsNatConf']}\n\n";
 
-        // WSS transport for WebRTC
+        // IPv4 WSS transport for WebRTC
         $conf .= "[transport-wss]\n" .
             "$typeTransport\n" .
             "protocol = wss\n" .
@@ -833,6 +887,28 @@ class SIPConf extends AsteriskConfigClass
             "cert_file={$transportParams['certs']['certPath']}\n" .
             "priv_key_file={$transportParams['certs']['keyPath']}\n" .
             "{$transportParams['natConf']}\n\n";
+
+        // Check if IPv6 is enabled on any interface
+        if ($this->hasIpv6Interfaces()) {
+            // IPv6 TLS transport
+            $conf .= "[transport-tls-ipv6]\n" .
+                "$typeTransport\n" .
+                "protocol = tls\n" .
+                "bind=[::]:{$transportParams['tlsPort']}\n" .
+                "cert_file={$transportParams['certs']['certPath']}\n" .
+                "priv_key_file={$transportParams['certs']['keyPath']}\n" .
+                "method=tlsv1_2\n" .
+                "{$transportParams['tlsNatConf']}\n\n";
+
+            // IPv6 WSS transport for WebRTC
+            $conf .= "[transport-wss-ipv6]\n" .
+                "$typeTransport\n" .
+                "protocol = wss\n" .
+                "bind=[::]:{$transportParams['wssPort']}\n" .
+                "cert_file={$transportParams['certs']['certPath']}\n" .
+                "priv_key_file={$transportParams['certs']['keyPath']}\n" .
+                "{$transportParams['natConf']}\n\n";
+        }
 
         return $conf;
     }
@@ -1020,7 +1096,7 @@ class SIPConf extends AsteriskConfigClass
     /**
      * Generate NAT configuration based on topology
      *
-     * @param array $topologyData Topology data
+     * @param array $topologyData Topology data [topology, extipaddr, exthostname, subnets, dual_stack_mode]
      * @param string $externalSipPort External SIP port
      * @param string $externalTlsPort External TLS port
      * @return array NAT configuration strings
@@ -1041,7 +1117,37 @@ class SIPConf extends AsteriskConfigClass
 
         $externalHostName = $topologyData[2];
         $extIpAddress = $topologyData[1];
+        $dualStackMode = $topologyData[4] ?? '0';
 
+        // CRITICAL: Dual-stack mode validation
+        // In dual-stack (IPv4+IPv6), PJSIP MUST use hostname with A+AAAA records
+        // Using IP address in dual-stack is FORBIDDEN
+        if ($dualStackMode === '1') {
+            if (empty($externalHostName)) {
+                SystemMessages::sysLogMsg(__METHOD__, "ERROR: Dual-stack mode enabled but exthostname is empty. Dual-stack requires hostname with A and AAAA DNS records.");
+                return ['natConf' => $natConf, 'tlsNatConf' => $tlsNatConf];
+            }
+
+            // Verify hostname resolves (both A and AAAA records should exist)
+            $resolveOk = Processes::mwExec("timeout 1 getent hosts '$externalHostName'") === 0;
+            if (!$resolveOk) {
+                SystemMessages::sysLogMsg(__METHOD__, "ERROR: Dual-stack mode enabled but hostname '$externalHostName' does not resolve. Check DNS configuration.");
+                return ['natConf' => $natConf, 'tlsNatConf' => $tlsNatConf];
+            }
+
+            // In dual-stack mode, ONLY use hostname (NEVER IP address)
+            $parts = explode(':', $externalHostName);
+            $externalHostNameWithoutPort = $parts[0];
+            $natConf .= 'external_media_address=' . $externalHostNameWithoutPort . "\n";
+            $natConf .= 'external_signaling_address=' . $externalHostNameWithoutPort . "\n";
+            $tlsNatConf = "{$natConf}external_signaling_port=$externalTlsPort";
+            $natConf .= 'external_signaling_port=' . $externalSipPort;
+
+            SystemMessages::sysLogMsg(__METHOD__, "Dual-stack mode: Using hostname '$externalHostNameWithoutPort' for external addresses.");
+            return ['natConf' => $natConf, 'tlsNatConf' => $tlsNatConf];
+        }
+
+        // Non-dual-stack mode: Use existing priority logic (hostname > IP)
         $resolveOk = Processes::mwExec("timeout 1 getent hosts '$externalHostName'") === 0;
 
         if (!empty($externalHostName) && !$resolveOk) {
@@ -2194,6 +2300,27 @@ class SIPConf extends AsteriskConfigClass
             $conf .= "\n";
         }
         return $conf;
+    }
+
+    /**
+     * Check if any LAN interface has IPv6 enabled
+     *
+     * @return bool True if at least one interface has IPv6 mode = '1' (Auto) or '2' (Manual), false otherwise
+     */
+    private function hasIpv6Interfaces(): bool
+    {
+        $network = new Network();
+        $networks = $network->getEnabledLanInterfaces();
+
+        foreach ($networks as $if_data) {
+            $ipv6Mode = trim($if_data['ipv6_mode'] ?? '0');
+            // IPv6 is enabled if mode is '1' (Auto/SLAAC) or '2' (Manual/Static)
+            if ($ipv6Mode === '1' || $ipv6Mode === '2') {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

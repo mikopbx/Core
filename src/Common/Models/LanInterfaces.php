@@ -20,6 +20,7 @@
 
 namespace MikoPBX\Common\Models;
 
+use MikoPBX\Core\Utilities\IpAddressHelper;
 use Phalcon\Filter\Validation;
 use Phalcon\Filter\Validation\Validator\Uniqueness as UniquenessValidator;
 use Phalcon\Filter\Validation\Validator\Callback as CallbackValidator;
@@ -39,7 +40,7 @@ class LanInterfaces extends ModelsBase
      * @Identity
      * @Column(type="integer", nullable=false)
      */
-    public $id;
+    public int|string|null $id;
 
     /**
      * Name of the LAN interface
@@ -154,6 +155,49 @@ class LanInterfaces extends ModelsBase
     public ?string $disabled = '0';
 
     /**
+     * IPv6 configuration mode
+     * 0 = Off, 1 = Auto (SLAAC/DHCPv6), 2 = Manual (static)
+     *
+     * @Column(type="string", length=1, nullable=false)
+     */
+    public ?string $ipv6_mode = '0';
+
+    /**
+     * IPv6 address
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $ipv6addr = '';
+
+    /**
+     * IPv6 subnet prefix length (1-128)
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $ipv6_subnet = '';
+
+    /**
+     * IPv6 gateway
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $ipv6_gateway = '';
+
+    /**
+     * Primary IPv6 DNS server
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $primarydns6 = '';
+
+    /**
+     * Secondary IPv6 DNS server
+     *
+     * @Column(type="string", nullable=true)
+     */
+    public ?string $secondarydns6 = '';
+
+    /**
      * Initialize the model.
      */
     public function initialize(): void
@@ -242,6 +286,30 @@ class LanInterfaces extends ModelsBase
             )
         );
 
+        $validation->add(
+            'primarydns6',
+            new CallbackValidator(
+                [
+                    'callback' => function () {
+                        return $this->validateIpv6DnsField($this->primarydns6);
+                    },
+                    'message' => $this->t('mo_InvalidPrimaryDnsIpv6Address'),
+                ]
+            )
+        );
+
+        $validation->add(
+            'secondarydns6',
+            new CallbackValidator(
+                [
+                    'callback' => function () {
+                        return $this->validateIpv6DnsField($this->secondarydns6);
+                    },
+                    'message' => $this->t('mo_InvalidSecondaryDnsIpv6Address'),
+                ]
+            )
+        );
+
         // Validate hostname fields
         $validation->add(
             'hostname',
@@ -267,6 +335,58 @@ class LanInterfaces extends ModelsBase
             )
         );
 
+        // Validate IPv6 mode
+        $validation->add(
+            'ipv6_mode',
+            new CallbackValidator(
+                [
+                    'callback' => function () {
+                        return $this->validateIpv6Mode($this->ipv6_mode);
+                    },
+                    'message' => $this->t('mo_InvalidIpv6Mode'),
+                ]
+            )
+        );
+
+        // Validate IPv6 address (required when mode is manual)
+        $validation->add(
+            'ipv6addr',
+            new CallbackValidator(
+                [
+                    'callback' => function () {
+                        return $this->validateIpv6Address($this->ipv6addr, $this->ipv6_mode);
+                    },
+                    'message' => $this->t('mo_InvalidIpv6Address'),
+                ]
+            )
+        );
+
+        // Validate IPv6 subnet (required when mode is manual)
+        $validation->add(
+            'ipv6_subnet',
+            new CallbackValidator(
+                [
+                    'callback' => function () {
+                        return $this->validateIpv6Subnet($this->ipv6_subnet, $this->ipv6_mode, $this->ipv6addr);
+                    },
+                    'message' => $this->t('mo_InvalidIpv6Subnet'),
+                ]
+            )
+        );
+
+        // Validate IPv6 gateway (optional)
+        $validation->add(
+            'ipv6_gateway',
+            new CallbackValidator(
+                [
+                    'callback' => function () {
+                        return $this->validateIpv6Gateway($this->ipv6_gateway);
+                    },
+                    'message' => $this->t('mo_InvalidIpv6Gateway'),
+                ]
+            )
+        );
+
         return $this->validate($validation);
     }
 
@@ -288,8 +408,9 @@ class LanInterfaces extends ModelsBase
 
     /**
      * Validates an IP address with optional port
+     * Supports both IPv4 (ip:port) and IPv6 ([ip]:port) formats
      *
-     * @param string|null $value IP address with optional port (e.g., "192.168.1.1:5060")
+     * @param string|null $value IP address with optional port (e.g., "192.168.1.1:5060" or "[2001:db8::1]:5060")
      * @return bool True if valid or empty, false otherwise
      */
     private function validateIpWithOptionalPort(?string $value): bool
@@ -299,30 +420,40 @@ class LanInterfaces extends ModelsBase
             return true;
         }
 
-        // Check if there's a port
-        if (strpos($value, ':') !== false) {
-            $parts = explode(':', $value);
-            if (count($parts) !== 2) {
-                return false;
-            }
+        // Parse IP and port using helper method
+        $parsed = $this->parseIpWithOptionalPort($value);
 
-            [$ip, $port] = $parts;
+        if ($parsed === false) {
+            return false;
+        }
 
-            // Validate IP
-            if (filter_var($ip, FILTER_VALIDATE_IP) === false) {
-                return false;
-            }
+        [$ip, $port] = $parsed;
 
-            // Validate port (1-65535)
+        // Validate IP
+        if (filter_var($ip, FILTER_VALIDATE_IP) === false) {
+            return false;
+        }
+
+        // Validate port if present (1-65535)
+        if ($port !== null) {
             if (!ctype_digit($port) || (int)$port < 1 || (int)$port > 65535) {
                 return false;
             }
-
-            return true;
         }
 
-        // No port, just validate IP
-        return filter_var($value, FILTER_VALIDATE_IP) !== false;
+        return true;
+    }
+
+    /**
+     * Parses IP address with optional port from string
+     * Handles IPv4 (ip:port) and IPv6 ([ip]:port) formats
+     *
+     * @param string $value IP address with optional port
+     * @return array{0: string, 1: string|null}|false Array [ip, port] where port is null if not present, or false on parse error
+     */
+    private function parseIpWithOptionalPort(string $value): array|false
+    {
+        return IpAddressHelper::parseIpWithOptionalPort($value);
     }
 
     /**
@@ -333,32 +464,118 @@ class LanInterfaces extends ModelsBase
      */
     private function validateHostnameField(?string $value): bool
     {
-        // Empty values are allowed
+        return IpAddressHelper::validateHostname($value ?? '');
+    }
+
+    /**
+     * Validates IPv6 mode field
+     *
+     * @param string|null $value IPv6 mode: '0' (Off), '1' (Auto), '2' (Manual)
+     * @return bool True if valid, false otherwise
+     */
+    private function validateIpv6Mode(?string $value): bool
+    {
+        return in_array($value, ['0', '1', '2'], true);
+    }
+
+    /**
+     * Validates IPv6 address field
+     * Required when mode is '2' (Manual), optional otherwise
+     *
+     * @param string|null $value IPv6 address
+     * @param string|null $mode IPv6 mode
+     * @return bool True if valid, false otherwise
+     */
+    private function validateIpv6Address(?string $value, ?string $mode): bool
+    {
+        // If mode is Manual ('2'), address is required
+        if ($mode === '2') {
+            if (empty($value)) {
+                return false;
+            }
+            return filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false;
+        }
+
+        // For other modes (Off or Auto), address is optional
         if (empty($value)) {
             return true;
         }
 
-        // Check length (max 253 characters total)
-        if (strlen($value) > 253) {
-            return false;
+        // If provided, must be valid IPv6
+        return filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false;
+    }
+
+    /**
+     * Validates IPv6 subnet prefix length
+     * Required when mode is '2' (Manual) and address is provided
+     *
+     * @param string|null $value Subnet prefix length (1-128)
+     * @param string|null $mode IPv6 mode
+     * @param string|null $address IPv6 address
+     * @return bool True if valid, false otherwise
+     */
+    private function validateIpv6Subnet(?string $value, ?string $mode, ?string $address): bool
+    {
+        // For Off ('0') and Auto ('1') modes, subnet validation is skipped
+        // Auto mode gets subnet from SLAAC/DHCPv6, Off mode doesn't use IPv6
+        if ($mode === '0' || $mode === '1') {
+            return true;
         }
 
-        // Split into labels
-        $labels = explode('.', $value);
+        // For Manual mode ('2'), validate subnet
+        if ($mode === '2') {
+            // If address is provided, subnet is required
+            if (!empty($address)) {
+                if (empty($value)) {
+                    return false;
+                }
 
-        foreach ($labels as $label) {
-            // Check label length (1-63 characters)
-            $labelLength = strlen($label);
-            if ($labelLength < 1 || $labelLength > 63) {
-                return false;
+                // Use IpAddressHelper for IPv6 subnet validation
+                return IpAddressHelper::isValidSubnet($address, (int)$value);
             }
 
-            // Check label format: only alphanumeric and hyphens, cannot start/end with hyphen
-            if (!preg_match('/^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/', $label)) {
-                return false;
+            // If no address, subnet is optional but must be valid if provided
+            if (!empty($value)) {
+                $intValue = (int)$value;
+                return ($intValue >= 1 && $intValue <= 128);
             }
         }
 
         return true;
     }
+
+    /**
+     * Validates IPv6 gateway field (optional)
+     *
+     * @param string|null $value IPv6 gateway address
+     * @return bool True if valid or empty, false otherwise
+     */
+    private function validateIpv6Gateway(?string $value): bool
+    {
+        // Empty values are allowed
+        if (empty($value)) {
+            return true;
+        }
+
+        // Must be valid IPv6 address
+        return filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false;
+    }
+
+    /**
+     * Validates IPv6 DNS server address
+     *
+     * @param string|null $value IPv6 DNS server address
+     * @return bool True if valid IPv6 address or empty, false otherwise
+     */
+    private function validateIpv6DnsField(?string $value): bool
+    {
+        // Empty values are allowed (DNS is optional)
+        if (empty($value)) {
+            return true;
+        }
+
+        // Must be valid IPv6 address
+        return filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false;
+    }
+
 }

@@ -23,6 +23,7 @@ use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Models\NetworkStaticRoutes;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Configs\DnsConf;
+use MikoPBX\Core\Utilities\IpAddressHelper;
 use MikoPBX\Core\Utilities\SubnetCalculator;
 use MikoPBX\PBXCoreREST\Lib\Sysinfo\GetExternalIpInfoAction;
 use Phalcon\Di\Injectable;
@@ -42,7 +43,7 @@ class Network extends Injectable
     /**
      * Retrieves the names of all PCI network interfaces.
      *
-     * @return array An array containing the names of the network interfaces.
+     * @return array<string> An array containing the names of the network interfaces.
      */
     public function getInterfacesNames(): array
     {
@@ -86,7 +87,7 @@ class Network extends Injectable
         foreach ($networks as $if_data) {
 
             $if_name = $if_data['interface'];
-            $if_name = escapeshellcmd(trim($if_name));
+            $if_name = escapeshellarg(trim($if_name));
 
             $commands = [
                 'subnet' => $ifconfig . ' '.$if_name.' | '.$awk.' \'/Mask:/ {sub("Mask:", "", $NF); print $NF}\'',
@@ -117,7 +118,7 @@ class Network extends Injectable
     /**
      * Retrieves the general network settings and performs additional processing.
      *
-     * @return array An array of network interfaces and their settings.
+     * @return array<string, mixed> An array of network interfaces and their settings.
      */
     public function getGeneralNetSettings(): array
     {
@@ -203,10 +204,16 @@ class Network extends Injectable
     }
 
     /**
-     * Converts a net mask to CIDR notation.
+     * Converts a net mask to CIDR notation (IPv4 only).
      *
-     * @param string $net_mask The net mask to convert.
-     * @return int The CIDR notation.
+     * This method converts IPv4 dotted-decimal subnet masks (e.g., "255.255.255.0")
+     * to CIDR prefix length notation (e.g., 24).
+     *
+     * Note: This method is IPv4-specific. IPv6 does not use dotted-decimal subnet masks;
+     * IPv6 prefix lengths are already stored directly as integers (1-128).
+     *
+     * @param string $net_mask The IPv4 net mask in dotted-decimal format (e.g., "255.255.255.0")
+     * @return int The CIDR prefix length (0-32 for IPv4)
      */
     public function netMaskToCidr(string $net_mask): int
     {
@@ -251,7 +258,10 @@ class Network extends Injectable
      */
     public function disableLanInterface(string $name): void
     {
-        $if_data = LanInterfaces::findFirst("interface = '$name'");
+        $if_data = LanInterfaces::findFirst([
+            'conditions' => 'interface = :name:',
+            'bind' => ['name' => $name]
+        ]);
         if ($if_data !== null) {
             $if_data->internet = 0;
             $if_data->disabled = 1;
@@ -312,7 +322,7 @@ class Network extends Injectable
      *
      * @param string $name The name of the interface.
      * @param bool $general Flag indicating if the interface is a general interface.
-     * @return array The array representation of the added interface.
+     * @return array<string, mixed> The array representation of the added interface.
      */
     private function addLanInterface(string $name, bool $general = false): array
     {
@@ -335,15 +345,17 @@ class Network extends Injectable
     /**
      * Updates the interface settings with the provided data.
      *
-     * @param array $data The data to update the interface settings with.
+     * @param array<string, mixed> $data The data to update the interface settings with.
      * @param string $name The name of the interface.
-     *
      * @return void;
      */
     public function updateIfSettings(array $data, string $name): void
     {
         /** @var LanInterfaces $res */
-        $res = LanInterfaces::findFirst("interface = '$name' AND vlanid=0");
+        $res = LanInterfaces::findFirst([
+            'conditions' => 'interface = :name: AND vlanid = 0',
+            'bind' => ['name' => $name]
+        ]);
         if ($res === null || !$this->settingsIsChange($data, $res->toArray())) {
             return;
         }
@@ -356,9 +368,8 @@ class Network extends Injectable
     /**
      * Checks if the network settings have changed.
      *
-     * @param array $data The new network settings.
-     * @param array $dbData The existing network settings from the database.
-     *
+     * @param array<string, mixed> $data The new network settings.
+     * @param array<string, mixed> $dbData The existing network settings from the database.
      * @return bool  Returns true if the settings have changed, false otherwise.
      */
     public function settingsIsChange(array $data, array $dbData): bool
@@ -377,15 +388,17 @@ class Network extends Injectable
     /**
      * Updates the DNS settings with the provided data.
      *
-     * @param array $data The data to update the DNS settings with.
+     * @param array<string, mixed> $data The data to update the DNS settings with.
      * @param string $name The name of the interface.
-     *
      * @return void
      */
     public function updateDnsSettings(array $data, string $name): void
     {
         /** @var LanInterfaces $res */
-        $res = LanInterfaces::findFirst("interface = '$name' AND vlanid=0");
+        $res = LanInterfaces::findFirst([
+            'conditions' => 'interface = :name: AND vlanid = 0',
+            'bind' => ['name' => $name]
+        ]);
         if ($res === null || !$this->settingsIsChange($data, $res->toArray())) {
             return;
         }
@@ -420,7 +433,7 @@ class Network extends Injectable
     /**
      * Retrieves the enabled LAN interfaces.
      *
-     * @return array  An array of enabled LAN interfaces.
+     * @return array<string, mixed>  An array of enabled LAN interfaces.
      */
     public function getEnabledLanInterfaces(): array
     {
@@ -432,8 +445,8 @@ class Network extends Injectable
 
     /**
      * Updates the network settings with the provided data.
-     * @param array $data The network settings data to update.
-     * return bool
+     * @param array<string, mixed> $data The network settings data to update.
+     * @return bool
      */
     public function updateNetSettings(array $data): bool
     {
@@ -555,7 +568,7 @@ class Network extends Injectable
     /**
      * Retrieves the hostname and domain information.
      *
-     * @return array An array containing the hostname and domain.
+     * @return array<string, string> An array containing the hostname and domain.
      */
     public static function getHostName(): array
     {
@@ -584,7 +597,7 @@ class Network extends Injectable
     /**
      * Retrieves the DNS servers configured for the host.
      *
-     * @return array An array containing the DNS servers.
+     * @return array<string> An array containing the DNS servers.
      */
     public function getHostDNS(): array
     {
@@ -621,6 +634,154 @@ class Network extends Injectable
     }
 
     /**
+     * Configures IPv6 on a network interface based on the specified mode.
+     *
+     * Supports three IPv6 modes:
+     * - Mode '0' (Off): Flushes all IPv6 addresses from the interface
+     * - Mode '1' (Auto/SLAAC): Enables interface for SLAAC autoconfiguration
+     * - Mode '2' (Manual): Configures static IPv6 address and optional gateway
+     *
+     * @param string $ifName The network interface name (e.g., 'eth0', 'vlan100')
+     * @param string $ipv6Mode IPv6 configuration mode: '0'=Off, '1'=Auto, '2'=Manual
+     * @param string $ipv6Addr IPv6 address (required for Manual mode)
+     * @param string $ipv6Subnet IPv6 prefix length (required for Manual mode, e.g., '64')
+     * @param string $ipv6Gateway IPv6 gateway address (optional for Manual mode)
+     * @return array<string> Array of shell commands to configure IPv6
+     */
+    private function configureIpv6Interface(
+        string $ifName,
+        string $ipv6Mode,
+        string $ipv6Addr = '',
+        string $ipv6Subnet = '',
+        string $ipv6Gateway = ''
+    ): array {
+        $arr_commands = [];
+        $ip = Util::which('ip');
+
+        switch ($ipv6Mode) {
+            case '0': // Off - Remove all IPv6 addresses
+                SystemMessages::sysLogMsg(__METHOD__, "Disabling IPv6 on $ifName");
+                $escapedIfName = escapeshellarg($ifName);
+                $arr_commands[] = "$ip -6 addr flush dev $escapedIfName";
+                break;
+
+            case '1': // Auto - SLAAC (Stateless Address Autoconfiguration)
+                SystemMessages::sysLogMsg(__METHOD__, "Enabling IPv6 Auto (SLAAC) on $ifName");
+                // SLAAC is automatic in Linux kernel when interface is up
+                // Link-local address (fe80::/10) will be assigned automatically
+                // No explicit commands needed - kernel handles this
+                break;
+
+            case '2': // Manual - Static IPv6 configuration
+                if (empty($ipv6Addr) || empty($ipv6Subnet)) {
+                    SystemMessages::sysLogMsg(__METHOD__, "WARNING: Manual IPv6 mode requires address and subnet for $ifName");
+                    break;
+                }
+
+                // Validate IPv6 address format
+                if (!IpAddressHelper::isIpv6($ipv6Addr)) {
+                    SystemMessages::sysLogMsg(__METHOD__, "ERROR: Invalid IPv6 address format: $ipv6Addr");
+                    break;
+                }
+
+                // Validate subnet range
+                if (!IpAddressHelper::isValidSubnet($ipv6Addr, (int)$ipv6Subnet)) {
+                    SystemMessages::sysLogMsg(__METHOD__, "ERROR: Invalid IPv6 subnet: /$ipv6Subnet (must be 1-128)");
+                    break;
+                }
+
+                SystemMessages::sysLogMsg(__METHOD__, "Configuring IPv6 Manual on $ifName: $ipv6Addr/$ipv6Subnet");
+
+                // Escape all shell arguments to prevent command injection
+                $escapedAddr = escapeshellarg($ipv6Addr);
+                $escapedSubnet = escapeshellarg($ipv6Subnet);
+                $escapedIfName = escapeshellarg($ifName);
+
+                // Add IPv6 address to interface
+                $arr_commands[] = "$ip -6 addr add $escapedAddr/$escapedSubnet dev $escapedIfName";
+
+                // Add default gateway if specified
+                if (!empty($ipv6Gateway)) {
+                    if (!IpAddressHelper::isIpv6($ipv6Gateway)) {
+                        SystemMessages::sysLogMsg(__METHOD__, "WARNING: Invalid IPv6 gateway format: $ipv6Gateway");
+                    } else {
+                        SystemMessages::sysLogMsg(__METHOD__, "Adding IPv6 default gateway: $ipv6Gateway via $ifName");
+                        $escapedGateway = escapeshellarg($ipv6Gateway);
+                        // Delete any existing default IPv6 route on this interface first
+                        $arr_commands[] = "$ip -6 route del default dev $escapedIfName 2>/dev/null || true";
+                        // Add new default route
+                        $arr_commands[] = "$ip -6 route add default via $escapedGateway dev $escapedIfName";
+                    }
+                }
+                break;
+
+            default:
+                SystemMessages::sysLogMsg(__METHOD__, "WARNING: Unknown IPv6 mode '$ipv6Mode' for $ifName");
+                break;
+        }
+
+        return $arr_commands;
+    }
+
+    /**
+     * Configures IPv6 network settings inside Docker container.
+     *
+     * In Docker environment, IPv4 networking is managed by the container runtime,
+     * but IPv6 can be configured manually inside the container using standard Linux commands.
+     * This method applies IPv6 configuration based on the interface mode (Off/Auto/Manual).
+     *
+     * @return void
+     */
+    private function configureIpv6InDocker(): void
+    {
+        // Retrieve network settings from database
+        $networks = $this->getGeneralNetSettings();
+
+        $arr_commands = [];
+
+        foreach ($networks as $if_data) {
+            if ($if_data['disabled'] === '1') {
+                continue;
+            }
+
+            $if_name = trim($if_data['interface']);
+            if (empty($if_name)) {
+                continue;
+            }
+
+            // Get IPv6 configuration
+            $ipv6Mode = $if_data['ipv6_mode'] ?? '0';
+            $ipv6Addr = $if_data['ipv6addr'] ?? '';
+            $ipv6Subnet = $if_data['ipv6_subnet'] ?? '';
+            $ipv6Gateway = $if_data['ipv6_gateway'] ?? '';
+
+            // Configure IPv6 based on mode
+            $ipv6Commands = $this->configureIpv6Interface(
+                $if_name,
+                $ipv6Mode,
+                $ipv6Addr,
+                $ipv6Subnet,
+                $ipv6Gateway
+            );
+
+            $arr_commands = array_merge($arr_commands, $ipv6Commands);
+        }
+
+        // Execute IPv6 configuration commands
+        if (!empty($arr_commands)) {
+            $result = Processes::mwExecCommands($arr_commands, $out, 'net');
+
+            if ($result === 0) {
+                SystemMessages::sysLogMsg(__METHOD__, 'IPv6 configured successfully in Docker container: ' . implode('; ', $arr_commands));
+            } else {
+                SystemMessages::sysLogMsg(__METHOD__, 'WARNING: Some IPv6 commands failed in Docker. Output: ' . implode(' ', $out));
+            }
+        } else {
+            SystemMessages::sysLogMsg(__METHOD__, 'No IPv6 configuration needed in Docker (all interfaces have IPv6 mode=Off or invalid config)');
+        }
+    }
+
+    /**
      * Configures the LAN interfaces and performs related network operations.
      *
      * @return int The result of the configuration process.
@@ -628,6 +789,8 @@ class Network extends Injectable
     public function lanConfigure(): int
     {
         if (System::isDocker()) {
+            // In Docker: Only configure IPv6 (IPv4 is managed by Docker runtime)
+            $this->configureIpv6InDocker();
             return 0;
         }
 
@@ -649,7 +812,7 @@ class Network extends Injectable
             }
 
             $if_name = $if_data['interface'];
-            $if_name = escapeshellcmd(trim($if_name));
+            $if_name = escapeshellarg(trim($if_name));
             if (empty($if_name)) {
                 continue;
             }
@@ -730,9 +893,12 @@ class Network extends Injectable
                 $route = Util::which('route');
                 $arr_commands[] = "$route del default $if_name";
 
-                /** @var LanInterfaces $if_data */
-                $if_data = LanInterfaces::findFirst("id = '{$if_data['id']}'");
-                $is_inet = ($if_data !== null) ? (string)$if_data->internet : '0';
+                /** @var LanInterfaces $if_data_model */
+                $if_data_model = LanInterfaces::findFirst([
+                    'conditions' => 'id = :id:',
+                    'bind' => ['id' => $if_data['id']]
+                ]);
+                $is_inet = ($if_data_model !== null) ? (string)$if_data_model->internet : '0';
 
                 if ($is_inet === '1') {
                     // Create default route only if the interface is for internet
@@ -743,6 +909,25 @@ class Network extends Injectable
 
                 $eth_mtu[] = $if_name;
             }
+
+            // Configure IPv6 for this interface (regardless of DHCP or static IPv4)
+            // IPv6 can run independently alongside IPv4 (dual-stack)
+            $ipv6Mode = $if_data['ipv6_mode'] ?? '0';
+            $ipv6Addr = $if_data['ipv6addr'] ?? '';
+            $ipv6Subnet = $if_data['ipv6_subnet'] ?? '';
+            $ipv6Gateway = $if_data['ipv6_gateway'] ?? '';
+
+            // Get IPv6 configuration commands
+            $ipv6Commands = $this->configureIpv6Interface(
+                $if_name,
+                $ipv6Mode,
+                $ipv6Addr,
+                $ipv6Subnet,
+                $ipv6Gateway
+            );
+
+            // Add IPv6 commands to the main command array
+            $arr_commands = array_merge($arr_commands, $ipv6Commands);
         }
         $out = null;
         Processes::mwExecCommands($arr_commands, $out, 'net');
@@ -791,8 +976,8 @@ class Network extends Injectable
         
         // Only add hostname to /etc/hosts if it doesn't match the external hostname
         // This prevents DNS resolution conflicts when the same name is used for both local and external access
-        if (strcasecmp($data['hostname'], $externalHostname) !== 0 && 
-            strcasecmp($fullHostname, $externalHostname) !== 0) {
+        if (strcasecmp($data['hostname'], $externalHostname ?? '') !== 0 &&
+            strcasecmp($fullHostname, $externalHostname ?? '') !== 0) {
             $hosts_conf .= "127.0.0.1 {$data['hostname']}\n";
             if (!empty($data['domain'])) {
                 $hosts_conf .= "127.0.0.1 {$data['hostname']}.{$data['domain']}\n";
@@ -826,6 +1011,7 @@ class Network extends Injectable
 
         if (count($staticRoutes) > 0) {
             $route = Util::which('route');
+            $ip = Util::which('ip');
 
             foreach ($staticRoutes as $routeData) {
                 // Skip if interface filter is specified and doesn't match
@@ -833,9 +1019,9 @@ class Network extends Injectable
                     continue;
                 }
 
-                $network = trim($routeData->network);
-                $subnet = trim($routeData->subnet);
-                $gateway = trim($routeData->gateway);
+                $network = trim($routeData->network ?? '');
+                $subnet = trim($routeData->subnet ?? '');
+                $gateway = trim($routeData->gateway ?? '');
                 $iface = trim($routeData->interface ?? '');
 
                 // Validate required fields
@@ -844,16 +1030,34 @@ class Network extends Injectable
                     continue;
                 }
 
-                // Build route command: route add -net 192.168.10.0/24 gw 192.168.1.1 dev eth0
-                $command = "$route add -net $network/$subnet gw $gateway";
+                // Detect if this is an IPv6 route by checking the network address
+                $isIpv6 = IpAddressHelper::isIpv6($network);
 
-                // Add interface if specified (empty = auto-detect)
-                if (!empty($iface)) {
-                    $command .= " dev $iface";
+                if ($isIpv6) {
+                    // IPv6 route using modern 'ip' command
+                    // Command format: ip -6 route add 2001:db8:1::/64 via 2001:db8::1 dev eth0
+                    $command = "$ip -6 route add " . escapeshellarg("$network/$subnet") .
+                               " via " . escapeshellarg($gateway);
+
+                    if (!empty($iface)) {
+                        $command .= " dev " . escapeshellarg($iface);
+                    }
+
+                    $arr_commands[] = $command;
+                    SystemMessages::sysLogMsg(__METHOD__, "Adding IPv6 static route: $network/$subnet via $gateway" . (!empty($iface) ? " dev $iface" : ''));
+                } else {
+                    // IPv4 route using legacy 'route' command (backward compatibility)
+                    // Command format: route add -net 192.168.10.0/24 gw 192.168.1.1 dev eth0
+                    $command = "$route add -net " . escapeshellarg("$network/$subnet") .
+                               " gw " . escapeshellarg($gateway);
+
+                    if (!empty($iface)) {
+                        $command .= " dev " . escapeshellarg($iface);
+                    }
+
+                    $arr_commands[] = $command;
+                    SystemMessages::sysLogMsg(__METHOD__, "Adding IPv4 static route: $network/$subnet via $gateway" . (!empty($iface) ? " dev $iface" : ''));
                 }
-
-                $arr_commands[] = $command;
-                SystemMessages::sysLogMsg(__METHOD__, "Adding static route: $network/$subnet via $gateway" . (!empty($iface) ? " dev $iface" : ''));
             }
         }
 
@@ -904,7 +1108,7 @@ class Network extends Injectable
 
     /**
      * Retrieves information about all network interfaces.
-     * @return array An array of network interfaces with their respective information.
+     * @return array<string, mixed> An array of network interfaces with their respective information.
      */
     public function getInterfaces(): array
     {
@@ -921,7 +1125,7 @@ class Network extends Injectable
     /**
      * Retrieves information about a specific network interface.
      * @param string $name The name of the network interface.
-     * @return array An array containing the interface information.
+     * @return array<string, mixed> An array containing the interface information.
      */
     public function getInterface(string $name): array
     {
@@ -930,31 +1134,62 @@ class Network extends Injectable
         // Get ifconfig's output for the specified interface.
         $ifconfig = Util::which('ifconfig');
         Processes::mwExec("$ifconfig $name 2>/dev/null", $output);
-        $output = implode(" ", $output);
+        $outputStr = implode(" ", $output ?? []);
 
         // Parse MAC address.
-        preg_match("/HWaddr (\S+)/", $output, $matches);
-        $interface['mac'] = (count($matches) > 0) ? $matches[1] : '';
+        preg_match("/HWaddr (\S+)/", $outputStr, $matches);
+        $interface['mac'] = $matches[1] ?? '';
 
-        // Parse IP address.
-        preg_match("/inet addr:(\S+)/", $output, $matches);
-        $interface['ipaddr'] = (count($matches) > 0) ? $matches[1] : '';
+        // Parse IPv4 address.
+        preg_match("/inet addr:(\S+)/", $outputStr, $matches);
+        $interface['ipaddr'] = $matches[1] ?? '';
 
-        // Parse subnet mask.
-        preg_match("/Mask:(\S+)/", $output, $matches);
-        $subnet = (count($matches) > 0) ? $this->netMaskToCidr($matches[1]) : '';
+        // Parse IPv4 subnet mask.
+        preg_match("/Mask:(\S+)/", $outputStr, $matches);
+        $subnet = isset($matches[1]) ? $this->netMaskToCidr($matches[1]) : '';
         $interface['subnet'] = $subnet;
 
         // Check if the interface is up.
-        preg_match("/\s+(UP)\s+/", $output, $matches);
-        $status = (count($matches) > 0) ? $matches[1] : '';
+        preg_match("/\s+(UP)\s+/", $outputStr, $matches);
+        $status = $matches[1] ?? '';
         if ($status === "UP") {
             $interface['up'] = true;
         } else {
             $interface['up'] = false;
         }
 
-        // Get the default gateway.
+        // Parse IPv6 addresses (Global and Link-Local)
+        // Example ifconfig output:
+        //   inet6 addr: fd07:b51a:cc66:d000::2/64 Scope:Global
+        //   inet6 addr: fe80::2c47:3ff:fe79:31d0/64 Scope:Link
+        $ipv6Addresses = [];
+        foreach ($output as $line) {
+            if (preg_match("/inet6 addr:\s*([^\s\/]+)\/(\d+)\s+Scope:(\S+)/", $line, $matches)) {
+                $ipv6Address = $matches[1];
+                $ipv6Prefix = $matches[2];
+                $scope = $matches[3];
+
+                // Store Global addresses (skip Link-Local fe80::/10)
+                if ($scope === 'Global' && !str_starts_with($ipv6Address, 'fe80:')) {
+                    $ipv6Addresses[] = [
+                        'address' => $ipv6Address,
+                        'prefix' => $ipv6Prefix,
+                        'scope' => $scope
+                    ];
+                }
+            }
+        }
+
+        // Set IPv6 fields (use first Global address if available)
+        if (!empty($ipv6Addresses)) {
+            $interface['ipv6addr'] = $ipv6Addresses[0]['address'];
+            $interface['ipv6_subnet'] = $ipv6Addresses[0]['prefix'];
+        } else {
+            $interface['ipv6addr'] = '';
+            $interface['ipv6_subnet'] = '';
+        }
+
+        // Get the default IPv4 gateway.
         $grep = Util::which('grep');
         $cut = Util::which('cut');
         $route = Util::which('route');
@@ -968,17 +1203,39 @@ class Network extends Injectable
             $interface['gateway'] = $gw;
         }
 
-        // Get DNS servers.
+        // Get the default IPv6 gateway using ip -6 route
+        $ip = Util::which('ip');
+        Processes::mwExec(
+            "$ip -6 route show default dev $name 2>/dev/null | $grep default | $cut -d ' ' -f 3",
+            $ipv6GwMatches
+        );
+        $ipv6Gw = (count($ipv6GwMatches) > 0) ? trim($ipv6GwMatches[0]) : '';
+        if (filter_var($ipv6Gw, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+            $interface['ipv6_gateway'] = $ipv6Gw;
+        } else {
+            $interface['ipv6_gateway'] = '';
+        }
+
+        // Get DNS servers (both IPv4 and IPv6).
         $cat = Util::which('cat');
         Processes::mwExec("$cat /etc/resolv.conf | $grep nameserver | $cut -d ' ' -f 2", $dnsout);
 
         $dnsSrv = [];
+        $dnsSrv6 = [];
         foreach ($dnsout as $line) {
-            if (Verify::isIpAddress($line)) {
+            $line = trim($line);
+            if (filter_var($line, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
                 $dnsSrv[] = $line;
+            } elseif (filter_var($line, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+                $dnsSrv6[] = $line;
             }
         }
         $interface['dns'] = $dnsSrv;
+        $interface['dns6'] = $dnsSrv6;
+
+        // Set individual IPv6 DNS fields for backward compatibility
+        $interface['primarydns6'] = $dnsSrv6[0] ?? '';
+        $interface['secondarydns6'] = $dnsSrv6[1] ?? '';
 
         return $interface;
     }

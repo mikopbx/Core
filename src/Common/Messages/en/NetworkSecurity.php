@@ -267,4 +267,63 @@ return [
     'f2b_PBXFirewallMaxReqSecTooltip_warning_header' => '⚠️ Important',
     'f2b_PBXFirewallMaxReqSecTooltip_warning' => 'Too low a value may block legitimate traffic during mass device re-registration after reboot. Consider the number of SIP devices in the network.',
     'f2b_PBXFirewallMaxReqSecTooltip_note' => 'Protection only works for SIP TCP and UDP ports (5060) and TLS (5061). Does not affect established connections.',
+
+    // IPv6 Configuration (Phase 3)
+    'nw_IPv6Configuration' => 'IPv6 Configuration',
+    'nw_IPv6Mode' => 'IPv6 Mode',
+    'nw_IPv6ModeOff' => 'Off',
+    'nw_IPv6ModeAuto' => 'Auto (SLAAC/DHCPv6)',
+    'nw_IPv6ModeManual' => 'Manual',
+    'nw_IPv6Address' => 'IPv6 Address',
+    'nw_IPv6Subnet' => 'IPv6 Prefix Length',
+    'nw_IPv6Gateway' => 'IPv6 Gateway',
+    'nw_SelectIPv6Mode' => 'Select IPv6 Mode',
+    'nw_SelectIPv6Subnet' => 'Select IPv6 Prefix',
+    'nw_ValidateIPv6ModeInvalid' => 'Invalid IPv6 mode selected',
+    'nw_ValidateIPv6AddressInvalid' => 'Invalid IPv6 address format',
+    'nw_ValidateIPv6SubnetInvalid' => 'IPv6 prefix length must be between 1 and 128',
+    'nw_ValidateIPv6GatewayInvalid' => 'Invalid IPv6 gateway format',
+    'nw_ValidateIPv6AddressRequired' => 'IPv6 address is required for Manual mode',
+    'nw_ValidateIPv6SubnetRequired' => 'IPv6 prefix length is required for Manual mode',
+
+    // IPv6 DNS Fields (Phase 6)
+    'nw_IPv6PrimaryDNS' => 'Primary IPv6 DNS',
+    'nw_IPv6SecondaryDNS' => 'Secondary IPv6 DNS',
+
+    // Docker IPv6 Info (Phase 6)
+    'nw_DockerIPv6Info' => 'IPv6 settings are applied inside the container. IPv4 configuration is managed by Docker.',
+
+    // DHCP Info Messages (Phase 6)
+    'nw_DHCPInfoHeader' => 'DHCP Configuration Obtained',
+    'nw_DHCPInfoIP' => 'IP Address',
+    'nw_DHCPInfoSubnet' => 'Subnet',
+    'nw_DHCPInfoGateway' => 'Gateway',
+    'nw_DHCPInfoDNS' => 'DNS',
+
+    // Dual-Stack Configuration (Phase 6)
+    'nw_DualStackConfiguration' => 'Dual-Stack Configuration',
+    'nw_DualStackHostnameRequired' => 'External hostname (required)',
+    'nw_DualStackHostnameHelp' => 'In Dual-Stack mode, only hostname with A (IPv4) and AAAA (IPv6) DNS records is used',
+    'nw_DualStackMode' => 'Dual-Stack Mode',
+    'nw_DualStackModeDescription' => 'Your PBX uses both IPv4 and IPv6 simultaneously for external connections.',
+    'nw_DualStackDnsConfiguration' => 'DNS Configuration',
+    'nw_DualStackDnsConfigurationDescription' => 'Ensure that your external hostname has both A and AAAA records',
+    'nw_DualStackDnsARecord' => 'record',
+    'nw_DualStackDnsARecordDescription' => 'points to your external IPv4 address',
+    'nw_DualStackDnsAAAARecord' => 'record',
+    'nw_DualStackDnsAAAARecordDescription' => 'points to your external IPv6 address',
+    'nw_DualStackIpv4Nat' => 'IPv4 NAT',
+    'nw_DualStackIpv4NatDescription' => 'Forward the following ports from public IPv4 to internal PBX IP',
+    'nw_DualStackIpv6Info' => 'IPv6',
+    'nw_DualStackIpv6InfoDescription' => 'NAT is not required. Ensure firewall allows incoming connections on the same ports.',
+    'nw_ValidateExternalHostnameEmpty' => 'External hostname is required in Dual-Stack mode',
+    'nw_DHCPInfoDomain' => 'Domain',
+    'nw_DHCPInfoHostname' => 'Hostname',
+
+    // IPv6 Auto (SLAAC) Info Messages (Phase 6)
+    'nw_IPv6AutoInfoHeader' => 'IPv6 Autoconfiguration (SLAAC/DHCPv6)',
+    'nw_IPv6AutoInfoAddress' => 'IPv6 Address',
+    'nw_IPv6AutoInfoPrefix' => 'Prefix Length',
+    'nw_IPv6AutoInfoGateway' => 'Gateway',
+    'nw_IPv6AutoInfoDNS' => 'DNS',
 ];

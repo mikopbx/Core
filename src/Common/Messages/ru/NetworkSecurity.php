@@ -130,12 +130,14 @@ return [
     'nw_InternetInterface' => 'Сетевой интерфейс с доступом в Интернет',
     'nw_InternetSettings' => 'Настройки интернет-интерфейса',
     'nw_LookUpExternalIp' => 'Узнать внешний IP',
+    'nw_NATConfigurationInfo' => 'Информация о настройке NAT',
     'nw_NATInfo1' => 'Если ваша сеть настроена на поддержку NAT 1:1 (обычно это правило используется в облаках по-умолчанию), вам не нужно выполнять дополнительных настроек на вашем маршрутизаторе.',
     'nw_NATInfo2' => 'Если же NAT 1:1 не используется, перенаправьте указанные ниже порты с публичного IP на внутренний IP адрес PBX в настройках вашего маршрутизатора.',
     'nw_NATInfo3' => '%SIP_PORT% TCP/UDP и %TLS_PORT% TCP',
     'nw_NATInfo4' => '%RTP_PORT_FROM%-%RTP_PORT_TO% UDP',
     'nw_NATInfo5' => 'Если указано внешнее имя хоста, оно будет использоваться в приоритете вместо внешнего IP адреса.',
     'nw_NATInfo6OR' => 'ИЛИ',
+    'nw_PortForwarding' => 'Перенаправление портов',
     'nw_NetworkAddressTranslations' => 'Топология сети',
     'nw_NetworkInterfaces' => 'Сетевые интерфейсы',
     'nw_NetworkMask' => 'Маска подсети (CIDR)',
@@ -249,4 +251,63 @@ return [
     'f2b_PBXFirewallMaxReqSecTooltip_warning_header' => '⚠️ Важно',
     'f2b_PBXFirewallMaxReqSecTooltip_warning' => 'Слишком низкое значение может блокировать легитимный трафик при массовой перерегистрации устройств после перезагрузки. Учитывайте количество SIP-устройств в сети.',
     'f2b_PBXFirewallMaxReqSecTooltip_note' => 'Защита работает только для TCP и UDP портов SIP (5060) и TLS (5061). Не влияет на установленные соединения.',
+
+    // IPv6 Configuration (Phase 3)
+    'nw_IPv6Configuration' => 'Конфигурация IPv6',
+    'nw_IPv6Mode' => 'Режим IPv6',
+    'nw_IPv6ModeOff' => 'Выкл',
+    'nw_IPv6ModeAuto' => 'Авто (SLAAC/DHCPv6)',
+    'nw_IPv6ModeManual' => 'Ручной',
+    'nw_IPv6Address' => 'IPv6 адрес',
+    'nw_IPv6Subnet' => 'IPv6 префикс длины',
+    'nw_IPv6Gateway' => 'IPv6 шлюз',
+    'nw_SelectIPv6Mode' => 'Выберите режим IPv6',
+    'nw_SelectIPv6Subnet' => 'Выберите префикс IPv6',
+    'nw_ValidateIPv6ModeInvalid' => 'Некорректный режим IPv6',
+    'nw_ValidateIPv6AddressInvalid' => 'Некорректный формат IPv6 адреса',
+    'nw_ValidateIPv6SubnetInvalid' => 'Длина префикса IPv6 должна быть между 1 и 128',
+    'nw_ValidateIPv6GatewayInvalid' => 'Некорректный формат IPv6 шлюза',
+    'nw_ValidateIPv6AddressRequired' => 'IPv6 адрес обязателен для ручного режима',
+    'nw_ValidateIPv6SubnetRequired' => 'Длина префикса IPv6 обязательна для ручного режима',
+
+    // IPv6 DNS поля (Phase 6)
+    'nw_IPv6PrimaryDNS' => 'Первичный IPv6 DNS',
+    'nw_IPv6SecondaryDNS' => 'Вторичный IPv6 DNS',
+
+    // Docker IPv6 информация (Phase 6)
+    'nw_DockerIPv6Info' => 'Настройки IPv6 применяются внутри контейнера. Конфигурация IPv4 управляется Docker.',
+
+    // DHCP информационные сообщения (Phase 6)
+    'nw_DHCPInfoHeader' => 'Получена конфигурация DHCP',
+    'nw_DHCPInfoIP' => 'IP адрес',
+    'nw_DHCPInfoSubnet' => 'Подсеть',
+    'nw_DHCPInfoGateway' => 'Шлюз',
+    'nw_DHCPInfoDNS' => 'DNS',
+    'nw_DHCPInfoDomain' => 'Домен',
+    'nw_DHCPInfoHostname' => 'Имя хоста',
+
+    // IPv6 Auto (SLAAC) информационные сообщения (Phase 6)
+    'nw_IPv6AutoInfoHeader' => 'Автоконфигурация IPv6 (SLAAC/DHCPv6)',
+    'nw_IPv6AutoInfoAddress' => 'IPv6 адрес',
+    'nw_IPv6AutoInfoPrefix' => 'Длина префикса',
+    'nw_IPv6AutoInfoGateway' => 'Шлюз',
+    'nw_IPv6AutoInfoDNS' => 'DNS',
+
+    // Конфигурация Dual-Stack (Phase 6)
+    'nw_DualStackConfiguration' => 'Конфигурация Dual-Stack',
+    'nw_DualStackHostnameRequired' => 'Внешнее имя хоста (обязательно)',
+    'nw_DualStackHostnameHelp' => 'В режиме Dual-Stack используется только hostname с DNS записями A (IPv4) и AAAA (IPv6)',
+    'nw_DualStackMode' => 'Режим Dual-Stack',
+    'nw_DualStackModeDescription' => 'Ваша PBX использует одновременно IPv4 и IPv6 для внешних подключений.',
+    'nw_DualStackDnsConfiguration' => 'DNS конфигурация',
+    'nw_DualStackDnsConfigurationDescription' => 'Убедитесь, что для вашего внешнего имени хоста настроены записи A и AAAA',
+    'nw_DualStackDnsARecord' => 'запись',
+    'nw_DualStackDnsARecordDescription' => 'указывает на ваш внешний IPv4 адрес',
+    'nw_DualStackDnsAAAARecord' => 'запись',
+    'nw_DualStackDnsAAAARecordDescription' => 'указывает на ваш внешний IPv6 адрес',
+    'nw_DualStackIpv4Nat' => 'IPv4 NAT',
+    'nw_DualStackIpv4NatDescription' => 'Перенаправьте следующие порты с публичного IPv4 на внутренний IP PBX',
+    'nw_DualStackIpv6Info' => 'IPv6',
+    'nw_DualStackIpv6InfoDescription' => 'NAT не требуется. Убедитесь, что файрвол разрешает входящие подключения на те же порты.',
+    'nw_ValidateExternalHostnameEmpty' => 'Внешнее имя хоста обязательно в режиме Dual-Stack',
 ];

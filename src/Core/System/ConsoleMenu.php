@@ -22,13 +22,13 @@ namespace MikoPBX\Core\System;
 
 use Closure;
 use Exception;
-use LucidFrame\Console\ConsoleTable;
 use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\Storage as StorageModel;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\Config\RegisterDIServices;
 use MikoPBX\Core\System\{Configs\DnsConf, Configs\Fail2BanConf, Configs\IptablesConf, Configs\NginxConf};
+use MikoPBX\Core\Utilities\IpAddressHelper;
 use MikoPBX\Service\Main;
 use Phalcon\Di\Di;
 use PhpSchool\CliMenu\Action\GoBackAction;
@@ -51,21 +51,89 @@ class ConsoleMenu
     }
 
     /**
+     * Display network interfaces information
+     * @return void
+     */
+    private function displayNetworkInterfaces(): void
+    {
+        $network = new Network();
+        $networks = $network->getEnabledLanInterfaces();
+
+        if (empty($networks)) {
+            echo "\n   No network interfaces configured.\n\n";
+            return;
+        }
+
+        echo "\n   Current Network Configuration:\n";
+        echo "   " . str_repeat('-', 70) . "\n";
+
+        foreach ($networks as $if_data) {
+            $if_data['interface_orign'] = $if_data['interface'];
+            $if_data['interface'] = ($if_data['vlanid'] > 0) ? "vlan{$if_data['vlanid']}" : $if_data['interface'];
+            $interface = $network->getInterface($if_data['interface']);
+
+            if (empty($interface['mac'])) {
+                continue;
+            }
+
+            echo "   Interface: {$if_data['interface']}";
+            if ($if_data['internet'] === '1') {
+                echo " \033[01;32m[Internet]\033[39m";
+            }
+            echo "\n";
+
+            // IPv4 configuration
+            if ($if_data['dhcp'] === '1') {
+                echo "     IPv4: DHCP";
+            } elseif (!empty($interface['ipaddr'])) {
+                echo "     IPv4: {$interface['ipaddr']}/{$interface['subnet']}";
+            } else {
+                echo "     IPv4: Not configured";
+            }
+            echo "\n";
+
+            // IPv6 configuration
+            if (!empty($interface['ipv6addr'])) {
+                echo "     IPv6: {$interface['ipv6addr']}";
+                if (!empty($interface['ipv6_subnet'])) {
+                    echo "/{$interface['ipv6_subnet']}";
+                }
+                echo "\n";
+            }
+
+            // MAC address
+            if (!empty($interface['mac'])) {
+                echo "     MAC: {$interface['mac']}\n";
+            }
+
+            echo "\n";
+        }
+
+        echo "   " . str_repeat('-', 70) . "\n\n";
+    }
+
+    /**
      * Building a network connection setup menu
      * @param CliMenuBuilder $menuBuilder
      * @return void
      */
     public function setupLan(CliMenuBuilder $menuBuilder): void
     {
-        $menuBuilder->setTitle(Util::translate('Choose action'))
-            ->addItem('[1] ' . Util::translate('Configuring using DHCP'), Closure::fromCallable([$this, 'setupLanAuto']))
-            ->addItem('[2] ' . Util::translate('Manual setting'), Closure::fromCallable([$this, 'setupLanManual']))
-            ->addItem('[3] ' . Util::translate('Set internet interface'), Closure::fromCallable([$this, 'setupInternetInterface']))
+        $di = Di::getDefault();
+        $translation = $di->getShared(TranslationProvider::SERVICE_NAME);
+
+        // Display current network configuration
+        $this->displayNetworkInterfaces();
+
+        $menuBuilder->setTitle($translation->_('cm_ChooseAction'))
+            ->addItem('[1] ' . $translation->_('cm_QuickSetupWizard') . ' (recommended)', Closure::fromCallable([$this, 'setupLanWizard']))
+            ->addItem('[2] ' . $translation->_('cm_ConfiguringUsingDHCP'), Closure::fromCallable([$this, 'setupLanAuto']))
+            ->addItem('[3] ' . $translation->_('cm_SetInternetInterface'), Closure::fromCallable([$this, 'setupInternetInterface']))
             ->setWidth(75)
             ->setBackgroundColour('black', 'black')
             ->enableAutoShortcuts()
             ->disableDefaultItems()
-            ->addItem('[4] ' . Util::translate('Cancel'), new GoBackAction());
+            ->addItem('[4] ' . $translation->_('cm_Cancel'), new GoBackAction());
     }
 
     public function setupInternetInterface(CliMenu $menu):void
@@ -74,7 +142,10 @@ class ConsoleMenu
         if(empty($ethName)){
             return;
         }
-        echo Util::translate('The LAN interface will now be configured via DHCP...');
+        $di = Di::getDefault();
+        $translation = $di->getShared(TranslationProvider::SERVICE_NAME);
+
+        echo $translation->_('cm_LanWillBeConfiguredDhcp');
         $network = new Network();
         $data = [];
         $data['interface'] = $ethName;
@@ -96,6 +167,9 @@ class ConsoleMenu
      */
     private function setupEthParams(CliMenu $menu):string
     {
+        $di = Di::getDefault();
+        $translation = $di->getShared(TranslationProvider::SERVICE_NAME);
+
         $ethName    = '';
         $lan = LanInterfaces::find(['columns' => 'interface'])->toArray();
         $lan = array_column($lan, 'interface');
@@ -118,12 +192,12 @@ class ConsoleMenu
                 }
             };
             $elDialog = $inputEth
-                ->setPromptText(Util::translate('Enter interface name... '.implode(',', $lan).': '))
-                ->setValidationFailedText(Util::translate('WARNING'))
+                ->setPromptText($translation->_('cm_EnterInterfaceName', ['interfaces' => implode(',', $lan)]))
+                ->setValidationFailedText($translation->_('cm_Warning'))
                 ->ask();
             $ethName = $elDialog->fetch();
         }elseif(empty($lan)){
-            echo Util::translate("Interface not found");
+            echo $translation->_('cm_InterfaceNotFound');
             sleep(1);
             if ($parent = $menu->getParent()) {
                 $menu->closeThis();
@@ -145,8 +219,11 @@ class ConsoleMenu
         if(empty($ethName)){
             return;
         }
+        $di = Di::getDefault();
+        $translation = $di->getShared(TranslationProvider::SERVICE_NAME);
+
         // Action for DHCP configuration
-        echo Util::translate('The LAN interface will now be configured via DHCP...');
+        echo $translation->_('cm_LanWillBeConfiguredDhcp');
         $network = new Network();
         $data = [];
         $data['dhcp'] = 1;
@@ -163,102 +240,669 @@ class ConsoleMenu
         }
     }
 
+    // ==================== WIZARD HELPER METHODS ====================
+
     /**
-     * Manual setting LAN
+     * Ask user to choose from numeric range
+     * @param CliMenu $menu
+     * @param string $prompt
+     * @param int $min
+     * @param int $max
+     * @return int|null Returns choice or null if cancelled
+     */
+    private function askChoice(CliMenu $menu, string $prompt, int $min, int $max): ?int
+    {
+        $style = (new MenuStyle())->setBg('white')->setFg('black');
+        $input = new class (new InputIO($menu, $menu->getTerminal()), $style, $min, $max) extends Text {
+            private int $min;
+            private int $max;
+            public function __construct(InputIO $inputIO, $style, int $min, int $max)
+            {
+                parent::__construct($inputIO, $style);
+                $this->min = $min;
+                $this->max = $max;
+            }
+            public function validate(string $input): bool
+            {
+                return is_numeric($input) && ($input >= $this->min) && ($input <= $this->max);
+            }
+        };
+
+        $dialog = $input->setPromptText($prompt)
+            ->setValidationFailedText('Invalid choice')
+            ->ask();
+        $result = $dialog->fetch();
+        return is_numeric($result) ? (int)$result : null;
+    }
+
+    /**
+     * Ask yes/no question
+     * @param CliMenu $menu
+     * @param string $prompt
+     * @return bool|null Returns true for yes, false for no, null if invalid
+     */
+    private function askYesNo(CliMenu $menu, string $prompt): ?bool
+    {
+        $di = Di::getDefault();
+        $translation = $di->getShared(TranslationProvider::SERVICE_NAME);
+
+        $style = (new MenuStyle())->setBg('white')->setFg('black');
+        $input = new class (new InputIO($menu, $menu->getTerminal()), $style) extends Text {
+            public function validate(string $input): bool
+            {
+                return ($input === 'y' || $input === 'n');
+            }
+        };
+
+        $dialog = $input->setPromptText($prompt)
+            ->setValidationFailedText($translation->_('cm_WarningYesNo'))
+            ->ask();
+        $result = $dialog->fetch();
+        return $result === 'y' ? true : ($result === 'n' ? false : null);
+    }
+
+    /**
+     * Ask for IP address with validation
+     * @param CliMenu $menu
+     * @param string $prompt
+     * @param string $ipVersion 'v4', 'v6', or 'both'
+     * @param bool $allowEmpty Allow empty input (optional field)
+     * @return string|null Returns IP address or null/empty if cancelled/skipped
+     */
+    private function askIPAddress(CliMenu $menu, string $prompt, string $ipVersion = 'both', bool $allowEmpty = false): ?string
+    {
+        $di = Di::getDefault();
+        $translation = $di->getShared(TranslationProvider::SERVICE_NAME);
+
+        $style = (new MenuStyle())->setBg('white')->setFg('black');
+        $input = new class (new InputIO($menu, $menu->getTerminal()), $style, $ipVersion, $allowEmpty) extends Text {
+            private string $ipVersion;
+            private bool $allowEmpty;
+            public function __construct(InputIO $inputIO, $style, string $ipVersion, bool $allowEmpty)
+            {
+                parent::__construct($inputIO, $style);
+                $this->ipVersion = $ipVersion;
+                $this->allowEmpty = $allowEmpty;
+            }
+            public function validate(string $input): bool
+            {
+                if (empty($input)) {
+                    return $this->allowEmpty;
+                }
+                if ($this->ipVersion === 'v4') {
+                    return filter_var($input, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false;
+                }
+                if ($this->ipVersion === 'v6') {
+                    return filter_var($input, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false;
+                }
+                // both
+                return filter_var($input, FILTER_VALIDATE_IP) !== false;
+            }
+        };
+
+        $dialog = $input->setPromptText($prompt)
+            ->setValidationFailedText($translation->_('cm_Warning'))
+            ->ask();
+        $result = $dialog->fetch();
+        return empty($result) && $allowEmpty ? '' : $result;
+    }
+
+    /**
+     * Ask for subnet prefix length with validation
+     * @param CliMenu $menu
+     * @param string $prompt
+     * @param string $ipVersion 'v4' or 'v6'
+     * @return int|null Returns prefix length or null if cancelled
+     */
+    private function askSubnet(CliMenu $menu, string $prompt, string $ipVersion): ?int
+    {
+        $di = Di::getDefault();
+        $translation = $di->getShared(TranslationProvider::SERVICE_NAME);
+
+        $maxBits = $ipVersion === 'v6' ? 128 : 32;
+        $style = (new MenuStyle())->setBg('white')->setFg('black');
+        $input = new class (new InputIO($menu, $menu->getTerminal()), $style, $maxBits) extends Text {
+            private int $maxBits;
+            public function __construct(InputIO $inputIO, $style, int $maxBits)
+            {
+                parent::__construct($inputIO, $style);
+                $this->maxBits = $maxBits;
+            }
+            public function validate(string $input): bool
+            {
+                return is_numeric($input) && ($input >= 1) && ($input <= $this->maxBits);
+            }
+        };
+
+        $dialog = $input->setPromptText($prompt)
+            ->setValidationFailedText($translation->_('cm_SubnetValidationFailed'))
+            ->ask();
+        $result = $dialog->fetch();
+        return is_numeric($result) ? (int)$result : null;
+    }
+
+    /**
+     * Show configuration summary before applying
+     * @param array $config Configuration to display
+     * @return void
+     */
+    private function showConfigSummary(array $config): void
+    {
+        echo "\n" . str_repeat('=', 70) . "\n";
+        echo "CONFIGURATION SUMMARY\n";
+        echo str_repeat('=', 70) . "\n\n";
+
+        echo "Interface: {$config['interface']}\n\n";
+
+        // IPv4 section
+        echo "IPv4 Configuration:\n";
+        if (!empty($config['dhcp']) && $config['dhcp'] == '1') {
+            echo "  Mode: DHCP (automatic)\n";
+        } elseif (!empty($config['ipaddr'])) {
+            echo "  Mode: Static\n";
+            echo "  Address: {$config['ipaddr']}/{$config['subnet']}\n";
+            if (!empty($config['gateway'])) {
+                echo "  Gateway: {$config['gateway']}\n";
+            }
+        } else {
+            echo "  Mode: Disabled\n";
+        }
+
+        // IPv6 section
+        echo "\nIPv6 Configuration:\n";
+        $ipv6Mode = $config['ipv6_mode'] ?? '0';
+        switch ($ipv6Mode) {
+            case '1':
+                echo "  Mode: Auto (SLAAC/DHCPv6)\n";
+                break;
+            case '2':
+                echo "  Mode: Manual\n";
+                if (!empty($config['ipv6addr'])) {
+                    echo "  Address: {$config['ipv6addr']}/{$config['ipv6_subnet']}\n";
+                }
+                if (!empty($config['ipv6_gateway'])) {
+                    echo "  Gateway: {$config['ipv6_gateway']}\n";
+                }
+                break;
+            default:
+                echo "  Mode: Disabled\n";
+                break;
+        }
+
+        // DNS section
+        if (!empty($config['primarydns']) || !empty($config['primarydns6'])) {
+            echo "\nDNS Configuration:\n";
+            if (!empty($config['primarydns'])) {
+                echo "  Primary DNS (IPv4): {$config['primarydns']}\n";
+            }
+            if (!empty($config['secondarydns'])) {
+                echo "  Secondary DNS (IPv4): {$config['secondarydns']}\n";
+            }
+            if (!empty($config['primarydns6'])) {
+                echo "  Primary DNS (IPv6): {$config['primarydns6']}\n";
+            }
+            if (!empty($config['secondarydns6'])) {
+                echo "  Secondary DNS (IPv6): {$config['secondarydns6']}\n";
+            }
+        }
+
+        // Internet interface flag
+        if (!empty($config['internet'])) {
+            echo "\nInternet Interface: Yes\n";
+        }
+
+        echo "\n" . str_repeat('=', 70) . "\n";
+    }
+
+    // ==================== END WIZARD HELPER METHODS ====================
+
+    // ==================== WIZARD STEP METHODS ====================
+
+    /**
+     * Wizard Step 1: Select network interface
+     * @param CliMenu $menu
+     * @return string|null Returns interface name or null if cancelled
+     */
+    private function wizardSelectInterface(CliMenu $menu): ?string
+    {
+        $interfaces = LanInterfaces::find(['columns' => 'interface'])->toArray();
+        $interfaceNames = array_column($interfaces, 'interface');
+
+        if (empty($interfaceNames)) {
+            $di = Di::getDefault();
+            $translation = $di->getShared(TranslationProvider::SERVICE_NAME);
+            echo $translation->_('cm_InterfaceNotFound') . "\n";
+            sleep(1);
+            return null;
+        }
+
+        // Auto-select if only one interface
+        if (count($interfaceNames) === 1) {
+            return $interfaceNames[0];
+        }
+
+        // Multiple interfaces - ask user to choose
+        $di = Di::getDefault();
+        $translation = $di->getShared(TranslationProvider::SERVICE_NAME);
+
+        echo "\n" . $translation->_('cm_SelectInterface') . "\n";
+        foreach ($interfaceNames as $index => $ifName) {
+            echo "  [" . ($index + 1) . "] $ifName\n";
+        }
+        echo "  [" . (count($interfaceNames) + 1) . "] " . $translation->_('cm_Cancel') . "\n\n";
+
+        $choice = $this->askChoice($menu, "Choice: ", 1, count($interfaceNames) + 1);
+        if ($choice === null || $choice === count($interfaceNames) + 1) {
+            return null; // cancelled
+        }
+
+        return $interfaceNames[$choice - 1];
+    }
+
+    /**
+     * Wizard Step 2: Configure IPv4
+     * @param CliMenu $menu
+     * @param string $interfaceName
+     * @return array|null Returns config array or null if cancelled
+     */
+    private function wizardConfigureIPv4(CliMenu $menu, string $interfaceName): ?array
+    {
+        $di = Di::getDefault();
+        $translation = $di->getShared(TranslationProvider::SERVICE_NAME);
+
+        // Load current settings
+        $interface = LanInterfaces::findFirst([
+            "interface = :interface:",
+            'bind' => ['interface' => $interfaceName]
+        ]);
+
+        $currentMode = $interface && $interface->dhcp == '1' ? 'DHCP' :
+                      ($interface && !empty($interface->ipaddr) ? 'Static' : 'Disabled');
+
+        echo "\n" . $translation->_('cm_IPv4ConfigMode') . "\n";
+        echo "  Current: $currentMode\n\n";
+        echo "  [1] " . $translation->_('cm_IPv4DHCP') . "\n";
+        echo "  [2] " . $translation->_('cm_IPv4Static') . "\n";
+        echo "  [3] " . $translation->_('cm_IPv4Disabled') . "\n";
+        echo "  [4] " . $translation->_('cm_KeepCurrent') . "\n";
+        echo "  [5] " . $translation->_('cm_GoBack') . "\n\n";
+
+        $choice = $this->askChoice($menu, "Choice: ", 1, 5);
+        if ($choice === null || $choice === 5) {
+            return null; // cancelled or go back
+        }
+
+        $config = [];
+
+        if ($choice === 4) {
+            // Keep current
+            if ($interface) {
+                $config['dhcp'] = $interface->dhcp;
+                $config['ipaddr'] = $interface->ipaddr;
+                $config['subnet'] = $interface->subnet;
+                $config['gateway'] = $interface->gateway;
+            }
+            return $config;
+        }
+
+        if ($choice === 1) {
+            // DHCP
+            $config['dhcp'] = '1';
+            $config['ipaddr'] = '';
+            $config['subnet'] = '';
+            $config['gateway'] = '';
+            return $config;
+        }
+
+        if ($choice === 3) {
+            // Disabled
+            $config['dhcp'] = '0';
+            $config['ipaddr'] = '';
+            $config['subnet'] = '';
+            $config['gateway'] = '';
+            return $config;
+        }
+
+        // Choice 2: Static - ask for details
+        $config['dhcp'] = '0';
+
+        $ipaddr = $this->askIPAddress($menu, $translation->_('cm_EnterIPv4Address'), 'v4');
+        if ($ipaddr === null) return null;
+        $config['ipaddr'] = $ipaddr;
+
+        $subnet = $this->askSubnet($menu, $translation->_('cm_EnterIPv4Subnet'), 'v4');
+        if ($subnet === null) return null;
+        $config['subnet'] = $subnet;
+
+        $gateway = $this->askIPAddress($menu, $translation->_('cm_EnterIPv4Gateway'), 'v4');
+        if ($gateway === null) return null;
+        $config['gateway'] = $gateway;
+
+        return $config;
+    }
+
+    /**
+     * Wizard Step 3: Configure IPv6
+     * @param CliMenu $menu
+     * @param string $interfaceName
+     * @return array|null Returns config array or null if cancelled
+     */
+    private function wizardConfigureIPv6(CliMenu $menu, string $interfaceName): ?array
+    {
+        $di = Di::getDefault();
+        $translation = $di->getShared(TranslationProvider::SERVICE_NAME);
+
+        // Load current settings
+        $interface = LanInterfaces::findFirst([
+            "interface = :interface:",
+            'bind' => ['interface' => $interfaceName]
+        ]);
+
+        $currentMode = $interface && $interface->ipv6_mode == '1' ? 'Auto' :
+                      ($interface && $interface->ipv6_mode == '2' ? 'Manual' : 'Disabled');
+
+        echo "\n" . $translation->_('cm_IPv6ConfigMode') . "\n";
+        echo "  Current: $currentMode\n\n";
+        echo "  [1] " . $translation->_('cm_IPv6Auto') . "\n";
+        echo "  [2] " . $translation->_('cm_IPv6Manual') . "\n";
+        echo "  [3] " . $translation->_('cm_IPv6Disabled') . "\n";
+        echo "  [4] " . $translation->_('cm_KeepCurrent') . "\n";
+        echo "  [5] " . $translation->_('cm_GoBack') . "\n\n";
+
+        $choice = $this->askChoice($menu, "Choice: ", 1, 5);
+        if ($choice === null || $choice === 5) {
+            return null; // cancelled or go back
+        }
+
+        $config = [];
+
+        if ($choice === 4) {
+            // Keep current
+            if ($interface) {
+                $config['ipv6_mode'] = $interface->ipv6_mode;
+                $config['ipv6addr'] = $interface->ipv6addr;
+                $config['ipv6_subnet'] = $interface->ipv6_subnet;
+                $config['ipv6_gateway'] = $interface->ipv6_gateway;
+            }
+            return $config;
+        }
+
+        if ($choice === 1) {
+            // Auto (SLAAC/DHCPv6)
+            $config['ipv6_mode'] = '1';
+            $config['ipv6addr'] = '';
+            $config['ipv6_subnet'] = '';
+            $config['ipv6_gateway'] = '';
+            return $config;
+        }
+
+        if ($choice === 3) {
+            // Disabled
+            $config['ipv6_mode'] = '0';
+            $config['ipv6addr'] = '';
+            $config['ipv6_subnet'] = '';
+            $config['ipv6_gateway'] = '';
+            return $config;
+        }
+
+        // Choice 2: Manual - ask for details
+        $config['ipv6_mode'] = '2';
+
+        $ipv6addr = $this->askIPAddress($menu, $translation->_('cm_EnterIPv6Address'), 'v6');
+        if ($ipv6addr === null) return null;
+        $config['ipv6addr'] = $ipv6addr;
+
+        $ipv6_subnet = $this->askSubnet($menu, $translation->_('cm_EnterIPv6Subnet'), 'v6');
+        if ($ipv6_subnet === null) return null;
+        $config['ipv6_subnet'] = $ipv6_subnet;
+
+        $ipv6_gateway = $this->askIPAddress($menu, $translation->_('cm_EnterIPv6Gateway'), 'v6');
+        if ($ipv6_gateway === null) return null;
+        $config['ipv6_gateway'] = $ipv6_gateway;
+
+        return $config;
+    }
+
+    /**
+     * Wizard Step 4: Configure DNS (for internet interface only)
+     * @param CliMenu $menu
+     * @param array $config Current configuration
+     * @return array|null Returns DNS config or null if cancelled
+     */
+    private function wizardConfigureDNS(CliMenu $menu, array $config): ?array
+    {
+        $di = Di::getDefault();
+        $translation = $di->getShared(TranslationProvider::SERVICE_NAME);
+
+        // Ask if this is internet interface
+        echo "\n";
+        $isInternet = $this->askYesNo($menu, $translation->_('cm_IsInternetInterface'));
+        if ($isInternet === null) {
+            return null; // cancelled
+        }
+
+        $dnsConfig = [];
+        $dnsConfig['internet'] = $isInternet ? '1' : '0';
+
+        if (!$isInternet) {
+            return $dnsConfig; // No DNS configuration needed
+        }
+
+        // Configure DNS servers
+        echo "\n" . $translation->_('cm_ConfigureDNS') . "\n\n";
+
+        // Primary DNS (IPv4 or IPv6)
+        $primaryDns = $this->askIPAddress($menu, $translation->_('cm_EnterPrimaryDNS'), 'both', true);
+        if ($primaryDns === null) return null;
+
+        if (!empty($primaryDns)) {
+            if (IpAddressHelper::isIpv6($primaryDns)) {
+                $dnsConfig['primarydns6'] = $primaryDns;
+            } else {
+                $dnsConfig['primarydns'] = $primaryDns;
+            }
+        }
+
+        // Secondary DNS (optional)
+        $secondaryDns = $this->askIPAddress($menu, $translation->_('cm_EnterSecondaryDNS'), 'both', true);
+        if ($secondaryDns === null) return null;
+
+        if (!empty($secondaryDns)) {
+            if (IpAddressHelper::isIpv6($secondaryDns)) {
+                $dnsConfig['secondarydns6'] = $secondaryDns;
+            } else {
+                $dnsConfig['secondarydns'] = $secondaryDns;
+            }
+        }
+
+        return $dnsConfig;
+    }
+
+    /**
+     * Wizard Step 5: Review and confirm configuration
+     * @param CliMenu $menu
+     * @param array $config Complete configuration
+     * @return bool|null Returns true to apply, false to edit, null to cancel
+     */
+    private function wizardReviewAndConfirm(CliMenu $menu, array $config): ?bool
+    {
+        $di = Di::getDefault();
+        $translation = $di->getShared(TranslationProvider::SERVICE_NAME);
+
+        echo "\n" . $translation->_('cm_ReviewConfiguration') . "\n";
+        $this->showConfigSummary($config);
+
+        echo "\n  [1] " . $translation->_('cm_ApplyConfiguration') . "\n";
+        echo "  [2] " . $translation->_('cm_EditConfiguration') . "\n";
+        echo "  [3] " . $translation->_('cm_Cancel') . "\n\n";
+
+        $choice = $this->askChoice($menu, "Choice: ", 1, 3);
+
+        if ($choice === null || $choice === 3) {
+            return null; // cancelled
+        }
+
+        if ($choice === 2) {
+            return false; // go back to edit
+        }
+
+        return true; // apply
+    }
+
+    /**
+     * Wizard Step 6: Apply configuration via model save
+     * @param array $config Configuration to apply
+     * @return void
+     */
+    private function wizardApplyConfiguration(array $config): void
+    {
+        $di = Di::getDefault();
+        $translation = $di->getShared(TranslationProvider::SERVICE_NAME);
+
+        // Validate IPv6 configuration before saving
+        if (!empty($config['ipv6addr'])) {
+            if (!IpAddressHelper::isIpv6($config['ipv6addr'])) {
+                echo "\n" . $translation->_('cm_InvalidIPv6Address') . ": {$config['ipv6addr']}\n";
+                sleep(3);
+                return;
+            }
+        }
+
+        if (!empty($config['ipv6_gateway'])) {
+            if (!IpAddressHelper::isIpv6($config['ipv6_gateway'])) {
+                echo "\n" . $translation->_('cm_InvalidIPv6Gateway') . ": {$config['ipv6_gateway']}\n";
+                sleep(3);
+                return;
+            }
+        }
+
+        // Find or create interface record
+        $interface = LanInterfaces::findFirst([
+            "interface = :interface:",
+            'bind' => ['interface' => $config['interface']]
+        ]);
+
+        if (!$interface) {
+            $interface = new LanInterfaces();
+            $interface->interface = $config['interface'];
+        }
+
+        // Apply all configuration fields
+        foreach ($config as $key => $value) {
+            if ($key !== 'interface' && property_exists($interface, $key)) {
+                $interface->$key = $value;
+            }
+        }
+
+        // Save - this triggers WorkerModelsEvents automatically
+        if ($interface->save()) {
+            echo "\n" . $translation->_('cm_ConfigurationSaved') . "\n";
+            sleep(2);
+        } else {
+            echo "\nError saving configuration:\n";
+            foreach ($interface->getMessages() as $message) {
+                echo "  - " . $message . "\n";
+            }
+            sleep(3);
+        }
+    }
+
+    // ==================== END WIZARD STEP METHODS ====================
+
+    /**
+     * Network Setup Wizard - Main coordinator method
      * @param CliMenu $menu
      * @return void
      */
-    public function setupLanManual (CliMenu $menu):void
+    public function setupLanWizard(CliMenu $menu): void
     {
-        $ethName = $this->setupEthParams($menu);
-        if(empty($ethName)){
+        $di = Di::getDefault();
+        $translation = $di->getShared(TranslationProvider::SERVICE_NAME);
+
+        // Step 1: Select interface
+        $interfaceName = $this->wizardSelectInterface($menu);
+        if ($interfaceName === null) {
+            echo $translation->_('cm_WizardCancelled') . "\n";
+            sleep(1);
+            if ($parent = $menu->getParent()) {
+                $menu->closeThis();
+                $parent->open();
+            }
             return;
         }
-        // Action for manual LAN setting
-        $network = new Network();
-        // Set style for input menu
-        $style = (new MenuStyle())
-            ->setBg('white')
-            ->setFg('black');
-        // Validate IP address input
-        $input_ip = new class (new InputIO($menu, $menu->getTerminal()), $style) extends Text {
-            public function validate(string $input): bool
-            {
-                return Verify::isIpAddress($input);
+
+        // Initialize config with interface name
+        $config = ['interface' => $interfaceName];
+
+        // Step 2: Configure IPv4
+        $ipv4Config = $this->wizardConfigureIPv4($menu, $interfaceName);
+        if ($ipv4Config === null) {
+            echo $translation->_('cm_WizardCancelled') . "\n";
+            sleep(1);
+            if ($parent = $menu->getParent()) {
+                $menu->closeThis();
+                $parent->open();
             }
-        };
-
-        // Prompt for new LAN IP address
-        $elDialog = $input_ip
-            ->setPromptText(Util::translate('Enter the new LAN IP address: '))
-            ->setValidationFailedText(Util::translate('WARNING'))
-            ->ask();
-        $lanIp = $elDialog->fetch();
-
-        // Prompt for subnet mask
-        $helloText = Util::translate('Subnet masks are to be entered as bit counts (as in CIDR notation).');
-        $input_bits = new class (new InputIO($menu, $menu->getTerminal()), $style) extends Text {
-            public function validate(string $input): bool
-            {
-                echo $input;
-                return (is_numeric($input) && ($input >= 1) && ($input <= 32));
-            }
-        };
-        $elDialog = $input_bits
-            ->setPromptText($helloText)
-            ->setValidationFailedText('e.g. 32 = 255.255.255.255, 24 = 255.255.255.0')
-            ->ask();
-        $lanBits = $elDialog->fetch();
-
-        // Prompt for LAN gateway IP address
-        $elDialog = $input_ip
-            ->setPromptText(Util::translate('Enter the LAN gateway IP address: '))
-            ->setValidationFailedText(Util::translate('WARNING'))
-            ->ask();
-        $gwIp = $elDialog->fetch();
-
-        // Update network settings and configure LAN
-        $data = [];
-
-        $filter = [
-            "interface = :interface: AND internet = '1'",
-            'bind' => [
-                'interface' => $ethName
-            ]
-        ];
-        $res = LanInterfaces::findFirst($filter);
-        if($res){
-            // Prompt for LAN DNS IP address
-            // Internet intarface only
-            $elDialog = $input_ip
-                ->setPromptText(Util::translate('Enter the LAN DNS IP address: '))
-                ->setValidationFailedText(Util::translate('WARNING'))
-                ->ask();
-            $data['primarydns'] = $elDialog->fetch();
+            return;
         }
-        $data['interface'] = $ethName;
-        $data['ipaddr'] = $lanIp;
-        $data['subnet'] = $lanBits;
-        $data['gateway'] = $gwIp;
-        $data['dhcp'] = 0;
+        $config = array_merge($config, $ipv4Config);
 
-        echo Util::translate('The LAN interface will now be configured ...');
-        $network->updateNetSettings($data);
+        // Step 3: Configure IPv6
+        $ipv6Config = $this->wizardConfigureIPv6($menu, $interfaceName);
+        if ($ipv6Config === null) {
+            echo $translation->_('cm_WizardCancelled') . "\n";
+            sleep(1);
+            if ($parent = $menu->getParent()) {
+                $menu->closeThis();
+                $parent->open();
+            }
+            return;
+        }
+        $config = array_merge($config, $ipv6Config);
 
-        $dnsConf = new DnsConf();
-        $dnsConf->resolveConfGenerate($network->getHostDNS());
-        $dnsConf->reStart();
+        // Step 4: Configure DNS
+        $dnsConfig = $this->wizardConfigureDNS($menu, $config);
+        if ($dnsConfig === null) {
+            echo $translation->_('cm_WizardCancelled') . "\n";
+            sleep(1);
+            if ($parent = $menu->getParent()) {
+                $menu->closeThis();
+                $parent->open();
+            }
+            return;
+        }
+        $config = array_merge($config, $dnsConfig);
 
-        $network->lanConfigure();
-        $nginxConf = new NginxConf();
-        $nginxConf->reStart();
+        // Step 5: Review and confirm
+        $confirmed = $this->wizardReviewAndConfirm($menu, $config);
+        if ($confirmed === null) {
+            echo $translation->_('cm_WizardCancelled') . "\n";
+            sleep(1);
+            if ($parent = $menu->getParent()) {
+                $menu->closeThis();
+                $parent->open();
+            }
+            return;
+        }
 
-        sleep(1);
+        if ($confirmed === false) {
+            // User wants to edit - restart wizard
+            echo "Returning to wizard...\n";
+            sleep(1);
+            $this->setupLanWizard($menu);
+            return;
+        }
+
+        // Step 6: Apply configuration
+        $this->wizardApplyConfiguration($config);
+
+        // Return to main menu
         if ($parent = $menu->getParent()) {
             $menu->closeThis();
             $parent->open();
         }
     }
+
 
     /**
      * Menu Language Settings
@@ -267,21 +911,24 @@ class ConsoleMenu
      */
     public function setupLanguage(CliMenuBuilder $menuBuilder): void
     {
+        $di = Di::getDefault();
+        $translation = $di->getShared(TranslationProvider::SERVICE_NAME);
+
         $languages = [
-            'en' => Util::translate('ex_English'),
-            'ru' => Util::translate('ex_Russian'),
-            'de' => Util::translate('ex_Deutsch'),
-            'es' => Util::translate('ex_Spanish'),
-            'fr' => Util::translate('ex_French'),
-            'pt' => Util::translate('ex_Portuguese'),
-            'uk' => Util::translate('ex_Ukrainian'),
-            'it' => Util::translate('ex_Italian'),
-            'da' => Util::translate('ex_Danish'),
-            'nl' => Util::translate('ex_Dutch'),
-            'pl' => Util::translate('ex_Polish'),
-            'sv' => Util::translate('ex_Swedish'),
-            'az' => Util::translate('ex_Azerbaijan'),
-            'ro' => Util::translate('ex_Romanian'),
+            'en' => $translation->_('ex_English'),
+            'ru' => $translation->_('ex_Russian'),
+            'de' => $translation->_('ex_Deutsch'),
+            'es' => $translation->_('ex_Spanish'),
+            'fr' => $translation->_('ex_French'),
+            'pt' => $translation->_('ex_Portuguese'),
+            'uk' => $translation->_('ex_Ukrainian'),
+            'it' => $translation->_('ex_Italian'),
+            'da' => $translation->_('ex_Danish'),
+            'nl' => $translation->_('ex_Dutch'),
+            'pl' => $translation->_('ex_Polish'),
+            'sv' => $translation->_('ex_Swedish'),
+            'az' => $translation->_('ex_Azerbaijan'),
+            'ro' => $translation->_('ex_Romanian'),
             // not able to show in console without additional shell fonts, maybe later we add it
             // 'th' => Util::translate('ex_Thai'),
             // 'el'      => Util::translate('ex_Greek'),
@@ -293,7 +940,7 @@ class ConsoleMenu
             // 'zh_Hans' => Util::translate('ex_Chinese'),
         ];
 
-        $menuBuilder->setTitle('Choose shell language')
+        $menuBuilder->setTitle($translation->_('cm_ChooseShellLanguage'))
             ->setWidth(75)
             ->setBackgroundColour('black', 'black')
             ->enableAutoShortcuts()
@@ -313,7 +960,7 @@ class ConsoleMenu
             );
             $index++;
         }
-        $menuBuilder->addItem("[$index] Cancel", new GoBackAction());
+        $menuBuilder->addItem("[$index] " . $translation->_('cm_Cancel'), new GoBackAction());
     }
 
     /**
@@ -324,11 +971,14 @@ class ConsoleMenu
     {
         RegisterDIServices::init();
 
+        $di = Di::getDefault();
+        $translation = $di->getShared(TranslationProvider::SERVICE_NAME);
+
         // Set Cyrillic font for display
         Util::setCyrillicFont();
         $separator = '-';
         $titleWidth = 75;
-        $title = str_repeat($separator, 2) . '  ' . Util::translate("PBX console setup") . '  ';
+        $title = str_repeat($separator, 2) . '  ' . $translation->_('cm_PbxConsoleSetup') . '  ';
         $titleSeparator = mb_substr($title . str_repeat($separator, $titleWidth - mb_strlen($title)), 0, $titleWidth);
 
         $menu = new CliMenuBuilder();
@@ -348,32 +998,32 @@ class ConsoleMenu
             ->setWidth($titleWidth)
             ->addItem(' ', static function (CliMenu $menu) {
             })
-            ->addSubMenu('[1] Change language', Closure::fromCallable([$this, 'setupLanguage']));
+            ->addSubMenu('[1] ' . $translation->_('cm_ChangeLanguage'), Closure::fromCallable([$this, 'setupLanguage']));
 
         if ($this->isDocker) {
-            $menu->addSubMenu('[3] ' . Util::translate('Reboot system'), Closure::fromCallable([$this, 'setupReboot']))
-                ->addItem('[4] ' . Util::translate('Ping host'), Closure::fromCallable([$this, 'pingAction']))
-                ->addItem('[5] ' . Util::translate('Firewall') . $this->firewallWarning(), Closure::fromCallable([$this, 'setupFirewall']))
-                ->addItem('[7] ' . Util::translate('Reset admin password'), Closure::fromCallable([$this, 'resetPassword']));
+            $menu->addSubMenu('[3] ' . $translation->_('cm_RebootSystem'), Closure::fromCallable([$this, 'setupReboot']))
+                ->addItem('[4] ' . $translation->_('cm_PingHost'), Closure::fromCallable([$this, 'pingAction']))
+                ->addItem('[5] ' . $translation->_('cm_Firewall') . $this->firewallWarning(), Closure::fromCallable([$this, 'setupFirewall']))
+                ->addItem('[7] ' . $translation->_('cm_ResetAdminPassword'), Closure::fromCallable([$this, 'resetPassword']));
         } elseif ($this->isLiveCd) {
-            $menu->addSubMenu('[2] ' . Util::translate('Set up LAN IP address'), Closure::fromCallable([$this, 'setupLan']))
-                ->addSubMenu('[3] ' . Util::translate('Reboot system'), Closure::fromCallable([$this, 'setupReboot']))
-                ->addItem('[4] ' . Util::translate('Ping host'), Closure::fromCallable([$this, 'pingAction']));
+            $menu->addSubMenu('[2] ' . $translation->_('cm_SetupLanIpAddress'), Closure::fromCallable([$this, 'setupLan']))
+                ->addSubMenu('[3] ' . $translation->_('cm_RebootSystem'), Closure::fromCallable([$this, 'setupReboot']))
+                ->addItem('[4] ' . $translation->_('cm_PingHost'), Closure::fromCallable([$this, 'pingAction']));
             // Add items for live CD options
             if (file_exists('/conf.recover/conf')) {
-                $menu->addItem('[8] ' . Util::translate('Install or recover'), Closure::fromCallable([$this, 'installRecoveryAction']));
+                $menu->addItem('[8] ' . $translation->_('cm_InstallOrRecover'), Closure::fromCallable([$this, 'installRecoveryAction']));
             } else {
-                $menu->addItem('[8] ' . Util::translate('Install on Hard Drive'), Closure::fromCallable([$this, 'installAction']));
+                $menu->addItem('[8] ' . $translation->_('cm_InstallOnHardDrive'), Closure::fromCallable([$this, 'installAction']));
             }
         } else {
-            $menu->addSubMenu('[2] ' . Util::translate('Set up LAN IP address'), Closure::fromCallable([$this, 'setupLan']))
-                ->addSubMenu('[3] ' . Util::translate('Reboot system'), Closure::fromCallable([$this, 'setupReboot']))
-                ->addItem('[4] ' . Util::translate('Ping host'), Closure::fromCallable([$this, 'pingAction']))
-                ->addItem('[5] ' . Util::translate('Firewall') . $this->firewallWarning(), Closure::fromCallable([$this, 'setupFirewall']))
-                ->addSubMenu('[6] ' . Util::translate('Storage') . $this->storageWarning(), Closure::fromCallable([$this, 'setupStorage']))
-                ->addItem('[7] ' . Util::translate('Reset admin password'), Closure::fromCallable([$this, 'resetPassword']));
+            $menu->addSubMenu('[2] ' . $translation->_('cm_SetupLanIpAddress'), Closure::fromCallable([$this, 'setupLan']))
+                ->addSubMenu('[3] ' . $translation->_('cm_RebootSystem'), Closure::fromCallable([$this, 'setupReboot']))
+                ->addItem('[4] ' . $translation->_('cm_PingHost'), Closure::fromCallable([$this, 'pingAction']))
+                ->addItem('[5] ' . $translation->_('cm_Firewall') . $this->firewallWarning(), Closure::fromCallable([$this, 'setupFirewall']))
+                ->addSubMenu('[6] ' . $translation->_('cm_Storage') . $this->storageWarning(), Closure::fromCallable([$this, 'setupStorage']))
+                ->addItem('[7] ' . $translation->_('cm_ResetAdminPassword'), Closure::fromCallable([$this, 'resetPassword']));
         }
-        $menu->addItem('[9] ' . Util::translate('Console'), Closure::fromCallable([$this, 'consoleAction']))
+        $menu->addItem('[9] ' . $translation->_('cm_Console'), Closure::fromCallable([$this, 'consoleAction']))
             ->disableDefaultItems();
 
         $menuBuilder = $menu->build();
@@ -393,11 +1043,14 @@ class ConsoleMenu
      */
     private function getBannerText(): string
     {
+        $di = Di::getDefault();
+        $translation = $di->getShared(TranslationProvider::SERVICE_NAME);
+
         $network = new Network();
 
         $liveCdText = '';
         if ($this->isLiveCd) {
-            $liveCdText = Util::translate('PBX is running in Live or Recovery mode');
+            $liveCdText = $translation->_('cm_PbxLiveModeWarning');
         }
 
         // Determine version and build time
@@ -417,95 +1070,71 @@ class ConsoleMenu
 
         // Get enabled LAN interfaces
         $networks = $network->getEnabledLanInterfaces();
-        $id_text = 0;
 
-        $countSpaceIP = 1;
-        $ipTable = [];
-        $externAddress = '';
+        // Find internet interface for Web UI URL
+        $webInterfaceIp = '';
         foreach ($networks as $if_data) {
-            $if_data['interface_orign'] = $if_data['interface'];
-            $if_data['interface'] = ($if_data['vlanid'] > 0) ? "vlan{$if_data['vlanid']}" : $if_data['interface'];
-            $interface = $network->getInterface($if_data['interface']);
-
-            // Determine the IP line
-            if ($if_data['dhcp'] === '1') {
-                $ip_line = 'IP via DHCP';
-            } elseif ($if_data['vlanid'] > 0) {
-                $ip_line = "VLAN via {$if_data['interface_orign']}";
-                $countSpaceIP = Max($countSpaceIP - 11, strlen($ip_line));
-            } else {
-                $ip_line = 'Static IP  ';
-            }
-
-            // Determine the IP info
-            $ip_info = 'unassigned';
-            if (!empty($interface['ipaddr'])) {
-                $ip_info = "\033[01;33m{$interface['ipaddr']}\033[39m";
-            }
-
-            if (!empty($interface['mac']) && $id_text < 4) {
-                $ipTable[] = ["{$if_data['interface']}:", $ip_line, $ip_info];
-                $id_text++;
-            }
-
             if ($if_data['internet'] === '1') {
-                if (!empty($if_data['exthostname'])) {
-                    $externAddress = $if_data['exthostname'];
-                } elseif (!empty($if_data['extipaddr'])) {
-                    $externAddress = $if_data['extipaddr'];
+                $if_data['interface'] = ($if_data['vlanid'] > 0) ? "vlan{$if_data['vlanid']}" : $if_data['interface'];
+                $interface = $network->getInterface($if_data['interface']);
+
+                // Prefer IPv4, fallback to IPv6
+                if (!empty($interface['ipaddr'])) {
+                    $webInterfaceIp = $interface['ipaddr'];
+                } elseif (!empty($interface['ipv6addr'])) {
+                    $webInterfaceIp = $interface['ipv6addr'];
                 }
+                break;
             }
         }
 
+        // Get virtual hardware type
+        $virtualHardwareType = PbxSettings::getValueByKey(PbxSettings::VIRTUAL_HARDWARE_TYPE);
+        $versionSuffix = '';
+        if (!empty($virtualHardwareType)) {
+            $versionSuffix = " in $virtualHardwareType";
+        }
+
         // Check for system integrity
-        $broken = static function () {
+        $broken = function () use ($translation) {
             if (Util::isT2SdeLinux()) {
                 $files = Main::checkForCorruptedFiles();
                 if (count($files) !== 0) {
-                    return "   \033[01;31m" . Util::translate('The integrity of the system is broken') . "\033[39m";
+                    return "   \033[01;31m" . $translation->_('cm_SystemIntegrityBroken') . "\033[39m";
                 }
             } elseif (php_uname('m') === 'x86_64' && System::isDocker()) {
                 $files = Main::checkForCorruptedFiles();
-                $result = '    Is Docker';
                 if (count($files) !== 0) {
-                    $result .= ": \033[01;31m" . Util::translate('The integrity of the system is broken') . "\033[39m";
+                    return "   \033[01;31m" . $translation->_('cm_SystemIntegrityBroken') . "\033[39m";
                 }
-                return $result;
-            } elseif (System::isDocker()) {
-                // ARM and other platform...
-                return '    Is Docker';
-            } else {
-                return '    Is Debian';
             }
             return '';
         };
 
         // Generate the banner text
-        $result = "*** " . Util::translate('this_is') . "\033[01;32mMikoPBX v.$version\033[39m" . PHP_EOL .
+        $result = "*** " . $translation->_('cm_ThisIs') . " \033[01;32mMikoPBX v.$version$versionSuffix\033[39m" . PHP_EOL .
             "   built on $buildtime for Generic (x64)" . PHP_EOL .
-            "   " . $copyright_info . PHP_EOL;
+            "   " . $copyright_info . PHP_EOL . PHP_EOL;
 
+        // Display Web Interface URL if internet interface has IP
+        if (!empty($webInterfaceIp)) {
+            $httpsPort = PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PORT);
+            $webUrl = 'https://';
 
-        // Create and populate the IP table
-        $table = new ConsoleTable();
-        foreach ($ipTable as $row) {
-            $table->addRow($row);
+            // Handle IPv6 addresses - wrap in brackets
+            if (IpAddressHelper::isIpv6($webInterfaceIp)) {
+                $webUrl .= '[' . $webInterfaceIp . ']';
+            } else {
+                $webUrl .= $webInterfaceIp;
+            }
+
+            // Add port only if it's not standard (443)
+            if ($httpsPort !== '443') {
+                $webUrl .= ':' . $httpsPort;
+            }
+
+            $result .= '   ' . $translation->_('cm_WebInterfaceUrl') . ': ' . "\033[01;36m" . $webUrl . "\033[39m" . PHP_EOL;
         }
-
-        // Add external address if available
-        if (!empty($externAddress)) {
-            $table->addRow(['external:', '', $externAddress]);
-            $id_text++;
-        }
-
-        // Add empty rows if needed
-        while ($id_text < 4) {
-            $table->addRow([' ', ' ']);
-            $id_text++;
-        }
-
-        // Append the IP table to the result
-        $result .= $table->hideBorder()->getTable() . PHP_EOL;
 
         // Append system integrity information
         $result .= $broken();
@@ -520,7 +1149,9 @@ class ConsoleMenu
     {
         // Check if the firewall is disabled
         if (PbxSettings::getValueByKey(PbxSettings::PBX_FIREWALL_ENABLED) === '0') {
-            return "\033[01;34m (" . Util::translate('Firewall disabled') . ") \033[39m";
+            $di = Di::getDefault();
+            $translation = $di->getShared(TranslationProvider::SERVICE_NAME);
+            return "\033[01;34m (" . $translation->_('cm_FirewallDisabled') . ") \033[39m";
         }
         return '';
     }
@@ -533,7 +1164,9 @@ class ConsoleMenu
     {
         // Check if storage disk is unmounted and not in livecd mode
         if (!$this->isLiveCd && !Storage::isStorageDiskMounted()) {
-            return "    \033[01;31m (" . Util::translate('Storage unmounted') . ") \033[39m";
+            $di = Di::getDefault();
+            $translation = $di->getShared(TranslationProvider::SERVICE_NAME);
+            return "    \033[01;31m (" . $translation->_('cm_StorageUnmounted') . ") \033[39m";
         }
         return '';
     }
@@ -545,10 +1178,13 @@ class ConsoleMenu
      */
     public function setupReboot(CliMenuBuilder $b): void
     {
-        $b->setTitle(Util::translate('Choose action'))
+        $di = Di::getDefault();
+        $translation = $di->getShared(TranslationProvider::SERVICE_NAME);
+
+        $b->setTitle($translation->_('cm_ChooseAction'))
             ->enableAutoShortcuts()
             ->addItem(
-                '[1] ' . Util::translate('Reboot'),
+                '[1] ' . $translation->_('cm_Reboot'),
                 function (CliMenu $menu) {
                     try {
                         $menu->close();
@@ -560,7 +1196,7 @@ class ConsoleMenu
                 }
             )
             ->addItem(
-                '[2] ' . Util::translate('Power off'),
+                '[2] ' . $translation->_('cm_PowerOff'),
                 function (CliMenu $menu) {
                     try {
                         $menu->close();
@@ -574,7 +1210,7 @@ class ConsoleMenu
             ->setForegroundColour('white', 'white')
             ->setBackgroundColour('black', 'black')
             ->disableDefaultItems()
-            ->addItem('[3] ' . Util::translate('Cancel'), new GoBackAction());
+            ->addItem('[3] ' . $translation->_('cm_Cancel'), new GoBackAction());
     }
 
     /**
@@ -584,14 +1220,17 @@ class ConsoleMenu
      */
     public function pingAction(CliMenu $menu): void
     {
+        $di = Di::getDefault();
+        $translation = $di->getShared(TranslationProvider::SERVICE_NAME);
+
         $style = new MenuStyle();
         $style->setBg('white')
             ->setFg('black');
         $input_ip = new class (new InputIO($menu, $menu->getTerminal()), $style) extends Text {
         };
         $elLanIp = $input_ip
-            ->setPromptText(Util::translate('Enter a host name or IP address: (Press ESC to exit)'))
-            ->setValidationFailedText(Util::translate('WARNING'))
+            ->setPromptText($translation->_('cm_EnterHostnameOrIp'))
+            ->setValidationFailedText($translation->_('cm_Warning'))
             ->ask();
         $pingHost = $elLanIp->fetch();
         $pingPath = Util::which('ping');
@@ -608,6 +1247,9 @@ class ConsoleMenu
      */
     public function setupFirewall(CliMenu $menu): void
     {
+        $di = Di::getDefault();
+        $translation = $di->getShared(TranslationProvider::SERVICE_NAME);
+
         // Code for firewall optionn
         $firewall_enable = PbxSettings::getValueByKey(PbxSettings::PBX_FIREWALL_ENABLED);
 
@@ -617,7 +1259,7 @@ class ConsoleMenu
             $action = 'enable';
         }
 
-        $helloText = Util::translate("Do you want $action firewall now? (y/n): ");
+        $helloText = $translation->_('cm_DoYouWantFirewallAction', ['action' => $action]);
         $style = (new MenuStyle())
             ->setBg('white')
             ->setFg('black');
@@ -630,7 +1272,7 @@ class ConsoleMenu
         };
         $elDialog = $inputDialog
             ->setPromptText($helloText)
-            ->setValidationFailedText(Util::translate('WARNING') . ': y/n')
+            ->setValidationFailedText($translation->_('cm_WarningYesNo'))
             ->ask();
         $result = $elDialog->fetch();
 
@@ -657,9 +1299,12 @@ class ConsoleMenu
      */
     public function setupStorage(CliMenuBuilder $b): void
     {
-        $b->setTitle(Util::translate('Choose action'))
+        $di = Di::getDefault();
+        $translation = $di->getShared(TranslationProvider::SERVICE_NAME);
+
+        $b->setTitle($translation->_('cm_ChooseAction'))
             ->addItem(
-                '[1] ' . Util::translate('Connect storage'),
+                '[1] ' . $translation->_('cm_ConnectStorage'),
                 function (CliMenu $menu) {
                     // Code for connecting storage
                     $menu->close();
@@ -669,13 +1314,16 @@ class ConsoleMenu
                 }
             )
             ->addItem(
-                '[2] ' . Util::translate('Check storage'),
+                '[2] ' . $translation->_('cm_CheckStorage'),
                 function (CliMenu $menu) {
+                    $di = Di::getDefault();
+                    $translation = $di->getShared(TranslationProvider::SERVICE_NAME);
+
                     // Code for checking storage
                     /** @var StorageModel $data */
                     $data = StorageModel::findFirst();
                     if (!$data) {
-                        echo "\n " . Util::translate('Valid disks not found...') . " \n";
+                        echo "\n " . $translation->_('cm_ValidDisksNotFound') . " \n";
                         return;
                     }
                     $style = (new MenuStyle())
@@ -688,8 +1336,8 @@ class ConsoleMenu
                         }
                     };
                     $elDialog = $input_ip
-                        ->setPromptText(Util::translate('All processes will be completed. Continue? (y/n):'))
-                        ->setValidationFailedText(Util::translate('WARNING') . ': y/n')
+                        ->setPromptText($translation->_('cm_AllProcessesWillBeCompleted'))
+                        ->setValidationFailedText($translation->_('cm_WarningYesNo'))
                         ->ask();
                     $result = $elDialog->fetch();
                     $menu->close();
@@ -707,13 +1355,16 @@ class ConsoleMenu
                 }
             )
             ->addItem(
-                '[3] ' . Util::translate('Resize storage'),
+                '[3] ' . $translation->_('cm_ResizeStorage'),
                 function (CliMenu $menu) {
+                    $di = Di::getDefault();
+                    $translation = $di->getShared(TranslationProvider::SERVICE_NAME);
+
                     // Code for resizing storage
                     /** @var StorageModel $data */
                     $data = StorageModel::findFirst();
                     if ($data === null) {
-                        echo "\n " . Util::translate('Valid disks not found...') . " \n";
+                        echo "\n " . $translation->_('cm_ValidDisksNotFound') . " \n";
                         return;
                     }
                     $style = (new MenuStyle())
@@ -727,8 +1378,8 @@ class ConsoleMenu
                         }
                     };
                     $elDialog = $input_ip
-                        ->setPromptText(Util::translate('All processes will be completed. Continue? (y/n):'))
-                        ->setValidationFailedText(Util::translate('WARNING') . ': y/n')
+                        ->setPromptText($translation->_('cm_AllProcessesWillBeCompleted'))
+                        ->setValidationFailedText($translation->_('cm_WarningYesNo'))
                         ->ask();
                     $result = $elDialog->fetch();
                     $menu->close();
@@ -751,7 +1402,7 @@ class ConsoleMenu
             ->setForegroundColour('white', 'white')
             ->setBackgroundColour('black', 'black')
             ->disableDefaultItems()
-            ->addItem('[4] ' . Util::translate('Cancel'), new GoBackAction());
+            ->addItem('[4] ' . $translation->_('cm_Cancel'), new GoBackAction());
     }
 
     /**
@@ -761,6 +1412,9 @@ class ConsoleMenu
      */
     public function resetPassword(CliMenu $menu): void
     {
+        $di = Di::getDefault();
+        $translation = $di->getShared(TranslationProvider::SERVICE_NAME);
+
         // Code for resetting admin password
         $style = (new MenuStyle())
             ->setBg('white')
@@ -773,8 +1427,8 @@ class ConsoleMenu
             }
         };
         $elResetPassword = $input_ip
-            ->setPromptText('Do you want reset password? (y/n):')
-            ->setValidationFailedText(Util::translate('WARNING') . ': y/n')
+            ->setPromptText($translation->_('cm_DoYouWantResetPassword'))
+            ->setValidationFailedText($translation->_('cm_WarningYesNo'))
             ->ask();
         $result = $elResetPassword->fetch();
         if ($result !== 'y') {
@@ -784,13 +1438,13 @@ class ConsoleMenu
             $menu->close();
         } catch (Exception $e) {
         }
-        
+
         PbxSettings::resetValueToDefault(PbxSettings::WEB_ADMIN_LOGIN);
         PbxSettings::resetValueToDefault(PbxSettings::WEB_ADMIN_PASSWORD);
 
         $newLogin = PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_LOGIN);
         $newPassword = PbxSettings::getValueByKey(PbxSettings::WEB_ADMIN_PASSWORD);
-        echo Util::translate("Password successfully reset. New login: $newLogin. New password: $newPassword.");
+        echo $translation->_('cm_PasswordSuccessfullyReset', ['login' => $newLogin, 'password' => $newPassword]);
         sleep(2);
         $this->start();
     }

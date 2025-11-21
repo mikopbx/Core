@@ -24,6 +24,7 @@ use MikoPBX\Common\Models\NetworkStaticRoutes;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Network as NetworkSystem;
 use MikoPBX\Core\System\System;
+use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 
 /**
@@ -80,6 +81,17 @@ class GetConfigAction
                         $interfaceData['subnet'] = '24';
                     }
 
+                    // Include IPv6 fields (added in Phase 2a)
+                    // ipv6_mode: '0'=Off, '1'=Auto (SLAAC/DHCPv6), '2'=Manual
+                    $interfaceData['ipv6_mode'] = $interfaceData['ipv6_mode'] ?? '0';
+                    $interfaceData['ipv6addr'] = $interfaceData['ipv6addr'] ?? '';
+                    $interfaceData['ipv6_subnet'] = $interfaceData['ipv6_subnet'] ?? '';
+                    $interfaceData['ipv6_gateway'] = $interfaceData['ipv6_gateway'] ?? '';
+
+                    // Include IPv6 DNS fields (added in Phase 6)
+                    $interfaceData['primarydns6'] = $interfaceData['primarydns6'] ?? '';
+                    $interfaceData['secondarydns6'] = $interfaceData['secondarydns6'] ?? '';
+
                     // Get current IP address from system (especially useful when DHCP is enabled)
                     // Determine the actual interface name (including VLAN)
                     $actualInterfaceName = $interfaceData['interface'];
@@ -89,10 +101,17 @@ class GetConfigAction
 
                     try {
                         $currentInterface = $networkSystem->getInterface($actualInterfaceName);
-                        // Add current system values (useful when DHCP is enabled and DB values are empty)
+                        // Add current IPv4 system values (useful when DHCP is enabled and DB values are empty)
                         $interfaceData['currentIpaddr'] = $currentInterface['ipaddr'] ?? '';
                         $interfaceData['currentSubnet'] = $currentInterface['subnet'] ?? '';
                         $interfaceData['currentGateway'] = $currentInterface['gateway'] ?? '';
+
+                        // Add current IPv6 system values (useful when IPv6 Auto/SLAAC is enabled)
+                        $interfaceData['currentIpv6addr'] = $currentInterface['ipv6addr'] ?? '';
+                        $interfaceData['currentIpv6_subnet'] = $currentInterface['ipv6_subnet'] ?? '';
+                        $interfaceData['currentIpv6_gateway'] = $currentInterface['ipv6_gateway'] ?? '';
+                        $interfaceData['currentPrimarydns6'] = $currentInterface['primarydns6'] ?? '';
+                        $interfaceData['currentSecondarydns6'] = $currentInterface['secondarydns6'] ?? '';
 
                         // When DHCP is enabled, use current values from system instead of DB
                         // This ensures we always show actual DHCP-provided values
@@ -104,11 +123,41 @@ class GetConfigAction
                                 $interfaceData['subnet'] = $interfaceData['currentSubnet'];
                             }
                         }
+
+                        // When IPv6 Auto mode (SLAAC/DHCPv6) is enabled, use current values from system
+                        // This ensures we show actual autoconfigured IPv6 addresses
+                        if ($interfaceData['ipv6_mode'] === '1') {
+                            if (!empty($interfaceData['currentIpv6addr'])) {
+                                $interfaceData['ipv6addr'] = $interfaceData['currentIpv6addr'];
+                            }
+                            if (!empty($interfaceData['currentIpv6_subnet'])) {
+                                $interfaceData['ipv6_subnet'] = $interfaceData['currentIpv6_subnet'];
+                            }
+                            if (!empty($interfaceData['currentIpv6_gateway'])) {
+                                $interfaceData['ipv6_gateway'] = $interfaceData['currentIpv6_gateway'];
+                            }
+                            if (!empty($interfaceData['currentPrimarydns6'])) {
+                                $interfaceData['primarydns6'] = $interfaceData['currentPrimarydns6'];
+                            }
+                            if (!empty($interfaceData['currentSecondarydns6'])) {
+                                $interfaceData['secondarydns6'] = $interfaceData['currentSecondarydns6'];
+                            }
+                        }
                     } catch (\Throwable $e) {
-                        // If we can't get current interface info, leave fields empty
+                        // Log the error and leave fields empty
+                        SystemMessages::sysLogMsg(
+                            __METHOD__,
+                            "Failed to get current interface info for {$actualInterfaceName}: " . $e->getMessage(),
+                            LOG_WARNING
+                        );
                         $interfaceData['currentIpaddr'] = '';
                         $interfaceData['currentSubnet'] = '';
                         $interfaceData['currentGateway'] = '';
+                        $interfaceData['currentIpv6addr'] = '';
+                        $interfaceData['currentIpv6_subnet'] = '';
+                        $interfaceData['currentIpv6_gateway'] = '';
+                        $interfaceData['currentPrimarydns6'] = '';
+                        $interfaceData['currentSecondarydns6'] = '';
                     }
 
                     $interfaces[] = $interfaceData;
@@ -157,7 +206,15 @@ class GetConfigAction
                 'internet' => false,
                 'topology' => '',
                 'extipaddr' => '',
-                'exthostname' => ''
+                'exthostname' => '',
+                // IPv6 fields (Phase 3)
+                'ipv6_mode' => '0',
+                'ipv6addr' => '',
+                'ipv6_subnet' => '',
+                'ipv6_gateway' => '',
+                // IPv6 DNS fields (Phase 6)
+                'primarydns6' => '',
+                'secondarydns6' => ''
             ];
 
             // Get NAT settings

@@ -20,6 +20,7 @@
 
 namespace MikoPBX\Common\Models;
 
+use MikoPBX\Core\Utilities\IpAddressHelper;
 use Phalcon\Filter\Validation;
 use Phalcon\Filter\Validation\Validator\Uniqueness as UniquenessValidator;
 use Phalcon\Filter\Validation\Validator\Callback as CallbackValidator;
@@ -39,7 +40,7 @@ class NetworkStaticRoutes extends ModelsBase
      * @Identity
      * @Column(type="integer", nullable=false)
      */
-    public $id;
+    public int|string|null $id;
 
     /**
      * Network address (e.g., 192.168.10.0)
@@ -49,7 +50,7 @@ class NetworkStaticRoutes extends ModelsBase
     public ?string $network = '';
 
     /**
-     * Subnet mask in CIDR notation (0-32)
+     * Subnet mask in CIDR notation (0-32 for IPv4, 0-128 for IPv6)
      *
      * @Column(type="string", nullable=false)
      */
@@ -139,6 +140,19 @@ class NetworkStaticRoutes extends ModelsBase
             )
         );
 
+        // Validate that gateway and network have matching IP versions
+        $validation->add(
+            'gateway',
+            new CallbackValidator(
+                [
+                    'callback' => function () {
+                        return $this->validateGatewayMatchesNetwork($this->network, $this->gateway);
+                    },
+                    'message' => $this->t('mo_GatewayIpVersionMismatch'),
+                ]
+            )
+        );
+
         // Validate subnet mask (CIDR notation: 0-32)
         $validation->add(
             'subnet',
@@ -172,7 +186,7 @@ class NetworkStaticRoutes extends ModelsBase
     }
 
     /**
-     * Validates a subnet mask field in CIDR notation (0-32)
+     * Validates a subnet mask field in CIDR notation (0-32 for IPv4, 0-128 for IPv6)
      *
      * @param string|null $value Subnet mask to validate
      * @return bool True if valid, false otherwise
@@ -189,12 +203,42 @@ class NetworkStaticRoutes extends ModelsBase
             return false;
         }
 
-        // Check range (0-32)
         $intValue = (int)$value;
-        if ($intValue < 0 || $intValue > 32) {
+
+        // Network address is required for CIDR validation
+        if (empty($this->network)) {
+            // Cannot validate CIDR without knowing IP version
+            // Reject to prevent inconsistent data
             return false;
         }
 
-        return true;
+        // Use IpAddressHelper to validate subnet for the specific IP version
+        return IpAddressHelper::isValidSubnet($this->network, $intValue);
+    }
+
+    /**
+     * Validates that gateway and network have matching IP versions
+     *
+     * @param string|null $network Network address
+     * @param string|null $gateway Gateway address
+     * @return bool True if IP versions match or either is empty, false otherwise
+     */
+    private function validateGatewayMatchesNetwork(?string $network, ?string $gateway): bool
+    {
+        // Empty values are allowed (validation happens elsewhere)
+        if (empty($network) || empty($gateway)) {
+            return true;
+        }
+
+        $networkVersion = IpAddressHelper::getIpVersion($network);
+        $gatewayVersion = IpAddressHelper::getIpVersion($gateway);
+
+        // Both must be valid IPs
+        if ($networkVersion === false || $gatewayVersion === false) {
+            return true; // Let other validators handle invalid IPs
+        }
+
+        // Versions must match
+        return $networkVersion === $gatewayVersion;
     }
 }
