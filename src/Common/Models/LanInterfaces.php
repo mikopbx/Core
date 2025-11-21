@@ -158,7 +158,7 @@ class LanInterfaces extends ModelsBase
      * IPv6 configuration mode
      * 0 = Off, 1 = Auto (SLAAC/DHCPv6), 2 = Manual (static)
      *
-     * @Column(type="string", length=1, nullable=false)
+     * @Column(type="string", length=1, nullable=false, default='0')
      */
     public ?string $ipv6_mode = '0';
 
