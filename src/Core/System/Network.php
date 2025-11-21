@@ -657,19 +657,32 @@ class Network extends Injectable
     ): array {
         $arr_commands = [];
         $ip = Util::which('ip');
+        $sysctl = Util::which('sysctl');
+        $escapedIfName = escapeshellarg($ifName);
 
         switch ($ipv6Mode) {
-            case '0': // Off - Remove all IPv6 addresses
+            case '0': // Off - Disable IPv6 completely on this interface
                 SystemMessages::sysLogMsg(__METHOD__, "Disabling IPv6 on $ifName");
-                $escapedIfName = escapeshellarg($ifName);
-                $arr_commands[] = "$ip -6 addr flush dev $escapedIfName";
+
+                // Disable IPv6 on this specific interface (not globally!)
+                $arr_commands[] = "$sysctl -w net.ipv6.conf.$ifName.disable_ipv6=1";
+
+                // Flush any existing IPv6 addresses
+                $arr_commands[] = "$ip -6 addr flush dev $escapedIfName 2>/dev/null || true";
                 break;
 
             case '1': // Auto - SLAAC (Stateless Address Autoconfiguration)
                 SystemMessages::sysLogMsg(__METHOD__, "Enabling IPv6 Auto (SLAAC) on $ifName");
+
+                // Enable IPv6 on this interface
+                $arr_commands[] = "$sysctl -w net.ipv6.conf.$ifName.disable_ipv6=0";
+
+                // Enable autoconf (SLAAC)
+                $arr_commands[] = "$sysctl -w net.ipv6.conf.$ifName.autoconf=1";
+                $arr_commands[] = "$sysctl -w net.ipv6.conf.$ifName.accept_ra=1";
+
                 // SLAAC is automatic in Linux kernel when interface is up
                 // Link-local address (fe80::/10) will be assigned automatically
-                // No explicit commands needed - kernel handles this
                 break;
 
             case '2': // Manual - Static IPv6 configuration
@@ -695,9 +708,15 @@ class Network extends Injectable
                 // Escape all shell arguments to prevent command injection
                 $escapedAddr = escapeshellarg($ipv6Addr);
                 $escapedSubnet = escapeshellarg($ipv6Subnet);
-                $escapedIfName = escapeshellarg($ifName);
 
-                // Add IPv6 address to interface
+                // Enable IPv6 on this interface
+                $arr_commands[] = "$sysctl -w net.ipv6.conf.$ifName.disable_ipv6=0";
+
+                // Disable autoconf for manual configuration
+                $arr_commands[] = "$sysctl -w net.ipv6.conf.$ifName.autoconf=0";
+                $arr_commands[] = "$sysctl -w net.ipv6.conf.$ifName.accept_ra=0";
+
+                // Add static IPv6 address to interface
                 $arr_commands[] = "$ip -6 addr add $escapedAddr/$escapedSubnet dev $escapedIfName";
 
                 // Add default gateway if specified
@@ -769,13 +788,8 @@ class Network extends Injectable
 
         // Execute IPv6 configuration commands
         if (!empty($arr_commands)) {
-            $result = Processes::mwExecCommands($arr_commands, $out, 'net');
-
-            if ($result === 0) {
-                SystemMessages::sysLogMsg(__METHOD__, 'IPv6 configured successfully in Docker container: ' . implode('; ', $arr_commands));
-            } else {
-                SystemMessages::sysLogMsg(__METHOD__, 'WARNING: Some IPv6 commands failed in Docker. Output: ' . implode(' ', $out));
-            }
+            Processes::mwExecCommands($arr_commands, $out, 'net');
+            SystemMessages::sysLogMsg(__METHOD__, 'IPv6 configured in Docker container: ' . implode('; ', $arr_commands));
         } else {
             SystemMessages::sysLogMsg(__METHOD__, 'No IPv6 configuration needed in Docker (all interfaces have IPv6 mode=Off or invalid config)');
         }
@@ -788,6 +802,17 @@ class Network extends Injectable
      */
     public function lanConfigure(): int
     {
+        // ALWAYS enable IPv6 at kernel level for stability
+        // This allows applications (Asterisk, Nginx, PHP-FPM) to bind on IPv6 sockets
+        // IPv6 addresses will be managed per-interface based on user configuration
+        $sysctl = Util::which('sysctl');
+        $enableIpv6Commands = [
+            "$sysctl -w net.ipv6.conf.all.disable_ipv6=0",
+            "$sysctl -w net.ipv6.conf.default.disable_ipv6=0",
+        ];
+        Processes::mwExecCommands($enableIpv6Commands, $out, 'ipv6_enable');
+        SystemMessages::sysLogMsg(__METHOD__, 'IPv6 enabled at kernel level');
+
         if (System::isDocker()) {
             // In Docker: Only configure IPv6 (IPv4 is managed by Docker runtime)
             $this->configureIpv6InDocker();

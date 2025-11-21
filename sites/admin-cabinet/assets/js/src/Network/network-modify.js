@@ -1204,7 +1204,7 @@ const networks = {
                         <div class="five wide field">
                             <label>${globalTranslate.nw_IPv6Address || 'IPv6 Address'}</label>
                             <div class="field max-width-600">
-                                <input type="text" class="ipv6address" name="ipv6addr_${id}" value="${iface.ipv6addr || ''}" placeholder="2001:db8::1" />
+                                <input type="text" class="ipv6address" name="ipv6addr_${id}" value="${iface.ipv6addr || ''}" placeholder="fd00::1" />
                             </div>
                         </div>
                         <div class="field">
@@ -1243,7 +1243,7 @@ const networks = {
                     <div class="field ipv6-gateway-field-${id}" ${ipv6FieldsVisible}>
                         <label>${globalTranslate.nw_IPv6Gateway || 'IPv6 Gateway'}</label>
                         <div class="field max-width-400 ${ipv6GatewayDisabledClass}">
-                            <input type="text" class="ipv6address" name="ipv6_gateway_${id}" value="${iface.currentIpv6_gateway || iface.ipv6_gateway || ''}" ${ipv6GatewayReadonly} placeholder="2001:db8::1" />
+                            <input type="text" class="ipv6address" name="ipv6_gateway_${id}" value="${iface.currentIpv6_gateway || iface.ipv6_gateway || ''}" ${ipv6GatewayReadonly} placeholder="fe80::1" />
                         </div>
                     </div>
 
