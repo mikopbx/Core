@@ -23,6 +23,7 @@ use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Models\NetworkStaticRoutes;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\System;
+use MikoPBX\Core\Utilities\IpAddressHelper;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Di;
 
@@ -46,7 +47,7 @@ class SaveConfigAction
     /**
      * Save complete network configuration
      *
-     * @param array $data Configuration data
+     * @param array<string, mixed> $data Configuration data
      * @return PBXApiResult
      */
     public static function main(array $data): PBXApiResult
@@ -55,7 +56,7 @@ class SaveConfigAction
         $res->processor = __METHOD__;
 
         // Validate input data
-        list($isValid, $validationMessages) = self::validateInputData($data);
+        [$isValid, $validationMessages] = self::validateInputData($data);
         if (!$isValid) {
             $res->messages['error'] = $validationMessages;
             $res->success = false;
@@ -63,13 +64,18 @@ class SaveConfigAction
         }
 
         $di = Di::getDefault();
+        if ($di === null) {
+            $res->messages['error'] = ['Dependency injection container not initialized'];
+            $res->success = false;
+            return $res;
+        }
         $db = $di->get('db');
 
         $db->begin();
 
         try {
             // Save LAN interfaces
-            list($result, $messages) = self::saveLanInterfaces($data);
+            [$result, $messages] = self::saveLanInterfaces($data);
             if (!$result) {
                 $res->messages['error'] = $messages;
                 $db->rollback();
@@ -77,7 +83,7 @@ class SaveConfigAction
             }
 
             // Save NAT settings
-            list($result, $messages) = self::saveNatSettings($data);
+            [$result, $messages] = self::saveNatSettings($data);
             if (!$result) {
                 $res->messages['error'] = $messages;
                 $db->rollback();
@@ -85,7 +91,7 @@ class SaveConfigAction
             }
 
             // Save static routes
-            list($result, $messages) = self::saveStaticRoutes($data);
+            [$result, $messages] = self::saveStaticRoutes($data);
             if (!$result) {
                 $res->messages['error'] = $messages;
                 $db->rollback();
@@ -110,8 +116,8 @@ class SaveConfigAction
     /**
      * Validates input data for network configuration
      *
-     * @param array $data Configuration data to validate
-     * @return array Returns [bool $isValid, array $messages]
+     * @param array<string, mixed> $data Configuration data to validate
+     * @return array{0: bool, 1: array<int, string>} Returns [bool $isValid, array $messages]
      */
     private static function validateInputData(array $data): array
     {
@@ -119,14 +125,21 @@ class SaveConfigAction
 
         // Validate external IP address if provided
         if (!empty($data['extipaddr'])) {
-            if (!self::validateIpAddressWithOptionalPort($data['extipaddr'])) {
+            $parsed = IpAddressHelper::parseIpWithOptionalPort($data['extipaddr']);
+            if ($parsed === false) {
                 $messages[] = 'nw_ValidateExtIppaddrNotRight';
+            } else {
+                // Validate port if present
+                [$ip, $port] = $parsed;
+                if ($port !== null && ((int)$port < 1 || (int)$port > 65535)) {
+                    $messages[] = 'nw_ValidateExtIppaddrNotRight';
+                }
             }
         }
 
         // Validate external hostname if provided
         if (!empty($data['exthostname'])) {
-            if (!self::validateHostname($data['exthostname'])) {
+            if (!IpAddressHelper::validateHostname($data['exthostname'])) {
                 $messages[] = 'nw_ValidateHostnameInvalid';
             }
         }
@@ -134,6 +147,40 @@ class SaveConfigAction
         // Check that at least one of extipaddr or exthostname is provided when NAT is enabled
         if (($data['usenat'] ?? false) && empty($data['extipaddr']) && empty($data['exthostname'])) {
             $messages[] = 'nw_ValidateExtIppaddrOrHostIsEmpty';
+        }
+
+        // Check Dual-Stack mode: exthostname is REQUIRED when any interface has IPv4 + public IPv6
+        // Dual-Stack = IPv4 (any mode) + IPv6 global unicast (2000::/3)
+        if ($data['usenat'] ?? false) {
+            $hasDualStack = false;
+
+            // Check all interfaces for dual-stack configuration
+            foreach ($data as $key => $value) {
+                if (preg_match('/^ipv6addr_(\d+)$/', $key, $matches) && !empty($value)) {
+                    $interfaceId = $matches[1];
+
+                    // Check if interface has IPv4 (either static or DHCP)
+                    $hasIpv4 = !empty($data["ipaddr_{$interfaceId}"]) ||
+                               (bool)($data["dhcp_{$interfaceId}"] ?? false);
+
+                    // Check if IPv6 is enabled (Auto or Manual)
+                    $ipv6Mode = $data["ipv6_mode_{$interfaceId}"] ?? '0';
+                    $hasIpv6 = ($ipv6Mode === '1' || $ipv6Mode === '2');
+
+                    // Check if IPv6 address is global unicast (public)
+                    $isGlobalUnicast = IpAddressHelper::isGlobalUnicast($value);
+
+                    if ($hasIpv4 && $hasIpv6 && $isGlobalUnicast) {
+                        $hasDualStack = true;
+                        break;
+                    }
+                }
+            }
+
+            // In Dual-Stack mode, exthostname is REQUIRED
+            if ($hasDualStack && empty($data['exthostname'])) {
+                $messages[] = 'nw_ValidateExternalHostnameEmpty';
+            }
         }
 
         // Validate interface IP addresses
@@ -177,6 +224,79 @@ class SaveConfigAction
             }
         }
 
+        // Validate IPv6 fields (Phase 3)
+        foreach ($data as $key => $value) {
+            // IPv6 mode validation (ipv6_mode_{id})
+            if (preg_match('/^ipv6_mode_(\d+)$/', $key, $matches)) {
+                if (!in_array($value, ['0', '1', '2'], true)) {
+                    $messages[] = 'nw_ValidateIPv6ModeInvalid';
+                }
+
+                // Check required fields for Manual mode
+                if ($value === '2') {
+                    $interfaceId = $matches[1];
+                    $addr = $data["ipv6addr_{$interfaceId}"] ?? '';
+                    $subnet = $data["ipv6_subnet_{$interfaceId}"] ?? '';
+
+                    if (empty($addr)) {
+                        $messages[] = 'nw_ValidateIPv6AddressRequired';
+                    }
+                    if (empty($subnet)) {
+                        $messages[] = 'nw_ValidateIPv6SubnetRequired';
+                    }
+                }
+            }
+
+            // IPv6 address validation (ipv6addr_{id})
+            if (preg_match('/^ipv6addr_(\d+)$/', $key, $matches) && !empty($value)) {
+                $interfaceId = $matches[1];
+                $mode = $data["ipv6_mode_{$interfaceId}"] ?? '0';
+
+                // Validate only if mode is Manual ('2')
+                if ($mode === '2') {
+                    if (!filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+                        $messages[] = 'nw_ValidateIPv6AddressInvalid';
+                    }
+                }
+            }
+
+            // IPv6 subnet validation (ipv6_subnet_{id})
+            if (preg_match('/^ipv6_subnet_(\d+)$/', $key, $matches)) {
+                $interfaceId = $matches[1];
+                $mode = $data["ipv6_mode_{$interfaceId}"] ?? '0';
+
+                // Validate only if mode is Manual ('2') AND value is not empty
+                if ($mode === '2' && !empty($value)) {
+                    $subnetInt = (int)$value;
+                    if ($subnetInt < 1 || $subnetInt > 128) {
+                        $messages[] = 'nw_ValidateIPv6SubnetInvalid';
+                    }
+                }
+                // For Auto ('1') and Off ('0') modes, subnet validation is skipped
+            }
+
+            // IPv6 gateway validation (ipv6_gateway_{id}) - optional
+            if (preg_match('/^ipv6_gateway_(\d+)$/', $key, $matches) && !empty($value)) {
+                if (!filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+                    $messages[] = 'nw_ValidateIPv6GatewayInvalid';
+                }
+            }
+
+            // IPv6 Primary DNS validation (primarydns6_{id}) - optional
+            if (preg_match('/^primarydns6_(\d+)$/', $key, $matches) && !empty($value)) {
+                if (!filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+                    $messages[] = 'nw_ValidateIPv6PrimaryDnsInvalid';
+                }
+            }
+
+            // IPv6 Secondary DNS validation (secondarydns6_{id}) - optional
+            if (preg_match('/^secondarydns6_(\d+)$/', $key, $matches) && !empty($value)) {
+                if (!filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+                    $messages[] = 'nw_ValidateIPv6SecondaryDnsInvalid';
+                }
+            }
+        }
+
         return [empty($messages), $messages];
     }
 
@@ -191,77 +311,12 @@ class SaveConfigAction
         return filter_var($ip, FILTER_VALIDATE_IP) !== false;
     }
 
-    /**
-     * Validates IP address with optional port
-     *
-     * @param string $ipWithPort IP address with optional port (e.g., "192.168.1.1:5060")
-     * @return bool True if valid, false otherwise
-     */
-    private static function validateIpAddressWithOptionalPort(string $ipWithPort): bool
-    {
-        // Check if there's a port
-        if (strpos($ipWithPort, ':') !== false) {
-            $parts = explode(':', $ipWithPort);
-            if (count($parts) !== 2) {
-                return false;
-            }
-
-            [$ip, $port] = $parts;
-
-            // Validate IP
-            if (!self::validateIpAddress($ip)) {
-                return false;
-            }
-
-            // Validate port (1-65535)
-            if (!ctype_digit($port) || (int)$port < 1 || (int)$port > 65535) {
-                return false;
-            }
-
-            return true;
-        }
-
-        // No port, just validate IP
-        return self::validateIpAddress($ipWithPort);
-    }
-
-    /**
-     * Validates hostname according to RFC 952 and RFC 1123
-     *
-     * @param string $hostname Hostname to validate
-     * @return bool True if valid, false otherwise
-     */
-    private static function validateHostname(string $hostname): bool
-    {
-        // Check length (max 253 characters total)
-        if (strlen($hostname) > 253) {
-            return false;
-        }
-
-        // Split into labels
-        $labels = explode('.', $hostname);
-
-        foreach ($labels as $label) {
-            // Check label length (1-63 characters)
-            $labelLength = strlen($label);
-            if ($labelLength < 1 || $labelLength > 63) {
-                return false;
-            }
-
-            // Check label format: only alphanumeric and hyphens, cannot start/end with hyphen
-            if (!preg_match('/^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/', $label)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
 
     /**
      * Saves the LAN interface configurations
      *
-     * @param array $data Array containing the interface configurations
-     * @return array Returns an array with a boolean success flag and an array of error messages if applicable
+     * @param array<string, mixed> $data Array containing the interface configurations
+     * @return array{0: bool, 1: array<int, string>} Returns an array with a boolean success flag and an array of error messages if applicable
      */
     private static function saveLanInterfaces(array $data): array
     {
@@ -275,9 +330,12 @@ class SaveConfigAction
             $internetInterface = LanInterfaces::findFirst(['conditions' => 'internet = 1']);
             if ($internetInterface) {
                 $data['internet_interface'] = (string)$internetInterface->id;
-            } elseif ($networkInterfaces->count() > 0) {
+            } else {
                 // Fallback: use first interface if no internet interface marked
-                $data['internet_interface'] = (string)$networkInterfaces[0]->id;
+                $firstInterface = $networkInterfaces->getFirst();
+                if ($firstInterface !== false) {
+                    $data['internet_interface'] = (string)$firstInterface->id;
+                }
             }
         }
 
@@ -335,12 +393,16 @@ class SaveConfigAction
      * Fills network interface settings
      *
      * @param LanInterfaces $eth
-     * @param array $data post data
+     * @param array<string, mixed> $data post data
      * @param bool $isDocker
      */
     private static function fillEthStructure(LanInterfaces $eth, array $data, bool $isDocker): void
     {
-        foreach ($eth as $name => $value) {
+        // Get model column names
+        $metaData = $eth->getModelsMetaData();
+        $attributes = $metaData->getAttributes($eth);
+
+        foreach ($attributes as $name) {
             // Check if this interface is selected as internet interface
             $itIsInternetInterface = isset($data['internet_interface']) && intval($eth->id) === intval($data['internet_interface']);
 
@@ -446,6 +508,54 @@ class SaveConfigAction
                     }
                     break;
 
+                // IPv6 fields (Phase 3)
+                case 'ipv6_mode':
+                    // Save IPv6 mode
+                    $fieldKey = $name . '_' . $eth->id;
+                    if (array_key_exists($fieldKey, $data)) {
+                        $eth->$name = $data[$fieldKey] ?? '0';
+                    }
+                    break;
+
+                case 'ipv6addr':
+                case 'ipv6_gateway':
+                    // Save IPv6 address fields (optional for Auto mode)
+                    $fieldKey = $name . '_' . $eth->id;
+                    if (array_key_exists($fieldKey, $data)) {
+                        $eth->$name = $data[$fieldKey] ?? '';
+                    }
+                    break;
+
+                case 'ipv6_subnet':
+                    // Save IPv6 subnet with default for Auto mode
+                    $fieldKey = $name . '_' . $eth->id;
+                    $modeKey = 'ipv6_mode_' . $eth->id;
+
+                    if (array_key_exists($fieldKey, $data)) {
+                        $value = $data[$fieldKey] ?? '';
+                        $mode = $data[$modeKey] ?? '0';
+
+                        // For Auto mode (SLAAC/DHCPv6), set default subnet if empty
+                        if ($mode === '1' && empty($value)) {
+                            $eth->$name = '64';
+                        } else {
+                            $eth->$name = $value;
+                        }
+                    }
+                    break;
+
+                // IPv6 DNS fields (Phase 6)
+                case 'primarydns6':
+                case 'secondarydns6':
+                    // Save IPv6 DNS configuration for internet interface only
+                    if ($itIsInternetInterface) {
+                        $fieldKey = $name . '_' . $eth->id;
+                        $eth->$name = array_key_exists($fieldKey, $data) ? $data[$fieldKey] : '';
+                    } else {
+                        $eth->$name = '';
+                    }
+                    break;
+
                 default:
                     if (array_key_exists($name . '_' . $eth->id, $data)) {
                         $eth->$name = $data[$name . '_' . $eth->id];
@@ -457,8 +567,8 @@ class SaveConfigAction
     /**
      * Saves the NAT-related settings for external access
      *
-     * @param array $data Associative array where keys are setting names and values are the new settings to be saved
-     * @return array Returns an array with a boolean success flag and, if unsuccessful, an array of error messages
+     * @param array<string, mixed> $data Associative array where keys are setting names and values are the new settings to be saved
+     * @return array{0: bool, 1: array<int, string>} Returns an array with a boolean success flag and, if unsuccessful, an array of error messages
      */
     private static function saveNatSettings(array $data): array
     {
@@ -496,8 +606,8 @@ class SaveConfigAction
     /**
      * Saves static route configurations
      *
-     * @param array $data Configuration data containing staticRoutes array
-     * @return array Returns [bool $success, array $messages]
+     * @param array<string, mixed> $data Configuration data containing staticRoutes array
+     * @return array{0: bool, 1: array<int, string>} Returns [bool $success, array $messages]
      */
     private static function saveStaticRoutes(array $data): array
     {

@@ -26,6 +26,7 @@ use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Core\System\Configs;
 use MikoPBX\Core\System\System;
+use MikoPBX\Core\Utilities\IpAddressHelper;
 use MikoPBX\Core\Utilities\SubnetCalculator;
 use MikoPBX\Core\Workers\Libs\WorkerModelsEvents\Actions\ReloadPJSIPAction;
 use MikoPBX\Core\Workers\WorkerModelsEvents;
@@ -54,8 +55,8 @@ class DockerNetworkFilterService extends Injectable
     /**
      * Get list of IPs to deny from NetworkFilters for specific categories
      *
-     * @param array $categories Traffic categories to filter (e.g., ['SIP', 'WEB'])
-     * @return array List of IP addresses/networks to deny
+     * @param array<string> $categories Traffic categories to filter (e.g., ['SIP', 'WEB'])
+     * @return array<string> List of IP addresses/networks to deny
      */
     private static function getNetworkFiltersDenyList(array $categories = []): array
     {
@@ -131,8 +132,8 @@ class DockerNetworkFilterService extends Injectable
     /**
      * Get list of permitted networks for specific categories
      *
-     * @param array $categories Traffic categories to filter (e.g., ['WEB'])
-     * @return array List of IP addresses/networks that are permitted
+     * @param array<string> $categories Traffic categories to filter (e.g., ['WEB'])
+     * @return array<string> List of IP addresses/networks that are permitted
      */
     private static function getNetworkFiltersPermitList(array $categories = []): array
     {
@@ -187,7 +188,7 @@ class DockerNetworkFilterService extends Injectable
     /**
      * Get list of IPs that should never be blocked (whitelist)
      *
-     * @return array List of whitelisted IP addresses/networks
+     * @return array<string> List of whitelisted IP addresses/networks
      */
     private static function getNetworkFiltersWhitelist(): array
     {
@@ -276,7 +277,13 @@ class DockerNetworkFilterService extends Injectable
                 if (strpos($ip, '/') !== false) {
                     $content .= "deny=$ip\n";
                 } else {
-                    $content .= "deny=$ip/255.255.255.255\n";
+                    // Asterisk accepts single IPs without netmask for both protocols
+                    $isIpv6 = filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6);
+                    if ($isIpv6) {
+                        $content .= "deny=$ip\n";
+                    } else {
+                        $content .= "deny=$ip/255.255.255.255\n";
+                    }
                 }
             }
         } else {
@@ -305,7 +312,13 @@ class DockerNetworkFilterService extends Injectable
                 if (strpos($ip, '/') !== false) {
                     $managerContent .= "deny=$ip\n";
                 } else {
-                    $managerContent .= "deny=$ip/255.255.255.255\n";
+                    // Asterisk Manager accepts single IPs without netmask for both protocols
+                    $isIpv6 = filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6);
+                    if ($isIpv6) {
+                        $managerContent .= "deny=$ip\n";
+                    } else {
+                        $managerContent .= "deny=$ip/255.255.255.255\n";
+                    }
                 }
             }
         }
@@ -333,7 +346,13 @@ class DockerNetworkFilterService extends Injectable
                 if (strpos($ip, '/') !== false) {
                     $iaxContent .= "deny=$ip\n";
                 } else {
-                    $iaxContent .= "deny=$ip/255.255.255.255\n";
+                    // Asterisk IAX accepts single IPs without netmask for both protocols
+                    $isIpv6 = filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6);
+                    if ($isIpv6) {
+                        $iaxContent .= "deny=$ip\n";
+                    } else {
+                        $iaxContent .= "deny=$ip/255.255.255.255\n";
+                    }
                 }
             }
         } else {
@@ -538,7 +557,7 @@ class DockerNetworkFilterService extends Injectable
      * Get list of blocked IPs for a category
      *
      * @param string $category Category (http, ami, sip)
-     * @return array List of blocked IPs
+     * @return array<string> List of blocked IPs
      */
     public static function getBlockedIps(string $category): array
     {
@@ -551,10 +570,11 @@ class DockerNetworkFilterService extends Injectable
         try {
             $di = Di::getDefault();
             $redis = $di->getShared(RedisClientProvider::SERVICE_NAME);
-            
+
             $pattern = self::REDIS_PREFIX . $category . ':*';
             $keys = $redis->keys($pattern);
-            
+
+            /** @var string $key */
             foreach ($keys as $key) {
                 // Extract IP from key - remove both Redis client prefix and our prefix
                 // Redis client adds '_PH_REDIS_CLIENT:' prefix to all keys
@@ -577,7 +597,7 @@ class DockerNetworkFilterService extends Injectable
     /**
      * Get whitelist from Redis
      *
-     * @return array List of whitelisted IPs
+     * @return array<string> List of whitelisted IPs
      */
     private static function getWhitelistFromRedis(): array
     {
@@ -684,6 +704,7 @@ class DockerNetworkFilterService extends Injectable
     
     /**
      * Check if an IP is within a network range
+     * Supports both IPv4 and IPv6 CIDR notation
      *
      * @param string $ip IP address to check
      * @param string $network Network in CIDR notation or single IP
@@ -691,26 +712,19 @@ class DockerNetworkFilterService extends Injectable
      */
     private static function ipInNetwork(string $ip, string $network): bool
     {
+        // Exact match
         if ($ip === $network) {
             return true;
         }
-        
+
+        // No CIDR notation - must be exact match
         if (strpos($network, '/') === false) {
             return $ip === $network;
         }
-        
-        list($subnet, $mask) = explode('/', $network);
-        
-        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) && 
-            filter_var($subnet, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
-            $ip_long = ip2long($ip);
-            $subnet_long = ip2long($subnet);
-            $mask_long = -1 << (32 - (int)$mask);
-            
-            return ($ip_long & $mask_long) === ($subnet_long & $mask_long);
-        }
-        
-        return false;
+
+        // Use IpAddressHelper for dual-stack CIDR matching
+        // Supports both IPv4 (192.168.1.0/24) and IPv6 (2001:db8::/64)
+        return IpAddressHelper::ipInNetwork($ip, $network);
     }
     
     /**
@@ -749,8 +763,8 @@ class DockerNetworkFilterService extends Injectable
     
     /**
      * Get Docker network information for whitelist
-     * 
-     * @return array Network addresses to whitelist for Docker environment
+     *
+     * @return array<string> Network addresses to whitelist for Docker environment
      */
     private static function getDockerNetworkWhitelist(): array
     {
@@ -787,7 +801,7 @@ class DockerNetworkFilterService extends Injectable
                         : $network->netMaskToCidr($interface['subnet']);
                     
                     try {
-                        $calculator = new SubnetCalculator($interface['ipaddr'], $subnet);
+                        $calculator = new SubnetCalculator($interface['ipaddr'], (string)$subnet);
                         $whitelist[] = $calculator->getNetworkPortion() . '/' . $subnet;
                     } catch (\Throwable $e) {
                         SystemMessages::sysLogMsg(__CLASS__, 
@@ -879,7 +893,7 @@ class DockerNetworkFilterService extends Injectable
     /**
      * Get rate limit settings
      *
-     * @return array Rate limit configuration
+     * @return array{enabled: string, requests_per_minute: int, requests_per_minute_auth: int, block_time: int, security_mode: string}
      */
     public static function getRateLimitSettings(): array
     {

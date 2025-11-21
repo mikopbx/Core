@@ -142,4 +142,171 @@ class NetworkInterfacesTest extends MikoPBXTestsBase
         ];
         return $params;
     }
+
+    /**
+     * Test IPv6 Manual configuration through web UI
+     *
+     * @depends testAddNewVLAN
+     */
+    public function testIPv6ManualConfiguration(): void
+    {
+        $this->setSessionName("Test: IPv6 Manual Configuration");
+
+        // Navigate to network configuration page
+        $this->clickSidebarMenuItemByHref("/admin-cabinet/network/modify/");
+        $this->waitForAjax();
+
+        // Switch to eth0 tab (ID 1)
+        $this->changeTabOnCurrentPage('1');
+
+        // Select IPv6 Mode = Manual (value '2')
+        $this->selectDropdownItem('ipv6-mode-1', '2');
+
+        // Wait for IPv6 fields to become visible
+        sleep(1);
+
+        // Fill IPv6 configuration
+        $this->changeInputField('ipv6addr_1', '2001:db8::100');
+        $this->selectDropdownItem('ipv6-subnet-1', '64');
+        $this->changeInputField('ipv6gateway_1', '2001:db8::1');
+
+        // Submit form
+        $this->submitForm('network-form');
+
+        // Reload page and verify settings
+        $this->clickSidebarMenuItemByHref("/admin-cabinet/network/modify/");
+        $this->waitForAjax();
+        $this->changeTabOnCurrentPage('1');
+
+        // Verify IPv6 settings
+        $this->assertMenuItemSelected('ipv6-mode-1', '2');
+        $this->assertInputFieldValueEqual('ipv6addr_1', '2001:db8::100');
+        $this->assertMenuItemSelected('ipv6-subnet-1', '64');
+        $this->assertInputFieldValueEqual('ipv6gateway_1', '2001:db8::1');
+
+        // Reset to Off mode
+        $this->selectDropdownItem('ipv6-mode-1', '0');
+        $this->submitForm('network-form');
+    }
+
+    /**
+     * Test IPv6 Auto configuration (SLAAC/DHCPv6)
+     *
+     * @depends testIPv6ManualConfiguration
+     */
+    public function testIPv6AutoConfiguration(): void
+    {
+        $this->setSessionName("Test: IPv6 Auto Configuration (SLAAC)");
+
+        $this->clickSidebarMenuItemByHref("/admin-cabinet/network/modify/");
+        $this->waitForAjax();
+        $this->changeTabOnCurrentPage('1');
+
+        // Select IPv6 Mode = Auto (value '1')
+        $this->selectDropdownItem('ipv6-mode-1', '1');
+
+        // Wait for fields to hide
+        sleep(1);
+
+        // Submit form
+        $this->submitForm('network-form');
+
+        // Verify Auto mode was saved
+        $this->clickSidebarMenuItemByHref("/admin-cabinet/network/modify/");
+        $this->waitForAjax();
+        $this->changeTabOnCurrentPage('1');
+
+        $this->assertMenuItemSelected('ipv6-mode-1', '1');
+
+        // Reset to Off mode
+        $this->selectDropdownItem('ipv6-mode-1', '0');
+        $this->submitForm('network-form');
+    }
+
+    /**
+     * Test Dual-Stack NAT section visibility
+     *
+     * @depends testIPv6AutoConfiguration
+     */
+    public function testDualStackNATSection(): void
+    {
+        $this->setSessionName("Test: Dual-Stack NAT Section");
+
+        $this->clickSidebarMenuItemByHref("/admin-cabinet/network/modify/");
+        $this->waitForAjax();
+        $this->changeTabOnCurrentPage('1');
+
+        // Configure IPv4 Static
+        $this->changeCheckBoxState('dhcp_1', false);
+        $this->changeInputField('ipaddr_1', '192.168.1.100');
+        $this->selectDropdownItem('subnet_1', '24');
+
+        // Configure IPv6 Manual
+        $this->selectDropdownItem('ipv6-mode-1', '2');
+        sleep(1);
+        $this->changeInputField('ipv6addr_1', '2001:db8::100');
+        $this->selectDropdownItem('ipv6-subnet-1', '64');
+
+        // Wait for Dual-Stack section to appear
+        sleep(1);
+
+        // Verify standard NAT section is hidden and Dual-Stack section is visible
+        $natSection = self::$driver->findElement(WebDriverBy::id('nat-section'));
+        $dualStackSection = self::$driver->findElement(WebDriverBy::id('dual-stack-section'));
+
+        $this->assertFalse($natSection->isDisplayed(), 'Standard NAT section should be hidden in dual-stack mode');
+        $this->assertTrue($dualStackSection->isDisplayed(), 'Dual-Stack section should be visible');
+
+        // Fill required hostname
+        $this->changeInputField('exthostname', 'mikopbx-dualstack.example.com');
+
+        // Submit form
+        $this->submitForm('network-form');
+
+        // Verify hostname was saved
+        $this->clickSidebarMenuItemByHref("/admin-cabinet/network/modify/");
+        $this->waitForAjax();
+        $this->changeTabOnCurrentPage('1');
+
+        $this->assertInputFieldValueEqual('exthostname', 'mikopbx-dualstack.example.com');
+
+        // Reset configuration
+        $this->selectDropdownItem('ipv6-mode-1', '0');
+        $this->changeCheckBoxState('dhcp_1', true);
+        $this->submitForm('network-form');
+    }
+
+    /**
+     * Test IPv6 DNS fields functionality
+     *
+     * @depends testDualStackNATSection
+     */
+    public function testIPv6DNSFields(): void
+    {
+        $this->setSessionName("Test: IPv6 DNS Fields");
+
+        $this->clickSidebarMenuItemByHref("/admin-cabinet/network/modify/");
+        $this->waitForAjax();
+        $this->changeTabOnCurrentPage('1');
+
+        // Fill IPv6 DNS servers (Google Public DNS IPv6)
+        $this->changeInputField('primarydns6_1', '2001:4860:4860::8888');
+        $this->changeInputField('secondarydns6_1', '2001:4860:4860::8844');
+
+        // Submit form
+        $this->submitForm('network-form');
+
+        // Verify DNS servers were saved
+        $this->clickSidebarMenuItemByHref("/admin-cabinet/network/modify/");
+        $this->waitForAjax();
+        $this->changeTabOnCurrentPage('1');
+
+        $this->assertInputFieldValueEqual('primarydns6_1', '2001:4860:4860::8888');
+        $this->assertInputFieldValueEqual('secondarydns6_1', '2001:4860:4860::8844');
+
+        // Clear DNS fields
+        $this->changeInputField('primarydns6_1', '');
+        $this->changeInputField('secondarydns6_1', '');
+        $this->submitForm('network-form');
+    }
 }

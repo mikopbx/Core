@@ -25,6 +25,7 @@ use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
+use MikoPBX\Core\Utilities\IpAddressHelper;
 use Phalcon\Di\Injectable;
 
 /**
@@ -149,7 +150,7 @@ class IptablesConf extends Injectable
     /**
      *  Flushes all firewall rules.
      *
-     * It uses the iptables command to flush the INPUT chain.
+     * It uses the iptables and ip6tables commands to flush the INPUT chain for both IPv4 and IPv6.
      */
     private function dropAllRules(): void
     {
@@ -157,9 +158,18 @@ class IptablesConf extends Injectable
         if (System::isDocker()) {
             return;
         }
+
+        // Flush IPv4 rules
         $iptablesPath = Util::which('iptables');
         Processes::mwExec("$iptablesPath -F INPUT");
         Processes::mwExec("$iptablesPath -X INPUT");
+
+        // Flush IPv6 rules
+        $ip6tablesPath = Util::which('ip6tables');
+        if (!empty($ip6tablesPath)) {
+            Processes::mwExec("$ip6tablesPath -F INPUT");
+            Processes::mwExec("$ip6tablesPath -X INPUT");
+        }
     }
 
     /**
@@ -185,6 +195,42 @@ class IptablesConf extends Injectable
     }
 
     /**
+     * Generates a firewall rule (iptables or ip6tables) based on IP address version.
+     *
+     * Detects if the subnet is IPv4 or IPv6 and generates the appropriate firewall command.
+     *
+     * @param string $subnet The subnet or IP address (CIDR notation or single IP).
+     * @param string $protocol The protocol (tcp, udp, icmp).
+     * @param string $other_data Additional rule parameters.
+     * @param string $action The action to take (ACCEPT, DROP, etc.).
+     *
+     * @return string The firewall rule command (iptables or ip6tables).
+     */
+    private function getFirewallRule(string $subnet, string $protocol, string $other_data = '', string $action = 'ACCEPT'): string
+    {
+        $other_data = trim($other_data);
+        if (trim($action) !== '') {
+            $action = '-j ' . $action;
+        }
+
+        // Extract IP address from CIDR notation if present
+        $ip = $subnet;
+        if (strpos($subnet, '/') !== false) {
+            [$ip, ] = explode('/', $subnet, 2);
+        }
+
+        // Detect IP version
+        $isIpv6 = IpAddressHelper::isIpv6($ip);
+
+        // Generate appropriate firewall command
+        if ($isIpv6) {
+            return "ip6tables -A INPUT -s $subnet -p $protocol $other_data $action";
+        } else {
+            return "iptables -A INPUT -s $subnet -p $protocol $other_data $action";
+        }
+    }
+
+    /**
      * Adds additional firewall rules.
      *
      * @param array $arr_command Reference to the command array.
@@ -193,43 +239,48 @@ class IptablesConf extends Injectable
      */
     private function addAdditionalFirewallRules(array &$arr_command): void
     {
-        /** @var Sip $data */
         $db_data  = Sip::find("type = 'friend' AND ( disabled <> '1')");
         $sipHosts = SIPConf::getSipHosts();
 
         $hashArray = [];
+        /** @var Sip $data */
         foreach ($db_data as $data) {
             $data = $sipHosts[$data->uniqid] ?? [];
             foreach ($data as $host) {
-                if($host === '127.0.0.1'){
+                // Skip localhost addresses (IPv4 and IPv6)
+                if ($host === '127.0.0.1' || $host === '::1') {
                     continue;
                 }
                 if (in_array($host, $hashArray, true)) {
                     // For every unique host only one string.
                     continue;
                 }
-                $hashArray[]   = $host;
-                $arr_command[] = "iptables -A INPUT -s $host -p tcp -m multiport --dport $this->sipPort,$this->tlsPort -j ACCEPT";
-                $arr_command[] = "iptables -A INPUT -s $host -p udp -m multiport --dport $this->sipPort,$this->rtpPorts -j ACCEPT";
+                $hashArray[] = $host;
+
+                // Use dual-stack firewall rule generation
+                $arr_command[] = $this->getFirewallRule($host, 'tcp', "-m multiport --dport $this->sipPort,$this->tlsPort");
+                $arr_command[] = $this->getFirewallRule($host, 'udp', "-m multiport --dport $this->sipPort,$this->rtpPorts");
             }
         }
-        // Allow all local connections
+
+        // Allow all local connections (both IPv4 and IPv6)
         $arr_command[] = $this->getIptablesInputRule('', '-s 127.0.0.1 ');
+        $arr_command[] = "ip6tables -A INPUT -s ::1 -j ACCEPT";
+
         unset($db_data, $sipHosts, $hashArray);
     }
 
     /**
      * Adds the main firewall rules.
      *
-     * @param array $arr_command Reference to the command array.
-     *
+     * @param array<string> $arr_command Reference to the command array.
      * @return void
      */
     public function addMainFirewallRules(array &$arr_command):void
     {
         $options = [];
-        /** @var FirewallRules $rule */
         $result = FirewallRules::find('action="allow"');
+        /** @var FirewallRules $rule */
         foreach ($result as $rule) {
             if ($rule->portfrom !== $rule->portto && trim($rule->portto) !== '') {
                 $port = "$rule->portfrom:$rule->portto";
@@ -254,8 +305,10 @@ class IptablesConf extends Injectable
     /**
      * Constructs the multiport command and adds it to the command array.
      *
-     * @param array $options      Options for constructing the command.
-     * @param array $arr_command  Reference to the command array.
+     * Automatically detects IP version (IPv4 or IPv6) and generates appropriate firewall rules.
+     *
+     * @param array<string, mixed> $options      Options for constructing the command.
+     * @param array<string> $arr_command  Reference to the command array.
      *
      * @return void
      */
@@ -269,7 +322,9 @@ class IptablesConf extends Injectable
                     $portsString = implode(',', array_unique($ports));
                     $other_data = "-m multiport --dport $portsString";
                 }
-                $arr_command[] = "iptables -A INPUT -s $subnet -p $protocol $other_data -j ACCEPT";
+
+                // Use dual-stack firewall rule generation based on IP version detection
+                $arr_command[] = $this->getFirewallRule($subnet, $protocol, $other_data);
             }
         }
     }

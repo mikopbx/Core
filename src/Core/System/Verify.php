@@ -31,27 +31,22 @@ class Verify
 {
 
     /**
-     * Returns true if $ipaddr is a valid dotted IPv4 address.
+     * Returns true if $ipaddr is a valid IPv4 or IPv6 address.
      *
      * @param string $ipaddr The string to validate as an IP address.
+     * @param int $flags Optional flags to restrict validation to IPv4 or IPv6.
+     *                   Use FILTER_FLAG_IPV4 for IPv4 only, FILTER_FLAG_IPV6 for IPv6 only,
+     *                   or combine both (default) for dual-stack validation.
      *
      * @return bool|null Returns true if the $ipaddr is a valid IP address, false otherwise.
      */
-    public static function isIpAddress(string $ipaddr): ?bool
+    public static function isIpAddress(string $ipaddr, int $flags = FILTER_FLAG_IPV4 | FILTER_FLAG_IPV6): ?bool
     {
-        // Convert the IP address to long format.
-        $ip_long    = ip2long($ipaddr);
-
-        // Convert back to IP address.
-        $ip_reverse = long2ip($ip_long);
-
-        // Check if the original IP address is the same as the one we converted back.
-        // If it's the same, it means the IP address is valid.
-        if ($ipaddr == $ip_reverse) {
-            return true;
-        } else {
+        if (empty($ipaddr)) {
             return false;
         }
+
+        return filter_var($ipaddr, FILTER_VALIDATE_IP, $flags) !== false;
     }
 
     /**

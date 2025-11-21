@@ -20,6 +20,7 @@
 
 namespace MikoPBX\Core\System\Configs;
 
+use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Providers\ConfigProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
@@ -173,6 +174,23 @@ class NginxConf extends SystemConfigClass
     }
 
     /**
+     * Checks if any network interface has IPv6 enabled.
+     *
+     * @return bool True if at least one interface has IPv6 mode '1' (Auto) or '2' (Manual).
+     */
+    private function hasIpv6Interfaces(): bool
+    {
+        $interfaces = LanInterfaces::find();
+        foreach ($interfaces as $interface) {
+            // IPv6 mode: '0' = Off, '1' = Auto (SLAAC/DHCPv6), '2' = Manual
+            if ($interface->ipv6_mode === '1' || $interface->ipv6_mode === '2') {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Writes additional settings to the nginx.conf.
      * Always configures both HTTP and HTTPS with valid certificates.
      *
@@ -197,6 +215,20 @@ class NginxConf extends SystemConfigClass
         $WEBHTTPSPort = PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PORT);
 
         $config = file_get_contents(self::CONF_PATH . ".original");
+        if ($config === false) {
+            return;
+        }
+
+        // Add IPv6 listener if any interface has IPv6 enabled
+        if ($this->hasIpv6Interfaces()) {
+            // Insert IPv6 listener after the IPv4 listener line
+            $config = str_replace(
+                "listen      <WEBPort>;",
+                "listen      <WEBPort>;\n    listen      [::]:<WEBPort>;",
+                $config
+            );
+            SystemMessages::sysLogMsg(self::PROC_NAME, 'HTTP configured with IPv6 support', LOG_INFO);
+        }
 
         // Add dynamic security filtering via Lua when firewall is enabled
         $firewallEnabled = PbxSettings::getValueByKey(PbxSettings::PBX_FIREWALL_ENABLED);
@@ -242,10 +274,24 @@ class NginxConf extends SystemConfigClass
         // SSL Configuration - Always enable HTTPS with valid certificates
         // Prepare SSL certificates (will use user-provided or fallback)
         $certInfo = SslCertificateService::prepareNginxCertificates();
-        
+
         if (!empty($certInfo['certPath']) && !empty($certInfo['keyPath'])) {
             // We have valid certificates, configure SSL
             $config = file_get_contents(self::CONF_PATH_SSL . ".original");
+            if ($config === false) {
+                return;
+            }
+
+            // Add IPv6 listener if any interface has IPv6 enabled
+            if ($this->hasIpv6Interfaces()) {
+                // Insert IPv6 listener after the IPv4 listener line
+                $config = str_replace(
+                    "listen       <WEBHTTPSPort> ssl;",
+                    "listen       <WEBHTTPSPort> ssl;\n    listen       [::]:<WEBHTTPSPort> ssl;",
+                    $config
+                );
+                SystemMessages::sysLogMsg(self::PROC_NAME, 'HTTPS configured with IPv6 support', LOG_INFO);
+            }
 
             // Add dynamic security filtering via Lua when firewall is enabled (SSL)
             if ($firewallEnabled === '1') {
@@ -440,7 +486,7 @@ class NginxConf extends SystemConfigClass
      /**
      * Returns the Nginx log file path.
      *
-     * @return array The log files path.
+     * @return array<string> The log files path.
      */
     public static function getLogFiles(): array
     {

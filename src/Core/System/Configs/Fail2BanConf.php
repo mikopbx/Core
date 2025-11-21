@@ -700,7 +700,7 @@ class Fail2BanConf extends SystemConfigClass
      * This method retrieves fail2ban rule properties from the database and constructs a whitelist
      * of IPs which should not be banned. If the rule is not found, it assigns default values.
      *
-     * @return array Contains max_retry, find_time, ban_time and user_whitelist.
+     * @return array{int, int, int, string}
      */
     private function initProperty(): array
     {
@@ -933,10 +933,18 @@ class Fail2BanConf extends SystemConfigClass
             $sipContent .= "\n; Blocked IPs by fail2ban (SIP)\n";
             foreach ($sipBlockedIps as $ip) {
                 // Check if IP contains subnet mask
-                if (strpos($ip, '/') !== false) {
+                if (str_contains($ip, '/')) {
                     $sipContent .= "deny=$ip\n";
                 } else {
-                    $sipContent .= "deny=$ip/255.255.255.255\n";
+                    // Asterisk accepts single IPs without netmask for both IPv4 and IPv6
+                    // IPv4: deny=192.168.1.1/255.255.255.255 or deny=192.168.1.1
+                    // IPv6: deny=2001:db8::1 (netmask not needed)
+                    $isIpv6 = filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6);
+                    if ($isIpv6) {
+                        $sipContent .= "deny=$ip\n";
+                    } else {
+                        $sipContent .= "deny=$ip/255.255.255.255\n";
+                    }
                 }
             }
         }
@@ -951,10 +959,16 @@ class Fail2BanConf extends SystemConfigClass
         if (!empty($amiBlockedIps)) {
             foreach ($amiBlockedIps as $ip) {
                 // Check if IP contains subnet mask
-                if (strpos($ip, '/') !== false) {
+                if (str_contains($ip, '/')) {
                     $managerContent .= "deny=$ip\n";
                 } else {
-                    $managerContent .= "deny=$ip/255.255.255.255\n";
+                    // Asterisk Manager accepts single IPs without netmask for both protocols
+                    $isIpv6 = filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6);
+                    if ($isIpv6) {
+                        $managerContent .= "deny=$ip\n";
+                    } else {
+                        $managerContent .= "deny=$ip/255.255.255.255\n";
+                    }
                 }
             }
         }
@@ -975,10 +989,16 @@ class Fail2BanConf extends SystemConfigClass
             $iaxContent .= "\n; Blocked IPs by fail2ban (IAX)\n";
             foreach ($iaxBlockedIps as $ip) {
                 // Check if IP contains subnet mask
-                if (strpos($ip, '/') !== false) {
+                if (str_contains($ip, '/')) {
                     $iaxContent .= "deny=$ip\n";
                 } else {
-                    $iaxContent .= "deny=$ip/255.255.255.255\n";
+                    // Asterisk IAX accepts single IPs without netmask for both protocols
+                    $isIpv6 = filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6);
+                    if ($isIpv6) {
+                        $iaxContent .= "deny=$ip\n";
+                    } else {
+                        $iaxContent .= "deny=$ip/255.255.255.255\n";
+                    }
                 }
             }
         }
@@ -1028,7 +1048,7 @@ class Fail2BanConf extends SystemConfigClass
         }
 
         // Check if IP is in 127.0.0.0/8 network
-        if (strpos($ip, '127.') === 0) {
+        if (str_starts_with($ip, '127.')) {
             return true;
         }
 

@@ -141,6 +141,7 @@ const networks = {
 
     /**
      * Update NAT help text with actual port values from REST API
+     * Updates both standard NAT section and Dual-Stack section
      * @param {object} ports - Port configuration object from API
      */
     updateNATHelpText(ports) {
@@ -150,7 +151,7 @@ const networks = {
             return;
         }
 
-        // Update SIP ports text using ID
+        // Update standard NAT section - SIP ports info text
         const $sipPortValues = $('#nat-help-sip-ports .port-values');
         if ($sipPortValues.length > 0) {
             const sipText = i18n('nw_NATInfo3', {
@@ -160,7 +161,7 @@ const networks = {
             $sipPortValues.html(sipText);
         }
 
-        // Update RTP ports text using ID
+        // Update standard NAT section - RTP ports info text
         const $rtpPortValues = $('#nat-help-rtp-ports .port-values');
         if ($rtpPortValues.length > 0) {
             const rtpText = i18n('nw_NATInfo4', {
@@ -169,10 +170,31 @@ const networks = {
             });
             $rtpPortValues.html(rtpText);
         }
+
+        // Update Dual-Stack section - SIP ports info text
+        const $dualStackSipPortValues = $('#dual-stack-sip-ports .port-values');
+        if ($dualStackSipPortValues.length > 0) {
+            const dualStackSipText = i18n('nw_NATInfo3', {
+                'SIP_PORT': ports.SIPPort,
+                'TLS_PORT': ports.TLS_PORT
+            });
+            $dualStackSipPortValues.html(dualStackSipText);
+        }
+
+        // Update Dual-Stack section - RTP ports info text
+        const $dualStackRtpPortValues = $('#dual-stack-rtp-ports .port-values');
+        if ($dualStackRtpPortValues.length > 0) {
+            const dualStackRtpText = i18n('nw_NATInfo4', {
+                'RTP_PORT_FROM': ports.RTPPortFrom,
+                'RTP_PORT_TO': ports.RTPPortTo
+            });
+            $dualStackRtpPortValues.html(dualStackRtpText);
+        }
     },
 
     /**
      * Update port field labels with actual internal port values from REST API
+     * Updates both standard NAT section and Dual-Stack section
      * @param {object} ports - Port configuration object from API
      */
     updatePortLabels(ports) {
@@ -182,7 +204,7 @@ const networks = {
             return;
         }
 
-        // Update external SIP port label using ID
+        // Update standard NAT section - external SIP port label
         const $sipLabel = $('#external-sip-port-label');
         if ($sipLabel.length > 0) {
             const sipLabelText = i18n('nw_PublicSIPPort', {
@@ -191,13 +213,31 @@ const networks = {
             $sipLabel.text(sipLabelText);
         }
 
-        // Update external TLS port label using ID
+        // Update standard NAT section - external TLS port label
         const $tlsLabel = $('#external-tls-port-label');
         if ($tlsLabel.length > 0) {
             const tlsLabelText = i18n('nw_PublicTLSPort', {
                 'TLS_PORT': ports.TLS_PORT
             });
             $tlsLabel.text(tlsLabelText);
+        }
+
+        // Update Dual-Stack section - SIP port label
+        const $dualStackSipLabel = $('#dual-stack-sip-port-label');
+        if ($dualStackSipLabel.length > 0) {
+            const dualStackSipLabelText = i18n('nw_PublicSIPPort', {
+                'SIP_PORT': ports.SIPPort
+            });
+            $dualStackSipLabel.text(dualStackSipLabelText);
+        }
+
+        // Update Dual-Stack section - TLS port label
+        const $dualStackTlsLabel = $('#dual-stack-tls-port-label');
+        if ($dualStackTlsLabel.length > 0) {
+            const dualStackTlsLabelText = i18n('nw_PublicTLSPort', {
+                'TLS_PORT': ports.TLS_PORT
+            });
+            $dualStackTlsLabel.text(dualStackTlsLabelText);
         }
     },
 
@@ -232,11 +272,185 @@ const networks = {
             networks.addNewFormRules(eth);
         });
 
+        // Hide/show NAT sections instead of disabling to simplify UI
         if ($('#usenat-checkbox').checkbox('is checked')) {
-            $('.nated-settings-group').removeClass('disabled');
+            $('.nated-settings-group').show();
+            // After showing all sections, determine which one to actually display
+            networks.updateDualStackNatLogic();
         } else {
-            $('.nated-settings-group').addClass('disabled');
+            $('.nated-settings-group').hide();
         }
+    },
+
+    /**
+     * Toggle visibility of IPv6 manual configuration fields based on selected mode
+     * @param {string} interfaceId - Interface ID
+     */
+    toggleIPv6Fields(interfaceId) {
+        const $ipv6ModeDropdown = $(`#ipv6_mode_${interfaceId}`);
+        const ipv6Mode = $ipv6ModeDropdown.val();
+        const $manualFieldsContainer = $(`.ipv6-manual-fields-${interfaceId}`);
+        const $autoInfoMessage = $(`.ipv6-auto-info-message-${interfaceId}`);
+        const $ipv6GatewayField = $(`.ipv6-gateway-field-${interfaceId}`);
+        const $ipv6PrimaryDNSField = $(`.ipv6-primarydns-field-${interfaceId}`);
+        const $ipv6SecondaryDNSField = $(`.ipv6-secondarydns-field-${interfaceId}`);
+
+        // Show manual fields only when mode is '2' (Manual)
+        if (ipv6Mode === '2') {
+            $manualFieldsContainer.show();
+            $autoInfoMessage.hide();
+            $ipv6GatewayField.show();
+            $ipv6PrimaryDNSField.show();
+            $ipv6SecondaryDNSField.show();
+        } else if (ipv6Mode === '1') {
+            // Show Auto (SLAAC) info message when mode is '1' (Auto)
+            $manualFieldsContainer.hide();
+            $autoInfoMessage.show();
+            $ipv6GatewayField.show();
+            $ipv6PrimaryDNSField.show();
+            $ipv6SecondaryDNSField.show();
+        } else {
+            // Hide all IPv6 fields for mode '0' (Off)
+            $manualFieldsContainer.hide();
+            $autoInfoMessage.hide();
+            $ipv6GatewayField.hide();
+            $ipv6PrimaryDNSField.hide();
+            $ipv6SecondaryDNSField.hide();
+        }
+
+        // Update dual-stack NAT logic when IPv6 mode changes
+        networks.updateDualStackNatLogic();
+    },
+
+    /**
+     * Check if dual-stack mode is active (IPv4 + IPv6 public address both configured)
+     * Dual-stack NAT section is shown when both IPv4 and public IPv6 are present.
+     * Public IPv6 = Global Unicast addresses (2000::/3) that start with 2 or 3.
+     * Private IPv6 addresses (ULA fd00::/8, link-local fe80::/10) do NOT trigger dual-stack.
+     *
+     * IPv4 detection works for both static and DHCP configurations:
+     * - Static: checks ipaddr_X field
+     * - DHCP: checks if DHCP is enabled AND gateway is obtained
+     *
+     * @param {string} interfaceId - Interface ID
+     * @returns {boolean} True if dual-stack with public IPv6, false otherwise
+     */
+    isDualStackMode(interfaceId) {
+        // Get IPv4 configuration (static or DHCP)
+        const ipv4addr = $(`input[name="ipaddr_${interfaceId}"]`).val();
+        const dhcpEnabled = $(`input[name="dhcp_${interfaceId}"]`).val() === 'on';
+        const gateway = $(`input[name="gateway_${interfaceId}"]`).val();
+
+        // Get IPv6 configuration
+        const ipv6Mode = $(`#ipv6_mode_${interfaceId}`).val();
+        const ipv6addr = $(`input[name="ipv6addr_${interfaceId}"]`).val();
+
+        // Check if IPv4 is present (either static address or DHCP with gateway)
+        // Gateway presence indicates DHCP successfully obtained an IPv4 address
+        const hasIpv4 = (ipv4addr && ipv4addr.trim() !== '') ||
+                        (dhcpEnabled && gateway && gateway.trim() !== '');
+
+        // Check if IPv6 is enabled (Auto SLAAC/DHCPv6 or Manual)
+        const hasIpv6 = (ipv6Mode === '1' || ipv6Mode === '2') &&
+                        ipv6addr && ipv6addr.trim() !== '';
+
+        if (!hasIpv4 || !hasIpv6) {
+            return false;
+        }
+
+        // Check if IPv6 address is global unicast (public)
+        // Global unicast: 2000::/3 (addresses starting with 2 or 3)
+        // Exclude ULA (fd00::/8) and link-local (fe80::/10)
+        const ipv6Lower = ipv6addr.toLowerCase().trim();
+
+        // Remove CIDR notation if present (e.g., "2001:db8::1/64" -> "2001:db8::1")
+        const ipv6WithoutCidr = ipv6Lower.split('/')[0];
+
+        // Check if first character is 2 or 3 (global unicast range)
+        const isGlobalUnicast = /^[23]/.test(ipv6WithoutCidr);
+
+        return isGlobalUnicast;
+    },
+
+    /**
+     * Update NAT section UI based on dual-stack detection
+     * Switches between standard NAT section and Dual-Stack section
+     * Makes exthostname required in dual-stack mode
+     */
+    updateDualStackNatLogic() {
+        // Check if NAT is enabled - if not, don't show any NAT sections
+        const isNatEnabled = $('#usenat-checkbox').checkbox('is checked');
+        if (!isNatEnabled) {
+            return; // NAT disabled, sections already hidden by toggleDisabledFieldClass
+        }
+
+        // Check if any interface is in dual-stack mode
+        let anyDualStack = false;
+
+        $('#eth-interfaces-menu a').each((index, tab) => {
+            const interfaceId = $(tab).attr('data-tab');
+            if (networks.isDualStackMode(interfaceId)) {
+                anyDualStack = true;
+                return false; // Break loop
+            }
+        });
+
+        const $standardNatSection = $('#standard-nat-section');
+        const $dualStackSection = $('#dual-stack-section');
+
+        if (anyDualStack) {
+            // Dual-stack detected: Hide standard NAT section, show Dual-Stack section
+            $standardNatSection.hide();
+            $dualStackSection.show();
+
+            // Clear extipaddr (external IP not needed in dual-stack, only hostname)
+            networks.$formObj.form('set value', 'extipaddr', '');
+
+            // Disable autoUpdateExternalIp (not needed in dual-stack)
+            const $autoUpdateCheckbox = networks.$formObj.find('input[name="autoUpdateExternalIp"]').parent('.checkbox');
+            if ($autoUpdateCheckbox.length > 0) {
+                $autoUpdateCheckbox.checkbox('uncheck');
+            }
+
+            // Update hostname display in dual-stack info message
+            const hostname = $('#exthostname').val() || 'mikopbx.company.com';
+            $('#hostname-display').text(hostname);
+
+            // Make exthostname required in dual-stack
+            networks.validateRules.exthostname.rules = [
+                {
+                    type: 'empty',
+                    prompt: globalTranslate.nw_ValidateExternalHostnameEmpty || 'External hostname is required in dual-stack mode',
+                },
+                {
+                    type: 'validHostname',
+                    prompt: globalTranslate.nw_ValidateHostnameInvalid || 'Invalid hostname format',
+                },
+            ];
+        } else {
+            // No dual-stack: Show standard NAT section, hide Dual-Stack section
+            $standardNatSection.show();
+            $dualStackSection.hide();
+
+            // Restore original exthostname validation (optional with usenat dependency)
+            networks.validateRules.exthostname.depends = 'usenat';
+            networks.validateRules.exthostname.rules = [
+                {
+                    type: 'extenalIpHost',
+                    prompt: globalTranslate.nw_ValidateExtIppaddrOrHostIsEmpty,
+                },
+                {
+                    type: 'validHostname',
+                    prompt: globalTranslate.nw_ValidateHostnameInvalid,
+                },
+            ];
+        }
+
+        // Reinitialize form validation
+        networks.$formObj.form('destroy').form({
+            on: 'blur',
+            fields: networks.validateRules
+        });
     },
 
     /**
@@ -398,6 +612,21 @@ const networks = {
 
         // WHY: No port field mapping needed - form field names match API constants
         // (externalSIPPort = PbxSettings::EXTERNAL_SIP_PORT)
+
+        // Set default IPv6 subnet for Auto mode (SLAAC/DHCPv6)
+        Object.keys(result.data).forEach(key => {
+            const ipv6ModeMatch = key.match(/^ipv6_mode_(\d+)$/);
+            if (ipv6ModeMatch) {
+                const interfaceId = ipv6ModeMatch[1];
+                const mode = result.data[key];
+                const subnetKey = `ipv6_subnet_${interfaceId}`;
+
+                // If mode is Auto ('1') and subnet is empty, set default to '64'
+                if (mode === '1' && (!result.data[subnetKey] || result.data[subnetKey] === '')) {
+                    result.data[subnetKey] = '64';
+                }
+            }
+        });
 
         return result;
     },
@@ -565,6 +794,40 @@ const networks = {
                 allowEmpty: false,
                 additionalClasses: ['search']  // Add search class for searchable dropdown
             });
+
+            // Initialize IPv6 mode dropdown (Off/Auto/Manual)
+            const ipv6ModeFieldName = `ipv6_mode_${iface.id}`;
+            const ipv6ModeFormData = {};
+            ipv6ModeFormData[ipv6ModeFieldName] = String(iface.ipv6_mode || '0');
+
+            DynamicDropdownBuilder.buildDropdown(ipv6ModeFieldName, ipv6ModeFormData, {
+                staticOptions: [
+                    {value: '0', text: globalTranslate.nw_IPv6ModeOff || 'Off'},
+                    {value: '1', text: globalTranslate.nw_IPv6ModeAuto || 'Auto (SLAAC/DHCPv6)'},
+                    {value: '2', text: globalTranslate.nw_IPv6ModeManual || 'Manual'}
+                ],
+                placeholder: globalTranslate.nw_SelectIPv6Mode || 'Select IPv6 Mode',
+                allowEmpty: false,
+                onChange: () => {
+                    networks.toggleIPv6Fields(iface.id);
+                    Form.dataChanged();
+                }
+            });
+
+            // Initialize IPv6 subnet dropdown
+            const ipv6SubnetFieldName = `ipv6_subnet_${iface.id}`;
+            const ipv6SubnetFormData = {};
+            ipv6SubnetFormData[ipv6SubnetFieldName] = String(iface.ipv6_subnet || '64');
+
+            DynamicDropdownBuilder.buildDropdown(ipv6SubnetFieldName, ipv6SubnetFormData, {
+                staticOptions: networks.getIpv6SubnetOptionsArray(),
+                placeholder: globalTranslate.nw_SelectIPv6Subnet || 'Select IPv6 Prefix',
+                allowEmpty: false,
+                additionalClasses: ['search']
+            });
+
+            // Set initial visibility of IPv6 manual fields
+            networks.toggleIPv6Fields(iface.id);
         });
 
         // Initialize subnet dropdown for template (id = 0)
@@ -692,16 +955,22 @@ const networks = {
             // Find DNS/Gateway fields for this interface
             const $dnsGatewayGroup = $(`.dns-gateway-group-${interfaceId}`);
             const $dnsGatewayFields = $dnsGatewayGroup.find('input[name^="gateway_"], input[name^="primarydns_"], input[name^="secondarydns_"]');
+            const $dhcpInfoMessage = $(`.dhcp-info-message-${interfaceId}`);
 
             if (isDhcpEnabled) {
                 // DHCP enabled -> make DNS/Gateway read-only
                 $dnsGatewayFields.prop('readonly', true);
                 $dnsGatewayFields.closest('.field').addClass('disabled');
+                $dhcpInfoMessage.show();
             } else {
                 // DHCP disabled -> make DNS/Gateway editable
                 $dnsGatewayFields.prop('readonly', false);
                 $dnsGatewayFields.closest('.field').removeClass('disabled');
+                $dhcpInfoMessage.hide();
             }
+
+            // Update dual-stack NAT logic when DHCP changes
+            networks.updateDualStackNatLogic();
         });
 
         // Trigger initial TAB icon update for checked radio button
@@ -811,6 +1080,13 @@ const networks = {
         const dnsReadonly = isDocker ? '' : (iface.dhcp ? 'readonly' : '');
         const dnsDisabledClass = isDocker ? '' : (iface.dhcp ? 'disabled' : '');
 
+        // IPv6 Gateway: readonly when ipv6_mode='1' (Auto/SLAAC), editable when ipv6_mode='2' (Manual) or '0' (Off)
+        const ipv6GatewayReadonly = iface.ipv6_mode === '1' ? 'readonly' : '';
+        const ipv6GatewayDisabledClass = iface.ipv6_mode === '1' ? 'disabled' : '';
+
+        // IPv6 fields visibility: hide when ipv6_mode='0' (Off), show when '1' (Auto) or '2' (Manual)
+        const ipv6FieldsVisible = iface.ipv6_mode === '0' ? 'style="display:none;"' : '';
+
         // In Docker: IP, subnet, VLAN are readonly
         const dockerReadonly = isDocker ? 'readonly' : '';
         const dockerDisabledClass = isDocker ? 'disabled' : '';
@@ -827,6 +1103,8 @@ const networks = {
                 <input type="hidden" name="name_${id}" value="${iface.name || ''}" />
                 <input type="hidden" name="internet_interface" value="${id}" />
                 <input type="hidden" name="dhcp_${id}" value="on" />
+                <input type="hidden" name="ipaddr_${id}" value="${iface.ipaddr || ''}" />
+                <input type="hidden" name="subnet_${id}" value="${iface.subnet || '24'}" />
                 ` : `
                 <div class="field">
                     <label>${globalTranslate.nw_InterfaceName}</label>
@@ -856,8 +1134,25 @@ const networks = {
                 </div>
                 `}
 
+                <div class="dhcp-info-message-${id}" style="display: ${dhcpChecked ? 'block' : 'none'};">
+                    <div class="ui compact info message">
+                        <div class="content">
+                            <div class="header">${globalTranslate.nw_DHCPInfoHeader || 'DHCP Configuration Obtained'}</div>
+                            <ul class="list" style="margin-top: 0.5em;">
+                                <li>${globalTranslate.nw_DHCPInfoIP || 'IP Address'}: <strong>${iface.currentIpaddr || iface.ipaddr || 'N/A'}</strong></li>
+                                <li>${globalTranslate.nw_DHCPInfoSubnet || 'Subnet'}: <strong>/${iface.currentSubnet || iface.subnet || 'N/A'}</strong></li>
+                                <li>${globalTranslate.nw_DHCPInfoGateway || 'Gateway'}: <strong>${iface.currentGateway || iface.gateway || 'N/A'}</strong></li>
+                                <li>${globalTranslate.nw_DHCPInfoDNS || 'DNS'}: <strong>${iface.primarydns || 'N/A'}${iface.secondarydns ? ', ' + iface.secondarydns : ''}</strong></li>
+                                ${iface.domain ? `<li>${globalTranslate.nw_DHCPInfoDomain || 'Domain'}: <strong>${iface.domain}</strong></li>` : ''}
+                                ${iface.hostname ? `<li>${globalTranslate.nw_DHCPInfoHostname || 'Hostname'}: <strong>${iface.hostname}</strong></li>` : ''}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
                 <input type="hidden" name="notdhcp_${id}" id="not-dhcp-${id}"/>
 
+                ${isDocker ? '' : `
                 <div class="fields" id="ip-address-group-${id}">
                     <div class="field">
                         <label>${globalTranslate.nw_IPAddress}</label>
@@ -872,6 +1167,7 @@ const networks = {
                         </div>
                     </div>
                 </div>
+                `}
 
                 ${isDocker ? '' : `
                 <div class="field">
@@ -881,6 +1177,44 @@ const networks = {
                     </div>
                 </div>
                 `}
+
+                <div class="field">
+                    <label>${globalTranslate.nw_IPv6Mode || 'IPv6 Mode'}</label>
+                    <div class="field max-width-400">
+                        <input type="hidden" id="ipv6_mode_${id}" name="ipv6_mode_${id}" value="${iface.ipv6_mode || '0'}" />
+                    </div>
+                </div>
+
+                <div class="ipv6-auto-info-message-${id}" style="display: ${iface.ipv6_mode === '1' ? 'block' : 'none'};">
+                    <div class="ui compact info message">
+                        <div class="content">
+                            <div class="header">${globalTranslate.nw_IPv6AutoInfoHeader || 'IPv6 Autoconfiguration (SLAAC/DHCPv6)'}</div>
+                            <ul class="list" style="margin-top: 0.5em;">
+                                <li>${globalTranslate.nw_IPv6AutoInfoAddress || 'IPv6 Address'}: <strong>${iface.currentIpv6addr || iface.ipv6addr || 'Autoconfigured'}</strong></li>
+                                <li>${globalTranslate.nw_IPv6AutoInfoPrefix || 'Prefix Length'}: <strong>/${iface.currentIpv6_subnet || iface.ipv6_subnet || '64'}</strong></li>
+                                ${(iface.currentIpv6_gateway || iface.ipv6_gateway) ? `<li>${globalTranslate.nw_IPv6AutoInfoGateway || 'Gateway'}: <strong>${iface.currentIpv6_gateway || iface.ipv6_gateway}</strong></li>` : ''}
+                                ${(iface.currentPrimarydns6 || iface.primarydns6) ? `<li>${globalTranslate.nw_IPv6AutoInfoDNS || 'DNS'}: <strong>${iface.currentPrimarydns6 || iface.primarydns6}${(iface.currentSecondarydns6 || iface.secondarydns6) ? ', ' + (iface.currentSecondarydns6 || iface.secondarydns6) : ''}</strong></li>` : ''}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ipv6-manual-fields-${id}" style="display: none;">
+                    <div class="fields">
+                        <div class="five wide field">
+                            <label>${globalTranslate.nw_IPv6Address || 'IPv6 Address'}</label>
+                            <div class="field max-width-600">
+                                <input type="text" class="ipv6address" name="ipv6addr_${id}" value="${iface.ipv6addr || ''}" placeholder="2001:db8::1" />
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label>${globalTranslate.nw_IPv6Subnet || 'IPv6 Prefix Length'}</label>
+                            <div class="field max-width-400">
+                                <input type="hidden" id="ipv6_subnet_${id}" name="ipv6_subnet_${id}" value="${iface.ipv6_subnet || '64'}" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <div class="dns-gateway-group-${id}" ${dnsGatewayVisible}>
                     <div class="ui horizontal divider">${globalTranslate.nw_InternetSettings || 'Internet Settings'}</div>
@@ -906,6 +1240,13 @@ const networks = {
                         </div>
                     </div>
 
+                    <div class="field ipv6-gateway-field-${id}" ${ipv6FieldsVisible}>
+                        <label>${globalTranslate.nw_IPv6Gateway || 'IPv6 Gateway'}</label>
+                        <div class="field max-width-400 ${ipv6GatewayDisabledClass}">
+                            <input type="text" class="ipv6address" name="ipv6_gateway_${id}" value="${iface.currentIpv6_gateway || iface.ipv6_gateway || ''}" ${ipv6GatewayReadonly} placeholder="2001:db8::1" />
+                        </div>
+                    </div>
+
                     <div class="field">
                         <label>${globalTranslate.nw_PrimaryDNS}</label>
                         <div class="field max-width-400 ${dnsDisabledClass}">
@@ -917,6 +1258,20 @@ const networks = {
                         <label>${globalTranslate.nw_SecondaryDNS}</label>
                         <div class="field max-width-400 ${dnsDisabledClass}">
                             <input type="text" class="ipaddress" name="secondarydns_${id}" value="${iface.secondarydns || ''}" ${dnsReadonly} />
+                        </div>
+                    </div>
+
+                    <div class="field ipv6-primarydns-field-${id}" ${ipv6FieldsVisible}>
+                        <label>${globalTranslate.nw_IPv6PrimaryDNS || 'Primary IPv6 DNS'}</label>
+                        <div class="field max-width-400">
+                            <input type="text" class="ipv6address" name="primarydns6_${id}" value="${iface.currentPrimarydns6 || iface.primarydns6 || ''}" placeholder="2001:4860:4860::8888" />
+                        </div>
+                    </div>
+
+                    <div class="field ipv6-secondarydns-field-${id}" ${ipv6FieldsVisible}>
+                        <label>${globalTranslate.nw_IPv6SecondaryDNS || 'Secondary IPv6 DNS'}</label>
+                        <div class="field max-width-400">
+                            <input type="text" class="ipv6address" name="secondarydns6_${id}" value="${iface.currentSecondarydns6 || iface.secondarydns6 || ''}" placeholder="2001:4860:4860::8844" />
                         </div>
                     </div>
                 </div>
@@ -982,6 +1337,30 @@ const networks = {
                 </div>
             </div>
         `;
+    },
+
+    /**
+     * Get IPv6 subnet prefix options array for DynamicDropdownBuilder
+     * @returns {Array} Array of IPv6 subnet prefix options (/1 to /128)
+     */
+    getIpv6SubnetOptionsArray() {
+        const options = [];
+        // Generate /1 to /128 (common: /64, /48, /56, /128)
+        for (let i = 128; i >= 1; i--) {
+            let description = `/${i}`;
+            // Add descriptions for common prefixes
+            if (i === 128) description += ' (Single host)';
+            else if (i === 64) description += ' (Standard subnet)';
+            else if (i === 56) description += ' (Small network)';
+            else if (i === 48) description += ' (Large network)';
+            else if (i === 32) description += ' (ISP assignment)';
+
+            options.push({
+                value: i.toString(),
+                text: description
+            });
+        }
+        return options;
     },
 
     /**
@@ -1118,6 +1497,27 @@ $.fn.form.settings.rules.ipaddr = (value) => {
         }
     }
     return result;
+};
+
+/**
+ * Custom form validation rule for checking if the value is a valid IPv6 address.
+ * @param {string} value - The value to validate as an IPv6 address.
+ * @returns {boolean} - True if the value is a valid IPv6 address, false otherwise.
+ */
+$.fn.form.settings.rules.ipv6addr = (value) => {
+    // IPv6 regex pattern
+    // Supports full form, compressed form (::), IPv4-mapped (::ffff:192.0.2.1), link-local (fe80::1%eth0)
+    const ipv6Pattern = /^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$/;
+    return ipv6Pattern.test(value);
+};
+
+/**
+ * Custom form validation rule for checking if the value is a valid IP address (IPv4 or IPv6).
+ * @param {string} value - The value to validate as an IP address.
+ * @returns {boolean} - True if the value is a valid IPv4 or IPv6 address, false otherwise.
+ */
+$.fn.form.settings.rules.ipaddress = (value) => {
+    return $.fn.form.settings.rules.ipaddr(value) || $.fn.form.settings.rules.ipv6addr(value);
 };
 
 /**
