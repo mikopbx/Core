@@ -40,7 +40,7 @@
     },
     "require-dev": {
         "browserstack/browserstack-local": "^v1.1.0",
-        "phalcon/ide-stubs": "^5.0.0",
+        "phalcon/ide-stubs": "^5.9",
         "php-webdriver/webdriver": "^1.14.0",
         "phpstan/phpstan": "^2.1",
         "phpunit/phpunit": "^9.0",
