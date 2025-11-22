@@ -39,8 +39,8 @@ class FirewallRulesDataFactory
         'miko.network' => [
             'id' => 4,
             'description' => 'MikoNetwork',
-            'network' => '172.16.32.0',
-            'subnet' => 24,
+            'ipv4_network' => '172.16.32.0',
+            'ipv4_subnet' => 24,
             'local_network' => true,
             'newer_block_ip' => true,
             'rules' => [
@@ -55,8 +55,8 @@ class FirewallRulesDataFactory
         'nikolay.macbook' => [
             'id' => 5,
             'description' => 'Nikolay macbook',
-            'network' => '172.16.32.69',
-            'subnet' => 32,
+            'ipv4_network' => '172.16.32.69',
+            'ipv4_subnet' => 32,
             'local_network' => true,
             'newer_block_ip' => true,
             'rules' => [
@@ -71,8 +71,8 @@ class FirewallRulesDataFactory
         'miko.vpn' => [
             'id' => 6,
             'description' => 'MIKOVPN',
-            'network' => '172.16.34.0',
-            'subnet' => 24,
+            'ipv4_network' => '172.16.34.0',
+            'ipv4_subnet' => 24,
             'local_network' => true,
             'newer_block_ip' => true,
             'rules' => [

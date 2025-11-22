@@ -77,8 +77,8 @@ abstract class CreateFirewallRuleTest extends MikoPBXTestsBase
     {
         $this->changeInputField('id', $params['id']);
         $this->changeInputField('description', $params['description']);
-        $this->changeInputField('network', $params['network']);
-        $this->selectDropdownItem('subnet', $params['subnet']);
+        $this->changeInputField('ipv4_network', $params['ipv4_network']);
+        $this->selectDropdownItem('ipv4_subnet', $params['ipv4_subnet']);
     }
 
     /**
@@ -112,8 +112,8 @@ abstract class CreateFirewallRuleTest extends MikoPBXTestsBase
     {
         $this->assertInputFieldValueEqual('id', $params['id']);
         $this->assertInputFieldValueEqual('description', $params['description']);
-        $this->assertInputFieldValueEqual('network', $params['network']);
-        $this->assertMenuItemSelected('subnet', $params['subnet']);
+        $this->assertInputFieldValueEqual('ipv4_network', $params['ipv4_network']);
+        $this->assertMenuItemSelected('ipv4_subnet', $params['ipv4_subnet']);
     }
 
     /**
