@@ -251,7 +251,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
             'network' => [
                 'type' => 'string',
                 'description' => 'rest_schema_fw_network',
-                'pattern' => '^(\d{1,3}\.){3}\d{1,3}$', // IPv4 format
+                'pattern' => '^((\d{1,3}\.){3}\d{1,3}|([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4})$', // IPv4 or IPv6 format
                 'sanitize' => 'string',
                 'required' => true, // Required for CREATE
                 'example' => '192.168.1.0'
@@ -260,7 +260,7 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
                 'type' => 'integer',
                 'description' => 'rest_schema_fw_subnet',
                 'minimum' => 0,
-                'maximum' => 32, // CIDR notation for IPv4
+                'maximum' => 128, // CIDR notation for IPv4 (/0-/32) and IPv6 (/0-/128)
                 'sanitize' => 'int',
                 'required' => true, // Required for CREATE
                 'example' => 24

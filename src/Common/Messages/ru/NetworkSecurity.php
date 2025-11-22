@@ -116,6 +116,33 @@ return [
     'fw_webDescription' => 'WEB - доступ к этому веб интерфейсу',
     'fw_webDescriptionHint' => 'HTTP/HTTPS - протоколы доступа к веб-интерфейсу MikoPBX<br>Доступ через браузер с логином и паролем администратора<br>Рекомендуется использовать HTTPS для безопасности',
 
+    // IPv6 Firewall Support
+    'fw_ValidateIPv4Address' => 'Неверный формат IPv4 адреса',
+    'fw_ValidateIPv6Address' => 'Неверный формат IPv6 адреса',
+    'fw_ValidateEitherIPv4OrIPv6Required' => 'Укажите IPv4 или IPv6 сеть',
+    'fw_ValidateOnlyOneProtocol' => 'Можно указать только один протокол',
+    'fw_IPv4Network' => 'IPv4 сеть',
+    'fw_IPv4Subnet' => 'IPv4 префикс',
+    'fw_IPv6Network' => 'IPv6 сеть',
+    'fw_IPv6Subnet' => 'IPv6 префикс',
+    'fw_IPv6OrIPv4Required' => 'Укажите IPv4 или IPv6 сеть (не обязательно оба протокола). Каждое правило использует только один тип IP адреса.',
+    'fw_Or' => 'ИЛИ',
+
+    // Backend Validation Messages
+    'fw_ValidationInvalidIPFormat' => 'Неверный формат IP адреса: %network%',
+    'fw_ValidationIPv4SubnetRange' => 'Префикс IPv4 сети должен быть от 0 до 32, получено: %subnet%',
+    'fw_ValidationIPv4InvalidOctetCount' => 'Неверный формат IPv4 адреса: %network% (должно быть 4 октета)',
+    'fw_ValidationIPv4InvalidOctet' => 'Неверный октет IPv4 #%index%: %octet% (должен быть от 0 до 255)',
+    'fw_ValidationIPv6PrefixRange' => 'Длина префикса IPv6 должна быть от 0 до 128, получено: %subnet%',
+    'fw_ValidationIPv6ZoneIdNotAllowed' => 'IPv6 Zone ID (например, %%eth0) не разрешены в правилах файрвола: %network%',
+    'fw_ValidationIPv6InvalidFormat' => 'Неверный формат IPv6 адреса: %network%',
+    'fw_ValidationInvalidCIDRFormat' => 'Неверный формат CIDR нотации: %cidr%',
+
+    // Default firewall rule names
+    'fw_AllIPv4NetworkRule' => 'Вся IPv4 сеть',
+    'fw_AllIPv6NetworkRule' => 'Вся IPv6 сеть',
+    'fw_LocalNetworkRuleDescription' => 'Локальная сеть',
+
     // NW
     'nw_AllowNatPortForwarding' => 'Эта станция расположена за NAT маршрутизатором',
     'nw_CurrentIPFromDHCP' => 'Текущий IP адрес полученный по DHCP',

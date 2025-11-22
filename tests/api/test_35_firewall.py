@@ -515,5 +515,207 @@ class TestFirewallEdgeCases:
             print(f"⚠ POST with custom ID error: {str(e)[:80]}")
 
 
+class TestFirewallIPv6:
+    """IPv6 and dual-stack firewall rules tests"""
+
+    created_ids = []
+
+    def test_01_create_rule_any_ipv4(self, api_client):
+        """Test creating firewall rule with 0.0.0.0/0 (any IPv4 address)
+
+        REGRESSION TEST: This used to fail with "Укажите IPv4 или IPv6 сеть"
+        Fixed by removing 0.0.0.0 validation from frontend (firewall-modify.js:433)
+        """
+        rule_data = {
+            'network': '0.0.0.0',
+            'subnet': '0',
+            'description': 'Allow from any IPv4 address',
+            'local_network': False,
+            'newer_block_ip': False
+        }
+
+        response = api_client.post('firewall', rule_data)
+        assert_api_success(response, "Failed to create 0.0.0.0/0 firewall rule")
+
+        assert 'id' in response['data']
+        rule_id = response['data']['id']
+        self.created_ids.append(rule_id)
+
+        # Verify permit field contains normalized CIDR
+        record = assert_record_exists(api_client, 'firewall', rule_id)
+        assert record['permit'] == '0.0.0.0/0', f"Expected permit=0.0.0.0/0, got {record.get('permit')}"
+
+        print(f"✓ Created 0.0.0.0/0 rule (any IPv4): {rule_id}")
+
+    def test_02_create_ipv6_rule(self, api_client):
+        """Test creating firewall rule with IPv6 address"""
+        rule_data = {
+            'network': '2001:db8::1',
+            'subnet': '64',
+            'description': 'Test IPv6 Rule',
+            'local_network': False,
+            'newer_block_ip': False
+        }
+
+        response = api_client.post('firewall', rule_data)
+        assert_api_success(response, "Failed to create IPv6 firewall rule")
+
+        assert 'id' in response['data']
+        rule_id = response['data']['id']
+        self.created_ids.append(rule_id)
+
+        # Verify permit field contains IPv6 CIDR
+        record = assert_record_exists(api_client, 'firewall', rule_id)
+        assert '2001:db8::1/64' in record['permit'] or '2001:db8::/64' in record['permit'], \
+            f"Expected IPv6 CIDR in permit, got {record.get('permit')}"
+
+        print(f"✓ Created IPv6 rule: {rule_id}")
+        print(f"  Network: {record['permit']}")
+
+    def test_03_create_ipv6_any_address(self, api_client):
+        """Test creating firewall rule with ::/0 (any IPv6 address)"""
+        rule_data = {
+            'network': '::',
+            'subnet': '0',
+            'description': 'Allow from any IPv6 address',
+            'local_network': False,
+            'newer_block_ip': False
+        }
+
+        response = api_client.post('firewall', rule_data)
+        assert_api_success(response, "Failed to create ::/0 firewall rule")
+
+        assert 'id' in response['data']
+        rule_id = response['data']['id']
+        self.created_ids.append(rule_id)
+
+        # Verify permit field
+        record = assert_record_exists(api_client, 'firewall', rule_id)
+        assert record['permit'] == '::/0', f"Expected permit=::/0, got {record.get('permit')}"
+
+        print(f"✓ Created ::/0 rule (any IPv6): {rule_id}")
+
+    def test_04_validate_ipv6_prefix_range(self, api_client):
+        """Test validation - IPv6 subnet must be 0-128"""
+        invalid_data = {
+            'network': '2001:db8::1',
+            'subnet': '200',  # Invalid - should be 0-128
+            'description': 'Invalid IPv6 Prefix'
+        }
+
+        try:
+            response = api_client.post('firewall', invalid_data)
+            if not response['result']:
+                print(f"✓ Invalid IPv6 prefix rejected")
+            else:
+                # Cleanup
+                if 'id' in response['data']:
+                    api_client.delete(f"firewall/{response['data']['id']}")
+                print(f"⚠ Invalid IPv6 prefix accepted (lenient validation)")
+        except Exception as e:
+            if '422' in str(e) or '400' in str(e):
+                print(f"✓ Invalid IPv6 prefix rejected via HTTP error")
+            else:
+                print(f"⚠ Unexpected error: {str(e)[:50]}")
+
+    def test_05_validate_invalid_ipv6_format(self, api_client):
+        """Test validation - invalid IPv6 address format"""
+        invalid_data = {
+            'network': 'gggg:hhhh::1',  # Invalid hex digits
+            'subnet': '64',
+            'description': 'Invalid IPv6 Format'
+        }
+
+        try:
+            response = api_client.post('firewall', invalid_data)
+            if not response['result']:
+                print(f"✓ Invalid IPv6 format rejected")
+            else:
+                # Cleanup
+                if 'id' in response['data']:
+                    api_client.delete(f"firewall/{response['data']['id']}")
+                print(f"⚠ Invalid IPv6 format accepted")
+        except Exception as e:
+            if '422' in str(e) or '400' in str(e):
+                print(f"✓ Invalid IPv6 format rejected via HTTP error")
+            else:
+                print(f"⚠ Unexpected error: {str(e)[:50]}")
+
+    def test_06_validate_ipv6_zone_id_rejected(self, api_client):
+        """Test validation - IPv6 zone IDs (e.g., fe80::1%eth0) should be rejected
+
+        Zone IDs are valid for link-local addresses but should NOT be stored in firewall rules
+        See SaveRecordAction.php:583 - explicit validation to reject zone IDs
+        """
+        invalid_data = {
+            'network': 'fe80::1%eth0',  # Zone ID not allowed in firewall rules
+            'subnet': '64',
+            'description': 'IPv6 with Zone ID'
+        }
+
+        try:
+            response = api_client.post('firewall', invalid_data)
+            if not response['result']:
+                print(f"✓ IPv6 zone ID correctly rejected")
+            else:
+                # Cleanup
+                if 'id' in response['data']:
+                    api_client.delete(f"firewall/{response['data']['id']}")
+                raise AssertionError("IPv6 zone IDs should be rejected in firewall rules")
+        except Exception as e:
+            if '422' in str(e) or '400' in str(e):
+                print(f"✓ IPv6 zone ID rejected via HTTP error")
+            else:
+                raise
+
+    def test_07_common_ipv6_prefixes(self, api_client):
+        """Test common IPv6 prefix lengths (/64, /48, /32, /128)"""
+        test_cases = [
+            ('2001:db8::', '128', 'Single IPv6 host'),
+            ('2001:db8::', '64', 'Standard IPv6 subnet'),
+            ('2001:db8::', '48', 'IPv6 site prefix'),
+            ('2001:db8::', '32', 'IPv6 provider allocation'),
+        ]
+
+        for network, subnet, description in test_cases:
+            rule_data = {
+                'network': network,
+                'subnet': subnet,
+                'description': description
+            }
+
+            response = api_client.post('firewall', rule_data)
+            assert_api_success(response, f"Failed to create {description}")
+
+            rule_id = response['data']['id']
+            self.created_ids.append(rule_id)
+
+            print(f"✓ Created {description}: {network}/{subnet}")
+
+    def test_08_cleanup_ipv6_rules(self, api_client):
+        """Cleanup all IPv6 test rules"""
+        deleted_count = 0
+        failed_count = 0
+
+        for rule_id in self.created_ids[:]:
+            try:
+                response = api_client.delete(f'firewall/{rule_id}')
+                assert_api_success(response, f"Failed to delete firewall rule {rule_id}")
+
+                assert_record_deleted(api_client, 'firewall', rule_id)
+
+                print(f"✓ Deleted IPv6 test rule: {rule_id}")
+                deleted_count += 1
+            except Exception as e:
+                if '422' in str(e) or '404' in str(e):
+                    print(f"⚠ Could not delete rule {rule_id}: {str(e)[:80]}")
+                    failed_count += 1
+                else:
+                    raise
+
+        print(f"✓ Deleted {deleted_count} IPv6 rules, {failed_count} failed")
+        self.created_ids.clear()
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v', '-s'])

@@ -258,17 +258,19 @@ const firewallTable = {
         // Action buttons cell
         html += '<td class="right aligned collapsing">';
         html += '<div class="ui small basic icon buttons">';
-        
+
         if (!rule.id) {
-            // New rule form
-            html += `<form action="${globalRootUrl}firewall/modify/" method="post">`;
-            html += `<input type="hidden" name="permit" value="${rule.network}"/>`;
-            html += `<input type="hidden" name="description" value="${rule.description}"/>`;
+            // New rule - use link with URL parameters instead of form
+            // Extract network and subnet from rule.network (e.g., "0.0.0.0/0" -> network=0.0.0.0&subnet=0)
+            const networkParts = rule.network.split('/');
+            const network = networkParts[0] || '';
+            const subnet = networkParts[1] || '0';
+            const ruleName = rule.description || '';
             const modifyClass = firewallTable.permissions.modify ? '' : 'disabled';
-            html += `<button class="ui icon basic mini button ${modifyClass}" type="submit">`;
-            html += '<i class="icon edit blue"></i></button>';
+            const prefillUrl = `${globalRootUrl}firewall/modify/?network=${encodeURIComponent(network)}&subnet=${encodeURIComponent(subnet)}&ruleName=${encodeURIComponent(ruleName)}`;
+            html += `<a href="${prefillUrl}" class="ui icon basic mini button ${modifyClass}">`;
+            html += '<i class="icon edit blue"></i></a>';
             html += '<a href="#" class="ui disabled button"><i class="icon trash red"></i></a>';
-            html += '</form>';
         } else {
             // Existing rule buttons
             const modifyClass = firewallTable.permissions.modify ? '' : 'disabled';

@@ -578,4 +578,18 @@ class LanInterfaces extends ModelsBase
         return filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false;
     }
 
+    /**
+     * Check if IPv6 is enabled on any interface
+     *
+     * @return bool True if at least one interface has IPv6 enabled
+     */
+    public static function isIpv6Enabled(): bool
+    {
+        $count = self::count([
+            'conditions' => 'ipv6_mode != :mode:',
+            'bind' => ['mode' => '0']
+        ]);
+        return $count > 0;
+    }
+
 }

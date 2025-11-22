@@ -134,6 +134,33 @@ return [
     'fw_webDescription' => 'WEB - access to this web interface',
     'fw_webDescriptionHint' => 'HTTP/HTTPS - protocols for accessing MikoPBX web interface<br>Access via browser with administrator login and password<br>HTTPS is recommended for security',
 
+    // IPv6 Firewall Support
+    'fw_ValidateIPv4Address' => 'Invalid IPv4 address format',
+    'fw_ValidateIPv6Address' => 'Invalid IPv6 address format',
+    'fw_ValidateEitherIPv4OrIPv6Required' => 'Specify IPv4 or IPv6 network',
+    'fw_ValidateOnlyOneProtocol' => 'Only one protocol can be specified',
+    'fw_IPv4Network' => 'IPv4 network',
+    'fw_IPv4Subnet' => 'IPv4 prefix',
+    'fw_IPv6Network' => 'IPv6 network',
+    'fw_IPv6Subnet' => 'IPv6 prefix',
+    'fw_IPv6OrIPv4Required' => 'Specify IPv4 or IPv6 network (not necessarily both protocols). Each rule uses only one IP address type.',
+    'fw_Or' => 'OR',
+
+    // Backend Validation Messages
+    'fw_ValidationInvalidIPFormat' => 'Invalid IP address format: %network%',
+    'fw_ValidationIPv4SubnetRange' => 'IPv4 subnet prefix must be between 0 and 32, got: %subnet%',
+    'fw_ValidationIPv4InvalidOctetCount' => 'Invalid IPv4 address format: %network% (must have 4 octets)',
+    'fw_ValidationIPv4InvalidOctet' => 'Invalid IPv4 octet #%index%: %octet% (must be 0-255)',
+    'fw_ValidationIPv6PrefixRange' => 'IPv6 prefix length must be between 0 and 128, got: %subnet%',
+    'fw_ValidationIPv6ZoneIdNotAllowed' => 'IPv6 zone IDs (e.g., %%eth0) are not allowed in firewall rules: %network%',
+    'fw_ValidationIPv6InvalidFormat' => 'Invalid IPv6 address format: %network%',
+    'fw_ValidationInvalidCIDRFormat' => 'Invalid CIDR notation format: %cidr%',
+
+    // Default firewall rule names
+    'fw_AllIPv4NetworkRule' => 'All IPv4 network',
+    'fw_AllIPv6NetworkRule' => 'All IPv6 network',
+    'fw_LocalNetworkRuleDescription' => 'Local network',
+
     // NW
     'nw_AllowNatPortForwarding' => 'This PBX is located behind a NAT router',
     'nw_CurrentIPFromDHCP' => 'Current IP address obtained via DHCP',

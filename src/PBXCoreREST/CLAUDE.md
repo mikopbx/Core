@@ -336,8 +336,116 @@ Study these as perfect examples:
 - **CallQueues** - Complete 7-phase pattern, nested members
 - **IvrMenu** - Complex nested actions array
 - **Providers** - Polymorphic schema (SIP/IAX), password masking
-- **Firewall** - Security validation, nested rules, inheritance
+- **Firewall** - Security validation, nested rules, inheritance, **dual-stack IPv4/IPv6 support**
 - **Employees** - Multi-entity save (Users + Extensions + Sip)
+
+### Firewall: IPv4/IPv6 Dual-Stack Support
+
+The Firewall REST API demonstrates how to implement dual-stack IPv4/IPv6 support with proper validation:
+
+**SaveRecordAction IPv6 Validation** (`src/PBXCoreREST/Lib/Firewall/SaveRecordAction.php`):
+```php
+private static function validateIpAndCidr(string $network, int|string $subnet): array
+{
+    $errors = [];
+
+    // Detect IP version using IpAddressHelper
+    $version = IpAddressHelper::getIpVersion($network);
+    if ($version === false) {
+        $errors[] = "Invalid IP address format: $network";
+        return $errors;
+    }
+
+    $subnetInt = is_string($subnet) ? intval($subnet) : $subnet;
+
+    // IPv4 validation (prefix /0-/32)
+    if ($version === IpAddressHelper::IP_VERSION_4) {
+        if ($subnetInt < 0 || $subnetInt > 32) {
+            $errors[] = "IPv4 subnet prefix must be between 0 and 32, got: $subnet";
+        }
+
+        // Validate octets are in correct range
+        $octets = explode('.', $network);
+        if (count($octets) !== 4) {
+            $errors[] = "Invalid IPv4 address format: $network (must have 4 octets)";
+            return $errors;
+        }
+
+        foreach ($octets as $index => $octet) {
+            $octetNum = (int)$octet;
+            if ($octetNum < 0 || $octetNum > 255) {
+                $errors[] = "Invalid IPv4 octet #" . ($index + 1) . ": $octet (must be 0-255)";
+            }
+        }
+    }
+    // IPv6 validation (prefix /0-/128)
+    else {
+        if ($subnetInt < 0 || $subnetInt > 128) {
+            $errors[] = "IPv6 prefix length must be between 0 and 128, got: $subnet";
+        }
+
+        // Validate IPv6 format using filter
+        if (!filter_var($network, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+            $errors[] = "Invalid IPv6 address format: $network";
+        }
+    }
+
+    // Final CIDR validation using IpAddressHelper
+    $cidr = "$network/$subnet";
+    if (IpAddressHelper::normalizeCidr($cidr) === false) {
+        $errors[] = "Invalid CIDR notation format: $cidr";
+    }
+
+    return $errors;
+}
+```
+
+**Key implementation details:**
+1. **Version detection**: Use `IpAddressHelper::getIpVersion()` to detect IPv4 vs IPv6
+2. **Subnet range validation**: IPv4 accepts /0-/32, IPv6 accepts /0-/128
+3. **Format validation**: Use `filter_var()` with `FILTER_FLAG_IPV6` for IPv6
+4. **CIDR normalization**: Use `IpAddressHelper::normalizeCidr()` for final validation
+5. **Unified storage**: Store both IPv4 and IPv6 in same network/subnet fields
+6. **Either/or enforcement**: UI enforces one protocol per rule (NIST SP 800-119)
+
+**Model-level validation** (`src/Common/Models/NetworkFilters.php`):
+```php
+public function beforeValidation(): bool
+{
+    // Validate permit field (IPv4 or IPv6 CIDR)
+    if (!empty($this->permit)) {
+        $cidrInfo = IpAddressHelper::normalizeCidr($this->permit);
+        if ($cidrInfo === false) {
+            $this->appendMessage(new Message(
+                'Invalid permit network CIDR notation',
+                'permit'
+            ));
+            return false;
+        }
+    }
+
+    // Validate deny field
+    if (!empty($this->deny)) {
+        $cidrInfo = IpAddressHelper::normalizeCidr($this->deny);
+        if ($cidrInfo === false) {
+            $this->appendMessage(new Message(
+                'Invalid deny network CIDR notation',
+                'deny'
+            ));
+            return false;
+        }
+    }
+
+    return true;
+}
+```
+
+**Testing:**
+- Unit tests: `tests/Common/Models/NetworkFiltersTest.php` (IPv6 CIDR validation)
+- Unit tests: `tests/Core/System/Configs/IptablesConfTest.php` (IPv6 firewall rule generation)
+- Test various IPv6 formats: 2001:db8::/64, fe80::/10, ::1/128, ::/0
+
+**See also:** `src/AdminCabinet/CLAUDE.md` section "Dual-Stack IPv4/IPv6 Forms" for frontend implementation
 
 ## External Resources
 

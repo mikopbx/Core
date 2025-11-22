@@ -22,6 +22,8 @@ namespace MikoPBX\PBXCoreREST\Lib\Firewall;
 use MikoPBX\AdminCabinet\Library\Cidr;
 use MikoPBX\Common\Models\FirewallRules;
 use MikoPBX\Common\Models\NetworkFilters;
+use MikoPBX\Common\Providers\TranslationProvider;
+use MikoPBX\Core\Utilities\IpAddressHelper;
 use MikoPBX\PBXCoreREST\Lib\Common\AbstractSaveRecordAction;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Di;
@@ -218,6 +220,11 @@ class SaveRecordAction extends AbstractSaveRecordAction
         // ============================================================
 
         $di = Di::getDefault();
+        if ($di === null) {
+            $res->messages['error'][] = 'DI container is not available';
+            $res->httpCode = 500;
+            return $res;
+        }
         $db = $di->get('db');
 
         try {
@@ -225,11 +232,21 @@ class SaveRecordAction extends AbstractSaveRecordAction
 
             // Process network/subnet fields to calculate permit (CIDR notation)
             if (isset($sanitizedData['network']) && isset($sanitizedData['subnet'])) {
-                $calculator = new Cidr();
-                $networkFilter->permit = $calculator->cidr2network(
-                    $sanitizedData['network'],
-                    intval($sanitizedData['subnet'])
-                ) . '/' . $sanitizedData['subnet'];
+                $network = $sanitizedData['network'];
+                $subnet = $sanitizedData['subnet'];
+
+                // Detect IP version to apply correct normalization
+                $version = IpAddressHelper::getIpVersion($network);
+
+                if ($version === IpAddressHelper::IP_VERSION_4) {
+                    // IPv4: Normalize network address using Cidr calculator
+                    $calculator = new Cidr();
+                    $normalizedNetwork = $calculator->cidr2network($network, intval($subnet));
+                    $networkFilter->permit = $normalizedNetwork . '/' . $subnet;
+                } else {
+                    // IPv6: Use address as-is (already validated in validateIpAndCidr)
+                    $networkFilter->permit = $network . '/' . $subnet;
+                }
             }
 
             // Convert boolean fields to '0'/'1' strings
@@ -487,9 +504,9 @@ class SaveRecordAction extends AbstractSaveRecordAction
      * Validate IP address and CIDR notation (Security Critical!)
      *
      * Validates:
-     * - IP address format (IPv4)
-     * - IP octets in valid range (0-255)
-     * - CIDR prefix length (0-32 for IPv4)
+     * - IP address format (IPv4 or IPv6)
+     * - IP octets/segments in valid range
+     * - CIDR prefix length (0-32 for IPv4, 0-128 for IPv6)
      * - No private/reserved IPs if not explicitly allowed
      *
      * WHY: Prevents malicious network configurations that could:
@@ -497,49 +514,93 @@ class SaveRecordAction extends AbstractSaveRecordAction
      * - Block legitimate traffic
      * - Create security vulnerabilities
      *
-     * @param string $ipAddress IP address to validate
-     * @param int $cidr CIDR prefix length (0-32)
+     * @param string $network Network address to validate
+     * @param int|string $subnet CIDR prefix length
      * @return array<string> List of validation errors (empty if valid)
      */
-    private static function validateIpAndCidr(string $ipAddress, int $cidr): array
+    private static function validateIpAndCidr(string $network, int|string $subnet): array
     {
         $errors = [];
 
-        // Validate IP address format using PHP's built-in filter
-        if (!filter_var($ipAddress, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
-            $errors[] = "Invalid IP address format: $ipAddress (must be valid IPv4)";
-            // Return early - no point in further validation
+        // Detect IP version
+        $version = IpAddressHelper::getIpVersion($network);
+        if ($version === false) {
+            $errors[] = TranslationProvider::translate('fw_ValidationInvalidIPFormat', [
+                'network' => $network
+            ]);
             return $errors;
         }
 
-        // Validate CIDR prefix length (already validated by schema min/max, but double-check)
-        if ($cidr < 0 || $cidr > 32) {
-            $errors[] = "Invalid CIDR prefix: $cidr (must be 0-32 for IPv4)";
-        }
+        $subnetInt = is_string($subnet) ? intval($subnet) : $subnet;
 
-        // Validate octets are in correct range (additional check)
-        $octets = explode('.', $ipAddress);
-        if (count($octets) !== 4) {
-            $errors[] = "Invalid IP address format: $ipAddress (must have 4 octets)";
-            return $errors;
-        }
+        // Validate subnet range based on IP version
+        if ($version === IpAddressHelper::IP_VERSION_4) {
+            // IPv4 validation
+            if ($subnetInt < 0 || $subnetInt > 32) {
+                $errors[] = TranslationProvider::translate('fw_ValidationIPv4SubnetRange', [
+                    'subnet' => $subnet
+                ]);
+            }
 
-        foreach ($octets as $index => $octet) {
-            $octetNum = (int)$octet;
-            if ($octetNum < 0 || $octetNum > 255) {
-                $errors[] = "Invalid IP octet #" . ($index + 1) . ": $octet (must be 0-255)";
+            // Validate octets are in correct range
+            $octets = explode('.', $network);
+            if (count($octets) !== 4) {
+                $errors[] = TranslationProvider::translate('fw_ValidationIPv4InvalidOctetCount', [
+                    'network' => $network
+                ]);
+                return $errors;
+            }
+
+            foreach ($octets as $index => $octet) {
+                $octetNum = (int)$octet;
+                if ($octetNum < 0 || $octetNum > 255) {
+                    $errors[] = TranslationProvider::translate('fw_ValidationIPv4InvalidOctet', [
+                        'index' => $index + 1,
+                        'octet' => $octet
+                    ]);
+                }
+            }
+
+            // Validate network address matches CIDR (IPv4 only)
+            $calculator = new Cidr();
+            $networkAddress = $calculator->cidr2network($network, $subnetInt);
+
+            if ($networkAddress !== $network) {
+                // This is a warning, not an error - we'll auto-correct it
+                // But we could make it an error for strict validation
+                // $errors[] = "IP address $network is not a valid network address for /$subnet (should be $networkAddress)";
+            }
+        } else {
+            // IPv6 validation
+            if ($subnetInt < 0 || $subnetInt > 128) {
+                $errors[] = TranslationProvider::translate('fw_ValidationIPv6PrefixRange', [
+                    'subnet' => $subnet
+                ]);
+            }
+
+            // Reject IPv6 zone IDs (e.g., fe80::1%eth0)
+            // WHY: Zone IDs are valid for link-local addresses but should NOT be stored in firewall rules
+            if (str_contains($network, '%')) {
+                $errors[] = TranslationProvider::translate('fw_ValidationIPv6ZoneIdNotAllowed', [
+                    'network' => $network
+                ]);
+                return $errors;
+            }
+
+            // Validate IPv6 format using filter
+            if (!filter_var($network, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+                $errors[] = TranslationProvider::translate('fw_ValidationIPv6InvalidFormat', [
+                    'network' => $network
+                ]);
             }
         }
 
-        // Validate network address matches CIDR
-        // Network address should have all host bits set to 0
-        $calculator = new Cidr();
-        $networkAddress = $calculator->cidr2network($ipAddress, $cidr);
-
-        if ($networkAddress !== $ipAddress) {
-            // This is a warning, not an error - we'll auto-correct it
-            // But we could make it an error for strict validation
-            // $errors[] = "IP address $ipAddress is not a valid network address for /$cidr (should be $networkAddress)";
+        // Validate CIDR notation using IpAddressHelper
+        $cidr = "$network/$subnet";
+        if (IpAddressHelper::normalizeCidr($cidr) === false) {
+            $errors[] = TranslationProvider::translate('fw_ValidationInvalidCIDRFormat', [
+                'cidr' => $cidr
+            ]);
         }
 
         return $errors;
