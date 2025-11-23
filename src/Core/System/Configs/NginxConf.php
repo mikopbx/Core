@@ -257,10 +257,12 @@ class NginxConf extends SystemConfigClass
             $mapDirective = 'map $remote_addr$host $is_local {' . PHP_EOL
                 . '    default 0;' . PHP_EOL
                 . '    "~127\.0\.0\.1.*" 1;' . PHP_EOL
+                . '    "~::1" 1;' . PHP_EOL
                 . '    "~.*localhost" 1;' . PHP_EOL
                 . '}' . PHP_EOL . PHP_EOL
                 . 'map $host $redirect_host {' . PHP_EOL
                 . '    default $host;' . PHP_EOL
+                . '    "~^\[" $host;' . PHP_EOL
                 . '    "~:" "[$host]";' . PHP_EOL
                 . '}' . PHP_EOL;
 
