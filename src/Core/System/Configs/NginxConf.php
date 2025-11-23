@@ -258,11 +258,15 @@ class NginxConf extends SystemConfigClass
                 . '    default 0;' . PHP_EOL
                 . '    "~127\.0\.0\.1.*" 1;' . PHP_EOL
                 . '    "~.*localhost" 1;' . PHP_EOL
+                . '}' . PHP_EOL . PHP_EOL
+                . 'map $host $redirect_host {' . PHP_EOL
+                . '    default $host;' . PHP_EOL
+                . '    "~:" "[$host]";' . PHP_EOL
                 . '}' . PHP_EOL;
 
 
               $conf_data = 'if ( $is_local != 1 ) {' . PHP_EOL
-                . '    ' . 'return 301 https://$host:' . $WEBHTTPSPort . '$request_uri;' . PHP_EOL
+                . '    ' . 'return 301 https://$redirect_host:' . $WEBHTTPSPort . '$request_uri;' . PHP_EOL
                 . '}' . PHP_EOL
                 . $includeRow . PHP_EOL;
 
