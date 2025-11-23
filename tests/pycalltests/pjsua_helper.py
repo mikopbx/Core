@@ -59,6 +59,7 @@ class PJSUAConfig:
     listen_ip: str = "0.0.0.0"
     listen_port: int = 0
     media: Optional[str] = None
+    auto_answer: bool = False
 
 
 class PJSUAAccount(pj.Account):
@@ -68,6 +69,8 @@ class PJSUAAccount(pj.Account):
         pj.Account.__init__(self)
         self.loop = None
         self.registration_future: Optional[asyncio.Future] = None
+        self.auto_answer: bool = False
+        self.incoming_calls: list = []  # Store incoming calls to prevent garbage collection
         self.logger = logging.getLogger(f"{__name__}.Account")
 
     def set_loop(self, loop):
@@ -111,20 +114,28 @@ class PJSUAAccount(pj.Account):
                 self.loop.call_soon_threadsafe(self.registration_future.set_exception, e)
 
     def onIncomingCall(self, prm):
-        """Called when receiving incoming call - auto-answer for testing"""
+        """Called when receiving incoming call - auto-answer if enabled"""
         try:
             call = PJSUACall(self, prm.callId)
             call.set_loop(self.loop)
-            call_info = call.getInfo()
-            self.logger.info(f"Incoming call from {call_info.remoteUri} - auto-answering")
 
-            # Auto-answer the call
-            call_op_param = pj.CallOpParam()
-            call_op_param.statusCode = 200
-            call.answer(call_op_param)
-            self.logger.info("Call auto-answered successfully")
+            # CRITICAL: Store call object to prevent garbage collection
+            # Without this, the call object gets destroyed and PJSUA sends 603 Decline automatically
+            self.incoming_calls.append(call)
+
+            call_info = call.getInfo()
+
+            if self.auto_answer:
+                self.logger.info(f"Incoming call from {call_info.remoteUri} - auto-answering")
+                # Auto-answer the call
+                call_op_param = pj.CallOpParam()
+                call_op_param.statusCode = 200
+                call.answer(call_op_param)
+                self.logger.info("Call auto-answered successfully")
+            else:
+                self.logger.info(f"Incoming call from {call_info.remoteUri} - NOT answering (auto_answer=False)")
         except Exception as e:
-            self.logger.error(f"Error auto-answering incoming call: {e}")
+            self.logger.error(f"Error handling incoming call: {e}", exc_info=True)
 
 
 class PJSUACall(pj.Call):
@@ -247,13 +258,14 @@ class PJSUAEndpoint:
                 print(f"[PJSUA_HELPER] Setting account media boundAddress: {PJSUAManager._local_ip}", flush=True)
                 logger.info(f"Account {self.config.extension}: media bound to {PJSUAManager._local_ip}")
 
-            # Use "*" wildcard realm to match any authentication challenge
-            # This is critical for PJSUA2 to automatically handle 401 responses to INVITE
-            cred = pj.AuthCredInfo("digest", "*", self.config.extension, 0, self.config.password)
+            # Use "asterisk" realm to match MikoPBX authentication challenges
+            # PJSUA2 will automatically handle 401 responses to INVITE with these credentials
+            cred = pj.AuthCredInfo("digest", "asterisk", self.config.extension, 0, self.config.password)
             acc_cfg.sipConfig.authCreds.append(cred)
 
             self.account = PJSUAAccount()
             self.account.set_loop(self.loop)
+            self.account.auto_answer = self.config.auto_answer
 
             # Create account - this will automatically start registration
             self.account.create(acc_cfg)
@@ -543,6 +555,15 @@ class PJSUAManager:
 
                     PJSUAManager._endpoint.libStart()
 
+                    # Configure null audio device for headless environments (Docker)
+                    # This MUST be called AFTER libStart() but BEFORE making calls
+                    try:
+                        PJSUAManager._endpoint.audDevManager().setNullDev()
+                        print(f"[PJSUA_HELPER] Null audio device configured (headless mode)", flush=True)
+                        logger.info("Null audio device configured for headless Docker environment")
+                    except Exception as audio_err:
+                        logger.warning(f"Could not set null audio device: {audio_err}")
+
                     # Give the endpoint a moment to fully initialize
                     import time
                     time.sleep(0.1)
@@ -554,11 +575,12 @@ class PJSUAManager:
                     raise
 
     async def create_endpoint(self, extension: str, password: str,
-                            auto_register: bool = True) -> PJSUAEndpoint:
+                            auto_register: bool = True, auto_answer: bool = False) -> PJSUAEndpoint:
         config = PJSUAConfig(
             extension=extension,
             password=password,
-            server_ip=self.server_ip
+            server_ip=self.server_ip,
+            auto_answer=auto_answer
         )
 
         endpoint = PJSUAEndpoint(config)

@@ -12,19 +12,17 @@ import pytest
 import pytest_asyncio
 import asyncio
 import logging
+import sys
 from pathlib import Path
+
+# Add api directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent / "api"))
+
 from pjsua_helper import PJSUAManager, get_mikopbx_ip
+from conftest import get_extension_secret
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-
-# Test extension credentials (shared with test_advanced_calls.py)
-TEST_EXTENSIONS = {
-    "201": "5b66b92d5714f921cfcde78a4fda0f58",
-    "202": "e72b3aea6e4f2a8560adb33cb9bfa5dd",
-    "203": "ce4fb0a6a238ddbcd059ecb30f884188",
-}
 
 
 @pytest_asyncio.fixture
@@ -49,7 +47,7 @@ async def pjsua_manager(mikopbx_ip):
 
 
 @pytest.mark.asyncio
-async def test_01_queue_ringall_strategy(api_client, pjsua_manager, cdr_baseline):
+async def test_01_queue_ringall_strategy(api_client, call_queue_fixtures, pjsua_manager, cdr_baseline):
     """
     Test Call Queue with Ringall Strategy
 
@@ -84,20 +82,22 @@ async def test_01_queue_ringall_strategy(api_client, pjsua_manager, cdr_baseline
         print(f"STEP 1: Create Call Queue")
         print(f"{'-'*70}")
 
+        # Use fixture data for queue
+        queue_fixture = call_queue_fixtures.get('test.queue.ringall', {})
         queue_data = {
-            'name': 'Sales Queue',
-            'extension': '600',
-            'strategy': 'ringall',
-            'description': 'Test queue for ringall',
-            'seconds_to_ring_each_member': 30,
-            'seconds_for_wrapup': 5,
-            'caller_hear': 'ringing',
-            'announce_position': False,
-            'announce_hold_time': False,
-            'members': [
+            'name': queue_fixture.get('name', 'Test Ringall Queue'),
+            'extension': str(queue_fixture.get('extension', 600)),
+            'strategy': queue_fixture.get('strategy', 'ringall'),
+            'description': queue_fixture.get('description', 'Test queue for ringall'),
+            'seconds_to_ring_each_member': queue_fixture.get('seconds_to_ring_each_member', 30),
+            'seconds_for_wrapup': queue_fixture.get('seconds_for_wrapup', 5),
+            'caller_hear': queue_fixture.get('caller_hear', 'ringing'),
+            'announce_position': queue_fixture.get('announce_position', False),
+            'announce_hold_time': queue_fixture.get('announce_hold_time', False),
+            'members': queue_fixture.get('members', [
                 {'extension': '201'},
                 {'extension': '202'}
-            ]
+            ])
         }
 
         print(f"Creating queue: {queue_data['name']}")
@@ -113,26 +113,38 @@ async def test_01_queue_ringall_strategy(api_client, pjsua_manager, cdr_baseline
         print(f"✅ Queue members added: 201, 202")
 
         # ================================================================
-        # STEP 2: Register Queue Members (Answer Mode)
+        # STEP 2: Get extension credentials and Register Queue Members
         # ================================================================
         print(f"\n{'-'*70}")
         print(f"STEP 2: Register Queue Members")
         print(f"{'-'*70}")
 
-        # Create and register endpoints using pjsua_manager
+        # Get actual passwords from API
+        pwd201 = get_extension_secret('201', api_client)
+        pwd202 = get_extension_secret('202', api_client)
+        pwd203 = get_extension_secret('203', api_client)
+
+        print(f"Retrieved credentials for extensions 201, 202, 203 from API")
+
+        if not pwd201 or not pwd202 or not pwd203:
+            raise ValueError("Failed to retrieve passwords from API")
+
+        # Create and register endpoints with auto_answer
         member_201 = await pjsua_manager.create_endpoint(
             extension="201",
-            password=TEST_EXTENSIONS["201"],
-            auto_register=True
+            password=pwd201,
+            auto_register=True,
+            auto_answer=True
         )
         member_202 = await pjsua_manager.create_endpoint(
             extension="202",
-            password=TEST_EXTENSIONS["202"],
-            auto_register=True
+            password=pwd202,
+            auto_register=True,
+            auto_answer=True
         )
 
-        print(f"✅ Member 201 registered (answer mode)")
-        print(f"✅ Member 202 registered (answer mode)")
+        print(f"✅ Member 201 registered (auto-answer enabled)")
+        print(f"✅ Member 202 registered (auto-answer enabled)")
 
         # ================================================================
         # STEP 3: Make Call to Queue
@@ -141,12 +153,15 @@ async def test_01_queue_ringall_strategy(api_client, pjsua_manager, cdr_baseline
         print(f"STEP 3: Call Queue from Extension 203")
         print(f"{'-'*70}")
 
-        # Create caller endpoint (not registered, will dial)
+        # Create caller endpoint (must be registered!)
         caller_203 = await pjsua_manager.create_endpoint(
             extension="203",
-            password=TEST_EXTENSIONS["203"],
-            auto_register=False
+            password=pwd203,
+            auto_register=True
         )
+
+        print(f"✅ Caller 203 registered")
+        await asyncio.sleep(2)
 
         print(f"Caller 203 calling queue 600...")
 

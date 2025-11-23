@@ -21,6 +21,7 @@ spec.loader.exec_module(api_conftest)
 
 # Re-export fixtures from API conftest
 api_client = api_conftest.api_client
+call_queue_fixtures = api_conftest.call_queue_fixtures
 
 # Re-export MikoPBXClient class for direct import
 MikoPBXClient = api_conftest.MikoPBXClient
@@ -129,6 +130,7 @@ async def pjsua_cleanup():
 __all__ = [
     'api_client',
     'cdr_baseline',
+    'call_queue_fixtures',
     'MikoPBXClient',
     'assert_api_success',
     'get_extension_secret',

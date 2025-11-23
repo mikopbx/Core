@@ -19,10 +19,19 @@ tests/api/__pycache__/
 tests/api/.pytest_cache/
 tests/api/.hypothesis/
 tests/api/**/__pycache__/
+tests/pycalltests/__pycache__/
+tests/pycalltests/.pytest_cache/
+tests/pycalltests/**/__pycache__/
 
 # Python compiled files
 tests/api/*.pyc
 tests/api/**/*.pyc
+tests/pycalltests/*.pyc
+tests/pycalltests/**/*.pyc
+
+# Python dependencies (installed via pip)
+tests/pycalltests/bin/pjsua2/linux-arm64/python_deps/
+tests/pycalltests/vendor_deps/
 
 # Environment files
 .env

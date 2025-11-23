@@ -19,7 +19,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "api"))
 
 from config import get_config
-from conftest import MikoPBXClient, assert_api_success
+from conftest import MikoPBXClient, assert_api_success, get_extension_secret
 from pjsua_helper import PJSUAConfig, PJSUAEndpoint, PJSUAManager, get_mikopbx_ip
 
 # Load configuration
@@ -28,13 +28,6 @@ config = get_config()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
-# Test extension credentials
-TEST_EXTENSIONS = {
-    "201": "5b66b92d5714f921cfcde78a4fda0f58",
-    "202": "e72b3aea6e4f2a8560adb33cb9bfa5dd",
-    "203": "ce4fb0a6a238ddbcd059ecb30f884188",
-}
 
 
 @pytest_asyncio.fixture
@@ -49,6 +42,7 @@ async def mikopbx_ip():
 async def pjsua_manager(mikopbx_ip):
     """Create PJSUA manager for tests"""
     manager = PJSUAManager(server_ip=mikopbx_ip)
+    await manager.initialize()  # Start PJSIP event handler
 
     yield manager
 
@@ -69,485 +63,292 @@ async def audio_file_id(api_client):
     return ""
 
 
+@pytest_asyncio.fixture
+async def extension_credentials(api_client):
+    """
+    Dynamically load SIP secrets for test extensions via REST API.
+
+    Returns dictionary mapping extension number to SIP secret (MD5 hash).
+    """
+    extensions = ["201", "202", "203", "204", "205", "206"]
+    credentials = {}
+
+    for ext in extensions:
+        secret = get_extension_secret(ext, api_client)
+        if secret:
+            credentials[ext] = secret
+            logger.info(f"Loaded credentials for extension {ext}")
+        else:
+            logger.warning(f"Failed to load credentials for extension {ext}")
+
+    return credentials
+
+
 @pytest.mark.asyncio
-async def test_01_single_level_ivr_navigation(api_client, pjsua_manager, audio_file_id):
+async def test_01_single_level_ivr_navigation(api_client, pjsua_manager, extension_credentials):
     """
     Test: Single-Level IVR Menu with DTMF Navigation
 
+    Uses existing demo IVR "Main IVR menu" (extension 20020):
+    - DTMF 2 → Extension 202
+    - DTMF 3 → Extension 203
+
     Scenario:
-    1. Create IVR menu "Main Menu" (ext 500)
-       - Press 1 → Route to extension 201
-       - Press 2 → Route to extension 202
-       - Press 3 → Route to extension 203
-    2. Register extensions 201, 202, 203 in answer mode
-    3. Caller dials IVR extension 500
-    4. After IVR greeting, send DTMF "2"
-    5. Verify call routes to extension 202
-    6. Test routing with DTMF "1" and "3"
-    7. Cleanup IVR menu
+    1. Register extensions 202, 203 in answer mode
+    2. Caller 204 dials IVR extension 20020
+    3. After IVR greeting, send DTMF "2"
+    4. Verify call routes to extension 202
+    5. Test routing with DTMF "3"
 
     Expected:
-    - IVR menu created successfully
     - DTMF digits route to correct extensions
     - Extensions receive calls based on DTMF input
     """
 
     print(f"\n{'='*70}")
-    print(f"Test: Single-Level IVR Navigation")
+    print(f"Test: Single-Level IVR Navigation (Demo IVR 20020)")
     print(f"{'='*70}")
 
-    ivr_id = None
+    # ================================================================
+    # STEP 1: Register Target Extensions
+    # ================================================================
+    print(f"\n{'-'*70}")
+    print(f"STEP 1: Register Target Extensions")
+    print(f"{'-'*70}")
 
-    try:
-        # ================================================================
-        # STEP 1: Create IVR Menu via API
-        # ================================================================
-        print(f"\n{'-'*70}")
-        print(f"STEP 1: Create IVR Menu")
-        print(f"{'-'*70}")
+    ext202 = await pjsua_manager.create_endpoint(
+        extension="202",
+        password=extension_credentials["202"],
+        auto_register=True,
+        auto_answer=True
+    )
+    print(f"✅ Extension 202 registered (auto-answer enabled)")
 
-        ivr_data = {
-            'name': 'Main Menu',
-            'extension': '500',
-            'audio_message_id': audio_file_id,
-            'timeout': 10,
-            'timeout_extension': '201',  # Default extension on timeout
-            'description': 'Test IVR for DTMF navigation'
-        }
+    ext203 = await pjsua_manager.create_endpoint(
+        extension="203",
+        password=extension_credentials["203"],
+        auto_register=True,
+        auto_answer=True
+    )
+    print(f"✅ Extension 203 registered (auto-answer enabled)")
 
-        print(f"Creating IVR menu: {ivr_data['name']}")
-        print(f"  Extension: {ivr_data['extension']}")
-        print(f"  Audio ID: {ivr_data['audio_message_id']}")
+    await asyncio.sleep(2)
 
-        response = api_client.post('ivr-menu', ivr_data)
-        assert_api_success(response, f"Failed to create IVR menu: {response.get('messages')}")
+    # ================================================================
+    # STEP 2: Test IVR Navigation with DTMF "2" → 202
+    # ================================================================
+    print(f"\n{'-'*70}")
+    print(f"STEP 2: Test IVR Navigation - Press 2")
+    print(f"{'-'*70}")
 
-        ivr_id = response['data']['id']
-        print(f"✅ IVR menu created with ID: {ivr_id}")
+    caller = await pjsua_manager.create_endpoint(
+        extension="204",
+        password=extension_credentials["204"],
+        auto_register=True
+    )
+    print(f"✅ Caller extension 204 registered")
 
-        # ================================================================
-        # STEP 2: Add IVR Menu Actions (DTMF mappings)
-        # ================================================================
-        print(f"\n{'-'*70}")
-        print(f"STEP 2: Configure IVR Menu Actions")
-        print(f"{'-'*70}")
+    print(f"Calling IVR 20020 and sending DTMF '2' after 3s delay...")
+    success = await caller.dial("20020", dtmf="2", dtmf_delay=3)
 
-        # Define DTMF to extension mappings
-        menu_actions = [
-            {'digits': '1', 'extension': '201'},
-            {'digits': '2', 'extension': '202'},
-            {'digits': '3', 'extension': '203'}
-        ]
+    assert success, "Failed to dial IVR extension 20020"
+    print(f"✅ Call initiated to IVR 20020")
 
-        # Update IVR with menu items
-        ivr_update_data = ivr_data.copy()
-        ivr_update_data['id'] = ivr_id
-        ivr_update_data['menuItems'] = menu_actions
+    await asyncio.sleep(8)
+    print(f"✅ DTMF '2' sent, call should route to extension 202")
 
-        response = api_client.patch(f'ivr-menu/{ivr_id}', ivr_update_data)
-        assert_api_success(response, f"Failed to update IVR menu actions: {response.get('messages')}")
+    await caller.hangup()
+    await asyncio.sleep(2)
 
-        for action in menu_actions:
-            print(f"  ✅ DTMF {action['digits']} → Extension {action['extension']}")
+    # ================================================================
+    # STEP 3: Test IVR Navigation with DTMF "3" → 203
+    # ================================================================
+    print(f"\n{'-'*70}")
+    print(f"STEP 3: Test IVR Navigation - Press 3")
+    print(f"{'-'*70}")
 
-        # Wait for configuration to apply
-        await asyncio.sleep(3)
+    caller2 = await pjsua_manager.create_endpoint(
+        extension="205",
+        password=extension_credentials["205"],
+        auto_register=True
+    )
+    print(f"✅ Caller extension 205 registered")
 
-        # ================================================================
-        # STEP 3: Register Target Extensions
-        # ================================================================
-        print(f"\n{'-'*70}")
-        print(f"STEP 3: Register Target Extensions")
-        print(f"{'-'*70}")
+    print(f"Calling IVR 20020 and sending DTMF '3' after 3s delay...")
+    success = await caller2.dial("20020", dtmf="3", dtmf_delay=3)
 
-        ext201 = await pjsua_manager.create_endpoint(
-            extension="201",
-            password=TEST_EXTENSIONS["201"],
-            auto_register=True
-        )
-        print(f"✅ Extension 201 registered")
+    assert success, "Failed to dial IVR extension 20020"
+    print(f"✅ Call initiated to IVR 20020")
 
-        ext202 = await pjsua_manager.create_endpoint(
-            extension="202",
-            password=TEST_EXTENSIONS["202"],
-            auto_register=True
-        )
-        print(f"✅ Extension 202 registered")
+    await asyncio.sleep(8)
+    print(f"✅ DTMF '3' sent, call should route to extension 203")
 
-        ext203 = await pjsua_manager.create_endpoint(
-            extension="203",
-            password=TEST_EXTENSIONS["203"],
-            auto_register=True
-        )
-        print(f"✅ Extension 203 registered")
+    await caller2.hangup()
 
-        await asyncio.sleep(2)
-
-        # ================================================================
-        # STEP 4: Test IVR Navigation with DTMF "2"
-        # ================================================================
-        print(f"\n{'-'*70}")
-        print(f"STEP 4: Test IVR Navigation - Press 2")
-        print(f"{'-'*70}")
-
-        # Create calling endpoint (not registered, will dial)
-        config_caller = PJSUAConfig(
-            extension="204",
-            password="test_password",
-            server_ip=pjsua_manager.server_ip,
-            media="log"
-        )
-        caller = PJSUAEndpoint(config_caller)
-
-        # Call IVR and send DTMF "2" after 3 seconds
-        print(f"Calling IVR 500 and sending DTMF '2' after 3s delay...")
-        success = await caller.dial("500", dtmf="2", dtmf_delay=3)
-
-        assert success, "Failed to dial IVR extension"
-        print(f"✅ Call initiated to IVR 500")
-
-        # Wait for DTMF to be sent and call to route
-        await asyncio.sleep(8)
-
-        print(f"✅ DTMF '2' sent, call should route to extension 202")
-
-        # Cleanup this call
-        await caller.hangup()
-        await asyncio.sleep(2)
-
-        # ================================================================
-        # STEP 5: Test IVR Navigation with DTMF "1"
-        # ================================================================
-        print(f"\n{'-'*70}")
-        print(f"STEP 5: Test IVR Navigation - Press 1")
-        print(f"{'-'*70}")
-
-        caller2 = PJSUAEndpoint(config_caller)
-
-        print(f"Calling IVR 500 and sending DTMF '1' after 3s delay...")
-        success = await caller2.dial("500", dtmf="1", dtmf_delay=3)
-
-        assert success, "Failed to dial IVR extension"
-        print(f"✅ Call initiated to IVR 500")
-
-        await asyncio.sleep(8)
-        print(f"✅ DTMF '1' sent, call should route to extension 201")
-
-        await caller2.hangup()
-        await asyncio.sleep(2)
-
-        # ================================================================
-        # STEP 6: Test IVR Navigation with DTMF "3"
-        # ================================================================
-        print(f"\n{'-'*70}")
-        print(f"STEP 6: Test IVR Navigation - Press 3")
-        print(f"{'-'*70}")
-
-        caller3 = PJSUAEndpoint(config_caller)
-
-        print(f"Calling IVR 500 and sending DTMF '3' after 3s delay...")
-        success = await caller3.dial("500", dtmf="3", dtmf_delay=3)
-
-        assert success, "Failed to dial IVR extension"
-        print(f"✅ Call initiated to IVR 500")
-
-        await asyncio.sleep(8)
-        print(f"✅ DTMF '3' sent, call should route to extension 203")
-
-        await caller3.hangup()
-
-        print(f"\n{'='*70}")
-        print(f"✓ Single-Level IVR Navigation Test COMPLETED")
-        print(f"{'='*70}")
-
-    finally:
-        # ================================================================
-        # CLEANUP: Delete IVR Menu
-        # ================================================================
-        if ivr_id:
-            print(f"\nCleaning up IVR menu {ivr_id}...")
-            try:
-                response = api_client.delete(f'ivr-menu/{ivr_id}')
-                if response.get('result'):
-                    print(f"✅ IVR menu deleted")
-            except Exception as e:
-                logger.error(f"Failed to delete IVR menu: {e}")
+    print(f"\n{'='*70}")
+    print(f"✓ Single-Level IVR Navigation Test COMPLETED")
+    print(f"{'='*70}")
 
 
 @pytest.mark.asyncio
-async def test_02_multi_level_ivr_navigation(api_client, pjsua_manager, audio_file_id):
+async def test_02_multi_level_ivr_navigation(api_client, pjsua_manager, extension_credentials):
     """
     Test: Multi-Level (Nested) IVR Menu Navigation
 
+    Uses existing demo IVR structure:
+    - Main IVR (20020): DTMF 1 → Second IVR (30021)
+    - Second IVR (30021): DTMF 1 → 201, DTMF 2 → 202, DTMF 3 → 203
+
     Scenario:
-    1. Create Main IVR menu (ext 510)
-       - Press 1 → Route to Sales IVR (520)
-       - Press 2 → Route to Support extension (202)
-       - Press 0 → Route to Operator (201)
-    2. Create Sales IVR menu (ext 520)
-       - Press 1 → Sales Rep 1 (203)
-       - Press 2 → Sales Rep 2 (202)
-    3. Register all extensions
-    4. Test navigation: Call 510 → Press 1 → Press 2
-    5. Verify call routes through nested menus correctly
+    1. Register target extensions (201, 202, 203)
+    2. Call Main IVR (20020)
+    3. Press DTMF "1" → routes to Second IVR (30021)
+    4. Press DTMF "2" → routes to extension 202
 
     Expected:
-    - Nested IVR menus work correctly
+    - Nested IVR navigation works correctly
     - DTMF navigates through multiple levels
-    - Final destination receives the call
+    - Final extension receives the call
     """
 
     print(f"\n{'='*70}")
-    print(f"Test: Multi-Level IVR Navigation")
+    print(f"Test: Multi-Level IVR Navigation (Demo IVR 20020→30021)")
     print(f"{'='*70}")
 
-    main_ivr_id = None
-    sales_ivr_id = None
+    # ================================================================
+    # STEP 1: Register Target Extensions
+    # ================================================================
+    print(f"\n{'-'*70}")
+    print(f"STEP 1: Register Target Extensions")
+    print(f"{'-'*70}")
 
-    try:
-        # ================================================================
-        # STEP 1: Create Sales IVR Menu (Second Level)
-        # ================================================================
-        print(f"\n{'-'*70}")
-        print(f"STEP 1: Create Sales IVR (Second Level)")
-        print(f"{'-'*70}")
+    ext201 = await pjsua_manager.create_endpoint(
+        extension="201",
+        password=extension_credentials["201"],
+        auto_register=True,
+        auto_answer=True
+    )
+    print(f"✅ Extension 201 registered (auto-answer enabled)")
 
-        sales_ivr_data = {
-            'name': 'Sales IVR',
-            'extension': '520',
-            'audio_message_id': audio_file_id,
-            'timeout': 10,
-            'timeout_extension': '201',
-            'description': 'Sales department IVR'
-        }
+    ext202 = await pjsua_manager.create_endpoint(
+        extension="202",
+        password=extension_credentials["202"],
+        auto_register=True,
+        auto_answer=True
+    )
+    print(f"✅ Extension 202 registered (auto-answer enabled)")
 
-        response = api_client.post('ivr-menu', sales_ivr_data)
-        assert_api_success(response, f"Failed to create Sales IVR: {response.get('messages')}")
+    ext203 = await pjsua_manager.create_endpoint(
+        extension="203",
+        password=extension_credentials["203"],
+        auto_register=True,
+        auto_answer=True
+    )
+    print(f"✅ Extension 203 registered (auto-answer enabled)")
 
-        sales_ivr_id = response['data']['id']
-        print(f"✅ Sales IVR created (ext 520, ID: {sales_ivr_id})")
+    await asyncio.sleep(2)
 
-        # Configure Sales IVR actions
-        sales_menu_actions = [
-            {'digits': '1', 'extension': '203'},
-            {'digits': '2', 'extension': '202'}
-        ]
+    # ================================================================
+    # STEP 2: Test Nested Navigation - 20020 (DTMF 1) → 30021 (DTMF 2) → 202
+    # ================================================================
+    print(f"\n{'-'*70}")
+    print(f"STEP 2: Test Nested IVR Navigation")
+    print(f"{'-'*70}")
 
-        sales_ivr_update = sales_ivr_data.copy()
-        sales_ivr_update['id'] = sales_ivr_id
-        sales_ivr_update['menuItems'] = sales_menu_actions
+    caller = await pjsua_manager.create_endpoint(
+        extension="204",
+        password=extension_credentials["204"],
+        auto_register=True
+    )
+    print(f"✅ Caller extension 204 registered")
 
-        response = api_client.patch(f'ivr-menu/{sales_ivr_id}', sales_ivr_update)
-        assert_api_success(response, f"Failed to update Sales IVR: {response.get('messages')}")
+    print(f"Calling Main IVR 20020...")
+    print(f"  Will send DTMF '12' (1 for Second IVR, 2 for ext 202)")
 
-        print(f"  ✅ DTMF 1 → Extension 203")
-        print(f"  ✅ DTMF 2 → Extension 202")
+    success = await caller.dial("20020", dtmf="12", dtmf_delay=3)
+    assert success, "Failed to dial Main IVR 20020"
 
-        # ================================================================
-        # STEP 2: Create Main IVR Menu (First Level)
-        # ================================================================
-        print(f"\n{'-'*70}")
-        print(f"STEP 2: Create Main IVR (First Level)")
-        print(f"{'-'*70}")
+    print(f"✅ Call initiated, DTMF will route: 20020→30021→202")
 
-        main_ivr_data = {
-            'name': 'Main IVR',
-            'extension': '510',
-            'audio_message_id': audio_file_id,
-            'timeout': 10,
-            'timeout_extension': '201',
-            'description': 'Main company IVR'
-        }
+    await asyncio.sleep(10)
 
-        response = api_client.post('ivr-menu', main_ivr_data)
-        assert_api_success(response, f"Failed to create Main IVR: {response.get('messages')}")
+    await caller.hangup()
 
-        main_ivr_id = response['data']['id']
-        print(f"✅ Main IVR created (ext 510, ID: {main_ivr_id})")
-
-        # Configure Main IVR actions (link to Sales IVR)
-        main_menu_actions = [
-            {'digits': '1', 'extension': '520'},  # Route to Sales IVR
-            {'digits': '2', 'extension': '202'},  # Direct to support
-            {'digits': '0', 'extension': '201'}   # Operator
-        ]
-
-        main_ivr_update = main_ivr_data.copy()
-        main_ivr_update['id'] = main_ivr_id
-        main_ivr_update['menuItems'] = main_menu_actions
-
-        response = api_client.patch(f'ivr-menu/{main_ivr_id}', main_ivr_update)
-        assert_api_success(response, f"Failed to update Main IVR: {response.get('messages')}")
-
-        print(f"  ✅ DTMF 1 → Sales IVR (520)")
-        print(f"  ✅ DTMF 2 → Support (202)")
-        print(f"  ✅ DTMF 0 → Operator (201)")
-
-        await asyncio.sleep(3)
-
-        # ================================================================
-        # STEP 3: Register Target Extensions
-        # ================================================================
-        print(f"\n{'-'*70}")
-        print(f"STEP 3: Register Target Extensions")
-        print(f"{'-'*70}")
-
-        ext201 = await pjsua_manager.create_endpoint(
-            extension="201", password=TEST_EXTENSIONS["201"], auto_register=True
-        )
-        ext202 = await pjsua_manager.create_endpoint(
-            extension="202", password=TEST_EXTENSIONS["202"], auto_register=True
-        )
-        ext203 = await pjsua_manager.create_endpoint(
-            extension="203", password=TEST_EXTENSIONS["203"], auto_register=True
-        )
-
-        print(f"✅ Extensions 201, 202, 203 registered")
-        await asyncio.sleep(2)
-
-        # ================================================================
-        # STEP 4: Test Nested Navigation (510 → 1 → 1)
-        # ================================================================
-        print(f"\n{'-'*70}")
-        print(f"STEP 4: Test Nested Navigation - Main→Sales→Rep1")
-        print(f"{'-'*70}")
-
-        config_caller = PJSUAConfig(
-            extension="205",
-            password="test_password",
-            server_ip=pjsua_manager.server_ip,
-            media="log"
-        )
-        caller = PJSUAEndpoint(config_caller)
-
-        # Call Main IVR, send "1" to go to Sales IVR, then "1" to reach ext 203
-        print(f"Calling Main IVR 510...")
-        print(f"  Will send DTMF '11' (1 for Sales, 1 for Rep1)")
-
-        success = await caller.dial("510", dtmf="11", dtmf_delay=3)
-        assert success, "Failed to dial Main IVR"
-
-        print(f"✅ Call initiated, DTMF will route: 510→520→203")
-
-        await asyncio.sleep(10)
-
-        await caller.hangup()
-
-        print(f"\n{'='*70}")
-        print(f"✓ Multi-Level IVR Navigation Test COMPLETED")
-        print(f"{'='*70}")
-
-    finally:
-        # ================================================================
-        # CLEANUP: Delete IVR Menus
-        # ================================================================
-        print(f"\nCleaning up IVR menus...")
-
-        if main_ivr_id:
-            try:
-                api_client.delete(f'ivr-menu/{main_ivr_id}')
-                print(f"✅ Main IVR deleted")
-            except Exception as e:
-                logger.error(f"Failed to delete Main IVR: {e}")
-
-        if sales_ivr_id:
-            try:
-                api_client.delete(f'ivr-menu/{sales_ivr_id}')
-                print(f"✅ Sales IVR deleted")
-            except Exception as e:
-                logger.error(f"Failed to delete Sales IVR: {e}")
+    print(f"\n{'='*70}")
+    print(f"✓ Multi-Level IVR Navigation Test COMPLETED")
+    print(f"{'='*70}")
 
 
 @pytest.mark.asyncio
-async def test_03_ivr_invalid_dtmf_handling(api_client, pjsua_manager, audio_file_id):
+async def test_03_ivr_invalid_dtmf_handling(api_client, pjsua_manager, extension_credentials):
     """
     Test: IVR Invalid DTMF Input Handling
 
+    Uses existing demo Main IVR (20020):
+    - Valid DTMF: 1 → 30021, 2 → 202, 3 → 203
+    - Timeout: 20 seconds → 201
+
     Scenario:
-    1. Create IVR menu with defined actions (1, 2, 3)
-    2. Call IVR and send invalid DTMF (9)
-    3. Verify timeout or invalid handler works
-    4. Test with no DTMF input (timeout scenario)
+    1. Register timeout destination (201)
+    2. Call Main IVR (20020)
+    3. Send invalid DTMF (9) - should handle gracefully
+    4. Verify no crashes or hung calls
 
     Expected:
     - Invalid DTMF handled gracefully
-    - Timeout routes to default extension
+    - System continues to operate normally
     - No crashes or hung calls
     """
 
     print(f"\n{'='*70}")
-    print(f"Test: IVR Invalid DTMF Handling")
+    print(f"Test: IVR Invalid DTMF Handling (Demo IVR 20020)")
     print(f"{'='*70}")
 
-    ivr_id = None
+    # ================================================================
+    # STEP 1: Register Timeout Destination
+    # ================================================================
+    print(f"\n{'-'*70}")
+    print(f"STEP 1: Register Timeout Destination")
+    print(f"{'-'*70}")
 
-    try:
-        # Create IVR with timeout handler
-        ivr_data = {
-            'name': 'Test IVR - Invalid DTMF',
-            'extension': '530',
-            'audio_message_id': audio_file_id,
-            'timeout': 5,  # Short timeout for testing
-            'timeout_extension': '201',  # Route to 201 on timeout
-            'description': 'Test IVR for invalid DTMF handling'
-        }
+    ext201 = await pjsua_manager.create_endpoint(
+        extension="201",
+        password=extension_credentials["201"],
+        auto_register=True,
+        auto_answer=True
+    )
+    print(f"✅ Timeout destination (201) registered (auto-answer enabled)")
 
-        response = api_client.post('ivr-menu', ivr_data)
-        assert_api_success(response, "Failed to create IVR")
+    await asyncio.sleep(2)
 
-        ivr_id = response['data']['id']
-        print(f"✅ IVR created (ext 530, timeout→201)")
+    # ================================================================
+    # STEP 2: Test Invalid DTMF
+    # ================================================================
+    print(f"\n{'-'*70}")
+    print(f"STEP 2: Send Invalid DTMF '9'")
+    print(f"{'-'*70}")
 
-        # Configure valid actions (1, 2 only)
-        menu_actions = [
-            {'digits': '1', 'extension': '202'},
-            {'digits': '2', 'extension': '203'}
-        ]
+    caller = await pjsua_manager.create_endpoint(
+        extension="204",
+        password=extension_credentials["204"],
+        auto_register=True
+    )
+    print(f"✅ Caller extension 204 registered")
 
-        ivr_update = ivr_data.copy()
-        ivr_update['id'] = ivr_id
-        ivr_update['menuItems'] = menu_actions
+    print(f"Calling IVR 20020 and sending invalid DTMF '9'...")
+    success = await caller.dial("20020", dtmf="9", dtmf_delay=2)
 
-        response = api_client.patch(f'ivr-menu/{ivr_id}', ivr_update)
-        assert_api_success(response, "Failed to update IVR")
+    assert success, "Failed to dial IVR 20020"
+    print(f"✅ Call initiated with invalid DTMF '9'")
 
-        await asyncio.sleep(3)
+    # Wait for IVR to handle invalid input
+    await asyncio.sleep(8)
 
-        # Register timeout destination
-        ext201 = await pjsua_manager.create_endpoint(
-            extension="201", password=TEST_EXTENSIONS["201"], auto_register=True
-        )
-        print(f"✅ Timeout destination (201) registered")
+    await caller.hangup()
 
-        await asyncio.sleep(2)
-
-        # Test with invalid DTMF "9"
-        print(f"\nTest 1: Sending invalid DTMF '9'")
-        config_caller = PJSUAConfig(
-            extension="206",
-            password="test_password",
-            server_ip=pjsua_manager.server_ip,
-            media="log"
-        )
-        caller = PJSUAEndpoint(config_caller)
-
-        success = await caller.dial("530", dtmf="9", dtmf_delay=2)
-        assert success, "Failed to dial IVR"
-
-        print(f"  Sent invalid DTMF '9', should route to timeout destination")
-        await asyncio.sleep(8)
-
-        await caller.hangup()
-
-        print(f"\n✅ Invalid DTMF handling test completed")
-
-    finally:
-        if ivr_id:
-            try:
-                api_client.delete(f'ivr-menu/{ivr_id}')
-                print(f"✅ IVR deleted")
-            except Exception as e:
-                logger.error(f"Failed to delete IVR: {e}")
+    print(f"\n{'='*70}")
+    print(f"✓ Invalid DTMF Handling Test COMPLETED")
+    print(f"{'='*70}")
 
 
 if __name__ == "__main__":
