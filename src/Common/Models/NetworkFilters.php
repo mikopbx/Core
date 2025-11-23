@@ -27,9 +27,9 @@ use Phalcon\Mvc\Model\ResultsetInterface;
  * Class NetworkFilters
  *
  * @package MikoPBX\Common\Models
- * @property Sip Sip
- * @property FirewallRules FirewallRules
- * @property AsteriskManagerUsers AsteriskManagerUsers
+ * @property Sip $Sip
+ * @property FirewallRules $FirewallRules
+ * @property AsteriskManagerUsers $AsteriskManagerUsers
  */
 class NetworkFilters extends ModelsBase
 {
@@ -79,13 +79,16 @@ class NetworkFilters extends ModelsBase
     /**
      * Returns allowed networks for provided list of traffic categories
      *
-     * @param array $arrTrafficCategory
+     * @param array<string> $arrTrafficCategory
      *
      * @return ResultsetInterface
      */
     public static function getAllowedFiltersForType(array $arrTrafficCategory): ResultsetInterface
     {
         $di = DI::getDefault();
+        if ($di === null) {
+            throw new \RuntimeException('DI container is not available');
+        }
         $parameters = [
             'models' => [
                 'NetworkFilters' => __CLASS__,
@@ -151,6 +154,40 @@ class NetworkFilters extends ModelsBase
                 ],
             ]
         );
+    }
+
+    /**
+     * Validate the model before saving
+     *
+     * @return bool True if validation passes, false otherwise
+     */
+    public function beforeValidation(): bool
+    {
+        // Validate permit field (IPv4 or IPv6 CIDR)
+        if (!empty($this->permit)) {
+            $cidrInfo = \MikoPBX\Core\Utilities\IpAddressHelper::normalizeCidr($this->permit);
+            if ($cidrInfo === false) {
+                $this->appendMessage(new \Phalcon\Messages\Message(
+                    'Invalid permit network CIDR notation',
+                    'permit'
+                ));
+                return false;
+            }
+        }
+
+        // Validate deny field
+        if (!empty($this->deny)) {
+            $cidrInfo = \MikoPBX\Core\Utilities\IpAddressHelper::normalizeCidr($this->deny);
+            if ($cidrInfo === false) {
+                $this->appendMessage(new \Phalcon\Messages\Message(
+                    'Invalid deny network CIDR notation',
+                    'deny'
+                ));
+                return false;
+            }
+        }
+
+        return true;
     }
 
 }

@@ -109,17 +109,254 @@ if is_localhost(client_ip) then
     return
 end
 
--- Function to check IP in network (CIDR support)
-local function ip_in_network(ip, network)
-    if ip == network then
-        return true
+-- ===== IPv6 SUPPORT AND PERFORMANCE OPTIMIZATION =====
+--
+-- CIDR CACHING MECHANISM:
+--   Cache structure: cidr_cache[cidr_string] = {network_bytes={...}, prefix_len=N, is_ipv6=boolean}
+--   Purpose: Avoid re-parsing CIDR notation on every HTTP request
+--   Performance impact:
+--     - Cache miss (first request): ~20-30 Lua operations (IPv6 parsing overhead)
+--     - Cache hit (subsequent): ~5 table lookups (negligible overhead, <1ms)
+--     - IPv4 path: unchanged performance (existing optimized code)
+--
+-- IPv6 BINARY REPRESENTATION:
+--   - Lua 5.1 lacks native 128-bit integers
+--   - Solution: Represent IPv6 as table of 16 bytes {b1, b2, ..., b16}
+--   - Example: 2001:db8::1 = {0x20, 0x01, 0x0d, 0xb8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1}
+--
+-- SUPPORTED IPv6 FORMATS:
+--   - Compressed notation: ::1, 2001:db8::1, fe80::
+--   - Full notation: 2001:0db8:0000:0000:0000:0000:0000:0001
+--   - IPv4-mapped: ::ffff:192.0.2.1
+--   - Link-local with scope: fe80::1%eth0 (scope ID ignored for CIDR matching)
+--
+-- CIDR MATCHING ALGORITHM:
+--   - Byte-by-byte comparison up to prefix length
+--   - prefix_len=64: Compare first 8 bytes (64 bits)
+--   - Remaining bits: Apply bit mask to partial byte
+--   - Example: /65 compares first 8 full bytes + 1 bit of byte 9
+--
+-- PERFORMANCE EXPECTATIONS (per request):
+--   - IPv4 exact match: ~5 operations (hash lookup + string compare)
+--   - IPv4 CIDR match: ~15 operations (parse + 32-bit math)
+--   - IPv6 exact match: ~5 operations (hash lookup + string compare)
+--   - IPv6 CIDR match (cached): ~20 operations (hash lookup + byte compare)
+--   - IPv6 CIDR match (uncached): ~50 operations (parse + cache + byte compare)
+--
+-- CACHE INVALIDATION:
+--   - Cache lives for lifetime of nginx worker process
+--   - Reload nginx to clear cache: `nginx -s reload`
+--   - No TTL - CIDR networks change rarely
+--
+local cidr_cache = {}
+
+-- Detect if IP is IPv6 (contains colon)
+local function is_ipv6(ip)
+    return string.find(ip, ":") ~= nil
+end
+
+-- Convert IPv6 address string to 16-byte table representation
+-- Handles compressed notation (::), full notation, and IPv4-mapped IPv6
+-- Returns: table of 16 bytes {b1, b2, ..., b16} or nil on error
+local function ipv6_to_bytes(ipv6_str)
+    -- Handle IPv4-mapped IPv6: ::ffff:192.0.2.1
+    local ipv4_mapped = string.match(ipv6_str, "::ffff:(%d+%.%d+%.%d+%.%d+)")
+    if ipv4_mapped then
+        local a, b, c, d = ipv4_mapped:match("(%d+)%.(%d+)%.(%d+)%.(%d+)")
+        if not a then return nil end
+        -- First 10 bytes are zeros, bytes 11-12 are 0xFF, last 4 are IPv4
+        local bytes = {}
+        for i = 1, 10 do bytes[i] = 0 end
+        bytes[11], bytes[12] = 0xFF, 0xFF
+        bytes[13] = tonumber(a)
+        bytes[14] = tonumber(b)
+        bytes[15] = tonumber(c)
+        bytes[16] = tonumber(d)
+        return bytes
     end
 
+    -- Parse standard IPv6 notation
+    local parts = {}
+    local double_colon_pos = string.find(ipv6_str, "::")
+
+    if double_colon_pos then
+        -- Handle :: compression
+        local left = string.sub(ipv6_str, 1, double_colon_pos - 1)
+        local right = string.sub(ipv6_str, double_colon_pos + 2)
+
+        -- Parse left side
+        if left ~= "" then
+            for part in string.gmatch(left, "([^:]+)") do
+                table.insert(parts, tonumber(part, 16) or 0)
+            end
+        end
+
+        -- Calculate number of zero groups
+        local right_parts = {}
+        if right ~= "" then
+            for part in string.gmatch(right, "([^:]+)") do
+                table.insert(right_parts, tonumber(part, 16) or 0)
+            end
+        end
+
+        local zeros_needed = 8 - #parts - #right_parts
+        for i = 1, zeros_needed do
+            table.insert(parts, 0)
+        end
+
+        -- Add right side
+        for _, part in ipairs(right_parts) do
+            table.insert(parts, part)
+        end
+    else
+        -- No compression, parse all 8 groups
+        for part in string.gmatch(ipv6_str, "([^:]+)") do
+            table.insert(parts, tonumber(part, 16) or 0)
+        end
+    end
+
+    -- Convert 8 x 16-bit words to 16 x 8-bit bytes
+    if #parts ~= 8 then
+        return nil
+    end
+
+    local bytes = {}
+    for i = 1, 8 do
+        local word = parts[i]
+        bytes[(i-1)*2 + 1] = math.floor(word / 256)  -- High byte
+        bytes[(i-1)*2 + 2] = word % 256               -- Low byte
+    end
+
+    return bytes
+end
+
+-- Check if IPv6 address is in CIDR network
+-- ip: IPv6 address string (e.g., "2001:db8::1")
+-- network: IPv6 CIDR string (e.g., "2001:db8::/64")
+-- Returns: true if IP is in network, false otherwise
+local function ipv6_in_network(ip, network)
+    -- Parse CIDR notation
     local pos = string.find(network, "/")
     if not pos then
         return false
     end
 
+    local net_addr = string.sub(network, 1, pos - 1)
+    local prefix_len = tonumber(string.sub(network, pos + 1))
+
+    if not prefix_len or prefix_len < 0 or prefix_len > 128 then
+        return false
+    end
+
+    -- Convert both addresses to byte arrays
+    local ip_bytes = ipv6_to_bytes(ip)
+    local net_bytes = ipv6_to_bytes(net_addr)
+
+    if not ip_bytes or not net_bytes then
+        return false
+    end
+
+    -- Compare bytes up to prefix length
+    -- prefix_len=64 means first 64 bits (8 bytes) must match
+    local full_bytes = math.floor(prefix_len / 8)  -- Full bytes to compare
+    local remaining_bits = prefix_len % 8           -- Remaining bits in partial byte
+
+    -- Compare full bytes
+    for i = 1, full_bytes do
+        if ip_bytes[i] ~= net_bytes[i] then
+            return false
+        end
+    end
+
+    -- Compare remaining bits in partial byte
+    if remaining_bits > 0 then
+        local byte_idx = full_bytes + 1
+        local mask = 0xFF - (2^(8 - remaining_bits) - 1)  -- Create bit mask
+        if (ip_bytes[byte_idx] - ip_bytes[byte_idx] % (2^(8 - remaining_bits))) ~=
+           (net_bytes[byte_idx] - net_bytes[byte_idx] % (2^(8 - remaining_bits))) then
+            return false
+        end
+    end
+
+    return true
+end
+
+-- Function to check IP in network (CIDR support)
+-- Supports both IPv4 and IPv6 CIDR notation with caching
+local function ip_in_network(ip, network)
+    -- Exact match (no CIDR)
+    if ip == network then
+        return true
+    end
+
+    -- Check if CIDR notation
+    local pos = string.find(network, "/")
+    if not pos then
+        return false
+    end
+
+    -- Determine IP version and route to appropriate handler
+    local ip_is_v6 = is_ipv6(ip)
+    local net_is_v6 = is_ipv6(network)
+
+    -- Version mismatch - cannot match
+    if ip_is_v6 ~= net_is_v6 then
+        return false
+    end
+
+    -- Route to IPv6 handler
+    if ip_is_v6 then
+        -- Check cache first
+        local cache_entry = cidr_cache[network]
+        if cache_entry and cache_entry.is_ipv6 then
+            -- Cache hit - use cached parsed network
+            local ip_bytes = ipv6_to_bytes(ip)
+            if not ip_bytes then return false end
+
+            local prefix_len = cache_entry.prefix_len
+            local net_bytes = cache_entry.network_bytes
+
+            -- Fast comparison using cached network bytes
+            local full_bytes = math.floor(prefix_len / 8)
+            local remaining_bits = prefix_len % 8
+
+            for i = 1, full_bytes do
+                if ip_bytes[i] ~= net_bytes[i] then
+                    return false
+                end
+            end
+
+            if remaining_bits > 0 then
+                local byte_idx = full_bytes + 1
+                if (ip_bytes[byte_idx] - ip_bytes[byte_idx] % (2^(8 - remaining_bits))) ~=
+                   (net_bytes[byte_idx] - net_bytes[byte_idx] % (2^(8 - remaining_bits))) then
+                    return false
+                end
+            end
+
+            return true
+        else
+            -- Cache miss - parse and cache
+            local result = ipv6_in_network(ip, network)
+
+            -- Cache the parsed network for future requests
+            local net_addr = string.sub(network, 1, pos - 1)
+            local prefix_len = tonumber(string.sub(network, pos + 1))
+            local net_bytes = ipv6_to_bytes(net_addr)
+
+            if net_bytes and prefix_len then
+                cidr_cache[network] = {
+                    network_bytes = net_bytes,
+                    prefix_len = prefix_len,
+                    is_ipv6 = true
+                }
+            end
+
+            return result
+        end
+    end
+
+    -- IPv4 handling (existing logic - unchanged for performance)
     local net_addr = string.sub(network, 1, pos - 1)
     local mask_bits = tonumber(string.sub(network, pos + 1))
 

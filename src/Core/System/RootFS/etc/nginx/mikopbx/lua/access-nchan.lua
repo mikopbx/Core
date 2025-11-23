@@ -10,6 +10,12 @@
 -- - Both scripts use validate_jwt_via_php() - keep logic synchronized
 -- - Token source: query string (?token=xxx) because WebSocket can't send custom headers
 --
+-- IPv6 COMPATIBILITY:
+-- - This script does not perform IP-based filtering
+-- - Works transparently with both IPv4 and IPv6 client connections
+-- - ngx.var.remote_addr supports both protocols natively
+-- - IP filtering for WebSocket connections is handled by unified-security.lua
+--
 -- Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
 
 -- ===== NCHAN ACCESS CONTROL =====

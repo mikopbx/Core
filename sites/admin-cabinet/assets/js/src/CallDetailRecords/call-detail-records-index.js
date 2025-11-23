@@ -78,12 +78,128 @@ const callDetailRecords = {
     $emptyDatabasePlaceholder: $('#cdr-empty-database-placeholder'),
 
     /**
+     * Storage key for filter state in sessionStorage
+     * @type {string}
+     */
+    STORAGE_KEY: 'cdr_filters_state',
+
+    /**
+     * Flag to track if DataTable has completed initialization
+     * WHY: Prevents saving state during initial load before filters are restored
+     * @type {boolean}
+     */
+    isInitialized: false,
+
+    /**
      * Initializes the call detail records.
      */
     initialize() {
+        // Listen for hash changes (when user clicks menu link while already on page)
+        // WHY: Browser doesn't reload page on hash-only URL changes
+        $(`a[href='${globalRootUrl}call-detail-records/index/#reset-cache']`).on('click', function(e) {
+            e.preventDefault();
+             // Remove hash from URL without page reload
+             history.replaceState(null, null, window.location.pathname);
+            
+             callDetailRecords.clearFiltersState();
+             // Also clear page length preference
+             localStorage.removeItem('cdrTablePageLength');
+             // Reload page to apply reset
+             window.location.reload();
+        });
+
         // Fetch metadata first, then initialize DataTable with proper date range
         // WHY: Prevents double request on page load
         callDetailRecords.fetchLatestCDRDate();
+    },
+
+    /**
+     * Save current filter state to sessionStorage
+     * Stores date range, search text, current page, and page length
+     */
+    saveFiltersState() {
+        try {
+            // Feature detection - exit silently if sessionStorage not available
+            if (typeof sessionStorage === 'undefined') {
+                console.warn('[CDR] sessionStorage not available');
+                return;
+            }
+
+            const state = {
+                dateFrom: null,
+                dateTo: null,
+                searchText: '',
+                currentPage: 0,
+                pageLength: callDetailRecords.getPageLength()
+            };
+
+            // Get dates from daterangepicker instance
+            const dateRangePicker = callDetailRecords.$dateRangeSelector.data('daterangepicker');
+            if (dateRangePicker && dateRangePicker.startDate && dateRangePicker.endDate) {
+                state.dateFrom = dateRangePicker.startDate.format('YYYY-MM-DD');
+                state.dateTo = dateRangePicker.endDate.format('YYYY-MM-DD');
+            }
+
+            // Get search text from input field
+            state.searchText = callDetailRecords.$globalSearch.val() || '';
+
+            // Get current page from DataTable (if initialized)
+            if (callDetailRecords.dataTable && callDetailRecords.dataTable.page) {
+                const pageInfo = callDetailRecords.dataTable.page.info();
+                state.currentPage = pageInfo.page;
+            }
+
+            sessionStorage.setItem(callDetailRecords.STORAGE_KEY, JSON.stringify(state));
+        } catch (error) {
+            console.error('[CDR] Failed to save filters to sessionStorage:', error);
+        }
+    },
+
+    /**
+     * Load filter state from sessionStorage
+     * @returns {Object|null} Saved state object or null if not found/invalid
+     */
+    loadFiltersState() {
+        try {
+            // Feature detection - return null if sessionStorage not available
+            if (typeof sessionStorage === 'undefined') {
+                console.warn('[CDR] sessionStorage not available for loading');
+                return null;
+            }
+
+            const rawData = sessionStorage.getItem(callDetailRecords.STORAGE_KEY);
+            if (!rawData) {
+                return null;
+            }
+
+            const state = JSON.parse(rawData);
+
+            // Validate state structure
+            if (!state || typeof state !== 'object') {
+                callDetailRecords.clearFiltersState();
+                return null;
+            }
+
+            return state;
+        } catch (error) {
+            console.error('[CDR] Failed to load filters from sessionStorage:', error);
+            // Clear corrupted data
+            callDetailRecords.clearFiltersState();
+            return null;
+        }
+    },
+
+    /**
+     * Clear saved filter state from sessionStorage
+     */
+    clearFiltersState() {
+        try {
+            if (typeof sessionStorage !== 'undefined') {
+                sessionStorage.removeItem(callDetailRecords.STORAGE_KEY);
+            }
+        } catch (error) {
+            console.error('Failed to clear CDR filters from sessionStorage:', error);
+        }
     },
 
     /**
@@ -274,6 +390,16 @@ const callDetailRecords = {
                 ExtensionsAPI.updatePhonesRepresent('need-update');
                 callDetailRecords.togglePaginationControls();
             },
+            /**
+             * Initialization complete callback - fired after first data load
+             * WHY: Restore filters AFTER DataTable has loaded initial data from server
+             */
+            initComplete() {
+                // Set flag FIRST to allow state saving during filter restoration
+                callDetailRecords.isInitialized = true;
+                // Now restore filters - draw event will correctly save the restored state
+                callDetailRecords.restoreFiltersFromState();
+            },
             ordering: false,
         });
         callDetailRecords.dataTable = callDetailRecords.$cdrTable.DataTable();
@@ -328,6 +454,14 @@ const callDetailRecords = {
 
         callDetailRecords.dataTable.on('draw', () => {
             callDetailRecords.$globalSearch.closest('div').removeClass('loading');
+
+            // Skip saving state during initial load before filters are restored
+            if (!callDetailRecords.isInitialized) {
+                return;
+            }
+
+            // Save state after every draw (pagination, search, date change)
+            callDetailRecords.saveFiltersState();
         });
 
         // Add event listener for clicking on icon with data-ids (open in new window)
@@ -390,6 +524,35 @@ const callDetailRecords = {
     },
 
     /**
+     * Restore filters from saved state after DataTable initialization
+     * WHY: Must be called after DataTable is created to restore search and page
+     */
+    restoreFiltersFromState() {
+        const savedState = callDetailRecords.loadFiltersState();
+        if (!savedState) {
+            return;
+        }
+
+        // Restore search text to input field
+        if (savedState.searchText) {
+            callDetailRecords.$globalSearch.val(savedState.searchText);
+            // Apply search to DataTable
+            callDetailRecords.dataTable.search(savedState.searchText);
+        }
+
+        // Restore page number with delay
+        // WHY: DataTable ignores page() during initComplete, need setTimeout to allow initialization to fully complete
+        if (savedState.currentPage) {
+            setTimeout(() => {
+                callDetailRecords.dataTable.page(savedState.currentPage).draw(false);
+            }, 100);
+        } else if (savedState.searchText) {
+            // If only search text exists, still need to draw
+            callDetailRecords.dataTable.draw();
+        }
+    },
+
+    /**
      * Delete CDR record via REST API
      * WHY: Deletes by linkedid - automatically removes entire conversation with all linked records
      * @param {string} recordId - CDR linkedid (like "mikopbx-1760784793.4627")
@@ -433,14 +596,25 @@ const callDetailRecords = {
      * Avoids double request on page load
      */
     fetchLatestCDRDate() {
+        // Check for saved state first
+        const savedState = callDetailRecords.loadFiltersState();
+
         CdrAPI.getMetadata({ limit: 100 }, (data) => {
             if (data && data.hasRecords) {
-                // Convert date strings to moment objects
-                const earliestDate = moment(data.earliestDate);
-                const latestDate = moment(data.latestDate);
+                let startDate, endDate;
+
+                // If we have saved state with dates, use those instead of metadata
+                if (savedState && savedState.dateFrom && savedState.dateTo) {
+                    startDate = moment(savedState.dateFrom);
+                    endDate = moment(savedState.dateTo);
+                } else {
+                    // Convert metadata date strings to moment objects
+                    startDate = moment(data.earliestDate);
+                    endDate = moment(data.latestDate);
+                }
 
                 callDetailRecords.hasCDRRecords = true;
-                callDetailRecords.initializeDateRangeSelector(earliestDate, latestDate);
+                callDetailRecords.initializeDateRangeSelector(startDate, endDate);
 
                 // Initialize DataTable only if we have records
                 // WHY: DataTable needs date range to be set first
@@ -715,6 +889,7 @@ const callDetailRecords = {
     cbDateRangeSelectorOnSelect(start, end, label) {
         // Only pass search keyword, dates are read directly from date range selector
         callDetailRecords.applyFilter(callDetailRecords.$globalSearch.val());
+        // State will be saved automatically in draw event after filter is applied
     },
 
     /**

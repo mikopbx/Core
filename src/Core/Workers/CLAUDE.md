@@ -17,7 +17,8 @@ MikoPBX uses a sophisticated worker system for background processing with:
 1. **Beanstalk Workers** - Process jobs from Beanstalk queues (CDR, Call Events)
 2. **Redis Workers** - Process jobs from Redis queues (API Commands)
 3. **AMI Workers** - Listen to Asterisk Manager Interface events
-4. **PID Workers** - Simple workers monitored by process ID
+4. **PID Workers** - Simple workers monitored by process ID (Log Rotation, S3 Upload, WAV to WebM Conversion)
+5. **File-based Task Workers** - Process JSON task files from filesystem (WAV to WebM Conversion)
 
 ## Core Components
 
@@ -136,7 +137,134 @@ class Processes
 
 ## Worker Implementation Patterns
 
-### 1. Queue-based Worker (Beanstalk)
+### 1. File-based Task Worker (JSON)
+
+Example: WorkerWav2Webm processes conversion tasks from JSON files:
+
+```php
+class WorkerWav2Webm extends WorkerBase
+{
+    private const int MAX_ATTEMPTS = 3;
+    private const int RETRY_DELAY_SECONDS = 300;
+    private const int FFMPEG_TIMEOUT = 300;
+
+    public static function getCheckInterval(): int
+    {
+        return 5; // Fast processing for conversion tasks
+    }
+
+    public function start(array $argv): void
+    {
+        // Set lowest CPU priority
+        if (function_exists('proc_nice')) {
+            proc_nice(19);
+        }
+
+        $this->ensureTaskDirectoryExists();
+
+        while ($this->needRestart === false) {
+            pcntl_signal_dispatch();
+
+            try {
+                $this->processConversionTasks();
+            } catch (Throwable $e) {
+                SystemMessages::sysLogMsg(__CLASS__, $e->getMessage(), LOG_ERR);
+            }
+
+            sleep(5);
+        }
+    }
+
+    private function processConversionTasks(): void
+    {
+        $monitorDir = Directories::getDir(Directories::AST_MONITOR_DIR);
+        $tasksDir = $monitorDir . '/conversion-tasks';
+
+        if (!is_dir($tasksDir)) {
+            return;
+        }
+
+        // Find JSON task files recursively
+        $taskFiles = $this->findTaskFiles($tasksDir);
+
+        foreach ($taskFiles as $taskFile) {
+            if ($this->needRestart) {
+                break;
+            }
+
+            $this->processTaskFile($taskFile);
+        }
+    }
+
+    private function processTaskFile(string $taskFile): void
+    {
+        // Try to get exclusive lock (non-blocking)
+        $fp = fopen($taskFile, 'r+');
+        if (!$fp || !flock($fp, LOCK_EX | LOCK_NB)) {
+            if ($fp) fclose($fp);
+            return; // Another worker is processing this
+        }
+
+        try {
+            // Read and parse task
+            $contents = stream_get_contents($fp);
+            $taskData = json_decode($contents, true, 512, JSON_THROW_ON_ERROR);
+
+            // Check retry logic
+            if (!$this->shouldRetryTask($taskData)) {
+                flock($fp, LOCK_UN);
+                fclose($fp);
+                return;
+            }
+
+            // Execute conversion with timeout protection
+            $exitCode = $this->executeConversion($taskData);
+
+            if ($exitCode === 0) {
+                // Success - delete task file
+                flock($fp, LOCK_UN);
+                fclose($fp);
+                unlink($taskFile);
+            } else {
+                // Failure - handle retry or mark as failed
+                $this->handleFailedTask($taskFile, $taskData, $exitCode, $fp);
+            }
+        } catch (Throwable $e) {
+            SystemMessages::sysLogMsg(__CLASS__, $e->getMessage(), LOG_ERR);
+            flock($fp, LOCK_UN);
+            fclose($fp);
+        }
+    }
+}
+```
+
+**JSON Task File Format:**
+```json
+{
+    "linkedid": "1699876543.123",
+    "src_num": "201",
+    "dst_num": "202",
+    "start": "2024-11-13 10:30:00",
+    "duration": "120",
+    "billsec": "115",
+    "disposition": "ANSWERED",
+    "uniqueid": "1699876543.123",
+    "input_path": "/storage/usbdisk1/mikopbx/astspool/monitor/2024/11/13/out-201-202-20241113-103000",
+    "delete_source": "1",
+    "created_at": 1699876543,
+    "attempts": 0
+}
+```
+
+**Key Features:**
+- File-based locking prevents race conditions in multi-worker scenarios
+- Retry logic with exponential backoff (3 attempts, 5-minute delay)
+- Timeout protection to prevent FFmpeg from hanging (300 seconds)
+- Failed tasks renamed to `.failed.json` for manual inspection
+- Lowest CPU priority (nice +19) to avoid impacting call processing
+- Registered as CHECK_BY_PID_NOT_ALERT (simple periodic task)
+
+### 2. Queue-based Worker (Beanstalk)
 
 Example: WorkerCdr processes CDR events from Beanstalk queue:
 
@@ -170,7 +298,7 @@ class WorkerCdr extends WorkerBase
 }
 ```
 
-### 2. Event-driven Worker (Models)
+### 3. Event-driven Worker (Models)
 
 Example: WorkerModelsEvents reacts to model changes:
 
@@ -224,7 +352,7 @@ class WorkerModelsEvents extends WorkerBase
 }
 ```
 
-### 3. Redis-based Worker with Pool Support
+### 4. Redis-based Worker with Pool Support
 
 Example: WorkerApiCommands with multiple instances:
 
@@ -579,42 +707,119 @@ public function getModuleWorkers(): array
 }
 ```
 
+## Worker Communication Patterns
+
+### JSON Task File Pattern (WorkerCdr → WorkerWav2Webm)
+
+WorkerCdr creates JSON task files that WorkerWav2Webm processes asynchronously:
+
+**Task Creation (WorkerCdr):**
+```php
+// In WorkerCdr::checkBillsecMakeRecFile()
+$monitorDir = Directories::getDir(Directories::AST_MONITOR_DIR);
+$tasksDir = $monitorDir . '/conversion-tasks';
+
+// Ensure tasks directory exists
+if (!is_dir($tasksDir)) {
+    Util::mwMkdir($tasksDir, true);
+}
+
+// Build task data with metadata
+$deleteSourceFiles = PbxSettings::getValueByKey(PbxSettings::PBX_RECORD_DELETE_SOURCE_AFTER_CONVERT);
+
+$taskData = [
+    'linkedid' => $row['linkedid'] ?? '',
+    'src_num' => $row['src_num'] ?? '',
+    'dst_num' => $row['dst_num'] ?? '',
+    'start' => $row['start'] ?? '',
+    'duration' => $row['duration'] ?? '',
+    'billsec' => $billsec,
+    'disposition' => $row['disposition'] ?? '',
+    'uniqueid' => $row['UNIQUEID'] ?? '',
+    'input_path' => $p_info['dirname'] . '/' . $p_info['filename'],
+    'delete_source' => $deleteSourceFiles,
+    'created_at' => time(),
+    'attempts' => 0
+];
+
+// Create unique task filename
+$taskFile = $tasksDir . '/' . $row['linkedid'] . '_' . uniqid() . '.json';
+file_put_contents($taskFile, json_encode($taskData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+
+// Update recordingfile path to point to WebM file
+$row['recordingfile'] = str_replace(['.wav', '.WAV'], '.webm', $row['recordingfile']);
+```
+
+**Task Processing (WorkerWav2Webm):**
+- Scans `/storage/usbdisk1/mikopbx/astspool/monitor/conversion-tasks/` every 5 seconds
+- Uses file locking (`LOCK_EX | LOCK_NB`) to prevent race conditions
+- Executes FFmpeg conversion with timeout protection
+- On success: deletes task file
+- On failure: increments attempt counter, keeps file for retry (max 3 attempts)
+- After max attempts: renames to `.failed.json` for manual inspection
+
+**Benefits:**
+- System restart resilience (unprocessed tasks remain in queue)
+- No blocking - CDR processing continues immediately
+- Independent scaling (conversion worker runs on different interval)
+- Better error tracking (failed task files can be analyzed)
+- Worker crash recovery (tasks not lost)
+
 ## Best Practices
 
 1. **Always handle signals** for graceful shutdown
-2. **Implement ping callbacks** for monitoring
+2. **Implement ping callbacks** for monitoring (Beanstalk/Redis workers)
 3. **Use state persistence** for critical workers
 4. **Log important operations** but avoid excessive logging
-5. **Set appropriate timeouts** to prevent hanging
+5. **Set appropriate timeouts** to prevent hanging (especially FFmpeg/external processes)
 6. **Clean up resources** in signal handlers
 7. **Use worker pools** for high-throughput operations
 8. **Monitor memory usage** and restart if needed
 9. **Handle errors gracefully** with retry logic
 10. **Test worker resilience** with chaos testing
+11. **Use file locking** for file-based task workers to prevent race conditions
+12. **Set CPU priority** for resource-intensive workers (nice +19 for low priority)
 
 ## Debugging Workers
 
 ```bash
 # Check worker status
 ps aux | grep WorkerApiCommands
+ps aux | grep WorkerWav2Webm
 
 # Monitor worker logs
 tail -f /var/log/mikopbx/system.log | grep WorkerApiCommands
+tail -f /storage/usbdisk1/mikopbx/log/system/messages | grep WorkerWav2Webm
 
 # Check Redis queues
 redis-cli llen api:requests
 
+# Check JSON task files
+ls -lah /storage/usbdisk1/mikopbx/astspool/monitor/conversion-tasks/
+cat /storage/usbdisk1/mikopbx/astspool/monitor/conversion-tasks/*.json
+
+# Check failed conversion tasks
+ls -lah /storage/usbdisk1/mikopbx/astspool/monitor/conversion-tasks/*.failed.json
+
 # Manually restart worker
 php -f /usr/www/src/Core/Workers/WorkerApiCommands.php restart
+php -f /usr/www/src/Core/Workers/WorkerWav2Webm.php restart
 
 # Test worker with specific instance
 php -f /usr/www/src/Core/Workers/WorkerApiCommands.php start --instance-id=2
+
+# Test WAV to WebM conversion manually
+php -f /usr/www/src/Core/Workers/WorkerWav2Webm.php start
 ```
 
 ## Common Issues and Solutions
 
 1. **Worker not starting**: Check PID files in `/var/run/php-workers/`
-2. **High CPU usage**: Add appropriate sleep() in main loop
+2. **High CPU usage**: Add appropriate sleep() in main loop, set CPU priority with proc_nice()
 3. **Memory leaks**: Implement periodic restart or memory monitoring
 4. **Queue backlog**: Increase worker pool size (maxProc)
 5. **Stale jobs**: Implement job TTL and cleanup mechanisms
+6. **Conversion tasks stuck**: Check for `.failed.json` files, review FFmpeg timeout settings
+7. **File locking issues**: Ensure proper lock release (LOCK_UN) in all code paths
+8. **FFmpeg hangs**: Use timeout command wrapper (BusyBox: `timeout -k 10 -s TERM 300 ffmpeg ...`)
+9. **Task retry loops**: Verify retry delay logic prevents immediate re-attempts

@@ -6,19 +6,36 @@
     <label>{{ t._('fw_Description') }}</label>
     {{ form.render('description') }}
 </div>
-<div class="fields">
-    <div class="field">
-        <label>{{ t._('fw_Permit') }}</label>
-        <div class="field max-width-400">
-            {{ form.render('network') }}
+<div class="field">
+    <div class="fields">
+        <div class="field">
+            <label>{{ t._('fw_IPv4Network') }}</label>
+            {{ form.render('ipv4_network') }}
         </div>
-    </div>
-    <div class="field">
-        <label>{{ t._('fw_Subnet') }}</label>
-        <div class="field max-width-400">
-            {{ form.render('subnet') }}
+        <div class="field">
+            <label>{{ t._('fw_IPv4Subnet') }}</label>
+            {{ form.render('ipv4_subnet') }}
         </div>
+        {% if form.has('ipv6_network') %}
+        <div class="field" style="display: flex; align-items: center; padding-top: 1.75em;">
+            <div class="ui horizontal divider" style="margin: 0 1em;">{{ t._('fw_Or') }}</div>
+        </div>
+        <div class="field">
+            <label>{{ t._('fw_IPv6Network') }}</label>
+            {{ form.render('ipv6_network') }}
+        </div>
+        <div class="field">
+            <label>{{ t._('fw_IPv6Subnet') }}</label>
+            {{ form.render('ipv6_subnet') }}
+        </div>
+        {% endif %}
     </div>
+    {% if form.has('ipv6_network') %}
+    <div class="ui info message">
+        <i class="info circle icon"></i>
+        {{ t._('fw_IPv6OrIPv4Required') }}
+    </div>
+    {% endif %}
 </div>
 <div class="field">
     <h4 class="ui  header">{{ t._('fw_Rules') }}</h4>

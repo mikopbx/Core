@@ -440,10 +440,6 @@ return [
     'cdr_ColumnFrom' => 'Кто',
     'cdr_ColumnRecordings' => 'Записи разговоров',
     'cdr_ColumnTo' => 'Кому',
-    'cdr_EmptyDatabaseDescription' => 'Здесь будут отображаться все входящие, исходящие и внутренние звонки. История начнет накапливаться после первого звонка',
-    'cdr_EmptyDatabaseTitle' => 'История вызовов пока пуста',
-    'cdr_FilteredEmptyDescription' => 'Попробуйте изменить период или условия поиска',
-    'cdr_FilteredEmptyTitle' => 'Нет записей по заданным критериям',
     'cdr_NoRecordsFound' => 'Записей не найдено',
     'cdr_TryChangingDate' => 'Попробуйте изменить интервал дат',
     'cdr_AudioFileLoadError' => 'Ошибка загрузки аудиофайла',
@@ -706,6 +702,11 @@ return [
     'mo_InvalidNetworkAddress' => 'Некорректный адрес сети',
     'mo_InvalidGatewayAddress' => 'Некорректный адрес шлюза',
     'mo_InvalidSubnetMask' => 'Некорректная маска подсети (допустимые значения: 0-32)',
+    'mo_InvalidIpv6Mode' => 'Некорректный режим IPv6 (допустимые значения: 0-2)',
+    'mo_InvalidIpv6Address' => 'Некорректный IPv6 адрес',
+    'mo_InvalidIpv6Subnet' => 'Некорректная маска подсети IPv6 (допустимые значения: 1-128)',
+    'mo_InvalidIpv6Gateway' => 'Некорректный IPv6 адрес шлюза',
+    'mo_InvalidDualStackMode' => 'Некорректная конфигурация dual-stack режима (требуется внешнее имя хоста с A и AAAA DNS записями)',
 
     // MS - Moved to MailSettings.php
 

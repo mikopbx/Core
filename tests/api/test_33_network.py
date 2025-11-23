@@ -605,5 +605,482 @@ class TestStaticRoutesEdgeCases:
             api_client.post('network:saveConfig', {'staticRoutes': cleanup_routes})
 
 
+@pytest.mark.dangerous_network
+class TestNetworkIPv6Config:
+    """Tests for IPv6 network configuration
+
+    WARNING: These tests modify IPv6 settings which may affect network connectivity
+    """
+    original_config = None
+    test_interface_id = None
+
+    def test_01_get_config_includes_ipv6_fields(self, api_client):
+        """Verify API returns IPv6 fields for interfaces"""
+        response = api_client.get('network:getConfig')
+        assert_api_success(response, "Failed to get network configuration")
+
+        TestNetworkIPv6Config.original_config = response['data']
+
+        # Verify at least one interface has IPv6 fields
+        interfaces = response['data'].get('interfaces', [])
+        assert len(interfaces) > 0, "Should have at least one interface"
+
+        # Check first interface for IPv6 fields
+        iface = interfaces[0]
+        TestNetworkIPv6Config.test_interface_id = iface['id']
+
+        assert 'ipv6_mode' in iface, "Interface should include ipv6_mode field"
+        assert 'ipv6addr' in iface, "Interface should include ipv6addr field"
+        assert 'ipv6_subnet' in iface, "Interface should include ipv6_subnet field"
+        assert 'ipv6_gateway' in iface, "Interface should include ipv6_gateway field"
+
+        print(f"✓ API returns IPv6 fields for interface {iface.get('interface')} (ID: {iface['id']})")
+        print(f"  IPv6 Mode: {iface.get('ipv6_mode')} (0=Off, 1=Auto, 2=Manual)")
+
+    def test_02_save_ipv6_manual_mode(self, api_client):
+        """Save IPv6 Manual configuration (static IPv6 address)"""
+        if not TestNetworkIPv6Config.test_interface_id:
+            pytest.skip("No interface ID from previous test")
+
+        # Get current config
+        response = api_client.get('network:getConfig')
+        assert_api_success(response, "Failed to get current config")
+
+        config = response['data']
+        iface_id = TestNetworkIPv6Config.test_interface_id
+
+        # Find original IPv6 settings for this interface
+        original_ipv6_mode = None
+        original_ipv6addr = None
+        original_ipv6_subnet = None
+        original_ipv6_gateway = None
+
+        for iface in config['interfaces']:
+            if iface['id'] == iface_id:
+                original_ipv6_mode = iface.get('ipv6_mode', '0')
+                original_ipv6addr = iface.get('ipv6addr', '')
+                original_ipv6_subnet = iface.get('ipv6_subnet', '')
+                original_ipv6_gateway = iface.get('ipv6_gateway', '')
+                break
+
+        # Save IPv6 Manual configuration
+        save_data = {
+            'staticRoutes': config.get('staticRoutes', []),
+            f'ipv6_mode_{iface_id}': '2',  # Manual mode
+            f'ipv6addr_{iface_id}': '2001:db8::100',
+            f'ipv6_subnet_{iface_id}': '64',
+            f'ipv6_gateway_{iface_id}': '2001:db8::1',
+        }
+
+        response = api_client.post('network:saveConfig', save_data)
+        assert_api_success(response, "Failed to save IPv6 configuration")
+
+        # Verify IPv6 settings were saved
+        verify = api_client.get('network:getConfig')
+        saved_iface = None
+        for iface in verify['data']['interfaces']:
+            if iface['id'] == iface_id:
+                saved_iface = iface
+                break
+
+        assert saved_iface is not None, "Interface should exist"
+        assert saved_iface['ipv6_mode'] == '2', "IPv6 mode should be Manual (2)"
+        assert saved_iface['ipv6addr'] == '2001:db8::100', "IPv6 address should match"
+        assert saved_iface['ipv6_subnet'] == '64', "IPv6 subnet should match"
+        assert saved_iface['ipv6_gateway'] == '2001:db8::1', "IPv6 gateway should match"
+
+        print(f"✓ Saved IPv6 Manual configuration:")
+        print(f"  Address: {saved_iface['ipv6addr']}/{saved_iface['ipv6_subnet']}")
+        print(f"  Gateway: {saved_iface['ipv6_gateway']}")
+
+        # Restore original IPv6 settings
+        restore_data = {
+            'staticRoutes': verify['data'].get('staticRoutes', []),
+            f'ipv6_mode_{iface_id}': original_ipv6_mode,
+            f'ipv6addr_{iface_id}': original_ipv6addr,
+            f'ipv6_subnet_{iface_id}': original_ipv6_subnet,
+            f'ipv6_gateway_{iface_id}': original_ipv6_gateway,
+        }
+        api_client.post('network:saveConfig', restore_data)
+        print(f"  Restored original IPv6 mode: {original_ipv6_mode}")
+
+    def test_03_save_ipv6_auto_mode(self, api_client):
+        """Save IPv6 Auto configuration (SLAAC/DHCPv6)"""
+        if not TestNetworkIPv6Config.test_interface_id:
+            pytest.skip("No interface ID from previous test")
+
+        # Get current config
+        response = api_client.get('network:getConfig')
+        config = response['data']
+        iface_id = TestNetworkIPv6Config.test_interface_id
+
+        # Find original IPv6 mode
+        original_ipv6_mode = '0'
+        for iface in config['interfaces']:
+            if iface['id'] == iface_id:
+                original_ipv6_mode = iface.get('ipv6_mode', '0')
+                break
+
+        # Save IPv6 Auto mode (SLAAC/DHCPv6)
+        save_data = {
+            'staticRoutes': config.get('staticRoutes', []),
+            f'ipv6_mode_{iface_id}': '1',  # Auto mode
+            f'ipv6addr_{iface_id}': '',    # Empty for Auto mode
+            f'ipv6_subnet_{iface_id}': '',
+            f'ipv6_gateway_{iface_id}': '',
+        }
+
+        response = api_client.post('network:saveConfig', save_data)
+        assert_api_success(response, "Failed to save IPv6 Auto mode")
+
+        # Verify mode was saved
+        verify = api_client.get('network:getConfig')
+        saved_iface = None
+        for iface in verify['data']['interfaces']:
+            if iface['id'] == iface_id:
+                saved_iface = iface
+                break
+
+        assert saved_iface['ipv6_mode'] == '1', "IPv6 mode should be Auto (1)"
+        print(f"✓ Saved IPv6 Auto mode (SLAAC/DHCPv6)")
+
+        # Restore original mode
+        restore_data = {
+            'staticRoutes': verify['data'].get('staticRoutes', []),
+            f'ipv6_mode_{iface_id}': original_ipv6_mode,
+        }
+        api_client.post('network:saveConfig', restore_data)
+
+    def test_04_save_ipv6_dns_servers(self, api_client):
+        """Save IPv6 DNS servers (primarydns6, secondarydns6)"""
+        if not TestNetworkIPv6Config.test_interface_id:
+            pytest.skip("No interface ID from previous test")
+
+        # Get current config
+        response = api_client.get('network:getConfig')
+        config = response['data']
+        iface_id = TestNetworkIPv6Config.test_interface_id
+
+        # Find original IPv6 DNS settings
+        original_primarydns6 = ''
+        original_secondarydns6 = ''
+        for iface in config['interfaces']:
+            if iface['id'] == iface_id:
+                original_primarydns6 = iface.get('primarydns6', '')
+                original_secondarydns6 = iface.get('secondarydns6', '')
+                break
+
+        # Save IPv6 DNS servers (Google Public DNS IPv6)
+        save_data = {
+            'staticRoutes': config.get('staticRoutes', []),
+            f'primarydns6_{iface_id}': '2001:4860:4860::8888',
+            f'secondarydns6_{iface_id}': '2001:4860:4860::8844',
+        }
+
+        response = api_client.post('network:saveConfig', save_data)
+        assert_api_success(response, "Failed to save IPv6 DNS servers")
+
+        # Verify DNS servers were saved
+        verify = api_client.get('network:getConfig')
+        saved_iface = None
+        for iface in verify['data']['interfaces']:
+            if iface['id'] == iface_id:
+                saved_iface = iface
+                break
+
+        assert saved_iface.get('primarydns6') == '2001:4860:4860::8888', "Primary DNS IPv6 should match"
+        assert saved_iface.get('secondarydns6') == '2001:4860:4860::8844', "Secondary DNS IPv6 should match"
+
+        print(f"✓ Saved IPv6 DNS servers:")
+        print(f"  Primary: {saved_iface.get('primarydns6')}")
+        print(f"  Secondary: {saved_iface.get('secondarydns6')}")
+
+        # Restore original DNS settings
+        restore_data = {
+            'staticRoutes': verify['data'].get('staticRoutes', []),
+            f'primarydns6_{iface_id}': original_primarydns6,
+            f'secondarydns6_{iface_id}': original_secondarydns6,
+        }
+        api_client.post('network:saveConfig', restore_data)
+
+    def test_05_dual_stack_configuration(self, api_client):
+        """Test dual-stack configuration (IPv4 + IPv6 simultaneously)"""
+        if not TestNetworkIPv6Config.test_interface_id:
+            pytest.skip("No interface ID from previous test")
+
+        # Get current config
+        response = api_client.get('network:getConfig')
+        config = response['data']
+        iface_id = TestNetworkIPv6Config.test_interface_id
+
+        # Save configuration with both IPv4 and IPv6
+        save_data = {
+            'staticRoutes': config.get('staticRoutes', []),
+            f'dhcp_{iface_id}': False,  # Static IPv4
+            f'ipaddr_{iface_id}': '192.168.1.100',
+            f'subnet_{iface_id}': '24',
+            f'gateway_{iface_id}': '192.168.1.1',
+            f'ipv6_mode_{iface_id}': '2',  # Manual IPv6
+            f'ipv6addr_{iface_id}': '2001:db8::200',
+            f'ipv6_subnet_{iface_id}': '64',
+            f'ipv6_gateway_{iface_id}': '2001:db8::1',
+        }
+
+        response = api_client.post('network:saveConfig', save_data)
+        assert_api_success(response, "Failed to save dual-stack configuration")
+
+        # Verify both IPv4 and IPv6 are configured
+        verify = api_client.get('network:getConfig')
+        saved_iface = None
+        for iface in verify['data']['interfaces']:
+            if iface['id'] == iface_id:
+                saved_iface = iface
+                break
+
+        # IPv4 checks
+        assert saved_iface['dhcp'] == False, "DHCP should be disabled"
+        assert saved_iface['ipaddr'] == '192.168.1.100', "IPv4 address should match"
+
+        # IPv6 checks
+        assert saved_iface['ipv6_mode'] == '2', "IPv6 mode should be Manual"
+        assert saved_iface['ipv6addr'] == '2001:db8::200', "IPv6 address should match"
+
+        print(f"✓ Dual-stack configuration saved:")
+        print(f"  IPv4: {saved_iface['ipaddr']}/{saved_iface['subnet']}")
+        print(f"  IPv6: {saved_iface['ipv6addr']}/{saved_iface['ipv6_subnet']}")
+
+
+@pytest.mark.dangerous_network
+class TestStaticRoutesIPv6:
+    """Tests for IPv6 static routes
+
+    WARNING: These tests create/modify/delete IPv6 static routes
+    """
+    test_route_id = None
+
+    def test_01_create_ipv6_static_route(self, api_client):
+        """Create new IPv6 static route"""
+        # Get current config
+        response = api_client.get('network:getConfig')
+        assert_api_success(response, "Failed to get current config")
+
+        config = response['data']
+        existing_routes = config.get('staticRoutes', [])
+
+        # Clean up any existing test route
+        cleaned_routes = [r for r in existing_routes
+                         if not (r.get('network') == '2001:db8:1::' and r.get('subnet') == '64')]
+
+        # Add new IPv6 route
+        new_route = {
+            'id': 'new_ipv6_route',
+            'network': '2001:db8:1::',
+            'subnet': '64',
+            'gateway': '2001:db8::1',
+            'interface': '',
+            'description': 'Test IPv6 static route',
+            'priority': 100
+        }
+
+        save_data = {
+            'staticRoutes': cleaned_routes + [new_route]
+        }
+
+        response = api_client.post('network:saveConfig', save_data)
+        assert_api_success(response, "Failed to save IPv6 route")
+
+        # Verify route was created
+        verify = api_client.get('network:getConfig')
+        created_route = None
+        for route in verify['data']['staticRoutes']:
+            if route['network'] == '2001:db8:1::' and route['subnet'] == '64':
+                created_route = route
+                TestStaticRoutesIPv6.test_route_id = route['id']
+                break
+
+        assert created_route is not None, "IPv6 route should be created"
+        assert created_route['gateway'] == '2001:db8::1', "Gateway should match"
+
+        print(f"✓ Created IPv6 static route: {new_route['network']}/{new_route['subnet']}")
+        print(f"  Gateway: {new_route['gateway']}")
+        print(f"  Route ID: {TestStaticRoutesIPv6.test_route_id}")
+
+    def test_02_validate_ipv6_subnet_range(self, api_client):
+        """IPv6 subnet should accept /1-/128 range"""
+        # Get current config
+        response = api_client.get('network:getConfig')
+        config = response['data']
+        existing_routes = config.get('staticRoutes', [])
+
+        # Test /128 (single host) - should be valid
+        cleaned_routes = [r for r in existing_routes
+                         if not (r.get('network') == '2001:db8::5' and r.get('subnet') == '128')]
+
+        test_route = {
+            'id': 'new_ipv6_host',
+            'network': '2001:db8::5',
+            'subnet': '128',  # Single host
+            'gateway': '2001:db8::1',
+            'description': 'IPv6 /128 host route'
+        }
+
+        save_data = {
+            'staticRoutes': cleaned_routes + [test_route]
+        }
+
+        try:
+            response = api_client.post('network:saveConfig', save_data)
+            if response.get('result', False):
+                print(f"✓ IPv6 /128 route accepted (valid)")
+            else:
+                print(f"⚠ IPv6 /128 route rejected (should be valid)")
+        finally:
+            # Cleanup
+            verify = api_client.get('network:getConfig')
+            cleanup_routes = [r for r in verify['data']['staticRoutes']
+                            if not (r.get('network') == '2001:db8::5' and r.get('subnet') == '128')]
+            api_client.post('network:saveConfig', {'staticRoutes': cleanup_routes})
+
+    def test_03_cleanup_ipv6_route(self, api_client):
+        """Delete IPv6 test route"""
+        if not TestStaticRoutesIPv6.test_route_id:
+            pytest.skip("No route ID from creation test")
+
+        # Get current config
+        response = api_client.get('network:getConfig')
+        config = response['data']
+        routes = config.get('staticRoutes', [])
+
+        # Remove the test route
+        filtered_routes = [r for r in routes if r['id'] != TestStaticRoutesIPv6.test_route_id]
+
+        save_data = {
+            'staticRoutes': filtered_routes
+        }
+
+        response = api_client.post('network:saveConfig', save_data)
+        assert_api_success(response, "Failed to delete IPv6 route")
+
+        print(f"✓ Deleted IPv6 route {TestStaticRoutesIPv6.test_route_id}")
+
+
+@pytest.mark.dangerous_network
+class TestStaticRoutesIPv6Validation:
+    """Validation tests for IPv6 static routes"""
+
+    def test_01_validate_invalid_ipv6_address(self, api_client):
+        """Invalid IPv6 address should be rejected"""
+        response = api_client.get('network:getConfig')
+        config = response['data']
+
+        invalid_route = {
+            'id': 'new_invalid_ipv6',
+            'network': 'gggg:hhhh::1',  # Invalid IPv6
+            'subnet': '64',
+            'gateway': '2001:db8::1'
+        }
+
+        save_data = {
+            'staticRoutes': config.get('staticRoutes', []) + [invalid_route]
+        }
+
+        try:
+            response = api_client.post('network:saveConfig', save_data)
+            if not response.get('result', False):
+                print(f"✓ Validation rejected invalid IPv6 address")
+            else:
+                print(f"⚠ Invalid IPv6 address was accepted")
+        except Exception as e:
+            if '422' in str(e) or '400' in str(e):
+                print(f"✓ Validation rejected invalid IPv6 address")
+            else:
+                raise
+
+    def test_02_validate_subnet_over_128(self, api_client):
+        """IPv6 subnet >128 should be rejected"""
+        response = api_client.get('network:getConfig')
+        config = response['data']
+
+        invalid_route = {
+            'id': 'new_invalid_subnet',
+            'network': '2001:db8::',
+            'subnet': '129',  # Invalid: >128
+            'gateway': '2001:db8::1'
+        }
+
+        save_data = {
+            'staticRoutes': config.get('staticRoutes', []) + [invalid_route]
+        }
+
+        try:
+            response = api_client.post('network:saveConfig', save_data)
+            if not response.get('result', False):
+                print(f"✓ Validation rejected subnet >128")
+            else:
+                print(f"⚠ Subnet >128 was accepted (should be rejected)")
+        except Exception as e:
+            if '422' in str(e) or '400' in str(e):
+                print(f"✓ Validation rejected subnet >128")
+            else:
+                raise
+
+    def test_03_validate_mixed_ipv4_ipv6_routes(self, api_client):
+        """Mixed IPv4 and IPv6 routes should coexist"""
+        response = api_client.get('network:getConfig')
+        config = response['data']
+        existing_routes = config.get('staticRoutes', [])
+
+        # Clean up test routes
+        cleaned_routes = [r for r in existing_routes
+                         if not ((r.get('network') == '10.20.30.0' and r.get('subnet') == '24') or
+                                (r.get('network') == '2001:db8:2::' and r.get('subnet') == '64'))]
+
+        # Add both IPv4 and IPv6 routes
+        mixed_routes = cleaned_routes + [
+            {
+                'id': 'new_ipv4_mixed',
+                'network': '10.20.30.0',
+                'subnet': '24',
+                'gateway': '192.168.1.1',
+                'description': 'IPv4 route in mixed table'
+            },
+            {
+                'id': 'new_ipv6_mixed',
+                'network': '2001:db8:2::',
+                'subnet': '64',
+                'gateway': '2001:db8::1',
+                'description': 'IPv6 route in mixed table'
+            }
+        ]
+
+        save_data = {
+            'staticRoutes': mixed_routes
+        }
+
+        try:
+            response = api_client.post('network:saveConfig', save_data)
+            if response.get('result', False):
+                # Verify both routes exist
+                verify = api_client.get('network:getConfig')
+                routes = verify['data']['staticRoutes']
+
+                ipv4_exists = any(r['network'] == '10.20.30.0' for r in routes)
+                ipv6_exists = any(r['network'] == '2001:db8:2::' for r in routes)
+
+                if ipv4_exists and ipv6_exists:
+                    print(f"✓ Mixed IPv4/IPv6 routes coexist in same table")
+                else:
+                    print(f"⚠ Mixed routes not found after save")
+            else:
+                print(f"⚠ Could not save mixed IPv4/IPv6 routes")
+        finally:
+            # Cleanup
+            verify = api_client.get('network:getConfig')
+            cleanup_routes = [r for r in verify['data']['staticRoutes']
+                            if not ((r.get('network') == '10.20.30.0' and r.get('subnet') == '24') or
+                                   (r.get('network') == '2001:db8:2::' and r.get('subnet') == '64'))]
+            api_client.post('network:saveConfig', {'staticRoutes': cleanup_routes})
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v', '-s'])

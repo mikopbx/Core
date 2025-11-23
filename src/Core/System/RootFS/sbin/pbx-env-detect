@@ -276,15 +276,24 @@ get_env_info() {
     CONSOLE=$(detect_console)
     ARCH=$(detect_architecture)
 
-    # Save to cache
-    cat > "$ENV_CACHE" << EOF
+    # Save to cache only if we have a definitive detection
+    # Don't cache 'virtual' as it's a generic fallback that may be incorrect during early boot
+    if [ "$ENV_TYPE" != "virtual" ]; then
+        cat > "$ENV_CACHE" << EOF
 ENV_TYPE=$ENV_TYPE
 SERIAL_PORTS=$SERIAL_PORTS
 CONSOLE=$CONSOLE
 ARCH=$ARCH
 EOF
+    fi
 
-    cat "$ENV_CACHE"
+    # Return current values (even if not cached)
+    cat << EOF
+ENV_TYPE=$ENV_TYPE
+SERIAL_PORTS=$SERIAL_PORTS
+CONSOLE=$CONSOLE
+ARCH=$ARCH
+EOF
 }
 
 # Main execution

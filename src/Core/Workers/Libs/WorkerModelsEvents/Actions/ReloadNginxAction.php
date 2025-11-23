@@ -6,7 +6,9 @@ use MikoPBX\Core\System\Configs\NginxConf;
 class ReloadNginxAction implements ReloadActionInterface
 {
     /**
-     * Restarts Nginx daemon
+     * Regenerates Nginx configuration and restarts service.
+     * This includes regenerating main HTTP/HTTPS configs with IPv6 listeners
+     * when IPv6 is enabled on network interfaces.
      *
      * @param array $parameters
      * @return void

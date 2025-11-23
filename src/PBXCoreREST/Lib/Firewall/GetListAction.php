@@ -24,6 +24,7 @@ use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Models\NetworkFilters;
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\System;
+use MikoPBX\Core\Utilities\IpAddressHelper;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 
 /**
@@ -38,7 +39,7 @@ class GetListAction
     /**
      * Get list of all firewall rules
      *
-     * @param array $data Request parameters (limit, offset, search)
+     * @param array<string, mixed> $data Request parameters (limit, offset, search)
      * @return PBXApiResult The result containing list of firewall rules
      */
     public static function main(array $data): PBXApiResult
@@ -50,7 +51,12 @@ class GetListAction
             $calculator = new \MikoPBX\AdminCabinet\Library\Cidr();
             $localAddresses = [];
             $localAddresses[] = '0.0.0.0/0';
-            
+
+            // Add IPv6 "all networks" if IPv6 is enabled
+            if (LanInterfaces::isIpv6Enabled()) {
+                $localAddresses[] = '::/0';
+            }
+
             // Get local network interfaces
             $conditions = 'disabled=0 AND internet=0';
             $networkInterfaces = LanInterfaces::find($conditions);
@@ -92,17 +98,26 @@ class GetListAction
                 
                 // Format network address
                 $permitParts = explode('/', $filter->permit);
-                if (!str_contains($permitParts[1], '.')) {
-                    $filterData['network'] = $calculator->cidr2network(
-                        $permitParts[0],
-                        intval($permitParts[1])
-                    ) . '/' . $permitParts[1];
+                $network = $permitParts[0];
+                $subnet = $permitParts[1];
+
+                // Detect IP version to apply correct normalization
+                $version = IpAddressHelper::getIpVersion($network);
+
+                if ($version === IpAddressHelper::IP_VERSION_4) {
+                    // IPv4: Normalize using Cidr calculator
+                    if (!str_contains($subnet, '.')) {
+                        $filterData['network'] = $calculator->cidr2network($network, intval($subnet));
+                        $filterData['subnet'] = $subnet;
+                    } else {
+                        $cidr = $calculator->netmask2cidr($subnet);
+                        $filterData['network'] = $calculator->cidr2network($network, $cidr);
+                        $filterData['subnet'] = (string)$cidr;
+                    }
                 } else {
-                    $cidr = $calculator->netmask2cidr($permitParts[1]);
-                    $filterData['network'] = $calculator->cidr2network(
-                        $permitParts[0],
-                        $cidr
-                    ) . '/' . $cidr;
+                    // IPv6: Use address as-is (already validated)
+                    $filterData['network'] = $network;
+                    $filterData['subnet'] = $subnet;
                 }
                 
                 // Fill default values for categories
@@ -132,7 +147,9 @@ class GetListAction
             foreach ($localAddresses as $localAddress) {
                 $existsPersistentRecord = false;
                 foreach ($networksTable as &$network) {
-                    if ($network['network'] === $localAddress) {
+                    // Compare network with subnet mask (e.g., "0.0.0.0/0" vs "0.0.0.0/0")
+                    $networkWithMask = $network['network'] . '/' . $network['subnet'];
+                    if ($networkWithMask === $localAddress) {
                         $network['permanent'] = true;
                         $existsPersistentRecord = true;
                         break;
@@ -140,15 +157,35 @@ class GetListAction
                 }
                 
                 if (!$existsPersistentRecord) {
+                    // Determine if this is an "all networks" address
+                    $isAllNetworks = ($localAddress === '0.0.0.0/0' || $localAddress === '::/0');
+
+                    // Set appropriate description based on address type using translations
+                    $di = \Phalcon\Di\Di::getDefault();
+                    $translation = $di->get('translation');
+
+                    $description = $translation->_('fw_LocalNetworkRuleDescription');
+                    if ($localAddress === '0.0.0.0/0') {
+                        $description = $translation->_('fw_AllIPv4NetworkRule');
+                    } elseif ($localAddress === '::/0') {
+                        $description = $translation->_('fw_AllIPv6NetworkRule');
+                    }
+
+                    // Extract network and subnet from localAddress (e.g., "0.0.0.0/0" -> network="0.0.0.0", subnet="0")
+                    $localParts = explode('/', $localAddress);
+                    $localNetwork = $localParts[0];
+                    $localSubnet = $localParts[1] ?? '0';
+
                     $defaultFilter = [
                         'id' => '',
                         'permanent' => true,
-                        'network' => $localAddress,
+                        'network' => $localNetwork,
+                        'subnet' => $localSubnet,
                         'permit' => $localAddress,
-                        'deny' => '0.0.0.0/0',
+                        'deny' => $localAddress === '::/0' ? '::/0' : '0.0.0.0/0',
                         'newer_block_ip' => '0',
-                        'local_network' => $localAddress !== '0.0.0.0/0' ? '1' : '0',
-                        'description' => $localAddress === '0.0.0.0/0' ? 'All Networks' : 'Local Networks',
+                        'local_network' => $isAllNetworks ? '0' : '1',
+                        'description' => $description,
                         'rules' => []
                     ];
                     
@@ -199,30 +236,36 @@ class GetListAction
     /**
      * Compare two network entries for sorting
      *
-     * @param array $a First network entry
-     * @param array $b Second network entry
+     * @param array<string, mixed> $a First network entry
+     * @param array<string, mixed> $b Second network entry
      * @return int Sort order
      */
     private static function sortArrayByNetwork(array $a, array $b): int
     {
-        // If second entry is permanent and first is not 0.0.0.0/0
-        if ($b['permanent'] && $a['network'] !== '0.0.0.0/0') {
+        // Check if entries are "all networks" addresses (compare with subnet mask)
+        $aNetworkWithMask = $a['network'] . '/' . $a['subnet'];
+        $bNetworkWithMask = $b['network'] . '/' . $b['subnet'];
+        $aIsAllNetworks = ($aNetworkWithMask === '0.0.0.0/0' || $aNetworkWithMask === '::/0');
+        $bIsAllNetworks = ($bNetworkWithMask === '0.0.0.0/0' || $bNetworkWithMask === '::/0');
+
+        // If second entry is permanent and first is not "all networks"
+        if ($b['permanent'] && !$aIsAllNetworks) {
             return 1;
         }
-        
-        // If second entry is 0.0.0.0/0
-        if ($b['network'] === '0.0.0.0/0') {
+
+        // If second entry is "all networks"
+        if ($bIsAllNetworks) {
             return 1;
         }
-        
+
         return -1;
     }
     
     /**
      * Get ports information for a category
      *
-     * @param array $categoryData Category configuration
-     * @return array Ports information
+     * @param array<string, mixed> $categoryData Category configuration
+     * @return array<int, array<string, mixed>> Ports information
      */
     private static function getPortsInfo(array $categoryData): array
     {

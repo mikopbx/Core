@@ -89,3 +89,9 @@
 .download-format-dropdown.ui.dropdown .menu {
     min-width: 140px;
 }
+
+/* Audio format badge spacing */
+.audio-format-badge {
+    margin-left: 0.5em;
+    margin-right: 0.5em;
+}

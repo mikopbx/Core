@@ -105,7 +105,7 @@ class FirewallRules extends ModelsBase
     /**
      * Prepares template with firewall settings
      *
-     * @return array[]
+     * @return array<string, array<string, mixed>>
      */
     public static function getDefaultRules(): array
     {
@@ -224,7 +224,7 @@ class FirewallRules extends ModelsBase
                     ],
                 ],
                 'action' => 'allow',
-                'shortName' => 'AJAM',
+                'shortName' => 'AJAM,WebRTC,ARI',
             ],
             'ICMP' => [
                 'rules' => [
@@ -253,7 +253,7 @@ class FirewallRules extends ModelsBase
     /**
      * Returns array of protected network ports from PbxSettings
      *
-     * @return array
+     * @return array<string, string>
      */
     public static function getProtectedPortSet(): array
     {

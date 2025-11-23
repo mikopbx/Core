@@ -3,23 +3,25 @@
 {{ form.render('content') }}
 {{ form.render('mode-custom-value') }}
 
-<div class="field max-width-800" id="filepath-field">
-    <label>{{ t._('cf_ColumnPath') }}</label>
-    {{ form.render('filepath') }}
-</div>
-
-<div class="field max-width-800">
-    <label>{{ t._('cf_Description') }}</label>
-    {{ form.render('description') }}
-</div>
-<div class="field ">
-    <label>{{ t._('cf_Mode') }}</label>
-    <div class="field max-width-400">
-        {{ form.render('mode') }}
+<div class="ui two fields">
+   <div class="field">
+    <div class="field max-width-800" id="filepath-field">
+        <label>{{ t._('cf_ColumnPath') }}</label>
+        {{ form.render('filepath') }}
     </div>
+    <div class="field max-width-400">
+        <label>{{ t._('cf_Mode') }}</label>
+        <div class="field max-width-400">
+            {{ form.render('mode') }}
+        </div>
+    </div>
+ </div>
+    
+        <div class="field max-width-800">
+            <label>{{ t._('cf_Description') }}</label>
+            {{ form.render('description') }}
+        </div>
 </div>
-
-
 <div class="ui top attached tabular menu" id="custom-files-menu">
     <a class="item" data-tab="original">{{ t._('cf_OriginalFileHeader') }}</a>
     <a class="item" data-tab="editor">{{ t._('cf_UserEditHeader') }}</a>
