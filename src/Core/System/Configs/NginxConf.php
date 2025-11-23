@@ -262,6 +262,7 @@ class NginxConf extends SystemConfigClass
                 . 'map $host $redirect_host {' . PHP_EOL
                 . '    default $host;' . PHP_EOL
                 . '    "~:" "[$host]";' . PHP_EOL
+                . '    "~^\[" $host;' . PHP_EOL
                 . '}' . PHP_EOL;
 
 

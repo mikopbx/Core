@@ -1,7 +1,10 @@
 {
   "trigger_phrases": {
     "implementation_mode": [
-      "yert"
+      "yert",
+      "сделай",
+      "обнови",
+      "исправь"
     ],
     "discussion_mode": [
       "SILENCE"
