@@ -270,6 +270,9 @@ class RouterProvider implements ServiceProviderInterface
         // Normalize to array for unified processing
         $patterns = is_array($idPatterns) ? $idPatterns : [$idPatterns];
 
+        // Register public endpoints in registry for AuthenticationMiddleware
+        $this->registerPublicEndpoint($controllerClass, $resourcePath);
+
         return $this->generateRoutes($controllerClass, $resourcePath, $patterns);
     }
 
@@ -321,6 +324,56 @@ class RouterProvider implements ServiceProviderInterface
     }
 
     /**
+     * HTTP methods supported by REST API
+     */
+    private const HTTP_METHODS = ['get', 'head', 'post', 'put', 'patch', 'delete'];
+
+    /**
+     * Register public endpoint if controller has PUBLIC security type
+     *
+     * @param string $controllerClass Fully qualified controller class name
+     * @param string $resourcePath Resource path for this controller
+     */
+    private function registerPublicEndpoint(string $controllerClass, string $resourcePath): void
+    {
+        try {
+            $di = \Phalcon\Di\Di::getDefault();
+            if ($di === null || !$di->has(PublicEndpointsRegistryProvider::SERVICE_NAME)) {
+                return;
+            }
+
+            $registry = $di->getShared(PublicEndpointsRegistryProvider::SERVICE_NAME);
+            $registry->registerFromController($controllerClass, $resourcePath);
+        } catch (\Exception) {
+            // Ignore errors - public endpoints registry is optional
+        }
+    }
+
+    /**
+     * Build ID pattern for resource-level routes
+     *
+     * For array patterns (prefixes), escape and add suffix [^/:]+
+     * For string patterns, use as-is
+     *
+     * @param array $patterns Array of ID patterns or single regex pattern
+     * @return string Regex pattern for ID matching
+     */
+    private function buildIdPattern(array $patterns): string
+    {
+        if (empty($patterns) || $patterns === ['']) {
+            return '[^/:]+';
+        }
+
+        // For array patterns (prefixes), escape and add suffix
+        // For string patterns, use as-is
+        // Note: Use [^/:] to explicitly exclude colon and slash from ID pattern for proper /{id}:{method} parsing
+        $pattern = reset($patterns);
+        return is_numeric(array_key_first($patterns)) && count($patterns) > 1
+            ? preg_quote($pattern, '/') . '[^/:]+'
+            : $pattern;
+    }
+
+    /**
      * Generate routes based on HttpMapping configuration
      */
     private function generateMappedRoutes(
@@ -330,14 +383,12 @@ class RouterProvider implements ServiceProviderInterface
         \MikoPBX\PBXCoreREST\Attributes\HttpMapping $httpMapping
     ): array {
         $routes = [];
-        $httpMethods = ['get', 'head', 'post', 'put', 'patch', 'delete'];
 
         // Get operations per HTTP method
         $mapping = $httpMapping->mapping;
-        $customMethods = $httpMapping->customMethods;
 
-        // Generate custom methods routes for each HTTP method that has operations
-        foreach ($httpMethods as $httpMethod) {
+        // Phase 1: Collection-level custom methods (highest priority)
+        foreach (self::HTTP_METHODS as $httpMethod) {
             $operations = $mapping[strtoupper($httpMethod)] ?? [];
             if (empty($operations)) {
                 continue;
@@ -347,8 +398,8 @@ class RouterProvider implements ServiceProviderInterface
             $routes[] = [$controllerClass, 'handleCustomRequest', $resourcePath, $httpMethod, ':{method:[a-zA-Z][a-zA-Z0-9]*}'];
         }
 
-        // Generate standard CRUD routes for collection level
-        foreach ($httpMethods as $httpMethod) {
+        // Phase 2: Collection-level CRUD
+        foreach (self::HTTP_METHODS as $httpMethod) {
             $operations = $mapping[strtoupper($httpMethod)] ?? [];
             if (empty($operations)) {
                 continue;
@@ -358,17 +409,13 @@ class RouterProvider implements ServiceProviderInterface
             $routes[] = [$controllerClass, 'handleCRUDRequest', $resourcePath, $httpMethod, '/'];
         }
 
-        // Generate resource-level routes (with ID) if patterns are not empty
+        // Phase 3 & 4: Resource-level routes (with ID) if patterns are not empty
         if (!empty($patterns) && $patterns !== ['']) {
             foreach ($patterns as $pattern) {
-                // For array patterns (prefixes), escape and add suffix; for string patterns, use as-is
-                // Note: Use [^/:] to explicitly exclude colon and slash from ID pattern for proper /{id}:{method} parsing
-                $idPattern = is_numeric(array_key_first($patterns)) && count($patterns) > 1
-                    ? preg_quote($pattern, '/') . '[^/:]+'
-                    : $pattern;
+                $idPattern = $this->buildIdPattern([$pattern] + $patterns);
 
-                // Generate resource-level custom methods
-                foreach ($httpMethods as $httpMethod) {
+                // Phase 3: Resource-level custom methods
+                foreach (self::HTTP_METHODS as $httpMethod) {
                     $operations = $mapping[strtoupper($httpMethod)] ?? [];
                     if (empty($operations)) {
                         continue;
@@ -377,8 +424,8 @@ class RouterProvider implements ServiceProviderInterface
                     $routes[] = [$controllerClass, 'handleResourceCustomRequest', $resourcePath, $httpMethod, '/{id:' . $idPattern . '}:{method:[a-zA-Z][a-zA-Z0-9]*}'];
                 }
 
-                // Generate resource-level CRUD operations
-                foreach ($httpMethods as $httpMethod) {
+                // Phase 4: Resource-level CRUD operations
+                foreach (self::HTTP_METHODS as $httpMethod) {
                     $operations = $mapping[strtoupper($httpMethod)] ?? [];
                     if (empty($operations)) {
                         continue;
@@ -397,50 +444,31 @@ class RouterProvider implements ServiceProviderInterface
      */
     private function generateAllRoutes(string $controllerClass, string $resourcePath, array $patterns): array
     {
-        $routes = [
-            // === CUSTOM METHODS (highest priority for proper matching) ===
+        $routes = [];
 
-            // Collection-level custom methods: GET /resource:method, POST /resource:method
-            [$controllerClass, 'handleCustomRequest', $resourcePath, 'get', ':{method:[a-zA-Z][a-zA-Z0-9]*}'],
-            [$controllerClass, 'handleCustomRequest', $resourcePath, 'head', ':{method:[a-zA-Z][a-zA-Z0-9]*}'],
-            [$controllerClass, 'handleCustomRequest', $resourcePath, 'post', ':{method:[a-zA-Z][a-zA-Z0-9]*}'],
-            [$controllerClass, 'handleCustomRequest', $resourcePath, 'put', ':{method:[a-zA-Z][a-zA-Z0-9]*}'],
-            [$controllerClass, 'handleCustomRequest', $resourcePath, 'patch', ':{method:[a-zA-Z][a-zA-Z0-9]*}'],
-            [$controllerClass, 'handleCustomRequest', $resourcePath, 'delete', ':{method:[a-zA-Z][a-zA-Z0-9]*}'],
+        // Phase 1: Collection-level custom methods (highest priority)
+        foreach (self::HTTP_METHODS as $httpMethod) {
+            $routes[] = [$controllerClass, 'handleCustomRequest', $resourcePath, $httpMethod, ':{method:[a-zA-Z][a-zA-Z0-9]*}'];
+        }
 
-            // === STANDARD CRUD OPERATIONS ===
+        // Phase 2: Collection-level CRUD
+        foreach (self::HTTP_METHODS as $httpMethod) {
+            $routes[] = [$controllerClass, 'handleCRUDRequest', $resourcePath, $httpMethod, '/'];
+        }
 
-            // Collection operations
-            [$controllerClass, 'handleCRUDRequest', $resourcePath, 'get', '/'],     // List all
-            [$controllerClass, 'handleCRUDRequest', $resourcePath, 'head', '/'],    // Get metadata
-            [$controllerClass, 'handleCRUDRequest', $resourcePath, 'post', '/'],    // Create new
-            [$controllerClass, 'handleCRUDRequest', $resourcePath, 'put', '/'],     // Replace all (bulk)
-            [$controllerClass, 'handleCRUDRequest', $resourcePath, 'patch', '/'],   // Update all (bulk)
-            [$controllerClass, 'handleCRUDRequest', $resourcePath, 'delete', '/'],  // Delete all (dangerous, controlled by processor)
-        ];
-
-        // Add resource-level routes for each pattern
+        // Phase 3 & 4: Resource-level routes for each pattern
         foreach ($patterns as $pattern) {
-            // For array patterns (prefixes), escape and add suffix; for string patterns, use as-is
-            // Note: Use [^/:] to explicitly exclude colon and slash from ID pattern for proper /{id}:{method} parsing
-            $idPattern = is_numeric(array_key_first($patterns)) && count($patterns) > 1
-                ? preg_quote($pattern, '/') . '[^/:]+'
-                : $pattern;
+            $idPattern = $this->buildIdPattern([$pattern] + $patterns);
 
-            // Resource-level custom methods
-            $routes[] = [$controllerClass, 'handleResourceCustomRequest', $resourcePath, 'get', '/{id:' . $idPattern . '}:{method:[a-zA-Z][a-zA-Z0-9]*}'];
-            $routes[] = [$controllerClass, 'handleResourceCustomRequest', $resourcePath, 'head', '/{id:' . $idPattern . '}:{method:[a-zA-Z][a-zA-Z0-9]*}'];
-            $routes[] = [$controllerClass, 'handleResourceCustomRequest', $resourcePath, 'post', '/{id:' . $idPattern . '}:{method:[a-zA-Z][a-zA-Z0-9]*}'];
-            $routes[] = [$controllerClass, 'handleResourceCustomRequest', $resourcePath, 'put', '/{id:' . $idPattern . '}:{method:[a-zA-Z][a-zA-Z0-9]*}'];
-            $routes[] = [$controllerClass, 'handleResourceCustomRequest', $resourcePath, 'patch', '/{id:' . $idPattern . '}:{method:[a-zA-Z][a-zA-Z0-9]*}'];
-            $routes[] = [$controllerClass, 'handleResourceCustomRequest', $resourcePath, 'delete', '/{id:' . $idPattern . '}:{method:[a-zA-Z][a-zA-Z0-9]*}'];
+            // Phase 3: Resource-level custom methods
+            foreach (self::HTTP_METHODS as $httpMethod) {
+                $routes[] = [$controllerClass, 'handleResourceCustomRequest', $resourcePath, $httpMethod, '/{id:' . $idPattern . '}:{method:[a-zA-Z][a-zA-Z0-9]*}'];
+            }
 
-            // Individual resource operations
-            $routes[] = [$controllerClass, 'handleCRUDRequest', $resourcePath, 'get', '/{id:' . $idPattern . '}'];     // Get one
-            $routes[] = [$controllerClass, 'handleCRUDRequest', $resourcePath, 'head', '/{id:' . $idPattern . '}'];    // Get one metadata
-            $routes[] = [$controllerClass, 'handleCRUDRequest', $resourcePath, 'put', '/{id:' . $idPattern . '}'];     // Replace one
-            $routes[] = [$controllerClass, 'handleCRUDRequest', $resourcePath, 'patch', '/{id:' . $idPattern . '}'];   // Update one
-            $routes[] = [$controllerClass, 'handleCRUDRequest', $resourcePath, 'delete', '/{id:' . $idPattern . '}'];  // Delete one
+            // Phase 4: Resource-level CRUD operations
+            foreach (self::HTTP_METHODS as $httpMethod) {
+                $routes[] = [$controllerClass, 'handleCRUDRequest', $resourcePath, $httpMethod, '/{id:' . $idPattern . '}'];
+            }
         }
 
         return $routes;
