@@ -484,10 +484,10 @@ const Form = {
                     Form.showErrorMessages(response.messages.error);
                 }
             } else if (response.message) {
-                // Legacy format support
+                // Legacy format support - also show at top via UserMessage
                 $.each(response.message, (index, value) => {
                     if (index === 'error') {
-                        Form.$formObj.after(`<div class="ui ${index} message ajax">${value}</div>`);
+                        UserMessage.showError(value);
                     }
                 });
             }
@@ -590,31 +590,30 @@ const Form = {
     },
     
     /**
-     * Shows error messages (unified error display)
+     * Shows error messages (unified error display at top of page)
      * @param {string|array|object} errors - Error messages
      */
     showErrorMessages(errors) {
         if (Array.isArray(errors)) {
-            // Convert newlines to <br> for proper HTML display
-            const errorText = errors
-                .map(error => error.replace(/\n/g, '<br>'))
-                .join('<br>');
-            Form.$formObj.after(`<div class="ui error message ajax">${errorText}</div>`);
+            // Array of errors - show at top via UserMessage
+            UserMessage.showError(errors);
         } else if (typeof errors === 'object') {
-            // Field-specific errors
+            // Field-specific errors - highlight fields AND show message at top
+            const errorMessages = [];
             $.each(errors, (field, message) => {
                 const $field = Form.$formObj.find(`[name="${field}"]`);
                 if ($field.length) {
+                    // Highlight field with error state
                     $field.closest('.field').addClass('error');
-                    // Convert newlines to <br> for field-specific errors too
-                    const formattedMessage = message.replace(/\n/g, '<br>');
-                    $field.after(`<div class="ui pointing red label">${formattedMessage}</div>`);
                 }
+                // Collect error message for top display
+                errorMessages.push(message);
             });
+            // Show all errors at top
+            UserMessage.showError(errorMessages);
         } else {
-            // Convert newlines to <br> for string errors
-            const formattedError = errors.replace(/\n/g, '<br>');
-            Form.$formObj.after(`<div class="ui error message ajax">${formattedError}</div>`);
+            // String error - show at top via UserMessage
+            UserMessage.showError(errors);
         }
     },
     

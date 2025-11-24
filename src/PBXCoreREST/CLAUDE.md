@@ -200,6 +200,93 @@ Use the **`api-client`** skill to execute API requests with automatic authentica
 - **Refresh Token:** 30 days, Redis storage, httpOnly cookie, auto-rotation
 - **API Keys:** No expiration, format: `miko_ak_1234567890abcdef...`
 
+### Public Endpoints
+
+**Public endpoints** allow access without authentication. MikoPBX uses a **hybrid approach** combining attribute-based detection (modern) with legacy hardcoded constants (backward compatibility).
+
+#### Strategy 1: Attribute-Based Public Endpoints (Recommended - Pattern 4)
+
+Mark entire resource as public using `SecurityType::PUBLIC`:
+
+```php
+#[ApiResource(path: '/pbxcore/api/v3/webhooks')]
+#[ResourceSecurity('webhooks', requirements: [SecurityType::PUBLIC])]
+#[HttpMapping(mapping: ['POST' => ['processWebhook']], ...)]
+class WebhooksController extends BaseRestController
+{
+    // All methods in this controller are public
+}
+```
+
+**How it works:**
+1. `RouterProvider` scans controller during route generation
+2. Detects `SecurityType::PUBLIC` in `ResourceSecurity` attribute
+3. Registers endpoint in `PublicEndpointsRegistry` service
+4. `AuthenticationMiddleware` checks registry before requiring authentication
+
+**Benefits:**
+- ✅ Single source of truth (controller attributes)
+- ✅ Works for Core and Module Pattern 4 endpoints
+- ✅ No code duplication
+- ✅ Automatic discovery
+
+#### Strategy 2: Module Pattern 2 Public Endpoints
+
+For legacy Pattern 2 modules, use 6th parameter `noAuth: true`:
+
+```php
+public function getPBXCoreRESTAdditionalRoutes(): array
+{
+    return [
+        // Private endpoint (requires authentication)
+        [GetController::class, 'callAction', '/pbxcore/api/module-name/{action}', 'get', '', false],
+
+        // Public endpoint (no authentication required)
+        [GetController::class, 'callAction', '/pbxcore/api/module-name-public/{action}', 'get', '', true],
+        //                                                                                           ^^^^
+        //                                                                                           noAuth flag
+    ];
+}
+```
+
+**How it works:**
+1. `Request::thisIsModuleNoAuthRequest()` checks 6th parameter
+2. Matches URI pattern against module routes
+3. Returns `true` if `noAuth === true`
+4. `AuthenticationMiddleware` allows request
+
+#### Strategy 3: Legacy Hardcoded Constants (Backward Compatibility)
+
+Core public endpoints still in `AuthenticationMiddleware::PUBLIC_ENDPOINTS`:
+
+```php
+private const PUBLIC_ENDPOINTS = [
+    '/pbxcore/api/v3/auth:login' => ['POST'],
+    '/pbxcore/api/v3/auth:refresh' => ['POST'],
+    '/pbxcore/api/v3/system:ping' => ['GET'],
+    // ... other core public endpoints
+];
+```
+
+**Migration path:** New endpoints should use Strategy 1 (attributes). This constant will be phased out once all core endpoints are migrated.
+
+#### Optional Authentication on Public Endpoints
+
+Public endpoints support **optional authentication** - they work with or without Bearer token:
+
+```php
+// Public endpoint without token
+GET /pbxcore/api/v3/system:ping
+→ 200 OK (anonymous)
+
+// Public endpoint with valid token
+GET /pbxcore/api/v3/system:ping
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGci...
+→ 200 OK (authenticated, user context available)
+```
+
+**Use case:** Health check endpoints that can provide extended info for authenticated users.
+
 ## Creating New Endpoints
 
 ### Core Endpoints
@@ -254,6 +341,36 @@ When creating module endpoints, **ALWAYS** include module namespace in path:
 // ModuleCRM
 #[ApiResource(path: '/pbxcore/api/v3/modules/crm/contacts')]
 ```
+
+**Public Module Endpoints (Pattern 4):**
+
+Modules can create public endpoints using `SecurityType::PUBLIC`:
+
+```php
+namespace Modules\ModuleWebhooks\Lib\RestAPI\Webhooks;
+
+#[ApiResource(path: '/pbxcore/api/v3/modules/webhooks/receiver')]
+#[ResourceSecurity('webhooks-receiver', requirements: [SecurityType::PUBLIC])]
+#[HttpMapping(
+    mapping: ['POST' => ['processWebhook']],
+    collectionLevelMethods: ['processWebhook']
+)]
+class Controller extends BaseRestController
+{
+    protected string $processorClass = Processor::class;
+
+    // This endpoint will be publicly accessible without authentication
+    // Example: POST /pbxcore/api/v3/modules/webhooks/receiver
+}
+```
+
+**Why use public endpoints in modules:**
+- Webhook receivers (GitHub, GitLab, payment gateways)
+- Public API integrations
+- Health check endpoints
+- Status pages
+
+**Pattern 2 modules** should use the 6th parameter `noAuth: true` as shown in Strategy 2 above.
 
 ## HTTP Status Codes
 
@@ -336,8 +453,116 @@ Study these as perfect examples:
 - **CallQueues** - Complete 7-phase pattern, nested members
 - **IvrMenu** - Complex nested actions array
 - **Providers** - Polymorphic schema (SIP/IAX), password masking
-- **Firewall** - Security validation, nested rules, inheritance
+- **Firewall** - Security validation, nested rules, inheritance, **dual-stack IPv4/IPv6 support**
 - **Employees** - Multi-entity save (Users + Extensions + Sip)
+
+### Firewall: IPv4/IPv6 Dual-Stack Support
+
+The Firewall REST API demonstrates how to implement dual-stack IPv4/IPv6 support with proper validation:
+
+**SaveRecordAction IPv6 Validation** (`src/PBXCoreREST/Lib/Firewall/SaveRecordAction.php`):
+```php
+private static function validateIpAndCidr(string $network, int|string $subnet): array
+{
+    $errors = [];
+
+    // Detect IP version using IpAddressHelper
+    $version = IpAddressHelper::getIpVersion($network);
+    if ($version === false) {
+        $errors[] = "Invalid IP address format: $network";
+        return $errors;
+    }
+
+    $subnetInt = is_string($subnet) ? intval($subnet) : $subnet;
+
+    // IPv4 validation (prefix /0-/32)
+    if ($version === IpAddressHelper::IP_VERSION_4) {
+        if ($subnetInt < 0 || $subnetInt > 32) {
+            $errors[] = "IPv4 subnet prefix must be between 0 and 32, got: $subnet";
+        }
+
+        // Validate octets are in correct range
+        $octets = explode('.', $network);
+        if (count($octets) !== 4) {
+            $errors[] = "Invalid IPv4 address format: $network (must have 4 octets)";
+            return $errors;
+        }
+
+        foreach ($octets as $index => $octet) {
+            $octetNum = (int)$octet;
+            if ($octetNum < 0 || $octetNum > 255) {
+                $errors[] = "Invalid IPv4 octet #" . ($index + 1) . ": $octet (must be 0-255)";
+            }
+        }
+    }
+    // IPv6 validation (prefix /0-/128)
+    else {
+        if ($subnetInt < 0 || $subnetInt > 128) {
+            $errors[] = "IPv6 prefix length must be between 0 and 128, got: $subnet";
+        }
+
+        // Validate IPv6 format using filter
+        if (!filter_var($network, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+            $errors[] = "Invalid IPv6 address format: $network";
+        }
+    }
+
+    // Final CIDR validation using IpAddressHelper
+    $cidr = "$network/$subnet";
+    if (IpAddressHelper::normalizeCidr($cidr) === false) {
+        $errors[] = "Invalid CIDR notation format: $cidr";
+    }
+
+    return $errors;
+}
+```
+
+**Key implementation details:**
+1. **Version detection**: Use `IpAddressHelper::getIpVersion()` to detect IPv4 vs IPv6
+2. **Subnet range validation**: IPv4 accepts /0-/32, IPv6 accepts /0-/128
+3. **Format validation**: Use `filter_var()` with `FILTER_FLAG_IPV6` for IPv6
+4. **CIDR normalization**: Use `IpAddressHelper::normalizeCidr()` for final validation
+5. **Unified storage**: Store both IPv4 and IPv6 in same network/subnet fields
+6. **Either/or enforcement**: UI enforces one protocol per rule (NIST SP 800-119)
+
+**Model-level validation** (`src/Common/Models/NetworkFilters.php`):
+```php
+public function beforeValidation(): bool
+{
+    // Validate permit field (IPv4 or IPv6 CIDR)
+    if (!empty($this->permit)) {
+        $cidrInfo = IpAddressHelper::normalizeCidr($this->permit);
+        if ($cidrInfo === false) {
+            $this->appendMessage(new Message(
+                'Invalid permit network CIDR notation',
+                'permit'
+            ));
+            return false;
+        }
+    }
+
+    // Validate deny field
+    if (!empty($this->deny)) {
+        $cidrInfo = IpAddressHelper::normalizeCidr($this->deny);
+        if ($cidrInfo === false) {
+            $this->appendMessage(new Message(
+                'Invalid deny network CIDR notation',
+                'deny'
+            ));
+            return false;
+        }
+    }
+
+    return true;
+}
+```
+
+**Testing:**
+- Unit tests: `tests/Common/Models/NetworkFiltersTest.php` (IPv6 CIDR validation)
+- Unit tests: `tests/Core/System/Configs/IptablesConfTest.php` (IPv6 firewall rule generation)
+- Test various IPv6 formats: 2001:db8::/64, fe80::/10, ::1/128, ::/0
+
+**See also:** `src/AdminCabinet/CLAUDE.md` section "Dual-Stack IPv4/IPv6 Forms" for frontend implementation
 
 ## External Resources
 

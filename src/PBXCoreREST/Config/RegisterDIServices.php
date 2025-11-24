@@ -46,6 +46,7 @@ use MikoPBX\Common\Providers\{AclProvider,
 };
 use MikoPBX\PBXCoreREST\Providers\{
     DispatcherProvider,
+    PublicEndpointsRegistryProvider,
     RequestProvider,
     ResponseProvider,
     RouterProvider
@@ -99,6 +100,7 @@ class RegisterDIServices
             DispatcherProvider::class,
             ResponseProvider::class,
             RequestProvider::class,
+            PublicEndpointsRegistryProvider::class,
             RouterProvider::class,
 
             // Inject crypto provider
