@@ -410,6 +410,11 @@ class Network extends Injectable
             $res->primarydns = $res->secondarydns;
             $res->secondarydns = '';
         }
+        if (empty($res->primarydns6) && !empty($res->secondarydns6)) {
+            // Swap primary and secondary IPv6 DNS if primary is empty
+            $res->primarydns6 = $res->secondarydns6;
+            $res->secondarydns6 = '';
+        }
         $res->save();
     }
 
@@ -623,6 +628,38 @@ class Network extends Injectable
     }
 
     /**
+     * Retrieves IPv6 DNS servers from LanInterfaces
+     *
+     * Returns array of IPv6 DNS server addresses from all enabled interfaces,
+     * ordered by internet flag (internet interface DNS servers first).
+     *
+     * @return array<string> Array of IPv6 DNS server addresses
+     */
+    public function getHostDNS6(): array
+    {
+        $dns = [];
+
+        // Get all enabled interfaces ordered by internet flag (internet interface first)
+        $data = LanInterfaces::find([
+            'conditions' => "disabled IS NULL OR disabled = '0'",
+            'order' => 'internet DESC'
+        ]);
+
+        foreach ($data as $if_data) {
+            // Add primary IPv6 DNS if valid
+            if (!empty($if_data->primarydns6) && IpAddressHelper::isIpv6($if_data->primarydns6)) {
+                $dns[] = $if_data->primarydns6;
+            }
+            // Add secondary IPv6 DNS if valid
+            if (!empty($if_data->secondarydns6) && IpAddressHelper::isIpv6($if_data->secondarydns6)) {
+                $dns[] = $if_data->secondarydns6;
+            }
+        }
+
+        return array_unique($dns);
+    }
+
+    /**
      * Configures the loopback interface (lo) with the IP address 127.0.0.1.
      *
      * @return void
@@ -671,18 +708,48 @@ class Network extends Injectable
                 $arr_commands[] = "$ip -6 addr flush dev $escapedIfName 2>/dev/null || true";
                 break;
 
-            case '1': // Auto - SLAAC (Stateless Address Autoconfiguration)
-                SystemMessages::sysLogMsg(__METHOD__, "Enabling IPv6 Auto (SLAAC) on $ifName");
+            case '1': // Auto - DHCPv6 with SLAAC fallback
+                SystemMessages::sysLogMsg(__METHOD__, "Enabling IPv6 Auto (DHCPv6 + SLAAC fallback) on $ifName");
 
                 // Enable IPv6 on this interface
                 $arr_commands[] = "$sysctl -w net.ipv6.conf.$ifName.disable_ipv6=0";
 
-                // Enable autoconf (SLAAC)
+                // Enable autoconf (SLAAC) - serves as fallback when DHCPv6 unavailable
                 $arr_commands[] = "$sysctl -w net.ipv6.conf.$ifName.autoconf=1";
                 $arr_commands[] = "$sysctl -w net.ipv6.conf.$ifName.accept_ra=1";
 
-                // SLAAC is automatic in Linux kernel when interface is up
-                // Link-local address (fe80::/10) will be assigned automatically
+                // Launch DHCPv6 client (mimics IPv4 udhcpc pattern)
+                // ARCHITECTURAL DECISION: DHCPv6 client behavior based on Router Advertisement flags
+                // - M-flag set (Managed): Run stateful DHCPv6 to get IPv6 address
+                // - O-flag set (Other Config): Run stateless DHCPv6 to get DNS servers
+                // - Neither flag: SLAAC-only (current behavior)
+                // - If DHCPv6 server doesn't respond: udhcpc6 exits, SLAAC continues (graceful fallback)
+
+                $pid_file = "/var/run/udhcpc6_$ifName";
+                $udhcpc6 = Util::which('udhcpc6');
+                $nohup = Util::which('nohup');
+                $workerPath = '/etc/rc/udhcpc6_configure';
+
+                // Kill existing udhcpc6 process if running
+                $pid = Processes::getPidOfProcess($pid_file);
+                if (!empty($pid) && file_exists($pid_file)) {
+                    $kill = Util::which('kill');
+                    $cat = Util::which('cat');
+                    system("$kill `$cat $pid_file` $pid");
+                }
+
+                // Run udhcpc6 once in foreground to get immediate lease (quick attempt)
+                $options = '-t 2 -T 2 -q -n';  // 2 attempts, 2 sec timeout, quit after lease, exit if no lease
+                $arr_commands[] = "$udhcpc6 $options -i $ifName -s $workerPath";
+
+                // Start persistent udhcpc6 in background (long-running daemon)
+                $options = '-t 6 -T 5 -S -b -n';  // 6 attempts, 5 sec, syslog, background, exit if no lease
+                $arr_commands[] = "$nohup $udhcpc6 $options -p $pid_file -i $ifName -s $workerPath 2>&1 &";
+
+                // FALLBACK BEHAVIOR:
+                // - If DHCPv6 server responds: udhcpc6 callback updates database with DHCPv6 address
+                // - If DHCPv6 server not available: udhcpc6 exits (no lease), SLAAC continues to work
+                // - Result: Graceful fallback to SLAAC when DHCPv6 unavailable
                 break;
 
             case '2': // Manual - Static IPv6 configuration
