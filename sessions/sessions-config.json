@@ -1,22 +1,27 @@
 {
   "trigger_phrases": {
     "implementation_mode": [
-      "yert"
+      "yert",
+      "ДЕЛАЙ"
     ],
     "discussion_mode": [
-      "SILENCE"
+      "SILENCE",
+      "ОБСУДИМ"
     ],
     "task_creation": [
-      "mek:"
+      "mek:",
+      "ЗАДАЧА:"
     ],
     "task_startup": [
       "start^"
     ],
     "task_completion": [
-      "finito"
+      "finito",
+      "ЗАВЕРШИ"
     ],
     "context_compaction": [
-      "squish"
+      "squish",
+      "ПРОШУРШИ"
     ]
   },
   "blocked_actions": {
