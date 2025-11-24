@@ -726,7 +726,21 @@ class Network extends Injectable
                 // - If DHCPv6 server doesn't respond: udhcpc6 exits, SLAAC continues (graceful fallback)
 
                 $pid_file = "/var/run/udhcpc6_$ifName";
+
+                // Try to find udhcpc6 symlink first, fallback to busybox direct call
                 $udhcpc6 = Util::which('udhcpc6');
+                if (empty($udhcpc6)) {
+                    $busybox = Util::which('busybox');
+                    if (!empty($busybox)) {
+                        $udhcpc6 = "$busybox udhcpc6";
+                    }
+                }
+
+                if (empty($udhcpc6)) {
+                    SystemMessages::sysLogMsg(__METHOD__, "udhcpc6 not available in busybox, skipping DHCPv6 for $ifName", LOG_WARNING);
+                    break;
+                }
+
                 $nohup = Util::which('nohup');
                 $workerPath = '/etc/rc/udhcpc6_configure';
 
