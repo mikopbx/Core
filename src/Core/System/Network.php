@@ -735,16 +735,21 @@ class Network extends Injectable
                 if (!empty($pid) && file_exists($pid_file)) {
                     $kill = Util::which('kill');
                     $cat = Util::which('cat');
-                    system("$kill `$cat $pid_file` $pid");
+                    $escapedPidFile = escapeshellarg($pid_file);
+                    system("$kill `$cat $escapedPidFile` $pid");
                 }
+
+                // Escape shell arguments for udhcpc6 commands
+                $escapedPidFile = escapeshellarg($pid_file);
+                $escapedWorkerPath = escapeshellarg($workerPath);
 
                 // Run udhcpc6 once in foreground to get immediate lease (quick attempt)
                 $options = '-t 2 -T 2 -q -n';  // 2 attempts, 2 sec timeout, quit after lease, exit if no lease
-                $arr_commands[] = "$udhcpc6 $options -i $ifName -s $workerPath";
+                $arr_commands[] = "$udhcpc6 $options -i $ifName -s $escapedWorkerPath";
 
                 // Start persistent udhcpc6 in background (long-running daemon)
                 $options = '-t 6 -T 5 -S -b -n';  // 6 attempts, 5 sec, syslog, background, exit if no lease
-                $arr_commands[] = "$nohup $udhcpc6 $options -p $pid_file -i $ifName -s $workerPath 2>&1 &";
+                $arr_commands[] = "$nohup $udhcpc6 $options -p $escapedPidFile -i $ifName -s $escapedWorkerPath 2>&1 &";
 
                 // FALLBACK BEHAVIOR:
                 // - If DHCPv6 server responds: udhcpc6 callback updates database with DHCPv6 address
