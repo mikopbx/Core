@@ -973,6 +973,161 @@ window.addEventListener('hashchange', () => {
 9. **Loading States** - Show loading indicators during operations
 10. **Responsive Design** - Test on various screen sizes
 
+## IPv4 and IPv6 Support in Forms
+
+### Network Interface Configuration
+
+The Network configuration form (`sites/admin-cabinet/assets/js/src/Network/network-modify.js`) supports dual-stack IPv4 and IPv6:
+
+#### IPv6 Form Fields
+
+```javascript
+// IPv6 mode selector
+$('#ipv6-mode-select').dropdown({
+    values: [
+        { value: '0', name: 'Off' },
+        { value: '1', name: 'Auto (SLAAC/DHCPv6)' },
+        { value: '2', name: 'Manual (Static)' }
+    ]
+});
+
+// IPv6 address input validation
+const ipv6Validation = {
+    identifier: 'ipv6addr',
+    rules: [
+        {
+            type: 'regExp',
+            value: /^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}$/,
+            prompt: globalTranslate.nw_ValidateIpv6Invalid
+        }
+    ]
+};
+```
+
+#### Dynamic Field Visibility
+
+IPv6 fields visibility depends on `ipv6_mode` value:
+
+```javascript
+// Show/hide IPv6 manual fields based on mode
+$('#ipv6-mode-select').dropdown({
+    onChange(value) {
+        if (value === '2') {
+            // Manual mode - show all IPv6 fields
+            $('.ipv6-manual-fields').show();
+        } else if (value === '1') {
+            // Auto mode - show read-only current values
+            $('.ipv6-auto-fields').show();
+            $('.ipv6-manual-fields').hide();
+        } else {
+            // Off - hide all IPv6 fields
+            $('.ipv6-fields').hide();
+        }
+    }
+});
+```
+
+#### Dual-Stack Validation
+
+Validate both IPv4 and IPv6 addresses:
+
+```javascript
+validateRules: {
+    ipaddr: {
+        identifier: 'ipaddr',
+        rules: [
+            {
+                type: 'regExp',
+                value: /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/,
+                prompt: globalTranslate.nw_ValidateIpv4Invalid
+            }
+        ]
+    },
+    ipv6addr: {
+        identifier: 'ipv6addr',
+        optional: true,
+        rules: [
+            {
+                type: 'regExp',
+                value: /^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}$/,
+                prompt: globalTranslate.nw_ValidateIpv6Invalid
+            }
+        ]
+    },
+    ipv6_subnet: {
+        identifier: 'ipv6_subnet',
+        optional: true,
+        rules: [
+            {
+                type: 'integer[1..128]',
+                prompt: globalTranslate.nw_ValidateIpv6PrefixInvalid
+            }
+        ]
+    }
+}
+```
+
+#### IPv6 Address Examples
+
+Use appropriate placeholder text for IPv6 fields:
+
+```volt
+<div class="field">
+    <label>{{ t._('nw_Ipv6Address') }}</label>
+    <input type="text" name="ipv6addr"
+           placeholder="2001:db8::1"
+           value="{{ form.render('ipv6addr') }}">
+</div>
+
+<div class="field">
+    <label>{{ t._('nw_Ipv6Subnet') }}</label>
+    <input type="text" name="ipv6_subnet"
+           placeholder="64"
+           value="{{ form.render('ipv6_subnet') }}">
+</div>
+```
+
+### IP Address Display in Lists
+
+When displaying IP addresses in tables, handle both IPv4 and IPv6:
+
+```javascript
+// Format IP address with proper display
+formatIpAddress(ipv4, ipv6) {
+    const parts = [];
+    if (ipv4) parts.push(ipv4);
+    if (ipv6) parts.push(ipv6);
+    return parts.join(' / ');
+}
+
+// In DataTable column render
+{
+    data: null,
+    render(data) {
+        return networkIndex.formatIpAddress(data.ipaddr, data.ipv6addr);
+    }
+}
+```
+
+### Handling IPv6 in AJAX Responses
+
+REST API may return both configured and current (auto-configured) IPv6 values:
+
+```javascript
+cbAfterLoadData(response) {
+    if (response.ipv6_mode === '1') {
+        // Auto mode - show current autoconfigured values
+        $('#current-ipv6addr').text(response.currentIpv6addr || 'Not assigned');
+        $('#current-ipv6-gateway').text(response.currentIpv6_gateway || 'Not assigned');
+    } else if (response.ipv6_mode === '2') {
+        // Manual mode - populate form fields
+        Form.$formObj.form('set value', 'ipv6addr', response.ipv6addr);
+        Form.$formObj.form('set value', 'ipv6_subnet', response.ipv6_subnet);
+        Form.$formObj.form('set value', 'ipv6_gateway', response.ipv6_gateway);
+    }
+}
+```
+
 ## JavaScript Code Style
 
 For detailed JavaScript coding standards and real-world examples from the project, use:
@@ -987,3 +1142,4 @@ Key principles:
 - SessionStorage for filter persistence (see Common Patterns #4)
 - Event delegation for dynamic elements
 - Loading states for all async operations
+- Dual-stack IPv4/IPv6 validation and display

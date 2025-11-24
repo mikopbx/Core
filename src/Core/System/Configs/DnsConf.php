@@ -25,6 +25,7 @@ use MikoPBX\Core\System\Network;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\System\Util;
+use MikoPBX\Core\Utilities\IpAddressHelper;
 
 /**
  * Class DnsConf
@@ -68,6 +69,11 @@ class DnsConf extends SystemConfigClass
             unset($netConf);
         }
 
+        // Retrieve IPv6 DNS settings
+        $netConf = new Network();
+        $dns6 = $netConf->getHostDNS6();
+        unset($netConf);
+
         // Initialize resolv.conf content
         $resolveConf = '';
 
@@ -97,7 +103,7 @@ class DnsConf extends SystemConfigClass
         // Initialize an array to store named DNS servers
         $named_dns = [];
 
-        // Iterate over each DNS server
+        // Iterate over each IPv4 DNS server
         foreach ($dns as $ns) {
             // Skip empty DNS servers
             if (trim($ns) === '') {
@@ -108,6 +114,19 @@ class DnsConf extends SystemConfigClass
 
             // Append the DNS server to resolv.conf
             $resolveConf .= "nameserver $ns\n";
+        }
+
+        // Iterate over each IPv6 DNS server
+        foreach ($dns6 as $ns6) {
+            // Skip empty or invalid IPv6 DNS servers
+            if (trim($ns6) === '' || !IpAddressHelper::isIpv6($ns6)) {
+                continue;
+            }
+            // Add the IPv6 DNS server to the named_dns array
+            $named_dns[] = $ns6;
+
+            // Append the IPv6 DNS server to resolv.conf
+            $resolveConf .= "nameserver $ns6\n";
         }
 
         // If no DNS servers were found, use default ones and add them to named_dns

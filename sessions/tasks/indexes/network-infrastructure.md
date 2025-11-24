@@ -9,7 +9,7 @@ description: Tasks related to network configuration, system utilities, firewall 
 ## Active Tasks
 
 ### High Priority
-- `h-implement-ipv6-application-support/` - Add comprehensive IPv6 support across network services, firewall, UI, and configuration scripts
+- `h-implement-dhcpv6-client-support.md` - Add RFC-compliant DHCPv6 client with SLAAC fallback for enterprise production environments
 
 ### Medium Priority
 
@@ -19,4 +19,4 @@ description: Tasks related to network configuration, system utilities, firewall 
 
 ## Completed Tasks
 <!-- Move tasks here when completed, maintaining the format -->
-- `h-completed-task.md` - Brief description of what was accomplished
+- `h-implement-ipv6-application-support/` - Add comprehensive IPv6 support across network services, firewall, UI, and configuration scripts
