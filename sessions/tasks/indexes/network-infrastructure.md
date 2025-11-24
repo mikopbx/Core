@@ -9,6 +9,7 @@ description: Tasks related to network configuration, system utilities, firewall 
 ## Active Tasks
 
 ### High Priority
+- `h-implement-dhcpv6-client-support.md` - Add RFC-compliant DHCPv6 client with SLAAC fallback for enterprise production environments
 
 ### Medium Priority
 
