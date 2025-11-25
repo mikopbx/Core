@@ -129,27 +129,34 @@ class Udhcpc6 extends Network
             'domain' => trim((string)getenv('domain')),
         ];
 
-        SystemMessages::sysLogMsg(
-            __METHOD__,
-            "DHCPv6 lease obtained: {$env_vars['ipv6']}/{$env_vars['mask']} on {$env_vars['interface']}",
-            LOG_INFO
-        );
-
         // Validate DHCPv6 address
         if (empty($env_vars['ipv6']) || !IpAddressHelper::isIpv6($env_vars['ipv6'])) {
             SystemMessages::sysLogMsg(__METHOD__, "Invalid DHCPv6 address received", LOG_ERR);
             return;
         }
 
-        // Add DHCPv6 address to interface alongside SLAAC address
-        $ip = Util::which('ip');
-        $interface = escapeshellarg($env_vars['interface']);
-        $ipv6_addr = escapeshellarg($env_vars['ipv6']);
-        $prefix_len = escapeshellarg($env_vars['mask']);
+        // DHCPv6 typically assigns /128 (single host) addresses
+        // Use mask from server if provided, otherwise default to 128
+        $prefix_len = !empty($env_vars['mask']) ? (int)$env_vars['mask'] : 128;
+        if ($prefix_len < 1 || $prefix_len > 128) {
+            $prefix_len = 128;
+        }
 
-        // Add DHCPv6 address (won't duplicate if already exists)
-        $cmd = "$ip -6 addr add $ipv6_addr/$prefix_len dev $interface 2>/dev/null || true";
-        Processes::mwExec($cmd);
+        $actual_prefix = !empty($env_vars['mask']) ? $env_vars['mask'] : '128 (default)';
+        SystemMessages::sysLogMsg(
+            __METHOD__,
+            "DHCPv6 lease obtained: {$env_vars['ipv6']}/{$actual_prefix} on {$env_vars['interface']}",
+            LOG_INFO
+        );
+
+        // Add DHCPv6 address to interface alongside SLAAC address
+        // Use ifconfig (same approach as IPv4 DHCP in Udhcpc.php)
+        $ifconfig = Util::which('ifconfig');
+        $interface = $env_vars['interface'];
+        $ipv6_addr = $env_vars['ipv6'];
+
+        // Add DHCPv6 address using ifconfig (matches IPv4 implementation)
+        Processes::mwExec("$ifconfig $interface inet6 add $ipv6_addr/$prefix_len");
 
         // Parse DNS servers
         $named_dns = [];
