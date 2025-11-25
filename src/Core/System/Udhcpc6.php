@@ -156,7 +156,13 @@ class Udhcpc6 extends Network
         $ipv6_addr = $env_vars['ipv6'];
 
         // Add DHCPv6 address using ifconfig (matches IPv4 implementation)
-        Processes::mwExec("$ifconfig $interface inet6 add $ipv6_addr/$prefix_len");
+        $cmd = "$ifconfig $interface inet6 add $ipv6_addr/$prefix_len";
+        $result = Processes::mwExec($cmd, $output);
+        SystemMessages::sysLogMsg(
+            __METHOD__,
+            "Executing: $cmd (result: $result, output: " . implode(' ', $output) . ")",
+            LOG_DEBUG
+        );
 
         // Parse DNS servers
         $named_dns = [];
@@ -172,9 +178,10 @@ class Udhcpc6 extends Network
         }
 
         // Save DHCPv6 configuration to database
+        // Note: BusyBox udhcpc6 doesn't provide 'mask' variable, use computed $prefix_len
         $data = [
             'ipv6addr' => $env_vars['ipv6'],
-            'ipv6_subnet' => $env_vars['mask'],
+            'ipv6_subnet' => (string)$prefix_len,
             'ipv6_gateway' => '',  // DHCPv6 typically doesn't provide gateway (use RA default route)
         ];
         $this->updateIfSettings($data, $env_vars['interface']);
