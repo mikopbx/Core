@@ -695,6 +695,9 @@ class Network extends Injectable
         $arr_commands = [];
         $ip = Util::which('ip');
         $sysctl = Util::which('sysctl');
+
+        // Remove any shell escaping from interface name (may come pre-escaped from lanConfigure)
+        $ifName = trim($ifName, "'\"");
         $escapedIfName = escapeshellarg($ifName);
 
         switch ($ipv6Mode) {
