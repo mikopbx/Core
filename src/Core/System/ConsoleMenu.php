@@ -243,36 +243,58 @@ class ConsoleMenu
     // ==================== WIZARD HELPER METHODS ====================
 
     /**
-     * Ask user to choose from numeric range
-     * @param CliMenu $menu
-     * @param string $prompt
-     * @param int $min
-     * @param int $max
-     * @return int|null Returns choice or null if cancelled
+     * Show arrow-based choice menu for better UX
+     * Creates a temporary submenu with arrow navigation instead of text input popup
+     *
+     * @param CliMenu $parentMenu The parent menu context
+     * @param string $title Menu title
+     * @param array $options Array of options: ['label' => 'Display text', ...]
+     * @param string|null $currentValue Current value to show (optional)
+     * @return int|null Returns 1-based index of selected option, or null if cancelled
      */
-    private function askChoice(CliMenu $menu, string $prompt, int $min, int $max): ?int
+    private function showArrowChoiceMenu(CliMenu $parentMenu, string $title, array $options, ?string $currentValue = null): ?int
     {
-        $style = (new MenuStyle())->setBg('white')->setFg('black');
-        $input = new class (new InputIO($menu, $menu->getTerminal()), $style, $min, $max) extends Text {
-            private int $min;
-            private int $max;
-            public function __construct(InputIO $inputIO, $style, int $min, int $max)
-            {
-                parent::__construct($inputIO, $style);
-                $this->min = $min;
-                $this->max = $max;
-            }
-            public function validate(string $input): bool
-            {
-                return is_numeric($input) && ($input >= $this->min) && ($input <= $this->max);
-            }
-        };
+        $selectedIndex = null;
+        $optionKeys = array_keys($options);
 
-        $dialog = $input->setPromptText($prompt)
-            ->setValidationFailedText('Invalid choice')
-            ->ask();
-        $result = $dialog->fetch();
-        return is_numeric($result) ? (int)$result : null;
+        // Build the menu title with current value if provided
+        $menuTitle = $title;
+        if ($currentValue !== null) {
+            $menuTitle .= "\n  Current: $currentValue";
+        }
+
+        $builder = (new CliMenuBuilder())
+            ->setTitle($menuTitle)
+            ->setWidth(70)
+            ->setBackgroundColour('black')
+            ->setForegroundColour('white')
+            ->modifySelectableStyle(function (SelectableStyle $style) {
+                $style->setSelectedMarker('> ')
+                    ->setUnselectedMarker('  ');
+            })
+            ->disableDefaultItems();
+
+        // Add options with callbacks that save selection and close menu
+        foreach ($options as $key => $label) {
+            $index = array_search($key, $optionKeys) + 1; // 1-based index
+            $builder->addItem(
+                "[$index] $label",
+                function (CliMenu $menu) use ($index, &$selectedIndex) {
+                    $selectedIndex = $index;
+                    $menu->close();
+                }
+            );
+        }
+
+        try {
+            $menu = $builder->build();
+            $menu->open();
+        } catch (\Throwable $e) {
+            SystemMessages::sysLogMsg('ConsoleMenu', 'Arrow menu error: ' . $e->getMessage());
+            return null;
+        }
+
+        return $selectedIndex;
     }
 
     /**
@@ -481,19 +503,26 @@ class ConsoleMenu
             return $interfaceNames[0];
         }
 
-        // Multiple interfaces - ask user to choose
+        // Multiple interfaces - ask user to choose with arrow menu
         $di = Di::getDefault();
         $translation = $di->getShared(TranslationProvider::SERVICE_NAME);
 
-        echo "\n" . $translation->_('cm_SelectInterface') . "\n";
-        foreach ($interfaceNames as $index => $ifName) {
-            echo "  [" . ($index + 1) . "] $ifName\n";
+        // Build options array for arrow menu
+        $options = [];
+        foreach ($interfaceNames as $ifName) {
+            $options[$ifName] = $ifName;
         }
-        echo "  [" . (count($interfaceNames) + 1) . "] " . $translation->_('cm_Cancel') . "\n\n";
+        $options['cancel'] = $translation->_('cm_Cancel');
 
-        $choice = $this->askChoice($menu, "Choice: ", 1, count($interfaceNames) + 1);
+        $choice = $this->showArrowChoiceMenu(
+            $menu,
+            $translation->_('cm_SelectInterface'),
+            $options
+        );
+
+        // Last option is Cancel
         if ($choice === null || $choice === count($interfaceNames) + 1) {
-            return null; // cancelled
+            return null;
         }
 
         return $interfaceNames[$choice - 1];
@@ -519,15 +548,22 @@ class ConsoleMenu
         $currentMode = $interface && $interface->dhcp == '1' ? 'DHCP' :
                       ($interface && !empty($interface->ipaddr) ? 'Static' : 'Disabled');
 
-        echo "\n" . $translation->_('cm_IPv4ConfigMode') . "\n";
-        echo "  Current: $currentMode\n\n";
-        echo "  [1] " . $translation->_('cm_IPv4DHCP') . "\n";
-        echo "  [2] " . $translation->_('cm_IPv4Static') . "\n";
-        echo "  [3] " . $translation->_('cm_IPv4Disabled') . "\n";
-        echo "  [4] " . $translation->_('cm_KeepCurrent') . "\n";
-        echo "  [5] " . $translation->_('cm_GoBack') . "\n\n";
+        // Build options array for arrow menu
+        $options = [
+            'dhcp' => $translation->_('cm_IPv4DHCP'),
+            'static' => $translation->_('cm_IPv4Static'),
+            'disabled' => $translation->_('cm_IPv4Disabled'),
+            'keep' => $translation->_('cm_KeepCurrent'),
+            'back' => $translation->_('cm_GoBack'),
+        ];
 
-        $choice = $this->askChoice($menu, "Choice: ", 1, 5);
+        $choice = $this->showArrowChoiceMenu(
+            $menu,
+            $translation->_('cm_IPv4ConfigMode'),
+            $options,
+            $currentMode
+        );
+
         if ($choice === null || $choice === 5) {
             return null; // cancelled or go back
         }
@@ -601,15 +637,22 @@ class ConsoleMenu
         $currentMode = $interface && $interface->ipv6_mode == '1' ? 'Auto' :
                       ($interface && $interface->ipv6_mode == '2' ? 'Manual' : 'Disabled');
 
-        echo "\n" . $translation->_('cm_IPv6ConfigMode') . "\n";
-        echo "  Current: $currentMode\n\n";
-        echo "  [1] " . $translation->_('cm_IPv6Auto') . "\n";
-        echo "  [2] " . $translation->_('cm_IPv6Manual') . "\n";
-        echo "  [3] " . $translation->_('cm_IPv6Disabled') . "\n";
-        echo "  [4] " . $translation->_('cm_KeepCurrent') . "\n";
-        echo "  [5] " . $translation->_('cm_GoBack') . "\n\n";
+        // Build options array for arrow menu
+        $options = [
+            'auto' => $translation->_('cm_IPv6Auto'),
+            'manual' => $translation->_('cm_IPv6Manual'),
+            'disabled' => $translation->_('cm_IPv6Disabled'),
+            'keep' => $translation->_('cm_KeepCurrent'),
+            'back' => $translation->_('cm_GoBack'),
+        ];
 
-        $choice = $this->askChoice($menu, "Choice: ", 1, 5);
+        $choice = $this->showArrowChoiceMenu(
+            $menu,
+            $translation->_('cm_IPv6ConfigMode'),
+            $options,
+            $currentMode
+        );
+
         if ($choice === null || $choice === 5) {
             return null; // cancelled or go back
         }
@@ -729,14 +772,22 @@ class ConsoleMenu
         $di = Di::getDefault();
         $translation = $di->getShared(TranslationProvider::SERVICE_NAME);
 
-        echo "\n" . $translation->_('cm_ReviewConfiguration') . "\n";
+        // Show configuration summary first
+        echo "\n";
         $this->showConfigSummary($config);
 
-        echo "\n  [1] " . $translation->_('cm_ApplyConfiguration') . "\n";
-        echo "  [2] " . $translation->_('cm_EditConfiguration') . "\n";
-        echo "  [3] " . $translation->_('cm_Cancel') . "\n\n";
+        // Build options array for arrow menu
+        $options = [
+            'apply' => $translation->_('cm_ApplyConfiguration'),
+            'edit' => $translation->_('cm_EditConfiguration'),
+            'cancel' => $translation->_('cm_Cancel'),
+        ];
 
-        $choice = $this->askChoice($menu, "Choice: ", 1, 3);
+        $choice = $this->showArrowChoiceMenu(
+            $menu,
+            $translation->_('cm_ReviewConfiguration'),
+            $options
+        );
 
         if ($choice === null || $choice === 3) {
             return null; // cancelled
