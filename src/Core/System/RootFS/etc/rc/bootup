@@ -23,8 +23,9 @@ use MikoPBX\Core\System\{Processes, Util, SystemLoader, System};
 
 require_once('Globals.php');
 
-// Record system boot start time
-$bootStartTime = microtime(true);
+// Record system boot start time using monotonic clock (hrtime)
+// This avoids issues with NTP time synchronization during boot
+$bootStartTime = hrtime(true);
 file_put_contents('/tmp/system_boot_start_time', $bootStartTime);
 
 // Sleep if /tmp/ejectcd file exists
