@@ -749,8 +749,8 @@ class Network extends Injectable
                 if (!empty($pid) && file_exists($pid_file)) {
                     $kill = Util::which('kill');
                     $cat = Util::which('cat');
-                    $escapedPidFile = escapeshellarg($pid_file);
-                    system("$kill `$cat $escapedPidFile` $pid");
+                    // Use $() instead of backticks to avoid quoting issues
+                    system("$kill \$($cat $pid_file) $pid");
                 }
 
                 // Escape shell arguments for udhcpc6 commands
@@ -762,8 +762,10 @@ class Network extends Injectable
                 $arr_commands[] = "$udhcpc6 $options -i $ifName -s $escapedWorkerPath";
 
                 // Start persistent udhcpc6 in background (long-running daemon)
-                $options = '-t 6 -T 5 -S -b -n';  // 6 attempts, 5 sec, syslog, background, exit if no lease
-                $arr_commands[] = "$nohup $udhcpc6 $options -p $escapedPidFile -i $ifName -s $escapedWorkerPath 2>&1 &";
+                // Use mwExecBg to properly handle background execution instead of shell &
+                $bgOptions = '-t 6 -T 5 -S -b';  // 6 attempts, 5 sec, syslog, background
+                $bgCommand = "$udhcpc6 $bgOptions -p $escapedPidFile -i $ifName -s $escapedWorkerPath";
+                Processes::mwExecBg($bgCommand);
 
                 // FALLBACK BEHAVIOR:
                 // - If DHCPv6 server responds: udhcpc6 callback updates database with DHCPv6 address
@@ -1029,8 +1031,9 @@ class Network extends Injectable
             $ipv6Gateway = $if_data['ipv6_gateway'] ?? '';
 
             // Get IPv6 configuration commands
+            // Pass unescaped interface name - configureIpv6Interface handles escaping internally
             $ipv6Commands = $this->configureIpv6Interface(
-                $if_name,
+                $if_data['interface'],
                 $ipv6Mode,
                 $ipv6Addr,
                 $ipv6Subnet,
