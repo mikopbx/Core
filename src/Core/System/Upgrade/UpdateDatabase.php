@@ -304,7 +304,7 @@ class UpdateDatabase extends Injectable
         $connectionService->begin();
         if (! $connectionService->tableExists($tableName)) {
             
-            $msg = '   |- UpdateDatabase: Create new table: ' . $tableName;
+            $msg = '   |- Create table: ' . $tableName;
             $msg = $this->publishMessage($msg);
             $result = $connectionService->createTable($tableName, '', $columnsNew);
             $this->publishResult($msg);
@@ -314,7 +314,7 @@ class UpdateDatabase extends Injectable
 
             if ($this->isTableStructureNotEqual($currentColumnsArr, $columns)) {
                
-                $msg = '   |- UpdateDatabase: Upgrade table: ' . $tableName;
+                $msg = '   |- Upgrade table: ' . $tableName;
                 $msg = $this->publishMessage($msg);
                 // Create new table and copy all data
                 $currentStateColumnList = [];
@@ -451,10 +451,16 @@ DROP TABLE  $tableName";
                 stripos($indexName, 'sqlite_autoindex') === false
                 && ! array_key_exists($indexName, $indexes)
             ) {
-                $msg = " - UpdateDatabase: Delete index: $indexName ";
+                $msg = '   |- Delete index: ' . $indexName;
                 $msg = $this->publishMessage($msg);
-                $result += $connectionService->dropIndex($tableName, '', $indexName);
-                $this->publishResult($msg);
+                try {
+                    $result += $connectionService->dropIndex($tableName, '', $indexName);
+                    $this->publishResult($msg);
+                } catch (Throwable $e) {
+                    $this->publishResult($msg, SystemMessages::RESULT_FAILED);
+                    SystemMessages::sysLogMsg(__METHOD__, "Failed to delete index $indexName: " . $e->getMessage(), LOG_ERR);
+                    $result = false;
+                }
             }
         }
 
@@ -463,17 +469,30 @@ DROP TABLE  $tableName";
             if (array_key_exists($indexName, $currentIndexes)) {
                 $currentIndex = $currentIndexes[$indexName];
                 if ($describedIndex->getColumns() !== $currentIndex->getColumns()) {
-                    $msg = " - UpdateDatabase: Update index: $indexName ";
+                    $msg = '   |- Update index: ' . $indexName;
                     $msg = $this->publishMessage($msg);
-                    $result += $connectionService->dropIndex($tableName, '', $indexName);
-                    $result += $connectionService->addIndex($tableName, '', $describedIndex);
-                    $this->publishResult($msg);
+                    try {
+                        $result += $connectionService->dropIndex($tableName, '', $indexName);
+                        $result += $connectionService->addIndex($tableName, '', $describedIndex);
+                        $this->publishResult($msg);
+                    } catch (Throwable $e) {
+                        $this->publishResult($msg, SystemMessages::RESULT_FAILED);
+                        SystemMessages::sysLogMsg(__METHOD__, "Failed to update index $indexName: " . $e->getMessage(), LOG_ERR);
+                        $result = false;
+                    }
                 }
             } else {
-                $msg = " - UpdateDatabase: Add new index: $indexName ";
+                $msg = '   |- Add index: ' . $indexName;
                 $msg = $this->publishMessage($msg);
-                $result += $connectionService->addIndex($tableName, '', $describedIndex);
-                $this->publishResult($msg);
+                try {
+                    $addResult = $connectionService->addIndex($tableName, '', $describedIndex);
+                    $result += $addResult;
+                    $this->publishResult($msg);
+                } catch (Throwable $e) {
+                    $this->publishResult($msg, SystemMessages::RESULT_FAILED);
+                    SystemMessages::sysLogMsg(__METHOD__, "Failed to add index $indexName: " . $e->getMessage(), LOG_ERR);
+                    $result = false;
+                }
             }
         }
 

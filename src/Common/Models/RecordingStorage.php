@@ -33,20 +33,34 @@ use Phalcon\Mvc\Model\Relation;
  * - This model tracks where the file actually is (local vs S3)
  * - StorageAdapter uses this mapping to transparently access files
  *
- * @property string $recordingfile     Original recording path (PRIMARY KEY)
+ * @property int $id                   Auto-increment primary key
+ * @property string $recordingfile     Original recording path (UNIQUE)
  * @property string $storage_location  Current location: 'local' or 's3'
  * @property string|null $s3_key       S3 object key (when location='s3')
  * @property string|null $uploaded_at  Timestamp of S3 upload
  * @property int $file_size            File size in bytes
+ *
+ * @Indexes(
+ *     [name='recordingfile', columns=['recordingfile'], type='UNIQUE']
+ * )
  */
 class RecordingStorage extends ModelsBase
 {
     /**
-     * Original recording file path (PRIMARY KEY)
+     * Auto-increment primary key
+     * Standard ID field for consistency with other MikoPBX models
+     *
+     * @Primary
+     * @Identity
+     * @Column(type="integer", nullable=false)
+     */
+    public int $id;
+
+    /**
+     * Original recording file path (UNIQUE INDEX)
      * Same path as stored in CallDetailRecords.recordingfile
      * Example: /monitor/2024/11/01/10/out-201-102-20241101-100534.17.wav
      *
-     * @Primary
      * @Column(type="string", nullable=false)
      */
     public string $recordingfile;
