@@ -50,10 +50,8 @@ async def mikopbx_ip():
 @pytest_asyncio.fixture
 async def pjsua_manager(mikopbx_ip):
     """Create PJSUA manager for tests"""
-    manager = PJSUAManager(
-        server_ip=mikopbx_ip,
-        gophone_path=str(Path(__file__).parent / "bin/darwin-arm64/gophone")
-    )
+    manager = PJSUAManager(server_ip=mikopbx_ip)
+    await manager.initialize()
 
     yield manager
 
@@ -154,7 +152,7 @@ async def test_01_automatic_call_recording(api_client, pjsua_manager):
             server_ip=pjsua_manager.server_ip,
             media="log"
         )
-        caller = PJSUAEndpoint(config_201_dial, gophone_path=pjsua_manager.gophone_path)
+        caller = PJSUAEndpoint(config_201_dial)
 
         print(f"Extension 201 calling 202...")
         success = await caller.dial("202")
@@ -264,7 +262,7 @@ async def test_02_recording_file_validation(api_client, pjsua_manager):
             server_ip=pjsua_manager.server_ip,
             media="log"
         )
-        caller = PJSUAEndpoint(config_201, gophone_path=pjsua_manager.gophone_path)
+        caller = PJSUAEndpoint(config_201)
 
         success = await caller.dial("202")
         assert success, "Failed to establish call"
@@ -397,7 +395,7 @@ async def test_03_recording_during_blind_transfer(api_client, pjsua_manager):
             server_ip=pjsua_manager.server_ip,
             media="log"
         )
-        caller = PJSUAEndpoint(config_201, gophone_path=pjsua_manager.gophone_path)
+        caller = PJSUAEndpoint(config_201)
 
         success = await caller.dial("202")
         assert success, "Failed to establish call"

@@ -5,7 +5,7 @@ status: in-progress
 created: 2025-11-14
 ---
 
-# Advanced Call Flow Testing with GoPhone and CipBX
+# Advanced Call Flow Testing with PJSUA2
 
 ## Problem/Goal
 
@@ -17,23 +17,23 @@ Implement comprehensive end-to-end call flow testing for MikoPBX covering 6 crit
 5. Call recording verification
 6. Codec negotiation (alaw, ulaw, g729, g722, opus)
 
-These tests will validate real call scenarios using GoPhone (SIP softphone) and CipBX (provider simulator) infrastructure already in place.
+These tests will validate real call scenarios using PJSUA2 Python SWIG bindings (SIP softphone library) infrastructure.
 
 ## Success Criteria
 
 ### Helper Utilities Created
-- [ ] `helpers/__init__.py` - Python package initialization
-- [ ] `helpers/feature_codes_helper.py` - Parse feature codes from general-settings API
-- [ ] `helpers/audio_validator.py` - Validate audio files contain sound (not silence)
-- [ ] `helpers/asterisk_helper.py` - Asterisk CLI wrappers for channels, codecs, parking
+- [x] `helpers/__init__.py` - Python package initialization
+- [x] `helpers/feature_codes_helper.py` - Parse feature codes from general-settings API
+- [x] `helpers/audio_validator.py` - Validate audio files contain sound (not silence)
+- [x] `helpers/asterisk_helper.py` - Asterisk CLI wrappers for channels, codecs, parking
 
 ### Test Files Implemented
-- [ ] `test_66_ivr_navigation.py` - 3 tests for IVR DTMF navigation
-- [ ] `test_67_voicemail.py` - 3 tests for voicemail (files + email logging)
-- [ ] `test_68_call_parking.py` - 3 tests for parking/retrieval
-- [ ] `test_69_music_on_hold.py` - 3 tests for MOH validation
-- [ ] `test_70_call_recording.py` - 3 tests for recording verification
-- [ ] `test_71_codec_negotiation.py` - 5 tests for codec support (conditional on GoPhone support)
+- [x] `test_66_ivr_navigation.py` - 3 tests for IVR DTMF navigation
+- [x] `test_67_voicemail.py` - 3 tests for voicemail (files + email logging)
+- [x] `test_68_call_parking.py` - 3 tests for parking/retrieval
+- [x] `test_69_music_on_hold.py` - 3 tests for MOH validation
+- [x] `test_70_call_recording.py` - 3 tests for recording verification
+- [x] `test_71_codec_negotiation.py` - 5 tests for codec support (conditional on GoPhone support)
 
 ### Quality Requirements
 - [ ] All tests use fixtures from `tests/api/fixtures/employee.json` (extensions 201, 202, 203)
@@ -146,7 +146,7 @@ echo "[$(date)] voicemail-sender called with args: $@" >> /tmp/voicemail-sender.
 **Default Class:** `default`
 **Custom MOH Files:** `/storage/usbdisk1/mikopbx/media/moh/`
 
-### GoPhone DTMF Support
+### PJSUA2 DTMF Support
 
 **DTMF Parameters in `dial()` method:**
 ```python
@@ -155,6 +155,16 @@ await endpoint.dial(
     dtmf="2",           # DTMF digits to send
     dtmf_delay=3        # Delay before sending (seconds)
 )
+```
+
+**PJSUA2 Library Location:** `tests/pycalltests/bin/pjsua2/{platform}-{arch}/`
+- `darwin-arm64/` - macOS Apple Silicon
+- `linux-arm64/` - Linux ARM64
+- `linux-x86_64/` - Linux x86_64
+
+**Required Environment:**
+```bash
+DYLD_LIBRARY_PATH=tests/pycalltests/pjsua2_lib python3 -m pytest ...
 ```
 
 ## Implementation Plan
@@ -188,12 +198,27 @@ await endpoint.dial(
 
 ### Known Constraints
 
-- GoPhone codec support unknown - need to verify before implementing codec tests
-- If codec not supported by GoPhone, skip test gracefully with `@pytest.mark.skipif`
+- PJSUA2 codec support depends on library build - tests skip gracefully if codec unavailable
+- If codec not supported by PJSUA2, skip test gracefully with `@pytest.mark.skipif`
 - `/sbin/voicemail-sender` not mounted, edit directly in container for debugging
 - Recording enabled by default in test fixtures (`sip_enableRecording: true`)
+
+### Next Steps
+
+- [ ] Run validation tests to verify all 6 test files work correctly
+- [ ] Fix any issues discovered during test runs
+- [ ] Mark task as completed once all tests pass
 
 ## Work Log
 
 - [2025-11-14] Task created with detailed implementation plan
 - [2025-11-14] Implementation mode activated, starting helper utilities creation
+- [2025-12-02] All test files and helpers created
+- [2025-12-02] Migrated from GoPhone to PJSUA2 SWIG library (pjsua_helper.py rewritten)
+- [2025-12-02] Fixed test_70_call_recording.py - removed obsolete gophone_path references
+- [2025-12-02] Added manager.initialize() to all test files for PJSUA2 event handler:
+  - test_67_voicemail.py
+  - test_68_call_parking.py
+  - test_69_music_on_hold.py
+  - test_71_codec_negotiation.py
+- [2025-12-02] Tests ready for validation run

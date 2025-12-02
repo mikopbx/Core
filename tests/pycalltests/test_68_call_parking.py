@@ -52,9 +52,8 @@ async def mikopbx_ip():
 @pytest_asyncio.fixture
 async def pjsua_manager(mikopbx_ip):
     """Create PJSUA manager for tests"""
-    manager = PJSUAManager(
-        server_ip=mikopbx_ip,
-            )
+    manager = PJSUAManager(server_ip=mikopbx_ip)
+    await manager.initialize()
 
     yield manager
 
