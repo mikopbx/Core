@@ -1162,9 +1162,18 @@ class ConsoleMenu
             return '';
         };
 
+        // Determine architecture display name
+        if (System::isARM64()) {
+            $archDisplay = 'arm64';
+        } elseif (System::isAMD64()) {
+            $archDisplay = 'x64';
+        } else {
+            $archDisplay = php_uname('m');
+        }
+
         // Generate the banner text
         $result = "*** " . $translation->_('cm_ThisIs') . " \033[01;32mMikoPBX v.$version$versionSuffix\033[39m" . PHP_EOL .
-            "   built on $buildtime for Generic (x64)" . PHP_EOL .
+            "   built on $buildtime ($archDisplay)" . PHP_EOL .
             "   " . $copyright_info . PHP_EOL . PHP_EOL;
 
         // Display Web Interface URL if internet interface has IP
