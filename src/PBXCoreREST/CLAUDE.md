@@ -524,11 +524,18 @@ The Network API endpoints (`/pbxcore/api/v3/network`) support dual-stack IPv4 an
 ]
 ```
 
-#### Auto-Configuration Mode (SLAAC/DHCPv6)
+#### Auto-Configuration Mode (DHCPv6 with SLAAC Fallback)
 
-When `ipv6_mode='1'`, the system automatically configures IPv6 via:
-- **SLAAC** (Stateless Address Autoconfiguration)
-- **DHCPv6** (Dynamic Host Configuration Protocol for IPv6)
+When `ipv6_mode='1'`, the system automatically configures IPv6 using enterprise-grade autoconfiguration:
+- **Primary**: DHCPv6 stateful client (BusyBox udhcpc6) - obtains address from DHCPv6 server
+- **Fallback**: SLAAC (Stateless Address Autoconfiguration) - activates when DHCPv6 unavailable
+- **Dual addressing**: DHCPv6 and SLAAC addresses coexist on same interface
+- **Priority**: DHCPv6 address preferred over SLAAC per RFC 6724
+
+Implementation:
+- `src/Core/System/Udhcpc6.php` - Handles DHCPv6 events (bound/renew/deconfig)
+- Callback script: `/etc/rc/udhcpc6_configure`
+- IPv6 DNS servers obtained via DHCPv6 options
 
 The API returns current auto-configured values in read-only fields:
 - `currentIpv6addr` - Auto-configured IPv6 address

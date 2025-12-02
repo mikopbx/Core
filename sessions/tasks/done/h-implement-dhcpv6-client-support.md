@@ -1,7 +1,7 @@
 ---
 name: h-implement-dhcpv6-client-support
 branch: feature/dhcpv6-client-support
-status: pending
+status: completed
 created: 2025-11-24
 ---
 
@@ -23,19 +23,19 @@ Implement RFC-compliant IPv6 autoconfiguration using enterprise-grade approach (
 - Graceful degradation to link-local addressing
 
 ## Success Criteria
-- [ ] DHCPv6 client successfully obtains IPv6 address from MikroTik DHCPv6 server (M-flag scenario)
-- [ ] System appears in MikroTik DHCPv6 bindings table with proper DUID
-- [ ] SLAAC fallback works when DHCPv6 server is unavailable
-- [ ] DNS servers obtained via DHCPv6 options
-- [ ] Configuration persists across system reboots
-- [ ] Mode 1 (Auto) prioritizes DHCPv6 > SLAAC > Link-Local as per RFC 4861
-- [ ] No breaking changes to existing Mode 0 (Off) and Mode 2 (Manual) functionality
+- [x] DHCPv6 client successfully obtains IPv6 address from MikroTik DHCPv6 server (M-flag scenario)
+- [x] System appears in MikroTik DHCPv6 bindings table with proper DUID
+- [x] SLAAC fallback works when DHCPv6 server is unavailable
+- [x] DNS servers obtained via DHCPv6 options
+- [x] Configuration persists across system reboots
+- [x] Mode 1 (Auto) prioritizes DHCPv6 > SLAAC > Link-Local as per RFC 4861
+- [x] No breaking changes to existing Mode 0 (Off) and Mode 2 (Manual) functionality
 
 ## Context Manifest
 
-### Executive Summary: Current IPv6 "Auto" Implementation (SLAAC-Only)
+### Executive Summary: IPv6 "Auto" Implementation with DHCPv6 Client
 
-MikoPBX has **complete IPv6 support at the application layer** as of the recently completed IPv6 implementation task, but the "Auto" mode (Mode 1) currently uses **SLAAC-only autoconfiguration**. This is a simplified implementation that works for basic networks but lacks enterprise-grade DHCPv6 functionality needed for production environments where centralized address management, DNS options, and DUID-based reservations are required.
+MikoPBX has **complete IPv6 support** including enterprise-grade DHCPv6 functionality. The "Auto" mode (Mode 1) implements RFC-compliant DHCPv6 stateful client with automatic SLAAC fallback, providing centralized address management, DNS options, and DUID-based reservations while maintaining graceful degradation when DHCPv6 is unavailable.
 
 **Current State:**
 - ✅ IPv6 kernel support fully enabled (6 kernel options including policy routing, NAT66, optimistic DAD)
@@ -43,16 +43,13 @@ MikoPBX has **complete IPv6 support at the application layer** as of the recentl
 - ✅ Web interface supports IPv6 configuration (forms, validation, display)
 - ✅ Network services configured for IPv6 (nginx, asterisk, dnsmasq, fail2ban)
 - ✅ Mode 0 (Off) and Mode 2 (Manual/Static) work correctly
-- ⚠️ Mode 1 (Auto) only enables SLAAC - **no DHCPv6 client running**
+- ✅ Mode 1 (Auto) implements DHCPv6 client with SLAAC fallback
+- ✅ DHCPv6 stateful client for M-flag Router Advertisements (udhcpc6)
+- ✅ Automatic fallback to SLAAC when DHCPv6 server unavailable
+- ✅ DHCP callback infrastructure integrated (`udhcpc6_configure` pattern)
+- ✅ Priority mechanism: DHCPv6 > SLAAC > Link-Local
 
-**What's Missing:**
-- DHCPv6 client (stateful) for M-flag Router Advertisements
-- DHCPv6 client (stateless) for O-flag Router Advertisements (DNS-only)
-- Fallback mechanism when DHCPv6 server unavailable
-- Integration with existing DHCP callback infrastructure (`udhcpc_configure` pattern)
-- Priority mechanism: DHCPv6 > SLAAC > Link-Local
-
-### How IPv6 Auto Mode Currently Works (SLAAC-Only Flow)
+### How IPv6 Auto Mode Works (DHCPv6 + SLAAC Fallback)
 
 #### 1. Database Configuration Layer
 
@@ -787,6 +784,306 @@ inet6 fe80::94a3:2eff:fe1f:5ee5/64 scope link   # Link-local address
 - Both addresses valid and routable
 - No configuration required
 
+### Critical Docker Environment Handling
+
+**PROBLEM IDENTIFIED (2025-11-30):**
+Current `Udhcpc::configure()` implementation has a critical bug where it **completely skips** callback processing in Docker environments:
+
+```php
+// src/Core/System/Udhcpc.php (CURRENT - BROKEN)
+public function configure(string $action): void
+{
+    // Skip in Docker (IPv4 managed by container runtime)
+    if (System::isDocker()) {
+        SystemMessages::sysLogMsg(__METHOD__, "Skipped action $action (Docker environment)", LOG_DEBUG);
+        return; // ← EXITS WITHOUT UPDATING DATABASE!
+    }
+    // ...
+}
+```
+
+**CONSEQUENCES:**
+- Docker container gets IP from DHCP (e.g., `192.168.107.3`)
+- Callback is invoked but exits immediately
+- **Database is NOT updated** (remains with old IP like `192.168.107.2`)
+- Welcome message shows **wrong IP address** from stale database
+- **Same issue will affect DHCPv6** if we copy this pattern!
+
+**ROOT CAUSE:**
+The logic conflates two separate concerns:
+1. **Network command execution** (should be skipped in Docker - network managed by container runtime)
+2. **Database synchronization** (should ALWAYS happen - required for UI/display consistency)
+
+**CORRECT IMPLEMENTATION PATTERN:**
+
+Both `Udhcpc::configure()` (IPv4) and `Udhcpc6::configure()` (IPv6) MUST:
+1. **Accept callbacks in all environments** (Docker or bare metal)
+2. **Skip network commands in Docker** (managed by container runtime)
+3. **ALWAYS update database** (critical for UI consistency)
+
+**Fixed Implementation for IPv4 (Udhcpc.php):**
+```php
+public function configure(string $action): void
+{
+    $isDocker = System::isDocker();
+
+    if ($isDocker) {
+        SystemMessages::sysLogMsg(
+            __METHOD__,
+            "Docker environment - skipping network commands, updating database only",
+            LOG_DEBUG
+        );
+    }
+
+    SystemMessages::sysLogMsg(__METHOD__, "Processing DHCP event: $action", LOG_INFO);
+
+    if ($action === 'deconfig') {
+        $this->deconfigAction($isDocker);
+    } elseif ($action === 'bound' || $action === 'renew') {
+        $this->renewBoundAction($isDocker);
+    }
+}
+
+private function renewBoundAction(bool $isDocker = false): void
+{
+    // Read environment variables from udhcpc
+    $env_vars = [
+        'interface' => trim(getenv('interface')),
+        'ip' => trim(getenv('ip')),
+        'subnet' => trim(getenv('subnet')),
+        'router' => trim(getenv('router')),
+        'dns' => trim(getenv('dns')),
+        'domain' => trim(getenv('domain')),
+        'broadcast' => trim(getenv('broadcast')),
+        'staticroutes' => trim(getenv('staticroutes')),
+    ];
+
+    // Skip network configuration in Docker (managed by container runtime)
+    if (!$isDocker) {
+        // Configure interface
+        $ifconfig = Util::which('ifconfig');
+        $interface = escapeshellarg($env_vars['interface']);
+        $ip = escapeshellarg($env_vars['ip']);
+        $broadcast = escapeshellarg($env_vars['broadcast']);
+        $netmask = escapeshellarg($env_vars['subnet']);
+
+        $arr_commands[] = "$ifconfig $interface $ip broadcast $broadcast netmask $netmask";
+
+        // Remove old default routes
+        $route = Util::which('route');
+        while (true) {
+            $out = [];
+            Processes::mwExec("$route del default gw 0.0.0.0 dev $interface 2>&1", $out);
+            if (count($out) > 0) break;
+        }
+
+        // Add new default route (if internet interface)
+        $if_data = LanInterfaces::findFirst("interface = '{$env_vars['interface']}'");
+        $is_inet = ($if_data !== null) ? (int)$if_data->internet : 0;
+
+        if (!empty($env_vars['router']) && $is_inet === 1) {
+            $arr_commands[] = "$route add default gw {$env_vars['router']} dev $interface";
+        }
+
+        // Add DHCP-provided static routes
+        $this->addStaticRoutes($env_vars['staticroutes'], $env_vars['interface']);
+
+        // Add custom static routes from database
+        $this->addCustomStaticRoutes($env_vars['interface']);
+
+        // Execute network commands
+        Processes::mwExecCommands($arr_commands, $out, 'net');
+
+        // Set MTU
+        Processes::mwExec("/etc/rc/networking_set_mtu '{$env_vars['interface']}'");
+    }
+
+    // ALWAYS update database (even in Docker!)
+    $data = [
+        'ipaddr' => $env_vars['ip'],
+        'subnet' => $this->netMaskToCidr($env_vars['subnet']),
+        'gateway' => $env_vars['router'],
+    ];
+    $this->updateIfSettings($data, $env_vars['interface']);
+
+    // Parse and save DNS servers
+    $named_dns = [];
+    if (!empty($env_vars['dns'])) {
+        $named_dns = explode(' ', $env_vars['dns']);
+    }
+
+    $data = [
+        'primarydns' => $named_dns[0] ?? '',
+        'secondarydns' => $named_dns[1] ?? '',
+    ];
+    $this->updateDnsSettings($data, $env_vars['interface']);
+
+    // Restart DNS (skip in Docker as DNS is managed differently)
+    if (!$isDocker && $is_inet === 1) {
+        $dnsConf = new DnsConf();
+        $dnsConf->reStart();
+    }
+}
+
+private function deconfigAction(bool $isDocker = false): void
+{
+    $interface = trim(getenv('interface'));
+
+    // Skip network commands in Docker
+    if (!$isDocker) {
+        $ifconfig = Util::which('ifconfig');
+        $if_name = escapeshellarg($interface);
+        Processes::mwExec("$ifconfig $if_name 0.0.0.0");
+    }
+
+    // ALWAYS clear database
+    $data = [
+        'ipaddr' => '',
+        'subnet' => '',
+        'gateway' => '',
+    ];
+    $this->updateIfSettings($data, $interface);
+
+    $data = [
+        'primarydns' => '',
+        'secondarydns' => '',
+    ];
+    $this->updateDnsSettings($data, $interface);
+}
+```
+
+**Fixed Implementation for IPv6 (Udhcpc6.php):**
+```php
+public function configure(string $action): void
+{
+    $isDocker = System::isDocker();
+
+    if ($isDocker) {
+        SystemMessages::sysLogMsg(
+            __METHOD__,
+            "Docker environment - skipping IPv6 network commands, updating database only",
+            LOG_DEBUG
+        );
+    }
+
+    SystemMessages::sysLogMsg(__METHOD__, "Processing DHCPv6 event: $action", LOG_INFO);
+
+    if ($action === 'deconfig') {
+        $this->deconfigAction($isDocker);
+    } elseif ($action === 'bound' || $action === 'renew') {
+        $this->renewBoundAction($isDocker);
+    }
+}
+
+private function renewBoundAction(bool $isDocker = false): void
+{
+    // Read environment variables from udhcpc6
+    $env_vars = [
+        'interface' => trim(getenv('interface')),
+        'ipv6' => trim(getenv('ipv6')),
+        'mask' => trim(getenv('mask')),
+        'dns' => trim(getenv('dns')),
+        'domain' => trim(getenv('domain')),
+    ];
+
+    SystemMessages::sysLogMsg(
+        __METHOD__,
+        "DHCPv6 lease obtained: {$env_vars['ipv6']}/{$env_vars['mask']} on {$env_vars['interface']}",
+        LOG_INFO
+    );
+
+    // Validate DHCPv6 address
+    if (empty($env_vars['ipv6']) || !IpAddressHelper::isIpv6($env_vars['ipv6'])) {
+        SystemMessages::sysLogMsg(__METHOD__, "Invalid DHCPv6 address received", LOG_ERR);
+        return;
+    }
+
+    // Skip network commands in Docker (IPv6 managed by container runtime)
+    if (!$isDocker) {
+        $ip = Util::which('ip');
+        $interface = escapeshellarg($env_vars['interface']);
+        $ipv6_addr = escapeshellarg($env_vars['ipv6']);
+        $prefix_len = escapeshellarg($env_vars['mask']);
+
+        // Add DHCPv6 address (won't duplicate if already exists)
+        $cmd = "$ip -6 addr add $ipv6_addr/$prefix_len dev $interface 2>/dev/null || true";
+        Processes::mwExec($cmd);
+    }
+
+    // Parse DNS servers
+    $named_dns = [];
+    if (!empty($env_vars['dns'])) {
+        $named_dns = explode(' ', $env_vars['dns']);
+        $named_dns = array_filter($named_dns, fn($dns) => IpAddressHelper::isIpv6(trim($dns)));
+    }
+
+    // ALWAYS save to database (even in Docker!)
+    $data = [
+        'ipv6addr' => $env_vars['ipv6'],
+        'ipv6_subnet' => $env_vars['mask'],
+        'ipv6_gateway' => '', // DHCPv6 typically doesn't provide gateway
+    ];
+    $this->updateIfSettings($data, $env_vars['interface']);
+
+    $data = [
+        'primarydns6' => $named_dns[0] ?? '',
+        'secondarydns6' => $named_dns[1] ?? '',
+    ];
+    $this->updateDnsSettings($data, $env_vars['interface']);
+
+    // Check if internet interface
+    $if_data = LanInterfaces::findFirst("interface = '{$env_vars['interface']}'");
+    $is_inet = ($if_data !== null) ? (int)$if_data->internet : 0;
+
+    // Restart DNS (skip in Docker)
+    if (!$isDocker && $is_inet === 1) {
+        $dnsConf = new DnsConf();
+        $dnsConf->reStart();
+    }
+}
+
+private function deconfigAction(bool $isDocker = false): void
+{
+    $interface = trim(getenv('interface'));
+
+    SystemMessages::sysLogMsg(
+        __METHOD__,
+        "DHCPv6 lease lost on $interface - SLAAC fallback active",
+        LOG_WARNING
+    );
+
+    // Note: We do NOT remove IPv6 addresses in Docker or bare metal
+    // SLAAC addresses should remain for fallback connectivity
+    // Only clear database DHCPv6-specific values
+
+    // ALWAYS update database
+    $data = [
+        'ipv6addr' => '',
+        'ipv6_subnet' => '',
+        'ipv6_gateway' => '',
+    ];
+    $this->updateIfSettings($data, $interface);
+
+    $data = [
+        'primarydns6' => '',
+        'secondarydns6' => '',
+    ];
+    $this->updateDnsSettings($data, $interface);
+}
+```
+
+**WHY THIS MATTERS:**
+1. **Docker Development:** MikoPBX developers use Docker containers extensively for testing
+2. **Welcome Message:** Shows IP addresses from database - must be accurate
+3. **Web UI Display:** Network settings page reads from database
+4. **REST API:** `/api/v3/network/interfaces` returns database values
+5. **Consistency:** Database must reflect actual system state
+
+**IMPLEMENTATION PRIORITY:**
+- **CRITICAL** - Must fix `Udhcpc::configure()` for IPv4 (existing bug)
+- **CRITICAL** - Must implement `Udhcpc6::configure()` correctly from start (avoid same bug)
+- Both fixes should be implemented **before** testing DHCPv6 functionality
+
 ### Technical Reference Details
 
 #### BusyBox udhcpc6 Command Options
@@ -1070,5 +1367,43 @@ docker exec mikopbx_ipv6-support sqlite3 /cf/conf/mikopbx.db "SELECT interface, 
 <!-- Any specific notes or requirements from the developer -->
 
 ## Work Log
-<!-- Updated as work progresses -->
-- [YYYY-MM-DD] Started task, initial research
+
+### 2025-11-30
+
+#### Completed
+- Implemented DHCPv6 client support using BusyBox udhcpc6 for IPv6 Auto mode (Mode 1)
+- Created `Udhcpc6.php` class to handle DHCPv6 events (bound/renew/deconfig)
+- Created `/etc/rc/udhcpc6_configure` callback script
+- Modified `Network.php` to launch udhcpc6 daemon in foreground and background modes
+- Added IPv6 DNS server support to `DnsConf.php` (resolveConfGenerate method)
+- Implemented dual-stack addressing: DHCPv6 and SLAAC coexist on same interface
+- Fixed Docker database synchronization bug in both `Udhcpc.php` and `Udhcpc6.php`
+- Applied security improvements: parameterized SQL queries and shell argument escaping
+
+#### Decisions
+- DHCPv6 address assignment using ifconfig (matches IPv4 DHCP pattern from Udhcpc.php)
+- Database always updated in DHCP callbacks regardless of environment (Docker or bare metal)
+- Network commands skipped in Docker (managed by container runtime)
+- SLAAC fallback preserved when DHCPv6 unavailable (deconfig doesn't remove SLAAC addresses)
+- Defense-in-depth security: use escapeshellarg() and Phalcon parameterized queries
+
+#### Discovered
+- BusyBox udhcpc6 available in container but not previously utilized
+- Critical bug in original Udhcpc::configure() - exited early in Docker without updating database
+- Same bug pattern would have affected Udhcpc6 if not fixed during implementation
+
+#### Issues Fixed
+- Shell escaping issues in udhcpc6 commands (double escaping removed)
+- Interface name injection via escapeshellarg()
+- SQL injection risk via parameterized Phalcon queries
+- Docker environment database consistency (welcome message showed wrong IP)
+
+#### Key Commits
+- `2935e57b1` feat: implement DHCPv6 client support with SLAAC fallback
+- `e3a28e20d` fix: use ifconfig for DHCPv6 address assignment to match IPv4 implementation
+- `cf056feba` fix: escape shell arguments in udhcpc6 commands to prevent syntax errors
+- `8a4754eb6` fix: clean shell handling in DHCPv6 configuration
+- `7b3b9b7d9` fix: remove double shell escaping for interface name in DHCPv6 configuration
+- `362b696a8` fix: DHCPv6 client improvements for IPv6 Auto mode
+- `1c040a022` fix: always update database in DHCP callbacks regardless of environment
+- `c3db6782d` security: add shell escaping and parameterized queries to DHCP callbacks

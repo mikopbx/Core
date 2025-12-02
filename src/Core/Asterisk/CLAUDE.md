@@ -345,7 +345,9 @@ The SIP configuration generator detects dual-stack mode (IPv4 + IPv6 simultaneou
  *
  * Dual-stack is active when:
  * - IPv4 is configured (ipaddr is not empty)
- * - IPv6 is in Manual mode (ipv6_mode='2') with address configured
+ * - IPv6 is configured with an address:
+ *   - Manual mode (ipv6_mode='2') with static address configured, OR
+ *   - Auto mode (ipv6_mode='1') with DHCPv6-obtained address
  *
  * @param array $if_data Interface data from database
  * @return bool True if dual-stack mode is active
@@ -353,7 +355,12 @@ The SIP configuration generator detects dual-stack mode (IPv4 + IPv6 simultaneou
 private function isDualStackInterface(array $if_data): bool
 {
     $hasIPv4 = !empty($if_data['ipaddr']);
-    $hasIPv6 = ($if_data['ipv6_mode'] ?? '0') === '2' && !empty($if_data['ipv6addr']);
+    $ipv6Mode = $if_data['ipv6_mode'] ?? '0';
+
+    // IPv6 is configured if:
+    // - Manual mode ('2') with static address, OR
+    // - Auto mode ('1') with DHCPv6-obtained address (stored in ipv6addr)
+    $hasIPv6 = (($ipv6Mode === '2') || ($ipv6Mode === '1')) && !empty($if_data['ipv6addr']);
 
     return $hasIPv4 && $hasIPv6;
 }
