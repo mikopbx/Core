@@ -43,6 +43,7 @@ use MikoPBX\Core\System\Configs\SyslogConf;
 use MikoPBX\Core\System\Configs\VmToolsConf;
 use MikoPBX\Core\System\Upgrade\UpdateDatabase;
 use MikoPBX\Core\System\Upgrade\UpdateSystemConfig;
+use MikoPBX\Common\Models\PbxSettings;
 use Phalcon\Di\Injectable;
 
 /**
@@ -139,6 +140,47 @@ class SystemLoader extends Injectable
         SystemMessages::echoResultMsgWithTime($this->stageMessage, $result, $elapsedTime);
         $this->stageMessage = '';
         $this->stageStartTime = 0;
+    }
+
+    /**
+     * Detect and update the environment type (Docker, VM, Cloud, Bare Metal).
+     *
+     * Uses pbx-env-detect script as the single source of truth for environment detection.
+     * Updates VIRTUAL_HARDWARE_TYPE in database with the detected value.
+     *
+     * @return string The detected environment type
+     */
+    private function detectEnvironment(): string
+    {
+        $pbxEnvDetect = '/sbin/pbx-env-detect';
+        $envType = 'Bare Metal';
+
+        if (file_exists($pbxEnvDetect) && is_executable($pbxEnvDetect)) {
+            $envOutput = [];
+            Processes::mwExec("$pbxEnvDetect --type 2>/dev/null", $envOutput);
+            $detectedType = strtolower(trim(implode('', $envOutput)));
+
+            // Map detected type to display name
+            $envType = match ($detectedType) {
+                'docker' => 'Docker',
+                'vmware' => 'VMware',
+                'vbox' => 'VirtualBox',
+                'kvm' => 'KVM',
+                'qemu' => 'QEMU',
+                'xen' => 'Xen',
+                'baremetal' => 'Bare Metal',
+                'virtual' => 'Virtual Machine',
+                default => ucfirst($detectedType) ?: 'Bare Metal',
+            };
+        }
+
+        // Update the setting in database
+        $currentValue = PbxSettings::getValueByKey(PbxSettings::VIRTUAL_HARDWARE_TYPE);
+        if ($currentValue !== $envType) {
+            PbxSettings::setValueByKey(PbxSettings::VIRTUAL_HARDWARE_TYPE, $envType);
+        }
+
+        return $envType;
     }
 
     /**
@@ -308,6 +350,16 @@ class SystemLoader extends Injectable
         $this->echoStartMsg(' - Configuring SSH console...');
         $sshConf = new SSHConf();
         $this->echoResultMsg($sshConf->start() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
+
+        // Detect and update environment type (Docker, VM, Cloud, Bare Metal)
+        $this->echoStartMsg(' - Detecting environment...');
+        if (!$this->isRecoveryMode) {
+            $envType = $this->detectEnvironment();
+            $this->stageMessage = " - Detecting environment ($envType)";
+            $this->echoResultMsg(SystemMessages::RESULT_DONE);
+        } else {
+            $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
+        }
 
         // Start cloud provisioning
         $this->echoStartMsg(' - Attempting cloud provisioning...');

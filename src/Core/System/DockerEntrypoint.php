@@ -274,8 +274,6 @@ class DockerEntrypoint extends Injectable
             $this->settings[$key] = $value;
         }
 
-        // Add some extra information
-        putenv("VIRTUAL_HARDWARE_TYPE=Docker");
         $this->echoResultMsg();
     }
 
