@@ -156,7 +156,10 @@ class Udhcpc6 extends Network
         );
 
         // Get interface data for both Docker and non-Docker environments
-        $if_data = LanInterfaces::findFirst("interface = '{$env_vars['interface']}'");
+        $if_data = LanInterfaces::findFirst([
+            'conditions' => 'interface = :iface:',
+            'bind' => ['iface' => $env_vars['interface']]
+        ]);
         $is_inet = ($if_data !== null) ? (int)$if_data->internet : 0;
 
         // Skip network commands in Docker (IPv6 managed by container runtime)
@@ -164,11 +167,13 @@ class Udhcpc6 extends Network
             // Add DHCPv6 address to interface alongside SLAAC address
             // Use ifconfig (same approach as IPv4 DHCP in Udhcpc.php)
             $ifconfig = Util::which('ifconfig');
-            $interface = $env_vars['interface'];
-            $ipv6_addr = $env_vars['ipv6'];
+            // Escape shell arguments for security
+            $safeInterface = escapeshellarg($env_vars['interface']);
+            $safeIpv6Addr = escapeshellarg($env_vars['ipv6']);
+            $safePrefixLen = escapeshellarg((string)$prefix_len);
 
             // Add DHCPv6 address using ifconfig (matches IPv4 implementation)
-            $cmd = "$ifconfig $interface inet6 add $ipv6_addr/$prefix_len";
+            $cmd = "$ifconfig $safeInterface inet6 add $safeIpv6Addr/$safePrefixLen";
             $result = Processes::mwExec($cmd, $output);
             SystemMessages::sysLogMsg(
                 __METHOD__,

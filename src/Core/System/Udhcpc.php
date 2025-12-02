@@ -83,12 +83,13 @@ class Udhcpc extends Network
         if (!$isDocker) {
             // For MIKO LFS Edition.
             $ifconfig = Util::which('ifconfig');
+            $safeInterface = escapeshellarg($interface);
 
             // Bring the interface up.
-            Processes::mwExec("$ifconfig $interface up");
+            Processes::mwExec("$ifconfig $safeInterface up");
 
             // Set a default IP configuration for the interface.
-            Processes::mwExec("$ifconfig $interface 192.168.2.1 netmask 255.255.255.0");
+            Processes::mwExec("$ifconfig $safeInterface 192.168.2.1 netmask 255.255.255.0");
         }
 
         // ALWAYS clear database
@@ -140,7 +141,10 @@ class Udhcpc extends Network
         }
 
         /** @var LanInterfaces $if_data */
-        $if_data = LanInterfaces::findFirst("interface = '{$env_vars['interface']}'");
+        $if_data = LanInterfaces::findFirst([
+            'conditions' => 'interface = :iface:',
+            'bind' => ['iface' => $env_vars['interface']]
+        ]);
         $is_inet = ($if_data !== null) ? (string)$if_data->internet : '0';
 
         $named_dns = [];
@@ -216,26 +220,35 @@ class Udhcpc extends Network
         unset($value);
 
         // Get interface data for both Docker and non-Docker environments
-        $if_data = LanInterfaces::findFirst("interface = '{$env_vars['interface']}'");
+        $if_data = LanInterfaces::findFirst([
+            'conditions' => 'interface = :iface:',
+            'bind' => ['iface' => $env_vars['interface']]
+        ]);
         $is_inet = ($if_data !== null) ? (int)$if_data->internet : 0;
 
         // Skip network configuration in Docker (managed by container runtime)
         if (!$isDocker) {
+            // Escape shell arguments for security
+            $safeInterface = escapeshellarg($env_vars['interface']);
+            $safeIp = escapeshellarg($env_vars['ip']);
+            $safeBroadcast = !empty($env_vars['broadcast']) ? escapeshellarg($env_vars['broadcast']) : '';
+            $safeSubnet = !empty($env_vars['subnet']) ? escapeshellarg($env_vars['subnet']) : '';
+
             // Configure broadcast address if provided, otherwise leave it blank.
-            $BROADCAST = !empty($env_vars['broadcast']) ? "broadcast {$env_vars['broadcast']}" : "";
+            $BROADCAST = !empty($safeBroadcast) ? "broadcast $safeBroadcast" : "";
 
             // Handle subnet mask for /32 assignments and other cases.
-            $NET_MASK = (!empty($env_vars['subnet']) && $env_vars['subnet'] !== '255.255.255.255') ? "netmask {$env_vars['subnet']}" : "";
+            $NET_MASK = (!empty($env_vars['subnet']) && $env_vars['subnet'] !== '255.255.255.255') ? "netmask $safeSubnet" : "";
 
             // Configure the network interface with the provided IP, broadcast, and subnet mask.
             $ifconfig = Util::which('ifconfig');
-            Processes::mwExec("$ifconfig {$env_vars['interface']} {$env_vars['ip']} $BROADCAST $NET_MASK");
+            Processes::mwExec("$ifconfig $safeInterface $safeIp $BROADCAST $NET_MASK");
 
 
             // Remove any existing default gateway routes associated with this interface.
             while (true) {
                 $out = [];
-                Processes::mwExec("route del default gw 0.0.0.0 dev {$env_vars['interface']}", $out);
+                Processes::mwExec("route del default gw 0.0.0.0 dev $safeInterface", $out);
                 if (trim(implode('', $out)) !== '') {
                     // An error occurred, indicating that all routes have been cleared.
                     break;
@@ -250,7 +263,8 @@ class Udhcpc extends Network
                 // Only add the default route if this interface is for the internet.
                 $routers = explode(' ', $env_vars['router']);
                 foreach ($routers as $router) {
-                    Processes::mwExec("route add default gw $router dev {$env_vars['interface']}");
+                    $safeRouter = escapeshellarg($router);
+                    Processes::mwExec("route add default gw $safeRouter dev $safeInterface");
                 }
             }
 
