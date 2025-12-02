@@ -328,7 +328,10 @@ class Storage extends Injectable
         // Check if the storage disk is already mounted
         if (self::isStorageDiskMounted()) {
             SystemMessages::echoWithSyslog(PHP_EOL . " " . Util::translate('Storage disk is already mounted...') . " ");
-            sleep(2);
+            // Only pause for user to read the message in interactive (console) mode
+            if (!$automatic) {
+                sleep(2);
+            }
             return true;
         }
 

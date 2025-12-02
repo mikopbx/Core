@@ -473,6 +473,175 @@ Study these as perfect examples:
 - **Providers** - Polymorphic schema (SIP/IAX), password masking
 - **Firewall** - Security validation, nested rules, inheritance, **dual-stack IPv4/IPv6 support**
 - **Employees** - Multi-entity save (Users + Extensions + Sip)
+- **Network** - Dual-stack IPv4/IPv6 configuration, dynamic field handling
+
+## IPv4 and IPv6 Support
+
+### Network Configuration Endpoints
+
+The Network API endpoints (`/pbxcore/api/v3/network`) support dual-stack IPv4 and IPv6 configuration:
+
+#### IPv6 Fields in Network Interface Configuration
+
+```php
+// IPv6 configuration mode
+'ipv6_mode' => [
+    'type' => 'string',
+    'enum' => ['0', '1', '2'],
+    'default' => '0',
+    'description' => '0=Off, 1=Auto (SLAAC/DHCPv6), 2=Manual (static)'
+]
+
+// Static IPv6 address (used when ipv6_mode='2')
+'ipv6addr' => [
+    'type' => 'string',
+    'pattern' => '^[0-9a-fA-F:]+$',
+    'example' => '2001:db8::1'
+]
+
+// IPv6 prefix length (1-128, typically 64)
+'ipv6_subnet' => [
+    'type' => 'string',
+    'pattern' => '^[0-9]{1,3}$',
+    'example' => '64'
+]
+
+// IPv6 gateway
+'ipv6_gateway' => [
+    'type' => 'string',
+    'pattern' => '^[0-9a-fA-F:]+$',
+    'example' => '2001:db8::254'
+]
+
+// IPv6 DNS servers
+'primarydns6' => [
+    'type' => 'string',
+    'example' => '2001:4860:4860::8888'
+]
+'secondarydns6' => [
+    'type' => 'string',
+    'example' => '2001:4860:4860::8844'
+]
+```
+
+#### Auto-Configuration Mode (SLAAC/DHCPv6)
+
+When `ipv6_mode='1'`, the system automatically configures IPv6 via:
+- **SLAAC** (Stateless Address Autoconfiguration)
+- **DHCPv6** (Dynamic Host Configuration Protocol for IPv6)
+
+The API returns current auto-configured values in read-only fields:
+- `currentIpv6addr` - Auto-configured IPv6 address
+- `currentIpv6_subnet` - Auto-configured prefix length
+- `currentIpv6_gateway` - Auto-configured gateway
+- `currentPrimarydns6` - Auto-configured primary DNS
+- `currentSecondarydns6` - Auto-configured secondary DNS
+
+```json
+// Example response with IPv6 Auto mode
+{
+  "ipv6_mode": "1",
+  "ipv6addr": "",
+  "ipv6_subnet": "",
+  "ipv6_gateway": "",
+  "currentIpv6addr": "2001:db8::a123:4567:89ab:cdef",
+  "currentIpv6_subnet": "64",
+  "currentIpv6_gateway": "fe80::1"
+}
+```
+
+#### Manual Configuration Mode
+
+When `ipv6_mode='2'`, provide static IPv6 configuration:
+
+```json
+POST /pbxcore/api/v3/network/{id}
+{
+  "ipv6_mode": "2",
+  "ipv6addr": "2001:db8::1",
+  "ipv6_subnet": "64",
+  "ipv6_gateway": "2001:db8::254",
+  "primarydns6": "2001:4860:4860::8888",
+  "secondarydns6": "2001:4860:4860::8844"
+}
+```
+
+#### Dual-Stack Configuration
+
+IPv4 and IPv6 work simultaneously. A complete dual-stack configuration:
+
+```json
+{
+  "interface": "eth0",
+  "dhcp": "0",
+  "ipaddr": "192.168.1.10",
+  "subnet": "255.255.255.0",
+  "gateway": "192.168.1.1",
+  "primarydns": "8.8.8.8",
+  "ipv6_mode": "2",
+  "ipv6addr": "2001:db8::10",
+  "ipv6_subnet": "64",
+  "ipv6_gateway": "2001:db8::1",
+  "primarydns6": "2001:4860:4860::8888"
+}
+```
+
+### IP Address Validation
+
+Use `IpAddressHelper` utility for dual-stack IP validation:
+
+```php
+use MikoPBX\Core\Utilities\IpAddressHelper;
+
+// In SaveConfigAction
+if (!empty($data['ipv6addr'])) {
+    if (!IpAddressHelper::isIpv6($data['ipv6addr'])) {
+        $res->messages['error'][] = 'Invalid IPv6 address';
+        return $res;
+    }
+}
+
+// Validate CIDR notation
+$cidr = IpAddressHelper::normalizeCidr($data['network']);
+if ($cidr === false) {
+    $res->messages['error'][] = 'Invalid CIDR notation';
+    return $res;
+}
+
+// Check IP version consistency
+$ipVersion = IpAddressHelper::getIpVersion($data['gateway']);
+$networkVersion = IpAddressHelper::getIpVersion($data['network']);
+if ($ipVersion !== $networkVersion) {
+    $res->messages['error'][] = 'Gateway and network IP versions must match';
+    return $res;
+}
+```
+
+### Static Routes with IPv6
+
+Network static routes support both IPv4 and IPv6:
+
+```json
+// IPv4 route
+POST /pbxcore/api/v3/network/routes
+{
+  "network": "10.0.0.0",
+  "subnet": "24",
+  "gateway": "192.168.1.1"
+}
+
+// IPv6 route
+POST /pbxcore/api/v3/network/routes
+{
+  "network": "2001:db8:1::",
+  "subnet": "64",
+  "gateway": "2001:db8::1"
+}
+```
+
+The subnet field accepts:
+- **IPv4**: 0-32 (CIDR notation)
+- **IPv6**: 1-128 (prefix length)
 
 ### Firewall: IPv4/IPv6 Dual-Stack Support
 

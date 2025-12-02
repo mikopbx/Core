@@ -190,6 +190,85 @@ const CATEGORY_AMI = 'AMI';     // 5038
 **Table**: `m_Fail2BanRules`
 - `maxretry` (5), `bantime` (86400s), `findtime` (1800s), `whitelist`
 
+## Network Models
+
+### LanInterfaces
+**Table**: `m_LanInterfaces` - Network interface configuration with dual-stack IPv4/IPv6 support
+
+```php
+// Topology constants
+const TOPOLOGY_PUBLIC = 'public';
+const TOPOLOGY_PRIVATE = 'private';
+
+// IPv4 fields
+interface          // System interface name (eth0, eth1, etc.)
+vlanid            // VLAN ID (0 = no VLAN)
+ipaddr            // IPv4 address
+subnet            // IPv4 subnet mask
+gateway           // IPv4 gateway
+dhcp              // "1" = DHCP enabled, "0" = static
+internet          // "1" = internet connection present
+
+// IPv6 fields (NEW in IPv6 support)
+ipv6_mode         // "0" = Off, "1" = Auto (SLAAC/DHCPv6), "2" = Manual (static)
+ipv6addr          // IPv6 address (e.g., "2001:db8::1")
+ipv6_subnet       // IPv6 prefix length (1-128, typically 64)
+ipv6_gateway      // IPv6 gateway address
+primarydns6       // Primary IPv6 DNS server
+secondarydns6     // Secondary IPv6 DNS server
+
+// DNS (dual-stack)
+primarydns        // Primary IPv4 DNS server
+secondarydns      // Secondary IPv4 DNS server
+
+// Topology
+topology          // 'public' or 'private'
+extipaddr         // External IP address
+exthostname       // External hostname
+
+// Usage - IPv4 configuration
+$lan = LanInterfaces::findFirst();
+$lan->ipaddr = '192.168.1.1';
+$lan->subnet = '255.255.255.0';
+$lan->gateway = '192.168.1.254';
+$lan->dhcp = '0'; // Static IP
+
+// Usage - IPv6 configuration (Manual)
+$lan->ipv6_mode = '2'; // Manual/Static
+$lan->ipv6addr = '2001:db8::1';
+$lan->ipv6_subnet = '64';
+$lan->ipv6_gateway = '2001:db8::254';
+$lan->save();
+
+// Usage - IPv6 configuration (Auto)
+$lan->ipv6_mode = '1'; // SLAAC/DHCPv6
+$lan->save(); // Address auto-configured by network
+
+// Validation uses IpAddressHelper for dual-stack validation
+```
+
+### NetworkStaticRoutes
+**Table**: `m_NetworkStaticRoutes` - Static routing table with IPv4 and IPv6 support
+
+```php
+// Fields
+network           // Network address (IPv4 or IPv6)
+subnet            // Subnet mask for IPv4 (e.g., "24") or prefix for IPv6 (1-128)
+gateway           // Gateway address (must match network IP version)
+
+// IPv4 example
+$route = new NetworkStaticRoutes();
+$route->network = '10.0.0.0';
+$route->subnet = '24';
+$route->gateway = '192.168.1.1';
+
+// IPv6 example (NEW in IPv6 support)
+$route = new NetworkStaticRoutes();
+$route->network = '2001:db8:1::/64';
+$route->subnet = '64';
+$route->gateway = '2001:db8::1';
+```
+
 ## Settings & Data
 
 ### PbxSettings
@@ -259,6 +338,40 @@ $providers = Providers::find([
     'conditions' => 'type = :type:',
     'bind' => ['type' => 'SIP']
 ]);
+```
+
+### Working with IP Addresses (IPv4 and IPv6)
+```php
+use MikoPBX\Core\Utilities\IpAddressHelper;
+
+// Detect IP version
+$version = IpAddressHelper::getIpVersion('192.168.1.1');        // 4
+$version = IpAddressHelper::getIpVersion('2001:db8::1');        // 6
+$version = IpAddressHelper::getIpVersion('invalid');            // false
+
+// Check IP type
+if (IpAddressHelper::isIpv6($address)) {
+    // Handle IPv6
+}
+
+// Parse CIDR notation
+$cidr = IpAddressHelper::normalizeCidr('2001:db8::/64');
+// Returns: ['ip' => '2001:db8::', 'prefix' => 64, 'version' => 6]
+
+// Check if IP is in network
+$inNetwork = IpAddressHelper::isIpInCidr('2001:db8::100', '2001:db8::/64'); // true
+
+// Validate before saving
+$lan = new LanInterfaces();
+if (IpAddressHelper::isIpv6($ipAddress)) {
+    $lan->ipv6addr = $ipAddress;
+    $lan->ipv6_subnet = '64';
+    $lan->ipv6_mode = '2'; // Manual
+} else {
+    $lan->ipaddr = $ipAddress;
+    $lan->subnet = '255.255.255.0';
+}
+$lan->save();
 ```
 
 ### Model Events

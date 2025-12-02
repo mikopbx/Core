@@ -43,6 +43,7 @@ use MikoPBX\Core\System\Configs\SyslogConf;
 use MikoPBX\Core\System\Configs\VmToolsConf;
 use MikoPBX\Core\System\Upgrade\UpdateDatabase;
 use MikoPBX\Core\System\Upgrade\UpdateSystemConfig;
+use MikoPBX\Common\Models\PbxSettings;
 use Phalcon\Di\Injectable;
 
 /**
@@ -63,18 +64,18 @@ class SystemLoader extends Injectable
     private string $stageMessage = '';
 
     /**
-     * Time when the current stage started (microtime)
+     * Time when the current stage started (hrtime in nanoseconds for monotonic timing)
      *
-     * @var float
+     * @var int
      */
-    private float $stageStartTime = 0.0;
+    private int $stageStartTime = 0;
 
     /**
-     * Time when the system startup began (microtime)
+     * Time when the system startup began (hrtime in nanoseconds for monotonic timing)
      *
-     * @var float
+     * @var int
      */
-    private float $systemStartTime = 0.0;
+    private int $systemStartTime = 0;
 
     /**
      * Check if the system is running in Docker
@@ -99,13 +100,14 @@ class SystemLoader extends Injectable
     {
         $this->isDocker = System::isDocker();
         $this->isRecoveryMode = Util::isRecoveryMode();
-        
+
         // Read system boot start time from file, fallback to current time if not available
+        // Uses hrtime (monotonic clock) to avoid issues with NTP time synchronization
         $bootTimeFile = '/tmp/system_boot_start_time';
         if (file_exists($bootTimeFile)) {
-            $this->systemStartTime = (float)file_get_contents($bootTimeFile);
+            $this->systemStartTime = (int)file_get_contents($bootTimeFile);
         } else {
-            $this->systemStartTime = microtime(true);
+            $this->systemStartTime = hrtime(true);
         }
     }
 
@@ -119,7 +121,7 @@ class SystemLoader extends Injectable
     {
         SystemMessages::echoStartMsg($message);
         $this->stageMessage = $message;
-        $this->stageStartTime = microtime(true);
+        $this->stageStartTime = hrtime(true);
     }
 
     /**
@@ -130,13 +132,55 @@ class SystemLoader extends Injectable
     private function echoResultMsg(string $result = SystemMessages::RESULT_DONE): void
     {
         // Only calculate elapsed time if we have a valid start time
+        // Convert nanoseconds to seconds with 2 decimal places
         $elapsedTime = 0.0;
         if ($this->stageStartTime > 0) {
-            $elapsedTime = round(microtime(true) - $this->stageStartTime, 2);
+            $elapsedTime = round((hrtime(true) - $this->stageStartTime) / 1_000_000_000, 2);
         }
         SystemMessages::echoResultMsgWithTime($this->stageMessage, $result, $elapsedTime);
         $this->stageMessage = '';
-        $this->stageStartTime = 0.0;
+        $this->stageStartTime = 0;
+    }
+
+    /**
+     * Detect and update the environment type (Docker, VM, Cloud, Bare Metal).
+     *
+     * Uses pbx-env-detect script as the single source of truth for environment detection.
+     * Updates VIRTUAL_HARDWARE_TYPE in database with the detected value.
+     *
+     * @return string The detected environment type
+     */
+    private function detectEnvironment(): string
+    {
+        $pbxEnvDetect = '/sbin/pbx-env-detect';
+        $envType = 'Bare Metal';
+
+        if (file_exists($pbxEnvDetect) && is_executable($pbxEnvDetect)) {
+            $envOutput = [];
+            Processes::mwExec("$pbxEnvDetect --type 2>/dev/null", $envOutput);
+            $detectedType = strtolower(trim(implode('', $envOutput)));
+
+            // Map detected type to display name
+            $envType = match ($detectedType) {
+                'docker' => 'Docker',
+                'vmware' => 'VMware',
+                'vbox' => 'VirtualBox',
+                'kvm' => 'KVM',
+                'qemu' => 'QEMU',
+                'xen' => 'Xen',
+                'baremetal' => 'Bare Metal',
+                'virtual' => 'Virtual Machine',
+                default => ucfirst($detectedType) ?: 'Bare Metal',
+            };
+        }
+
+        // Update the setting in database
+        $currentValue = PbxSettings::getValueByKey(PbxSettings::VIRTUAL_HARDWARE_TYPE);
+        if ($currentValue !== $envType) {
+            PbxSettings::setValueByKey(PbxSettings::VIRTUAL_HARDWARE_TYPE, $envType);
+        }
+
+        return $envType;
     }
 
     /**
@@ -307,6 +351,16 @@ class SystemLoader extends Injectable
         $sshConf = new SSHConf();
         $this->echoResultMsg($sshConf->start() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
 
+        // Detect and update environment type (Docker, VM, Cloud, Bare Metal)
+        $this->echoStartMsg(' - Detecting environment...');
+        if (!$this->isRecoveryMode) {
+            $envType = $this->detectEnvironment();
+            $this->stageMessage = " - Detecting environment ($envType)";
+            $this->echoResultMsg(SystemMessages::RESULT_DONE);
+        } else {
+            $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
+        }
+
         // Start cloud provisioning
         $this->echoStartMsg(' - Attempting cloud provisioning...');
         if (!$this->isDocker && !$this->isRecoveryMode) {
@@ -442,8 +496,9 @@ class SystemLoader extends Injectable
 
         System::setBooting(false);
 
-        // Calculate total startup time
-        $totalTime = round(microtime(true) - $this->systemStartTime, 2);
+        // Calculate total startup time using monotonic clock
+        // Convert nanoseconds to seconds with 1 decimal place
+        $totalTime = round((hrtime(true) - $this->systemStartTime) / 1_000_000_000, 1);
         $message = PHP_EOL . " - System startup completed in {$totalTime}s" . PHP_EOL;
         SystemMessages::echoToTeletype($message, true);
         

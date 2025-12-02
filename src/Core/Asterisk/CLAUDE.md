@@ -333,6 +333,91 @@ Reference in dialplan:
 "same => n,AGI(/usr/www/mikopbx/MyModule/agi-bin/my-script.php)\n"
 ```
 
+## IPv6 Support in Asterisk Configuration
+
+### Dual-Stack Network Detection
+
+The SIP configuration generator detects dual-stack mode (IPv4 + IPv6 simultaneously):
+
+```php
+/**
+ * Check if interface is configured in dual-stack mode
+ *
+ * Dual-stack is active when:
+ * - IPv4 is configured (ipaddr is not empty)
+ * - IPv6 is in Manual mode (ipv6_mode='2') with address configured
+ *
+ * @param array $if_data Interface data from database
+ * @return bool True if dual-stack mode is active
+ */
+private function isDualStackInterface(array $if_data): bool
+{
+    $hasIPv4 = !empty($if_data['ipaddr']);
+    $hasIPv6 = ($if_data['ipv6_mode'] ?? '0') === '2' && !empty($if_data['ipv6addr']);
+
+    return $hasIPv4 && $hasIPv6;
+}
+```
+
+### SIP Transport Configuration
+
+SIP transports automatically include IPv6 when configured:
+
+```php
+// In SIPConf.php
+if ($this->isDualStackInterface($lan_config)) {
+    // Configure both IPv4 and IPv6 transports
+    $conf .= "transport=udp,tcp\n";
+    $conf .= "bind={$lan_config['ipaddr']}:5060\n";
+    $conf .= "bind=[{$lan_config['ipv6addr']}]:5060\n";
+}
+```
+
+Note the bracket notation `[::1]` for IPv6 addresses in configuration files.
+
+### Nginx IPv6 Listeners
+
+Nginx configuration automatically adds IPv6 listeners when IPv6 is enabled:
+
+```php
+/**
+ * Checks if any network interface has IPv6 enabled
+ *
+ * @return bool True if at least one interface has IPv6 mode '1' (Auto) or '2' (Manual)
+ */
+private function hasIpv6Interfaces(): bool
+{
+    $interfaces = LanInterfaces::find();
+    foreach ($interfaces as $interface) {
+        // IPv6 mode: '0' = Off, '1' = Auto (SLAAC/DHCPv6), '2' = Manual
+        if ($interface->ipv6_mode === '1' || $interface->ipv6_mode === '2') {
+            return true;
+        }
+    }
+    return false;
+}
+
+// In configuration generation
+if ($this->hasIpv6Interfaces()) {
+    $conf .= "    listen [::]:443 ssl http2;\n";
+    $conf .= "    listen [::]:80;\n";
+}
+```
+
+### Best Practices for IPv6 in Asterisk
+
+1. **Bracket Notation**: Always wrap IPv6 addresses in brackets when used with port numbers:
+   - Correct: `[2001:db8::1]:5060`
+   - Wrong: `2001:db8::1:5060` (ambiguous with port)
+
+2. **Dual-Stack Detection**: Check both IPv4 and IPv6 configuration before enabling features
+
+3. **Transport Selection**: Use appropriate transports for IPv6 (UDP, TCP, TLS all work)
+
+4. **Firewall Rules**: Generate both iptables (IPv4) and ip6tables (IPv6) rules
+
+5. **Localhost Detection**: Handle both `127.0.0.1` and `::1` for localhost
+
 ## Best Practices
 
 ### 1. Configuration Generation
@@ -341,6 +426,7 @@ Reference in dialplan:
 - Always use `hookModulesMethod()` for extensibility
 - Save configs with `saveConfig()` method
 - Add descriptive comments in generated files
+- Check for IPv6 when generating network-related configs
 
 ### 2. Dialplan Development
 
@@ -362,6 +448,7 @@ Reference in dialplan:
 - Use secure contexts for external calls
 - Implement proper authentication
 - Log security events
+- Configure firewall for both IPv4 and IPv6
 
 ### 5. Error Handling
 
