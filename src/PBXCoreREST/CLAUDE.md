@@ -202,7 +202,15 @@ Use the **`api-client`** skill to execute API requests with automatic authentica
 
 ### Public Endpoints
 
-**Public endpoints** allow access without authentication. MikoPBX uses a **hybrid approach** combining attribute-based detection (modern) with legacy hardcoded constants (backward compatibility).
+**Public endpoints** allow access without authentication. MikoPBX uses a **3-priority hybrid system** that checks endpoints in the following order:
+
+1. **Priority 1:** Attribute-based (Pattern 4) via `PublicEndpointsRegistry`
+2. **Priority 2:** Legacy hardcoded constants in `AuthenticationMiddleware::PUBLIC_ENDPOINTS`
+3. **Priority 3:** Module Pattern 2 with `noAuth: true` flag
+
+The `AuthenticationMiddleware` checks these priorities in order during request authentication. If an endpoint is found in any priority level, it's treated as public and authentication is skipped.
+
+**Testing:** Comprehensive functional tests in `tests/api/test_63_public_endpoints.py` verify all 3 priorities, priority order, optional authentication, and edge cases.
 
 #### Strategy 1: Attribute-Based Public Endpoints (Recommended - Pattern 4)
 
@@ -308,7 +316,17 @@ Custom methods (Google API Design):
 - Collection: `GET /resource:method`
 - Resource: `GET /resource/{id}:method`
 
-**Important:** When using array-based `idPattern` (e.g., `['SIP-', 'IAX-', 'SIP-TRUNK-']`), the router automatically generates patterns that exclude colons and slashes (`[^/:]+`) to ensure proper parsing of `/{id}:method` routes.
+**ID Pattern Generation:**
+
+The `RouterProvider::buildIdPattern()` method handles ID pattern generation for route matching:
+
+- **Array of prefixes** (e.g., `['SIP-', 'IAX-', 'SIP-TRUNK-']`): Escapes each prefix and appends `[^/:]+` to exclude colons and slashes for proper `/{id}:method` parsing
+- **Single regex pattern** (e.g., `[0-9]+`): Uses pattern as-is without modification
+- **Empty array**: Returns default pattern `[^/:]+`
+
+This ensures proper route matching when controllers define multiple ID prefixes via the `idPattern` parameter in `HttpMapping` attribute.
+
+**Implementation reference:** `/Users/nb/PhpstormProjects/mikopbx/project-modules-api-refactoring/src/PBXCoreREST/Providers/RouterProvider.php:605-612`
 
 ### Module Endpoints (Pattern 4)
 
