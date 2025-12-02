@@ -54,7 +54,6 @@ class ModulesControllerBase extends BaseController
         // Old style modules, we can remove it after 2025
         $payload =$this->request->getData();
         $payload['ip_srv'] = $_SERVER['SERVER_ADDR'];
-       
 
         $this->sendRequestToBackendWorker(PbxExtensionsProcessor::class, $actionName, $payload, $moduleName, $maxTimeout, $priority);
 
@@ -156,27 +155,87 @@ class ModulesControllerBase extends BaseController
     }
 
     /**
-     * Handles file pass-through responses.
+     * Handles file pass-through responses from modules.
      *
-     * @param array $data
+     * WHY: Modules can return files without streaming through PHP memory.
+     * This method streams files directly to client using fpassthru().
+     *
+     * BACKWARD COMPATIBLE FORMAT (since 2017):
+     * [
+     *     'filename' => '/path/to/file.txt',  // Required: server path
+     *     'fpassthru' => true,                 // Required: enable streaming
+     *     'need_delete' => true,               // Optional: delete after send
+     * ]
+     *
+     * EXTENDED FORMAT (since 2025):
+     * [
+     *     'filename' => '/tmp/backup.tar.gz',         // Required: server path
+     *     'fpassthru' => true,                        // Required: enable streaming
+     *     'download_name' => 'backup.tar.gz',         // Optional: client filename (fallback: basename)
+     *     'content_type' => 'application/x-gzip',     // Optional: MIME type (fallback: text/plain)
+     *     'need_delete' => true,                      // Optional: delete after send
+     *     'additional_headers' => [                   // Optional: custom headers
+     *         'X-Generated-By' => 'ModuleName',
+     *         'Cache-Control' => 'no-cache',
+     *     ],
+     * ]
+     *
+     * MODULES USING OLD FORMAT (still supported):
+     * - ModuleAutoprovision (since 2017)
+     * - All legacy modules (before 2025)
+     *
+     * MODULES USING NEW FORMAT:
+     * - ModuleExampleRestAPIv2 (reference implementation)
+     *
+     * @param array $data Response data from module
      * @return void
      */
     private function handleFilePassThrough(array $data): void
     {
+        // WHY: Extract server file path
         $filename = $data['filename'] ?? '';
+
+        // WHY: Open file for binary reading
         $fp = fopen($filename, "rb");
         if ($fp !== false) {
+            // WHY: Get file size for Content-Length header
             $size = filesize($filename);
-            $name = basename($filename);
+
+            // WHY BACKWARD COMPATIBLE: Use download_name if provided, fallback to basename()
+            // Old modules (ModuleAutoprovision) don't set download_name
+            // New modules (ModuleExampleRestAPIv2) can specify custom filename
+            $name = $data['download_name'] ?? basename($filename);
+
+            // WHY BACKWARD COMPATIBLE: Use content_type if provided, fallback to text/plain
+            // Old modules don't set content_type
+            // New modules can specify proper MIME type (application/x-gzip, application/zip, etc.)
+            $contentType = $data['content_type'] ?? 'text/plain';
+
+            // WHY: Set standard download headers
             $this->response->setHeader('Content-Description', "config file");
             $this->response->setHeader('Content-Disposition', "attachment; filename=$name");
-            $this->response->setHeader('Content-Type', "text/plain");
+            $this->response->setHeader('Content-Type', $contentType);
             $this->response->setHeader('Content-Transfer-Encoding', "binary");
             $this->response->setContentLength($size);
+
+            // WHY BACKWARD COMPATIBLE: Apply additional headers if provided
+            // Old modules don't use additional_headers
+            // New modules can add custom headers (X-Generated-By, Cache-Control, etc.)
+            if (!empty($data['additional_headers']) && is_array($data['additional_headers'])) {
+                foreach ($data['additional_headers'] as $headerName => $headerValue) {
+                    $this->response->setHeader($headerName, $headerValue);
+                }
+            }
+
+            // WHY: Send headers before streaming
             $this->response->sendHeaders();
+
+            // WHY: Stream file directly to output (memory efficient)
             fpassthru($fp);
             fclose($fp);
         }
+
+        // WHY: Clean up temporary files after sending
         if (!empty($data['need_delete'])) {
             unlink($filename);
         }

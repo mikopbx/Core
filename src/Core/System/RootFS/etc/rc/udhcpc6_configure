@@ -18,29 +18,27 @@
  * If not, see <https://www.gnu.org/licenses/>.
  */
 
-namespace MikoPBX\Core\RootFS\etc\rc;
-use MikoPBX\Core\System\{Processes, Util, SystemLoader, System};
+use MikoPBX\Core\System\Udhcpc6;
 
-require_once('Globals.php');
+require_once 'Globals.php';
 
-// Record system boot start time using monotonic clock (hrtime)
-// This avoids issues with NTP time synchronization during boot
-$bootStartTime = hrtime(true);
-file_put_contents('/tmp/system_boot_start_time', $bootStartTime);
+/**
+ * DHCPv6 client callback script for udhcpc6
+ *
+ * Called on DHCPv6 events: deconfig, bound, renew
+ *
+ * Receives environment variables from udhcpc6:
+ * - interface: eth0
+ * - ipv6: DHCPv6-assigned IPv6 address
+ * - mask: Prefix length (usually 128 for single address, or delegated prefix length)
+ * - dns: IPv6 DNS servers (space-separated)
+ * - domain: Domain name
+ */
 
-// Sleep if /tmp/ejectcd file exists
-if(file_exists('/tmp/ejectcd')){
-    sleep(15);
-}
+/**
+ * Get the action parameter from the command line arguments and convert it to lowercase.
+ */
+$action = strtolower(trim($argv[1]));
 
-// Create an instance of SystemLoader and start the system
-$mikoPBX = new SystemLoader();
-$result = $mikoPBX->startSystem();
-
-// Run /etc/rc/bootup_pbx in background if system start is successful
-if((true === $result)
-    && ! Util::isRecoveryMode()
-    && ! System::isDocker()
-) {
-    Processes::mwExecBg('/etc/rc/bootup_pbx');
-}
+$udhcpc6Client = new Udhcpc6();
+$udhcpc6Client->configure($action);

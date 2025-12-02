@@ -200,6 +200,101 @@ Use the **`api-client`** skill to execute API requests with automatic authentica
 - **Refresh Token:** 30 days, Redis storage, httpOnly cookie, auto-rotation
 - **API Keys:** No expiration, format: `miko_ak_1234567890abcdef...`
 
+### Public Endpoints
+
+**Public endpoints** allow access without authentication. MikoPBX uses a **3-priority hybrid system** that checks endpoints in the following order:
+
+1. **Priority 1:** Attribute-based (Pattern 4) via `PublicEndpointsRegistry`
+2. **Priority 2:** Legacy hardcoded constants in `AuthenticationMiddleware::PUBLIC_ENDPOINTS`
+3. **Priority 3:** Module Pattern 2 with `noAuth: true` flag
+
+The `AuthenticationMiddleware` checks these priorities in order during request authentication. If an endpoint is found in any priority level, it's treated as public and authentication is skipped.
+
+**Testing:** Comprehensive functional tests in `tests/api/test_63_public_endpoints.py` verify all 3 priorities, priority order, optional authentication, and edge cases.
+
+#### Strategy 1: Attribute-Based Public Endpoints (Recommended - Pattern 4)
+
+Mark entire resource as public using `SecurityType::PUBLIC`:
+
+```php
+#[ApiResource(path: '/pbxcore/api/v3/webhooks')]
+#[ResourceSecurity('webhooks', requirements: [SecurityType::PUBLIC])]
+#[HttpMapping(mapping: ['POST' => ['processWebhook']], ...)]
+class WebhooksController extends BaseRestController
+{
+    // All methods in this controller are public
+}
+```
+
+**How it works:**
+1. `RouterProvider` scans controller during route generation
+2. Detects `SecurityType::PUBLIC` in `ResourceSecurity` attribute
+3. Registers endpoint in `PublicEndpointsRegistry` service
+4. `AuthenticationMiddleware` checks registry before requiring authentication
+
+**Benefits:**
+- ✅ Single source of truth (controller attributes)
+- ✅ Works for Core and Module Pattern 4 endpoints
+- ✅ No code duplication
+- ✅ Automatic discovery
+
+#### Strategy 2: Module Pattern 2 Public Endpoints
+
+For legacy Pattern 2 modules, use 6th parameter `noAuth: true`:
+
+```php
+public function getPBXCoreRESTAdditionalRoutes(): array
+{
+    return [
+        // Private endpoint (requires authentication)
+        [GetController::class, 'callAction', '/pbxcore/api/module-name/{action}', 'get', '', false],
+
+        // Public endpoint (no authentication required)
+        [GetController::class, 'callAction', '/pbxcore/api/module-name-public/{action}', 'get', '', true],
+        //                                                                                           ^^^^
+        //                                                                                           noAuth flag
+    ];
+}
+```
+
+**How it works:**
+1. `Request::thisIsModuleNoAuthRequest()` checks 6th parameter
+2. Matches URI pattern against module routes
+3. Returns `true` if `noAuth === true`
+4. `AuthenticationMiddleware` allows request
+
+#### Strategy 3: Legacy Hardcoded Constants (Backward Compatibility)
+
+Core public endpoints still in `AuthenticationMiddleware::PUBLIC_ENDPOINTS`:
+
+```php
+private const PUBLIC_ENDPOINTS = [
+    '/pbxcore/api/v3/auth:login' => ['POST'],
+    '/pbxcore/api/v3/auth:refresh' => ['POST'],
+    '/pbxcore/api/v3/system:ping' => ['GET'],
+    // ... other core public endpoints
+];
+```
+
+**Migration path:** New endpoints should use Strategy 1 (attributes). This constant will be phased out once all core endpoints are migrated.
+
+#### Optional Authentication on Public Endpoints
+
+Public endpoints support **optional authentication** - they work with or without Bearer token:
+
+```php
+// Public endpoint without token
+GET /pbxcore/api/v3/system:ping
+→ 200 OK (anonymous)
+
+// Public endpoint with valid token
+GET /pbxcore/api/v3/system:ping
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGci...
+→ 200 OK (authenticated, user context available)
+```
+
+**Use case:** Health check endpoints that can provide extended info for authenticated users.
+
 ## Creating New Endpoints
 
 ### Core Endpoints
@@ -221,7 +316,17 @@ Custom methods (Google API Design):
 - Collection: `GET /resource:method`
 - Resource: `GET /resource/{id}:method`
 
-**Important:** When using array-based `idPattern` (e.g., `['SIP-', 'IAX-', 'SIP-TRUNK-']`), the router automatically generates patterns that exclude colons and slashes (`[^/:]+`) to ensure proper parsing of `/{id}:method` routes.
+**ID Pattern Generation:**
+
+The `RouterProvider::buildIdPattern()` method handles ID pattern generation for route matching:
+
+- **Array of prefixes** (e.g., `['SIP-', 'IAX-', 'SIP-TRUNK-']`): Escapes each prefix and appends `[^/:]+` to exclude colons and slashes for proper `/{id}:method` parsing
+- **Single regex pattern** (e.g., `[0-9]+`): Uses pattern as-is without modification
+- **Empty array**: Returns default pattern `[^/:]+`
+
+This ensures proper route matching when controllers define multiple ID prefixes via the `idPattern` parameter in `HttpMapping` attribute.
+
+**Implementation reference:** `/Users/nb/PhpstormProjects/mikopbx/project-modules-api-refactoring/src/PBXCoreREST/Providers/RouterProvider.php:605-612`
 
 ### Module Endpoints (Pattern 4)
 
@@ -254,6 +359,36 @@ When creating module endpoints, **ALWAYS** include module namespace in path:
 // ModuleCRM
 #[ApiResource(path: '/pbxcore/api/v3/modules/crm/contacts')]
 ```
+
+**Public Module Endpoints (Pattern 4):**
+
+Modules can create public endpoints using `SecurityType::PUBLIC`:
+
+```php
+namespace Modules\ModuleWebhooks\Lib\RestAPI\Webhooks;
+
+#[ApiResource(path: '/pbxcore/api/v3/modules/webhooks/receiver')]
+#[ResourceSecurity('webhooks-receiver', requirements: [SecurityType::PUBLIC])]
+#[HttpMapping(
+    mapping: ['POST' => ['processWebhook']],
+    collectionLevelMethods: ['processWebhook']
+)]
+class Controller extends BaseRestController
+{
+    protected string $processorClass = Processor::class;
+
+    // This endpoint will be publicly accessible without authentication
+    // Example: POST /pbxcore/api/v3/modules/webhooks/receiver
+}
+```
+
+**Why use public endpoints in modules:**
+- Webhook receivers (GitHub, GitLab, payment gateways)
+- Public API integrations
+- Health check endpoints
+- Status pages
+
+**Pattern 2 modules** should use the 6th parameter `noAuth: true` as shown in Strategy 2 above.
 
 ## HTTP Status Codes
 
@@ -338,6 +473,175 @@ Study these as perfect examples:
 - **Providers** - Polymorphic schema (SIP/IAX), password masking
 - **Firewall** - Security validation, nested rules, inheritance, **dual-stack IPv4/IPv6 support**
 - **Employees** - Multi-entity save (Users + Extensions + Sip)
+- **Network** - Dual-stack IPv4/IPv6 configuration, dynamic field handling
+
+## IPv4 and IPv6 Support
+
+### Network Configuration Endpoints
+
+The Network API endpoints (`/pbxcore/api/v3/network`) support dual-stack IPv4 and IPv6 configuration:
+
+#### IPv6 Fields in Network Interface Configuration
+
+```php
+// IPv6 configuration mode
+'ipv6_mode' => [
+    'type' => 'string',
+    'enum' => ['0', '1', '2'],
+    'default' => '0',
+    'description' => '0=Off, 1=Auto (SLAAC/DHCPv6), 2=Manual (static)'
+]
+
+// Static IPv6 address (used when ipv6_mode='2')
+'ipv6addr' => [
+    'type' => 'string',
+    'pattern' => '^[0-9a-fA-F:]+$',
+    'example' => '2001:db8::1'
+]
+
+// IPv6 prefix length (1-128, typically 64)
+'ipv6_subnet' => [
+    'type' => 'string',
+    'pattern' => '^[0-9]{1,3}$',
+    'example' => '64'
+]
+
+// IPv6 gateway
+'ipv6_gateway' => [
+    'type' => 'string',
+    'pattern' => '^[0-9a-fA-F:]+$',
+    'example' => '2001:db8::254'
+]
+
+// IPv6 DNS servers
+'primarydns6' => [
+    'type' => 'string',
+    'example' => '2001:4860:4860::8888'
+]
+'secondarydns6' => [
+    'type' => 'string',
+    'example' => '2001:4860:4860::8844'
+]
+```
+
+#### Auto-Configuration Mode (SLAAC/DHCPv6)
+
+When `ipv6_mode='1'`, the system automatically configures IPv6 via:
+- **SLAAC** (Stateless Address Autoconfiguration)
+- **DHCPv6** (Dynamic Host Configuration Protocol for IPv6)
+
+The API returns current auto-configured values in read-only fields:
+- `currentIpv6addr` - Auto-configured IPv6 address
+- `currentIpv6_subnet` - Auto-configured prefix length
+- `currentIpv6_gateway` - Auto-configured gateway
+- `currentPrimarydns6` - Auto-configured primary DNS
+- `currentSecondarydns6` - Auto-configured secondary DNS
+
+```json
+// Example response with IPv6 Auto mode
+{
+  "ipv6_mode": "1",
+  "ipv6addr": "",
+  "ipv6_subnet": "",
+  "ipv6_gateway": "",
+  "currentIpv6addr": "2001:db8::a123:4567:89ab:cdef",
+  "currentIpv6_subnet": "64",
+  "currentIpv6_gateway": "fe80::1"
+}
+```
+
+#### Manual Configuration Mode
+
+When `ipv6_mode='2'`, provide static IPv6 configuration:
+
+```json
+POST /pbxcore/api/v3/network/{id}
+{
+  "ipv6_mode": "2",
+  "ipv6addr": "2001:db8::1",
+  "ipv6_subnet": "64",
+  "ipv6_gateway": "2001:db8::254",
+  "primarydns6": "2001:4860:4860::8888",
+  "secondarydns6": "2001:4860:4860::8844"
+}
+```
+
+#### Dual-Stack Configuration
+
+IPv4 and IPv6 work simultaneously. A complete dual-stack configuration:
+
+```json
+{
+  "interface": "eth0",
+  "dhcp": "0",
+  "ipaddr": "192.168.1.10",
+  "subnet": "255.255.255.0",
+  "gateway": "192.168.1.1",
+  "primarydns": "8.8.8.8",
+  "ipv6_mode": "2",
+  "ipv6addr": "2001:db8::10",
+  "ipv6_subnet": "64",
+  "ipv6_gateway": "2001:db8::1",
+  "primarydns6": "2001:4860:4860::8888"
+}
+```
+
+### IP Address Validation
+
+Use `IpAddressHelper` utility for dual-stack IP validation:
+
+```php
+use MikoPBX\Core\Utilities\IpAddressHelper;
+
+// In SaveConfigAction
+if (!empty($data['ipv6addr'])) {
+    if (!IpAddressHelper::isIpv6($data['ipv6addr'])) {
+        $res->messages['error'][] = 'Invalid IPv6 address';
+        return $res;
+    }
+}
+
+// Validate CIDR notation
+$cidr = IpAddressHelper::normalizeCidr($data['network']);
+if ($cidr === false) {
+    $res->messages['error'][] = 'Invalid CIDR notation';
+    return $res;
+}
+
+// Check IP version consistency
+$ipVersion = IpAddressHelper::getIpVersion($data['gateway']);
+$networkVersion = IpAddressHelper::getIpVersion($data['network']);
+if ($ipVersion !== $networkVersion) {
+    $res->messages['error'][] = 'Gateway and network IP versions must match';
+    return $res;
+}
+```
+
+### Static Routes with IPv6
+
+Network static routes support both IPv4 and IPv6:
+
+```json
+// IPv4 route
+POST /pbxcore/api/v3/network/routes
+{
+  "network": "10.0.0.0",
+  "subnet": "24",
+  "gateway": "192.168.1.1"
+}
+
+// IPv6 route
+POST /pbxcore/api/v3/network/routes
+{
+  "network": "2001:db8:1::",
+  "subnet": "64",
+  "gateway": "2001:db8::1"
+}
+```
+
+The subnet field accepts:
+- **IPv4**: 0-32 (CIDR notation)
+- **IPv6**: 1-128 (prefix length)
 
 ### Firewall: IPv4/IPv6 Dual-Stack Support
 

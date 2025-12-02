@@ -48,7 +48,12 @@ class AuthenticationMiddleware implements MiddlewareInterface
     use ResponseTrait;
 
     /**
-     * Public endpoints that don't require authentication
+     * Public endpoints that don't require authentication (Legacy Fallback)
+     *
+     * This constant is kept for backward compatibility during the 2025 migration
+     * to attribute-based public endpoint detection. New endpoints should use
+     * #[ResourceSecurity(..., requirements: [SecurityType::PUBLIC])] instead.
+     *
      * Format: path => [allowed HTTP methods]
      *
      * @var array<string, array<string>>
@@ -186,6 +191,10 @@ class AuthenticationMiddleware implements MiddlewareInterface
     /**
      * Check if current request is to a public endpoint
      *
+     * Uses hybrid approach:
+     * 1. Check PublicEndpointsRegistry (attribute-based, Pattern 4 modules)
+     * 2. Fallback to hardcoded PUBLIC_ENDPOINTS constant (legacy endpoints)
+     *
      * @param Micro $application
      * @return bool True if public endpoint
      */
@@ -196,6 +205,12 @@ class AuthenticationMiddleware implements MiddlewareInterface
         $uri = $request->getURI();
         $method = $request->getMethod();
 
+        // Strategy 1: Check attribute-based public endpoints registry
+        if ($this->isPublicEndpointByAttributes($application, $uri)) {
+            return true;
+        }
+
+        // Strategy 2: Check hardcoded legacy endpoints (backward compatibility)
         foreach (self::PUBLIC_ENDPOINTS as $endpoint => $allowedMethods) {
             if (strpos($uri, $endpoint) === 0 && in_array($method, $allowedMethods, true)) {
                 return true;
@@ -203,6 +218,29 @@ class AuthenticationMiddleware implements MiddlewareInterface
         }
 
         return false;
+    }
+
+    /**
+     * Check if endpoint is public via ResourceSecurity attributes
+     *
+     * @param Micro $application
+     * @param string $uri Request URI
+     * @return bool True if endpoint is public
+     */
+    private function isPublicEndpointByAttributes(Micro $application, string $uri): bool
+    {
+        try {
+            $di = $application->getDI();
+            if (!$di->has(\MikoPBX\PBXCoreREST\Providers\PublicEndpointsRegistryProvider::SERVICE_NAME)) {
+                return false;
+            }
+
+            $registry = $di->getShared(\MikoPBX\PBXCoreREST\Providers\PublicEndpointsRegistryProvider::SERVICE_NAME);
+            return $registry->isPublicEndpoint($uri);
+        } catch (\Exception) {
+            // If registry is unavailable, return false (fail closed for security)
+            return false;
+        }
     }
 
     /**

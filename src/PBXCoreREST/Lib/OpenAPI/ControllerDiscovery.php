@@ -114,10 +114,14 @@ class ControllerDiscovery
     }
 
     /**
-     * Discover Module REST API controllers (Pattern 4)
+     * Discover Module REST API controllers
      *
-     * WHY: Scans enabled modules for API/Controllers with RestController.php
+     * WHY: Scans enabled modules for Lib/RestAPI/{Resource}/Controller.php
      * Only includes controllers with ApiResource attribute
+     *
+     * NEW PATTERN (2025):
+     * Modules/{ModuleName}/Lib/RestAPI/{Resource}/Controller.php
+     * Example: Modules/ModuleExampleRestAPIv3/Lib/RestAPI/Tasks/Controller.php
      *
      * @return array<string> List of Module controller class names
      */
@@ -143,16 +147,16 @@ class ControllerDiscovery
         foreach ($enabledModules as $module) {
             $moduleName = $module->uniqid;
             $moduleDir = "{$modulesPath}/{$moduleName}";
-            $apiControllersPath = "{$moduleDir}/API/Controllers";
+            $restApiPath = "{$moduleDir}/Lib/RestAPI";
 
-            // Skip if module doesn't have API/Controllers directory
-            if (!is_dir($apiControllersPath)) {
+            // Skip if module doesn't have Lib/RestAPI directory
+            if (!is_dir($restApiPath)) {
                 continue;
             }
 
-            // Recursively scan API/Controllers directory for PHP files
+            // Recursively scan Lib/RestAPI directory for Controller.php files
             $iterator = new \RecursiveIteratorIterator(
-                new \RecursiveDirectoryIterator($apiControllersPath, \RecursiveDirectoryIterator::SKIP_DOTS)
+                new \RecursiveDirectoryIterator($restApiPath, \RecursiveDirectoryIterator::SKIP_DOTS)
             );
 
             /** @var \SplFileInfo $file */
@@ -161,15 +165,20 @@ class ControllerDiscovery
                     continue;
                 }
 
+                // Only process files named *Controller.php
+                if (!str_ends_with($file->getFilename(), 'Controller.php')) {
+                    continue;
+                }
+
                 // Extract class name from file path
-                // Example: Tasks/RestController.php -> Tasks\RestController
-                $relativePath = str_replace($apiControllersPath . '/', '', $file->getPathname());
+                // Example: Tasks/Controller.php -> Tasks\Controller
+                $relativePath = str_replace($restApiPath . '/', '', $file->getPathname());
                 $relativePath = str_replace('.php', '', $relativePath);
                 $className = str_replace('/', '\\', $relativePath);
 
                 // Build full controller class name
-                // Example: Modules\ModuleExampleModern\API\Controllers\Tasks\RestController
-                $controllerClass = "Modules\\{$moduleName}\\API\\Controllers\\{$className}";
+                // Example: Modules\ModuleExampleRestAPIv3\Lib\RestAPI\Tasks\Controller
+                $controllerClass = "Modules\\{$moduleName}\\Lib\\RestAPI\\{$className}";
 
                 // Check if class exists and has ApiResource attribute
                 if (!class_exists($controllerClass)) {

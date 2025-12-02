@@ -97,6 +97,7 @@ Tests are automatically synchronized between host and container:
 4. **Asterisk Configuration**: Dynamic config generation system
    - Generators in `src/Core/Asterisk/Configs/`
    - Stage-based generation (pre-generate → generate → post-generate)
+   - Dual-stack IPv4/IPv6 support in network configurations
 
 5. **Event System**: Nginx nchan-based pub/sub messaging
    - EventBusProvider publishes events via REST API
@@ -109,10 +110,17 @@ Tests are automatically synchronized between host and container:
 7. **REST API**: Queue-based REST API architecture
    - Controllers handle HTTP requests
    - Requests are queued to Redis for async processing
+   - Dual-stack IPv4/IPv6 network configuration endpoints
 
 8. **Admin Cabinet**: Web administration interface
    - MVC architecture with Phalcon + Volt templates
    - Semantic UI for frontend components
+   - IPv6 support in network configuration forms
+
+9. **Network Utilities**: Dual-stack IP address handling
+   - `src/Core/Utilities/IpAddressHelper.php` - IPv4/IPv6 validation and utilities
+   - CIDR notation parsing for both IP versions
+   - Network membership checking (isIpInCidr)
 
 ### Key Design Patterns
 
@@ -129,6 +137,7 @@ Tests are automatically synchronized between host and container:
 - `ConfigInterface` - Interface for module configuration hooks
 - `AsteriskConfInterface` - Interface for Asterisk config generation
 - `PBXCoreREST` - Main REST API entry point
+- `IpAddressHelper` - Dual-stack IPv4/IPv6 address utilities (validation, CIDR parsing, network checks)
 
 ### System Services (managed by monit)
 

@@ -274,8 +274,6 @@ class DockerEntrypoint extends Injectable
             $this->settings[$key] = $value;
         }
 
-        // Add some extra information
-        putenv("VIRTUAL_HARDWARE_TYPE=Docker");
         $this->echoResultMsg();
     }
 
@@ -500,8 +498,9 @@ class DockerEntrypoint extends Injectable
     }
 }
 
-// Record system boot start time
-$bootStartTime = microtime(true);
+// Record system boot start time using monotonic clock (hrtime)
+// This avoids issues with NTP time synchronization during boot
+$bootStartTime = hrtime(true);
 file_put_contents('/tmp/system_boot_start_time', $bootStartTime);
 
 // Output startup message

@@ -385,9 +385,36 @@ class SystemMessages extends Injectable
         $emptyLine = "|" . str_repeat(' ', $lineWidth - 2) . "|";
         $version = PbxSettings::getValueByKey(PbxSettings::PBX_VERSION);
 
+        // Get build time
+        $buildtime = '';
+        if (file_exists('/offload/version')) {
+            $buildtime = trim(file_get_contents('/etc/version.buildtime'));
+        } elseif (file_exists('/etc/version.buildtime')) {
+            $buildtime = trim(file_get_contents('/etc/version.buildtime'));
+        }
+
+        // Determine architecture display name
+        if (System::isARM64()) {
+            $archDisplay = 'arm64';
+        } elseif (System::isAMD64()) {
+            $archDisplay = 'x64';
+        } else {
+            $archDisplay = php_uname('m');
+        }
+
+        // Get environment type
+        $envType = PbxSettings::getValueByKey(PbxSettings::VIRTUAL_HARDWARE_TYPE);
+
+        // Build the info line: "built on 2024-01-01 (arm64) in QEMU"
+        $buildInfo = "built on $buildtime ($archDisplay)";
+        if (!empty($envType) && $envType !== 'Bare Metal') {
+            $buildInfo .= " in $envType";
+        }
+
         $info = PHP_EOL . $borderLine;
         $info .= PHP_EOL . self::formatLine($header, $lineWidth, 'center');
         $info .= PHP_EOL . self::formatLine("MikoPBX " . $version, $lineWidth, 'center');
+        $info .= PHP_EOL . self::formatLine($buildInfo, $lineWidth, 'center');
         $info .= PHP_EOL . $borderLine;
 
         $addresses = self::getNetworkAddresses();

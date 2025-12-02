@@ -1583,36 +1583,50 @@ class ApiMetadataRegistry extends Injectable
     /**
      * Derive DataStructure class from controller class name using convention
      *
-     * Convention: Controllers\{Resource}\RestController -> Lib\{Resource}\DataStructure
+     * Supports two patterns:
+     * 1. Core: Controllers\{Resource}\RestController -> Lib\{Resource}\DataStructure
+     * 2. Module: Lib\RestAPI\{Resource}\Controller -> Lib\RestAPI\{Resource}\DataStructure
      *
      * Examples:
      * - MikoPBX\PBXCoreREST\Controllers\Cdr\RestController
      *   -> MikoPBX\PBXCoreREST\Lib\Cdr\DataStructure
-     * - MikoPBX\PBXCoreREST\Controllers\CallQueues\RestController
-     *   -> MikoPBX\PBXCoreREST\Lib\CallQueues\DataStructure
+     * - Modules\ModuleExampleRestAPIv3\Lib\RestAPI\Tasks\Controller
+     *   -> Modules\ModuleExampleRestAPIv3\Lib\RestAPI\Tasks\DataStructure
      *
      * @param string $controllerClass Fully qualified controller class name
      * @return string|null DataStructure class name if derivable, null otherwise
      */
     private function deriveDataStructureFromController(string $controllerClass): ?string
     {
-        // Pattern: MikoPBX\PBXCoreREST\Controllers\{Resource}\RestController
-        if (!preg_match('/^(.+)\\\\Controllers\\\\(.+)\\\\RestController$/', $controllerClass, $matches)) {
-            return null;
+        // Pattern 1: Core - MikoPBX\PBXCoreREST\Controllers\{Resource}\RestController
+        if (preg_match('/^(.+)\\\\Controllers\\\\(.+)\\\\RestController$/', $controllerClass, $matches)) {
+            $baseNamespace = $matches[1]; // MikoPBX\PBXCoreREST
+            $resource = $matches[2];      // Cdr, CallQueues, etc.
+
+            // Derive: MikoPBX\PBXCoreREST\Lib\{Resource}\DataStructure
+            $dataStructureClass = $baseNamespace . '\\Lib\\' . $resource . '\\DataStructure';
+
+            // Verify class exists
+            if (class_exists($dataStructureClass)) {
+                return $dataStructureClass;
+            }
         }
 
-        $baseNamespace = $matches[1]; // MikoPBX\PBXCoreREST
-        $resource = $matches[2];      // Cdr, CallQueues, etc.
+        // Pattern 2: Module - Modules\{Module}\Lib\RestAPI\{Resource}\Controller
+        if (preg_match('/^Modules\\\\(.+)\\\\Lib\\\\RestAPI\\\\(.+)\\\\Controller$/', $controllerClass, $matches)) {
+            $moduleName = $matches[1];    // ModuleExampleRestAPIv3
+            $resource = $matches[2];      // Tasks, Contacts, etc.
 
-        // Derive: MikoPBX\PBXCoreREST\Lib\{Resource}\DataStructure
-        $dataStructureClass = $baseNamespace . '\\Lib\\' . $resource . '\\DataStructure';
+            // Derive: Modules\{Module}\Lib\RestAPI\{Resource}\DataStructure
+            $dataStructureClass = "Modules\\{$moduleName}\\Lib\\RestAPI\\{$resource}\\DataStructure";
 
-        // Verify class exists
-        if (!class_exists($dataStructureClass)) {
-            return null;
+            // Verify class exists
+            if (class_exists($dataStructureClass)) {
+                return $dataStructureClass;
+            }
         }
 
-        return $dataStructureClass;
+        return null;
     }
 
     /**

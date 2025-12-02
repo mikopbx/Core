@@ -361,13 +361,26 @@ class AsteriskManager
      */
     private function waitResponseReadFollowsPart(string $event_text, array &$parameters): void
     {
-        if (($event_text === 'Follows') && !count($parameters)) {
-            // A follows response means there is a miltiline field that follows.
-            $parameters['data'] = '';
-            $buff               = $this->getStringDataFromSocket();
-            while (strpos($buff, '--END ') !== 0) {
-                $parameters['data'] .= $buff;
-                $buff               = $this->getStringDataFromSocket();
+        if ($event_text === 'Follows') {
+            // WHY: Find which key triggered "Follows" (usually "Message" or "Output")
+            // The key is added to $parameters AFTER this method returns (line 280)
+            // So we look for the key that doesn't exist yet or exists but != 'Follows'
+            $followsKey = null;
+            foreach (['Output', 'Message', 'data'] as $possibleKey) {
+                if (!isset($parameters[$possibleKey]) || $parameters[$possibleKey] !== 'Follows') {
+                    $followsKey = $possibleKey;
+                    break;
+                }
+            }
+
+            if ($followsKey) {
+                // A follows response means there is a miltiline field that follows.
+                $parameters[$followsKey] = '';
+                $buff = $this->getStringDataFromSocket();
+                while (strpos($buff, '--END ') !== 0) {
+                    $parameters[$followsKey] .= $buff;
+                    $buff = $this->getStringDataFromSocket();
+                }
             }
         }
     }

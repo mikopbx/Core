@@ -344,7 +344,7 @@ class Fail2BanConf extends SystemConfigClass
 
         // Generate the Fail2Ban configuration
         $config       = "[DEFAULT]\n" .
-            "ignoreip = 127.0.0.1 $user_whitelist\n\n";
+            "ignoreip = 127.0.0.1 ::1 $user_whitelist\n\n";
         $syslog_file = SyslogConf::getSyslogFile();
         $commonParams = "enabled = true" . PHP_EOL .
             "maxretry = $max_retry\n" .
