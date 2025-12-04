@@ -51,6 +51,21 @@ class ConsoleMenu
     }
 
     /**
+     * Ensure terminal type is valid, fallback to xterm-256color for unknown terminals.
+     * Fixes issue with Ghostty and other modern terminals not recognized by remote system.
+     */
+    private function ensureValidTerminal(): void
+    {
+        // Check if tput can work with current terminal
+        exec('tput cols 2>&1', $output, $exitCode);
+
+        if ($exitCode !== 0 || empty($output[0]) || (int)$output[0] === 0) {
+            // Terminal unknown or cannot determine width, use safe fallback
+            putenv('TERM=xterm-256color');
+        }
+    }
+
+    /**
      * Display network interfaces information
      * @return void
      */
@@ -1020,6 +1035,9 @@ class ConsoleMenu
      */
     public function start(): void
     {
+        // Ensure terminal type is recognized, fallback to xterm-256color for unknown terminals
+        $this->ensureValidTerminal();
+
         RegisterDIServices::init();
 
         $di = Di::getDefault();
