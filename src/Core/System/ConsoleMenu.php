@@ -1157,8 +1157,16 @@ class ConsoleMenu
             }
         }
 
-        // Get virtual hardware type
-        $virtualHardwareType = PbxSettings::getValueByKey(PbxSettings::VIRTUAL_HARDWARE_TYPE);
+        // Get virtual hardware type - always use fresh detection from pbx-env-detect (no cache)
+        $virtualHardwareType = '';
+        $pbxEnvDetect = '/sbin/pbx-env-detect';
+        if (file_exists($pbxEnvDetect) && is_executable($pbxEnvDetect)) {
+            $detectedType = trim(shell_exec("$pbxEnvDetect --type --nocache 2>/dev/null") ?? '');
+            if (!empty($detectedType) && $detectedType !== 'baremetal') {
+                $virtualHardwareType = strtoupper($detectedType);
+            }
+        }
+
         $versionSuffix = '';
         if (!empty($virtualHardwareType)) {
             $versionSuffix = " in $virtualHardwareType";

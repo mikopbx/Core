@@ -32,7 +32,8 @@ ENV_CHECK_AGE=3600  # Re-check every hour
 
 # Parse command line options
 OPTION="type"
-if [ $# -gt 0 ]; then
+NO_CACHE=0
+while [ $# -gt 0 ]; do
     case "$1" in
         -t|--type)
             OPTION="type"
@@ -49,13 +50,17 @@ if [ $# -gt 0 ]; then
         -a|--all)
             OPTION="all"
             ;;
+        --nocache)
+            NO_CACHE=1
+            ;;
         *)
             echo "Unknown option: $1" >&2
-            echo "Usage: $0 [-t|--type] [-s|--serial] [-c|--console] [-r|--arch] [-a|--all]" >&2
+            echo "Usage: $0 [-t|--type] [-s|--serial] [-c|--console] [-r|--arch] [-a|--all] [--nocache]" >&2
             exit 1
             ;;
     esac
-fi
+    shift
+done
 
 # Function to detect environment type
 detect_environment() {
@@ -64,9 +69,9 @@ detect_environment() {
         echo "docker"
         return
     fi
-    
+
     # Check for virtualization using various methods
-    
+
     # Method 1: Check DMI/SMBIOS information
     if [ -r "/sys/devices/virtual/dmi/id/sys_vendor" ]; then
         SYS_VENDOR=$(cat /sys/devices/virtual/dmi/id/sys_vendor 2>/dev/null | tr '[:upper:]' '[:lower:]')
@@ -158,7 +163,30 @@ detect_environment() {
             return
         fi
     fi
-    
+
+    # Method 6: Check dmesg for DMI info (useful during early boot when sysfs may not be ready)
+    DMESG_DMI=$(/bin/dmesg 2>/dev/null | /bin/grep -i "DMI:" | head -n1 | tr '[:upper:]' '[:lower:]')
+    if [ -n "$DMESG_DMI" ]; then
+        case "$DMESG_DMI" in
+            *qemu*)
+                if [ -e "/dev/kvm" ]; then
+                    echo "kvm"
+                else
+                    echo "qemu"
+                fi
+                return
+                ;;
+            *vmware*)
+                echo "vmware"
+                return
+                ;;
+            *virtualbox*)
+                echo "vbox"
+                return
+                ;;
+        esac
+    fi
+
     # If we get here, assume bare metal
     echo "baremetal"
 }
@@ -261,8 +289,8 @@ detect_console() {
 
 # Function to get cached or fresh environment info
 get_env_info() {
-    # Check if cache exists and is recent
-    if [ -f "$ENV_CACHE" ]; then
+    # Check if cache exists and is recent (skip if --nocache)
+    if [ "$NO_CACHE" -eq 0 ] && [ -f "$ENV_CACHE" ]; then
         CACHE_AGE=$(($(date +%s) - $(stat -c %Y "$ENV_CACHE" 2>/dev/null || echo 0)))
         if [ "$CACHE_AGE" -lt "$ENV_CHECK_AGE" ]; then
             cat "$ENV_CACHE"
@@ -276,9 +304,8 @@ get_env_info() {
     CONSOLE=$(detect_console)
     ARCH=$(detect_architecture)
 
-    # Save to cache only if we have a definitive detection
-    # Don't cache 'virtual' as it's a generic fallback that may be incorrect during early boot
-    if [ "$ENV_TYPE" != "virtual" ]; then
+    # Save to cache (skip if --nocache)
+    if [ "$NO_CACHE" -eq 0 ] && [ -n "$ENV_TYPE" ]; then
         cat > "$ENV_CACHE" << EOF
 ENV_TYPE=$ENV_TYPE
 SERIAL_PORTS=$SERIAL_PORTS
@@ -287,7 +314,7 @@ ARCH=$ARCH
 EOF
     fi
 
-    # Return current values (even if not cached)
+    # Return current values
     cat << EOF
 ENV_TYPE=$ENV_TYPE
 SERIAL_PORTS=$SERIAL_PORTS
