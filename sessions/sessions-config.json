@@ -32,7 +32,10 @@
       "NotebookEdit"
     ],
     "bash_read_patterns": [
-      "sg"
+      "sg",
+      "vendor/bin/phpstan",
+      "grep",
+      "ssh"
     ],
     "bash_write_patterns": [],
     "extrasafe": false

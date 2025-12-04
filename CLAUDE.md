@@ -122,6 +122,14 @@ Tests are automatically synchronized between host and container:
    - CIDR notation parsing for both IP versions
    - Network membership checking (isIpInCidr)
 
+10. **DHCPv6 Client**: Enterprise-grade IPv6 autoconfiguration
+   - `src/Core/System/Udhcpc6.php` - DHCPv6 event handler (bound/renew/deconfig)
+   - BusyBox udhcpc6 integration for stateful DHCPv6
+   - Automatic SLAAC fallback when DHCPv6 unavailable
+   - Dual-stack addressing (DHCPv6 and SLAAC coexist)
+   - IPv6 DNS server integration via DHCPv6 options
+   - Callback script: `/etc/rc/udhcpc6_configure`
+
 ### Key Design Patterns
 
 - **MVC Pattern**: Clear separation in AdminCabinet
@@ -129,6 +137,11 @@ Tests are automatically synchronized between host and container:
 - **Worker Pattern**: Async job processing with queue management
 - **Hook System**: Modules can hook into various system processes
 - **Stage Pattern**: Multi-stage configuration generation
+- **DHCP Callback Pattern**: Event-driven network configuration
+  - IPv4: `Udhcpc` class handles udhcpc events via `/etc/rc/udhcpc_configure`
+  - IPv6: `Udhcpc6` class handles udhcpc6 events via `/etc/rc/udhcpc6_configure`
+  - Database always synchronized regardless of Docker environment
+  - Network commands conditional based on execution context
 
 ### Important Classes and Interfaces
 
@@ -138,6 +151,10 @@ Tests are automatically synchronized between host and container:
 - `AsteriskConfInterface` - Interface for Asterisk config generation
 - `PBXCoreREST` - Main REST API entry point
 - `IpAddressHelper` - Dual-stack IPv4/IPv6 address utilities (validation, CIDR parsing, network checks)
+- `Network` - Network configuration manager (IPv4/IPv6 interface configuration, DHCP client management)
+- `Udhcpc` - IPv4 DHCP client event handler (database synchronization, interface configuration)
+- `Udhcpc6` - IPv6 DHCPv6 client event handler (stateful DHCPv6, SLAAC coexistence, DNS integration)
+- `DnsConf` - DNS configuration generator (dual-stack IPv4/IPv6 nameserver support)
 
 ### System Services (managed by monit)
 
@@ -147,6 +164,44 @@ Tests are automatically synchronized between host and container:
 - `php-fpm` - PHP process manager
 - `nginx` - Web server
 - `fail2ban` - Security service
+
+### IPv6 Implementation Details
+
+**Supported IPv6 Modes** (configured via `LanInterfaces` model):
+- **Mode 0 (Off)**: IPv6 completely disabled on interface
+- **Mode 1 (Auto)**: DHCPv6 with SLAAC fallback (enterprise-grade autoconfiguration)
+- **Mode 2 (Manual)**: Static IPv6 address and gateway configuration
+
+**Mode 1 (Auto) Behavior - DHCPv6 + SLAAC:**
+- Primary: DHCPv6 stateful client (BusyBox udhcpc6) obtains address from DHCPv6 server
+- Fallback: SLAAC continues when DHCPv6 server unavailable
+- Both addresses coexist on same interface (dual addressing)
+- Priority: DHCPv6 address preferred over SLAAC per RFC 6724
+- DNS: IPv6 nameservers obtained via DHCPv6 options (integrated in `/etc/resolv.conf`)
+
+**Implementation Architecture:**
+- `Network::configureIpv6Interface()` - Configures interface based on mode (lines 674-788)
+- `Network::lanConfigure()` - Orchestrates network configuration on boot and changes
+- `Udhcpc6::configure()` - Handles DHCPv6 events (bound/renew/deconfig)
+- `DnsConf::resolveConfGenerate()` - Merges IPv4/IPv6 DNS servers (lines 62-159)
+- `Network::getHostDNS6()` - Retrieves IPv6 DNS from LanInterfaces (lines 638-660)
+
+**Database Schema** (`m_LanInterfaces` table):
+- `ipv6_mode`: '0'=Off, '1'=Auto, '2'=Manual
+- `ipv6addr`: IPv6 address (empty in Auto until DHCPv6 binds)
+- `ipv6_subnet`: Prefix length (1-128)
+- `ipv6_gateway`: IPv6 gateway (optional, DHCPv6 uses RA)
+- `primarydns6`, `secondarydns6`: IPv6 DNS servers
+
+**Security Features:**
+- Shell argument escaping via `escapeshellarg()` in all network commands
+- Parameterized SQL queries in DHCP callback handlers
+- Validation using `IpAddressHelper::isIpv6()` before database storage
+
+**Docker Environment Handling:**
+- DHCP callbacks always update database (fixes stale IP display bug)
+- Network commands skipped in Docker (container runtime manages networking)
+- Critical for consistent UI/API responses across environments
 
 ## Development Guidelines
 
