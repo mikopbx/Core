@@ -71,11 +71,13 @@ Task originated from context-summary indicating need for centralized permissions
   - Result: 45 Core endpoints in PBX_CORE_REST, module endpoints in respective module categories
 
 ### 2025-12-04
-**Code Review Fixes:**
+**Code Review & Completion:**
 - Removed 'excluded' field from API response (ModuleUsersUI maintains exclusion rules locally)
 - Added `CriticalErrorsHandler::handleExceptionWithSyslog()` for proper error logging
 - Added documentation for Pattern 2 wildcard '*' actions (Phalcon Annotations limitation)
 - Fixed array merging: use `+` operator to prevent key collisions during defensive merges
 - Unified response structure: added 'label' field to all controller types (APP and REST)
 - Updated test `test_13_get_detailed_permissions` to remove 'excluded' field assertions
+- Fixed translation descriptions: removed "exclusion rules" mention from en/ru RestApi.php
 - All tests passing (259 endpoints)
+- Task completed and committed

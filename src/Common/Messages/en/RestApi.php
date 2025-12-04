@@ -1973,7 +1973,7 @@ return [
     'rest_openapi_GetSimplifiedPerms' => 'Get simplified permissions list',
     'rest_openapi_GetSimplifiedPermsDesc' => 'Retrieve simplified API key permissions list for convenient access management',
     'rest_openapi_GetDetailedPerms' => 'Get detailed permissions list',
-    'rest_openapi_GetDetailedPermsDesc' => 'Retrieve comprehensive list of controllers and actions for building ACL tree. Includes AdminCabinet controllers, REST API controllers, modules and exclusion rules',
+    'rest_openapi_GetDetailedPermsDesc' => 'Retrieve comprehensive list of controllers and actions for building ACL tree. Includes AdminCabinet controllers, REST API controllers and module controllers',
     'rest_password' => 'Password',
 
     // ============================================================================

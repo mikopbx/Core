@@ -2411,7 +2411,7 @@ return [
     'rest_openapi_GetSimplifiedPerms' => 'Получить упрощенный список разрешений',
     'rest_openapi_GetSimplifiedPermsDesc' => 'Получить упрощенный список разрешений API ключей для удобного управления доступом',
     'rest_openapi_GetDetailedPerms' => 'Получить детальный список разрешений',
-    'rest_openapi_GetDetailedPermsDesc' => 'Получить полный список контроллеров и действий для построения дерева ACL. Включает контроллеры AdminCabinet, REST API, модули и правила исключений',
+    'rest_openapi_GetDetailedPermsDesc' => 'Получить полный список контроллеров и действий для построения дерева ACL. Включает контроллеры AdminCabinet, REST API и модулей',
 
     // ============================================================================
     // S3 Storage Parameters and Schema
