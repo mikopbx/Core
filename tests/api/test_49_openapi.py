@@ -370,6 +370,150 @@ class TestOpenAPI:
             else:
                 print(f"⚠ Error: {str(e)[:80]}")
 
+    def test_13_get_detailed_permissions(self, api_client):
+        """Test GET /openapi:getDetailedPermissions - Get detailed ACL permissions
+
+        This endpoint returns comprehensive controller/action structure for building
+        ACL tree in ModuleUsersUI. Includes:
+        - AdminCabinet controllers (MVC pattern)
+        - REST API controllers (Pattern 4)
+        - Module controllers (APP and REST)
+        - Exclusion rules (alwaysAllowed, alwaysDenied, linkedActions)
+        """
+        try:
+            response = api_client.get('openapi:getDetailedPermissions')
+
+            if response.get('result') is True:
+                data = response.get('data', {})
+
+                # Validate response structure
+                # NOTE: 'excluded' (alwaysAllowed, alwaysDenied, linkedActions) is NOT returned by this API
+                # ModuleUsersUI maintains and applies these exclusion rules locally
+                assert 'categories' in data, "Missing 'categories' in response"
+
+                categories = data['categories']
+
+                # Validate categories structure
+                assert isinstance(categories, dict), "'categories' should be a dict"
+
+                # Should have AdminCabinet category
+                if 'AdminCabinet' in categories:
+                    admin_cabinet = categories['AdminCabinet']
+                    assert 'type' in admin_cabinet, "AdminCabinet missing 'type'"
+                    assert admin_cabinet['type'] == 'APP', "AdminCabinet should have type 'APP'"
+                    assert 'controllers' in admin_cabinet, "AdminCabinet missing 'controllers'"
+                    print(f"  AdminCabinet controllers: {len(admin_cabinet.get('controllers', {}))}")
+
+                # Should have PBX_CORE_REST category
+                if 'PBX_CORE_REST' in categories:
+                    pbx_rest = categories['PBX_CORE_REST']
+                    assert 'type' in pbx_rest, "PBX_CORE_REST missing 'type'"
+                    assert pbx_rest['type'] == 'REST', "PBX_CORE_REST should have type 'REST'"
+                    assert 'controllers' in pbx_rest, "PBX_CORE_REST missing 'controllers'"
+                    print(f"  REST API endpoints: {len(pbx_rest.get('controllers', {}))}")
+
+                print(f"✓ Detailed permissions retrieved successfully")
+                print(f"  Total categories: {len(categories)}")
+                print(f"  Category names: {list(categories.keys())[:5]}")
+
+                # Validate controller structure within a category
+                # All controllers should have unified structure: name, label, actions
+                for cat_name, cat_data in categories.items():
+                    controllers = cat_data.get('controllers', {})
+                    if controllers:
+                        first_controller = list(controllers.values())[0]
+                        assert 'name' in first_controller, f"Controller in {cat_name} missing 'name'"
+                        assert 'label' in first_controller, f"Controller in {cat_name} missing 'label'"
+                        assert 'actions' in first_controller, f"Controller in {cat_name} missing 'actions'"
+                        assert isinstance(first_controller['actions'], list), f"Controller actions should be a list"
+                        break
+
+            else:
+                messages = response.get('messages', {})
+                print(f"⚠ Detailed permissions retrieval failed: {messages}")
+
+        except Exception as e:
+            if '404' in str(e) or '501' in str(e) or '405' in str(e):
+                print(f"⚠ Detailed permissions method not implemented yet")
+                pytest.skip("Detailed permissions not implemented")
+            else:
+                raise
+
+    def test_14_module_rest_v3_endpoints_separation(self, api_client):
+        """Test that Module REST v3 endpoints are in module categories, not PBX_CORE_REST
+
+        WHY: Module REST v3 endpoints (e.g., /pbxcore/api/v3/module-example-rest-api-v3/tasks)
+        should appear in their respective module categories, not in PBX_CORE_REST.
+
+        This ensures ACL tree properly groups module endpoints under module names.
+        """
+        try:
+            response = api_client.get('openapi:getDetailedPermissions')
+
+            if response.get('result') is True:
+                data = response.get('data', {})
+                categories = data.get('categories', {})
+
+                # Get PBX_CORE_REST controllers
+                pbx_rest = categories.get('PBX_CORE_REST', {})
+                pbx_rest_controllers = pbx_rest.get('controllers', {})
+
+                # Check that Core REST paths don't contain module-specific patterns
+                # WHY: Module v3 endpoints have paths like /pbxcore/api/v3/module-{name}/...
+                # But /pbxcore/api/v3/modules is a Core endpoint for module management
+                module_paths_in_core = []
+                for path in pbx_rest_controllers.keys():
+                    # Module v3 paths typically contain module name kebab-cased
+                    # e.g., /pbxcore/api/v3/module-example-rest-api-v3/tasks
+                    # Exclude /modules which is Core endpoint for module management
+                    if '/module-' in path.lower():
+                        module_paths_in_core.append(path)
+
+                # Report Core REST endpoints
+                print(f"✓ Module REST v3 separation test")
+                print(f"  PBX_CORE_REST endpoints: {len(pbx_rest_controllers)}")
+
+                if module_paths_in_core:
+                    print(f"  ⚠ Found {len(module_paths_in_core)} module paths in PBX_CORE_REST:")
+                    for path in module_paths_in_core[:5]:
+                        print(f"    - {path}")
+                    # This indicates separation is not working properly
+                    assert len(module_paths_in_core) == 0, \
+                        f"Module endpoints should not be in PBX_CORE_REST: {module_paths_in_core}"
+                else:
+                    print(f"  ✓ No module paths found in PBX_CORE_REST (correct separation)")
+
+                # Check for module categories with REST endpoints
+                module_categories = {
+                    name: data for name, data in categories.items()
+                    if name not in ['AdminCabinet', 'PBX_CORE_REST']
+                }
+
+                if module_categories:
+                    print(f"  Module categories: {len(module_categories)}")
+                    for module_name, module_data in list(module_categories.items())[:3]:
+                        controllers = module_data.get('controllers', {})
+                        rest_controllers = [
+                            path for path in controllers.keys()
+                            if path.startswith('/pbxcore/api/')
+                        ]
+                        if rest_controllers:
+                            print(f"    - {module_name}: {len(rest_controllers)} REST v3 endpoints")
+                else:
+                    print(f"  No module categories found (no modules enabled?)")
+
+            else:
+                messages = response.get('messages', {})
+                print(f"⚠ Test failed: {messages}")
+                pytest.skip("Could not get detailed permissions")
+
+        except Exception as e:
+            if '404' in str(e) or '501' in str(e) or '405' in str(e):
+                print(f"⚠ Detailed permissions not implemented")
+                pytest.skip("Detailed permissions not implemented")
+            else:
+                raise
+
 
 class TestOpenAPIEdgeCases:
     """Edge cases for OpenAPI endpoint"""

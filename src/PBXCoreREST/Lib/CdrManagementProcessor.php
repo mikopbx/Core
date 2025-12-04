@@ -76,6 +76,9 @@ class CdrManagementProcessor extends Injectable
 
         $actionString = $request['action'];
         $data = $request['data'];
+        // WHY: Pass session context for ACL filtering in REST API
+        // Contains role, user_name from JWT token - needed by modules like ModuleUsersUI
+        $sessionContext = $request['sessionContext'] ?? [];
 
         // IMPORTANT: DataTables sends POST requests which are mapped to 'create' action
         // by BaseRestController, but we need to handle them as 'getList'
@@ -96,7 +99,8 @@ class CdrManagementProcessor extends Injectable
         // Execute action using match expression (PHP 8)
         $res = match ($action) {
             // Standard CRUD operations
-            CdrAction::GET_LIST => GetListAction::main($data),
+            // WHY: Pass sessionContext for ACL filtering (role from JWT token)
+            CdrAction::GET_LIST => GetListAction::main($data, $sessionContext),
             CdrAction::GET_RECORD => GetRecordAction::main($data['id'] ?? null),
             CdrAction::DELETE => DeleteRecordAction::main($data['id'] ?? null, $data),
 
