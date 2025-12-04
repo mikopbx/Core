@@ -1,10 +1,14 @@
-"""Audio File Validator - Check audio files contain sound (not silence)"""
+"""Audio File Validator - Check audio files contain sound (not silence)
+
+This module is designed to run INSIDE the Docker container, using direct
+file system access instead of docker exec commands.
+"""
 
 import subprocess
 import logging
-import tempfile
+import os
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Any, Dict, Optional, List
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +17,7 @@ def validate_audio_file(
     file_path: str,
     min_duration: float = 0.5,
     silence_threshold: float = 0.01
-) -> Dict[str, any]:
+) -> Dict[str, Any]:
     """
     Validate audio file contains actual sound (not silence).
 
@@ -39,12 +43,6 @@ def validate_audio_file(
             'has_audio': True/False (RMS > threshold),
             'error': str (if any)
         }
-
-    Example:
-        >>> result = validate_audio_file('/path/to/recording.wav')
-        >>> if result['valid'] and result['has_audio']:
-        ...     print(f"Valid audio: {result['duration']}s, RMS: {result['rms']}")
-        Valid audio: 5.234s, RMS: 0.123
     """
     result = {
         'valid': False,
@@ -99,12 +97,16 @@ def _analyze_with_sox(
     # Run sox stat to get audio statistics
     cmd = ['sox', file_path, '-n', 'stat']
 
-    proc = subprocess.run(
-        cmd,
-        capture_output=True,
-        text=True,
-        timeout=30
-    )
+    try:
+        proc = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+    except subprocess.TimeoutExpired:
+        result['error'] = "Audio analysis timed out (sox)"
+        return result
 
     # sox outputs to stderr
     output = proc.stderr
@@ -163,7 +165,11 @@ def _analyze_with_ffprobe(
         file_path
     ]
 
-    proc = subprocess.run(cmd_duration, capture_output=True, text=True, timeout=30)
+    try:
+        proc = subprocess.run(cmd_duration, capture_output=True, text=True, timeout=30)
+    except subprocess.TimeoutExpired:
+        result['error'] = "Audio analysis timed out (ffprobe)"
+        return result
 
     if proc.returncode != 0:
         raise RuntimeError(f"ffprobe failed: {proc.stderr}")
@@ -214,110 +220,48 @@ def _analyze_with_ffprobe(
     return result
 
 
-def validate_audio_in_container(
-    container_name: str,
-    file_path_in_container: str,
-    **kwargs
-) -> Dict[str, any]:
-    """
-    Validate audio file inside Docker container.
-
-    Args:
-        container_name: Docker container name (e.g., 'mikopbx-php83')
-        file_path_in_container: Path to file inside container
-        **kwargs: Additional arguments passed to validate_audio_file()
-
-    Returns:
-        Same as validate_audio_file()
-
-    Example:
-        >>> result = validate_audio_in_container(
-        ...     'mikopbx-php83',
-        ...     '/storage/usbdisk1/mikopbx/monitor/recording.wav'
-        ... )
-        >>> if result['valid']:
-        ...     print(f"Recording is valid: {result['duration']}s")
-    """
-    # Copy file from container to temp location
-    with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmp:
-        tmp_path = tmp.name
-
-    try:
-        # Docker cp
-        cmd = ['docker', 'cp', f'{container_name}:{file_path_in_container}', tmp_path]
-        proc = subprocess.run(cmd, capture_output=True, timeout=30, text=True)
-
-        if proc.returncode != 0:
-            error_msg = f"Failed to copy file from container: {proc.stderr}"
-            logger.error(error_msg)
-            return {
-                'valid': False,
-                'exists': False,
-                'size_bytes': 0,
-                'duration': 0.0,
-                'rms': 0.0,
-                'has_audio': False,
-                'error': error_msg
-            }
-
-        # Validate local copy
-        return validate_audio_file(tmp_path, **kwargs)
-
-    finally:
-        # Cleanup temp file
-        Path(tmp_path).unlink(missing_ok=True)
-
-
 def find_recording_file(
-    container_name: str,
     src_extension: str,
     dst_extension: str,
     recording_dir: str = '/storage/usbdisk1/mikopbx/astspool/monitor'
 ) -> Optional[str]:
     """
-    Find call recording file in container by source and destination extensions.
+    Find call recording file by source and destination extensions.
+    Uses direct file system access (runs inside container).
 
     Args:
-        container_name: Docker container name
         src_extension: Source extension (caller)
         dst_extension: Destination extension (callee)
-        recording_dir: Recording directory in container
+        recording_dir: Recording directory path
 
     Returns:
-        Path to recording file in container, or None if not found
-
-    Example:
-        >>> file_path = find_recording_file('mikopbx-php83', '201', '202')
-        >>> if file_path:
-        ...     print(f"Found recording: {file_path}")
-        Found recording: /storage/usbdisk1/mikopbx/monitor/2024-01-15/123-201-202-20240115-143022.wav
+        Path to recording file, or None if not found
     """
     try:
-        # List files in recording directory
-        cmd = [
-            'docker', 'exec', container_name,
-            'find', recording_dir,
-            '-name', f'*-{src_extension}-{dst_extension}-*.wav',
-            '-o',
-            '-name', f'*-{src_extension}-{dst_extension}-*.mp3'
-        ]
-
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
-
-        if proc.returncode != 0:
-            logger.error(f"Failed to search for recording: {proc.stderr}")
+        recording_path = Path(recording_dir)
+        if not recording_path.exists():
+            logger.warning(f"Recording directory not found: {recording_dir}")
             return None
 
-        files = proc.stdout.strip().split('\n')
-        files = [f for f in files if f]  # Filter empty lines
+        # Search pattern: *-{src}-{dst}-*.wav or *.mp3
+        patterns = [
+            f'*-{src_extension}-{dst_extension}-*.wav',
+            f'*-{src_extension}-{dst_extension}-*.mp3',
+            f'*_{src_extension}_{dst_extension}_*.wav',
+            f'*_{src_extension}_{dst_extension}_*.mp3'
+        ]
+
+        files = []
+        for pattern in patterns:
+            files.extend(recording_path.rglob(pattern))
 
         if not files:
             logger.warning(f"No recording found for {src_extension} -> {dst_extension}")
             return None
 
-        # Return most recent file (last in list after sort)
-        files.sort()
-        recording_file = files[-1]
+        # Return most recent file
+        files.sort(key=lambda f: f.stat().st_mtime)
+        recording_file = str(files[-1])
 
         logger.info(f"Found recording: {recording_file}")
         return recording_file
@@ -328,55 +272,37 @@ def find_recording_file(
 
 
 def find_voicemail_file(
-    container_name: str,
     extension: str,
     voicemail_dir: str = '/storage/usbdisk1/mikopbx/voicemail/default'
 ) -> Optional[str]:
     """
-    Find latest voicemail file for extension in container.
+    Find latest voicemail file for extension.
+    Uses direct file system access (runs inside container).
 
     Args:
-        container_name: Docker container name
         extension: Extension number
         voicemail_dir: Voicemail base directory
 
     Returns:
-        Path to voicemail file in container, or None if not found
-
-    Example:
-        >>> file_path = find_voicemail_file('mikopbx-php83', '201')
-        >>> if file_path:
-        ...     print(f"Found voicemail: {file_path}")
-        Found voicemail: /storage/usbdisk1/mikopbx/voicemail/default/201/INBOX/msg0000.wav
+        Path to voicemail file, or None if not found
     """
     try:
-        inbox_dir = f"{voicemail_dir}/{extension}/INBOX"
+        inbox_path = Path(voicemail_dir) / extension / 'INBOX'
 
-        # List files in INBOX
-        cmd = [
-            'docker', 'exec', container_name,
-            'find', inbox_dir,
-            '-name', 'msg*.wav',
-            '-o',
-            '-name', 'msg*.mp3'
-        ]
-
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
-
-        if proc.returncode != 0:
-            logger.warning(f"No voicemail found for extension {extension}")
+        if not inbox_path.exists():
+            logger.warning(f"Voicemail INBOX not found: {inbox_path}")
             return None
 
-        files = proc.stdout.strip().split('\n')
-        files = [f for f in files if f]  # Filter empty lines
+        # Find msg*.wav or msg*.mp3 files
+        files = list(inbox_path.glob('msg*.wav')) + list(inbox_path.glob('msg*.mp3'))
 
         if not files:
             logger.warning(f"No voicemail files found for extension {extension}")
             return None
 
         # Return most recent file
-        files.sort()
-        voicemail_file = files[-1]
+        files.sort(key=lambda f: f.stat().st_mtime)
+        voicemail_file = str(files[-1])
 
         logger.info(f"Found voicemail: {voicemail_file}")
         return voicemail_file
@@ -384,3 +310,109 @@ def find_voicemail_file(
     except Exception as e:
         logger.error(f"Error finding voicemail file: {e}")
         return None
+
+
+def list_directory(dir_path: str) -> List[str]:
+    """
+    List directory contents.
+    Uses direct file system access (runs inside container).
+
+    Args:
+        dir_path: Directory path
+
+    Returns:
+        List of file/directory names
+    """
+    try:
+        path = Path(dir_path)
+        if not path.exists():
+            return []
+        return [item.name for item in path.iterdir()]
+    except Exception as e:
+        logger.error(f"Error listing directory {dir_path}: {e}")
+        return []
+
+
+def file_exists(file_path: str) -> bool:
+    """Check if file exists using direct file system access."""
+    return Path(file_path).exists()
+
+
+def get_file_size(file_path: str) -> int:
+    """Get file size in bytes using direct file system access."""
+    try:
+        return Path(file_path).stat().st_size
+    except Exception:
+        return 0
+
+
+def read_file_content(file_path: str, max_lines: int = 100) -> str:
+    """
+    Read file content (for log files).
+    Uses direct file system access.
+
+    Args:
+        file_path: Path to file
+        max_lines: Maximum lines to read from end
+
+    Returns:
+        File content as string
+    """
+    try:
+        path = Path(file_path)
+        if not path.exists():
+            return ""
+
+        with open(path, 'r', errors='ignore') as f:
+            lines = f.readlines()
+            return ''.join(lines[-max_lines:])
+    except Exception as e:
+        logger.error(f"Error reading file {file_path}: {e}")
+        return ""
+
+
+def grep_in_file(file_path: str, pattern: str, case_insensitive: bool = True) -> List[str]:
+    """
+    Search for pattern in file (like grep).
+    Uses direct file system access.
+
+    Args:
+        file_path: Path to file
+        pattern: Search pattern (simple substring match)
+        case_insensitive: Ignore case in search
+
+    Returns:
+        List of matching lines
+    """
+    try:
+        path = Path(file_path)
+        if not path.exists():
+            return []
+
+        matches = []
+        search_pattern = pattern.lower() if case_insensitive else pattern
+
+        with open(path, 'r', errors='ignore') as f:
+            for line in f:
+                compare_line = line.lower() if case_insensitive else line
+                if search_pattern in compare_line:
+                    matches.append(line.strip())
+
+        return matches
+    except Exception as e:
+        logger.error(f"Error searching in file {file_path}: {e}")
+        return []
+
+
+# Legacy function signatures for backward compatibility (deprecated)
+def validate_audio_in_container(
+    container_name: str,
+    file_path_in_container: str,
+    **kwargs
+) -> Dict[str, Any]:
+    """
+    DEPRECATED: Use validate_audio_file() directly.
+    This function now ignores container_name and uses direct file access.
+    """
+    logger.warning("validate_audio_in_container is deprecated, use validate_audio_file directly")
+    return validate_audio_file(file_path_in_container, **kwargs)

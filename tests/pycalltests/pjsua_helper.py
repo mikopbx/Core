@@ -113,6 +113,10 @@ class PJSUAAccount(pj.Account):
             if self.registration_future and not self.registration_future.done() and self.loop:
                 self.loop.call_soon_threadsafe(self.registration_future.set_exception, e)
 
+    def clear_incoming_calls(self):
+        """Clear stored incoming call objects to prevent memory leak"""
+        self.incoming_calls.clear()
+
     def onIncomingCall(self, prm):
         """Called when receiving incoming call - auto-answer if enabled"""
         try:
@@ -121,6 +125,7 @@ class PJSUAAccount(pj.Account):
 
             # CRITICAL: Store call object to prevent garbage collection
             # Without this, the call object gets destroyed and PJSUA sends 603 Decline automatically
+            # Note: Call clear_incoming_calls() after test to prevent memory leak
             self.incoming_calls.append(call)
 
             call_info = call.getInfo()
@@ -353,6 +358,7 @@ class PJSUAEndpoint:
             import time
             start_time = time.monotonic()
             poll_interval = 0.1  # 100ms between checks
+            early_media_detected = False  # Track if we've seen 183/200 response
 
             while True:
                 # CRITICAL: Process PJSUA events to receive SIP responses (100 Trying, 200 OK, etc.)
@@ -369,6 +375,17 @@ class PJSUAEndpoint:
                     call_info = self.call.getInfo()
                     state = call_info.state
                     state_text = call_info.stateText
+                    last_status = call_info.lastStatusCode
+
+                    # Detect early media (183 Session Progress) or immediate answer (200 OK)
+                    # ConfBridge answers immediately with 200 OK, need to wait for media setup
+                    if not early_media_detected and last_status in (183, 200):
+                        early_media_detected = True
+                        logger.info(f"Early media/answer detected (status={last_status}), waiting for media setup...")
+                        # Give PJSUA time to process SDP and establish RTP
+                        await asyncio.sleep(0.5)
+                        # Process more events after delay
+                        PJSUAManager._endpoint.libHandleEvents(50)
 
                     if state == pj.PJSIP_INV_STATE_CONFIRMED:
                         # Call connected
@@ -380,7 +397,12 @@ class PJSUAEndpoint:
                         return True
                     elif state == pj.PJSIP_INV_STATE_DISCONNECTED:
                         # Call failed or ended
+                        # Note: Even if we saw 200 OK, DISCONNECTED means call is no longer active
+                        # Don't set call_active=True for disconnected calls - that causes resource issues
+                        if early_media_detected and last_status == 200:
+                            logger.warning(f"Call disconnected after 200 OK - call was briefly connected but is now terminated")
                         logger.error(f"✗ Call disconnected ({state_text})")
+                        self.call_active = False
                         await self.hangup()
                         return False
                     else:
@@ -388,9 +410,13 @@ class PJSUAEndpoint:
                         logger.debug(f"Call state: {state_text}, elapsed={elapsed:.1f}s")
 
                 except Exception as e:
-                    logger.error(f"✗ Error checking call state: {e}")
-                    import traceback
-                    traceback.print_exc()
+                    # Call object may become invalid after disconnect
+                    # Don't treat this as success - if call object is invalid, the call has ended
+                    if early_media_detected:
+                        logger.warning(f"Call info unavailable after 200 OK - call has terminated")
+                    logger.debug(f"Error checking call state (call may be terminated): {e}")
+                    self.call_active = False
+                    return False
 
                 # Wait before next poll
                 await asyncio.sleep(poll_interval)
@@ -600,6 +626,9 @@ class PJSUAManager:
         logger.info("cleanup_all() called - unregistering endpoints (keeping event handler running)")
         for ext, endpoint in list(self.endpoints.items()):
             try:
+                # Clear incoming calls list to prevent memory leak
+                if endpoint.account:
+                    endpoint.account.clear_incoming_calls()
                 await endpoint.unregister()
             except Exception as e:
                 logger.error(f"Cleanup {ext} failed: {e}")

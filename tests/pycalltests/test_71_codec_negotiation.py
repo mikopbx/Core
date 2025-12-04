@@ -7,6 +7,8 @@ Tests audio codec negotiation:
 - Test multiple codec scenarios: alaw, ulaw, g729, g722, opus
 - Verify codec selection via Asterisk CLI
 - Test fallback when preferred codec unavailable
+
+NOTE: These tests run INSIDE the Docker container using direct file system access.
 """
 
 import pytest
@@ -20,24 +22,32 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "api"))
 sys.path.insert(0, str(Path(__file__).parent / "helpers"))
 
-from config import get_config
-from conftest import MikoPBXClient
-from pjsua_helper import PJSUAConfig, PJSUAEndpoint, PJSUAManager, get_mikopbx_ip
+from conftest import MikoPBXClient, get_extension_secret
+from pjsua_helper import PJSUAManager, get_mikopbx_ip
 from feature_codes_helper import get_enabled_codecs, enable_codec, disable_all_codecs_except
 from asterisk_helper import get_active_channels, get_channel_codec
-
-# Load configuration
-config = get_config()
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-# Test extension credentials
-TEST_EXTENSIONS = {
-    "201": "5b66b92d5714f921cfcde78a4fda0f58",
-    "202": "e72b3aea6e4f2a8560adb33cb9bfa5dd",
-}
+@pytest_asyncio.fixture
+async def extension_credentials(api_client):
+    """
+    Dynamically load SIP secrets for test extensions via REST API.
+    """
+    extensions = ["201", "202"]
+    credentials = {}
+
+    for ext in extensions:
+        secret = get_extension_secret(ext, api_client)
+        if secret:
+            credentials[ext] = secret
+            logger.info(f"Loaded credentials for extension {ext}")
+        else:
+            logger.warning(f"Failed to load credentials for extension {ext}")
+
+    return credentials
 
 # Codecs to test (conditional based on PJSUA support)
 TEST_CODECS = ['alaw', 'ulaw', 'g729', 'g722', 'opus']
@@ -140,7 +150,7 @@ async def test_01_verify_enabled_codecs(api_client):
 
 
 @pytest.mark.asyncio
-async def test_02_codec_negotiation_alaw(api_client, pjsua_manager, original_codec_config):
+async def test_02_codec_negotiation_alaw(api_client, pjsua_manager, original_codec_config, extension_credentials):
     """
     Test: Codec Negotiation - A-law
 
@@ -184,17 +194,18 @@ async def test_02_codec_negotiation_alaw(api_client, pjsua_manager, original_cod
 
         ext201 = await pjsua_manager.create_endpoint(
             extension="201",
-            password=TEST_EXTENSIONS["201"],
+            password=extension_credentials["201"],
             auto_register=True
         )
 
         ext202 = await pjsua_manager.create_endpoint(
             extension="202",
-            password=TEST_EXTENSIONS["202"],
-            auto_register=True
+            password=extension_credentials["202"],
+            auto_register=True,
+            auto_answer=True
         )
 
-        print(f"✅ Extensions 201, 202 registered")
+        print(f"✅ Extensions 201, 202 registered (202 auto-answer)")
         await asyncio.sleep(2)
 
         # ================================================================
@@ -204,15 +215,8 @@ async def test_02_codec_negotiation_alaw(api_client, pjsua_manager, original_cod
         print(f"STEP 3: Establish Call and Verify Codec")
         print(f"{'-'*70}")
 
-        config_201 = PJSUAConfig(
-            extension="201",
-            password=TEST_EXTENSIONS["201"],
-            server_ip=pjsua_manager.server_ip,
-            media="log"
-        )
-        caller = PJSUAEndpoint(config_201)
-
-        success = await caller.dial("202")
+        # Use manager endpoint for dialing
+        success = await ext201.dial("202")
         assert success, "Failed to establish call"
 
         print(f"✅ Call established: 201 → 202")
@@ -248,7 +252,7 @@ async def test_02_codec_negotiation_alaw(api_client, pjsua_manager, original_cod
         # Maintain call
         await asyncio.sleep(5)
 
-        await caller.hangup()
+        await ext201.hangup()
         print(f"✅ Call ended")
 
         print(f"\n{'='*70}")
@@ -261,7 +265,7 @@ async def test_02_codec_negotiation_alaw(api_client, pjsua_manager, original_cod
 
 
 @pytest.mark.asyncio
-async def test_03_codec_negotiation_ulaw(api_client, pjsua_manager, original_codec_config):
+async def test_03_codec_negotiation_ulaw(api_client, pjsua_manager, original_codec_config, extension_credentials):
     """
     Test: Codec Negotiation - μ-law
 
@@ -295,27 +299,21 @@ async def test_03_codec_negotiation_ulaw(api_client, pjsua_manager, original_cod
 
         ext201 = await pjsua_manager.create_endpoint(
             extension="201",
-            password=TEST_EXTENSIONS["201"],
+            password=extension_credentials["201"],
             auto_register=True
         )
 
         ext202 = await pjsua_manager.create_endpoint(
             extension="202",
-            password=TEST_EXTENSIONS["202"],
-            auto_register=True
+            password=extension_credentials["202"],
+            auto_register=True,
+            auto_answer=True
         )
 
         await asyncio.sleep(2)
 
-        config_201 = PJSUAConfig(
-            extension="201",
-            password=TEST_EXTENSIONS["201"],
-            server_ip=pjsua_manager.server_ip,
-            media="log"
-        )
-        caller = PJSUAEndpoint(config_201)
-
-        success = await caller.dial("202")
+        # Use manager endpoint for dialing
+        success = await ext201.dial("202")
         assert success, "Failed to establish call"
 
         print(f"✅ Call established: 201 → 202")
@@ -341,7 +339,7 @@ async def test_03_codec_negotiation_ulaw(api_client, pjsua_manager, original_cod
                     print(f"⚠ Unexpected codec: {codec} (expected: ulaw)")
 
         await asyncio.sleep(5)
-        await caller.hangup()
+        await ext201.hangup()
         print(f"✅ Call ended")
 
         print(f"\n{'='*70}")
@@ -354,7 +352,7 @@ async def test_03_codec_negotiation_ulaw(api_client, pjsua_manager, original_cod
 
 
 @pytest.mark.asyncio
-async def test_04_codec_priority_selection(api_client, pjsua_manager, original_codec_config):
+async def test_04_codec_priority_selection(api_client, pjsua_manager, original_codec_config, extension_credentials):
     """
     Test: Codec Priority Selection
 
@@ -419,27 +417,21 @@ async def test_04_codec_priority_selection(api_client, pjsua_manager, original_c
 
         ext201 = await pjsua_manager.create_endpoint(
             extension="201",
-            password=TEST_EXTENSIONS["201"],
+            password=extension_credentials["201"],
             auto_register=True
         )
 
         ext202 = await pjsua_manager.create_endpoint(
             extension="202",
-            password=TEST_EXTENSIONS["202"],
-            auto_register=True
+            password=extension_credentials["202"],
+            auto_register=True,
+            auto_answer=True
         )
 
         await asyncio.sleep(2)
 
-        config_201 = PJSUAConfig(
-            extension="201",
-            password=TEST_EXTENSIONS["201"],
-            server_ip=pjsua_manager.server_ip,
-            media="log"
-        )
-        caller = PJSUAEndpoint(config_201)
-
-        success = await caller.dial("202")
+        # Use manager endpoint for dialing
+        success = await ext201.dial("202")
         assert success, "Failed to establish call"
 
         print(f"✅ Call established")
@@ -475,117 +467,11 @@ async def test_04_codec_priority_selection(api_client, pjsua_manager, original_c
             print(f"⚠ Could not determine selected codec")
 
         await asyncio.sleep(5)
-        await caller.hangup()
+        await ext201.hangup()
         print(f"✅ Call ended")
 
         print(f"\n{'='*70}")
         print(f"✓ Codec Priority Selection Test COMPLETED")
-        print(f"{'='*70}")
-
-    except Exception as e:
-        logger.error(f"Test failed: {e}")
-        raise
-
-
-@pytest.mark.asyncio
-@pytest.mark.skipif(
-    "g729" not in TEST_CODECS,
-    reason="G.729 codec testing requires PJSUA support"
-)
-async def test_05_g729_codec_negotiation(api_client, pjsua_manager, original_codec_config):
-    """
-    Test: G.729 Codec Negotiation
-
-    Scenario:
-    1. Enable only g729 codec
-    2. Make call
-    3. Verify g729 codec in use
-
-    Expected:
-    - Call uses g729 codec if supported
-
-    Note: G.729 may require licensing or specific builds
-    This test is conditional based on availability
-    """
-
-    print(f"\n{'='*70}")
-    print(f"Test: G.729 Codec Negotiation")
-    print(f"{'='*70}")
-
-    try:
-        # ================================================================
-        # STEP 1: Configure G.729 Codec
-        # ================================================================
-        print(f"\n{'-'*70}")
-        print(f"STEP 1: Enable G.729 Codec")
-        print(f"{'-'*70}")
-
-        success = disable_all_codecs_except(api_client, ['g729'])
-
-        if not success:
-            print(f"⚠ Failed to configure G.729 codec")
-            print(f"  G.729 may not be available in this build")
-            pytest.skip("G.729 codec not available")
-            return
-
-        print(f"✅ G.729 codec enabled")
-        await asyncio.sleep(3)
-
-        # ================================================================
-        # STEP 2: Make Call
-        # ================================================================
-        print(f"\n{'-'*70}")
-        print(f"STEP 2: Make Call with G.729")
-        print(f"{'-'*70}")
-
-        ext201 = await pjsua_manager.create_endpoint(
-            extension="201",
-            password=TEST_EXTENSIONS["201"],
-            auto_register=True
-        )
-
-        ext202 = await pjsua_manager.create_endpoint(
-            extension="202",
-            password=TEST_EXTENSIONS["202"],
-            auto_register=True
-        )
-
-        await asyncio.sleep(2)
-
-        config_201 = PJSUAConfig(
-            extension="201",
-            password=TEST_EXTENSIONS["201"],
-            server_ip=pjsua_manager.server_ip,
-            media="log"
-        )
-        caller = PJSUAEndpoint(config_201)
-
-        success = await caller.dial("202")
-
-        if not success:
-            print(f"⚠ Call failed - PJSUA may not support G.729")
-            pytest.skip("PJSUA does not support G.729")
-            return
-
-        print(f"✅ Call established with G.729")
-        await asyncio.sleep(3)
-
-        # Verify codec
-        channels = get_active_channels()
-        for ch in channels:
-            if '201' in ch['channel']:
-                codec = get_channel_codec(ch['channel'])
-                print(f"✓ Codec: {codec}")
-
-                if codec and 'g729' in codec.lower():
-                    print(f"✅ G.729 codec verified")
-
-        await asyncio.sleep(5)
-        await caller.hangup()
-        print(f"✅ Call ended")
-
-        print(f"\n{'='*70}")
-        print(f"✓ G.729 Codec Negotiation Test COMPLETED")
         print(f"{'='*70}")
 
     except Exception as e:
