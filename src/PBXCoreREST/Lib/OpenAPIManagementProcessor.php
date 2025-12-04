@@ -23,6 +23,7 @@ use MikoPBX\PBXCoreREST\Lib\OpenAPI\GetSpecificationAction;
 use MikoPBX\PBXCoreREST\Lib\OpenAPI\GetAclRulesAction;
 use MikoPBX\PBXCoreREST\Lib\OpenAPI\GetValidationSchemasAction;
 use MikoPBX\PBXCoreREST\Lib\OpenAPI\GetSimplifiedPermissionsAction;
+use MikoPBX\PBXCoreREST\Lib\OpenAPI\GetDetailedPermissionsAction;
 use MikoPBX\PBXCoreREST\Lib\OpenAPI\ClearCacheAction;
 use Phalcon\Di\Injectable;
 
@@ -36,6 +37,7 @@ enum OpenAPIAction: string
     case GET_ACL_RULES = 'getAclRules';
     case GET_VALIDATION_SCHEMAS = 'getValidationSchemas';
     case GET_SIMPLIFIED_PERMISSIONS = 'getSimplifiedPermissions';
+    case GET_DETAILED_PERMISSIONS = 'getDetailedPermissions';
     case CLEAR_CACHE = 'clearCache';
 }
 
@@ -49,7 +51,8 @@ enum OpenAPIAction: string
  * - GET /openapi:getSpecification           -> getSpecification (retrieve OpenAPI specification)
  * - GET /openapi:getAclRules                -> getAclRules (get ACL rules)
  * - GET /openapi:getValidationSchemas       -> getValidationSchemas (get validation schemas)
- * - GET /openapi:getSimplifiedPermissions   -> getSimplifiedPermissions (get simplified permissions structure)
+ * - GET /openapi:getSimplifiedPermissions   -> getSimplifiedPermissions (get simplified permissions for API Keys)
+ * - GET /openapi:getDetailedPermissions     -> getDetailedPermissions (get detailed permissions for ACL tree)
  * - POST /openapi:clearCache                -> clearCache (clear metadata cache)
  *
  * @package MikoPBX\PBXCoreREST\Lib
@@ -85,6 +88,7 @@ class OpenAPIManagementProcessor extends Injectable
             OpenAPIAction::GET_ACL_RULES => GetAclRulesAction::main(),
             OpenAPIAction::GET_VALIDATION_SCHEMAS => GetValidationSchemasAction::main(),
             OpenAPIAction::GET_SIMPLIFIED_PERMISSIONS => GetSimplifiedPermissionsAction::main(),
+            OpenAPIAction::GET_DETAILED_PERMISSIONS => GetDetailedPermissionsAction::main(),
             OpenAPIAction::CLEAR_CACHE => ClearCacheAction::main(),
         };
 

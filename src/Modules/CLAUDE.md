@@ -161,6 +161,9 @@ public function onBeforeModuleDisable(): bool
 
 // Handle data modification events
 public function modelsEventChangeData(array $data): void
+
+// Filter CDR queries based on user permissions
+public function applyACLFiltersToCDRQuery(array &$parameters, array $sessionContext = []): void
 ```
 
 ### WebUI Manipulation Methods
@@ -207,18 +210,50 @@ public function onVoltBlockCompile(string $controller, string $blockName): strin
 ```php
 public function onAfterExecuteRestAPIRoute(array $request, array &$response): void
 {
-    if ($request['action'] === 'extensions/save' && 
+    if ($request['action'] === 'extensions/save' &&
         isset($request['data']['user_group_id'])) {
-        
+
         // Update group membership
         $extension = $request['data']['number'];
         $groupId = $request['data']['user_group_id'];
-        
+
         GroupMembers::assign($extension, $groupId);
-        
+
         // Clear cache
         $this->di->get('cache')->delete('groups_members');
     }
+}
+```
+
+**CDR Query Filtering (from ModuleUsersUI):**
+
+```php
+public function applyACLFiltersToCDRQuery(array &$parameters, array $sessionContext = []): void
+{
+    // WHY dual context: Called from AdminCabinet (session available)
+    // and REST API (session not available, use $sessionContext from JWT)
+
+    // Determine user role based on context
+    if (!empty($sessionContext)) {
+        // REST API context - use JWT token data
+        $userRole = $sessionContext['role'] ?? '';
+        $userName = $sessionContext['user_name'] ?? '';
+    } else {
+        // AdminCabinet context - use SessionProvider
+        $session = $this->di->get(SessionProvider::SERVICE_NAME);
+        $userRole = $session->get('role');
+        $userName = $session->get('login');
+    }
+
+    // Apply role-based filters
+    if ($userRole === 'operator') {
+        // Restrict to user's own extensions
+        $userExtensions = $this->getUserExtensions($userName);
+
+        $parameters['conditions'] .= ' AND (src IN ({extensions:array}) OR dst IN ({extensions:array}))';
+        $parameters['bind']['extensions'] = $userExtensions;
+    }
+    // Admins see all records - no filters
 }
 ```
 

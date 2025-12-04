@@ -404,6 +404,90 @@ class Controller extends BaseRestController
 500 Internal Server Error   # Unexpected error
 ```
 
+## OpenAPI Management Endpoints
+
+The `/pbxcore/api/v3/openapi` resource provides comprehensive API metadata and documentation.
+
+### Available Endpoints
+
+**GET /pbxcore/api/v3/openapi:getSpecification**
+- Returns OpenAPI 3.1 specification (JSON/YAML)
+- Query parameter: `format` (json/yaml)
+- Used by: Swagger UI, ReDoc, API documentation tools
+
+**GET /pbxcore/api/v3/openapi:getAclRules**
+- Returns ACL rules extracted from API metadata
+- Used by: Access control systems
+
+**GET /pbxcore/api/v3/openapi:getValidationSchemas**
+- Returns validation schemas for all endpoints
+- Used by: Frontend validation, API clients
+
+**GET /pbxcore/api/v3/openapi:getSimplifiedPermissions**
+- Returns simplified resource/action structure for API Keys
+- Groups endpoints by resource and action type (read/write)
+- Used by: API Keys management UI
+
+**GET /pbxcore/api/v3/openapi:getDetailedPermissions**
+- Returns comprehensive controller/action structure for ACL tree building
+- Categories: AdminCabinet (APP), PBX_CORE_REST (REST), Module categories
+- Response structure:
+  ```json
+  {
+    "categories": {
+      "AdminCabinet": {
+        "type": "APP",
+        "controllers": {
+          "ClassName": {
+            "name": "ControllerName",
+            "label": "Display Label",
+            "actions": ["action1", "action2"]
+          }
+        }
+      },
+      "PBX_CORE_REST": {
+        "type": "REST",
+        "controllers": {
+          "/pbxcore/api/v3/resource": {
+            "name": "resource",
+            "label": "Resource Tag",
+            "actions": ["getList", "create", "update"]
+          }
+        }
+      },
+      "ModuleId": {
+        "type": "APP|REST",
+        "controllers": { /* module controllers */ }
+      }
+    }
+  }
+  ```
+- Module Pattern 2 endpoints (legacy) use `"actions": ["*"]` wildcard
+- Module REST v3 endpoints (Pattern 4) are separated into respective module categories
+- Used by: ModuleUsersUI ACL tree builder
+
+**POST /pbxcore/api/v3/openapi:clearCache**
+**DELETE /pbxcore/api/v3/openapi:clearCache**
+- Clears OpenAPI metadata cache
+- Forces metadata regeneration on next request
+
+### Implementation Details
+
+**Controller Discovery**: `src/PBXCoreREST/Lib/OpenAPI/GetDetailedPermissionsAction.php`
+- Scans AdminCabinet controllers via filesystem (MVC pattern)
+- Scans REST API controllers via `ControllerDiscovery` and `ApiMetadataRegistry` (Pattern 4)
+- Separates Core REST endpoints from Module REST v3 endpoints by namespace analysis
+- Scans Module APP controllers in enabled modules
+- Scans Module REST controllers (Pattern 2 legacy with Phalcon Annotations)
+
+**Module Endpoint Separation**: Module REST v3 endpoints (Pattern 4) are detected by namespace pattern `Modules\{ModuleId}\Lib\RestAPI\...` and placed in module categories instead of PBX_CORE_REST. This ensures proper ACL tree grouping.
+
+**Pattern 2 Wildcard Actions**: Legacy modules using Pattern 2 (`moduleRestAPICallback`, `getPBXCoreRESTAdditionalRoutes`) return `["*"]` wildcard for actions because parsing Phalcon Annotations would require controller instantiation. Frontend should interpret this as "all actions" and provide single permission toggle for the entire endpoint.
+
+**Test Coverage**: `tests/api/test_49_openapi.py`
+- `test_13_get_detailed_permissions` - Validates response structure and categories
+- `test_14_module_rest_v3_endpoints_separation` - Ensures Module REST v3 endpoints are properly separated from Core
+
 ## Testing & Validation
 
 ### API Testing

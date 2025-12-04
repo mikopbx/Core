@@ -52,13 +52,13 @@ use MikoPBX\PBXCoreREST\Attributes\{
 #[ResourceSecurity('openapi', requirements: [SecurityType::LOCALHOST, SecurityType::BEARER_TOKEN])]
 #[HttpMapping(
     mapping: [
-        'GET' => ['getSpecification', 'getAclRules', 'getValidationSchemas', 'getSimplifiedPermissions'],
+        'GET' => ['getSpecification', 'getAclRules', 'getValidationSchemas', 'getSimplifiedPermissions', 'getDetailedPermissions'],
         'POST' => ['clearCache'],
         'DELETE' => ['clearCache']
     ],
     resourceLevelMethods: [],
     collectionLevelMethods: ['clearCache'],
-    customMethods: ['getSpecification', 'getAclRules', 'getValidationSchemas', 'getSimplifiedPermissions', 'clearCache']
+    customMethods: ['getSpecification', 'getAclRules', 'getValidationSchemas', 'getSimplifiedPermissions', 'getDetailedPermissions', 'clearCache']
 )]
 class RestController extends BaseRestController
 {
@@ -143,6 +143,29 @@ class RestController extends BaseRestController
     #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
     #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
     public function getSimplifiedPermissions(): void
+    {
+        // Implementation handled by BaseRestController
+    }
+
+    /**
+     * Get detailed permissions structure for ACL management
+     *
+     * Returns a comprehensive view of all controllers (AdminCabinet, REST API, Modules)
+     * with their actions for building ACL tree in ModuleUsersUI. Includes exclusion rules
+     * (always allowed, always denied, linked actions).
+     *
+     * @route GET /pbxcore/api/v3/openapi:getDetailedPermissions
+     */
+    #[ApiOperation(
+        summary: 'rest_openapi_GetDetailedPerms',
+        description: 'rest_openapi_GetDetailedPermsDesc',
+        operationId: 'getDetailedPermissions'
+    )]
+    #[ApiResponse(200, 'rest_response_200_get')]
+    #[ApiResponse(401, 'rest_response_401_unauthorized', 'PBXApiResult')]
+    #[ApiResponse(403, 'rest_response_403_forbidden', 'PBXApiResult')]
+    #[ApiResponse(500, 'rest_response_500_error', 'PBXApiResult')]
+    public function getDetailedPermissions(): void
     {
         // Implementation handled by BaseRestController
     }

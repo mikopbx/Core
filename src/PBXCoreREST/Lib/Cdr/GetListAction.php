@@ -45,9 +45,11 @@ class GetListAction
      * Frontend is responsible for transforming to DataTables format if needed.
      *
      * @param array $data Request parameters
+     * @param array $sessionContext Session context from REST API (role, user_name, session_id).
+     *                              Passed to module hooks for ACL filtering.
      * @return PBXApiResult
      */
-    public static function main(array $data): PBXApiResult
+    public static function main(array $data, array $sessionContext = []): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
@@ -55,7 +57,7 @@ class GetListAction
         try {
             // Always return REST format with grouped records
             // WHY: Single format, easier maintenance, reusable for CRM and WebUI
-            $result = self::handleRestRequest($data);
+            $result = self::handleRestRequest($data, $sessionContext);
 
             // WHY: Follow REST API protocol - all data inside 'data' block
             // Structure: {data: {records: [...], pagination: {...}}}
@@ -95,9 +97,10 @@ class GetListAction
      * - ACL filtering via module hooks
      *
      * @param array $data Request parameters
+     * @param array $sessionContext Session context from REST API for ACL filtering
      * @return array Response with data and pagination
      */
-    private static function handleRestRequest(array $data): array
+    private static function handleRestRequest(array $data, array $sessionContext = []): array
     {
         // Pagination parameters
         // WHY: Clamp limit to 1-1000 range to prevent excessive queries
@@ -215,10 +218,12 @@ class GetListAction
         ];
 
         // Apply ACL filters via module hooks
-        // WHY: Same mechanism as CallDetailRecordsController for consistency
+        // WHY: Pass sessionContext (role, user_name from JWT) for REST API context
+        // In AdminCabinet context, sessionContext is empty - modules use SessionProvider
+        // In REST API context, modules should use sessionContext['role'] instead
         PBXConfModulesProvider::hookModulesMethod(
             CDRConfigInterface::APPLY_ACL_FILTERS_TO_CDR_QUERY,
-            [&$parameters]
+            [&$parameters, $sessionContext]
         );
 
         // Build query conditions (Phalcon ORM format)
