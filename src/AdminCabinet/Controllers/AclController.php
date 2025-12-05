@@ -19,7 +19,7 @@
 
 namespace MikoPBX\AdminCabinet\Controllers;
 
-use MikoPBX\AdminCabinet\Providers\SecurityPluginProvider;
+use MikoPBX\AdminCabinet\Plugins\SecurityPlugin;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\WebUIConfigInterface;
 
@@ -70,15 +70,36 @@ class AclController extends BaseController
             $controllerClass = "MikoPBX\\AdminCabinet\\Controllers\\{$controllerName}";
         }
 
-        // Check permissions for common actions using SecurityPlugin service
+        // Create SecurityPlugin instance with proper DI context for ACL checks
+        $securityPlugin = new SecurityPlugin();
+        $securityPlugin->setDI($this->di);
+
+        // Check permissions using 3-level model:
+        // Level 1: View list (index) - can see list of records
+        // Level 2: View record (modify) - can open and view individual record
+        // Level 3: Edit/Delete (save) - can modify, delete, copy records
+        //
+        // ModuleUsersUI stores permissions as: index, modify, save
+        // UI components need: index, modify, edit, save, delete, copy, getNewRecords
+        // We map granular checks to the 3-level model
+
+        $canViewList = $securityPlugin->isAllowedAction($controllerClass, 'index');
+        $canViewRecord = $securityPlugin->isAllowedAction($controllerClass, 'modify');
+        $canEdit = $securityPlugin->isAllowedAction($controllerClass, 'save');
+
         $permissions = [
-            'save' => $this->di->get(SecurityPluginProvider::SERVICE_NAME, [$controllerClass, 'save']),
-            'modify' => $this->di->get(SecurityPluginProvider::SERVICE_NAME, [$controllerClass, 'modify']),
-            'edit' => $this->di->get(SecurityPluginProvider::SERVICE_NAME, [$controllerClass, 'modify']), // Alias for modify
-            'delete' => $this->di->get(SecurityPluginProvider::SERVICE_NAME, [$controllerClass, 'delete']),
-            'copy' => $this->di->get(SecurityPluginProvider::SERVICE_NAME, [$controllerClass, 'copy']),
-            'index' => $this->di->get(SecurityPluginProvider::SERVICE_NAME, [$controllerClass, 'index']),
-            'getNewRecords' => $this->di->get(SecurityPluginProvider::SERVICE_NAME, [$controllerClass, 'getNewRecords']),
+            // Level 1: View list
+            'index' => $canViewList,
+            'getNewRecords' => $canViewList,
+
+            // Level 2: View record
+            'modify' => $canViewRecord,
+            'edit' => $canViewRecord,
+
+            // Level 3: Edit/Delete (all modification actions map to 'save' permission)
+            'save' => $canEdit,
+            'delete' => $canEdit,
+            'copy' => $canEdit,
         ];
 
         // Allow modules to add custom permissions for specific controllers

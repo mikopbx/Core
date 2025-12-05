@@ -33,6 +33,7 @@ use MikoPBX\Common\Models\{
     Users
 };
 use MikoPBX\Common\Library\Text;
+use MikoPBX\Common\Providers\AclProvider;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
 use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
@@ -45,19 +46,38 @@ use Phalcon\Translate\Adapter\NativeArray;
  * - Database entities (users, providers, queues, etc.)
  * - Static menu pages (settings, network, etc.)
  *
- * Supports filtering by search query parameter.
+ * Supports filtering by search query parameter and ACL permissions.
  *
  * @package MikoPBX\PBXCoreREST\Lib\Search
  */
 class GetSearchItemsAction extends Injectable
 {
     /**
+     * Mapping of model classes to their corresponding AdminCabinet controllers
+     * Used for ACL permission checking
+     */
+    private const MODEL_TO_CONTROLLER = [
+        Users::class => 'MikoPBX\\AdminCabinet\\Controllers\\ExtensionsController',
+        Providers::class => 'MikoPBX\\AdminCabinet\\Controllers\\ProvidersController',
+        CallQueues::class => 'MikoPBX\\AdminCabinet\\Controllers\\CallQueuesController',
+        IvrMenu::class => 'MikoPBX\\AdminCabinet\\Controllers\\IvrMenuController',
+        PbxExtensionModules::class => 'MikoPBX\\AdminCabinet\\Controllers\\PbxExtensionModulesController',
+        ConferenceRooms::class => 'MikoPBX\\AdminCabinet\\Controllers\\ConferenceRoomsController',
+        DialplanApplications::class => 'MikoPBX\\AdminCabinet\\Controllers\\DialplanApplicationsController',
+        NetworkFilters::class => 'MikoPBX\\AdminCabinet\\Controllers\\FirewallController',
+        OutWorkTimes::class => 'MikoPBX\\AdminCabinet\\Controllers\\OutboundRoutesController',
+        AsteriskManagerUsers::class => 'MikoPBX\\AdminCabinet\\Controllers\\AsteriskManagersController',
+        CustomFiles::class => 'MikoPBX\\AdminCabinet\\Controllers\\CustomFilesController',
+    ];
+
+    /**
      * Get searchable items with optional filtering
      *
      * @param array $data Request data with optional 'query' parameter
+     * @param array $sessionContext Session context from REST API (role, user_name from JWT)
      * @return PBXApiResult
      */
-    public static function main(array $data = []): PBXApiResult
+    public static function main(array $data = [], array $sessionContext = []): PBXApiResult
     {
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
@@ -71,13 +91,17 @@ class GetSearchItemsAction extends Injectable
         // Get translation service
         $translation = $di->getShared('translation');
 
+        // Get ACL service and user role
+        $acl = $di->getShared(AclProvider::SERVICE_NAME);
+        $role = self::getUserRole($sessionContext);
+
         $results = [];
 
         // If query is empty, show only menu sections (like main menu)
         // If query is provided, search in all entities + menu items
         if (empty(trim($query))) {
             // Empty query - show only main menu sections
-            self::addOtherMenuItems($results, $translation, $query);
+            self::addOtherMenuItems($results, $translation, $query, $acl, $role);
         } else {
             // Query provided - search in all database entities
             $arrClasses = [
@@ -98,6 +122,11 @@ class GetSearchItemsAction extends Injectable
 
             // Fetch items from each model class
             foreach ($arrClasses as $itemClass) {
+                // Check if user has access to the controller for this model
+                if (!self::hasAccessToModel($itemClass, $acl, $role)) {
+                    continue;
+                }
+
                 $records = call_user_func([$itemClass, 'find']);
                 $categoryItems = [];
 
@@ -111,12 +140,76 @@ class GetSearchItemsAction extends Injectable
 
             $results = array_merge(...$categoryResults);
 
-            // Add static menu items (filtered by query)
-            self::addOtherMenuItems($results, $translation, $query);
+            // Add static menu items (filtered by query and ACL)
+            self::addOtherMenuItems($results, $translation, $query, $acl, $role);
         }
 
         $res->data = $results;
         return $res;
+    }
+
+    /**
+     * Get user role from session context
+     *
+     * @param array $sessionContext Session context from JWT
+     * @return string User role (defaults to 'admins' for backward compatibility)
+     */
+    private static function getUserRole(array $sessionContext): string
+    {
+        // If no session context (localhost request), default to admins
+        if (empty($sessionContext)) {
+            return AclProvider::ROLE_ADMINS;
+        }
+
+        return $sessionContext['role'] ?? AclProvider::ROLE_ADMINS;
+    }
+
+    /**
+     * Check if user has access to view/modify entities of a specific model
+     *
+     * @param string $modelClass Model class name
+     * @param object $acl ACL service
+     * @param string $role User role
+     * @return bool True if user has access
+     */
+    private static function hasAccessToModel(string $modelClass, object $acl, string $role): bool
+    {
+        // Admins have full access
+        if ($role === AclProvider::ROLE_ADMINS) {
+            return true;
+        }
+
+        $controller = self::MODEL_TO_CONTROLLER[$modelClass] ?? null;
+        if ($controller === null) {
+            return true; // Unknown model - allow by default
+        }
+
+        // Check if user can at least view (index action) or modify
+        // Note: isAllowed() returns boolean in Phalcon 5.x, not AclEnum constant
+        $canIndex = $acl->isAllowed($role, $controller, 'index') === true;
+        $canModify = $acl->isAllowed($role, $controller, 'modify') === true;
+
+        return $canIndex || $canModify;
+    }
+
+    /**
+     * Check if user has access to a specific controller action
+     *
+     * @param string $controllerClass Full controller class name
+     * @param string $action Action name
+     * @param object $acl ACL service
+     * @param string $role User role
+     * @return bool True if user has access
+     */
+    private static function hasAccessToController(string $controllerClass, string $action, object $acl, string $role): bool
+    {
+        // Admins have full access
+        if ($role === AclProvider::ROLE_ADMINS) {
+            return true;
+        }
+
+        // Note: isAllowed() returns boolean in Phalcon 5.x, not AclEnum constant
+        return $acl->isAllowed($role, $controllerClass, $action) === true;
     }
 
     /**
@@ -164,14 +257,16 @@ class GetSearchItemsAction extends Injectable
     }
 
     /**
-     * Add static menu items for controllers if they match the search query
+     * Add static menu items for controllers if they match the search query and ACL permissions
      *
      * @param array $items Reference to items array
      * @param NativeArray $translation Translation service
      * @param string $query Search query to filter by
+     * @param object $acl ACL service
+     * @param string $role User role
      * @return void
      */
-    private static function addOtherMenuItems(array &$items, NativeArray $translation, string $query = ''): void
+    private static function addOtherMenuItems(array &$items, NativeArray $translation, string $query, object $acl, string $role): void
     {
         $additionalMenuItems = [
             // Main sections - entities
@@ -215,10 +310,18 @@ class GetSearchItemsAction extends Injectable
         ];
 
         foreach ($additionalMenuItems as $controllerName => $config) {
-            // Remove "Controller" suffix
-            $controllerName = str_replace('Controller', '', $controllerName);
-            $unCamelizedControllerName = Text::uncamelize($controllerName, '-');
-            $translatedControllerName = $translation->_('mm_' . $controllerName);
+            // Build full controller class name for ACL check
+            $controllerClass = 'MikoPBX\\AdminCabinet\\Controllers\\' . $controllerName;
+
+            // Check ACL permission for this controller action
+            if (!self::hasAccessToController($controllerClass, $config['action'], $acl, $role)) {
+                continue;
+            }
+
+            // Remove "Controller" suffix for URL and translation
+            $controllerNameWithoutSuffix = str_replace('Controller', '', $controllerName);
+            $unCamelizedControllerName = Text::uncamelize($controllerNameWithoutSuffix, '-');
+            $translatedControllerName = $translation->_('mm_' . $controllerNameWithoutSuffix);
 
             // Filter by search query if provided
             if (!empty($query)) {

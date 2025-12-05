@@ -42,6 +42,7 @@ return [
      'pk_ColumnCreated' => 'Создано',
      'pk_ColumnLastUsed' => 'Последнее использование',
      'pk_ColumnActions' => 'Действия',
+     'pk_NeverUsed' => 'Ещё не использовался',
  
      // Actions
      'pk_Rename' => 'Переименовать',
@@ -64,6 +65,9 @@ return [
      'pk_RenameSuccess' => 'Passkey успешно переименован',
      'pk_RenameError' => 'Ошибка переименования Passkey',
      'pk_NotSupported' => 'Ваш браузер не поддерживает Passkeys',
+     'pk_TlsCertificateError' => 'WebAuthn требует доверенный TLS сертификат. Добавьте сертификат в доверенные или используйте другой браузер (Safari).',
+     'pk_DomainRequired' => 'Требуется доменное имя',
+     'pk_DomainRequiredDescription' => 'Passkeys работают только при доступе через доменное имя (например, pbx.example.com). При доступе по IP-адресу Passkeys недоступны. Настройте доменное имя для вашей АТС, чтобы использовать Passkeys.',
  
      // Login page
      'pk_LoginButton' => 'Войти с Passkey',

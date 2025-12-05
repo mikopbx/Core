@@ -70,7 +70,7 @@ class GetWikiLinkAction
         // Get link replacement mapping
         $finalUrl = $baseUrl;
         if (!empty($moduleId)) {
-            $finalUrl = self::getModuleWikiLink($moduleId, $language, $baseUrl);
+            $finalUrl = self::getModuleWikiLink($moduleId, $language, $baseUrl, $controller);
         } else {
             $finalUrl = self::getCoreWikiLink($language, $baseUrl);
         }
@@ -153,9 +153,10 @@ class GetWikiLinkAction
      * @param string $uniqid Module unique ID
      * @param string $language Language code
      * @param string $baseUrl Base wiki URL (fallback)
+     * @param string $controller Controller name for anchor
      * @return string Final documentation URL
      */
-    private static function getModuleWikiLink(string $uniqid, string $language, string $baseUrl): string
+    private static function getModuleWikiLink(string $uniqid, string $language, string $baseUrl, string $controller = ''): string
     {
         $module = PbxExtensionModules::findFirstByUniqid($uniqid);
 
@@ -163,23 +164,88 @@ class GetWikiLinkAction
             return $baseUrl;
         }
 
-        try {
-            $links = json_decode($module->wiki_links, true, 512, JSON_THROW_ON_ERROR);
+        // First, check if module has custom wiki_links configured
+        if (!empty($module->wiki_links)) {
+            try {
+                $links = json_decode($module->wiki_links, true, 512, JSON_THROW_ON_ERROR);
 
-            if (is_array($links) && isset($links[$language])) {
-                // Module has language-specific links
-                if (is_string($links[$language])) {
-                    return $links[$language];
+                if (is_array($links) && isset($links[$language])) {
+                    // Module has language-specific links
+                    if (is_string($links[$language])) {
+                        return $links[$language];
+                    }
+                    // If it's an array, look for specific page mapping
+                    if (is_array($links[$language]) && isset($links[$language][$baseUrl])) {
+                        return $links[$language][$baseUrl];
+                    }
                 }
-                // If it's an array, look for specific page mapping
-                if (is_array($links[$language]) && isset($links[$language][$baseUrl])) {
-                    return $links[$language][$baseUrl];
-                }
+            } catch (\JsonException $e) {
+                SystemMessages::sysLogMsg(__CLASS__, $e->getMessage());
             }
-        } catch (\JsonException $e) {
-            SystemMessages::sysLogMsg(__CLASS__, $e->getMessage());
         }
 
-        return $baseUrl;
+        // Generate automatic documentation URL based on developer and module ID
+        return self::generateModuleDocUrl($uniqid, $module->developer ?? '', $language, $controller);
+    }
+
+    /**
+     * Generate automatic documentation URL for module
+     *
+     * URL pattern:
+     * - EN: https://docs.mikopbx.com/mikopbx/english/modules/{developer}/{module-slug}#{controller-slug}
+     * - RU: https://docs.mikopbx.ru/mikopbx/modules/{developer}/{module-slug}#{controller-slug}
+     *
+     * @param string $moduleId Module unique ID (e.g., ModuleUsersUI)
+     * @param string $developer Developer name from module record
+     * @param string $language Language code (en/ru)
+     * @param string $controller Controller name for anchor
+     * @return string Generated documentation URL
+     */
+    private static function generateModuleDocUrl(string $moduleId, string $developer, string $language, string $controller): string
+    {
+        // Normalize developer: empty = "miko", otherwise lowercase with special chars replaced by hyphens
+        $developerSlug = self::normalizeSlug($developer, 'miko');
+
+        // Convert module ID to slug (ModuleUsersUI → module-users-u-i)
+        $moduleSlug = Text::uncamelize($moduleId, '-');
+
+        // Convert controller to slug (UserProfile → user-profile)
+        $controllerSlug = Text::uncamelize($controller, '-');
+
+        // Build URL based on language
+        if ($language === 'ru') {
+            $url = "https://docs.mikopbx.ru/mikopbx/modules/{$developerSlug}/{$moduleSlug}";
+        } else {
+            $url = "https://docs.mikopbx.com/mikopbx/english/modules/{$developerSlug}/{$moduleSlug}";
+        }
+
+        // Add controller as anchor
+        if (!empty($controllerSlug)) {
+            $url .= "#{$controllerSlug}";
+        }
+
+        return $url;
+    }
+
+    /**
+     * Normalize string to URL-safe slug
+     *
+     * @param string $value Input string
+     * @param string $default Default value if input is empty
+     * @return string Normalized slug
+     */
+    private static function normalizeSlug(string $value, string $default = ''): string
+    {
+        $value = trim($value);
+
+        if ($value === '') {
+            return $default;
+        }
+
+        // Replace any non-alphanumeric characters with hyphens, convert to lowercase
+        $slug = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $value));
+
+        // Remove leading/trailing hyphens
+        return trim($slug, '-');
     }
 }

@@ -151,10 +151,14 @@ class RefreshAction
                 return $res;
             }
 
+            // Get homePage from sessionParams (stored during login)
+            $homePage = $sessionParams[SessionController::HOME_PAGE] ?? '/admin-cabinet/extensions/index';
+
             // Return new access token with cookie instructions
             $res->data = DataStructure::createRefreshResponse(
                 $accessToken,
-                JWTHelper::ACCESS_TOKEN_TTL
+                JWTHelper::ACCESS_TOKEN_TTL,
+                $homePage
             );
 
             // Add cookie instructions for controller (will be removed before sending to client)
@@ -168,10 +172,14 @@ class RefreshAction
             // No rotation - just update lastUsedAt
             $tokenStorage->touch($refreshToken);
 
+            // Get homePage from sessionParams (stored during login)
+            $homePage = $sessionParams[SessionController::HOME_PAGE] ?? '/admin-cabinet/extensions/index';
+
             // Return new access token (no cookie update)
             $res->data = DataStructure::createRefreshResponse(
                 $accessToken,
-                JWTHelper::ACCESS_TOKEN_TTL
+                JWTHelper::ACCESS_TOKEN_TTL,
+                $homePage
             );
         }
 

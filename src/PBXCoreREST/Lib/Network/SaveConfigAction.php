@@ -22,6 +22,7 @@ namespace MikoPBX\PBXCoreREST\Lib\Network;
 use MikoPBX\Common\Models\LanInterfaces;
 use MikoPBX\Common\Models\NetworkStaticRoutes;
 use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\System\System;
 use MikoPBX\Core\Utilities\IpAddressHelper;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
@@ -55,17 +56,24 @@ class SaveConfigAction
         $res = new PBXApiResult();
         $res->processor = __METHOD__;
 
-        // Validate input data
-        [$isValid, $validationMessages] = self::validateInputData($data);
-        if (!$isValid) {
-            $res->messages['error'] = $validationMessages;
+        $di = Di::getDefault();
+        if ($di === null) {
+            $res->messages['error'] = ['Dependency injection container not initialized'];
             $res->success = false;
             return $res;
         }
 
-        $di = Di::getDefault();
-        if ($di === null) {
-            $res->messages['error'] = ['Dependency injection container not initialized'];
+        // Get translation service
+        $t = $di->get(TranslationProvider::SERVICE_NAME);
+
+        // Validate input data
+        [$isValid, $validationMessages] = self::validateInputData($data);
+        if (!$isValid) {
+            // Translate validation messages
+            $res->messages['error'] = array_map(
+                static fn(string $key): string => $t->_($key),
+                $validationMessages
+            );
             $res->success = false;
             return $res;
         }
@@ -426,6 +434,11 @@ class SaveConfigAction
                         } else {
                             $eth->$name = $data['ipaddr_' . $eth->id] ?? '';
                         }
+
+                        // Synchronize external IP to EXTERNAL_SIP_IP_ADDR
+                        // This ensures SSL certificates and notifications use current external IP
+                        $messages = [];
+                        PbxSettings::setValueByKey(PbxSettings::EXTERNAL_SIP_IP_ADDR, trim($eth->$name), $messages);
                     } else {
                         $eth->$name = '';
                     }
@@ -443,10 +456,8 @@ class SaveConfigAction
 
                         // Synchronize external hostname to EXTERNAL_SIP_HOST_NAME
                         // This ensures SSL certificates are regenerated with the new hostname
-                        if (!empty($eth->$name)) {
-                            $messages = [];
-                            PbxSettings::setValueByKey(PbxSettings::EXTERNAL_SIP_HOST_NAME, trim($eth->$name), $messages);
-                        }
+                        $messages = [];
+                        PbxSettings::setValueByKey(PbxSettings::EXTERNAL_SIP_HOST_NAME, trim($eth->$name), $messages);
                     } else {
                         $eth->$name = '';
                     }
