@@ -113,6 +113,7 @@ class BaseController extends Controller
         $this->view->t = $this->translation;
         $this->view->debugMode = $this->config->path('adminApplication.debugMode');
         $this->view->urlToLogo = $this->url->get('assets/img/logo-mikopbx.svg');
+        $this->view->logoHref = $this->getLogoHref();
         $this->view->urlToController = $this->url->get($this->controllerNameUnCamelized);
         $this->view->represent = '';
         $this->view->WebAdminLanguage = $this->language;
@@ -312,6 +313,37 @@ class BaseController extends Controller
 
         // Get the second part of the namespace
         return $parts[1];
+    }
+
+    /**
+     * Get the logo href URL based on user's home page from JWT token.
+     *
+     * For users with limited permissions, returns their configured home page.
+     * For admins or when home page is not set, returns default index.
+     *
+     * @return string URL for logo click redirect
+     */
+    private function getLogoHref(): string
+    {
+        $defaultUrl = $this->url->get('index');
+
+        // Try to get home page from refresh token cookie
+        if ($this->cookies->has('refreshToken')) {
+            try {
+                $refreshToken = $this->cookies->get('refreshToken')->getValue();
+                if (!empty($refreshToken)) {
+                    $jwt = $this->di->getShared(\MikoPBX\Common\Providers\JwtProvider::SERVICE_NAME);
+                    $homePage = $jwt->extractHomePageFromRefreshToken($refreshToken);
+                    if (!empty($homePage)) {
+                        return $homePage;
+                    }
+                }
+            } catch (\Throwable) {
+                // Cookie decryption failed - use default
+            }
+        }
+
+        return $defaultUrl;
     }
 
     /**

@@ -1,6 +1,6 @@
 <!--TOP MENU-->
 <div class="ui fixed inverted menu">
-    <a class="item logo hide-on-mobile" href="{{ url.get('index') }}" id="top-left-logo">
+    <a class="item logo hide-on-mobile" href="{{ logoHref }}" id="top-left-logo">
         <img src="{{ urlToLogo }}" class="ui small image"/>
     </a>
 

@@ -25,6 +25,7 @@ use MikoPBX\AdminCabinet\Controllers\SessionController;
 use MikoPBX\Common\Handlers\CriticalErrorsHandler;
 use MikoPBX\Common\Library\Text;
 use MikoPBX\Common\Providers\AclProvider;
+use MikoPBX\Common\Providers\JwtProvider;
 use MikoPBX\Common\Providers\ManagedCacheProvider;
 use Phalcon\Acl\Enum as AclEnum;
 use Phalcon\Di\Injectable;
@@ -326,8 +327,8 @@ class SecurityPlugin extends Injectable
     /**
      * Checks if an action is allowed for the current user.
      *
-     * JWT authentication: role should be extracted from JWT claims.
-     * For now, uses default 'admins' role for authenticated users.
+     * Extracts role from JWT Bearer token for proper ACL checking.
+     * Falls back to 'admins' role for localhost requests or when no Bearer token present.
      *
      * @param string $controller The full name of the controller class.
      * @param string $action The name of the action to check.
@@ -335,9 +336,13 @@ class SecurityPlugin extends Injectable
      */
     public function isAllowedAction(string $controller, string $action): bool
     {
-        // TODO: extract role from JWT token claims
-        // For now, assume all authenticated users have 'admins' role
-        $role = AclProvider::ROLE_ADMINS;
+        // Extract role from JWT token if Bearer header present
+        $role = $this->extractRoleFromJwt();
+
+        // Fallback to admins for localhost requests or initial page loads (backward compatibility)
+        if ($role === null) {
+            $role = AclProvider::ROLE_ADMINS;
+        }
 
         $acl = $this->di->get(AclProvider::SERVICE_NAME);
         $allowed = $acl->isAllowed($role, $controller, $action);
@@ -347,5 +352,62 @@ class SecurityPlugin extends Injectable
         }
 
         return true;
+    }
+
+    /**
+     * Extract user role from JWT Bearer token or refreshToken cookie.
+     *
+     * Priority:
+     * 1. Bearer token in Authorization header (AJAX requests)
+     * 2. RefreshToken cookie -> Redis lookup (browser page loads)
+     *
+     * @return string|null Role from JWT claims or Redis, or null if not available
+     */
+    private function extractRoleFromJwt(): ?string
+    {
+        $jwt = $this->di->getShared(JwtProvider::SERVICE_NAME);
+
+        // 1. Try Bearer header first (AJAX requests)
+        $authHeader = $this->request->getHeader('Authorization');
+        $role = $jwt->extractRoleFromHeader($authHeader);
+
+        if ($role !== null) {
+            if (class_exists(\MikoPBX\Core\System\SystemMessages::class)) {
+                \MikoPBX\Core\System\SystemMessages::sysLogMsg(
+                    __METHOD__,
+                    "Role from Bearer header: {$role}",
+                    LOG_DEBUG
+                );
+            }
+            return $role;
+        }
+
+        // 2. Fallback: try refreshToken cookie (browser page load)
+        if ($this->cookies->has('refreshToken')) {
+            try {
+                $refreshToken = $this->cookies->get('refreshToken')->getValue();
+                if (!empty($refreshToken)) {
+                    $role = $jwt->extractRoleFromRefreshToken($refreshToken);
+                    if (class_exists(\MikoPBX\Core\System\SystemMessages::class)) {
+                        \MikoPBX\Core\System\SystemMessages::sysLogMsg(
+                            __METHOD__,
+                            "Role from refreshToken cookie: " . ($role ?? 'null') . ", token length: " . strlen($refreshToken),
+                            LOG_DEBUG
+                        );
+                    }
+                    return $role;
+                }
+            } catch (\Throwable $e) {
+                if (class_exists(\MikoPBX\Core\System\SystemMessages::class)) {
+                    \MikoPBX\Core\System\SystemMessages::sysLogMsg(
+                        __METHOD__,
+                        "Cookie decryption failed: " . $e->getMessage(),
+                        LOG_DEBUG
+                    );
+                }
+            }
+        }
+
+        return null;
     }
 }

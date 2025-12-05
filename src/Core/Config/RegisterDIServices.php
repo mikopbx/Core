@@ -22,7 +22,8 @@ declare(strict_types=1);
 
 namespace MikoPBX\Core\Config;
 
-use MikoPBX\Common\Providers\{AmiConnectionCommand,
+use MikoPBX\Common\Providers\{AclProvider,
+    AmiConnectionCommand,
     AmiConnectionListener,
     BeanstalkConnectionModelsProvider,
     CDRDatabaseProvider,
@@ -108,6 +109,9 @@ class RegisterDIServices
             // Inject PBX modules
             PBXConfModulesProvider::class,
             ModulesDBConnectionsProvider::class,
+
+            // Inject Access Control Lists
+            AclProvider::class,
 
             // Inject Rest API client
             PBXCoreRESTClientProvider::class,

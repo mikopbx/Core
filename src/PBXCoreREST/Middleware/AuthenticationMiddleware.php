@@ -206,7 +206,8 @@ class AuthenticationMiddleware implements MiddlewareInterface
         $method = $request->getMethod();
 
         // Strategy 1: Check attribute-based public endpoints registry
-        if ($this->isPublicEndpointByAttributes($application, $uri)) {
+        // Passes HTTP method for method-level PUBLIC endpoint checking
+        if ($this->isPublicEndpointByAttributes($application, $uri, $method)) {
             return true;
         }
 
@@ -223,11 +224,15 @@ class AuthenticationMiddleware implements MiddlewareInterface
     /**
      * Check if endpoint is public via ResourceSecurity attributes
      *
+     * Supports both resource-level (entire controller) and method-level
+     * (specific operations) PUBLIC attributes.
+     *
      * @param Micro $application
      * @param string $uri Request URI
+     * @param string $httpMethod HTTP method (GET, POST, etc.)
      * @return bool True if endpoint is public
      */
-    private function isPublicEndpointByAttributes(Micro $application, string $uri): bool
+    private function isPublicEndpointByAttributes(Micro $application, string $uri, string $httpMethod): bool
     {
         try {
             $di = $application->getDI();
@@ -236,7 +241,7 @@ class AuthenticationMiddleware implements MiddlewareInterface
             }
 
             $registry = $di->getShared(\MikoPBX\PBXCoreREST\Providers\PublicEndpointsRegistryProvider::SERVICE_NAME);
-            return $registry->isPublicEndpoint($uri);
+            return $registry->isPublicEndpoint($uri, $httpMethod);
         } catch (\Exception) {
             // If registry is unavailable, return false (fail closed for security)
             return false;

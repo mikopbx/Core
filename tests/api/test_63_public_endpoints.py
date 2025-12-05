@@ -4,6 +4,8 @@ Test suite for Public Endpoints - 3-Priority Hybrid System
 
 Tests the hybrid public endpoint detection system with 3 priorities:
 1. PRIORITY 1: Attribute-based (Pattern 4) - #[ResourceSecurity(..., requirements: [SecurityType::PUBLIC])]
+   - Supports class-level PUBLIC (entire controller)
+   - Supports method-level PUBLIC (specific methods only)
 2. PRIORITY 2: Legacy hardcoded constants - PUBLIC_ENDPOINTS in AuthenticationMiddleware
 3. PRIORITY 3: Module Pattern 2 - noAuth: true parameter in getPBXCoreRESTAdditionalRoutes()
 
@@ -12,9 +14,13 @@ Architecture:
 - Public endpoints work without Bearer token
 - Optional authentication: public endpoints can use Bearer token for enhanced features
 - Priority order ensures modern attribute-based detection takes precedence
+- Method-level PUBLIC allows fine-grained control (e.g., wiki-links:getLink)
 
 Implementation Details:
 - Priority 1: PublicEndpointsRegistry service populated during route generation
+  - Scans class-level ResourceSecurity for PUBLIC
+  - Scans method-level ResourceSecurity for PUBLIC (custom methods)
+  - Registers full paths with HTTP methods for method-level PUBLIC
 - Priority 2: Hardcoded array in AuthenticationMiddleware::PUBLIC_ENDPOINTS
 - Priority 3: Request::thisIsModuleNoAuthRequest() checks module route config
 """
@@ -328,6 +334,85 @@ class TestPublicEndpointsPriority:
 
         print(f"✓ Priority 2 fallback: pageView accessible without Priority 1")
         print(f"  Note: This endpoint only exists in PUBLIC_ENDPOINTS constant")
+
+
+class TestMethodLevelPublicEndpoints:
+    """
+    Test method-level PUBLIC endpoints (new feature)
+
+    Tests endpoints where only specific methods are marked as PUBLIC via
+    method-level #[ResourceSecurity(..., requirements: [SecurityType::PUBLIC])]
+    while the entire controller is not public.
+
+    Example: WikiLinks controller has class-level LOCALHOST+BEARER_TOKEN,
+    but getLink() method has method-level PUBLIC attribute.
+    """
+
+    def test_01_wiki_links_getlink_without_auth(self):
+        """Test method-level PUBLIC - wiki-links:getLink works without auth"""
+        # wiki-links:getLink has method-level SecurityType::PUBLIC attribute
+        # but the controller itself is NOT public
+        client = MikoPBXClient(API_BASE_URL)
+
+        response = client.get_raw('wiki-links:getLink', params={
+            'controller': 'Extensions',
+            'action': 'index',
+            'language': 'en'
+        })
+
+        assert response.status_code == HTTP_OK, \
+            f"Method-level PUBLIC endpoint should return {HTTP_OK}, got {response.status_code}"
+
+        data = response.json()
+        assert data.get('result') is True, \
+            f"Method-level PUBLIC endpoint should succeed, got: {data}"
+
+        print(f"✓ Method-level PUBLIC: wiki-links:getLink works without auth")
+        print(f"  Response: {data.get('data', {})}")
+
+    def test_02_wiki_links_module_documentation(self):
+        """Test method-level PUBLIC - wiki-links:getLink for module docs"""
+        client = MikoPBXClient(API_BASE_URL)
+
+        response = client.get_raw('wiki-links:getLink', params={
+            'controller': 'UserProfile',
+            'action': 'index',
+            'language': 'ru',
+            'moduleId': 'ModuleUsersUI'
+        })
+
+        assert response.status_code == HTTP_OK, \
+            f"Method-level PUBLIC endpoint should return {HTTP_OK}, got {response.status_code}"
+
+        data = response.json()
+        assert data.get('result') is True
+
+        # Should return module documentation URL
+        url = data.get('data', {}).get('url', '')
+        assert 'docs.mikopbx' in url or 'wiki.mikopbx' in url, \
+            f"Should return MikoPBX documentation URL, got: {url}"
+
+        print(f"✓ Method-level PUBLIC: wiki-links:getLink returns module docs")
+        print(f"  URL: {url}")
+
+    def test_03_wiki_links_requires_controller_param(self):
+        """Test method-level PUBLIC - validation still works"""
+        client = MikoPBXClient(API_BASE_URL)
+
+        # Missing required 'controller' parameter
+        response = client.get_raw('wiki-links:getLink')
+
+        # Should be public (not 401/403), but fail validation (400)
+        assert response.status_code not in [HTTP_UNAUTHORIZED, HTTP_FORBIDDEN], \
+            f"Endpoint should be public, got {response.status_code}"
+        assert response.status_code == HTTP_BAD_REQUEST, \
+            f"Missing required param should return {HTTP_BAD_REQUEST}, got {response.status_code}"
+
+        data = response.json()
+        assert data.get('result') is False, "Validation should fail"
+
+        print(f"✓ Method-level PUBLIC: Validation works on public endpoint")
+        print(f"  Error: {data.get('messages', {})}")
 
 
 class TestPublicEndpointsEdgeCases:

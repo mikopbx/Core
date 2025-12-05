@@ -338,12 +338,16 @@ const networks = {
     isDualStackMode(interfaceId) {
         // Get IPv4 configuration (static or DHCP)
         const ipv4addr = $(`input[name="ipaddr_${interfaceId}"]`).val();
-        const dhcpEnabled = $(`input[name="dhcp_${interfaceId}"]`).val() === 'on';
+        const $dhcpCheckbox = $(`#dhcp-${interfaceId}-checkbox`);
+        const dhcpEnabled = $dhcpCheckbox.length > 0 && $dhcpCheckbox.checkbox('is checked');
         const gateway = $(`input[name="gateway_${interfaceId}"]`).val();
 
         // Get IPv6 configuration
         const ipv6Mode = $(`#ipv6_mode_${interfaceId}`).val();
-        const ipv6addr = $(`input[name="ipv6addr_${interfaceId}"]`).val();
+        // For Manual mode use form field, for Auto mode use current (autoconfigured) value from hidden field
+        const ipv6addrManual = $(`input[name="ipv6addr_${interfaceId}"]`).val();
+        const ipv6addrAuto = $(`#current-ipv6addr-${interfaceId}`).val();
+        const ipv6addr = ipv6Mode === '1' ? ipv6addrAuto : ipv6addrManual;
 
         // Check if IPv4 is present (either static address or DHCP with gateway)
         // Gateway presence indicates DHCP successfully obtained an IPv4 address
@@ -351,8 +355,9 @@ const networks = {
                         (dhcpEnabled && gateway && gateway.trim() !== '');
 
         // Check if IPv6 is enabled (Auto SLAAC/DHCPv6 or Manual)
+        // For Auto mode ('1'), we check currentIpv6addr which shows autoconfigured address
         const hasIpv6 = (ipv6Mode === '1' || ipv6Mode === '2') &&
-                        ipv6addr && ipv6addr.trim() !== '';
+                        ipv6addr && ipv6addr.trim() !== '' && ipv6addr !== 'Autoconfigured';
 
         if (!hasIpv4 || !hasIpv6) {
             return false;
@@ -398,10 +403,20 @@ const networks = {
         const $standardNatSection = $('#standard-nat-section');
         const $dualStackSection = $('#dual-stack-section');
 
+        // Get the exthostname input element and its original parent
+        const $exthostnameInput = $('#exthostname');
+        const $standardHostnameWrapper = $standardNatSection.find('.max-width-500').has('#exthostname').first();
+        const $dualStackHostnameWrapper = $('#exthostname-dual-stack-input-wrapper');
+
         if (anyDualStack) {
             // Dual-stack detected: Hide standard NAT section, show Dual-Stack section
             $standardNatSection.hide();
             $dualStackSection.show();
+
+            // Move exthostname input to dual-stack section (avoid duplicate inputs)
+            if ($exthostnameInput.length > 0 && $dualStackHostnameWrapper.length > 0) {
+                $exthostnameInput.appendTo($dualStackHostnameWrapper);
+            }
 
             // Clear extipaddr (external IP not needed in dual-stack, only hostname)
             networks.$formObj.form('set value', 'extipaddr', '');
@@ -413,7 +428,7 @@ const networks = {
             }
 
             // Update hostname display in dual-stack info message
-            const hostname = $('#exthostname').val() || 'mikopbx.company.com';
+            const hostname = $exthostnameInput.val() || 'mikopbx.company.com';
             $('#hostname-display').text(hostname);
 
             // Make exthostname required in dual-stack
@@ -431,6 +446,11 @@ const networks = {
             // No dual-stack: Show standard NAT section, hide Dual-Stack section
             $standardNatSection.show();
             $dualStackSection.hide();
+
+            // Move exthostname input back to standard section
+            if ($exthostnameInput.length > 0 && $standardHostnameWrapper.length > 0) {
+                $exthostnameInput.appendTo($standardHostnameWrapper);
+            }
 
             // Restore original exthostname validation (optional with usenat dependency)
             networks.validateRules.exthostname.depends = 'usenat';
@@ -1185,6 +1205,9 @@ const networks = {
                     </div>
                 </div>
 
+                <!-- Hidden field to store current auto-configured IPv6 address for dual-stack detection -->
+                <input type="hidden" id="current-ipv6addr-${id}" value="${iface.currentIpv6addr || ''}" />
+
                 <div class="ipv6-auto-info-message-${id}" style="display: ${iface.ipv6_mode === '1' ? 'block' : 'none'};">
                     <div class="ui compact info message">
                         <div class="content">
@@ -1590,7 +1613,10 @@ $.fn.form.settings.rules.checkVlan = (vlanValue, param) => {
 $.fn.form.settings.rules.extenalIpHost = () => {
     const allValues = networks.$formObj.form('get values');
     if (allValues.usenat === 'on') {
-        if (allValues.exthostname === '' && allValues.extipaddr === '') {
+        // Get unmasked value for extipaddr (inputmask may return "_._._._" for empty)
+        const extipaddr = networks.$extipaddr.inputmask('unmaskedvalue') || '';
+        const exthostname = (allValues.exthostname || '').trim();
+        if (exthostname === '' && extipaddr === '') {
             return false;
         }
     }

@@ -375,14 +375,16 @@ class Elements extends Injectable
     {
         $result = '';
         foreach ($this->_headerMenu as $index => $group) {
+            // Direct menu item (no submenu) - $index is controller class, $group is the item config
             if (
                 $index === $controllerClass
-                && array_key_exists('iconclass', $group[$controllerClass])
-                && !empty($group[$controllerClass]['iconclass'])
+                && array_key_exists('iconclass', $group)
+                && !empty($group['iconclass'])
             ) {
-                $result = "<i class='{$group[$controllerClass]['iconclass']} icon'></i>";
+                $result = "<i class='{$group['iconclass']} icon'></i>";
                 break;
             }
+            // Group with submenu - search inside submenu
             if (array_key_exists('submenu', $group)) {
                 foreach ($group['submenu'] as $index2 => $submenu) {
                     if (
@@ -490,7 +492,7 @@ class Elements extends Injectable
         // Convert the controller name to a dash-separated format
         $controllerName = Text::uncamelize($controllerName, '-');
 
-        if ($controllerParts[0] === 'Module') {
+        if ($controllerParts[0] === 'Modules') {
             // Convert the module name to a dash-separated format
             $moduleName = Text::uncamelize($controllerParts[1], '-');
             $url = $this->url->get("$moduleName/$controllerName/$action/$param");
