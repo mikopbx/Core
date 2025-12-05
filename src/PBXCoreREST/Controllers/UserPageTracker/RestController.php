@@ -88,6 +88,7 @@ class RestController extends BaseRestController
      *
      * @route POST /pbxcore/api/v3/user-page-tracker:pageView
      */
+    #[ResourceSecurity('user_page_tracker_page_view', requirements: [SecurityType::PUBLIC])]
     #[ApiDataSchema(
         schemaClass: DataStructure::class,
         type: 'detail'
@@ -116,6 +117,7 @@ class RestController extends BaseRestController
      *
      * @route POST /pbxcore/api/v3/user-page-tracker:pageLeave
      */
+    #[ResourceSecurity('user_page_tracker_page_leave', requirements: [SecurityType::PUBLIC])]
     #[ApiDataSchema(
         schemaClass: DataStructure::class,
         type: 'list'
