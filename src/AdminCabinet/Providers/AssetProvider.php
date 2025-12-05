@@ -193,6 +193,7 @@ class AssetProvider implements ServiceProviderInterface
 
         $this->footerCollectionJS
             ->addJs('js/pbx/main/form.js', true)
+            ->addJs('js/pbx/main/acl-helper.js', true) // Client-side ACL permission checker
             ->addJs('js/pbx/FormElements/dynamic-dropdown-builder.js', true) // Required for language selector
             ->addJs('js/pbx/Language/language-select.js', true);
 

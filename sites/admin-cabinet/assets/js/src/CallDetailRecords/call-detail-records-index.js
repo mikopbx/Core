@@ -227,9 +227,10 @@ const callDetailRecords = {
         });
 
         // Build columns dynamically based on ACL permissions
-        // WHY: Volt template conditionally renders delete column header based on isAllowed('delete')
+        // WHY: Volt template conditionally renders delete column header based on isAllowed('save')
+        // 'save' is a virtual permission that includes delete capability in ModuleUsersUI
         // If columns config doesn't match <thead> count, DataTables throws 'style' undefined error
-        const canDelete = typeof ACLHelper !== 'undefined' && ACLHelper.isAllowed('delete');
+        const canDelete = typeof ACLHelper !== 'undefined' && ACLHelper.isAllowed('save');
         const columns = [
             { data: null, orderable: false },  // 0: expand icon column
             { data: 0 },                       // 1: date (array index 0)
