@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * API keys translations
  */
-
-return [
     // AK
     'ak_AddNewApiKey' => 'API-sleutel toevoegen',
     'ak_AddNewKey' => 'API-sleutel toevoegen',
@@ -125,4 +124,42 @@ return [
     'ak_UsageStatistics' => 'Gebruiksstatistieken',
     'ak_ValidateNameEmpty' => 'Geef een naam op voor de API-sleutel',
     'ak_YourApiKey' => 'Uw API-sleutel',
+    'ak_ApiKeyUsageTooltip_auth_header' => 'Authenticatie',
+    'ak_ApiKeyUsageTooltip_warning' => 'Deel uw API-sleutel nooit en bewaar deze niet in versiebeheer. Behandel hem als een wachtwoord.',
+    'ak_NoAccess' => 'Geen toegang',
+    // Tooltips for API key usage
+    'ak_ApiKeyUsageTooltip_header' => 'API-sleutels gebruiken',
+    'ak_ApiKeyUsageTooltip_desc' => 'API-sleutels worden gebruikt om verzoeken aan de REST API te verifiëren.',
+    'ak_ApiKeyUsageTooltip_auth_format' => 'Voeg de header Autorisatie toe aan uw verzoeken:',
+    'ak_ApiKeyUsageTooltip_example_header' => 'Gebruikscases',
+    'ak_ApiKeyUsageTooltip_curl_example' => 'curl -H "Autorisatie: Drager UW_API_SLEUTEL" "http://pbx.example.com/pbxcore/api/v3/werknemers"',
+    'ak_ApiKeyUsageTooltip_js_example' => 'fetch("http://pbx.example.com/pbxcore/api/v3/employees", { headers: { "Authorization": "Draagbaar UW_API_SLEUTEL" } })',
+    'ak_ApiKeyUsageTooltip_php_example' => '$ch = curl_init("http://pbx.example.com/pbxcore/api/v3/employees"); curl_setopt($ch, CURLOPT_HTTPHEADER, ["Autorisatie: Drager UW_API_SLEUTEL"]);',
+    'ak_ApiKeyUsageTooltip_warning_header' => 'Beveiligingswaarschuwing',
+    'ak_ApiKeyUsageTooltip_note' => 'Om veiligheidsredenen worden alleen de eerste en de laatste 5 tekens van de sleutel weergegeven.',
+    // ACL permissions messages
+    'ak_NoPermissionToModify' => 'U hebt geen toestemming om API-sleutels te wijzigen.',
+    'ak_NoPermissionToDelete' => 'U hebt geen toestemming om API-sleutels te verwijderen.',
+    'ak_NoPermissionToCreate' => 'U hebt geen toestemming om API-sleutels aan te maken.',
+    // Permissions selector
+    'ak_Permissions' => 'Toegangsrechten tot API-eindpunten',
+    'ak_SelectPermission' => 'Selecteer rechten',
+    'ak_PermissionRead' => 'Lezing',
+    'ak_PermissionWrite' => 'Lezen en schrijven',
+    'ak_ErrorLoadingEndpoints' => 'Het laden van de lijst met beschikbare API-eindpunten is mislukt',
+    'ak_NoEndpointsAvailable' => 'Geen API-eindpunten beschikbaar',
+    // Permissions table headers
+    'ak_PermissionTableHeaderName' => 'Bronnaam',
+    'ak_PermissionTableHeaderURI' => 'Eindpunt-URI',
+    'ak_PermissionTableHeaderAccess' => 'Toegangsniveau',
+    'ak_LoadingApiDocumentation' => 'API-documentatie wordt geladen...',
+    'ak_OpenAPIDocumentation' => 'OpenAPI-documentatie',
+    'ak_SwaggerLoadError' => 'Fout bij het laden van API-documentatie',
+    'ak_SwaggerLoadErrorDesc' => 'API-specificatie laden mislukt. Controleer uw verbinding en probeer het opnieuw.',
+    'ak_RetryLoad' => 'Herhalen',
+    'ak_AuthenticationRequired' => 'Authenticatie vereist',
+    'ak_PleaseLoginFirst' => 'Meld u aan om toegang te krijgen tot de API.',
+    'ak_PermissionsHelp' => 'Selecteer het toegangsniveau voor elk REST API-eindpunt. <br>Met \'Lezen\' kunt u gegevens ophalen (GET), <br>Met \'Lezen en schrijven\' kunt u gegevens maken, wijzigen en verwijderen (POST, PUT, DELETE).',
+    // OpenAPI/Swagger UI
+    'ak_ApiDocumentation' => 'API-documentatie',
 ];

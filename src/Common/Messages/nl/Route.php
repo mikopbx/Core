@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Routing related translations
  */
-
-return [
     // CQ
     'cq_AddNewQueue' => 'Maak een nieuwe wachtrij aan',
     'cq_AddQueueMembers' => 'Geen operator geselecteerd',
@@ -102,7 +101,6 @@ return [
     'cq_strategy_ringall_short' => 'Bel iedereen tegelijk',
     'cq_strategy_rrmemory_short' => 'Om de beurt met geheugen',
     'cq_strategy_wrandom_short' => 'Gewogen willekeurig',
-
     // CR
     'cr_AddNewConferenceRoom' => 'Conferentie toevoegen',
     'cr_ColumnExtension' => 'Nummer',
@@ -126,7 +124,6 @@ return [
     'cr_ValidateNameIsEmpty' => 'Conferentienaam is verplicht',
     'cr_ValidatePinNumber' => 'PIN moet alleen cijfers bevatten',
     'cr_pinCode' => 'Conferentie-PIN',
-
     // DA
     'da_AddNewDialplanApp' => 'Nieuwe toevoegen',
     'da_Applicationlogic' => 'Programmacode',
@@ -151,7 +148,6 @@ return [
     'da_ValidateExtensionNumber' => 'Intern nummer mag alleen cijfers bevatten',
     'da_ValidateNameIsEmpty' => 'Applicatienaam niet ingevuld',
     'da_ValidateNameTooLong' => 'Naam te lang (maximaal 50 tekens)',
-
     // IR
     'ir_ActionSelect' => 'Als geen van de regels past',
     'ir_AddNewRule' => 'Nieuwe regel toevoegen',
@@ -248,7 +244,6 @@ return [
     'ir_timeout_tooltip_value2' => '<strong>20-30 seconden:</strong> standaardtijd voor kantoren',
     'ir_timeout_tooltip_value3' => '<strong>45-60 seconden:</strong> als medewerkers tijdelijk bezet kunnen zijn',
     'ir_timeout_tooltip_values_header' => 'Aanbevolen waarden',
-
     // IV
     'iv_Actions' => 'Doorbelacties',
     'iv_AddNewIvrMenu' => 'Nieuw IVR-menu maken',
@@ -322,7 +317,6 @@ return [
     'iv_ValidateTimeout' => 'Timeout moet tussen 1 en 99 seconden liggen',
     'iv_ValidateTimeoutExtensionIsEmpty' => 'Timeout doorschakelnummer niet opgegeven',
     'iv_ValidateTimeoutOutOfRange' => 'Onjuiste toestel invoerwachttijd timeout opgegeven',
-
     // OR
     'or_AddNewRule' => 'Nieuwe regel toevoegen',
     'or_BeforeConnectingTheCallTrim' => 'Voor het starten van gesprek kappen we',
@@ -453,7 +447,6 @@ return [
     'or_trimfrombegin_tooltip_why2' => 'Provider prefix of bedrijfscode verwijderen',
     'or_trimfrombegin_tooltip_why3' => 'Nummer naar provider formaat brengen',
     'or_trimfrombegin_tooltip_why_header' => 'Waarom nodig:',
-
     // TF
     'tf_ActionPlayMessage' => 'Speel bestand <b>%message%</b> af',
     'tf_ActionTransferToExtension' => 'Verbind gesprek door naar <b>%extension%</b>',
@@ -509,4 +502,13 @@ return [
     'tf_calType' => 'Type',
     'tf_calUrl' => 'Agenda-URL',
     'tf_calUser' => 'Gebruikersnaam',
+    'or_RuleDescriptionBeginEmptyWithProviderAndModify' => 'Nummers van <b>%restnumbers%</b> cijfers → kap <b>%trim%</b>, voeg toe <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionBeginEmptyWithProviderAndPrepend' => 'Nummers van <b>%restnumbers%</b> cijfers → voeg toe <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionBeginEmptyWithProviderAndTrim' => 'Nummers van <b>%restnumbers%</b> cijfers → kap <b>%trim%</b> → via %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndModify' => 'Nummers met <b>%numberbeginswith%</b> → kap <b>%trim%</b>, voeg toe <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndPrepend' => 'Nummers met <b>%numberbeginswith%</b> → voeg toe <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionBeginMatchWithProviderAndTrim' => 'Nummers met <b>%numberbeginswith%</b> → kap <b>%trim%</b> → via %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndModify' => 'Alleen <b>%numberbeginswith%</b> → kap <b>%trim%</b>, voeg toe <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndPrepend' => 'Alleen <b>%numberbeginswith%</b> → voeg toe <b>%prepend%</b> → via %provider%',
+    'or_RuleDescriptionFullMatchWithProviderAndTrim' => 'Alleen <b>%numberbeginswith%</b> → kap <b>%trim%</b> → via %provider%',
 ];

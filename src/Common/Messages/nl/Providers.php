@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * Provider related translations (SIP, IAX)
  */
-
-return [
     // IAX
     'iax_ManualAttributesTooltip_desc' => 'Hiermee kunt u extra Asterisk IAX-configuratieparameters toevoegen voor fijnafstelling van de provider.',
     'iax_ManualAttributesTooltip_examples_header' => 'Voorbeelden',
@@ -50,7 +49,6 @@ return [
     'iax_RegistrationTypeTooltip_outbound' => 'Uitgaande registratie',
     'iax_RegistrationTypeTooltip_outbound_desc' => 'Uw PBX registreert zich op providerserver. Gebruikt voor uitgaande oproepen via provider.',
     'iax_registration_type' => 'Accounttype',
-
     // PR
     'pr_AddIAXProvider' => 'IAX verbinden',
     'pr_AddSIPProvider' => 'SIP verbinden',
@@ -448,14 +446,23 @@ return [
     'pr_ValidationProviderPortIsEmpty' => 'Specificeer providerpoort',
     'pr_ValidationProviderPortRange' => 'Providerpoort moet binnen {ruleValue} zijn',
     'pr_WithoutRegistration' => 'Registratie uitgeschakeld',
-
     // PROV
     'prov_dropdownCategory_IAX' => 'IAX2-providers',
     'prov_dropdownCategory_SIP' => 'SIP-providers',
-
     // SIP
     'sip_REG_TYPE_INBOUND' => 'Inkomende registratie',
     'sip_REG_TYPE_NONE' => 'Geen registratie (IP-authenticatie)',
     'sip_REG_TYPE_OUTBOUND' => 'Uitgaande registratie',
     'sip_registration_type' => 'Accounttype',
+    'pr_ValidationProviderLogin' => 'Voer login in voor autorisatie bij provider',
+    'pr_RegisteredFrom' => 'Geregistreerd bij',
+    'pr_RegisteredTo' => 'Geregistreerd op',
+    'pr_ProviderRegistered' => 'De aanbieder is geregistreerd',
+    'pr_WaitingForRegistration' => 'Wachten op registratie',
+    'pr_StateChangedFromTo' => 'De status is gewijzigd van %previousState% naar %newState%',
+    // MO - Models validation
+    'mo_IaxUsernameInvalidCharacters' => 'De IAX-gebruikersnaam voor inkomende registratie mag alleen Latijnse letters, cijfers en symbolen bevatten: _ - .',
+    'mo_SipUsernameInvalidCharacters' => 'De SIP-gebruikersnaam voor inkomende registratie mag alleen Latijnse letters, cijfers en symbolen bevatten: _ - .',
+    'pr_Disabled' => 'uit',
+    'pr_CheckingStatus' => 'Status controleren...',
 ];

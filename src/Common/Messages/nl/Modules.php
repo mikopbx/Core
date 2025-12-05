@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * External modules translations
  */
-
-return [
     // EXT
     'ext_AddNewExtension' => 'Nieuwe module downloaden',
     'ext_Available' => 'kan worden opgewaardeerd naar',
@@ -98,4 +97,10 @@ return [
     'ext_ValidateCaptionEmpty' => 'Naam menu-item leeg',
     'ext_Version' => 'Versie',
     'ext_WrongGetModuleLink' => 'Fout bij het ophalen van modulebestand uit repository',
+    'ext_CorruptedZipFile' => 'Het ZIP-bestand van de module is beschadigd of heeft een ongeldige indeling: %filePath%. Foutcode: %errorCode%',
+    'ext_ModuleJsonNotFound' => 'Het bestand module.json is niet gevonden in het modulearchief %filePath%',
+    'ext_InvalidModuleJson' => 'Het bestand module.json in het archief %filePath% bevat ongeldige JSON: %error%',
+    'ext_MissingModuleUniqueID' => 'In het bestand module.json in het archief %filePath% ontbreekt het vereiste veld moduleUniqueID.',
+    // Module package validation errors
+    'ext_FileNotFound' => 'Modulebestand niet gevonden: %filePath%',
 ];

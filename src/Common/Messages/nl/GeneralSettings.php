@@ -1,5 +1,4 @@
 <?php
-
 return [
     /*
  * MikoPBX - free phone system for small business
@@ -18,7 +17,6 @@ return [
  * You should have received a copy of the GNU General Public License along with this program.
  * If not, see <https://www.gnu.org/licenses/>.
  */
-
     'gs_SystemWillRestart' => 'Systeem wordt herstart',
     'gs_CallRecordTab' => 'Gespreksopnames',
     'gs_RTPStunServer' => 'STUN server adres (bijvoorbeeld: stun.test.net:10000)',
@@ -164,7 +162,7 @@ return [
     'gs_DeleteAllStageResettingSettings' => 'Reset PBX instellingen',
     'gs_DeleteAllStageFinalizing' => 'Voltooien reset proces',
     'gs_DeleteAllStageCompleted' => 'Systeemreset voltooid',
-    'gs_DeleteAllStageRestarting' => 'Initialiseren systeem herstart',
+    'gs_DeleteAllStageRestarting' => 'Het systeem zal opnieuw opstarten',
     'gs_StatUsers' => 'Gebruikers/Interne nummers',
     'gs_StatProviders' => 'SIP providers',
     'gs_StatCallQueues' => 'Wachtrijen',
@@ -182,8 +180,7 @@ return [
     'gs_StatCustomFiles' => 'Gebruikersbestanden',
     'gs_PBXRecordAnnouncementIn' => 'Selecteer aankondiging over gespreksopname voor inkomende oproepen',
     'gs_PBXRecordAnnouncementOut' => 'Selecteer aankondiging over gespreksopname voor uitgaande oproepen',
-
-    // General Settings Tooltips    
+    // General Settings Tooltips
     // RestartEveryNight tooltip
     'gs_RestartEveryNightTooltip_header' => 'Dagelijkse PBX herstart',
     'gs_RestartEveryNightTooltip_desc' => 'Automatische herstart van het Asterisk systeem elke nacht om stabiliteit en prestaties te behouden',
@@ -196,7 +193,6 @@ return [
     'gs_RestartEveryNightTooltip_drawback_calls' => 'Onderbreking actieve oproepen tijdens herstart',
     'gs_RestartEveryNightTooltip_drawback_registration' => 'Korte onbeschikbaarheid systeem (10-30 seconden)',
     'gs_RestartEveryNightTooltip_recommendation' => 'Aanbevolen voor systemen met lage nachtactiviteit. Voor 24-uurs callcenters beter uitschakelen en handmatig herstarten in periodes met minimale belasting.',
-    
     // PBXLanguage tooltip
     'gs_PBXLanguageTooltip_header' => 'Taal systeemberichten',
     'gs_PBXLanguageTooltip_desc' => 'Bepaalt de taal van spraakberichten van het Asterisk systeem voor bellers en IVR menu\'s',
@@ -208,7 +204,6 @@ return [
     'gs_PBXLanguageTooltip_restart' => 'Herstart vereist',
     'gs_PBXLanguageTooltip_restart_desc' => 'Bij taalwijziging wordt Asterisk service herstart voor 10-30 seconden met verbindingsonderbreking.',
     'gs_PBXLanguageTooltip_note' => 'Web interface taal wordt afzonderlijk geconfigureerd per gebruiker',
-    
     // PBXInternalExtensionLength tooltip
     'gs_PBXInternalExtensionLengthTooltip_header' => 'Lengte interne nummers',
     'gs_PBXInternalExtensionLengthTooltip_desc' => 'Bepaalt de maximale lengte van interne nummers van medewerkers in het systeem',
@@ -222,7 +217,6 @@ return [
     'gs_PBXInternalExtensionLengthTooltip_example_5' => 'Lengte 5: nummers van 10000 tot 99999',
     'gs_PBXInternalExtensionLengthTooltip_warning' => 'Wijzigen van deze parameter beïnvloedt bestaande nummers niet. Als u nummers heeft langer dan de nieuwe instelling, blijven ze werken',
     'gs_PBXInternalExtensionLengthTooltip_note' => 'Aanbevolen lengte kiezen op basis van aantal medewerkers: 3 cijfers voor bedrijven tot 900 medewerkers, 4 cijfers voor grote organisaties',
-    
     // PBXAllowGuestCalls tooltip
     'gs_AllowGuestCallsTooltip_header' => 'Gastoproepen zonder autorisatie',
     'gs_AllowGuestCallsTooltip_desc' => 'Staat SIP oproepen toe van niet-geautoriseerde apparaten en servers zonder registratie',
@@ -240,7 +234,6 @@ return [
     'gs_AllowGuestCallsTooltip_security' => 'Veiligheidaanbevelingen:',
     'gs_AllowGuestCallsTooltip_security_desc' => 'Gebruik Fail2ban, beperk toegang per IP, configureer inkomende routeringsregels',
     'gs_AllowGuestCallsTooltip_recommendation' => 'Aanbevolen deze optie uit te schakelen als u geen apparaten zonder registratie gebruikt',
-    
     // PBXCallParkingExt tooltip
     'gs_PBXCallParkingExtTooltip_header' => 'Gesprek parkeren',
     'gs_PBXCallParkingExtTooltip_desc' => 'Nummer voor tijdelijk plaatsen van een oproep met mogelijkheid tot later ophalen vanaf elke telefoon',
@@ -255,7 +248,6 @@ return [
     'gs_PBXCallParkingExtTooltip_example' => 'Gebruiksvoorbeeld:',
     'gs_PBXCallParkingExtTooltip_example_desc' => 'Secretaresse neemt oproep aan, parkeert op 800, systeem meldt "Oproep geparkeerd op 801". Manager kiest 801 en vervolgt gesprek',
     'gs_PBXCallParkingExtTooltip_note' => 'Als oproep niet opgehaald wordt binnen timeout tijd, keert deze terug naar oorspronkelijke telefoon',
-    
     // PBXFeatureAttendedTransfer tooltip
     'gs_PBXFeatureAttendedTransferTooltip_header' => 'Begeleid doorverbinden',
     'gs_PBXFeatureAttendedTransferTooltip_desc' => 'Toetscombinatie voor doorverbinden van oproep met voorafgaande consultatie',
@@ -267,7 +259,6 @@ return [
     'gs_PBXFeatureAttendedTransferTooltip_benefits' => 'Voordelen:',
     'gs_PBXFeatureAttendedTransferTooltip_benefits_desc' => 'Mogelijk collega te waarschuwen over doorverbinding en context gesprek door te geven',
     'gs_PBXFeatureAttendedTransferTooltip_note' => 'Als persoon niet opneemt of bezet is, keert oproep naar u terug',
-    
     // PBXFeatureBlindTransfer tooltip
     'gs_PBXFeatureBlindTransferTooltip_header' => 'Blind doorverbinden',
     'gs_PBXFeatureBlindTransferTooltip_desc' => 'Toetscombinatie voor direct doorverbinden oproep zonder consultatie',
@@ -277,7 +268,6 @@ return [
     'gs_PBXFeatureBlindTransferTooltip_how_hangup' => 'Oproep wordt direct doorverbonden',
     'gs_PBXFeatureBlindTransferTooltip_warning' => 'Persoon kan onbereikbaar of bezet zijn. Gebruik voorzichtig',
     'gs_PBXFeatureBlindTransferTooltip_note' => 'Voor belangrijke oproepen wordt begeleid doorverbinden aanbevolen',
-    
     // PBXFeaturePickupExten tooltip
     'gs_PBXFeaturePickupExtenTooltip_header' => 'Oproep ophalen',
     'gs_PBXFeaturePickupExtenTooltip_desc' => 'Nummer voor ophalen inkomende oproepen naar andere telefoons',
@@ -288,7 +278,6 @@ return [
     'gs_PBXFeaturePickupExtenTooltip_type_directed_desc' => 'Haalt oproep naar specifiek intern nummer op',
     'gs_PBXFeaturePickupExtenTooltip_usage' => 'Gebruik:',
     'gs_PBXFeaturePickupExtenTooltip_usage_desc' => 'Wanneer andere telefoon belt, kies *8 om op te halen of *8201 om oproep naar nummer 201 op te halen',
-    
     // PBXFeatureAtxferNoAnswerTimeout tooltip
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_header' => 'Timeout terugkeer na begeleid doorverbinden',
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_desc' => 'Bepaalt wachttijd op antwoord bij begeleid doorverbinden, waarna oproep terugkeert naar operator.',
@@ -302,7 +291,6 @@ return [
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_rec_standard' => '30-45 sec - standaard configuratie voor kantoren',
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_rec_quick' => '15-20 sec - voor snelle terugkeer (hoge belasting)',
     'gs_PBXFeatureAtxferNoAnswerTimeoutTooltip_rec_extended' => '60-90 sec - voor belangrijke doorverbindingen of externe kantoren',
-    
     // PBXFeatureDigitTimeout tooltip
     'gs_PBXFeatureDigitTimeoutTooltip_header' => 'Timeout tussen cijfers bij kiezen',
     'gs_PBXFeatureDigitTimeoutTooltip_desc' => 'Maximale wachttijd tussen cijfertoetsen bij kiezen nummer of gebruik functies (in milliseconden).',
@@ -316,7 +304,6 @@ return [
     'gs_PBXFeatureDigitTimeoutTooltip_change_decrease' => 'Verlagen (3000-5000 ms):',
     'gs_PBXFeatureDigitTimeoutTooltip_change_decrease_desc' => 'Voor ervaren gebruikers en versnellen commando verwerking',
     'gs_PBXFeatureDigitTimeoutTooltip_footer' => 'Let op: te lage waarde kan afbreken van lange nummers veroorzaken',
-    
     // RTPPortRange tooltip (for both RTPPortFrom and RTPPortTo)
     'gs_RTPPortRangeTooltip_header' => 'RTP poorten bereik',
     'gs_RTPPortRangeTooltip_desc' => 'Bepaalt UDP poorten bereik voor realtime media streams (audio/video) tussen deelnemers.',
@@ -336,7 +323,6 @@ return [
     'gs_RTPPortRangeTooltip_change_nat' => 'NAT/Firewall configuratie:',
     'gs_RTPPortRangeTooltip_change_nat_desc' => 'Zorg dat opgegeven poorten bereik open is in firewall en port forwarding geconfigureerd',
     'gs_RTPPortRangeTooltip_footer' => 'Belangrijk: wijziging vereist Asterisk herstart en overeenkomstige netwerkapparatuur configuratie',
-    
     // RTPStunServer tooltip
     'gs_RTPStunServerTooltip_header' => 'STUN server',
     'gs_RTPStunServerTooltip_desc' => 'STUN (Session Traversal Utilities for NAT) - server voor bepalen extern IP-adres en poort bij werken door NAT.',
@@ -357,7 +343,6 @@ return [
     'gs_RTPStunServerTooltip_example_2' => 'stun1.l.google.com:19302 (Google backup)',
     'gs_RTPStunServerTooltip_example_3' => 'stun.ekiga.net:3478 (Ekiga)',
     'gs_RTPStunServerTooltip_footer' => 'Aanbeveling: laat veld leeg als PBX direct publiek IP heeft of alle deelnemers in lokaal netwerk zijn',
-    
     // SIPAuthPrefix tooltip
     'gs_SIPAuthPrefixTooltip_header' => 'Prefix voor SIP autorisatie',
     'gs_SIPAuthPrefixTooltip_desc' => 'Aanvullend achtervoegsel toegevoegd aan gebruikersnaam bij SIP-autorisatie voor verhoogde veiligheid.',
@@ -376,7 +361,6 @@ return [
     'gs_SIPAuthPrefixTooltip_use_4' => 'Naleving bedrijfsveiligheidsbeleid',
     'gs_SIPAuthPrefixTooltip_warning_header' => 'Belangrijk:',
     'gs_SIPAuthPrefixTooltip_warning' => 'Na prefix wijziging moeten instellingen op alle SIP-apparaten en softphones bijgewerkt worden',
-    
     // SIPDefaultExpiry tooltip
     'gs_SIPDefaultExpiryTooltip_header' => 'SIP registratie interval standaard',
     'gs_SIPDefaultExpiryTooltip_desc' => 'Bepaalt hoe vaak SIP-apparaten hun registratie op server moeten vernieuwen. Beïnvloedt snelheid detectie onbereikbaarheid apparaat en netwerkbelasting.',
@@ -393,7 +377,6 @@ return [
     'gs_SIPDefaultExpiryTooltip_change_stable' => 'Verhogen naar 300-600 sec: voor stabiele kantoortelefoons in lokaal netwerk',
     'gs_SIPDefaultExpiryTooltip_change_battery' => 'Verhogen naar 600-1800 sec: voor batterijbesparing mobiele apparaten',
     'gs_SIPDefaultExpiryTooltip_note' => 'Tip: lagere waarden detecteren onbereikbaarheid sneller maar verhogen netwerkbelasting',
-    
     // SIPExpiryRange tooltip (gecombineerd voor Min en Max)
     'gs_SIPExpiryRangeTooltip_header' => 'SIP registratie intervallen bereik',
     'gs_SIPExpiryRangeTooltip_desc' => 'Bepaalt minimaal en maximaal toegestane intervallen tussen SIP-apparaat registraties op server.',
@@ -417,7 +400,6 @@ return [
     'gs_SIPExpiryRangeTooltip_warning_header' => 'Belangrijk:',
     'gs_SIPExpiryRangeTooltip_warning' => 'Minimale waarde moet kleiner zijn dan standaard waarde (SIPDefaultExpiry), en maximale - groter',
     'gs_SIPExpiryRangeTooltip_note' => 'Tip: waarden beïnvloeden balans tussen netwerkbelasting en snelheid detectie onbereikbaarheid apparaten',
-    
     // AMIEnabled tooltip
     'gs_AMIEnabledTooltip_header' => 'AMI (Asterisk Manager Interface)',
     'gs_AMIEnabledTooltip_desc' => 'Programma interface voor beheer en monitoring van Asterisk via TCP/IP verbinding.',
@@ -443,7 +425,6 @@ return [
     'gs_AMIEnabledTooltip_warning_header' => 'Waarschuwing:',
     'gs_AMIEnabledTooltip_warning' => 'Uitschakelen AMI kan werking modules en integraties verstoren',
     'gs_AMIEnabledTooltip_footer' => 'AMI poort: 5038. Configureer toegang via AMI managers voor veiligheid',
-    
     // AJAMEnabled tooltip
     'gs_AJAMEnabledTooltip_header' => 'AJAM (Asynchronous Javascript Asterisk Manager)',
     'gs_AJAMEnabledTooltip_desc' => 'Web-interface voor AMI toegang via HTTP/HTTPS protocol.',
@@ -465,7 +446,6 @@ return [
     'gs_AJAMEnabledTooltip_warning_header' => 'Belangrijk:',
     'gs_AJAMEnabledTooltip_warning' => 'Sommige MikoPBX modules kunnen AJAM gebruiken voor hun werking',
     'gs_AJAMEnabledTooltip_note' => 'AJAM gebruikt zelfde inloggegevens als AMI managers',
-    
     // SSHAuthorizedKeys tooltip
     'gs_SSHAuthorizedKeysTooltip_header' => 'Geautoriseerde SSH sleutels',
     'gs_SSHAuthorizedKeysTooltip_desc' => 'Lijst publieke SSH sleutels voor wachtwoordloze toegang tot systeem. Staat SSH toegang toe met privé sleutel in plaats van wachtwoord.',
@@ -490,7 +470,6 @@ return [
     'gs_SSHAuthorizedKeysTooltip_warning_header' => 'Belangrijk!',
     'gs_SSHAuthorizedKeysTooltip_warning' => 'Na toevoegen sleutels wordt wachtwoord authenticatie uitschakelen aanbevolen voor verhoogde veiligheid',
     'gs_SSHAuthorizedKeysTooltip_note' => 'Tip: voor sleutelgeneratie in Windows gebruik PuTTYgen of OpenSSH',
-    
     // SSH_ID_RSA_PUB tooltip
     'gs_SSH_ID_RSA_PUBTooltip_header' => 'PBX publieke sleutel',
     'gs_SSH_ID_RSA_PUBTooltip_desc' => 'RSA publieke sleutel van deze PBX voor verbinding met andere systemen zonder wachtwoord.',
@@ -512,7 +491,6 @@ return [
     'gs_SSH_ID_RSA_PUBTooltip_warning_header' => 'Veiligheid:',
     'gs_SSH_ID_RSA_PUBTooltip_warning' => 'Deze sleutel is publiek en kan veilig aan derden gegeven worden. Privé sleutel opgeslagen in systeem en moet nooit PBX verlaten',
     'gs_SSH_ID_RSA_PUBTooltip_note' => 'Opmerking: wijzigen of regenereren sleutel vereist bijwerken op alle servers waar gebruikt',
-    
     // WEBHTTPSPublicKey tooltip
     'gs_WEBHTTPSPublicKeyTooltip_header' => 'SSL/TLS certificaat (publieke sleutel)',
     'gs_WEBHTTPSPublicKeyTooltip_desc' => 'Publieke deel van SSL/TLS certificaat voor HTTPS verbindingen versleuteling en bescherming van overgedragen data.',
@@ -533,8 +511,7 @@ return [
     'gs_WEBHTTPSPublicKeyTooltip_chain_desc' => 'Als u tussenliggende certificaten (intermediate) heeft, voeg ze toe na hoofdcertificaat in zelfde veld',
     'gs_WEBHTTPSPublicKeyTooltip_note' => 'Aanbeveling: gebruik Let\'s Encrypt module voor automatisch certificaatbeheer',
     'gs_WEBHTTPSPublicKeyTooltip_footer' => 'Belangrijk: na certificaat wijziging wordt webserver herstart',
-    
-    // WEBHTTPSPrivateKey tooltip  
+    // WEBHTTPSPrivateKey tooltip
     'gs_WEBHTTPSPrivateKeyTooltip_header' => 'SSL/TLS privé sleutel',
     'gs_WEBHTTPSPrivateKeyTooltip_desc' => 'Geheime sleutel voor ontsleutelen SSL/TLS verbindingen. Moet overeenkomen met publiek certificaat.',
     'gs_WEBHTTPSPrivateKeyTooltip_what_is' => 'Wat is privé sleutel:',
@@ -556,7 +533,6 @@ return [
     'gs_WEBHTTPSPrivateKeyTooltip_compatibility_desc' => 'Sleutel moet exact overeenkomen met publiek certificaat. Bij mismatch werkt HTTPS niet',
     'gs_WEBHTTPSPrivateKeyTooltip_note' => 'Tip: Let\'s Encrypt module beheert automatisch sleutelpaar',
     'gs_WEBHTTPSPrivateKeyTooltip_footer' => 'Standaard: systeem genereert zelfondertekend certificaat bij eerste installatie',
-    
     // SendMetrics tooltips
     'gs_SendMetricsTooltip_header' => 'Verzenden metrics en foutrapporten',
     'gs_SendMetricsTooltip_desc' => 'Automatisch verzenden informatie over fouten naar Sentry systeem voor verbeteren productkwaliteit',
@@ -576,6 +552,78 @@ return [
     'gs_SendMetricsTooltip_privacy_desc' => 'NIET verzonden: wachtwoorden, gespreksopnames, persoonlijke data, database inhoud',
     'gs_SendMetricsTooltip_warning' => 'Uitschakelen deze functie kan foutoplossing proces vertragen en ondersteuningskwaliteit verminderen',
     'gs_SendMetricsTooltip_note' => 'Aanbevolen: ingeschakeld laten voor productie systemen. Data alleen verzonden bij internet verbinding',
-    
     'gs_SPlitAudioThreadTooltip_benefit_quality' => 'Verbeterde kwaliteit bij transcriptie en spraakherkenning',
+    // ARIEnabled tooltip
+    'gs_ARIEnabledTooltip_header' => 'ARI (Asterisk REST-interface)',
+    'gs_ARIEnabledTooltip_what_is' => 'Wat is ARI:',
+    'gs_ARIEnabledTooltip_usage' => 'Waarvoor gebruikt:',
+    'gs_ARIEnabledTooltip_usage_webrtc' => 'WebRTC-applicaties en softphones maken',
+    'gs_ARIAllowedOriginsTooltip_format' => 'Invoerformaat:',
+    'gs_ARIEnabledTooltip_default' => 'Standaardwaarde:',
+    'gs_ARIEnabledTooltip_usage_recording' => 'Realtime gespreksopname en -verwerking',
+    'gs_ARIEnabledTooltip_default_desc' => 'Uitgeschakeld (indien nodig inschakelen)',
+    'gs_ARIEnabled' => 'Gebruik de ARI-interface',
+    'gs_SystemManagedPrivateKey' => 'Systeemprivésleutel (automatisch gegenereerd samen met het certificaat)',
+    'gs_AMISettings' => 'AMI-instellingen',
+    'gs_AJAMSettings' => 'AJAM-instellingen',
+    'gs_ARISettings' => 'ARI-instellingen',
+    'gs_ARIAllowedOriginsTooltip_desc' => 'Lijst met domeinen waarvan cross-domein verzoeken aan ARI zijn toegestaan.',
+    'gs_ARIAllowedOriginsTooltip_example_1' => '* - alle bronnen toestaan (onveilig)',
+    'gs_ARIAllowedOriginsTooltip_security' => 'Veiligheidsaanbevelingen:',
+    'gs_AJAMRequiresAMI' => 'Voor AJAM moet AMI ingeschakeld zijn',
+    'gs_ARIAllowedOrigins' => 'Toegestane CORS-oorsprongen',
+    'gs_HTTPSettings' => 'HTTP-serverinstellingen',
+    'gs_HTTPPort' => 'HTTP-poort (AJAM en ARI)',
+    'gs_HTTPPortTLS' => 'HTTPS-poort (AJAM en ARI)',
+    'gs_StatOutWorkTimes' => 'Regels voor niet-werkuren',
+    'gs_StatOutWorkTimesRouts' => 'Relaties tussen regels voor niet-werkuren en routes',
+    'gs_StatApiKeys' => 'REST API-sleutels',
+    'gs_StatAsteriskRestUsers' => 'ARI-gebruikers',
+    'gs_StatUserPasskeys' => 'WebAuthn-sleutels (wachtwoordloos inloggen)',
+    'gs_ARIEnabledTooltip_desc' => 'RESTful API voor het bouwen van moderne realtime-applicaties met Asterisk.',
+    'gs_ARIEnabledTooltip_what_is_desc' => 'REST/WebSocket-interface voor volledige controle over kanalen en bruggen',
+    'gs_ARIEnabledTooltip_usage_ivr' => 'Ontwikkeling van interactieve spraakmenu\'s (IVR)',
+    'gs_ARIEnabledTooltip_usage_conference' => 'Beheer van telefonische vergaderingen',
+    'gs_ARIEnabledTooltip_usage_custom' => 'Aangepaste telefoonlogica maken',
+    'gs_ARIEnabledTooltip_examples' => 'Voorbeelden van ARI-gebruik:',
+    'gs_ARIEnabledTooltip_example_webphone' => 'Webphones en mobiele applicaties',
+    'gs_ARIEnabledTooltip_example_bot' => 'Spraakbots en virtuele assistenten',
+    'gs_ARIEnabledTooltip_example_queue' => 'Geavanceerde wachtrijbeheersystemen',
+    'gs_ARIEnabledTooltip_example_analytics' => 'Spraakanalysesystemen',
+    'gs_ARIEnabledTooltip_when_enable' => 'Wanneer moet u het inschakelen:',
+    'gs_ARIEnabledTooltip_enable_1' => 'Ontwikkeling van webbrowsers of mobiele applicaties',
+    'gs_ARIEnabledTooltip_enable_2' => 'Het creëren van aangepaste IVR- en spraaktoepassingen',
+    'gs_ARIEnabledTooltip_enable_3' => 'Integratie met moderne webframeworks',
+    'gs_ARIEnabledTooltip_warning_header' => 'Waarschuwing:',
+    'gs_ARIEnabledTooltip_warning' => 'ARI vereist programmeerkennis om applicaties te creëren',
+    'gs_ARIEnabledTooltip_footer' => 'Gebruikt dezelfde poorten als AJAM. WebSocket is beschikbaar op /ari/events',
+    // ARIAllowedOrigins tooltip
+    'gs_ARIAllowedOriginsTooltip_header' => 'Toegestane CORS-oorsprongen',
+    'gs_ARIAllowedOriginsTooltip_what_is' => 'Wat is CORS:',
+    'gs_ARIAllowedOriginsTooltip_what_is_desc' => 'Een browserbeveiligingsmechanisme voor het beheren van API-toegang vanuit andere domeinen',
+    'gs_ARIAllowedOriginsTooltip_format_desc' => 'Een door komma\'s gescheiden lijst met URL\'s (bijv. http://example.com, https://app.example.com)',
+    'gs_ARIAllowedOriginsTooltip_examples' => 'Voorbeelden van waarden:',
+    'gs_ARIAllowedOriginsTooltip_example_2' => 'http://localhost:3000 - voor lokale ontwikkeling',
+    'gs_ARIAllowedOriginsTooltip_example_3' => 'https://app.mycompany.com - voor productietoepassingen',
+    'gs_ARIAllowedOriginsTooltip_security_1' => 'Gebruik * nooit in productie',
+    'gs_ARIAllowedOriginsTooltip_security_2' => 'Geef alleen vertrouwde domeinen op',
+    'gs_ARIAllowedOriginsTooltip_security_3' => 'Gebruik HTTPS voor productiedomeinen',
+    'gs_ARIAllowedOriginsTooltip_default' => 'Standaardwaarde:',
+    'gs_ARIAllowedOriginsTooltip_default_desc' => 'Leeg (CORS uitgeschakeld, toegang alleen vanaf hetzelfde domein)',
+    'gs_ARIAllowedOriginsTooltip_footer' => 'Wijzigingen worden toegepast nadat de instellingen zijn opgeslagen.',
+    'cert_FailedToParseCertificate' => 'Het is niet gelukt om het certificaat te parseren',
+    'cert_CertificateExpired' => 'Het certificaat is verlopen op %date%',
+    'cert_CertificateExpiresSoon' => 'Het certificaat verloopt over %days% dagen',
+    'cert_CertificateNotYetValid' => 'Het certificaat is nog niet geldig tot %date%',
+    'cert_PrivateKeyIsEmpty' => 'De privésleutel is leeg',
+    'cert_InvalidPrivateKeyFormat' => 'Ongeldige privésleutelindeling: %error%',
+    'cert_FailedToGetPrivateKeyDetails' => 'Het is niet gelukt om de details van de privésleutel op te halen',
+    'cert_FailedToLoadCertificateForPairValidation' => 'Certificaat laden om paar te verifiëren mislukt',
+    'cert_FailedToLoadPrivateKeyForPairValidation' => 'Het laden van de privésleutel voor paarverificatie is mislukt',
+    'cert_FailedToExtractPublicKeyFromCertificate' => 'Het is niet gelukt om de openbare sleutel uit het certificaat te halen',
+    'cert_CertificateAndPrivateKeyDoNotMatch' => 'Het certificaat en de persoonlijke sleutel komen niet overeen.',
+    'gs_NoDataToDelete' => 'Er zijn geen gegevens om te verwijderen.',
+    // Certificate validation messages
+    'cert_CertificateIsEmpty' => 'Het certificaat is leeg',
+    'cert_InvalidCertificateFormat' => 'Ongeldig certificaatformaat: %error%',
 ];
