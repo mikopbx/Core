@@ -86,12 +86,14 @@ class Network extends Injectable
 
         foreach ($networks as $if_data) {
 
-            $if_name = $if_data['interface'];
-            $if_name = escapeshellarg(trim($if_name));
+            // Keep original interface name for database operations
+            $if_name = trim($if_data['interface']);
+            // Escape for shell commands only
+            $if_name_escaped = escapeshellarg($if_name);
 
             $commands = [
-                'subnet' => $ifconfig . ' '.$if_name.' | '.$awk.' \'/Mask:/ {sub("Mask:", "", $NF); print $NF}\'',
-                'ipaddr' => $ifconfig . ' '.$if_name.' | '.$awk.' \'/inet / {sub("addr:", "", $2); print $2}\'',
+                'subnet' => $ifconfig . ' '.$if_name_escaped.' | '.$awk.' \'/Mask:/ {sub("Mask:", "", $NF); print $NF}\'',
+                'ipaddr' => $ifconfig . ' '.$if_name_escaped.' | '.$awk.' \'/inet / {sub("addr:", "", $2); print $2}\'',
                 'gateway' => $route . ' -n | '.$awk.' \'/^0.0.0.0/ {print $2}\'',
                 'hostname' => $hostname,
             ];
@@ -109,7 +111,7 @@ class Network extends Injectable
                 }
             }
 
-            // Save information to the database.
+            // Save information to the database using original (unescaped) interface name
             $this->updateIfSettings($data, $if_name);
         }
 
