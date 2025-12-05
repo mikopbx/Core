@@ -2,9 +2,8 @@
 PJSUA2 SIP Softphone Helper for MikoPBX Testing
 
 This module provides Python wrapper for PJSUA2 library to enable
-automated SIP testing in pytest. It replaces GoPhone with a more
-robust SIP client that properly creates CDR records and supports
-all required features.
+automated SIP testing in pytest. It provides a robust SIP client
+that properly creates CDR records and supports all required features.
 """
 
 import asyncio
@@ -60,6 +59,7 @@ class PJSUAConfig:
     listen_ip: str = "0.0.0.0"
     listen_port: int = 0
     media: Optional[str] = None
+    auto_answer: bool = False
 
 
 class PJSUAAccount(pj.Account):
@@ -69,6 +69,8 @@ class PJSUAAccount(pj.Account):
         pj.Account.__init__(self)
         self.loop = None
         self.registration_future: Optional[asyncio.Future] = None
+        self.auto_answer: bool = False
+        self.incoming_calls: list = []  # Store incoming calls to prevent garbage collection
         self.logger = logging.getLogger(f"{__name__}.Account")
 
     def set_loop(self, loop):
@@ -84,40 +86,61 @@ class PJSUAAccount(pj.Account):
             reason = getattr(ai, 'regStatusText', 'Unknown')
             self.logger.info(f"[CALLBACK] onRegState fired: status={status}, reason={reason}")
 
-            if self.registration_future and not self.registration_future.done():
-                if status == 200:
-                    self.logger.info(f"[CALLBACK] Registration successful, resolving future")
-                    if self.loop:
-                        self.loop.call_soon_threadsafe(self.registration_future.set_result, True)
-                elif status >= 400:
+            # Handle registration errors - log them even if no future waiting
+            if status >= 400:
+                error = RuntimeError(f"Registration failed: {status} - {reason}")
+                if self.registration_future and not self.registration_future.done():
                     self.logger.error(f"[CALLBACK] Registration failed with status {status}, rejecting future")
                     if self.loop:
                         self.loop.call_soon_threadsafe(
                             self.registration_future.set_exception,
-                            RuntimeError(f"Registration failed: {status} - {reason}")
+                            error
                         )
+                else:
+                    # Log errors even if no future waiting (race condition or polling mode)
+                    self.logger.error(f"[CALLBACK] Registration failed but no future to notify: {error}")
+            elif status == 200:
+                if self.registration_future and not self.registration_future.done():
+                    self.logger.info(f"[CALLBACK] Registration successful, resolving future")
+                    if self.loop:
+                        self.loop.call_soon_threadsafe(self.registration_future.set_result, True)
+                else:
+                    self.logger.debug(f"[CALLBACK] Registration successful but future already resolved or not set")
             else:
-                self.logger.debug(f"[CALLBACK] onRegState called but future already resolved or not set")
+                self.logger.debug(f"[CALLBACK] onRegState called with status {status} (future state: {'done' if self.registration_future and self.registration_future.done() else 'waiting'})")
         except Exception as e:
-            self.logger.error(f"[CALLBACK] Error in onRegState: {e}")
+            self.logger.error(f"[CALLBACK] Error in onRegState: {e}", exc_info=True)
             if self.registration_future and not self.registration_future.done() and self.loop:
                 self.loop.call_soon_threadsafe(self.registration_future.set_exception, e)
 
+    def clear_incoming_calls(self):
+        """Clear stored incoming call objects to prevent memory leak"""
+        self.incoming_calls.clear()
+
     def onIncomingCall(self, prm):
-        """Called when receiving incoming call - auto-answer for testing"""
+        """Called when receiving incoming call - auto-answer if enabled"""
         try:
             call = PJSUACall(self, prm.callId)
             call.set_loop(self.loop)
-            call_info = call.getInfo()
-            self.logger.info(f"Incoming call from {call_info.remoteUri} - auto-answering")
 
-            # Auto-answer the call
-            call_op_param = pj.CallOpParam()
-            call_op_param.statusCode = 200
-            call.answer(call_op_param)
-            self.logger.info("Call auto-answered successfully")
+            # CRITICAL: Store call object to prevent garbage collection
+            # Without this, the call object gets destroyed and PJSUA sends 603 Decline automatically
+            # Note: Call clear_incoming_calls() after test to prevent memory leak
+            self.incoming_calls.append(call)
+
+            call_info = call.getInfo()
+
+            if self.auto_answer:
+                self.logger.info(f"Incoming call from {call_info.remoteUri} - auto-answering")
+                # Auto-answer the call
+                call_op_param = pj.CallOpParam()
+                call_op_param.statusCode = 200
+                call.answer(call_op_param)
+                self.logger.info("Call auto-answered successfully")
+            else:
+                self.logger.info(f"Incoming call from {call_info.remoteUri} - NOT answering (auto_answer=False)")
         except Exception as e:
-            self.logger.error(f"Error auto-answering incoming call: {e}")
+            self.logger.error(f"Error handling incoming call: {e}", exc_info=True)
 
 
 class PJSUACall(pj.Call):
@@ -148,19 +171,38 @@ class PJSUACall(pj.Call):
 
             self.logger.info(f"[CALLBACK] onCallState fired: {state_text} ({state}), lastStatus={last_status}")
 
-            if self.call_future and not self.call_future.done():
-                if state == pj.PJSIP_INV_STATE_CONFIRMED:
+            # Handle call states - log important states even if no future waiting
+            if state == pj.PJSIP_INV_STATE_CONFIRMED:
+                if self.call_future and not self.call_future.done():
                     self.logger.info(f"[CALLBACK] Call confirmed, resolving future")
                     if self.loop:
                         self.loop.call_soon_threadsafe(self.call_future.set_result, True)
-                elif state == pj.PJSIP_INV_STATE_DISCONNECTED:
-                    self.logger.info(f"[CALLBACK] Call disconnected, resolving future with False")
-                    if not self.call_future.done() and self.loop:
-                        self.loop.call_soon_threadsafe(self.call_future.set_result, False)
+                else:
+                    self.logger.debug(f"[CALLBACK] Call confirmed but future already resolved or not set")
+            elif state == pj.PJSIP_INV_STATE_DISCONNECTED:
+                # Log disconnection details even if no future waiting
+                disconnect_reason = f"lastStatus={last_status}, state={state_text}"
+                if last_status >= 400:
+                    # This is an error condition - log as error
+                    if self.call_future and not self.call_future.done():
+                        self.logger.error(f"[CALLBACK] Call failed: {disconnect_reason}, resolving future with False")
+                        if self.loop:
+                            self.loop.call_soon_threadsafe(self.call_future.set_result, False)
+                    else:
+                        # Log errors even if no future waiting (race condition or polling mode)
+                        self.logger.error(f"[CALLBACK] Call failed but no future to notify: {disconnect_reason}")
+                else:
+                    # Normal disconnection
+                    if self.call_future and not self.call_future.done():
+                        self.logger.info(f"[CALLBACK] Call disconnected, resolving future with False")
+                        if self.loop:
+                            self.loop.call_soon_threadsafe(self.call_future.set_result, False)
+                    else:
+                        self.logger.debug(f"[CALLBACK] Call disconnected but future already resolved or not set")
             else:
-                self.logger.debug(f"[CALLBACK] onCallState called but future already resolved or not set")
+                self.logger.debug(f"[CALLBACK] onCallState intermediate state: {state_text} (future state: {'done' if self.call_future and self.call_future.done() else 'waiting'})")
         except Exception as e:
-            self.logger.error(f"[CALLBACK] Error in onCallState: {e}")
+            self.logger.error(f"[CALLBACK] Error in onCallState: {e}", exc_info=True)
             if self.call_future and not self.call_future.done() and self.loop:
                 self.loop.call_soon_threadsafe(self.call_future.set_exception, e)
 
@@ -221,13 +263,14 @@ class PJSUAEndpoint:
                 print(f"[PJSUA_HELPER] Setting account media boundAddress: {PJSUAManager._local_ip}", flush=True)
                 logger.info(f"Account {self.config.extension}: media bound to {PJSUAManager._local_ip}")
 
-            # Use "*" wildcard realm to match any authentication challenge
-            # This is critical for PJSUA2 to automatically handle 401 responses to INVITE
-            cred = pj.AuthCredInfo("digest", "*", self.config.extension, 0, self.config.password)
+            # Use "asterisk" realm to match MikoPBX authentication challenges
+            # PJSUA2 will automatically handle 401 responses to INVITE with these credentials
+            cred = pj.AuthCredInfo("digest", "asterisk", self.config.extension, 0, self.config.password)
             acc_cfg.sipConfig.authCreds.append(cred)
 
             self.account = PJSUAAccount()
             self.account.set_loop(self.loop)
+            self.account.auto_answer = self.config.auto_answer
 
             # Create account - this will automatically start registration
             self.account.create(acc_cfg)
@@ -315,6 +358,7 @@ class PJSUAEndpoint:
             import time
             start_time = time.monotonic()
             poll_interval = 0.1  # 100ms between checks
+            early_media_detected = False  # Track if we've seen 183/200 response
 
             while True:
                 # CRITICAL: Process PJSUA events to receive SIP responses (100 Trying, 200 OK, etc.)
@@ -331,6 +375,17 @@ class PJSUAEndpoint:
                     call_info = self.call.getInfo()
                     state = call_info.state
                     state_text = call_info.stateText
+                    last_status = call_info.lastStatusCode
+
+                    # Detect early media (183 Session Progress) or immediate answer (200 OK)
+                    # ConfBridge answers immediately with 200 OK, need to wait for media setup
+                    if not early_media_detected and last_status in (183, 200):
+                        early_media_detected = True
+                        logger.info(f"Early media/answer detected (status={last_status}), waiting for media setup...")
+                        # Give PJSUA time to process SDP and establish RTP
+                        await asyncio.sleep(0.5)
+                        # Process more events after delay
+                        PJSUAManager._endpoint.libHandleEvents(50)
 
                     if state == pj.PJSIP_INV_STATE_CONFIRMED:
                         # Call connected
@@ -342,7 +397,12 @@ class PJSUAEndpoint:
                         return True
                     elif state == pj.PJSIP_INV_STATE_DISCONNECTED:
                         # Call failed or ended
+                        # Note: Even if we saw 200 OK, DISCONNECTED means call is no longer active
+                        # Don't set call_active=True for disconnected calls - that causes resource issues
+                        if early_media_detected and last_status == 200:
+                            logger.warning(f"Call disconnected after 200 OK - call was briefly connected but is now terminated")
                         logger.error(f"✗ Call disconnected ({state_text})")
+                        self.call_active = False
                         await self.hangup()
                         return False
                     else:
@@ -350,9 +410,13 @@ class PJSUAEndpoint:
                         logger.debug(f"Call state: {state_text}, elapsed={elapsed:.1f}s")
 
                 except Exception as e:
-                    logger.error(f"✗ Error checking call state: {e}")
-                    import traceback
-                    traceback.print_exc()
+                    # Call object may become invalid after disconnect
+                    # Don't treat this as success - if call object is invalid, the call has ended
+                    if early_media_detected:
+                        logger.warning(f"Call info unavailable after 200 OK - call has terminated")
+                    logger.debug(f"Error checking call state (call may be terminated): {e}")
+                    self.call_active = False
+                    return False
 
                 # Wait before next poll
                 await asyncio.sleep(poll_interval)
@@ -517,6 +581,15 @@ class PJSUAManager:
 
                     PJSUAManager._endpoint.libStart()
 
+                    # Configure null audio device for headless environments (Docker)
+                    # This MUST be called AFTER libStart() but BEFORE making calls
+                    try:
+                        PJSUAManager._endpoint.audDevManager().setNullDev()
+                        print(f"[PJSUA_HELPER] Null audio device configured (headless mode)", flush=True)
+                        logger.info("Null audio device configured for headless Docker environment")
+                    except Exception as audio_err:
+                        logger.warning(f"Could not set null audio device: {audio_err}")
+
                     # Give the endpoint a moment to fully initialize
                     import time
                     time.sleep(0.1)
@@ -528,11 +601,12 @@ class PJSUAManager:
                     raise
 
     async def create_endpoint(self, extension: str, password: str,
-                            auto_register: bool = True) -> PJSUAEndpoint:
+                            auto_register: bool = True, auto_answer: bool = False) -> PJSUAEndpoint:
         config = PJSUAConfig(
             extension=extension,
             password=password,
-            server_ip=self.server_ip
+            server_ip=self.server_ip,
+            auto_answer=auto_answer
         )
 
         endpoint = PJSUAEndpoint(config)
@@ -552,6 +626,9 @@ class PJSUAManager:
         logger.info("cleanup_all() called - unregistering endpoints (keeping event handler running)")
         for ext, endpoint in list(self.endpoints.items()):
             try:
+                # Clear incoming calls list to prevent memory leak
+                if endpoint.account:
+                    endpoint.account.clear_incoming_calls()
                 await endpoint.unregister()
             except Exception as e:
                 logger.error(f"Cleanup {ext} failed: {e}")
@@ -563,6 +640,55 @@ class PJSUAManager:
 
     def get_endpoint(self, extension: str) -> Optional[PJSUAEndpoint]:
         return self.endpoints.get(extension)
+
+    @classmethod
+    async def shutdown(cls):
+        """Stop event handler and cleanup PJSIP endpoint
+
+        This is a class method that can be called without creating a manager instance.
+        It should be called at the end of the entire test session to properly release
+        PJSIP resources (threads, sockets, memory pools).
+
+        IMPORTANT: This is a class-level cleanup that affects all manager instances.
+        Only call this when ALL tests are complete.
+
+        Usage:
+            await PJSUAManager.shutdown()
+        """
+        logger.info("shutdown() called - stopping event handler and destroying endpoint")
+
+        # Stop the event handler task
+        cls._running = False
+        if cls._event_handler_task:
+            logger.info("Waiting for event handler task to complete...")
+            try:
+                await asyncio.wait_for(cls._event_handler_task, timeout=5.0)
+                logger.info("Event handler task completed gracefully")
+            except asyncio.TimeoutError:
+                logger.warning("Event handler task did not complete within timeout, forcing cancellation")
+                cls._event_handler_task.cancel()
+                try:
+                    await cls._event_handler_task
+                except asyncio.CancelledError:
+                    logger.info("Event handler task cancelled successfully")
+            except Exception as e:
+                logger.error(f"Error waiting for event handler task: {e}")
+            finally:
+                cls._event_handler_task = None
+
+        # Destroy the PJSIP endpoint
+        if cls._endpoint:
+            logger.info("Destroying PJSIP endpoint with libDestroy()")
+            try:
+                cls._endpoint.libDestroy()
+                logger.info("PJSIP endpoint destroyed successfully")
+            except Exception as e:
+                logger.error(f"Error destroying PJSIP endpoint: {e}")
+            finally:
+                cls._endpoint = None
+                cls._endpoint_initialized = False
+
+        logger.info("PJSUA2 shutdown complete")
 
 
 async def get_mikopbx_ip() -> str:
@@ -609,9 +735,3 @@ async def get_mikopbx_ip() -> str:
         raise RuntimeError(f"Cannot determine MikoPBX IP address")
 
     raise RuntimeError(f"Cannot determine MikoPBX IP address")
-
-
-# Backward compatibility
-GoPhoneConfig = PJSUAConfig
-GoPhoneEndpoint = PJSUAEndpoint
-GoPhoneManager = PJSUAManager

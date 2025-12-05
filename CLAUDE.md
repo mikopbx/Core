@@ -44,6 +44,13 @@ src/
 └── Service/          # Service layer components
 
 tests/                # Comprehensive test suite
+├── AdminCabinet/     # Browser automation tests (PHPUnit + Selenium)
+│   └── CLAUDE.md     # Browser test development guide
+├── api/              # REST API tests (pytest)
+├── pycalltests/      # SIP call flow tests (pytest + PJSUA2)
+│   └── README.md     # Call flow testing guide
+└── PBXCoreREST/      # REST API unit tests
+
 sites/               # Web assets and entry points
 resources/           # Static resources (DB, sounds, rootfs)
 ```
@@ -76,6 +83,11 @@ Use the **`log-analyzer`** skill to diagnose issues:
 Tests are automatically synchronized between host and container:
 - **Host**: `src/Core/tests`
 - **Container**: `/offload/rootfs/usr/www/tests`
+
+**SIP Call Flow Tests** (pycalltests):
+- Run inside Docker container using PJSUA2 Python SWIG bindings
+- Direct file system access for voicemail, recordings, and audio validation
+- See `tests/pycalltests/README.md` for complete documentation
 
 
 ### Core Components
@@ -225,6 +237,7 @@ Use the **`translations`** skill to manage multilingual translations:
 
 ## Quick Links to Development Guides
 
+### Core Development
 - **[Module Development](src/Modules/CLAUDE.md)** - Create custom modules
 - **[Worker Development](src/Core/Workers/CLAUDE.md)** - Build background workers
 - **[REST API Development](src/PBXCoreREST/CLAUDE.md)** - Add new API endpoints
@@ -232,7 +245,10 @@ Use the **`translations`** skill to manage multilingual translations:
 - **[Asterisk Integration](src/Core/Asterisk/CLAUDE.md)** - Work with Asterisk
 - **[Models Documentation](src/Common/Models/CLAUDE.md)** - Database models guide
 - **[Providers Documentation](src/Common/Providers/CLAUDE.md)** - DI providers guide
-- **[Test Suite](tests/AdminCabinet/CLAUDE.md)** - Browser automation tests
+
+### Testing
+- **[Browser Tests](tests/AdminCabinet/CLAUDE.md)** - Web UI automation with Selenium/PHPUnit
+- **[Call Flow Tests](tests/pycalltests/README.md)** - SIP testing with PJSUA2 (conferences, IVR, voicemail, parking, recording, codecs)
 
 ## Specialized Agents
 

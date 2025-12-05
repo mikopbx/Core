@@ -1,4 +1,43 @@
 {
+  "test.queue.ringall": {
+    "description": "Test queue for ringall strategy",
+    "name": "Test Ringall Queue",
+    "uniqid": "QUEUE-TEST-RINGALL-123456789ABC",
+    "extension": 600,
+    "strategy": "ringall",
+    "seconds_to_ring_each_member": 30,
+    "seconds_for_wrapup": 5,
+    "recive_calls_while_on_a_call": true,
+    "caller_hear": "ringing",
+    "announce_position": false,
+    "announce_hold_time": false,
+    "timeout_to_redirect_to_extension": 30,
+    "timeout_extension": "",
+    "redirect_to_extension_if_empty": "",
+    "members": [
+      {"extension": "201"},
+      {"extension": "202"}
+    ]
+  },
+  "test.queue.overflow": {
+    "description": "Test queue for overflow handling",
+    "name": "Test Overflow Queue",
+    "uniqid": "QUEUE-TEST-OVERFLOW-123456789DEF",
+    "extension": 601,
+    "strategy": "ringall",
+    "seconds_to_ring_each_member": 10,
+    "seconds_for_wrapup": 5,
+    "recive_calls_while_on_a_call": true,
+    "caller_hear": "ringing",
+    "announce_position": false,
+    "announce_hold_time": false,
+    "timeout": 15,
+    "timeout_extension": "202",
+    "redirect_to_extension_if_empty": "",
+    "members": [
+      {"extension": "201"}
+    ]
+  },
   "sales.department": {
     "description": "'Sales department queue",
     "name": "Sales department",
