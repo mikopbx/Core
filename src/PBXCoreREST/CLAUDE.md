@@ -202,19 +202,20 @@ Use the **`api-client`** skill to execute API requests with automatic authentica
 
 ### Public Endpoints
 
-**Public endpoints** allow access without authentication. MikoPBX uses a **3-priority hybrid system** that checks endpoints in the following order:
+**Public endpoints** allow access without authentication. MikoPBX uses a **2-priority system** that checks endpoints in the following order:
 
-1. **Priority 1:** Attribute-based (Pattern 4) via `PublicEndpointsRegistry`
-2. **Priority 2:** Legacy hardcoded constants in `AuthenticationMiddleware::PUBLIC_ENDPOINTS`
-3. **Priority 3:** Module Pattern 2 with `noAuth: true` flag
+1. **Priority 1:** Attribute-based via `PublicEndpointsRegistry`
+   - Class-level: `#[ResourceSecurity('resource', requirements: [SecurityType::PUBLIC])]`
+   - Method-level: `#[ResourceSecurity('resource_action', requirements: [SecurityType::PUBLIC])]`
+2. **Priority 2:** Module Pattern 2 with `noAuth: true` flag
 
-The `AuthenticationMiddleware` checks these priorities in order during request authentication. If an endpoint is found in any priority level, it's treated as public and authentication is skipped.
+The `AuthenticationMiddleware` checks `PublicEndpointsRegistry` first, then module routes. If an endpoint is found in any priority level, it's treated as public and authentication is skipped.
 
-**Testing:** Comprehensive functional tests in `tests/api/test_63_public_endpoints.py` verify all 3 priorities, priority order, optional authentication, and edge cases.
+**Testing:** Comprehensive functional tests in `tests/api/test_63_public_endpoints.py` verify both priorities, optional authentication, and edge cases.
 
-#### Strategy 1: Attribute-Based Public Endpoints (Recommended - Pattern 4)
+#### Strategy 1: Attribute-Based Public Endpoints (Recommended)
 
-Mark entire resource as public using `SecurityType::PUBLIC`:
+**Class-level PUBLIC** - marks entire resource as public:
 
 ```php
 #[ApiResource(path: '/pbxcore/api/v3/webhooks')]
@@ -226,14 +227,43 @@ class WebhooksController extends BaseRestController
 }
 ```
 
+**Method-level PUBLIC** - marks specific custom methods as public:
+
+```php
+#[ApiResource(path: '/pbxcore/api/v3/passkeys')]
+#[ResourceSecurity('passkeys', requirements: [SecurityType::BEARER_TOKEN])]  // Protected by default
+#[HttpMapping(
+    customMethods: ['checkAvailability', 'authenticationStart', 'authenticationFinish'],
+    ...
+)]
+class RestController extends BaseRestController
+{
+    // Protected methods - require authentication
+    public function getList(): void {}
+    public function create(): void {}
+
+    // Public methods - no authentication required
+    #[ResourceSecurity('passkeys_check_availability', requirements: [SecurityType::PUBLIC])]
+    public function checkAvailability(): void {}
+
+    #[ResourceSecurity('passkeys_authentication_start', requirements: [SecurityType::PUBLIC])]
+    public function authenticationStart(): void {}
+
+    #[ResourceSecurity('passkeys_authentication_finish', requirements: [SecurityType::PUBLIC])]
+    public function authenticationFinish(): void {}
+}
+```
+
 **How it works:**
 1. `RouterProvider` scans controller during route generation
-2. Detects `SecurityType::PUBLIC` in `ResourceSecurity` attribute
-3. Registers endpoint in `PublicEndpointsRegistry` service
-4. `AuthenticationMiddleware` checks registry before requiring authentication
+2. `PublicEndpointsRegistry::registerFromController()` checks:
+   - Class-level `ResourceSecurity` - if PUBLIC, registers entire resource path
+   - Method-level `ResourceSecurity` - if PUBLIC, registers custom method routes (e.g., `/path:methodName`)
+3. `AuthenticationMiddleware` checks registry via `isPublicEndpoint()`
 
 **Benefits:**
 - ✅ Single source of truth (controller attributes)
+- ✅ Fine-grained control (class or method level)
 - ✅ Works for Core and Module Pattern 4 endpoints
 - ✅ No code duplication
 - ✅ Automatic discovery
@@ -262,21 +292,6 @@ public function getPBXCoreRESTAdditionalRoutes(): array
 2. Matches URI pattern against module routes
 3. Returns `true` if `noAuth === true`
 4. `AuthenticationMiddleware` allows request
-
-#### Strategy 3: Legacy Hardcoded Constants (Backward Compatibility)
-
-Core public endpoints still in `AuthenticationMiddleware::PUBLIC_ENDPOINTS`:
-
-```php
-private const PUBLIC_ENDPOINTS = [
-    '/pbxcore/api/v3/auth:login' => ['POST'],
-    '/pbxcore/api/v3/auth:refresh' => ['POST'],
-    '/pbxcore/api/v3/system:ping' => ['GET'],
-    // ... other core public endpoints
-];
-```
-
-**Migration path:** New endpoints should use Strategy 1 (attributes). This constant will be phased out once all core endpoints are migrated.
 
 #### Optional Authentication on Public Endpoints
 

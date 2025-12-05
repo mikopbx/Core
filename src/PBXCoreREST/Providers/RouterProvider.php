@@ -174,6 +174,9 @@ class RouterProvider implements ServiceProviderInterface
                 continue;
             }
 
+            // Register controller for public endpoint detection
+            $this->registerControllerForPublicEndpoints($controllerClass, $resourcePath);
+
             // Generate UNIVERSAL routes for this controller
             $routes = [...$routes, ...$this->generateUniversalRoutes($controllerClass, $resourcePath)];
         }
