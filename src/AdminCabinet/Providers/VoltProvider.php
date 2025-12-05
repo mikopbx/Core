@@ -80,15 +80,23 @@ class VoltProvider implements ServiceProviderInterface
                 }
 
                 // Allows use isAllowed within volt templates
+                // Usage: isAllowed('action') - checks current controller
+                // Usage: isAllowed('action', 'ControllerClass') - checks specific controller
                 $compiler->addFunction(
                     'isAllowed',
-                    function ($action, $controller = '') {
-                        // If we don't provide the second parameter
-                        // there is some array with parameters instead of empty string.
-                        if (is_array($controller)) {
-                            $controller = '$this->dispatcher->getHandlerClass()';
+                    function ($resolvedArgs, $exprArgs) {
+                        // Parse arguments from Volt expression
+                        $action = $exprArgs[0]['expr']['value'] ?? 'index';
+
+                        // Check if second argument (controller) is provided
+                        if (isset($exprArgs[1])) {
+                            // Use provided controller class
+                            $controller = $exprArgs[1]['expr']['value'];
+                            return '$this->di->get("' . SecurityPluginProvider::SERVICE_NAME . '",[\'' . $controller . '\',\'' . $action . '\'])';
                         }
-                        return '$this->di->get("' . SecurityPluginProvider::SERVICE_NAME . '",[' . $controller . ',' . $action . '])';
+
+                        // Default: use current controller from dispatcher
+                        return '$this->di->get("' . SecurityPluginProvider::SERVICE_NAME . '",[$this->dispatcher->getHandlerClass(),\'' . $action . '\'])';
                     }
                 );
 

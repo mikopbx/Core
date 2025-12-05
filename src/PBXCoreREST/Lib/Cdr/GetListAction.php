@@ -364,6 +364,20 @@ class GetListAction
                 unset($bindForRawSql['extNumbers']);
             }
 
+            // Handle array placeholder {filteredExtensions:array} for ACL filtering
+            // WHY: ModuleUsersUI adds CDR ACL filters with this placeholder
+            if (isset($bindForRawSql['filteredExtensions']) && is_array($bindForRawSql['filteredExtensions'])) {
+                $placeholders = [];
+                foreach ($bindForRawSql['filteredExtensions'] as $idx => $number) {
+                    $key = "filtExt{$idx}";
+                    $placeholders[] = ":{$key}";
+                    $bindForRawSql[$key] = $number;
+                }
+                // Replace {filteredExtensions:array} with :filtExt0,:filtExt1,:filtExt2,...
+                $whereRaw = str_replace('{filteredExtensions:array}', implode(',', $placeholders), $whereRaw);
+                unset($bindForRawSql['filteredExtensions']);
+            }
+
             // Replace simple Phalcon placeholders (:name:) with PDO format (:name)
             $whereRaw = str_replace(
                 [':linkedid:', ':idFrom:', ':dateFrom:', ':dateTo:', ':searchLike:', ':srcNum:', ':dstNum:', ':disposition:', ':did:'],

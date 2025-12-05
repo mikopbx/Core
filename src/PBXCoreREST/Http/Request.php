@@ -22,11 +22,9 @@ declare(strict_types=1);
 
 namespace MikoPBX\PBXCoreREST\Http;
 
-use MikoPBX\Common\Providers\AclProvider;
 use MikoPBX\Common\Providers\ConfigProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Modules\Config\RestAPIConfigInterface;
-use Phalcon\Acl\Enum as AclEnum;
 use Phalcon\Http\Request as PhRequest;
 use Phalcon\Mvc\Micro;
 
@@ -259,40 +257,6 @@ class Request extends PhRequest
     public function getJwtPayload(): ?array
     {
         return $this->jwtPayload;
-    }
-
-    /**
-     * Checks current request by ACL lists
-     *
-     * For example, we request /pbxcore/api/sip/getPeersStatuses
-     * We explode the paths on 5-th parts and combine two variables
-     *  controller = /pbxcore/api/sip
-     *  action = getPeersStatuses
-     *
-     * The next we request the ACL table and check if it allows or not
-     *
-     * Role is extracted from JWT token payload (set by AuthenticationMiddleware during token validation)
-     *
-     * @param Micro $api
-     * @return bool
-     */
-    public function isAllowedAction(Micro $api): bool
-    {
-        $pattern = $api->router->getMatches()[0] ?? '';
-        $partsOfPattern = explode('/', $pattern);
-        if (count($partsOfPattern) === 5) {
-            // Get role from JWT payload (set by AuthenticationMiddleware)
-            $role = $this->jwtPayload['role'] ?? AclProvider::ROLE_GUESTS;
-
-            $acl =  $api->getSharedService(AclProvider::SERVICE_NAME);
-            $controller = "/$partsOfPattern[1]/$partsOfPattern[2]/$partsOfPattern[3]";
-            $action = "/$partsOfPattern[4]";
-            $allowed = $acl->isAllowed($role, $controller, $action);
-            if ($allowed != AclEnum::ALLOW) {
-                return false;
-            }
-        }
-        return true;
     }
 
     /**

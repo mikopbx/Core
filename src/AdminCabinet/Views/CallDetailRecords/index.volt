@@ -46,7 +46,7 @@
         <th class="">{{ t._('cdr_ColumnFrom') }}</th>
         <th class="">{{ t._('cdr_ColumnTo') }}</th>
         <th class="one wide">{{ t._('cdr_ColumnDuration') }}</th>
-        {% if isAllowed('delete') %}
+        {% if isAllowed('save') %}
         <th class="one wide"></th>
         {% endif %}
     </tr>
