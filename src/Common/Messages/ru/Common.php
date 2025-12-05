@@ -643,7 +643,7 @@ return [
     'mm_ModuleManager' => 'Маркетплейс модулей',
     'mm_Network' => 'Сетевые интерфейсы',
     'mm_NetworkSettings' => 'Сеть и Firewall',
-    'mm_OutOffWorkTime' => 'Нерабочее время',
+    'mm_OffWorkTimes' => 'Нерабочее время',
     'mm_OutboundRoutes' => 'Исходящие маршруты',
     'mm_PbxExtensionModules' => 'Модули',
     'mm_Providers' => 'Провайдеры телефонии',

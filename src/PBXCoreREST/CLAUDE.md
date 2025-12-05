@@ -200,6 +200,42 @@ Use the **`api-client`** skill to execute API requests with automatic authentica
 - **Refresh Token:** 30 days, Redis storage, httpOnly cookie, auto-rotation
 - **API Keys:** No expiration, format: `miko_ak_1234567890abcdef...`
 
+### ACL Authorization
+
+After successful JWT authentication, ACL (Access Control List) authorization is performed by `AuthenticationMiddleware`:
+
+**How it works:**
+1. Role is extracted from JWT payload (`role` claim)
+2. Request URI is parsed into controller + action
+3. ACL checks if role has permission for controller/action
+4. 401 = not authenticated (no/invalid token)
+5. 403 = authenticated but not authorized (no ACL permission)
+
+**ACL Resource Format (Universal for any API version):**
+- **Controller** = full resource path (e.g., `/pbxcore/api/v3/extensions`)
+- **Action** = operation name (getList, getRecord, create, update, delete, or custom method)
+- Supports `/pbxcore/api/v1/`, `/pbxcore/api/v2/`, `/pbxcore/api/v3/`, etc.
+- ACL rules are defined in `ModuleUsersUI/Lib/EndpointConstants` and `ModuleUsersUI/Lib/ACL/CoreACL`
+
+**Request to ACL Mapping:**
+```
+GET  /pbxcore/api/v3/extensions              → controller=/pbxcore/api/v3/extensions, action=getList
+GET  /pbxcore/api/v3/extensions/{id}         → controller=/pbxcore/api/v3/extensions, action=getRecord
+POST /pbxcore/api/v3/extensions              → controller=/pbxcore/api/v3/extensions, action=create
+PUT  /pbxcore/api/v3/extensions/{id}         → controller=/pbxcore/api/v3/extensions, action=update
+PATCH /pbxcore/api/v3/extensions/{id}        → controller=/pbxcore/api/v3/extensions, action=patch
+DELETE /pbxcore/api/v3/extensions/{id}       → controller=/pbxcore/api/v3/extensions, action=delete
+GET  /pbxcore/api/v3/extensions:getDefault   → controller=/pbxcore/api/v3/extensions, action=getDefault
+POST /pbxcore/api/v3/extensions/{id}:copy    → controller=/pbxcore/api/v3/extensions, action=copy
+```
+
+**ACL Bypass:**
+- Localhost requests (127.0.0.1, ::1) bypass ACL checks
+- Public endpoints skip authentication entirely
+- API Keys have separate permission checking via `ApiKeyPermissionChecker`
+
+**Testing:** ACL tests in `tests/api/test_02_acl.py`
+
 ### Public Endpoints
 
 **Public endpoints** allow access without authentication. MikoPBX uses a **2-priority system** that checks endpoints in the following order:
