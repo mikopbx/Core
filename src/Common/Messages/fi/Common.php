@@ -550,7 +550,6 @@ Voit saada uuden avaimen automaattisesti täyttämällä rekisteröintilomakkeen
     'mm_ModuleManager' => 'Moduulien markkinapaikka',
     'mm_Network' => 'Verkkoliitännät',
     'mm_NetworkSettings' => 'Verkko ja palomuuri',
-    'mm_OutOffWorkTime' => 'Työajan ulkopuolella',
     'mm_OutboundRoutes' => 'Lähtevät reitit',
     'mm_PbxExtensionModules' => 'Moduulit',
     'mm_Providers' => 'Puhelinpalvelujen tarjoajat',

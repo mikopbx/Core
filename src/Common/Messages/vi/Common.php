@@ -550,7 +550,6 @@ Bạn có thể tự động nhận khóa mới bằng cách điền vào biểu
     'mm_ModuleManager' => 'Thị trường của các mô-đun',
     'mm_Network' => 'Giao diện mạng',
     'mm_NetworkSettings' => 'Mạng và tường lửa',
-    'mm_OutOffWorkTime' => 'Thời gian không làm việc',
     'mm_OutboundRoutes' => 'Tuyến đi',
     'mm_PbxExtensionModules' => 'Mô-đun',
     'mm_Providers' => 'Nhà cung cấp điện thoại',

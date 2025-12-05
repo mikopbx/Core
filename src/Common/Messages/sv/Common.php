@@ -496,7 +496,6 @@ Du kan få en ny nyckel automatiskt genom att fylla i registreringsformuläret.<
     'mm_ModuleManager' => 'Marknadsplats för moduler',
     'mm_Network' => 'Nätverksgränssnitt',
     'mm_NetworkSettings' => 'Nätverk och brandvägg',
-    'mm_OutOffWorkTime' => 'Icke arbetande tid',
     'mm_OutboundRoutes' => 'Utgående rutter',
     'mm_PbxExtensionModules' => 'moduler',
     'mm_Providers' => 'Telefonileverantörer',

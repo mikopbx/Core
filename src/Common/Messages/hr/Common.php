@@ -550,7 +550,6 @@ Novi ključ možete dobiti automatski ispunjavanjem obrasca za registraciju.<br>
     'mm_ModuleManager' => 'Tržište modula',
     'mm_Network' => 'Mrežna sučelja',
     'mm_NetworkSettings' => 'Mreža i vatrozid',
-    'mm_OutOffWorkTime' => 'Neradno vrijeme',
     'mm_OutboundRoutes' => 'Odlazne rute',
     'mm_PbxExtensionModules' => 'Moduli',
     'mm_Providers' => 'Pružatelji usluga telefonije',

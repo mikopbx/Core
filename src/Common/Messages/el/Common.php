@@ -471,7 +471,6 @@ return [
     'mm_ModuleManager' => 'Αγορά μονάδων',
     'mm_Network' => 'Διεπαφές δικτύου',
     'mm_NetworkSettings' => 'Δίκτυο και Τείχος προστασίας',
-    'mm_OutOffWorkTime' => 'Μη εργάσιμες ώρες',
     'mm_OutboundRoutes' => 'Εξερχόμενες κλήσεις',
     'mm_PbxExtensionModules' => 'Ενότητες',
     'mm_Providers' => 'Πάροχοι',

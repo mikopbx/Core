@@ -530,7 +530,6 @@ Sie können automatisch einen neuen Schlüssel erhalten, indem Sie das Registrie
     'mm_ModuleManager' => 'Marktplatz der Module',
     'mm_Network' => 'Netzwerkschnittstellen',
     'mm_NetworkSettings' => 'Netzwerk und Firewall',
-    'mm_OutOffWorkTime' => 'Nacht- und Urlaubsschalter',
     'mm_OutboundRoutes' => 'Ausgehende Regeln',
     'mm_PbxExtensionModules' => 'Module',
     'mm_Providers' => 'Telefonie Provider',

@@ -550,7 +550,6 @@ return [
     'mm_ModuleManager' => 'モジュールのマーケットプレイス',
     'mm_Network' => 'ネットワークインターフェース',
     'mm_NetworkSettings' => 'ネットワークとファイアウォール',
-    'mm_OutOffWorkTime' => '非稼働時間',
     'mm_OutboundRoutes' => '発信ルート',
     'mm_PbxExtensionModules' => 'モジュール',
     'mm_Providers' => 'テレフォニープロバイダー',

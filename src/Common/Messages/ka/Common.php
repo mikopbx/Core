@@ -550,7 +550,6 @@ return [
     'mm_ModuleManager' => 'მოდულების ბაზარი',
     'mm_Network' => 'ქსელის ინტერფეისი',
     'mm_NetworkSettings' => 'ქსელი და Firewall',
-    'mm_OutOffWorkTime' => 'არასამუშაო საათები',
     'mm_OutboundRoutes' => 'გამავალი მარშრუტები',
     'mm_PbxExtensionModules' => 'მოდულები',
     'mm_Providers' => 'სატელეფონო პროვაიდერები',

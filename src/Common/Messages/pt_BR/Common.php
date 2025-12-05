@@ -550,7 +550,6 @@ Você pode obter uma nova chave automaticamente preenchendo o formulário de reg
     'mm_ModuleManager' => 'Mercado de módulos',
     'mm_Network' => 'Interfaces de rede',
     'mm_NetworkSettings' => 'Rede e Firewall',
-    'mm_OutOffWorkTime' => 'Horário não comercial',
     'mm_OutboundRoutes' => 'Rotas de saída',
     'mm_PbxExtensionModules' => 'Módulos',
     'mm_Providers' => 'Provedores de telefonia',

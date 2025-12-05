@@ -550,7 +550,6 @@ Nový klíč můžete získat automaticky vyplněním registračního formulář
     'mm_ModuleManager' => 'Tržiště modulů',
     'mm_Network' => 'Síťová rozhraní',
     'mm_NetworkSettings' => 'Síť a Firewall',
-    'mm_OutOffWorkTime' => 'Nepracovní čas',
     'mm_OutboundRoutes' => 'Odchozí trasy',
     'mm_PbxExtensionModules' => 'Moduly',
     'mm_Providers' => 'Poskytovatelé telefonních služeb',

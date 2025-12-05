@@ -496,7 +496,6 @@ return [
     'mm_ModuleManager' => 'ตลาดของโมดูล',
     'mm_Network' => 'อินเทอร์เฟซเครือข่าย',
     'mm_NetworkSettings' => 'เครือข่ายและไฟร์วอลล์',
-    'mm_OutOffWorkTime' => 'นอกเวลาทำการ',
     'mm_OutboundRoutes' => 'เส้นทางขาออก',
     'mm_PbxExtensionModules' => 'โมดูล',
     'mm_Providers' => 'ผู้ให้บริการโทรศัพท์',

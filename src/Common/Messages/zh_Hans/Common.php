@@ -550,7 +550,6 @@ return [
     'mm_ModuleManager' => '模块市场',
     'mm_Network' => '网络接口',
     'mm_NetworkSettings' => '网络和防火墙',
-    'mm_OutOffWorkTime' => '非工作时间',
     'mm_OutboundRoutes' => '外发路线',
     'mm_PbxExtensionModules' => '模组',
     'mm_Providers' => '电话提供商',

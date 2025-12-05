@@ -481,7 +481,6 @@ Puede obtener una nueva clave automáticamente completando el formulario de regi
     'mm_ModuleManager' => 'Marketplace de módulos',
     'mm_Network' => 'Interfaces de red',
     'mm_NetworkSettings' => 'Red y cortafuegos',
-    'mm_OutOffWorkTime' => 'Tiempo no laboral',
     'mm_OutboundRoutes' => 'Rutas salientes',
     'mm_PbxExtensionModules' => 'Módulos',
     'mm_Providers' => 'Proveedores de telefonía',

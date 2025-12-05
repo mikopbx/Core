@@ -550,7 +550,6 @@ U kunt automatisch een nieuwe sleutel krijgen door het registratieformulier in t
     'mm_ModuleManager' => 'Marktplaats van modules',
     'mm_Network' => 'Netwerk interfaces',
     'mm_NetworkSettings' => 'Netwerk en Firewall',
-    'mm_OutOffWorkTime' => 'Niet-werkuren',
     'mm_OutboundRoutes' => 'Uitgaande trajecten',
     'mm_PbxExtensionModules' => 'modules',
     'mm_Providers' => 'Telefonie aanbieders',

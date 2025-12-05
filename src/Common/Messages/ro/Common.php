@@ -550,7 +550,6 @@ Puteți obține automat o cheie nouă completând formularul de înregistrare.<b
     'mm_ModuleManager' => 'Piața modulelor',
     'mm_Network' => 'Interfețe de rețea',
     'mm_NetworkSettings' => 'Rețea și Firewall',
-    'mm_OutOffWorkTime' => 'Orele nelucrătoare',
     'mm_OutboundRoutes' => 'Rutele de ieșire',
     'mm_PbxExtensionModules' => 'Module',
     'mm_Providers' => 'Furnizorii de telefonie',

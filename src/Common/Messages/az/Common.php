@@ -550,7 +550,6 @@ Siz qeydiyyat formasını doldurmaqla avtomatik olaraq yeni açar əldə edə bi
     'mm_ModuleManager' => 'Modullar bazarı',
     'mm_Network' => 'Şəbəkə interfeysləri',
     'mm_NetworkSettings' => 'Şəbəkə və Firewall',
-    'mm_OutOffWorkTime' => 'Qeyri-iş saatları',
     'mm_OutboundRoutes' => 'Çıxış marşrutları',
     'mm_PbxExtensionModules' => 'Modullar',
     'mm_Providers' => 'Telefon provayderləri',

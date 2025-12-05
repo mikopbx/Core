@@ -550,7 +550,6 @@ Nowy klucz możesz otrzymać automatycznie wypełniając formularz rejestracyjny
     'mm_ModuleManager' => 'Giełda modułów',
     'mm_Network' => 'Interfejsy sieciowe',
     'mm_NetworkSettings' => 'Sieć i zapora ogniowa',
-    'mm_OutOffWorkTime' => 'Czas wolny od pracy',
     'mm_OutboundRoutes' => 'Trasy wychodzące',
     'mm_PbxExtensionModules' => 'Moduły',
     'mm_Providers' => 'Dostawcy telefonii',

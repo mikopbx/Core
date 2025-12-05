@@ -550,7 +550,6 @@ Vous pouvez obtenir une nouvelle clé automatiquement en remplissant le formulai
     'mm_ModuleManager' => 'Marketplace de modules',
     'mm_Network' => 'Interfaces réseau',
     'mm_NetworkSettings' => 'Réseau et pare-feu',
-    'mm_OutOffWorkTime' => 'Temps chômé',
     'mm_OutboundRoutes' => 'Itinéraires sortants',
     'mm_PbxExtensionModules' => 'Modules',
     'mm_Providers' => 'Fournisseurs de téléphonie',

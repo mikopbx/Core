@@ -550,7 +550,6 @@ return [
     'mm_ModuleManager' => 'Маркетплейс модулів',
     'mm_Network' => 'Мережеві інтерфейси',
     'mm_NetworkSettings' => 'Мережа та Firewall',
-    'mm_OutOffWorkTime' => 'Неробочий час',
     'mm_OutboundRoutes' => 'Вихідні маршрути',
     'mm_PbxExtensionModules' => 'Модулі',
     'mm_Providers' => 'Провайдери телефонії',

@@ -567,7 +567,6 @@ You can get a new key automatically by filling out the registration form.<br>',
     'mm_ModuleManager' => 'Module marketplace',
     'mm_Network' => 'Network interfaces',
     'mm_NetworkSettings' => 'Network and Firewall',
-    'mm_OutOffWorkTime' => 'Out of office time',
     'mm_OutboundRoutes' => 'Outgoing routes',
     'mm_PbxExtensionModules' => 'Modules',
     'mm_Providers' => 'Telephony providers',
@@ -747,7 +746,6 @@ You can get a new key automatically by filling out the registration form.<br>',
     'st_TestS3Connection' => 'Test connection',
     'st_Used' => 'used',
     'st_ValidationError' => 'Validation error',
-
     // Tooltip translations
     'st_tooltip_record_retention_header' => 'Total Retention Period',
     'st_tooltip_record_retention_desc' => 'How long call recordings are kept in the system',
@@ -757,36 +755,29 @@ You can get a new key automatically by filling out the registration form.<br>',
     'st_tooltip_record_retention_item4' => 'Unlimited - keep all recordings',
     'st_tooltip_record_retention_warning_header' => 'Storage Warning',
     'st_tooltip_record_retention_warning' => 'Longer retention periods require more disk space',
-
     'st_tooltip_s3_enabled_header' => 'Cloud Storage',
     'st_tooltip_s3_enabled_desc' => 'Upload recordings to S3-compatible cloud storage for backup and archival',
     'st_tooltip_s3_enabled_item1' => 'Automatic upload after recording completion',
     'st_tooltip_s3_enabled_item2' => 'Frees up local disk space',
     'st_tooltip_s3_enabled_item3' => 'Compatible with AWS S3, MinIO, Wasabi',
-
     'st_tooltip_s3_endpoint_header' => 'S3 Endpoint URL',
     'st_tooltip_s3_endpoint_desc' => 'API endpoint for your S3-compatible storage service',
     'st_tooltip_examples' => 'Examples',
-
     'st_tooltip_s3_region_header' => 'S3 Region',
     'st_tooltip_s3_region_desc' => 'Geographic region where your bucket is located',
     'st_tooltip_s3_region_note' => 'Must match your bucket region for AWS S3',
-
     'st_tooltip_s3_bucket_header' => 'Bucket Name',
     'st_tooltip_s3_bucket_desc' => 'Name of the S3 bucket for storing recordings',
     'st_tooltip_s3_bucket_item1' => 'Must be unique across all S3 users (for AWS)',
     'st_tooltip_s3_bucket_item2' => 'Only lowercase letters, numbers, hyphens',
     'st_tooltip_s3_bucket_item3' => 'Must already exist - will not be created',
-
     'st_tooltip_s3_access_key_header' => 'Access Key ID',
     'st_tooltip_s3_access_key_desc' => 'Public identifier for API authentication',
     'st_tooltip_s3_access_key_note' => 'Similar to username - safe to display',
-
     'st_tooltip_s3_secret_key_header' => 'Secret Access Key',
     'st_tooltip_s3_secret_key_desc' => 'Private key for API authentication',
     'st_tooltip_warning' => 'Security Warning',
     'st_tooltip_s3_secret_key_warning' => 'Keep this secret safe - treat it like a password',
-
     'st_tooltip_local_retention_header' => 'Local Retention Period',
     'st_tooltip_local_retention_desc' => 'How long to keep recordings locally before deleting',
     'st_tooltip_local_retention_item1' => 'After this period, recordings are deleted from local storage',
@@ -794,7 +785,6 @@ You can get a new key automatically by filling out the registration form.<br>',
     'st_tooltip_local_retention_item3' => 'Cannot exceed total retention period',
     'st_tooltip_note' => 'Note',
     'st_tooltip_local_retention_warning' => 'Shorter local retention frees disk space faster',
-
     // THIS
     'this_is' => 'This is ',
     // TS
@@ -930,7 +920,6 @@ You can get a new key automatically by filling out the registration form.<br>',
     'mo_UserCanHaveOnlyOneGeneralExtensionPerType' => 'User can have only one general number of type %type%. Exists: %existing%',
     'ms_MB' => 'MB',
     'ms_Minutes' => 'minutes',
-
     // S3 Storage validation messages
     'mo_S3EndpointRequired' => 'S3 endpoint URL is required when S3 storage is enabled',
     'mo_S3BucketRequired' => 'S3 bucket name is required when S3 storage is enabled',

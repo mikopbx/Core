@@ -550,7 +550,6 @@ Puoi ottenere una nuova chiave automaticamente compilando il modulo di registraz
     'mm_ModuleManager' => 'Mercato dei moduli',
     'mm_Network' => 'Interfacce di rete',
     'mm_NetworkSettings' => 'Rete e firewall',
-    'mm_OutOffWorkTime' => 'Tempo non lavorativo',
     'mm_OutboundRoutes' => 'Percorsi in uscita',
     'mm_PbxExtensionModules' => 'moduli',
     'mm_Providers' => 'Fornitori di telefonia',
