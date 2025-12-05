@@ -33,6 +33,7 @@ use MikoPBX\Common\Providers\BeanstalkConnectionModelsProvider;
 use MikoPBX\Common\Providers\CDRDatabaseProvider;
 use MikoPBX\Common\Providers\CryptProvider;
 use MikoPBX\Common\Providers\EventBusProvider;
+use MikoPBX\Common\Providers\JwtProvider;
 use MikoPBX\Common\Providers\LanguageProvider;
 use MikoPBX\Common\Providers\LoggerAuthProvider;
 use MikoPBX\Common\Providers\LoggerProvider;
@@ -45,6 +46,7 @@ use MikoPBX\Common\Providers\ModelsMetadataProvider;
 use MikoPBX\Common\Providers\ModulesDBConnectionsProvider;
 use MikoPBX\Common\Providers\PBXConfModulesProvider;
 use MikoPBX\Common\Providers\PBXCoreRESTClientProvider;
+use MikoPBX\Common\Providers\RedisClientProvider;
 use MikoPBX\Common\Providers\RegistryProvider;
 use MikoPBX\Common\Providers\RouterProvider;
 use MikoPBX\Common\Providers\SessionProvider;
@@ -69,6 +71,7 @@ class RegisterDIServices
 
             // Inject cache providers
             ManagedCacheProvider::class,
+            RedisClientProvider::class,
 
             // Inject Database connections
             ModelsAnnotationsProvider::class,
@@ -93,6 +96,9 @@ class RegisterDIServices
 
             // Inject Access Control Lists
             AclProvider::class,
+
+            // Inject JWT validation service
+            JwtProvider::class,
 
             // Inject Queue connection
             BeanstalkConnectionModelsProvider::class,

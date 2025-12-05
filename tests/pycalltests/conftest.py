@@ -21,6 +21,7 @@ spec.loader.exec_module(api_conftest)
 
 # Re-export fixtures from API conftest
 api_client = api_conftest.api_client
+call_queue_fixtures = api_conftest.call_queue_fixtures
 
 # Re-export MikoPBXClient class for direct import
 MikoPBXClient = api_conftest.MikoPBXClient
@@ -33,6 +34,7 @@ convert_employee_fixture_to_api_format = api_conftest.convert_employee_fixture_t
 
 # CDR baseline fixture - specific to pycalltests tests
 import pytest
+import pytest_asyncio
 
 @pytest.fixture
 def cdr_baseline(api_client):
@@ -95,10 +97,40 @@ def cdr_baseline(api_client):
     return CdrBaseline(api_client)
 
 
+@pytest_asyncio.fixture(scope="session", autouse=True)
+async def pjsua_cleanup():
+    """
+    Ensure PJSUA2 resources are cleaned up after the entire test session
+
+    This fixture runs automatically at the end of the test session (scope="session", autouse=True)
+    and calls PJSUAManager.shutdown() to properly release PJSIP resources:
+    - Stop the event handler background task
+    - Destroy the PJSIP endpoint with libDestroy()
+    - Release memory pools, thread pools, socket descriptors
+
+    IMPORTANT: This must be session-scoped because the PJSIP endpoint is shared
+    across all tests. Calling shutdown() during the session would break subsequent tests.
+    """
+    # Yield control to run all tests
+    yield
+
+    # After all tests complete, cleanup PJSUA2 resources
+    try:
+        from pjsua_helper import PJSUAManager
+        # Call class method directly without creating instance
+        await PJSUAManager.shutdown()
+    except Exception as e:
+        # Log but don't fail - cleanup is best-effort
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error during PJSUA2 cleanup: {e}", exc_info=True)
+
+
 # Re-export all fixtures so they can be discovered by pytest
 __all__ = [
     'api_client',
     'cdr_baseline',
+    'call_queue_fixtures',
     'MikoPBXClient',
     'assert_api_success',
     'get_extension_secret',

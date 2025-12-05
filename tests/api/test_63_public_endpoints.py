@@ -1,22 +1,27 @@
 #!/usr/bin/env python3
 """
-Test suite for Public Endpoints - 3-Priority Hybrid System
+Test suite for Public Endpoints - 2-Priority System
 
-Tests the hybrid public endpoint detection system with 3 priorities:
-1. PRIORITY 1: Attribute-based (Pattern 4) - #[ResourceSecurity(..., requirements: [SecurityType::PUBLIC])]
-2. PRIORITY 2: Legacy hardcoded constants - PUBLIC_ENDPOINTS in AuthenticationMiddleware
-3. PRIORITY 3: Module Pattern 2 - noAuth: true parameter in getPBXCoreRESTAdditionalRoutes()
+Tests the public endpoint detection system with 2 priorities:
+1. PRIORITY 1: Attribute-based - #[ResourceSecurity(..., requirements: [SecurityType::PUBLIC])]
+   - Class-level: Registers entire resource path as public
+   - Method-level: Registers specific custom method routes (e.g., /path:methodName)
+2. PRIORITY 2: Module Pattern 2 - noAuth: true parameter in getPBXCoreRESTAdditionalRoutes()
 
 Architecture:
-- AuthenticationMiddleware checks endpoints in priority order
+- AuthenticationMiddleware checks endpoints via PublicEndpointsRegistry first
+- If not found in registry, checks Module Pattern 2 (noAuth flag)
 - Public endpoints work without Bearer token
 - Optional authentication: public endpoints can use Bearer token for enhanced features
-- Priority order ensures modern attribute-based detection takes precedence
 
 Implementation Details:
-- Priority 1: PublicEndpointsRegistry service populated during route generation
-- Priority 2: Hardcoded array in AuthenticationMiddleware::PUBLIC_ENDPOINTS
-- Priority 3: Request::thisIsModuleNoAuthRequest() checks module route config
+- Priority 1: PublicEndpointsRegistry scans class-level and method-level ResourceSecurity attributes
+- Priority 2: Request::thisIsModuleNoAuthRequest() checks module route config
+
+Migration Note (2025-12):
+- Removed legacy PUBLIC_ENDPOINTS constant from AuthenticationMiddleware
+- All public endpoints now use method-level or class-level SecurityType::PUBLIC attributes
+- Passkeys and UserPageTracker endpoints migrated to method-level attributes
 """
 
 import pytest
@@ -84,38 +89,20 @@ class TestPublicEndpointsRegistry:
         print(f"✓ Priority 1: system:ping is registered in PublicEndpointsRegistry")
 
 
-class TestPublicEndpointsLegacy:
+class TestPublicEndpointsMethodLevel:
     """
-    Priority 2: Legacy hardcoded public endpoints
+    Priority 1: Method-level attribute-based public endpoints
 
-    Tests endpoints from PUBLIC_ENDPOINTS constant in AuthenticationMiddleware.
-    These are kept for backward compatibility during migration to attribute-based detection.
+    Tests endpoints with method-level #[ResourceSecurity(..., requirements: [SecurityType::PUBLIC])]
+    These endpoints are registered in PublicEndpointsRegistry as /path:methodName patterns.
     """
 
-    def test_01_priority2_system_ping_legacy(self):
-        """Test Priority 2 - system:ping from PUBLIC_ENDPOINTS constant"""
-        # system:ping is BOTH in registry (Priority 1) AND in PUBLIC_ENDPOINTS (Priority 2)
-        # This test verifies backward compatibility
-
-        client = MikoPBXClient(API_BASE_URL)
-        response = client.get_raw('system:ping')
-
-        assert response.status_code == HTTP_OK, \
-            f"Legacy public endpoint should work, got {response.status_code}"
-
-        data = response.json()
-        assert data.get('result') is True
-
-        print(f"✓ Priority 2: system:ping works via PUBLIC_ENDPOINTS constant")
-        print(f"  Note: Also registered in Priority 1 - both work")
-
-    def test_02_priority2_auth_login_without_token(self):
-        """Test Priority 2 - auth:login from PUBLIC_ENDPOINTS (POST)"""
-        # auth:login is in PUBLIC_ENDPOINTS - must work without Bearer token
+    def test_01_auth_login_without_token(self):
+        """Test method-level PUBLIC - auth:login"""
+        # auth:login has method-level SecurityType::PUBLIC attribute
 
         client = MikoPBXClient(API_BASE_URL)
 
-        # Try to login without prior authentication
         response = client.session.post(
             f"{API_BASE_URL}/auth:login",
             data={
@@ -127,36 +114,33 @@ class TestPublicEndpointsLegacy:
         )
 
         # Should return 401 or result:false, but NOT 403 (auth required)
-        # This proves the endpoint is public (authentication happens inside, not at middleware)
         assert response.status_code in [HTTP_OK, HTTP_UNAUTHORIZED], \
             f"auth:login should be public (got {response.status_code}, expected {HTTP_OK}/{HTTP_UNAUTHORIZED})"
 
-        print(f"✓ Priority 2: auth:login is public (returned {response.status_code})")
+        print(f"✓ Method-level PUBLIC: auth:login is public (returned {response.status_code})")
         print(f"  Note: Invalid credentials rejected by login logic, not by middleware")
 
-    def test_03_priority2_auth_refresh_without_token(self):
-        """Test Priority 2 - auth:refresh from PUBLIC_ENDPOINTS (POST)"""
-        # auth:refresh is in PUBLIC_ENDPOINTS - must work without Bearer token
+    def test_02_auth_refresh_without_token(self):
+        """Test method-level PUBLIC - auth:refresh"""
+        # auth:refresh has method-level SecurityType::PUBLIC attribute
 
         client = MikoPBXClient(API_BASE_URL)
 
-        # Try to refresh without Bearer token (will fail, but should be public)
         response = client.session.post(
             f"{API_BASE_URL}/auth:refresh",
             json={},
             verify=False
         )
 
-        # Should return 200/401, but NOT 403 (which would mean auth required at middleware)
+        # Should return 200/401, but NOT 403
         assert response.status_code in [HTTP_OK, HTTP_UNAUTHORIZED], \
             f"auth:refresh should be public (got {response.status_code})"
 
-        print(f"✓ Priority 2: auth:refresh is public (returned {response.status_code})")
-        print(f"  Note: No refresh token → login logic fails, but middleware allows access")
+        print(f"✓ Method-level PUBLIC: auth:refresh is public (returned {response.status_code})")
 
-    def test_04_priority2_get_languages_without_auth(self):
-        """Test Priority 2 - system:getAvailableLanguages from PUBLIC_ENDPOINTS"""
-        # getAvailableLanguages is in PUBLIC_ENDPOINTS - needed for login page
+    def test_03_get_languages_without_auth(self):
+        """Test method-level PUBLIC - system:getAvailableLanguages"""
+        # getAvailableLanguages has method-level SecurityType::PUBLIC attribute
 
         client = MikoPBXClient(API_BASE_URL)
         response = client.get_raw('system:getAvailableLanguages')
@@ -168,59 +152,133 @@ class TestPublicEndpointsLegacy:
         assert data.get('result') is True, \
             f"getAvailableLanguages should succeed without auth: {data}"
 
-        # Verify we got language list (API returns array or object)
         languages = data.get('data', {})
         assert len(languages) > 0, "Should return at least one language"
 
-        print(f"✓ Priority 2: system:getAvailableLanguages works without auth")
-        # Handle both list and dict responses
+        print(f"✓ Method-level PUBLIC: system:getAvailableLanguages works without auth")
         if isinstance(languages, dict):
             print(f"  Languages: {list(languages.keys())[:5]}...")
         else:
             print(f"  Languages: {languages[:5] if isinstance(languages, list) else 'N/A'}...")
 
-    def test_05_priority2_change_language_without_auth(self):
-        """Test Priority 2 - system:changeLanguage from PUBLIC_ENDPOINTS"""
-        # changeLanguage supports both POST and PATCH in PUBLIC_ENDPOINTS
+    def test_04_change_language_without_auth(self):
+        """Test method-level PUBLIC - system:changeLanguage"""
+        # changeLanguage has method-level SecurityType::PUBLIC attribute
 
         client = MikoPBXClient(API_BASE_URL)
 
-        # POST method
         response_post = client.session.post(
             f"{API_BASE_URL}/system:changeLanguage",
             json={'language': 'en'},
             verify=False
         )
 
-        # Should be public (200/400/422, but NOT 401/403)
         assert response_post.status_code not in [HTTP_UNAUTHORIZED, HTTP_FORBIDDEN], \
             f"changeLanguage (POST) should be public, got {response_post.status_code}"
 
-        print(f"✓ Priority 2: system:changeLanguage (POST) is public")
+        print(f"✓ Method-level PUBLIC: system:changeLanguage (POST) is public")
 
-        # PATCH method
-        response_patch = client.session.patch(
-            f"{API_BASE_URL}/system:changeLanguage",
-            json={'language': 'en'},
+    def test_05_passkeys_check_availability_without_auth(self):
+        """Test method-level PUBLIC - passkeys:checkAvailability"""
+        # checkAvailability has method-level SecurityType::PUBLIC attribute
+
+        client = MikoPBXClient(API_BASE_URL)
+
+        response = client.session.get(
+            f"{API_BASE_URL}/passkeys:checkAvailability",
+            params={'login': 'admin'},
             verify=False
         )
 
-        assert response_patch.status_code not in [HTTP_UNAUTHORIZED, HTTP_FORBIDDEN], \
-            f"changeLanguage (PATCH) should be public, got {response_patch.status_code}"
+        # Should be public (not 401/403)
+        assert response.status_code not in [HTTP_UNAUTHORIZED, HTTP_FORBIDDEN], \
+            f"passkeys:checkAvailability should be public, got {response.status_code}"
 
-        print(f"✓ Priority 2: system:changeLanguage (PATCH) is public")
+        print(f"✓ Method-level PUBLIC: passkeys:checkAvailability is public")
+
+    def test_06_passkeys_authentication_start_without_auth(self):
+        """Test method-level PUBLIC - passkeys:authenticationStart"""
+        # authenticationStart has method-level SecurityType::PUBLIC attribute
+
+        client = MikoPBXClient(API_BASE_URL)
+
+        response = client.session.get(
+            f"{API_BASE_URL}/passkeys:authenticationStart",
+            params={'login': 'admin'},
+            verify=False
+        )
+
+        # Should be public (not 401/403)
+        assert response.status_code not in [HTTP_UNAUTHORIZED, HTTP_FORBIDDEN], \
+            f"passkeys:authenticationStart should be public, got {response.status_code}"
+
+        print(f"✓ Method-level PUBLIC: passkeys:authenticationStart is public")
+
+    def test_07_passkeys_authentication_finish_without_auth(self):
+        """Test method-level PUBLIC - passkeys:authenticationFinish"""
+        # authenticationFinish has method-level SecurityType::PUBLIC attribute
+
+        client = MikoPBXClient(API_BASE_URL)
+
+        response = client.session.post(
+            f"{API_BASE_URL}/passkeys:authenticationFinish",
+            json={'credential': {}},
+            verify=False
+        )
+
+        # Should be public (not 401/403)
+        assert response.status_code not in [HTTP_UNAUTHORIZED, HTTP_FORBIDDEN], \
+            f"passkeys:authenticationFinish should be public, got {response.status_code}"
+
+        print(f"✓ Method-level PUBLIC: passkeys:authenticationFinish is public")
+
+    def test_08_user_page_tracker_page_view_without_auth(self):
+        """Test method-level PUBLIC - user-page-tracker:pageView"""
+        # pageView has method-level SecurityType::PUBLIC attribute
+
+        client = MikoPBXClient(API_BASE_URL)
+
+        response = client.session.post(
+            f"{API_BASE_URL}/user-page-tracker:pageView",
+            json={'pageName': '/test', 'expire': 300},
+            verify=False
+        )
+
+        # Should be public (not 401/403)
+        assert response.status_code not in [HTTP_UNAUTHORIZED, HTTP_FORBIDDEN], \
+            f"user-page-tracker:pageView should be public, got {response.status_code}"
+
+        print(f"✓ Method-level PUBLIC: user-page-tracker:pageView is public")
+
+    def test_09_user_page_tracker_page_leave_without_auth(self):
+        """Test method-level PUBLIC - user-page-tracker:pageLeave"""
+        # pageLeave has method-level SecurityType::PUBLIC attribute
+
+        client = MikoPBXClient(API_BASE_URL)
+
+        response = client.session.post(
+            f"{API_BASE_URL}/user-page-tracker:pageLeave",
+            json={'pageName': '/test'},
+            verify=False
+        )
+
+        # Should be public (not 401/403)
+        assert response.status_code not in [HTTP_UNAUTHORIZED, HTTP_FORBIDDEN], \
+            f"user-page-tracker:pageLeave should be public, got {response.status_code}"
+
+        print(f"✓ Method-level PUBLIC: user-page-tracker:pageLeave is public")
 
 
 class TestPublicEndpointsModules:
     """
-    Priority 3: Module Pattern 2 public endpoints
+    Priority 2: Module Pattern 2 public endpoints
 
     Tests endpoints from modules using noAuth: true in getPBXCoreRESTAdditionalRoutes().
     These endpoints are detected via Request::thisIsModuleNoAuthRequest().
     """
 
-    def test_01_priority3_module_endpoint_skip_if_no_modules(self):
-        """Test Priority 3 - Module Pattern 2 with noAuth: true"""
+    def test_01_priority2_module_endpoint_skip_if_no_modules(self):
+        """Test Priority 2 - Module Pattern 2 with noAuth: true"""
         # Module examples are not available in current project
         # This test documents the expected behavior
 
@@ -234,7 +292,7 @@ class TestPublicEndpointsModules:
         # Example endpoint (if module exists):
         # GET /pbxcore/api/module-example-v2-public/status
 
-        print(f"✓ Priority 3: Module Pattern 2 documented (skip - no modules)")
+        print(f"✓ Priority 2: Module Pattern 2 documented (skip - no modules)")
 
 
 class TestPublicEndpointsNegative:
@@ -289,13 +347,12 @@ class TestPublicEndpointsNegative:
 
 class TestPublicEndpointsPriority:
     """
-    Test priority order - Priority 1 should be checked before Priority 2
+    Test priority order - Priority 1 (attributes) is checked before Priority 2 (modules)
     """
 
     def test_01_priority1_takes_precedence(self):
-        """Test that Priority 1 (registry) is checked before Priority 2 (constant)"""
-        # system:ping is in BOTH Priority 1 (registry) and Priority 2 (constant)
-        # Priority 1 should be checked first
+        """Test that Priority 1 (registry) is checked first"""
+        # system:ping uses method-level SecurityType::PUBLIC attribute (Priority 1)
 
         client = MikoPBXClient(API_BASE_URL)
         response = client.get_raw('system:ping')
@@ -304,30 +361,31 @@ class TestPublicEndpointsPriority:
         data = response.json()
         assert data.get('result') is True
 
-        print(f"✓ Priority order: system:ping accessible (Priority 1 checked first)")
-        print(f"  Note: Endpoint exists in both Priority 1 and 2")
+        print(f"✓ Priority order: system:ping accessible via attribute-based detection")
 
-    def test_02_fallback_to_priority2_if_registry_unavailable(self):
-        """Test that Priority 2 (constant) works as fallback"""
-        # If PublicEndpointsRegistry is unavailable, Priority 2 should still work
-        # We test this by verifying an endpoint that's ONLY in Priority 2
+    def test_02_method_level_attributes_work(self):
+        """Test that method-level PUBLIC attributes work correctly"""
+        # All custom methods with SecurityType::PUBLIC should be registered
 
         client = MikoPBXClient(API_BASE_URL)
 
-        # user-page-tracker:pageView is ONLY in PUBLIC_ENDPOINTS (Priority 2)
-        # Not in any controller's SecurityType::PUBLIC (Priority 1)
-        response = client.session.post(
-            f"{API_BASE_URL}/user-page-tracker:pageView",
-            json={'page': '/test', 'duration': 10},
-            verify=False
-        )
+        # Test various method-level public endpoints
+        endpoints = [
+            ('GET', 'system:ping'),
+            ('GET', 'system:getAvailableLanguages'),
+            ('GET', 'passkeys:checkAvailability'),
+        ]
 
-        # Should be public (not 401/403)
-        assert response.status_code not in [HTTP_UNAUTHORIZED, HTTP_FORBIDDEN], \
-            f"Priority 2 fallback should work, got {response.status_code}"
+        for method, endpoint in endpoints:
+            if method == 'GET':
+                response = client.get_raw(endpoint)
+            else:
+                response = client.session.post(f"{API_BASE_URL}/{endpoint}", json={}, verify=False)
 
-        print(f"✓ Priority 2 fallback: pageView accessible without Priority 1")
-        print(f"  Note: This endpoint only exists in PUBLIC_ENDPOINTS constant")
+            assert response.status_code not in [HTTP_UNAUTHORIZED, HTTP_FORBIDDEN], \
+                f"{endpoint} should be public via method-level attribute, got {response.status_code}"
+
+        print(f"✓ Method-level attributes: All tested endpoints are public")
 
 
 class TestPublicEndpointsEdgeCases:
@@ -339,23 +397,25 @@ class TestPublicEndpointsEdgeCases:
         """Test that only allowed methods work on public endpoints"""
         client = MikoPBXClient(API_BASE_URL)
 
-        # system:ping is public for GET
+        # system:ping is public for GET (registered via method-level attribute)
         response_get = client.get_raw('system:ping')
         assert response_get.status_code == HTTP_OK, "GET should work"
 
-        # system:ping should NOT be public for POST (not in PUBLIC_ENDPOINTS for POST)
+        # system:ping should NOT be accessible for POST (router rejects)
+        # Note: PublicEndpointsRegistry only registers the URI, HTTP method filtering
+        # happens at router level. If URI is public, request passes auth but may fail routing.
         response_post = client.session.post(
             f"{API_BASE_URL}/system:ping",
             json={},
             verify=False
         )
 
-        # Should fail (401 auth required, 404 not found, or 405 method not allowed)
-        # Note: MikoPBX checks auth before method, so 401 is also valid
-        assert response_post.status_code in [HTTP_UNAUTHORIZED, HTTP_NOT_FOUND, HTTP_METHOD_NOT_ALLOWED], \
-            f"POST on GET-only public endpoint should fail, got {response_post.status_code}"
+        # Router should reject POST (404 not found, or 405 method not allowed)
+        # With attribute-based detection, auth passes but routing fails
+        assert response_post.status_code in [HTTP_NOT_FOUND, HTTP_METHOD_NOT_ALLOWED], \
+            f"POST on GET-only public endpoint should fail at router level, got {response_post.status_code}"
 
-        print(f"✓ Edge case: Method-specific public access enforced")
+        print(f"✓ Edge case: Method-specific public access enforced by router")
         print(f"  GET: {response_get.status_code}, POST: {response_post.status_code}")
 
     def test_02_public_endpoint_with_invalid_token(self):

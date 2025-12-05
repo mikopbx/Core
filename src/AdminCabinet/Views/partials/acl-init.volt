@@ -31,7 +31,8 @@
             'restore': {{ isAllowed('restore') ? 'true' : 'false' }},
             'edit': {{ isAllowed('edit') ? 'true' : 'false' }},
             'modifyiax': {{ isAllowed('modifyiax') ? 'true' : 'false' }},
-            'modifysip': {{ isAllowed('modifysip') ? 'true' : 'false' }}
+            'modifysip': {{ isAllowed('modifysip') ? 'true' : 'false' }},
+            'viewSystemDiagnostic': {{ isAllowed('index', 'MikoPBX\\AdminCabinet\\Controllers\\SystemDiagnosticController') ? 'true' : 'false' }}
         },
         initialized: true
     };

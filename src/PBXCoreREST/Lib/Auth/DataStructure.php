@@ -106,14 +106,16 @@ class DataStructure extends AbstractDataStructure implements OpenApiSchemaProvid
      *
      * @param string $accessToken New JWT access token
      * @param int $expiresIn Seconds until token expires
+     * @param string $homePage User's home page URL after login
      * @return array<string, mixed> Refresh response structure
      */
-    public static function createRefreshResponse(string $accessToken, int $expiresIn): array
+    public static function createRefreshResponse(string $accessToken, int $expiresIn, string $homePage): array
     {
         return [
             'accessToken' => $accessToken,
             'tokenType' => 'Bearer',
             'expiresIn' => $expiresIn,
+            'homePage' => $homePage,
         ];
     }
 

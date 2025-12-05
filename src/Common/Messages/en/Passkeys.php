@@ -42,6 +42,7 @@ return [
         'pk_ColumnCreated' => 'Created',
         'pk_ColumnLastUsed' => 'Last Used',
         'pk_ColumnActions' => 'Actions',
+        'pk_NeverUsed' => 'Never used',
     
         // Actions
         'pk_Rename' => 'Rename',
@@ -64,7 +65,10 @@ return [
         'pk_RenameSuccess' => 'Passkey renamed successfully',
         'pk_RenameError' => 'Error renaming Passkey',
         'pk_NotSupported' => 'Your browser does not support Passkeys',
-    
+        'pk_TlsCertificateError' => 'WebAuthn requires a trusted TLS certificate. Add the certificate to trusted store or use a different browser (Safari).',
+        'pk_DomainRequired' => 'Domain name required',
+        'pk_DomainRequiredDescription' => 'Passkeys require access via a domain name (e.g., pbx.example.com). They cannot be used when accessing the system via IP address. Please configure a domain name for your PBX to use Passkeys.',
+
         // Login page
         'pk_LoginButton' => 'Sign in with Passkey',
         'pk_LoginOr' => 'or',

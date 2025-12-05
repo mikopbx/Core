@@ -345,6 +345,7 @@ return [
     'auth_ValidateLoginNotEmpty' => 'Enter login',
     'auth_ValidatePasswordNotEmpty' => 'Enter password',
     'auth_WrongLoginPassword' => 'Authorization error, you have %attempts% attempts left',
+    'auth_ServerUnavailable' => 'Server unavailable or loading. Please try again later.',
     // BT
     'bt_Add' => 'Add',
     'bt_ApplyChangesToPBX' => 'Apply changes',

@@ -352,34 +352,33 @@ class SystemLoader extends Injectable
         $this->echoResultMsg($sshConf->start() ? SystemMessages::RESULT_DONE : SystemMessages::RESULT_FAILED);
 
         // Detect and update environment type (Docker, VM, Cloud, Bare Metal)
-        $this->echoStartMsg(' - Detecting environment...');
         if (!$this->isRecoveryMode) {
             $envType = $this->detectEnvironment();
-            $this->stageMessage = " - Detecting environment ($envType)";
+            $this->echoStartMsg(" - Detecting environment ($envType)...");
             $this->echoResultMsg(SystemMessages::RESULT_DONE);
         } else {
+            $this->echoStartMsg(' - Detecting environment...');
             $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
         }
 
         // Start cloud provisioning
-        $this->echoStartMsg(' - Attempting cloud provisioning...');
         if (!$this->isDocker && !$this->isRecoveryMode) {
-            echo PHP_EOL; // Add newline before cloud providers list
             $cloudResult = CloudProvisioning::start();
-            
-            // Update the stage message with more informative result
+
+            // Show result with informative message
             if ($cloudResult['success']) {
                 if (isset($cloudResult['alreadyDone'])) {
-                    $this->stageMessage = ' - Cloud provisioning (already configured)';
+                    $this->echoStartMsg(' - Cloud provisioning (already configured)...');
                 } else {
-                    $this->stageMessage = ' - Cloud provisioning on ' . $cloudResult['cloudId'];
+                    $this->echoStartMsg(' - Cloud provisioning on ' . $cloudResult['cloudId'] . '...');
                 }
                 $this->echoResultMsg(SystemMessages::RESULT_DONE);
             } else {
-                $this->stageMessage = ' - Cloud provisioning (no cloud provider detected)';
+                $this->echoStartMsg(' - Cloud provisioning...');
                 $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
             }
         } else {
+            $this->echoStartMsg(' - Cloud provisioning...');
             $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
         }
 

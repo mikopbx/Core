@@ -37,42 +37,19 @@ use Phalcon\Mvc\Micro\MiddlewareInterface;
  * Authentication Middleware for MikoPBX REST API
  *
  * Handles three access channels:
- * 1. PUBLIC endpoints - no authentication required
+ * 1. PUBLIC endpoints - no authentication required (via ResourceSecurity attributes)
  * 2. LOCALHOST - direct access from 127.0.0.1
  * 3. BEARER TOKEN - JWT or API Key authentication
+ *
+ * Public endpoints are detected via 2-priority system:
+ * - Priority 1: Attribute-based via PublicEndpointsRegistry (class and method level)
+ * - Priority 2: Module Pattern 2 with noAuth: true flag (legacy modules)
  *
  * @package MikoPBX\PBXCoreREST\Middleware
  */
 class AuthenticationMiddleware implements MiddlewareInterface
 {
     use ResponseTrait;
-
-    /**
-     * Public endpoints that don't require authentication (Legacy Fallback)
-     *
-     * This constant is kept for backward compatibility during the 2025 migration
-     * to attribute-based public endpoint detection. New endpoints should use
-     * #[ResourceSecurity(..., requirements: [SecurityType::PUBLIC])] instead.
-     *
-     * Format: path => [allowed HTTP methods]
-     *
-     * @var array<string, array<string>>
-     */
-    private const PUBLIC_ENDPOINTS = [
-        '/pbxcore/api/v3/mail-settings/oauth2-callback' => ['GET'],
-        '/pbxcore/api/v3/passkeys:checkAvailability' => ['GET'],
-        '/pbxcore/api/v3/passkeys:authenticationStart' => ['GET'],
-        '/pbxcore/api/v3/passkeys:authenticationFinish' => ['POST'],
-        '/pbxcore/api/v3/auth:login' => ['POST'],
-        '/pbxcore/api/v3/auth:refresh' => ['POST'],
-        '/pbxcore/api/v3/user-page-tracker:pageView' => ['POST'],
-        '/pbxcore/api/v3/user-page-tracker:pageLeave' => ['POST'],
-        '/pbxcore/api/v3/system:changeLanguage' => ['POST', 'PATCH'],
-        '/pbxcore/api/v3/system:getAvailableLanguages' => ['GET'],
-        '/pbxcore/api/v3/system:ping' => ['GET'],
-        '/pbxcore/api/v3/cdr:playback' => ['GET', 'HEAD'], // Token-based security
-        '/pbxcore/api/v3/cdr:download' => ['GET'],          // Token-based security
-    ];
 
     /**
      * Main middleware entry point
@@ -191,9 +168,9 @@ class AuthenticationMiddleware implements MiddlewareInterface
     /**
      * Check if current request is to a public endpoint
      *
-     * Uses hybrid approach:
-     * 1. Check PublicEndpointsRegistry (attribute-based, Pattern 4 modules)
-     * 2. Fallback to hardcoded PUBLIC_ENDPOINTS constant (legacy endpoints)
+     * Uses attribute-based detection via PublicEndpointsRegistry which scans:
+     * - Class-level ResourceSecurity with SecurityType::PUBLIC
+     * - Method-level ResourceSecurity with SecurityType::PUBLIC
      *
      * @param Micro $application
      * @return bool True if public endpoint
@@ -203,21 +180,8 @@ class AuthenticationMiddleware implements MiddlewareInterface
         /** @var Request $request */
         $request = $application->getService(RequestProvider::SERVICE_NAME);
         $uri = $request->getURI();
-        $method = $request->getMethod();
 
-        // Strategy 1: Check attribute-based public endpoints registry
-        if ($this->isPublicEndpointByAttributes($application, $uri)) {
-            return true;
-        }
-
-        // Strategy 2: Check hardcoded legacy endpoints (backward compatibility)
-        foreach (self::PUBLIC_ENDPOINTS as $endpoint => $allowedMethods) {
-            if (strpos($uri, $endpoint) === 0 && in_array($method, $allowedMethods, true)) {
-                return true;
-            }
-        }
-
-        return false;
+        return $this->isPublicEndpointByAttributes($application, $uri);
     }
 
     /**

@@ -6,6 +6,8 @@ Tests MOH functionality:
 - MOH via dialplan application
 - MOH in call queue while waiting
 - MOH audio validation (verify sound present)
+
+NOTE: These tests run INSIDE the Docker container using direct file system access.
 """
 
 import pytest
@@ -19,24 +21,13 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "api"))
 sys.path.insert(0, str(Path(__file__).parent / "helpers"))
 
-from config import get_config
-from conftest import MikoPBXClient
-from gophone_helper import GoPhoneConfig, GoPhoneEndpoint, GoPhoneManager, get_mikopbx_ip
+from conftest import MikoPBXClient, get_extension_secret
+from pjsua_helper import PJSUAManager, get_mikopbx_ip
 from asterisk_helper import check_moh_playing, get_active_channels
-
-# Load configuration
-config = get_config()
+from audio_validator import list_directory, file_exists
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-
-# Test extension credentials
-TEST_EXTENSIONS = {
-    "201": "5b66b92d5714f921cfcde78a4fda0f58",
-    "202": "e72b3aea6e4f2a8560adb33cb9bfa5dd",
-    "203": "ce4fb0a6a238ddbcd059ecb30f884188",
-}
 
 
 @pytest_asyncio.fixture
@@ -48,12 +39,10 @@ async def mikopbx_ip():
 
 
 @pytest_asyncio.fixture
-async def gophone_manager(mikopbx_ip):
-    """Create GoPhone manager for tests"""
-    manager = GoPhoneManager(
-        server_ip=mikopbx_ip,
-        gophone_path=str(Path(__file__).parent / "bin/darwin-arm64/gophone")
-    )
+async def pjsua_manager(mikopbx_ip):
+    """Create PJSUA manager for tests"""
+    manager = PJSUAManager(server_ip=mikopbx_ip)
+    await manager.initialize()
 
     yield manager
 
@@ -61,8 +50,27 @@ async def gophone_manager(mikopbx_ip):
     await manager.cleanup_all()
 
 
+@pytest_asyncio.fixture
+async def extension_credentials(api_client):
+    """
+    Dynamically load SIP secrets for test extensions via REST API.
+    """
+    extensions = ["201", "202", "203"]
+    credentials = {}
+
+    for ext in extensions:
+        secret = get_extension_secret(ext, api_client)
+        if secret:
+            credentials[ext] = secret
+            logger.info(f"Loaded credentials for extension {ext}")
+        else:
+            logger.warning(f"Failed to load credentials for extension {ext}")
+
+    return credentials
+
+
 @pytest.mark.asyncio
-async def test_01_moh_via_dialplan_application(api_client, gophone_manager):
+async def test_01_moh_via_dialplan_application(api_client, pjsua_manager, extension_credentials):
     """
     Test: MOH via Dialplan Application
 
@@ -83,8 +91,6 @@ async def test_01_moh_via_dialplan_application(api_client, gophone_manager):
     print(f"\n{'='*70}")
     print(f"Test: MOH via Dialplan Application")
     print(f"{'='*70}")
-
-    moh_extension_id = None
 
     try:
         # ================================================================
@@ -109,9 +115,9 @@ async def test_01_moh_via_dialplan_application(api_client, gophone_manager):
         print(f"STEP 2: Register Extension 201")
         print(f"{'-'*70}")
 
-        ext201 = await gophone_manager.create_endpoint(
+        ext201 = await pjsua_manager.create_endpoint(
             extension="201",
-            password=TEST_EXTENSIONS["201"],
+            password=extension_credentials["201"],
             auto_register=True
         )
         print(f"✅ Extension 201 registered")
@@ -125,16 +131,9 @@ async def test_01_moh_via_dialplan_application(api_client, gophone_manager):
         print(f"STEP 3: Extension 201 Calls {moh_extension_number} (MOH via Parking)")
         print(f"{'-'*70}")
 
-        config_201 = GoPhoneConfig(
-            extension="201",
-            password=TEST_EXTENSIONS["201"],
-            server_ip=gophone_manager.server_ip,
-            media="log"
-        )
-        caller = GoPhoneEndpoint(config_201, gophone_path=gophone_manager.gophone_path)
-
         print(f"Extension 201 calling {moh_extension_number}...")
-        success = await caller.dial(moh_extension_number)
+        # Use manager endpoint for dialing
+        success = await ext201.dial(moh_extension_number)
 
         if not success:
             print(f"⚠ Call to {moh_extension_number} failed")
@@ -189,7 +188,7 @@ async def test_01_moh_via_dialplan_application(api_client, gophone_manager):
         print(f"STEP 5: End Call")
         print(f"{'-'*70}")
 
-        await caller.hangup()
+        await ext201.hangup()
         print(f"✅ Call ended")
 
         print(f"\n{'='*70}")
@@ -200,13 +199,9 @@ async def test_01_moh_via_dialplan_application(api_client, gophone_manager):
         logger.error(f"Test failed: {e}")
         raise
 
-    finally:
-        # No cleanup needed - we used built-in parking extension
-        pass
-
 
 @pytest.mark.asyncio
-async def test_02_moh_in_call_queue(api_client, gophone_manager):
+async def test_02_moh_in_call_queue(api_client, pjsua_manager, extension_credentials):
     """
     Test: MOH in Call Queue
 
@@ -274,15 +269,15 @@ async def test_02_moh_in_call_queue(api_client, gophone_manager):
         print(f"STEP 2: Register Extensions")
         print(f"{'-'*70}")
 
-        ext201 = await gophone_manager.create_endpoint(
+        ext201 = await pjsua_manager.create_endpoint(
             extension="201",
-            password=TEST_EXTENSIONS["201"],
+            password=extension_credentials["201"],
             auto_register=True
         )
 
-        ext202 = await gophone_manager.create_endpoint(
+        ext202 = await pjsua_manager.create_endpoint(
             extension="202",
-            password=TEST_EXTENSIONS["202"],
+            password=extension_credentials["202"],
             auto_register=True
         )
 
@@ -296,16 +291,9 @@ async def test_02_moh_in_call_queue(api_client, gophone_manager):
         print(f"STEP 3: Extension 201 Calls Queue 700")
         print(f"{'-'*70}")
 
-        config_201 = GoPhoneConfig(
-            extension="201",
-            password=TEST_EXTENSIONS["201"],
-            server_ip=gophone_manager.server_ip,
-            media="log"
-        )
-        caller = GoPhoneEndpoint(config_201, gophone_path=gophone_manager.gophone_path)
-
         print(f"Extension 201 calling queue 700...")
-        success = await caller.dial("700")
+        # Use manager endpoint for dialing
+        success = await ext201.dial("700")
 
         if not success:
             print(f"⚠ Failed to call queue - may require queue configuration")
@@ -351,7 +339,7 @@ async def test_02_moh_in_call_queue(api_client, gophone_manager):
         # Note: In real scenario, ext202 would answer
         # For this test, we'll just hangup to test MOH period
 
-        await caller.hangup()
+        await ext201.hangup()
         print(f"✅ Call ended")
 
         print(f"\n{'='*70}")
@@ -373,7 +361,7 @@ async def test_02_moh_in_call_queue(api_client, gophone_manager):
 
 
 @pytest.mark.asyncio
-async def test_03_moh_audio_validation(api_client, gophone_manager):
+async def test_03_moh_audio_validation(api_client, pjsua_manager, extension_credentials):
     """
     Test: MOH Audio Content Validation
 
@@ -406,9 +394,9 @@ async def test_03_moh_audio_validation(api_client, gophone_manager):
         print(f"STEP 1: Register Extension 201")
         print(f"{'-'*70}")
 
-        ext201 = await gophone_manager.create_endpoint(
+        ext201 = await pjsua_manager.create_endpoint(
             extension="201",
-            password=TEST_EXTENSIONS["201"],
+            password=extension_credentials["201"],
             auto_register=True
         )
         print(f"✅ Extension 201 registered")
@@ -434,36 +422,50 @@ async def test_03_moh_audio_validation(api_client, gophone_manager):
         print(f"  - Validate MOH source files directly")
 
         # For this test, we'll validate that MOH source files exist
-        # and contain audio
+        # and contain audio using direct file system access
 
-        import subprocess
-
-        # Check for MOH files in Asterisk
-        cmd = [
-            'docker', 'exec', config.container_name,
-            'find', '/usr/share/asterisk/sounds',
-            '-name', '*.wav',
-            '-o', '-name', '*.mp3'
+        # Check for MOH files in Asterisk sounds directory
+        sounds_dirs = [
+            '/usr/share/asterisk/sounds',
+            '/var/lib/asterisk/sounds',
+            '/storage/usbdisk1/mikopbx/media/moh'
         ]
 
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+        moh_files_found = []
 
-        if proc.returncode == 0:
-            files = [f for f in proc.stdout.strip().split('\n') if f]
-            print(f"✓ Found {len(files)} audio files in Asterisk sounds directory")
+        for sounds_dir in sounds_dirs:
+            if file_exists(sounds_dir):
+                print(f"✓ Checking directory: {sounds_dir}")
 
-            if files:
-                # Show first few MOH files
-                moh_files = [f for f in files if 'moh' in f.lower() or 'music' in f.lower()]
-                if moh_files:
-                    print(f"✓ MOH files found:")
-                    for f in moh_files[:5]:
-                        print(f"  - {f}")
-                    print(f"✅ MOH audio files exist")
-                else:
-                    print(f"⚠ No specific MOH files found, but audio files available")
+                # Use pathlib to find audio files
+                sounds_path = Path(sounds_dir)
+                try:
+                    wav_files = list(sounds_path.rglob('*.wav'))
+                    mp3_files = list(sounds_path.rglob('*.mp3'))
+                    gsm_files = list(sounds_path.rglob('*.gsm'))
+
+                    all_files = wav_files + mp3_files + gsm_files
+
+                    # Filter for MOH-related files
+                    for f in all_files:
+                        if 'moh' in str(f).lower() or 'music' in str(f).lower():
+                            moh_files_found.append(str(f))
+
+                    print(f"  Found {len(all_files)} audio files total")
+
+                except Exception as e:
+                    logger.debug(f"Error scanning {sounds_dir}: {e}")
+
+        if moh_files_found:
+            print(f"\n✓ MOH files found:")
+            for f in moh_files_found[:10]:  # Show first 10
+                print(f"  - {f}")
+            if len(moh_files_found) > 10:
+                print(f"  ... and {len(moh_files_found) - 10} more")
+            print(f"✅ MOH audio files exist")
         else:
-            print(f"⚠ Could not list Asterisk sound files")
+            print(f"⚠ No specific MOH files found")
+            print(f"  MOH may use default Asterisk sounds or custom configuration")
 
         print(f"\n{'='*70}")
         print(f"✓ MOH Audio Validation Test COMPLETED")

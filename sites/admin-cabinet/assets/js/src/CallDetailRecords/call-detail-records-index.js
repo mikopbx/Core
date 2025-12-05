@@ -226,20 +226,28 @@ const callDetailRecords = {
             }, 500); // 500ms delay before executing the search
         });
 
+        // Build columns dynamically based on ACL permissions
+        // WHY: Volt template conditionally renders delete column header based on isAllowed('delete')
+        // If columns config doesn't match <thead> count, DataTables throws 'style' undefined error
+        const canDelete = typeof ACLHelper !== 'undefined' && ACLHelper.isAllowed('delete');
+        const columns = [
+            { data: null, orderable: false },  // 0: expand icon column
+            { data: 0 },                       // 1: date (array index 0)
+            { data: 1 },                       // 2: src_num (array index 1)
+            { data: 2 },                       // 3: dst_num (array index 2)
+            { data: 3 },                       // 4: duration (array index 3)
+        ];
+        if (canDelete) {
+            columns.push({ data: null, orderable: false });  // 5: actions column (logs icon + delete)
+        }
+
         callDetailRecords.$cdrTable.dataTable({
             search: {
                 search: callDetailRecords.$globalSearch.val(),
             },
             serverSide: true,
             processing: true,
-            columns: [
-                { data: null, orderable: false },  // 0: expand icon column
-                { data: 0 },                       // 1: date (array index 0)
-                { data: 1 },                       // 2: src_num (array index 1)
-                { data: 2 },                       // 3: dst_num (array index 2)
-                { data: 3 },                       // 4: duration (array index 3)
-                { data: null, orderable: false }   // 5: delete button column
-            ],
+            columns: columns,
             columnDefs: [
                 { defaultContent: "-",  targets: "_all"},
             ],
@@ -361,18 +369,25 @@ const callDetailRecords = {
                 // Duration column (no icons)
                 $('td', row).eq(4).html(data[3]).addClass('right aligned');
 
+                // Actions column: only render if user has delete permission
+                // WHY: Volt template conditionally renders this column based on isAllowed('delete')
+                if (!canDelete) {
+                    return;
+                }
+
                 // Last column: log icon + delete button
                 let actionsHtml = '';
 
-                // Add log icon if available
-                if (data.ids !== '') {
+                // Add log icon if user has access to System Diagnostic
+                // WHY: Log icon links to system-diagnostic page which requires specific permissions
+                const canViewLogs = typeof ACLHelper !== 'undefined' && ACLHelper.isAllowed('viewSystemDiagnostic');
+                if (canViewLogs && data.ids !== '') {
                     actionsHtml += `<i data-ids="${data.ids}" class="file alternate outline icon" style="cursor: pointer; margin-right: 8px;"></i>`;
                 }
 
                 // Add delete button
                 // WHY: Use two-steps-delete mechanism to prevent accidental deletion
                 // First click changes trash icon to close icon, second click deletes
-                // Note: ACL check is done server-side in Volt template (column is hidden if no permission)
                 // WHY: Use data.DT_RowId which contains linkedid for grouped records
                 actionsHtml += `<a href="#" class="two-steps-delete delete-record popuped"
                                    data-record-id="${data.DT_RowId}"

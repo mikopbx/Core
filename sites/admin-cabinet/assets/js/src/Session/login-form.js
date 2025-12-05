@@ -188,9 +188,17 @@ const loginForm = {
         } catch (error) {
             console.error('Login error:', error);
 
-            if (error.responseJSON && error.responseJSON.messages) {
+            // Distinguish network errors from authentication errors
+            const status = error.status || 0;
+
+            if (status === 0 || status >= 502) {
+                // Network error or server unavailable (502, 503, 504)
+                loginForm.showError({ error: [globalTranslate.auth_ServerUnavailable] });
+            } else if (error.responseJSON && error.responseJSON.messages) {
+                // API returned error with message (e.g., wrong password, rate limit)
                 loginForm.showError(error.responseJSON.messages);
             } else {
+                // Unknown error - show generic message
                 loginForm.showError({ error: [globalTranslate.auth_WrongLoginPassword] });
             }
         } finally {
@@ -229,8 +237,9 @@ const loginForm = {
                     response.data.expiresIn
                 );
 
-                // Now redirect - we know the cookie works
-                window.location = `${globalRootUrl}extensions/index`;
+                // Redirect to user's configured home page from API response
+                const redirectUrl = response.data.homePage || `${globalRootUrl}extensions/index`;
+                window.location = redirectUrl;
             } else {
                 console.error('[LOGIN] Refresh failed - cookie not working');
                 loginForm.showError({ error: [globalTranslate.auth_RefreshTokenError || 'Refresh token error'] });

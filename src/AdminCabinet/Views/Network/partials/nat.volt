@@ -117,13 +117,14 @@
         </h4>
 
         <!-- Hostname field (required in dual-stack) -->
-        <div class="field">
-            <label for="exthostname-dual-stack">
+        <!-- Note: Uses same #exthostname input which is moved here by JavaScript -->
+        <div class="field" id="exthostname-dual-stack-container">
+            <label>
                 {{ t._('nw_DualStackHostnameRequired') }}
                 <span style="color:red">*</span>
             </label>
-            <div class="field max-width-500">
-                {{ form.render('exthostname') }}
+            <div class="field max-width-500" id="exthostname-dual-stack-input-wrapper">
+                <!-- Input will be moved here by JavaScript when dual-stack is active -->
             </div>
         </div>
 

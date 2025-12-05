@@ -58,8 +58,53 @@ const GeneralSettingsPasskeys = {
             return;
         }
 
+        // Check if accessing via IP address (WebAuthn requires valid domain)
+        if (this.isAccessingViaIpAddress()) {
+            this.renderDomainRequiredMessage();
+            return;
+        }
+
         this.loadPasskeys();
         this.bindEventHandlers();
+    },
+
+    /**
+     * Check if the current hostname is an IP address (IPv4 or IPv6)
+     * WebAuthn requires a valid domain name, not an IP address
+     * @returns {boolean} True if accessing via IP address
+     */
+    isAccessingViaIpAddress() {
+        const { hostname } = window.location;
+
+        // IPv4 pattern: xxx.xxx.xxx.xxx
+        const ipv4Pattern = /^(\d{1,3}\.){3}\d{1,3}$/;
+
+        // IPv6 patterns: [::1], [2001:db8::1], etc.
+        // Also check for localhost IP representations
+        const ipv6Pattern = /^(\[.*\]|::1|localhost)$/i;
+
+        // Check for IPv6 without brackets (some browsers)
+        const ipv6NoBrackets = /^([0-9a-fA-F]{0,4}:){2,7}[0-9a-fA-F]{0,4}$/;
+
+        return ipv4Pattern.test(hostname)
+            || ipv6Pattern.test(hostname)
+            || ipv6NoBrackets.test(hostname);
+    },
+
+    /**
+     * Render message when domain is required for Passkeys
+     */
+    renderDomainRequiredMessage() {
+        const html = `
+            <div class="ui info message">
+                <div class="header">
+                    <i class="info circle icon"></i>
+                    ${globalTranslate.pk_DomainRequired}
+                </div>
+                <p>${globalTranslate.pk_DomainRequiredDescription}</p>
+            </div>
+        `;
+        this.$container.html(html);
     },
 
     /**
@@ -111,7 +156,7 @@ const GeneralSettingsPasskeys = {
             this.passkeys.forEach((passkey) => {
                 const lastUsed = passkey.last_used_at
                     ? this.formatDate(passkey.last_used_at)
-                    : globalTranslate.pk_NeverUsed || 'Never used';
+                    : globalTranslate.pk_NeverUsed;
 
                 const html = `
                     <tr data-id="${passkey.id}">
@@ -270,9 +315,15 @@ const GeneralSettingsPasskeys = {
                     $button.removeClass('loading disabled');
                     console.error('WebAuthn registration error:', error);
 
-                    // Handle user cancellation gracefully
+                    // Handle specific WebAuthn errors
                     if (error.name === 'NotAllowedError') {
-                        UserMessage.showError(globalTranslate.pk_RegisterCancelled || 'Registration was cancelled');
+                        // Check if it's a TLS certificate error (Chrome-specific)
+                        if (error.message && error.message.includes('TLS certificate')) {
+                            UserMessage.showError(globalTranslate.pk_TlsCertificateError);
+                        } else {
+                            // User cancelled the operation
+                            UserMessage.showError(globalTranslate.pk_RegisterCancelled);
+                        }
                     } else {
                         UserMessage.showError(`${globalTranslate.pk_RegisterError}: ${error.message}`);
                     }

@@ -197,6 +197,7 @@ class RestController extends BaseRestController
      *
      * @route GET /pbxcore/api/v3/passkeys:checkAvailability
      */
+    #[ResourceSecurity('passkeys_check_availability', requirements: [SecurityType::PUBLIC])]
     #[ApiOperation(
         summary: 'rest_pk_CheckAvailability',
         description: 'rest_pk_CheckAvailabilityDesc',
@@ -257,6 +258,7 @@ class RestController extends BaseRestController
      *
      * @route GET /pbxcore/api/v3/passkeys:authenticationStart
      */
+    #[ResourceSecurity('passkeys_authentication_start', requirements: [SecurityType::PUBLIC])]
     #[ApiOperation(
         summary: 'rest_pk_AuthenticationStart',
         description: 'rest_pk_AuthenticationStartDesc',
@@ -275,6 +277,7 @@ class RestController extends BaseRestController
      *
      * @route POST /pbxcore/api/v3/passkeys:authenticationFinish
      */
+    #[ResourceSecurity('passkeys_authentication_finish', requirements: [SecurityType::PUBLIC])]
     #[ApiOperation(
         summary: 'rest_pk_AuthenticationFinish',
         description: 'rest_pk_AuthenticationFinishDesc',

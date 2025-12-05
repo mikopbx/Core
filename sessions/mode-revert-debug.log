@@ -1,0 +1,5 @@
+
+[2025-12-04T12:49:15.070Z] EMERGENCY STOP TRIGGERED
+  Prompt: Давай сначала обсудим что ты делаешь и для чего. Почему мы не можем просто извлечь роль из JWT токена после авторизации?...
+  discussion_phrase_detected: true
+  Trigger phrases: ["SILENCE","ОБСУДИМ"]

@@ -562,7 +562,7 @@ Tests remain unchanged if interface preserved.
 - CDR record creation not yet verified
 - GoPhone test migration incomplete
 - Advanced features (DTMF, parking, transfers) untested
-- Resource cleanup improvements needed (see task h-fix-pjsua2-resource-leaks)
+- ✅ Resource cleanup issues RESOLVED (see completed task h-fix-pjsua2-resource-leaks)
 
 ## Work Log
 
@@ -626,8 +626,15 @@ Tests remain unchanged if interface preserved.
 - **Resource Management**: PJSUA2 requires careful cleanup sequence (calls → accounts → transports → library)
 
 #### Next Steps
-- Address resource leaks and cleanup issues (task h-fix-pjsua2-resource-leaks created)
+- ✅ Address resource leaks and cleanup issues (task h-fix-pjsua2-resource-leaks completed 2025-11-18)
 - Verify CDR record creation for PJSUA calls
 - Migrate existing GoPhone tests to use PJSUA helper
 - Test advanced features: codec negotiation, DTMF, parking, transfers, voicemail
 - Performance testing with multiple concurrent calls
+
+## Related Tasks
+
+- **h-fix-pjsua2-resource-leaks** (completed 2025-11-18) - Fixed resource management issues identified during code review
+  - Implemented proper event handler cleanup
+  - Added `libDestroy()` call for PJSIP endpoint
+  - Created session-scoped pytest fixture for automatic cleanup

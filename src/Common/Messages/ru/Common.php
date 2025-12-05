@@ -382,6 +382,7 @@ return [
     'auth_ValidateLoginNotEmpty' => 'Введите логин',
     'auth_ValidatePasswordNotEmpty' => 'Введите пароль',
     'auth_WrongLoginPassword' => 'Ошибка авторизации, у вас осталось %attempts% попыток',
+    'auth_ServerUnavailable' => 'Сервер недоступен или загружается. Попробуйте позже.',
 
     // BT
     'bt_Add' => 'Добавить',

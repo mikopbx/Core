@@ -45,10 +45,12 @@ class SearchProcessor extends Injectable
         $res->processor = __METHOD__;
         $action = $request['action'];
 
+        $sessionContext = $request['sessionContext'] ?? [];
+
         switch ($action) {
             case 'getSearchItems':
                 $data = $request['data'] ?? [];
-                $res = GetSearchItemsAction::main($data);
+                $res = GetSearchItemsAction::main($data, $sessionContext);
                 break;
             default:
                 $res->messages['error'][] = "Unknown action - $action in ".__CLASS__;
