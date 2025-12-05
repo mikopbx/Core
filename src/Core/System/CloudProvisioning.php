@@ -21,13 +21,14 @@
 namespace MikoPBX\Core\System;
 
 use GuzzleHttp\Promise\Utils;
-use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\CloudProvisioning\AlibabaCloud;
 use MikoPBX\Core\System\CloudProvisioning\AWSCloud;
 use MikoPBX\Core\System\CloudProvisioning\AzureCloud;
 use MikoPBX\Core\System\CloudProvisioning\CloudProvider;
 use MikoPBX\Core\System\CloudProvisioning\DigitalOceanCloud;
+use MikoPBX\Core\System\CloudProvisioning\DockerCloud;
 use MikoPBX\Core\System\CloudProvisioning\GoogleCloud;
+use MikoPBX\Core\System\CloudProvisioning\NoCloud;
 use MikoPBX\Core\System\CloudProvisioning\VKCloud;
 use MikoPBX\Core\System\CloudProvisioning\YandexCloud;
 use MikoPBX\Core\System\CloudProvisioning\VultrCloud;
@@ -43,16 +44,31 @@ class CloudProvisioning
 {
     /**
      * Starts the cloud provisioning process.
+     * Uses direct SQLite queries to avoid Redis/ORM dependency during early boot.
+     *
+     * Docker environment variables are applied on EVERY container start (12-factor app pattern),
+     * while cloud provisioning (AWS, GCP, etc.) runs only once per instance (cloud-init pattern).
+     *
      * @return array{success: bool, cloudId: string, alreadyDone?: bool} Returns array with 'success' boolean and 'cloudId' string (if successful)
      */
     public static function start(): array
     {
-        if (self::checkItNeedToStartProvisioning() === false) {
+        // Step 1: Docker ENV overrides are applied on EVERY start
+        // This follows 12-factor app pattern where ENV config should be dynamic
+        if (Util::isDocker()) {
+            DockerCloud::applyEnvironmentOverrides();
+        }
+
+        // Step 2: Cloud provisioning runs only ONCE (cloud-init pattern)
+        // Use direct SQLite check - no Redis/ORM dependency
+        if (CloudProvider::isProvisioningCompleted()) {
             return ['success' => true, 'cloudId' => 'Previously configured', 'alreadyDone' => true];
         }
 
         // Lists of possible cloud providers.
+        // DockerCloud is first - if we're in Docker, skip cloud provider detection
         $providers = [
+            DockerCloud::CloudID => new DockerCloud(),
             YandexCloud::CloudID => new YandexCloud(),
             VKCloud::CloudID => new VKCloud(),
             GoogleCloud::CloudID => new GoogleCloud(),
@@ -60,7 +76,9 @@ class CloudProvisioning
             AWSCloud::CloudID => new AWSCloud(),
             DigitalOceanCloud::CloudID => new DigitalOceanCloud(),
             AlibabaCloud::CloudID => new AlibabaCloud(),
-            VultrCloud::CloudID => new VultrCloud()
+            VultrCloud::CloudID => new VultrCloud(),
+            // NoCloud is last - fallback for on-premise (VMware, Proxmox, KVM)
+            NoCloud::CloudID => new NoCloud()
         ];
 
         $message = PHP_EOL."   |- Checking cloud providers in parallel...";
@@ -107,30 +125,16 @@ class CloudProvisioning
     }
 
     /**
-     * Checks if provisioning is needed.
-     */
-    private static function checkItNeedToStartProvisioning(): bool
-    {
-        if (PbxSettings::findFirst('key="' . PbxSettings::CLOUD_PROVISIONING . '"') === null) {
-            return true;    // Need provision
-        }
-        return false;   // Provisioning is already completed
-    }
-
-    /**
      * After provisioning, perform the following actions:
+     * Uses direct SQLite queries to avoid Redis/ORM dependency.
+     *
      * @param CloudProvider $provider The provider object.
      * @param string $cloudName The name of the cloud.
      * @return void
      */
     public static function afterProvisioning(CloudProvider $provider, string $cloudName): void
     {
-        // Enable firewall and Fail2Ban
-        $provider->updatePbxSettings(PbxSettings::PBX_FIREWALL_ENABLED, '1');
-        $provider->updatePbxSettings(PbxSettings::PBX_FAIL2BAN_ENABLED, '1');
-
-        // Mark provisioning as completed
-        $provider->updatePbxSettings(PbxSettings::CLOUD_PROVISIONING, '1');
-        $provider->updatePbxSettings(PbxSettings::VIRTUAL_HARDWARE_TYPE, $cloudName);
+        // Use direct SQLite method to mark provisioning complete
+        $provider->markProvisioningCompleteDirect($cloudName);
     }
 }
