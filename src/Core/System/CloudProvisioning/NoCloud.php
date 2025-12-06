@@ -220,7 +220,10 @@ class NoCloud extends CloudProvider
      * Prevents SSRF attacks by ensuring URL:
      * - Uses only http or https scheme
      * - Has a valid host
-     * - Does not point to private/internal networks (optional)
+     * - Does not point to private/internal networks (default, can be overridden)
+     *
+     * Set NOCLOUD_ALLOW_PRIVATE_IPS=1 environment variable to allow private IPs
+     * in single-tenant on-premise environments.
      *
      * @param string $url URL to validate
      * @return bool True if URL is valid and safe
@@ -249,13 +252,18 @@ class NoCloud extends CloudProvider
 
         // Check if it's a valid IP address
         if (filter_var($host, FILTER_VALIDATE_IP)) {
-            // Note: We intentionally allow private IPs here because NoCloud
-            // is typically used in private/on-premise environments where
-            // the metadata server is on a local network.
-            // If stricter validation is needed, uncomment the following:
-            // if (filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
-            //     return false;
-            // }
+            // Check environment override for on-premise deployments
+            $allowPrivateIps = getenv('NOCLOUD_ALLOW_PRIVATE_IPS') === '1';
+
+            if (!$allowPrivateIps) {
+                // Strict SSRF protection by default (prevents attacks in multi-tenant environments)
+                if (filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
+                    SystemMessages::sysLogMsg(__CLASS__, "NoCloud SSRF protection: blocked private IP $host. Set NOCLOUD_ALLOW_PRIVATE_IPS=1 to override.", LOG_WARNING);
+                    return false;
+                }
+            } else {
+                SystemMessages::sysLogMsg(__CLASS__, "NoCloud: private IP allowed via NOCLOUD_ALLOW_PRIVATE_IPS override: $host", LOG_NOTICE);
+            }
             return true;
         }
 

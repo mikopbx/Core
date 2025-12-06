@@ -812,6 +812,85 @@ php -f /usr/www/src/Core/Workers/WorkerApiCommands.php start --instance-id=2
 php -f /usr/www/src/Core/Workers/WorkerWav2Webm.php start
 ```
 
+## System Diagnostics Worker
+
+### WorkerPrepareAdvice
+
+**Purpose:** Runs periodic system health checks and generates advice/warnings for administrators.
+
+**Location:** `src/Core/Workers/WorkerPrepareAdvice.php`
+
+**Check Interval:** 3600 seconds (1 hour)
+
+**Diagnostic Modules** (`src/Core/Workers/Libs/WorkerPrepareAdvice/`):
+
+1. **CheckAmiPasswords** - Detects weak AMI passwords
+2. **CheckAriPasswords** - Detects weak ARI passwords
+3. **CheckConnection** - Verifies internet connectivity
+4. **CheckCorruptedFiles** - Scans for corrupted system files
+5. **CheckDockerPermissions** - Detects Docker volume permission issues (NEW)
+6. **CheckFirewalls** - Verifies firewall configuration
+7. **CheckModulesUpdates** - Checks for available module updates
+8. **CheckSecurityLog** - Analyzes fail2ban security events
+9. **CheckSIPPasswords** - Detects weak SIP extension passwords
+10. **CheckS3Connection** - Validates S3 backup configuration
+11. **CheckSSHConfig** - Verifies SSH security settings
+12. **CheckSSHPasswords** - Detects weak SSH passwords
+13. **CheckStorage** - Monitors disk space usage
+14. **CheckUpdates** - Checks for system updates
+15. **CheckWebPasswords** - Detects weak web admin passwords
+
+### CheckDockerPermissions (NEW)
+
+**Purpose:** Detects when container cannot write to mounted volumes due to UID/GID mismatch between host and container.
+
+**Critical Paths Tested:**
+- `/cf` - Configuration storage
+- `/storage` - Data storage
+
+**Detection Method:**
+```php
+// Attempts to create temporary file in each critical path
+$testFile = $path . '/.write_test_' . uniqid();
+$canWrite = @file_put_contents($testFile, 'test');
+
+if ($canWrite === false) {
+    // Report permission issue with UID/GID details
+}
+```
+
+**Advice Message:**
+- **Translation Key:** `adv_DockerVolumePermissionIssues`
+- **English:** "Docker volume permission issues detected. Container cannot write to mounted directories. Restart container with environment variables -e ID_WWW_USER=\"$(id -u)\" -e ID_WWW_GROUP=\"$(id -g)\"."
+- **Russian:** "Обнаружены проблемы с правами доступа к Docker volumes. Контейнер не может записывать данные в смонтированные каталоги. Перезапустите контейнер с переменными окружения -e ID_WWW_USER=\"$(id -u)\" -e ID_WWW_GROUP=\"$(id -g)\"."
+
+**Error Information Provided:**
+- Container UID/GID
+- Container username
+- Directory owner UID/GID
+- Directory owner username/group
+- List of affected paths
+
+**Common Causes:**
+- Host volume owned by different user (e.g., root instead of current user)
+- Container running with different UID than volume owner
+- Incorrect Docker volume mount permissions
+
+**Solution:**
+```bash
+# Fix 1: Restart container with matching UID/GID
+docker run -e ID_WWW_USER="$(id -u)" -e ID_WWW_GROUP="$(id -g)" mikopbx/mikopbx:latest
+
+# Fix 2: Change host directory ownership
+sudo chown -R $(id -u):$(id -g) ./data/cf ./data/storage
+
+# Fix 3: Use Docker volume instead of bind mount
+docker volume create mikopbx-cf
+docker volume create mikopbx-storage
+```
+
+**Related Documentation:** See Cloud Provisioning CLAUDE.md for Docker deployment best practices.
+
 ## Common Issues and Solutions
 
 1. **Worker not starting**: Check PID files in `/var/run/php-workers/`

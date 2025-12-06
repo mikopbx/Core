@@ -142,6 +142,14 @@ Tests are automatically synchronized between host and container:
    - IPv6 DNS server integration via DHCPv6 options
    - Callback script: `/etc/rc/udhcpc6_configure`
 
+11. **Cloud Provisioning**: Unified system for automatic configuration
+   - `src/Core/System/CloudProvisioning/` - Cloud provider detection and provisioning
+   - Supports Docker ENV variables, cloud IMDS metadata, and NoCloud datasources
+   - User-data parsing for YAML/JSON cloud-init format
+   - Direct SQLite access for early boot provisioning (no Redis dependency)
+   - SSRF and SQL injection protections
+   - 9 providers: Docker, AWS, Google Cloud, Azure, Yandex, DigitalOcean, Vultr, VKCloud, Alibaba, NoCloud
+
 ### Key Design Patterns
 
 - **MVC Pattern**: Clear separation in AdminCabinet
@@ -167,6 +175,9 @@ Tests are automatically synchronized between host and container:
 - `Udhcpc` - IPv4 DHCP client event handler (database synchronization, interface configuration)
 - `Udhcpc6` - IPv6 DHCPv6 client event handler (stateful DHCPv6, SLAAC coexistence, DNS integration)
 - `DnsConf` - DNS configuration generator (dual-stack IPv4/IPv6 nameserver support)
+- `CloudProvider` - Abstract base class for all cloud provisioning providers (direct SQLite access, user-data parsing)
+- `ProvisioningConfig` - DTO for unified configuration from ENV, YAML, JSON sources (validation, sanitization, merging)
+- `NoCloud` - On-premise provisioning provider (ISO, seed directory, HTTP endpoint, kernel cmdline)
 
 ### System Services (managed by monit)
 
@@ -214,6 +225,89 @@ Tests are automatically synchronized between host and container:
 - DHCP callbacks always update database (fixes stale IP display bug)
 - Network commands skipped in Docker (container runtime manages networking)
 - Critical for consistent UI/API responses across environments
+
+### Cloud Provisioning Architecture
+
+**Unified Configuration System** - All deployment environments use the same provisioning flow:
+- **Boot Sequence**: `SystemLoader::start()` → `CloudProvisioning::start()` (line 368)
+- **Provider Detection**: Async parallel checks using GuzzleHttp promises (3-second timeout)
+- **Priority Order**: Docker ENV → Cloud IMDS → NoCloud datasources
+- **One-time Execution**: `CLOUD_PROVISIONING` key in PbxSettings prevents re-provisioning
+
+**ProvisioningConfig DTO** (`src/Core/System/CloudProvisioning/ProvisioningConfig.php`):
+- Factory methods: `fromEnvironment()`, `fromYaml()`, `fromJson()`, `fromArray()`
+- Validation: RFC 1123 hostname, IPv4/IPv6 address, topology (public/private)
+- Sanitization: Length limits, control character removal, XSS prevention
+- Merge strategy: User-data overrides IMDS metadata
+- Empty check: `isEmpty()` method for conditional provisioning
+
+**CloudProvider Base Class** (`src/Core/System/CloudProvisioning/CloudProvider.php`):
+- Abstract methods: `checkAvailability(): PromiseInterface`, `provision(): bool`
+- Direct SQLite access: 11 methods bypass Phalcon ORM to avoid Redis dependency during early boot
+- User-data support: `fetchUserData()` and `parseUserData()` (YAML/JSON auto-detection)
+- Configuration application: `applyConfigDirect(ProvisioningConfig)` unified method
+- Security: SQL injection prevention (key validation, value escaping), SSRF protection
+
+**Cloud Providers** (9 implementations):
+1. **DockerCloud** - Environment variables from container runtime
+2. **AWSCloud** - EC2 IMDS at 169.254.169.254 (partition detection)
+3. **GoogleCloud** - GCE metadata with `Metadata-Flavor: Google` header
+4. **AzureCloud** - Azure IMDS with `Metadata: true` header
+5. **YandexCloud** - Yandex Cloud metadata (Google-compatible API)
+6. **DigitalOceanCloud** - Droplet metadata with vendor-data detection
+7. **VultrCloud** - Single JSON endpoint with instance-v2-id
+8. **VKCloud** - VK Cloud (OpenStack-based) with multi-check detection
+9. **AlibabaCloud** - Alibaba Cloud IMDS at 100.100.100.200
+10. **NoCloud** - On-premise VMware/Proxmox/KVM (ISO, seed, HTTP, cmdline)
+
+**User-Data Format** (Cloud-init compatible YAML/JSON):
+```yaml
+#cloud-config
+mikopbx:
+  hostname: my-pbx
+  ssh_authorized_keys:
+    - ssh-rsa AAAA...
+  web_password: secret123
+  pbx_settings:
+    PBXLanguage: ru-ru
+    SIPPort: 5060
+  network:
+    topology: private
+    extipaddr: 1.2.3.4
+```
+
+**NoCloud Datasources** (priority order):
+1. Kernel cmdline: `ds=nocloud;s=http://...`
+2. CIDATA ISO: `/dev/sr0`, `/dev/sr1` with `LABEL=CIDATA`
+3. Seed directories: `/var/lib/cloud/seed/nocloud/`, `/var/lib/cloud/seed/nocloud-net/`
+4. HTTP endpoint: URL from kernel cmdline `s=` parameter
+
+**Security Protections:**
+- **SQL Injection**: Key validation against whitelist, value escaping with `escapeshellarg()`
+- **SSRF (NoCloud HTTP)**: Private IP blocking by default, `NOCLOUD_ALLOW_PRIVATE_IPS=1` override for on-premise
+- **XSS (ProvisioningConfig)**: Control character removal, length limits, hostname/IP validation
+- **Resource Exhaustion**: Max string length 1024, max SSH keys 65536, max hostname 253
+
+**DockerEntrypoint Refactoring**:
+- **Before**: 500 lines with custom ENV parsing and SQLite queries
+- **After**: 260 lines, delegates to `CloudProvisioning::start()`
+- **Removed Code**: `applyEnvironmentSettings()`, `updateDBSetting()`, `reconfigureNetwork()`
+- **Preserved Behavior**: All ENV variables work identically, service port JSON updates
+
+**Direct SQLite Methods** (avoid Redis dependency):
+- `loadPbxSettingsDirectly()` - Read all settings into cache
+- `updatePbxSettingsDirect()` - UPDATE or INSERT with validation
+- `loadLanInterfaceDirectly()` - Read first LAN interface
+- `updateLanSettingDirect()` - UPDATE column with whitelist validation
+- `updateHostnameDirect()` - Update both PbxSettings and LanInterfaces
+- `updateJsonSettingsDirect()` - Modify `/etc/inc/mikopbx-settings.json` for service ports
+
+**Deployment Examples**:
+- **AWS EC2**: User-data in launch configuration
+- **Google Cloud**: Custom metadata or startup script
+- **Docker**: `docker run -e WEB_ADMIN_PASSWORD=secret123`
+- **VMware**: Attach CIDATA ISO with meta-data/user-data files
+- **Proxmox**: Cloud-init drive with NoCloud datasource
 
 ## Development Guidelines
 

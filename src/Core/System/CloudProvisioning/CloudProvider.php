@@ -410,8 +410,17 @@ abstract class CloudProvider
      */
     protected function updatePbxSettingsDirect(string $key, string|int|null $value): bool
     {
+        // VALIDATE KEY FIRST - prevent SQL injection
+        $reflection = new ReflectionClass(PbxSettings::class);
+        $constants = $reflection->getConstants();
+        if (!in_array($key, $constants, true)) {
+            SystemMessages::sysLogMsg(__METHOD__, "Invalid PbxSettings key: $key - skipping", LOG_WARNING);
+            return false;
+        }
+
         $sqlite3 = Util::which('sqlite3');
         $dbPath = self::PATH_DB;
+        $escapedKey = str_replace("'", "''", $key);
         $escapedValue = str_replace("'", "''", (string)$value);
         $out = [];
 
@@ -420,7 +429,7 @@ abstract class CloudProvider
         if (array_key_exists($key, $settings)) {
             // Update existing setting if value is different
             if ($settings[$key] !== (string)$value) {
-                $command = "$sqlite3 $dbPath \"UPDATE m_PbxSettings SET value='$escapedValue' WHERE key='$key'\"";
+                $command = "$sqlite3 $dbPath \"UPDATE m_PbxSettings SET value='$escapedValue' WHERE key='$escapedKey'\"";
                 $res = Processes::mwExec($command, $out);
                 if ($res === 0) {
                     $this->pbxSettingsCache[$key] = (string)$value;
@@ -439,31 +448,21 @@ abstract class CloudProvider
             }
             return true; // Value unchanged, consider success
         } else {
-            // Check if this is a valid PbxSettings constant
-            $reflection = new ReflectionClass(PbxSettings::class);
-            $constants = $reflection->getConstants();
-            $isValidConstant = in_array($key, $constants, true);
-
-            if ($isValidConstant) {
-                // Insert new setting
-                $command = "$sqlite3 $dbPath \"INSERT INTO m_PbxSettings (key, value) VALUES ('$key', '$escapedValue')\"";
-                $res = Processes::mwExec($command, $out);
-                if ($res === 0) {
-                    $this->pbxSettingsCache[$key] = (string)$value;
-                    $this->changedPbxSettings[] = $key;
-                    $message = "      |- Create PbxSettings - $key ... ";
-                    $this->publishMessage($message);
-                    SystemMessages::teletypeEchoResult($message);
-                    return true;
-                } else {
-                    $message = "      |- Create PbxSettings - $key ... ";
-                    $this->publishMessage($message);
-                    SystemMessages::teletypeEchoResult($message, SystemMessages::RESULT_FAILED);
-                    SystemMessages::sysLogMsg(__METHOD__, "Insert $key failed: " . implode($out), LOG_ERR);
-                    return false;
-                }
+            // Insert new setting (key already validated above)
+            $command = "$sqlite3 $dbPath \"INSERT INTO m_PbxSettings (key, value) VALUES ('$escapedKey', '$escapedValue')\"";
+            $res = Processes::mwExec($command, $out);
+            if ($res === 0) {
+                $this->pbxSettingsCache[$key] = (string)$value;
+                $this->changedPbxSettings[] = $key;
+                $message = "      |- Create PbxSettings - $key ... ";
+                $this->publishMessage($message);
+                SystemMessages::teletypeEchoResult($message);
+                return true;
             } else {
-                SystemMessages::sysLogMsg(__METHOD__, "Unknown PbxSettings key: $key - skipping", LOG_WARNING);
+                $message = "      |- Create PbxSettings - $key ... ";
+                $this->publishMessage($message);
+                SystemMessages::teletypeEchoResult($message, SystemMessages::RESULT_FAILED);
+                SystemMessages::sysLogMsg(__METHOD__, "Insert $key failed: " . implode($out), LOG_ERR);
                 return false;
             }
         }
