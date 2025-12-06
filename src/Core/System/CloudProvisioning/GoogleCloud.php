@@ -71,6 +71,7 @@ class GoogleCloud extends CloudProvider
 
     /**
      * Performs the Google Cloud provisioning using the Metadata Service.
+     * Uses direct SQLite queries to avoid Redis/ORM dependency during early boot.
      *
      * @return bool True if the provisioning was successful, false otherwise.
      */
@@ -81,26 +82,61 @@ class GoogleCloud extends CloudProvider
             return false;
         }
 
-        SystemMessages::echoToTeletype(PHP_EOL);
-
         // Extract SSH keys and primary SSH user
         $sshKeys = $metadata['attributes']['ssh-keys'] ?? '';
         $adminUsername = $this->extractPrimaryUser($sshKeys);
 
-        // Update machine name
+        // Extract instance metadata
         $hostname = $metadata['name'] ?? '';
-        $this->updateHostName($hostname);
-
-        // Update LAN settings with the external IP address
         $extIp = $metadata['networkInterfaces'][0]['accessConfigs'][0]['externalIp'] ?? '';
-        $this->updateLanSettings($extIp);
-
-        // Update SSH and WEB passwords using some unique identifier from the metadata
         $vmId = $metadata['id'];
-        $this->updateSSHCredentials($adminUsername, $vmId);
-        $this->updateWebPassword($vmId);
 
-        return true;
+        // Build config from IMDS metadata
+        $config = new ProvisioningConfig(
+            hostname: $hostname,
+            externalIp: $extIp,
+            sshKeys: $sshKeys,
+            sshLogin: $adminUsername,
+            instanceId: $vmId,
+            webPassword: $vmId
+        );
+
+        // Fetch and merge user-data if available
+        $userData = $this->fetchUserData();
+        if ($userData !== null) {
+            $userConfig = $this->parseUserData($userData);
+            if ($userConfig !== null && !$userConfig->isEmpty()) {
+                SystemMessages::sysLogMsg(__CLASS__, "Applying user-data configuration");
+                $config = $config->merge($userConfig);
+            }
+        }
+
+        // Apply configuration using direct SQLite (no Redis/ORM)
+        return $this->applyConfigDirect($config);
+    }
+
+    /**
+     * Fetches user-data from Google Cloud Metadata Service.
+     *
+     * @return string|null User-data content or null if not available
+     */
+    protected function fetchUserData(): ?string
+    {
+        try {
+            $response = $this->client->request('GET', 'http://169.254.169.254/computeMetadata/v1/instance/attributes/user-data', [
+                'headers' => ['Metadata-Flavor' => 'Google'],
+                'http_errors' => false
+            ]);
+
+            if ($response->getStatusCode() === 200) {
+                $userData = $response->getBody()->getContents();
+                return !empty($userData) ? $userData : null;
+            }
+        } catch (GuzzleException $e) {
+            SystemMessages::sysLogMsg(__CLASS__, "Failed to fetch user-data: " . $e->getMessage());
+        }
+
+        return null;
     }
 
     /**

@@ -72,6 +72,7 @@ class YandexCloud extends CloudProvider
 
     /**
      * Performs the Yandex Cloud provisioning.
+     * Uses direct SQLite queries to avoid Redis/ORM dependency during early boot.
      *
      * @return bool True if the provisioning was successful, false otherwise.
      */
@@ -79,34 +80,63 @@ class YandexCloud extends CloudProvider
     {
         $metadata = $this->retrieveInstanceMetadata();
         if ($metadata === null || empty($metadata['id'])) {
-            // If metadata is null ot machine id is unknown, do not proceed with provisioning.
+            // If metadata is null or machine id is unknown, do not proceed with provisioning.
             return false;
         }
 
-        SystemMessages::echoToTeletype(PHP_EOL);
-
+        // Extract metadata
         $sshKeys = $metadata['attributes']['ssh-keys'] ?? '';
-
-        // Extract username
-        $username = $this->extractUserNameFromSshKeys($sshKeys);
-
-        // Update SSH keys, if available
-        $this->updateSSHKeys($sshKeys);
-
-        // Update machine name
+        $username = $this->extractUserNameFromSshKeys($sshKeys) ?? 'yc-user';
         $hostname = $metadata['name'] ?? '';
-        $this->updateHostName($hostname);
-
-        // Update LAN settings with the external IP address
         $extIp = $metadata['networkInterfaces'][0]['accessConfigs'][0]['externalIp'] ?? '';
-        $this->updateLanSettings($extIp);
-
-        // Update SSH and WEB passwords using some unique identifier from the metadata
         $vmId = $metadata['id'];
-        $this->updateSSHCredentials($username ?? 'yc-user', $vmId);
-        $this->updateWebPassword($vmId);
 
-        return true;
+        // Build config from IMDS metadata
+        $config = new ProvisioningConfig(
+            hostname: $hostname,
+            externalIp: $extIp,
+            sshKeys: $sshKeys,
+            sshLogin: $username,
+            instanceId: $vmId,
+            webPassword: $vmId
+        );
+
+        // Fetch and merge user-data if available
+        $userData = $this->fetchUserData();
+        if ($userData !== null) {
+            $userConfig = $this->parseUserData($userData);
+            if ($userConfig !== null && !$userConfig->isEmpty()) {
+                SystemMessages::sysLogMsg(__CLASS__, "Applying user-data configuration");
+                $config = $config->merge($userConfig);
+            }
+        }
+
+        // Apply configuration using direct SQLite (no Redis/ORM)
+        return $this->applyConfigDirect($config);
+    }
+
+    /**
+     * Fetches user-data from Yandex Cloud Metadata Service.
+     *
+     * @return string|null User-data content or null if not available
+     */
+    protected function fetchUserData(): ?string
+    {
+        try {
+            $response = $this->client->request('GET', 'http://169.254.169.254/computeMetadata/v1/instance/attributes/user-data', [
+                'headers' => ['Metadata-Flavor' => 'Google'],
+                'http_errors' => false
+            ]);
+
+            if ($response->getStatusCode() === 200) {
+                $userData = $response->getBody()->getContents();
+                return !empty($userData) ? $userData : null;
+            }
+        } catch (GuzzleException $e) {
+            SystemMessages::sysLogMsg(__CLASS__, "Failed to fetch user-data: " . $e->getMessage());
+        }
+
+        return null;
     }
 
     /**

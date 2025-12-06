@@ -266,6 +266,7 @@ return [
     'adv_SshPasswordWeak' => 'Weak SSH account password <a href=\'%url%\'>change</a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'Storage disk running out of free space (%free% Mb)</a>',
     'adv_StorageDiskUnMounted' => 'Disk for storing settings and data not connected!',
+    'adv_DockerVolumePermissionIssues' => 'Docker volume permission issues detected. Container cannot write to mounted directories. Restart container with environment variables -e ID_WWW_USER="$(id -u)" -e ID_WWW_GROUP="$(id -g)".',
     'adv_S3EnabledButNotConfigured' => 'S3 storage is enabled but not properly configured. Please check S3 settings.',
     'adv_S3ConnectionFailed' => 'S3 storage connection failed: %error%. Endpoint: %endpoint%, Bucket: %bucket%',
     'adv_S3ClientInitializationFailed' => 'S3 client initialization failed: %error%. Endpoint: %endpoint%',

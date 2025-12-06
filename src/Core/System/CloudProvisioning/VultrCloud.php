@@ -78,6 +78,7 @@ class VultrCloud extends CloudProvider
 
     /**
      * Performs the Vultr Cloud provisioning.
+     * Uses direct SQLite queries to avoid Redis/ORM dependency during early boot.
      *
      * @return bool True if the provisioning was successful, false otherwise.
      */
@@ -89,8 +90,6 @@ class VultrCloud extends CloudProvider
             return false;
         }
 
-        SystemMessages::echoToTeletype(PHP_EOL);
-
         // Extract SSH keys from public-keys if available
         $sshKeys = '';
         if (isset($metadata['public-keys']) && is_array($metadata['public-keys']) && !empty($metadata['public-keys'])) {
@@ -98,18 +97,10 @@ class VultrCloud extends CloudProvider
         }
 
         // Extract username from SSH keys or use default
-        $username = $this->extractUserNameFromSshKeys($sshKeys);
+        $username = $this->extractUserNameFromSshKeys($sshKeys) ?? 'vultr-user';
 
-        // Update SSH keys if available
-        if (!empty($sshKeys)) {
-            $this->updateSSHKeys($sshKeys);
-        }
-
-        // Update machine name (hostname)
+        // Extract hostname
         $hostname = $metadata['hostname'] ?? '';
-        if (!empty($hostname)) {
-            $this->updateHostName($hostname);
-        }
 
         // Extract external IP from interfaces array
         $extIp = '';
@@ -122,17 +113,53 @@ class VultrCloud extends CloudProvider
             }
         }
 
-        // Update LAN settings with the external IP address if found
-        if (!empty($extIp)) {
-            $this->updateLanSettings($extIp);
+        $instanceId = $metadata['instance-v2-id'];
+
+        // Build config from IMDS metadata
+        $config = new ProvisioningConfig(
+            hostname: $hostname,
+            externalIp: $extIp,
+            sshKeys: $sshKeys,
+            sshLogin: $username,
+            instanceId: $instanceId,
+            webPassword: $instanceId
+        );
+
+        // Fetch and merge user-data if available
+        $userData = $this->fetchUserData();
+        if ($userData !== null) {
+            $userConfig = $this->parseUserData($userData);
+            if ($userConfig !== null && !$userConfig->isEmpty()) {
+                SystemMessages::sysLogMsg(__CLASS__, "Applying user-data configuration");
+                $config = $config->merge($userConfig);
+            }
         }
 
-        // Update SSH and WEB passwords using instance ID as unique identifier
-        $instanceId = $metadata['instance-v2-id'];
-        $this->updateSSHCredentials($username ?? 'vultr-user', $instanceId);
-        $this->updateWebPassword($instanceId);
+        // Apply configuration using direct SQLite (no Redis/ORM)
+        return $this->applyConfigDirect($config);
+    }
 
-        return true;
+    /**
+     * Fetches user-data from Vultr Metadata Service.
+     *
+     * @return string|null User-data content or null if not available
+     */
+    protected function fetchUserData(): ?string
+    {
+        try {
+            $response = $this->client->request('GET', 'http://169.254.169.254/v1/user-data', [
+                'http_errors' => false
+            ]);
+
+            if ($response->getStatusCode() === 200) {
+                $userData = $response->getBody()->getContents();
+                return !empty($userData) ? $userData : null;
+            }
+        } catch (GuzzleException $e) {
+            SystemMessages::sysLogMsg(__CLASS__, "Failed to fetch user-data: " . $e->getMessage());
+        }
+
+        return null;
     }
 
     /**

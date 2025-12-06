@@ -276,6 +276,7 @@ return [
     'adv_SshPasswordWeak' => 'Простой пароль учетной записи SSH <a href=\'%url%\'>изменить</a>',
     'adv_StorageDiskRunningOutOfFreeSpace' => 'На диске для хранения заканчивается свободное место (%free% Mb)</a>',
     'adv_StorageDiskUnMounted' => 'Не подключен диск для хранения настроек и данных!',
+    'adv_DockerVolumePermissionIssues' => 'Обнаружены проблемы с правами доступа к Docker volumes. Контейнер не может записывать данные в смонтированные каталоги. Перезапустите контейнер с переменными окружения -e ID_WWW_USER="$(id -u)" -e ID_WWW_GROUP="$(id -g)".',
     'adv_S3EnabledButNotConfigured' => 'Хранилище S3 включено, но не настроено. Проверьте настройки S3.',
     'adv_S3ConnectionFailed' => 'Ошибка подключения к хранилищу S3: %error%. Endpoint: %endpoint%, Bucket: %bucket%',
     'adv_S3ClientInitializationFailed' => 'Не удалось инициализировать S3 клиент: %error%. Endpoint: %endpoint%',

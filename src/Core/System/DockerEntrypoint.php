@@ -20,15 +20,7 @@
 
 namespace MikoPBX\Core\System;
 
-use Error;
-use JsonException;
-use MikoPBX\Common\Models\LanInterfaces;
-use MikoPBX\Common\Models\PbxSettings;
-use MikoPBX\Common\Providers\BeanstalkConnectionModelsProvider;
-use Phalcon\Di\Di;
 use Phalcon\Di\Injectable;
-use ReflectionClass;
-use Throwable;
 
 require_once 'Globals.php';
 
@@ -40,13 +32,9 @@ require_once 'Globals.php';
 class DockerEntrypoint extends Injectable
 {
     private const string PATH_DB = '/cf/conf/mikopbx.db';
-    private const string pathInc = '/etc/inc/mikopbx-settings.json';
     public float $workerStartTime;
-    private array $jsonSettings;
-    private array $settings;
     private string $stageMessage = '';
     private float $stageStartTime = 0.0;
-    private array $changedPbxSettings = [];
 
     /**
      * Constructor for the DockerEntrypoint class.
@@ -129,20 +117,27 @@ class DockerEntrypoint extends Injectable
         // Update WWW user id and group id.
         $this->changeWwwUserID();
 
+        // Diagnose volume permissions
+        $this->diagnosePermissions();
+
         // Prepare database
         $this->prepareDatabase();
 
-        // Get default settings
-        $this->getDefaultSettings();
-
-        // Update DB values
-        $this->applyEnvironmentSettings();
+        // Apply environment variables via unified cloud provisioning
+        // DockerCloud provider handles ENV → DB mapping
+        $this->echoStartMsg(' - Applying environment variables...');
+        $result = CloudProvisioning::start();
+        if ($result['success']) {
+            $this->echoResultMsg();
+            if (!empty($result['cloudId']) && $result['cloudId'] !== 'Previously configured') {
+                $this->echoMessage("   Provisioned via: {$result['cloudId']}");
+            }
+        } else {
+            $this->echoResultMsg(SystemMessages::RESULT_SKIPPED);
+        }
 
         // Start the MikoPBX system.
         $this->startTheMikoPBXSystem();
-
-        // Send accumulated changes to backend worker
-        $this->sendChangesToBackend();
     }
 
     /**
@@ -173,8 +168,8 @@ class DockerEntrypoint extends Injectable
         $cut = Util::which('cut');
         $chown = Util::which('chown');
         $chgrp = Util::which('chgrp');
-        $currentUserId = trim(shell_exec("$grep '^$userID:' < /etc/shadow | $cut -d ':' -f 3")??'');
-        $currentGroupId = trim(shell_exec("$grep '^$userID:' < /etc/group | $cut -d ':' -f 3")??'');
+        $currentUserId = trim((string)shell_exec("$grep '^$userID:' < /etc/shadow | $cut -d ':' -f 3"));
+        $currentGroupId = trim((string)shell_exec("$grep '^$userID:' < /etc/group | $cut -d ':' -f 3"));
         
         $needUserUpdate = ($currentUserId !== '' && !empty($newUserId) && $currentUserId !== $newUserId);
         $needGroupUpdate = ($currentGroupId !== '' && !empty($newGroupId) && $currentGroupId !== $newGroupId);
@@ -208,11 +203,9 @@ class DockerEntrypoint extends Injectable
                 }
             }
             
-            // Execute commands
-            if (!empty($commands)) {
-                passthru(implode('; ', $commands));
-            }
-            
+            // Execute collected commands
+            passthru(implode('; ', $commands));
+
             $this->echoResultMsg();
             
             // Show details after completion
@@ -226,8 +219,103 @@ class DockerEntrypoint extends Injectable
     }
 
     /**
+     * Diagnoses permissions for critical directories and provides helpful feedback.
+     * Checks write access to mounted volumes and suggests correct UID/GID if issues found.
+     */
+    private function diagnosePermissions(): void
+    {
+        $this->echoStartMsg(' - Diagnosing volume permissions...');
+
+        $criticalPaths = [
+            '/cf' => 'Configuration storage',
+            '/storage' => 'Data storage'
+        ];
+
+        $hasIssues = false;
+        $issueDetails = [];
+        $currentUserId = posix_getuid();
+        $currentGroupId = posix_getgid();
+        $userInfo = posix_getpwuid($currentUserId);
+        $userName = $userInfo['name'] ?? 'unknown';
+
+        foreach ($criticalPaths as $path => $description) {
+            if (!file_exists($path)) {
+                $issueDetails[] = "   ✗ $path ($description) - directory does not exist";
+                $hasIssues = true;
+                continue;
+            }
+
+            // Test write access by attempting to create a temporary file
+            $testFile = $path . '/.write_test_' . uniqid();
+            $canWrite = @file_put_contents($testFile, 'test');
+
+            if ($canWrite === false) {
+                $stat = stat($path);
+                if ($stat === false) {
+                    $issueDetails[] = "   ✗ $path ($description) - cannot read directory stats";
+                    $hasIssues = true;
+                    continue;
+                }
+                $owner = posix_getpwuid($stat['uid']);
+                $group = posix_getgrgid($stat['gid']);
+
+                $issueDetails[] = sprintf(
+                    "   ✗ %s (%s) - NO WRITE ACCESS\n" .
+                    "     Directory owner: UID=%d GID=%d (%s:%s)\n" .
+                    "     Container user:  UID=%d GID=%d (%s)",
+                    $path,
+                    $description,
+                    $stat['uid'],
+                    $stat['gid'],
+                    $owner['name'] ?? 'unknown',
+                    $group['name'] ?? 'unknown',
+                    $currentUserId,
+                    $currentGroupId,
+                    $userName
+                );
+                $hasIssues = true;
+            } else {
+                @unlink($testFile);
+                $issueDetails[] = "   ✓ $path ($description) - write access OK";
+            }
+        }
+
+        if ($hasIssues) {
+            $this->echoResultMsg(SystemMessages::RESULT_WARNING);
+            $this->echoMessage("\n┌─────────────────────────────────────────────────────────────────┐");
+            $this->echoMessage("│ ⚠️  DOCKER VOLUME PERMISSION ISSUES DETECTED                     │");
+            $this->echoMessage("└─────────────────────────────────────────────────────────────────┘\n");
+
+            foreach ($issueDetails as $detail) {
+                $this->echoMessage($detail);
+            }
+
+            $this->echoMessage("\n┌─────────────────────────────────────────────────────────────────┐");
+            $this->echoMessage("│ 💡 SOLUTION: Set correct user permissions                       │");
+            $this->echoMessage("└─────────────────────────────────────────────────────────────────┘\n");
+            $this->echoMessage("To fix this issue, restart the container with environment variables:");
+            $this->echoMessage("\n  docker run ... \\");
+            $this->echoMessage("    -e ID_WWW_USER=\"\$(id -u www-user)\" \\");
+            $this->echoMessage("    -e ID_WWW_GROUP=\"\$(id -g www-user)\" \\");
+            $this->echoMessage("    ...\n");
+            $this->echoMessage("Where 'www-user' is the user that owns the mounted directories.");
+            $this->echoMessage("\nFor detailed instructions, see:");
+            $this->echoMessage("https://github.com/mikopbx/Core/wiki/Docker-Installation\n");
+
+            SystemMessages::sysLogMsg(
+                static::class,
+                "Volume permission issues detected. Container user UID=$currentUserId GID=$currentGroupId cannot write to mounted volumes.",
+                LOG_WARNING
+            );
+        } else {
+            $this->echoResultMsg();
+            $this->echoMessage("   All volumes accessible (UID=$currentUserId GID=$currentGroupId)");
+        }
+    }
+
+    /**
      * Prepares the SQLite database for use, checking for table existence and restoring from defaults if necessary.
-     * @return array An array containing the results of the database check commands.
+     * @return array<int, string> An array containing the results of the database check commands.
      */
     public function prepareDatabase(): array
     {
@@ -237,198 +325,13 @@ class DockerEntrypoint extends Injectable
         $cp = Util::which('cp');
         $out = [];
         Processes::mwExec("$sqlite3 " . self::PATH_DB . ' .tables', $out);
-        if (trim(implode('', $out)) === '') {
+        if ($out !== null && trim(implode('', $out)) === '') {
             Util::mwMkdir(dirname(self::PATH_DB));
             Processes::mwExec("$rm -rf " . self::PATH_DB . "; $cp /conf.default/mikopbx.db " . self::PATH_DB);
             Util::addRegularWWWRights(self::PATH_DB);
         }
         $this->echoResultMsg();
-        return array($rm, $out);
-    }
-
-    /**
-     * Retrieves default settings from JSON configuration and the database,
-     * setting up initial configuration states required for system operations.
-     */
-    private function getDefaultSettings(): void
-    {
-        $this->echoStartMsg(' - Loading system settings...');
-        // Get settings from mikopbx-settings.json
-        $jsonString = file_get_contents(self::pathInc);
-        try {
-            $this->jsonSettings = json_decode($jsonString, true, 512, JSON_THROW_ON_ERROR);
-        } catch (JsonException $exception) {
-            $this->jsonSettings = [];
-            throw new Error(self::pathInc . " has broken format");
-        }
-
-        // Get settings from DB
-        $out = [];
-        $sqlite3 = Util::which('sqlite3');
-        Processes::mwExec("$sqlite3 " . self::PATH_DB . " 'SELECT * FROM m_PbxSettings'", $out);
-        $this->settings = [];
-        foreach ($out as $row) {
-            $data = explode('|', $row);
-            $key = $data[0] ?? '';
-            $value = $data[1] ?? '';
-            $this->settings[$key] = $value;
-        }
-
-        $this->echoResultMsg();
-    }
-
-    /**
-     * Applies configuration settings from environment variables to the system,
-     * updating both database and JSON stored settings as necessary.
-     */
-    private function applyEnvironmentSettings(): void
-    {
-        $this->echoStartMsg(' - Applying environment variables...');
-        $reflection = new ReflectionClass(PbxSettings::class);
-        $constants = $reflection->getConstants();
-        $appliedSettings = [];
-
-        foreach ($constants as $name => $dbKey) {
-            $envValue = getenv($name);
-            if ($envValue !== false) {
-                switch ($dbKey) {
-                    case PbxSettings::BEANSTALK_PORT:
-                    case PbxSettings::REDIS_PORT:
-                    case PbxSettings::GNATS_PORT:
-                        if ($this->updateJsonSettings($dbKey, 'port', intval($envValue))) {
-                            $appliedSettings[] = "   Updated $name → " . intval($envValue);
-                        }
-                        break;
-                    case PbxSettings::GNATS_HTTP_PORT:
-                        if ($this->updateJsonSettings('gnats', 'httpPort', intval($envValue))) {
-                            $appliedSettings[] = "   Updated $name → " . intval($envValue);
-                        }
-                        break;
-                    case PbxSettings::ENABLE_USE_NAT:
-                        if ($envValue === '1') {
-                            $this->reconfigureNetwork("topology", LanInterfaces::TOPOLOGY_PRIVATE);
-                            $appliedSettings[] = "   Updated $name → 1 (NAT enabled)";
-                        }
-                        break;
-                    case PbxSettings::EXTERNAL_SIP_HOST_NAME:
-                        $this->reconfigureNetwork("exthostname", $envValue);
-                        $appliedSettings[] = "   Updated $name → $envValue";
-                        break;
-                    case PbxSettings::EXTERNAL_SIP_IP_ADDR:
-                        $this->reconfigureNetwork("extipaddr", $envValue);
-                        $appliedSettings[] = "   Updated $name → $envValue";
-                        break;
-                    default:
-                        if ($this->updateDBSetting($dbKey, $envValue)) {
-                            $action = array_key_exists($dbKey, $this->settings) ? 'Updated' : 'Created';
-                            $appliedSettings[] = "   $action $name → $envValue";
-                        }
-                        break;
-                }
-            }
-        }
-        
-        $this->echoResultMsg();
-        
-        // Show applied settings after DONE
-        foreach ($appliedSettings as $setting) {
-            $this->echoMessage($setting);
-        }
-    }
-
-    /**
-     * Reconfigures a network setting in the database.
-     *
-     * This method updates the value of a specified setting for network interfaces
-     * that are marked as connected to the internet in the database. It logs the outcome
-     * of the operation, detailing success or failure along with the executed command
-     * if an error occurs.
-     *
-     * @param string $key The database column key representing the setting to update.
-     * @param string $newValue The new value to assign to the specified setting.
-     * @return void
-     */
-    private function reconfigureNetwork(string $key, string $newValue): void
-    {
-        $sqlite3 = Util::which('sqlite3');
-        $dbPath =  self::PATH_DB;
-        $out = [];
-        $command = "$sqlite3 $dbPath \"UPDATE m_LanInterfaces SET $key='$newValue' WHERE internet='1'\"";
-        $res = Processes::mwExec($command, $out);
-        if ($res === 0) {
-            SystemMessages::sysLogMsg(__METHOD__, " - Update m_LanInterfaces.$key to '$newValue'", LOG_DEBUG);
-        } else {
-            SystemMessages::sysLogMsg(__METHOD__, " - Update m_LanInterfaces.$key to '$newValue' failed: " . implode($out) . PHP_EOL . 'Command:' . PHP_EOL . $command, LOG_ERR);
-        }
-    }
-    /**
-     * Updates the specified setting in the JSON configuration file.
-     * @param string $path The JSON path where the setting is stored.
-     * @param string $key The setting key to update.
-     * @param mixed $newValue The new value to set.
-     * @return bool True if the setting was updated, false otherwise.
-     */
-    private function updateJsonSettings(string $path, string $key, mixed $newValue): bool
-    {
-        if ($this->jsonSettings[$path][$key] ?? null !== $newValue) {
-            $this->jsonSettings[$path][$key] = $newValue;
-            $newData = json_encode($this->jsonSettings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-            file_put_contents(self::pathInc, $newData);
-            SystemMessages::sysLogMsg(__METHOD__, " - Update $path:$key to '$newValue' in /etc/inc/mikopbx-settings.json", LOG_DEBUG);
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Updates a specified setting directly in the database.
-     * @param string $key The key of the setting to update.
-     * @param string $newValue The new value for the setting.
-     * @return bool True if the setting was updated, false otherwise.
-     */
-    private function updateDBSetting(string $key, string $newValue): bool
-    {
-        $sqlite3 = Util::which('sqlite3');
-        $dbPath =  self::PATH_DB;
-        $out = [];
-        
-        if (array_key_exists($key, $this->settings)) {
-            // Update existing setting if value is different
-            if ($this->settings[$key] !== $newValue) {
-                $command = "$sqlite3 $dbPath \"UPDATE m_PbxSettings SET value='$newValue' WHERE key='$key'\"";
-                $res = Processes::mwExec($command, $out);
-                if ($res === 0) {
-                    SystemMessages::sysLogMsg(__METHOD__, " - Update $key to '$newValue' in m_PbxSettings", LOG_DEBUG);
-                    $this->changedPbxSettings[] = $key;
-                    return true;
-                } else {
-                    SystemMessages::sysLogMsg(__METHOD__, " - Update $key failed: " . implode($out) . PHP_EOL . 'Command:' . PHP_EOL . $command, LOG_ERR);
-                    return false;
-                }
-            }
-        } else {
-            // Check if this is a valid PbxSettings constant
-            $reflection = new ReflectionClass(PbxSettings::class);
-            $constants = $reflection->getConstants();
-            $isValidConstant = in_array($key, $constants, true);
-
-            if ($isValidConstant) {
-                // Insert new setting
-                $command = "$sqlite3 $dbPath \"INSERT INTO m_PbxSettings (key, value) VALUES ('$key', '$newValue')\"";
-                $res = Processes::mwExec($command, $out);
-                if ($res === 0) {
-                    SystemMessages::sysLogMsg(__METHOD__, " - Insert $key with value '$newValue' in m_PbxSettings", LOG_DEBUG);
-                    $this->changedPbxSettings[] = $key;
-                    return true;
-                } else {
-                    SystemMessages::sysLogMsg(__METHOD__, " - Insert $key failed: " . implode($out) . PHP_EOL . 'Command:' . PHP_EOL . $command, LOG_ERR);
-                    return false;
-                }
-            } else {
-                $this->echoMessage("   Warning: Unknown environment variable '$key' - skipping");
-            }
-        }
-        return false;
+        return [];
     }
 
     /**
@@ -443,58 +346,6 @@ class DockerEntrypoint extends Injectable
             '/etc/rc/bootup 2>/dev/null && ' .
             '/etc/rc/bootup_pbx 2>/dev/null';
         passthru($commands);
-    }
-
-    /**
-     * Sends accumulated PbxSettings changes to backend worker through Beanstalk queue.
-     * This ensures that configuration changes made during Docker startup are properly
-     * processed by WorkerModelsEvents for system reconfiguration.
-     *
-     * @return void
-     */
-    private function sendChangesToBackend(): void
-    {
-        if (empty($this->changedPbxSettings)) {
-            return;
-        }
-
-        // Wait for DI to become available after system startup
-        $maxAttempts = 30;
-        $di = null;
-        for ($i = 0; $i < $maxAttempts; $i++) {
-            try {
-                $di = Di::getDefault();
-                if ($di !== null) {
-                    break;
-                }
-            } catch (Throwable $e) {
-                // DI not yet initialized
-            }
-            sleep(1);
-        }
-
-        if ($di === null) {
-            SystemMessages::sysLogMsg(__METHOD__, "DI not available after {$maxAttempts} seconds, cannot send changes", LOG_ERR);
-            return;
-        }
-
-        try {
-            $queue = $di->getShared(BeanstalkConnectionModelsProvider::SERVICE_NAME);
-
-            foreach ($this->changedPbxSettings as $key) {
-                $jobData = json_encode([
-                    'source' => BeanstalkConnectionModelsProvider::SOURCE_MODELS_CHANGED,
-                    'model' => PbxSettings::class,
-                    'recordId' => $key,
-                    'action' => 'afterSave',
-                    'changedFields' => [$key],
-                ]);
-                $queue->publish($jobData);
-                SystemMessages::sysLogMsg(__METHOD__, " - Sent change notification for PbxSettings key: $key", LOG_DEBUG);
-            }
-        } catch (Throwable $e) {
-            SystemMessages::sysLogMsg(__METHOD__, "Failed to send changes to backend: {$e->getMessage()}", LOG_ERR);
-        }
     }
 }
 

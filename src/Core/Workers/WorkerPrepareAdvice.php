@@ -29,6 +29,7 @@ use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckAmiPasswords;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckAriPasswords;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckConnection;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckCorruptedFiles;
+use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckDockerPermissions;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckFirewalls;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckModulesUpdates;
 use MikoPBX\Core\Workers\Libs\WorkerPrepareAdvice\CheckSecurityLog;
@@ -64,6 +65,7 @@ class WorkerPrepareAdvice extends WorkerRedisBase
     public const array ARR_ADVICE_TYPES = [
         ['type' => CheckConnection::class, 'cacheTime' => 120, 'priority' => 5],
         ['type' => CheckCorruptedFiles::class, 'cacheTime' => 3600, 'priority' => 5],
+        ['type' => CheckDockerPermissions::class, 'cacheTime' => 3600, 'priority' => 1],
         ['type' => CheckWebPasswords::class, 'cacheTime' => 864000, 'priority' => 1],
         ['type' => CheckSSHPasswords::class, 'cacheTime' => 864000, 'priority' => 1],
         ['type' => CheckFirewalls::class, 'cacheTime' => 864000, 'priority' => 1],

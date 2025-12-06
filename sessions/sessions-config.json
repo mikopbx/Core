@@ -35,7 +35,9 @@
       "sg",
       "vendor/bin/phpstan",
       "grep",
-      "ssh"
+      "ssh",
+      "vendor/bin/phpunit",
+      "docker exec mikopbx_ipv6-support"
     ],
     "bash_write_patterns": [],
     "extrasafe": false

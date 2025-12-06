@@ -36,11 +36,13 @@ class SystemMessages extends Injectable
     public const string RESULT_DONE = 'Done';
     public const string RESULT_FAILED = 'Failed';
     public const string RESULT_SKIPPED = 'Skipped';
+    public const string RESULT_WARNING = 'Warning';
 
     private static array $defaultTexts = [
         self::RESULT_DONE => " \033[32;1mDONE\033[0m \n", // Green for DONE
         self::RESULT_FAILED => " \033[31;1mFAIL\033[0m \n",  // Red for FAILED
         self::RESULT_SKIPPED => " \033[33;1mSKIP\033[0m \n", // Yellow for SKIPPED
+        self::RESULT_WARNING => " \033[33;1mWARN\033[0m \n", // Yellow for WARNING
     ];
     
     private static ?array $availableSerialPorts = null;
@@ -161,6 +163,7 @@ class SystemMessages extends Injectable
             self::RESULT_DONE => " DONE \n",
             self::RESULT_FAILED => " FAIL \n",
             self::RESULT_SKIPPED => " SKIP \n",
+            self::RESULT_WARNING => " WARN \n",
         ];
         
         if (array_key_exists($result, $plainTexts)) {
@@ -294,6 +297,7 @@ class SystemMessages extends Injectable
             self::RESULT_DONE => 'completed successfully',
             self::RESULT_FAILED => 'failed',
             self::RESULT_SKIPPED => 'skipped',
+            self::RESULT_WARNING => 'completed with warnings',
             default => $result
         };
         $logger->log(LOG_DEBUG, trim($message) . " - $resultText");
@@ -317,6 +321,7 @@ class SystemMessages extends Injectable
             self::RESULT_DONE => 'completed successfully',
             self::RESULT_FAILED => 'failed',
             self::RESULT_SKIPPED => 'skipped',
+            self::RESULT_WARNING => 'completed with warnings',
             default => $result
         };
         $logger->log(LOG_DEBUG, sprintf("%s - %s (%.2fs)", trim($message), $resultText, $elapsedTime));

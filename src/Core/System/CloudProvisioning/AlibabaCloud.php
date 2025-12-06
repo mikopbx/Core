@@ -65,6 +65,7 @@ class AlibabaCloud extends CloudProvider
 
     /**
      * Performs the Alibaba Cloud provisioning using the Metadata Service.
+     * Uses direct SQLite queries to avoid Redis/ORM dependency during early boot.
      *
      * @return bool True if the provisioning was successful, false otherwise.
      */
@@ -76,29 +77,35 @@ class AlibabaCloud extends CloudProvider
             return false;
         }
 
-        SystemMessages::echoToTeletype(PHP_EOL);
-
-        // Update machine hostname
+        // Extract metadata
         $hostname = $metadata['hostname'] ?? '';
-        $this->updateHostName($hostname);
-
-        // Update LAN settings with the EIP (public IP) if available, otherwise use private IP
         $publicIp = $metadata['eipv4'] ?? '';
         $privateIp = $metadata['private-ipv4'] ?? '';
-        $this->updateLanSettings(
-            empty($publicIp) ? $privateIp : $publicIp
+        $instanceId = $metadata['instance-id'];
+        $sshKeys = $this->retrieveSSHKeys();
+
+        // Use public IP if available, otherwise private IP
+        $extIp = empty($publicIp) ? $privateIp : $publicIp;
+
+        // Build config from IMDS metadata
+        $config = new ProvisioningConfig(
+            hostname: $hostname,
+            externalIp: $extIp,
+            sshKeys: $sshKeys,
+            sshLogin: 'root',
+            instanceId: $instanceId,
+            webPassword: $instanceId
         );
 
-        // Update SSH keys if available
-        $sshKeys = $this->retrieveSSHKeys();
-        if (!empty($sshKeys)) {
-            $this->updateSSHKeys($sshKeys);
+        // Fetch and merge user-data if available
+        $userData = $this->fetchUserData();
+        if ($userData !== null) {
+            $userConfig = $this->parseUserData($userData);
+            if ($userConfig !== null && !$userConfig->isEmpty()) {
+                SystemMessages::sysLogMsg(__CLASS__, "Applying user-data configuration");
+                $config = $config->merge($userConfig);
+            }
         }
-
-        // Update SSH and Web credentials using instance ID
-        $instanceId = $metadata['instance-id'];
-        $this->updateSSHCredentials('root', $instanceId);
-        $this->updateWebPassword($instanceId);
 
         // Log successful provisioning with instance details
         SystemMessages::sysLogMsg(
@@ -111,7 +118,32 @@ class AlibabaCloud extends CloudProvider
             )
         );
 
-        return true;
+        // Apply configuration using direct SQLite (no Redis/ORM)
+        return $this->applyConfigDirect($config);
+    }
+
+    /**
+     * Fetches user-data from Alibaba Cloud Metadata Service.
+     * Note: Alibaba uses a different base IP (100.100.100.200) than other clouds.
+     *
+     * @return string|null User-data content or null if not available
+     */
+    protected function fetchUserData(): ?string
+    {
+        try {
+            $response = $this->client->request('GET', 'http://100.100.100.200/latest/user-data', [
+                'http_errors' => false
+            ]);
+
+            if ($response->getStatusCode() === 200) {
+                $userData = $response->getBody()->getContents();
+                return !empty($userData) ? $userData : null;
+            }
+        } catch (GuzzleException $e) {
+            SystemMessages::sysLogMsg(__CLASS__, "Failed to fetch user-data: " . $e->getMessage());
+        }
+
+        return null;
     }
 
     /**

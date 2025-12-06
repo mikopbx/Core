@@ -84,6 +84,7 @@ class DigitalOceanCloud extends CloudProvider
 
     /**
      * Performs the DigitalOcean cloud provisioning using the Metadata Service.
+     * Uses direct SQLite queries to avoid Redis/ORM dependency during early boot.
      *
      * @return bool True if the provisioning was successful, false otherwise.
      */
@@ -100,25 +101,44 @@ class DigitalOceanCloud extends CloudProvider
             return false;
         }
 
-        SystemMessages::echoToTeletype(PHP_EOL);
-
-        // Update machine name with DO hostname
+        // Extract metadata
         $hostname = $this->getMetadata('hostname');
-        $this->updateHostName($hostname);
-
-        // Get external IP address (check reserved IP first, then fallback to anchor IP)
         $extIp = $this->getExternalIP();
-        $this->updateLanSettings($extIp);
-
-        // Update SSH keys
         $sshKeys = $this->getMetadata('public-keys');
-        $this->updateSSHKeys($sshKeys);
 
-        // Update SSH and web credentials using droplet ID
-        $this->updateSSHCredentials('do-user', $dropletId);
-        $this->updateWebPassword($dropletId);
+        // Build config from IMDS metadata
+        $config = new ProvisioningConfig(
+            hostname: $hostname,
+            externalIp: $extIp,
+            sshKeys: $sshKeys,
+            sshLogin: 'do-user',
+            instanceId: $dropletId,
+            webPassword: $dropletId
+        );
 
-        return true;
+        // Fetch and merge user-data if available
+        $userData = $this->fetchUserData();
+        if ($userData !== null) {
+            $userConfig = $this->parseUserData($userData);
+            if ($userConfig !== null && !$userConfig->isEmpty()) {
+                SystemMessages::sysLogMsg(__CLASS__, "Applying user-data configuration");
+                $config = $config->merge($userConfig);
+            }
+        }
+
+        // Apply configuration using direct SQLite (no Redis/ORM)
+        return $this->applyConfigDirect($config);
+    }
+
+    /**
+     * Fetches user-data from DigitalOcean Metadata Service.
+     *
+     * @return string|null User-data content or null if not available
+     */
+    protected function fetchUserData(): ?string
+    {
+        $userData = $this->getMetadata('user-data');
+        return !empty($userData) ? $userData : null;
     }
 
     /**

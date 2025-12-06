@@ -80,6 +80,7 @@ class VKCloud extends CloudProvider
 
     /**
      * Performs the VK Cloud Solutions provisioning.
+     * Uses direct SQLite queries to avoid Redis/ORM dependency during early boot.
      *
      * @return bool True if the provisioning was successful, false otherwise.
      */
@@ -90,36 +91,59 @@ class VKCloud extends CloudProvider
             return false;
         }
 
-        // Update machine name
+        // Get hostname
         $hostname = $this->getMetaDataVCS('hostname');
         if (empty($hostname)) {
             SystemMessages::sysLogMsg(__CLASS__, "Failed to get hostname from metadata");
             return false;
         }
 
-        SystemMessages::echoToTeletype(PHP_EOL);
-
-        $this->updateHostName($hostname);
-
-        // Update LAN settings with the external IP address
+        // Extract metadata
         $extIp = $this->getMetaDataVCS('public-ipv4');
-        $this->updateLanSettings($extIp);
+        $vmId = $this->getMetaDataVCS('instance-id') ?? '';
 
-        // Update SSH keys, if available
+        // Get SSH keys
         $sshKey = '';
         $sshKeys = $this->getMetaDataVCS('public-keys');
-        $sshId = explode('=', $sshKeys)[0] ?? '';
+        $sshIdParts = explode('=', $sshKeys);
+        $sshId = $sshIdParts[0];
         if ($sshId !== '') {
             $sshKey = $this->getMetaDataVCS("public-keys/$sshId/openssh-key");
         }
-        $this->updateSSHKeys($sshKey);
 
-        // Update SSH and WEB passwords using some unique identifier from the metadata
-        $vmId = $this->getMetaDataVCS('instance-id') ?? '';
-        $this->updateSSHCredentials('vk-user', $vmId);
-        $this->updateWebPassword($vmId);
+        // Build config from IMDS metadata
+        $config = new ProvisioningConfig(
+            hostname: $hostname,
+            externalIp: $extIp,
+            sshKeys: $sshKey,
+            sshLogin: 'vk-user',
+            instanceId: $vmId,
+            webPassword: $vmId
+        );
 
-        return true;
+        // Fetch and merge user-data if available
+        $userData = $this->fetchUserData();
+        if ($userData !== null) {
+            $userConfig = $this->parseUserData($userData);
+            if ($userConfig !== null && !$userConfig->isEmpty()) {
+                SystemMessages::sysLogMsg(__CLASS__, "Applying user-data configuration");
+                $config = $config->merge($userConfig);
+            }
+        }
+
+        // Apply configuration using direct SQLite (no Redis/ORM)
+        return $this->applyConfigDirect($config);
+    }
+
+    /**
+     * Fetches user-data from VK Cloud Metadata Service (AWS-compatible API).
+     *
+     * @return string|null User-data content or null if not available
+     */
+    protected function fetchUserData(): ?string
+    {
+        $userData = $this->getMetaDataVCS('../user-data');
+        return !empty($userData) ? $userData : null;
     }
 
     /**
