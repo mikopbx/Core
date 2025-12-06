@@ -21,7 +21,7 @@ namespace MikoPBX\PBXCoreREST\Controllers\OpenAPI;
 
 use MikoPBX\PBXCoreREST\Controllers\BaseRestController;
 use MikoPBX\PBXCoreREST\Lib\OpenAPIManagementProcessor;
-use MikoPBX\PBXCoreREST\Lib\OpenAPI\DataStructure;
+
 use MikoPBX\PBXCoreREST\Attributes\{
     ApiResource,
     ApiOperation,

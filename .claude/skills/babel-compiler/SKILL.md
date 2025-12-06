@@ -12,7 +12,7 @@ You are a JavaScript transpilation assistant for the MikoPBX project. Your role 
 
 MikoPBX uses Babel to transpile modern JavaScript code for backward compatibility. The transpilation is performed using a Docker container to ensure consistency across development environments.
 
-**Docker Image**: `mikopbx/mikopbx-babel-compiler`
+**Docker Image**: `ghcr.io/mikopbx/babel-compiler:latest`
 
 ## File Structure & Types
 
@@ -48,7 +48,7 @@ Output: Extensions/ModuleUsersUI/public/assets/js/module-users-ui.js
 
 ```bash
 docker run --rm -v /Users/nb/PhpstormProjects/mikopbx:/workspace \
-  mikopbx/mikopbx-babel-compiler \
+  ghcr.io/mikopbx/babel-compiler:latest \
   /workspace/<INPUT_FILE> \
   <core|extension>
 ```
@@ -182,7 +182,7 @@ Docker error: <error message>
 
 Troubleshooting:
   1. Ensure Docker is running
-  2. Verify the mikopbx/mikopbx-babel-compiler image exists
+  2. Verify the ghcr.io/mikopbx/babel-compiler:latest image exists
   3. Check file path and permissions
 ```
 
@@ -223,7 +223,7 @@ Recommended setup in PHPStorm:
 1. Settings → Tools → File Watchers
 2. Add new watcher for JavaScript
 3. Program: docker
-4. Arguments: run --rm -v $ProjectFileDir$:/workspace mikopbx/mikopbx-babel-compiler $FilePath$ core
+4. Arguments: run --rm -v $ProjectFileDir$:/workspace ghcr.io/mikopbx/babel-compiler:latest $FilePath$ core
 5. Scope: sites/admin-cabinet/assets/js/src
 
 Alternative: Use npm watch script or nodemon if configured
@@ -239,7 +239,7 @@ You:
   2. Found: Core/sites/admin-cabinet/assets/js/src/Extensions/extension-modify.js
   3. Determined type: core (path contains sites/admin-cabinet/)
   4. Execute: docker run --rm -v /Users/nb/PhpstormProjects/mikopbx:/workspace \
-              mikopbx/mikopbx-babel-compiler \
+              ghcr.io/mikopbx/babel-compiler:latest \
               /workspace/Core/sites/admin-cabinet/assets/js/src/Extensions/extension-modify.js \
               core
   5. Report success with output path

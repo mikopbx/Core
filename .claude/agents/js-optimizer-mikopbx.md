@@ -29,8 +29,8 @@ Your core responsibilities:
 
 **Transpilation Workflow:**
 - Always transpile code after making modifications using the appropriate Docker command
-- For core admin cabinet files: `docker run --rm -v /Users/nb/PhpstormProjects/mikopbx:/workspace mikopbx/mikopbx-babel-compiler /workspace/Core/sites/admin-cabinet/assets/js/src/[path-to-file] core`
-- For extension files: `docker run --rm -v /Users/nb/PhpstormProjects/mikopbx:/workspace mikopbx/mikopbx-babel-compiler /workspace/Extensions/[module]/public/assets/js/src/[file] extension`
+- For core admin cabinet files: `docker run --rm -v /Users/nb/PhpstormProjects/mikopbx:/workspace ghcr.io/mikopbx/babel-compiler:latest /workspace/Core/sites/admin-cabinet/assets/js/src/[path-to-file] core`
+- For extension files: `docker run --rm -v /Users/nb/PhpstormProjects/mikopbx:/workspace ghcr.io/mikopbx/babel-compiler:latest /workspace/Extensions/[module]/public/assets/js/src/[file] extension`
 - Verify transpilation success and check for any compilation errors
 
 **Quality Assurance Process:**
