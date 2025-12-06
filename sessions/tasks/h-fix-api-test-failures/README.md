@@ -12,10 +12,15 @@ created: 2025-12-06
 
 ## Success Criteria
 - [ ] Все 22 проваленных теста исправлены и проходят успешно
+  - [x] **CDR Seeding (CRITICAL)** - `test_00a_cdr_seed.py::test_01_seed_cdr_database` - FIXED
+  - [ ] Custom Files Worker (2 tests) - флаг changed не сбрасывается
+  - [ ] Employee Creation (2 tests) - проблемы с созданием сотрудников
+  - [ ] PJSIP Manual Attributes (2 tests) - атрибуты не попадают в pjsip.conf
+  - [ ] Export Template (1 test)
 - [ ] Все пропущенные (SKIPPED) тесты проанализированы и либо исправлены, либо задокументирована причина пропуска
 - [ ] Полный прогон всех 892 тестов показывает 100% PASSED
 - [ ] Исправления сделаны в правильных местах (MikoPBX код, тесты или окружение) с обоснованием каждого решения
-- [ ] Скрипты получили корректные права доступа (chmod +x для seed_cdr_database.sh и других)
+- [x] Скрипты получили корректные права доступа (chmod +x для seed_cdr_database.sh и других)
 - [ ] Все изменения покрыты документацией в Work Log с описанием причины провала и способа исправления
 
 ## Context Manifest
@@ -1273,4 +1278,49 @@ print(response.json())
 <!-- Any specific notes or requirements from the developer -->
 
 ## Work Log
+
+### 2025-12-06 - CDR Seeding Script Permissions Fix (CRITICAL)
+
+**Problem Identified:**
+- Test: `test_00a_cdr_seed.py::TestCDRSeeding::test_01_seed_cdr_database` - FAILED
+- Error: `Permission denied: '/offload/rootfs/usr/www/tests/api/scripts/seed_cdr_database.sh'`
+- Root Cause: Script file had permissions `rw-r--r--` (644) instead of `rwxr-xr-x` (755)
+- Impact: Blocked 30+ CDR tests that depend on seeded test data
+
+**How CDR Seeding Works:**
+1. Script `seed_cdr_database.sh` executes INSIDE Docker container via `docker exec`
+2. Direct SQLite access to `/storage/usbdisk1/mikopbx/astlogs/asterisk/cdr.db`
+3. No REST API involved - CDR records are read-only via API (created only by actual calls)
+4. Python wrapper `CDRSeederRemote` supports 4 execution modes:
+   - Docker: `docker exec mikopbx_tests-refactoring bash -c 'script.sh seed'`
+   - REST API: `/pbxcore/api/v3/system:executeBashCommand` (remote hosts)
+   - SSH: `ssh root@host 'script.sh seed'`
+   - Local: Direct bash execution
+
+**Fix Applied:**
+```bash
+chmod +x tests/api/scripts/seed_cdr_database.sh
+```
+
+**Verification:**
+- Permissions changed from `rw-r--r--` (644) to `rwxr-xr-x` (755)
+- Test execution: `pytest tests/api/test_00a_cdr_seed.py -v -s`
+- Result: **2 passed in 0.84s** ✓
+- Seeded: 30 CDR records (IDs 1-30)
+- Created: 15 MP3 recording files
+- Database verification: All records accessible via API
+
+**Why This Matters:**
+- CDR (Call Detail Records) are only created by real phone calls through Asterisk
+- To test CDR API endpoints without making real calls, we pre-populate database with test data
+- Execution mode (docker) calls `bash -c 'script.sh'`, which requires execute permission
+- API/SSH modes already had `chmod +x` in wrapper, but Docker mode did not
+
+**Files Modified:**
+- `tests/api/scripts/seed_cdr_database.sh` - Added execute permissions (chmod +x)
+
+**Status:** ✅ FIXED - CDR seeding now works correctly
+
+---
+
 - [2025-12-06] Created task directory structure
