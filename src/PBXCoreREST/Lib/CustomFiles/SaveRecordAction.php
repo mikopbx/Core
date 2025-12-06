@@ -43,8 +43,9 @@ use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
  *
  * Security Features:
  * - Base64 handling: setContent()/getContent() for proper encoding
- * - Mode protection: MODE_CUSTOM files cannot change mode
- * - Immediate application: ApplyCustomFilesAction for MODE_CUSTOM files
+ * - Mode protection: MODE_CUSTOM files cannot change mode (user-created files)
+ * - System files (append/override/script/none): can switch modes freely
+ * - Async application: ApplyCustomFilesAction via WorkerModelsEvents
  *
  * @package MikoPBX\PBXCoreREST\Lib\CustomFiles
  */
@@ -54,8 +55,8 @@ class SaveRecordAction extends AbstractSaveRecordAction
      * Save custom file record with comprehensive validation
      *
      * Handles CREATE and UPDATE operations:
-     * - CREATE: New record with auto-increment ID, mode=MODE_CUSTOM
-     * - UPDATE: Full replacement of existing record, mode protection
+     * - CREATE: New record with mode from request (or default), supports both system and user files
+     * - UPDATE: Mode protection for MODE_CUSTOM files, free mode switching for system files
      *
      * @param array<string, mixed> $data Input data from API request
      * @return PBXApiResult Result with data/errors and HTTP status code
@@ -219,15 +220,21 @@ class SaveRecordAction extends AbstractSaveRecordAction
 
                 // Update mode with special handling (PATCH support with isset())
                 if ($isCreateOperation) {
-                    // CREATE: Always MODE_CUSTOM for new user-created files
-                    $record->mode = CustomFiles::MODE_CUSTOM;
+                    // CREATE: Use mode from request (defaults applied in Phase 4)
+                    // WHY: Allows creating both system files (append/override/script) and user files (custom)
+                    if (isset($sanitizedData['mode'])) {
+                        $record->mode = $sanitizedData['mode'];
+                    }
+                    // If mode not provided, default was already applied in Phase 4
                 } elseif (isset($sanitizedData['mode'])) {
                     // UPDATE: Protect MODE_CUSTOM from changes
                     if ($record->mode === CustomFiles::MODE_CUSTOM) {
                         // MODE_CUSTOM files cannot have their mode changed
+                        // WHY: User-created custom files must stay MODE_CUSTOM
                         $record->mode = CustomFiles::MODE_CUSTOM;
                     } else {
-                        // For non-custom files, allow mode changes
+                        // For non-custom files (none/append/override/script), allow mode changes
+                        // WHY: System files can switch between operational modes freely
                         $record->mode = $sanitizedData['mode'];
                     }
                 }
