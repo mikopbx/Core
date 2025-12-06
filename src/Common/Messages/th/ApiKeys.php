@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * API keys translations
  */
-
-return [
     // AK
     'ak_AddNewApiKey' => 'เพิ่มคีย์ API',
     'ak_AddNewKey' => 'เพิ่มคีย์ API',
@@ -125,4 +124,42 @@ return [
     'ak_UsageStatistics' => 'สถิติการใช้งาน',
     'ak_ValidateNameEmpty' => 'กรุณาระบุชื่อคีย์ API',
     'ak_YourApiKey' => 'คีย์ API ของคุณ',
+    'ak_ApiKeyUsageTooltip_example_header' => 'กรณีการใช้งาน',
+    // Tooltips for API key usage
+    'ak_ApiKeyUsageTooltip_header' => 'การใช้คีย์ API',
+    'ak_PermissionWrite' => 'การอ่านและการเขียน',
+    'ak_ApiKeyUsageTooltip_auth_format' => 'เพิ่มส่วนหัวการอนุญาตลงในคำขอของคุณ:',
+    // Permissions selector
+    'ak_Permissions' => 'สิทธิ์การเข้าถึงจุดสิ้นสุด API',
+    'ak_ErrorLoadingEndpoints' => 'ไม่สามารถโหลดรายการจุดสิ้นสุด API ที่มีอยู่ได้',
+    'ak_ApiKeyUsageTooltip_auth_header' => 'การยืนยันตัวตน',
+    'ak_ApiKeyUsageTooltip_note' => 'เพื่อความปลอดภัย จะแสดงเฉพาะ 5 ตัวอักษรแรกและ 5 ตัวอักษรสุดท้ายของคีย์เท่านั้น',
+    'ak_LoadingApiDocumentation' => 'กำลังโหลดเอกสาร API...',
+    'ak_PermissionRead' => 'การอ่าน',
+    'ak_ApiKeyUsageTooltip_warning' => 'อย่าแชร์คีย์ API ของคุณหรือเก็บไว้ในระบบควบคุมเวอร์ชัน ปฏิบัติต่อคีย์นี้เหมือนเป็นรหัสผ่าน',
+    'ak_PermissionTableHeaderURI' => 'URI ปลายทาง',
+    'ak_AuthenticationRequired' => 'จำเป็นต้องมีการตรวจสอบสิทธิ์',
+    'ak_NoAccess' => 'ไม่มีการเข้าถึง',
+    'ak_ApiKeyUsageTooltip_warning_header' => 'คำเตือนด้านความปลอดภัย',
+    // ACL permissions messages
+    'ak_NoPermissionToModify' => 'คุณไม่มีสิทธิ์ในการเปลี่ยนแปลงคีย์ API',
+    // Permissions table headers
+    'ak_PermissionTableHeaderName' => 'ชื่อทรัพยากร',
+    'ak_OpenAPIDocumentation' => 'เอกสารประกอบ OpenAPI',
+    // OpenAPI/Swagger UI
+    'ak_ApiDocumentation' => 'เอกสารประกอบ API',
+    'ak_ApiKeyUsageTooltip_php_example' => '$ch = curl_init("http://pbx.example.com/pbxcore/api/v3/employees"); curl_setopt($ch, CURLOPT_HTTPHEADER, ["การอนุญาต: ผู้ถือ YOUR_API_KEY"]);',
+    'ak_PermissionTableHeaderAccess' => 'ระดับการเข้าถึง',
+    'ak_SwaggerLoadErrorDesc' => 'ไม่สามารถโหลดข้อมูลจำเพาะ API ได้ โปรดตรวจสอบการเชื่อมต่อของคุณแล้วลองอีกครั้ง',
+    'ak_PleaseLoginFirst' => 'กรุณาเข้าสู่ระบบเพื่อเข้าถึง API',
+    'ak_ApiKeyUsageTooltip_desc' => 'คีย์ API ใช้สำหรับพิสูจน์ยืนยันคำขอไปยัง REST API',
+    'ak_SwaggerLoadError' => 'เกิดข้อผิดพลาดในการโหลดเอกสาร API',
+    'ak_ApiKeyUsageTooltip_js_example' => 'ดึงข้อมูล("http://pbx.example.com/pbxcore/api/v3/employees", { ส่วนหัว: { "การอนุญาต": "ผู้ถือ YOUR_API_KEY" } })',
+    'ak_RetryLoad' => 'ทำซ้ำ',
+    'ak_SelectPermission' => 'เลือกสิทธิ์',
+    'ak_NoPermissionToDelete' => 'คุณไม่มีสิทธิ์ในการลบคีย์ API',
+    'ak_NoPermissionToCreate' => 'คุณไม่มีสิทธิ์ในการสร้างคีย์ API',
+    'ak_NoEndpointsAvailable' => 'ไม่มีจุดสิ้นสุด API ที่พร้อมใช้งาน',
+    'ak_ApiKeyUsageTooltip_curl_example' => 'curl -H "การอนุญาต: ผู้ถือ YOUR_API_KEY" "http://pbx.example.com/pbxcore/api/v3/employees"',
+    'ak_PermissionsHelp' => 'เลือกระดับการเข้าถึงสำหรับแต่ละจุดสิ้นสุด REST API <br>"อ่าน" ช่วยให้คุณดึงข้อมูล (GET) <br>"อ่านและเขียน" ช่วยให้คุณสร้าง แก้ไข และลบข้อมูล (POST, PUT, DELETE)',
 ];

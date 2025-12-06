@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * API keys translations
  */
-
-return [
     // AK
     'ak_AddNewApiKey' => '添加API密钥',
     'ak_AddNewKey' => '添加API密钥',
@@ -125,4 +124,42 @@ return [
     'ak_UsageStatistics' => '使用统计',
     'ak_ValidateNameEmpty' => '请指定API密钥名称',
     'ak_YourApiKey' => '您的API密钥',
+    'ak_ApiKeyUsageTooltip_example_header' => '用例示例',
+    // Tooltips for API key usage
+    'ak_ApiKeyUsageTooltip_header' => '使用 API 密钥',
+    'ak_PermissionWrite' => '阅读和写作',
+    'ak_ApiKeyUsageTooltip_auth_format' => '在请求中添加 Authorization 标头：',
+    // Permissions selector
+    'ak_Permissions' => 'API端点访问权限',
+    'ak_ErrorLoadingEndpoints' => '加载可用 API 端点列表失败',
+    'ak_ApiKeyUsageTooltip_auth_header' => '身份验证',
+    'ak_ApiKeyUsageTooltip_note' => '出于安全考虑，仅显示密钥的前 5 位和后 5 位字符。',
+    'ak_LoadingApiDocumentation' => '正在加载 API 文档……',
+    'ak_PermissionRead' => '阅读',
+    'ak_ApiKeyUsageTooltip_warning' => '切勿共享您的 API 密钥或将其存储在版本控制系统中。请像对待密码一样对待它。',
+    'ak_PermissionTableHeaderURI' => '端点 URI',
+    'ak_AuthenticationRequired' => '需要身份验证',
+    'ak_NoAccess' => '无访问权限',
+    'ak_ApiKeyUsageTooltip_warning_header' => '安全警告',
+    // ACL permissions messages
+    'ak_NoPermissionToModify' => '您没有权限更改 API 密钥。',
+    // Permissions table headers
+    'ak_PermissionTableHeaderName' => '资源名称',
+    'ak_OpenAPIDocumentation' => 'OpenAPI 文档',
+    // OpenAPI/Swagger UI
+    'ak_ApiDocumentation' => 'API 文档',
+    'ak_ApiKeyUsageTooltip_php_example' => '$ch = curl_init("http://pbx.example.com/pbxcore/api/v3/employees"); curl_setopt($ch, CURLOPT_HTTPHEADER, ["Authorization: Bearer YOUR_API_KEY"]);',
+    'ak_PermissionTableHeaderAccess' => '访问级别',
+    'ak_SwaggerLoadErrorDesc' => 'API规范加载失败。请检查您的网络连接并重试。',
+    'ak_PleaseLoginFirst' => '请登录以访问API。',
+    'ak_ApiKeyUsageTooltip_desc' => 'API密钥用于对REST API的请求进行身份验证。',
+    'ak_SwaggerLoadError' => '加载 API 文档时出错',
+    'ak_ApiKeyUsageTooltip_js_example' => 'fetch("http://pbx.example.com/pbxcore/api/v3/employees", { headers: { "Authorization": "Bearer YOUR_API_KEY" } })',
+    'ak_RetryLoad' => '重复',
+    'ak_SelectPermission' => '权限',
+    'ak_NoPermissionToDelete' => '您没有权限删除 API 密钥。',
+    'ak_NoPermissionToCreate' => '您没有创建 API 密钥的权限。',
+    'ak_NoEndpointsAvailable' => '暂无可用 API 端点',
+    'ak_ApiKeyUsageTooltip_curl_example' => 'curl -H "Authorization: Bearer YOUR_API_KEY" "http://pbx.example.com/pbxcore/api/v3/employees"',
+    'ak_PermissionsHelp' => '为每个 REST API 端点选择访问级别。<br>“读取”允许您检索数据（GET），<br>“读写”允许您创建、修改和删除数据（POST、PUT、DELETE）。',
 ];

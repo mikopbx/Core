@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * API keys translations
  */
-
-return [
     // AK
     'ak_AddNewApiKey' => 'API kulcs hozzáadása',
     'ak_AddNewKey' => 'API kulcs hozzáadása',
@@ -125,4 +124,42 @@ return [
     'ak_UsageStatistics' => 'Használati statisztikák',
     'ak_ValidateNameEmpty' => 'Adja meg az API kulcs nevét',
     'ak_YourApiKey' => 'Az Ön API kulcsa',
+    'ak_ApiKeyUsageTooltip_example_header' => 'Használati esetek',
+    // Tooltips for API key usage
+    'ak_ApiKeyUsageTooltip_header' => 'API-kulcsok használata',
+    'ak_PermissionWrite' => 'Olvasás és írás',
+    'ak_ApiKeyUsageTooltip_auth_format' => 'Adja hozzá az Authorization fejlécet a kéréseihez:',
+    // Permissions selector
+    'ak_Permissions' => 'Hozzáférési jogok az API végpontokhoz',
+    'ak_ErrorLoadingEndpoints' => 'Nem sikerült betölteni az elérhető API-végpontok listáját',
+    'ak_ApiKeyUsageTooltip_auth_header' => 'Hitelesítés',
+    'ak_ApiKeyUsageTooltip_note' => 'Biztonsági okokból a kulcsnak csak az első és az utolsó 5 karaktere jelenik meg.',
+    'ak_LoadingApiDocumentation' => 'API dokumentáció betöltése...',
+    'ak_PermissionRead' => 'Olvasás',
+    'ak_ApiKeyUsageTooltip_warning' => 'Soha ne oszd meg az API-kulcsodat, és ne tárold verziókövetésben. Kezeld úgy, mint egy jelszót.',
+    'ak_PermissionTableHeaderURI' => 'Végpont URI',
+    'ak_AuthenticationRequired' => 'Hitelesítés szükséges',
+    'ak_NoAccess' => 'Nincs hozzáférés',
+    'ak_ApiKeyUsageTooltip_warning_header' => 'Biztonsági figyelmeztetés',
+    // ACL permissions messages
+    'ak_NoPermissionToModify' => 'Nincs jogosultsága az API-kulcsok módosítására.',
+    // Permissions table headers
+    'ak_PermissionTableHeaderName' => 'Erőforrás neve',
+    'ak_OpenAPIDocumentation' => 'OpenAPI dokumentáció',
+    // OpenAPI/Swagger UI
+    'ak_ApiDocumentation' => 'API dokumentáció',
+    'ak_ApiKeyUsageTooltip_php_example' => '$ch = curl_init("http://pbx.example.com/pbxcore/api/v3/employees"); curl_setopt($ch, CURLOPT_HTTPHEADER, ["Engedélyezés: A TE_API_KEY-ED TULAJDONOSÍTÓJA"]);',
+    'ak_PermissionTableHeaderAccess' => 'Hozzáférési szint',
+    'ak_SwaggerLoadErrorDesc' => 'Nem sikerült betölteni az API-specifikációt. Ellenőrizd a kapcsolatot, és próbáld újra.',
+    'ak_PleaseLoginFirst' => 'Kérjük, jelentkezzen be az API eléréséhez.',
+    'ak_ApiKeyUsageTooltip_desc' => 'Az API-kulcsok a REST API-hoz intézett kérések hitelesítésére szolgálnak.',
+    'ak_SwaggerLoadError' => 'Hiba történt az API dokumentáció betöltése során',
+    'ak_ApiKeyUsageTooltip_js_example' => 'fetch("http://pbx.example.com/pbxcore/api/v3/employees", { headers: { "Authorization": "A TE_API_KULCSDŐL SZÁRMAZÓ" } })',
+    'ak_RetryLoad' => 'Ismétlés',
+    'ak_SelectPermission' => 'Jogok kiválasztása',
+    'ak_NoPermissionToDelete' => 'Nincs jogosultsága API-kulcsok törlésére.',
+    'ak_NoPermissionToCreate' => 'Nincs jogosultsága API-kulcsok létrehozására.',
+    'ak_NoEndpointsAvailable' => 'Nincsenek elérhető API-végpontok',
+    'ak_ApiKeyUsageTooltip_curl_example' => 'curl -H "Engedélyezés: A TE_API_KULCSD_tulajdonosa" "http://pbx.example.com/pbxcore/api/v3/employees"',
+    'ak_PermissionsHelp' => 'Válassza ki az egyes REST API végpontok hozzáférési szintjét. <br>Az „Olvasás” lehetővé teszi az adatok lekérését (GET), <br>Az „Olvasás és írás” lehetővé teszi az adatok létrehozását, módosítását és törlését (POST, PUT, DELETE).',
 ];

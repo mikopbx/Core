@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * API keys translations
  */
-
-return [
     // AK
     'ak_AddNewApiKey' => 'Přidat API klíč',
     'ak_AddNewKey' => 'Přidat API klíč',
@@ -125,4 +124,42 @@ return [
     'ak_UsageStatistics' => 'Statistiky používání',
     'ak_ValidateNameEmpty' => 'Zadejte název API klíče',
     'ak_YourApiKey' => 'Váš API klíč',
+    'ak_ApiKeyUsageTooltip_example_header' => 'Příklady použití',
+    // Tooltips for API key usage
+    'ak_ApiKeyUsageTooltip_header' => 'Používání API klíčů',
+    'ak_PermissionWrite' => 'Čtení a psaní',
+    'ak_ApiKeyUsageTooltip_auth_format' => 'Přidejte do svých požadavků hlavičku Authorization:',
+    // Permissions selector
+    'ak_Permissions' => 'Přístupová práva ke koncovým bodům API',
+    'ak_ErrorLoadingEndpoints' => 'Nepodařilo se načíst seznam dostupných koncových bodů API.',
+    'ak_ApiKeyUsageTooltip_auth_header' => 'Autentizace',
+    'ak_ApiKeyUsageTooltip_note' => 'Z bezpečnostních důvodů se zobrazuje pouze prvních a posledních 5 znaků klíče.',
+    'ak_LoadingApiDocumentation' => 'Načítání dokumentace k API...',
+    'ak_PermissionRead' => 'Čtení',
+    'ak_ApiKeyUsageTooltip_warning' => 'Nikdy nesdílejte svůj API klíč ani jej neukládejte do systému správy verzí. Zacházejte s ním jako s heslem.',
+    'ak_PermissionTableHeaderURI' => 'URI koncového bodu',
+    'ak_AuthenticationRequired' => 'Vyžadováno ověření',
+    'ak_NoAccess' => 'Žádný přístup',
+    'ak_ApiKeyUsageTooltip_warning_header' => 'Bezpečnostní upozornění',
+    // ACL permissions messages
+    'ak_NoPermissionToModify' => 'Nemáte oprávnění ke změně klíčů API.',
+    // Permissions table headers
+    'ak_PermissionTableHeaderName' => 'Název zdroje',
+    'ak_OpenAPIDocumentation' => 'Dokumentace k OpenAPI',
+    // OpenAPI/Swagger UI
+    'ak_ApiDocumentation' => 'Dokumentace k API',
+    'ak_ApiKeyUsageTooltip_php_example' => '$ch = curl_init("http://pbx.example.com/pbxcore/api/v3/employees"); curl_setopt($ch, CURLOPT_HTTPHEADER, ["Autorizace: Nositel VÁŠ_KLÍČ_API"]);',
+    'ak_PermissionTableHeaderAccess' => 'Úroveň přístupu',
+    'ak_SwaggerLoadErrorDesc' => 'Nepodařilo se načíst specifikaci API. Zkontrolujte připojení a zkuste to znovu.',
+    'ak_PleaseLoginFirst' => 'Pro přístup k API se prosím přihlaste.',
+    'ak_ApiKeyUsageTooltip_desc' => 'Klíče API se používají k ověřování požadavků do REST API.',
+    'ak_SwaggerLoadError' => 'Chyba při načítání dokumentace API',
+    'ak_ApiKeyUsageTooltip_js_example' => 'fetch("http://pbx.example.com/pbxcore/api/v3/employees", { hlavičky: { "Autorizace": "Nositel VÁŠ_KLÍČ_API" } })',
+    'ak_RetryLoad' => 'Opakovat',
+    'ak_SelectPermission' => 'Vyberte práva',
+    'ak_NoPermissionToDelete' => 'Nemáte oprávnění k odstranění klíčů API.',
+    'ak_NoPermissionToCreate' => 'Nemáte oprávnění k vytváření klíčů API.',
+    'ak_NoEndpointsAvailable' => 'Žádné koncové body API nejsou k dispozici',
+    'ak_ApiKeyUsageTooltip_curl_example' => 'curl -H "Autorizace: Nositel VÁŠ_KLÍČ_API" "http://pbx.example.com/pbxcore/api/v3/employees"',
+    'ak_PermissionsHelp' => 'Vyberte úroveň přístupu pro každý koncový bod REST API. <br>„Čtení“ umožňuje načítání dat (GET), <br>„Čtení a zápis“ umožňuje vytvářet, upravovat a mazat data (POST, PUT, DELETE).',
 ];

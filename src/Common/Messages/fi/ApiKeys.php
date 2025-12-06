@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * API keys translations
  */
-
-return [
     // AK
     'ak_AddNewApiKey' => 'Lisää API avain',
     'ak_AddNewKey' => 'Lisää API avain',
@@ -125,4 +124,42 @@ return [
     'ak_UsageStatistics' => 'Käyttötilastot',
     'ak_ValidateNameEmpty' => 'Määritä API avaimen nimi',
     'ak_YourApiKey' => 'Sinun API avaimesi',
+    'ak_ApiKeyUsageTooltip_example_header' => 'Käyttöesimerkit',
+    // Tooltips for API key usage
+    'ak_ApiKeyUsageTooltip_header' => 'API-avainten käyttö',
+    'ak_PermissionWrite' => 'Lukeminen ja kirjoittaminen',
+    'ak_ApiKeyUsageTooltip_auth_format' => 'Lisää valtuutusotsikko pyyntöihisi:',
+    // Permissions selector
+    'ak_Permissions' => 'API-päätepisteiden käyttöoikeudet',
+    'ak_ErrorLoadingEndpoints' => 'Käytettävissä olevien API-päätepisteiden luettelon lataaminen epäonnistui.',
+    'ak_ApiKeyUsageTooltip_auth_header' => 'Todennus',
+    'ak_ApiKeyUsageTooltip_note' => 'Turvallisuussyistä avaimen vain ensimmäiset ja viisi viimeistä merkkiä näytetään.',
+    'ak_LoadingApiDocumentation' => 'Ladataan API-dokumentaatiota...',
+    'ak_PermissionRead' => 'Lukeminen',
+    'ak_ApiKeyUsageTooltip_warning' => 'Älä koskaan jaa API-avaintasi tai tallenna sitä versionhallintaan. Käsittele sitä kuin salasanaa.',
+    'ak_PermissionTableHeaderURI' => 'Päätepisteen URI',
+    'ak_AuthenticationRequired' => 'Todennus vaaditaan',
+    'ak_NoAccess' => 'Ei pääsyä',
+    'ak_ApiKeyUsageTooltip_warning_header' => 'Turvallisuusvaroitus',
+    // ACL permissions messages
+    'ak_NoPermissionToModify' => 'Sinulla ei ole oikeutta muuttaa API-avaimia.',
+    // Permissions table headers
+    'ak_PermissionTableHeaderName' => 'Resurssin nimi',
+    'ak_OpenAPIDocumentation' => 'OpenAPI-dokumentaatio',
+    // OpenAPI/Swagger UI
+    'ak_ApiDocumentation' => 'API-dokumentaatio',
+    'ak_ApiKeyUsageTooltip_php_example' => '$ch = curl_init("http://pbx.example.com/pbxcore/api/v3/employees"); curl_setopt($ch, CURLOPT_HTTPHEADER, ["Valtuutus: Haltija YOUR_API_KEY"]);',
+    'ak_PermissionTableHeaderAccess' => 'Käyttöoikeustaso',
+    'ak_SwaggerLoadErrorDesc' => 'API-määrityksen lataaminen epäonnistui. Tarkista yhteytesi ja yritä uudelleen.',
+    'ak_PleaseLoginFirst' => 'Kirjaudu sisään käyttääksesi API:a.',
+    'ak_ApiKeyUsageTooltip_desc' => 'API-avaimia käytetään REST API:lle tehtyjen pyyntöjen todentamiseen.',
+    'ak_SwaggerLoadError' => 'Virhe ladattaessa API-dokumentaatiota',
+    'ak_ApiKeyUsageTooltip_js_example' => 'fetch("http://pbx.example.com/pbxcore/api/v3/employees", { headers: { "Authorization": "Haltija YOUR_API_AVAIN" } })',
+    'ak_RetryLoad' => 'Toistaa',
+    'ak_SelectPermission' => 'Valitse oikeudet',
+    'ak_NoPermissionToDelete' => 'Sinulla ei ole oikeutta poistaa API-avaimia.',
+    'ak_NoPermissionToCreate' => 'Sinulla ei ole oikeutta luoda API-avaimia.',
+    'ak_NoEndpointsAvailable' => 'Ei saatavilla olevia API-päätepisteitä',
+    'ak_ApiKeyUsageTooltip_curl_example' => 'curl -H "Valtuutus: Haltija YOUR_API_KEY" "http://pbx.example.com/pbxcore/api/v3/employees"',
+    'ak_PermissionsHelp' => 'Valitse kunkin REST API -päätepisteen käyttöoikeustaso. <br>"Lue"-toiminnolla voit hakea tietoja (GET), <br>"Lue ja kirjoita"-toiminnolla voit luoda, muokata ja poistaa tietoja (POST, PUT, DELETE).',
 ];

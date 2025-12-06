@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * API keys translations
  */
-
-return [
     // AK
     'ak_AddNewApiKey' => 'Aggiungi chiave API',
     'ak_AddNewKey' => 'Aggiungi chiave API',
@@ -125,4 +124,42 @@ return [
     'ak_UsageStatistics' => 'Statistiche di utilizzo',
     'ak_ValidateNameEmpty' => 'Si prega di specificare il nome della chiave API',
     'ak_YourApiKey' => 'La tua chiave API',
+    'ak_ApiKeyUsageTooltip_example_header' => 'Casi d\'uso',
+    // Tooltips for API key usage
+    'ak_ApiKeyUsageTooltip_header' => 'Utilizzo delle chiavi API',
+    'ak_PermissionWrite' => 'Leggere e scrivere',
+    'ak_ApiKeyUsageTooltip_auth_format' => 'Aggiungi l\'intestazione Autorizzazione alle tue richieste:',
+    // Permissions selector
+    'ak_Permissions' => 'Diritti di accesso agli endpoint API',
+    'ak_ErrorLoadingEndpoints' => 'Impossibile caricare l\'elenco degli endpoint API disponibili',
+    'ak_ApiKeyUsageTooltip_auth_header' => 'Autenticazione',
+    'ak_ApiKeyUsageTooltip_note' => 'Per motivi di sicurezza vengono visualizzati solo i primi e gli ultimi 5 caratteri della chiave.',
+    'ak_LoadingApiDocumentation' => 'Caricamento della documentazione API...',
+    'ak_PermissionRead' => 'Lettura',
+    'ak_ApiKeyUsageTooltip_warning' => 'Non condividere mai la tua chiave API e non memorizzarla nel controllo di versione. Trattala come una password.',
+    'ak_PermissionTableHeaderURI' => 'URI dell\'endpoint',
+    'ak_AuthenticationRequired' => 'Autenticazione richiesta',
+    'ak_NoAccess' => 'Nessun accesso',
+    'ak_ApiKeyUsageTooltip_warning_header' => 'Avviso di sicurezza',
+    // ACL permissions messages
+    'ak_NoPermissionToModify' => 'Non hai l\'autorizzazione per modificare le chiavi API.',
+    // Permissions table headers
+    'ak_PermissionTableHeaderName' => 'Nome della risorsa',
+    'ak_OpenAPIDocumentation' => 'Documentazione OpenAPI',
+    // OpenAPI/Swagger UI
+    'ak_ApiDocumentation' => 'Documentazione API',
+    'ak_ApiKeyUsageTooltip_php_example' => '$ch = curl_init("http://pbx.example.com/pbxcore/api/v3/employees"); curl_setopt($ch, CURLOPT_HTTPHEADER, ["Autorizzazione: Portatore YOUR_API_KEY"]);',
+    'ak_PermissionTableHeaderAccess' => 'Livello di accesso',
+    'ak_SwaggerLoadErrorDesc' => 'Impossibile caricare le specifiche API. Controlla la connessione e riprova.',
+    'ak_PleaseLoginFirst' => 'Effettua il login per accedere all\'API.',
+    'ak_ApiKeyUsageTooltip_desc' => 'Le chiavi API vengono utilizzate per autenticare le richieste all\'API REST.',
+    'ak_SwaggerLoadError' => 'Errore durante il caricamento della documentazione API',
+    'ak_ApiKeyUsageTooltip_js_example' => 'fetch("http://pbx.example.com/pbxcore/api/v3/employees", { headers: { "Authorization": "Portatore YOUR_API_KEY" } })',
+    'ak_RetryLoad' => 'Ripetere',
+    'ak_SelectPermission' => 'Seleziona i diritti',
+    'ak_NoPermissionToDelete' => 'Non hai l\'autorizzazione per eliminare le chiavi API.',
+    'ak_NoPermissionToCreate' => 'Non hai l\'autorizzazione per creare chiavi API.',
+    'ak_NoEndpointsAvailable' => 'Nessun endpoint API disponibile',
+    'ak_ApiKeyUsageTooltip_curl_example' => 'curl -H "Autorizzazione: portatore YOUR_API_KEY" "http://pbx.example.com/pbxcore/api/v3/employees"',
+    'ak_PermissionsHelp' => 'Seleziona il livello di accesso per ciascun endpoint API REST. <br>"Lettura" consente di recuperare dati (GET), <br>"Lettura e scrittura" consente di creare, modificare ed eliminare dati (POST, PUT, DELETE).',
 ];

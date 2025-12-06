@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * API keys translations
  */
-
-return [
     // AK
     'ak_AddNewApiKey' => 'Adaugă cheie API',
     'ak_AddNewKey' => 'Adaugă cheie API',
@@ -125,4 +124,42 @@ return [
     'ak_UsageStatistics' => 'Statistici de utilizare',
     'ak_ValidateNameEmpty' => 'Specificați numele cheii API',
     'ak_YourApiKey' => 'Cheia dumneavoastră API',
+    'ak_ApiKeyUsageTooltip_example_header' => 'Exemple de utilizare',
+    // Tooltips for API key usage
+    'ak_ApiKeyUsageTooltip_header' => 'Utilizarea cheilor API',
+    'ak_PermissionWrite' => 'Cititul și scrisul',
+    'ak_ApiKeyUsageTooltip_auth_format' => 'Adăugați antetul de autorizare la solicitările dvs.:',
+    // Permissions selector
+    'ak_Permissions' => 'Drepturi de acces la punctele finale API',
+    'ak_ErrorLoadingEndpoints' => 'Nu s-a putut încărca lista de puncte finale API disponibile',
+    'ak_ApiKeyUsageTooltip_auth_header' => 'Autentificare',
+    'ak_ApiKeyUsageTooltip_note' => 'Din motive de securitate, sunt afișate doar primele și ultimele 5 caractere ale cheii.',
+    'ak_LoadingApiDocumentation' => 'Se încarcă documentația API...',
+    'ak_PermissionRead' => 'Lectură',
+    'ak_ApiKeyUsageTooltip_warning' => 'Nu partajați niciodată cheia API și nu o stocați în controlul versiunilor. Tratați-o ca pe o parolă.',
+    'ak_PermissionTableHeaderURI' => 'URI punct final',
+    'ak_AuthenticationRequired' => 'Autentificare necesară',
+    'ak_NoAccess' => 'Fără acces',
+    'ak_ApiKeyUsageTooltip_warning_header' => 'Avertisment de securitate',
+    // ACL permissions messages
+    'ak_NoPermissionToModify' => 'Nu aveți permisiunea de a modifica cheile API.',
+    // Permissions table headers
+    'ak_PermissionTableHeaderName' => 'Numele resursei',
+    'ak_OpenAPIDocumentation' => 'Documentație OpenAPI',
+    // OpenAPI/Swagger UI
+    'ak_ApiDocumentation' => 'Documentația API',
+    'ak_ApiKeyUsageTooltip_php_example' => '$ch = curl_init("http://pbx.example.com/pbxcore/api/v3/employees"); curl_setopt($ch, CURLOPT_HTTPHEADER, ["Autorizație: Purtător YOUR_API_KEY"]);',
+    'ak_PermissionTableHeaderAccess' => 'Nivel de acces',
+    'ak_SwaggerLoadErrorDesc' => 'Nu s-a putut încărca specificația API. Verificați conexiunea și încercați din nou.',
+    'ak_PleaseLoginFirst' => 'Vă rugăm să vă conectați pentru a accesa API-ul.',
+    'ak_ApiKeyUsageTooltip_desc' => 'Cheile API sunt folosite pentru autentificarea cererilor către API-ul REST.',
+    'ak_SwaggerLoadError' => 'Eroare la încărcarea documentației API-ului',
+    'ak_ApiKeyUsageTooltip_js_example' => 'fetch("http://pbx.example.com/pbxcore/api/v3/employees", { headers: { "Autorizare": "Purtător CHEIA_DUMNEAVOASTRĂ_API" } })',
+    'ak_RetryLoad' => 'Repeta',
+    'ak_SelectPermission' => 'Selectați drepturile',
+    'ak_NoPermissionToDelete' => 'Nu aveți permisiunea de a șterge cheile API.',
+    'ak_NoPermissionToCreate' => 'Nu aveți permisiunea de a crea chei API.',
+    'ak_NoEndpointsAvailable' => 'Nu sunt disponibile puncte finale API',
+    'ak_ApiKeyUsageTooltip_curl_example' => 'curl -H "Autorizație: Purtător CHEIA_DUMNEAVOASTRĂ_API" "http://pbx.example.com/pbxcore/api/v3/employees"',
+    'ak_PermissionsHelp' => 'Selectați nivelul de acces pentru fiecare punct final API REST. <br>„Citire” vă permite să recuperați date (GET), <br>„Citire și scriere” vă permite să creați, să modificați și să ștergeți date (POST, PUT, DELETE).',
 ];

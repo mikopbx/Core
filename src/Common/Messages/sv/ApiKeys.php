@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * API keys translations
  */
-
-return [
     // AK
     'ak_AddNewApiKey' => 'Lägg till API-nyckel',
     'ak_AddNewKey' => 'Lägg till API-nyckel',
@@ -125,4 +124,42 @@ return [
     'ak_UsageStatistics' => 'Användningsstatistik',
     'ak_ValidateNameEmpty' => 'Ange namn på API-nyckeln',
     'ak_YourApiKey' => 'Din API-nyckel',
+    'ak_ApiKeyUsageTooltip_example_header' => 'Användningsexempel',
+    // Tooltips for API key usage
+    'ak_ApiKeyUsageTooltip_header' => 'Använda API-nycklar',
+    'ak_PermissionWrite' => 'Läsning och skrivning',
+    'ak_ApiKeyUsageTooltip_auth_format' => 'Lägg till auktoriseringsrubriken till dina förfrågningar:',
+    // Permissions selector
+    'ak_Permissions' => 'Åtkomsträttigheter till API-slutpunkter',
+    'ak_ErrorLoadingEndpoints' => 'Misslyckades med att läsa in listan över tillgängliga API-slutpunkter',
+    'ak_ApiKeyUsageTooltip_auth_header' => 'Autentisering',
+    'ak_ApiKeyUsageTooltip_note' => 'Av säkerhetsskäl visas endast de första och sista 5 tecknen i nyckeln.',
+    'ak_LoadingApiDocumentation' => 'Läser in API-dokumentation...',
+    'ak_PermissionRead' => 'Läsning',
+    'ak_ApiKeyUsageTooltip_warning' => 'Dela aldrig din API-nyckel eller lagra den i versionshantering. Behandla den som ett lösenord.',
+    'ak_PermissionTableHeaderURI' => 'Slutpunkts-URI',
+    'ak_AuthenticationRequired' => 'Autentisering krävs',
+    'ak_NoAccess' => 'Ingen åtkomst',
+    'ak_ApiKeyUsageTooltip_warning_header' => 'Säkerhetsvarning',
+    // ACL permissions messages
+    'ak_NoPermissionToModify' => 'Du har inte behörighet att ändra API-nycklar.',
+    // Permissions table headers
+    'ak_PermissionTableHeaderName' => 'Resursnamn',
+    'ak_OpenAPIDocumentation' => 'OpenAPI-dokumentation',
+    // OpenAPI/Swagger UI
+    'ak_ApiDocumentation' => 'API-dokumentation',
+    'ak_ApiKeyUsageTooltip_php_example' => '$ch = curl_init("http://pbx.example.com/pbxcore/api/v3/employees"); curl_setopt($ch, CURLOPT_HTTPHEADER, ["Auktorisering: Bärare YOUR_API_KEY"]);',
+    'ak_PermissionTableHeaderAccess' => 'Åtkomstnivå',
+    'ak_SwaggerLoadErrorDesc' => 'Misslyckades med att ladda API-specifikationen. Kontrollera din anslutning och försök igen.',
+    'ak_PleaseLoginFirst' => 'Vänligen logga in för att få åtkomst till API:et.',
+    'ak_ApiKeyUsageTooltip_desc' => 'API-nycklar används för att autentisera förfrågningar till REST API:et.',
+    'ak_SwaggerLoadError' => 'Fel vid laddning av API-dokumentation',
+    'ak_ApiKeyUsageTooltip_js_example' => 'fetch("http://pbx.example.com/pbxcore/api/v3/employees", { headers: { "Auktorisering": "Bärare DIN_API_NYCKEL" } })',
+    'ak_RetryLoad' => 'Upprepa',
+    'ak_SelectPermission' => 'Välj rättigheter',
+    'ak_NoPermissionToDelete' => 'Du har inte behörighet att ta bort API-nycklar.',
+    'ak_NoPermissionToCreate' => 'Du har inte behörighet att skapa API-nycklar.',
+    'ak_NoEndpointsAvailable' => 'Inga API-slutpunkter tillgängliga',
+    'ak_ApiKeyUsageTooltip_curl_example' => 'curl -H "Auktorisering: Bärare YOUR_API_KEY" "http://pbx.example.com/pbxcore/api/v3/employees"',
+    'ak_PermissionsHelp' => 'Välj åtkomstnivå för varje REST API-slutpunkt. <br>"Läs" låter dig hämta data (GET), <br>"Läs och skriv" låter dig skapa, ändra och ta bort data (POST, PUT, DELETE).',
 ];

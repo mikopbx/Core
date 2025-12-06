@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * API keys translations
  */
-
-return [
     // AK
     'ak_AddNewApiKey' => 'Dodaj API ključ',
     'ak_AddNewKey' => 'Dodaj API ključ',
@@ -125,4 +124,42 @@ return [
     'ak_UsageStatistics' => 'Statistike korištenja',
     'ak_ValidateNameEmpty' => 'Navedite naziv API ključa',
     'ak_YourApiKey' => 'Vaš API ključ',
+    'ak_ApiKeyUsageTooltip_example_header' => 'Primjeri korištenja',
+    // Tooltips for API key usage
+    'ak_ApiKeyUsageTooltip_header' => 'Korištenje API ključeva',
+    'ak_PermissionWrite' => 'Čitanje i pisanje',
+    'ak_ApiKeyUsageTooltip_auth_format' => 'Dodajte zaglavlje autorizacije svojim zahtjevima:',
+    // Permissions selector
+    'ak_Permissions' => 'Prava pristupa krajnjim točkama API-ja',
+    'ak_ErrorLoadingEndpoints' => 'Nije uspjelo učitavanje popisa dostupnih krajnjih točaka API-ja',
+    'ak_ApiKeyUsageTooltip_auth_header' => 'Autentifikacija',
+    'ak_ApiKeyUsageTooltip_note' => 'Iz sigurnosnih razloga prikazuju se samo prvih i posljednjih 5 znakova ključa.',
+    'ak_LoadingApiDocumentation' => 'Učitavanje API dokumentacije...',
+    'ak_PermissionRead' => 'Čitanje',
+    'ak_ApiKeyUsageTooltip_warning' => 'Nikada ne dijelite svoj API ključ niti ga pohranjujte u sustavu za kontrolu verzija. Tretirajte ga kao lozinku.',
+    'ak_PermissionTableHeaderURI' => 'URI krajnje točke',
+    'ak_AuthenticationRequired' => 'Potrebna je autentifikacija',
+    'ak_NoAccess' => 'Nema pristupa',
+    'ak_ApiKeyUsageTooltip_warning_header' => 'Sigurnosno upozorenje',
+    // ACL permissions messages
+    'ak_NoPermissionToModify' => 'Nemate dopuštenje za promjenu API ključeva.',
+    // Permissions table headers
+    'ak_PermissionTableHeaderName' => 'Naziv resursa',
+    'ak_OpenAPIDocumentation' => 'Dokumentacija OpenAPI-ja',
+    // OpenAPI/Swagger UI
+    'ak_ApiDocumentation' => 'Dokumentacija API-ja',
+    'ak_ApiKeyUsageTooltip_php_example' => '$ch = curl_init("http://pbx.example.com/pbxcore/api/v3/employees"); curl_setopt($ch, CURLOPT_HTTPHEADER, ["Autorizacija: Nositelj VAŠ_API_KLJUČ"]);',
+    'ak_PermissionTableHeaderAccess' => 'Razina pristupa',
+    'ak_SwaggerLoadErrorDesc' => 'Nije uspjelo učitavanje API specifikacije. Provjerite vezu i pokušajte ponovno.',
+    'ak_PleaseLoginFirst' => 'Molimo prijavite se za pristup API-ju.',
+    'ak_ApiKeyUsageTooltip_desc' => 'API ključevi se koriste za autentifikaciju zahtjeva prema REST API-ju.',
+    'ak_SwaggerLoadError' => 'Pogreška pri učitavanju API dokumentacije',
+    'ak_ApiKeyUsageTooltip_js_example' => 'dohvati("http://pbx.example.com/pbxcore/api/v3/employees", { zaglavlja: { "Autorizacija": "Nosilac VAŠ_API_KLJUČ" } })',
+    'ak_RetryLoad' => 'Ponoviti',
+    'ak_SelectPermission' => 'Odaberite prava',
+    'ak_NoPermissionToDelete' => 'Nemate dopuštenje za brisanje API ključeva.',
+    'ak_NoPermissionToCreate' => 'Nemate dopuštenje za izradu API ključeva.',
+    'ak_NoEndpointsAvailable' => 'Nema dostupnih API krajnjih točaka',
+    'ak_ApiKeyUsageTooltip_curl_example' => 'curl -H "Autorizacija: Nositelj VAŠ_API_KLJUČ" "http://pbx.example.com/pbxcore/api/v3/employees"',
+    'ak_PermissionsHelp' => 'Odaberite razinu pristupa za svaku krajnju točku REST API-ja. <br>"Čitanje" vam omogućuje dohvaćanje podataka (GET), <br>"Čitanje i pisanje" vam omogućuje stvaranje, mijenjanje i brisanje podataka (POST, PUT, DELETE).',
 ];

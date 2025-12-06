@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * API keys translations
  */
-
-return [
     // AK
     'ak_AddNewApiKey' => 'Thêm khóa API',
     'ak_AddNewKey' => 'Thêm khóa API',
@@ -125,4 +124,42 @@ return [
     'ak_UsageStatistics' => 'Thống kê sử dụng',
     'ak_ValidateNameEmpty' => 'Chỉ định tên của khóa API',
     'ak_YourApiKey' => 'Khóa API của bạn',
+    'ak_ApiKeyUsageTooltip_example_header' => 'Ví dụ sử dụng',
+    // Tooltips for API key usage
+    'ak_ApiKeyUsageTooltip_header' => 'Sử dụng khóa API',
+    'ak_PermissionWrite' => 'Đọc và viết',
+    'ak_ApiKeyUsageTooltip_auth_format' => 'Thêm tiêu đề Ủy quyền vào yêu cầu của bạn:',
+    // Permissions selector
+    'ak_Permissions' => 'Quyền truy cập vào điểm cuối API',
+    'ak_ErrorLoadingEndpoints' => 'Không tải được danh sách các điểm cuối API khả dụng',
+    'ak_ApiKeyUsageTooltip_auth_header' => 'Xác thực',
+    'ak_ApiKeyUsageTooltip_note' => 'Vì mục đích bảo mật, chỉ 5 ký tự đầu tiên và 5 ký tự cuối cùng của khóa được hiển thị.',
+    'ak_LoadingApiDocumentation' => 'Đang tải tài liệu API...',
+    'ak_PermissionRead' => 'Đọc',
+    'ak_ApiKeyUsageTooltip_warning' => 'Không bao giờ chia sẻ khóa API hoặc lưu trữ nó trong hệ thống kiểm soát phiên bản. Hãy coi nó như mật khẩu.',
+    'ak_PermissionTableHeaderURI' => 'URI điểm cuối',
+    'ak_AuthenticationRequired' => 'Yêu cầu xác thực',
+    'ak_NoAccess' => 'Không có quyền truy cập',
+    'ak_ApiKeyUsageTooltip_warning_header' => 'Cảnh báo bảo mật',
+    // ACL permissions messages
+    'ak_NoPermissionToModify' => 'Bạn không có quyền thay đổi khóa API.',
+    // Permissions table headers
+    'ak_PermissionTableHeaderName' => 'Tên tài nguyên',
+    'ak_OpenAPIDocumentation' => 'Tài liệu OpenAPI',
+    // OpenAPI/Swagger UI
+    'ak_ApiDocumentation' => 'Tài liệu API',
+    'ak_ApiKeyUsageTooltip_php_example' => '$ch = curl_init("http://pbx.example.com/pbxcore/api/v3/employees"); curl_setopt($ch, CURLOPT_HTTPHEADER, ["Ủy quyền: Người mang YOUR_API_KEY"]);',
+    'ak_PermissionTableHeaderAccess' => 'Mức độ truy cập',
+    'ak_SwaggerLoadErrorDesc' => 'Không tải được thông số kỹ thuật API. Vui lòng kiểm tra kết nối và thử lại.',
+    'ak_PleaseLoginFirst' => 'Vui lòng đăng nhập để truy cập API.',
+    'ak_ApiKeyUsageTooltip_desc' => 'Khóa API được sử dụng để xác thực các yêu cầu tới REST API.',
+    'ak_SwaggerLoadError' => 'Lỗi khi tải tài liệu API',
+    'ak_ApiKeyUsageTooltip_js_example' => 'fetch("http://pbx.example.com/pbxcore/api/v3/employees", { headers: { "Authorization": "Người mang YOUR_API_KEY" } })',
+    'ak_RetryLoad' => 'Lặp lại',
+    'ak_SelectPermission' => 'Chọn quyền',
+    'ak_NoPermissionToDelete' => 'Bạn không có quyền xóa khóa API.',
+    'ak_NoPermissionToCreate' => 'Bạn không có quyền tạo khóa API.',
+    'ak_NoEndpointsAvailable' => 'Không có điểm cuối API nào khả dụng',
+    'ak_ApiKeyUsageTooltip_curl_example' => 'curl -H "Ủy quyền: Người mang YOUR_API_KEY" "http://pbx.example.com/pbxcore/api/v3/employees"',
+    'ak_PermissionsHelp' => 'Chọn mức truy cập cho từng điểm cuối REST API. <br>"Đọc" cho phép bạn truy xuất dữ liệu (GET), <br>"Đọc và ghi" cho phép bạn tạo, sửa đổi và xóa dữ liệu (POST, PUT, DELETE).',
 ];

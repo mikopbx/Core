@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * API keys translations
  */
-
-return [
     // AK
     'ak_AddNewApiKey' => 'Додати API ключ',
     'ak_AddNewKey' => 'Додати API ключ',
@@ -125,4 +124,42 @@ return [
     'ak_UsageStatistics' => 'Статистика використання',
     'ak_ValidateNameEmpty' => 'Вкажіть назву API ключа',
     'ak_YourApiKey' => 'Ваш API ключ',
+    'ak_ApiKeyUsageTooltip_example_header' => 'Приклади використання',
+    // Tooltips for API key usage
+    'ak_ApiKeyUsageTooltip_header' => 'Використання API ключів',
+    'ak_PermissionWrite' => 'Читання та запис',
+    'ak_ApiKeyUsageTooltip_auth_format' => 'Додайте заголовок Authorization до ваших запитів:',
+    // Permissions selector
+    'ak_Permissions' => 'Права доступу до API endpoints',
+    'ak_ErrorLoadingEndpoints' => 'Неможливо завантажити список доступних API endpoints',
+    'ak_ApiKeyUsageTooltip_auth_header' => 'Автентифікація',
+    'ak_ApiKeyUsageTooltip_note' => 'З метою безпеки відображаються лише перші та останні 5 символів ключа.',
+    'ak_LoadingApiDocumentation' => 'Завантаження документації API...',
+    'ak_PermissionRead' => 'Читання',
+    'ak_ApiKeyUsageTooltip_warning' => 'Ніколи не діліться своїм ключем API і не зберігайте його в системі контролю версій. Поводьтеся з ним як з паролем.',
+    'ak_PermissionTableHeaderURI' => 'URI ендпоінта',
+    'ak_AuthenticationRequired' => 'Потрібна автентифікація',
+    'ak_NoAccess' => 'Немає доступу',
+    'ak_ApiKeyUsageTooltip_warning_header' => 'Попередження безпеки',
+    // ACL permissions messages
+    'ak_NoPermissionToModify' => 'У вас немає прав на зміну API ключів',
+    // Permissions table headers
+    'ak_PermissionTableHeaderName' => 'Назва ресурсу',
+    'ak_OpenAPIDocumentation' => 'Документація OpenAPI',
+    // OpenAPI/Swagger UI
+    'ak_ApiDocumentation' => 'Документація API',
+    'ak_ApiKeyUsageTooltip_php_example' => '$ch = curl_init("http://pbx.example.com/pbxcore/api/v3/employees"); curl_setopt($ch, CURLOPT_HTTPHEADER, ["Authorization: Bearer ВАШ_API_КЛЮЧ"]);',
+    'ak_PermissionTableHeaderAccess' => 'Рівень доступу',
+    'ak_SwaggerLoadErrorDesc' => 'Не вдалося завантажити специфікацію API. Перевірте підключення та спробуйте знову.',
+    'ak_PleaseLoginFirst' => 'Будь ласка, увійдіть до системи для доступу до API',
+    'ak_ApiKeyUsageTooltip_desc' => 'API ключі використовуються для автентифікації запитів до REST API',
+    'ak_SwaggerLoadError' => 'Помилка завантаження документації API',
+    'ak_ApiKeyUsageTooltip_js_example' => 'fetch("http://pbx.example.com/pbxcore/api/v3/employees", { headers: { "Authorization": "Bearer ВАШ_API_КЛЮЧ" } })',
+    'ak_RetryLoad' => 'Повторити',
+    'ak_SelectPermission' => 'Виберіть права',
+    'ak_NoPermissionToDelete' => 'У вас немає прав на видалення API ключів',
+    'ak_NoPermissionToCreate' => 'У вас немає прав на створення API ключів',
+    'ak_NoEndpointsAvailable' => 'Немає доступних API endpoints',
+    'ak_ApiKeyUsageTooltip_curl_example' => 'curl -H "Authorization: Bearer ВАШ_API_КЛЮЧ" "http://pbx.example.com/pbxcore/api/v3/employees"',
+    'ak_PermissionsHelp' => 'Виберіть рівень доступу для кожного REST API endpoint. <br>"Читання" дозволяє отримувати дані (GET), а "Читання та запис" дозволяє створювати, змінювати та видаляти дані (POST, PUT, DELETE).',
 ];

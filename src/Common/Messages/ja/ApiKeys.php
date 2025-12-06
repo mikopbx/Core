@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * API keys translations
  */
-
-return [
     // AK
     'ak_AddNewApiKey' => 'APIキーを追加',
     'ak_AddNewKey' => 'APIキーを追加',
@@ -125,4 +124,42 @@ return [
     'ak_UsageStatistics' => '使用統計',
     'ak_ValidateNameEmpty' => 'APIキー名を指定してください',
     'ak_YourApiKey' => 'あなたのAPIキー',
+    'ak_ApiKeyUsageTooltip_example_header' => '使用例',
+    // Tooltips for API key usage
+    'ak_ApiKeyUsageTooltip_header' => 'APIキーの使用',
+    'ak_PermissionWrite' => '読み書き',
+    'ak_ApiKeyUsageTooltip_auth_format' => 'リクエストに Authorization ヘッダーを追加します。',
+    // Permissions selector
+    'ak_Permissions' => 'APIエンドポイントへのアクセス権',
+    'ak_ErrorLoadingEndpoints' => '利用可能な API エンドポイントのリストを読み込めませんでした',
+    'ak_ApiKeyUsageTooltip_auth_header' => '認証',
+    'ak_ApiKeyUsageTooltip_note' => 'セキュリティ上の理由から、キーの最初と最後の 5 文字のみが表示されます。',
+    'ak_LoadingApiDocumentation' => 'API ドキュメントを読み込んでいます...',
+    'ak_PermissionRead' => '読む',
+    'ak_ApiKeyUsageTooltip_warning' => 'APIキーは絶対に共有したり、バージョン管理下に置いたりしないでください。パスワードのように扱ってください。',
+    'ak_PermissionTableHeaderURI' => 'エンドポイントURI',
+    'ak_AuthenticationRequired' => '認証が必要です',
+    'ak_NoAccess' => 'アクセス不可',
+    'ak_ApiKeyUsageTooltip_warning_header' => 'セキュリティ警告',
+    // ACL permissions messages
+    'ak_NoPermissionToModify' => 'API キーを変更する権限がありません。',
+    // Permissions table headers
+    'ak_PermissionTableHeaderName' => 'リソース名',
+    'ak_OpenAPIDocumentation' => 'OpenAPIドキュメント',
+    // OpenAPI/Swagger UI
+    'ak_ApiDocumentation' => 'APIドキュメント',
+    'ak_ApiKeyUsageTooltip_php_example' => '$ch = curl_init("http://pbx.example.com/pbxcore/api/v3/employees"); curl_setopt($ch, CURLOPT_HTTPHEADER, ["承認: Bearer YOUR_API_KEY"]);',
+    'ak_PermissionTableHeaderAccess' => 'アクセスレベル',
+    'ak_SwaggerLoadErrorDesc' => 'API仕様の読み込みに失敗しました。接続を確認してもう一度お試しください。',
+    'ak_PleaseLoginFirst' => 'APIにアクセスするにはログインしてください。',
+    'ak_ApiKeyUsageTooltip_desc' => 'API キーは、REST API へのリクエストを認証するために使用されます。',
+    'ak_SwaggerLoadError' => 'APIドキュメントの読み込み中にエラーが発生しました',
+    'ak_ApiKeyUsageTooltip_js_example' => 'fetch("http://pbx.example.com/pbxcore/api/v3/employees", { ヘッダー: { "Authorization": "Bearer YOUR_API_KEY" } })',
+    'ak_RetryLoad' => '繰り返す',
+    'ak_SelectPermission' => '権利を選択',
+    'ak_NoPermissionToDelete' => 'API キーを削除する権限がありません。',
+    'ak_NoPermissionToCreate' => 'API キーを作成する権限がありません。',
+    'ak_NoEndpointsAvailable' => '利用可能なAPIエンドポイントがありません',
+    'ak_ApiKeyUsageTooltip_curl_example' => 'curl -H "認証: Bearer YOUR_API_KEY" "http://pbx.example.com/pbxcore/api/v3/employees"',
+    'ak_PermissionsHelp' => '各 REST API エンドポイントのアクセス レベルを選択します。<br>「読み取り」ではデータの取得 (GET) が可能で、<br>「読み取りと書き込み」ではデータの作成、変更、削除 (POST、PUT、DELETE) が可能です。',
 ];

@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * API keys translations
  */
-
-return [
     // AK
     'ak_AddNewApiKey' => 'Ajouter une clé API',
     'ak_AddNewKey' => 'Ajouter une clé API',
@@ -125,4 +124,42 @@ return [
     'ak_UsageStatistics' => 'Statistiques d\'utilisation',
     'ak_ValidateNameEmpty' => 'Veuillez spécifier le nom de la clé API',
     'ak_YourApiKey' => 'Votre clé API',
+    'ak_ApiKeyUsageTooltip_example_header' => 'Exemples d\'utilisation',
+    // Tooltips for API key usage
+    'ak_ApiKeyUsageTooltip_header' => 'Utilisation des clés API',
+    'ak_PermissionWrite' => 'Lecture et écriture',
+    'ak_ApiKeyUsageTooltip_auth_format' => 'Ajoutez l\'en-tête Authorization à vos requêtes :',
+    // Permissions selector
+    'ak_Permissions' => 'Droits d\'accès aux points de terminaison de l\'API',
+    'ak_ErrorLoadingEndpoints' => 'Impossible de charger la liste des points de terminaison d\'API disponibles.',
+    'ak_ApiKeyUsageTooltip_auth_header' => 'Authentification',
+    'ak_ApiKeyUsageTooltip_note' => 'Pour des raisons de sécurité, seuls les 5 premiers et les 5 derniers caractères de la clé sont affichés.',
+    'ak_LoadingApiDocumentation' => 'Chargement de la documentation API...',
+    'ak_PermissionRead' => 'En lisant',
+    'ak_ApiKeyUsageTooltip_warning' => 'Ne partagez jamais votre clé API et ne la stockez pas dans un système de contrôle de version. Traitez-la comme un mot de passe.',
+    'ak_PermissionTableHeaderURI' => 'URI du point de terminaison',
+    'ak_AuthenticationRequired' => 'Authentification requise',
+    'ak_NoAccess' => 'Aucun accès',
+    'ak_ApiKeyUsageTooltip_warning_header' => 'Avertissement de sécurité',
+    // ACL permissions messages
+    'ak_NoPermissionToModify' => 'Vous n\'êtes pas autorisé à modifier les clés API.',
+    // Permissions table headers
+    'ak_PermissionTableHeaderName' => 'Nom de la ressource',
+    'ak_OpenAPIDocumentation' => 'Documentation OpenAPI',
+    // OpenAPI/Swagger UI
+    'ak_ApiDocumentation' => 'Documentation API',
+    'ak_ApiKeyUsageTooltip_php_example' => '$ch = curl_init("http://pbx.example.com/pbxcore/api/v3/employees"); curl_setopt($ch, CURLOPT_HTTPHEADER, ["Authorization: Bearer YOUR_API_KEY"]);',
+    'ak_PermissionTableHeaderAccess' => 'Niveau d\'accès',
+    'ak_SwaggerLoadErrorDesc' => 'Impossible de charger la spécification de l\'API. Vérifiez votre connexion et réessayez.',
+    'ak_PleaseLoginFirst' => 'Veuillez vous connecter pour accéder à l\'API.',
+    'ak_ApiKeyUsageTooltip_desc' => 'Les clés API servent à authentifier les requêtes adressées à l\'API REST.',
+    'ak_SwaggerLoadError' => 'Erreur lors du chargement de la documentation de l\'API',
+    'ak_ApiKeyUsageTooltip_js_example' => 'fetch("http://pbx.example.com/pbxcore/api/v3/employees", { headers: { "Authorization": "Bearer YOUR_API_KEY" } })',
+    'ak_RetryLoad' => 'Répéter',
+    'ak_SelectPermission' => 'Sélectionner les droits',
+    'ak_NoPermissionToDelete' => 'Vous n\'êtes pas autorisé à supprimer les clés API.',
+    'ak_NoPermissionToCreate' => 'Vous n\'êtes pas autorisé à créer des clés API.',
+    'ak_NoEndpointsAvailable' => 'Aucun point de terminaison API disponible',
+    'ak_ApiKeyUsageTooltip_curl_example' => 'curl -H "Authorization: Bearer VOTRE_CLÉ_API" "http://pbx.example.com/pbxcore/api/v3/employees"',
+    'ak_PermissionsHelp' => 'Sélectionnez le niveau d\'accès pour chaque point de terminaison de l\'API REST. <br>« Lecture » vous permet de récupérer des données (GET), <br>« Lecture et écriture » vous permet de créer, modifier et supprimer des données (POST, PUT, DELETE).',
 ];

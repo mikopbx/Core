@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * API keys translations
  */
-
-return [
     // AK
     'ak_AddNewApiKey' => 'Agregar clave API',
     'ak_AddNewKey' => 'Agregar clave API',
@@ -125,4 +124,42 @@ return [
     'ak_UsageStatistics' => 'Estadísticas de uso',
     'ak_ValidateNameEmpty' => 'Por favor especifique el nombre de la clave API',
     'ak_YourApiKey' => 'Su clave API',
+    'ak_ApiKeyUsageTooltip_example_header' => 'Ejemplos de uso',
+    // Tooltips for API key usage
+    'ak_ApiKeyUsageTooltip_header' => 'Uso de claves API',
+    'ak_PermissionWrite' => 'Lectura y escritura',
+    'ak_ApiKeyUsageTooltip_auth_format' => 'Añade el encabezado de Autorización a tus solicitudes:',
+    // Permissions selector
+    'ak_Permissions' => 'Derechos de acceso a los puntos finales de la API',
+    'ak_ErrorLoadingEndpoints' => 'No se pudo cargar la lista de puntos finales de API disponibles',
+    'ak_ApiKeyUsageTooltip_auth_header' => 'Autenticación',
+    'ak_ApiKeyUsageTooltip_note' => 'Por motivos de seguridad, solo se muestran los primeros y los últimos 5 caracteres de la clave.',
+    'ak_LoadingApiDocumentation' => 'Cargando documentación de API...',
+    'ak_PermissionRead' => 'Lectura',
+    'ak_ApiKeyUsageTooltip_warning' => 'Nunca compartas tu clave API ni la guardes en el control de versiones. Trátala como una contraseña.',
+    'ak_PermissionTableHeaderURI' => 'URI del punto final',
+    'ak_AuthenticationRequired' => 'Se requiere autenticación',
+    'ak_NoAccess' => 'Sin acceso',
+    'ak_ApiKeyUsageTooltip_warning_header' => 'Advertencia de seguridad',
+    // ACL permissions messages
+    'ak_NoPermissionToModify' => 'No tienes permiso para cambiar las claves API.',
+    // Permissions table headers
+    'ak_PermissionTableHeaderName' => 'Nombre del recurso',
+    'ak_OpenAPIDocumentation' => 'Documentación de OpenAPI',
+    // OpenAPI/Swagger UI
+    'ak_ApiDocumentation' => 'Documentación de la API',
+    'ak_ApiKeyUsageTooltip_php_example' => '$ch = curl_init("http://pbx.example.com/pbxcore/api/v3/employees"); curl_setopt($ch, CURLOPT_HTTPHEADER, ["Autorización: Portador YOUR_API_KEY"]);',
+    'ak_PermissionTableHeaderAccess' => 'Nivel de acceso',
+    'ak_SwaggerLoadErrorDesc' => 'No se pudo cargar la especificación de la API. Verifique su conexión y vuelva a intentarlo.',
+    'ak_PleaseLoginFirst' => 'Inicie sesión para acceder a la API.',
+    'ak_ApiKeyUsageTooltip_desc' => 'Las claves API se utilizan para autenticar solicitudes a la API REST.',
+    'ak_SwaggerLoadError' => 'Error al cargar la documentación de la API',
+    'ak_ApiKeyUsageTooltip_js_example' => 'fetch("http://pbx.example.com/pbxcore/api/v3/employees", { headers: { "Autorización": "Portador YOUR_API_KEY" } })',
+    'ak_RetryLoad' => 'Repetir',
+    'ak_SelectPermission' => 'Seleccionar derechos',
+    'ak_NoPermissionToDelete' => 'No tienes permiso para eliminar claves API.',
+    'ak_NoPermissionToCreate' => 'No tienes permiso para crear claves API.',
+    'ak_NoEndpointsAvailable' => 'No hay puntos finales de API disponibles',
+    'ak_ApiKeyUsageTooltip_curl_example' => 'curl -H "Autorización: Portador YOUR_API_KEY" "http://pbx.example.com/pbxcore/api/v3/employees"',
+    'ak_PermissionsHelp' => 'Seleccione el nivel de acceso para cada punto final de la API REST. <br>"Leer" le permite recuperar datos (GET), <br>"Leer y escribir" le permite crear, modificar y eliminar datos (POST, PUT, DELETE).',
 ];

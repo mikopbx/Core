@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * API keys translations
  */
-
-return [
     // AK
     'ak_AddNewApiKey' => 'API açarı əlavə et',
     'ak_AddNewKey' => 'API açarı əlavə et',
@@ -125,4 +124,42 @@ return [
     'ak_UsageStatistics' => 'İstifadə statistikası',
     'ak_ValidateNameEmpty' => 'API açarının adını göstərin',
     'ak_YourApiKey' => 'Sizin API açarınız',
+    'ak_ApiKeyUsageTooltip_example_header' => 'İstifadə nümunələri',
+    // Tooltips for API key usage
+    'ak_ApiKeyUsageTooltip_header' => 'API açarlarından istifadə',
+    'ak_PermissionWrite' => 'Oxumaq və yazmaq',
+    'ak_ApiKeyUsageTooltip_auth_format' => 'Sorğularınıza Avtorizasiya başlığını əlavə edin:',
+    // Permissions selector
+    'ak_Permissions' => 'API son nöqtələrinə giriş hüquqları',
+    'ak_ErrorLoadingEndpoints' => 'Mövcud API son nöqtələrinin siyahısını yükləmək alınmadı',
+    'ak_ApiKeyUsageTooltip_auth_header' => 'Autentifikasiya',
+    'ak_ApiKeyUsageTooltip_note' => 'Təhlükəsizlik məqsədləri üçün açarın yalnız ilk və son 5 simvolu göstərilir.',
+    'ak_LoadingApiDocumentation' => 'API sənədləri yüklənir...',
+    'ak_PermissionRead' => 'Oxumaq',
+    'ak_ApiKeyUsageTooltip_warning' => 'Heç vaxt API açarınızı paylaşmayın və ya versiya nəzarətində saxlamayın. Onu parol kimi qəbul edin.',
+    'ak_PermissionTableHeaderURI' => 'Son nöqtə URI',
+    'ak_AuthenticationRequired' => 'Doğrulama tələb olunur',
+    'ak_NoAccess' => 'Giriş yoxdur',
+    'ak_ApiKeyUsageTooltip_warning_header' => 'Təhlükəsizlik xəbərdarlığı',
+    // ACL permissions messages
+    'ak_NoPermissionToModify' => 'API açarlarını dəyişmək icazəniz yoxdur.',
+    // Permissions table headers
+    'ak_PermissionTableHeaderName' => 'Resurs adı',
+    'ak_OpenAPIDocumentation' => 'OpenAPI Sənədləri',
+    // OpenAPI/Swagger UI
+    'ak_ApiDocumentation' => 'API sənədləri',
+    'ak_ApiKeyUsageTooltip_php_example' => '$ch = curl_init("http://pbx.example.com/pbxcore/api/v3/employees"); curl_setopt($ch, CURLOPT_HTTPHEADER, ["Authorization: Taşıyıcı YOUR_API_KEY"]);',
+    'ak_PermissionTableHeaderAccess' => 'Giriş səviyyəsi',
+    'ak_SwaggerLoadErrorDesc' => 'API spesifikasiyasını yükləmək alınmadı. Bağlantınızı yoxlayın və yenidən cəhd edin.',
+    'ak_PleaseLoginFirst' => 'API-yə daxil olmaq üçün daxil olun.',
+    'ak_ApiKeyUsageTooltip_desc' => 'API açarları REST API-yə sorğuların autentifikasiyası üçün istifadə olunur.',
+    'ak_SwaggerLoadError' => 'API sənədlərinin yüklənməsi xətası',
+    'ak_ApiKeyUsageTooltip_js_example' => 'fetch("http://pbx.example.com/pbxcore/api/v3/employees", { başlıqlar: { "Authorization": "Taşıyıcı YOUR_API_KEY" } })',
+    'ak_RetryLoad' => 'təkrarlayın',
+    'ak_SelectPermission' => 'Hüquqları seçin',
+    'ak_NoPermissionToDelete' => 'API açarlarını silmək icazəniz yoxdur.',
+    'ak_NoPermissionToCreate' => 'API açarları yaratmaq icazəniz yoxdur.',
+    'ak_NoEndpointsAvailable' => 'API son nöqtələri mövcud deyil',
+    'ak_ApiKeyUsageTooltip_curl_example' => 'curl -H "İcazə: Daşıyıcı SİZİN_API_KEY" "http://pbx.example.com/pbxcore/api/v3/employees"',
+    'ak_PermissionsHelp' => 'Hər REST API son nöqtəsi üçün giriş səviyyəsini seçin. <br>"Oxu" məlumatı əldə etməyə imkan verir (GET), <br>"Oxu və yaz" sizə məlumat yaratmağa, dəyişdirməyə və silməyə imkan verir (POST, PUT, DELETE).',
 ];

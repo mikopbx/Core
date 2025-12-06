@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * API keys translations
  */
-
-return [
     // AK
     'ak_AddNewApiKey' => 'Dodaj klucz API',
     'ak_AddNewKey' => 'Dodaj klucz API',
@@ -125,4 +124,42 @@ return [
     'ak_UsageStatistics' => 'Statystyki użycia',
     'ak_ValidateNameEmpty' => 'Podaj nazwę klucza API',
     'ak_YourApiKey' => 'Twój klucz API',
+    'ak_ApiKeyUsageTooltip_example_header' => 'Przykłady użycia',
+    // Tooltips for API key usage
+    'ak_ApiKeyUsageTooltip_header' => 'Korzystanie z kluczy API',
+    'ak_PermissionWrite' => 'Czytanie i pisanie',
+    'ak_ApiKeyUsageTooltip_auth_format' => 'Dodaj nagłówek Authorization do swoich żądań:',
+    // Permissions selector
+    'ak_Permissions' => 'Prawa dostępu do punktów końcowych API',
+    'ak_ErrorLoadingEndpoints' => 'Nie udało się załadować listy dostępnych punktów końcowych interfejsu API',
+    'ak_ApiKeyUsageTooltip_auth_header' => 'Uwierzytelnianie',
+    'ak_ApiKeyUsageTooltip_note' => 'Ze względów bezpieczeństwa wyświetlanych jest tylko pierwszych i ostatnich 5 znaków klucza.',
+    'ak_LoadingApiDocumentation' => 'Ładowanie dokumentacji API...',
+    'ak_PermissionRead' => 'Czytanie',
+    'ak_ApiKeyUsageTooltip_warning' => 'Nigdy nie udostępniaj swojego klucza API ani nie przechowuj go w systemie kontroli wersji. Traktuj go jak hasło.',
+    'ak_PermissionTableHeaderURI' => 'Identyfikator URI punktu końcowego',
+    'ak_AuthenticationRequired' => 'Wymagane uwierzytelnienie',
+    'ak_NoAccess' => 'Dostęp wzbroniony',
+    'ak_ApiKeyUsageTooltip_warning_header' => 'Ostrzeżenie bezpieczeństwa',
+    // ACL permissions messages
+    'ak_NoPermissionToModify' => 'Nie masz uprawnień do zmiany kluczy API.',
+    // Permissions table headers
+    'ak_PermissionTableHeaderName' => 'Nazwa zasobu',
+    'ak_OpenAPIDocumentation' => 'Dokumentacja OpenAPI',
+    // OpenAPI/Swagger UI
+    'ak_ApiDocumentation' => 'Dokumentacja API',
+    'ak_ApiKeyUsageTooltip_php_example' => '$ch = curl_init("http://pbx.example.com/pbxcore/api/v3/employees"); curl_setopt($ch, CURLOPT_HTTPHEADER, ["Autoryzacja: Nośnik YOUR_API_KEY"]);',
+    'ak_PermissionTableHeaderAccess' => 'Poziom dostępu',
+    'ak_SwaggerLoadErrorDesc' => 'Nie udało się załadować specyfikacji API. Sprawdź połączenie i spróbuj ponownie.',
+    'ak_PleaseLoginFirst' => 'Zaloguj się, aby uzyskać dostęp do API.',
+    'ak_ApiKeyUsageTooltip_desc' => 'Klucze API służą do uwierzytelniania żądań kierowanych do interfejsu API REST.',
+    'ak_SwaggerLoadError' => 'Błąd ładowania dokumentacji API',
+    'ak_ApiKeyUsageTooltip_js_example' => 'pobierz("http://pbx.example.com/pbxcore/api/v3/employees", { nagłówki: { "Autoryzacja": "Nośnik TWOJEGO_KLUCZA_API" } })',
+    'ak_RetryLoad' => 'Powtarzać',
+    'ak_SelectPermission' => 'Wybierz prawa',
+    'ak_NoPermissionToDelete' => 'Nie masz uprawnień do usuwania kluczy API.',
+    'ak_NoPermissionToCreate' => 'Nie masz uprawnień do tworzenia kluczy API.',
+    'ak_NoEndpointsAvailable' => 'Brak dostępnych punktów końcowych API',
+    'ak_ApiKeyUsageTooltip_curl_example' => 'curl -H "Autoryzacja: Nośnik YOUR_API_KEY" "http://pbx.example.com/pbxcore/api/v3/employees"',
+    'ak_PermissionsHelp' => 'Wybierz poziom dostępu dla każdego punktu końcowego interfejsu API REST. <br>„Odczyt” umożliwia pobieranie danych (GET), <br>„Odczyt i zapis” umożliwia tworzenie, modyfikowanie i usuwanie danych (POST, PUT, DELETE).',
 ];

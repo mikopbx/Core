@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * API keys translations
  */
-
-return [
     // AK
     'ak_AddNewApiKey' => 'API გასაღების დამატება',
     'ak_AddNewKey' => 'API გასაღების დამატება',
@@ -125,4 +124,42 @@ return [
     'ak_UsageStatistics' => 'გამოყენების სტატისტიკა',
     'ak_ValidateNameEmpty' => 'მიუთითეთ API გასაღების სახელი',
     'ak_YourApiKey' => 'თქვენი API გასაღები',
+    'ak_ApiKeyUsageTooltip_example_header' => 'გამოყენების მაგალითები',
+    // Tooltips for API key usage
+    'ak_ApiKeyUsageTooltip_header' => 'API გასაღებების გამოყენება',
+    'ak_PermissionWrite' => 'კითხვა და წერა',
+    'ak_ApiKeyUsageTooltip_auth_format' => 'თქვენს მოთხოვნებს დაამატეთ ავტორიზაციის სათაური:',
+    // Permissions selector
+    'ak_Permissions' => 'API-ის საბოლოო წერტილებზე წვდომის უფლებები',
+    'ak_ErrorLoadingEndpoints' => 'ხელმისაწვდომი API საბოლოო წერტილების სიის ჩატვირთვა ვერ მოხერხდა',
+    'ak_ApiKeyUsageTooltip_auth_header' => 'ავთენტიფიკაცია',
+    'ak_ApiKeyUsageTooltip_note' => 'უსაფრთხოების მიზნით, ნაჩვენებია მხოლოდ გასაღების პირველი და ბოლო 5 სიმბოლო.',
+    'ak_LoadingApiDocumentation' => 'API დოკუმენტაციის ჩატვირთვა...',
+    'ak_PermissionRead' => 'კითხვა',
+    'ak_ApiKeyUsageTooltip_warning' => 'არასოდეს გააზიაროთ თქვენი API გასაღები და არ შეინახოთ ის ვერსიის კონტროლში. მოეპყარით მას როგორც პაროლს.',
+    'ak_PermissionTableHeaderURI' => 'საბოლოო წერტილის URI',
+    'ak_AuthenticationRequired' => 'საჭიროა ავტორიზაცია',
+    'ak_NoAccess' => 'წვდომა არ არის',
+    'ak_ApiKeyUsageTooltip_warning_header' => 'უსაფრთხოების გაფრთხილება',
+    // ACL permissions messages
+    'ak_NoPermissionToModify' => 'თქვენ არ გაქვთ API გასაღებების შეცვლის უფლება.',
+    // Permissions table headers
+    'ak_PermissionTableHeaderName' => 'რესურსის სახელი',
+    'ak_OpenAPIDocumentation' => 'OpenAPI დოკუმენტაცია',
+    // OpenAPI/Swagger UI
+    'ak_ApiDocumentation' => 'API დოკუმენტაცია',
+    'ak_ApiKeyUsageTooltip_php_example' => '$ch = curl_init("http://pbx.example.com/pbxcore/api/v3/employees"); curl_setopt($ch, CURLOPT_HTTPHEADER, ["ავტორიზაცია: მატარებელი YOUR_API_KEY"]);',
+    'ak_PermissionTableHeaderAccess' => 'წვდომის დონე',
+    'ak_SwaggerLoadErrorDesc' => 'API სპეციფიკაციის ჩატვირთვა ვერ მოხერხდა. შეამოწმეთ თქვენი კავშირი და სცადეთ ხელახლა.',
+    'ak_PleaseLoginFirst' => 'API-ზე წვდომისთვის, გთხოვთ, შეხვიდეთ სისტემაში.',
+    'ak_ApiKeyUsageTooltip_desc' => 'API გასაღებები გამოიყენება REST API-ზე მოთხოვნების ავტორიზაციისთვის.',
+    'ak_SwaggerLoadError' => 'შეცდომა API დოკუმენტაციის ჩატვირთვისას მოხდა. შეცდომა მოხდა API დოკუმენტაციის ჩატვირთვისას.',
+    'ak_ApiKeyUsageTooltip_js_example' => 'fetch("http://pbx.example.com/pbxcore/api/v3/employees", { სათაურები: { "ავტორიზაცია": "თქვენი_API_გასაღების_მატარებელი" } })',
+    'ak_RetryLoad' => 'გამეორება',
+    'ak_SelectPermission' => 'უფლებების შერჩევა',
+    'ak_NoPermissionToDelete' => 'თქვენ არ გაქვთ API გასაღებების წაშლის უფლება.',
+    'ak_NoPermissionToCreate' => 'თქვენ არ გაქვთ API გასაღებების შექმნის ნებართვა.',
+    'ak_NoEndpointsAvailable' => 'API-ის საბოლოო წერტილები მიუწვდომელია',
+    'ak_ApiKeyUsageTooltip_curl_example' => 'curl -H "ავტორიზაცია: მატარებელი YOUR_API_KEY" "http://pbx.example.com/pbxcore/api/v3/employees"',
+    'ak_PermissionsHelp' => 'აირჩიეთ წვდომის დონე თითოეული REST API საბოლოო წერტილისთვის. <br>„წაკითხვა“ საშუალებას გაძლევთ მიიღოთ მონაცემები (GET), <br>„წაკითხვა და ჩაწერა“ საშუალებას გაძლევთ შექმნათ, შეცვალოთ და წაშალოთ მონაცემები (POST, PUT, DELETE).',
 ];

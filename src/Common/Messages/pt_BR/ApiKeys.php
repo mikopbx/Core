@@ -161,5 +161,5 @@ return [
     'ak_NoPermissionToCreate' => 'Você não tem permissão para criar chaves de API',
     'ak_NoEndpointsAvailable' => 'Nenhum ponto de extremidade de API disponível',
     'ak_ApiKeyUsageTooltip_curl_example' => 'curl -H "Autorização: Usuário YOUR_API_KEY" "http://pbx.example.com/pbxcore/api/v3/employees"',
-    'ak_PermissionsHelp' => 'Selecione o nível de acesso para cada ponto de extremidade da API REST. "Leitura" permite recuperar dados (GET), enquanto "Leitura e Gravação" permite criar, modificar e excluir dados (POST, PUT, DELETE).',
+    'ak_PermissionsHelp' => 'Selecione o nível de acesso para cada endpoint da API REST. <br>"Leitura" permite recuperar dados (GET), <br>"Leitura e gravação" permite criar, modificar e excluir dados (POST, PUT, DELETE).',
 ];

@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * API keys translations
  */
-
-return [
     // AK
     'ak_AddNewApiKey' => 'Προσθήκη API κλειδιού',
     'ak_AddNewKey' => 'Προσθήκη API κλειδιού',
@@ -125,4 +124,42 @@ return [
     'ak_UsageStatistics' => 'Στατιστικά χρήσης',
     'ak_ValidateNameEmpty' => 'Καθορίστε το όνομα του API κλειδιού',
     'ak_YourApiKey' => 'Το API κλειδί σας',
+    'ak_ApiKeyUsageTooltip_example_header' => 'Παραδείγματα χρήσης',
+    // Tooltips for API key usage
+    'ak_ApiKeyUsageTooltip_header' => 'Χρήση κλειδιών API',
+    'ak_PermissionWrite' => 'Ανάγνωση και γραφή',
+    'ak_ApiKeyUsageTooltip_auth_format' => 'Προσθέστε την κεφαλίδα Εξουσιοδότηση στα αιτήματά σας:',
+    // Permissions selector
+    'ak_Permissions' => 'Δικαιώματα πρόσβασης σε τελικά σημεία API',
+    'ak_ErrorLoadingEndpoints' => 'Αποτυχία φόρτωσης λίστας διαθέσιμων τελικών σημείων API',
+    'ak_ApiKeyUsageTooltip_auth_header' => 'Ταυτοποίηση',
+    'ak_ApiKeyUsageTooltip_note' => 'Για λόγους ασφαλείας, εμφανίζονται μόνο ο πρώτος και οι τελευταίοι 5 χαρακτήρες του κλειδιού.',
+    'ak_LoadingApiDocumentation' => 'Φόρτωση τεκμηρίωσης API...',
+    'ak_PermissionRead' => 'Ανάγνωση',
+    'ak_ApiKeyUsageTooltip_warning' => 'Μην κοινοποιείτε ποτέ το κλειδί API σας και μην το αποθηκεύετε στον έλεγχο έκδοσης. Αντιμετωπίστε το σαν κωδικό πρόσβασης.',
+    'ak_PermissionTableHeaderURI' => 'URI τελικού σημείου',
+    'ak_AuthenticationRequired' => 'Απαιτείται έλεγχος ταυτότητας',
+    'ak_NoAccess' => 'Δεν υπάρχει πρόσβαση',
+    'ak_ApiKeyUsageTooltip_warning_header' => 'Προειδοποίηση ασφάλειας',
+    // ACL permissions messages
+    'ak_NoPermissionToModify' => 'Δεν έχετε άδεια να αλλάξετε τα κλειδιά API.',
+    // Permissions table headers
+    'ak_PermissionTableHeaderName' => 'Όνομα πόρου',
+    'ak_OpenAPIDocumentation' => 'Τεκμηρίωση OpenAPI',
+    // OpenAPI/Swagger UI
+    'ak_ApiDocumentation' => 'Τεκμηρίωση API',
+    'ak_ApiKeyUsageTooltip_php_example' => '$ch = curl_init("http://pbx.example.com/pbxcore/api/v3/employees"); curl_setopt($ch, CURLOPT_HTTPHEADER, ["Εξουσιοδότηση: Φορέας YOUR_API_KEY"]);',
+    'ak_PermissionTableHeaderAccess' => 'Επίπεδο πρόσβασης',
+    'ak_SwaggerLoadErrorDesc' => 'Αποτυχία φόρτωσης προδιαγραφών API. Ελέγξτε τη σύνδεσή σας και δοκιμάστε ξανά.',
+    'ak_PleaseLoginFirst' => 'Παρακαλούμε συνδεθείτε για να αποκτήσετε πρόσβαση στο API.',
+    'ak_ApiKeyUsageTooltip_desc' => 'Τα κλειδιά API χρησιμοποιούνται για τον έλεγχο ταυτότητας αιτημάτων στο REST API.',
+    'ak_SwaggerLoadError' => 'Σφάλμα κατά τη φόρτωση της τεκμηρίωσης του API ....',
+    'ak_ApiKeyUsageTooltip_js_example' => 'fetch("http://pbx.example.com/pbxcore/api/v3/employees", { headers: { "Εξουσιοδότηση": "Φορέας ΤΟ ΚΛΕΙΔΙ_YOUR_API" } })',
+    'ak_RetryLoad' => 'Επαναλαμβάνω',
+    'ak_SelectPermission' => 'Επιλογή δικαιωμάτων',
+    'ak_NoPermissionToDelete' => 'Δεν έχετε άδεια να διαγράψετε κλειδιά API.',
+    'ak_NoPermissionToCreate' => 'Δεν έχετε άδεια δημιουργίας κλειδιών API.',
+    'ak_NoEndpointsAvailable' => 'Δεν υπάρχουν διαθέσιμα τελικά σημεία API',
+    'ak_ApiKeyUsageTooltip_curl_example' => 'curl -H "Εξουσιοδότηση: Φορέας YOUR_API_KEY" "http://pbx.example.com/pbxcore/api/v3/employees"',
+    'ak_PermissionsHelp' => 'Επιλέξτε το επίπεδο πρόσβασης για κάθε τελικό σημείο REST API. <br>Η "Ανάγνωση" σάς επιτρέπει να ανακτήσετε δεδομένα (GET), <br>Η "Ανάγνωση και εγγραφή" σάς επιτρέπει να δημιουργήσετε, να τροποποιήσετε και να διαγράψετε δεδομένα (POST, PUT, DELETE).',
 ];

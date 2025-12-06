@@ -1,9 +1,8 @@
 <?php
-/**
+return [
+    /**
  * API keys translations
  */
-
-return [
     // AK
     'ak_AddNewApiKey' => 'Tilføj API nøgle',
     'ak_AddNewKey' => 'Tilføj API nøgle',
@@ -125,4 +124,42 @@ return [
     'ak_UsageStatistics' => 'Anvendelsesstatistik',
     'ak_ValidateNameEmpty' => 'Angiv navn på API nøgle',
     'ak_YourApiKey' => 'Din API nøgle',
+    'ak_ApiKeyUsageTooltip_example_header' => 'Eksempler på brug',
+    // Tooltips for API key usage
+    'ak_ApiKeyUsageTooltip_header' => 'Brug af API-nøgler',
+    'ak_PermissionWrite' => 'Læsning og skrivning',
+    'ak_ApiKeyUsageTooltip_auth_format' => 'Tilføj autorisationsheaderen til dine anmodninger:',
+    // Permissions selector
+    'ak_Permissions' => 'Adgangsrettigheder til API-slutpunkter',
+    'ak_ErrorLoadingEndpoints' => 'Kunne ikke indlæse listen over tilgængelige API-slutpunkter',
+    'ak_ApiKeyUsageTooltip_auth_header' => 'Godkendelse',
+    'ak_ApiKeyUsageTooltip_note' => 'Af sikkerhedsmæssige årsager vises kun de første og sidste 5 tegn i nøglen.',
+    'ak_LoadingApiDocumentation' => 'Indlæser API-dokumentation...',
+    'ak_PermissionRead' => 'Læsning',
+    'ak_ApiKeyUsageTooltip_warning' => 'Del aldrig din API-nøgle, og gem den ikke i versionsstyring. Behandl den som en adgangskode.',
+    'ak_PermissionTableHeaderURI' => 'Slutpunkts-URI',
+    'ak_AuthenticationRequired' => 'Godkendelse kræves',
+    'ak_NoAccess' => 'Ingen adgang',
+    'ak_ApiKeyUsageTooltip_warning_header' => 'Sikkerhedsadvarsel',
+    // ACL permissions messages
+    'ak_NoPermissionToModify' => 'Du har ikke tilladelse til at ændre API-nøgler.',
+    // Permissions table headers
+    'ak_PermissionTableHeaderName' => 'Ressourcenavn',
+    'ak_OpenAPIDocumentation' => 'OpenAPI-dokumentation',
+    // OpenAPI/Swagger UI
+    'ak_ApiDocumentation' => 'API-dokumentation',
+    'ak_ApiKeyUsageTooltip_php_example' => '$ch = curl_init("http://pbx.example.com/pbxcore/api/v3/employees"); curl_setopt($ch, CURLOPT_HTTPHEADER, ["Godkendelse: Bearer YOUR_API_NØGLE"]);',
+    'ak_PermissionTableHeaderAccess' => 'Adgangsniveau',
+    'ak_SwaggerLoadErrorDesc' => 'API-specifikationen kunne ikke indlæses. Tjek din forbindelse, og prøv igen.',
+    'ak_PleaseLoginFirst' => 'Log venligst ind for at få adgang til API\'en.',
+    'ak_ApiKeyUsageTooltip_desc' => 'API-nøgler bruges til at godkende anmodninger til REST API\'en.',
+    'ak_SwaggerLoadError' => 'Fejl ved indlæsning af API-dokumentation',
+    'ak_ApiKeyUsageTooltip_js_example' => 'fetch("http://pbx.example.com/pbxcore/api/v3/employees", { headers: { "Authorization": "Bærer DIN_API_NØGLE" } })',
+    'ak_RetryLoad' => 'Gentage',
+    'ak_SelectPermission' => 'Vælg rettigheder',
+    'ak_NoPermissionToDelete' => 'Du har ikke tilladelse til at slette API-nøgler.',
+    'ak_NoPermissionToCreate' => 'Du har ikke tilladelse til at oprette API-nøgler.',
+    'ak_NoEndpointsAvailable' => 'Ingen API-slutpunkter tilgængelige',
+    'ak_ApiKeyUsageTooltip_curl_example' => 'curl -H "Godkendelse: Bærer YOUR_API_NØGLE" "http://pbx.example.com/pbxcore/api/v3/employees"',
+    'ak_PermissionsHelp' => 'Vælg adgangsniveauet for hvert REST API-slutpunkt. <br>"Læs" giver dig mulighed for at hente data (GET), <br>"Læs og skriv" giver dig mulighed for at oprette, ændre og slette data (POST, PUT, DELETE).',
 ];
