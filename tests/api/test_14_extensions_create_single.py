@@ -60,6 +60,47 @@ def test_create_single_employee(api_client, employee_fixtures):
 
     print(f"\n✅ All required fields present")
 
+    # Check if employee with this number already exists and delete it
+    print(f"\n🔍 Checking if number {api_data['number']} already exists...")
+
+    existing_response = api_client.get('employees', params={'limit': 1000, 'offset': 0})
+    existing_employees = []
+
+    if existing_response.get('result'):
+        data = existing_response.get('data', {})
+        if isinstance(data, dict):
+            existing_employees = data.get('data', [])
+        elif isinstance(data, list):
+            existing_employees = data
+
+    # Find employee with same number
+    existing_employee = None
+    for emp in existing_employees:
+        if str(emp.get('number')) == str(api_data['number']):
+            existing_employee = emp
+            break
+
+    if existing_employee:
+        employee_id = existing_employee.get('id')
+        print(f"⚠️  Employee with number {api_data['number']} already exists (ID: {employee_id})")
+        print(f"🗑️  Deleting existing employee to ensure clean test...")
+
+        try:
+            delete_response = api_client.delete(f"employees/{employee_id}")
+            if delete_response.get('result'):
+                print(f"✅ Deleted existing employee {employee_id}")
+            else:
+                error_msg = delete_response.get('messages', {})
+                print(f"⚠️  Failed to delete employee: {error_msg}")
+                print(f"⚠️  This employee cannot be deleted (possibleToDelete=false or has dependencies)")
+                print(f"⚠️  Skipping test - cannot ensure clean state")
+                pytest.skip(f"Employee {api_data['number']} already exists and cannot be deleted")
+        except Exception as e:
+            print(f"⚠️  Error deleting employee: {e}")
+            print(f"⚠️  This employee cannot be deleted")
+            print(f"⚠️  Skipping test - cannot ensure clean state")
+            pytest.skip(f"Employee {api_data['number']} already exists and cannot be deleted: {e}")
+
     # Step 3: Create employee
     print(f"\n📤 Sending POST /employees...")
 
