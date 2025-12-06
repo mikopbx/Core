@@ -21,6 +21,7 @@ This test suite focuses on read operations which work reliably.
 import pytest
 import base64
 from conftest import assert_api_success
+from config import get_config
 
 
 class TestCustomFiles:
@@ -606,9 +607,10 @@ allow=alaw
         time.sleep(15)
 
         # Check that 'changed' flag was reset to '0' by worker
+        container_name = get_config().container_name
         try:
             result = subprocess.run(
-                ['docker', 'exec', 'mikopbx-php83', 'sqlite3', '/cf/conf/mikopbx.db',
+                ['docker', 'exec', container_name, 'sqlite3', '/cf/conf/mikopbx.db',
                  f"SELECT changed FROM m_CustomFiles WHERE id={TestCustomFilesAppendMode.test_file_id}"],
                 capture_output=True, text=True, timeout=5
             )
@@ -624,7 +626,7 @@ allow=alaw
         # Read actual file content from container
         try:
             result = subprocess.run(
-                ['docker', 'exec', 'mikopbx-php83', 'cat', '/etc/asterisk/pjsip.conf'],
+                ['docker', 'exec', container_name, 'cat', '/etc/asterisk/pjsip.conf'],
                 capture_output=True, text=True, timeout=5
             )
 
@@ -653,7 +655,7 @@ allow=alaw
 
             # Check that .orgn backup file exists (created by MODE_APPEND mechanism)
             backup_result = subprocess.run(
-                ['docker', 'exec', 'mikopbx-php83', 'test', '-f', '/etc/asterisk/pjsip.conf.orgn'],
+                ['docker', 'exec', container_name, 'test', '-f', '/etc/asterisk/pjsip.conf.orgn'],
                 capture_output=True, timeout=5
             )
 
@@ -704,8 +706,9 @@ allow=ulaw
         print(f"✓ File updated with fresh content")
 
         # Immediately check changed flag - should be '1'
+        container_name = get_config().container_name
         result = subprocess.run(
-            ['docker', 'exec', 'mikopbx-php83', 'sqlite3', '/cf/conf/mikopbx.db',
+            ['docker', 'exec', container_name, 'sqlite3', '/cf/conf/mikopbx.db',
              f"SELECT changed FROM m_CustomFiles WHERE id={TestCustomFilesAppendMode.test_file_id}"],
             capture_output=True, text=True, timeout=5
         )
@@ -719,7 +722,7 @@ allow=ulaw
 
         # Check changed flag again - should be '0' now
         result = subprocess.run(
-            ['docker', 'exec', 'mikopbx-php83', 'sqlite3', '/cf/conf/mikopbx.db',
+            ['docker', 'exec', container_name, 'sqlite3', '/cf/conf/mikopbx.db',
              f"SELECT changed FROM m_CustomFiles WHERE id={TestCustomFilesAppendMode.test_file_id}"],
             capture_output=True, text=True, timeout=5
         )
