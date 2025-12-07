@@ -20,8 +20,8 @@ This test suite focuses on read operations which work reliably.
 
 import pytest
 import base64
-from conftest import assert_api_success
-from config import get_config
+import time
+from conftest import assert_api_success, read_file_from_container
 
 
 class TestCustomFiles:
@@ -579,9 +579,6 @@ allow=alaw
 
     def test_02_verify_file_applied(self, api_client):
         """Verify that the custom content was applied to pjsip.conf"""
-        import subprocess
-        import time
-
         if not TestCustomFilesAppendMode.test_file_id:
             pytest.skip("No test file ID available")
 
@@ -607,34 +604,28 @@ allow=alaw
         time.sleep(15)
 
         # Check that 'changed' flag was reset to '0' by worker
-        container_name = get_config().container_name
         try:
-            result = subprocess.run(
-                ['docker', 'exec', container_name, 'sqlite3', '/cf/conf/mikopbx.db',
-                 f"SELECT changed FROM m_CustomFiles WHERE id={TestCustomFilesAppendMode.test_file_id}"],
-                capture_output=True, text=True, timeout=5
-            )
-            changed_flag = result.stdout.strip()
-            print(f"  Changed flag in DB: {changed_flag}")
-            if changed_flag == '0':
-                print(f"  ✓ Worker processed the change (changed flag reset to 0)")
+            sql_response = api_client.post('system:executeSqlRequest', {
+                'query': f"SELECT changed FROM m_CustomFiles WHERE id={TestCustomFilesAppendMode.test_file_id}",
+                'database': 'main'
+            })
+
+            if sql_response.get('result') and sql_response.get('data', {}).get('rows'):
+                changed_flag = sql_response['data']['rows'][0]['changed']
+                print(f"  Changed flag in DB: {changed_flag}")
+                if changed_flag == '0':
+                    print(f"  ✓ Worker processed the change (changed flag reset to 0)")
+                else:
+                    print(f"  ⚠ Worker hasn't processed yet (changed=1)")
             else:
-                print(f"  ⚠ Worker hasn't processed yet (changed=1)")
+                print(f"  ⚠ Could not retrieve changed flag from database")
         except Exception as e:
             print(f"  ⚠ Could not check changed flag: {e}")
 
-        # Read actual file content from container
+        # Read actual file content using REST API
         try:
-            result = subprocess.run(
-                ['docker', 'exec', container_name, 'cat', '/etc/asterisk/pjsip.conf'],
-                capture_output=True, text=True, timeout=5
-            )
-
-            if result.returncode != 0:
-                pytest.fail(f"Failed to read pjsip.conf from container: {result.stderr}")
-
-            actual_content = result.stdout
-            print(f"\n✓ Read actual file from container ({len(actual_content)} bytes)")
+            actual_content = read_file_from_container(api_client, '/etc/asterisk/pjsip.conf')
+            print(f"\n✓ Read actual file via REST API ({len(actual_content)} bytes)")
 
             # Verify custom content is present (MODE_APPEND)
             if 'transport-test' in actual_content:
@@ -653,27 +644,11 @@ allow=alaw
             else:
                 print(f"  ⚠ Warning: Could not verify original content preservation")
 
-            # Check that .orgn backup file exists (created by MODE_APPEND mechanism)
-            backup_result = subprocess.run(
-                ['docker', 'exec', container_name, 'test', '-f', '/etc/asterisk/pjsip.conf.orgn'],
-                capture_output=True, timeout=5
-            )
-
-            if backup_result.returncode == 0:
-                print(f"  ✓ Backup file pjsip.conf.orgn exists (MODE_APPEND mechanism)")
-            else:
-                print(f"  ⚠ Backup file pjsip.conf.orgn not found")
-
-        except subprocess.TimeoutExpired:
-            pytest.fail("Timeout reading file from container")
         except Exception as e:
-            pytest.fail(f"Error reading file from container: {e}")
+            pytest.fail(f"Error reading file via REST API: {e}")
 
     def test_03_update_and_verify_worker_resets_flag(self, api_client):
         """Update file again and verify worker resets changed flag"""
-        import subprocess
-        import time
-
         if not TestCustomFilesAppendMode.test_file_id:
             pytest.skip("No test file ID available")
 
@@ -706,13 +681,16 @@ allow=ulaw
         print(f"✓ File updated with fresh content")
 
         # Immediately check changed flag - should be '1'
-        container_name = get_config().container_name
-        result = subprocess.run(
-            ['docker', 'exec', container_name, 'sqlite3', '/cf/conf/mikopbx.db',
-             f"SELECT changed FROM m_CustomFiles WHERE id={TestCustomFilesAppendMode.test_file_id}"],
-            capture_output=True, text=True, timeout=5
-        )
-        changed_flag_before = result.stdout.strip()
+        sql_response = api_client.post('system:executeSqlRequest', {
+            'query': f"SELECT changed FROM m_CustomFiles WHERE id={TestCustomFilesAppendMode.test_file_id}",
+            'database': 'main'
+        })
+
+        if sql_response.get('result') and sql_response.get('data', {}).get('rows'):
+            changed_flag_before = sql_response['data']['rows'][0]['changed']
+        else:
+            changed_flag_before = ''
+
         print(f"  Changed flag immediately after update: {changed_flag_before}")
         assert changed_flag_before == '1', "Changed flag should be '1' after update"
 
@@ -721,12 +699,16 @@ allow=ulaw
         time.sleep(20)
 
         # Check changed flag again - should be '0' now
-        result = subprocess.run(
-            ['docker', 'exec', container_name, 'sqlite3', '/cf/conf/mikopbx.db',
-             f"SELECT changed FROM m_CustomFiles WHERE id={TestCustomFilesAppendMode.test_file_id}"],
-            capture_output=True, text=True, timeout=5
-        )
-        changed_flag_after = result.stdout.strip()
+        sql_response = api_client.post('system:executeSqlRequest', {
+            'query': f"SELECT changed FROM m_CustomFiles WHERE id={TestCustomFilesAppendMode.test_file_id}",
+            'database': 'main'
+        })
+
+        if sql_response.get('result') and sql_response.get('data', {}).get('rows'):
+            changed_flag_after = sql_response['data']['rows'][0]['changed']
+        else:
+            changed_flag_after = ''
+
         print(f"  Changed flag after worker processing: {changed_flag_after}")
 
         if changed_flag_after == '0':
