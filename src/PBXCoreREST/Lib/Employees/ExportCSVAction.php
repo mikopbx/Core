@@ -251,38 +251,38 @@ class ExportCSVAction
         fprintf($output, "\xEF\xBB\xBF");
         
         // Write field names as headers (English identifiers)
-        fputcsv($output, $fields);
-        
+        fputcsv($output, $fields, ',', '"', '\\');
+
         // Write data
         foreach ($employees as $employee) {
             $row = [];
             foreach ($fields as $field) {
                 $value = $employee[$field] ?? '';
-                
+
                 // Special handling for boolean fields
                 if ($field === 'sip_enableRecording') {
                     $value = $value ? 'true' : 'false';
                 }
-                
+
                 // Decode base64 for manualattributes
                 if ($field === 'sip_manualattributes' && !empty($value)) {
                     $value = base64_decode($value);
                 }
-                
+
                 // Convert avatar to URL
                 if ($field === 'user_avatar') {
                     $value = AvatarHelper::getAvatarUrl($value);
                 }
-                
+
                 // Clean passwords for security (optional - can be removed for full backup)
                 if ($field === 'sip_secret' && !empty($value)) {
                     // Keep password for migration, but you might want to mask it
                     // $value = '***MASKED***';
                 }
-                
+
                 $row[] = $value;
             }
-            fputcsv($output, $row);
+            fputcsv($output, $row, ',', '"', '\\');
         }
         
         // Get content
@@ -358,17 +358,17 @@ class ExportCSVAction
         
         // Add BOM for Excel UTF-8 compatibility
         fprintf($output, "\xEF\xBB\xBF");
-        
+
         // Write field names as headers (English identifiers)
-        fputcsv($output, $fields);
-        
+        fputcsv($output, $fields, ',', '"', '\\');
+
         // Write sample data
         foreach ($sampleData as $sample) {
             $row = [];
             foreach ($fields as $field) {
                 $row[] = $sample[$field] ?? '';
             }
-            fputcsv($output, $row);
+            fputcsv($output, $row, ',', '"', '\\');
         }
         
         // Get content

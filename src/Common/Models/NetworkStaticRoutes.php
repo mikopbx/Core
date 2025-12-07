@@ -40,7 +40,7 @@ class NetworkStaticRoutes extends ModelsBase
      * @Identity
      * @Column(type="integer", nullable=false)
      */
-    public int|string|null $id;
+    public $id;
 
     /**
      * Network address (e.g., 192.168.10.0)

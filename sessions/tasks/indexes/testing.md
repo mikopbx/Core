@@ -9,6 +9,7 @@ description: Tasks related to test frameworks, test infrastructure, and testing 
 ## Active Tasks
 
 ### High Priority
+- `h-fix-api-test-failures/` - Fix 22 failed REST API tests to achieve 100% pass rate (CDR seeding, extensions, custom files, SIP providers)
 
 ### Medium Priority
 

@@ -32,9 +32,21 @@ Usage:
 """
 
 import os
+import warnings
 from pathlib import Path
 from typing import Optional, Literal
-from dotenv import load_dotenv
+
+# Optional dotenv import - allows running without python-dotenv package
+try:
+    from dotenv import load_dotenv
+    HAS_DOTENV = True
+except ImportError:
+    HAS_DOTENV = False
+    warnings.warn(
+        "python-dotenv not installed. Using environment variables only. "
+        "Install with: pip install python-dotenv",
+        ImportWarning
+    )
 
 
 class TestConfig:
@@ -77,19 +89,26 @@ class TestConfig:
         """
         Initialize configuration loader
 
+        Loads configuration from (in priority order):
+        1. Environment variables (Docker ENV, TeamCity, system)
+        2. .env file (if exists and python-dotenv installed)
+        3. Default values
+
         Args:
             env_file: Path to .env file (default: tests/api/.env)
         """
-        # Load .env file
+        # Load .env file if available (optional)
         if env_file is None:
             env_file = Path(__file__).parent / '.env'
 
-        if env_file.exists():
-            load_dotenv(env_file)
-        else:
-            raise FileNotFoundError(
-                f".env file not found: {env_file}\n"
-                "Create .env file from .env.example template"
+        if HAS_DOTENV and env_file.exists():
+            # Load .env but don't override existing environment variables
+            load_dotenv(env_file, override=False)
+        elif not HAS_DOTENV and env_file.exists():
+            warnings.warn(
+                f".env file exists ({env_file}) but python-dotenv not installed. "
+                "Using environment variables only.",
+                RuntimeWarning
             )
 
         # Validate required variables
@@ -99,19 +118,20 @@ class TestConfig:
         """Validate that required environment variables are set"""
         missing_vars = []
 
-        if not os.getenv('MIKOPBX_API_URL'):
-            missing_vars.append('MIKOPBX_API_URL')
+        # Check new format (MIKOPBX_*) or legacy format (API_*)
+        if not (os.getenv('MIKOPBX_API_URL') or os.getenv('API_BASE_URL')):
+            missing_vars.append('MIKOPBX_API_URL or API_BASE_URL')
 
-        if not os.getenv('MIKOPBX_API_USERNAME'):
-            missing_vars.append('MIKOPBX_API_USERNAME')
+        if not (os.getenv('MIKOPBX_API_USERNAME') or os.getenv('API_LOGIN')):
+            missing_vars.append('MIKOPBX_API_USERNAME or API_LOGIN')
 
-        if not os.getenv('MIKOPBX_API_PASSWORD'):
-            missing_vars.append('MIKOPBX_API_PASSWORD')
+        if not (os.getenv('MIKOPBX_API_PASSWORD') or os.getenv('API_PASSWORD')):
+            missing_vars.append('MIKOPBX_API_PASSWORD or API_PASSWORD')
 
         if missing_vars:
             raise ValueError(
                 f"Missing required environment variables: {', '.join(missing_vars)}\n"
-                "Please update your .env file with required values.\n"
+                "Set via Docker ENV, TeamCity variables, or .env file.\n"
                 "See .env.example for template."
             )
 
@@ -121,18 +141,60 @@ class TestConfig:
 
     @property
     def api_url(self) -> str:
-        """MikoPBX REST API base URL"""
-        return os.getenv('MIKOPBX_API_URL', '').rstrip('/')
+        """
+        MikoPBX REST API base URL
+
+        Priority: MIKOPBX_API_URL → API_BASE_URL (legacy)
+        """
+        url = os.getenv('MIKOPBX_API_URL') or os.getenv('API_BASE_URL', '')
+
+        # Warn if using legacy format
+        if not os.getenv('MIKOPBX_API_URL') and os.getenv('API_BASE_URL'):
+            warnings.warn(
+                "Using legacy API_BASE_URL variable. Please migrate to MIKOPBX_API_URL",
+                DeprecationWarning,
+                stacklevel=2
+            )
+
+        return url.rstrip('/')
 
     @property
     def api_username(self) -> str:
-        """API username"""
-        return os.getenv('MIKOPBX_API_USERNAME', 'admin')
+        """
+        API username
+
+        Priority: MIKOPBX_API_USERNAME → API_LOGIN (legacy)
+        """
+        username = os.getenv('MIKOPBX_API_USERNAME') or os.getenv('API_LOGIN', 'admin')
+
+        # Warn if using legacy format
+        if not os.getenv('MIKOPBX_API_USERNAME') and os.getenv('API_LOGIN'):
+            warnings.warn(
+                "Using legacy API_LOGIN variable. Please migrate to MIKOPBX_API_USERNAME",
+                DeprecationWarning,
+                stacklevel=2
+            )
+
+        return username
 
     @property
     def api_password(self) -> str:
-        """API password"""
-        return os.getenv('MIKOPBX_API_PASSWORD', '')
+        """
+        API password
+
+        Priority: MIKOPBX_API_PASSWORD → API_PASSWORD (legacy)
+        """
+        password = os.getenv('MIKOPBX_API_PASSWORD') or os.getenv('API_PASSWORD', '')
+
+        # Warn if using legacy format
+        if not os.getenv('MIKOPBX_API_PASSWORD') and os.getenv('API_PASSWORD'):
+            warnings.warn(
+                "Using legacy API_PASSWORD variable. Please migrate to MIKOPBX_API_PASSWORD",
+                DeprecationWarning,
+                stacklevel=2
+            )
+
+        return password
 
     # ========================================================================
     # Execution Mode Configuration
