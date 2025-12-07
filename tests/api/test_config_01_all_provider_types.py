@@ -17,7 +17,8 @@ Then validates:
 """
 
 import pytest
-from conftest import assert_api_success
+import time
+from conftest import assert_api_success, read_file_from_container, execute_asterisk_command
 
 
 class TestAllProviderTypes:
@@ -293,25 +294,25 @@ class TestAllProviderTypes:
         print(f"✓ All {len(self.created_providers['iax'])} IAX providers verified")
 
     @pytest.mark.dependency(depends=["TestAllProviderTypes::test_11_verify_all_providers_created"])
-    def test_12_trigger_config_regeneration(self):
+    def test_12_trigger_config_regeneration(self, api_client):
         """Trigger Asterisk configuration regeneration by restarting container"""
-        import subprocess
-        import time
+        from config import get_config
 
         print("\n" + "="*70)
         print("Triggering Asterisk Configuration Regeneration")
         print("="*70)
 
-        # Restart container to apply all settings
-        print("Restarting mikopbx-php83 container...")
-        result = subprocess.run(
-            ['docker', 'restart', 'mikopbx-php83'],
-            capture_output=True,
-            text=True
-        )
+        # Restart container to apply all settings using REST API
+        container_name = get_config().container_name
+        print(f"Restarting {container_name} container...")
 
-        if result.returncode != 0:
-            pytest.fail(f"Failed to restart container: {result.stderr}")
+        # Use REST API to execute container restart
+        response = api_client.post('system:executeBashCommand', {
+            'command': f'docker restart {container_name}'
+        })
+
+        if not response.get('result'):
+            pytest.fail(f"Failed to restart container: {response.get('messages')}")
 
         print("✓ Container restart initiated")
         print("Waiting 10 seconds for container to fully restart...")
@@ -319,25 +320,14 @@ class TestAllProviderTypes:
         print("✓ Configuration regeneration completed")
 
     @pytest.mark.dependency(depends=["TestAllProviderTypes::test_12_trigger_config_regeneration"])
-    def test_13_validate_pjsip_conf(self):
+    def test_13_validate_pjsip_conf(self, api_client):
         """Validate pjsip.conf was generated with proper templating"""
-        import subprocess
-
         print("\n" + "="*70)
         print("Validating pjsip.conf Configuration")
         print("="*70)
 
-        # Read pjsip.conf from container
-        result = subprocess.run(
-            ['docker', 'exec', 'mikopbx-php83', 'cat', '/etc/asterisk/pjsip.conf'],
-            capture_output=True,
-            text=True
-        )
-
-        if result.returncode != 0:
-            pytest.fail(f"Failed to read pjsip.conf: {result.stderr}")
-
-        config = result.stdout
+        # Read pjsip.conf from container using REST API
+        config = read_file_from_container(api_client, '/etc/asterisk/pjsip.conf')
 
         # Validate template definitions exist
         assert '[registration-base](!)' in config, "Missing registration-base template"
@@ -376,48 +366,35 @@ class TestAllProviderTypes:
         print(f"✓ Found {peer_count} PEER TRUNK(s)")
 
     @pytest.mark.dependency(depends=["TestAllProviderTypes::test_13_validate_pjsip_conf"])
-    def test_14_validate_asterisk_loaded_config(self):
+    def test_14_validate_asterisk_loaded_config(self, api_client):
         """Validate Asterisk loaded the configuration without errors"""
-        import subprocess
-
         print("\n" + "="*70)
         print("Validating Asterisk Configuration Loading")
         print("="*70)
 
-        # Check PJSIP endpoints
-        result = subprocess.run(
-            ['docker', 'exec', 'mikopbx-php83', 'asterisk', '-rx', 'pjsip show endpoints'],
-            capture_output=True,
-            text=True
-        )
-
-        if result.returncode != 0:
-            pytest.fail(f"Failed to query PJSIP endpoints: {result.stderr}")
-
-        output = result.stdout
+        # Check PJSIP endpoints using REST API
+        output = execute_asterisk_command(api_client, 'pjsip show endpoints')
 
         # Count loaded endpoints (should include our providers)
         endpoint_lines = [line for line in output.split('\n') if line.strip() and 'Endpoint:' in line]
         print(f"\n✓ Asterisk loaded {len(endpoint_lines)} PJSIP endpoint(s)")
 
-        # Check for errors in Asterisk log
-        result = subprocess.run(
-            ['docker', 'exec', 'mikopbx-php83', 'tail', '-n', '100', '/var/log/asterisk/messages'],
-            capture_output=True,
-            text=True
-        )
+        # Check for errors in Asterisk log using REST API
+        log_content = read_file_from_container(api_client, '/var/log/asterisk/messages')
 
-        if result.returncode == 0:
-            log = result.stdout
-            error_keywords = ['ERROR', 'WARNING[general]', 'CRITICAL']
-            errors = [line for line in log.split('\n') if any(kw in line for kw in error_keywords) and 'pjsip' in line.lower()]
+        # Get last 100 lines
+        log_lines = log_content.split('\n')
+        log = '\n'.join(log_lines[-100:])
 
-            if errors:
-                print("\n⚠ Found PJSIP-related errors in Asterisk log:")
-                for error in errors[-5:]:  # Show last 5 errors
-                    print(f"  {error}")
-            else:
-                print("✓ No PJSIP errors in recent Asterisk log")
+        error_keywords = ['ERROR', 'WARNING[general]', 'CRITICAL']
+        errors = [line for line in log.split('\n') if any(kw in line for kw in error_keywords) and 'pjsip' in line.lower()]
+
+        if errors:
+            print("\n⚠ Found PJSIP-related errors in Asterisk log:")
+            for error in errors[-5:]:  # Show last 5 errors
+                print(f"  {error}")
+        else:
+            print("✓ No PJSIP errors in recent Asterisk log")
 
     @pytest.mark.dependency(depends=["TestAllProviderTypes::test_14_validate_asterisk_loaded_config"])
     def test_15_cleanup_test_providers(self, api_client):
