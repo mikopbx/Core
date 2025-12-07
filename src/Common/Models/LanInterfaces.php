@@ -40,7 +40,7 @@ class LanInterfaces extends ModelsBase
      * @Identity
      * @Column(type="integer", nullable=false)
      */
-    public int|string|null $id;
+    public $id;
 
     /**
      * Name of the LAN interface
