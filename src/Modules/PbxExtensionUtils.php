@@ -27,6 +27,7 @@ use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\SystemMessages;
 use MikoPBX\Core\System\Util;
+use MikoPBX\Modules\PbxExtensionState;
 use Phalcon\Di\Di;
 use Phalcon\Mvc\Application;
 use Phalcon\Mvc\Router;
@@ -328,6 +329,103 @@ class PbxExtensionUtils
                 // Disable the module using its unique ID
                 self::forceDisableModule($moduleUniqueId, $exceptionMessage);
                 SystemMessages::sysLogMsg(__CLASS__, "The module $moduleUniqueId was disabled because an exception occurred in it", LOG_ERR);
+            }
+        }
+    }
+
+    /**
+     * Validates all enabled modules for compatibility issues.
+     * Automatically disables modules that cannot be loaded due to Fatal Errors.
+     * This method runs early in the boot process to prevent system crashes.
+     *
+     * Uses separate process isolation to catch Fatal Errors that cannot be caught
+     * with try-catch (e.g., method signature incompatibility).
+     *
+     * @return void
+     */
+    public static function validateEnabledModules(): void
+    {
+        $modulesToDisable = [];
+        $modules = PbxExtensionModules::find(['conditions' => 'disabled = "0"']);
+
+        foreach ($modules as $module) {
+            $className = str_replace('Module', '', $module->uniqid);
+            $configClassName = "Modules\\{$module->uniqid}\\Lib\\{$className}Conf";
+
+            // WHY: Use separate PHP process to isolate Fatal Errors
+            // Method signature incompatibility cannot be caught with try-catch
+            // because it's a compile-time error, not a runtime exception
+
+            // Create a temporary PHP script that loads autoloader without Whoops
+            // WHY: We disable Whoops to prevent formatted error output that we can't parse
+            $tempScript = sprintf(
+                'define("MIKOPBX_VALIDATION_MODE", true); ' .  // Signal to disable Whoops
+                'require_once "/offload/rootfs/usr/www/src/globals.php"; ' .
+                'class_exists(%s); exit(0);',
+                var_export($configClassName, true)
+            );
+
+            $command = sprintf(
+                'php -r %s 2>&1',
+                escapeshellarg($tempScript)
+            );
+
+            $output = [];
+            $returnCode = 0;
+            exec($command, $output, $returnCode);
+
+            // WHY: Exit code 255 indicates Fatal Error during compilation/autoload
+            // We don't check output because Whoops may format it differently
+            if ($returnCode === 255 || $returnCode !== 0) {
+                // Module has Fatal Error or compatibility issue
+                $errorOutput = implode("\n", $output);
+                $errorMessage = "Module {$module->uniqid} is incompatible with current MikoPBX version";
+
+                // Look for signature incompatibility in error output
+                if (strpos($errorOutput, 'must be compatible with') !== false) {
+                    // Extract the specific incompatibility from error message
+                    $errorMessage .= ": Method signature incompatibility detected";
+                } elseif (!empty($errorOutput)) {
+                    // Include first line of actual error
+                    $firstLine = explode("\n", $errorOutput)[0];
+                    if (strpos($firstLine, 'Fatal error') !== false || strpos($firstLine, 'Error') !== false) {
+                        $errorMessage .= ": " . substr($firstLine, 0, 150);
+                    }
+                }
+
+                SystemMessages::sysLogMsg(__CLASS__, $errorMessage, LOG_ERR);
+                $modulesToDisable[$module->uniqid] = $errorMessage;
+            }
+        }
+
+        // Disable all incompatible modules in a single transaction
+        if (!empty($modulesToDisable)) {
+            foreach ($modulesToDisable as $uniqid => $errorMessage) {
+                $module = PbxExtensionModules::findFirstByUniqid($uniqid);
+                if ($module !== null) {
+                    $module->disabled = '1';
+                    $module->disableReason = PbxExtensionState::DISABLED_BY_EXCEPTION;
+                    $module->disableReasonText = $errorMessage;
+                    $module->save();
+
+                    // WHY: Remove module symlink immediately to prevent usage before next restart
+                    // Symlinks are created by Storage::createWorkDirsAfterDBUpgrade() before validation
+                    $moduleDir = "/usr/www/src/Modules/{$uniqid}";
+                    if (is_link($moduleDir)) {
+                        unlink($moduleDir);
+                        SystemMessages::sysLogMsg(
+                            __CLASS__,
+                            "Module {$uniqid} symlink removed after disabling",
+                            LOG_INFO
+                        );
+                    }
+
+                    SystemMessages::sysLogMsg(
+                        __CLASS__,
+                        "Module {$uniqid} has been automatically disabled due to incompatibility",
+                        LOG_WARNING
+                    );
+                }
             }
         }
     }

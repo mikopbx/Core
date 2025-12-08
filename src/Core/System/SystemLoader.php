@@ -287,6 +287,11 @@ class SystemLoader extends Injectable
         $storage->createWorkDirsAfterDBUpgrade();
         $this->echoResultMsg();
 
+        // Validate enabled modules for compatibility issues
+        $this->echoStartMsg(' - Validating enabled modules...');
+        \MikoPBX\Modules\PbxExtensionUtils::validateEnabledModules();
+        $this->echoResultMsg();
+
         // Update the system configuration and applications
         $this->echoStartMsg(' - Updating system configuration...');
         $confUpdate = new UpdateSystemConfig();
