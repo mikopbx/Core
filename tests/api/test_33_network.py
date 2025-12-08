@@ -773,6 +773,7 @@ class TestNetworkIPv6Config:
         # Save IPv6 DNS servers (Google Public DNS IPv6)
         save_data = {
             'staticRoutes': config.get('staticRoutes', []),
+            'internet_interface': iface_id,
             f'primarydns6_{iface_id}': '2001:4860:4860::8888',
             f'secondarydns6_{iface_id}': '2001:4860:4860::8844',
         }
@@ -798,12 +799,13 @@ class TestNetworkIPv6Config:
         # Restore original DNS settings
         restore_data = {
             'staticRoutes': verify['data'].get('staticRoutes', []),
+            'internet_interface': iface_id,
             f'primarydns6_{iface_id}': original_primarydns6,
             f'secondarydns6_{iface_id}': original_secondarydns6,
         }
         api_client.post('network:saveConfig', restore_data)
 
-    def test_05_dual_stack_configuration(self, api_client):
+    def test_05_dual_stack_configuration(self, api_client, is_docker):
         """Test dual-stack configuration (IPv4 + IPv6 simultaneously)"""
         if not TestNetworkIPv6Config.test_interface_id:
             pytest.skip("No interface ID from previous test")
@@ -817,9 +819,9 @@ class TestNetworkIPv6Config:
         save_data = {
             'staticRoutes': config.get('staticRoutes', []),
             f'dhcp_{iface_id}': False,  # Static IPv4
-            f'ipaddr_{iface_id}': '192.168.1.100',
+            f'ipaddr_{iface_id}': '172.16.32.72',
             f'subnet_{iface_id}': '24',
-            f'gateway_{iface_id}': '192.168.1.1',
+            f'gateway_{iface_id}': '172.16.32.15',
             f'ipv6_mode_{iface_id}': '2',  # Manual IPv6
             f'ipv6addr_{iface_id}': '2001:db8::200',
             f'ipv6_subnet_{iface_id}': '64',
@@ -838,8 +840,15 @@ class TestNetworkIPv6Config:
                 break
 
         # IPv4 checks
-        assert saved_iface['dhcp'] == False, "DHCP should be disabled"
-        assert saved_iface['ipaddr'] == '192.168.1.100', "IPv4 address should match"
+        if not is_docker:
+            # WHY: In Docker mode, DHCP is force-enabled by SaveConfigAction:473
+            # Docker runtime manages networking, not MikoPBX
+            assert saved_iface['dhcp'] == False, "DHCP should be disabled"
+            assert saved_iface['ipaddr'] == '172.16.32.72', "IPv4 address should match"
+        else:
+            print("  ℹ️  Skipping DHCP and IP checks (Docker runtime manages networking)")
+            # In Docker, GetConfigAction returns current interface IP (192.168.107.2)
+            # not the value saved to database (172.16.32.72)
 
         # IPv6 checks
         assert saved_iface['ipv6_mode'] == '2', "IPv6 mode should be Manual"
