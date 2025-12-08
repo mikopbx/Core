@@ -46,11 +46,12 @@ class TestIPv6EndToEndNativeDualStack:
         # Configure dual-stack
         save_data = {
             'staticRoutes': response['data'].get('staticRoutes', []),
+            'internet_interface': iface_id,
             # IPv4 Static
             f'dhcp_{iface_id}': False,
-            f'ipaddr_{iface_id}': '192.168.100.10',
+            f'ipaddr_{iface_id}': '172.16.32.72',
             f'subnet_{iface_id}': '24',
-            f'gateway_{iface_id}': '192.168.100.1',
+            f'gateway_{iface_id}': '172.16.32.15',
             # IPv6 Manual
             f'ipv6_mode_{iface_id}': '2',
             f'ipv6addr_{iface_id}': '2001:db8:100::10',
@@ -66,7 +67,7 @@ class TestIPv6EndToEndNativeDualStack:
 
         print(f"✓ Configured dual-stack on interface {iface.get('interface')}")
 
-    def test_02_verify_dual_stack_saved(self, api_client):
+    def test_02_verify_dual_stack_saved(self, api_client, is_docker):
         """Verify dual-stack configuration was saved correctly"""
         if not TestIPv6EndToEndNativeDualStack.test_interface_id:
             pytest.skip("No interface ID from configuration test")
@@ -84,10 +85,17 @@ class TestIPv6EndToEndNativeDualStack:
         assert iface is not None, "Interface should exist"
 
         # Verify IPv4
-        assert iface['dhcp'] == False, "DHCP should be disabled"
-        assert iface['ipaddr'] == '192.168.100.10', "IPv4 address should match"
-        assert iface['subnet'] == '24', "IPv4 subnet should match"
-        assert iface['gateway'] == '192.168.100.1', "IPv4 gateway should match"
+        if not is_docker:
+            # WHY: In Docker mode, DHCP is force-enabled by SaveConfigAction:473
+            # Docker runtime manages networking, not MikoPBX
+            assert iface['dhcp'] == False, "DHCP should be disabled"
+            assert iface['ipaddr'] == '172.16.32.72', "IPv4 address should match"
+            assert iface['subnet'] == '24', "IPv4 subnet should match"
+            assert iface['gateway'] == '172.16.32.15', "IPv4 gateway should match"
+        else:
+            print("  ℹ️  Skipping DHCP and IPv4 checks (Docker runtime manages networking)")
+            # In Docker, GetConfigAction returns current interface IP (192.168.107.2)
+            # not the value saved to database (172.16.32.72)
 
         # Verify IPv6
         assert iface['ipv6_mode'] == '2', "IPv6 mode should be Manual (2)"
@@ -145,6 +153,8 @@ class TestIPv6EndToEndAutoMode:
     """End-to-end test for IPv6 Auto mode (SLAAC/DHCPv6)"""
     test_interface_id = None
     original_ipv6_mode = None
+    original_ipv6addr = None
+    original_ipv6_subnet = None
 
     def test_01_configure_ipv6_auto(self, api_client):
         """Configure IPv6 Auto mode (SLAAC/DHCPv6)"""
@@ -158,6 +168,8 @@ class TestIPv6EndToEndAutoMode:
         iface_id = iface['id']
         TestIPv6EndToEndAutoMode.test_interface_id = iface_id
         TestIPv6EndToEndAutoMode.original_ipv6_mode = iface.get('ipv6_mode', '0')
+        TestIPv6EndToEndAutoMode.original_ipv6addr = iface.get('ipv6addr', '')
+        TestIPv6EndToEndAutoMode.original_ipv6_subnet = iface.get('ipv6_subnet', '')
 
         # Configure IPv6 Auto mode
         save_data = {
@@ -195,9 +207,12 @@ class TestIPv6EndToEndAutoMode:
         if not TestIPv6EndToEndAutoMode.test_interface_id:
             pytest.skip("No interface ID")
 
+        iface_id = TestIPv6EndToEndAutoMode.test_interface_id
         restore_data = {
             'staticRoutes': [],
-            f'ipv6_mode_{TestIPv6EndToEndAutoMode.test_interface_id}': TestIPv6EndToEndAutoMode.original_ipv6_mode,
+            f'ipv6_mode_{iface_id}': TestIPv6EndToEndAutoMode.original_ipv6_mode,
+            f'ipv6addr_{iface_id}': TestIPv6EndToEndAutoMode.original_ipv6addr or '',
+            f'ipv6_subnet_{iface_id}': TestIPv6EndToEndAutoMode.original_ipv6_subnet or '',
         }
 
         api_client.post('network:saveConfig', restore_data)
@@ -376,7 +391,7 @@ class TestIPv6EndToEndValidation:
         for subnet in valid_subnets:
             test_route = {
                 'id': f'new_subnet_{subnet}',
-                'network': '2001:db8:test::',
+                'network': '2001:db8:1::',
                 'subnet': subnet,
                 'gateway': '2001:db8::1'
             }

@@ -327,6 +327,32 @@ class MikoPBXClient:
                 else:
                     raise
 
+    def is_docker_environment(self) -> bool:
+        """
+        Check if MikoPBX is running in Docker environment
+
+        Returns:
+            bool: True if running in Docker, False otherwise
+
+        Implementation:
+            Executes bash command via system:executeBashCommand to check if /.dockerenv exists
+            Docker containers always have this marker file
+        """
+        try:
+            response = self.post('system:executeBashCommand', {
+                'command': 'test -f /.dockerenv && echo "Docker" || echo "NotDocker"'
+            })
+
+            if response.get('result') and 'data' in response:
+                result_data = response['data']
+                if 'output' in result_data:
+                    output = result_data['output'].strip()
+                    return output == 'Docker'
+        except Exception:
+            # If API call fails, assume non-Docker for safety (tests will run normally)
+            pass
+        return False
+
     def upload_file(self, path: str, file_path: str, params: Optional[Dict] = None) -> Dict[str, Any]:
         """
         Upload file using Resumable.js protocol (chunked upload)
@@ -440,6 +466,23 @@ def api_client() -> MikoPBXClient:
 
     # Cleanup: logout after all tests
     client.logout()
+
+
+@pytest.fixture(scope='session')
+def is_docker(api_client) -> bool:
+    """
+    Check if MikoPBX is running in Docker environment
+
+    Returns:
+        bool: True if running in Docker, False otherwise
+
+    Usage:
+        def test_network_config(api_client, is_docker):
+            if not is_docker:
+                # Skip Docker-specific behavior checks
+                assert interface['dhcp'] == False
+    """
+    return api_client.is_docker_environment()
 
 
 @pytest.fixture(scope='session')

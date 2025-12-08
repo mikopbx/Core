@@ -674,12 +674,24 @@ abstract class CloudProvider
         // Apply web password
         if ($config->webPassword !== null) {
             $this->updatePbxSettingsDirect(PbxSettings::WEB_ADMIN_PASSWORD, $config->webPassword);
-            $this->updatePbxSettingsDirect(PbxSettings::CLOUD_INSTANCE_ID, $config->webPassword);
+
+            // Only set CloudInstanceId for real cloud providers, not Docker/NoCloud
+            // Docker uses 12-factor ENV vars applied on every restart
+            // NoCloud is for on-premise where users control passwords
+            if ($this->shouldSetCloudInstanceId()) {
+                $this->updatePbxSettingsDirect(PbxSettings::CLOUD_INSTANCE_ID, $config->webPassword);
+            }
+
             $this->updatePbxSettingsDirect(PbxSettings::PBX_DESCRIPTION, PbxSettings::DEFAULT_CLOUD_PASSWORD_DESCRIPTION);
         } elseif ($config->instanceId !== null) {
             // Use instance ID as web password (cloud provider behavior)
             $this->updatePbxSettingsDirect(PbxSettings::WEB_ADMIN_PASSWORD, $config->instanceId);
-            $this->updatePbxSettingsDirect(PbxSettings::CLOUD_INSTANCE_ID, $config->instanceId);
+
+            // Only set CloudInstanceId for real cloud providers
+            if ($this->shouldSetCloudInstanceId()) {
+                $this->updatePbxSettingsDirect(PbxSettings::CLOUD_INSTANCE_ID, $config->instanceId);
+            }
+
             $this->updatePbxSettingsDirect(PbxSettings::PBX_DESCRIPTION, PbxSettings::DEFAULT_CLOUD_PASSWORD_DESCRIPTION);
         }
 
@@ -723,6 +735,25 @@ abstract class CloudProvider
         $message = "      |- Update LAN settings external IP: $extipaddr";
         $this->publishMessage($message);
         SystemMessages::teletypeEchoResult($message);
+    }
+
+    /**
+     * Determines if CloudInstanceId should be set for this provider.
+     *
+     * CloudInstanceId should only be set for real cloud providers (AWS, GCP, Azure, etc.)
+     * to track the initial deployment password. It should NOT be set for:
+     * - Docker: Uses 12-factor ENV vars applied on every restart
+     * - NoCloud: On-premise installations where users control passwords
+     *
+     * @return bool True if CloudInstanceId should be set
+     */
+    protected function shouldSetCloudInstanceId(): bool
+    {
+        $className = static::class;
+        $providerName = basename(str_replace('\\', '/', $className));
+
+        // Skip CloudInstanceId for Docker and NoCloud
+        return !in_array($providerName, ['DockerCloud', 'NoCloud'], true);
     }
 
     /**
