@@ -27,7 +27,7 @@ use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Common\Models\Storage as StorageModel;
 use MikoPBX\Common\Providers\TranslationProvider;
 use MikoPBX\Core\Config\RegisterDIServices;
-use MikoPBX\Core\System\{Configs\DnsConf, Configs\Fail2BanConf, Configs\IptablesConf, Configs\NginxConf};
+use MikoPBX\Core\System\{Configs\Fail2BanConf, Configs\IptablesConf, Configs\NginxConf};
 use MikoPBX\Core\Utilities\IpAddressHelper;
 use MikoPBX\Service\Main;
 use Phalcon\Di\Di;
@@ -43,6 +43,9 @@ class ConsoleMenu
 {
     private bool $isLiveCd;
     private bool $isDocker;
+    private ?string $cachedBanner = null;
+    private int $bannerTimestamp = 0;
+    private const int BANNER_REFRESH_INTERVAL = 5; // seconds
 
     public function __construct()
     {
@@ -63,6 +66,35 @@ class ConsoleMenu
             // Terminal unknown or cannot determine width, use safe fallback
             putenv('TERM=xterm-256color');
         }
+    }
+
+    /**
+     * Get or refresh cached banner with IP addresses
+     * Caches banner for BANNER_REFRESH_INTERVAL seconds to avoid excessive system calls
+     *
+     * @param CliMenu|null $menu Optional menu instance to update title if refreshed
+     * @return string Banner text with current network information
+     */
+    private function getOrRefreshBanner(?CliMenu $menu = null): string
+    {
+        $now = time();
+
+        // Return cached banner if it's still fresh (less than BANNER_REFRESH_INTERVAL seconds old)
+        if ($this->cachedBanner !== null && ($now - $this->bannerTimestamp) < self::BANNER_REFRESH_INTERVAL) {
+            return $this->cachedBanner;
+        }
+
+        // Generate new banner with current network state
+        $this->cachedBanner = $this->getBannerText();
+        $this->bannerTimestamp = $now;
+
+        // Update menu title if menu instance provided
+        if ($menu !== null) {
+            $menu->setTitle($this->cachedBanner);
+            $menu->redraw();
+        }
+
+        return $this->cachedBanner;
     }
 
     /**
@@ -137,6 +169,9 @@ class ConsoleMenu
         $di = Di::getDefault();
         $translation = $di->getShared(TranslationProvider::SERVICE_NAME);
 
+        // Refresh banner to show current network state
+        $this->getOrRefreshBanner();
+
         // Display current network configuration
         $this->displayNetworkInterfaces();
 
@@ -153,6 +188,9 @@ class ConsoleMenu
 
     public function setupInternetInterface(CliMenu $menu):void
     {
+        // Refresh banner
+        $this->getOrRefreshBanner($menu);
+
         $ethName = $this->setupEthParams($menu);
         if(empty($ethName)){
             return;
@@ -230,6 +268,9 @@ class ConsoleMenu
      * @return void
      */
     public function setupLanAuto (CliMenu $menu) {
+        // Refresh banner
+        $this->getOrRefreshBanner($menu);
+
         $ethName = $this->setupEthParams($menu);
         if(empty($ethName)){
             return;
@@ -882,6 +923,9 @@ class ConsoleMenu
      */
     public function setupLanWizard(CliMenu $menu): void
     {
+        // Refresh banner
+        $this->getOrRefreshBanner($menu);
+
         $di = Di::getDefault();
         $translation = $di->getShared(TranslationProvider::SERVICE_NAME);
 
@@ -977,6 +1021,9 @@ class ConsoleMenu
      */
     public function setupLanguage(CliMenuBuilder $menuBuilder): void
     {
+        // Refresh banner
+        $this->getOrRefreshBanner();
+
         $di = Di::getDefault();
         $translation = $di->getShared(TranslationProvider::SERVICE_NAME);
 
@@ -1051,7 +1098,7 @@ class ConsoleMenu
         $titleSeparator = mb_substr($title . str_repeat($separator, $titleWidth - mb_strlen($title)), 0, $titleWidth);
 
         $menu = new CliMenuBuilder();
-        $menu->setTitle($this->getBannerText())
+        $menu->setTitle($this->getOrRefreshBanner())
             ->setTitleSeparator($titleSeparator)
             ->enableAutoShortcuts()
             ->setPadding(0)
@@ -1264,6 +1311,9 @@ class ConsoleMenu
      */
     public function setupReboot(CliMenuBuilder $b): void
     {
+        // Refresh banner
+        $this->getOrRefreshBanner();
+
         $di = Di::getDefault();
         $translation = $di->getShared(TranslationProvider::SERVICE_NAME);
 
@@ -1306,6 +1356,9 @@ class ConsoleMenu
      */
     public function pingAction(CliMenu $menu): void
     {
+        // Refresh banner
+        $this->getOrRefreshBanner($menu);
+
         $di = Di::getDefault();
         $translation = $di->getShared(TranslationProvider::SERVICE_NAME);
 
@@ -1333,6 +1386,9 @@ class ConsoleMenu
      */
     public function setupFirewall(CliMenu $menu): void
     {
+        // Refresh banner
+        $this->getOrRefreshBanner($menu);
+
         $di = Di::getDefault();
         $translation = $di->getShared(TranslationProvider::SERVICE_NAME);
 
@@ -1385,6 +1441,9 @@ class ConsoleMenu
      */
     public function setupStorage(CliMenuBuilder $b): void
     {
+        // Refresh banner
+        $this->getOrRefreshBanner();
+
         $di = Di::getDefault();
         $translation = $di->getShared(TranslationProvider::SERVICE_NAME);
 
@@ -1498,6 +1557,9 @@ class ConsoleMenu
      */
     public function resetPassword(CliMenu $menu): void
     {
+        // Refresh banner
+        $this->getOrRefreshBanner($menu);
+
         $di = Di::getDefault();
         $translation = $di->getShared(TranslationProvider::SERVICE_NAME);
 
@@ -1542,6 +1604,9 @@ class ConsoleMenu
      */
     public function installRecoveryAction(CliMenu $menu): void
     {
+        // Refresh banner
+        $this->getOrRefreshBanner($menu);
+
         echo "\e[?25h";
         try {
             $menu->close();
@@ -1560,6 +1625,9 @@ class ConsoleMenu
      */
     public function installAction(CliMenu $menu): void
     {
+        // Refresh banner
+        $this->getOrRefreshBanner($menu);
+
         echo "\e[?25h";
         try {
             $menu->close();
@@ -1578,6 +1646,9 @@ class ConsoleMenu
      */
     public function consoleAction(CliMenu $menu): void
     {
+        // Refresh banner
+        $this->getOrRefreshBanner($menu);
+
         // Enable cursor
         echo "\e[?25h";
         try {
