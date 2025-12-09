@@ -19,6 +19,7 @@
 
 namespace MikoPBX\PBXCoreREST\Lib\Cdr;
 
+use MikoPBX\Core\System\Directories;
 use MikoPBX\Core\System\Storage\StorageAdapter;
 use MikoPBX\Core\System\Util;
 use MikoPBX\PBXCoreREST\Lib\PBXApiResult;
@@ -51,7 +52,8 @@ class PlaybackAction extends Injectable
      *
      * Examples:
      *   - /cdr:playback?token=xxx&format=mp3
-     *   - /cdr:playback?view=/path/to/file.webm&format=ogg
+     *   - /cdr:playback?view=/path/to/file.webm               // Legacy: auto-converts to MP3
+     *   - /cdr:playback?view=/path/to/file.webm&format=ogg    // Legacy: uses specified format
      *
      * @return PBXApiResult
      */
@@ -92,15 +94,20 @@ class PlaybackAction extends Injectable
             }
         }
         // ============ MODE 2: Direct path access (LEGACY) ============
-        // WHY: Backward compatibility with existing code
+        // WHY: Backward compatibility with external systems via CDR Events
+        // SECURITY: Only allow paths within AST_MONITOR_DIR (call recordings)
         elseif (!empty($data['view'])) {
-            $filename = $data['view'];
+            // Validate path is within monitor directory
+            // WHY: Prevent Path Traversal attacks (../, symlinks, /etc/passwd)
+            $validation = self::validateMonitorPath($data['view']);
 
-            // Validate that this is actually a CDR recording path
-            if (!self::isCallRecording($filename)) {
-                // Still allow the request but mark as deprecated
-                $res->messages['warning'][] = 'Direct file path access is deprecated. Use token-based access via /pbxcore/api/v3/cdr/{id}:playback?token=xxx';
+            if (!$validation['valid']) {
+                $res->messages['error'][] = $validation['error'];
+                $res->httpCode = 403;
+                return $res;
             }
+
+            $filename = $validation['realPath'];
         } else {
             $res->messages['error'][] = 'Either token or view parameter must be provided';
             $res->httpCode = 400;
@@ -145,7 +152,15 @@ class PlaybackAction extends Injectable
         // ============ FORMAT CONVERSION (OPTIONAL) ============
         // WHY: Allow playback in different formats for browser compatibility
         // Some browsers may not support WebM playback natively
-        $requestedFormat = strtolower($data['format'] ?? 'original');
+
+        // Legacy mode: force MP3 conversion for old integrations
+        // WHY: External systems via CDR Events expect MP3 for compatibility
+        if (!empty($data['view']) && empty($data['format'])) {
+            $requestedFormat = 'mp3';  // Force MP3 for backward compatibility
+        } else {
+            $requestedFormat = strtolower($data['format'] ?? 'original');
+        }
+
         $currentExtension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
         $needDelete = false;
 
@@ -201,21 +216,83 @@ class PlaybackAction extends Injectable
     }
 
     /**
-     * Check if the file path represents a CDR recording
+     * Validate that file path is within AST_MONITOR_DIR (call recordings directory)
      *
-     * CDR recordings are typically stored in:
-     * - /monitor/ - call recordings
-     * - /voicemail/ - voicemail messages
-     * - /voicemailarchive/ - archived voicemail
+     * WHY SECURITY:
+     * - Prevents Path Traversal attacks (../, symlinks)
+     * - External systems via CDR Events receive file paths from this directory
+     * - All call recordings are stored in AST_MONITOR_DIR only
+     * - Rejects any path outside this directory
      *
-     * @param string $path File path to check
-     * @return bool True if this is a CDR recording
+     * @param string $filePath File path from 'view' parameter
+     * @return array{valid: bool, error: string|null, realPath: string|null}
      */
-    private static function isCallRecording(string $path): bool
+    private static function validateMonitorPath(string $filePath): array
     {
-        return str_contains($path, '/monitor/') ||
-               str_contains($path, '/voicemail/') ||
-               str_contains($path, '/voicemailarchive/');
+        // Get canonical monitor directory path
+        $monitorDir = Directories::getDir(Directories::AST_MONITOR_DIR);
+        $realMonitorDir = realpath($monitorDir);
+
+        if ($realMonitorDir === false) {
+            return [
+                'valid' => false,
+                'error' => 'Monitor directory not found',
+                'realPath' => null
+            ];
+        }
+
+        // Resolve file path to canonical form (eliminates ../, symlinks)
+        // WHY: realpath() follows symlinks and resolves all path components
+        // This prevents Path Traversal attacks like:
+        //   /monitor/../../../etc/passwd
+        //   /monitor/link-to-etc/passwd
+        $realFilePath = realpath($filePath);
+
+        if ($realFilePath === false) {
+            // File doesn't exist yet or path is invalid
+            // Try to resolve parent directory
+            $parentDir = dirname($filePath);
+            $realParentDir = realpath($parentDir);
+
+            if ($realParentDir === false) {
+                return [
+                    'valid' => false,
+                    'error' => 'Invalid file path or parent directory does not exist',
+                    'realPath' => null
+                ];
+            }
+
+            // Check if parent is within monitor directory
+            if (!str_starts_with($realParentDir . '/', $realMonitorDir . '/') &&
+                $realParentDir !== $realMonitorDir) {
+                return [
+                    'valid' => false,
+                    'error' => 'File path is outside call recordings directory',
+                    'realPath' => null
+                ];
+            }
+
+            // Construct real path from validated parent
+            $realFilePath = $realParentDir . '/' . basename($filePath);
+        }
+
+        // Check if resolved path is within monitor directory
+        // WHY: str_starts_with ensures path is subdirectory, not just prefix match
+        // Example: /monitor123 would NOT match /monitor/
+        if (!str_starts_with($realFilePath . '/', $realMonitorDir . '/') &&
+            $realFilePath !== $realMonitorDir) {
+            return [
+                'valid' => false,
+                'error' => 'Access denied: file path is outside call recordings directory',
+                'realPath' => null
+            ];
+        }
+
+        return [
+            'valid' => true,
+            'error' => null,
+            'realPath' => $realFilePath
+        ];
     }
 
     /**
