@@ -815,6 +815,13 @@ class TestNetworkIPv6Config:
         config = response['data']
         iface_id = TestNetworkIPv6Config.test_interface_id
 
+        # Save original interface settings for cleanup
+        original_iface = None
+        for iface in config['interfaces']:
+            if iface['id'] == iface_id:
+                original_iface = iface
+                break
+
         # Save configuration with both IPv4 and IPv6
         save_data = {
             'staticRoutes': config.get('staticRoutes', []),
@@ -857,6 +864,26 @@ class TestNetworkIPv6Config:
         print(f"✓ Dual-stack configuration saved:")
         print(f"  IPv4: {saved_iface['ipaddr']}/{saved_iface['subnet']}")
         print(f"  IPv6: {saved_iface['ipv6addr']}/{saved_iface['ipv6_subnet']}")
+
+        # Restore original configuration
+        if original_iface:
+            restore_data = {
+                'staticRoutes': config.get('staticRoutes', []),
+                f'dhcp_{iface_id}': original_iface.get('dhcp', True),
+                f'ipaddr_{iface_id}': original_iface.get('ipaddr', ''),
+                f'subnet_{iface_id}': original_iface.get('subnet', ''),
+                f'gateway_{iface_id}': original_iface.get('gateway', ''),
+                f'primarydns_{iface_id}': original_iface.get('primarydns', ''),
+                f'secondarydns_{iface_id}': original_iface.get('secondarydns', ''),
+                f'ipv6_mode_{iface_id}': original_iface.get('ipv6_mode', '0'),
+                f'ipv6addr_{iface_id}': original_iface.get('ipv6addr', ''),
+                f'ipv6_subnet_{iface_id}': original_iface.get('ipv6_subnet', ''),
+                f'ipv6_gateway_{iface_id}': original_iface.get('ipv6_gateway', ''),
+                f'primarydns6_{iface_id}': original_iface.get('primarydns6', ''),
+                f'secondarydns6_{iface_id}': original_iface.get('secondarydns6', ''),
+            }
+            api_client.post('network:saveConfig', restore_data)
+            print(f"  Restored original network configuration")
 
 
 @pytest.mark.dangerous_network

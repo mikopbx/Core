@@ -498,12 +498,12 @@ class SaveConfigAction
                 case 'gateway':
                 case 'primarydns':
                 case 'secondarydns':
-                    // Use only new interface-specific format (field_name_{id})
-                    if ($itIsInternetInterface) {
-                        $fieldKey = $name . '_' . $eth->id;
-                        $eth->$name = array_key_exists($fieldKey, $data) ? $data[$fieldKey] : '';
-                    } else {
-                        $eth->$name = '';
+                    // WHY: Save gateway/DNS for ALL interfaces, not just internet interface
+                    // Multi-homed servers need gateway on each interface for proper routing
+                    // Static IP interfaces (dhcp=0) require gateway for any outbound traffic
+                    $fieldKey = $name . '_' . $eth->id;
+                    if (array_key_exists($fieldKey, $data)) {
+                        $eth->$name = $data[$fieldKey];
                     }
                     break;
 
