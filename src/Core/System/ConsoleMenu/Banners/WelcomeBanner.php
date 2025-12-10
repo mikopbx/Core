@@ -96,10 +96,12 @@ class WelcomeBanner implements BannerInterface
 
         $lines[] = ''; // Empty line
 
-        // PBX Name
+        // PBX Name (only if customized)
         $pbxName = $this->dataCollector->getPbxName();
-        $lines[] = '    ' . $translation->_('cm_PbxName') . ': '
-            . MenuStyleConfig::colorize($pbxName, MenuStyleConfig::COLOR_CYAN);
+        if ($pbxName !== 'MikoPBX system') {
+            $lines[] = '    ' . $translation->_('cm_PbxName') . ': '
+                . MenuStyleConfig::colorize($pbxName, MenuStyleConfig::COLOR_CYAN);
+        }
 
         // Web Interface URL
         $webInfo = $this->dataCollector->getWebInterfaceInfo();
@@ -264,9 +266,11 @@ class WelcomeBanner implements BannerInterface
             MenuStyleConfig::COLOR_GREEN
         );
 
-        // PBX Name
+        // PBX Name (only if customized)
         $pbxName = $this->dataCollector->getPbxName();
-        $lines[] = '    ' . MenuStyleConfig::colorize($pbxName, MenuStyleConfig::COLOR_CYAN);
+        if ($pbxName !== 'MikoPBX system') {
+            $lines[] = '    ' . MenuStyleConfig::colorize($pbxName, MenuStyleConfig::COLOR_CYAN);
+        }
 
         // Description (if not empty)
         $description = $this->dataCollector->getDescription();
@@ -274,21 +278,10 @@ class WelcomeBanner implements BannerInterface
             $lines[] = '    ' . $description;
         }
 
-        // Copyright
-        $lines[] = '    MikoPBX is Copyright © 2017-2025. All rights reserved.';
-
         // LiveCD warning
         if ($this->dataCollector->isLiveCd()) {
             $lines[] = '    ' . MenuStyleConfig::colorize(
                 $translation->_('cm_PbxLiveModeWarning'),
-                MenuStyleConfig::COLOR_RED
-            );
-        }
-
-        // System integrity warning
-        if ($this->dataCollector->hasCorruptedFiles()) {
-            $lines[] = '    ' . MenuStyleConfig::colorize(
-                $translation->_('cm_SystemIntegrityBroken'),
                 MenuStyleConfig::COLOR_RED
             );
         }

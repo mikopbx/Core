@@ -186,4 +186,9 @@ return [
     'cm_BackToBanner' => 'Back to status screen',
     'cm_PressEnterToContinue' => 'Press Enter to continue...',
     'cm_RestartingWizard' => 'Restarting setup wizard...',
+
+    // System integrity
+    'cm_CheckSystemIntegrity' => 'Check system integrity',
+    'cm_CorruptedFilesFound' => 'Modified files found:',
+    'cm_NoCorruptedFiles' => 'All system files are intact.',
 ];

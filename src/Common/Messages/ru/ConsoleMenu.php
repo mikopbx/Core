@@ -186,4 +186,9 @@ return [
     'cm_BackToBanner' => 'Вернуться к экрану статуса',
     'cm_PressEnterToContinue' => 'Нажмите Enter для продолжения...',
     'cm_RestartingWizard' => 'Перезапуск мастера настройки...',
+
+    // System integrity
+    'cm_CheckSystemIntegrity' => 'Проверка целостности системы',
+    'cm_CorruptedFilesFound' => 'Найдены изменённые файлы:',
+    'cm_NoCorruptedFiles' => 'Все системные файлы в порядке.',
 ];

@@ -31,6 +31,7 @@ use MikoPBX\Core\System\ConsoleMenu\Utilities\MenuStyleConfig;
 use MikoPBX\Core\System\Processes;
 use MikoPBX\Core\System\Storage;
 use MikoPBX\Core\System\Util;
+use MikoPBX\Service\Main;
 use Phalcon\Di\Di;
 use Phalcon\Translate\Adapter\NativeArray;
 use PhpSchool\CliMenu\Builder\CliMenuBuilder;
@@ -358,5 +359,55 @@ class SystemActions
             $pbxRebootPath = Util::which('pbx_reboot');
             Processes::mwExecBg($pbxRebootPath);
         }
+    }
+
+    /**
+     * Show corrupted/modified system files
+     *
+     * Displays list of files that have been modified from their original state.
+     * Uses non-silent mode to also log to syslog.
+     *
+     * @param CliMenu $menu Current menu
+     * @return void
+     */
+    public function showCorruptedFiles(CliMenu $menu): void
+    {
+        $menu->close();
+
+        echo "\n";
+        echo MenuStyleConfig::colorize(
+            $this->translation->_('cm_CheckSystemIntegrity'),
+            MenuStyleConfig::COLOR_CYAN
+        );
+        echo "\n\n";
+
+        // Use non-silent mode to also log to syslog
+        $files = Main::checkForCorruptedFiles(false);
+
+        if (empty($files)) {
+            echo MenuStyleConfig::colorize(
+                $this->translation->_('cm_NoCorruptedFiles'),
+                MenuStyleConfig::COLOR_GREEN
+            );
+            echo "\n";
+        } else {
+            echo MenuStyleConfig::colorize(
+                $this->translation->_('cm_CorruptedFilesFound'),
+                MenuStyleConfig::COLOR_YELLOW
+            );
+            echo "\n\n";
+
+            foreach ($files as $file) {
+                echo "  • $file\n";
+            }
+        }
+
+        echo "\n";
+        echo $this->translation->_('cm_PressEnterToContinue');
+        fgets(STDIN);
+
+        // Return to main menu
+        $mainMenu = new MainMenu();
+        $mainMenu->show();
     }
 }

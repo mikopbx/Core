@@ -77,6 +77,14 @@ class SystemMenu extends AbstractMenu
         });
         $index++;
 
+        // Check system integrity (not in LiveCD)
+        if (!$this->env->isLiveCd()) {
+            $builder->addItem("[$index] " . $this->translation->_('cm_CheckSystemIntegrity'), function (CliMenu $menu) use ($actions) {
+                $actions->showCorruptedFiles($menu);
+            });
+            $index++;
+        }
+
         // [6] Back
         $this->addBackItem($builder, $index, $parentMenu);
 

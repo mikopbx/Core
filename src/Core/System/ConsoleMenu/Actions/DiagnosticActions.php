@@ -35,44 +35,24 @@ class DiagnosticActions
 {
     /**
      * Run Midnight Commander file manager
-     *
-     * @return void
      */
     public function runFileManager(): void
     {
         $mcPath = Util::which('mc');
-        if (empty($mcPath)) {
-            echo "mc not found\n";
-            return;
+        if ($mcPath) {
+            $this->runNcursesApp($mcPath);
         }
-
-        // Reset terminal to sane state before running mc (required after CliMenu closes)
-        passthru('stty sane 2>/dev/null');
-
-        // Run mc and clear screen when done
-        passthru($mcPath);
-        echo "\033[2J\033[H";
     }
 
     /**
      * Run sngrep for SIP packet capture
-     *
-     * @return void
      */
     public function runSngrep(): void
     {
         $sngrepPath = Util::which('sngrep');
-        if (empty($sngrepPath)) {
-            echo "sngrep not found\n";
-            return;
+        if ($sngrepPath) {
+            $this->runNcursesApp($sngrepPath);
         }
-
-        // Reset terminal to sane state before running sngrep (required after CliMenu closes)
-        passthru('stty sane 2>/dev/null');
-
-        // Run sngrep and clear screen when done
-        passthru($sngrepPath);
-        echo "\033[2J\033[H";
     }
 
     /**
@@ -144,20 +124,65 @@ class DiagnosticActions
      * Run mtr for network diagnostics
      *
      * @param string $host Target host
-     * @return void
      */
     public function runMtr(string $host): void
     {
         $mtrPath = Util::which('mtr');
-        if (empty($mtrPath)) {
-            echo "mtr not found\n";
-            return;
+        if ($mtrPath) {
+            $this->runNcursesApp($mtrPath . ' ' . escapeshellarg($host));
+        }
+    }
+
+    /**
+     * Run ncurses application via wrapper script
+     *
+     * Creates a temporary shell script that properly initializes terminal
+     * before running the application. This is necessary because PHP passthru()
+     * doesn't properly pass terminal control for commands like 'reset'.
+     *
+     * @param string $command Command to run
+     */
+    private function runNcursesApp(string $command): void
+    {
+        $term = $this->getOptimalTerm();
+        $wrapper = "/tmp/ncurses_" . getmypid() . ".sh";
+
+        // Create and run wrapper script
+        $script = "#!/bin/sh\nexport TERM=$term\nreset\nexec $command\n";
+        file_put_contents($wrapper, $script);
+        chmod($wrapper, 0755);
+        passthru($wrapper);
+
+        // Cleanup and clear screen
+        @unlink($wrapper);
+        echo "\033[2J\033[H";
+    }
+
+    /**
+     * Determine optimal TERM value based on console type
+     *
+     * Serial consoles (ttyS*, ttyAMA*) use TERM=linux for proper VGA charset
+     * PTY/SSH sessions use TERM=xterm-256color for full color and Unicode support
+     * System console (/dev/console) preserves current TERM from environment
+     *
+     * @return string Terminal type
+     */
+    private function getOptimalTerm(): string
+    {
+        $tty = @exec('tty 2>/dev/null');
+
+        // Serial console (ttyS0, ttyS1, ttyAMA0 for ARM)
+        if (preg_match('#/dev/tty(S|AMA)\d+#', $tty)) {
+            return 'linux';
         }
 
-        passthru("$mtrPath " . escapeshellarg($host));
+        // System console or unknown - preserve current TERM from environment
+        if ($tty === '/dev/console' || empty($tty) || $tty === 'not a tty') {
+            $currentTerm = getenv('TERM');
+            return $currentTerm ?: 'linux';
+        }
 
-        // Reset terminal to sane state after ncurses application
-        passthru('stty sane 2>/dev/null');
-        echo "\033[2J\033[H";
+        // PTY (SSH, telnet) - use xterm-256color as recommended for sngrep
+        return 'xterm-256color';
     }
 }

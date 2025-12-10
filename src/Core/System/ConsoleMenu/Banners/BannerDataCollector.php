@@ -247,19 +247,28 @@ class BannerDataCollector
     /**
      * Check system integrity for corrupted files
      *
+     * Uses silent mode to avoid syslog output in banner display.
+     * Skipped on LiveCD as files may differ from installed version.
+     *
      * @return bool True if system integrity is broken
      */
     public function hasCorruptedFiles(): bool
     {
-        if (Util::isT2SdeLinux()) {
-            return count(Main::checkForCorruptedFiles()) > 0;
+        // Skip on LiveCD - files may differ from installed version
+        if ($this->isLiveCd()) {
+            return false;
         }
 
-        if (php_uname('m') === 'x86_64' && System::isDocker()) {
-            return count(Main::checkForCorruptedFiles()) > 0;
-        }
+        // TODO: Remove platform restrictions if unified builds work correctly
+        // Previously limited to T2SDE Linux and x86_64 Docker only
+        // if (Util::isT2SdeLinux()) {
+        //     return count(Main::checkForCorruptedFiles(true)) > 0;
+        // }
+        // if (php_uname('m') === 'x86_64' && System::isDocker()) {
+        //     return count(Main::checkForCorruptedFiles(true)) > 0;
+        // }
 
-        return false;
+        return count(Main::checkForCorruptedFiles(true)) > 0;
     }
 
     /**
