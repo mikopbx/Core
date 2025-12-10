@@ -69,6 +69,7 @@ class Fail2BanConf extends SystemConfigClass
      */
     public function __construct()
     {
+        parent::__construct();
         $this->fail2banEnable = self::fail2BanEnable();
         $binPath = Util::which(self::FB_CLIENT_BIN);
         $this->startCommand = "$binPath -x start";

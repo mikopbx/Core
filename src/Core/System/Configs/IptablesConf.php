@@ -56,6 +56,7 @@ class IptablesConf extends Injectable
      */
     public function __construct()
     {
+        parent::__construct();
         // Check if the firewall is enabled.
         $this->firewall_enable  =  intval(PbxSettings::getValueByKey(PbxSettings::PBX_FIREWALL_ENABLED)) === 1;
         // Get the SIP, TLS, and RTP port settings.
