@@ -50,6 +50,12 @@ return [
     'cm_FirewallDisabled' => 'Межсетевой экран отключен',
     'cm_DoYouWantFirewallAction' => 'Вы хотите %action% межсетевой экран? (y/n): ',
 
+    // HTTP Redirect
+    'cm_HttpRedirect' => 'Редирект HTTP на HTTPS',
+    'cm_HttpRedirectEnabled' => 'включен',
+    'cm_HttpRedirectDisabled' => 'отключен',
+    'cm_DoYouWantHttpRedirectAction' => 'Вы хотите %action% редирект HTTP? (y/n): ',
+
     // Storage
     'cm_Storage' => 'Хранилище',
     'cm_ConnectStorage' => 'Подключить хранилище',
@@ -123,4 +129,61 @@ return [
     // Validation errors
     'cm_InvalidIPv6Address' => 'Неверный IPv6 адрес',
     'cm_InvalidIPv6Gateway' => 'Неверный IPv6 шлюз',
+
+    // New modular menu system (ESXi-style)
+    'cm_Settings' => 'Настройки',
+    'cm_MonitoringAndDiagnostics' => 'Мониторинг и диагностика',
+    'cm_NetworkAndConnection' => 'Сеть и подключение',
+    'cm_System' => 'Система',
+    'cm_Services' => 'Службы',
+
+    // Network info display
+    'cm_NetworkInformation' => 'Информация о сети',
+    'cm_CurrentNetworkConfiguration' => 'Текущая конфигурация сети',
+    'cm_ConfigureInterfaces' => 'Настроить сетевые интерфейсы',
+    'cm_ShowNetworkInfo' => 'Показать информацию о сети',
+    'cm_Mtr' => 'MTR (диагностика сети)',
+    'cm_MtrSelectHost' => 'Выберите хост для MTR',
+    'cm_MtrGateway' => 'Шлюз',
+    'cm_MtrCustomHost' => 'Ввести свой адрес',
+    'cm_NoInterfacesConfigured' => 'Сетевые интерфейсы не настроены',
+    'cm_NotConfigured' => 'Не настроено',
+    'cm_RoutingTables' => 'Таблицы маршрутизации',
+    'cm_DnsServers' => 'DNS серверы',
+
+    // Log viewing
+    'cm_ViewLogs' => 'Просмотр логов',
+    'cm_SelectLogMode' => 'Выбрать режим просмотра',
+    'cm_SelectLogAndMode' => 'Выбрать лог и режим просмотра',
+    'cm_LogSystem' => 'Системный лог',
+    'cm_LogAsterisk' => 'Лог Asterisk',
+    'cm_LogPHP' => 'Лог PHP',
+    'cm_LogNginx' => 'Лог Nginx',
+    'cm_LogFail2ban' => 'Лог Fail2ban',
+    'cm_LogFileNotFound' => 'Файл лога не найден',
+
+    // vi commands help
+    'cm_ViGoEnd' => 'в конец',
+    'cm_ViExit' => 'выход',
+    'cm_ViReload' => 'обновить',
+
+    // Asterisk diagnostics
+    'cm_AsteriskDiagnostics' => 'Диагностика Asterisk',
+    'cm_Sngrep' => 'Sngrep (захват SIP пакетов)',
+    'cm_AsteriskCLI' => 'Консоль Asterisk (asterisk -r)',
+    'cm_ActiveChannels' => 'Активные каналы',
+    'cm_PjsipEndpoints' => 'PJSIP конечные точки',
+    'cm_PjsipRegistrations' => 'Регистрации провайдеров',
+
+    // File manager and utilities
+    'cm_FileManager' => 'Файловый менеджер (mc)',
+
+    // Banner display
+    'cm_PbxName' => 'Имя PBX',
+    'cm_PbxDescription' => 'Описание',
+    'cm_Uptime' => 'Время работы',
+    'cm_PressAnyKey' => 'Нажмите любую клавишу...',
+    'cm_BackToBanner' => 'Вернуться к экрану статуса',
+    'cm_PressEnterToContinue' => 'Нажмите Enter для продолжения...',
+    'cm_RestartingWizard' => 'Перезапуск мастера настройки...',
 ];

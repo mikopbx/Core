@@ -50,6 +50,12 @@ return [
     'cm_FirewallDisabled' => 'Firewall disabled',
     'cm_DoYouWantFirewallAction' => 'Do you want to %action% firewall now? (y/n): ',
 
+    // HTTP Redirect
+    'cm_HttpRedirect' => 'HTTP to HTTPS redirect',
+    'cm_HttpRedirectEnabled' => 'enabled',
+    'cm_HttpRedirectDisabled' => 'disabled',
+    'cm_DoYouWantHttpRedirectAction' => 'Do you want to %action% HTTP redirect now? (y/n): ',
+
     // Storage
     'cm_Storage' => 'Storage',
     'cm_ConnectStorage' => 'Connect storage',
@@ -123,4 +129,61 @@ return [
     // Validation errors
     'cm_InvalidIPv6Address' => 'Invalid IPv6 address',
     'cm_InvalidIPv6Gateway' => 'Invalid IPv6 gateway',
+
+    // New modular menu system (ESXi-style)
+    'cm_Settings' => 'Settings',
+    'cm_MonitoringAndDiagnostics' => 'Monitoring and Diagnostics',
+    'cm_NetworkAndConnection' => 'Network and Connection',
+    'cm_System' => 'System',
+    'cm_Services' => 'Services',
+
+    // Network info display
+    'cm_NetworkInformation' => 'Network Information',
+    'cm_CurrentNetworkConfiguration' => 'Current Network Configuration',
+    'cm_ConfigureInterfaces' => 'Configure network interfaces',
+    'cm_ShowNetworkInfo' => 'Show network information',
+    'cm_Mtr' => 'MTR (network diagnostics)',
+    'cm_MtrSelectHost' => 'Select host for MTR',
+    'cm_MtrGateway' => 'Gateway',
+    'cm_MtrCustomHost' => 'Enter custom address',
+    'cm_NoInterfacesConfigured' => 'No network interfaces configured',
+    'cm_NotConfigured' => 'Not configured',
+    'cm_RoutingTables' => 'Routing tables',
+    'cm_DnsServers' => 'DNS servers',
+
+    // Log viewing
+    'cm_ViewLogs' => 'View logs',
+    'cm_SelectLogMode' => 'Select viewing mode',
+    'cm_SelectLogAndMode' => 'Select log and viewing mode',
+    'cm_LogSystem' => 'System log',
+    'cm_LogAsterisk' => 'Asterisk log',
+    'cm_LogPHP' => 'PHP log',
+    'cm_LogNginx' => 'Nginx log',
+    'cm_LogFail2ban' => 'Fail2ban log',
+    'cm_LogFileNotFound' => 'Log file not found',
+
+    // vi commands help
+    'cm_ViGoEnd' => 'go to end',
+    'cm_ViExit' => 'exit',
+    'cm_ViReload' => 'reload',
+
+    // Asterisk diagnostics
+    'cm_AsteriskDiagnostics' => 'Asterisk Diagnostics',
+    'cm_Sngrep' => 'Sngrep (SIP packet capture)',
+    'cm_AsteriskCLI' => 'Asterisk console (asterisk -r)',
+    'cm_ActiveChannels' => 'Active channels',
+    'cm_PjsipEndpoints' => 'PJSIP endpoints',
+    'cm_PjsipRegistrations' => 'PJSIP registrations (providers)',
+
+    // File manager and utilities
+    'cm_FileManager' => 'File manager (mc)',
+
+    // Banner display
+    'cm_PbxName' => 'PBX Name',
+    'cm_PbxDescription' => 'Description',
+    'cm_Uptime' => 'Uptime',
+    'cm_PressAnyKey' => 'Press any key...',
+    'cm_BackToBanner' => 'Back to status screen',
+    'cm_PressEnterToContinue' => 'Press Enter to continue...',
+    'cm_RestartingWizard' => 'Restarting setup wizard...',
 ];

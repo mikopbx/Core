@@ -1,0 +1,333 @@
+<?php
+
+/*
+ * MikoPBX - free phone system for small business
+ * Copyright © 2017-2025 Alexey Portnov and Nikolay Beketov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <https://www.gnu.org/licenses/>.
+ */
+
+namespace MikoPBX\Core\System\ConsoleMenu\Banners;
+
+use MikoPBX\Common\Models\PbxSettings;
+use MikoPBX\Core\System\Configs\Fail2BanConf;
+use MikoPBX\Core\System\Configs\NginxConf;
+use MikoPBX\Core\System\Configs\PbxConf;
+use MikoPBX\Core\System\Configs\PHPConf;
+use MikoPBX\Core\System\Network;
+use MikoPBX\Core\System\System;
+use MikoPBX\Core\System\Util;
+use MikoPBX\Core\Utilities\IpAddressHelper;
+use MikoPBX\Service\Main;
+
+/**
+ * Collects system data for banner display
+ *
+ * Gathers information about version, network, services, and system status.
+ * Data is used by WelcomeBanner for rendering the ESXi-style banner.
+ */
+class BannerDataCollector
+{
+    private Network $network;
+
+    public function __construct()
+    {
+        $this->network = new Network();
+    }
+
+    /**
+     * Get MikoPBX version
+     *
+     * @return string Version string (e.g., "2025.1.1")
+     */
+    public function getVersion(): string
+    {
+        if (file_exists('/offload/version')) {
+            $versionFile = '/offload/version';
+        } else {
+            $versionFile = '/etc/version';
+        }
+
+        return trim(file_get_contents($versionFile) ?: 'Unknown');
+    }
+
+    /**
+     * Get build timestamp
+     *
+     * @return string Build date/time string
+     */
+    public function getBuildTime(): string
+    {
+        return trim(file_get_contents('/etc/version.buildtime') ?: 'Unknown');
+    }
+
+    /**
+     * Get virtual hardware type (Docker, VMware, KVM, etc.)
+     *
+     * @return string Hardware type in uppercase, empty for baremetal
+     */
+    public function getVirtualHardwareType(): string
+    {
+        $pbxEnvDetect = '/sbin/pbx-env-detect';
+        if (!file_exists($pbxEnvDetect) || !is_executable($pbxEnvDetect)) {
+            return '';
+        }
+
+        $detectedType = trim(shell_exec("$pbxEnvDetect --type --nocache 2>/dev/null") ?? '');
+        if (empty($detectedType) || $detectedType === 'baremetal') {
+            return '';
+        }
+
+        return strtoupper($detectedType);
+    }
+
+    /**
+     * Get CPU architecture display name
+     *
+     * @return string Architecture (x64, arm64, or raw uname value)
+     */
+    public function getArchitecture(): string
+    {
+        if (System::isARM64()) {
+            return 'arm64';
+        }
+        if (System::isAMD64()) {
+            return 'x64';
+        }
+        return php_uname('m');
+    }
+
+    /**
+     * Get PBX name from settings
+     *
+     * @return string PBX name
+     */
+    public function getPbxName(): string
+    {
+        return PbxSettings::getValueByKey(PbxSettings::PBX_NAME) ?: 'PBX system';
+    }
+
+    /**
+     * Get PBX description from settings
+     *
+     * @return string PBX description (empty if not set)
+     */
+    public function getDescription(): string
+    {
+        return PbxSettings::getValueByKey(PbxSettings::PBX_DESCRIPTION) ?: '';
+    }
+
+    /**
+     * Get web interface URL for the internet interface
+     *
+     * @return array{url: string, ip: string, port: string} Web interface info
+     */
+    public function getWebInterfaceInfo(): array
+    {
+        $result = ['url' => '', 'ip' => '', 'port' => ''];
+
+        $networks = $this->network->getEnabledLanInterfaces();
+
+        foreach ($networks as $if_data) {
+            if ($if_data['internet'] !== '1') {
+                continue;
+            }
+
+            $ifName = ($if_data['vlanid'] > 0) ? "vlan{$if_data['vlanid']}" : $if_data['interface'];
+            $interface = $this->network->getInterface($ifName);
+
+            // Prefer IPv4, fallback to IPv6
+            $ip = '';
+            if (!empty($interface['ipaddr'])) {
+                $ip = $interface['ipaddr'];
+            } elseif (!empty($interface['ipv6addr'])) {
+                $ip = $interface['ipv6addr'];
+            }
+
+            if (empty($ip)) {
+                break;
+            }
+
+            $httpsPort = PbxSettings::getValueByKey(PbxSettings::WEB_HTTPS_PORT) ?: '443';
+
+            // Build URL with proper IPv6 bracket handling
+            $webUrl = 'https://';
+            if (IpAddressHelper::isIpv6($ip)) {
+                $webUrl .= '[' . $ip . ']';
+            } else {
+                $webUrl .= $ip;
+            }
+
+            // Add port only if non-standard
+            if ($httpsPort !== '443') {
+                $webUrl .= ':' . $httpsPort;
+            }
+
+            $result = ['url' => $webUrl, 'ip' => $ip, 'port' => $httpsPort];
+            break;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Get SSH port from settings
+     *
+     * @return string SSH port number
+     */
+    public function getSshPort(): string
+    {
+        return PbxSettings::getValueByKey(PbxSettings::SSH_PORT) ?: '22';
+    }
+
+    /**
+     * Get system uptime in compact format
+     *
+     * @return string Uptime in format "Xd Yh Zm" (e.g., "2d 3h 45m")
+     */
+    public function getUptime(): string
+    {
+        $uptimeFile = '/proc/uptime';
+        if (!file_exists($uptimeFile)) {
+            return '';
+        }
+
+        $uptimeData = file_get_contents($uptimeFile);
+        if ($uptimeData === false) {
+            return '';
+        }
+
+        $seconds = (int)explode(' ', $uptimeData)[0];
+
+        $days = floor($seconds / 86400);
+        $hours = floor(($seconds % 86400) / 3600);
+        $minutes = floor(($seconds % 3600) / 60);
+
+        $parts = [];
+        if ($days > 0) {
+            $parts[] = "{$days}d";
+        }
+        if ($hours > 0 || $days > 0) {
+            $parts[] = "{$hours}h";
+        }
+        $parts[] = "{$minutes}m";
+
+        return implode(' ', $parts);
+    }
+
+    /**
+     * Get service statuses for banner display
+     *
+     * Uses unified isRunning() method from service configuration classes.
+     * This allows consistent status checking across console menu, Zabbix, and other tools.
+     *
+     * @return array<string, bool> Service name => running status
+     */
+    public function getServiceStatuses(): array
+    {
+        return [
+            'Asterisk' => (new PbxConf())->isRunning(),
+            'Nginx' => (new NginxConf())->isRunning(),
+            'PHP' => (new PHPConf())->isRunning(),
+            'Fail2ban' => (new Fail2BanConf())->isRunning(),
+        ];
+    }
+
+    /**
+     * Check system integrity for corrupted files
+     *
+     * @return bool True if system integrity is broken
+     */
+    public function hasCorruptedFiles(): bool
+    {
+        if (Util::isT2SdeLinux()) {
+            return count(Main::checkForCorruptedFiles()) > 0;
+        }
+
+        if (php_uname('m') === 'x86_64' && System::isDocker()) {
+            return count(Main::checkForCorruptedFiles()) > 0;
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if running in LiveCD mode
+     *
+     * @return bool True if running from LiveCD
+     */
+    public function isLiveCd(): bool
+    {
+        return file_exists('/offload/livecd');
+    }
+
+    /**
+     * Check if running in Docker
+     *
+     * @return bool True if running in Docker container
+     */
+    public function isDocker(): bool
+    {
+        return System::isDocker();
+    }
+
+    /**
+     * Get storage disk usage information
+     *
+     * @return array{used: string, total: string, percent: int}|null Storage info or null if not mounted
+     */
+    public function getStorageInfo(): ?array
+    {
+        $storagePath = '/storage/usbdisk1';
+
+        if (!is_dir($storagePath) || !is_readable($storagePath)) {
+            return null;
+        }
+
+        $total = @disk_total_space($storagePath);
+        $free = @disk_free_space($storagePath);
+
+        if ($total === false || $free === false || $total === 0) {
+            return null;
+        }
+
+        $used = $total - $free;
+        $percent = (int)round(($used / $total) * 100);
+
+        return [
+            'used' => $this->formatBytes($used),
+            'total' => $this->formatBytes($total),
+            'percent' => $percent,
+        ];
+    }
+
+    /**
+     * Format bytes to human-readable string
+     *
+     * @param int|float $bytes Bytes count
+     * @return string Formatted size (e.g., "1.5 GB")
+     */
+    private function formatBytes(int|float $bytes): string
+    {
+        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        $index = 0;
+
+        while ($bytes >= 1024 && $index < count($units) - 1) {
+            $bytes /= 1024;
+            $index++;
+        }
+
+        return round($bytes, 1) . ' ' . $units[$index];
+    }
+}
