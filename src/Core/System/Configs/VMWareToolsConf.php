@@ -38,7 +38,6 @@ class VMWareToolsConf
 
     public function __construct()
     {
-        parent::__construct();
         $binPath = Util::which(self::PROC_NAME);
         $this->startCommand = "$binPath --background=/var/run/".self::PROC_NAME.".pid";
     }
