@@ -22,12 +22,14 @@ namespace MikoPBX\Core\System\ConsoleMenu\Banners;
 
 use MikoPBX\Common\Models\PbxSettings;
 use MikoPBX\Core\System\Configs\Fail2BanConf;
+use MikoPBX\Core\System\Configs\MonitConf;
+use MikoPBX\Core\System\Configs\NatsConf;
 use MikoPBX\Core\System\Configs\NginxConf;
 use MikoPBX\Core\System\Configs\PbxConf;
 use MikoPBX\Core\System\Configs\PHPConf;
+use MikoPBX\Core\System\Configs\RedisConf;
 use MikoPBX\Core\System\Network;
 use MikoPBX\Core\System\System;
-use MikoPBX\Core\System\Util;
 use MikoPBX\Core\Utilities\IpAddressHelper;
 use MikoPBX\Service\Main;
 
@@ -232,6 +234,10 @@ class BannerDataCollector
      * Uses unified isRunning() method from service configuration classes.
      * This allows consistent status checking across console menu, Zabbix, and other tools.
      *
+     * Returns services in two groups:
+     * - Core: Asterisk, Nginx, PHP (essential for PBX operation)
+     * - System: Redis, Nats, Fail2ban, Monit (infrastructure services)
+     *
      * @return array<string, bool> Service name => running status
      */
     public function getServiceStatuses(): array
@@ -240,7 +246,42 @@ class BannerDataCollector
             'Asterisk' => (new PbxConf())->isRunning(),
             'Nginx' => (new NginxConf())->isRunning(),
             'PHP' => (new PHPConf())->isRunning(),
+            'Redis' => (new RedisConf())->isRunning(),
+            'Nats' => (new NatsConf())->isRunning(),
             'Fail2ban' => (new Fail2BanConf())->isRunning(),
+            'Monit' => (new MonitConf())->isRunning(),
+        ];
+    }
+
+    /**
+     * Get system load average
+     *
+     * Reads from /proc/loadavg and returns load values for 1, 5, and 15 minutes.
+     * Color thresholds: green < 1.0, yellow 1.0-2.0, red > 2.0
+     *
+     * @return array{load1: float, load5: float, load15: float}|null Load values or null if unavailable
+     */
+    public function getLoadAverage(): ?array
+    {
+        $loadAvgFile = '/proc/loadavg';
+        if (!file_exists($loadAvgFile)) {
+            return null;
+        }
+
+        $content = file_get_contents($loadAvgFile);
+        if ($content === false) {
+            return null;
+        }
+
+        $parts = explode(' ', $content);
+        if (count($parts) < 3) {
+            return null;
+        }
+
+        return [
+            'load1' => (float)$parts[0],
+            'load5' => (float)$parts[1],
+            'load15' => (float)$parts[2],
         ];
     }
 
@@ -259,16 +300,7 @@ class BannerDataCollector
             return false;
         }
 
-        // TODO: Remove platform restrictions if unified builds work correctly
-        // Previously limited to T2SDE Linux and x86_64 Docker only
-        // if (Util::isT2SdeLinux()) {
-        //     return count(Main::checkForCorruptedFiles(true)) > 0;
-        // }
-        // if (php_uname('m') === 'x86_64' && System::isDocker()) {
-        //     return count(Main::checkForCorruptedFiles(true)) > 0;
-        // }
-
-        return count(Main::checkForCorruptedFiles(true)) > 0;
+        return count(Main::checkForCorruptedFiles()) > 0;
     }
 
     /**
@@ -307,7 +339,7 @@ class BannerDataCollector
         $total = @disk_total_space($storagePath);
         $free = @disk_free_space($storagePath);
 
-        if ($total === false || $free === false || $total === 0) {
+        if ($total === false || $free === false || $total <= 0) {
             return null;
         }
 

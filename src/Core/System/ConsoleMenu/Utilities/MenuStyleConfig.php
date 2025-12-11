@@ -37,15 +37,28 @@ class MenuStyleConfig
     private const int MAX_WIDTH = 160;
     private const int DEFAULT_WIDTH = 80;
 
-    // ANSI color codes
+    // ANSI foreground color codes
     public const string COLOR_GREEN = "\033[01;32m";
     public const string COLOR_RED = "\033[01;31m";
     public const string COLOR_YELLOW = "\033[01;33m";
     public const string COLOR_CYAN = "\033[01;36m";
     public const string COLOR_BLUE = "\033[01;34m";
+    public const string COLOR_WHITE = "\033[01;37m";
+    public const string COLOR_ORANGE = "\033[38;5;208m";  // Claude Code style accent
     public const string COLOR_RESET = "\033[39m";
     public const string COLOR_BOLD = "\033[1m";
     public const string COLOR_RESET_ALL = "\033[0m";
+
+    // ANSI background color codes (Claude Code inspired dark theme)
+    public const string BG_BLACK = "\033[40m";
+    public const string BG_DARK = "\033[48;5;236m";  // Dark gray like Claude Code
+    public const string BG_RESET = "\033[49m";
+
+    // Screen control codes
+    public const string CLEAR_SCREEN = "\033[2J";
+    public const string CURSOR_HOME = "\033[H";
+    public const string HIDE_CURSOR = "\033[?25l";
+    public const string SHOW_CURSOR = "\033[?25h";
 
     // Service status indicators
     public const string STATUS_OK = '●';
@@ -227,5 +240,96 @@ class MenuStyleConfig
             $width = $this->getMenuWidth();
         }
         return str_repeat($char, $width);
+    }
+
+    /**
+     * Get terminal height
+     *
+     * @return int Terminal height in lines
+     */
+    public function getTerminalHeight(): int
+    {
+        $height = 24; // Default
+        exec('tput lines 2>/dev/null', $output, $exitCode);
+
+        if ($exitCode === 0 && !empty($output[0])) {
+            $height = (int)$output[0];
+        }
+
+        return max(20, $height);
+    }
+
+    /**
+     * Set terminal background color for fullscreen display
+     *
+     * @param string $bgColor Background color constant (BG_BLUE, BG_BLACK, etc.)
+     * @return void
+     */
+    public static function setTerminalBackground(string $bgColor): void
+    {
+        echo $bgColor;
+    }
+
+    /**
+     * Reset terminal to default colors
+     *
+     * @return void
+     */
+    public static function resetTerminal(): void
+    {
+        echo self::BG_RESET . self::COLOR_RESET_ALL . self::SHOW_CURSOR;
+    }
+
+    /**
+     * Clear screen and move cursor to home position
+     *
+     * @return void
+     */
+    public static function clearScreen(): void
+    {
+        echo self::CLEAR_SCREEN . self::CURSOR_HOME;
+    }
+
+    /**
+     * Fill entire screen with background color
+     *
+     * @param string $bgColor Background color constant
+     * @return void
+     */
+    public function fillScreenBackground(string $bgColor): void
+    {
+        $width = $this->terminalWidth;
+        $height = $this->getTerminalHeight();
+
+        echo $bgColor;
+        self::clearScreen();
+
+        // Fill screen with spaces to apply background
+        $emptyLine = str_repeat(' ', $width);
+        for ($i = 0; $i < $height; $i++) {
+            echo $emptyLine . PHP_EOL;
+        }
+
+        // Return cursor to top
+        echo self::CURSOR_HOME;
+    }
+
+    /**
+     * Format load average value with color based on threshold
+     *
+     * @param float $load Load average value
+     * @return string Colored load value
+     */
+    public static function formatLoadValue(float $load): string
+    {
+        $formatted = number_format($load, 2);
+
+        if ($load < 1.0) {
+            return self::colorize($formatted, self::COLOR_GREEN);
+        }
+        if ($load < 2.0) {
+            return self::colorize($formatted, self::COLOR_YELLOW);
+        }
+        return self::colorize($formatted, self::COLOR_RED);
     }
 }

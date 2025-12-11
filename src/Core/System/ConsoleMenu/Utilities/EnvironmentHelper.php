@@ -178,4 +178,42 @@ class EnvironmentHelper
         }
         return '';
     }
+
+    /**
+     * Check if running on a serial console
+     *
+     * Serial consoles (ttyS*, ttyAMA*) have limited display capabilities.
+     * Graphical consoles (pts/*, tty*, console) support fullscreen banners.
+     *
+     * @return bool True if running on serial console
+     */
+    public function isSerialConsole(): bool
+    {
+        $tty = trim(shell_exec('tty 2>/dev/null') ?? '');
+
+        if (empty($tty) || $tty === 'not a tty') {
+            // Not attached to terminal, assume graphical
+            return false;
+        }
+
+        // Serial console patterns: /dev/ttyS0, /dev/ttyAMA0, /dev/ttyUSB0
+        if (preg_match('#/dev/tty(S|AMA|USB)\d+#', $tty)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if fullscreen banner should be displayed
+     *
+     * Returns true for graphical consoles (VM console, SSH) where we can
+     * display a rich ASCII-art banner with box drawing characters.
+     *
+     * @return bool True if fullscreen banner is supported
+     */
+    public function supportsFullscreenBanner(): bool
+    {
+        return !$this->isSerialConsole();
+    }
 }

@@ -21,37 +21,71 @@
 namespace MikoPBX\Core\System\ConsoleMenu\Banners;
 
 use MikoPBX\Common\Providers\TranslationProvider;
+use MikoPBX\Core\System\ConsoleMenu\Utilities\EnvironmentHelper;
 use MikoPBX\Core\System\ConsoleMenu\Utilities\MenuStyleConfig;
 use Phalcon\Di\Di;
 
 /**
  * ESXi-style welcome banner for console display
  *
+ * Supports two display modes:
+ * - Compact: For serial consoles (ttyS*, ttyAMA*) - simple text format
+ * - Fullscreen: For VM/SSH consoles - ASCII art logo with box drawing
+ *
  * Displays system information including:
  * - Version and build information
- * - PBX name
+ * - PBX name and description
  * - Web interface and SSH URLs
- * - Service status indicators
- * - System uptime
+ * - Service status indicators (7 services)
+ * - System uptime and load average
+ * - Storage usage
  *
  * Supports auto-refresh and terminal width adaptation.
  */
 class WelcomeBanner implements BannerInterface
 {
     private const int MIN_WIDTH = 60;
+    private const int FULLSCREEN_MIN_WIDTH = 80;
     private const int AUTO_REFRESH_INTERVAL = 60; // seconds
+
+    // ASCII art logo for MikoPBX (7 lines)
+    private const array ASCII_LOGO = [
+        '███╗   ███╗██╗██╗  ██╗ ██████╗ ██████╗ ██████╗ ██╗  ██╗',
+        '████╗ ████║██║██║ ██╔╝██╔═══██╗██╔══██╗██╔══██╗╚██╗██╔╝',
+        '██╔████╔██║██║█████╔╝ ██║   ██║██████╔╝██████╔╝ ╚███╔╝ ',
+        '██║╚██╔╝██║██║██╔═██╗ ██║   ██║██╔═══╝ ██╔══██╗ ██╔██╗ ',
+        '██║ ╚═╝ ██║██║██║  ██╗╚██████╔╝██║     ██████╔╝██╔╝ ██╗',
+        '╚═╝     ╚═╝╚═╝╚═╝  ╚═╝ ╚═════╝ ╚═╝     ╚═════╝ ╚═╝  ╚═╝',
+    ];
+
+    // Box drawing characters for fullscreen mode
+    private const string BOX_TOP_LEFT = '╔';
+    private const string BOX_TOP_RIGHT = '╗';
+    private const string BOX_BOTTOM_LEFT = '╚';
+    private const string BOX_BOTTOM_RIGHT = '╝';
+    private const string BOX_HORIZONTAL = '═';
+    private const string BOX_VERTICAL = '║';
+    private const string BOX_T_LEFT = '╠';
+    private const string BOX_T_RIGHT = '╣';
 
     private BannerDataCollector $dataCollector;
     private MenuStyleConfig $styleConfig;
+    private EnvironmentHelper $envHelper;
 
     public function __construct()
     {
         $this->dataCollector = new BannerDataCollector();
         $this->styleConfig = new MenuStyleConfig();
+        $this->envHelper = new EnvironmentHelper();
     }
 
     /**
-     * {@inheritdoc}
+     * Render compact banner for serial consoles
+     *
+     * Simple text format without box drawing, suitable for serial consoles
+     * (ttyS, ttyAMA, ttyUSB). Shows all essential information in a condensed format.
+     *
+     * @return string Rendered banner text
      */
     public function render(): string
     {
@@ -73,88 +107,93 @@ class WelcomeBanner implements BannerInterface
 
         $lines[] = '*** ' . $translation->_('cm_ThisIs') . ' '
             . MenuStyleConfig::colorize("MikoPBX v.$version$versionSuffix", MenuStyleConfig::COLOR_GREEN);
-        $lines[] = "    built on $buildTime ($arch)";
+        $lines[] = "    Built: $buildTime ($arch)";
+        $lines[] = '';
 
-        // Copyright
-        $lines[] = '    MikoPBX is Copyright © 2017-2025. All rights reserved.';
-
-        // LiveCD warning
-        if ($this->dataCollector->isLiveCd()) {
-            $lines[] = '    ' . MenuStyleConfig::colorize(
-                $translation->_('cm_PbxLiveModeWarning'),
-                MenuStyleConfig::COLOR_RED
-            );
-        }
-
-        // System integrity warning
+        // Warnings section
         if ($this->dataCollector->hasCorruptedFiles()) {
             $lines[] = '    ' . MenuStyleConfig::colorize(
-                $translation->_('cm_SystemIntegrityBroken'),
+                '⚠ ' . $translation->_('cm_SystemIntegrityBroken'),
+                MenuStyleConfig::COLOR_RED
+            );
+        }
+        if ($this->dataCollector->isLiveCd()) {
+            $lines[] = '    ' . MenuStyleConfig::colorize(
+                '⚠ ' . $translation->_('cm_PbxLiveModeWarning'),
                 MenuStyleConfig::COLOR_RED
             );
         }
 
-        $lines[] = ''; // Empty line
-
-        // PBX Name (only if customized)
+        // PBX Name (if customized)
         $pbxName = $this->dataCollector->getPbxName();
-        if ($pbxName !== 'MikoPBX system') {
-            $lines[] = '    ' . $translation->_('cm_PbxName') . ': '
-                . MenuStyleConfig::colorize($pbxName, MenuStyleConfig::COLOR_CYAN);
+        if (!empty($pbxName) && $pbxName !== 'PBX system') {
+            $lines[] = '    Station: ' . MenuStyleConfig::colorize($pbxName, MenuStyleConfig::COLOR_CYAN);
         }
+
+        $lines[] = '';
 
         // Web Interface URL
         $webInfo = $this->dataCollector->getWebInterfaceInfo();
         if (!empty($webInfo['url'])) {
-            $lines[] = '    ' . $translation->_('cm_WebInterfaceUrl') . ': '
-                . MenuStyleConfig::colorize($webInfo['url'], MenuStyleConfig::COLOR_CYAN);
+            $lines[] = '    Web: ' . MenuStyleConfig::colorize($webInfo['url'], MenuStyleConfig::COLOR_CYAN);
         }
 
         // SSH access
         $sshPort = $this->dataCollector->getSshPort();
-        $sshDisplay = 'SSH';
-        if ($sshPort !== '22') {
-            $sshDisplay .= " (port $sshPort)";
-        }
         if (!empty($webInfo['ip'])) {
-            $lines[] = '    ' . $sshDisplay . ': ssh root@' . $webInfo['ip']
-                . ($sshPort !== '22' ? " -p $sshPort" : '');
+            $sshCmd = 'ssh root@' . $webInfo['ip'];
+            if ($sshPort !== '22') {
+                $sshCmd .= " -p $sshPort";
+            }
+            $lines[] = '    SSH: ' . $sshCmd;
         }
 
-        // Uptime
+        $lines[] = '';
+
+        // System metrics line: Uptime | Load | Storage
+        $metrics = [];
+
         $uptime = $this->dataCollector->getUptime();
         if (!empty($uptime)) {
-            $lines[] = '    ' . $translation->_('cm_Uptime') . ': ' . $uptime;
+            $metrics[] = $translation->_('cm_Uptime') . ': ' . $uptime;
         }
 
-        // Storage info
+        $loadAvg = $this->dataCollector->getLoadAverage();
+        if ($loadAvg !== null) {
+            $loadStr = MenuStyleConfig::formatLoadValue($loadAvg['load1']) . ' '
+                . MenuStyleConfig::formatLoadValue($loadAvg['load5']) . ' '
+                . MenuStyleConfig::formatLoadValue($loadAvg['load15']);
+            $metrics[] = 'Load: ' . $loadStr;
+        }
+
         $storageInfo = $this->dataCollector->getStorageInfo();
         if ($storageInfo !== null) {
             $storageColor = $storageInfo['percent'] > 90
                 ? MenuStyleConfig::COLOR_RED
                 : ($storageInfo['percent'] > 70 ? MenuStyleConfig::COLOR_YELLOW : MenuStyleConfig::COLOR_GREEN);
-            $lines[] = '    ' . $translation->_('cm_Storage') . ': '
-                . MenuStyleConfig::colorize(
-                    "{$storageInfo['used']} / {$storageInfo['total']} ({$storageInfo['percent']}%)",
-                    $storageColor
-                );
+            $metrics[] = $translation->_('cm_Storage') . ': '
+                . MenuStyleConfig::colorize("{$storageInfo['percent']}%", $storageColor);
         }
 
-        $lines[] = ''; // Empty line
+        if (!empty($metrics)) {
+            $lines[] = '    ' . implode(' | ', $metrics);
+        }
 
-        // Service status
+        $lines[] = '';
+
+        // Service status - all 7 services in one line
         $services = $this->dataCollector->getServiceStatuses();
         $statusParts = [];
         foreach ($services as $name => $isRunning) {
             $statusParts[] = $name . ' ' . MenuStyleConfig::formatServiceStatus($isRunning);
         }
-        $lines[] = '    ' . $translation->_('cm_Services') . ': ' . implode(' | ', $statusParts);
+        $lines[] = '    ' . $translation->_('cm_Services') . ': ' . implode(' ', $statusParts);
 
-        $lines[] = ''; // Empty line
+        $lines[] = '';
 
         // Press any key hint
         $lines[] = '    ' . MenuStyleConfig::colorize(
-            $translation->_('cm_PressAnyKey'),
+            $translation->_('cm_PressAnyKey') . ', Ctrl+C ' . $translation->_('cm_ForShell'),
             MenuStyleConfig::COLOR_YELLOW
         );
 
@@ -178,17 +217,295 @@ class WelcomeBanner implements BannerInterface
     }
 
     /**
+     * Render fullscreen banner for VM/SSH consoles
+     *
+     * ASCII art logo with box drawing characters, dark background.
+     * Displays all system information in a professional ESXi-style layout.
+     *
+     * @return string Rendered fullscreen banner
+     */
+    public function renderFullscreen(): string
+    {
+        $di = Di::getDefault();
+        $translation = $di->getShared(TranslationProvider::SERVICE_NAME);
+
+        $width = $this->styleConfig->getTerminalWidth();
+        $innerWidth = $width - 2; // Account for box borders
+
+        $lines = [];
+
+        // Top border
+        $lines[] = self::BOX_TOP_LEFT . str_repeat(self::BOX_HORIZONTAL, $innerWidth) . self::BOX_TOP_RIGHT;
+
+        // Empty line
+        $lines[] = $this->boxLine('', $innerWidth);
+
+        // ASCII Logo (centered)
+        foreach (self::ASCII_LOGO as $logoLine) {
+            $lines[] = $this->boxLine($this->centerText($logoLine, $innerWidth), $innerWidth);
+        }
+
+        // Slogan
+        $slogan = 'Free phone system for small business';
+        $lines[] = $this->boxLine($this->centerText($slogan, $innerWidth), $innerWidth);
+        $lines[] = $this->boxLine('', $innerWidth);
+
+        // PBX Name and Description section (if set)
+        $pbxName = $this->dataCollector->getPbxName();
+        $description = $this->dataCollector->getDescription();
+
+        if ((!empty($pbxName) && $pbxName !== 'PBX system') || !empty($description)) {
+            // Separator
+            $lines[] = $this->boxSeparator($innerWidth);
+
+            if (!empty($pbxName) && $pbxName !== 'PBX system') {
+                $nameDisplay = '★ ' . $pbxName . ' ★';
+                $lines[] = $this->boxLine(
+                    $this->centerText(MenuStyleConfig::colorize($nameDisplay, MenuStyleConfig::COLOR_CYAN), $innerWidth),
+                    $innerWidth,
+                    true
+                );
+            }
+            if (!empty($description)) {
+                $lines[] = $this->boxLine($this->centerText($description, $innerWidth), $innerWidth);
+            }
+        }
+
+        // Warnings section (if any)
+        $hasWarnings = $this->dataCollector->hasCorruptedFiles() || $this->dataCollector->isLiveCd();
+        if ($hasWarnings) {
+            $lines[] = $this->boxSeparator($innerWidth);
+
+            if ($this->dataCollector->hasCorruptedFiles()) {
+                $warning = '⚠ ' . $translation->_('cm_SystemIntegrityBroken');
+                $lines[] = $this->boxLine(
+                    '  ' . MenuStyleConfig::colorize($warning, MenuStyleConfig::COLOR_RED),
+                    $innerWidth,
+                    true
+                );
+            }
+            if ($this->dataCollector->isLiveCd()) {
+                $warning = '⚠ ' . $translation->_('cm_PbxLiveModeWarning');
+                $lines[] = $this->boxLine(
+                    '  ' . MenuStyleConfig::colorize($warning, MenuStyleConfig::COLOR_RED),
+                    $innerWidth,
+                    true
+                );
+            }
+        }
+
+        // System info section
+        $lines[] = $this->boxSeparator($innerWidth);
+
+        $version = $this->dataCollector->getVersion();
+        $virtualType = $this->dataCollector->getVirtualHardwareType();
+        $arch = $this->dataCollector->getArchitecture();
+        $buildTime = $this->dataCollector->getBuildTime();
+        $uptime = $this->dataCollector->getUptime();
+
+        $versionStr = "MikoPBX v.$version";
+        if (!empty($virtualType)) {
+            $versionStr .= " in $virtualType";
+        }
+        $versionStr .= " ($arch)";
+
+        // Two-column layout for system info
+        $leftCol = '  Version: ' . MenuStyleConfig::colorize($versionStr, MenuStyleConfig::COLOR_GREEN);
+        $rightCol = $translation->_('cm_Uptime') . ': ' . $uptime;
+        $lines[] = $this->boxLineTwoCol($leftCol, $rightCol, $innerWidth);
+
+        $leftCol = "  Built: $buildTime";
+        $loadAvg = $this->dataCollector->getLoadAverage();
+        if ($loadAvg !== null) {
+            $rightCol = 'Load: ' . MenuStyleConfig::formatLoadValue($loadAvg['load1']) . ' '
+                . MenuStyleConfig::formatLoadValue($loadAvg['load5']) . ' '
+                . MenuStyleConfig::formatLoadValue($loadAvg['load15']);
+        } else {
+            $rightCol = '';
+        }
+        $lines[] = $this->boxLineTwoCol($leftCol, $rightCol, $innerWidth);
+
+        // Storage info
+        $storageInfo = $this->dataCollector->getStorageInfo();
+        if ($storageInfo !== null) {
+            $storageColor = $storageInfo['percent'] > 90
+                ? MenuStyleConfig::COLOR_RED
+                : ($storageInfo['percent'] > 70 ? MenuStyleConfig::COLOR_YELLOW : MenuStyleConfig::COLOR_GREEN);
+            $rightCol = $translation->_('cm_Storage') . ': '
+                . MenuStyleConfig::colorize(
+                    "{$storageInfo['used']} / {$storageInfo['total']} ({$storageInfo['percent']}%)",
+                    $storageColor
+                );
+            $lines[] = $this->boxLineTwoCol('', $rightCol, $innerWidth);
+        }
+
+        // Network section
+        $lines[] = $this->boxSeparator($innerWidth);
+
+        $webInfo = $this->dataCollector->getWebInterfaceInfo();
+        if (!empty($webInfo['url'])) {
+            $lines[] = $this->boxLine(
+                '  ' . $translation->_('cm_WebInterfaceUrl') . ': '
+                . MenuStyleConfig::colorize($webInfo['url'], MenuStyleConfig::COLOR_CYAN),
+                $innerWidth,
+                true
+            );
+        }
+
+        $sshPort = $this->dataCollector->getSshPort();
+        if (!empty($webInfo['ip'])) {
+            $sshCmd = 'ssh root@' . $webInfo['ip'];
+            if ($sshPort !== '22') {
+                $sshCmd .= " -p $sshPort";
+            }
+            $lines[] = $this->boxLine('  SSH Access:    ' . $sshCmd, $innerWidth);
+        }
+
+        // Services section (two rows)
+        $lines[] = $this->boxSeparator($innerWidth);
+
+        $services = $this->dataCollector->getServiceStatuses();
+        $serviceNames = array_keys($services);
+
+        // First row: Core services (Asterisk, Nginx, PHP)
+        $coreServices = array_slice($serviceNames, 0, 3);
+        $coreParts = [];
+        foreach ($coreServices as $name) {
+            $coreParts[] = $name . ' ' . MenuStyleConfig::formatServiceStatus($services[$name]);
+        }
+        $lines[] = $this->boxLine(
+            '  Core:    ' . implode('   ', $coreParts),
+            $innerWidth,
+            true
+        );
+
+        // Second row: System services (Redis, Nats, Fail2ban, Monit)
+        $systemServices = array_slice($serviceNames, 3);
+        $systemParts = [];
+        foreach ($systemServices as $name) {
+            $systemParts[] = $name . ' ' . MenuStyleConfig::formatServiceStatus($services[$name]);
+        }
+        $lines[] = $this->boxLine(
+            '  System:  ' . implode('   ', $systemParts),
+            $innerWidth,
+            true
+        );
+
+        // Footer section
+        $lines[] = $this->boxSeparator($innerWidth);
+
+        $hint1 = $translation->_('cm_PressAnyKey') . '...';
+        $hint2 = 'Press Ctrl+C ' . $translation->_('cm_ForShell');
+
+        $lines[] = $this->boxLine(
+            $this->centerText(MenuStyleConfig::colorize($hint1, MenuStyleConfig::COLOR_YELLOW), $innerWidth),
+            $innerWidth,
+            true
+        );
+        $lines[] = $this->boxLine($this->centerText($hint2, $innerWidth), $innerWidth);
+
+        // Bottom border
+        $lines[] = self::BOX_BOTTOM_LEFT . str_repeat(self::BOX_HORIZONTAL, $innerWidth) . self::BOX_BOTTOM_RIGHT;
+
+        return implode(PHP_EOL, $lines);
+    }
+
+    /**
+     * Create a boxed line with content
+     *
+     * @param string $content Line content
+     * @param int $innerWidth Inner width (without borders)
+     * @param bool $hasAnsiCodes If true, content has ANSI codes that don't count toward visible length
+     * @return string Boxed line
+     */
+    private function boxLine(string $content, int $innerWidth, bool $hasAnsiCodes = false): string
+    {
+        if ($hasAnsiCodes) {
+            // Strip ANSI codes to calculate visible length
+            $visibleContent = preg_replace('/\033\[[0-9;]*m/', '', $content);
+            $visibleLen = mb_strlen($visibleContent);
+            $padding = max(0, $innerWidth - $visibleLen);
+            return self::BOX_VERTICAL . $content . str_repeat(' ', $padding) . self::BOX_VERTICAL;
+        }
+
+        $contentLen = mb_strlen($content);
+        $padding = max(0, $innerWidth - $contentLen);
+        return self::BOX_VERTICAL . $content . str_repeat(' ', $padding) . self::BOX_VERTICAL;
+    }
+
+    /**
+     * Create a boxed line with two columns
+     *
+     * @param string $left Left column content
+     * @param string $right Right column content
+     * @param int $innerWidth Inner width
+     * @return string Boxed two-column line
+     */
+    private function boxLineTwoCol(string $left, string $right, int $innerWidth): string
+    {
+        // Strip ANSI for length calculation
+        $leftVisible = preg_replace('/\033\[[0-9;]*m/', '', $left);
+        $rightVisible = preg_replace('/\033\[[0-9;]*m/', '', $right);
+
+        $leftLen = mb_strlen($leftVisible);
+        $rightLen = mb_strlen($rightVisible);
+
+        $halfWidth = (int)($innerWidth / 2);
+        $leftPadding = max(0, $halfWidth - $leftLen);
+        $rightPadding = max(0, $innerWidth - $halfWidth - $rightLen);
+
+        return self::BOX_VERTICAL . $left . str_repeat(' ', $leftPadding) . $right . str_repeat(' ', $rightPadding) . self::BOX_VERTICAL;
+    }
+
+    /**
+     * Create a box separator line
+     *
+     * @param int $innerWidth Inner width
+     * @return string Separator line
+     */
+    private function boxSeparator(int $innerWidth): string
+    {
+        return self::BOX_T_LEFT . str_repeat(self::BOX_HORIZONTAL, $innerWidth) . self::BOX_T_RIGHT;
+    }
+
+    /**
+     * Center text within given width
+     *
+     * @param string $text Text to center
+     * @param int $width Total width
+     * @return string Centered text with padding
+     */
+    private function centerText(string $text, int $width): string
+    {
+        // Strip ANSI codes for length calculation
+        $visibleText = preg_replace('/\033\[[0-9;]*m/', '', $text);
+        $textLen = mb_strlen($visibleText);
+
+        if ($textLen >= $width) {
+            return $text;
+        }
+
+        $leftPad = (int)(($width - $textLen) / 2);
+        return str_repeat(' ', $leftPad) . $text;
+    }
+
+    /**
      * Run the banner with auto-refresh loop
      *
      * Displays the banner and refreshes it every AUTO_REFRESH_INTERVAL seconds.
+     * Automatically selects display mode based on console type:
+     * - Serial console (ttyS*, ttyAMA*): compact text banner
+     * - VM/SSH console: fullscreen banner with ASCII art and blue background
+     *
      * Exits on any key press, returning the key pressed.
      *
      * @return string|null The key pressed to exit, or null if Ctrl+C
      */
     public function runWithAutoRefresh(): ?string
     {
-        $di = Di::getDefault();
-        $translation = $di->getShared(TranslationProvider::SERVICE_NAME);
+        // Determine display mode based on console type
+        $useFullscreen = $this->envHelper->supportsFullscreenBanner()
+            && $this->styleConfig->getTerminalWidth() >= self::FULLSCREEN_MIN_WIDTH;
 
         // Set terminal to non-blocking mode for key detection
         system('stty -icanon -echo');
@@ -196,6 +513,7 @@ class WelcomeBanner implements BannerInterface
         // Ensure terminal is restored on exit
         register_shutdown_function(function () {
             system('stty sane');
+            MenuStyleConfig::resetTerminal();
         });
 
         $lastRefresh = 0;
@@ -205,9 +523,16 @@ class WelcomeBanner implements BannerInterface
 
             // Refresh banner if needed
             if ($now - $lastRefresh >= self::AUTO_REFRESH_INTERVAL || $lastRefresh === 0) {
-                // Clear screen and move cursor to top
-                echo "\033[2J\033[H";
-                echo $this->render();
+                if ($useFullscreen) {
+                    // Fullscreen mode with dark background (Claude Code style)
+                    $this->styleConfig->fillScreenBackground(MenuStyleConfig::BG_DARK);
+                    echo MenuStyleConfig::COLOR_WHITE;
+                    echo $this->renderFullscreen();
+                } else {
+                    // Compact mode with black background
+                    MenuStyleConfig::clearScreen();
+                    echo $this->render();
+                }
                 echo PHP_EOL;
                 $lastRefresh = $now;
             }
@@ -222,6 +547,8 @@ class WelcomeBanner implements BannerInterface
 
                 // Restore terminal
                 system('stty sane');
+                MenuStyleConfig::resetTerminal();
+                MenuStyleConfig::clearScreen();
 
                 // Ctrl+C returns null (exit to shell)
                 if ($key === "\x03") {
@@ -268,7 +595,7 @@ class WelcomeBanner implements BannerInterface
 
         // PBX Name (only if customized)
         $pbxName = $this->dataCollector->getPbxName();
-        if ($pbxName !== 'MikoPBX system') {
+        if (!empty($pbxName) && $pbxName !== 'PBX system') {
             $lines[] = '    ' . MenuStyleConfig::colorize($pbxName, MenuStyleConfig::COLOR_CYAN);
         }
 
