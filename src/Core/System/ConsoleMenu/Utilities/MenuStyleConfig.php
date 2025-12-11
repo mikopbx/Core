@@ -183,10 +183,35 @@ class MenuStyleConfig
      */
     public static function formatServiceStatus(bool $isRunning): string
     {
+        $useAscii = self::shouldUseAsciiSymbols();
+
         if ($isRunning) {
-            return self::colorize(self::STATUS_OK, self::COLOR_GREEN);
+            $symbol = $useAscii ? '*' : self::STATUS_OK;
+            return self::colorize($symbol, self::COLOR_GREEN);
         }
-        return self::colorize(self::STATUS_FAIL, self::COLOR_RED);
+
+        $symbol = $useAscii ? 'x' : self::STATUS_FAIL;
+        return self::colorize($symbol, self::COLOR_RED);
+    }
+
+    /**
+     * Check if ASCII symbols should be used instead of Unicode
+     *
+     * VGA console and system console don't support Unicode symbols,
+     * so we use ASCII alternatives for status indicators.
+     *
+     * @return bool True if ASCII symbols should be used
+     */
+    private static function shouldUseAsciiSymbols(): bool
+    {
+        $tty = @exec('tty 2>/dev/null');
+
+        // System console or VGA virtual console - use ASCII
+        if ($tty === '/dev/console' || preg_match('#/dev/tty\d+$#', $tty)) {
+            return true;
+        }
+
+        return false;
     }
 
     /**

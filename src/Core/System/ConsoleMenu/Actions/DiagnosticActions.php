@@ -145,10 +145,17 @@ class DiagnosticActions
     private function runNcursesApp(string $command): void
     {
         $term = $this->getOptimalTerm();
+        $tty = exec('tty 2>/dev/null') ?: '/dev/console';
         $wrapper = "/tmp/ncurses_" . getmypid() . ".sh";
 
-        // Create and run wrapper script
-        $script = "#!/bin/sh\nexport TERM=$term\nreset\nexec $command\n";
+        // Create wrapper script that explicitly reopens the terminal
+        // This ensures proper terminal control after CliMenu closes
+        $script = "#!/bin/sh\n";
+        $script .= "exec <$tty >$tty 2>&1\n";
+        $script .= "export TERM=$term\n";
+        $script .= "reset\n";
+        $script .= "exec $command\n";
+
         file_put_contents($wrapper, $script);
         chmod($wrapper, 0755);
         passthru($wrapper);
