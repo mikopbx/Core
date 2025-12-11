@@ -91,8 +91,9 @@ while : ; do
     fi
     # Ensure that the /offload partition is mounted.
     if [ ! -f "$freeOffloadFile" ]; then
-        # Console menu depends on the /offload partition.
-        /etc/rc/console_menu --banner 2>/dev/null;
+        # Show welcome banner, then console menu
+        /etc/rc/welcome_banner 2>/dev/null;
+        /etc/rc/console_menu 2>/dev/null;
         resultMenu=$?;
 
         # Check for reboot.

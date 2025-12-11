@@ -21,22 +21,20 @@
 namespace MikoPBX\Core\System;
 
 use MikoPBX\Core\Config\RegisterDIServices;
-use MikoPBX\Core\System\ConsoleMenu\Banners\WelcomeBanner;
 use MikoPBX\Core\System\ConsoleMenu\Menus\MainMenu;
 
 /**
  * Console Menu - Main entry point for SSH/console interface
  *
  * This is a lightweight orchestrator that delegates to modular components:
- * - Banners: WelcomeBanner displays system info with auto-refresh
  * - Menus: MainMenu provides hierarchical navigation
  * - Actions: Handlers for specific operations (network, system, diagnostics)
  * - Wizards: Multi-step configuration flows (network setup)
  * - Utilities: Helpers for logging, network info, environment detection
  *
  * Usage:
- * - `console-menu` - Start directly in settings menu (no banner)
- * - `console-menu --banner` - Show banner with auto-refresh, then menu on keypress
+ * - `/etc/rc/welcome_banner` - Show banner with auto-refresh
+ * - `/etc/rc/console_menu` - Start settings menu
  *
  * @see ConsoleMenu/Banners/ - Banner display components
  * @see ConsoleMenu/Menus/ - Menu hierarchy
@@ -46,20 +44,6 @@ use MikoPBX\Core\System\ConsoleMenu\Menus\MainMenu;
  */
 class ConsoleMenu
 {
-    private bool $showBanner = false;
-
-    /**
-     * Parse command line arguments
-     *
-     * Supported flags:
-     * - --banner: Show welcome banner with auto-refresh before menu
-     */
-    private function parseArguments(): void
-    {
-        $args = $_SERVER['argv'] ?? [];
-        $this->showBanner = in_array('--banner', $args, true);
-    }
-
     /**
      * Ensure terminal type is valid, fallback to xterm-256color for unknown terminals.
      * Fixes issue with Ghostty and other modern terminals not recognized by remote system.
@@ -77,20 +61,15 @@ class ConsoleMenu
      * Launch the console menu system
      *
      * Entry point that:
-     * 1. Parses command line arguments
-     * 2. Validates terminal environment
-     * 3. Initializes DI services
-     * 4. Sets up Cyrillic font support
-     * 5. If --banner flag: displays welcome banner with auto-refresh
-     * 6. Shows the main menu
+     * 1. Validates terminal environment
+     * 2. Initializes DI services
+     * 3. Sets up Cyrillic font support
+     * 4. Shows the main menu
      *
      * @return void
      */
     public function start(): void
     {
-        // Parse command line arguments
-        $this->parseArguments();
-
         // Ensure terminal type is recognized
         $this->ensureValidTerminal();
 
@@ -99,37 +78,6 @@ class ConsoleMenu
 
         // Set Cyrillic font for proper display
         Util::setCyrillicFont();
-
-        // Display welcome banner (if requested) and start menu
-        $this->showWelcomeBannerAndMenu();
-    }
-
-    /**
-     * Display welcome banner (if requested) and show main menu
-     *
-     * In banner mode (--banner flag):
-     * - Banner refreshes every 60 seconds with system info
-     * - Any key press → enters main menu
-     * - Ctrl+C → exits to shell
-     *
-     * In normal mode (no flag):
-     * - Goes directly to main menu without banner
-     *
-     * @return void
-     */
-    private function showWelcomeBannerAndMenu(): void
-    {
-        if ($this->showBanner) {
-            // Show banner with auto-refresh loop
-            $banner = new WelcomeBanner();
-            $result = $banner->runWithAutoRefresh();
-
-            // Ctrl+C pressed - exit to shell
-            if ($result === null) {
-                file_put_contents('/tmp/start_sh', '');
-                exit(0);
-            }
-        }
 
         // Show the main menu
         $mainMenu = new MainMenu();

@@ -171,8 +171,8 @@ class DiagnosticActions
     {
         $tty = @exec('tty 2>/dev/null');
 
-        // Serial console (ttyS0, ttyS1, ttyAMA0 for ARM)
-        if (preg_match('#/dev/tty(S|AMA)\d+#', $tty)) {
+        // Serial console (ttyS0, ttyS1, ttyAMA0 for ARM) or virtual console (tty1, tty2, etc.)
+        if (preg_match('#/dev/tty(S|AMA)?\d+#', $tty)) {
             return 'linux';
         }
 
