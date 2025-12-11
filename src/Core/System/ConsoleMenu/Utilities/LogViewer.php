@@ -72,10 +72,10 @@ class LogViewer
     }
 
     /**
-     * View log file using lnav
+     * View log file in read-only mode using vi
      *
-     * lnav provides syntax highlighting, automatic format detection,
-     * and real-time file following. Press 'q' to exit.
+     * Uses vi -R for reliable terminal handling in BusyBox environment.
+     * Navigate with arrow keys or j/k, press G to go to end, :q to exit.
      *
      * @param string $logType Log type (system, asterisk, php, nginx, fail2ban)
      * @return bool True if log was viewed successfully
@@ -87,17 +87,17 @@ class LogViewer
             return false;
         }
 
-        $lnavPath = Util::which('lnav');
-        if (empty($lnavPath)) {
-            echo "lnav command not found\n";
+        $viPath = Util::which('vi');
+        if (empty($viPath)) {
+            echo "vi command not found\n";
             return false;
         }
 
-        // Reset terminal to sane state (required after CliMenu closes)
+        // Reset terminal to sane state before running vi (required after CliMenu closes)
         passthru('stty sane 2>/dev/null');
 
-        // Run lnav - it auto-follows file changes and positions at end
-        passthru("$lnavPath " . escapeshellarg($logFile));
+        // Run vi in read-only mode (press G to go to end of file)
+        passthru("$viPath -R " . escapeshellarg($logFile));
 
         return true;
     }
